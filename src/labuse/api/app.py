@@ -33,14 +33,17 @@ WEB_DIR = Path(__file__).resolve().parent / "web"
 # Tant qu'une de ces couches n'est pas ingérée, une "opportunité" peut masquer une
 # contrainte → bandeau d'avertissement + distinction "opportunité fiable".
 CRITICAL_LAYERS = {
-    "sar": "SAR (zonage régional — supérieur au PLU)",
-    "foret_publique": "Forêts publiques / régime forestier (ONF)",
-    "ens": "Espaces Naturels Sensibles (ENS)",
-    "safer": "Zonage agricole / SAFER",
-    "trait_de_cote": "Recul du trait de côte",
+    "sar": ("SAR (zonage régional — supérieur au PLU)", ["sar"]),
+    "risques": ("Risques (Géorisques / PPR — inondation, mouvement de terrain)", ["ppr", "georisque_alea"]),
+    "foret_publique": ("Forêts publiques / régime forestier (ONF)", ["foret_publique"]),
+    "ens": ("Espaces Naturels Sensibles (ENS)", ["ens"]),
+    "safer": ("Zonage agricole / SAFER", ["safer"]),
+    "trait_de_cote": ("Recul du trait de côte", ["trait_de_cote"]),
 }
-# Minimum requis pour qualifier une "opportunité FIABLE" (consigne produit).
-RELIABLE_REQUIRED = ("sar", "foret_publique", "trait_de_cote")
+# Minimum requis pour qualifier une "opportunité FIABLE" (consigne produit) : survie à
+# SAR + risques + forêts + littoral (une opportunité en zone à risque non vérifiée ne
+# peut pas être présentée comme fiable). Chaque clé -> liste de `kind` qui l'attestent.
+RELIABLE_REQUIRED = ("sar", "risques", "foret_publique", "trait_de_cote")
 
 app = FastAPI(
     title="LA BUSE — radar foncier",
@@ -71,14 +74,19 @@ def coverage(db: Session = Depends(get_db)) -> dict:
     fiable. `present` = au moins une entité de ce `kind` est ingérée.
     """
     present = {k for (k,) in db.execute(text("SELECT DISTINCT kind FROM spatial_layers")).all()}
-    layers = [{"kind": k, "label": v, "present": k in present} for k, v in CRITICAL_LAYERS.items()]
-    missing = [v for k, v in CRITICAL_LAYERS.items() if k not in present]
+
+    def _present(kinds: list[str]) -> bool:
+        return any(k in present for k in kinds)
+
+    layers = [{"kind": key, "label": label, "present": _present(kinds)}
+              for key, (label, kinds) in CRITICAL_LAYERS.items()]
+    missing = [label for _, (label, kinds) in CRITICAL_LAYERS.items() if not _present(kinds)]
     return {
         "critical_layers": layers,
         "missing": missing,
         "complete": not missing,
-        "reliable_requires": [CRITICAL_LAYERS[k] for k in RELIABLE_REQUIRED],
-        "reliable_ready": all(k in present for k in RELIABLE_REQUIRED),
+        "reliable_requires": [CRITICAL_LAYERS[k][0] for k in RELIABLE_REQUIRED],
+        "reliable_ready": all(_present(CRITICAL_LAYERS[k][1]) for k in RELIABLE_REQUIRED),
     }
 
 

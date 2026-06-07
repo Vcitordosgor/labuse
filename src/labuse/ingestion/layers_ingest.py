@@ -355,10 +355,14 @@ def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
             if not f.get("geometry"):
                 continue
             p = f.get("properties") or {}
-            nom = p.get("nom") or p.get("toponyme") or p.get("libelle") or p.get("site_nom") or label
+            # M1 : ne JAMAIS flaguer du foncier terrestre avec une protection MARINE
+            # (ex. Réserve naturelle marine de La Réunion). On garde les protections terrestres.
+            if str(p.get("marin", "")).strip().upper() in ("T", "OUI", "TRUE", "1"):
+                continue
+            nom = p.get("nom_site") or p.get("nom") or p.get("toponyme") or p.get("libelle") or label
             _insert_layer(session, "ens", label.lower().replace(" ", "_")[:48], f"{label} — {nom}"[:255],
                           f["geometry"], sids.get("ENS (Département)"), commune, run_id,
-                          {"type": label, "src": typename})
+                          {"type": label, "src": typename, "marin": p.get("marin")})
             n += 1
     return n
 
