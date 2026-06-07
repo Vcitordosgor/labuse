@@ -144,7 +144,7 @@ def stats(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
 
 
 @app.get("/map/parcels.geojson")
-def parcels_geojson(commune: str | None = None, limit: int = 8000, db: Session = Depends(get_db)) -> dict:
+def parcels_geojson(commune: str | None = None, limit: int = 60000, db: Session = Depends(get_db)) -> dict:
     """Parcelles (géométrie simplifiée 4326) + verdict, pour la carte colorée."""
     rows = db.execute(
         text(

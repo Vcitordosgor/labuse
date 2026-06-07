@@ -57,6 +57,7 @@ def evaluate_parcels(
     est stocké dans parcel_evaluations.ai_payload.
     """
     ctx = EvalContext(session)
+    ctx.prime(parcel_ids)  # précalcul batch (commune entière) — sinon 1 requête/parcelle×couche
     parcels = _load_parcel_refs(session, parcel_ids)
     verdicts_by = run_cascade(parcels, ctx)
     rules_v = config.rules_version()

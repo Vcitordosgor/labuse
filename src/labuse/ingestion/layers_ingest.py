@@ -211,50 +211,48 @@ def ingest_ocsge(session, bbox, commune, run_id, sids) -> int:
     return n
 
 
-def ingest_pente(session, commune, run_id, sids, sample_m: float = 15.0, chunk: int = 100,
-                 max_api_parcels: int = 8000) -> object:
-    """Pente par échantillonnage RGE ALTI (5 points/parcelle, batché). Non éliminatoire.
+def ingest_pente(session, bbox, commune, run_id, sids, step_m: float = 180.0, chunk: int = 100) -> int:
+    """Pente par échantillonnage RGE ALTI sur une GRILLE régulière (≈raster), batché.
 
-    Au-delà de `max_api_parcels`, l'échantillonnage par API n'est plus raisonnable
-    (quota 5 req/s) → bascule à prévoir sur le raster RGE ALTI en batch (TODO scale).
-    """
-    rows = session.execute(text("SELECT id, ST_Y(centroid), ST_X(centroid) FROM parcels ORDER BY id")).all()
-    if len(rows) > max_api_parcels:
-        return f"skip ({len(rows)} parcelles > {max_api_parcels} → RGE ALTI raster batch requis)"
-    pts: list[tuple[int, float, float]] = []
-    for pid, lat, lon in rows:
-        dlat = sample_m / 110574.0
-        dlon = sample_m / ((111320.0 * math.cos(math.radians(lat))) or 1.0)
-        pts += [(pid, lon, lat), (pid, lon + dlon, lat), (pid, lon - dlon, lat),
-                (pid, lon, lat + dlat), (pid, lon, lat - dlat)]
-    elev: dict[int, float] = {}
+    Indépendant du nombre de parcelles (grille fixe sur le bbox) → tient la commune
+    entière sans des dizaines de milliers d'appels. Affichée, NON éliminatoire (§2)."""
+    minlon, minlat, maxlon, maxlat = bbox
+    dlat = step_m / 110574.0
+    dlon = step_m / ((111320.0 * math.cos(math.radians((minlat + maxlat) / 2))) or 1.0)
+    lats, y = [], minlat
+    while y <= maxlat + dlat:
+        lats.append(y)
+        y += dlat
+    lons, x = [], minlon
+    while x <= maxlon + dlon:
+        lons.append(x)
+        x += dlon
+    nodes = [(i, j, lons[j], lats[i]) for i in range(len(lats)) for j in range(len(lons))]
+    elev: dict[tuple[int, int], float] = {}
     with _client() as c:
-        for i in range(0, len(pts), chunk):
-            part = pts[i:i + chunk]
+        for k in range(0, len(nodes), chunk):
+            part = nodes[k:k + chunk]
             r = c.get(ALTI_URL, params={
-                "lon": "|".join(f"{p[1]:.6f}" for p in part),
-                "lat": "|".join(f"{p[2]:.6f}" for p in part),
+                "lon": "|".join(f"{p[2]:.6f}" for p in part),
+                "lat": "|".join(f"{p[3]:.6f}" for p in part),
                 "resource": "ign_rge_alti_wld", "zonly": "true"})
-            for j, h in enumerate(r.json().get("elevations", [])):
-                elev[i + j] = h
+            for idx, h in enumerate(r.json().get("elevations", [])):
+                elev[(part[idx][0], part[idx][1])] = h
             time.sleep(0.21)  # quota 5 req/s
     n = 0
-    for k in range(0, len(pts), 5):
-        pid = pts[k][0]
-        hs = [elev[k + o] for o in range(5) if elev.get(k + o) is not None and elev.get(k + o, -9999) > -9999]
-        if len(hs) < 2:
-            continue
-        slope = max(abs(h - hs[0]) for h in hs[1:]) / sample_m * 100.0
-        session.execute(
-            text(
-                """INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id, commune, ingestion_run_id)
-                   SELECT 'pente', NULL, 'Pente RGE ALTI', geom, CAST(:a AS jsonb), :sid, commune, :run
-                   FROM parcels WHERE id = :pid"""
-            ),
-            {"a": json.dumps({"slope_pct": round(slope, 1)}), "sid": sids.get(KIND_SOURCE["pente"]),
-             "run": run_id, "pid": pid},
-        )
-        n += 1
+    for i in range(len(lats) - 1):
+        for j in range(len(lons) - 1):
+            hs = [elev.get((i, j)), elev.get((i, j + 1)), elev.get((i + 1, j)), elev.get((i + 1, j + 1))]
+            hs = [h for h in hs if h is not None and h > -9999]
+            if len(hs) < 2:
+                continue
+            slope = (max(hs) - min(hs)) / step_m * 100.0
+            cell = {"type": "Polygon", "coordinates": [[
+                [lons[j], lats[i]], [lons[j + 1], lats[i]], [lons[j + 1], lats[i + 1]],
+                [lons[j], lats[i + 1]], [lons[j], lats[i]]]]}
+            _insert_layer(session, "pente", None, "Pente RGE ALTI (grille)", cell,
+                          sids.get(KIND_SOURCE["pente"]), commune, run_id, {"slope_pct": round(slope, 1)})
+            n += 1
     return n
 
 
@@ -300,7 +298,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("water", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "water", "BDTOPO_V3:surface_hydrographique")),
         ("voirie", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "voirie", "BDTOPO_V3:troncon_de_route")),
         ("ocs_ge", lambda: ingest_ocsge(session, bbox, commune, run_id, sids)),
-        ("pente", lambda: ingest_pente(session, commune, run_id, sids)),
+        ("pente", lambda: ingest_pente(session, bbox, commune, run_id, sids)),
         ("dvf", lambda: ingest_dvf(session, insee, commune, run_id, sids)),
     ]
     for kind, fn in jobs:

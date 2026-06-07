@@ -37,6 +37,99 @@ class EvalContext:
         self.rules = rules or config.cascade_rules()
         self._source_ids: dict[str, int | None] = {}
         self._kind_present: dict[str, bool] = {}
+        # Caches batch (remplis par prime()) : évitent une requête par parcelle×couche.
+        self._primed_ids: set[int] = set()
+        self._inter: dict[tuple[int, str], list[Intersection]] = {}
+        self._centroid: dict[tuple[int, str], bool] = {}
+        self._dvf: dict[int, dict[int, dict]] = {}
+        self._sitadel: dict[int, dict] = {}
+        self._ff: dict[int, dict] = {}
+
+    # ───────────────────────── batch (commune entière) ─────────────────────────
+
+    def _layer_params(self, name: str) -> dict:
+        for lc in self.rules.get("layers", []):
+            if lc.get("name") == name:
+                return lc.get("params", {}) or {}
+        return {}
+
+    def prime(self, parcel_ids: list[int]) -> None:
+        """Précalcule EN BATCH les requêtes spatiales pour tout l'ensemble de parcelles
+        (une requête par famille au lieu d'une par parcelle×couche) — brief §4 : la
+        cascade tourne en batch sur toute la commune. Les getters lisent ensuite le cache."""
+        ids = list(parcel_ids)
+        if not ids:
+            return
+        self._primed_ids = set(ids)
+
+        for r in self.session.execute(
+            text(
+                """
+                SELECT p.id AS pid, sl.kind, sl.subtype, sl.name, sl.attrs,
+                       ST_Area(ST_Intersection(ST_Transform(p.geom, 2975), ST_Transform(sl.geom, 2975)))
+                         / NULLIF(ST_Area(ST_Transform(p.geom, 2975)), 0) AS coverage,
+                       ds.name AS source_name
+                FROM parcels p
+                JOIN spatial_layers sl ON ST_Intersects(p.geom, sl.geom)
+                LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
+                WHERE p.id = ANY(:ids)
+                """
+            ), {"ids": ids}
+        ).mappings().all():
+            self._inter.setdefault((r["pid"], r["kind"]), []).append(
+                Intersection(r["subtype"], r["name"], float(r["coverage"] or 0.0), r["attrs"] or {}, r["source_name"]))
+
+        for pid, kind in self.session.execute(
+            text(
+                """SELECT p.id, sl.kind FROM parcels p
+                   JOIN spatial_layers sl ON ST_Contains(sl.geom, p.centroid)
+                   WHERE p.id = ANY(:ids)"""
+            ), {"ids": ids}
+        ).all():
+            self._centroid[(pid, kind)] = True
+
+        dp = self._layer_params("dvf")
+        years = dp.get("lookback_years", 5)
+        for radius in dp.get("radii_m", [250, 500, 1000]):
+            self._dvf[radius] = {}
+            for r in self.session.execute(
+                text(
+                    """SELECT p.id AS pid, count(*) AS n,
+                              percentile_cont(0.5) WITHIN GROUP (ORDER BY d.valeur_fonciere) AS med
+                       FROM parcels p JOIN dvf_mutations d
+                         ON ST_DWithin(ST_Transform(p.centroid, 2975), ST_Transform(d.geom, 2975), :r)
+                       WHERE p.id = ANY(:ids)
+                         AND (d.date_mutation IS NULL OR d.date_mutation >= now() - (:yrs || ' years')::interval)
+                       GROUP BY p.id"""
+                ), {"ids": ids, "r": radius, "yrs": years}
+            ).mappings().all():
+                self._dvf[radius][r["pid"]] = {"count": int(r["n"] or 0),
+                                               "median_value": float(r["med"]) if r["med"] else None}
+
+        sp = self._layer_params("sitadel")
+        for r in self.session.execute(
+            text(
+                """WITH pp AS (SELECT id, idu, centroid FROM parcels WHERE id = ANY(:ids))
+                   SELECT pp.id AS pid,
+                     count(*) FILTER (WHERE jsonb_exists(s.idu_codes, pp.idu)) AS matched,
+                     count(*) FILTER (WHERE s.geom IS NOT NULL AND
+                        ST_DWithin(ST_Transform(pp.centroid, 2975), ST_Transform(s.geom, 2975), :r)) AS nearby
+                   FROM pp LEFT JOIN sitadel_permits s
+                     ON (s.date IS NULL OR s.date >= now() - (:mo || ' months')::interval)
+                   GROUP BY pp.id"""
+            ), {"ids": ids, "r": sp.get("radius_m", 200), "mo": sp.get("lookback_months", 36)}
+        ).mappings().all():
+            self._sitadel[r["pid"]] = {"matched_idu": int(r["matched"] or 0), "nearby": int(r["nearby"] or 0)}
+
+        for r in self.session.execute(
+            text(
+                """SELECT DISTINCT ON (psr.parcel_id) psr.parcel_id AS pid, psr.status, psr.raw_payload, psr.summary
+                   FROM parcel_source_results psr JOIN data_sources ds ON ds.id = psr.data_source_id
+                   WHERE ds.name = :ff AND psr.parcel_id = ANY(:ids)
+                   ORDER BY psr.parcel_id, psr.fetched_at DESC"""
+            ), {"ids": ids, "ff": "Fichiers fonciers (Cerema)"}
+        ).mappings().all():
+            self._ff[r["pid"]] = {"status": r["status"], "raw_payload": r["raw_payload"], "summary": r["summary"]}
 
     # ───────────────────────── requêtes spatiales ─────────────────────────
 
@@ -46,6 +139,8 @@ class EvalContext:
         ST_Intersects (test topologique, CRS-agnostique) pour le filtre ;
         couverture mesurée en 2975 (jamais en degrés).
         """
+        if parcel_id in self._primed_ids:
+            return self._inter.get((parcel_id, kind), [])
         sql = text(
             """
             SELECT sl.subtype, sl.name, sl.attrs,
@@ -88,6 +183,8 @@ class EvalContext:
 
     def centroid_in(self, parcel_id: int, kind: str) -> bool:
         """Le centroïde de la parcelle tombe-t-il dans une entité de ce `kind` ?"""
+        if parcel_id in self._primed_ids:
+            return self._centroid.get((parcel_id, kind), False)
         sql = text(
             """
             SELECT EXISTS(
@@ -104,6 +201,8 @@ class EvalContext:
 
         Médiane robuste ; jamais de mutation nominative exposée (R112 A-3 LPF).
         """
+        if parcel_id in self._primed_ids and radius_m in self._dvf:
+            return self._dvf[radius_m].get(parcel_id, {"count": 0, "median_value": None})
         sql = text(
             """
             SELECT count(*) AS n,
@@ -120,6 +219,8 @@ class EvalContext:
 
     def sitadel_near(self, parcel_id: int, radius_m: float, months: int) -> dict[str, Any]:
         """Permis SITADEL rattachés (IDU) ou à proximité (rayon = signal de zone, §7bis)."""
+        if parcel_id in self._primed_ids:
+            return self._sitadel.get(parcel_id, {"matched_idu": 0, "nearby": 0})
         sql = text(
             """
             WITH p AS (SELECT id, idu, centroid FROM parcels WHERE id = :pid)
@@ -142,6 +243,8 @@ class EvalContext:
 
     def latest_source_result(self, parcel_id: int, source_name: str) -> dict[str, Any] | None:
         """Dernier résultat d'une source pour la parcelle (ex. propriétaire manuel/mock)."""
+        if parcel_id in self._primed_ids and source_name == "Fichiers fonciers (Cerema)":
+            return self._ff.get(parcel_id)
         sql = text(
             """
             SELECT psr.status, psr.raw_payload, psr.summary
