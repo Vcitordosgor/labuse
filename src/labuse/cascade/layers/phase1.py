@@ -23,7 +23,7 @@ SRC_SAR = "SAR Réunion (PEIGEO)"
 SRC_GPU = "Urbanisme PLU/GPU (API Carto)"
 SRC_SAFER = "Zonage SAFER (DAAF)"
 SRC_GEORISQUES = "Géorisques"
-SRC_DEAL = "DEAL Réunion (WMS/WFS)"
+SRC_TRAIT = "DEAL Réunion — trait de côte"
 SRC_ALTI = "RGE ALTI (altimétrie)"
 SRC_ABF = "ABF / Monuments historiques"
 SRC_ENS = "ENS (Département)"
@@ -237,18 +237,18 @@ class TraitDeCoteLayer(Layer):
     def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
         kind = params["spatial_kind"]
         if not ctx.kind_present(kind):
-            return unknown(self.name, "Recul du trait de côte non ingéré.", source=SRC_DEAL)
+            return unknown(self.name, "Recul du trait de côte non ingéré.", source=SRC_TRAIT)
         inter = ctx.intersections(parcel.id, kind)
         subtypes = {i.subtype for i in inter if i.coverage > 0}
         if subtypes & set(params.get("exclude_subtypes", [])):
             return hard_exclude(
-                self.name, "Exclue : bande de précaution du recul du trait de côte.", kind="faux_positif", source=SRC_DEAL
+                self.name, "Exclue : bande de précaution du recul du trait de côte.", kind="faux_positif", source=SRC_TRAIT
             )
         if subtypes & set(params.get("flag_subtypes", [])):
             return soft_flag(
-                self.name, "Zone de recul du trait de côte (bande d'anticipation).", Severity(params.get("flag_severity", "moyen")), source=SRC_DEAL
+                self.name, "Zone de recul du trait de côte (bande d'anticipation).", Severity(params.get("flag_severity", "moyen")), source=SRC_TRAIT
             )
-        return passed(self.name, "Hors zone de recul du trait de côte.", source=SRC_DEAL)
+        return passed(self.name, "Hors zone de recul du trait de côte.", source=SRC_TRAIT)
 
 
 @register

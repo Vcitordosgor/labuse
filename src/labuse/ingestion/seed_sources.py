@@ -162,10 +162,11 @@ SOURCES: list[dict] = [
          legal_notes="Accès sous convention. Version anonymisée : physiques masquées (_X_), morales complètes → RGPD-safe.",
          technical_notes="idprocpte / idprodroit → nb_droits_propriete = signal d'indivision. Champ manuel en attendant la convention."),
     dict(name="DEAL Réunion — trait de côte", category="risques", provider="Cerema / GéoLittoral",
-         access_type="import", status=S.A_FAIRE, reliability_level=R.A_CONFIRMER,
+         access_type="import/SHP", status=S.CONNECTE, reliability_level=R.VERIFIE,
          documentation_url="https://www.geolittoral.developpement-durable.gouv.fr/indicateur-national-de-l-erosion-cotiere-a1434.html",
-         endpoint_url=None, legal_notes=None,
-         technical_notes="Indicateur d'érosion Cerema/RNOTC TROUVÉ mais exposé seulement en WMS (image) / viewer ArcGIS / téléchargement interactif — features non requêtables en auto (query→0). Reste UNKNOWN."),
+         endpoint_url="https://geolittoral.din.developpement-durable.gouv.fr/telechargement/couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip",
+         legal_notes=None,
+         technical_notes="✓ intégré : SHP indicateur national d'érosion côtière (Réunion, EPSG:2975→4326). Champ `taux` (m/an) : recul fort ≤ -1 → exclude, recul modéré → flag."),
 ]
 
 

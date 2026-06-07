@@ -10,9 +10,13 @@ source en échec n'empêche pas les autres — chaque couche est isolée.
 """
 from __future__ import annotations
 
+import io
 import json
 import math
+import os
+import tempfile
 import time
+import zipfile
 
 import httpx
 from sqlalchemy import text
@@ -25,6 +29,9 @@ from ..connectors.wfs import WfsConnector
 APICARTO = "https://apicarto.ign.fr/api"
 ODS_BASE = "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets"
 ALTI_URL = "https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json"
+# Indicateur national d'érosion côtière (Cerema/GéoLittoral), emprise Réunion, EPSG:2975.
+EROSION_URL = ("https://geolittoral.din.developpement-durable.gouv.fr/telechargement/"
+               "couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip")
 
 # kind LA BUSE -> nom canonique de data_sources (pour data_source_id).
 KIND_SOURCE = {
@@ -36,6 +43,7 @@ KIND_SOURCE = {
     "potentiel_foncier": "data.regionreunion.com — Potentiel foncier",
     "ocs_ge": "OCS GE (IGN)",
     "pente": "RGE ALTI (altimétrie)",
+    "trait_de_cote": "DEAL Réunion — trait de côte",
 }
 
 
@@ -355,6 +363,61 @@ def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
     return n
 
 
+def _taux_subtype(taux) -> str:
+    """Mappe le taux d'évolution (m/an) du trait de côte vers le vocabulaire cascade."""
+    if taux is None or taux <= -9000:
+        return "indetermine"           # -9999 = donnée absente
+    if taux <= -1.0:
+        return "bande_courte"          # recul fort → HARD_EXCLUDE
+    if taux < -0.1:
+        return "bande_longue"          # recul modéré → SOFT_FLAG
+    return "stable"                    # stable / accrétion → PASS
+
+
+def ingest_trait_de_cote(session, commune, run_id, sids) -> int:
+    """Indicateur national d'érosion côtière (Cerema/GéoLittoral) — SHP Réunion EPSG:2975.
+
+    Téléchargé puis reprojeté 2975→4326 (pyproj). `taux` (m/an) → recul fort = exclude,
+    recul modéré = flag (cf. config/cascade_rules.yaml : trait_de_cote)."""
+    import shapefile  # pyshp
+    from pyproj import Transformer
+
+    with _client() as c:
+        r = c.get(EROSION_URL)
+        r.raise_for_status()
+    tmp = tempfile.mkdtemp(prefix="labuse_tdc_")
+    zipfile.ZipFile(io.BytesIO(r.content)).extractall(tmp)
+    shp = next((os.path.join(tmp, f) for f in os.listdir(tmp) if f.lower().endswith(".shp")), None)
+    if not shp:
+        return 0
+    rd = shapefile.Reader(shp)
+    flds = [f[0] for f in rd.fields[1:]]
+    ti = flds.index("taux") if "taux" in flds else None
+    tr = Transformer.from_crs(2975, 4326, always_xy=True)
+    n = 0
+    for srec in rd.shapeRecords():
+        sh = srec.shape
+        if not sh.points or sh.shapeType not in (5, 15, 25):
+            continue
+        taux = float(srec.record[ti]) if ti is not None else None
+        parts = list(sh.parts) + [len(sh.points)]
+        polys = []
+        for k in range(len(parts) - 1):
+            ring = sh.points[parts[k]:parts[k + 1]]
+            coords = [list(tr.transform(x, y)) for (x, y) in ring]
+            if len(coords) >= 4:
+                polys.append([coords])
+        if not polys:
+            continue
+        _insert_layer(session, "trait_de_cote", _taux_subtype(taux),
+                      f"Évolution trait de côte (taux {taux} m/an)",
+                      {"type": "MultiPolygon", "coordinates": polys},
+                      sids.get(KIND_SOURCE["trait_de_cote"]), commune, run_id,
+                      {"taux": taux, "src": "GéoLittoral/Cerema — indicateur érosion (SHP, EPSG:2975)"})
+        n += 1
+    return n
+
+
 def ingest_layers(session: Session, insee: str, commune: str,
                   bbox: tuple[float, float, float, float], run_id: int | None) -> dict[str, object]:
     """Ingère toutes les couches géométriques réelles disponibles. Isolé par couche."""
@@ -371,6 +434,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("foret_publique", lambda: ingest_foret_publique(session, bbox, commune, run_id, sids)),
         ("safer", lambda: ingest_rpg_agricole(session, bbox, commune, run_id, sids)),
         ("ens", lambda: ingest_espaces_proteges(session, bbox, commune, run_id, sids)),
+        ("trait_de_cote", lambda: ingest_trait_de_cote(session, commune, run_id, sids)),
         ("pente", lambda: ingest_pente(session, bbox, commune, run_id, sids)),
         ("dvf", lambda: ingest_dvf(session, insee, commune, run_id, sids)),
     ]
