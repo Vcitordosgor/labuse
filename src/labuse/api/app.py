@@ -172,7 +172,11 @@ def stats(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
             """
         ), {"c": commune}
     ).mappings().one()
-    return {k: (int(v) if v is not None else None) for k, v in row.items()}
+    out = {k: (int(v) if v is not None else None) for k, v in row.items()}
+    out["active_signals"] = int(db.execute(
+        text("""SELECT count(*) FROM parcel_signals s JOIN parcels p ON p.id = s.parcel_id
+                WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)"""), {"c": commune}).scalar() or 0)
+    return out
 
 
 @app.get("/map/parcels.geojson")
@@ -338,15 +342,17 @@ def discover(
 # ───────────────────────────── Veille / signaux (offre C) ─────────────────────────────
 
 @app.get("/signals")
-def list_signals(commune: str | None = None, limit: int = 200, db: Session = Depends(get_db)) -> list[dict]:
-    """Signaux de veille (offre C) récents, par parcelle."""
+def list_signals(commune: str | None = None, signal_type: str | None = None,
+                 limit: int = 200, db: Session = Depends(get_db)) -> list[dict]:
+    """Signaux de veille (offre C) récents, filtrables par commune / type."""
     rows = db.execute(
         text(
             """SELECT s.signal_type, s.payload, s.detected_at, p.idu, p.commune
                FROM parcel_signals s JOIN parcels p ON p.id = s.parcel_id
                WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+                 AND (CAST(:t AS text) IS NULL OR s.signal_type = :t)
                ORDER BY s.detected_at DESC LIMIT :lim"""
-        ), {"c": commune, "lim": limit}
+        ), {"c": commune, "t": signal_type, "lim": limit}
     ).mappings().all()
     return [dict(r) for r in rows]
 

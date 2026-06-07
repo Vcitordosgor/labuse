@@ -37,10 +37,15 @@ status_rules:
   completeness_floor: 50         # complétude < 50 → statut plafonné à "a_creuser"
   # RÈGLE D'OR : l'opportunité ne s'affiche JAMAIS seule, toujours avec la complétude.
 
-# --- Réinjection du feedback promoteur (§10) — boucle d'apprentissage, TUNABLE ---
-# Le feedback ne court-circuite PAS la règle d'or : un "bon lead" ne devient
-# "opportunite" que si la complétude reste suffisante.
+# --- Réinjection du feedback terrain (§10) — agrégation par ZONE, TUNABLE ---
+# Le feedback est agrégé par PROXIMITÉ géographique (rayon) : une zone qui
+# accumule des "false_positive" applique une décote au score d'opportunité des
+# parcelles de la zone ; les "good_lead" remontent légèrement. Transparent et
+# tracé dans la fiche ("score ajusté par retour terrain"). Ne court-circuite PAS
+# la règle d'or (la complétude garde la main).
 feedback:
-  good_lead_bonus: 10            # bon lead → bonus d'opportunité
-  not_interested_penalty: 5      # pas intéressé → légère pénalité
-  false_positive_demote: true    # faux positif → statut rétrogradé (faux_positif_probable)
+  zone_radius_m: 300             # rayon d'agrégation du retour terrain
+  false_positive_decote: 8       # décote par faux positif dans la zone
+  good_lead_bonus: 6             # bonus par bon lead dans la zone
+  not_interested_decote: 3       # légère décote par "pas intéressé"
+  max_adjustment: 20             # borne de l'ajustement total |Δ|

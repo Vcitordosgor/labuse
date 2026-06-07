@@ -69,6 +69,18 @@ async function loadStats() {
   $("#kpi-opp").textContent = fmt(s.opportunite);
   $("#kpi-creuser").textContent = fmt(s.a_creuser);
   $("#kpi-exclue").textContent = fmt(s.exclue);
+  $("#veille-count").textContent = fmt(s.active_signals || 0);
+}
+
+async function loadSignals() {
+  let sig = [];
+  try { sig = await (await fetch(`/signals?commune=${encodeURIComponent(COMMUNE)}&limit=8`)).json(); } catch { sig = []; }
+  const TYPE = { zonage_change: "Changement de zonage", mutation_dvf: "Mutation DVF", new_permit_nearby: "Permis à proximité" };
+  $("#veille-list").innerHTML = sig.length ? sig.map((s) => {
+    const p = s.payload || {};
+    const det = (p.from || p.to) ? `<br>${esc(p.from)} → ${esc(p.to)}` : (p.date_mutation || p.date ? `<br>${esc(p.date_mutation || p.date)}` : "");
+    return `<div class="alert"><span class="a-type">${TYPE[s.signal_type] || esc(s.signal_type)}</span> · <span class="a-idu">${esc(s.idu)}</span>${det}</div>`;
+  }).join("") : `<div class="muted-sm">Aucune alerte. Lancer « labuse watch ».</div>`;
 }
 
 async function loadCoverage() {
@@ -219,6 +231,7 @@ async function main() {
   initMap();
   await loadStats();
   await loadCoverage();
+  await loadSignals();
   const fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json();
   FEATURES = fc.features || [];
   applyFilters();

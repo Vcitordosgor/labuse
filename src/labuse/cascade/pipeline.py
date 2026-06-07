@@ -84,10 +84,10 @@ def evaluate_parcels(
             outcome.status = status.value
             model_version = getattr(ai_provider, "name", "ai")
 
-        # Feedback promoteur réinjecté (§10) — après l'IA, ne court-circuite pas la règle d'or.
-        fb_verdict = ctx.latest_feedback(p.id)
-        if fb_verdict:
-            status, fb_display = apply_feedback(opportunity, completeness.score, fb_verdict)
+        # Feedback terrain réinjecté (§10, agrégé par zone) — après l'IA, garde la règle d'or.
+        fp, gl, ni = ctx.feedback_counts(p.id)
+        if fp or gl or ni:
+            status, fb_display = apply_feedback(opportunity, completeness.score, fp, gl, ni)
             outcome.status = status.value
             if fb_display is not None:
                 verdicts.append(fb_display)

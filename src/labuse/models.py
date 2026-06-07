@@ -212,6 +212,27 @@ class ParcelFeedback(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+# ─────────────────────── watch_snapshots (veille, offre C) ───────────────────────
+
+class WatchSnapshot(Base):
+    """Photo de l'état surveillé d'une parcelle (veille, offre C).
+
+    Un run de veille compare l'état courant à cette photo pour détecter les deltas
+    (zonage_change, mutation/permis récents) puis met la photo à jour. Première
+    photo = référence (aucune alerte)."""
+
+    __tablename__ = "watch_snapshots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    parcel_id: Mapped[int] = mapped_column(ForeignKey("parcels.id", ondelete="CASCADE"), unique=True, index=True)
+    gpu_zone: Mapped[str | None] = mapped_column(String(48))
+    dvf_last: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    permit_last: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
 # ═══════════════════ Couches spatiales pré-ingérées (découverte) ═══════════════════
 # Brief §4 : on n'appelle pas 15 API pour 40 000 parcelles. On pré-ingère les couches
 # structurantes dans PostGIS et la cascade phase 1 tourne en batch sur le local.

@@ -114,22 +114,39 @@ def test_coverage_banner(client):
     assert isinstance(cov["reliable_ready"], bool)
 
 
-def test_feedback_reinjecte_dans_le_scoring(client):
-    # Retour « faux positif » sur une opportunité → rétrogradée à la ré-évaluation (§10).
+def test_feedback_terrain_decote_le_score(client):
+    # Retour « faux positif » sur une zone → décote le score d'opportunité (§10, zone).
     idu = "97415000AB0001"
-    client.post("/feedback", json={"idu": idu, "verdict": "false_positive"})
-    r = client.post(f"/parcels/{idu}/evaluate").json()
-    assert r["status"] == "faux_positif_probable"
+    before = client.get(f"/parcels/{idu}").json()["verdict"]["opportunity_score"]
+    client.post("/feedback", json={"idu": idu, "verdict": "false_positive", "comment": "déjà bâti (visite)"})
+    after = client.post(f"/parcels/{idu}/evaluate").json()["opportunity_score"]
+    assert after < before  # la zone faux-positif décote le score d'opportunité
 
 
-def test_veille_signaux_idempotente(client):
+def test_permit_idu_reconstruction():
+    from labuse.ingestion.permits import _idu
+    assert _idu("97415", "CV", "984") == "97415000CV0984"
+    assert _idu("97415", "AH", "1017") == "97415000AH1017"
+    assert _idu("97415", None, "1") is None
+
+
+def test_watch_snapshot_delta_zonage(client):
+    from sqlalchemy import text
+
     from labuse.db import session_scope
     from labuse.ingestion import signals
 
     with session_scope() as s:
-        c1 = signals.generate_signals(s, "Saint-Paul")
+        r1 = signals.run_watch(s, "Saint-Paul")
+    assert r1["baseline"] is True and r1["signals_total"] == 0  # 1er run = photo de référence
+
+    with session_scope() as s:  # simule une révision de zonage PLU (N → U)
+        s.execute(text("UPDATE spatial_layers SET subtype='U' WHERE kind='plu_gpu_zone' AND subtype='N'"))
+
     with session_scope() as s:
-        c2 = signals.generate_signals(s, "Saint-Paul")
-    assert set(c1) == {"mutation_dvf", "new_permit_nearby", "zonage_change"}
-    assert c1 == c2  # purge avant regénération → idempotent
-    assert isinstance(client.get("/signals", params={"commune": "Saint-Paul"}).json(), list)
+        r2 = signals.run_watch(s, "Saint-Paul")
+    assert r2["baseline"] is False
+    assert r2["zonage_change"] >= 1 and r2["reevaluated"] >= 1  # delta détecté + ré-évaluation
+
+    sig = client.get("/signals", params={"commune": "Saint-Paul", "signal_type": "zonage_change"}).json()
+    assert sig and sig[0]["signal_type"] == "zonage_change" and sig[0]["payload"]["to"] == "U"

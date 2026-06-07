@@ -44,7 +44,7 @@ class EvalContext:
         self._dvf: dict[int, dict[int, dict]] = {}
         self._sitadel: dict[int, dict] = {}
         self._ff: dict[int, dict] = {}
-        self._fb: dict[int, str] = {}
+        self._fbz: dict[int, tuple[int, int, int]] = {}
 
     # ───────────────────────── batch (commune entière) ─────────────────────────
 
@@ -132,22 +132,40 @@ class EvalContext:
         ).mappings().all():
             self._ff[r["pid"]] = {"status": r["status"], "raw_payload": r["raw_payload"], "summary": r["summary"]}
 
-        for pid, verdict in self.session.execute(
+        radius = config.opportunity_weights().get("feedback", {}).get("zone_radius_m", 300)
+        for pid, fp, gl, ni in self.session.execute(
             text(
-                """SELECT DISTINCT ON (parcel_id) parcel_id, verdict FROM parcel_feedback
-                   WHERE parcel_id = ANY(:ids) ORDER BY parcel_id, created_at DESC"""
-            ), {"ids": ids}
+                """WITH fb AS (SELECT pc.centroid, pf.verdict
+                              FROM parcel_feedback pf JOIN parcels pc ON pc.id = pf.parcel_id)
+                   SELECT p.id,
+                     count(*) FILTER (WHERE fb.verdict = 'false_positive') AS fp,
+                     count(*) FILTER (WHERE fb.verdict = 'good_lead') AS gl,
+                     count(*) FILTER (WHERE fb.verdict = 'not_interested') AS ni
+                   FROM parcels p
+                   JOIN fb ON ST_DWithin(ST_Transform(p.centroid,2975), ST_Transform(fb.centroid,2975), :r)
+                   WHERE p.id = ANY(:ids) GROUP BY p.id"""
+            ), {"ids": ids, "r": radius}
         ).all():
-            self._fb[pid] = verdict
+            self._fbz[pid] = (int(fp), int(gl), int(ni))
 
-    def latest_feedback(self, parcel_id: int) -> str | None:
-        """Dernier verdict de feedback promoteur pour la parcelle (§10)."""
+    def feedback_counts(self, parcel_id: int) -> tuple[int, int, int]:
+        """Agrégat du retour terrain dans la zone : (faux_positif, bon_lead, pas_intéressé) (§10)."""
         if parcel_id in self._primed_ids:
-            return self._fb.get(parcel_id)
-        return self.session.execute(
-            text("SELECT verdict FROM parcel_feedback WHERE parcel_id = :pid ORDER BY created_at DESC LIMIT 1"),
-            {"pid": parcel_id},
-        ).scalar()
+            return self._fbz.get(parcel_id, (0, 0, 0))
+        radius = config.opportunity_weights().get("feedback", {}).get("zone_radius_m", 300)
+        r = self.session.execute(
+            text(
+                """WITH fb AS (SELECT pc.centroid, pf.verdict
+                              FROM parcel_feedback pf JOIN parcels pc ON pc.id = pf.parcel_id)
+                   SELECT count(*) FILTER (WHERE fb.verdict = 'false_positive'),
+                          count(*) FILTER (WHERE fb.verdict = 'good_lead'),
+                          count(*) FILTER (WHERE fb.verdict = 'not_interested')
+                   FROM parcels p
+                   JOIN fb ON ST_DWithin(ST_Transform(p.centroid,2975), ST_Transform(fb.centroid,2975), :r)
+                   WHERE p.id = :pid"""
+            ), {"pid": parcel_id, "r": radius}
+        ).first()
+        return (int(r[0]), int(r[1]), int(r[2])) if r else (0, 0, 0)
 
     # ───────────────────────── requêtes spatiales ─────────────────────────
 

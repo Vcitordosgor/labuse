@@ -200,15 +200,22 @@ def test_source_cmd(name: str = typer.Argument(..., help="Nom exact de la source
     typer.echo(f"{'✓' if res.ok else '✗'} {res.source} — {res.message}")
 
 
-@app.command("signals")
-def signals_cmd(commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote).")) -> None:
-    """Veille (offre C) : (re)génère les signaux par parcelle (mutation DVF, permis proche)."""
+@app.command("watch")
+def watch_cmd(commune: str = typer.Argument(None, help="Commune (nom ou INSEE ; défaut = pilote).")) -> None:
+    """Veille (offre C) : run snapshot/delta → signaux + ré-évaluation des parcelles touchées."""
     from .ingestion import signals
 
     name = _resolve_commune(commune)
     with session_scope() as session:
-        counts = signals.generate_signals(session, name)
-    typer.echo(f"✓ Veille {name} : " + ", ".join(f"{k}={v}" for k, v in counts.items()))
+        res = signals.run_watch(session, name)
+    if res["baseline"]:
+        typer.echo(f"✓ Veille {name} : photo de référence posée (1er run, aucune alerte).")
+    else:
+        typer.echo(
+            f"✓ Veille {name} : {res['signals_total']} signal(aux) détecté(s) — "
+            f"zonage_change={res['zonage_change']}, mutation_dvf={res['mutation_dvf']}, "
+            f"new_permit_nearby={res['new_permit_nearby']} ; {res['reevaluated']} parcelle(s) ré-évaluée(s)."
+        )
 
 
 @app.command("api")
