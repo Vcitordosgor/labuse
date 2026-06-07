@@ -9,10 +9,15 @@ DB_PASS="${DB_PASS:-labuse}"
 PG_VER="${PG_VER:-16}"
 
 echo "==> Installation PostGIS (si absent)"
-if ! dpkg -l | grep -q "postgresql-${PG_VER}-postgis-3"; then
+# NB : dpkg-query (sortie minuscule) plutôt que `dpkg -l | grep -q` qui, sous
+# `set -o pipefail`, renvoie non-zéro à cause d'un SIGPIPE sur dpkg (faux négatif).
+if ! dpkg-query -W -f='${Status}' "postgresql-${PG_VER}-postgis-3" 2>/dev/null | grep -q "ok installed"; then
   export DEBIAN_FRONTEND=noninteractive
-  apt-get update -qq
-  apt-get install -y "postgresql-${PG_VER}-postgis-3" "postgresql-${PG_VER}-postgis-3-scripts"
+  # PPA tierces parfois bloquées (allowlist) : on tolère un update partiel,
+  # le paquet PostGIS venant de l'archive principale Ubuntu.
+  apt-get update -qq || echo "   (apt-get update partiel — dépôts tiers ignorés)"
+  apt-get install -y --no-install-recommends \
+    "postgresql-${PG_VER}-postgis-3" "postgresql-${PG_VER}-postgis-3-scripts"
 fi
 
 echo "==> Démarrage du cluster PostgreSQL ${PG_VER}"

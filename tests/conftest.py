@@ -17,8 +17,8 @@ os.environ.setdefault("LABUSE_CONFIG_DIR", "config")
 
 @pytest.fixture(scope="session")
 def engine():
-    from labuse.db import ensure_postgis, make_engine
     from labuse import models
+    from labuse.db import ensure_postgis, make_engine
 
     eng = make_engine()
     try:

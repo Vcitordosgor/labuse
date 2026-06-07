@@ -9,7 +9,6 @@ from labuse.cascade.base import hard_exclude, passed, positive, soft_flag
 from labuse.enums import EvaluationStatus, Severity
 from labuse.scoring import compute_completeness, compute_opportunity, decide_status
 
-
 # ───────────────────────────── opportunité ─────────────────────────────
 
 def test_hard_exclude_donne_zero():

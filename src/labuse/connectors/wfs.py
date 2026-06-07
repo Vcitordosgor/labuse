@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Any
 
 from .. import config
-from .base import Connector, ConnectionTestResult
+from .base import ConnectionTestResult, Connector
 
 
 class WfsConnector(Connector):

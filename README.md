@@ -73,7 +73,7 @@ UNKNOWN       → donnée indisponible → impacte la COMPLÉTUDE, pas l'opportu
 
 # 2. Dépendances
 python3 -m venv .venv && . .venv/bin/activate
-pip install -e .
+pip install -e ".[dev]"          # cœur + outils de tests/lint (ajouter ai pour le provider Anthropic)
 
 # 3. Config
 cp .env.example .env          # ajuster LABUSE_DATABASE_URL si besoin

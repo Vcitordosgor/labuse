@@ -27,11 +27,26 @@ dependencies = [
   "jsonschema>=4.21",
 ]
 
+[project.optional-dependencies]
+# Provider IA réel (sinon provider "stub" hors-ligne par défaut).
+ai = ["anthropic>=0.40"]
+# Outils de dev / CI (tests + lint).
+dev = ["pytest>=8.0", "ruff>=0.5"]
+
 [project.scripts]
 labuse = "labuse.cli:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# F = pyflakes (vraies erreurs : imports inutilisés, noms indéfinis) ; I = tri des imports ; E/W = style.
+select = ["F", "I", "E", "W"]
+ignore = ["E501"]  # longueur de ligne gérée par le formateur, pas bloquante
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -11,15 +11,16 @@ from geoalchemy2 import Geometry
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
-    Enum as SAEnum,
     Float,
     ForeignKey,
     Index,
     Integer,
     String,
     Text,
-    UniqueConstraint,
     func,
+)
+from sqlalchemy import (
+    Enum as SAEnum,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
