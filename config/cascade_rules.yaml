@@ -1,0 +1,199 @@
+# LA BUSE — Règles de la CASCADE D'EXCLUSION  [brief §2, cœur du produit]
+#
+# Séquence ORDONNÉE de couches. Le moins cher / le plus décisif d'abord.
+# Chaque couche renvoie un verdict : HARD_EXCLUDE / SOFT_FLAG / POSITIVE / PASS / UNKNOWN
+# et écrit un MOTIF HUMAIN (cascade_results.detail) — la traçabilité EST le produit.
+#
+# phase 1 = géométrique, locale, instantanée (PostGIS, sur TOUTES les parcelles)
+# phase 2 = coûteuse, externe, IA (UNIQUEMENT sur parcelles promues)
+#
+# `name`   : identifiant de l'implémentation enregistrée (registry du moteur)
+# `enabled`: active/désactive la couche sans toucher au code
+# `params` : paramètres propres à la couche (table spatiale visée, seuils, sévérités…)
+
+layers:
+
+  # ───────────────────────── PHASE 1 — géométrique ─────────────────────────
+
+  - name: eau
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: water
+      # exclusion si le centroïde OU la majorité de surface est sur l'eau
+      majority_threshold: 0.5
+      detail_exclude: "Exclue : parcelle majoritairement sur l'eau (hydrographie)."
+
+  - name: parc_national
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: parc_national
+      # cœur = éliminatoire (UNESCO) ; aire d'adhésion = flag (contraintes de charte)
+      coeur_subtype: coeur
+      adhesion_subtype: adhesion
+      adhesion_severity: moyen
+
+  - name: foret_publique
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: foret_publique
+      # forêt domaniale = HARD_EXCLUDE ; autre forêt publique = flag fort
+      domaniale_subtype: domaniale
+      mode_default: hard_exclude     # hard_exclude | flag_fort
+
+  - name: sar
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: sar
+      # SAR juridiquement supérieur au PLU.
+      # espaces naturels / coupures d'urbanisation → HARD_EXCLUDE
+      # espaces agricoles → SOFT_FLAG fort (risque SAFER)
+      hard_exclude_subtypes: [espace_naturel, coupure_urbanisation]
+      flag_fort_subtypes: [espace_agricole]
+
+  - name: zonage_plu_gpu
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: plu_gpu_zone
+      # libelle de zone (libelle court) → verdict
+      # N → flag fort (exclude possible selon sous-zone) ; A → flag (SAFER) ; U/AU → POSITIVE
+      exclude_zones: []                       # sous-zones N strictement inconstructibles (ex. Nr)
+      flag_fort_prefixes: [N]
+      flag_prefixes: [A]
+      positive_prefixes: [U, AU]
+      positive_bonus_key: zonage_u_au
+
+  - name: safer
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: safer
+      severity: moyen
+      detail: "Risque de préemption SAFER (zonage terres agricoles DAAF)."
+
+  - name: risques
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind_ppr: ppr
+      spatial_kind_alea: georisque_alea
+      # PPR zone rouge → HARD_EXCLUDE ; aléa fort (inondation / mouvement de terrain) → flag fort
+      ppr_red_subtypes: [rouge, R]
+      alea_severity_map:
+        fort: fort
+        moyen: moyen
+        faible: faible
+
+  - name: trait_de_cote
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: trait_de_cote
+      # bande de recul du trait de côte : exclude sur la bande la plus proche, flag au-delà
+      exclude_subtypes: [bande_courte]
+      flag_subtypes: [bande_longue]
+      flag_severity: moyen
+
+  - name: pente
+    phase: 1
+    enabled: true
+    params:
+      # ⚠ DÉCISION PRODUIT : la pente est CALCULÉE et AFFICHÉE, mais N'EXCLUT PAS
+      # et NE PÉNALISE PAS automatiquement (brief §2, encadré seuils).
+      exclude: false
+      penalize: false
+      # seuils présents mais DÉSACTIVÉS, prêts à activer sans refactor :
+      threshold_enabled: false
+      slope_labels:           # pente en %, bornes hautes
+        faible: 10
+        modere: 20
+        fort: 30
+        tres_fort: 9999
+      sample_points: 9        # échantillonnage altimétrique dans la parcelle
+
+  - name: abf
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: abf
+      severity: faible
+      detail: "Périmètre ABF / monument historique (≈500 m) — avis Architecte des Bâtiments de France."
+
+  - name: ens
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: ens
+      severity: moyen
+      detail: "Espace Naturel Sensible — droit de préemption départemental."
+
+  - name: ocs_ge
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: ocs_ge
+      # sol naturel/agricole (logique ZAN) → flag faible ; artificialisé → PASS
+      naturel_subtypes: [naturel, agricole]
+      severity: faible
+
+  - name: osm_faux_positif
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: osm_faux_positif
+      # cimetière / terrain de sport / parking / école SUR la parcelle
+      hard_exclude_subtypes: [cemetery, school]
+      flag_fort_subtypes: [pitch, parking]
+      coverage_threshold: 0.3       # part de surface couverte pour déclencher
+
+  - name: surface
+    phase: 1
+    enabled: true
+    params:
+      # ⚠ DÉCISION PRODUIT : surface CALCULÉE et AFFICHÉE, mais PAS de seuil dur.
+      # Repère (Potentiel foncier Région) : 500 m² bâti / 200 m² vierge.
+      exclude: false
+      penalize: false
+      threshold_enabled: false
+      min_surface_m2_bati: 500
+      min_surface_m2_vierge: 200
+
+  # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
+
+  - name: dvf
+    phase: 2
+    enabled: true
+    params:
+      radii_m: [250, 500, 1000]    # rayons d'agrégation autour du centroïde
+      lookback_years: 5
+      bonus_key: contexte_dvf_favorable
+
+  - name: sitadel
+    phase: 2
+    enabled: true
+    params:
+      radius_m: 200                # un permis non rattaché = signal de zone
+      lookback_months: 36
+      bonus_key: permis_sitadel_recent_proximite
+
+  - name: potentiel_foncier_region
+    phase: 2
+    enabled: true
+    params:
+      spatial_kind: potentiel_foncier
+      bonus_key: potentiel_foncier_region
+      detail: "Intersecte un îlot « Potentiel foncier » Région (signal public)."
+
+  - name: proprietaire
+    phase: 2
+    enabled: true
+    params:
+      # POSITIVE si personne morale/publique acquérable ; SOFT_FLAG si indivision.
+      # Source = Fichiers fonciers anonymisés (sous convention) ; sinon UNKNOWN.
+      bonus_key: proprietaire_morale_acquerable
+      indivision_severity: fort
+      indivision_min_droits: 2     # nb_droits_propriete ≥ 2 sur un compte = signal indivision

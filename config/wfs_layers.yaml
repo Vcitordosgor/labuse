@@ -1,0 +1,73 @@
+# LA BUSE — Déclaration des couches WMS/WFS (connecteur générique)  [brief §6 hubs]
+#
+# Le connecteur WFS générique lit ce fichier : pour chaque couche déclarée, il sait
+# où taper (endpoint), quel typename demander, et dans quel `spatial_kind` ranger le
+# résultat pour la cascade. Superposition carte + intersection PostGIS ; fallback
+# lien externe + champ manuel si le flux est indisponible.
+#
+# reliability : verifie | a_confirmer   (cf. marqueurs du brief)
+# ⚠ Aucun endpoint marqué `a_confirmer` ne doit être considéré comme branché tant
+#   qu'un appel de test (GetCapabilities) n'a pas confirmé typename + CRS + format.
+
+endpoints:
+
+  geoplateforme_wfs:
+    base_url: "https://data.geopf.fr/wfs/ows"
+    reliability: verifie
+    rate_limit_per_s: 10
+    notes: "GetCapabilities pour lister les typenames. Source BD TOPO, OCS GE, parcellaire."
+
+  deal_reunion:
+    base_url: "https://carto.reunion.developpement-durable.gouv.fr"  # à préciser via catalogue DEAL
+    reliability: a_confirmer
+    notes: "Catalogue cartes + flux WMS/WFS (PPRN, risques, trait de côte). Confirmer l'URL OWS exacte."
+
+  peigeo:
+    base_url: "https://peigeo.re"  # GeoNetwork/visualiseur AGORAH ; confirmer endpoint OWS
+    reliability: a_confirmer
+    notes: "Hub n°1 local. Occupation du sol, consommation d'espace, PPR, SAR probable."
+
+# Couches : chaque entrée mappe un flux distant vers un spatial_kind LA BUSE.
+layers:
+
+  - key: bdtopo_hydrographie
+    endpoint: geoplateforme_wfs
+    typename: "BDTOPO_V3:surface_hydrographique"
+    spatial_kind: water
+    reliability: a_confirmer        # typename exact à confirmer via GetCapabilities
+
+  - key: bdtopo_batiment
+    endpoint: geoplateforme_wfs
+    typename: "BDTOPO_V3:batiment"
+    spatial_kind: batiment
+    reliability: a_confirmer
+
+  - key: ocs_ge
+    endpoint: geoplateforme_wfs
+    typename: "OCSGE:occupation_du_sol"
+    spatial_kind: ocs_ge
+    reliability: a_confirmer
+
+  - key: ppr_reunion
+    endpoint: deal_reunion
+    typename: "PPRN_974"
+    spatial_kind: ppr
+    reliability: a_confirmer
+
+  - key: trait_de_cote
+    endpoint: deal_reunion
+    typename: "TRAIT_DE_COTE"
+    spatial_kind: trait_de_cote
+    reliability: a_confirmer
+
+  - key: sar_zonage
+    endpoint: peigeo
+    typename: "SAR_REUNION:zonage"
+    spatial_kind: sar
+    reliability: a_confirmer
+
+  - key: ens_reunion
+    endpoint: peigeo
+    typename: "ENS:perimetres"
+    spatial_kind: ens
+    reliability: a_confirmer

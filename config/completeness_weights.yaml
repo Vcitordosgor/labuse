@@ -1,0 +1,28 @@
+# LA BUSE — Score de COMPLÉTUDE des données (0–100)  [brief §7A]
+#
+# Mesure COMBIEN on sait sur la parcelle, PAS si c'est bon.
+# Une source qui répond ajoute son poids ; UNKNOWN / échec ajoute 0.
+# Somme des poids = 100. Bandes : forte 80–100 · moyenne 50–79 · faible < 50.
+#
+# La clé correspond à une "famille de complétude". Plusieurs data_sources
+# peuvent alimenter la même famille (ex. risques = Géorisques + PPR PEIGEO) ;
+# la famille est considérée "couverte" dès qu'au moins une source répond.
+
+weights:
+  cadastre: 8
+  zonage_plu_gpu: 12
+  sar: 10
+  risques_georisques_ppr: 12
+  agricole_safer: 8
+  parc_national: 6
+  pente: 8
+  dvf: 10
+  sitadel: 8
+  ocs_ge: 5
+  acces: 5            # BD TOPO / BAN
+  proprietaire: 8     # moral / indivision
+
+bands:
+  forte: [80, 100]
+  moyenne: [50, 79]
+  faible: [0, 49]

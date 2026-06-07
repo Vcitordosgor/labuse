@@ -1,0 +1,38 @@
+# LA BUSE — Score d'OPPORTUNITÉ (0–100), dérivé de la cascade  [brief §7B/§7C]
+#
+#   si une couche = HARD_EXCLUDE : score = 0 (statut "exclue" ou "faux_positif_probable")
+#   sinon :
+#     base       = 50
+#     pénalités  = Σ ( penalite_base × mult_severite )   # un par SOFT_FLAG
+#     bonus      = Σ ( bonus_couche )                     # un par POSITIVE
+#     score = clamp(base − pénalités + bonus, 1, 100)
+#     score = clamp(score + ai_adjustment, 1, 100)        # ai_adjustment ∈ [−20, +20]
+#
+# Tous ces poids sont TUNABLES et destinés à être nourris par le feedback (§10).
+
+base_score: 50
+penalty_per_flag: 5          # pénalité de base par SOFT_FLAG (un flag "fort" ≈ −15)
+
+severity_multipliers:
+  faible: 1
+  moyen: 2
+  fort: 3
+
+ai_adjustment_bounds: [-20, 20]
+score_bounds: [1, 100]       # plancher 1 quand non exclue (0 réservé à HARD_EXCLUDE)
+
+# Bonus indicatifs (POSITIVE). La couche émet un "bonus_key" ; on lit le poids ici.
+bonuses:
+  potentiel_foncier_region: 12
+  proprietaire_morale_acquerable: 12
+  permis_sitadel_recent_proximite: 8
+  zonage_u_au: 8
+  contexte_dvf_favorable: 6
+  proximite_equipements_bpe: 4
+  acces_direct_voirie: 3
+
+# --- Décision de statut (règles dures, brief §7C) ---
+status_rules:
+  opportunity_threshold: 65      # opp ≥ 65 ET complétude ≥ 50 → "opportunite"
+  completeness_floor: 50         # complétude < 50 → statut plafonné à "a_creuser"
+  # RÈGLE D'OR : l'opportunité ne s'affiche JAMAIS seule, toujours avec la complétude.

@@ -1,0 +1,23 @@
+# LA BUSE — dépendances cœur (MVP backend)
+# Socle géo : PostGIS imposé côté base ; ici la couche connecteurs/géo en Python.
+
+SQLAlchemy>=2.0
+GeoAlchemy2>=0.14
+psycopg[binary]>=3.1
+
+pydantic>=2.5
+pydantic-settings>=2.1
+PyYAML>=6.0
+
+fastapi>=0.110
+uvicorn[standard]>=0.27
+httpx>=0.26
+
+shapely>=2.0
+pyproj>=3.6
+
+typer>=0.9
+jsonschema>=4.21
+
+# Dev / tests
+pytest>=8.0

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "labuse"
+version = "0.1.0"
+description = "LA BUSE — radar foncier intelligent de La Réunion (moteur de pré-qualification parcellaire)"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+
+# Les dépendances exactes sont épinglées dans requirements.txt (installées en venv).
+dependencies = [
+  "SQLAlchemy>=2.0",
+  "GeoAlchemy2>=0.14",
+  "psycopg[binary]>=3.1",
+  "pydantic>=2.5",
+  "pydantic-settings>=2.1",
+  "PyYAML>=6.0",
+  "fastapi>=0.110",
+  "uvicorn[standard]>=0.27",
+  "httpx>=0.26",
+  "shapely>=2.0",
+  "pyproj>=3.6",
+  "typer>=0.9",
+  "jsonschema>=4.21",
+]
+
+[project.scripts]
+labuse = "labuse.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+markers = [
+  "db: tests nécessitant une base PostGIS accessible (voir conftest)",
+  "network: tests nécessitant un accès réseau sortant (souvent bloqué en CI sandbox)",
+]

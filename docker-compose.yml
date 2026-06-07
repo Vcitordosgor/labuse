@@ -1,0 +1,22 @@
+# PostGIS local pour le développement.
+#   docker compose up -d
+#   export LABUSE_DATABASE_URL=postgresql+psycopg://labuse:labuse@localhost:5432/labuse
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: labuse
+      POSTGRES_PASSWORD: labuse
+      POSTGRES_DB: labuse
+    ports:
+      - "5432:5432"
+    volumes:
+      - labuse_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labuse"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  labuse_pgdata:

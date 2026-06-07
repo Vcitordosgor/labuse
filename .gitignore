@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Env / secrets
+.env
+config/settings.yaml
+
+# Data (never commit ingested public data dumps / fixtures volumineuses)
+data/
+*.gpkg
+*.shp
+*.shx
+*.dbf
+*.prj
+*.cpg
+*.tif
+*.tiff
+/tmp/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
