@@ -1,6 +1,6 @@
 "use strict";
 const COMMUNE = "Saint-Paul";
-const COLORS = { opportunite: "#3a9d6e", a_creuser: "#c79a3e", exclue: "#6b7178", faux_positif_probable: "#a8584a", inconnu: "#3a4350" };
+const COLORS = { opportunite: "#37976a", a_creuser: "#c2913f", exclue: "#697079", faux_positif_probable: "#b85f4c", inconnu: "#3a434e" };
 const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue", faux_positif_probable: "Faux positif probable" };
 const VERDICT_GLOSS = {
   opportunite: "Foncier a priori mobilisable — reste à confirmer sur le terrain.",
@@ -38,7 +38,16 @@ function initMap() {
 function colorFor(p) { return COLORS[p.status] || COLORS.inconnu; }
 
 function styleFor(p) {
-  return { color: colorFor(p), weight: 1, fillColor: colorFor(p), fillOpacity: 0.55, opacity: 0.9 };
+  const c = colorFor(p);
+  const opp = p.status === "opportunite";          // l'opportunité prime aussi sur la carte
+  return { color: c, weight: opp ? 1.4 : 0.7, fillColor: c, fillOpacity: opp ? 0.62 : 0.4, opacity: 0.95 };
+}
+
+function tipHtml(p) {
+  const lbl = STATUS_LABEL[p.status] || "non évaluée";
+  const sc = p.opportunity_score != null
+    ? `<span class="t-sc"><b>${p.opportunity_score}</b> opp · ${p.completeness_score ?? "—"} cpl</span>` : "";
+  return `<span class="t-idu">${esc(p.idu)}</span><span class="t-st st-${p.status || "inconnu"}">${lbl}</span>${sc}`;
 }
 
 function passesFilter(p) {
@@ -70,7 +79,7 @@ function renderMap() {
     onEachFeature: (ft, lyr) => {
       byIdu[ft.properties.idu] = lyr;
       lyr.on("click", () => openSheet(ft.properties.idu));
-      lyr.bindTooltip(`${ft.properties.idu} · ${STATUS_LABEL[ft.properties.status] || "non évaluée"}`, { sticky: true });
+      lyr.bindTooltip(tipHtml(ft.properties), { sticky: true, direction: "top", className: "lb-tip" });
     },
   }).addTo(map);
 }

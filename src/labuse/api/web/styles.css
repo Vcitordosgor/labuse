@@ -7,10 +7,11 @@
   --muted: #8b95a3;
   --gold: #c9a86a;
   --gold-soft: #e3cfa0;
-  --opp: #3a9d6e;
-  --creuser: #c79a3e;
-  --exclue: #6b7178;
-  --inconnu: #3a4350;
+  --opp: #37976a;
+  --creuser: #c2913f;
+  --exclue: #697079;
+  --faux: #b85f4c;
+  --inconnu: #3a434e;
   font-synthesis: none;
 }
 
@@ -71,7 +72,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .dot.opportunite { background: var(--opp); }
 .dot.a_creuser { background: var(--creuser); }
 .dot.exclue { background: var(--exclue); }
-.dot.faux_positif_probable { background: #a8584a; }
+.dot.faux_positif_probable { background: var(--faux); }
 .dot.inconnu { background: var(--inconnu); }
 
 .veille h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); margin: 16px 0 10px; }
@@ -102,7 +103,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .chip.opportunite { background: rgba(58,157,110,.16); color: #6bcf9c; }
 .chip.a_creuser { background: rgba(199,154,62,.16); color: #e0b65e; }
 .chip.exclue { background: rgba(107,113,120,.18); color: #aab2bd; }
-.chip.faux_positif_probable { background: rgba(168,88,74,.18); color: #d98c7d; }
+.chip.faux_positif_probable { background: rgba(184,95,76,.18); color: #db8b7b; }
 
 .disclaimer-foot {
   position: sticky; bottom: 0; margin: 0 -20px; padding: 12px 20px;
@@ -114,24 +115,53 @@ input[type=checkbox] { accent-color: var(--gold); }
 /* ───────── Bandeau d'avertissement (verdicts partiels) ───────── */
 .banner {
   position: fixed; top: 0; left: 372px; right: 0; z-index: 700;
-  background: linear-gradient(90deg, #3a2e12, #241f0d);
-  border-bottom: 1px solid var(--creuser); color: #f0e6cf;
-  padding: 9px 16px; font-size: 12.5px; line-height: 1.4;
+  background: rgba(20,25,32,.94); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--line); box-shadow: inset 3px 0 0 var(--gold);
+  color: #d7dde4; padding: 9px 18px; font-size: 12.5px; line-height: 1.45;
   display: flex; gap: 10px; align-items: baseline;
 }
-.banner .warn-ico { color: #e0b65e; font-size: 15px; }
-.banner b { color: #e6c878; }
-.banner .missing { color: #f3ead2; font-weight: 600; }
+.banner .warn-ico { color: var(--gold); font-size: 14px; }
+.banner b { color: var(--gold-soft); font-weight: 600; }
+.banner .missing { color: #eef2f6; font-weight: 600; }
 
-/* ───────── Map ───────── */
+/* ───────── Map / radar ───────── */
 #map { height: 100vh; background: #0b0e12; }
-.leaflet-container { background: #0b0e12; }
+.leaflet-container { background: #0b0e12; font: inherit; }
 .legend {
   position: absolute; right: 16px; bottom: 16px; z-index: 600;
-  background: rgba(22,28,36,.92); border: 1px solid var(--line); border-radius: 10px;
-  padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; font-size: 12px;
+  background: rgba(18,23,30,.92); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 7px; font-size: 12px;
+  box-shadow: 0 12px 32px rgba(0,0,0,.42);
 }
-.legend span { display: flex; align-items: center; gap: 8px; }
+.legend .legend-h { font-size: 10px; text-transform: uppercase; letter-spacing: .13em; color: var(--muted); margin-bottom: 1px; }
+.legend span { display: flex; align-items: center; gap: 9px; color: #c4ccd5; }
+
+/* Contrôles Leaflet — sombres, alignés au thème */
+.leaflet-bar { border: 1px solid var(--line) !important; box-shadow: 0 6px 18px rgba(0,0,0,.45) !important; }
+.leaflet-bar a, .leaflet-bar a:hover {
+  background: rgba(20,25,32,.96); color: var(--txt); border-bottom-color: var(--line);
+}
+.leaflet-bar a:hover { color: var(--gold); }
+.leaflet-control-attribution { background: rgba(14,17,22,.72) !important; color: var(--muted) !important; }
+.leaflet-control-attribution a { color: #97a0ac !important; }
+
+/* Infobulle premium au survol d'une parcelle */
+.lb-tip.leaflet-tooltip {
+  background: rgba(16,20,27,.97); border: 1px solid var(--line); border-radius: 9px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.55); color: var(--txt); padding: 8px 11px;
+  font-size: 12px; line-height: 1.5; white-space: nowrap;
+}
+.lb-tip.leaflet-tooltip::before { display: none; }
+.lb-tip .t-idu { font-family: ui-monospace, Menlo, monospace; color: var(--gold-soft); display: block; font-size: 11.5px; }
+.lb-tip .t-st { font-weight: 600; }
+.lb-tip .t-st.st-opportunite { color: #5cc596; }
+.lb-tip .t-st.st-a_creuser { color: #ddb158; }
+.lb-tip .t-st.st-faux_positif_probable { color: #db8b7b; }
+.lb-tip .t-st.st-exclue { color: #9aa3ad; }
+.lb-tip .t-st.st-inconnu { color: var(--muted); }
+.lb-tip .t-sc { color: var(--muted); display: block; margin-top: 1px; }
+.lb-tip .t-sc b { color: var(--txt); }
 
 /* ───────── Fiche — « le dossier » · feuille éditoriale ivoire §8 ───────── */
 .scrim { position: fixed; inset: 0; background: rgba(8,10,14,.62); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); z-index: 900; }
