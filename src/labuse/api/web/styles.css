@@ -71,6 +71,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .dot.opportunite { background: var(--opp); }
 .dot.a_creuser { background: var(--creuser); }
 .dot.exclue { background: var(--exclue); }
+.dot.faux_positif_probable { background: #a8584a; }
 .dot.inconnu { background: var(--inconnu); }
 
 .listing { flex: 1; }
@@ -93,6 +94,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .chip.opportunite { background: rgba(58,157,110,.16); color: #6bcf9c; }
 .chip.a_creuser { background: rgba(199,154,62,.16); color: #e0b65e; }
 .chip.exclue { background: rgba(107,113,120,.18); color: #aab2bd; }
+.chip.faux_positif_probable { background: rgba(168,88,74,.18); color: #d98c7d; }
 
 .disclaimer-foot {
   position: sticky; bottom: 0; margin: 0 -20px; padding: 12px 20px;

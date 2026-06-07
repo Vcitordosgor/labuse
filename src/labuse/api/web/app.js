@@ -1,7 +1,7 @@
 "use strict";
 const COMMUNE = "Saint-Paul";
-const COLORS = { opportunite: "#3a9d6e", a_creuser: "#c79a3e", exclue: "#6b7178", inconnu: "#3a4350" };
-const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue" };
+const COLORS = { opportunite: "#3a9d6e", a_creuser: "#c79a3e", exclue: "#6b7178", faux_positif_probable: "#a8584a", inconnu: "#3a4350" };
+const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue", faux_positif_probable: "Faux positif probable" };
 
 let FEATURES = [];          // toutes les parcelles (GeoJSON features)
 let layer = null;           // couche Leaflet courante
