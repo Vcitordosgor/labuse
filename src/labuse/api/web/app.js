@@ -110,12 +110,12 @@ function fiableBadge(status) {
 
 function renderList() {
   const f = currentFilter();
-  const rows = FEATURES
+  const matched = FEATURES
     .map((ft) => ft.properties)
     .filter((p) => p.status !== "exclue" && p.status !== "faux_positif_probable" && passesFilter(p))
-    .sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0) || (b.surface_m2 || 0) - (a.surface_m2 || 0))
-    .slice(0, 80);
-  $("#list-count").textContent = `(${rows.length})`;
+    .sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0) || (b.surface_m2 || 0) - (a.surface_m2 || 0));
+  const rows = matched.slice(0, 80);
+  $("#list-count").textContent = matched.length > rows.length ? `(${rows.length} affichées / ${matched.length})` : `(${matched.length})`;
   $("#parcel-list").innerHTML = rows.map((p) => `
     <div class="prow" data-idu="${esc(p.idu)}">
       <span class="idu">${esc(p.idu)}</span>
