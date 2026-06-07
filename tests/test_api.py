@@ -84,3 +84,23 @@ def test_discover_classe_les_survivantes(client):
 def test_feedback(client):
     r = client.post("/feedback", json={"idu": "97415000AB0001", "verdict": "good_lead"})
     assert r.json()["ok"] is True
+
+
+def test_stats_endpoint(client):
+    s = client.get("/stats", params={"commune": "Saint-Paul"}).json()
+    assert s["total"] >= 8
+    assert s["opportunite"] + s["a_creuser"] + s["exclue"] <= s["total"]
+
+
+def test_map_geojson(client):
+    fc = client.get("/map/parcels.geojson", params={"commune": "Saint-Paul"}).json()
+    assert fc["type"] == "FeatureCollection" and len(fc["features"]) >= 8
+    props = fc["features"][0]["properties"]
+    assert props["idu"] and "status" in props and "opportunity_score" in props
+    assert fc["features"][0]["geometry"]["type"] in ("Polygon", "MultiPolygon")
+
+
+def test_front_served(client):
+    assert client.get("/", follow_redirects=False).status_code in (302, 307)
+    idx = client.get("/app/")
+    assert idx.status_code == 200 and "LA" in idx.text

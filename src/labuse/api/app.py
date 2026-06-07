@@ -11,10 +11,14 @@
 """
 from __future__ import annotations
 
+import json
 from collections.abc import Iterator
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
@@ -22,6 +26,8 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..db import session_scope
 from ..enums import FeedbackVerdict
+
+WEB_DIR = Path(__file__).resolve().parent / "web"
 
 app = FastAPI(
     title="LA BUSE — radar foncier",
@@ -110,6 +116,68 @@ def list_parcels(commune: str | None = None, db: Session = Depends(get_db)) -> l
             "completeness_score": ev.completeness_score if ev else None,
         })
     return out
+
+
+@app.get("/stats")
+def stats(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Cartouches du dashboard : volumétrie + statuts + scores (dernière évaluation)."""
+    row = db.execute(
+        text(
+            """
+            SELECT count(*) AS total,
+                   count(*) FILTER (WHERE e.status = 'opportunite') AS opportunite,
+                   count(*) FILTER (WHERE e.status = 'a_creuser')   AS a_creuser,
+                   count(*) FILTER (WHERE e.status = 'exclue')      AS exclue,
+                   round(avg(e.completeness_score)) AS completeness_avg,
+                   max(e.opportunity_score)         AS opportunity_max
+            FROM parcels p
+            LEFT JOIN LATERAL (
+                SELECT status, opportunity_score, completeness_score
+                FROM parcel_evaluations e WHERE e.parcel_id = p.id
+                ORDER BY evaluated_at DESC LIMIT 1
+            ) e ON true
+            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+            """
+        ), {"c": commune}
+    ).mappings().one()
+    return {k: (int(v) if v is not None else None) for k, v in row.items()}
+
+
+@app.get("/map/parcels.geojson")
+def parcels_geojson(commune: str | None = None, limit: int = 8000, db: Session = Depends(get_db)) -> dict:
+    """Parcelles (géométrie simplifiée 4326) + verdict, pour la carte colorée."""
+    rows = db.execute(
+        text(
+            """
+            SELECT p.idu, p.surface_m2,
+                   ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
+                   e.status, e.opportunity_score, e.completeness_score
+            FROM parcels p
+            LEFT JOIN LATERAL (
+                SELECT status, opportunity_score, completeness_score
+                FROM parcel_evaluations e WHERE e.parcel_id = p.id
+                ORDER BY evaluated_at DESC LIMIT 1
+            ) e ON true
+            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+            LIMIT :lim
+            """
+        ), {"c": commune, "lim": limit}
+    ).mappings().all()
+    feats = [
+        {
+            "type": "Feature",
+            "geometry": json.loads(r["g"]),
+            "properties": {
+                "idu": r["idu"],
+                "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
+                "status": r["status"],
+                "opportunity_score": r["opportunity_score"],
+                "completeness_score": r["completeness_score"],
+            },
+        }
+        for r in rows if r["g"]
+    ]
+    return {"type": "FeatureCollection", "features": feats}
 
 
 @app.get("/parcels/{idu}")
@@ -253,3 +321,14 @@ def post_feedback(body: FeedbackIn, db: Session = Depends(get_db)) -> dict:
     db.add(fb)
     db.flush()
     return {"ok": True, "id": fb.id}
+
+
+# ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
+
+if WEB_DIR.exists():
+    app.mount("/app", StaticFiles(directory=str(WEB_DIR), html=True), name="app")
+
+
+@app.get("/", include_in_schema=False)
+def _root() -> RedirectResponse:
+    return RedirectResponse("/app/" if WEB_DIR.exists() else "/docs")
