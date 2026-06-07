@@ -46,6 +46,10 @@ CRITICAL_LAYERS = {
 # peut pas être présentée comme fiable). Chaque clé -> liste de `kind` qui l'attestent.
 RELIABLE_REQUIRED = ("sar", "risques", "foret_publique", "trait_de_cote")
 
+# En deçà, ce sont des slivers cadastraux (artefacts) : masqués de la CARTE et de la
+# DÉCOUVERTE (restent en base et dans les compteurs de volumétrie).
+MIN_DISPLAY_SURFACE_M2 = 2.0
+
 app = FastAPI(
     title="LA BUSE — radar foncier",
     version="0.1.0",
@@ -204,9 +208,10 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 ORDER BY evaluated_at DESC LIMIT 1
             ) e ON true
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+              AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
             LIMIT :lim
             """
-        ), {"c": commune, "lim": limit}
+        ), {"c": commune, "lim": limit, "minsurf": MIN_DISPLAY_SURFACE_M2}
     ).mappings().all()
     feats = [
         {
@@ -336,9 +341,10 @@ def discover(
                    e.status, e.opportunity_score, e.completeness_score, e.evaluated_at
             FROM parcel_evaluations e JOIN parcels p ON p.id = e.parcel_id
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+              AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
             ORDER BY e.parcel_id, e.evaluated_at DESC
             """
-        ), {"c": commune}
+        ), {"c": commune, "minsurf": MIN_DISPLAY_SURFACE_M2}
     ).mappings().all()
     survivors = [
         dict(r) for r in rows
