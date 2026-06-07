@@ -139,11 +139,11 @@ function renderList() {
   const rows = matched.slice(0, 80);
   $("#list-count").textContent = matched.length > rows.length ? `(${rows.length} affichées / ${matched.length})` : `(${matched.length})`;
   $("#parcel-list").innerHTML = rows.map((p) => `
-    <div class="prow" data-idu="${esc(p.idu)}">
+    <div class="prow st-${p.status}" data-idu="${esc(p.idu)}">
       <span class="idu">${esc(p.idu)}</span>
+      <span class="p-verdict"><span class="chip ${p.status}">${STATUS_LABEL[p.status] || "?"}</span></span>
       <span class="scores"><b>${p.opportunity_score ?? "—"}</b> opp · ${p.completeness_score ?? "—"} cpl</span>
-      <span class="meta"><span class="chip ${p.status}">${STATUS_LABEL[p.status] || "?"}</span></span>
-      <span class="meta" style="text-align:right">${fmt(p.surface_m2)} m²</span>
+      <span class="p-surf">${fmt(p.surface_m2)} m²</span>
     </div>`).join("") || `<div class="loading">Aucune parcelle ne correspond.</div>`;
   document.querySelectorAll(".prow").forEach((el) => el.addEventListener("click", () => focusParcel(el.dataset.idu)));
 }

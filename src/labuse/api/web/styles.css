@@ -37,25 +37,32 @@ body {
   flex-direction: column;
 }
 .brand { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.brand-top { display: flex; align-items: center; gap: 13px; }
+.brand-bird {
+  width: 42px; height: auto; fill: var(--gold); flex: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.55));
+}
 .brand-mark {
-  font-size: 30px; font-weight: 800; letter-spacing: .14em;
+  font-size: 29px; font-weight: 800; letter-spacing: .13em;
   color: var(--gold);
   text-shadow: 0 1px 0 rgba(0,0,0,.5);
 }
-.brand-sub { color: var(--muted); font-size: 12.5px; letter-spacing: .06em; margin-top: 2px; }
-.brand-commune { margin-top: 10px; font-size: 14px; color: var(--gold-soft); font-weight: 600; }
+.brand-sub { color: var(--muted); font-size: 12.5px; letter-spacing: .06em; margin-top: 7px; }
+.brand-commune { margin-top: 9px; font-size: 14px; color: var(--gold-soft); font-weight: 600; }
 
 .kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 18px 0; }
 .kpi {
   background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px;
   padding: 12px 14px; display: flex; flex-direction: column; gap: 2px;
 }
-.kpi-val { font-size: 24px; font-weight: 700; line-height: 1; }
+.kpi-val { font-family: "Fraunces", Georgia, serif; font-size: 29px; font-weight: 600; line-height: 1; }
 .kpi-lbl { font-size: 11.5px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
 .kpi.opp { border-left: 3px solid var(--opp); }
 .kpi.creuser { border-left: 3px solid var(--creuser); }
 .kpi.exclue { border-left: 3px solid var(--exclue); }
-.kpi.opp .kpi-val { color: var(--opp); }
+.kpi.opp .kpi-val { color: #4bb487; }
+.kpi.creuser .kpi-val { color: var(--creuser); }
+.kpi.exclue .kpi-val { color: #aab2bd; }
 
 .filters h2, .listing h2 {
   font-size: 12px; text-transform: uppercase; letter-spacing: .09em;
@@ -87,15 +94,21 @@ input[type=checkbox] { accent-color: var(--gold); }
 .count { color: var(--gold-soft); font-weight: 600; }
 .parcel-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 14px; }
 .prow {
-  background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px;
-  padding: 9px 11px; cursor: pointer; display: grid;
-  grid-template-columns: 1fr auto; gap: 3px 8px; transition: border-color .12s, transform .06s;
+  background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--line);
+  border-radius: 10px; padding: 9px 12px; cursor: pointer; display: grid;
+  grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center;
+  transition: border-color .12s, transform .06s;
 }
 .prow:hover { border-color: var(--gold); transform: translateX(2px); }
+.prow.st-opportunite { border-left-color: var(--opp); }
+.prow.st-a_creuser { border-left-color: var(--creuser); }
+.prow.st-exclue { border-left-color: var(--exclue); }
+.prow.st-faux_positif_probable { border-left-color: var(--faux); }
 .prow .idu { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--gold-soft); }
-.prow .meta { font-size: 11.5px; color: var(--muted); }
-.prow .scores { text-align: right; font-size: 12px; }
-.prow .scores b { color: var(--txt); }
+.prow .p-verdict { text-align: right; }
+.prow .scores { font-size: 12px; color: var(--muted); }
+.prow .scores b { font-family: "Fraunces", Georgia, serif; font-size: 16px; color: var(--txt); margin-right: 1px; }
+.prow .p-surf { text-align: right; font-size: 11.5px; color: var(--muted); }
 .chip {
   font-size: 10.5px; padding: 2px 7px; border-radius: 999px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .03em;
