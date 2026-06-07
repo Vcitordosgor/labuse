@@ -11,6 +11,8 @@ source en échec n'empêche pas les autres — chaque couche est isolée.
 from __future__ import annotations
 
 import json
+import math
+import time
 
 import httpx
 from sqlalchemy import text
@@ -22,6 +24,7 @@ from ..connectors.wfs import WfsConnector
 
 APICARTO = "https://apicarto.ign.fr/api"
 ODS_BASE = "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets"
+ALTI_URL = "https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json"
 
 # kind LA BUSE -> nom canonique de data_sources (pour data_source_id).
 KIND_SOURCE = {
@@ -31,6 +34,8 @@ KIND_SOURCE = {
     "parc_national": "Parc National de La Réunion (INPN)",
     "abf": "ABF / Monuments historiques",
     "potentiel_foncier": "data.regionreunion.com — Potentiel foncier",
+    "ocs_ge": "OCS GE (IGN)",
+    "pente": "RGE ALTI (altimétrie)",
 }
 
 
@@ -184,6 +189,104 @@ def ingest_bdtopo(session, bbox, commune, run_id, sids, kind: str, typename: str
     return n
 
 
+def ingest_ocsge(session, bbox, commune, run_id, sids) -> int:
+    """Occupation du sol (proxy BD CARTO `occupation_du_sol`, OCS GE 974 non exposé en WFS)."""
+    wfs = WfsConnector("geoplateforme_wfs")
+    fc = wfs.fetch_layer("geoplateforme_wfs", "BDCARTO_V5:occupation_du_sol", bbox=bbox, max_features=3000)
+    n = 0
+    for f in fc.get("features", []) or []:
+        if not f.get("geometry"):
+            continue
+        nat = ((f.get("properties") or {}).get("nature") or "")
+        low = nat.lower()
+        if any(w in low for w in ("forêt", "foret", "bois", "végé", "vege", "lande", "verger", "haie")):
+            sub = "naturel"
+        elif any(w in low for w in ("cult", "agric", "vigne", "prairie", "canne")):
+            sub = "agricole"
+        else:
+            sub = "artificialise"
+        _insert_layer(session, "ocs_ge", sub, nat or "occupation du sol", f["geometry"],
+                      sids.get(KIND_SOURCE["ocs_ge"]), commune, run_id, {"nature": nat, "src": "BDCARTO_V5"})
+        n += 1
+    return n
+
+
+def ingest_pente(session, commune, run_id, sids, sample_m: float = 15.0, chunk: int = 100,
+                 max_api_parcels: int = 8000) -> object:
+    """Pente par échantillonnage RGE ALTI (5 points/parcelle, batché). Non éliminatoire.
+
+    Au-delà de `max_api_parcels`, l'échantillonnage par API n'est plus raisonnable
+    (quota 5 req/s) → bascule à prévoir sur le raster RGE ALTI en batch (TODO scale).
+    """
+    rows = session.execute(text("SELECT id, ST_Y(centroid), ST_X(centroid) FROM parcels ORDER BY id")).all()
+    if len(rows) > max_api_parcels:
+        return f"skip ({len(rows)} parcelles > {max_api_parcels} → RGE ALTI raster batch requis)"
+    pts: list[tuple[int, float, float]] = []
+    for pid, lat, lon in rows:
+        dlat = sample_m / 110574.0
+        dlon = sample_m / ((111320.0 * math.cos(math.radians(lat))) or 1.0)
+        pts += [(pid, lon, lat), (pid, lon + dlon, lat), (pid, lon - dlon, lat),
+                (pid, lon, lat + dlat), (pid, lon, lat - dlat)]
+    elev: dict[int, float] = {}
+    with _client() as c:
+        for i in range(0, len(pts), chunk):
+            part = pts[i:i + chunk]
+            r = c.get(ALTI_URL, params={
+                "lon": "|".join(f"{p[1]:.6f}" for p in part),
+                "lat": "|".join(f"{p[2]:.6f}" for p in part),
+                "resource": "ign_rge_alti_wld", "zonly": "true"})
+            for j, h in enumerate(r.json().get("elevations", [])):
+                elev[i + j] = h
+            time.sleep(0.21)  # quota 5 req/s
+    n = 0
+    for k in range(0, len(pts), 5):
+        pid = pts[k][0]
+        hs = [elev[k + o] for o in range(5) if elev.get(k + o) is not None and elev.get(k + o, -9999) > -9999]
+        if len(hs) < 2:
+            continue
+        slope = max(abs(h - hs[0]) for h in hs[1:]) / sample_m * 100.0
+        session.execute(
+            text(
+                """INSERT INTO spatial_layers (kind, subtype, name, geom, attrs, data_source_id, commune, ingestion_run_id)
+                   SELECT 'pente', NULL, 'Pente RGE ALTI', geom, CAST(:a AS jsonb), :sid, commune, :run
+                   FROM parcels WHERE id = :pid"""
+            ),
+            {"a": json.dumps({"slope_pct": round(slope, 1)}), "sid": sids.get(KIND_SOURCE["pente"]),
+             "run": run_id, "pid": pid},
+        )
+        n += 1
+    return n
+
+
+def ingest_dvf(session, insee, commune, run_id, sids) -> int:
+    """DVF (Région ODS) géolocalisé via jointure l_idpar→parcelle (requête par RAYON, §7bis)."""
+    with _client() as c:
+        recs = _ods_records(c, "demande-de-valeurs-foncierespublic", where=f'l_codinsee like "{insee}"',
+                            select="l_idpar,valeurfonc,datemut,libnatmut,libtypbien,sterr", page=100, cap=10000)
+    by_idpar: dict[str, dict] = {}
+    for r in recs:
+        for idpar in (r.get("l_idpar") or []):
+            by_idpar.setdefault(idpar, r)
+    n = 0
+    for pid, idu in session.execute(text("SELECT id, idu FROM parcels")).all():
+        m = by_idpar.get(idu)
+        if not m:
+            continue
+        session.execute(
+            text(
+                """INSERT INTO dvf_mutations
+                   (mutation_id, date_mutation, valeur_fonciere, type_local, surface_terrain, nature_mutation, commune, geom, raw)
+                   SELECT :mid, :dt, :val, :tl, :st, :nat, commune, centroid, CAST(:raw AS jsonb)
+                   FROM parcels WHERE id = :pid"""
+            ),
+            {"mid": idu, "dt": m.get("datemut"), "val": m.get("valeurfonc"), "tl": m.get("libtypbien"),
+             "st": m.get("sterr"), "nat": m.get("libnatmut"), "pid": pid,
+             "raw": json.dumps({"source": "DVF Région ODS", "idpar": idu})},
+        )
+        n += 1
+    return n
+
+
 def ingest_layers(session: Session, insee: str, commune: str,
                   bbox: tuple[float, float, float, float], run_id: int | None) -> dict[str, object]:
     """Ingère toutes les couches géométriques réelles disponibles. Isolé par couche."""
@@ -196,6 +299,9 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("abf", lambda: ingest_abf(session, bbox, commune, run_id, sids)),
         ("water", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "water", "BDTOPO_V3:surface_hydrographique")),
         ("voirie", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "voirie", "BDTOPO_V3:troncon_de_route")),
+        ("ocs_ge", lambda: ingest_ocsge(session, bbox, commune, run_id, sids)),
+        ("pente", lambda: ingest_pente(session, commune, run_id, sids)),
+        ("dvf", lambda: ingest_dvf(session, insee, commune, run_id, sids)),
     ]
     for kind, fn in jobs:
         try:
