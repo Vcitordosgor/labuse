@@ -188,7 +188,7 @@ def stats(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
 
 
 @app.get("/map/parcels.geojson")
-def parcels_geojson(commune: str | None = None, limit: int = 60000, db: Session = Depends(get_db)) -> dict:
+def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, le=200000), db: Session = Depends(get_db)) -> dict:
     """Parcelles (géométrie simplifiée 4326) + verdict, pour la carte colorée."""
     rows = db.execute(
         text(
@@ -320,9 +320,9 @@ def evaluate_one(idu: str, ai: bool = Query(False), db: Session = Depends(get_db
 @app.get("/discover")
 def discover(
     commune: str | None = None,
-    min_opportunity: int = 0,
+    min_opportunity: int = Query(0, ge=0, le=100),
     statuses: str = "opportunite,a_creuser",
-    limit: int = 50,
+    limit: int = Query(50, ge=1, le=2000),
     db: Session = Depends(get_db),
 ) -> list[dict]:
     """Survivantes de la cascade, classées (radar). S'appuie sur la dernière évaluation."""
@@ -351,7 +351,7 @@ def discover(
 
 @app.get("/signals")
 def list_signals(commune: str | None = None, signal_type: str | None = None,
-                 limit: int = 200, db: Session = Depends(get_db)) -> list[dict]:
+                 limit: int = Query(200, ge=0, le=10000), db: Session = Depends(get_db)) -> list[dict]:
     """Signaux de veille (offre C) récents, filtrables par commune / type."""
     rows = db.execute(
         text(

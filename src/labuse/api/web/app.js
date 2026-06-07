@@ -112,7 +112,7 @@ function renderList() {
   const f = currentFilter();
   const rows = FEATURES
     .map((ft) => ft.properties)
-    .filter((p) => p.status !== "exclue" && passesFilter(p))
+    .filter((p) => p.status !== "exclue" && p.status !== "faux_positif_probable" && passesFilter(p))
     .sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0) || (b.surface_m2 || 0) - (a.surface_m2 || 0))
     .slice(0, 80);
   $("#list-count").textContent = `(${rows.length})`;

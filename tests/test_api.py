@@ -114,6 +114,13 @@ def test_coverage_banner(client):
     assert isinstance(cov["reliable_ready"], bool)
 
 
+def test_limit_negatif_rejete_en_422(client):
+    # M3 : un limit négatif doit renvoyer un 422 propre (pas un 500 Postgres).
+    assert client.get("/map/parcels.geojson", params={"limit": -5}).status_code == 422
+    assert client.get("/signals", params={"limit": -5}).status_code == 422
+    assert client.get("/discover", params={"limit": -5}).status_code == 422
+
+
 def test_feedback_terrain_decote_le_score(client):
     # Retour « faux positif » sur une zone → décote le score d'opportunité (§10, zone).
     idu = "97415000AB0001"
