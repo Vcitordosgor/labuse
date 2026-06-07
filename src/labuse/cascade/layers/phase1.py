@@ -100,7 +100,7 @@ class ForetPubliqueLayer(Layer):
         is_domaniale = dom.subtype == params.get("domaniale_subtype", "domaniale")
         if is_domaniale and params.get("mode_default", "hard_exclude") == "hard_exclude":
             return hard_exclude(
-                self.name, "Exclue : forêt domaniale (forêt publique gérée ONF).", kind="faux_positif", source=SRC_FORET
+                self.name, "Exclue : forêt domaniale (domaine public — terrain inacquérable).", kind="exclue", source=SRC_FORET
             )
         return soft_flag(
             self.name, f"Forêt publique ({dom.subtype or 'non précisée'}).", Severity.FORT, source=SRC_FORET
