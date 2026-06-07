@@ -110,7 +110,7 @@ def test_coverage_banner(client):
     cov = client.get("/coverage").json()
     assert {"critical_layers", "missing", "complete", "reliable_ready"} <= set(cov)
     kinds = {x["kind"] for x in cov["critical_layers"]}
-    assert kinds == {"sar", "risques", "foret_publique", "ens", "safer", "trait_de_cote"}
+    assert kinds == {"sar", "risques", "foret_publique", "ens", "safer", "trait_de_cote", "abf"}
     assert isinstance(cov["reliable_ready"], bool)
 
 

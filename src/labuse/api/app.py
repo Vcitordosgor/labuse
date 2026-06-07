@@ -39,6 +39,7 @@ CRITICAL_LAYERS = {
     "ens": ("Espaces Naturels Sensibles (ENS)", ["ens"]),
     "safer": ("Zonage agricole / SAFER", ["safer"]),
     "trait_de_cote": ("Recul du trait de côte", ["trait_de_cote"]),
+    "abf": ("ABF / périmètres Monuments historiques", ["abf"]),
 }
 # Minimum requis pour qualifier une "opportunité FIABLE" (consigne produit) : survie à
 # SAR + risques + forêts + littoral (une opportunité en zone à risque non vérifiée ne
