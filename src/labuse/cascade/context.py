@@ -44,6 +44,7 @@ class EvalContext:
         self._dvf: dict[int, dict[int, dict]] = {}
         self._sitadel: dict[int, dict] = {}
         self._ff: dict[int, dict] = {}
+        self._fb: dict[int, str] = {}
 
     # ───────────────────────── batch (commune entière) ─────────────────────────
 
@@ -130,6 +131,23 @@ class EvalContext:
             ), {"ids": ids, "ff": "Fichiers fonciers (Cerema)"}
         ).mappings().all():
             self._ff[r["pid"]] = {"status": r["status"], "raw_payload": r["raw_payload"], "summary": r["summary"]}
+
+        for pid, verdict in self.session.execute(
+            text(
+                """SELECT DISTINCT ON (parcel_id) parcel_id, verdict FROM parcel_feedback
+                   WHERE parcel_id = ANY(:ids) ORDER BY parcel_id, created_at DESC"""
+            ), {"ids": ids}
+        ).all():
+            self._fb[pid] = verdict
+
+    def latest_feedback(self, parcel_id: int) -> str | None:
+        """Dernier verdict de feedback promoteur pour la parcelle (§10)."""
+        if parcel_id in self._primed_ids:
+            return self._fb.get(parcel_id)
+        return self.session.execute(
+            text("SELECT verdict FROM parcel_feedback WHERE parcel_id = :pid ORDER BY created_at DESC LIMIT 1"),
+            {"pid": parcel_id},
+        ).scalar()
 
     # ───────────────────────── requêtes spatiales ─────────────────────────
 

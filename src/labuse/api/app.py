@@ -303,6 +303,22 @@ def discover(
     return survivors[:limit]
 
 
+# ───────────────────────────── Veille / signaux (offre C) ─────────────────────────────
+
+@app.get("/signals")
+def list_signals(commune: str | None = None, limit: int = 200, db: Session = Depends(get_db)) -> list[dict]:
+    """Signaux de veille (offre C) récents, par parcelle."""
+    rows = db.execute(
+        text(
+            """SELECT s.signal_type, s.payload, s.detected_at, p.idu, p.commune
+               FROM parcel_signals s JOIN parcels p ON p.id = s.parcel_id
+               WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+               ORDER BY s.detected_at DESC LIMIT :lim"""
+        ), {"c": commune, "lim": limit}
+    ).mappings().all()
+    return [dict(r) for r in rows]
+
+
 # ───────────────────────────── Feedback (§10) ─────────────────────────────
 
 class FeedbackIn(BaseModel):

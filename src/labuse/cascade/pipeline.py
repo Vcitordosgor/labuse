@@ -16,6 +16,7 @@ from ..models import CascadeResult, Parcel, ParcelEvaluation
 from ..scoring import (
     CompletenessResult,
     OpportunityResult,
+    apply_feedback,
     compute_completeness,
     compute_opportunity,
     decide_status,
@@ -82,6 +83,15 @@ def evaluate_parcels(
             outcome.opportunity = opportunity
             outcome.status = status.value
             model_version = getattr(ai_provider, "name", "ai")
+
+        # Feedback promoteur réinjecté (§10) — après l'IA, ne court-circuite pas la règle d'or.
+        fb_verdict = ctx.latest_feedback(p.id)
+        if fb_verdict:
+            status, fb_display = apply_feedback(opportunity, completeness.score, fb_verdict)
+            outcome.status = status.value
+            if fb_display is not None:
+                verdicts.append(fb_display)
+                opportunity.weights.append(0.0)
 
         if persist:
             _persist(session, ctx, p, verdicts, completeness, opportunity, status, rules_v, ai_payload, model_version)

@@ -36,3 +36,11 @@ status_rules:
   opportunity_threshold: 65      # opp ≥ 65 ET complétude ≥ 50 → "opportunite"
   completeness_floor: 50         # complétude < 50 → statut plafonné à "a_creuser"
   # RÈGLE D'OR : l'opportunité ne s'affiche JAMAIS seule, toujours avec la complétude.
+
+# --- Réinjection du feedback promoteur (§10) — boucle d'apprentissage, TUNABLE ---
+# Le feedback ne court-circuite PAS la règle d'or : un "bon lead" ne devient
+# "opportunite" que si la complétude reste suffisante.
+feedback:
+  good_lead_bonus: 10            # bon lead → bonus d'opportunité
+  not_interested_penalty: 5      # pas intéressé → légère pénalité
+  false_positive_demote: true    # faux positif → statut rétrogradé (faux_positif_probable)

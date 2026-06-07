@@ -104,3 +104,24 @@ def test_front_served(client):
     assert client.get("/", follow_redirects=False).status_code in (302, 307)
     idx = client.get("/app/")
     assert idx.status_code == 200 and "LA" in idx.text
+
+
+def test_feedback_reinjecte_dans_le_scoring(client):
+    # Retour « faux positif » sur une opportunité → rétrogradée à la ré-évaluation (§10).
+    idu = "97415000AB0001"
+    client.post("/feedback", json={"idu": idu, "verdict": "false_positive"})
+    r = client.post(f"/parcels/{idu}/evaluate").json()
+    assert r["status"] == "faux_positif_probable"
+
+
+def test_veille_signaux_idempotente(client):
+    from labuse.db import session_scope
+    from labuse.ingestion import signals
+
+    with session_scope() as s:
+        c1 = signals.generate_signals(s, "Saint-Paul")
+    with session_scope() as s:
+        c2 = signals.generate_signals(s, "Saint-Paul")
+    assert set(c1) == {"mutation_dvf", "new_permit_nearby", "zonage_change"}
+    assert c1 == c2  # purge avant regénération → idempotent
+    assert isinstance(client.get("/signals", params={"commune": "Saint-Paul"}).json(), list)

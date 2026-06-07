@@ -200,6 +200,17 @@ def test_source_cmd(name: str = typer.Argument(..., help="Nom exact de la source
     typer.echo(f"{'✓' if res.ok else '✗'} {res.source} — {res.message}")
 
 
+@app.command("signals")
+def signals_cmd(commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote).")) -> None:
+    """Veille (offre C) : (re)génère les signaux par parcelle (mutation DVF, permis proche)."""
+    from .ingestion import signals
+
+    name = _resolve_commune(commune)
+    with session_scope() as session:
+        counts = signals.generate_signals(session, name)
+    typer.echo(f"✓ Veille {name} : " + ", ".join(f"{k}={v}" for k, v in counts.items()))
+
+
 @app.command("api")
 def api_cmd(host: str = "127.0.0.1", port: int = 8000) -> None:
     """Lance l'API FastAPI (uvicorn)."""
