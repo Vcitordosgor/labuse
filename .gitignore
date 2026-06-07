@@ -29,3 +29,6 @@ data/
 .DS_Store
 .idea/
 .vscode/
+
+# Aperçus radar générés (livrés via l'app / SendUserFile, pas du source)
+labuse_radar*.svg
