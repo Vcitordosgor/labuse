@@ -160,10 +160,8 @@ class ZonagePluGpuLayer(Layer):
             return hard_exclude(
                 self.name, f"Exclue : zone PLU « {libelle} » strictement inconstructible.", kind="faux_positif", source=SRC_GPU
             )
-        if any(up.startswith(p) for p in params.get("flag_fort_prefixes", [])):
-            return soft_flag(self.name, f"Zone PLU « {libelle} » (naturelle).", Severity.FORT, source=SRC_GPU)
-        if any(up.startswith(p) for p in params.get("flag_prefixes", [])):
-            return soft_flag(self.name, f"Zone PLU « {libelle} » (agricole — SAFER).", Severity.MOYEN, source=SRC_GPU)
+        # Constructible (U / AU) EN PREMIER : sinon « AUc/AUs » serait happé par le
+        # préfixe agricole « A » (AU commence par A). L'ordre des tests fait foi.
         if any(up.startswith(p) for p in params.get("positive_prefixes", [])):
             return positive(
                 self.name,
@@ -171,6 +169,10 @@ class ZonagePluGpuLayer(Layer):
                 params.get("positive_bonus_key", "zonage_u_au"),
                 source=SRC_GPU,
             )
+        if any(up.startswith(p) for p in params.get("flag_fort_prefixes", [])):
+            return soft_flag(self.name, f"Zone PLU « {libelle} » (naturelle).", Severity.FORT, source=SRC_GPU)
+        if any(up.startswith(p) for p in params.get("flag_prefixes", [])):
+            return soft_flag(self.name, f"Zone PLU « {libelle} » (agricole — SAFER).", Severity.MOYEN, source=SRC_GPU)
         return passed(self.name, f"Zone PLU « {libelle} ».", source=SRC_GPU)
 
 

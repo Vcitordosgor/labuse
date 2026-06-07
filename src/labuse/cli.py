@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import typer
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from . import models
 from .config import get_settings
@@ -33,6 +33,15 @@ def _parcel_ids(session, commune: str | None) -> list[int]:
     if commune:
         stmt = stmt.where(models.Parcel.commune == commune)
     return [r[0] for r in session.execute(stmt).all()]
+
+
+def _parcels_bbox(session) -> tuple[float, float, float, float]:
+    """Emprise (minlon, minlat, maxlon, maxlat) des parcelles ingérées."""
+    row = session.execute(
+        text("SELECT ST_XMin(e), ST_YMin(e), ST_XMax(e), ST_YMax(e) "
+             "FROM (SELECT ST_Extent(geom) AS e FROM parcels) t")
+    ).one()
+    return (float(row[0]), float(row[1]), float(row[2]), float(row[3]))
 
 
 @app.command("init-db")
@@ -61,6 +70,57 @@ def seed_demo_cmd() -> None:
         seed_sources.seed(session)
         info = demo_saint_paul.seed_demo(session, s.pilot_commune_insee, s.pilot_commune_name)
     typer.echo(f"✓ Démo {s.pilot_commune_name} : {info['parcels']} parcelles (synthétiques).")
+
+
+@app.command("ingest-real")
+def ingest_real_cmd(
+    commune: str = typer.Option(None, help="INSEE (défaut = pilote 97415)."),
+    bbox: str = typer.Option(None, help="Sous-ensemble borné « minlon,minlat,maxlon,maxlat » (4326)."),
+    limit: int = typer.Option(None, help="Cap du nombre de parcelles (après bbox) — passage borné."),
+    reset: bool = typer.Option(True, help="Vide les tables avant ingestion."),
+) -> None:
+    """Ingestion RÉELLE : cadastre bulk Etalab + couches structurantes live (remplace la démo)."""
+    from .connectors.cadastre import ingest_parcels
+    from .ingestion import cadastre_bulk, demo_saint_paul, layers_ingest, seed_sources
+    from .models import IngestionRun
+
+    s = get_settings()
+    insee = commune or s.pilot_commune_insee
+    commune_name = s.pilot_commune_name if insee == s.pilot_commune_insee else insee
+    bb = None
+    if bbox:
+        parts = [float(x) for x in bbox.split(",")]
+        if len(parts) != 4:
+            typer.echo("bbox attendu : minlon,minlat,maxlon,maxlat")
+            raise typer.Exit(1)
+        bb = (parts[0], parts[1], parts[2], parts[3])
+
+    typer.echo(f"Téléchargement cadastre bulk {insee}…")
+    parcels = cadastre_bulk.parse_etalab(cadastre_bulk.download_parcelles(insee))
+    total = len(parcels)
+    parcels = cadastre_bulk.filter_bbox(parcels, bb)
+    if limit:
+        parcels = parcels[:limit]
+    typer.echo(f"  {total} parcelles au total ; {len(parcels)} retenues (bbox/limit).")
+    if not parcels:
+        typer.echo("Aucune parcelle retenue — vérifier le bbox.")
+        raise typer.Exit(1)
+
+    with session_scope() as session:
+        seed_sources.seed(session)
+        if reset:
+            demo_saint_paul.reset_demo(session)
+        run = IngestionRun(commune=commune_name, status="running", parcels_count=len(parcels))
+        session.add(run)
+        session.flush()
+        n = ingest_parcels(session, parcels, commune_name, run.id)
+        typer.echo(f"✓ {n} parcelles ingérées (géométrie 4326, surface 2975).")
+        layer_bbox = bb or _parcels_bbox(session)
+        counts = layers_ingest.ingest_layers(session, insee, commune_name, layer_bbox, run.id)
+        run.status = "ok"
+    typer.echo("✓ Couches structurantes (kind : nombre) :")
+    for k, v in counts.items():
+        typer.echo(f"    {k:18} : {v}")
 
 
 @app.command("evaluate")
