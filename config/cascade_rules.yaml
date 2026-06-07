@@ -150,6 +150,14 @@ layers:
       flag_fort_subtypes: [pitch, parking]
       coverage_threshold: 0.3       # part de surface couverte pour déclencher
 
+  - name: acces
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: voirie         # tronçons de voirie (BD TOPO) pré-ingérés
+      direct_access_m: 25          # voirie à ≤ 25 m → accès direct (bonus)
+      bonus_key: acces_direct_voirie
+
   - name: surface
     phase: 1
     enabled: true

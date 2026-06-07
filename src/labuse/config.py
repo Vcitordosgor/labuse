@@ -81,10 +81,22 @@ def wfs_layers() -> dict[str, Any]:
     return load_yaml_config("wfs_layers")
 
 
+@lru_cache(maxsize=1)
+def rules_version() -> str:
+    """Empreinte courte des configs de règles (pour estampiller les évaluations)."""
+    import hashlib
+
+    h = hashlib.sha1()
+    for name in ("cascade_rules", "completeness_weights", "opportunity_weights"):
+        h.update(yaml.safe_dump(load_yaml_config(name), sort_keys=True).encode("utf-8"))
+    return h.hexdigest()[:12]
+
+
 def reset_config_cache() -> None:
     """Vide les caches (utile en tests quand on bascule de config)."""
     load_yaml_config.cache_clear()
     get_settings.cache_clear()
+    rules_version.cache_clear()
 
 
 # Permet de surcharger le répertoire de config via env même quand .env absent.
