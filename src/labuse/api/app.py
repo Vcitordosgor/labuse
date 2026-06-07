@@ -29,6 +29,19 @@ from ..enums import FeedbackVerdict
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
+# Couches EXCLUANTES / FLAGGANTES dont l'absence rend les verdicts partiels (§3).
+# Tant qu'une de ces couches n'est pas ingérée, une "opportunité" peut masquer une
+# contrainte → bandeau d'avertissement + distinction "opportunité fiable".
+CRITICAL_LAYERS = {
+    "sar": "SAR (zonage régional — supérieur au PLU)",
+    "foret_publique": "Forêts publiques / régime forestier (ONF)",
+    "ens": "Espaces Naturels Sensibles (ENS)",
+    "safer": "Zonage agricole / SAFER",
+    "trait_de_cote": "Recul du trait de côte",
+}
+# Minimum requis pour qualifier une "opportunité FIABLE" (consigne produit).
+RELIABLE_REQUIRED = ("sar", "foret_publique", "trait_de_cote")
+
 app = FastAPI(
     title="LA BUSE — radar foncier",
     version="0.1.0",
@@ -48,6 +61,25 @@ def get_db() -> Iterator[Session]:
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "produit": "LA BUSE"}
+
+
+@app.get("/coverage")
+def coverage(db: Session = Depends(get_db)) -> dict:
+    """Couverture des couches excluantes/flaggantes : ce qui est intégré vs absent.
+
+    Pilote le bandeau d'avertissement (verdicts partiels) et la notion d'opportunité
+    fiable. `present` = au moins une entité de ce `kind` est ingérée.
+    """
+    present = {k for (k,) in db.execute(text("SELECT DISTINCT kind FROM spatial_layers")).all()}
+    layers = [{"kind": k, "label": v, "present": k in present} for k, v in CRITICAL_LAYERS.items()]
+    missing = [v for k, v in CRITICAL_LAYERS.items() if k not in present]
+    return {
+        "critical_layers": layers,
+        "missing": missing,
+        "complete": not missing,
+        "reliable_requires": [CRITICAL_LAYERS[k] for k in RELIABLE_REQUIRED],
+        "reliable_ready": all(k in present for k in RELIABLE_REQUIRED),
+    }
 
 
 # ───────────────────────────── Sources de données ─────────────────────────────

@@ -101,6 +101,26 @@ input[type=checkbox] { accent-color: var(--gold); }
 }
 .disclaimer-foot strong { color: var(--gold-soft); }
 
+/* ───────── Bandeau d'avertissement (verdicts partiels) ───────── */
+.banner {
+  position: fixed; top: 0; left: 372px; right: 0; z-index: 700;
+  background: linear-gradient(90deg, #3a2e12, #241f0d);
+  border-bottom: 1px solid var(--creuser); color: #f0e6cf;
+  padding: 9px 16px; font-size: 12.5px; line-height: 1.4;
+  display: flex; gap: 10px; align-items: baseline;
+}
+.banner .warn-ico { color: #e0b65e; font-size: 15px; }
+.banner b { color: #e6c878; }
+.banner .missing { color: #f3ead2; font-weight: 600; }
+.sheet-warn {
+  background: linear-gradient(90deg, #3a2e12, #241f0d); border: 1px solid var(--creuser);
+  border-radius: 9px; padding: 9px 12px; font-size: 12px; color: #f0e6cf; margin: 0 0 14px;
+}
+.sheet-warn b { color: #e6c878; }
+.fiable-tag { font-size: 10.5px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+.fiable-tag.ok { background: rgba(58,157,110,.18); color: #6bcf9c; }
+.fiable-tag.reserve { background: rgba(199,154,62,.18); color: #e0b65e; }
+
 /* ───────── Map ───────── */
 #map { height: 100vh; background: #0b0e12; }
 .leaflet-container { background: #0b0e12; }

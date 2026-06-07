@@ -106,6 +106,14 @@ def test_front_served(client):
     assert idx.status_code == 200 and "LA" in idx.text
 
 
+def test_coverage_banner(client):
+    cov = client.get("/coverage").json()
+    assert {"critical_layers", "missing", "complete", "reliable_ready"} <= set(cov)
+    kinds = {x["kind"] for x in cov["critical_layers"]}
+    assert kinds == {"sar", "foret_publique", "ens", "safer", "trait_de_cote"}
+    assert isinstance(cov["reliable_ready"], bool)
+
+
 def test_feedback_reinjecte_dans_le_scoring(client):
     # Retour « faux positif » sur une opportunité → rétrogradée à la ré-évaluation (§10).
     idu = "97415000AB0001"

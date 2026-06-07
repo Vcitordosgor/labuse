@@ -7,6 +7,7 @@ let FEATURES = [];          // toutes les parcelles (GeoJSON features)
 let layer = null;           // couche Leaflet courante
 const byIdu = {};           // idu -> layer (pour highlight)
 let map;
+let COVERAGE = null;        // couverture des couches critiques (/coverage)
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -68,6 +69,31 @@ async function loadStats() {
   $("#kpi-opp").textContent = fmt(s.opportunite);
   $("#kpi-creuser").textContent = fmt(s.a_creuser);
   $("#kpi-exclue").textContent = fmt(s.exclue);
+}
+
+async function loadCoverage() {
+  try { COVERAGE = await (await fetch("/coverage")).json(); } catch { COVERAGE = null; }
+  renderBanner();
+}
+
+function renderBanner() {
+  const b = $("#banner");
+  if (!COVERAGE || COVERAGE.complete) { b.classList.add("hidden"); return; }
+  b.classList.remove("hidden");
+  b.innerHTML = `<span class="warn-ico">⚠</span><span><b>Verdicts partiels</b> — une opportunité peut masquer une contrainte non encore intégrée.
+    Couches manquantes : <span class="missing">${COVERAGE.missing.map(esc).join(" · ")}</span></span>`;
+}
+
+function ficheWarn() {
+  if (!COVERAGE || COVERAGE.complete) return "";
+  return `<div class="sheet-warn"><b>⚠ Verdicts partiels.</b> Couches non encore intégrées : ${COVERAGE.missing.map(esc).join(" · ")}.</div>`;
+}
+
+function fiableBadge(status) {
+  if (status !== "opportunite") return "";
+  return COVERAGE && COVERAGE.reliable_ready
+    ? `<span class="fiable-tag ok">opportunité fiable</span>`
+    : `<span class="fiable-tag reserve">sous réserve · couches manquantes</span>`;
 }
 
 function renderList() {
@@ -133,7 +159,8 @@ function renderFiche(f) {
     <div class="sh-idu">${esc(p.idu)}</div>
     <div class="sh-sub">${esc(p.commune || "")}${p.section ? " · section " + esc(p.section) : ""}${p.surface_m2 ? " · " + fmt(Math.round(p.surface_m2)) + " m²" : ""}</div>
 
-    <div class="sh-verdict"><span class="chip ${v.status}">${STATUS_LABEL[v.status] || esc(v.status) || "—"}</span></div>
+    ${ficheWarn()}
+    <div class="sh-verdict"><span class="chip ${v.status}">${STATUS_LABEL[v.status] || esc(v.status) || "—"}</span>${fiableBadge(v.status)}</div>
     <div class="sh-scores">
       <div class="score-box opp"><div class="v">${v.opportunity_score ?? "—"}</div><div class="l">Opportunité</div></div>
       <div class="score-box"><div class="v">${v.completeness_score ?? "—"}</div><div class="l">Complétude</div></div>
@@ -191,6 +218,7 @@ function closeSheet() { $("#sheet").classList.add("hidden"); $("#scrim").classLi
 async function main() {
   initMap();
   await loadStats();
+  await loadCoverage();
   const fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json();
   FEATURES = fc.features || [];
   applyFilters();
