@@ -88,7 +88,7 @@ def ingest_parcels(session: Session, parcels: list[dict], commune_name: str | No
 class CadastreConnector(Connector):
     name = "Cadastre (API Carto PCI)"
     test_url = f"{BASE}/parcelle"
-    test_params = {"code_insee": "97411", "section": "AB", "numero": "0001", "source_ign": "PCI"}
+    test_params = {"code_insee": "97415", "section": "AB", "numero": "0001", "source_ign": "PCI"}
 
     def fetch_by_section(self, code_insee: str, section: str, numero: str | None = None) -> dict:
         params = {"code_insee": code_insee, "section": section, "source_ign": "PCI"}

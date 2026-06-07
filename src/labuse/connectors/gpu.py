@@ -34,7 +34,7 @@ def parse_zones(feature_collection: dict) -> list[dict[str, Any]]:
 class GpuConnector(Connector):
     name = "Urbanisme PLU/GPU (API Carto)"
     test_url = f"{BASE}/municipality"
-    test_params = {"insee": "97411"}
+    test_params = {"insee": "97415"}
 
     def zone_urba(self, geojson_geometry: dict) -> list[dict]:
         with self._client() as c:

@@ -8,7 +8,7 @@ from labuse.ai import StubProvider, validate_ai_output
 from labuse.ai.schema import AI_OUTPUT_SCHEMA  # noqa: F401
 
 SAMPLE_PAYLOAD = {
-    "parcel": {"idu": "97411000AB0001", "commune": "Saint-Paul", "surface_m2": 2000},
+    "parcel": {"idu": "97415000AB0001", "commune": "Saint-Paul", "surface_m2": 2000},
     "computed_scores": {"completeness": 92, "completeness_band": "forte", "opportunity": 70, "cascade_status": "opportunite"},
     "cascade_verdicts": [
         {"layer": "zonage_plu_gpu", "result": "POSITIVE", "severity": None, "detail": "Zone U constructible", "source": "Urbanisme PLU/GPU (API Carto)"},

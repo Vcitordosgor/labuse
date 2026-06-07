@@ -84,7 +84,7 @@ def reset_demo(session: Session) -> None:
     session.execute(text("TRUNCATE " + ", ".join(_RESET_TABLES) + " RESTART IDENTITY CASCADE"))
 
 
-def seed_demo(session: Session, commune_insee: str = "97411", commune_name: str = "Saint-Paul") -> dict:
+def seed_demo(session: Session, commune_insee: str = "97415", commune_name: str = "Saint-Paul") -> dict:
     # Catalogue de sources requis (pour résoudre data_source_id).
     if session.query(DataSource).count() == 0:
         seed_sources.seed(session)

@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://labuse:labuse@localhost:5432/labuse"
 
     # Commune pilote — paramétrable (brief §12 : Saint-Paul par défaut).
-    pilot_commune_insee: str = "97411"
+    pilot_commune_insee: str = "97415"
     pilot_commune_name: str = "Saint-Paul"
 
     config_dir: str = "config"

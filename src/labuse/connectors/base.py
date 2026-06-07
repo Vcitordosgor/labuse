@@ -57,3 +57,18 @@ class Connector:
             )
         except Exception as exc:  # réseau bloqué / timeout / DNS
             return ConnectionTestResult(self.name, False, f"Inatteignable : {type(exc).__name__}: {exc}")
+
+
+class GenericGetConnector(Connector):
+    """Connecteur de test générique : un GET simple paramétrable.
+
+    Couvre le bouton « tester la connexion » pour les sources REST/WFS/ODS
+    confirmées live au SPIKE, sans coder une classe par source. Succès = HTTP 200.
+    """
+
+    def __init__(self, name: str, test_url: str, test_params: dict | None = None,
+                 timeout: float | None = None):
+        super().__init__(timeout)
+        self.name = name
+        self.test_url = test_url
+        self.test_params = test_params or {}

@@ -15,17 +15,17 @@ endpoints:
     base_url: "https://data.geopf.fr/wfs/ows"
     reliability: verifie
     rate_limit_per_s: 10
-    notes: "GetCapabilities pour lister les typenames. Source BD TOPO, OCS GE, parcellaire."
+    notes: "✓ live (SPIKE 2026-06) : GetFeature BDTOPO_V3:batiment OK (51 M feat). BD TOPO/parcellaire ; OCS GE typename à confirmer."
 
   deal_reunion:
     base_url: "https://carto.reunion.developpement-durable.gouv.fr"  # à préciser via catalogue DEAL
     reliability: a_confirmer
-    notes: "Catalogue cartes + flux WMS/WFS (PPRN, risques, trait de côte). Confirmer l'URL OWS exacte."
+    notes: "⚠ Hôte injoignable au SPIKE (HTTP 000, 2026-06-07). Risques via Géorisques en proxy ; sinon import."
 
   peigeo:
     base_url: "https://peigeo.re"  # GeoNetwork/visualiseur AGORAH ; confirmer endpoint OWS
     reliability: a_confirmer
-    notes: "Hub n°1 local. Occupation du sol, consommation d'espace, PPR, SAR probable."
+    notes: "⚠ Hôte injoignable au SPIKE (HTTP 000, 2026-06-07). Fallback Région ODS (SAR proxy via potentiel-foncier) / import."
 
 # Couches : chaque entrée mappe un flux distant vers un spatial_kind LA BUSE.
 layers:
@@ -40,11 +40,11 @@ layers:
     endpoint: geoplateforme_wfs
     typename: "BDTOPO_V3:batiment"
     spatial_kind: batiment
-    reliability: a_confirmer
+    reliability: verifie        # ✓ live : GetFeature 200 (SPIKE 2026-06)
 
   - key: ocs_ge
     endpoint: geoplateforme_wfs
-    typename: "OCSGE:occupation_du_sol"
+    typename: "OCSGE:occupation_du_sol"   # ⚠ 400 au SPIKE — typename exact à confirmer (GetCapabilities)
     spatial_kind: ocs_ge
     reliability: a_confirmer
 

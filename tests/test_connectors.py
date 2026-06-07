@@ -16,13 +16,13 @@ CADASTRE_FC = {
         {
             "type": "Feature",
             "geometry": {"type": "Polygon", "coordinates": [[[55.27, -21.01], [55.271, -21.01], [55.271, -21.009], [55.27, -21.009], [55.27, -21.01]]]},
-            "properties": {"idu": "97411000AB0001", "numero": "0001", "section": "AB",
-                            "code_insee": "97411", "nom_com": "Saint-Paul", "contenance": 2000},
+            "properties": {"idu": "97415000AB0001", "numero": "0001", "section": "AB",
+                            "code_insee": "97415", "nom_com": "Saint-Paul", "contenance": 2000},
         },
         {  # sans idu explicite → reconstruit
             "type": "Feature",
             "geometry": {"type": "Polygon", "coordinates": [[[55.28, -21.02], [55.281, -21.02], [55.281, -21.019], [55.28, -21.019], [55.28, -21.02]]]},
-            "properties": {"numero": "42", "section": "AC", "code_insee": "97411", "com_abs": "000", "nom_com": "Saint-Paul"},
+            "properties": {"numero": "42", "section": "AC", "code_insee": "97415", "com_abs": "000", "nom_com": "Saint-Paul"},
         },
         {"type": "Feature", "geometry": None, "properties": {"idu": "x"}},  # ignorée (pas de géométrie)
     ],
@@ -32,17 +32,17 @@ CADASTRE_FC = {
 def test_parse_parcelles():
     parcels = parse_parcelles(CADASTRE_FC)
     assert len(parcels) == 2
-    assert parcels[0]["idu"] == "97411000AB0001"
+    assert parcels[0]["idu"] == "97415000AB0001"
     assert parcels[0]["section"] == "AB" and parcels[0]["numero"] == "0001"
     assert parcels[0]["geometry"]["type"] == "Polygon"
 
 
 def test_build_idu_reconstruit():
     # idu présent → utilisé tel quel
-    assert _build_idu({"idu": "97411000AB0001"}) == "97411000AB0001"
+    assert _build_idu({"idu": "97415000AB0001"}) == "97415000AB0001"
     # reconstruction 14 car. : insee(5)+com_abs(3)+section(2)+numero(4)
-    idu = _build_idu({"code_insee": "97411", "com_abs": "000", "section": "AC", "numero": "42"})
-    assert idu == "97411000AC0042" and len(idu) == 14
+    idu = _build_idu({"code_insee": "97415", "com_abs": "000", "section": "AC", "numero": "42"})
+    assert idu == "97415000AC0042" and len(idu) == 14
     assert _build_idu({"section": "AC"}) is None  # infos insuffisantes
 
 
@@ -59,3 +59,24 @@ def test_registry():
     c = get_connector("Cadastre (API Carto PCI)")
     assert c is not None and c.name == "Cadastre (API Carto PCI)"
     assert get_connector("inconnue") is None
+
+
+def test_registry_couvre_les_sources_live():
+    # Sources confirmées au SPIKE réseau → doivent être testables.
+    for name in (
+        "Cadastre (API Carto PCI)", "Cadastre Etalab (bulk DGFiP/Etalab)",
+        "RGE ALTI (altimétrie)", "Géorisques", "Parc National de La Réunion (INPN)",
+        "Base Adresse Nationale", "OpenStreetMap / Overpass", "SIRENE",
+        "ABF / Monuments historiques", "Géoplateforme IGN",
+    ):
+        assert get_connector(name) is not None, name
+    # Sources sans flux ouvert : pas de connecteur live (import/manuel).
+    for name in ("Fichiers fonciers (Cerema)", "Forêts publiques (ONF)", "ENS (Département)"):
+        assert get_connector(name) is None, name
+
+
+def test_generic_get_connector_attrs():
+    from labuse.connectors.base import GenericGetConnector
+
+    c = GenericGetConnector("X", "https://example.test/api", {"a": 1})
+    assert c.name == "X" and c.test_url.endswith("/api") and c.test_params == {"a": 1}

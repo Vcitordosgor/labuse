@@ -85,8 +85,8 @@ labuse seed-sources
 labuse seed-demo            # parcelles + couches structurantes synthétiques
 
 # 5. Faire tourner la cascade + le scoring sur la commune pilote
-labuse evaluate --commune 97411
-labuse discover --commune 97411   # vue Découverte (offre B) : survivantes classées
+labuse evaluate --commune 97415
+labuse discover --commune 97415   # vue Découverte (offre B) : survivantes classées
 
 # 6. API (page Sources, fiche parcelle, découverte)
 labuse api      # uvicorn sur http://localhost:8000 (docs : /docs)

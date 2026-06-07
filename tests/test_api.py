@@ -49,7 +49,7 @@ def test_source_test_sans_connecteur(client):
 
 
 def test_fiche_double_score_et_cascade(client):
-    f = client.get("/parcels/97411000AB0001").json()
+    f = client.get("/parcels/97415000AB0001").json()
     assert f["verdict"]["status"] == "opportunite"
     # Règle d'or : les DEUX scores présents
     assert f["verdict"]["opportunity_score"] is not None
@@ -64,16 +64,16 @@ def test_fiche_404(client):
 
 
 def test_export_markdown_et_html(client):
-    md = client.get("/parcels/97411000AB0001/export", params={"format": "md"})
+    md = client.get("/parcels/97415000AB0001/export", params={"format": "md"})
     assert md.status_code == 200 and "# LA BUSE" in md.text and "Cascade" in md.text
-    htmlr = client.get("/parcels/97411000AB0001/export", params={"format": "html"})
+    htmlr = client.get("/parcels/97415000AB0001/export", params={"format": "html"})
     assert htmlr.status_code == 200 and "<table" in htmlr.text
 
 
 def test_discover_classe_les_survivantes(client):
     disc = client.get("/discover").json()
     idus = [d["idu"] for d in disc]
-    assert "97411000AB0001" in idus  # opportunité présente
+    assert "97415000AB0001" in idus  # opportunité présente
     # aucune exclue/faux positif dans la découverte
     assert all(d["status"] in ("opportunite", "a_creuser") for d in disc)
     # classées par opportunité décroissante
@@ -82,5 +82,5 @@ def test_discover_classe_les_survivantes(client):
 
 
 def test_feedback(client):
-    r = client.post("/feedback", json={"idu": "97411000AB0001", "verdict": "good_lead"})
+    r = client.post("/feedback", json={"idu": "97415000AB0001", "verdict": "good_lead"})
     assert r.json()["ok"] is True
