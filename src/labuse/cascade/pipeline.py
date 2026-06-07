@@ -44,9 +44,18 @@ def _load_parcel_refs(session: Session, parcel_ids: list[int]) -> list[ParcelRef
 
 
 def evaluate_parcels(
-    parcel_ids: list[int], session: Session, *, persist: bool = True, ai_adjustments: dict[int, int] | None = None
+    parcel_ids: list[int],
+    session: Session,
+    *,
+    persist: bool = True,
+    ai_provider=None,
 ) -> list[EvaluationOutcome]:
-    ai_adjustments = ai_adjustments or {}
+    """Évalue un ensemble de parcelles (offre A : N=1 ; offre B : toute la commune).
+
+    Si `ai_provider` est fourni, l'agent IA (§9) produit un JSON borné validé, dont
+    l'`opportunity_score_adjustment` (∈ [−20, 20]) corrige le score, et l'ensemble
+    est stocké dans parcel_evaluations.ai_payload.
+    """
     ctx = EvalContext(session)
     parcels = _load_parcel_refs(session, parcel_ids)
     verdicts_by = run_cascade(parcels, ctx)
@@ -56,23 +65,45 @@ def evaluate_parcels(
     for p in parcels:
         verdicts = verdicts_by[p.id]
         completeness = compute_completeness(verdicts, parcel_ingested=True)
-        opportunity = compute_opportunity(verdicts, ai_adjustment=ai_adjustments.get(p.id, 0))
+        opportunity = compute_opportunity(verdicts, ai_adjustment=0)
         status = decide_status(opportunity, completeness.score)
 
-        if persist:
-            _persist(session, ctx, p, verdicts, completeness, opportunity, status, rules_v)
-
-        outcomes.append(
-            EvaluationOutcome(
-                parcel_id=p.id, idu=p.idu, verdicts=verdicts,
-                completeness=completeness, opportunity=opportunity,
-                status=status.value, promoted=is_promoted(verdicts),
-            )
+        outcome = EvaluationOutcome(
+            parcel_id=p.id, idu=p.idu, verdicts=verdicts,
+            completeness=completeness, opportunity=opportunity,
+            status=status.value, promoted=is_promoted(verdicts),
         )
+
+        ai_payload = None
+        model_version = None
+        if ai_provider is not None:
+            ai_payload, opportunity, status = _apply_ai(ai_provider, outcome, p)
+            outcome.opportunity = opportunity
+            outcome.status = status.value
+            model_version = getattr(ai_provider, "name", "ai")
+
+        if persist:
+            _persist(session, ctx, p, verdicts, completeness, opportunity, status, rules_v, ai_payload, model_version)
+
+        outcomes.append(outcome)
 
     if persist:
         session.flush()
     return outcomes
+
+
+def _apply_ai(provider, outcome: EvaluationOutcome, parcel: ParcelRef):
+    """Lance l'agent, applique l'ajustement borné, renvoie (ai_payload, opp, status)."""
+    from ..ai.prompt import payload_from_outcome
+
+    payload = payload_from_outcome(
+        outcome, {"idu": parcel.idu, "commune": parcel.commune, "surface_m2": parcel.surface_m2}
+    )
+    ai_payload = provider.analyze(payload)
+    adj = int(ai_payload.get("opportunity_score_adjustment", 0))
+    opportunity = compute_opportunity(outcome.verdicts, ai_adjustment=adj)
+    status = decide_status(opportunity, outcome.completeness.score)
+    return ai_payload, opportunity, status
 
 
 def _persist(
@@ -84,6 +115,8 @@ def _persist(
     opportunity: OpportunityResult,
     status,
     rules_v: str,
+    ai_payload: dict | None = None,
+    model_version: str | None = None,
 ) -> None:
     # cascade_results : on remplace les verdicts courants de la parcelle.
     session.execute(text("DELETE FROM cascade_results WHERE parcel_id = :pid"), {"pid": parcel.id})
@@ -106,6 +139,8 @@ def _persist(
             completeness_score=completeness.score,
             opportunity_score=opportunity.score,
             status=status,
+            ai_payload=ai_payload,
+            model_version=model_version,
             rules_version=rules_v,
         )
     )

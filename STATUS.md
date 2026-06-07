@@ -27,9 +27,12 @@ est disponible (voir `connectors/*.test_connection()`).
 | 5 | Page Sources de données + statut connecteurs + test | ✅ API + catalogue ; bouton test = endpoint `/sources/{id}/test` |
 | 6 | Fiche parcelle + double score (opportunité TOUJOURS avec complétude) | ✅ fait |
 | 7 | Enrichissement async (DVF rayon, SITADEL appariement, Overpass, BAN) + cache | 🔶 DVF/SITADEL ingérés + cascade phase 2 ; connecteurs externes structurés |
-| 8 | Analyse IA LA BUSE (anti-hallucination, JSON borné validé) | 🔶 prompt + schéma + validateur + provider `stub` ; provider Anthropic à brancher |
-| 9 | Vue Découverte (cascade sur toute la commune → survivantes classées, offre B) | ✅ fait |
-| 10 | Export fiche premium | ⬜ à faire |
+| 8 | Analyse IA LA BUSE (anti-hallucination, JSON borné validé) | ✅ prompt + schéma + validateur + provider `stub` (déterministe) ; provider Anthropic prêt à brancher (clé + réseau) |
+| 9 | Vue Découverte (cascade sur toute la commune → survivantes classées, offre B) | ✅ fait (CLI `discover` + API `/discover`) |
+| 10 | Export fiche premium | ✅ Markdown/HTML via API `/parcels/{idu}/export` |
+
+**Livré en plus** : CLI `labuse` (init-db/seed/evaluate/discover/sources/test-source/api),
+API FastAPI (sources, fiche §8, découverte, évaluation, feedback, export), 30 tests verts.
 
 ## Suite (post-cœur, §12)
 Veille/signaux (offre C) · feedback réinjecté dans le scoring · BD TOPO, BPE,
