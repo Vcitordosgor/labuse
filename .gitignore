@@ -30,5 +30,6 @@ data/
 .idea/
 .vscode/
 
-# Aperçus radar générés (livrés via l'app / SendUserFile, pas du source)
+# Aperçus / captures générés (livrés via l'app / SendUserFile, pas du source)
 labuse_radar*.svg
+shot_*.png
