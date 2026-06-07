@@ -2,6 +2,19 @@
 const COMMUNE = "Saint-Paul";
 const COLORS = { opportunite: "#3a9d6e", a_creuser: "#c79a3e", exclue: "#6b7178", faux_positif_probable: "#a8584a", inconnu: "#3a4350" };
 const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue", faux_positif_probable: "Faux positif probable" };
+const VERDICT_GLOSS = {
+  opportunite: "Foncier a priori mobilisable — reste à confirmer sur le terrain.",
+  a_creuser: "Signaux mitigés : une vérification s'impose avant de démarcher.",
+  exclue: "Contrainte rédhibitoire identifiée — écartée du radar.",
+  faux_positif_probable: "La donnée terrain contredit le signal — probable faux positif.",
+};
+const LAYER_SHORT = {
+  sar: "SAR", risques: "Risques (PPR)", abf: "ABF / Monuments", ens: "ENS", safer: "SAFER",
+  foret_publique: "Forêt publique", trait_de_cote: "Trait de côte", parc_national: "Parc national",
+  zonage_plu_gpu: "PLU", eau: "Hydrographie", pente: "Pente", ocs_ge: "Occupation du sol",
+  osm_faux_positif: "Bâti (OSM)",
+};
+const shortLayer = (c) => LAYER_SHORT[c.layer_name] || c.layer_name;
 
 let FEATURES = [];          // toutes les parcelles (GeoJSON features)
 let layer = null;           // couche Leaflet courante
@@ -149,70 +162,109 @@ async function openSheet(idu) {
 function renderFiche(f) {
   const v = f.verdict || {};
   const p = f.parcel || {};
-  const reasons = (v.reasons || []);
-  const reasonsHtml = reasons.length ? reasons.map((r) => `
-    <div class="reason ${r.result}">
-      <div class="r-head"><span>${esc(r.layer_name)} · ${esc(r.severity || r.result)}</span><span>${esc(r.source || "")}</span></div>
-      <div class="r-detail">${esc(r.detail)}</div>
-    </div>`).join("") : `<div class="reason">Aucune contrainte ni signal bloquant relevé.</div>`;
+  const cascade = f.cascade || [];
+  const status = v.status || "inconnu";
+  const w = (n) => Math.max(0, Math.min(100, Number(n) || 0));
 
-  const cascade = (f.cascade || []).map((c) => `
-    <div class="casc-row">
-      <span class="v-tag v-${c.result}">${esc(c.result)}</span>
-      <span>
-        <span class="c-detail">${esc(c.detail)}</span><br>
-        <span class="c-src">${esc(c.layer_name)}${c.source ? " · " + esc(c.source) : ""}</span>
-      </span>
-    </div>`).join("");
+  const favors = cascade.filter((c) => c.result === "POSITIVE");
+  const limits = cascade.filter((c) => c.result === "HARD_EXCLUDE" || c.result === "SOFT_FLAG");
+  const unknown = cascade.filter((c) => c.result === "UNKNOWN");
+
+  const liRow = (c, cls) => `<li class="rd-li ${cls}">
+      <span class="rd-detail">${esc(c.detail)}</span>
+      <span class="rd-src">${esc(shortLayer(c))}${c.source ? " · " + esc(c.source) : ""}</span></li>`;
+  const block = (arr, cls, emptyMsg) => arr.length
+    ? `<ul class="rd-list">${arr.map((c) => liRow(c, cls === "lim" ? (c.result === "HARD_EXCLUDE" ? "hard" : "soft") : cls)).join("")}</ul>`
+    : `<p class="rd-empty">${emptyMsg}</p>`;
+
+  const unverifiedLine = unknown.length ? `
+    <section class="unverified">
+      <span class="uv-mark">◔</span>
+      <span><b>Non vérifié à ce jour</b> — ${unknown.map((c) => esc(shortLayer(c))).join(" · ")}.
+      Le verdict reste partiel tant que ces couches ne sont pas intégrées.</span>
+    </section>` : "";
+
+  const cascadeRows = cascade.map((c) => `
+    <tr>
+      <td><span class="ct-tag v-${c.result}">${esc(c.result)}</span></td>
+      <td><span class="ct-detail">${esc(c.detail)}</span>
+          <span class="ct-src">${esc(c.layer_name)}${c.source ? " · " + esc(c.source) : ""}</span></td>
+    </tr>`).join("");
 
   const chips = (arr, cls) => (arr || []).map((s) => `<span class="src-chip ${cls}">${esc(s)}</span>`).join("");
+  const loc = [p.commune, p.section ? "section " + esc(p.section) : "",
+    p.surface_m2 ? fmt(Math.round(p.surface_m2)) + " m²" : ""].filter(Boolean).join(" · ");
 
   return `
-    <div class="sh-idu">${esc(p.idu)}</div>
-    <div class="sh-sub">${esc(p.commune || "")}${p.section ? " · section " + esc(p.section) : ""}${p.surface_m2 ? " · " + fmt(Math.round(p.surface_m2)) + " m²" : ""}</div>
+    <header class="fiche-head">
+      <div class="fh-id">${esc(p.idu)}</div>
+      <div class="fh-loc">${loc}</div>
+    </header>
 
-    ${ficheWarn()}
-    <div class="sh-verdict"><span class="chip ${v.status}">${STATUS_LABEL[v.status] || esc(v.status) || "—"}</span>${fiableBadge(v.status)}</div>
-    <div class="sh-scores">
-      <div class="score-box opp"><div class="v">${v.opportunity_score ?? "—"}</div><div class="l">Opportunité</div></div>
-      <div class="score-box"><div class="v">${v.completeness_score ?? "—"}</div><div class="l">Complétude</div></div>
-    </div>
-    <div class="golden">L'opportunité ne s'affiche jamais seule : complétude &lt; 50 ⇒ statut plafonné à « à creuser ».</div>
+    <section class="verdict v-${status}">
+      <div class="verdict-eyebrow">Verdict LA BUSE</div>
+      <h1 class="verdict-word">${STATUS_LABEL[status] || esc(status) || "—"}</h1>
+      <p class="verdict-gloss">${esc(VERDICT_GLOSS[status] || "")}</p>
+      ${fiableBadge(status)}
+    </section>
 
-    <div class="sh-section"><h3>Pourquoi</h3>${reasonsHtml}</div>
+    <section class="scores v-${status}">
+      <div class="score">
+        <div class="score-top"><span class="score-num">${v.opportunity_score ?? "—"}</span><span class="score-lbl">Opportunité</span></div>
+        <div class="bar opp"><i style="width:${w(v.opportunity_score)}%"></i></div>
+      </div>
+      <div class="score">
+        <div class="score-top"><span class="score-num">${v.completeness_score ?? "—"}</span><span class="score-lbl">Complétude</span></div>
+        <div class="bar cpl"><i style="width:${w(v.completeness_score)}%"></i></div>
+      </div>
+      <p class="golden-note">L'opportunité ne s'affiche jamais seule — une complétude &lt; 50 plafonne le verdict à « à creuser ».</p>
+    </section>
+
+    ${unverifiedLine}
+
+    <section class="reads">
+      <div class="read"><h3 class="rd-h ok">Ce qui favorise</h3>${block(favors, "ok", "Aucun signal franchement favorable sur les couches disponibles.")}</div>
+      <div class="read"><h3 class="rd-h lim">Ce qui contraint</h3>${block(limits, "lim", "Aucune contrainte relevée sur les couches disponibles.")}</div>
+      <div class="read"><h3 class="rd-h unk">Ce qu'on n'a pas vérifié</h3>${block(unknown, "unk", "Toutes les couches critiques ont répondu.")}</div>
+    </section>
 
     ${renderAi(f.ai)}
 
-    <div class="sh-section"><h3>Sources qui ont répondu</h3>
+    <details class="cascade">
+      <summary>Cascade complète · la traçabilité est le produit <span class="cc-count">${cascade.length} couches</span></summary>
+      <table class="cascade-table">${cascadeRows}</table>
+    </details>
+
+    <section class="sources">
+      <h3 class="src-h">Sources qui ont répondu</h3>
       <div class="src-chips">${chips(f.sources_responded, "ok") || '<span class="src-chip silent">—</span>'}</div>
-      ${(f.sources_silent || []).length ? `<div style="margin-top:8px" class="src-chips">${chips(f.sources_silent, "silent")}</div>` : ""}
-    </div>
+      ${(f.sources_silent || []).length ? `<h3 class="src-h muted">Restées silencieuses</h3><div class="src-chips">${chips(f.sources_silent, "silent")}</div>` : ""}
+    </section>
 
-    <div class="sh-section"><h3>Cascade complète — la traçabilité est le produit</h3>${cascade}</div>
-
-    <div class="sh-actions">
+    <footer class="fiche-actions">
       <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=md" target="_blank">Export Markdown</a>
       <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=html" target="_blank">Export HTML</a>
-      <button class="btn gold" data-fb="good_lead">👍 Bon lead</button>
-      <button class="btn" data-fb="false_positive">🚫 Faux positif</button>
-    </div>
-    <div class="disclaimer">${esc(f.disclaimer || "")}</div>`;
+      <button class="btn good" data-fb="good_lead">Bon lead</button>
+      <button class="btn bad" data-fb="false_positive">Faux positif</button>
+    </footer>
+    <p class="disclaimer">${esc(f.disclaimer || "")}</p>`;
 }
 
 function renderAi(ai) {
-  if (!ai) return "";
-  const list = (arr) => (arr && arr.length) ? `<ul>${arr.map((x) => `<li>${esc(typeof x === "string" ? x : (x.detail || x.source || JSON.stringify(x)))}</li>`).join("")}</ul>` : "";
+  if (!ai || !Object.keys(ai).length) return "";
+  const list = (arr) => (arr && arr.length) ? `<ul class="ai-list">${arr.map((x) => `<li>${esc(typeof x === "string" ? x : (x.detail || x.source || JSON.stringify(x)))}</li>`).join("")}</ul>` : "";
   return `
-    <div class="sh-section"><h3>Analyse LA BUSE (IA)</h3>
+    <section class="ai">
+      <h3 class="src-h">Analyse LA BUSE · IA</h3>
       <div class="ai-box">
-        <div><span class="ai-tag">Statut recommandé :</span> ${esc(ai.recommended_status || "—")}
-          · <span class="ai-tag">confiance :</span> ${esc(ai.confidence_level || "—")}
-          ${ai.opportunity_score_adjustment != null ? `· ajust. ${ai.opportunity_score_adjustment > 0 ? "+" : ""}${esc(ai.opportunity_score_adjustment)}` : ""}</div>
-        ${ai.reunion_specific_flags ? `<div style="margin-top:8px"><span class="ai-tag">Spécificités Réunion</span>${list(ai.reunion_specific_flags)}</div>` : ""}
-        ${ai.blocking_or_risk_signals ? `<div><span class="ai-tag">Signaux bloquants / risque</span>${list(ai.blocking_or_risk_signals)}</div>` : ""}
-        ${ai.must_check_before_showing_developer ? `<div><span class="ai-tag">À vérifier avant de montrer au promoteur</span>${list(ai.must_check_before_showing_developer)}</div>` : ""}
+        <div class="ai-line"><span class="ai-tag">Statut recommandé</span> ${esc(ai.recommended_status || "—")}
+          · <span class="ai-tag">confiance</span> ${esc(ai.confidence_level || "—")}
+          ${ai.opportunity_score_adjustment != null ? `· <span class="ai-tag">ajustement</span> ${ai.opportunity_score_adjustment > 0 ? "+" : ""}${esc(ai.opportunity_score_adjustment)}` : ""}</div>
+        ${ai.reunion_specific_flags ? `<div class="ai-grp"><span class="ai-tag">Spécificités Réunion</span>${list(ai.reunion_specific_flags)}</div>` : ""}
+        ${ai.blocking_or_risk_signals ? `<div class="ai-grp"><span class="ai-tag">Signaux bloquants / risque</span>${list(ai.blocking_or_risk_signals)}</div>` : ""}
+        ${ai.must_check_before_showing_developer ? `<div class="ai-grp"><span class="ai-tag">À vérifier avant de démarcher</span>${list(ai.must_check_before_showing_developer)}</div>` : ""}
       </div>
-    </div>`;
+    </section>`;
 }
 
 function wireSheetActions(idu) {
