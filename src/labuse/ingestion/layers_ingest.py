@@ -285,6 +285,76 @@ def ingest_dvf(session, insee, commune, run_id, sids) -> int:
     return n
 
 
+def ingest_foret_publique(session, bbox, commune, run_id, sids) -> int:
+    """Forêts publiques / régime forestier — BD TOPO (IGN/ONF) via WFS Géoplateforme."""
+    wfs = WfsConnector("geoplateforme_wfs")
+    fc = wfs.fetch_layer("geoplateforme_wfs", "BDTOPO_V3:foret_publique", bbox=bbox, max_features=5000)
+    n = 0
+    for f in fc.get("features", []) or []:
+        if not f.get("geometry"):
+            continue
+        p = f.get("properties") or {}
+        topo = p.get("toponyme") or ""
+        subtype = "domaniale" if "domanial" in topo.lower() else "publique"
+        _insert_layer(session, "foret_publique", subtype, topo or "Forêt publique", f["geometry"],
+                      sids.get("Forêts publiques (ONF)"), commune, run_id,
+                      {"toponyme": topo, "src": "BDTOPO_V3:foret_publique"})
+        n += 1
+    return n
+
+
+def ingest_rpg_agricole(session, bbox, commune, run_id, sids) -> int:
+    """Parcelles agricoles déclarées (RPG, IGN/ASP via WFS) → proxy zonage agricole/SAFER."""
+    wfs = WfsConnector("geoplateforme_wfs")
+    fc = wfs.fetch_layer("geoplateforme_wfs", "RPG.LATEST:parcelles_graphiques", bbox=bbox, max_features=12000)
+    n = 0
+    for f in fc.get("features", []) or []:
+        if not f.get("geometry"):
+            continue
+        p = f.get("properties") or {}
+        _insert_layer(session, "safer", "rpg", f"Parcelle agricole RPG ({p.get('code_cultu') or '?'})",
+                      f["geometry"], sids.get("Zonage SAFER (DAAF)"), commune, run_id,
+                      {"code_cultu": p.get("code_cultu"), "code_group": p.get("code_group"), "src": "RPG.LATEST"})
+        n += 1
+    return n
+
+
+_PROTECTED = [
+    ("patrinat_apb:apb", "APB"),
+    ("patrinat_aphn:aire_protection_habitats_naturels", "APHN"),
+    ("patrinat_rnn:rnn", "Réserve naturelle nationale"),
+    ("patrinat_rnr:rnr", "Réserve naturelle régionale"),
+    ("patrinat_rb:reserve_biologique", "Réserve biologique"),
+    ("patrinat_cen:cen", "Conservatoire d'espaces naturels"),
+    ("patrinat_cdl:conservatoire_littoral", "Conservatoire du littoral"),
+]
+
+
+def ingest_espaces_proteges(session, bbox, commune, run_id, sids) -> int:
+    """Espaces protégés réglementaires (INPN/MNHN via WFS Géoplateforme) → couche `ens`.
+
+    ENS départemental proprement dit non public ; on intègre les protections
+    réglementaires (APB/APHN/réserves/conservatoires) qui jouent le même rôle de
+    contrainte. Étiquetées par leur vrai type."""
+    wfs = WfsConnector("geoplateforme_wfs")
+    n = 0
+    for typename, label in _PROTECTED:
+        try:
+            fc = wfs.fetch_layer("geoplateforme_wfs", typename, bbox=bbox, max_features=2000)
+        except Exception:
+            continue
+        for f in fc.get("features", []) or []:
+            if not f.get("geometry"):
+                continue
+            p = f.get("properties") or {}
+            nom = p.get("nom") or p.get("toponyme") or p.get("libelle") or p.get("site_nom") or label
+            _insert_layer(session, "ens", label.lower().replace(" ", "_")[:48], f"{label} — {nom}"[:255],
+                          f["geometry"], sids.get("ENS (Département)"), commune, run_id,
+                          {"type": label, "src": typename})
+            n += 1
+    return n
+
+
 def ingest_layers(session: Session, insee: str, commune: str,
                   bbox: tuple[float, float, float, float], run_id: int | None) -> dict[str, object]:
     """Ingère toutes les couches géométriques réelles disponibles. Isolé par couche."""
@@ -298,6 +368,9 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("water", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "water", "BDTOPO_V3:surface_hydrographique")),
         ("voirie", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "voirie", "BDTOPO_V3:troncon_de_route")),
         ("ocs_ge", lambda: ingest_ocsge(session, bbox, commune, run_id, sids)),
+        ("foret_publique", lambda: ingest_foret_publique(session, bbox, commune, run_id, sids)),
+        ("safer", lambda: ingest_rpg_agricole(session, bbox, commune, run_id, sids)),
+        ("ens", lambda: ingest_espaces_proteges(session, bbox, commune, run_id, sids)),
         ("pente", lambda: ingest_pente(session, bbox, commune, run_id, sids)),
         ("dvf", lambda: ingest_dvf(session, insee, commune, run_id, sids)),
     ]

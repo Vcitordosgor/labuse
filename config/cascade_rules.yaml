@@ -73,7 +73,7 @@ layers:
     params:
       spatial_kind: safer
       severity: moyen
-      detail: "Risque de préemption SAFER (zonage terres agricoles DAAF)."
+      detail: "Parcelle en zone agricole (proxy RPG/IGN — préemption SAFER possible)."
 
   - name: risques
     phase: 1
@@ -129,7 +129,7 @@ layers:
     params:
       spatial_kind: ens
       severity: moyen
-      detail: "Espace Naturel Sensible — droit de préemption départemental."
+      detail: "Espace protégé réglementaire (réserve / APB / conservatoire…) — restriction."
 
   - name: ocs_ge
     phase: 1
