@@ -19,7 +19,7 @@
     <div class="mt-toggle" role="tablist">
       <button class="mt-tab js-view" data-view="map" role="tab" aria-selected="true">Carte</button>
       <button class="mt-tab js-view" data-view="list" role="tab" aria-selected="false">Liste</button>
-      <button class="mt-tab js-view" data-view="kanban" role="tab" aria-selected="false">Pipeline</button>
+      <button class="mt-tab js-view" data-view="kanban" role="tab" aria-selected="false">Pipeline <span class="kb-badge hidden" title="rappels échus">0</span></button>
     </div>
   </nav>
 
@@ -36,7 +36,7 @@
     </header>
 
     <div class="side-nav">
-      <button class="nav-kanban js-view" data-view="kanban">📋 Pipeline de prospection</button>
+      <button class="nav-kanban js-view" data-view="kanban">📋 Pipeline de prospection <span class="kb-badge hidden" title="rappels échus">0</span></button>
     </div>
 
     <section class="kpis" id="kpis">
@@ -110,6 +110,16 @@
     <header class="kb-head">
       <button class="kb-back js-view" data-view="map">← Radar</button>
       <div class="kb-title">Pipeline de prospection</div>
+      <div class="kb-tools">
+        <button class="kb-remfilter" id="kb-remfilter" type="button" aria-pressed="false" title="N'afficher que les rappels échus ou proches">⏰ À rappeler <span class="kb-remn" id="kb-remn">0</span></button>
+        <label class="kb-sort">Trier
+          <select id="kb-sort">
+            <option value="score">Score</option>
+            <option value="priority">Priorité</option>
+            <option value="reminder">Rappel</option>
+          </select>
+        </label>
+      </div>
       <span class="kb-count" id="kb-count"></span>
     </header>
     <div class="kb-board" id="kb-board"></div>

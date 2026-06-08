@@ -24,6 +24,10 @@ const byIdu = {};           // idu -> layer (pour highlight)
 let map;
 let COVERAGE = null;        // couverture des couches critiques (/coverage)
 let KANBAN_META = null;     // colonnes & priorités du pipeline (/pipeline/meta)
+let PIPELINE = [];          // entrées du pipeline chargées (mémoire → re-render local)
+let KB_SORT = "score";      // tri courant des cartes dans chaque colonne
+let KB_REMINDER_ONLY = false; // filtre « à rappeler »
+let DRAG_ID = null;         // id de la carte en cours de glisser-déposer
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -392,20 +396,53 @@ function expandCascadeForPrint() { const d = document.querySelector(".cascade");
 
 function closeSheet() { $("#sheet").classList.add("hidden"); $("#scrim").classList.add("hidden"); }
 
-// ───────────────────────── Pipeline / Kanban (T1) ─────────────────────────
+// ───────────────────────── Pipeline / Kanban (T2) ─────────────────────────
 async function loadMeta() {
   try { KANBAN_META = await (await fetch("/pipeline/meta")).json(); }
   catch { KANBAN_META = { columns: [], priorities: [], defaults: {} }; }
 }
 const colLabel = (k) => (KANBAN_META && KANBAN_META.columns.find((c) => c.key === k) || {}).label || k;
 const prioLabel = (k) => (KANBAN_META && KANBAN_META.priorities.find((p) => p.key === k) || {}).label || k;
+const prioRank = (k) => { const i = (KANBAN_META && KANBAN_META.priorities || []).findIndex((p) => p.key === k); return i < 0 ? 99 : i; };
+
+// Rappel : état calculé côté client (échu / proche ≤ 3 j / —) — aucune dépendance backend.
+function reminderState(dateStr) {
+  if (!dateStr) return { state: "", days: null };
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = Math.round((new Date(dateStr + "T00:00:00") - today) / 86400000);
+  if (days < 0) return { state: "overdue", days };
+  if (days <= 3) return { state: "soon", days };
+  return { state: "", days };
+}
+const isDue = (e) => reminderState(e.reminder_date).state !== "";
+
+async function fetchPipeline() {
+  try { PIPELINE = await (await fetch("/pipeline")).json(); } catch { PIPELINE = []; }
+  updateReminderBadges();
+}
+function updateReminderBadges() {
+  const overdue = PIPELINE.filter((e) => reminderState(e.reminder_date).state === "overdue").length;
+  document.querySelectorAll(".kb-badge").forEach((b) => { b.textContent = overdue; b.classList.toggle("hidden", overdue === 0); });
+  const due = PIPELINE.filter(isDue).length;
+  const rn = $("#kb-remn"); if (rn) rn.textContent = due;
+  const rf = $("#kb-remfilter"); if (rf) rf.classList.toggle("has-due", due > 0);
+}
 
 async function loadKanban() {
   if (!KANBAN_META) await loadMeta();
-  let entries = [];
-  try { entries = await (await fetch("/pipeline")).json(); } catch { entries = []; }
-  renderKanban(entries);
+  await fetchPipeline();
+  renderKanban();
 }
+
+// Comparateur selon le tri courant (score / priorité / rappel) — le statut n'entre pas.
+function sortKey(e) {
+  const opp = e.verdict && e.verdict.opportunity_score != null ? e.verdict.opportunity_score : -1;
+  const rem = e.reminder_date ? Date.parse(e.reminder_date) : Number.POSITIVE_INFINITY;
+  if (KB_SORT === "priority") return [prioRank(e.priority), -opp];
+  if (KB_SORT === "reminder") return [rem, -opp];
+  return [-opp, prioRank(e.priority)];
+}
+function cmpKey(a, b) { for (let i = 0; i < a.length; i++) { if (a[i] !== b[i]) return a[i] < b[i] ? -1 : 1; } return 0; }
 
 function kbCard(e) {
   const v = e.verdict || {};
@@ -415,8 +452,16 @@ function kbCard(e) {
   const opts = cols.map((c) => `<option value="${c.key}" ${c.key === e.status ? "selected" : ""}>${esc(c.label)}</option>`).join("");
   const prioOpts = prios.map((p) => `<option value="${p.key}" ${p.key === e.priority ? "selected" : ""}>${esc(p.label)}</option>`).join("");
   const surf = e.parcel && e.parcel.surface_m2 ? fmt(Math.round(e.parcel.surface_m2)) + " m²" : "—";
+  const rs = reminderState(e.reminder_date);
+  let remHtml = "";
+  if (e.reminder_date) {
+    const lbl = rs.state === "overdue" ? `en retard (${esc(e.reminder_date)})`
+      : rs.state === "soon" ? (rs.days === 0 ? "aujourd'hui" : `dans ${rs.days} j (${esc(e.reminder_date)})`)
+        : esc(e.reminder_date);
+    remHtml = `<div class="kb-rem ${rs.state}">⏰ rappel ${lbl}</div>`;
+  }
   return `
-    <div class="kb-card st-${st}" data-id="${e.id}" data-idu="${esc(e.idu)}">
+    <div class="kb-card st-${st}${rs.state ? " rem-" + rs.state : ""}" data-id="${e.id}" data-idu="${esc(e.idu)}" draggable="true">
       <div class="kb-card-top">
         <span class="kb-idu">${esc(e.idu)}</span>
         <span class="chip ${st}">${STATUS_LABEL[st] || "?"}</span>
@@ -425,10 +470,10 @@ function kbCard(e) {
         <span class="kb-opp">${v.opportunity_score ?? "—"}</span> opp · <span>${surf}</span>
         <span class="kb-prio prio-${esc(e.priority)}">${esc(prioLabel(e.priority))}</span>
       </div>
-      ${e.reminder_date ? `<div class="kb-rem">⏰ rappel ${esc(e.reminder_date)}</div>` : ""}
+      ${remHtml}
       ${e.notes ? `<div class="kb-notes">${esc(e.notes)}</div>` : ""}
       <div class="kb-foot">
-        <select class="kb-move" title="Changer de colonne">${opts}</select>
+        <select class="kb-move" title="Changer de colonne (alternative au glisser-déposer)">${opts}</select>
         <button class="kb-iconbtn kb-edit" title="Éditer">✎</button>
         <button class="kb-iconbtn kb-del" title="Retirer du pipeline">🗑</button>
       </div>
@@ -446,12 +491,14 @@ function kbCard(e) {
     </div>`;
 }
 
-function renderKanban(entries) {
+function renderKanban() {
   const cols = KANBAN_META.columns || [];
-  const n = entries.length;
-  $("#kb-count").textContent = n ? `${n} parcelle${n > 1 ? "s" : ""} suivie${n > 1 ? "s" : ""}` : "Aucune parcelle suivie";
-  const byCol = {};
-  cols.forEach((c) => { byCol[c.key] = []; });
+  let entries = PIPELINE.slice();
+  if (KB_REMINDER_ONLY) entries = entries.filter(isDue);
+  entries.sort((a, b) => cmpKey(sortKey(a), sortKey(b)));
+  const total = PIPELINE.length;
+  $("#kb-count").textContent = total ? `${total} parcelle${total > 1 ? "s" : ""} suivie${total > 1 ? "s" : ""}` : "Aucune parcelle suivie";
+  const byCol = {}; cols.forEach((c) => { byCol[c.key] = []; });
   entries.forEach((e) => { (byCol[e.status] = byCol[e.status] || []).push(e); });
   $("#kb-board").innerHTML = cols.map((c) => `
     <div class="kb-col" data-col="${c.key}">
@@ -465,31 +512,104 @@ function patchEntry(id, body) {
   return fetch(`/pipeline/${id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 }
 
+// Déplacement (drag OU sélecteur) : maj mémoire + DOM (carte glissée vers la colonne, position triée)
+// + persistance via PATCH ; resync si le serveur refuse. Pas de re-render global → fluide, scroll préservé.
+async function moveEntry(id, status) {
+  const e = PIPELINE.find((x) => x.id === id);
+  if (!e || e.status === status) return;
+  const prev = e.status;
+  e.status = status;
+  const card = document.querySelector(`#kb-board .kb-card[data-id="${id}"]`);
+  if (card) {
+    const sel = card.querySelector(".kb-move"); if (sel) sel.value = status;
+    placeCardInColumn(card, status);
+    updateColumnCounts();
+  } else { renderKanban(); }
+  try {
+    const r = await patchEntry(id, { status });
+    if (!r.ok) { e.status = prev; await loadKanban(); }
+  } catch { e.status = prev; await loadKanban(); }
+}
+
+function placeCardInColumn(card, colKey) {
+  const container = document.querySelector(`#kb-board .kb-col[data-col="${colKey}"] .kb-cards`);
+  if (!container) return;
+  const empty = container.querySelector(".kb-empty"); if (empty) empty.remove();
+  const me = PIPELINE.find((x) => x.id === +card.dataset.id);
+  let before = null;
+  container.querySelectorAll(".kb-card").forEach((o) => {
+    if (before || o === card) return;
+    const oe = PIPELINE.find((x) => x.id === +o.dataset.id);
+    if (oe && cmpKey(sortKey(me), sortKey(oe)) < 0) before = o;
+  });
+  card.classList.add("just-moved");
+  container.insertBefore(card, before);
+  setTimeout(() => card.classList.remove("just-moved"), 260);
+}
+
+function updateColumnCounts() {
+  document.querySelectorAll("#kb-board .kb-col").forEach((col) => {
+    const cont = col.querySelector(".kb-cards");
+    const cards = cont.querySelectorAll(".kb-card");
+    const n = col.querySelector(".kb-col-n"); if (n) n.textContent = cards.length;
+    if (cards.length === 0 && !cont.querySelector(".kb-empty")) {
+      const d = document.createElement("div"); d.className = "kb-empty"; d.textContent = "—"; cont.appendChild(d);
+    }
+  });
+}
+
 function wireKanban() {
   document.querySelectorAll("#kb-board .kb-card").forEach((card) => {
-    const id = card.dataset.id;
+    const id = +card.dataset.id;
     const idu = card.dataset.idu;
-    card.addEventListener("click", (ev) => {            // clic carte → fiche (sauf sur les contrôles)
+    card.addEventListener("click", (ev) => {
       if (ev.target.closest(".kb-foot, .kb-editor")) return;
       openSheet(idu);
     });
-    card.querySelector(".kb-move").addEventListener("change", async (ev) => {
-      await patchEntry(id, { status: ev.target.value }); loadKanban();
+    card.addEventListener("dragstart", (ev) => {
+      if (ev.target.closest(".kb-foot, .kb-editor")) { ev.preventDefault(); return; }
+      DRAG_ID = id; card.classList.add("dragging");
+      ev.dataTransfer.effectAllowed = "move";
+      try { ev.dataTransfer.setData("text/plain", String(id)); } catch { /* compat */ }
     });
+    card.addEventListener("dragend", () => {
+      card.classList.remove("dragging");
+      document.querySelectorAll(".kb-col.drag-over").forEach((c) => c.classList.remove("drag-over"));
+      DRAG_ID = null;
+    });
+    card.querySelector(".kb-move").addEventListener("change", (ev) => moveEntry(id, ev.target.value));
     card.querySelector(".kb-edit").addEventListener("click", () => card.querySelector(".kb-editor").classList.toggle("hidden"));
     card.querySelector(".kb-cancel").addEventListener("click", () => card.querySelector(".kb-editor").classList.add("hidden"));
     card.querySelector(".kb-del").addEventListener("click", async () => {
-      await fetch(`/pipeline/${id}`, { method: "DELETE" }); loadKanban();
+      await fetch(`/pipeline/${id}`, { method: "DELETE" }); await loadKanban();
     });
     card.querySelector(".kb-save").addEventListener("click", async () => {
       await patchEntry(id, {
         notes: card.querySelector(".kb-notes-in").value,
         priority: card.querySelector(".kb-prio-in").value,
-        reminder_date: card.querySelector(".kb-rem-in").value,   // "" = efface
+        reminder_date: card.querySelector(".kb-rem-in").value,
       });
-      loadKanban();
+      await loadKanban();
     });
   });
+  // Colonnes = zones de dépôt (drag & drop, desktop).
+  document.querySelectorAll("#kb-board .kb-col").forEach((col) => {
+    col.addEventListener("dragover", (ev) => { ev.preventDefault(); ev.dataTransfer.dropEffect = "move"; col.classList.add("drag-over"); });
+    col.addEventListener("dragleave", (ev) => { if (!col.contains(ev.relatedTarget)) col.classList.remove("drag-over"); });
+    col.addEventListener("drop", (ev) => {
+      ev.preventDefault(); col.classList.remove("drag-over");
+      if (DRAG_ID != null) moveEntry(DRAG_ID, col.dataset.col);
+      DRAG_ID = null;
+    });
+  });
+}
+
+// Tri + filtre « à rappeler » (en-tête du board).
+function wireKanbanControls() {
+  const sortSel = $("#kb-sort");
+  if (sortSel) sortSel.addEventListener("change", () => { KB_SORT = sortSel.value; renderKanban(); });
+  const rf = $("#kb-remfilter");
+  if (rf) rf.addEventListener("click", () => { KB_REMINDER_ONLY = !KB_REMINDER_ONLY; rf.setAttribute("aria-pressed", String(KB_REMINDER_ONLY)); renderKanban(); });
 }
 
 function markFollowing(btn, statusKey) {
@@ -505,6 +625,7 @@ async function main() {
   await loadCoverage();
   await loadSignals();
   await loadMeta();
+  await fetchPipeline();          // pour la pastille « à rappeler » sur l'onglet, dès le démarrage
   const fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json();
   FEATURES = fc.features || [];
   setSliderBounds();                              // P3 : curseurs bornés à la plage réelle
@@ -528,6 +649,7 @@ async function main() {
   ftog.addEventListener("click", () => { const hid = $("#filters-panel").classList.toggle("hidden"); ftog.setAttribute("aria-expanded", String(!hid)); });
   document.querySelectorAll(".js-reset").forEach((b) => b.addEventListener("click", resetFilters));
   document.querySelectorAll(".js-view").forEach((t) => t.addEventListener("click", () => setView(t.dataset.view)));
+  wireKanbanControls();
   // Bandeau « verdicts partiels » repliable : lu une fois → pastille discrète
   $("#banner").addEventListener("click", (e) => {
     const b = $("#banner");

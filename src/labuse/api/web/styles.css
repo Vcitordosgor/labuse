@@ -496,8 +496,10 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .kb-cards { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 9px; min-height: 40px; }
 .kb-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 12px 6px; font-style: italic; }
 .kb-card { background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--inconnu);
-  border-radius: 10px; padding: 10px 11px; cursor: pointer; transition: border-color .12s, transform .06s; }
-.kb-card:hover { border-color: var(--gold); transform: translateY(-1px); }
+  border-radius: 10px; padding: 10px 11px; cursor: grab;
+  transition: border-color .15s, transform .2s cubic-bezier(.4,0,.2,1), box-shadow .2s, background .2s, opacity .2s; }
+.kb-card:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+.kb-card:active { cursor: grabbing; }
 .kb-card.st-opportunite { border-left-color: var(--opp); }
 .kb-card.st-a_creuser { border-left-color: var(--creuser); }
 .kb-card.st-exclue { border-left-color: var(--exclue); }
@@ -531,6 +533,35 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
   font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; flex: 1; }
 .kb-cancel { background: var(--panel); border: 1px solid var(--line); color: var(--muted);
   border-radius: 7px; padding: 6px 11px; font: inherit; font-size: 12px; cursor: pointer; }
+
+/* — Kanban T2 : pastille rappels, outils tri/filtre, drag&drop, rappels actifs — */
+.kb-badge { display: inline-block; min-width: 17px; height: 17px; line-height: 17px; padding: 0 5px; margin-left: 6px;
+  background: #b8503f; color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700; text-align: center; vertical-align: middle; }
+.kb-badge.hidden { display: none; }
+
+.kb-tools { display: flex; align-items: center; gap: 12px; margin-left: 6px; }
+.kb-remfilter { background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+  padding: 6px 11px; border-radius: 8px; font: inherit; font-size: 12.5px; cursor: pointer; transition: all .15s; }
+.kb-remfilter:hover { border-color: var(--gold); color: var(--gold-soft); }
+.kb-remfilter.has-due { color: #e0b65e; border-color: rgba(194,145,63,.4); }
+.kb-remfilter[aria-pressed="true"] { background: #e0b65e; border-color: #e0b65e; color: #1a1206; font-weight: 600; }
+.kb-remn { font-weight: 700; }
+.kb-sort { color: var(--muted); font-size: 12.5px; display: flex; align-items: center; gap: 7px; }
+.kb-sort select { background: var(--panel-2); border: 1px solid var(--line); color: var(--txt);
+  border-radius: 7px; padding: 5px 8px; font: inherit; font-size: 12.5px; cursor: pointer; }
+
+/* Drag : carte soulevée + colonne cible surlignée (retour propre si annulation : aucun déplacement avant le drop) */
+.kb-card.dragging { opacity: .45; transform: scale(.97) rotate(-1deg); box-shadow: 0 16px 32px rgba(0,0,0,.5); cursor: grabbing; }
+.kb-col.drag-over { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold), 0 10px 28px rgba(0,0,0,.32); }
+.kb-col.drag-over .kb-cards { background: rgba(201,168,106,.06); }
+@keyframes kb-pop { from { opacity: .25; transform: translateY(-7px); } to { opacity: 1; transform: none; } }
+.kb-card.just-moved { animation: kb-pop .26s cubic-bezier(.4,0,.2,1); }
+
+/* Rappels actifs : échu (rouge) / proche ≤ 3 j (ambre) — sans masquer le filet de verdict (bord gauche) */
+.kb-rem.overdue { color: #db8b7b; font-weight: 600; }
+.kb-rem.soon { color: #e0b65e; }
+.kb-card.rem-overdue { border-color: rgba(184,80,63,.55); background: rgba(184,80,63,.07); }
+.kb-card.rem-soon { border-color: rgba(194,145,63,.45); }
 
 /* ───────── Mobile : shell une colonne + bascule Carte ⇄ Liste (P1) ───────── */
 .mtabs { display: none; }
@@ -572,10 +603,13 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
   /* Kanban mobile : plein écran sous les onglets, colonnes scrollables au doigt */
   .side-nav { display: none; }                 /* l'onglet Pipeline suffit sur mobile */
   .kanban { top: 52px; }
-  .kb-head { padding: 12px 14px; gap: 10px; }
+  .kb-head { padding: 11px 14px; gap: 9px 12px; flex-wrap: wrap; }
   .kb-title { font-size: 18px; }
+  .kb-count { display: none; }                  /* la pastille « à rappeler » suffit sur mobile */
+  .kb-tools { order: 3; width: 100%; margin-left: 0; justify-content: space-between; }
   .kb-board { padding: 12px; gap: 11px; }
   .kb-col { flex-basis: 82vw; }
+  /* le glisser-déposer n'est pas fiable au tactile → le sélecteur de statut reste la voie sur mobile */
 
   /* légende compacte — la carte est plein écran, plus de chevauchement */
   .legend { right: 10px; bottom: 10px; padding: 8px 11px; gap: 5px; font-size: 11px; }
