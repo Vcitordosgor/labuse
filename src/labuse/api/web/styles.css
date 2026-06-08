@@ -397,3 +397,43 @@ input[type=checkbox] { accent-color: var(--gold); }
   .src-h, .rd-h { break-after: avoid; }
   a[href]::after { content: ""; }               /* pas d'URL en exposant */
 }
+
+/* ───────── Mobile : shell une colonne + bascule Carte ⇄ Liste (P1) ───────── */
+.mtabs { display: none; }
+
+@media (max-width: 900px) {
+  body { display: block; }
+
+  .mtabs {
+    display: flex; align-items: center; justify-content: space-between;
+    position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 850;
+    padding: 0 14px; background: rgba(14,18,24,.97);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  .mt-brand { display: flex; align-items: center; gap: 9px; color: var(--gold); font-weight: 800; letter-spacing: .1em; font-size: 16px; }
+  .mt-bird { width: 26px; height: auto; fill: var(--gold); flex: none; }
+  .mt-toggle { display: flex; background: var(--panel-2); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+  .mt-tab { background: transparent; border: none; color: var(--muted); padding: 8px 18px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .12s; }
+  .mt-tab[aria-selected="true"] { background: var(--gold); color: #1a1206; }
+
+  /* sidebar et carte : plein écran sous les onglets, l'un OU l'autre */
+  #sidebar, #map { position: fixed; inset: 52px 0 0 0; width: 100%; height: auto; }
+  #sidebar { border-right: none; padding: 16px 16px 0; }
+  #sidebar .brand-top { display: none; }   /* logo déjà présent dans la barre d'onglets */
+  #sidebar .brand { padding-bottom: 10px; }
+  #map { height: auto; }
+  body.view-map #sidebar { display: none; }
+  body.view-list #map { display: none; }
+  body.view-list .legend, body.view-list .banner { display: none; }
+
+  /* bandeau : pleine largeur sous les onglets (plus hors écran) */
+  .banner { left: 0; right: 0; top: 52px; }
+
+  /* légende compacte — la carte est plein écran, plus de chevauchement */
+  .legend { right: 10px; bottom: 10px; padding: 8px 11px; gap: 5px; font-size: 11px; }
+  .legend .legend-h { font-size: 9px; }
+
+  /* la fiche occupe tout l'écran sur mobile */
+  .sheet { width: 100vw; box-shadow: none; }
+}

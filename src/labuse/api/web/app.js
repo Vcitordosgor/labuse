@@ -149,9 +149,24 @@ function renderList() {
   document.querySelectorAll(".prow").forEach((el) => el.addEventListener("click", () => focusParcel(el.dataset.idu)));
 }
 
+// Bascule Carte ⇄ Liste (mobile). Sans effet visible en desktop (les deux sont affichés).
+function setView(view) {
+  document.body.classList.toggle("view-map", view === "map");
+  document.body.classList.toggle("view-list", view === "list");
+  document.querySelectorAll(".mt-tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.view === view)));
+  if (view === "map" && map) setTimeout(() => map.invalidateSize(), 60);
+}
+const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
+
 function focusParcel(idu) {
+  if (isMobile()) setView("map");                 // sur mobile, montrer la carte avant de cadrer
   const lyr = byIdu[idu];
-  if (lyr) { map.fitBounds(lyr.getBounds(), { maxZoom: 18 }); lyr.openTooltip(); }
+  const focus = () => {
+    if (lyr && getComputedStyle($("#map")).display !== "none") {
+      try { map.invalidateSize(); map.fitBounds(lyr.getBounds(), { maxZoom: 18 }); lyr.openTooltip(); } catch (e) { /* carte masquée */ }
+    }
+  };
+  isMobile() ? setTimeout(focus, 90) : focus();
   openSheet(idu);
 }
 
@@ -321,6 +336,7 @@ async function main() {
   FEATURES = fc.features || [];
   applyFilters();
   if (FEATURES.length && layer) map.fitBounds(layer.getBounds(), { maxZoom: 15 });
+  if (isMobile()) setTimeout(() => map.invalidateSize(), 120);
 
   // filtres
   const debounce = (fn, ms = 140) => { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; };
@@ -330,6 +346,7 @@ async function main() {
     $("#" + id).addEventListener("input", debounce(applyFilters));
   });
   document.querySelectorAll("#filter-statuses input").forEach((i) => i.addEventListener("change", applyFilters));
+  document.querySelectorAll(".mt-tab").forEach((t) => t.addEventListener("click", () => setView(t.dataset.view)));
   $("#sheet-close").addEventListener("click", closeSheet);
   $("#scrim").addEventListener("click", closeSheet);
 }
