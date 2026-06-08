@@ -23,6 +23,7 @@ let layer = null;           // couche Leaflet courante
 const byIdu = {};           // idu -> layer (pour highlight)
 let map;
 let COVERAGE = null;        // couverture des couches critiques (/coverage)
+let KANBAN_META = null;     // colonnes & priorités du pipeline (/pipeline/meta)
 
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -186,12 +187,17 @@ function renderList() {
   document.querySelectorAll(".prow").forEach((el) => el.addEventListener("click", () => focusParcel(el.dataset.idu)));
 }
 
-// Bascule Carte ⇄ Liste (mobile). Sans effet visible en desktop (les deux sont affichés).
+// Navigation : radar (Carte ⇄ Liste, mobile) ⇄ Kanban (plein écran, desktop + mobile).
 function setView(view) {
-  document.body.classList.toggle("view-map", view === "map");
-  document.body.classList.toggle("view-list", view === "list");
-  document.querySelectorAll(".mt-tab").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.view === view)));
-  if (view === "map" && map) setTimeout(() => map.invalidateSize(), 60);
+  const kanban = view === "kanban";
+  document.body.classList.toggle("view-kanban", kanban);
+  if (!kanban) {
+    document.body.classList.toggle("view-map", view === "map");
+    document.body.classList.toggle("view-list", view === "list");
+    if (view === "map" && map) setTimeout(() => map.invalidateSize(), 60);
+  }
+  document.querySelectorAll(".js-view").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.view === view)));
+  if (kanban) loadKanban();
 }
 const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
 
@@ -324,6 +330,7 @@ function renderFiche(f) {
     </section>
 
     <footer class="fiche-actions">
+      <button class="btn follow" data-follow>+ Suivre cette parcelle</button>
       <button class="btn print" data-print>⎙ Imprimer / PDF</button>
       <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=md" target="_blank">Export Markdown</a>
       <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=html" target="_blank">Export HTML</a>
@@ -364,12 +371,131 @@ function wireSheetActions(idu) {
   }));
   const pb = $("[data-print]");
   if (pb) pb.addEventListener("click", () => { expandCascadeForPrint(); window.print(); });
+
+  // « Suivre cette parcelle » → pipeline (statut Repérée par défaut ; si déjà suivie, affiche son statut)
+  const fol = $("[data-follow]");
+  if (fol) {
+    fetch(`/pipeline/parcel/${encodeURIComponent(idu)}`).then((r) => r.json())
+      .then((d) => { if (d.in_pipeline && d.entry) markFollowing(fol, d.entry.status); }).catch(() => {});
+    fol.addEventListener("click", async () => {
+      if (fol.classList.contains("on")) { closeSheet(); setView("kanban"); return; }   // déjà suivie → aller au pipeline
+      try {
+        const r = await (await fetch("/pipeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idu }) })).json();
+        if (r.entry) markFollowing(fol, r.entry.status);
+      } catch { /* réseau */ }
+    });
+  }
 }
 
 // La cascade est repliée à l'écran ; on la déplie pour qu'elle figure dans le PDF.
 function expandCascadeForPrint() { const d = document.querySelector(".cascade"); if (d) d.open = true; }
 
 function closeSheet() { $("#sheet").classList.add("hidden"); $("#scrim").classList.add("hidden"); }
+
+// ───────────────────────── Pipeline / Kanban (T1) ─────────────────────────
+async function loadMeta() {
+  try { KANBAN_META = await (await fetch("/pipeline/meta")).json(); }
+  catch { KANBAN_META = { columns: [], priorities: [], defaults: {} }; }
+}
+const colLabel = (k) => (KANBAN_META && KANBAN_META.columns.find((c) => c.key === k) || {}).label || k;
+const prioLabel = (k) => (KANBAN_META && KANBAN_META.priorities.find((p) => p.key === k) || {}).label || k;
+
+async function loadKanban() {
+  if (!KANBAN_META) await loadMeta();
+  let entries = [];
+  try { entries = await (await fetch("/pipeline")).json(); } catch { entries = []; }
+  renderKanban(entries);
+}
+
+function kbCard(e) {
+  const v = e.verdict || {};
+  const st = v.status || "inconnu";
+  const cols = (KANBAN_META.columns || []);
+  const prios = (KANBAN_META.priorities || []);
+  const opts = cols.map((c) => `<option value="${c.key}" ${c.key === e.status ? "selected" : ""}>${esc(c.label)}</option>`).join("");
+  const prioOpts = prios.map((p) => `<option value="${p.key}" ${p.key === e.priority ? "selected" : ""}>${esc(p.label)}</option>`).join("");
+  const surf = e.parcel && e.parcel.surface_m2 ? fmt(Math.round(e.parcel.surface_m2)) + " m²" : "—";
+  return `
+    <div class="kb-card st-${st}" data-id="${e.id}" data-idu="${esc(e.idu)}">
+      <div class="kb-card-top">
+        <span class="kb-idu">${esc(e.idu)}</span>
+        <span class="chip ${st}">${STATUS_LABEL[st] || "?"}</span>
+      </div>
+      <div class="kb-sub">
+        <span class="kb-opp">${v.opportunity_score ?? "—"}</span> opp · <span>${surf}</span>
+        <span class="kb-prio prio-${esc(e.priority)}">${esc(prioLabel(e.priority))}</span>
+      </div>
+      ${e.reminder_date ? `<div class="kb-rem">⏰ rappel ${esc(e.reminder_date)}</div>` : ""}
+      ${e.notes ? `<div class="kb-notes">${esc(e.notes)}</div>` : ""}
+      <div class="kb-foot">
+        <select class="kb-move" title="Changer de colonne">${opts}</select>
+        <button class="kb-iconbtn kb-edit" title="Éditer">✎</button>
+        <button class="kb-iconbtn kb-del" title="Retirer du pipeline">🗑</button>
+      </div>
+      <div class="kb-editor hidden">
+        <textarea class="kb-notes-in" placeholder="Notes libres…">${esc(e.notes || "")}</textarea>
+        <div class="kb-editor-row">
+          <select class="kb-prio-in" title="Priorité">${prioOpts}</select>
+          <input type="date" class="kb-rem-in" title="Date de rappel" value="${esc(e.reminder_date || "")}">
+        </div>
+        <div class="kb-editor-row">
+          <button class="kb-save">Enregistrer</button>
+          <button class="kb-cancel">Annuler</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderKanban(entries) {
+  const cols = KANBAN_META.columns || [];
+  const n = entries.length;
+  $("#kb-count").textContent = n ? `${n} parcelle${n > 1 ? "s" : ""} suivie${n > 1 ? "s" : ""}` : "Aucune parcelle suivie";
+  const byCol = {};
+  cols.forEach((c) => { byCol[c.key] = []; });
+  entries.forEach((e) => { (byCol[e.status] = byCol[e.status] || []).push(e); });
+  $("#kb-board").innerHTML = cols.map((c) => `
+    <div class="kb-col" data-col="${c.key}">
+      <div class="kb-col-head"><span class="kb-col-title">${esc(c.label)}</span><span class="kb-col-n">${(byCol[c.key] || []).length}</span></div>
+      <div class="kb-cards">${(byCol[c.key] || []).map(kbCard).join("") || '<div class="kb-empty">—</div>'}</div>
+    </div>`).join("");
+  wireKanban();
+}
+
+function patchEntry(id, body) {
+  return fetch(`/pipeline/${id}`, { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+}
+
+function wireKanban() {
+  document.querySelectorAll("#kb-board .kb-card").forEach((card) => {
+    const id = card.dataset.id;
+    const idu = card.dataset.idu;
+    card.addEventListener("click", (ev) => {            // clic carte → fiche (sauf sur les contrôles)
+      if (ev.target.closest(".kb-foot, .kb-editor")) return;
+      openSheet(idu);
+    });
+    card.querySelector(".kb-move").addEventListener("change", async (ev) => {
+      await patchEntry(id, { status: ev.target.value }); loadKanban();
+    });
+    card.querySelector(".kb-edit").addEventListener("click", () => card.querySelector(".kb-editor").classList.toggle("hidden"));
+    card.querySelector(".kb-cancel").addEventListener("click", () => card.querySelector(".kb-editor").classList.add("hidden"));
+    card.querySelector(".kb-del").addEventListener("click", async () => {
+      await fetch(`/pipeline/${id}`, { method: "DELETE" }); loadKanban();
+    });
+    card.querySelector(".kb-save").addEventListener("click", async () => {
+      await patchEntry(id, {
+        notes: card.querySelector(".kb-notes-in").value,
+        priority: card.querySelector(".kb-prio-in").value,
+        reminder_date: card.querySelector(".kb-rem-in").value,   // "" = efface
+      });
+      loadKanban();
+    });
+  });
+}
+
+function markFollowing(btn, statusKey) {
+  btn.classList.add("on");
+  btn.textContent = `✓ Suivie · ${colLabel(statusKey)}`;
+}
 
 // ───────────────────────── Bootstrap ─────────────────────────
 async function main() {
@@ -378,6 +504,7 @@ async function main() {
   await loadStats();
   await loadCoverage();
   await loadSignals();
+  await loadMeta();
   const fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json();
   FEATURES = fc.features || [];
   setSliderBounds();                              // P3 : curseurs bornés à la plage réelle
@@ -400,7 +527,7 @@ async function main() {
   const ftog = $("#filter-toggle");
   ftog.addEventListener("click", () => { const hid = $("#filters-panel").classList.toggle("hidden"); ftog.setAttribute("aria-expanded", String(!hid)); });
   document.querySelectorAll(".js-reset").forEach((b) => b.addEventListener("click", resetFilters));
-  document.querySelectorAll(".mt-tab").forEach((t) => t.addEventListener("click", () => setView(t.dataset.view)));
+  document.querySelectorAll(".js-view").forEach((t) => t.addEventListener("click", () => setView(t.dataset.view)));
   // Bandeau « verdicts partiels » repliable : lu une fois → pastille discrète
   $("#banner").addEventListener("click", (e) => {
     const b = $("#banner");

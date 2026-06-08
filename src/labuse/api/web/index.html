@@ -17,8 +17,9 @@
       <span>LA&nbsp;BUSE</span>
     </div>
     <div class="mt-toggle" role="tablist">
-      <button class="mt-tab" data-view="map" role="tab" aria-selected="true">Carte</button>
-      <button class="mt-tab" data-view="list" role="tab" aria-selected="false">Liste</button>
+      <button class="mt-tab js-view" data-view="map" role="tab" aria-selected="true">Carte</button>
+      <button class="mt-tab js-view" data-view="list" role="tab" aria-selected="false">Liste</button>
+      <button class="mt-tab js-view" data-view="kanban" role="tab" aria-selected="false">Pipeline</button>
     </div>
   </nav>
 
@@ -33,6 +34,10 @@
       <div class="brand-sub">Radar foncier · La Réunion</div>
       <div class="brand-commune" id="commune-label">Saint-Paul (97415)</div>
     </header>
+
+    <div class="side-nav">
+      <button class="nav-kanban js-view" data-view="kanban">📋 Pipeline de prospection</button>
+    </div>
 
     <section class="kpis" id="kpis">
       <div class="kpi" data-status="all" role="button" tabindex="0" title="Tout afficher"><span class="kpi-val" id="kpi-total">—</span><span class="kpi-lbl">parcelles</span></div>
@@ -99,6 +104,16 @@
     <span><i class="dot exclue"></i> Exclue</span>
     <span><i class="dot inconnu"></i> Non évaluée</span>
   </div>
+
+  <!-- Pipeline de prospection (Kanban T1) -->
+  <section id="kanban" class="kanban" aria-label="Pipeline de prospection">
+    <header class="kb-head">
+      <button class="kb-back js-view" data-view="map">← Radar</button>
+      <div class="kb-title">Pipeline de prospection</div>
+      <span class="kb-count" id="kb-count"></span>
+    </header>
+    <div class="kb-board" id="kb-board"></div>
+  </section>
 
   <!-- Fiche premium §8 -->
   <section id="sheet" class="sheet hidden" aria-hidden="true">
