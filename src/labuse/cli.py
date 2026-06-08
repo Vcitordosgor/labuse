@@ -123,6 +123,87 @@ def ingest_real_cmd(
         typer.echo(f"    {k:18} : {v}")
 
 
+def _fmt_layers(counts: dict) -> str:
+    return ", ".join(f"{k}:{v}" for k, v in counts.items()) or "—"
+
+
+@app.command("ingest-island")
+def ingest_island_cmd(
+    only: str = typer.Option(None, help="INSEE ou noms (séparés par virgule) ; défaut = les 24."),
+    force: bool = typer.Option(False, help="Réingère même les communes déjà « ok »."),
+    limit: int = typer.Option(None, help="Cap de parcelles par commune (tests)."),
+    spacing: float = typer.Option(4.0, help="Pause (s) entre communes — politesse API."),
+) -> None:
+    """Ingestion + évaluation des 24 communes, EN SÉRIE et REPRENABLE.
+
+    Reprise : saute les communes déjà « ok », ne ré-évalue que celles « ingested »,
+    (re)fait celles en erreur / jamais tentées. Chaque commune est committée seule :
+    un arrêt ne reperd jamais le travail déjà fait.
+    """
+    import time
+
+    from .ingestion import run_all, seed_sources
+
+    targets = run_all.REUNION_COMMUNES
+    if only:
+        wanted = {x.strip() for x in only.split(",")}
+        targets = [(i, n) for (i, n) in targets if i in wanted or n in wanted]
+    if not targets:
+        typer.echo("Aucune commune ciblée (vérifier --only).")
+        raise typer.Exit(1)
+
+    with session_scope() as s:
+        seed_sources.seed(s)  # idempotent
+
+    ok: list[tuple] = []
+    failed: list[tuple] = []
+    skipped: list[str] = []
+    t_all = time.monotonic()
+
+    for k, (insee, name) in enumerate(targets, 1):
+        with session_scope() as s:
+            st = run_all.run_status(s, name)
+        if st == "ok" and not force:
+            typer.echo(f"  [{k}/{len(targets)}] {name} ({insee}) — déjà OK, saute.")
+            skipped.append(name)
+            continue
+        t0 = time.monotonic()
+        typer.echo(f"▶ [{k}/{len(targets)}] {name} ({insee}) …")
+        try:
+            if st == "ingested" and not force:
+                with session_scope() as s:                       # parcelles déjà là → ré-évaluation
+                    nev = run_all.evaluate_commune(s, name)
+                info = {"parcels": "(déjà ingérées)", "layers": {}}
+            else:
+                with session_scope() as s:                       # phase A (commit)
+                    info = run_all.ingest_commune(s, insee, name, limit=limit)
+                with session_scope() as s:                       # phase B (commit) → ok
+                    nev = run_all.evaluate_commune(s, name)
+            dt = time.monotonic() - t0
+            plu = (info.get("layers") or {}).get("plu_gpu_zone", "?")
+            typer.echo(f"  ✓ {name} : {info['parcels']} parcelles · PLU={plu} · {nev} évaluées · {dt:.0f}s")
+            typer.echo(f"      couches : {_fmt_layers(info.get('layers') or {})}")
+            ok.append((name, nev, dt))
+        except Exception as exc:  # noqa: BLE001 - on isole la commune, on continue
+            dt = time.monotonic() - t0
+            typer.echo(f"  ✗ {name} : ÉCHEC {type(exc).__name__}: {exc} ({dt:.0f}s)")
+            failed.append((name, f"{type(exc).__name__}: {exc}", dt))
+        time.sleep(spacing)
+
+    with session_scope() as s:
+        total_p = s.execute(text("SELECT count(*) FROM parcels")).scalar()
+        communes_db = s.execute(text("SELECT count(DISTINCT commune) FROM parcels")).scalar()
+
+    dt_all = time.monotonic() - t_all
+    typer.echo("\n" + "═" * 60)
+    typer.echo(f"BILAN — {len(ok)} OK · {len(failed)} échec(s) · {len(skipped)} sauté(s) · {dt_all:.0f}s")
+    for name, nev, dt in ok:
+        typer.echo(f"  ✓ {name:24} {nev:>7} évaluées  ({dt:.0f}s)")
+    for name, err, dt in failed:
+        typer.echo(f"  ✗ {name:24} {err}")
+    typer.echo(f"TOTAL EN BASE : {total_p} parcelles sur {communes_db} commune(s).")
+
+
 @app.command("evaluate")
 def evaluate_cmd(
     commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
