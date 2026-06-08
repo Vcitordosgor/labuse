@@ -30,6 +30,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from . import enums
 
 SRID = 4326  # stockage (voir geo.py)
+SRID_M = 2975  # RGR92 UTM 40S — CRS métrique (mesures + intersections cascade)
 
 
 def _enum(enum_cls, name: str) -> SAEnum:
@@ -66,6 +67,8 @@ class Parcel(Base, TimestampMixin):
     numero: Mapped[str | None] = mapped_column(String(10))
 
     geom: Mapped[object] = mapped_column(Geometry("GEOMETRY", srid=SRID, spatial_index=True))
+    geom_2975: Mapped[object | None] = mapped_column(  # pré-projeté (perf cascade), auto-maintenu par trigger
+        Geometry("GEOMETRY", srid=SRID_M, spatial_index=False))
     surface_m2: Mapped[float | None] = mapped_column(Float)  # calculée en 2975
     centroid: Mapped[object | None] = mapped_column(Geometry("POINT", srid=SRID, spatial_index=False))
     bbox: Mapped[object | None] = mapped_column(Geometry("POLYGON", srid=SRID, spatial_index=False))
@@ -257,6 +260,8 @@ class SpatialLayer(Base):
     subtype: Mapped[str | None] = mapped_column(String(48))
     name: Mapped[str | None] = mapped_column(String(255))
     geom: Mapped[object] = mapped_column(Geometry("GEOMETRY", srid=SRID, spatial_index=True))
+    geom_2975: Mapped[object | None] = mapped_column(  # pré-projeté (perf cascade), auto-maintenu par trigger
+        Geometry("GEOMETRY", srid=SRID_M, spatial_index=False))
     attrs: Mapped[dict | None] = mapped_column(JSONB)
     data_source_id: Mapped[int | None] = mapped_column(ForeignKey("data_sources.id"))
     commune: Mapped[str | None] = mapped_column(String(64))
@@ -328,6 +333,40 @@ class PipelineEntry(Base, TimestampMixin):
 
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
+    ensure_geom_2975(engine)
+
+
+def ensure_geom_2975(engine) -> None:
+    """Géométrie pré-projetée en 2975 (perf cascade), auto-maintenue par TRIGGER.
+
+    `geom_2975 = ST_Transform(geom, 2975)` sur parcels + spatial_layers : la cascade
+    n'a plus à reprojeter à la volée (la géométrie d'une parcelle était re-transformée
+    une fois PAR couche croisée). C'est la MÊME valeur, pré-calculée et indexée en GIST
+    → coverage/verdicts INCHANGÉS. Idempotent ; remplit l'existant et pose le trigger
+    qui couvre tous les écrivains (cadastre, couches, démo, MakeValid)."""
+    from sqlalchemy import text as _t
+
+    ddl = [
+        "ALTER TABLE parcels ADD COLUMN IF NOT EXISTS geom_2975 geometry(Geometry, 2975)",
+        "ALTER TABLE spatial_layers ADD COLUMN IF NOT EXISTS geom_2975 geometry(Geometry, 2975)",
+        "CREATE OR REPLACE FUNCTION labuse_set_geom_2975() RETURNS trigger AS $$ "
+        "BEGIN NEW.geom_2975 := ST_Transform(NEW.geom, 2975); RETURN NEW; END; $$ LANGUAGE plpgsql",
+        "DROP TRIGGER IF EXISTS trg_parcels_geom_2975 ON parcels",
+        "CREATE TRIGGER trg_parcels_geom_2975 BEFORE INSERT OR UPDATE OF geom ON parcels "
+        "FOR EACH ROW EXECUTE FUNCTION labuse_set_geom_2975()",
+        "DROP TRIGGER IF EXISTS trg_layers_geom_2975 ON spatial_layers",
+        "CREATE TRIGGER trg_layers_geom_2975 BEFORE INSERT OR UPDATE OF geom ON spatial_layers "
+        "FOR EACH ROW EXECUTE FUNCTION labuse_set_geom_2975()",
+        "UPDATE parcels SET geom_2975 = ST_Transform(geom, 2975) WHERE geom_2975 IS NULL AND geom IS NOT NULL",
+        "UPDATE spatial_layers SET geom_2975 = ST_Transform(geom, 2975) WHERE geom_2975 IS NULL AND geom IS NOT NULL",
+        "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",
+        "CREATE INDEX IF NOT EXISTS idx_spatial_layers_geom_2975 ON spatial_layers USING gist (geom_2975)",
+        "ANALYZE parcels",
+        "ANALYZE spatial_layers",
+    ]
+    with engine.begin() as c:
+        for stmt in ddl:
+            c.execute(_t(stmt))
 
 
 def drop_all(engine) -> None:

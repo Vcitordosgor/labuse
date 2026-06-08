@@ -67,11 +67,11 @@ class EvalContext:
             text(
                 """
                 SELECT p.id AS pid, sl.kind, sl.subtype, sl.name, sl.attrs,
-                       ST_Area(ST_Intersection(ST_Transform(p.geom, 2975), ST_Transform(sl.geom, 2975)))
-                         / NULLIF(ST_Area(ST_Transform(p.geom, 2975)), 0) AS coverage,
+                       ST_Area(ST_Intersection(p.geom_2975, sl.geom_2975))
+                         / NULLIF(ST_Area(p.geom_2975), 0) AS coverage,
                        ds.name AS source_name
                 FROM parcels p
-                JOIN spatial_layers sl ON ST_Intersects(p.geom, sl.geom)
+                JOIN spatial_layers sl ON ST_Intersects(p.geom_2975, sl.geom_2975)
                 LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
                 WHERE p.id = ANY(:ids)
                 """
@@ -184,12 +184,12 @@ class EvalContext:
         sql = text(
             """
             SELECT sl.subtype, sl.name, sl.attrs,
-                   ST_Area(ST_Intersection(ST_Transform(p.geom, 2975), ST_Transform(sl.geom, 2975)))
-                     / NULLIF(ST_Area(ST_Transform(p.geom, 2975)), 0) AS coverage,
+                   ST_Area(ST_Intersection(p.geom_2975, sl.geom_2975))
+                     / NULLIF(ST_Area(p.geom_2975), 0) AS coverage,
                    ds.name AS source_name
             FROM parcels p
             JOIN spatial_layers sl
-              ON sl.kind = :kind AND ST_Intersects(p.geom, sl.geom)
+              ON sl.kind = :kind AND ST_Intersects(p.geom_2975, sl.geom_2975)
             LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
             WHERE p.id = :pid
             """
