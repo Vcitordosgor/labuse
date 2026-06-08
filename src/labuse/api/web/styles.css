@@ -107,7 +107,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .prow .idu { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12.5px; color: var(--gold-soft); }
 .prow .p-verdict { text-align: right; }
 .prow .scores { font-size: 12px; color: var(--muted); }
-.prow .scores b { font-family: "Fraunces", Georgia, serif; font-size: 16px; color: var(--txt); margin-right: 1px; }
+.prow .scores b { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 16px; color: var(--txt); margin-right: 1px; }
 .prow .p-surf { text-align: right; font-size: 11.5px; color: var(--muted); }
 .chip {
   font-size: 10.5px; padding: 2px 7px; border-radius: 999px; font-weight: 600;
@@ -261,7 +261,8 @@ input[type=checkbox] { accent-color: var(--gold); }
 .rd-h { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 9px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .rd-h::before { content: ""; width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 .rd-h.ok { color: #246046; } .rd-h.ok::before { background: var(--v-opportunite); }
-.rd-h.lim { color: #8a4233; } .rd-h.lim::before { background: var(--v-faux_positif_probable); }
+.rd-h.lim { color: #8a5a1f; } .rd-h.lim::before { background: var(--v-a_creuser); }
+.rd-h.lim.has-hard { color: #8a4233; } .rd-h.lim.has-hard::before { background: var(--v-faux_positif_probable); }
 .rd-h.unk { color: #7c581f; } .rd-h.unk::before { background: var(--accent); }
 .rd-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .rd-li { padding-left: 15px; position: relative; }

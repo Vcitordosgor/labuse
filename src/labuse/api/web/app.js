@@ -12,7 +12,8 @@ const LAYER_SHORT = {
   sar: "SAR", risques: "Risques (PPR)", abf: "ABF / Monuments", ens: "ENS", safer: "SAFER",
   foret_publique: "Forêt publique", trait_de_cote: "Trait de côte", parc_national: "Parc national",
   zonage_plu_gpu: "PLU", eau: "Hydrographie", pente: "Pente", ocs_ge: "Occupation du sol",
-  osm_faux_positif: "Bâti (OSM)",
+  osm_faux_positif: "Bâti (OSM)", sitadel: "SITADEL", proprietaire: "Propriétaire",
+  fichiers_fonciers: "Fichiers fonciers", dvf: "DVF",
 };
 const shortLayer = (c) => LAYER_SHORT[c.layer_name] || c.layer_name;
 
@@ -178,6 +179,7 @@ function renderFiche(f) {
   const favors = cascade.filter((c) => c.result === "POSITIVE");
   const limits = cascade.filter((c) => c.result === "HARD_EXCLUDE" || c.result === "SOFT_FLAG");
   const unknown = cascade.filter((c) => c.result === "UNKNOWN");
+  const hasHard = limits.some((c) => c.result === "HARD_EXCLUDE");  // rouge si blocage dur, sinon ambre
 
   const liRow = (c, cls) => `<li class="rd-li ${cls}">
       <span class="rd-detail">${esc(c.detail)}</span>
@@ -233,7 +235,7 @@ function renderFiche(f) {
 
     <section class="reads">
       <div class="read"><h3 class="rd-h ok">Ce qui favorise</h3>${block(favors, "ok", "Aucun signal franchement favorable sur les couches disponibles.")}</div>
-      <div class="read"><h3 class="rd-h lim">Ce qui contraint</h3>${block(limits, "lim", "Aucune contrainte relevée sur les couches disponibles.")}</div>
+      <div class="read"><h3 class="rd-h lim${hasHard ? " has-hard" : ""}">Ce qui contraint</h3>${block(limits, "lim", "Aucune contrainte relevée sur les couches disponibles.")}</div>
       <div class="read"><h3 class="rd-h unk">Ce qu'on n'a pas vérifié</h3>${block(unknown, "unk", "Toutes les couches critiques ont répondu.")}</div>
     </section>
 
