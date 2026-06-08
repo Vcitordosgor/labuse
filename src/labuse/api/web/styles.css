@@ -63,6 +63,11 @@ body {
 .kpi.opp .kpi-val { color: #4bb487; }
 .kpi.creuser .kpi-val { color: var(--creuser); }
 .kpi.exclue .kpi-val { color: #aab2bd; }
+/* KPI cliquables : filtrent carte + liste par statut */
+.kpi { cursor: pointer; user-select: none; transition: transform .06s, box-shadow .12s, background .12s; }
+.kpi:hover { background: #232c38; }
+.kpi:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.kpi.active { box-shadow: 0 0 0 1.5px var(--gold) inset; background: #232c38; }
 
 .filters h2, .listing h2 {
   font-size: 12px; text-transform: uppercase; letter-spacing: .09em;
@@ -91,6 +96,17 @@ input[type=checkbox] { accent-color: var(--gold); }
 .muted-sm { color: var(--muted); font-size: 12px; }
 
 .listing { flex: 1; }
+.listing-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 16px 0 10px; }
+.listing-head h2 { margin: 0; }
+.filter-btn {
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
+  padding: 5px 11px; border-radius: 8px; font: inherit; font-size: 12px; font-weight: 600;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all .12s; white-space: nowrap;
+}
+.filter-btn:hover { border-color: var(--gold); color: var(--txt); }
+.filter-btn[aria-expanded="true"] { border-color: var(--gold); color: var(--gold-soft); background: #232c38; }
+.filters-panel { padding: 12px 12px 4px; margin-bottom: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; }
+.filters-panel .range:last-child { margin-bottom: 8px; }
 .count { color: var(--gold-soft); font-weight: 600; }
 .parcel-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 14px; }
 .prow {

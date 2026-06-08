@@ -172,6 +172,14 @@ function focusParcel(idu) {
 
 function applyFilters() { renderMap(); renderList(); }
 
+// KPI cliquable → filtre carte + liste par statut (P2). "all" = tout afficher.
+function clearKpiActive() { document.querySelectorAll(".kpi").forEach((k) => k.classList.remove("active")); }
+function filterByStatus(status) {
+  document.querySelectorAll("#filter-statuses input").forEach((b) => { b.checked = (status === "all") || (b.value === status); });
+  document.querySelectorAll(".kpi").forEach((k) => k.classList.toggle("active", k.dataset.status === status));
+  applyFilters();
+}
+
 // ───────────────────────── Fiche premium §8 ─────────────────────────
 async function openSheet(idu) {
   $("#sheet").classList.remove("hidden");
@@ -345,7 +353,13 @@ async function main() {
     $("#" + id).addEventListener("input", (e) => { if (out) out.textContent = e.target.value; });
     $("#" + id).addEventListener("input", debounce(applyFilters));
   });
-  document.querySelectorAll("#filter-statuses input").forEach((i) => i.addEventListener("change", applyFilters));
+  document.querySelectorAll("#filter-statuses input").forEach((i) => i.addEventListener("change", () => { clearKpiActive(); applyFilters(); }));
+  document.querySelectorAll(".kpi[data-status]").forEach((k) => {
+    k.addEventListener("click", () => filterByStatus(k.dataset.status));
+    k.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); filterByStatus(k.dataset.status); } });
+  });
+  const ftog = $("#filter-toggle");
+  ftog.addEventListener("click", () => { const hid = $("#filters-panel").classList.toggle("hidden"); ftog.setAttribute("aria-expanded", String(!hid)); });
   document.querySelectorAll(".mt-tab").forEach((t) => t.addEventListener("click", () => setView(t.dataset.view)));
   $("#sheet-close").addEventListener("click", closeSheet);
   $("#scrim").addEventListener("click", closeSheet);

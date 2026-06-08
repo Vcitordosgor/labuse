@@ -35,36 +35,37 @@
     </header>
 
     <section class="kpis" id="kpis">
-      <div class="kpi"><span class="kpi-val" id="kpi-total">—</span><span class="kpi-lbl">parcelles</span></div>
-      <div class="kpi opp"><span class="kpi-val" id="kpi-opp">—</span><span class="kpi-lbl">opportunités</span></div>
-      <div class="kpi creuser"><span class="kpi-val" id="kpi-creuser">—</span><span class="kpi-lbl">à creuser</span></div>
-      <div class="kpi exclue"><span class="kpi-val" id="kpi-exclue">—</span><span class="kpi-lbl">exclues</span></div>
+      <div class="kpi" data-status="all" role="button" tabindex="0" title="Tout afficher"><span class="kpi-val" id="kpi-total">—</span><span class="kpi-lbl">parcelles</span></div>
+      <div class="kpi opp" data-status="opportunite" role="button" tabindex="0" title="Voir les opportunités"><span class="kpi-val" id="kpi-opp">—</span><span class="kpi-lbl">opportunités</span></div>
+      <div class="kpi creuser" data-status="a_creuser" role="button" tabindex="0" title="Voir les « à creuser »"><span class="kpi-val" id="kpi-creuser">—</span><span class="kpi-lbl">à creuser</span></div>
+      <div class="kpi exclue" data-status="exclue" role="button" tabindex="0" title="Voir les exclues"><span class="kpi-val" id="kpi-exclue">—</span><span class="kpi-lbl">exclues</span></div>
+    </section>
+
+    <section class="listing">
+      <div class="listing-head">
+        <h2>Opportunités classées <span class="count" id="list-count"></span></h2>
+        <button class="filter-btn" id="filter-toggle" aria-expanded="false" aria-controls="filters-panel">⚲ Filtrer</button>
+      </div>
+      <div class="filters-panel hidden" id="filters-panel">
+        <div class="filter-statuses" id="filter-statuses">
+          <label><input type="checkbox" value="opportunite" checked /> <i class="dot opportunite"></i>Opportunité</label>
+          <label><input type="checkbox" value="a_creuser" checked /> <i class="dot a_creuser"></i>À creuser</label>
+          <label><input type="checkbox" value="faux_positif_probable" /> <i class="dot faux_positif_probable"></i>Faux positif</label>
+          <label><input type="checkbox" value="exclue" /> <i class="dot exclue"></i>Exclue</label>
+        </div>
+        <label class="range">Opportunité ≥ <output id="opp-out">0</output>
+          <input type="range" id="f-opp" min="0" max="100" value="0" /></label>
+        <label class="range">Complétude ≥ <output id="cpl-out">0</output>
+          <input type="range" id="f-cpl" min="0" max="100" value="0" /></label>
+        <label class="range">Surface ≥ <output id="surf-out">0</output> m²
+          <input type="range" id="f-surf" min="0" max="5000" step="100" value="0" /></label>
+      </div>
+      <div id="parcel-list" class="parcel-list"></div>
     </section>
 
     <section class="veille">
       <h2>Veille (offre C) <span class="count" id="veille-count">—</span> signaux</h2>
       <div id="veille-list" class="veille-list"><div class="muted-sm">—</div></div>
-    </section>
-
-    <section class="filters">
-      <h2>Filtres</h2>
-      <div class="filter-statuses" id="filter-statuses">
-        <label><input type="checkbox" value="opportunite" checked /> <i class="dot opportunite"></i>Opportunité</label>
-        <label><input type="checkbox" value="a_creuser" checked /> <i class="dot a_creuser"></i>À creuser</label>
-        <label><input type="checkbox" value="faux_positif_probable" /> <i class="dot faux_positif_probable"></i>Faux positif</label>
-        <label><input type="checkbox" value="exclue" /> <i class="dot exclue"></i>Exclue</label>
-      </div>
-      <label class="range">Opportunité ≥ <output id="opp-out">0</output>
-        <input type="range" id="f-opp" min="0" max="100" value="0" /></label>
-      <label class="range">Complétude ≥ <output id="cpl-out">0</output>
-        <input type="range" id="f-cpl" min="0" max="100" value="0" /></label>
-      <label class="range">Surface ≥ <output id="surf-out">0</output> m²
-        <input type="range" id="f-surf" min="0" max="5000" step="100" value="0" /></label>
-    </section>
-
-    <section class="listing">
-      <h2>Survivantes classées <span class="count" id="list-count"></span></h2>
-      <div id="parcel-list" class="parcel-list"></div>
     </section>
 
     <footer class="disclaimer-foot">
