@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="LA BUSE">
+  <rect width="64" height="64" rx="14" fill="#12161d"/>
+  <rect x="2.5" y="2.5" width="59" height="59" rx="11.5" fill="none" stroke="#c9a86a" stroke-opacity=".35" stroke-width="1.5"/>
+  <g transform="translate(6.6,22) scale(0.453)" fill="#c9a86a">
+    <path d="M56 11 C58 13 59 15 61 17 C74 12 92 10 109 14 C93 17 75 20 62 25 C60 28 59 30 58 32 L56 35 L54 32 C53 30 52 28 50 25 C37 20 19 17 3 14 C20 10 38 12 51 17 C53 15 54 13 56 11 Z"/>
+  </g>
+</svg>
