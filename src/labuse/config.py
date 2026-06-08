@@ -81,6 +81,11 @@ def wfs_layers() -> dict[str, Any]:
     return load_yaml_config("wfs_layers")
 
 
+def pipeline() -> dict[str, Any]:
+    """Colonnes & priorités du Kanban de prospection (config/pipeline.yaml)."""
+    return load_yaml_config("pipeline")
+
+
 @lru_cache(maxsize=1)
 def rules_version() -> str:
     """Empreinte courte des configs de règles (pour estampiller les évaluations)."""

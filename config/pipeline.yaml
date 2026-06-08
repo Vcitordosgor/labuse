@@ -1,0 +1,20 @@
+# LA BUSE — Kanban de prospection (colonnes & priorités EN CONFIG, pas en dur).
+# La base stocke la `key` (stable, ascii) ; `label` = affichage. Réordonner/renommer
+# une colonne ici ne demande aucune migration.
+
+columns:
+  - {key: reperee,                   label: Repérée}
+  - {key: proprietaire_a_identifier, label: Propriétaire à identifier}
+  - {key: contacte,                  label: Contacté}
+  - {key: en_discussion,             label: En discussion}
+  - {key: chaud,                     label: Chaud}
+  - {key: abandonnee,                label: Abandonnée}
+
+priorities:
+  - {key: haute,   label: Haute}
+  - {key: moyenne, label: Moyenne}
+  - {key: basse,   label: Basse}
+
+defaults:
+  status: reperee
+  priority: moyenne

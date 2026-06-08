@@ -5,11 +5,12 @@ Toute mesure métrique passe par ST_Transform(geom, 2975).
 """
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
     CheckConstraint,
+    Date,
     DateTime,
     Float,
     ForeignKey,
@@ -17,6 +18,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy import (
@@ -299,6 +301,29 @@ class SitadelPermit(Base):
     commune: Mapped[str | None] = mapped_column(String(64))
     geom: Mapped[object | None] = mapped_column(Geometry("POINT", srid=SRID, spatial_index=True))
     raw: Mapped[dict | None] = mapped_column(JSONB)
+
+
+# ─────────────────────── pipeline de prospection (Kanban) ───────────────────────
+
+class PipelineEntry(Base, TimestampMixin):
+    """Une parcelle suivie dans le pipeline de prospection (Kanban).
+
+    `status` (colonne) et `priority` sont des CLÉS validées contre config/pipeline.yaml
+    (colonnes en config, pas en dur). Une parcelle = au plus une entrée (parcel_id unique).
+    `created_at` (mixin) sert de date d'ajout.
+    """
+
+    __tablename__ = "pipeline_entries"
+    __table_args__ = (UniqueConstraint("parcel_id", name="uq_pipeline_parcel"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    parcel_id: Mapped[int] = mapped_column(ForeignKey("parcels.id", ondelete="CASCADE"))
+    status: Mapped[str] = mapped_column(String(48))          # clé de colonne (config)
+    priority: Mapped[str] = mapped_column(String(16))        # clé de priorité (config)
+    notes: Mapped[str] = mapped_column(Text, default="", server_default="")
+    reminder_date: Mapped[date | None] = mapped_column(Date)  # rappel optionnel
+
+    parcel: Mapped[Parcel] = relationship()
 
 
 def create_all(engine) -> None:
