@@ -59,7 +59,10 @@ def compute_opportunity(verdicts, ai_adjustment: int = 0, cfg: dict | None = Non
             if sev == Severity.FORT.value:
                 has_fort = True
         elif v.result == CascadeVerdict.POSITIVE and v.bonus_key:
-            b = float(bonuses.get(v.bonus_key, 0))
+            # poids config = PLAFOND ; magnitude ∈ [0,1] = intensité calculée par la couche.
+            # Arrondi entier → chaque ligne reste un nombre de points lisible et la somme est exacte.
+            mag = max(0.0, min(1.0, float(getattr(v, "magnitude", 1.0))))
+            b = float(round(float(bonuses.get(v.bonus_key, 0)) * mag))
             weights[i] = b
             score += b
 

@@ -96,7 +96,10 @@ class EvalContext:
             for r in self.session.execute(
                 text(
                     """SELECT p.id AS pid, count(*) AS n,
-                              percentile_cont(0.5) WITHIN GROUP (ORDER BY d.valeur_fonciere) AS med
+                              percentile_cont(0.5) WITHIN GROUP (ORDER BY d.valeur_fonciere) AS med,
+                              percentile_cont(0.5) WITHIN GROUP (
+                                ORDER BY d.valeur_fonciere / NULLIF(d.surface_terrain, 0))
+                                FILTER (WHERE d.surface_terrain > 0 AND d.valeur_fonciere > 0) AS med_em2
                        FROM parcels p JOIN dvf_mutations d
                          ON ST_DWithin(ST_Transform(p.centroid, 2975), ST_Transform(d.geom, 2975), :r)
                        WHERE p.id = ANY(:ids)
@@ -105,7 +108,8 @@ class EvalContext:
                 ), {"ids": ids, "r": radius, "yrs": years}
             ).mappings().all():
                 self._dvf[radius][r["pid"]] = {"count": int(r["n"] or 0),
-                                               "median_value": float(r["med"]) if r["med"] else None}
+                                               "median_value": float(r["med"]) if r["med"] else None,
+                                               "median_eur_m2": float(r["med_em2"]) if r["med_em2"] else None}
 
         sp = self._layer_params("sitadel")
         for r in self.session.execute(
@@ -238,11 +242,14 @@ class EvalContext:
         Médiane robuste ; jamais de mutation nominative exposée (R112 A-3 LPF).
         """
         if parcel_id in self._primed_ids and radius_m in self._dvf:
-            return self._dvf[radius_m].get(parcel_id, {"count": 0, "median_value": None})
+            return self._dvf[radius_m].get(parcel_id, {"count": 0, "median_value": None, "median_eur_m2": None})
         sql = text(
             """
             SELECT count(*) AS n,
-                   percentile_cont(0.5) WITHIN GROUP (ORDER BY d.valeur_fonciere) AS median_value
+                   percentile_cont(0.5) WITHIN GROUP (ORDER BY d.valeur_fonciere) AS median_value,
+                   percentile_cont(0.5) WITHIN GROUP (
+                     ORDER BY d.valeur_fonciere / NULLIF(d.surface_terrain, 0))
+                     FILTER (WHERE d.surface_terrain > 0 AND d.valeur_fonciere > 0) AS median_eur_m2
             FROM parcels p
             JOIN dvf_mutations d
               ON ST_DWithin(ST_Transform(p.centroid, 2975), ST_Transform(d.geom, 2975), :r)
@@ -251,7 +258,9 @@ class EvalContext:
             """
         )
         r = self.session.execute(sql, {"pid": parcel_id, "r": radius_m, "yrs": years}).mappings().one()
-        return {"count": int(r["n"] or 0), "median_value": float(r["median_value"]) if r["median_value"] else None}
+        return {"count": int(r["n"] or 0),
+                "median_value": float(r["median_value"]) if r["median_value"] else None,
+                "median_eur_m2": float(r["median_eur_m2"]) if r["median_eur_m2"] else None}
 
     def sitadel_near(self, parcel_id: int, radius_m: float, months: int) -> dict[str, Any]:
         """Permis SITADEL rattachés (IDU) ou à proximité (rayon = signal de zone, §7bis)."""

@@ -162,13 +162,21 @@ layers:
     phase: 1
     enabled: true
     params:
-      # ⚠ DÉCISION PRODUIT : surface CALCULÉE et AFFICHÉE, mais PAS de seuil dur.
+      # ⚠ DÉCISION PRODUIT : surface CALCULÉE et AFFICHÉE, mais PAS de seuil dur (exclusion).
       # Repère (Potentiel foncier Région) : 500 m² bâti / 200 m² vierge.
       exclude: false
       penalize: false
       threshold_enabled: false
       min_surface_m2_bati: 500
       min_surface_m2_vierge: 200
+      # COURBE SATURANTE (bonus surface_utile, magnitude 0..1). Bornes pour la promotion réunionnaise :
+      #   < 400 m²  : magnitude 0 (sous le seuil d'une opération de promotion utile)
+      #   400→2500 m² : montée linéaire 0→1 (chaque m² ajoute de la capacité programme)
+      #   ≥ 2500 m² : PLAFOND à 1 (au-delà, valeur marginale plate : phasage, viabilisation,
+      #               servitudes — une parcelle géante peut être un piège, elle ne « gagne » pas mécaniquement)
+      bonus_key: surface_utile
+      sweet_spot_lo_m2: 400
+      sweet_spot_hi_m2: 2500
 
   # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
 
@@ -179,6 +187,15 @@ layers:
       radii_m: [250, 500, 1000]    # rayons d'agrégation autour du centroïde
       lookback_years: 5
       bonus_key: contexte_dvf_favorable
+      # MARCHÉ CONTINU (magnitude 0..1) = mélange liquidité + niveau de prix, borné.
+      #   liquidité : nb de mutations / liquidity_ref, plafonné à 1
+      #   prix      : médiane €/m² de TERRAIN, normalisée sur [price_lo, price_hi] €/m²
+      #               (calé sur Saint-Paul : p25≈312, médiane≈503, p75≈821 €/m²)
+      liquidity_ref: 8
+      price_lo_eur_m2: 250
+      price_hi_eur_m2: 900
+      w_liquidity: 0.5
+      w_price: 0.5
 
   - name: sitadel
     phase: 2

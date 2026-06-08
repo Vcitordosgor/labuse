@@ -26,15 +26,26 @@ class DvfLayer(Layer):
         if not ctx.table_has_commune("dvf_mutations", parcel.commune):
             return unknown(self.name, "DVF non ingéré pour la commune.", source=SRC_DVF)
         years = params.get("lookback_years", 5)
+        liq_ref = float(params.get("liquidity_ref", 8))
+        plo = float(params.get("price_lo_eur_m2", 250))
+        phi = float(params.get("price_hi_eur_m2", 900))
+        wl = float(params.get("w_liquidity", 0.5))
+        wp = float(params.get("w_price", 0.5))
         for radius in params.get("radii_m", [250, 500, 1000]):
             stats = ctx.dvf_stats(parcel.id, radius, years)
             if stats["count"] > 0:
-                med = stats["median_value"]
-                med_txt = f"médiane ~{med:,.0f} €".replace(",", " ") if med else "médiane n/d"
-                detail = f"Marché DVF : {stats['count']} mutation(s) ≤ {radius} m sur {years} ans, {med_txt}."
-                # Liquidité suffisante → signal favorable (bonus).
-                if stats["count"] >= 3:
-                    return positive(self.name, detail + " Marché liquide.", params.get("bonus_key", "contexte_dvf_favorable"), source=SRC_DVF)
+                count = stats["count"]
+                em2 = stats.get("median_eur_m2")
+                em2_txt = f"{em2:,.0f} €/m²".replace(",", " ") if em2 else "prix/m² n/d"
+                detail = f"Marché : {count} mutation(s) ≤ {radius} m / {years} ans, médiane {em2_txt}."
+                # magnitude = mélange borné liquidité + niveau de prix (terrain).
+                liq = max(0.0, min(1.0, count / liq_ref)) if liq_ref > 0 else 0.0
+                price = max(0.0, min(1.0, (em2 - plo) / (phi - plo))) if (em2 and phi > plo) else 0.0
+                mag = (wl * liq + wp * price) if em2 else liq   # sans prix/m² → liquidité seule
+                mag = max(0.0, min(1.0, mag))
+                if mag > 0:
+                    return positive(self.name, detail + " Contexte de marché favorable.",
+                                    params.get("bonus_key", "contexte_dvf_favorable"), magnitude=mag, source=SRC_DVF)
                 return passed(self.name, detail, source=SRC_DVF)
         return passed(self.name, "Aucune mutation DVF dans le rayon max.", source=SRC_DVF)
 
@@ -78,8 +89,14 @@ class PotentielFoncierLayer(Layer):
         kind = params["spatial_kind"]
         if not ctx.kind_present(kind):
             return passed(self.name, "Potentiel foncier Région non ingéré (signal bonus absent).", source=SRC_POTENTIEL)
-        if any(i.coverage > 0 for i in ctx.intersections(parcel.id, kind)):
-            return positive(self.name, params["detail"], params.get("bonus_key", "potentiel_foncier_region"), source=SRC_POTENTIEL)
+        cov = max((i.coverage for i in ctx.intersections(parcel.id, kind)), default=0.0)
+        if cov > 0:
+            return positive(
+                self.name,
+                f"Dans un îlot « Potentiel foncier » Région — recouvrement {round(cov * 100)}% de la parcelle.",
+                params.get("bonus_key", "potentiel_foncier_region"),
+                magnitude=max(0.0, min(1.0, cov)), source=SRC_POTENTIEL,
+            )
         return passed(self.name, "Hors îlot « Potentiel foncier » Région.", source=SRC_POTENTIEL)
 
 

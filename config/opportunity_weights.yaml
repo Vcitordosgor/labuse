@@ -21,15 +21,20 @@ severity_multipliers:
 ai_adjustment_bounds: [-20, 20]
 score_bounds: [1, 100]       # plancher 1 quand non exclue (0 réservé à HARD_EXCLUDE)
 
-# Bonus indicatifs (POSITIVE). La couche émet un "bonus_key" ; on lit le poids ici.
+# Bonus (POSITIVE). La couche émet un "bonus_key" ; le poids ici = PLAFOND du bonus.
+# La couche peut renvoyer une `magnitude` ∈ [0,1] (intensité calculée sur la donnée
+# réelle) ; le score appliqué = round(poids × magnitude). magnitude = 1 pour les
+# signaux binaires (zone U, accès). Tout reste BORNÉ et TRACÉ (weight_applied + libellé).
 bonuses:
-  potentiel_foncier_region: 12
+  potentiel_foncier_region: 12      # × taux de recouvrement de l'îlot (largement dedans > effleure)
   proprietaire_morale_acquerable: 12
   permis_sitadel_recent_proximite: 8
-  zonage_u_au: 8
-  contexte_dvf_favorable: 6
-  proximite_equipements_bpe: 4
-  acces_direct_voirie: 3
+  surface_utile: 8                  # × courbe saturante sur la surface (plafonne : une parcelle géante ne gagne pas mécaniquement)
+  zonage_u_au: 8                    # binaire (zone U/AU)
+  contexte_dvf_favorable: 8         # × marché réel : médiane €/m² (terrain) + liquidité (nb mutations)
+  acces_direct_voirie: 3            # binaire
+  # proximite_equipements_bpe : SUPPRIMÉ — bonus mort (aucune couche ne l'émettait).
+  #   Brancher une vraie couche équipements (BPE/OSM) est une tâche d'INGESTION séparée.
 
 # --- Décision de statut (règles dures, brief §7C) ---
 status_rules:

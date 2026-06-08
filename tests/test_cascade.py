@@ -98,10 +98,14 @@ def test_sar_agricole_est_un_flag_fort(demo):
 
 
 def test_surface_calculee_non_excluante(demo):
-    """Surface affichée (~2000 m²) mais ne pénalise pas (décision produit)."""
+    """Surface (~2000 m²) : bonus GRADUÉ via courbe saturante, jamais éliminatoire."""
     v = _verdict(demo[1], "surface")
-    assert v.result == CascadeVerdict.PASS
-    assert v.extra.get("surface_m2") == pytest.approx(2000, abs=2)
+    # Valorisée (POSITIVE) et non plus un simple PASS, mais ne pénalise/exclut jamais.
+    assert v.result == CascadeVerdict.POSITIVE
+    assert v.result not in (CascadeVerdict.HARD_EXCLUDE, CascadeVerdict.SOFT_FLAG)
+    assert v.bonus_key == "surface_utile"
+    # magnitude ∈ ]0,1] : ~0.76 pour 2000 m² (lo=400, hi=2500) → la surface joue, bornée.
+    assert v.magnitude == pytest.approx((2000 - 400) / (2500 - 400), abs=0.03)
 
 
 def test_persistance_cascade_et_evaluation(db_session, demo):

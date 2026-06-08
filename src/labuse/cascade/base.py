@@ -24,6 +24,7 @@ class Verdict:
     detail: str                              # motif humain : POURQUOI (le produit)
     severity: Severity | None = None         # requis pour SOFT_FLAG
     bonus_key: str | None = None             # clé de bonus (POSITIVE) → opportunity_weights
+    magnitude: float = 1.0                   # POSITIVE : intensité 0..1 du bonus (×poids config). 1.0 = bonus plein/binaire
     exclude_kind: str | None = None          # "exclue" | "faux_positif" (pour HARD_EXCLUDE)
     data_source_name: str | None = None      # source ayant alimenté ce verdict
     extra: dict[str, Any] = field(default_factory=dict)  # ex. surface_m2, slope_label
@@ -40,8 +41,10 @@ def soft_flag(layer: str, detail: str, severity: Severity, *, source: str | None
     return Verdict(layer, CascadeVerdict.SOFT_FLAG, detail, severity=severity, data_source_name=source)
 
 
-def positive(layer: str, detail: str, bonus_key: str, *, source: str | None = None) -> Verdict:
-    return Verdict(layer, CascadeVerdict.POSITIVE, detail, bonus_key=bonus_key, data_source_name=source)
+def positive(layer: str, detail: str, bonus_key: str, *, magnitude: float = 1.0, source: str | None = None) -> Verdict:
+    # magnitude ∈ [0,1] : part du poids config réellement attribuée (continu, borné, tracé).
+    m = max(0.0, min(1.0, float(magnitude)))
+    return Verdict(layer, CascadeVerdict.POSITIVE, detail, bonus_key=bonus_key, magnitude=m, data_source_name=source)
 
 
 def passed(layer: str, detail: str = "", *, source: str | None = None, **extra) -> Verdict:

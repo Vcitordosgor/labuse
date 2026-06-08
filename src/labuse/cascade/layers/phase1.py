@@ -376,10 +376,19 @@ class SurfaceLayer(Layer):
         s = parcel.surface_m2
         if s is None:
             return unknown(self.name, "Surface non calculée.")
-        v = passed(self.name, f"Surface ~{s:.0f} m² — calculée, non éliminatoire.", surface_m2=round(float(s), 1))
-        # Seuil présent mais DÉSACTIVÉ par défaut :
+        # Seuil dur présent mais DÉSACTIVÉ par défaut (décision produit) :
         if params.get("threshold_enabled") and params.get("penalize"):
             mini = params.get("min_surface_m2_vierge", 0)
             if s < mini:
                 return soft_flag(self.name, f"Surface {s:.0f} m² < seuil {mini} m².", Severity.MOYEN)
-        return v
+        # Bonus surface via COURBE SATURANTE (magnitude 0..1) : monte de lo→hi puis plafonne.
+        lo = float(params.get("sweet_spot_lo_m2", 400))
+        hi = float(params.get("sweet_spot_hi_m2", 2500))
+        mag = 0.0 if hi <= lo else max(0.0, min(1.0, (float(s) - lo) / (hi - lo)))
+        if mag > 0:
+            return positive(
+                self.name,
+                f"Surface utile {s:.0f} m² — gisement (valorisation {round(mag * 100)}%, plafond {hi:.0f} m²).",
+                params.get("bonus_key", "surface_utile"), magnitude=mag,
+            )
+        return passed(self.name, f"Surface {s:.0f} m² — sous le seuil de valorisation ({lo:.0f} m²).", surface_m2=round(float(s), 1))
