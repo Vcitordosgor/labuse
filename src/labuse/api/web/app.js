@@ -188,12 +188,18 @@ function renderFiche(f) {
     ? `<ul class="rd-list">${arr.map((c) => liRow(c, cls === "lim" ? (c.result === "HARD_EXCLUDE" ? "hard" : "soft") : cls)).join("")}</ul>`
     : `<p class="rd-empty">${emptyMsg}</p>`;
 
-  const unverifiedLine = unknown.length ? `
+  const chips = (arr, cls) => (arr || []).map((s) => `<span class="src-chip ${cls}">${esc(s)}</span>`).join("");
+  const loc = [p.commune, p.section ? "section " + esc(p.section) : "",
+    p.surface_m2 ? fmt(Math.round(p.surface_m2)) + " m²" : ""].filter(Boolean).join(" · ");
+
+  const nU = unknown.length;
+  const unverifiedLine = nU ? `
     <section class="unverified">
       <span class="uv-mark">◔</span>
-      <span><b>Non vérifié à ce jour</b> — ${unknown.map((c) => esc(shortLayer(c))).join(" · ")}.
-      Le verdict reste partiel tant que ces couches ne sont pas intégrées.</span>
+      <span><b>${nU} couche${nU > 1 ? "s" : ""} non vérifiée${nU > 1 ? "s" : ""}</b> à ce jour — verdict partiel. Détail en bas de fiche.</span>
     </section>` : "";
+
+  const today = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
 
   const cascadeRows = cascade.map((c) => `
     <tr>
@@ -202,11 +208,15 @@ function renderFiche(f) {
           <span class="ct-src">${esc(c.layer_name)}${c.source ? " · " + esc(c.source) : ""}</span></td>
     </tr>`).join("");
 
-  const chips = (arr, cls) => (arr || []).map((s) => `<span class="src-chip ${cls}">${esc(s)}</span>`).join("");
-  const loc = [p.commune, p.section ? "section " + esc(p.section) : "",
-    p.surface_m2 ? fmt(Math.round(p.surface_m2)) + " m²" : ""].filter(Boolean).join(" · ");
-
   return `
+    <header class="print-head print-only">
+      <div class="ph-brand">
+        <svg class="ph-bird" viewBox="0 0 112 44" aria-hidden="true"><path d="M56 11 C58 13 59 15 61 17 C74 12 92 10 109 14 C93 17 75 20 62 25 C60 28 59 30 58 32 L56 35 L54 32 C53 30 52 28 50 25 C37 20 19 17 3 14 C20 10 38 12 51 17 C53 15 54 13 56 11 Z"/></svg>
+        <div><div class="ph-name">LA&nbsp;BUSE</div><div class="ph-sub">Radar foncier · La Réunion</div></div>
+      </div>
+      <div class="ph-meta">Fiche parcelle<br>${today}</div>
+    </header>
+
     <header class="fiche-head">
       <div class="fh-id">${esc(p.idu)}</div>
       <div class="fh-loc">${loc}</div>
@@ -253,12 +263,18 @@ function renderFiche(f) {
     </section>
 
     <footer class="fiche-actions">
+      <button class="btn print" data-print>⎙ Imprimer / PDF</button>
       <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=md" target="_blank">Export Markdown</a>
       <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=html" target="_blank">Export HTML</a>
       <button class="btn good" data-fb="good_lead">Bon lead</button>
       <button class="btn bad" data-fb="false_positive">Faux positif</button>
     </footer>
-    <p class="disclaimer">${esc(f.disclaimer || "")}</p>`;
+    <p class="disclaimer">${esc(f.disclaimer || "")}</p>
+
+    <footer class="print-foot print-only">
+      <b>LA&nbsp;BUSE</b> · Pré-analyse foncière sur données publiques · ${esc(p.idu)} · ${today}<br>
+      Constructibilité, propriété, rentabilité, faisabilité — <b>jamais garanties</b>. Document indicatif à vérifier avant toute démarche.
+    </footer>`;
 }
 
 function renderAi(ai) {
@@ -285,12 +301,18 @@ function wireSheetActions(idu) {
       body: JSON.stringify({ idu, verdict: b.dataset.fb }) });
     b.textContent = "✓ Enregistré";
   }));
+  const pb = $("[data-print]");
+  if (pb) pb.addEventListener("click", () => { expandCascadeForPrint(); window.print(); });
 }
+
+// La cascade est repliée à l'écran ; on la déplie pour qu'elle figure dans le PDF.
+function expandCascadeForPrint() { const d = document.querySelector(".cascade"); if (d) d.open = true; }
 
 function closeSheet() { $("#sheet").classList.add("hidden"); $("#scrim").classList.add("hidden"); }
 
 // ───────────────────────── Bootstrap ─────────────────────────
 async function main() {
+  window.addEventListener("beforeprint", expandCascadeForPrint);
   initMap();
   await loadStats();
   await loadCoverage();

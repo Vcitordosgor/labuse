@@ -327,6 +327,8 @@ input[type=checkbox] { accent-color: var(--gold); }
 .btn.good:hover { background: rgba(47,125,87,.08); }
 .btn.bad { border-color: rgba(169,84,63,.35); color: #8a4233; }
 .btn.bad:hover { background: rgba(169,84,63,.08); }
+.btn.print { border-color: var(--accent); color: #6e4f1c; font-weight: 600; }
+.btn.print:hover { background: rgba(173,127,55,.10); color: #000; }
 .disclaimer { font-size: 11px; color: var(--ink-faint); margin-top: 18px; line-height: 1.5; }
 
 .loading { color: var(--muted); padding: 40px 0; text-align: center; }
@@ -336,4 +338,62 @@ input[type=checkbox] { accent-color: var(--gold); }
   .sheet { padding: 26px 20px 40px; }
   .verdict-word { font-size: 42px; }
   .scores { grid-template-columns: 1fr; gap: 15px; }
+}
+
+/* ───────── Impression / PDF de la fiche (document A4, clair) ───────── */
+.print-only { display: none; }
+@page { size: A4; margin: 14mm 14mm 15mm; }
+
+@media print {
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { height: auto !important; background: #fff !important; }
+  body { display: block !important; }
+  /* on ne garde que la fiche */
+  #sidebar, #map, #banner, .legend, #scrim, .sheet-close, .fiche-actions { display: none !important; }
+  .scrim.hidden { display: none !important; }
+  .sheet, .sheet.hidden {
+    position: static !important; width: 100% !important; max-width: 100% !important; height: auto !important;
+    overflow: visible !important; transform: none !important; box-shadow: none !important;
+    border: none !important; padding: 0 !important; background: #fff !important;
+    font-size: 11px; color: var(--ink);
+  }
+  .print-only { display: block; }
+
+  /* en-tête imprimé : marque + date */
+  .print-head { display: flex !important; align-items: center; justify-content: space-between;
+    border-bottom: 1.5px solid var(--accent); padding-bottom: 9px; margin-bottom: 16px; break-after: avoid; }
+  .ph-brand { display: flex; align-items: center; gap: 11px; }
+  .ph-bird { width: 38px; height: auto; fill: #1b1e23; }
+  .ph-name { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 21px; letter-spacing: .07em; color: #1b1e23; line-height: 1; }
+  .ph-sub { font-size: 9.5px; color: #565b63; letter-spacing: .05em; margin-top: 3px; }
+  .ph-meta { text-align: right; font-size: 9.5px; color: #565b63; text-transform: uppercase; letter-spacing: .08em; line-height: 1.5; }
+
+  /* pied imprimé */
+  .print-foot { display: block !important; margin-top: 16px; padding-top: 8px;
+    border-top: 1px solid var(--rule-2); font-size: 9px; color: #565b63; line-height: 1.5; }
+  .print-foot b { color: #1b1e23; }
+
+  /* compacter le hero pour le papier */
+  .fiche-head { margin-bottom: 14px; padding-right: 0; }
+  .verdict { padding-bottom: 16px; }
+  .verdict-word { font-size: 38px; margin: 4px 0 7px; }
+  .verdict-gloss { font-size: 12px; margin-bottom: 10px; }
+  .scores { margin: 16px 0 2px; gap: 14px 26px; }
+  .score-num { font-size: 32px; }
+  .reads { margin-top: 18px; }
+  .read { padding: 11px 0; }
+  .disclaimer { display: none; }                /* repris dans le pied imprimé */
+
+  /* la cascade (annexe) toujours visible et lisible à l'impression */
+  .cascade { margin-top: 16px; }
+  .cascade > summary { color: #565b63; list-style: none; }
+  .cascade > summary::before { content: "" !important; margin: 0; }
+  .cascade-table { display: table !important; }
+
+  /* sauts de page propres : on ne coupe jamais un bloc atomique */
+  .print-head, .verdict, .scores, .unverified, .ai-box, .read, .rd-li,
+  .sources, .cascade-table tr, .print-foot { break-inside: avoid; }
+  .verdict, .scores { break-after: avoid; }
+  .src-h, .rd-h { break-after: avoid; }
+  a[href]::after { content: ""; }               /* pas d'URL en exposant */
 }
