@@ -329,6 +329,9 @@ input[type=checkbox] { accent-color: var(--gold); }
 .rd-li.soft::before { background: var(--v-a_creuser); }
 .rd-li.unk::before { background: var(--accent); }
 .rd-detail { display: block; color: var(--ink); font-size: 13.5px; }
+.rd-pts { display: inline-block; margin-left: 7px; font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.rd-pts.pos { color: #246046; }
+.rd-pts.neg { color: #8a4233; }
 .rd-src { display: block; color: var(--ink-faint); font-size: 11px; margin-top: 1px; }
 .rd-empty { color: var(--ink-faint); font-size: 13px; font-style: italic; margin: 0; }
 

@@ -13,7 +13,8 @@ const LAYER_SHORT = {
   foret_publique: "Forêt publique", trait_de_cote: "Trait de côte", parc_national: "Parc national",
   zonage_plu_gpu: "PLU", eau: "Hydrographie", pente: "Pente", ocs_ge: "Occupation du sol",
   osm_faux_positif: "Bâti (OSM)", sitadel: "SITADEL", proprietaire: "Propriétaire",
-  fichiers_fonciers: "Fichiers fonciers", dvf: "DVF",
+  fichiers_fonciers: "Fichiers fonciers", dvf: "Marché (DVF)", surface: "Surface",
+  potentiel_foncier_region: "Potentiel foncier", acces: "Accès voirie",
 };
 const shortLayer = (c) => LAYER_SHORT[c.layer_name] || c.layer_name;
 
@@ -240,8 +241,9 @@ function renderFiche(f) {
   const unknown = cascade.filter((c) => c.result === "UNKNOWN");
   const hasHard = limits.some((c) => c.result === "HARD_EXCLUDE");  // rouge si blocage dur, sinon ambre
 
+  const pts = (c) => (c.weight_applied ? `<span class="rd-pts ${c.weight_applied > 0 ? "pos" : "neg"}">${c.weight_applied > 0 ? "+" : "−"}${Math.abs(Math.round(c.weight_applied))}</span>` : "");
   const liRow = (c, cls) => `<li class="rd-li ${cls}">
-      <span class="rd-detail">${esc(c.detail)}</span>
+      <span class="rd-detail">${esc(c.detail)}${pts(c)}</span>
       <span class="rd-src">${esc(shortLayer(c))}${c.source ? " · " + esc(c.source) : ""}</span></li>`;
   const block = (arr, cls, emptyMsg) => arr.length
     ? `<ul class="rd-list">${arr.map((c) => liRow(c, cls === "lim" ? (c.result === "HARD_EXCLUDE" ? "hard" : "soft") : cls)).join("")}</ul>`
