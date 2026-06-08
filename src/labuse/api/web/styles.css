@@ -69,6 +69,14 @@ body {
 .kpi:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .kpi.active { box-shadow: 0 0 0 1.5px var(--gold) inset; background: #232c38; }
 
+/* Compteur de résultats + réinitialiser (P3) */
+.result-meta { display: flex; align-items: center; gap: 10px; margin: 2px 0 4px; font-size: 12px; color: var(--muted); }
+#rm-count { flex: 1; }
+.rm-reset { background: transparent; border: 1px solid var(--line); color: var(--gold-soft);
+  padding: 3px 9px; border-radius: 7px; font: inherit; font-size: 11.5px; cursor: pointer; white-space: nowrap; }
+.rm-reset:hover { border-color: var(--gold); color: var(--gold); }
+.rm-reset.hidden { display: none; }
+
 .filters h2, .listing h2 {
   font-size: 12px; text-transform: uppercase; letter-spacing: .09em;
   color: var(--muted); margin: 16px 0 10px;
@@ -152,6 +160,20 @@ input[type=checkbox] { accent-color: var(--gold); }
 .banner .warn-ico { color: var(--gold); font-size: 14px; }
 .banner b { color: var(--gold-soft); font-weight: 600; }
 .banner .missing { color: #eef2f6; font-weight: 600; }
+/* Bandeau repliable → pastille discrète (P3) */
+.banner-pill { display: none; }
+.banner-collapse {
+  margin-left: auto; flex: none; align-self: center; background: transparent; border: 1px solid var(--line);
+  color: var(--muted); padding: 3px 9px; border-radius: 7px; font: inherit; font-size: 11px; cursor: pointer; white-space: nowrap;
+}
+.banner-collapse:hover { border-color: var(--gold); color: var(--gold-soft); }
+.banner.collapsed {
+  left: auto; right: 14px; top: 10px; width: auto; max-width: max-content;
+  padding: 6px 13px; border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
+  box-shadow: inset 3px 0 0 var(--gold), 0 8px 22px rgba(0,0,0,.45);
+}
+.banner.collapsed .banner-text, .banner.collapsed .banner-collapse { display: none; }
+.banner.collapsed .banner-pill { display: inline; color: var(--gold-soft); font-weight: 600; }
 
 /* ───────── Map / radar ───────── */
 #map { height: 100vh; background: #0b0e12; }
@@ -165,6 +187,25 @@ input[type=checkbox] { accent-color: var(--gold); }
 }
 .legend .legend-h { font-size: 10px; text-transform: uppercase; letter-spacing: .13em; color: var(--muted); margin-bottom: 1px; }
 .legend span { display: flex; align-items: center; gap: 9px; color: #c4ccd5; }
+
+/* État vide de la carte : jamais une carte blanche muette (P3) */
+.map-empty {
+  position: fixed; top: 0; left: 372px; right: 0; bottom: 0; z-index: 650;
+  display: flex; align-items: center; justify-content: center; pointer-events: none;
+}
+.map-empty.hidden { display: none; }
+.me-card {
+  pointer-events: auto; background: rgba(18,23,30,.96); border: 1px solid var(--line);
+  border-radius: 14px; padding: 22px 26px; text-align: center; max-width: 340px;
+  box-shadow: 0 18px 50px rgba(0,0,0,.5); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.me-title { font-size: 15px; font-weight: 700; color: var(--txt); }
+.me-sub { font-size: 12.5px; color: var(--muted); margin: 6px 0 14px; }
+.me-reset {
+  background: var(--gold); border: none; color: #1a1206; font-weight: 600;
+  padding: 9px 16px; border-radius: 9px; font: inherit; font-size: 13px; cursor: pointer;
+}
+.me-reset:hover { background: var(--gold-soft); }
 
 /* Contrôles Leaflet — sombres, alignés au thème */
 .leaflet-bar { border: 1px solid var(--line) !important; box-shadow: 0 6px 18px rgba(0,0,0,.45) !important; }
@@ -445,6 +486,11 @@ input[type=checkbox] { accent-color: var(--gold); }
 
   /* bandeau : pleine largeur sous les onglets (plus hors écran) */
   .banner { left: 0; right: 0; top: 52px; }
+  .banner.collapsed { left: auto; right: 10px; top: 60px; }
+
+  /* état vide : sur la carte plein écran, masqué en vue liste */
+  .map-empty { left: 0; top: 52px; }
+  body.view-list .map-empty { display: none; }
 
   /* légende compacte — la carte est plein écran, plus de chevauchement */
   .legend { right: 10px; bottom: 10px; padding: 8px 11px; gap: 5px; font-size: 11px; }

@@ -41,6 +41,11 @@
       <div class="kpi exclue" data-status="exclue" role="button" tabindex="0" title="Voir les exclues"><span class="kpi-val" id="kpi-exclue">—</span><span class="kpi-lbl">exclues</span></div>
     </section>
 
+    <div class="result-meta" id="result-meta">
+      <span id="rm-count">—</span>
+      <button class="rm-reset hidden js-reset" type="button">↺ Réinitialiser</button>
+    </div>
+
     <section class="listing">
       <div class="listing-head">
         <h2>Opportunités classées <span class="count" id="list-count"></span></h2>
@@ -75,6 +80,14 @@
   </aside>
 
   <main id="map"></main>
+
+  <div id="map-empty" class="map-empty hidden">
+    <div class="me-card">
+      <div class="me-title">Aucune parcelle ne correspond</div>
+      <div class="me-sub">Vos filtres masquent toutes les parcelles de la commune.</div>
+      <button class="me-reset js-reset" type="button">↺ Réinitialiser les filtres</button>
+    </div>
+  </div>
 
   <div id="banner" class="banner hidden"></div>
 

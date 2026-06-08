@@ -40,8 +40,14 @@ function colorFor(p) { return COLORS[p.status] || COLORS.inconnu; }
 
 function styleFor(p) {
   const c = colorFor(p);
-  const opp = p.status === "opportunite";          // l'opportunité prime aussi sur la carte
-  return { color: c, weight: opp ? 1.4 : 0.7, fillColor: c, fillOpacity: opp ? 0.62 : 0.4, opacity: 0.95 };
+  // Le radar fait CLIGNOTER la cible : l'opportunité ressort fort, le reste s'efface.
+  switch (p.status) {
+    case "opportunite":            return { color: "#9bf0c7", weight: 2.2, fillColor: "#41c08c", fillOpacity: 0.88, opacity: 1 };
+    case "faux_positif_probable":  return { color: c, weight: 0.6, fillColor: c, fillOpacity: 0.3, opacity: 0.6 };
+    case "a_creuser":              return { color: c, weight: 0.4, fillColor: c, fillOpacity: 0.18, opacity: 0.42 };
+    case "exclue":                 return { color: c, weight: 0.4, fillColor: c, fillOpacity: 0.14, opacity: 0.34 };
+    default:                       return { color: c, weight: 0.4, fillColor: c, fillOpacity: 0.16, opacity: 0.4 };
+  }
 }
 
 function tipHtml(p) {
@@ -74,7 +80,8 @@ function currentFilter() {
 
 function renderMap() {
   if (layer) layer.remove();
-  const fc = { type: "FeatureCollection", features: FEATURES.filter((ft) => passesFilter(ft.properties)) };
+  const shown = FEATURES.filter((ft) => passesFilter(ft.properties));
+  const fc = { type: "FeatureCollection", features: shown };
   layer = L.geoJSON(fc, {
     style: (ft) => styleFor(ft.properties),
     onEachFeature: (ft, lyr) => {
@@ -83,6 +90,32 @@ function renderMap() {
       lyr.bindTooltip(tipHtml(ft.properties), { sticky: true, direction: "top", className: "lb-tip" });
     },
   }).addTo(map);
+  const empty = $("#map-empty"); if (empty) empty.classList.toggle("hidden", shown.length > 0);
+  updateResultMeta(shown.length);
+}
+
+// Compteur de résultats + bouton « Réinitialiser » (visible si filtre non par défaut).
+function isDefaultFilter() {
+  const st = new Set([...document.querySelectorAll("#filter-statuses input:checked")].map((i) => i.value));
+  const defStatus = st.size === 2 && st.has("opportunite") && st.has("a_creuser");
+  return defStatus && +$("#f-opp").value === 0 && +$("#f-cpl").value === 0 && +$("#f-surf").value === 0;
+}
+function updateResultMeta(n) {
+  const c = $("#rm-count"); if (c) c.textContent = `${fmt(n)} parcelle${n > 1 ? "s" : ""} sur la carte`;
+  document.querySelectorAll(".rm-reset").forEach((b) => b.classList.toggle("hidden", isDefaultFilter()));
+}
+function resetFilters() {
+  document.querySelectorAll("#filter-statuses input").forEach((b) => { b.checked = (b.value === "opportunite" || b.value === "a_creuser"); });
+  ["opp", "cpl", "surf"].forEach((k) => { $("#f-" + k).value = 0; const o = $("#" + k + "-out"); if (o) o.textContent = "0"; });
+  clearKpiActive();
+  applyFilters();
+}
+function setSliderBounds() {
+  const props = FEATURES.map((f) => f.properties);
+  const maxOf = (sel, floor, step) => Math.max(floor, Math.ceil(Math.max(0, ...props.map(sel)) / step) * step);
+  $("#f-opp").max = maxOf((p) => p.opportunity_score || 0, 10, 5);
+  $("#f-cpl").max = maxOf((p) => p.completeness_score || 0, 10, 5);
+  $("#f-surf").max = maxOf((p) => p.surface_m2 || 0, 1000, 500);
 }
 
 // ───────────────────────── Dashboard / liste ─────────────────────────
@@ -115,8 +148,11 @@ function renderBanner() {
   const b = $("#banner");
   if (!COVERAGE || COVERAGE.complete) { b.classList.add("hidden"); return; }
   b.classList.remove("hidden");
-  b.innerHTML = `<span class="warn-ico">⚠</span><span><b>Verdicts partiels</b> — une opportunité peut masquer une contrainte non encore intégrée.
-    Couches manquantes : <span class="missing">${COVERAGE.missing.map(esc).join(" · ")}</span></span>`;
+  b.innerHTML = `<span class="warn-ico">⚠</span>
+    <span class="banner-text"><b>Verdicts partiels</b> — une opportunité peut masquer une contrainte non encore intégrée.
+    Couches manquantes : <span class="missing">${COVERAGE.missing.map(esc).join(" · ")}</span></span>
+    <span class="banner-pill">Verdicts partiels</span>
+    <button class="banner-collapse" type="button" aria-label="Réduire le bandeau" title="Réduire">Réduire ✕</button>`;
 }
 
 function ficheWarn() {
@@ -342,6 +378,7 @@ async function main() {
   await loadSignals();
   const fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json();
   FEATURES = fc.features || [];
+  setSliderBounds();                              // P3 : curseurs bornés à la plage réelle
   applyFilters();
   if (FEATURES.length && layer) map.fitBounds(layer.getBounds(), { maxZoom: 15 });
   if (isMobile()) setTimeout(() => map.invalidateSize(), 120);
@@ -360,7 +397,14 @@ async function main() {
   });
   const ftog = $("#filter-toggle");
   ftog.addEventListener("click", () => { const hid = $("#filters-panel").classList.toggle("hidden"); ftog.setAttribute("aria-expanded", String(!hid)); });
+  document.querySelectorAll(".js-reset").forEach((b) => b.addEventListener("click", resetFilters));
   document.querySelectorAll(".mt-tab").forEach((t) => t.addEventListener("click", () => setView(t.dataset.view)));
+  // Bandeau « verdicts partiels » repliable : lu une fois → pastille discrète
+  $("#banner").addEventListener("click", (e) => {
+    const b = $("#banner");
+    if (e.target.closest(".banner-collapse")) { b.classList.add("collapsed"); return; }
+    if (b.classList.contains("collapsed")) b.classList.remove("collapsed");
+  });
   $("#sheet-close").addEventListener("click", closeSheet);
   $("#scrim").addEventListener("click", closeSheet);
 }
