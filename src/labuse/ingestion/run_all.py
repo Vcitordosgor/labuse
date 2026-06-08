@@ -102,13 +102,26 @@ def ingest_commune(session: Session, insee: str, name: str, *, limit: int | None
     return {"total": total, "parcels": n, "layers": counts, "run_id": run.id}
 
 
-def evaluate_commune(session: Session, name: str, ai_provider=None) -> int:
-    """PHASE ÉVALUATION : cascade + scoring sur les parcelles de la commune. Run → 'ok'."""
+def evaluate_commune(session: Session, name: str, ai_provider=None, chunk: int = 2000) -> int:
+    """PHASE ÉVALUATION : cascade + scoring PAR LOTS. Run → 'ok'.
+
+    Évalue par paquets de `chunk` parcelles avec COMMIT + purge mémoire après chaque
+    lot : la conso reste plate sur les grosses communes (≥ 40k parcelles), et un
+    battement de progression est émis (suivi + anti-inactivité du conteneur).
+    Cascade/scoring INCHANGÉS — on ne change que la granularité d'appel.
+    """
+    import sys
+
     from ..cascade import evaluate_parcels
 
     ids = [r[0] for r in session.execute(
         text("SELECT id FROM parcels WHERE commune = :c ORDER BY idu"), {"c": name}).all()]
-    if ids:
-        evaluate_parcels(ids, session, persist=True, ai_provider=ai_provider)
+    total = len(ids)
+    for k in range(0, total, chunk):
+        evaluate_parcels(ids[k:k + chunk], session, persist=True, ai_provider=ai_provider)
+        session.commit()
+        session.expunge_all()                 # libère la mémoire des objets persistés
+        print(f"      … {name} {min(k + chunk, total)}/{total} évaluées", flush=True)
+        sys.stdout.flush()
     session.execute(text("UPDATE ingestion_runs SET status = 'ok' WHERE commune = :c"), {"c": name})
-    return len(ids)
+    return total
