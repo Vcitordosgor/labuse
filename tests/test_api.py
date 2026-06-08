@@ -157,3 +157,56 @@ def test_watch_snapshot_delta_zonage(client):
 
     sig = client.get("/signals", params={"commune": "Saint-Paul", "signal_type": "zonage_change"}).json()
     assert sig and sig[0]["signal_type"] == "zonage_change" and sig[0]["payload"]["to"] == "U"
+
+
+# ───────────────────────── Pipeline de prospection (Kanban T1) ─────────────────────────
+
+def test_pipeline_meta(client):
+    m = client.get("/pipeline/meta").json()
+    assert [c["key"] for c in m["columns"]] == [
+        "reperee", "proprietaire_a_identifier", "contacte", "en_discussion", "chaud", "abandonnee",
+    ]
+    assert len(m["priorities"]) == 3 and m["defaults"]["status"] == "reperee"
+
+
+def test_pipeline_crud_flow(client):
+    # Ajout (statut "Repérée" par défaut) ; la carte porte le verdict/score.
+    r = client.post("/pipeline", json={"idu": "97415000AB0002"}).json()
+    assert r["ok"] and r["already"] is False
+    eid = r["entry"]["id"]
+    assert r["entry"]["status"] == "reperee" and r["entry"]["priority"] == "moyenne"
+    assert r["entry"]["verdict"]["opportunity_score"] is not None
+    # Présente dans la liste et la recherche par parcelle.
+    assert any(e["id"] == eid for e in client.get("/pipeline").json())
+    look = client.get("/pipeline/parcel/97415000AB0002").json()
+    assert look["in_pipeline"] is True and look["entry"]["id"] == eid
+    # Édition : statut + priorité + notes + rappel.
+    p = client.patch(f"/pipeline/{eid}", json={
+        "status": "contacte", "priority": "haute", "notes": "appelé la mairie", "reminder_date": "2026-07-15",
+    }).json()
+    assert p["entry"]["status"] == "contacte" and p["entry"]["priority"] == "haute"
+    assert p["entry"]["notes"] == "appelé la mairie" and p["entry"]["reminder_date"] == "2026-07-15"
+    # Effacer le rappel.
+    assert client.patch(f"/pipeline/{eid}", json={"reminder_date": ""}).json()["entry"]["reminder_date"] is None
+    # Retrait → la parcelle n'est plus suivie (persistance vérifiée par relecture).
+    assert client.delete(f"/pipeline/{eid}").json()["ok"] is True
+    assert client.get("/pipeline/parcel/97415000AB0002").json()["in_pipeline"] is False
+
+
+def test_pipeline_duplicate_returns_existing(client):
+    a = client.post("/pipeline", json={"idu": "97415000AB0003"}).json()
+    b = client.post("/pipeline", json={"idu": "97415000AB0003"}).json()
+    assert b["already"] is True and b["entry"]["id"] == a["entry"]["id"]  # pas de doublon
+    client.delete(f"/pipeline/{a['entry']['id']}")
+
+
+def test_pipeline_validation_jamais_500(client):
+    assert client.post("/pipeline", json={"idu": "00000000000000"}).status_code == 404  # parcelle inconnue
+    assert client.post("/pipeline", json={"idu": "97415000AB0004", "status": "bogus"}).status_code == 422
+    r = client.post("/pipeline", json={"idu": "97415000AB0004"}).json()
+    eid = r["entry"]["id"]
+    assert client.patch(f"/pipeline/{eid}", json={"status": "pas_une_colonne"}).status_code == 422
+    assert client.patch(f"/pipeline/{eid}", json={"reminder_date": "pas-une-date"}).status_code == 422
+    assert client.patch("/pipeline/999999", json={"status": "chaud"}).status_code == 404
+    assert client.delete("/pipeline/999999").status_code == 404
+    client.delete(f"/pipeline/{eid}")

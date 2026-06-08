@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator
+from datetime import date
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query
@@ -23,7 +24,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from .. import models
+from .. import config, models
 from ..db import session_scope
 from ..enums import FeedbackVerdict
 
@@ -390,6 +391,142 @@ def post_feedback(body: FeedbackIn, db: Session = Depends(get_db)) -> dict:
     db.add(fb)
     db.flush()
     return {"ok": True, "id": fb.id}
+
+
+# ───────────────────────────── Pipeline de prospection (Kanban, T1) ─────────────────────────────
+
+def _pipeline_cfg() -> dict:
+    return config.pipeline()
+
+
+def _col_keys() -> list[str]:
+    return [c["key"] for c in _pipeline_cfg().get("columns", [])]
+
+
+def _prio_keys() -> list[str]:
+    return [p["key"] for p in _pipeline_cfg().get("priorities", [])]
+
+
+def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
+    p = e.parcel
+    ev = _latest_eval(db, e.parcel_id)
+    return {
+        "id": e.id,
+        "idu": p.idu,
+        "status": e.status,
+        "priority": e.priority,
+        "notes": e.notes or "",
+        "reminder_date": e.reminder_date.isoformat() if e.reminder_date else None,
+        "created_at": e.created_at.isoformat() if e.created_at else None,
+        "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2},
+        "verdict": {
+            "status": ev.status.value if ev else None,
+            "opportunity_score": ev.opportunity_score if ev else None,
+        },
+    }
+
+
+class PipelineAddIn(BaseModel):
+    idu: str
+    status: str | None = None
+    priority: str | None = None
+    notes: str | None = None
+
+
+class PipelinePatchIn(BaseModel):
+    status: str | None = None
+    priority: str | None = None
+    notes: str | None = None
+    reminder_date: str | None = None     # "YYYY-MM-DD" = définir ; "" = effacer ; absent = inchangé
+
+
+@app.get("/pipeline/meta")
+def pipeline_meta() -> dict:
+    """Colonnes & priorités (config) pour piloter le Kanban côté front."""
+    cfg = _pipeline_cfg()
+    return {"columns": cfg.get("columns", []), "priorities": cfg.get("priorities", []),
+            "defaults": cfg.get("defaults", {})}
+
+
+@app.get("/pipeline")
+def pipeline_list(db: Session = Depends(get_db)) -> list[dict]:
+    entries = db.execute(
+        select(models.PipelineEntry).order_by(models.PipelineEntry.created_at.desc())
+    ).scalars().all()
+    return [_entry_dict(db, e) for e in entries]
+
+
+@app.get("/pipeline/parcel/{idu}")
+def pipeline_for_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
+    p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
+    if not p:
+        raise HTTPException(404, "Parcelle inconnue")
+    e = db.execute(
+        select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
+    ).scalar_one_or_none()
+    return {"in_pipeline": bool(e), "entry": _entry_dict(db, e) if e else None}
+
+
+@app.post("/pipeline")
+def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
+    p = db.execute(select(models.Parcel).where(models.Parcel.idu == body.idu)).scalar_one_or_none()
+    if not p:
+        raise HTTPException(404, "Parcelle inconnue")
+    existing = db.execute(
+        select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
+    ).scalar_one_or_none()
+    if existing:                                            # déjà suivie → on renvoie son état courant
+        return {"ok": True, "already": True, "entry": _entry_dict(db, existing)}
+
+    dfl = _pipeline_cfg().get("defaults", {})
+    status = body.status or dfl.get("status", "reperee")
+    priority = body.priority or dfl.get("priority", "moyenne")
+    if status not in _col_keys():
+        raise HTTPException(422, f"Statut invalide : {status}")
+    if priority not in _prio_keys():
+        raise HTTPException(422, f"Priorité invalide : {priority}")
+    e = models.PipelineEntry(parcel_id=p.id, status=status, priority=priority, notes=(body.notes or ""))
+    db.add(e)
+    db.flush()
+    return {"ok": True, "already": False, "entry": _entry_dict(db, e)}
+
+
+@app.patch("/pipeline/{entry_id}")
+def pipeline_patch(entry_id: int, body: PipelinePatchIn, db: Session = Depends(get_db)) -> dict:
+    e = db.get(models.PipelineEntry, entry_id)
+    if not e:
+        raise HTTPException(404, "Entrée de pipeline inconnue")
+    if body.status is not None:
+        if body.status not in _col_keys():
+            raise HTTPException(422, f"Statut invalide : {body.status}")
+        e.status = body.status
+    if body.priority is not None:
+        if body.priority not in _prio_keys():
+            raise HTTPException(422, f"Priorité invalide : {body.priority}")
+        e.priority = body.priority
+    if body.notes is not None:
+        e.notes = body.notes
+    if body.reminder_date is not None:
+        rd = body.reminder_date.strip()
+        if rd == "":
+            e.reminder_date = None
+        else:
+            try:
+                e.reminder_date = date.fromisoformat(rd)
+            except ValueError:
+                raise HTTPException(422, "Date de rappel invalide (attendu YYYY-MM-DD).") from None
+    db.flush()
+    return {"ok": True, "entry": _entry_dict(db, e)}
+
+
+@app.delete("/pipeline/{entry_id}")
+def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
+    e = db.get(models.PipelineEntry, entry_id)
+    if not e:
+        raise HTTPException(404, "Entrée de pipeline inconnue")
+    db.delete(e)
+    db.flush()
+    return {"ok": True}
 
 
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
