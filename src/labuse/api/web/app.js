@@ -36,10 +36,21 @@ const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString("fr-FR"));
 // ───────────────────────── Carte ─────────────────────────
 function initMap() {
   map = L.map("map", { zoomControl: true, preferCanvas: true }).setView([-21.01, 55.285], 13);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  const plan = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
     subdomains: "abcd", maxZoom: 20,
     attribution: '&copy; OpenStreetMap &copy; CARTO',
   }).addTo(map);
+  // « Vue du ciel » : orthophotographie IGN (BD ORTHO) via la Géoplateforme (WMTS/PM).
+  const ortho = L.tileLayer(
+    "https://data.geopf.fr/wmts?layer=ORTHOIMAGERY.ORTHOPHOTOS&style=normal&tilematrixset=PM" +
+    "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg" +
+    "&TileMatrix={z}&TileCol={x}&TileRow={y}",
+    { maxZoom: 21, attribution: "&copy; IGN — Géoplateforme (BD ORTHO)" }
+  );
+  L.control.layers(
+    { "Plan (radar)": plan, "Vue du ciel (IGN)": ortho },
+    null, { position: "topright", collapsed: true }
+  ).addTo(map);
 }
 
 function colorFor(p) { return COLORS[p.status] || COLORS.inconnu; }
@@ -322,6 +333,8 @@ function renderFiche(f) {
 
     ${renderAi(f.ai)}
 
+    ${renderPromoteur(f.promoteur, p.centroid)}
+
     <details class="cascade">
       <summary>Cascade complète · la traçabilité est le produit <span class="cc-count">${cascade.length} couches</span></summary>
       <table class="cascade-table">${cascadeRows}</table>
@@ -347,6 +360,81 @@ function renderFiche(f) {
       <b>LA&nbsp;BUSE</b> · Pré-analyse foncière sur données publiques · ${esc(p.idu)} · ${today}<br>
       Constructibilité, propriété, rentabilité, faisabilité — <b>jamais garanties</b>. Document indicatif à vérifier avant toute démarche.
     </footer>`;
+}
+
+// ───────────────────────── Données promoteur (Temps 1) ─────────────────────────
+// Tout est indicatif & sourcé ; aucune valeur réglementaire fabriquée. Mesures EPSG:2975.
+function renderPromoteur(pr, centroid) {
+  if (!pr) return "";
+  const alt = pr.altimetrie || {}, fac = pr.facade || {}, plu = pr.plu_detail || {};
+  const own = pr.proprietaire || {}, net = pr.reseaux || {};
+  const fig = (val, lbl) => `<span class="pm-fig"><b>${val ?? "—"}</b><i>${lbl}</i></span>`;
+  const na = (o) => `<p class="pm-na">${esc(o.note || "Indisponible.")}</p>`;
+
+  // 1 · Cote altimétrique (RGE ALTI, live échantillonné)
+  const altBody = alt.available
+    ? `<div class="pm-figs">${fig(alt.min_m, "min (m)")}${fig(alt.mean_m, "moy. (m)")}${fig(alt.max_m, "max (m)")}${fig(alt.amplitude_m, "amplitude (m)")}</div>
+       <p class="pm-src">${esc(alt.source || "")} · ${alt.n_points || 0} pts</p>` : na(alt);
+
+  // 2 · Façade sur voie + profondeur (BD TOPO, EPSG:2975)
+  let facBody;
+  if (fac.sur_rue) {
+    const prof = fac.profondeur_m != null
+      ? `<span class="pm-fig"><b>${fac.profondeur_m}</b><i>profondeur (m)</i></span>`
+      : `<span class="pm-fig degr"><b>≈</b><i>${esc(fac.profondeur_note || "")}</i></span>`;
+    const forme = fac.forme
+      ? `<p class="pm-src">forme : rectangularité ${fac.forme.rectangularite} · convexité ${fac.forme.convexite} · emprise orientée ${fac.forme.emprise_orientee_m?.join(" × ")} m</p>` : "";
+    facBody = `<div class="pm-figs">${fig(fac.facade_totale_m, "façade totale (m)")}${fig(fac.facade_principale_m, "façade princ. (m)")}${fig(fac.nb_voies, "voie(s) longée(s)")}${prof}</div>
+      ${forme}<p class="pm-src">${esc(fac.source || "")} · tampon ${fac.tolerance_laterale_m} m</p>`;
+  } else {
+    facBody = na({ note: fac.profondeur_note || "Aucune façade sur voie identifiée." });
+  }
+
+  // 3 · Vue du ciel (orthophoto IGN) — vignette + rappel du fond de carte
+  let sky = "";
+  if (centroid && centroid.lon != null) {
+    const d = 0.0006;  // ~ ±65 m autour du centroïde
+    const bbox = `${(centroid.lat - d).toFixed(6)},${(centroid.lon - d).toFixed(6)},${(centroid.lat + d).toFixed(6)},${(centroid.lon + d).toFixed(6)}`;
+    const url = "https://data.geopf.fr/wms-r/wms?LAYERS=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg&SERVICE=WMS"
+      + "&VERSION=1.3.0&REQUEST=GetMap&STYLES=&CRS=EPSG:4326&WIDTH=440&HEIGHT=300&BBOX=" + bbox;
+    sky = `<div class="pm-sky"><img loading="lazy" src="${url}" alt="Vue aérienne IGN de la parcelle"
+        onerror="this.parentNode.innerHTML='<p class=&quot;pm-na&quot;>Orthophoto IGN momentanément indisponible.</p>'">
+      <span class="pm-sky-cap">Orthophoto IGN (BD ORTHO) · centrée sur la parcelle</span></div>
+      <p class="pm-src">Astuce : bascule le fond « Vue du ciel (IGN) » sur la carte (coin haut-droit).</p>`;
+  }
+
+  // 4 · PLU détaillé (zonage ingéré + prescriptions GPU réelles ; règles chiffrées → règlement)
+  const zChips = (plu.zonage || []).map((z) => `<span class="src-chip ok">${esc(z)}</span>`).join("") || '<span class="src-chip silent">zonage non trouvé</span>';
+  const presc = (plu.prescriptions || []).length
+    ? `<ul class="pm-list">${plu.prescriptions.map((x) => `<li><span class="pm-prtype">${esc(x.type)}</span> ${esc(x.libelle || "—")}${x.nature ? " · " + esc(x.nature) : ""}</li>`).join("")}</ul>`
+    : `<p class="pm-na">${esc(plu.prescriptions_note || "Aucune prescription/servitude graphique interceptée.")}</p>`;
+  const pluBody = `
+    <div class="pm-row"><span class="pm-k">Zonage</span><span class="src-chips">${zChips}</span>${plu.idurba ? `<span class="pm-src">${esc(plu.idurba)}</span>` : ""}</div>
+    <div class="pm-row"><span class="pm-k">Prescriptions / servitudes</span><div>${presc}</div></div>
+    <p class="pm-note">⚠︎ ${esc(plu.regles_chiffrees_note || "")}</p>
+    ${plu.reglement_url ? `<a class="btn" href="${esc(plu.reglement_url)}" target="_blank" rel="noopener">Ouvrir le règlement (GPU)</a>` : ""}`;
+
+  // 5 · Propriétaire + réseaux (honnêteté : rien de fabriqué)
+  const netRow = (label, o) => `<li><b>${label}</b> — ${esc((o && o.note) || "à vérifier")}</li>`;
+  const factBody = `
+    <p class="pm-na"><b>Propriétaire :</b> ${esc(own.note || "non vérifié")}</p>
+    <ul class="pm-list net">${netRow("Eau potable", net.eau_potable)}${netRow("Électricité (EDF)", net.electricite)}${netRow("Assainissement", net.assainissement)}</ul>
+    <p class="pm-src">${esc((net && net.source) || "")}</p>`;
+
+  const card = (title, body, tag) => `<div class="pm-card"><h4 class="pm-h">${title}${tag ? `<span class="pm-ind">${tag}</span>` : ""}</h4>${body}</div>`;
+
+  return `
+    <section class="promoteur">
+      <h3 class="src-h">Données promoteur <span class="pm-sub">· publiques, tracées, indicatives</span></h3>
+      <div class="pm-grid">
+        ${card("Cote altimétrique", altBody, "indicatif")}
+        ${card("Façade & profondeur", facBody, "indicatif · EPSG:2975")}
+        ${card("Vue du ciel", sky || na({ note: "Centroïde indisponible." }), "")}
+        ${card("PLU détaillé", pluBody, "")}
+        ${card("Propriété & réseaux", factBody, "")}
+      </div>
+      <p class="pm-foot">${esc(pr.disclaimer || "")}</p>
+    </section>`;
 }
 
 function renderAi(ai) {
