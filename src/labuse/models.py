@@ -349,16 +349,24 @@ def ensure_geom_2975(engine) -> None:
     ddl = [
         "ALTER TABLE parcels ADD COLUMN IF NOT EXISTS geom_2975 geometry(Geometry, 2975)",
         "ALTER TABLE spatial_layers ADD COLUMN IF NOT EXISTS geom_2975 geometry(Geometry, 2975)",
+        # ST_MakeValid : la reprojection 4326→2975 d'une géométrie pourtant valide peut
+        # produire un polygone INVALIDE (auto-intersection au mm près) ; non réparé, il
+        # fait planter ST_Intersection côté cascade (GEOS « side location conflict ») et
+        # tue l'évaluation de toute la commune. MakeValid est un no-op sur une géométrie
+        # déjà valide → verdicts INCHANGÉS, et répare les rares cas pathologiques.
         "CREATE OR REPLACE FUNCTION labuse_set_geom_2975() RETURNS trigger AS $$ "
-        "BEGIN NEW.geom_2975 := ST_Transform(NEW.geom, 2975); RETURN NEW; END; $$ LANGUAGE plpgsql",
+        "BEGIN NEW.geom_2975 := ST_MakeValid(ST_Transform(NEW.geom, 2975)); RETURN NEW; END; $$ LANGUAGE plpgsql",
         "DROP TRIGGER IF EXISTS trg_parcels_geom_2975 ON parcels",
         "CREATE TRIGGER trg_parcels_geom_2975 BEFORE INSERT OR UPDATE OF geom ON parcels "
         "FOR EACH ROW EXECUTE FUNCTION labuse_set_geom_2975()",
         "DROP TRIGGER IF EXISTS trg_layers_geom_2975 ON spatial_layers",
         "CREATE TRIGGER trg_layers_geom_2975 BEFORE INSERT OR UPDATE OF geom ON spatial_layers "
         "FOR EACH ROW EXECUTE FUNCTION labuse_set_geom_2975()",
-        "UPDATE parcels SET geom_2975 = ST_Transform(geom, 2975) WHERE geom_2975 IS NULL AND geom IS NOT NULL",
-        "UPDATE spatial_layers SET geom_2975 = ST_Transform(geom, 2975) WHERE geom_2975 IS NULL AND geom IS NOT NULL",
+        "UPDATE parcels SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL",
+        "UPDATE spatial_layers SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL",
+        # Réparation de l'existant : geom_2975 déjà peuplé mais invalide (avant ce correctif).
+        "UPDATE parcels SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975)",
+        "UPDATE spatial_layers SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975)",
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",
         "CREATE INDEX IF NOT EXISTS idx_spatial_layers_geom_2975 ON spatial_layers USING gist (geom_2975)",
         "ANALYZE parcels",
