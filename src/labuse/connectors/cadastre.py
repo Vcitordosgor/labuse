@@ -55,7 +55,9 @@ def parse_parcelles(feature_collection: dict) -> list[dict[str, Any]]:
 def ingest_parcels(session: Session, parcels: list[dict], commune_name: str | None, run_id: int | None) -> int:
     """Insère des parcelles (géométrie GeoJSON → 4326), surface/centroïde calculés en base.
 
-    Surface mesurée en 2975 (jamais en degrés). Upsert par IDU.
+    Surface mesurée en 2975 (jamais en degrés). Upsert par IDU. Géométrie passée par
+    ST_MakeValid : quelques parcelles cadastrales sont topologiquement invalides
+    (anneaux auto-sécants) et feraient échouer ST_Intersection côté cascade.
     """
     n = 0
     for p in parcels:
@@ -66,10 +68,10 @@ def ingest_parcels(session: Session, parcels: list[dict], commune_name: str | No
                 INSERT INTO parcels (idu, commune, section, numero, geom, surface_m2, centroid, bbox, ingestion_run_id)
                 VALUES (
                     :idu, :commune, :section, :numero,
-                    ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326),
-                    ST_Area(ST_Transform(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326), 2975)),
-                    ST_Centroid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)),
-                    ST_Envelope(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)),
+                    ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)),
+                    ST_Area(ST_Transform(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)), 2975)),
+                    ST_Centroid(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326))),
+                    ST_Envelope(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326))),
                     :run
                 )
                 ON CONFLICT (idu) DO UPDATE SET
