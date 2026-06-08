@@ -193,6 +193,15 @@ def test_pipeline_crud_flow(client):
     assert client.get("/pipeline/parcel/97415000AB0002").json()["in_pipeline"] is False
 
 
+def test_pipeline_move_status_persists(client):
+    # Simule un glisser-déposer : changer de colonne via PATCH /pipeline/{id} → persistant en base.
+    eid = client.post("/pipeline", json={"idu": "97415000AB0007"}).json()["entry"]["id"]
+    assert client.patch(f"/pipeline/{eid}", json={"status": "en_discussion"}).json()["entry"]["status"] == "en_discussion"
+    moved = next(e for e in client.get("/pipeline").json() if e["id"] == eid)  # relecture indépendante
+    assert moved["status"] == "en_discussion"
+    client.delete(f"/pipeline/{eid}")
+
+
 def test_pipeline_duplicate_returns_existing(client):
     a = client.post("/pipeline", json={"idu": "97415000AB0003"}).json()
     b = client.post("/pipeline", json={"idu": "97415000AB0003"}).json()
