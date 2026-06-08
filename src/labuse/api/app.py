@@ -268,11 +268,16 @@ def _build_fiche(db: Session, idu: str) -> dict:
         ), {"pid": p.id}
     ).mappings().all()
 
+    from .enrichment import build_enrichment
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
         },
+        # Bloc « promoteur » (TEMPS 1) : données publiques tracées, indicatives, EPSG:2975.
+        # Isolé de la cascade/scoring ; chaque sous-section dégrade sans casser la fiche.
+        "promoteur": build_enrichment(db, p, lon, lat),
         # En-tête : verdict + LES DEUX scores (jamais l'opportunité seule).
         "verdict": {
             "status": ev.status.value if ev else None,

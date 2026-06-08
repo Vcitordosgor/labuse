@@ -15,6 +15,8 @@ import pytest
 from sqlalchemy.orm import sessionmaker
 
 os.environ.setdefault("LABUSE_CONFIG_DIR", "config")
+# Fiche « promoteur » : pas d'appels externes (RGE ALTI / GPU) en test → déterministe.
+os.environ.setdefault("LABUSE_ENRICH_LIVE", "0")
 
 # Redirige l'app ET les tests vers une base de test dédiée, AVANT le 1er get_settings().
 _APP_URL = os.environ.get("LABUSE_DATABASE_URL", "postgresql+psycopg://labuse:labuse@localhost:5432/labuse")
