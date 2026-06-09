@@ -56,6 +56,14 @@ def main() -> None:
     ap.add_argument("--workers", type=int, default=4, help="évaluations parallèles (défaut 4)")
     a = ap.parse_args()
 
+    # Auto-réparation du schéma : les colonnes pré-projetées geom_2975 (requises par
+    # la cascade) peuvent manquer après un recyclage de conteneur — on les (re)crée
+    # et (re)peuple, idempotent, avant toute évaluation.
+    from labuse.db import engine
+    from labuse.models import ensure_geom_2975
+    print("Schéma : ensure_geom_2975 …", flush=True)
+    ensure_geom_2975(engine())
+
     with session_scope() as s:
         status = {n: run_all.run_status(s, n) for _, n in run_all.REUNION_COMMUNES}
     pending = [n for _, n in run_all.REUNION_COMMUNES if status.get(n) == "ingested"]
