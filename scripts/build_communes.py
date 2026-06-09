@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures as cf
+import fcntl
 import subprocess
 import sys
 import threading
@@ -28,8 +29,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
+from sqlalchemy import text  # noqa: E402
+
 from labuse.db import session_scope  # noqa: E402
 from labuse.ingestion import run_all  # noqa: E402
+
+LOCK_PATH = "/tmp/build_communes.lock"
 
 WORKER = str(Path(__file__).with_name("_commune_worker.py"))
 EVAL_TIMEOUT = 21600     # 6 h max / commune (garde-fou anti-hang)
@@ -55,6 +60,24 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--workers", type=int, default=4, help="évaluations parallèles (défaut 4)")
     a = ap.parse_args()
+
+    # Instance unique : si un autre build tourne déjà (ex. hook + lancement manuel),
+    # on abandonne. flock se libère automatiquement si le process meurt — pas de
+    # verrou périmé après un recyclage de conteneur.
+    lock_f = open(LOCK_PATH, "w")
+    try:
+        fcntl.flock(lock_f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print("Un autre build_communes tourne déjà — abandon.", flush=True)
+        return
+
+    # No-op rapide si déjà terminé : permet au hook de lancer ce script à chaque
+    # démarrage sans coût quand les 24 communes sont complètes.
+    with session_scope() as s:
+        if s.execute(text("SELECT count(DISTINCT commune) "
+                          "FROM ingestion_runs WHERE status='ok'")).scalar() >= 24:
+            print("Déjà 24/24 communes complètes — rien à faire.", flush=True)
+            return
 
     # Auto-réparation du schéma : les colonnes pré-projetées geom_2975 (requises par
     # la cascade) peuvent manquer après un recyclage de conteneur — on les (re)crée
@@ -89,7 +112,6 @@ def main() -> None:
     with cf.ThreadPoolExecutor(max_workers=a.workers) as ex:
         list(ex.map(lambda n: _run(["eval", n], "EVAL", EVAL_TIMEOUT), [n for _, n in absent]))
 
-    from sqlalchemy import text
     with session_scope() as s:
         ok = s.execute(
             text("SELECT count(DISTINCT commune) FROM ingestion_runs WHERE status='ok'")).scalar()
