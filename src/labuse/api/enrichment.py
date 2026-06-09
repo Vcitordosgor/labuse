@@ -297,16 +297,46 @@ def plu_detail(db: Session, parcel_id: int, lon: float, lat: float) -> dict[str,
 # ────────────────────────── 5. Propriétaire public/privé ──────────────────────────
 
 def owner(db: Session, parcel_id: int) -> dict[str, Any]:
-    """Catégorie de propriétaire si une source publique le donne, sinon honnêteté.
+    """Catégorie de propriétaire si une source publique la donne, sinon honnêteté.
 
-    Les Fichiers fonciers (propriétaires) sont sous convention CEREMA : non rediffusables.
-    On ne fabrique rien.
+    On LIT les Fichiers fonciers s'ils ont été ingérés pour la parcelle (sous convention
+    CEREMA, donc rarement présents ici) et on AFFICHE la catégorie morale/publique le cas
+    échéant ; sinon « non vérifié ». Jamais de personne physique nominative, rien de fabriqué.
     """
+    note_absent = (
+        "Propriétaire non vérifié — Fichiers fonciers (propriétaires) sous convention CEREMA, "
+        "non rediffusables. Statut public/privé à confirmer (mairie / service du cadastre)."
+    )
+    src = "Fichiers fonciers (Cerema)"
+    row = db.execute(
+        text(
+            "SELECT psr.raw_payload FROM parcel_source_results psr "
+            "JOIN data_sources ds ON ds.id = psr.data_source_id "
+            "WHERE psr.parcel_id = :p AND ds.name = :s ORDER BY psr.fetched_at DESC LIMIT 1"
+        ), {"p": parcel_id, "s": src},
+    ).first()
+    payload = row[0] if row and row[0] else None
+    if not payload:
+        return {"categorie": None, "note": note_absent, "source": "—"}
+
+    morale = bool(payload.get("personne_morale"))
+    cat = payload.get("categorie")
+    nb = payload.get("nb_droits_propriete")
+    indivision = bool(payload.get("indivision") or (nb is not None and nb >= 2))
+    publique = morale and bool(cat) and any(
+        h in cat.lower() for h in
+        ("commune", "état", "etat", "région", "region", "départe", "departe", "public",
+         "epci", "epf", "domaine", "collectivité", "collectivite", "conservatoire", "office", "hlm"))
+    categorie = "publique" if publique else "morale_privee" if morale else "personne_physique"
+    libelle = ("Propriété publique" if publique else
+               "Personne morale privée" if morale else "Personne physique (non nominatif)")
     return {
-        "categorie": None,
-        "note": "Propriétaire non vérifié — Fichiers fonciers (propriétaires) sous convention CEREMA, "
-                "non rediffusables. Statut public/privé à confirmer (mairie / service du cadastre).",
-        "source": "—",
+        "categorie": categorie,
+        "personne_morale": morale,
+        "indivision": indivision,
+        "note": f"Propriétaire : {libelle}" + (f" — {cat}" if cat else "")
+                + (" · indivision probable (bloqueur fréquent)" if indivision else ""),
+        "source": src,
     }
 
 
@@ -318,12 +348,17 @@ def networks(db: Session, parcel_id: int) -> dict[str, Any]:
     Recon : aucun jeu réseau (eau potable / assainissement / électrique) exploitable
     par parcelle en open data 974. On ne pose pas de faux indicateur.
     """
-    msg = "À vérifier auprès des concessionnaires via DT-DICT (téléservice reseaux-et-canalisations.gouv.fr)."
+    dtdict = "À vérifier auprès des concessionnaires via DT-DICT (téléservice reseaux-et-canalisations.gouv.fr)."
     return {
-        "eau_potable": {"disponible_open_data": False, "note": msg},
-        "assainissement": {"disponible_open_data": False, "note": msg},
-        "electricite": {"disponible_open_data": False, "note": msg},
-        "source": "Recon open data (data.gouv 974, ODS Réunion, BD TOPO) — aucun réseau exploitable par parcelle.",
+        "eau_potable": {"disponible_open_data": False,
+                        "note": "Open data 974 limité à la qualité/captages/stations, pas au tracé. " + dtdict},
+        "assainissement": {"disponible_open_data": False,
+                           "note": "Open data limité aux stations de traitement (STEP), pas au réseau. " + dtdict},
+        "electricite": {"disponible_open_data": False,
+                        "note": "La Réunion = EDF SEI (hors Enedis) : open data agrégé (km de lignes), "
+                                "sans tracé géolocalisé. " + dtdict},
+        "source": "Recon open data 974 (eaureunion.fr, ODS Réunion, opendata-reunion.edf.fr) — "
+                  "aucun tracé réseau exploitable par parcelle (cf. RESEAUX_RECON.md).",
     }
 
 

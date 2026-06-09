@@ -104,3 +104,26 @@ def test_reseaux_et_proprietaire_honnetes(db_session):
     own = E.owner(db_session, 1)
     assert own["categorie"] is None
     assert "Fichiers fonciers" in own["note"]
+
+
+def test_proprietaire_categorie_affichee_si_disponible(db_session):
+    """Si les Fichiers fonciers sont ingérés, on AFFICHE la catégorie (brief §5)."""
+    import json
+    x, y = X0, Y0
+    pid = _insert_parcel_2975(db_session, "TEST00000000O1",
+                              f"POLYGON(({x} {y},{x+20} {y},{x+20} {y+20},{x} {y+20},{x} {y}))")
+    ff = "Fichiers fonciers (Cerema)"
+    sid = db_session.execute(text("SELECT id FROM data_sources WHERE name=:n"), {"n": ff}).scalar()
+    if not sid:
+        sid = db_session.execute(
+            text("INSERT INTO data_sources (name, status) VALUES (:n, 'a_faire') RETURNING id"), {"n": ff}
+        ).scalar()
+    db_session.execute(
+        text("INSERT INTO parcel_source_results (parcel_id, data_source_id, status, raw_payload) "
+             "VALUES (:p, :s, 'repondu', CAST(:raw AS jsonb))"),
+        {"p": pid, "s": sid, "raw": json.dumps(
+            {"personne_morale": True, "categorie": "Commune", "indivision": False})},
+    )
+    own = E.owner(db_session, pid)
+    assert own["categorie"] == "publique" and own["personne_morale"] is True
+    assert "publique" in own["note"].lower()
