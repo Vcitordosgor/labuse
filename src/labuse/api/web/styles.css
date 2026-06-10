@@ -141,6 +141,8 @@ input[type=checkbox] { accent-color: var(--gold); }
 .chip.a_creuser { background: rgba(199,154,62,.16); color: #e0b65e; }
 .chip.exclue { background: rgba(107,113,120,.18); color: #aab2bd; }
 .chip.faux_positif_probable { background: rgba(184,95,76,.18); color: #db8b7b; }
+/* Motif de déclassement (garde-fou faux positifs) — liste */
+.prow .p-downgrade { grid-column: 1 / -1; font-size: 11px; color: #db8b7b; margin-top: 2px; }
 
 .disclaimer-foot {
   position: sticky; bottom: 0; margin: 0 -20px; padding: 12px 20px;
@@ -231,6 +233,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .lb-tip .t-st.st-exclue { color: #9aa3ad; }
 .lb-tip .t-st.st-inconnu { color: var(--muted); }
 .lb-tip .t-sc { color: var(--muted); display: block; margin-top: 1px; }
+.lb-tip .t-dg { color: #db8b7b; display: block; margin-top: 2px; font-size: 11px; }
 .lb-tip .t-sc b { color: var(--txt); }
 
 /* ───────── Fiche — « le dossier » · feuille éditoriale ivoire §8 ───────── */
@@ -284,6 +287,8 @@ input[type=checkbox] { accent-color: var(--gold); }
 .verdict.v-exclue .verdict-word { color: var(--v-exclue); }
 .verdict.v-faux_positif_probable .verdict-word { color: var(--v-faux_positif_probable); }
 .verdict-gloss { color: var(--ink-soft); font-size: 14.5px; margin: 0 0 15px; max-width: 44ch; }
+.verdict-downgrade { margin: 0 0 14px; padding: 9px 13px; border-radius: 9px; font-size: 13px; line-height: 1.45;
+  max-width: 52ch; background: rgba(184,95,76,.12); border: 1px solid rgba(184,95,76,.4); color: #b85f4c; font-weight: 600; }
 .fiable-tag { display: inline-block; font-size: 11px; padding: 4px 12px; border-radius: 999px; font-weight: 600; letter-spacing: .02em; }
 .fiable-tag.ok { background: rgba(47,125,87,.12); color: #246046; border: 1px solid rgba(47,125,87,.28); }
 .fiable-tag.reserve { background: rgba(176,125,43,.12); color: #8a5f1c; border: 1px solid rgba(176,125,43,.30); }

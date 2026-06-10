@@ -12,16 +12,20 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from .. import config
+from ..enums import Severity
 from ..models import CascadeResult, Parcel, ParcelEvaluation
 from ..scoring import (
     CompletenessResult,
     OpportunityResult,
+    apply_declassement,
     apply_feedback,
     compute_completeness,
+    compute_declass_signals,
     compute_opportunity,
     decide_status,
 )
-from .base import Verdict
+from ..enums import EvaluationStatus
+from .base import Verdict, hard_exclude, soft_flag
 from .context import EvalContext, ParcelRef
 from .engine import is_promoted, run_cascade
 
@@ -61,6 +65,7 @@ def evaluate_parcels(
     ctx.prime(parcel_ids)  # précalcul batch (commune entière) — sinon 1 requête/parcelle×couche
     parcels = _load_parcel_refs(session, parcel_ids)
     verdicts_by = run_cascade(parcels, ctx)
+    signals_by = compute_declass_signals(session, parcel_ids)  # garde-fou faux positifs
     rules_v = config.rules_version()
 
     outcomes: list[EvaluationOutcome] = []
@@ -92,6 +97,21 @@ def evaluate_parcels(
             if fb_display is not None:
                 verdicts.append(fb_display)
                 opportunity.weights.append(0.0)
+
+        # Garde-fou FAUX POSITIFS (dernier mot) : un score brut élevé ne maintient pas
+        # « opportunité » si la parcelle EST un parking/équipement, est minuscule ou en
+        # pente non aménageable. Score brut CONSERVÉ ; seul le statut est corrigé + motif.
+        final_status, motif = apply_declassement(status, signals_by.get(p.id, {}))
+        if motif:
+            status = final_status
+            outcome.status = status.value
+            dv = (soft_flag("declassement", motif, Severity.FORT, source="LA BUSE — garde-fou faux positifs")
+                  if status == EvaluationStatus.A_CREUSER
+                  else hard_exclude("declassement", motif,
+                                    kind=("exclue" if status == EvaluationStatus.EXCLUE else "faux_positif"),
+                                    source="LA BUSE — garde-fou faux positifs"))
+            verdicts.append(dv)
+            opportunity.weights.append(0.0)
 
         if persist:
             _persist(session, ctx, p, verdicts, completeness, opportunity, status, rules_v, ai_payload, model_version)

@@ -71,7 +71,8 @@ function tipHtml(p) {
   const lbl = STATUS_LABEL[p.status] || "non évaluée";
   const sc = p.opportunity_score != null
     ? `<span class="t-sc"><b>${p.opportunity_score}</b> opp · ${p.completeness_score ?? "—"} cpl</span>` : "";
-  return `<span class="t-idu">${esc(p.idu)}</span><span class="t-st st-${p.status || "inconnu"}">${lbl}</span>${sc}`;
+  const dg = p.downgrade_reason ? `<span class="t-dg">⚠ déclassée : ${esc(p.downgrade_reason)}</span>` : "";
+  return `<span class="t-idu">${esc(p.idu)}</span><span class="t-st st-${p.status || "inconnu"}">${lbl}</span>${sc}${dg}`;
 }
 
 function passesFilter(p) {
@@ -198,6 +199,7 @@ function renderList() {
       <span class="p-verdict"><span class="chip ${p.status}">${STATUS_LABEL[p.status] || "?"}</span></span>
       <span class="scores"><b>${p.opportunity_score ?? "—"}</b> opp · ${p.completeness_score ?? "—"} cpl</span>
       <span class="p-surf">${fmt(p.surface_m2)} m²</span>
+      ${p.downgrade_reason ? `<span class="p-downgrade">⚠ déclassée : ${esc(p.downgrade_reason)}</span>` : ""}
     </div>`).join("") || `<div class="loading">Aucune parcelle ne correspond.</div>`;
   document.querySelectorAll(".prow").forEach((el) => el.addEventListener("click", () => focusParcel(el.dataset.idu)));
 }
@@ -308,6 +310,7 @@ function renderFiche(f) {
       <div class="verdict-eyebrow">Verdict LA BUSE</div>
       <h1 class="verdict-word">${STATUS_LABEL[status] || esc(status) || "—"}</h1>
       <p class="verdict-gloss">${esc(VERDICT_GLOSS[status] || "")}</p>
+      ${v.downgrade_reason ? `<p class="verdict-downgrade">⚠️ Déclassée malgré un score brut élevé — ${esc(v.downgrade_reason)}.</p>` : ""}
       ${fiableBadge(status)}
     </section>
 

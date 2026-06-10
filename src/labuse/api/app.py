@@ -201,13 +201,17 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
             """
             SELECT p.idu, p.surface_m2,
                    ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
-                   e.status, e.opportunity_score, e.completeness_score
+                   e.status, e.opportunity_score, e.completeness_score, d.detail AS downgrade_reason
             FROM parcels p
             LEFT JOIN LATERAL (
                 SELECT status, opportunity_score, completeness_score
                 FROM parcel_evaluations e WHERE e.parcel_id = p.id
                 ORDER BY evaluated_at DESC LIMIT 1
             ) e ON true
+            LEFT JOIN LATERAL (
+                SELECT detail FROM cascade_results
+                WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
+            ) d ON true
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
               AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
             LIMIT :lim
@@ -224,6 +228,7 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 "status": r["status"],
                 "opportunity_score": r["opportunity_score"],
                 "completeness_score": r["completeness_score"],
+                "downgrade_reason": r["downgrade_reason"],
             },
         }
         for r in rows if r["g"]
@@ -292,6 +297,8 @@ def _build_fiche(db: Session, idu: str) -> dict:
             "opportunity_score": ev.opportunity_score if ev else None,
             "completeness_score": ev.completeness_score if ev else None,
             "reasons": reasons,
+            # Motif de déclassement (garde-fou faux positifs), si la parcelle a été corrigée.
+            "downgrade_reason": next((r["detail"] for r in cascade if r["layer_name"] == "declassement"), None),
             "evaluated_at": ev.evaluated_at if ev else None,
             "rules_version": ev.rules_version if ev else None,
         },
