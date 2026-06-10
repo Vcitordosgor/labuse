@@ -288,7 +288,8 @@ def ingest_dvf(session, insee, commune, run_id, sids) -> int:
     """DVF (Région ODS) géolocalisé via jointure l_idpar→parcelle (requête par RAYON, §7bis)."""
     with _client() as c:
         recs = _ods_records(c, "demande-de-valeurs-foncierespublic", where=f'l_codinsee like "{insee}"',
-                            select="l_idpar,valeurfonc,datemut,libnatmut,libtypbien,sterr", page=100, cap=10000)
+                            select="l_idpar,valeurfonc,datemut,libnatmut,libtypbien,sterr,sbati,sbatapt,sbatmai",
+                            page=100, cap=10000)
     by_idpar: dict[str, dict] = {}
     for r in recs:
         for idpar in (r.get("l_idpar") or []):
@@ -301,13 +302,14 @@ def ingest_dvf(session, insee, commune, run_id, sids) -> int:
         session.execute(
             text(
                 """INSERT INTO dvf_mutations
-                   (mutation_id, date_mutation, valeur_fonciere, type_local, surface_terrain, nature_mutation, commune, geom, raw)
-                   SELECT :mid, :dt, :val, :tl, :st, :nat, commune, centroid, CAST(:raw AS jsonb)
+                   (mutation_id, date_mutation, valeur_fonciere, type_local, surface_reelle_bati, surface_terrain, nature_mutation, commune, geom, raw)
+                   SELECT :mid, :dt, :val, :tl, :sb, :st, :nat, commune, centroid, CAST(:raw AS jsonb)
                    FROM parcels WHERE id = :pid"""
             ),
             {"mid": idu, "dt": m.get("datemut"), "val": m.get("valeurfonc"), "tl": m.get("libtypbien"),
-             "st": m.get("sterr"), "nat": m.get("libnatmut"), "pid": pid,
-             "raw": json.dumps({"source": "DVF Région ODS", "idpar": idu})},
+             "sb": m.get("sbati"), "st": m.get("sterr"), "nat": m.get("libnatmut"), "pid": pid,
+             "raw": json.dumps({"source": "DVF Région ODS", "idpar": idu,
+                                "sbatapt": m.get("sbatapt"), "sbatmai": m.get("sbatmai")})},
         )
         n += 1
     return n

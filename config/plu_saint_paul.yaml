@@ -45,6 +45,13 @@ hypotheses_faisabilite:
   logement_m2_haut: 80.0            # surface moyenne d'un logement (borne haute)
   place_m2: 25.0                    # 1 place de stationnement (avec circulation)
   densite_logts_ha_par_niveau: 30.0 # plafond densité = ce taux x niveaux (logts/ha) — filet ex-COS
+  # --- Bilan promoteur (CA, charge foncière) ---
+  cout_construction_m2_bas: 1800.0  # coût de construction au m² habitable (borne basse)
+  cout_construction_m2_haut: 2200.0 # idem (borne haute)
+  marge_promoteur_pct: 0.18         # marge promoteur (% du CA)
+  frais_annexes_pct: 0.12           # honoraires + commercialisation + financier + aléas (% du CA)
+  dvf_radius_m: 1500.0              # rayon de recherche des ventes DVF comparables (m)
+  dvf_min_ventes: 8                # en deçà, prix DVF non fiable -> on le dit, on n'invente pas
 
 zones:
 

@@ -30,6 +30,13 @@ class Hypotheses:
     densite_logts_ha_par_niveau: float = 30.0   # plafond densité = ce taux × niveaux (logts/ha)
     recul_voirie_defaut_m: float = 5.0
     recul_limites_defaut_m: float = 3.0
+    # --- Bilan promoteur (PARTIE 1) ---
+    cout_construction_m2_bas: float = 1800.0    # coût de construction au m² habitable (borne basse)
+    cout_construction_m2_haut: float = 2200.0   # idem (borne haute)
+    marge_promoteur_pct: float = 0.18           # marge promoteur (% du CA)
+    frais_annexes_pct: float = 0.12             # honoraires, commercialisation, financier, aléas (% du CA)
+    dvf_radius_m: float = 1500.0                # rayon de recherche des ventes DVF comparables
+    dvf_min_ventes: int = 8                     # en deçà, prix DVF jugé non fiable
 
     @classmethod
     def charger(cls) -> "Hypotheses":
@@ -293,7 +300,11 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     sous_lo, sous_hi = sous_lo * facteur, sous_hi * facteur
 
     rp = f"R+{max(0, niveaux - 1)}"
+    logt_moyen = (hyp.logement_m2_bas + hyp.logement_m2_haut) / 2.0
     fourch = {"niveaux": rp, "surface_plancher_m2": round(sdp),
+              # surface habitable VENDABLE (post-rendement, plafond densité, modulation) :
+              # base du chiffre d'affaires du bilan promoteur.
+              "shab_vendable_m2": round((sous_lo + sous_hi) / 2.0 * logt_moyen),
               "logements_au_sol": _rng(sol_lo, sol_hi),
               "logements_sous_sol": _rng(sous_lo, sous_hi),
               "stationnement_regime": regime}

@@ -96,6 +96,26 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
         return None
     ctx, f = res
     c = ctx.contraintes
+
+    # Bilan promoteur (PARTIE 1) — uniquement si constructible ; isolé/défensif.
+    bilan = None
+    try:
+        from .bilan import compute_bilan, sector_price
+        from .engine import Hypotheses
+        if f.constructible:
+            hyp = Hypotheses.charger()
+            b = compute_bilan(f.fourchette.get("shab_vendable_m2", 0), ctx.surface_m2,
+                              sector_price(session, ctx.parcel_id, hyp), hyp)
+            bilan = {
+                "fiable": b.fiable, "verdict": b.verdict, "prix_dvf": b.prix_dvf,
+                "ca": b.ca, "charge_fonciere": b.charge_fonciere,
+                "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur, "source": s.source}
+                          for s in b.steps],
+                "hypotheses": b.hypotheses, "avertissements": b.avertissements, "bandeau": b.bandeau,
+            }
+    except Exception:  # noqa: BLE001 - le bilan ne casse jamais la fiche
+        bilan = None
+
     return {
         "zone": f.zone,
         "zone_resolue": f.zone_resolue,
@@ -114,4 +134,5 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
         "avertissements": f.avertissements,
         "modulation": f.modulation,
         "bandeau": f.bandeau,
+        "bilan": bilan,
     }
