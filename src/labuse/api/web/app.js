@@ -416,10 +416,18 @@ function renderPromoteur(pr, centroid) {
     <p class="pm-note">⚠︎ ${esc(plu.regles_chiffrees_note || "")}</p>
     ${plu.reglement_url ? `<a class="btn" href="${esc(plu.reglement_url)}" target="_blank" rel="noopener">Ouvrir le règlement (GPU)</a>` : ""}`;
 
-  // 5 · Propriétaire + réseaux (honnêteté : rien de fabriqué)
+  // 5 · Propriétaire + viabilité/réseaux (honnêteté : aucun « raccordé/non raccordé »)
   const netRow = (label, o) => `<li><b>${label}</b> — ${esc((o && o.note) || "à vérifier")}</li>`;
+  const via = net.viabilite || {};
+  const viaBlock = via.presomption ? `
+    <div class="pm-via">
+      <span class="pm-via-h">Viabilité <span class="pm-via-tag">à vérifier</span></span>
+      <p>${esc(via.presomption)}</p>
+      ${via.a_verifier ? `<p class="pm-note">⚠︎ ${esc(via.a_verifier)}</p>` : ""}
+    </div>` : "";
   const factBody = `
     <p class="pm-na"><b>Propriétaire :</b> ${esc(own.note || "non vérifié")}</p>
+    ${viaBlock}
     <ul class="pm-list net">${netRow("Eau potable", net.eau_potable)}${netRow("Électricité (EDF)", net.electricite)}${netRow("Assainissement", net.assainissement)}</ul>
     <p class="pm-src">${esc((net && net.source) || "")}</p>`;
 

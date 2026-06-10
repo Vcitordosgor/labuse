@@ -351,13 +351,44 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
 # ──────────────────────────── Réseaux (eau / EDF / assainissement) ────────────────────────────
 
 def networks(db: Session, parcel_id: int) -> dict[str, Any]:
-    """Réseaux : ce qui est RÉELLEMENT en open data pour 974 (rien d'exploitable) → DT-DICT.
+    """Réseaux / viabilité — VERSION HONNÊTE (PARTIE 2).
 
-    Recon : aucun jeu réseau (eau potable / assainissement / électrique) exploitable
-    par parcelle en open data 974. On ne pose pas de faux indicateur.
+    Les tracés réseau fins (eau / EDF / assainissement) ne sont PAS en open data 974 :
+    on ne fabrique AUCUN indicateur « raccordé/non raccordé ». On fournit seulement :
+    - un PROXY DE PRÉSOMPTION (proximité voirie : les réseaux courent généralement le
+      long des voies) et la distance à la voie la plus proche ;
+    - un champ clair « à vérifier auprès des concessionnaires (DT-DICT) ».
     """
-    dtdict = "À vérifier auprès des concessionnaires via DT-DICT (téléservice reseaux-et-canalisations.gouv.fr)."
+    dtdict = ("Viabilité (eau, électricité, assainissement) à vérifier auprès des "
+              "concessionnaires via DT-DICT (téléservice reseaux-et-canalisations.gouv.fr).")
+
+    # Proxy de présomption : distance à la voirie la plus proche (BD TOPO, déjà ingérée).
+    dist = db.execute(text(
+        "SELECT round(ST_Distance(p.geom_2975, v.geom_2975)) "
+        "FROM parcels p CROSS JOIN LATERAL ("
+        "  SELECT geom_2975 FROM spatial_layers WHERE commune = p.commune AND kind = 'voirie' "
+        "  ORDER BY p.geom_2975 <-> geom_2975 LIMIT 1) v WHERE p.id = :pid"),
+        {"pid": parcel_id}).scalar()
+    dist = float(dist) if dist is not None else None
+    contact = dist is not None and dist <= 1.0
+    if dist is None:
+        presomption = "Voirie non disponible en base ici — proximité non évaluable."
+    elif contact:
+        presomption = ("Voirie AU CONTACT de la parcelle → réseaux probablement à proximité "
+                       "immédiate (ils suivent généralement les voies). À CONFIRMER.")
+    else:
+        presomption = (f"Voie la plus proche à ~{dist:.0f} m → viabilisation à étudier "
+                       "(extension de réseau possible, surcoût). À confirmer.")
+
     return {
+        # JAMAIS « raccordé/non raccordé » : statut volontairement « à vérifier ».
+        "viabilite": {
+            "statut": "à_vérifier",
+            "voirie_contact": contact,
+            "distance_voirie_m": dist,
+            "presomption": presomption,
+            "a_verifier": dtdict,
+        },
         "eau_potable": {"disponible_open_data": False,
                         "note": "Open data 974 limité à la qualité/captages/stations, pas au tracé. " + dtdict},
         "assainissement": {"disponible_open_data": False,
@@ -366,7 +397,8 @@ def networks(db: Session, parcel_id: int) -> dict[str, Any]:
                         "note": "La Réunion = EDF SEI (hors Enedis) : open data agrégé (km de lignes), "
                                 "sans tracé géolocalisé. " + dtdict},
         "source": "Recon open data 974 (eaureunion.fr, ODS Réunion, opendata-reunion.edf.fr) — "
-                  "aucun tracé réseau exploitable par parcelle (cf. RESEAUX_RECON.md).",
+                  "aucun tracé réseau exploitable par parcelle (cf. RESEAUX_RECON.md). "
+                  "Présomption = proximité voirie (BD TOPO).",
     }
 
 
