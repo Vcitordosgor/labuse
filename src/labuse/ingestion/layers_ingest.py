@@ -284,35 +284,124 @@ def ingest_pente(session, bbox, commune, run_id, sids, step_m: float = 180.0, ch
     return n
 
 
+_GEO_DVF_CACHE: list[dict] | None = None  # dept 974 agrégé, téléchargé une fois par process
+
+
 def ingest_dvf(session, insee, commune, run_id, sids) -> int:
-    """DVF (Région ODS) géolocalisé via jointure l_idpar→parcelle (requête par RAYON, §7bis)."""
-    with _client() as c:
-        recs = _ods_records(c, "demande-de-valeurs-foncierespublic", where=f'l_codinsee like "{insee}"',
-                            select="l_idpar,valeurfonc,datemut,libnatmut,libtypbien,sterr,sbati,sbatapt,sbatmai",
-                            page=100, cap=10000)
-    by_idpar: dict[str, dict] = {}
-    for r in recs:
-        for idpar in (r.get("l_idpar") or []):
-            by_idpar.setdefault(idpar, r)
-    n = 0
-    for pid, idu in session.execute(text("SELECT id, idu FROM parcels")).all():
-        m = by_idpar.get(idu)
-        if not m:
+    """DVF géolocalisé (Etalab, data.gouv) pour la commune.
+
+    Remplace l'ancien flux ODS Région (2014-2021, surfaces lacunaires, mutation_id =
+    parcelle). Apporte : millésime récent (5 ans glissants), id_mutation RÉEL (traçabilité),
+    surface bâtie correcte agrégée PAR MUTATION (€/m² juste, plus de surcompte multi-lots),
+    VEFA exploitable (= comparable « neuf »), et une vraie coordonnée de mutation."""
+    global _GEO_DVF_CACHE
+    if _GEO_DVF_CACHE is None:
+        _GEO_DVF_CACHE = fetch_geo_dvf()  # dept 974 entier, une seule fois
+    muts = [m for m in _GEO_DVF_CACHE if m["insee"] == insee]
+    if not muts:
+        return 0
+    stmt = text(
+        """INSERT INTO dvf_mutations
+           (mutation_id, date_mutation, valeur_fonciere, type_local, surface_reelle_bati,
+            surface_terrain, nature_mutation, commune, geom, raw)
+           VALUES (:mid, :dt, :val, :tl, :sb, :st, :nat, :com,
+                   ST_SetSRID(ST_MakePoint(:lon, :lat), 4326), CAST(:raw AS jsonb))""")
+    params = [{**m, "com": commune,
+               "raw": json.dumps({"source": "geo-dvf Etalab (data.gouv)",
+                                  "id_mutation": m["mid"], "vefa": m["vefa"]})}
+              for m in muts]
+    session.execute(stmt, params)
+    return len(params)
+
+
+GEO_DVF_URL = "https://files.data.gouv.fr/geo-dvf/latest/csv/{year}/departements/{dep}.csv.gz"
+GEO_DVF_YEARS = (2021, 2022, 2023, 2024, 2025)  # millésime « latest » Etalab (5 ans glissants)
+
+
+def _geo_dvf_aggregate(rows: list[dict]) -> list[dict]:
+    """Agrège les lignes geo-dvf (DVF géolocalisé Etalab) PAR MUTATION RÉELLE.
+
+    DVF éclate une vente en plusieurs lignes (un local / lot / parcelle par ligne) qui
+    portent TOUTES la valeur foncière TOTALE de la mutation. Un €/m² calculé ligne par
+    ligne surévalue donc les ventes multi-lots. On regroupe par id_mutation, on somme la
+    surface bâtie des locaux RÉSIDENTIELS (Maison/Appartement) et on divise la valeur par
+    cette surface — €/m² correct, et dédoublonnage exact (le vrai défaut du flux ODS).
+
+    On ne garde que les mutations mono-type, géolocalisées et avec surface : aucun prix
+    fabriqué. La VEFA est conservée SI elle a une surface (geo-dvf la fournit, au contraire
+    du flux ODS où elle vaut 0) — c'est le comparable « neuf » que vend un promoteur.
+    """
+    from collections import defaultdict
+    by: dict[str, list[dict]] = defaultdict(list)
+    for r in rows:
+        by[r["id_mutation"]].append(r)
+    out: list[dict] = []
+    for mid, rs in by.items():
+        locs = [r for r in rs if r["type_local"] in ("Maison", "Appartement")
+                and r["surface_reelle_bati"] and float(r["surface_reelle_bati"]) > 0]
+        if not locs:
             continue
-        session.execute(
-            text(
-                """INSERT INTO dvf_mutations
-                   (mutation_id, date_mutation, valeur_fonciere, type_local, surface_reelle_bati, surface_terrain, nature_mutation, commune, geom, raw)
-                   SELECT :mid, :dt, :val, :tl, :sb, :st, :nat, commune, centroid, CAST(:raw AS jsonb)
-                   FROM parcels WHERE id = :pid"""
-            ),
-            {"mid": idu, "dt": m.get("datemut"), "val": m.get("valeurfonc"), "tl": m.get("libtypbien"),
-             "sb": m.get("sbati"), "st": m.get("sterr"), "nat": m.get("libnatmut"), "pid": pid,
-             "raw": json.dumps({"source": "DVF Région ODS", "idpar": idu,
-                                "sbatapt": m.get("sbatapt"), "sbatmai": m.get("sbatmai")})},
-        )
-        n += 1
-    return n
+        types = {r["type_local"] for r in locs}
+        if len(types) > 1:            # mutation appart+maison : €/m² ambigu → écartée
+            continue
+        vals = [float(r["valeur_fonciere"]) for r in rs if r["valeur_fonciere"]]
+        coords = next(((r["longitude"], r["latitude"]) for r in locs
+                       if r["longitude"] and r["latitude"]), None)
+        if not vals or not coords:    # sans prix ou sans géolocalisation : inexploitable
+            continue
+        terr = next((float(r["surface_terrain"]) for r in rs if r.get("surface_terrain")), None)
+        out.append({
+            "mid": mid, "dt": rs[0]["date_mutation"], "val": max(vals),
+            "tl": next(iter(types)),
+            "sb": round(sum(float(r["surface_reelle_bati"]) for r in locs), 2),
+            "st": terr, "nat": rs[0]["nature_mutation"], "insee": rs[0]["code_commune"],
+            "lon": float(coords[0]), "lat": float(coords[1]),
+            "vefa": any("futur" in r["nature_mutation"].lower() for r in rs),
+        })
+    return out
+
+
+def fetch_geo_dvf(years: tuple[int, ...] = GEO_DVF_YEARS, dep: str = "974") -> list[dict]:
+    """Télécharge geo-dvf (data.gouv, Etalab) pour un département et agrège par mutation."""
+    import csv
+    import gzip
+    rows: list[dict] = []
+    with _client() as c:
+        for y in years:
+            r = c.get(GEO_DVF_URL.format(year=y, dep=dep), timeout=120.0)
+            r.raise_for_status()
+            txt = gzip.decompress(r.content).decode("utf-8", "replace")
+            rows += list(csv.DictReader(txt.splitlines()))
+    return _geo_dvf_aggregate(rows)
+
+
+def load_dvf_geo(session: Session, target: str = "dvf_mutations",
+                 years: tuple[int, ...] = GEO_DVF_YEARS) -> int:
+    """Charge geo-dvf dans `target` : mutation_id = id_mutation RÉEL (traçabilité corrigée),
+    géométrie = vraie coordonnée lon/lat de la mutation (plus le centroïde de parcelle).
+    N'insère que les communes ayant des parcelles chargées (jointure commune du moteur).
+    Idempotent à l'appelant : vider `target` avant si rechargement. Renvoie le nombre inséré."""
+    muts = fetch_geo_dvf(years)
+    insee2com = {idu[:5]: com for (com, idu) in session.execute(
+        text("SELECT commune, min(idu) FROM parcels GROUP BY commune")).all()}
+    stmt = text(f"""
+        INSERT INTO {target}
+          (mutation_id, date_mutation, valeur_fonciere, type_local,
+           surface_reelle_bati, surface_terrain, nature_mutation, commune, geom, raw)
+        VALUES
+          (:mid, :dt, :val, :tl, :sb, :st, :nat, :com,
+           ST_SetSRID(ST_MakePoint(:lon, :lat), 4326), CAST(:raw AS jsonb))""")
+    params = []
+    for m in muts:
+        com = insee2com.get(m["insee"])
+        if com is None:
+            continue
+        params.append({**m, "com": com,
+                       "raw": json.dumps({"source": "geo-dvf Etalab (data.gouv)",
+                                          "id_mutation": m["mid"], "vefa": m["vefa"]})})
+    if params:
+        session.execute(stmt, params)
+    return len(params)
 
 
 def ingest_foret_publique(session, bbox, commune, run_id, sids) -> int:

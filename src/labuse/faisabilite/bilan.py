@@ -103,7 +103,7 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
     """Prix de sortie €/m² HABITABLE, fiabilisé (type prioritaire, rayon adaptatif, aberrants
     exclus, récence, indice de fiabilité)."""
     rows = db.execute(text(
-        "SELECT d.valeur_fonciere AS val, d.surface_reelle_bati AS surf, "
+        "SELECT d.mutation_id AS mid, d.valeur_fonciere AS val, d.surface_reelle_bati AS surf, "
         "  d.valeur_fonciere / d.surface_reelle_bati AS prix, "
         "  CASE WHEN d.type_local ILIKE '%APPARTEMENT%' THEN 'appartement' ELSE 'maison' END AS cat, "
         "  extract(year FROM d.date_mutation)::int AS annee, "
@@ -114,11 +114,14 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
         "  AND d.type_local ILIKE ANY(ARRAY['%APPARTEMENT%','%MAISON%'])"),
         {"pid": parcel_id}).mappings().all()
 
-    # Dédoublonnage des mutations multi-parcelles (même valeur+surface+année = 1 événement).
+    # Dédoublonnage par MUTATION RÉELLE (id_mutation DVF). geo-dvf fournit un identifiant
+    # fiable : une mutation = une vente. On ne fusionne donc PAS deux ventes identiques
+    # mais distinctes (fréquent en VEFA : lots jumeaux au même prix) — l'ancien dédoublonnage
+    # (valeur+surface+année), hérité du flux ODS multi-parcelles, les écrasait à tort.
     seen: dict = {}
     sales: list[dict] = []
     for r in rows:
-        key = (float(r["val"]), float(r["surf"]), int(r["annee"]))
+        key = r["mid"] if r["mid"] else (float(r["val"]), float(r["surf"]), int(r["annee"]))
         if key in seen:
             seen[key]["dist"] = min(seen[key]["dist"], float(r["dist"]))
             continue
