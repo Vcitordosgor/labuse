@@ -180,9 +180,13 @@ function ficheWarn() {
 
 function fiableBadge(status) {
   if (status !== "opportunite") return "";
-  return COVERAGE && COVERAGE.reliable_ready
-    ? `<span class="fiable-tag ok">opportunité fiable</span>`
-    : `<span class="fiable-tag reserve">sous réserve · couches manquantes</span>`;
+  // « Vérifiée » (pas « fiable ») : couches critiques contrôlées, MAIS le SAR n'est que
+  // partiel et rien ne garantit la constructibilité (PLU/PPR à croiser, terrain à vérifier).
+  if (COVERAGE && COVERAGE.reliable_ready) {
+    return `<span class="fiable-tag ok" title="Contrôlée sur les couches disponibles : PLU, PPR, littoral, forêt, SAR partiel. Ne vaut pas garantie de constructibilité.">Opportunité vérifiée</span>`
+      + `<span class="fiable-sub">vérifiée sur les couches disponibles (PLU, PPR, littoral, forêt, SAR partiel) — ne vaut pas garantie de constructibilité</span>`;
+  }
+  return `<span class="fiable-tag reserve" title="Des couches critiques ne sont pas encore ingérées.">sous réserve · couches manquantes</span>`;
 }
 
 function renderList() {

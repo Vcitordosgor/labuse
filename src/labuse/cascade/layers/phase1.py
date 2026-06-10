@@ -122,7 +122,9 @@ class SarLayer(Layer):
         if dom is None or dom.coverage <= 0:
             # Couverture SAR partielle (proxy de vocation) : « hors îlot » N'équivaut PAS à
             # « aucune contrainte SAR ». On ne conclut pas à la compatibilité.
-            return passed(self.name, "Hors îlot SAR cartographié (couverture régionale partielle).", source=SRC_SAR)
+            return passed(self.name,
+                          "SAR : hors îlot cartographié — aucune contrainte SAR déduite automatiquement.",
+                          source=SRC_SAR)
         lib = (dom.attrs or {}).get("libelle")
         pct = f" (~{dom.coverage * 100:.0f}% de la parcelle)" if dom.coverage < 0.99 else ""
         if dom.subtype in set(params.get("hard_exclude_subtypes", [])):
@@ -135,13 +137,13 @@ class SarLayer(Layer):
         if dom.subtype in set(params.get("flag_fort_subtypes", [])):
             return soft_flag(
                 self.name,
-                f"{lib or 'espace agricole (risque préemption SAFER)'}{pct} — orientation SAR à vérifier "
-                "(ne vaut ni interdiction ni constructibilité).",
+                f"SAR : vocation à vérifier — {lib or 'espace agricole (risque préemption SAFER)'}{pct} "
+                "— possible contrainte régionale (ne vaut ni interdiction ni constructibilité).",
                 Severity.FORT,
                 source=SRC_SAR,
             )
         return passed(self.name,
-                      f"SAR : {lib or 'territoire urbain'} — vocation compatible (orientation régionale).",
+                      f"SAR : vocation compatible détectée — {lib or 'territoire urbain'} — à croiser avec PLU/PPR.",
                       source=SRC_SAR)
 
 

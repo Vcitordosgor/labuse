@@ -32,7 +32,7 @@ WEB_DIR = Path(__file__).resolve().parent / "web"
 
 # Couches EXCLUANTES / FLAGGANTES dont l'absence rend les verdicts partiels (§3).
 # Tant qu'une de ces couches n'est pas ingérée, une "opportunité" peut masquer une
-# contrainte → bandeau d'avertissement + distinction "opportunité fiable".
+# contrainte → bandeau d'avertissement + distinction "opportunité vérifiée".
 CRITICAL_LAYERS = {
     "sar": ("SAR (zonage régional — supérieur au PLU)", ["sar"]),
     "risques": ("Risques (Géorisques / PPR — inondation, mouvement de terrain)", ["ppr", "georisque_alea"]),
@@ -42,9 +42,10 @@ CRITICAL_LAYERS = {
     "trait_de_cote": ("Recul du trait de côte", ["trait_de_cote"]),
     "abf": ("ABF / périmètres Monuments historiques", ["abf"]),
 }
-# Minimum requis pour qualifier une "opportunité FIABLE" (consigne produit) : survie à
-# SAR + risques + forêts + littoral (une opportunité en zone à risque non vérifiée ne
-# peut pas être présentée comme fiable). Chaque clé -> liste de `kind` qui l'attestent.
+# Minimum requis pour qualifier une "opportunité VÉRIFIÉE" (consigne produit) : contrôle
+# SAR + risques + forêts + littoral ingérés. Le SAR n'étant qu'un proxy de vocation à
+# couverture partielle, « vérifiée » = contrôlée sur les couches disponibles, JAMAIS une
+# garantie de constructibilité. Chaque clé -> liste de `kind` qui l'attestent.
 RELIABLE_REQUIRED = ("sar", "risques", "foret_publique", "trait_de_cote")
 
 # En deçà, ce sont des slivers cadastraux (artefacts) : masqués de la CARTE et de la
