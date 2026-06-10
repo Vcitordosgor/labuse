@@ -95,3 +95,32 @@ def test_bandeau_et_hypotheses():
     assert "ne remplace pas" in f.bandeau
     txt = " ".join(f.hypotheses).lower()
     assert "hauteur d'étage" in txt and "logement" in txt
+
+
+def test_capacite_realiste_ordre_de_grandeur():
+    # U1c ~4500 m² R+4 doit donner ~40-70 logts (repère réaliste), PAS 200+.
+    f = estimate_capacity(resolve_zone("U1c"), 4500, emprise_geo=(2600.0, 3.0))
+    hi = f.fourchette["logements_au_sol"][1]
+    assert 35 <= hi <= 80, f"hors ordre de grandeur réaliste: {f.fourchette}"
+
+
+def test_etapes_rendement_et_occupation():
+    f = estimate_capacity(resolve_zone("U1c"), 2000)
+    labels = " ".join(s.label.lower() for s in f.steps)
+    assert "occupation" in labels and "habitable" in labels and "densité" in labels
+    txt = " ".join(f.hypotheses).lower()
+    assert "rendement" in txt and "occupation" in txt and "densité" in txt
+
+
+def test_plafond_densite_borne_les_zones_denses():
+    # U1pru R+9 sans plafond exploserait ; le plafond densité doit le borner et le signaler.
+    f = estimate_capacity(resolve_zone("U1pru"), 4000, emprise_geo=(3200.0, 3.0))
+    assert any("plafond de densité" in m.lower() for m in f.modulation)
+    assert f.fourchette["logements_sous_sol"][1] < 200  # borné, plus de 400+
+
+
+def test_hypotheses_chargees_depuis_yaml():
+    from labuse.faisabilite.engine import Hypotheses
+    h = Hypotheses.charger()
+    assert h.coef_rendement == 0.80 and h.coef_occupation == 0.45
+    assert h.logement_m2_bas == 65.0 and h.densite_logts_ha_par_niveau == 30.0

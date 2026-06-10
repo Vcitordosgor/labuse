@@ -77,14 +77,15 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
     if rules is None:
         return None
 
+    hyp = Hypotheses.charger()
     recul = (float(rules.recul_limites_sep_m)
              if isinstance(rules.recul_limites_sep_m, (int, float))
-             else Hypotheses().recul_limites_defaut_m)
+             else hyp.recul_limites_defaut_m)
     area = session.execute(
         text("SELECT ST_Area(ST_Buffer(geom_2975, -:d)) FROM parcels WHERE id = :pid"),
         {"d": recul, "pid": parcel_id}).scalar()
     emprise_geo = (float(area or 0.0), recul)
-    return ctx, estimate_capacity(rules, ctx.surface_m2, ctx.contraintes, emprise_geo=emprise_geo)
+    return ctx, estimate_capacity(rules, ctx.surface_m2, ctx.contraintes, hyp=hyp, emprise_geo=emprise_geo)
 
 
 def fiche_payload(session: Session, parcel_id: int) -> dict | None:

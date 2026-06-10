@@ -22,11 +22,26 @@ SEUIL_EXIGU_M2 = 5.0  # en deçà, le contour inseté est considéré vidé → 
 @dataclass
 class Hypotheses:
     etage_m: float = 3.0
-    logement_m2_bas: float = 55.0
-    logement_m2_haut: float = 75.0
+    coef_occupation: float = 0.45        # emprise constructible → emprise réellement bâtie au sol
+    coef_rendement: float = 0.80         # surface de plancher BRUTE → surface HABITABLE vendable
+    logement_m2_bas: float = 65.0
+    logement_m2_haut: float = 80.0
     place_m2: float = 25.0
+    densite_logts_ha_par_niveau: float = 30.0   # plafond densité = ce taux × niveaux (logts/ha)
     recul_voirie_defaut_m: float = 5.0
     recul_limites_defaut_m: float = 3.0
+
+    @classmethod
+    def charger(cls) -> "Hypotheses":
+        """Hypothèses depuis la section `hypotheses_faisabilite` du YAML (config éditable
+        sans toucher au code) ; sinon valeurs par défaut."""
+        from .plu_rules import _doc
+        h = (_doc().get("hypotheses_faisabilite") or {})
+        out = cls()
+        for k, v in h.items():
+            if hasattr(out, k) and isinstance(v, (int, float)):
+                setattr(out, k, float(v))
+        return out
 
 
 @dataclass
@@ -184,12 +199,45 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                     {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
     hypotheses.append(f"Hauteur d'étage supposée {hyp.etage_m:g} m ; niveaux comptés sur hé (égout), pas hf.")
 
-    # ---- Surface de plancher & logements (fourchette) ----
-    sdp = emprise * niveaux
-    steps.append(Step("Surface de plancher potentielle",
-                      f"{emprise:.0f} m² × {niveaux} niveaux", f"~{sdp:.0f} m²", "dérivé reculs×hauteur"))
-    floor_lo, floor_hi = sdp / hyp.logement_m2_haut, sdp / hyp.logement_m2_bas
-    hypotheses.append(f"Surface moyenne logement supposée {hyp.logement_m2_bas:g}–{hyp.logement_m2_haut:g} m².")
+    # ---- Emprise BÂTIE (on ne remplit pas toute l'enveloppe) ----
+    footprint = emprise * hyp.coef_occupation
+    steps.append(Step("Emprise bâtie (occupation du gabarit)",
+                      f"{emprise:.0f} m² × {hyp.coef_occupation:.0%} (espaces entre bâtiments, accès…)",
+                      f"~{footprint:.0f} m²", "hypothèse occupation"))
+    hypotheses.append(f"Coefficient d'occupation du gabarit supposé {hyp.coef_occupation:.0%} "
+                      "(on ne bâtit pas 100 % de l'emprise constructible).")
+
+    # ---- Surface de plancher BRUTE puis HABITABLE (rendement) ----
+    sdp = footprint * niveaux
+    steps.append(Step("Surface de plancher brute", f"{footprint:.0f} m² × {niveaux} niveaux",
+                      f"~{sdp:.0f} m²", "dérivé occupation×hauteur"))
+    shab = sdp * hyp.coef_rendement
+    steps.append(Step("Surface habitable (rendement)",
+                      f"{sdp:.0f} m² × {hyp.coef_rendement:.0%} (murs, communs, circulations, locaux techniques déduits)",
+                      f"~{shab:.0f} m²", "hypothèse rendement"))
+    hypotheses.append(f"Coefficient de rendement SDP→habitable supposé {hyp.coef_rendement:.0%}.")
+
+    floor_lo, floor_hi = shab / hyp.logement_m2_haut, shab / hyp.logement_m2_bas
+    steps.append(Step("Logements (avant plafonds)",
+                      f"{shab:.0f} m² ÷ {hyp.logement_m2_haut:g} à {hyp.logement_m2_bas:g} m²/logt",
+                      f"~{floor_lo:.0f} à {floor_hi:.0f}", "hypothèse surface logement"))
+    hypotheses.append(f"Surface moyenne par logement supposée {hyp.logement_m2_bas:g}–{hyp.logement_m2_haut:g} m².")
+
+    # ---- Plafond de DENSITÉ (filet de sécurité, remplace le COS) ----
+    surface_ha = surface_m2 / 10000.0
+    cap_logts_ha = hyp.densite_logts_ha_par_niveau * niveaux
+    densite_cap = surface_ha * cap_logts_ha
+    steps.append(Step("Plafond de densité (filet de sécurité)",
+                      f"{surface_ha:.2f} ha × {cap_logts_ha:.0f} logts/ha "
+                      f"({hyp.densite_logts_ha_par_niveau:g}/niveau × {niveaux})",
+                      f"≤ {densite_cap:.0f} logts", "hypothèse densité (ex-COS)"))
+    hypotheses.append(f"Plafond de densité {hyp.densite_logts_ha_par_niveau:g} logts/ha par niveau "
+                      "(filet de sécurité remplaçant le COS).")
+    if densite_cap < floor_hi:
+        modul.append(f"Plafond de densité {cap_logts_ha:.0f} logts/ha appliqué : le calcul détaillé "
+                     f"donnait ~{math.floor(floor_lo)}-{math.ceil(floor_hi)} → borné à "
+                     f"~{round(densite_cap)} logts (enveloppe théorique trop optimiste).")
+    floor_lo, floor_hi = min(floor_lo, densite_cap), min(floor_hi, densite_cap)
 
     # ---- Stationnement : 2 scénarios ----
     ppl = rules.places_par_logement()
@@ -197,7 +245,7 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     sol_lo, sol_hi = floor_lo, floor_hi
     if _is_num(ppl) and ppl > 0:
         regime = "borne"
-        sol_dispo = max(0.0, surface_m2 - emprise - pt_area)
+        sol_dispo = max(0.0, surface_m2 - footprint - pt_area)
         log_max_park = sol_dispo / (ppl * hyp.place_m2)
         steps.append(Step("Stationnement — scénario au sol",
                           f"{ppl:g} pl./logt × {hyp.place_m2:g} m² ; sol restant {sol_dispo:.0f} m² "

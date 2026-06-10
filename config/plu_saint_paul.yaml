@@ -35,6 +35,17 @@ regles_transverses:
   pleine_terre: "Au moins 50 % de la surface perméable doit être traitée en pleine terre plantée. Le % minimal d'espaces libres perméables varie par sous-zone et par aléa PPRI. (Art. 13)"
   stationnement_aide: "Logements aidés : 1 place / logement aidé (Art. 12)."
 
+# Hypothèses de CALCUL de la pré-faisabilité (éditables ici, sans toucher au code ;
+# toutes affichées dans la fiche comme hypothèses). Ce ne sont PAS des règles PLU.
+hypotheses_faisabilite:
+  etage_m: 3.0                      # hauteur d'un niveau
+  coef_occupation: 0.45             # emprise constructible -> emprise réellement bâtie au sol
+  coef_rendement: 0.80              # surface de plancher BRUTE -> surface HABITABLE vendable
+  logement_m2_bas: 65.0             # surface moyenne d'un logement (borne basse)
+  logement_m2_haut: 80.0            # surface moyenne d'un logement (borne haute)
+  place_m2: 25.0                    # 1 place de stationnement (avec circulation)
+  densite_logts_ha_par_niveau: 30.0 # plafond densité = ce taux x niveaux (logts/ha) — filet ex-COS
+
 zones:
 
   # ============== BASSIN SAINT-PAUL CENTRE (section p. imprimées 9-59) ==============
