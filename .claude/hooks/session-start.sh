@@ -35,11 +35,4 @@ fi
   echo "export PATH=$PROJECT_DIR/.venv/bin:\$PATH"
 } >> "$CLAUDE_ENV_FILE"
 
-# 4) Reprise automatique du build des 24 communes (non-bloquant, détaché).
-#    Le script est à INSTANCE UNIQUE (flock) et NO-OP s'il est déjà 24/24 : il peut
-#    donc être lancé à chaque démarrage sans risque de doublon ni de coût inutile.
-#    Reprend le travail après un redémarrage/remplacement de conteneur (reprise au
-#    niveau parcelle + schéma auto-réparé). Pour désactiver : supprimer ce bloc.
-nohup .venv/bin/python scripts/build_communes.py --workers 4 >>/tmp/build_communes.log 2>&1 &
-
 echo "✓ LA BUSE prêt : PostGIS démarré (base 'labuse'), venv installé. Tests : pytest"
