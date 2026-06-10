@@ -1,22 +1,24 @@
 # =============================================================================
-# PLU SAINT-PAUL (974) — règles chiffrées par zone constructible
+# PLU SAINT-PAUL (974) — règles chiffrées par zone constructible (U / AU)
 # =============================================================================
 # Source unique : règlement écrit du PLU de Saint-Paul.
 #   document : 04_REGLT_PLU_st_paul_approuve_27septembre2012__Edition_mars2026.pdf
 #   url      : https://www.mairie-saintpaul.re/wp-content/uploads/2026/03/04_REGLT_PLU_st_paul_approuve_27septembre2012__Edition_mars2026.pdf
-#   PLU approuvé le 27/09/2012, édition mars 2026 (413 pages).
-#   ⚠️ La mairie/ta consigne mentionnait 2019 ; le document officiel dit bien 2012
-#      (+ modifs successives jusqu'au 27/03/2025). Valeur reportée telle quelle.
+#   PLU approuvé le 27/09/2012, édition mars 2026 (413 p.). ⚠️ La consigne disait
+#   2019 ; le document officiel dit bien 2012 (+ modifs jusqu'au 27/03/2025).
 #
-# CONVENTIONS DE FIABILITÉ (consigne : n'inventer AUCUNE valeur) :
+# FIABILITÉ (n'inventer AUCUNE valeur) :
 #   - page_pdf = page_imprimee + 4   (vérifié : imprimée 1 = PDF 5)
-#   - chaque valeur cite ZONE + ARTICLE + PAGE imprimée.
-#   - null            = règle explicitement "non réglementée" dans le texte.
-#   - "a_verifier"    = présent mais ambigu / conditionnel / non attribuable
-#                       sûrement à la sous-zone -> NE PAS s'en servir tel quel.
-#   - structure article (PLU à 16 articles) : 6=recul voirie, 7=recul limites,
-#     9=emprise, 10=hauteur, 12=stationnement, 13=espaces libres/pleine terre.
-#   - hauteurs : hé = égout/acrotère, hf = faîtage (valeurs en mètres).
+#   - chaque valeur cite ZONE + ARTICLE (+ page imprimée de la section).
+#   - null         = règle explicitement "non réglementée" / "il n'est pas fixé de règle".
+#   - "a_verifier" = présent mais ambigu / conditionnel / non attribuable sûrement.
+#   - hauteurs : he_m = égout/acrotère, hf_m = faîtage (mètres). "En l'absence
+#     d'indication, la hauteur maximale est considérée comme la hauteur au faîtage."
+#     Donc quand seul un chiffre est donné => hf_m, he_m laissé null (non précisé).
+#   - PLU à 16 articles : 6=recul voirie, 7=recul limites, 9=emprise, 10=hauteur,
+#     12=stationnement, 13=espaces libres/pleine terre.
+#   - Les zones AU renvoient explicitement aux règles de la zone U de même indice
+#     (cf. "caractère de zone" : « se reporter au règlement de la zone U… »).
 # =============================================================================
 
 source:
@@ -27,138 +29,192 @@ source:
   pages_total: 413
   offset_pdf_vs_imprimee: 4
 
-# -----------------------------------------------------------------------------
-# BASSIN DE VIE SAINT-PAUL CENTRE — groupe U1  (✅ EXTRAIT & SOURCÉ)
-# Section : pages imprimées 9-32 (PDF 13-36).
-# -----------------------------------------------------------------------------
+# Règles transverses constatées (s'appliquent largement, à pondérer par sous-zone) :
+regles_transverses:
+  recul_limites_sep: "Implantation sur limite autorisée (longueur max 10-18 m selon zone) OU retrait >= 3 m. H réduite (6-9 m) dans une bande de 3 m depuis la limite. (Art. 7)"
+  pleine_terre: "Au moins 50 % de la surface perméable doit être traitée en pleine terre plantée. Le % minimal d'espaces libres perméables varie par sous-zone et par aléa PPRI. (Art. 13)"
+  stationnement_aide: "Logements aidés : 1 place / logement aidé (Art. 12)."
+
 zones:
 
-  U1a:
-    bassin: "Saint-Paul Centre"
-    hauteur:
-      he_m: 12            # 9 m dans la bande de 15 m depuis la voie ; 12 m au-delà
-      hf_m: 16            # 13 m dans la bande de 15 m ; 16 m au-delà
-      note: "Bande 15 m depuis voie : hé 9 / hf 13. Au-delà (ou si jouxte bâti >3 niveaux) : hé 12 / hf 16."
-      source: "Zone U1a, Art. 10.2, p. imprimée 20-21"
-    emprise_sol_pct: null
-    emprise_source: "Art. 9, p. 20 : « Il n'est pas fixé de règle »"
-    recul_voirie_m: "a_verifier"
-    recul_voirie_source: "Art. 6, p. 16-18 : valeurs multiples (alignement / retrait 3 m / 8 m selon cas) non attribuables sûrement à U1a sans relecture ciblée"
-    recul_limites_sep_m: 3
-    recul_limites_note: "Implantation sur limite autorisée (longueur max 18 m) ; sinon retrait ≥ 3 m. Dans bande de 3 m depuis la limite, H max = 9 m."
-    recul_limites_source: "Art. 7.2, p. 17-18"
-    stationnement:
-      logement: "1 place / logement"
-      logement_aide: "1 place / logement aidé"
-      visiteurs: "1 place / tranche de 5 logements ou lots (opérations > 5)"
-      source: "Art. 12.2, p. 23-25"
-    pleine_terre_pct: 10
-    pleine_terre_note: "Min 10 % d'espaces libres perméables sur le terrain ; dont ≥ 50 % traités en pleine terre plantée. Variantes 30 % (selon secteur) et 50 % (aléa fort PPRI) — à attribuer précisément."
-    pleine_terre_source: "Art. 13.1, p. 25"
+  # ============== BASSIN SAINT-PAUL CENTRE (section p. imprimées 9-59) ==============
+  U1a: {bassin: "Saint-Paul Centre", he_m: 12, hf_m: 16,
+        hauteur_note: "Bande 15 m depuis voie : hé 9 / hf 13 ; au-delà (ou si jouxte bâti >3 niveaux) : hé 12 / hf 16.",
+        hauteur_src: "Zone U1a, Art. 10.2, p.20-21",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20 : « Il n'est pas fixé de règle »",
+        recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18 : valeurs multiples (alignement/3/6/8 m) non attribuables sûrement à la sous-zone",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18",
+        stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.23",
+        pleine_terre_pct: 10, pleine_terre_note: "10 % base ; 30 % / 50 % (aléa fort PPRI) selon secteur — à préciser", pleine_terre_src: "Art. 13.1, p.25"}
+  U1b: {bassin: "Saint-Paul Centre", he_m: 12, hf_m: 16, hauteur_src: "Zone U1b, Art. 10.2, p.20",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.23",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+  U1c: {bassin: "Saint-Paul Centre", he_m: 15, hf_m: 19, hauteur_src: "Zone U1c, Art. 10.2, p.20",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.23",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+  U1d: {bassin: "Saint-Paul Centre", he_m: 6, hf_m: 9, hauteur_src: "Zones U1d et U1g, Art. 10.2, p.20",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.23",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+  U1f: {bassin: "Saint-Paul Centre", he_m: 9, hf_m: 13, hauteur_src: "Zone U1f, Art. 10.2, p.20",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.23 (U1f, U1g : 2 pl./logt)",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+  U1g: {bassin: "Saint-Paul Centre", he_m: 6, hf_m: 9, hauteur_src: "Zones U1d et U1g, Art. 10.2, p.20",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.23 (U1f, U1g : 2 pl./logt)",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+  U1pru: {bassin: "Saint-Paul Centre", he_m: 30, hf_m: 34, hauteur_src: "Zones U1pru et U1pso, Art. 10.2, p.21",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "a_verifier", stat_src: "Art. 12.2 (« sauf en zone U1pru » pour certaines obligations)",
+        pleine_terre_pct: "a_verifier", pleine_terre_note: "U1pru : plantations dans >=80 cm de terre comptées en pleine terre (Art. 13.3)", pleine_terre_src: "Art. 13, p.25"}
+  U1pso: {bassin: "Saint-Paul Centre", he_m: 30, hf_m: 34, hauteur_src: "Zones U1pru et U1pso, Art. 10.2, p.21",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "a_verifier", stat_src: "Art. 12.2, p.23",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+  U1e: {bassin: "Saint-Paul Centre", he_m: null, hf_m: 14, hauteur_note: "Seul hf donné (14 m au faîtage) ; hé non précisé.",
+        hauteur_src: "Zones U1e/U1l, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9",
+        recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6", recul_limites_sep_m: 3, recul_limites_src: "Art. 7",
+        stat_logement: "a_verifier", stat_src: "Art. 12", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
+  U1l: {bassin: "Saint-Paul Centre", he_m: null, hf_m: 14, hauteur_note: "Idem U1e (section commune). hé non précisé.",
+        hauteur_src: "Zones U1e/U1l, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9",
+        recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6", recul_limites_sep_m: 3, recul_limites_src: "Art. 7",
+        stat_logement: "a_verifier", stat_src: "Art. 12", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
+  U1ec: {bassin: "Saint-Paul Centre", he_m: null, hf_m: 18,
+        hauteur_note: "18 m au faîtage ; porté à 21 m pour parcs de stationnement communs à <250 m de l'axe de la RN7. hé non précisé.",
+        hauteur_src: "Zone U1ec, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9",
+        recul_voirie_m: "a_verifier", recul_limites_sep_m: 3, stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
+        note: "Mentionnée dans la section U1e/U1l ; non listée séparément au sommaire."}
+  U1lec: {bassin: "Saint-Paul Centre", he_m: "a_verifier", hf_m: "a_verifier",
+        note: "Zone citée comme renvoi par AU1lec ; règles propres non localisées précisément — à vérifier.",
+        hauteur_src: "a_verifier", emprise_sol_pct: "a_verifier", recul_voirie_m: "a_verifier",
+        recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier"}
 
-  U1b:
-    bassin: "Saint-Paul Centre"
-    hauteur: { he_m: 12, hf_m: 16, source: "Zone U1b, Art. 10.2, p. 20" }
-    emprise_sol_pct: null
-    emprise_source: "Art. 9, p. 20 : « Il n'est pas fixé de règle »"
-    recul_voirie_m: "a_verifier"
-    recul_limites_sep_m: 3
-    recul_limites_source: "Art. 7.2, p. 17-18"
-    stationnement: { logement: "1 place / logement", source: "Art. 12.2, p. 23-24" }
-    pleine_terre_pct: 10
-    pleine_terre_source: "Art. 13.1, p. 25 (à confirmer 10/30 % pour U1b)"
+  # ============== BASSIN SAINT-GILLES LES BAINS (p. 61-99) ==============
+  U2a: {bassin: "Saint-Gilles", he_m: 12, hf_m: 16, hauteur_src: "Zone U2a, Art. 10.2, p.~75",
+        emprise_sol_pct: null, emprise_src: "Art. 9 : « Il n'est pas fixé de règle »",
+        recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min de la voie ; terrasses commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U2a",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U2a, U2b : 1,5 pl./logt)",
+        pleine_terre_pct: "a_verifier", pleine_terre_note: "30/40/50 % selon sous-zone/aléa", pleine_terre_src: "Art. 13"}
+  U2b: {bassin: "Saint-Gilles", he_m: 15, hf_m: 19, hauteur_src: "Zone U2b, Art. 10.2, p.~75",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6 (U2b non capturé explicitement)",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U2a, U2b : 1,5 pl./logt)",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
+  U2c: {bassin: "Saint-Gilles", he_m: 6, hf_m: 9, hauteur_src: "Zone U2c, Art. 10.2, p.~75",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6 (U2c non capturé explicitement)",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U2c, U2d : 2 pl./logt)",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
+  U2d: {bassin: "Saint-Gilles", he_m: 4.5, hf_m: 6.5, hauteur_src: "Zone U2d, Art. 10.2, p.~75",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U2c, U2d : 2 pl./logt)",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
+  U2h: {bassin: "Saint-Gilles", he_m: 9, hf_m: 13, hauteur_src: "Zone U2h, Art. 10.2, p.~75",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "bande 5 m à compter du retrait 4 m min de la voie", recul_voirie_src: "Art. 6, zone U2h",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "a_verifier", stat_src: "Art. 12.2 (U2h non capturé)",
+        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
+  U2e: {bassin: "Saint-Gilles", he_m: null, hf_m: 14, hauteur_note: "Seul hf (14 m) ; hé non précisé.", hauteur_src: "Zone U2e, Art. 10.2, p.~92",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_limites_sep_m: 3,
+        stat_logement: "a_verifier", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
 
-  U1c:
-    bassin: "Saint-Paul Centre"
-    hauteur: { he_m: 15, hf_m: 19, source: "Zone U1c, Art. 10.2, p. 20" }
-    emprise_sol_pct: null
-    emprise_source: "Art. 9, p. 20 : « Il n'est pas fixé de règle »"
-    recul_voirie_m: "a_verifier"
-    recul_limites_sep_m: 3
-    recul_limites_source: "Art. 7.2, p. 17-18"
-    stationnement: { logement: "1 place / logement", source: "Art. 12.2, p. 23-24" }
-    pleine_terre_pct: "a_verifier"
-    pleine_terre_source: "Art. 13.1, p. 25"
+  # ============== BASSIN PLATEAU CAILLOU (p. 101-161) ==============
+  U3a: {bassin: "Plateau Caillou", he_m: 15, hf_m: 19, hauteur_note: "Sous-cas : hé 18 / hf 22 (secteur spécifique).", hauteur_src: "Zone U3a, Art. 10.2, p.~115",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 0, recul_voirie_note: "à l'alignement ; ZAC Savane des Tamarins : retrait 3 m possible", recul_voirie_src: "Art. 6, zone U3a",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U3a, U3b : 1,5 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_note: "20 % base ; 30 % selon secteur/aléa", pleine_terre_src: "Art. 13"}
+  U3b: {bassin: "Plateau Caillou", he_m: 12, hf_m: 16, hauteur_src: "Zone U3b, Art. 10.2, p.~115",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U3b",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U3a, U3b : 1,5 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  U3c: {bassin: "Plateau Caillou", he_m: 9, hf_m: 12, hauteur_src: "Zone U3c, Art. 10.2, p.~115",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U3c",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U3c : 2 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  U3h: {bassin: "Plateau Caillou", he_m: 9, hf_m: 13, hauteur_src: "Zone U3h, Art. 10.2, p.~115",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "bande 5 m à compter du retrait 4 m min", recul_voirie_src: "Art. 6, zone U3h",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "a_verifier", stat_src: "Art. 12.2 (U3h non capturé)",
+        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  U3e: {bassin: "Plateau Caillou", he_m: null, hf_m: 14, hauteur_note: "Seul hf (14 m) ; ZAC Savane des Tamarins : 19 m. hé non précisé.", hauteur_src: "Zone U3e, Art. 10.2, p.~149",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_limites_sep_m: 3,
+        stat_logement: "a_verifier", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
+  Usdu_PlateauCaillou: {bassin: "Plateau Caillou", he_m: 6, hf_m: 9, hauteur_src: "Zone Usdu, Art. 10.2, p.~131",
+        emprise_sol_pct: "a_verifier", emprise_note: "Emprise liée aux surfaces perméables imposées (règle propre, ≠ « pas de règle ») — à détailler", emprise_src: "Art. 9",
+        recul_voirie_m: "a_verifier", recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
+        note: "Zone Usdu présente dans plusieurs bassins (mêmes hauteurs constatées)."}
 
-  U1d:
-    bassin: "Saint-Paul Centre"
-    hauteur: { he_m: 6, hf_m: 9, source: "Zones U1d et U1g, Art. 10.2, p. 20" }
-    emprise_sol_pct: null
-    emprise_source: "Art. 9, p. 20 : « Il n'est pas fixé de règle »"
-    recul_voirie_m: "a_verifier"
-    recul_limites_sep_m: 3
-    recul_limites_source: "Art. 7.2, p. 17-18"
-    stationnement: { logement: "1 place / logement", source: "Art. 12.2, p. 23-24" }
-    pleine_terre_pct: "a_verifier"
-    pleine_terre_source: "Art. 13.1, p. 25"
+  # ============== BASSIN LA PLAINE - BOIS DE NÈFLES (p. 163-207) ==============
+  U4a: {bassin: "La Plaine-Bois de Nèfles", he_m: 12, hf_m: 16, hauteur_src: "Zone U4a, Art. 10.2, p.~177",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 0, recul_voirie_note: "à l'alignement ; ZAC Marie Caze / Sans Souci : retrait 3 m possible", recul_voirie_src: "Art. 6, zone U4a",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U4a : 1,5 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_note: "20 % base ; 30/40 % selon secteur/aléa", pleine_terre_src: "Art. 13"}
+  U4b: {bassin: "La Plaine-Bois de Nèfles", he_m: 9, hf_m: 13, hauteur_src: "Zone U4b, Art. 10.2, p.~177",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U4b",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U4b, U4c : 2 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  U4c: {bassin: "La Plaine-Bois de Nèfles", he_m: 6, hf_m: 9, hauteur_src: "Zone U4c, Art. 10.2, p.~177",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U4c",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U4b, U4c : 2 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
 
-  U1f:
-    bassin: "Saint-Paul Centre"
-    hauteur: { he_m: 9, hf_m: 13, source: "Zone U1f, Art. 10.2, p. 20" }
-    emprise_sol_pct: null
-    emprise_source: "Art. 9, p. 20 : « Il n'est pas fixé de règle »"
-    recul_voirie_m: "a_verifier"
-    recul_limites_sep_m: 3
-    recul_limites_source: "Art. 7.2, p. 17-18"
-    stationnement: { logement: "2 places / logement", source: "Art. 12.2, p. 23 (U1f, U1g : 2 places/logt)" }
-    pleine_terre_pct: "a_verifier"
-    pleine_terre_source: "Art. 13.1, p. 25"
+  # ============== BASSIN LA SALINE (p. 209-267) ==============
+  U5a: {bassin: "La Saline", he_m: 12, hf_m: 16, hauteur_src: "Zone U5a, Art. 10.2, p.~223",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 0, recul_voirie_note: "à l'alignement ; ZAC Saline : retrait 3 m possible", recul_voirie_src: "Art. 6, zone U5a",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U5a : 1,5 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_note: "20 % base ; 30/40 % selon secteur/aléa", pleine_terre_src: "Art. 13"}
+  U5b: {bassin: "La Saline", he_m: 9, hf_m: 13, hauteur_src: "Zone U5b, Art. 10.2, p.~223",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U5b",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U5b, U5c : 2 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  U5c: {bassin: "La Saline", he_m: 6, hf_m: 9, hauteur_src: "Zone U5c, Art. 10.2, p.~223",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U5c",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U5b, U5c : 2 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  AU5e: {bassin: "La Saline", he_m: null, hf_m: 14, hauteur_note: "Zone AU avec règle PROPRE (ne renvoie pas à un U) : hf 14 m ; hé non précisé.",
+        hauteur_src: "Zone AU5e, Art. 10.2, p.~254", emprise_sol_pct: "a_verifier", recul_voirie_m: "a_verifier",
+        recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier"}
 
-  U1g:
-    bassin: "Saint-Paul Centre"
-    hauteur: { he_m: 6, hf_m: 9, source: "Zones U1d et U1g, Art. 10.2, p. 20" }
-    emprise_sol_pct: null
-    emprise_source: "Art. 9, p. 20 : « Il n'est pas fixé de règle »"
-    recul_voirie_m: "a_verifier"
-    recul_limites_sep_m: 3
-    recul_limites_source: "Art. 7.2, p. 17-18"
-    stationnement: { logement: "2 places / logement", source: "Art. 12.2, p. 23 (U1f, U1g : 2 places/logt)" }
-    pleine_terre_pct: "a_verifier"
-    pleine_terre_source: "Art. 13.1, p. 25"
+  # ============== BASSIN DU GUILLAUME (p. 269-313) ==============
+  U6a: {bassin: "Le Guillaume", he_m: 12, hf_m: 16, hauteur_src: "Zone U6a, Art. 10.2, p.~283",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 0, recul_voirie_note: "à l'alignement", recul_voirie_src: "Art. 6, zone U6a",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U6a : 1,5 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_note: "20 % base ; 30/40 % selon secteur/aléa", pleine_terre_src: "Art. 13"}
+  U6b: {bassin: "Le Guillaume", he_m: 9, hf_m: 13, hauteur_src: "Zone U6b, Art. 10.2, p.~283",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U6b",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U6b, U6c : 2 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  U6c: {bassin: "Le Guillaume", he_m: 6, hf_m: 9, hauteur_src: "Zone U6c, Art. 10.2, p.~283",
+        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U6c",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U6b, U6c : 2 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
 
-  U1pru:
-    bassin: "Saint-Paul Centre"
-    hauteur: { he_m: 30, hf_m: 34, source: "Zones U1pru et U1pso, Art. 10.2, p. 21" }
-    emprise_sol_pct: null
-    emprise_source: "Art. 9, p. 20 : « Il n'est pas fixé de règle »"
-    recul_voirie_m: "a_verifier"
-    recul_limites_sep_m: 3
-    recul_limites_source: "Art. 7.2, p. 17-18"
-    stationnement: { logement: "a_verifier", source: "Art. 12.2 — « sauf en zone U1pru » pour certaines obligations" }
-    pleine_terre_pct: "a_verifier"
-    pleine_terre_note: "En U1pru, plantations dans ≥ 80 cm de terre comptées comme pleine terre (Art. 13.3, p. 25)."
-    pleine_terre_source: "Art. 13, p. 25"
+  # ============== Usdu (secteur présent dans 4 bassins, hauteurs identiques) ==============
+  Usdu: {bassin: "multi (Plateau C., Plaine, Saline, Guillaume)", he_m: 6, hf_m: 9,
+        hauteur_src: "Zone Usdu, Art. 10.2 (ex. p.~131, ~192)",
+        emprise_sol_pct: "a_verifier", emprise_note: "Règle propre liée aux surfaces perméables imposées (≠ « pas de règle ») — à détailler par bassin", emprise_src: "Art. 9",
+        recul_voirie_m: "a_verifier", recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
+        annexes_hf_m: 3.5, annexes_src: "Art. 10.2"}
 
-  U1pso:
-    bassin: "Saint-Paul Centre"
-    hauteur: { he_m: 30, hf_m: 34, source: "Zones U1pru et U1pso, Art. 10.2, p. 21" }
-    emprise_sol_pct: null
-    emprise_source: "Art. 9, p. 20 : « Il n'est pas fixé de règle »"
-    recul_voirie_m: "a_verifier"
-    recul_limites_sep_m: 3
-    recul_limites_source: "Art. 7.2, p. 17-18"
-    stationnement: { logement: "a_verifier", source: "Art. 12.2, p. 23-24" }
-    pleine_terre_pct: "a_verifier"
-    pleine_terre_source: "Art. 13.1, p. 25"
+# Zones AU « génériques » : RENVOI explicite au règlement de la zone U de même indice
+# (donc mêmes règles que U ci-dessus — ne pas dupliquer/inventer).
+zones_au_renvoi:
+  AU1: "Règles de U1 de même indice (AU1a->U1a, AU1b->U1b, ...). Source: « caractère de zone », p.49."
+  AU1e: "Règles de U1e (et U1ec). Source: p.51."
+  AU1lec: "Règles de U1lec. Source: p.53."
+  AU2: "Règles de U2 de même indice. Source: p.97."
+  AU3: "Règles de U3 de même indice. Source: p.154."
+  AU3e: "Règles de U3e. Source: p.156."
+  AU4: "Règles de U4 de même indice. Source: p.202."
+  AU5: "Règles de U5 de même indice. Source: p.248."
+  AU6: "Règles de U6 de même indice. Source: p.308."
 
-# -----------------------------------------------------------------------------
-# RESTE À EXTRAIRE (inventaire complet vérifié au sommaire, p. imprimées) :
-#   Bassin SAINT-PAUL CENTRE : U1e,U1l (p33) · AU1 (p49) · AU1e (p51) ·
-#                              AU1lec (p53) · AU1st, AU1e st (p55)
-#   Bassin SAINT-GILLES      : U2a,b,c,d,h (p61) · U2e (p84) · AU2 (p97)
-#   Bassin PLATEAU CAILLOU   : U3a,b,c,h (p101) · Usdu (p123) · U3e (p141) ·
-#                              AU3 (p154) · AU3e (p156) · AU3st (p158)
-#   Bassin LA PLAINE-B.NÈFLES: U4a,b,c (p163) · Usdu (p184) · AU4 (p202) · AU4st (p204)
-#   Bassin LA SALINE         : U5a,b,c (p209) · Usdu (p230) · AU5 (p248) ·
-#                              AU5e (p250) · AU5st (p263)
-#   Bassin DU GUILLAUME      : U6a,b,c (p269) · Usdu (p290) · AU6 (p308) · AU6st (p310)
-#   (Zones A p329, N p338, Ni/Ntol p315 = NON constructibles au sens urbanisation.)
-# -----------------------------------------------------------------------------
-zones_a_extraire:
-  - "U1e, U1l"
-  - "U2a, U2b, U2c, U2d, U2h, U2e, AU2"
-  - "U3a, U3b, U3c, U3h, Usdu, U3e, AU3, AU3e, AU3st"
-  - "U4a, U4b, U4c, AU4, AU4st"
-  - "U5a, U5b, U5c, AU5, AU5e, AU5st"
-  - "U6a, U6b, U6c, Usdu, AU6, AU6st"
-  - "AU1, AU1e, AU1lec, AU1st, AU1e st"
+# Zones AU « st » (secteurs de transition) : construction neuve NON autorisée ;
+# seuls travaux d'aménagement/extension mineure pour mise aux normes, H max 4 m.
+zones_au_st:
+  liste: ["AU1st", "AU1e st", "AU3st", "AU4st", "AU5st", "AU6st"]
+  hauteur_max_m: 4
+  portee: "Uniquement travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires et d'habitabilité (pas de construction neuve)."
+  source: "Art. 10 des sections AU*st (ex. p.59, 158, 204, 263, 310)."
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU :
+zones_non_constructibles: ["A (p.329)", "N (p.338)", "Ni, Ntol (p.315 — Mafate/forestière)"]
