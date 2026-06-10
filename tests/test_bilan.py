@@ -1,8 +1,13 @@
 """Tests du bilan promoteur (PARTIE 1). Cœur pur, sans DB."""
-from labuse.faisabilite.bilan import compute_bilan
+from labuse.faisabilite.bilan import _comparables, compute_bilan
 from labuse.faisabilite.engine import Hypotheses
 
 H = Hypotheses()
+
+
+def _kept(n_vefa, n_ancien, prix_vefa=5000.0, prix_ancien=3800.0):
+    return ([{"prix": prix_vefa, "vefa": True}] * n_vefa
+            + [{"prix": prix_ancien, "vefa": False}] * n_ancien)
 
 
 def _prix(q1, med, q3, n=40, fiabilite="fiable", raisons=None):
@@ -26,6 +31,33 @@ def test_bilan_chiffre_et_fourchettes():
     assert b.charge_fonciere["bas"] <= b.charge_fonciere["haut"]
     assert any("chiffre d'affaires" in s.label.lower() for s in b.steps)
     assert any("charge foncière" in s.label.lower() for s in b.steps)
+    # vocabulaire : même un prix fiable donne une SIMULATION indicative (bilon ≠ fiable)
+    assert "simulation indicative" in b.verdict.lower()
+    assert "prix de sortie fiable" in b.verdict.lower()
+
+
+def test_comparables_neuf_vs_ancien_exploitable():
+    # 10 VEFA à 5000, 10 ancien à 3800 : médianes séparées + écart +32 %.
+    c = _comparables(_kept(10, 10), min_n=8)
+    assert c["n_vefa"] == 10 and c["n_ancien"] == 10
+    assert c["median_vefa"] == 5000 and c["median_ancien"] == 3800
+    assert c["ecart_pct"] == round(100 * (5000 / 3800 - 1)) and c["ecart_exploitable"] is True
+    assert c["note"] is None
+
+
+def test_comparables_vefa_insuffisant_pas_de_faux_ecart():
+    # 3 VEFA seulement → pas de médiane VEFA, pas d'écart, note explicite.
+    c = _comparables(_kept(3, 20), min_n=8)
+    assert c["median_vefa"] is None and c["ecart_pct"] is None and c["ecart_exploitable"] is False
+    assert "vefa insuffisant" in c["note"].lower()
+    assert c["median_ancien"] == 3800            # l'ancien reste affiché
+
+
+def test_comparables_sans_vefa_affiche_seulement_ancien():
+    c = _comparables(_kept(0, 15), min_n=8)
+    assert c["n_vefa"] == 0 and c["median_vefa"] is None and c["ecart_exploitable"] is False
+    assert "aucune vente vefa" in c["note"].lower()
+    assert c["median_ancien"] == 3800
 
 
 def test_charge_fonciere_a_rebours_formule():

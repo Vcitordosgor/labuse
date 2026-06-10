@@ -498,9 +498,9 @@ function renderBilan(b) {
   const meur = (x) => (x == null ? "—" : (Math.abs(x) >= 1e6 ? (x / 1e6).toFixed(1) + " M€"
     : Math.abs(x) >= 1e3 ? Math.round(x / 1e3) + " k€" : Math.round(x) + " €"));
   const km = (m) => (m ? Math.round(m / 100) / 10 + " km" : "—");
-  // Badge de fiabilité (M2/M6) — fiable / fragile / insuffisant, toujours visible.
+  // Badge de fiabilité du PRIX DE SORTIE (pas du bilan complet) — toujours visible.
   const niveau = b.fiabilite || (b.fiable ? "fiable" : "insuffisant");
-  const badgeTxt = { fiable: "Prix fiable", fragile: "Prix fragile", insuffisant: "Données insuffisantes" }[niveau] || niveau;
+  const badgeTxt = { fiable: "Prix de marché fiable", fragile: "Prix de marché fragile", insuffisant: "Données insuffisantes" }[niveau] || niveau;
   const badge = `<span class="fiab fiab-${niveau}">${badgeTxt}</span>`;
   const bullets = (arr, cls, title) => (arr && arr.length)
     ? `<div class="fa-grp ${cls}"><span class="fa-grp-t">${title}</span><ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
@@ -526,7 +526,7 @@ function renderBilan(b) {
   const methodRows = `
     <tr><td class="fs-lbl">Prix retenu</td><td class="fs-for"><b>${fmt(px.median)} €/m²</b> (Q1–Q3 ${fmt(px.q1)}–${fmt(px.q3)})<span class="fs-src">médiane DVF</span></td></tr>
     <tr><td class="fs-lbl">Type de biens</td><td class="fs-for">${esc(px.type_prix || "—")}${px.pct_appartement != null ? ` · ${px.pct_appartement}% appartements` : ""}<span class="fs-src">comparable visé : collectif</span></td></tr>
-    <tr><td class="fs-lbl">Échantillon</td><td class="fs-for"><b>${px.n}</b> ventes · période ${per}<span class="fs-src">DVF Région ODS</span></td></tr>
+    <tr><td class="fs-lbl">Échantillon</td><td class="fs-for"><b>${px.n}</b> ventes · période ${per}<span class="fs-src">DVF géolocalisé (Etalab)</span></td></tr>
     <tr><td class="fs-lbl">Rayon utilisé</td><td class="fs-for">${px.commune_fallback ? "commune entière (peu de ventes proches)" : km(px.radius_m)}<span class="fs-src">500 → 1000 → 1500 m → commune</span></td></tr>
     <tr><td class="fs-lbl">Dispersion</td><td class="fs-for">min ${fmt(px.min)} / max ${fmt(px.max)} €/m²<span class="fs-src">après exclusion des aberrants</span></td></tr>
     <tr><td class="fs-lbl">Ventes écartées</td><td class="fs-for">${ecartes}<span class="fs-src">Tukey IQR + dédoublonnage</span></td></tr>`;
@@ -534,6 +534,30 @@ function renderBilan(b) {
   const fragileBanner = niveau === "fragile"
     ? `<p class="bilan-fragile">⚠️ Prix de sortie <b>fragile</b> — ${esc(raisons.join(" ; ") || "échantillon DVF limité")}. Simulation à lire comme un <b>ordre de grandeur</b>, pas comme un bilan ferme.</p>`
     : "";
+
+  // Transparence neuf/ancien (« Comparables de prix utilisés ») — n'altère pas le prix retenu.
+  const cmp = px.comparables || {};
+  const vefaCell = cmp.median_vefa != null
+    ? `${fmt(cmp.median_vefa)} €/m² <span class="bc-n">(${cmp.n_vefa} ventes)</span>`
+    : `<i>${esc(cmp.note || (cmp.n_vefa ? cmp.n_vefa + " vente(s), trop peu" : "aucune"))}</i>`;
+  const ancienCell = cmp.median_ancien != null
+    ? `${fmt(cmp.median_ancien)} €/m² <span class="bc-n">(${cmp.n_ancien} ventes)</span>`
+    : `<i>${cmp.n_ancien ? cmp.n_ancien + " vente(s), trop peu" : "aucune"}</i>`;
+  const ecartCell = cmp.ecart_exploitable
+    ? `<b>${cmp.ecart_pct >= 0 ? "+" : ""}${cmp.ecart_pct} %</b> <span class="bc-n">(neuf vs ancien)</span>`
+    : `<i>${esc(cmp.note || "écart non exploitable")}</i>`;
+  const compBlock = (cmp.n_vefa == null && cmp.n_ancien == null) ? "" : `
+      <div class="bilan-comp">
+        <div class="bilan-comp-t">Comparables de prix utilisés</div>
+        <dl class="bilan-comp-grid">
+          <dt>Prix retenu</dt><dd><b>${fmt(px.median)} €/m²</b> · ${esc(px.type_prix || "")} · ${px.n} ventes · ${per} · ${px.commune_fallback ? "commune" : km(px.radius_m)}</dd>
+          <dt>Médiane ancien</dt><dd>${ancienCell}</dd>
+          <dt>Médiane neuf / VEFA</dt><dd>${vefaCell}</dd>
+          <dt>Écart neuf vs ancien</dt><dd>${ecartCell}</dd>
+          <dt>Fiabilité du prix</dt><dd>${badge}</dd>
+        </dl>
+        <p class="bilan-comp-note">Le prix au m² est une donnée de <b>marché</b> (DVF). Le bilan promoteur complet reste <b>indicatif</b> : travaux, marge, frais, TVA, VRD, stationnement et aléas sont à valider par un professionnel.</p>
+      </div>`;
 
   return `
     <section class="bilan ${niveau === "fragile" ? "bilan-frag" : ""}">
@@ -545,6 +569,7 @@ function renderBilan(b) {
         <div class="fc"><span class="fc-num">${fmt(px.median)} €/m²</span><span class="fc-lbl">Prix DVF médian · ${esc(px.type_prix || "")} (${px.n} ventes / ${px.commune_fallback ? "commune" : km(px.radius_m)})</span></div>
         <div class="fc fc-wide"><span class="fc-num">${meur(cf.central)}<span class="fc-sub">~${fmt(cf.par_m2_terrain)} €/m² terrain</span></span><span class="fc-lbl">Charge foncière (médiane)</span></div>
       </div>
+      ${compBlock}
       <details class="faisa-calc bilan-method">
         <summary>La méthode du prix, en clair — type, échantillon, rayon, ventes écartées</summary>
         <table class="faisa-steps">${methodRows}</table>

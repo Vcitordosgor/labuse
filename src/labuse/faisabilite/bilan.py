@@ -99,6 +99,29 @@ def _fiabilite(kept: list[dict], type_label: str, commune_fallback: bool, min_n:
     return niveau, raisons
 
 
+def _comparables(kept: list[dict], min_n: int) -> dict:
+    """Décompose le comparable RETENU en neuf (VEFA) vs ancien — pure transparence, sans
+    toucher au prix retenu. N'invente aucun écart : une médiane n'est donnée que si son
+    sous-échantillon atteint min_n ventes, et l'écart n'est « exploitable » que si les DEUX
+    sous-échantillons l'atteignent."""
+    vefa = [s["prix"] for s in kept if s.get("vefa")]
+    ancien = [s["prix"] for s in kept if not s.get("vefa")]
+    med_v = round(statistics.median(vefa)) if len(vefa) >= min_n else None
+    med_a = round(statistics.median(ancien)) if len(ancien) >= min_n else None
+    ecart = round(100 * (med_v / med_a - 1)) if (med_v and med_a) else None
+    if not vefa:
+        note = "aucune vente VEFA dans le comparable retenu (prix = ancien)"
+    elif len(vefa) < min_n:
+        note = f"VEFA insuffisant pour comparaison fiable ({len(vefa)} vente(s) < {min_n})"
+    elif len(ancien) < min_n:
+        note = f"ancien insuffisant pour comparaison fiable ({len(ancien)} vente(s) < {min_n})"
+    else:
+        note = None
+    return {"n_vefa": len(vefa), "n_ancien": len(ancien),
+            "median_vefa": med_v, "median_ancien": med_a,
+            "ecart_pct": ecart, "ecart_exploitable": ecart is not None, "note": note}
+
+
 def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
     """Prix de sortie €/m² HABITABLE, fiabilisé (type prioritaire, rayon adaptatif, aberrants
     exclus, récence, indice de fiabilité)."""
@@ -106,6 +129,7 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
         "SELECT d.mutation_id AS mid, d.valeur_fonciere AS val, d.surface_reelle_bati AS surf, "
         "  d.valeur_fonciere / d.surface_reelle_bati AS prix, "
         "  CASE WHEN d.type_local ILIKE '%APPARTEMENT%' THEN 'appartement' ELSE 'maison' END AS cat, "
+        "  (d.nature_mutation ILIKE '%futur%') AS vefa, "
         "  extract(year FROM d.date_mutation)::int AS annee, "
         "  round(ST_Distance(d.geom::geography, p.centroid::geography)) AS dist "
         "FROM dvf_mutations d, parcels p "
@@ -125,7 +149,8 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
         if key in seen:
             seen[key]["dist"] = min(seen[key]["dist"], float(r["dist"]))
             continue
-        d = {"prix": float(r["prix"]), "cat": r["cat"], "annee": int(r["annee"]), "dist": float(r["dist"])}
+        d = {"prix": float(r["prix"]), "cat": r["cat"], "annee": int(r["annee"]),
+             "dist": float(r["dist"]), "vefa": bool(r["vefa"])}
         seen[key] = d
         sales.append(d)
     n_dup = len(rows) - len(sales)
@@ -161,7 +186,8 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
     return {**base, "fiable": niveau != "insuffisant", "pct_appartement": pct_appt,
             "periode": [min(annees), max(annees)],
             "q1": round(q1), "median": round(med), "q3": round(q3),
-            "min": round(min(prices)), "max": round(max(prices))}
+            "min": round(min(prices)), "max": round(max(prices)),
+            "comparables": _comparables(kept, min_n)}
 
 
 def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
@@ -227,6 +253,8 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
         f"Marge promoteur supposée {hyp.marge_promoteur_pct:.0%} du CA ; frais annexes {hyp.frais_annexes_pct:.0%}.",
         f"Prix = ventes DVF {prix['type_prix']} ({prix.get('pct_appartement', '?')}% d'appartements), "
         f"{prix['periode'][0]}-{prix['periode'][1]}, {lieu}.",
+        "Le prix de sortie est une donnée de MARCHÉ (DVF) ; le bilan complet reste INDICATIF. "
+        "À valider par un professionnel : coût travaux, marge, frais, TVA, VRD, stationnement et aléas.",
     ]
     if fragile:
         avert.insert(0, "Prix de sortie FRAGILE (" + " ; ".join(raisons) + ") — "
@@ -235,12 +263,14 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
         avert.append("Charge foncière NÉGATIVE en bas de fourchette : aux prix bas / coûts hauts, "
                      "l'opération ne dégage pas de valeur pour le terrain.")
 
+    # Le BILAN reste une « simulation indicative » dans tous les cas (il dépend d'hypothèses) ;
+    # seule la fiabilité du PRIX DE SORTIE varie (fiable / fragile).
     if fragile:
-        verdict = (f"Simulation indicative — CA ≈ {_eur(rnd(ca_bas))}–{_eur(rnd(ca_haut))}, "
+        verdict = (f"Simulation indicative (prix de sortie fragile) — CA ≈ {_eur(rnd(ca_bas))}–{_eur(rnd(ca_haut))}, "
                    f"charge foncière ≈ {_eur(max(0, rnd(cf_bas)))}–{_eur(rnd(cf_haut))} (ordre de grandeur)")
     else:
-        verdict = (f"CA ~{_eur(ca_bas)}–{_eur(ca_haut)} · charge foncière "
-                   f"~{_eur(max(0, cf_bas))}–{_eur(cf_haut)} (médiane {_eur(cf_cen)})")
+        verdict = (f"Simulation indicative (prix de sortie fiable) — CA ~{_eur(ca_bas)}–{_eur(ca_haut)} · "
+                   f"charge foncière ~{_eur(max(0, cf_bas))}–{_eur(cf_haut)} (médiane {_eur(cf_cen)})")
 
     return Bilan(True, niveau, verdict, prix,
                  {"bas": rnd(ca_bas), "central": rnd(ca_cen), "haut": rnd(ca_haut)},
