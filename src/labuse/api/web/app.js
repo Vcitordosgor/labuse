@@ -537,14 +537,14 @@ function renderBilan(b) {
 
   // Transparence neuf/ancien (« Comparables de prix utilisés ») — n'altère pas le prix retenu.
   const cmp = px.comparables || {};
-  const vefaCell = cmp.median_vefa != null
-    ? `${fmt(cmp.median_vefa)} €/m² <span class="bc-n">(${cmp.n_vefa} ventes)</span>`
+  const vefaCell = cmp.mediane_vefa != null
+    ? `${fmt(cmp.mediane_vefa)} €/m² <span class="bc-n">(${cmp.n_vefa} ventes)</span>`
     : `<i>${esc(cmp.note || (cmp.n_vefa ? cmp.n_vefa + " vente(s), trop peu" : "aucune"))}</i>`;
-  const ancienCell = cmp.median_ancien != null
-    ? `${fmt(cmp.median_ancien)} €/m² <span class="bc-n">(${cmp.n_ancien} ventes)</span>`
+  const ancienCell = cmp.mediane_ancien != null
+    ? `${fmt(cmp.mediane_ancien)} €/m² <span class="bc-n">(${cmp.n_ancien} ventes)</span>`
     : `<i>${cmp.n_ancien ? cmp.n_ancien + " vente(s), trop peu" : "aucune"}</i>`;
-  const ecartCell = cmp.ecart_exploitable
-    ? `<b>${cmp.ecart_pct >= 0 ? "+" : ""}${cmp.ecart_pct} %</b> <span class="bc-n">(neuf vs ancien)</span>`
+  const ecartCell = cmp.exploitable
+    ? `<b>${cmp.ecart_vefa_ancien_pct >= 0 ? "+" : ""}${cmp.ecart_vefa_ancien_pct} %</b> <span class="bc-n">(neuf vs ancien)</span>`
     : `<i>${esc(cmp.note || "écart non exploitable")}</i>`;
   const compBlock = (cmp.n_vefa == null && cmp.n_ancien == null) ? "" : `
       <div class="bilan-comp">

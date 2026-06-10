@@ -37,27 +37,27 @@ def test_bilan_chiffre_et_fourchettes():
 
 
 def test_comparables_neuf_vs_ancien_exploitable():
-    # 10 VEFA à 5000, 10 ancien à 3800 : médianes séparées + écart +32 %.
-    c = _comparables(_kept(10, 10), min_n=8)
+    # 10 VEFA à 5000, 10 ancien à 3800 : médianes séparées + écart exploitable.
+    c = _comparables(_kept(10, 10), min_n=8, fiabilite="fiable")
     assert c["n_vefa"] == 10 and c["n_ancien"] == 10
-    assert c["median_vefa"] == 5000 and c["median_ancien"] == 3800
-    assert c["ecart_pct"] == round(100 * (5000 / 3800 - 1)) and c["ecart_exploitable"] is True
-    assert c["note"] is None
+    assert c["mediane_vefa"] == 5000 and c["mediane_ancien"] == 3800
+    assert c["ecart_vefa_ancien_pct"] == round(100 * (5000 / 3800 - 1)) and c["exploitable"] is True
+    assert c["note"] is None and c["fiabilite_prix"] == "fiable"
 
 
 def test_comparables_vefa_insuffisant_pas_de_faux_ecart():
     # 3 VEFA seulement → pas de médiane VEFA, pas d'écart, note explicite.
-    c = _comparables(_kept(3, 20), min_n=8)
-    assert c["median_vefa"] is None and c["ecart_pct"] is None and c["ecart_exploitable"] is False
+    c = _comparables(_kept(3, 20), min_n=8, fiabilite="fiable")
+    assert c["mediane_vefa"] is None and c["ecart_vefa_ancien_pct"] is None and c["exploitable"] is False
     assert "vefa insuffisant" in c["note"].lower()
-    assert c["median_ancien"] == 3800            # l'ancien reste affiché
+    assert c["mediane_ancien"] == 3800            # l'ancien reste affiché
 
 
 def test_comparables_sans_vefa_affiche_seulement_ancien():
-    c = _comparables(_kept(0, 15), min_n=8)
-    assert c["n_vefa"] == 0 and c["median_vefa"] is None and c["ecart_exploitable"] is False
+    c = _comparables(_kept(0, 15), min_n=8, fiabilite="fragile")
+    assert c["n_vefa"] == 0 and c["mediane_vefa"] is None and c["exploitable"] is False
     assert "aucune vente vefa" in c["note"].lower()
-    assert c["median_ancien"] == 3800
+    assert c["mediane_ancien"] == 3800 and c["fiabilite_prix"] == "fragile"
 
 
 def test_charge_fonciere_a_rebours_formule():

@@ -52,6 +52,19 @@ def fiche_markdown(fiche: dict) -> str:
               f"**Ont répondu :** {', '.join(fiche['sources_responded']) or '—'}", "",
               f"**Silencieuses (donnée manquante) :** {', '.join(fiche['sources_silent']) or '—'}", ""]
 
+    cv = _comparables_view(fiche)
+    if cv:
+        lines += [
+            "## Comparables de prix utilisés (transparence)", "",
+            "_Prix de marché (DVF géolocalisé). **Simulation indicative** — le bilan complet reste "
+            "à valider avec les hypothèses travaux, marge, frais, TVA, VRD, stationnement et aléas._", "",
+            f"- **Prix retenu :** {cv['retenu']}",
+            f"- **Médiane ancien :** {cv['ancien']}",
+            f"- **Médiane neuf / VEFA :** {cv['vefa']}",
+            f"- **Écart neuf vs ancien :** {cv['ecart']}",
+            f"- **Fiabilité du prix :** {cv['fiabilite']}", "",
+        ]
+
     ai = fiche.get("ai")
     if ai:
         lines += ["## Analyse LA BUSE (IA)", "",
@@ -81,6 +94,17 @@ def fiche_html(fiche: dict) -> str:
     reasons = "".join(f"<li>{html.escape(r['detail'])} <span class='src'>({html.escape(r['source'] or 'n/d')})</span></li>"
                       for r in v["reasons"]) or "<li>—</li>"
     ai = fiche.get("ai") or {}
+    cv = _comparables_view(fiche)
+    comp_html = ("" if not cv else
+                 "<h2>Comparables de prix utilisés (transparence)</h2>"
+                 "<p class='disc'>Prix de marché (DVF géolocalisé). <strong>Simulation indicative</strong> — "
+                 "le bilan complet reste à valider avec les hypothèses travaux, marge, frais, TVA, VRD, "
+                 "stationnement et aléas.</p><ul>"
+                 f"<li><strong>Prix retenu :</strong> {html.escape(cv['retenu'])}</li>"
+                 f"<li><strong>Médiane ancien :</strong> {html.escape(cv['ancien'])}</li>"
+                 f"<li><strong>Médiane neuf / VEFA :</strong> {html.escape(cv['vefa'])}</li>"
+                 f"<li><strong>Écart neuf vs ancien :</strong> {html.escape(cv['ecart'])}</li>"
+                 f"<li><strong>Fiabilité du prix :</strong> {html.escape(cv['fiabilite'])}</li></ul>")
     return f"""<!doctype html><html lang="fr"><meta charset="utf-8">
 <title>LA BUSE — {html.escape(p['idu'])}</title>
 <style>
@@ -104,6 +128,7 @@ def fiche_html(fiche: dict) -> str:
 <h2>Sources</h2>
 <p><strong>Ont répondu :</strong> {html.escape(', '.join(fiche['sources_responded']) or '—')}</p>
 <p><strong>Silencieuses :</strong> {html.escape(', '.join(fiche['sources_silent']) or '—')}</p>
+{comp_html}
 {"<h2>Analyse LA BUSE (IA)</h2><p>" + html.escape(ai.get('executive_summary','')) + "</p>" if ai else ""}
 </html>"""
 
@@ -114,3 +139,36 @@ def _score(x) -> str:
 
 def _m2(x) -> str:
     return "—" if x is None else f"{x:,.0f} m²".replace(",", " ")
+
+
+def _eurm2(x) -> str:
+    return "—" if x is None else f"{x:,.0f} €/m²".replace(",", " ")
+
+
+def _comparables_view(fiche: dict) -> dict | None:
+    """Vue d'affichage du bloc « Comparables de prix utilisés » (transparence neuf/ancien).
+
+    Reprend tel quel le moteur de prix (aucune invention) ; None si pas de bilan chiffré.
+    Le bloc est volontairement formulé en « prix de marché » + « simulation indicative ».
+    """
+    b = ((fiche.get("faisabilite") or {}).get("bilan")) or {}
+    c, px = b.get("comparables"), (b.get("prix_dvf") or {})
+    if not c or not b.get("fiable"):
+        return None
+    fia = {"fiable": "Prix de marché fiable", "fragile": "Prix de marché fragile"}.get(
+        c.get("fiabilite_prix"), "Prix de marché " + str(c.get("fiabilite_prix") or "—"))
+    per = px.get("periode") or []
+    rayon = "commune" if px.get("commune_fallback") else (
+        f"{px['radius_m']:.0f} m" if px.get("radius_m") else "—")
+    retenu = f"{_eurm2(px.get('median'))} · {px.get('type_prix', '')} · {px.get('n', '?')} ventes"
+    if len(per) == 2:
+        retenu += f" · {per[0]}-{per[1]} · {rayon}"
+    ancien = (f"{_eurm2(c['mediane_ancien'])} ({c['n_ancien']} ventes)"
+              if c.get("mediane_ancien") is not None
+              else (f"{c['n_ancien']} vente(s), trop peu" if c.get("n_ancien") else "aucune"))
+    vefa = (f"{_eurm2(c['mediane_vefa'])} ({c['n_vefa']} ventes)"
+            if c.get("mediane_vefa") is not None
+            else (c.get("note") or (f"{c['n_vefa']} vente(s), trop peu" if c.get("n_vefa") else "aucune")))
+    ecart = (f"{'+' if (c['ecart_vefa_ancien_pct'] or 0) >= 0 else ''}{c['ecart_vefa_ancien_pct']} % (neuf vs ancien)"
+             if c.get("exploitable") else (c.get("note") or "non exploitable"))
+    return {"retenu": retenu, "ancien": ancien, "vefa": vefa, "ecart": ecart, "fiabilite": fia}

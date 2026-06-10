@@ -99,11 +99,11 @@ def _fiabilite(kept: list[dict], type_label: str, commune_fallback: bool, min_n:
     return niveau, raisons
 
 
-def _comparables(kept: list[dict], min_n: int) -> dict:
+def _comparables(kept: list[dict], min_n: int, fiabilite: str) -> dict:
     """Décompose le comparable RETENU en neuf (VEFA) vs ancien — pure transparence, sans
     toucher au prix retenu. N'invente aucun écart : une médiane n'est donnée que si son
     sous-échantillon atteint min_n ventes, et l'écart n'est « exploitable » que si les DEUX
-    sous-échantillons l'atteignent."""
+    sous-échantillons l'atteignent. Schéma stable (clés toujours présentes) pour API/exports."""
     vefa = [s["prix"] for s in kept if s.get("vefa")]
     ancien = [s["prix"] for s in kept if not s.get("vefa")]
     med_v = round(statistics.median(vefa)) if len(vefa) >= min_n else None
@@ -117,9 +117,10 @@ def _comparables(kept: list[dict], min_n: int) -> dict:
         note = f"ancien insuffisant pour comparaison fiable ({len(ancien)} vente(s) < {min_n})"
     else:
         note = None
-    return {"n_vefa": len(vefa), "n_ancien": len(ancien),
-            "median_vefa": med_v, "median_ancien": med_a,
-            "ecart_pct": ecart, "ecart_exploitable": ecart is not None, "note": note}
+    return {"n_ancien": len(ancien), "mediane_ancien": med_a,
+            "n_vefa": len(vefa), "mediane_vefa": med_v,
+            "ecart_vefa_ancien_pct": ecart, "exploitable": ecart is not None,
+            "note": note, "fiabilite_prix": fiabilite}
 
 
 def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
@@ -187,7 +188,7 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
             "periode": [min(annees), max(annees)],
             "q1": round(q1), "median": round(med), "q3": round(q3),
             "min": round(min(prices)), "max": round(max(prices)),
-            "comparables": _comparables(kept, min_n)}
+            "comparables": _comparables(kept, min_n, niveau)}
 
 
 def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
