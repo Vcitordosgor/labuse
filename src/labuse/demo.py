@@ -11,26 +11,28 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 # Parcelles utiles en démo (IDU stables Saint-Paul) — rôle + ce qu'elles montrent + vigilance.
+# États VÉRIFIÉS après `rebuild-demo --commune 97415` (peuvent évoluer si les données changent).
 DEMO_PARCELS = [
-    {"idu": "97415000BN1351", "role": "Opportunité vérifiée + bilan + PPR",
-     "montre": "verdict, prix DVF fiable, charge foncière, périmètre PPR i_mvt",
-     "vigilance": "PPR = prescriptions à vérifier, pas une exclusion"},
-    {"idu": "97415000BO0057", "role": "Opportunité avec bilan promoteur lisible",
-     "montre": "grande surface vendable, CA et charge foncière chiffrés (prix de marché fiable)",
-     "vigilance": "hors îlot SAR (couverture partielle) ; bilan = simulation indicative"},
+    {"idu": "97415000BP0571", "role": "Belle opportunité vérifiée + bilan promoteur lisible",
+     "montre": "opportunité (opp ~77, 9222 m²), prix de marché FIABLE ~4184 €/m², CA ~23,5 M€",
+     "vigilance": "« vérifiée » = sur couches dispo ; bilan = simulation indicative"},
+    {"idu": "97415000BS0009", "role": "Opportunité avec bilan (2ᵉ exemple)",
+     "montre": "opp ~76, ~3479 m², prix fiable ~4145 €/m², CA ~8,8 M€", "vigilance": "hypothèses travaux/marge à valider"},
+    {"idu": "97415000BN1351", "role": "À creuser — PÉRIMÈTRE PPR (inondation + mvt)",
+     "montre": "le PPR rétrograde l'opportunité en « à creuser » + bilan affiché",
+     "vigilance": "PPR = prescriptions à vérifier, PAS une exclusion"},
     {"idu": "97415000BH0283", "role": "SAR compatible (espace urbanisé à densifier)",
      "montre": "vocation SAR compatible — à croiser avec PLU/PPR", "vigilance": "compatibilité ≠ constructibilité"},
     {"idu": "97415000BO0845", "role": "Faux positif PARKING déclassé",
-     "montre": "score brut élevé mais statut « faux positif probable » + motif parking OSM",
+     "montre": "score brut ~82 mais « faux positif probable » + motif « parking sur 82 % (OSM) »",
      "vigilance": "le score brut reste affiché (transparence)"},
     {"idu": "97415000BV1431", "role": "Faux positif PENTE déclassé",
-     "montre": "déclassement pente 94 % + SAR vocation naturelle (à vérifier)", "vigilance": "—"},
+     "montre": "« pente 103 % — terrain non aménageable » + SAR vocation naturelle (à vérifier)", "vigilance": "—"},
     {"idu": "97415000BO0619", "role": "Micro-parcelle déclassée",
-     "montre": "surface ~28 m² → faux positif (aucun programme possible)", "vigilance": "—"},
-    {"idu": "97415000BN1086", "role": "Micro-parcelle déclassée (variante)",
-     "montre": "surface ~29 m² → faux positif", "vigilance": "—"},
+     "montre": "« micro-parcelle 28 m² — aucun programme possible »", "vigilance": "—"},
     {"idu": "97415000BK0023", "role": "Bord d'équipement CONSERVÉ (anti-sur-déclassement)",
-     "montre": "effleure un parking (<30 %) → reste opportunité", "vigilance": "honnêteté : on ne sur-déclasse pas"},
+     "montre": "effleure un parking (<30 %) → reste opportunité (opp ~74)",
+     "vigilance": "honnêteté : on ne sur-déclasse pas"},
 ]
 
 # Seed pipeline : statut colonne + prospection MANUELLE réaliste, AUCUN nom de propriétaire réel.

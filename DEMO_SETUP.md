@@ -32,28 +32,29 @@ actif · module prospection · pipeline · exports HTML/Markdown.
 python -m labuse.cli api          # FastAPI (uvicorn) → http://localhost:8000/app
 ```
 
-## 4. Parcelles de démo (Saint-Paul)
+## 4. Parcelles de démo (Saint-Paul) — états vérifiés après `rebuild-demo`
 
 | IDU | Rôle | Ce qu'elle montre | Vigilance |
 |---|---|---|---|
-| 97415000BN1351 | Opportunité vérifiée + bilan + PPR | prix DVF fiable, charge foncière, périmètre PPR | PPR = prescriptions, pas exclusion |
-| 97415000BO0057 | Bilan promoteur lisible | CA + charge foncière chiffrés | hors îlot SAR ; bilan = simulation indicative |
+| 97415000BP0571 | **Belle opportunité + bilan** | opp ~77, 9222 m², prix **fiable** ~4184 €/m², CA ~23,5 M€ | « vérifiée » = sur couches dispo ; bilan = simulation indicative |
+| 97415000BS0009 | Opportunité + bilan (2ᵉ ex.) | opp ~76, prix fiable ~4145 €/m², CA ~8,8 M€ | hypothèses travaux/marge à valider |
+| 97415000BN1351 | **À creuser — périmètre PPR** | le PPR rétrograde l'opportunité en « à creuser » + bilan | PPR = prescriptions, **pas** exclusion |
 | 97415000BH0283 | SAR compatible | vocation « urbanisé à densifier » | compatibilité ≠ constructibilité |
-| 97415000BO0845 | Faux positif PARKING déclassé | score brut élevé mais « faux positif probable » + motif | score brut conservé (transparence) |
-| 97415000BV1431 | Faux positif PENTE déclassé | déclassement pente 94 % + SAR naturel | — |
-| 97415000BO0619 | Micro-parcelle déclassée | ~28 m² → faux positif | — |
-| 97415000BN1086 | Micro-parcelle déclassée | ~29 m² → faux positif | — |
+| 97415000BO0845 | **Faux positif PARKING déclassé** | brut ~82 mais « faux positif » + « parking sur 82 % (OSM) » | score brut conservé (transparence) |
+| 97415000BV1431 | **Faux positif PENTE déclassé** | « pente 103 % — terrain non aménageable » + SAR naturel | — |
+| 97415000BO0619 | Micro-parcelle déclassée | « micro-parcelle 28 m² — aucun programme » | — |
 | 97415000BK0023 | Bord d'équipement CONSERVÉ | effleure un parking (<30 %) → reste opportunité | anti-sur-déclassement (honnêteté) |
 
 ## 5. Scénario de démo recommandé (≈ 8 min)
 
 1. **Carte** : « voici Saint-Paul, en vert les opportunités vérifiées ».
-2. **BN1351** : opportunité vérifiée → bilan (prix de marché fiable, charge foncière) + PPR (à vérifier).
-3. **BO0845** : « score brut 82… mais c'est un parking » → faux positif déclassé, motif visible. *La confiance avant l'effet waouh.*
-4. **BV1431** : pente 94 % → déclassée. **BK0023** : effleure un parking mais conservée → on ne sur-déclasse pas.
-5. **Prospection** : sur BN1351, « + Suivre » → « Propriétaire à identifier » → prochaine action + contact manuel.
-6. **Kanban** : pipeline de prospection (entrées de démo) → organiser le suivi.
-7. **Export** : fiche Markdown/HTML présentable en réunion.
+2. **BP0571** : belle opportunité vérifiée → bilan (prix de marché **fiable** 4184 €/m², CA ~23,5 M€, neuf vs ancien, charge foncière).
+3. **BN1351** : opportunité… mais **périmètre PPR** → « à creuser », prescriptions à vérifier (PPR ≠ exclusion).
+4. **BO0845** : « score brut 82… mais c'est un **parking** » → faux positif déclassé, motif visible. *La confiance avant l'effet waouh.*
+5. **BV1431** : pente 103 % → déclassée. **BK0023** : effleure un parking mais **conservée** → on ne sur-déclasse pas.
+6. **Prospection** : sur BP0571, « + Suivre » → « Propriétaire à identifier » → prochaine action + contact manuel.
+7. **Kanban** : pipeline de prospection (entrées de démo) → organiser le suivi.
+8. **Export** : fiche Markdown/HTML présentable en réunion.
 
 ## 6. Limites à expliquer honnêtement
 
