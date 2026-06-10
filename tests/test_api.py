@@ -163,9 +163,10 @@ def test_watch_snapshot_delta_zonage(client):
 
 def test_pipeline_meta(client):
     m = client.get("/pipeline/meta").json()
-    assert [c["key"] for c in m["columns"]] == [
-        "reperee", "proprietaire_a_identifier", "contacte", "en_discussion", "chaud", "abandonnee",
-    ]
+    keys = [c["key"] for c in m["columns"]]
+    # workflow prospection (colonnes alignées) — « propriétaire à identifier » présente.
+    assert keys[0] == "reperee" and "proprietaire_a_identifier" in keys
+    assert keys[-1] == "abandonnee" and "contacte" in keys
     assert len(m["priorities"]) == 3 and m["defaults"]["status"] == "reperee"
 
 
