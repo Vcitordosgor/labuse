@@ -209,12 +209,18 @@ class RisquesLayer(Layer):
                 continue
             if i.subtype in red:
                 verdicts.append(
-                    hard_exclude(self.name, "Exclue : PPR zone rouge (inconstructible).", kind="exclue", source=SRC_GEORISQUES)
+                    hard_exclude(self.name, "Exclue : PPR zone rouge (inconstructible).", kind="exclue", source=SRC_GPU)
                 )
             else:
-                verdicts.append(
-                    soft_flag(self.name, f"PPR zone « {i.subtype or 'bleue'} » (prescriptions).", Severity.FORT, source=SRC_GEORISQUES)
-                )
+                # Assiette PPR (servitude PM1) : on connaît le PÉRIMÈTRE réglementaire, pas le
+                # zonage rouge/bleue interne → flag fort PRUDENT, jamais une exclusion automatique.
+                risque = (i.attrs or {}).get("risque") or "risque naturel"
+                pct = f" (~{i.coverage * 100:.0f}% de la parcelle)" if i.coverage < 0.99 else ""
+                verdicts.append(soft_flag(
+                    self.name,
+                    f"Périmètre PPR {risque}{pct} — servitude réglementaire approuvée ; prescriptions "
+                    "applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie).",
+                    Severity.FORT, source=SRC_GPU))
 
         sev_map = params.get("alea_severity_map", {})
         for i in ctx.intersections(parcel.id, kind_alea):

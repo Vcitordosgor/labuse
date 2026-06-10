@@ -14,6 +14,7 @@ import io
 import json
 import math
 import os
+import re
 import tempfile
 import time
 import zipfile
@@ -45,6 +46,14 @@ KIND_SOURCE = {
     "pente": "RGE ALTI (altimétrie)",
     "trait_de_cote": "DEAL Réunion — trait de côte",
     "osm_faux_positif": "OpenStreetMap / Overpass",
+    "ppr": "Géoportail de l'Urbanisme — PPR (servitude PM1)",
+}
+
+# Risques PPR codés dans le nom de fichier de la servitude (PM1_PPR_<code>_<COMMUNE>_...).
+PPR_RISK_LABELS = {
+    "i_mvt": "inondation + mouvement de terrain", "mvt": "mouvement de terrain",
+    "i": "inondation", "l": "littoral / aléa côtier", "i_mvt_alea_cotier": "inondation, mouvement de terrain, littoral",
+    "t": "feux de forêt", "s": "séisme",
 }
 
 # Faux positifs géométriques OSM : tags → subtype consommé par la cascade
@@ -141,6 +150,60 @@ def ingest_gpu_zones(session, bbox, commune, run_id, sids) -> int:
                       p.get("libelong") or p.get("libelle"), f["geometry"],
                       sids.get(KIND_SOURCE["plu_gpu_zone"]), commune, run_id,
                       {"libelle": p.get("libelle"), "partition": p.get("partition"), "idurba": p.get("idurba")})
+        n += 1
+    return n
+
+
+def _norm_commune(name: str) -> str:
+    import unicodedata
+    s = unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode()
+    return re.sub(r"[\s'-]+", "_", s).upper().strip("_")
+
+
+def _ppr_risque(fichier: str) -> tuple[str, str]:
+    """'PM1_PPR_i_mvt_SAINT_PAUL_2016..._act.pdf' → ('i_mvt', 'inondation + mouvement de terrain').
+
+    Les codes de risque (minuscules) suivent 'PPR' ; le nom de commune (majuscules) suit."""
+    codes, started = [], False
+    for tok in fichier.split("_"):
+        if tok.upper() in ("PM1", "PPR"):
+            started = True
+            continue
+        if started and tok and tok.islower():
+            codes.append(tok)
+        elif started:
+            break
+    code = "_".join(codes) or "ppr"
+    return code, PPR_RISK_LABELS.get(code, "risque naturel (PPR)")
+
+
+def ingest_ppr_sup(session, bbox, commune, run_id, sids) -> int:
+    """PPR RÉGLEMENTAIRE (risques naturels) via API Carto GPU — servitudes d'utilité publique PM1.
+
+    Le PPR est exposé comme SUP PM1 : l'assiette est le PÉRIMÈTRE réglementaire (MultiPolygon).
+    Elle ne porte PAS le zonage interne rouge/bleue → on stocke le périmètre comme contrainte à
+    PRESCRIPTIONS (jamais une exclusion automatique : on ne sait pas si la parcelle est en rouge).
+    Le type de risque est lu dans le nom de la servitude. Réglementaire, daté, source tracée.
+    """
+    want = _norm_commune(commune)
+    with _client() as c:
+        r = c.get(f"{APICARTO}/gpu/assiette-sup-s", params={"geom": json.dumps(_bbox_polygon(bbox))})
+        r.raise_for_status()
+        feats = r.json().get("features", []) or []
+    n = 0
+    for f in feats:
+        p = f.get("properties") or {}
+        fichier = p.get("fichier") or ""
+        if not f.get("geometry") or (p.get("suptype") or "").lower() != "pm1" or "PPR" not in fichier.upper():
+            continue  # PM2/PM3 = établissements dangereux (≠ risque naturel) → écartés
+        if want and want not in _norm_commune(fichier):
+            continue  # la bbox renvoie aussi les PPR des communes voisines → on filtre
+        code, libelle = _ppr_risque(fichier)
+        _insert_layer(session, "ppr", code, f"PPR {libelle}", f["geometry"],
+                      sids.get(KIND_SOURCE["ppr"]), commune, run_id,
+                      {"risque": libelle, "code_risque": code, "suptype": "PM1",
+                       "statut": "reglementaire", "fichier": fichier, "idass": p.get("idass"),
+                       "nomreg": p.get("nomreg"), "urlreg": p.get("urlreg") or p.get("href")})
         n += 1
     return n
 
@@ -621,6 +684,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("trait_de_cote", lambda: ingest_trait_de_cote(session, commune, run_id, sids)),
         ("pente", lambda: ingest_pente(session, bbox, commune, run_id, sids)),
         ("osm_faux_positif", lambda: ingest_osm_faux_positifs(session, bbox, commune, run_id, sids)),
+        ("ppr", lambda: ingest_ppr_sup(session, bbox, commune, run_id, sids)),
         ("dvf", lambda: ingest_dvf(session, insee, commune, run_id, sids)),
     ]
     for kind, fn in jobs:
