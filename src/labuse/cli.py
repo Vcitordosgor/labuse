@@ -237,6 +237,67 @@ def evaluate_cmd(
         typer.echo(f"    {status:24} : {n}")
 
 
+def _print_healthcheck(commune: str) -> bool:
+    from . import demo
+
+    with session_scope() as s:
+        res = demo.healthcheck(s, commune)
+    typer.echo(f"\n── Healthcheck démo ({res['commune']}) ──")
+    for c in res["checks"]:
+        mark = "✓" if c["ok"] else ("✗" if c["critical"] else "•")
+        typer.echo(f"  {mark} {c['name']:34} {c['detail']}")
+    typer.echo("\n" + ("✅ PRÊT POUR LA DÉMO" if res["ok"] else "❌ NON PRÊT — voir les ✗ ci-dessus"))
+    return res["ok"]
+
+
+@app.command("rebuild-demo")
+def rebuild_demo_cmd(
+    commune: str = typer.Option("97415", help="INSEE de la commune de démo (défaut Saint-Paul)."),
+    limit: int = typer.Option(None, help="Cap de parcelles (tests)."),
+    seed_pipeline: bool = typer.Option(True, help="Seed quelques entrées pipeline (démo non vide)."),
+    skip_ingest: bool = typer.Option(False, help="Ne ré-ingère pas les couches (ré-évalue seulement)."),
+) -> None:
+    """Reconstruit une base de DÉMO cohérente et IDEMPOTENTE pour une commune.
+
+    Enchaîne les briques DURABLES : schéma + colonnes (geom_2975 trigger, prospection) →
+    cadastre + couches (geo-dvf/PPR/SAR/OSM/pente/PLU) → geom_2975 valide + index →
+    évaluation (cascade + scoring + déclassement) → seed pipeline → healthcheck.
+    Aucun changement de scoring/seuils : on ne fait que (re)jouer l'existant.
+    """
+    from . import demo
+    from .ingestion import run_all, seed_sources
+
+    s_set = get_settings()
+    name = s_set.pilot_commune_name if commune == s_set.pilot_commune_insee else commune
+    ensure_postgis()
+    models.create_all(engine())                              # schéma + triggers + colonne prospection
+    with session_scope() as s:
+        seed_sources.seed(s)
+    if not skip_ingest:
+        typer.echo(f"▶ Ingestion {name} ({commune}) — cadastre + couches…")
+        with session_scope() as s:
+            info = run_all.ingest_commune(s, commune, name, limit=limit)
+        typer.echo(f"  couches : {_fmt_layers(info.get('layers') or {})}")
+    models.ensure_geom_2975(engine())                        # geom_2975 valide (ST_MakeValid) + GIST
+    typer.echo("▶ Évaluation (cascade + scoring + déclassement)…")
+    with session_scope() as s:
+        nev = run_all.evaluate_commune(s, name)
+    typer.echo(f"  {nev} parcelles évaluées.")
+    if seed_pipeline:
+        with session_scope() as s:
+            k = demo.seed_demo_pipeline(s, name)
+        typer.echo(f"  pipeline : {k} entrées de démo (aucun nom réel).")
+    _print_healthcheck(name)
+
+
+@app.command("demo-healthcheck")
+def demo_healthcheck_cmd(
+    commune: str = typer.Option("Saint-Paul", help="Nom de commune (défaut Saint-Paul)."),
+) -> None:
+    """Vérifie que la base est prête pour une démo (code de sortie ≠ 0 si une couche critique manque)."""
+    raise typer.Exit(0 if _print_healthcheck(commune) else 1)
+
+
 @app.command("discover")
 def discover_cmd(
     commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
