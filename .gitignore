@@ -33,3 +33,5 @@ data/
 # Aperçus / captures générés (livrés via l'app / SendUserFile, pas du source)
 labuse_radar*.svg
 shot_*.png
+data/plu_saint_paul/*.pdf
+data/plu_saint_paul/*.txt
