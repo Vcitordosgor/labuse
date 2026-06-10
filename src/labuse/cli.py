@@ -265,20 +265,37 @@ def rebuild_demo_cmd(
     Aucun changement de scoring/seuils : on ne fait que (re)jouer l'existant.
     """
     from . import demo
-    from .ingestion import run_all, seed_sources
+    from .ingestion import layers_ingest, run_all, seed_sources
 
     s_set = get_settings()
     name = s_set.pilot_commune_name if commune == s_set.pilot_commune_insee else commune
     ensure_postgis()
-    models.create_all(engine())                              # schéma + triggers + colonne prospection
+    # Schéma + colonnes (rapide) — le backfill geom_2975 GLOBAL est ÉVITÉ ici (fait SCOPÉ plus bas).
+    models.Base.metadata.create_all(engine())
+    models.ensure_pipeline_prospection(engine())
     with session_scope() as s:
         seed_sources.seed(s)
-    if not skip_ingest:
-        typer.echo(f"▶ Ingestion {name} ({commune}) — cadastre + couches…")
+        n_parcels = s.execute(
+            text("SELECT count(*) FROM parcels WHERE commune = :c"), {"c": name}).scalar() or 0
+    if skip_ingest:
+        layers = {"(couches inchangées)": "skip"}
+    elif n_parcels == 0:
+        typer.echo(f"▶ Ingestion COMPLÈTE {name} ({commune}) — cadastre + couches…")
         with session_scope() as s:
-            info = run_all.ingest_commune(s, commune, name, limit=limit)
-        typer.echo(f"  couches : {_fmt_layers(info.get('layers') or {})}")
-    models.ensure_geom_2975(engine())                        # geom_2975 valide (ST_MakeValid) + GIST
+            layers = (run_all.ingest_commune(s, commune, name, limit=limit).get("layers") or {})
+    else:
+        # Parcelles déjà là (cas du recyclage) : on ne re-télécharge PAS le cadastre,
+        # on ré-ingère seulement les COUCHES de la commune (geo-dvf/PPR/SAR/OSM/pente/PLU).
+        typer.echo(f"▶ {n_parcels} parcelles présentes → ré-ingestion des COUCHES seulement…")
+        with session_scope() as s:
+            s.execute(text("DELETE FROM spatial_layers WHERE commune = :c"), {"c": name})
+            s.execute(text("DELETE FROM dvf_mutations WHERE commune = :c"), {"c": name})
+            bb = s.execute(text("SELECT ST_XMin(e),ST_YMin(e),ST_XMax(e),ST_YMax(e) "
+                                "FROM (SELECT ST_Extent(geom) e FROM parcels WHERE commune=:c) t"),
+                           {"c": name}).one()
+            layers = layers_ingest.ingest_layers(s, commune, name, tuple(bb), None)
+    typer.echo(f"  couches : {_fmt_layers(layers)}")
+    models.ensure_geom_2975(engine(), commune=name)          # SCOPÉ commune → rapide (MakeValid + GIST)
     typer.echo("▶ Évaluation (cascade + scoring + déclassement)…")
     with session_scope() as s:
         nev = run_all.evaluate_commune(s, name)

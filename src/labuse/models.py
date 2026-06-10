@@ -350,16 +350,20 @@ def ensure_pipeline_prospection(engine) -> None:
                      "ADD COLUMN IF NOT EXISTS prospection jsonb NOT NULL DEFAULT '{}'::jsonb"))
 
 
-def ensure_geom_2975(engine) -> None:
+def ensure_geom_2975(engine, commune: str | None = None) -> None:
     """Géométrie pré-projetée en 2975 (perf cascade), auto-maintenue par TRIGGER.
 
     `geom_2975 = ST_Transform(geom, 2975)` sur parcels + spatial_layers : la cascade
     n'a plus à reprojeter à la volée (la géométrie d'une parcelle était re-transformée
     une fois PAR couche croisée). C'est la MÊME valeur, pré-calculée et indexée en GIST
     → coverage/verdicts INCHANGÉS. Idempotent ; remplit l'existant et pose le trigger
-    qui couvre tous les écrivains (cadastre, couches, démo, MakeValid)."""
+    qui couvre tous les écrivains (cadastre, couches, démo, MakeValid).
+
+    `commune` : si fourni, le BACKFILL/RÉPARATION ne portent que sur cette commune (rapide,
+    pour un rebuild mono-commune) ; le trigger et les index restent globaux. Défaut = global."""
     from sqlalchemy import text as _t
 
+    scope = " AND commune = :c" if commune else ""
     ddl = [
         "ALTER TABLE parcels ADD COLUMN IF NOT EXISTS geom_2975 geometry(Geometry, 2975)",
         "ALTER TABLE spatial_layers ADD COLUMN IF NOT EXISTS geom_2975 geometry(Geometry, 2975)",
@@ -376,19 +380,20 @@ def ensure_geom_2975(engine) -> None:
         "DROP TRIGGER IF EXISTS trg_layers_geom_2975 ON spatial_layers",
         "CREATE TRIGGER trg_layers_geom_2975 BEFORE INSERT OR UPDATE OF geom ON spatial_layers "
         "FOR EACH ROW EXECUTE FUNCTION labuse_set_geom_2975()",
-        "UPDATE parcels SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL",
-        "UPDATE spatial_layers SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL",
+        f"UPDATE parcels SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL{scope}",
+        f"UPDATE spatial_layers SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL{scope}",
         # Réparation de l'existant : geom_2975 déjà peuplé mais invalide (avant ce correctif).
-        "UPDATE parcels SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975)",
-        "UPDATE spatial_layers SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975)",
+        f"UPDATE parcels SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975){scope}",
+        f"UPDATE spatial_layers SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975){scope}",
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",
         "CREATE INDEX IF NOT EXISTS idx_spatial_layers_geom_2975 ON spatial_layers USING gist (geom_2975)",
-        "ANALYZE parcels",
-        "ANALYZE spatial_layers",
     ]
+    params = {"c": commune} if commune else {}
     with engine.begin() as c:
         for stmt in ddl:
-            c.execute(_t(stmt))
+            c.execute(_t(stmt), params)
+        c.execute(_t("ANALYZE parcels"))
+        c.execute(_t("ANALYZE spatial_layers"))
 
 
 def drop_all(engine) -> None:
