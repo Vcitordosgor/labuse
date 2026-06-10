@@ -44,7 +44,27 @@ KIND_SOURCE = {
     "ocs_ge": "OCS GE (IGN)",
     "pente": "RGE ALTI (altimétrie)",
     "trait_de_cote": "DEAL Réunion — trait de côte",
+    "osm_faux_positif": "OpenStreetMap / Overpass",
 }
+
+# Faux positifs géométriques OSM : tags → subtype consommé par la cascade
+# (config/cascade_rules.yaml : hard cemetery/school ; flag pitch/parking).
+OVERPASS_MIRRORS = (
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+)
+_OSM_FP_QUERY = """[out:json][timeout:90];
+(
+  way["landuse"="cemetery"]({s},{w},{n},{e});
+  relation["landuse"="cemetery"]({s},{w},{n},{e});
+  way["amenity"="grave_yard"]({s},{w},{n},{e});
+  way["amenity"="school"]({s},{w},{n},{e});
+  relation["amenity"="school"]({s},{w},{n},{e});
+  way["leisure"="pitch"]({s},{w},{n},{e});
+  way["amenity"="parking"]({s},{w},{n},{e});
+  relation["amenity"="parking"]({s},{w},{n},{e});
+);
+out geom;"""
 
 
 def _client() -> httpx.Client:
@@ -422,6 +442,75 @@ def ingest_trait_de_cote(session, commune, run_id, sids) -> int:
     return n
 
 
+def _overpass(query: str, tries: int = 3) -> dict:
+    """POST Overpass, résilient : retries + bascule de mirror (Overpass est souvent saturé)."""
+    last: Exception | None = None
+    with _client() as c:
+        for mirror in OVERPASS_MIRRORS:
+            for attempt in range(tries):
+                try:
+                    r = c.post(mirror, data={"data": query})
+                    r.raise_for_status()
+                    return r.json()
+                except Exception as exc:  # noqa: BLE001 - on retente / on bascule
+                    last = exc
+                    time.sleep(2 ** attempt)
+    raise last  # type: ignore[misc]
+
+
+def _osm_fp_subtype(tags: dict) -> str | None:
+    if tags.get("landuse") == "cemetery" or tags.get("amenity") == "grave_yard":
+        return "cemetery"
+    if tags.get("amenity") == "school":
+        return "school"
+    if tags.get("leisure") == "pitch":
+        return "pitch"
+    if tags.get("amenity") == "parking":
+        return "parking"
+    return None
+
+
+def _osm_ring(geometry: list) -> list | None:
+    coords = [[g["lon"], g["lat"]] for g in (geometry or []) if g.get("lon") is not None]
+    if len(coords) < 3:
+        return None
+    if coords[0] != coords[-1]:
+        coords.append(coords[0])
+    return coords if len(coords) >= 4 else None
+
+
+def ingest_osm_faux_positifs(session, bbox, commune, run_id, sids) -> int:
+    """Faux positifs géométriques OSM (cimetière / école / terrain de sport / parking) via
+    Overpass → kind='osm_faux_positif'. Étiquettes mappées vers les subtypes que la cascade
+    consomme (hard: cemetery/school ; flag: pitch/parking). Empêche qu'un équipement public
+    ressorte en « opportunité »."""
+    minlon, minlat, maxlon, maxlat = bbox
+    data = _overpass(_OSM_FP_QUERY.format(s=minlat, w=minlon, n=maxlat, e=maxlon))
+    src = sids.get(KIND_SOURCE["osm_faux_positif"])
+    n = 0
+    for el in data.get("elements", []) or []:
+        sub = _osm_fp_subtype(el.get("tags", {}) or {})
+        if not sub:
+            continue
+        geom = None
+        if el.get("type") == "way":
+            ring = _osm_ring(el.get("geometry"))
+            if ring:
+                geom = {"type": "Polygon", "coordinates": [ring]}
+        elif el.get("type") == "relation":
+            polys = [[r] for m in (el.get("members") or [])
+                     if m.get("role") == "outer" and (r := _osm_ring(m.get("geometry")))]
+            if polys:
+                geom = {"type": "MultiPolygon", "coordinates": polys}
+        if not geom:
+            continue
+        name = (el.get("tags", {}) or {}).get("name") or f"{sub} (OSM)"
+        _insert_layer(session, "osm_faux_positif", sub, name[:255], geom, src, commune, run_id,
+                      {"osm_id": el.get("id"), "osm_type": el.get("type"), "subtype": sub})
+        n += 1
+    return n
+
+
 def ingest_layers(session: Session, insee: str, commune: str,
                   bbox: tuple[float, float, float, float], run_id: int | None) -> dict[str, object]:
     """Ingère toutes les couches géométriques réelles disponibles. Isolé par couche."""
@@ -440,6 +529,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("ens", lambda: ingest_espaces_proteges(session, bbox, commune, run_id, sids)),
         ("trait_de_cote", lambda: ingest_trait_de_cote(session, commune, run_id, sids)),
         ("pente", lambda: ingest_pente(session, bbox, commune, run_id, sids)),
+        ("osm_faux_positif", lambda: ingest_osm_faux_positifs(session, bbox, commune, run_id, sids)),
         ("dvf", lambda: ingest_dvf(session, insee, commune, run_id, sids)),
     ]
     for kind, fn in jobs:
