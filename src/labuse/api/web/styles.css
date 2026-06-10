@@ -749,3 +749,6 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .kb-pp-statut, .kb-pp-resp, .kb-pp-action { font: inherit; font-size: 12px; background: var(--panel);
   border: 1px solid var(--line); color: var(--txt); border-radius: 6px; padding: 4px 6px; }
 .kb-pp-action { width: 100%; margin-top: 6px; }
+.kb-empty-hint { grid-column: 1 / -1; margin: 0 0 14px; padding: 18px 20px; border: 1px dashed var(--line);
+  border-radius: 12px; background: var(--panel-2); color: var(--muted); font-size: 13.5px; line-height: 1.55; text-align: center; }
+.kb-empty-hint b { color: var(--gold-soft); }

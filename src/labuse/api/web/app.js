@@ -812,7 +812,11 @@ function renderKanban() {
   $("#kb-count").textContent = total ? `${total} parcelle${total > 1 ? "s" : ""} suivie${total > 1 ? "s" : ""}` : "Aucune parcelle suivie";
   const byCol = {}; cols.forEach((c) => { byCol[c.key] = []; });
   entries.forEach((e) => { (byCol[e.status] = byCol[e.status] || []).push(e); });
-  $("#kb-board").innerHTML = cols.map((c) => `
+  // État vide pédagogique : on explique comment démarrer une prospection.
+  const emptyHint = total === 0
+    ? `<div class="kb-empty-hint">Aucune parcelle suivie pour l'instant.<br>Ouvrez une fiche parcelle, cliquez <b>« + Suivre cette parcelle »</b>, puis passez-la en <b>« Propriétaire à identifier »</b> et notez votre prochaine action pour démarrer votre prospection.</div>`
+    : "";
+  $("#kb-board").innerHTML = emptyHint + cols.map((c) => `
     <div class="kb-col" data-col="${c.key}">
       <div class="kb-col-head"><span class="kb-col-title">${esc(c.label)}</span><span class="kb-col-n">${(byCol[c.key] || []).length}</span></div>
       <div class="kb-cards">${(byCol[c.key] || []).map(kbCard).join("") || '<div class="kb-empty">—</div>'}</div>
