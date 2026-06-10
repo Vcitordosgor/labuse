@@ -12,6 +12,7 @@ section ne casse pas la fiche → pas de 500).
 """
 from __future__ import annotations
 
+import json
 import math
 import os
 import time
@@ -266,19 +267,26 @@ def plu_detail(db: Session, parcel_id: int, lon: float, lat: float) -> dict[str,
             if not geom:
                 note = "Géométrie indisponible pour interroger les prescriptions."
             else:
+                import concurrent.futures as _cf
                 gpu = GpuConnector()
-                for kind in ("surf", "lin", "pct"):
+
+                def _fetch(kind):  # les 3 familles en PARALLÈLE (≈6 s → ≈2 s)
                     try:
-                        fc = gpu.prescriptions(geom, kind=kind)
+                        return kind, gpu.prescriptions(geom, kind=kind)
                     except Exception:  # noqa: BLE001 — une famille en échec n'arrête pas les autres
-                        continue
-                    for feat in fc.get("features", []):
-                        pr = feat.get("properties", {}) or {}
-                        prescriptions.append({
-                            "type": kind,
-                            "libelle": pr.get("libelle") or pr.get("lib_idpsc"),
-                            "nature": pr.get("nature"),
-                        })
+                        return kind, None
+
+                with _cf.ThreadPoolExecutor(max_workers=3) as _ex:
+                    for kind, fc in _ex.map(_fetch, ("surf", "lin", "pct")):
+                        if not fc:
+                            continue
+                        for feat in fc.get("features", []):
+                            pr = feat.get("properties", {}) or {}
+                            prescriptions.append({
+                                "type": kind,
+                                "libelle": pr.get("libelle") or pr.get("lib_idpsc"),
+                                "nature": pr.get("nature"),
+                            })
         except Exception as exc:  # noqa: BLE001
             note = f"Prescriptions GPU injoignables ({type(exc).__name__})."
     out["prescriptions"] = prescriptions
@@ -381,3 +389,55 @@ def build_enrichment(db: Session, parcel, lon: float, lat: float) -> dict[str, A
         "disclaimer": "Données promoteur indicatives, sourcées ; aucune valeur réglementaire fabriquée. "
                       "Mesures en EPSG:2975. À confirmer auprès des sources officielles.",
     }
+
+
+# ───────────────────── Cache d'enrichissement (perf fiche) ─────────────────────
+# L'enrichissement « promoteur » fait des appels externes LENTS (prescriptions GPU ~6 s,
+# RGE ALTI ~1,5 s) mais STATIQUES par parcelle. On le calcule UNE FOIS et on le stocke ;
+# la fiche lit le cache → ouverture quasi instantanée. Pré-chauffable par commune/statut.
+
+def _ensure_cache_table(db: Session) -> None:
+    db.execute(text(
+        "CREATE TABLE IF NOT EXISTS parcel_enrichment ("
+        " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
+        " payload jsonb NOT NULL, computed_at timestamptz NOT NULL DEFAULT now())"))
+
+
+def enrichment_cached(db: Session, parcel, lon: float, lat: float, *, refresh: bool = False) -> dict[str, Any]:
+    """Enrichissement servi depuis le cache ; calculé puis stocké au premier accès."""
+    _ensure_cache_table(db)
+    if not refresh:
+        cached = db.execute(text("SELECT payload FROM parcel_enrichment WHERE parcel_id = :p"),
+                            {"p": parcel.id}).scalar()
+        if cached is not None:
+            return cached
+    payload = build_enrichment(db, parcel, lon, lat)
+    db.execute(text(
+        "INSERT INTO parcel_enrichment (parcel_id, payload, computed_at) "
+        "VALUES (:p, CAST(:j AS jsonb), now()) "
+        "ON CONFLICT (parcel_id) DO UPDATE SET payload = EXCLUDED.payload, computed_at = now()"),
+        {"p": parcel.id, "j": json.dumps(payload)})
+    return payload
+
+
+def warm_commune(db: Session, commune: str,
+                 statuses: tuple[str, ...] = ("opportunite", "a_creuser"),
+                 limit: int | None = None) -> int:
+    """Pré-chauffe le cache pour les parcelles cliquables d'une commune (au moment de
+    l'évaluation / en batch, pas au clic)."""
+    from ..models import Parcel
+    _ensure_cache_table(db)
+    sql = ("SELECT p.id, ST_X(p.centroid), ST_Y(p.centroid) FROM parcels p "
+           "JOIN LATERAL (SELECT status FROM parcel_evaluations e WHERE e.parcel_id=p.id "
+           "ORDER BY evaluated_at DESC LIMIT 1) ev ON true "
+           "WHERE p.commune = :c AND ev.status = ANY(:st) "
+           "AND NOT EXISTS (SELECT 1 FROM parcel_enrichment pe WHERE pe.parcel_id = p.id)")
+    if limit:
+        sql += f" LIMIT {int(limit)}"
+    rows = db.execute(text(sql), {"c": commune, "st": list(statuses)}).all()
+    n = 0
+    for pid, lon, lat in rows:
+        enrichment_cached(db, db.get(Parcel, pid), float(lon), float(lat), refresh=True)
+        db.commit()
+        n += 1
+    return n

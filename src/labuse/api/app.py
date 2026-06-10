@@ -268,7 +268,7 @@ def _build_fiche(db: Session, idu: str) -> dict:
         ), {"pid": p.id}
     ).mappings().all()
 
-    from .enrichment import build_enrichment
+    from .enrichment import enrichment_cached
 
     # Carte de pré-faisabilité (ÉTAPE B) — isolée, ne casse jamais la fiche si indispo.
     try:
@@ -284,8 +284,8 @@ def _build_fiche(db: Session, idu: str) -> dict:
         },
         "faisabilite": faisabilite,
         # Bloc « promoteur » (TEMPS 1) : données publiques tracées, indicatives, EPSG:2975.
-        # Isolé de la cascade/scoring ; chaque sous-section dégrade sans casser la fiche.
-        "promoteur": build_enrichment(db, p, lon, lat),
+        # Servi depuis le CACHE (appels externes lents calculés une fois) → fiche rapide.
+        "promoteur": enrichment_cached(db, p, lon, lat),
         # En-tête : verdict + LES DEUX scores (jamais l'opportunité seule).
         "verdict": {
             "status": ev.status.value if ev else None,
