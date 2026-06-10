@@ -120,22 +120,29 @@ class SarLayer(Layer):
         inter = ctx.intersections(parcel.id, kind)
         dom = _dominant(inter)
         if dom is None or dom.coverage <= 0:
-            return passed(self.name, "Hors zonage SAR contraignant.", source=SRC_SAR)
+            # Couverture SAR partielle (proxy de vocation) : « hors îlot » N'équivaut PAS à
+            # « aucune contrainte SAR ». On ne conclut pas à la compatibilité.
+            return passed(self.name, "Hors îlot SAR cartographié (couverture régionale partielle).", source=SRC_SAR)
+        lib = (dom.attrs or {}).get("libelle")
+        pct = f" (~{dom.coverage * 100:.0f}% de la parcelle)" if dom.coverage < 0.99 else ""
         if dom.subtype in set(params.get("hard_exclude_subtypes", [])):
             return hard_exclude(
                 self.name,
-                f"Exclue : SAR « {dom.subtype} » (espace naturel / coupure d'urbanisation — supérieur au PLU).",
+                f"Exclue : SAR « {lib or dom.subtype} » (espace naturel / coupure d'urbanisation — supérieur au PLU).",
                 kind="faux_positif",
                 source=SRC_SAR,
             )
         if dom.subtype in set(params.get("flag_fort_subtypes", [])):
             return soft_flag(
                 self.name,
-                "SAR : espace agricole (risque préemption SAFER ; supérieur au PLU).",
+                f"{lib or 'espace agricole (risque préemption SAFER)'}{pct} — orientation SAR à vérifier "
+                "(ne vaut ni interdiction ni constructibilité).",
                 Severity.FORT,
                 source=SRC_SAR,
             )
-        return passed(self.name, f"SAR : {dom.subtype or 'territoire urbain'}.", source=SRC_SAR)
+        return passed(self.name,
+                      f"SAR : {lib or 'territoire urbain'} — vocation compatible (orientation régionale).",
+                      source=SRC_SAR)
 
 
 @register

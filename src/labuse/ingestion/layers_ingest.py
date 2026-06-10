@@ -47,6 +47,7 @@ KIND_SOURCE = {
     "trait_de_cote": "DEAL Réunion — trait de côte",
     "osm_faux_positif": "OpenStreetMap / Overpass",
     "ppr": "Géoportail de l'Urbanisme — PPR (servitude PM1)",
+    "sar": "data.regionreunion.com — SAR (vocation via potentiel foncier)",
 }
 
 # Risques PPR codés dans le nom de fichier de la servitude (PM1_PPR_<code>_<COMMUNE>_...).
@@ -242,6 +243,61 @@ def ingest_potentiel_foncier(session, insee, commune, run_id, sids) -> int:
                       sids.get(KIND_SOURCE["potentiel_foncier"]), commune, run_id,
                       {"espacesar": rec.get("espacesar"), "zpu": rec.get("zpu"),
                        "section": rec.get("section"), "parcelle": rec.get("parcelle")})
+        n += 1
+    return n
+
+
+def _sar_vocation(espacesar: str | None) -> tuple[str, str, str]:
+    """Mappe la vocation SAR (champ `espacesar` du potentiel foncier Région) → (subtype, libellé, niveau).
+
+    PRUDENCE (proxy de vocation, grain îlot, souvent multi-classe) : aucune vocation ne
+    déclenche d'EXCLUSION automatique — les contraintes deviennent des FLAGS « à vérifier ».
+    Le SAR contribue au verdict ; il ne prouve ni la constructibilité ni l'interdiction."""
+    s = (espacesar or "").lower()
+    urb = any(k in s for k in ("urbanis", "densifier", "urbain"))
+    if "protection forte" in s or "espace naturel" in s:
+        return ("vocation_mixte", "vocation mixte SAR (naturel + urbain) — à vérifier", "fort") if urb \
+            else ("vocation_naturelle", "espace naturel SAR (protection forte) — à vérifier", "fort")
+    if "coupure" in s:
+        return ("vocation_coupure", "coupure d'urbanisation SAR — à vérifier (bloquant potentiel)", "fort")
+    if "continuit" in s:
+        return ("vocation_continuite", "continuité écologique SAR (trame verte/bleue) — à vérifier", "fort")
+    if "agricole" in s:
+        return ("vocation_mixte", "vocation mixte SAR (agricole + urbain) — à vérifier", "fort") if urb \
+            else ("vocation_agricole", "espace agricole SAR (risque préemption SAFER) — à vérifier", "fort")
+    if "urbanisation prioritaire" in s:
+        return ("vocation_urbaine", "espace d'urbanisation prioritaire SAR — compatible", "faible")
+    if urb:
+        return ("vocation_urbaine", "espace urbanisé à densifier SAR — compatible", "faible")
+    if "rur" in s:
+        return ("vocation_rurale", "territoires ruraux habités SAR", "faible")
+    return ("vocation_autre", espacesar or "vocation SAR non précisée", "faible")
+
+
+def ingest_sar(session, insee, commune, run_id, sids) -> int:
+    """SAR (Schéma d'Aménagement Régional) — vocation via le potentiel foncier Région (ODS).
+
+    Faute de zonage SAR réglementaire en flux libre (DEAL/PEIGEO injoignables, rien sur la
+    Géoplateforme pour 974), on utilise la classification officielle `espacesar` de la Région
+    (géolocalisée, grain îlot). C'est une COUCHE DE COHÉRENCE TERRITORIALE (vocation/orientation),
+    PAS le zonage opposable ni un substitut au PLU/PPR. Couverture PARTIELLE (îlots à potentiel).
+    """
+    with _client() as c:
+        recs = _ods_records(c, "potentiel-foncier", where=f'insee="{insee}"',
+                            select="espacesar,geo_shape", page=100)
+    n = 0
+    for rec in recs:
+        shape = rec.get("geo_shape") or {}
+        geom = shape.get("geometry") if shape.get("type") == "Feature" else shape
+        if not geom or not rec.get("espacesar"):
+            continue
+        subtype, libelle, niveau = _sar_vocation(rec.get("espacesar"))
+        _insert_layer(session, "sar", subtype, f"SAR — {libelle}", geom,
+                      sids.get(KIND_SOURCE["sar"]), commune, run_id,
+                      {"libelle": libelle, "vocation": rec.get("espacesar"), "niveau": niveau,
+                       "statut": "strategique (orientation SAR — Région)",
+                       "source": "data.regionreunion.com / potentiel-foncier",
+                       "couverture": "partielle (îlots à potentiel foncier)"})
         n += 1
     return n
 
@@ -685,6 +741,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("pente", lambda: ingest_pente(session, bbox, commune, run_id, sids)),
         ("osm_faux_positif", lambda: ingest_osm_faux_positifs(session, bbox, commune, run_id, sids)),
         ("ppr", lambda: ingest_ppr_sup(session, bbox, commune, run_id, sids)),
+        ("sar", lambda: ingest_sar(session, insee, commune, run_id, sids)),
         ("dvf", lambda: ingest_dvf(session, insee, commune, run_id, sids)),
     ]
     for kind, fn in jobs:
