@@ -481,6 +481,44 @@ function renderFaisabilite(fa) {
       ${bullets(fa.avertissements, "warn", "À vérifier (non comblé, jamais deviné)")}
       ${bullets(fa.hypotheses, "hyp", "Hypothèses de calcul (signalées)")}
       <p class="faisa-bandeau">⚠️ ${esc(fa.bandeau)}</p>
+    </section>
+    ${renderBilan(fa.bilan)}`;
+}
+
+function renderBilan(b) {
+  if (!b) return "";
+  const meur = (x) => (x == null ? "—" : (Math.abs(x) >= 1e6 ? (x / 1e6).toFixed(1) + " M€"
+    : Math.abs(x) >= 1e3 ? Math.round(x / 1e3) + " k€" : Math.round(x) + " €"));
+  if (!b.fiable) {
+    return `
+    <section class="bilan bilan-nf">
+      <div class="bilan-eyebrow">Bilan promoteur · potentiel économique</div>
+      <p class="bilan-msg">${esc(b.verdict)}</p>
+      <p class="bilan-bandeau">⚠️ ${esc(b.bandeau)}</p>
+    </section>`;
+  }
+  const px = b.prix_dvf || {}, ca = b.ca || {}, cf = b.charge_fonciere || {};
+  const stepRows = (b.steps || []).map((s) => `
+    <tr><td class="fs-lbl">${esc(s.label)}</td>
+        <td class="fs-for">${esc(s.formule)}${s.valeur ? ` <b>= ${esc(s.valeur)}</b>` : ""}<span class="fs-src">${esc(s.source)}</span></td></tr>`).join("");
+  const bullets = (arr, cls, title) => (arr && arr.length)
+    ? `<div class="fa-grp ${cls}"><span class="fa-grp-t">${title}</span><ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+  return `
+    <section class="bilan">
+      <div class="bilan-eyebrow">Bilan promoteur · potentiel économique</div>
+      <h3 class="bilan-verdict">${esc(b.verdict)}</h3>
+      <div class="faisa-cards bilan-cards">
+        <div class="fc"><span class="fc-num">${meur(ca.bas)}–${meur(ca.haut)}</span><span class="fc-lbl">Chiffre d'affaires potentiel</span></div>
+        <div class="fc"><span class="fc-num">${fmt(px.q1)}–${fmt(px.q3)} €/m²</span><span class="fc-lbl">Prix vente DVF (${px.n} ventes / ${Math.round((px.radius_m||0)/100)/10} km)</span></div>
+        <div class="fc fc-wide"><span class="fc-num">${meur(cf.central)}<span class="fc-sub">~${fmt(cf.par_m2_terrain)} €/m² terrain</span></span><span class="fc-lbl">Charge foncière (médiane)</span></div>
+      </div>
+      <details class="faisa-calc bilan-calc" open>
+        <summary>Le calcul — prix DVF sourcé, hypothèses signalées</summary>
+        <table class="faisa-steps">${stepRows}</table>
+      </details>
+      ${bullets(b.avertissements, "warn", "À surveiller")}
+      ${bullets(b.hypotheses, "hyp", "Hypothèses (configurables)")}
+      <p class="bilan-bandeau">⚠️ ${esc(b.bandeau)}</p>
     </section>`;
 }
 
