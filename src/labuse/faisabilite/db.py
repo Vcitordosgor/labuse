@@ -85,3 +85,32 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
         {"d": recul, "pid": parcel_id}).scalar()
     emprise_geo = (float(area or 0.0), recul)
     return ctx, estimate_capacity(rules, ctx.surface_m2, ctx.contraintes, emprise_geo=emprise_geo)
+
+
+def fiche_payload(session: Session, parcel_id: int) -> dict | None:
+    """Payload JSON de la carte de faisabilité pour la fiche parcelle.
+    None si la parcelle n'est pas couverte (zone hors PLU Saint-Paul outillé)."""
+    res = parcel_faisabilite(session, parcel_id)
+    if res is None:
+        return None
+    ctx, f = res
+    c = ctx.contraintes
+    return {
+        "zone": f.zone,
+        "zone_resolue": f.zone_resolue,
+        "surface_m2": round(ctx.surface_m2),
+        "constructible": f.constructible,
+        "verdict": f.verdict,
+        "fourchette": f.fourchette,
+        "contexte": {
+            "pente_pct": round(c.pente_pct) if c.pente_pct is not None else None,
+            "littoral": c.bande_littorale,
+            "safer": c.agricole_sar,
+        },
+        "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur, "source": s.source}
+                  for s in f.steps],
+        "hypotheses": f.hypotheses,
+        "avertissements": f.avertissements,
+        "modulation": f.modulation,
+        "bandeau": f.bandeau,
+    }

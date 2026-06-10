@@ -270,11 +270,19 @@ def _build_fiche(db: Session, idu: str) -> dict:
 
     from .enrichment import build_enrichment
 
+    # Carte de pré-faisabilité (ÉTAPE B) — isolée, ne casse jamais la fiche si indispo.
+    try:
+        from ..faisabilite.db import fiche_payload
+        faisabilite = fiche_payload(db, p.id)
+    except Exception:  # noqa: BLE001 - module optionnel, dégrade en silence
+        faisabilite = None
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
         },
+        "faisabilite": faisabilite,
         # Bloc « promoteur » (TEMPS 1) : données publiques tracées, indicatives, EPSG:2975.
         # Isolé de la cascade/scoring ; chaque sous-section dégrade sans casser la fiche.
         "promoteur": build_enrichment(db, p, lon, lat),

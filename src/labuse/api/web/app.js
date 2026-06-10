@@ -331,6 +331,8 @@ function renderFiche(f) {
       <div class="read"><h3 class="rd-h unk">Ce qu'on n'a pas vérifié</h3>${block(unknown, "unk", "Toutes les couches critiques ont répondu.")}</div>
     </section>
 
+    ${renderFaisabilite(f.faisabilite)}
+
     ${renderAi(f.ai)}
 
     ${renderPromoteur(f.promoteur, p.centroid)}
@@ -434,6 +436,51 @@ function renderPromoteur(pr, centroid) {
         ${card("Propriété & réseaux", factBody, "")}
       </div>
       <p class="pm-foot">${esc(pr.disclaimer || "")}</p>
+    </section>`;
+}
+
+function renderFaisabilite(fa) {
+  if (!fa) return "";
+  const fr = fa.fourchette || {}, ctx = fa.contexte || {};
+  const ctxBits = [
+    `zone PLU <b>${esc(fa.zone)}</b>`,
+    fa.surface_m2 ? fmt(fa.surface_m2) + " m²" : "",
+    ctx.pente_pct != null ? "pente " + ctx.pente_pct + " %" : "",
+    ctx.littoral ? "trait de côte" : "",
+    ctx.safer ? "SAFER" : "",
+  ].filter(Boolean).join(" · ");
+
+  const reg = fr.stationnement_regime, sol = fr.logements_au_sol || [], sous = fr.logements_sous_sol || [];
+  let logCard = "—";
+  if (fa.constructible) {
+    if (reg === "borne") logCard = `${sol[0]}–${sol[1]}<span class="fc-sub">au sol</span> · ${sous[0]}–${sous[1]}<span class="fc-sub">sous-sol</span>`;
+    else logCard = `${sous[0]}–${sous[1]}${reg === "exempt" ? '<span class="fc-sub">non borné</span>' : ""}`;
+  }
+  const keyCards = fa.constructible ? `
+    <div class="fc"><span class="fc-num">${esc(fr.niveaux || "—")}</span><span class="fc-lbl">Niveaux constructibles</span></div>
+    <div class="fc"><span class="fc-num">~${fmt(fr.surface_plancher_m2)} m²</span><span class="fc-lbl">Surface de plancher</span></div>
+    <div class="fc fc-wide"><span class="fc-num">${logCard}</span><span class="fc-lbl">Logements estimés</span></div>` : "";
+
+  const stepRows = (fa.steps || []).map((s) => `
+    <tr><td class="fs-lbl">${esc(s.label)}</td>
+        <td class="fs-for">${esc(s.formule)}${s.valeur && s.valeur !== "—" ? ` <b>= ${esc(s.valeur)}</b>` : ""}<span class="fs-src">${esc(s.source)}</span></td></tr>`).join("");
+  const bullets = (arr, cls, title) => (arr && arr.length)
+    ? `<div class="fa-grp ${cls}"><span class="fa-grp-t">${title}</span><ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+
+  return `
+    <section class="faisa${fa.constructible ? "" : " faisa-nc"}">
+      <div class="faisa-eyebrow">Pré-faisabilité · carte promoteur</div>
+      <h2 class="faisa-verdict">${esc(fa.verdict)}</h2>
+      <div class="faisa-ctx">${ctxBits}</div>
+      ${keyCards ? `<div class="faisa-cards">${keyCards}</div>` : ""}
+      <details class="faisa-calc" open>
+        <summary>Le calcul, ligne par ligne — chaque ligne pointe sa règle PLU</summary>
+        <table class="faisa-steps">${stepRows}</table>
+      </details>
+      ${bullets(fa.modulation, "mod", "Modulation réunionnaise")}
+      ${bullets(fa.avertissements, "warn", "À vérifier (non comblé, jamais deviné)")}
+      ${bullets(fa.hypotheses, "hyp", "Hypothèses de calcul (signalées)")}
+      <p class="faisa-bandeau">⚠️ ${esc(fa.bandeau)}</p>
     </section>`;
 }
 
