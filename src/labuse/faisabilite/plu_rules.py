@@ -17,6 +17,8 @@ _YAML = Path(__file__).resolve().parents[3] / "config" / "plu_saint_paul.yaml"
 
 # Valeur "à vérifier" telle qu'écrite dans le YAML.
 A_VERIFIER = "a_verifier"
+# Stationnement explicitement non réglementé (ex. U1pru exemptée par l'Art. 12).
+EXEMPT = "exempt"
 
 
 @dataclass
@@ -41,10 +43,14 @@ class ZoneRules:
     raw: dict = field(default_factory=dict)
 
     def places_par_logement(self) -> float | str | None:
-        """Extrait le ratio places/logement du texte stationnement (best-effort)."""
+        """Ratio places/logement : nombre, None, A_VERIFIER, ou EXEMPT (non réglementé)."""
         s = self.stat_logement
-        if not s or s == A_VERIFIER:
-            return A_VERIFIER if s == A_VERIFIER else None
+        if not s:
+            return None
+        if s == A_VERIFIER:
+            return A_VERIFIER
+        if re.search(r"exempt|aucune place|sauf en zone", s, re.I):
+            return EXEMPT
         m = re.search(r"(\d+(?:[.,]\d+)?)\s*places?\s*/?\s*(?:par\s*)?logement", s, re.I)
         return float(m.group(1).replace(",", ".")) if m else None
 

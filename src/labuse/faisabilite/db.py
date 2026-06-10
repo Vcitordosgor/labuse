@@ -65,11 +65,23 @@ def parcel_context(session: Session, parcel_id: int) -> ParcelContext | None:
 
 
 def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext, Faisabilite] | None:
-    """Contexte + pré-faisabilité d'une parcelle. None si parcelle/zone introuvable."""
+    """Contexte + pré-faisabilité d'une parcelle, EMPRISE SUR GÉOMÉTRIE RÉELLE
+    (ST_Buffer du contour cadastral par le recul séparatif, EPSG:2975).
+    None si parcelle/zone introuvable."""
+    from .engine import Hypotheses
+
     ctx = parcel_context(session, parcel_id)
     if ctx is None or not ctx.zone:
         return None
     rules = resolve_zone(ctx.zone)
     if rules is None:
         return None
-    return ctx, estimate_capacity(rules, ctx.surface_m2, ctx.contraintes)
+
+    recul = (float(rules.recul_limites_sep_m)
+             if isinstance(rules.recul_limites_sep_m, (int, float))
+             else Hypotheses().recul_limites_defaut_m)
+    area = session.execute(
+        text("SELECT ST_Area(ST_Buffer(geom_2975, -:d)) FROM parcels WHERE id = :pid"),
+        {"d": recul, "pid": parcel_id}).scalar()
+    emprise_geo = (float(area or 0.0), recul)
+    return ctx, estimate_capacity(rules, ctx.surface_m2, ctx.contraintes, emprise_geo=emprise_geo)

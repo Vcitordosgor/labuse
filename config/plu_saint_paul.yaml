@@ -68,7 +68,8 @@ zones:
         pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
   U1pru: {bassin: "Saint-Paul Centre", he_m: 30, hf_m: 34, hauteur_src: "Zones U1pru et U1pso, Art. 10.2, p.21",
         emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "a_verifier", stat_src: "Art. 12.2 (« sauf en zone U1pru » pour certaines obligations)",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18",
+        stat_logement: "exempté : aucune place imposée", stat_src: "Art. 12 : « il doit être réalisé, SAUF EN ZONE U1pru, des places de stationnement » (p.23)",
         pleine_terre_pct: "a_verifier", pleine_terre_note: "U1pru : plantations dans >=80 cm de terre comptées en pleine terre (Art. 13.3)", pleine_terre_src: "Art. 13, p.25"}
   U1pso: {bassin: "Saint-Paul Centre", he_m: 30, hf_m: 34, hauteur_src: "Zones U1pru et U1pso, Art. 10.2, p.21",
         emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",

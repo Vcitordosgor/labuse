@@ -5,14 +5,13 @@ from labuse.faisabilite.engine import Contraintes, Hypotheses
 
 def test_resolution_zone_directe():
     r = resolve_zone("U1c")
-    assert r is not None and r.he_m == 15 and r.hf_m == 19
-    assert r.constructible_neuf is True
+    assert r is not None and r.he_m == 15 and r.hf_m == 19 and r.constructible_neuf
 
 
 def test_resolution_au_renvoi_vers_u():
     r = resolve_zone("AU1a")
     assert r is not None and r.via_renvoi and "U1a" in r.via_renvoi
-    assert r.he_m == resolve_zone("U1a").he_m  # mêmes règles que U1a
+    assert r.he_m == resolve_zone("U1a").he_m
 
 
 def test_au_st_non_constructible_neuf():
@@ -20,70 +19,79 @@ def test_au_st_non_constructible_neuf():
     assert r is not None and r.constructible_neuf is False
     f = estimate_capacity(r, 1000)
     assert f.constructible is False and "transition" in f.verdict.lower()
-    assert f.fourchette["logements"] == (0, 0)
+    assert f.fourchette["logements_au_sol"] == (0, 0)
 
 
 def test_emprise_bornee_par_reculs_pas_par_emprise():
-    # U2c : emprise non réglementée → l'enveloppe vient des reculs, pas d'un %.
-    r = resolve_zone("U2c")
-    f = estimate_capacity(r, 1000)
-    libs = " ".join(s.formule + s.valeur for s in f.steps)
-    assert "non réglementée" in libs  # Art. 9 = pas de règle d'emprise
+    f = estimate_capacity(resolve_zone("U2c"), 1000)
+    assert any("non réglementée" in s.formule for s in f.steps)
     assert any("reculs" in s.label.lower() for s in f.steps)
 
 
 def test_hauteur_he_donne_niveaux():
-    # hé 15 m ÷ 3 = 5 niveaux → R+4 (U1c)
     f = estimate_capacity(resolve_zone("U1c"), 1200)
     assert f.fourchette["niveaux"] == "R+4"
-    assert f.constructible and f.fourchette["logements"][1] >= f.fourchette["logements"][0]
+    lo, hi = f.fourchette["logements_au_sol"]
+    assert hi >= lo and f.constructible
 
 
 def test_zone_basse_moins_de_niveaux():
-    # U2d hé 4,5 m ÷ 3 = 1 niveau → R+0
     f = estimate_capacity(resolve_zone("U2d"), 1000)
     assert f.fourchette["niveaux"] == "R+0"
 
 
 def test_pleine_terre_reduit_emprise():
-    # U3a a 20% pleine terre → présence de l'étape de réduction
     f = estimate_capacity(resolve_zone("U3a"), 1000)
     assert any("pleine terre" in s.label.lower() for s in f.steps)
 
 
+def test_deux_scenarios_stationnement():
+    # sous-sol (sol non consommé) >= au sol (plafonné par le parking)
+    f = estimate_capacity(resolve_zone("U1c"), 4000)
+    sol = f.fourchette["logements_au_sol"]
+    sous = f.fourchette["logements_sous_sol"]
+    assert sous[1] >= sol[1] and f.fourchette["stationnement_regime"] == "borne"
+    assert "au sol" in f.verdict and "sous-sol" in f.verdict
+
+
+def test_u1pru_stationnement_exempte_non_borne():
+    f = estimate_capacity(resolve_zone("U1pru"), 3000)
+    assert f.fourchette["stationnement_regime"] == "exempt"
+    assert f.fourchette["logements_au_sol"] == f.fourchette["logements_sous_sol"]
+    assert "non réglementé" in f.verdict.lower()
+
+
+def test_geometrie_reelle_utilisee():
+    # emprise_geo fournie → l'étape cite la géométrie réelle
+    f = estimate_capacity(resolve_zone("U1c"), 1000, emprise_geo=(600.0, 3.0))
+    assert any("géométrie réelle" in s.label.lower() for s in f.steps)
+
+
+def test_terrain_trop_exigu():
+    f = estimate_capacity(resolve_zone("U1c"), 80, emprise_geo=(2.0, 3.0))
+    assert f.constructible is False and "exigu" in f.verdict.lower()
+
+
 def test_modulation_alea_fort_annule():
     f = estimate_capacity(resolve_zone("U1c"), 1000, Contraintes(alea_ppr="fort"))
-    assert f.constructible is False
-    assert f.fourchette["logements"] == (0, 0)
+    assert f.constructible is False and f.fourchette["logements_au_sol"] == (0, 0)
     assert any("aléa fort" in m.lower() for m in f.modulation)
 
 
 def test_modulation_pente_forte_reduit():
     base = estimate_capacity(resolve_zone("U6a"), 1500)
     pentu = estimate_capacity(resolve_zone("U6a"), 1500, Contraintes(pente_pct=35))
-    assert pentu.fourchette["logements"][1] <= base.fourchette["logements"][1]
+    assert pentu.fourchette["logements_au_sol"][1] <= base.fourchette["logements_au_sol"][1]
     assert any("pente forte" in m.lower() for m in pentu.modulation)
 
 
 def test_recul_a_verifier_signale_et_prudent():
-    # U1a : recul voirie "a_verifier" → avertissement + hypothèse prudente utilisée
     f = estimate_capacity(resolve_zone("U1a"), 1000)
     assert any("recul voirie" in a.lower() and "à_vérifier" in a.lower() for a in f.avertissements)
 
 
-def test_resultat_est_une_fourchette():
-    f = estimate_capacity(resolve_zone("U4a"), 2000)
-    lo, hi = f.fourchette["logements"]
-    assert isinstance(lo, int) and isinstance(hi, int) and hi >= lo
-    assert "à" in f.verdict  # « ~X à Y logements »
-
-
-def test_bandeau_present():
+def test_bandeau_et_hypotheses():
     f = estimate_capacity(resolve_zone("U5b"), 800)
     assert "ne remplace pas" in f.bandeau
-
-
-def test_hypotheses_signalees():
-    f = estimate_capacity(resolve_zone("U1c"), 1000, hyp=Hypotheses())
-    txt = " ".join(f.hypotheses)
-    assert "hauteur d'étage" in txt.lower() and "logement" in txt.lower()
+    txt = " ".join(f.hypotheses).lower()
+    assert "hauteur d'étage" in txt and "logement" in txt

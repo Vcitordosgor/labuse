@@ -1,37 +1,40 @@
 """Calcul de pré-faisabilité : enveloppe constructible + fourchette de capacité.
 
 Principe (Saint-Paul : emprise au sol le plus souvent NON réglementée) → la capacité
-est bornée par les RECULS (enveloppe au sol), la HAUTEUR hé (niveaux) et la PLEINE
-TERRE imposée, puis MODULÉE par les contraintes réunionnaises (pente/PPR/littoral/SAR).
-Tout est tracé à sa règle source ; tout résultat est une FOURCHETTE ; toute hypothèse
-est signalée. On n'invente jamais d'emprise.
+est bornée par les RECULS (enveloppe au sol — calculée sur la GÉOMÉTRIE RÉELLE quand
+disponible), la HAUTEUR hé (niveaux) et la PLEINE TERRE imposée, puis MODULÉE par les
+contraintes réunionnaises (pente/PPR/littoral/SAR).
+
+Deux scénarios de stationnement sont présentés (au sol / sous-sol-silo). Tout est tracé
+à sa règle source ; tout résultat est une FOURCHETTE ; toute hypothèse est signalée.
+On n'invente jamais d'emprise.
 """
 from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
 
-from .plu_rules import A_VERIFIER, ZoneRules
+from .plu_rules import A_VERIFIER, EXEMPT, ZoneRules
+
+SEUIL_EXIGU_M2 = 5.0  # en deçà, le contour inseté est considéré vidé → "trop exigu"
 
 
 @dataclass
 class Hypotheses:
-    """Hypothèses de calcul — TOUTES signalées dans le rendu."""
-    etage_m: float = 3.0                 # hauteur d'un niveau
-    logement_m2_bas: float = 55.0        # petit logement → plus de logements
-    logement_m2_haut: float = 75.0       # grand logement → moins
-    place_m2: float = 25.0               # 1 place de stationnement (avec circulation)
-    recul_voirie_defaut_m: float = 5.0   # quand l'Art. 6 est "a_verifier"
-    recul_limites_defaut_m: float = 3.0  # quand l'Art. 7 est "a_verifier"
+    etage_m: float = 3.0
+    logement_m2_bas: float = 55.0
+    logement_m2_haut: float = 75.0
+    place_m2: float = 25.0
+    recul_voirie_defaut_m: float = 5.0
+    recul_limites_defaut_m: float = 3.0
 
 
 @dataclass
 class Contraintes:
-    """Contraintes réunionnaises de la parcelle (issues de la cascade / des couches)."""
     pente_pct: float | None = None
-    alea_ppr: str | None = None          # "fort" | "moyen" | "faible" | None
-    bande_littorale: bool = False        # trait de côte / loi littoral
-    agricole_sar: bool = False           # zonage agricole / protection SAR
+    alea_ppr: str | None = None
+    bande_littorale: bool = False
+    agricole_sar: bool = False
     libelles: list[str] = field(default_factory=list)
 
 
@@ -67,9 +70,16 @@ def _is_num(x) -> bool:
     return isinstance(x, (int, float))
 
 
+def _rng(lo: float, hi: float) -> tuple[int, int]:
+    return max(0, math.floor(lo)), max(0, math.ceil(hi))
+
+
 def estimate_capacity(rules: ZoneRules, surface_m2: float,
                       contraintes: Contraintes | None = None,
-                      hyp: Hypotheses | None = None) -> Faisabilite:
+                      hyp: Hypotheses | None = None,
+                      emprise_geo: tuple[float, float] | None = None) -> Faisabilite:
+    """emprise_geo = (aire_insetée_m2, recul_utilisé_m) issue de la géométrie réelle ;
+    None ⇒ modèle parcelle carrée (repli, tests purs)."""
     hyp = hyp or Hypotheses()
     c = contraintes or Contraintes()
     steps: list[Step] = []
@@ -84,37 +94,51 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     if rules.via_renvoi:
         steps.append(Step("Zone (renvoi AU→U)", rules.via_renvoi, rules.code, "Règlement, caractère de zone"))
 
-    # Zone AU*st : pas de construction neuve
     if not rules.constructible_neuf:
         return fini(False, "Construction neuve non autorisée — secteur de transition "
                     "(AU*st) : travaux mineurs de mise aux normes, H max 4 m.",
-                    {"logements": (0, 0)})
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
 
-    # ---- Reculs (avec hypothèse prudente si « a_verifier ») ----
+    # reculs (avec hypothèse prudente si "a_verifier")
     if _is_num(rules.recul_voirie_m):
         recul_v, rv_src = float(rules.recul_voirie_m), rules.sources.get("recul_voirie", "Art. 6")
     else:
-        recul_v = hyp.recul_voirie_defaut_m
-        rv_src = "Art. 6 (à_vérifier → hypothèse)"
+        recul_v, rv_src = hyp.recul_voirie_defaut_m, "Art. 6 (à_vérifier → hypothèse)"
         avert.append(f"Recul voirie « à_vérifier » pour {rules.code} → hypothèse prudente {recul_v:g} m.")
     if _is_num(rules.recul_limites_sep_m):
         recul_l, rl_src = float(rules.recul_limites_sep_m), rules.sources.get("recul_limites", "Art. 7")
     else:
-        recul_l = hyp.recul_limites_defaut_m
-        rl_src = "Art. 7 (à_vérifier → hypothèse)"
+        recul_l, rl_src = hyp.recul_limites_defaut_m, "Art. 7 (à_vérifier → hypothèse)"
         avert.append(f"Recul limites « à_vérifier » pour {rules.code} → hypothèse {recul_l:g} m.")
 
-    # ---- Emprise constructible au sol (modèle parcelle carrée, 1 façade sur voie) ----
-    cote = math.sqrt(max(0.0, surface_m2))
-    larg = max(0.0, cote - recul_v - recul_l)   # voie d'un côté, séparative de l'autre
-    prof = max(0.0, cote - 2 * recul_l)          # deux limites séparatives
-    emprise = larg * prof
-    hypotheses.append(f"Parcelle modélisée carrée ({cote:.0f}×{cote:.0f} m), 1 façade sur voie (modèle simplifié).")
-    steps.append(Step("Emprise au sol — reculs",
-                      f"(√{surface_m2:.0f}−{recul_v:g}−{recul_l:g}) × (√{surface_m2:.0f}−2×{recul_l:g}) "
-                      f"= {larg:.0f}×{prof:.0f}", f"~{emprise:.0f} m²", f"{rv_src} ; {rl_src}"))
+    # ---- Emprise constructible au sol ----
+    if emprise_geo is not None:
+        emprise, recul_used = emprise_geo
+        if emprise < SEUIL_EXIGU_M2:
+            steps.append(Step("Emprise au sol — reculs (géométrie réelle)",
+                              f"contour cadastral inseté de {recul_used:g} m (ST_Buffer 2975)",
+                              "≈ 0 m² (contour vidé)", f"{rl_src}"))
+            return fini(False, f"Terrain trop exigu compte tenu des reculs ({recul_used:g} m) — "
+                        "non constructible en l'état (le contour inseté se vide).",
+                        {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+        steps.append(Step("Emprise au sol — reculs (géométrie réelle)",
+                          f"contour cadastral réel inseté de {recul_used:g} m (ST_Buffer, EPSG:2975)",
+                          f"~{emprise:.0f} m²", f"{rl_src} (séparatif) ; recul voirie en sus"))
+        hypotheses.append("Emprise = contour cadastral réel inseté du recul séparatif (géométrie EPSG:2975).")
+        if _is_num(rules.recul_voirie_m) and rules.recul_voirie_m > recul_used:
+            avert.append(f"Recul voirie {rules.recul_voirie_m:g} m s'applique en sus sur la façade sur "
+                         "rue (bord rue non identifiable au cadastre → non déduit géométriquement).")
+    else:
+        cote = math.sqrt(max(0.0, surface_m2))
+        larg = max(0.0, cote - recul_v - recul_l)
+        prof = max(0.0, cote - 2 * recul_l)
+        emprise = larg * prof
+        hypotheses.append(f"Parcelle modélisée carrée ({cote:.0f}×{cote:.0f} m), 1 façade sur voie (modèle simplifié).")
+        steps.append(Step("Emprise au sol — reculs (modèle carré)",
+                          f"(√{surface_m2:.0f}−{recul_v:g}−{recul_l:g})×(√{surface_m2:.0f}−2×{recul_l:g})",
+                          f"~{emprise:.0f} m²", f"{rv_src} ; {rl_src}"))
 
-    # emprise réglementée explicite (ex. Usdu)
+    # emprise % réglementée (ex. Usdu)
     if _is_num(rules.emprise_sol_pct):
         cap = surface_m2 * float(rules.emprise_sol_pct) / 100
         emprise = min(emprise, cap)
@@ -149,45 +173,49 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           f"hé {rules.he_m:g} m ÷ {hyp.etage_m:g} m/niveau = {niveaux} niveaux",
                           f"R+{max(0, niveaux - 1)}", he_src))
     elif _is_num(rules.hf_m):
-        he_est = float(rules.hf_m) - hyp.etage_m
-        niveaux = max(1, int(he_est // hyp.etage_m))
+        niveaux = max(1, int((float(rules.hf_m) - hyp.etage_m) // hyp.etage_m))
         avert.append(f"Hauteur égout (hé) non précisée pour {rules.code} : niveaux estimés "
-                     f"depuis hf {rules.hf_m:g} m (prudent, réserve toiture).")
+                     f"depuis hf {rules.hf_m:g} m (prudent).")
         steps.append(Step("Niveaux constructibles",
                           f"hé non précisé → (hf {rules.hf_m:g}−{hyp.etage_m:g}) ÷ {hyp.etage_m:g} = {niveaux}",
                           f"R+{max(0, niveaux - 1)}", he_src))
     else:
         return fini(False, "Hauteur non disponible (à_vérifier) — capacité non calculable.",
-                    {"logements": (0, 0)})
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
     hypotheses.append(f"Hauteur d'étage supposée {hyp.etage_m:g} m ; niveaux comptés sur hé (égout), pas hf.")
 
     # ---- Surface de plancher & logements (fourchette) ----
     sdp = emprise * niveaux
     steps.append(Step("Surface de plancher potentielle",
                       f"{emprise:.0f} m² × {niveaux} niveaux", f"~{sdp:.0f} m²", "dérivé reculs×hauteur"))
-
-    log_bas = sdp / hyp.logement_m2_haut
-    log_haut = sdp / hyp.logement_m2_bas
-    steps.append(Step("Logements (avant garde-fous)",
-                      f"{sdp:.0f} ÷ {hyp.logement_m2_haut:g} à {hyp.logement_m2_bas:g} m²/logt",
-                      f"~{log_bas:.0f} à {log_haut:.0f}", "hypothèse surface logement"))
+    floor_lo, floor_hi = sdp / hyp.logement_m2_haut, sdp / hyp.logement_m2_bas
     hypotheses.append(f"Surface moyenne logement supposée {hyp.logement_m2_bas:g}–{hyp.logement_m2_haut:g} m².")
 
-    # garde-fou stationnement
+    # ---- Stationnement : 2 scénarios ----
     ppl = rules.places_par_logement()
+    sous_lo, sous_hi = floor_lo, floor_hi          # sous-sol/silo : non mangé au sol
+    sol_lo, sol_hi = floor_lo, floor_hi
     if _is_num(ppl) and ppl > 0:
+        regime = "borne"
         sol_dispo = max(0.0, surface_m2 - emprise - pt_area)
         log_max_park = sol_dispo / (ppl * hyp.place_m2)
-        steps.append(Step("Garde-fou stationnement",
+        steps.append(Step("Stationnement — scénario au sol",
                           f"{ppl:g} pl./logt × {hyp.place_m2:g} m² ; sol restant {sol_dispo:.0f} m² "
-                          f"→ ≤ {log_max_park:.0f} logts", "appliqué", rules.sources.get("stationnement", "Art. 12")))
-        if log_max_park < log_haut:
-            log_haut = log_max_park
-            log_bas = min(log_bas, log_max_park)
-            modul.append(f"Stationnement plafonne la capacité à ~{log_max_park:.0f} logements.")
-        hypotheses.append(f"1 place de stationnement supposée {hyp.place_m2:g} m² ; parking au sol restant.")
-    elif ppl == A_VERIFIER:
-        avert.append(f"Stationnement « à_vérifier » pour {rules.code} → garde-fou non appliqué (Art. 12).")
+                          f"→ ≤ {log_max_park:.0f} logts", "plafond au sol",
+                          rules.sources.get("stationnement", "Art. 12")))
+        steps.append(Step("Stationnement — scénario sous-sol/silo",
+                          "parking enterré/silo : le sol n'est plus consommé → borné par le plancher",
+                          f"~{floor_lo:.0f}–{floor_hi:.0f} logts", rules.sources.get("stationnement", "Art. 12")))
+        sol_lo, sol_hi = min(floor_lo, log_max_park), min(floor_hi, log_max_park)
+        hypotheses.append(f"1 place de stationnement supposée {hyp.place_m2:g} m² (au sol restant).")
+    elif ppl == EXEMPT:
+        regime = "exempt"
+        avert.append(f"Stationnement non réglementé pour {rules.code} (exemptée, Art. 12) → "
+                     "capacité non bornée par le stationnement.")
+    else:
+        regime = "non_applique"
+        if ppl == A_VERIFIER:
+            avert.append(f"Stationnement « à_vérifier » pour {rules.code} → garde-fou non appliqué (Art. 12).")
 
     # ---- Modulation réunionnaise ----
     facteur = 1.0
@@ -211,21 +239,27 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         elif c.pente_pct >= 15:
             facteur = min(facteur, 0.7)
             modul.append(f"Pente {c.pente_pct:.0f}% → surcoût, capacité réduite (~×0,7).")
-    for lib in c.libelles:
-        modul.append(lib)
+    modul.extend(c.libelles)
 
-    log_bas *= facteur
-    log_haut *= facteur
+    sol_lo, sol_hi = sol_lo * facteur, sol_hi * facteur
+    sous_lo, sous_hi = sous_lo * facteur, sous_hi * facteur
 
-    # ---- Verdict ----
     rp = f"R+{max(0, niveaux - 1)}"
+    fourch = {"niveaux": rp, "surface_plancher_m2": round(sdp),
+              "logements_au_sol": _rng(sol_lo, sol_hi),
+              "logements_sous_sol": _rng(sous_lo, sous_hi),
+              "stationnement_regime": regime}
+
     if facteur == 0.0:
         return fini(False, f"Non constructible en l'état malgré le zonage ({rp} théorique) — "
-                    "contrainte rédhibitoire (voir modulation).",
-                    {"niveaux": rp, "surface_plancher_m2": round(sdp), "logements": (0, 0)})
+                    "contrainte rédhibitoire (voir modulation).", fourch)
 
-    lo, hi = math.floor(log_bas), math.ceil(log_haut)
-    lo = max(0, lo)
-    verdict = f"{rp} · ~{lo} à {hi} logements"
-    return fini(True, verdict,
-                {"niveaux": rp, "surface_plancher_m2": round(sdp), "logements": (lo, hi)})
+    if regime == "borne":
+        a, b = fourch["logements_au_sol"]
+        cc, d = fourch["logements_sous_sol"]
+        verdict = f"{rp} · au sol ~{a}-{b} / sous-sol ~{cc}-{d} logts"
+    else:
+        a, b = fourch["logements_sous_sol"]
+        suffix = " — stationnement non réglementé, capacité non bornée" if regime == "exempt" else ""
+        verdict = f"{rp} · ~{a} à {b} logts{suffix}"
+    return fini(True, verdict, fourch)
