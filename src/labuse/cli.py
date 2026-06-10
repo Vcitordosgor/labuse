@@ -118,6 +118,9 @@ def ingest_real_cmd(
         layer_bbox = bb or _parcels_bbox(session)
         counts = layers_ingest.ingest_layers(session, insee, commune_name, layer_bbox, run.id)
         run.status = "ok"
+    # Hors transaction : geom_2975 valide (ST_MakeValid) + index GIST sur parcelles & couches
+    # (dont l'assiette PPR, dont la géométrie GPU peut être auto-sécante).
+    models.ensure_geom_2975(engine())
     typer.echo("✓ Couches structurantes (kind : nombre) :")
     for k, v in counts.items():
         typer.echo(f"    {k:18} : {v}")
@@ -171,12 +174,16 @@ def ingest_island_cmd(
         typer.echo(f"▶ [{k}/{len(targets)}] {name} ({insee}) …")
         try:
             if st == "ingested" and not force:
+                models.ensure_geom_2975(engine())                # geom_2975 valide+indexée avant cascade
                 with session_scope() as s:                       # parcelles déjà là → ré-évaluation
                     nev = run_all.evaluate_commune(s, name)
                 info = {"parcels": "(déjà ingérées)", "layers": {}}
             else:
                 with session_scope() as s:                       # phase A (commit)
                     info = run_all.ingest_commune(s, insee, name, limit=limit)
+                # Hors transaction (anti-deadlock) : trigger ST_MakeValid + reprojection 2975 +
+                # réparation des géométries invalides (ex. assiette PPR auto-sécante) + index GIST.
+                models.ensure_geom_2975(engine())
                 with session_scope() as s:                       # phase B (commit) → ok
                     nev = run_all.evaluate_commune(s, name)
             dt = time.monotonic() - t0
