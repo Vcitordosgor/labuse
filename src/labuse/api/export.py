@@ -65,6 +65,20 @@ def fiche_markdown(fiche: dict) -> str:
             f"- **Fiabilité du prix :** {cv['fiabilite']}", "",
         ]
 
+    pv = _prospection_view(fiche)
+    lines += ["## Prospection propriétaire", "",
+              f"- **Statut propriétaire :** {pv['statut']}",
+              f"- **Source :** {pv['source']}  ·  **Niveau de confiance :** {pv['confiance']}"]
+    lines.append(f"- **Contact (saisi manuellement) :** {pv['contact']}" if pv["contact"]
+                 else "- **Contact :** Propriétaire à identifier — aucune donnée nominative disponible dans LA BUSE.")
+    if pv["action"]:
+        lines.append(f"- **Prochaine action :** {pv['action']}")
+    if pv["responsable"]:
+        lines.append(f"- **Responsable :** {pv['responsable']}")
+    if pv["notes"]:
+        lines.append(f"- **Notes :** {pv['notes']}")
+    lines += ["", f"_{pv['disclaimer']}_", ""]
+
     ai = fiche.get("ai")
     if ai:
         lines += ["## Analyse LA BUSE (IA)", "",
@@ -105,6 +119,21 @@ def fiche_html(fiche: dict) -> str:
                  f"<li><strong>Médiane neuf / VEFA :</strong> {html.escape(cv['vefa'])}</li>"
                  f"<li><strong>Écart neuf vs ancien :</strong> {html.escape(cv['ecart'])}</li>"
                  f"<li><strong>Fiabilité du prix :</strong> {html.escape(cv['fiabilite'])}</li></ul>")
+    pv = _prospection_view(fiche)
+    contact_li = (f"<li><strong>Contact (saisi manuellement) :</strong> {html.escape(pv['contact'])}</li>"
+                  if pv["contact"] else
+                  "<li><strong>Contact :</strong> Propriétaire à identifier — aucune donnée nominative "
+                  "disponible dans LA BUSE.</li>")
+    prosp_html = (
+        "<h2>Prospection propriétaire</h2><ul>"
+        f"<li><strong>Statut propriétaire :</strong> {html.escape(pv['statut'])}</li>"
+        f"<li><strong>Source :</strong> {html.escape(pv['source'])} · "
+        f"<strong>Niveau de confiance :</strong> {html.escape(pv['confiance'])}</li>"
+        + contact_li
+        + (f"<li><strong>Prochaine action :</strong> {html.escape(pv['action'])}</li>" if pv["action"] else "")
+        + (f"<li><strong>Responsable :</strong> {html.escape(pv['responsable'])}</li>" if pv["responsable"] else "")
+        + (f"<li><strong>Notes :</strong> {html.escape(pv['notes'])}</li>" if pv["notes"] else "")
+        + f"</ul><p class='disc'>{html.escape(pv['disclaimer'])}</p>")
     return f"""<!doctype html><html lang="fr"><meta charset="utf-8">
 <title>LA BUSE — {html.escape(p['idu'])}</title>
 <style>
@@ -129,6 +158,7 @@ def fiche_html(fiche: dict) -> str:
 <p><strong>Ont répondu :</strong> {html.escape(', '.join(fiche['sources_responded']) or '—')}</p>
 <p><strong>Silencieuses :</strong> {html.escape(', '.join(fiche['sources_silent']) or '—')}</p>
 {comp_html}
+{prosp_html}
 {"<h2>Analyse LA BUSE (IA)</h2><p>" + html.escape(ai.get('executive_summary','')) + "</p>" if ai else ""}
 </html>"""
 
@@ -143,6 +173,36 @@ def _m2(x) -> str:
 
 def _eurm2(x) -> str:
     return "—" if x is None else f"{x:,.0f} €/m²".replace(",", " ")
+
+
+_SOURCE_LABEL = {"non_renseignee": "non renseignée", "saisi_utilisateur": "saisie utilisateur",
+                 "deduit_manuellement": "déduit manuellement",
+                 "document_externe_utilisateur": "document externe (utilisateur)", "autre": "autre"}
+_CONF_LABEL = {"inconnu": "inconnu", "faible": "faible", "moyen": "moyen", "eleve": "élevé"}
+
+
+def _prospection_view(fiche: dict) -> dict:
+    """Vue d'affichage du bloc « Prospection propriétaire » (saisie MANUELLE, jamais externe)."""
+    pr = fiche.get("prospection") or {}
+    d = pr.get("data") or {}
+    contact = " · ".join(x for x in (d.get("contact_nom"), d.get("contact_organisation"),
+                                     d.get("contact_telephone"), d.get("contact_email"),
+                                     d.get("contact_adresse")) if x)
+    action = d.get("prochaine_action") or ""
+    if action and d.get("date_prochaine_action"):
+        action += f" (rappel {d['date_prochaine_action']})"
+    return {
+        "statut": pr.get("statut_label") or "Propriétaire inconnu",
+        "source": _SOURCE_LABEL.get(d.get("source_statut"), "non renseignée"),
+        "confiance": _CONF_LABEL.get(d.get("niveau_confiance"), "inconnu"),
+        "contact": contact,
+        "action": action,
+        "responsable": d.get("responsable_interne") or "",
+        "notes": d.get("notes_contact") or "",
+        "disclaimer": pr.get("disclaimer") or
+        ("Informations de contact renseignées manuellement par l'utilisateur ou issues d'une "
+         "source autorisée. LA BUSE ne garantit pas l'identité du propriétaire."),
+    }
 
 
 def _comparables_view(fiche: dict) -> dict | None:

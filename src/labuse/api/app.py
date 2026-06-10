@@ -24,7 +24,7 @@ from pydantic import BaseModel
 from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
-from .. import config, models
+from .. import config, models, prospection
 from ..db import session_scope
 from ..enums import FeedbackVerdict
 
@@ -283,12 +283,28 @@ def _build_fiche(db: Session, idu: str) -> dict:
     except Exception:  # noqa: BLE001 - module optionnel, dégrade en silence
         faisabilite = None
 
+    # Bloc PROSPECTION (manuel) : état propriétaire/contact si la parcelle est suivie au pipeline.
+    pe = db.execute(
+        select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
+    ).scalar_one_or_none()
+    pe_data = (pe.prospection or {}) if pe else {}
+    prosp_block = {
+        "in_pipeline": bool(pe),
+        "entry_id": pe.id if pe else None,
+        "pipeline_status": pe.status if pe else None,
+        "data": pe_data,
+        "statut_label": prospection.statut_label(pe_data.get("statut_proprietaire")),
+        "has_manual_contact": prospection.has_manual_contact(pe_data),
+        "disclaimer": prospection.disclaimer(),
+    }
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
         },
         "faisabilite": faisabilite,
+        "prospection": prosp_block,
         # Bloc « promoteur » (TEMPS 1) : données publiques tracées, indicatives, EPSG:2975.
         # Servi depuis le CACHE (appels externes lents calculés une fois) → fiche rapide.
         "promoteur": enrichment_cached(db, p, lon, lat),
@@ -439,6 +455,9 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
         "notes": e.notes or "",
         "reminder_date": e.reminder_date.isoformat() if e.reminder_date else None,
         "created_at": e.created_at.isoformat() if e.created_at else None,
+        "prospection": e.prospection or {},
+        "proprietaire_label": prospection.statut_label((e.prospection or {}).get("statut_proprietaire")),
+        "has_manual_contact": prospection.has_manual_contact(e.prospection),
         "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2},
         "verdict": {
             "status": ev.status.value if ev else None,
@@ -452,6 +471,7 @@ class PipelineAddIn(BaseModel):
     status: str | None = None
     priority: str | None = None
     notes: str | None = None
+    prospection: dict | None = None      # saisie MANUELLE (statut propriétaire, contact…)
 
 
 class PipelinePatchIn(BaseModel):
@@ -459,6 +479,7 @@ class PipelinePatchIn(BaseModel):
     priority: str | None = None
     notes: str | None = None
     reminder_date: str | None = None     # "YYYY-MM-DD" = définir ; "" = effacer ; absent = inchangé
+    prospection: dict | None = None      # patch partiel validé (merge dans l'existant)
 
 
 @app.get("/pipeline/meta")
@@ -506,7 +527,12 @@ def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(422, f"Statut invalide : {status}")
     if priority not in _prio_keys():
         raise HTTPException(422, f"Priorité invalide : {priority}")
-    e = models.PipelineEntry(parcel_id=p.id, status=status, priority=priority, notes=(body.notes or ""))
+    try:
+        prosp = prospection.merge_prospection(prospection.default_prospection(), body.prospection)
+    except ValueError as exc:
+        raise HTTPException(422, f"Prospection invalide : {exc}") from None
+    e = models.PipelineEntry(parcel_id=p.id, status=status, priority=priority,
+                             notes=(body.notes or ""), prospection=prosp)
     db.add(e)
     db.flush()
     return {"ok": True, "already": False, "entry": _entry_dict(db, e)}
@@ -536,6 +562,11 @@ def pipeline_patch(entry_id: int, body: PipelinePatchIn, db: Session = Depends(g
                 e.reminder_date = date.fromisoformat(rd)
             except ValueError:
                 raise HTTPException(422, "Date de rappel invalide (attendu YYYY-MM-DD).") from None
+    if body.prospection is not None:
+        try:
+            e.prospection = prospection.merge_prospection(e.prospection, body.prospection)
+        except ValueError as exc:
+            raise HTTPException(422, f"Prospection invalide : {exc}") from None
     db.flush()
     return {"ok": True, "entry": _entry_dict(db, e)}
 

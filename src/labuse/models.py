@@ -327,6 +327,9 @@ class PipelineEntry(Base, TimestampMixin):
     priority: Mapped[str] = mapped_column(String(16))        # clé de priorité (config)
     notes: Mapped[str] = mapped_column(Text, default="", server_default="")
     reminder_date: Mapped[date | None] = mapped_column(Date)  # rappel optionnel
+    # Prospection MANUELLE (Niveau 1) : statut propriétaire, contact saisi, action suivante…
+    # AUCUNE donnée nominative externe — tout est renseigné par l'utilisateur. RGPD : effaçable.
+    prospection: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
 
     parcel: Mapped[Parcel] = relationship()
 
@@ -334,6 +337,17 @@ class PipelineEntry(Base, TimestampMixin):
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine)
+    ensure_pipeline_prospection(engine)
+
+
+def ensure_pipeline_prospection(engine) -> None:
+    """Colonne `prospection` (jsonb) sur pipeline_entries — module prospection manuel.
+    Idempotent ; ADD COLUMN IF NOT EXISTS → durable au rebuild sur base existante."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("ALTER TABLE pipeline_entries "
+                     "ADD COLUMN IF NOT EXISTS prospection jsonb NOT NULL DEFAULT '{}'::jsonb"))
 
 
 def ensure_geom_2975(engine) -> None:

@@ -732,3 +732,20 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .pm-via-tag { background: rgba(199, 154, 62, .16); color: #9a6f2b; font-size: 10px; padding: 1px 6px;
   border-radius: 999px; margin-left: 6px; letter-spacing: 0; }
 .pm-via p { margin: 5px 0 0; font-size: 12.5px; color: var(--ink-soft); line-height: 1.45; }
+
+/* ───────── Prospection propriétaire (module manuel, Niveau 1) ───────── */
+.prospection { margin: 16px 0 0; padding: 14px 16px; border: 1px solid var(--line);
+  border-radius: 12px; background: var(--panel-2); }
+.pp-grid { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; margin: 8px 0 0; font-size: 13px; }
+.pp-grid .pp-k { color: var(--muted); }
+.pp-grid .pp-v { color: var(--txt); }
+.pp-grid .pp-v i { color: var(--muted); }
+.pp-default { margin: 10px 0 0; font-size: 12.5px; color: var(--gold-soft); font-style: italic; }
+.pp-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 0; }
+.pp-actions .btn { font-size: 12px; }
+.pp-disc { margin: 10px 0 0; font-size: 11px; color: var(--muted); font-style: italic;
+  border-top: 1px solid var(--line); padding-top: 8px; }
+.kb-prosp { font-size: 11.5px; color: var(--gold-soft); margin: 4px 0 0; }
+.kb-pp-statut, .kb-pp-resp, .kb-pp-action { font: inherit; font-size: 12px; background: var(--panel);
+  border: 1px solid var(--line); color: var(--txt); border-radius: 6px; padding: 4px 6px; }
+.kb-pp-action { width: 100%; margin-top: 6px; }

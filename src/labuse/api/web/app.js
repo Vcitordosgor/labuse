@@ -355,6 +355,8 @@ function renderFiche(f) {
       ${(f.sources_silent || []).length ? `<h3 class="src-h muted">Restées silencieuses</h3><div class="src-chips">${chips(f.sources_silent, "silent")}</div>` : ""}
     </section>
 
+    ${renderProspection(f)}
+
     <footer class="fiche-actions">
       <button class="btn follow" data-follow>+ Suivre cette parcelle</button>
       <button class="btn print" data-print>⎙ Imprimer / PDF</button>
@@ -369,6 +371,40 @@ function renderFiche(f) {
       <b>LA&nbsp;BUSE</b> · Pré-analyse foncière sur données publiques · ${esc(p.idu)} · ${today}<br>
       Constructibilité, propriété, rentabilité, faisabilité — <b>jamais garanties</b>. Document indicatif à vérifier avant toute démarche.
     </footer>`;
+}
+
+// Bloc PROSPECTION propriétaire (manuel, Niveau 1) — aucune donnée nominative externe.
+const PP_SRC = { non_renseignee: "non renseignée", saisi_utilisateur: "saisie utilisateur",
+  deduit_manuellement: "déduit manuellement", document_externe_utilisateur: "document externe (utilisateur)", autre: "autre" };
+const PP_CONF = { inconnu: "inconnu", faible: "faible", moyen: "moyen", eleve: "élevé" };
+const PP_STATUT = { inconnu: "Propriétaire inconnu", a_identifier: "À identifier",
+  identifie_manuellement: "Identifié (manuel)", public_probable: "Public probable",
+  institutionnel_probable: "Institutionnel probable", indivision_probable: "Indivision probable",
+  copropriete_probable: "Copropriété probable" };
+function renderProspection(f) {
+  const pr = f.prospection || {}, d = pr.data || {};
+  const contact = [d.contact_nom, d.contact_organisation, d.contact_telephone, d.contact_email, d.contact_adresse].filter(Boolean).map(esc).join(" · ");
+  const action = d.prochaine_action ? esc(d.prochaine_action) + (d.date_prochaine_action ? ` (rappel ${esc(d.date_prochaine_action)})` : "") : "—";
+  const row = (k, v) => `<span class="pp-k">${k}</span><span class="pp-v">${v}</span>`;
+  return `
+    <section class="prospection">
+      <h3 class="src-h">Prospection propriétaire</h3>
+      <div class="pp-grid">
+        ${row("Statut", esc(pr.statut_label || "Propriétaire inconnu"))}
+        ${row("Source · confiance", esc(PP_SRC[d.source_statut] || "non renseignée") + " · " + esc(PP_CONF[d.niveau_confiance] || "inconnu"))}
+        ${row("Contact", contact || "<i>Propriétaire à identifier — aucune donnée nominative dans LA BUSE.</i>")}
+        ${row("Prochaine action", action)}
+        ${row("Responsable", esc(d.responsable_interne || "—"))}
+        ${row("Notes", esc(d.notes_contact || "—"))}
+      </div>
+      ${pr.in_pipeline ? "" : `<p class="pp-default">Propriétaire non identifié automatiquement. À compléter manuellement ou via une source autorisée.</p>`}
+      <div class="pp-actions">
+        ${pr.in_pipeline ? "" : `<button class="btn" data-prosp="add">+ Ajouter au pipeline</button>`}
+        <button class="btn" data-prosp="identify">Marquer « propriétaire à identifier »</button>
+        <button class="btn" data-prosp="contact">Ajouter / modifier contact manuel</button>
+      </div>
+      <p class="pp-disc">${esc(pr.disclaimer || "")}</p>
+    </section>`;
 }
 
 // ───────────────────────── Données promoteur (Temps 1) ─────────────────────────
@@ -618,6 +654,34 @@ function wireSheetActions(idu) {
   const pb = $("[data-print]");
   if (pb) pb.addEventListener("click", () => { expandCascadeForPrint(); window.print(); });
 
+  // Prospection MANUELLE : ajouter au pipeline / marquer « à identifier » / saisir un contact.
+  document.querySelectorAll("[data-prosp]").forEach((b) => b.addEventListener("click", async () => {
+    const act = b.dataset.prosp;
+    b.disabled = true;
+    try {
+      let pe = await (await fetch(`/pipeline/parcel/${encodeURIComponent(idu)}`)).json();
+      let entry = pe.entry;
+      if (!entry) {
+        const r = await (await fetch("/pipeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idu }) })).json();
+        entry = r.entry;
+      }
+      if (act === "identify") {
+        await fetch(`/pipeline/${entry.id}`, { method: "PATCH", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ status: "proprietaire_a_identifier", prospection: { statut_proprietaire: "a_identifier" } }) });
+      } else if (act === "contact") {
+        const d = entry.prospection || {};
+        const nom = window.prompt("Nom / organisation du contact (saisie manuelle) :", d.contact_nom || d.contact_organisation || "");
+        if (nom === null) { b.disabled = false; return; }
+        const tel = window.prompt("Téléphone ou e-mail (optionnel) :", d.contact_telephone || d.contact_email || "") || "";
+        const isMail = tel.includes("@");
+        await fetch(`/pipeline/${entry.id}`, { method: "PATCH", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ prospection: { statut_proprietaire: "identifie_manuellement", source_statut: "saisi_utilisateur",
+            niveau_confiance: "moyen", contact_nom: nom, [isMail ? "contact_email" : "contact_telephone"]: tel } }) });
+      }
+      openSheet(idu);   // recharge la fiche
+    } catch { b.disabled = false; }
+  }));
+
   // « Suivre cette parcelle » → pipeline (statut Repérée par défaut ; si déjà suivie, affiche son statut)
   const fol = $("[data-follow]");
   if (fol) {
@@ -713,6 +777,7 @@ function kbCard(e) {
         <span class="kb-prio prio-${esc(e.priority)}">${esc(prioLabel(e.priority))}</span>
       </div>
       ${remHtml}
+      ${e.proprietaire_label ? `<div class="kb-prosp">👤 ${esc(e.proprietaire_label)}${(e.prospection && e.prospection.prochaine_action) ? ` · ▶ ${esc(e.prospection.prochaine_action)}` : ""}${(e.prospection && e.prospection.responsable_interne) ? ` · ${esc(e.prospection.responsable_interne)}` : ""}</div>` : ""}
       ${e.notes ? `<div class="kb-notes">${esc(e.notes)}</div>` : ""}
       <div class="kb-foot">
         <select class="kb-move" title="Changer de colonne (alternative au glisser-déposer)">${opts}</select>
@@ -725,6 +790,11 @@ function kbCard(e) {
           <select class="kb-prio-in" title="Priorité">${prioOpts}</select>
           <input type="date" class="kb-rem-in" title="Date de rappel" value="${esc(e.reminder_date || "")}">
         </div>
+        <div class="kb-editor-row">
+          <select class="kb-pp-statut" title="Statut propriétaire">${Object.entries(PP_STATUT).map(([k, l]) => `<option value="${k}"${((e.prospection || {}).statut_proprietaire || "inconnu") === k ? " selected" : ""}>${l}</option>`).join("")}</select>
+          <input class="kb-pp-resp" placeholder="Responsable" value="${esc((e.prospection || {}).responsable_interne || "")}">
+        </div>
+        <input class="kb-pp-action" placeholder="Prochaine action (manuelle)…" value="${esc((e.prospection || {}).prochaine_action || "")}">
         <div class="kb-editor-row">
           <button class="kb-save">Enregistrer</button>
           <button class="kb-cancel">Annuler</button>
@@ -830,6 +900,11 @@ function wireKanban() {
         notes: card.querySelector(".kb-notes-in").value,
         priority: card.querySelector(".kb-prio-in").value,
         reminder_date: card.querySelector(".kb-rem-in").value,
+        prospection: {
+          statut_proprietaire: card.querySelector(".kb-pp-statut").value,
+          responsable_interne: card.querySelector(".kb-pp-resp").value,
+          prochaine_action: card.querySelector(".kb-pp-action").value,
+        },
       });
       await loadKanban();
     });

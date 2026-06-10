@@ -5,10 +5,12 @@
 columns:
   - {key: reperee,                   label: Repérée}
   - {key: proprietaire_a_identifier, label: Propriétaire à identifier}
+  - {key: contact_a_preparer,        label: Contact à préparer}
   - {key: contacte,                  label: Contacté}
+  - {key: relance_prevue,            label: Relance prévue}
   - {key: en_discussion,             label: En discussion}
-  - {key: chaud,                     label: Chaud}
-  - {key: abandonnee,                label: Abandonnée}
+  - {key: chaud,                     label: Opportunité chaude}
+  - {key: abandonnee,                label: À abandonner}
 
 priorities:
   - {key: haute,   label: Haute}
