@@ -107,8 +107,8 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
             b = compute_bilan(f.fourchette.get("shab_vendable_m2", 0), ctx.surface_m2,
                               sector_price(session, ctx.parcel_id, hyp), hyp)
             bilan = {
-                "fiable": b.fiable, "verdict": b.verdict, "prix_dvf": b.prix_dvf,
-                "ca": b.ca, "charge_fonciere": b.charge_fonciere,
+                "fiable": b.fiable, "fiabilite": b.fiabilite, "verdict": b.verdict,
+                "prix_dvf": b.prix_dvf, "ca": b.ca, "charge_fonciere": b.charge_fonciere,
                 "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur, "source": s.source}
                           for s in b.steps],
                 "hypotheses": b.hypotheses, "avertissements": b.avertissements, "bandeau": b.bandeau,

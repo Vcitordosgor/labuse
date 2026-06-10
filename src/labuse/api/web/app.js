@@ -497,29 +497,58 @@ function renderBilan(b) {
   if (!b) return "";
   const meur = (x) => (x == null ? "—" : (Math.abs(x) >= 1e6 ? (x / 1e6).toFixed(1) + " M€"
     : Math.abs(x) >= 1e3 ? Math.round(x / 1e3) + " k€" : Math.round(x) + " €"));
+  const km = (m) => (m ? Math.round(m / 100) / 10 + " km" : "—");
+  // Badge de fiabilité (M2/M6) — fiable / fragile / insuffisant, toujours visible.
+  const niveau = b.fiabilite || (b.fiable ? "fiable" : "insuffisant");
+  const badgeTxt = { fiable: "Prix fiable", fragile: "Prix fragile", insuffisant: "Données insuffisantes" }[niveau] || niveau;
+  const badge = `<span class="fiab fiab-${niveau}">${badgeTxt}</span>`;
+  const bullets = (arr, cls, title) => (arr && arr.length)
+    ? `<div class="fa-grp ${cls}"><span class="fa-grp-t">${title}</span><ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+
+  const px = b.prix_dvf || {};
+  const raisons = px.fiabilite_raisons || [];
   if (!b.fiable) {
     return `
     <section class="bilan bilan-nf">
-      <div class="bilan-eyebrow">Bilan promoteur · potentiel économique</div>
+      <div class="bilan-eyebrow">Bilan promoteur · potentiel économique ${badge}</div>
       <p class="bilan-msg">${esc(b.verdict)}</p>
+      ${bullets(raisons, "warn", "Pourquoi le prix n'est pas fiable")}
       <p class="bilan-bandeau">⚠️ ${esc(b.bandeau)}</p>
     </section>`;
   }
-  const px = b.prix_dvf || {}, ca = b.ca || {}, cf = b.charge_fonciere || {};
+  const ca = b.ca || {}, cf = b.charge_fonciere || {};
   const stepRows = (b.steps || []).map((s) => `
     <tr><td class="fs-lbl">${esc(s.label)}</td>
         <td class="fs-for">${esc(s.formule)}${s.valeur ? ` <b>= ${esc(s.valeur)}</b>` : ""}<span class="fs-src">${esc(s.source)}</span></td></tr>`).join("");
-  const bullets = (arr, cls, title) => (arr && arr.length)
-    ? `<div class="fa-grp ${cls}"><span class="fa-grp-t">${title}</span><ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
+  // M6 — la méthode du prix, en clair (prix retenu, type, n, période, rayon, dispersion, écartés).
+  const per = px.periode ? `${px.periode[0]}–${px.periode[1]}` : "—";
+  const ecartes = [px.n_exclus ? `${px.n_exclus} aberrant(s)` : "", px.n_doublons ? `${px.n_doublons} doublon(s)` : ""].filter(Boolean).join(" · ") || "aucun";
+  const methodRows = `
+    <tr><td class="fs-lbl">Prix retenu</td><td class="fs-for"><b>${fmt(px.median)} €/m²</b> (Q1–Q3 ${fmt(px.q1)}–${fmt(px.q3)})<span class="fs-src">médiane DVF</span></td></tr>
+    <tr><td class="fs-lbl">Type de biens</td><td class="fs-for">${esc(px.type_prix || "—")}${px.pct_appartement != null ? ` · ${px.pct_appartement}% appartements` : ""}<span class="fs-src">comparable visé : collectif</span></td></tr>
+    <tr><td class="fs-lbl">Échantillon</td><td class="fs-for"><b>${px.n}</b> ventes · période ${per}<span class="fs-src">DVF Région ODS</span></td></tr>
+    <tr><td class="fs-lbl">Rayon utilisé</td><td class="fs-for">${km(px.radius_m)}${px.commune_fallback ? " (commune entière — peu de ventes proches)" : ""}<span class="fs-src">500 → 1000 → 1500 m → commune</span></td></tr>
+    <tr><td class="fs-lbl">Dispersion</td><td class="fs-for">min ${fmt(px.min)} / max ${fmt(px.max)} €/m²<span class="fs-src">après exclusion des aberrants</span></td></tr>
+    <tr><td class="fs-lbl">Ventes écartées</td><td class="fs-for">${ecartes}<span class="fs-src">Tukey IQR + dédoublonnage</span></td></tr>`;
+
+  const fragileBanner = niveau === "fragile"
+    ? `<p class="bilan-fragile">⚠️ Prix de sortie <b>fragile</b> — ${esc(raisons.join(" ; ") || "échantillon DVF limité")}. Simulation à lire comme un <b>ordre de grandeur</b>, pas comme un bilan ferme.</p>`
+    : "";
+
   return `
-    <section class="bilan">
-      <div class="bilan-eyebrow">Bilan promoteur · potentiel économique</div>
+    <section class="bilan ${niveau === "fragile" ? "bilan-frag" : ""}">
+      <div class="bilan-eyebrow">Bilan promoteur · potentiel économique ${badge}</div>
       <h3 class="bilan-verdict">${esc(b.verdict)}</h3>
+      ${fragileBanner}
       <div class="faisa-cards bilan-cards">
         <div class="fc"><span class="fc-num">${meur(ca.bas)}–${meur(ca.haut)}</span><span class="fc-lbl">Chiffre d'affaires potentiel</span></div>
-        <div class="fc"><span class="fc-num">${fmt(px.q1)}–${fmt(px.q3)} €/m²</span><span class="fc-lbl">Prix vente DVF (${px.n} ventes / ${Math.round((px.radius_m||0)/100)/10} km)</span></div>
+        <div class="fc"><span class="fc-num">${fmt(px.median)} €/m²</span><span class="fc-lbl">Prix DVF médian · ${esc(px.type_prix || "")} (${px.n} ventes / ${km(px.radius_m)})</span></div>
         <div class="fc fc-wide"><span class="fc-num">${meur(cf.central)}<span class="fc-sub">~${fmt(cf.par_m2_terrain)} €/m² terrain</span></span><span class="fc-lbl">Charge foncière (médiane)</span></div>
       </div>
+      <details class="faisa-calc bilan-method">
+        <summary>La méthode du prix, en clair — type, échantillon, rayon, ventes écartées</summary>
+        <table class="faisa-steps">${methodRows}</table>
+      </details>
       <details class="faisa-calc bilan-calc" open>
         <summary>Le calcul — prix DVF sourcé, hypothèses signalées</summary>
         <table class="faisa-steps">${stepRows}</table>
