@@ -527,7 +527,7 @@ function renderBilan(b) {
     <tr><td class="fs-lbl">Prix retenu</td><td class="fs-for"><b>${fmt(px.median)} €/m²</b> (Q1–Q3 ${fmt(px.q1)}–${fmt(px.q3)})<span class="fs-src">médiane DVF</span></td></tr>
     <tr><td class="fs-lbl">Type de biens</td><td class="fs-for">${esc(px.type_prix || "—")}${px.pct_appartement != null ? ` · ${px.pct_appartement}% appartements` : ""}<span class="fs-src">comparable visé : collectif</span></td></tr>
     <tr><td class="fs-lbl">Échantillon</td><td class="fs-for"><b>${px.n}</b> ventes · période ${per}<span class="fs-src">DVF Région ODS</span></td></tr>
-    <tr><td class="fs-lbl">Rayon utilisé</td><td class="fs-for">${km(px.radius_m)}${px.commune_fallback ? " (commune entière — peu de ventes proches)" : ""}<span class="fs-src">500 → 1000 → 1500 m → commune</span></td></tr>
+    <tr><td class="fs-lbl">Rayon utilisé</td><td class="fs-for">${px.commune_fallback ? "commune entière (peu de ventes proches)" : km(px.radius_m)}<span class="fs-src">500 → 1000 → 1500 m → commune</span></td></tr>
     <tr><td class="fs-lbl">Dispersion</td><td class="fs-for">min ${fmt(px.min)} / max ${fmt(px.max)} €/m²<span class="fs-src">après exclusion des aberrants</span></td></tr>
     <tr><td class="fs-lbl">Ventes écartées</td><td class="fs-for">${ecartes}<span class="fs-src">Tukey IQR + dédoublonnage</span></td></tr>`;
 
@@ -542,7 +542,7 @@ function renderBilan(b) {
       ${fragileBanner}
       <div class="faisa-cards bilan-cards">
         <div class="fc"><span class="fc-num">${meur(ca.bas)}–${meur(ca.haut)}</span><span class="fc-lbl">Chiffre d'affaires potentiel</span></div>
-        <div class="fc"><span class="fc-num">${fmt(px.median)} €/m²</span><span class="fc-lbl">Prix DVF médian · ${esc(px.type_prix || "")} (${px.n} ventes / ${km(px.radius_m)})</span></div>
+        <div class="fc"><span class="fc-num">${fmt(px.median)} €/m²</span><span class="fc-lbl">Prix DVF médian · ${esc(px.type_prix || "")} (${px.n} ventes / ${px.commune_fallback ? "commune" : km(px.radius_m)})</span></div>
         <div class="fc fc-wide"><span class="fc-num">${meur(cf.central)}<span class="fc-sub">~${fmt(cf.par_m2_terrain)} €/m² terrain</span></span><span class="fc-lbl">Charge foncière (médiane)</span></div>
       </div>
       <details class="faisa-calc bilan-method">

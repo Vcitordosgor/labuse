@@ -179,6 +179,7 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     fragile = niveau == "fragile"
     q1, med, q3 = prix["q1"], prix["median"], prix["q3"]
     surf = shab_vendable_m2
+    lieu = "commune entière" if prix.get("commune_fallback") else f"{prix['radius_m']:.0f} m"
     steps: list[Step] = []
     hypotheses: list[str] = []
     avert: list[str] = []
@@ -187,7 +188,7 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                       "issue de la faisabilité (post-rendement, plafond, modulation)",
                       f"~{surf:.0f} m²", "faisabilité"))
     detail = (f"{prix['type_prix']} · {prix['n']} ventes ({prix['periode'][0]}-{prix['periode'][1]}) "
-              f"dans {prix['radius_m']:.0f} m"
+              f"dans {lieu}"
               + (f" · {prix['n_exclus']} aberrant(s) exclu(s)" if prix["n_exclus"] else "")
               + (f" · {prix['n_doublons']} doublon(s) écarté(s)" if prix.get("n_doublons") else ""))
     steps.append(Step("Prix de vente (DVF secteur)", detail,
@@ -222,7 +223,7 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
         f"Coût de construction supposé {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m² habitable.",
         f"Marge promoteur supposée {hyp.marge_promoteur_pct:.0%} du CA ; frais annexes {hyp.frais_annexes_pct:.0%}.",
         f"Prix = ventes DVF {prix['type_prix']} ({prix.get('pct_appartement', '?')}% d'appartements), "
-        f"{prix['periode'][0]}-{prix['periode'][1]}, rayon {prix['radius_m']:.0f} m.",
+        f"{prix['periode'][0]}-{prix['periode'][1]}, {lieu}.",
     ]
     if fragile:
         avert.insert(0, "Prix de sortie FRAGILE (" + " ; ".join(raisons) + ") — "
