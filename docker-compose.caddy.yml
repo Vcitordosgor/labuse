@@ -1,0 +1,28 @@
+# LA BUSE — overlay HTTPS (Caddy) pour le pilote. À combiner avec le compose pilote :
+#
+#   cp deploy/Caddyfile.example deploy/Caddyfile        # puis vérifier LABUSE_DOMAIN dans .env
+#   docker compose -f docker-compose.pilot.yml -f docker-compose.caddy.yml up -d --build
+#
+# Caddy obtient et renouvelle le certificat (Let's Encrypt) automatiquement et redirige
+# HTTP → HTTPS. L'app reste sur le réseau compose (loopback côté hôte) ; PostgreSQL n'est
+# jamais publié. Prérequis : DNS A/AAAA du domaine → IP du serveur, ports 80/443 ouverts.
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - app
+    environment:
+      LABUSE_DOMAIN: ${LABUSE_DOMAIN:?définir LABUSE_DOMAIN dans .env (ex. labuse.mondomaine.re)}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data          # certificats TLS (persistants)
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

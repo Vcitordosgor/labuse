@@ -45,7 +45,10 @@ services:
     volumes:
       - ./backups:/srv/labuse/backups        # sauvegardes visibles côté hôte
     ports:
-      - "${LABUSE_PORT:-8000}:8000"
+      # LOOPBACK par défaut : l'app n'est pas joignable depuis l'extérieur du serveur ;
+      # c'est le reverse proxy HTTPS (cf. docker-compose.caddy.yml) qui expose 80/443.
+      # Pour exposer directement (déconseillé, HTTP nu) : LABUSE_BIND=0.0.0.0
+      - "${LABUSE_BIND:-127.0.0.1}:${LABUSE_PORT:-8000}:8000"
     restart: unless-stopped
 
 volumes:

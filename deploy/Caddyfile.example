@@ -1,0 +1,20 @@
+# LA BUSE — Caddyfile pilote (copier en deploy/Caddyfile ; AUCUN secret ici).
+# Le domaine vient de LABUSE_DOMAIN (.env). HTTPS automatique (Let's Encrypt)
+# et redirection HTTP → HTTPS : comportements PAR DÉFAUT de Caddy.
+
+{$LABUSE_DOMAIN} {
+	encode gzip
+
+	# L'authentification est APPLICATIVE (session LA BUSE) : Caddy ne fait que
+	# le TLS et le proxy. /healthz et /readyz (réduit) restent publics par design ;
+	# tout le métier exige la session — ne rien ouvrir de plus ici.
+	reverse_proxy app:8000
+
+	# En-têtes prudents (le produit ne doit pas être indexé pendant le pilote).
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+}

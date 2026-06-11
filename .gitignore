@@ -39,3 +39,6 @@ data/plu_saint_paul/*.txt
 # Sauvegardes DB (jamais committées)
 backups/
 *.dump
+
+# Copie serveur du Caddyfile (le modèle est deploy/Caddyfile.example)
+deploy/Caddyfile
