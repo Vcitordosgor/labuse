@@ -1,0 +1,17 @@
+.git
+.venv
+venv
+__pycache__
+*.py[cod]
+*.egg-info
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.env
+backups/
+*.dump
+tests/
+DEMO_PACK_PRINT.html
+DEMO_ONE_PAGER.html
+*.md
+!README.md

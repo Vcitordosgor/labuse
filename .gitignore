@@ -35,3 +35,7 @@ labuse_radar*.svg
 shot_*.png
 data/plu_saint_paul/*.pdf
 data/plu_saint_paul/*.txt
+
+# Sauvegardes DB (jamais committées)
+backups/
+*.dump

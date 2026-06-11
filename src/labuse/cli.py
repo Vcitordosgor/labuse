@@ -387,30 +387,46 @@ def warm_demo_cmd(
 def doctor_cmd(
     commune: str = typer.Option("Saint-Paul", help="Nom de commune (défaut Saint-Paul)."),
     fix: bool = typer.Option(True, help="Répare le schéma (léger, idempotent) avant le diagnostic."),
+    as_json: bool = typer.Option(False, "--json", help="Sortie JSON (monitoring/outillage) — mêmes codes de sortie."),
 ) -> None:
     """Diagnostic complet de l'état : DB → schéma → données → démo, avec quoi faire.
 
     Répare automatiquement le SCHÉMA (colonnes/triggers/index — secondes, sans risque) ;
     ne reconstruit JAMAIS les données (c'est `rebuild-demo`, dit explicitement).
     Codes de sortie : 0 = prêt pour la démo · 1 = dégradé (actions affichées) · 2 = DB injoignable."""
+    import json as _json
+
     from . import state
 
     try:
         ensure_postgis()
     except Exception as exc:  # noqa: BLE001 — sans DB, rien d'autre n'a de sens
-        typer.echo(f"✗ Base injoignable : {type(exc).__name__}: {exc}")
-        typer.echo("→ vérifier PostgreSQL et LABUSE_DATABASE_URL")
+        if as_json:
+            typer.echo(_json.dumps({"db_reachable": False, "ready_for_demo": False,
+                                    "error": f"{type(exc).__name__}: {exc}"}, ensure_ascii=False))
+        else:
+            typer.echo(f"✗ Base injoignable : {type(exc).__name__}: {exc}")
+            typer.echo("→ vérifier PostgreSQL et LABUSE_DATABASE_URL")
         raise typer.Exit(2) from None
-    typer.echo("✓ Base joignable")
+    if not as_json:
+        typer.echo("✓ Base joignable")
 
     if fix:
         models.ensure_schema(engine())
-        typer.echo("✓ Schéma réconcilié (léger : tables, colonnes, triggers, index — aucune donnée recalculée)")
+        if not as_json:
+            typer.echo("✓ Schéma réconcilié (léger : tables, colonnes, triggers, index — aucune donnée recalculée)")
 
     with session_scope() as s:
         sch = state.schema_status(s)
         data = state.data_status(s, commune)
         st = state.demo_status(s, commune)
+
+    if as_json:
+        typer.echo(_json.dumps({"db_reachable": True, "schema": sch, "data": data, **st},
+                               ensure_ascii=False))
+        if not st["ready_for_demo"]:
+            raise typer.Exit(1)
+        return
 
     typer.echo(f"{'✓' if sch['ok'] else '✗'} Schéma : {'OK' if sch['ok'] else ' · '.join(sch['missing'])}")
     typer.echo(f"{'✓' if data['ok'] else '✗'} Données ({commune}) : "
@@ -547,6 +563,92 @@ def watch_cmd(commune: str = typer.Argument(None, help="Commune (nom ou INSEE ; 
             f"zonage_change={res['zonage_change']}, mutation_dvf={res['mutation_dvf']}, "
             f"new_permit_nearby={res['new_permit_nearby']} ; {res['reevaluated']} parcelle(s) ré-évaluée(s)."
         )
+
+
+def _pg_env_and_db(url_str: str) -> tuple[dict, str]:
+    """Variables d'environnement PG* + nom de base, depuis l'URL SQLAlchemy (jamais de
+    mot de passe sur la ligne de commande — il passe par PGPASSWORD)."""
+    import os
+
+    from sqlalchemy.engine import make_url
+
+    url = make_url(url_str)
+    env = dict(os.environ)
+    env.update({k: v for k, v in {
+        "PGHOST": url.host, "PGPORT": str(url.port) if url.port else None,
+        "PGUSER": url.username, "PGPASSWORD": url.password,
+    }.items() if v})
+    return env, url.database or "labuse"
+
+
+@app.command("backup-db")
+def backup_db_cmd(
+    dir: str = typer.Option("backups", help="Dossier des sauvegardes (créé si absent)."),
+) -> None:
+    """Sauvegarde COMPLÈTE de la base (pg_dump format custom compressé) — données,
+    évaluations, pipeline, cache enrichment, état démo. Nommage horodaté."""
+    import subprocess
+    import time
+    from pathlib import Path
+    from shutil import which
+
+    if not which("pg_dump"):
+        typer.echo("✗ pg_dump introuvable — installer postgresql-client.")
+        raise typer.Exit(2)
+    env, dbname = _pg_env_and_db(get_settings().database_url)
+    out_dir = Path(dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out = out_dir / f"labuse-{dbname}-{time.strftime('%Y%m%d-%H%M%S')}.dump"
+    typer.echo(f"▶ pg_dump {dbname} → {out}")
+    res = subprocess.run(["pg_dump", "-Fc", "--no-owner", "-d", dbname, "-f", str(out)],
+                         env=env, capture_output=True, text=True)
+    if res.returncode != 0:
+        typer.echo(f"✗ pg_dump a échoué :\n{res.stderr.strip()}")
+        raise typer.Exit(1)
+    size_mb = out.stat().st_size / 1e6
+    typer.echo(f"✓ Sauvegarde : {out} ({size_mb:.1f} Mo)")
+    typer.echo(f"  restauration : labuse restore-db --file {out}")
+
+
+@app.command("restore-db")
+def restore_db_cmd(
+    file: str = typer.Option(..., help="Fichier .dump (sortie de labuse backup-db)."),
+    target_url: str = typer.Option(None, help="URL SQLAlchemy cible (défaut : la base configurée)."),
+    yes: bool = typer.Option(False, "--yes", help="Ne pas demander confirmation (ÉCRASE la cible)."),
+) -> None:
+    """Restaure une sauvegarde dans la base (pg_restore --clean : ÉCRASE l'existant).
+
+    Vérifie d'abord que le fichier est une archive pg_dump valide (erreur claire sinon).
+    Après restauration : lancer `labuse doctor` pour confirmer l'état."""
+    import subprocess
+    from pathlib import Path
+    from shutil import which
+
+    if not which("pg_restore"):
+        typer.echo("✗ pg_restore introuvable — installer postgresql-client.")
+        raise typer.Exit(2)
+    src = Path(file)
+    if not src.is_file():
+        typer.echo(f"✗ Fichier introuvable : {src}")
+        raise typer.Exit(1)
+    probe = subprocess.run(["pg_restore", "--list", str(src)], capture_output=True, text=True)
+    if probe.returncode != 0:
+        typer.echo(f"✗ Fichier invalide (pas une archive pg_dump) : {src}\n{probe.stderr.strip()}")
+        raise typer.Exit(1)
+
+    env, dbname = _pg_env_and_db(target_url or get_settings().database_url)
+    if not yes and not typer.confirm(f"⚠ Restaurer {src.name} dans « {dbname} » ? Les données actuelles seront ÉCRASÉES."):
+        typer.echo("Abandon.")
+        raise typer.Exit(1)
+    typer.echo(f"▶ pg_restore → {dbname}…")
+    res = subprocess.run(
+        ["pg_restore", "--clean", "--if-exists", "--no-owner", "-d", dbname, str(src)],
+        env=env, capture_output=True, text=True)
+    if res.returncode != 0:
+        typer.echo(f"✗ pg_restore a échoué :\n{res.stderr.strip()[:2000]}")
+        raise typer.Exit(1)
+    typer.echo("✓ Restauration terminée.")
+    typer.echo("  vérifier l'état : labuse doctor")
 
 
 @app.command("api")

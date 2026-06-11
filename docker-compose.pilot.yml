@@ -1,0 +1,52 @@
+# LA BUSE — déploiement PILOTE : PostGIS (volume persistant) + app authentifiée.
+# (docker-compose.yml reste l'aide DEV — base seule, identifiants de dev.)
+#
+#   cp .env.example .env   puis définir AU MINIMUM :
+#     POSTGRES_PASSWORD=…           (mot de passe DB — jamais committé)
+#     LABUSE_AUTH_PASSWORD=…        (mot de passe d'accès pilote)
+#     LABUSE_SECRET_KEY=…           (openssl rand -hex 32)
+#
+#   docker compose -f docker-compose.pilot.yml up -d --build
+#   docker compose -f docker-compose.pilot.yml exec app labuse prepare-pilot   # ≈5 min la 1ʳᵉ fois
+#   docker compose -f docker-compose.pilot.yml exec app labuse doctor
+#
+# HTTPS : mettre un reverse proxy (Caddy/Traefik/nginx) devant le port 8000 — les cookies
+# de session sont « Secure » dès que LABUSE_ENV ≠ local (défaut ici : pilot).
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: labuse
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?définir POSTGRES_PASSWORD dans .env}
+      POSTGRES_DB: labuse
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U labuse -d labuse"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    # PAS de ports: la base n'est joignable que depuis le réseau compose (pilote fermé).
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      LABUSE_DATABASE_URL: postgresql+psycopg://labuse:${POSTGRES_PASSWORD}@db:5432/labuse
+      LABUSE_ENV: ${LABUSE_ENV:-pilot}
+      LABUSE_AUTH_PASSWORD: ${LABUSE_AUTH_PASSWORD:?définir LABUSE_AUTH_PASSWORD dans .env}
+      LABUSE_SECRET_KEY: ${LABUSE_SECRET_KEY:?définir LABUSE_SECRET_KEY dans .env}
+      LABUSE_SESSION_HOURS: ${LABUSE_SESSION_HOURS:-12}
+      LABUSE_PUBLIC_URL: ${LABUSE_PUBLIC_URL:-}
+    volumes:
+      - ./backups:/srv/labuse/backups        # sauvegardes visibles côté hôte
+    ports:
+      - "${LABUSE_PORT:-8000}:8000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
