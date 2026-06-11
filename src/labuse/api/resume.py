@@ -50,7 +50,7 @@ def _positifs(cascade: list[dict], bilan: dict) -> list[str]:
     if any(c.get("layer_name") == "sar" and c.get("result") == "PASS"
            and "compatible" in (c.get("detail") or "") for c in cascade):
         out.append("Vocation SAR compatible (à croiser)")
-    # Prix de sortie de marché fiable (DVF) — jamais « bilan fiable ».
+    # Prix de SORTIE de marché fiable (DVF) — on qualifie le prix, jamais le bilan complet.
     if bilan.get("fiable") and bilan.get("fiabilite") == "fiable":
         out.append("Prix de marché fiable (DVF)")
     return out[:3]
