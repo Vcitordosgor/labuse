@@ -99,9 +99,10 @@ def _synthese(status: str, positifs: list[str], vigilance: list[str],
         hard = next((c["detail"] for c in cascade if c.get("result") == "HARD_EXCLUDE"), None)
         return f"Parcelle écartée : {_clean(hard) or (vigilance[0] if vigilance else 'contrainte rédhibitoire')}."
     if status == "a_creuser":
-        v = " ; ".join(vigilance) if vigilance else "des contraintes à lever"
         base = "Parcelle à creuser : potentiel présent"
-        return f"{base}, mais {v} avant d'aller plus loin." if vigilance else f"{base}, à confirmer."
+        # Construction en liste après deux-points : reste lisible quels que soient les
+        # libellés injectés (« surface réduite 106 m² », « Périmètre PPR… »).
+        return f"{base} ; à lever d'abord : {' ; '.join(vigilance)}." if vigilance else f"{base}, à confirmer."
     if status == "opportunite":
         p = ", ".join(positifs).lower() if positifs else "ses signaux favorables"
         phrase = f"Ressort comme opportunité vérifiée par {p}"

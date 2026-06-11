@@ -11,6 +11,10 @@ _RESULT_LABEL = {
     "HARD_EXCLUDE": "EXCLUSION", "SOFT_FLAG": "contrainte", "POSITIVE": "signal +",
     "PASS": "ok", "UNKNOWN": "donnée manquante",
 }
+_STATUS_LABEL = {
+    "opportunite": "Opportunité vérifiée", "a_creuser": "À creuser",
+    "faux_positif_probable": "Faux positif probable", "exclue": "Exclue",
+}
 
 
 def fiche_markdown(fiche: dict) -> str:
@@ -80,6 +84,19 @@ def fiche_markdown(fiche: dict) -> str:
             f"- **Fiabilité du prix :** {cv['fiabilite']}", "",
         ]
 
+    vz = fiche.get("voisinage") or {}
+    if vz.get("voisines"):
+        lines += ["## Parcelles voisines (contiguïté)", ""]
+        if (vz.get("assemblage") or {}).get("note"):
+            lines += [f"_{vz['assemblage']['note']}_", ""]
+        lines += ["| Parcelle | Statut LA BUSE | Opp. | Zone PLU | Surface |", "|---|---|---|---|---|"]
+        for v in vz["voisines"]:
+            lines.append(f"| {v['idu']} | {_STATUS_LABEL.get(v.get('status'), v.get('status') or '—')} | "
+                         f"{v.get('opportunity_score') if v.get('opportunity_score') is not None else '—'} | "
+                         f"{v.get('plu_zone') or '—'} | {_m2(v.get('surface_m2'))} |")
+        lines += ["", "_Adjacence géométrique uniquement — propriétaires, accords et faisabilité d'un "
+                  "assemblage restent à vérifier._", ""]
+
     pv = _prospection_view(fiche)
     lines += ["## Prospection propriétaire", "",
               f"- **Statut propriétaire :** {pv['statut']}",
@@ -145,6 +162,23 @@ def fiche_html(fiche: dict) -> str:
                  f"<li><strong>Médiane neuf / VEFA :</strong> {html.escape(cv['vefa'])}</li>"
                  f"<li><strong>Écart neuf vs ancien :</strong> {html.escape(cv['ecart'])}</li>"
                  f"<li><strong>Fiabilité du prix :</strong> {html.escape(cv['fiabilite'])}</li></ul>")
+    vz = fiche.get("voisinage") or {}
+    vz_html = ""
+    if vz.get("voisines"):
+        note = (vz.get("assemblage") or {}).get("note")
+        rows_vz = "".join(
+            f"<tr><td>{html.escape(v['idu'])}</td>"
+            f"<td>{html.escape(_STATUS_LABEL.get(v.get('status'), v.get('status') or '—'))}</td>"
+            f"<td>{v.get('opportunity_score') if v.get('opportunity_score') is not None else '—'}</td>"
+            f"<td>{html.escape(v.get('plu_zone') or '—')}</td>"
+            f"<td>{_m2(v.get('surface_m2'))}</td></tr>"
+            for v in vz["voisines"])
+        vz_html = ("<h2>Parcelles voisines (contiguïté)</h2>"
+                   + (f"<p class='disc'>{html.escape(note)}</p>" if note else "")
+                   + "<table><tr><th>Parcelle</th><th>Statut LA BUSE</th><th>Opp.</th><th>Zone PLU</th><th>Surface</th></tr>"
+                   + rows_vz + "</table>"
+                   "<p class='disc'>Adjacence géométrique uniquement — propriétaires, accords et "
+                   "faisabilité d'un assemblage restent à vérifier.</p>")
     pv = _prospection_view(fiche)
     contact_li = (f"<li><strong>Contact (saisi manuellement) :</strong> {html.escape(pv['contact'])}</li>"
                   if pv["contact"] else
@@ -185,6 +219,7 @@ def fiche_html(fiche: dict) -> str:
 <p><strong>Ont répondu :</strong> {html.escape(', '.join(fiche['sources_responded']) or '—')}</p>
 <p><strong>Silencieuses :</strong> {html.escape(', '.join(fiche['sources_silent']) or '—')}</p>
 {comp_html}
+{vz_html}
 {prosp_html}
 {"<h2>Analyse LA BUSE (IA)</h2><p>" + html.escape(ai.get('executive_summary','')) + "</p>" if ai else ""}
 </html>"""

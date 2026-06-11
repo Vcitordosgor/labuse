@@ -744,8 +744,10 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 
 /* Assemblage foncier — parcelles voisines (Phase 5) */
 .voisinage { margin: 24px 0 0; padding-top: 18px; border-top: 1px solid var(--rule); }
-.vz-assemblage { margin: 2px 0 12px; padding: 11px 14px; border-radius: 9px; font-size: 13px; line-height: 1.45;
-  background: rgba(47,125,87,.08); border: 1px solid rgba(47,125,87,.28); color: #246046; }
+/* Continuité foncière : information CONTEXTUELLE neutre (quasi systématique en tissu
+   urbain) — pas un badge de découverte, pour ne pas diluer les vrais signaux. */
+.vz-assemblage { margin: 2px 0 12px; padding: 10px 13px; border-radius: 9px; font-size: 12.5px; line-height: 1.5;
+  background: var(--card); border: 1px solid var(--rule-2); border-left: 2px solid var(--accent); color: var(--ink-soft); }
 .vz-list { display: flex; flex-direction: column; gap: 7px; }
 .vz-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer;
   background: var(--card); border: 1px solid var(--rule-2); border-radius: 10px; padding: 9px 12px; font: inherit;

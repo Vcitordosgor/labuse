@@ -420,7 +420,7 @@ function renderVoisinage(vz) {
       <span class="chip ${v.status || "inconnu"}">${STATUS_LABEL[v.status] || "—"}</span>
       <span class="vz-meta">${v.opportunity_score != null ? `<b>${v.opportunity_score}</b> opp · ` : ""}${v.plu_zone ? "zone " + esc(v.plu_zone) + " · " : ""}${v.surface_m2 != null ? fmt(v.surface_m2) + " m²" : ""}</span>
     </button>`).join("");
-  const banner = a.possible ? `<div class="vz-assemblage">🧩 ${esc(a.note)}</div>` : "";
+  const banner = a.possible ? `<div class="vz-assemblage">${esc(a.note)}</div>` : "";
   return `
     <section class="voisinage">
       <h3 class="src-h">Parcelles voisines à regarder <span class="pm-sub">· contiguës, indicatif</span></h3>

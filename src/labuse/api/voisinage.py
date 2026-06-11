@@ -60,9 +60,13 @@ def compute_voisinage(session: Session, parcel_id: int,
     surface_cumulee = (parcel_surface or 0.0) + sum(v["surface_m2"] or 0 for v in interessantes)
     note = None
     if possible:
+        # Formulé comme du CONTEXTE (« continuité foncière »), pas comme un signal rare :
+        # mesuré sur Saint-Paul, ~99 % des opportunités ont au moins une voisine contiguë
+        # en opportunité/à creuser (tissu urbain) — toute sévérisation du critère serait
+        # un choix produit à calibrer avec un promoteur, pas un réglage technique.
         surf_str = f"{surface_cumulee:,.0f}".replace(",", " ")   # espace fine, sans toucher au texte
-        note = (f"{n_total} parcelles contiguës classées « opportunité » ou « à creuser » "
-                f"(~{surf_str} m² cumulés) — assemblage à étudier. "
+        note = (f"Continuité foncière : {n_total} parcelles contiguës en opportunité ou à creuser, "
+                f"~{surf_str} m² cumulés — un assemblage peut être étudié. "
                 "Propriétaires, accords et faisabilité restent à vérifier.")
     return {
         "voisines": voisines,
