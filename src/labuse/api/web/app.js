@@ -857,14 +857,21 @@ function reminderState(dateStr) {
   if (days <= 3) return { state: "soon", days };
   return { state: "", days };
 }
-const isDue = (e) => reminderState(e.reminder_date).state !== "";
+// Échéance d'action = la date la plus PROCHE entre le rappel (reminder_date) et la date de
+// prochaine action saisie en prospection — pour un « à faire » unifié et actionnable.
+function echeance(e) {
+  const a = e.reminder_date || null;
+  const b = (e.prospection && e.prospection.date_prochaine_action) || null;
+  return (a && b) ? (a < b ? a : b) : (a || b);   // ISO yyyy-mm-dd → comparaison lexicale = chronologique
+}
+const isDue = (e) => reminderState(echeance(e)).state !== "";
 
 async function fetchPipeline() {
   try { PIPELINE = await (await fetch("/pipeline")).json(); } catch { PIPELINE = []; }
   updateReminderBadges();
 }
 function updateReminderBadges() {
-  const overdue = PIPELINE.filter((e) => reminderState(e.reminder_date).state === "overdue").length;
+  const overdue = PIPELINE.filter((e) => reminderState(echeance(e)).state === "overdue").length;
   document.querySelectorAll(".kb-badge").forEach((b) => { b.textContent = overdue; b.classList.toggle("hidden", overdue === 0); });
   const due = PIPELINE.filter(isDue).length;
   const rn = $("#kb-remn"); if (rn) rn.textContent = due;
@@ -880,7 +887,8 @@ async function loadKanban() {
 // Comparateur selon le tri courant (score / priorité / rappel) — le statut n'entre pas.
 function sortKey(e) {
   const opp = e.verdict && e.verdict.opportunity_score != null ? e.verdict.opportunity_score : -1;
-  const rem = e.reminder_date ? Date.parse(e.reminder_date) : Number.POSITIVE_INFINITY;
+  const ech = echeance(e);
+  const rem = ech ? Date.parse(ech) : Number.POSITIVE_INFINITY;
   if (KB_SORT === "priority") return [prioRank(e.priority), -opp];
   if (KB_SORT === "reminder") return [rem, -opp];
   return [-opp, prioRank(e.priority)];
@@ -895,13 +903,14 @@ function kbCard(e) {
   const opts = cols.map((c) => `<option value="${c.key}" ${c.key === e.status ? "selected" : ""}>${esc(c.label)}</option>`).join("");
   const prioOpts = prios.map((p) => `<option value="${p.key}" ${p.key === e.priority ? "selected" : ""}>${esc(p.label)}</option>`).join("");
   const surf = e.parcel && e.parcel.surface_m2 ? fmt(Math.round(e.parcel.surface_m2)) + " m²" : "—";
-  const rs = reminderState(e.reminder_date);
+  const ech = echeance(e);
+  const rs = reminderState(ech);
   let remHtml = "";
-  if (e.reminder_date) {
-    const lbl = rs.state === "overdue" ? `en retard (${esc(e.reminder_date)})`
-      : rs.state === "soon" ? (rs.days === 0 ? "aujourd'hui" : `dans ${rs.days} j (${esc(e.reminder_date)})`)
-        : esc(e.reminder_date);
-    remHtml = `<div class="kb-rem ${rs.state}">⏰ rappel ${lbl}</div>`;
+  if (ech) {
+    const lbl = rs.state === "overdue" ? `en retard (${esc(ech)})`
+      : rs.state === "soon" ? (rs.days === 0 ? "aujourd'hui" : `dans ${rs.days} j (${esc(ech)})`)
+        : esc(ech);
+    remHtml = `<div class="kb-rem ${rs.state}">⏰ échéance ${lbl}</div>`;
   }
   return `
     <div class="kb-card st-${st}${rs.state ? " rem-" + rs.state : ""}" data-id="${e.id}" data-idu="${esc(e.idu)}" draggable="true">
@@ -931,7 +940,10 @@ function kbCard(e) {
           <select class="kb-pp-statut" title="Statut propriétaire">${Object.entries(PP_STATUT).map(([k, l]) => `<option value="${k}"${((e.prospection || {}).statut_proprietaire || "inconnu") === k ? " selected" : ""}>${l}</option>`).join("")}</select>
           <input class="kb-pp-resp" placeholder="Responsable" value="${esc((e.prospection || {}).responsable_interne || "")}">
         </div>
-        <input class="kb-pp-action" placeholder="Prochaine action (manuelle)…" value="${esc((e.prospection || {}).prochaine_action || "")}">
+        <div class="kb-editor-row">
+          <input class="kb-pp-action" placeholder="Prochaine action (manuelle)…" value="${esc((e.prospection || {}).prochaine_action || "")}">
+          <input type="date" class="kb-pp-date" title="Échéance de la prochaine action (alimente « à faire »)" value="${esc((e.prospection || {}).date_prochaine_action || "")}">
+        </div>
         <div class="kb-editor-row">
           <button class="kb-save">Enregistrer</button>
           <button class="kb-cancel">Annuler</button>
@@ -1045,6 +1057,7 @@ function wireKanban() {
           statut_proprietaire: card.querySelector(".kb-pp-statut").value,
           responsable_interne: card.querySelector(".kb-pp-resp").value,
           prochaine_action: card.querySelector(".kb-pp-action").value,
+          date_prochaine_action: card.querySelector(".kb-pp-date").value,
         },
       });
       await loadKanban();
