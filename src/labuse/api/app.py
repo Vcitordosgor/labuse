@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterator
+from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import Path
 
@@ -52,11 +53,29 @@ RELIABLE_REQUIRED = ("sar", "risques", "foret_publique", "trait_de_cote")
 # DÉCOUVERTE (restent en base et dans les compteurs de volumétrie).
 MIN_DISPLAY_SURFACE_M2 = 2.0
 
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    """Auto-réconciliation LÉGÈRE du schéma au démarrage (recyclage d'environnement).
+
+    Répare en quelques secondes : tables, colonnes critiques (geom_2975, prospection),
+    triggers, index, cache enrichment. NE lance JAMAIS d'ingestion ni de backfill lourd
+    (cf. models.ensure_schema). Best-effort : si la DB est injoignable, l'app démarre
+    quand même (l'état est exposé par /readyz, jamais masqué)."""
+    try:
+        from ..db import engine as _engine
+        models.ensure_schema(_engine())
+        app.state.schema_heal = "ok"
+    except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
+        app.state.schema_heal = f"échec : {type(exc).__name__}: {exc}"
+    yield
+
+
 app = FastAPI(
     title="LA BUSE — radar foncier",
     version="0.1.0",
     description="La donnée publique ne suffit pas. LA BUSE l'interprète. "
                 "Pré-analyse — constructibilité/propriété/rentabilité jamais garanties.",
+    lifespan=_lifespan,
 )
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
@@ -71,6 +90,43 @@ def get_db() -> Iterator[Session]:
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok", "produit": "LA BUSE"}
+
+
+@app.get("/healthz")
+def healthz() -> dict:
+    """Niveau 1 — le PROCESS répond. Zéro accès DB : ne dit RIEN de l'état des données
+    (c'est /readyz et /demo-status qui le disent — ne jamais confondre)."""
+    return {"status": "ok"}
+
+
+@app.get("/readyz")
+def readyz(commune: str | None = None):
+    """Niveau 2+3 — schéma prêt ET données critiques présentes (503 sinon, avec l'action
+    à lancer). Session ouverte à la main : une DB injoignable rend un 503 propre, pas un 500."""
+    from fastapi.responses import JSONResponse
+
+    from .. import state
+
+    name = commune or config.get_settings().pilot_commune_name
+    try:
+        with session_scope() as s:
+            st = state.readiness(s, name)
+    except Exception as exc:  # noqa: BLE001 — DB down → 503 explicite
+        return JSONResponse(status_code=503, content={
+            "ready": False, "error": f"base injoignable : {type(exc).__name__}",
+            "actions": ["vérifier PostgreSQL / LABUSE_DATABASE_URL"]})
+    return JSONResponse(status_code=200 if st["ready"] else 503, content=st)
+
+
+@app.get("/demo-status")
+def demo_status_endpoint(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Niveau 4 — état COMPLET de la démo (healthcheck 13 points, parcelles de démo
+    conformes, cache chaud) + actions à lancer. Toujours 200 (informatif, panneau admin) ;
+    le drapeau `ready_for_demo` fait foi."""
+    from .. import state
+
+    name = commune or config.get_settings().pilot_commune_name
+    return state.demo_status(db, name)
 
 
 @app.get("/coverage")

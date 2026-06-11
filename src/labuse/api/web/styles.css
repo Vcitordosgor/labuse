@@ -535,6 +535,19 @@ input[type=checkbox] { accent-color: var(--gold); }
 .dp-meta { flex: none; display: flex; align-items: center; gap: 7px; }
 .dp-drift { color: #db8b7b; font-size: 14px; }
 
+/* État de la démo (panneau admin dans l'overlay Démo guidée) */
+.ds-box { margin: 0 0 14px; padding: 11px 13px; border-radius: 11px; font-size: 13px; border: 1px solid var(--line); }
+.ds-box.ds-ok { background: rgba(55,151,106,.08); border-color: rgba(55,151,106,.35); color: #7fd3ab; }
+.ds-box.ds-bad { background: rgba(184,95,76,.08); border-color: rgba(184,95,76,.4); color: #db8b7b; }
+.ds-when { float: right; font-size: 11px; color: var(--muted); font-weight: 400; }
+.ds-grid { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 8px; }
+.ds-item { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); }
+.ds-item.ok { color: #6bcf9c; }
+.ds-item.ko { color: #db8b7b; border-color: rgba(184,95,76,.4); font-weight: 600; }
+.ds-actions { margin-top: 9px; font-size: 12px; color: var(--txt); line-height: 1.7; }
+.ds-actions code { font-family: ui-monospace, Menlo, monospace; background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 6px; padding: 1px 7px; color: var(--gold-soft); }
+
 #kanban { display: none; }
 body.view-kanban #kanban { display: flex; }
 body.view-kanban #sidebar, body.view-kanban #map, body.view-kanban #banner,

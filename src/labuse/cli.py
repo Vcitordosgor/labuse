@@ -315,17 +315,9 @@ def demo_healthcheck_cmd(
     raise typer.Exit(0 if _print_healthcheck(commune) else 1)
 
 
-@app.command("warm-demo")
-def warm_demo_cmd(
-    commune: str = typer.Option("Saint-Paul", help="Nom de commune (défaut Saint-Paul)."),
-    seed_pipeline: bool = typer.Option(True, help="(Re)seed quelques entrées pipeline (Kanban non vide)."),
-) -> None:
-    """Pré-chauffe le cache d'enrichissement des parcelles de démo + vérifie verdicts & exports.
-
-    À lancer juste AVANT une démo : la 1ʳᵉ ouverture des fiches de démo devient instantanée
-    (RGE ALTI/GPU déjà calculés et mis en cache), et on confirme que chaque parcelle montre le
-    statut attendu et qu'elle s'exporte (avec son résumé). Idempotent ; ne touche NI le scoring
-    NI les couches. Code de sortie ≠ 0 si une parcelle dérive ou manque."""
+def _warm_demo_core(name: str, seed_pipeline: bool) -> list[str]:
+    """Cœur de warm-demo (réutilisé par prepare-pilot) : pré-chauffe + vérifie chaque
+    parcelle de démo (statut attendu, export avec résumé). Renvoie la liste des alertes."""
     import time
 
     from . import demo
@@ -333,10 +325,7 @@ def warm_demo_cmd(
     from .api.enrichment import enrichment_cached
     from .api.export import fiche_html, fiche_markdown
 
-    s_set = get_settings()
-    name = s_set.pilot_commune_name if commune == s_set.pilot_commune_insee else commune
     typer.echo(f"▶ Pré-chauffe démo ({name}) — {len(demo.DEMO_PARCELS)} parcelles…")
-    warmed = 0
     issues: list[str] = []
     for spec in demo.DEMO_PARCELS:
         idu = spec["idu"]
@@ -356,7 +345,6 @@ def warm_demo_cmd(
             md, html = fiche_markdown(fiche), fiche_html(fiche)
             exp_ok = "Résumé opportunité" in md and "Résumé opportunité" in html
             conforme = status == spec["attendu"]
-            warmed += 1
             if not conforme:
                 issues.append(f"{idu} statut={status} (attendu {spec['attendu']})")
             if not exp_ok:
@@ -367,12 +355,129 @@ def warm_demo_cmd(
         with session_scope() as s:
             k = demo.seed_demo_pipeline(s, name)
         typer.echo(f"  pipeline : {k} entrées de démo (aucun nom réel).")
+    return issues
+
+
+@app.command("warm-demo")
+def warm_demo_cmd(
+    commune: str = typer.Option("Saint-Paul", help="Nom de commune (défaut Saint-Paul)."),
+    seed_pipeline: bool = typer.Option(True, help="(Re)seed quelques entrées pipeline (Kanban non vide)."),
+) -> None:
+    """Pré-chauffe le cache d'enrichissement des parcelles de démo + vérifie verdicts & exports.
+
+    À lancer juste AVANT une démo : la 1ʳᵉ ouverture des fiches de démo devient instantanée
+    (RGE ALTI/GPU déjà calculés et mis en cache), et on confirme que chaque parcelle montre le
+    statut attendu et qu'elle s'exporte (avec son résumé). Idempotent ; ne touche NI le scoring
+    NI les couches. Code de sortie ≠ 0 si une parcelle dérive ou manque."""
+    from . import demo
+
+    s_set = get_settings()
+    name = s_set.pilot_commune_name if commune == s_set.pilot_commune_insee else commune
+    issues = _warm_demo_core(name, seed_pipeline)
     if issues:
         typer.echo("\n⚠️  Alertes :")
         for x in issues:
             typer.echo(f"   - {x}")
+        typer.echo(f"→ corriger avec : labuse rebuild-demo --commune {s_set.pilot_commune_insee}")
         raise typer.Exit(1)
-    typer.echo(f"\n✅ {warmed}/{len(demo.DEMO_PARCELS)} parcelles pré-chauffées, conformes et exportables.")
+    typer.echo(f"\n✅ {len(demo.DEMO_PARCELS)}/{len(demo.DEMO_PARCELS)} parcelles pré-chauffées, conformes et exportables.")
+
+
+@app.command("doctor")
+def doctor_cmd(
+    commune: str = typer.Option("Saint-Paul", help="Nom de commune (défaut Saint-Paul)."),
+    fix: bool = typer.Option(True, help="Répare le schéma (léger, idempotent) avant le diagnostic."),
+) -> None:
+    """Diagnostic complet de l'état : DB → schéma → données → démo, avec quoi faire.
+
+    Répare automatiquement le SCHÉMA (colonnes/triggers/index — secondes, sans risque) ;
+    ne reconstruit JAMAIS les données (c'est `rebuild-demo`, dit explicitement).
+    Codes de sortie : 0 = prêt pour la démo · 1 = dégradé (actions affichées) · 2 = DB injoignable."""
+    from . import state
+
+    try:
+        ensure_postgis()
+    except Exception as exc:  # noqa: BLE001 — sans DB, rien d'autre n'a de sens
+        typer.echo(f"✗ Base injoignable : {type(exc).__name__}: {exc}")
+        typer.echo("→ vérifier PostgreSQL et LABUSE_DATABASE_URL")
+        raise typer.Exit(2) from None
+    typer.echo("✓ Base joignable")
+
+    if fix:
+        models.ensure_schema(engine())
+        typer.echo("✓ Schéma réconcilié (léger : tables, colonnes, triggers, index — aucune donnée recalculée)")
+
+    with session_scope() as s:
+        sch = state.schema_status(s)
+        data = state.data_status(s, commune)
+        st = state.demo_status(s, commune)
+
+    typer.echo(f"{'✓' if sch['ok'] else '✗'} Schéma : {'OK' if sch['ok'] else ' · '.join(sch['missing'])}")
+    typer.echo(f"{'✓' if data['ok'] else '✗'} Données ({commune}) : "
+               f"{'OK' if data['ok'] else 'manquant → ' + ' · '.join(data['missing'])}")
+    hc = st["healthcheck"]
+    n_ok = sum(1 for c in hc["checks"] if c["ok"])
+    typer.echo(f"{'✓' if hc['ok'] else '✗'} Healthcheck : {n_ok}/{len(hc['checks'])}")
+    typer.echo(f"{'✓' if st['demo']['all_conform'] else '✗'} Parcelles de démo conformes")
+    w = st["warm"]
+    typer.echo(f"{'✓' if w['done'] else '•'} Cache fiches démo : {w['warmed']}/{w['total']} pré-chauffées")
+
+    if st["ready_for_demo"]:
+        typer.echo("\n✅ PRÊT POUR LA DÉMO")
+        return
+    typer.echo("\n❌ NON PRÊT — à lancer :")
+    for a in st["actions"]:
+        typer.echo(f"   $ {a}")
+    raise typer.Exit(1)
+
+
+@app.command("prepare-pilot")
+def prepare_pilot_cmd(
+    commune: str = typer.Option("97415", help="INSEE de la commune pilote (défaut Saint-Paul)."),
+    skip_rebuild: bool = typer.Option(False, help="Vérifie sans jamais reconstruire (échoue si non prêt)."),
+) -> None:
+    """UNE commande pour préparer un pilote/démo : schéma → (rebuild si nécessaire) →
+    healthcheck → warm-demo → confirmation. Ne relance PAS un rebuild si l'état est déjà
+    prêt (idempotent et économe). Code de sortie ≠ 0 si l'état final n'est pas prêt."""
+    s_set = get_settings()
+    name = s_set.pilot_commune_name if commune == s_set.pilot_commune_insee else commune
+
+    typer.echo("━━ 1/4 · Schéma ━━")
+    ensure_postgis()
+    models.ensure_schema(engine())
+    typer.echo("  ✓ schéma réconcilié (léger)")
+
+    typer.echo("━━ 2/4 · Données ━━")
+    from . import demo, state
+    with session_scope() as s:
+        hc_ok = demo.healthcheck(s, name)["ok"]
+    if hc_ok:
+        typer.echo("  ✓ healthcheck déjà OK → rebuild sauté (rien à reconstruire)")
+    elif skip_rebuild:
+        typer.echo("  ✗ healthcheck NON OK et --skip-rebuild demandé")
+        typer.echo(f"  → lancer : labuse rebuild-demo --commune {commune}")
+        raise typer.Exit(1)
+    else:
+        typer.echo("  • healthcheck NON OK → rebuild-demo (~5 min)…")
+        rebuild_demo_cmd(commune=commune, limit=None, seed_pipeline=True, skip_ingest=False)
+
+    typer.echo("━━ 3/4 · Healthcheck final ━━")
+    if not _print_healthcheck(name):
+        typer.echo(f"→ diagnostic : labuse doctor --commune {name}")
+        raise typer.Exit(1)
+
+    typer.echo("━━ 4/4 · Pré-chauffe démo ━━")
+    issues = _warm_demo_core(name, seed_pipeline=True)
+    if issues:
+        typer.echo("⚠️  " + " ; ".join(issues))
+        raise typer.Exit(1)
+
+    with session_scope() as s:
+        ready = state.demo_status(s, name)["ready_for_demo"]
+    if not ready:
+        typer.echo("❌ État final incohérent — lancer : labuse doctor")
+        raise typer.Exit(1)
+    typer.echo("\n✅ PILOTE PRÊT — lancer : labuse api  → http://127.0.0.1:8000/app/")
 
 
 @app.command("discover")

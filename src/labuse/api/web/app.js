@@ -811,11 +811,40 @@ function openDemo() {
   const ov = $("#demo-overlay");
   ov.classList.remove("hidden"); ov.setAttribute("aria-hidden", "false");
   $("#demo-body").innerHTML = `<div class="loading">Chargement du parcours…</div>`;
-  fetch("/demo").then((r) => r.json()).then((d) => {
-    $("#demo-body").innerHTML = renderDemoPanel(d);
+  // Parcours (/demo) + état complet (/demo-status) en parallèle — l'état n'est jamais masqué.
+  Promise.all([
+    fetch("/demo").then((r) => r.json()),
+    fetch("/demo-status").then((r) => r.json()).catch(() => null),
+  ]).then(([d, st]) => {
+    $("#demo-body").innerHTML = renderDemoStatus(st) + renderDemoPanel(d);
     document.querySelectorAll("#demo-body .dp-item").forEach((el) =>
       el.addEventListener("click", () => { closeDemo(); focusParcel(el.dataset.idu); }));
   }).catch(() => { $("#demo-body").innerHTML = `<div class="loading">Démo momentanément indisponible.</div>`; });
+}
+
+// État de la démo (panneau admin) : healthcheck, couches, warm — avec la COMMANDE à lancer
+// si quelque chose manque. On affiche l'erreur, on ne la cache jamais.
+function renderDemoStatus(st) {
+  if (!st) return `<div class="ds-box ds-bad">État de la démo indisponible (/demo-status injoignable).</div>`;
+  const byName = {}; (st.healthcheck && st.healthcheck.checks || []).forEach((c) => { byName[c.name] = c.ok; });
+  const items = [
+    ["PPR", byName["PPR"]], ["SAR", byName["SAR"]], ["DVF geo-dvf", byName["DVF geo-dvf"]],
+    ["OSM", byName["OSM faux positifs"]], ["Déclassement", byName["Déclassement appliqué"]],
+    ["Top 20 propre", byName["Top 20 sans faux positif évident"]],
+    ["Pipeline", byName["Module prospection"]], ["Exports", byName["Exports HTML/Markdown"]],
+    ["Parcelles démo", st.demo && st.demo.all_conform],
+    [`Cache chaud ${st.warm ? st.warm.warmed + "/" + st.warm.total : ""}`, st.warm && st.warm.done],
+  ];
+  const dots = items.map(([lbl, ok]) =>
+    `<span class="ds-item ${ok ? "ok" : "ko"}">${ok ? "✓" : "✗"} ${esc(lbl)}</span>`).join("");
+  const when = st.checked_at ? `<span class="ds-when">vérifié ${fmtDateTime(st.checked_at)}</span>` : "";
+  if (st.ready_for_demo) {
+    return `<div class="ds-box ds-ok"><b>✅ Démo prête</b> ${when}<div class="ds-grid">${dots}</div></div>`;
+  }
+  const actions = (st.actions || []).map((a) => `<code>${esc(a)}</code>`).join("<br>");
+  return `<div class="ds-box ds-bad"><b>⚠ Démo non prête</b> ${when}
+    <div class="ds-grid">${dots}</div>
+    <div class="ds-actions">À lancer :<br>${actions || "<code>labuse doctor</code>"}</div></div>`;
 }
 function closeDemo() {
   const ov = $("#demo-overlay");

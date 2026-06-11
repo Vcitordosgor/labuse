@@ -338,6 +338,7 @@ def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine)
     ensure_pipeline_prospection(engine)
+    ensure_enrichment_cache(engine)
 
 
 def ensure_pipeline_prospection(engine) -> None:
@@ -350,7 +351,7 @@ def ensure_pipeline_prospection(engine) -> None:
                      "ADD COLUMN IF NOT EXISTS prospection jsonb NOT NULL DEFAULT '{}'::jsonb"))
 
 
-def ensure_geom_2975(engine, commune: str | None = None) -> None:
+def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) -> None:
     """Géométrie pré-projetée en 2975 (perf cascade), auto-maintenue par TRIGGER.
 
     `geom_2975 = ST_Transform(geom, 2975)` sur parcels + spatial_layers : la cascade
@@ -360,7 +361,12 @@ def ensure_geom_2975(engine, commune: str | None = None) -> None:
     qui couvre tous les écrivains (cadastre, couches, démo, MakeValid).
 
     `commune` : si fourni, le BACKFILL/RÉPARATION ne portent que sur cette commune (rapide,
-    pour un rebuild mono-commune) ; le trigger et les index restent globaux. Défaut = global."""
+    pour un rebuild mono-commune) ; le trigger et les index restent globaux. Défaut = global.
+
+    `backfill=False` : ne pose QUE le schéma (colonnes, fonction, triggers, index) sans
+    les UPDATE massifs — pour le démarrage de l'app (réparer le schéma en secondes, jamais
+    recalculer 300k lignes au boot). Les données manquantes sont alors signalées par
+    /readyz et `labuse doctor`, et reconstruites par `rebuild-demo`."""
     from sqlalchemy import text as _t
 
     scope = " AND commune = :c" if commune else ""
@@ -380,11 +386,16 @@ def ensure_geom_2975(engine, commune: str | None = None) -> None:
         "DROP TRIGGER IF EXISTS trg_layers_geom_2975 ON spatial_layers",
         "CREATE TRIGGER trg_layers_geom_2975 BEFORE INSERT OR UPDATE OF geom ON spatial_layers "
         "FOR EACH ROW EXECUTE FUNCTION labuse_set_geom_2975()",
-        f"UPDATE parcels SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL{scope}",
-        f"UPDATE spatial_layers SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL{scope}",
-        # Réparation de l'existant : geom_2975 déjà peuplé mais invalide (avant ce correctif).
-        f"UPDATE parcels SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975){scope}",
-        f"UPDATE spatial_layers SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975){scope}",
+    ]
+    if backfill:
+        ddl += [
+            f"UPDATE parcels SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL{scope}",
+            f"UPDATE spatial_layers SET geom_2975 = ST_MakeValid(ST_Transform(geom, 2975)) WHERE geom_2975 IS NULL AND geom IS NOT NULL{scope}",
+            # Réparation de l'existant : geom_2975 déjà peuplé mais invalide (avant ce correctif).
+            f"UPDATE parcels SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975){scope}",
+            f"UPDATE spatial_layers SET geom_2975 = ST_MakeValid(geom_2975) WHERE geom_2975 IS NOT NULL AND NOT ST_IsValid(geom_2975){scope}",
+        ]
+    ddl += [
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",
         "CREATE INDEX IF NOT EXISTS idx_spatial_layers_geom_2975 ON spatial_layers USING gist (geom_2975)",
         # Index FONCTIONNEL pour DVF : la cascade interroge les ventes par rayon métrique via
@@ -400,6 +411,32 @@ def ensure_geom_2975(engine, commune: str | None = None) -> None:
         c.execute(_t("ANALYZE parcels"))
         c.execute(_t("ANALYZE spatial_layers"))
         c.execute(_t("ANALYZE dvf_mutations"))
+
+
+def ensure_enrichment_cache(engine) -> None:
+    """Table de cache du bloc « promoteur » (même DDL que enrichment._ensure_cache_table,
+    garantie ici dès le boot plutôt qu'au premier accès)."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS parcel_enrichment ("
+            " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
+            " payload jsonb NOT NULL, computed_at timestamptz NOT NULL DEFAULT now())"))
+
+
+def ensure_schema(engine) -> None:
+    """Réconciliation LÉGÈRE et idempotente du schéma (boot / doctor / prepare-pilot).
+
+    Garantit : tables ORM, colonnes critiques (geom_2975, prospection), fonction+triggers,
+    index GIST (dont l'index fonctionnel DVF) et table de cache enrichment — en SECONDES.
+    NE fait JAMAIS : backfill massif, téléchargement, ré-évaluation. Si des DONNÉES
+    manquent (geom_2975 NULL, couches absentes), c'est /readyz et `labuse doctor` qui le
+    disent, et `rebuild-demo` qui reconstruit."""
+    Base.metadata.create_all(engine)
+    ensure_geom_2975(engine, backfill=False)
+    ensure_pipeline_prospection(engine)
+    ensure_enrichment_cache(engine)
 
 
 def drop_all(engine) -> None:
