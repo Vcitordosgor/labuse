@@ -256,6 +256,7 @@ async function openSheet(idu) {
   catch { $("#sheet-body").innerHTML = `<div class="loading">Parcelle introuvable.</div>`; return; }
   $("#sheet-body").innerHTML = renderFiche(f);
   wireSheetActions(idu);
+  loadEnrichment(idu, f.parcel && f.parcel.centroid);   // bloc « promoteur » en arrière-plan (lazy)
 }
 
 function renderFiche(f) {
@@ -344,7 +345,7 @@ function renderFiche(f) {
 
     ${renderAi(f.ai)}
 
-    ${renderPromoteur(f.promoteur, p.centroid)}
+    ${promoteurSlot()}
 
     <details class="cascade">
       <summary>Cascade complète · la traçabilité est le produit <span class="cc-count">${cascade.length} couches</span></summary>
@@ -488,8 +489,44 @@ function renderPromoteur(pr, centroid) {
         ${card("PLU détaillé", pluBody, "")}
         ${card("Propriété & réseaux", factBody, "")}
       </div>
-      <p class="pm-foot">${esc(pr.disclaimer || "")}</p>
+      <p class="pm-foot">${esc(pr.disclaimer || "")}${pr.computed_at ? ` · Dernière vérification : ${fmtDateTime(pr.computed_at)}` : ""}</p>
     </section>`;
+}
+
+// Format date/heure court (fr) à partir d'un ISO ; "" si invalide.
+function fmtDateTime(iso) {
+  const d = new Date(iso);
+  return isNaN(d) ? "" : d.toLocaleString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+// Emplacement du bloc « promoteur » pendant son chargement lazy (appels externes lents).
+function promoteurSlot() {
+  return `<section class="promoteur" id="pm-slot">
+    <h3 class="src-h">Données promoteur <span class="pm-sub">· publiques, tracées, indicatives</span></h3>
+    <div class="pm-loading"><span class="pm-spin" aria-hidden="true"></span> Analyse réseaux &amp; terrain en cours…</div>
+  </section>`;
+}
+
+// Charge le bloc « promoteur » en arrière-plan (GET /parcels/{idu}/enrichment) puis remplace
+// l'emplacement. Échec/timeout : message clair, jamais de blocage ni de fiche cassée. Garde
+// anti-course : si l'utilisateur a déjà rouvert une autre fiche, on n'écrase pas son contenu.
+async function loadEnrichment(idu, centroid) {
+  const slot = $("#pm-slot");
+  if (!slot) return;
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 35000);   // garde-fou (ALTI+GPU déjà bornés serveur)
+  let pr;
+  try {
+    const r = await fetch(`/parcels/${encodeURIComponent(idu)}/enrichment`, { signal: ctrl.signal });
+    if (!r.ok) throw new Error(String(r.status));
+    pr = await r.json();
+  } catch {
+    if ($("#pm-slot") === slot) slot.innerHTML =
+      `<h3 class="src-h">Données promoteur</h3>
+       <p class="pm-na">Données réseaux &amp; terrain momentanément indisponibles — à vérifier auprès des sources officielles.</p>`;
+    return;
+  } finally { clearTimeout(timer); }
+  if ($("#pm-slot") === slot) slot.outerHTML = renderPromoteur(pr, centroid);
 }
 
 function renderFaisabilite(fa) {

@@ -274,8 +274,6 @@ def _build_fiche(db: Session, idu: str) -> dict:
         ), {"pid": p.id}
     ).mappings().all()
 
-    from .enrichment import enrichment_cached
-
     # Carte de pré-faisabilité (ÉTAPE B) — isolée, ne casse jamais la fiche si indispo.
     try:
         from ..faisabilite.db import fiche_payload
@@ -305,9 +303,9 @@ def _build_fiche(db: Session, idu: str) -> dict:
         },
         "faisabilite": faisabilite,
         "prospection": prosp_block,
-        # Bloc « promoteur » (TEMPS 1) : données publiques tracées, indicatives, EPSG:2975.
-        # Servi depuis le CACHE (appels externes lents calculés une fois) → fiche rapide.
-        "promoteur": enrichment_cached(db, p, lon, lat),
+        # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en
+        # LAZY-LOAD, par GET /parcels/{idu}/enrichment : il fait des appels externes lents
+        # (RGE ALTI, prescriptions GPU) qui ne doivent jamais bloquer l'ouverture de la fiche.
         # En-tête : verdict + LES DEUX scores (jamais l'opportunité seule).
         "verdict": {
             "status": ev.status.value if ev else None,
@@ -326,6 +324,27 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "ai": ev.ai_payload if ev else None,
         "disclaimer": "Pré-analyse. Constructibilité, propriété, rentabilité, faisabilité jamais garanties.",
     }
+
+
+@app.get("/parcels/{idu}/enrichment")
+def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
+    """Bloc « promoteur » (altimétrie, façade, PLU détaillé, propriété, réseaux) — LAZY-LOAD.
+
+    Sépare les appels externes LENTS (RGE ALTI ~1,5 s, prescriptions GPU ~2-6 s) de
+    l'ouverture de la fiche : calculés UNE FOIS puis mis en cache (parcel_enrichment), et
+    chargés en arrière-plan par le front → la fiche s'ouvre immédiatement. Jamais de 500
+    (chaque section est isolée par `_safe`)."""
+    from .enrichment import enrichment_cached
+
+    p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
+    if not p:
+        raise HTTPException(404, "Parcelle inconnue")
+    lon, lat = db.execute(
+        select(func.ST_X(p.__class__.centroid), func.ST_Y(p.__class__.centroid)).where(models.Parcel.id == p.id)
+    ).one()
+    payload = enrichment_cached(db, p, lon, lat)
+    ca = db.execute(text("SELECT computed_at FROM parcel_enrichment WHERE parcel_id = :p"), {"p": p.id}).scalar()
+    return {**payload, "computed_at": ca.isoformat() if ca else None}
 
 
 @app.get("/parcels/{idu}/export")

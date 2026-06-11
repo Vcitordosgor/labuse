@@ -63,6 +63,33 @@ def test_fiche_404(client):
     assert client.get("/parcels/00000000000000").status_code == 404
 
 
+def test_fiche_core_sans_bloc_promoteur_lazy(client):
+    # Phase 1 — la fiche « core » s'ouvre SANS le bloc promoteur (appels externes lents) :
+    # il est servi à part en lazy-load. Tout le reste (verdict/scores/cascade/prospection) reste là.
+    f = client.get("/parcels/97415000AB0001").json()
+    assert "promoteur" not in f
+    assert f["verdict"]["status"] and len(f["cascade"]) > 10 and "prospection" in f
+
+
+def test_enrichment_endpoint_lazy(client):
+    # Le bloc promoteur a son endpoint dédié : 200, sections présentes, computed_at, jamais 500.
+    e = client.get("/parcels/97415000AB0001/enrichment")
+    assert e.status_code == 200
+    js = e.json()
+    assert {"altimetrie", "facade", "plu_detail", "proprietaire", "reseaux"} <= set(js)
+    assert "computed_at" in js
+    # En test LABUSE_ENRICH_LIVE=0 : altimétrie indisponible PROPREMENT (jamais d'erreur).
+    assert js["altimetrie"].get("available") is False
+    assert client.get("/parcels/00000000000000/enrichment").status_code == 404
+
+
+def test_enrichment_cache_persiste(client):
+    # 2ᵉ appel servi depuis le cache (parcel_enrichment) → même computed_at, pas de recalcul.
+    a = client.get("/parcels/97415000AB0001/enrichment").json()
+    b = client.get("/parcels/97415000AB0001/enrichment").json()
+    assert a["computed_at"] and a["computed_at"] == b["computed_at"]
+
+
 def test_export_markdown_et_html(client):
     md = client.get("/parcels/97415000AB0001/export", params={"format": "md"})
     assert md.status_code == 200 and "# LA BUSE" in md.text and "Cascade" in md.text
