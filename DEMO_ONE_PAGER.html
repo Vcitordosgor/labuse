@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>LA BUSE — Radar foncier pour promoteurs</title>
+<style>
+  :root { --ink:#1c1c1c; --soft:#444; --muted:#777; --gold:#a67c2e; --line:#d9d2c4; --bg:#faf8f3;
+    --say:#2e6b46; --avoid:#9a3b2e; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font: 12.5px/1.5 "Segoe UI", Roboto, -apple-system, Helvetica, Arial, sans-serif;
+    color: var(--ink); background: #fff; }
+  .wrap { max-width: 800px; margin: 0 auto; padding: 22px 26px; }
+
+  header.cover { border-bottom: 2px solid var(--gold); padding-bottom: 12px; margin-bottom: 14px; }
+  .brand { font-size: 24px; font-weight: 800; letter-spacing: .14em; color: var(--gold); }
+  .sub { font-size: 12px; font-weight: 600; letter-spacing: .05em; color: var(--muted); margin-top: 3px; }
+  .promise { margin: 12px 0 0; padding: 11px 15px; background: var(--bg); border-left: 3px solid var(--gold);
+    border-radius: 4px; font-size: 13.5px; color: var(--ink); }
+
+  h2 { font-size: 13px; color: var(--gold); margin: 16px 0 7px; padding-bottom: 3px;
+    border-bottom: 1px solid var(--line); letter-spacing: .01em; }
+
+  .cols { display: flex; gap: 16px; }
+  .col { flex: 1; }
+  ul { margin: 5px 0 0; padding-left: 0; list-style: none; }
+  li { margin: 4px 0; padding-left: 20px; position: relative; color: var(--soft); }
+  b, strong { color: var(--ink); }
+  .does li::before { content: "\2714"; position: absolute; left: 0; color: var(--say); font-weight: 700; }
+  .doesnt li::before { content: "\2715"; position: absolute; left: 0; color: var(--avoid); font-weight: 700; }
+  .does .k, .doesnt .k { color: var(--ink); font-weight: 700; }
+
+  .proofs { display: flex; gap: 12px; margin-top: 6px; }
+  .proof { flex: 1; padding: 11px 13px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+  .proof .pid { font-weight: 800; color: var(--gold); letter-spacing: .03em; }
+  .proof .pt { display: block; font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .04em; margin: 2px 0 5px; }
+  .proof p { margin: 0; color: var(--soft); font-size: 12px; }
+
+  .conclusion { margin-top: 16px; padding: 13px 16px; background: #1c1c1c; color: #f3efe6;
+    border-radius: 6px; font-size: 13.5px; text-align: center; }
+  .conclusion b { color: #e9c97a; }
+
+  .foot { margin-top: 14px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 10.5px; color: var(--muted); }
+
+  @page { size: A4; margin: 14mm 14mm; }
+  @media print { .wrap { max-width: none; padding: 0; } a { color: inherit; text-decoration: none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="cover">
+    <div class="brand">LA&nbsp;BUSE</div>
+    <div class="sub">Radar foncier pour promoteurs · La Réunion</div>
+    <div class="promise">Un radar qui pré-analyse <b>toutes les parcelles d'une commune</b> sur les données publiques,
+      fait remonter les <b>opportunités vérifiées</b>, écarte les faux positifs avec un motif visible — et explique
+      chaque verdict.</div>
+  </header>
+
+  <div class="cols">
+    <div class="col">
+      <h2>Ce que LA BUSE fait</h2>
+      <ul class="does">
+        <li><span class="k">Détecter</span> — pré-trie une commune entière et fait ressortir les parcelles à fort potentiel.</li>
+        <li><span class="k">Vérifier</span> — croise PLU, PPR, SAR, littoral, forêt ; écarte parkings, pentes et micro-parcelles.</li>
+        <li><span class="k">Expliquer</span> — trace chaque verdict (cascade, sources DVF) : <b>pourquoi</b> ça ressort ou non.</li>
+        <li><span class="k">Prioriser</span> — double score opportunité + complétude, et un bilan promoteur <b>indicatif</b> au prix de marché.</li>
+        <li><span class="k">Suivre</span> — pipeline de prospection, contact saisi à la main, relances et export de fiche.</li>
+      </ul>
+    </div>
+    <div class="col">
+      <h2>Ce qu'elle ne prétend pas faire</h2>
+      <ul class="doesnt">
+        <li><span class="k">Garantir la constructibilité</span> — « opportunité vérifiée » = contrôlée sur les couches
+          disponibles ; ne vaut pas garantie. À confirmer (CU, terrain).</li>
+        <li><span class="k">Remplacer l'expertise promoteur</span> — elle outille le développeur foncier ; elle prépare, il décide.</li>
+        <li><span class="k">Fournir le propriétaire automatiquement</span> — statut « à identifier », contact saisi
+          manuellement ; aucune donnée nominative externe (RGPD).</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2>Trois preuves</h2>
+  <div class="proofs">
+    <div class="proof">
+      <span class="pid">BP0571</span><span class="pt">Opportunité vérifiée</span>
+      <p>Prix de marché <b>fiable ~4 184 €/m²</b>, CA de l'ordre de <b>23,5 M€</b> — bilan promoteur en simulation indicative.</p>
+    </div>
+    <div class="proof">
+      <span class="pid">BO0845</span><span class="pt">Faux positif écarté</span>
+      <p>Score brut 82… mais c'est un <b>parking</b>. Déclassée, <b>motif visible</b> : LA BUSE ne survend pas.</p>
+    </div>
+    <div class="proof">
+      <span class="pid">Pipeline + export</span><span class="pt">Passage à l'action</span>
+      <p>« + Suivre » → « propriétaire à identifier » → note &amp; prochaine action → <b>export HTML / Markdown</b> présentable.</p>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    Un copilote de prospection foncière <b>honnête, traçable et actionnable</b>.
+  </div>
+
+  <div class="foot">
+    LA BUSE — Pré-analyse foncière sur données publiques (cadastre, DVF, PLU/GPU, PPR, SAR, IGN, OSM).
+    Constructibilité, propriété et rentabilité ne sont jamais garanties.
+  </div>
+
+</div>
+</body>
+</html>
