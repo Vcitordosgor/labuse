@@ -80,14 +80,22 @@ class EvalContext:
             self._inter.setdefault((r["pid"], r["kind"]), []).append(
                 Intersection(r["subtype"], r["name"], float(r["coverage"] or 0.0), r["attrs"] or {}, r["source_name"]))
 
-        for pid, kind in self.session.execute(
-            text(
-                """SELECT p.id, sl.kind FROM parcels p
-                   JOIN spatial_layers sl ON ST_Contains(sl.geom, p.centroid)
-                   WHERE p.id = ANY(:ids)"""
-            ), {"ids": ids}
-        ).all():
-            self._centroid[(pid, kind)] = True
+        # Centroïde ∈ entité : SEULE la couche « eau » consomme centroid_in (cf. EauLayer).
+        # On restreint donc la précomputation au `kind` concerné, sinon on testait
+        # ST_Contains sur les 244k entités de TOUS les kinds — requête DOMINANTE du batch
+        # (ex. ~7 min pour un lot de 2000 parcelles). Résultat STRICTEMENT IDENTIQUE :
+        # centroid_in n'est jamais lu pour les autres kinds (un seul appelant, vérifié).
+        centroid_kinds = {k for k in (self._layer_params("eau").get("spatial_kind"),) if k}
+        if centroid_kinds:
+            for pid, kind in self.session.execute(
+                text(
+                    """SELECT p.id, sl.kind FROM parcels p
+                       JOIN spatial_layers sl ON sl.kind = ANY(:kinds)
+                         AND ST_Contains(sl.geom, p.centroid)
+                       WHERE p.id = ANY(:ids)"""
+                ), {"ids": ids, "kinds": list(centroid_kinds)}
+            ).all():
+                self._centroid[(pid, kind)] = True
 
         dp = self._layer_params("dvf")
         years = dp.get("lookback_years", 5)
