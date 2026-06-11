@@ -17,9 +17,21 @@ def _seed_parcels(db, commune="Testville", k=4):
 # ── Pur ───────────────────────────────────────────────────────────
 def test_parcelles_demo_documentees():
     assert len(demo.DEMO_PARCELS) >= 8
+    valid = {"opportunite", "a_creuser", "faux_positif_probable", "exclue"}
     for p in demo.DEMO_PARCELS:
-        assert {"idu", "role", "montre", "vigilance"} <= set(p)
+        assert {"idu", "role", "montre", "vigilance", "attendu"} <= set(p)
         assert p["idu"].startswith("97415") and len(p["idu"]) == 14
+        assert p["attendu"] in valid
+
+
+def test_demo_overview_structure(db_session):
+    # Structure stable et JAMAIS de crash, même quand les parcelles de démo réelles sont absentes
+    # (base de test = parcelles synthétiques) → present/conforme False.
+    ov = demo.demo_overview(db_session, "Saint-Paul")
+    assert len(ov) == len(demo.DEMO_PARCELS)
+    assert {"ordre", "idu", "role", "attendu", "present", "status", "conforme"} <= set(ov[0])
+    assert ov[0]["idu"] == "97415000BP0571" and ov[0]["ordre"] == 1
+    assert all(o["present"] is False and o["conforme"] is False for o in ov)
 
 
 def test_seed_pipeline_aucun_nom_de_personne():

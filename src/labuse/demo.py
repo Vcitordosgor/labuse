@@ -13,27 +13,48 @@ from sqlalchemy.orm import Session
 # Parcelles utiles en démo (IDU stables Saint-Paul) — rôle + ce qu'elles montrent + vigilance.
 # États VÉRIFIÉS après `rebuild-demo --commune 97415` (peuvent évoluer si les données changent).
 DEMO_PARCELS = [
-    {"idu": "97415000BP0571", "role": "Belle opportunité vérifiée + bilan promoteur lisible",
+    {"idu": "97415000BP0571", "attendu": "opportunite", "role": "Belle opportunité vérifiée + bilan promoteur lisible",
      "montre": "opportunité (opp ~77, 9222 m²), prix de marché FIABLE ~4184 €/m², CA ~23,5 M€",
      "vigilance": "« vérifiée » = sur couches dispo ; bilan = simulation indicative"},
-    {"idu": "97415000BS0009", "role": "Opportunité avec bilan (2ᵉ exemple)",
+    {"idu": "97415000BS0009", "attendu": "opportunite", "role": "Opportunité avec bilan (2ᵉ exemple)",
      "montre": "opp ~76, ~3479 m², prix fiable ~4145 €/m², CA ~8,8 M€", "vigilance": "hypothèses travaux/marge à valider"},
-    {"idu": "97415000BN1351", "role": "À creuser — PÉRIMÈTRE PPR (inondation + mvt)",
+    {"idu": "97415000BN1351", "attendu": "a_creuser", "role": "À creuser — PÉRIMÈTRE PPR (inondation + mvt)",
      "montre": "le PPR rétrograde l'opportunité en « à creuser » + bilan affiché",
      "vigilance": "PPR = prescriptions à vérifier, PAS une exclusion"},
-    {"idu": "97415000BH0283", "role": "SAR compatible (espace urbanisé à densifier)",
+    {"idu": "97415000BH0283", "attendu": "a_creuser", "role": "SAR compatible (espace urbanisé à densifier)",
      "montre": "vocation SAR compatible — à croiser avec PLU/PPR", "vigilance": "compatibilité ≠ constructibilité"},
-    {"idu": "97415000BO0845", "role": "Faux positif PARKING déclassé",
+    {"idu": "97415000BO0845", "attendu": "faux_positif_probable", "role": "Faux positif PARKING déclassé",
      "montre": "score brut ~82 mais « faux positif probable » + motif « parking sur 82 % (OSM) »",
      "vigilance": "le score brut reste affiché (transparence)"},
-    {"idu": "97415000BV1431", "role": "Faux positif PENTE déclassé",
+    {"idu": "97415000BV1431", "attendu": "faux_positif_probable", "role": "Faux positif PENTE déclassé",
      "montre": "« pente 103 % — terrain non aménageable » + SAR vocation naturelle (à vérifier)", "vigilance": "—"},
-    {"idu": "97415000BO0619", "role": "Micro-parcelle déclassée",
+    {"idu": "97415000BO0619", "attendu": "faux_positif_probable", "role": "Micro-parcelle déclassée",
      "montre": "« micro-parcelle 28 m² — aucun programme possible »", "vigilance": "—"},
-    {"idu": "97415000BK0023", "role": "Bord d'équipement CONSERVÉ (anti-sur-déclassement)",
+    {"idu": "97415000BK0023", "attendu": "opportunite", "role": "Bord d'équipement CONSERVÉ (anti-sur-déclassement)",
      "montre": "effleure un parking (<30 %) → reste opportunité (opp ~74)",
      "vigilance": "honnêteté : on ne sur-déclasse pas"},
 ]
+
+
+def demo_overview(session: Session, commune: str = "Saint-Paul") -> list[dict]:
+    """Parcelles de démo enrichies de leur verdict LIVE — pour le panneau « Démo guidée »,
+    l'endpoint /demo et la QA (warm-demo). `conforme` = statut live == statut attendu."""
+    out: list[dict] = []
+    for i, spec in enumerate(DEMO_PARCELS, 1):
+        row = session.execute(text(
+            "SELECT p.id, e.status, e.opportunity_score FROM parcels p "
+            "LEFT JOIN LATERAL (SELECT status, opportunity_score FROM parcel_evaluations e "
+            "  WHERE e.parcel_id = p.id ORDER BY evaluated_at DESC LIMIT 1) e ON true "
+            "WHERE p.idu = :idu"), {"idu": spec["idu"]}).mappings().first()
+        status = row["status"] if row else None
+        out.append({
+            "ordre": i, "idu": spec["idu"], "role": spec["role"], "montre": spec["montre"],
+            "vigilance": spec["vigilance"], "attendu": spec["attendu"],
+            "present": bool(row), "status": status,
+            "opportunity_score": row["opportunity_score"] if row else None,
+            "conforme": bool(row) and status == spec["attendu"],
+        })
+    return out
 
 # Seed pipeline : statut colonne + prospection MANUELLE réaliste, AUCUN nom de propriétaire réel.
 _SEED_PIPELINE = [

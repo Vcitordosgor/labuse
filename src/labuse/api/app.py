@@ -97,6 +97,19 @@ def coverage(db: Session = Depends(get_db)) -> dict:
     }
 
 
+@app.get("/demo")
+def demo_overview_endpoint(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Panneau « Démo guidée » : parcelles de démo (rôle, statut attendu, statut LIVE).
+
+    Ne masque AUCUNE donnée réelle — simple raccourci vers des parcelles DÉJÀ validées,
+    avec un drapeau `conforme` (statut live == attendu) pour repérer une dérive avant une démo."""
+    from .. import demo as demo_mod
+
+    name = commune or config.get_settings().pilot_commune_name
+    parcels = demo_mod.demo_overview(db, name)
+    return {"commune": name, "parcels": parcels, "all_conform": all(p["conforme"] for p in parcels)}
+
+
 # ───────────────────────────── Sources de données ─────────────────────────────
 
 @app.get("/sources")

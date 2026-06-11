@@ -63,6 +63,15 @@ def test_fiche_404(client):
     assert client.get("/parcels/00000000000000").status_code == 404
 
 
+def test_demo_endpoint(client):
+    # Phase 3 — panneau « Démo guidée » : structure stable, 8 parcelles, pas de 500.
+    d = client.get("/demo").json()
+    assert {"commune", "parcels", "all_conform"} <= set(d)
+    ps = d["parcels"]
+    assert len(ps) == 8 and ps[0]["idu"] == "97415000BP0571" and ps[0]["attendu"] == "opportunite"
+    assert {"ordre", "role", "status", "conforme", "present"} <= set(ps[0])
+
+
 def test_fiche_core_sans_bloc_promoteur_lazy(client):
     # Phase 1 — la fiche « core » s'ouvre SANS le bloc promoteur (appels externes lents) :
     # il est servi à part en lazy-load. Tout le reste (verdict/scores/cascade/prospection) reste là.

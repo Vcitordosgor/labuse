@@ -37,6 +37,7 @@
 
     <div class="side-nav">
       <button class="nav-kanban js-view" data-view="kanban">📋 Pipeline de prospection <span class="kb-badge hidden" title="rappels échus">0</span></button>
+      <button class="nav-demo js-demo" title="Parcours de démonstration guidé sur des parcelles validées">🎬 Démo guidée</button>
     </div>
 
     <section class="kpis" id="kpis">
@@ -124,6 +125,17 @@
     </header>
     <div class="kb-board" id="kb-board"></div>
   </section>
+
+  <!-- Démo guidée (Phase 3) : parcours sur des parcelles validées -->
+  <div id="demo-overlay" class="demo-overlay hidden" aria-hidden="true">
+    <section class="demo-panel" aria-label="Démo guidée">
+      <header class="dp-head">
+        <span class="dp-title">🎬 Démo guidée</span>
+        <button class="dp-close" id="demo-close" title="Fermer">✕</button>
+      </header>
+      <div class="dp-body" id="demo-body"></div>
+    </section>
+  </div>
 
   <!-- Fiche premium §8 -->
   <section id="sheet" class="sheet hidden" aria-hidden="true">

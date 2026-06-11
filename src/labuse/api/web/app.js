@@ -779,6 +779,41 @@ function showMapError() {
   if (s) s.textContent = "Le fond parcellaire n'a pas pu être chargé (réseau). Réessayez dans un instant.";
 }
 
+// ───────────────────────── Démo guidée (Phase 3) ─────────────────────────
+// Raccourci de présentation : liste les parcelles de démo VALIDÉES (rôle + statut live)
+// et ouvre leur fiche d'un clic. Ne masque aucune donnée réelle.
+function openDemo() {
+  const ov = $("#demo-overlay");
+  ov.classList.remove("hidden"); ov.setAttribute("aria-hidden", "false");
+  $("#demo-body").innerHTML = `<div class="loading">Chargement du parcours…</div>`;
+  fetch("/demo").then((r) => r.json()).then((d) => {
+    $("#demo-body").innerHTML = renderDemoPanel(d);
+    document.querySelectorAll("#demo-body .dp-item").forEach((el) =>
+      el.addEventListener("click", () => { closeDemo(); focusParcel(el.dataset.idu); }));
+  }).catch(() => { $("#demo-body").innerHTML = `<div class="loading">Démo momentanément indisponible.</div>`; });
+}
+function closeDemo() {
+  const ov = $("#demo-overlay");
+  ov.classList.add("hidden"); ov.setAttribute("aria-hidden", "true");
+}
+function renderDemoPanel(d) {
+  const items = (d.parcels || []).map((p) => {
+    const drift = p.conforme ? "" :
+      `<span class="dp-drift" title="statut live ≠ attendu (${esc(p.attendu)})">⚠</span>`;
+    return `<button class="dp-item" data-idu="${esc(p.idu)}">
+      <span class="dp-num">${p.ordre}</span>
+      <span class="dp-main">
+        <span class="dp-role">${esc(p.role)}</span>
+        <span class="dp-montre">${esc(p.montre)}</span>
+      </span>
+      <span class="dp-meta"><span class="chip ${p.status || "inconnu"}">${STATUS_LABEL[p.status] || "—"}</span>${drift}</span>
+    </button>`;
+  }).join("");
+  const warn = d.all_conform ? "" :
+    `<p class="dp-warn">⚠ Une parcelle a dérivé (statut ≠ attendu) — relancer <code>labuse rebuild-demo</code> avant la démo.</p>`;
+  return `<p class="dp-intro">Parcours guidé sur des parcelles déjà validées (${esc(d.commune)}). Cliquez une ligne pour ouvrir sa fiche.</p>${warn}<div class="dp-list">${items}</div>`;
+}
+
 // ───────────────────────── Pipeline / Kanban (T2) ─────────────────────────
 async function loadMeta() {
   try { KANBAN_META = await (await fetch("/pipeline/meta")).json(); }
@@ -1058,9 +1093,15 @@ async function main() {
   });
   $("#sheet-close").addEventListener("click", closeSheet);
   $("#scrim").addEventListener("click", closeSheet);
-  // Échap ferme la fiche (convention modale) — seulement si elle est ouverte.
+  // Démo guidée : bouton d'ouverture, fermeture (croix + clic sur le fond).
+  document.querySelectorAll(".js-demo").forEach((b) => b.addEventListener("click", openDemo));
+  $("#demo-close").addEventListener("click", closeDemo);
+  $("#demo-overlay").addEventListener("click", (e) => { if (e.target.id === "demo-overlay") closeDemo(); });
+  // Échap ferme la couche ouverte (démo d'abord, sinon la fiche).
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !$("#sheet").classList.contains("hidden")) closeSheet();
+    if (e.key !== "Escape") return;
+    if (!$("#demo-overlay").classList.contains("hidden")) closeDemo();
+    else if (!$("#sheet").classList.contains("hidden")) closeSheet();
   });
 }
 main();

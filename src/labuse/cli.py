@@ -315,6 +315,66 @@ def demo_healthcheck_cmd(
     raise typer.Exit(0 if _print_healthcheck(commune) else 1)
 
 
+@app.command("warm-demo")
+def warm_demo_cmd(
+    commune: str = typer.Option("Saint-Paul", help="Nom de commune (défaut Saint-Paul)."),
+    seed_pipeline: bool = typer.Option(True, help="(Re)seed quelques entrées pipeline (Kanban non vide)."),
+) -> None:
+    """Pré-chauffe le cache d'enrichissement des parcelles de démo + vérifie verdicts & exports.
+
+    À lancer juste AVANT une démo : la 1ʳᵉ ouverture des fiches de démo devient instantanée
+    (RGE ALTI/GPU déjà calculés et mis en cache), et on confirme que chaque parcelle montre le
+    statut attendu et qu'elle s'exporte (avec son résumé). Idempotent ; ne touche NI le scoring
+    NI les couches. Code de sortie ≠ 0 si une parcelle dérive ou manque."""
+    import time
+
+    from . import demo
+    from .api.app import _build_fiche
+    from .api.enrichment import enrichment_cached
+    from .api.export import fiche_html, fiche_markdown
+
+    s_set = get_settings()
+    name = s_set.pilot_commune_name if commune == s_set.pilot_commune_insee else commune
+    typer.echo(f"▶ Pré-chauffe démo ({name}) — {len(demo.DEMO_PARCELS)} parcelles…")
+    warmed = 0
+    issues: list[str] = []
+    for spec in demo.DEMO_PARCELS:
+        idu = spec["idu"]
+        with session_scope() as s:
+            p = s.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
+            if not p:
+                typer.echo(f"  ✗ {idu:16} ABSENTE")
+                issues.append(f"{idu} absente")
+                continue
+            lon, lat = s.execute(
+                text("SELECT ST_X(centroid), ST_Y(centroid) FROM parcels WHERE id = :i"), {"i": p.id}).one()
+            t0 = time.monotonic()
+            enrichment_cached(s, p, float(lon), float(lat))      # calcule si froid, sinon sert le cache
+            dt = time.monotonic() - t0
+            fiche = _build_fiche(s, idu)
+            status = fiche["verdict"]["status"]
+            md, html = fiche_markdown(fiche), fiche_html(fiche)
+            exp_ok = "Résumé opportunité" in md and "Résumé opportunité" in html
+            conforme = status == spec["attendu"]
+            warmed += 1
+            if not conforme:
+                issues.append(f"{idu} statut={status} (attendu {spec['attendu']})")
+            if not exp_ok:
+                issues.append(f"{idu} export incomplet")
+            mark = "✓" if conforme and exp_ok else "•"
+            typer.echo(f"  {mark} {idu:16} {status:22} cache {dt:4.1f}s · export {'ok' if exp_ok else 'KO'}")
+    if seed_pipeline:
+        with session_scope() as s:
+            k = demo.seed_demo_pipeline(s, name)
+        typer.echo(f"  pipeline : {k} entrées de démo (aucun nom réel).")
+    if issues:
+        typer.echo("\n⚠️  Alertes :")
+        for x in issues:
+            typer.echo(f"   - {x}")
+        raise typer.Exit(1)
+    typer.echo(f"\n✅ {warmed}/{len(demo.DEMO_PARCELS)} parcelles pré-chauffées, conformes et exportables.")
+
+
 @app.command("discover")
 def discover_cmd(
     commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
