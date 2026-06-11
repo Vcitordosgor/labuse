@@ -150,6 +150,8 @@ input[type=checkbox] { accent-color: var(--gold); }
   border-top: 1px solid var(--line);
 }
 .disclaimer-foot strong { color: var(--gold-soft); }
+.logout-link { float: right; color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--line); }
+.logout-link:hover { color: var(--gold-soft); border-bottom-color: var(--gold); }
 
 /* ───────── Bandeau d'avertissement (verdicts partiels) ───────── */
 .banner {

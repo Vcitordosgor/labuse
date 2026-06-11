@@ -27,6 +27,20 @@ class Settings(BaseSettings):
 
     database_url: str = "postgresql+psycopg://labuse:labuse@localhost:5432/labuse"
 
+    # ── Mode de déploiement : local (démo dev) | pilot (client encadré) | production ──
+    # Pilote/production : cookies Secure, CORS restreint, /docs protégés, auth OBLIGATOIRE
+    # (sans LABUSE_AUTH_PASSWORD, les routes métier répondent 503 — fail-closed, jamais ouvert).
+    env: str = "local"
+    # Authentification pilote (compte unique) : mot de passe en clair OU "sha256:<hexdigest>".
+    # JAMAIS en dur dans le code ; activer en local en posant simplement la variable.
+    auth_password: str | None = None
+    # Clé de signature des cookies de session ; absente → clé éphémère (sessions perdues au
+    # redémarrage — acceptable en local, à définir en pilote).
+    secret_key: str | None = None
+    session_hours: float = 12.0
+    # Origine publique (https://…) autorisée en CORS hors local ; vide = même origine seulement.
+    public_url: str | None = None
+
     # Commune pilote — paramétrable (brief §12 : Saint-Paul par défaut).
     pilot_commune_insee: str = "97415"
     pilot_commune_name: str = "Saint-Paul"

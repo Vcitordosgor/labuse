@@ -1,4 +1,12 @@
 "use strict";
+// Session expirée en cours d'usage : tout 401 d'API renvoie à la page de connexion
+// (la page elle-même est déjà protégée par redirection côté serveur).
+const _nativeFetch = window.fetch.bind(window);
+window.fetch = async (...args) => {
+  const r = await _nativeFetch(...args);
+  if (r.status === 401) { window.location.href = "/login"; throw new Error("session expirée"); }
+  return r;
+};
 const COMMUNE = "Saint-Paul";
 const COLORS = { opportunite: "#37976a", a_creuser: "#c2913f", exclue: "#697079", faux_positif_probable: "#b85f4c", inconnu: "#3a434e" };
 const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue", faux_positif_probable: "Faux positif probable" };

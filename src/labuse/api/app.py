@@ -17,7 +17,7 @@ from contextlib import asynccontextmanager
 from datetime import date
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -61,12 +61,30 @@ async def _lifespan(app: FastAPI):
     triggers, index, cache enrichment. NE lance JAMAIS d'ingestion ni de backfill lourd
     (cf. models.ensure_schema). Best-effort : si la DB est injoignable, l'app démarre
     quand même (l'état est exposé par /readyz, jamais masqué)."""
+    import logging
+
+    # uvicorn ne configure pas le logger racine : sans ce basicConfig, les événements INFO
+    # de LA BUSE (démarrage, connexions réussies) seraient invisibles. No-op si déjà configuré.
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s — %(message)s")
+    log = logging.getLogger("labuse")
     try:
         from ..db import engine as _engine
         models.ensure_schema(_engine())
         app.state.schema_heal = "ok"
     except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
         app.state.schema_heal = f"échec : {type(exc).__name__}: {exc}"
+    from . import auth
+    s = config.get_settings()
+    log.info("LA BUSE démarrée · env=%s · auth=%s · schéma=%s",
+             s.env,
+             "active" if auth.enabled() else "désactivée (local)",
+             app.state.schema_heal)
+    if auth.enabled() and not auth.configured():
+        log.error("env=%s sans LABUSE_AUTH_PASSWORD : routes métier en 503 (fail-closed) "
+                  "jusqu'à configuration.", s.env)
+    if auth.enabled() and not s.secret_key:
+        log.warning("LABUSE_SECRET_KEY absente : clé de session éphémère "
+                    "(les sessions ne survivront pas à un redémarrage).")
     yield
 
 
@@ -77,9 +95,37 @@ app = FastAPI(
                 "Pré-analyse — constructibilité/propriété/rentabilité jamais garanties.",
     lifespan=_lifespan,
 )
+# CORS par environnement : tout-venant utile en LOCAL (dev) seulement. En pilote/production,
+# le front est servi par la même origine → aucun CORS requis, sauf LABUSE_PUBLIC_URL explicite.
+_cors_origins = (["*"] if config.get_settings().env == "local"
+                 else ([config.get_settings().public_url] if config.get_settings().public_url else []))
 app.add_middleware(
-    CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
+    CORSMiddleware, allow_origins=_cors_origins, allow_methods=["*"], allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def _auth_guard(request, call_next):
+    """Garde d'authentification PILOTE (cf. api/auth.py) — protège TOUTES les routes métier.
+
+    Publiques : /healthz, /health, /readyz (détails réduits sans session), /login, /logout
+    (+ /docs en local uniquement). Navigation sans session → redirection /login ;
+    appel API sans session → 401 JSON ; pilote sans mot de passe configuré → 503 (fail-closed)."""
+    from fastapi.responses import JSONResponse
+
+    from . import auth
+
+    path = request.url.path
+    if not auth.enabled() or auth.is_public(path):
+        return await call_next(request)
+    if auth.token_ok(request.cookies.get(auth.COOKIE)):
+        return await call_next(request)
+    if not auth.configured():
+        return JSONResponse(status_code=503, content={
+            "detail": "Authentification non configurée (LABUSE_AUTH_PASSWORD absent) — accès fermé."})
+    if auth.wants_html(path):
+        return RedirectResponse("/login", status_code=302)
+    return JSONResponse(status_code=401, content={"detail": "Authentification requise."})
 
 
 def get_db() -> Iterator[Session]:
@@ -99,13 +145,73 @@ def healthz() -> dict:
     return {"status": "ok"}
 
 
+# ───────────────────────────── Connexion pilote ─────────────────────────────
+
+@app.get("/login", include_in_schema=False)
+def login_page(request: Request):
+    from fastapi.responses import HTMLResponse
+
+    from . import auth
+
+    if not auth.enabled():                       # auth désactivée (local) → rien à demander
+        return RedirectResponse("/app/", status_code=302)
+    if auth.token_ok(request.cookies.get(auth.COOKIE)):
+        return RedirectResponse("/app/", status_code=302)
+    return HTMLResponse(auth.login_page())
+
+
+@app.post("/login", include_in_schema=False)
+async def login_submit(request: Request):
+    """Connexion : formulaire urlencodé (parse stdlib — zéro dépendance) ou JSON.
+    Échec → message NEUTRE + petit délai (anti force-brute) + journalisation."""
+    from urllib.parse import parse_qs
+
+    from fastapi.responses import HTMLResponse
+
+    from . import auth
+
+    body = await request.body()
+    password = ""
+    ctype = request.headers.get("content-type", "")
+    if "json" in ctype:
+        try:
+            password = str(json.loads(body or b"{}").get("password") or "")
+        except ValueError:
+            password = ""
+    else:
+        password = (parse_qs(body.decode("utf-8", "replace")).get("password") or [""])[0]
+
+    if not auth.configured() or not auth.password_ok(password):
+        auth.log_event("login_failed", request)
+        auth.slow_failure()
+        return HTMLResponse(auth.login_page(error=True), status_code=401)
+    auth.log_event("login_ok", request)
+    resp = RedirectResponse("/app/", status_code=303)
+    resp.set_cookie(value=auth.make_token(), **auth.cookie_kwargs())
+    return resp
+
+
+@app.get("/logout", include_in_schema=False)
+def logout(request: Request):
+    from . import auth
+
+    auth.log_event("logout", request)
+    resp = RedirectResponse("/login", status_code=302)
+    resp.delete_cookie(auth.COOKIE, path="/")
+    return resp
+
+
 @app.get("/readyz")
-def readyz(commune: str | None = None):
+def readyz(request: Request, commune: str | None = None):
     """Niveau 2+3 — schéma prêt ET données critiques présentes (503 sinon, avec l'action
-    à lancer). Session ouverte à la main : une DB injoignable rend un 503 propre, pas un 500."""
+    à lancer). Session ouverte à la main : une DB injoignable rend un 503 propre, pas un 500.
+
+    PUBLIC pour le monitoring, mais DÉTAILS RÉDUITS sans session quand l'auth est active
+    (un sonde externe voit ready/checked_at, pas la liste des couches ni la commune)."""
     from fastapi.responses import JSONResponse
 
     from .. import state
+    from . import auth
 
     name = commune or config.get_settings().pilot_commune_name
     try:
@@ -115,7 +221,9 @@ def readyz(commune: str | None = None):
         return JSONResponse(status_code=503, content={
             "ready": False, "error": f"base injoignable : {type(exc).__name__}",
             "actions": ["vérifier PostgreSQL / LABUSE_DATABASE_URL"]})
-    return JSONResponse(status_code=200 if st["ready"] else 503, content=st)
+    if auth.enabled() and not auth.token_ok(request.cookies.get(auth.COOKIE)):
+        st = {"ready": st["ready"], "checked_at": st["checked_at"]}
+    return JSONResponse(status_code=200 if st.get("ready") else 503, content=st)
 
 
 @app.get("/demo-status")
