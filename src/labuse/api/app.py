@@ -324,12 +324,17 @@ def _build_fiche(db: Session, idu: str) -> dict:
     from .resume import build_resume
     resume = build_resume(verdict_block, cascade, faisabilite, prosp_block)
 
+    # Assemblage foncier (Phase 5) — voisines adjacentes + drapeau prudent (requête indexée).
+    from .voisinage import compute_voisinage
+    voisinage = compute_voisinage(db, p.id, p.surface_m2, verdict_block["status"])
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
         },
         "resume": resume,
+        "voisinage": voisinage,
         "faisabilite": faisabilite,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en

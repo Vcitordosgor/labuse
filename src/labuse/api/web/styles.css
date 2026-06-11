@@ -727,6 +727,26 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 @keyframes pm-spin { to { transform: rotate(360deg); } }
 @media print { .pm-loading { display: none; } }   /* jamais d'état « en cours » sur le PDF */
 
+/* Assemblage foncier — parcelles voisines (Phase 5) */
+.voisinage { margin: 24px 0 0; padding-top: 18px; border-top: 1px solid var(--rule); }
+.vz-assemblage { margin: 2px 0 12px; padding: 11px 14px; border-radius: 9px; font-size: 13px; line-height: 1.45;
+  background: rgba(47,125,87,.08); border: 1px solid rgba(47,125,87,.28); color: #246046; }
+.vz-list { display: flex; flex-direction: column; gap: 7px; }
+.vz-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer;
+  background: var(--card); border: 1px solid var(--rule-2); border-radius: 10px; padding: 9px 12px; font: inherit;
+  color: var(--ink); transition: border-color .12s, transform .06s; }
+.vz-item:hover { border-color: var(--accent); transform: translateX(2px); }
+.vz-idu { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--accent); flex: none; }
+.vz-meta { margin-left: auto; font-size: 12px; color: var(--ink-soft); text-align: right; }
+.vz-meta b { color: var(--ink); font-family: var(--serif); }
+.vz-foot { font-size: 11px; color: var(--ink-faint); font-style: italic; margin: 11px 0 0; line-height: 1.5; }
+
+/* Chips lisibles sur le papier ivoire de la fiche (résumé + voisines) */
+.sheet .chip.opportunite { background: rgba(47,125,87,.14); color: #246046; }
+.sheet .chip.a_creuser { background: rgba(176,125,43,.16); color: #8a5f1c; }
+.sheet .chip.faux_positif_probable { background: rgba(169,84,63,.16); color: #8a4233; }
+.sheet .chip.exclue { background: rgba(91,98,107,.16); color: #5b626b; }
+
 /* ───────── Carte de pré-faisabilité (ÉTAPE B) ───────── */
 .faisa { margin: 26px 0 0; padding: 22px; border: 1px solid var(--rule-2); border-radius: 14px;
   background: var(--card); box-shadow: 0 1px 0 #fff inset, 0 2px 12px rgba(27, 30, 35, .05); }

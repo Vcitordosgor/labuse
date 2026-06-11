@@ -345,6 +345,8 @@ function renderFiche(f) {
 
     ${renderFaisabilite(f.faisabilite)}
 
+    ${renderVoisinage(f.voisinage)}
+
     ${renderAi(f.ai)}
 
     ${promoteurSlot()}
@@ -397,6 +399,26 @@ function renderResume(r) {
         <div class="rs-col"><h4 class="rs-h warn">À vérifier</h4>${li(r.vigilance)}</div>
       </div>
       <div class="rs-action"><span class="rs-action-k">Prochaine action</span> ${esc(r.prochaine_action)}</div>
+    </section>`;
+}
+
+// Assemblage foncier (Phase 5) — parcelles voisines contiguës + drapeau prudent.
+function renderVoisinage(vz) {
+  if (!vz || !(vz.voisines || []).length) return "";
+  const a = vz.assemblage || {};
+  const items = vz.voisines.map((v) => `
+    <button class="vz-item" data-idu="${esc(v.idu)}" title="Ouvrir la fiche ${esc(v.idu)}">
+      <span class="vz-idu">${esc(v.idu)}</span>
+      <span class="chip ${v.status || "inconnu"}">${STATUS_LABEL[v.status] || "—"}</span>
+      <span class="vz-meta">${v.opportunity_score != null ? `<b>${v.opportunity_score}</b> opp · ` : ""}${v.plu_zone ? "zone " + esc(v.plu_zone) + " · " : ""}${v.surface_m2 != null ? fmt(v.surface_m2) + " m²" : ""}</span>
+    </button>`).join("");
+  const banner = a.possible ? `<div class="vz-assemblage">🧩 ${esc(a.note)}</div>` : "";
+  return `
+    <section class="voisinage">
+      <h3 class="src-h">Parcelles voisines à regarder <span class="pm-sub">· contiguës, indicatif</span></h3>
+      ${banner}
+      <div class="vz-list">${items}</div>
+      <p class="vz-foot">Adjacence géométrique uniquement — un même propriétaire, un accord ou la faisabilité d'un assemblage restent à vérifier.</p>
     </section>`;
 }
 
@@ -708,6 +730,9 @@ function renderAi(ai) {
 }
 
 function wireSheetActions(idu) {
+  // Voisines (assemblage) : un clic ouvre la fiche de la parcelle adjacente.
+  document.querySelectorAll(".vz-item").forEach((el) =>
+    el.addEventListener("click", () => focusParcel(el.dataset.idu)));
   document.querySelectorAll("[data-fb]").forEach((b) => b.addEventListener("click", async () => {
     b.disabled = true;
     await fetch("/feedback", { method: "POST", headers: { "content-type": "application/json" },
