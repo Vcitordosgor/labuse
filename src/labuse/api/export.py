@@ -38,6 +38,21 @@ def fiche_markdown(fiche: dict) -> str:
                   f"({r['source'] or 'n/d'})" for r in v["reasons"]]
         lines.append("")
 
+    rv = fiche.get("resume") or {}
+    if rv.get("synthese"):
+        lines += ["## Résumé opportunité", "",
+                  f"**{rv.get('statut_label', '')}** — {rv['synthese']}", ""]
+        if rv.get("positifs"):
+            lines.append("**Pourquoi elle ressort :**")
+            lines += [f"- {x}" for x in rv["positifs"]]
+            lines.append("")
+        if rv.get("vigilance"):
+            lines.append("**À vérifier :**")
+            lines += [f"- {x}" for x in rv["vigilance"]]
+            lines.append("")
+        if rv.get("prochaine_action"):
+            lines += [f"**Prochaine action :** {rv['prochaine_action']}", ""]
+
     lines += ["## Cascade — traçabilité complète", "",
               "| Couche | Verdict | Sévérité | Détail | Source |",
               "|---|---|---|---|---|"]
@@ -107,6 +122,17 @@ def fiche_html(fiche: dict) -> str:
     )
     reasons = "".join(f"<li>{html.escape(r['detail'])} <span class='src'>({html.escape(r['source'] or 'n/d')})</span></li>"
                       for r in v["reasons"]) or "<li>—</li>"
+    rv = fiche.get("resume") or {}
+    resume_html = ""
+    if rv.get("synthese"):
+        pos = "".join(f"<li>{html.escape(x)}</li>" for x in rv.get("positifs", [])) or "<li>—</li>"
+        vig = "".join(f"<li>{html.escape(x)}</li>" for x in rv.get("vigilance", [])) or "<li>—</li>"
+        resume_html = (
+            "<h2>Résumé opportunité</h2>"
+            f"<p><strong>{html.escape(rv.get('statut_label', ''))}</strong> — {html.escape(rv['synthese'])}</p>"
+            f"<p><strong>Pourquoi elle ressort :</strong></p><ul>{pos}</ul>"
+            f"<p><strong>À vérifier :</strong></p><ul>{vig}</ul>"
+            f"<p><strong>Prochaine action :</strong> {html.escape(rv.get('prochaine_action', ''))}</p>")
     ai = fiche.get("ai") or {}
     cv = _comparables_view(fiche)
     comp_html = ("" if not cv else
@@ -152,6 +178,7 @@ def fiche_html(fiche: dict) -> str:
 <p><span class="badge">{html.escape(v['status'] or '—')}</span></p>
 <p class="score">Opportunité {_score(v['opportunity_score'])}/100 · Complétude {_score(v['completeness_score'])}/100</p>
 <p><strong>Raisons :</strong></p><ul>{reasons}</ul>
+{resume_html}
 <h2>Cascade — traçabilité</h2>
 <table><tr><th>Couche</th><th>Verdict</th><th>Sévérité</th><th>Détail</th><th>Source</th></tr>{rows}</table>
 <h2>Sources</h2>

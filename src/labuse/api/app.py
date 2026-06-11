@@ -296,27 +296,33 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "disclaimer": prospection.disclaimer(),
     }
 
+    # En-tête : verdict + LES DEUX scores (jamais l'opportunité seule).
+    verdict_block = {
+        "status": ev.status.value if ev else None,
+        "opportunity_score": ev.opportunity_score if ev else None,
+        "completeness_score": ev.completeness_score if ev else None,
+        "reasons": reasons,
+        # Motif de déclassement (garde-fou faux positifs), si la parcelle a été corrigée.
+        "downgrade_reason": next((r["detail"] for r in cascade if r["layer_name"] == "declassement"), None),
+        "evaluated_at": ev.evaluated_at if ev else None,
+        "rules_version": ev.rules_version if ev else None,
+    }
+    # Résumé « business » (Phase 2) — dérivé des signaux ci-dessus, repris dans les exports.
+    from .resume import build_resume
+    resume = build_resume(verdict_block, cascade, faisabilite, prosp_block)
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
         },
+        "resume": resume,
         "faisabilite": faisabilite,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en
         # LAZY-LOAD, par GET /parcels/{idu}/enrichment : il fait des appels externes lents
         # (RGE ALTI, prescriptions GPU) qui ne doivent jamais bloquer l'ouverture de la fiche.
-        # En-tête : verdict + LES DEUX scores (jamais l'opportunité seule).
-        "verdict": {
-            "status": ev.status.value if ev else None,
-            "opportunity_score": ev.opportunity_score if ev else None,
-            "completeness_score": ev.completeness_score if ev else None,
-            "reasons": reasons,
-            # Motif de déclassement (garde-fou faux positifs), si la parcelle a été corrigée.
-            "downgrade_reason": next((r["detail"] for r in cascade if r["layer_name"] == "declassement"), None),
-            "evaluated_at": ev.evaluated_at if ev else None,
-            "rules_version": ev.rules_version if ev else None,
-        },
+        "verdict": verdict_block,
         "cascade": cascade,
         "sources_responded": sources_responded,
         "sources_silent": sources_silent,

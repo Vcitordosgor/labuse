@@ -333,6 +333,8 @@ function renderFiche(f) {
       <p class="golden-note">L'opportunité ne s'affiche jamais seule — une complétude &lt; 50 plafonne le verdict à « à creuser ».</p>
     </section>
 
+    ${renderResume(f.resume)}
+
     ${unverifiedLine}
 
     <section class="reads">
@@ -374,6 +376,28 @@ function renderFiche(f) {
       <b>LA&nbsp;BUSE</b> · Pré-analyse foncière sur données publiques · ${esc(p.idu)} · ${today}<br>
       Constructibilité, propriété, rentabilité, faisabilité — <b>jamais garanties</b>. Document indicatif à vérifier avant toute démarche.
     </footer>`;
+}
+
+// Résumé « business » (Phase 2) — lecture promoteur : pourquoi / vigilance / prochaine action.
+// Le contenu vient du backend (build_resume) ; vocabulaire prudent garanti côté serveur.
+function renderResume(r) {
+  if (!r) return "";
+  const li = (arr) => (arr && arr.length)
+    ? `<ul class="rs-list">${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`
+    : `<p class="rs-empty">—</p>`;
+  return `
+    <section class="resume v-${r.statut}">
+      <div class="rs-head">
+        <span class="rs-eyebrow">Résumé opportunité</span>
+        <span class="chip ${r.statut}">${esc(r.statut_label)}</span>
+      </div>
+      <p class="rs-synthese">${esc(r.synthese)}</p>
+      <div class="rs-cols">
+        <div class="rs-col"><h4 class="rs-h ok">Pourquoi elle ressort</h4>${li(r.positifs)}</div>
+        <div class="rs-col"><h4 class="rs-h warn">À vérifier</h4>${li(r.vigilance)}</div>
+      </div>
+      <div class="rs-action"><span class="rs-action-k">Prochaine action</span> ${esc(r.prochaine_action)}</div>
+    </section>`;
 }
 
 // Bloc PROSPECTION propriétaire (manuel, Niveau 1) — aucune donnée nominative externe.

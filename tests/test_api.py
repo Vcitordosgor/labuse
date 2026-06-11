@@ -93,8 +93,9 @@ def test_enrichment_cache_persiste(client):
 def test_export_markdown_et_html(client):
     md = client.get("/parcels/97415000AB0001/export", params={"format": "md"})
     assert md.status_code == 200 and "# LA BUSE" in md.text and "Cascade" in md.text
+    assert "Résumé opportunité" in md.text  # Phase 2 : l'export reprend le résumé business
     htmlr = client.get("/parcels/97415000AB0001/export", params={"format": "html"})
-    assert htmlr.status_code == 200 and "<table" in htmlr.text
+    assert htmlr.status_code == 200 and "<table" in htmlr.text and "Résumé opportunité" in htmlr.text
 
 
 def test_discover_classe_les_survivantes(client):
