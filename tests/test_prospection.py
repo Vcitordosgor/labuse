@@ -84,6 +84,7 @@ pytestmark_db = pytest.mark.db
 @pytest.fixture
 def client_parcel(engine):
     from fastapi.testclient import TestClient
+
     from labuse.api.app import app
     from labuse.db import session_scope
     wkt = "POLYGON((55.30 -21.00,55.31 -21.00,55.31 -20.99,55.30 -20.99,55.30 -21.00))"

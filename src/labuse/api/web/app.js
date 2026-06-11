@@ -138,7 +138,8 @@ function setSliderBounds() {
 
 // ───────────────────────── Dashboard / liste ─────────────────────────
 async function loadStats() {
-  const s = await (await fetch(`/stats?commune=${encodeURIComponent(COMMUNE)}`)).json();
+  let s = {};
+  try { s = await (await fetch(`/stats?commune=${encodeURIComponent(COMMUNE)}`)).json(); } catch { s = {}; }
   $("#kpi-total").textContent = fmt(s.total);
   $("#kpi-opp").textContent = fmt(s.opportunite);
   $("#kpi-creuser").textContent = fmt(s.a_creuser);
@@ -247,6 +248,7 @@ function filterByStatus(status) {
 // ───────────────────────── Fiche premium §8 ─────────────────────────
 async function openSheet(idu) {
   $("#sheet").classList.remove("hidden");
+  $("#sheet").setAttribute("aria-hidden", "false");   // a11y : le panneau ouvert n'est plus masqué aux lecteurs d'écran
   $("#scrim").classList.remove("hidden");
   $("#sheet-body").innerHTML = `<div class="loading">Chargement de la fiche…</div>`;
   let f;
@@ -700,7 +702,21 @@ function wireSheetActions(idu) {
 // La cascade est repliée à l'écran ; on la déplie pour qu'elle figure dans le PDF.
 function expandCascadeForPrint() { const d = document.querySelector(".cascade"); if (d) d.open = true; }
 
-function closeSheet() { $("#sheet").classList.add("hidden"); $("#scrim").classList.add("hidden"); }
+function closeSheet() {
+  $("#sheet").classList.add("hidden");
+  $("#sheet").setAttribute("aria-hidden", "true");
+  $("#scrim").classList.add("hidden");
+}
+
+// Carte indisponible (réseau) : message lisible dans l'encart d'état vide, jamais d'écran mort muet.
+function showMapError() {
+  const empty = $("#map-empty");
+  if (!empty) return;
+  empty.classList.remove("hidden");
+  const t = empty.querySelector(".me-title"), s = empty.querySelector(".me-sub");
+  if (t) t.textContent = "Carte momentanément indisponible";
+  if (s) s.textContent = "Le fond parcellaire n'a pas pu être chargé (réseau). Réessayez dans un instant.";
+}
 
 // ───────────────────────── Pipeline / Kanban (T2) ─────────────────────────
 async function loadMeta() {
@@ -942,12 +958,14 @@ function markFollowing(btn, statusKey) {
 async function main() {
   window.addEventListener("beforeprint", expandCascadeForPrint);
   initMap();
-  await loadStats();
-  await loadCoverage();
-  await loadSignals();
-  await loadMeta();
-  await fetchPipeline();          // pour la pastille « à rappeler » sur l'onglet, dès le démarrage
-  const fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json();
+  // Chargements initiaux INDÉPENDANTS en parallèle (chacun gère déjà son échec) →
+  // moins de latence au premier rendu qu'une chaîne de 5 await séquentiels.
+  await Promise.all([loadStats(), loadCoverage(), loadSignals(), loadMeta(), fetchPipeline()]);
+  // La carte est le cœur de la démo : si le geojson échoue (réseau), on ne laisse jamais
+  // un écran mort silencieux — message lisible + filtres encore utilisables au retour.
+  let fc = { features: [] };
+  try { fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json(); }
+  catch { showMapError(); }
   FEATURES = fc.features || [];
   setSliderBounds();                              // P3 : curseurs bornés à la plage réelle
   applyFilters();
@@ -979,5 +997,9 @@ async function main() {
   });
   $("#sheet-close").addEventListener("click", closeSheet);
   $("#scrim").addEventListener("click", closeSheet);
+  // Échap ferme la fiche (convention modale) — seulement si elle est ouverte.
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("#sheet").classList.contains("hidden")) closeSheet();
+  });
 }
 main();

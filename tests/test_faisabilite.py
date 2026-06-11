@@ -120,7 +120,6 @@ def test_plafond_densite_borne_les_zones_denses():
 
 
 def test_hypotheses_chargees_depuis_yaml():
-    from labuse.faisabilite.engine import Hypotheses
     h = Hypotheses.charger()
     assert h.coef_rendement == 0.80 and h.coef_occupation == 0.45
     assert h.logement_m2_bas == 65.0 and h.densite_logts_ha_par_niveau == 30.0

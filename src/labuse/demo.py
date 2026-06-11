@@ -142,7 +142,7 @@ def healthcheck(session: Session, commune: str = "Saint-Paul") -> dict:
              "cascade": [], "sources_responded": [], "sources_silent": [], "disclaimer": "x", "ai": None,
              "prospection": {"statut_label": "Propriétaire inconnu", "data": {}}}
         ok_exp = "Prospection propriétaire" in fiche_markdown(f) and "Prospection propriétaire" in fiche_html(f)
-    except Exception as exc:  # noqa: BLE001
+    except Exception:  # noqa: BLE001
         ok_exp = False
     chk("Exports HTML/Markdown", ok_exp, "section prospection rendue")
 

@@ -12,7 +12,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from .. import config
-from ..enums import Severity
+from ..enums import EvaluationStatus, Severity
 from ..models import CascadeResult, Parcel, ParcelEvaluation
 from ..scoring import (
     CompletenessResult,
@@ -24,7 +24,6 @@ from ..scoring import (
     compute_opportunity,
     decide_status,
 )
-from ..enums import EvaluationStatus
 from .base import Verdict, hard_exclude, soft_flag
 from .context import EvalContext, ParcelRef
 from .engine import is_promoted, run_cascade
