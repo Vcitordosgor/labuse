@@ -46,6 +46,12 @@ opportunité. **C'est le défaut n°1.**
 5 616 m² » ; comparer à l'orthophoto (bouton « Vue du ciel » de la fiche, ou
 `overlay_BP0571.jpg`). Le bilan propose de **construire à neuf sur une résidence habitée**.
 
+**Méthode validée (contre-épreuve) :** le même pipeline d'overlay appliqué à **BO0845**
+(`overlay_BO0845.jpg`) tombe **exactement sur un parking plein de voitures** — ce qui
+correspond au verdict « parking 82 % » de LA BUSE. La méthode d'overlay est donc fiable :
+quand elle montre BP0571 remplie d'immeubles, c'est réel. **Le détecteur de parkings marche ;
+il manque seulement un détecteur de BÂTIMENTS** — c'est précisément le trou.
+
 **Nuance honnête (à valider par un promoteur) :** un terrain bâti n'est pas toujours sans
 valeur — démolition/reconstruction ou surélévation existent (surtout sous servitude de
 mixité sociale qui pousse à densifier). MAIS le produit présente ces parcelles comme du
