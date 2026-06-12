@@ -54,8 +54,15 @@ hypotheses_faisabilite:
   dvf_min_ventes: 8                # en deçà, prix DVF non fiable -> on le dit, on n'invente pas
   # --- Prescriptions GPU (Décisions 3.b / 3.c) — PLACEHOLDERS à renseigner par Vic ---
   pct_lls: 0                        # % de logements aidés imposé en secteur de mixité sociale.
-  #                                   0 = non calibré -> CA NON pondéré + avertissement (le libellé
-  #                                   GPU « Clause logements aidés » ne chiffre pas le quota).
+  #   0 = non calibré -> CA NON pondéré + avertissement (PLACEHOLDER visible).
+  #   PROPOSITION SOURCÉE (en attente de validation Vic avant activation) : 30 %.
+  #   Source : Règlement PLU Saint-Paul, Article 2 « Occupations et utilisations du sol soumises
+  #   à des conditions particulières », clause de logement aidé (p.11, Titre 2 Livret 1, zones
+  #   U1a/U1b/U1c/U1d/U1f/U1g/U1pru/U1pso ; valeur identique 30 % dans tous les bassins).
+  #   Déclencheurs : programme SDP ≥ 1 800 m² (30 % de la programmation logement en LLTS/LLS/PLS)
+  #   OU ≥ 20 logements (SDP < 1 800) OU SDP ∈ [1 500 ; 1 800[ OU terrain habitation > 6 000 m²
+  #   (30 % des logements en aidés ou accession sociale PTZ/PSLA). La plupart des programmes
+  #   collectifs estimés ici franchissent ce seuil. -> mettre 30 pour activer après validation.
   prix_m2_lls: 0                    # prix de sortie €/m² des logements aidés (0 = non calibré).
   majoration_vrd_pluvial: 0         # % de majoration du coût (VRD) en zonage eaux pluviales
   #                                   (0 = badge visible mais effet neutre tant que non calibré).
