@@ -333,6 +333,20 @@ input[type=checkbox] { accent-color: var(--gold); }
 .rs-action-k { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); font-weight: 700; margin-right: 8px; }
 @media (max-width: 460px) { .rs-cols { grid-template-columns: 1fr; gap: 12px; } }
 
+/* Occupation actuelle / bâti détecté (correctif R1) — bandeau compact sous le résumé */
+.bati { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; margin: 14px 0 0;
+  padding: 10px 14px; border-radius: 9px; border: 1px solid var(--rule-2); background: var(--card);
+  border-left-width: 3px; font-size: 12.5px; }
+.bati .bt-k { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-faint); font-weight: 700; }
+.bati .bt-label { font-weight: 600; color: var(--ink); }
+.bati .bt-figs { color: var(--ink-soft); }
+.bati .bt-src { margin-left: auto; font-size: 10.5px; color: var(--ink-faint); }
+.bati.bt-ok { border-left-color: var(--v-opportunite); }
+.bati.bt-warn { border-left-color: var(--v-a_creuser); background: #fbf6ea; }
+.bati.bt-bad { border-left-color: var(--v-faux_positif_probable); background: rgba(184,95,76,.07); }
+.bati.bt-bad .bt-label { color: #8a4233; }
+.bati.bt-unk { border-left-color: var(--accent); }
+
 /* Non vérifié — élégant, pas criard */
 .unverified {
   display: flex; gap: 11px; align-items: flex-start; margin: 22px 0 2px; padding: 11px 15px;

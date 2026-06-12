@@ -68,7 +68,10 @@ def test_demo_endpoint(client):
     d = client.get("/demo").json()
     assert {"commune", "parcels", "all_conform"} <= set(d)
     ps = d["parcels"]
-    assert len(ps) == 8 and ps[0]["idu"] == "97415000BP0571" and ps[0]["attendu"] == "opportunite"
+    # R1 : la vitrine est désormais BK0023 (VACANTE) ; BP0571 (résidence) attendue en faux positif.
+    assert len(ps) == 8 and ps[0]["idu"] == "97415000BK0023" and ps[0]["attendu"] == "opportunite"
+    bp = next(p for p in ps if p["idu"] == "97415000BP0571")
+    assert bp["attendu"] == "faux_positif_probable"
     assert {"ordre", "role", "status", "conforme", "present"} <= set(ps[0])
 
 
@@ -78,6 +81,8 @@ def test_fiche_core_sans_bloc_promoteur_lazy(client):
     f = client.get("/parcels/97415000AB0001").json()
     assert "promoteur" not in f
     assert f["verdict"]["status"] and len(f["cascade"]) > 10 and "prospection" in f
+    # Correctif R1 : bloc « Occupation » toujours présent — ici couche absente → honnêteté.
+    assert f["bati"]["disponible"] is False and "non vérifiée" in f["bati"]["label"]
 
 
 def test_enrichment_endpoint_lazy(client):
@@ -103,6 +108,7 @@ def test_export_markdown_et_html(client):
     md = client.get("/parcels/97415000AB0001/export", params={"format": "md"})
     assert md.status_code == 200 and "# LA BUSE" in md.text and "Cascade" in md.text
     assert "Résumé opportunité" in md.text  # Phase 2 : l'export reprend le résumé business
+    assert "Occupation actuelle" in md.text  # R1 : le signal bâti est exporté
     htmlr = client.get("/parcels/97415000AB0001/export", params={"format": "html"})
     assert htmlr.status_code == 200 and "<table" in htmlr.text and "Résumé opportunité" in htmlr.text
 

@@ -484,9 +484,13 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "evaluated_at": ev.evaluated_at if ev else None,
         "rules_version": ev.rules_version if ev else None,
     }
+    # Occupation bâtie (correctif R1) — ratio/nb/plus grand bâtiment + label prudent.
+    from .. import bati as bati_mod
+    bati_block = bati_mod.fiche_block(db, p.id, p.surface_m2)
+
     # Résumé « business » (Phase 2) — dérivé des signaux ci-dessus, repris dans les exports.
     from .resume import build_resume
-    resume = build_resume(verdict_block, cascade, faisabilite, prosp_block)
+    resume = build_resume(verdict_block, cascade, faisabilite, prosp_block, bati=bati_block)
 
     # Assemblage foncier (Phase 5) — voisines adjacentes + drapeau prudent (requête indexée).
     from .voisinage import compute_voisinage
@@ -498,6 +502,7 @@ def _build_fiche(db: Session, idu: str) -> dict:
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
         },
         "resume": resume,
+        "bati": bati_block,
         "voisinage": voisinage,
         "faisabilite": faisabilite,
         "prospection": prosp_block,

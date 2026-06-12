@@ -12,12 +12,21 @@ from sqlalchemy.orm import Session
 
 # Parcelles utiles en démo (IDU stables Saint-Paul) — rôle + ce qu'elles montrent + vigilance.
 # États VÉRIFIÉS après `rebuild-demo --commune 97415` (peuvent évoluer si les données changent).
+# États VÉRIFIÉS après rebuild + correctif R1 « déjà bâti » (BD TOPO bâtiments).
 DEMO_PARCELS = [
-    {"idu": "97415000BP0571", "attendu": "opportunite", "role": "Belle opportunité vérifiée + bilan promoteur lisible",
-     "montre": "opportunité (opp ~77, 9222 m²), prix de marché FIABLE ~4184 €/m², CA ~23,5 M€",
+    {"idu": "97415000BK0023", "attendu": "opportunite",
+     "role": "Parcelle VITRINE — opportunité VACANTE (0 % bâti, vérifiée à l'orthophoto)",
+     "montre": "opp ~74, 9723 m² NUS avec accès voirie ; prix de marché FIABLE ~5310 €/m² (14 ventes) ; CA indicatif ~32-35 M€",
      "vigilance": "« vérifiée » = sur couches dispo ; bilan = simulation indicative"},
-    {"idu": "97415000BS0009", "attendu": "opportunite", "role": "Opportunité avec bilan (2ᵉ exemple)",
-     "montre": "opp ~76, ~3479 m², prix fiable ~4145 €/m², CA ~8,8 M€", "vigilance": "hypothèses travaux/marge à valider"},
+    {"idu": "97415000BV0912", "attendu": "opportunite",
+     "role": "Opportunité avec BÂTI LÉGER signalé (2ᵉ exemple — palier non déclassant)",
+     "montre": "opp ~77, ~3948 m², prix fiable ~3014 €/m² ; « présence de bâti à vérifier (7 %) » affiché honnêtement",
+     "vigilance": "le bâti léger est signalé, pas caché — vérification terrain"},
+    {"idu": "97415000BP0571", "attendu": "faux_positif_probable",
+     "role": "RÉSIDENCE EXISTANTE détectée — correctif « déjà bâti » (ex-fausse vitrine)",
+     "montre": "score brut 77 MAIS « ensemble bâti : 4 bâtiments couvrant 18 % (BD TOPO) » → faux positif. "
+               "Avant le correctif, LA BUSE la vendait comme opportunité à 23,5 M€ — plus maintenant.",
+     "vigilance": "l'histoire à raconter : le produit se corrige et le montre"},
     {"idu": "97415000BN1351", "attendu": "a_creuser", "role": "À creuser — PÉRIMÈTRE PPR (inondation + mvt)",
      "montre": "le PPR rétrograde l'opportunité en « à creuser » + bilan affiché",
      "vigilance": "PPR = prescriptions à vérifier, PAS une exclusion"},
@@ -30,9 +39,6 @@ DEMO_PARCELS = [
      "montre": "« pente 103 % — terrain non aménageable » + SAR vocation naturelle (à vérifier)", "vigilance": "—"},
     {"idu": "97415000BO0619", "attendu": "faux_positif_probable", "role": "Micro-parcelle déclassée",
      "montre": "« micro-parcelle 28 m² — aucun programme possible »", "vigilance": "—"},
-    {"idu": "97415000BK0023", "attendu": "opportunite", "role": "Bord d'équipement CONSERVÉ (anti-sur-déclassement)",
-     "montre": "effleure un parking (<30 %) → reste opportunité (opp ~74)",
-     "vigilance": "honnêteté : on ne sur-déclasse pas"},
 ]
 
 
@@ -79,11 +85,25 @@ _SEED_PIPELINE = [
 
 def seed_demo_pipeline(session: Session, commune: str = "Saint-Paul") -> int:
     """Crée quelques entrées pipeline (idempotent) pour que le Kanban ne soit pas vide en démo.
-    AUCUN nom de personne physique. Réutilise des parcelles réelles de la commune."""
+    AUCUN nom de personne physique.
+
+    Suit les parcelles de DÉMO crédibles (opportunités / à creuser de DEMO_PARCELS) — pas
+    « les 4 premières par ordre d'IDU », qui faisaient suivre des faux positifs en démo
+    (constat d'audit). Repli sur de vraies opportunités si les parcelles de démo manquent."""
     from . import models, prospection
+    wanted = [p["idu"] for p in DEMO_PARCELS if p["attendu"] in ("opportunite", "a_creuser")]
     pids = session.execute(
-        text("SELECT id FROM parcels WHERE commune = :c ORDER BY idu LIMIT :n"),
-        {"c": commune, "n": len(_SEED_PIPELINE)}).scalars().all()
+        text("SELECT id FROM parcels WHERE commune = :c AND idu = ANY(:idus) ORDER BY array_position(:idus, idu) LIMIT :n"),
+        {"c": commune, "idus": wanted, "n": len(_SEED_PIPELINE)}).scalars().all()
+    if len(pids) < len(_SEED_PIPELINE):                       # base de test / parcelles absentes
+        extra = session.execute(text(
+            """SELECT p.id FROM parcels p
+               LEFT JOIN LATERAL (SELECT status FROM parcel_evaluations e WHERE e.parcel_id=p.id
+                 ORDER BY evaluated_at DESC LIMIT 1) e ON true
+               WHERE p.commune = :c AND p.id <> ALL(:got)
+               ORDER BY (e.status = 'opportunite') DESC NULLS LAST, p.idu LIMIT :n"""),
+            {"c": commune, "got": list(pids) or [0], "n": len(_SEED_PIPELINE) - len(pids)}).scalars().all()
+        pids = list(pids) + list(extra)
     n = 0
     for pid, spec in zip(pids, _SEED_PIPELINE):
         session.execute(text("DELETE FROM pipeline_entries WHERE parcel_id = :p"), {"p": pid})  # idempotent
@@ -124,7 +144,8 @@ def healthcheck(session: Session, commune: str = "Saint-Paul") -> dict:
         "FROM dvf_mutations WHERE commune=:c"), {"c": commune}).one()
     chk("DVF geo-dvf", (dvf[0] or 0) > 0 and (dvf[2] or 0) >= 2024, f"{dvf[0]} mutations, période {dvf[1]}-{dvf[2]}")
 
-    for kind, lbl in [("ppr", "PPR"), ("sar", "SAR"), ("osm_faux_positif", "OSM faux positifs")]:
+    for kind, lbl in [("ppr", "PPR"), ("sar", "SAR"), ("osm_faux_positif", "OSM faux positifs"),
+                      ("batiment", "Bâtiments (BD TOPO)")]:
         n = scal("SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind=:k", k=kind) or 0
         chk(lbl, n > 0, f"{n} entités")
 

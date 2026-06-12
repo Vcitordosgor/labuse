@@ -63,6 +63,18 @@ def apply_declassement(status: ES, signals: dict) -> tuple[ES, str | None]:
             blockers.append((ES.A_CREUSER,
                              f"recouvre en partie un {_osm_label(sub)} (OSM, {cov * 100:.0f} %)"))
 
+    # Correctif R1 « déjà bâti » : couverture bâtiments BD TOPO (cf. labuse/bati.py —
+    # classification graduée : la règle « ensemble bâti » attrape les résidences dont le
+    # ratio reste sous 30 % à cause des espaces communs, ex. BP0571 = 18 % / 4 bâtiments).
+    if signals.get("bati_ratio") is not None:
+        from .. import bati as _bati
+        cls = _bati.classify(signals.get("bati_ratio"), signals.get("bati_count") or 0,
+                             signals.get("bati_max_m2") or 0.0, signals.get("surface_m2"))
+        if cls["declasse"] == "faux_positif":
+            blockers.append((ES.FAUX_POSITIF_PROBABLE, cls["motif"]))
+        elif cls["declasse"] == "a_creuser":
+            blockers.append((ES.A_CREUSER, cls["motif"]))
+
     if not blockers:
         return status, None
 
@@ -110,4 +122,12 @@ def compute_declass_signals(session, parcel_ids: list[int]) -> dict[int, dict]:
     for pid, sub, cov in osm:
         out[pid]["osm_subtype"] = sub
         out[pid]["osm_coverage"] = float(cov) if cov is not None else None
+
+    # Correctif R1 : couverture bâtie BD TOPO (batch indexé). Si la couche n'est pas
+    # ingérée, on n'émet PAS de signal (bati_ratio absent → aucune décision « vacant »
+    # mensongère) — la fiche affichera « occupation non vérifiée ».
+    from .. import bati as _bati
+    if _bati.layer_available(session):
+        for pid, st in _bati.stats_batch(session, list(ids)).items():
+            out[pid].update(st)
     return out

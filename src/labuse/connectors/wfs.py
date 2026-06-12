@@ -32,14 +32,24 @@ class WfsConnector(Connector):
         sep = "&" if "?" in base else "?"
         return f"{base}{sep}service=WFS&request=GetCapabilities"
 
-    def fetch_layer(self, endpoint_key: str, typename: str, bbox: tuple | None = None, max_features: int = 1000) -> dict:
-        """GetFeature en GeoJSON (srsName EPSG:4326)."""
+    def fetch_layer(self, endpoint_key: str, typename: str, bbox: tuple | None = None,
+                    max_features: int = 1000, start_index: int = 0,
+                    sort_by: str | None = None) -> dict:
+        """GetFeature en GeoJSON (srsName EPSG:4326).
+
+        `start_index`/`sort_by` : pagination WFS 2.0 (count + startIndex). Un tri stable
+        (ex. `cleabs` en BD TOPO) est requis pour paginer sans doublon ni trou sur les
+        couches volumineuses (bâtiments : >10k entités par commune)."""
         base = self._endpoint(endpoint_key)["base_url"]
         params: dict[str, Any] = {
             "service": "WFS", "version": "2.0.0", "request": "GetFeature",
             "typeNames": typename, "outputFormat": "application/json",
             "srsName": "EPSG:4326", "count": max_features,
         }
+        if start_index:
+            params["startIndex"] = start_index
+        if sort_by:
+            params["sortBy"] = sort_by
         if bbox:
             params["bbox"] = ",".join(str(b) for b in bbox) + ",EPSG:4326"
         with self._client() as c:

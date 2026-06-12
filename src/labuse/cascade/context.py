@@ -63,6 +63,10 @@ class EvalContext:
             return
         self._primed_ids = set(ids)
 
+        # kind='batiment' (>10k polygones BD TOPO par commune) est EXCLU : aucune couche
+        # cascade ne le lit — il alimente le DÉCLASSEMENT (compute_declass_signals) et la
+        # fiche « Occupation », qui font leurs propres requêtes ciblées. Le garder ici
+        # multiplierait le coût d'intersection sans changer aucun verdict.
         for r in self.session.execute(
             text(
                 """
@@ -73,7 +77,7 @@ class EvalContext:
                 FROM parcels p
                 JOIN spatial_layers sl ON ST_Intersects(p.geom_2975, sl.geom_2975)
                 LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
-                WHERE p.id = ANY(:ids)
+                WHERE p.id = ANY(:ids) AND sl.kind <> 'batiment'
                 """
             ), {"ids": ids}
         ).mappings().all():

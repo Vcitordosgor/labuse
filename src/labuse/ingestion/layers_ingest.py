@@ -38,6 +38,7 @@ EROSION_URL = ("https://geolittoral.din.developpement-durable.gouv.fr/telecharge
 KIND_SOURCE = {
     "water": "BD TOPO IGN",
     "voirie": "BD TOPO IGN",
+    "batiment": "BD TOPO IGN",
     "plu_gpu_zone": "Urbanisme PLU/GPU (API Carto)",
     "parc_national": "Parc National de La Réunion (INPN)",
     "abf": "ABF / Monuments historiques",
@@ -334,6 +335,36 @@ def ingest_bdtopo(session, bbox, commune, run_id, sids, kind: str, typename: str
                       f["geometry"], sids.get(KIND_SOURCE[kind]), commune, run_id, None)
         n += 1
     return n
+
+
+def ingest_batiments(session, bbox, commune, run_id, sids, page_size: int = 5000) -> int:
+    """Bâtiments BD TOPO (IGN) — correctif R1 « déjà bâti » : la source bâtiment la plus
+    complète disponible en open data (OSM sous-cartographie La Réunion, vérifié à l'audit :
+    BP0571 ressortait à 18 % de bâti OSM alors que l'orthophoto montre une résidence
+    entière). PAGINÉ (count/startIndex + tri stable cleabs) : >10k bâtiments par commune,
+    bien au-delà du plafond d'une requête GetFeature.
+
+    Consommé par le déclassement (ratio bâti par parcelle) et la fiche « Occupation » —
+    PAS par la cascade (exclu de la pré-computation, cf. EvalContext.prime)."""
+    wfs = WfsConnector("geoplateforme_wfs")
+    n, start = 0, 0
+    while True:
+        fc = wfs.fetch_layer("geoplateforme_wfs", "BDTOPO_V3:batiment", bbox=bbox,
+                             max_features=page_size, start_index=start, sort_by="cleabs")
+        feats = fc.get("features", []) or []
+        for f in feats:
+            if not f.get("geometry"):
+                continue
+            p = f.get("properties") or {}
+            _insert_layer(session, "batiment", p.get("nature"), p.get("usage_1") or "bâtiment",
+                          f["geometry"], sids.get(KIND_SOURCE["batiment"]), commune, run_id,
+                          {"nature": p.get("nature"), "usage": p.get("usage_1"),
+                           "nb_logements": p.get("nombre_de_logements"),
+                           "source": "BD TOPO IGN (Géoplateforme WFS)"})
+            n += 1
+        if len(feats) < page_size:
+            return n
+        start += page_size
 
 
 def ingest_ocsge(session, bbox, commune, run_id, sids) -> int:
@@ -733,6 +764,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("abf", lambda: ingest_abf(session, bbox, commune, run_id, sids)),
         ("water", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "water", "BDTOPO_V3:surface_hydrographique")),
         ("voirie", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "voirie", "BDTOPO_V3:troncon_de_route")),
+        ("batiment", lambda: ingest_batiments(session, bbox, commune, run_id, sids)),
         ("ocs_ge", lambda: ingest_ocsge(session, bbox, commune, run_id, sids)),
         ("foret_publique", lambda: ingest_foret_publique(session, bbox, commune, run_id, sids)),
         ("safer", lambda: ingest_rpg_agricole(session, bbox, commune, run_id, sids)),

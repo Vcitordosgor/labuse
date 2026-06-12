@@ -30,7 +30,7 @@ def test_demo_overview_structure(db_session):
     ov = demo.demo_overview(db_session, "Saint-Paul")
     assert len(ov) == len(demo.DEMO_PARCELS)
     assert {"ordre", "idu", "role", "attendu", "present", "status", "conforme"} <= set(ov[0])
-    assert ov[0]["idu"] == "97415000BP0571" and ov[0]["ordre"] == 1
+    assert ov[0]["idu"] == "97415000BK0023" and ov[0]["ordre"] == 1   # vitrine R1 : vacante
     assert all(o["present"] is False and o["conforme"] is False for o in ov)
 
 

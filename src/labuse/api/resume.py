@@ -56,11 +56,15 @@ def _positifs(cascade: list[dict], bilan: dict) -> list[str]:
     return out[:3]
 
 
-def _vigilance(verdict: dict, cascade: list[dict], bilan: dict, prospection: dict) -> list[str]:
+def _vigilance(verdict: dict, cascade: list[dict], bilan: dict, prospection: dict,
+               bati: dict | None = None) -> list[str]:
     out: list[str] = []
     dg = verdict.get("downgrade_reason")
     if dg:
         out.append(dg)  # motif de déclassement, déjà prudent (« parking sur 82 % », « pente 103 % »)
+    # Bâti léger (5-15 %, non déclassant — correctif R1) : signalé en vigilance.
+    if bati and bati.get("code") == "peu_bati":
+        out.append(f"Présence de bâti à vérifier ({bati.get('ratio_pct')} % de la surface)")
     # Contraintes franches : HARD_EXCLUDE d'abord, puis SOFT_FLAG fort.
     for want in ("HARD_EXCLUDE", "SOFT_FLAG"):
         for c in cascade:
@@ -130,14 +134,15 @@ def _prochaine_action(status: str, vigilance: list[str], prospection: dict) -> s
 
 
 def build_resume(verdict: dict, cascade: list[dict],
-                 faisabilite: dict | None, prospection: dict | None) -> dict:
+                 faisabilite: dict | None, prospection: dict | None,
+                 bati: dict | None = None) -> dict:
     """Bloc « Résumé opportunité » : statut, synthèse, ≤3 positifs, ≤3 vigilances, action."""
     cascade = cascade or []
     prospection = prospection or {}
     bilan = _bilan(faisabilite)
     status = verdict.get("status") or "inconnu"
     positifs = _positifs(cascade, bilan)
-    vigilance = _vigilance(verdict, cascade, bilan, prospection)
+    vigilance = _vigilance(verdict, cascade, bilan, prospection, bati)
     return {
         "statut": status,
         "statut_label": STATUT_LABEL.get(status, "Non évaluée"),

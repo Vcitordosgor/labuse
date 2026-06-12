@@ -57,6 +57,14 @@ def fiche_markdown(fiche: dict) -> str:
         if rv.get("prochaine_action"):
             lines += [f"**Prochaine action :** {rv['prochaine_action']}", ""]
 
+    bt = fiche.get("bati") or {}
+    if bt:
+        lines += ["## Occupation actuelle (bâti détecté)", "", f"**{bt.get('label', '—')}**"]
+        if bt.get("disponible"):
+            lines.append(f"- Couverture bâtie : {bt.get('ratio_pct')} % · {bt.get('nb_batiments')} bâtiment(s)"
+                         + (f" · plus grand : {bt.get('plus_grand_m2')} m²" if bt.get("plus_grand_m2") else ""))
+        lines += [f"- Source : {bt.get('source')} · confiance : {bt.get('confiance')}", ""]
+
     lines += ["## Cascade — traçabilité complète", "",
               "| Couche | Verdict | Sévérité | Détail | Source |",
               "|---|---|---|---|---|"]
@@ -150,6 +158,16 @@ def fiche_html(fiche: dict) -> str:
             f"<p><strong>Pourquoi elle ressort :</strong></p><ul>{pos}</ul>"
             f"<p><strong>À vérifier :</strong></p><ul>{vig}</ul>"
             f"<p><strong>Prochaine action :</strong> {html.escape(rv.get('prochaine_action', ''))}</p>")
+    bt = fiche.get("bati") or {}
+    bati_html = ""
+    if bt:
+        figs = (f"<li>Couverture bâtie : {bt.get('ratio_pct')} % · {bt.get('nb_batiments')} bâtiment(s)"
+                + (f" · plus grand : {bt.get('plus_grand_m2')} m²" if bt.get("plus_grand_m2") else "")
+                + "</li>") if bt.get("disponible") else ""
+        bati_html = ("<h2>Occupation actuelle (bâti détecté)</h2>"
+                     f"<p><strong>{html.escape(bt.get('label', '—'))}</strong></p><ul>{figs}"
+                     f"<li>Source : {html.escape(str(bt.get('source')))} · "
+                     f"confiance : {html.escape(str(bt.get('confiance')))}</li></ul>")
     ai = fiche.get("ai") or {}
     cv = _comparables_view(fiche)
     comp_html = ("" if not cv else
@@ -213,6 +231,7 @@ def fiche_html(fiche: dict) -> str:
 <p class="score">Opportunité {_score(v['opportunity_score'])}/100 · Complétude {_score(v['completeness_score'])}/100</p>
 <p><strong>Raisons :</strong></p><ul>{reasons}</ul>
 {resume_html}
+{bati_html}
 <h2>Cascade — traçabilité</h2>
 <table><tr><th>Couche</th><th>Verdict</th><th>Sévérité</th><th>Détail</th><th>Source</th></tr>{rows}</table>
 <h2>Sources</h2>

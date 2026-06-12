@@ -343,6 +343,8 @@ function renderFiche(f) {
 
     ${renderResume(f.resume)}
 
+    ${renderBati(f.bati)}
+
     ${unverifiedLine}
 
     <section class="reads">
@@ -407,6 +409,24 @@ function renderResume(r) {
         <div class="rs-col"><h4 class="rs-h warn">À vérifier</h4>${li(r.vigilance)}</div>
       </div>
       <div class="rs-action"><span class="rs-action-k">Prochaine action</span> ${esc(r.prochaine_action)}</div>
+    </section>`;
+}
+
+// Occupation actuelle / bâti détecté (correctif R1) — toujours affiché, y compris
+// « non vérifiée » si la couche bâtiments n'est pas ingérée (jamais un faux « vacant »).
+function renderBati(b) {
+  if (!b) return "";
+  const tone = { vacant: "ok", peu_bati: "warn", partiellement_bati: "warn",
+    deja_bati_probable: "bad", deja_bati: "bad", ensemble_bati: "bad", inconnu: "unk" }[b.code] || "unk";
+  const figs = b.disponible
+    ? `<span class="bt-figs">${b.ratio_pct} % bâti · ${b.nb_batiments} bâtiment${b.nb_batiments > 1 ? "s" : ""}${b.plus_grand_m2 ? ` · plus grand ${fmt(b.plus_grand_m2)} m²` : ""}</span>`
+    : "";
+  return `
+    <section class="bati bt-${tone}">
+      <span class="bt-k">Occupation actuelle</span>
+      <span class="bt-label">${esc(b.label)}</span>
+      ${figs}
+      <span class="bt-src">${esc(b.source)} · confiance ${esc(b.confiance)}</span>
     </section>`;
 }
 
