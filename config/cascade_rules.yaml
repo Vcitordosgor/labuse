@@ -62,13 +62,35 @@ layers:
     enabled: true
     params:
       spatial_kind: plu_gpu_zone
-      # libelle de zone (libelle court) → verdict
-      # N → flag fort (exclude possible selon sous-zone) ; A → flag (SAFER) ; U/AU → POSITIVE
-      exclude_zones: []                       # sous-zones N strictement inconstructibles (ex. Nr)
-      flag_fort_prefixes: [N]
-      flag_prefixes: [A]
+      # libelle de zone (libelle court) → verdict.
+      # U/AU → POSITIVE (constructible). A (agricole) / N (naturelle) → HARD_EXCLUDE :
+      # non constructibles au règlement du PLU de Saint-Paul (plu_saint_paul.yaml). Décision Vic
+      # (aligner la cascade sur la réalité PLU). U/AU sont testés AVANT A/N (AU commence par « A »).
+      exclude_zones: []                       # sous-zones strictement listées (ex. Nr) — exact match
       positive_prefixes: [U, AU]
+      hard_exclude_prefixes: [A, N]
+      # préfixes de repli (sous-zones non couvertes par les listes ci-dessus) — vides par défaut :
+      flag_fort_prefixes: []
+      flag_prefixes: []
       positive_bonus_key: zonage_u_au
+
+  - name: prescription_plu
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: plu_gpu_prescription
+      # Mapping typepsc CNIG → classe de contrainte, CALIBRÉ sur les prescriptions RÉELLES
+      # de Saint-Paul (API Carto GPU) — le libellé GPU reste toujours affiché, jamais inventé :
+      #   01 EBC · 05 emplacement réservé · 07 élément bâti protégé (L151-19) ·
+      #   17 (+16) secteur de mixité sociale · 18 OAP · 48 zonage eaux pluviales
+      emplacement_reserve_typepsc: ["05"]
+      boise_classe_typepsc: ["01"]
+      patrimoine_bati_typepsc: ["07"]
+      mixite_sociale_typepsc: ["16", "17"]
+      oap_typepsc: ["18"]
+      eaux_pluviales_typepsc: ["48"]
+      # couverture (0..1) à partir de laquelle un ER est jugé « majoritaire » → sévérité forte :
+      majorite_threshold: 0.5
 
   - name: safer
     phase: 1

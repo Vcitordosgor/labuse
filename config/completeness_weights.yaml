@@ -32,7 +32,7 @@ bands:
 # `cadastre` est spécial : couvert dès que la parcelle est ingérée (géométrie connue).
 family_layers:
   cadastre: []
-  zonage_plu_gpu: [zonage_plu_gpu]
+  zonage_plu_gpu: [zonage_plu_gpu, prescription_plu]
   sar: [sar]
   risques_georisques_ppr: [risques]
   agricole_safer: [safer]

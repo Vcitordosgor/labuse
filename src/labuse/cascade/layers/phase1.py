@@ -178,11 +178,96 @@ class ZonagePluGpuLayer(Layer):
                 params.get("positive_bonus_key", "zonage_u_au"),
                 source=SRC_GPU,
             )
+        # A (agricole) / N (naturelle) : non constructibles au règlement du PLU de Saint-Paul
+        # (cf. plu_saint_paul.yaml « zones non constructibles : A, N »). HARD_EXCLUDE (décision
+        # Vic : aligner cascade ↔ réalité PLU). Testé APRÈS U/AU (AU commence par « A »).
+        if any(up.startswith(p) for p in params.get("hard_exclude_prefixes", [])):
+            nature = "agricole" if up.startswith("A") else "naturelle"
+            return hard_exclude(
+                self.name,
+                f"Exclue : zone PLU « {libelle} » ({nature} — non constructible au règlement).",
+                kind="faux_positif", source=SRC_GPU,
+            )
         if any(up.startswith(p) for p in params.get("flag_fort_prefixes", [])):
             return soft_flag(self.name, f"Zone PLU « {libelle} » (naturelle).", Severity.FORT, source=SRC_GPU)
         if any(up.startswith(p) for p in params.get("flag_prefixes", [])):
             return soft_flag(self.name, f"Zone PLU « {libelle} » (agricole — SAFER).", Severity.MOYEN, source=SRC_GPU)
         return passed(self.name, f"Zone PLU « {libelle} ».", source=SRC_GPU)
+
+
+@register
+class PrescriptionPluLayer(Layer):
+    """Prescriptions du PLU (GPU) : emplacement réservé, mixité sociale, EBC, patrimoine bâti,
+    OAP, eaux pluviales… De VRAIES servitudes opposables, jusque-là non lues par la cascade.
+
+    PRUDENCE assumée : aucune prescription n'exclut SEULE (ce sont des servitudes/contraintes
+    de programme, pas une inconstructibilité de droit). Le libellé GPU est TOUJOURS affiché ;
+    le `typepsc` CNIG ne sert qu'à graduer la sévérité (mapping dans cascade_rules.yaml).
+    Peut émettre PLUSIEURS verdicts (une parcelle peut cumuler ER + mixité + eaux pluviales)."""
+
+    name = "prescription_plu"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> list[Verdict]:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return [unknown(self.name, "Prescriptions PLU/GPU non ingérées.", source=SRC_GPU)]
+        # lin/pct ont une couverture surfacique ~0 mais intersectent réellement (présence).
+        inter = [i for i in ctx.intersections(parcel.id, kind)
+                 if i.coverage > 0 or (i.attrs or {}).get("geom_kind") in ("lin", "pct")]
+        if not inter:
+            return [passed(self.name, "Aucune prescription PLU sur la parcelle.", source=SRC_GPU)]
+
+        er = set(params.get("emplacement_reserve_typepsc", []))
+        ebc = set(params.get("boise_classe_typepsc", []))
+        mixite = set(params.get("mixite_sociale_typepsc", []))
+        patrimoine = set(params.get("patrimoine_bati_typepsc", []))
+        oap = set(params.get("oap_typepsc", []))
+        eaux = set(params.get("eaux_pluviales_typepsc", []))
+        seuil = float(params.get("majorite_threshold", 0.5))
+
+        verdicts: list[Verdict] = []
+        seen: set[tuple[str | None, str]] = set()
+        for i in inter:
+            tp = (i.subtype or "").strip()
+            lib = ((i.attrs or {}).get("libelle") or i.name or "prescription PLU").strip()
+            if (tp, lib) in seen:
+                continue
+            seen.add((tp, lib))
+            pct = f" (~{i.coverage * 100:.0f}% de la parcelle)" if i.coverage >= 0.01 else ""
+            # Contraintes DISCRIMINANTES (spécifiques à la parcelle) → SOFT_FLAG pénalisant.
+            if tp in er:
+                sev = Severity.FORT if i.coverage >= seuil else Severity.MOYEN
+                verdicts.append(soft_flag(
+                    self.name, f"Emplacement réservé : {lib}{pct} — emprise grevée au profit d'un "
+                    "projet public, constructibilité réduite (servitude levable).", sev, source=SRC_GPU))
+            elif tp in ebc:
+                verdicts.append(soft_flag(
+                    self.name, f"Espace boisé classé (EBC) : {lib}{pct} — toute construction interdite "
+                    "sur l'emprise boisée (Art. L113-1 CU).", Severity.FORT, source=SRC_GPU))
+            elif tp in patrimoine:
+                verdicts.append(soft_flag(
+                    self.name, f"Élément bâti protégé (Art. L151-19 CU) : {lib} — démolition/modification "
+                    "encadrée (frein à la restructuration).", Severity.MOYEN, source=SRC_GPU))
+            # Contraintes de PROGRAMME / quasi communales (mixité 92 %, eaux pluviales 96 %, OAP) :
+            # RÉELLES mais NON discriminantes → PASS informatif (recensé, tracé, AUCUNE pénalité,
+            # pas de bruit dans la vigilance). L'impact mixité est porté par le bilan, pas le score.
+            elif tp in mixite:
+                verdicts.append(passed(
+                    self.name, f"Secteur de mixité sociale : {lib} — quota de logements aidés imposé "
+                    "(impacte le bilan, pas la constructibilité).", source=SRC_GPU))
+            elif tp in oap:
+                verdicts.append(passed(
+                    self.name, f"Orientation d'aménagement (OAP) : {lib} — secteur de projet encadré "
+                    "(principes d'aménagement à respecter).", source=SRC_GPU))
+            elif tp in eaux:
+                verdicts.append(passed(
+                    self.name, f"Zonage des eaux pluviales : {lib} — rétention/infiltration imposée "
+                    "(impacte la conception, pas la constructibilité).", source=SRC_GPU))
+            else:
+                verdicts.append(soft_flag(
+                    self.name, f"Prescription PLU : {lib}{pct} — à vérifier au règlement.",
+                    Severity.FAIBLE, source=SRC_GPU))
+        return verdicts
 
 
 @register

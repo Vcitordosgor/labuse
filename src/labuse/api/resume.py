@@ -72,6 +72,13 @@ def _vigilance(verdict: dict, cascade: list[dict], bilan: dict, prospection: dic
                 continue
             if want == "SOFT_FLAG" and c.get("severity") not in (None, "fort"):
                 continue
+            # Prescriptions PLU (ER majoritaire, EBC) : on remonte le LIBELLÉ précis, pas un
+            # label générique (« Emplacement réservé : ER 68 … (~53 %) »), tronqué avant l'explication.
+            if c.get("layer_name") == "prescription_plu":
+                txt = _clean(c.get("detail")).split(" — ")[0].strip()
+                if txt and txt not in out:
+                    out.append(txt)
+                continue
             lbl = _VIGILANCE_LABEL.get(c.get("layer_name"))
             if lbl and lbl not in out:
                 out.append(lbl)

@@ -35,7 +35,7 @@ def _verdict(outcome, layer, result=None):
 def test_statuts_attendus(demo):
     expected = {
         1: EvaluationStatus.OPPORTUNITE,
-        2: EvaluationStatus.A_CREUSER,
+        2: EvaluationStatus.FAUX_POSITIF_PROBABLE,  # zone Ab agricole → HARD_EXCLUDE (non constructible au PLU)
         3: EvaluationStatus.EXCLUE,
         4: EvaluationStatus.FAUX_POSITIF_PROBABLE,
         5: EvaluationStatus.EXCLUE,
@@ -95,6 +95,15 @@ def test_indivision_flag_fort(demo):
 def test_sar_agricole_est_un_flag_fort(demo):
     flag = _verdict(demo[2], "sar", CascadeVerdict.SOFT_FLAG)
     assert flag and flag.severity == Severity.FORT
+
+
+def test_zonage_agricole_naturel_hard_exclude(demo):
+    """Décision Vic : zones A (agricole) et N (naturelle) → HARD_EXCLUDE (non constructibles
+    au règlement du PLU de Saint-Paul). U/AU restent constructibles (testés avant A/N)."""
+    for num, nature in ((2, "agricole"), (4, "naturelle")):  # P2 = Ab, P4 = N
+        he = _verdict(demo[num], "zonage_plu_gpu", CascadeVerdict.HARD_EXCLUDE)
+        assert he and he.exclude_kind == "faux_positif" and nature in he.detail.lower()
+    assert _verdict(demo[1], "zonage_plu_gpu", CascadeVerdict.POSITIVE)  # U reste constructible
 
 
 def test_surface_calculee_non_excluante(demo):

@@ -40,6 +40,7 @@ KIND_SOURCE = {
     "voirie": "BD TOPO IGN",
     "batiment": "BD TOPO IGN",
     "plu_gpu_zone": "Urbanisme PLU/GPU (API Carto)",
+    "plu_gpu_prescription": "Urbanisme PLU/GPU (API Carto)",
     "parc_national": "Parc National de La Réunion (INPN)",
     "abf": "ABF / Monuments historiques",
     "potentiel_foncier": "data.regionreunion.com — Potentiel foncier",
@@ -153,6 +154,48 @@ def ingest_gpu_zones(session, bbox, commune, run_id, sids) -> int:
                       sids.get(KIND_SOURCE["plu_gpu_zone"]), commune, run_id,
                       {"libelle": p.get("libelle"), "partition": p.get("partition"), "idurba": p.get("idurba")})
         n += 1
+    return n
+
+
+# Endpoints prescriptions GPU : (geom_kind interne, chemin API).
+_PRESCRIPTION_ENDPOINTS = (("surf", "prescription-surf"), ("lin", "prescription-lin"), ("pct", "prescription-pct"))
+
+
+def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids) -> int:
+    """Prescriptions du PLU (API Carto GPU) → kind='plu_gpu_prescription', subtype=typepsc.
+
+    Surfaciques + linéaires + ponctuelles : emplacements réservés (ER), secteurs de mixité
+    sociale, espaces boisés classés (EBC), zonage des eaux pluviales… Ce sont de VRAIES
+    contraintes opposables, jusqu'ici non ingérées (la cascade ne lisait que le zonage).
+    Le GPU fournit le LIBELLÉ lisible : on le stocke tel quel (jamais inventé). La géométrie
+    surf est un polygone (couverture mesurable) ; lin/pct sont ligne/point (présence seule).
+    Source/url/millésime (idurba) tracés. Idempotent à l'appelant (purge avant rechargement)."""
+    poly = json.dumps(_bbox_polygon(bbox))
+    src = sids.get(KIND_SOURCE["plu_gpu_prescription"])
+    n = 0
+    with _client() as c:
+        for geom_kind, endpoint in _PRESCRIPTION_ENDPOINTS:
+            try:
+                r = c.get(f"{APICARTO}/gpu/{endpoint}", params={"geom": poly})
+                r.raise_for_status()
+                feats = r.json().get("features", []) or []
+            except Exception:
+                continue  # un endpoint vide/en échec n'empêche pas les autres (résultats partiels)
+            for f in feats:
+                if not f.get("geometry"):
+                    continue
+                p = f.get("properties") or {}
+                typepsc = (p.get("typepsc") or "").strip() or None
+                libelle = (p.get("libelle") or p.get("txt") or "prescription PLU").strip()
+                _insert_layer(
+                    session, "plu_gpu_prescription", typepsc, libelle[:255], f["geometry"],
+                    src, commune, run_id,
+                    {"typepsc": typepsc, "stypepsc": p.get("stypepsc"), "libelle": libelle,
+                     "txt": p.get("txt") or None, "geom_kind": geom_kind, "idurba": p.get("idurba"),
+                     "partition": p.get("partition"),
+                     "source": f"API Carto GPU — {endpoint}",
+                     "url_source": f"{APICARTO}/gpu/{endpoint}", "millesime": p.get("idurba")})
+                n += 1
     return n
 
 
@@ -759,6 +802,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
     counts: dict[str, object] = {}
     jobs = [
         ("plu_gpu_zone", lambda: ingest_gpu_zones(session, bbox, commune, run_id, sids)),
+        ("plu_gpu_prescription", lambda: ingest_gpu_prescriptions(session, bbox, commune, run_id, sids)),
         ("parc_national", lambda: ingest_parc_national(session, commune, run_id, sids)),
         ("potentiel_foncier", lambda: ingest_potentiel_foncier(session, insee, commune, run_id, sids)),
         ("abf", lambda: ingest_abf(session, bbox, commune, run_id, sids)),
