@@ -1,10 +1,11 @@
 # LA BUSE — Script de vente (3 / 10 / 25 min) + 20 objections
 
 > Chiffres RÉELS vérifiés en base (rejouer `labuse warm-demo` avant tout rendez-vous) :
-> BP0571 = opportunité 77, 9 222 m², prix DVF **fiable** ~4 184 €/m², CA indicatif ~23,5 M€ ·
-> BO0845 = score brut élevé mais **parking 82 %** → déclassée · BN1351 = **périmètre PPR**
-> → « à creuser » · BK0023 = effleure un parking <30 % → **conservée** · continuité foncière
-> BP0571 : 2 parcelles contiguës ~10 690 m².
+> BK0023 = opportunité 74, 9 723 m² **VACANTS (0 % bâti, vérifié orthophoto)**, prix DVF **fiable** ~5 310 €/m², CA indicatif ~33 M€ ·
+> BP0571 = **résidence existante DÉTECTÉE** (« ensemble bâti : 4 bâtiments, 18 % » → faux positif) ·
+> BO0845 = score brut élevé mais **parking 82 %** → déclassée · BN1351 = **périmètre PPR** → « à creuser » ·
+> BV0912 = bâti léger **7 % signalé sans déclasser** (on ne sur-corrige pas) ·
+> continuité foncière : parcelles contiguës listées sur chaque fiche, surface cumulée affichée.
 
 ## À ne JAMAIS dire (quel que soit le format)
 « constructible » en promesse · « rentable / rentabilité garantie » · « le propriétaire,
@@ -20,10 +21,10 @@ Si on ne sait pas : « Je ne sais pas, je vérifie et je reviens vers vous. »
    qui ne tiendra pas ? Nous, on a fait pré-analyser les 3 000 parcelles de Saint-Paul. »
 2. **Carte** — « En vert, les opportunités vérifiées sur les couches publiques : PLU, PPR,
    SAR, littoral, forêt, ventes DVF. Le reste est classé et **motivé**. »
-3. **BP0571** — « Exemple : 9 200 m², zone U, accès voirie. Prix de marché **fiable** à
-   ~4 200 €/m² sur ventes DVF réelles ; bilan indicatif ~23 M€ de CA. Tout est sourcé. »
-4. **BO0845** — « Et l'inverse : score brut élevé… mais c'est un **parking à 82 %**.
-   Déclassée, motif affiché. On ne vous vend pas n'importe quoi. »
+3. **BK0023** — « Exemple : 9 700 m² VACANTS — zéro bâtiment détecté, vérifié à l'orthophoto —
+   zone U, accès voirie. Prix de marché **fiable** ~5 300 €/m² (ventes DVF réelles) ; bilan indicatif ~33 M€ de CA. Tout est sourcé. »
+4. **BP0571** — « Et l'inverse : score brut 77… mais c'est une **résidence existante** : 4 bâtiments
+   détectés (BD TOPO) → faux positif, motif affiché. Même chose pour un parking à 82 % (BO0845). On ne vous vend pas n'importe quoi. »
 5. **Conclusion** — « C'est un copilote de prospection : il vérifie, il explique, il
    priorise. Il ne garantit rien — il vous fait gagner le pré-tri. 30 minutes cette
    semaine pour le passer sur vos critères ? »
@@ -34,10 +35,10 @@ Si on ne sait pas : « Je ne sais pas, je vérifie et je reviens vers vous. »
 |---|---|---|
 | 0-1 | — | « Avant de montrer quoi que ce soit : LA BUSE travaille sur **données publiques**. Elle ne garantit ni constructibilité ni rentabilité — elle pré-trie, elle explique, elle organise. Si vous cherchez une boule de cristal, ce n'est pas nous. » |
 | 1-2 | carte | « Saint-Paul entier est évalué. Vert = opportunité vérifiée, jaune = à creuser, le reste écarté **avec motif**. Filtres surface/score/statut. » |
-| 2-4 | BP0571 | « Verdict + DEUX scores : opportunité **et** complétude — on ne montre jamais l'un sans l'autre. Résumé : pourquoi elle ressort, quoi vérifier, prochaine action. » |
+| 2-4 | BK0023 | « Verdict + DEUX scores : opportunité **et** complétude — on ne montre jamais l'un sans l'autre. Résumé : pourquoi elle ressort, quoi vérifier, prochaine action. » |
 | 4-5 | bilan | « Prix issu des ventes DVF 2021-2025 géolocalisées, neuf et ancien séparés. Quand l'échantillon est faible, on l'écrit : "fragile". Le bilan reste **indicatif** — vos coûts, votre marge. » |
-| 5-6 | BO0845 | « Le piège classique : brut élevé, mais parking 82 %. Déclassée, motif visible, score brut conservé par transparence. » |
-| 6-7 | BN1351 | « Périmètre **PPR** : on rétrograde en "à creuser" — prescriptions à vérifier au règlement, pas une interdiction inventée. Et BK0023, qui effleure un parking à moins de 30 % : **conservée**. On ne sur-déclasse pas non plus. » |
+| 5-6 | BP0571 + BO0845 | « Les pièges classiques : une RÉSIDENCE EXISTANTE (4 bâtiments, BD TOPO) et un parking à 82 % — déclassées, motif visible, score brut conservé par transparence. » |
+| 6-7 | BN1351 | « Périmètre **PPR** : on rétrograde en "à creuser" — prescriptions à vérifier au règlement, pas une interdiction inventée. Et BV0912, 7 % de bâti léger : **signalé sans déclasser**. On ne sur-corrige pas non plus. » |
 | 7-8 | voisines | « Continuité foncière : les parcelles contiguës, leur statut, la surface cumulée — ici ~10 700 m² sur 2 parcelles. Un assemblage **peut** être étudié ; propriétaires et accords restent à vérifier. » |
 | 8-9 | pipeline + export | « Vous suivez vos cibles : propriétaire à identifier, prochaine action datée, responsable. Et vous exportez une fiche propre pour votre comité. » |
 | 9-10 | — | « Voilà ce que ça fait, et voilà ce que ça ne fait pas. La suite logique, c'est de le passer sur VOS critères : c'est exactement notre pilote de 45 jours. Je vous propose un second rendez-vous de 25 minutes pour le cadrer ? » |
@@ -146,7 +147,7 @@ Format : **R.** réponse courte · **D.** détail · **P.** phrase prudente · *
 11. **« Le prix est fiable ? »**
     **R.** Quand il l'est, on l'écrit ; quand il ne l'est pas, on écrit « fragile ».
     **D.** Médiane DVF, rayon adaptatif, aberrants exclus (méthode affichée « en clair ») ;
-    BP0571 : fiable, ~4 184 €/m². Échantillon faible → fragile, assumé.
+    BK0023 : fiable, ~5 310 €/m². Échantillon faible → fragile, assumé.
     **P.** « Le prix de marché peut être fiable ; le bilan reste indicatif. »
 
 12. **« Pourquoi je paierais pour des données publiques ? »**

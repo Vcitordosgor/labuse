@@ -12,10 +12,10 @@
 > ventes DVF), fait remonter les opportunités et écarte les pièges — parkings, pentes,
 > micro-parcelles — avec le motif affiché.
 >
-> Sur Saint-Paul : 3 000 parcelles évaluées, ~800 classées « opportunité », chaque
-> verdict tracé jusqu'à sa source. Exemple concret : une parcelle de 9 200 m² en zone U,
-> prix de marché DVF fiable ~4 200 €/m² — et, à l'inverse, un « beau » terrain déclassé
-> parce que c'est un parking à 82 %.
+> Sur Saint-Paul : 3 000 parcelles évaluées, ~120 retenues « opportunité » après contrôle
+> du bâti existant (BD TOPO), chaque verdict tracé jusqu'à sa source. Exemple concret :
+> 9 700 m² VACANTS en zone U, prix de marché DVF fiable ~5 300 €/m² — et, à l'inverse,
+> une résidence existante ou un parking à 82 % : déclassés, motif affiché.
 >
 > Ça ne garantit ni constructibilité ni rentabilité — ça fait gagner les heures de
 > pré-tri et ça arrive mieux préparé sur les bonnes parcelles.
@@ -113,9 +113,9 @@ un simple tableur suffit pour les prospects au début.
 - **Ce qu'elle ne prétend pas faire** : garantir la constructibilité (CU/terrain) ·
   remplacer votre expertise · fournir le propriétaire automatiquement (à identifier,
   saisie manuelle — choix légal).
-- **Exemples de signaux** (réels) : 9 222 m² zone U, prix fiable ~4 184 €/m² · parking
+- **Exemples de signaux** (réels) : 9 723 m² VACANTS zone U (0 % bâti), prix fiable ~5 310 €/m² · résidence existante détectée (4 bâtiments) et écartée · parking
   82 % déclassé · périmètre PPR → « à creuser » · 2 parcelles contiguës ~10 690 m².
-- **Captures à prévoir** : carte Saint-Paul (verts) · fiche BP0571 (résumé+bilan) ·
+- **Captures à prévoir** : carte Saint-Paul (verts) · fiche BK0023 (résumé+bilan) ·
   fiche BO0845 (motif parking) · pipeline kanban.
 - **Offre pilote** : 45 jours accompagnés — accès + session 2 h + short-list co-validée
   + suivi + bilan écrit — **2 500 € TTC**.
@@ -124,7 +124,7 @@ un simple tableur suffit pour les prospects au début.
 ## 5. Plan d'action 7 jours
 | Jour | Action |
 |---|---|
-| **J1** | Lister 20 prospects (méthode §3) ; vérifier la démo (`CLIENT_DEMO_CHECKLIST.md`) ; imprimer 5 one-pagers + 3 exports BP0571 |
+| **J1** | Lister 20 prospects (méthode §3) ; vérifier la démo (`CLIENT_DEMO_CHECKLIST.md`) ; imprimer 5 one-pagers + 3 exports BK0023 |
 | **J2** | Envoyer 10 mails froids (§1.1) + 10 invitations LinkedIn (§1.2) — matinée ; après-midi : répéter la démo 10 min à voix haute ×2 |
 | **J3** | 5 appels directs aux pétitionnaires de PC identifiés ; WhatsApp aux contacts connus (§1.3) |
 | **J4** | Relances J+4 (§1.4) sur la vague J2 sans réponse |

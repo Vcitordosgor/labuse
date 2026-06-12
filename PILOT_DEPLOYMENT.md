@@ -108,7 +108,7 @@ labuse api
 - [ ] `labuse prepare-pilot` → **✅ PILOTE PRÊT** (la veille, puis le matin même) ;
 - [ ] réseau du lieu testé (tuiles carte + unpkg accessibles) ;
 - [ ] `labuse api` lancé, `/app/` ouvert, panneau « Démo guidée » → **✅ Démo prête** ;
-- [ ] fiches BP0571 / BO0845 / BN1351 ouvertes une fois (instantanées si warm fait) ;
+- [ ] fiches BK0023 / BP0571 (résidence détectée) / BO0845 / BN1351 ouvertes une fois (instantanées si warm fait) ;
 - [ ] un export (md/html) ouvert et gardé sous la main ;
 - [ ] relire `DEMO_PACK.md` (script, objections, limites) — et ses versions imprimables.
 

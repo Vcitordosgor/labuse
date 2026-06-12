@@ -36,25 +36,25 @@ python -m labuse.cli api          # FastAPI (uvicorn) → http://localhost:8000/
 
 | IDU | Rôle | Ce qu'elle montre | Vigilance |
 |---|---|---|---|
-| 97415000BP0571 | **Belle opportunité + bilan** | opp ~77, 9222 m², prix **fiable** ~4184 €/m², CA ~23,5 M€ | « vérifiée » = sur couches dispo ; bilan = simulation indicative |
-| 97415000BS0009 | Opportunité + bilan (2ᵉ ex.) | opp ~76, prix fiable ~4145 €/m², CA ~8,8 M€ | hypothèses travaux/marge à valider |
+| 97415000BK0023 | **VITRINE — opportunité VACANTE + bilan** | opp ~74, **9 723 m² nus (0 % bâti, vérifié orthophoto)**, accès voirie, prix **fiable** ~5 310 €/m², CA indicatif ~32-35 M€ | « vérifiée » = sur couches dispo ; bilan = simulation indicative |
+| 97415000BV0912 | Opportunité + **bâti léger signalé** (2ᵉ ex.) | opp ~77, ~3 948 m², prix fiable ~3 014 €/m² ; « présence de bâti à vérifier (7 %) » affiché | bâti léger signalé, pas caché — terrain à vérifier |
+| 97415000BP0571 | **RÉSIDENCE DÉTECTÉE — correctif « déjà bâti »** | score brut 77 mais « ensemble bâti : 4 bâtiments couvrant 18 % (BD TOPO) » → faux positif | l'argument honnêteté : on s'est corrigés et on le montre |
 | 97415000BN1351 | **À creuser — périmètre PPR** | le PPR rétrograde l'opportunité en « à creuser » + bilan | PPR = prescriptions, **pas** exclusion |
 | 97415000BH0283 | SAR compatible | vocation « urbanisé à densifier » | compatibilité ≠ constructibilité |
 | 97415000BO0845 | **Faux positif PARKING déclassé** | brut ~82 mais « faux positif » + « parking sur 82 % (OSM) » | score brut conservé (transparence) |
 | 97415000BV1431 | **Faux positif PENTE déclassé** | « pente 103 % — terrain non aménageable » + SAR naturel | — |
 | 97415000BO0619 | Micro-parcelle déclassée | « micro-parcelle 28 m² — aucun programme » | — |
-| 97415000BK0023 | Bord d'équipement CONSERVÉ | effleure un parking (<30 %) → reste opportunité | anti-sur-déclassement (honnêteté) |
 
 ## 5. Scénario de démo recommandé (≈ 8 min)
 
-1. **Carte** : « voici Saint-Paul, en vert les opportunités vérifiées ».
-2. **BP0571** : belle opportunité vérifiée → bilan (prix de marché **fiable** 4184 €/m², CA ~23,5 M€, neuf vs ancien, charge foncière).
-3. **BN1351** : opportunité… mais **périmètre PPR** → « à creuser », prescriptions à vérifier (PPR ≠ exclusion).
-4. **BO0845** : « score brut 82… mais c'est un **parking** » → faux positif déclassé, motif visible. *La confiance avant l'effet waouh.*
-5. **BV1431** : pente 103 % → déclassée. **BK0023** : effleure un parking mais **conservée** → on ne sur-déclasse pas.
-6. **Prospection** : sur BP0571, « + Suivre » → « Propriétaire à identifier » → prochaine action + contact manuel.
+1. **Carte** : « voici Saint-Paul, en vert les opportunités vérifiées — et VACANTES (bâti contrôlé sur BD TOPO) ».
+2. **BK0023** : opportunité vitrine, **0 % bâti** → bilan (prix de marché **fiable** ~5 310 €/m², CA indicatif ~33 M€, neuf vs ancien, charge foncière).
+3. **BP0571** : « score brut 77… mais c'est une **résidence existante** : 4 bâtiments détectés (BD TOPO) → faux positif ». *L'outil détecte le déjà-bâti — la confiance avant l'effet waouh.*
+4. **BN1351** : opportunité… mais **périmètre PPR** → « à creuser », prescriptions à vérifier (PPR ≠ exclusion).
+5. **BO0845** : parking sur 82 % → déclassée. **BV1431** : pente 103 % → déclassée. **BV0912** : bâti léger 7 % → **signalé sans déclasser** (on ne sur-corrige pas).
+6. **Prospection** : sur BK0023, « + Suivre » → « Propriétaire à identifier » → prochaine action + contact manuel.
 7. **Kanban** : pipeline de prospection (entrées de démo) → organiser le suivi.
-8. **Export** : fiche Markdown/HTML présentable en réunion.
+8. **Export** : fiche Markdown/HTML présentable en réunion (avec la section « Occupation actuelle »).
 
 ## 6. Limites à expliquer honnêtement
 

@@ -30,10 +30,10 @@ Elle ne garantit jamais la constructibilité ; elle **fait gagner du temps et fi
 | # | Écran | Parcelle | À faire voir |
 |---|---|---|---|
 | 1 | Carte | — | la promesse : opportunités en vert sur toute la commune |
-| 2 | Fiche + bilan | **BP0571** | opportunité vérifiée → bilan : **prix fiable ~4184 €/m², CA ~23,5 M€** |
+| 2 | Fiche + bilan | **BK0023** | opportunité VACANTE (0 % bâti) → bilan : **prix fiable ~5 310 €/m², CA indicatif ~33 M€** |
 | 3 | Faux positif | **BO0845** | « score brut 82… mais **parking** » → déclassé, motif visible |
 | 4 | À vérifier | **BN1351** | **périmètre PPR** → « à creuser », prescriptions (pas exclusion) |
-| 5 | Prospection + export | BP0571 | « + Suivre » → « propriétaire à identifier » → export de fiche |
+| 5 | Prospection + export | BK0023 | « + Suivre » → « propriétaire à identifier » → export de fiche |
 
 *Effet recherché : « ça gagne du temps ET ça ne me vend pas n'importe quoi ».*
 
@@ -42,11 +42,11 @@ Elle ne garantit jamais la constructibilité ; elle **fait gagner du temps et fi
 ## D. Parcours de démo — 10 minutes (Mission 1 : 8 étapes)
 
 1. **Carte & promesse** — vue Saint-Paul, compteurs, couleurs de verdict.
-2. **Belle opportunité vérifiée** — **BP0571** : verdict, double score, badge « Opportunité vérifiée ».
-3. **Bilan promoteur** — BP0571 : CA, charge foncière, hypothèses (signalées comme telles).
+2. **Belle opportunité vérifiée** — **BK0023** : verdict, double score, badge « Opportunité vérifiée », bloc « Occupation : aucun bâti significatif ».
+3. **Bilan promoteur** — BK0023 : CA, charge foncière, hypothèses (signalées comme telles).
 4. **Comparables neuf / ancien** — prix de marché médian, médiane ancien vs VEFA, écart, fiabilité.
 5. **Couches & traçabilité** — la cascade ligne par ligne : PLU, **PPR**, **SAR**, littoral, forêt, faux positifs, sources qui ont répondu / silencieuses.
-6. **Faux positif déclassé** — **BO0845** (parking 82 %), puis **BV1431** (pente 103 %) et **BO0619** (micro 28 m²). Et **BK0023** : effleure un parking mais **conservée** → on ne sur-déclasse pas.
+6. **Faux positifs déclassés** — **BP0571** (RÉSIDENCE EXISTANTE : « ensemble bâti, 4 bâtiments, 18 % » — le correctif « déjà bâti »), **BO0845** (parking 82 %), **BV1431** (pente 103 %), **BO0619** (micro 28 m²). Et **BV0912** : bâti léger 7 % **signalé sans déclasser** → on ne sur-corrige pas.
 7. **Parcelle à vérifier** — **BN1351** (périmètre PPR → à creuser) et **BH0283** (SAR compatible « urbanisé à densifier »).
 8. **Prospection / pipeline / export** — « + Suivre » → « propriétaire à identifier » → prochaine action, responsable, contact manuel → Kanban → export Markdown/HTML.
 
@@ -56,7 +56,7 @@ Elle ne garantit jamais la constructibilité ; elle **fait gagner du temps et fi
 
 ### Version 3 minutes
 1. « LA BUSE pré-analyse toutes les parcelles de Saint-Paul sur les données publiques. En vert, les opportunités vérifiées. »
-2. « Regardez BP0571 : opportunité, et voici le bilan promoteur — un prix de marché **fiable** à ~4 200 €/m², un CA de l'ordre de 23 millions. »
+2. « Regardez BK0023 : 9 700 m² VACANTS — zéro bâtiment détecté — et voici le bilan promoteur : prix de marché **fiable** à ~5 300 €/m², un CA indicatif de l'ordre de 33 millions. »
 3. « On distingue le neuf et l'ancien, et on dit clairement que ce bilan reste une **simulation** à caler avec vos hypothèses travaux, marge et frais. »
 4. « Maintenant l'inverse : ce score brut de 82… c'est un **parking**. LA BUSE le déclasse, motif affiché. On ne vous vend pas n'importe quoi. »
 5. « BN1351 paraissait belle, mais elle est dans un **périmètre PPR** : on la passe en "à creuser", prescriptions à vérifier — pas une interdiction. »
@@ -66,12 +66,12 @@ Elle ne garantit jamais la constructibilité ; elle **fait gagner du temps et fi
 ### Version 10 minutes
 - **(0:00) Accroche** : « Combien de temps passez-vous à pré-trier du foncier ? LA BUSE le fait sur toute une commune, et vous explique chaque choix. »
 - **(1:00) Carte** : « Tout Saint-Paul est évalué. En vert les opportunités, en jaune "à creuser", en rouge écartées. Vous filtrez par surface, score, statut. »
-- **(2:00) BP0571 — l'opportunité** : « Verdict "opportunité vérifiée". Deux scores : opportunité ET complétude — on ne montre jamais l'un sans l'autre. »
+- **(2:00) BK0023 — l'opportunité** : « Verdict "opportunité vérifiée" sur une parcelle VACANTE (bâti contrôlé BD TOPO). Deux scores : opportunité ET complétude — on ne montre jamais l'un sans l'autre. »
 - **(3:00) Le bilan** : « Surface vendable, prix de marché, chiffre d'affaires, charge foncière acceptable à rebours. Les hypothèses de coût/marge sont **affichées** — vous les ajustez. »
 - **(4:00) Neuf vs ancien** : « Le prix vient des ventes DVF récentes, géolocalisées. On sépare l'ancien du neuf/VEFA et on donne l'écart. Si l'échantillon est faible, on le dit : "fragile". »
 - **(5:00) Traçabilité** : « Voici POURQUOI : PLU, PPR, SAR, littoral, forêt. Et les sources qui ont répondu, celles restées silencieuses. Pas de boîte noire. »
 - **(6:00) Faux positifs** : « Le plus important pour la confiance : BO0845, score brut 82, mais c'est un **parking** → écartée. BV1431, pente 103 % → écartée. Une parcelle de 28 m² → écartée. »
-- **(7:00) Anti-sur-déclassement** : « Mais on reste juste : BK0023 n'effleure un parking qu'à 20 %, elle **reste** une opportunité. On n'écarte pas à tort. »
+- **(7:00) Anti-sur-correction** : « Mais on reste juste : BV0912 porte 7 % de bâti léger — c'est **signalé**, pas déclassé. On n'écarte pas à tort. »
 - **(8:00) PPR / SAR** : « BN1351 est dans un périmètre PPR → "à creuser". BH0283 est en zone SAR compatible. On contribue au verdict sans prétendre remplacer le règlement. »
 - **(9:00) Prospection** : « Vous suivez la parcelle, vous notez "propriétaire à identifier", une prochaine action, un responsable, un contact que VOUS renseignez. Puis le Kanban, et l'export. »
 - **(10:00) Clôture** : « LA BUSE ne remplace pas votre développeur foncier : elle lui fait gagner des heures et sécurise le pré-tri. »
@@ -99,7 +99,7 @@ Elle ne garantit jamais la constructibilité ; elle **fait gagner du temps et fi
 
 | Écran | À DIRE | À ÉVITER |
 |---|---|---|
-| Opportunité (BP0571) | « ressort comme **opportunité vérifiée sur les couches disponibles**, à confirmer selon vos hypothèses et le terrain » | ❌ « cette parcelle **est constructible** » |
+| Opportunité (BK0023) | « ressort comme **opportunité vérifiée sur les couches disponibles**, à confirmer selon vos hypothèses et le terrain » | ❌ « cette parcelle **est constructible** » |
 | Bilan | « **simulation indicative** ; les hypothèses travaux/marge/frais sont à valider » | ❌ « voici votre **marge garantie** » |
 | Prix | « **prix de marché** DVF sourcé ; fiable ou fragile selon l'échantillon » | ❌ « **le prix certain** de la parcelle » |
 | PPR (BN1351) | « **périmètre PPR** → prescriptions à vérifier au règlement » | ❌ « **interdit de construire** » / ❌ « aucun risque » |
@@ -115,8 +115,8 @@ Elle ne garantit jamais la constructibilité ; elle **fait gagner du temps et fi
 - [ ] `python -m labuse.cli rebuild-demo --commune 97415` (≈ ingestion 4 min + évaluation ~15 min — **à lancer en avance**).
 - [ ] `python -m labuse.cli demo-healthcheck --commune Saint-Paul` → **✅ PRÊT (13/13)**.
 - [ ] `python -m labuse.cli api` puis ouvrir `http://localhost:8000/app`.
-- [ ] **Pré-ouvrir** les fiches de démo (chauffe le cache réseaux → 1ʳᵉ ouverture instantanée) : BP0571, BN1351, BO0845, BV1431, BK0023.
-- [ ] Vérifier **BP0571** : opportunité + bilan fiable affiché.
+- [ ] **Pré-ouvrir** les fiches de démo (chauffe le cache réseaux → 1ʳᵉ ouverture instantanée) : BK0023, BP0571, BN1351, BO0845, BV1431, BV0912.
+- [ ] Vérifier **BK0023** : opportunité + prix de marché fiable affiché. Vérifier **BP0571** : « faux positif — ensemble bâti ».
 - [ ] Vérifier **BO0845** : « faux positif probable » + motif « parking ».
 - [ ] Vérifier **pipeline non vide** (entrées de démo seedées).
 - [ ] Ouvrir un **export** (Markdown ou HTML) et le garder sous la main.

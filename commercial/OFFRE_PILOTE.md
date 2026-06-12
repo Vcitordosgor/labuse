@@ -86,7 +86,7 @@ exports). Un **outil d'aide à la décision** — jamais une étude réglementai
 
 **Lancer UNIQUEMENT l'option C à 2 500 € / 45 jours.**
 Pourquoi : un seul prix, une seule décision, un montant trivial face à un seul terrain
-(BP0571 ≈ 23 M€ de CA potentiel indicatif) mais assez sérieux pour filtrer les curieux ;
+(BK0023 ≈ 33 M€ de CA potentiel indicatif — 9 723 m² vacants) mais assez sérieux pour filtrer les curieux ;
 l'accompagnement neutralise le risque n°1 (l'abandon) et nous donne le feedback produit.
 L'option A se garde en repli si le prospect refuse tout outil (« on vous livre l'étude,
 l'outil reste chez nous »). L'option B n'est pas proposée au lancement.

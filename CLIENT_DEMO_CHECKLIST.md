@@ -23,10 +23,10 @@
       `exec app labuse doctor --json` → `ready_for_demo: true`).
 - [ ] **warm-demo OK** : `exec app labuse warm-demo` → `✅ 8/8 … conformes et exportables`.
 - [ ] **8 parcelles de démo** ouvertes une fois chacune (instantanées si cache chaud) :
-      BP0571 (opportunité+bilan) · BS0009 (2ᵉ opportunité) · BN1351 (PPR→à creuser) ·
+      BK0023 (opportunité VACANTE+bilan) · BV0912 (bâti léger signalé) · BN1351 (PPR→à creuser) ·
       BH0283 (SAR compatible) · BO0845 (parking déclassé) · BV1431 (pente) ·
-      BO0619 (micro-parcelle) · BK0023 (anti-sur-déclassement).
-- [ ] **Exports OK** : export HTML de BP0571 ouvert, propre (résumé, bilan, disclaimers) —
+      BO0619 (micro-parcelle) · BP0571 (résidence détectée — correctif déjà bâti).
+- [ ] **Exports OK** : export HTML de BK0023 ouvert, propre (résumé, bilan, disclaimers) —
       en garder un sous la main (pièce jointe de secours).
 - [ ] **Pipeline non vide** : Kanban avec les entrées de démo (aucun nom réel).
 
