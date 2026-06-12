@@ -100,6 +100,8 @@ function passesFilter(p) {
   if ((p.opportunity_score || 0) < f.minOpp) return false;
   if ((p.completeness_score || 0) < f.minCpl) return false;
   if ((p.surface_m2 || 0) < f.minSurf) return false;
+  // Sous-densité (Lot B) : taux d'utilisation de l'emprise constructible sous le seuil.
+  if (f.sousDensite && !(p.taux_emprise_pct != null && p.taux_emprise_pct < f.maxTaux)) return false;
   return true;
 }
 
@@ -110,6 +112,8 @@ function currentFilter() {
     minOpp: +$("#f-opp").value,
     minCpl: +$("#f-cpl").value,
     minSurf: +$("#f-surf").value,
+    sousDensite: !!($("#f-sousdense") && $("#f-sousdense").checked),
+    maxTaux: +(($("#f-taux") && $("#f-taux").value) || 40),
   };
 }
 
@@ -723,6 +727,7 @@ function renderFaisabilite(fa) {
       <div class="faisa-ctx">${ctxBits}</div>
       ${badges ? `<div class="faisa-badges">${badges}</div>` : ""}
       ${keyCards ? `<div class="faisa-cards">${keyCards}</div>` : ""}
+      ${renderResiduel(fa.residuel)}
       <details class="faisa-calc" open>
         <summary>Le calcul, ligne par ligne — chaque ligne pointe sa règle PLU</summary>
         <table class="faisa-steps">${stepRows}</table>
@@ -733,6 +738,27 @@ function renderFaisabilite(fa) {
       <p class="faisa-bandeau">⚠️ ${esc(fa.bandeau)}</p>
     </section>
     ${renderBilan(fa.bilan)}`;
+}
+
+// Potentiel résiduel (Lot B) — « bâtie à N % de son potentiel » + SDP résiduelle.
+function renderResiduel(r) {
+  if (!r || !r.disponible) return "";
+  const cls = r.sous_densite ? "sousdense" : "";
+  const estim = r.estimation_sdp
+    ? ` <span class="res-estim" title="hauteur du bâti BD TOPO non ingérée — niveaux existants supposés ${r.niveaux_existants}">SDP estimée</span>` : "";
+  return `
+    <div class="residuel ${cls}">
+      <div class="res-head">
+        <span class="res-eyebrow">Potentiel résiduel</span>
+        ${r.sous_densite ? `<span class="res-badge">Sous-densité (&lt; ${r.sous_densite_seuil_pct} %)</span>` : ""}
+      </div>
+      <div class="res-cards">
+        <div class="res-c"><span class="res-num">${r.taux_emprise_pct} %</span><span class="res-lbl">emprise au sol utilisée<br>(${fmt(r.emprise_batie_m2)} / ${fmt(r.emprise_constructible_m2)} m²)</span></div>
+        <div class="res-c"><span class="res-num">${r.pct_potentiel} %</span><span class="res-lbl">bâtie de son potentiel SDP${estim}</span></div>
+        <div class="res-c res-hi"><span class="res-num">~${fmt(r.sdp_residuelle_m2)} m²</span><span class="res-lbl">SDP résiduelle mobilisable<br>(max ${fmt(r.sdp_max_m2)} − existant ${fmt(r.sdp_existante_m2)})</span></div>
+      </div>
+      <p class="res-note">${esc(r.libelle)}</p>
+    </div>`;
 }
 
 function renderBilan(b) {
@@ -1399,6 +1425,10 @@ async function main() {
     $("#" + id).addEventListener("input", debounce(applyFilters));
   });
   document.querySelectorAll("#filter-statuses input").forEach((i) => i.addEventListener("change", () => { clearKpiActive(); applyFilters(); }));
+  // Filtre sous-densité (Lot B) : case + seuil.
+  const sd = $("#f-sousdense"); if (sd) sd.addEventListener("change", applyFilters);
+  const ft = $("#f-taux");
+  if (ft) ft.addEventListener("input", () => { const o = $("#taux-out"); if (o) o.textContent = ft.value; applyFilters(); });
   document.querySelectorAll(".kpi[data-status]").forEach((k) => {
     k.addEventListener("click", () => filterByStatus(k.dataset.status));
     k.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); filterByStatus(k.dataset.status); } });

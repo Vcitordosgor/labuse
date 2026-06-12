@@ -58,6 +58,12 @@ def _evaluate(session: Session, parcels: list[dict]) -> AuditResult:
 
     from .cascade import evaluate_parcels
     outs = {o.idu: o for o in evaluate_parcels(ids, session, persist=True)}
+    # Potentiel résiduel (Lot B) : caché aussi pour la parcelle auditée → visible au filtre.
+    try:
+        from .faisabilite.residuel import compute_residuel_batch
+        compute_residuel_batch(session, ids)
+    except Exception:  # noqa: BLE001 - n'empêche jamais l'audit
+        pass
 
     primary = max(parcels, key=lambda p: _surface(session, p["idu"]))["idu"]
     o = outs.get(primary)

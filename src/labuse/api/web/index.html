@@ -86,6 +86,9 @@
           <input type="range" id="f-cpl" min="0" max="100" value="0" /></label>
         <label class="range">Surface ≥ <output id="surf-out">0</output> m²
           <input type="range" id="f-surf" min="0" max="5000" step="100" value="0" /></label>
+        <label class="filter-sousdense"><input type="checkbox" id="f-sousdense" />
+          Sous-densité : emprise utilisée &lt; <output id="taux-out">40</output> %
+          <input type="range" id="f-taux" min="5" max="90" step="5" value="40" /></label>
       </div>
       <div id="parcel-list" class="parcel-list"></div>
     </section>

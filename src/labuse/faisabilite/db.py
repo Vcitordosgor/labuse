@@ -206,6 +206,14 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
     ctx, f = res
     c = ctx.contraintes
 
+    # Potentiel résiduel (Lot B) — réutilise la faisabilité déjà calculée ; isolé/défensif.
+    residuel = None
+    try:
+        from .residuel import compute_residuel
+        residuel = compute_residuel(session, parcel_id, faisa=res)
+    except Exception:  # noqa: BLE001 - n'empêche jamais la fiche
+        residuel = None
+
     # Bilan promoteur (PARTIE 1) — uniquement si constructible ; isolé/défensif.
     bilan = None
     try:
@@ -248,6 +256,7 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
         "modulation": f.modulation,
         "bandeau": f.bandeau,
         "bilan": bilan,
+        "residuel": residuel,   # Lot B — potentiel résiduel (bâti existant × capacité max)
         # Badges fiche (Décisions 2/3) : mixité sociale, eaux pluviales, ER déduits.
         "prescriptions_eco": {
             "mixite_sociale": (ctx.prescriptions_eco.get("mixite_libelle") or "Clause logements aidés")

@@ -66,6 +66,13 @@ hypotheses_faisabilite:
   prix_m2_lls: 0                    # prix de sortie €/m² des logements aidés (0 = non calibré).
   majoration_vrd_pluvial: 0         # % de majoration du coût (VRD) en zonage eaux pluviales
   #                                   (0 = badge visible mais effet neutre tant que non calibré).
+  # --- Potentiel résiduel (Lot B) ---
+  niveaux_bati_existant_defaut: 1   # PLACEHOLDER : niveaux supposés du bâti EXISTANT quand la
+  #   hauteur/étages BD TOPO n'est pas ingéré (cas actuel). Prudent (1 = rez) → SOUS-estime la
+  #   SDP existante, donc SUR-estime le résiduel. Remplacé automatiquement par nombre_d_etages
+  #   BD TOPO dès qu'il est ingéré. Le taux d'emprise, lui, est calculé sans hypothèse de hauteur.
+  sous_densite_seuil_pct: 40        # PLACEHOLDER : en deçà de ce taux d'utilisation de l'emprise
+  #                                   constructible, une parcelle bâtie est marquée « sous-densité ».
 
 zones:
 

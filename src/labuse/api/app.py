@@ -379,7 +379,8 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
             """
             SELECT p.idu, p.surface_m2,
                    ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
-                   e.status, e.opportunity_score, e.completeness_score, d.detail AS downgrade_reason
+                   e.status, e.opportunity_score, e.completeness_score, d.detail AS downgrade_reason,
+                   r.taux_emprise_pct, r.sous_densite, r.sdp_residuelle_m2
             FROM parcels p
             LEFT JOIN LATERAL (
                 SELECT status, opportunity_score, completeness_score
@@ -390,6 +391,7 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 SELECT detail FROM cascade_results
                 WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
             ) d ON true
+            LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
               AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
             LIMIT :lim
@@ -407,6 +409,9 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 "opportunity_score": r["opportunity_score"],
                 "completeness_score": r["completeness_score"],
                 "downgrade_reason": r["downgrade_reason"],
+                "taux_emprise_pct": r["taux_emprise_pct"],
+                "sous_densite": r["sous_densite"],
+                "sdp_residuelle_m2": r["sdp_residuelle_m2"],
             },
         }
         for r in rows if r["g"]

@@ -403,6 +403,9 @@ def ingest_batiments(session, bbox, commune, run_id, sids, page_size: int = 5000
                           f["geometry"], sids.get(KIND_SOURCE["batiment"]), commune, run_id,
                           {"nature": p.get("nature"), "usage": p.get("usage_1"),
                            "nb_logements": p.get("nombre_de_logements"),
+                           # Hauteur/étages BD TOPO (Lot B — SDP existante du potentiel résiduel).
+                           "hauteur": p.get("hauteur"),
+                           "nombre_d_etages": p.get("nombre_d_etages"),
                            "source": "BD TOPO IGN (Géoplateforme WFS)"})
             n += 1
         if len(feats) < page_size:

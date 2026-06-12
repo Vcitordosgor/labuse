@@ -237,6 +237,28 @@ def evaluate_cmd(
         typer.echo(f"    {status:24} : {n}")
 
 
+@app.command("compute-residuel")
+def compute_residuel_cmd(
+    commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
+    chunk: int = typer.Option(500, help="Taille des lots (commit par lot)."),
+) -> None:
+    """Calcule et cache le POTENTIEL RÉSIDUEL (Lot B) — alimente le filtre « sous-densité »."""
+    from .faisabilite.residuel import compute_residuel_batch
+
+    commune = _resolve_commune(commune)
+    with session_scope() as session:
+        ids = _parcel_ids(session, commune)
+    if not ids:
+        typer.echo("Aucune parcelle ingérée.")
+        raise typer.Exit(1)
+    total = 0
+    for k in range(0, len(ids), chunk):
+        with session_scope() as s:
+            total += compute_residuel_batch(s, ids[k:k + chunk])
+        typer.echo(f"    {min(k + chunk, len(ids))}/{len(ids)} parcelles…")
+    typer.echo(f"✓ Potentiel résiduel caché pour {total} parcelles constructibles ({commune}).")
+
+
 def _print_healthcheck(commune: str) -> bool:
     from . import demo
 

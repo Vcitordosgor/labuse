@@ -44,6 +44,9 @@ class Hypotheses:
     frais_annexes_pct: float = 0.12             # honoraires, commercialisation, financier, aléas (% du CA)
     dvf_radius_m: float = 1500.0                # rayon de recherche des ventes DVF comparables
     dvf_min_ventes: int = 8                     # en deçà, prix DVF jugé non fiable
+    # --- Potentiel résiduel (Lot B) — PLACEHOLDERS ---
+    niveaux_bati_existant_defaut: float = 1.0   # niveaux supposés du bâti existant (hauteur BD TOPO non ingérée)
+    sous_densite_seuil_pct: float = 40.0        # seuil du taux d'emprise sous lequel = « sous-densité »
     # --- Prescriptions GPU (Décisions 3.b / 3.c) — PLACEHOLDERS, à renseigner par Vic ---
     pct_lls: float = 0.0              # % de logements aidés imposé en secteur de mixité sociale
     #                                   (0 = non calibré → CA NON pondéré, avertissement affiché)
@@ -314,7 +317,12 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     rp = f"R+{max(0, niveaux - 1)}"
     logt_moyen = (hyp.logement_m2_bas + hyp.logement_m2_haut) / 2.0
-    fourch = {"niveaux": rp, "surface_plancher_m2": round(sdp),
+    fourch = {"niveaux": rp, "niveaux_max": niveaux,
+              # Potentiel résiduel (Lot B) : emprise constructible au sol et emprise bâtie MAX
+              # (post-occupation), pour croiser avec le bâti existant.
+              "emprise_constructible_m2": round(emprise),
+              "emprise_batie_max_m2": round(footprint),
+              "surface_plancher_m2": round(sdp),
               # surface habitable VENDABLE (post-rendement, plafond densité, modulation) :
               # base du chiffre d'affaires du bilan promoteur.
               "shab_vendable_m2": round((sous_lo + sous_hi) / 2.0 * logt_moyen),

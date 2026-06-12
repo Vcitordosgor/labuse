@@ -341,6 +341,7 @@ def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine)
     ensure_parcel_origine(engine)
+    ensure_residuel_cache(engine)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
 
@@ -429,6 +430,19 @@ def ensure_enrichment_cache(engine) -> None:
             " payload jsonb NOT NULL, computed_at timestamptz NOT NULL DEFAULT now())"))
 
 
+def ensure_residuel_cache(engine) -> None:
+    """Cache du potentiel résiduel (Lot B) — alimente le filtre « sous-densité » sans
+    relancer la faisabilité par parcelle à chaque chargement de carte. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS parcel_residuel ("
+            " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
+            " taux_emprise_pct integer, pct_potentiel integer, sous_densite boolean,"
+            " sdp_residuelle_m2 integer, computed_at timestamptz NOT NULL DEFAULT now())"))
+
+
 def ensure_schema(engine) -> None:
     """Réconciliation LÉGÈRE et idempotente du schéma (boot / doctor / prepare-pilot).
 
@@ -442,6 +456,7 @@ def ensure_schema(engine) -> None:
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
     ensure_parcel_origine(engine)
+    ensure_residuel_cache(engine)
 
 
 def ensure_parcel_origine(engine) -> None:
