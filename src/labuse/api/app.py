@@ -512,6 +512,7 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
+            "origine": p.origine,  # 'audit' → bandeau « audit à la demande » sur la fiche
         },
         "resume": resume,
         "bati": bati_block,
@@ -583,6 +584,44 @@ def evaluate_one(idu: str, ai: bool = Query(False), db: Session = Depends(get_db
         "completeness_score": out.completeness.score,
         "promoted": out.promoted,
     }
+
+
+# ───────────────────────────── Audit pull (Lot A) ─────────────────────────────
+
+class AuditRefIn(BaseModel):
+    section: str
+    numero: str
+    code_insee: str | None = None
+
+
+class AuditAddressIn(BaseModel):
+    q: str
+
+
+class AuditPolygonIn(BaseModel):
+    geometry: dict
+
+
+@app.post("/audit/reference")
+def audit_reference(body: AuditRefIn, db: Session = Depends(get_db)) -> dict:
+    """Auditer un terrain par référence cadastrale (section + numéro). Fetch cadastre à la
+    volée → ingestion (origine='audit') → cascade → renvoie l'idu pour ouvrir la fiche."""
+    from .. import audit
+    return audit.audit_by_reference(db, body.section, body.numero, body.code_insee)
+
+
+@app.post("/audit/adresse")
+def audit_adresse(body: AuditAddressIn, db: Session = Depends(get_db)) -> dict:
+    """Auditer un terrain par adresse (géocodage BAN → parcelle cadastrale)."""
+    from .. import audit
+    return audit.audit_by_address(db, body.q)
+
+
+@app.post("/audit/polygone")
+def audit_polygone(body: AuditPolygonIn, db: Session = Depends(get_db)) -> dict:
+    """Auditer un terrain par polygone dessiné sur la carte."""
+    from .. import audit
+    return audit.audit_by_polygon(db, body.geometry)
 
 
 # ───────────────────────────── Découverte (offre B) ─────────────────────────────

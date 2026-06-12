@@ -38,6 +38,19 @@
       <div class="brand-commune" id="commune-label">Saint-Paul (97415)</div>
     </header>
 
+    <form class="audit-box" id="audit-form" autocomplete="off">
+      <label class="audit-lbl" for="audit-q">🔎 Auditer un terrain <span class="audit-hint">à la demande</span></label>
+      <div class="audit-row">
+        <input id="audit-q" class="audit-input" type="text" inputmode="text"
+               placeholder="Adresse ou réf. cadastrale (ex. BV 912)" aria-label="Adresse ou référence cadastrale" />
+        <button class="audit-go" type="submit" title="Auditer ce terrain à la demande">Auditer</button>
+      </div>
+      <div class="audit-tools">
+        <button type="button" class="audit-draw" id="audit-draw" title="Dessiner un polygone sur la carte">✏ Dessiner sur la carte</button>
+        <span class="audit-msg" id="audit-msg" role="status" aria-live="polite"></span>
+      </div>
+    </form>
+
     <div class="side-nav">
       <button class="nav-kanban js-view" data-view="kanban">📋 Pipeline de prospection <span class="kb-badge hidden" title="rappels échus">0</span></button>
       <button class="nav-demo js-demo" title="Parcours de démonstration guidé sur des parcelles validées">🎬 Démo guidée</button>

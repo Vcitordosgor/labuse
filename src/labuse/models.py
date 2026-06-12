@@ -72,6 +72,9 @@ class Parcel(Base, TimestampMixin):
     surface_m2: Mapped[float | None] = mapped_column(Float)  # calculée en 2975
     centroid: Mapped[object | None] = mapped_column(Geometry("POINT", srid=SRID, spatial_index=False))
     bbox: Mapped[object | None] = mapped_column(Geometry("POLYGON", srid=SRID, spatial_index=False))
+    # Provenance : NULL/'referentiel' = ingestion en masse ; 'audit' = ajoutée à la demande
+    # (Lot A — audit pull). Sert au bandeau « audit à la demande » et au filtrage.
+    origine: Mapped[str | None] = mapped_column(String(16))
 
     ingestion_run_id: Mapped[int | None] = mapped_column(ForeignKey("ingestion_runs.id"))
 
@@ -337,6 +340,7 @@ class PipelineEntry(Base, TimestampMixin):
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine)
+    ensure_parcel_origine(engine)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
 
@@ -437,6 +441,15 @@ def ensure_schema(engine) -> None:
     ensure_geom_2975(engine, backfill=False)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
+    ensure_parcel_origine(engine)
+
+
+def ensure_parcel_origine(engine) -> None:
+    """Colonne `origine` sur parcels (Lot A — audit pull). Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("ALTER TABLE parcels ADD COLUMN IF NOT EXISTS origine varchar(16)"))
 
 
 def drop_all(engine) -> None:

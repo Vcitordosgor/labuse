@@ -352,6 +352,8 @@ function renderFiche(f) {
       <div class="fh-loc">${loc}</div>
     </header>
 
+    ${p.origine === "audit" ? `<section class="audit-banner">🔎 <b>Audit à la demande</b> — parcelle récupérée au cadastre et évaluée à la volée (hors balayage initial). Mêmes règles et mêmes sources que le reste du radar.</section>` : ""}
+
     <section class="verdict v-${status}">
       <div class="verdict-eyebrow">Verdict LA BUSE</div>
       <h1 class="verdict-word">${STATUS_LABEL[status] || esc(status) || "—"}</h1>
@@ -1290,6 +1292,87 @@ function markFollowing(btn, statusKey) {
   btn.textContent = `✓ Suivie · ${colLabel(statusKey)}`;
 }
 
+// ───────────────────────── Audit pull (Lot A) ─────────────────────────
+// Auditer un terrain à la demande : référence cadastrale, adresse (BAN) ou polygone dessiné.
+// Tout converge vers POST /audit/* → ingestion 'audit' + cascade → on ouvre la fiche produite.
+const AUDIT_REF_RX = /^([A-Za-z]{1,2})\s*0*(\d{1,4})$/;   // « BV 912 », « bv912 », « BV 0912 »
+
+function auditMsg(text, busy = false) {
+  const el = $("#audit-msg");
+  if (!el) return;
+  el.textContent = text || "";
+  el.classList.toggle("busy", !!busy);
+  el.classList.toggle("err", !!text && !busy && !/en cours|analyse/i.test(text));
+}
+
+async function reloadParcelLayer() {
+  // Rafraîchit la couche carte/liste pour faire apparaître la parcelle auditée.
+  try {
+    const fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json();
+    FEATURES = fc.features || [];
+    setSliderBounds();
+    applyFilters();
+  } catch { /* la fiche s'ouvre quand même ; la carte se resynchronisera au prochain chargement */ }
+  loadStats();
+}
+
+async function runAudit(url, body) {
+  auditMsg("Analyse en cours… (cadastre + cascade)", true);
+  let res;
+  try {
+    res = await (await fetch(url, {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+    })).json();
+  } catch { auditMsg("Service d'audit indisponible — réessayez."); return; }
+  if (!res || !res.ok) { auditMsg((res && res.message) || "Audit impossible."); return; }
+  auditMsg(res.cached ? "Déjà au référentiel — fiche ouverte." : `Parcelle ajoutée (${res.n}) — fiche ouverte.`);
+  if (!res.cached) await reloadParcelLayer();
+  openSheet(res.idu);
+  setTimeout(() => auditMsg(""), 4000);
+}
+
+function submitAudit(e) {
+  if (e) e.preventDefault();
+  const q = ($("#audit-q").value || "").trim();
+  if (q.length < 3) { auditMsg("Saisissez une adresse ou une référence (ex. BV 912)."); return; }
+  const m = AUDIT_REF_RX.exec(q);
+  if (m) return runAudit("/audit/reference", { section: m[1].toUpperCase(), numero: m[2] });
+  return runAudit("/audit/adresse", { q });
+}
+
+// Dessin de polygone (Leaflet natif : clic = sommet, double-clic = terminer).
+let DRAW_PTS = [], DRAW_LAYER = null, DRAWING = false;
+function startDraw() {
+  if (!map) { auditMsg("Carte indisponible."); return; }
+  if (DRAWING) return finishDraw();
+  DRAWING = true; DRAW_PTS = [];
+  if (DRAW_LAYER) { map.removeLayer(DRAW_LAYER); DRAW_LAYER = null; }
+  $("#audit-draw").classList.add("on");
+  $("#audit-draw").textContent = "✓ Terminer le tracé";
+  auditMsg("Cliquez pour poser les sommets ; double-clic ou « Terminer » pour boucler.");
+  map.doubleClickZoom.disable();
+  map.on("click", onDrawClick);
+  map.on("dblclick", finishDraw);
+}
+function onDrawClick(e) {
+  DRAW_PTS.push([e.latlng.lng, e.latlng.lat]);
+  if (DRAW_LAYER) map.removeLayer(DRAW_LAYER);
+  DRAW_LAYER = L.polygon(DRAW_PTS.map(([lng, lat]) => [lat, lng]),
+    { color: "#c9a86a", weight: 2, dashArray: "4", fillOpacity: 0.08 }).addTo(map);
+}
+async function finishDraw(e) {
+  if (e && e.originalEvent) L.DomEvent.stop(e);
+  map.off("click", onDrawClick); map.off("dblclick", finishDraw);
+  setTimeout(() => map.doubleClickZoom.enable(), 300);
+  DRAWING = false;
+  $("#audit-draw").classList.remove("on");
+  $("#audit-draw").textContent = "✏ Dessiner sur la carte";
+  if (DRAW_PTS.length < 3) { auditMsg("Tracé annulé (au moins 3 points requis)."); return; }
+  const ring = DRAW_PTS.concat([DRAW_PTS[0]]);     // fermeture de l'anneau
+  await runAudit("/audit/polygone", { geometry: { type: "Polygon", coordinates: [ring] } });
+  if (DRAW_LAYER) { map.removeLayer(DRAW_LAYER); DRAW_LAYER = null; }
+}
+
 // ───────────────────────── Bootstrap ─────────────────────────
 async function main() {
   window.addEventListener("beforeprint", expandCascadeForPrint);
@@ -1333,6 +1416,9 @@ async function main() {
   });
   $("#sheet-close").addEventListener("click", closeSheet);
   $("#scrim").addEventListener("click", closeSheet);
+  // Audit pull (Lot A) : référence/adresse via le formulaire, polygone via le bouton dessiner.
+  const af = $("#audit-form"); if (af) af.addEventListener("submit", submitAudit);
+  const ad = $("#audit-draw"); if (ad) ad.addEventListener("click", startDraw);
   // Démo guidée : bouton d'ouverture, fermeture (croix + clic sur le fond).
   document.querySelectorAll(".js-demo").forEach((b) => b.addEventListener("click", openDemo));
   $("#demo-close").addEventListener("click", closeDemo);
