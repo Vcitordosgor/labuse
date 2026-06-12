@@ -371,6 +371,13 @@ def stats(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     return out
 
 
+def _owner_famille(ff_payload) -> str:
+    """Famille de propriétaire (public/prive/inconnu) pour le filtre carte — réutilise le
+    classifieur C3 (source unique). `inconnu` quand les Fichiers fonciers ne sont pas importés."""
+    from ..proprietaire_type import classify_owner_type
+    return classify_owner_type(ff_payload)["famille"]
+
+
 @app.get("/map/parcels.geojson")
 def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, le=200000), db: Session = Depends(get_db)) -> dict:
     """Parcelles (géométrie simplifiée 4326) + verdict, pour la carte colorée."""
@@ -380,7 +387,7 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
             SELECT p.idu, p.surface_m2,
                    ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                    e.status, e.opportunity_score, e.completeness_score, d.detail AS downgrade_reason,
-                   r.taux_emprise_pct, r.sous_densite, r.sdp_residuelle_m2
+                   r.taux_emprise_pct, r.sous_densite, r.sdp_residuelle_m2, own.ff
             FROM parcels p
             LEFT JOIN LATERAL (
                 SELECT status, opportunity_score, completeness_score
@@ -392,6 +399,12 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
             ) d ON true
             LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+            LEFT JOIN LATERAL (
+                SELECT psr.raw_payload AS ff FROM parcel_source_results psr
+                JOIN data_sources ds ON ds.id = psr.data_source_id
+                WHERE psr.parcel_id = p.id AND ds.name = 'Fichiers fonciers (Cerema)'
+                ORDER BY psr.fetched_at DESC LIMIT 1
+            ) own ON true
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
               AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
             LIMIT :lim
@@ -412,6 +425,7 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 "taux_emprise_pct": r["taux_emprise_pct"],
                 "sous_densite": r["sous_densite"],
                 "sdp_residuelle_m2": r["sdp_residuelle_m2"],
+                "owner_famille": _owner_famille(r["ff"]),
             },
         }
         for r in rows if r["g"]
@@ -570,6 +584,23 @@ def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"), db:
     if format == "html":
         return HTMLResponse(fiche_html(fiche))
     return PlainTextResponse(fiche_markdown(fiche), media_type="text/markdown")
+
+
+@app.get("/parcels/{idu}/spf-letter")
+def spf_letter(idu: str, db: Session = Depends(get_db)):
+    """Courrier de demande au Service de la Publicité Foncière (Lot C3), pré-rempli avec la
+    référence cadastrale publique — voie légale d'identification, aucune donnée nominative."""
+    from fastapi.responses import PlainTextResponse
+
+    from ..proprietaire_type import spf_letter as build_letter
+
+    _check_idu(idu)
+    p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
+    if not p:
+        raise HTTPException(404, "Parcelle inconnue")
+    letter = build_letter({"idu": p.idu, "commune": p.commune, "section": p.section,
+                           "numero": p.numero, "surface_m2": p.surface_m2})
+    return PlainTextResponse(letter, media_type="text/plain; charset=utf-8")
 
 
 @app.post("/parcels/{idu}/evaluate")

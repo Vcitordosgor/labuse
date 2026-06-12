@@ -89,6 +89,14 @@
         <label class="filter-sousdense"><input type="checkbox" id="f-sousdense" />
           Sous-densité : emprise utilisée &lt; <output id="taux-out">40</output> %
           <input type="range" id="f-taux" min="5" max="90" step="5" value="40" /></label>
+        <label class="filter-owner">Propriétaire
+          <select id="f-owner">
+            <option value="">tous</option>
+            <option value="identifie">identifié (morale / public)</option>
+            <option value="public">public</option>
+            <option value="prive">personne morale privée</option>
+            <option value="inconnu">à identifier</option>
+          </select></label>
       </div>
       <div id="parcel-list" class="parcel-list"></div>
     </section>

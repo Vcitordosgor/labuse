@@ -325,7 +325,12 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
     ).first()
     payload = row[0] if row and row[0] else None
     if not payload:
-        return {"categorie": None, "note": note_absent, "source": "—"}
+        from ..proprietaire_type import classify_owner_type
+        ot = classify_owner_type(None)   # → inconnu
+        return {"categorie": None, "note": note_absent, "source": "—",
+                "owner_type": ot["owner_type"], "owner_label": ot["label"],
+                "owner_famille": ot["famille"], "owner_acquerabilite": ot["acquerabilite"],
+                "owner_identifiable": False, "needs_spf": True}
 
     morale = bool(payload.get("personne_morale"))
     cat = payload.get("categorie")
@@ -338,6 +343,8 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
     categorie = "publique" if publique else "morale_privee" if morale else "personne_physique"
     libelle = ("Propriété publique" if publique else
                "Personne morale privée" if morale else "Personne physique (non nominatif)")
+    from ..proprietaire_type import classify_owner_type, needs_spf
+    otype = classify_owner_type(payload)
     return {
         "categorie": categorie,
         "personne_morale": morale,
@@ -345,6 +352,10 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
         "note": f"Propriétaire : {libelle}" + (f" — {cat}" if cat else "")
                 + (" · indivision probable (bloqueur fréquent)" if indivision else ""),
         "source": src,
+        # Type fin (Lot C3) : SCI / commune / EPF / bailleur / État… + besoin d'une demande SPF.
+        "owner_type": otype["owner_type"], "owner_label": otype["label"],
+        "owner_famille": otype["famille"], "owner_acquerabilite": otype["acquerabilite"],
+        "owner_identifiable": otype["identifiable"], "needs_spf": needs_spf(otype),
     }
 
 

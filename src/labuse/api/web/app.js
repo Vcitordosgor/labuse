@@ -102,6 +102,11 @@ function passesFilter(p) {
   if ((p.surface_m2 || 0) < f.minSurf) return false;
   // Sous-densité (Lot B) : taux d'utilisation de l'emprise constructible sous le seuil.
   if (f.sousDensite && !(p.taux_emprise_pct != null && p.taux_emprise_pct < f.maxTaux)) return false;
+  // Type de propriétaire (Lot C3).
+  if (f.owner) {
+    const fam = p.owner_famille || "inconnu";
+    if (f.owner === "identifie" ? fam === "inconnu" : fam !== f.owner) return false;
+  }
   return true;
 }
 
@@ -114,6 +119,7 @@ function currentFilter() {
     minSurf: +$("#f-surf").value,
     sousDensite: !!($("#f-sousdense") && $("#f-sousdense").checked),
     maxTaux: +(($("#f-taux") && $("#f-taux").value) || 40),
+    owner: ($("#f-owner") && $("#f-owner").value) || "",
   };
 }
 
@@ -540,7 +546,7 @@ function renderProspection(f) {
 
 // ───────────────────────── Données promoteur (Temps 1) ─────────────────────────
 // Tout est indicatif & sourcé ; aucune valeur réglementaire fabriquée. Mesures EPSG:2975.
-function renderPromoteur(pr, centroid) {
+function renderPromoteur(pr, centroid, idu) {
   if (!pr) return "";
   const alt = pr.altimetrie || {}, fac = pr.facade || {}, plu = pr.plu_detail || {};
   const own = pr.proprietaire || {}, net = pr.reseaux || {};
@@ -599,8 +605,15 @@ function renderPromoteur(pr, centroid) {
       <p>${esc(via.presomption)}</p>
       ${via.a_verifier ? `<p class="pm-note">⚠︎ ${esc(via.a_verifier)}</p>` : ""}
     </div>` : "";
+  // Type de propriétaire (Lot C3) : badge + bouton « demande SPF » si non identifiable.
+  const famCls = { public: "own-pub", prive: "own-priv", inconnu: "own-unk" }[own.owner_famille] || "own-unk";
+  const ownerBadge = own.owner_label
+    ? `<span class="own-badge ${famCls}" title="${esc(own.owner_acquerabilite || "")}">${esc(own.owner_label)}</span>` : "";
+  const spfBtn = own.needs_spf
+    ? `<button type="button" class="own-spf js-spf" data-idu="${esc(idu)}" title="Courrier pré-rempli de demande au Service de la Publicité Foncière">✉ Générer demande SPF</button>` : "";
   const factBody = `
-    <p class="pm-na"><b>Propriétaire :</b> ${esc(own.note || "non vérifié")}</p>
+    <p class="pm-na"><b>Propriétaire :</b> ${ownerBadge} ${esc(own.note || "non vérifié")}</p>
+    ${spfBtn}
     ${viaBlock}
     <ul class="pm-list net">${netRow("Eau potable", net.eau_potable)}${netRow("Électricité (EDF)", net.electricite)}${netRow("Assainissement", net.assainissement)}</ul>
     <p class="pm-src">${esc((net && net.source) || "")}</p>`;
@@ -655,9 +668,16 @@ async function loadEnrichment(idu, centroid) {
     return;
   } finally { clearTimeout(timer); }
   if ($("#pm-slot") === slot) {
-    slot.outerHTML = renderPromoteur(pr, centroid);
+    slot.outerHTML = renderPromoteur(pr, centroid, idu);
     surfaceServitudesMajeures(pr);
+    const spf = document.querySelector(".js-spf");
+    if (spf) spf.addEventListener("click", () => openSpfLetter(spf.dataset.idu));
   }
+}
+
+// Lot C3 — ouvre le courrier SPF pré-rempli dans un nouvel onglet (texte brut, imprimable).
+function openSpfLetter(idu) {
+  window.open(`/parcels/${encodeURIComponent(idu)}/spf-letter`, "_blank", "noopener");
 }
 
 // Audit O6 : une servitude de MIXITÉ SOCIALE (« logements aidés », emplacement réservé)
@@ -1438,6 +1458,7 @@ async function main() {
   const sd = $("#f-sousdense"); if (sd) sd.addEventListener("change", applyFilters);
   const ft = $("#f-taux");
   if (ft) ft.addEventListener("input", () => { const o = $("#taux-out"); if (o) o.textContent = ft.value; applyFilters(); });
+  const fo = $("#f-owner"); if (fo) fo.addEventListener("change", applyFilters);
   document.querySelectorAll(".kpi[data-status]").forEach((k) => {
     k.addEventListener("click", () => filterByStatus(k.dataset.status));
     k.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); filterByStatus(k.dataset.status); } });
