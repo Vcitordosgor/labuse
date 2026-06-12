@@ -420,7 +420,19 @@ def parcel_fiche(idu: str, db: Session = Depends(get_db)) -> dict:
     return _build_fiche(db, idu)
 
 
+def _check_idu(idu: str) -> str:
+    """Valide la forme d'un IDU avant tout accès DB : un octet nul ou un caractère de
+    contrôle dans le chemin provoquait un 500 (erreur driver) au lieu d'un 404 propre
+    (audit O5). Alphanumérique ≤ 20 caractères, sinon 404 — jamais d'erreur serveur."""
+    import re as _re
+
+    if not _re.fullmatch(r"[0-9A-Za-z]{1,20}", idu or ""):
+        raise HTTPException(404, "Parcelle inconnue")
+    return idu
+
+
 def _build_fiche(db: Session, idu: str) -> dict:
+    _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
@@ -529,6 +541,7 @@ def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
     (chaque section est isolée par `_safe`)."""
     from .enrichment import enrichment_cached
 
+    _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
@@ -558,6 +571,7 @@ def evaluate_one(idu: str, ai: bool = Query(False), db: Session = Depends(get_db
     from ..ai import get_provider
     from ..cascade import evaluate_parcels
 
+    _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
@@ -581,18 +595,25 @@ def discover(
     limit: int = Query(50, ge=1, le=2000),
     db: Session = Depends(get_db),
 ) -> list[dict]:
-    """Survivantes de la cascade, classées (radar). S'appuie sur la dernière évaluation."""
+    """Survivantes de la cascade, classées (radar). S'appuie sur la dernière évaluation.
+
+    Dernière évaluation via LATERAL depuis `parcels` (comme la carte) plutôt que
+    DISTINCT ON sur TOUT l'historique d'évaluations : mêmes résultats, mais le coût ne
+    grossit plus avec l'historique (audit J1 : ~1,9 s → quelques dizaines de ms)."""
     wanted = {s.strip() for s in statuses.split(",") if s.strip()}
-    # Dernière évaluation par parcelle (DISTINCT ON).
     rows = db.execute(
         text(
             """
-            SELECT DISTINCT ON (e.parcel_id) p.idu, p.commune, p.surface_m2,
+            SELECT p.idu, p.commune, p.surface_m2,
                    e.status, e.opportunity_score, e.completeness_score, e.evaluated_at
-            FROM parcel_evaluations e JOIN parcels p ON p.id = e.parcel_id
+            FROM parcels p
+            JOIN LATERAL (
+                SELECT status, opportunity_score, completeness_score, evaluated_at
+                FROM parcel_evaluations e WHERE e.parcel_id = p.id
+                ORDER BY evaluated_at DESC LIMIT 1
+            ) e ON true
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
               AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
-            ORDER BY e.parcel_id, e.evaluated_at DESC
             """
         ), {"c": commune, "minsurf": MIN_DISPLAY_SURFACE_M2}
     ).mappings().all()
@@ -633,6 +654,7 @@ class FeedbackIn(BaseModel):
 
 @app.post("/feedback")
 def post_feedback(body: FeedbackIn, db: Session = Depends(get_db)) -> dict:
+    _check_idu(body.idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == body.idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
@@ -712,6 +734,7 @@ def pipeline_list(db: Session = Depends(get_db)) -> list[dict]:
 
 @app.get("/pipeline/parcel/{idu}")
 def pipeline_for_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
+    _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
@@ -723,6 +746,7 @@ def pipeline_for_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
 
 @app.post("/pipeline")
 def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
+    _check_idu(body.idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == body.idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")

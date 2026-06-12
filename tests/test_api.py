@@ -63,6 +63,16 @@ def test_fiche_404(client):
     assert client.get("/parcels/00000000000000").status_code == 404
 
 
+def test_idu_malforme_404_jamais_500(client):
+    # Audit O5 : un octet nul / caractère de contrôle dans l'IDU provoquait un 500 driver.
+    for bad in ("%00", "a b", "x" * 25, "..%2F..", "AB-0001"):
+        r = client.get(f"/parcels/{bad}")
+        assert r.status_code == 404, f"{bad!r} → {r.status_code}"
+    assert client.get("/parcels/%00/enrichment").status_code == 404
+    assert client.get("/pipeline/parcel/%00").status_code == 404
+    assert client.post("/feedback", json={"idu": "\x00", "verdict": "good_lead"}).status_code == 404
+
+
 def test_demo_endpoint(client):
     # Phase 3 — panneau « Démo guidée » : structure stable, 8 parcelles, pas de 500.
     d = client.get("/demo").json()

@@ -162,3 +162,9 @@ opportunités sans voirie < 3 m ; à re-mesurer sur les 124 restantes), puis **b
 prudent** (O2/O3 : coûts Réunion sur surface de plancher, médiane d'abord, bas borné à 0).
 Ces deux-là, combinés à R1, donnent un top crédible de bout en bout : **vacant + accessible
 + chiffré prudemment**.
+
+---
+*Addendum (passe « 10/10 », même jour) : l'ajout du signal **accès non identifié**
+(audit O1, seuil 6 m BD TOPO) a rétrogradé 16 opportunités enclavées supplémentaires →
+**108 opportunités finales** (vacantes ET desservies), 710 parcelles portent le motif accès.
+Les 8 parcelles de démo restent conformes (toutes à 0 m d'une voirie).*

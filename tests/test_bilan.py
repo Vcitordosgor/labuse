@@ -62,9 +62,13 @@ def test_comparables_sans_vefa_affiche_seulement_ancien():
 
 def test_charge_fonciere_a_rebours_formule():
     b = compute_bilan(1000, 1000, _prix(3000, 3000, 3000), H)
-    # CA=3,0 M€ ; coef=1-0.18-0.12=0.70 ; coût central=1000*2000=2,0 M€
-    # CF central = 3.0M*0.70 - 2.0M = 100 k€
-    assert abs(b.charge_fonciere["central"] - 100_000) < 5_000
+    # Formule PRUDENTE (audit O2) : coût sur SURFACE DE PLANCHER (hab. × coef), coûts Réunion.
+    # CA = 3,0 M€ ; coef CA = 1-0.18-0.12 = 0.70 ; coût central = 1000 × 1.15 × 2550.
+    # Le « central » reste le chiffre VRAI (peut être négatif) ; seul l'affichage du BAS
+    # de fourchette est borné à 0 (audit O3).
+    cout_central = 1000 * H.coef_plancher_habitable * (H.cout_construction_m2_bas + H.cout_construction_m2_haut) / 2
+    attendu = 3_000_000 * 0.70 - cout_central
+    assert abs(b.charge_fonciere["central"] - attendu) < 5_000
 
 
 def test_dvf_trop_maigre_ne_chiffre_pas():
@@ -77,9 +81,10 @@ def test_dvf_trop_maigre_ne_chiffre_pas():
 
 
 def test_charge_fonciere_negative_signalee():
-    # prix bas + grande surface → CF basse négative
+    # prix bas + grande surface → CF basse négative : AFFICHÉE bornée à 0 (audit O3)
+    # mais l'avertissement « négative » est toujours émis (l'information n'est pas cachée).
     b = compute_bilan(2000, 2000, _prix(1500, 1700, 1900), H)
-    assert b.charge_fonciere["bas"] < 0
+    assert b.charge_fonciere["bas"] == 0
     assert any("négative" in a.lower() for a in b.avertissements)
 
 

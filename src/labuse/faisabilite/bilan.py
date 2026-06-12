@@ -62,13 +62,15 @@ def _quartiles(xs: list[float]) -> tuple[float, float, float]:
 
 def _trim_aberrants(sales: list[dict]) -> tuple[list[dict], int]:
     """Exclut les €/m² aberrants : Tukey (Q1−1,5·IQR ; Q3+1,5·IQR) borné au bon sens
-    réunionnais [600 ; 12000] €/m². Retourne (ventes gardées, nb exclus)."""
+    réunionnais [1000 ; 12000] €/m² — sous 1 000 €/m² bâti, c'est quasi toujours un
+    artefact DVF (lot annexe, vente familiale), qui entamait la confiance d'un
+    promoteur dans un échantillon dit « fiable » (audit J6). Retourne (gardées, exclues)."""
     prices = [s["prix"] for s in sales]
     if len(prices) < 4:
         return sales, 0
     q1, _m, q3 = _quartiles(prices)
     iqr = q3 - q1
-    lo = max(q1 - 1.5 * iqr, 600.0)
+    lo = max(q1 - 1.5 * iqr, 1000.0)
     hi = min(q3 + 1.5 * iqr, 12000.0)
     kept = [s for s in sales if lo <= s["prix"] <= hi]
     return kept, len(sales) - len(kept)
@@ -226,7 +228,10 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                       f"DVF Région ODS · fiabilité {niveau}"))
 
     ca_bas, ca_cen, ca_haut = surf * q1, surf * med, surf * q3
-    cc_bas, cc_haut = surf * hyp.cout_construction_m2_bas, surf * hyp.cout_construction_m2_haut
+    # Coût rapporté à la SURFACE DE PLANCHER (≈ habitable × coef), pas à l'habitable vendu
+    # (audit O2 : compter le coût sur l'habitable sous-estimait la construction).
+    sdp = surf * hyp.coef_plancher_habitable
+    cc_bas, cc_haut = sdp * hyp.cout_construction_m2_bas, sdp * hyp.cout_construction_m2_haut
     coef = 1.0 - hyp.marge_promoteur_pct - hyp.frais_annexes_pct
     cf_bas = ca_bas * coef - cc_haut
     cf_cen = ca_cen * coef - (cc_bas + cc_haut) / 2
@@ -239,18 +244,23 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     steps.append(Step("Chiffre d'affaires potentiel", f"{surf:.0f} m² × {q1}–{q3} €/m²",
                       f"~{_eur(ca_bas)} – {_eur(ca_haut)} (médiane {_eur(ca_cen)})", "dérivé"))
     steps.append(Step("Coût de construction",
-                      f"{surf:.0f} m² × {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m²",
-                      f"~{_eur(cc_bas)} – {_eur(cc_haut)}", "hypothèse coût"))
+                      f"{sdp:.0f} m² de plancher ({surf:.0f} m² hab. × {hyp.coef_plancher_habitable:.2f}) "
+                      f"× {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m²",
+                      f"~{_eur(cc_bas)} – {_eur(cc_haut)}", "hypothèse coût (prudente, Réunion)"))
     steps.append(Step("Marge promoteur + frais annexes",
                       f"marge {hyp.marge_promoteur_pct:.0%} + frais {hyp.frais_annexes_pct:.0%} du CA",
                       "déduits du CA", "hypothèse"))
+    # Présentation : la MÉDIANE d'abord (le chiffre de référence), la fourchette ensuite,
+    # bas borné à 0 (audit O3 : « entre −0,2 et 8 M€ » n'aide personne à décider).
     steps.append(Step("Charge foncière acceptable (bilan à rebours)",
                       f"CA×(1−{hyp.marge_promoteur_pct:.0%}−{hyp.frais_annexes_pct:.0%}) − coût construction",
-                      f"~{_eur(cf_bas)} – {_eur(cf_haut)} (médiane {_eur(cf_cen)} ≈ {par_m2:.0f} €/m² terrain)",
+                      f"médiane {_eur(cf_cen)} ≈ {par_m2:.0f} €/m² terrain "
+                      f"(fourchette {_eur(max(0, cf_bas))} – {_eur(cf_haut)})",
                       "dérivé"))
 
     hypotheses += [
-        f"Coût de construction supposé {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m² habitable.",
+        f"Coût de construction supposé {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m² "
+        f"de surface de plancher (habitable × {hyp.coef_plancher_habitable:.2f}) — hypothèse prudente Réunion.",
         f"Marge promoteur supposée {hyp.marge_promoteur_pct:.0%} du CA ; frais annexes {hyp.frais_annexes_pct:.0%}.",
         f"Prix = ventes DVF {prix['type_prix']} ({prix.get('pct_appartement', '?')}% d'appartements), "
         f"{prix['periode'][0]}-{prix['periode'][1]}, {lieu}.",
@@ -268,13 +278,16 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     # seule la fiabilité du PRIX DE SORTIE varie (fiable / fragile).
     if fragile:
         verdict = (f"Simulation indicative (prix de sortie fragile) — CA ≈ {_eur(rnd(ca_bas))}–{_eur(rnd(ca_haut))}, "
-                   f"charge foncière ≈ {_eur(max(0, rnd(cf_bas)))}–{_eur(rnd(cf_haut))} (ordre de grandeur)")
+                   f"charge foncière médiane ≈ {_eur(rnd(cf_cen))} (ordre de grandeur)")
     else:
         verdict = (f"Simulation indicative (prix de sortie fiable) — CA ~{_eur(ca_bas)}–{_eur(ca_haut)} · "
-                   f"charge foncière ~{_eur(max(0, cf_bas))}–{_eur(cf_haut)} (médiane {_eur(cf_cen)})")
+                   f"charge foncière médiane ~{_eur(cf_cen)} "
+                   f"(fourchette {_eur(max(0, cf_bas))}–{_eur(cf_haut)})")
 
     return Bilan(True, niveau, verdict, prix,
                  {"bas": rnd(ca_bas), "central": rnd(ca_cen), "haut": rnd(ca_haut)},
-                 {"bas": rnd(cf_bas), "central": rnd(cf_cen), "haut": rnd(cf_haut),
+                 # bas borné à 0 pour l'AFFICHAGE (audit O3) ; l'avertissement « charge
+                 # foncière négative en bas de fourchette » reste émis quand c'est le cas.
+                 {"bas": max(0, rnd(cf_bas)), "central": rnd(cf_cen), "haut": rnd(cf_haut),
                   "par_m2_terrain": round(par_m2)},
                  steps, hypotheses, avert)

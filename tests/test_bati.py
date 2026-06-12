@@ -93,6 +93,42 @@ def test_apply_declassement_ne_remonte_jamais():
     assert st == ES.EXCLUE
 
 
+# ───────────────────────── Accès / enclavement (audit O1) ─────────────────────────
+
+def test_acces_non_identifie_a_creuser():
+    # voirie à 12 m (> seuil 6 m) → enclavement PROBABLE → à creuser, jamais faux positif.
+    st, motif = apply_declassement(ES.OPPORTUNITE, {"surface_m2": 2000.0, "acces_dist_m": 12.0})
+    assert st == ES.A_CREUSER and "accès non identifié" in motif and "servitude" in motif
+
+
+def test_acces_aucune_voirie_a_creuser():
+    st, motif = apply_declassement(ES.OPPORTUNITE, {"surface_m2": 2000.0, "acces_dist_m": None})
+    assert st == ES.A_CREUSER and "aucune voirie" in motif
+
+
+def test_acces_voirie_proche_inchange():
+    st, motif = apply_declassement(ES.OPPORTUNITE, {"surface_m2": 2000.0, "acces_dist_m": 0.0})
+    assert st == ES.OPPORTUNITE and motif is None
+
+
+def test_acces_cle_absente_aucun_signal():
+    # Couche voirie non ingérée → clé absente → jamais d'« enclavée » déduite du vide.
+    st, motif = apply_declassement(ES.OPPORTUNITE, {"surface_m2": 2000.0})
+    assert st == ES.OPPORTUNITE and motif is None
+
+
+def test_compute_declass_signals_inclut_acces(db_session):
+    from labuse.scoring.declassement import compute_declass_signals
+    pid = _parcel(db_session, "BT0000000000D4", x0=55.60)
+    # voirie au CONTACT de la parcelle (ligne traversante)
+    db_session.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, geom, commune) VALUES "
+        "('voirie','route','voie test', ST_GeomFromText('LINESTRING(55.5995 -20.9995, 55.6015 -20.9995)',4326), 'BatiTest')"))
+    db_session.flush()
+    sig = compute_declass_signals(db_session, [pid])[pid]
+    assert "acces_dist_m" in sig and sig["acces_dist_m"] is not None and sig["acces_dist_m"] <= 6.0
+
+
 # ───────────────────────── DB : signaux batch + fiche ─────────────────────────
 
 def _parcel(db, idu, x0=55.30, w=0.001):

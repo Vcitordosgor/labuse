@@ -21,6 +21,11 @@ PENTE_FAUX_PCT = 60.0       # > : terrain non aménageable → faux positif prob
 PENTE_FORTE_PCT = 40.0      # > : aménagement difficile → jamais « opportunité »
 OSM_FAUX_COVERAGE = 0.50    # ≥ : la parcelle EST l'équipement → faux positif probable
 OSM_FLAG_COVERAGE = 0.30    # ≥ : recouvre en partie un équipement → « à creuser »
+# Accès (audit O1) : aucune voirie BD TOPO à moins de N mètres → enclavement PROBABLE.
+# 6 m = demi-largeur de voie (le filaire BD TOPO est un AXE, pas la limite) — même
+# tolérance que la façade (FACADE_TOL_M). Jamais une exclusion : une servitude de
+# passage ou une desserte non cartographiée reste possible → « à creuser », motif visible.
+ACCES_MAX_M = 6.0
 
 # Sévérité croissante : on ne déclasse QUE vers le bas (rang strictement supérieur).
 _RANK = {ES.OPPORTUNITE: 0, ES.A_CREUSER: 1, ES.FAUX_POSITIF_PROBABLE: 2, ES.EXCLUE: 3}
@@ -62,6 +67,15 @@ def apply_declassement(status: ES, signals: dict) -> tuple[ES, str | None]:
         elif cov >= OSM_FLAG_COVERAGE:
             blockers.append((ES.A_CREUSER,
                              f"recouvre en partie un {_osm_label(sub)} (OSM, {cov * 100:.0f} %)"))
+
+    # Accès (audit O1) : signal présent UNIQUEMENT si la couche voirie est ingérée
+    # (clé absente sinon — jamais d'« enclavée » déduite d'une couche manquante).
+    if "acces_dist_m" in signals:
+        d = signals["acces_dist_m"]
+        if d is None or d > ACCES_MAX_M:
+            txt = "aucune voirie cartographiée à proximité" if d is None else f"voirie la plus proche à ~{d:.0f} m"
+            blockers.append((ES.A_CREUSER,
+                             f"accès non identifié ({txt}, BD TOPO) — desserte ou servitude de passage à vérifier"))
 
     # Correctif R1 « déjà bâti » : couverture bâtiments BD TOPO (cf. labuse/bati.py —
     # classification graduée : la règle « ensemble bâti » attrape les résidences dont le
@@ -130,4 +144,20 @@ def compute_declass_signals(session, parcel_ids: list[int]) -> dict[int, dict]:
     if _bati.layer_available(session):
         for pid, st in _bati.stats_batch(session, list(ids)).items():
             out[pid].update(st)
+
+    # Accès (audit O1) : distance à la voirie la plus proche (batch, index geom_2975).
+    # Clé posée UNIQUEMENT si la couche voirie existe ; None = aucune voirie trouvée.
+    has_voirie = bool(session.execute(text(
+        "SELECT EXISTS(SELECT 1 FROM spatial_layers WHERE kind = 'voirie')")).scalar())
+    if has_voirie:
+        for pid in ids:
+            out[pid].setdefault("acces_dist_m", None)
+        for pid, d in session.execute(text(
+            """SELECT p.id, round(ST_Distance(p.geom_2975, v.geom_2975))
+               FROM parcels p
+               CROSS JOIN LATERAL (
+                 SELECT geom_2975 FROM spatial_layers
+                 WHERE kind = 'voirie' ORDER BY p.geom_2975 <-> geom_2975 LIMIT 1) v
+               WHERE p.id = ANY(:ids)"""), {"ids": list(ids)}).all():
+            out[pid]["acces_dist_m"] = float(d) if d is not None else None
     return out

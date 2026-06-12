@@ -31,8 +31,15 @@ class Hypotheses:
     recul_voirie_defaut_m: float = 5.0
     recul_limites_defaut_m: float = 3.0
     # --- Bilan promoteur (PARTIE 1) ---
-    cout_construction_m2_bas: float = 1800.0    # coût de construction au m² habitable (borne basse)
-    cout_construction_m2_haut: float = 2200.0   # idem (borne haute)
+    # Coûts de construction PRUDENTS pour La Réunion (audit O2) : collectif en contexte
+    # insulaire — matériaux importés, normes para-cycloniques/sismiques — les 1 800-2 200 €/m²
+    # « métropole » sous-estimaient le coût et SUR-estimaient donc la charge foncière.
+    # Le défaut doit être prudent, pas optimiste ; tunable via hypotheses_faisabilite (YAML).
+    cout_construction_m2_bas: float = 2300.0    # coût au m² de SURFACE DE PLANCHER (borne basse)
+    cout_construction_m2_haut: float = 2800.0   # idem (borne haute)
+    # Le coût se rapporte à la surface de PLANCHER, pas à l'habitable vendu (audit O2) :
+    # plancher ≈ habitable × 1.15 (circulations, gaines, murs).
+    coef_plancher_habitable: float = 1.15
     marge_promoteur_pct: float = 0.18           # marge promoteur (% du CA)
     frais_annexes_pct: float = 0.12             # honoraires, commercialisation, financier, aléas (% du CA)
     dvf_radius_m: float = 1500.0                # rayon de recherche des ventes DVF comparables
