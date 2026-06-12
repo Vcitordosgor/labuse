@@ -967,3 +967,8 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .pmt-num { color: var(--ink-soft); }
 .pmt-meta { margin-left: auto; color: var(--muted); font-size: 11px; }
 .pmt-src { margin: 7px 0 0; font-size: 11px; color: var(--muted); }
+
+/* ── Assemblage v1 (Lot C5) ── */
+.vz-unlock { margin: 0 0 8px; padding: 9px 12px; border-radius: 8px; border-left: 3px solid var(--gold-soft);
+  background: rgba(201,168,106,.1); font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+.vz-unlock.vz-prio { border-left-color: #37976a; background: rgba(55,151,106,.12); }

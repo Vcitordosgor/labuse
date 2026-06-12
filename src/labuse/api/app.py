@@ -439,6 +439,18 @@ def parcel_fiche(idu: str, db: Session = Depends(get_db)) -> dict:
     return _build_fiche(db, idu)
 
 
+@app.get("/assemblages")
+def assemblages(commune: str | None = None, limit: int = Query(100, ge=1, le=500),
+                db: Session = Depends(get_db)) -> dict:
+    """Liste dédiée des assemblages fonciers (Lot C5) : paires contiguës qui, réunies,
+    franchissent le seuil de taille — même propriétaire morale priorisé."""
+    from .. import assemblage
+    commune = commune or config.get_settings().pilot_commune_name
+    groups = assemblage.find_assemblages(db, commune, limit=limit)
+    return {"commune": commune, "count": len(groups),
+            "prioritaires": sum(1 for g in groups if g["meme_proprietaire"]), "assemblages": groups}
+
+
 @app.get("/map/permits.geojson")
 def permits_geojson(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Marqueurs SITADEL (Lot C4) : autorisations d'urbanisme géolocalisées (point = parcelle
@@ -551,6 +563,13 @@ def _build_fiche(db: Session, idu: str) -> dict:
         permits = nearby_permits(db, p.id)
     except Exception:  # noqa: BLE001 - n'empêche jamais la fiche
         permits = None
+
+    # Assemblage foncier v1 (Lot C5) — paire contiguë qui débloque le seuil de taille.
+    try:
+        from .. import assemblage as _asm
+        voisinage["assemblage_unlock"] = _asm.parcel_assemblage(db, p.id)
+    except Exception:  # noqa: BLE001
+        pass
 
     return {
         "parcel": {

@@ -511,9 +511,14 @@ function renderVoisinage(vz) {
       <span class="vz-meta">${v.opportunity_score != null ? `<b>${v.opportunity_score}</b> opp · ` : ""}${v.plu_zone ? "zone " + esc(v.plu_zone) + " · " : ""}${v.surface_m2 != null ? fmt(v.surface_m2) + " m²" : ""}</span>
     </button>`).join("");
   const banner = a.possible ? `<div class="vz-assemblage">${esc(a.note)}</div>` : "";
+  // Assemblage v1 (Lot C5) : paire contiguë qui débloque le seuil de taille.
+  const unlock = vz.assemblage_unlock || {};
+  const unlockBanner = unlock.possible
+    ? `<div class="vz-unlock${unlock.priorite_meme_proprietaire ? " vz-prio" : ""}">🧩 ${esc(unlock.note)}</div>` : "";
   return `
     <section class="voisinage">
       <h3 class="src-h">Parcelles voisines à regarder <span class="pm-sub">· contiguës, indicatif</span></h3>
+      ${unlockBanner}
       ${banner}
       <div class="vz-list">${items}</div>
       <p class="vz-foot">Adjacence géométrique uniquement — un même propriétaire, un accord ou la faisabilité d'un assemblage restent à vérifier.</p>

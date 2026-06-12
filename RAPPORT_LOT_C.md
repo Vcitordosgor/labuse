@@ -79,4 +79,41 @@ proximité » (`nearby_permits`, rattachés + < 300 m, type/date/distance). Cart
 « Permis (SITADEL) » (`/map/permits.geojson`, 117 marqueurs, désactivée par défaut). **Recette** :
 BI0380 → 3 PC à 177-228 m. Tests : +3.
 
-## C5 — Assemblage v1 — _en cours_
+## C5 — Assemblage v1 ✅ (livré)
+
+**Disponibilité** : pur PostGIS (contiguïté `ST_DWithin` sur le contour cadastral) + type de
+propriétaire (C3) — aucune source externe. GO.
+
+**Livré** : module `assemblage.py` — **paires contiguës** dont la surface cumulée franchit le
+seuil (`assemblage_min_surface_m2`, **PLACEHOLDER 1 000 m²**) alors qu'aucune ne l'atteint seule.
+Croisement **owner_type** : même propriétaire morale identifié = priorité (un interlocuteur).
+Endpoint `GET /assemblages` (liste dédiée, triée même-propriétaire puis surface cumulée). Fiche :
+bandeau « 🧩 Assemblage à étudier » (cumul + seuil + priorité). **Recette** : ~500+ paires sur
+Saint-Paul (ex. BV1549 978 m² + BV1193 987 m² = 1 965 m²) ; 0 prioritaires (aucun Fichier foncier
+importé → pas de même-propriétaire détectable, cohérent). Le triplet se lit en chaînant deux
+paires partageant une parcelle (v1). Tests : +3.
+
+---
+
+## ⛔ STOP & VALIDATE — fin de Lot C
+
+| Item | État | Livré / Bloqué |
+|---|---|---|
+| **C0** Hauteurs bâtiments | ✅ | SDP résiduelle réelle (flag PLACEHOLDER retiré) |
+| **C1** Ravines | ✅ | 98 ravines, SOFT_FLAG proximité (buffer PLACEHOLDER 10 m) |
+| **C2** 50 pas géométriques | ⛔ | bloqué — aucune source joignable (PEIGEO timeout) ; reprise au whitelist |
+| **C3** Personnes morales DGFiP | ✅ | owner_type + badge + filtre + demande SPF (donnée sous convention) |
+| **C4** SITADEL | ✅ | 2 519 permis, historique < 300 m + marqueurs |
+| **C5** Assemblage v1 | ✅ | paires franchissant le seuil + priorité même-propriétaire |
+
+**Bilan** : 5/6 items livrés ; **C2 seul bloqué** par la disponibilité (PEIGEO, action
+environnement côté Vic). 250 tests verts, ruff clean, démo 8/8, baseline 3 000 intacte.
+
+**PLACEHOLDERS Lot C en attente de calibrage** : `buffer_m` ravine (10), `assemblage_min_surface_m2`
+(1 000), `assemblage_individuel_max_m2` (1 000). (Plus, hérités : `prix_m2_lls`,
+`majoration_vrd_pluvial`, seuils A/N et ER.)
+
+**À trancher par Vic** :
+1. Reprise C2 dès que PEIGEO est whitelisté (sinon l'item reste en attente).
+2. Calibrage des PLACEHOLDERS ci-dessus.
+3. Lot D (UX du DONE : export PDF 1 page, comparateur, filtres sauvegardés) — brief détaillé attendu.
