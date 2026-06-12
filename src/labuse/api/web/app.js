@@ -647,7 +647,34 @@ async function loadEnrichment(idu, centroid) {
        <p class="pm-na">Données réseaux &amp; terrain momentanément indisponibles — à vérifier auprès des sources officielles.</p>`;
     return;
   } finally { clearTimeout(timer); }
-  if ($("#pm-slot") === slot) slot.outerHTML = renderPromoteur(pr, centroid);
+  if ($("#pm-slot") === slot) {
+    slot.outerHTML = renderPromoteur(pr, centroid);
+    surfaceServitudesMajeures(pr);
+  }
+}
+
+// Audit O6 : une servitude de MIXITÉ SOCIALE (« logements aidés », emplacement réservé)
+// change le bilan d'un promoteur privé — elle ne doit pas rester enfouie dans le bloc
+// enrichi. Quand l'enrichissement arrive, on la REMONTE dans la vigilance du résumé
+// (les prescriptions GPU sont chargées en lazy : c'est le seul moment où on les connaît).
+function surfaceServitudesMajeures(pr) {
+  const prescs = ((pr || {}).plu_detail || {}).prescriptions || [];
+  const RX = /logement(s)? (aid|soci)|mixit[ée] sociale|emplacement r[ée]serv[ée]/i;
+  const hits = prescs.filter((x) => RX.test(`${x.libelle || ""} ${x.nature || ""}`));
+  if (!hits.length) return;
+  const col = document.querySelectorAll(".rs-col")[1];           // colonne « À vérifier »
+  if (!col) return;
+  let list = col.querySelector(".rs-list");
+  if (!list) {                                                    // colonne vide (« — »)
+    const empty = col.querySelector(".rs-empty"); if (empty) empty.remove();
+    list = document.createElement("ul"); list.className = "rs-list"; col.appendChild(list);
+  }
+  const lbl = (hits[0].libelle || "servitude de mixité sociale").toString().slice(0, 80);
+  if ([...list.children].some((li) => li.dataset.servitude)) return;   // déjà injectée
+  const li = document.createElement("li");
+  li.dataset.servitude = "1";
+  li.textContent = `Servitude PLU : ${lbl} — % de logements aidés possible, à intégrer au bilan`;
+  list.appendChild(li);
 }
 
 function renderFaisabilite(fa) {
