@@ -195,6 +195,30 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
             "comparables": _comparables(kept, min_n, niveau)}
 
 
+def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
+    """Déclenchement de la clause de mixité (Art. 2 règlement PLU) selon le PROGRAMME estimé.
+    Logique OU du texte : SDP ≥ seuil OU logements ≥ seuil OU terrain > seuil. Renvoie l'état
+    (déclenchée + critère atteint) pour pondérer le CA et l'AFFICHER au promoteur."""
+    sdp = float(eco.get("sdp_max_m2") or 0.0)
+    logements = float(eco.get("logements_estimes") or 0.0)
+    terrain = float(eco.get("terrain_m2") or 0.0)
+    s_sdp = float(hyp.mixite_sdp_seuil_m2)
+    s_log = float(hyp.mixite_logements_seuil)
+    s_ter = float(hyp.mixite_terrain_seuil_m2)
+    if sdp >= s_sdp:
+        return {"declenchee": True, "critere": f"SDP {sdp:.0f} m² ≥ {s_sdp:.0f} m²",
+                "detail": f"programme SDP ~{sdp:.0f} m² ≥ seuil {s_sdp:.0f} m²"}
+    if logements >= s_log:
+        return {"declenchee": True, "critere": f"{logements:.0f} logements ≥ {s_log:.0f}",
+                "detail": f"programme ~{logements:.0f} logements ≥ seuil {s_log:.0f}"}
+    if terrain > s_ter:
+        return {"declenchee": True, "critere": f"terrain {terrain:.0f} m² > {s_ter:.0f} m²",
+                "detail": f"terrain ~{terrain:.0f} m² > seuil {s_ter:.0f} m²"}
+    return {"declenchee": False, "critere": None,
+            "detail": (f"programme sous les seuils (SDP {sdp:.0f} < {s_sdp:.0f} m², "
+                       f"{logements:.0f} < {s_log:.0f} logts, terrain {terrain:.0f} ≤ {s_ter:.0f} m²)")}
+
+
 def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                   prix: dict, hyp: Hypotheses, contexte_eco: dict | None = None) -> Bilan:
     """Cœur pur (testable). Protège le bilan selon la fiabilité du prix.
@@ -238,21 +262,31 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     eco = contexte_eco or {}
     mixite, pluvial = bool(eco.get("mixite")), bool(eco.get("pluvial"))
     p_lls = min(1.0, max(0.0, float(hyp.pct_lls) / 100.0))
-    pondere = mixite and p_lls > 0 and float(hyp.prix_m2_lls) > 0
-    # CA pondéré mixité sociale (Décision 3.b) : part LLS vendue à prix_m2_lls.
+    # Clause de mixité : déclenchée seulement si le PROGRAMME estimé franchit un seuil de l'Art. 2.
+    clause = _clause_mixite(eco, hyp) if mixite else None
+    declenchee = bool(clause and clause["declenchee"])
+    # Pondération du CA = clause déclenchée ET 30 % posé ET prix LLS calibré (jamais de prix fictif).
+    pondere = declenchee and p_lls > 0 and float(hyp.prix_m2_lls) > 0
     _px = (lambda x: (1.0 - p_lls) * float(x) + p_lls * float(hyp.prix_m2_lls)) if pondere \
         else (lambda x: float(x))
     ca_bas, ca_cen, ca_haut = surf * _px(q1), surf * _px(med), surf * _px(q3)
-    if pondere:
-        steps.append(Step("CA pondéré — secteur de mixité sociale",
-                          f"prix mixé = (1−{p_lls:.0%})×prix DVF + {p_lls:.0%}×{hyp.prix_m2_lls:.0f} €/m² (LLS)",
-                          f"{_px(med):.0f} €/m² (médiane pondérée)",
-                          "prescription GPU · params pct_lls / prix_m2_lls"))
-    elif mixite:
-        avert.append(
-            f"Secteur de mixité sociale ({eco.get('mixite_libelle') or 'logements aidés'}) : "
-            "quota et prix LLS non calibrés (pct_lls / prix_m2_lls = PLACEHOLDER) → CA NON "
-            "pondéré. Renseigner ces paramètres (ou les éditer dans le panneau) pour fiabiliser le CA.")
+    if mixite:
+        lib_sms = eco.get("mixite_libelle") or "logements aidés"
+        if not declenchee:
+            steps.append(Step("Clause de mixité sociale — non déclenchée",
+                              clause["detail"], "pas de quota LLS sur ce programme",
+                              "Art. 2 règlement PLU"))
+        elif pondere:
+            steps.append(Step("CA pondéré — clause de mixité DÉCLENCHÉE",
+                              f"{clause['detail']} · prix mixé = (1−{p_lls:.0%})×prix DVF + "
+                              f"{p_lls:.0%}×{hyp.prix_m2_lls:.0f} €/m² (LLS)",
+                              f"{_px(med):.0f} €/m² (médiane pondérée)",
+                              "Art. 2 · pct_lls / prix_m2_lls"))
+        else:  # déclenchée mais prix LLS non calibré → on NE chiffre PAS
+            avert.append(
+                f"Clause de mixité sociale DÉCLENCHÉE ({clause['critere']}) — {p_lls:.0%} de "
+                f"logements aidés imposés ({lib_sms}). Impact non chiffré : prix LLS non calibré "
+                "(PLACEHOLDER) → saisir le prix LLS dans le panneau pour pondérer le CA.")
     # Coût rapporté à la SURFACE DE PLANCHER (≈ habitable × coef), pas à l'habitable vendu
     # (audit O2 : compter le coût sur l'habitable sous-estimait la construction).
     sdp = surf * hyp.coef_plancher_habitable
@@ -328,7 +362,11 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
             "cc_bas": round(cc_bas), "cc_haut": round(cc_haut),
             "mixite": mixite, "pluvial": pluvial, "pondere": pondere,
             "pct_lls": float(hyp.pct_lls), "prix_m2_lls": float(hyp.prix_m2_lls),
-            "majoration_vrd_pluvial": maj_vrd}
+            "majoration_vrd_pluvial": maj_vrd,
+            # État de la clause de mixité (info de pilotage promoteur).
+            "clause_declenchee": declenchee,
+            "clause_critere": (clause or {}).get("critere"),
+            "clause_detail": (clause or {}).get("detail")}
     return Bilan(True, niveau, verdict, prix,
                  {"bas": rnd(ca_bas), "central": rnd(ca_cen), "haut": rnd(ca_haut)},
                  # bas borné à 0 pour l'AFFICHAGE (audit O3) ; l'avertissement « charge

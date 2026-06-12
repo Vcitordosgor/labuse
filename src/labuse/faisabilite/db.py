@@ -221,7 +221,16 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
         from .engine import Hypotheses
         if f.constructible:
             hyp = Hypotheses.charger()
-            b = compute_bilan(f.fourchette.get("shab_vendable_m2", 0), ctx.surface_m2,
+            # Programme estimé → déclenchement de la clause de mixité (seuils Art. 2).
+            fr = f.fourchette
+            logements_est = max((fr.get("logements_au_sol") or (0, 0))[1],
+                                (fr.get("logements_sous_sol") or (0, 0))[1])
+            ctx.prescriptions_eco.update({
+                "sdp_max_m2": fr.get("surface_plancher_m2"),
+                "logements_estimes": logements_est,
+                "terrain_m2": ctx.surface_m2,
+            })
+            b = compute_bilan(fr.get("shab_vendable_m2", 0), ctx.surface_m2,
                               sector_price(session, ctx.parcel_id, hyp), hyp,
                               contexte_eco=ctx.prescriptions_eco)
             bilan = {

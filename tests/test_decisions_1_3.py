@@ -165,24 +165,53 @@ def _prix(q1, med, q3, n=40):
             "min": round(q1 * 0.9), "max": round(q3 * 1.1)}
 
 
-def test_d3b_mixite_placeholder_ca_non_pondere_et_averti():
-    h = Hypotheses()  # pct_lls = prix_m2_lls = 0 (PLACEHOLDER)
-    eco = {"mixite": True, "mixite_libelle": "Clause logements aidés"}
-    b = compute_bilan(4600, 4500, _prix(2200, 3000, 4300), h, contexte_eco=eco)
-    assert b.ca["central"] == round(4600 * 3000)          # CA inchangé
-    assert any("PLACEHOLDER" in a for a in b.avertissements)
-    assert b.calc and b.calc["mixite"] is True and b.calc["pondere"] is False
+# Programme qui DÉCLENCHE la clause (SDP 2 000 ≥ 1 500 m²) et un qui NE la déclenche PAS.
+_ECO_DECL = {"mixite": True, "mixite_libelle": "Clause logements aidés",
+             "sdp_max_m2": 2000, "logements_estimes": 12, "terrain_m2": 1500}
+_ECO_SOUS = {"mixite": True, "mixite_libelle": "Clause logements aidés",
+             "sdp_max_m2": 900, "logements_estimes": 8, "terrain_m2": 1200}
 
 
-def test_d3b_mixite_calibree_ca_pondere_formule_directive():
+def test_d3b_clause_non_declenchee_pas_de_quota():
+    """① Programme sous les seuils → clause non déclenchée, CA inchangé, message clair."""
+    h = Hypotheses()
+    h.pct_lls, h.prix_m2_lls = 30.0, 2600.0   # même calibré, pas de quota
+    b = compute_bilan(4600, 4500, _prix(2200, 3000, 4300), h, contexte_eco=_ECO_SOUS)
+    assert b.ca["central"] == round(4600 * 3000)               # CA inchangé
+    assert b.calc["clause_declenchee"] is False and b.calc["pondere"] is False
+    assert any("non déclenchée" in s.label.lower() for s in b.steps)
+
+
+def test_d3b_clause_declenchee_sans_prix_lls_non_chiffre():
+    """② Clause déclenchée mais prix LLS non calibré → impact NON chiffré (pas de prix fictif)."""
+    h = Hypotheses()
+    h.pct_lls = 30.0   # prix_m2_lls = 0 (PLACEHOLDER)
+    b = compute_bilan(4600, 4500, _prix(2200, 3000, 4300), h, contexte_eco=_ECO_DECL)
+    assert b.ca["central"] == round(4600 * 3000)               # CA NON pondéré
+    assert b.calc["clause_declenchee"] is True and b.calc["pondere"] is False
+    assert any("non chiffré" in a.lower() and "prix lls" in a.lower() for a in b.avertissements)
+
+
+def test_d3b_clause_declenchee_avec_prix_ca_pondere():
+    """③ Clause déclenchée + prix LLS saisi → CA pondéré [(1−p)×DVF + p×LLS]."""
     h = Hypotheses()
     h.pct_lls, h.prix_m2_lls = 30.0, 2600.0
-    b = compute_bilan(4600, 4500, _prix(2200, 3000, 4300), h,
-                      contexte_eco={"mixite": True})
-    attendu = 4600 * (0.70 * 3000 + 0.30 * 2600)          # CA = SDP×[(1−p)×neuf + p×LLS]
+    b = compute_bilan(4600, 4500, _prix(2200, 3000, 4300), h, contexte_eco=_ECO_DECL)
+    attendu = 4600 * (0.70 * 3000 + 0.30 * 2600)
     assert b.ca["central"] == round(attendu)
-    assert any("CA pondéré" in s.label for s in b.steps)
-    assert b.calc["pondere"] is True
+    assert b.calc["pondere"] is True and b.calc["clause_declenchee"] is True
+    assert any("DÉCLENCHÉE" in s.label for s in b.steps)
+
+
+def test_d3b_declenchement_par_logements_et_terrain():
+    """Logique OU : déclenchée par ≥ 20 logements ou terrain > 6 000 m², même SDP faible."""
+    h = Hypotheses()
+    par_logts = compute_bilan(4600, 4500, _prix(2200, 3000, 4300), h,
+                              contexte_eco={"mixite": True, "sdp_max_m2": 500, "logements_estimes": 22, "terrain_m2": 800})
+    par_terrain = compute_bilan(4600, 4500, _prix(2200, 3000, 4300), h,
+                                contexte_eco={"mixite": True, "sdp_max_m2": 500, "logements_estimes": 4, "terrain_m2": 6500})
+    assert par_logts.calc["clause_declenchee"] is True and "logements" in par_logts.calc["clause_critere"]
+    assert par_terrain.calc["clause_declenchee"] is True and "terrain" in par_terrain.calc["clause_critere"]
 
 
 def test_d3c_pluvial_neutre_puis_majoration():

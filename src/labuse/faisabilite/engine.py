@@ -47,12 +47,15 @@ class Hypotheses:
     # --- Potentiel résiduel (Lot B) — PLACEHOLDERS ---
     niveaux_bati_existant_defaut: float = 1.0   # niveaux supposés du bâti existant (hauteur BD TOPO non ingérée)
     sous_densite_seuil_pct: float = 40.0        # seuil du taux d'emprise sous lequel = « sous-densité »
-    # --- Prescriptions GPU (Décisions 3.b / 3.c) — PLACEHOLDERS, à renseigner par Vic ---
-    pct_lls: float = 0.0              # % de logements aidés imposé en secteur de mixité sociale
-    #                                   (0 = non calibré → CA NON pondéré, avertissement affiché)
-    prix_m2_lls: float = 0.0          # prix de sortie €/m² des logements aidés (0 = non calibré)
-    majoration_vrd_pluvial: float = 0.0  # % de majoration du coût (VRD) en zonage eaux pluviales
-    #                                      (0 = visible mais neutre tant que non calibré)
+    # --- Prescriptions GPU (Décisions 3.b / 3.c) ---
+    pct_lls: float = 0.0              # % de logements aidés (validé Vic : 30 % — Art. 2 règlement PLU)
+    prix_m2_lls: float = 0.0          # prix de sortie €/m² des logements aidés (PLACEHOLDER, 0 = non calibré)
+    majoration_vrd_pluvial: float = 0.0  # % de majoration du coût (VRD) en zonage eaux pluviales (PLACEHOLDER)
+    # Seuils de DÉCLENCHEMENT de la clause de mixité (Art. 2 règlement PLU — SOURCÉS, non placeholder).
+    # Clause déclenchée si SDP ≥ seuil OU logements ≥ seuil OU terrain > seuil (logique OU du texte).
+    mixite_sdp_seuil_m2: float = 1500.0       # « SDP ≥ 1 500 m² » (bornes 1500/1800 du texte)
+    mixite_logements_seuil: float = 20.0      # « programme de 20 logements ou plus »
+    mixite_terrain_seuil_m2: float = 6000.0   # « terrain d'habitation de plus de 6 000 m² »
 
     @classmethod
     def charger(cls) -> "Hypotheses":

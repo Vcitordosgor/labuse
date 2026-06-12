@@ -859,18 +859,27 @@ function renderBilan(b) {
 // Tant que les PLACEHOLDERS (0) ne sont pas renseignés, le bilan affiché reste NON pondéré.
 function renderLls(calc) {
   if (!calc || !calc.mixite) return "";
+  const decl = !!calc.clause_declenchee;
+  // Clause non déclenchée : info de pilotage, pas de pondération ni de champs.
+  if (!decl) {
+    return `
+      <div class="bilan-lls bilan-lls-off">
+        <div class="bilan-comp-t">Clause de mixité sociale — <b>non déclenchée</b></div>
+        <span class="bilan-lls-note">${esc(calc.clause_detail || "programme sous les seuils")} — aucun quota de logements aidés sur ce programme. Dimensionner sous le seuil reste une stratégie possible.</span>
+      </div>`;
+  }
   const on = Number(calc.pct_lls) > 0 && Number(calc.prix_m2_lls) > 0;
   return `
       <div class="bilan-lls" id="bilan-lls"
            data-surf="${Number(calc.surf) || 0}" data-terrain="${Number(calc.terrain_m2) || 0}"
            data-q1="${Number(calc.q1) || 0}" data-med="${Number(calc.median) || 0}" data-q3="${Number(calc.q3) || 0}"
            data-coef="${Number(calc.coef) || 0}" data-ccbas="${Number(calc.cc_bas) || 0}" data-cchaut="${Number(calc.cc_haut) || 0}">
-        <div class="bilan-comp-t">Mixité sociale — pondération du CA (éditable, recalcul immédiat)</div>
+        <div class="bilan-comp-t">Clause de mixité sociale — <b>déclenchée</b> <span class="lls-crit">(${esc(calc.clause_critere || "")})</span></div>
         <label>quota logements aidés <input type="number" id="lls-pct" min="0" max="100" step="1" value="${Number(calc.pct_lls) || 0}"> %</label>
         <label>prix LLS <input type="number" id="lls-prix" min="0" step="50" value="${Number(calc.prix_m2_lls) || 0}"> €/m²</label>
         <span class="bilan-lls-note" id="lls-note">${on
-          ? "pondération appliquée (params calibrés)"
-          : "PLACEHOLDER non calibré → CA non pondéré ; saisir les deux valeurs pour simuler"}</span>
+          ? "pondération appliquée (prix LLS calibré)"
+          : "impact non chiffré — prix LLS non calibré ; saisir le prix LLS pour pondérer le CA"}</span>
       </div>`;
 }
 
