@@ -65,6 +65,18 @@ public/bailleur, indivision prime sur physique, sans données → inconnu+SPF ; 
 parcelles réelles : owner_famille=inconnu partout (pas de Fichiers fonciers importés) → chemin
 SPF. Tests : +8.
 
-## C4 — SITADEL PC/DP — _en cours_
+## C4 — SITADEL PC/DP ✅ (livré)
 
-## C5 — Assemblage v1 — _à venir_
+**Disponibilité (couverture 974 vérifiée d'abord)** : Région ODS
+(`liste-des-permis-de-construire…-reunion`) HTTP 200, **2 529 autorisations pour Saint-Paul**
+(comm=97415), avec références cadastrales et dates (2017-2023). GO.
+
+**Livré** : ingestion (2 519 permis avec réf cadastrale, 6 s). Géolocalisation par rattachement
+IDU à une parcelle ingérée → 117 permis géolocalisés (les autres pointent des parcelles hors du
+sous-ensemble bbox du référentiel — limite de couverture, pas de bug), suffisant pour donner à
+**2 846/3 000 parcelles ≥ 1 permis ≤ 300 m**. Fiche : bloc « Autorisations d'urbanisme à
+proximité » (`nearby_permits`, rattachés + < 300 m, type/date/distance). Carte : couche
+« Permis (SITADEL) » (`/map/permits.geojson`, 117 marqueurs, désactivée par défaut). **Recette** :
+BI0380 → 3 PC à 177-228 m. Tests : +3.
+
+## C5 — Assemblage v1 — _en cours_

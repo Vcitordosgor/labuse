@@ -439,6 +439,24 @@ def parcel_fiche(idu: str, db: Session = Depends(get_db)) -> dict:
     return _build_fiche(db, idu)
 
 
+@app.get("/map/permits.geojson")
+def permits_geojson(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Marqueurs SITADEL (Lot C4) : autorisations d'urbanisme géolocalisées (point = parcelle
+    rattachée). Pour la couche « permis » de la carte."""
+    rows = db.execute(
+        text(
+            """SELECT s.permit_id, s.type, s.date, ST_AsGeoJSON(s.geom) AS g
+               FROM sitadel_permits s
+               WHERE s.geom IS NOT NULL AND (CAST(:c AS text) IS NULL OR s.commune = :c)"""
+        ), {"c": commune}
+    ).mappings().all()
+    feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
+              "properties": {"num": r["permit_id"], "type": r["type"],
+                             "date": r["date"].date().isoformat() if r["date"] else None}}
+             for r in rows if r["g"]]
+    return {"type": "FeatureCollection", "features": feats}
+
+
 def _check_idu(idu: str) -> str:
     """Valide la forme d'un IDU avant tout accès DB : un octet nul ou un caractère de
     contrôle dans le chemin provoquait un 500 (erreur driver) au lieu d'un 404 propre
@@ -527,6 +545,13 @@ def _build_fiche(db: Session, idu: str) -> dict:
     from .voisinage import compute_voisinage
     voisinage = compute_voisinage(db, p.id, p.surface_m2, verdict_block["status"])
 
+    # Autorisations d'urbanisme à proximité (Lot C4) — historique SITADEL < 300 m.
+    try:
+        from ..ingestion.permits import nearby_permits
+        permits = nearby_permits(db, p.id)
+    except Exception:  # noqa: BLE001 - n'empêche jamais la fiche
+        permits = None
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
@@ -537,6 +562,7 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "bati": bati_block,
         "voisinage": voisinage,
         "faisabilite": faisabilite,
+        "permits": permits,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en
         # LAZY-LOAD, par GET /parcels/{idu}/enrichment : il fait des appels externes lents

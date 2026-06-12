@@ -31,6 +31,7 @@ let FEATURES = [];          // toutes les parcelles (GeoJSON features)
 let layer = null;           // couche Leaflet courante
 const byIdu = {};           // idu -> layer (pour highlight)
 let map;
+let PERMITS_LAYER = null;   // couche marqueurs SITADEL (Lot C4)
 let COVERAGE = null;        // couverture des couches critiques (/coverage)
 let KANBAN_META = null;     // colonnes & priorités du pipeline (/pipeline/meta)
 let PIPELINE = [];          // entrées du pipeline chargées (mémoire → re-render local)
@@ -60,9 +61,10 @@ function initMap() {
       "&TileMatrix={z}&TileCol={x}&TileRow={y}",
       { maxZoom: 21, attribution: "&copy; IGN — Géoplateforme (BD ORTHO)" }
     );
+    PERMITS_LAYER = L.layerGroup();   // marqueurs SITADEL (Lot C4), peuplés en différé
     L.control.layers(
       { "Plan (radar)": plan, "Vue du ciel (IGN)": ortho },
-      null, { position: "topright", collapsed: true }
+      { "Permis (SITADEL)": PERMITS_LAYER }, { position: "topright", collapsed: true }
     ).addTo(map);
   } catch (e) {
     map = null;
@@ -398,6 +400,8 @@ function renderFiche(f) {
 
     ${renderFaisabilite(f.faisabilite)}
 
+    ${renderPermits(f.permits)}
+
     ${renderVoisinage(f.voisinage)}
 
     ${renderAi(f.ai)}
@@ -479,6 +483,24 @@ function renderBati(b) {
 }
 
 // Assemblage foncier (Phase 5) — parcelles voisines contiguës + drapeau prudent.
+// Autorisations d'urbanisme à proximité (Lot C4) — historique SITADEL < 300 m.
+function renderPermits(pm) {
+  if (!pm || !pm.count) return "";
+  const rows = (pm.items || []).map((x) => `
+    <li class="pmt-li${x.rattache ? " pmt-rat" : ""}">
+      <span class="pmt-type">${esc(x.type || "—")}</span>
+      <span class="pmt-num">${esc(x.num || "")}</span>
+      <span class="pmt-meta">${x.date ? esc(x.date) : ""}${x.rattache ? " · sur la parcelle" : (x.distance_m != null ? ` · ~${x.distance_m} m` : "")}</span>
+    </li>`).join("");
+  return `
+    <section class="permits">
+      <h3 class="pmt-h">Autorisations d'urbanisme à proximité
+        <span class="pmt-count">${pm.count} dans ${pm.radius_m} m${pm.rattaches ? ` · ${pm.rattaches} sur la parcelle` : ""}</span></h3>
+      <ul class="pmt-list">${rows}</ul>
+      <p class="pmt-src">Signal d'activité (un permis voisin = secteur qui bouge) — source ${esc(pm.source || "SITADEL")}. Non exhaustif.</p>
+    </section>`;
+}
+
 function renderVoisinage(vz) {
   if (!vz || !(vz.voisines || []).length) return "";
   const a = vz.assemblage || {};
@@ -678,6 +700,22 @@ async function loadEnrichment(idu, centroid) {
 // Lot C3 — ouvre le courrier SPF pré-rempli dans un nouvel onglet (texte brut, imprimable).
 function openSpfLetter(idu) {
   window.open(`/parcels/${encodeURIComponent(idu)}/spf-letter`, "_blank", "noopener");
+}
+
+// Lot C4 — marqueurs SITADEL (différés) ; couche désactivée par défaut (toggle layer control).
+async function loadPermitMarkers() {
+  if (!map || !PERMITS_LAYER) return;
+  let fc;
+  try { fc = await (await fetch(`/map/permits.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json(); }
+  catch { return; }
+  PERMITS_LAYER.clearLayers();
+  (fc.features || []).forEach((ft) => {
+    const [lon, lat] = ft.geometry.coordinates;
+    L.circleMarker([lat, lon], { radius: 4, color: "#c98a3a", weight: 1, fillOpacity: 0.7 })
+      .bindTooltip(`${esc(ft.properties.type || "permis")} ${esc(ft.properties.num || "")}${ft.properties.date ? " · " + esc(ft.properties.date) : ""}`,
+        { direction: "top" })
+      .addTo(PERMITS_LAYER);
+  });
 }
 
 // Audit O6 : une servitude de MIXITÉ SOCIALE (« logements aidés », emplacement réservé)
@@ -1445,6 +1483,7 @@ async function main() {
   applyFilters();
   if (map && FEATURES.length && layer) map.fitBounds(layer.getBounds(), { maxZoom: 15 });
   if (map && isMobile()) setTimeout(() => map.invalidateSize(), 120);
+  loadPermitMarkers();   // couche SITADEL (Lot C4), différée, désactivée par défaut
 
   // filtres
   const debounce = (fn, ms = 140) => { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; };

@@ -955,3 +955,15 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .own-spf:hover { border-color: var(--gold-soft); }
 .filter-owner { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
 .filter-owner select { flex: 1; padding: 4px 6px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); color: var(--txt); font: inherit; }
+
+/* ── Autorisations d'urbanisme à proximité (Lot C4) ── */
+.permits { margin: 0 0 16px; }
+.pmt-h { font-size: 13px; font-weight: 700; color: var(--ink); margin: 0 0 8px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pmt-count { font-size: 11px; font-weight: 500; color: var(--muted); }
+.pmt-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.pmt-li { display: flex; align-items: baseline; gap: 8px; padding: 4px 8px; border-radius: 6px; background: var(--panel-2); font-size: 12px; }
+.pmt-li.pmt-rat { border-left: 2px solid var(--gold-soft); }
+.pmt-type { font-weight: 700; color: var(--gold-soft); min-width: 26px; }
+.pmt-num { color: var(--ink-soft); }
+.pmt-meta { margin-left: auto; color: var(--muted); font-size: 11px; }
+.pmt-src { margin: 7px 0 0; font-size: 11px; color: var(--muted); }

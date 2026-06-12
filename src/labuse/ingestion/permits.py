@@ -68,3 +68,36 @@ def ingest_permits(session: Session, insee: str, commune: str, run_id: int | Non
         n += 1
     session.flush()
     return n
+
+
+def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int = 12) -> dict:
+    """Historique des autorisations d'urbanisme à proximité (Lot C4) — pour la fiche.
+
+    Permis rattachés à la parcelle (par IDU) ET permis géolocalisés dans le rayon. Renvoie la
+    liste ordonnée (rattachés d'abord, puis par distance) + un résumé. Lecture seule."""
+    rows = session.execute(
+        text(
+            """
+            WITH p AS (SELECT idu, centroid FROM parcels WHERE id = :pid)
+            SELECT s.permit_id, s.type, s.date,
+                   jsonb_exists(s.idu_codes, p.idu) AS rattache,
+                   CASE WHEN s.geom IS NULL THEN NULL
+                        ELSE round(ST_Distance(ST_Transform(p.centroid, 2975),
+                                               ST_Transform(s.geom, 2975))) END AS dist_m
+            FROM sitadel_permits s, p
+            WHERE jsonb_exists(s.idu_codes, p.idu)
+               OR (s.geom IS NOT NULL
+                   AND ST_DWithin(ST_Transform(p.centroid, 2975), ST_Transform(s.geom, 2975), :r))
+            ORDER BY rattache DESC, dist_m NULLS LAST
+            LIMIT :lim
+            """
+        ), {"pid": parcel_id, "r": radius_m, "lim": limit},
+    ).mappings().all()
+    items = [{"num": r["permit_id"], "type": r["type"],
+              "date": r["date"].date().isoformat() if r["date"] else None,
+              "rattache": bool(r["rattache"]),
+              "distance_m": int(r["dist_m"]) if r["dist_m"] is not None else None}
+             for r in rows]
+    rattaches = sum(1 for i in items if i["rattache"])
+    return {"radius_m": int(radius_m), "count": len(items), "rattaches": rattaches,
+            "items": items, "source": "SITADEL / Région ODS 974"}
