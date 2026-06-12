@@ -7,7 +7,9 @@
   <link rel="icon" type="image/svg+xml" href="favicon.svg" />
   <link rel="mask-icon" href="favicon.svg" color="#c9a86a" />
   <link rel="stylesheet" href="fonts.css" />
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Leaflet VENDORISÉ (audit R2) : un CDN bloqué (proxy TLS d'entreprise, unpkg down)
+       rendait l'app entièrement noire. Seules les TUILES restent externes. -->
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="view-map">
@@ -21,6 +23,7 @@
       <button class="mt-tab js-view" data-view="list" role="tab" aria-selected="false">Liste</button>
       <button class="mt-tab js-view" data-view="kanban" role="tab" aria-selected="false">Pipeline <span class="kb-badge hidden" title="rappels échus">0</span></button>
     </div>
+    <button class="mt-demo js-demo" title="Démo guidée" aria-label="Démo guidée">🎬</button>
   </nav>
 
   <aside id="sidebar">
@@ -75,7 +78,7 @@
     </section>
 
     <section class="veille">
-      <h2>Veille (offre C) <span class="count" id="veille-count">—</span> signaux</h2>
+      <h2>Veille foncière <span class="count" id="veille-count">—</span> signaux</h2>
       <div id="veille-list" class="veille-list"><div class="muted-sm">—</div></div>
     </section>
 
@@ -145,7 +148,7 @@
   </section>
   <div id="scrim" class="scrim hidden"></div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="vendor/leaflet/leaflet.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

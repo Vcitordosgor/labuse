@@ -42,23 +42,31 @@ const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": 
 const fmt = (n) => (n == null ? "—" : Number(n).toLocaleString("fr-FR"));
 
 // ───────────────────────── Carte ─────────────────────────
+// Leaflet est vendorisé (audit R2) ; par défense en profondeur, son échec éventuel ne doit
+// JAMAIS tuer l'app : la carte se met en erreur lisible, KPIs/liste/fiches restent utilisables.
 function initMap() {
-  map = L.map("map", { zoomControl: true, preferCanvas: true }).setView([-21.01, 55.285], 13);
-  const plan = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-    subdomains: "abcd", maxZoom: 20,
-    attribution: '&copy; OpenStreetMap &copy; CARTO',
-  }).addTo(map);
-  // « Vue du ciel » : orthophotographie IGN (BD ORTHO) via la Géoplateforme (WMTS/PM).
-  const ortho = L.tileLayer(
-    "https://data.geopf.fr/wmts?layer=ORTHOIMAGERY.ORTHOPHOTOS&style=normal&tilematrixset=PM" +
-    "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg" +
-    "&TileMatrix={z}&TileCol={x}&TileRow={y}",
-    { maxZoom: 21, attribution: "&copy; IGN — Géoplateforme (BD ORTHO)" }
-  );
-  L.control.layers(
-    { "Plan (radar)": plan, "Vue du ciel (IGN)": ortho },
-    null, { position: "topright", collapsed: true }
-  ).addTo(map);
+  try {
+    if (typeof L === "undefined") throw new Error("Leaflet indisponible");
+    map = L.map("map", { zoomControl: true, preferCanvas: true }).setView([-21.01, 55.285], 13);
+    const plan = L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      subdomains: "abcd", maxZoom: 20,
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+    }).addTo(map);
+    // « Vue du ciel » : orthophotographie IGN (BD ORTHO) via la Géoplateforme (WMTS/PM).
+    const ortho = L.tileLayer(
+      "https://data.geopf.fr/wmts?layer=ORTHOIMAGERY.ORTHOPHOTOS&style=normal&tilematrixset=PM" +
+      "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg" +
+      "&TileMatrix={z}&TileCol={x}&TileRow={y}",
+      { maxZoom: 21, attribution: "&copy; IGN — Géoplateforme (BD ORTHO)" }
+    );
+    L.control.layers(
+      { "Plan (radar)": plan, "Vue du ciel (IGN)": ortho },
+      null, { position: "topright", collapsed: true }
+    ).addTo(map);
+  } catch (e) {
+    map = null;
+    showMapError();
+  }
 }
 
 function colorFor(p) { return COLORS[p.status] || COLORS.inconnu; }
@@ -105,8 +113,9 @@ function currentFilter() {
 }
 
 function renderMap() {
-  if (layer) layer.remove();
   const shown = FEATURES.filter((ft) => passesFilter(ft.properties));
+  if (!map) { updateResultMeta(shown.length); return; }   // carte en panne : liste/fiches vivent
+  if (layer) layer.remove();
   const fc = { type: "FeatureCollection", features: shown };
   layer = L.geoJSON(fc, {
     style: (ft) => styleFor(ft.properties),
@@ -158,12 +167,16 @@ async function loadStats() {
 async function loadSignals() {
   let sig = [];
   try { sig = await (await fetch(`/signals?commune=${encodeURIComponent(COMMUNE)}&limit=8`)).json(); } catch { sig = []; }
+  // Audit J8 : pas de section VIDE en permanence (effet « inachevé »), pas de jargon CLI.
+  const section = document.querySelector(".veille");
+  if (!sig.length) { if (section) section.classList.add("hidden"); return; }
+  if (section) section.classList.remove("hidden");
   const TYPE = { zonage_change: "Changement de zonage", mutation_dvf: "Mutation DVF", new_permit_nearby: "Permis à proximité" };
-  $("#veille-list").innerHTML = sig.length ? sig.map((s) => {
+  $("#veille-list").innerHTML = sig.map((s) => {
     const p = s.payload || {};
     const det = (p.from || p.to) ? `<br>${esc(p.from)} → ${esc(p.to)}` : (p.date_mutation || p.date ? `<br>${esc(p.date_mutation || p.date)}` : "");
     return `<div class="alert"><span class="a-type">${TYPE[s.signal_type] || esc(s.signal_type)}</span> · <span class="a-idu">${esc(s.idu)}</span>${det}</div>`;
-  }).join("") : `<div class="muted-sm">Aucune alerte. Lancer « labuse watch ».</div>`;
+  }).join("");
 }
 
 async function loadCoverage() {
@@ -192,20 +205,31 @@ function fiableBadge(status) {
   // « Vérifiée » (pas « fiable ») : couches critiques contrôlées, MAIS le SAR n'est que
   // partiel et rien ne garantit la constructibilité (PLU/PPR à croiser, terrain à vérifier).
   if (COVERAGE && COVERAGE.reliable_ready) {
-    return `<span class="fiable-tag ok" title="Contrôlée sur les couches disponibles : PLU, PPR, littoral, forêt, SAR partiel. Ne vaut pas garantie de constructibilité.">Opportunité vérifiée</span>`
-      + `<span class="fiable-sub">vérifiée sur les couches disponibles (PLU, PPR, littoral, forêt, SAR partiel) — ne vaut pas garantie de constructibilité</span>`;
+    // Audit B2 : sous-texte raccourci (l'intégral reste dans l'infobulle).
+    return `<span class="fiable-tag ok" title="Contrôlée sur les couches disponibles : PLU, PPR, littoral, forêt, SAR partiel, bâti BD TOPO. Ne vaut pas garantie de constructibilité.">Opportunité vérifiée</span>`
+      + `<span class="fiable-sub">sur les couches disponibles — ne vaut pas garantie de constructibilité</span>`;
   }
   return `<span class="fiable-tag reserve" title="Des couches critiques ne sont pas encore ingérées.">sous réserve · couches manquantes</span>`;
 }
 
+// Tri liste : OPPORTUNITÉS d'abord (audit J9 — le score seul noyait les vraies pistes
+// sous les « à creuser » surface réduite), puis score, puis surface.
+const STATUS_RANK = { opportunite: 0, a_creuser: 1, faux_positif_probable: 2, exclue: 3 };
+let LIST_LIMIT = 80;   // « Afficher plus » (audit J2 — 97 % des résultats étaient invisibles)
+
 function renderList() {
-  const f = currentFilter();
+  // La liste REFLÈTE les filtres : faux positifs/exclues y apparaissent si leur case est
+  // cochée (audit B5 — « montrez-moi ce que vous écartez » est un argument de vente).
   const matched = FEATURES
     .map((ft) => ft.properties)
-    .filter((p) => p.status !== "exclue" && p.status !== "faux_positif_probable" && passesFilter(p))
-    .sort((a, b) => (b.opportunity_score || 0) - (a.opportunity_score || 0) || (b.surface_m2 || 0) - (a.surface_m2 || 0));
-  const rows = matched.slice(0, 80);
+    .filter((p) => passesFilter(p))
+    .sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9)
+      || (b.opportunity_score || 0) - (a.opportunity_score || 0)
+      || (b.surface_m2 || 0) - (a.surface_m2 || 0));
+  const rows = matched.slice(0, LIST_LIMIT);
   $("#list-count").textContent = matched.length > rows.length ? `(${rows.length} affichées / ${matched.length})` : `(${matched.length})`;
+  const more = matched.length > rows.length
+    ? `<button class="list-more" type="button">Afficher 80 de plus (${matched.length - rows.length} restantes)</button>` : "";
   $("#parcel-list").innerHTML = rows.map((p) => `
     <div class="prow st-${p.status}" data-idu="${esc(p.idu)}">
       <span class="idu">${esc(p.idu)}</span>
@@ -213,8 +237,10 @@ function renderList() {
       <span class="scores"><b>${p.opportunity_score ?? "—"}</b> opp · ${p.completeness_score ?? "—"} cpl</span>
       <span class="p-surf">${fmt(p.surface_m2)} m²</span>
       ${p.downgrade_reason ? `<span class="p-downgrade">⚠ déclassée : ${esc(p.downgrade_reason)}</span>` : ""}
-    </div>`).join("") || `<div class="loading">Aucune parcelle ne correspond.</div>`;
+    </div>`).join("") + more || `<div class="loading">Aucune parcelle ne correspond.</div>`;
   document.querySelectorAll(".prow").forEach((el) => el.addEventListener("click", () => focusParcel(el.dataset.idu)));
+  const mb = document.querySelector(".list-more");
+  if (mb) mb.addEventListener("click", () => { LIST_LIMIT += 80; renderList(); });
 }
 
 // Navigation : radar (Carte ⇄ Liste, mobile) ⇄ Kanban (plein écran, desktop + mobile).
@@ -243,7 +269,7 @@ function focusParcel(idu) {
   openSheet(idu);
 }
 
-function applyFilters() { renderMap(); renderList(); }
+function applyFilters() { LIST_LIMIT = 80; renderMap(); renderList(); }
 
 // KPI cliquable → filtre carte + liste par statut (P2). "all" = tout afficher.
 function clearKpiActive() { document.querySelectorAll(".kpi").forEach((k) => k.classList.remove("active")); }
@@ -291,11 +317,15 @@ function renderFiche(f) {
   const loc = [p.commune, p.section ? "section " + esc(p.section) : "",
     p.surface_m2 ? fmt(Math.round(p.surface_m2)) + " m²" : ""].filter(Boolean).join(" · ");
 
+  // Audit J7 : NOMMER les couches non vérifiées inline (au lieu d'un « verdict partiel »
+  // anxiogène qui obligeait à descendre en bas de fiche pour savoir de quoi on parle).
   const nU = unknown.length;
+  const uvNames = unknown.slice(0, 3).map(shortLayer).map(esc).join(", ")
+    + (nU > 3 ? ` +${nU - 3}` : "");
   const unverifiedLine = nU ? `
     <section class="unverified">
       <span class="uv-mark">◔</span>
-      <span><b>${nU} couche${nU > 1 ? "s" : ""} non vérifiée${nU > 1 ? "s" : ""}</b> à ce jour — verdict partiel. Détail en bas de fiche.</span>
+      <span><b>Non vérifié à ce jour :</b> ${uvNames} — le verdict porte sur les couches disponibles (détail en bas de fiche).</span>
     </section>` : "";
 
   const today = new Date().toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
@@ -397,6 +427,11 @@ function renderResume(r) {
   const li = (arr) => (arr && arr.length)
     ? `<ul class="rs-list">${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`
     : `<p class="rs-empty">—</p>`;
+  // Une parcelle DÉCLASSÉE ne « ressort » pas : ses positifs sont les signaux BRUTS
+  // d'avant déclassement (audit J4 — lister « pourquoi elle ressort » sous un verdict
+  // « faux positif » déroutait).
+  const declassee = r.statut === "faux_positif_probable" || r.statut === "exclue";
+  const posTitle = declassee ? "Signaux bruts (avant déclassement)" : "Pourquoi elle ressort";
   return `
     <section class="resume v-${r.statut}">
       <div class="rs-head">
@@ -405,7 +440,7 @@ function renderResume(r) {
       </div>
       <p class="rs-synthese">${esc(r.synthese)}</p>
       <div class="rs-cols">
-        <div class="rs-col"><h4 class="rs-h ok">Pourquoi elle ressort</h4>${li(r.positifs)}</div>
+        <div class="rs-col"><h4 class="rs-h ok">${posTitle}</h4>${li(r.positifs)}</div>
         <div class="rs-col"><h4 class="rs-h warn">À vérifier</h4>${li(r.vigilance)}</div>
       </div>
       <div class="rs-action"><span class="rs-action-k">Prochaine action</span> ${esc(r.prochaine_action)}</div>
@@ -480,6 +515,18 @@ function renderProspection(f) {
         <button class="btn" data-prosp="identify">Marquer « propriétaire à identifier »</button>
         <button class="btn" data-prosp="contact">Ajouter / modifier contact manuel</button>
       </div>
+      <form class="pp-form hidden" id="pp-form">
+        <input class="pp-in" name="contact_nom" maxlength="200" placeholder="Nom ou organisation (saisie manuelle)" value="${esc(d.contact_nom || d.contact_organisation || "")}">
+        <div class="pp-form-row">
+          <input class="pp-in" name="contact_telephone" maxlength="40" placeholder="Téléphone" value="${esc(d.contact_telephone || "")}">
+          <input class="pp-in" name="contact_email" type="email" maxlength="120" placeholder="E-mail" value="${esc(d.contact_email || "")}">
+        </div>
+        <div class="pp-form-row">
+          <button class="btn pp-save" type="submit">Enregistrer le contact</button>
+          <button class="btn pp-cancel" type="button">Annuler</button>
+        </div>
+        <p class="pp-disc">Saisie manuelle — aucune donnée récupérée automatiquement.</p>
+      </form>
       <p class="pp-disc">${esc(pr.disclaimer || "")}</p>
     </section>`;
 }
@@ -771,32 +818,51 @@ function wireSheetActions(idu) {
   if (pb) pb.addEventListener("click", () => { expandCascadeForPrint(); window.print(); });
 
   // Prospection MANUELLE : ajouter au pipeline / marquer « à identifier » / saisir un contact.
-  document.querySelectorAll("[data-prosp]").forEach((b) => b.addEventListener("click", async () => {
+  // Audit J5 : le contact passe par un FORMULAIRE inline (plus de window.prompt « prototype »).
+  const _ensureEntry = async () => {
+    const pe = await (await fetch(`/pipeline/parcel/${encodeURIComponent(idu)}`)).json();
+    if (pe.entry) return pe.entry;
+    const r = await (await fetch("/pipeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idu }) })).json();
+    return r.entry;
+  };
+  document.querySelectorAll("[data-prosp]").forEach((b) => b.addEventListener("click", async (ev) => {
+    ev.preventDefault();
     const act = b.dataset.prosp;
+    if (act === "contact") {                    // ouvre/ferme le formulaire, sans réseau
+      const f = $("#pp-form"); if (f) f.classList.toggle("hidden");
+      return;
+    }
     b.disabled = true;
     try {
-      let pe = await (await fetch(`/pipeline/parcel/${encodeURIComponent(idu)}`)).json();
-      let entry = pe.entry;
-      if (!entry) {
-        const r = await (await fetch("/pipeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idu }) })).json();
-        entry = r.entry;
-      }
+      const entry = await _ensureEntry();
       if (act === "identify") {
         await fetch(`/pipeline/${entry.id}`, { method: "PATCH", headers: { "content-type": "application/json" },
           body: JSON.stringify({ status: "proprietaire_a_identifier", prospection: { statut_proprietaire: "a_identifier" } }) });
-      } else if (act === "contact") {
-        const d = entry.prospection || {};
-        const nom = window.prompt("Nom / organisation du contact (saisie manuelle) :", d.contact_nom || d.contact_organisation || "");
-        if (nom === null) { b.disabled = false; return; }
-        const tel = window.prompt("Téléphone ou e-mail (optionnel) :", d.contact_telephone || d.contact_email || "") || "";
-        const isMail = tel.includes("@");
-        await fetch(`/pipeline/${entry.id}`, { method: "PATCH", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ prospection: { statut_proprietaire: "identifie_manuellement", source_statut: "saisi_utilisateur",
-            niveau_confiance: "moyen", contact_nom: nom, [isMail ? "contact_email" : "contact_telephone"]: tel } }) });
       }
       openSheet(idu);   // recharge la fiche
     } catch { b.disabled = false; }
   }));
+  const ppForm = $("#pp-form");
+  if (ppForm) {
+    ppForm.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const fd = new FormData(ppForm);
+      const nom = (fd.get("contact_nom") || "").toString().trim();
+      if (!nom) { ppForm.querySelector("[name=contact_nom]").focus(); return; }
+      try {
+        const entry = await _ensureEntry();
+        await fetch(`/pipeline/${entry.id}`, { method: "PATCH", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ prospection: {
+            statut_proprietaire: "identifie_manuellement", source_statut: "saisi_utilisateur",
+            niveau_confiance: "moyen", contact_nom: nom,
+            contact_telephone: (fd.get("contact_telephone") || "").toString().trim(),
+            contact_email: (fd.get("contact_email") || "").toString().trim(),
+          } }) });
+        openSheet(idu);
+      } catch { /* réseau : le formulaire reste ouvert, rien n'est perdu */ }
+    });
+    ppForm.querySelector(".pp-cancel").addEventListener("click", () => ppForm.classList.add("hidden"));
+  }
 
   // « Suivre cette parcelle » → pipeline (statut Repérée par défaut ; si déjà suivie, affiche son statut)
   const fol = $("[data-follow]");
@@ -1160,8 +1226,8 @@ async function main() {
   FEATURES = fc.features || [];
   setSliderBounds();                              // P3 : curseurs bornés à la plage réelle
   applyFilters();
-  if (FEATURES.length && layer) map.fitBounds(layer.getBounds(), { maxZoom: 15 });
-  if (isMobile()) setTimeout(() => map.invalidateSize(), 120);
+  if (map && FEATURES.length && layer) map.fitBounds(layer.getBounds(), { maxZoom: 15 });
+  if (map && isMobile()) setTimeout(() => map.invalidateSize(), 120);
 
   // filtres
   const debounce = (fn, ms = 140) => { let t; return () => { clearTimeout(t); t = setTimeout(fn, ms); }; };

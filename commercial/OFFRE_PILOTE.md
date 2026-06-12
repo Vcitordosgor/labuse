@@ -82,6 +82,24 @@ exports). Un **outil d'aide à la décision** — jamais une étude réglementai
 | **Prix recommandé** | **2 500 € TTC les 45 jours** (alternative : 1 500 € setup + 490 €/mois — moins lisible pour un premier contrat) |
 | **Argumentaire** | le promoteur n'achète pas « un logiciel inconnu », il achète un **résultat encadré** : une short-list co-validée + l'outil qui l'a produite. Nous, on apprend son métier en direct — c'est notre vraie monnaie au stade pilote |
 
+## 2 bis. Positionnement face à Kel Foncier (à dire si on nous le sort — jamais en premier)
+
+Kel Foncier est l'outil national de référence : 50+ critères, **identification des
+propriétaires**, préfaisabilité validée par des instructeurs, toute la France, app mobile.
+**On ne se présente JAMAIS comme un équivalent.** Notre position tenable :
+
+| | Kel Foncier | LA BUSE (pilote) |
+|---|---|---|
+| Couverture | France entière | Saint-Paul (pilote), extension commune par commune |
+| Propriétaires | oui (conventionné) | non — « à identifier », saisie manuelle (choix légal) |
+| Force | exhaustivité nationale | **pré-tri LOCAL motivé** : bâti existant contrôlé (BD TOPO), accès vérifié, chaque verdict tracé à sa source, faux positifs écartés EN L'EXPLIQUANT |
+| Lecture | riche, dense | **5 minutes par parcelle** : résumé, vigilances, prochaine action |
+| Calibration | nationale | Réunion : SAR, périmètres PPR locaux, EPSG:2975, prix DVF 974 |
+
+**Phrase de positionnement :** « Kel Foncier est un annuaire national très complet ;
+LA BUSE est un radar péi qui vous dit *pourquoi* chaque parcelle de votre commune mérite
+ou non votre temps — et qui vous montre ce qu'il écarte. Les deux ne s'excluent pas. »
+
 ## 3. Recommandation de lancement
 
 **Lancer UNIQUEMENT l'option C à 2 500 € / 45 jours.**

@@ -12,7 +12,7 @@
 > ventes DVF), fait remonter les opportunités et écarte les pièges — parkings, pentes,
 > micro-parcelles — avec le motif affiché.
 >
-> Sur Saint-Paul : 3 000 parcelles évaluées, ~120 retenues « opportunité » après contrôle
+> Sur Saint-Paul : 3 000 parcelles évaluées, ~110 retenues « opportunité » après contrôle
 > du bâti existant (BD TOPO), chaque verdict tracé jusqu'à sa source. Exemple concret :
 > 9 700 m² VACANTS en zone U, prix de marché DVF fiable ~5 300 €/m² — et, à l'inverse,
 > une résidence existante ou un parking à 82 % : déclassés, motif affiché.
