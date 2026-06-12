@@ -41,6 +41,7 @@ class EvalContext:
         self._primed_ids: set[int] = set()
         self._inter: dict[tuple[int, str], list[Intersection]] = {}
         self._centroid: dict[tuple[int, str], bool] = {}
+        self._near: dict[tuple[int, str], float] = {}   # min distance (m, 2975) à un kind linéaire
         self._dvf: dict[int, dict[int, dict]] = {}
         self._sitadel: dict[int, dict] = {}
         self._ff: dict[int, dict] = {}
@@ -100,6 +101,23 @@ class EvalContext:
                 ), {"ids": ids, "kinds": list(centroid_kinds)}
             ).all():
                 self._centroid[(pid, kind)] = True
+
+        # Distance min (m, 2975) à un kind LINÉAIRE (ravine) : ST_Intersects ne capte pas la
+        # PROXIMITÉ (une ligne à 8 m ne touche pas la parcelle). Batché sous un rayon de garde,
+        # comme centroid_in — seule la couche `ravine` le consomme.
+        rp = self._layer_params("ravine")
+        near_kind = rp.get("spatial_kind") if rp.get("enabled", True) is not False else None
+        near_cap = float(rp.get("search_cap_m", 60))
+        if near_kind:
+            for pid, dist in self.session.execute(
+                text(
+                    """SELECT p.id, MIN(ST_Distance(p.geom_2975, sl.geom_2975)) AS d
+                       FROM parcels p JOIN spatial_layers sl ON sl.kind = :k
+                         AND ST_DWithin(p.geom_2975, sl.geom_2975, :cap)
+                       WHERE p.id = ANY(:ids) GROUP BY p.id"""
+                ), {"ids": ids, "k": near_kind, "cap": near_cap}
+            ).all():
+                self._near[(pid, near_kind)] = float(dist)
 
         dp = self._layer_params("dvf")
         years = dp.get("lookback_years", 5)
@@ -211,6 +229,22 @@ class EvalContext:
             Intersection(r["subtype"], r["name"], float(r["coverage"] or 0.0), r["attrs"] or {}, r["source_name"])
             for r in rows
         ]
+
+    def min_distance_m(self, parcel_id: int, kind: str) -> float | None:
+        """Distance min (m, 2975) de la parcelle à une entité de ce `kind`, ou None si au-delà
+        du rayon de garde (cf. prime). Pour les couches linéaires (ravine) où la PROXIMITÉ
+        compte, pas l'intersection."""
+        if parcel_id in self._primed_ids:
+            return self._near.get((parcel_id, kind))
+        row = self.session.execute(
+            text(
+                """SELECT MIN(ST_Distance(p.geom_2975, sl.geom_2975))
+                   FROM parcels p JOIN spatial_layers sl ON sl.kind = :k
+                     AND ST_DWithin(p.geom_2975, sl.geom_2975, :cap)
+                   WHERE p.id = :pid"""
+            ), {"pid": parcel_id, "k": kind, "cap": 200.0}
+        ).scalar()
+        return float(row) if row is not None else None
 
     def kind_present(self, kind: str) -> bool:
         """Une couche `spatial_layers` de ce `kind` est-elle ingérée ? (→ UNKNOWN sinon).

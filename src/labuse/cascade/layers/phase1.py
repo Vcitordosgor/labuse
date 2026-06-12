@@ -434,6 +434,30 @@ class RisquesLayer(Layer):
 
 
 @register
+class RavineLayer(Layer):
+    """Proximité d'une ravine (BD TOPO, Lot C1). À La Réunion, les ravines sont des thalwegs
+    au régime de crue brutal : la proximité impose recul/risque → SOFT_FLAG, jamais une
+    exclusion seule (le PPR/risques tranche, lui). Distance paramétrable (buffer)."""
+
+    name = "ravine"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Réseau hydrographique (ravines) non ingéré.", source=SRC_BDTOPO)
+        buffer_m = float(params.get("buffer_m", 10))
+        d = ctx.min_distance_m(parcel.id, kind)
+        if d is not None and d <= buffer_m:
+            sev = Severity(params.get("severity", "moyen"))
+            où = "traversée/au contact" if d < 1.0 else f"à ~{d:.0f} m"
+            return soft_flag(
+                self.name,
+                f"Proximité d'une ravine ({où}, seuil {buffer_m:.0f} m) — recul et risque de crue "
+                "à vérifier (thalweg BD TOPO).", sev, source=SRC_BDTOPO)
+        return passed(self.name, "Hors voisinage immédiat d'une ravine.", source=SRC_BDTOPO)
+
+
+@register
 class TraitDeCoteLayer(Layer):
     name = "trait_de_cote"
 

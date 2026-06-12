@@ -125,6 +125,17 @@ layers:
         moyen: moyen
         faible: faible
 
+  - name: ravine
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: ravine
+      # proximité d'une ravine (thalweg BD TOPO) → SOFT_FLAG. Buffer PLACEHOLDER (défaut Vic 10 m) :
+      buffer_m: 10
+      severity: moyen
+      # rayon de garde du précalcul batch (doit être ≥ buffer_m ; couvre un réglage à la hausse) :
+      search_cap_m: 60
+
   - name: trait_de_cote
     phase: 1
     enabled: true

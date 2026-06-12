@@ -39,6 +39,7 @@ KIND_SOURCE = {
     "water": "BD TOPO IGN",
     "voirie": "BD TOPO IGN",
     "batiment": "BD TOPO IGN",
+    "ravine": "BD TOPO IGN",
     "plu_gpu_zone": "Urbanisme PLU/GPU (API Carto)",
     "plu_gpu_prescription": "Urbanisme PLU/GPU (API Carto)",
     "parc_national": "Parc National de La Réunion (INPN)",
@@ -378,6 +379,35 @@ def ingest_bdtopo(session, bbox, commune, run_id, sids, kind: str, typename: str
                       f["geometry"], sids.get(KIND_SOURCE[kind]), commune, run_id, None)
         n += 1
     return n
+
+
+def ingest_ravines(session, bbox, commune, run_id, sids, page_size: int = 1000) -> int:
+    """Ravines (BD TOPO `troncon_hydrographique`, `nature='Ravine'`) — Lot C1.
+
+    Disponibilité vérifiée (rapport C1) : 98 tronçons « Ravine » sur Saint-Paul, géométries
+    LineString. À La Réunion, les ravines sont des thalwegs (souvent à sec) au régime de crue
+    brutal : la PROXIMITÉ est une contrainte de constructibilité (recul, risque). On stocke la
+    ligne ; la cascade calcule la distance (buffer paramétrable, jamais figé à l'ingestion)."""
+    wfs = WfsConnector("geoplateforme_wfs")
+    n, start = 0, 0
+    while True:
+        fc = wfs.fetch_layer("geoplateforme_wfs", "BDTOPO_V3:troncon_hydrographique", bbox=bbox,
+                             max_features=page_size, start_index=start, sort_by="cleabs")
+        feats = fc.get("features", []) or []
+        for f in feats:
+            p = f.get("properties") or {}
+            if not f.get("geometry") or (p.get("nature") or "") != "Ravine":
+                continue
+            topo = p.get("cpx_toponyme_de_cours_d_eau") or p.get("cpx_toponyme_d_entite_de_transition")
+            _insert_layer(session, "ravine", "ravine", topo or "Ravine (BD TOPO)",
+                          f["geometry"], sids.get(KIND_SOURCE["ravine"]), commune, run_id,
+                          {"nature": "Ravine", "toponyme": topo,
+                           "code_hydro": p.get("code_hydrographique"),
+                           "source": "BD TOPO IGN (Géoplateforme WFS) — troncon_hydrographique"})
+            n += 1
+        if len(feats) < page_size:
+            return n
+        start += page_size
 
 
 def ingest_batiments(session, bbox, commune, run_id, sids, page_size: int = 5000) -> int:
@@ -810,6 +840,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
         ("potentiel_foncier", lambda: ingest_potentiel_foncier(session, insee, commune, run_id, sids)),
         ("abf", lambda: ingest_abf(session, bbox, commune, run_id, sids)),
         ("water", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "water", "BDTOPO_V3:surface_hydrographique")),
+        ("ravine", lambda: ingest_ravines(session, bbox, commune, run_id, sids)),
         ("voirie", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "voirie", "BDTOPO_V3:troncon_de_route")),
         ("batiment", lambda: ingest_batiments(session, bbox, commune, run_id, sids)),
         ("ocs_ge", lambda: ingest_ocsge(session, bbox, commune, run_id, sids)),
