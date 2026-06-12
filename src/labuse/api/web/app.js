@@ -17,7 +17,8 @@ const VERDICT_GLOSS = {
   faux_positif_probable: "La donnée terrain contredit le signal — probable faux positif.",
 };
 const LAYER_SHORT = {
-  sar: "SAR", risques: "Risques (PPR)", abf: "ABF / Monuments", ens: "ENS", safer: "SAFER",
+  // Décision 2 : le SAR servi est un PROXY de vocation → badge explicite, jamais « SAR » nu.
+  sar: "SAR (proxy indicatif)", risques: "Risques (PPR)", abf: "ABF / Monuments", ens: "ENS", safer: "SAFER",
   foret_publique: "Forêt publique", trait_de_cote: "Trait de côte", parc_national: "Parc national",
   zonage_plu_gpu: "PLU", eau: "Hydrographie", pente: "Pente", ocs_ge: "Occupation du sol",
   osm_faux_positif: "Bâti (OSM)", sitadel: "SITADEL", proprietaire: "Propriétaire",
@@ -705,11 +706,20 @@ function renderFaisabilite(fa) {
   const bullets = (arr, cls, title) => (arr && arr.length)
     ? `<div class="fa-grp ${cls}"><span class="fa-grp-t">${title}</span><ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul></div>` : "";
 
+  // Badges « prescriptions GPU » (Décision 3) : mixité sociale, eaux pluviales, ER déduits.
+  const eco = fa.prescriptions_eco || {};
+  const badges = [
+    eco.mixite_sociale ? `<span class="eco-badge" title="${esc(eco.mixite_sociale)}">Secteur de mixité sociale (logements aidés)</span>` : "",
+    eco.eaux_pluviales ? `<span class="eco-badge" title="${esc(eco.eaux_pluviales)}">Zonage eaux pluviales</span>` : "",
+    eco.er_deduit_m2 ? `<span class="eco-badge eco-er" title="surface d'emplacement réservé soustraite de l'emprise constructible">ER : ${fmt(eco.er_deduit_m2)} m² déduits</span>` : "",
+  ].filter(Boolean).join("");
+
   return `
     <section class="faisa${fa.constructible ? "" : " faisa-nc"}">
       <div class="faisa-eyebrow">Pré-faisabilité · carte promoteur</div>
       <h2 class="faisa-verdict">${esc(fa.verdict)}</h2>
       <div class="faisa-ctx">${ctxBits}</div>
+      ${badges ? `<div class="faisa-badges">${badges}</div>` : ""}
       ${keyCards ? `<div class="faisa-cards">${keyCards}</div>` : ""}
       <details class="faisa-calc" open>
         <summary>Le calcul, ligne par ligne — chaque ligne pointe sa règle PLU</summary>
@@ -795,10 +805,11 @@ function renderBilan(b) {
       <h3 class="bilan-verdict">${esc(b.verdict)}</h3>
       ${fragileBanner}
       <div class="faisa-cards bilan-cards">
-        <div class="fc"><span class="fc-num">${meur(ca.bas)}–${meur(ca.haut)}</span><span class="fc-lbl">Chiffre d'affaires potentiel</span></div>
+        <div class="fc"><span class="fc-num" id="bilan-ca">${meur(ca.bas)}–${meur(ca.haut)}</span><span class="fc-lbl">Chiffre d'affaires potentiel</span></div>
         <div class="fc"><span class="fc-num">${fmt(px.median)} €/m²</span><span class="fc-lbl">Prix DVF médian · ${esc(px.type_prix || "")} (${px.n} ventes / ${px.commune_fallback ? "commune" : km(px.radius_m)})</span></div>
-        <div class="fc fc-wide"><span class="fc-num">${meur(cf.central)}<span class="fc-sub">~${fmt(cf.par_m2_terrain)} €/m² terrain</span></span><span class="fc-lbl">Charge foncière (médiane)</span></div>
+        <div class="fc fc-wide"><span class="fc-num" id="bilan-cf">${meur(cf.central)}<span class="fc-sub">~${fmt(cf.par_m2_terrain)} €/m² terrain</span></span><span class="fc-lbl">Charge foncière (médiane)</span></div>
       </div>
+      ${renderLls(b.calc)}
       ${compBlock}
       <details class="faisa-calc bilan-method">
         <summary>La méthode du prix, en clair — type, échantillon, rayon, ventes écartées</summary>
@@ -813,6 +824,47 @@ function renderBilan(b) {
       <p class="bilan-bandeau">⚠️ ${esc(b.bandeau)}</p>
     </section>`;
 }
+
+// Décision 3.b — secteur de mixité sociale : champs ÉDITABLES (quota % + prix LLS €/m²),
+// recalcul INSTANTANÉ du CA pondéré et de la charge foncière, sans appel serveur.
+// CA = surface vendable × [(1−pct)×prix DVF + pct×prix LLS] ; CF = CA×coef − coût constr.
+// Tant que les PLACEHOLDERS (0) ne sont pas renseignés, le bilan affiché reste NON pondéré.
+function renderLls(calc) {
+  if (!calc || !calc.mixite) return "";
+  const on = Number(calc.pct_lls) > 0 && Number(calc.prix_m2_lls) > 0;
+  return `
+      <div class="bilan-lls" id="bilan-lls"
+           data-surf="${Number(calc.surf) || 0}" data-terrain="${Number(calc.terrain_m2) || 0}"
+           data-q1="${Number(calc.q1) || 0}" data-med="${Number(calc.median) || 0}" data-q3="${Number(calc.q3) || 0}"
+           data-coef="${Number(calc.coef) || 0}" data-ccbas="${Number(calc.cc_bas) || 0}" data-cchaut="${Number(calc.cc_haut) || 0}">
+        <div class="bilan-comp-t">Mixité sociale — pondération du CA (éditable, recalcul immédiat)</div>
+        <label>quota logements aidés <input type="number" id="lls-pct" min="0" max="100" step="1" value="${Number(calc.pct_lls) || 0}"> %</label>
+        <label>prix LLS <input type="number" id="lls-prix" min="0" step="50" value="${Number(calc.prix_m2_lls) || 0}"> €/m²</label>
+        <span class="bilan-lls-note" id="lls-note">${on
+          ? "pondération appliquée (params calibrés)"
+          : "PLACEHOLDER non calibré → CA non pondéré ; saisir les deux valeurs pour simuler"}</span>
+      </div>`;
+}
+
+document.addEventListener("input", (e) => {
+  if (e.target.id !== "lls-pct" && e.target.id !== "lls-prix") return;
+  const box = $("#bilan-lls"); if (!box) return;
+  const d = box.dataset;
+  const meur = (x) => (x == null ? "—" : (Math.abs(x) >= 1e6 ? (x / 1e6).toFixed(1) + " M€"
+    : Math.abs(x) >= 1e3 ? Math.round(x / 1e3) + " k€" : Math.round(x) + " €"));
+  const p = Math.min(1, Math.max(0, (Number($("#lls-pct").value) || 0) / 100));
+  const lls = Number($("#lls-prix").value) || 0;
+  const w = (px) => (p > 0 && lls > 0) ? (1 - p) * px + p * lls : px;
+  const surf = +d.surf, coef = +d.coef;
+  const caB = surf * w(+d.q1), caC = surf * w(+d.med), caH = surf * w(+d.q3);
+  const cfB = caB * coef - +d.cchaut, cfC = caC * coef - (+d.ccbas + +d.cchaut) / 2, cfH = caH * coef - +d.ccbas;
+  const caEl = $("#bilan-ca"), cfEl = $("#bilan-cf"), note = $("#lls-note");
+  if (caEl) caEl.textContent = `${meur(caB)}–${meur(caH)}`;
+  if (cfEl) cfEl.innerHTML = `${meur(cfC)}<span class="fc-sub">~${fmt(Math.round(+d.terrain ? cfC / +d.terrain : 0))} €/m² terrain</span>`;
+  if (note) note.textContent = (p > 0 && lls > 0)
+    ? `pondération appliquée : CA médian ${meur(caC)} · CF ${meur(Math.max(0, cfB))}–${meur(cfH)} (simulation locale, non enregistrée)`
+    : "PLACEHOLDER non calibré → CA non pondéré ; saisir les deux valeurs pour simuler";
+});
 
 function renderAi(ai) {
   if (!ai || !Object.keys(ai).length) return "";

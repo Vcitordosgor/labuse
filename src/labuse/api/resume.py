@@ -22,9 +22,10 @@ _POSITIVE_LABEL = {
 }
 
 # Points de VIGILANCE sûrs par couche contraignante (SOFT_FLAG/HARD_EXCLUDE).
+# (« sar » n'y figure plus : Décision 2, le proxy SAR n'émet plus de flag — sa
+# divergence éventuelle est remontée explicitement plus bas.)
 _VIGILANCE_LABEL = {
     "risques": "Périmètre PPR — prescriptions à vérifier",
-    "sar": "Contrainte SAR possible à vérifier",
     "foret_publique": "Forêt publique — emprise à vérifier",
     "trait_de_cote": "Recul du trait de côte à vérifier",
     "safer": "Zonage SAFER — préemption possible",
@@ -82,6 +83,11 @@ def _vigilance(verdict: dict, cascade: list[dict], bilan: dict, prospection: dic
             lbl = _VIGILANCE_LABEL.get(c.get("layer_name"))
             if lbl and lbl not in out:
                 out.append(lbl)
+    # Divergence proxy SAR sur zone AU (Décision 2) : ouverture à l'urbanisation moins
+    # probable — info de risque réelle, visible sur la fiche même sans aucun flag.
+    if any(c.get("layer_name") == "sar" and (c.get("detail") or "").startswith("⚠ proxy SAR divergent")
+           and "zone AU" in (c.get("detail") or "") for c in cascade):
+        out.append("Proxy SAR divergent du PLU (zone AU) — ouverture à l'urbanisation moins probable")
     # Prix de sortie fragile (échantillon DVF limité).
     if bilan.get("fiabilite") == "fragile":
         out.append("Prix de marché fragile (échantillon limité)")

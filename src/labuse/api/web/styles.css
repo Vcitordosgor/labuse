@@ -887,3 +887,17 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .kb-empty-hint { grid-column: 1 / -1; margin: 0 0 14px; padding: 18px 20px; border: 1px dashed var(--line);
   border-radius: 12px; background: var(--panel-2); color: var(--muted); font-size: 13.5px; line-height: 1.55; text-align: center; }
 .kb-empty-hint b { color: var(--gold-soft); }
+
+/* ── Prescriptions GPU (Décisions 2/3) : badges fiche + panneau mixité éditable ── */
+.faisa-badges { display: flex; flex-wrap: wrap; gap: 6px; margin: -8px 0 14px; }
+.eco-badge { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .02em;
+  padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--panel-2); color: var(--ink-soft); }
+.eco-badge.eco-er { background: rgba(199, 124, 18, .14); color: #b3600f; border-color: rgba(199, 124, 18, .35); }
+.bilan-lls { margin: 4px 0 14px; padding: 10px 12px; border: 1px dashed var(--line);
+  border-radius: 10px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; font-size: 12.5px; }
+.bilan-lls label { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-soft); }
+.bilan-lls input { width: 76px; padding: 3px 6px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--panel-2); color: var(--txt); font: inherit; }
+.bilan-lls .bilan-comp-t { flex-basis: 100%; }
+.bilan-lls-note { color: var(--muted); font-size: 11.5px; flex-basis: 100%; }

@@ -41,11 +41,11 @@ def test_rural_habite_faible():
     assert st == "vocation_rurale" and niv == "faible"
 
 
-def test_cascade_sar_proxy_flague_sans_exclure(db_session):
-    """Bout en bout : une vocation SAR naturelle (proxy) → FLAG FORT « à vérifier »,
-    JAMAIS une exclusion. Le SAR contribue, il ne tranche pas seul."""
+def test_cascade_sar_proxy_informatif_sans_exclure_ni_flaguer(db_session):
+    """Bout en bout (Décision 2) : une vocation SAR naturelle (proxy) → PASS INFORMATIF,
+    jamais une exclusion NI un flag. Le proxy SAR n'a plus aucun pouvoir sur le score."""
     from labuse.cascade import evaluate_parcels
-    from labuse.enums import CascadeVerdict, Severity
+    from labuse.enums import CascadeVerdict
     par = "POLYGON((55.40 -21.00,55.41 -21.00,55.41 -20.99,55.40 -20.99,55.40 -21.00))"
     sar = "POLYGON((55.39 -21.01,55.42 -21.01,55.42 -20.98,55.39 -20.98,55.39 -21.01))"
     db_session.execute(text(
@@ -61,5 +61,6 @@ def test_cascade_sar_proxy_flague_sans_exclure(db_session):
     outs = evaluate_parcels([pid], db_session, persist=False)
     v = next((x for x in outs[0].verdicts if x.layer_name == "sar"), None)
     assert v is not None
-    assert v.result == CascadeVerdict.SOFT_FLAG and v.severity == Severity.FORT   # flag, PAS exclusion
-    assert "à vérifier" in v.detail
+    assert v.result == CascadeVerdict.PASS            # informatif : ni exclusion, ni flag
+    assert "proxy" in v.detail.lower()                # badge « SAR (proxy indicatif) » assumé
+    assert outs[0].promoted                           # le SAR seul ne déclasse plus rien

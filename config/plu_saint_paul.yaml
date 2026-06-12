@@ -52,6 +52,13 @@ hypotheses_faisabilite:
   frais_annexes_pct: 0.12           # honoraires + commercialisation + financier + aléas (% du CA)
   dvf_radius_m: 1500.0              # rayon de recherche des ventes DVF comparables (m)
   dvf_min_ventes: 8                # en deçà, prix DVF non fiable -> on le dit, on n'invente pas
+  # --- Prescriptions GPU (Décisions 3.b / 3.c) — PLACEHOLDERS à renseigner par Vic ---
+  pct_lls: 0                        # % de logements aidés imposé en secteur de mixité sociale.
+  #                                   0 = non calibré -> CA NON pondéré + avertissement (le libellé
+  #                                   GPU « Clause logements aidés » ne chiffre pas le quota).
+  prix_m2_lls: 0                    # prix de sortie €/m² des logements aidés (0 = non calibré).
+  majoration_vrd_pluvial: 0         # % de majoration du coût (VRD) en zonage eaux pluviales
+  #                                   (0 = badge visible mais effet neutre tant que non calibré).
 
 zones:
 

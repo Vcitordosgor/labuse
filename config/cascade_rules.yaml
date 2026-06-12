@@ -48,14 +48,18 @@ layers:
     enabled: true
     params:
       spatial_kind: sar
-      # SAR juridiquement supérieur au PLU.
-      # espaces naturels / coupures d'urbanisation → HARD_EXCLUDE
-      # espaces agricoles → SOFT_FLAG fort (risque SAFER)
-      hard_exclude_subtypes: [espace_naturel, coupure_urbanisation]
-      # espace_agricole = zonage SAR réglementaire (démo) ; vocation_* = proxy de vocation
-      # (potentiel foncier Région) → JAMAIS d'exclusion auto, seulement un flag « à vérifier ».
-      flag_fort_subtypes: [espace_agricole, vocation_naturelle, vocation_agricole,
-                           vocation_continuite, vocation_coupure, vocation_mixte]
+      # DÉCISION 2 (directive post-1.A) : la seule donnée SAR disponible est un PROXY de
+      # vocation (potentiel foncier Région) → couche INFORMATIVE, ZÉRO pouvoir d'exclusion
+      # (plus jamais de HARD_EXCLUDE ni de SOFT_FLAG — aucun effet score/statut).
+      # Warning de divergence (PASS « ⚠ … ») quand PLU U/AU ∩ proxy naturel/agricole ;
+      # mention renforcée sur zone AU (ouverture à l'urbanisation moins probable).
+      plu_kind: plu_gpu_zone
+      uau_prefixes: [U, AU]
+      # vocations « naturel/agricole » du proxy (+ subtypes réglementaires du seed synthétique) :
+      divergent_subtypes: [vocation_naturelle, vocation_agricole, vocation_continuite,
+                           vocation_coupure, espace_naturel, espace_agricole, coupure_urbanisation]
+      # vocations sans a priori constructif (ni divergence ni compatibilité) :
+      info_subtypes: [vocation_mixte, vocation_rurale]
 
   - name: zonage_plu_gpu
     phase: 1
@@ -69,6 +73,12 @@ layers:
       exclude_zones: []                       # sous-zones strictement listées (ex. Nr) — exact match
       positive_prefixes: [U, AU]
       hard_exclude_prefixes: [A, N]
+      # DÉCISION 1 : exclusion SENSIBLE AU RECOUVREMENT. HARD_EXCLUDE seulement si la part
+      # A+N de la parcelle atteint ce seuil ; en deçà avec une part U/AU → SOFT_FLAG
+      # « zonage mixte » + emprise clippée à la portion U/AU dans la pré-faisabilité.
+      an_hard_exclude_pct: 90                 # PLACEHOLDER (défaut directive) — à calibrer par Vic
+      # plancher en deçà duquel une part A/N est traitée comme liséré géométrique GPU (ignorée) :
+      an_mixte_min_pct: 5                     # PLACEHOLDER — à calibrer par Vic
       # préfixes de repli (sous-zones non couvertes par les listes ci-dessus) — vides par défaut :
       flag_fort_prefixes: []
       flag_prefixes: []
@@ -89,8 +99,10 @@ layers:
       mixite_sociale_typepsc: ["16", "17"]
       oap_typepsc: ["18"]
       eaux_pluviales_typepsc: ["48"]
-      # couverture (0..1) à partir de laquelle un ER est jugé « majoritaire » → sévérité forte :
-      majorite_threshold: 0.5
+      # DÉCISION 3.a : recouvrement ER (en % de la parcelle) à partir duquel la parcelle est
+      # exclue (emprise majoritairement grevée) ; en deçà → SOFT_FLAG + surface ER déduite de
+      # l'emprise constructible dans la pré-faisabilité.
+      er_hard_exclude_pct: 50                 # PLACEHOLDER (défaut directive) — à calibrer par Vic
 
   - name: safer
     phase: 1

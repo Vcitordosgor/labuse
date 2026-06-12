@@ -36,7 +36,7 @@ DEMO_PARCELS = [
      "montre": "score brut ~82 mais « faux positif probable » + motif « parking sur 82 % (OSM) »",
      "vigilance": "le score brut reste affiché (transparence)"},
     {"idu": "97415000BV1431", "attendu": "faux_positif_probable", "role": "Faux positif PENTE déclassé",
-     "montre": "« pente 103 % — terrain non aménageable » + SAR vocation naturelle (à vérifier)", "vigilance": "—"},
+     "montre": "« pente 103 % — terrain non aménageable » + ⚠ proxy SAR divergent du PLU (zone AU)", "vigilance": "—"},
     {"idu": "97415000BO0619", "attendu": "faux_positif_probable", "role": "Micro-parcelle déclassée",
      "montre": "« micro-parcelle 28 m² — aucun programme possible »", "vigilance": "—"},
 ]

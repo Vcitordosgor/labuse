@@ -41,6 +41,8 @@ class Bilan:
     hypotheses: list[str] = field(default_factory=list)
     avertissements: list[str] = field(default_factory=list)
     bandeau: str = _BANDEAU
+    # Paramètres bruts pour le recalcul instantané côté fiche (mixité sociale, Décision 3.b).
+    calc: dict | None = None
 
 
 def _eur(x: float) -> str:
@@ -194,8 +196,14 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
 
 
 def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
-                  prix: dict, hyp: Hypotheses) -> Bilan:
-    """Cœur pur (testable). Protège le bilan selon la fiabilité du prix."""
+                  prix: dict, hyp: Hypotheses, contexte_eco: dict | None = None) -> Bilan:
+    """Cœur pur (testable). Protège le bilan selon la fiabilité du prix.
+
+    `contexte_eco` (Décisions 3.b/3.c) : {"mixite": bool, "mixite_libelle", "pluvial": bool,
+    "pluvial_libelle"}. En secteur de mixité sociale, si `pct_lls` ET `prix_m2_lls` sont
+    calibrés (> 0), le CA est PONDÉRÉ : CA = SDP_vendable × [(1−pct_lls)×prix_DVF +
+    pct_lls×prix_m2_lls] ; sinon avertissement PLACEHOLDER, CA inchangé. En zonage eaux
+    pluviales, `majoration_vrd_pluvial` (%) majore le coût de construction (0 = neutre)."""
     niveau = prix.get("fiabilite", "insuffisant")
     raisons = prix.get("fiabilite_raisons", [])
 
@@ -227,11 +235,40 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                       f"{q1}–{q3} €/m² (médiane {med} ; min {prix['min']} / max {prix['max']})",
                       f"DVF Région ODS · fiabilité {niveau}"))
 
-    ca_bas, ca_cen, ca_haut = surf * q1, surf * med, surf * q3
+    eco = contexte_eco or {}
+    mixite, pluvial = bool(eco.get("mixite")), bool(eco.get("pluvial"))
+    p_lls = min(1.0, max(0.0, float(hyp.pct_lls) / 100.0))
+    pondere = mixite and p_lls > 0 and float(hyp.prix_m2_lls) > 0
+    # CA pondéré mixité sociale (Décision 3.b) : part LLS vendue à prix_m2_lls.
+    _px = (lambda x: (1.0 - p_lls) * float(x) + p_lls * float(hyp.prix_m2_lls)) if pondere \
+        else (lambda x: float(x))
+    ca_bas, ca_cen, ca_haut = surf * _px(q1), surf * _px(med), surf * _px(q3)
+    if pondere:
+        steps.append(Step("CA pondéré — secteur de mixité sociale",
+                          f"prix mixé = (1−{p_lls:.0%})×prix DVF + {p_lls:.0%}×{hyp.prix_m2_lls:.0f} €/m² (LLS)",
+                          f"{_px(med):.0f} €/m² (médiane pondérée)",
+                          "prescription GPU · params pct_lls / prix_m2_lls"))
+    elif mixite:
+        avert.append(
+            f"Secteur de mixité sociale ({eco.get('mixite_libelle') or 'logements aidés'}) : "
+            "quota et prix LLS non calibrés (pct_lls / prix_m2_lls = PLACEHOLDER) → CA NON "
+            "pondéré. Renseigner ces paramètres (ou les éditer dans le panneau) pour fiabiliser le CA.")
     # Coût rapporté à la SURFACE DE PLANCHER (≈ habitable × coef), pas à l'habitable vendu
     # (audit O2 : compter le coût sur l'habitable sous-estimait la construction).
     sdp = surf * hyp.coef_plancher_habitable
-    cc_bas, cc_haut = sdp * hyp.cout_construction_m2_bas, sdp * hyp.cout_construction_m2_haut
+    maj_vrd = float(hyp.majoration_vrd_pluvial) if pluvial else 0.0
+    cc_bas = sdp * hyp.cout_construction_m2_bas * (1.0 + maj_vrd / 100.0)
+    cc_haut = sdp * hyp.cout_construction_m2_haut * (1.0 + maj_vrd / 100.0)
+    if pluvial:
+        lib_pl = eco.get("pluvial_libelle") or "zonage eaux pluviales"
+        if maj_vrd > 0:
+            steps.append(Step("Majoration VRD — eaux pluviales",
+                              f"coût construction × (1 + {maj_vrd:g} %) — {lib_pl}",
+                              "appliquée", "zonage pluvial · param majoration_vrd_pluvial"))
+        else:
+            hypotheses.append(
+                f"Zonage eaux pluviales ({lib_pl}) : majoration VRD paramétrable "
+                "(majoration_vrd_pluvial = 0, PLACEHOLDER) → coût inchangé tant que non calibrée.")
     coef = 1.0 - hyp.marge_promoteur_pct - hyp.frais_annexes_pct
     cf_bas = ca_bas * coef - cc_haut
     cf_cen = ca_cen * coef - (cc_bas + cc_haut) / 2
@@ -241,7 +278,9 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     # Si prix fragile : on ARRONDIT (pas de fausse précision).
     rnd = (lambda x: round(x / 100_000) * 100_000) if fragile else (lambda x: round(x))
 
-    steps.append(Step("Chiffre d'affaires potentiel", f"{surf:.0f} m² × {q1}–{q3} €/m²",
+    ca_formule = (f"{surf:.0f} m² × {_px(q1):.0f}–{_px(q3):.0f} €/m² (prix mixés LLS)"
+                  if pondere else f"{surf:.0f} m² × {q1}–{q3} €/m²")
+    steps.append(Step("Chiffre d'affaires potentiel", ca_formule,
                       f"~{_eur(ca_bas)} – {_eur(ca_haut)} (médiane {_eur(ca_cen)})", "dérivé"))
     steps.append(Step("Coût de construction",
                       f"{sdp:.0f} m² de plancher ({surf:.0f} m² hab. × {hyp.coef_plancher_habitable:.2f}) "
@@ -284,10 +323,16 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                    f"charge foncière médiane ~{_eur(cf_cen)} "
                    f"(fourchette {_eur(max(0, cf_bas))}–{_eur(cf_haut)})")
 
+    calc = {"surf": round(surf), "terrain_m2": round(surface_terrain_m2 or 0),
+            "q1": q1, "median": med, "q3": q3, "coef": round(coef, 4),
+            "cc_bas": round(cc_bas), "cc_haut": round(cc_haut),
+            "mixite": mixite, "pluvial": pluvial, "pondere": pondere,
+            "pct_lls": float(hyp.pct_lls), "prix_m2_lls": float(hyp.prix_m2_lls),
+            "majoration_vrd_pluvial": maj_vrd}
     return Bilan(True, niveau, verdict, prix,
                  {"bas": rnd(ca_bas), "central": rnd(ca_cen), "haut": rnd(ca_haut)},
                  # bas borné à 0 pour l'AFFICHAGE (audit O3) ; l'avertissement « charge
                  # foncière négative en bas de fourchette » reste émis quand c'est le cas.
                  {"bas": max(0, rnd(cf_bas)), "central": rnd(cf_cen), "haut": rnd(cf_haut),
                   "par_m2_terrain": round(par_m2)},
-                 steps, hypotheses, avert)
+                 steps, hypotheses, avert, calc=calc)

@@ -44,6 +44,12 @@ class Hypotheses:
     frais_annexes_pct: float = 0.12             # honoraires, commercialisation, financier, aléas (% du CA)
     dvf_radius_m: float = 1500.0                # rayon de recherche des ventes DVF comparables
     dvf_min_ventes: int = 8                     # en deçà, prix DVF jugé non fiable
+    # --- Prescriptions GPU (Décisions 3.b / 3.c) — PLACEHOLDERS, à renseigner par Vic ---
+    pct_lls: float = 0.0              # % de logements aidés imposé en secteur de mixité sociale
+    #                                   (0 = non calibré → CA NON pondéré, avertissement affiché)
+    prix_m2_lls: float = 0.0          # prix de sortie €/m² des logements aidés (0 = non calibré)
+    majoration_vrd_pluvial: float = 0.0  # % de majoration du coût (VRD) en zonage eaux pluviales
+    #                                      (0 = visible mais neutre tant que non calibré)
 
     @classmethod
     def charger(cls) -> "Hypotheses":

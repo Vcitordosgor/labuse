@@ -69,8 +69,11 @@ def test_exclusions_sont_dures(demo):
     assert he and he.exclude_kind == "exclue" and "rouge" in he.detail.lower()
     # cœur Parc → exclue
     assert _verdict(demo[5], "parc_national", CascadeVerdict.HARD_EXCLUDE).exclude_kind == "exclue"
-    # SAR espace naturel → faux positif (SAR supérieur au PLU)
-    assert _verdict(demo[4], "sar", CascadeVerdict.HARD_EXCLUDE).exclude_kind == "faux_positif"
+    # SAR : proxy INFORMATIF (Décision 2) — l'exclusion de P4 est portée par le zonage N,
+    # plus jamais par le SAR (cf. test_zonage_agricole_naturel_hard_exclude).
+    sar4 = _verdict(demo[4], "sar")
+    assert sar4 is not None and sar4.result == CascadeVerdict.PASS
+    assert _verdict(demo[4], "zonage_plu_gpu", CascadeVerdict.HARD_EXCLUDE).exclude_kind == "faux_positif"
     # cimetière OSM → faux positif
     assert _verdict(demo[6], "osm_faux_positif", CascadeVerdict.HARD_EXCLUDE).exclude_kind == "faux_positif"
     for num in (3, 4, 5, 6):
@@ -92,17 +95,24 @@ def test_indivision_flag_fort(demo):
     assert flag and flag.severity == Severity.FORT and "indivision" in flag.detail.lower()
 
 
-def test_sar_agricole_est_un_flag_fort(demo):
-    flag = _verdict(demo[2], "sar", CascadeVerdict.SOFT_FLAG)
-    assert flag and flag.severity == Severity.FORT
+def test_sar_proxy_informatif_jamais_bloquant(demo):
+    """Décision 2 : le proxy SAR (espace agricole) n'émet plus AUCUN flag — PASS informatif,
+    et aucun verdict SAR d'aucune parcelle n'est excluant ni pénalisant."""
+    v = _verdict(demo[2], "sar")
+    assert v is not None and v.result == CascadeVerdict.PASS and "proxy" in v.detail.lower()
+    for o in demo.values():
+        for s in (x for x in o.verdicts if x.layer_name == "sar"):
+            assert s.result not in (CascadeVerdict.HARD_EXCLUDE, CascadeVerdict.SOFT_FLAG)
 
 
 def test_zonage_agricole_naturel_hard_exclude(demo):
-    """Décision Vic : zones A (agricole) et N (naturelle) → HARD_EXCLUDE (non constructibles
-    au règlement du PLU de Saint-Paul). U/AU restent constructibles (testés avant A/N)."""
-    for num, nature in ((2, "agricole"), (4, "naturelle")):  # P2 = Ab, P4 = N
+    """Décision 1 : zones A/N → HARD_EXCLUDE sensible au recouvrement (ici 100 % ≥ seuil 90 %),
+    motif « Zone {libelle} PLU — inconstructible (recouvrement {pct} %) ».
+    U/AU restent constructibles (testés avant A/N)."""
+    for num, lib in ((2, "Ab"), (4, "N")):
         he = _verdict(demo[num], "zonage_plu_gpu", CascadeVerdict.HARD_EXCLUDE)
-        assert he and he.exclude_kind == "faux_positif" and nature in he.detail.lower()
+        assert he and he.exclude_kind == "faux_positif"
+        assert f"Zone {lib} PLU — inconstructible (recouvrement" in he.detail
     assert _verdict(demo[1], "zonage_plu_gpu", CascadeVerdict.POSITIVE)  # U reste constructible
 
 

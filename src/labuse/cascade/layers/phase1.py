@@ -9,6 +9,7 @@ présente mais que la parcelle n'est pas contrainte → PASS.
 """
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from ...enums import Severity
@@ -34,6 +35,15 @@ SRC_OSM = "OpenStreetMap / Overpass"
 def _dominant(intersections) -> Any | None:
     """Entité couvrant la plus grande part de la parcelle."""
     return max(intersections, key=lambda i: i.coverage, default=None)
+
+
+_ER_RE = re.compile(r"^ER\s*(\S+)\s*[-–—:]\s*(.+)$", re.IGNORECASE)
+
+
+def _er_split(libelle: str) -> tuple[str | None, str]:
+    """« ER 81 - Aménagement… » → ('81', 'Aménagement…') ; sinon (None, libellé entier)."""
+    m = _ER_RE.match((libelle or "").strip())
+    return (m.group(1), m.group(2).strip()) if m else (None, (libelle or "").strip())
 
 
 @register
@@ -109,7 +119,14 @@ class ForetPubliqueLayer(Layer):
 
 @register
 class SarLayer(Layer):
-    """SAR — juridiquement SUPÉRIEUR au PLU (brief §3). Couche de premier rang."""
+    """SAR — DÉCISION 2 (directive post-1.A) : la seule donnée disponible est un PROXY de
+    vocation (potentiel foncier Région), pas le SAR réglementaire → couche INFORMATIVE,
+    badge « SAR (proxy indicatif) ». ZÉRO pouvoir d'exclusion : ne produit plus jamais de
+    HARD_EXCLUDE ni de SOFT_FLAG (la donnée est conservée et affichée).
+
+    Émet un WARNING de divergence (PASS « ⚠ … », sans effet score/statut) quand le proxy
+    « naturel/agricole » contredit un zonage PLU U/AU — sur zone AU, c'est une info de
+    risque réelle (ouverture à l'urbanisation moins probable), remontée en vigilance."""
 
     name = "sar"
 
@@ -125,74 +142,148 @@ class SarLayer(Layer):
             return passed(self.name,
                           "SAR : hors îlot cartographié — aucune contrainte SAR déduite automatiquement.",
                           source=SRC_SAR)
-        lib = (dom.attrs or {}).get("libelle")
+        lib = (dom.attrs or {}).get("libelle") or dom.subtype
         pct = f" (~{dom.coverage * 100:.0f}% de la parcelle)" if dom.coverage < 0.99 else ""
-        if dom.subtype in set(params.get("hard_exclude_subtypes", [])):
-            return hard_exclude(
+        if dom.subtype in set(params.get("divergent_subtypes", [])):
+            zone = self._zone_uau(parcel, ctx, params)
+            if zone:
+                au = zone.upper().startswith("AU")
+                return passed(
+                    self.name,
+                    "⚠ proxy SAR divergent du PLU — vigilance en cas de révision : "
+                    f"SAR (proxy indicatif) « {lib} »{pct} sur zone PLU « {zone} »"
+                    + (" — zone AU : ouverture à l'urbanisation moins probable." if au else "."),
+                    source=SRC_SAR,
+                )
+            return passed(
                 self.name,
-                f"Exclue : SAR « {lib or dom.subtype} » (espace naturel / coupure d'urbanisation — supérieur au PLU).",
-                kind="faux_positif",
+                f"SAR (proxy indicatif) : « {lib} »{pct} — information de vocation, sans effet sur "
+                "le score (proxy : ne vaut ni interdiction ni constructibilité).",
                 source=SRC_SAR,
             )
-        if dom.subtype in set(params.get("flag_fort_subtypes", [])):
-            return soft_flag(
+        if dom.subtype in set(params.get("info_subtypes", [])):
+            return passed(
                 self.name,
-                f"SAR : vocation à vérifier — {lib or 'espace agricole (risque préemption SAFER)'}{pct} "
-                "— possible contrainte régionale (ne vaut ni interdiction ni constructibilité).",
-                Severity.FORT,
+                f"SAR (proxy indicatif) : « {lib} »{pct} — vocation sans a priori constructif (information).",
                 source=SRC_SAR,
             )
         return passed(self.name,
                       f"SAR : vocation compatible détectée — {lib or 'territoire urbain'} — à croiser avec PLU/PPR.",
                       source=SRC_SAR)
 
+    @staticmethod
+    def _zone_uau(parcel: ParcelRef, ctx: EvalContext, params: dict) -> str | None:
+        """Libellé de la zone PLU dominante si U/AU (sinon None — pas de divergence à signaler :
+        un proxy « naturel » sur une zone N est cohérent, le zonage PLU fait déjà foi)."""
+        plu_kind = params.get("plu_kind", "plu_gpu_zone")
+        if not ctx.kind_present(plu_kind):
+            return None
+        dom = _dominant(ctx.intersections(parcel.id, plu_kind))
+        if dom is None or dom.coverage <= 0:
+            return None
+        zone = (dom.subtype or "").strip()
+        prefixes = tuple(params.get("uau_prefixes", ["U", "AU"]))
+        return zone if any(zone.upper().startswith(p) for p in prefixes) else None
+
 
 @register
 class ZonagePluGpuLayer(Layer):
+    """Zonage PLU — DÉCISION 1 (directive post-1.A) : exclusion A/N SENSIBLE AU RECOUVREMENT.
+
+    - part A+N ≥ `an_hard_exclude_pct` (PLACEHOLDER 90 %) → HARD_EXCLUDE ;
+    - zonage mixte (part A/N ≥ `an_mixte_min_pct` + part U/AU) → SOFT_FLAG « zonage mixte »
+      + bonus U/AU réduit à la part U/AU ; l'emprise constructible est clippée à la portion
+      U/AU dans la pré-faisabilité (faisabilite/db.py) ;
+    - liséré A/N < `an_mixte_min_pct` (artefact géométrique GPU) → ignoré.
+    STECAL : pas de traitement v1 (exception future via plu_saint_paul.yaml)."""
+
     name = "zonage_plu_gpu"
 
-    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> list[Verdict]:
         kind = params["spatial_kind"]
         if not ctx.kind_present(kind):
-            return unknown(
+            return [unknown(
                 self.name,
                 "Zonage PLU/GPU indisponible (document non dématérialisé sur le GPU ? → fallback import).",
                 source=SRC_GPU,
-            )
-        inter = ctx.intersections(parcel.id, kind)
-        dom = _dominant(inter)
-        if dom is None or dom.coverage <= 0:
-            return passed(self.name, "Hors zonage PLU connu.", source=SRC_GPU)
-        libelle = (dom.subtype or "").strip()
-        up = libelle.upper()
-        if libelle in set(params.get("exclude_zones", [])):
-            return hard_exclude(
-                self.name, f"Exclue : zone PLU « {libelle} » strictement inconstructible.", kind="faux_positif", source=SRC_GPU
-            )
-        # Constructible (U / AU) EN PREMIER : sinon « AUc/AUs » serait happé par le
+            )]
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return [passed(self.name, "Hors zonage PLU connu.", source=SRC_GPU)]
+        for i in inter:
+            lib = (i.subtype or "").strip()
+            if lib in set(params.get("exclude_zones", [])):
+                return [hard_exclude(
+                    self.name, f"Exclue : zone PLU « {lib} » strictement inconstructible.",
+                    kind="faux_positif", source=SRC_GPU,
+                )]
+
+        # Constructible (U / AU) testé EN PREMIER : sinon « AUc/AUs » serait happé par le
         # préfixe agricole « A » (AU commence par A). L'ordre des tests fait foi.
-        if any(up.startswith(p) for p in params.get("positive_prefixes", [])):
-            return positive(
+        pos_p = tuple(params.get("positive_prefixes", []))
+        an_p = tuple(params.get("hard_exclude_prefixes", []))
+
+        def classe(libelle: str) -> str:
+            up = libelle.upper()
+            if any(up.startswith(p) for p in pos_p):
+                return "uau"
+            if any(up.startswith(p) for p in an_p):
+                return "an"
+            return "autre"
+
+        uau = [i for i in inter if classe((i.subtype or "").strip()) == "uau"]
+        an = [i for i in inter if classe((i.subtype or "").strip()) == "an"]
+        an_cov = min(1.0, sum(i.coverage for i in an))
+        uau_cov = min(1.0, sum(i.coverage for i in uau))
+        seuil = float(params.get("an_hard_exclude_pct", 90)) / 100.0
+        plancher = float(params.get("an_mixte_min_pct", 5)) / 100.0
+
+        if an and an_cov >= seuil:
+            lib = (_dominant(an).subtype or "").strip()
+            return [hard_exclude(
                 self.name,
-                f"Zone PLU « {libelle} » (urbaine / à urbaniser — constructible).",
-                params.get("positive_bonus_key", "zonage_u_au"),
-                source=SRC_GPU,
-            )
-        # A (agricole) / N (naturelle) : non constructibles au règlement du PLU de Saint-Paul
-        # (cf. plu_saint_paul.yaml « zones non constructibles : A, N »). HARD_EXCLUDE (décision
-        # Vic : aligner cascade ↔ réalité PLU). Testé APRÈS U/AU (AU commence par « A »).
-        if any(up.startswith(p) for p in params.get("hard_exclude_prefixes", [])):
-            nature = "agricole" if up.startswith("A") else "naturelle"
-            return hard_exclude(
-                self.name,
-                f"Exclue : zone PLU « {libelle} » ({nature} — non constructible au règlement).",
+                f"Zone {lib} PLU — inconstructible (recouvrement {an_cov * 100:.0f} %).",
                 kind="faux_positif", source=SRC_GPU,
-            )
+            )]
+
+        verdicts: list[Verdict] = []
+        mixte = bool(an) and an_cov >= plancher and bool(uau)
+        if mixte:
+            lib_an = (_dominant(an).subtype or "").strip()
+            verdicts.append(soft_flag(
+                self.name,
+                "Zonage mixte — constructibilité limitée à l'emprise U/AU "
+                f"(« {lib_an} » inconstructible sur ~{an_cov * 100:.0f} % ; emprise clippée en pré-faisabilité).",
+                Severity.MOYEN, source=SRC_GPU,
+            ))
+        if uau:
+            lib = (_dominant(uau).subtype or "").strip()
+            mag = uau_cov if mixte else 1.0
+            verdicts.append(positive(
+                self.name,
+                f"Zone PLU « {lib} » (urbaine / à urbaniser — constructible"
+                + (f" sur ~{uau_cov * 100:.0f} % de la parcelle" if mixte else "") + ").",
+                params.get("positive_bonus_key", "zonage_u_au"),
+                magnitude=mag, source=SRC_GPU,
+            ))
+            return verdicts
+        if an:
+            # Part A/N sous le seuil SANS part U/AU (bordure de couverture PLU — non observé
+            # à Saint-Paul) : prudence sans exclure.
+            lib = (_dominant(an).subtype or "").strip()
+            return [soft_flag(
+                self.name,
+                f"Zone {lib} PLU sur ~{an_cov * 100:.0f} % de la parcelle (couverture PLU partielle) "
+                "— constructibilité à vérifier.",
+                Severity.FORT, source=SRC_GPU,
+            )]
+        libelle = (_dominant(inter).subtype or "").strip()
+        up = libelle.upper()
         if any(up.startswith(p) for p in params.get("flag_fort_prefixes", [])):
-            return soft_flag(self.name, f"Zone PLU « {libelle} » (naturelle).", Severity.FORT, source=SRC_GPU)
+            return [soft_flag(self.name, f"Zone PLU « {libelle} » (naturelle).", Severity.FORT, source=SRC_GPU)]
         if any(up.startswith(p) for p in params.get("flag_prefixes", [])):
-            return soft_flag(self.name, f"Zone PLU « {libelle} » (agricole — SAFER).", Severity.MOYEN, source=SRC_GPU)
-        return passed(self.name, f"Zone PLU « {libelle} ».", source=SRC_GPU)
+            return [soft_flag(self.name, f"Zone PLU « {libelle} » (agricole — SAFER).", Severity.MOYEN, source=SRC_GPU)]
+        return [passed(self.name, f"Zone PLU « {libelle} ».", source=SRC_GPU)]
 
 
 @register
@@ -200,9 +291,11 @@ class PrescriptionPluLayer(Layer):
     """Prescriptions du PLU (GPU) : emplacement réservé, mixité sociale, EBC, patrimoine bâti,
     OAP, eaux pluviales… De VRAIES servitudes opposables, jusque-là non lues par la cascade.
 
-    PRUDENCE assumée : aucune prescription n'exclut SEULE (ce sont des servitudes/contraintes
-    de programme, pas une inconstructibilité de droit). Le libellé GPU est TOUJOURS affiché ;
-    le `typepsc` CNIG ne sert qu'à graduer la sévérité (mapping dans cascade_rules.yaml).
+    DÉCISION 3.a (directive post-1.A) : un ER couvrant ≥ `er_hard_exclude_pct` (PLACEHOLDER
+    50 %) de la parcelle EXCLUT (emprise majoritairement grevée) ; en deçà → SOFT_FLAG et la
+    surface ER est déduite de l'emprise constructible en pré-faisabilité (faisabilite/db.py).
+    Les autres prescriptions n'excluent jamais seules. Le libellé GPU est TOUJOURS affiché ;
+    le `typepsc` CNIG ne sert qu'à graduer le traitement (mapping dans cascade_rules.yaml).
     Peut émettre PLUSIEURS verdicts (une parcelle peut cumuler ER + mixité + eaux pluviales)."""
 
     name = "prescription_plu"
@@ -223,7 +316,7 @@ class PrescriptionPluLayer(Layer):
         patrimoine = set(params.get("patrimoine_bati_typepsc", []))
         oap = set(params.get("oap_typepsc", []))
         eaux = set(params.get("eaux_pluviales_typepsc", []))
-        seuil = float(params.get("majorite_threshold", 0.5))
+        er_seuil = float(params.get("er_hard_exclude_pct", 50)) / 100.0
 
         verdicts: list[Verdict] = []
         seen: set[tuple[str | None, str]] = set()
@@ -234,12 +327,22 @@ class PrescriptionPluLayer(Layer):
                 continue
             seen.add((tp, lib))
             pct = f" (~{i.coverage * 100:.0f}% de la parcelle)" if i.coverage >= 0.01 else ""
-            # Contraintes DISCRIMINANTES (spécifiques à la parcelle) → SOFT_FLAG pénalisant.
+            # Contraintes DISCRIMINANTES (spécifiques à la parcelle).
             if tp in er:
-                sev = Severity.FORT if i.coverage >= seuil else Severity.MOYEN
-                verdicts.append(soft_flag(
-                    self.name, f"Emplacement réservé : {lib}{pct} — emprise grevée au profit d'un "
-                    "projet public, constructibilité réduite (servitude levable).", sev, source=SRC_GPU))
+                num, objet = _er_split(lib)
+                if i.coverage >= er_seuil:
+                    titre = f"Emplacement réservé {num}" if num else "Emplacement réservé"
+                    verdicts.append(hard_exclude(
+                        self.name,
+                        f"{titre} : {objet} ({i.coverage * 100:.0f} %) — emprise majoritairement "
+                        "grevée au profit d'un projet public (servitude levable : à réévaluer si "
+                        "l'ER est abandonné).",
+                        kind="faux_positif", source=SRC_GPU))
+                else:
+                    verdicts.append(soft_flag(
+                        self.name, f"Emplacement réservé : {lib}{pct} — emprise grevée au profit "
+                        "d'un projet public ; surface ER déduite de l'emprise constructible "
+                        "(pré-faisabilité).", Severity.MOYEN, source=SRC_GPU))
             elif tp in ebc:
                 verdicts.append(soft_flag(
                     self.name, f"Espace boisé classé (EBC) : {lib}{pct} — toute construction interdite "
