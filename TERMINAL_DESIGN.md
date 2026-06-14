@@ -1,59 +1,48 @@
-# LE TERMINAL FONCIER — système de design (proposition · Temps 1)
+# LE TERMINAL FONCIER — système de design (v2)
 
-> Refonte visuelle de LA BUSE en **terminal de décision foncière** (registre Linear / Bloomberg),
-> ancré Réunion. **Temps 1 = ce système + la FICHE PARCELLE seule**, livré **isolé** (tout scopé sous
-> `.sheet`, le reste de l'app inchangé). ⛔ **STOP & VALIDATE** avant déploiement global (Temps 2).
+> Source unique de vérité : **`src/labuse/api/web/terminal.css`** (bloc `:root`). Toute valeur
+> (couleur, espacement, radius, taille) dérive de ces échelles — **aucune valeur magique** ailleurs.
+> Étape 2 : système posé + **fiche parcelle ET bilan** migrés (scopés `.sheet`). ⛔ STOP avant
+> propagation aux autres vues (étape 3).
 
-## Anti-cliché (garde-fou du brief)
-Le réflexe « outil sombre » = near-black `#0a0a0a` + acid-green `#00ff88`. **Évité.** On s'en distingue
-par un fond **océan profond bleuté** et un accent **ambre basalte** (terre volcanique réunionnaise).
-
-## Tokens couleur
-| Token | Hex | Rôle |
+## Couleur — sémantique stricte (§2.A)
+| Token | Hex | Usage EXCLUSIF |
 |---|---|---|
-| `--paper` | `#0F1620` | fond fiche — océan profond bleuté (léger dégradé radial en haut-droite) |
-| `--paper-2` | `#0B111A` | recess / panneaux enfoncés |
-| `--card` | `#18212E` | élévation : cartes, panneaux |
-| `--card-2` | `#1F2A39` | sur-élévation : champs, lignes actives |
-| `--ink` / `--ink-soft` / `--ink-faint` | `#E6EAF0` / `#AEB9C7` / `#7E8B9C` | texte / secondaire / labels-sources |
-| `--rule` / `--rule-2` | `#243042` / `#2E3C50` | hairlines (séparation par filets, pas par boîtes) |
-| **`--accent`** | **`#E08A3C`** | **ambre basalte — RÉSERVÉ** : score d'opportunité, actions primaires, eyebrows clés |
+| `--tf-bg` / `--tf-surface` / `--tf-surface-2` | `#0F1620` / `#18212E` / `#202C3C` | 3 profondeurs de surface, pas plus |
+| `--tf-text` / `--tf-text-2` / `--tf-text-3` | `#E8ECF2` / `#AEB9C7` / `#8693A4` | 3 niveaux de texte (tous ≥ AA) |
+| `--tf-border` | `#2A3645` | **hairline unique** |
+| **`--tf-accent`** | **`#E89A4E`** | **RÉSERVÉ** : score d'opportunité + actions primaires. Rien d'autre. |
+| `--tf-positive` / `--tf-flag` / `--tf-exclude` / `--tf-unknown` | `#5CC08C` / `#E0BC5A` / `#DD6A66` / `#7D8A9B` | **verdicts uniquement** (POSITIVE / SOFT_FLAG / HARD_EXCLUDE / inconnu) |
 
-### Sémantique des verdicts (donnée, pas déco — lisible à la couleur seule)
-| Verdict | Hex | |
-|---|---|---|
-| POSITIVE / PASS / opportunité | `#4CAF7D` | vert sobre |
-| SOFT_FLAG / à creuser | `#D9B04A` | jaune d'avertissement (distinct de l'accent orange) |
-| HARD_EXCLUDE / faux positif | `#D9534F` | rouge sobre |
-| UNKNOWN / exclue | `#6B7787` | gris neutre |
+- **Badges méta** (« indicatif », « EPSG:2975 », « non calibré ») → **gris discret** (`--tf-surface-2` + `--tf-text-3`), jamais d'ambre.
+- **Contraste** : toutes les combinaisons texte/fond vérifiées **≥ AA** (min mesuré 4.52:1).
 
-## Typographie (3 rôles, polices **vendorisées / offline-safe**)
-- **Données & chiffres-clés → IBM Plex Mono** (nouvellement vendorisé, 400/500/600). **Toutes** les
-  valeurs numériques en chasse fixe (`tnum`/`zero`) → alignement au pixel = confiance. Eyebrows et
-  libellés de verdict en mono capitales tracées (registre « readout »).
-- **Prose → Inter** (déjà vendorisé) : gloses, synthèse métier, explication de l'assistant.
-- Fraunces (serif) est **retiré de la fiche** (trop éditorial pour un terminal).
-- Échelle intentionnelle : score 58px · verdict 27px caps · titres data 20-30px · corps 13px · labels 10-11px.
+## Typographie — 1 police par usage (§2.B), zéro serif
+- **Titres & prose → Inter** (`--font-ui`). Fraunces banni de l'interface-outil.
+- **Données chiffrées → IBM Plex Mono** (`--font-mono`) : scores, €, m², coordonnées, réf. cadastrale.
+- Échelle nommée : `--fs-display 54` · `h1 22` · `h2 18` · `body 13` · `small 11.5` · `micro 10.5`.
 
-## Élément signature
-**Le score d'opportunité** : chiffre-roi en **grande chasse mono ambre** (58px), dans un panneau à
-filet ambre, avec le **score de complétude** plus discret qui le qualifie. C'est ce qu'on retient de
-la fiche — l'ambre marque toujours « le score d'opportunité ».
+## Espacement (§2.C) & Radius (§2.D)
+- **Espacement** multiples de 4 : `--sp-1..8` (4/8/12/16/24/32). Rythme vertical homogène entre sections (`--sp-6`).
+- **Radius** = 3 valeurs : `--radius-card 12` (panneaux) · `--radius-control 8` (cartes/boutons/champs) · `--radius-pill` (pastilles).
 
-## Principes appliqués
-Donnée = héros · densité maîtrisée (rythme 4/8px) · **hairlines** plutôt que boîtes lourdes ·
-hiérarchie par typo+espace avant couleur · mouvement sobre (`prefers-reduced-motion` respecté) ·
-focus clavier visible (liseré ambre) · copy côté promoteur (« Propriétaire », pas `owner_type`).
+## Signature — le score d'opportunité (§2.E)
+Grand chiffre **mono ambre** (`--fs-display`), **isolé** sur `--tf-surface`, **sans cadre ambre** (le
+chiffre porte l'accent, pas le contour) et **sans barre verte** (le vert = verdict). La **complétude**
+est secondaire : plus petite, en texte neutre, avec une fine jauge neutre — elle *qualifie* le score,
+elle ne rivalise pas.
 
-## Périmètre & garanties (Temps 1)
-- **Refonte visuelle uniquement** : `terminal.css` (nouveau) + 3 woff2 + `@font-face`. **Aucune** ligne
-  de logique, d'endpoint, ni de HTML de rendu touchée. **288 tests verts**, ruff clean.
-- **Isolation stricte** : tous les sélecteurs sont scopés `.sheet…` → sidebar, carte, pipeline,
-  comparateur **inchangés**. Rollback = retirer le `<link>` de `terminal.css`.
-- Contraintes conservées : **offline-safe** (polices auto-hébergées, zéro CDN à l'exécution), Leaflet
-  vendorisé, aucune dépendance lourde. Saint-Paul inchangé.
+## Étape 2 — livré
+- `terminal.css` réécrit autour du système (`:root` = référence ; `.sheet` mappe ses tokens locaux
+  ET les tokens globaux qui fuyaient vers la référence).
+- **Fiche** : en-tête, signature, lectures (verdicts à la couleur), capacité (cartes alignées), 3D
+  (données neutres), promoteur, badges méta gris.
+- **Bilan** (correction n°1) : **entièrement migré en sombre** — titre lisible, 3 stat-cards
+  identiques à la capacité, tableaux sombres, bandeaux « non fiable / prix fragile » en
+  avertissement sombre, panneau de calibration cohérent.
+- **288→290 tests verts**, ruff clean, isolation stricte (reste de l'app inchangé).
 
-## ⛔ STOP — décision attendue
-Valider la **direction** (palette, mono, score-signature, sémantique verdicts) sur la fiche avant le
-**Temps 2** = application aux autres vues (carte/radar, veille, comparateur, pipeline, accueil) avec
-les **mêmes tokens**, responsive, focus visible, tests verts, démo 8/8.
+## ⛔ Étape 3 (après validation) — propagation
+Mêmes tokens sur : carte/radar (bandeau « verdicts partiels », stat-cards, légende), veille,
+comparateur, **pipeline** (supprimer le serif du titre), modale démo (serif → Inter), sidebar.
+Responsive, focus visible, `prefers-reduced-motion`, démo 8/8.

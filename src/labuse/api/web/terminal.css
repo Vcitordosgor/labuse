@@ -1,190 +1,264 @@
 /* ============================================================================
-   LE TERMINAL FONCIER — proposition de design · TEMPS 1
+   LE TERMINAL FONCIER — SYSTÈME DE DESIGN (v2) · source unique de vérité
    ----------------------------------------------------------------------------
-   Refonte VISUELLE de la FICHE PARCELLE uniquement (#sheet / .sheet).
-   Chargé APRÈS styles.css ; tout est scopé sous .sheet → le reste de l'app
-   (sidebar, carte, pipeline, comparateur) reste INCHANGÉ jusqu'au feu vert.
-
-   Direction : terminal de décision foncière (registre Linear / Bloomberg),
-   ancré Réunion. Fond océan profond BLEUTÉ (anti near-black), accent AMBRE
-   BASALTE (anti acid-green). Données en MONO (IBM Plex Mono). La donnée est le
-   héros, la couleur est un signal (verdicts), le score d'opportunité la signature.
+   §2 du brief : tokens fondateurs ci-dessous = LA référence. Aucune valeur magique
+   ne doit subsister dans les vues — tout dérive de ces échelles.
+   Étape 2 : appliqué à la FICHE PARCELLE + au BILAN (scopé .sheet → reste de l'app
+   inchangé jusqu'à l'étape 3). Chargé après styles.css.
    ============================================================================ */
 
-/* ── 1. Tokens : la fiche passe en thème sombre « terminal » ─────────────── */
-.sheet {
-  --paper:   #0F1620;          /* fond fiche : océan profond bleuté          */
-  --paper-2: #0B111A;          /* recess / gouttières (un cran plus sombre)  */
-  --card:    #18212E;          /* élévation : panneaux / cartes              */
-  --card-2:  #1F2A39;          /* sur-élévation : lignes actives, champs     */
-  --ink:       #E6EAF0;        /* texte (blanc cassé, pas blanc pur)         */
-  --ink-soft:  #AEB9C7;        /* texte secondaire                          */
-  --ink-faint: #7E8B9C;        /* labels, métadonnées, sources              */
-  --rule:   #243042;           /* hairline discrète                         */
-  --rule-2: #2E3C50;           /* hairline renforcée                        */
-  --accent:      #E08A3C;      /* AMBRE BASALTE — réservé (score, actions+)  */
-  --accent-soft: rgba(224,138,60,.13);
-  /* Sémantique des verdicts — DONNÉE, pas déco (lisible à la couleur seule) */
-  --v-opportunite:           #4CAF7D;   /* POSITIVE / PASS — vert sobre      */
-  --v-a_creuser:             #D9B04A;   /* SOFT_FLAG — jaune d'avertissement */
-  --v-exclue:                #6B7787;   /* UNKNOWN / exclue — gris neutre    */
-  --v-faux_positif_probable: #D9534F;   /* HARD_EXCLUDE — rouge sobre        */
-  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
-  --serif: var(--mono);        /* les « chiffres-rois » existants → mono     */
+:root {
+  /* — Surfaces : 3 profondeurs, pas plus (§2.A) — */
+  --tf-bg:        #0F1620;   /* fond                                   */
+  --tf-surface:   #18212E;   /* carte niveau 1                         */
+  --tf-surface-2: #202C3C;   /* carte imbriquée niveau 2 / champs      */
+  /* — Texte : 3 niveaux (§2.A) ; tous ≥ AA sur les surfaces ci-dessus — */
+  --tf-text:   #E8ECF2;      /* principal                              */
+  --tf-text-2: #AEB9C7;      /* secondaire                             */
+  --tf-text-3: #8693A4;      /* atténué (sources, méta) — ~4.6:1 sur bg */
+  /* — Bordure : hairline UNIQUE (§2.D) — */
+  --tf-border: #2A3645;
+  /* — Accent ambre basalte : RÉSERVÉ au score d'opportunité + actions primaires (§2.A) — */
+  --tf-accent:     #E89A4E;  /* éclairci pour AA en texte sur fond sombre */
+  --tf-accent-ink: #14171C;  /* texte posé SUR l'accent                  */
+  --tf-accent-dim: rgba(232,154,78,.14);
+  /* — Verdicts : sémantique de données, immuable, RIEN d'autre (§2.A) — */
+  --tf-positive: #5CC08C;    /* POSITIVE / opportunité   */
+  --tf-flag:     #E0BC5A;    /* SOFT_FLAG / à creuser    */
+  --tf-exclude:  #DD6A66;    /* HARD_EXCLUDE / exclu     */
+  --tf-unknown:  #7D8A9B;    /* inconnu / non évalué     */
+  /* — Espacement : multiples de 4 (§2.C) — */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-6: 24px; --sp-8: 32px;
+  /* — Radius : 3 valeurs (§2.D) — */
+  --radius-card: 12px; --radius-control: 8px; --radius-pill: 999px;
+  /* — Familles : 1 sans (UI + prose), 1 mono (données). AUCUN serif (§2.B) — */
+  --font-ui:   "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* — Échelle typo : 6 tailles nommées (§2.B) — */
+  --fs-display: 54px; --fs-h1: 22px; --fs-h2: 18px;
+  --fs-body: 13px;    --fs-small: 11.5px; --fs-micro: 10.5px;
+}
 
-  background:
-    radial-gradient(120% 60% at 100% 0%, #131d2a 0%, var(--paper) 46%) fixed;
-  color: var(--ink);
-  border-left: 1px solid var(--rule-2);
+/* ── Mapping : la fiche fait pointer SES tokens locaux vers le système ───────
+   (les composants existants référencent --paper/--ink/--rule/--accent/--v-* et
+   parfois les tokens globaux --gold/--panel/--muted → tout est redirigé ici). */
+.sheet {
+  --paper: var(--tf-bg);   --card: var(--tf-surface);  --card-2: var(--tf-surface-2);
+  --ink: var(--tf-text);   --ink-soft: var(--tf-text-2); --ink-faint: var(--tf-text-3);
+  --rule: var(--tf-border); --rule-2: var(--tf-border);          /* hairline unique */
+  --accent: var(--tf-accent);
+  --v-opportunite: var(--tf-positive); --v-a_creuser: var(--tf-flag);
+  --v-exclue: var(--tf-unknown);       --v-faux_positif_probable: var(--tf-exclude);
+  --serif: var(--font-ui);              /* tout « serif » résiduel → Inter (zéro serif) */
+  /* neutralise les tokens globaux (dark sidebar) qui fuyaient dans la fiche */
+  --panel: var(--tf-surface); --panel-2: var(--tf-surface-2);
+  --txt: var(--tf-text); --muted: var(--tf-text-3); --line: var(--tf-border);
+  --gold: var(--tf-accent); --gold-soft: var(--tf-text-2);
+
+  background: var(--tf-bg);
+  color: var(--tf-text);
+  border-left: 1px solid var(--tf-border);
   box-shadow: -24px 0 64px rgba(0,0,0,.55);
+  font-family: var(--font-ui); font-size: var(--fs-body);
   -webkit-font-smoothing: antialiased;
 }
-/* Toutes les VALEURS NUMÉRIQUES en chasse fixe → alignement au pixel = confiance */
-.sheet .fh-id, .sheet .score-num, .sheet .fc-num, .sheet .faisa-verdict,
-.sheet .pm-fig b, .sheet .v3d-figs b, .sheet .res-num, .sheet .meur,
-.sheet [class*="-num"], .sheet .bilan-num {
-  font-family: var(--mono); font-feature-settings: "tnum" 1, "zero" 1;
-}
-.sheet, .sheet .verdict-gloss, .sheet .ai-prose, .sheet p {
-  font-family: "Inter", system-ui, sans-serif;     /* la prose reste en Inter */
-}
-
-/* Barre de défilement sombre */
-.sheet { scrollbar-color: var(--rule-2) transparent; }
+.sheet { scrollbar-color: var(--tf-border) transparent; }
 .sheet::-webkit-scrollbar { width: 10px; }
-.sheet::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 10px; }
+.sheet::-webkit-scrollbar-thumb { background: var(--tf-border); border-radius: var(--radius-pill); }
 
-.sheet-close { border-color: var(--rule-2); color: var(--ink-soft); background: rgba(255,255,255,.02); }
-.sheet-close:hover { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
+/* ── Typographie : Inter pour titres+prose, MONO pour les nombres (§2.B) ──── */
+.sheet .fh-id, .sheet .score-num, .sheet .fc-num, .sheet .pm-fig b, .sheet .v3d-figs b,
+.sheet .res-num, .sheet .meur, .sheet .bc-n, .sheet .faisa-steps b, .sheet .bilan-num,
+.sheet .bilan-comp-grid dd, .sheet .bp-in input {
+  font-family: var(--font-mono); font-feature-settings: "tnum" 1, "zero" 1;
+}
+.sheet .verdict-word, .sheet .faisa-verdict, .sheet .bilan-verdict, .sheet .rs-synthese,
+.sheet .pm-h, .sheet .verdict-gloss, .sheet .ai-prose {
+  font-family: var(--font-ui);
+}
 
-/* ── 2. En-tête « ticker » : référence cadastrale en lecture machine ─────── */
-.sheet .fiche-head {
-  margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--rule);
-}
-.sheet .fh-id {
-  font-family: var(--mono); font-weight: 600; font-size: 14px; letter-spacing: .06em;
-  color: var(--accent);
-}
-.sheet .fh-loc { color: var(--ink-faint); font-size: 12.5px; margin-top: 4px; }
+.sheet-close { border-color: var(--tf-border); color: var(--tf-text-2);
+  background: var(--tf-surface); width: 30px; height: 30px; top: var(--sp-4); right: var(--sp-4); }
+.sheet-close:hover { color: var(--tf-text); border-color: var(--tf-accent); background: var(--tf-accent-dim); }
 
-/* ── 3. SIGNATURE : le verdict en readout + le score d'opportunité chiffre-roi ─ */
-.sheet .verdict { padding-bottom: 16px; border-bottom: none; }
-.sheet .verdict-eyebrow {
-  font-family: var(--mono); font-size: 10.5px; font-weight: 500;
-  letter-spacing: .22em; color: var(--ink-faint);
-}
+/* ── En-tête « ticker » ──────────────────────────────────────────────────── */
+.sheet .fiche-head { margin-bottom: var(--sp-4); padding-bottom: var(--sp-3); border-bottom: 1px solid var(--tf-border); }
+.sheet .fh-id { font-weight: 600; font-size: 14px; letter-spacing: .06em; color: var(--tf-text); }
+.sheet .fh-loc { color: var(--tf-text-3); font-size: var(--fs-small); margin-top: var(--sp-1); }
+
+/* ── SIGNATURE : score d'opportunité isolé, sans cadre ni barre verte (§2.E) ─ */
+.sheet .verdict { padding: 0 0 var(--sp-3); border-bottom: none; }
+.sheet .verdict-eyebrow { font-size: var(--fs-micro); font-weight: 600; letter-spacing: .16em; color: var(--tf-text-3); }
 .sheet .verdict-word {
-  font-family: var(--mono); font-weight: 600; font-size: 27px; letter-spacing: .01em;
-  text-transform: uppercase; margin: 8px 0 10px;
+  font-weight: 700; font-size: var(--fs-h1); letter-spacing: .01em; text-transform: uppercase;
+  margin: var(--sp-2) 0; color: var(--tf-unknown);
 }
-.sheet .verdict-gloss { color: var(--ink-soft); font-size: 13.5px; line-height: 1.5; }
+.sheet .verdict.v-opportunite .verdict-word { color: var(--tf-positive); }
+.sheet .verdict.v-a_creuser .verdict-word { color: var(--tf-flag); }
+.sheet .verdict.v-exclue .verdict-word { color: var(--tf-unknown); }
+.sheet .verdict.v-faux_positif_probable .verdict-word { color: var(--tf-exclude); }
+.sheet .verdict-gloss { color: var(--tf-text-2); font-size: var(--fs-body); line-height: 1.5; max-width: 46ch; }
 
-/* Le bloc des deux scores = la signature. Opportunité dominante, en ambre mono. */
 .sheet .scores {
-  margin: 4px 0 0; padding: 18px 20px; gap: 14px 26px;
-  background: var(--card); border: 1px solid var(--rule);
-  border-radius: 12px; position: relative; overflow: hidden;
+  margin: var(--sp-2) 0 0; padding: var(--sp-4) var(--sp-4) var(--sp-3);
+  background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-card);
+  display: grid; grid-template-columns: auto 1fr; align-items: end; gap: var(--sp-2) var(--sp-6);
 }
-.sheet .scores::before {            /* filet ambre de signature, à gauche */
-  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent);
-}
-.sheet .score-top { align-items: baseline; gap: 10px; }
-.sheet .score-num { font-family: var(--mono); font-weight: 600; line-height: .9; }
-/* Opportunité = chiffre-roi (grande chasse, ambre) */
-.sheet .scores .score:first-child .score-num { font-size: 58px; color: var(--accent); }
-/* Complétude = le qualifieur (plus discret) */
-.sheet .scores .score:last-child .score-num { font-size: 30px; color: var(--ink-soft); }
-.sheet .score-lbl {
-  font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .14em; color: var(--ink-faint);
-}
-.sheet .bar { height: 4px; background: var(--paper-2); margin-top: 12px; }
-.sheet .bar i { background: var(--ink-soft); }
-.sheet .bar.cpl i { background: var(--accent); }
-.sheet .golden-note {
-  font-family: var(--mono); font-size: 10.5px; font-style: normal; letter-spacing: .01em;
-  color: var(--ink-faint); border-top: 1px dashed var(--rule-2); padding-top: 10px; margin-top: 12px;
-}
-.sheet .fiable-tag { font-family: var(--mono); letter-spacing: .04em; }
-.sheet .fiable-tag.ok      { background: rgba(76,175,125,.12); color: var(--v-opportunite); border-color: rgba(76,175,125,.3); }
-.sheet .fiable-tag.reserve { background: rgba(217,176,74,.12);  color: var(--v-a_creuser);  border-color: rgba(217,176,74,.32); }
-.sheet .fiable-sub { color: var(--ink-faint); }
-.sheet .verdict-downgrade {
-  background: rgba(217,83,79,.10); border-color: rgba(217,83,79,.42); color: #e88a86;
-}
+.sheet .scores::before { content: none; }                 /* pas de filet ambre — le chiffre porte l'accent */
+.sheet .scores .score:first-child { grid-row: span 2; }   /* le score d'opportunité domine la colonne gauche */
+.sheet .score-top { display: block; }
+.sheet .score-num { font-weight: 600; line-height: .92; }
+.sheet .scores .score:first-child .score-num { font-size: var(--fs-display); color: var(--tf-accent); }
+.sheet .scores .score:last-child  .score-num { font-size: 20px; color: var(--tf-text-2); }
+.sheet .score-lbl { display: block; font-family: var(--font-ui); font-size: var(--fs-micro);
+  font-weight: 600; letter-spacing: .12em; color: var(--tf-text-3); margin-top: var(--sp-1); }
+.sheet .scores .bar.opp { display: none; }                /* §2.E : retirer la barre verte sous le score */
+.sheet .scores .bar.cpl { height: 3px; background: var(--tf-surface-2); margin-top: var(--sp-2); border-radius: var(--radius-pill); }
+.sheet .scores .bar.cpl i { background: var(--tf-text-3); }     /* jauge neutre, pas d'ambre */
+.sheet .golden-note { grid-column: 1 / -1; font-family: var(--font-ui); font-style: normal;
+  font-size: var(--fs-micro); color: var(--tf-text-3); border-top: 1px solid var(--tf-border);
+  padding-top: var(--sp-2); margin-top: var(--sp-3); }
 
-/* ── 4. Eyebrows & titres de section : libellés machine, hairlines ───────── */
-.sheet .src-h, .sheet .faisa-eyebrow {
-  font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: .2em;
-  color: var(--ink-faint); text-transform: uppercase;
-}
-.sheet .faisa-eyebrow { color: var(--accent); }
-.sheet .rd-h, .sheet .rs-h {
-  font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .1em;
-}
-/* Verdicts lisibles À LA COULEUR (corrige les teintes prévues pour fond clair) */
-.sheet .rd-h.ok,  .sheet .rs-h.ok,  .sheet .rd-pts.pos { color: var(--v-opportunite); }
-.sheet .rd-h.lim, .sheet .rs-h.warn { color: var(--v-a_creuser); }
-.sheet .rd-h.lim.has-hard, .sheet .rd-pts.neg, .sheet .bati.bt-bad .bt-label { color: var(--v-faux_positif_probable); }
-.sheet .rd-h.unk { color: var(--ink-faint); }
-.sheet .rd-h.unk::before { background: var(--ink-faint); }
-.sheet .rd-li { color: var(--ink-soft); }
-.sheet .rd-li::before { background: var(--rule-2); }
-.sheet .rd-src { color: var(--ink-faint); }
+/* ── Badge de fiabilité (verdict, pas méta) ──────────────────────────────── */
+.sheet .fiable-tag { font-family: var(--font-ui); border-radius: var(--radius-pill); letter-spacing: .02em; }
+.sheet .fiable-tag.ok      { background: rgba(92,192,140,.13); color: var(--tf-positive); border-color: rgba(92,192,140,.32); }
+.sheet .fiable-tag.reserve { background: rgba(224,188,90,.13); color: var(--tf-flag);     border-color: rgba(224,188,90,.34); }
+.sheet .fiable-sub { color: var(--tf-text-3); }
+.sheet .verdict-downgrade { background: rgba(221,106,102,.10); border-color: rgba(221,106,102,.4); color: #e8a5a1; border-radius: var(--radius-control); }
 
-/* ── 5. Cartes de capacité, étapes, bilan, promoteur → surfaces sombres ──── */
-.sheet .resume, .sheet .ai-box, .sheet .pm-card, .sheet .bilan-comp,
-.sheet .pm-via, .sheet .faisa-calc, .sheet .src-chip {
-  background: var(--card); border-color: var(--rule);
+/* ── Titres de section & eyebrows : Inter, jamais d'ambre décoratif (§2.A/B) ─ */
+.sheet .src-h, .sheet .faisa-eyebrow, .sheet .bilan-eyebrow, .sheet .rs-eyebrow,
+.sheet .bilan-comp-t, .sheet .bp-grp-t {
+  font-family: var(--font-ui); font-size: var(--fs-micro); font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--tf-text-3);
 }
-.sheet .faisa {
-  background: var(--paper-2); border: 1px solid var(--rule); border-radius: 14px;
+.sheet .faisa-verdict, .sheet .bilan-verdict { font-size: var(--fs-h2); font-weight: 700; color: var(--tf-text); }
+.sheet .rs-synthese { font-size: 15px; color: var(--tf-text); }
+.sheet .faisa-ctx, .sheet .bilan-msg, .sheet .rs-list li, .sheet .rs-action { color: var(--tf-text-2); }
+.sheet .rs-action-k, .sheet .bati .bt-k { font-family: var(--font-ui); color: var(--tf-text-3); }
+
+/* ── Verdicts lisibles À LA COULEUR (corrige les teintes pour fond clair) ──── */
+.sheet .rd-h, .sheet .rs-h { font-family: var(--font-ui); font-size: var(--fs-small); font-weight: 700; letter-spacing: .04em; }
+.sheet .rd-h.ok,  .sheet .rs-h.ok,  .sheet .rd-pts.pos { color: var(--tf-positive); }
+.sheet .rd-h.lim, .sheet .rs-h.warn { color: var(--tf-flag); }
+.sheet .rd-h.lim.has-hard, .sheet .rd-pts.neg, .sheet .bati.bt-bad .bt-label { color: var(--tf-exclude); }
+.sheet .rd-h.unk { color: var(--tf-text-3); }
+.sheet .rd-h.unk::before { background: var(--tf-text-3); }
+.sheet .rd-li { color: var(--tf-text-2); padding-left: var(--sp-3); }
+.sheet .rd-li::before { width: 6px; height: 6px; border-radius: 50%; top: .45em; }
+.sheet .rd-li.ok::before { background: var(--tf-positive); }
+.sheet .rd-li.hard::before { background: var(--tf-exclude); }
+.sheet .rd-li.soft::before { background: var(--tf-flag); }
+.sheet .rd-li.unk::before { background: var(--tf-text-3); }
+.sheet .rd-src { color: var(--tf-text-3); }
+
+/* ── Rythme vertical homogène entre sections (§2.C) ──────────────────────── */
+.sheet .resume, .sheet .assistant, .sheet .reads, .sheet .faisa, .sheet .promoteur,
+.sheet .bilan, .sheet .bati { margin-top: var(--sp-6); }
+
+/* ── Cartes data, capacité, étapes → surfaces sombres + 3 radius ──────────── */
+.sheet .resume { background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-left: 3px solid var(--tf-unknown); border-radius: var(--radius-card); padding: var(--sp-4); }
+.sheet .resume.v-opportunite { border-left-color: var(--tf-positive); }
+.sheet .resume.v-a_creuser { border-left-color: var(--tf-flag); }
+.sheet .resume.v-faux_positif_probable { border-left-color: var(--tf-exclude); }
+.sheet .resume.v-exclue { border-left-color: var(--tf-unknown); }
+.sheet .faisa { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-card); padding: var(--sp-6); }
+.sheet .faisa-nc { background: var(--tf-surface); }
+.sheet .faisa-nc .faisa-verdict { color: var(--tf-exclude); }
+/* Cartes de capacité : grille égale, labels alignés en bas (§3.B img 4) */
+.sheet .faisa-cards { grid-template-columns: 1fr 1fr 1fr; gap: var(--sp-3); }
+.sheet .fc { background: var(--tf-surface-2); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  box-shadow: none; display: flex; flex-direction: column; padding: var(--sp-3); }
+.sheet .fc-num { color: var(--tf-text); font-size: 20px; font-weight: 600; }
+.sheet .fc-lbl, .sheet .pm-fig i, .sheet .v3d-figs i { font-family: var(--font-ui); color: var(--tf-text-3); margin-top: auto; }
+.sheet .fc.fc-wide { grid-column: auto; }
+.sheet .faisa-steps td { border-bottom-color: var(--tf-border); color: var(--tf-text-2); }
+.sheet .faisa-steps b { color: var(--tf-text); }
+.sheet .fs-src, .sheet .pm-src, .sheet .faisa-bandeau, .sheet .pm-foot, .sheet .bilan-bandeau { color: var(--tf-text-3); }
+.sheet .faisa-calc { border-top: 1px solid var(--tf-border); }
+.sheet .faisa-calc > summary, .sheet .faisa-calc[open] > summary { color: var(--tf-accent); }
+
+/* ── 3D : surface neutre, données en mono NEUTRE (l'ambre reste au score) ──── */
+.sheet .v3d { background: var(--tf-bg); border: 1px solid var(--tf-border); border-radius: var(--radius-card); }
+.sheet .v3d-figs b { color: var(--tf-text); }
+.sheet .v3d-note { color: var(--tf-text-3); }
+
+/* ── Promoteur : cartes homogènes ────────────────────────────────────────── */
+.sheet .pm-card { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-control); padding: var(--sp-3); }
+.sheet .pm-h { font-size: var(--fs-h2); font-weight: 600; color: var(--tf-text); }
+.sheet .pm-fig b { color: var(--tf-text); }
+.sheet .pm-fig.degr b { color: var(--tf-text-2); }       /* §2.A : pas d'ambre sur une donnée */
+.sheet .pm-na, .sheet .pm-list.net li { color: var(--tf-text-2); }
+.sheet .pm-list.net b, .sheet .pm-list b { color: var(--tf-text); }
+.sheet .pm-list li { border-top-color: var(--tf-border); }
+.sheet .pm-via, .sheet .pm-note { background: var(--tf-surface-2); border-color: var(--tf-border); }
+.sheet .pm-sky img { background: var(--tf-surface-2); }
+.sheet .pm-sky, .sheet .pm-sky-cap { border-radius: var(--radius-control); }
+.sheet .pm-sky-cap { background: var(--tf-surface-2); color: var(--tf-text-3); }
+
+/* ══ LE BILAN — migration complète en sombre (§3.A, correction n°1) ════════ */
+.sheet .bilan { background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-card); padding: var(--sp-6); }
+.sheet .bilan-verdict { color: var(--tf-text); }          /* « Simulation indicative » LISIBLE */
+.sheet .bilan-msg { color: var(--tf-text-2); }
+.sheet .bilan-cards .fc, .sheet .bilan-comp .fc { background: var(--tf-surface-2); }  /* mêmes stat-cards que la capacité */
+.sheet .bilan-calc table td, .sheet .bilan-method table td { border-bottom-color: var(--tf-border); color: var(--tf-text-2); }
+.sheet .bilan-comp { background: var(--tf-surface-2); border: 1px solid var(--tf-border); border-radius: var(--radius-control); }
+.sheet .bilan-comp-grid dt { color: var(--tf-text-3); }
+.sheet .bilan-comp-grid dd { color: var(--tf-text-2); }
+.sheet .bilan-comp-grid .bc-n, .sheet .bilan-comp-note { color: var(--tf-text-3); }
+/* bandeau « non fiable / prix fragile » : avertissement sombre, plus de bloc saumon clair */
+.sheet .bilan-frag { background: var(--tf-surface); border-color: var(--tf-border); }
+.sheet .bilan-fragile { background: rgba(224,188,90,.10); border: 1px solid rgba(224,188,90,.34);
+  color: #ecd58f; border-radius: var(--radius-control); }
+.sheet .bilan-noncal { background: rgba(224,188,90,.10); border-left: 3px solid var(--tf-flag);
+  color: #ecd58f; border-radius: var(--radius-control); }
+/* badges de fiabilité du prix → couleurs verdict */
+.sheet .fiab { font-family: var(--font-ui); border-radius: var(--radius-pill); }
+.sheet .fiab-fiable      { background: rgba(92,192,140,.14); color: var(--tf-positive); }
+.sheet .fiab-fragile     { background: rgba(224,188,90,.16);  color: var(--tf-flag); }
+.sheet .fiab-insuffisant { background: rgba(221,106,102,.14); color: var(--tf-exclude); }
+
+/* Calibration des paramètres (1.C) — formulaire sombre cohérent */
+.sheet .bilan-lls, .sheet .bp-in input { background: var(--tf-surface-2); border-color: var(--tf-border); color: var(--tf-text); border-radius: var(--radius-control); }
+.sheet .bilan-lls label, .sheet .bp-lbl { color: var(--tf-text-2); }
+.sheet .bilan-lls-note, .sheet .bp-note, .sheet .bp-u, .sheet .bp-msg { color: var(--tf-text-3); }
+.sheet .bp-badge, .sheet .bp-nc input { border-color: rgba(224,188,90,.45); }
+.sheet .bp-badge { color: var(--tf-flag); border-radius: var(--radius-control); }
+.sheet .bp-src { color: var(--tf-text-3); }
+.sheet .bp-save { background: var(--tf-accent); color: var(--tf-accent-ink); border-radius: var(--radius-control); }  /* action primaire = ambre */
+
+/* ── Badges MÉTA → gris discret, jamais d'ambre (§2.A, img 10) ────────────── */
+.sheet .pm-ind, .sheet .eco-badge, .sheet .pmt-cov, .sheet .res-estim {
+  font-family: var(--font-ui); background: var(--tf-surface-2); color: var(--tf-text-3);
+  border: 1px solid var(--tf-border); border-radius: var(--radius-pill);
 }
-.sheet .faisa-nc { background: var(--paper-2); }
-.sheet .faisa-verdict { color: var(--ink); }
-.sheet .faisa-nc .faisa-verdict { color: var(--v-faux_positif_probable); }
-.sheet .faisa-ctx { color: var(--ink-faint); }
-.sheet .fc {
-  background: var(--card); border: 1px solid var(--rule); box-shadow: none;
-}
-.sheet .fc-num { color: var(--ink); }
-.sheet .fc-lbl, .sheet .pm-fig i, .sheet .v3d-figs i { color: var(--ink-faint); }
-.sheet .pm-fig b { color: var(--ink); }
-.sheet .faisa-steps td { border-bottom-color: var(--rule); color: var(--ink-soft); }
-.sheet .fs-src, .sheet .pm-src { color: var(--ink-faint); }
-.sheet .faisa-calc > summary, .sheet .faisa-calc[open] > summary { color: var(--accent); }
-.sheet .faisa-bandeau, .sheet .pm-foot { color: var(--ink-faint); }
-.sheet .bilan-frag, .sheet .bati.bt-warn, .sheet .unverified, .sheet .pm-note {
-  background: rgba(217,176,74,.08); border-color: rgba(217,176,74,.28);
-}
-.sheet .unverified b { color: var(--v-a_creuser); }
-.sheet .bilan-comp .fc, .sheet .bilan-cards .fc { background: var(--card-2); }
+.sheet .eco-badge { padding: 2px 9px; font-weight: 600; }
 
-/* Pastilles d'état & badges → fond translucide + texte clair (lecture sur sombre) */
-.sheet .chip.opportunite, .sheet .src-chip.ok { color: var(--v-opportunite); background: rgba(76,175,125,.12); border-color: rgba(76,175,125,.3); }
-.sheet .chip.a_creuser   { color: var(--v-a_creuser);  background: rgba(217,176,74,.14); }
-.sheet .chip.faux_positif_probable { color: var(--v-faux_positif_probable); background: rgba(217,83,79,.14); }
-.sheet .chip.exclue      { color: var(--ink-soft);     background: rgba(107,119,135,.16); }
-.sheet .eco-badge { background: var(--accent-soft); border-color: rgba(224,138,60,.32); color: var(--accent); }
-.sheet .src-chip.silent { color: var(--ink-faint); }
+/* ── Pastilles d'état & chips → fond translucide + texte clair ────────────── */
+.sheet .chip, .sheet .src-chip, .sheet .fiable-tag, .sheet .fiab { border-radius: var(--radius-pill); }
+.sheet .chip.opportunite, .sheet .src-chip.ok { color: var(--tf-positive); background: rgba(92,192,140,.13); border-color: rgba(92,192,140,.3); }
+.sheet .chip.a_creuser   { color: var(--tf-flag);    background: rgba(224,188,90,.14); }
+.sheet .chip.faux_positif_probable { color: var(--tf-exclude); background: rgba(221,106,102,.14); }
+.sheet .chip.exclue      { color: var(--tf-text-2);  background: rgba(125,138,155,.16); }
+.sheet .src-chip { background: var(--tf-surface-2); color: var(--tf-text-2); }
+.sheet .src-chip.silent { background: transparent; color: var(--tf-text-3); }
+.sheet .own-badge { border-radius: var(--radius-pill); }
 
-/* La synthèse « métier » est une PHRASE → prose en Inter, pas en mono */
-.sheet .rs-synthese { font-family: "Inter", system-ui, sans-serif; color: var(--ink); }
-.sheet .rs-list li, .sheet .rs-action, .sheet .bati .bt-label { color: var(--ink); }
-.sheet .rs-eyebrow, .sheet .rs-action-k, .sheet .bati .bt-k { color: var(--accent); }
+/* ── Boutons : action primaire = ambre, secondaires = neutres ─────────────── */
+.sheet .btn { background: var(--tf-surface); border: 1px solid var(--tf-border); color: var(--tf-text); border-radius: var(--radius-control); }
+.sheet .btn:hover { border-color: var(--tf-accent); color: var(--tf-accent); background: var(--tf-accent-dim); }
+.sheet .btn.good { color: var(--tf-positive); border-color: rgba(92,192,140,.35); }
+.sheet .btn.bad  { color: var(--tf-exclude);  border-color: rgba(221,106,102,.35); }
+.sheet .btn.follow.on { color: var(--tf-positive); background: rgba(92,192,140,.10); border-color: rgba(92,192,140,.4); }
+.sheet .ai-btn { background: var(--tf-surface); border: 1px solid var(--tf-accent); color: var(--tf-accent); border-radius: var(--radius-control); }
+.sheet .ai-btn:hover:not(:disabled) { background: var(--tf-accent-dim); }
+.sheet .ai-out { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-card); }
+.sheet .ai-prose { color: var(--tf-text); }
+.sheet .ai-foot, .sheet .ai-req { color: var(--tf-text-3); }
 
-/* Boutons (export, SPF, assistant, suivi, comparer) → cohérence sombre */
-.sheet .btn { background: var(--card); border-color: var(--rule-2); color: var(--ink); }
-.sheet .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-.sheet .btn.good { color: var(--v-opportunite); border-color: rgba(76,175,125,.35); }
-.sheet .btn.bad  { color: var(--v-faux_positif_probable); border-color: rgba(217,83,79,.35); }
-.sheet .btn.follow.on { color: var(--v-opportunite); background: rgba(76,175,125,.10); border-color: rgba(76,175,125,.4); }
-
-/* Vue du ciel : le fond de chargement de l'image n'est plus crème */
-.sheet .pm-sky img { background: var(--card-2); }
-
-/* ── 6. Mouvement sobre & plancher de qualité ───────────────────────────── */
-.sheet .fc, .sheet .pm-card, .sheet .btn, .sheet .alert { transition: border-color .14s, background .14s, transform .14s; }
-.sheet :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
-@media (prefers-reduced-motion: reduce) {
-  .sheet, .sheet * { transition: none !important; animation: none !important; }
-}
+/* ── Mouvement sobre & plancher de qualité ───────────────────────────────── */
+.sheet .fc, .sheet .pm-card, .sheet .btn, .sheet .ai-btn { transition: border-color .14s, background .14s; }
+.sheet :focus-visible { outline: 2px solid var(--tf-accent); outline-offset: 2px; border-radius: var(--radius-control); }
+@media (prefers-reduced-motion: reduce) { .sheet, .sheet * { transition: none !important; animation: none !important; } }
