@@ -37,6 +37,11 @@ def _num(x: Any) -> Any:
     return x if isinstance(x, (int, float)) and not isinstance(x, bool) else None
 
 
+def is_configured() -> bool:
+    """Vrai si la clé API Anthropic est présente → l'assistant peut être activé côté UI."""
+    return bool(os.environ.get(ENV_KEY, "").strip())
+
+
 def assistant_facts(fiche: dict) -> dict[str, Any]:
     """Liste BLANCHE des faits réels de la fiche → unique contenu du prompt (anti-hallucination).
 

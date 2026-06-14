@@ -618,6 +618,13 @@ def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
             "computed_at": ca.isoformat() if ca else None}
 
 
+@app.get("/assistant/status")
+def assistant_status() -> dict:
+    """3.A — l'assistant IA est-il configuré (clé API présente) ? Pilote l'état du bouton côté UI."""
+    from .assistant import is_configured
+    return {"configured": is_configured()}
+
+
 @app.get("/parcels/{idu}/explain")
 def parcel_explain(idu: str, db: Session = Depends(get_db)) -> dict:
     """3.A — Assistant : explication en langage naturel de la fiche (API Anthropic).

@@ -33,6 +33,7 @@ const byIdu = {};           // idu -> layer (pour highlight)
 let map;
 let PERMITS_LAYER = null;   // couche marqueurs SITADEL (Lot C4)
 let WATCH_LAYER = null, WATCH_ZONES = [];   // 3.C — zones de veille (dessinées sur la carte)
+let ASSISTANT_OK = false;                   // 3.A — l'assistant IA est-il configuré (clé API) ?
 let COMPARE = [];           // IDU sélectionnés pour le comparateur (Lot D2), max 3
 let COVERAGE = null;        // couverture des couches critiques (/coverage)
 let KANBAN_META = null;     // colonnes & priorités du pipeline (/pipeline/meta)
@@ -1018,11 +1019,23 @@ function renderFaisabilite(fa) {
 }
 
 // 3.A — Assistant IA : « Expliquer cette parcelle » → synthèse en prose des données RÉELLES.
+// Sans clé API (ASSISTANT_OK=false), le bouton est désactivé avec un libellé clair — jamais d'erreur.
 function renderAssistant(idu) {
+  if (!ASSISTANT_OK) {
+    return `<section class="assistant">
+      <button type="button" class="ai-btn" disabled
+        title="Définissez la variable d'environnement ANTHROPIC_API_KEY côté serveur pour activer l'assistant">
+        ✨ Expliquer cette parcelle <span class="ai-req">· clé API requise</span></button>
+    </section>`;
+  }
   return `<section class="assistant">
     <button type="button" class="ai-btn js-explain" data-idu="${esc(idu)}">✨ Expliquer cette parcelle</button>
     <div class="ai-out" id="ai-out" hidden></div>
   </section>`;
+}
+async function loadAssistantStatus() {
+  try { ASSISTANT_OK = !!(await (await fetch("/assistant/status")).json()).configured; }
+  catch { ASSISTANT_OK = false; }
 }
 async function explainParcel(idu) {
   const out = $("#ai-out"), btn = document.querySelector(".js-explain");
@@ -1725,7 +1738,10 @@ function markFollowing(btn, statusKey) {
 // ───────────────────────── Audit pull (Lot A) ─────────────────────────
 // Auditer un terrain à la demande : référence cadastrale, adresse (BAN) ou polygone dessiné.
 // Tout converge vers POST /audit/* → ingestion 'audit' + cascade → on ouvre la fiche produite.
-const AUDIT_REF_RX = /^([A-Za-z]{1,2})\s*0*(\d{1,4})$/;   // « BV 912 », « bv912 », « BV 0912 »
+// Réf. cadastrale : IDU COMPLET (INSEE 5 + préfixe 3 + section + n°) OU forme courte (section + n°).
+// Ex. « 97415000BP0571 », « 97415 000 BP 0571 », « BV 912 », « bv912 », « BP0571 ».
+// g1 = INSEE (option.), g2 = section, g3 = numéro.
+const AUDIT_REF_RX = /^(?:(\d{5})\s*\d{3}\s*)?([A-Za-z]{1,2})\s*0*(\d{1,4})$/;
 
 function auditMsg(text, busy = false) {
   const el = $("#audit-msg");
@@ -1764,9 +1780,13 @@ async function runAudit(url, body) {
 function submitAudit(e) {
   if (e) e.preventDefault();
   const q = ($("#audit-q").value || "").trim();
-  if (q.length < 3) { auditMsg("Saisissez une adresse ou une référence (ex. BV 912)."); return; }
+  if (q.length < 3) { auditMsg("Saisissez une adresse ou une référence (ex. BV 912 ou 97415000BP0571)."); return; }
   const m = AUDIT_REF_RX.exec(q);
-  if (m) return runAudit("/audit/reference", { section: m[1].toUpperCase(), numero: m[2] });
+  if (m) {
+    const body = { section: m[2].toUpperCase(), numero: m[3] };
+    if (m[1]) body.code_insee = m[1];   // IDU complet → on transmet l'INSEE (contrôle commune)
+    return runAudit("/audit/reference", body);
+  }
   return runAudit("/audit/adresse", { q });
 }
 
@@ -1818,7 +1838,7 @@ async function main() {
   initMap();
   // Chargements initiaux INDÉPENDANTS en parallèle (chacun gère déjà son échec) →
   // moins de latence au premier rendu qu'une chaîne de 5 await séquentiels.
-  await Promise.all([loadStats(), loadCoverage(), loadVeille(), loadMeta(), fetchPipeline()]);
+  await Promise.all([loadStats(), loadCoverage(), loadVeille(), loadMeta(), fetchPipeline(), loadAssistantStatus()]);
   // La carte est le cœur de la démo : si le geojson échoue (réseau), on ne laisse jamais
   // un écran mort silencieux — message lisible + filtres encore utilisables au retour.
   let fc = { features: [] };

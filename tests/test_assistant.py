@@ -6,7 +6,9 @@ crash. La recette « explication fidèle sur 2 parcelles contrastées » s'exéc
 """
 from __future__ import annotations
 
-from labuse.api.assistant import ENV_KEY, assistant_facts, explain_parcel
+import pytest
+
+from labuse.api.assistant import ENV_KEY, assistant_facts, explain_parcel, is_configured
 
 FICHE = {
     "parcel": {"idu": "97415000AB0001", "commune": "Saint-Paul", "section": "AB", "numero": "1",
@@ -64,3 +66,21 @@ def test_sans_cle_degrade_proprement(monkeypatch):
     assert ENV_KEY in out["message"]                    # message clair : nomme la variable d'env
     assert "facts" in out                               # les faits restent dispo (preview/debug)
     assert "explanation" not in out                     # rien d'inventé sans le modèle
+
+
+def test_is_configured_reflet_de_lenv(monkeypatch):
+    """1.B — l'UI sait si l'assistant est activable (bouton désactivé sinon)."""
+    monkeypatch.delenv(ENV_KEY, raising=False)
+    assert is_configured() is False
+    monkeypatch.setenv(ENV_KEY, "sk-ant-test")
+    assert is_configured() is True
+
+
+@pytest.mark.db
+def test_assistant_status_endpoint(engine, monkeypatch):
+    from fastapi.testclient import TestClient
+
+    from labuse.api.app import app
+    monkeypatch.delenv(ENV_KEY, raising=False)
+    with TestClient(app) as c:
+        assert c.get("/assistant/status").json() == {"configured": False}
