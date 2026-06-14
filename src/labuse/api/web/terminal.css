@@ -50,7 +50,10 @@
   --tf-bg:#F7F5F0; --tf-surface:#FFFFFF; --tf-surface-2:#FCFBF8;
   --tf-text:#2C2C2A; --tf-text-2:#5F5E5A; --tf-text-3:#6F6E67;
   --tf-border:#E2DDD2;
-  --tf-accent:#234E78; --tf-accent-ink:#FFFFFF; --tf-accent-dim:rgba(35,78,120,.10);
+  /* Accent = OR LA BUSE (le bleu est banni des CTA, cf brief). Deux nuances : texte/contour (AA sur
+     papier) + or vif pour les fonds de bouton premium (texte foncé). */
+  --tf-accent:#846A22; --tf-accent-ink:#2A2410; --tf-accent-dim:rgba(214,179,106,.16);
+  --tf-gold:#D6B36A;
   /* verdicts : version TEXTE (AA sur papier) + version VIVE (jauge, pastilles) */
   --tf-positive:#0F6E56; --tf-positive-bright:#1D9E75;
   --tf-flag:#854F0B;     --tf-flag-bright:#C8841A;
@@ -250,7 +253,7 @@
 .sheet .bp-badge.bp-est { color: var(--tf-text-3); border-color: var(--tf-border); }      /* estimée → indicatif gris */
 .sheet .bp-badge.bp-srcok { color: var(--tf-positive); border-color: rgba(29,158,117,.4); }  /* sourcée → vert sobre */
 .sheet .bp-src { color: var(--tf-text-3); }
-.sheet .bp-save { background: var(--tf-accent); color: var(--tf-accent-ink); border-radius: var(--radius-control); }  /* action primaire = ambre */
+.sheet .bp-save { background: var(--tf-gold); color: var(--tf-accent-ink); border: 1px solid #C29E55; border-radius: var(--radius-control); }  /* action primaire = or */
 
 /* ── Badges MÉTA → gris discret, jamais d'ambre (§2.A, img 10) ────────────── */
 .sheet .pm-ind, .sheet .eco-badge, .sheet .pmt-cov, .sheet .res-estim {
@@ -276,11 +279,11 @@
 .sheet .btn.bad  { color: var(--tf-exclude);  border-color: rgba(221,106,102,.35); }
 .sheet .btn.follow.on { color: var(--tf-positive); background: rgba(92,192,140,.10); border-color: rgba(92,192,140,.4); }
 /* 2.C — « Expliquer cette parcelle » = action SIGNATURE (l'effet IA). Accent plein, présence forte. */
-.sheet .ai-btn { width: 100%; background: var(--tf-accent); border: 1px solid var(--tf-accent);
+.sheet .ai-btn { width: 100%; background: var(--tf-gold); border: 1px solid #C29E55;
   color: var(--tf-accent-ink); border-radius: var(--radius-control); padding: 11px 16px;
   font-weight: 700; font-size: var(--fs-body); letter-spacing: .01em;
-  box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 6px 16px rgba(35,78,120,.22); }
-.sheet .ai-btn:hover:not(:disabled) { filter: brightness(1.05); box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 8px 20px rgba(35,78,120,.26); }
+  box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 6px 16px rgba(159,123,46,.20); }
+.sheet .ai-btn:hover:not(:disabled) { filter: brightness(1.04); box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 8px 20px rgba(159,123,46,.26); }
 .sheet .ai-ic { font-size: 1.05em; margin-right: 2px; }
 /* sous-texte : dit ce que fait la fonction AVANT le clic (registre pro, pas marketing) */
 .sheet .ai-pitch { margin: var(--sp-2) 0 0; text-align: center; font-size: var(--fs-small);
@@ -311,6 +314,55 @@
 .sheet .ai-foot { margin: var(--sp-3) 0 0; padding-top: var(--sp-2); border-top: 1px solid var(--tf-border);
   font-size: var(--fs-micro); color: var(--tf-text-3); line-height: 1.4; }
 .sheet .ai-na { font-size: var(--fs-body); color: var(--tf-text-2); line-height: 1.5; }
+
+/* ══ NOTE PROMOTEUR — synthèse décisionnelle en tête de fiche (SaaS premium) ══ */
+.sheet .note-pro { margin-top: var(--sp-3); }
+.sheet .np-decision { background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-left: 3px solid var(--tf-accent); border-radius: var(--radius-card); padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-body); line-height: 1.45; color: var(--tf-text); }
+.sheet .note-pro.v-opportunite .np-decision { border-left-color: var(--tf-positive-bright); }
+.sheet .note-pro.v-a_creuser .np-decision { border-left-color: var(--tf-flag-bright); }
+.sheet .note-pro.v-exclue .np-decision, .sheet .note-pro.v-faux_positif_probable .np-decision { border-left-color: var(--tf-exclude-bright); }
+.sheet .np-decision-k { display: block; font-family: var(--font-ui); font-size: var(--fs-micro); font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--tf-text-3); margin-bottom: 3px; }
+.sheet .np-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); margin-top: var(--sp-3); }
+@media (min-width: 560px) { .sheet .np-cards { grid-template-columns: repeat(4, 1fr); } }
+.sheet .mc { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  padding: var(--sp-3); display: flex; flex-direction: column; min-height: 64px; }
+.sheet .mc-k { font-family: var(--font-ui); font-size: 9.5px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--tf-text-3); }
+.sheet .mc-v { font-family: var(--font-mono); font-weight: 600; font-size: 17px; color: var(--tf-text);
+  line-height: 1.15; margin-top: 3px; }
+.sheet .mc-v i { font-style: normal; font-size: .8em; color: var(--tf-text-2); }
+.sheet .mc-s { font-size: var(--fs-micro); color: var(--tf-text-3); margin-top: auto; padding-top: 4px; }
+.sheet .mc.mc-warn { border-left: 3px solid var(--tf-flag-bright); }
+.sheet .mc.mc-warn .mc-v { font-family: var(--font-ui); font-size: var(--fs-small); font-weight: 600; color: var(--tf-flag); }
+
+/* ══ Séparateur « Audit foncier complet » (la preuve, sous la synthèse) ══ */
+.sheet .audit-head { margin: var(--sp-8) 0 var(--sp-3); padding-top: var(--sp-4); border-top: 2px solid var(--tf-border); }
+.sheet .audit-head-t { display: block; font-family: var(--font-ui); font-size: var(--fs-h2); font-weight: 700; color: var(--tf-text); }
+.sheet .audit-head-s { display: block; font-size: var(--fs-small); color: var(--tf-text-3); margin-top: 2px; }
+
+/* ══ Actions hiérarchisées : 1 CTA métier · secondaires · « Plus d'actions » ══ */
+.sheet .fiche-actions { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-6);
+  border-top: 1px solid var(--tf-border); padding-top: var(--sp-4); }
+.sheet .cta-primary { width: 100%; background: #147A58; border: 1px solid #0F6E56;
+  color: #fff; font-weight: 700; font-size: var(--fs-body); padding: 12px 16px; border-radius: var(--radius-control);
+  box-shadow: 0 1px 0 rgba(255,255,255,.16) inset, 0 6px 16px rgba(20,122,88,.22); }
+.sheet .cta-primary:hover { filter: brightness(1.04); }
+.sheet .cta-primary.on { background: var(--tf-surface); color: var(--tf-positive); border-color: rgba(29,158,117,.4); box-shadow: none; }
+.sheet .fa-secondary { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
+.sheet .fa-secondary .btn { font-size: var(--fs-small); }
+.sheet .fa-more { position: relative; margin-left: auto; }
+.sheet .fa-more-btn { list-style: none; cursor: pointer; font-size: var(--fs-small); color: var(--tf-text-3);
+  padding: 7px 10px; border: 1px solid var(--tf-border); border-radius: var(--radius-control); }
+.sheet .fa-more-btn::-webkit-details-marker { display: none; }
+.sheet .fa-more-btn::after { content: " ▾"; }
+.sheet .fa-more[open] .fa-more-btn::after { content: " ▴"; }
+.sheet .fa-more-menu { position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 5;
+  display: flex; flex-direction: column; gap: 4px; background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-card); padding: var(--sp-2); min-width: 190px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.sheet .fa-more-menu .btn { width: 100%; text-align: left; font-size: var(--fs-small); }
 
 /* ── Mouvement sobre & plancher de qualité ───────────────────────────────── */
 .sheet .fc, .sheet .pm-card, .sheet .btn, .sheet .ai-btn { transition: border-color .14s, background .14s; }

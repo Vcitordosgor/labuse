@@ -401,6 +401,66 @@ function renderGauge(score) {
   </div>`;
 }
 
+// ─────────────────────── NOTE PROMOTEUR (synthèse décisionnelle, en tête de fiche) ───────────────────────
+// Répond en <10 s aux 5 questions du promoteur : ça vaut le coup ? quoi construire ? combien ?
+// quel blocage ? quelle action ? — dérivée des données DÉJÀ calculées (zéro nouvelle logique métier).
+const _eurK = (n) => (n == null ? "—"
+  : Math.abs(n) >= 1e6 ? (n / 1e6).toFixed(Math.abs(n) >= 1e7 ? 0 : 1).replace(".", ",") + " M€"
+  : Math.round(n / 1000) + " k€");
+
+function _logtsLabel(fr) {
+  const sol = fr.logements_au_sol, sous = fr.logements_sous_sol;
+  const rng = (a) => (a && a.length === 2) ? (a[0] === a[1] ? `${a[0]}` : `${a[0]}–${a[1]}`) : null;
+  const s = rng(sol) || rng(sous);
+  return s ? `${s} logement${s === "1" || s === "0–1" ? "" : "s"}` : "";
+}
+function _blocagePrincipal(f) {
+  const cascade = f.cascade || [];
+  const hard = cascade.find((c) => c.result === "HARD_EXCLUDE");
+  if (hard) return esc(hard.detail);
+  const r = f.resume || {};
+  if (r.vigilance && r.vigilance.length) return esc(r.vigilance[0]);
+  const soft = cascade.find((c) => c.result === "SOFT_FLAG");
+  if (soft) return esc(soft.detail);
+  const surf = (f.parcel || {}).surface_m2;
+  if (surf && surf < 300) return `Surface réduite (${fmt(Math.round(surf))} m²)`;
+  return "Aucun blocage majeur identifié";
+}
+function _confiance(cpl) {
+  if (cpl == null) return "—";
+  return cpl >= 75 ? "Élevé" : cpl >= 50 ? "Moyen" : "Faible";
+}
+
+function renderNotePromoteur(f) {
+  const v = f.verdict || {}, fa = f.faisabilite || {}, fr = fa.fourchette || {}, bil = fa.bilan || {};
+  const vois = (f.voisinage || {}).assemblage || {}, r = f.resume || {};
+  const status = v.status || "inconnu";
+  const decision = r.prochaine_action ? esc(r.prochaine_action)
+    : (status === "exclue" ? "Écarter — contrainte rédhibitoire."
+      : "Qualifier la parcelle et identifier le propriétaire.");
+
+  const mc = (label, value, sub, tone) => `<div class="mc${tone ? " mc-" + tone : ""}">
+    <div class="mc-k">${label}</div><div class="mc-v">${value}</div>${sub ? `<div class="mc-s">${sub}</div>` : ""}</div>`;
+  const cards = [];
+  cards.push(mc("Potentiel opération", fa.constructible ? esc(fr.niveaux || "—") : "Non constructible",
+    fa.constructible ? _logtsLabel(fr) : esc(fa.zone || "")));
+  if (fr.surface_plancher_m2) cards.push(mc("Surface plancher", `~${fmt(fr.surface_plancher_m2)}<i> m²</i>`, "estimée"));
+  if (bil.ca) cards.push(mc("CA potentiel", `${_eurK(bil.ca.bas)} – ${_eurK(bil.ca.haut)}`, bil.fiabilite ? `prix ${esc(bil.fiabilite)}` : ""));
+  if (bil.charge_fonciere) cards.push(mc("Charge foncière cible", _eurK(bil.charge_fonciere.central),
+    bil.charge_fonciere.par_m2_terrain ? `~${bil.charge_fonciere.par_m2_terrain} €/m² terrain` : ""));
+  cards.push(mc("Blocage principal", _blocagePrincipal(f), "", "warn"));
+  if (vois.possible) cards.push(mc("Opportunité voisine", `${vois.n_interessantes} contiguës`,
+    vois.surface_cumulee_m2 ? `~${fmt(vois.surface_cumulee_m2)} m² cumulés` : ""));
+  cards.push(mc("Confiance", _confiance(v.completeness_score),
+    v.completeness_score != null ? `complétude ${v.completeness_score} %` : ""));
+
+  return `
+    <section class="note-pro v-${status}">
+      <div class="np-decision"><span class="np-decision-k">Décision promoteur</span>${decision}</div>
+      <div class="np-cards">${cards.join("")}</div>
+    </section>`;
+}
+
 function renderFiche(f) {
   const v = f.verdict || {};
   const p = f.parcel || {};
@@ -473,9 +533,11 @@ function renderFiche(f) {
       </div>
     </section>
 
-    ${renderResume(f.resume)}
+    ${renderNotePromoteur(f)}
 
     ${renderAssistant(p.idu)}
+
+    ${renderResume(f.resume)}
 
     ${renderBati(f.bati)}
 
@@ -486,6 +548,9 @@ function renderFiche(f) {
       <div class="read"><h3 class="rd-h lim${hasHard ? " has-hard" : ""}">Ce qui contraint</h3>${block(limits, "lim", "Aucune contrainte relevée sur les couches disponibles.")}</div>
       <div class="read"><h3 class="rd-h unk">Ce qu'on n'a pas vérifié</h3>${block(unknown, "unk", "Toutes les couches critiques ont répondu.")}</div>
     </section>
+
+    <div class="audit-head"><span class="audit-head-t">Audit foncier complet</span>
+      <span class="audit-head-s">détails, calculs, sources — la traçabilité de chaque verdict</span></div>
 
     ${renderFaisabilite(f.faisabilite)}
 
@@ -511,13 +576,20 @@ function renderFiche(f) {
     ${renderProspection(f)}
 
     <footer class="fiche-actions">
-      <button class="btn follow" data-follow>+ Suivre cette parcelle</button>
-      <button class="btn js-compare-add" data-idu="${esc(p.idu)}">⊕ Comparer</button>
-      <a class="btn primary" href="/parcels/${encodeURIComponent(p.idu)}/export?format=onepager" target="_blank" title="Fiche 1 page A4 — à imprimer en PDF pour un comité">📄 Fiche 1 page (PDF)</a>
-      <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=md" target="_blank">Export Markdown</a>
-      <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=html" target="_blank">Export HTML</a>
-      <button class="btn good" data-fb="good_lead">Bon lead</button>
-      <button class="btn bad" data-fb="false_positive">Faux positif</button>
+      <button class="btn cta-primary follow" data-follow>+ Ajouter au pipeline</button>
+      <div class="fa-secondary">
+        <button class="btn js-compare-add" data-idu="${esc(p.idu)}">⊕ Comparer</button>
+        <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=onepager" target="_blank" title="Fiche 1 page A4 — pour un comité">📄 Fiche PDF</a>
+        <details class="fa-more">
+          <summary class="fa-more-btn">Plus d'actions</summary>
+          <div class="fa-more-menu">
+            <button class="btn good" data-fb="good_lead">Marquer « bon lead »</button>
+            <button class="btn bad" data-fb="false_positive">Marquer « faux positif »</button>
+            <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=md" target="_blank">Export Markdown</a>
+            <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=html" target="_blank">Export HTML</a>
+          </div>
+        </details>
+      </div>
     </footer>
     <p class="disclaimer">${esc(f.disclaimer || "")}</p>
 
@@ -1783,7 +1855,7 @@ function wireKanbanControls() {
 
 function markFollowing(btn, statusKey) {
   btn.classList.add("on");
-  btn.textContent = `✓ Suivie · ${colLabel(statusKey)}`;
+  btn.textContent = `✓ Dans le pipeline · ${colLabel(statusKey)}`;
 }
 
 // ───────────────────────── Audit pull (Lot A) ─────────────────────────
