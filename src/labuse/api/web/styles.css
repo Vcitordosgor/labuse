@@ -232,6 +232,24 @@ input[type=checkbox] { accent-color: var(--gold); }
   padding: 9px 16px; border-radius: 9px; font: inherit; font-size: 13px; cursor: pointer;
 }
 .me-reset:hover { background: var(--gold-soft); }
+.me-actions { display: flex; flex-direction: column; gap: 8px; }
+.me-all { background: transparent; border: 1px solid var(--line); color: var(--gold-soft); padding: 8px 14px;
+  border-radius: 9px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.me-all:hover { border-color: var(--gold); color: var(--gold); }
+
+/* M1 — Loader premium (couvre la carte au boot, jamais d'écran « cassé ») */
+.app-loader { position: fixed; inset: 0 0 0 372px; z-index: 1500; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(120% 80% at 50% 32%, #131d2a 0%, #0B1118 68%); transition: opacity .42s ease; }
+.app-loader.gone { opacity: 0; pointer-events: none; }
+.al-card { display: flex; flex-direction: column; align-items: center; gap: 13px; text-align: center; }
+.al-bird { width: 60px; height: auto; fill: var(--gold); filter: drop-shadow(0 2px 8px rgba(0,0,0,.55)); opacity: .95; }
+.al-spin { width: 32px; height: 32px; border: 3px solid rgba(214,179,106,.18); border-top-color: var(--gold);
+  border-radius: 50%; animation: al-rot .8s linear infinite; }
+@keyframes al-rot { to { transform: rotate(360deg); } }
+.al-txt { color: var(--txt); font-size: 15px; font-weight: 600; letter-spacing: .02em; }
+.al-sub { color: var(--muted); font-size: 12.5px; }
+@media (max-width: 900px) { .app-loader { inset: 0; } }
+@media (prefers-reduced-motion: reduce) { .al-spin { animation: none; } }
 
 /* Contrôles Leaflet — refondus premium (plus « natifs/bruts ») */
 .leaflet-bar { border: none !important; border-radius: 11px !important; overflow: hidden;

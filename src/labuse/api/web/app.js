@@ -9,12 +9,12 @@ window.fetch = async (...args) => {
 };
 const COMMUNE = "Saint-Paul";
 const COLORS = { opportunite: "#37976a", a_creuser: "#c2913f", exclue: "#697079", faux_positif_probable: "#b85f4c", inconnu: "#3a434e" };
-const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue", faux_positif_probable: "Faux positif probable" };
+const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue", faux_positif_probable: "Écartée" };
 const VERDICT_GLOSS = {
   opportunite: "Foncier a priori mobilisable — reste à confirmer sur le terrain.",
   a_creuser: "Signaux mitigés : une vérification s'impose avant de démarcher.",
   exclue: "Contrainte rédhibitoire identifiée — écartée du radar.",
-  faux_positif_probable: "La donnée terrain contredit le signal — probable faux positif.",
+  faux_positif_probable: "Signal positif au départ, mais potentiel limité — non prioritaire.",
 };
 const LAYER_SHORT = {
   // Décision 2 : le SAR servi est un PROXY de vocation → badge explicite, jamais « SAR » nu.
@@ -28,6 +28,7 @@ const LAYER_SHORT = {
 const shortLayer = (c) => LAYER_SHORT[c.layer_name] || c.layer_name;
 
 let FEATURES = [];          // toutes les parcelles (GeoJSON features)
+let DATA_READY = false;     // M1 — vrai une fois le geojson chargé (évite le faux « vide » au boot)
 let layer = null;           // couche Leaflet courante
 const byIdu = {};           // idu -> layer (pour highlight)
 let map;
@@ -153,8 +154,38 @@ function renderMap() {
       lyr.bindTooltip(tipHtml(ft.properties), { sticky: true, direction: "top", className: "lb-tip" });
     },
   }).addTo(map);
-  const empty = $("#map-empty"); if (empty) empty.classList.toggle("hidden", shown.length > 0);
+  updateEmptyState(shown.length);
   updateResultMeta(shown.length);
+}
+
+// M1 — état initial sûr : on ne crie « aucune parcelle » qu'une fois les DONNÉES chargées, et on
+// distingue « filtres trop stricts » de « radar encore en préparation ». Jamais d'écran « cassé ».
+function updateEmptyState(shown) {
+  const empty = $("#map-empty"); if (!empty) return;
+  if (!DATA_READY || shown > 0) { empty.classList.add("hidden"); return; }
+  const card = empty.querySelector(".me-card");
+  if (FEATURES.length === 0) {
+    card.innerHTML = `<div class="me-title">Radar en préparation</div>
+      <div class="me-sub">Les parcelles de la commune se chargent, ou la base finalise sa préparation. Réessayez dans un instant.</div>
+      <button class="me-reset js-reload" type="button">↻ Recharger</button>`;
+  } else {
+    card.innerHTML = `<div class="me-title">Aucune parcelle ne correspond</div>
+      <div class="me-sub">Vos filtres masquent les ${fmt(FEATURES.length)} parcelles de la commune.</div>
+      <div class="me-actions"><button class="me-reset js-reset" type="button">↺ Réinitialiser les filtres</button>
+        <button class="me-all js-showall" type="button">Afficher toutes les parcelles</button></div>`;
+  }
+  empty.classList.remove("hidden");
+}
+function hideLoader() {
+  const l = $("#app-loader"); if (!l) return;
+  l.classList.add("gone");
+  setTimeout(() => l.remove(), 450);   // laisse la transition d'opacité se jouer
+}
+function showAllParcels() {
+  document.querySelectorAll("#filter-statuses input").forEach((b) => { b.checked = true; });
+  ["opp", "cpl", "surf"].forEach((k) => { const el = $("#f-" + k); if (el) el.value = 0; const o = $("#" + k + "-out"); if (o) o.textContent = "0"; });
+  clearKpiActive();
+  applyFilters();
 }
 
 // Compteur de résultats + bouton « Réinitialiser » (visible si filtre non par défaut).
@@ -527,7 +558,7 @@ function renderFiche(f) {
         <div class="hero-eyebrow">Verdict LA BUSE</div>
         <h1 class="hero-verdict">${STATUS_LABEL[status] || esc(status) || "—"}</h1>
         <p class="hero-pitch">${esc(VERDICT_GLOSS[status] || "")}</p>
-        ${v.downgrade_reason ? `<p class="verdict-downgrade">⚠️ Déclassée malgré un score brut élevé — ${esc(v.downgrade_reason)}.</p>` : ""}
+        ${v.downgrade_reason ? `<p class="verdict-downgrade">Signal positif, mais potentiel limité seul — ${esc(v.downgrade_reason)}.</p>` : ""}
         <div class="hero-meta">Complétude ${v.completeness_score ?? "—"}${p.surface_m2 ? " · " + fmt(Math.round(p.surface_m2)) + " m²" : ""}</div>
         ${fiableBadge(status)}
       </div>
@@ -563,14 +594,14 @@ function renderFiche(f) {
     ${promoteurSlot()}
 
     <details class="cascade">
-      <summary>Cascade complète · la traçabilité est le produit <span class="cc-count">${cascade.length} couches</span></summary>
+      <summary>Traçabilité des sources · chaque verdict pointe sa couche <span class="cc-count">${cascade.length} couches</span></summary>
       <table class="cascade-table">${cascadeRows}</table>
     </details>
 
     <section class="sources">
       <h3 class="src-h">Sources qui ont répondu</h3>
       <div class="src-chips">${chips(f.sources_responded, "ok") || '<span class="src-chip silent">—</span>'}</div>
-      ${(f.sources_silent || []).length ? `<h3 class="src-h muted">Restées silencieuses</h3><div class="src-chips">${chips(f.sources_silent, "silent")}</div>` : ""}
+      ${(f.sources_silent || []).length ? `<h3 class="src-h muted">Sources non disponibles · à vérifier</h3><div class="src-chips">${chips(f.sources_silent, "silent")}</div>` : ""}
     </section>
 
     ${renderProspection(f)}
@@ -584,7 +615,7 @@ function renderFiche(f) {
           <summary class="fa-more-btn">Plus d'actions</summary>
           <div class="fa-more-menu">
             <button class="btn good" data-fb="good_lead">Marquer « bon lead »</button>
-            <button class="btn bad" data-fb="false_positive">Marquer « faux positif »</button>
+            <button class="btn bad" data-fb="false_positive">Marquer « écartée »</button>
             <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=md" target="_blank">Export Markdown</a>
             <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=html" target="_blank">Export HTML</a>
           </div>
@@ -610,7 +641,7 @@ function renderResume(r) {
   // d'avant déclassement (audit J4 — lister « pourquoi elle ressort » sous un verdict
   // « faux positif » déroutait).
   const declassee = r.statut === "faux_positif_probable" || r.statut === "exclue";
-  const posTitle = declassee ? "Signaux bruts (avant déclassement)" : "Pourquoi elle ressort";
+  const posTitle = declassee ? "Signaux positifs (potentiel limité seul)" : "Pourquoi elle ressort";
   return `
     <section class="resume v-${r.statut}">
       <div class="rs-head">
@@ -1252,7 +1283,7 @@ async function saveBilanParams(box) {
 function renderBilanBanner(b) {
   const nc = b.non_calibres_critiques || [];
   if (nc.length) {
-    return `<div class="bilan-noncal">⚠️ Bilan <b>non fiable</b> tant que ces paramètres clés ne sont pas calibrés : ${nc.map(esc).join(", ")}. Renseignez-les ci-dessous (secteur <b>${esc(b.secteur || "—")}</b>).</div>`;
+    return `<div class="bilan-noncal">Bilan <b>à calibrer</b> — paramètres économiques à compléter : ${nc.map(esc).join(", ")}. Renseignez-les ci-dessous (secteur <b>${esc(b.secteur || "—")}</b>).</div>`;
   }
   const est = b.estimes_a_affiner || [];
   if (est.length) {
@@ -1982,6 +2013,15 @@ async function main() {
   try { fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json(); }
   catch { showMapError(); }
   FEATURES = fc.features || [];
+  DATA_READY = true;                              // M1 — données chargées : l'état vide est désormais fiable
+  hideLoader();
+  // Délégation des actions de l'état vide (réinitialiser / tout afficher / recharger).
+  const me = $("#map-empty");
+  if (me) me.addEventListener("click", (e) => {
+    if (e.target.closest(".js-showall")) showAllParcels();
+    else if (e.target.closest(".js-reload")) location.reload();
+    else if (e.target.closest(".js-reset")) resetFilters();
+  });
   setSliderBounds();                              // P3 : curseurs bornés à la plage réelle
   applyFilters();
   if (map && FEATURES.length && layer) map.fitBounds(layer.getBounds(), { maxZoom: 15 });
