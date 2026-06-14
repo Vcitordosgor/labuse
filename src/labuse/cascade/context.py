@@ -102,22 +102,23 @@ class EvalContext:
             ).all():
                 self._centroid[(pid, kind)] = True
 
-        # Distance min (m, 2975) à un kind LINÉAIRE (ravine) : ST_Intersects ne capte pas la
-        # PROXIMITÉ (une ligne à 8 m ne touche pas la parcelle). Batché sous un rayon de garde,
-        # comme centroid_in — seule la couche `ravine` le consomme.
+        # Distance min (m, 2975) à des kinds où la PROXIMITÉ compte (ST_Intersects ne la capte
+        # pas) : ravine (axe linéaire) + water (surface → BORD/berge, 2.C). Batché sous un rayon
+        # de garde, comme centroid_in. Consommé par la couche `ravine`.
         rp = self._layer_params("ravine")
-        near_kind = rp.get("spatial_kind") if rp.get("enabled", True) is not False else None
-        near_cap = float(rp.get("search_cap_m", 60))
-        if near_kind:
-            for pid, dist in self.session.execute(
-                text(
-                    """SELECT p.id, MIN(ST_Distance(p.geom_2975, sl.geom_2975)) AS d
-                       FROM parcels p JOIN spatial_layers sl ON sl.kind = :k
-                         AND ST_DWithin(p.geom_2975, sl.geom_2975, :cap)
-                       WHERE p.id = ANY(:ids) GROUP BY p.id"""
-                ), {"ids": ids, "k": near_kind, "cap": near_cap}
-            ).all():
-                self._near[(pid, near_kind)] = float(dist)
+        if rp.get("enabled", True) is not False and rp.get("spatial_kind"):
+            near_cap = float(rp.get("search_cap_m", 60))
+            near_kinds = [rp["spatial_kind"]] + list(rp.get("berge_kinds", []))
+            for k in near_kinds:
+                for pid, dist in self.session.execute(
+                    text(
+                        """SELECT p.id, MIN(ST_Distance(p.geom_2975, sl.geom_2975)) AS d
+                           FROM parcels p JOIN spatial_layers sl ON sl.kind = :k
+                             AND ST_DWithin(p.geom_2975, sl.geom_2975, :cap)
+                           WHERE p.id = ANY(:ids) GROUP BY p.id"""
+                    ), {"ids": ids, "k": k, "cap": near_cap}
+                ).all():
+                    self._near[(pid, k)] = float(dist)
 
         dp = self._layer_params("dvf")
         years = dp.get("lookback_years", 5)

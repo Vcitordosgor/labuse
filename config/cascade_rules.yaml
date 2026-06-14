@@ -133,6 +133,9 @@ layers:
       # proximité d'une ravine (thalweg BD TOPO) → SOFT_FLAG. Buffer PLACEHOLDER (défaut Vic 10 m) :
       buffer_m: 10
       severity: moyen
+      # 2.C — quand une SURFACE en eau existe (ravine large), on mesure au BORD (berge), plus proche
+      # que l'axe ; sinon à l'axe du tronçon. Les `berge_kinds` sont des surfaces hydrographiques :
+      berge_kinds: [water]
       # rayon de garde du précalcul batch (doit être ≥ buffer_m ; couvre un réglage à la hausse) :
       search_cap_m: 60
 

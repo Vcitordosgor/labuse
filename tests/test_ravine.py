@@ -63,3 +63,22 @@ def test_ravine_non_ingeree_unknown(db_session):
     out = evaluate_parcels([pid], db_session, persist=False)[0]
     v = _ravine_verdict(out)
     assert v and v.result == CascadeVerdict.UNKNOWN
+
+
+def test_berge_mesuree_au_bord_quand_surface(db_session):
+    """2.C : ravine large avec surface en eau → distance mesurée AU BORD (berge), plus proche."""
+    from labuse.cascade import evaluate_parcels
+    from labuse.enums import CascadeVerdict
+    # axe de ravine à ~18 m de la parcelle (dans le rayon de garde), MAIS une surface en eau
+    # (le lit) au contact (~1 m). 1e-4° lon ≈ 10 m à cette latitude.
+    _ravine(db_session, "LINESTRING(55.70000 -21.000, 55.70000 -21.010)")   # axe vertical à l'ouest
+    db_session.execute(text(
+        "INSERT INTO spatial_layers (kind, subtype, name, commune, geom) VALUES "
+        "('water','riviere','lit ravine','Ravinia',"
+        " ST_GeomFromText('POLYGON((55.70010 -21.005,55.70016 -21.005,55.70016 -21.004,55.70010 -21.004,55.70010 -21.005))',4326))"))
+    pid = _seed_parcel(db_session, "RAV00010",
+                       "POLYGON((55.70017 -21.0048,55.70019 -21.0048,55.70019 -21.0042,55.70017 -21.0042,55.70017 -21.0048))")
+    out = evaluate_parcels([pid], db_session, persist=False)[0]
+    v = _ravine_verdict(out)
+    assert v and v.result == CascadeVerdict.SOFT_FLAG
+    assert "berge" in v.detail.lower() and "au bord" in v.detail.lower()

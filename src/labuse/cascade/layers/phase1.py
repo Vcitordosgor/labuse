@@ -446,15 +446,31 @@ class RavineLayer(Layer):
         if not ctx.kind_present(kind):
             return unknown(self.name, "Réseau hydrographique (ravines) non ingéré.", source=SRC_BDTOPO)
         buffer_m = float(params.get("buffer_m", 10))
-        d = ctx.min_distance_m(parcel.id, kind)
-        if d is not None and d <= buffer_m:
-            sev = Severity(params.get("severity", "moyen"))
-            où = "traversée/au contact" if d < 1.0 else f"à ~{d:.0f} m"
-            return soft_flag(
-                self.name,
-                f"Proximité d'une ravine ({où}, seuil {buffer_m:.0f} m) — recul et risque de crue "
-                "à vérifier (thalweg BD TOPO).", sev, source=SRC_BDTOPO)
-        return passed(self.name, "Hors voisinage immédiat d'une ravine.", source=SRC_BDTOPO)
+        d_axe = ctx.min_distance_m(parcel.id, kind)
+        if d_axe is None:   # aucune ravine dans le rayon de garde → pas de flag (évite de confondre
+            return passed(self.name, "Hors voisinage immédiat d'une ravine.", source=SRC_BDTOPO)
+        # 2.C — la ravine est proche : si une SURFACE en eau (son lit/berge) existe, on mesure au BORD
+        # (plus proche que l'axe sur une ravine large) ; sinon à l'AXE du tronçon.
+        d_berge = None
+        for bk in params.get("berge_kinds", []):
+            db = ctx.min_distance_m(parcel.id, bk)
+            if db is not None and (d_berge is None or db < d_berge):
+                d_berge = db
+        eff = min(d_axe, d_berge) if d_berge is not None else d_axe
+        if eff > buffer_m:
+            return passed(self.name, "Hors voisinage immédiat d'une ravine.", source=SRC_BDTOPO)
+        sev = Severity(params.get("severity", "moyen"))
+        au_bord = d_berge is not None and (d_axe is None or d_berge <= d_axe)
+        if au_bord:
+            base = ("au contact de la berge" if d_berge < 1.0 else f"berge à ~{d_berge:.0f} m")
+            mesure = "mesuré AU BORD de la surface en eau"
+        else:
+            base = ("traversée par l'axe" if d_axe < 1.0 else f"à ~{d_axe:.0f} m de l'axe du tronçon")
+            mesure = "mesuré à l'AXE (sur une ravine large, la berge est plus proche — recul réel à vérifier)"
+        return soft_flag(
+            self.name,
+            f"Proximité d'une ravine ({base}, seuil {buffer_m:.0f} m) — {mesure} ; recul et risque "
+            "de crue à vérifier (BD TOPO hydrographie).", sev, source=SRC_BDTOPO)
 
 
 @register
