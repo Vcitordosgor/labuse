@@ -203,7 +203,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 
 /* ───────── Map / radar ───────── */
 #map { height: 100vh; background: #0b0e12; }
-.leaflet-container { background: #0b0e12; font: inherit; }
+.leaflet-container { background: #0B1118; font: inherit; }
 .legend {
   position: absolute; right: 16px; bottom: 16px; z-index: 600;
   background: rgba(18,23,30,.92); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
@@ -233,13 +233,29 @@ input[type=checkbox] { accent-color: var(--gold); }
 }
 .me-reset:hover { background: var(--gold-soft); }
 
-/* Contrôles Leaflet — sombres, alignés au thème */
-.leaflet-bar { border: 1px solid var(--line) !important; box-shadow: 0 6px 18px rgba(0,0,0,.45) !important; }
+/* Contrôles Leaflet — refondus premium (plus « natifs/bruts ») */
+.leaflet-bar { border: none !important; border-radius: 11px !important; overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5) !important; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .leaflet-bar a, .leaflet-bar a:hover {
-  background: rgba(20,25,32,.96); color: var(--txt); border-bottom-color: var(--line);
+  background: rgba(17,26,36,.94); color: var(--txt); border-bottom: 1px solid rgba(38,50,65,.8) !important;
+  width: 32px; height: 32px; line-height: 32px; font-size: 16px;
 }
-.leaflet-bar a:hover { color: var(--gold); }
-.leaflet-control-attribution { background: rgba(14,17,22,.72) !important; color: var(--muted) !important; }
+.leaflet-bar a:first-child { border-top-left-radius: 11px; border-top-right-radius: 11px; }
+.leaflet-bar a:last-child { border-bottom: none !important; border-bottom-left-radius: 11px; border-bottom-right-radius: 11px; }
+.leaflet-bar a:hover { color: var(--gold); background: rgba(24,36,49,.98); }
+/* Sélecteur de couches (fond carto / millésimes / permis) — panneau sombre soigné */
+.leaflet-control-layers { background: rgba(17,26,36,.96) !important; border: 1px solid var(--line) !important;
+  border-radius: 11px !important; box-shadow: 0 8px 24px rgba(0,0,0,.5) !important;
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); color: var(--txt); }
+.leaflet-control-layers-toggle { background-color: rgba(17,26,36,.94) !important; border-radius: 11px !important;
+  width: 34px !important; height: 34px !important; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.leaflet-control-layers-expanded { padding: 11px 13px !important; font-size: 12.5px; min-width: 168px; }
+.leaflet-control-layers-list { color: #c4ccd5; }
+.leaflet-control-layers label { margin: 3px 0; display: flex; align-items: center; gap: 7px; cursor: pointer; }
+.leaflet-control-layers-separator { border-top: 1px solid var(--line) !important; margin: 8px 0 !important; }
+.leaflet-control-layers input { accent-color: var(--gold); }
+.leaflet-control-attribution { background: rgba(11,17,24,.78) !important; color: var(--muted) !important;
+  border-radius: 7px 0 0 0; font-size: 10px; }
 .leaflet-control-attribution a { color: #97a0ac !important; }
 
 /* Infobulle premium au survol d'une parcelle */
