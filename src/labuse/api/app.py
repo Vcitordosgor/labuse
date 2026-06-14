@@ -602,7 +602,7 @@ def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
     l'ouverture de la fiche : calculés UNE FOIS puis mis en cache (parcel_enrichment), et
     chargés en arrière-plan par le front → la fiche s'ouvre immédiatement. Jamais de 500
     (chaque section est isolée par `_safe`)."""
-    from .enrichment import enrichment_cached
+    from .enrichment import enrichment_cached, remonter_le_temps
 
     _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
@@ -613,7 +613,9 @@ def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
     ).one()
     payload = enrichment_cached(db, p, lon, lat)
     ca = db.execute(text("SELECT computed_at FROM parcel_enrichment WHERE parcel_id = :p"), {"p": p.id}).scalar()
-    return {**payload, "computed_at": ca.isoformat() if ca else None}
+    # 3.B — lien « Remonter le temps » calculé HORS cache (déterministe, jamais périmé).
+    return {**payload, "remonter_le_temps": remonter_le_temps(lon, lat),
+            "computed_at": ca.isoformat() if ca else None}
 
 
 @app.get("/parcels/{idu}/export")

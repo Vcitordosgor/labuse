@@ -55,16 +55,26 @@ function initMap() {
       subdomains: "abcd", maxZoom: 20,
       attribution: '&copy; OpenStreetMap &copy; CARTO',
     }).addTo(map);
-    // « Vue du ciel » : orthophotographie IGN (BD ORTHO) via la Géoplateforme (WMTS/PM).
-    const ortho = L.tileLayer(
-      "https://data.geopf.fr/wmts?layer=ORTHOIMAGERY.ORTHOPHOTOS&style=normal&tilematrixset=PM" +
-      "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=image/jpeg" +
-      "&TileMatrix={z}&TileCol={x}&TileRow={y}",
-      { maxZoom: 21, attribution: "&copy; IGN — Géoplateforme (BD ORTHO)" }
-    );
+    // Fonds IGN (Géoplateforme, WMTS/PM). Helper DRY : une couche par millésime.
+    const ignWmts = (layer, { fmt = "image/jpeg", maxNativeZoom = 19, attr = "IGN — Géoplateforme" } = {}) =>
+      L.tileLayer(
+        "https://data.geopf.fr/wmts?layer=" + layer + "&style=normal&tilematrixset=PM" +
+        "&Service=WMTS&Request=GetTile&Version=1.0.0&Format=" + encodeURIComponent(fmt) +
+        "&TileMatrix={z}&TileCol={x}&TileRow={y}",
+        { maxZoom: 21, maxNativeZoom, attribution: "&copy; " + attr });
+    // « Vue du ciel » : orthophotographie IGN ACTUELLE (BD ORTHO).
+    const ortho = ignWmts("ORTHOIMAGERY.ORTHOPHOTOS", { attr: "IGN — Géoplateforme (BD ORTHO)" });
+    // 3.B — millésimes HISTORIQUES couvrant Saint-Paul (EduGéo La Réunion, vérifiés z≤16,
+    // cf. RAPPORT_DISPO_3B.md) → « remonter le temps » directement sur le radar.
+    const histOpts = { fmt: "image/png", maxNativeZoom: 16, attr: "IGN — EduGéo (ortho historique La Réunion)" };
+    const h2010 = ignWmts("ORTHOIMAGERY.EDUGEO.LA-REUNION2010", histOpts);
+    const h1989 = ignWmts("ORTHOIMAGERY.EDUGEO.LA-REUNION1989", histOpts);
+    const h1980 = ignWmts("ORTHOIMAGERY.EDUGEO.LA-REUNION1980", histOpts);
+    const h1961 = ignWmts("ORTHOIMAGERY.EDUGEO.LA-REUNION1961", histOpts);
     PERMITS_LAYER = L.layerGroup();   // marqueurs SITADEL (Lot C4), peuplés en différé
     L.control.layers(
-      { "Plan (radar)": plan, "Vue du ciel (IGN)": ortho },
+      { "Plan (radar)": plan, "Vue du ciel (IGN)": ortho,
+        "Ciel · 2010": h2010, "Ciel · 1989": h1989, "Ciel · 1980": h1980, "Ciel · 1961": h1961 },
       { "Permis (SITADEL)": PERMITS_LAYER }, { position: "topright", collapsed: true }
     ).addTo(map);
   } catch (e) {
@@ -625,10 +635,17 @@ function renderPromoteur(pr, centroid, idu) {
     const bbox = `${(centroid.lat - d).toFixed(6)},${(centroid.lon - d).toFixed(6)},${(centroid.lat + d).toFixed(6)},${(centroid.lon + d).toFixed(6)}`;
     const url = "https://data.geopf.fr/wms-r/wms?LAYERS=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg&SERVICE=WMS"
       + "&VERSION=1.3.0&REQUEST=GetMap&STYLES=&CRS=EPSG:4326&WIDTH=440&HEIGHT=300&BBOX=" + bbox;
+    // 3.B — « Remonter le temps » : lien IGN paramétré sur le centroïde (ortho actuelle ↔ ~1960).
+    // URL servie par l'API (testée) ; repli client si cache d'enrichissement antérieur à 3.B.
+    const rlt = (pr.remonter_le_temps && pr.remonter_le_temps.url)
+      || `https://remonterletemps.ign.fr/comparer?lon=${centroid.lon.toFixed(6)}&lat=${centroid.lat.toFixed(6)}`
+         + `&z=18&layer1=ORTHOIMAGERY.ORTHOPHOTOS&layer2=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&mode=doubleMap`;
     sky = `<div class="pm-sky"><img loading="lazy" src="${url}" alt="Vue aérienne IGN de la parcelle"
         onerror="this.parentNode.innerHTML='<p class=&quot;pm-na&quot;>Orthophoto IGN momentanément indisponible.</p>'">
       <span class="pm-sky-cap">Orthophoto IGN (BD ORTHO) · centrée sur la parcelle</span></div>
-      <p class="pm-src">Astuce : bascule le fond « Vue du ciel (IGN) » sur la carte (coin haut-droit).</p>`;
+      <a class="btn pm-rlt" href="${rlt}" target="_blank" rel="noopener"
+         title="Comparer la parcelle aux photos aériennes historiques de l'IGN (1950 → aujourd'hui)">📜 Remonter le temps (IGN)</a>
+      <p class="pm-src">Astuce : bascule un millésime historique (1961 / 1980 / 1989 / 2010) sur la carte (coin haut-droit).</p>`;
   }
 
   // 4 · PLU détaillé (zonage ingéré + prescriptions GPU réelles ; règles chiffrées → règlement)

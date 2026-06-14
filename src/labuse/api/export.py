@@ -470,10 +470,22 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
   </div>
   <div>
     {_minimap(geojson, cen.get('lon'), cen.get('lat'))}
+    {_rlt_link(cen.get('lon'), cen.get('lat'))}
   </div>
 </div>
 <div class="foot">{html.escape(fiche.get('disclaimer') or '')} Document indicatif sur données publiques — pré-faisabilité et bilan ne valent pas étude réglementaire ni engagement.</div>
 </html>"""
+
+
+def _rlt_link(lon: float | None, lat: float | None) -> str:
+    """3.B — lien « Remonter le temps » (IGN) sous la mini-carte du one-pager."""
+    from .enrichment import remonter_le_temps
+    rlt = remonter_le_temps(lon, lat)
+    if not rlt.get("available"):
+        return ""
+    return (f'<p style="margin:5px 0 0;font-size:9.5px;color:#555">📜 Photos aériennes historiques : '
+            f'<a href="{html.escape(rlt["url"])}">remonterletemps.ign.fr</a> '
+            f'(comparer la parcelle, 1950 → aujourd\'hui)</p>')
 
 
 def _today() -> str:

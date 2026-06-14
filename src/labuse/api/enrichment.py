@@ -44,6 +44,31 @@ RECT_MIN = 0.70   # aire / aire(rectangle d'aire minimale orienté)
 CONVEX_MIN = 0.85  # aire / aire(enveloppe convexe) → drapeaux / formes en L exclus
 
 
+# ───────── 3.B — Photos aériennes historiques (IGN « Remonter le temps ») ─────────
+# Lien EXTERNE paramétré par le centroïde réel de la parcelle : ouvre le comparateur IGN
+# (ortho actuelle ↔ millésime historique). Aucune donnée fabriquée — c'est une navigation
+# vers un outil public. `layer2` = ORTHOIMAGERY.ORTHOPHOTOS.1950-1965, un des rares millésimes
+# nationaux qui COUVRENT La Réunion (vérifié, cf. RAPPORT_DISPO_3B.md) → la comparaison s'ouvre
+# d'emblée sur un historique pertinent à Saint-Paul, pas sur un défaut métropolitain vide.
+RLT_BASE = "https://remonterletemps.ign.fr/comparer"
+RLT_LAYER_ACTUELLE = "ORTHOIMAGERY.ORTHOPHOTOS"
+RLT_LAYER_HISTORIQUE = "ORTHOIMAGERY.ORTHOPHOTOS.1950-1965"   # couvre La Réunion (vérifié)
+
+
+def remonter_le_temps(lon: float | None, lat: float | None, z: int = 18) -> dict[str, Any]:
+    """URL « Remonter le temps » IGN centrée sur (lon, lat) : ortho actuelle vs ~1950-1965.
+
+    Pur (pas d'I/O) → testable. Renvoie `available=False` si le centroïde manque."""
+    if lon is None or lat is None:
+        return {"available": False, "note": "Centroïde indisponible."}
+    from urllib.parse import urlencode
+    q = urlencode({"lon": f"{float(lon):.6f}", "lat": f"{float(lat):.6f}", "z": int(z),
+                   "layer1": RLT_LAYER_ACTUELLE, "layer2": RLT_LAYER_HISTORIQUE, "mode": "doubleMap"})
+    return {"available": True, "url": f"{RLT_BASE}?{q}",
+            "label": "Comparer aux photos aériennes historiques (IGN)",
+            "source": "IGN — Remonter le temps"}
+
+
 # ───────────────────────────── 1. Cote altimétrique ─────────────────────────────
 
 def _alti_sample_points(db: Session, parcel_id: int) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
