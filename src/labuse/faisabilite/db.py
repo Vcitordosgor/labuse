@@ -226,11 +226,14 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
             fr = f.fourchette
             logements_est = max((fr.get("logements_au_sol") or (0, 0))[1],
                                 (fr.get("logements_sous_sol") or (0, 0))[1])
+            vue_mer = session.execute(text(
+                "SELECT vue FROM parcel_vue_mer WHERE parcel_id = :p"), {"p": parcel_id}).scalar()
             ctx.prescriptions_eco.update({
                 "sdp_max_m2": fr.get("surface_plancher_m2"),
                 "logements_estimes": logements_est,
                 "terrain_m2": ctx.surface_m2,
                 "pente_pct": ctx.contraintes.pente_pct,   # 2.A — alimente la majoration VRD pente
+                "vue_mer": vue_mer,                        # 2.B — bonus prix si 'oui' (depuis le cache)
             })
             # 1.C — secteur = bassin PLU de la zone ; params résolus (défaut ← global ← secteur).
             secteur = None

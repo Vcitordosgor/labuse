@@ -22,6 +22,7 @@ PARAMS: list[tuple[str, str, str, str, float, bool, bool]] = [
     ("prix_m2_neuf", "Prix de vente neuf (override ; 0 = DVF du secteur)", "Recettes", "€/m²", 0.0, True, False),
     ("prix_m2_lls", "Prix de sortie logement aidé (LLS)", "Recettes", "€/m²", 0.0, True, False),
     ("ratio_vendable", "Ratio surface de plancher → habitable vendable", "Recettes", "ratio", 0.80, False, False),
+    ("bonus_vue_mer_pct", "Bonus prix si vue mer dégagée (2.B)", "Recettes", "%", 0.0, True, False),
     # Coûts
     ("cout_construction_m2_sdp", "Coût de construction", "Coûts", "€/m² SDP", 2550.0, True, True),
     ("cout_vrd_base", "VRD / viabilisation de base", "Coûts", "€/m² terrain", 0.0, True, False),

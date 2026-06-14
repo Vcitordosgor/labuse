@@ -171,6 +171,88 @@ def exposition(db: Session, parcel_id: int) -> dict[str, Any]:
             "source": source, "indicatif": True}
 
 
+def vue_mer(db: Session, parcel_id: int) -> dict[str, Any]:
+    """Vue mer — 2.B, v1 approximée (GRASS r.viewshed / raster PostGIS indisponibles ici).
+
+    Ligne de vue 1D : profil d'altitude (RGE ALTI) du centroïde vers le point de côte le plus
+    proche (trait de côte DEAL). La vue est dégagée si le terrain DESCEND vers la mer sans relief
+    intermédiaire au-dessus de la ligne observateur→mer. Indicateur oui/partielle/non. LIMITE :
+    profil sur un seul azimut (pas un viewshed 360°), sans bâti — INDICATIF."""
+    import math
+    source = "RGE ALTI (IGN) + trait de côte (DEAL) — ligne de vue 1D"
+    if not _live_enabled():
+        return {"available": False, "note": "Calcul live désactivé (mode hors-ligne).", "source": source}
+    row = db.execute(text(
+        """WITH p AS (SELECT centroid, geom_2975 FROM parcels WHERE id = :pid)
+           SELECT ST_X(p.centroid) olon, ST_Y(p.centroid) olat,
+                  ST_X(ST_Transform(t.cp,4326)) clon, ST_Y(ST_Transform(t.cp,4326)) clat,
+                  round(t.dist) dist_m
+           FROM p, LATERAL (
+             SELECT ST_ClosestPoint(s.geom_2975, ST_Centroid(p.geom_2975)) cp,
+                    ST_Distance(p.geom_2975, s.geom_2975) dist
+             FROM spatial_layers s WHERE s.kind = 'trait_de_cote'
+             ORDER BY p.geom_2975 <-> s.geom_2975 LIMIT 1) t"""),
+        {"pid": parcel_id}).first()
+    if not row or row.dist_m is None:
+        return {"available": False, "note": "Trait de côte non ingéré.", "source": source}
+    D = float(row.dist_m)
+    if D > 6000:   # au-delà, une vue mer est très improbable depuis le sol
+        return _memo_vue_mer(db, parcel_id, {"available": True, "vue": "non",
+                "label": "pas de vue mer (côte à >6 km)", "distance_cote_m": round(D),
+                "source": source, "indicatif": True})
+    olon, olat, clon, clat = float(row.olon), float(row.olat), float(row.clon), float(row.clat)
+    bearing = (math.degrees(math.atan2((clon - olon) * math.cos(math.radians(olat)), clat - olat)) + 360) % 360
+    base = {"distance_cote_m": round(D), "azimut_mer_deg": round(bearing),
+            "source": source, "indicatif": True, "available": True}
+    if D < 120:    # front de mer : au contact de la côte → vue acquise (cas dégénéré du profil)
+        return _memo_vue_mer(db, parcel_id, {**base, "vue": "oui", "label": "vue mer dégagée (front de mer)"})
+    # échantillonnage du profil observateur → mer (jusqu'à 200 m AU-DELÀ de la côte, alt ~0).
+    n, over = 40, 200.0
+    f_end = (D + over) / D
+    pts = [(olon + (clon - olon) * (k / n) * f_end, olat + (clat - olat) * (k / n) * f_end)
+           for k in range(n + 1)]
+    try:
+        h = _alti_query(pts, max(get_settings().http_timeout_s, 25.0))
+    except Exception as exc:  # noqa: BLE001
+        return {"available": False, "note": f"RGE ALTI injoignable ({type(exc).__name__}).", "source": source}
+    hs = [x for x in h if x is not None]
+    if len(hs) < n // 2:
+        return {"available": False, "note": "RGE ALTI sans valeur exploitable ici.", "source": source}
+    h0 = h[0] if h[0] is not None else max(hs)            # altitude observateur (parcelle)
+    # obstruction = terrain AU-DESSUS de la ligne observateur→mer, sur la partie TERRESTRE (≤ D).
+    obstructions, considered = 0, 0
+    k_coast = round(n / f_end)
+    for k in range(1, k_coast):
+        if h[k] is None:
+            continue
+        considered += 1
+        h_line = h0 * (1.0 - (k / n) / f_end * (D + over) / D)   # descend vers 0 à la côte
+        if h[k] > h_line + 4.0:
+            obstructions += 1
+    frac = obstructions / considered if considered else 1.0
+    vue = "oui" if frac < 0.10 else "partielle" if frac < 0.35 else "non"
+    label = {"oui": "vue mer dégagée", "partielle": "vue mer partielle (relief intermédiaire)",
+             "non": "pas de vue mer (relief masquant)"}[vue]
+    return _memo_vue_mer(db, parcel_id, {**base, "vue": vue, "label": label,
+            "altitude_obs_m": round(h0, 1), "obstruction_pct": round(100 * frac)})
+
+
+def _memo_vue_mer(db: Session, parcel_id: int, res: dict) -> dict:
+    """Mémoïse le résultat vue mer (cache lu par le bilan, sans appel live). Best-effort."""
+    try:
+        db.execute(text(
+            """INSERT INTO parcel_vue_mer (parcel_id, vue, distance_cote_m, obstruction_pct, computed_at)
+               VALUES (:p,:v,:d,:o, now())
+               ON CONFLICT (parcel_id) DO UPDATE SET vue=EXCLUDED.vue,
+                 distance_cote_m=EXCLUDED.distance_cote_m, obstruction_pct=EXCLUDED.obstruction_pct,
+                 computed_at=now()"""),
+            {"p": parcel_id, "v": res.get("vue"), "d": res.get("distance_cote_m"),
+             "o": res.get("obstruction_pct")})
+    except Exception:  # noqa: BLE001 - le cache ne casse jamais la fiche
+        pass
+    return res
+
+
 # ──────────────────────────── 2. Façade sur rue + profondeur ────────────────────────────
 
 def _shape_metrics(db: Session, parcel_id: int) -> dict[str, float]:
@@ -484,6 +566,7 @@ def build_enrichment(db: Session, parcel, lon: float, lat: float) -> dict[str, A
     return {
         "altimetrie": _safe(altimetry, db, parcel.id),
         "exposition": _safe(exposition, db, parcel.id),
+        "vue_mer": _safe(vue_mer, db, parcel.id),
         "facade": _safe(facade_depth, db, parcel.id),
         "plu_detail": _safe(plu_detail, db, parcel.id, lon, lat),
         "proprietaire": _safe(owner, db, parcel.id),

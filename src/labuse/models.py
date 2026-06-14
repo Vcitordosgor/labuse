@@ -345,6 +345,7 @@ def create_all(engine) -> None:
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
     ensure_bilan_params(engine)
+    ensure_vue_mer_cache(engine)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
 
@@ -433,6 +434,19 @@ def ensure_enrichment_cache(engine) -> None:
             " payload jsonb NOT NULL, computed_at timestamptz NOT NULL DEFAULT now())"))
 
 
+def ensure_vue_mer_cache(engine) -> None:
+    """Cache de la vue mer (2.B) — mémoïse le calcul line-of-sight (RGE ALTI) ; lu par le bilan
+    (bonus prix) sans appel live. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS parcel_vue_mer ("
+            " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
+            " vue varchar(10), distance_cote_m integer, obstruction_pct integer,"
+            " computed_at timestamptz NOT NULL DEFAULT now())"))
+
+
 def ensure_bilan_params(engine) -> None:
     """Overrides de paramètres du bilan par SECTEUR (1.C). secteur='*' = global. Idempotent."""
     from sqlalchemy import text as _t
@@ -500,6 +514,7 @@ def ensure_schema(engine) -> None:
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
     ensure_bilan_params(engine)
+    ensure_vue_mer_cache(engine)
 
 
 def ensure_parcel_origine(engine) -> None:
