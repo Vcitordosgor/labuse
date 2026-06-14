@@ -278,9 +278,9 @@ function renderBanner() {
   const b = $("#banner");
   if (!COVERAGE || COVERAGE.complete) { b.classList.add("hidden"); return; }
   b.classList.remove("hidden");
-  b.innerHTML = `<span class="warn-ico">⚠</span>
-    <span class="banner-text"><b>Verdicts partiels</b> — une opportunité peut masquer une contrainte non encore intégrée.
-    Couches manquantes : <span class="missing">${COVERAGE.missing.map(esc).join(" · ")}</span></span>
+  b.innerHTML = `<span class="warn-ico">◆</span>
+    <span class="banner-text"><b>Transparence méthodologique</b> — verdicts établis sur les couches publiques disponibles.
+    Restent à vérifier : <span class="missing">${COVERAGE.missing.map(esc).join(" · ")}</span></span>
     <span class="banner-pill">Verdicts partiels</span>
     <button class="banner-collapse" type="button" aria-label="Réduire le bandeau" title="Réduire">Réduire ✕</button>`;
 }
@@ -1580,12 +1580,16 @@ function renderDemoStatus(st) {
     `<span class="ds-item ${ok ? "ok" : "ko"}">${ok ? "✓" : "✗"} ${esc(lbl)}</span>`).join("");
   const when = st.checked_at ? `<span class="ds-when">vérifié ${fmtDateTime(st.checked_at)}</span>` : "";
   if (st.ready_for_demo) {
-    return `<div class="ds-box ds-ok"><b>✅ Démo prête</b> ${when}<div class="ds-grid">${dots}</div></div>`;
+    return `<div class="ds-box ds-ok"><div class="ds-h"><b>✅ Démo prête</b> ${when}</div><div class="ds-grid">${dots}</div></div>`;
   }
-  const actions = (st.actions || []).map((a) => `<code>${esc(a)}</code>`).join("<br>");
-  return `<div class="ds-box ds-bad"><b>⚠ Démo non prête</b> ${when}
+  // Commandes techniques : repliées dans un détail « développeur », jamais au premier plan.
+  const actions = (st.actions || []).map((a) => `<code>${esc(a)}</code>`).join("");
+  return `<div class="ds-box ds-bad">
+    <div class="ds-h"><b>Démo à préparer</b> ${when}</div>
+    <p class="ds-msg">Une vérification n'est pas passée. La démo reste présentable, mais relancez la préparation pour un parcours impeccable.</p>
     <div class="ds-grid">${dots}</div>
-    <div class="ds-actions">À lancer :<br>${actions || "<code>labuse doctor</code>"}</div></div>`;
+    <details class="ds-dev"><summary>Préparer la démo — commandes (développeur)</summary>
+      <div class="ds-actions">${actions || "<code>labuse doctor</code>"}</div></details></div>`;
 }
 function closeDemo() {
   const ov = $("#demo-overlay");
@@ -1605,8 +1609,10 @@ function renderDemoPanel(d) {
     </button>`;
   }).join("");
   const warn = d.all_conform ? "" :
-    `<p class="dp-warn">⚠ Une parcelle a dérivé (statut ≠ attendu) — relancer <code>labuse rebuild-demo</code> avant la démo.</p>`;
-  return `<p class="dp-intro">Parcours guidé sur des parcelles déjà validées (${esc(d.commune)}). Cliquez une ligne pour ouvrir sa fiche.</p>${warn}<div class="dp-list">${items}</div>`;
+    `<p class="dp-warn">⚠ Une parcelle a dérivé (statut ≠ attendu) — voir « Préparer la démo » ci-dessus.</p>`;
+  const n = (d.parcels || []).length;
+  return `<p class="dp-intro"><b>${esc(d.commune || "Saint-Paul")}</b> · ${n} parcelle${n > 1 ? "s" : ""} pour comprendre LA BUSE en 5 minutes.</p>
+    <p class="dp-sub">Cliquez une ligne pour ouvrir sa fiche.</p>${warn}<div class="dp-list">${items}</div>`;
 }
 
 // ───────────────────────── Pipeline / Kanban (T2) ─────────────────────────
@@ -1728,7 +1734,15 @@ function renderKanban() {
   if (KB_REMINDER_ONLY) entries = entries.filter(isDue);
   entries.sort((a, b) => cmpKey(sortKey(a), sortKey(b)));
   const total = PIPELINE.length;
-  $("#kb-count").textContent = total ? `${total} parcelle${total > 1 ? "s" : ""} suivie${total > 1 ? "s" : ""}` : "Aucune parcelle suivie";
+  // Résumé CRM : suivies · propriétaires à identifier · relances prévues.
+  const aIdentifier = PIPELINE.filter((e) => {
+    const sp = (e.prospection || {}).statut_proprietaire;
+    return !e.proprietaire_label && (!sp || sp === "a_identifier" || sp === "inconnu");
+  }).length;
+  const relances = PIPELINE.filter((e) => (e.prospection || {}).date_prochaine_action).length;
+  $("#kb-count").textContent = total
+    ? `${total} parcelle${total > 1 ? "s" : ""} suivie${total > 1 ? "s" : ""} · ${aIdentifier} propriétaire${aIdentifier > 1 ? "s" : ""} à identifier · ${relances} relance${relances > 1 ? "s" : ""} prévue${relances > 1 ? "s" : ""}`
+    : "Aucune parcelle suivie";
   const byCol = {}; cols.forEach((c) => { byCol[c.key] = []; });
   entries.forEach((e) => { (byCol[e.status] = byCol[e.status] || []).push(e); });
   // État vide pédagogique : on explique comment démarrer une prospection.
@@ -1738,7 +1752,7 @@ function renderKanban() {
   $("#kb-board").innerHTML = emptyHint + cols.map((c) => `
     <div class="kb-col" data-col="${c.key}">
       <div class="kb-col-head"><span class="kb-col-title">${esc(c.label)}</span><span class="kb-col-n">${(byCol[c.key] || []).length}</span></div>
-      <div class="kb-cards">${(byCol[c.key] || []).map(kbCard).join("") || '<div class="kb-empty">—</div>'}</div>
+      <div class="kb-cards">${(byCol[c.key] || []).map(kbCard).join("") || '<div class="kb-empty">Aucune parcelle à ce stade<span>les parcelles qualifiées apparaîtront ici</span></div>'}</div>
     </div>`).join("");
   wireKanban();
 }
