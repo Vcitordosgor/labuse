@@ -311,9 +311,27 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
     CEREMA, donc rarement présents ici) et on AFFICHE la catégorie morale/publique le cas
     échéant ; sinon « non vérifié ». Jamais de personne physique nominative, rien de fabriqué.
     """
+    # 1.A — Fichier DGFiP des personnes morales (PUBLIC) en priorité : si la parcelle y figure,
+    # on connaît le type ET le nom du propriétaire morale. Absente → particulier (→ SPF).
+    pm = db.execute(text(
+        """SELECT pm.groupe, pm.forme_juridique, pm.denomination, pm.millesime
+           FROM parcels p JOIN parcelle_personne_morale pm ON pm.idu = p.idu
+           WHERE p.id = :pid"""), {"pid": parcel_id}).mappings().first()
+    if pm:
+        from ..proprietaire_type import classify_dgfip
+        ot = classify_dgfip(pm["groupe"], pm["forme_juridique"], pm["denomination"])
+        return {
+            "categorie": ot["famille"], "personne_morale": True, "indivision": ot["indivision"],
+            "note": f"Propriétaire : {ot['label']}" + (f" — {ot['owner_name']}" if ot.get("owner_name") else ""),
+            "source": "DGFiP — personnes morales (millésime " + str(pm["millesime"] or "—") + ")",
+            "owner_type": ot["owner_type"], "owner_label": ot["label"], "owner_name": ot.get("owner_name"),
+            "owner_famille": ot["famille"], "owner_acquerabilite": ot["acquerabilite"],
+            "owner_identifiable": ot["identifiable"], "needs_spf": False,
+        }
+
     note_absent = (
-        "Propriétaire non vérifié — Fichiers fonciers (propriétaires) sous convention CEREMA, "
-        "non rediffusables. Statut public/privé à confirmer (mairie / service du cadastre)."
+        "Propriétaire personne physique probable (absent du fichier DGFiP des personnes morales) "
+        "— aucune donnée nominative dans LA BUSE. Identité à obtenir via le SPF (bouton ci-dessous)."
     )
     src = "Fichiers fonciers (Cerema)"
     row = db.execute(

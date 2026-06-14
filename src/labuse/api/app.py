@@ -371,11 +371,13 @@ def stats(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     return out
 
 
-def _owner_famille(ff_payload) -> str:
-    """Famille de propriétaire (public/prive/inconnu) pour le filtre carte — réutilise le
-    classifieur C3 (source unique). `inconnu` quand les Fichiers fonciers ne sont pas importés."""
-    from ..proprietaire_type import classify_owner_type
-    return classify_owner_type(ff_payload)["famille"]
+def _owner_famille(groupe, forme, denom) -> str:
+    """Famille de propriétaire (public/prive/inconnu) pour le filtre carte (1.A — DGFiP). Source
+    unique : classify_dgfip. `inconnu` = parcelle absente du fichier des morales (= particulier)."""
+    if groupe is None and not denom:
+        return "inconnu"
+    from ..proprietaire_type import classify_dgfip
+    return classify_dgfip(groupe, forme, denom)["famille"]
 
 
 @app.get("/map/parcels.geojson")
@@ -387,7 +389,8 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
             SELECT p.idu, p.surface_m2,
                    ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                    e.status, e.opportunity_score, e.completeness_score, d.detail AS downgrade_reason,
-                   r.taux_emprise_pct, r.sous_densite, r.sdp_residuelle_m2, own.ff
+                   r.taux_emprise_pct, r.sous_densite, r.sdp_residuelle_m2,
+                   own.groupe AS own_groupe, own.forme_juridique AS own_forme, own.denomination AS own_denom
             FROM parcels p
             LEFT JOIN LATERAL (
                 SELECT status, opportunity_score, completeness_score
@@ -399,12 +402,7 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
             ) d ON true
             LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-            LEFT JOIN LATERAL (
-                SELECT psr.raw_payload AS ff FROM parcel_source_results psr
-                JOIN data_sources ds ON ds.id = psr.data_source_id
-                WHERE psr.parcel_id = p.id AND ds.name = 'Fichiers fonciers (Cerema)'
-                ORDER BY psr.fetched_at DESC LIMIT 1
-            ) own ON true
+            LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
               AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
             LIMIT :lim
@@ -425,7 +423,7 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 "taux_emprise_pct": r["taux_emprise_pct"],
                 "sous_densite": r["sous_densite"],
                 "sdp_residuelle_m2": r["sdp_residuelle_m2"],
-                "owner_famille": _owner_famille(r["ff"]),
+                "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"]),
             },
         }
         for r in rows if r["g"]

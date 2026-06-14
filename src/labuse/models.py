@@ -343,6 +343,7 @@ def create_all(engine) -> None:
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
     ensure_saved_filters(engine)
+    ensure_personnes_morales(engine)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
 
@@ -431,6 +432,20 @@ def ensure_enrichment_cache(engine) -> None:
             " payload jsonb NOT NULL, computed_at timestamptz NOT NULL DEFAULT now())"))
 
 
+def ensure_personnes_morales(engine) -> None:
+    """Propriétaires personnes morales (1.A — fichier DGFiP, Licence Ouverte). Donnée PUBLIQUE,
+    par parcelle (idu). Idempotent. `source`/`url_source`/`millesime`/`date_import` tracés (§3)."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS parcelle_personne_morale ("
+            " idu varchar(14) PRIMARY KEY,"
+            " groupe smallint, groupe_label varchar(80), forme_juridique varchar(20),"
+            " denomination varchar(200), siren varchar(20), millesime varchar(8),"
+            " source varchar(120), url_source text, date_import timestamptz NOT NULL DEFAULT now())"))
+
+
 def ensure_saved_filters(engine) -> None:
     """Filtres de recherche sauvegardés (Lot D3) — pilote mono-compte, params en JSONB. Idempotent."""
     from sqlalchemy import text as _t
@@ -470,6 +485,7 @@ def ensure_schema(engine) -> None:
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
     ensure_saved_filters(engine)
+    ensure_personnes_morales(engine)
 
 
 def ensure_parcel_origine(engine) -> None:

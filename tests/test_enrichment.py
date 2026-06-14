@@ -103,7 +103,8 @@ def test_reseaux_et_proprietaire_honnetes(db_session):
     assert "DT-DICT" in net["eau_potable"]["note"]
     own = E.owner(db_session, 1)
     assert own["categorie"] is None
-    assert "Fichiers fonciers" in own["note"]
+    # 1.A : absente du fichier DGFiP des personnes morales → particulier → voie SPF, jamais de nom.
+    assert "aucune donnée nominative" in own["note"].lower() and own["needs_spf"] is True
 
 
 def test_proprietaire_categorie_affichee_si_disponible(db_session):

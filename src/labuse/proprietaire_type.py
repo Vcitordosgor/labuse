@@ -16,6 +16,8 @@ OWNER_TYPES: dict[str, tuple[str, bool | None, str]] = {
     "etat": ("État / domaine public", True, "domaine — cession soumise à procédure"),
     "collectivite": ("Collectivité (Région / Département / EPCI)", True, "interlocuteur public"),
     "epf": ("EPF — établissement public foncier", True, "portage foncier possible"),
+    "etablissement_public": ("Établissement public / organisme associé", True, "interlocuteur public/parapublic"),
+    "sem": ("SEM — société d'économie mixte", True, "parapublic — un interlocuteur"),
     "bailleur_social": ("Bailleur social", False, "négociation directe — un interlocuteur"),
     "sci": ("SCI", False, "acquérable — interlocuteur unique"),
     "societe": ("Société (SA / SARL / SAS)", False, "acquérable — personne morale"),
@@ -23,6 +25,14 @@ OWNER_TYPES: dict[str, tuple[str, bool | None, str]] = {
     "indivision": ("Indivision", False, "bloqueur fréquent — accord de tous les indivisaires"),
     "personne_physique": ("Personne physique", False, "identité à obtenir via le SPF"),
     "inconnu": ("Propriétaire à identifier", None, "demande au SPF (voie légale)"),
+}
+
+# Groupe de personne morale DGFiP (champ « Groupe personne », 0-9) → owner_type (1.A).
+_DGFIP_GROUPE: dict[int, str] = {
+    1: "etat", 2: "collectivite", 3: "collectivite", 4: "commune",
+    5: "bailleur_social", 6: "sem", 7: "copropriete", 8: "indivision",
+    9: "etablissement_public",
+    # 0 = « personnes morales non remarquables » → raffiné par la forme juridique (SCI vs société).
 }
 
 # Heuristiques sur le libellé `categorie` des Fichiers fonciers (mots-clés → type).
@@ -77,6 +87,30 @@ def _pack(otype: str, *, indivision: bool, identifiable: bool, categorie: str | 
         # Pour les filtres : famille agrégée.
         "famille": ("public" if public else "prive" if public is False else "inconnu"),
     }
+
+
+def classify_dgfip(groupe: int | None, forme_abregee: str | None, denomination: str | None) -> dict:
+    """Classe un propriétaire à partir du fichier DGFiP des personnes morales (1.A) : groupe
+    (0-9) + forme juridique abrégée + dénomination → owner_type + owner_name (donnée publique)."""
+    forme = (forme_abregee or "").strip().upper()
+    nom = (denomination or "").strip()
+    nom_l = nom.lower()
+    otype = _DGFIP_GROUPE.get(int(groupe)) if groupe is not None else None
+    # Affinages dénomination (avant le repli groupe 0).
+    if otype == "etablissement_public" and any(k in nom_l for k in ("epf", "foncier")):
+        otype = "epf"
+    if otype is None:  # groupe 0 — personnes morales « non remarquables »
+        if "SCI" in forme or "civile immobili" in nom_l:
+            otype = "sci"
+        elif any(k in forme for k in ("ASL", "AFUL", "SYND")) or "copropri" in nom_l:
+            otype = "copropriete"
+        else:
+            otype = "societe"
+    ot = _pack(otype, indivision=(otype == "indivision"),
+               identifiable=(otype not in ("inconnu", "personne_physique")), categorie=nom or forme)
+    ot["owner_name"] = nom or None
+    ot["forme_juridique"] = forme or None
+    return ot
 
 
 def needs_spf(owner: dict) -> bool:

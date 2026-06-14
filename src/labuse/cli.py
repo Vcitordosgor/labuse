@@ -237,6 +237,21 @@ def evaluate_cmd(
         typer.echo(f"    {status:24} : {n}")
 
 
+@app.command("ingest-personnes-morales")
+def ingest_pm_cmd(
+    commune: str = typer.Option(None, help="INSEE (défaut = pilote 97415)."),
+    csv: str = typer.Option(None, help="CSV départemental DGFiP déjà extrait (sinon téléchargé)."),
+) -> None:
+    """Charge les propriétaires PERSONNES MORALES (1.A — fichier DGFiP, Licence Ouverte)."""
+    from .ingestion.personnes_morales import fetch_974_csv, ingest_personnes_morales
+
+    insee = commune if (commune and commune.isdigit()) else get_settings().pilot_commune_insee
+    path = csv or str(fetch_974_csv())
+    with session_scope() as s:
+        n = ingest_personnes_morales(s, path, insee=insee)
+    typer.echo(f"✓ {n} parcelles de personnes morales chargées (DGFiP, INSEE {insee}).")
+
+
 @app.command("compute-residuel")
 def compute_residuel_cmd(
     commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
