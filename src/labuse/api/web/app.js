@@ -599,9 +599,11 @@ function renderFiche(f) {
     </details>
 
     <section class="sources">
-      <h3 class="src-h">Sources qui ont répondu</h3>
+      <h3 class="src-h">Sources analysées · transparence méthodologique</h3>
+      <p class="src-summary"><b>${(f.sources_responded || []).length + (f.sources_silent || []).length}</b> sources publiques analysées · <b class="src-ok-n">${(f.sources_responded || []).length}</b> ont répondu${(f.sources_silent || []).length ? ` · <b class="src-na-n">${(f.sources_silent || []).length}</b> à vérifier / non disponibles` : ""}.</p>
       <div class="src-chips">${chips(f.sources_responded, "ok") || '<span class="src-chip silent">—</span>'}</div>
       ${(f.sources_silent || []).length ? `<h3 class="src-h muted">Sources non disponibles · à vérifier</h3><div class="src-chips">${chips(f.sources_silent, "silent")}</div>` : ""}
+      <p class="src-note">LA BUSE affiche ce qu'elle sait — et ce qu'elle ne sait pas encore. Chaque verdict est vérifiable, source par source.</p>
     </section>
 
     ${renderProspection(f)}
@@ -853,12 +855,24 @@ function renderPromoteur(pr, centroid, idu) {
     ? `<span class="own-badge ${famCls}" title="${esc(own.owner_acquerabilite || "")}">${esc(own.owner_label)}</span>` : "";
   const spfBtn = own.needs_spf
     ? `<button type="button" class="own-spf js-spf" data-idu="${esc(idu)}" title="Courrier pré-rempli de demande au Service de la Publicité Foncière">✉ Générer demande SPF</button>` : "";
+  // M8 — statuts COURTS au premier niveau ; le détail verbeux + sources sous un accordéon.
+  const ownShort = own.owner_label ? ownerBadge : (own.needs_spf ? "à identifier" : esc(own.note || "à vérifier"));
+  const psRow = (k, v) => `<li><span class="ps-k">${k}</span><span class="ps-v">${v}</span></li>`;
   const factBody = `
-    <p class="pm-na"><b>Propriétaire :</b> ${ownerBadge} ${esc(own.note || "non vérifié")}</p>
+    <ul class="pm-status">
+      ${psRow("Propriétaire", ownShort)}
+      ${psRow("Viabilité", "à vérifier")}
+      ${psRow("Eau potable", "données insuffisantes")}
+      ${psRow("Électricité", "donnée agrégée, sans tracé")}
+      ${psRow("Assainissement", "à vérifier")}
+    </ul>
     ${spfBtn}
-    ${viaBlock}
-    <ul class="pm-list net">${netRow("Eau potable", net.eau_potable)}${netRow("Électricité (EDF)", net.electricite)}${netRow("Assainissement", net.assainissement)}</ul>
-    <p class="pm-src">${esc((net && net.source) || "")}</p>`;
+    <details class="pm-detail">
+      <summary>Voir détails réseaux &amp; sources</summary>
+      ${viaBlock}
+      <ul class="pm-list net">${netRow("Eau potable", net.eau_potable)}${netRow("Électricité (EDF)", net.electricite)}${netRow("Assainissement", net.assainissement)}</ul>
+      <p class="pm-src">${esc((net && net.source) || "")}</p>
+    </details>`;
 
   const card = (title, body, tag) => `<div class="pm-card"><h4 class="pm-h">${title}${tag ? `<span class="pm-ind">${tag}</span>` : ""}</h4>${body}</div>`;
 
