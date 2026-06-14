@@ -492,7 +492,10 @@ function renderPermits(pm) {
   if (!pm || (!pm.count && !(pm.dynamique && pm.dynamique.permis_recents))) return "";
   const dyn = pm.dynamique || {};
   const dynCls = { actif: "dyn-actif", "modéré": "dyn-modere", calme: "dyn-calme" }[dyn.niveau] || "dyn-calme";
-  const dynBanner = dyn.niveau ? `<div class="pmt-dyn ${dynCls}">Secteur <b>${esc(dyn.niveau)}</b> — ${dyn.permis_recents} autorisation(s)${dyn.logements_recents ? ` · ${dyn.logements_recents} logements` : ""} dans ${pm.radius_m} m sur ${dyn.annees} ans</div>` : "";
+  // 1.B-fix-b — toujours qualifier par la couverture (jamais « calme » sec si peu de PC géolocalisés).
+  const cov = dyn.couverture_pct != null
+    ? ` <span class="pmt-cov">— calculé sur ${dyn.geolocalises}/${dyn.total} autorisations géolocalisées (${dyn.couverture_pct}%${dyn.fiable ? "" : ", couverture partielle"})</span>` : "";
+  const dynBanner = dyn.niveau ? `<div class="pmt-dyn ${dynCls}">Secteur <b>${esc(dyn.niveau)}</b> — ${dyn.permis_recents} autorisation(s)${dyn.logements_recents ? ` · ${dyn.logements_recents} logements` : ""} dans ${pm.radius_m} m sur ${dyn.annees} ans${cov}</div>` : "";
   const rows = (pm.items || []).map((x) => `
     <li class="pmt-li${x.rattache ? " pmt-rat" : ""}">
       <span class="pmt-type" title="${esc(x.type_label || x.type || "")}">${esc(x.type || "—")}</span>

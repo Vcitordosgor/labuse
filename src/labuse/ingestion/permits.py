@@ -111,6 +111,50 @@ def _statut(raw: dict | None, date) -> str:
     return f"autorisé le {d}" + (" · travaux achevés" if raw.get("daact") else "")
 
 
+def geocode_permits_via_cadastre(session, insee: str | None = None) -> dict:
+    """1.B-fix-a — géolocalise les permis NON géocodés via le cadastre (API Carto), PAR SECTION.
+
+    Les permis référencent ~2 663 parcelles cadastrales, dont peu sont dans notre référentiel bbox.
+    Plutôt que d'ingérer tout le cadastre, on récupère par SECTION (84 appels) les centroïdes des
+    parcelles cadastrales référencées et on pose le geom des permis. N'ingère AUCUNE parcelle
+    (baseline préservée). Retourne le gain (avant/après)."""
+    from ..connectors.cadastre import CadastreConnector, parse_parcelles
+    insee = insee or get_settings().pilot_commune_insee
+    before = session.execute(text("SELECT count(*) FROM sitadel_permits WHERE geom IS NOT NULL")).scalar()
+    # sections référencées par des permis encore non géocodés
+    sections = [r[0] for r in session.execute(text(
+        """SELECT DISTINCT substring(idu FROM 9 FOR 2) AS section
+           FROM (SELECT jsonb_array_elements_text(idu_codes) AS idu FROM sitadel_permits
+                 WHERE geom IS NULL) q WHERE idu IS NOT NULL""")).all()]
+    conn = CadastreConnector()
+    lookup: dict[str, str] = {}   # idu -> geometry GeoJSON (str)
+    import json as _json
+    for sec in sections:
+        try:
+            fc = conn.fetch_by_section(insee, sec)
+        except Exception:  # noqa: BLE001 - une section qui échoue n'arrête pas le lot
+            continue
+        for p in parse_parcelles(fc):
+            if p.get("idu") and p.get("geometry"):
+                lookup[p["idu"]] = _json.dumps(p["geometry"])
+    # poser le geom (centroïde de la parcelle cadastrale) pour chaque permis non géocodé
+    n = 0
+    rows = session.execute(text(
+        "SELECT id, idu_codes FROM sitadel_permits WHERE geom IS NULL")).all()
+    for pid, idus in rows:
+        gj = next((lookup[i] for i in (idus or []) if i in lookup), None)
+        if not gj:
+            continue
+        session.execute(text(
+            "UPDATE sitadel_permits SET geom = ST_Centroid(ST_SetSRID(ST_GeomFromGeoJSON(:gj),4326)) WHERE id = :id"),
+            {"gj": gj, "id": pid})
+        n += 1
+    session.flush()
+    after = session.execute(text("SELECT count(*) FROM sitadel_permits WHERE geom IS NOT NULL")).scalar()
+    return {"avant": int(before), "ajoutes": n, "apres": int(after),
+            "sections_recuperees": len(sections), "parcelles_cadastre": len(lookup)}
+
+
 def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int = 12,
                    dynamique_years: int = 5) -> dict:
     """Historique des autorisations d'urbanisme à proximité (C4 + 1.B) — pour la fiche.
@@ -159,8 +203,16 @@ def nearby_permits(session, parcel_id: int, radius_m: float = 300.0, limit: int 
     n_recent = int(dyn["n"]) if dyn else 0
     niveau = "actif" if n_recent >= 5 else "modéré" if n_recent >= 1 else "calme"
     rattaches = sum(1 for i in items if i["rattache"])
+    # 1.B-fix-b — couverture : part des autorisations de la commune effectivement géolocalisées.
+    cov = session.execute(text(
+        "SELECT count(*) FILTER (WHERE geom IS NOT NULL) AS g, count(*) AS t FROM sitadel_permits")).mappings().first()
+    geoloc, total = (int(cov["g"]), int(cov["t"])) if cov else (0, 0)
+    couverture_pct = round(100 * geoloc / total) if total else 0
     return {"radius_m": int(radius_m), "count": len(items), "rattaches": rattaches,
             "items": items, "source": "SITADEL / Région ODS 974",
             "dynamique": {"niveau": niveau, "permis_recents": n_recent,
                           "logements_recents": int(dyn["logts"]) if dyn else 0,
-                          "annees": dynamique_years}}
+                          "annees": dynamique_years,
+                          # couverture : ne jamais lire « calme » sans la qualifier.
+                          "couverture_pct": couverture_pct, "geolocalises": geoloc, "total": total,
+                          "fiable": couverture_pct >= 60}}

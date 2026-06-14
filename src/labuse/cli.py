@@ -237,6 +237,18 @@ def evaluate_cmd(
         typer.echo(f"    {status:24} : {n}")
 
 
+@app.command("geocode-permits")
+def geocode_permits_cmd(commune: str = typer.Option(None, help="INSEE (défaut = pilote).")) -> None:
+    """1.B-fix — géolocalise les permis SITADEL non géocodés via le cadastre (API Carto, par section)."""
+    from .ingestion.permits import geocode_permits_via_cadastre
+
+    insee = commune if (commune and commune.isdigit()) else get_settings().pilot_commune_insee
+    with session_scope() as s:
+        r = geocode_permits_via_cadastre(s, insee)
+    typer.echo(f"✓ Permis géolocalisés : {r['avant']} → {r['apres']} (+{r['ajoutes']}) "
+               f"via {r['sections_recuperees']} sections.")
+
+
 @app.command("ingest-personnes-morales")
 def ingest_pm_cmd(
     commune: str = typer.Option(None, help="INSEE (défaut = pilote 97415)."),
