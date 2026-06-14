@@ -70,6 +70,15 @@ body {
 .kpi.active { box-shadow: 0 0 0 1.5px var(--gold) inset; background: #232c38; }
 
 /* Compteur de résultats + réinitialiser (P3) */
+/* M2 — filtres rapides de statut (chips, sélection unique, état actif net) */
+.quick-filters { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+.qf { display: inline-flex; align-items: center; gap: 6px; background: var(--panel-2); border: 1px solid var(--line);
+  color: var(--muted); font: inherit; font-size: 12px; padding: 5px 11px; border-radius: 999px; cursor: pointer;
+  transition: border-color .12s, color .12s, background .12s; }
+.qf:hover { color: var(--txt); background: #232c38; }
+.qf .dot { width: 8px; height: 8px; }
+.qf.active { border-color: var(--gold); color: var(--gold); background: rgba(173,127,55,.12); font-weight: 600; }
+
 .result-meta { display: flex; align-items: center; gap: 10px; margin: 2px 0 4px; font-size: 12px; color: var(--muted); }
 #rm-count { flex: 1; }
 .rm-reset { background: transparent; border: 1px solid var(--line); color: var(--gold-soft);

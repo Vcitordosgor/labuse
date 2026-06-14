@@ -393,10 +393,14 @@ function focusParcel(idu) {
 function applyFilters() { LIST_LIMIT = 80; renderMap(); renderList(); }
 
 // KPI cliquable → filtre carte + liste par statut (P2). "all" = tout afficher.
-function clearKpiActive() { document.querySelectorAll(".kpi").forEach((k) => k.classList.remove("active")); }
+function clearKpiActive() {
+  document.querySelectorAll(".kpi").forEach((k) => k.classList.remove("active"));
+  document.querySelectorAll(".qf").forEach((q) => q.classList.remove("active"));
+}
 function filterByStatus(status) {
   document.querySelectorAll("#filter-statuses input").forEach((b) => { b.checked = (status === "all") || (b.value === status); });
   document.querySelectorAll(".kpi").forEach((k) => k.classList.toggle("active", k.dataset.status === status));
+  document.querySelectorAll(".qf").forEach((q) => q.classList.toggle("active", q.dataset.status === status));
   applyFilters();
 }
 
@@ -2067,6 +2071,7 @@ async function main() {
     k.addEventListener("click", () => filterByStatus(k.dataset.status));
     k.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); filterByStatus(k.dataset.status); } });
   });
+  document.querySelectorAll(".qf").forEach((q) => q.addEventListener("click", () => filterByStatus(q.dataset.status)));
   const ftog = $("#filter-toggle");
   ftog.addEventListener("click", () => { const hid = $("#filters-panel").classList.toggle("hidden"); ftog.setAttribute("aria-expanded", String(!hid)); });
   document.querySelectorAll(".js-reset").forEach((b) => b.addEventListener("click", resetFilters));

@@ -66,6 +66,15 @@
       <div class="kpi exclue" data-status="exclue" role="button" tabindex="0" title="Voir les exclues"><span class="kpi-val" id="kpi-exclue">—</span><span class="kpi-lbl">exclues</span></div>
     </section>
 
+    <!-- M2 — filtres rapides de statut (sélection unique, état actif visible) -->
+    <div class="quick-filters" id="quick-filters" role="group" aria-label="Filtres rapides par statut">
+      <button class="qf" data-status="all" type="button">Tout</button>
+      <button class="qf" data-status="opportunite" type="button"><i class="dot opportunite"></i>Opportunité</button>
+      <button class="qf" data-status="a_creuser" type="button"><i class="dot a_creuser"></i>À creuser</button>
+      <button class="qf" data-status="faux_positif_probable" type="button"><i class="dot faux_positif_probable"></i>Écartée</button>
+      <button class="qf" data-status="exclue" type="button"><i class="dot exclue"></i>Exclue</button>
+    </div>
+
     <div class="result-meta" id="result-meta">
       <span id="rm-count">—</span>
       <button class="rm-reset hidden js-reset" type="button">↺ Réinitialiser</button>
