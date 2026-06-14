@@ -150,12 +150,11 @@ layers:
     phase: 1
     enabled: true
     params:
-      # ⚠ DÉCISION PRODUIT : la pente est CALCULÉE et AFFICHÉE, mais N'EXCLUT PAS
-      # et NE PÉNALISE PAS automatiquement (brief §2, encadré seuils).
+      # 2.A : la pente est CALCULÉE et AFFICHÉE ; au-delà de `seuil_flag_pct` → SOFT_FLAG
+      # (driver de coût terrassement, jamais une exclusion). Seuil PLACEHOLDER (défaut Vic 30 %).
       exclude: false
-      penalize: false
-      # seuils présents mais DÉSACTIVÉS, prêts à activer sans refactor :
-      threshold_enabled: false
+      seuil_flag_pct: 30      # PLACEHOLDER — au-delà : SOFT_FLAG « pente forte »
+      severity: moyen
       slope_labels:           # pente en %, bornes hautes
         faible: 10
         modere: 20

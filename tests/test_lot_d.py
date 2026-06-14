@@ -83,9 +83,9 @@ def test_1c_compute_bilan_params_pilotent(monkeypatch):
     # override prix neuf + coût construction secteur → CA et coût changent
     bp = {"prix_m2_neuf": 3500, "cout_construction_m2_sdp": 3200, "cout_vrd_base": 50,
           "majoration_vrd_pente_pct": 20, "marge_cible_pct": 18, "honoraires_pct": 12, "frais_financiers_pct": 3}
-    sect = compute_bilan(4600, 4500, prix, h, bilan_params=bp)
+    sect = compute_bilan(4600, 4500, prix, h, contexte_eco={"pente_pct": 35}, bilan_params=bp)
     assert sect.ca["central"] == round(4600 * 3500)              # prix override appliqué (flat)
-    assert sect.calc["cout_vrd"] == round(50 * 1.20 * 4500)      # VRD base × (1+20%) × terrain
+    assert sect.calc["cout_vrd"] == round(50 * 1.20 * 4500)      # VRD base × (1+20% pente≥15) × terrain
     assert sect.charge_fonciere["central"] != base.charge_fonciere["central"]  # piloté par secteur
 
 

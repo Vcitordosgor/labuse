@@ -230,6 +230,7 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
                 "sdp_max_m2": fr.get("surface_plancher_m2"),
                 "logements_estimes": logements_est,
                 "terrain_m2": ctx.surface_m2,
+                "pente_pct": ctx.contraintes.pente_pct,   # 2.A — alimente la majoration VRD pente
             })
             # 1.C — secteur = bassin PLU de la zone ; params résolus (défaut ← global ← secteur).
             secteur = None

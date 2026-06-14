@@ -587,14 +587,18 @@ function renderProspection(f) {
 function renderPromoteur(pr, centroid, idu) {
   if (!pr) return "";
   const alt = pr.altimetrie || {}, fac = pr.facade || {}, plu = pr.plu_detail || {};
+  const exp = pr.exposition || {};
   const own = pr.proprietaire || {}, net = pr.reseaux || {};
   const fig = (val, lbl) => `<span class="pm-fig"><b>${val ?? "—"}</b><i>${lbl}</i></span>`;
   const na = (o) => `<p class="pm-na">${esc(o.note || "Indisponible.")}</p>`;
 
-  // 1 · Cote altimétrique (RGE ALTI, live échantillonné)
+  // 1 · Cote altimétrique + EXPOSITION (RGE ALTI, live échantillonné) — 2.A
+  const expLine = exp.available
+    ? `<p class="pm-exp">🧭 ${esc(exp.label || "")}${exp.azimut_deg != null ? ` (${exp.azimut_deg}°)` : ""}${exp.pente_locale_pct != null ? ` · pente locale ~${exp.pente_locale_pct} %` : ""}</p>` : "";
   const altBody = alt.available
     ? `<div class="pm-figs">${fig(alt.min_m, "min (m)")}${fig(alt.mean_m, "moy. (m)")}${fig(alt.max_m, "max (m)")}${fig(alt.amplitude_m, "amplitude (m)")}</div>
-       <p class="pm-src">${esc(alt.source || "")} · ${alt.n_points || 0} pts</p>` : na(alt);
+       ${expLine}<p class="pm-src">${esc(alt.source || "")} · ${alt.n_points || 0} pts</p>`
+    : (expLine ? `${expLine}<p class="pm-src">${esc(exp.source || "")}</p>` : na(alt));
 
   // 2 · Façade sur voie + profondeur (BD TOPO, EPSG:2975)
   let facBody;

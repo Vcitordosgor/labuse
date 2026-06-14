@@ -131,6 +131,46 @@ def altimetry(db: Session, parcel_id: int) -> dict[str, Any]:
         return {"available": False, "note": f"RGE ALTI injoignable ({type(exc).__name__}).", "source": source}
 
 
+_CARDINAUX = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"]
+
+
+def exposition(db: Session, parcel_id: int) -> dict[str, Any]:
+    """Exposition (orientation dominante de la pente) — 2.A. Calculée par gradient d'altitude
+    (RGE ALTI) sur 4 points cardinaux autour du centroïde. À La Réunion, l'exposition (vue,
+    ensoleillement) est un driver de valeur. INDICATIF ; plat → pas d'exposition dominante."""
+    source = "RGE ALTI (IGN) — gradient d'altitude"
+    if not _live_enabled():
+        return {"available": False, "note": "Calcul live désactivé (mode hors-ligne).", "source": source}
+    row = db.execute(text(
+        "SELECT ST_X(centroid) lon, ST_Y(centroid) lat, sqrt(ST_Area(geom_2975)) cote "
+        "FROM parcels WHERE id = :p"), {"p": parcel_id}).first()
+    if not row or row.lon is None:
+        return {"available": False, "note": "Centroïde indisponible.", "source": source}
+    import math
+    lon, lat = float(row.lon), float(row.lat)
+    d_m = max(25.0, min(120.0, float(row.cote or 50.0)))     # demi-pas adapté à la taille
+    dlat = d_m / 111320.0
+    dlon = d_m / (111320.0 * max(0.1, math.cos(math.radians(lat))))
+    pts = [(lon, lat + dlat), (lon, lat - dlat), (lon + dlon, lat), (lon - dlon, lat)]  # N,S,E,W
+    try:
+        h = _alti_query(pts, max(get_settings().http_timeout_s, 20.0))
+    except Exception as exc:  # noqa: BLE001
+        return {"available": False, "note": f"RGE ALTI injoignable ({type(exc).__name__}).", "source": source}
+    if any(x is None for x in h):
+        return {"available": False, "note": "RGE ALTI sans valeur exploitable ici.", "source": source}
+    hN, hS, hE, hW = h
+    dz_ns, dz_ew = hN - hS, hE - hW                          # uphill components (N, E)
+    pente_locale = math.hypot(dz_ew, dz_ns) / (2 * d_m) * 100.0
+    if pente_locale < 3.0:                                   # quasi plat → pas d'exposition nette
+        return {"available": True, "exposition": None, "label": "terrain plat (pas d'exposition dominante)",
+                "pente_locale_pct": round(pente_locale, 1), "source": source, "indicatif": True}
+    azimut = (math.degrees(math.atan2(-dz_ew, -dz_ns)) + 360.0) % 360.0   # downhill, depuis le Nord
+    card = _CARDINAUX[round(azimut / 45.0) % 8]
+    return {"available": True, "exposition": card, "azimut_deg": round(azimut),
+            "label": f"exposition {card}", "pente_locale_pct": round(pente_locale, 1),
+            "source": source, "indicatif": True}
+
+
 # ──────────────────────────── 2. Façade sur rue + profondeur ────────────────────────────
 
 def _shape_metrics(db: Session, parcel_id: int) -> dict[str, float]:
@@ -443,6 +483,7 @@ def build_enrichment(db: Session, parcel, lon: float, lat: float) -> dict[str, A
 
     return {
         "altimetrie": _safe(altimetry, db, parcel.id),
+        "exposition": _safe(exposition, db, parcel.id),
         "facade": _safe(facade_depth, db, parcel.id),
         "plu_detail": _safe(plu_detail, db, parcel.id, lon, lat),
         "proprietaire": _safe(owner, db, parcel.id),

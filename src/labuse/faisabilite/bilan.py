@@ -321,13 +321,21 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     cm_haut = cout_m2 if cout_m2 > 0 else hyp.cout_construction_m2_haut
     cc_bas = sdp * cm_bas * (1.0 + maj_vrd_pluvial / 100.0)
     cc_haut = sdp * cm_haut * (1.0 + maj_vrd_pluvial / 100.0)
-    # VRD / viabilisation (1.C) : base €/m² terrain, majorée pente + assainissement autonome.
-    maj_vrd_terrain = maj_pente + maj_assain
+    # VRD / viabilisation (1.C + 2.A) : base €/m² terrain, majorée si pente forte (≥ 15 %, seuil
+    # faisabilité) et/ou assainissement autonome. La pente ALIMENTE la majoration (2.A).
+    pente_pct = float(eco.get("pente_pct") or 0.0)
+    maj_pente_eff = maj_pente if pente_pct >= 15.0 else 0.0
+    maj_vrd_terrain = maj_pente_eff + maj_assain
     cout_vrd = vrd_base * (1.0 + maj_vrd_terrain / 100.0) * (surface_terrain_m2 or 0.0)
     if vrd_base > 0:
+        bits = []
+        if maj_pente_eff:
+            bits.append(f"pente {pente_pct:.0f} %")
+        if maj_assain:
+            bits.append("assainissement autonome")
         steps.append(Step("VRD / viabilisation",
                           f"{vrd_base:.0f} €/m² terrain × {surface_terrain_m2:.0f} m²"
-                          + (f" × (1 + {maj_vrd_terrain:g} % pente/assainissement)" if maj_vrd_terrain else ""),
+                          + (f" × (1 + {maj_vrd_terrain:g} % : {', '.join(bits)})" if maj_vrd_terrain else ""),
                           f"~{_eur(cout_vrd)}", "param cout_vrd_base"))
     if pluvial:
         lib_pl = eco.get("pluvial_libelle") or "zonage eaux pluviales"

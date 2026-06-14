@@ -480,7 +480,9 @@ class TraitDeCoteLayer(Layer):
 
 @register
 class PenteLayer(Layer):
-    """Pente CALCULÉE et AFFICHÉE mais NON excluante (décision produit, brief §2)."""
+    """Pente CALCULÉE (RGE ALTI). 2.A : SOFT_FLAG au-delà du seuil (param, défaut 30 %, PLACEHOLDER) —
+    sur une île montagneuse, la pente forte est un driver de coût (terrassement) et un risque, jamais
+    une exclusion seule. En deçà du seuil : affichée, non pénalisante."""
 
     name = "pente"
 
@@ -493,7 +495,14 @@ class PenteLayer(Layer):
         inter = ctx.intersections(parcel.id, "pente")
         slope = max(((i.attrs or {}).get("slope_pct", 0) for i in inter), default=0)
         label = self._label(float(slope), params.get("slope_labels", {}))
-        # ⚠ Même si threshold_enabled, on N'EXCLUT/PÉNALISE PAS par défaut.
+        seuil = float(params.get("seuil_flag_pct", 30))
+        if float(slope) > seuil:
+            sev = Severity(params.get("severity", "moyen"))
+            return soft_flag(
+                self.name,
+                f"Pente forte {label} (~{float(slope):.0f}% > seuil {seuil:.0f}%) — terrassement et "
+                "accès renchéris (majoration VRD du bilan), pas une exclusion.",
+                sev, source=SRC_ALTI)
         return passed(
             self.name,
             f"Pente {label} (~{float(slope):.0f}%) — calculée, non éliminatoire.",
