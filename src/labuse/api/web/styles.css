@@ -819,6 +819,14 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .fc-num { display: block; font-family: var(--serif); font-weight: 600; font-size: 21px; color: var(--ink); line-height: 1.12; }
 .fc-sub { font-size: 10.5px; color: var(--ink-faint); font-weight: 400; margin-left: 5px; }
 .fc-lbl { font-size: 10.5px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-faint); margin-top: 5px; display: block; }
+/* 3.D — gabarit constructible en 3D (axonométrie SVG) */
+.v3d { margin: 10px 0 4px; background: #14171c; border: 1px solid var(--rule); border-radius: 12px; padding: 10px 12px 12px; }
+.v3d-svg { display: block; width: 100%; height: auto; max-height: 230px; }
+.v3d-figs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
+.v3d-figs span { text-align: center; }
+.v3d-figs b { display: block; font-family: var(--serif); font-size: 18px; color: #e3c478; line-height: 1.1; }
+.v3d-figs i { font-style: normal; font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: #8b94a2; }
+.v3d-note { font-size: 10px; color: #8b94a2; margin: 8px 0 0; line-height: 1.35; }
 .faisa-calc { border-top: 1px solid var(--rule); margin-top: 16px; padding-top: 12px; }
 .faisa-calc > summary { cursor: pointer; font-weight: 600; font-size: 12.5px; color: var(--accent); list-style: none; }
 .faisa-calc > summary::-webkit-details-marker { display: none; }

@@ -1001,6 +1001,7 @@ function renderFaisabilite(fa) {
       <div class="faisa-ctx">${ctxBits}</div>
       ${badges ? `<div class="faisa-badges">${badges}</div>` : ""}
       ${keyCards ? `<div class="faisa-cards">${keyCards}</div>` : ""}
+      ${renderVolume3D(fa.volume3d)}
       ${renderResiduel(fa.residuel)}
       <details class="faisa-calc" open>
         <summary>Le calcul, ligne par ligne — chaque ligne pointe sa règle PLU</summary>
@@ -1012,6 +1013,48 @@ function renderFaisabilite(fa) {
       <p class="faisa-bandeau">⚠️ ${esc(fa.bandeau)}</p>
     </section>
     ${renderBilan(fa.bilan)}`;
+}
+
+// 3.D — Gabarit constructible en 3D : extrusion de l'emprise à la hauteur PLU, en AXONOMÉTRIE
+// SVG (zéro dépendance 3D — cohérent avec la contrainte « vendorisé, offline-safe »). v1 simple :
+// volume = emprise × hauteur ; ni architecture ni implantation réelle. Données en mètres locaux.
+function renderVolume3D(v) {
+  if (!v || !v.constructible || !(v.outline && v.outline.length >= 3)) return "";
+  const foot = (v.emprise && v.emprise.length >= 3) ? v.emprise : v.outline;
+  const h = v.hauteur_m || 0;
+  const COS = 0.866, SIN = 0.5;
+  const iso = (p, z) => [(p[0] - p[1]) * COS, (p[0] + p[1]) * SIN - z];   // (x,y,z) m → plan écran
+  const proj = [];
+  v.outline.forEach((p) => proj.push(iso(p, 0)));
+  foot.forEach((p) => { proj.push(iso(p, 0)); proj.push(iso(p, h)); });
+  const xs = proj.map((q) => q[0]), ys = proj.map((q) => q[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const W = 320, H = 220, pad = 16;
+  const s = Math.min((W - 2 * pad) / Math.max(1e-6, maxX - minX), (H - 2 * pad) / Math.max(1e-6, maxY - minY));
+  const tx = (q) => (pad + (q[0] - minX) * s).toFixed(1), ty = (q) => (pad + (q[1] - minY) * s).toFixed(1);
+  const poly = (ring, z) => ring.map((p) => { const q = iso(p, z); return `${tx(q)},${ty(q)}`; }).join(" ");
+
+  let svg = `<polygon points="${poly(v.outline, 0)}" fill="#262b33" stroke="#586273" stroke-width="1"/>`;
+  const walls = [];                                    // murs triés arrière→avant (somme x+y)
+  for (let i = 0; i < foot.length; i++) {
+    const a = foot[i], b = foot[(i + 1) % foot.length];
+    const quad = [iso(a, 0), iso(b, 0), iso(b, h), iso(a, h)].map((q) => `${tx(q)},${ty(q)}`).join(" ");
+    const left = ((b[0] - a[0]) - (b[1] - a[1])) < 0;  // orientation écran → ombrage
+    walls.push({ depth: a[0] + a[1] + b[0] + b[1], pts: quad, fill: left ? "#9a7b3a" : "#c2a155" });
+  }
+  walls.sort((p, q) => p.depth - q.depth)
+    .forEach((w) => { svg += `<polygon points="${w.pts}" fill="${w.fill}" stroke="#3a2f18" stroke-width="0.5"/>`; });
+  svg += `<polygon points="${poly(foot, h)}" fill="#e3c478" stroke="#8a6f2c" stroke-width="1"/>`;
+
+  return `<div class="v3d">
+    <svg viewBox="0 0 ${W} ${H}" class="v3d-svg" role="img" aria-label="Gabarit constructible en 3D (indicatif)">${svg}</svg>
+    <div class="v3d-figs">
+      <span><b>${fmt(v.volume_m3)}</b><i>m³ · volume enveloppe</i></span>
+      <span><b>${esc(v.niveaux || "—")}</b><i>${v.hauteur_m} m de haut</i></span>
+      <span><b>${fmt(v.emprise_constructible_m2)}</b><i>m² · emprise au sol</i></span>
+    </div>
+    <p class="v3d-note">${esc(v.note || "")}</p>
+  </div>`;
 }
 
 // Potentiel résiduel (Lot B) — « bâtie à N % de son potentiel » + SDP résiduelle.

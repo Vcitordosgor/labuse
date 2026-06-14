@@ -15,6 +15,7 @@ DÉCISIONS 1 & 3 (directive post-1.A) appliquées ICI, sur la géométrie réell
 """
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 
@@ -197,6 +198,75 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
                                   emprise_geo=(emprise, recul))
 
 
+# 3.D — Empreintes pour le gabarit 3D : parcelle + emprise insetée du recul, RECENTRÉES sur le
+# centroïde (mètres locaux EPSG:2975) → le front projette en axonométrie sans dépendance 3D.
+_VOLUME_GEOM = text("""
+WITH p AS (SELECT geom_2975 AS g, ST_Centroid(geom_2975) AS c FROM parcels WHERE id = :pid)
+SELECT ST_AsGeoJSON(ST_Translate(p.g, -ST_X(p.c), -ST_Y(p.c)), 2) AS outline,
+       ST_AsGeoJSON(ST_Translate(ST_Buffer(p.g, -:d), -ST_X(p.c), -ST_Y(p.c)), 2) AS emprise
+FROM p
+""")
+
+
+def _ring_local(gj: str | None) -> list[list[float]] | None:
+    """Anneau extérieur d'un polygone GeoJSON → liste [x,y] (sans le point de fermeture)."""
+    if not gj:
+        return None
+    try:
+        coords = (json.loads(gj).get("coordinates") or [])
+    except (ValueError, AttributeError):
+        return None
+    if not coords or not coords[0]:
+        return None
+    ring = [[round(float(x), 2), round(float(y), 2)] for x, y in coords[0]]
+    if len(ring) >= 2 and ring[0] == ring[-1]:
+        ring = ring[:-1]
+    return ring if len(ring) >= 3 else None
+
+
+def volume3d_payload(session: Session, parcel_id: int,
+                     fais: tuple[ParcelContext, Faisabilite] | None = None) -> dict | None:
+    """3.D — Gabarit constructible 3D (v1 : extrusion simple). Empreinte = emprise constructible
+    insetée du recul (mètres locaux) ; hauteur = niveaux × hauteur d'étage de la capacité DÉJÀ
+    calculée. Volume = emprise × hauteur. Indicatif (ni architecture ni implantation réelle)."""
+    res = fais or parcel_faisabilite(session, parcel_id)
+    if res is None:
+        return None
+    ctx, f = res
+    fr = f.fourchette or {}
+    if not f.constructible:
+        return {"constructible": False,
+                "note": "Parcelle non constructible — aucun gabarit à extruder."}
+
+    from .engine import Hypotheses
+    rules = resolve_zone(ctx.zone) if ctx.zone else None
+    hyp = Hypotheses.charger()
+    recul = (float(rules.recul_limites_sep_m)
+             if rules is not None and isinstance(rules.recul_limites_sep_m, (int, float))
+             else hyp.recul_limites_defaut_m)
+    row = session.execute(_VOLUME_GEOM, {"pid": parcel_id, "d": recul}).one()
+    outline = _ring_local(row.outline)
+    if not outline:
+        return None
+    hauteur, emprise_m2 = fr.get("hauteur_m"), fr.get("emprise_constructible_m2")
+    return {
+        "constructible": True,
+        "outline": outline,                       # parcelle (mètres locaux, centroïde = origine)
+        "emprise": _ring_local(row.emprise),      # emprise constructible insetée (peut être None si exiguë)
+        "hauteur_m": hauteur,
+        "etage_m": fr.get("hauteur_etage_m"),
+        "niveaux": fr.get("niveaux"),
+        "niveaux_max": fr.get("niveaux_max"),
+        "emprise_constructible_m2": emprise_m2,
+        "emprise_batie_max_m2": fr.get("emprise_batie_max_m2"),
+        "surface_plancher_m2": fr.get("surface_plancher_m2"),
+        "volume_m3": round((emprise_m2 or 0) * (hauteur or 0)),   # ← recette : emprise × hauteur
+        "recul_m": recul,
+        "note": "Gabarit-enveloppe indicatif : emprise constructible insetée du recul, extrudée à "
+                "la hauteur PLU (niveaux × étage). Ni architecture ni implantation réelle.",
+    }
+
+
 def fiche_payload(session: Session, parcel_id: int) -> dict | None:
     """Payload JSON de la carte de faisabilité pour la fiche parcelle.
     None si la parcelle n'est pas couverte (zone hors PLU Saint-Paul outillé)."""
@@ -260,6 +330,13 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
     except Exception:  # noqa: BLE001 - le bilan ne casse jamais la fiche
         bilan = None
 
+    # 3.D — gabarit 3D (extrusion emprise × hauteur) ; isolé/défensif, jamais bloquant.
+    volume3d = None
+    try:
+        volume3d = volume3d_payload(session, parcel_id, fais=res)
+    except Exception:  # noqa: BLE001 - le 3D ne casse jamais la fiche
+        volume3d = None
+
     return {
         "zone": f.zone,
         "zone_resolue": f.zone_resolue,
@@ -280,6 +357,7 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
         "bandeau": f.bandeau,
         "bilan": bilan,
         "residuel": residuel,   # Lot B — potentiel résiduel (bâti existant × capacité max)
+        "volume3d": volume3d,   # 3.D — gabarit constructible 3D (extrusion emprise × hauteur)
         # Badges fiche (Décisions 2/3) : mixité sociale, eaux pluviales, ER déduits.
         "prescriptions_eco": {
             "mixite_sociale": (ctx.prescriptions_eco.get("mixite_libelle") or "Clause logements aidés")

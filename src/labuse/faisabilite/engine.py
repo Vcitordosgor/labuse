@@ -321,6 +321,9 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     rp = f"R+{max(0, niveaux - 1)}"
     logt_moyen = (hyp.logement_m2_bas + hyp.logement_m2_haut) / 2.0
     fourch = {"niveaux": rp, "niveaux_max": niveaux,
+              # 3.D — hauteur du gabarit (niveaux × hauteur d'étage), pour l'extrusion 3D.
+              "hauteur_m": round(niveaux * hyp.etage_m, 1),
+              "hauteur_etage_m": hyp.etage_m,
               # Potentiel résiduel (Lot B) : emprise constructible au sol et emprise bâtie MAX
               # (post-occupation), pour croiser avec le bâti existant.
               "emprise_constructible_m2": round(emprise),
