@@ -8,7 +8,7 @@ window.fetch = async (...args) => {
   return r;
 };
 const COMMUNE = "Saint-Paul";
-const COLORS = { opportunite: "#37976a", a_creuser: "#c2913f", exclue: "#697079", faux_positif_probable: "#b85f4c", inconnu: "#3a434e" };
+const COLORS = { opportunite: "#2DBE87", a_creuser: "#C88422", exclue: "#7C8694", faux_positif_probable: "#D76055", inconnu: "#9BA3AF" };
 const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue", faux_positif_probable: "Écartée" };
 const VERDICT_GLOSS = {
   opportunite: "Foncier a priori mobilisable — reste à confirmer sur le terrain.",
@@ -94,7 +94,7 @@ function styleFor(p) {
   const c = colorFor(p);
   // Le radar fait CLIGNOTER la cible : l'opportunité ressort fort, le reste s'efface.
   switch (p.status) {
-    case "opportunite":            return { color: "#9bf0c7", weight: 2.2, fillColor: "#41c08c", fillOpacity: 0.88, opacity: 1 };
+    case "opportunite":            return { color: "#86EFCC", weight: 2.2, fillColor: "#2DBE87", fillOpacity: 0.86, opacity: 1 };
     case "faux_positif_probable":  return { color: c, weight: 0.6, fillColor: c, fillOpacity: 0.3, opacity: 0.6 };
     case "a_creuser":              return { color: c, weight: 0.4, fillColor: c, fillOpacity: 0.18, opacity: 0.42 };
     case "exclue":                 return { color: c, weight: 0.4, fillColor: c, fillOpacity: 0.14, opacity: 0.34 };

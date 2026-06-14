@@ -7,11 +7,12 @@
   --muted: #8b95a3;
   --gold: #c9a86a;
   --gold-soft: #e3cfa0;
-  --opp: #37976a;
-  --creuser: #c2913f;
-  --exclue: #697079;
-  --faux: #b85f4c;
-  --inconnu: #3a434e;
+  /* Verdicts (palette LA BUSE — légende, carte, KPI, pastilles : une seule source) */
+  --opp: #2DBE87;        /* Opportunité      */
+  --creuser: #C88422;    /* À creuser        */
+  --exclue: #7C8694;     /* Exclue (gris)    */
+  --faux: #D76055;       /* Écartée / risque */
+  --inconnu: #9BA3AF;    /* Non évaluée      */
   font-synthesis: none;
 }
 
@@ -60,9 +61,9 @@ body {
 .kpi.opp { border-left: 3px solid var(--opp); }
 .kpi.creuser { border-left: 3px solid var(--creuser); }
 .kpi.exclue { border-left: 3px solid var(--exclue); }
-.kpi.opp .kpi-val { color: #4bb487; }
+.kpi.opp .kpi-val { color: var(--opp); }
 .kpi.creuser .kpi-val { color: var(--creuser); }
-.kpi.exclue .kpi-val { color: #aab2bd; }
+.kpi.exclue .kpi-val { color: var(--inconnu); }
 /* KPI cliquables : filtrent carte + liste par statut */
 .kpi { cursor: pointer; user-select: none; transition: transform .06s, box-shadow .12s, background .12s; }
 .kpi:hover { background: #232c38; }
