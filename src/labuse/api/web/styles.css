@@ -1003,3 +1003,11 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .fs-row select, .fs-row input { flex: 1; min-width: 0; padding: 4px 7px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); color: var(--txt); font: inherit; font-size: 12px; }
 .fs-save { padding: 4px 10px; border: 0; border-radius: 6px; background: var(--gold-soft); color: #1a1205; font-weight: 700; font-size: 12px; cursor: pointer; white-space: nowrap; }
 .fs-del { padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel-2); color: var(--muted); cursor: pointer; }
+
+/* 1.B — dynamique de secteur + nature des permis */
+.pmt-dyn { margin: 0 0 8px; padding: 6px 11px; border-radius: 7px; font-size: 12px; font-weight: 600; }
+.pmt-dyn.dyn-actif { background: rgba(55,151,106,.16); color: #2f9d6a; }
+.pmt-dyn.dyn-modere { background: rgba(199,168,106,.14); color: var(--gold-soft); }
+.pmt-dyn.dyn-calme { background: var(--panel-2); color: var(--muted); }
+.pmt-body { display: flex; flex-direction: column; flex: 1; }
+.pmt-nat { color: var(--ink-soft); }

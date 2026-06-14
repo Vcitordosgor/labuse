@@ -487,19 +487,23 @@ function renderBati(b) {
 // Assemblage foncier (Phase 5) — parcelles voisines contiguës + drapeau prudent.
 // Autorisations d'urbanisme à proximité (Lot C4) — historique SITADEL < 300 m.
 function renderPermits(pm) {
-  if (!pm || !pm.count) return "";
+  if (!pm || (!pm.count && !(pm.dynamique && pm.dynamique.permis_recents))) return "";
+  const dyn = pm.dynamique || {};
+  const dynCls = { actif: "dyn-actif", "modéré": "dyn-modere", calme: "dyn-calme" }[dyn.niveau] || "dyn-calme";
+  const dynBanner = dyn.niveau ? `<div class="pmt-dyn ${dynCls}">Secteur <b>${esc(dyn.niveau)}</b> — ${dyn.permis_recents} autorisation(s)${dyn.logements_recents ? ` · ${dyn.logements_recents} logements` : ""} dans ${pm.radius_m} m sur ${dyn.annees} ans</div>` : "";
   const rows = (pm.items || []).map((x) => `
     <li class="pmt-li${x.rattache ? " pmt-rat" : ""}">
-      <span class="pmt-type">${esc(x.type || "—")}</span>
-      <span class="pmt-num">${esc(x.num || "")}</span>
-      <span class="pmt-meta">${x.date ? esc(x.date) : ""}${x.rattache ? " · sur la parcelle" : (x.distance_m != null ? ` · ~${x.distance_m} m` : "")}</span>
+      <span class="pmt-type" title="${esc(x.type_label || x.type || "")}">${esc(x.type || "—")}</span>
+      <span class="pmt-body"><span class="pmt-nat">${esc(x.nature || "")}</span>
+        <span class="pmt-meta">${esc(x.statut || "")}${x.rattache ? " · sur la parcelle" : (x.distance_m != null ? ` · ~${x.distance_m} m` : "")}</span></span>
     </li>`).join("");
   return `
     <section class="permits">
       <h3 class="pmt-h">Autorisations d'urbanisme à proximité
         <span class="pmt-count">${pm.count} dans ${pm.radius_m} m${pm.rattaches ? ` · ${pm.rattaches} sur la parcelle` : ""}</span></h3>
+      ${dynBanner}
       <ul class="pmt-list">${rows}</ul>
-      <p class="pmt-src">Signal d'activité (un permis voisin = secteur qui bouge) — source ${esc(pm.source || "SITADEL")}. Non exhaustif.</p>
+      <p class="pmt-src">Source ${esc(pm.source || "SITADEL")} — autorisations accordées (les refus n'y figurent pas). Géolocalisation par référence cadastrale, non exhaustive.</p>
     </section>`;
 }
 

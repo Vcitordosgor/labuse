@@ -52,3 +52,29 @@ def test_permit_hors_rayon_absent(db_session):
     _permit(db_session, "PC-FAR", "PC", [], "POINT(55.610 -21.205)")      # ~1 km
     pm = nearby_permits(db_session, pid, radius_m=300)
     assert pm["count"] == 0
+
+
+def test_nature_et_dynamique(db_session):
+    """1.B : nature (logements/surface) + statut + indicateur de dynamique de secteur."""
+    import json as _j
+    pid = _parcel(db_session, "PMT00100",
+                  "POLYGON((55.40 -21.05,55.401 -21.05,55.401 -21.049,55.40 -21.049,55.40 -21.05))")
+    # 3 permis géolocalisés à proximité, dont 2 récents avec logements
+    permits = [("PCN0", "PC", 5, 420, "POINT(55.4003 -21.0497)"),
+               ("PCN1", "PC", 3, 260, "POINT(55.4006 -21.0496)"),
+               ("PCN2", "DP", 0, 0, "POINT(55.4004 -21.0498)")]
+    for num, typ, lgt, surf, pt in permits:
+        db_session.execute(text(
+            "INSERT INTO sitadel_permits (permit_id,type,date,idu_codes,commune,geom,raw) VALUES "
+            "(:p,:t, now()-interval '1 year', '[]'::jsonb,'Permia', ST_GeomFromText(:w,4326), CAST(:raw AS jsonb))"),
+            {"p": num, "t": typ, "w": pt,
+             "raw": _j.dumps({"nb_lgt": lgt, "surf_hab": surf, "daact": None})})
+    from labuse.ingestion.permits import nearby_permits
+    pm = nearby_permits(db_session, pid, radius_m=300)
+    assert pm["dynamique"]["niveau"] == "modéré" or pm["dynamique"]["niveau"] == "actif"
+    assert pm["dynamique"]["logements_recents"] == 8        # 5 + 3
+    pc = next(i for i in pm["items"] if i["num"] == "PCN0")
+    assert "5 logements" in pc["nature"] and "420 m²" in pc["nature"]
+    assert pc["statut"].startswith("autorisé le")
+    dp = next(i for i in pm["items"] if i["num"] == "PCN2")
+    assert "non résidentiel" in dp["nature"]                # 0 logement → projet non résidentiel
