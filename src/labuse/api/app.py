@@ -618,6 +618,17 @@ def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
             "computed_at": ca.isoformat() if ca else None}
 
 
+@app.get("/parcels/{idu}/explain")
+def parcel_explain(idu: str, db: Session = Depends(get_db)) -> dict:
+    """3.A — Assistant : explication en langage naturel de la fiche (API Anthropic).
+
+    Le prompt ne contient QUE les faits structurés de la fiche (anti-hallucination). Sans clé
+    API (`ANTHROPIC_API_KEY`), renvoie un message clair — jamais d'erreur 500."""
+    from .assistant import explain_parcel
+    fiche = _build_fiche(db, idu)
+    return explain_parcel(fiche)
+
+
 @app.get("/parcels/{idu}/export")
 def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html|onepager)$"),
                  db: Session = Depends(get_db)):

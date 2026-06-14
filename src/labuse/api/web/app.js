@@ -466,6 +466,8 @@ function renderFiche(f) {
 
     ${renderResume(f.resume)}
 
+    ${renderAssistant(p.idu)}
+
     ${renderBati(f.bati)}
 
     ${unverifiedLine}
@@ -1013,6 +1015,31 @@ function renderFaisabilite(fa) {
       <p class="faisa-bandeau">⚠️ ${esc(fa.bandeau)}</p>
     </section>
     ${renderBilan(fa.bilan)}`;
+}
+
+// 3.A — Assistant IA : « Expliquer cette parcelle » → synthèse en prose des données RÉELLES.
+function renderAssistant(idu) {
+  return `<section class="assistant">
+    <button type="button" class="ai-btn js-explain" data-idu="${esc(idu)}">✨ Expliquer cette parcelle</button>
+    <div class="ai-out" id="ai-out" hidden></div>
+  </section>`;
+}
+async function explainParcel(idu) {
+  const out = $("#ai-out"), btn = document.querySelector(".js-explain");
+  if (!out) return;
+  out.hidden = false;
+  out.innerHTML = `<div class="ai-loading"><span class="pm-spin" aria-hidden="true"></span> L'assistant rédige la synthèse…</div>`;
+  if (btn) btn.disabled = true;
+  let res;
+  try { res = await (await fetch(`/parcels/${encodeURIComponent(idu)}/explain`)).json(); }
+  catch { res = { available: false, message: "Assistant indisponible — réessayez." }; }
+  if (btn) btn.disabled = false;
+  if (res && res.available) {
+    out.innerHTML = `<div class="ai-prose">${esc(res.explanation).replace(/\n/g, "<br>")}</div>
+      <p class="ai-foot">✨ Synthèse rédigée par IA${res.model ? ` (${esc(res.model)})` : ""} à partir des seules données de la fiche — <b>à vérifier</b>, aucune garantie.</p>`;
+  } else {
+    out.innerHTML = `<div class="ai-na">${esc((res && res.message) || "Assistant indisponible.")}</div>`;
+  }
 }
 
 // 3.D — Gabarit constructible en 3D : extrusion de l'emprise à la hauteur PLU, en AXONOMÉTRIE
@@ -1860,6 +1887,8 @@ async function main() {
     const ack = e.target.closest(".al-ack"); if (ack) { e.stopPropagation(); ackAlerte(+ack.dataset.id); return; }
     const wzd = e.target.closest(".wz-del"); if (wzd) { deleteWatchZone(+wzd.dataset.id); return; }
     const al = e.target.closest(".alert[data-idu]"); if (al) { openSheet(al.dataset.idu); return; }
+    // 3.A — assistant IA : « Expliquer cette parcelle ».
+    const ex = e.target.closest(".js-explain"); if (ex) { explainParcel(ex.dataset.idu); return; }
   });
   const cc = $("#cmp-close"); if (cc) cc.addEventListener("click", closeCompare);
   // Démo guidée : bouton d'ouverture, fermeture (croix + clic sur le fond).
