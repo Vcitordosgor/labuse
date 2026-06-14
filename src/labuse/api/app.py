@@ -619,13 +619,21 @@ def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
 
 
 @app.get("/parcels/{idu}/export")
-def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"), db: Session = Depends(get_db)):
-    """Export fiche premium (§12 étape 10) : Markdown (?format=md) ou HTML (?format=html)."""
+def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html|onepager)$"),
+                 db: Session = Depends(get_db)):
+    """Export fiche : Markdown (md), HTML détaillé (html), ou one-pager A4 imprimable (onepager,
+    Lot D1 — le document de comité : verdict, capacité, résiduel, bilan, contraintes, mini-carte)."""
     from fastapi.responses import HTMLResponse, PlainTextResponse
 
-    from .export import fiche_html, fiche_markdown
+    from .export import fiche_html, fiche_markdown, fiche_onepager
 
     fiche = _build_fiche(db, idu)
+    if format == "onepager":
+        _check_idu(idu)
+        gj = db.execute(
+            text("SELECT ST_AsGeoJSON(ST_SimplifyPreserveTopology(geom, 0.000005)) FROM parcels WHERE idu = :i"),
+            {"i": idu}).scalar()
+        return HTMLResponse(fiche_onepager(fiche, json.loads(gj) if gj else None))
     if format == "html":
         return HTMLResponse(fiche_html(fiche))
     return PlainTextResponse(fiche_markdown(fiche), media_type="text/markdown")
@@ -646,6 +654,79 @@ def spf_letter(idu: str, db: Session = Depends(get_db)):
     letter = build_letter({"idu": p.idu, "commune": p.commune, "section": p.section,
                            "numero": p.numero, "surface_m2": p.surface_m2})
     return PlainTextResponse(letter, media_type="text/plain; charset=utf-8")
+
+
+def _compare_row(fiche: dict) -> dict:
+    """Résumé COMPARABLE d'une parcelle (Lot D2) — champs alignés pour la vue côte à côte."""
+    p, v = fiche["parcel"], fiche["verdict"]
+    fa = fiche.get("faisabilite") or {}
+    fr = fa.get("fourchette") or {}
+    res = fa.get("residuel") or {}
+    bilan = fa.get("bilan") or {}
+    ca = bilan.get("ca") or {}
+    cf = bilan.get("charge_fonciere") or {}
+    contraintes = [c for c in fiche["cascade"] if c["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    return {
+        "idu": p["idu"], "commune": p.get("commune"), "section": p.get("section"), "numero": p.get("numero"),
+        "surface_m2": round(p["surface_m2"]) if p.get("surface_m2") else None,
+        "status": v.get("status"), "opportunity_score": v.get("opportunity_score"),
+        "completeness_score": v.get("completeness_score"),
+        "zone": fa.get("zone"), "constructible": fa.get("constructible"),
+        "capacite": fa.get("verdict") if fa.get("constructible") else None,
+        "sdp_max_m2": fr.get("surface_plancher_m2"),
+        "taux_emprise_pct": res.get("taux_emprise_pct") if res.get("disponible") else None,
+        "sdp_residuelle_m2": res.get("sdp_residuelle_m2") if res.get("disponible") else None,
+        "sous_densite": res.get("sous_densite") if res.get("disponible") else None,
+        "ca_bas": ca.get("bas"), "ca_haut": ca.get("haut"),
+        "charge_fonciere_m2": cf.get("par_m2_terrain"),
+        "n_contraintes": len(contraintes),
+        "contraintes": [c["detail"] for c in contraintes[:4]],
+        "synthese": (fiche.get("resume") or {}).get("synthese"),
+    }
+
+
+class SavedFilterIn(BaseModel):
+    name: str
+    params: dict
+
+
+@app.get("/filters")
+def list_filters(db: Session = Depends(get_db)) -> list[dict]:
+    """Filtres de recherche sauvegardés (Lot D3)."""
+    rows = db.execute(text("SELECT id, name, params, created_at FROM saved_filters ORDER BY created_at DESC")).mappings().all()
+    return [{"id": r["id"], "name": r["name"], "params": r["params"],
+             "created_at": r["created_at"].isoformat() if r["created_at"] else None} for r in rows]
+
+
+@app.post("/filters")
+def save_filter(body: SavedFilterIn, db: Session = Depends(get_db)) -> dict:
+    name = (body.name or "").strip()[:80]
+    if not name:
+        raise HTTPException(422, "Nom de filtre requis.")
+    fid = db.execute(text("INSERT INTO saved_filters (name, params) VALUES (:n, CAST(:p AS jsonb)) RETURNING id"),
+                     {"n": name, "p": json.dumps(body.params or {})}).scalar()
+    return {"id": fid, "name": name, "params": body.params}
+
+
+@app.delete("/filters/{filter_id}")
+def delete_filter(filter_id: int, db: Session = Depends(get_db)) -> dict:
+    db.execute(text("DELETE FROM saved_filters WHERE id = :i"), {"i": filter_id})
+    return {"ok": True}
+
+
+@app.get("/compare")
+def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des virgules"),
+            db: Session = Depends(get_db)) -> dict:
+    """Comparateur de parcelles (Lot D2) : 2-3 parcelles côte à côte (verdict, capacité,
+    résiduel, bilan, contraintes). Ignore silencieusement un IDU introuvable."""
+    ids = [x.strip() for x in idus.split(",") if x.strip()][:3]
+    out = []
+    for idu in ids:
+        try:
+            out.append(_compare_row(_build_fiche(db, idu)))
+        except HTTPException:
+            continue
+    return {"count": len(out), "parcels": out}
 
 
 @app.post("/parcels/{idu}/evaluate")

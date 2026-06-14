@@ -97,6 +97,16 @@
             <option value="prive">personne morale privée</option>
             <option value="inconnu">à identifier</option>
           </select></label>
+        <div class="filter-saved">
+          <div class="fs-row">
+            <select id="f-saved"><option value="">— filtres sauvegardés —</option></select>
+            <button type="button" id="fs-del" class="fs-del" title="Supprimer ce filtre">🗑</button>
+          </div>
+          <div class="fs-row">
+            <input type="text" id="fs-name" placeholder="nom du filtre" maxlength="60" />
+            <button type="button" id="fs-save" class="fs-save">💾 Sauvegarder</button>
+          </div>
+        </div>
       </div>
       <div id="parcel-list" class="parcel-list"></div>
     </section>
@@ -171,6 +181,13 @@
     <div id="sheet-body"></div>
   </section>
   <div id="scrim" class="scrim hidden"></div>
+
+  <!-- Comparateur (Lot D2) : barre de sélection + panneau côte à côte -->
+  <div id="compare-tray" class="compare-tray hidden" aria-label="Parcelles à comparer"></div>
+  <div id="compare-panel" class="compare-panel hidden" role="dialog" aria-label="Comparateur de parcelles">
+    <button class="cmp-close" id="cmp-close" title="Fermer">✕</button>
+    <div id="compare-body"></div>
+  </div>
 
   <script src="vendor/leaflet/leaflet.js"></script>
   <script src="app.js"></script>

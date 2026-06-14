@@ -32,6 +32,7 @@ let layer = null;           // couche Leaflet courante
 const byIdu = {};           // idu -> layer (pour highlight)
 let map;
 let PERMITS_LAYER = null;   // couche marqueurs SITADEL (Lot C4)
+let COMPARE = [];           // IDU sélectionnés pour le comparateur (Lot D2), max 3
 let COVERAGE = null;        // couverture des couches critiques (/coverage)
 let KANBAN_META = null;     // colonnes & priorités du pipeline (/pipeline/meta)
 let PIPELINE = [];          // entrées du pipeline chargées (mémoire → re-render local)
@@ -423,7 +424,8 @@ function renderFiche(f) {
 
     <footer class="fiche-actions">
       <button class="btn follow" data-follow>+ Suivre cette parcelle</button>
-      <button class="btn print" data-print>⎙ Imprimer / PDF</button>
+      <button class="btn js-compare-add" data-idu="${esc(p.idu)}">⊕ Comparer</button>
+      <a class="btn primary" href="/parcels/${encodeURIComponent(p.idu)}/export?format=onepager" target="_blank" title="Fiche 1 page A4 — à imprimer en PDF pour un comité">📄 Fiche 1 page (PDF)</a>
       <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=md" target="_blank">Export Markdown</a>
       <a class="btn" href="/parcels/${encodeURIComponent(p.idu)}/export?format=html" target="_blank">Export HTML</a>
       <button class="btn good" data-fb="good_lead">Bon lead</button>
@@ -705,6 +707,116 @@ async function loadEnrichment(idu, centroid) {
 // Lot C3 — ouvre le courrier SPF pré-rempli dans un nouvel onglet (texte brut, imprimable).
 function openSpfLetter(idu) {
   window.open(`/parcels/${encodeURIComponent(idu)}/spf-letter`, "_blank", "noopener");
+}
+
+// ───────────────────────── Filtres sauvegardés (Lot D3) ─────────────────────────
+function getFilterState() {
+  return {
+    statuses: [...document.querySelectorAll("#filter-statuses input:checked")].map((i) => i.value),
+    opp: +$("#f-opp").value, cpl: +$("#f-cpl").value, surf: +$("#f-surf").value,
+    sousDensite: !!($("#f-sousdense") && $("#f-sousdense").checked),
+    taux: +(($("#f-taux") && $("#f-taux").value) || 40),
+    owner: ($("#f-owner") && $("#f-owner").value) || "",
+  };
+}
+function applyFilterState(s) {
+  if (!s) return;
+  document.querySelectorAll("#filter-statuses input").forEach((i) => { i.checked = (s.statuses || []).includes(i.value); });
+  const set = (id, val, out) => { const el = $(id); if (el && val != null) { el.value = val; if (out) { const o = $(out); if (o) o.textContent = val; } } };
+  set("#f-opp", s.opp, "#opp-out"); set("#f-cpl", s.cpl, "#cpl-out"); set("#f-surf", s.surf, "#surf-out");
+  if ($("#f-sousdense")) $("#f-sousdense").checked = !!s.sousDensite;
+  set("#f-taux", s.taux, "#taux-out"); if ($("#f-owner")) $("#f-owner").value = s.owner || "";
+  clearKpiActive(); applyFilters();
+}
+let SAVED_FILTERS = [];
+async function loadSavedFilters() {
+  try { SAVED_FILTERS = await (await fetch("/filters")).json(); } catch { SAVED_FILTERS = []; }
+  const sel = $("#f-saved"); if (!sel) return;
+  sel.innerHTML = `<option value="">— filtres sauvegardés —</option>`
+    + SAVED_FILTERS.map((f) => `<option value="${f.id}">${esc(f.name)}</option>`).join("");
+}
+async function saveCurrentFilter() {
+  const name = ($("#fs-name").value || "").trim();
+  if (!name) { $("#fs-name").focus(); return; }
+  try {
+    await fetch("/filters", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, params: getFilterState() }) });
+    $("#fs-name").value = ""; await loadSavedFilters();
+  } catch { /* silencieux */ }
+}
+async function deleteSavedFilter() {
+  const id = $("#f-saved").value; if (!id) return;
+  try { await fetch(`/filters/${id}`, { method: "DELETE" }); await loadSavedFilters(); } catch { /* */ }
+}
+
+// ───────────────────────── Comparateur (Lot D2) ─────────────────────────
+function addToCompare(idu) {
+  if (!idu || COMPARE.includes(idu)) return;
+  if (COMPARE.length >= 3) { alert("Comparateur : 3 parcelles maximum."); return; }
+  COMPARE.push(idu);
+  renderCompareTray();
+}
+function removeFromCompare(idu) { COMPARE = COMPARE.filter((x) => x !== idu); renderCompareTray(); }
+function clearCompare() { COMPARE = []; renderCompareTray(); }
+
+function renderCompareTray() {
+  const tray = $("#compare-tray"); if (!tray) return;
+  tray.classList.toggle("hidden", COMPARE.length === 0);
+  const chips = COMPARE.map((idu) =>
+    `<span class="cmp-chip">${esc(idu)}<button class="cmp-x" data-rm="${esc(idu)}" title="Retirer">✕</button></span>`).join("");
+  tray.innerHTML = `<span class="cmp-tray-lbl">Comparer :</span>${chips}
+    <button class="cmp-go" id="cmp-go"${COMPARE.length < 2 ? " disabled" : ""}>Comparer (${COMPARE.length})</button>
+    <button class="cmp-clear" id="cmp-clear">vider</button>`;
+}
+
+function meur(x) { return x == null ? "—" : (Math.abs(x) >= 1e6 ? (x / 1e6).toFixed(1) + " M€" : Math.abs(x) >= 1e3 ? Math.round(x / 1e3) + " k€" : Math.round(x) + " €"); }
+// label · affichage · clé numérique de surlignage (raw) · sens "max"/"min"/"".
+const CMP_ROWS = [
+  ["Statut", (p) => STATUS_LABEL[p.status] || "—", null, ""],
+  ["Opportunité", (p) => p.opportunity_score ?? "—", (p) => p.opportunity_score, "max"],
+  ["Complétude", (p) => p.completeness_score ?? "—", (p) => p.completeness_score, "max"],
+  ["Surface", (p) => p.surface_m2 != null ? fmt(p.surface_m2) + " m²" : "—", (p) => p.surface_m2, "max"],
+  ["Zone PLU", (p) => esc(p.zone || "—"), null, ""],
+  ["Capacité", (p) => esc(p.capacite || (p.constructible ? "—" : "non constructible")), null, ""],
+  ["SDP max", (p) => p.sdp_max_m2 != null ? "~" + fmt(p.sdp_max_m2) + " m²" : "—", (p) => p.sdp_max_m2, "max"],
+  ["Emprise utilisée", (p) => p.taux_emprise_pct != null ? p.taux_emprise_pct + " %" + (p.sous_densite ? " · sous-densité" : "") : "—", (p) => p.taux_emprise_pct, "min"],
+  ["SDP résiduelle", (p) => p.sdp_residuelle_m2 != null ? "~" + fmt(p.sdp_residuelle_m2) + " m²" : "—", (p) => p.sdp_residuelle_m2, "max"],
+  ["CA potentiel", (p) => p.ca_bas != null ? meur(p.ca_bas) + "–" + meur(p.ca_haut) : "—", (p) => p.ca_haut, "max"],
+  ["Charge foncière /m²", (p) => p.charge_fonciere_m2 != null ? fmt(p.charge_fonciere_m2) + " €/m²" : "—", (p) => p.charge_fonciere_m2, "max"],
+  ["Contraintes", (p) => p.n_contraintes, (p) => p.n_contraintes, "min"],
+];
+
+async function openCompare() {
+  if (COMPARE.length < 2) return;
+  $("#compare-panel").classList.remove("hidden"); $("#scrim").classList.remove("hidden");
+  $("#compare-body").innerHTML = `<div class="loading">Comparaison…</div>`;
+  let data;
+  try { data = await (await fetch(`/compare?idus=${encodeURIComponent(COMPARE.join(","))}`)).json(); }
+  catch { $("#compare-body").innerHTML = `<div class="loading">Comparaison indisponible.</div>`; return; }
+  const ps = data.parcels || [];
+  if (ps.length < 2) { $("#compare-body").innerHTML = `<div class="loading">Au moins 2 parcelles valides requises.</div>`; return; }
+  const heads = ps.map((p) => `<th><a href="#" class="cmp-open" data-idu="${esc(p.idu)}">${esc(p.idu)}</a><span class="cmp-loc">${esc(p.commune || "")} ${esc(p.section || "")}${esc(p.numero || "")}</span></th>`).join("");
+  const rows = CMP_ROWS.map(([label, disp, raw, dir]) => {
+    let bestIdx = -1;
+    if (raw && dir) {
+      const nums = ps.map((p) => { const n = raw(p); return (n == null || isNaN(n)) ? null : Number(n); });
+      const valid = nums.filter((n) => n != null);
+      if (valid.length > 1) {
+        const target = dir === "max" ? Math.max(...valid) : Math.min(...valid);
+        bestIdx = nums.findIndex((n) => n === target);
+      }
+    }
+    const cells = ps.map((p, i) => `<td class="${i === bestIdx ? "cmp-best" : ""}">${disp(p)}</td>`).join("");
+    return `<tr><td class="cmp-lbl">${label}</td>${cells}</tr>`;
+  }).join("");
+  $("#compare-body").innerHTML = `
+    <h2 class="cmp-h">Comparateur · ${ps.length} parcelles</h2>
+    <table class="cmp-table"><thead><tr><th></th>${heads}</tr></thead><tbody>${rows}</tbody></table>
+    <p class="cmp-foot">Surlignage = meilleure valeur par ligne (indicatif). Pré-analyse sur données publiques ; capacité et bilan ne valent pas étude réglementaire.</p>`;
+}
+function closeCompare() {
+  $("#compare-panel").classList.add("hidden");
+  if ($("#sheet").classList.contains("hidden")) $("#scrim").classList.add("hidden");
 }
 
 // Lot C4 — marqueurs SITADEL (différés) ; couche désactivée par défaut (toggle layer control).
@@ -1503,6 +1615,14 @@ async function main() {
   const ft = $("#f-taux");
   if (ft) ft.addEventListener("input", () => { const o = $("#taux-out"); if (o) o.textContent = ft.value; applyFilters(); });
   const fo = $("#f-owner"); if (fo) fo.addEventListener("change", applyFilters);
+  // Filtres sauvegardés (Lot D3).
+  const fsv = $("#fs-save"); if (fsv) fsv.addEventListener("click", saveCurrentFilter);
+  const fsd = $("#fs-del"); if (fsd) fsd.addEventListener("click", deleteSavedFilter);
+  const fsel = $("#f-saved"); if (fsel) fsel.addEventListener("change", () => {
+    const f = SAVED_FILTERS.find((x) => String(x.id) === fsel.value);
+    if (f) applyFilterState(f.params);
+  });
+  loadSavedFilters();
   document.querySelectorAll(".kpi[data-status]").forEach((k) => {
     k.addEventListener("click", () => filterByStatus(k.dataset.status));
     k.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); filterByStatus(k.dataset.status); } });
@@ -1519,10 +1639,19 @@ async function main() {
     if (b.classList.contains("collapsed")) b.classList.remove("collapsed");
   });
   $("#sheet-close").addEventListener("click", closeSheet);
-  $("#scrim").addEventListener("click", closeSheet);
+  $("#scrim").addEventListener("click", () => { closeCompare(); closeSheet(); });
   // Audit pull (Lot A) : référence/adresse via le formulaire, polygone via le bouton dessiner.
   const af = $("#audit-form"); if (af) af.addEventListener("submit", submitAudit);
   const ad = $("#audit-draw"); if (ad) ad.addEventListener("click", startDraw);
+  // Comparateur (Lot D2) : ajout depuis la fiche, barre, panneau.
+  document.addEventListener("click", (e) => {
+    const add = e.target.closest(".js-compare-add"); if (add) { addToCompare(add.dataset.idu); return; }
+    const rm = e.target.closest("[data-rm]"); if (rm) { removeFromCompare(rm.dataset.rm); return; }
+    if (e.target.closest("#cmp-go")) { openCompare(); return; }
+    if (e.target.closest("#cmp-clear")) { clearCompare(); return; }
+    const open = e.target.closest(".cmp-open"); if (open) { e.preventDefault(); closeCompare(); openSheet(open.dataset.idu); }
+  });
+  const cc = $("#cmp-close"); if (cc) cc.addEventListener("click", closeCompare);
   // Démo guidée : bouton d'ouverture, fermeture (croix + clic sur le fond).
   document.querySelectorAll(".js-demo").forEach((b) => b.addEventListener("click", openDemo));
   $("#demo-close").addEventListener("click", closeDemo);

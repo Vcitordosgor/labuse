@@ -342,6 +342,7 @@ def create_all(engine) -> None:
     ensure_geom_2975(engine)
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
+    ensure_saved_filters(engine)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
 
@@ -430,6 +431,17 @@ def ensure_enrichment_cache(engine) -> None:
             " payload jsonb NOT NULL, computed_at timestamptz NOT NULL DEFAULT now())"))
 
 
+def ensure_saved_filters(engine) -> None:
+    """Filtres de recherche sauvegardés (Lot D3) — pilote mono-compte, params en JSONB. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS saved_filters ("
+            " id serial PRIMARY KEY, name varchar(80) NOT NULL, params jsonb NOT NULL,"
+            " created_at timestamptz NOT NULL DEFAULT now())"))
+
+
 def ensure_residuel_cache(engine) -> None:
     """Cache du potentiel résiduel (Lot B) — alimente le filtre « sous-densité » sans
     relancer la faisabilité par parcelle à chaque chargement de carte. Idempotent."""
@@ -457,6 +469,7 @@ def ensure_schema(engine) -> None:
     ensure_enrichment_cache(engine)
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
+    ensure_saved_filters(engine)
 
 
 def ensure_parcel_origine(engine) -> None:
