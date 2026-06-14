@@ -69,6 +69,12 @@
   --txt:var(--tf-text); --muted:var(--tf-text-3); --line:var(--tf-border);
   --gold:var(--tf-accent); --gold-soft:var(--tf-text-2);
 
+  /* ── Densité fiche −10% (décision Vic) : échelle typo + espacement réduits ~0.9× ──
+     Réduire les TOKENS plutôt que chaque valeur → tout se densifie proportionnellement,
+     en harmonie. Corps ≥ 12px (seuil de lisibilité). Réversible : remettre les valeurs :root. */
+  --fs-h1: 20px; --fs-h2: 16px; --fs-body: 12px; --fs-small: 11px; --fs-micro: 10px;
+  --sp-3: 10px; --sp-4: 14px; --sp-6: 20px; --sp-8: 28px;   /* sp-1/sp-2 (4/8) inchangés */
+
   background: var(--tf-bg);
   color: var(--tf-text);
   border-left: 1px solid #D7CFC0;
@@ -92,24 +98,24 @@
 }
 
 .sheet-close { border-color: var(--tf-border); color: var(--tf-text-2);
-  background: var(--tf-surface); width: 30px; height: 30px; top: var(--sp-4); right: var(--sp-4); }
+  background: var(--tf-surface); width: 28px; height: 28px; top: var(--sp-4); right: var(--sp-4); }
 .sheet-close:hover { color: var(--tf-text); border-color: var(--tf-accent); background: var(--tf-accent-dim); }
 
 /* ── En-tête « ticker » ──────────────────────────────────────────────────── */
 .sheet .fiche-head { margin-bottom: var(--sp-4); padding-bottom: var(--sp-3); border-bottom: 1px solid var(--tf-border); }
-.sheet .fh-id { font-weight: 600; font-size: 14px; letter-spacing: .06em; color: var(--tf-text); }
+.sheet .fh-id { font-weight: 600; font-size: 13px; letter-spacing: .06em; color: var(--tf-text); }
 .sheet .fh-loc { color: var(--tf-text-3); font-size: var(--fs-small); margin-top: var(--sp-1); }
 
 /* ── SIGNATURE : jauge circulaire (anneau = couleur du verdict, rempli = score) ─ */
 .sheet .hero { display: flex; gap: var(--sp-4); align-items: center; padding-bottom: var(--sp-3); }
-.sheet .gauge { position: relative; width: 116px; height: 116px; flex: none; }
-.sheet .gauge svg { width: 116px; height: 116px; transform: rotate(-90deg); }
+.sheet .gauge { position: relative; width: 104px; height: 104px; flex: none; }
+.sheet .gauge svg { width: 104px; height: 104px; transform: rotate(-90deg); }
 .sheet .g-track { fill: none; stroke: var(--tf-border); stroke-width: 9; }
 .sheet .g-arc { fill: none; stroke-width: 9; stroke-linecap: round; stroke-dasharray: 326.726;
   transition: stroke-dashoffset .7s ease, stroke .3s; }
 .sheet .g-center { position: absolute; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; line-height: 1; }
-.sheet .g-num { font-family: var(--font-mono); font-weight: 600; font-size: 33px; color: var(--tf-text); }
+.sheet .g-num { font-family: var(--font-mono); font-weight: 600; font-size: 30px; color: var(--tf-text); }
 .sheet .g-max { font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--tf-text-3); margin-top: 3px; }
 .sheet .hero-eyebrow { font-size: var(--fs-micro); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--tf-text-3); }
 .sheet .hero-verdict { font-family: var(--font-ui); font-weight: 700; font-size: var(--fs-h1);
@@ -141,7 +147,7 @@
   letter-spacing: .14em; text-transform: uppercase; color: var(--tf-text-3);
 }
 .sheet .faisa-verdict, .sheet .bilan-verdict { font-size: var(--fs-h2); font-weight: 700; color: var(--tf-text); }
-.sheet .rs-synthese { font-size: 15px; color: var(--tf-text); }
+.sheet .rs-synthese { font-size: 14px; color: var(--tf-text); }
 .sheet .faisa-ctx, .sheet .bilan-msg, .sheet .rs-list li, .sheet .rs-action { color: var(--tf-text-2); }
 .sheet .rs-action-k, .sheet .bati .bt-k { font-family: var(--font-ui); color: var(--tf-text-3); }
 
@@ -178,7 +184,7 @@
 .sheet .faisa-cards { grid-template-columns: 1fr 1fr 1fr; gap: var(--sp-3); }
 .sheet .fc { background: var(--tf-surface-2); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
   box-shadow: none; display: flex; flex-direction: column; padding: var(--sp-3); }
-.sheet .fc-num { color: var(--tf-text); font-size: 20px; font-weight: 600; }
+.sheet .fc-num { color: var(--tf-text); font-size: 18px; font-weight: 600; }
 .sheet .fc-lbl, .sheet .pm-fig i, .sheet .v3d-figs i { font-family: var(--font-ui); color: var(--tf-text-3); margin-top: auto; }
 .sheet .fc.fc-wide { grid-column: auto; }
 .sheet .faisa-steps td { border-bottom-color: var(--tf-border); color: var(--tf-text-2); }
@@ -194,8 +200,11 @@
 
 /* ── Promoteur : cartes homogènes ────────────────────────────────────────── */
 .sheet .pm-card { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-control); padding: var(--sp-3); }
-.sheet .pm-h { font-size: var(--fs-h2); font-weight: 600; color: var(--tf-text); }
-.sheet .pm-fig b { color: var(--tf-text); }
+.sheet .pm-h { font-size: var(--fs-h2); font-weight: 600; color: var(--tf-text); margin-bottom: var(--sp-2); }
+/* §5 — données promoteur : valeurs en mono, colonnes alignées, taille resserrée (densité −10%) */
+.sheet .pm-fig b { color: var(--tf-text); font-size: 20px; }
+.sheet .pm-figs { gap: var(--sp-2) var(--sp-4); }
+.sheet .pm-fig { min-width: 64px; }
 .sheet .pm-fig.degr b { color: var(--tf-text-2); }       /* §2.A : pas d'ambre sur une donnée */
 .sheet .pm-na, .sheet .pm-list.net li { color: var(--tf-text-2); }
 .sheet .pm-list.net b, .sheet .pm-list b { color: var(--tf-text); }
@@ -262,7 +271,7 @@
 .sheet .btn.follow.on { color: var(--tf-positive); background: rgba(92,192,140,.10); border-color: rgba(92,192,140,.4); }
 /* 2.C — « Expliquer cette parcelle » = action SIGNATURE (l'effet IA). Accent plein, présence forte. */
 .sheet .ai-btn { width: 100%; background: var(--tf-accent); border: 1px solid var(--tf-accent);
-  color: var(--tf-accent-ink); border-radius: var(--radius-control); padding: 12px 16px;
+  color: var(--tf-accent-ink); border-radius: var(--radius-control); padding: 11px 16px;
   font-weight: 700; font-size: var(--fs-body); letter-spacing: .01em;
   box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 6px 16px rgba(35,78,120,.22); }
 .sheet .ai-btn:hover:not(:disabled) { filter: brightness(1.06); }

@@ -1829,7 +1829,7 @@ async function finishDraw(e) {
   DRAWING = false;
   const mode = DRAW_MODE;
   if (mode === "zone") { const b = $("#watch-add"); if (b) { b.classList.remove("on"); b.textContent = "+ Zone"; } }
-  else { const b = $("#audit-draw"); if (b) { b.classList.remove("on"); b.textContent = "✏ Dessiner sur la carte"; } }
+  else { const b = $("#audit-draw"); if (b) { b.classList.remove("on"); b.textContent = "✏ Dessiner une zone sur la carte"; } }
   if (DRAW_PTS.length < 3) {
     auditMsg("Tracé annulé (au moins 3 points requis).");
     if (DRAW_LAYER) { map.removeLayer(DRAW_LAYER); DRAW_LAYER = null; }
