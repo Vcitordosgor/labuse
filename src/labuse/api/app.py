@@ -871,6 +871,75 @@ def list_signals(commune: str | None = None, signal_type: str | None = None,
     return [dict(r) for r in rows]
 
 
+# ───────────────────────── Alertes intelligentes (3.C) ─────────────────────────
+# Scope défini par l'utilisateur (zones de veille + parcelles suivies) → « nouveautés ».
+
+class WatchZoneIn(BaseModel):
+    name: str
+    geometry: dict           # polygone GeoJSON (EPSG:4326)
+    commune: str | None = None
+
+
+class AlerteAckIn(BaseModel):
+    id: int | None = None    # None → accuse réception de toutes les nouveautés de la commune
+    commune: str | None = None
+
+
+@app.get("/watch-zones")
+def watch_zones_list(commune: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
+    """Zones de veille définies (polygones surveillés)."""
+    from .. import alertes
+    commune = commune or config.get_settings().pilot_commune_name
+    return alertes.list_watch_zones(db, commune)
+
+
+@app.post("/watch-zones")
+def watch_zones_create(body: WatchZoneIn, db: Session = Depends(get_db)) -> dict:
+    """Crée une zone de veille (polygone dessiné). Détecte aussitôt les nouveautés du scope."""
+    from .. import alertes
+    if (body.geometry or {}).get("type") != "Polygon":
+        raise HTTPException(422, "geometry doit être un Polygon GeoJSON")
+    commune = body.commune or config.get_settings().pilot_commune_name
+    zone = alertes.create_watch_zone(db, body.name, commune, body.geometry)
+    counts = alertes.compute_alertes(db, commune)
+    return {"zone": zone, "detected": counts}
+
+
+@app.delete("/watch-zones/{zone_id}")
+def watch_zones_delete(zone_id: int, db: Session = Depends(get_db)) -> dict:
+    """Supprime une zone de veille (et ses alertes, par cascade)."""
+    from .. import alertes
+    if not alertes.delete_watch_zone(db, zone_id):
+        raise HTTPException(404, "Zone de veille inconnue")
+    return {"ok": True}
+
+
+@app.get("/alertes")
+def alertes_list(commune: str | None = None, only_new: bool = False,
+                 limit: int = Query(100, ge=0, le=1000), db: Session = Depends(get_db)) -> list[dict]:
+    """Liste des « nouveautés » : ventes DVF en zone de veille + permis près d'une parcelle suivie."""
+    from .. import alertes
+    commune = commune or config.get_settings().pilot_commune_name
+    return alertes.list_alertes(db, commune, only_new=only_new, limit=limit)
+
+
+@app.post("/alertes/refresh")
+def alertes_refresh(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Re-détecte les nouveautés du scope au rafraîchissement des données (idempotent)."""
+    from .. import alertes
+    commune = commune or config.get_settings().pilot_commune_name
+    return alertes.compute_alertes(db, commune)
+
+
+@app.post("/alertes/ack")
+def alertes_ack(body: AlerteAckIn, db: Session = Depends(get_db)) -> dict:
+    """Marque une nouveauté (ou toutes celles de la commune) comme lue."""
+    from .. import alertes
+    commune = body.commune or config.get_settings().pilot_commune_name
+    n = alertes.acknowledge(db, alerte_id=body.id, commune=commune)
+    return {"ok": True, "acknowledged": n}
+
+
 # ───────────────────────────── Feedback (§10) ─────────────────────────────
 
 class FeedbackIn(BaseModel):

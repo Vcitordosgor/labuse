@@ -112,7 +112,14 @@
     </section>
 
     <section class="veille">
-      <h2>Veille foncière <span class="count" id="veille-count">—</span> signaux</h2>
+      <div class="veille-head">
+        <h2>Veille foncière <span class="count" id="veille-count" title="Nouveautés non lues">—</span></h2>
+        <div class="veille-tools">
+          <button type="button" id="watch-add" class="veille-btn" title="Dessiner une zone à surveiller sur la carte">+ Zone</button>
+          <button type="button" id="alertes-refresh" class="veille-btn" title="Re-détecter les nouveautés (ventes DVF, permis)">↻</button>
+        </div>
+      </div>
+      <div id="watch-zones" class="watch-zones"></div>
       <div id="veille-list" class="veille-list"><div class="muted-sm">—</div></div>
     </section>
 

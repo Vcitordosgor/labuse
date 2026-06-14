@@ -32,6 +32,7 @@ let layer = null;           // couche Leaflet courante
 const byIdu = {};           // idu -> layer (pour highlight)
 let map;
 let PERMITS_LAYER = null;   // couche marqueurs SITADEL (Lot C4)
+let WATCH_LAYER = null, WATCH_ZONES = [];   // 3.C — zones de veille (dessinées sur la carte)
 let COMPARE = [];           // IDU sélectionnés pour le comparateur (Lot D2), max 3
 let COVERAGE = null;        // couverture des couches critiques (/coverage)
 let KANBAN_META = null;     // colonnes & priorités du pipeline (/pipeline/meta)
@@ -72,10 +73,12 @@ function initMap() {
     const h1980 = ignWmts("ORTHOIMAGERY.EDUGEO.LA-REUNION1980", histOpts);
     const h1961 = ignWmts("ORTHOIMAGERY.EDUGEO.LA-REUNION1961", histOpts);
     PERMITS_LAYER = L.layerGroup();   // marqueurs SITADEL (Lot C4), peuplés en différé
+    WATCH_LAYER = L.layerGroup().addTo(map);   // 3.C — zones de veille (visibles par défaut)
     L.control.layers(
       { "Plan (radar)": plan, "Vue du ciel (IGN)": ortho,
         "Ciel · 2010": h2010, "Ciel · 1989": h1989, "Ciel · 1980": h1980, "Ciel · 1961": h1961 },
-      { "Permis (SITADEL)": PERMITS_LAYER }, { position: "topright", collapsed: true }
+      { "Permis (SITADEL)": PERMITS_LAYER, "Zones de veille": WATCH_LAYER },
+      { position: "topright", collapsed: true }
     ).addTo(map);
   } catch (e) {
     map = null;
@@ -185,22 +188,84 @@ async function loadStats() {
   $("#kpi-opp").textContent = fmt(s.opportunite);
   $("#kpi-creuser").textContent = fmt(s.a_creuser);
   $("#kpi-exclue").textContent = fmt(s.exclue);
-  $("#veille-count").textContent = fmt(s.active_signals || 0);
 }
 
-async function loadSignals() {
-  let sig = [];
-  try { sig = await (await fetch(`/signals?commune=${encodeURIComponent(COMMUNE)}&limit=8`)).json(); } catch { sig = []; }
-  // Audit J8 : pas de section VIDE en permanence (effet « inachevé »), pas de jargon CLI.
-  const section = document.querySelector(".veille");
-  if (!sig.length) { if (section) section.classList.add("hidden"); return; }
-  if (section) section.classList.remove("hidden");
-  const TYPE = { zonage_change: "Changement de zonage", mutation_dvf: "Mutation DVF", new_permit_nearby: "Permis à proximité" };
-  $("#veille-list").innerHTML = sig.map((s) => {
-    const p = s.payload || {};
-    const det = (p.from || p.to) ? `<br>${esc(p.from)} → ${esc(p.to)}` : (p.date_mutation || p.date ? `<br>${esc(p.date_mutation || p.date)}` : "");
-    return `<div class="alert"><span class="a-type">${TYPE[s.signal_type] || esc(s.signal_type)}</span> · <span class="a-idu">${esc(s.idu)}</span>${det}</div>`;
+// 3.C — Veille = zones surveillées + parcelles suivies → liste de « nouveautés ».
+async function loadVeille() { await Promise.all([loadWatchZones(), loadAlertes()]); }
+
+async function loadWatchZones() {
+  try { WATCH_ZONES = await (await fetch(`/watch-zones?commune=${encodeURIComponent(COMMUNE)}`)).json(); }
+  catch { WATCH_ZONES = []; }
+  if (WATCH_LAYER) {
+    WATCH_LAYER.clearLayers();
+    WATCH_ZONES.forEach((z) => {
+      if (!z.geojson) return;
+      L.geoJSON(z.geojson, { style: { color: "#c9a86a", weight: 1.5, dashArray: "5", fillOpacity: 0.05 } })
+        .bindTooltip(`Veille : ${z.name}`, { sticky: true }).addTo(WATCH_LAYER);
+    });
+  }
+  const box = $("#watch-zones");
+  if (!box) return;
+  box.innerHTML = WATCH_ZONES.length
+    ? WATCH_ZONES.map((z) => `<span class="wz-chip" title="${z.area_m2 ? z.area_m2.toLocaleString("fr-FR") + " m²" : ""}">🔔 ${esc(z.name)}<button class="wz-del" data-id="${z.id}" title="Retirer cette zone de veille">✕</button></span>`).join("")
+    : `<span class="muted-sm">Aucune zone de veille — « + Zone » pour en dessiner une.</span>`;
+}
+
+async function loadAlertes() {
+  let items = [];
+  try { items = await (await fetch(`/alertes?commune=${encodeURIComponent(COMMUNE)}&limit=12`)).json(); } catch { items = []; }
+  const nNew = items.filter((a) => !a.acknowledged).length;
+  $("#veille-count").textContent = fmt(nNew);
+  const list = $("#veille-list");
+  if (!list) return;
+  if (!items.length) {
+    list.innerHTML = `<div class="muted-sm">Aucune nouveauté. Surveillez une zone (« + Zone ») ou suivez des parcelles dans le pipeline.</div>`;
+    return;
+  }
+  const TYPE = { dvf_in_zone: "Vente DVF", permit_near_followed: "Permis à proximité" };
+  list.innerHTML = items.map((a) => {
+    const p = a.payload || {};
+    const dt = p.date ? " · " + esc(String(p.date).slice(0, 10)) : "";
+    const sub = a.kind === "dvf_in_zone"
+      ? `${esc(a.zone_name || "")}${p.valeur_fonciere ? " · " + Number(p.valeur_fonciere).toLocaleString("fr-FR") + " €" : ""}${dt}`
+      : `${esc(a.parcel_idu || "")}${p.within_m != null ? " · à " + p.within_m + " m" : ""}${dt}`;
+    const target = a.kind === "permit_near_followed" ? (a.parcel_idu || "") : "";
+    return `<div class="alert${a.acknowledged ? " ack" : ""}"${target ? ` data-idu="${esc(target)}"` : ""}>
+      <span class="a-type">${TYPE[a.kind] || esc(a.kind)}</span> <span class="a-idu">${sub}</span>
+      ${a.acknowledged ? "" : `<button class="al-ack" data-id="${a.id}" title="Marquer comme lu">✓</button>`}</div>`;
   }).join("");
+}
+
+// Dessiner une zone de veille (réutilise l'outil de tracé), puis POST.
+function startWatchZone() {
+  const name = (prompt("Nom de la zone à surveiller ?", "Ma zone de veille") || "").trim();
+  if (!name) { auditMsg("Création de zone annulée."); return; }
+  startDraw("zone", name);
+}
+async function createWatchZone(name, geometry) {
+  auditMsg("Création de la zone de veille…", true);
+  let res;
+  try {
+    res = await (await fetch("/watch-zones", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, geometry, commune: COMMUNE }) })).json();
+  } catch { auditMsg("Création impossible — réessayez."); return; }
+  const d = (res && res.detected) || {};
+  auditMsg(`Zone « ${name} » créée${d.total ? ` · ${d.total} nouveauté(s) détectée(s)` : ""}.`);
+  setTimeout(() => auditMsg(""), 4500);
+  await loadVeille();
+}
+async function refreshAlertes() {
+  auditMsg("Détection des nouveautés…", true);
+  try { await fetch(`/alertes/refresh?commune=${encodeURIComponent(COMMUNE)}`, { method: "POST" }); } catch { /* silencieux */ }
+  auditMsg(""); await loadVeille();
+}
+async function ackAlerte(id) {
+  try { await fetch("/alertes/ack", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, commune: COMMUNE }) }); } catch { /* silencieux */ }
+  await loadAlertes();
+}
+async function deleteWatchZone(id) {
+  try { await fetch(`/watch-zones/${id}`, { method: "DELETE" }); } catch { /* silencieux */ }
+  await loadVeille();
 }
 
 async function loadCoverage() {
@@ -1636,15 +1701,18 @@ function submitAudit(e) {
 }
 
 // Dessin de polygone (Leaflet natif : clic = sommet, double-clic = terminer).
-let DRAW_PTS = [], DRAW_LAYER = null, DRAWING = false;
-function startDraw() {
+// Deux usages (DRAW_MODE) : 'audit' (auditer un terrain) et 'zone' (zone de veille 3.C).
+let DRAW_PTS = [], DRAW_LAYER = null, DRAWING = false, DRAW_MODE = "audit", DRAW_ZONE_NAME = "";
+function startDraw(mode = "audit", zoneName = "") {
   if (!map) { auditMsg("Carte indisponible."); return; }
   if (DRAWING) return finishDraw();
-  DRAWING = true; DRAW_PTS = [];
+  DRAWING = true; DRAW_PTS = []; DRAW_MODE = mode; DRAW_ZONE_NAME = zoneName;
   if (DRAW_LAYER) { map.removeLayer(DRAW_LAYER); DRAW_LAYER = null; }
-  $("#audit-draw").classList.add("on");
-  $("#audit-draw").textContent = "✓ Terminer le tracé";
-  auditMsg("Cliquez pour poser les sommets ; double-clic ou « Terminer » pour boucler.");
+  const btn = mode === "zone" ? $("#watch-add") : $("#audit-draw");
+  if (btn) { btn.classList.add("on"); btn.textContent = "✓ Terminer le tracé"; }
+  auditMsg(mode === "zone"
+    ? `Zone « ${zoneName} » : cliquez les sommets, double-clic pour boucler.`
+    : "Cliquez pour poser les sommets ; double-clic ou « Terminer » pour boucler.");
   map.doubleClickZoom.disable();
   map.on("click", onDrawClick);
   map.on("dblclick", finishDraw);
@@ -1660,11 +1728,17 @@ async function finishDraw(e) {
   map.off("click", onDrawClick); map.off("dblclick", finishDraw);
   setTimeout(() => map.doubleClickZoom.enable(), 300);
   DRAWING = false;
-  $("#audit-draw").classList.remove("on");
-  $("#audit-draw").textContent = "✏ Dessiner sur la carte";
-  if (DRAW_PTS.length < 3) { auditMsg("Tracé annulé (au moins 3 points requis)."); return; }
+  const mode = DRAW_MODE;
+  if (mode === "zone") { const b = $("#watch-add"); if (b) { b.classList.remove("on"); b.textContent = "+ Zone"; } }
+  else { const b = $("#audit-draw"); if (b) { b.classList.remove("on"); b.textContent = "✏ Dessiner sur la carte"; } }
+  if (DRAW_PTS.length < 3) {
+    auditMsg("Tracé annulé (au moins 3 points requis).");
+    if (DRAW_LAYER) { map.removeLayer(DRAW_LAYER); DRAW_LAYER = null; }
+    return;
+  }
   const ring = DRAW_PTS.concat([DRAW_PTS[0]]);     // fermeture de l'anneau
-  await runAudit("/audit/polygone", { geometry: { type: "Polygon", coordinates: [ring] } });
+  if (mode === "zone") await createWatchZone(DRAW_ZONE_NAME, { type: "Polygon", coordinates: [ring] });
+  else await runAudit("/audit/polygone", { geometry: { type: "Polygon", coordinates: [ring] } });
   if (DRAW_LAYER) { map.removeLayer(DRAW_LAYER); DRAW_LAYER = null; }
 }
 
@@ -1674,7 +1748,7 @@ async function main() {
   initMap();
   // Chargements initiaux INDÉPENDANTS en parallèle (chacun gère déjà son échec) →
   // moins de latence au premier rendu qu'une chaîne de 5 await séquentiels.
-  await Promise.all([loadStats(), loadCoverage(), loadSignals(), loadMeta(), fetchPipeline()]);
+  await Promise.all([loadStats(), loadCoverage(), loadVeille(), loadMeta(), fetchPipeline()]);
   // La carte est le cœur de la démo : si le geojson échoue (réseau), on ne laisse jamais
   // un écran mort silencieux — message lisible + filtres encore utilisables au retour.
   let fc = { features: [] };
@@ -1727,7 +1801,10 @@ async function main() {
   $("#scrim").addEventListener("click", () => { closeCompare(); closeSheet(); });
   // Audit pull (Lot A) : référence/adresse via le formulaire, polygone via le bouton dessiner.
   const af = $("#audit-form"); if (af) af.addEventListener("submit", submitAudit);
-  const ad = $("#audit-draw"); if (ad) ad.addEventListener("click", startDraw);
+  const ad = $("#audit-draw"); if (ad) ad.addEventListener("click", () => startDraw("audit"));
+  // 3.C — veille : surveiller une zone, rafraîchir les nouveautés.
+  const wa = $("#watch-add"); if (wa) wa.addEventListener("click", startWatchZone);
+  const ar = $("#alertes-refresh"); if (ar) ar.addEventListener("click", refreshAlertes);
   // Comparateur (Lot D2) : ajout depuis la fiche, barre, panneau.
   document.addEventListener("click", (e) => {
     const add = e.target.closest(".js-compare-add"); if (add) { addToCompare(add.dataset.idu); return; }
@@ -1736,6 +1813,10 @@ async function main() {
     if (e.target.closest("#cmp-clear")) { clearCompare(); return; }
     const open = e.target.closest(".cmp-open"); if (open) { e.preventDefault(); closeCompare(); openSheet(open.dataset.idu); }
     const bps = e.target.closest(".bp-save"); if (bps) { const box = bps.closest(".bilan-params"); if (box) saveBilanParams(box); }
+    // 3.C — veille : accuser une nouveauté, retirer une zone, ouvrir la parcelle suivie.
+    const ack = e.target.closest(".al-ack"); if (ack) { e.stopPropagation(); ackAlerte(+ack.dataset.id); return; }
+    const wzd = e.target.closest(".wz-del"); if (wzd) { deleteWatchZone(+wzd.dataset.id); return; }
+    const al = e.target.closest(".alert[data-idu]"); if (al) { openSheet(al.dataset.idu); return; }
   });
   const cc = $("#cmp-close"); if (cc) cc.addEventListener("click", closeCompare);
   // Démo guidée : bouton d'ouverture, fermeture (croix + clic sur le fond).

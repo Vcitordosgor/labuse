@@ -346,6 +346,7 @@ def create_all(engine) -> None:
     ensure_personnes_morales(engine)
     ensure_bilan_params(engine)
     ensure_vue_mer_cache(engine)
+    ensure_watch_zones(engine)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
 
@@ -484,6 +485,35 @@ def ensure_saved_filters(engine) -> None:
             " created_at timestamptz NOT NULL DEFAULT now())"))
 
 
+def ensure_watch_zones(engine) -> None:
+    """3.C — Alertes intelligentes : ZONES DE VEILLE (polygones dessinés) + table `alertes`
+    (les « nouveautés »). Idempotent. La dédup d'une alerte par fait-source repose sur deux
+    index uniques PARTIELS (une vente ne crée qu'une alerte par zone ; un permis qu'une par
+    parcelle suivie) → re-rafraîchir sans donnée neuve n'ajoute rien."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS watch_zones ("
+            " id serial PRIMARY KEY, name varchar(120) NOT NULL, commune varchar(64) NOT NULL,"
+            " geom geometry(Polygon, 4326) NOT NULL,"
+            " created_at timestamptz NOT NULL DEFAULT now(), last_run_at timestamptz)"))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS idx_watch_zones_geom ON watch_zones USING gist (geom)"))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_watch_zones_commune ON watch_zones (commune)"))
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS alertes ("
+            " id serial PRIMARY KEY, kind varchar(32) NOT NULL,"
+            " zone_id integer REFERENCES watch_zones(id) ON DELETE CASCADE,"
+            " parcel_id integer REFERENCES parcels(id) ON DELETE CASCADE,"
+            " source_ref varchar(64) NOT NULL, label text NOT NULL, payload jsonb,"
+            " acknowledged boolean NOT NULL DEFAULT false,"
+            " detected_at timestamptz NOT NULL DEFAULT now())"))
+        c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_zone_dvf "
+                     "ON alertes (zone_id, source_ref) WHERE kind = 'dvf_in_zone'"))
+        c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_parcel_permit "
+                     "ON alertes (parcel_id, source_ref) WHERE kind = 'permit_near_followed'"))
+
+
 def ensure_residuel_cache(engine) -> None:
     """Cache du potentiel résiduel (Lot B) — alimente le filtre « sous-densité » sans
     relancer la faisabilité par parcelle à chaque chargement de carte. Idempotent."""
@@ -515,6 +545,7 @@ def ensure_schema(engine) -> None:
     ensure_personnes_morales(engine)
     ensure_bilan_params(engine)
     ensure_vue_mer_cache(engine)
+    ensure_watch_zones(engine)
 
 
 def ensure_parcel_origine(engine) -> None:
