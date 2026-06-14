@@ -385,6 +385,22 @@ async function openSheet(idu) {
   loadEnrichment(idu, f.parcel && f.parcel.centroid);   // bloc « promoteur » en arrière-plan (lazy)
 }
 
+// Jauge circulaire du score (signature) : anneau coloré par le verdict (CSS) + remplissage
+// proportionnel au score réel (stroke-dashoffset). Score absent → anneau vide, « — » au centre.
+const GAUGE_C = 326.726;   // circonférence = 2·π·52
+function renderGauge(score) {
+  const has = score != null && !Number.isNaN(Number(score));
+  const s = Math.max(0, Math.min(100, Number(score) || 0));
+  const off = (has ? GAUGE_C * (1 - s / 100) : GAUGE_C).toFixed(1);
+  return `<div class="gauge">
+    <svg viewBox="0 0 116 116" aria-hidden="true">
+      <circle class="g-track" cx="58" cy="58" r="52"/>
+      <circle class="g-arc" cx="58" cy="58" r="52" style="stroke-dashoffset:${off}"/>
+    </svg>
+    <div class="g-center"><span class="g-num">${has ? s : "—"}</span><span class="g-max">/ 100</span></div>
+  </div>`;
+}
+
 function renderFiche(f) {
   const v = f.verdict || {};
   const p = f.parcel || {};
@@ -445,24 +461,16 @@ function renderFiche(f) {
 
     ${p.origine === "audit" ? `<section class="audit-banner">🔎 <b>Audit à la demande</b> — parcelle récupérée au cadastre et évaluée à la volée (hors balayage initial). Mêmes règles et mêmes sources que le reste du radar.</section>` : ""}
 
-    <section class="verdict v-${status}">
-      <div class="verdict-eyebrow">Verdict LA BUSE</div>
-      <h1 class="verdict-word">${STATUS_LABEL[status] || esc(status) || "—"}</h1>
-      <p class="verdict-gloss">${esc(VERDICT_GLOSS[status] || "")}</p>
-      ${v.downgrade_reason ? `<p class="verdict-downgrade">⚠️ Déclassée malgré un score brut élevé — ${esc(v.downgrade_reason)}.</p>` : ""}
-      ${fiableBadge(status)}
-    </section>
-
-    <section class="scores v-${status}">
-      <div class="score">
-        <div class="score-top"><span class="score-num">${v.opportunity_score ?? "—"}</span><span class="score-lbl">Opportunité</span></div>
-        <div class="bar opp"><i style="width:${w(v.opportunity_score)}%"></i></div>
+    <section class="hero v-${status}">
+      ${renderGauge(v.opportunity_score)}
+      <div class="hero-txt">
+        <div class="hero-eyebrow">Verdict LA BUSE</div>
+        <h1 class="hero-verdict">${STATUS_LABEL[status] || esc(status) || "—"}</h1>
+        <p class="hero-pitch">${esc(VERDICT_GLOSS[status] || "")}</p>
+        ${v.downgrade_reason ? `<p class="verdict-downgrade">⚠️ Déclassée malgré un score brut élevé — ${esc(v.downgrade_reason)}.</p>` : ""}
+        <div class="hero-meta">Complétude ${v.completeness_score ?? "—"}${p.surface_m2 ? " · " + fmt(Math.round(p.surface_m2)) + " m²" : ""}</div>
+        ${fiableBadge(status)}
       </div>
-      <div class="score">
-        <div class="score-top"><span class="score-num">${v.completeness_score ?? "—"}</span><span class="score-lbl">Complétude</span></div>
-        <div class="bar cpl"><i style="width:${w(v.completeness_score)}%"></i></div>
-      </div>
-      <p class="golden-note">L'opportunité ne s'affiche jamais seule — une complétude &lt; 50 plafonne le verdict à « à creuser ».</p>
     </section>
 
     ${renderResume(f.resume)}
@@ -1074,17 +1082,18 @@ function renderVolume3D(v) {
   const tx = (q) => (pad + (q[0] - minX) * s).toFixed(1), ty = (q) => (pad + (q[1] - minY) * s).toFixed(1);
   const poly = (ring, z) => ring.map((p) => { const q = iso(p, z); return `${tx(q)},${ty(q)}`; }).join(" ");
 
-  let svg = `<polygon points="${poly(v.outline, 0)}" fill="#262b33" stroke="#586273" stroke-width="1"/>`;
+  // Fiche claire : sol = papier teinté, gabarit en TERRE chaude (volume bâti, ressort sur le papier).
+  let svg = `<polygon points="${poly(v.outline, 0)}" fill="#ECE6D8" stroke="#C9C0AE" stroke-width="1"/>`;
   const walls = [];                                    // murs triés arrière→avant (somme x+y)
   for (let i = 0; i < foot.length; i++) {
     const a = foot[i], b = foot[(i + 1) % foot.length];
     const quad = [iso(a, 0), iso(b, 0), iso(b, h), iso(a, h)].map((q) => `${tx(q)},${ty(q)}`).join(" ");
     const left = ((b[0] - a[0]) - (b[1] - a[1])) < 0;  // orientation écran → ombrage
-    walls.push({ depth: a[0] + a[1] + b[0] + b[1], pts: quad, fill: left ? "#9a7b3a" : "#c2a155" });
+    walls.push({ depth: a[0] + a[1] + b[0] + b[1], pts: quad, fill: left ? "#B07C36" : "#CDA05B" });
   }
   walls.sort((p, q) => p.depth - q.depth)
-    .forEach((w) => { svg += `<polygon points="${w.pts}" fill="${w.fill}" stroke="#3a2f18" stroke-width="0.5"/>`; });
-  svg += `<polygon points="${poly(foot, h)}" fill="#e3c478" stroke="#8a6f2c" stroke-width="1"/>`;
+    .forEach((w) => { svg += `<polygon points="${w.pts}" fill="${w.fill}" stroke="#7A5E26" stroke-width="0.5"/>`; });
+  svg += `<polygon points="${poly(foot, h)}" fill="#E3BE73" stroke="#9A7A33" stroke-width="1"/>`;
 
   return `<div class="v3d">
     <svg viewBox="0 0 ${W} ${H}" class="v3d-svg" role="img" aria-label="Gabarit constructible en 3D (indicatif)">${svg}</svg>

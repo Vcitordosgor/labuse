@@ -1,9 +1,26 @@
-# LE TERMINAL FONCIER — système de design (v2)
+# LE TERMINAL FONCIER — système de design (v3)
 
-> Source unique de vérité : **`src/labuse/api/web/terminal.css`** (bloc `:root`). Toute valeur
-> (couleur, espacement, radius, taille) dérive de ces échelles — **aucune valeur magique** ailleurs.
-> Étape 2 : système posé + **fiche parcelle ET bilan** migrés (scopés `.sheet`). ⛔ STOP avant
-> propagation aux autres vues (étape 3).
+> Source unique de vérité : **`src/labuse/api/web/terminal.css`**. `:root` = la variante SOMBRE
+> (conservée pour réversibilité) ; `.sheet` = le **thème CLAIR « dossier »** validé pour la fiche.
+> Toute valeur dérive des tokens — **aucune valeur magique** ailleurs.
+
+## v3 — La fiche passe en CLAIR + jauge circulaire (le reste de l'app reste sombre)
+- **Effet** : l'app de prospection est sombre (salle de marché) ; la fiche s'ouvre comme un
+  **dossier clair** (rapport d'expertise) — fiche **élargie de 30 %** (728 px), ombre portée qui
+  la détache du radar sombre.
+- **Signature = jauge circulaire** (`renderGauge`) : anneau SVG dont la **couleur = le verdict**
+  (vert / ambre / rouge / gris) et le **remplissage = le score réel** (`stroke-dashoffset`). Lisible
+  d'un coup d'œil sur les 4 verdicts. La complétude devient une **métadonnée** discrète à côté.
+- **Palette claire** : fond papier `#F7F5F0`, cartes `#FFFFFF`/`#FCFBF8`, encre `#2C2C2A`, hairline
+  `#E2DDD2`. **Accent actions = bleu encre `#234E78`** (registre cadastre/tampon administratif —
+  remplace l'ambre ; les verdicts gardent vert/ambre/rouge). Données en **mono** = relevé imprimé.
+- **Verdicts** : version TEXTE assombrie (AA sur papier) + version VIVE (anneau de jauge, pastilles).
+- **3D** : gabarit en **terre chaude** sur le papier (ressort, évoque le volume bâti).
+- **Contrastes ≥ AA** vérifiés (min 4.70). **Réversibilité** : réécrire le bloc `.sheet` vers les
+  tokens `:root` rebascule la fiche en sombre, zéro casse.
+- Périmètre : **fiche uniquement** — carte, radar, sidebar, pipeline restent **sombres**.
+
+## Fondations (inchangées depuis v2)
 
 ## Couleur — sémantique stricte (§2.A)
 | Token | Hex | Usage EXCLUSIF |

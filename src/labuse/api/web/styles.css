@@ -276,7 +276,7 @@ input[type=checkbox] { accent-color: var(--gold); }
   --v-exclue: #5b626b;
   --v-faux_positif_probable: #a9543f;
   --serif: "Fraunces", Georgia, "Times New Roman", serif;
-  position: fixed; top: 0; right: 0; width: min(560px, 94vw); height: 100vh; z-index: 1000;
+  position: fixed; top: 0; right: 0; width: min(728px, 96vw); height: 100vh; z-index: 1000;
   background: var(--paper); color: var(--ink);
   border-left: 1px solid #d6cdb8;
   box-shadow: -24px 0 64px rgba(0,0,0,.45);
