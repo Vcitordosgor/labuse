@@ -280,14 +280,37 @@
   color: var(--tf-accent-ink); border-radius: var(--radius-control); padding: 11px 16px;
   font-weight: 700; font-size: var(--fs-body); letter-spacing: .01em;
   box-shadow: 0 1px 0 rgba(255,255,255,.18) inset, 0 6px 16px rgba(35,78,120,.22); }
-.sheet .ai-btn:hover:not(:disabled) { filter: brightness(1.06); }
+.sheet .ai-btn:hover:not(:disabled) { filter: brightness(1.05); box-shadow: 0 1px 0 rgba(255,255,255,.2) inset, 0 8px 20px rgba(35,78,120,.26); }
+.sheet .ai-ic { font-size: 1.05em; margin-right: 2px; }
+/* sous-texte : dit ce que fait la fonction AVANT le clic (registre pro, pas marketing) */
+.sheet .ai-pitch { margin: var(--sp-2) 0 0; text-align: center; font-size: var(--fs-small);
+  color: var(--tf-text-3); line-height: 1.4; }
 /* État sans clé : discret mais présent (ghost), jamais un gros bouton accent grisé frustrant */
 .sheet .ai-btn:disabled { background: transparent; border: 1px dashed var(--tf-border);
   color: var(--tf-text-3); box-shadow: none; font-weight: 600; }
 .sheet .ai-req { color: var(--tf-text-3); font-weight: 400; }
-.sheet .ai-out { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-card); }
-.sheet .ai-prose { color: var(--tf-text); }
-.sheet .ai-foot { color: var(--tf-text-3); }
+/* La réponse : encadré soigné et lisible (ce que le promoteur lit / montre à son associé) */
+.sheet .ai-out { margin-top: var(--sp-3); background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-card); padding: var(--sp-4); }
+.sheet .ai-out.ready { box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 4px 16px rgba(35,78,120,.06); }
+.sheet .ai-loading { display: flex; align-items: center; gap: 8px; font-size: var(--fs-body); color: var(--tf-text-3); }
+.sheet .ai-card-h { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: var(--fs-body);
+  color: var(--tf-accent); margin-bottom: var(--sp-2); padding-bottom: var(--sp-2); border-bottom: 1px solid var(--tf-border); }
+.sheet .ai-prose { font-size: var(--fs-body); line-height: 1.6; color: var(--tf-text); }
+.sheet .ai-prose .ai-p { margin: 0 0 var(--sp-2); }
+.sheet .ai-prose .ai-p.ai-h { font-weight: 700; color: var(--tf-text); margin-top: var(--sp-2); }
+.sheet .ai-prose strong { font-weight: 700; color: var(--tf-text); }
+.sheet .ai-prose em { font-style: italic; }
+.sheet .ai-prose code { font-family: var(--font-mono); font-size: .92em; background: var(--tf-surface-2);
+  padding: 1px 5px; border-radius: 5px; }
+.sheet .ai-prose ul { margin: var(--sp-1) 0 var(--sp-2); padding-left: 18px; }
+.sheet .ai-prose li { margin: 2px 0; }
+/* le « signal de vigilance » repérable d'un coup d'œil */
+.sheet .ai-prose .ai-warn { background: rgba(200,132,26,.10); border-left: 3px solid var(--tf-flag-bright);
+  color: var(--tf-flag); padding: 7px 11px; border-radius: var(--radius-control); margin: var(--sp-2) 0; }
+.sheet .ai-foot { margin: var(--sp-3) 0 0; padding-top: var(--sp-2); border-top: 1px solid var(--tf-border);
+  font-size: var(--fs-micro); color: var(--tf-text-3); line-height: 1.4; }
+.sheet .ai-na { font-size: var(--fs-body); color: var(--tf-text-2); line-height: 1.5; }
 
 /* ── Mouvement sobre & plancher de qualité ───────────────────────────────── */
 .sheet .fc, .sheet .pm-card, .sheet .btn, .sheet .ai-btn { transition: border-color .14s, background .14s; }

@@ -1031,13 +1031,15 @@ function renderFaisabilite(fa) {
 function renderAssistant(idu) {
   if (!ASSISTANT_OK) {
     return `<section class="assistant">
-      <button type="button" class="ai-btn" disabled
+      <button type="button" class="ai-btn ai-off" disabled
         title="Définissez la variable d'environnement ANTHROPIC_API_KEY côté serveur pour activer l'assistant">
-        ✨ Expliquer cette parcelle <span class="ai-req">· clé API requise</span></button>
+        <span class="ai-ic">✨</span> Expliquer cette parcelle <span class="ai-req">· clé API requise</span></button>
     </section>`;
   }
   return `<section class="assistant">
-    <button type="button" class="ai-btn js-explain" data-idu="${esc(idu)}">✨ Expliquer cette parcelle</button>
+    <button type="button" class="ai-btn js-explain" data-idu="${esc(idu)}">
+      <span class="ai-ic">✨</span> Expliquer cette parcelle</button>
+    <p class="ai-pitch">Synthèse en langage clair : ce qui favorise, ce qui bloque, la prochaine action.</p>
     <div class="ai-out" id="ai-out" hidden></div>
   </section>`;
 }
@@ -1045,6 +1047,33 @@ async function loadAssistantStatus() {
   try { ASSISTANT_OK = !!(await (await fetch("/assistant/status")).json()).configured; }
   catch { ASSISTANT_OK = false; }
 }
+
+// Markdown LÉGER et sûr pour la synthèse IA : on échappe d'abord (anti-XSS), puis on met en forme
+// gras/italique, listes, et on isole visuellement les lignes de VIGILANCE (⚠).
+function aiMarkdown(src) {
+  const inline = (t) => esc(t)
+    .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+  let html = "", inList = false;
+  for (const raw of String(src || "").split(/\n/)) {
+    const t = raw.trim();
+    if (/^[-*•]\s+/.test(t)) {
+      if (!inList) { html += "<ul>"; inList = true; }
+      html += `<li>${inline(t.replace(/^[-*•]\s+/, ""))}</li>`;
+      continue;
+    }
+    if (inList) { html += "</ul>"; inList = false; }
+    if (!t) continue;
+    const warn = t.includes("⚠") ? " ai-warn" : "";
+    // titre court terminé par « : » → mis en exergue
+    const head = /^[^:]{2,40}:\s*$/.test(t) ? " ai-h" : "";
+    html += `<p class="ai-p${warn}${head}">${inline(t)}</p>`;
+  }
+  if (inList) html += "</ul>";
+  return html;
+}
+
 async function explainParcel(idu) {
   const out = $("#ai-out"), btn = document.querySelector(".js-explain");
   if (!out) return;
@@ -1056,9 +1085,12 @@ async function explainParcel(idu) {
   catch { res = { available: false, message: "Assistant indisponible — réessayez." }; }
   if (btn) btn.disabled = false;
   if (res && res.available) {
-    out.innerHTML = `<div class="ai-prose">${esc(res.explanation).replace(/\n/g, "<br>")}</div>
-      <p class="ai-foot">✨ Synthèse rédigée par IA${res.model ? ` (${esc(res.model)})` : ""} à partir des seules données de la fiche — <b>à vérifier</b>, aucune garantie.</p>`;
+    out.classList.add("ready");
+    out.innerHTML = `<div class="ai-card-h"><span class="ai-ic">✨</span> Synthèse de la parcelle</div>
+      <div class="ai-prose">${aiMarkdown(res.explanation)}</div>
+      <p class="ai-foot">Rédigée par IA${res.model ? ` · ${esc(res.model)}` : ""} à partir des <b>seules données de la fiche</b> — à vérifier, aucune garantie.</p>`;
   } else {
+    out.classList.remove("ready");
     out.innerHTML = `<div class="ai-na">${esc((res && res.message) || "Assistant indisponible.")}</div>`;
   }
 }
