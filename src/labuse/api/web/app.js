@@ -1143,11 +1143,18 @@ async function saveBilanParams(box) {
   if (CURRENT_IDU) openSheet(CURRENT_IDU);   // re-fetch → bilan recalculé
 }
 
-// 1.C — bandeau « non calibré » si un paramètre CRITIQUE manque.
+// 1.C — bandeau bilan : DUR « non fiable » si un param critique n'a aucune valeur ; sinon SOUPLE
+// « valeurs indicatives à affiner » si des params clés sont estimés (socle web, cf calibration).
 function renderBilanBanner(b) {
   const nc = b.non_calibres_critiques || [];
-  if (!nc.length) return "";
-  return `<div class="bilan-noncal">⚠️ Bilan <b>non fiable</b> tant que ces paramètres clés ne sont pas calibrés : ${nc.map(esc).join(", ")}. Renseignez-les ci-dessous (secteur <b>${esc(b.secteur || "—")}</b>).</div>`;
+  if (nc.length) {
+    return `<div class="bilan-noncal">⚠️ Bilan <b>non fiable</b> tant que ces paramètres clés ne sont pas calibrés : ${nc.map(esc).join(", ")}. Renseignez-les ci-dessous (secteur <b>${esc(b.secteur || "—")}</b>).</div>`;
+  }
+  const est = b.estimes_a_affiner || [];
+  if (est.length) {
+    return `<div class="bilan-estim">ℹ️ Charge foncière chiffrée sur un <b>socle de valeurs sourcées en ligne</b>. À affiner avec un promoteur : ${est.map(esc).join(", ")}.</div>`;
+  }
+  return "";
 }
 
 // 1.C — panneau de calibration des paramètres du bilan, par secteur (édition + persistance).
@@ -1160,9 +1167,12 @@ function renderBilanParams(b) {
     <div class="bp-grp"><div class="bp-grp-t">${esc(g)}</div>
       ${ps.map((p) => {
         const nonCal = p.is_placeholder;
+        const badge = nonCal ? '<span class="bp-badge">non calibré</span>'
+          : p.provenance === "estimee" ? '<span class="bp-badge bp-est">indicatif</span>'
+          : p.provenance === "sourcee" ? '<span class="bp-badge bp-srcok">sourcée</span>' : "";
         const src = p.source && p.source !== "défaut" ? `<span class="bp-src">${esc(p.source)}</span>` : "";
         return `<label class="bp-row${nonCal ? " bp-nc" : ""}">
-          <span class="bp-lbl">${esc(p.label)}${p.critique ? " ★" : ""}${nonCal ? ' <span class="bp-badge">non calibré</span>' : ""}${src}</span>
+          <span class="bp-lbl">${esc(p.label)}${p.critique ? " ★" : ""} ${badge}${src}</span>
           <span class="bp-in"><input type="number" step="any" data-param="${esc(p.key)}" value="${p.value}"> <span class="bp-u">${esc(p.unite || "")}</span></span>
         </label>`;
       }).join("")}

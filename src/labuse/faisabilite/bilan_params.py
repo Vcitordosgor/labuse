@@ -49,19 +49,22 @@ def registry() -> list[dict]:
 
 
 def resolve(session: Session, secteur: str | None) -> dict[str, dict]:
-    """Params effectifs pour un secteur : {key: {value, is_placeholder, source}}.
-    défaut ← override global ← override secteur. Un override saisi n'est plus placeholder."""
+    """Params effectifs pour un secteur : {key: {value, is_placeholder, source, provenance}}.
+    défaut ← override global ← override secteur. Un override saisi n'est plus placeholder ;
+    `provenance` (sourcee|estimee|None) distingue une valeur sourcée d'une estimée à affiner."""
     out: dict[str, dict] = {
-        k: {"value": v[4], "is_placeholder": v[5], "source": "défaut"} for k, v in _BY_KEY.items()}
+        k: {"value": v[4], "is_placeholder": v[5], "source": "défaut", "provenance": None}
+        for k, v in _BY_KEY.items()}
     rows = session.execute(text(
-        "SELECT secteur, param, value FROM bilan_params WHERE secteur IN ('*', :s)"),
+        "SELECT secteur, param, value, provenance FROM bilan_params WHERE secteur IN ('*', :s)"),
         {"s": secteur or "*"}).all()
     # appliquer global puis secteur (le secteur prime)
     for sect_target in (SECTEUR_GLOBAL, secteur):
-        for sect, param, value in rows:
+        for sect, param, value, prov in rows:
             if sect == sect_target and param in out:
                 out[param] = {"value": float(value), "is_placeholder": False,
-                              "source": "global" if sect == SECTEUR_GLOBAL else "secteur"}
+                              "source": "global" if sect == SECTEUR_GLOBAL else "secteur",
+                              "provenance": prov}
     return out
 
 
@@ -70,8 +73,18 @@ def values(session: Session, secteur: str | None) -> dict[str, float]:
 
 
 def uncalibrated_critical(resolved: dict[str, dict]) -> list[str]:
-    """Libellés des paramètres CRITIQUES encore non calibrés (→ bandeau bilan)."""
+    """Libellés des paramètres CRITIQUES encore SANS valeur (→ bandeau « non fiable » DUR)."""
     return [_BY_KEY[k][1] for k in CRITIQUES if resolved.get(k, {}).get("is_placeholder", True)]
+
+
+# Paramètres dont l'affinage par un vrai promoteur change le plus le bilan (cf rapport).
+REFINE_KEYS = list(dict.fromkeys(CRITIQUES + ["marge_cible_pct"]))
+
+
+def estimated_to_refine(resolved: dict[str, dict]) -> list[str]:
+    """Libellés des paramètres clés RENSEIGNÉS mais ESTIMÉS (→ sous-bandeau « à affiner », pas dur)."""
+    return [_BY_KEY[k][1] for k in REFINE_KEYS
+            if resolved.get(k, {}).get("provenance") == "estimee"]
 
 
 def save(session: Session, secteur: str, param: str, value: float | None) -> None:

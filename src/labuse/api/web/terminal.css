@@ -231,6 +231,10 @@
   color: var(--tf-flag); border-radius: var(--radius-control); }
 .sheet .bilan-noncal { background: rgba(200,132,26,.10); border-left: 3px solid var(--tf-flag-bright);
   color: var(--tf-flag); border-radius: var(--radius-control); }
+/* socle web sourcé : note INFO souple (pas un avertissement) */
+.sheet .bilan-estim { margin: var(--sp-2) 0; padding: 9px 12px; font-size: var(--fs-small); line-height: 1.5;
+  background: var(--tf-accent-dim); border-left: 3px solid var(--tf-accent); color: var(--tf-text-2);
+  border-radius: var(--radius-control); }
 /* badges de fiabilité du prix → couleurs verdict */
 .sheet .fiab { font-family: var(--font-ui); border-radius: var(--radius-pill); }
 .sheet .fiab-fiable      { background: rgba(92,192,140,.14); color: var(--tf-positive); }
@@ -243,6 +247,8 @@
 .sheet .bilan-lls-note, .sheet .bp-note, .sheet .bp-u, .sheet .bp-msg { color: var(--tf-text-3); }
 .sheet .bp-badge, .sheet .bp-nc input { border-color: rgba(224,188,90,.45); }
 .sheet .bp-badge { color: var(--tf-flag); border-radius: var(--radius-control); }
+.sheet .bp-badge.bp-est { color: var(--tf-text-3); border-color: var(--tf-border); }      /* estimée → indicatif gris */
+.sheet .bp-badge.bp-srcok { color: var(--tf-positive); border-color: rgba(29,158,117,.4); }  /* sourcée → vert sobre */
 .sheet .bp-src { color: var(--tf-text-3); }
 .sheet .bp-save { background: var(--tf-accent); color: var(--tf-accent-ink); border-radius: var(--radius-control); }  /* action primaire = ambre */
 

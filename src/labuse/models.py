@@ -449,7 +449,9 @@ def ensure_vue_mer_cache(engine) -> None:
 
 
 def ensure_bilan_params(engine) -> None:
-    """Overrides de paramètres du bilan par SECTEUR (1.C). secteur='*' = global. Idempotent."""
+    """Overrides de paramètres du bilan par SECTEUR (1.C). secteur='*' = global. Idempotent.
+    Pose la colonne `provenance` (sourcee|estimee) et injecte le SOCLE web sourcé (sans écraser
+    un override déjà saisi) → le bilan est défendable dès le boot."""
     from sqlalchemy import text as _t
 
     with engine.begin() as c:
@@ -458,6 +460,9 @@ def ensure_bilan_params(engine) -> None:
             " secteur varchar(64) NOT NULL, param varchar(48) NOT NULL, value double precision NOT NULL,"
             " is_placeholder boolean NOT NULL DEFAULT false, updated_at timestamptz NOT NULL DEFAULT now(),"
             " PRIMARY KEY (secteur, param))"))
+        c.execute(_t("ALTER TABLE bilan_params ADD COLUMN IF NOT EXISTS provenance varchar(16)"))
+        from .faisabilite.bilan_calibration import seed as _seed
+        _seed(c)
 
 
 def ensure_personnes_morales(engine) -> None:

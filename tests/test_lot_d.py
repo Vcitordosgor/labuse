@@ -101,7 +101,10 @@ def test_1c_resolution_par_secteur(db_session):
     bp.save(db_session, "*", "prix_m2_lls", 2600.0)
     a = bp.resolve(db_session, "Saint-Paul Centre")
     b = bp.resolve(db_session, "Le Guillaume")
-    assert a["cout_construction_m2_sdp"]["source"] == "défaut"          # isolé du secteur Guillaume
+    # Le secteur « Guillaume » (3200) ne fuit PAS vers un autre secteur — qui retombe sur le
+    # socle global/défaut (le socle web sourcé peut peupler '*', d'où source 'défaut' OU 'global').
+    assert a["cout_construction_m2_sdp"]["value"] != 3200.0
+    assert a["cout_construction_m2_sdp"]["source"] in ("défaut", "global")
     assert b["cout_construction_m2_sdp"]["value"] == 3200.0 and b["cout_construction_m2_sdp"]["source"] == "secteur"
     assert a["prix_m2_lls"]["source"] == "global" and a["prix_m2_lls"]["value"] == 2600.0
     assert "Coût de construction" in " ".join(bp.uncalibrated_critical({"cout_construction_m2_sdp": {"is_placeholder": True}}))

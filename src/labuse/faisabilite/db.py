@@ -326,6 +326,7 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
                 "secteur": secteur,
                 "params": [{**p, **resolved.get(p["key"], {})} for p in bpmod.registry()],
                 "non_calibres_critiques": bpmod.uncalibrated_critical(resolved),
+                "estimes_a_affiner": bpmod.estimated_to_refine(resolved),
             }
     except Exception:  # noqa: BLE001 - le bilan ne casse jamais la fiche
         bilan = None
