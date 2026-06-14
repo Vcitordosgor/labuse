@@ -294,7 +294,9 @@ function filterByStatus(status) {
 }
 
 // ───────────────────────── Fiche premium §8 ─────────────────────────
+let CURRENT_IDU = null;   // fiche ouverte (pour le recalcul bilan après calibration, 1.C)
 async function openSheet(idu) {
+  CURRENT_IDU = idu;
   $("#sheet").classList.remove("hidden");
   $("#sheet").setAttribute("aria-hidden", "false");   // a11y : le panneau ouvert n'est plus masqué aux lecteurs d'écran
   $("#scrim").classList.remove("hidden");
@@ -940,6 +942,55 @@ function renderResiduel(r) {
     </div>`;
 }
 
+// 1.C — enregistrement des paramètres de bilan calibrés (par secteur) + recalcul.
+async function saveBilanParams(box) {
+  const secteur = box.dataset.secteur || "*";
+  const msg = box.querySelector("#bp-msg");
+  if (msg) msg.textContent = "Enregistrement…";
+  const inputs = [...box.querySelectorAll("input[data-param]")];
+  try {
+    for (const i of inputs) {
+      const v = i.value.trim() === "" ? null : Number(i.value);
+      await fetch("/bilan/params", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secteur, param: i.dataset.param, value: v }) });
+    }
+  } catch { if (msg) msg.textContent = "Échec d'enregistrement."; return; }
+  if (CURRENT_IDU) openSheet(CURRENT_IDU);   // re-fetch → bilan recalculé
+}
+
+// 1.C — bandeau « non calibré » si un paramètre CRITIQUE manque.
+function renderBilanBanner(b) {
+  const nc = b.non_calibres_critiques || [];
+  if (!nc.length) return "";
+  return `<div class="bilan-noncal">⚠️ Bilan <b>non fiable</b> tant que ces paramètres clés ne sont pas calibrés : ${nc.map(esc).join(", ")}. Renseignez-les ci-dessous (secteur <b>${esc(b.secteur || "—")}</b>).</div>`;
+}
+
+// 1.C — panneau de calibration des paramètres du bilan, par secteur (édition + persistance).
+function renderBilanParams(b) {
+  const params = b.params || [];
+  if (!params.length) return "";
+  const groups = {};
+  params.forEach((p) => { (groups[p.groupe] = groups[p.groupe] || []).push(p); });
+  const grpHtml = Object.entries(groups).map(([g, ps]) => `
+    <div class="bp-grp"><div class="bp-grp-t">${esc(g)}</div>
+      ${ps.map((p) => {
+        const nonCal = p.is_placeholder;
+        const src = p.source && p.source !== "défaut" ? `<span class="bp-src">${esc(p.source)}</span>` : "";
+        return `<label class="bp-row${nonCal ? " bp-nc" : ""}">
+          <span class="bp-lbl">${esc(p.label)}${p.critique ? " ★" : ""}${nonCal ? ' <span class="bp-badge">non calibré</span>' : ""}${src}</span>
+          <span class="bp-in"><input type="number" step="any" data-param="${esc(p.key)}" value="${p.value}"> <span class="bp-u">${esc(p.unite || "")}</span></span>
+        </label>`;
+      }).join("")}
+    </div>`).join("");
+  return `
+    <details class="faisa-calc bilan-params" data-secteur="${esc(b.secteur || "*")}" data-idu="${esc(b._idu || "")}">
+      <summary>Paramètres du bilan — calibration par secteur : <b>${esc(b.secteur || "—")}</b></summary>
+      <p class="bp-note">Vic calibre ici (session terrain). Une valeur saisie s'applique à <b>tout le secteur</b> et recalcule le bilan. ★ = paramètre critique. Vider un champ = retour au défaut.</p>
+      ${grpHtml}
+      <div class="bp-actions"><button type="button" class="bp-save">💾 Enregistrer &amp; recalculer</button><span class="bp-msg" id="bp-msg"></span></div>
+    </details>`;
+}
+
 function renderBilan(b) {
   if (!b) return "";
   const meur = (x) => (x == null ? "—" : (Math.abs(x) >= 1e6 ? (x / 1e6).toFixed(1) + " M€"
@@ -1011,12 +1062,14 @@ function renderBilan(b) {
       <div class="bilan-eyebrow">Bilan promoteur · potentiel économique ${badge}</div>
       <h3 class="bilan-verdict">${esc(b.verdict)}</h3>
       ${fragileBanner}
+      ${renderBilanBanner(b)}
       <div class="faisa-cards bilan-cards">
         <div class="fc"><span class="fc-num" id="bilan-ca">${meur(ca.bas)}–${meur(ca.haut)}</span><span class="fc-lbl">Chiffre d'affaires potentiel</span></div>
         <div class="fc"><span class="fc-num">${fmt(px.median)} €/m²</span><span class="fc-lbl">Prix DVF médian · ${esc(px.type_prix || "")} (${px.n} ventes / ${px.commune_fallback ? "commune" : km(px.radius_m)})</span></div>
         <div class="fc fc-wide"><span class="fc-num" id="bilan-cf">${meur(cf.central)}<span class="fc-sub">~${fmt(cf.par_m2_terrain)} €/m² terrain</span></span><span class="fc-lbl">Charge foncière (médiane)</span></div>
       </div>
       ${renderLls(b.calc)}
+      ${renderBilanParams(b)}
       ${compBlock}
       <details class="faisa-calc bilan-method">
         <summary>La méthode du prix, en clair — type, échantillon, rayon, ventes écartées</summary>
@@ -1654,6 +1707,7 @@ async function main() {
     if (e.target.closest("#cmp-go")) { openCompare(); return; }
     if (e.target.closest("#cmp-clear")) { clearCompare(); return; }
     const open = e.target.closest(".cmp-open"); if (open) { e.preventDefault(); closeCompare(); openSheet(open.dataset.idu); }
+    const bps = e.target.closest(".bp-save"); if (bps) { const box = bps.closest(".bilan-params"); if (box) saveBilanParams(box); }
   });
   const cc = $("#cmp-close"); if (cc) cc.addEventListener("click", closeCompare);
   // Démo guidée : bouton d'ouverture, fermeture (croix + clic sur le fond).

@@ -712,6 +712,33 @@ def delete_filter(filter_id: int, db: Session = Depends(get_db)) -> dict:
     return {"ok": True}
 
 
+class BilanParamIn(BaseModel):
+    secteur: str
+    param: str
+    value: float | None = None   # None → réinitialise au défaut
+
+
+@app.get("/bilan/params")
+def get_bilan_params(secteur: str = Query("*"), db: Session = Depends(get_db)) -> dict:
+    """Paramètres du bilan (1.C) résolus pour un secteur (registre + overrides + non calibrés)."""
+    from ..faisabilite import bilan_params as bp
+    resolved = bp.resolve(db, secteur)
+    return {"secteur": secteur,
+            "params": [{**p, **resolved.get(p["key"], {})} for p in bp.registry()],
+            "non_calibres_critiques": bp.uncalibrated_critical(resolved)}
+
+
+@app.post("/bilan/params")
+def set_bilan_param(body: BilanParamIn, db: Session = Depends(get_db)) -> dict:
+    """Calibre (ou réinitialise) un paramètre du bilan pour un secteur (1.C — Vic calibre)."""
+    from ..faisabilite import bilan_params as bp
+    try:
+        bp.save(db, body.secteur.strip() or "*", body.param, body.value)
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
+    return {"ok": True, "secteur": body.secteur, "param": body.param, "value": body.value}
+
+
 @app.get("/compare")
 def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des virgules"),
             db: Session = Depends(get_db)) -> dict:

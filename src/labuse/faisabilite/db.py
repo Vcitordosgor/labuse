@@ -217,6 +217,7 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
     # Bilan promoteur (PARTIE 1) — uniquement si constructible ; isolé/défensif.
     bilan = None
     try:
+        from . import bilan_params as bpmod
         from .bilan import compute_bilan, sector_price
         from .engine import Hypotheses
         if f.constructible:
@@ -230,9 +231,15 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
                 "logements_estimes": logements_est,
                 "terrain_m2": ctx.surface_m2,
             })
+            # 1.C — secteur = bassin PLU de la zone ; params résolus (défaut ← global ← secteur).
+            secteur = None
+            rules = resolve_zone(ctx.zone) if ctx.zone else None
+            secteur = (rules.bassin if rules else None) or "Saint-Paul"
+            resolved = bpmod.resolve(session, secteur)
+            bp_values = {k: r["value"] for k, r in resolved.items()}
             b = compute_bilan(fr.get("shab_vendable_m2", 0), ctx.surface_m2,
                               sector_price(session, ctx.parcel_id, hyp), hyp,
-                              contexte_eco=ctx.prescriptions_eco)
+                              contexte_eco=ctx.prescriptions_eco, bilan_params=bp_values)
             bilan = {
                 "fiable": b.fiable, "fiabilite": b.fiabilite, "verdict": b.verdict,
                 "prix_dvf": b.prix_dvf, "comparables": (b.prix_dvf or {}).get("comparables"),
@@ -240,8 +247,11 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
                 "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur, "source": s.source}
                           for s in b.steps],
                 "hypotheses": b.hypotheses, "avertissements": b.avertissements, "bandeau": b.bandeau,
-                # Paramètres de recalcul instantané côté fiche (mixité sociale, Décision 3.b).
                 "calc": b.calc,
+                # 1.C — secteur + paramètres éditables (registre + valeurs résolues) + non calibrés.
+                "secteur": secteur,
+                "params": [{**p, **resolved.get(p["key"], {})} for p in bpmod.registry()],
+                "non_calibres_critiques": bpmod.uncalibrated_critical(resolved),
             }
     except Exception:  # noqa: BLE001 - le bilan ne casse jamais la fiche
         bilan = None

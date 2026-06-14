@@ -67,3 +67,41 @@ def test_saved_filters_roundtrip(db_session):
     assert any(f["name"] == "Mon filtre" and f["params"]["taux"] == 40 for f in lst)
     delete_filter(r["id"], db=db_session)
     assert all(f["id"] != r["id"] for f in list_filters(db=db_session))
+
+
+# ── 1.C — paramètres de bilan par secteur ──
+
+def test_1c_compute_bilan_params_pilotent(monkeypatch):
+    from labuse.faisabilite.bilan import compute_bilan
+    from labuse.faisabilite.engine import Hypotheses
+    h = Hypotheses()
+    prix = {"fiable": True, "fiabilite": "fiable", "fiabilite_raisons": [], "type_prix": "appartement",
+            "n": 40, "n_exclus": 0, "n_doublons": 0, "radius_m": 1500.0, "commune_fallback": False,
+            "pct_appartement": 100, "periode": [2022, 2025], "q1": 2200, "median": 3000, "q3": 4300,
+            "min": 2000, "max": 4700}
+    base = compute_bilan(4600, 4500, prix, h)
+    # override prix neuf + coût construction secteur → CA et coût changent
+    bp = {"prix_m2_neuf": 3500, "cout_construction_m2_sdp": 3200, "cout_vrd_base": 50,
+          "majoration_vrd_pente_pct": 20, "marge_cible_pct": 18, "honoraires_pct": 12, "frais_financiers_pct": 3}
+    sect = compute_bilan(4600, 4500, prix, h, bilan_params=bp)
+    assert sect.ca["central"] == round(4600 * 3500)              # prix override appliqué (flat)
+    assert sect.calc["cout_vrd"] == round(50 * 1.20 * 4500)      # VRD base × (1+20%) × terrain
+    assert sect.charge_fonciere["central"] != base.charge_fonciere["central"]  # piloté par secteur
+
+
+@pytest.mark.db
+def test_1c_resolution_par_secteur(db_session):
+    from sqlalchemy import text as _t
+
+    from labuse.faisabilite import bilan_params as bp
+    db_session.execute(_t("CREATE TABLE IF NOT EXISTS bilan_params (secteur varchar(64), param varchar(48),"
+                          " value double precision, is_placeholder boolean DEFAULT false,"
+                          " updated_at timestamptz DEFAULT now(), PRIMARY KEY (secteur, param))"))
+    bp.save(db_session, "Le Guillaume", "cout_construction_m2_sdp", 3200.0)
+    bp.save(db_session, "*", "prix_m2_lls", 2600.0)
+    a = bp.resolve(db_session, "Saint-Paul Centre")
+    b = bp.resolve(db_session, "Le Guillaume")
+    assert a["cout_construction_m2_sdp"]["source"] == "défaut"          # isolé du secteur Guillaume
+    assert b["cout_construction_m2_sdp"]["value"] == 3200.0 and b["cout_construction_m2_sdp"]["source"] == "secteur"
+    assert a["prix_m2_lls"]["source"] == "global" and a["prix_m2_lls"]["value"] == 2600.0
+    assert "Coût de construction" in " ".join(bp.uncalibrated_critical({"cout_construction_m2_sdp": {"is_placeholder": True}}))

@@ -220,8 +220,15 @@ def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
 
 
 def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
-                  prix: dict, hyp: Hypotheses, contexte_eco: dict | None = None) -> Bilan:
+                  prix: dict, hyp: Hypotheses, contexte_eco: dict | None = None,
+                  bilan_params: dict | None = None) -> Bilan:
     """Cœur pur (testable). Protège le bilan selon la fiabilité du prix.
+
+    `bilan_params` (1.C) = paramètres résolus par SECTEUR (prix neuf override, coût construction,
+    VRD base + majorations pente/assainissement, honoraires, frais financiers, marge). Quand fourni,
+    ils PILOTENT le bilan ; absents → repli sur les hypothèses YAML (compat tests). `calc` les
+    expose pour l'édition + recalcul instantané ; les critiques non calibrés lèvent un bandeau.
+
 
     `contexte_eco` (Décisions 3.b/3.c) : {"mixite": bool, "mixite_libelle", "pluvial": bool,
     "pluvial_libelle"}. En secteur de mixité sociale, si `pct_lls` ET `prix_m2_lls` sont
@@ -243,6 +250,25 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     fragile = niveau == "fragile"
     q1, med, q3 = prix["q1"], prix["median"], prix["q3"]
     surf = shab_vendable_m2
+
+    # 1.C — paramètres effectifs (secteur si fourni, sinon hypothèses YAML).
+    bp = bilan_params or {}
+
+    def _p(key: str, fallback: float) -> float:
+        v = bp.get(key)
+        return float(v) if v is not None else float(fallback)
+
+    prix_neuf_override = _p("prix_m2_neuf", 0.0)
+    cout_m2 = _p("cout_construction_m2_sdp", 0.0)            # 0 → fourchette YAML bas/haut
+    vrd_base = _p("cout_vrd_base", 0.0)
+    maj_pente = _p("majoration_vrd_pente_pct", 0.0)
+    maj_assain = _p("majoration_vrd_assainissement_pct", 0.0)
+    honoraires_pct = _p("honoraires_pct", hyp.frais_annexes_pct * 100.0)
+    frais_fin_pct = _p("frais_financiers_pct", 0.0)
+    marge_pct = _p("marge_cible_pct", hyp.marge_promoteur_pct * 100.0)
+    prix_lls = _p("prix_m2_lls", hyp.prix_m2_lls)
+    if prix_neuf_override > 0:                                # override du prix de sortie neuf
+        q1 = med = q3 = prix_neuf_override
     lieu = "commune entière" if prix.get("commune_fallback") else f"{prix['radius_m']:.0f} m"
     steps: list[Step] = []
     hypotheses: list[str] = []
@@ -266,8 +292,8 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     clause = _clause_mixite(eco, hyp) if mixite else None
     declenchee = bool(clause and clause["declenchee"])
     # Pondération du CA = clause déclenchée ET 30 % posé ET prix LLS calibré (jamais de prix fictif).
-    pondere = declenchee and p_lls > 0 and float(hyp.prix_m2_lls) > 0
-    _px = (lambda x: (1.0 - p_lls) * float(x) + p_lls * float(hyp.prix_m2_lls)) if pondere \
+    pondere = declenchee and p_lls > 0 and prix_lls > 0
+    _px = (lambda x: (1.0 - p_lls) * float(x) + p_lls * prix_lls) if pondere \
         else (lambda x: float(x))
     ca_bas, ca_cen, ca_haut = surf * _px(q1), surf * _px(med), surf * _px(q3)
     if mixite:
@@ -287,26 +313,36 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                 f"Clause de mixité sociale DÉCLENCHÉE ({clause['critere']}) — {p_lls:.0%} de "
                 f"logements aidés imposés ({lib_sms}). Impact non chiffré : prix LLS non calibré "
                 "(PLACEHOLDER) → saisir le prix LLS dans le panneau pour pondérer le CA.")
-    # Coût rapporté à la SURFACE DE PLANCHER (≈ habitable × coef), pas à l'habitable vendu
-    # (audit O2 : compter le coût sur l'habitable sous-estimait la construction).
+    # Coût de construction rapporté à la SURFACE DE PLANCHER. Coût au m² piloté par secteur
+    # (cout_construction_m2_sdp) si calibré ; sinon fourchette YAML bas/haut.
     sdp = surf * hyp.coef_plancher_habitable
-    maj_vrd = float(hyp.majoration_vrd_pluvial) if pluvial else 0.0
-    cc_bas = sdp * hyp.cout_construction_m2_bas * (1.0 + maj_vrd / 100.0)
-    cc_haut = sdp * hyp.cout_construction_m2_haut * (1.0 + maj_vrd / 100.0)
+    maj_vrd_pluvial = float(hyp.majoration_vrd_pluvial) if pluvial else 0.0
+    cm_bas = cout_m2 if cout_m2 > 0 else hyp.cout_construction_m2_bas
+    cm_haut = cout_m2 if cout_m2 > 0 else hyp.cout_construction_m2_haut
+    cc_bas = sdp * cm_bas * (1.0 + maj_vrd_pluvial / 100.0)
+    cc_haut = sdp * cm_haut * (1.0 + maj_vrd_pluvial / 100.0)
+    # VRD / viabilisation (1.C) : base €/m² terrain, majorée pente + assainissement autonome.
+    maj_vrd_terrain = maj_pente + maj_assain
+    cout_vrd = vrd_base * (1.0 + maj_vrd_terrain / 100.0) * (surface_terrain_m2 or 0.0)
+    if vrd_base > 0:
+        steps.append(Step("VRD / viabilisation",
+                          f"{vrd_base:.0f} €/m² terrain × {surface_terrain_m2:.0f} m²"
+                          + (f" × (1 + {maj_vrd_terrain:g} % pente/assainissement)" if maj_vrd_terrain else ""),
+                          f"~{_eur(cout_vrd)}", "param cout_vrd_base"))
     if pluvial:
         lib_pl = eco.get("pluvial_libelle") or "zonage eaux pluviales"
-        if maj_vrd > 0:
+        if maj_vrd_pluvial > 0:
             steps.append(Step("Majoration VRD — eaux pluviales",
-                              f"coût construction × (1 + {maj_vrd:g} %) — {lib_pl}",
+                              f"coût construction × (1 + {maj_vrd_pluvial:g} %) — {lib_pl}",
                               "appliquée", "zonage pluvial · param majoration_vrd_pluvial"))
         else:
             hypotheses.append(
                 f"Zonage eaux pluviales ({lib_pl}) : majoration VRD paramétrable "
                 "(majoration_vrd_pluvial = 0, PLACEHOLDER) → coût inchangé tant que non calibrée.")
-    coef = 1.0 - hyp.marge_promoteur_pct - hyp.frais_annexes_pct
-    cf_bas = ca_bas * coef - cc_haut
-    cf_cen = ca_cen * coef - (cc_bas + cc_haut) / 2
-    cf_haut = ca_haut * coef - cc_bas
+    coef = 1.0 - (marge_pct + honoraires_pct + frais_fin_pct) / 100.0
+    cf_bas = ca_bas * coef - cc_haut - cout_vrd
+    cf_cen = ca_cen * coef - (cc_bas + cc_haut) / 2 - cout_vrd
+    cf_haut = ca_haut * coef - cc_bas - cout_vrd
     par_m2 = cf_cen / surface_terrain_m2 if surface_terrain_m2 else 0.0
 
     # Si prix fragile : on ARRONDIT (pas de fausse précision).
@@ -316,17 +352,19 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                   if pondere else f"{surf:.0f} m² × {q1}–{q3} €/m²")
     steps.append(Step("Chiffre d'affaires potentiel", ca_formule,
                       f"~{_eur(ca_bas)} – {_eur(ca_haut)} (médiane {_eur(ca_cen)})", "dérivé"))
+    cout_lbl = (f"× {cout_m2:.0f} €/m² (secteur)" if cout_m2 > 0
+                else f"× {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m²")
     steps.append(Step("Coût de construction",
-                      f"{sdp:.0f} m² de plancher ({surf:.0f} m² hab. × {hyp.coef_plancher_habitable:.2f}) "
-                      f"× {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m²",
-                      f"~{_eur(cc_bas)} – {_eur(cc_haut)}", "hypothèse coût (prudente, Réunion)"))
-    steps.append(Step("Marge promoteur + frais annexes",
-                      f"marge {hyp.marge_promoteur_pct:.0%} + frais {hyp.frais_annexes_pct:.0%} du CA",
-                      "déduits du CA", "hypothèse"))
+                      f"{sdp:.0f} m² de plancher ({surf:.0f} m² hab. × {hyp.coef_plancher_habitable:.2f}) {cout_lbl}",
+                      f"~{_eur(cc_bas)} – {_eur(cc_haut)}",
+                      "param cout_construction_m2_sdp" if cout_m2 > 0 else "hypothèse coût (prudente, Réunion)"))
+    steps.append(Step("Marge + frais (déduits du CA)",
+                      f"marge {marge_pct:g} % + honoraires {honoraires_pct:g} % + frais financiers {frais_fin_pct:g} %",
+                      f"{(1 - coef) * 100:.0f} % du CA", "params marge/honoraires/frais"))
     # Présentation : la MÉDIANE d'abord (le chiffre de référence), la fourchette ensuite,
     # bas borné à 0 (audit O3 : « entre −0,2 et 8 M€ » n'aide personne à décider).
     steps.append(Step("Charge foncière acceptable (bilan à rebours)",
-                      f"CA×(1−{hyp.marge_promoteur_pct:.0%}−{hyp.frais_annexes_pct:.0%}) − coût construction",
+                      f"CA×{coef:.2f} − coût construction" + (" − VRD" if vrd_base > 0 else ""),
                       f"médiane {_eur(cf_cen)} ≈ {par_m2:.0f} €/m² terrain "
                       f"(fourchette {_eur(max(0, cf_bas))} – {_eur(cf_haut)})",
                       "dérivé"))
@@ -359,10 +397,10 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
 
     calc = {"surf": round(surf), "terrain_m2": round(surface_terrain_m2 or 0),
             "q1": q1, "median": med, "q3": q3, "coef": round(coef, 4),
-            "cc_bas": round(cc_bas), "cc_haut": round(cc_haut),
+            "cc_bas": round(cc_bas), "cc_haut": round(cc_haut), "cout_vrd": round(cout_vrd),
             "mixite": mixite, "pluvial": pluvial, "pondere": pondere,
-            "pct_lls": float(hyp.pct_lls), "prix_m2_lls": float(hyp.prix_m2_lls),
-            "majoration_vrd_pluvial": maj_vrd,
+            "pct_lls": float(hyp.pct_lls), "prix_m2_lls": prix_lls,
+            "majoration_vrd_pluvial": maj_vrd_pluvial,
             # État de la clause de mixité (info de pilotage promoteur).
             "clause_declenchee": declenchee,
             "clause_critere": (clause or {}).get("critere"),

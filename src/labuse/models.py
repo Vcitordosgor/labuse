@@ -344,6 +344,7 @@ def create_all(engine) -> None:
     ensure_residuel_cache(engine)
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
+    ensure_bilan_params(engine)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
 
@@ -432,6 +433,18 @@ def ensure_enrichment_cache(engine) -> None:
             " payload jsonb NOT NULL, computed_at timestamptz NOT NULL DEFAULT now())"))
 
 
+def ensure_bilan_params(engine) -> None:
+    """Overrides de paramètres du bilan par SECTEUR (1.C). secteur='*' = global. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS bilan_params ("
+            " secteur varchar(64) NOT NULL, param varchar(48) NOT NULL, value double precision NOT NULL,"
+            " is_placeholder boolean NOT NULL DEFAULT false, updated_at timestamptz NOT NULL DEFAULT now(),"
+            " PRIMARY KEY (secteur, param))"))
+
+
 def ensure_personnes_morales(engine) -> None:
     """Propriétaires personnes morales (1.A — fichier DGFiP, Licence Ouverte). Donnée PUBLIQUE,
     par parcelle (idu). Idempotent. `source`/`url_source`/`millesime`/`date_import` tracés (§3)."""
@@ -486,6 +499,7 @@ def ensure_schema(engine) -> None:
     ensure_residuel_cache(engine)
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
+    ensure_bilan_params(engine)
 
 
 def ensure_parcel_origine(engine) -> None:
