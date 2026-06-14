@@ -24,6 +24,28 @@
 | `ratio_vendable` | **0,80** | estimée | standard promotion | SDP brute → habitable vendable (murs, communs, circulations déduits) 0,78–0,85. |
 | `bonus_vue_mer_pct` | **15 %** | estimée | lien 2.B (vue mer) | Prime vue mer dégagée balnéaire ~+10–25 %. |
 
+## Ventilation du prix neuf PAR SECTEUR (bassins PLU existants)
+
+Découpage = les **bassins PLU déjà dans l'app** (override par secteur, résolution défaut ← global ←
+secteur). Aucun découpage inventé. Chaque prix est sourcé sur un observatoire du quartier ; un
+secteur non couvert retombe sur le **socle commun 4 900 €/m²**.
+
+| Bassin PLU | Prix neuf retenu | Provenance | Source (URL) · date | Solidité · note |
+|---|---|---|---|---|
+| **Saint-Gilles** (U2*) | **5 800 €/m²** | sourcée | [SeLoger 974455](https://www.seloger.com/prix-de-l-immo/vente/departements-d-outre-mer/la-reunion/saint-gilles-les-bains/974455.htm) — médiane appart **6 029 €/m²** (11/2025) | 🟢 **solide** (balnéaire, marché actif). Retenu sous la médiane (la médiane inclut le front de mer ultra-premium). |
+| **La Saline** (U5*) | **6 000 €/m²** | sourcée | [immo-diffusion 97434](https://www.immo-diffusion.fr/fr/dom-tom/la-reunion/97434/estimation-prixm2-la-saline-les-bains) — moy. appart **6 632 €/m²** (10/2025) ; [Superimmo](https://www.superimmo.com/prix-immobilier/dom-tom/la-reunion/saint-paul-97411/la-saline-les-bains-97434) | 🟢 **solide** (balnéaire l'Hermitage/Saline). Conservateur sous la moyenne. |
+| **Plateau Caillou** (U3*) | **3 500 €/m²** | sourcée | [SeLoger 974436](https://www.seloger.com/prix-de-l-immo/vente/departements-d-outre-mer/la-reunion/plateau-caillou/974436.htm) — moy. appart **3 417 €/m²** (11/2025) | 🟢 **solide** (intérieur). Léger premium neuf. |
+| **La Plaine-Bois de Nèfles** (U4*) | **3 400 €/m²** | sourcée | [consortium 97411](https://www.consortium-immobilier.fr/prix/bois-de-nefles-saint-paul-97411.html) ; [SeLoger 974440](https://www.seloger.com/prix-de-l-immo/vente/departements-d-outre-mer/la-reunion/bois-de-nefles-saint-paul/974440.htm) — appart **~3 100-3 700 €/m²** (2025) | 🟡 **moyen** (Hauts, peu de collectif). |
+| **Le Guillaume** (U…) | **3 900 €/m²** | **estimée — à affiner** | [av-transaction 97423](https://av-transaction.immo/estimation/la-reunion-04/la-reunion-974/saint-paul-97423/) — appart 5 284 €/m² **mais maison 3 973 €/m²** (12/2025) | 🔴 **fragile** : échantillon **appartement non fiable** (Hauts à dominante maisons). Retenu ~niveau maison ; **à confirmer**. |
+| **Saint-Paul Centre** (U1*) | *4 900 €/m²* (socle commun) | sourcée | [consortium 97460](https://www.consortium-immobilier.fr/prix/saint-paul-97460.html) — neuf 2024 **4 922 €/m²** | 🟢 **solide**. Couvert par le socle commun (pas d'override séparé). |
+| *multi / hors-U* | *4 900 €/m²* (fallback) | — | — | Zones sans bassin unique → socle commun. |
+
+**Couverture du référentiel (3 000 parcelles)** : concentré sur **Saint-Paul Centre (2 497)** et
+**Le Guillaume (198)** ; les bassins balnéaires (Saint-Gilles, La Saline) et Plateau Caillou ont peu
+ou pas de parcelles dans le référentiel actuel — leur override est en place et **se déclenchera** dès
+qu'une parcelle de ces bassins est auditée/ingérée. Recette `pytest tests/test_calibration.py` :
+résolution par secteur + fallback commun vérifiés.
+
 ## Effet sur le bandeau
 - **Hard « non fiable »** (`uncalibrated_critical`) : levé — le seul paramètre **critique** (`cout_construction_m2_sdp`) a désormais une valeur. Recette vérifiée sur 3 parcelles Saint-Paul (`97415000BO0845`, `BV1431`, `BV0912`) → **« non_fiable : AUCUN »**, prix de sortie **fiable**, charge foncière chiffrée.
 - **Soft « à affiner »** (`estimated_to_refine`) : sous-bandeau info présent → « Coût de construction, Marge cible promoteur » (les deux paramètres estimés les plus sensibles).

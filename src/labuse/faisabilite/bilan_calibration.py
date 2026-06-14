@@ -31,12 +31,31 @@ CALIBRATION: dict[str, tuple[float, str]] = {
 }
 
 
+# prix_m2_neuf VENTILÉ par BASSIN PLU existant (le découpage de l'app, cf RAPPORT_CALIBRATION_WEB.md).
+# Chaque valeur sourcée par observatoire/annonces du quartier ; les secteurs absents retombent sur
+# le socle commun (4 900). secteur → (valeur, provenance).
+SECTEUR_PRIX_NEUF: dict[str, tuple[float, str]] = {
+    "Saint-Gilles": (5800.0, "sourcee"),               # balnéaire — médiane appart ~6 029 €/m² (SeLoger)
+    "La Saline": (6000.0, "sourcee"),                  # balnéaire — moy. appart ~6 632 €/m² (immo-diffusion)
+    "Plateau Caillou": (3500.0, "sourcee"),            # intérieur — moy. appart ~3 417 €/m² (SeLoger)
+    "La Plaine-Bois de Nèfles": (3400.0, "sourcee"),   # Hauts — appart ~3 100-3 700 €/m² (consortium/SeLoger)
+    "Le Guillaume": (3900.0, "estimee"),               # Hauts — échantillon appart FRAGILE (maison ~3 973)
+    # « Saint-Paul Centre » → reste sur le socle commun 4 900 € (neuf Saint-Paul 2024, sourcé).
+}
+
+
 def seed(executor, secteur: str = "*") -> None:
-    """Injecte le socle au `secteur` (défaut global '*'), sans écraser un override existant.
-    `executor` = Session OU Connection (les deux exposent .execute). Idempotent."""
+    """Injecte le socle commun (global '*') + la ventilation prix neuf par secteur, sans écraser
+    un override existant. `executor` = Session OU Connection. Idempotent (ON CONFLICT DO NOTHING)."""
     for param, (value, prov) in CALIBRATION.items():
         executor.execute(
             text("INSERT INTO bilan_params (secteur, param, value, is_placeholder, provenance, updated_at) "
                  "VALUES (:s, :p, :v, false, :pr, now()) ON CONFLICT (secteur, param) DO NOTHING"),
             {"s": secteur, "p": param, "v": value, "pr": prov},
+        )
+    for sect, (value, prov) in SECTEUR_PRIX_NEUF.items():
+        executor.execute(
+            text("INSERT INTO bilan_params (secteur, param, value, is_placeholder, provenance, updated_at) "
+                 "VALUES (:s, 'prix_m2_neuf', :v, false, :pr, now()) ON CONFLICT (secteur, param) DO NOTHING"),
+            {"s": sect, "v": value, "pr": prov},
         )
