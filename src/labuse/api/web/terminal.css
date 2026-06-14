@@ -1,0 +1,190 @@
+/* ============================================================================
+   LE TERMINAL FONCIER — proposition de design · TEMPS 1
+   ----------------------------------------------------------------------------
+   Refonte VISUELLE de la FICHE PARCELLE uniquement (#sheet / .sheet).
+   Chargé APRÈS styles.css ; tout est scopé sous .sheet → le reste de l'app
+   (sidebar, carte, pipeline, comparateur) reste INCHANGÉ jusqu'au feu vert.
+
+   Direction : terminal de décision foncière (registre Linear / Bloomberg),
+   ancré Réunion. Fond océan profond BLEUTÉ (anti near-black), accent AMBRE
+   BASALTE (anti acid-green). Données en MONO (IBM Plex Mono). La donnée est le
+   héros, la couleur est un signal (verdicts), le score d'opportunité la signature.
+   ============================================================================ */
+
+/* ── 1. Tokens : la fiche passe en thème sombre « terminal » ─────────────── */
+.sheet {
+  --paper:   #0F1620;          /* fond fiche : océan profond bleuté          */
+  --paper-2: #0B111A;          /* recess / gouttières (un cran plus sombre)  */
+  --card:    #18212E;          /* élévation : panneaux / cartes              */
+  --card-2:  #1F2A39;          /* sur-élévation : lignes actives, champs     */
+  --ink:       #E6EAF0;        /* texte (blanc cassé, pas blanc pur)         */
+  --ink-soft:  #AEB9C7;        /* texte secondaire                          */
+  --ink-faint: #7E8B9C;        /* labels, métadonnées, sources              */
+  --rule:   #243042;           /* hairline discrète                         */
+  --rule-2: #2E3C50;           /* hairline renforcée                        */
+  --accent:      #E08A3C;      /* AMBRE BASALTE — réservé (score, actions+)  */
+  --accent-soft: rgba(224,138,60,.13);
+  /* Sémantique des verdicts — DONNÉE, pas déco (lisible à la couleur seule) */
+  --v-opportunite:           #4CAF7D;   /* POSITIVE / PASS — vert sobre      */
+  --v-a_creuser:             #D9B04A;   /* SOFT_FLAG — jaune d'avertissement */
+  --v-exclue:                #6B7787;   /* UNKNOWN / exclue — gris neutre    */
+  --v-faux_positif_probable: #D9534F;   /* HARD_EXCLUDE — rouge sobre        */
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --serif: var(--mono);        /* les « chiffres-rois » existants → mono     */
+
+  background:
+    radial-gradient(120% 60% at 100% 0%, #131d2a 0%, var(--paper) 46%) fixed;
+  color: var(--ink);
+  border-left: 1px solid var(--rule-2);
+  box-shadow: -24px 0 64px rgba(0,0,0,.55);
+  -webkit-font-smoothing: antialiased;
+}
+/* Toutes les VALEURS NUMÉRIQUES en chasse fixe → alignement au pixel = confiance */
+.sheet .fh-id, .sheet .score-num, .sheet .fc-num, .sheet .faisa-verdict,
+.sheet .pm-fig b, .sheet .v3d-figs b, .sheet .res-num, .sheet .meur,
+.sheet [class*="-num"], .sheet .bilan-num {
+  font-family: var(--mono); font-feature-settings: "tnum" 1, "zero" 1;
+}
+.sheet, .sheet .verdict-gloss, .sheet .ai-prose, .sheet p {
+  font-family: "Inter", system-ui, sans-serif;     /* la prose reste en Inter */
+}
+
+/* Barre de défilement sombre */
+.sheet { scrollbar-color: var(--rule-2) transparent; }
+.sheet::-webkit-scrollbar { width: 10px; }
+.sheet::-webkit-scrollbar-thumb { background: var(--rule-2); border-radius: 10px; }
+
+.sheet-close { border-color: var(--rule-2); color: var(--ink-soft); background: rgba(255,255,255,.02); }
+.sheet-close:hover { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
+
+/* ── 2. En-tête « ticker » : référence cadastrale en lecture machine ─────── */
+.sheet .fiche-head {
+  margin-bottom: 16px; padding-bottom: 14px; border-bottom: 1px solid var(--rule);
+}
+.sheet .fh-id {
+  font-family: var(--mono); font-weight: 600; font-size: 14px; letter-spacing: .06em;
+  color: var(--accent);
+}
+.sheet .fh-loc { color: var(--ink-faint); font-size: 12.5px; margin-top: 4px; }
+
+/* ── 3. SIGNATURE : le verdict en readout + le score d'opportunité chiffre-roi ─ */
+.sheet .verdict { padding-bottom: 16px; border-bottom: none; }
+.sheet .verdict-eyebrow {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 500;
+  letter-spacing: .22em; color: var(--ink-faint);
+}
+.sheet .verdict-word {
+  font-family: var(--mono); font-weight: 600; font-size: 27px; letter-spacing: .01em;
+  text-transform: uppercase; margin: 8px 0 10px;
+}
+.sheet .verdict-gloss { color: var(--ink-soft); font-size: 13.5px; line-height: 1.5; }
+
+/* Le bloc des deux scores = la signature. Opportunité dominante, en ambre mono. */
+.sheet .scores {
+  margin: 4px 0 0; padding: 18px 20px; gap: 14px 26px;
+  background: var(--card); border: 1px solid var(--rule);
+  border-radius: 12px; position: relative; overflow: hidden;
+}
+.sheet .scores::before {            /* filet ambre de signature, à gauche */
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent);
+}
+.sheet .score-top { align-items: baseline; gap: 10px; }
+.sheet .score-num { font-family: var(--mono); font-weight: 600; line-height: .9; }
+/* Opportunité = chiffre-roi (grande chasse, ambre) */
+.sheet .scores .score:first-child .score-num { font-size: 58px; color: var(--accent); }
+/* Complétude = le qualifieur (plus discret) */
+.sheet .scores .score:last-child .score-num { font-size: 30px; color: var(--ink-soft); }
+.sheet .score-lbl {
+  font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: .14em; color: var(--ink-faint);
+}
+.sheet .bar { height: 4px; background: var(--paper-2); margin-top: 12px; }
+.sheet .bar i { background: var(--ink-soft); }
+.sheet .bar.cpl i { background: var(--accent); }
+.sheet .golden-note {
+  font-family: var(--mono); font-size: 10.5px; font-style: normal; letter-spacing: .01em;
+  color: var(--ink-faint); border-top: 1px dashed var(--rule-2); padding-top: 10px; margin-top: 12px;
+}
+.sheet .fiable-tag { font-family: var(--mono); letter-spacing: .04em; }
+.sheet .fiable-tag.ok      { background: rgba(76,175,125,.12); color: var(--v-opportunite); border-color: rgba(76,175,125,.3); }
+.sheet .fiable-tag.reserve { background: rgba(217,176,74,.12);  color: var(--v-a_creuser);  border-color: rgba(217,176,74,.32); }
+.sheet .fiable-sub { color: var(--ink-faint); }
+.sheet .verdict-downgrade {
+  background: rgba(217,83,79,.10); border-color: rgba(217,83,79,.42); color: #e88a86;
+}
+
+/* ── 4. Eyebrows & titres de section : libellés machine, hairlines ───────── */
+.sheet .src-h, .sheet .faisa-eyebrow {
+  font-family: var(--mono); font-size: 10.5px; font-weight: 500; letter-spacing: .2em;
+  color: var(--ink-faint); text-transform: uppercase;
+}
+.sheet .faisa-eyebrow { color: var(--accent); }
+.sheet .rd-h, .sheet .rs-h {
+  font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .1em;
+}
+/* Verdicts lisibles À LA COULEUR (corrige les teintes prévues pour fond clair) */
+.sheet .rd-h.ok,  .sheet .rs-h.ok,  .sheet .rd-pts.pos { color: var(--v-opportunite); }
+.sheet .rd-h.lim, .sheet .rs-h.warn { color: var(--v-a_creuser); }
+.sheet .rd-h.lim.has-hard, .sheet .rd-pts.neg, .sheet .bati.bt-bad .bt-label { color: var(--v-faux_positif_probable); }
+.sheet .rd-h.unk { color: var(--ink-faint); }
+.sheet .rd-h.unk::before { background: var(--ink-faint); }
+.sheet .rd-li { color: var(--ink-soft); }
+.sheet .rd-li::before { background: var(--rule-2); }
+.sheet .rd-src { color: var(--ink-faint); }
+
+/* ── 5. Cartes de capacité, étapes, bilan, promoteur → surfaces sombres ──── */
+.sheet .resume, .sheet .ai-box, .sheet .pm-card, .sheet .bilan-comp,
+.sheet .pm-via, .sheet .faisa-calc, .sheet .src-chip {
+  background: var(--card); border-color: var(--rule);
+}
+.sheet .faisa {
+  background: var(--paper-2); border: 1px solid var(--rule); border-radius: 14px;
+}
+.sheet .faisa-nc { background: var(--paper-2); }
+.sheet .faisa-verdict { color: var(--ink); }
+.sheet .faisa-nc .faisa-verdict { color: var(--v-faux_positif_probable); }
+.sheet .faisa-ctx { color: var(--ink-faint); }
+.sheet .fc {
+  background: var(--card); border: 1px solid var(--rule); box-shadow: none;
+}
+.sheet .fc-num { color: var(--ink); }
+.sheet .fc-lbl, .sheet .pm-fig i, .sheet .v3d-figs i { color: var(--ink-faint); }
+.sheet .pm-fig b { color: var(--ink); }
+.sheet .faisa-steps td { border-bottom-color: var(--rule); color: var(--ink-soft); }
+.sheet .fs-src, .sheet .pm-src { color: var(--ink-faint); }
+.sheet .faisa-calc > summary, .sheet .faisa-calc[open] > summary { color: var(--accent); }
+.sheet .faisa-bandeau, .sheet .pm-foot { color: var(--ink-faint); }
+.sheet .bilan-frag, .sheet .bati.bt-warn, .sheet .unverified, .sheet .pm-note {
+  background: rgba(217,176,74,.08); border-color: rgba(217,176,74,.28);
+}
+.sheet .unverified b { color: var(--v-a_creuser); }
+.sheet .bilan-comp .fc, .sheet .bilan-cards .fc { background: var(--card-2); }
+
+/* Pastilles d'état & badges → fond translucide + texte clair (lecture sur sombre) */
+.sheet .chip.opportunite, .sheet .src-chip.ok { color: var(--v-opportunite); background: rgba(76,175,125,.12); border-color: rgba(76,175,125,.3); }
+.sheet .chip.a_creuser   { color: var(--v-a_creuser);  background: rgba(217,176,74,.14); }
+.sheet .chip.faux_positif_probable { color: var(--v-faux_positif_probable); background: rgba(217,83,79,.14); }
+.sheet .chip.exclue      { color: var(--ink-soft);     background: rgba(107,119,135,.16); }
+.sheet .eco-badge { background: var(--accent-soft); border-color: rgba(224,138,60,.32); color: var(--accent); }
+.sheet .src-chip.silent { color: var(--ink-faint); }
+
+/* La synthèse « métier » est une PHRASE → prose en Inter, pas en mono */
+.sheet .rs-synthese { font-family: "Inter", system-ui, sans-serif; color: var(--ink); }
+.sheet .rs-list li, .sheet .rs-action, .sheet .bati .bt-label { color: var(--ink); }
+.sheet .rs-eyebrow, .sheet .rs-action-k, .sheet .bati .bt-k { color: var(--accent); }
+
+/* Boutons (export, SPF, assistant, suivi, comparer) → cohérence sombre */
+.sheet .btn { background: var(--card); border-color: var(--rule-2); color: var(--ink); }
+.sheet .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+.sheet .btn.good { color: var(--v-opportunite); border-color: rgba(76,175,125,.35); }
+.sheet .btn.bad  { color: var(--v-faux_positif_probable); border-color: rgba(217,83,79,.35); }
+.sheet .btn.follow.on { color: var(--v-opportunite); background: rgba(76,175,125,.10); border-color: rgba(76,175,125,.4); }
+
+/* Vue du ciel : le fond de chargement de l'image n'est plus crème */
+.sheet .pm-sky img { background: var(--card-2); }
+
+/* ── 6. Mouvement sobre & plancher de qualité ───────────────────────────── */
+.sheet .fc, .sheet .pm-card, .sheet .btn, .sheet .alert { transition: border-color .14s, background .14s, transform .14s; }
+.sheet :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .sheet * { transition: none !important; animation: none !important; }
+}
