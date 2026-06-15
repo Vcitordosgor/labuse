@@ -204,8 +204,9 @@
     </section>
   </div>
 
-  <!-- Fiche premium §8 -->
-  <section id="sheet" class="sheet hidden" aria-hidden="true">
+  <!-- Fiche premium §8 — `inert` au repos : fermée (hors écran via translateX), elle ne doit
+       jamais capter le focus clavier ni être lue par les lecteurs d'écran (levé à l'ouverture). -->
+  <section id="sheet" class="sheet hidden" aria-hidden="true" inert>
     <button class="sheet-close" id="sheet-close" title="Fermer">✕</button>
     <div id="sheet-body"></div>
   </section>

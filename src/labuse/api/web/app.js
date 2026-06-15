@@ -222,6 +222,20 @@ async function loadStats() {
   $("#kpi-exclue").textContent = fmt(s.exclue);
 }
 
+// Filet de sécurité (audit QA) : si /stats est indisponible, les KPIs ne restent JAMAIS bloqués
+// sur « — » pendant que la carte affiche des parcelles. On les reconstruit depuis les parcelles
+// déjà chargées (même périmètre commune → cohérent avec la carte). /stats reste autoritatif :
+// on ne reconstruit que les compteurs encore vides.
+function reconcileKpisFromFeatures() {
+  if ($("#kpi-total") && $("#kpi-total").textContent !== "—") return;   // /stats a répondu
+  const c = { total: FEATURES.length, opportunite: 0, a_creuser: 0, exclue: 0 };
+  for (const ft of FEATURES) { const st = ft.properties.status; if (st in c && st !== "total") c[st]++; }
+  $("#kpi-total").textContent = fmt(c.total);
+  $("#kpi-opp").textContent = fmt(c.opportunite);
+  $("#kpi-creuser").textContent = fmt(c.a_creuser);
+  $("#kpi-exclue").textContent = fmt(c.exclue);
+}
+
 // 3.C — Veille = zones surveillées + parcelles suivies → liste de « nouveautés ».
 async function loadVeille() { await Promise.all([loadWatchZones(), loadAlertes()]); }
 
@@ -409,6 +423,7 @@ let CURRENT_IDU = null;   // fiche ouverte (pour le recalcul bilan après calibr
 async function openSheet(idu) {
   CURRENT_IDU = idu;
   $("#sheet").classList.remove("hidden");
+  $("#sheet").removeAttribute("inert");               // a11y : la fiche ouverte (re)devient focusable
   $("#sheet").setAttribute("aria-hidden", "false");   // a11y : le panneau ouvert n'est plus masqué aux lecteurs d'écran
   $("#scrim").classList.remove("hidden");
   $("#sheet-body").innerHTML = `<div class="loading">Chargement de la fiche…</div>`;
@@ -1581,6 +1596,7 @@ function expandCascadeForPrint() { const d = document.querySelector(".cascade");
 function closeSheet() {
   $("#sheet").classList.add("hidden");
   $("#sheet").setAttribute("aria-hidden", "true");
+  $("#sheet").setAttribute("inert", "");              // a11y : fermée (hors écran), elle sort de l'ordre de tabulation
   $("#scrim").classList.add("hidden");
 }
 
@@ -2034,6 +2050,7 @@ async function main() {
   try { fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json(); }
   catch { showMapError(); }
   FEATURES = fc.features || [];
+  reconcileKpisFromFeatures();                    // QA : KPIs jamais bloqués sur « — » si /stats a échoué
   DATA_READY = true;                              // M1 — données chargées : l'état vide est désormais fiable
   hideLoader();
   // Délégation des actions de l'état vide (réinitialiser / tout afficher / recharger).

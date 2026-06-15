@@ -45,3 +45,6 @@ deploy/Caddyfile
 
 # Phase 1.A GPU test — cache brut régénérable (réponses API Carto)
 reports/phase1a_gpu/cache/
+
+# Captures d'audit QA (artefacts locaux)
+qa/shots/
