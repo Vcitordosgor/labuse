@@ -7,12 +7,18 @@
   --muted: #9BA6B3;
   --gold: #D6B36A;
   --gold-soft: #e8d2a3;
-  /* Verdicts (palette LA BUSE — légende, carte, KPI, pastilles : une seule source) */
+  /* Verdicts (palette LA BUSE — légende, carte, KPI, pastilles : une seule source).
+     Base = remplissage carte/filet ; *-soft = MÊME verdict en texte lisible sur surface sombre. */
   --opp: #2DBE87;        /* Opportunité      */
+  --opp-soft: #6BCF9C;
   --creuser: #C88422;    /* À creuser        */
+  --creuser-soft: #E0B65E;
   --exclue: #7C8694;     /* Exclue (gris)    */
+  --exclue-soft: #AAB2BD;
   --faux: #D76055;       /* Écartée / risque */
+  --faux-soft: #E78D7F;
   --inconnu: #9BA3AF;    /* Non évaluée      */
+  --warn: #E0B65E;       /* rappels / urgence temporelle (≠ verdict) */
   font-synthesis: none;
 }
 
@@ -125,7 +131,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .alert[data-idu] { cursor: pointer; }
 .alert[data-idu]:hover { border-color: var(--accent); }
 .alert.ack { opacity: .5; border-left-color: var(--line); }
-.alert .a-type { color: #e0b65e; font-weight: 600; }
+.alert .a-type { color: var(--warn); font-weight: 600; }
 .alert .a-idu { font-family: ui-monospace, Menlo, monospace; color: var(--gold-soft); flex: 1; }
 .al-ack { background: none; border: 1px solid var(--line); color: var(--opp); border-radius: 6px;
           cursor: pointer; font-size: 11px; padding: 1px 6px; }
@@ -169,12 +175,12 @@ input[type=checkbox] { accent-color: var(--gold); }
   font-size: 10.5px; padding: 2px 7px; border-radius: 999px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .03em;
 }
-.chip.opportunite { background: rgba(58,157,110,.16); color: #6bcf9c; }
-.chip.a_creuser { background: rgba(199,154,62,.16); color: #e0b65e; }
-.chip.exclue { background: rgba(107,113,120,.18); color: #aab2bd; }
-.chip.faux_positif_probable { background: rgba(184,95,76,.18); color: #db8b7b; }
+.chip.opportunite { background: rgba(45,190,135,.15); color: var(--opp-soft); }
+.chip.a_creuser { background: rgba(200,132,34,.16); color: var(--creuser-soft); }
+.chip.exclue { background: rgba(124,134,148,.18); color: var(--exclue-soft); }
+.chip.faux_positif_probable { background: rgba(215,96,85,.16); color: var(--faux-soft); }
 /* Motif de déclassement (garde-fou faux positifs) — liste */
-.prow .p-downgrade { grid-column: 1 / -1; font-size: 11px; color: #db8b7b; margin-top: 2px; }
+.prow .p-downgrade { grid-column: 1 / -1; font-size: 11px; color: var(--faux-soft); margin-top: 2px; }
 
 .disclaimer-foot {
   position: sticky; bottom: 0; margin: 0 -20px; padding: 12px 20px;
@@ -222,7 +228,7 @@ input[type=checkbox] { accent-color: var(--gold); }
   box-shadow: 0 12px 32px rgba(0,0,0,.42);
 }
 .legend .legend-h { font-size: 10px; text-transform: uppercase; letter-spacing: .13em; color: var(--muted); margin-bottom: 1px; }
-.legend span { display: flex; align-items: center; gap: 9px; color: #c4ccd5; }
+.legend span { display: flex; align-items: center; gap: 9px; color: var(--muted); }
 
 /* État vide de la carte : jamais une carte blanche muette (P3) */
 .map-empty {
@@ -278,7 +284,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .leaflet-control-layers-toggle { background-color: rgba(17,26,36,.94) !important; border-radius: 11px !important;
   width: 34px !important; height: 34px !important; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
 .leaflet-control-layers-expanded { padding: 11px 13px !important; font-size: 12.5px; min-width: 168px; }
-.leaflet-control-layers-list { color: #c4ccd5; }
+.leaflet-control-layers-list { color: var(--muted); }
 .leaflet-control-layers label { margin: 3px 0; display: flex; align-items: center; gap: 7px; cursor: pointer; }
 .leaflet-control-layers-separator { border-top: 1px solid var(--line) !important; margin: 8px 0 !important; }
 .leaflet-control-layers input { accent-color: var(--gold); }
@@ -295,13 +301,13 @@ input[type=checkbox] { accent-color: var(--gold); }
 .lb-tip.leaflet-tooltip::before { display: none; }
 .lb-tip .t-idu { font-family: ui-monospace, Menlo, monospace; color: var(--gold-soft); display: block; font-size: 11.5px; }
 .lb-tip .t-st { font-weight: 600; }
-.lb-tip .t-st.st-opportunite { color: #5cc596; }
-.lb-tip .t-st.st-a_creuser { color: #ddb158; }
-.lb-tip .t-st.st-faux_positif_probable { color: #db8b7b; }
-.lb-tip .t-st.st-exclue { color: #9aa3ad; }
+.lb-tip .t-st.st-opportunite { color: var(--opp-soft); }
+.lb-tip .t-st.st-a_creuser { color: var(--creuser-soft); }
+.lb-tip .t-st.st-faux_positif_probable { color: var(--faux-soft); }
+.lb-tip .t-st.st-exclue { color: var(--exclue-soft); }
 .lb-tip .t-st.st-inconnu { color: var(--muted); }
 .lb-tip .t-sc { color: var(--muted); display: block; margin-top: 1px; }
-.lb-tip .t-dg { color: #db8b7b; display: block; margin-top: 2px; font-size: 11px; }
+.lb-tip .t-dg { color: var(--faux-soft); display: block; margin-top: 2px; font-size: 11px; }
 .lb-tip .t-sc b { color: var(--txt); }
 
 /* ───────── Fiche — « le dossier » · feuille éditoriale ivoire §8 ───────── */
@@ -356,7 +362,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .verdict.v-faux_positif_probable .verdict-word { color: var(--v-faux_positif_probable); }
 .verdict-gloss { color: var(--ink-soft); font-size: 14.5px; margin: 0 0 15px; max-width: 44ch; }
 .verdict-downgrade { margin: 0 0 14px; padding: 9px 13px; border-radius: 9px; font-size: 13px; line-height: 1.45;
-  max-width: 52ch; background: rgba(184,95,76,.12); border: 1px solid rgba(184,95,76,.4); color: #b85f4c; font-weight: 600; }
+  max-width: 52ch; background: rgba(215,96,85,.12); border: 1px solid rgba(215,96,85,.4); color: #b85f4c; font-weight: 600; }
 .fiable-tag { display: inline-block; font-size: 11px; padding: 4px 12px; border-radius: 999px; font-weight: 600; letter-spacing: .02em; }
 .fiable-tag.ok { background: rgba(47,125,87,.12); color: #246046; border: 1px solid rgba(47,125,87,.28); }
 .fiable-tag.reserve { background: rgba(176,125,43,.12); color: #8a5f1c; border: 1px solid rgba(176,125,43,.30); }
@@ -409,7 +415,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .bati .bt-src { margin-left: auto; font-size: 10.5px; color: var(--ink-faint); }
 .bati.bt-ok { border-left-color: var(--v-opportunite); }
 .bati.bt-warn { border-left-color: var(--v-a_creuser); background: #fbf6ea; }
-.bati.bt-bad { border-left-color: var(--v-faux_positif_probable); background: rgba(184,95,76,.07); }
+.bati.bt-bad { border-left-color: var(--v-faux_positif_probable); background: rgba(215,96,85,.07); }
 .bati.bt-bad .bt-label { color: #8a4233; }
 .bati.bt-unk { border-left-color: var(--accent); }
 
@@ -598,7 +604,7 @@ input[type=checkbox] { accent-color: var(--gold); }
 .dp-close:hover { border-color: var(--gold); color: var(--gold); }
 .dp-body { overflow-y: auto; padding: 16px 20px 20px; }
 .dp-intro { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
-.dp-warn { color: #db8b7b; font-size: 12.5px; background: rgba(184,95,76,.1); border: 1px solid rgba(184,95,76,.35);
+.dp-warn { color: var(--faux-soft); font-size: 12.5px; background: rgba(215,96,85,.1); border: 1px solid rgba(215,96,85,.35);
   border-radius: 8px; padding: 8px 11px; margin: 0 0 12px; }
 .dp-warn code { font-family: ui-monospace, Menlo, monospace; color: var(--gold-soft); }
 .dp-list { display: flex; flex-direction: column; gap: 8px; }
@@ -612,17 +618,17 @@ input[type=checkbox] { accent-color: var(--gold); }
 .dp-role { font-size: 13.5px; font-weight: 600; color: var(--txt); }
 .dp-montre { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
 .dp-meta { flex: none; display: flex; align-items: center; gap: 7px; }
-.dp-drift { color: #db8b7b; font-size: 14px; }
+.dp-drift { color: var(--faux-soft); font-size: 14px; }
 
 /* État de la démo (panneau admin dans l'overlay Démo guidée) */
 .ds-box { margin: 0 0 14px; padding: 11px 13px; border-radius: 11px; font-size: 13px; border: 1px solid var(--line); }
 .ds-box.ds-ok { background: rgba(55,151,106,.08); border-color: rgba(55,151,106,.35); color: #7fd3ab; }
-.ds-box.ds-bad { background: rgba(184,95,76,.08); border-color: rgba(184,95,76,.4); color: #db8b7b; }
+.ds-box.ds-bad { background: rgba(215,96,85,.08); border-color: rgba(215,96,85,.4); color: var(--faux-soft); }
 .ds-when { float: right; font-size: 11px; color: var(--muted); font-weight: 400; }
 .ds-grid { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 8px; }
 .ds-item { font-size: 11.5px; padding: 2px 8px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); }
-.ds-item.ok { color: #6bcf9c; }
-.ds-item.ko { color: #db8b7b; border-color: rgba(184,95,76,.4); font-weight: 600; }
+.ds-item.ok { color: var(--opp-soft); }
+.ds-item.ko { color: var(--faux-soft); border-color: rgba(215,96,85,.4); font-weight: 600; }
 /* §4 — « À lancer » : vraies commandes dans un encadré de code lisible (fond contrasté, mono) */
 .ds-actions { margin-top: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
 .ds-actions code { display: block; margin-top: 6px; font-family: var(--font-mono, ui-monospace, Menlo, monospace);
@@ -657,9 +663,12 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .kb-count { color: var(--muted); font-size: 13px; margin-left: auto; }
 .kb-board { flex: 1; display: flex; gap: 14px; padding: 16px 20px; overflow-x: auto; overflow-y: hidden; }
 .kb-col { flex: 0 0 286px; display: flex; flex-direction: column; min-height: 0;
-  background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  /* cap d'accent d'entonnoir (tone) — respecte le radius, n'affecte pas le layout */
+  box-shadow: inset 0 2px 0 0 var(--col-accent, transparent); }
 .kb-col-head { display: flex; align-items: center; justify-content: space-between; padding: 11px 13px; border-bottom: 1px solid var(--line); }
-.kb-col-title { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--gold-soft); font-weight: 600; }
+.kb-col-title { font-size: 12px; text-transform: uppercase; letter-spacing: .07em; color: var(--gold-soft); font-weight: 600; display: flex; align-items: center; gap: 7px; }
+.kb-col-title::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--col-accent, var(--muted)); flex: none; }
 .kb-col-n { font-size: 12px; color: var(--muted); background: var(--panel-2); border-radius: 999px; padding: 1px 9px; }
 .kb-cards { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 9px; min-height: 40px; }
 .kb-empty { color: var(--muted); font-size: 12px; text-align: center; padding: 18px 8px; display: flex; flex-direction: column; gap: 3px; border: 1px dashed var(--line); border-radius: 9px; }
@@ -678,11 +687,11 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 .kb-sub { font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
 .kb-opp { font-family: var(--font-mono, ui-monospace, monospace); font-weight: 600; font-size: 14px; color: var(--txt); font-feature-settings: "tnum" 1; }
 .kb-prio { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding: 1px 7px; border-radius: 999px; margin-left: auto; }
-.kb-prio.prio-haute { background: rgba(184,95,76,.18); color: #db8b7b; }
-.kb-prio.prio-moyenne { background: rgba(201,168,106,.16); color: var(--gold-soft); }
-.kb-prio.prio-basse { background: rgba(105,112,121,.2); color: #aab2bd; }
-.kb-rem { font-size: 11.5px; color: #e0b65e; margin-top: 7px; }
-.kb-notes { font-size: 12px; color: #c4ccd5; margin-top: 7px; line-height: 1.4;
+.kb-prio.prio-haute { background: rgba(215,96,85,.16); color: var(--faux-soft); }
+.kb-prio.prio-moyenne { background: rgba(214,179,106,.16); color: var(--gold-soft); }
+.kb-prio.prio-basse { background: rgba(155,166,179,.15); color: var(--muted); }
+.kb-rem { font-size: 11.5px; color: var(--warn); margin-top: 7px; }
+.kb-notes { font-size: 12px; color: var(--muted); margin-top: 7px; line-height: 1.4;
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .kb-foot { display: flex; gap: 6px; margin-top: 9px; align-items: center; }
 .kb-move { flex: 1; background: var(--panel); border: 1px solid var(--line); color: var(--txt);
@@ -705,15 +714,15 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 
 /* — Kanban T2 : pastille rappels, outils tri/filtre, drag&drop, rappels actifs — */
 .kb-badge { display: inline-block; min-width: 17px; height: 17px; line-height: 17px; padding: 0 5px; margin-left: 6px;
-  background: #b8503f; color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700; text-align: center; vertical-align: middle; }
+  background: var(--faux); color: #fff; border-radius: 999px; font-size: 11px; font-weight: 700; text-align: center; vertical-align: middle; }
 .kb-badge.hidden { display: none; }
 
 .kb-tools { display: flex; align-items: center; gap: 12px; margin-left: 6px; }
 .kb-remfilter { background: var(--panel-2); border: 1px solid var(--line); color: var(--muted);
   padding: 6px 11px; border-radius: 8px; font: inherit; font-size: 12.5px; cursor: pointer; transition: all .15s; }
 .kb-remfilter:hover { border-color: var(--gold); color: var(--gold-soft); }
-.kb-remfilter.has-due { color: #e0b65e; border-color: rgba(194,145,63,.4); }
-.kb-remfilter[aria-pressed="true"] { background: #e0b65e; border-color: #e0b65e; color: #1a1206; font-weight: 600; }
+.kb-remfilter.has-due { color: var(--warn); border-color: rgba(224,182,94,.4); }
+.kb-remfilter[aria-pressed="true"] { background: var(--warn); border-color: var(--warn); color: #1a1206; font-weight: 600; }
 .kb-remn { font-weight: 700; }
 .kb-sort { color: var(--muted); font-size: 12.5px; display: flex; align-items: center; gap: 7px; }
 .kb-sort select { background: var(--panel-2); border: 1px solid var(--line); color: var(--txt);
@@ -722,15 +731,15 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 /* Drag : carte soulevée + colonne cible surlignée (retour propre si annulation : aucun déplacement avant le drop) */
 .kb-card.dragging { opacity: .45; transform: scale(.97) rotate(-1deg); box-shadow: 0 16px 32px rgba(0,0,0,.5); cursor: grabbing; }
 .kb-col.drag-over { border-color: var(--gold); box-shadow: inset 0 0 0 1px var(--gold), 0 10px 28px rgba(0,0,0,.32); }
-.kb-col.drag-over .kb-cards { background: rgba(201,168,106,.06); }
+.kb-col.drag-over .kb-cards { background: rgba(214,179,106,.06); }
 @keyframes kb-pop { from { opacity: .25; transform: translateY(-7px); } to { opacity: 1; transform: none; } }
 .kb-card.just-moved { animation: kb-pop .26s cubic-bezier(.4,0,.2,1); }
 
 /* Rappels actifs : échu (rouge) / proche ≤ 3 j (ambre) — sans masquer le filet de verdict (bord gauche) */
-.kb-rem.overdue { color: #db8b7b; font-weight: 600; }
-.kb-rem.soon { color: #e0b65e; }
-.kb-card.rem-overdue { border-color: rgba(184,80,63,.55); background: rgba(184,80,63,.07); }
-.kb-card.rem-soon { border-color: rgba(194,145,63,.45); }
+.kb-rem.overdue { color: var(--faux-soft); font-weight: 600; }
+.kb-rem.soon { color: var(--warn); }
+.kb-card.rem-overdue { border-color: rgba(215,96,85,.5); background: rgba(215,96,85,.07); }
+.kb-card.rem-soon { border-color: rgba(224,182,94,.4); }
 
 /* ───────── Mobile : shell une colonne + bascule Carte ⇄ Liste (P1) ───────── */
 .mtabs { display: none; }
@@ -741,7 +750,7 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
   .mtabs {
     display: flex; align-items: center; justify-content: space-between;
     position: fixed; top: 0; left: 0; right: 0; height: 52px; z-index: 850;
-    padding: 0 14px; background: rgba(14,18,24,.97);
+    padding: 0 14px; background: rgba(11,17,24,.97);
     -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
   }
@@ -1075,7 +1084,7 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 
 /* ── Assemblage v1 (Lot C5) ── */
 .vz-unlock { margin: 0 0 8px; padding: 9px 12px; border-radius: 8px; border-left: 3px solid var(--gold-soft);
-  background: rgba(201,168,106,.1); font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+  background: rgba(214,179,106,.1); font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
 .vz-unlock.vz-prio { border-left-color: #37976a; background: rgba(55,151,106,.12); }
 
 /* ── Comparateur (Lot D2) ── */

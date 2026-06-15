@@ -27,12 +27,17 @@
 | `--tf-accent` / `--tf-gold` | `#846A22` / `#D6B36A` | or (texte AA / fond bouton) — **jamais de bleu** |
 
 ### Verdicts — sémantique stricte (les MÊMES partout : légende, carte, KPI, pastilles, fiche)
-| Verdict | Sombre (`--opp`…) | Clair (`--tf-positive`…) |
-|---|---|---|
-| Opportunité | `#2DBE87` | texte `#0F6E56` · vif `#1D9E75` |
-| À creuser | `#C88422` | texte `#854F0B` · vif `#C8841A` |
-| Écartée / risque | `#D76055` | texte `#A32D2D` · vif `#E24B4A` |
-| Exclue / non évaluée | `#7C8694` / `#9BA3AF` | `#6E6D67` (gris) |
+| Verdict | Sombre base (`--opp`…) | Sombre texte (`--*-soft`) | Clair (`--tf-positive`…) |
+|---|---|---|---|
+| Opportunité | `#2DBE87` | `#6BCF9C` | texte `#0F6E56` · vif `#1D9E75` |
+| À creuser | `#C88422` | `#E0B65E` | texte `#854F0B` · vif `#C8841A` |
+| Écartée / risque | `#D76055` | `#E78D7F` | texte `#A32D2D` · vif `#E24B4A` |
+| Exclue / non évaluée | `#7C8694` / `#9BA3AF` | `#AAB2BD` | `#6E6D67` (gris) |
+
+> **base** = remplissage carte / filet de pastille ; **soft** = le MÊME verdict en *texte* lisible
+> (≥ AA) sur surface sombre. Une seule source : chips, légende, tooltips et Kanban tirent tous des
+> tokens — aucune valeur de couleur en dur. Hors verdict : `--warn #E0B65E` = rappels / urgence
+> temporelle (jamais une couleur de verdict).
 
 **Règle** : l'accent (or) = score + actions primaires ; les couleurs verdict = **données uniquement** ;
 badges méta = **gris discret**. Contrastes texte ≥ **AA** (4.5:1) vérifiés.
@@ -61,6 +66,7 @@ badges méta = **gris discret**. Contrastes texte ≥ **AA** (4.5:1) vérifiés.
 | **ActionPanel** | `.fiche-actions` — CTA vert « Ajouter au pipeline » + `.fa-more` (exports) |
 | **PropertyStatus** | `.pm-status` — statuts courts + « Voir détails » |
 | **SourceBadge** | `.src-summary` + `.src-chip` — « N analysées · X répondu · Y à vérifier » |
+| **PipelineColumn** | `.kb-col` — accent d'entonnoir piloté par `tone` (config `pipeline.yaml`) : cold→warm→hot→reject, cap + pastille (`--col-accent`, gold = progression) |
 | **PipelineCard** | `kbCard()` · `.kb-card` — réf · verdict · score · proprio · action |
 | **DemoGuideModal** | `renderDemoStatus/Panel()` · `.dp-*` / `.ds-*` (commandes en détail développeur) |
 

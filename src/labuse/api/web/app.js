@@ -1671,6 +1671,9 @@ async function loadMeta() {
 }
 const colLabel = (k) => (KANBAN_META && KANBAN_META.columns.find((c) => c.key === k) || {}).label || k;
 const prioLabel = (k) => (KANBAN_META && KANBAN_META.priorities.find((p) => p.key === k) || {}).label || k;
+// Accent d'entonnoir piloté par la config (`tone`) — gold = progression, pas une couleur de verdict.
+const TONE_ACCENT = { cold: "var(--muted)", warm: "var(--gold-soft)", hot: "var(--gold)", reject: "var(--exclue)" };
+const toneAccent = (t) => TONE_ACCENT[t] || "var(--line)";
 const prioRank = (k) => { const i = (KANBAN_META && KANBAN_META.priorities || []).findIndex((p) => p.key === k); return i < 0 ? 99 : i; };
 
 // Rappel : état calculé côté client (échu / proche ≤ 3 j / —) — aucune dépendance backend.
@@ -1786,7 +1789,7 @@ function renderKanban() {
   // Résumé CRM : suivies · propriétaires à identifier · relances prévues.
   const aIdentifier = PIPELINE.filter((e) => {
     const sp = (e.prospection || {}).statut_proprietaire;
-    return !e.proprietaire_label && (!sp || sp === "a_identifier" || sp === "inconnu");
+    return (!sp || sp === "a_identifier" || sp === "inconnu") && !e.has_manual_contact;
   }).length;
   const relances = PIPELINE.filter((e) => (e.prospection || {}).date_prochaine_action).length;
   $("#kb-count").textContent = total
@@ -1799,7 +1802,7 @@ function renderKanban() {
     ? `<div class="kb-empty-hint">Aucune parcelle suivie pour l'instant.<br>Ouvrez une fiche parcelle, cliquez <b>« + Suivre cette parcelle »</b>, puis passez-la en <b>« Propriétaire à identifier »</b> et notez votre prochaine action pour démarrer votre prospection.</div>`
     : "";
   $("#kb-board").innerHTML = emptyHint + cols.map((c) => `
-    <div class="kb-col" data-col="${c.key}">
+    <div class="kb-col tone-${esc(c.tone || "none")}" data-col="${c.key}" style="--col-accent: ${toneAccent(c.tone)}">
       <div class="kb-col-head"><span class="kb-col-title">${esc(c.label)}</span><span class="kb-col-n">${(byCol[c.key] || []).length}</span></div>
       <div class="kb-cards">${(byCol[c.key] || []).map(kbCard).join("") || '<div class="kb-empty">Aucune parcelle à ce stade<span>les parcelles qualifiées apparaîtront ici</span></div>'}</div>
     </div>`).join("");
