@@ -89,13 +89,18 @@ ok('8d.shortlist-open-fiche', slFiche.open, JSON.stringify(slFiche));
 ok('8e.assemblage-in-note', slFiche.asm >= 1, `asm-bloc dans la note = ${slFiche.asm}`);
 await page.keyboard.press('Escape'); await page.waitForTimeout(400);
 await page.locator('.sl-back').click(); await page.waitForTimeout(500);
-// 9 — démo guidée : ouverture + fermeture Escape, pas de commande terminal au 1er niveau
+// 9 — démo guidée scénarisée : ouverture, 3 actes + CTA shortlist, pas de commande au 1er niveau
 await page.locator('.nav-demo.js-demo').first().click(); await page.waitForTimeout(1200);
-const demoOpen = await page.locator('#demo-overlay').isVisible();
+const demo = await page.evaluate(() => ({
+  open: !document.querySelector('#demo-overlay').classList.contains('hidden'),
+  acts: document.querySelectorAll('#demo-body .dp-act').length,
+  items: document.querySelectorAll('#demo-body .dp-item').length,
+  cta: !!document.querySelector('#demo-body [data-demo-go]'),
+}));
 const rawCmd = await page.locator('#demo-body code:visible').count();
+ok('9.demo-scenarise', demo.open && demo.acts === 3 && demo.items >= 5 && demo.cta && rawCmd === 0, JSON.stringify({ ...demo, rawCmd }));
 await page.keyboard.press('Escape'); await page.waitForTimeout(500);
-const demoClosed = !(await page.locator('#demo-overlay').isVisible());
-ok('9.demo-open-close', demoOpen && demoClosed && rawCmd === 0, `open=${demoOpen} close=${demoClosed} cmdVisibles=${rawCmd}`);
+ok('9b.demo-close', !(await page.locator('#demo-overlay').isVisible()));
 // 10 — santé globale : aucune erreur JS / requête 4xx-5xx applicative
 ok('10.no-js-errors', pageErrors.length === 0 && consoleErrors.length === 0, `pageerr=${pageErrors.length} console=${consoleErrors.length} ${JSON.stringify([...new Set(consoleErrors)].slice(0,3))}`);
 ok('10b.no-bad-requests', badReq.length === 0, JSON.stringify([...new Set(badReq)].slice(0, 8)));

@@ -1682,6 +1682,8 @@ function openDemo() {
     $("#demo-body").innerHTML = renderDemoStatus(st) + renderDemoPanel(d);
     document.querySelectorAll("#demo-body .dp-item").forEach((el) =>
       el.addEventListener("click", () => { closeDemo(); focusParcel(el.dataset.idu); }));
+    const go = $("#demo-body [data-demo-go]");
+    if (go) go.addEventListener("click", () => { closeDemo(); setView("shortlist"); });
   }).catch(() => { $("#demo-body").innerHTML = `<div class="loading">Démo momentanément indisponible.</div>`; });
 }
 
@@ -1718,23 +1720,50 @@ function closeDemo() {
   ov.classList.add("hidden"); ov.setAttribute("aria-hidden", "true");
 }
 function renderDemoPanel(d) {
-  const items = (d.parcels || []).map((p) => {
-    const drift = p.conforme ? "" :
-      `<span class="dp-drift" title="statut live ≠ attendu (${esc(p.attendu)})">⚠</span>`;
-    return `<button class="dp-item" data-idu="${esc(p.idu)}">
-      <span class="dp-num">${p.ordre}</span>
-      <span class="dp-main">
-        <span class="dp-role">${esc(p.role)}</span>
-        <span class="dp-montre">${esc(p.montre)}</span>
-      </span>
-      <span class="dp-meta"><span class="chip ${p.status || "inconnu"}">${STATUS_LABEL[p.status] || "—"}</span>${drift}</span>
-    </button>`;
-  }).join("");
+  const parcels = d.parcels || [];
+  const byAct = {};
+  parcels.forEach((p) => { (byAct[p.attendu] = byAct[p.attendu] || []).push(p); });
+  const acts = DEMO_ACTS.filter((a) => (byAct[a.key] || []).length).map((a) => `
+    <section class="dp-act">
+      <header class="dp-act-h"><span class="dp-act-n">${a.n}</span>
+        <span class="dp-act-tt"><span class="dp-act-t">${esc(a.title)}</span><span class="dp-act-s">${esc(a.sub)}</span></span>
+        <span class="dp-act-c">${byAct[a.key].length}</span></header>
+      <div class="dp-list">${byAct[a.key].map(demoItem).join("")}</div>
+    </section>`).join("");
   const warn = d.all_conform ? "" :
     `<p class="dp-warn">⚠ Une parcelle a dérivé (statut ≠ attendu) — voir « Préparer la démo » ci-dessus.</p>`;
-  const n = (d.parcels || []).length;
-  return `<p class="dp-intro"><b>${esc(d.commune || "Saint-Paul")}</b> · ${n} parcelle${n > 1 ? "s" : ""} pour comprendre LA BUSE en 5 minutes.</p>
-    <p class="dp-sub">Cliquez une ligne pour ouvrir sa fiche.</p>${warn}<div class="dp-list">${items}</div>`;
+  const n = parcels.length;
+  return `
+    <p class="dp-intro"><b>${esc(d.commune || "Saint-Paul")}</b> — de l'opportunité à la décision en 5 minutes.</p>
+    <div class="dp-path">
+      <button class="dp-cta" data-demo-go="shortlist" type="button">🎯 Ouvrir la shortlist du jour</button>
+      <span class="dp-path-s">les ${n} parcelles ci-dessous montrent comment LA BUSE trie le vrai du faux.</span>
+    </div>
+    ${warn}
+    ${acts}
+    <p class="dp-close-note">▶ Chaque sujet retenu part au <b>pipeline de prospection</b> — notes, relances, propriétaire.</p>`;
+}
+// Parcours en 3 actes : faire ressortir → écarter (la rigueur) → instruire. Dérivé du statut
+// ATTENDU de chaque parcelle de démo (aucune donnée ajoutée) — l'histoire à raconter au promoteur.
+const DEMO_ACTS = [
+  { key: "opportunite", n: "①", title: "Ce que LA BUSE fait ressortir",
+    sub: "Opportunités foncières vacantes ou sous-denses — dont un cas d'assemblage." },
+  { key: "faux_positif_probable", n: "②", title: "Ce qu'elle écarte — la rigueur",
+    sub: "Faux bons plans corrigés et tracés (résidence déjà bâtie, parking, pente). La crédibilité du radar." },
+  { key: "a_creuser", n: "③", title: "Les pistes à instruire",
+    sub: "Sujets à creuser avant démarche : périmètre PPR, densification SAR." },
+];
+function demoItem(p) {
+  const drift = p.conforme ? "" :
+    `<span class="dp-drift" title="statut live ≠ attendu (${esc(p.attendu)})">⚠</span>`;
+  return `<button class="dp-item" data-idu="${esc(p.idu)}">
+    <span class="dp-num">${p.ordre}</span>
+    <span class="dp-main">
+      <span class="dp-role">${esc(p.role)}</span>
+      <span class="dp-montre">${esc(p.montre)}</span>
+    </span>
+    <span class="dp-meta"><span class="chip ${p.status || "inconnu"}">${STATUS_LABEL[p.status] || "—"}</span>${drift}</span>
+  </button>`;
 }
 
 // ───────────────────────── Pipeline / Kanban (T2) ─────────────────────────
