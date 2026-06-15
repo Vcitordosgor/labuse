@@ -100,6 +100,11 @@ def pipeline() -> dict[str, Any]:
     return load_yaml_config("pipeline")
 
 
+def shortlist() -> dict[str, Any]:
+    """Pondérations de la shortlist promoteur (config/shortlist.yaml) — calibration métier."""
+    return load_yaml_config("shortlist")
+
+
 @lru_cache(maxsize=1)
 def rules_version() -> str:
     """Empreinte courte des configs de règles (pour estampiller les évaluations)."""

@@ -58,6 +58,26 @@ def test_assemblage_bonus_thresholds():
     assert sl.assemblage_bonus(True, 1200) == 45        # franchit le seuil
 
 
+def test_marche_bonus():
+    assert sl.marche_bonus("fiable") == 20
+    assert sl.marche_bonus("fragile") == 8
+    assert sl.marche_bonus("insuffisant") == 0
+    assert sl.marche_bonus(None) == 0                   # pas de marché → pas de bonus
+
+
+def test_weights_are_calibratable_via_config():
+    """Calibration métier : les pondérations sont injectables sans toucher au code."""
+    cfg = {"verdict_base": {"opportunite": 200},
+           "weights": {"opportunite": 2.0, "fiabilite": 0, "densification": 0,
+                       "residuel_par_100m2": 0, "residuel_cap": 0,
+                       "economique_par_100m2": 0, "economique_cap": 0,
+                       "proprietaire": 0, "risque": 0}}
+    s, comp = sl.priority_score(_row(status="opportunite", opportunity_score=50), cfg=cfg)
+    assert comp["verdict"] == 200
+    assert comp["opportunite"] == 100                   # 50 × 2.0
+    assert s == 300
+
+
 def test_badges_actionnable_vs_pipeline():
     sujet = {"verdict_status": "opportunite",
              "potentiel_assemblage": {"possible": True},

@@ -542,8 +542,8 @@ function renderNotePromoteur(f) {
   const r = f.resume || {};
   const status = v.status || "inconnu";
   const decision = r.prochaine_action ? esc(r.prochaine_action)
-    : (status === "exclue" ? "Écarter — contrainte rédhibitoire."
-      : "Qualifier la parcelle et identifier le propriétaire.");
+    : (status === "exclue" ? "Écarter — contrainte rédhibitoire, hors périmètre d'instruction."
+      : "Sécuriser le foncier : qualifier le terrain et identifier le propriétaire.");
 
   const mc = (label, value, sub, tone) => `<div class="mc${tone ? " mc-" + tone : ""}">
     <div class="mc-k">${label}</div><div class="mc-v">${value}</div>${sub ? `<div class="mc-s">${sub}</div>` : ""}</div>`;
@@ -1464,6 +1464,12 @@ function renderBilan(b) {
   const ecartCell = cmp.exploitable
     ? `<b>${cmp.ecart_vefa_ancien_pct >= 0 ? "+" : ""}${cmp.ecart_vefa_ancien_pct} %</b> <span class="bc-n">(neuf vs ancien)</span>`
     : `<i>${esc(cmp.note || "écart non exploitable")}</i>`;
+  // Raffinements marché : volatilité (dispersion) + tendance prudente (récent vs ancien).
+  const TREND = { hausse: "↗ en hausse", baisse: "↘ en baisse", stable: "→ stable", indéterminée: "tendance indéterminée" };
+  const volTxt = px.volatilite ? `dispersion ${esc(px.volatilite)}${px.volatilite_pct != null ? ` <span class="bc-n">(±${px.volatilite_pct} %)</span>` : ""}` : "";
+  const trTxt = px.tendance && px.tendance !== "indéterminée"
+    ? `${TREND[px.tendance] || esc(px.tendance)}${px.tendance_pct != null ? ` <span class="bc-n">(${px.tendance_pct > 0 ? "+" : ""}${px.tendance_pct} %)</span>` : ""}` : "";
+  const dynCell = (volTxt || trTxt) ? `${volTxt}${volTxt && trTxt ? " · " : ""}${trTxt}` : "<i>non concluante</i>";
   const compBlock = (cmp.n_vefa == null && cmp.n_ancien == null) ? "" : `
       <div class="bilan-comp">
         <div class="bilan-comp-t">Comparables de prix utilisés</div>
@@ -1472,6 +1478,7 @@ function renderBilan(b) {
           <dt>Médiane ancien</dt><dd>${ancienCell}</dd>
           <dt>Médiane neuf / VEFA</dt><dd>${vefaCell}</dd>
           <dt>Écart neuf vs ancien</dt><dd>${ecartCell}</dd>
+          <dt>Dynamique marché</dt><dd>${dynCell}</dd>
           <dt>Fiabilité du prix</dt><dd>${badge}</dd>
         </dl>
         <p class="bilan-comp-note">Le prix au m² est une donnée de <b>marché</b> (DVF). Le bilan promoteur complet reste <b>indicatif</b> : travaux, marge, frais, TVA, VRD, stationnement et aléas sont à valider par un professionnel.</p>

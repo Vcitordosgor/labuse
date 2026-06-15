@@ -62,6 +62,31 @@ def _quartiles(xs: list[float]) -> tuple[float, float, float]:
     return (xs[0], statistics.median(xs), xs[-1]) if xs else (0.0, 0.0, 0.0)
 
 
+def _marche_dynamique(kept: list[dict], q1: float, med: float, q3: float, min_n: int) -> dict:
+    """Raffinements marché (DVF) : VOLATILITÉ (dispersion interquartile relative au prix médian)
+    + TENDANCE prudente (médiane des ventes récentes vs anciennes). Indicatif, jamais certain :
+    la tendance n'est calculée que si l'échantillon le permet, sinon « indéterminée »."""
+    vol = round(100 * (q3 - q1) / med) if med else None
+    out = {
+        "volatilite_pct": vol,
+        "volatilite": (None if vol is None else "stable" if vol < 25 else "modérée" if vol <= 50 else "volatile"),
+        "tendance_pct": None,
+        "tendance": "indéterminée",
+    }
+    annees = sorted({s["annee"] for s in kept})
+    if len(annees) >= 2 and len(kept) >= min_n:
+        pivot = statistics.median([s["annee"] for s in kept])
+        recent = [s["prix"] for s in kept if s["annee"] >= pivot]
+        ancien = [s["prix"] for s in kept if s["annee"] < pivot]
+        if len(recent) >= 2 and len(ancien) >= 2:
+            mr, ma = statistics.median(recent), statistics.median(ancien)
+            if ma:
+                tr = round(100 * (mr - ma) / ma)
+                out["tendance_pct"] = tr
+                out["tendance"] = "hausse" if tr >= 5 else "baisse" if tr <= -5 else "stable"
+    return out
+
+
 def _trim_aberrants(sales: list[dict]) -> tuple[list[dict], int]:
     """Exclut les €/m² aberrants : Tukey (Q1−1,5·IQR ; Q3+1,5·IQR) borné au bon sens
     réunionnais [1000 ; 12000] €/m² — sous 1 000 €/m² bâti, c'est quasi toujours un
@@ -192,6 +217,7 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
             "periode": [min(annees), max(annees)],
             "q1": round(q1), "median": round(med), "q3": round(q3),
             "min": round(min(prices)), "max": round(max(prices)),
+            **_marche_dynamique(kept, q1, med, q3, min_n),
             "comparables": _comparables(kept, min_n, niveau)}
 
 

@@ -501,8 +501,12 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
         except Exception:  # noqa: BLE001 - un sujet illisible ne casse jamais la shortlist
             fiche = None
         asm = ((fiche or {}).get("voisinage") or {}).get("assemblage") or {}
-        row["_priority"] = (row.get("_priority") or 0) + sl.assemblage_bonus(
-            bool(asm.get("possible")), asm.get("surface_cumulee_m2"))
+        fiab = (((fiche or {}).get("faisabilite") or {}).get("bilan") or {}).get("fiabilite")
+        ab = sl.assemblage_bonus(bool(asm.get("possible")), asm.get("surface_cumulee_m2"))
+        mb = sl.marche_bonus(fiab)
+        row["_priority"] = (row.get("_priority") or 0) + ab + mb
+        if isinstance(row.get("_components"), dict):
+            row["_components"].update({"assemblage": ab, "marche": mb})   # transparence calibration
         enriched.append((row, fiche))
     enriched.sort(key=lambda t: (-(t[0].get("_priority") or 0),
                                  -(t[0].get("opportunity_score") or 0), t[0].get("idu") or ""))

@@ -1,0 +1,30 @@
+# LA BUSE — pondérations de la SHORTLIST promoteur (priorisation « sujets à traiter »).
+# Tunables ICI sans toucher au code : c'est le point de calibration métier. La priorité
+# n'est PAS le score brut — c'est une lecture promoteur. Chaque poste est explicable
+# (renvoyé dans `priority_components` du payload /shortlist).
+
+# Base par verdict : on travaille les opportunités d'abord, puis les « à creuser ».
+verdict_base:
+  opportunite: 120
+  a_creuser: 50
+
+# Postes du score (calculés sur les champs « légers » de la couche carte).
+weights:
+  opportunite: 1.0        # × score d'opportunité (0–100)
+  fiabilite: 0.4          # × complétude (0–100) → 0–40 (la confiance compte)
+  densification: 25       # bonus si sous-densité (potentiel de densification)
+  residuel_par_100m2: 1.0 # × (SDP résiduelle / 100), plafonné
+  residuel_cap: 20
+  economique_par_100m2: 1.0  # × (surface / 100), plafonné (poids économique)
+  economique_cap: 30
+  proprietaire: 18        # bonus si propriétaire actionnable (public / morale)
+  risque: -30             # malus si déclassement (downgrade)
+
+# Bonus appliqués APRÈS enrichissement du haut du panier (assemblage + marché).
+bonus:
+  assemblage: 30          # un assemblage débloque une vraie opération
+  assemblage_seuil: 15    # bonus additionnel si la surface cumulée franchit le seuil
+  assemblage_seuil_m2: 1000
+  marche_fiable: 20       # marché favorable : prix DVF fiable
+  marche_fragile: 8       # marché exploitable mais fragile
+  marche_insuffisant: 0   # pas de marché chiffrable → pas de bonus
