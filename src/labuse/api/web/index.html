@@ -55,6 +55,7 @@
     </form>
 
     <div class="side-nav">
+      <button class="nav-shortlist js-view" data-view="shortlist" title="Les sujets fonciers prioritaires à traiter aujourd'hui">🎯 Shortlist du jour</button>
       <button class="nav-kanban js-view" data-view="kanban">📋 Pipeline de prospection <span class="kb-badge hidden" title="rappels échus">0</span></button>
       <button class="nav-demo js-demo" title="Parcours de démonstration guidé sur des parcelles validées">🎬 Démo guidée</button>
     </div>
@@ -172,6 +173,26 @@
     <span><i class="dot exclue"></i> Exclue</span>
     <span><i class="dot inconnu"></i> Non évaluée</span>
   </div>
+
+  <!-- Shortlist promoteur — « les sujets à traiter aujourd'hui » (priorisation métier) -->
+  <section id="shortlist" class="shortlist-view" aria-label="Shortlist promoteur">
+    <header class="sl-head">
+      <button class="sl-back js-view" data-view="map">← Radar</button>
+      <div class="sl-title">🎯 Shortlist du jour</div>
+      <div class="sl-tools">
+        <label class="sl-n">Sujets
+          <select id="sl-limit">
+            <option value="5" selected>Top 5</option>
+            <option value="10">Top 10</option>
+            <option value="15">Top 15</option>
+          </select>
+        </label>
+        <button class="sl-refresh" id="sl-refresh" type="button" title="Recalculer la shortlist">↻</button>
+      </div>
+      <span class="sl-count" id="sl-count"></span>
+    </header>
+    <div class="sl-board" id="sl-board"></div>
+  </section>
 
   <!-- Pipeline de prospection (Kanban T1) -->
   <section id="kanban" class="kanban" aria-label="Pipeline de prospection">

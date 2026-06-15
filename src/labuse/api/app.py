@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
@@ -447,6 +447,73 @@ def assemblages(commune: str | None = None, limit: int = Query(100, ge=1, le=500
     groups = assemblage.find_assemblages(db, commune, limit=limit)
     return {"commune": commune, "count": len(groups),
             "prioritaires": sum(1 for g in groups if g["meme_proprietaire"]), "assemblages": groups}
+
+
+@app.get("/shortlist")
+def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
+              db: Session = Depends(get_db)) -> dict:
+    """Shortlist promoteur — « les N sujets à traiter aujourd'hui ».
+
+    Priorisation PROMOTEUR (pas le score brut) : exploitabilité + fiabilité + densification +
+    poids économique + actionnabilité propriétaire − risque, puis bonus d'assemblage sur le
+    haut du panier (enrichi via la fiche existante). Aucune donnée inventée : tout provient
+    d'évaluations déjà calculées ; ce qui manque reste explicitement nul côté UI."""
+    from .. import shortlist as sl
+    commune = commune or config.get_settings().pilot_commune_name
+    # Candidats = verdicts actionnables (opportunité / à creuser), mêmes champs que la carte.
+    rows = db.execute(
+        text(
+            """
+            SELECT p.idu, p.commune, p.surface_m2,
+                   e.status, e.opportunity_score, e.completeness_score,
+                   d.detail AS downgrade_reason,
+                   r.sous_densite, r.sdp_residuelle_m2,
+                   own.groupe AS own_groupe, own.forme_juridique AS own_forme, own.denomination AS own_denom
+            FROM parcels p
+            JOIN LATERAL (
+                SELECT status, opportunity_score, completeness_score
+                FROM parcel_evaluations e WHERE e.parcel_id = p.id
+                ORDER BY evaluated_at DESC LIMIT 1
+            ) e ON true
+            LEFT JOIN LATERAL (
+                SELECT detail FROM cascade_results
+                WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
+            ) d ON true
+            LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+            LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
+            WHERE p.commune = :c AND e.status IN ('opportunite', 'a_creuser')
+            """
+        ), {"c": commune}
+    ).mappings().all()
+    candidates = [
+        {**{k: r[k] for k in ("idu", "commune", "surface_m2", "status",
+                              "opportunity_score", "completeness_score", "downgrade_reason",
+                              "sous_densite", "sdp_residuelle_m2")},
+         "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"])}
+        for r in rows
+    ]
+    # 1) classement « cheap » → 2) enrichissement du panier → 3) bonus assemblage → 4) re-tri.
+    pool = sl.rank_candidates(candidates, pool=min(max(limit * 2, limit), 12))
+    enriched = []
+    for row in pool:
+        try:
+            fiche = _build_fiche(db, row["idu"])
+        except Exception:  # noqa: BLE001 - un sujet illisible ne casse jamais la shortlist
+            fiche = None
+        asm = ((fiche or {}).get("voisinage") or {}).get("assemblage") or {}
+        row["_priority"] = (row.get("_priority") or 0) + sl.assemblage_bonus(
+            bool(asm.get("possible")), asm.get("surface_cumulee_m2"))
+        enriched.append((row, fiche))
+    enriched.sort(key=lambda t: (-(t[0].get("_priority") or 0),
+                                 -(t[0].get("opportunity_score") or 0), t[0].get("idu") or ""))
+    sujets = [sl.assemble_sujet(i + 1, row, fiche) for i, (row, fiche) in enumerate(enriched[:limit])]
+    return {
+        "commune": commune,
+        "count": len(sujets),
+        "candidates_total": len(candidates),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "sujets": sujets,
+    }
 
 
 @app.get("/map/permits.geojson")

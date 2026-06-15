@@ -71,6 +71,19 @@ const kb = await page.evaluate(() => ({ open: document.body.classList.contains('
 ok('8.pipeline-columns', kb.open && kb.cols >= 1, JSON.stringify(kb));
 await page.locator('.kb-back').click(); await page.waitForTimeout(700);
 ok('8b.back-to-radar', await page.evaluate(() => !document.body.classList.contains('view-kanban')));
+// 8c — shortlist promoteur : vue, cartes classées, badges, ouverture fiche
+await page.locator('.nav-shortlist.js-view').first().click(); await page.waitForTimeout(2500);
+const sl = await page.evaluate(() => {
+  const cards = [...document.querySelectorAll('#sl-board .sl-card')];
+  return { open: document.body.classList.contains('view-shortlist'), n: cards.length,
+    firstHasPrio: !!cards[0]?.querySelector('.sl-badge.b-prio'),
+    hasBtns: !!cards[0]?.querySelector('.sl-open') && !!cards[0]?.querySelector('.sl-add') };
+});
+ok('8c.shortlist', sl.open && sl.n >= 1 && sl.firstHasPrio && sl.hasBtns, JSON.stringify(sl));
+await page.locator('#sl-board .sl-open').first().click(); await page.waitForTimeout(1200);
+ok('8d.shortlist-open-fiche', await page.evaluate(() => !document.querySelector('#sheet').classList.contains('hidden')));
+await page.keyboard.press('Escape'); await page.waitForTimeout(400);
+await page.locator('.sl-back').click(); await page.waitForTimeout(500);
 // 9 — démo guidée : ouverture + fermeture Escape, pas de commande terminal au 1er niveau
 await page.locator('.nav-demo.js-demo').first().click(); await page.waitForTimeout(1200);
 const demoOpen = await page.locator('#demo-overlay').isVisible();

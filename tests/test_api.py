@@ -153,6 +153,26 @@ def test_map_geojson(client):
     assert fc["features"][0]["geometry"]["type"] in ("Polygon", "MultiPolygon")
 
 
+def test_shortlist_endpoint(client):
+    r = client.get("/shortlist", params={"commune": "Saint-Paul", "limit": 5})
+    assert r.status_code == 200
+    d = r.json()
+    assert {"commune", "count", "candidates_total", "generated_at", "sujets"} <= set(d)
+    assert d["count"] <= 5 and len(d["sujets"]) == d["count"]
+    if d["sujets"]:
+        # rangs 1..N consécutifs et priorité décroissante (logique promoteur, pas le score brut)
+        assert [s["rang"] for s in d["sujets"]] == list(range(1, len(d["sujets"]) + 1))
+        prios = [s["priority_score"] for s in d["sujets"]]
+        assert prios == sorted(prios, reverse=True)
+        top = d["sujets"][0]
+        assert {"idu", "verdict_status", "score", "surface_m2", "potentiel_assemblage",
+                "ca", "charge_fonciere", "blocage_principal", "confiance",
+                "proprietaire", "prochaine_action", "badges"} <= set(top)
+        assert top["verdict_status"] in ("opportunite", "a_creuser")
+        assert "Priorité du jour" in top["badges"]      # le 1er sujet est toujours marqué
+        assert isinstance(top["priority_components"], dict)
+
+
 def test_front_served(client):
     assert client.get("/", follow_redirects=False).status_code in (302, 307)
     idx = client.get("/app/")

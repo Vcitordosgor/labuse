@@ -378,17 +378,20 @@ function renderList() {
   if (mb) mb.addEventListener("click", () => { LIST_LIMIT += 80; renderList(); });
 }
 
-// Navigation : radar (Carte ⇄ Liste, mobile) ⇄ Kanban (plein écran, desktop + mobile).
+// Navigation : radar (Carte ⇄ Liste, mobile) ⇄ vues plein écran (Shortlist, Kanban).
 function setView(view) {
   const kanban = view === "kanban";
+  const shortlist = view === "shortlist";
   document.body.classList.toggle("view-kanban", kanban);
-  if (!kanban) {
+  document.body.classList.toggle("view-shortlist", shortlist);
+  if (!kanban && !shortlist) {
     document.body.classList.toggle("view-map", view === "map");
     document.body.classList.toggle("view-list", view === "list");
     if (view === "map" && map) setTimeout(() => map.invalidateSize(), 60);
   }
   document.querySelectorAll(".js-view").forEach((t) => t.setAttribute("aria-selected", String(t.dataset.view === view)));
   if (kanban) loadKanban();
+  if (shortlist) loadShortlist();
 }
 const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
 
@@ -1940,6 +1943,100 @@ function markFollowing(btn, statusKey) {
   btn.textContent = `✓ Dans le pipeline · ${colLabel(statusKey)}`;
 }
 
+// ───────────────────────── Shortlist promoteur ─────────────────────────
+// « Les sujets à traiter aujourd'hui » : priorisation métier (serveur), pas le score brut.
+let SHORTLIST = [];
+async function loadShortlist() {
+  const board = $("#sl-board"); if (!board) return;
+  const limit = ($("#sl-limit") && $("#sl-limit").value) || 5;
+  board.innerHTML = `<div class="sl-loading">Calcul des priorités foncières…</div>`;
+  let data = null;
+  try { data = await (await fetch(`/shortlist?commune=${encodeURIComponent(COMMUNE)}&limit=${limit}`)).json(); }
+  catch { data = null; }
+  if (!data || !Array.isArray(data.sujets)) {
+    board.innerHTML = `<div class="sl-empty"><div class="sl-empty-t">Shortlist indisponible</div>
+      <div class="sl-empty-s">Le calcul des priorités n'a pas abouti. Réessayez dans un instant.</div></div>`;
+    return;
+  }
+  SHORTLIST = data.sujets;
+  const c = $("#sl-count");
+  if (c) c.textContent = data.candidates_total != null
+    ? `${data.sujets.length} sujet${data.sujets.length > 1 ? "s" : ""} · sur ${fmt(data.candidates_total)} parcelles actionnables`
+    : "";
+  if (!data.sujets.length) {
+    board.innerHTML = `<div class="sl-empty"><div class="sl-empty-t">Aucun sujet prioritaire</div>
+      <div class="sl-empty-s">Aucune parcelle « opportunité » ou « à creuser » sur ${esc(COMMUNE)} pour l'instant.</div></div>`;
+    return;
+  }
+  renderShortlist(data.sujets);
+}
+
+const BADGE_CLASS = {
+  "Priorité du jour": "b-prio", "Assemblage à vérifier": "b-asm", "À appeler": "b-call",
+  "À surveiller": "b-watch", "Risque fort": "b-risk", "Données à consolider": "b-cons",
+};
+function _caRange(ca) {
+  if (!ca) return null;
+  return ca.bas !== ca.haut ? `${_eurK(ca.bas)} – ${_eurK(ca.haut)}` : _eurK(ca.central ?? ca.bas);
+}
+function renderShortlist(sujets) {
+  const board = $("#sl-board");
+  board.innerHTML = sujets.map((s) => {
+    const st = s.verdict_status || "inconnu";
+    const asm = s.potentiel_assemblage || {};
+    const ca = _caRange(s.ca);
+    const cf = s.charge_fonciere;
+    const prop = s.proprietaire || {};
+    const conf = s.confiance || {};
+    const badges = (s.badges || []).map((b) => `<span class="sl-badge ${BADGE_CLASS[b] || ""}">${esc(b)}</span>`).join("");
+    const fiabMarche = s.fiabilite_marche
+      ? `<span class="sl-fiab fiab-${esc(s.fiabilite_marche)}">marché ${esc(s.fiabilite_marche)}</span>` : "";
+    return `
+    <article class="sl-card st-${st}" data-idu="${esc(s.idu)}">
+      <div class="sl-rang">${s.rang}</div>
+      <div class="sl-main">
+        <div class="sl-top">
+          <span class="sl-idu">${esc(s.idu)}</span>
+          <span class="chip ${st}">${STATUS_LABEL[st] || "?"}</span>
+          <span class="sl-score">${s.score ?? "—"}<small>opp</small></span>
+          <span class="sl-surf">${fmt(Math.round(s.surface_m2 || 0))} m²</span>
+        </div>
+        ${badges ? `<div class="sl-badges">${badges}</div>` : ""}
+        <div class="sl-grid">
+          <div class="sl-cell"><span class="sl-k">Potentiel seul</span><span class="sl-v">${esc(s.potentiel_seul || "non disponible")}</span></div>
+          <div class="sl-cell"><span class="sl-k">Assemblage</span><span class="sl-v">${asm.possible
+            ? `${asm.n_interessantes || "?"} contiguës · ~${fmt(Math.round(asm.surface_cumulee_m2 || 0))} m²`
+            : "à vérifier / non détecté"}</span></div>
+          <div class="sl-cell"><span class="sl-k">CA potentiel</span><span class="sl-v">${ca || "non chiffré"} ${fiabMarche}</span></div>
+          <div class="sl-cell"><span class="sl-k">Charge foncière cible</span><span class="sl-v">${cf
+            ? `${_eurK(cf.central)}${cf.par_m2_terrain ? ` · ${cf.par_m2_terrain} €/m² terrain` : ""}` : "non chiffrée"}</span></div>
+          <div class="sl-cell"><span class="sl-k">Blocage principal</span><span class="sl-v">${esc(s.blocage_principal || "—")}</span></div>
+          <div class="sl-cell"><span class="sl-k">Propriétaire</span><span class="sl-v">${esc(prop.statut || prop.famille || "à identifier")}${prop.in_pipeline ? " · suivi" : ""}</span></div>
+        </div>
+        <div class="sl-foot">
+          <span class="sl-action">▶ ${esc(s.prochaine_action || "À qualifier")} <em>· confiance ${esc(conf.label || "—")}</em></span>
+          <span class="sl-btns">
+            <button class="btn sl-open" data-idu="${esc(s.idu)}">Ouvrir la fiche</button>
+            <button class="btn cta-primary sl-add" data-idu="${esc(s.idu)}"${prop.in_pipeline ? " disabled" : ""}>${prop.in_pipeline ? "✓ Au pipeline" : "+ Pipeline"}</button>
+          </span>
+        </div>
+      </div>
+    </article>`;
+  }).join("");
+  board.querySelectorAll(".sl-open").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); openSheet(b.dataset.idu); }));
+  board.querySelectorAll(".sl-card").forEach((c) => c.addEventListener("click", (e) => { if (!e.target.closest("button")) openSheet(c.dataset.idu); }));
+  board.querySelectorAll(".sl-add").forEach((b) => b.addEventListener("click", async (e) => {
+    e.stopPropagation();
+    b.disabled = true; b.textContent = "…";
+    try {
+      const r = await (await fetch("/pipeline", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idu: b.dataset.idu }) })).json();
+      b.textContent = r && (r.ok || r.id) ? "✓ Au pipeline" : "+ Pipeline";
+      if (!(r && (r.ok || r.id))) b.disabled = false;
+      fetchPipeline();
+    } catch { b.textContent = "+ Pipeline"; b.disabled = false; }
+  }));
+}
+
 // ───────────────────────── Audit pull (Lot A) ─────────────────────────
 // Auditer un terrain à la demande : référence cadastrale, adresse (BAN) ou polygone dessiné.
 // Tout converge vers POST /audit/* → ingestion 'audit' + cascade → on ouvre la fiche produite.
@@ -2097,6 +2194,8 @@ async function main() {
   document.querySelectorAll(".js-reset").forEach((b) => b.addEventListener("click", resetFilters));
   document.querySelectorAll(".js-view").forEach((t) => t.addEventListener("click", () => setView(t.dataset.view)));
   wireKanbanControls();
+  const slLim = $("#sl-limit"); if (slLim) slLim.addEventListener("change", loadShortlist);
+  const slRef = $("#sl-refresh"); if (slRef) slRef.addEventListener("click", loadShortlist);
   // Bandeau « verdicts partiels » repliable : lu une fois → pastille discrète
   $("#banner").addEventListener("click", (e) => {
     const b = $("#banner");
