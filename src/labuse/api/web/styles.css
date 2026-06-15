@@ -1,12 +1,12 @@
 :root {
-  --bg: #0e1116;
-  --panel: #161c24;
-  --panel-2: #1d2530;
-  --line: #2a3340;
-  --txt: #e7ebf0;
-  --muted: #8b95a3;
-  --gold: #c9a86a;
-  --gold-soft: #e3cfa0;
+  --bg: #0B1118;
+  --panel: #111A24;
+  --panel-2: #151F2B;
+  --line: #263241;
+  --txt: #F4EFE4;
+  --muted: #9BA6B3;
+  --gold: #D6B36A;
+  --gold-soft: #e8d2a3;
   /* Verdicts (palette LA BUSE — légende, carte, KPI, pastilles : une seule source) */
   --opp: #2DBE87;        /* Opportunité      */
   --creuser: #C88422;    /* À creuser        */
@@ -31,7 +31,7 @@ body {
 #sidebar {
   height: 100vh;
   overflow-y: auto;
-  background: linear-gradient(180deg, #11161d 0%, var(--panel) 22%);
+  background: linear-gradient(180deg, #0D141C 0%, var(--panel) 22%);
   border-right: 1px solid var(--line);
   padding: 22px 20px 0;
   display: flex;
@@ -591,7 +591,7 @@ input[type=checkbox] { accent-color: var(--gold); }
   background: var(--panel); border: 1px solid var(--line); border-radius: 16px; overflow: hidden;
   box-shadow: 0 30px 80px rgba(0,0,0,.6); }
 .dp-head { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px;
-  border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #11161d, var(--panel)); }
+  border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #0D141C, var(--panel)); }
 .dp-title { font-family: var(--font-ui, "Inter", sans-serif); font-size: 16px; color: var(--gold-soft); font-weight: 700; letter-spacing: .01em; }
 .dp-close { background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); width: 32px; height: 32px;
   border-radius: 50%; cursor: pointer; font-size: 13px; }
@@ -648,7 +648,7 @@ body.view-kanban .legend, body.view-kanban .map-empty { display: none !important
 }
 .kb-head {
   display: flex; align-items: center; gap: 14px; padding: 14px 22px;
-  border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #11161d, var(--panel));
+  border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #0D141C, var(--panel));
 }
 .kb-back { background: var(--panel-2); border: 1px solid var(--line); color: var(--txt);
   padding: 7px 13px; border-radius: 8px; font: inherit; font-size: 13px; cursor: pointer; }

@@ -232,7 +232,7 @@ async function loadWatchZones() {
     WATCH_LAYER.clearLayers();
     WATCH_ZONES.forEach((z) => {
       if (!z.geojson) return;
-      L.geoJSON(z.geojson, { style: { color: "#c9a86a", weight: 1.5, dashArray: "5", fillOpacity: 0.05 } })
+      L.geoJSON(z.geojson, { style: { color: "#D6B36A", weight: 1.5, dashArray: "5", fillOpacity: 0.05 } })
         .bindTooltip(`Veille : ${z.name}`, { sticky: true }).addTo(WATCH_LAYER);
     });
   }
@@ -1997,7 +1997,7 @@ function onDrawClick(e) {
   DRAW_PTS.push([e.latlng.lng, e.latlng.lat]);
   if (DRAW_LAYER) map.removeLayer(DRAW_LAYER);
   DRAW_LAYER = L.polygon(DRAW_PTS.map(([lng, lat]) => [lat, lng]),
-    { color: "#c9a86a", weight: 2, dashArray: "4", fillOpacity: 0.08 }).addTo(map);
+    { color: "#D6B36A", weight: 2, dashArray: "4", fillOpacity: 0.08 }).addTo(map);
 }
 async function finishDraw(e) {
   if (e && e.originalEvent) L.DomEvent.stop(e);

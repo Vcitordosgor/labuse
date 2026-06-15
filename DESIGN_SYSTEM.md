@@ -12,11 +12,11 @@
 ### Monde sombre — `:root` (styles.css)
 | Token | Hex | Usage |
 |---|---|---|
-| `--bg` | `#0e1116` | fond app |
-| `--panel` / `--panel-2` | `#161c24` / `#1d2530` | sidebar / cartes |
-| `--line` | `#2a3340` | bordures |
-| `--txt` / `--muted` | `#e7ebf0` / `#8b95a3` | texte / secondaire |
-| `--gold` / `--gold-soft` | `#c9a86a` / `#e3cfa0` | or LA BUSE (accent, actions) |
+| `--bg` | `#0B1118` | fond app |
+| `--panel` / `--panel-2` | `#111A24` / `#151F2B` | sidebar / cartes |
+| `--line` | `#263241` | bordures |
+| `--txt` / `--muted` | `#F4EFE4` / `#9BA6B3` | texte / secondaire |
+| `--gold` / `--gold-soft` | `#D6B36A` / `#e8d2a3` | or LA BUSE (accent, actions) |
 
 ### Fiche claire — `.sheet` (terminal.css)
 | Token | Hex | Usage |
