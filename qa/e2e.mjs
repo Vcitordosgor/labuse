@@ -70,7 +70,7 @@ const ck = await page.evaluate(() => {
     noPhoto: !c?.querySelector('img'),
     metricsTxt: c?.querySelector('.oc-metrics')?.textContent || '' };
 });
-ok('6b.cockpit-cards', ck.qa === 4 && ck.hasMetrics && ck.hasSignal && ck.hasAction && ck.hasChevron && ck.noPhoto && /Score.*Données.*%/.test(ck.metricsTxt), JSON.stringify(ck));
+ok('6b.cockpit-cards', ck.qa === 4 && ck.hasMetrics && !ck.hasSignal && !ck.hasAction && ck.hasChevron && ck.noPhoto && /Score.*m²/.test(ck.metricsTxt) && !/Données/.test(ck.metricsTxt), JSON.stringify(ck));
 ok('6c.no-emoji-sidebar', ck.noEmoji, 'aucun emoji dans la sidebar');
 // 7 — carte : ouverture fiche + fermeture (Escape) + inert
 await page.locator('#parcel-list .oc').first().click();

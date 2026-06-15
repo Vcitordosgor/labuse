@@ -405,9 +405,7 @@ function renderList() {
           <span class="oc-idu">${esc(p.idu)}</span>
           <span class="chip ${st}">${STATUS_LABEL[st] || "?"}</span>
         </div>
-        <div class="oc-metrics"><b>Score ${p.opportunity_score ?? "—"}</b> · Données ${p.completeness_score ?? "—"} % · ${fmt(p.surface_m2)} m²</div>
-        <div class="oc-signal"><span class="oc-k">Signal</span> ${_ocSignal(p)}</div>
-        <div class="oc-action"><span class="oc-k">Action</span> ${_ocAction(p)}</div>
+        <div class="oc-metrics"><b>Score ${p.opportunity_score ?? "—"}</b> · ${fmt(p.surface_m2)} m²</div>
       </div>
       ${CHEVRON}
     </article>`;
