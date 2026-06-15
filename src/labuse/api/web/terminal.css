@@ -338,6 +338,28 @@
 .sheet .mc.mc-warn { border-left: 3px solid var(--tf-flag-bright); }
 .sheet .mc.mc-warn .mc-v { font-family: var(--font-ui); font-size: var(--fs-small); font-weight: 600; color: var(--tf-flag); }
 
+/* ══ Assemblage « star » (Module 3) — décision parcelle seule vs groupée, dans la note ══ */
+.sheet .asm-bloc { margin-top: var(--sp-3); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  background: var(--tf-surface-2); padding: var(--sp-3); }
+.sheet .asm-bloc.asm-on { border-color: rgba(214,179,106,.5); box-shadow: inset 3px 0 0 var(--tf-gold); }
+.sheet .asm-h { font-family: var(--font-ui); font-size: var(--fs-small); font-weight: 700; color: var(--tf-text);
+  letter-spacing: .01em; margin-bottom: var(--sp-2); }
+.sheet .asm-h span { color: var(--tf-text-3); font-weight: 600; font-size: .85em; }
+.sheet .asm-cols { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--sp-2); }
+.sheet .asm-col { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  padding: var(--sp-2) var(--sp-3); min-width: 0; }
+.sheet .asm-col-grp { border-color: rgba(214,179,106,.45); }
+.sheet .asm-col-k { font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tf-text-3); }
+.sheet .asm-col-v { font-family: var(--font-ui); font-weight: 600; font-size: var(--fs-body); color: var(--tf-text); margin-top: 2px; line-height: 1.2; }
+.sheet .asm-col-s { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--tf-text-2); margin-top: 3px; }
+.sheet .asm-arrow { color: var(--tf-gold); font-size: 18px; font-weight: 700; text-align: center; }
+.sheet .asm-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--sp-3); margin: var(--sp-3) 0 0; }
+.sheet .asm-grid dt { font-size: var(--fs-small); color: var(--tf-text-3); }
+.sheet .asm-grid dd { margin: 0; font-size: var(--fs-small); color: var(--tf-text); text-align: right; }
+.sheet .asm-action { margin-top: var(--sp-2); font-size: var(--fs-small); font-weight: 600; color: var(--tf-accent); }
+.sheet .asm-foot { margin: 6px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); }
+@media (max-width: 520px) { .sheet .asm-cols { grid-template-columns: 1fr; } .sheet .asm-arrow { transform: rotate(90deg); } }
+
 /* ══ Séparateur « Audit foncier complet » (la preuve, sous la synthèse) ══ */
 .sheet .audit-head { margin: var(--sp-8) 0 var(--sp-3); padding-top: var(--sp-4); border-top: 2px solid var(--tf-border); }
 .sheet .audit-head-t { display: block; font-family: var(--font-ui); font-size: var(--fs-h2); font-weight: 700; color: var(--tf-text); }

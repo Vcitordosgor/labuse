@@ -81,7 +81,12 @@ const sl = await page.evaluate(() => {
 });
 ok('8c.shortlist', sl.open && sl.n >= 1 && sl.firstHasPrio && sl.hasBtns, JSON.stringify(sl));
 await page.locator('#sl-board .sl-open').first().click(); await page.waitForTimeout(1200);
-ok('8d.shortlist-open-fiche', await page.evaluate(() => !document.querySelector('#sheet').classList.contains('hidden')));
+const slFiche = await page.evaluate(() => ({
+  open: !document.querySelector('#sheet').classList.contains('hidden'),
+  asm: document.querySelectorAll('#sheet .note-pro .asm-bloc').length,   // Module 3 : assemblage dans la note
+}));
+ok('8d.shortlist-open-fiche', slFiche.open, JSON.stringify(slFiche));
+ok('8e.assemblage-in-note', slFiche.asm >= 1, `asm-bloc dans la note = ${slFiche.asm}`);
 await page.keyboard.press('Escape'); await page.waitForTimeout(400);
 await page.locator('.sl-back').click(); await page.waitForTimeout(500);
 // 9 — démo guidée : ouverture + fermeture Escape, pas de commande terminal au 1er niveau

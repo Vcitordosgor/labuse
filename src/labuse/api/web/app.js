@@ -484,9 +484,62 @@ function _confiance(cpl) {
   return cpl >= 75 ? "Élevé" : cpl >= 50 ? "Moyen" : "Faible";
 }
 
+// Module 3 — Assemblage « star » : bloc DÉCISION (parcelle seule vs groupée) dans la note,
+// pas seulement dans l'audit. Données réelles (voisinage adjacent) ; tout reste « à vérifier ».
+function _potentielSeul(f) {
+  const fa = f.faisabilite || {};
+  if (!fa.constructible) return "Non constructible seule";
+  const s = (f.parcel || {}).surface_m2 || 0;
+  if (s < 500) return "Potentiel limité seule";
+  if (s < 1500) return "Potentiel correct seule";
+  return "Potentiel solide seule";
+}
+function renderAssembBloc(f) {
+  const vz = f.voisinage || {}, a = vz.assemblage || {}, unlock = vz.assemblage_unlock || {};
+  const voisines = vz.voisines || [];
+  const possible = !!(a.possible || unlock.possible);
+  const surfSeule = Math.round((f.parcel || {}).surface_m2 || 0);
+  const surfCum = a.surface_cumulee_m2 || null;
+  const n = a.n_interessantes || voisines.length;
+  const memeProprio = !!unlock.priorite_meme_proprietaire;
+  const gain = (possible && surfCum && surfSeule)
+    ? `+${fmt(Math.max(0, surfCum - surfSeule))} m² (×${(surfCum / surfSeule).toFixed(1).replace(".", ",")})` : "—";
+  const proprios = !possible ? "—" : memeProprio ? "Même propriétaire probable (à confirmer)" : "Multiples / à identifier";
+  const complexite = !possible ? "—"
+    : memeProprio ? "Faible — même propriétaire probable"
+    : n <= 2 ? "Modérée — 2 propriétaires à aligner" : "Élevée — propriétaires multiples";
+  const action = !possible ? "Traiter la parcelle seule — pas de contiguë exploitable détectée."
+    : memeProprio ? "Vérifier le périmètre et approcher le propriétaire pour l'ensemble."
+    : "Vérifier la faisabilité d'assemblage et identifier les propriétaires contigus.";
+  return `
+  <div class="asm-bloc${possible ? " asm-on" : ""}">
+    <div class="asm-h">🧩 Parcelle seule <span>vs</span> assemblage</div>
+    <div class="asm-cols">
+      <div class="asm-col">
+        <div class="asm-col-k">Parcelle seule</div>
+        <div class="asm-col-v">${esc(_potentielSeul(f))}</div>
+        <div class="asm-col-s">${surfSeule ? fmt(surfSeule) + " m²" : "—"}</div>
+      </div>
+      <div class="asm-arrow" aria-hidden="true">→</div>
+      <div class="asm-col asm-col-grp">
+        <div class="asm-col-k">En assemblage</div>
+        <div class="asm-col-v">${possible ? "Assemblage possible — à vérifier" : "Aucune contiguë exploitable"}</div>
+        <div class="asm-col-s">${possible ? `${n} contiguë${n > 1 ? "s" : ""} · ~${fmt(surfCum || 0)} m² cumulés` : "—"}</div>
+      </div>
+    </div>
+    <dl class="asm-grid">
+      <dt>Gain de surface</dt><dd>${gain}</dd>
+      <dt>Propriétaires</dt><dd>${esc(proprios)}</dd>
+      <dt>Complexité</dt><dd>${esc(complexite)}</dd>
+    </dl>
+    <div class="asm-action">▶ ${esc(action)}</div>
+    <p class="asm-foot">Adjacence géométrique — faisabilité, accord et propriété restent à vérifier.</p>
+  </div>`;
+}
+
 function renderNotePromoteur(f) {
   const v = f.verdict || {}, fa = f.faisabilite || {}, fr = fa.fourchette || {}, bil = fa.bilan || {};
-  const vois = (f.voisinage || {}).assemblage || {}, r = f.resume || {};
+  const r = f.resume || {};
   const status = v.status || "inconnu";
   const decision = r.prochaine_action ? esc(r.prochaine_action)
     : (status === "exclue" ? "Écarter — contrainte rédhibitoire."
@@ -502,15 +555,16 @@ function renderNotePromoteur(f) {
   if (bil.charge_fonciere) cards.push(mc("Charge foncière cible", _eurK(bil.charge_fonciere.central),
     bil.charge_fonciere.par_m2_terrain ? `~${bil.charge_fonciere.par_m2_terrain} €/m² terrain` : ""));
   cards.push(mc("Blocage principal", _blocagePrincipal(f), "", "warn"));
-  if (vois.possible) cards.push(mc("Opportunité voisine", `${vois.n_interessantes} contiguës`,
-    vois.surface_cumulee_m2 ? `~${fmt(vois.surface_cumulee_m2)} m² cumulés` : ""));
   cards.push(mc("Confiance", _confiance(v.completeness_score),
     v.completeness_score != null ? `complétude ${v.completeness_score} %` : ""));
 
+  // Module 3 — l'assemblage est une décision : bloc dédié pour les verdicts actionnables.
+  const asmBloc = (status === "opportunite" || status === "a_creuser") ? renderAssembBloc(f) : "";
   return `
     <section class="note-pro v-${status}">
       <div class="np-decision"><span class="np-decision-k">Décision promoteur</span>${decision}</div>
       <div class="np-cards">${cards.join("")}</div>
+      ${asmBloc}
     </section>`;
 }
 
