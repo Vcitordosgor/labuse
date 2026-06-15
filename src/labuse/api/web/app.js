@@ -195,8 +195,18 @@ function isDefaultFilter() {
   return defStatus && +$("#f-opp").value === 0 && +$("#f-cpl").value === 0 && +$("#f-surf").value === 0;
 }
 function updateResultMeta(n) {
-  const c = $("#rm-count"); if (c) c.textContent = `${fmt(n)} parcelle${n > 1 ? "s" : ""} sur la carte`;
+  const c = $("#rm-count"); if (c) c.textContent = `${fmt(n)} visible${n > 1 ? "s" : ""}`;
+  const v = $("#visible-count"); if (v) v.textContent = `${fmt(n)} parcelle${n > 1 ? "s" : ""} visible${n > 1 ? "s" : ""}`;
   document.querySelectorAll(".rm-reset").forEach((b) => b.classList.toggle("hidden", isDefaultFilter()));
+}
+// Compteurs des raccourcis « actions rapides » (pipeline suivi / cas de démo).
+function updateQuickCounts() {
+  const p = $("#qa-pipeline-n"); if (p) p.textContent = PIPELINE.length ? `${PIPELINE.length} suivi${PIPELINE.length > 1 ? "s" : ""}` : "—";
+}
+async function updateDemoCount() {
+  const el = $("#qa-demo-n"); if (!el) return;
+  try { const d = await (await fetch("/demo")).json(); const n = (d.parcels || []).length; el.textContent = n ? `${n} cas` : "—"; }
+  catch { el.textContent = "—"; }
 }
 function resetFilters() {
   document.querySelectorAll("#filter-statuses input").forEach((b) => { b.checked = (b.value === "opportunite" || b.value === "a_creuser"); });
@@ -253,7 +263,7 @@ async function loadWatchZones() {
   const box = $("#watch-zones");
   if (!box) return;
   box.innerHTML = WATCH_ZONES.length
-    ? WATCH_ZONES.map((z) => `<span class="wz-chip" title="${z.area_m2 ? z.area_m2.toLocaleString("fr-FR") + " m²" : ""}">🔔 ${esc(z.name)}<button class="wz-del" data-id="${z.id}" title="Retirer cette zone de veille">✕</button></span>`).join("")
+    ? WATCH_ZONES.map((z) => `<span class="wz-chip" title="${z.area_m2 ? z.area_m2.toLocaleString("fr-FR") + " m²" : ""}"><svg class="ic wz-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M6 9a4 4 0 0 1 8 0c0 3 1 4 1 4H5s1-1 1-4z"/><path d="M8.5 16a1.6 1.6 0 0 0 3 0"/></svg>${esc(z.name)}<button class="wz-del" data-id="${z.id}" title="Retirer cette zone de veille" aria-label="Retirer">×</button></span>`).join("")
     : `<span class="muted-sm">Aucune zone de veille — « + Zone » pour en dessiner une.</span>`;
 }
 
@@ -352,6 +362,26 @@ function fiableBadge(status) {
 const STATUS_RANK = { opportunite: 0, a_creuser: 1, faux_positif_probable: 2, exclue: 3 };
 let LIST_LIMIT = 80;   // « Afficher plus » (audit J2 — 97 % des résultats étaient invisibles)
 
+// Signal / action dérivés des PROPRIÉTÉS RÉELLES (aucune donnée inventée) — lecture promoteur.
+function _ocSignal(p) {
+  if (p.downgrade_reason) return esc(p.downgrade_reason);
+  if (p.sous_densite) return "Sous-densité — potentiel de densification";
+  if (p.taux_emprise_pct != null && p.taux_emprise_pct < 50) return "Emprise peu utilisée";
+  if (p.owner_famille === "public") return "Propriétaire public identifiable";
+  if (p.owner_famille === "prive") return "Personne morale identifiable";
+  if (p.status === "opportunite") return "Signal d'opportunité";
+  if (p.status === "a_creuser") return "Potentiel à instruire";
+  return "À qualifier";
+}
+function _ocAction(p) {
+  if (p.status === "opportunite") return "Vérifier le propriétaire";
+  if (p.status === "a_creuser") return "Instruire les contraintes";
+  if (p.status === "faux_positif_probable") return "Écartée — re-vérifier si besoin";
+  if (p.status === "exclue") return "Hors périmètre d'instruction";
+  return "À qualifier";
+}
+const CHEVRON = `<svg class="ic oc-chev" viewBox="0 0 20 20" aria-hidden="true"><path d="M8 5l5 5-5 5"/></svg>`;
+
 function renderList() {
   // La liste REFLÈTE les filtres : faux positifs/exclues y apparaissent si leur case est
   // cochée (audit B5 — « montrez-moi ce que vous écartez » est un argument de vente).
@@ -362,18 +392,31 @@ function renderList() {
       || (b.opportunity_score || 0) - (a.opportunity_score || 0)
       || (b.surface_m2 || 0) - (a.surface_m2 || 0));
   const rows = matched.slice(0, LIST_LIMIT);
-  $("#list-count").textContent = matched.length > rows.length ? `(${rows.length} affichées / ${matched.length})` : `(${matched.length})`;
+  $("#list-count").textContent = `${fmt(matched.length)} résultat${matched.length > 1 ? "s" : ""}`;
   const more = matched.length > rows.length
-    ? `<button class="list-more" type="button">Afficher 80 de plus (${matched.length - rows.length} restantes)</button>` : "";
-  $("#parcel-list").innerHTML = rows.map((p) => `
-    <div class="prow st-${p.status}" data-idu="${esc(p.idu)}">
-      <span class="idu">${esc(p.idu)}</span>
-      <span class="p-verdict"><span class="chip ${p.status}">${STATUS_LABEL[p.status] || "?"}</span></span>
-      <span class="scores"><b>${p.opportunity_score ?? "—"}</b> opp · ${p.completeness_score ?? "—"} cpl</span>
-      <span class="p-surf">${fmt(p.surface_m2)} m²</span>
-      ${p.downgrade_reason ? `<span class="p-downgrade">⚠ déclassée : ${esc(p.downgrade_reason)}</span>` : ""}
-    </div>`).join("") + more || `<div class="loading">Aucune parcelle ne correspond.</div>`;
-  document.querySelectorAll(".prow").forEach((el) => el.addEventListener("click", () => focusParcel(el.dataset.idu)));
+    ? `<button class="list-more" type="button">Afficher 80 de plus (${fmt(matched.length - rows.length)} restantes)</button>` : "";
+  $("#parcel-list").innerHTML = rows.map((p) => {
+    const st = p.status || "inconnu";
+    const sel = p.idu === CURRENT_IDU ? " selected" : "";
+    return `
+    <article class="oc st-${st}${sel}" data-idu="${esc(p.idu)}" role="button" tabindex="0">
+      <div class="oc-l">
+        <div class="oc-top">
+          <span class="oc-idu">${esc(p.idu)}</span>
+          <span class="chip ${st}">${STATUS_LABEL[st] || "?"}</span>
+        </div>
+        <div class="oc-metrics"><b>Score ${p.opportunity_score ?? "—"}</b> · Données ${p.completeness_score ?? "—"} % · ${fmt(p.surface_m2)} m²</div>
+        <div class="oc-signal"><span class="oc-k">Signal</span> ${_ocSignal(p)}</div>
+        <div class="oc-action"><span class="oc-k">Action</span> ${_ocAction(p)}</div>
+      </div>
+      ${CHEVRON}
+    </article>`;
+  }).join("") + more || `<div class="loading">Aucune parcelle ne correspond.</div>`;
+  const open = (idu) => { focusParcel(idu); document.querySelectorAll("#parcel-list .oc").forEach((c) => c.classList.toggle("selected", c.dataset.idu === idu)); };
+  document.querySelectorAll("#parcel-list .oc").forEach((el) => {
+    el.addEventListener("click", () => open(el.dataset.idu));
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(el.dataset.idu); } });
+  });
   const mb = document.querySelector(".list-more");
   if (mb) mb.addEventListener("click", () => { LIST_LIMIT += 80; renderList(); });
 }
@@ -1806,6 +1849,7 @@ const isDue = (e) => reminderState(echeance(e)).state !== "";
 async function fetchPipeline() {
   try { PIPELINE = await (await fetch("/pipeline")).json(); } catch { PIPELINE = []; }
   updateReminderBadges();
+  updateQuickCounts();
 }
 function updateReminderBadges() {
   const overdue = PIPELINE.filter((e) => reminderState(echeance(e)).state === "overdue").length;
@@ -2212,7 +2256,7 @@ async function finishDraw(e) {
   DRAWING = false;
   const mode = DRAW_MODE;
   if (mode === "zone") { const b = $("#watch-add"); if (b) { b.classList.remove("on"); b.textContent = "+ Zone"; } }
-  else { const b = $("#audit-draw"); if (b) { b.classList.remove("on"); b.textContent = "✏ Dessiner une zone sur la carte"; } }
+  else { const b = $("#audit-draw"); if (b) { b.classList.remove("on"); b.textContent = "Dessiner une zone sur la carte"; } }
   if (DRAW_PTS.length < 3) {
     auditMsg("Tracé annulé (au moins 3 points requis).");
     if (DRAW_LAYER) { map.removeLayer(DRAW_LAYER); DRAW_LAYER = null; }
@@ -2231,6 +2275,7 @@ async function main() {
   // Chargements initiaux INDÉPENDANTS en parallèle (chacun gère déjà son échec) →
   // moins de latence au premier rendu qu'une chaîne de 5 await séquentiels.
   await Promise.all([loadStats(), loadCoverage(), loadVeille(), loadMeta(), fetchPipeline(), loadAssistantStatus()]);
+  updateDemoCount();
   // La carte est le cœur de la démo : si le geojson échoue (réseau), on ne laisse jamais
   // un écran mort silencieux — message lisible + filtres encore utilisables au retour.
   let fc = { features: [] };
@@ -2297,6 +2342,12 @@ async function main() {
   // Audit pull (Lot A) : référence/adresse via le formulaire, polygone via le bouton dessiner.
   const af = $("#audit-form"); if (af) af.addEventListener("submit", submitAudit);
   const ad = $("#audit-draw"); if (ad) ad.addEventListener("click", () => startDraw("audit"));
+  // Actions rapides : « Auditer » révèle le champ d'audit ; « Dessiner » arme le tracé.
+  const qaA = $("#qa-audit"); if (qaA) qaA.addEventListener("click", () => {
+    const box = $("#audit-form"); if (box) box.classList.toggle("collapsed");
+    if (box && !box.classList.contains("collapsed")) { box.scrollIntoView({ block: "nearest" }); const q = $("#audit-q"); if (q) q.focus(); }
+  });
+  const qaD = $("#qa-draw"); if (qaD) qaD.addEventListener("click", () => startDraw("audit"));
   // 3.C — veille : surveiller une zone, rafraîchir les nouveautés.
   const wa = $("#watch-add"); if (wa) wa.addEventListener("click", startWatchZone);
   const ar = $("#alertes-refresh"); if (ar) ar.addEventListener("click", refreshAlertes);

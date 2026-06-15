@@ -29,62 +29,109 @@
   </nav>
 
   <aside id="sidebar">
-    <header class="brand">
-      <div class="brand-top">
+    <!-- 1 · Header compact : marque + sélecteur commune + volumétrie visible -->
+    <header class="ck-head">
+      <div class="ck-brand">
         <svg class="brand-bird" viewBox="0 0 112 44" aria-hidden="true">
           <path d="M56 11 C58 13 59 15 61 17 C74 12 92 10 109 14 C93 17 75 20 62 25 C60 28 59 30 58 32 L56 35 L54 32 C53 30 52 28 50 25 C37 20 19 17 3 14 C20 10 38 12 51 17 C53 15 54 13 56 11 Z"/>
         </svg>
-        <div class="brand-mark">LA&nbsp;BUSE</div>
+        <div class="ck-brand-tt">
+          <div class="brand-mark">LA&nbsp;BUSE</div>
+          <div class="brand-sub">Radar foncier · La Réunion</div>
+        </div>
       </div>
-      <div class="brand-sub">Radar foncier · La Réunion</div>
-      <div class="brand-commune" id="commune-label">Saint-Paul (97415)</div>
+      <div class="ck-commune" id="commune-card" title="Commune analysée">
+        <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17.5s5-4.6 5-9.2a5 5 0 0 0-10 0c0 4.6 5 9.2 5 9.2z"/><circle cx="10" cy="8" r="1.9"/></svg>
+        <span class="ck-commune-tx">
+          <b id="commune-label">Saint-Paul (97415)</b>
+          <span class="ck-commune-sub"><i class="dot opportunite"></i><span id="visible-count">— parcelles visibles</span></span>
+        </span>
+        <svg class="ic ck-chev-d" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>
+      </div>
     </header>
 
-    <form class="audit-box" id="audit-form" autocomplete="off">
-      <label class="audit-lbl" for="audit-q">🔎 Auditer un terrain <span class="audit-hint">à la demande</span></label>
+    <!-- 2 · Actions rapides -->
+    <section class="ck-block">
+      <div class="ck-label">Actions rapides</div>
+      <div class="qa-grid">
+        <button class="qa" id="qa-audit" type="button" title="Auditer une parcelle à la demande">
+          <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.2"/><path d="M12.5 12.5l4 4"/></svg>
+          <span class="qa-t">Auditer une parcelle</span></button>
+        <button class="qa js-draw" id="qa-draw" type="button" title="Dessiner une zone sur la carte">
+          <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 16l1-4 9-9 3 3-9 9-4 1z"/><path d="M12 5l3 3"/></svg>
+          <span class="qa-t">Dessiner une zone</span></button>
+        <button class="qa js-view" data-view="kanban" type="button" title="Pipeline de prospection">
+          <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><rect x="5" y="4.5" width="10" height="12.5" rx="2"/><path d="M8 4.5V3.5h4v1"/><path d="M7.6 9h4.8M7.6 12h4.8"/></svg>
+          <span class="qa-t">Pipeline</span><span class="qa-s" id="qa-pipeline-n">—</span></button>
+        <button class="qa js-demo" type="button" title="Démo guidée">
+          <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.6"/><path d="M8.6 7l4.4 3-4.4 3V7z"/></svg>
+          <span class="qa-t">Démo guidée</span><span class="qa-s" id="qa-demo-n">—</span></button>
+      </div>
+    </section>
+
+    <!-- 3 · Bloc audit (révélé par « Auditer une parcelle ») -->
+    <form class="audit-box collapsed" id="audit-form" autocomplete="off">
       <div class="audit-row">
         <input id="audit-q" class="audit-input" type="text" inputmode="text"
                placeholder="Adresse ou réf. cadastrale" aria-label="Adresse ou référence cadastrale (ex. BV 912 ou 97415000BP0571)" />
         <button class="audit-go" type="submit" title="Auditer ce terrain à la demande">Auditer</button>
       </div>
-      <div class="audit-or"><span>ou</span></div>
       <div class="audit-tools">
-        <button type="button" class="audit-draw" id="audit-draw" title="Dessiner un polygone sur la carte">✏ Dessiner une zone sur la carte</button>
+        <button type="button" class="audit-draw" id="audit-draw" title="Dessiner un polygone sur la carte">Dessiner une zone sur la carte</button>
         <span class="audit-msg" id="audit-msg" role="status" aria-live="polite"></span>
       </div>
     </form>
 
-    <div class="side-nav">
-      <button class="nav-shortlist js-view" data-view="shortlist" title="Les sujets fonciers prioritaires à traiter aujourd'hui">🎯 Shortlist du jour</button>
-      <button class="nav-kanban js-view" data-view="kanban">📋 Pipeline de prospection <span class="kb-badge hidden" title="rappels échus">0</span></button>
-      <button class="nav-demo js-demo" title="Parcours de démonstration guidé sur des parcelles validées">🎬 Démo guidée</button>
-    </div>
-
-    <section class="kpis" id="kpis">
-      <div class="kpi" data-status="all" role="button" tabindex="0" title="Tout afficher"><span class="kpi-val" id="kpi-total">—</span><span class="kpi-lbl">parcelles</span></div>
-      <div class="kpi opp" data-status="opportunite" role="button" tabindex="0" title="Voir les opportunités"><span class="kpi-val" id="kpi-opp">—</span><span class="kpi-lbl">opportunités</span></div>
-      <div class="kpi creuser" data-status="a_creuser" role="button" tabindex="0" title="Voir les « à creuser »"><span class="kpi-val" id="kpi-creuser">—</span><span class="kpi-lbl">à creuser</span></div>
-      <div class="kpi exclue" data-status="exclue" role="button" tabindex="0" title="Voir les exclues"><span class="kpi-val" id="kpi-exclue">—</span><span class="kpi-lbl">exclues</span></div>
+    <!-- 4 · Vue d'ensemble (KPIs) -->
+    <section class="ck-block">
+      <div class="ck-label">Vue d'ensemble</div>
+      <section class="kpis" id="kpis">
+        <div class="kpi" data-status="all" role="button" tabindex="0" title="Tout afficher">
+          <div class="kpi-tx"><span class="kpi-val" id="kpi-total">—</span><span class="kpi-lbl">Parcelles</span></div>
+          <svg class="ic kpi-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3l7 3.5-7 3.5-7-3.5L10 3z"/><path d="M3 11l7 3.5 7-3.5"/></svg>
+        </div>
+        <div class="kpi opp" data-status="opportunite" role="button" tabindex="0" title="Voir les opportunités">
+          <div class="kpi-tx"><span class="kpi-val" id="kpi-opp">—</span><span class="kpi-lbl">Opportunités</span></div>
+          <svg class="ic kpi-ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 13l4-4 3 3 6-6"/><path d="M13 6h3v3"/></svg>
+        </div>
+        <div class="kpi creuser" data-status="a_creuser" role="button" tabindex="0" title="Voir les « à creuser »">
+          <div class="kpi-tx"><span class="kpi-val" id="kpi-creuser">—</span><span class="kpi-lbl">À creuser</span></div>
+          <svg class="ic kpi-ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="5"/><path d="M13 13l4 4"/><path d="M9 7v4M7 9h4"/></svg>
+        </div>
+        <div class="kpi exclue" data-status="exclue" role="button" tabindex="0" title="Voir les exclues">
+          <div class="kpi-tx"><span class="kpi-val" id="kpi-exclue">—</span><span class="kpi-lbl">Exclues</span></div>
+          <svg class="ic kpi-ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.6"/><path d="M7.6 7.6l4.8 4.8M12.4 7.6l-4.8 4.8"/></svg>
+        </div>
+      </section>
     </section>
 
-    <!-- M2 — filtres rapides de statut (sélection unique, état actif visible) -->
-    <div class="quick-filters" id="quick-filters" role="group" aria-label="Filtres rapides par statut">
-      <button class="qf" data-status="all" type="button">Tout</button>
-      <button class="qf" data-status="opportunite" type="button"><i class="dot opportunite"></i>Opportunité</button>
-      <button class="qf" data-status="a_creuser" type="button"><i class="dot a_creuser"></i>À creuser</button>
-      <button class="qf" data-status="faux_positif_probable" type="button"><i class="dot faux_positif_probable"></i>Écartée</button>
-      <button class="qf" data-status="exclue" type="button"><i class="dot exclue"></i>Exclue</button>
-    </div>
+    <!-- 5 · Filtres rapides -->
+    <section class="ck-block">
+      <div class="ck-label">Filtres</div>
+      <div class="quick-filters" id="quick-filters" role="group" aria-label="Filtres rapides par statut">
+        <button class="qf" data-status="all" type="button">Tout</button>
+        <button class="qf" data-status="opportunite" type="button"><i class="dot opportunite"></i>Opportunité</button>
+        <button class="qf" data-status="a_creuser" type="button"><i class="dot a_creuser"></i>À creuser</button>
+        <button class="qf" data-status="faux_positif_probable" type="button"><i class="dot faux_positif_probable"></i>Écartée</button>
+        <button class="qf" data-status="exclue" type="button"><i class="dot exclue"></i>Exclue</button>
+        <button class="qf-reset rm-reset hidden js-reset" type="button" title="Réinitialiser les filtres" aria-label="Réinitialiser les filtres">
+          <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 6a6.5 6.5 0 1 0 1.1 4"/><path d="M16.5 3.5V7H13"/></svg>
+        </button>
+      </div>
+    </section>
 
-    <div class="result-meta" id="result-meta">
-      <span id="rm-count">—</span>
-      <button class="rm-reset hidden js-reset" type="button">↺ Réinitialiser</button>
-    </div>
-
-    <section class="listing">
-      <div class="listing-head">
-        <h2>Opportunités classées <span class="count" id="list-count"></span></h2>
-        <button class="filter-btn" id="filter-toggle" aria-expanded="false" aria-controls="filters-panel">⚲ Filtrer</button>
+    <!-- 6 · Shortlist promoteur -->
+    <section class="ck-block ck-shortlist">
+      <div class="ck-shead">
+        <div class="ck-shead-tt">
+          <div class="ck-stitle">Shortlist promoteur</div>
+          <div class="ck-ssub"><span id="list-count">—</span><span class="ck-ssub-sep"> · </span><span id="rm-count">—</span></div>
+        </div>
+        <div class="ck-shead-actions">
+          <button class="ck-top js-view" data-view="shortlist" type="button" title="Vue priorisée : les sujets à traiter aujourd'hui">Top du jour</button>
+          <button class="filter-btn" id="filter-toggle" aria-expanded="false" aria-controls="filters-panel">
+            <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14l-5.4 6.4V16l-3.2 1.5v-6.6L3 5z"/></svg>Filtrer</button>
+        </div>
       </div>
       <div class="filters-panel hidden" id="filters-panel">
         <div class="filter-statuses" id="filter-statuses">
@@ -113,32 +160,36 @@
         <div class="filter-saved">
           <div class="fs-row">
             <select id="f-saved"><option value="">— filtres sauvegardés —</option></select>
-            <button type="button" id="fs-del" class="fs-del" title="Supprimer ce filtre">🗑</button>
+            <button type="button" id="fs-del" class="fs-del" title="Supprimer ce filtre">Suppr.</button>
           </div>
           <div class="fs-row">
             <input type="text" id="fs-name" placeholder="nom du filtre" maxlength="60" />
-            <button type="button" id="fs-save" class="fs-save">💾 Sauvegarder</button>
+            <button type="button" id="fs-save" class="fs-save">Sauvegarder</button>
           </div>
         </div>
       </div>
       <div id="parcel-list" class="parcel-list"></div>
     </section>
 
-    <section class="veille">
-      <div class="veille-head">
-        <h2>Veille foncière <span class="count" id="veille-count" title="Nouveautés non lues">—</span></h2>
+    <!-- 7 · Zones de veille (compact) -->
+    <section class="ck-block ck-veille">
+      <div class="ck-shead-sm">
+        <div class="ck-label">Zones de veille <span class="ck-count" id="veille-count" title="Nouveautés non lues">—</span></div>
         <div class="veille-tools">
-          <button type="button" id="watch-add" class="veille-btn" title="Dessiner une zone à surveiller sur la carte">+ Zone</button>
-          <button type="button" id="alertes-refresh" class="veille-btn" title="Re-détecter les nouveautés (ventes DVF, permis)">↻</button>
+          <button type="button" id="watch-add" class="veille-btn" title="Dessiner une zone à surveiller sur la carte">
+            <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 5v10M5 10h10"/></svg>Zone</button>
+          <button type="button" id="alertes-refresh" class="veille-btn" title="Re-détecter les nouveautés (ventes DVF, permis)" aria-label="Rafraîchir la veille">
+            <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 6a6.5 6.5 0 1 0 1.1 4"/><path d="M16.5 3.5V7H13"/></svg></button>
         </div>
       </div>
       <div id="watch-zones" class="watch-zones"></div>
       <div id="veille-list" class="veille-list"><div class="muted-sm">—</div></div>
     </section>
 
-    <footer class="disclaimer-foot">
-      Pré-analyse sur données publiques. Constructibilité, propriété, rentabilité —
-      <strong>jamais garanties</strong>.
+    <!-- 8 · Footer discret -->
+    <footer class="ck-foot">
+      <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2"/><path d="M10 9.2v4.6"/><circle cx="10" cy="6.6" r=".55" fill="currentColor" stroke="none"/></svg>
+      <span class="ck-foot-tx">Pré-analyse sur données publiques. Constructibilité, propriété, rentabilité — <strong>jamais garanties</strong>.</span>
       <a class="logout-link" href="/logout" title="Fermer la session pilote">Se déconnecter</a>
     </footer>
   </aside>

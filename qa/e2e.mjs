@@ -51,28 +51,43 @@ const emptyTitle = await page.locator('#map-empty .me-title').textContent().catc
 await page.locator('#map-empty .js-reset').click(); await page.waitForTimeout(600);
 const nReset = await rmNum(page);
 ok('5.empty-and-reset', emptyAfterStrict && nReset > 0, `empty=${emptyAfterStrict} ("${emptyTitle}") reset→${nReset}`);
-// 6 — audit champ vide : pas de fiche, message d'aide
+// 6 — audit champ vide : révéler le bloc (action rapide) puis tester le garde-fou
+await page.locator('#qa-audit').click(); await page.waitForTimeout(300);
 await page.locator('#audit-q').fill('');
 await page.locator('.audit-go').click(); await page.waitForTimeout(700);
 const sheetStillHidden = await sheetHidden(page);
 const auditMsg = await page.locator('#audit-msg').textContent();
 ok('6.audit-empty-guarded', sheetStillHidden && /saisi/i.test(auditMsg || ''), `fermée=${sheetStillHidden} msg="${(auditMsg||'').slice(0,40)}"`);
+// 6b — cockpit : cartes opportunité premium (format texte, sans photo) + actions rapides
+await page.locator('.qf[data-status="all"]').click();
+await page.waitForSelector('#parcel-list .oc', { timeout: 15000 }).catch(() => {});
+const ck = await page.evaluate(() => {
+  const c = document.querySelector('#parcel-list .oc');
+  return { qa: document.querySelectorAll('.qa-grid .qa').length,
+    noEmoji: !/[\u{1F300}-\u{1FAFF}\u{2190}-\u{21FF}\u{1F000}-\u{1F0FF}]/u.test(document.querySelector('#sidebar').innerText),
+    hasMetrics: !!c?.querySelector('.oc-metrics'), hasSignal: !!c?.querySelector('.oc-signal'),
+    hasAction: !!c?.querySelector('.oc-action'), hasChevron: !!c?.querySelector('.oc-chev'),
+    noPhoto: !c?.querySelector('img'),
+    metricsTxt: c?.querySelector('.oc-metrics')?.textContent || '' };
+});
+ok('6b.cockpit-cards', ck.qa === 4 && ck.hasMetrics && ck.hasSignal && ck.hasAction && ck.hasChevron && ck.noPhoto && /Score.*Données.*%/.test(ck.metricsTxt), JSON.stringify(ck));
+ok('6c.no-emoji-sidebar', ck.noEmoji, 'aucun emoji dans la sidebar');
 // 7 — carte : ouverture fiche + fermeture (Escape) + inert
-await page.locator('.qf[data-status="all"]').click(); await page.waitForTimeout(500);
-await page.locator('#parcel-list > *').first().click(); await page.waitForTimeout(1500);
+await page.locator('#parcel-list .oc').first().click();
+await page.waitForSelector('#sheet .note-pro', { timeout: 8000 }).catch(() => {});
 const fOpen = await page.evaluate(() => { const s = document.querySelector('#sheet'); return { open: !s.classList.contains('hidden'), inert: s.hasAttribute('inert'), note: s.querySelectorAll('.note-pro').length, gauge: s.querySelectorAll('.g-arc').length }; });
 ok('7.fiche-open', fOpen.open && !fOpen.inert && fOpen.note > 0, JSON.stringify(fOpen));
 await page.keyboard.press('Escape'); await page.waitForTimeout(600);
 const fClosed = await page.evaluate(() => { const s = document.querySelector('#sheet'); const cb = document.querySelector('#sheet-close'); cb.focus(); return { hidden: s.classList.contains('hidden'), inert: s.hasAttribute('inert'), focusLeak: document.activeElement === cb }; });
 ok('7b.fiche-escape-inert', fClosed.hidden && fClosed.inert && !fClosed.focusLeak, JSON.stringify(fClosed));
 // 8 — navigation onglets (pipeline ↔ radar) + colonnes
-await page.locator('.nav-kanban.js-view').first().click(); await page.waitForTimeout(1400);
+await page.locator('.qa.js-view[data-view="kanban"]').first().click(); await page.waitForTimeout(1400);
 const kb = await page.evaluate(() => ({ open: document.body.classList.contains('view-kanban'), cols: document.querySelectorAll('#kb-board .kb-col').length }));
 ok('8.pipeline-columns', kb.open && kb.cols >= 1, JSON.stringify(kb));
 await page.locator('.kb-back').click(); await page.waitForTimeout(700);
 ok('8b.back-to-radar', await page.evaluate(() => !document.body.classList.contains('view-kanban')));
 // 8c — shortlist promoteur : vue, cartes classées, badges, ouverture fiche
-await page.locator('.nav-shortlist.js-view').first().click(); await page.waitForTimeout(2500);
+await page.locator('.ck-top.js-view').first().click(); await page.waitForTimeout(2500);
 const sl = await page.evaluate(() => {
   const cards = [...document.querySelectorAll('#sl-board .sl-card')];
   return { open: document.body.classList.contains('view-shortlist'), n: cards.length,
@@ -90,7 +105,8 @@ ok('8e.assemblage-in-note', slFiche.asm >= 1, `asm-bloc dans la note = ${slFiche
 await page.keyboard.press('Escape'); await page.waitForTimeout(400);
 await page.locator('.sl-back').click(); await page.waitForTimeout(500);
 // 9 — démo guidée scénarisée : ouverture, 3 actes + CTA shortlist, pas de commande au 1er niveau
-await page.locator('.nav-demo.js-demo').first().click(); await page.waitForTimeout(1200);
+await page.locator('.qa.js-demo').first().click();
+await page.waitForSelector('#demo-body .dp-act', { timeout: 8000 }).catch(() => {});
 const demo = await page.evaluate(() => ({
   open: !document.querySelector('#demo-overlay').classList.contains('hidden'),
   acts: document.querySelectorAll('#demo-body .dp-act').length,
