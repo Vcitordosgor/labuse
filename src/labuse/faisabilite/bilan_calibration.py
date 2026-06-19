@@ -27,7 +27,9 @@ CALIBRATION: dict[str, tuple[float, str]] = {
     # Frais & marge
     "honoraires_pct": (12.0, "estimee"),       # honoraires techniques + commercialisation, % du CA
     "frais_financiers_pct": (3.0, "estimee"),  # portage financier au taux actuel, % du CA
-    "marge_cible_pct": (16.0, "estimee"),      # marge cible promoteur, % du CA (à affiner ++)
+    # LOT 3 — calé sur la fourchette promoteur réelle 8–10 % (retour terrain). Reste « estimée /
+    # à affiner » : dépend des contraintes propres à chaque promoteur, jamais une vérité certaine.
+    "marge_cible_pct": (9.0, "estimee"),       # marge cible promoteur, % du CA (8–10 %, à affiner)
 }
 
 

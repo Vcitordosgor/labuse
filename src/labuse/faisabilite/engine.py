@@ -40,7 +40,7 @@ class Hypotheses:
     # Le coût se rapporte à la surface de PLANCHER, pas à l'habitable vendu (audit O2) :
     # plancher ≈ habitable × 1.15 (circulations, gaines, murs).
     coef_plancher_habitable: float = 1.15
-    marge_promoteur_pct: float = 0.18           # marge promoteur (% du CA)
+    marge_promoteur_pct: float = 0.09           # marge promoteur (% du CA) — 8–10 %, à affiner
     frais_annexes_pct: float = 0.12             # honoraires, commercialisation, financier, aléas (% du CA)
     dvf_radius_m: float = 1500.0                # rayon de recherche des ventes DVF comparables
     dvf_min_ventes: int = 8                     # en deçà, prix DVF jugé non fiable

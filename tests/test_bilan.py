@@ -63,11 +63,12 @@ def test_comparables_sans_vefa_affiche_seulement_ancien():
 def test_charge_fonciere_a_rebours_formule():
     b = compute_bilan(1000, 1000, _prix(3000, 3000, 3000), H)
     # Formule PRUDENTE (audit O2) : coût sur SURFACE DE PLANCHER (hab. × coef), coûts Réunion.
-    # CA = 3,0 M€ ; coef CA = 1-0.18-0.12 = 0.70 ; coût central = 1000 × 1.15 × 2550.
+    # CA = 3,0 M€ ; coef CA = 1 − marge − frais annexes (calé sur la calibration, pas en dur).
     # Le « central » reste le chiffre VRAI (peut être négatif) ; seul l'affichage du BAS
     # de fourchette est borné à 0 (audit O3).
+    coef = 1 - H.marge_promoteur_pct - H.frais_annexes_pct
     cout_central = 1000 * H.coef_plancher_habitable * (H.cout_construction_m2_bas + H.cout_construction_m2_haut) / 2
-    attendu = 3_000_000 * 0.70 - cout_central
+    attendu = 3_000_000 * coef - cout_central
     assert abs(b.charge_fonciere["central"] - attendu) < 5_000
 
 

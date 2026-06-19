@@ -31,7 +31,7 @@ PARAMS: list[tuple[str, str, str, str, float, bool, bool]] = [
     # Frais & marge
     ("honoraires_pct", "Honoraires + commercialisation", "Frais & marge", "% du CA", 12.0, False, False),
     ("frais_financiers_pct", "Frais financiers", "Frais & marge", "% du CA", 0.0, True, False),
-    ("marge_cible_pct", "Marge cible promoteur", "Frais & marge", "% du CA", 18.0, False, False),
+    ("marge_cible_pct", "Marge cible promoteur", "Frais & marge", "% du CA", 9.0, False, False),
 ]
 _BY_KEY = {p[0]: p for p in PARAMS}
 CRITIQUES = [p[0] for p in PARAMS if p[6]]

@@ -48,7 +48,7 @@ hypotheses_faisabilite:
   # --- Bilan promoteur (CA, charge foncière) ---
   cout_construction_m2_bas: 1800.0  # coût de construction au m² habitable (borne basse)
   cout_construction_m2_haut: 2200.0 # idem (borne haute)
-  marge_promoteur_pct: 0.18         # marge promoteur (% du CA)
+  marge_promoteur_pct: 0.09         # marge promoteur (% du CA) — fourchette réelle 8–10 %, à affiner
   frais_annexes_pct: 0.12           # honoraires + commercialisation + financier + aléas (% du CA)
   dvf_radius_m: 1500.0              # rayon de recherche des ventes DVF comparables (m)
   dvf_min_ventes: 8                # en deçà, prix DVF non fiable -> on le dit, on n'invente pas

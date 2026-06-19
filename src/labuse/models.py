@@ -461,8 +461,17 @@ def ensure_bilan_params(engine) -> None:
             " is_placeholder boolean NOT NULL DEFAULT false, updated_at timestamptz NOT NULL DEFAULT now(),"
             " PRIMARY KEY (secteur, param))"))
         c.execute(_t("ALTER TABLE bilan_params ADD COLUMN IF NOT EXISTS provenance varchar(16)"))
+        from .faisabilite.bilan_calibration import CALIBRATION
         from .faisabilite.bilan_calibration import seed as _seed
         _seed(c)
+        # LOT 3 — recale la marge cible par DÉFAUT (système, secteur '*') sur la fourchette
+        # promoteur 8–10 %. Ne touche QUE l'estimée système au-dessus de la fourchette : jamais
+        # un override saisi (les overrides utilisateur vivent sur un secteur, pas '*').
+        c.execute(_t(
+            "UPDATE bilan_params SET value = :v, updated_at = now() "
+            "WHERE secteur = '*' AND param = 'marge_cible_pct' "
+            "AND provenance = 'estimee' AND value > 10"),
+            {"v": CALIBRATION["marge_cible_pct"][0]})
 
 
 def ensure_personnes_morales(engine) -> None:
