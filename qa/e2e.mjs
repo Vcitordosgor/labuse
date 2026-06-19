@@ -74,9 +74,10 @@ ok('6b.cockpit-cards', ck.qa === 4 && ck.hasMetrics && !ck.hasSignal && !ck.hasA
 ok('6c.no-emoji-sidebar', ck.noEmoji, 'aucun emoji dans la sidebar');
 // 7 — carte : ouverture fiche + fermeture (Escape) + inert
 await page.locator('#parcel-list .oc').first().click();
-await page.waitForSelector('#sheet .note-pro', { timeout: 8000 }).catch(() => {});
-const fOpen = await page.evaluate(() => { const s = document.querySelector('#sheet'); return { open: !s.classList.contains('hidden'), inert: s.hasAttribute('inert'), note: s.querySelectorAll('.note-pro').length, gauge: s.querySelectorAll('.g-arc').length }; });
-ok('7.fiche-open', fOpen.open && !fOpen.inert && fOpen.note > 0, JSON.stringify(fOpen));
+await page.waitForSelector('#sheet .essentiel', { timeout: 8000 }).catch(() => {});
+const fOpen = await page.evaluate(() => { const s = document.querySelector('#sheet'); return { open: !s.classList.contains('hidden'), inert: s.hasAttribute('inert'), essentiel: s.querySelectorAll('.essentiel').length, acc: s.querySelectorAll('details.acc').length, gauge: s.querySelectorAll('.g-arc').length, vol3dLast: s.querySelector('details.acc:last-of-type .v3d, details.acc:last-of-type')?.outerHTML?.includes('Volume 3D') || false }; });
+ok('7.fiche-open', fOpen.open && !fOpen.inert && fOpen.essentiel === 1 && fOpen.acc >= 8 && fOpen.gauge > 0, JSON.stringify(fOpen));
+ok('7c.fiche-accordions-collapsed', await page.evaluate(() => [...document.querySelectorAll('#sheet details.acc')].every(d => !d.open)), '(repliés par défaut)');
 await page.keyboard.press('Escape'); await page.waitForTimeout(600);
 const fClosed = await page.evaluate(() => { const s = document.querySelector('#sheet'); const cb = document.querySelector('#sheet-close'); cb.focus(); return { hidden: s.classList.contains('hidden'), inert: s.hasAttribute('inert'), focusLeak: document.activeElement === cb }; });
 ok('7b.fiche-escape-inert', fClosed.hidden && fClosed.inert && !fClosed.focusLeak, JSON.stringify(fClosed));
@@ -98,10 +99,10 @@ ok('8c.shortlist', sl.open && sl.n >= 1 && sl.firstHasPrio && sl.hasBtns, JSON.s
 await page.locator('#sl-board .sl-open').first().click(); await page.waitForTimeout(1200);
 const slFiche = await page.evaluate(() => ({
   open: !document.querySelector('#sheet').classList.contains('hidden'),
-  asm: document.querySelectorAll('#sheet .note-pro .asm-bloc').length,   // Module 3 : assemblage dans la note
+  asm: document.querySelectorAll('#sheet .asm-bloc').length,   // assemblage : désormais dans l'accordéon « Assemblage & voisinage »
 }));
 ok('8d.shortlist-open-fiche', slFiche.open, JSON.stringify(slFiche));
-ok('8e.assemblage-in-note', slFiche.asm >= 1, `asm-bloc dans la note = ${slFiche.asm}`);
+ok('8e.assemblage-present', slFiche.asm >= 1, `asm-bloc présent = ${slFiche.asm}`);
 await page.keyboard.press('Escape'); await page.waitForTimeout(400);
 await page.locator('.sl-back').click(); await page.waitForTimeout(500);
 // 9 — démo guidée scénarisée : ouverture, 3 actes + CTA shortlist, pas de commande au 1er niveau

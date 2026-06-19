@@ -578,34 +578,63 @@ function renderAssembBloc(f) {
   </div>`;
 }
 
-function renderNotePromoteur(f) {
-  const v = f.verdict || {}, fa = f.faisabilite || {}, fr = fa.fourchette || {}, bil = fa.bilan || {};
-  const r = f.resume || {};
+// ───────────────────────── Fiche : « L'essentiel » + accordéons (LOT 1) ─────────────────────────
+// Accordéon générique : replié par défaut, ouverture FLUIDE au clic (CSS), indépendant.
+// Jamais d'accordéon vide → zéro section fantôme (et zéro donnée perdue : si vide, n'existait pas non plus avant).
+function accordion(title, sub, body, opts = {}) {
+  if (body == null || !String(body).trim()) return "";
+  return `<details class="acc"${opts.open ? " open" : ""}>
+    <summary class="acc-sum"><span class="acc-tt"><span class="acc-t">${title}</span>${sub ? `<span class="acc-s">${sub}</span>` : ""}</span><svg class="acc-chev" viewBox="0 0 20 20" aria-hidden="true"><path d="M7 5l6 5-6 5"/></svg></summary>
+    <div class="acc-wrap"><div class="acc-body">${body}</div></div>
+  </details>`;
+}
+// Badge de provenance (non négociable §3) : valeur sourcée vs estimée.
+const _prov = (k) => `<span class="prov prov-${k}">${k === "src" ? "sourcé" : "estimé"}</span>`;
+// Emplacement d'enrichissement lazy (PLU détaillé / topo / réseaux) injecté par loadEnrichment.
+const _enrSlot = (id) => `<div class="enr-slot" id="${id}"><span class="enr-loading"><span class="pm-spin" aria-hidden="true"></span> Analyse en cours…</span></div>`;
+
+// Bloc « L'essentiel » — la décision en un coup d'œil (toujours visible, en tête).
+function renderEssentiel(f) {
+  const v = f.verdict || {}, p = f.parcel || {}, fa = f.faisabilite || {}, fr = fa.fourchette || {}, bil = fa.bilan || {};
+  const r = f.resume || {}, bati = f.bati || {}, a = (f.voisinage || {}).assemblage || {};
   const status = v.status || "inconnu";
-  const decision = r.prochaine_action ? esc(r.prochaine_action)
-    : (status === "exclue" ? "Écarter — contrainte rédhibitoire, hors périmètre d'instruction."
-      : "Sécuriser le foncier : qualifier le terrain et identifier le propriétaire.");
-
-  const mc = (label, value, sub, tone) => `<div class="mc${tone ? " mc-" + tone : ""}">
-    <div class="mc-k">${label}</div><div class="mc-v">${value}</div>${sub ? `<div class="mc-s">${sub}</div>` : ""}</div>`;
-  const cards = [];
-  cards.push(mc("Potentiel opération", fa.constructible ? esc(fr.niveaux || "—") : "Non constructible",
-    fa.constructible ? _logtsLabel(fr) : esc(fa.zone || "")));
-  if (fr.surface_plancher_m2) cards.push(mc("Surface plancher", `~${fmt(fr.surface_plancher_m2)}<i> m²</i>`, "estimée"));
-  if (bil.ca) cards.push(mc("CA potentiel", `${_eurK(bil.ca.bas)} – ${_eurK(bil.ca.haut)}`, bil.fiabilite ? `prix ${esc(bil.fiabilite)}` : ""));
-  if (bil.charge_fonciere) cards.push(mc("Charge foncière cible", _eurK(bil.charge_fonciere.central),
-    bil.charge_fonciere.par_m2_terrain ? `~${bil.charge_fonciere.par_m2_terrain} €/m² terrain` : ""));
-  cards.push(mc("Blocage principal", _blocagePrincipal(f), "", "warn"));
-  cards.push(mc("Confiance", _confiance(v.completeness_score),
-    v.completeness_score != null ? `complétude ${v.completeness_score} %` : ""));
-
-  // Module 3 — l'assemblage est une décision : bloc dédié pour les verdicts actionnables.
-  const asmBloc = (status === "opportunite" || status === "a_creuser") ? renderAssembBloc(f) : "";
+  const zone = fa.zone ? `${esc(fa.zone)} · ${fa.constructible ? "constructible" : "non constructible"}` : "—";
+  const occ = bati.label
+    ? esc(bati.label) + (bati.disponible && bati.ratio_pct != null ? ` · ${bati.ratio_pct} % bâti` : "")
+    : "à vérifier";
+  const capa = fa.constructible
+    ? `~${fmt(fr.surface_plancher_m2)} m² SDP${_logtsLabel(fr) ? " · " + _logtsLabel(fr) : ""}`
+    : "Non constructible";
+  const cf = bil.charge_fonciere;
+  const charge = cf ? `${_eurK(cf.central)}${cf.par_m2_terrain ? ` · ~${cf.par_m2_terrain} €/m² terrain` : ""}` : "non chiffrée";
+  const asmLine = a.possible
+    ? `Assemblage possible — ${a.n_interessantes || "?"} contiguë${(a.n_interessantes || 0) > 1 ? "s" : ""}, ~${fmt(a.surface_cumulee_m2 || 0)} m² cumulés · à vérifier` : "";
+  const blocage = _blocagePrincipal(f);
+  const hasBloc = blocage && blocage !== "Aucun blocage majeur identifié";
+  const why = r.prochaine_action ? esc(r.prochaine_action) : "";
+  const fact = (k, val, prov) => `<div class="es-fact"><dt>${k}</dt><dd>${val} ${prov}</dd></div>`;
   return `
-    <section class="note-pro v-${status}">
-      <div class="np-decision"><span class="np-decision-k">Décision promoteur</span>${decision}</div>
-      <div class="np-cards">${cards.join("")}</div>
-      ${asmBloc}
+    <section class="essentiel v-${status}">
+      <div class="es-top">
+        ${renderGauge(v.opportunity_score)}
+        <div class="es-id">
+          <div class="es-eyebrow">Verdict LA BUSE</div>
+          <h1 class="es-verdict">${STATUS_LABEL[status] || esc(status) || "—"}</h1>
+          <div class="es-ref">${esc(p.idu)}${[p.commune, p.section ? "section " + esc(p.section) : "", p.surface_m2 ? fmt(Math.round(p.surface_m2)) + " m²" : ""].filter(Boolean).map((x) => " · " + x).join("")}</div>
+          ${v.downgrade_reason
+            ? `<p class="es-downgrade">Signal positif, mais potentiel limité seul — ${esc(v.downgrade_reason)}.</p>`
+            : `<p class="es-pitch">${esc(VERDICT_GLOSS[status] || "")}</p>`}
+          ${fiableBadge(status)}
+        </div>
+      </div>
+      <dl class="es-facts">
+        ${fact("Zonage PLU", zone, _prov("src"))}
+        ${fact("Occupation", occ, _prov("src"))}
+        ${fact("Capacité constructible", capa, _prov("est"))}
+        ${fact("Charge foncière admissible", charge, _prov("est"))}
+      </dl>
+      ${asmLine ? `<div class="es-asm">🧩 ${asmLine}</div>` : ""}
+      ${(why || hasBloc) ? `<div class="es-why">${why ? `<span class="es-action">▸ ${why}</span>` : ""}${hasBloc ? `<span class="es-bloc">⚠ ${blocage}</span>` : ""}</div>` : ""}
     </section>`;
 }
 
@@ -630,8 +659,6 @@ function renderFiche(f) {
     : `<p class="rd-empty">${emptyMsg}</p>`;
 
   const chips = (arr, cls) => (arr || []).map((s) => `<span class="src-chip ${cls}">${esc(s)}</span>`).join("");
-  const loc = [p.commune, p.section ? "section " + esc(p.section) : "",
-    p.surface_m2 ? fmt(Math.round(p.surface_m2)) + " m²" : ""].filter(Boolean).join(" · ");
 
   // Audit J7 : NOMMER les couches non vérifiées inline (au lieu d'un « verdict partiel »
   // anxiogène qui obligeait à descendre en bas de fiche pour savoir de quoi on parle).
@@ -662,68 +689,58 @@ function renderFiche(f) {
       <div class="ph-meta">Fiche parcelle<br>${today}</div>
     </header>
 
-    <header class="fiche-head">
-      <div class="fh-id">${esc(p.idu)}</div>
-      <div class="fh-loc">${loc}</div>
-    </header>
-
     ${p.origine === "audit" ? `<section class="audit-banner">🔎 <b>Audit à la demande</b> — parcelle récupérée au cadastre et évaluée à la volée (hors balayage initial). Mêmes règles et mêmes sources que le reste du radar.</section>` : ""}
 
-    <section class="hero v-${status}">
-      ${renderGauge(v.opportunity_score)}
-      <div class="hero-txt">
-        <div class="hero-eyebrow">Verdict LA BUSE</div>
-        <h1 class="hero-verdict">${STATUS_LABEL[status] || esc(status) || "—"}</h1>
-        <p class="hero-pitch">${esc(VERDICT_GLOSS[status] || "")}</p>
-        ${v.downgrade_reason ? `<p class="verdict-downgrade">Signal positif, mais potentiel limité seul — ${esc(v.downgrade_reason)}.</p>` : ""}
-        <div class="hero-meta">Complétude ${v.completeness_score ?? "—"}${p.surface_m2 ? " · " + fmt(Math.round(p.surface_m2)) + " m²" : ""}</div>
-        ${fiableBadge(status)}
-      </div>
-    </section>
+    ${renderEssentiel(f)}
 
-    ${renderNotePromoteur(f)}
+    <div class="acc-head"><span class="acc-head-t">Le dossier complet</span>
+      <span class="acc-head-s">tout le détail, rangé — un clic pour ouvrir</span></div>
 
-    ${renderAssistant(p.idu)}
+    ${accordion("Urbanisme / PLU détaillé", "zonage, prescriptions, règles chiffrées",
+      `<div class="acc-zone">Zone PLU <b>${esc((f.faisabilite || {}).zone || "—")}</b>${(f.faisabilite || {}).constructible ? " · constructible" : ((f.faisabilite || {}).zone ? " · non constructible" : "")}</div>${_enrSlot("enr-urba")}`)}
 
-    ${renderResume(f.resume)}
+    ${accordion("Faisabilité & bilan détaillé", "capacité, calcul ligne à ligne, bilan promoteur",
+      renderFaisabilite(f.faisabilite, { no3d: true }))}
 
-    ${renderBati(f.bati)}
+    ${accordion("Assemblage & voisinage", "parcelle seule vs groupée, parcelles contiguës",
+      ((status === "opportunite" || status === "a_creuser") ? renderAssembBloc(f) : "") + renderVoisinage(f.voisinage))}
 
-    ${unverifiedLine}
+    ${accordion("Propriétaire & prospection", "statut, contact, réseaux",
+      renderProspection(f) + _enrSlot("enr-prop"))}
 
-    <section class="reads">
-      <div class="read"><h3 class="rd-h ok">Ce qui favorise</h3>${block(favors, "ok", "Aucun signal franchement favorable sur les couches disponibles.")}</div>
-      <div class="read"><h3 class="rd-h lim${hasHard ? " has-hard" : ""}">Ce qui contraint</h3>${block(limits, "lim", "Aucune contrainte relevée sur les couches disponibles.")}</div>
-      <div class="read"><h3 class="rd-h unk">Ce qu'on n'a pas vérifié</h3>${block(unknown, "unk", "Toutes les couches critiques ont répondu.")}</div>
-    </section>
+    ${accordion("Permis à proximité (SITADEL)", "autorisations d'urbanisme récentes",
+      renderPermits(f.permits))}
 
-    <div class="audit-head"><span class="audit-head-t">Audit foncier complet</span>
-      <span class="audit-head-s">détails, calculs, sources — la traçabilité de chaque verdict</span></div>
+    ${accordion("Topographie", "pente, exposition, vue mer, altimétrie, photos",
+      `<div class="acc-topo-ctx">${[(f.faisabilite || {}).contexte && f.faisabilite.contexte.pente_pct != null ? "Pente " + f.faisabilite.contexte.pente_pct + " %" : "", (f.faisabilite || {}).contexte && f.faisabilite.contexte.littoral ? "Trait de côte à proximité" : ""].filter(Boolean).join(" · ")}</div>${_enrSlot("enr-topo")}`)}
 
-    ${renderFaisabilite(f.faisabilite)}
+    ${accordion("Environnement, risques & traçabilité", `${cascade.length} couches · sources analysées`,
+      `${unverifiedLine}
+       <section class="reads">
+         <div class="read"><h3 class="rd-h ok">Ce qui favorise</h3>${block(favors, "ok", "Aucun signal franchement favorable sur les couches disponibles.")}</div>
+         <div class="read"><h3 class="rd-h lim${hasHard ? " has-hard" : ""}">Ce qui contraint</h3>${block(limits, "lim", "Aucune contrainte relevée sur les couches disponibles.")}</div>
+         <div class="read"><h3 class="rd-h unk">Ce qu'on n'a pas vérifié</h3>${block(unknown, "unk", "Toutes les couches critiques ont répondu.")}</div>
+       </section>
+       <details class="cascade">
+         <summary>Traçabilité des sources · chaque verdict pointe sa couche <span class="cc-count">${cascade.length} couches</span></summary>
+         <table class="cascade-table">${cascadeRows}</table>
+       </details>
+       <section class="sources">
+         <h3 class="src-h">Sources analysées · transparence méthodologique</h3>
+         <p class="src-summary"><b>${(f.sources_responded || []).length + (f.sources_silent || []).length}</b> sources publiques analysées · <b class="src-ok-n">${(f.sources_responded || []).length}</b> ont répondu${(f.sources_silent || []).length ? ` · <b class="src-na-n">${(f.sources_silent || []).length}</b> à vérifier / non disponibles` : ""}.</p>
+         <div class="src-chips">${chips(f.sources_responded, "ok") || '<span class="src-chip silent">—</span>'}</div>
+         ${(f.sources_silent || []).length ? `<h3 class="src-h muted">Sources non disponibles · à vérifier</h3><div class="src-chips">${chips(f.sources_silent, "silent")}</div>` : ""}
+         <p class="src-note">LA BUSE affiche ce qu'elle sait — et ce qu'elle ne sait pas encore. Chaque verdict est vérifiable, source par source.</p>
+       </section>`)}
 
-    ${renderPermits(f.permits)}
+    ${accordion("Pourquoi ce verdict", "synthèse business & occupation actuelle",
+      renderResume(f.resume) + renderBati(f.bati))}
 
-    ${renderVoisinage(f.voisinage)}
+    ${accordion("Assistant IA — « Expliquer cette parcelle »", "synthèse en prose des données réelles",
+      renderAssistant(p.idu) + renderAi(f.ai))}
 
-    ${renderAi(f.ai)}
-
-    ${promoteurSlot()}
-
-    <details class="cascade">
-      <summary>Traçabilité des sources · chaque verdict pointe sa couche <span class="cc-count">${cascade.length} couches</span></summary>
-      <table class="cascade-table">${cascadeRows}</table>
-    </details>
-
-    <section class="sources">
-      <h3 class="src-h">Sources analysées · transparence méthodologique</h3>
-      <p class="src-summary"><b>${(f.sources_responded || []).length + (f.sources_silent || []).length}</b> sources publiques analysées · <b class="src-ok-n">${(f.sources_responded || []).length}</b> ont répondu${(f.sources_silent || []).length ? ` · <b class="src-na-n">${(f.sources_silent || []).length}</b> à vérifier / non disponibles` : ""}.</p>
-      <div class="src-chips">${chips(f.sources_responded, "ok") || '<span class="src-chip silent">—</span>'}</div>
-      ${(f.sources_silent || []).length ? `<h3 class="src-h muted">Sources non disponibles · à vérifier</h3><div class="src-chips">${chips(f.sources_silent, "silent")}</div>` : ""}
-      <p class="src-note">LA BUSE affiche ce qu'elle sait — et ce qu'elle ne sait pas encore. Chaque verdict est vérifiable, source par source.</p>
-    </section>
-
-    ${renderProspection(f)}
+    ${accordion("Volume 3D — gabarit constructible", "extrusion indicative emprise × hauteur (indicatif)",
+      renderVolume3D((f.faisabilite || {}).volume3d))}
 
     <footer class="fiche-actions">
       <button class="btn cta-primary follow" data-follow>+ Ajouter au pipeline</button>
@@ -992,19 +1009,18 @@ function renderPromoteur(pr, centroid, idu) {
     </details>`;
 
   const card = (title, body, tag) => `<div class="pm-card"><h4 class="pm-h">${title}${tag ? `<span class="pm-ind">${tag}</span>` : ""}</h4>${body}</div>`;
+  const foot = `<p class="pm-foot">${esc(pr.disclaimer || "")}${pr.computed_at ? ` · Dernière vérification : ${fmtDateTime(pr.computed_at)}` : ""}</p>`;
 
-  return `
-    <section class="promoteur">
-      <h3 class="src-h">Données promoteur <span class="pm-sub">· publiques, tracées, indicatives</span></h3>
-      <div class="pm-grid">
+  // LOT 1 — l'enrichissement est ventilé dans les bons accordéons (topo / urbanisme / propriété).
+  return {
+    topo: `<div class="pm-grid">
         ${card("Cote altimétrique", altBody, "indicatif")}
         ${card("Façade & profondeur", facBody, "indicatif · EPSG:2975")}
         ${card("Vue du ciel", sky || na({ note: "Centroïde indisponible." }), "")}
-        ${card("PLU détaillé", pluBody, "")}
-        ${card("Propriété & réseaux", factBody, "")}
-      </div>
-      <p class="pm-foot">${esc(pr.disclaimer || "")}${pr.computed_at ? ` · Dernière vérification : ${fmtDateTime(pr.computed_at)}` : ""}</p>
-    </section>`;
+      </div>${foot}`,
+    urba: `<div class="pm-grid">${card("PLU détaillé · règles chiffrées", pluBody, "GPU")}</div>`,
+    prop: `<div class="pm-grid">${card("Propriété & réseaux", factBody, "")}</div>`,
+  };
 }
 
 // Format date/heure court (fr) à partir d'un ISO ; "" si invalide.
@@ -1013,20 +1029,16 @@ function fmtDateTime(iso) {
   return isNaN(d) ? "" : d.toLocaleString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-// Emplacement du bloc « promoteur » pendant son chargement lazy (appels externes lents).
-function promoteurSlot() {
-  return `<section class="promoteur" id="pm-slot">
-    <h3 class="src-h">Données promoteur <span class="pm-sub">· publiques, tracées, indicatives</span></h3>
-    <div class="pm-loading"><span class="pm-spin" aria-hidden="true"></span> Analyse réseaux &amp; terrain en cours…</div>
-  </section>`;
-}
 
 // Charge le bloc « promoteur » en arrière-plan (GET /parcels/{idu}/enrichment) puis remplace
 // l'emplacement. Échec/timeout : message clair, jamais de blocage ni de fiche cassée. Garde
 // anti-course : si l'utilisateur a déjà rouvert une autre fiche, on n'écrase pas son contenu.
 async function loadEnrichment(idu, centroid) {
-  const slot = $("#pm-slot");
-  if (!slot) return;
+  // LOT 1 — 3 emplacements ventilés dans les accordéons Topographie / Urbanisme / Propriétaire.
+  const slots = { topo: $("#enr-topo"), urba: $("#enr-urba"), prop: $("#enr-prop") };
+  if (!slots.topo && !slots.urba && !slots.prop) return;
+  ENRICH_IDU = idu;                                       // garde anti-course : la dernière fiche ouverte gagne
+  const setAll = (html) => { for (const el of Object.values(slots)) if (el) el.innerHTML = html; };
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 35000);   // garde-fou (ALTI+GPU déjà bornés serveur)
   let pr;
@@ -1035,18 +1047,19 @@ async function loadEnrichment(idu, centroid) {
     if (!r.ok) throw new Error(String(r.status));
     pr = await r.json();
   } catch {
-    if ($("#pm-slot") === slot) slot.innerHTML =
-      `<h3 class="src-h">Données promoteur</h3>
-       <p class="pm-na">Données réseaux &amp; terrain momentanément indisponibles — à vérifier auprès des sources officielles.</p>`;
+    if (ENRICH_IDU === idu) setAll(`<p class="pm-na">Données momentanément indisponibles — à vérifier auprès des sources officielles.</p>`);
     return;
   } finally { clearTimeout(timer); }
-  if ($("#pm-slot") === slot) {
-    slot.outerHTML = renderPromoteur(pr, centroid, idu);
-    surfaceServitudesMajeures(pr);
-    const spf = document.querySelector(".js-spf");
-    if (spf) spf.addEventListener("click", () => openSpfLetter(spf.dataset.idu));
-  }
+  if (ENRICH_IDU !== idu) return;                          // l'utilisateur a rouvert une autre fiche
+  const parts = renderPromoteur(pr, centroid, idu);
+  if (slots.topo) slots.topo.innerHTML = parts.topo;
+  if (slots.urba) slots.urba.innerHTML = parts.urba;
+  if (slots.prop) slots.prop.innerHTML = parts.prop;
+  surfaceServitudesMajeures(pr);
+  const spf = document.querySelector(".js-spf");
+  if (spf) spf.addEventListener("click", () => openSpfLetter(spf.dataset.idu));
 }
+let ENRICH_IDU = null;
 
 // Lot C3 — ouvre le courrier SPF pré-rempli dans un nouvel onglet (texte brut, imprimable).
 function openSpfLetter(idu) {
@@ -1203,7 +1216,7 @@ function surfaceServitudesMajeures(pr) {
   list.appendChild(li);
 }
 
-function renderFaisabilite(fa) {
+function renderFaisabilite(fa, opts = {}) {
   if (!fa) return "";
   const fr = fa.fourchette || {}, ctx = fa.contexte || {};
   const ctxBits = [
@@ -1246,7 +1259,7 @@ function renderFaisabilite(fa) {
       <div class="faisa-ctx">${ctxBits}</div>
       ${badges ? `<div class="faisa-badges">${badges}</div>` : ""}
       ${keyCards ? `<div class="faisa-cards">${keyCards}</div>` : ""}
-      ${renderVolume3D(fa.volume3d)}
+      ${opts.no3d ? "" : renderVolume3D(fa.volume3d)}
       ${renderResiduel(fa.residuel)}
       <details class="faisa-calc" open>
         <summary>Le calcul, ligne par ligne — chaque ligne pointe sa règle PLU</summary>

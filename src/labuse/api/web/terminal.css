@@ -136,6 +136,64 @@
 .sheet .hero.v-inconnu .g-arc { stroke: var(--tf-unknown-bright); }
 .sheet .hero.v-inconnu .hero-verdict, .sheet .hero.v-inconnu .g-num { color: var(--tf-unknown); }
 
+/* ══════ LOT 1 — Bloc « L'essentiel » (décision en tête) ══════ */
+.sheet .essentiel { padding-bottom: var(--sp-3); border-bottom: 1px solid var(--tf-border); margin-bottom: var(--sp-3); }
+.sheet .es-top { display: flex; gap: var(--sp-4); align-items: center; }
+.sheet .es-id { min-width: 0; flex: 1; }
+.sheet .es-eyebrow { font-size: var(--fs-micro); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--tf-text-3); }
+.sheet .es-verdict { font-family: var(--font-ui); font-weight: 700; font-size: var(--fs-h1); line-height: 1.05; margin: 2px 0 4px; color: var(--tf-text); }
+.sheet .es-ref { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--tf-text-2); letter-spacing: .01em; }
+.sheet .es-pitch { font-size: var(--fs-body); line-height: 1.4; color: var(--tf-text-2); margin: var(--sp-2) 0 0; max-width: 52ch; }
+.sheet .es-downgrade { font-size: var(--fs-small); line-height: 1.4; color: var(--tf-flag); margin: var(--sp-2) 0 0; }
+.sheet .es-id .fiable-tag { display: inline-block; margin-top: var(--sp-2); }
+/* anneau de jauge + mot, colorés par verdict (mêmes règles que le hero) */
+.sheet .essentiel.v-opportunite .g-arc { stroke: var(--tf-positive-bright); } .sheet .essentiel.v-opportunite .es-verdict { color: var(--tf-positive); }
+.sheet .essentiel.v-a_creuser .g-arc { stroke: var(--tf-flag-bright); } .sheet .essentiel.v-a_creuser .es-verdict { color: var(--tf-flag); }
+.sheet .essentiel.v-exclue .g-arc, .sheet .essentiel.v-faux_positif_probable .g-arc { stroke: var(--tf-exclude-bright); }
+.sheet .essentiel.v-exclue .es-verdict, .sheet .essentiel.v-faux_positif_probable .es-verdict { color: var(--tf-exclude); }
+.sheet .essentiel.v-inconnu .g-arc { stroke: var(--tf-unknown-bright); } .sheet .essentiel.v-inconnu .es-verdict { color: var(--tf-unknown); }
+/* grille de faits décisifs */
+.sheet .es-facts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin: var(--sp-3) 0 0; }
+.sheet .es-fact { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-control); padding: var(--sp-2) var(--sp-3); min-width: 0; }
+.sheet .es-fact dt { font-size: var(--fs-micro); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tf-text-3); }
+.sheet .es-fact dd { margin: 3px 0 0; font-size: var(--fs-body); color: var(--tf-text); line-height: 1.25; }
+.sheet .es-asm { margin: var(--sp-2) 0 0; padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-control); font-size: var(--fs-small);
+  background: var(--tf-accent-dim); border: 1px solid rgba(214,179,106,.4); color: var(--tf-text); }
+.sheet .es-why { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); margin: var(--sp-2) 0 0; font-size: var(--fs-small); }
+.sheet .es-action { color: var(--tf-accent); font-weight: 600; }
+.sheet .es-bloc { color: var(--tf-flag); }
+/* badges de provenance (sourcée / estimée) */
+.sheet .prov { display: inline-block; font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; padding: 1px 6px; border-radius: var(--radius-pill); vertical-align: middle; margin-left: 4px; }
+.sheet .prov-src { background: rgba(92,192,140,.14); color: var(--tf-positive); }
+.sheet .prov-est { background: rgba(224,188,90,.16); color: var(--tf-flag); }
+
+/* ══════ LOT 1 — Accordéons du « dossier complet » ══════ */
+.sheet .acc-head { display: flex; align-items: baseline; gap: var(--sp-3); margin: var(--sp-4) 0 var(--sp-2); padding-bottom: 6px; border-bottom: 1px solid var(--tf-border); }
+.sheet .acc-head-t { font-family: var(--font-ui); font-size: var(--fs-h2); font-weight: 700; color: var(--tf-text); }
+.sheet .acc-head-s { font-size: var(--fs-small); color: var(--tf-text-3); }
+.sheet .acc { border: 1px solid var(--tf-border); border-radius: var(--radius-control); background: var(--tf-surface); margin: 0 0 var(--sp-2); overflow: hidden; }
+.sheet .acc[open] { border-color: rgba(214,179,106,.45); }
+.sheet .acc-sum { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3); cursor: pointer; list-style: none; user-select: none; }
+.sheet .acc-sum::-webkit-details-marker { display: none; }
+.sheet .acc-sum:hover { background: var(--tf-surface-2); }
+.sheet .acc-sum:focus-visible { outline: 2px solid var(--tf-gold); outline-offset: -2px; }
+.sheet .acc-tt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.sheet .acc-t { font-family: var(--font-ui); font-size: var(--fs-body); font-weight: 700; color: var(--tf-text); }
+.sheet .acc-s { font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .acc-chev { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--tf-text-3); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s ease; }
+.sheet .acc[open] .acc-chev { transform: rotate(90deg); stroke: var(--tf-accent); }
+.sheet .acc-wrap { border-top: 1px solid var(--tf-border); }
+.sheet .acc-body { padding: var(--sp-3); }
+.sheet .acc[open] .acc-body { animation: acc-in .22s ease; }   /* ouverture fluide, sans rechargement */
+@keyframes acc-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sheet .acc[open] .acc-body { animation: none; } .sheet .acc-chev { transition: none; } }
+.sheet .acc-zone { font-size: var(--fs-body); color: var(--tf-text); margin-bottom: var(--sp-2); }
+.sheet .acc-topo-ctx { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--tf-text-2); }
+.sheet .acc-topo-ctx:empty { display: none; }
+.sheet .enr-slot { margin-top: var(--sp-2); }
+.sheet .enr-loading { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-small); color: var(--tf-text-3); }
+
 /* ── Badge de fiabilité (verdict, pas méta) ──────────────────────────────── */
 .sheet .fiable-tag { font-family: var(--font-ui); border-radius: var(--radius-pill); letter-spacing: .02em; }
 .sheet .fiable-tag.ok      { background: rgba(92,192,140,.13); color: var(--tf-positive); border-color: rgba(92,192,140,.32); }
