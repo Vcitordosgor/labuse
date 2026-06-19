@@ -48,3 +48,6 @@ reports/phase1a_gpu/cache/
 
 # Captures d'audit QA (artefacts locaux)
 qa/shots/
+
+# Sources externes brutes (PDF PLH, etc.) — non commitées
+.sources/
