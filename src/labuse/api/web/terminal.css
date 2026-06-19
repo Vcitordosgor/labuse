@@ -195,6 +195,20 @@
 .sheet .enr-slot { margin-top: var(--sp-2); }
 .sheet .enr-loading { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-small); color: var(--tf-text-3); }
 
+/* LOT 4.1 — box « Orientations PLH » */
+.sheet .plh { margin: var(--sp-2) 0; padding: var(--sp-3); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  background: var(--tf-surface-2); border-left: 3px solid var(--tf-gold); }
+.sheet .plh-h { display: flex; align-items: center; gap: 7px; font-family: var(--font-ui); font-size: var(--fs-small);
+  font-weight: 700; color: var(--tf-text); }
+.sheet .plh-mill { font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--tf-text-3); margin-left: auto; }
+.sheet .plh-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--sp-3); margin: var(--sp-2) 0 0; }
+.sheet .plh-grid dt { font-size: var(--fs-small); color: var(--tf-text-3); }
+.sheet .plh-grid dd { margin: 0; font-size: var(--fs-small); color: var(--tf-text); text-align: right; }
+.sheet .plh-align { margin-top: var(--sp-2); padding: var(--sp-2); border-radius: var(--radius-control);
+  background: var(--tf-accent-dim); font-size: var(--fs-small); color: var(--tf-text); line-height: 1.4; }
+.sheet .plh-note { margin: var(--sp-2) 0 0; font-size: var(--fs-small); color: var(--tf-text-2); line-height: 1.4; }
+.sheet .plh-src { margin: 6px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); }
+
 /* ── Badge de fiabilité (verdict, pas méta) ──────────────────────────────── */
 .sheet .fiable-tag { font-family: var(--font-ui); border-radius: var(--radius-pill); letter-spacing: .02em; }
 .sheet .fiable-tag.ok      { background: rgba(92,192,140,.13); color: var(--tf-positive); border-color: rgba(92,192,140,.32); }

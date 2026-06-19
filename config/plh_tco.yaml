@@ -1,0 +1,40 @@
+# LA BUSE — Orientations habitat du PLH (LOT 4.1). Données EXTRAITES du document de
+# référence, non inventées : 3e Programme Local de l'Habitat du TCO, adopté en Conseil
+# Communautaire le 16/12/2019. Ce qui n'est pas explicite dans le PLH reste « non précisé ».
+# Structure commune-agnostique : la cible s'applique à toutes les communes membres du TCO ;
+# le bilan par commune est renseigné quand le PLH le chiffre.
+source:
+  nom: "3e Programme Local de l'Habitat (PLH) du TCO"
+  perimetre: "Territoire de la Côte Ouest (TCO) — Le Port, La Possession, Saint-Paul, Saint-Leu, Trois-Bassins"
+  millesime: "2019"
+  adoption: "Conseil Communautaire du 16/12/2019"
+  provenance: "sourcee"   # extrait du rapport PLH 3 adopté (document de référence)
+
+# Cible de répartition de la production neuve, à l'échelle TCO (s'applique à chaque commune).
+cible_repartition:
+  libre_pct: 40
+  aide_pct: 60
+besoin_tco_logements_an: 3000
+
+# Typologies de logements aidés visées (le PLH ventile l'aidé en ces catégories).
+typologies_aidees:
+  locatif_social: ["LLTS", "LLS", "PLS"]
+  accession_aidee: ["LES", "PSLA", "PTZ"]
+
+# Bilan par commune (PLH précédent) — % de l'objectif de production atteint. Sourcé.
+communes:
+  Saint-Paul:
+    population: 104634          # INSEE 2014 (PLH)
+    part_population_tco_pct: 50
+    bilan:
+      logements_sociaux_realise_pct: 82
+      libre_realise_pct: 85
+    note: "Saint-Paul concentre ~50 % de la population du TCO. Au bilan du PLH précédent : 82 % de l'objectif en logements sociaux et 85 % en libre atteints."
+  Saint-Leu:
+    bilan: {libre_realise_pct: 88}
+  La Possession:
+    bilan: {global_realise_pct: 60}
+  Trois-Bassins:
+    bilan: {global_realise_pct: 50}
+  Le Port:
+    bilan: {libre_realise_pct: 13}

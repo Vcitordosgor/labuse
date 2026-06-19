@@ -105,6 +105,11 @@ def shortlist() -> dict[str, Any]:
     return load_yaml_config("shortlist")
 
 
+def plh() -> dict[str, Any]:
+    """Orientations habitat du PLH du TCO (config/plh_tco.yaml) — LOT 4.1, données extraites."""
+    return load_yaml_config("plh_tco")
+
+
 @lru_cache(maxsize=1)
 def rules_version() -> str:
     """Empreinte courte des configs de règles (pour estampiller les évaluations)."""

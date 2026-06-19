@@ -724,6 +724,17 @@ def _build_fiche(db: Session, idu: str) -> dict:
     except Exception:  # noqa: BLE001
         pass
 
+    # LOT 4.1 — Orientations PLH (TCO) pour la commune, avec alignement sur la capacité estimée.
+    plh_block = None
+    try:
+        from .. import plh as plh_mod
+        fr = ((faisabilite or {}).get("fourchette") or {})
+        rng = fr.get("logements_sous_sol") or fr.get("logements_au_sol") or [0, 0]
+        logements_est = rng[1] or None
+        plh_block = plh_mod.orientations(p.commune, logements_est)
+    except Exception:  # noqa: BLE001 - orientation optionnelle, jamais bloquante
+        plh_block = None
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
@@ -734,6 +745,7 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "bati": bati_block,
         "voisinage": voisinage,
         "faisabilite": faisabilite,
+        "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
         "permits": permits,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en

@@ -794,6 +794,26 @@ function renderAssembBloc(f) {
   </div>`;
 }
 
+// LOT 4.1 — box « Orientations PLH » (TCO) : cible de répartition + typologies + alignement
+// FACTUEL (capacité × cible), sourcé. Rien d'inventé : si la commune est hors PLH, f.plh = null.
+function renderPlh(plh) {
+  if (!plh) return "";
+  const c = plh.cible_repartition || {}, ty = plh.typologies_aidees || {}, al = plh.alignement, src = plh.source || {};
+  const ls = (ty.locatif_social || []).join(" / "), ac = (ty.accession_aidee || []).join(" / ");
+  return `
+  <div class="plh">
+    <div class="plh-h">Orientations PLH <span class="prov prov-src">sourcé</span>${src.millesime ? `<span class="plh-mill">${esc(src.millesime)}</span>` : ""}</div>
+    <dl class="plh-grid">
+      <dt>Répartition cible</dt><dd><b>${c.libre_pct ?? "—"} % libre</b> · <b>${c.aide_pct ?? "—"} % aidé</b></dd>
+      <dt>Logement aidé</dt><dd>Locatif social ${esc(ls || "—")}${ac ? ` · accession ${esc(ac)}` : ""}</dd>
+      ${plh.besoin_tco_logements_an ? `<dt>Besoin TCO</dt><dd>~${fmt(plh.besoin_tco_logements_an)} logements/an</dd>` : ""}
+    </dl>
+    ${al ? `<div class="plh-align">▶ ${esc(al.message)}</div>` : ""}
+    ${plh.note ? `<p class="plh-note">${esc(plh.note)}</p>` : ""}
+    <p class="plh-src">${esc(src.nom || "")}${src.adoption ? " · " + esc(src.adoption) : ""}.</p>
+  </div>`;
+}
+
 // ───────────────────────── Fiche : « L'essentiel » + accordéons (LOT 1) ─────────────────────────
 // Accordéon générique : replié par défaut, ouverture FLUIDE au clic (CSS), indépendant.
 // Jamais d'accordéon vide → zéro section fantôme (et zéro donnée perdue : si vide, n'existait pas non plus avant).
@@ -918,8 +938,8 @@ function renderFiche(f) {
     <div class="acc-head"><span class="acc-head-t">Le dossier complet</span>
       <span class="acc-head-s">tout le détail, rangé — un clic pour ouvrir</span></div>
 
-    ${accordion("Urbanisme / PLU détaillé", "zonage, prescriptions, règles chiffrées",
-      `<div class="acc-zone">Zone PLU <b>${esc((f.faisabilite || {}).zone || "—")}</b>${(f.faisabilite || {}).constructible ? " · constructible" : ((f.faisabilite || {}).zone ? " · non constructible" : "")}</div>${_enrSlot("enr-urba")}`)}
+    ${accordion("Urbanisme / PLU détaillé", "zonage, PLH, prescriptions, règles chiffrées",
+      `<div class="acc-zone">Zone PLU <b>${esc((f.faisabilite || {}).zone || "—")}</b>${(f.faisabilite || {}).constructible ? " · constructible" : ((f.faisabilite || {}).zone ? " · non constructible" : "")}</div>${renderPlh(f.plh)}${_enrSlot("enr-urba")}`)}
 
     ${accordion("Faisabilité & bilan détaillé", "capacité, calcul ligne à ligne, bilan promoteur",
       renderFaisabilite(f.faisabilite, { no3d: true }))}
