@@ -82,15 +82,231 @@ function initMap() {
       { "Permis (SITADEL)": PERMITS_LAYER, "Zones de veille": WATCH_LAYER },
       { position: "topright", collapsed: true }
     ).addTo(map);
+    // LOT 2 — bascule de mode carte : Verdict ⇄ Mutabilité (bâti/non-bâti).
+    const ModeCtl = L.Control.extend({
+      options: { position: "topright" },
+      onAdd() {
+        const d = L.DomUtil.create("div", "map-mode");
+        d.innerHTML = `<button class="mm-btn active" data-mode="verdict" type="button">Verdict</button>`
+          + `<button class="mm-btn" data-mode="mutabilite" type="button" title="Bâti / non-bâti — repérer le foncier mutable">Mutabilité</button>`;
+        L.DomEvent.disableClickPropagation(d);
+        d.querySelectorAll(".mm-btn").forEach((b) => b.addEventListener("click", () => setMapMode(b.dataset.mode)));
+        return d;
+      },
+    });
+    map.addControl(new ModeCtl());
+    // LOT 2 — outil de mesure (distance + surface).
+    const MeasureCtl = L.Control.extend({
+      options: { position: "topright" },
+      onAdd() {
+        const d = L.DomUtil.create("div", "measure-ctl");
+        d.innerHTML = `<button class="measure-btn" type="button" title="Mesurer une distance / une surface (clic = points, double-clic = terminer)">`
+          + `<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M3 12l9-9 5 5-9 9-5-5z"/><path d="M6 9l1.5 1.5M9 6l1.5 1.5M12 9l1.5 1.5"/></svg>Mesurer</button>`;
+        L.DomEvent.disableClickPropagation(d);
+        d.querySelector(".measure-btn").addEventListener("click", toggleMeasure);
+        return d;
+      },
+    });
+    map.addControl(new MeasureCtl());
+    // LOT 2 — mode assemblage (sélection de parcelles mitoyennes).
+    const AssembleCtl = L.Control.extend({
+      options: { position: "topright" },
+      onAdd() {
+        const d = L.DomUtil.create("div", "assemble-ctl");
+        d.innerHTML = `<button class="assemble-btn" type="button" title="Assembler des parcelles mitoyennes et étudier la faisabilité cumulée">`
+          + `<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="7" width="7" height="7" rx="1"/><rect x="10" y="4" width="7" height="7" rx="1"/></svg>Assembler</button>`;
+        L.DomEvent.disableClickPropagation(d);
+        d.querySelector(".assemble-btn").addEventListener("click", toggleAssemble);
+        return d;
+      },
+    });
+    map.addControl(new AssembleCtl());
   } catch (e) {
     map = null;
     showMapError();
   }
 }
 
+// LOT 2 — bascule le mode de coloration de la carte. La couche « mutabilité » (bâti) est
+// chargée À LA DEMANDE (/map/bati) : le radar par défaut reste rapide. Si la couche bâtiments
+// n'est pas ingérée, on le DIT (jamais de faux « mutable »).
+async function setMapMode(mode) {
+  if (mode === MAP_MODE || !map) return;
+  const btns = document.querySelectorAll(".mm-btn");
+  if (mode === "mutabilite" && BATI_RATIOS == null) {
+    const b = document.querySelector('.mm-btn[data-mode="mutabilite"]');
+    if (b) { b.classList.add("loading"); b.textContent = "Calcul…"; }
+    try {
+      const d = await (await fetch(`/map/bati?commune=${encodeURIComponent(COMMUNE)}`)).json();
+      if (!d.disponible) {
+        if (b) { b.classList.remove("loading"); b.textContent = "Mutabilité"; }
+        auditMsg("Couche bâtiments non ingérée — mutabilité indisponible.");
+        return;
+      }
+      BATI_RATIOS = d.ratios || {};
+      FEATURES.forEach((ft) => { ft.properties.bati_ratio = BATI_RATIOS[ft.properties.idu] ?? null; });
+    } catch { BATI_RATIOS = {}; }
+    if (b) { b.classList.remove("loading"); b.textContent = "Mutabilité"; }
+  }
+  MAP_MODE = mode;
+  btns.forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
+  renderMap();
+  updateLegend();
+}
+
+// LOT 2 — outil de mesure : distance (polyligne) + surface (polygone) à la main sur la carte.
+let MEASURE_ON = false, MEASURE_PTS = [], MEASURE_LAYER = null;
+function geodesicAreaM2(latlngs) {
+  if (latlngs.length < 3) return 0;
+  const R = 6378137, d2r = Math.PI / 180; let a = 0;            // formule géodésique (Leaflet.Draw)
+  for (let i = 0; i < latlngs.length; i++) {
+    const p1 = latlngs[i], p2 = latlngs[(i + 1) % latlngs.length];
+    a += (p2.lng - p1.lng) * d2r * (2 + Math.sin(p1.lat * d2r) + Math.sin(p2.lat * d2r));
+  }
+  return Math.abs(a * R * R / 2);
+}
+const fmtDist = (m) => (m >= 1000 ? (m / 1000).toFixed(2).replace(".", ",") + " km" : Math.round(m) + " m");
+function measureLabel() {
+  let dist = 0;
+  for (let i = 1; i < MEASURE_PTS.length; i++) dist += map.distance(MEASURE_PTS[i - 1], MEASURE_PTS[i]);
+  const area = MEASURE_PTS.length >= 3 ? geodesicAreaM2(MEASURE_PTS) : 0;
+  return `${fmtDist(dist)}${area ? ` · ${fmt(Math.round(area))} m²` : ""}`;
+}
+function renderMeasure() {
+  if (MEASURE_LAYER) map.removeLayer(MEASURE_LAYER);
+  MEASURE_LAYER = null;
+  if (!MEASURE_PTS.length) return;
+  const g = L.layerGroup();
+  if (MEASURE_PTS.length >= 2) {
+    const shape = MEASURE_PTS.length >= 3
+      ? L.polygon(MEASURE_PTS, { color: "#D6B36A", weight: 2, dashArray: "5", fillColor: "#D6B36A", fillOpacity: 0.08 })
+      : L.polyline(MEASURE_PTS, { color: "#D6B36A", weight: 2, dashArray: "5" });
+    shape.addTo(g);
+    shape.bindTooltip(measureLabel(), { permanent: true, direction: "top", className: "measure-tip" })
+      .openTooltip(MEASURE_PTS[MEASURE_PTS.length - 1]);
+  }
+  MEASURE_PTS.forEach((ll) => L.circleMarker(ll, { radius: 3, color: "#D6B36A", fillColor: "#D6B36A", fillOpacity: 1, weight: 1 }).addTo(g));
+  g.addTo(map); MEASURE_LAYER = g;
+}
+function onMeasureClick(e) { MEASURE_PTS.push(e.latlng); renderMeasure(); }
+function startMeasure() {
+  if (DRAWING) finishDraw();                                    // jamais deux modes carte à la fois
+  MEASURE_ON = true; MEASURE_PTS = [];
+  if (MEASURE_LAYER) { map.removeLayer(MEASURE_LAYER); MEASURE_LAYER = null; }
+  $("#map").classList.add("measuring");
+  map.doubleClickZoom.disable();
+  map.on("click", onMeasureClick); map.on("dblclick", stopMeasure);
+  const b = document.querySelector(".measure-btn"); if (b) b.classList.add("active");
+}
+function stopMeasure() {
+  MEASURE_ON = false;
+  map.off("click", onMeasureClick); map.off("dblclick", stopMeasure);
+  setTimeout(() => map.doubleClickZoom.enable(), 300);
+  $("#map").classList.remove("measuring");
+  const b = document.querySelector(".measure-btn"); if (b) b.classList.remove("active");
+}
+function toggleMeasure() {
+  if (MEASURE_ON) { stopMeasure(); return; }
+  if (MEASURE_LAYER) { map.removeLayer(MEASURE_LAYER); MEASURE_LAYER = null; }   // efface la mesure précédente
+  startMeasure();
+}
+
+// LOT 2 — assemblage : sélection de parcelles MITOYENNES sur la carte + étude de faisabilité cumulée.
+let ASSEMBLE_ON = false, ASSEMBLE_SEL = [], ASSEMBLE_LAYER = null;
+const assembleFeature = (idu) => FEATURES.find((ft) => ft.properties.idu === idu);
+function renderAssembleHighlight() {
+  if (ASSEMBLE_LAYER) map.removeLayer(ASSEMBLE_LAYER);
+  ASSEMBLE_LAYER = L.geoJSON({ type: "FeatureCollection", features: ASSEMBLE_SEL.map(assembleFeature).filter(Boolean) },
+    { style: { color: "#D6B36A", weight: 2.5, fillColor: "#D6B36A", fillOpacity: 0.22, opacity: 1 } }).addTo(map);
+}
+function toggleAssembleParcel(idu) {
+  const i = ASSEMBLE_SEL.indexOf(idu);
+  if (i >= 0) ASSEMBLE_SEL.splice(i, 1); else if (ASSEMBLE_SEL.length < 8) ASSEMBLE_SEL.push(idu);
+  renderAssembleHighlight(); renderAssembleTray();
+}
+function startAssemble() {
+  if (DRAWING) finishDraw();
+  if (MEASURE_ON) stopMeasure();
+  ASSEMBLE_ON = true; ASSEMBLE_SEL = [];
+  $("#map").classList.add("assembling");
+  const b = document.querySelector(".assemble-btn"); if (b) b.classList.add("active");
+  renderAssembleTray();
+}
+function stopAssemble() {
+  ASSEMBLE_ON = false; ASSEMBLE_SEL = [];
+  if (ASSEMBLE_LAYER) { map.removeLayer(ASSEMBLE_LAYER); ASSEMBLE_LAYER = null; }
+  $("#map").classList.remove("assembling");
+  const b = document.querySelector(".assemble-btn"); if (b) b.classList.remove("active");
+  const t = $("#assemble-tray"); if (t) t.classList.add("hidden");
+}
+function toggleAssemble() { ASSEMBLE_ON ? stopAssemble() : startAssemble(); }
+function renderAssembleTray() {
+  let t = $("#assemble-tray");
+  if (!t) { t = document.createElement("div"); t.id = "assemble-tray"; t.className = "assemble-tray"; document.body.appendChild(t); }
+  t.classList.remove("hidden");
+  const surf = ASSEMBLE_SEL.reduce((s, idu) => s + ((assembleFeature(idu) || { properties: {} }).properties.surface_m2 || 0), 0);
+  const n = ASSEMBLE_SEL.length;
+  t.innerHTML = `
+    <div class="as-head"><b>🧩 Assemblage foncier</b><button class="as-x" type="button" title="Quitter le mode assemblage">✕</button></div>
+    <div class="as-sel">${n ? `${n} parcelle${n > 1 ? "s" : ""} · ~${fmt(Math.round(surf))} m² cumulés` : "Cliquez les parcelles contiguës sur la carte (2 à 8)."}</div>
+    <div class="as-actions">
+      <button class="btn cta-primary as-study" type="button"${n < 2 ? " disabled" : ""}>Étudier l'assemblage</button>
+      ${n ? `<button class="btn as-clear" type="button">Vider</button>` : ""}
+    </div>
+    <div class="as-result" id="as-result"></div>`;
+  t.querySelector(".as-x").addEventListener("click", stopAssemble);
+  const study = t.querySelector(".as-study"); if (study) study.addEventListener("click", studyAssemble);
+  const clr = t.querySelector(".as-clear"); if (clr) clr.addEventListener("click", () => { ASSEMBLE_SEL = []; renderAssembleHighlight(); renderAssembleTray(); });
+}
+async function studyAssemble() {
+  if (ASSEMBLE_SEL.length < 2) return;
+  const out = $("#as-result"); if (out) out.innerHTML = `<div class="as-loading">Calcul de la faisabilité cumulée…</div>`;
+  let d;
+  try { d = await (await fetch(`/assemblage/study?idus=${ASSEMBLE_SEL.map(encodeURIComponent).join(",")}`)).json(); }
+  catch { if (out) out.innerHTML = `<div class="as-loading">Étude indisponible — réessayez.</div>`; return; }
+  if (!out) return;
+  const cap = d.capacite || {}, ca = d.ca, cf = d.charge_fonciere;
+  out.innerHTML = `
+    <dl class="as-grid">
+      <dt>Ensemble</dt><dd>${d.n_parcelles} parcelles · ${d.contigu ? "contiguës" : "⚠ non contiguës"}</dd>
+      <dt>Surface cumulée</dt><dd>${fmt(d.surface_cumulee_m2)} m²</dd>
+      <dt>Capacité (SDP)</dt><dd>~${fmt(cap.sdp_m2)} m²${cap.logements ? ` · ${cap.logements[0]}–${cap.logements[1]} logts` : ""}</dd>
+      <dt>CA cumulé</dt><dd>${ca ? _eurK(ca.central) : "non chiffré"}</dd>
+      <dt>Charge foncière</dt><dd>${cf ? _eurK(cf.central) + (cf.par_m2_terrain ? ` · ~${cf.par_m2_terrain} €/m² terrain` : "") : "non chiffrée"}</dd>
+    </dl>
+    <p class="as-note">${esc(d.note || "")}</p>`;
+}
+
+let LEGEND_VERDICT_HTML = null;
+function updateLegend() {
+  const lg = $("#legend"); if (!lg) return;
+  if (LEGEND_VERDICT_HTML == null) LEGEND_VERDICT_HTML = lg.innerHTML;   // mémorise la légende verdict
+  if (MAP_MODE === "mutabilite") {
+    lg.innerHTML = `<div class="legend-h">Mutabilité (bâti)</div>
+      <span><i class="dot" style="background:#2DBE87"></i> Mutable · non/peu bâti (&lt; 15 %)</span>
+      <span><i class="dot" style="background:#7C8694"></i> Bâti (&ge; 15 %)</span>
+      <span class="lg-src">BD TOPO · indicatif</span>`;
+  } else {
+    lg.innerHTML = LEGEND_VERDICT_HTML;
+  }
+}
+
 function colorFor(p) { return COLORS[p.status] || COLORS.inconnu; }
 
+// LOT 2 — mode carte « mutabilité » : repérer le foncier mutable (non/peu bâti) d'un coup d'œil.
+let MAP_MODE = "verdict";   // "verdict" (défaut) | "mutabilite"
+let BATI_RATIOS = null;     // {idu: ratio} chargé à la demande (/map/bati), puis caché
+const MUTABLE_MAX = 0.15;   // < 15 % de bâti = mutable (vacant + peu bâti, cf. bati.py)
+function styleMutabilite(p) {
+  const r = p.bati_ratio;
+  if (r == null) return { color: "#6b7480", weight: 0.4, fillColor: "#6b7480", fillOpacity: 0.08, opacity: 0.25 };
+  return r < MUTABLE_MAX
+    ? { color: "#86EFCC", weight: 1.8, fillColor: "#2DBE87", fillOpacity: 0.72, opacity: 1 }     // mutable
+    : { color: "#5b636e", weight: 0.4, fillColor: "#7C8694", fillOpacity: 0.42, opacity: 0.6 };  // bâti
+}
+
 function styleFor(p) {
+  if (MAP_MODE === "mutabilite") return styleMutabilite(p);
   const c = colorFor(p);
   // Le radar fait CLIGNOTER la cible : l'opportunité ressort fort, le reste s'efface.
   switch (p.status) {
@@ -150,7 +366,7 @@ function renderMap() {
     style: (ft) => styleFor(ft.properties),
     onEachFeature: (ft, lyr) => {
       byIdu[ft.properties.idu] = lyr;
-      lyr.on("click", () => openSheet(ft.properties.idu));
+      lyr.on("click", () => { if (ASSEMBLE_ON) toggleAssembleParcel(ft.properties.idu); else openSheet(ft.properties.idu); });
       lyr.bindTooltip(tipHtml(ft.properties), { sticky: true, direction: "top", className: "lb-tip" });
     },
   }).addTo(map);
@@ -2391,7 +2607,9 @@ async function main() {
   // Échap ferme la couche ouverte (démo d'abord, sinon la fiche).
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (!$("#demo-overlay").classList.contains("hidden")) closeDemo();
+    if (MEASURE_ON || MEASURE_LAYER) { stopMeasure(); if (MEASURE_LAYER) { map.removeLayer(MEASURE_LAYER); MEASURE_LAYER = null; } }
+    else if (ASSEMBLE_ON) stopAssemble();
+    else if (!$("#demo-overlay").classList.contains("hidden")) closeDemo();
     else if (!$("#sheet").classList.contains("hidden")) closeSheet();
   });
 }

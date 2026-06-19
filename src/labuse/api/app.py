@@ -437,6 +437,25 @@ def parcel_fiche(idu: str, db: Session = Depends(get_db)) -> dict:
     return _build_fiche(db, idu)
 
 
+@app.get("/map/bati")
+def map_bati(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Taux de bâti par parcelle (BD TOPO), pour le mode carte « mutabilité » (LOT 2).
+
+    Calcul à la demande (spatial geom_2975) — la couche par défaut (verdict) reste rapide.
+    `disponible=false` si la couche bâtiments n'est pas ingérée → l'UI le dit, ne ment pas."""
+    from .. import bati as bati_mod
+    commune = commune or config.get_settings().pilot_commune_name
+    if not bati_mod.layer_available(db):
+        return {"commune": commune, "disponible": False, "ratios": {}}
+    rows = db.execute(
+        text("SELECT id, idu FROM parcels WHERE commune = :c"), {"c": commune}
+    ).all()
+    id2idu = {r[0]: r[1] for r in rows}
+    stats = bati_mod.stats_batch(db, list(id2idu.keys()))
+    ratios = {id2idu[pid]: round(s.get("bati_ratio", 0.0), 3) for pid, s in stats.items()}
+    return {"commune": commune, "disponible": True, "ratios": ratios}
+
+
 @app.get("/assemblages")
 def assemblages(commune: str | None = None, limit: int = Query(100, ge=1, le=500),
                 db: Session = Depends(get_db)) -> dict:
@@ -447,6 +466,71 @@ def assemblages(commune: str | None = None, limit: int = Query(100, ge=1, le=500
     groups = assemblage.find_assemblages(db, commune, limit=limit)
     return {"commune": commune, "count": len(groups),
             "prioritaires": sum(1 for g in groups if g["meme_proprietaire"]), "assemblages": groups}
+
+
+@app.get("/assemblage/study")
+def assemblage_study(idus: str, db: Session = Depends(get_db)) -> dict:
+    """Étude de faisabilité sur un ENSEMBLE de parcelles regroupées (LOT 2) : surface cumulée,
+    capacité cumulée (SDP / logements) et bilan cumulé, par AGRÉGATION des faisabilités
+    par parcelle. Vérifie la contiguïté (mitoyenneté) — jamais d'assemblage fabriqué.
+    `idus` = liste séparée par des virgules (cap à 8)."""
+    from ..assemblage import ADJ_BUFFER_M
+    from ..faisabilite.db import fiche_payload
+    idu_list = [s.strip() for s in idus.split(",") if s.strip()][:8]
+    for i in idu_list:
+        _check_idu(i)
+    if len(idu_list) < 2:
+        raise HTTPException(400, "Sélectionnez au moins 2 parcelles mitoyennes.")
+    parcels = db.execute(
+        select(models.Parcel).where(models.Parcel.idu.in_(idu_list))
+    ).scalars().all()
+    if len(parcels) < 2:
+        raise HTTPException(404, "Parcelles introuvables.")
+    ids = [p.id for p in parcels]
+    # Contiguïté : l'union des parcelles (tamponnées d'une demi-largeur d'adjacence) doit former
+    # UN seul bloc connexe. Sinon, ce n'est pas un assemblage mitoyen.
+    contigu = bool(db.execute(text(
+        "SELECT ST_NumGeometries(ST_Union(ST_Buffer(geom_2975, :b))) = 1 "
+        "FROM parcels WHERE id = ANY(:ids)"), {"b": ADJ_BUFFER_M / 2.0, "ids": ids}).scalar())
+    surface_cumulee = round(sum(p.surface_m2 or 0 for p in parcels))
+    sdp = 0.0
+    log_min = log_max = 0
+    ca = {"bas": 0, "central": 0, "haut": 0}
+    charge = {"bas": 0, "central": 0, "haut": 0}
+    n_chiffrables = 0
+    for p in parcels:
+        try:
+            fa = fiche_payload(db, p.id)
+        except Exception:  # noqa: BLE001 - une parcelle illisible ne casse pas l'étude
+            fa = None
+        fr = (fa or {}).get("fourchette") or {}
+        sdp += fr.get("surface_plancher_m2") or 0
+        rng = fr.get("logements_sous_sol") or fr.get("logements_au_sol") or [0, 0]
+        log_min += rng[0] or 0
+        log_max += rng[1] or 0
+        bil = (fa or {}).get("bilan") or {}
+        if bil.get("ca"):
+            for k in ca:
+                ca[k] += bil["ca"].get(k) or 0
+            n_chiffrables += 1
+        if bil.get("charge_fonciere"):
+            for k in charge:
+                charge[k] += bil["charge_fonciere"].get(k) or 0
+    cf_m2 = round(charge["central"] / surface_cumulee) if surface_cumulee else None
+    return {
+        "idus": [p.idu for p in parcels],
+        "n_parcelles": len(parcels),
+        "contigu": contigu,
+        "surface_cumulee_m2": surface_cumulee,
+        "capacite": {"sdp_m2": round(sdp), "logements": [log_min, log_max]},
+        "ca": ca if n_chiffrables else None,
+        "charge_fonciere": ({**charge, "par_m2_terrain": cf_m2} if n_chiffrables else None),
+        "n_chiffrables": n_chiffrables,
+        "note": ("Faisabilité cumulée par agrégation des parcelles. "
+                 + ("Ensemble mitoyen (contigu). " if contigu else "⚠ Parcelles non contiguës — ce n'est pas un assemblage mitoyen. ")
+                 + "Surfaces et capacités indicatives ; accords propriétaires, géométrie d'opération "
+                 "et règlement (reculs, mutualisation) restent à valider."),
+    }
 
 
 @app.get("/shortlist")

@@ -262,6 +262,57 @@ input[type=checkbox] { accent-color: var(--gold); }
 }
 .legend .legend-h { font-size: 10px; text-transform: uppercase; letter-spacing: .13em; color: var(--muted); margin-bottom: 1px; }
 .legend span { display: flex; align-items: center; gap: 9px; color: var(--muted); }
+.legend .lg-src { font-size: 10px; color: var(--muted); opacity: .8; margin-top: 2px; }
+
+/* LOT 2 — bascule de mode carte (Verdict ⇄ Mutabilité) */
+.map-mode { display: flex; background: rgba(17,26,36,.96); border: 1px solid var(--line); border-radius: 11px;
+  overflow: hidden; box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+.mm-btn { background: transparent; border: none; border-right: 1px solid var(--line); color: var(--muted);
+  font: inherit; font-size: 12px; font-weight: 600; padding: 7px 13px; cursor: pointer; transition: color .12s, background .12s; }
+.mm-btn:last-child { border-right: none; }
+.mm-btn:hover { color: var(--txt); background: rgba(24,36,49,.98); }
+.mm-btn.active { color: #1a1206; background: var(--gold); }
+.mm-btn.loading { color: var(--gold-soft); cursor: progress; }
+/* LOT 2 — outil de mesure */
+.measure-ctl { background: rgba(17,26,36,.96); border: 1px solid var(--line); border-radius: 11px; overflow: hidden; box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+.measure-btn { display: flex; align-items: center; gap: 6px; background: transparent; border: none; color: var(--muted);
+  font: inherit; font-size: 12px; font-weight: 600; padding: 7px 12px; cursor: pointer; transition: color .12s, background .12s; }
+.measure-btn .ic { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.measure-btn:hover { color: var(--txt); background: rgba(24,36,49,.98); }
+.measure-btn.active { color: #1a1206; background: var(--gold); }
+#map.measuring { cursor: crosshair; }
+.measure-tip { background: var(--gold) !important; color: #1a1206 !important; border: none !important; font-weight: 700 !important;
+  font-family: var(--font-mono, ui-monospace, monospace) !important; font-size: 12px !important; box-shadow: 0 4px 14px rgba(0,0,0,.4) !important; }
+.measure-tip::before { border-top-color: var(--gold) !important; }
+/* LOT 2 — mode assemblage : bouton + tray */
+.assemble-ctl { background: rgba(17,26,36,.96); border: 1px solid var(--line); border-radius: 11px; overflow: hidden; box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+.assemble-btn { display: flex; align-items: center; gap: 6px; background: transparent; border: none; color: var(--muted);
+  font: inherit; font-size: 12px; font-weight: 600; padding: 7px 12px; cursor: pointer; transition: color .12s, background .12s; }
+.assemble-btn .ic { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.5; }
+.assemble-btn:hover { color: var(--txt); background: rgba(24,36,49,.98); }
+.assemble-btn.active { color: #1a1206; background: var(--gold); }
+#map.assembling { cursor: copy; }
+.assemble-tray { position: absolute; left: 388px; bottom: 16px; z-index: 650; width: 320px; max-width: calc(100vw - 404px);
+  background: rgba(18,23,30,.97); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid rgba(214,179,106,.4); border-radius: 12px; padding: 12px 14px; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+.assemble-tray.hidden { display: none; }
+.as-head { display: flex; align-items: center; justify-content: space-between; font-size: 13px; color: var(--gold-soft); }
+.as-x { background: none; border: none; color: var(--muted); font-size: 14px; cursor: pointer; }
+.as-x:hover { color: var(--gold); }
+.as-sel { font-size: 12px; color: var(--muted); margin: 7px 0 10px; }
+.as-actions { display: flex; gap: 8px; }
+.as-actions .btn { font: inherit; font-size: 12.5px; font-weight: 600; padding: 7px 13px; border-radius: 8px; cursor: pointer;
+  background: var(--panel-2); border: 1px solid var(--line); color: var(--txt); }
+.as-actions .btn:hover { border-color: var(--gold); }
+.as-actions .cta-primary { background: #147A58; border-color: #147A58; color: #fff; }
+.as-actions .cta-primary:disabled { background: var(--panel-2); color: var(--muted); border-color: var(--line); cursor: default; }
+.as-result { margin-top: 11px; }
+.as-result:empty { display: none; }
+.as-loading { font-size: 12px; color: var(--gold-soft); padding: 6px 0; }
+.as-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0 0 8px; }
+.as-grid dt { font-size: 11px; color: var(--muted); }
+.as-grid dd { margin: 0; font-size: 12.5px; color: var(--txt); text-align: right; font-feature-settings: "tnum" 1; }
+.as-note { font-size: 10.5px; color: var(--muted); line-height: 1.4; margin: 0; padding-top: 8px; border-top: 1px solid var(--line); }
 
 /* État vide de la carte : jamais une carte blanche muette (P3) */
 .map-empty {
