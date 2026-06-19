@@ -167,6 +167,7 @@
   text-transform: uppercase; padding: 1px 6px; border-radius: var(--radius-pill); vertical-align: middle; margin-left: 4px; }
 .sheet .prov-src { background: rgba(92,192,140,.14); color: var(--tf-positive); }
 .sheet .prov-est { background: rgba(224,188,90,.16); color: var(--tf-flag); }
+.sheet .prov-nv  { background: rgba(110,109,103,.15); color: var(--tf-text-3); }
 
 /* ══════ LOT 1 — Accordéons du « dossier complet » ══════ */
 .sheet .acc-head { display: flex; align-items: baseline; gap: var(--sp-3); margin: var(--sp-4) 0 var(--sp-2); padding-bottom: 6px; border-bottom: 1px solid var(--tf-border); }

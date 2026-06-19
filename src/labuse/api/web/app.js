@@ -589,7 +589,7 @@ function accordion(title, sub, body, opts = {}) {
   </details>`;
 }
 // Badge de provenance (non négociable §3) : valeur sourcée vs estimée.
-const _prov = (k) => `<span class="prov prov-${k}">${k === "src" ? "sourcé" : "estimé"}</span>`;
+const _prov = (k) => `<span class="prov prov-${k}">${k === "src" ? "sourcé" : k === "est" ? "estimé" : "non vérifié"}</span>`;
 // Emplacement d'enrichissement lazy (PLU détaillé / topo / réseaux) injecté par loadEnrichment.
 const _enrSlot = (id) => `<div class="enr-slot" id="${id}"><span class="enr-loading"><span class="pm-spin" aria-hidden="true"></span> Analyse en cours…</span></div>`;
 
@@ -598,7 +598,13 @@ function renderEssentiel(f) {
   const v = f.verdict || {}, p = f.parcel || {}, fa = f.faisabilite || {}, fr = fa.fourchette || {}, bil = fa.bilan || {};
   const r = f.resume || {}, bati = f.bati || {}, a = (f.voisinage || {}).assemblage || {};
   const status = v.status || "inconnu";
-  const zone = fa.zone ? `${esc(fa.zone)} · ${fa.constructible ? "constructible" : "non constructible"}` : "—";
+  // Zonage PLU : faisabilité d'abord ; à défaut, la couche PLU de la cascade (ex. parcelle
+  // inconstructible où la faisabilité ne résout pas la zone) → reste honnête ET cohérent.
+  const pluC = (f.cascade || []).find((c) => c.layer_name === "zonage_plu_gpu" && c.detail);
+  let zone, zoneSourced = true;
+  if (fa.zone) zone = `${esc(fa.zone)} · ${fa.constructible ? "constructible" : "non constructible"}`;
+  else if (pluC) zone = esc(pluC.detail);
+  else { zone = "—"; zoneSourced = false; }
   const occ = bati.label
     ? esc(bati.label) + (bati.disponible && bati.ratio_pct != null ? ` · ${bati.ratio_pct} % bâti` : "")
     : "à vérifier";
@@ -628,10 +634,10 @@ function renderEssentiel(f) {
         </div>
       </div>
       <dl class="es-facts">
-        ${fact("Zonage PLU", zone, _prov("src"))}
-        ${fact("Occupation", occ, _prov("src"))}
-        ${fact("Capacité constructible", capa, _prov("est"))}
-        ${fact("Charge foncière admissible", charge, _prov("est"))}
+        ${fact("Zonage PLU", zone, zoneSourced ? _prov("src") : _prov("nv"))}
+        ${fact("Occupation", occ, bati.disponible ? _prov("src") : _prov("nv"))}
+        ${fact("Capacité constructible", capa, (fa.constructible && fr.surface_plancher_m2) ? _prov("est") : _prov("nv"))}
+        ${fact("Charge foncière admissible", charge, cf ? _prov("est") : _prov("nv"))}
       </dl>
       ${asmLine ? `<div class="es-asm">🧩 ${asmLine}</div>` : ""}
       ${(why || hasBloc) ? `<div class="es-why">${why ? `<span class="es-action">▸ ${why}</span>` : ""}${hasBloc ? `<span class="es-bloc">⚠ ${blocage}</span>` : ""}</div>` : ""}
