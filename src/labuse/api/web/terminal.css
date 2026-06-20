@@ -147,6 +147,11 @@
 .sheet .es-downgrade { font-size: var(--fs-small); line-height: 1.4; color: var(--tf-flag); margin: var(--sp-2) 0 0; }
 /* score élevé mais à creuser (complétude < 50) — pédagogie, ton neutre (ni alarme ni promesse) */
 .sheet .es-pitch-cpl { font-size: var(--fs-small); color: var(--tf-text-2); max-width: 52ch; }
+/* badge « micro-opportunité » — NUANCE (or sobre), jamais une alarme : le verdict reste « opportunité » */
+.sheet .es-micro-badge { display: inline-block; vertical-align: middle; margin-left: 8px; font-family: var(--font-ui);
+  font-size: 11px; font-weight: 700; letter-spacing: .02em; padding: 2px 9px; border-radius: var(--radius-pill);
+  background: var(--tf-accent-dim); color: var(--tf-accent); border: 1px solid rgba(214,179,106,.4); }
+.sheet .es-micro { font-size: var(--fs-small); line-height: 1.45; color: var(--tf-text-2); margin: var(--sp-2) 0 0; max-width: 54ch; }
 .sheet .es-id .fiable-tag { display: inline-block; margin-top: var(--sp-2); }
 /* anneau de jauge + mot, colorés par verdict (mêmes règles que le hero) */
 .sheet .essentiel.v-opportunite .g-arc { stroke: var(--tf-positive-bright); } .sheet .essentiel.v-opportunite .es-verdict { color: var(--tf-positive); }

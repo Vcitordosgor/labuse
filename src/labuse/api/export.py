@@ -30,11 +30,14 @@ def fiche_markdown(fiche: dict) -> str:
         "",
         "## Verdict",
         "",
-        f"- **Statut :** {v['status'] or '—'}",
+        f"- **Statut :** {v['status'] or '—'}"
+        + ("  ·  **micro-opportunité** (≤ 500 m²)" if v.get("micro_opportunite") else ""),
         f"- **Opportunité :** {_score(v['opportunity_score'])} / 100  ·  "
         f"**Complétude :** {_score(v['completeness_score'])} / 100",
         "",
     ]
+    if v.get("micro_opportunite"):
+        lines += ["> Petite parcelle : potentiel à analyser surtout en assemblage ou micro-opération.", ""]
     if v["reasons"]:
         lines.append("**Raisons (exclusion / réserve) :**")
         lines += [f"- _{_RESULT_LABEL.get(r['result'], r['result'])}"
@@ -220,6 +223,8 @@ def fiche_html(fiche: dict) -> str:
  .disc{{color:#777;font-style:italic;font-size:.9rem}} .score{{font-weight:600}}
  table{{border-collapse:collapse;width:100%;font-size:.9rem}} td,th{{border:1px solid #e5e5e5;padding:.35rem .5rem;text-align:left;vertical-align:top}}
  .src{{color:#888;font-size:.85em}} .badge{{display:inline-block;padding:.15rem .6rem;border-radius:.4rem;background:#111;color:#fff;font-size:.85rem}}
+ .badge-micro{{display:inline-block;margin-left:.4rem;padding:.15rem .6rem;border-radius:.4rem;background:#efe6cd;color:#6a5a1f;font-size:.85rem}}
+ .micro-note{{color:#6a5a1f;font-size:.9rem;margin:.3rem 0 0}}
 </style>
 <h1>LA BUSE — Fiche parcelle {html.escape(p['idu'])}</h1>
 <p class="disc">{html.escape(fiche['disclaimer'])}</p>
@@ -227,7 +232,8 @@ def fiche_html(fiche: dict) -> str:
    <strong>Surface :</strong> {_m2(p.get('surface_m2'))} ·
    <strong>Section/№ :</strong> {html.escape((p.get('section') or '—'))} {html.escape(p.get('numero') or '')}</p>
 <h2>Verdict</h2>
-<p><span class="badge">{html.escape(v['status'] or '—')}</span></p>
+<p><span class="badge">{html.escape(v['status'] or '—')}</span>{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>
+{'<p class="micro-note">Petite parcelle (≤ 500 m²) : potentiel à analyser surtout en assemblage ou micro-opération.</p>' if v.get('micro_opportunite') else ''}
 <p class="score">Opportunité {_score(v['opportunity_score'])}/100 · Complétude {_score(v['completeness_score'])}/100</p>
 <p><strong>Raisons :</strong></p><ul>{reasons}</ul>
 {resume_html}

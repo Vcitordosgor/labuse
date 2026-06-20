@@ -14,6 +14,20 @@ STATUT_LABEL = {
     "exclue": "Exclue",
 }
 
+# Seuil d'AFFICHAGE « micro-opportunité » (présentation pure). Une opportunité ≤ 500 m² est NUANCÉE :
+# son intérêt promoteur dépend surtout de l'assemblage ou d'une micro-opération. Ce drapeau N'AFFECTE
+# NI le verdict NI les scores — le déclassement métier (SURFACE_MIN_M2 = 250, scoring/declassement.py)
+# reste seul juge du statut. Le badge nuance, il ne déclasse pas. Sous 250 m², il n'y a plus
+# d'opportunité (déjà déclassée) ; la tranche concernée est donc 251–500 m².
+MICRO_OPPORTUNITE_MAX_M2 = 500.0
+
+
+def is_micro_opportunite(status: str | None, surface_m2: float | None) -> bool:
+    """Vrai si l'opportunité est de petite surface (badge d'affichage, sans effet sur le verdict).
+
+    Pure : ne dépend que du statut déjà décidé et de la surface cadastrale. Ne modifie rien."""
+    return status == "opportunite" and surface_m2 is not None and surface_m2 <= MICRO_OPPORTUNITE_MAX_M2
+
 # Raisons POSITIVES sûres par couche (jamais « constructible »).
 _POSITIVE_LABEL = {
     "zonage_plu_gpu": "Zonage favorable (zone urbaine / à urbaniser)",

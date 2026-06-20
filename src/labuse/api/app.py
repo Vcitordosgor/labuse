@@ -688,8 +688,10 @@ def _build_fiche(db: Session, idu: str) -> dict:
     }
 
     # En-tête : verdict + LES DEUX scores (jamais l'opportunité seule).
+    from .resume import is_micro_opportunite
+    _status_val = ev.status.value if ev else None
     verdict_block = {
-        "status": ev.status.value if ev else None,
+        "status": _status_val,
         "opportunity_score": ev.opportunity_score if ev else None,
         "completeness_score": ev.completeness_score if ev else None,
         "reasons": reasons,
@@ -697,6 +699,9 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "downgrade_reason": next((r["detail"] for r in cascade if r["layer_name"] == "declassement"), None),
         "evaluated_at": ev.evaluated_at if ev else None,
         "rules_version": ev.rules_version if ev else None,
+        # Badge d'AFFICHAGE « micro-opportunité » (≤ 500 m²) — nuance promoteur, n'affecte NI le
+        # verdict NI les scores (cf. resume.is_micro_opportunite). Le statut ci-dessus est intact.
+        "micro_opportunite": is_micro_opportunite(_status_val, p.surface_m2),
     }
     # Occupation bâtie (correctif R1) — ratio/nb/plus grand bâtiment + label prudent.
     from .. import bati as bati_mod

@@ -16,6 +16,11 @@ const VERDICT_GLOSS = {
   exclue: "Contrainte rédhibitoire identifiée — écartée du radar.",
   faux_positif_probable: "Signal positif au départ, mais potentiel limité — non prioritaire.",
 };
+// Seuil d'AFFICHAGE « micro-opportunité » — miroir de resume.MICRO_OPPORTUNITE_MAX_M2 (backend).
+// Présentation pure : NUANCE une opportunité de petite surface, ne change NI le verdict NI les scores.
+const MICRO_OPP_MAX_M2 = 500;
+const isMicroOpp = (status, surfaceM2) =>
+  status === "opportunite" && surfaceM2 != null && surfaceM2 <= MICRO_OPP_MAX_M2;
 const LAYER_SHORT = {
   // Décision 2 : le SAR servi est un PROXY de vocation → badge explicite, jamais « SAR » nu.
   sar: "SAR (proxy indicatif)", risques: "Risques (PPR)", abf: "ABF / Monuments", ens: "ENS", safer: "SAFER",
@@ -628,6 +633,7 @@ function renderList() {
         <div class="oc-top">
           <span class="oc-idu">${esc(p.idu)}</span>
           <span class="chip ${st}">${STATUS_LABEL[st] || "?"}</span>
+          ${isMicroOpp(st, p.surface_m2) ? `<span class="micro-tag" title="Opportunité ≤ 500 m² — verdict inchangé, intérêt surtout en assemblage">micro</span>` : ""}
         </div>
         <div class="oc-metrics"><b>Score ${p.opportunity_score ?? "—"}</b> · ${fmt(p.surface_m2)} m²</div>
       </div>
@@ -955,6 +961,9 @@ function renderEssentiel(f) {
   const cpl = v.completeness_score;
   const scoreHautMaisACreuser = status === "a_creuser" && (v.opportunity_score ?? 0) >= 65
     && cpl != null && cpl < 50 && !v.downgrade_reason;
+  // Badge « micro-opportunité » (≤ 500 m²) — NUANCE, ne déclasse pas : le verdict « opportunité »
+  // reste affiché. Drapeau backend (v.micro_opportunite) avec repli sur le calcul local.
+  const micro = v.micro_opportunite != null ? v.micro_opportunite : isMicroOpp(status, p.surface_m2);
   const fact = (k, val, prov) => `<div class="es-fact"><dt>${k}</dt><dd>${val} ${prov}</dd></div>`;
   return `
     <section class="essentiel v-${status}">
@@ -962,13 +971,14 @@ function renderEssentiel(f) {
         ${renderGauge(v.opportunity_score)}
         <div class="es-id">
           <div class="es-eyebrow">Verdict LA BUSE</div>
-          <h1 class="es-verdict">${STATUS_LABEL[status] || esc(status) || "—"}</h1>
+          <h1 class="es-verdict">${STATUS_LABEL[status] || esc(status) || "—"}${micro ? ` <span class="es-micro-badge" title="Opportunité de petite surface (≤ 500 m²) — verdict inchangé ; intérêt surtout en assemblage ou micro-opération">micro-opportunité</span>` : ""}</h1>
           <div class="es-ref">${esc(p.idu)}${[p.commune, p.section ? "section " + esc(p.section) : "", p.surface_m2 ? fmt(Math.round(p.surface_m2)) + " m²" : ""].filter(Boolean).map((x) => " · " + x).join("")}</div>
           ${v.downgrade_reason
             ? `<p class="es-downgrade">Signal positif, mais potentiel limité seul — ${esc(v.downgrade_reason)}.</p>`
             : scoreHautMaisACreuser
               ? `<p class="es-pitch es-pitch-cpl">Score élevé (${v.opportunity_score}), mais <b>données encore incomplètes</b> (complétude ${cpl}/100 &lt; 50) — LA BUSE ne déclare pas d'opportunité sur données trop minces. À compléter avant de conclure.</p>`
               : `<p class="es-pitch">${esc(VERDICT_GLOSS[status] || "")}</p>`}
+          ${micro ? `<p class="es-micro">Petite parcelle (≤ 500 m²) : potentiel à analyser surtout en <b>assemblage</b> ou <b>micro-opération</b>${a.possible ? ` — <b>${a.n_interessantes || "?"} voisine${(a.n_interessantes || 0) > 1 ? "s" : ""} contiguë${(a.n_interessantes || 0) > 1 ? "s" : ""}</b> détectée(s) : assemblage à étudier en priorité` : ""}.</p>` : ""}
           ${fiableBadge(status)}
         </div>
       </div>
@@ -2519,6 +2529,7 @@ function renderShortlist(sujets) {
         <div class="sl-top">
           <span class="sl-idu">${esc(s.idu)}</span>
           <span class="chip ${st}">${STATUS_LABEL[st] || "?"}</span>
+          ${isMicroOpp(st, s.surface_m2) ? `<span class="micro-tag" title="Opportunité ≤ 500 m² — verdict inchangé, intérêt surtout en assemblage">micro</span>` : ""}
           <span class="sl-score">${s.score ?? "—"}<small>opp</small></span>
           <span class="sl-surf">${fmt(Math.round(s.surface_m2 || 0))} m²</span>
         </div>

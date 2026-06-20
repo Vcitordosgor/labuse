@@ -270,6 +270,10 @@ input[type=checkbox] { accent-color: var(--gold); }
 .mm-lbl { display: flex; align-items: center; padding: 7px 11px; font-size: 10px; font-weight: 700;
   letter-spacing: .05em; text-transform: uppercase; color: var(--gold-soft);
   background: rgba(24,36,49,.85); border-right: 1px solid var(--line); }
+/* tag « micro » (liste + shortlist) — nuance sobre (or), pas une alarme ; verdict inchangé */
+.micro-tag { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
+  padding: 1px 7px; border-radius: 999px; background: rgba(214,179,106,.16); color: var(--gold);
+  border: 1px solid rgba(214,179,106,.35); }
 .mm-btn { background: transparent; border: none; border-right: 1px solid var(--line); color: var(--muted);
   font: inherit; font-size: 12px; font-weight: 600; padding: 7px 13px; cursor: pointer; transition: color .12s, background .12s; }
 .mm-btn:last-child { border-right: none; }
