@@ -101,3 +101,62 @@ def save(session: Session, secteur: str, param: str, value: float | None) -> Non
            ON CONFLICT (secteur, param) DO UPDATE SET value=EXCLUDED.value,
              is_placeholder=false, updated_at=now()"""),
         {"s": secteur, "p": param, "v": float(value)})
+
+
+# ── Injection du gabarit de calibration rempli par Vic (config/bilan_calibration_vic.csv) ──
+def read_calibration_csv(path: str) -> list[dict]:
+    """Lit le gabarit CSV. Ignore les lignes « # » et celles dont « valeur » est vide.
+
+    N'exige que les colonnes secteur/param/valeur/source ; les colonnes-repères sont ignorées.
+    """
+    import csv
+
+    out: list[dict] = []
+    with open(path, encoding="utf-8") as fh:
+        reader = csv.DictReader(ln for ln in fh if not ln.lstrip().startswith("#"))
+        for row in reader:
+            val = (row.get("valeur") or "").strip()
+            if not val:
+                continue   # ligne non renseignée → on garde l'estimation actuelle
+            out.append({
+                "secteur": (row.get("secteur") or "").strip(),
+                "param": (row.get("param") or "").strip(),
+                "valeur": val,
+                "source": (row.get("source") or "").strip(),
+            })
+    return out
+
+
+def apply_calibration(session: Session, rows: list[dict], dry_run: bool = False) -> dict:
+    """Applique les lignes de calibration (upsert par secteur). Ne touche pas aux lignes absentes.
+
+    Une valeur saisie par Vic devient `provenance='sourcee'` si une source est fournie (sinon NULL,
+    mais jamais « estimee ») et `is_placeholder=false` → le sous-bandeau « à affiner » disparaît
+    pour ce paramètre. Retour : {applied: [...], errors: [(secteur, param, msg)]}.
+    """
+    applied: list[dict] = []
+    errors: list[tuple[str, str, str]] = []
+    for r in rows:
+        secteur, param = r.get("secteur", ""), r.get("param", "")
+        if param not in _BY_KEY:
+            errors.append((secteur, param, "paramètre inconnu"))
+            continue
+        if not secteur:
+            errors.append((secteur, param, "secteur vide"))
+            continue
+        try:
+            value = float(str(r["valeur"]).replace(",", ".").strip())
+        except (ValueError, KeyError):
+            errors.append((secteur, param, f"valeur non numérique : {r.get('valeur')!r}"))
+            continue
+        prov = "sourcee" if r.get("source") else None
+        if not dry_run:
+            session.execute(text(
+                """INSERT INTO bilan_params (secteur, param, value, is_placeholder, provenance, updated_at)
+                   VALUES (:s,:p,:v, false, :pr, now())
+                   ON CONFLICT (secteur, param) DO UPDATE SET value=EXCLUDED.value,
+                     is_placeholder=false, provenance=EXCLUDED.provenance, updated_at=now()"""),
+                {"s": secteur, "p": param, "v": value, "pr": prov})
+        applied.append({"secteur": secteur, "param": param, "value": value,
+                        "provenance": prov, "source": r.get("source", "")})
+    return {"applied": applied, "errors": errors}

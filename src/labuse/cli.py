@@ -61,6 +61,38 @@ def seed_sources_cmd() -> None:
     typer.echo(f"✓ Catalogue de sources : {n} sources.")
 
 
+@app.command("bilan-calibrate")
+def bilan_calibrate_cmd(
+    csv_path: str = typer.Argument("config/bilan_calibration_vic.csv",
+                                   help="Gabarit CSV rempli (colonnes secteur,param,valeur,source)."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Prévisualise sans rien écrire en base."),
+) -> None:
+    """Injecte les valeurs de bilan saisies dans le gabarit CSV (par secteur, upsert, sans toucher
+    aux lignes vides). Une valeur saisie n'est plus « estimée » → le bandeau « à affiner » tombe."""
+    from pathlib import Path
+
+    from .faisabilite import bilan_params as bp
+
+    if not Path(csv_path).exists():
+        typer.echo(f"Fichier introuvable : {csv_path}")
+        raise typer.Exit(1)
+    rows = bp.read_calibration_csv(csv_path)
+    if not rows:
+        typer.echo("Aucune valeur à injecter (toutes les lignes « valeur » sont vides).")
+        raise typer.Exit(0)
+    with session_scope() as s:
+        res = bp.apply_calibration(s, rows, dry_run=dry_run)
+        if dry_run:
+            s.rollback()
+    for a in res["applied"]:
+        typer.echo(f"  {a['secteur']:24} {a['param']:34} → {a['value']:g}  "
+                   f"[{a['provenance'] or 'saisie'}{(' · ' + a['source']) if a['source'] else ''}]")
+    for secteur, param, msg in res["errors"]:
+        typer.echo(f"  ⚠ {secteur or '?'} / {param or '?'} : {msg}")
+    mode = "PRÉVISUALISÉ (rien écrit)" if dry_run else "injecté(s) en base"
+    typer.echo(f"✓ {len(res['applied'])} valeur(s) {mode} · {len(res['errors'])} erreur(s).")
+
+
 @app.command("seed-demo")
 def seed_demo_cmd() -> None:
     from .ingestion import demo_saint_paul, seed_sources
