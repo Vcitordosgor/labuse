@@ -14,7 +14,9 @@ venv/
 config/settings.yaml
 
 # Data (never commit ingested public data dumps / fixtures volumineuses)
-data/
+data/*
+# …sauf le dataset Obsimmo fourni par le client (petit, versionné, requis par la fiche LOT 4-C)
+!data/obsimmo_vente_reunion.json
 *.gpkg
 *.shp
 *.shx

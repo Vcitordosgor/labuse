@@ -814,6 +814,51 @@ function renderPlh(plh) {
   </div>`;
 }
 
+// LOT 4-C — box « Marché Obsimmo » (vente) : indicateurs locaux + comparaison régionale + signal
+// dérivé. Donnée fournie par le client, jamais inventée. NS = non significatif : on n'affiche
+// JAMAIS 0 pour une valeur absente (règle de fiabilité). Hors dataset → f.obsimmo = null → rien.
+function renderObsimmo(o) {
+  if (!o) return "";
+  const pr = o.principal || {}, sig = o.signal || {}, reg = o.comparaison_regionale || {}, src = o.source || {};
+  const ns = `<span class="obs-ns" title="Non significatif sur Obsimmo">NS</span>`;
+  const eur = (n) => (n == null ? ns : `${fmt(n)} €`);
+  const rng = (mn, mx) => (mn == null && mx == null ? ns : `${fmt(mn)}–${fmt(mx)} €/m²`);
+  const wks = (n) => (n == null ? ns : `${Math.round(n)} sem.`);
+  const sigHtml = sig.disponible
+    ? `<div class="obs-sig obs-sig-${esc(sig.label)}">
+         <span class="obs-sig-lab">Signal marché · ${esc(sig.label)}</span>
+         <span class="obs-sig-score">${sig.score}/100</span>
+         <span class="obs-sig-fiab">fiabilité ${esc(sig.fiabilite)}</span>
+       </div>
+       ${(sig.composantes || []).length ? `<ul class="obs-comp">${sig.composantes.map((c) =>
+         `<li><span class="obs-cs obs-cs-${c.sens === "+" ? "pos" : c.sens === "−" ? "neg" : "neu"}">${c.sens}</span> <b>${esc(c.cle)}</b> — ${esc(c.valeur)}</li>`).join("")}</ul>` : ""}
+       <p class="obs-signote">${esc(sig.note || "")}</p>`
+    : `<div class="obs-sig obs-sig-na">${esc(sig.note || "Marché local affiché en NS sur Obsimmo.")}</div>`;
+  const ap = (o.autres || {}).appartements, ma = (o.autres || {}).maisons;
+  const autresHtml = (ap || ma)
+    ? `<div class="obs-autres">Autres ventes du secteur : ${ap ? `appart. <b>${eur(ap.local_avg_price_eur)}</b>` : ""}${ap && ma ? " · " : ""}${ma ? `maison <b>${eur(ma.local_avg_price_eur)}</b>` : ""}</div>`
+    : "";
+  return `
+  <div class="obs">
+    <div class="obs-h">Marché Obsimmo <span class="obs-tx">vente</span> <span class="prov prov-src">sourcé</span><span class="obs-reg">${esc(o.region || "")}</span></div>
+    <div class="obs-sub">Terrains constructibles${o.secteur ? ` · secteur ${esc(o.secteur)}` : ""}</div>
+    <dl class="obs-grid">
+      <dt>Prix moyen local</dt><dd>${eur(pr.local_avg_price_eur)}</dd>
+      <dt>Fourchette €/m²</dt><dd>${rng(pr.local_price_m2_min, pr.local_price_m2_max)}</dd>
+      <dt>Délai moyen de vente</dt><dd>${wks(pr.local_avg_sale_delay_weeks)}</dd>
+      <dt>Opacité du marché</dt><dd>${pr.local_opacity ? esc(pr.local_opacity) : ns}</dd>
+      <dt>Niveau de l'offre</dt><dd>${pr.local_offer_level ? esc(pr.local_offer_level) : ns}</dd>
+      <dt>Biens en vente</dt><dd>${pr.active_listings_count}</dd>
+      <dt>Comparaison régionale</dt><dd>${eur(reg.regional_avg_price_eur)} · ${rng(reg.regional_price_m2_min, reg.regional_price_m2_max)} · ${wks(reg.regional_avg_sale_delay_weeks)}</dd>
+    </dl>
+    ${pr.notes ? `<p class="obs-note">⚠ ${esc(pr.notes)}</p>` : ""}
+    ${sigHtml}
+    ${autresHtml}
+    <p class="obs-src">${esc(src.mention || "")}</p>
+    <p class="obs-warn">${esc(o.avertissement || "")}</p>
+  </div>`;
+}
+
 // ───────────────────────── Fiche : « L'essentiel » + accordéons (LOT 1) ─────────────────────────
 // Accordéon générique : replié par défaut, ouverture FLUIDE au clic (CSS), indépendant.
 // Jamais d'accordéon vide → zéro section fantôme (et zéro donnée perdue : si vide, n'existait pas non plus avant).
@@ -942,7 +987,7 @@ function renderFiche(f) {
       `<div class="acc-zone">Zone PLU <b>${esc((f.faisabilite || {}).zone || "—")}</b>${(f.faisabilite || {}).constructible ? " · constructible" : ((f.faisabilite || {}).zone ? " · non constructible" : "")}</div>${renderPlh(f.plh)}${_enrSlot("enr-urba")}`)}
 
     ${accordion("Faisabilité & bilan détaillé", "capacité, calcul ligne à ligne, bilan promoteur",
-      renderFaisabilite(f.faisabilite, { no3d: true }))}
+      renderFaisabilite(f.faisabilite, { no3d: true }) + renderObsimmo(f.obsimmo))}
 
     ${accordion("Assemblage & voisinage", "parcelle seule vs groupée, parcelles contiguës",
       ((status === "opportunite" || status === "a_creuser") ? renderAssembBloc(f) : "") + renderVoisinage(f.voisinage))}

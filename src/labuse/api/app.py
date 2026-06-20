@@ -735,6 +735,14 @@ def _build_fiche(db: Session, idu: str) -> dict:
     except Exception:  # noqa: BLE001 - orientation optionnelle, jamais bloquante
         plh_block = None
 
+    # LOT 4-C — Marché Obsimmo (vente) : indicateurs locaux + comparaison régionale pour la commune.
+    obsimmo_block = None
+    try:
+        from .. import obsimmo as obsimmo_mod
+        obsimmo_block = obsimmo_mod.fiche_block(p.commune)
+    except Exception:  # noqa: BLE001 - indicateur marché optionnel, jamais bloquant
+        obsimmo_block = None
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
@@ -746,6 +754,7 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "voisinage": voisinage,
         "faisabilite": faisabilite,
         "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
+        "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
         "permits": permits,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en

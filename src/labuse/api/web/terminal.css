@@ -209,6 +209,43 @@
 .sheet .plh-note { margin: var(--sp-2) 0 0; font-size: var(--fs-small); color: var(--tf-text-2); line-height: 1.4; }
 .sheet .plh-src { margin: 6px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); }
 
+/* LOT 4-C — box « Marché Obsimmo » (vente) : indicateurs + comparaison régionale + signal dérivé */
+.sheet .obs { margin: var(--sp-2) 0; padding: var(--sp-3); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-control); background: var(--tf-surface-2); border-left: 3px solid var(--tf-gold); }
+.sheet .obs-h { display: flex; align-items: center; gap: 7px; font-family: var(--font-ui);
+  font-size: var(--fs-small); font-weight: 700; color: var(--tf-text); }
+.sheet .obs-tx { font-size: var(--fs-micro); font-weight: 600; color: var(--tf-text-3); text-transform: uppercase; letter-spacing: .08em; }
+.sheet .obs-reg { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .obs-sub { margin-top: 3px; font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .obs-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--sp-3); margin: var(--sp-2) 0 0; }
+.sheet .obs-grid dt { font-size: var(--fs-small); color: var(--tf-text-3); }
+.sheet .obs-grid dd { margin: 0; font-size: var(--fs-small); color: var(--tf-text); text-align: right; }
+/* NS = donnée non significative : marqueur sobre, jamais confondu avec un 0 */
+.sheet .obs-ns { font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--tf-text-3);
+  border-bottom: 1px dotted var(--tf-text-3); cursor: help; }
+.sheet .obs-note { margin: var(--sp-2) 0 0; padding: 6px var(--sp-2); border-radius: var(--radius-control);
+  background: rgba(133,79,11,.10); color: var(--tf-flag); font-size: var(--fs-micro); line-height: 1.4; }
+/* signal de marché — chip secondaire, distinct du verdict foncier */
+.sheet .obs-sig { display: flex; align-items: center; gap: 7px; margin-top: var(--sp-2); padding: 6px var(--sp-2);
+  border-radius: var(--radius-control); font-size: var(--fs-small); }
+.sheet .obs-sig-lab { font-weight: 700; }
+.sheet .obs-sig-score { font-family: var(--font-mono); }
+.sheet .obs-sig-fiab { margin-left: auto; font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .obs-sig-favorable { background: rgba(15,110,86,.10); color: var(--tf-positive); }
+.sheet .obs-sig-neutre    { background: rgba(110,109,103,.10); color: var(--tf-text-2); }
+.sheet .obs-sig-prudence  { background: rgba(133,79,11,.10); color: var(--tf-flag); }
+.sheet .obs-sig-na        { background: var(--tf-surface); color: var(--tf-text-3); font-style: italic; }
+.sheet .obs-comp { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; }
+.sheet .obs-comp li { font-size: var(--fs-micro); color: var(--tf-text-2); }
+.sheet .obs-cs { display: inline-block; width: 1.1em; text-align: center; font-weight: 700; }
+.sheet .obs-cs-pos { color: var(--tf-positive); }
+.sheet .obs-cs-neg { color: var(--tf-exclude); }
+.sheet .obs-cs-neu { color: var(--tf-text-3); }
+.sheet .obs-signote { margin: 6px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); line-height: 1.4; }
+.sheet .obs-autres { margin-top: var(--sp-2); font-size: var(--fs-small); color: var(--tf-text-2); }
+.sheet .obs-src { margin: var(--sp-2) 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .obs-warn { margin: 3px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); font-style: italic; }
+
 /* ── Badge de fiabilité (verdict, pas méta) ──────────────────────────────── */
 .sheet .fiable-tag { font-family: var(--font-ui); border-radius: var(--radius-pill); letter-spacing: .02em; }
 .sheet .fiable-tag.ok      { background: rgba(92,192,140,.13); color: var(--tf-positive); border-color: rgba(92,192,140,.32); }
