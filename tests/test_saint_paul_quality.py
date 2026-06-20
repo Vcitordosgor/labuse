@@ -21,7 +21,9 @@ import pytest
 from sqlalchemy import create_engine, text
 
 COMMUNE = "Saint-Paul"
-MIN_PARCELS = 3000          # plancher actuel ; passera à ~51129 après le LOT 2 (import complet)
+MIN_PARCELS = 51129         # GOLD STANDARD VERROUILLÉ : cadastre complet Etalab (LOT 2, 98 sections)
+EXPECTED_SECTIONS = 98
+BATI_MIN = 11285            # le bâti complet doit DÉPASSER l'état pilote initial (11 285)
 APP_URL = os.environ.get("LABUSE_AUDIT_DATABASE_URL") \
     or "postgresql+psycopg://labuse:labuse@localhost:5432/labuse"
 
@@ -50,7 +52,24 @@ def _scalar(db, sql: str) -> int:
 # ── Couverture & intégrité parcellaire ──────────────────────────────────────────────────────
 def test_nombre_minimal_de_parcelles(db):
     n = _scalar(db, "SELECT count(*) FROM parcels WHERE commune ILIKE :c")
-    assert n >= MIN_PARCELS, f"{n} parcelles Saint-Paul (< plancher {MIN_PARCELS})"
+    assert n >= MIN_PARCELS, f"{n} parcelles Saint-Paul (< gold standard {MIN_PARCELS})"
+
+
+def test_nombre_de_sections(db):
+    n = _scalar(db, "SELECT count(DISTINCT section) FROM parcels WHERE commune ILIKE :c")
+    assert n == EXPECTED_SECTIONS, f"{n} sections (attendu {EXPECTED_SECTIONS} — cadastre complet)"
+
+
+def test_couches_critiques_completes(db):
+    """Couches critiques sur l'emprise COMPLÈTE : bâti > état pilote, zonage/pente/voirie présents."""
+    with db.connect() as c:
+        def cnt(k):
+            return c.execute(text("SELECT count(*) FROM spatial_layers WHERE commune ILIKE :c AND kind=:k"),
+                             {"c": COMMUNE, "k": k}).scalar()
+        bati, zonage, pente, voirie = cnt("batiment"), cnt("plu_gpu_zone"), cnt("pente"), cnt("voirie")
+    assert bati > BATI_MIN, f"bâti {bati} ≤ état pilote {BATI_MIN} (re-fetch emprise complète manquant ?)"
+    assert zonage > 0 and pente > 0 and voirie > 0, \
+        f"couche critique vide : zonage={zonage} pente={pente} voirie={voirie}"
 
 
 def test_aucun_doublon_idu(db):
@@ -84,7 +103,8 @@ def test_index_gist_presents(db):
     with db.connect() as c:
         idx = set(r[0] for r in c.execute(text(
             "SELECT indexname FROM pg_indexes WHERE tablename IN ('parcels','spatial_layers')")).all())
-    for needed in ("idx_parcels_geom_2975", "idx_spatial_layers_geom_2975"):
+    for needed in ("idx_parcels_geom_2975", "idx_spatial_layers_geom_2975",
+                   "idx_spatial_layers_voirie_geom2975"):   # index voirie LOT 2 (distance KNN rapide)
         assert needed in idx, f"index GIST manquant : {needed}"
 
 

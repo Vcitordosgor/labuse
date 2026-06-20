@@ -408,6 +408,14 @@ def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) 
     ddl += [
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",
         "CREATE INDEX IF NOT EXISTS idx_spatial_layers_geom_2975 ON spatial_layers USING gist (geom_2975)",
+        # Index GIST PARTIEL voirie : la cascade calcule la distance à la voirie la plus proche
+        # (proxy d'accès/enclavement) via un KNN « ORDER BY geom_2975 <-> p.geom_2975 LIMIT 1 »
+        # filtré sur kind='voirie'. Sans index dédié, le KNN parcourt l'index complet (dont les
+        # ~84 000 bâtiments à Saint-Paul complet) en rejetant les non-voirie → recalcul cascade de
+        # plusieurs heures (mesuré LOT 2). Le prédicat est EXACTEMENT « kind='voirie' » (PAS de
+        # « AND geom_2975 IS NOT NULL » : la requête ne garantissant pas cette condition, le planner
+        # ne pourrait pas matcher l'index partiel et retomberait sur l'index complet).
+        "CREATE INDEX IF NOT EXISTS idx_spatial_layers_voirie_geom2975 ON spatial_layers USING gist (geom_2975) WHERE kind = 'voirie'",
         # Index FONCTIONNEL pour DVF : la cascade interroge les ventes par rayon métrique via
         # ST_DWithin(ST_Transform(centroid,2975), ST_Transform(d.geom,2975), r). Sans cet index,
         # la reprojection à la volée empêche tout index spatial → scan de toutes les ventes par
