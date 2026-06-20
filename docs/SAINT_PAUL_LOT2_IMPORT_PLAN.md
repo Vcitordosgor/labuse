@@ -243,4 +243,51 @@ contrôlée, avec arrêt immédiat + rollback LOT 1 au premier point de contrôl
 
 ---
 
+## 9. Script d'exécution — `scripts/lot2_import_saint_paul.py`
+
+Le LOT 2 est outillé par un **script unique, sécurisé par défaut**.
+
+| Élément | Valeur |
+|---|---|
+| **Script** | `scripts/lot2_import_saint_paul.py` |
+| **Mode par défaut** | **DRY-RUN** (lecture seule : pré-checks + affichage du plan ; n'écrit rien) |
+| **Flag exécution réelle** | `--execute` |
+| **Confirmation obligatoire** | `--confirm "IMPORT_SAINT_PAUL_COMPLET"` (exacte, sinon REFUS) |
+| `--backup` | chemin du dump LOT 1 (défaut : `/var/backups/labuse/labuse-labuse-20260620-101644.dump`) |
+| `--base-url` | URL pour la sonde `/readyz` (défaut `http://127.0.0.1:8000`) |
+| **Commune** | **FIGÉE** à Saint-Paul / 97415 — aucun argument ne permet d'en viser une autre |
+
+### Procédure DRY-RUN (sûre, à lancer autant qu'on veut)
+```bash
+python scripts/lot2_import_saint_paul.py
+```
+→ exécute les pré-checks (backup+checksum, PostGIS, tables critiques, SP=3000, 0 doublon, /readyz)
+et affiche les étapes B/D/F **sans les exécuter**. Aucune donnée modifiée, aucun rapport écrit.
+
+### Procédure RÉELLE (future — NE PAS lancer avant validation)
+```bash
+python scripts/lot2_import_saint_paul.py --execute --confirm "IMPORT_SAINT_PAUL_COMPLET"
+```
+→ enchaîne A→H : pré-checks bloquants, import parcelles (upsert id-préservant), purge ciblée +
+ré-ingestion des couches, recalcul cascade, contrôles post-import, écriture de
+`docs/SAINT_PAUL_LOT2_RESULTS.md`. Tout pré-check bloquant en échec ⇒ **arrêt immédiat, aucune action**.
+
+### Garanties du script (vérifiées par `tests/test_lot2_import_script.py`)
+- Dry-run par défaut ; refus de `--execute` sans la confirmation **exacte** (retour 2, avant toute connexion).
+- Refus si backup absent / checksum non conforme ; refus si Saint-Paul ≠ 3 000.
+- Aucune autre commune en dur ; les seules suppressions sont `… WHERE commune = 'Saint-Paul'`.
+- **`DELETE FROM parcels` absent du code** ; en dry-run, les étapes mutantes ne touchent même pas la connexion.
+
+### Rollback (rappel)
+`systemctl stop labuse` → `labuse restore-db --file /var/backups/labuse/labuse-labuse-20260620-101644.dump --yes`
+→ vérifier `SP=3000` → `systemctl start labuse`. ~1–2 min.
+
+### ✍️ Phrase EXACTE à valider avant exécution
+> **« Je valide l'exécution réelle du LOT 2 : importer Saint-Paul complet (3 000 → 51 129) avec le
+> script `scripts/lot2_import_saint_paul.py --execute --confirm "IMPORT_SAINT_PAUL_COMPLET"`. »**
+
+Tant que cette phrase n'est pas donnée, le script reste en dry-run et **rien n'est exécuté**.
+
+---
+
 *Plan LOT 2 — aucune exécution. Aucune donnée modifiée. Aucune autre commune touchée.*
