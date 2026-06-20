@@ -290,4 +290,52 @@ Tant que cette phrase n'est pas donnée, le script reste en dry-run et **rien n'
 
 ---
 
+## 10. Garde-fous de robustesse (durcissement audit #1–#4)
+
+Le script ne se contente pas d'importer : il **détecte les échecs et refuse de mentir sur le résultat**.
+
+### Codes de sortie (interprétables par l'opérateur / l'automatisation)
+| Code | Signification | Action |
+|---|---|---|
+| **0** | SUCCÈS — Saint-Paul prêt comme modèle | rien |
+| **1** | ROLLBACK RECOMMANDÉ (contrôle/couche **critique** KO) **ou** crash | restaurer le backup LOT 1 |
+| **2** | `--execute` sans `--confirm` exact | relancer avec la phrase exacte |
+| **3** | RE-FETCH COUCHE REQUIS (seule(s) couche(s) **non critique**(s) échouée(s)) | re-fetcher la couche, pas de rollback |
+
+### Détection des erreurs de couches (#1)
+- `ingest_layers` isole chaque couche par SAVEPOINT et écrit `"ERREUR …"` dans `counts` en cas d'échec.
+- Le script **inspecte `counts`** : toute couche en `"ERREUR"` est remontée et **classée** :
+  - **couche CRITIQUE** (`plu_gpu_zone`, `batiment`, `pente`, `voirie`) échouée → **ROLLBACK RECOMMANDÉ** (code 1) ;
+  - **couche non critique** (PPR, ravines, prescriptions, ABF, ENS…) échouée → **RE-FETCH COUCHE REQUIS** (code 3).
+- Post-checks de couverture : **zonage ≥ 99 %**, **bâti > état pilote** (le bâti doit avoir augmenté
+  avec l'emprise complète), **PPR / ravines / prescriptions** affichées avec un statut explicite
+  **complet / partiel / échoué**, et **aucune duplication** (groupes `(kind, géométrie)` en double = 0).
+
+### Conservation métier vérifiée (#3)
+Le script capture **avant** puis **après** les compteurs Saint-Paul de `pipeline_entries`,
+`parcel_feedback`, `alertes` (liés par `parcel_id`). **Toute baisse ⇒ contrôle critique KO ⇒ code 1.**
+
+### Crash / état partiel (#4)
+Les étapes B/D/F sont sous `try/except`. Une exception (ex. timeout réseau) ⇒ message
+**« ÉTAT PARTIEL POSSIBLE — ROLLBACK LOT 1 À ENVISAGER »**, écriture d'un **rapport d'échec**
+(`docs/SAINT_PAUL_LOT2_RESULTS.md`) et **code 1**. L'opération n'est **jamais** présentée comme réussie.
+
+### Différence « ROLLBACK requis » vs « RE-FETCH couche requis »
+| Situation | Verdict | Pourquoi |
+|---|---|---|
+| Couche **critique** vide/échouée, zonage < 99 %, bâti non augmenté, perte pipeline/feedback/alertes, ou crash | **ROLLBACK RECOMMANDÉ** | Saint-Paul serait dégradé/incohérent → revenir à l'état 3 000 (LOT 1) puis recommencer |
+| Couche **non critique** échouée, le reste OK | **RE-FETCH COUCHE REQUIS** | Saint-Paul est exploitable ; il suffit de **re-fetcher la seule couche manquante** (pas de rollback) |
+
+### Procédures
+- **Couche échouée (non critique)** : noter la couche listée, la re-fetcher ciblé une fois la cause
+  réseau résolue, puis re-lancer les post-checks. Pas de rollback.
+- **État partiel / contrôle critique KO** : `systemctl stop labuse` →
+  `labuse restore-db --file /var/backups/labuse/labuse-labuse-20260620-101644.dump --yes` →
+  vérifier `SP=3000` → `systemctl start labuse`. Puis diagnostiquer avant de retenter (~1–2 min).
+
+> Tous ces garde-fous sont **verrouillés par `tests/test_lot2_import_script.py`** (détection erreurs,
+> codes de sortie, conservation comparée, crash → rapport d'échec, dry-run 100 % non mutant).
+
+---
+
 *Plan LOT 2 — aucune exécution. Aucune donnée modifiée. Aucune autre commune touchée.*

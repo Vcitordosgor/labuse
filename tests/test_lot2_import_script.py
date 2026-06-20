@@ -115,3 +115,115 @@ def test_dry_run_n_ecrit_pas_de_rapport(capsys):
     assert "DRY-RUN" in out and "non créé" in out
     assert not pathlib.Path(lot2.RESULTS_DOC).exists() or "ne doit pas être écrit" not in \
         pathlib.Path(lot2.RESULTS_DOC).read_text(encoding="utf-8")
+
+
+# ── #1 Détection stricte des erreurs de couches ─────────────────────────────────────────────
+def test_layers_errors_detection():
+    counts = {"plu_gpu_zone": 7000, "batiment": "ERREUR Timeout: x", "ppr": 4,
+              "abf": "ERREUR HTTPError: 503"}
+    assert lot2.layers_errors(counts) == ["abf", "batiment"]
+    assert lot2.layers_errors({}) == [] and lot2.layers_errors(None) == []
+
+
+def test_classify_critique_vs_non_critique():
+    crit, noncrit = lot2.classify_layer_failures(["batiment", "abf", "ppr"])
+    assert crit == ["batiment"]                       # couche CRITIQUE → rollback
+    assert set(noncrit) == {"abf", "ppr"}             # non critiques → re-fetch
+
+
+# ── #2 Décision finale & code retour ────────────────────────────────────────────────────────
+def test_final_decision_succes():
+    code, verdict = lot2.final_decision([("x", True, True, "")], [], [], crashed=False)
+    assert code == lot2.EXIT_OK and "SUCCÈS" in verdict
+
+
+def test_final_decision_couche_critique_rollback():
+    code, verdict = lot2.final_decision([], ["batiment"], [], crashed=False)
+    assert code == lot2.EXIT_ROLLBACK and "ROLLBACK RECOMMANDÉ" in verdict
+
+
+def test_final_decision_couche_non_critique_refetch():
+    code, verdict = lot2.final_decision([], [], ["abf"], crashed=False)
+    assert code == lot2.EXIT_REFETCH and "RE-FETCH COUCHE REQUIS" in verdict
+    assert code != 0
+
+
+def test_final_decision_postcheck_critique_ko_non_zero():
+    code, verdict = lot2.final_decision([("zonage", False, True, "80 %")], [], [], crashed=False)
+    assert code != lot2.EXIT_OK and "ROLLBACK RECOMMANDÉ" in verdict
+
+
+def test_final_decision_crash():
+    code, verdict = lot2.final_decision([], [], [], crashed=True)
+    assert code == lot2.EXIT_ROLLBACK and "ROLLBACK LOT 1 À ENVISAGER" in verdict
+
+
+# ── #3 Conservation pipeline / feedback / alertes réellement comparée ───────────────────────
+def test_preservation_detecte_une_baisse():
+    base = {"pipeline": 4, "feedback": 1, "alertes": 12}
+    # une baisse de pipeline (4→3) = perte de donnée → check critique en échec
+    res = lot2.preservation_results(base, {"pipeline": 3, "feedback": 1, "alertes": 12})
+    pipeline_check = next(r for r in res if r[0].startswith("pipeline"))
+    assert pipeline_check[1] is False and pipeline_check[2] is True   # ok=False, critique=True
+    code, _ = lot2.final_decision(res, [], [], crashed=False)
+    assert code == lot2.EXIT_ROLLBACK
+    # aucune baisse → tout OK
+    res_ok = lot2.preservation_results(base, base)
+    assert all(ok for (_, ok, _, _) in res_ok)
+
+
+# ── Post-checks de couverture (seuils) ──────────────────────────────────────────────────────
+def test_coverage_results_seuils():
+    bon = lot2.coverage_results(
+        {"zonage_pct": 99.5, "bati_after": 50000, "ppr": 4, "ravine": 98,
+         "plu_gpu_prescription": 117, "dup_groups": 0}, [], bati_before=11285)
+    d = {name: (ok, crit) for (name, ok, crit, _) in bon}
+    assert d["zonage PLU ≥ 99 %"][0] is True
+    assert d["bâti re-fetché (> état pilote)"][0] is True
+    assert d["aucune duplication de couche"][0] is True
+    # dégradé : zonage bas + bâti non augmenté + doublons → checks critiques en échec
+    mauvais = lot2.coverage_results(
+        {"zonage_pct": 80.0, "bati_after": 11000, "ppr": 4, "ravine": 0,
+         "plu_gpu_prescription": 0, "dup_groups": 7}, [], bati_before=11285)
+    dm = {name: ok for (name, ok, _, _) in mauvais}
+    assert dm["zonage PLU ≥ 99 %"] is False
+    assert dm["bâti re-fetché (> état pilote)"] is False
+    assert dm["aucune duplication de couche"] is False
+    code, _ = lot2.final_decision(mauvais, [], [], crashed=False)
+    assert code == lot2.EXIT_ROLLBACK            # contrôles critiques KO → rollback
+
+
+# ── #4 Crash pendant une étape mutante → rapport d'échec + code ≠ 0 (sans base réelle) ───────
+class _DummyConn:
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+class _DummyEngine:
+    def connect(self):
+        return _DummyConn()
+
+
+def test_crash_etape_mutante_produit_rapport_echec(monkeypatch):
+    monkeypatch.setattr(lot2, "_engine", lambda: _DummyEngine())
+    monkeypatch.setattr(lot2, "prechecks", lambda eng, b, u: [
+        ("backup LOT 1 + checksum", True, "ok"), ("PostGIS actif", True, "ok"),
+        ("tables critiques présentes", True, "ok"),
+        ("Saint-Paul = 3000 parcelles", True, "ok"), ("0 doublon IDU (Saint-Paul)", True, "ok")])
+    monkeypatch.setattr(lot2, "snapshot_state",
+                        lambda c: {"pipeline": 0, "feedback": 0, "alertes": 0, "bati": 11285})
+    monkeypatch.setattr(lot2, "snapshot_idus", lambda eng: set())
+
+    def boom(eng, dry_run):
+        raise RuntimeError("réseau coupé")
+    monkeypatch.setattr(lot2, "step_import_parcels", boom)
+    captured = {}
+    monkeypatch.setattr(lot2, "write_report", lambda dry, lines: captured.update(dry=dry, lines=lines))
+
+    code = lot2.main(["--execute", "--confirm", "IMPORT_SAINT_PAUL_COMPLET"])
+    assert code == lot2.EXIT_ROLLBACK                       # jamais présenté comme succès
+    assert captured["dry"] is False                         # rapport d'échec écrit (réel)
+    assert any("ROLLBACK LOT 1" in line for line in captured["lines"])
