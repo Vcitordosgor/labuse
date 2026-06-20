@@ -246,6 +246,19 @@
 .sheet .obs-src { margin: var(--sp-2) 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); }
 .sheet .obs-warn { margin: 3px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); font-style: italic; }
 
+/* LOT 4-B — box « Marché locatif » (carte des loyers DHUP) */
+.sheet .loy { margin: var(--sp-2) 0; padding: var(--sp-3); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-control); background: var(--tf-surface-2); border-left: 3px solid var(--tf-gold); }
+.sheet .loy-h { display: flex; align-items: center; gap: 7px; font-family: var(--font-ui);
+  font-size: var(--fs-small); font-weight: 700; color: var(--tf-text); }
+.sheet .loy-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--sp-3);
+  margin-top: var(--sp-2); font-size: var(--fs-small); }
+.sheet .loy-k { color: var(--tf-text-3); }
+.sheet .loy-v { text-align: right; color: var(--tf-text); }
+.sheet .loy-v b { font-family: var(--font-mono); }
+.sheet .loy-ic { color: var(--tf-text-3); font-size: var(--fs-micro); }
+.sheet .loy-maille { color: var(--tf-flag); border-bottom: 1px dotted var(--tf-flag); cursor: help; }
+
 /* ── Badge de fiabilité (verdict, pas méta) ──────────────────────────────── */
 .sheet .fiable-tag { font-family: var(--font-ui); border-radius: var(--radius-pill); letter-spacing: .02em; }
 .sheet .fiable-tag.ok      { background: rgba(92,192,140,.13); color: var(--tf-positive); border-color: rgba(92,192,140,.32); }

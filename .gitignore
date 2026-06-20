@@ -17,6 +17,8 @@ config/settings.yaml
 data/*
 # …sauf le dataset Obsimmo fourni par le client (petit, versionné, requis par la fiche LOT 4-C)
 !data/obsimmo_vente_reunion.json
+# …et l'extrait La Réunion de la carte des loyers DHUP (open data, petit, requis par la fiche LOT 4-B)
+!data/carte_loyers_reunion_2025.json
 *.gpkg
 *.shp
 *.shx

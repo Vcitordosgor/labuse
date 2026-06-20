@@ -859,6 +859,29 @@ function renderObsimmo(o) {
   </div>`;
 }
 
+// LOT 4-B — box « Marché locatif » (carte des loyers DHUP, source ouverte) : loyer €/m²/mois
+// appartement & maison + intervalle + fiabilité (commune vs maille). Hors 974 → f.loyers = null.
+function renderLoyers(l) {
+  if (!l) return "";
+  const src = l.source || {};
+  const num1 = (n) => (n == null ? "—" : Number(n).toFixed(1).replace(".", ","));
+  const seg = (label, s) => {
+    if (!s) return "";
+    const maille = s.maille_elargie
+      ? ` · <span class="loy-maille" title="Loyer estimé sur une maille plus large que la commune — fiabilité moindre">maille élargie</span>`
+      : "";
+    return `<div class="loy-row"><span class="loy-k">${label}</span>
+      <span class="loy-v"><b>${num1(s.loyer_m2)} €/m²/mois</b> <span class="loy-ic">(${num1(s.ic_bas)}–${num1(s.ic_haut)}${maille})</span></span></div>`;
+  };
+  return `
+  <div class="loy">
+    <div class="loy-h">Marché locatif <span class="obs-tx">loyers d'annonce</span> <span class="prov prov-src">sourcé</span><span class="obs-reg">${esc(src.millesime || "")}</span></div>
+    ${seg("Appartement", l.appartement)}
+    ${seg("Maison", l.maison)}
+    <p class="obs-src">${esc(src.mention || "")}${src.nature ? " " + esc(src.nature[0].toUpperCase() + src.nature.slice(1)) + "." : ""}</p>
+  </div>`;
+}
+
 // ───────────────────────── Fiche : « L'essentiel » + accordéons (LOT 1) ─────────────────────────
 // Accordéon générique : replié par défaut, ouverture FLUIDE au clic (CSS), indépendant.
 // Jamais d'accordéon vide → zéro section fantôme (et zéro donnée perdue : si vide, n'existait pas non plus avant).
@@ -987,7 +1010,7 @@ function renderFiche(f) {
       `<div class="acc-zone">Zone PLU <b>${esc((f.faisabilite || {}).zone || "—")}</b>${(f.faisabilite || {}).constructible ? " · constructible" : ((f.faisabilite || {}).zone ? " · non constructible" : "")}</div>${renderPlh(f.plh)}${_enrSlot("enr-urba")}`)}
 
     ${accordion("Faisabilité & bilan détaillé", "capacité, calcul ligne à ligne, bilan promoteur",
-      renderFaisabilite(f.faisabilite, { no3d: true }) + renderObsimmo(f.obsimmo))}
+      renderFaisabilite(f.faisabilite, { no3d: true }) + renderObsimmo(f.obsimmo) + renderLoyers(f.loyers))}
 
     ${accordion("Assemblage & voisinage", "parcelle seule vs groupée, parcelles contiguës",
       ((status === "opportunite" || status === "a_creuser") ? renderAssembBloc(f) : "") + renderVoisinage(f.voisinage))}

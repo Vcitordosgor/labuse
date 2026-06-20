@@ -743,6 +743,14 @@ def _build_fiche(db: Session, idu: str) -> dict:
     except Exception:  # noqa: BLE001 - indicateur marché optionnel, jamais bloquant
         obsimmo_block = None
 
+    # LOT 4-B — Marché locatif (carte des loyers DHUP) : loyer €/m² appartement & maison, source ouverte.
+    loyers_block = None
+    try:
+        from .. import loyers as loyers_mod
+        loyers_block = loyers_mod.fiche_block(insee=(p.idu or "")[:5], commune=p.commune)
+    except Exception:  # noqa: BLE001 - indicateur marché optionnel, jamais bloquant
+        loyers_block = None
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
@@ -755,6 +763,7 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "faisabilite": faisabilite,
         "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
         "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
+        "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)
         "permits": permits,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en
