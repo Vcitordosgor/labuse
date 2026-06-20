@@ -85,6 +85,11 @@ class Step:
     formule: str
     valeur: str
     source: str
+    # Provenance d'AFFICHAGE de la ligne (transparence, n'altère AUCUN calcul) :
+    # "sourcee" = donnée réelle (ex. prix DVF) · "estimee" = hypothèse/param calibrable
+    # (coût construction, VRD, marge) · "derive" = résultat calculé à partir des lignes ci-dessus
+    # · "" = non qualifié (étapes de faisabilité). Sérialisé tel quel pour la fiche.
+    prov: str = ""
 
 
 @dataclass

@@ -87,7 +87,10 @@ function initMap() {
       options: { position: "topright" },
       onAdd() {
         const d = L.DomUtil.create("div", "map-mode");
-        d.innerHTML = `<button class="mm-btn active" data-mode="verdict" type="button" title="Couleur = verdict LA BUSE (opportunité, à creuser, écartée, faux positif)">Verdict</button>`
+        // Libellé de tête : explicite que ces boutons changent CE QUE LA COULEUR DES PARCELLES VEUT DIRE
+        // (découvrabilité du mode Mutabilité, qui sinon passe inaperçu).
+        d.innerHTML = `<span class="mm-lbl" title="Choisit ce que représente la couleur des parcelles sur la carte">Couleur</span>`
+          + `<button class="mm-btn active" data-mode="verdict" type="button" title="Couleur = verdict LA BUSE (opportunité, à creuser, écartée, faux positif)">Verdict</button>`
           + `<button class="mm-btn" data-mode="mutabilite" type="button" title="Couleur = bâti / non-bâti — repérer le foncier mutable (libre)">Mutabilité</button>`;
         L.DomEvent.disableClickPropagation(d);
         d.querySelectorAll(".mm-btn").forEach((b) => b.addEventListener("click", () => setMapMode(b.dataset.mode)));
@@ -166,11 +169,16 @@ function geodesicAreaM2(latlngs) {
   return Math.abs(a * R * R / 2);
 }
 const fmtDist = (m) => (m >= 1000 ? (m / 1000).toFixed(2).replace(".", ",") + " km" : Math.round(m) + " m");
+// Surface : m² en dessous d'1 ha, puis hectares (+ m²) au-delà — un promoteur raisonne en ha
+// sur les grands tènements (seuil 10 000 m² = 1 ha).
+const fmtArea = (m2) => (m2 >= 10000
+  ? `${(m2 / 10000).toFixed(2).replace(".", ",")} ha (${fmt(Math.round(m2))} m²)`
+  : `${fmt(Math.round(m2))} m²`);
 function measureLabel() {
   let dist = 0;
   for (let i = 1; i < MEASURE_PTS.length; i++) dist += map.distance(MEASURE_PTS[i - 1], MEASURE_PTS[i]);
   const area = MEASURE_PTS.length >= 3 ? geodesicAreaM2(MEASURE_PTS) : 0;
-  return `${fmtDist(dist)}${area ? ` · ${fmt(Math.round(area))} m²` : ""}`;
+  return `${fmtDist(dist)}${area ? ` · ${fmtArea(area)}` : ""}`;
 }
 function renderMeasure() {
   if (MEASURE_LAYER) map.removeLayer(MEASURE_LAYER);
@@ -702,7 +710,7 @@ function renderGauge(score) {
   const has = score != null && !Number.isNaN(Number(score));
   const s = Math.max(0, Math.min(100, Number(score) || 0));
   const off = (has ? GAUGE_C * (1 - s / 100) : GAUGE_C).toFixed(1);
-  return `<div class="gauge">
+  return `<div class="gauge" title="Score d'opportunité (0–100) = intensité du signal. Le verdict tient compte EN PLUS de la complétude des données : un score élevé sur données trop minces reste « à creuser » (voir docs/BAREME_VERDICT_MUTABILITE.md).">
     <svg viewBox="0 0 116 116" aria-hidden="true">
       <circle class="g-track" cx="58" cy="58" r="52"/>
       <circle class="g-arc" cx="58" cy="58" r="52" style="stroke-dashoffset:${off}"/>
@@ -912,8 +920,8 @@ function accordion(title, sub, body, opts = {}) {
     <div class="acc-wrap"><div class="acc-body">${body}</div></div>
   </details>`;
 }
-// Badge de provenance (non négociable §3) : valeur sourcée vs estimée.
-const _prov = (k) => `<span class="prov prov-${k}">${k === "src" ? "sourcé" : k === "est" ? "estimé" : "non vérifié"}</span>`;
+// Badge de provenance (non négociable §3) : valeur sourcée vs estimée (vs calculée = résultat dérivé).
+const _prov = (k) => `<span class="prov prov-${k}">${k === "src" ? "sourcé" : k === "est" ? "estimé" : k === "calc" ? "calculé" : "non vérifié"}</span>`;
 // Emplacement d'enrichissement lazy (PLU détaillé / topo / réseaux) injecté par loadEnrichment.
 const _enrSlot = (id) => `<div class="enr-slot" id="${id}"><span class="enr-loading"><span class="pm-spin" aria-hidden="true"></span> Analyse en cours…</span></div>`;
 
@@ -942,6 +950,11 @@ function renderEssentiel(f) {
   const blocage = _blocagePrincipal(f);
   const hasBloc = blocage && blocage !== "Aucun blocage majeur identifié";
   const why = r.prochaine_action ? esc(r.prochaine_action) : "";
+  // Explication score↔verdict (chantier barème) : un score élevé peut rester « à creuser » quand la
+  // complétude est sous le plancher (50). On l'explique en clair plutôt qu'un gloss générique.
+  const cpl = v.completeness_score;
+  const scoreHautMaisACreuser = status === "a_creuser" && (v.opportunity_score ?? 0) >= 65
+    && cpl != null && cpl < 50 && !v.downgrade_reason;
   const fact = (k, val, prov) => `<div class="es-fact"><dt>${k}</dt><dd>${val} ${prov}</dd></div>`;
   return `
     <section class="essentiel v-${status}">
@@ -953,7 +966,9 @@ function renderEssentiel(f) {
           <div class="es-ref">${esc(p.idu)}${[p.commune, p.section ? "section " + esc(p.section) : "", p.surface_m2 ? fmt(Math.round(p.surface_m2)) + " m²" : ""].filter(Boolean).map((x) => " · " + x).join("")}</div>
           ${v.downgrade_reason
             ? `<p class="es-downgrade">Signal positif, mais potentiel limité seul — ${esc(v.downgrade_reason)}.</p>`
-            : `<p class="es-pitch">${esc(VERDICT_GLOSS[status] || "")}</p>`}
+            : scoreHautMaisACreuser
+              ? `<p class="es-pitch es-pitch-cpl">Score élevé (${v.opportunity_score}), mais <b>données encore incomplètes</b> (complétude ${cpl}/100 &lt; 50) — LA BUSE ne déclare pas d'opportunité sur données trop minces. À compléter avant de conclure.</p>`
+              : `<p class="es-pitch">${esc(VERDICT_GLOSS[status] || "")}</p>`}
           ${fiableBadge(status)}
         </div>
       </div>
@@ -1841,8 +1856,13 @@ function renderBilan(b) {
     </section>`;
   }
   const ca = b.ca || {}, cf = b.charge_fonciere || {};
+  // Badge de provenance PAR LIGNE (transparence promoteur), via le système canonique _prov :
+  // sourcé = donnée réelle (DVF) · estimé = hypothèse / paramètre calibrable (coût construction,
+  // VRD, marge) · calculé = résultat dérivé des lignes ci-dessus.
+  const PROV_KEY = { sourcee: "src", estimee: "est", derive: "calc" };
+  const stepBadge = (p) => (PROV_KEY[p] ? _prov(PROV_KEY[p]) : "");
   const stepRows = (b.steps || []).map((s) => `
-    <tr><td class="fs-lbl">${esc(s.label)}</td>
+    <tr><td class="fs-lbl">${esc(s.label)} ${stepBadge(s.prov)}</td>
         <td class="fs-for">${esc(s.formule)}${s.valeur ? ` <b>= ${esc(s.valeur)}</b>` : ""}<span class="fs-src">${esc(s.source)}</span></td></tr>`).join("");
   // M6 — la méthode du prix, en clair (prix retenu, type, n, période, rayon, dispersion, écartés).
   const per = px.periode ? `${px.periode[0]}–${px.periode[1]}` : "—";
@@ -1910,6 +1930,10 @@ function renderBilan(b) {
       </details>
       <details class="faisa-calc bilan-calc" open>
         <summary>Le calcul — prix DVF sourcé, hypothèses signalées</summary>
+        <p class="bilan-microcopy"><b>Simulation indicative — paramètres calibrables selon vos ratios promoteur.</b>
+          Le prix de sortie est ${_prov("src")} (ventes DVF réelles) ;
+          les coûts (construction, VRD, marge) sont ${_prov("est")} ;
+          les totaux sont ${_prov("calc")} à partir des lignes ci-dessus.</p>
         <table class="faisa-steps">${stepRows}</table>
       </details>
       ${bullets(b.avertissements, "warn", "À surveiller")}

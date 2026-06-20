@@ -307,17 +307,17 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
 
     steps.append(Step("Surface habitable vendable",
                       "issue de la faisabilité (post-rendement, plafond, modulation)",
-                      f"~{surf:.0f} m²", "faisabilité"))
+                      f"~{surf:.0f} m²", "faisabilité", prov="derive"))
     if vue_mer_bonus:
         steps.append(Step("Bonus vue mer (2.B)", f"prix de sortie × (1 + {bonus_vue:g} %) — vue mer dégagée",
-                          "appliqué", "param bonus_vue_mer_pct"))
+                          "appliqué", "param bonus_vue_mer_pct", prov="estimee"))
     detail = (f"{prix['type_prix']} · {prix['n']} ventes ({prix['periode'][0]}-{prix['periode'][1]}) "
               f"dans {lieu}"
               + (f" · {prix['n_exclus']} aberrant(s) exclu(s)" if prix["n_exclus"] else "")
               + (f" · {prix['n_doublons']} doublon(s) écarté(s)" if prix.get("n_doublons") else ""))
     steps.append(Step("Prix de vente (DVF secteur)", detail,
                       f"{q1}–{q3} €/m² (médiane {med} ; min {prix['min']} / max {prix['max']})",
-                      f"DVF Région ODS · fiabilité {niveau}"))
+                      f"DVF Région ODS · fiabilité {niveau}", prov="sourcee"))
 
     eco = contexte_eco or {}
     mixite, pluvial = bool(eco.get("mixite")), bool(eco.get("pluvial"))
@@ -335,13 +335,13 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
         if not declenchee:
             steps.append(Step("Clause de mixité sociale — non déclenchée",
                               clause["detail"], "pas de quota LLS sur ce programme",
-                              "Art. 2 règlement PLU"))
+                              "Art. 2 règlement PLU", prov="derive"))
         elif pondere:
             steps.append(Step("CA pondéré — clause de mixité DÉCLENCHÉE",
                               f"{clause['detail']} · prix mixé = (1−{p_lls:.0%})×prix DVF + "
                               f"{p_lls:.0%}×{hyp.prix_m2_lls:.0f} €/m² (LLS)",
                               f"{_px(med):.0f} €/m² (médiane pondérée)",
-                              "Art. 2 · pct_lls / prix_m2_lls"))
+                              "Art. 2 · pct_lls / prix_m2_lls", prov="estimee"))
         else:  # déclenchée mais prix LLS non calibré → on NE chiffre PAS
             avert.append(
                 f"Clause de mixité sociale DÉCLENCHÉE ({clause['critere']}) — {p_lls:.0%} de "
@@ -370,13 +370,13 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
         steps.append(Step("VRD / viabilisation",
                           f"{vrd_base:.0f} €/m² terrain × {surface_terrain_m2:.0f} m²"
                           + (f" × (1 + {maj_vrd_terrain:g} % : {', '.join(bits)})" if maj_vrd_terrain else ""),
-                          f"~{_eur(cout_vrd)}", "param cout_vrd_base"))
+                          f"~{_eur(cout_vrd)}", "param cout_vrd_base", prov="estimee"))
     if pluvial:
         lib_pl = eco.get("pluvial_libelle") or "zonage eaux pluviales"
         if maj_vrd_pluvial > 0:
             steps.append(Step("Majoration VRD — eaux pluviales",
                               f"coût construction × (1 + {maj_vrd_pluvial:g} %) — {lib_pl}",
-                              "appliquée", "zonage pluvial · param majoration_vrd_pluvial"))
+                              "appliquée", "zonage pluvial · param majoration_vrd_pluvial", prov="estimee"))
         else:
             hypotheses.append(
                 f"Zonage eaux pluviales ({lib_pl}) : majoration VRD paramétrable "
@@ -393,23 +393,24 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     ca_formule = (f"{surf:.0f} m² × {_px(q1):.0f}–{_px(q3):.0f} €/m² (prix mixés LLS)"
                   if pondere else f"{surf:.0f} m² × {q1}–{q3} €/m²")
     steps.append(Step("Chiffre d'affaires potentiel", ca_formule,
-                      f"~{_eur(ca_bas)} – {_eur(ca_haut)} (médiane {_eur(ca_cen)})", "dérivé"))
+                      f"~{_eur(ca_bas)} – {_eur(ca_haut)} (médiane {_eur(ca_cen)})", "dérivé", prov="derive"))
     cout_lbl = (f"× {cout_m2:.0f} €/m² (secteur)" if cout_m2 > 0
                 else f"× {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m²")
     steps.append(Step("Coût de construction",
                       f"{sdp:.0f} m² de plancher ({surf:.0f} m² hab. × {hyp.coef_plancher_habitable:.2f}) {cout_lbl}",
                       f"~{_eur(cc_bas)} – {_eur(cc_haut)}",
-                      "param cout_construction_m2_sdp" if cout_m2 > 0 else "hypothèse coût (prudente, Réunion)"))
+                      "param cout_construction_m2_sdp" if cout_m2 > 0 else "hypothèse coût (prudente, Réunion)",
+                      prov="estimee"))
     steps.append(Step("Marge + frais (déduits du CA)",
                       f"marge {marge_pct:g} % + honoraires {honoraires_pct:g} % + frais financiers {frais_fin_pct:g} %",
-                      f"{(1 - coef) * 100:.0f} % du CA", "params marge/honoraires/frais"))
+                      f"{(1 - coef) * 100:.0f} % du CA", "params marge/honoraires/frais", prov="estimee"))
     # Présentation : la MÉDIANE d'abord (le chiffre de référence), la fourchette ensuite,
     # bas borné à 0 (audit O3 : « entre −0,2 et 8 M€ » n'aide personne à décider).
     steps.append(Step("Charge foncière acceptable (bilan à rebours)",
                       f"CA×{coef:.2f} − coût construction" + (" − VRD" if vrd_base > 0 else ""),
                       f"médiane {_eur(cf_cen)} ≈ {par_m2:.0f} €/m² terrain "
                       f"(fourchette {_eur(max(0, cf_bas))} – {_eur(cf_haut)})",
-                      "dérivé"))
+                      "dérivé", prov="derive"))
 
     hypotheses += [
         f"Coût de construction supposé {hyp.cout_construction_m2_bas:.0f}–{hyp.cout_construction_m2_haut:.0f} €/m² "

@@ -318,8 +318,8 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
                 "fiable": b.fiable, "fiabilite": b.fiabilite, "verdict": b.verdict,
                 "prix_dvf": b.prix_dvf, "comparables": (b.prix_dvf or {}).get("comparables"),
                 "ca": b.ca, "charge_fonciere": b.charge_fonciere,
-                "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur, "source": s.source}
-                          for s in b.steps],
+                "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur,
+                           "source": s.source, "prov": s.prov} for s in b.steps],
                 "hypotheses": b.hypotheses, "avertissements": b.avertissements, "bandeau": b.bandeau,
                 "calc": b.calc,
                 # 1.C — secteur + paramètres éditables (registre + valeurs résolues) + non calibrés.
@@ -350,8 +350,8 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
             "littoral": c.bande_littorale,
             "safer": c.agricole_sar,
         },
-        "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur, "source": s.source}
-                  for s in f.steps],
+        "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur,
+                   "source": s.source, "prov": s.prov} for s in f.steps],
         "hypotheses": f.hypotheses,
         "avertissements": f.avertissements,
         "modulation": f.modulation,

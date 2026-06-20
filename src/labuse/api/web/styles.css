@@ -267,6 +267,9 @@ input[type=checkbox] { accent-color: var(--gold); }
 /* LOT 2 — bascule de mode carte (Verdict ⇄ Mutabilité) */
 .map-mode { display: flex; background: rgba(17,26,36,.96); border: 1px solid var(--line); border-radius: 11px;
   overflow: hidden; box-shadow: 0 8px 22px rgba(0,0,0,.35); }
+.mm-lbl { display: flex; align-items: center; padding: 7px 11px; font-size: 10px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--gold-soft);
+  background: rgba(24,36,49,.85); border-right: 1px solid var(--line); }
 .mm-btn { background: transparent; border: none; border-right: 1px solid var(--line); color: var(--muted);
   font: inherit; font-size: 12px; font-weight: 600; padding: 7px 13px; cursor: pointer; transition: color .12s, background .12s; }
 .mm-btn:last-child { border-right: none; }

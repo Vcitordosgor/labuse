@@ -145,6 +145,8 @@
 .sheet .es-ref { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--tf-text-2); letter-spacing: .01em; }
 .sheet .es-pitch { font-size: var(--fs-body); line-height: 1.4; color: var(--tf-text-2); margin: var(--sp-2) 0 0; max-width: 52ch; }
 .sheet .es-downgrade { font-size: var(--fs-small); line-height: 1.4; color: var(--tf-flag); margin: var(--sp-2) 0 0; }
+/* score élevé mais à creuser (complétude < 50) — pédagogie, ton neutre (ni alarme ni promesse) */
+.sheet .es-pitch-cpl { font-size: var(--fs-small); color: var(--tf-text-2); max-width: 52ch; }
 .sheet .es-id .fiable-tag { display: inline-block; margin-top: var(--sp-2); }
 /* anneau de jauge + mot, colorés par verdict (mêmes règles que le hero) */
 .sheet .essentiel.v-opportunite .g-arc { stroke: var(--tf-positive-bright); } .sheet .essentiel.v-opportunite .es-verdict { color: var(--tf-positive); }
@@ -168,6 +170,7 @@
 .sheet .prov-src { background: rgba(92,192,140,.14); color: var(--tf-positive); }
 .sheet .prov-est { background: rgba(224,188,90,.16); color: var(--tf-flag); }
 .sheet .prov-nv  { background: rgba(110,109,103,.15); color: var(--tf-text-3); }
+.sheet .prov-calc { background: rgba(110,109,103,.12); color: var(--tf-text-2); }  /* résultat dérivé (ni source ni hypothèse) */
 
 /* ══════ LOT 1 — Accordéons du « dossier complet » ══════ */
 .sheet .acc-head { display: flex; align-items: baseline; gap: var(--sp-3); margin: var(--sp-4) 0 var(--sp-2); padding-bottom: 6px; border-bottom: 1px solid var(--tf-border); }
@@ -361,6 +364,8 @@
 .sheet .bilan-estim { margin: var(--sp-2) 0; padding: 9px 12px; font-size: var(--fs-small); line-height: 1.5;
   background: var(--tf-accent-dim); border-left: 3px solid var(--tf-accent); color: var(--tf-text-2);
   border-radius: var(--radius-control); }
+/* microcopy de transparence du calcul (légende des badges sourcé/estimé/calculé) */
+.sheet .bilan-microcopy { margin: 0 0 var(--sp-2); font-size: var(--fs-small); line-height: 1.55; color: var(--tf-text-2); }
 /* badges de fiabilité du prix → couleurs verdict */
 .sheet .fiab { font-family: var(--font-ui); border-radius: var(--radius-pill); }
 .sheet .fiab-fiable      { background: rgba(92,192,140,.14); color: var(--tf-positive); }
