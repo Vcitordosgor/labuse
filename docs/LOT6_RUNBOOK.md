@@ -60,18 +60,39 @@ et imprime le **PLAN** complet. **Aucune écriture.** À lire intégralement ava
 - [ ] Rapport `docs/communes/<commune>_RESULTS.md` écrit.
 - [ ] `config/communes_gold_standard.yaml` mis à jour (`etat: gold`).
 
+## Codes de sortie (post-checks [G] automatisés)
+
+| Code | Sens | Action |
+|:--:|---|---|
+| **0** | SUCCÈS | tous les contrôles critiques + QA verts → marquer la commune `gold` |
+| **1** | ROLLBACK recommandé | contrôle/couche **critique** KO ou crash → `restore-db` du backup pré |
+| **2** | Confirmation absente/incorrecte | relancer avec `--confirm "IMPORT_<COMMUNE>_COMPLET"` |
+| **3** | RE-FETCH ciblé | couche **non critique** KO → re-fetch cette couche, re-checker |
+| **4** | **NO-GO QA** | import OK mais résultat **suspect** (ex. taux d'opportunité explosif) → **ne pas** marquer gold, investiguer |
+
+Précédence : **1 > 4 > 3 > 0**. Le rapport `docs/communes/<commune>_RESULTS.md` est écrit dans tous les cas.
+
 ## Conditions de SUCCÈS (code 0)
 
-Tous les contrôles **critiques** verts **et** aucune couche critique en échec **et** aucune couche non
-critique en échec. → la commune est **gold** : on peut la marquer fiable et passer à la suivante.
+Tous les contrôles **critiques** verts (parcelles ≥ attendu · 0 doublon · 0 géométrie invalide ·
+100 % geom_2975 · 100 % évaluées · **bâti > 0** · zonage/pente/voirie présents · zonage ≥ 99 % ·
+index GIST · verdicts cohérents · conservation) **et** le contrôle **QA** vert (taux d'opportunité
+≤ 5 %, repère Saint-Paul ≈ 1 %) **et** aucune couche en échec. → commune **gold**.
 
 ## Conditions de RE-FETCH (code 3)
 
-Seule(s) une/des **couche(s) NON critique(s)** en échec (ex. OSM Overpass, prescriptions GPU, ABF).
-→ relancer **uniquement** l'ingestion de cette couche (la commune reste utilisable, mais pas encore
-« gold » tant que la couche manque). Re-fetch espacé (réseau), 1–2 tentatives, puis post-checks à nouveau.
+Seule(s) une/des **couche(s) NON critique(s)** en échec (ex. OSM Overpass, prescriptions GPU, ABF, SAR,
+PPR, ravines). → relancer **uniquement** l'ingestion de cette couche (la commune reste utilisable, mais
+pas encore « gold » tant que la couche manque). Re-fetch espacé (réseau), 1–2 tentatives, puis re-checker.
 
-## Conditions de ROLLBACK / NO-GO (code 1)
+## Conditions de NO-GO QA (code 4)
+
+Import techniquement réussi **mais résultat suspect** — typiquement **taux d'opportunité explosif**
+(> 5 %, signe d'une cascade SANS bâti). → **ne PAS marquer gold**, investiguer (le bâti a-t-il bien
+été ingéré ? la cascade a-t-elle tourné sur les bonnes couches ?). Pas de rollback automatique (données
+non corrompues), mais la commune reste flaggée « non fiable » dans l'UI.
+
+## Conditions de ROLLBACK / NO-GO avant lancement (code 1 / 2)
 
 - **NO-GO avant lancement** si : cible hors référentiel · backup absent/corrompu · PostGIS/tables KO ·
   commune déjà gold (sans `--allow-regold`) · `--execute` sans la phrase exacte.

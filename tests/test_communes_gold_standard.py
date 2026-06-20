@@ -139,6 +139,136 @@ def test_script_dry_run_par_defaut_zero_acces_base():
     assert s.step_cascade("La Possession", dry_run=True) == {"dry_run": True}
 
 
+# ── Post-checks [G] & décision (PURS — dict de métriques mocké, aucune base) ───
+def _good_metrics(s):
+    return {
+        "parcels": 13338, "distinct": 13338, "sections": 30,
+        "geom_invalid": 0, "geom2975_null": 0, "evaluated": 13338,
+        "layers": {"batiment": 5000, "voirie": 8000, "pente": 4000, "plu_gpu_zone": 663,
+                   "ppr": 4, "sar": 100, "ravine": 200, "plu_gpu_prescription": 300},
+        "zonage_pct": 99.6, "dup_groups": 0,
+        "verdicts": {"opportunite": 150, "a_creuser": 5000, "exclue": 1000, "faux_positif_probable": 7188},
+        "opp_rate_pct": 1.1, "micro_opp": 30, "indexes": list(s.EXPECTED_INDEXES),
+        "pipeline": 0, "feedback": 0, "alertes": 0,
+    }
+
+
+_BEFORE = {"pipeline": 0, "feedback": 0, "alertes": 0, "bati": 0, "parcels": 13338}
+
+
+def _decide(s, m, crit_lf=None, noncrit_lf=None):
+    checks = s.postcheck_results(m, _BEFORE, 13338, crit_lf or [])
+    return s.final_decision(checks, crit_lf or [], noncrit_lf or [])
+
+
+def test_postchecks_succes_exit0():
+    s = _load_script()
+    code, _ = _decide(s, _good_metrics(s))
+    assert code == s.EXIT_OK
+
+
+def test_postchecks_echec_couche_critique_rollback():
+    s = _load_script()
+    # bâti absent ET signalé en erreur critique → ROLLBACK (1)
+    m = _good_metrics(s)
+    m["layers"]["batiment"] = 0
+    code, _ = _decide(s, m, crit_lf=["batiment"])
+    assert code == s.EXIT_ROLLBACK
+
+
+def test_postchecks_couche_non_critique_refetch():
+    s = _load_script()
+    code, _ = _decide(s, _good_metrics(s), noncrit_lf=["osm_faux_positif"])
+    assert code == s.EXIT_REFETCH
+
+
+def test_postchecks_opportunites_explosees_nogo_qa():
+    s = _load_script()
+    m = _good_metrics(s)
+    m["opp_rate_pct"] = 11.2          # cascade SANS bâti → taux explosif
+    code, _ = _decide(s, m)
+    assert code == s.EXIT_NOGO_QA
+
+
+def test_postchecks_doublons_idu_rollback():
+    s = _load_script()
+    m = _good_metrics(s)
+    m["distinct"] = 13000             # doublons d'IDU
+    code, _ = _decide(s, m)
+    assert code == s.EXIT_ROLLBACK
+
+
+def test_postchecks_geometrie_invalide_rollback():
+    s = _load_script()
+    m = _good_metrics(s)
+    m["geom_invalid"] = 5
+    code, _ = _decide(s, m)
+    assert code == s.EXIT_ROLLBACK
+
+
+def test_postchecks_index_manquant_rollback():
+    s = _load_script()
+    m = _good_metrics(s)
+    m["indexes"] = []                 # index GIST absents
+    code, _ = _decide(s, m)
+    assert code == s.EXIT_ROLLBACK
+
+
+def test_final_decision_precedence_rollback_avant_qa():
+    s = _load_script()
+    m = _good_metrics(s)
+    m["opp_rate_pct"] = 12.0          # QA KO
+    code, _ = _decide(s, m, crit_lf=["batiment"])   # + critique KO
+    assert code == s.EXIT_ROLLBACK   # rollback (1) l'emporte sur no-go QA (4)
+
+
+def test_expected_min_jamais_invente():
+    s = _load_script()
+    # commune présente : plancher = compte en base (jamais un nombre inventé)
+    assert s.expected_min_parcels({"parcelles_en_base": 13338, "attendu": "a_verifier"}, None) == 13338
+    # commune absente : plancher = compte RÉEL importé (Etalab), pas une constante
+    assert s.expected_min_parcels({"parcelles_en_base": 0, "attendu": "a_verifier"}, 8200) == 8200
+    # Saint-Paul : attendu confirmé pris en compte
+    assert s.expected_min_parcels({"parcelles_en_base": 51129, "attendu": 51129}, None) == 51129
+
+
+# ── Rapport [H] (mocké, sans base, sans écriture) ─────────────────────────────
+def test_rapport_genere_avec_donnees_mockees():
+    s = _load_script()
+    m = _good_metrics(s)
+    checks = s.postcheck_results(m, _BEFORE, 13338, [])
+    code, verdict = s.final_decision(checks, [], [])
+    lines = s.build_report("La Possession", "97408", "re_couches_re_cascade", verdict, code,
+                           _BEFORE, m, checks, [], {"cascade": 1830.0})
+    md = "\n".join(lines)
+    assert "La Possession" in md and "97408" in md
+    assert "re_couches_re_cascade" in md
+    assert "## Verdicts & opportunités" in md and "Opportunité : **150**" in md
+    assert "Micro-opportunités" in md and "Taux d'opportunité" in md
+    assert "## Conclusion :" in md and "SUCCÈS" in md
+    assert "batiment : 5000" in md            # statut des couches
+    assert s.report_path("La Possession") == "docs/communes/la_possession_RESULTS.md"
+
+
+def test_write_report_dry_run_n_ecrit_rien(tmp_path, monkeypatch):
+    s = _load_script()
+    monkeypatch.chdir(tmp_path)
+    out = s.write_report("La Possession", dry_run=True, lines=["# test"])
+    assert out is None
+    assert not (tmp_path / "docs" / "communes").exists()    # aucune écriture en dry-run
+
+
+def test_rapport_couche_bloquee_listee():
+    s = _load_script()
+    m = _good_metrics(s)
+    m["layers"]["ppr"] = 0
+    checks = s.postcheck_results(m, _BEFORE, 13338, ["ppr"])
+    lines = s.build_report("La Possession", "97408", "re_couches_re_cascade", "x", s.EXIT_REFETCH,
+                           _BEFORE, m, checks, ["ppr"], None)
+    md = "\n".join(lines)
+    assert "ppr : BLOQUÉ" in md and "BLOQUÉES" in md
+
+
 # ── Endpoint /communes/status ─────────────────────────────────────────────────
 @pytest.mark.db
 def test_communes_status_endpoint(engine):
