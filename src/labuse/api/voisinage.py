@@ -20,6 +20,14 @@ ADJ_BUFFER_M = 0.5
 MIN_SURFACE_M2 = 100.0
 MAX_VOISINES = 8
 _INTERESSANT = ("opportunite", "a_creuser")
+# J3 — un assemblage n'est signalé qu'à partir de DEUX voisines contiguës intéressantes (et de
+# même zone PLU quand la zone est résolue) : avec « ≥ 1 voisine » le bandeau sortait sur ~99 %
+# des opportunités du tissu urbain → il ne discriminait rien. On exige une vraie cohérence.
+ASSEMBLAGE_MIN_VOISINES = 2
+
+
+def _zone_tokens(z: str | None) -> set[str]:
+    return {t.strip().lower() for t in (z or "").split(",") if t.strip()}
 
 
 def compute_voisinage(session: Session, parcel_id: int,
@@ -30,7 +38,10 @@ def compute_voisinage(session: Session, parcel_id: int,
         SELECT n.idu, n.surface_m2, e.status, e.opportunity_score,
                (SELECT string_agg(DISTINCT sl.subtype, ', ')
                   FROM spatial_layers sl
-                 WHERE sl.kind = 'plu_gpu_zone' AND ST_Intersects(sl.geom_2975, n.geom_2975)) AS plu_zone
+                 WHERE sl.kind = 'plu_gpu_zone' AND ST_Intersects(sl.geom_2975, n.geom_2975)) AS plu_zone,
+               (SELECT string_agg(DISTINCT sl.subtype, ', ')
+                  FROM spatial_layers sl
+                 WHERE sl.kind = 'plu_gpu_zone' AND ST_Intersects(sl.geom_2975, p.geom_2975)) AS parcel_zone
         FROM parcels p
         JOIN parcels n ON n.id <> p.id AND ST_DWithin(p.geom_2975, n.geom_2975, :buf)
         LEFT JOIN LATERAL (
@@ -51,22 +62,26 @@ def compute_voisinage(session: Session, parcel_id: int,
         "plu_zone": r["plu_zone"],
     } for r in rows]
 
+    parcel_zone = rows[0]["parcel_zone"] if rows else None
+    ptoks = _zone_tokens(parcel_zone)
     interessantes = [v for v in voisines if v["status"] in _INTERESSANT]
     cur_interessante = parcel_status in _INTERESSANT
-    # « Assemblage à étudier » = la parcelle ET au moins une voisine contiguë sont classées
-    # opportunité / à creuser → cohérence minimale (jamais une affirmation de faisabilité).
-    possible = cur_interessante and len(interessantes) >= 1
-    n_total = len(interessantes) + (1 if cur_interessante else 0)
-    surface_cumulee = (parcel_surface or 0.0) + sum(v["surface_m2"] or 0 for v in interessantes)
+    # Cohérence réglementaire : on retient les voisines intéressantes de MÊME zone PLU que la
+    # parcelle (un assemblage se monte dans un même régime de zonage). Si la zone n'est pas
+    # résolue (donnée PLU absente), on retombe sur la simple contiguïté — mais toujours ≥ 2.
+    meme_zone = [v for v in interessantes if ptoks and (ptoks & _zone_tokens(v["plu_zone"]))]
+    retenues = meme_zone if ptoks else interessantes
+    # « Assemblage à étudier » = la parcelle ET ≥ 2 voisines contiguës cohérentes → vrai bloc
+    # mobilisable (jamais une affirmation de faisabilité).
+    possible = cur_interessante and len(retenues) >= ASSEMBLAGE_MIN_VOISINES
+    n_total = len(retenues) + (1 if cur_interessante else 0)
+    surface_cumulee = (parcel_surface or 0.0) + sum(v["surface_m2"] or 0 for v in retenues)
     note = None
     if possible:
-        # Formulé comme du CONTEXTE (« continuité foncière »), pas comme un signal rare :
-        # mesuré sur Saint-Paul, ~99 % des opportunités ont au moins une voisine contiguë
-        # en opportunité/à creuser (tissu urbain) — toute sévérisation du critère serait
-        # un choix produit à calibrer avec un promoteur, pas un réglage technique.
         surf_str = f"{surface_cumulee:,.0f}".replace(",", " ")   # espace fine, sans toucher au texte
-        note = (f"Continuité foncière : {n_total} parcelles contiguës en opportunité ou à creuser, "
-                f"~{surf_str} m² cumulés — un assemblage peut être étudié. "
+        zlabel = " de même zone PLU" if ptoks else ""
+        note = (f"Continuité foncière : {n_total} parcelles contiguës{zlabel} en opportunité ou "
+                f"à creuser, ~{surf_str} m² cumulés — un assemblage peut être étudié. "
                 "Propriétaires, accords et faisabilité restent à vérifier.")
     return {
         "voisines": voisines,

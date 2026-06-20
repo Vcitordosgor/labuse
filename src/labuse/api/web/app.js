@@ -979,6 +979,10 @@ function renderFiche(f) {
   const limits = cascade.filter((c) => c.result === "HARD_EXCLUDE" || c.result === "SOFT_FLAG");
   const unknown = cascade.filter((c) => c.result === "UNKNOWN");
   const hasHard = limits.some((c) => c.result === "HARD_EXCLUDE");  // rouge si blocage dur, sinon ambre
+  // Audit J4 : une parcelle écartée/exclue ne « favorise » rien — ses signaux POSITIVE sont des
+  // signaux BRUTS d'avant déclassement. On renomme l'en-tête pour ne pas vanter une parcelle écartée.
+  const declassee = status === "faux_positif_probable" || status === "exclue";
+  const favorsTitle = declassee ? "Signaux bruts (avant déclassement)" : "Ce qui favorise";
 
   const pts = (c) => (c.weight_applied ? `<span class="rd-pts ${c.weight_applied > 0 ? "pos" : "neg"}">${c.weight_applied > 0 ? "+" : "−"}${Math.abs(Math.round(c.weight_applied))}</span>` : "");
   const liRow = (c, cls) => `<li class="rd-li ${cls}">
@@ -1047,7 +1051,7 @@ function renderFiche(f) {
     ${accordion("Environnement, risques & traçabilité", `${cascade.length} couches · sources analysées`,
       `${unverifiedLine}
        <section class="reads">
-         <div class="read"><h3 class="rd-h ok">Ce qui favorise</h3>${block(favors, "ok", "Aucun signal franchement favorable sur les couches disponibles.")}</div>
+         <div class="read"><h3 class="rd-h ok">${favorsTitle}</h3>${block(favors, "ok", "Aucun signal franchement favorable sur les couches disponibles.")}</div>
          <div class="read"><h3 class="rd-h lim${hasHard ? " has-hard" : ""}">Ce qui contraint</h3>${block(limits, "lim", "Aucune contrainte relevée sur les couches disponibles.")}</div>
          <div class="read"><h3 class="rd-h unk">Ce qu'on n'a pas vérifié</h3>${block(unknown, "unk", "Toutes les couches critiques ont répondu.")}</div>
        </section>

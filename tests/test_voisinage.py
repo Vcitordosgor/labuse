@@ -23,20 +23,34 @@ def _parcel(db, idu, x0, status=None, surface=1000.0):
 
 
 def test_voisines_adjacentes_et_assemblage(db_session):
-    # Trois carrés ALIGNÉS et CONTIGUS (arêtes partagées) : A|B|C.
+    # A entourée de DEUX voisines contiguës intéressantes (G ouest, B est) → vrai bloc (J3 : ≥ 2).
     a = _parcel(db_session, "VZ0000000000A1", 55.300, "opportunite", 1000)
-    _parcel(db_session, "VZ0000000000B2", 55.301, "opportunite", 1500)   # contiguë à A
+    _parcel(db_session, "VZ0000000000B2", 55.301, "opportunite", 1500)   # contiguë à A (est)
+    _parcel(db_session, "VZ0000000000G7", 55.299, "opportunite", 1200)   # contiguë à A (ouest)
     _parcel(db_session, "VZ0000000000C3", 55.302, "a_creuser", 800)      # contiguë à B, pas à A
     db_session.flush()
     vz = compute_voisinage(db_session, a, 1000.0, "opportunite")
     idus = [v["idu"] for v in vz["voisines"]]
-    assert "VZ0000000000B2" in idus and "VZ0000000000C3" not in idus     # seule B touche A
+    assert "VZ0000000000B2" in idus and "VZ0000000000G7" in idus
+    assert "VZ0000000000C3" not in idus                  # ne touche pas A
     assert vz["assemblage"]["possible"] is True
-    assert vz["assemblage"]["n_interessantes"] >= 2
+    assert vz["assemblage"]["n_interessantes"] >= 3      # A + 2 voisines retenues
     assert "à vérifier" in vz["assemblage"]["note"]
     # wording prudent : jamais de promesse de propriété / faisabilité / constructibilité
     low = vz["assemblage"]["note"].lower()
     assert "même propriétaire" not in low and "constructible" not in low
+
+
+def test_une_seule_voisine_ne_suffit_pas(db_session):
+    # J3 : une UNIQUE voisine contiguë ne déclenche plus d'assemblage (le bandeau ne sortait
+    # avant sur ~99 % des opportunités) — il faut une vraie cohérence (≥ 2 voisines).
+    a = _parcel(db_session, "VZ0000000000H8", 55.330, "opportunite", 1000)
+    _parcel(db_session, "VZ0000000000I9", 55.331, "opportunite", 1500)   # unique voisine contiguë
+    db_session.flush()
+    vz = compute_voisinage(db_session, a, 1000.0, "opportunite")
+    assert [v["idu"] for v in vz["voisines"]] == ["VZ0000000000I9"]      # la voisine est listée…
+    assert vz["assemblage"]["possible"] is False                        # …mais 1 ne suffit pas
+    assert vz["assemblage"]["note"] is None
 
 
 def test_faux_positif_ne_propose_pas_d_assemblage(db_session):
