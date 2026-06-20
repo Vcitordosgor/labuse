@@ -48,27 +48,61 @@ layers:
     enabled: true
     params:
       spatial_kind: sar
-      # SAR juridiquement supérieur au PLU.
-      # espaces naturels / coupures d'urbanisation → HARD_EXCLUDE
-      # espaces agricoles → SOFT_FLAG fort (risque SAFER)
-      hard_exclude_subtypes: [espace_naturel, coupure_urbanisation]
-      # espace_agricole = zonage SAR réglementaire (démo) ; vocation_* = proxy de vocation
-      # (potentiel foncier Région) → JAMAIS d'exclusion auto, seulement un flag « à vérifier ».
-      flag_fort_subtypes: [espace_agricole, vocation_naturelle, vocation_agricole,
-                           vocation_continuite, vocation_coupure, vocation_mixte]
+      # DÉCISION 2 (directive post-1.A) : la seule donnée SAR disponible est un PROXY de
+      # vocation (potentiel foncier Région) → couche INFORMATIVE, ZÉRO pouvoir d'exclusion
+      # (plus jamais de HARD_EXCLUDE ni de SOFT_FLAG — aucun effet score/statut).
+      # Warning de divergence (PASS « ⚠ … ») quand PLU U/AU ∩ proxy naturel/agricole ;
+      # mention renforcée sur zone AU (ouverture à l'urbanisation moins probable).
+      plu_kind: plu_gpu_zone
+      uau_prefixes: [U, AU]
+      # vocations « naturel/agricole » du proxy (+ subtypes réglementaires du seed synthétique) :
+      divergent_subtypes: [vocation_naturelle, vocation_agricole, vocation_continuite,
+                           vocation_coupure, espace_naturel, espace_agricole, coupure_urbanisation]
+      # vocations sans a priori constructif (ni divergence ni compatibilité) :
+      info_subtypes: [vocation_mixte, vocation_rurale]
 
   - name: zonage_plu_gpu
     phase: 1
     enabled: true
     params:
       spatial_kind: plu_gpu_zone
-      # libelle de zone (libelle court) → verdict
-      # N → flag fort (exclude possible selon sous-zone) ; A → flag (SAFER) ; U/AU → POSITIVE
-      exclude_zones: []                       # sous-zones N strictement inconstructibles (ex. Nr)
-      flag_fort_prefixes: [N]
-      flag_prefixes: [A]
+      # libelle de zone (libelle court) → verdict.
+      # U/AU → POSITIVE (constructible). A (agricole) / N (naturelle) → HARD_EXCLUDE :
+      # non constructibles au règlement du PLU de Saint-Paul (plu_saint_paul.yaml). Décision Vic
+      # (aligner la cascade sur la réalité PLU). U/AU sont testés AVANT A/N (AU commence par « A »).
+      exclude_zones: []                       # sous-zones strictement listées (ex. Nr) — exact match
       positive_prefixes: [U, AU]
+      hard_exclude_prefixes: [A, N]
+      # DÉCISION 1 : exclusion SENSIBLE AU RECOUVREMENT. HARD_EXCLUDE seulement si la part
+      # A+N de la parcelle atteint ce seuil ; en deçà avec une part U/AU → SOFT_FLAG
+      # « zonage mixte » + emprise clippée à la portion U/AU dans la pré-faisabilité.
+      an_hard_exclude_pct: 90                 # PLACEHOLDER (défaut directive) — à calibrer par Vic
+      # plancher en deçà duquel une part A/N est traitée comme liséré géométrique GPU (ignorée) :
+      an_mixte_min_pct: 5                     # PLACEHOLDER — à calibrer par Vic
+      # préfixes de repli (sous-zones non couvertes par les listes ci-dessus) — vides par défaut :
+      flag_fort_prefixes: []
+      flag_prefixes: []
       positive_bonus_key: zonage_u_au
+
+  - name: prescription_plu
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: plu_gpu_prescription
+      # Mapping typepsc CNIG → classe de contrainte, CALIBRÉ sur les prescriptions RÉELLES
+      # de Saint-Paul (API Carto GPU) — le libellé GPU reste toujours affiché, jamais inventé :
+      #   01 EBC · 05 emplacement réservé · 07 élément bâti protégé (L151-19) ·
+      #   17 (+16) secteur de mixité sociale · 18 OAP · 48 zonage eaux pluviales
+      emplacement_reserve_typepsc: ["05"]
+      boise_classe_typepsc: ["01"]
+      patrimoine_bati_typepsc: ["07"]
+      mixite_sociale_typepsc: ["16", "17"]
+      oap_typepsc: ["18"]
+      eaux_pluviales_typepsc: ["48"]
+      # DÉCISION 3.a : recouvrement ER (en % de la parcelle) à partir duquel la parcelle est
+      # exclue (emprise majoritairement grevée) ; en deçà → SOFT_FLAG + surface ER déduite de
+      # l'emprise constructible dans la pré-faisabilité.
+      er_hard_exclude_pct: 50                 # PLACEHOLDER (défaut directive) — à calibrer par Vic
 
   - name: safer
     phase: 1
@@ -91,6 +125,20 @@ layers:
         moyen: moyen
         faible: faible
 
+  - name: ravine
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: ravine
+      # proximité d'une ravine (thalweg BD TOPO) → SOFT_FLAG. Buffer PLACEHOLDER (défaut Vic 10 m) :
+      buffer_m: 10
+      severity: moyen
+      # 2.C — quand une SURFACE en eau existe (ravine large), on mesure au BORD (berge), plus proche
+      # que l'axe ; sinon à l'axe du tronçon. Les `berge_kinds` sont des surfaces hydrographiques :
+      berge_kinds: [water]
+      # rayon de garde du précalcul batch (doit être ≥ buffer_m ; couvre un réglage à la hausse) :
+      search_cap_m: 60
+
   - name: trait_de_cote
     phase: 1
     enabled: true
@@ -105,12 +153,11 @@ layers:
     phase: 1
     enabled: true
     params:
-      # ⚠ DÉCISION PRODUIT : la pente est CALCULÉE et AFFICHÉE, mais N'EXCLUT PAS
-      # et NE PÉNALISE PAS automatiquement (brief §2, encadré seuils).
+      # 2.A : la pente est CALCULÉE et AFFICHÉE ; au-delà de `seuil_flag_pct` → SOFT_FLAG
+      # (driver de coût terrassement, jamais une exclusion). Seuil PLACEHOLDER (défaut Vic 30 %).
       exclude: false
-      penalize: false
-      # seuils présents mais DÉSACTIVÉS, prêts à activer sans refactor :
-      threshold_enabled: false
+      seuil_flag_pct: 30      # PLACEHOLDER — au-delà : SOFT_FLAG « pente forte »
+      severity: moyen
       slope_labels:           # pente en %, bornes hautes
         faible: 10
         modere: 20

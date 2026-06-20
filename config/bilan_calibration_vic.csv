@@ -1,0 +1,28 @@
+# LA BUSE — gabarit de calibration du bilan promoteur (a remplir par Vic).
+# -------------------------------------------------------------------------
+# Remplis les colonnes "valeur" et "source" des lignes que tu veux fixer.
+#   valeur  = ton chiffre reel (promoteur, devis, observatoire). Laisse VIDE pour garder l'estimation actuelle.
+#   source  = d'ou vient le chiffre (ex: "promoteur X", "devis VRD 2026", "observatoire CERBTP").
+# Les colonnes a droite ("valeur_actuelle", "provenance_actuelle", "repere") sont des REPERES en lecture seule.
+# Renvoie-moi ce fichier rempli : je l'injecte en base par secteur, sans jamais ecraser une valeur deja saisie.
+# Lignes "#" et lignes a "valeur" vide = ignorees a l'injection. Decimales avec un POINT (ex: 0.80, 2750).
+#
+secteur,param,valeur,source,unite,libelle,valeur_actuelle,provenance_actuelle,repere
+# ===== SOCLE COMMUN (s'applique a toute la commune ; un secteur peut surcharger plus bas) =====
+*,cout_construction_m2_sdp,,,€/m² SDP,Cout de construction (CRITIQUE — plus fort levier),2100,estimee,"Reunion collectif 2200-2800+ €/m² SDP (audit O2) — sous-evalue surestime la charge fonciere"
+*,prix_m2_lls,,,€/m²,Prix de sortie logement aide (LLS),2900,estimee,"cession VEFA->bailleur, prix de revient social DOM"
+*,ratio_vendable,,,ratio,Ratio SDP -> habitable vendable,0.80,estimee,"standard 0.78-0.85"
+*,bonus_vue_mer_pct,,,%,Bonus prix si vue mer degagee,15,estimee,"balneaire Reunion 10-25 %"
+*,cout_vrd_base,,,€/m² terrain,VRD / viabilisation de base,90,estimee,"a confirmer par devis local"
+*,majoration_vrd_pente_pct,,,%,Majoration VRD — pente forte,30,estimee,"surcout terrassement"
+*,majoration_vrd_assainissement_pct,,,%,Majoration VRD — assainissement autonome,25,estimee,"surcout ANC"
+*,honoraires_pct,,,% du CA,Honoraires + commercialisation,12,estimee,"technique + commercialisation"
+*,frais_financiers_pct,,,% du CA,Frais financiers (portage),3,estimee,"taux de portage actuel"
+*,marge_cible_pct,,,% du CA,Marge cible promoteur,9,estimee,"fourchette reelle 8-10 %"
+*,prix_m2_neuf,,,€/m²,Prix de vente neuf (socle),4900,sourcee,"neuf Saint-Paul 2024 ~4920 ; marche ~5200 — OPTIONNEL (deja source)"
+# ===== PRIX DE VENTE NEUF PAR SECTEUR (bassin PLU) — surcharge le socle ci-dessus =====
+Le Guillaume,prix_m2_neuf,,,€/m²,Prix neuf — Le Guillaume (A CONFIRMER),3900,estimee,"echantillon appart FRAGILE — seul secteur estime"
+Saint-Gilles,prix_m2_neuf,,,€/m²,Prix neuf — Saint-Gilles,5800,sourcee,"mediane appart ~6029 (SeLoger) — OPTIONNEL"
+La Saline,prix_m2_neuf,,,€/m²,Prix neuf — La Saline,6000,sourcee,"moy appart ~6632 — OPTIONNEL"
+Plateau Caillou,prix_m2_neuf,,,€/m²,Prix neuf — Plateau Caillou,3500,sourcee,"moy appart ~3417 — OPTIONNEL"
+La Plaine-Bois de Nèfles,prix_m2_neuf,,,€/m²,Prix neuf — La Plaine-Bois de Nefles,3400,sourcee,"appart ~3100-3700 — OPTIONNEL"

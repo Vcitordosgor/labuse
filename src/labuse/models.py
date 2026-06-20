@@ -72,6 +72,9 @@ class Parcel(Base, TimestampMixin):
     surface_m2: Mapped[float | None] = mapped_column(Float)  # calculée en 2975
     centroid: Mapped[object | None] = mapped_column(Geometry("POINT", srid=SRID, spatial_index=False))
     bbox: Mapped[object | None] = mapped_column(Geometry("POLYGON", srid=SRID, spatial_index=False))
+    # Provenance : NULL/'referentiel' = ingestion en masse ; 'audit' = ajoutée à la demande
+    # (Lot A — audit pull). Sert au bandeau « audit à la demande » et au filtrage.
+    origine: Mapped[str | None] = mapped_column(String(16))
 
     ingestion_run_id: Mapped[int | None] = mapped_column(ForeignKey("ingestion_runs.id"))
 
@@ -337,6 +340,13 @@ class PipelineEntry(Base, TimestampMixin):
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine)
+    ensure_parcel_origine(engine)
+    ensure_residuel_cache(engine)
+    ensure_saved_filters(engine)
+    ensure_personnes_morales(engine)
+    ensure_bilan_params(engine)
+    ensure_vue_mer_cache(engine)
+    ensure_watch_zones(engine)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
 
@@ -398,6 +408,14 @@ def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) 
     ddl += [
         "CREATE INDEX IF NOT EXISTS idx_parcels_geom_2975 ON parcels USING gist (geom_2975)",
         "CREATE INDEX IF NOT EXISTS idx_spatial_layers_geom_2975 ON spatial_layers USING gist (geom_2975)",
+        # Index GIST PARTIEL voirie : la cascade calcule la distance à la voirie la plus proche
+        # (proxy d'accès/enclavement) via un KNN « ORDER BY geom_2975 <-> p.geom_2975 LIMIT 1 »
+        # filtré sur kind='voirie'. Sans index dédié, le KNN parcourt l'index complet (dont les
+        # ~84 000 bâtiments à Saint-Paul complet) en rejetant les non-voirie → recalcul cascade de
+        # plusieurs heures (mesuré LOT 2). Le prédicat est EXACTEMENT « kind='voirie' » (PAS de
+        # « AND geom_2975 IS NOT NULL » : la requête ne garantissant pas cette condition, le planner
+        # ne pourrait pas matcher l'index partiel et retomberait sur l'index complet).
+        "CREATE INDEX IF NOT EXISTS idx_spatial_layers_voirie_geom2975 ON spatial_layers USING gist (geom_2975) WHERE kind = 'voirie'",
         # Index FONCTIONNEL pour DVF : la cascade interroge les ventes par rayon métrique via
         # ST_DWithin(ST_Transform(centroid,2975), ST_Transform(d.geom,2975), r). Sans cet index,
         # la reprojection à la volée empêche tout index spatial → scan de toutes les ventes par
@@ -425,6 +443,112 @@ def ensure_enrichment_cache(engine) -> None:
             " payload jsonb NOT NULL, computed_at timestamptz NOT NULL DEFAULT now())"))
 
 
+def ensure_vue_mer_cache(engine) -> None:
+    """Cache de la vue mer (2.B) — mémoïse le calcul line-of-sight (RGE ALTI) ; lu par le bilan
+    (bonus prix) sans appel live. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS parcel_vue_mer ("
+            " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
+            " vue varchar(10), distance_cote_m integer, obstruction_pct integer,"
+            " computed_at timestamptz NOT NULL DEFAULT now())"))
+
+
+def ensure_bilan_params(engine) -> None:
+    """Overrides de paramètres du bilan par SECTEUR (1.C). secteur='*' = global. Idempotent.
+    Pose la colonne `provenance` (sourcee|estimee) et injecte le SOCLE web sourcé (sans écraser
+    un override déjà saisi) → le bilan est défendable dès le boot."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS bilan_params ("
+            " secteur varchar(64) NOT NULL, param varchar(48) NOT NULL, value double precision NOT NULL,"
+            " is_placeholder boolean NOT NULL DEFAULT false, updated_at timestamptz NOT NULL DEFAULT now(),"
+            " PRIMARY KEY (secteur, param))"))
+        c.execute(_t("ALTER TABLE bilan_params ADD COLUMN IF NOT EXISTS provenance varchar(16)"))
+        from .faisabilite.bilan_calibration import CALIBRATION
+        from .faisabilite.bilan_calibration import seed as _seed
+        _seed(c)
+        # LOT 3 — recale la marge cible par DÉFAUT (système, secteur '*') sur la fourchette
+        # promoteur 8–10 %. Ne touche QUE l'estimée système au-dessus de la fourchette : jamais
+        # un override saisi (les overrides utilisateur vivent sur un secteur, pas '*').
+        c.execute(_t(
+            "UPDATE bilan_params SET value = :v, updated_at = now() "
+            "WHERE secteur = '*' AND param = 'marge_cible_pct' "
+            "AND provenance = 'estimee' AND value > 10"),
+            {"v": CALIBRATION["marge_cible_pct"][0]})
+
+
+def ensure_personnes_morales(engine) -> None:
+    """Propriétaires personnes morales (1.A — fichier DGFiP, Licence Ouverte). Donnée PUBLIQUE,
+    par parcelle (idu). Idempotent. `source`/`url_source`/`millesime`/`date_import` tracés (§3)."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS parcelle_personne_morale ("
+            " idu varchar(14) PRIMARY KEY,"
+            " groupe smallint, groupe_label varchar(80), forme_juridique varchar(20),"
+            " denomination varchar(200), siren varchar(20), millesime varchar(8),"
+            " source varchar(120), url_source text, date_import timestamptz NOT NULL DEFAULT now())"))
+
+
+def ensure_saved_filters(engine) -> None:
+    """Filtres de recherche sauvegardés (Lot D3) — pilote mono-compte, params en JSONB. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS saved_filters ("
+            " id serial PRIMARY KEY, name varchar(80) NOT NULL, params jsonb NOT NULL,"
+            " created_at timestamptz NOT NULL DEFAULT now())"))
+
+
+def ensure_watch_zones(engine) -> None:
+    """3.C — Alertes intelligentes : ZONES DE VEILLE (polygones dessinés) + table `alertes`
+    (les « nouveautés »). Idempotent. La dédup d'une alerte par fait-source repose sur deux
+    index uniques PARTIELS (une vente ne crée qu'une alerte par zone ; un permis qu'une par
+    parcelle suivie) → re-rafraîchir sans donnée neuve n'ajoute rien."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS watch_zones ("
+            " id serial PRIMARY KEY, name varchar(120) NOT NULL, commune varchar(64) NOT NULL,"
+            " geom geometry(Polygon, 4326) NOT NULL,"
+            " created_at timestamptz NOT NULL DEFAULT now(), last_run_at timestamptz)"))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS idx_watch_zones_geom ON watch_zones USING gist (geom)"))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_watch_zones_commune ON watch_zones (commune)"))
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS alertes ("
+            " id serial PRIMARY KEY, kind varchar(32) NOT NULL,"
+            " zone_id integer REFERENCES watch_zones(id) ON DELETE CASCADE,"
+            " parcel_id integer REFERENCES parcels(id) ON DELETE CASCADE,"
+            " source_ref varchar(64) NOT NULL, label text NOT NULL, payload jsonb,"
+            " acknowledged boolean NOT NULL DEFAULT false,"
+            " detected_at timestamptz NOT NULL DEFAULT now())"))
+        c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_zone_dvf "
+                     "ON alertes (zone_id, source_ref) WHERE kind = 'dvf_in_zone'"))
+        c.execute(_t("CREATE UNIQUE INDEX IF NOT EXISTS uq_alertes_parcel_permit "
+                     "ON alertes (parcel_id, source_ref) WHERE kind = 'permit_near_followed'"))
+
+
+def ensure_residuel_cache(engine) -> None:
+    """Cache du potentiel résiduel (Lot B) — alimente le filtre « sous-densité » sans
+    relancer la faisabilité par parcelle à chaque chargement de carte. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS parcel_residuel ("
+            " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
+            " taux_emprise_pct integer, pct_potentiel integer, sous_densite boolean,"
+            " sdp_residuelle_m2 integer, computed_at timestamptz NOT NULL DEFAULT now())"))
+
+
 def ensure_schema(engine) -> None:
     """Réconciliation LÉGÈRE et idempotente du schéma (boot / doctor / prepare-pilot).
 
@@ -437,6 +561,21 @@ def ensure_schema(engine) -> None:
     ensure_geom_2975(engine, backfill=False)
     ensure_pipeline_prospection(engine)
     ensure_enrichment_cache(engine)
+    ensure_parcel_origine(engine)
+    ensure_residuel_cache(engine)
+    ensure_saved_filters(engine)
+    ensure_personnes_morales(engine)
+    ensure_bilan_params(engine)
+    ensure_vue_mer_cache(engine)
+    ensure_watch_zones(engine)
+
+
+def ensure_parcel_origine(engine) -> None:
+    """Colonne `origine` sur parcels (Lot A — audit pull). Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("ALTER TABLE parcels ADD COLUMN IF NOT EXISTS origine varchar(16)"))
 
 
 def drop_all(engine) -> None:

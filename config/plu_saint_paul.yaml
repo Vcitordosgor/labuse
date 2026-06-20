@@ -48,10 +48,33 @@ hypotheses_faisabilite:
   # --- Bilan promoteur (CA, charge foncière) ---
   cout_construction_m2_bas: 1800.0  # coût de construction au m² habitable (borne basse)
   cout_construction_m2_haut: 2200.0 # idem (borne haute)
-  marge_promoteur_pct: 0.18         # marge promoteur (% du CA)
+  marge_promoteur_pct: 0.09         # marge promoteur (% du CA) — fourchette réelle 8–10 %, à affiner
   frais_annexes_pct: 0.12           # honoraires + commercialisation + financier + aléas (% du CA)
   dvf_radius_m: 1500.0              # rayon de recherche des ventes DVF comparables (m)
   dvf_min_ventes: 8                # en deçà, prix DVF non fiable -> on le dit, on n'invente pas
+  # --- Prescriptions GPU (Décisions 3.b / 3.c) ---
+  pct_lls: 30                       # VALIDÉ Vic : 30 % de logements aidés en secteur de mixité sociale.
+  #   Source : Règlement PLU Saint-Paul, Article 2 « Occupations et utilisations du sol soumises
+  #   à des conditions particulières », clause de logement aidé (p.11, Titre 2 Livret 1 ; valeur
+  #   identique 30 % dans tous les bassins). Appliqué au CA UNIQUEMENT si la clause est DÉCLENCHÉE
+  #   (seuils ci-dessous) ET si prix_m2_lls est calibré ; sinon « impact non chiffré ».
+  # Seuils de déclenchement de la clause (Art. 2, SOURCÉS — logique OU du texte) :
+  mixite_sdp_seuil_m2: 1500         # « programme dont la SDP ≥ 1 500 m² » (bornes 1500/1800 du texte)
+  mixite_logements_seuil: 20        # « programme de 20 logements ou plus »
+  mixite_terrain_seuil_m2: 6000     # « terrain d'habitation de plus de 6 000 m² »
+  prix_m2_lls: 0                    # prix de sortie €/m² des logements aidés (PLACEHOLDER, 0 = non calibré).
+  majoration_vrd_pluvial: 0         # % de majoration du coût (VRD) en zonage eaux pluviales
+  #                                   (0 = badge visible mais effet neutre tant que non calibré).
+  # --- Potentiel résiduel (Lot B) ---
+  niveaux_bati_existant_defaut: 1   # PLACEHOLDER : niveaux supposés du bâti EXISTANT quand la
+  #   hauteur/étages BD TOPO n'est pas ingéré (cas actuel). Prudent (1 = rez) → SOUS-estime la
+  #   SDP existante, donc SUR-estime le résiduel. Remplacé automatiquement par nombre_d_etages
+  #   BD TOPO dès qu'il est ingéré. Le taux d'emprise, lui, est calculé sans hypothèse de hauteur.
+  sous_densite_seuil_pct: 40        # PLACEHOLDER : en deçà de ce taux d'utilisation de l'emprise
+  #                                   constructible, une parcelle bâtie est marquée « sous-densité ».
+  # --- Assemblage foncier (Lot C5) — PLACEHOLDERS ---
+  assemblage_min_surface_m2: 1000   # surface cumulée à partir de laquelle un assemblage « débloque »
+  assemblage_individuel_max_m2: 1000  # une parcelle au-dessus n'a pas besoin d'assemblage (exclue des paires)
 
 zones:
 

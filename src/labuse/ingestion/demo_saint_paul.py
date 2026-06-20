@@ -48,7 +48,7 @@ def _idu(insee: str, num: int) -> str:
 # Définition des parcelles : zonage propre + situation testée.
 PARCELS = [
     dict(num=1, plu="U",  sar="territoire_urbain", ocs="artificialise", case="opportunité (U, potentiel, marché, permis, morale)"),
-    dict(num=2, plu="Ab", sar="espace_agricole",   ocs="agricole",      safer=True, case="à creuser (agricole/SAFER)"),
+    dict(num=2, plu="Ab", sar="espace_agricole",   ocs="agricole",      safer=True, case="faux positif (zone Ab agricole — non constructible au PLU + SAFER)"),
     dict(num=3, plu="Ub", sar="territoire_urbain", ocs="naturel",       ppr_rouge=True, case="exclue (PPR rouge)"),
     dict(num=4, plu="N",  sar="espace_naturel",    ocs="naturel",       case="faux positif (SAR espace naturel > PLU)"),
     dict(num=5, plu="U",  sar="territoire_urbain", ocs="artificialise", parc_coeur=True, case="exclue (cœur Parc National)"),

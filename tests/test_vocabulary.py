@@ -37,7 +37,9 @@ def test_export_pas_d_opportunite_fiable():
 
 
 def test_sar_libelles_honnetes_dans_la_cascade():
-    # hors îlot / compatible / à vérifier : formulations prudentes exactes.
+    # hors îlot / compatible / proxy indicatif (Décision 2) : formulations prudentes exactes.
     assert "hors îlot cartographié — aucune contrainte SAR déduite automatiquement" in PHASE1
     assert "vocation compatible détectée" in PHASE1 and "à croiser avec PLU/PPR" in PHASE1
-    assert "vocation à vérifier" in PHASE1 and "possible contrainte régionale" in PHASE1
+    assert "⚠ proxy SAR divergent du PLU — vigilance en cas de révision" in PHASE1
+    assert "SAR (proxy indicatif)" in PHASE1
+    assert "ne vaut ni interdiction ni constructibilité" in PHASE1

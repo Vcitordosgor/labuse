@@ -153,6 +153,53 @@ def test_map_geojson(client):
     assert fc["features"][0]["geometry"]["type"] in ("Polygon", "MultiPolygon")
 
 
+def test_map_bati_endpoint(client):
+    """LOT 2 — taux de bâti par parcelle (mode carte « mutabilité »)."""
+    d = client.get("/map/bati", params={"commune": "Saint-Paul"}).json()
+    assert "disponible" in d and "ratios" in d
+    if d["disponible"]:
+        assert isinstance(d["ratios"], dict)
+        assert all(0.0 <= v <= 1.0 for v in d["ratios"].values())
+
+
+def test_assemblage_study_endpoint(client):
+    """LOT 2 — étude de faisabilité cumulée sur un ensemble de parcelles."""
+    from labuse import models
+    from labuse.db import session_scope
+    with session_scope() as s:   # 2 IDU réels du jeu de démo
+        idus = [r[0] for r in s.execute(select(models.Parcel.idu).limit(2)).all()]
+    # garde-fou : < 2 parcelles → 400
+    assert client.get("/assemblage/study", params={"idus": idus[0]}).status_code == 400
+    r = client.get("/assemblage/study", params={"idus": ",".join(idus)})
+    assert r.status_code == 200
+    d = r.json()
+    assert d["n_parcelles"] == 2
+    assert isinstance(d["contigu"], bool)
+    assert d["surface_cumulee_m2"] >= 0
+    assert "sdp_m2" in d["capacite"] and "logements" in d["capacite"]
+    assert "à valider" in d["note"]
+
+
+def test_shortlist_endpoint(client):
+    r = client.get("/shortlist", params={"commune": "Saint-Paul", "limit": 5})
+    assert r.status_code == 200
+    d = r.json()
+    assert {"commune", "count", "candidates_total", "generated_at", "sujets"} <= set(d)
+    assert d["count"] <= 5 and len(d["sujets"]) == d["count"]
+    if d["sujets"]:
+        # rangs 1..N consécutifs et priorité décroissante (logique promoteur, pas le score brut)
+        assert [s["rang"] for s in d["sujets"]] == list(range(1, len(d["sujets"]) + 1))
+        prios = [s["priority_score"] for s in d["sujets"]]
+        assert prios == sorted(prios, reverse=True)
+        top = d["sujets"][0]
+        assert {"idu", "verdict_status", "score", "surface_m2", "potentiel_assemblage",
+                "ca", "charge_fonciere", "blocage_principal", "confiance",
+                "proprietaire", "prochaine_action", "badges"} <= set(top)
+        assert top["verdict_status"] in ("opportunite", "a_creuser")
+        assert "Priorité du jour" in top["badges"]      # le 1er sujet est toujours marqué
+        assert isinstance(top["priority_components"], dict)
+
+
 def test_front_served(client):
     assert client.get("/", follow_redirects=False).status_code in (302, 307)
     idx = client.get("/app/")

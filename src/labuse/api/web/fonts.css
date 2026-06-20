@@ -1,4 +1,25 @@
-/* Polices auto-hébergées (Fraunces, Inter) — aucune dépendance Google Fonts */
+/* Polices auto-hébergées (Fraunces, Inter, IBM Plex Mono) — aucune dépendance Google Fonts */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/ibm-plex-mono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/ibm-plex-mono-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/ibm-plex-mono-600.woff2') format('woff2');
+}
 @font-face {
   font-family: 'Inter';
   font-style: normal;

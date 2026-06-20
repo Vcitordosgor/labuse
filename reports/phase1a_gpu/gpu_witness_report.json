@@ -1,0 +1,312 @@
+{
+  "insee": "97415",
+  "base": "https://apicarto.ign.fr/api/gpu",
+  "witnesses": [
+    {
+      "idu": "97415000BV0912",
+      "attendu": "U",
+      "role": "urbaine / centre",
+      "surface_m2": 3948,
+      "gpu_live": {
+        "zone_urba": [
+          {
+            "typezone": "U",
+            "libelle": "U6c",
+            "libelong": "",
+            "partition": "DU_97415",
+            "idurba": "97415_PLU_20251217",
+            "datappro": null,
+            "datvalid": "20120927",
+            "gpu_status": "production",
+            "gpu_timestamp": "2026-03-09T05:03:58.840Z"
+          }
+        ],
+        "document": [
+          {
+            "typezone": null,
+            "libelle": null,
+            "libelong": null,
+            "partition": "DU_97415",
+            "idurba": null,
+            "datappro": null,
+            "datvalid": null,
+            "gpu_status": "production",
+            "gpu_timestamp": "2026-03-09T05:03:58.840Z"
+          }
+        ],
+        "prescription_counts": {
+          "surf": 3,
+          "lin": 0,
+          "pct": 0
+        },
+        "prescriptions": {
+          "surf": [
+            {
+              "typepsc": "48",
+              "stypepsc": "01",
+              "libelle": "zonage d'eau pluviale - zone reglt Modérée",
+              "idurba": "97415_PLU_20251217"
+            },
+            {
+              "typepsc": "17",
+              "stypepsc": "00",
+              "libelle": "Clause logements aidés",
+              "idurba": "97415_PLU_20251217"
+            },
+            {
+              "typepsc": "05",
+              "stypepsc": "00",
+              "libelle": "ER 81 - Aménagement du chemin de la Cigale à 6 mètres d'emprise",
+              "idurba": "97415_PLU_20251217"
+            }
+          ],
+          "lin": [],
+          "pct": []
+        },
+        "assiette_sup_s": 0
+      },
+      "deja_ingere": {
+        "subtype": "U",
+        "coverage": 1.0,
+        "attrs": {
+          "idurba": "97415_PLU_20251217",
+          "libelle": "U6c",
+          "partition": "DU_97415"
+        }
+      },
+      "cascade": [
+        {
+          "layer_name": "safer",
+          "result": "PASS",
+          "severity": null,
+          "detail": "Hors zonage SAFER."
+        },
+        {
+          "layer_name": "sar",
+          "result": "PASS",
+          "severity": null,
+          "detail": "SAR : hors îlot cartographié — aucune contrainte SAR déduite automatiquement."
+        },
+        {
+          "layer_name": "zonage_plu_gpu",
+          "result": "POSITIVE",
+          "severity": null,
+          "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+        }
+      ]
+    },
+    {
+      "idu": "97415000BV0405",
+      "attendu": "A",
+      "role": "agricole / SAFER",
+      "surface_m2": 1991,
+      "gpu_live": {
+        "zone_urba": [
+          {
+            "typezone": "U",
+            "libelle": "U6c",
+            "libelong": "",
+            "partition": "DU_97415",
+            "idurba": "97415_PLU_20251217",
+            "datappro": null,
+            "datvalid": "20120927",
+            "gpu_status": "production",
+            "gpu_timestamp": "2026-03-09T05:03:58.840Z"
+          },
+          {
+            "typezone": "A",
+            "libelle": "A",
+            "libelong": "",
+            "partition": "DU_97415",
+            "idurba": "97415_PLU_20251217",
+            "datappro": null,
+            "datvalid": "20120927",
+            "gpu_status": "production",
+            "gpu_timestamp": "2026-03-09T05:03:58.840Z"
+          }
+        ],
+        "document": [
+          {
+            "typezone": null,
+            "libelle": null,
+            "libelong": null,
+            "partition": "DU_97415",
+            "idurba": null,
+            "datappro": null,
+            "datvalid": null,
+            "gpu_status": "production",
+            "gpu_timestamp": "2026-03-09T05:03:58.840Z"
+          }
+        ],
+        "prescription_counts": {
+          "surf": 2,
+          "lin": 0,
+          "pct": 0
+        },
+        "prescriptions": {
+          "surf": [
+            {
+              "typepsc": "48",
+              "stypepsc": "01",
+              "libelle": "zonage d'eau pluviale - zone reglt Modérée",
+              "idurba": "97415_PLU_20251217"
+            },
+            {
+              "typepsc": "17",
+              "stypepsc": "00",
+              "libelle": "Clause logements aidés",
+              "idurba": "97415_PLU_20251217"
+            }
+          ],
+          "lin": [],
+          "pct": []
+        },
+        "assiette_sup_s": 0
+      },
+      "deja_ingere": {
+        "subtype": "A",
+        "coverage": 1.0,
+        "attrs": {
+          "idurba": "97415_PLU_20251217",
+          "libelle": "A",
+          "partition": "DU_97415"
+        }
+      },
+      "cascade": [
+        {
+          "layer_name": "safer",
+          "result": "PASS",
+          "severity": null,
+          "detail": "Hors zonage SAFER."
+        },
+        {
+          "layer_name": "sar",
+          "result": "PASS",
+          "severity": null,
+          "detail": "SAR : hors îlot cartographié — aucune contrainte SAR déduite automatiquement."
+        },
+        {
+          "layer_name": "zonage_plu_gpu",
+          "result": "SOFT_FLAG",
+          "severity": "moyen",
+          "detail": "Zone PLU « A » (agricole — SAFER)."
+        }
+      ]
+    },
+    {
+      "idu": "97415000BV1431",
+      "attendu": "AUc",
+      "role": "à urbaniser",
+      "surface_m2": 2274,
+      "gpu_live": {
+        "zone_urba": [
+          {
+            "typezone": "U",
+            "libelle": "U6c",
+            "libelong": "",
+            "partition": "DU_97415",
+            "idurba": "97415_PLU_20251217",
+            "datappro": null,
+            "datvalid": "20120927",
+            "gpu_status": "production",
+            "gpu_timestamp": "2026-03-09T05:03:58.840Z"
+          },
+          {
+            "typezone": "AUc",
+            "libelle": "AU6c",
+            "libelong": "",
+            "partition": "DU_97415",
+            "idurba": "97415_PLU_20251217",
+            "datappro": null,
+            "datvalid": "20120927",
+            "gpu_status": "production",
+            "gpu_timestamp": "2026-03-09T05:03:58.840Z"
+          }
+        ],
+        "document": [
+          {
+            "typezone": null,
+            "libelle": null,
+            "libelong": null,
+            "partition": "DU_97415",
+            "idurba": null,
+            "datappro": null,
+            "datvalid": null,
+            "gpu_status": "production",
+            "gpu_timestamp": "2026-03-09T05:03:58.840Z"
+          }
+        ],
+        "prescription_counts": {
+          "surf": 3,
+          "lin": 0,
+          "pct": 0
+        },
+        "prescriptions": {
+          "surf": [
+            {
+              "typepsc": "17",
+              "stypepsc": "00",
+              "libelle": "Clause logements aidés",
+              "idurba": "97415_PLU_20251217"
+            },
+            {
+              "typepsc": "48",
+              "stypepsc": "01",
+              "libelle": "zonage d'eau pluviale - zone reglt Modérée",
+              "idurba": "97415_PLU_20251217"
+            },
+            {
+              "typepsc": "17",
+              "stypepsc": "00",
+              "libelle": "Clause logements aidés",
+              "idurba": "97415_PLU_20251217"
+            }
+          ],
+          "lin": [],
+          "pct": []
+        },
+        "assiette_sup_s": 0
+      },
+      "deja_ingere": {
+        "subtype": "AUc",
+        "coverage": 1.0,
+        "attrs": {
+          "idurba": "97415_PLU_20251217",
+          "libelle": "AU6c",
+          "partition": "DU_97415"
+        }
+      },
+      "cascade": [
+        {
+          "layer_name": "safer",
+          "result": "PASS",
+          "severity": null,
+          "detail": "Hors zonage SAFER."
+        },
+        {
+          "layer_name": "sar",
+          "result": "SOFT_FLAG",
+          "severity": "fort",
+          "detail": "SAR : vocation à vérifier — espace naturel SAR (protection forte) — à vérifier (~98% de la parcelle) — possible contrainte régionale (ne vaut ni interdiction ni constructibilité)."
+        },
+        {
+          "layer_name": "zonage_plu_gpu",
+          "result": "POSITIVE",
+          "severity": null,
+          "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+        }
+      ]
+    }
+  ],
+  "municipality": {
+    "feature_count": 1,
+    "properties": [
+      {
+        "partition": null,
+        "is_rnu": false,
+        "name": "SAINT-PAUL",
+        "insee": "97415"
+      }
+    ]
+  }
+}

@@ -11,10 +11,20 @@ venv/
 
 # Env / secrets
 .env
+# Fichiers d'environnement RÉELS du pack de déploiement (jamais committés) ;
+# seuls les gabarits *.env.example sont versionnés.
+deploy/env/*.env
+!deploy/env/*.env.example
 config/settings.yaml
 
 # Data (never commit ingested public data dumps / fixtures volumineuses)
-data/
+data/*
+# …sauf le dataset Obsimmo fourni par le client (petit, versionné, requis par la fiche LOT 4-C)
+!data/obsimmo_vente_reunion.json
+# …et l'extrait La Réunion de la carte des loyers DHUP (open data, petit, requis par la fiche LOT 4-B)
+!data/carte_loyers_reunion_2025.json
+# …et l'extrait INSEE statut d'occupation RP 2022 (open data, petit, requis par la fiche LOT 4-B)
+!data/insee_occupation_reunion_2022.json
 *.gpkg
 *.shp
 *.shx
@@ -42,3 +52,12 @@ backups/
 
 # Copie serveur du Caddyfile (le modèle est deploy/Caddyfile.example)
 deploy/Caddyfile
+
+# Phase 1.A GPU test — cache brut régénérable (réponses API Carto)
+reports/phase1a_gpu/cache/
+
+# Captures d'audit QA (artefacts locaux)
+qa/shots/
+
+# Sources externes brutes (PDF PLH, etc.) — non commitées
+.sources/

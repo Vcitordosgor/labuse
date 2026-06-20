@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
@@ -371,6 +371,15 @@ def stats(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     return out
 
 
+def _owner_famille(groupe, forme, denom) -> str:
+    """Famille de propriétaire (public/prive/inconnu) pour le filtre carte (1.A — DGFiP). Source
+    unique : classify_dgfip. `inconnu` = parcelle absente du fichier des morales (= particulier)."""
+    if groupe is None and not denom:
+        return "inconnu"
+    from ..proprietaire_type import classify_dgfip
+    return classify_dgfip(groupe, forme, denom)["famille"]
+
+
 @app.get("/map/parcels.geojson")
 def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, le=200000), db: Session = Depends(get_db)) -> dict:
     """Parcelles (géométrie simplifiée 4326) + verdict, pour la carte colorée."""
@@ -379,7 +388,9 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
             """
             SELECT p.idu, p.surface_m2,
                    ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
-                   e.status, e.opportunity_score, e.completeness_score, d.detail AS downgrade_reason
+                   e.status, e.opportunity_score, e.completeness_score, d.detail AS downgrade_reason,
+                   r.taux_emprise_pct, r.sous_densite, r.sdp_residuelle_m2,
+                   own.groupe AS own_groupe, own.forme_juridique AS own_forme, own.denomination AS own_denom
             FROM parcels p
             LEFT JOIN LATERAL (
                 SELECT status, opportunity_score, completeness_score
@@ -390,6 +401,8 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 SELECT detail FROM cascade_results
                 WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
             ) d ON true
+            LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+            LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
             WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
               AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
             LIMIT :lim
@@ -407,6 +420,10 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 "opportunity_score": r["opportunity_score"],
                 "completeness_score": r["completeness_score"],
                 "downgrade_reason": r["downgrade_reason"],
+                "taux_emprise_pct": r["taux_emprise_pct"],
+                "sous_densite": r["sous_densite"],
+                "sdp_residuelle_m2": r["sdp_residuelle_m2"],
+                "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"]),
             },
         }
         for r in rows if r["g"]
@@ -420,6 +437,191 @@ def parcel_fiche(idu: str, db: Session = Depends(get_db)) -> dict:
     return _build_fiche(db, idu)
 
 
+@app.get("/map/bati")
+def map_bati(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Taux de bâti par parcelle (BD TOPO), pour le mode carte « mutabilité » (LOT 2).
+
+    Calcul à la demande (spatial geom_2975) — la couche par défaut (verdict) reste rapide.
+    `disponible=false` si la couche bâtiments n'est pas ingérée → l'UI le dit, ne ment pas."""
+    from .. import bati as bati_mod
+    commune = commune or config.get_settings().pilot_commune_name
+    if not bati_mod.layer_available(db):
+        return {"commune": commune, "disponible": False, "ratios": {}}
+    rows = db.execute(
+        text("SELECT id, idu FROM parcels WHERE commune = :c"), {"c": commune}
+    ).all()
+    id2idu = {r[0]: r[1] for r in rows}
+    stats = bati_mod.stats_batch(db, list(id2idu.keys()))
+    ratios = {id2idu[pid]: round(s.get("bati_ratio", 0.0), 3) for pid, s in stats.items()}
+    return {"commune": commune, "disponible": True, "ratios": ratios}
+
+
+@app.get("/assemblages")
+def assemblages(commune: str | None = None, limit: int = Query(100, ge=1, le=500),
+                db: Session = Depends(get_db)) -> dict:
+    """Liste dédiée des assemblages fonciers (Lot C5) : paires contiguës qui, réunies,
+    franchissent le seuil de taille — même propriétaire morale priorisé."""
+    from .. import assemblage
+    commune = commune or config.get_settings().pilot_commune_name
+    groups = assemblage.find_assemblages(db, commune, limit=limit)
+    return {"commune": commune, "count": len(groups),
+            "prioritaires": sum(1 for g in groups if g["meme_proprietaire"]), "assemblages": groups}
+
+
+@app.get("/assemblage/study")
+def assemblage_study(idus: str, db: Session = Depends(get_db)) -> dict:
+    """Étude de faisabilité sur un ENSEMBLE de parcelles regroupées (LOT 2) : surface cumulée,
+    capacité cumulée (SDP / logements) et bilan cumulé, par AGRÉGATION des faisabilités
+    par parcelle. Vérifie la contiguïté (mitoyenneté) — jamais d'assemblage fabriqué.
+    `idus` = liste séparée par des virgules (cap à 8)."""
+    from ..assemblage import ADJ_BUFFER_M
+    from ..faisabilite.db import fiche_payload
+    idu_list = [s.strip() for s in idus.split(",") if s.strip()][:8]
+    for i in idu_list:
+        _check_idu(i)
+    if len(idu_list) < 2:
+        raise HTTPException(400, "Sélectionnez au moins 2 parcelles mitoyennes.")
+    parcels = db.execute(
+        select(models.Parcel).where(models.Parcel.idu.in_(idu_list))
+    ).scalars().all()
+    if len(parcels) < 2:
+        raise HTTPException(404, "Parcelles introuvables.")
+    ids = [p.id for p in parcels]
+    # Contiguïté : l'union des parcelles (tamponnées d'une demi-largeur d'adjacence) doit former
+    # UN seul bloc connexe. Sinon, ce n'est pas un assemblage mitoyen.
+    contigu = bool(db.execute(text(
+        "SELECT ST_NumGeometries(ST_Union(ST_Buffer(geom_2975, :b))) = 1 "
+        "FROM parcels WHERE id = ANY(:ids)"), {"b": ADJ_BUFFER_M / 2.0, "ids": ids}).scalar())
+    surface_cumulee = round(sum(p.surface_m2 or 0 for p in parcels))
+    sdp = 0.0
+    log_min = log_max = 0
+    ca = {"bas": 0, "central": 0, "haut": 0}
+    charge = {"bas": 0, "central": 0, "haut": 0}
+    n_chiffrables = 0
+    for p in parcels:
+        try:
+            fa = fiche_payload(db, p.id)
+        except Exception:  # noqa: BLE001 - une parcelle illisible ne casse pas l'étude
+            fa = None
+        fr = (fa or {}).get("fourchette") or {}
+        sdp += fr.get("surface_plancher_m2") or 0
+        rng = fr.get("logements_sous_sol") or fr.get("logements_au_sol") or [0, 0]
+        log_min += rng[0] or 0
+        log_max += rng[1] or 0
+        bil = (fa or {}).get("bilan") or {}
+        if bil.get("ca"):
+            for k in ca:
+                ca[k] += bil["ca"].get(k) or 0
+            n_chiffrables += 1
+        if bil.get("charge_fonciere"):
+            for k in charge:
+                charge[k] += bil["charge_fonciere"].get(k) or 0
+    cf_m2 = round(charge["central"] / surface_cumulee) if surface_cumulee else None
+    return {
+        "idus": [p.idu for p in parcels],
+        "n_parcelles": len(parcels),
+        "contigu": contigu,
+        "surface_cumulee_m2": surface_cumulee,
+        "capacite": {"sdp_m2": round(sdp), "logements": [log_min, log_max]},
+        "ca": ca if n_chiffrables else None,
+        "charge_fonciere": ({**charge, "par_m2_terrain": cf_m2} if n_chiffrables else None),
+        "n_chiffrables": n_chiffrables,
+        "note": ("Faisabilité cumulée par agrégation des parcelles. "
+                 + ("Ensemble mitoyen (contigu). " if contigu else "⚠ Parcelles non contiguës — ce n'est pas un assemblage mitoyen. ")
+                 + "Surfaces et capacités indicatives ; accords propriétaires, géométrie d'opération "
+                 "et règlement (reculs, mutualisation) restent à valider."),
+    }
+
+
+@app.get("/shortlist")
+def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
+              db: Session = Depends(get_db)) -> dict:
+    """Shortlist promoteur — « les N sujets à traiter aujourd'hui ».
+
+    Priorisation PROMOTEUR (pas le score brut) : exploitabilité + fiabilité + densification +
+    poids économique + actionnabilité propriétaire − risque, puis bonus d'assemblage sur le
+    haut du panier (enrichi via la fiche existante). Aucune donnée inventée : tout provient
+    d'évaluations déjà calculées ; ce qui manque reste explicitement nul côté UI."""
+    from .. import shortlist as sl
+    commune = commune or config.get_settings().pilot_commune_name
+    # Candidats = verdicts actionnables (opportunité / à creuser), mêmes champs que la carte.
+    rows = db.execute(
+        text(
+            """
+            SELECT p.idu, p.commune, p.surface_m2,
+                   e.status, e.opportunity_score, e.completeness_score,
+                   d.detail AS downgrade_reason,
+                   r.sous_densite, r.sdp_residuelle_m2,
+                   own.groupe AS own_groupe, own.forme_juridique AS own_forme, own.denomination AS own_denom
+            FROM parcels p
+            JOIN LATERAL (
+                SELECT status, opportunity_score, completeness_score
+                FROM parcel_evaluations e WHERE e.parcel_id = p.id
+                ORDER BY evaluated_at DESC LIMIT 1
+            ) e ON true
+            LEFT JOIN LATERAL (
+                SELECT detail FROM cascade_results
+                WHERE parcel_id = p.id AND layer_name = 'declassement' LIMIT 1
+            ) d ON true
+            LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+            LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
+            WHERE p.commune = :c AND e.status IN ('opportunite', 'a_creuser')
+            """
+        ), {"c": commune}
+    ).mappings().all()
+    candidates = [
+        {**{k: r[k] for k in ("idu", "commune", "surface_m2", "status",
+                              "opportunity_score", "completeness_score", "downgrade_reason",
+                              "sous_densite", "sdp_residuelle_m2")},
+         "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"])}
+        for r in rows
+    ]
+    # 1) classement « cheap » → 2) enrichissement du panier → 3) bonus assemblage → 4) re-tri.
+    pool = sl.rank_candidates(candidates, pool=min(max(limit * 2, limit), 12))
+    enriched = []
+    for row in pool:
+        try:
+            fiche = _build_fiche(db, row["idu"], with_assistant=False)
+        except Exception:  # noqa: BLE001 - un sujet illisible ne casse jamais la shortlist
+            fiche = None
+        asm = ((fiche or {}).get("voisinage") or {}).get("assemblage") or {}
+        fiab = (((fiche or {}).get("faisabilite") or {}).get("bilan") or {}).get("fiabilite")
+        ab = sl.assemblage_bonus(bool(asm.get("possible")), asm.get("surface_cumulee_m2"))
+        mb = sl.marche_bonus(fiab)
+        row["_priority"] = (row.get("_priority") or 0) + ab + mb
+        if isinstance(row.get("_components"), dict):
+            row["_components"].update({"assemblage": ab, "marche": mb})   # transparence calibration
+        enriched.append((row, fiche))
+    enriched.sort(key=lambda t: (-(t[0].get("_priority") or 0),
+                                 -(t[0].get("opportunity_score") or 0), t[0].get("idu") or ""))
+    sujets = [sl.assemble_sujet(i + 1, row, fiche) for i, (row, fiche) in enumerate(enriched[:limit])]
+    return {
+        "commune": commune,
+        "count": len(sujets),
+        "candidates_total": len(candidates),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "sujets": sujets,
+    }
+
+
+@app.get("/map/permits.geojson")
+def permits_geojson(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Marqueurs SITADEL (Lot C4) : autorisations d'urbanisme géolocalisées (point = parcelle
+    rattachée). Pour la couche « permis » de la carte."""
+    rows = db.execute(
+        text(
+            """SELECT s.permit_id, s.type, s.date, ST_AsGeoJSON(s.geom) AS g
+               FROM sitadel_permits s
+               WHERE s.geom IS NOT NULL AND (CAST(:c AS text) IS NULL OR s.commune = :c)"""
+        ), {"c": commune}
+    ).mappings().all()
+    feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
+              "properties": {"num": r["permit_id"], "type": r["type"],
+                             "date": r["date"].date().isoformat() if r["date"] else None}}
+             for r in rows if r["g"]]
+    return {"type": "FeatureCollection", "features": feats}
+
+
 def _check_idu(idu: str) -> str:
     """Valide la forme d'un IDU avant tout accès DB : un octet nul ou un caractère de
     contrôle dans le chemin provoquait un 500 (erreur driver) au lieu d'un 404 propre
@@ -431,7 +633,7 @@ def _check_idu(idu: str) -> str:
     return idu
 
 
-def _build_fiche(db: Session, idu: str) -> dict:
+def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
@@ -486,8 +688,10 @@ def _build_fiche(db: Session, idu: str) -> dict:
     }
 
     # En-tête : verdict + LES DEUX scores (jamais l'opportunité seule).
+    from .resume import is_micro_opportunite
+    _status_val = ev.status.value if ev else None
     verdict_block = {
-        "status": ev.status.value if ev else None,
+        "status": _status_val,
         "opportunity_score": ev.opportunity_score if ev else None,
         "completeness_score": ev.completeness_score if ev else None,
         "reasons": reasons,
@@ -495,6 +699,9 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "downgrade_reason": next((r["detail"] for r in cascade if r["layer_name"] == "declassement"), None),
         "evaluated_at": ev.evaluated_at if ev else None,
         "rules_version": ev.rules_version if ev else None,
+        # Badge d'AFFICHAGE « micro-opportunité » (≤ 500 m²) — nuance promoteur, n'affecte NI le
+        # verdict NI les scores (cf. resume.is_micro_opportunite). Le statut ci-dessus est intact.
+        "micro_opportunite": is_micro_opportunite(_status_val, p.surface_m2),
     }
     # Occupation bâtie (correctif R1) — ratio/nb/plus grand bâtiment + label prudent.
     from .. import bati as bati_mod
@@ -508,15 +715,70 @@ def _build_fiche(db: Session, idu: str) -> dict:
     from .voisinage import compute_voisinage
     voisinage = compute_voisinage(db, p.id, p.surface_m2, verdict_block["status"])
 
-    return {
+    # Autorisations d'urbanisme à proximité (Lot C4) — historique SITADEL < 300 m.
+    try:
+        from ..ingestion.permits import nearby_permits
+        permits = nearby_permits(db, p.id)
+    except Exception:  # noqa: BLE001 - n'empêche jamais la fiche
+        permits = None
+
+    # Assemblage foncier v1 (Lot C5) — paire contiguë qui débloque le seuil de taille.
+    try:
+        from .. import assemblage as _asm
+        voisinage["assemblage_unlock"] = _asm.parcel_assemblage(db, p.id)
+    except Exception:  # noqa: BLE001
+        pass
+
+    # LOT 4.1 — Orientations PLH (TCO) pour la commune, avec alignement sur la capacité estimée.
+    plh_block = None
+    try:
+        from .. import plh as plh_mod
+        fr = ((faisabilite or {}).get("fourchette") or {})
+        rng = fr.get("logements_sous_sol") or fr.get("logements_au_sol") or [0, 0]
+        logements_est = rng[1] or None
+        plh_block = plh_mod.orientations(p.commune, logements_est)
+    except Exception:  # noqa: BLE001 - orientation optionnelle, jamais bloquante
+        plh_block = None
+
+    # LOT 4-C — Marché Obsimmo (vente) : indicateurs locaux + comparaison régionale pour la commune.
+    obsimmo_block = None
+    try:
+        from .. import obsimmo as obsimmo_mod
+        obsimmo_block = obsimmo_mod.fiche_block(p.commune)
+    except Exception:  # noqa: BLE001 - indicateur marché optionnel, jamais bloquant
+        obsimmo_block = None
+
+    # LOT 4-B — Marché locatif (carte des loyers DHUP) : loyer €/m² appartement & maison, source ouverte.
+    loyers_block = None
+    try:
+        from .. import loyers as loyers_mod
+        loyers_block = loyers_mod.fiche_block(insee=(p.idu or "")[:5], commune=p.commune)
+    except Exception:  # noqa: BLE001 - indicateur marché optionnel, jamais bloquant
+        loyers_block = None
+
+    # LOT 4-B (structure) — Statut d'occupation (INSEE RP 2022) : part propriétaires / locataires.
+    occupation_block = None
+    try:
+        from .. import occupation as occ_mod
+        occupation_block = occ_mod.fiche_block(insee=(p.idu or "")[:5], commune=p.commune)
+    except Exception:  # noqa: BLE001 - indicateur structure optionnel, jamais bloquant
+        occupation_block = None
+
+    fiche = {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
+            "origine": p.origine,  # 'audit' → bandeau « audit à la demande » sur la fiche
         },
         "resume": resume,
         "bati": bati_block,
         "voisinage": voisinage,
         "faisabilite": faisabilite,
+        "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
+        "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
+        "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)
+        "occupation": occupation_block,   # LOT 4-B — statut d'occupation (INSEE RP 2022)
+        "permits": permits,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en
         # LAZY-LOAD, par GET /parcels/{idu}/enrichment : il fait des appels externes lents
@@ -529,6 +791,13 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "ai": ev.ai_payload if ev else None,
         "disclaimer": "Pré-analyse. Constructibilité, propriété, rentabilité, faisabilité jamais garanties.",
     }
+    # Synthèse assistant DÉTERMINISTE (règles), dérivée des SEULS faits ci-dessus — alimente l'état
+    # premium de l'assistant SANS clé API (jamais d'invention), et sert d'aperçu quand la clé est posée.
+    # Calculée seulement pour la fiche affichée ; inutile pour les builds internes (shortlist, compare).
+    if with_assistant:
+        from .assistant import assistant_facts, rules_summary
+        fiche["assistant_rules"] = rules_summary(assistant_facts(fiche))
+    return fiche
 
 
 @app.get("/parcels/{idu}/enrichment")
@@ -539,7 +808,7 @@ def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
     l'ouverture de la fiche : calculés UNE FOIS puis mis en cache (parcel_enrichment), et
     chargés en arrière-plan par le front → la fiche s'ouvre immédiatement. Jamais de 500
     (chaque section est isolée par `_safe`)."""
-    from .enrichment import enrichment_cached
+    from .enrichment import enrichment_cached, remonter_le_temps
 
     _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
@@ -550,20 +819,165 @@ def parcel_enrichment(idu: str, db: Session = Depends(get_db)) -> dict:
     ).one()
     payload = enrichment_cached(db, p, lon, lat)
     ca = db.execute(text("SELECT computed_at FROM parcel_enrichment WHERE parcel_id = :p"), {"p": p.id}).scalar()
-    return {**payload, "computed_at": ca.isoformat() if ca else None}
+    # 3.B — lien « Remonter le temps » calculé HORS cache (déterministe, jamais périmé).
+    return {**payload, "remonter_le_temps": remonter_le_temps(lon, lat),
+            "computed_at": ca.isoformat() if ca else None}
+
+
+@app.get("/assistant/status")
+def assistant_status() -> dict:
+    """3.A — l'assistant IA est-il configuré (clé API présente) ? Pilote l'état du bouton côté UI."""
+    from .assistant import is_configured
+    return {"configured": is_configured()}
+
+
+@app.get("/parcels/{idu}/explain")
+def parcel_explain(idu: str, db: Session = Depends(get_db)) -> dict:
+    """3.A — Assistant : explication en langage naturel de la fiche (API Anthropic).
+
+    Le prompt ne contient QUE les faits structurés de la fiche (anti-hallucination). Sans clé
+    API (`ANTHROPIC_API_KEY`), renvoie un message clair — jamais d'erreur 500."""
+    from .assistant import explain_parcel
+    fiche = _build_fiche(db, idu)
+    return explain_parcel(fiche)
 
 
 @app.get("/parcels/{idu}/export")
-def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html)$"), db: Session = Depends(get_db)):
-    """Export fiche premium (§12 étape 10) : Markdown (?format=md) ou HTML (?format=html)."""
+def export_fiche(idu: str, format: str = Query("md", pattern="^(md|html|onepager)$"),
+                 db: Session = Depends(get_db)):
+    """Export fiche : Markdown (md), HTML détaillé (html), ou one-pager A4 imprimable (onepager,
+    Lot D1 — le document de comité : verdict, capacité, résiduel, bilan, contraintes, mini-carte)."""
     from fastapi.responses import HTMLResponse, PlainTextResponse
 
-    from .export import fiche_html, fiche_markdown
+    from .export import fiche_html, fiche_markdown, fiche_onepager
 
     fiche = _build_fiche(db, idu)
+    if format == "onepager":
+        _check_idu(idu)
+        gj = db.execute(
+            text("SELECT ST_AsGeoJSON(ST_SimplifyPreserveTopology(geom, 0.000005)) FROM parcels WHERE idu = :i"),
+            {"i": idu}).scalar()
+        return HTMLResponse(fiche_onepager(fiche, json.loads(gj) if gj else None))
     if format == "html":
         return HTMLResponse(fiche_html(fiche))
     return PlainTextResponse(fiche_markdown(fiche), media_type="text/markdown")
+
+
+@app.get("/parcels/{idu}/spf-letter")
+def spf_letter(idu: str, db: Session = Depends(get_db)):
+    """Courrier de demande au Service de la Publicité Foncière (Lot C3), pré-rempli avec la
+    référence cadastrale publique — voie légale d'identification, aucune donnée nominative."""
+    from fastapi.responses import PlainTextResponse
+
+    from ..proprietaire_type import spf_letter as build_letter
+
+    _check_idu(idu)
+    p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
+    if not p:
+        raise HTTPException(404, "Parcelle inconnue")
+    letter = build_letter({"idu": p.idu, "commune": p.commune, "section": p.section,
+                           "numero": p.numero, "surface_m2": p.surface_m2})
+    return PlainTextResponse(letter, media_type="text/plain; charset=utf-8")
+
+
+def _compare_row(fiche: dict) -> dict:
+    """Résumé COMPARABLE d'une parcelle (Lot D2) — champs alignés pour la vue côte à côte."""
+    p, v = fiche["parcel"], fiche["verdict"]
+    fa = fiche.get("faisabilite") or {}
+    fr = fa.get("fourchette") or {}
+    res = fa.get("residuel") or {}
+    bilan = fa.get("bilan") or {}
+    ca = bilan.get("ca") or {}
+    cf = bilan.get("charge_fonciere") or {}
+    contraintes = [c for c in fiche["cascade"] if c["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    return {
+        "idu": p["idu"], "commune": p.get("commune"), "section": p.get("section"), "numero": p.get("numero"),
+        "surface_m2": round(p["surface_m2"]) if p.get("surface_m2") else None,
+        "status": v.get("status"), "opportunity_score": v.get("opportunity_score"),
+        "completeness_score": v.get("completeness_score"),
+        "zone": fa.get("zone"), "constructible": fa.get("constructible"),
+        "capacite": fa.get("verdict") if fa.get("constructible") else None,
+        "sdp_max_m2": fr.get("surface_plancher_m2"),
+        "taux_emprise_pct": res.get("taux_emprise_pct") if res.get("disponible") else None,
+        "sdp_residuelle_m2": res.get("sdp_residuelle_m2") if res.get("disponible") else None,
+        "sous_densite": res.get("sous_densite") if res.get("disponible") else None,
+        "ca_bas": ca.get("bas"), "ca_haut": ca.get("haut"),
+        "charge_fonciere_m2": cf.get("par_m2_terrain"),
+        "n_contraintes": len(contraintes),
+        "contraintes": [c["detail"] for c in contraintes[:4]],
+        "synthese": (fiche.get("resume") or {}).get("synthese"),
+    }
+
+
+class SavedFilterIn(BaseModel):
+    name: str
+    params: dict
+
+
+@app.get("/filters")
+def list_filters(db: Session = Depends(get_db)) -> list[dict]:
+    """Filtres de recherche sauvegardés (Lot D3)."""
+    rows = db.execute(text("SELECT id, name, params, created_at FROM saved_filters ORDER BY created_at DESC")).mappings().all()
+    return [{"id": r["id"], "name": r["name"], "params": r["params"],
+             "created_at": r["created_at"].isoformat() if r["created_at"] else None} for r in rows]
+
+
+@app.post("/filters")
+def save_filter(body: SavedFilterIn, db: Session = Depends(get_db)) -> dict:
+    name = (body.name or "").strip()[:80]
+    if not name:
+        raise HTTPException(422, "Nom de filtre requis.")
+    fid = db.execute(text("INSERT INTO saved_filters (name, params) VALUES (:n, CAST(:p AS jsonb)) RETURNING id"),
+                     {"n": name, "p": json.dumps(body.params or {})}).scalar()
+    return {"id": fid, "name": name, "params": body.params}
+
+
+@app.delete("/filters/{filter_id}")
+def delete_filter(filter_id: int, db: Session = Depends(get_db)) -> dict:
+    db.execute(text("DELETE FROM saved_filters WHERE id = :i"), {"i": filter_id})
+    return {"ok": True}
+
+
+class BilanParamIn(BaseModel):
+    secteur: str
+    param: str
+    value: float | None = None   # None → réinitialise au défaut
+
+
+@app.get("/bilan/params")
+def get_bilan_params(secteur: str = Query("*"), db: Session = Depends(get_db)) -> dict:
+    """Paramètres du bilan (1.C) résolus pour un secteur (registre + overrides + non calibrés)."""
+    from ..faisabilite import bilan_params as bp
+    resolved = bp.resolve(db, secteur)
+    return {"secteur": secteur,
+            "params": [{**p, **resolved.get(p["key"], {})} for p in bp.registry()],
+            "non_calibres_critiques": bp.uncalibrated_critical(resolved)}
+
+
+@app.post("/bilan/params")
+def set_bilan_param(body: BilanParamIn, db: Session = Depends(get_db)) -> dict:
+    """Calibre (ou réinitialise) un paramètre du bilan pour un secteur (1.C — Vic calibre)."""
+    from ..faisabilite import bilan_params as bp
+    try:
+        bp.save(db, body.secteur.strip() or "*", body.param, body.value)
+    except ValueError as e:
+        raise HTTPException(422, str(e)) from e
+    return {"ok": True, "secteur": body.secteur, "param": body.param, "value": body.value}
+
+
+@app.get("/compare")
+def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des virgules"),
+            db: Session = Depends(get_db)) -> dict:
+    """Comparateur de parcelles (Lot D2) : 2-3 parcelles côte à côte (verdict, capacité,
+    résiduel, bilan, contraintes). Ignore silencieusement un IDU introuvable."""
+    ids = [x.strip() for x in idus.split(",") if x.strip()][:3]
+    out = []
+    for idu in ids:
+        try:
+            out.append(_compare_row(_build_fiche(db, idu, with_assistant=False)))
+        except HTTPException:
+            continue
+    return {"count": len(out), "parcels": out}
 
 
 @app.post("/parcels/{idu}/evaluate")
@@ -583,6 +997,44 @@ def evaluate_one(idu: str, ai: bool = Query(False), db: Session = Depends(get_db
         "completeness_score": out.completeness.score,
         "promoted": out.promoted,
     }
+
+
+# ───────────────────────────── Audit pull (Lot A) ─────────────────────────────
+
+class AuditRefIn(BaseModel):
+    section: str
+    numero: str
+    code_insee: str | None = None
+
+
+class AuditAddressIn(BaseModel):
+    q: str
+
+
+class AuditPolygonIn(BaseModel):
+    geometry: dict
+
+
+@app.post("/audit/reference")
+def audit_reference(body: AuditRefIn, db: Session = Depends(get_db)) -> dict:
+    """Auditer un terrain par référence cadastrale (section + numéro). Fetch cadastre à la
+    volée → ingestion (origine='audit') → cascade → renvoie l'idu pour ouvrir la fiche."""
+    from .. import audit
+    return audit.audit_by_reference(db, body.section, body.numero, body.code_insee)
+
+
+@app.post("/audit/adresse")
+def audit_adresse(body: AuditAddressIn, db: Session = Depends(get_db)) -> dict:
+    """Auditer un terrain par adresse (géocodage BAN → parcelle cadastrale)."""
+    from .. import audit
+    return audit.audit_by_address(db, body.q)
+
+
+@app.post("/audit/polygone")
+def audit_polygone(body: AuditPolygonIn, db: Session = Depends(get_db)) -> dict:
+    """Auditer un terrain par polygone dessiné sur la carte."""
+    from .. import audit
+    return audit.audit_by_polygon(db, body.geometry)
 
 
 # ───────────────────────────── Découverte (offre B) ─────────────────────────────
@@ -641,6 +1093,75 @@ def list_signals(commune: str | None = None, signal_type: str | None = None,
         ), {"c": commune, "t": signal_type, "lim": limit}
     ).mappings().all()
     return [dict(r) for r in rows]
+
+
+# ───────────────────────── Alertes intelligentes (3.C) ─────────────────────────
+# Scope défini par l'utilisateur (zones de veille + parcelles suivies) → « nouveautés ».
+
+class WatchZoneIn(BaseModel):
+    name: str
+    geometry: dict           # polygone GeoJSON (EPSG:4326)
+    commune: str | None = None
+
+
+class AlerteAckIn(BaseModel):
+    id: int | None = None    # None → accuse réception de toutes les nouveautés de la commune
+    commune: str | None = None
+
+
+@app.get("/watch-zones")
+def watch_zones_list(commune: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
+    """Zones de veille définies (polygones surveillés)."""
+    from .. import alertes
+    commune = commune or config.get_settings().pilot_commune_name
+    return alertes.list_watch_zones(db, commune)
+
+
+@app.post("/watch-zones")
+def watch_zones_create(body: WatchZoneIn, db: Session = Depends(get_db)) -> dict:
+    """Crée une zone de veille (polygone dessiné). Détecte aussitôt les nouveautés du scope."""
+    from .. import alertes
+    if (body.geometry or {}).get("type") != "Polygon":
+        raise HTTPException(422, "geometry doit être un Polygon GeoJSON")
+    commune = body.commune or config.get_settings().pilot_commune_name
+    zone = alertes.create_watch_zone(db, body.name, commune, body.geometry)
+    counts = alertes.compute_alertes(db, commune)
+    return {"zone": zone, "detected": counts}
+
+
+@app.delete("/watch-zones/{zone_id}")
+def watch_zones_delete(zone_id: int, db: Session = Depends(get_db)) -> dict:
+    """Supprime une zone de veille (et ses alertes, par cascade)."""
+    from .. import alertes
+    if not alertes.delete_watch_zone(db, zone_id):
+        raise HTTPException(404, "Zone de veille inconnue")
+    return {"ok": True}
+
+
+@app.get("/alertes")
+def alertes_list(commune: str | None = None, only_new: bool = False,
+                 limit: int = Query(100, ge=0, le=1000), db: Session = Depends(get_db)) -> list[dict]:
+    """Liste des « nouveautés » : ventes DVF en zone de veille + permis près d'une parcelle suivie."""
+    from .. import alertes
+    commune = commune or config.get_settings().pilot_commune_name
+    return alertes.list_alertes(db, commune, only_new=only_new, limit=limit)
+
+
+@app.post("/alertes/refresh")
+def alertes_refresh(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Re-détecte les nouveautés du scope au rafraîchissement des données (idempotent)."""
+    from .. import alertes
+    commune = commune or config.get_settings().pilot_commune_name
+    return alertes.compute_alertes(db, commune)
+
+
+@app.post("/alertes/ack")
+def alertes_ack(body: AlerteAckIn, db: Session = Depends(get_db)) -> dict:
+    """Marque une nouveauté (ou toutes celles de la commune) comme lue."""
+    from .. import alertes
+    commune = body.commune or config.get_settings().pilot_commune_name
+    n = alertes.acknowledge(db, alerte_id=body.id, commune=commune)
+    return {"ok": True, "acknowledged": n}
 
 
 # ───────────────────────────── Feedback (§10) ─────────────────────────────

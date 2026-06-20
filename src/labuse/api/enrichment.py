@@ -44,6 +44,31 @@ RECT_MIN = 0.70   # aire / aire(rectangle d'aire minimale orienté)
 CONVEX_MIN = 0.85  # aire / aire(enveloppe convexe) → drapeaux / formes en L exclus
 
 
+# ───────── 3.B — Photos aériennes historiques (IGN « Remonter le temps ») ─────────
+# Lien EXTERNE paramétré par le centroïde réel de la parcelle : ouvre le comparateur IGN
+# (ortho actuelle ↔ millésime historique). Aucune donnée fabriquée — c'est une navigation
+# vers un outil public. `layer2` = ORTHOIMAGERY.ORTHOPHOTOS.1950-1965, un des rares millésimes
+# nationaux qui COUVRENT La Réunion (vérifié, cf. RAPPORT_DISPO_3B.md) → la comparaison s'ouvre
+# d'emblée sur un historique pertinent à Saint-Paul, pas sur un défaut métropolitain vide.
+RLT_BASE = "https://remonterletemps.ign.fr/comparer"
+RLT_LAYER_ACTUELLE = "ORTHOIMAGERY.ORTHOPHOTOS"
+RLT_LAYER_HISTORIQUE = "ORTHOIMAGERY.ORTHOPHOTOS.1950-1965"   # couvre La Réunion (vérifié)
+
+
+def remonter_le_temps(lon: float | None, lat: float | None, z: int = 18) -> dict[str, Any]:
+    """URL « Remonter le temps » IGN centrée sur (lon, lat) : ortho actuelle vs ~1950-1965.
+
+    Pur (pas d'I/O) → testable. Renvoie `available=False` si le centroïde manque."""
+    if lon is None or lat is None:
+        return {"available": False, "note": "Centroïde indisponible."}
+    from urllib.parse import urlencode
+    q = urlencode({"lon": f"{float(lon):.6f}", "lat": f"{float(lat):.6f}", "z": int(z),
+                   "layer1": RLT_LAYER_ACTUELLE, "layer2": RLT_LAYER_HISTORIQUE, "mode": "doubleMap"})
+    return {"available": True, "url": f"{RLT_BASE}?{q}",
+            "label": "Comparer aux photos aériennes historiques (IGN)",
+            "source": "IGN — Remonter le temps"}
+
+
 # ───────────────────────────── 1. Cote altimétrique ─────────────────────────────
 
 def _alti_sample_points(db: Session, parcel_id: int) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
@@ -129,6 +154,128 @@ def altimetry(db: Session, parcel_id: int) -> dict[str, Any]:
         }
     except Exception as exc:  # noqa: BLE001 — réseau/timeout : on dégrade, pas de 500
         return {"available": False, "note": f"RGE ALTI injoignable ({type(exc).__name__}).", "source": source}
+
+
+_CARDINAUX = ["Nord", "Nord-Est", "Est", "Sud-Est", "Sud", "Sud-Ouest", "Ouest", "Nord-Ouest"]
+
+
+def exposition(db: Session, parcel_id: int) -> dict[str, Any]:
+    """Exposition (orientation dominante de la pente) — 2.A. Calculée par gradient d'altitude
+    (RGE ALTI) sur 4 points cardinaux autour du centroïde. À La Réunion, l'exposition (vue,
+    ensoleillement) est un driver de valeur. INDICATIF ; plat → pas d'exposition dominante."""
+    source = "RGE ALTI (IGN) — gradient d'altitude"
+    if not _live_enabled():
+        return {"available": False, "note": "Calcul live désactivé (mode hors-ligne).", "source": source}
+    row = db.execute(text(
+        "SELECT ST_X(centroid) lon, ST_Y(centroid) lat, sqrt(ST_Area(geom_2975)) cote "
+        "FROM parcels WHERE id = :p"), {"p": parcel_id}).first()
+    if not row or row.lon is None:
+        return {"available": False, "note": "Centroïde indisponible.", "source": source}
+    import math
+    lon, lat = float(row.lon), float(row.lat)
+    d_m = max(25.0, min(120.0, float(row.cote or 50.0)))     # demi-pas adapté à la taille
+    dlat = d_m / 111320.0
+    dlon = d_m / (111320.0 * max(0.1, math.cos(math.radians(lat))))
+    pts = [(lon, lat + dlat), (lon, lat - dlat), (lon + dlon, lat), (lon - dlon, lat)]  # N,S,E,W
+    try:
+        h = _alti_query(pts, max(get_settings().http_timeout_s, 20.0))
+    except Exception as exc:  # noqa: BLE001
+        return {"available": False, "note": f"RGE ALTI injoignable ({type(exc).__name__}).", "source": source}
+    if any(x is None for x in h):
+        return {"available": False, "note": "RGE ALTI sans valeur exploitable ici.", "source": source}
+    hN, hS, hE, hW = h
+    dz_ns, dz_ew = hN - hS, hE - hW                          # uphill components (N, E)
+    pente_locale = math.hypot(dz_ew, dz_ns) / (2 * d_m) * 100.0
+    if pente_locale < 3.0:                                   # quasi plat → pas d'exposition nette
+        return {"available": True, "exposition": None, "label": "terrain plat (pas d'exposition dominante)",
+                "pente_locale_pct": round(pente_locale, 1), "source": source, "indicatif": True}
+    azimut = (math.degrees(math.atan2(-dz_ew, -dz_ns)) + 360.0) % 360.0   # downhill, depuis le Nord
+    card = _CARDINAUX[round(azimut / 45.0) % 8]
+    return {"available": True, "exposition": card, "azimut_deg": round(azimut),
+            "label": f"exposition {card}", "pente_locale_pct": round(pente_locale, 1),
+            "source": source, "indicatif": True}
+
+
+def vue_mer(db: Session, parcel_id: int) -> dict[str, Any]:
+    """Vue mer — 2.B, v1 approximée (GRASS r.viewshed / raster PostGIS indisponibles ici).
+
+    Ligne de vue 1D : profil d'altitude (RGE ALTI) du centroïde vers le point de côte le plus
+    proche (trait de côte DEAL). La vue est dégagée si le terrain DESCEND vers la mer sans relief
+    intermédiaire au-dessus de la ligne observateur→mer. Indicateur oui/partielle/non. LIMITE :
+    profil sur un seul azimut (pas un viewshed 360°), sans bâti — INDICATIF."""
+    import math
+    source = "RGE ALTI (IGN) + trait de côte (DEAL) — ligne de vue 1D"
+    if not _live_enabled():
+        return {"available": False, "note": "Calcul live désactivé (mode hors-ligne).", "source": source}
+    row = db.execute(text(
+        """WITH p AS (SELECT centroid, geom_2975 FROM parcels WHERE id = :pid)
+           SELECT ST_X(p.centroid) olon, ST_Y(p.centroid) olat,
+                  ST_X(ST_Transform(t.cp,4326)) clon, ST_Y(ST_Transform(t.cp,4326)) clat,
+                  round(t.dist) dist_m
+           FROM p, LATERAL (
+             SELECT ST_ClosestPoint(s.geom_2975, ST_Centroid(p.geom_2975)) cp,
+                    ST_Distance(p.geom_2975, s.geom_2975) dist
+             FROM spatial_layers s WHERE s.kind = 'trait_de_cote'
+             ORDER BY p.geom_2975 <-> s.geom_2975 LIMIT 1) t"""),
+        {"pid": parcel_id}).first()
+    if not row or row.dist_m is None:
+        return {"available": False, "note": "Trait de côte non ingéré.", "source": source}
+    D = float(row.dist_m)
+    if D > 6000:   # au-delà, une vue mer est très improbable depuis le sol
+        return _memo_vue_mer(db, parcel_id, {"available": True, "vue": "non",
+                "label": "pas de vue mer (côte à >6 km)", "distance_cote_m": round(D),
+                "source": source, "indicatif": True})
+    olon, olat, clon, clat = float(row.olon), float(row.olat), float(row.clon), float(row.clat)
+    bearing = (math.degrees(math.atan2((clon - olon) * math.cos(math.radians(olat)), clat - olat)) + 360) % 360
+    base = {"distance_cote_m": round(D), "azimut_mer_deg": round(bearing),
+            "source": source, "indicatif": True, "available": True}
+    if D < 120:    # front de mer : au contact de la côte → vue acquise (cas dégénéré du profil)
+        return _memo_vue_mer(db, parcel_id, {**base, "vue": "oui", "label": "vue mer dégagée (front de mer)"})
+    # échantillonnage du profil observateur → mer (jusqu'à 200 m AU-DELÀ de la côte, alt ~0).
+    n, over = 40, 200.0
+    f_end = (D + over) / D
+    pts = [(olon + (clon - olon) * (k / n) * f_end, olat + (clat - olat) * (k / n) * f_end)
+           for k in range(n + 1)]
+    try:
+        h = _alti_query(pts, max(get_settings().http_timeout_s, 25.0))
+    except Exception as exc:  # noqa: BLE001
+        return {"available": False, "note": f"RGE ALTI injoignable ({type(exc).__name__}).", "source": source}
+    hs = [x for x in h if x is not None]
+    if len(hs) < n // 2:
+        return {"available": False, "note": "RGE ALTI sans valeur exploitable ici.", "source": source}
+    h0 = h[0] if h[0] is not None else max(hs)            # altitude observateur (parcelle)
+    # obstruction = terrain AU-DESSUS de la ligne observateur→mer, sur la partie TERRESTRE (≤ D).
+    obstructions, considered = 0, 0
+    k_coast = round(n / f_end)
+    for k in range(1, k_coast):
+        if h[k] is None:
+            continue
+        considered += 1
+        h_line = h0 * (1.0 - (k / n) / f_end * (D + over) / D)   # descend vers 0 à la côte
+        if h[k] > h_line + 4.0:
+            obstructions += 1
+    frac = obstructions / considered if considered else 1.0
+    vue = "oui" if frac < 0.10 else "partielle" if frac < 0.35 else "non"
+    label = {"oui": "vue mer dégagée", "partielle": "vue mer partielle (relief intermédiaire)",
+             "non": "pas de vue mer (relief masquant)"}[vue]
+    return _memo_vue_mer(db, parcel_id, {**base, "vue": vue, "label": label,
+            "altitude_obs_m": round(h0, 1), "obstruction_pct": round(100 * frac)})
+
+
+def _memo_vue_mer(db: Session, parcel_id: int, res: dict) -> dict:
+    """Mémoïse le résultat vue mer (cache lu par le bilan, sans appel live). Best-effort."""
+    try:
+        db.execute(text(
+            """INSERT INTO parcel_vue_mer (parcel_id, vue, distance_cote_m, obstruction_pct, computed_at)
+               VALUES (:p,:v,:d,:o, now())
+               ON CONFLICT (parcel_id) DO UPDATE SET vue=EXCLUDED.vue,
+                 distance_cote_m=EXCLUDED.distance_cote_m, obstruction_pct=EXCLUDED.obstruction_pct,
+                 computed_at=now()"""),
+            {"p": parcel_id, "v": res.get("vue"), "d": res.get("distance_cote_m"),
+             "o": res.get("obstruction_pct")})
+    except Exception:  # noqa: BLE001 - le cache ne casse jamais la fiche
+        pass
+    return res
 
 
 # ──────────────────────────── 2. Façade sur rue + profondeur ────────────────────────────
@@ -311,9 +458,27 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
     CEREMA, donc rarement présents ici) et on AFFICHE la catégorie morale/publique le cas
     échéant ; sinon « non vérifié ». Jamais de personne physique nominative, rien de fabriqué.
     """
+    # 1.A — Fichier DGFiP des personnes morales (PUBLIC) en priorité : si la parcelle y figure,
+    # on connaît le type ET le nom du propriétaire morale. Absente → particulier (→ SPF).
+    pm = db.execute(text(
+        """SELECT pm.groupe, pm.forme_juridique, pm.denomination, pm.millesime
+           FROM parcels p JOIN parcelle_personne_morale pm ON pm.idu = p.idu
+           WHERE p.id = :pid"""), {"pid": parcel_id}).mappings().first()
+    if pm:
+        from ..proprietaire_type import classify_dgfip
+        ot = classify_dgfip(pm["groupe"], pm["forme_juridique"], pm["denomination"])
+        return {
+            "categorie": ot["famille"], "personne_morale": True, "indivision": ot["indivision"],
+            "note": f"Propriétaire : {ot['label']}" + (f" — {ot['owner_name']}" if ot.get("owner_name") else ""),
+            "source": "DGFiP — personnes morales (millésime " + str(pm["millesime"] or "—") + ")",
+            "owner_type": ot["owner_type"], "owner_label": ot["label"], "owner_name": ot.get("owner_name"),
+            "owner_famille": ot["famille"], "owner_acquerabilite": ot["acquerabilite"],
+            "owner_identifiable": ot["identifiable"], "needs_spf": False,
+        }
+
     note_absent = (
-        "Propriétaire non vérifié — Fichiers fonciers (propriétaires) sous convention CEREMA, "
-        "non rediffusables. Statut public/privé à confirmer (mairie / service du cadastre)."
+        "Propriétaire personne physique probable (absent du fichier DGFiP des personnes morales) "
+        "— aucune donnée nominative dans LA BUSE. Identité à obtenir via le SPF (bouton ci-dessous)."
     )
     src = "Fichiers fonciers (Cerema)"
     row = db.execute(
@@ -325,7 +490,12 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
     ).first()
     payload = row[0] if row and row[0] else None
     if not payload:
-        return {"categorie": None, "note": note_absent, "source": "—"}
+        from ..proprietaire_type import classify_owner_type
+        ot = classify_owner_type(None)   # → inconnu
+        return {"categorie": None, "note": note_absent, "source": "—",
+                "owner_type": ot["owner_type"], "owner_label": ot["label"],
+                "owner_famille": ot["famille"], "owner_acquerabilite": ot["acquerabilite"],
+                "owner_identifiable": False, "needs_spf": True}
 
     morale = bool(payload.get("personne_morale"))
     cat = payload.get("categorie")
@@ -338,6 +508,8 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
     categorie = "publique" if publique else "morale_privee" if morale else "personne_physique"
     libelle = ("Propriété publique" if publique else
                "Personne morale privée" if morale else "Personne physique (non nominatif)")
+    from ..proprietaire_type import classify_owner_type, needs_spf
+    otype = classify_owner_type(payload)
     return {
         "categorie": categorie,
         "personne_morale": morale,
@@ -345,6 +517,10 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
         "note": f"Propriétaire : {libelle}" + (f" — {cat}" if cat else "")
                 + (" · indivision probable (bloqueur fréquent)" if indivision else ""),
         "source": src,
+        # Type fin (Lot C3) : SCI / commune / EPF / bailleur / État… + besoin d'une demande SPF.
+        "owner_type": otype["owner_type"], "owner_label": otype["label"],
+        "owner_famille": otype["famille"], "owner_acquerabilite": otype["acquerabilite"],
+        "owner_identifiable": otype["identifiable"], "needs_spf": needs_spf(otype),
     }
 
 
@@ -414,6 +590,8 @@ def build_enrichment(db: Session, parcel, lon: float, lat: float) -> dict[str, A
 
     return {
         "altimetrie": _safe(altimetry, db, parcel.id),
+        "exposition": _safe(exposition, db, parcel.id),
+        "vue_mer": _safe(vue_mer, db, parcel.id),
         "facade": _safe(facade_depth, db, parcel.id),
         "plu_detail": _safe(plu_detail, db, parcel.id, lon, lat),
         "proprietaire": _safe(owner, db, parcel.id),

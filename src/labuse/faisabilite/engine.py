@@ -40,10 +40,22 @@ class Hypotheses:
     # Le coût se rapporte à la surface de PLANCHER, pas à l'habitable vendu (audit O2) :
     # plancher ≈ habitable × 1.15 (circulations, gaines, murs).
     coef_plancher_habitable: float = 1.15
-    marge_promoteur_pct: float = 0.18           # marge promoteur (% du CA)
+    marge_promoteur_pct: float = 0.09           # marge promoteur (% du CA) — 8–10 %, à affiner
     frais_annexes_pct: float = 0.12             # honoraires, commercialisation, financier, aléas (% du CA)
     dvf_radius_m: float = 1500.0                # rayon de recherche des ventes DVF comparables
     dvf_min_ventes: int = 8                     # en deçà, prix DVF jugé non fiable
+    # --- Potentiel résiduel (Lot B) — PLACEHOLDERS ---
+    niveaux_bati_existant_defaut: float = 1.0   # niveaux supposés du bâti existant (hauteur BD TOPO non ingérée)
+    sous_densite_seuil_pct: float = 40.0        # seuil du taux d'emprise sous lequel = « sous-densité »
+    # --- Prescriptions GPU (Décisions 3.b / 3.c) ---
+    pct_lls: float = 0.0              # % de logements aidés (validé Vic : 30 % — Art. 2 règlement PLU)
+    prix_m2_lls: float = 0.0          # prix de sortie €/m² des logements aidés (PLACEHOLDER, 0 = non calibré)
+    majoration_vrd_pluvial: float = 0.0  # % de majoration du coût (VRD) en zonage eaux pluviales (PLACEHOLDER)
+    # Seuils de DÉCLENCHEMENT de la clause de mixité (Art. 2 règlement PLU — SOURCÉS, non placeholder).
+    # Clause déclenchée si SDP ≥ seuil OU logements ≥ seuil OU terrain > seuil (logique OU du texte).
+    mixite_sdp_seuil_m2: float = 1500.0       # « SDP ≥ 1 500 m² » (bornes 1500/1800 du texte)
+    mixite_logements_seuil: float = 20.0      # « programme de 20 logements ou plus »
+    mixite_terrain_seuil_m2: float = 6000.0   # « terrain d'habitation de plus de 6 000 m² »
 
     @classmethod
     def charger(cls) -> "Hypotheses":
@@ -73,6 +85,11 @@ class Step:
     formule: str
     valeur: str
     source: str
+    # Provenance d'AFFICHAGE de la ligne (transparence, n'altère AUCUN calcul) :
+    # "sourcee" = donnée réelle (ex. prix DVF) · "estimee" = hypothèse/param calibrable
+    # (coût construction, VRD, marge) · "derive" = résultat calculé à partir des lignes ci-dessus
+    # · "" = non qualifié (étapes de faisabilité). Sérialisé tel quel pour la fiche.
+    prov: str = ""
 
 
 @dataclass
@@ -308,7 +325,15 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     rp = f"R+{max(0, niveaux - 1)}"
     logt_moyen = (hyp.logement_m2_bas + hyp.logement_m2_haut) / 2.0
-    fourch = {"niveaux": rp, "surface_plancher_m2": round(sdp),
+    fourch = {"niveaux": rp, "niveaux_max": niveaux,
+              # 3.D — hauteur du gabarit (niveaux × hauteur d'étage), pour l'extrusion 3D.
+              "hauteur_m": round(niveaux * hyp.etage_m, 1),
+              "hauteur_etage_m": hyp.etage_m,
+              # Potentiel résiduel (Lot B) : emprise constructible au sol et emprise bâtie MAX
+              # (post-occupation), pour croiser avec le bâti existant.
+              "emprise_constructible_m2": round(emprise),
+              "emprise_batie_max_m2": round(footprint),
+              "surface_plancher_m2": round(sdp),
               # surface habitable VENDABLE (post-rendement, plafond densité, modulation) :
               # base du chiffre d'affaires du bilan promoteur.
               "shab_vendable_m2": round((sous_lo + sous_hi) / 2.0 * logt_moyen),

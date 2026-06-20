@@ -1,0 +1,589 @@
+{
+  "source": {
+    "nom": "Recensement de la population — statut d'occupation des résidences principales",
+    "producteur": "INSEE (Dossier complet, RP 2022)",
+    "millesime": "2022",
+    "provenance": "sourcee",
+    "mention": "Source : INSEE, Recensement de la population 2022 (Dossier complet).",
+    "url": "https://www.insee.fr/fr/statistiques/2011101?geo=COM-97415",
+    "note": "Extrait une seule fois du tableau « statut d'occupation » du Dossier complet, puis versionné (hors-ligne sûr)."
+  },
+  "communes": [
+    {
+      "insee": "97401",
+      "commune": "Les Avirons",
+      "ensemble": {
+        "n": 4639,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 2778,
+        "pct": 59.9
+      },
+      "locataire": {
+        "n": 1682,
+        "pct": 36.2
+      },
+      "dont_hlm": {
+        "n": 495,
+        "pct": 10.7
+      },
+      "loge_gratuit": {
+        "n": 180,
+        "pct": 3.9
+      }
+    },
+    {
+      "insee": "97402",
+      "commune": "Bras-Panon",
+      "ensemble": {
+        "n": 5215,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 2756,
+        "pct": 52.9
+      },
+      "locataire": {
+        "n": 2215,
+        "pct": 42.5
+      },
+      "dont_hlm": {
+        "n": 1221,
+        "pct": 23.4
+      },
+      "loge_gratuit": {
+        "n": 244,
+        "pct": 4.7
+      }
+    },
+    {
+      "insee": "97403",
+      "commune": "Entre-Deux",
+      "ensemble": {
+        "n": 2928,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 1881,
+        "pct": 64.2
+      },
+      "locataire": {
+        "n": 867,
+        "pct": 29.6
+      },
+      "dont_hlm": {
+        "n": 139,
+        "pct": 4.7
+      },
+      "loge_gratuit": {
+        "n": 181,
+        "pct": 6.2
+      }
+    },
+    {
+      "insee": "97404",
+      "commune": "L'Étang-Salé",
+      "ensemble": {
+        "n": 5823,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 3548,
+        "pct": 60.9
+      },
+      "locataire": {
+        "n": 2008,
+        "pct": 34.5
+      },
+      "dont_hlm": {
+        "n": 658,
+        "pct": 11.3
+      },
+      "loge_gratuit": {
+        "n": 267,
+        "pct": 4.6
+      }
+    },
+    {
+      "insee": "97405",
+      "commune": "Petite-Île",
+      "ensemble": {
+        "n": 5353,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 3492,
+        "pct": 65.2
+      },
+      "locataire": {
+        "n": 1558,
+        "pct": 29.1
+      },
+      "dont_hlm": {
+        "n": 182,
+        "pct": 3.4
+      },
+      "loge_gratuit": {
+        "n": 303,
+        "pct": 5.7
+      }
+    },
+    {
+      "insee": "97406",
+      "commune": "La Plaine-des-Palmistes",
+      "ensemble": {
+        "n": 2585,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 1564,
+        "pct": 60.5
+      },
+      "locataire": {
+        "n": 896,
+        "pct": 34.7
+      },
+      "dont_hlm": {
+        "n": 311,
+        "pct": 12.0
+      },
+      "loge_gratuit": {
+        "n": 125,
+        "pct": 4.8
+      }
+    },
+    {
+      "insee": "97407",
+      "commune": "Le Port",
+      "ensemble": {
+        "n": 12692,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 4202,
+        "pct": 33.1
+      },
+      "locataire": {
+        "n": 8247,
+        "pct": 65.0
+      },
+      "dont_hlm": {
+        "n": 6142,
+        "pct": 48.4
+      },
+      "loge_gratuit": {
+        "n": 243,
+        "pct": 1.9
+      }
+    },
+    {
+      "insee": "97408",
+      "commune": "La Possession",
+      "ensemble": {
+        "n": 14267,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 7130,
+        "pct": 50.0
+      },
+      "locataire": {
+        "n": 6726,
+        "pct": 47.1
+      },
+      "dont_hlm": {
+        "n": 3256,
+        "pct": 22.8
+      },
+      "loge_gratuit": {
+        "n": 411,
+        "pct": 2.9
+      }
+    },
+    {
+      "insee": "97409",
+      "commune": "Saint-André",
+      "ensemble": {
+        "n": 21345,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 10307,
+        "pct": 48.3
+      },
+      "locataire": {
+        "n": 10250,
+        "pct": 48.0
+      },
+      "dont_hlm": {
+        "n": 4205,
+        "pct": 19.7
+      },
+      "loge_gratuit": {
+        "n": 789,
+        "pct": 3.7
+      }
+    },
+    {
+      "insee": "97410",
+      "commune": "Saint-Benoît",
+      "ensemble": {
+        "n": 14256,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 7708,
+        "pct": 54.1
+      },
+      "locataire": {
+        "n": 6120,
+        "pct": 42.9
+      },
+      "dont_hlm": {
+        "n": 3333,
+        "pct": 23.4
+      },
+      "loge_gratuit": {
+        "n": 428,
+        "pct": 3.0
+      }
+    },
+    {
+      "insee": "97411",
+      "commune": "Saint-Denis",
+      "ensemble": {
+        "n": 68193,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 21090,
+        "pct": 30.9
+      },
+      "locataire": {
+        "n": 45196,
+        "pct": 66.3
+      },
+      "dont_hlm": {
+        "n": 17445,
+        "pct": 25.6
+      },
+      "loge_gratuit": {
+        "n": 1907,
+        "pct": 2.8
+      }
+    },
+    {
+      "insee": "97412",
+      "commune": "Saint-Joseph",
+      "ensemble": {
+        "n": 16071,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 9461,
+        "pct": 58.9
+      },
+      "locataire": {
+        "n": 5604,
+        "pct": 34.9
+      },
+      "dont_hlm": {
+        "n": 1543,
+        "pct": 9.6
+      },
+      "loge_gratuit": {
+        "n": 1005,
+        "pct": 6.3
+      }
+    },
+    {
+      "insee": "97413",
+      "commune": "Saint-Leu",
+      "ensemble": {
+        "n": 14338,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 8906,
+        "pct": 62.1
+      },
+      "locataire": {
+        "n": 4606,
+        "pct": 32.1
+      },
+      "dont_hlm": {
+        "n": 1242,
+        "pct": 8.7
+      },
+      "loge_gratuit": {
+        "n": 826,
+        "pct": 5.8
+      }
+    },
+    {
+      "insee": "97414",
+      "commune": "Saint-Louis",
+      "ensemble": {
+        "n": 20285,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 11720,
+        "pct": 57.8
+      },
+      "locataire": {
+        "n": 7397,
+        "pct": 36.5
+      },
+      "dont_hlm": {
+        "n": 3111,
+        "pct": 15.3
+      },
+      "loge_gratuit": {
+        "n": 1169,
+        "pct": 5.8
+      }
+    },
+    {
+      "insee": "97415",
+      "commune": "Saint-Paul",
+      "ensemble": {
+        "n": 41610,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 25666,
+        "pct": 61.7
+      },
+      "locataire": {
+        "n": 14364,
+        "pct": 34.5
+      },
+      "dont_hlm": {
+        "n": 4670,
+        "pct": 11.2
+      },
+      "loge_gratuit": {
+        "n": 1580,
+        "pct": 3.8
+      }
+    },
+    {
+      "insee": "97416",
+      "commune": "Saint-Pierre",
+      "ensemble": {
+        "n": 34776,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 17442,
+        "pct": 50.2
+      },
+      "locataire": {
+        "n": 15887,
+        "pct": 45.7
+      },
+      "dont_hlm": {
+        "n": 5774,
+        "pct": 16.6
+      },
+      "loge_gratuit": {
+        "n": 1447,
+        "pct": 4.2
+      }
+    },
+    {
+      "insee": "97417",
+      "commune": "Saint-Philippe",
+      "ensemble": {
+        "n": 2109,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 1488,
+        "pct": 70.6
+      },
+      "locataire": {
+        "n": 514,
+        "pct": 24.4
+      },
+      "dont_hlm": {
+        "n": 104,
+        "pct": 4.9
+      },
+      "loge_gratuit": {
+        "n": 107,
+        "pct": 5.1
+      }
+    },
+    {
+      "insee": "97418",
+      "commune": "Sainte-Marie",
+      "ensemble": {
+        "n": 13656,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 7090,
+        "pct": 51.9
+      },
+      "locataire": {
+        "n": 5919,
+        "pct": 43.3
+      },
+      "dont_hlm": {
+        "n": 2592,
+        "pct": 19.0
+      },
+      "loge_gratuit": {
+        "n": 647,
+        "pct": 4.7
+      }
+    },
+    {
+      "insee": "97419",
+      "commune": "Sainte-Rose",
+      "ensemble": {
+        "n": 2519,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 1737,
+        "pct": 68.9
+      },
+      "locataire": {
+        "n": 645,
+        "pct": 25.6
+      },
+      "dont_hlm": {
+        "n": 185,
+        "pct": 7.3
+      },
+      "loge_gratuit": {
+        "n": 138,
+        "pct": 5.5
+      }
+    },
+    {
+      "insee": "97420",
+      "commune": "Sainte-Suzanne",
+      "ensemble": {
+        "n": 9215,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 4989,
+        "pct": 54.1
+      },
+      "locataire": {
+        "n": 3723,
+        "pct": 40.4
+      },
+      "dont_hlm": {
+        "n": 1687,
+        "pct": 18.3
+      },
+      "loge_gratuit": {
+        "n": 503,
+        "pct": 5.5
+      }
+    },
+    {
+      "insee": "97421",
+      "commune": "Salazie",
+      "ensemble": {
+        "n": 2716,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 1981,
+        "pct": 72.9
+      },
+      "locataire": {
+        "n": 500,
+        "pct": 18.4
+      },
+      "dont_hlm": {
+        "n": 62,
+        "pct": 2.3
+      },
+      "loge_gratuit": {
+        "n": 235,
+        "pct": 8.7
+      }
+    },
+    {
+      "insee": "97422",
+      "commune": "Le Tampon",
+      "ensemble": {
+        "n": 33911,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 16944,
+        "pct": 50.0
+      },
+      "locataire": {
+        "n": 15036,
+        "pct": 44.3
+      },
+      "dont_hlm": {
+        "n": 3387,
+        "pct": 10.0
+      },
+      "loge_gratuit": {
+        "n": 1930,
+        "pct": 5.7
+      }
+    },
+    {
+      "insee": "97423",
+      "commune": "Les Trois-Bassins",
+      "ensemble": {
+        "n": 2766,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 1985,
+        "pct": 71.8
+      },
+      "locataire": {
+        "n": 582,
+        "pct": 21.0
+      },
+      "dont_hlm": {
+        "n": 141,
+        "pct": 5.1
+      },
+      "loge_gratuit": {
+        "n": 198,
+        "pct": 7.2
+      }
+    },
+    {
+      "insee": "97424",
+      "commune": "Cilaos",
+      "ensemble": {
+        "n": 2153,
+        "pct": 100.0
+      },
+      "proprietaire": {
+        "n": 1539,
+        "pct": 71.5
+      },
+      "locataire": {
+        "n": 444,
+        "pct": 20.6
+      },
+      "dont_hlm": {
+        "n": 41,
+        "pct": 1.9
+      },
+      "loge_gratuit": {
+        "n": 169,
+        "pct": 7.9
+      }
+    }
+  ]
+}

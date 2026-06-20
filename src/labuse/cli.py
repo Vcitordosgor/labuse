@@ -61,6 +61,38 @@ def seed_sources_cmd() -> None:
     typer.echo(f"✓ Catalogue de sources : {n} sources.")
 
 
+@app.command("bilan-calibrate")
+def bilan_calibrate_cmd(
+    csv_path: str = typer.Argument("config/bilan_calibration_vic.csv",
+                                   help="Gabarit CSV rempli (colonnes secteur,param,valeur,source)."),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Prévisualise sans rien écrire en base."),
+) -> None:
+    """Injecte les valeurs de bilan saisies dans le gabarit CSV (par secteur, upsert, sans toucher
+    aux lignes vides). Une valeur saisie n'est plus « estimée » → le bandeau « à affiner » tombe."""
+    from pathlib import Path
+
+    from .faisabilite import bilan_params as bp
+
+    if not Path(csv_path).exists():
+        typer.echo(f"Fichier introuvable : {csv_path}")
+        raise typer.Exit(1)
+    rows = bp.read_calibration_csv(csv_path)
+    if not rows:
+        typer.echo("Aucune valeur à injecter (toutes les lignes « valeur » sont vides).")
+        raise typer.Exit(0)
+    with session_scope() as s:
+        res = bp.apply_calibration(s, rows, dry_run=dry_run)
+        if dry_run:
+            s.rollback()
+    for a in res["applied"]:
+        typer.echo(f"  {a['secteur']:24} {a['param']:34} → {a['value']:g}  "
+                   f"[{a['provenance'] or 'saisie'}{(' · ' + a['source']) if a['source'] else ''}]")
+    for secteur, param, msg in res["errors"]:
+        typer.echo(f"  ⚠ {secteur or '?'} / {param or '?'} : {msg}")
+    mode = "PRÉVISUALISÉ (rien écrit)" if dry_run else "injecté(s) en base"
+    typer.echo(f"✓ {len(res['applied'])} valeur(s) {mode} · {len(res['errors'])} erreur(s).")
+
+
 @app.command("seed-demo")
 def seed_demo_cmd() -> None:
     from .ingestion import demo_saint_paul, seed_sources
@@ -235,6 +267,55 @@ def evaluate_cmd(
     typer.echo(f"✓ {len(outcomes)} parcelles évaluées ({commune}).")
     for status, n in counts.most_common():
         typer.echo(f"    {status:24} : {n}")
+
+
+@app.command("geocode-permits")
+def geocode_permits_cmd(commune: str = typer.Option(None, help="INSEE (défaut = pilote).")) -> None:
+    """1.B-fix — géolocalise les permis SITADEL non géocodés via le cadastre (API Carto, par section)."""
+    from .ingestion.permits import geocode_permits_via_cadastre
+
+    insee = commune if (commune and commune.isdigit()) else get_settings().pilot_commune_insee
+    with session_scope() as s:
+        r = geocode_permits_via_cadastre(s, insee)
+    typer.echo(f"✓ Permis géolocalisés : {r['avant']} → {r['apres']} (+{r['ajoutes']}) "
+               f"via {r['sections_recuperees']} sections.")
+
+
+@app.command("ingest-personnes-morales")
+def ingest_pm_cmd(
+    commune: str = typer.Option(None, help="INSEE (défaut = pilote 97415)."),
+    csv: str = typer.Option(None, help="CSV départemental DGFiP déjà extrait (sinon téléchargé)."),
+) -> None:
+    """Charge les propriétaires PERSONNES MORALES (1.A — fichier DGFiP, Licence Ouverte)."""
+    from .ingestion.personnes_morales import fetch_974_csv, ingest_personnes_morales
+
+    insee = commune if (commune and commune.isdigit()) else get_settings().pilot_commune_insee
+    path = csv or str(fetch_974_csv())
+    with session_scope() as s:
+        n = ingest_personnes_morales(s, path, insee=insee)
+    typer.echo(f"✓ {n} parcelles de personnes morales chargées (DGFiP, INSEE {insee}).")
+
+
+@app.command("compute-residuel")
+def compute_residuel_cmd(
+    commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
+    chunk: int = typer.Option(500, help="Taille des lots (commit par lot)."),
+) -> None:
+    """Calcule et cache le POTENTIEL RÉSIDUEL (Lot B) — alimente le filtre « sous-densité »."""
+    from .faisabilite.residuel import compute_residuel_batch
+
+    commune = _resolve_commune(commune)
+    with session_scope() as session:
+        ids = _parcel_ids(session, commune)
+    if not ids:
+        typer.echo("Aucune parcelle ingérée.")
+        raise typer.Exit(1)
+    total = 0
+    for k in range(0, len(ids), chunk):
+        with session_scope() as s:
+            total += compute_residuel_batch(s, ids[k:k + chunk])
+        typer.echo(f"    {min(k + chunk, len(ids))}/{len(ids)} parcelles…")
+    typer.echo(f"✓ Potentiel résiduel caché pour {total} parcelles constructibles ({commune}).")
 
 
 def _print_healthcheck(commune: str) -> bool:

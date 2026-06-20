@@ -30,11 +30,14 @@ def fiche_markdown(fiche: dict) -> str:
         "",
         "## Verdict",
         "",
-        f"- **Statut :** {v['status'] or '—'}",
+        f"- **Statut :** {v['status'] or '—'}"
+        + ("  ·  **micro-opportunité** (≤ 500 m²)" if v.get("micro_opportunite") else ""),
         f"- **Opportunité :** {_score(v['opportunity_score'])} / 100  ·  "
         f"**Complétude :** {_score(v['completeness_score'])} / 100",
         "",
     ]
+    if v.get("micro_opportunite"):
+        lines += ["> Petite parcelle : potentiel à analyser surtout en assemblage ou micro-opération.", ""]
     if v["reasons"]:
         lines.append("**Raisons (exclusion / réserve) :**")
         lines += [f"- _{_RESULT_LABEL.get(r['result'], r['result'])}"
@@ -220,6 +223,8 @@ def fiche_html(fiche: dict) -> str:
  .disc{{color:#777;font-style:italic;font-size:.9rem}} .score{{font-weight:600}}
  table{{border-collapse:collapse;width:100%;font-size:.9rem}} td,th{{border:1px solid #e5e5e5;padding:.35rem .5rem;text-align:left;vertical-align:top}}
  .src{{color:#888;font-size:.85em}} .badge{{display:inline-block;padding:.15rem .6rem;border-radius:.4rem;background:#111;color:#fff;font-size:.85rem}}
+ .badge-micro{{display:inline-block;margin-left:.4rem;padding:.15rem .6rem;border-radius:.4rem;background:#efe6cd;color:#6a5a1f;font-size:.85rem}}
+ .micro-note{{color:#6a5a1f;font-size:.9rem;margin:.3rem 0 0}}
 </style>
 <h1>LA BUSE — Fiche parcelle {html.escape(p['idu'])}</h1>
 <p class="disc">{html.escape(fiche['disclaimer'])}</p>
@@ -227,7 +232,8 @@ def fiche_html(fiche: dict) -> str:
    <strong>Surface :</strong> {_m2(p.get('surface_m2'))} ·
    <strong>Section/№ :</strong> {html.escape((p.get('section') or '—'))} {html.escape(p.get('numero') or '')}</p>
 <h2>Verdict</h2>
-<p><span class="badge">{html.escape(v['status'] or '—')}</span></p>
+<p><span class="badge">{html.escape(v['status'] or '—')}</span>{' <span class="badge-micro">micro-opportunité</span>' if v.get('micro_opportunite') else ''}</p>
+{'<p class="micro-note">Petite parcelle (≤ 500 m²) : potentiel à analyser surtout en assemblage ou micro-opération.</p>' if v.get('micro_opportunite') else ''}
 <p class="score">Opportunité {_score(v['opportunity_score'])}/100 · Complétude {_score(v['completeness_score'])}/100</p>
 <p><strong>Raisons :</strong></p><ul>{reasons}</ul>
 {resume_html}
@@ -254,6 +260,17 @@ def _m2(x) -> str:
 
 def _eurm2(x) -> str:
     return "—" if x is None else f"{x:,.0f} €/m²".replace(",", " ")
+
+
+def _eur(x) -> str:
+    if x is None:
+        return "—"
+    ax = abs(x)
+    if ax >= 1_000_000:
+        return f"{x / 1_000_000:.1f} M€"
+    if ax >= 1_000:
+        return f"{x / 1_000:.0f} k€"
+    return f"{x:.0f} €"
 
 
 _SOURCE_LABEL = {"non_renseignee": "non renseignée", "saisi_utilisateur": "saisie utilisateur",
@@ -313,3 +330,170 @@ def _comparables_view(fiche: dict) -> dict | None:
     ecart = (f"{'+' if (c['ecart_vefa_ancien_pct'] or 0) >= 0 else ''}{c['ecart_vefa_ancien_pct']} % (neuf vs ancien)"
              if c.get("exploitable") else (c.get("note") or "non exploitable"))
     return {"retenu": retenu, "ancien": ancien, "vefa": vefa, "ecart": ecart, "fiabilite": fia}
+
+
+# ─────────────────────────── One-pager (Lot D1) — document de comité ───────────────────────────
+
+def _minimap(geojson: dict | None, lon, lat) -> str:
+    """Mini-carte aérienne (IGN WMS ortho) + contour de la parcelle en overlay SVG. Auto-suffisante
+    côté serveur (le navigateur charge la tuile à l'impression) ; dégrade proprement sans réseau."""
+    if lon is None or lat is None:
+        return ""
+    ring = []
+    try:
+        g = geojson or {}
+        coords = g.get("coordinates") or []
+        if g.get("type") == "MultiPolygon":
+            coords = coords[0]
+        if g.get("type") in ("Polygon", "MultiPolygon") and coords:
+            ring = coords[0]
+    except Exception:  # noqa: BLE001
+        ring = []
+    # bbox carré (en degrés) centré sur la parcelle, avec marge → contour bien visible.
+    if ring:
+        xs = [c[0] for c in ring]
+        ys = [c[1] for c in ring]
+        cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
+        half = max(max(xs) - min(xs), max(ys) - min(ys)) * 0.9 or 0.0008
+    else:
+        cx, cy, half = float(lon), float(lat), 0.0008
+    half = max(half, 0.0004)
+    minx, maxx, miny, maxy = cx - half, cx + half, cy - half, cy + half
+    W = H = 460
+    wms = ("https://data.geopf.fr/wms-r/ows?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
+           "&LAYERS=ORTHOIMAGERY.ORTHOPHOTOS&STYLES=&FORMAT=image/jpeg&CRS=EPSG:4326"
+           f"&WIDTH={W}&HEIGHT={H}&BBOX={miny},{minx},{maxy},{maxx}")  # 1.3.0 EPSG:4326 = lat,lon
+    overlay = ""
+    if ring:
+        pts = " ".join(f"{(c[0]-minx)/(maxx-minx)*W:.1f},{(maxy-c[1])/(maxy-miny)*H:.1f}" for c in ring)
+        overlay = (f"<svg class='mm-svg' viewBox='0 0 {W} {H}' preserveAspectRatio='none'>"
+                   f"<polygon points='{pts}' fill='rgba(201,168,106,.18)' "
+                   "stroke='#c9a86a' stroke-width='2.5'/></svg>")
+    return (f"<div class='mini'><img class='mm-img' src='{html.escape(wms)}' alt='vue aérienne' "
+            f"width='{W}' height='{H}'>{overlay}"
+            "<span class='mm-att'>© IGN — Géoplateforme (BD ORTHO)</span></div>")
+
+
+def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
+    """Fiche 1 page A4 (impression → PDF) : le document qu'un promoteur met en comité.
+    Verdict, capacité, résiduel, bilan, contraintes, « à vérifier », mini-carte aérienne."""
+    p, v = fiche["parcel"], fiche["verdict"]
+    fa = fiche.get("faisabilite") or {}
+    res = fa.get("residuel") or {}
+    bilan = fa.get("bilan") or {}
+    rv = fiche.get("resume") or {}
+    status = v.get("status") or "—"
+
+    # Capacité (si constructible).
+    cap = "—"
+    if fa.get("constructible"):
+        cap = html.escape(fa.get("verdict") or "—")
+    elif fa.get("verdict"):
+        cap = html.escape(fa["verdict"])
+
+    def kv(label, value):
+        return f"<div class='kv'><span class='kl'>{label}</span><span class='kvv'>{value}</span></div>"
+
+    # Résiduel.
+    res_html = ""
+    if res.get("disponible"):
+        res_html = kv("Potentiel résiduel",
+                      f"bâtie à {res['taux_emprise_pct']} % de l'emprise · SDP résiduelle ~{_m2(res.get('sdp_residuelle_m2'))}"
+                      + (" · <b>sous-densité</b>" if res.get("sous_densite") else ""))
+    # Bilan.
+    bil_html = ""
+    if bilan.get("fiable"):
+        ca = bilan.get("ca") or {}
+        cf = bilan.get("charge_fonciere") or {}
+        bil_html = kv("Bilan (indicatif)",
+                      f"CA ~{_eur(ca.get('bas'))}–{_eur(ca.get('haut'))} · charge foncière médiane ~{_eur(cf.get('central'))}"
+                      + (f" (~{cf.get('par_m2_terrain')} €/m² terrain)" if cf.get("par_m2_terrain") else ""))
+
+    # Contraintes (HARD_EXCLUDE + SOFT_FLAG) et à-vérifier (UNKNOWN).
+    contraintes = [c for c in fiche["cascade"] if c["result"] in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    cont_html = "".join(
+        f"<li class='{'hard' if c['result']=='HARD_EXCLUDE' else 'soft'}'>{html.escape(c['detail'])}</li>"
+        for c in contraintes[:7]) or "<li class='ok'>Aucune contrainte relevée sur les couches disponibles.</li>"
+    verifs = list(rv.get("vigilance") or [])
+    if not verifs:
+        verifs = [c["detail"] for c in fiche["cascade"] if c["result"] == "UNKNOWN"][:4]
+    verif_html = "".join(f"<li>{html.escape(x)}</li>" for x in verifs[:5]) or "<li>—</li>"
+
+    synth = html.escape(rv.get("synthese") or "")
+    action = html.escape(rv.get("prochaine_action") or "")
+    loc = (f"{html.escape(p.get('commune') or '—')} · section {html.escape(p.get('section') or '—')} "
+           f"{html.escape(p.get('numero') or '')} · {_m2(p.get('surface_m2'))}")
+    cen = p.get("centroid") or {}
+    today = _today()
+    return f"""<!doctype html><html lang="fr"><meta charset="utf-8">
+<title>LA BUSE — {html.escape(p['idu'])}</title>
+<style>
+ @page {{ size: A4 portrait; margin: 10mm; }}
+ * {{ box-sizing: border-box; }}
+ body {{ font: 11px/1.42 -apple-system,Segoe UI,Roboto,sans-serif; color:#1a1a1a; margin:0; }}
+ .head {{ display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #c9a86a; padding-bottom:6px; }}
+ .brand {{ font-weight:800; letter-spacing:.06em; font-size:15px; }} .brand small {{ font-weight:400; color:#777; letter-spacing:0; }}
+ .idu {{ font-size:16px; font-weight:700; }} .loc {{ color:#555; }}
+ .date {{ color:#888; text-align:right; }}
+ .grid {{ display:grid; grid-template-columns: 1fr 460px; gap:12px; margin-top:8px; }}
+ .verdict {{ display:flex; align-items:center; gap:10px; margin:6px 0; }}
+ .badge {{ display:inline-block; padding:3px 10px; border-radius:5px; color:#fff; font-weight:700; font-size:12px; }}
+ .v-opportunite{{background:#37976a}} .v-a_creuser{{background:#c2913f}} .v-exclue{{background:#697079}} .v-faux_positif_probable{{background:#b85f4c}}
+ .scores {{ font-weight:600; color:#333; }}
+ .synth {{ margin:6px 0; }}
+ .kv {{ display:flex; gap:8px; padding:3px 0; border-bottom:1px solid #f0f0f0; }}
+ .kl {{ flex:0 0 120px; color:#777; font-weight:600; }} .kvv {{ flex:1; }}
+ h3 {{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:#c9a86a; margin:10px 0 4px; }}
+ ul {{ margin:2px 0; padding-left:16px; }} li {{ margin:1px 0; }}
+ li.hard {{ color:#a23; }} li.soft {{ color:#a76; }} li.ok {{ color:#393; }}
+ .mini {{ position:relative; width:460px; height:300px; overflow:hidden; border:1px solid #ddd; border-radius:6px; }}
+ .mm-img {{ width:460px; height:300px; object-fit:cover; display:block; }}
+ .mm-svg {{ position:absolute; inset:0; width:100%; height:100%; }}
+ .mm-att {{ position:absolute; right:3px; bottom:2px; font-size:8px; color:#fff; background:rgba(0,0,0,.45); padding:0 4px; border-radius:3px; }}
+ .foot {{ margin-top:10px; border-top:1px solid #eee; padding-top:5px; color:#888; font-style:italic; font-size:9.5px; }}
+ .action {{ margin-top:6px; padding:6px 9px; background:#faf6ec; border-left:3px solid #c9a86a; }}
+</style>
+<div class="head">
+  <div><div class="brand">LA&nbsp;BUSE <small>· radar foncier La Réunion</small></div>
+       <div class="idu">{html.escape(p['idu'])}</div><div class="loc">{loc}</div></div>
+  <div class="date">Fiche de pré-qualification<br>{today}</div>
+</div>
+<div class="grid">
+  <div>
+    <div class="verdict"><span class="badge v-{html.escape(status)}">{html.escape(_STATUS_LABEL.get(status, status))}</span>
+      <span class="scores">Opportunité {_score(v.get('opportunity_score'))}/100 · Complétude {_score(v.get('completeness_score'))}/100</span></div>
+    {f'<p class="synth">{synth}</p>' if synth else ''}
+    <h3>Capacité &amp; potentiel</h3>
+    {kv("Zone PLU", html.escape(str(fa.get('zone') or '—')))}
+    {kv("Capacité estimée", cap)}
+    {res_html}
+    {bil_html}
+    <h3>Contraintes</h3>
+    <ul>{cont_html}</ul>
+    <h3>À vérifier avant de démarcher</h3>
+    <ul>{verif_html}</ul>
+    {f'<div class="action"><b>Prochaine action :</b> {action}</div>' if action else ''}
+  </div>
+  <div>
+    {_minimap(geojson, cen.get('lon'), cen.get('lat'))}
+    {_rlt_link(cen.get('lon'), cen.get('lat'))}
+  </div>
+</div>
+<div class="foot">{html.escape(fiche.get('disclaimer') or '')} Document indicatif sur données publiques — pré-faisabilité et bilan ne valent pas étude réglementaire ni engagement.</div>
+</html>"""
+
+
+def _rlt_link(lon: float | None, lat: float | None) -> str:
+    """3.B — lien « Remonter le temps » (IGN) sous la mini-carte du one-pager."""
+    from .enrichment import remonter_le_temps
+    rlt = remonter_le_temps(lon, lat)
+    if not rlt.get("available"):
+        return ""
+    return (f'<p style="margin:5px 0 0;font-size:9.5px;color:#555">📜 Photos aériennes historiques : '
+            f'<a href="{html.escape(rlt["url"])}">remonterletemps.ign.fr</a> '
+            f'(comparer la parcelle, 1950 → aujourd\'hui)</p>')
+
+
+def _today() -> str:
+    from datetime import date
+    return date.today().strftime("%d/%m/%Y")

@@ -2,15 +2,18 @@
 # La base stocke la `key` (stable, ascii) ; `label` = affichage. Réordonner/renommer
 # une colonne ici ne demande aucune migration.
 
+# `tone` = température de l'étape dans l'entonnoir (cosmétique, lu par le front pour
+# l'accent de colonne) : cold (amont) → warm → hot (signature proche) → reject (sortie).
+# Absent ⇒ neutre. Réordonner/renommer reste sans migration.
 columns:
-  - {key: reperee,                   label: Repérée}
-  - {key: proprietaire_a_identifier, label: Propriétaire à identifier}
-  - {key: contact_a_preparer,        label: Contact à préparer}
-  - {key: contacte,                  label: Contacté}
-  - {key: relance_prevue,            label: Relance prévue}
-  - {key: en_discussion,             label: En discussion}
-  - {key: chaud,                     label: Opportunité chaude}
-  - {key: abandonnee,                label: À abandonner}
+  - {key: reperee,                   label: Repérée,                   tone: cold}
+  - {key: proprietaire_a_identifier, label: Propriétaire à identifier, tone: cold}
+  - {key: contact_a_preparer,        label: Contact à préparer,        tone: warm}
+  - {key: contacte,                  label: Contacté,                  tone: warm}
+  - {key: relance_prevue,            label: Relance prévue,            tone: warm}
+  - {key: en_discussion,             label: En discussion,             tone: hot}
+  - {key: chaud,                     label: Opportunité chaude,        tone: hot}
+  - {key: abandonnee,                label: À abandonner,              tone: reject}
 
 priorities:
   - {key: haute,   label: Haute}

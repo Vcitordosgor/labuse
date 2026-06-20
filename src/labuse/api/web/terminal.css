@@ -1,0 +1,565 @@
+/* ============================================================================
+   LE TERMINAL FONCIER — SYSTÈME DE DESIGN (v2) · source unique de vérité
+   ----------------------------------------------------------------------------
+   §2 du brief : tokens fondateurs ci-dessous = LA référence. Aucune valeur magique
+   ne doit subsister dans les vues — tout dérive de ces échelles.
+   Étape 2 : appliqué à la FICHE PARCELLE + au BILAN (scopé .sheet → reste de l'app
+   inchangé jusqu'à l'étape 3). Chargé après styles.css.
+   ============================================================================ */
+
+:root {
+  /* — Surfaces : 3 profondeurs, pas plus (§2.A) — */
+  --tf-bg:        #0F1620;   /* fond                                   */
+  --tf-surface:   #18212E;   /* carte niveau 1                         */
+  --tf-surface-2: #202C3C;   /* carte imbriquée niveau 2 / champs      */
+  /* — Texte : 3 niveaux (§2.A) ; tous ≥ AA sur les surfaces ci-dessus — */
+  --tf-text:   #E8ECF2;      /* principal                              */
+  --tf-text-2: #AEB9C7;      /* secondaire                             */
+  --tf-text-3: #8693A4;      /* atténué (sources, méta) — ~4.6:1 sur bg */
+  /* — Bordure : hairline UNIQUE (§2.D) — */
+  --tf-border: #2A3645;
+  /* — Accent ambre basalte : RÉSERVÉ au score d'opportunité + actions primaires (§2.A) — */
+  --tf-accent:     #E89A4E;  /* éclairci pour AA en texte sur fond sombre */
+  --tf-accent-ink: #14171C;  /* texte posé SUR l'accent                  */
+  --tf-accent-dim: rgba(232,154,78,.14);
+  /* — Verdicts : sémantique de données, immuable, RIEN d'autre (§2.A) — */
+  --tf-positive: #5CC08C;    /* POSITIVE / opportunité   */
+  --tf-flag:     #E0BC5A;    /* SOFT_FLAG / à creuser    */
+  --tf-exclude:  #DD6A66;    /* HARD_EXCLUDE / exclu     */
+  --tf-unknown:  #7D8A9B;    /* inconnu / non évalué     */
+  /* — Espacement : multiples de 4 (§2.C) — */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-6: 24px; --sp-8: 32px;
+  /* — Radius : 3 valeurs (§2.D) — */
+  --radius-card: 12px; --radius-control: 8px; --radius-pill: 999px;
+  /* — Familles : 1 sans (UI + prose), 1 mono (données). AUCUN serif (§2.B) — */
+  --font-ui:   "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  /* — Échelle typo : 6 tailles nommées (§2.B) — */
+  --fs-display: 54px; --fs-h1: 22px; --fs-h2: 18px;
+  --fs-body: 13px;    --fs-small: 11.5px; --fs-micro: 10.5px;
+}
+
+/* ── Mapping : la fiche fait pointer SES tokens locaux vers le système ───────
+   (les composants existants référencent --paper/--ink/--rule/--accent/--v-* et
+   parfois les tokens globaux --gold/--panel/--muted → tout est redirigé ici). */
+.sheet {
+  /* ════ THÈME CLAIR « DOSSIER » (validé) ════════════════════════════════════
+     La fiche s'ouvre comme un dossier d'expertise CLAIR sur l'app sombre. La
+     variante sombre reste dans :root → réversibilité : réécrire ce bloc en
+     pointant vers les tokens :root rebascule la fiche en sombre, zéro casse. */
+  --tf-bg:#F7F5F0; --tf-surface:#FFFFFF; --tf-surface-2:#FCFBF8;
+  --tf-text:#2C2C2A; --tf-text-2:#5F5E5A; --tf-text-3:#6F6E67;
+  --tf-border:#E2DDD2;
+  /* Accent = OR LA BUSE (le bleu est banni des CTA, cf brief). Deux nuances : texte/contour (AA sur
+     papier) + or vif pour les fonds de bouton premium (texte foncé). */
+  --tf-accent:#846A22; --tf-accent-ink:#2A2410; --tf-accent-dim:rgba(214,179,106,.16);
+  --tf-gold:#D6B36A;
+  /* verdicts : version TEXTE (AA sur papier) + version VIVE (jauge, pastilles) */
+  --tf-positive:#0F6E56; --tf-positive-bright:#1D9E75;
+  --tf-flag:#854F0B;     --tf-flag-bright:#C8841A;
+  --tf-exclude:#A32D2D;  --tf-exclude-bright:#E24B4A;
+  --tf-unknown:#6E6D67;  --tf-unknown-bright:#B8B4AB;
+
+  /* mapping des tokens locaux/anciens → système (verdict TEXTE = version AA) */
+  --paper:var(--tf-bg); --card:var(--tf-surface); --card-2:var(--tf-surface-2);
+  --ink:var(--tf-text); --ink-soft:var(--tf-text-2); --ink-faint:var(--tf-text-3);
+  --rule:var(--tf-border); --rule-2:var(--tf-border);
+  --accent:var(--tf-accent);
+  --v-opportunite:var(--tf-positive); --v-a_creuser:var(--tf-flag);
+  --v-exclue:var(--tf-exclude); --v-faux_positif_probable:var(--tf-exclude);
+  --serif:var(--font-ui);
+  --panel:var(--tf-surface); --panel-2:var(--tf-surface-2);
+  --txt:var(--tf-text); --muted:var(--tf-text-3); --line:var(--tf-border);
+  --gold:var(--tf-accent); --gold-soft:var(--tf-text-2);
+
+  /* ── Densité fiche −10% (décision Vic) : échelle typo + espacement réduits ~0.9× ──
+     Réduire les TOKENS plutôt que chaque valeur → tout se densifie proportionnellement,
+     en harmonie. Corps ≥ 12px (seuil de lisibilité). Réversible : remettre les valeurs :root. */
+  --fs-h1: 20px; --fs-h2: 16px; --fs-body: 12px; --fs-small: 11px; --fs-micro: 10px;
+  --sp-3: 10px; --sp-4: 14px; --sp-6: 20px; --sp-8: 28px;   /* sp-1/sp-2 (4/8) inchangés */
+
+  background: var(--tf-bg);
+  color: var(--tf-text);
+  border-left: 1px solid #D7CFC0;
+  box-shadow: -34px 0 90px rgba(0,0,0,.5);     /* détache le dossier clair du radar sombre */
+  font-family: var(--font-ui); font-size: var(--fs-body);
+  -webkit-font-smoothing: antialiased;
+}
+.sheet { scrollbar-color: #CFC7B6 transparent; }
+.sheet::-webkit-scrollbar { width: 10px; }
+.sheet::-webkit-scrollbar-thumb { background: #CFC7B6; border-radius: var(--radius-pill); }
+
+/* ── Typographie : Inter pour titres+prose, MONO pour les nombres (§2.B) ──── */
+.sheet .fh-id, .sheet .score-num, .sheet .fc-num, .sheet .pm-fig b, .sheet .v3d-figs b,
+.sheet .res-num, .sheet .meur, .sheet .bc-n, .sheet .faisa-steps b, .sheet .bilan-num,
+.sheet .bilan-comp-grid dd, .sheet .bp-in input {
+  font-family: var(--font-mono); font-feature-settings: "tnum" 1, "zero" 1;
+}
+.sheet .verdict-word, .sheet .faisa-verdict, .sheet .bilan-verdict, .sheet .rs-synthese,
+.sheet .pm-h, .sheet .verdict-gloss, .sheet .ai-prose {
+  font-family: var(--font-ui);
+}
+
+.sheet-close { border-color: var(--tf-border); color: var(--tf-text-2);
+  background: var(--tf-surface); width: 28px; height: 28px; top: var(--sp-4); right: var(--sp-4); }
+.sheet-close:hover { color: var(--tf-text); border-color: var(--tf-accent); background: var(--tf-accent-dim); }
+
+/* ── En-tête « ticker » ──────────────────────────────────────────────────── */
+.sheet .fiche-head { margin-bottom: var(--sp-4); padding-bottom: var(--sp-3); border-bottom: 1px solid var(--tf-border); }
+.sheet .fh-id { font-weight: 600; font-size: 13px; letter-spacing: .06em; color: var(--tf-text); }
+.sheet .fh-loc { color: var(--tf-text-3); font-size: var(--fs-small); margin-top: var(--sp-1); }
+
+/* ── SIGNATURE : jauge circulaire (anneau = couleur du verdict, rempli = score) ─ */
+.sheet .hero { display: flex; gap: var(--sp-4); align-items: center; padding-bottom: var(--sp-3); }
+.sheet .gauge { position: relative; width: 104px; height: 104px; flex: none; }
+.sheet .gauge svg { width: 104px; height: 104px; transform: rotate(-90deg); }
+.sheet .g-track { fill: none; stroke: var(--tf-border); stroke-width: 9; }
+.sheet .g-arc { fill: none; stroke-width: 9; stroke-linecap: round; stroke-dasharray: 326.726;
+  transition: stroke-dashoffset .7s ease, stroke .3s; }
+.sheet .g-center { position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; line-height: 1; }
+.sheet .g-num { font-family: var(--font-mono); font-weight: 600; font-size: 30px; color: var(--tf-text); }
+.sheet .g-max { font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--tf-text-3); margin-top: 3px; }
+.sheet .hero-eyebrow { font-size: var(--fs-micro); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--tf-text-3); }
+.sheet .hero-verdict { font-family: var(--font-ui); font-weight: 700; font-size: var(--fs-h1);
+  margin: var(--sp-1) 0 var(--sp-2); letter-spacing: .01em; color: var(--tf-unknown); }
+.sheet .hero-pitch { font-size: var(--fs-body); line-height: 1.45; color: var(--tf-text-2); margin: 0 0 var(--sp-2); max-width: 52ch; }
+.sheet .hero-meta { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--tf-text-3); letter-spacing: .02em; }
+.sheet .hero .fiable-tag { display: inline-block; margin-top: var(--sp-2); }
+/* couleur du verdict : anneau VIF + mot en version AA */
+.sheet .hero.v-opportunite .g-arc { stroke: var(--tf-positive-bright); }
+.sheet .hero.v-opportunite .hero-verdict { color: var(--tf-positive); }
+.sheet .hero.v-a_creuser .g-arc { stroke: var(--tf-flag-bright); }
+.sheet .hero.v-a_creuser .hero-verdict { color: var(--tf-flag); }
+.sheet .hero.v-exclue .g-arc, .sheet .hero.v-faux_positif_probable .g-arc { stroke: var(--tf-exclude-bright); }
+.sheet .hero.v-exclue .hero-verdict, .sheet .hero.v-faux_positif_probable .hero-verdict { color: var(--tf-exclude); }
+.sheet .hero.v-inconnu .g-arc { stroke: var(--tf-unknown-bright); }
+.sheet .hero.v-inconnu .hero-verdict, .sheet .hero.v-inconnu .g-num { color: var(--tf-unknown); }
+
+/* ══════ LOT 1 — Bloc « L'essentiel » (décision en tête) ══════ */
+.sheet .essentiel { padding-bottom: var(--sp-3); border-bottom: 1px solid var(--tf-border); margin-bottom: var(--sp-3); }
+.sheet .es-top { display: flex; gap: var(--sp-4); align-items: center; }
+.sheet .es-id { min-width: 0; flex: 1; }
+.sheet .es-eyebrow { font-size: var(--fs-micro); font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--tf-text-3); }
+.sheet .es-verdict { font-family: var(--font-ui); font-weight: 700; font-size: var(--fs-h1); line-height: 1.05; margin: 2px 0 4px; color: var(--tf-text); }
+.sheet .es-ref { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--tf-text-2); letter-spacing: .01em; }
+.sheet .es-pitch { font-size: var(--fs-body); line-height: 1.4; color: var(--tf-text-2); margin: var(--sp-2) 0 0; max-width: 52ch; }
+.sheet .es-downgrade { font-size: var(--fs-small); line-height: 1.4; color: var(--tf-flag); margin: var(--sp-2) 0 0; }
+/* score élevé mais à creuser (complétude < 50) — pédagogie, ton neutre (ni alarme ni promesse) */
+.sheet .es-pitch-cpl { font-size: var(--fs-small); color: var(--tf-text-2); max-width: 52ch; }
+/* badge « micro-opportunité » — NUANCE (or sobre), jamais une alarme : le verdict reste « opportunité » */
+.sheet .es-micro-badge { display: inline-block; vertical-align: middle; margin-left: 8px; font-family: var(--font-ui);
+  font-size: 11px; font-weight: 700; letter-spacing: .02em; padding: 2px 9px; border-radius: var(--radius-pill);
+  background: var(--tf-accent-dim); color: var(--tf-accent); border: 1px solid rgba(214,179,106,.4); }
+.sheet .es-micro { font-size: var(--fs-small); line-height: 1.45; color: var(--tf-text-2); margin: var(--sp-2) 0 0; max-width: 54ch; }
+.sheet .es-id .fiable-tag { display: inline-block; margin-top: var(--sp-2); }
+/* anneau de jauge + mot, colorés par verdict (mêmes règles que le hero) */
+.sheet .essentiel.v-opportunite .g-arc { stroke: var(--tf-positive-bright); } .sheet .essentiel.v-opportunite .es-verdict { color: var(--tf-positive); }
+.sheet .essentiel.v-a_creuser .g-arc { stroke: var(--tf-flag-bright); } .sheet .essentiel.v-a_creuser .es-verdict { color: var(--tf-flag); }
+.sheet .essentiel.v-exclue .g-arc, .sheet .essentiel.v-faux_positif_probable .g-arc { stroke: var(--tf-exclude-bright); }
+.sheet .essentiel.v-exclue .es-verdict, .sheet .essentiel.v-faux_positif_probable .es-verdict { color: var(--tf-exclude); }
+.sheet .essentiel.v-inconnu .g-arc { stroke: var(--tf-unknown-bright); } .sheet .essentiel.v-inconnu .es-verdict { color: var(--tf-unknown); }
+/* grille de faits décisifs */
+.sheet .es-facts { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-2); margin: var(--sp-3) 0 0; }
+.sheet .es-fact { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-control); padding: var(--sp-2) var(--sp-3); min-width: 0; }
+.sheet .es-fact dt { font-size: var(--fs-micro); font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--tf-text-3); }
+.sheet .es-fact dd { margin: 3px 0 0; font-size: var(--fs-body); color: var(--tf-text); line-height: 1.25; }
+.sheet .es-asm { margin: var(--sp-2) 0 0; padding: var(--sp-2) var(--sp-3); border-radius: var(--radius-control); font-size: var(--fs-small);
+  background: var(--tf-accent-dim); border: 1px solid rgba(214,179,106,.4); color: var(--tf-text); }
+.sheet .es-why { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-3); margin: var(--sp-2) 0 0; font-size: var(--fs-small); }
+.sheet .es-action { color: var(--tf-accent); font-weight: 600; }
+.sheet .es-bloc { color: var(--tf-flag); }
+/* badges de provenance (sourcée / estimée) */
+.sheet .prov { display: inline-block; font-family: var(--font-ui); font-size: 9px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; padding: 1px 6px; border-radius: var(--radius-pill); vertical-align: middle; margin-left: 4px; }
+.sheet .prov-src { background: rgba(92,192,140,.14); color: var(--tf-positive); }
+.sheet .prov-est { background: rgba(224,188,90,.16); color: var(--tf-flag); }
+.sheet .prov-nv  { background: rgba(110,109,103,.15); color: var(--tf-text-3); }
+.sheet .prov-calc { background: rgba(110,109,103,.12); color: var(--tf-text-2); }  /* résultat dérivé (ni source ni hypothèse) */
+
+/* ══════ LOT 1 — Accordéons du « dossier complet » ══════ */
+.sheet .acc-head { display: flex; align-items: baseline; gap: var(--sp-3); margin: var(--sp-4) 0 var(--sp-2); padding-bottom: 6px; border-bottom: 1px solid var(--tf-border); }
+.sheet .acc-head-t { font-family: var(--font-ui); font-size: var(--fs-h2); font-weight: 700; color: var(--tf-text); }
+.sheet .acc-head-s { font-size: var(--fs-small); color: var(--tf-text-3); }
+.sheet .acc { border: 1px solid var(--tf-border); border-radius: var(--radius-control); background: var(--tf-surface); margin: 0 0 var(--sp-2); overflow: hidden; }
+.sheet .acc[open] { border-color: rgba(214,179,106,.45); }
+.sheet .acc-sum { display: flex; align-items: center; gap: var(--sp-3); padding: var(--sp-3); cursor: pointer; list-style: none; user-select: none; }
+.sheet .acc-sum::-webkit-details-marker { display: none; }
+.sheet .acc-sum:hover { background: var(--tf-surface-2); }
+.sheet .acc-sum:focus-visible { outline: 2px solid var(--tf-gold); outline-offset: -2px; }
+.sheet .acc-tt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.sheet .acc-t { font-family: var(--font-ui); font-size: var(--fs-body); font-weight: 700; color: var(--tf-text); }
+.sheet .acc-s { font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .acc-chev { width: 18px; height: 18px; flex: none; fill: none; stroke: var(--tf-text-3); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s ease; }
+.sheet .acc[open] .acc-chev { transform: rotate(90deg); stroke: var(--tf-accent); }
+.sheet .acc-wrap { border-top: 1px solid var(--tf-border); }
+.sheet .acc-body { padding: var(--sp-3); }
+.sheet .acc[open] .acc-body { animation: acc-in .22s ease; }   /* ouverture fluide, sans rechargement */
+@keyframes acc-in { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sheet .acc[open] .acc-body { animation: none; } .sheet .acc-chev { transition: none; } }
+.sheet .acc-zone { font-size: var(--fs-body); color: var(--tf-text); margin-bottom: var(--sp-2); }
+.sheet .acc-topo-ctx { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--tf-text-2); }
+.sheet .acc-topo-ctx:empty { display: none; }
+.sheet .enr-slot { margin-top: var(--sp-2); }
+.sheet .enr-loading { display: inline-flex; align-items: center; gap: 8px; font-size: var(--fs-small); color: var(--tf-text-3); }
+
+/* LOT 4.1 — box « Orientations PLH » */
+.sheet .plh { margin: var(--sp-2) 0; padding: var(--sp-3); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  background: var(--tf-surface-2); border-left: 3px solid var(--tf-gold); }
+.sheet .plh-h { display: flex; align-items: center; gap: 7px; font-family: var(--font-ui); font-size: var(--fs-small);
+  font-weight: 700; color: var(--tf-text); }
+.sheet .plh-mill { font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--tf-text-3); margin-left: auto; }
+.sheet .plh-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--sp-3); margin: var(--sp-2) 0 0; }
+.sheet .plh-grid dt { font-size: var(--fs-small); color: var(--tf-text-3); }
+.sheet .plh-grid dd { margin: 0; font-size: var(--fs-small); color: var(--tf-text); text-align: right; }
+.sheet .plh-align { margin-top: var(--sp-2); padding: var(--sp-2); border-radius: var(--radius-control);
+  background: var(--tf-accent-dim); font-size: var(--fs-small); color: var(--tf-text); line-height: 1.4; }
+.sheet .plh-note { margin: var(--sp-2) 0 0; font-size: var(--fs-small); color: var(--tf-text-2); line-height: 1.4; }
+.sheet .plh-src { margin: 6px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); }
+
+/* LOT 4-C — box « Marché Obsimmo » (vente) : indicateurs + comparaison régionale + signal dérivé */
+.sheet .obs { margin: var(--sp-2) 0; padding: var(--sp-3); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-control); background: var(--tf-surface-2); border-left: 3px solid var(--tf-gold); }
+.sheet .obs-h { display: flex; align-items: center; gap: 7px; font-family: var(--font-ui);
+  font-size: var(--fs-small); font-weight: 700; color: var(--tf-text); }
+.sheet .obs-tx { font-size: var(--fs-micro); font-weight: 600; color: var(--tf-text-3); text-transform: uppercase; letter-spacing: .08em; }
+.sheet .obs-reg { margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .obs-sub { margin-top: 3px; font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .obs-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--sp-3); margin: var(--sp-2) 0 0; }
+.sheet .obs-grid dt { font-size: var(--fs-small); color: var(--tf-text-3); }
+.sheet .obs-grid dd { margin: 0; font-size: var(--fs-small); color: var(--tf-text); text-align: right; }
+/* NS = donnée non significative : marqueur sobre, jamais confondu avec un 0 */
+.sheet .obs-ns { font-family: var(--font-mono); font-size: var(--fs-micro); color: var(--tf-text-3);
+  border-bottom: 1px dotted var(--tf-text-3); cursor: help; }
+.sheet .obs-note { margin: var(--sp-2) 0 0; padding: 6px var(--sp-2); border-radius: var(--radius-control);
+  background: rgba(133,79,11,.10); color: var(--tf-flag); font-size: var(--fs-micro); line-height: 1.4; }
+/* signal de marché — chip secondaire, distinct du verdict foncier */
+.sheet .obs-sig { display: flex; align-items: center; gap: 7px; margin-top: var(--sp-2); padding: 6px var(--sp-2);
+  border-radius: var(--radius-control); font-size: var(--fs-small); }
+.sheet .obs-sig-lab { font-weight: 700; }
+.sheet .obs-sig-score { font-family: var(--font-mono); }
+.sheet .obs-sig-fiab { margin-left: auto; font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .obs-sig-favorable { background: rgba(15,110,86,.10); color: var(--tf-positive); }
+.sheet .obs-sig-neutre    { background: rgba(110,109,103,.10); color: var(--tf-text-2); }
+.sheet .obs-sig-prudence  { background: rgba(133,79,11,.10); color: var(--tf-flag); }
+.sheet .obs-sig-na        { background: var(--tf-surface); color: var(--tf-text-3); font-style: italic; }
+.sheet .obs-comp { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 2px; }
+.sheet .obs-comp li { font-size: var(--fs-micro); color: var(--tf-text-2); }
+.sheet .obs-cs { display: inline-block; width: 1.1em; text-align: center; font-weight: 700; }
+.sheet .obs-cs-pos { color: var(--tf-positive); }
+.sheet .obs-cs-neg { color: var(--tf-exclude); }
+.sheet .obs-cs-neu { color: var(--tf-text-3); }
+.sheet .obs-signote { margin: 6px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); line-height: 1.4; }
+.sheet .obs-autres { margin-top: var(--sp-2); font-size: var(--fs-small); color: var(--tf-text-2); }
+.sheet .obs-src { margin: var(--sp-2) 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); }
+.sheet .obs-warn { margin: 3px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); font-style: italic; }
+
+/* LOT 4-B — box « Marché locatif » (carte des loyers DHUP) + « Statut d'occupation » (INSEE RP) */
+.sheet .loy, .sheet .occ { margin: var(--sp-2) 0; padding: var(--sp-3); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-control); background: var(--tf-surface-2); border-left: 3px solid var(--tf-gold); }
+.sheet .loy-h { display: flex; align-items: center; gap: 7px; font-family: var(--font-ui);
+  font-size: var(--fs-small); font-weight: 700; color: var(--tf-text); }
+.sheet .loy-row { display: flex; justify-content: space-between; align-items: baseline; gap: var(--sp-3);
+  margin-top: var(--sp-2); font-size: var(--fs-small); }
+.sheet .loy-k { color: var(--tf-text-3); }
+.sheet .loy-v { text-align: right; color: var(--tf-text); }
+.sheet .loy-v b { font-family: var(--font-mono); }
+.sheet .loy-ic { color: var(--tf-text-3); font-size: var(--fs-micro); }
+.sheet .loy-maille { color: var(--tf-flag); border-bottom: 1px dotted var(--tf-flag); cursor: help; }
+
+/* ── Badge de fiabilité (verdict, pas méta) ──────────────────────────────── */
+.sheet .fiable-tag { font-family: var(--font-ui); border-radius: var(--radius-pill); letter-spacing: .02em; }
+.sheet .fiable-tag.ok      { background: rgba(92,192,140,.13); color: var(--tf-positive); border-color: rgba(92,192,140,.32); }
+.sheet .fiable-tag.reserve { background: rgba(224,188,90,.13); color: var(--tf-flag);     border-color: rgba(224,188,90,.34); }
+.sheet .fiable-sub { color: var(--tf-text-3); }
+.sheet .verdict-downgrade { background: rgba(226,75,74,.08); border: 1px solid rgba(226,75,74,.30); color: var(--tf-exclude); border-radius: var(--radius-control); }
+
+/* ── Titres de section & eyebrows : Inter, jamais d'ambre décoratif (§2.A/B) ─ */
+.sheet .src-h, .sheet .faisa-eyebrow, .sheet .bilan-eyebrow, .sheet .rs-eyebrow,
+.sheet .bilan-comp-t, .sheet .bp-grp-t {
+  font-family: var(--font-ui); font-size: var(--fs-micro); font-weight: 700;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--tf-text-3);
+}
+.sheet .faisa-verdict, .sheet .bilan-verdict { font-size: var(--fs-h2); font-weight: 700; color: var(--tf-text); }
+.sheet .rs-synthese { font-size: 14px; color: var(--tf-text); }
+.sheet .faisa-ctx, .sheet .bilan-msg, .sheet .rs-list li, .sheet .rs-action { color: var(--tf-text-2); }
+.sheet .rs-action-k, .sheet .bati .bt-k { font-family: var(--font-ui); color: var(--tf-text-3); }
+
+/* ── Verdicts lisibles À LA COULEUR (corrige les teintes pour fond clair) ──── */
+.sheet .rd-h, .sheet .rs-h { font-family: var(--font-ui); font-size: var(--fs-small); font-weight: 700; letter-spacing: .04em; }
+.sheet .rd-h.ok,  .sheet .rs-h.ok,  .sheet .rd-pts.pos { color: var(--tf-positive); }
+.sheet .rd-h.lim, .sheet .rs-h.warn { color: var(--tf-flag); }
+.sheet .rd-h.lim.has-hard, .sheet .rd-pts.neg, .sheet .bati.bt-bad .bt-label { color: var(--tf-exclude); }
+.sheet .rd-h.unk { color: var(--tf-text-3); }
+.sheet .rd-h.unk::before { background: var(--tf-text-3); }
+.sheet .rd-li { color: var(--tf-text-2); padding-left: var(--sp-3); }
+.sheet .rd-li::before { width: 6px; height: 6px; border-radius: 50%; top: .45em; }
+.sheet .rd-li.ok::before { background: var(--tf-positive); }
+.sheet .rd-li.hard::before { background: var(--tf-exclude); }
+.sheet .rd-li.soft::before { background: var(--tf-flag); }
+.sheet .rd-li.unk::before { background: var(--tf-text-3); }
+.sheet .rd-src { color: var(--tf-text-3); }
+
+/* ── Rythme vertical homogène entre sections (§2.C) ──────────────────────── */
+.sheet .resume, .sheet .assistant, .sheet .reads, .sheet .faisa, .sheet .promoteur,
+.sheet .bilan, .sheet .bati { margin-top: var(--sp-6); }
+
+/* ── Cartes data, capacité, étapes → surfaces sombres + 3 radius ──────────── */
+.sheet .resume { background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-left: 3px solid var(--tf-unknown); border-radius: var(--radius-card); padding: var(--sp-4); }
+.sheet .resume.v-opportunite { border-left-color: var(--tf-positive); }
+.sheet .resume.v-a_creuser { border-left-color: var(--tf-flag); }
+.sheet .resume.v-faux_positif_probable { border-left-color: var(--tf-exclude); }
+.sheet .resume.v-exclue { border-left-color: var(--tf-unknown); }
+.sheet .faisa { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-card); padding: var(--sp-6); }
+.sheet .faisa-nc { background: var(--tf-surface); }
+.sheet .faisa-nc .faisa-verdict { color: var(--tf-exclude); }
+/* Cartes de capacité : grille égale, labels alignés en bas (§3.B img 4) */
+.sheet .faisa-cards { grid-template-columns: 1fr 1fr 1fr; gap: var(--sp-3); }
+.sheet .fc { background: var(--tf-surface-2); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  box-shadow: none; display: flex; flex-direction: column; padding: var(--sp-3); }
+.sheet .fc-num { color: var(--tf-text); font-size: 18px; font-weight: 600; }
+.sheet .fc-lbl, .sheet .pm-fig i, .sheet .v3d-figs i { font-family: var(--font-ui); color: var(--tf-text-3); margin-top: auto; }
+.sheet .fc.fc-wide { grid-column: auto; }
+.sheet .faisa-steps td { border-bottom-color: var(--tf-border); color: var(--tf-text-2); }
+.sheet .faisa-steps b { color: var(--tf-text); }
+.sheet .fs-src, .sheet .pm-src, .sheet .faisa-bandeau, .sheet .pm-foot, .sheet .bilan-bandeau { color: var(--tf-text-3); }
+.sheet .faisa-calc { border-top: 1px solid var(--tf-border); }
+.sheet .faisa-calc > summary, .sheet .faisa-calc[open] > summary { color: var(--tf-accent); }
+
+/* ── 3D : surface neutre, données en mono NEUTRE (l'ambre reste au score) ──── */
+.sheet .v3d { background: var(--tf-bg); border: 1px solid var(--tf-border); border-radius: var(--radius-card); }
+.sheet .v3d-figs b { color: var(--tf-text); }
+.sheet .v3d-note { color: var(--tf-text-3); }
+
+/* ── Promoteur : cartes homogènes ────────────────────────────────────────── */
+.sheet .pm-card { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-control); padding: var(--sp-3); }
+.sheet .pm-h { font-size: var(--fs-h2); font-weight: 600; color: var(--tf-text); margin-bottom: var(--sp-2); }
+/* §5 — données promoteur : valeurs en mono, colonnes alignées, taille resserrée (densité −10%) */
+.sheet .pm-fig b { color: var(--tf-text); font-size: 20px; }
+.sheet .pm-figs { gap: var(--sp-2) var(--sp-4); }
+.sheet .pm-fig { min-width: 64px; }
+.sheet .pm-fig.degr b { color: var(--tf-text-2); }       /* §2.A : pas d'ambre sur une donnée */
+.sheet .pm-na, .sheet .pm-list.net li { color: var(--tf-text-2); }
+.sheet .pm-list.net b, .sheet .pm-list b { color: var(--tf-text); }
+.sheet .pm-list li { border-top-color: var(--tf-border); }
+.sheet .pm-via, .sheet .pm-note { background: var(--tf-surface-2); border-color: var(--tf-border); }
+.sheet .pm-sky img { background: var(--tf-surface-2); }
+.sheet .pm-sky, .sheet .pm-sky-cap { border-radius: var(--radius-control); }
+.sheet .pm-sky-cap { background: var(--tf-surface-2); color: var(--tf-text-3); }
+
+/* ══ LE BILAN — migration complète en sombre (§3.A, correction n°1) ════════ */
+.sheet .bilan { background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-card); padding: var(--sp-6); }
+.sheet .bilan-verdict { color: var(--tf-text); }          /* « Simulation indicative » LISIBLE */
+.sheet .bilan-msg { color: var(--tf-text-2); }
+.sheet .bilan-cards .fc, .sheet .bilan-comp .fc { background: var(--tf-surface-2); }  /* mêmes stat-cards que la capacité */
+.sheet .bilan-calc table td, .sheet .bilan-method table td { border-bottom-color: var(--tf-border); color: var(--tf-text-2); }
+.sheet .bilan-comp { background: var(--tf-surface-2); border: 1px solid var(--tf-border); border-radius: var(--radius-control); }
+.sheet .bilan-comp-grid dt { color: var(--tf-text-3); }
+.sheet .bilan-comp-grid dd { color: var(--tf-text-2); }
+.sheet .bilan-comp-grid .bc-n, .sheet .bilan-comp-note { color: var(--tf-text-3); }
+/* bandeau « non fiable / prix fragile » : avertissement sombre, plus de bloc saumon clair */
+.sheet .bilan-frag { background: var(--tf-surface); border-color: var(--tf-border); }
+.sheet .bilan-fragile { background: rgba(200,132,26,.10); border: 1px solid rgba(200,132,26,.30);
+  color: var(--tf-flag); border-radius: var(--radius-control); }
+.sheet .bilan-noncal { background: rgba(200,132,26,.10); border-left: 3px solid var(--tf-flag-bright);
+  color: var(--tf-flag); border-radius: var(--radius-control); }
+/* socle web sourcé : note INFO souple (pas un avertissement) */
+.sheet .bilan-estim { margin: var(--sp-2) 0; padding: 9px 12px; font-size: var(--fs-small); line-height: 1.5;
+  background: var(--tf-accent-dim); border-left: 3px solid var(--tf-accent); color: var(--tf-text-2);
+  border-radius: var(--radius-control); }
+/* microcopy de transparence du calcul (légende des badges sourcé/estimé/calculé) */
+.sheet .bilan-microcopy { margin: 0 0 var(--sp-2); font-size: var(--fs-small); line-height: 1.55; color: var(--tf-text-2); }
+/* badges de fiabilité du prix → couleurs verdict */
+.sheet .fiab { font-family: var(--font-ui); border-radius: var(--radius-pill); }
+.sheet .fiab-fiable      { background: rgba(92,192,140,.14); color: var(--tf-positive); }
+.sheet .fiab-fragile     { background: rgba(224,188,90,.16);  color: var(--tf-flag); }
+.sheet .fiab-insuffisant { background: rgba(221,106,102,.14); color: var(--tf-exclude); }
+
+/* Calibration des paramètres (1.C) — formulaire sombre cohérent */
+.sheet .bilan-lls, .sheet .bp-in input { background: var(--tf-surface-2); border-color: var(--tf-border); color: var(--tf-text); border-radius: var(--radius-control); }
+.sheet .bilan-lls label, .sheet .bp-lbl { color: var(--tf-text-2); }
+.sheet .bilan-lls-note, .sheet .bp-note, .sheet .bp-u, .sheet .bp-msg { color: var(--tf-text-3); }
+.sheet .bp-badge, .sheet .bp-nc input { border-color: rgba(224,188,90,.45); }
+.sheet .bp-badge { color: var(--tf-flag); border-radius: var(--radius-control); }
+.sheet .bp-badge.bp-est { color: var(--tf-text-3); border-color: var(--tf-border); }      /* estimée → indicatif gris */
+.sheet .bp-badge.bp-srcok { color: var(--tf-positive); border-color: rgba(29,158,117,.4); }  /* sourcée → vert sobre */
+.sheet .bp-src { color: var(--tf-text-3); }
+.sheet .bp-save { background: var(--tf-gold); color: var(--tf-accent-ink); border: 1px solid #C29E55; border-radius: var(--radius-control); }  /* action primaire = or */
+
+/* ── Badges MÉTA → gris discret, jamais d'ambre (§2.A, img 10) ────────────── */
+.sheet .pm-ind, .sheet .eco-badge, .sheet .pmt-cov, .sheet .res-estim {
+  font-family: var(--font-ui); background: var(--tf-surface-2); color: var(--tf-text-3);
+  border: 1px solid var(--tf-border); border-radius: var(--radius-pill);
+}
+.sheet .eco-badge { padding: 2px 9px; font-weight: 600; }
+
+/* ── Pastilles d'état & chips → fond translucide + texte clair ────────────── */
+.sheet .chip, .sheet .src-chip, .sheet .fiable-tag, .sheet .fiab { border-radius: var(--radius-pill); }
+.sheet .chip.opportunite, .sheet .src-chip.ok { color: var(--tf-positive); background: rgba(92,192,140,.13); border-color: rgba(92,192,140,.3); }
+.sheet .chip.a_creuser   { color: var(--tf-flag);    background: rgba(224,188,90,.14); }
+.sheet .chip.faux_positif_probable { color: var(--tf-exclude); background: rgba(221,106,102,.14); }
+.sheet .chip.exclue      { color: var(--tf-text-2);  background: rgba(125,138,155,.16); }
+.sheet .src-chip { background: var(--tf-surface-2); color: var(--tf-text-2); }
+.sheet .src-chip.silent { background: transparent; color: var(--tf-text-3); }
+.sheet .own-badge { border-radius: var(--radius-pill); }
+
+/* ── Boutons : action primaire = ambre, secondaires = neutres ─────────────── */
+.sheet .btn { background: var(--tf-surface); border: 1px solid var(--tf-border); color: var(--tf-text); border-radius: var(--radius-control); }
+.sheet .btn:hover { border-color: var(--tf-accent); color: var(--tf-accent); background: var(--tf-accent-dim); }
+.sheet .btn.good { color: var(--tf-positive); border-color: rgba(92,192,140,.35); }
+.sheet .btn.bad  { color: var(--tf-exclude);  border-color: rgba(221,106,102,.35); }
+.sheet .btn.follow.on { color: var(--tf-positive); background: rgba(92,192,140,.10); border-color: rgba(92,192,140,.4); }
+/* 2.C — « Expliquer cette parcelle » = action SIGNATURE (l'effet IA). Accent plein, présence forte. */
+.sheet .ai-btn { width: 100%; background: var(--tf-gold); border: 1px solid #C29E55;
+  color: var(--tf-accent-ink); border-radius: var(--radius-control); padding: 11px 16px;
+  font-weight: 700; font-size: var(--fs-body); letter-spacing: .01em;
+  box-shadow: 0 1px 0 rgba(255,255,255,.4) inset, 0 6px 16px rgba(159,123,46,.20); }
+.sheet .ai-btn:hover:not(:disabled) { filter: brightness(1.04); box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 8px 20px rgba(159,123,46,.26); }
+.sheet .ai-ic { font-size: 1.05em; margin-right: 2px; }
+/* sous-texte : dit ce que fait la fonction AVANT le clic (registre pro, pas marketing) */
+.sheet .ai-pitch { margin: var(--sp-2) 0 0; text-align: center; font-size: var(--fs-small);
+  color: var(--tf-text-3); line-height: 1.4; }
+/* État sans clé : discret mais présent (ghost), jamais un gros bouton accent grisé frustrant */
+.sheet .ai-btn:disabled { background: transparent; border: 1px dashed var(--tf-border);
+  color: var(--tf-text-3); box-shadow: none; font-weight: 600; }
+.sheet .ai-req { color: var(--tf-text-3); font-weight: 400; }
+/* La réponse : encadré soigné et lisible (ce que le promoteur lit / montre à son associé) */
+.sheet .ai-out { margin-top: var(--sp-3); background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-card); padding: var(--sp-4); }
+.sheet .ai-out.ready { box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 4px 16px rgba(35,78,120,.06); }
+/* Bloc IA mis en avant en haut de fiche (perception « outil expert ») — distinct, premium, pas gadget. */
+.sheet .ai-hero { margin: var(--sp-3) 0 var(--sp-4); padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-card);
+  border: 1px solid #E3D7B5; border-left: 3px solid var(--tf-gold);
+  background: linear-gradient(180deg, rgba(214,179,106,.10), rgba(214,179,106,.03)); }
+.sheet .ai-hero-off { background: var(--tf-surface-2); border-left-color: var(--tf-border); }
+.sheet .ai-hero-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: var(--sp-2); }
+.sheet .ai-hero-ic { font-size: 1.25em; line-height: 1.2; }
+.sheet .ai-hero-t { font-family: var(--font-ui); font-weight: 700; font-size: var(--fs-body); color: var(--tf-text); }
+.sheet .ai-hero-s { font-size: var(--fs-small); color: var(--tf-text-2); line-height: 1.4; margin-top: 2px; }
+.sheet .ai-hero .assistant { margin-top: 0; }
+.sheet .ai-loading { display: flex; align-items: center; gap: 8px; font-size: var(--fs-body); color: var(--tf-text-3); }
+.sheet .ai-card-h { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: var(--fs-body);
+  color: var(--tf-accent); margin-bottom: var(--sp-2); padding-bottom: var(--sp-2); border-bottom: 1px solid var(--tf-border); }
+.sheet .ai-prose { font-size: var(--fs-body); line-height: 1.6; color: var(--tf-text); }
+.sheet .ai-prose .ai-p { margin: 0 0 var(--sp-2); }
+.sheet .ai-prose .ai-p.ai-h { font-weight: 700; color: var(--tf-text); margin-top: var(--sp-2); }
+.sheet .ai-prose strong { font-weight: 700; color: var(--tf-text); }
+.sheet .ai-prose em { font-style: italic; }
+.sheet .ai-prose code { font-family: var(--font-mono); font-size: .92em; background: var(--tf-surface-2);
+  padding: 1px 5px; border-radius: 5px; }
+.sheet .ai-prose ul { margin: var(--sp-1) 0 var(--sp-2); padding-left: 18px; }
+.sheet .ai-prose li { margin: 2px 0; }
+/* le « signal de vigilance » repérable d'un coup d'œil */
+.sheet .ai-prose .ai-warn { background: rgba(200,132,26,.10); border-left: 3px solid var(--tf-flag-bright);
+  color: var(--tf-flag); padding: 7px 11px; border-radius: var(--radius-control); margin: var(--sp-2) 0; }
+.sheet .ai-foot { margin: var(--sp-3) 0 0; padding-top: var(--sp-2); border-top: 1px solid var(--tf-border);
+  font-size: var(--fs-micro); color: var(--tf-text-3); line-height: 1.4; }
+.sheet .ai-na { font-size: var(--fs-body); color: var(--tf-text-2); line-height: 1.5; }
+/* Synthèse RÈGLES (déterministe, sans clé) — toujours visible, premium, distincte de l'IA enrichie */
+.sheet .ai-rules { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-card);
+  padding: var(--sp-3) var(--sp-4); }
+.sheet .ai-rules-h { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: var(--fs-body);
+  color: var(--tf-accent); margin-bottom: var(--sp-2); padding-bottom: var(--sp-2); border-bottom: 1px solid var(--tf-border); }
+.sheet .ai-rules-tag { margin-left: auto; font-family: var(--font-ui); font-size: 10px; font-weight: 700;
+  letter-spacing: .03em; text-transform: uppercase; color: var(--tf-text-3);
+  background: var(--tf-surface-2); border: 1px solid var(--tf-border); border-radius: var(--radius-pill); padding: 1px 8px; }
+/* Note d'activation (sans clé) — informe, ne fait pas « cassé », pas de fausse promesse */
+.sheet .ai-activate { margin: var(--sp-2) 0 0; font-size: var(--fs-small); line-height: 1.5; color: var(--tf-text-2); }
+
+/* ══ NOTE PROMOTEUR — synthèse décisionnelle en tête de fiche (SaaS premium) ══ */
+.sheet .note-pro { margin-top: var(--sp-3); }
+.sheet .np-decision { background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-left: 3px solid var(--tf-accent); border-radius: var(--radius-card); padding: var(--sp-3) var(--sp-4);
+  font-size: var(--fs-body); line-height: 1.45; color: var(--tf-text); }
+.sheet .note-pro.v-opportunite .np-decision { border-left-color: var(--tf-positive-bright); }
+.sheet .note-pro.v-a_creuser .np-decision { border-left-color: var(--tf-flag-bright); }
+.sheet .note-pro.v-exclue .np-decision, .sheet .note-pro.v-faux_positif_probable .np-decision { border-left-color: var(--tf-exclude-bright); }
+.sheet .np-decision-k { display: block; font-family: var(--font-ui); font-size: var(--fs-micro); font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--tf-text-3); margin-bottom: 3px; }
+.sheet .np-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-2); margin-top: var(--sp-3); }
+@media (min-width: 560px) { .sheet .np-cards { grid-template-columns: repeat(4, 1fr); } }
+.sheet .mc { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  padding: var(--sp-3); display: flex; flex-direction: column; min-height: 64px; }
+.sheet .mc-k { font-family: var(--font-ui); font-size: 9.5px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--tf-text-3); }
+.sheet .mc-v { font-family: var(--font-mono); font-weight: 600; font-size: 17px; color: var(--tf-text);
+  line-height: 1.15; margin-top: 3px; }
+.sheet .mc-v i { font-style: normal; font-size: .8em; color: var(--tf-text-2); }
+.sheet .mc-s { font-size: var(--fs-micro); color: var(--tf-text-3); margin-top: auto; padding-top: 4px; }
+.sheet .mc.mc-warn { border-left: 3px solid var(--tf-flag-bright); }
+.sheet .mc.mc-warn .mc-v { font-family: var(--font-ui); font-size: var(--fs-small); font-weight: 600; color: var(--tf-flag); }
+
+/* ══ Assemblage « star » (Module 3) — décision parcelle seule vs groupée, dans la note ══ */
+.sheet .asm-bloc { margin-top: var(--sp-3); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  background: var(--tf-surface-2); padding: var(--sp-3); }
+.sheet .asm-bloc.asm-on { border-color: rgba(214,179,106,.5); box-shadow: inset 3px 0 0 var(--tf-gold); }
+.sheet .asm-h { font-family: var(--font-ui); font-size: var(--fs-small); font-weight: 700; color: var(--tf-text);
+  letter-spacing: .01em; margin-bottom: var(--sp-2); }
+.sheet .asm-h span { color: var(--tf-text-3); font-weight: 600; font-size: .85em; }
+.sheet .asm-cols { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--sp-2); }
+.sheet .asm-col { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-control);
+  padding: var(--sp-2) var(--sp-3); min-width: 0; }
+.sheet .asm-col-grp { border-color: rgba(214,179,106,.45); }
+.sheet .asm-col-k { font-size: 9.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--tf-text-3); }
+.sheet .asm-col-v { font-family: var(--font-ui); font-weight: 600; font-size: var(--fs-body); color: var(--tf-text); margin-top: 2px; line-height: 1.2; }
+.sheet .asm-col-s { font-family: var(--font-mono); font-size: var(--fs-small); color: var(--tf-text-2); margin-top: 3px; }
+.sheet .asm-arrow { color: var(--tf-gold); font-size: 18px; font-weight: 700; text-align: center; }
+.sheet .asm-grid { display: grid; grid-template-columns: auto 1fr; gap: 3px var(--sp-3); margin: var(--sp-3) 0 0; }
+.sheet .asm-grid dt { font-size: var(--fs-small); color: var(--tf-text-3); }
+.sheet .asm-grid dd { margin: 0; font-size: var(--fs-small); color: var(--tf-text); text-align: right; }
+.sheet .asm-action { margin-top: var(--sp-2); font-size: var(--fs-small); font-weight: 600; color: var(--tf-accent); }
+.sheet .asm-foot { margin: 6px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); }
+@media (max-width: 520px) { .sheet .asm-cols { grid-template-columns: 1fr; } .sheet .asm-arrow { transform: rotate(90deg); } }
+
+/* ══ Séparateur « Audit foncier complet » (la preuve, sous la synthèse) ══ */
+.sheet .audit-head { margin: var(--sp-8) 0 var(--sp-3); padding-top: var(--sp-4); border-top: 2px solid var(--tf-border); }
+.sheet .audit-head-t { display: block; font-family: var(--font-ui); font-size: var(--fs-h2); font-weight: 700; color: var(--tf-text); }
+.sheet .audit-head-s { display: block; font-size: var(--fs-small); color: var(--tf-text-3); margin-top: 2px; }
+
+/* ══ Actions hiérarchisées : 1 CTA métier · secondaires · « Plus d'actions » ══ */
+.sheet .fiche-actions { display: flex; flex-direction: column; gap: var(--sp-3); margin-top: var(--sp-6);
+  border-top: 1px solid var(--tf-border); padding-top: var(--sp-4); }
+.sheet .cta-primary { width: 100%; background: #147A58; border: 1px solid #0F6E56;
+  color: #fff; font-weight: 700; font-size: var(--fs-body); padding: 12px 16px; border-radius: var(--radius-control);
+  box-shadow: 0 1px 0 rgba(255,255,255,.16) inset, 0 6px 16px rgba(20,122,88,.22); }
+.sheet .cta-primary:hover { filter: brightness(1.04); }
+.sheet .cta-primary.on { background: var(--tf-surface); color: var(--tf-positive); border-color: rgba(29,158,117,.4); box-shadow: none; }
+.sheet .fa-secondary { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
+.sheet .fa-secondary .btn { font-size: var(--fs-small); }
+.sheet .fa-more { position: relative; margin-left: auto; }
+.sheet .fa-more-btn { list-style: none; cursor: pointer; font-size: var(--fs-small); color: var(--tf-text-3);
+  padding: 7px 10px; border: 1px solid var(--tf-border); border-radius: var(--radius-control); }
+.sheet .fa-more-btn::-webkit-details-marker { display: none; }
+.sheet .fa-more-btn::after { content: " ▾"; }
+.sheet .fa-more[open] .fa-more-btn::after { content: " ▴"; }
+.sheet .fa-more-menu { position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 5;
+  display: flex; flex-direction: column; gap: 4px; background: var(--tf-surface); border: 1px solid var(--tf-border);
+  border-radius: var(--radius-card); padding: var(--sp-2); min-width: 190px; box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.sheet .fa-more-menu .btn { width: 100%; text-align: left; font-size: var(--fs-small); }
+
+/* ══ M8 — Propriété & réseaux : statuts courts d'abord, détail verbeux replié ══ */
+.sheet .pm-status { list-style: none; margin: 0; padding: 0; }
+.sheet .pm-status li { display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--tf-border); font-size: var(--fs-body); }
+.sheet .pm-status li:last-child { border-bottom: none; }
+.sheet .ps-k { color: var(--tf-text-3); }
+.sheet .ps-v { color: var(--tf-text); text-align: right; }
+.sheet .pm-detail { margin-top: var(--sp-2); border-top: 1px solid var(--tf-border); padding-top: var(--sp-2); }
+.sheet .pm-detail > summary { cursor: pointer; font-size: var(--fs-small); color: var(--tf-accent); list-style: none; font-weight: 600; }
+.sheet .pm-detail > summary::-webkit-details-marker { display: none; }
+.sheet .pm-detail > summary::before { content: "▸ "; }
+.sheet .pm-detail[open] > summary::before { content: "▾ "; }
+
+/* ══ M9 — Sources valorisées (la traçabilité comme argument commercial) ══ */
+.sheet .src-summary { font-size: var(--fs-body); color: var(--tf-text-2); margin: 2px 0 var(--sp-2); line-height: 1.5; }
+.sheet .src-summary b { font-family: var(--font-mono); color: var(--tf-text); }
+.sheet .src-summary .src-ok-n { color: var(--tf-positive); }
+.sheet .src-summary .src-na-n { color: var(--tf-flag); }
+.sheet .src-note { font-size: var(--fs-small); color: var(--tf-text-3); margin: var(--sp-2) 0 0; line-height: 1.45; }
+
+/* ── Mouvement sobre & plancher de qualité ───────────────────────────────── */
+.sheet .fc, .sheet .pm-card, .sheet .btn, .sheet .ai-btn { transition: border-color .14s, background .14s; }
+.sheet :focus-visible { outline: 2px solid var(--tf-accent); outline-offset: 2px; border-radius: var(--radius-control); }
+@media (prefers-reduced-motion: reduce) { .sheet, .sheet * { transition: none !important; animation: none !important; } }

@@ -52,12 +52,19 @@ def parse_parcelles(feature_collection: dict) -> list[dict[str, Any]]:
     return out
 
 
-def ingest_parcels(session: Session, parcels: list[dict], commune_name: str | None, run_id: int | None) -> int:
+def ingest_parcels(session: Session, parcels: list[dict], commune_name: str | None,
+                   run_id: int | None, origine: str | None = None) -> int:
     """Insère des parcelles (géométrie GeoJSON → 4326), surface/centroïde calculés en base.
 
     Surface mesurée en 2975 (jamais en degrés). Upsert par IDU. Géométrie passée par
     ST_MakeValid : quelques parcelles cadastrales sont topologiquement invalides
     (anneaux auto-sécants) et feraient échouer ST_Intersection côté cascade.
+
+    `origine` (Lot A) : 'audit' pour un ajout à la demande. Posé À L'INSERTION UNIQUEMENT —
+    l'upsert NE TOUCHE JAMAIS l'origine d'une parcelle déjà présente (clause SET sans
+    `origine`), pour qu'un audit recoupant une parcelle déjà au référentiel (ex. polygone
+    qui chevauche des parcelles connues) ne la marque pas 'audit' à tort. NB : NULL = origine
+    « référentiel » ; un COALESCE l'écraserait à tort par 'audit' — d'où l'omission.
     """
     n = 0
     for p in parcels:
@@ -65,14 +72,14 @@ def ingest_parcels(session: Session, parcels: list[dict], commune_name: str | No
         session.execute(
             text(
                 """
-                INSERT INTO parcels (idu, commune, section, numero, geom, surface_m2, centroid, bbox, ingestion_run_id)
+                INSERT INTO parcels (idu, commune, section, numero, geom, surface_m2, centroid, bbox, ingestion_run_id, origine)
                 VALUES (
                     :idu, :commune, :section, :numero,
                     ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)),
                     ST_Area(ST_Transform(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326)), 2975)),
                     ST_Centroid(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326))),
                     ST_Envelope(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(:gj), 4326))),
-                    :run
+                    :run, :origine
                 )
                 ON CONFLICT (idu) DO UPDATE SET
                     geom = EXCLUDED.geom, surface_m2 = EXCLUDED.surface_m2,
@@ -80,7 +87,8 @@ def ingest_parcels(session: Session, parcels: list[dict], commune_name: str | No
                 """
             ),
             {"idu": p["idu"], "commune": commune_name or p.get("commune"),
-             "section": p.get("section"), "numero": p.get("numero"), "gj": gj, "run": run_id},
+             "section": p.get("section"), "numero": p.get("numero"), "gj": gj, "run": run_id,
+             "origine": origine},
         )
         n += 1
     session.flush()

@@ -39,7 +39,9 @@ KIND_SOURCE = {
     "water": "BD TOPO IGN",
     "voirie": "BD TOPO IGN",
     "batiment": "BD TOPO IGN",
+    "ravine": "BD TOPO IGN",
     "plu_gpu_zone": "Urbanisme PLU/GPU (API Carto)",
+    "plu_gpu_prescription": "Urbanisme PLU/GPU (API Carto)",
     "parc_national": "Parc National de La Réunion (INPN)",
     "abf": "ABF / Monuments historiques",
     "potentiel_foncier": "data.regionreunion.com — Potentiel foncier",
@@ -153,6 +155,48 @@ def ingest_gpu_zones(session, bbox, commune, run_id, sids) -> int:
                       sids.get(KIND_SOURCE["plu_gpu_zone"]), commune, run_id,
                       {"libelle": p.get("libelle"), "partition": p.get("partition"), "idurba": p.get("idurba")})
         n += 1
+    return n
+
+
+# Endpoints prescriptions GPU : (geom_kind interne, chemin API).
+_PRESCRIPTION_ENDPOINTS = (("surf", "prescription-surf"), ("lin", "prescription-lin"), ("pct", "prescription-pct"))
+
+
+def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids) -> int:
+    """Prescriptions du PLU (API Carto GPU) → kind='plu_gpu_prescription', subtype=typepsc.
+
+    Surfaciques + linéaires + ponctuelles : emplacements réservés (ER), secteurs de mixité
+    sociale, espaces boisés classés (EBC), zonage des eaux pluviales… Ce sont de VRAIES
+    contraintes opposables, jusqu'ici non ingérées (la cascade ne lisait que le zonage).
+    Le GPU fournit le LIBELLÉ lisible : on le stocke tel quel (jamais inventé). La géométrie
+    surf est un polygone (couverture mesurable) ; lin/pct sont ligne/point (présence seule).
+    Source/url/millésime (idurba) tracés. Idempotent à l'appelant (purge avant rechargement)."""
+    poly = json.dumps(_bbox_polygon(bbox))
+    src = sids.get(KIND_SOURCE["plu_gpu_prescription"])
+    n = 0
+    with _client() as c:
+        for geom_kind, endpoint in _PRESCRIPTION_ENDPOINTS:
+            try:
+                r = c.get(f"{APICARTO}/gpu/{endpoint}", params={"geom": poly})
+                r.raise_for_status()
+                feats = r.json().get("features", []) or []
+            except Exception:
+                continue  # un endpoint vide/en échec n'empêche pas les autres (résultats partiels)
+            for f in feats:
+                if not f.get("geometry"):
+                    continue
+                p = f.get("properties") or {}
+                typepsc = (p.get("typepsc") or "").strip() or None
+                libelle = (p.get("libelle") or p.get("txt") or "prescription PLU").strip()
+                _insert_layer(
+                    session, "plu_gpu_prescription", typepsc, libelle[:255], f["geometry"],
+                    src, commune, run_id,
+                    {"typepsc": typepsc, "stypepsc": p.get("stypepsc"), "libelle": libelle,
+                     "txt": p.get("txt") or None, "geom_kind": geom_kind, "idurba": p.get("idurba"),
+                     "partition": p.get("partition"),
+                     "source": f"API Carto GPU — {endpoint}",
+                     "url_source": f"{APICARTO}/gpu/{endpoint}", "millesime": p.get("idurba")})
+                n += 1
     return n
 
 
@@ -337,6 +381,35 @@ def ingest_bdtopo(session, bbox, commune, run_id, sids, kind: str, typename: str
     return n
 
 
+def ingest_ravines(session, bbox, commune, run_id, sids, page_size: int = 1000) -> int:
+    """Ravines (BD TOPO `troncon_hydrographique`, `nature='Ravine'`) — Lot C1.
+
+    Disponibilité vérifiée (rapport C1) : 98 tronçons « Ravine » sur Saint-Paul, géométries
+    LineString. À La Réunion, les ravines sont des thalwegs (souvent à sec) au régime de crue
+    brutal : la PROXIMITÉ est une contrainte de constructibilité (recul, risque). On stocke la
+    ligne ; la cascade calcule la distance (buffer paramétrable, jamais figé à l'ingestion)."""
+    wfs = WfsConnector("geoplateforme_wfs")
+    n, start = 0, 0
+    while True:
+        fc = wfs.fetch_layer("geoplateforme_wfs", "BDTOPO_V3:troncon_hydrographique", bbox=bbox,
+                             max_features=page_size, start_index=start, sort_by="cleabs")
+        feats = fc.get("features", []) or []
+        for f in feats:
+            p = f.get("properties") or {}
+            if not f.get("geometry") or (p.get("nature") or "") != "Ravine":
+                continue
+            topo = p.get("cpx_toponyme_de_cours_d_eau") or p.get("cpx_toponyme_d_entite_de_transition")
+            _insert_layer(session, "ravine", "ravine", topo or "Ravine (BD TOPO)",
+                          f["geometry"], sids.get(KIND_SOURCE["ravine"]), commune, run_id,
+                          {"nature": "Ravine", "toponyme": topo,
+                           "code_hydro": p.get("code_hydrographique"),
+                           "source": "BD TOPO IGN (Géoplateforme WFS) — troncon_hydrographique"})
+            n += 1
+        if len(feats) < page_size:
+            return n
+        start += page_size
+
+
 def ingest_batiments(session, bbox, commune, run_id, sids, page_size: int = 5000) -> int:
     """Bâtiments BD TOPO (IGN) — correctif R1 « déjà bâti » : la source bâtiment la plus
     complète disponible en open data (OSM sous-cartographie La Réunion, vérifié à l'audit :
@@ -360,6 +433,9 @@ def ingest_batiments(session, bbox, commune, run_id, sids, page_size: int = 5000
                           f["geometry"], sids.get(KIND_SOURCE["batiment"]), commune, run_id,
                           {"nature": p.get("nature"), "usage": p.get("usage_1"),
                            "nb_logements": p.get("nombre_de_logements"),
+                           # Hauteur/étages BD TOPO (Lot B — SDP existante du potentiel résiduel).
+                           "hauteur": p.get("hauteur"),
+                           "nombre_d_etages": p.get("nombre_d_etages"),
                            "source": "BD TOPO IGN (Géoplateforme WFS)"})
             n += 1
         if len(feats) < page_size:
@@ -759,10 +835,12 @@ def ingest_layers(session: Session, insee: str, commune: str,
     counts: dict[str, object] = {}
     jobs = [
         ("plu_gpu_zone", lambda: ingest_gpu_zones(session, bbox, commune, run_id, sids)),
+        ("plu_gpu_prescription", lambda: ingest_gpu_prescriptions(session, bbox, commune, run_id, sids)),
         ("parc_national", lambda: ingest_parc_national(session, commune, run_id, sids)),
         ("potentiel_foncier", lambda: ingest_potentiel_foncier(session, insee, commune, run_id, sids)),
         ("abf", lambda: ingest_abf(session, bbox, commune, run_id, sids)),
         ("water", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "water", "BDTOPO_V3:surface_hydrographique")),
+        ("ravine", lambda: ingest_ravines(session, bbox, commune, run_id, sids)),
         ("voirie", lambda: ingest_bdtopo(session, bbox, commune, run_id, sids, "voirie", "BDTOPO_V3:troncon_de_route")),
         ("batiment", lambda: ingest_batiments(session, bbox, commune, run_id, sids)),
         ("ocs_ge", lambda: ingest_ocsge(session, bbox, commune, run_id, sids)),

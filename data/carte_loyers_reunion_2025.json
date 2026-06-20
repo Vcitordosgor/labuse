@@ -1,0 +1,493 @@
+{
+  "source": {
+    "nom": "Carte des loyers — indicateurs de loyers d'annonce par commune",
+    "producteur": "DHUP / Ministère de la Transition écologique (data.gouv.fr)",
+    "millesime": "2025",
+    "nature": "loyer d'annonce médian estimé, €/m²/mois, charges comprises",
+    "provenance": "sourcee",
+    "mention": "Source : Carte des loyers 2025 (DHUP / Ministère de la Transition écologique, data.gouv.fr).",
+    "url": "https://www.data.gouv.fr/datasets/693aa2feed1bf4da603faa49/"
+  },
+  "communes": [
+    {
+      "insee": "97401",
+      "commune": "Les Avirons",
+      "appartement": {
+        "loyer_m2": 15.13,
+        "ic_bas": 11.4,
+        "ic_haut": 20.1,
+        "type_prediction": "commune",
+        "nb_obs": 527,
+        "r2": 0.703
+      },
+      "maison": {
+        "loyer_m2": 14.93,
+        "ic_bas": 9.7,
+        "ic_haut": 22.9,
+        "type_prediction": "commune",
+        "nb_obs": 479,
+        "r2": 0.593
+      }
+    },
+    {
+      "insee": "97402",
+      "commune": "Bras-Panon",
+      "appartement": {
+        "loyer_m2": 13.12,
+        "ic_bas": 10.7,
+        "ic_haut": 16.1,
+        "type_prediction": "commune",
+        "nb_obs": 383,
+        "r2": 0.731
+      },
+      "maison": {
+        "loyer_m2": 11.82,
+        "ic_bas": 9.0,
+        "ic_haut": 15.5,
+        "type_prediction": "commune",
+        "nb_obs": 238,
+        "r2": 0.67
+      }
+    },
+    {
+      "insee": "97403",
+      "commune": "Entre-Deux",
+      "appartement": {
+        "loyer_m2": 13.93,
+        "ic_bas": 10.5,
+        "ic_haut": 18.4,
+        "type_prediction": "commune",
+        "nb_obs": 157,
+        "r2": 0.722
+      },
+      "maison": {
+        "loyer_m2": 12.73,
+        "ic_bas": 8.7,
+        "ic_haut": 18.7,
+        "type_prediction": "commune",
+        "nb_obs": 279,
+        "r2": 0.632
+      }
+    },
+    {
+      "insee": "97404",
+      "commune": "L'Étang-Salé",
+      "appartement": {
+        "loyer_m2": 16.16,
+        "ic_bas": 12.2,
+        "ic_haut": 21.4,
+        "type_prediction": "commune",
+        "nb_obs": 412,
+        "r2": 0.703
+      },
+      "maison": {
+        "loyer_m2": 16.85,
+        "ic_bas": 11.0,
+        "ic_haut": 25.9,
+        "type_prediction": "commune",
+        "nb_obs": 509,
+        "r2": 0.593
+      }
+    },
+    {
+      "insee": "97405",
+      "commune": "Petite-Île",
+      "appartement": {
+        "loyer_m2": 13.93,
+        "ic_bas": 10.5,
+        "ic_haut": 18.4,
+        "type_prediction": "commune",
+        "nb_obs": 277,
+        "r2": 0.722
+      },
+      "maison": {
+        "loyer_m2": 12.11,
+        "ic_bas": 9.0,
+        "ic_haut": 16.4,
+        "type_prediction": "commune",
+        "nb_obs": 619,
+        "r2": 0.687
+      }
+    },
+    {
+      "insee": "97406",
+      "commune": "La Plaine-des-Palmistes",
+      "appartement": {
+        "loyer_m2": 13.04,
+        "ic_bas": 10.3,
+        "ic_haut": 16.5,
+        "type_prediction": "maille",
+        "nb_obs": 24,
+        "r2": 0.799
+      },
+      "maison": {
+        "loyer_m2": 10.79,
+        "ic_bas": 8.0,
+        "ic_haut": 14.6,
+        "type_prediction": "commune",
+        "nb_obs": 322,
+        "r2": 0.644
+      }
+    },
+    {
+      "insee": "97407",
+      "commune": "Le Port",
+      "appartement": {
+        "loyer_m2": 15.33,
+        "ic_bas": 10.5,
+        "ic_haut": 22.3,
+        "type_prediction": "commune",
+        "nb_obs": 485,
+        "r2": 0.602
+      },
+      "maison": {
+        "loyer_m2": 14.31,
+        "ic_bas": 8.7,
+        "ic_haut": 23.7,
+        "type_prediction": "commune",
+        "nb_obs": 165,
+        "r2": 0.597
+      }
+    },
+    {
+      "insee": "97408",
+      "commune": "La Possession",
+      "appartement": {
+        "loyer_m2": 15.45,
+        "ic_bas": 12.3,
+        "ic_haut": 19.5,
+        "type_prediction": "commune",
+        "nb_obs": 1702,
+        "r2": 0.789
+      },
+      "maison": {
+        "loyer_m2": 16.33,
+        "ic_bas": 10.8,
+        "ic_haut": 24.6,
+        "type_prediction": "commune",
+        "nb_obs": 1172,
+        "r2": 0.684
+      }
+    },
+    {
+      "insee": "97409",
+      "commune": "Saint-André",
+      "appartement": {
+        "loyer_m2": 13.01,
+        "ic_bas": 10.6,
+        "ic_haut": 16.0,
+        "type_prediction": "commune",
+        "nb_obs": 1828,
+        "r2": 0.731
+      },
+      "maison": {
+        "loyer_m2": 11.7,
+        "ic_bas": 8.9,
+        "ic_haut": 15.4,
+        "type_prediction": "commune",
+        "nb_obs": 1972,
+        "r2": 0.67
+      }
+    },
+    {
+      "insee": "97410",
+      "commune": "Saint-Benoît",
+      "appartement": {
+        "loyer_m2": 12.05,
+        "ic_bas": 9.6,
+        "ic_haut": 15.2,
+        "type_prediction": "commune",
+        "nb_obs": 952,
+        "r2": 0.714
+      },
+      "maison": {
+        "loyer_m2": 11.32,
+        "ic_bas": 8.6,
+        "ic_haut": 14.9,
+        "type_prediction": "commune",
+        "nb_obs": 987,
+        "r2": 0.647
+      }
+    },
+    {
+      "insee": "97411",
+      "commune": "Saint-Denis",
+      "appartement": {
+        "loyer_m2": 15.09,
+        "ic_bas": 11.5,
+        "ic_haut": 19.9,
+        "type_prediction": "commune",
+        "nb_obs": 14748,
+        "r2": 0.837
+      },
+      "maison": {
+        "loyer_m2": 14.92,
+        "ic_bas": 10.1,
+        "ic_haut": 22.0,
+        "type_prediction": "commune",
+        "nb_obs": 2880,
+        "r2": 0.744
+      }
+    },
+    {
+      "insee": "97412",
+      "commune": "Saint-Joseph",
+      "appartement": {
+        "loyer_m2": 13.84,
+        "ic_bas": 11.2,
+        "ic_haut": 17.1,
+        "type_prediction": "commune",
+        "nb_obs": 1195,
+        "r2": 0.754
+      },
+      "maison": {
+        "loyer_m2": 11.42,
+        "ic_bas": 8.7,
+        "ic_haut": 15.0,
+        "type_prediction": "commune",
+        "nb_obs": 1405,
+        "r2": 0.628
+      }
+    },
+    {
+      "insee": "97413",
+      "commune": "Saint-Leu",
+      "appartement": {
+        "loyer_m2": 16.49,
+        "ic_bas": 11.8,
+        "ic_haut": 23.1,
+        "type_prediction": "commune",
+        "nb_obs": 1565,
+        "r2": 0.598
+      },
+      "maison": {
+        "loyer_m2": 15.79,
+        "ic_bas": 9.9,
+        "ic_haut": 25.1,
+        "type_prediction": "commune",
+        "nb_obs": 1435,
+        "r2": 0.541
+      }
+    },
+    {
+      "insee": "97414",
+      "commune": "Saint-Louis",
+      "appartement": {
+        "loyer_m2": 14.47,
+        "ic_bas": 11.7,
+        "ic_haut": 17.9,
+        "type_prediction": "commune",
+        "nb_obs": 968,
+        "r2": 0.715
+      },
+      "maison": {
+        "loyer_m2": 12.18,
+        "ic_bas": 9.0,
+        "ic_haut": 16.4,
+        "type_prediction": "commune",
+        "nb_obs": 1618,
+        "r2": 0.625
+      }
+    },
+    {
+      "insee": "97415",
+      "commune": "Saint-Paul",
+      "appartement": {
+        "loyer_m2": 18.86,
+        "ic_bas": 13.1,
+        "ic_haut": 27.3,
+        "type_prediction": "commune",
+        "nb_obs": 4503,
+        "r2": 0.602
+      },
+      "maison": {
+        "loyer_m2": 15.57,
+        "ic_bas": 9.4,
+        "ic_haut": 25.7,
+        "type_prediction": "commune",
+        "nb_obs": 3322,
+        "r2": 0.597
+      }
+    },
+    {
+      "insee": "97416",
+      "commune": "Saint-Pierre",
+      "appartement": {
+        "loyer_m2": 15.81,
+        "ic_bas": 12.0,
+        "ic_haut": 20.9,
+        "type_prediction": "commune",
+        "nb_obs": 4127,
+        "r2": 0.722
+      },
+      "maison": {
+        "loyer_m2": 14.29,
+        "ic_bas": 9.7,
+        "ic_haut": 21.0,
+        "type_prediction": "commune",
+        "nb_obs": 3289,
+        "r2": 0.632
+      }
+    },
+    {
+      "insee": "97417",
+      "commune": "Saint-Philippe",
+      "appartement": {
+        "loyer_m2": 13.41,
+        "ic_bas": 10.8,
+        "ic_haut": 16.6,
+        "type_prediction": "maille",
+        "nb_obs": 40,
+        "r2": 0.754
+      },
+      "maison": {
+        "loyer_m2": 10.73,
+        "ic_bas": 8.2,
+        "ic_haut": 14.1,
+        "type_prediction": "commune",
+        "nb_obs": 150,
+        "r2": 0.628
+      }
+    },
+    {
+      "insee": "97418",
+      "commune": "Sainte-Marie",
+      "appartement": {
+        "loyer_m2": 13.46,
+        "ic_bas": 10.5,
+        "ic_haut": 17.2,
+        "type_prediction": "commune",
+        "nb_obs": 1205,
+        "r2": 0.772
+      },
+      "maison": {
+        "loyer_m2": 14.42,
+        "ic_bas": 10.1,
+        "ic_haut": 20.6,
+        "type_prediction": "commune",
+        "nb_obs": 1169,
+        "r2": 0.635
+      }
+    },
+    {
+      "insee": "97419",
+      "commune": "Sainte-Rose",
+      "appartement": {
+        "loyer_m2": 12.17,
+        "ic_bas": 9.7,
+        "ic_haut": 15.3,
+        "type_prediction": "maille",
+        "nb_obs": 18,
+        "r2": 0.714
+      },
+      "maison": {
+        "loyer_m2": 10.55,
+        "ic_bas": 8.0,
+        "ic_haut": 13.9,
+        "type_prediction": "maille",
+        "nb_obs": 88,
+        "r2": 0.647
+      }
+    },
+    {
+      "insee": "97420",
+      "commune": "Sainte-Suzanne",
+      "appartement": {
+        "loyer_m2": 14.34,
+        "ic_bas": 11.6,
+        "ic_haut": 17.8,
+        "type_prediction": "commune",
+        "nb_obs": 594,
+        "r2": 0.677
+      },
+      "maison": {
+        "loyer_m2": 15.05,
+        "ic_bas": 11.2,
+        "ic_haut": 20.3,
+        "type_prediction": "commune",
+        "nb_obs": 814,
+        "r2": 0.701
+      }
+    },
+    {
+      "insee": "97421",
+      "commune": "Salazie",
+      "appartement": {
+        "loyer_m2": 12.17,
+        "ic_bas": 9.7,
+        "ic_haut": 15.3,
+        "type_prediction": "maille",
+        "nb_obs": 28,
+        "r2": 0.714
+      },
+      "maison": {
+        "loyer_m2": 9.82,
+        "ic_bas": 7.5,
+        "ic_haut": 12.9,
+        "type_prediction": "commune",
+        "nb_obs": 130,
+        "r2": 0.647
+      }
+    },
+    {
+      "insee": "97422",
+      "commune": "Le Tampon",
+      "appartement": {
+        "loyer_m2": 13.52,
+        "ic_bas": 10.7,
+        "ic_haut": 17.1,
+        "type_prediction": "commune",
+        "nb_obs": 3495,
+        "r2": 0.799
+      },
+      "maison": {
+        "loyer_m2": 11.89,
+        "ic_bas": 8.8,
+        "ic_haut": 16.1,
+        "type_prediction": "commune",
+        "nb_obs": 3052,
+        "r2": 0.644
+      }
+    },
+    {
+      "insee": "97423",
+      "commune": "Les Trois-Bassins",
+      "appartement": {
+        "loyer_m2": 15.15,
+        "ic_bas": 10.8,
+        "ic_haut": 21.2,
+        "type_prediction": "commune",
+        "nb_obs": 125,
+        "r2": 0.598
+      },
+      "maison": {
+        "loyer_m2": 14.08,
+        "ic_bas": 8.9,
+        "ic_haut": 22.4,
+        "type_prediction": "commune",
+        "nb_obs": 212,
+        "r2": 0.541
+      }
+    },
+    {
+      "insee": "97424",
+      "commune": "Cilaos",
+      "appartement": {
+        "loyer_m2": 13.85,
+        "ic_bas": 11.2,
+        "ic_haut": 17.1,
+        "type_prediction": "maille",
+        "nb_obs": 17,
+        "r2": 0.715
+      },
+      "maison": {
+        "loyer_m2": 11.25,
+        "ic_bas": 8.3,
+        "ic_haut": 15.2,
+        "type_prediction": "maille",
+        "nb_obs": 80,
+        "r2": 0.625
+      }
+    }
+  ]
+}

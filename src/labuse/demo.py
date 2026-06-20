@@ -13,15 +13,19 @@ from sqlalchemy.orm import Session
 # Parcelles utiles en démo (IDU stables Saint-Paul) — rôle + ce qu'elles montrent + vigilance.
 # États VÉRIFIÉS après `rebuild-demo --commune 97415` (peuvent évoluer si les données changent).
 # États VÉRIFIÉS après rebuild + correctif R1 « déjà bâti » (BD TOPO bâtiments).
+# Mis à jour après l'IMPORT COMPLET (LOT 2, 51 129 parcelles) : BV0912 → « à creuser » (ER 81 +
+# accès) — la donnée commune complète affine le verdict, on accepte le verdict plus conservateur.
 DEMO_PARCELS = [
     {"idu": "97415000BK0023", "attendu": "opportunite",
      "role": "Parcelle VITRINE — opportunité VACANTE (0 % bâti, vérifiée à l'orthophoto)",
      "montre": "opp ~74, 9723 m² NUS avec accès voirie ; prix de marché FIABLE ~5310 €/m² (14 ventes) ; CA indicatif ~32-35 M€",
      "vigilance": "« vérifiée » = sur couches dispo ; bilan = simulation indicative"},
-    {"idu": "97415000BV0912", "attendu": "opportunite",
-     "role": "Opportunité avec BÂTI LÉGER signalé (2ᵉ exemple — palier non déclassant)",
-     "montre": "opp ~77, ~3948 m², prix fiable ~3014 €/m² ; « présence de bâti à vérifier (7 %) » affiché honnêtement",
-     "vigilance": "le bâti léger est signalé, pas caché — vérification terrain"},
+    {"idu": "97415000BV0912", "attendu": "a_creuser",
+     "role": "À creuser — EMPLACEMENT RÉSERVÉ (ER 81) + accès à vérifier (affiné par l'import complet LOT 2)",
+     "montre": "score brut 64 mais 2 SOFT_FLAG révélés par la donnée commune COMPLÈTE : « ER 81 - aménagement "
+               "du chemin de la Cigale » (prescription PLU) et « accès non identifié — voirie la plus proche "
+               "à ~93 m » → rétrogradée honnêtement en « à creuser », pas vendue comme opportunité",
+     "vigilance": "ER réservé + accès à confirmer ; l'import complet a AFFINÉ le verdict (donnée plus complète), pas triché"},
     {"idu": "97415000BP0571", "attendu": "faux_positif_probable",
      "role": "RÉSIDENCE EXISTANTE détectée — correctif « déjà bâti » (ex-fausse vitrine)",
      "montre": "score brut 77 MAIS « ensemble bâti : 4 bâtiments couvrant 18 % (BD TOPO) » → faux positif. "
@@ -36,7 +40,7 @@ DEMO_PARCELS = [
      "montre": "score brut ~82 mais « faux positif probable » + motif « parking sur 82 % (OSM) »",
      "vigilance": "le score brut reste affiché (transparence)"},
     {"idu": "97415000BV1431", "attendu": "faux_positif_probable", "role": "Faux positif PENTE déclassé",
-     "montre": "« pente 103 % — terrain non aménageable » + SAR vocation naturelle (à vérifier)", "vigilance": "—"},
+     "montre": "« pente 103 % — terrain non aménageable » + ⚠ proxy SAR divergent du PLU (zone AU)", "vigilance": "—"},
     {"idu": "97415000BO0619", "attendu": "faux_positif_probable", "role": "Micro-parcelle déclassée",
      "montre": "« micro-parcelle 28 m² — aucun programme possible »", "vigilance": "—"},
 ]

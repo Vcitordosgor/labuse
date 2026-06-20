@@ -19,6 +19,9 @@ Volumes : pgdata (base) · caddy_data (certificats) · ./backups (dumps, montés
 Ports publiés : 80, 443 (Caddy) — c'est tout.
 Secrets : .env serveur uniquement (gitignoré) — POSTGRES_PASSWORD, LABUSE_AUTH_PASSWORD,
 LABUSE_SECRET_KEY, LABUSE_DOMAIN.
+Optionnel — assistant IA (3.A) : ANTHROPIC_API_KEY (clé API Anthropic ; sans elle, le bouton
+« Expliquer cette parcelle » affiche un message clair et reste inactif). Modèle surchargeable
+via LABUSE_ASSISTANT_MODEL (défaut : claude-sonnet-4-6).
 ```
 
 Dimensionnement pilote constaté : base Saint-Paul complète ≈ 1,5 Go en base, dump **≈ 240 Mo** ;
