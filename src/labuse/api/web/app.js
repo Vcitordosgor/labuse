@@ -931,6 +931,19 @@ const _prov = (k) => `<span class="prov prov-${k}">${k === "src" ? "sourcé" : k
 // Emplacement d'enrichissement lazy (PLU détaillé / topo / réseaux) injecté par loadEnrichment.
 const _enrSlot = (id) => `<div class="enr-slot" id="${id}"><span class="enr-loading"><span class="pm-spin" aria-hidden="true"></span> Analyse en cours…</span></div>`;
 
+// Garde-fou FIABILITÉ commune (LOT 6) : bandeau d'avertissement si la commune n'est PAS au standard
+// Saint-Paul. Information seulement (dérivé de la config commune) — n'altère NI donnée NI verdict.
+// Saint-Paul (gold) → aucun bandeau. Commune partielle → avertissement clair « ne pas utiliser ».
+function renderReliabilityBanner(rel) {
+  if (!rel || rel.reliable) return "";
+  const warns = (rel.warnings || []).map((w) => `<li>${esc(w)}</li>`).join("");
+  return `<section class="reliability-banner">
+    <div class="rb-h">⚠ ${esc(rel.title || "Commune non validée au standard Saint-Paul")}</div>
+    ${warns ? `<ul class="rb-list">${warns}</ul>` : ""}
+    <div class="rb-foot">Référence validée : <b>${esc(rel.gold_reference || "Saint-Paul")}</b>${rel.vague != null ? ` · remise au standard prévue (vague ${esc(rel.vague)})` : ""}.</div>
+  </section>`;
+}
+
 // Bloc « L'essentiel » — la décision en un coup d'œil (toujours visible, en tête).
 function renderEssentiel(f) {
   const v = f.verdict || {}, p = f.parcel || {}, fa = f.faisabilite || {}, fr = fa.fourchette || {}, bil = fa.bilan || {};
@@ -1049,6 +1062,8 @@ function renderFiche(f) {
     </header>
 
     ${p.origine === "audit" ? `<section class="audit-banner">🔎 <b>Audit à la demande</b> — parcelle récupérée au cadastre et évaluée à la volée (hors balayage initial). Mêmes règles et mêmes sources que le reste du radar.</section>` : ""}
+
+    ${renderReliabilityBanner(f.commune_reliability)}
 
     ${renderEssentiel(f)}
 

@@ -153,6 +153,12 @@
   background: var(--tf-accent-dim); color: var(--tf-accent); border: 1px solid rgba(214,179,106,.4); }
 .sheet .es-micro { font-size: var(--fs-small); line-height: 1.45; color: var(--tf-text-2); margin: var(--sp-2) 0 0; max-width: 54ch; }
 .sheet .es-id .fiable-tag { display: inline-block; margin-top: var(--sp-2); }
+/* Garde-fou FIABILITÉ commune (LOT 6) — bandeau fort : commune hors standard Saint-Paul */
+.sheet .reliability-banner { margin: 0 0 var(--sp-3); padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-card);
+  background: rgba(200,132,26,.10); border: 1px solid rgba(200,132,26,.35); border-left: 4px solid var(--tf-flag-bright); }
+.sheet .rb-h { font-family: var(--font-ui); font-weight: 700; font-size: var(--fs-body); color: var(--tf-flag); }
+.sheet .rb-list { margin: var(--sp-2) 0 0; padding-left: 18px; font-size: var(--fs-small); color: var(--tf-text-2); line-height: 1.55; }
+.sheet .rb-foot { margin-top: var(--sp-2); font-size: var(--fs-small); color: var(--tf-text-3); }
 /* anneau de jauge + mot, colorés par verdict (mêmes règles que le hero) */
 .sheet .essentiel.v-opportunite .g-arc { stroke: var(--tf-positive-bright); } .sheet .essentiel.v-opportunite .es-verdict { color: var(--tf-positive); }
 .sheet .essentiel.v-a_creuser .g-arc { stroke: var(--tf-flag-bright); } .sheet .essentiel.v-a_creuser .es-verdict { color: var(--tf-flag); }
