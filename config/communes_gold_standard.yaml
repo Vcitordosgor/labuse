@@ -34,15 +34,15 @@ communes:
   # ── Vague 1 — TESTS (moyennes, présentes, peu risquées) ──────────────────────
   - nom: La Possession
     insee: "97408"
-    etat: partiel_evalue
+    etat: gold              # validée au standard le 2026-06-20 (run réussi, code 0)
     parcelles_en_base: 13338
     sections: 30
-    eval_pct: 100          # évalué SUR couches incomplètes → verdicts NON fiables
-    attendu: a_verifier
+    eval_pct: 100          # re-couches + re-cascade : bâti 0→42217, opp 10.7%→3.1% (faux positifs réactivés)
+    attendu: 13338         # CONFIRMÉ par l'import Etalab du run (plus « a_verifier »)
     priorite: test
     vague: 1
     risque: faible
-    strategie: re_couches_re_cascade
+    strategie: gold_valide
   - nom: L'Étang-Salé
     insee: "97404"
     etat: partiel_evalue

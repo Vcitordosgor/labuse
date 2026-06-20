@@ -36,13 +36,16 @@ def test_config_couvre_les_24_communes_officielles():
         assert by_insee[e["insee"]] == nom
 
 
-def test_attendu_jamais_invente_hors_saint_paul():
-    # Seul Saint-Paul a un attendu confirmé (51 129) ; les autres = 'a_verifier' (jamais un nombre inventé).
+def test_attendu_jamais_invente_hors_gold():
+    # Les communes GOLD ont un attendu CONFIRMÉ (compte Etalab vérifié au run) ; toutes les autres
+    # restent 'a_verifier' — jamais un nombre inventé tant que la commune n'a pas été importée.
     c = communes.load_communes()
     assert c["Saint-Paul"]["attendu"] == 51129
     for nom, e in c.items():
-        if nom != "Saint-Paul":
-            assert e["attendu"] == "a_verifier"
+        if e["etat"] == "gold":
+            assert isinstance(e["attendu"], int)            # confirmé par l'import réel
+        else:
+            assert e["attendu"] == "a_verifier"             # jamais inventé avant import
 
 
 # ── Garde-fou fiabilité ───────────────────────────────────────────────────────
@@ -54,12 +57,20 @@ def test_saint_paul_est_fiable_gold():
 
 
 def test_communes_partielles_non_fiables():
-    for nom in ("La Possession", "L'Étang-Salé", "Saint-Denis", "Le Tampon"):
+    # La Possession est passée GOLD (run réussi) → elle n'est plus dans cette liste.
+    for nom in ("L'Étang-Salé", "Saint-Denis", "Le Tampon", "Saint-Leu"):
         assert communes.is_reliable(nom) is False
         r = communes.reliability(nom)
         assert r["reliable"] is False
         assert "non encore validée" in r["title"].lower()
         assert any("commercialement" in w.lower() for w in r["warnings"])
+
+
+def test_la_possession_est_gold_apres_run():
+    # Verrouille l'état post-run : La Possession validée au standard, désormais fiable.
+    assert communes.is_reliable("La Possession") is True
+    r = communes.reliability("La Possession")
+    assert r["reliable"] is True and r["etat"] == "gold" and r["title"] is None
 
 
 def test_commune_absente_non_fiable():
@@ -72,11 +83,12 @@ def test_commune_hors_referentiel_non_fiable():
     assert r["reliable"] is False and r["etat"] == "inconnu"
 
 
-def test_status_list_24_un_seul_fiable():
+def test_status_list_fiables_gold():
     items = communes.status_list()
     assert len(items) == 24
-    fiables = [x for x in items if x["reliable"]]
-    assert [x["commune"] for x in fiables] == ["Saint-Paul"]      # un seul gold aujourd'hui
+    fiables = {x["commune"] for x in items if x["reliable"]}
+    # Saint-Paul (étalon) + La Possession (run vague 1 réussi) ; le reste pas encore au standard.
+    assert fiables == {"Saint-Paul", "La Possession"}
 
 
 def test_commune_known_anti_erreur():
@@ -278,5 +290,5 @@ def test_communes_status_endpoint(engine):
     with TestClient(app) as c:
         r = c.get("/communes/status").json()
     assert len(r["communes"]) == 24
-    assert r["fiables"] == ["Saint-Paul"]
+    assert set(r["fiables"]) == {"Saint-Paul", "La Possession"}
     assert r["gold_reference"] == "Saint-Paul"
