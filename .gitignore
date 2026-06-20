@@ -11,6 +11,10 @@ venv/
 
 # Env / secrets
 .env
+# Fichiers d'environnement RÉELS du pack de déploiement (jamais committés) ;
+# seuls les gabarits *.env.example sont versionnés.
+deploy/env/*.env
+!deploy/env/*.env.example
 config/settings.yaml
 
 # Data (never commit ingested public data dumps / fixtures volumineuses)

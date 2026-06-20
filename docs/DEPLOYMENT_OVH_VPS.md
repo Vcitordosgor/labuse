@@ -150,16 +150,19 @@ sudo -u labuse /opt/labuse/venv/bin/labuse --help | head
 
 ## 7. Variables d'environnement
 
-Copier le gabarit du repo vers `/etc/labuse/labuse.env` et le remplir (secrets **jamais** dans git) :
+Copier le gabarit de PRODUCTION du repo vers `/etc/labuse/labuse.env` et le remplir (secrets
+**jamais** dans git ; `/etc/labuse/labuse.env` est hors dépôt, en 640 root:labuse) :
 
 ```bash
-install -o root -g labuse -m 640 /opt/labuse/app/.env.example /etc/labuse/labuse.env
+install -o root -g labuse -m 640 /opt/labuse/app/deploy/env/labuse.env.example /etc/labuse/labuse.env
 # Éditer /etc/labuse/labuse.env :
-#   - LABUSE_DATABASE_URL  → mot de passe choisi à l'étape 4
+#   - LABUSE_DATABASE_URL    → mot de passe choisi à l'étape 4
 #   - LABUSE_ENV=production
-#   - LABUSE_AUTH_PASSWORD → mot de passe pilote (obligatoire hors 'local', sinon 503 fail-closed)
-#   - LABUSE_SECRET_KEY    → openssl rand -hex 32
+#   - LABUSE_AUTH_PASSWORD   → mot de passe pilote (obligatoire hors 'local', sinon 503 fail-closed)
+#   - LABUSE_SECRET_KEY      → openssl rand -hex 32
 #   - LABUSE_PUBLIC_URL=https://app.labuse.immo
+#   - ANTHROPIC_API_KEY      → VIDE = mode synthèse règles ; renseigner = active l'IA (voir §11)
+#   - LABUSE_ASSISTANT_MODEL=claude-sonnet-4-6
 openssl rand -hex 32         # à coller dans LABUSE_SECRET_KEY
 ```
 
@@ -221,7 +224,65 @@ systemctl reload nginx
 > Après confirmation que tout passe en HTTPS, décommenter la ligne `Strict-Transport-Security`
 > (HSTS) dans `deploy/nginx/labuse.conf` puis `nginx -t && systemctl reload nginx`.
 
-## 11. Tests de santé après déploiement
+## 11. Assistant IA — activation de la clé (optionnel)
+
+L'assistant « Expliquer cette parcelle » fonctionne **sans clé** (synthèse règles déterministe, déjà
+premium). Pour activer l'**IA enrichie**, poser une clé Anthropic — **uniquement** côté serveur, jamais
+dans git. Détails et garde-fous : `docs/AI_ASSISTANT_SAFETY_AND_DEMO.md`, checklist : `docs/AI_DEMO_CHECKLIST.md`.
+
+**1) Où placer la clé.** Dans le fichier d'environnement systemd, **hors dépôt** : `/etc/labuse/labuse.env`
+(640 root:labuse). Jamais dans le code, un fichier suivi, un commit ou un log.
+
+**2) Ajouter la clé.** Éditer la ligne `ANTHROPIC_API_KEY=` :
+
+```bash
+# Éditer le fichier (jamais via l'historique shell : préférer l'éditeur)
+sudo ${EDITOR:-nano} /etc/labuse/labuse.env
+#   ANTHROPIC_API_KEY=sk-ant-…              # la VRAIE clé
+#   LABUSE_ASSISTANT_MODEL=claude-sonnet-4-6
+# Vérifier les permissions (jamais lisible par tous) :
+sudo chown root:labuse /etc/labuse/labuse.env && sudo chmod 640 /etc/labuse/labuse.env
+```
+
+**3) Redémarrer le service** (systemd relit `EnvironmentFile`) :
+
+```bash
+sudo systemctl restart labuse
+sudo systemctl is-active labuse        # → active
+```
+
+**4) Vérifier `/assistant/status`** — doit passer à `configured:true` (ne renvoie qu'un booléen,
+jamais la clé) :
+
+```bash
+curl -fsS https://app.labuse.immo/assistant/status        # {"configured":true}
+# en local sur le VPS, derrière le proxy :
+curl -fsS http://127.0.0.1:8000/assistant/status
+```
+
+**5) Tester 2–3 fiches contrastées** (recette anti-hallucination) — une opportunité, une
+micro-opportunité (≤ 500 m²), une parcelle écartée :
+
+```bash
+for IDU in 97415000DE1325 97415000HI0126 <IDU_ECARTEE>; do
+  curl -fsS "http://127.0.0.1:8000/parcels/$IDU/explain" \
+    | python3 -c 'import sys,json;r=json.load(sys.stdin);print(r.get("available"),"|",(r.get("explanation") or r.get("rules_summary") or "")[:200])'
+done
+```
+Dans l'UI : ouvrir la fiche → le bouton **« Enrichir avec l'IA »** apparaît ; la prose doit citer la
+**fiabilité** et les **données manquantes**, marquer la capacité **ESTIMÉE** et le bilan **INDICATIF**,
+et ne contenir **aucun** chiffre/fait absent de la fiche.
+
+**6) Si l'IA répond mal ou si l'API échoue.**
+- **Dégradation automatique** : clé invalide / quota / réseau / timeout → l'app renvoie HTTP 200 avec
+  la **synthèse règles** + un message clair (jamais de 500, jamais de fiche cassée). La démo continue.
+- **Hallucination constatée** (chiffre/fait absent du JSON) : **retirer la clé** (`ANTHROPIC_API_KEY=`,
+  `systemctl restart labuse`) → retour au mode règles, fiable. Re-tester avant de réactiver.
+- **Diagnostic** : `journalctl -u labuse -n 50` (aucune clé n'y apparaît) ; vérifier le quota/état de la
+  clé côté console Anthropic ; tester l'appel sortant depuis le VPS.
+- **Rollback express** : `ANTHROPIC_API_KEY=` (vide) + restart → l'assistant reste premium en mode règles.
+
+## 12. Tests de santé après déploiement
 
 ```bash
 # Smoke test fourni (process, /healthz, /readyz, DB, PostGIS, 1 parcelle, statut démo)
@@ -253,7 +314,7 @@ Mettre en place la maintenance + les sauvegardes (cron) :
 
 ---
 
-## 12. Procédure de ROLLBACK
+## 13. Procédure de ROLLBACK
 
 Le rollback repose sur deux invariants : **le code est versionné (git)** et **chaque mise en
 production est précédée d'un dump** (étape 5 / sauvegarde). Pour revenir à l'état antérieur :
