@@ -87,8 +87,8 @@ function initMap() {
       options: { position: "topright" },
       onAdd() {
         const d = L.DomUtil.create("div", "map-mode");
-        d.innerHTML = `<button class="mm-btn active" data-mode="verdict" type="button">Verdict</button>`
-          + `<button class="mm-btn" data-mode="mutabilite" type="button" title="Bâti / non-bâti — repérer le foncier mutable">Mutabilité</button>`;
+        d.innerHTML = `<button class="mm-btn active" data-mode="verdict" type="button" title="Couleur = verdict LA BUSE (opportunité, à creuser, écartée, faux positif)">Verdict</button>`
+          + `<button class="mm-btn" data-mode="mutabilite" type="button" title="Couleur = bâti / non-bâti — repérer le foncier mutable (libre)">Mutabilité</button>`;
         L.DomEvent.disableClickPropagation(d);
         d.querySelectorAll(".mm-btn").forEach((b) => b.addEventListener("click", () => setMapMode(b.dataset.mode)));
         return d;
@@ -1027,6 +1027,8 @@ function renderFiche(f) {
 
     ${renderEssentiel(f)}
 
+    ${renderAiHero(f)}
+
     <div class="acc-head"><span class="acc-head-t">Le dossier complet</span>
       <span class="acc-head-s">tout le détail, rangé — un clic pour ouvrir</span></div>
 
@@ -1069,9 +1071,6 @@ function renderFiche(f) {
 
     ${accordion("Pourquoi ce verdict", "synthèse business & occupation actuelle",
       renderResume(f.resume) + renderBati(f.bati))}
-
-    ${accordion("Assistant IA — « Expliquer cette parcelle »", "synthèse en prose des données réelles",
-      renderAssistant(p.idu) + renderAi(f.ai))}
 
     ${accordion("Volume 3D — gabarit constructible", "extrusion indicative emprise × hauteur (indicatif)",
       renderVolume3D((f.faisabilite || {}).volume3d))}
@@ -1605,6 +1604,25 @@ function renderFaisabilite(fa, opts = {}) {
       <p class="faisa-bandeau">⚠️ ${esc(fa.bandeau)}</p>
     </section>
     ${renderBilan(fa.bilan)}`;
+}
+
+// 3.A bis — Bloc IA mis en AVANT en haut de fiche (perception « outil expert », pas gadget).
+// Réutilise renderAssistant (CTA actif si clé API, sinon état désactivé propre). Placé juste sous
+// « L'essentiel » → l'analyse en langage clair devient un élément central, plus un bouton caché.
+function renderAiHero(f) {
+  const idu = (f.parcel || {}).idu || "";
+  return `
+  <section class="ai-hero${ASSISTANT_OK ? "" : " ai-hero-off"}">
+    <div class="ai-hero-head">
+      <span class="ai-hero-ic">✨</span>
+      <div class="ai-hero-txt">
+        <div class="ai-hero-t">Analyse IA de la parcelle</div>
+        <div class="ai-hero-s">Synthèse experte en langage clair, à partir des seules données réelles de cette fiche — jamais d'invention.</div>
+      </div>
+    </div>
+    ${renderAssistant(idu)}
+    ${renderAi(f.ai)}
+  </section>`;
 }
 
 // 3.A — Assistant IA : « Expliquer cette parcelle » → synthèse en prose des données RÉELLES.

@@ -419,6 +419,16 @@
 .sheet .ai-out { margin-top: var(--sp-3); background: var(--tf-surface); border: 1px solid var(--tf-border);
   border-radius: var(--radius-card); padding: var(--sp-4); }
 .sheet .ai-out.ready { box-shadow: 0 1px 0 rgba(255,255,255,.5) inset, 0 4px 16px rgba(35,78,120,.06); }
+/* Bloc IA mis en avant en haut de fiche (perception « outil expert ») — distinct, premium, pas gadget. */
+.sheet .ai-hero { margin: var(--sp-3) 0 var(--sp-4); padding: var(--sp-3) var(--sp-4); border-radius: var(--radius-card);
+  border: 1px solid #E3D7B5; border-left: 3px solid var(--tf-gold);
+  background: linear-gradient(180deg, rgba(214,179,106,.10), rgba(214,179,106,.03)); }
+.sheet .ai-hero-off { background: var(--tf-surface-2); border-left-color: var(--tf-border); }
+.sheet .ai-hero-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: var(--sp-2); }
+.sheet .ai-hero-ic { font-size: 1.25em; line-height: 1.2; }
+.sheet .ai-hero-t { font-family: var(--font-ui); font-weight: 700; font-size: var(--fs-body); color: var(--tf-text); }
+.sheet .ai-hero-s { font-size: var(--fs-small); color: var(--tf-text-2); line-height: 1.4; margin-top: 2px; }
+.sheet .ai-hero .assistant { margin-top: 0; }
 .sheet .ai-loading { display: flex; align-items: center; gap: 8px; font-size: var(--fs-body); color: var(--tf-text-3); }
 .sheet .ai-card-h { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: var(--fs-body);
   color: var(--tf-accent); margin-bottom: var(--sp-2); padding-bottom: var(--sp-2); border-bottom: 1px solid var(--tf-border); }
