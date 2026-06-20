@@ -88,7 +88,9 @@ ok('8.pipeline-columns', kb.open && kb.cols >= 1, JSON.stringify(kb));
 await page.locator('.kb-back').click(); await page.waitForTimeout(700);
 ok('8b.back-to-radar', await page.evaluate(() => !document.body.classList.contains('view-kanban')));
 // 8c — shortlist promoteur : vue, cartes classées, badges, ouverture fiche
-await page.locator('.ck-top.js-view').first().click(); await page.waitForTimeout(2500);
+// La shortlist enrichit 12 fiches (spatial, ~2,5-3 s) : on ATTEND le board peuplé plutôt qu'un délai fixe.
+await page.locator('.ck-top.js-view').first().click();
+await page.waitForFunction(() => document.querySelectorAll('#sl-board .sl-card').length > 0, { timeout: 15000 }).catch(() => {});
 const sl = await page.evaluate(() => {
   const cards = [...document.querySelectorAll('#sl-board .sl-card')];
   return { open: document.body.classList.contains('view-shortlist'), n: cards.length,

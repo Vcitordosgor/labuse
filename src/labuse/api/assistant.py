@@ -1,14 +1,18 @@
-"""3.A — Assistant de fiche en langage naturel (API Anthropic).
+"""3.A — Assistant de fiche en langage naturel (API Anthropic) + synthèse règles hors-ligne.
 
-« Expliquer cette parcelle » → une synthèse en prose française des forces/faiblesses, produite
-**STRICTEMENT** à partir des données réelles de la fiche.
+« Expliquer cette parcelle » → une synthèse française des forces/faiblesses, produite **STRICTEMENT**
+à partir des données réelles de la fiche.
 
-Garde-fou anti-hallucination : le prompt envoyé au modèle ne contient QUE des faits structurés
-extraits de la fiche (`assistant_facts`, liste blanche) — le modèle REFORMULE, il n'ajoute aucun
-chiffre ni verdict. Si une donnée manque, il doit le dire.
+Deux modes, jamais d'invention :
+  - AVEC clé `ANTHROPIC_API_KEY` : synthèse en prose par le modèle, bridée par un prompt système strict
+    (liste blanche de faits, provenance imposée, refus si données insuffisantes).
+  - SANS clé : `rules_summary()` — une synthèse DÉTERMINISTE en 5 blocs, dérivée UNIQUEMENT des faits
+    de la fiche (aucun LLM, aucune invention). Le bloc reste premium et utile en démo.
 
-Clé API : variable d'environnement **ANTHROPIC_API_KEY** (jamais en clair dans le code, jamais
-commitée). Absente → message clair, AUCUN crash. Modèle surchargeable via LABUSE_ASSISTANT_MODEL.
+Anti-hallucination : le seul contenu transmis au modèle est `assistant_facts` (liste blanche). Le
+modèle REFORMULE, il n'ajoute aucun chiffre, prix, propriétaire, servitude, règlement ni contrainte.
+Clé API : variable d'environnement **ANTHROPIC_API_KEY** (jamais en clair, jamais commitée). Absente
+→ synthèse règles + message clair, AUCUN crash. Modèle surchargeable via LABUSE_ASSISTANT_MODEL.
 """
 from __future__ import annotations
 
@@ -23,13 +27,38 @@ DEFAULT_MODEL = "claude-sonnet-4-6"
 ENV_KEY = "ANTHROPIC_API_KEY"
 ENV_MODEL = "LABUSE_ASSISTANT_MODEL"
 
+# Prompt système STRICT (chantiers « sécuriser » + « prompt 5 blocs »). Tout est imposé ici : la
+# structure, la provenance, le refus de conclure et l'interdiction d'inventer.
 SYSTEM = (
-    "Tu es l'assistant foncier de LA BUSE. À partir UNIQUEMENT des données structurées fournies "
-    "(JSON), rédige en français une explication claire et honnête de la parcelle pour un "
-    "promoteur : statut, capacité constructible, contraintes, bilan, complétude des données. "
-    "RÈGLES STRICTES : n'invente AUCUN chiffre, AUCUN verdict, AUCUNE donnée absente du JSON ; "
-    "si une information manque ou est nulle, dis-le explicitement ; ne donne jamais de garantie "
-    "réglementaire ou de rentabilité. Sois concis (4 à 8 phrases), structuré, sans jargon inutile."
+    "Tu es l'assistant foncier EXPERT de LA BUSE (préqualification foncière, La Réunion). À partir "
+    "UNIQUEMENT du JSON de données fourni, tu rédiges pour un promoteur une synthèse COURTE, "
+    "structurée et actionnable.\n\n"
+    "STRUCTURE IMPOSÉE — au plus 5 blocs courts, dans cet ordre, chaque titre en gras :\n"
+    "1. **Potentiel** — statut, score, zone PLU, capacité constructible ESTIMÉE (surface de plancher, "
+    "logements) si présente.\n"
+    "2. **Contraintes** — signaux bloquants / de vigilance RÉELS du JSON ; s'il n'y en a pas, écris "
+    "« aucune contrainte bloquante dans les données disponibles » (ne déduis jamais une absence de "
+    "risque d'une donnée manquante).\n"
+    "3. **Bâti / libre** — occupation au sol (BD TOPO) : libre, partiellement bâti, déjà bâti ; si la "
+    "couche est absente, dis « occupation non vérifiée ».\n"
+    "4. **Économie indicative** — bilan promoteur (charge foncière) TOUJOURS qualifié d'INDICATIF / "
+    "ESTIMÉ ; précise si le prix de sortie est fiable ou fragile.\n"
+    "5. **Recommandation** — la prochaine action concrète (ex. vérifier PLU/CU, identifier le "
+    "propriétaire, étudier l'assemblage, écarter).\n\n"
+    "RÈGLES ABSOLUES (anti-hallucination) :\n"
+    "- Tu n'utilises QUE les valeurs du JSON. Tu n'inventes AUCUN chiffre, prix, propriétaire, "
+    "servitude, règlement, risque ni contrainte qui ne figure pas explicitement dans le JSON.\n"
+    "- PROVENANCE : distingue toujours SOURCÉ (donnée réelle : prix DVF, zonage, occupation bâtie), "
+    "ESTIMÉ (capacité constructible, coûts et charge foncière du bilan) et ABSENT / À VÉRIFIER (champ "
+    "nul ou source muette). Appuie-toi sur le bloc `niveaux_fiabilite`.\n"
+    "- Ne déclare JAMAIS une parcelle « constructible » de façon certaine : parle de « zone X, "
+    "capacité ESTIMÉE » et renvoie à la vérification PLU/CU.\n"
+    "- Si les données sont insuffisantes (complétude faible, bilan non fiable, sources muettes), tu "
+    "REFUSES de conclure et tu le dis clairement — mieux vaut « à vérifier » qu'une fausse certitude.\n"
+    "- Termine TOUJOURS par une ligne **Fiabilité** (niveau global) et une ligne **Données manquantes** "
+    "(liste des sources muettes / champs absents).\n"
+    "- Aucune garantie réglementaire, de propriété ni de rentabilité.\n"
+    "Ton : expert foncier prudent. Très concis, phrases courtes ; listes à puces autorisées."
 )
 
 
@@ -38,20 +67,55 @@ def _num(x: Any) -> Any:
 
 
 def is_configured() -> bool:
-    """Vrai si la clé API Anthropic est présente → l'assistant peut être activé côté UI."""
+    """Vrai si la clé API Anthropic est présente → l'assistant LLM peut être activé côté UI."""
     return bool(os.environ.get(ENV_KEY, "").strip())
+
+
+def _completude_band(score: Any) -> str:
+    s = _num(score)
+    if s is None:
+        return "inconnue"
+    return "forte" if s >= 80 else "moyenne" if s >= 50 else "faible"
+
+
+def _niveaux_fiabilite(fiche: dict, *, fa: dict, bil: dict, occ: dict, v: dict) -> dict[str, Any]:
+    """Carte de PROVENANCE déterministe (sourcé / estimé / absent) — dérivée des faits, jamais inventée.
+
+    Donne au modèle (et à la synthèse règles) de quoi qualifier honnêtement chaque information."""
+    source = []
+    if fa.get("zone"):
+        source.append("zonage PLU")
+    if occ.get("disponible"):
+        source.append("occupation bâtie (BD TOPO)")
+    if (bil or {}).get("fiable"):
+        source.append("prix de sortie (DVF)")
+    estime = []
+    if fa.get("constructible") is not None:
+        estime.append("capacité constructible (réglementaire)")
+    if bil:
+        estime.append("coûts & charge foncière (bilan)")
+    return {
+        "sourcé": source or list(fiche.get("sources_responded") or []),
+        "estimé": estime,
+        "absent_ou_a_verifier": list(fiche.get("sources_silent") or []),
+        "completude_sur_100": _num(v.get("completeness_score")),
+        "completude_niveau": _completude_band(v.get("completeness_score")),
+        "prix_bilan_fiable": (bil or {}).get("fiable"),
+    }
 
 
 def assistant_facts(fiche: dict) -> dict[str, Any]:
     """Liste BLANCHE des faits réels de la fiche → unique contenu du prompt (anti-hallucination).
 
-    On ne transmet QUE des valeurs déjà calculées/sourcées : aucune reformulation, aucun ajout."""
+    On ne transmet QUE des valeurs déjà calculées/sourcées : aucune reformulation, aucun ajout.
+    `occupation_bati` et `niveaux_fiabilite` sont DÉRIVÉS de la fiche (toujours à partir du réel)."""
     p = fiche.get("parcel") or {}
     v = fiche.get("verdict") or {}
     fa = fiche.get("faisabilite") or {}
     fr = (fa.get("fourchette") or {}) if fa else {}
     bil = (fa.get("bilan") or {}) if fa else {}
     v3 = (fa.get("volume3d") or {}) if fa else {}
+    occ = fiche.get("bati") or {}
     contraintes = [
         {"type": r.get("result"), "regle": r.get("layer_name"), "motif": r.get("detail")}
         for r in (fiche.get("cascade") or [])
@@ -63,6 +127,7 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
         "verdict": {"statut": v.get("status"),
                     "score_opportunite": _num(v.get("opportunity_score")),
                     "score_completude": _num(v.get("completeness_score")),
+                    "micro_opportunite": v.get("micro_opportunite"),
                     "motif_declassement": v.get("downgrade_reason")},
         "faisabilite": ({
             "zone_plu": fa.get("zone"), "constructible": fa.get("constructible"),
@@ -75,24 +140,139 @@ def assistant_facts(fiche: dict) -> dict[str, Any]:
             "verdict": bil.get("verdict"), "charge_fonciere": bil.get("charge_fonciere"),
             "fiable": bil.get("fiable"),
         } if bil else None),
+        "occupation_bati": ({
+            "label": occ.get("label"), "code": occ.get("code"),
+            "ratio_bati_pct": _num(occ.get("ratio_pct")), "disponible": occ.get("disponible"),
+        } if occ else None),
         "contraintes_et_signaux": contraintes,
         "completude": {
             "sources_ayant_repondu": fiche.get("sources_responded"),
             "sources_muettes_donnee_manquante": fiche.get("sources_silent"),
         },
+        "niveaux_fiabilite": _niveaux_fiabilite(fiche, fa=fa, bil=bil, occ=occ, v=v),
         "resume_metier": fiche.get("resume"),
     }
 
 
+# ── Synthèse DÉTERMINISTE (sans clé) — 5 blocs, dérivée UNIQUEMENT des faits ──────────────────────
+_STATUT_PHRASE = {
+    "opportunite": "Opportunité (signal favorable, données suffisantes)",
+    "a_creuser": "À creuser (signal à confirmer ou données incomplètes)",
+    "exclue": "Écartée (contrainte bloquante identifiée)",
+    "faux_positif_probable": "Faux positif probable (artefact de détection)",
+}
+
+
+def _fmt_eur(x: Any) -> str:
+    n = _num(x)
+    if n is None:
+        return "non chiffrée"
+    ax = abs(n)
+    if ax >= 1_000_000:
+        return f"~{n / 1_000_000:.1f} M€"
+    if ax >= 1_000:
+        return f"~{n / 1_000:.0f} k€"
+    return f"~{n:.0f} €"
+
+
+def rules_summary(facts: dict) -> str:
+    """Synthèse déterministe en 5 blocs (markdown), SANS LLM — ne fait que reformuler les faits.
+
+    Anti-hallucination par construction : aucune valeur n'est produite, seulement restituée ; tout
+    champ absent devient « donnée manquante / à vérifier ». Utilisée en démo quand la clé est absente,
+    et comme aperçu quand elle est présente."""
+    v = facts.get("verdict") or {}
+    fa = facts.get("faisabilite") or {}
+    bil = facts.get("bilan_promoteur") or {}
+    occ = facts.get("occupation_bati") or {}
+    fia = facts.get("niveaux_fiabilite") or {}
+    contraintes = facts.get("contraintes_et_signaux") or []
+
+    statut = v.get("statut")
+    lignes: list[str] = []
+
+    # 1. Potentiel
+    pot = _STATUT_PHRASE.get(statut, "Statut non évalué")
+    score = v.get("score_opportunite")
+    if score is not None:
+        pot += f" · score {score}/100"
+    if v.get("micro_opportunite"):
+        pot += " · micro-opportunité (≤ 500 m²)"
+    cap = ""
+    if fa.get("zone_plu"):
+        cap = f" Zone {fa['zone_plu']}"
+        if fa.get("surface_plancher_m2"):
+            logts = fa.get("logements_au_sol")
+            lg = f", {logts[0]}–{logts[1]} logements" if isinstance(logts, list) and len(logts) == 2 else ""
+            cap += f", capacité ESTIMÉE ~{round(fa['surface_plancher_m2'])} m² de plancher{lg}"
+        cap += "."
+    lignes.append(f"**Potentiel** — {pot}.{cap}")
+
+    # 2. Contraintes
+    blk = [c for c in contraintes if c.get("type") in ("HARD_EXCLUDE", "SOFT_FLAG")]
+    if v.get("motif_declassement"):
+        lignes.append(f"**Contraintes** — Déclassement : {v['motif_declassement']}.")
+    elif blk:
+        items = "; ".join(f"{c.get('motif')}" for c in blk[:4] if c.get("motif"))
+        lignes.append(f"**Contraintes** — {items}.")
+    else:
+        lignes.append("**Contraintes** — Aucune contrainte bloquante dans les données disponibles "
+                      "(une donnée manquante n'est pas une absence de risque).")
+
+    # 3. Bâti / libre
+    if occ.get("disponible") and occ.get("label"):
+        r = occ.get("ratio_bati_pct")
+        lignes.append(f"**Bâti / libre** — {occ['label']}"
+                      + (f" ({r} % bâti, BD TOPO)." if r is not None else " (BD TOPO)."))
+    else:
+        lignes.append("**Bâti / libre** — Occupation non vérifiée (couche bâtiments non disponible).")
+
+    # 4. Économie indicative
+    if bil:
+        cf = bil.get("charge_fonciere")
+        cf_val = cf.get("central") if isinstance(cf, dict) else cf
+        fiable = bil.get("fiable")
+        qual = "prix de sortie fiable" if fiable else "prix de sortie fragile — ordre de grandeur"
+        lignes.append(f"**Économie indicative** — Charge foncière INDICATIVE {_fmt_eur(cf_val)} "
+                      f"({qual} ; coûts estimés).")
+    else:
+        lignes.append("**Économie indicative** — Non chiffrée (prix DVF insuffisant — pas de bilan inventé).")
+
+    # 5. Recommandation
+    reco = (facts.get("resume_metier") or {}).get("prochaine_action")
+    if not reco:
+        reco = {
+            "opportunite": "Vérifier le PLU/CU, croiser PPR/SAR, puis identifier le propriétaire avant de démarcher.",
+            "a_creuser": "Compléter les données manquantes (risques, pente, propriétaire) avant d'investir du temps.",
+            "exclue": "Ne pas prospecter : contrainte bloquante identifiée.",
+            "faux_positif_probable": "Écarter : la parcelle n'est probablement pas un foncier mobilisable.",
+        }.get(statut, "Vérifier les données avant toute décision.")
+    if v.get("micro_opportunite"):
+        reco += " Petite parcelle : étudier l'assemblage avec les voisines."
+    lignes.append(f"**Recommandation** — {reco}")
+
+    # Mentions obligatoires : fiabilité globale + données manquantes
+    niveau = fia.get("completude_niveau", "inconnue")
+    cpl = fia.get("completude_sur_100")
+    lignes.append(f"**Fiabilité** — complétude des données {niveau}"
+                  + (f" ({cpl}/100)" if cpl is not None else "")
+                  + (".  Bilan : prix de sortie fragile." if bil and bil.get("fiable") is False else "."))
+    manq = fia.get("absent_ou_a_verifier") or []
+    lignes.append("**Données manquantes** — " + (", ".join(manq) if manq else "aucune source muette signalée."))
+    return "\n".join(lignes)
+
+
 def _no_key(facts: dict) -> dict[str, Any]:
+    """Réponse sans clé : état PREMIER propre + synthèse règles déterministe (jamais « cassé »)."""
     return {"available": False, "reason": "no_key", "facts": facts,
-            "message": "Assistant IA non configuré — définissez la variable d'environnement "
-                       f"{ENV_KEY} (clé API Anthropic) pour activer « Expliquer cette parcelle »."}
+            "rules_summary": rules_summary(facts),
+            "message": "Analyse IA enrichie disponible sur activation (clé API). Ci-dessous, la "
+                       "synthèse automatique dérivée des seules données de la fiche."}
 
 
 def explain_parcel(fiche: dict, *, timeout: float = 25.0) -> dict[str, Any]:
     """Synthèse en prose via l'API Anthropic. Dégrade PROPREMENT : clé absente / réseau / timeout
-    → `available=False` + message clair, jamais d'exception remontée à l'endpoint."""
+    → `available=False` + synthèse règles + message clair, jamais d'exception remontée à l'endpoint."""
     facts = assistant_facts(fiche)
     key = os.environ.get(ENV_KEY, "").strip()
     if not key:
@@ -113,11 +293,15 @@ def explain_parcel(fiche: dict, *, timeout: float = 25.0) -> dict[str, Any]:
                         if b.get("type") == "text").strip()
         if not prose:
             return {"available": False, "reason": "empty", "facts": facts,
-                    "message": "Réponse vide de l'assistant — réessayez."}
+                    "rules_summary": rules_summary(facts),
+                    "message": "Réponse vide de l'assistant — synthèse automatique ci-dessous."}
         return {"available": True, "explanation": prose, "model": data.get("model", model)}
     except httpx.TimeoutException:
         return {"available": False, "reason": "timeout", "facts": facts,
-                "message": "L'assistant IA n'a pas répondu à temps — réessayez."}
+                "rules_summary": rules_summary(facts),
+                "message": "L'assistant IA n'a pas répondu à temps — synthèse automatique ci-dessous."}
     except Exception as exc:  # noqa: BLE001 — jamais de 500 sur la fiche
         return {"available": False, "reason": "error", "facts": facts,
-                "message": f"Assistant IA momentanément indisponible ({type(exc).__name__})."}
+                "rules_summary": rules_summary(facts),
+                "message": f"Assistant IA momentanément indisponible ({type(exc).__name__}) — "
+                           "synthèse automatique ci-dessous."}

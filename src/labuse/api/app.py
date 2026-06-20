@@ -581,7 +581,7 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
     enriched = []
     for row in pool:
         try:
-            fiche = _build_fiche(db, row["idu"])
+            fiche = _build_fiche(db, row["idu"], with_assistant=False)
         except Exception:  # noqa: BLE001 - un sujet illisible ne casse jamais la shortlist
             fiche = None
         asm = ((fiche or {}).get("voisinage") or {}).get("assemblage") or {}
@@ -633,7 +633,7 @@ def _check_idu(idu: str) -> str:
     return idu
 
 
-def _build_fiche(db: Session, idu: str) -> dict:
+def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     _check_idu(idu)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
@@ -764,7 +764,7 @@ def _build_fiche(db: Session, idu: str) -> dict:
     except Exception:  # noqa: BLE001 - indicateur structure optionnel, jamais bloquant
         occupation_block = None
 
-    return {
+    fiche = {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
@@ -791,6 +791,13 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "ai": ev.ai_payload if ev else None,
         "disclaimer": "Pré-analyse. Constructibilité, propriété, rentabilité, faisabilité jamais garanties.",
     }
+    # Synthèse assistant DÉTERMINISTE (règles), dérivée des SEULS faits ci-dessus — alimente l'état
+    # premium de l'assistant SANS clé API (jamais d'invention), et sert d'aperçu quand la clé est posée.
+    # Calculée seulement pour la fiche affichée ; inutile pour les builds internes (shortlist, compare).
+    if with_assistant:
+        from .assistant import assistant_facts, rules_summary
+        fiche["assistant_rules"] = rules_summary(assistant_facts(fiche))
+    return fiche
 
 
 @app.get("/parcels/{idu}/enrichment")
@@ -967,7 +974,7 @@ def compare(idus: str = Query(..., description="2 à 3 IDU séparés par des vir
     out = []
     for idu in ids:
         try:
-            out.append(_compare_row(_build_fiche(db, idu)))
+            out.append(_compare_row(_build_fiche(db, idu, with_assistant=False)))
         except HTTPException:
             continue
     return {"count": len(out), "parcels": out}

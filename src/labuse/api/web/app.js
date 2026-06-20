@@ -1645,25 +1645,34 @@ function renderAiHero(f) {
         <div class="ai-hero-s">Synthèse experte en langage clair, à partir des seules données réelles de cette fiche — jamais d'invention.</div>
       </div>
     </div>
-    ${renderAssistant(idu)}
+    ${renderAssistant(idu, f.assistant_rules)}
     ${renderAi(f.ai)}
   </section>`;
 }
 
-// 3.A — Assistant IA : « Expliquer cette parcelle » → synthèse en prose des données RÉELLES.
-// Sans clé API (ASSISTANT_OK=false), le bouton est désactivé avec un libellé clair — jamais d'erreur.
-function renderAssistant(idu) {
+// 3.A — Assistant IA : « Expliquer cette parcelle ». TOUJOURS utile :
+//  - une SYNTHÈSE RÈGLES déterministe (f.assistant_rules), dérivée des seules données de la fiche,
+//    s'affiche d'emblée (jamais d'invention) → état premium même SANS clé API ;
+//  - avec clé (ASSISTANT_OK), un bouton « Enrichir avec l'IA » ajoute la synthèse en prose du modèle ;
+//  - sans clé, une note explique que l'analyse IA est disponible sur activation (pas de fausse promesse).
+function renderAssistant(idu, rules) {
+  const rulesHtml = rules
+    ? `<div class="ai-rules">
+        <div class="ai-rules-h"><span class="ai-ic">✨</span> Synthèse de la parcelle <span class="ai-rules-tag">règles · données réelles</span></div>
+        <div class="ai-prose">${aiMarkdown(rules)}</div></div>`
+    : "";
   if (!ASSISTANT_OK) {
     return `<section class="assistant">
-      <button type="button" class="ai-btn ai-off" disabled
-        title="Définissez la variable d'environnement ANTHROPIC_API_KEY côté serveur pour activer l'assistant">
-        <span class="ai-ic">✨</span> Expliquer cette parcelle <span class="ai-req">· clé API requise</span></button>
+      ${rulesHtml}
+      <p class="ai-activate"><span class="ai-ic">✨</span> <b>Analyse IA enrichie</b> disponible sur activation
+        (clé API côté serveur). La synthèse ci-dessus est dérivée des <b>seules données de la fiche</b> — jamais d'invention.</p>
     </section>`;
   }
   return `<section class="assistant">
+    ${rulesHtml}
     <button type="button" class="ai-btn js-explain" data-idu="${esc(idu)}">
-      <span class="ai-ic">✨</span> Expliquer cette parcelle</button>
-    <p class="ai-pitch">Synthèse en langage clair : ce qui favorise, ce qui bloque, la prochaine action.</p>
+      <span class="ai-ic">✨</span> Enrichir avec l'IA</button>
+    <p class="ai-pitch">Synthèse en prose, structurée — à partir des seules données réelles de la fiche.</p>
     <div class="ai-out" id="ai-out" hidden></div>
   </section>`;
 }
@@ -1710,7 +1719,7 @@ async function explainParcel(idu) {
   if (btn) btn.disabled = false;
   if (res && res.available) {
     out.classList.add("ready");
-    out.innerHTML = `<div class="ai-card-h"><span class="ai-ic">✨</span> Synthèse de la parcelle</div>
+    out.innerHTML = `<div class="ai-card-h"><span class="ai-ic">✨</span> Analyse IA enrichie</div>
       <div class="ai-prose">${aiMarkdown(res.explanation)}</div>
       <p class="ai-foot">Rédigée par IA${res.model ? ` · ${esc(res.model)}` : ""} à partir des <b>seules données de la fiche</b> — à vérifier, aucune garantie.</p>`;
   } else {

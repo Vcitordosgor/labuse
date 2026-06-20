@@ -457,6 +457,16 @@
 .sheet .ai-foot { margin: var(--sp-3) 0 0; padding-top: var(--sp-2); border-top: 1px solid var(--tf-border);
   font-size: var(--fs-micro); color: var(--tf-text-3); line-height: 1.4; }
 .sheet .ai-na { font-size: var(--fs-body); color: var(--tf-text-2); line-height: 1.5; }
+/* Synthèse RÈGLES (déterministe, sans clé) — toujours visible, premium, distincte de l'IA enrichie */
+.sheet .ai-rules { background: var(--tf-surface); border: 1px solid var(--tf-border); border-radius: var(--radius-card);
+  padding: var(--sp-3) var(--sp-4); }
+.sheet .ai-rules-h { display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: var(--fs-body);
+  color: var(--tf-accent); margin-bottom: var(--sp-2); padding-bottom: var(--sp-2); border-bottom: 1px solid var(--tf-border); }
+.sheet .ai-rules-tag { margin-left: auto; font-family: var(--font-ui); font-size: 10px; font-weight: 700;
+  letter-spacing: .03em; text-transform: uppercase; color: var(--tf-text-3);
+  background: var(--tf-surface-2); border: 1px solid var(--tf-border); border-radius: var(--radius-pill); padding: 1px 8px; }
+/* Note d'activation (sans clé) — informe, ne fait pas « cassé », pas de fausse promesse */
+.sheet .ai-activate { margin: var(--sp-2) 0 0; font-size: var(--fs-small); line-height: 1.5; color: var(--tf-text-2); }
 
 /* ══ NOTE PROMOTEUR — synthèse décisionnelle en tête de fiche (SaaS premium) ══ */
 .sheet .note-pro { margin-top: var(--sp-3); }
