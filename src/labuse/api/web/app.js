@@ -882,6 +882,26 @@ function renderLoyers(l) {
   </div>`;
 }
 
+// LOT 4-B (volet structure) — box « Statut d'occupation » (INSEE RP 2022, source ouverte) :
+// part propriétaires / locataires (dont HLM) / logés gratuitement. Hors extrait → f.occupation = null.
+function renderOccupation(o) {
+  if (!o) return "";
+  const src = o.source || {};
+  const pc = (x) => (x && x.pct != null ? `${String(x.pct).replace(".", ",")} %` : "—");
+  const nb = (x) => (x && x.n != null ? fmt(x.n) : "—");
+  const hlm = o.dont_hlm && o.dont_hlm.pct != null ? ` · dont HLM ${String(o.dont_hlm.pct).replace(".", ",")} %` : "";
+  const row = (label, x, extra = "") => `<div class="loy-row"><span class="loy-k">${label}</span>
+    <span class="loy-v"><b>${pc(x)}</b> <span class="loy-ic">(${nb(x)}${extra})</span></span></div>`;
+  return `
+  <div class="occ">
+    <div class="loy-h">Statut d'occupation <span class="obs-tx">résidences principales</span> <span class="prov prov-src">sourcé</span><span class="obs-reg">INSEE RP ${esc(src.millesime || "")}</span></div>
+    ${row("Propriétaires", o.proprietaire)}
+    ${row("Locataires", o.locataire, hlm)}
+    ${o.loge_gratuit ? row("Logés gratuit.", o.loge_gratuit) : ""}
+    <p class="obs-src">${esc(src.mention || "")}</p>
+  </div>`;
+}
+
 // ───────────────────────── Fiche : « L'essentiel » + accordéons (LOT 1) ─────────────────────────
 // Accordéon générique : replié par défaut, ouverture FLUIDE au clic (CSS), indépendant.
 // Jamais d'accordéon vide → zéro section fantôme (et zéro donnée perdue : si vide, n'existait pas non plus avant).
@@ -1010,7 +1030,7 @@ function renderFiche(f) {
       `<div class="acc-zone">Zone PLU <b>${esc((f.faisabilite || {}).zone || "—")}</b>${(f.faisabilite || {}).constructible ? " · constructible" : ((f.faisabilite || {}).zone ? " · non constructible" : "")}</div>${renderPlh(f.plh)}${_enrSlot("enr-urba")}`)}
 
     ${accordion("Faisabilité & bilan détaillé", "capacité, calcul ligne à ligne, bilan promoteur",
-      renderFaisabilite(f.faisabilite, { no3d: true }) + renderObsimmo(f.obsimmo) + renderLoyers(f.loyers))}
+      renderFaisabilite(f.faisabilite, { no3d: true }) + renderObsimmo(f.obsimmo) + renderLoyers(f.loyers) + renderOccupation(f.occupation))}
 
     ${accordion("Assemblage & voisinage", "parcelle seule vs groupée, parcelles contiguës",
       ((status === "opportunite" || status === "a_creuser") ? renderAssembBloc(f) : "") + renderVoisinage(f.voisinage))}

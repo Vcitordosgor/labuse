@@ -751,6 +751,14 @@ def _build_fiche(db: Session, idu: str) -> dict:
     except Exception:  # noqa: BLE001 - indicateur marché optionnel, jamais bloquant
         loyers_block = None
 
+    # LOT 4-B (structure) — Statut d'occupation (INSEE RP 2022) : part propriétaires / locataires.
+    occupation_block = None
+    try:
+        from .. import occupation as occ_mod
+        occupation_block = occ_mod.fiche_block(insee=(p.idu or "")[:5], commune=p.commune)
+    except Exception:  # noqa: BLE001 - indicateur structure optionnel, jamais bloquant
+        occupation_block = None
+
     return {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
@@ -764,6 +772,7 @@ def _build_fiche(db: Session, idu: str) -> dict:
         "plh": plh_block,   # LOT 4.1 — orientations habitat (PLH TCO)
         "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
         "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)
+        "occupation": occupation_block,   # LOT 4-B — statut d'occupation (INSEE RP 2022)
         "permits": permits,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en

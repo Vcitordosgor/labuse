@@ -246,8 +246,8 @@
 .sheet .obs-src { margin: var(--sp-2) 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); }
 .sheet .obs-warn { margin: 3px 0 0; font-size: var(--fs-micro); color: var(--tf-text-3); font-style: italic; }
 
-/* LOT 4-B — box « Marché locatif » (carte des loyers DHUP) */
-.sheet .loy { margin: var(--sp-2) 0; padding: var(--sp-3); border: 1px solid var(--tf-border);
+/* LOT 4-B — box « Marché locatif » (carte des loyers DHUP) + « Statut d'occupation » (INSEE RP) */
+.sheet .loy, .sheet .occ { margin: var(--sp-2) 0; padding: var(--sp-3); border: 1px solid var(--tf-border);
   border-radius: var(--radius-control); background: var(--tf-surface-2); border-left: 3px solid var(--tf-gold); }
 .sheet .loy-h { display: flex; align-items: center; gap: 7px; font-family: var(--font-ui);
   font-size: var(--fs-small); font-weight: 700; color: var(--tf-text); }
