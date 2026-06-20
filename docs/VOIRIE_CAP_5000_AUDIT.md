@@ -1,8 +1,13 @@
 # Audit — plafond voirie 5 000 (avant vague 2)
 
-> **Audit lecture seule.** Aucun import, aucune écriture base, aucune cascade, aucune commune traitée,
-> aucun code modifié. Objectif : comprendre pourquoi la voirie plafonne à 5 000 et décider s'il faut
-> corriger avant les grosses communes. Diagnostic au **2026-06-20**.
+> **Audit lecture seule** (diagnostic d'origine, conservé tel quel ci-dessous). Aucun import, aucune
+> écriture base, aucune cascade au moment de l'audit. Diagnostic au **2026-06-20**.
+>
+> **🔧 MISE À JOUR 2026-06-20 — correctif CODE appliqué (données NON modifiées).** La pagination voirie
+> est désormais implémentée et testée (cf. **§10 Correction appliquée**). **Aucune base n'a été touchée :
+> aucun re-fetch, aucune cascade, aucun verdict modifié.** La voirie reste plafonnée à 5 000 en base
+> (preuve : `voirie=5000` partout) tant que le re-fetch ciblé n'est pas lancé — voir
+> **`docs/VOIRIE_REFETCH_RUNBOOK.md`** (procédure prête, NON exécutée).
 
 ## 1. Cause exacte
 
@@ -82,7 +87,7 @@ produirait des verdicts gold « techniquement verts » mais **biaisés sur l'acc
 | 4 | **Re-fetch ciblé voirie + re-cascade** (communes déjà gold) | ✅ **complément opérationnel** — pour récupérer Saint-Paul / La Possession / L'Étang-Salé une fois le code corrigé (ré-ingère SEULEMENT la voirie + relance la cascade). Décision séparée (re-traitement). |
 | 5 | **Plafond petites communes, pas grandes** | ❌ Inutile — la pagination (option 2) gère déjà les deux (1 page pour les petites, N pages pour les grandes). |
 
-## 7. Correction proposée (NON appliquée — audit only)
+## 7. Correction proposée (au moment de l'audit) — **APPLIQUÉE depuis, cf. §10**
 
 Rendre la voirie **paginée**, comme le bâti :
 - soit ajouter la **pagination dans `ingest_bdtopo`** (boucle `start_index` + `sort_by` jusqu'à
@@ -126,5 +131,82 @@ Rendre la voirie **paginée**, comme le bâti :
 | **Tests** | Pagination (2 pages → somme), arrêt, petite commune, garde-fou, 0 doublon. |
 | **Avant vague 2 ?** | **OUI** — corriger + re-fetch des gold, puis lancer les grosses communes. |
 
-*Audit lecture seule. Aucun code modifié, aucune base touchée, aucune cascade. Le correctif et le
-re-fetch sont à valider séparément.*
+*Audit lecture seule. Le correctif et le re-fetch sont à valider séparément.*
+
+---
+
+## 10. Correction appliquée — CODE uniquement (2026-06-20)
+
+> **Périmètre de ce chantier : code + tests + doc.** Aucun import, aucun re-fetch, aucune cascade,
+> aucune écriture base, aucun verdict modifié, aucune commune traitée, aucun merge `main`, aucun déploiement.
+> La base reste à l'identique (18 communes / 377 194 parcelles ; `voirie=5000` partout — non re-fetchée).
+
+### 10.1 Ce qui a changé (1 fonction)
+
+`src/labuse/ingestion/layers_ingest.py` › **`ingest_bdtopo()`** — la requête WFS unique est remplacée par
+une **boucle de pagination** :
+
+```text
+start = 0
+boucle :
+    fetch_layer(typename, bbox, max_features=page_size=5000, start_index=start, sort_by="cleabs")
+    insérer les features de la page
+    si len(page) < page_size  →  STOP (dernière page, incomplète ou vide)
+    start += page_size
+    si start >= max_total (=60 000)  →  STOP + WARNING (garde-fou anti-boucle)
+journaliser : nombre de pages + total d'objets
+```
+
+- **Choix de périmètre** : on pagine **`ingest_bdtopo`**, qui sert **à la fois la voirie ET le `water`**
+  (même chemin, même bug). C'est le correctif **minimal et complet** : il couvre les deux couches
+  concernées par le plafond sans élargir à d'autres fonctions. `ingest_batiments` et `ingest_ravines`
+  **paginaient déjà** (inchangées) — la voirie s'aligne désormais sur le **même pattern éprouvé**.
+- **Tri stable obligatoire** : `sort_by="cleabs"` (identifiant stable BD TOPO) → fenêtres `start_index`
+  **disjointes**, donc **zéro doublon ni trou** entre pages.
+- **Garde-fou anti-boucle** : `max_total=60 000`. Si un serveur pathologique renvoyait toujours une page
+  pleine, la boucle s'arrête au plafond et **journalise un WARNING** plutôt que de boucler à l'infini.
+- **Journalisation** : INFO en fin d'ingestion (`N objet(s) en P page(s)` par commune) → on **voit** si une
+  commune dépasse 5 000 (preuve de dé-plafonnement) et le WARNING signale toute troncature résiduelle.
+
+### 10.2 Pourquoi la pagination (et pas un simple `max_features` plus grand)
+
+Le plafond **n'est pas dans notre code** : c'est la limite **serveur** du WFS Géoplateforme
+(`CountDefault`, comportement WFS 2.0 standard). Le serveur **ignore tout `count`/`max_features`
+au-delà de son plafond** et renvoie **au plus 5 000** entités par réponse `GetFeature`.
+
+➡️ **`max_features=8000` (valeur d'avant) était donc inopérant** : on demandait 8 000, le serveur en
+rendait 5 000, et l'ingestion n'allait **jamais chercher la suite**. Seule la **pagination**
+(`startIndex` qui avance page après page) franchit le plafond, exactement comme le bâti récupère
+> 40 000 bâtiments par commune. Augmenter encore `max_features` (10 000, 50 000…) ne changerait **rien**.
+
+### 10.3 Stratégie de test (mock WFS — zéro réseau, zéro base)
+
+`tests/test_voirie_pagination.py` — `WfsConnector` et `_insert_layer` sont **mockés** (aucun appel
+réseau, aucune écriture base). **9 tests verts** :
+
+| Test | Vérifie |
+|---|---|
+| `test_une_page_sous_5000` | petite commune (3 000) → 1 page, 1 appel (régression non-pagination inutile). |
+| `test_deux_pages_5000_plus_1200` | **6 200** récupérés (> plafond) → **preuve de pagination** ; `start_index` = [0, 5000]. |
+| `test_multiple_exact_de_5000` | 10 000 pile → 2 pages pleines + 1 page vide → stop propre (3 appels). |
+| `test_arret_sur_page_vide_directe` | page vide d'emblée → 1 appel, stop. |
+| `test_tri_stable_cleabs_sur_chaque_page` | `sort_by="cleabs"` sur **chaque** requête. |
+| `test_pas_de_doublon_fenetres_non_chevauchantes` | `start_index` strictement croissants → **0 doublon** inséré. |
+| `test_garde_fou_anti_boucle` | serveur « toujours plein » → s'arrête à `max_total`, pas de boucle infinie. |
+| `test_regression_batiment_pagine` | **bâti** (déjà paginé) **inchangé** (6 200, tri stable). |
+| `test_regression_ravines_paginees` | **ravines** (déjà paginées, filtre `nature='Ravine'`) **inchangées** (2 300, 3 pages). |
+
+Full pytest : **441 passed**. `ruff check src tests` : **All checks passed**.
+
+### 10.4 Re-fetch — PRÉVU, NON exécuté
+
+Le code corrigé **ne change rien en base** tant qu'on ne ré-ingère pas la voirie. Le re-fetch ciblé des
+**3 communes gold** (Saint-Paul, La Possession, L'Étang-Salé) + re-cascade est décrit pas à pas dans
+**`docs/VOIRIE_REFETCH_RUNBOOK.md`** (backup pré, re-fetch voirie seule, re-cascade, post-checks,
+décision gold maintenu / NO-GO, rollback). **À lancer séparément, sur validation explicite.**
+
+**Impact attendu après re-fetch** (et seulement à ce moment-là) : la distance-à-la-voirie redevient
+exacte → **moins de faux « accès non identifié »** → des parcelles aujourd'hui retenues à tort en
+« à creuser » (jusqu'à ~6 900 Saint-Paul / ~1 080 La Possession / ~400 L'Étang-Salé, **bornes hautes**
+du §4) repassent en **opportunités**. Le sens est **monotone** : le re-fetch ne peut qu'**ajouter** des
+tronçons → les distances ne peuvent que **diminuer** → aucun verdict ne se dégrade du fait du correctif.

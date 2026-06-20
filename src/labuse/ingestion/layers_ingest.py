@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import io
 import json
+import logging
 import math
 import os
 import re
@@ -366,18 +367,40 @@ def ingest_abf(session, bbox, commune, run_id, sids) -> int:
     return n
 
 
-def ingest_bdtopo(session, bbox, commune, run_id, sids, kind: str, typename: str, max_features: int = 8000) -> int:
-    """BD TOPO via WFS Géoplateforme (bbox lon,lat) → kind (water | voirie)."""
+def ingest_bdtopo(session, bbox, commune, run_id, sids, kind: str, typename: str,
+                  page_size: int = 5000, max_total: int = 60000) -> int:
+    """BD TOPO via WFS Géoplateforme (bbox lon,lat) → kind (water | voirie). **PAGINÉ**.
+
+    Le serveur Géoplateforme PLAFONNE une réponse GetFeature à 5 000 entités : sans pagination, la
+    voirie/water des communes denses étaient TRONQUÉES à 5 000 (proxy d'accès faussé → faux « accès
+    non identifié », cf. docs/VOIRIE_CAP_5000_AUDIT.md). Augmenter `count`/`max_features` NE SUFFIT PAS
+    (le serveur ignore au-delà de son plafond) — il faut PAGINER : count/startIndex + tri stable
+    `cleabs` (comme le bâti), jusqu'à une page incomplète. Garde-fou anti-boucle : `max_total`.
+    """
     wfs = WfsConnector("geoplateforme_wfs")
-    fc = wfs.fetch_layer("geoplateforme_wfs", typename, bbox=bbox, max_features=max_features)
-    n = 0
-    for f in fc.get("features", []) or []:
-        if not f.get("geometry"):
-            continue
-        p = f.get("properties") or {}
-        _insert_layer(session, kind, p.get("nature"), p.get("nature") or typename.split(":")[-1],
-                      f["geometry"], sids.get(KIND_SOURCE[kind]), commune, run_id, None)
-        n += 1
+    n, start, pages = 0, 0, 0
+    while True:
+        fc = wfs.fetch_layer("geoplateforme_wfs", typename, bbox=bbox,
+                             max_features=page_size, start_index=start, sort_by="cleabs")
+        feats = fc.get("features", []) or []
+        for f in feats:
+            if not f.get("geometry"):
+                continue
+            p = f.get("properties") or {}
+            _insert_layer(session, kind, p.get("nature"), p.get("nature") or typename.split(":")[-1],
+                          f["geometry"], sids.get(KIND_SOURCE[kind]), commune, run_id, None)
+            n += 1
+        pages += 1
+        if len(feats) < page_size:        # page incomplète / vide → c'est la dernière
+            break
+        start += page_size
+        if start >= max_total:            # garde-fou anti-boucle (serveur qui renverrait toujours plein)
+            logging.getLogger("labuse").warning(
+                "ingest_bdtopo[%s] : garde-fou max_total=%d atteint (commune %s) — voirie tronquée ?",
+                kind, max_total, commune)
+            break
+    logging.getLogger("labuse").info(
+        "ingest_bdtopo[%s] : %d objet(s) en %d page(s) (commune %s)", kind, n, pages, commune)
     return n
 
 
