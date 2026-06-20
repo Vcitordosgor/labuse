@@ -5,6 +5,13 @@
 > Tous les chiffres « en base » sont issus de requêtes réelles ; les comptes Etalab attendus ne sont
 > **pas inventés** (à récupérer à l'import).
 
+> **Mise à jour — socle LOT 6 créé (toujours sans import réel).** Les 5 décisions sont validées :
+> (1) communes non gold **masquées/flaggées** → garde-fou UI livré ; (2) backups par commune + vagues ;
+> (3) tests **La Possession + L'Étang-Salé** ; (4) **re-couches + re-cascade** sur les 18 présentes ;
+> (5) **écrasement** des verdicts non fiables accepté. Livrés : `config/communes_gold_standard.yaml`,
+> `src/labuse/communes.py` (+ endpoint `/communes/status` + `commune_reliability` en fiche + bandeau UI),
+> `scripts/import_commune_gold_standard.py` (**dry-run only**), `docs/LOT6_RUNBOOK.md`, tests.
+
 ---
 
 ## 0. Le constat qui change tout

@@ -797,6 +797,10 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     if with_assistant:
         from .assistant import assistant_facts, rules_summary
         fiche["assistant_rules"] = rules_summary(assistant_facts(fiche))
+        # Garde-fou FIABILITÉ (LOT 6) : signale si la commune n'est pas encore au standard Saint-Paul.
+        # Information seulement — n'altère aucune donnée, aucun verdict, aucune cascade.
+        from .. import communes
+        fiche["commune_reliability"] = communes.reliability(p.commune)
     return fiche
 
 
@@ -829,6 +833,17 @@ def assistant_status() -> dict:
     """3.A — l'assistant IA est-il configuré (clé API présente) ? Pilote l'état du bouton côté UI."""
     from .assistant import is_configured
     return {"configured": is_configured()}
+
+
+@app.get("/communes/status")
+def communes_status() -> dict:
+    """LOT 6 — état & FIABILITÉ des 24 communes (garde-fou produit). Lecture seule, depuis la config
+    `communes_gold_standard.yaml` : seules les communes au standard Saint-Paul sont « fiables »."""
+    from .. import communes
+    items = communes.status_list()
+    return {"gold_reference": communes.meta().get("gold_reference", "Saint-Paul"),
+            "fiables": [x["commune"] for x in items if x["reliable"]],
+            "communes": items}
 
 
 @app.get("/parcels/{idu}/explain")

@@ -1,0 +1,297 @@
+# LA BUSE — état & stratégie de généralisation des 24 communes (LOT 6)
+# =============================================================================
+# Source INSEE ↔ nom : src/labuse/ingestion/run_all.py › REUNION_COMMUNES
+#   (d'après geo.api.gouv.fr/departements/974/communes).
+#
+# - parcelles_en_base / sections / eval_pct : MESURÉS en base le 2026-06-20 (snapshot).
+#   Le script re-mesure au runtime ; ces valeurs servent de repère/diagnostic, pas de vérité figée.
+# - attendu : compte cadastral Etalab. « a_verifier » tant qu'il n'est pas confirmé à l'import
+#   (on NE met JAMAIS un nombre attendu inventé — seul Saint-Paul est confirmé : 51 129).
+# - etat ∈ { gold, partiel_evalue, partiel_non_evalue, absent }
+# - strategie ∈ { gold_valide, re_couches_re_cascade, import_complet, attendre }
+# - reliable (garde-fou UI) est DÉRIVÉ en code : reliable = (etat == "gold"). Pas dupliqué ici.
+# =============================================================================
+
+meta:
+  snapshot_date: "2026-06-20"
+  gold_reference: "Saint-Paul"
+  # Couches « gold » présentes pour Saint-Paul SEUL au 2026-06-20 (à compléter ailleurs) :
+  couches_gold_manquantes_ailleurs: [batiment, ppr, sar, ravine, osm_faux_positif, plu_gpu_prescription, abf]
+
+communes:
+  - nom: Saint-Paul
+    insee: "97415"
+    etat: gold
+    parcelles_en_base: 51129
+    sections: 98
+    eval_pct: 100
+    attendu: 51129
+    priorite: reference
+    vague: 0
+    risque: aucun
+    strategie: gold_valide
+
+  # ── Vague 1 — TESTS (moyennes, présentes, peu risquées) ──────────────────────
+  - nom: La Possession
+    insee: "97408"
+    etat: partiel_evalue
+    parcelles_en_base: 13338
+    sections: 30
+    eval_pct: 100          # évalué SUR couches incomplètes → verdicts NON fiables
+    attendu: a_verifier
+    priorite: test
+    vague: 1
+    risque: faible
+    strategie: re_couches_re_cascade
+  - nom: L'Étang-Salé
+    insee: "97404"
+    etat: partiel_evalue
+    parcelles_en_base: 9070
+    sections: 19
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: test
+    vague: 1
+    risque: faible
+    strategie: re_couches_re_cascade
+
+  # ── Vague 2 — COMMERCIALES IMPORTANTES ───────────────────────────────────────
+  - nom: Saint-Pierre
+    insee: "97416"
+    etat: partiel_evalue
+    parcelles_en_base: 42425
+    sections: 66
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: haute
+    vague: 2
+    risque: moyen
+    strategie: re_couches_re_cascade
+  - nom: Le Tampon
+    insee: "97422"
+    etat: partiel_evalue
+    parcelles_en_base: 42756
+    sections: 79
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: haute
+    vague: 2
+    risque: moyen
+    strategie: re_couches_re_cascade
+  - nom: Saint-Leu
+    insee: "97413"
+    etat: partiel_non_evalue
+    parcelles_en_base: 22959
+    sections: 50
+    eval_pct: 0
+    attendu: a_verifier
+    priorite: haute
+    vague: 2
+    risque: moyen          # pente=0 en base → couche à recharger
+    strategie: re_couches_re_cascade
+  - nom: Saint-Louis
+    insee: "97414"
+    etat: partiel_non_evalue
+    parcelles_en_base: 29241
+    sections: 53
+    eval_pct: 0
+    attendu: a_verifier
+    priorite: haute
+    vague: 2
+    risque: moyen
+    strategie: re_couches_re_cascade
+
+  # ── Vague 3 — MOYENNES (présentes) ───────────────────────────────────────────
+  - nom: Saint-André
+    insee: "97409"
+    etat: partiel_non_evalue
+    parcelles_en_base: 22600
+    sections: 33
+    eval_pct: 0
+    attendu: a_verifier
+    priorite: moyenne
+    vague: 3
+    risque: moyen
+    strategie: re_couches_re_cascade
+  - nom: Saint-Joseph
+    insee: "97412"
+    etat: partiel_non_evalue
+    parcelles_en_base: 28959
+    sections: 57
+    eval_pct: 0
+    attendu: a_verifier
+    priorite: moyenne
+    vague: 3
+    risque: moyen
+    strategie: re_couches_re_cascade
+  - nom: Saint-Benoît
+    insee: "97410"
+    etat: partiel_evalue
+    parcelles_en_base: 21671
+    sections: 50
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: moyenne
+    vague: 3
+    risque: moyen
+    strategie: re_couches_re_cascade
+  - nom: Le Port
+    insee: "97407"
+    etat: partiel_evalue
+    parcelles_en_base: 10195
+    sections: 26
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: moyenne
+    vague: 3
+    risque: faible
+    strategie: re_couches_re_cascade
+  - nom: Petite-Île
+    insee: "97405"
+    etat: partiel_evalue
+    parcelles_en_base: 13137
+    sections: 25
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: moyenne
+    vague: 3
+    risque: faible
+    strategie: re_couches_re_cascade
+  - nom: Les Avirons
+    insee: "97401"
+    etat: partiel_evalue
+    parcelles_en_base: 8611
+    sections: 15
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: basse
+    vague: 3
+    risque: faible
+    strategie: re_couches_re_cascade
+  - nom: Bras-Panon
+    insee: "97402"
+    etat: partiel_evalue
+    parcelles_en_base: 6041
+    sections: 14
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: basse
+    vague: 3
+    risque: faible
+    strategie: re_couches_re_cascade
+
+  # ── Vague 4 — CHEF-LIEU LOURD ────────────────────────────────────────────────
+  - nom: Saint-Denis
+    insee: "97411"
+    etat: partiel_non_evalue
+    parcelles_en_base: 38138
+    sections: 124
+    eval_pct: 0
+    attendu: a_verifier
+    priorite: haute
+    vague: 4
+    risque: eleve           # la plus lourde (volume + urbanisme complexe)
+    strategie: re_couches_re_cascade
+
+  # ── Vague 5 — ABSENTES à valeur moyenne (import complet) ──────────────────────
+  - nom: Sainte-Marie
+    insee: "97418"
+    etat: absent
+    parcelles_en_base: 0
+    sections: null
+    eval_pct: null
+    attendu: a_verifier
+    priorite: moyenne
+    vague: 5
+    risque: moyen
+    strategie: import_complet
+  - nom: Sainte-Suzanne
+    insee: "97420"
+    etat: absent
+    parcelles_en_base: 0
+    sections: null
+    eval_pct: null
+    attendu: a_verifier
+    priorite: moyenne
+    vague: 5
+    risque: moyen
+    strategie: import_complet
+  - nom: Sainte-Rose
+    insee: "97419"
+    etat: absent
+    parcelles_en_base: 0
+    sections: null
+    eval_pct: null
+    attendu: a_verifier
+    priorite: basse
+    vague: 5
+    risque: moyen           # volcan / coulées
+    strategie: import_complet
+
+  # ── Vague 6 — ATYPIQUES / RELIEF (en dernier) ────────────────────────────────
+  - nom: Entre-Deux
+    insee: "97403"
+    etat: partiel_evalue
+    parcelles_en_base: 6312
+    sections: 13
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: basse
+    vague: 6
+    risque: moyen
+    strategie: re_couches_re_cascade
+  - nom: La Plaine-des-Palmistes
+    insee: "97406"
+    etat: partiel_evalue
+    parcelles_en_base: 6450
+    sections: 18
+    eval_pct: 100
+    attendu: a_verifier
+    priorite: basse
+    vague: 6
+    risque: moyen
+    strategie: re_couches_re_cascade
+  - nom: Saint-Philippe
+    insee: "97417"
+    etat: partiel_non_evalue
+    parcelles_en_base: 4162
+    sections: 29
+    eval_pct: 0
+    attendu: a_verifier
+    priorite: basse
+    vague: 6
+    risque: moyen           # volcan ; couverture GPU faible en base
+    strategie: re_couches_re_cascade
+  - nom: Les Trois-Bassins
+    insee: "97423"
+    etat: absent
+    parcelles_en_base: 0
+    sections: null
+    eval_pct: null
+    attendu: a_verifier
+    priorite: basse
+    vague: 6
+    risque: faible
+    strategie: import_complet
+  - nom: Salazie
+    insee: "97421"
+    etat: absent
+    parcelles_en_base: 0
+    sections: null
+    eval_pct: null
+    attendu: a_verifier
+    priorite: basse
+    vague: 6
+    risque: eleve           # cirque : relief extrême, urbanisme atypique
+    strategie: attendre
+  - nom: Cilaos
+    insee: "97424"
+    etat: absent
+    parcelles_en_base: 0
+    sections: null
+    eval_pct: null
+    attendu: a_verifier
+    priorite: basse
+    vague: 6
+    risque: eleve           # cirque : relief extrême, urbanisme atypique
+    strategie: attendre
