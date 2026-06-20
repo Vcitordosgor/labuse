@@ -45,15 +45,15 @@ communes:
     strategie: gold_valide
   - nom: L'Étang-Salé
     insee: "97404"
-    etat: partiel_evalue
+    etat: gold              # validée au standard le 2026-06-20 (run réussi, code 0)
     parcelles_en_base: 9070
     sections: 19
-    eval_pct: 100
-    attendu: a_verifier
+    eval_pct: 100          # re-couches + re-cascade : bâti 0→20407, opp 6.5%→3.2% (faux positifs réactivés)
+    attendu: 9070          # CONFIRMÉ par l'import Etalab du run (plus « a_verifier »)
     priorite: test
     vague: 1
     risque: faible
-    strategie: re_couches_re_cascade
+    strategie: gold_valide
 
   # ── Vague 2 — COMMERCIALES IMPORTANTES ───────────────────────────────────────
   - nom: Saint-Pierre
