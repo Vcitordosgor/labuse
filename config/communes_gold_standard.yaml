@@ -58,15 +58,15 @@ communes:
   # ── Vague 2 — COMMERCIALES IMPORTANTES ───────────────────────────────────────
   - nom: Saint-Pierre
     insee: "97416"
-    etat: partiel_evalue
+    etat: gold              # validée au standard le 2026-06-21 (run réel réussi, exit 0 après dédup ciblée)
     parcelles_en_base: 42425
     sections: 66
-    eval_pct: 100
-    attendu: a_verifier
+    eval_pct: 100          # re-couches + re-cascade : bâti 0→119094, voirie 5000→25949, opp 10.5%→3.6%, faux positifs 0→28142
+    attendu: 42425         # CONFIRMÉ par l'import Etalab du run (plus « a_verifier »)
     priorite: haute
     vague: 2
     risque: moyen
-    strategie: re_couches_re_cascade
+    strategie: gold_valide
   - nom: Le Tampon
     insee: "97422"
     etat: partiel_evalue
