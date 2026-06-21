@@ -10,7 +10,56 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « 3 communes gold + voirie complète » (2026-06-21)
+## 🟢 Baseline courant — « post-vague 2 : 6 communes gold + Saint-Leu bloquée » (2026-06-21)
+
+Point de restauration **propre et recommandé** après la vague 2. État figé : `main` à `cf58f28`
+(Saint-Louis gold mergée + Saint-Leu documentée bloquée), 6 communes validées au standard Saint-Paul,
+base locale propre après tous les runs / dédups / rollbacks.
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-vague2-6gold-saintleu-blocked-20260621-205329.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-vague2-6gold-saintleu-blocked-20260621-205329.dump` |
+| **Date / heure** | **2026-06-21 20:53:29 UTC** |
+| **Taille** | **646 Mo** (646 351 261 octets, `pg_dump -Fc`) |
+| **SHA-256** | `e0007a6763d0ada538f6d3d7fb48e1657046a3d7cb3ccd8eae75c110a1a6e982` |
+| **Sidecar** | `…-205329.dump.sha256` |
+
+### Contenu du baseline (post-vague 2)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`cf58f28`** (`LOT6: validate Saint-Louis gold`) |
+| Communes en base | **18** |
+| Parcelles | **377 194** |
+| Communes **gold** (6) | Saint-Paul · L'Étang-Salé · La Possession · Saint-Pierre · Le Tampon · **Saint-Louis** |
+| **Saint-Leu** | **non-gold / bloquée** — PLU `97413` absent du GPU (cf. `docs/communes/saint_leu_BLOCKED_PLU_GPU.md`) |
+| Saint-Louis (nouveau gold) | 29 241 parcelles · 100 % évaluées · voirie **9 020** (dé-plafonnée) · bâti **41 031** |
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes.
+- ✅ **SHA-256** généré (sidecar `…-205329.dump.sha256`).
+- ✅ Vérifs **avant/après** (lecture seule, inchangées par le backup) : `main=cf58f28`, working tree clean,
+  **18 communes / 377 194 parcelles**, `/communes/status` = **6 gold**, Saint-Louis **gold**, Saint-Leu **non-gold**.
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-vague2-6gold-saintleu-blocked-20260621-205329.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-vague2-6gold-saintleu-blocked-20260621-205329.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=18 parcels=377194 (puis /communes/status = 6 gold)
+```
+
+---
+
+## Baseline précédent — « 3 communes gold + voirie complète » (2026-06-21)
 
 Point de restauration **propre et recommandé** avant la vague 2. État figé : correctif de pagination
 voirie dans `main` + les 3 communes gold re-fetchées au standard voirie complet.
