@@ -1,7 +1,7 @@
 """LOT 6 — socle de généralisation : référentiel fiabilité + script générique (JAMAIS exécuté réel).
 
-Verrouille : la config des 24 communes, le garde-fou de fiabilité (Saint-Paul = gold, le reste = non
-fiable), et la sûreté du script générique (dry-run par défaut, confirmation spécifique à la commune,
+Verrouille : la config des 24 communes, le garde-fou de fiabilité (communes gold = fiables, le reste =
+non fiable), et la sûreté du script générique (dry-run par défaut, confirmation spécifique à la commune,
 refus de commune inconnue, classification d'état). Aucune exécution réelle, aucun accès base muté.
 """
 from __future__ import annotations
@@ -57,7 +57,7 @@ def test_saint_paul_est_fiable_gold():
 
 
 def test_communes_partielles_non_fiables():
-    # La Possession ET L'Étang-Salé sont passées GOLD (runs réussis) → plus dans cette liste.
+    # La Possession, L'Étang-Salé ET Saint-Pierre sont passées GOLD (runs réussis) → plus dans cette liste.
     for nom in ("Saint-Denis", "Le Tampon", "Saint-Leu", "Saint-Louis"):
         assert communes.is_reliable(nom) is False
         r = communes.reliability(nom)
@@ -67,8 +67,8 @@ def test_communes_partielles_non_fiables():
 
 
 def test_communes_gold_apres_runs():
-    # Verrouille l'état post-runs : Saint-Paul (étalon) + La Possession + L'Étang-Salé fiables.
-    for nom in ("Saint-Paul", "La Possession", "L'Étang-Salé"):
+    # Verrouille l'état post-runs : Saint-Paul (étalon) + La Possession + L'Étang-Salé + Saint-Pierre fiables.
+    for nom in ("Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre"):
         assert communes.is_reliable(nom) is True
         r = communes.reliability(nom)
         assert r["reliable"] is True and r["etat"] == "gold" and r["title"] is None
@@ -88,8 +88,8 @@ def test_status_list_fiables_gold():
     items = communes.status_list()
     assert len(items) == 24
     fiables = {x["commune"] for x in items if x["reliable"]}
-    # Saint-Paul (étalon) + La Possession + L'Étang-Salé (vague 1 réussie) ; le reste pas au standard.
-    assert fiables == {"Saint-Paul", "La Possession", "L'Étang-Salé"}
+    # Saint-Paul (étalon) + La Possession + L'Étang-Salé (vague 1) + Saint-Pierre (vague 2 réussie).
+    assert fiables == {"Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre"}
 
 
 def test_commune_known_anti_erreur():
@@ -291,5 +291,5 @@ def test_communes_status_endpoint(engine):
     with TestClient(app) as c:
         r = c.get("/communes/status").json()
     assert len(r["communes"]) == 24
-    assert set(r["fiables"]) == {"Saint-Paul", "La Possession", "L'Étang-Salé"}
+    assert set(r["fiables"]) == {"Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre"}
     assert r["gold_reference"] == "Saint-Paul"
