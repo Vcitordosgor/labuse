@@ -10,7 +10,58 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-LOT6 : 8 communes gold + Saint-Leu/Saint-André bloquées » (2026-06-22)
+## 🟢 Baseline courant — « post-LOT6 : 9 communes gold + 3 communes bloquées » (2026-06-22)
+
+Point de restauration **propre et recommandé** après LOT6 (9 communes gold). État figé : `main` à
+`b1eabe6` (Bras-Panon gold mergée), 9 communes validées au standard Saint-Paul, 3 communes bloquées
+(PLU/GPU propre absent), base locale propre après tous les runs / dédups.
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-lot6-9gold-braspanon-20260622-124630.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-lot6-9gold-braspanon-20260622-124630.dump` |
+| **Date / heure** | **2026-06-22 12:46:30 UTC** |
+| **Taille** | **764 Mo** (764 103 985 octets, `pg_dump -Fc`) |
+| **SHA-256** | `94ffa24c1c1cbe001c0fb6bf1939f798e870776249f984e7830fc19f2bfe2f7b` |
+| **Sidecar** | `…-124630.dump.sha256` |
+
+### Contenu du baseline (post-LOT6, 9 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`b1eabe6`** (`LOT6: validate Bras-Panon gold`) |
+| Communes en base | **18** |
+| Parcelles | **377 194** |
+| Communes **gold** (9) | Saint-Paul · L'Étang-Salé · La Possession · Saint-Pierre · Le Tampon · Saint-Louis · Saint-Denis · Saint-Joseph · **Bras-Panon** |
+| **Bloquées** (3) | **Saint-Leu** (`97413`) · **Saint-André** (`97409`) · **Saint-Philippe** (`97417`) — PLU propre absent du GPU (cf. notes `*_BLOCKED_PLU_GPU.md`) |
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes.
+- ✅ **SHA-256** généré (sidecar `…-124630.dump.sha256`).
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=b1eabe6`, working tree clean,
+  **18 communes / 377 194 parcelles**, **9 gold**, Saint-Leu/André/Philippe non-gold.
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » pour Bras-Panon (ex-`partiel_evalue`,
+> ×2 — verdicts canoniques = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-lot6-9gold-braspanon-20260622-124630.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-lot6-9gold-braspanon-20260622-124630.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=18 parcels=377194 (puis 9 communes gold)
+```
+
+---
+
+## Baseline précédent — « post-LOT6 : 8 communes gold + Saint-Leu/Saint-André bloquées » (2026-06-22)
 
 Point de restauration **propre et recommandé** après LOT6 (8 communes gold). État figé : `main` à
 `69748a4` (Saint-Joseph gold mergée), 8 communes validées au standard Saint-Paul, 2 communes bloquées
