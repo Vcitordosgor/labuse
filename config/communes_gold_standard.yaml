@@ -148,15 +148,15 @@ communes:
     strategie: gold_valide
   - nom: Petite-Île
     insee: "97405"
-    etat: partiel_evalue
+    etat: gold              # validée au standard le 2026-06-22 (run réel réussi, exit 0 du 1er coup, aucun doublon)
     parcelles_en_base: 13137
     sections: 25
-    eval_pct: 100
-    attendu: a_verifier
+    eval_pct: 100          # re-couches + re-cascade : bâti 0→17222, voirie 5000→6585, opp 3.5%→0.9%, faux positifs 0→11120
+    attendu: 13137         # CONFIRMÉ par l'import Etalab du run (plus « a_verifier »)
     priorite: moyenne
     vague: 3
     risque: faible
-    strategie: re_couches_re_cascade
+    strategie: gold_valide
   - nom: Les Avirons
     insee: "97401"
     etat: gold              # validée au standard le 2026-06-22 (run réel réussi, exit 0 du 1er coup, aucun doublon)
