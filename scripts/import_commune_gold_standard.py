@@ -45,6 +45,19 @@ OPP_RATE_MAX_PCT = 5.0
 EXPECTED_INDEXES = ("idx_parcels_geom_2975", "idx_spatial_layers_geom_2975",
                     "idx_spatial_layers_voirie_geom2975")
 
+# Détection de doublons EXACTS de couche : un même objet réglementaire ré-ingéré 2× (overlap de pages WFS,
+# cf. Saint-Denis/Saint-Joseph). La clé inclut la géométrie ET les attributs réglementaires
+# (kind, géom, subtype, name, attrs) — sinon deux objets DIFFÉRENTS superposés sur la même surface
+# (ex. Le Port : OAP sectorielle + règle de mixité logement = 2 prescriptions GPU distinctes) seraient
+# comptés à tort comme doublon. Un vrai doublon exact (tout identique) reste détecté.
+DUP_GROUPS_SQL = (
+    "SELECT count(*) FROM ("
+    " SELECT kind, md5(ST_AsBinary(geom_2975)) AS h, subtype, name, md5(attrs::text) AS ah"
+    " FROM spatial_layers WHERE commune = :c"
+    " GROUP BY 1, 2, 3, 4, 5 HAVING count(*) > 1"
+    ") t"
+)
+
 EXIT_OK = 0
 EXIT_ROLLBACK = 1        # contrôle critique KO ou crash → rollback recommandé
 EXIT_CONFIRM = 2         # --execute sans confirmation exacte / cible invalide
@@ -301,8 +314,7 @@ def read_postcheck_metrics(eng, commune: str) -> dict:
         zoned = q("SELECT count(*) FROM parcels p WHERE p.commune=:c AND EXISTS "
                   "(SELECT 1 FROM spatial_layers s WHERE s.kind='plu_gpu_zone' "
                   "AND ST_Intersects(p.geom_2975,s.geom_2975))")
-        dup = q("SELECT count(*) FROM (SELECT kind, md5(ST_AsBinary(geom_2975)) h FROM spatial_layers "
-                "WHERE commune=:c GROUP BY 1,2 HAVING count(*)>1) t")
+        dup = q(DUP_GROUPS_SQL)
         # Verdicts = DERNIÈRE évaluation par parcelle (DISTINCT ON), scopé commune.
         vrows = c.execute(text(
             "WITH latest AS (SELECT DISTINCT ON (p.id) e.status FROM parcels p "

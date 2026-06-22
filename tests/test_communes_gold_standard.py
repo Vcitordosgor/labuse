@@ -294,3 +294,35 @@ def test_communes_status_endpoint(engine):
     assert len(r["communes"]) == 24
     assert set(r["fiables"]) == {"Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre", "Le Tampon", "Saint-Louis", "Saint-Denis", "Saint-Joseph", "Bras-Panon", "Les Avirons"}
     assert r["gold_reference"] == "Saint-Paul"
+
+
+# ── Détection de doublons EXACTS de couche (clé enrichie) ─────────────────────
+@pytest.mark.db
+def test_dedup_prescriptions_distinctes_meme_geom_pas_doublon(db_session):
+    """Faux positif corrigé (cf. Le Port) : deux prescriptions GPU DIFFÉRENTES superposées sur la même
+    géométrie (OAP sectorielle + règle de mixité logement) ne sont PAS un doublon — la clé inclut
+    subtype/name/attrs. Un vrai doublon exact (tout identique, cf. Saint-Denis/Saint-Joseph) reste détecté."""
+    from sqlalchemy import text
+
+    s = _load_script()
+    commune = "__test_dedup__"
+
+    def ins(subtype, name, attrs):
+        db_session.execute(text(
+            "INSERT INTO spatial_layers (kind, subtype, name, commune, geom, geom_2975, attrs) VALUES "
+            "('plu_gpu_prescription', :st, :nm, :c, "
+            " ST_SetSRID(ST_GeomFromText('POINT(55.3 -20.9)'), 4326), "
+            " ST_SetSRID(ST_GeomFromText('POINT(330000 7650000)'), 2975), CAST(:a AS jsonb))"),
+            {"st": subtype, "nm": name, "c": commune, "a": attrs})
+
+    def dup_groups():
+        return db_session.execute(text(s.DUP_GROUPS_SQL), {"c": commune}).scalar()
+
+    # 2 prescriptions DIFFÉRENTES, même géométrie → PAS un doublon.
+    ins("18", "OAP sectorielle - OAP Ex ZI sud", '{"typepsc": "18"}')
+    ins("37", "100% logements libres et intermédiaires", '{"typepsc": "37"}')
+    assert dup_groups() == 0, "prescriptions distinctes (même géométrie) comptées à tort comme doublon"
+
+    # 3e ligne = copie EXACTE de la 1ère → vrai doublon exact détecté (1 groupe).
+    ins("18", "OAP sectorielle - OAP Ex ZI sud", '{"typepsc": "18"}')
+    assert dup_groups() == 1, "vrai doublon exact (tout identique) non détecté"
