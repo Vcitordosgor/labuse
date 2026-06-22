@@ -10,7 +10,55 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-vague 2 : 6 communes gold + Saint-Leu bloquée » (2026-06-21)
+## 🟢 Baseline courant — « post-LOT6 : 8 communes gold + Saint-Leu/Saint-André bloquées » (2026-06-22)
+
+Point de restauration **propre et recommandé** après LOT6 (8 communes gold). État figé : `main` à
+`69748a4` (Saint-Joseph gold mergée), 8 communes validées au standard Saint-Paul, 2 communes bloquées
+(PLU/GPU propre absent), base locale propre après tous les runs / dédups.
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-lot6-8gold-saintjoseph-20260622-113036.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-lot6-8gold-saintjoseph-20260622-113036.dump` |
+| **Date / heure** | **2026-06-22 11:30:36 UTC** |
+| **Taille** | **730 Mo** (729 840 418 octets, `pg_dump -Fc`) |
+| **SHA-256** | `5bdea2e2ae50345acb81a82f2d39684603aa95114e4c4deec10a896232d6afb2` |
+| **Sidecar** | `…-113036.dump.sha256` |
+
+### Contenu du baseline (post-LOT6, 8 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`69748a4`** (`LOT6: validate Saint-Joseph gold`) |
+| Communes en base | **18** |
+| Parcelles | **377 194** |
+| Communes **gold** (8) | Saint-Paul · L'Étang-Salé · La Possession · Saint-Pierre · Le Tampon · Saint-Louis · Saint-Denis · **Saint-Joseph** |
+| **Bloquées** (2) | **Saint-Leu** (`97413`) · **Saint-André** (`97409`) — PLU propre absent du GPU (cf. notes `*_BLOCKED_PLU_GPU.md`) |
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes.
+- ✅ **SHA-256** généré (sidecar `…-113036.dump.sha256`).
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=69748a4`, working tree clean,
+  **18 communes / 377 194 parcelles**, **8 gold**, Saint-Leu & Saint-André non-gold.
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-lot6-8gold-saintjoseph-20260622-113036.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-lot6-8gold-saintjoseph-20260622-113036.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=18 parcels=377194 (puis 8 communes gold)
+```
+
+---
+
+## Baseline précédent — « post-vague 2 : 6 communes gold + Saint-Leu bloquée » (2026-06-21)
 
 Point de restauration **propre et recommandé** après la vague 2. État figé : `main` à `cf58f28`
 (Saint-Louis gold mergée + Saint-Leu documentée bloquée), 6 communes validées au standard Saint-Paul,
