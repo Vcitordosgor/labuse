@@ -115,15 +115,15 @@ communes:
     strategie: re_couches_re_cascade
   - nom: Saint-Joseph
     insee: "97412"
-    etat: partiel_non_evalue
+    etat: gold              # validée au standard le 2026-06-22 (run réel réussi, exit 0 après dédup ciblé)
     parcelles_en_base: 28959
     sections: 57
-    eval_pct: 0
-    attendu: a_verifier
+    eval_pct: 100          # re-couches + re-cascade : bâti 0→25454, voirie 5000→8909, opp 1.8% (530), faux positifs 0→19744
+    attendu: 28959         # CONFIRMÉ par l'import Etalab du run (plus « a_verifier »)
     priorite: moyenne
     vague: 3
     risque: moyen
-    strategie: re_couches_re_cascade
+    strategie: gold_valide
   - nom: Saint-Benoît
     insee: "97410"
     etat: partiel_evalue
