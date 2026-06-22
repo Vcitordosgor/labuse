@@ -170,15 +170,15 @@ communes:
     strategie: re_couches_re_cascade
   - nom: Bras-Panon
     insee: "97402"
-    etat: partiel_evalue
+    etat: gold              # validée au standard le 2026-06-22 (run réel réussi, exit 0 du 1er coup, aucun doublon)
     parcelles_en_base: 6041
     sections: 14
-    eval_pct: 100
-    attendu: a_verifier
+    eval_pct: 100          # re-couches + re-cascade : bâti 0→14272, voirie 5000→7744, opp 5.3%→3.5%, faux positifs 0→3954
+    attendu: 6041          # CONFIRMÉ par l'import Etalab du run (plus « a_verifier »)
     priorite: basse
     vague: 3
     risque: faible
-    strategie: re_couches_re_cascade
+    strategie: gold_valide
 
   # ── Vague 4 — CHEF-LIEU LOURD ────────────────────────────────────────────────
   - nom: Saint-Denis
