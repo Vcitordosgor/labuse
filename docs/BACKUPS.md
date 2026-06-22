@@ -10,7 +10,58 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-LOT6 : 11 communes gold + 3 communes bloquées » (2026-06-22)
+## 🟢 Baseline courant — « post-LOT6 : 12 communes gold + 3 communes bloquées » (2026-06-22)
+
+Point de restauration **propre et recommandé** après LOT6 (12 communes gold). État figé : `main` à
+`d8c6861` (Petite-Île gold mergée), 12 communes validées au standard Saint-Paul, 3 communes bloquées
+(PLU/GPU propre absent), base locale propre après tous les runs / dédups.
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-lot6-12gold-petiteile-20260622-161233.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-lot6-12gold-petiteile-20260622-161233.dump` |
+| **Date / heure** | **2026-06-22 16:12:33 UTC** |
+| **Taille** | **787 Mo** (787 180 856 octets, `pg_dump -Fc`) |
+| **SHA-256** | `b42dd09d427e5182b8d2ce3f28dd711422406ce955e2681bf0e5e2acb413ade8` |
+| **Sidecar** | `…-161233.dump.sha256` |
+
+### Contenu du baseline (post-LOT6, 12 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`d8c6861`** (`LOT6: validate Petite-Île gold`) |
+| Communes en base | **18** |
+| Parcelles | **377 194** |
+| Communes **gold** (12) | Saint-Paul · L'Étang-Salé · La Possession · Saint-Pierre · Le Tampon · Saint-Louis · Saint-Denis · Saint-Joseph · Bras-Panon · Les Avirons · Le Port · **Petite-Île** |
+| **Bloquées** (3) | **Saint-Leu** (`97413`) · **Saint-André** (`97409`) · **Saint-Philippe** (`97417`) — PLU propre absent du GPU (cf. notes `*_BLOCKED_PLU_GPU.md`) |
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes.
+- ✅ **SHA-256** généré (sidecar `…-161233.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=d8c6861`, working tree clean,
+  **18 communes / 377 194 parcelles**, **12 gold**, Petite-Île gold/reliable, Saint-Leu/André/Philippe non-gold.
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » (Bras-Panon, Les Avirons, Le Port,
+> Petite-Île, ex-`partiel_evalue`, ×2 — verdicts canoniques = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-lot6-12gold-petiteile-20260622-161233.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-lot6-12gold-petiteile-20260622-161233.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=18 parcels=377194 (puis 12 communes gold)
+```
+
+---
+
+## Baseline précédent — « post-LOT6 : 11 communes gold + 3 communes bloquées » (2026-06-22)
 
 Point de restauration **propre et recommandé** après LOT6 (11 communes gold). État figé : `main` à
 `5b6a393` (Le Port gold mergé + correctif faux positif dédup), 11 communes validées au standard
