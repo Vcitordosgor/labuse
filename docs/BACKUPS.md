@@ -10,7 +10,58 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-LOT6 : 10 communes gold + 3 communes bloquées » (2026-06-22)
+## 🟢 Baseline courant — « post-LOT6 : 11 communes gold + 3 communes bloquées » (2026-06-22)
+
+Point de restauration **propre et recommandé** après LOT6 (11 communes gold). État figé : `main` à
+`5b6a393` (Le Port gold mergé + correctif faux positif dédup), 11 communes validées au standard
+Saint-Paul, 3 communes bloquées (PLU/GPU propre absent), base locale propre après tous les runs / dédups.
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-lot6-11gold-leport-20260622-145015.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-lot6-11gold-leport-20260622-145015.dump` |
+| **Date / heure** | **2026-06-22 14:50:15 UTC** |
+| **Taille** | **779 Mo** (779 147 452 octets, `pg_dump -Fc`) |
+| **SHA-256** | `ffefe0f73927e8a96a778e6da9defe243259c9f639bb443989801a51bfd122eb` |
+| **Sidecar** | `…-145015.dump.sha256` |
+
+### Contenu du baseline (post-LOT6, 11 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`5b6a393`** (`LOT6: validate Le Port gold`) |
+| Communes en base | **18** |
+| Parcelles | **377 194** |
+| Communes **gold** (11) | Saint-Paul · L'Étang-Salé · La Possession · Saint-Pierre · Le Tampon · Saint-Louis · Saint-Denis · Saint-Joseph · Bras-Panon · Les Avirons · **Le Port** |
+| **Bloquées** (3) | **Saint-Leu** (`97413`) · **Saint-André** (`97409`) · **Saint-Philippe** (`97417`) — PLU propre absent du GPU (cf. notes `*_BLOCKED_PLU_GPU.md`) |
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes.
+- ✅ **SHA-256** généré (sidecar `…-145015.dump.sha256`).
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=5b6a393`, working tree clean,
+  **18 communes / 377 194 parcelles**, **11 gold**, Saint-Leu/André/Philippe non-gold, DVF Le Port 526.
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » (Bras-Panon, Les Avirons, Le Port,
+> ex-`partiel_evalue`, ×2 — verdicts canoniques = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-lot6-11gold-leport-20260622-145015.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-lot6-11gold-leport-20260622-145015.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=18 parcels=377194 (puis 11 communes gold)
+```
+
+---
+
+## Baseline précédent — « post-LOT6 : 10 communes gold + 3 communes bloquées » (2026-06-22)
 
 Point de restauration **propre et recommandé** après LOT6 (10 communes gold). État figé : `main` à
 `3bb5955` (Les Avirons gold mergée), 10 communes validées au standard Saint-Paul, 3 communes bloquées
