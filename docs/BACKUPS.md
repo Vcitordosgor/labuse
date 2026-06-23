@@ -10,7 +10,66 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-LOT6 : 14 communes gold + 3 communes bloquées » (2026-06-23)
+## 🟢 Baseline courant — « post-LOT6 : 15 communes gold + 3 communes bloquées » (2026-06-23)
+
+Point de restauration **propre et recommandé** après LOT6 (15 communes gold). État figé : `main` à
+`f685f95` (Sainte-Suzanne gold mergée), 15 communes validées au standard Saint-Paul, 3 communes bloquées
+(PLU/GPU propre absent), base locale propre après tous les runs / dédups.
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-lot6-15gold-saintesuzanne-20260623-145720.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-lot6-15gold-saintesuzanne-20260623-145720.dump` |
+| **Date / heure** | **2026-06-23 14:57:20 UTC** |
+| **Taille** | **978 Mo** (977 512 604 octets, `pg_dump -Fc`) |
+| **SHA-256** | `3f48faa6d1b33a1c7252b22e56ed3d37b1110612c62b4c958e891ed967c949ef` |
+| **Sidecar** | `…-145720.dump.sha256` |
+
+### Contenu du baseline (post-LOT6, 15 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`f685f95`** (`LOT6: validate Sainte-Suzanne gold`) |
+| Communes en base | **20** |
+| Parcelles | **406 467** |
+| Communes **gold** (15) | Saint-Paul · L'Étang-Salé · La Possession · Saint-Pierre · Le Tampon · Saint-Louis · Saint-Denis · Saint-Joseph · Bras-Panon · Les Avirons · Le Port · Petite-Île · Saint-Benoît · Sainte-Marie · **Sainte-Suzanne** |
+| **Bloquées** (3) | **Saint-Leu** (`97413`) · **Saint-André** (`97409`) · **Saint-Philippe** (`97417`) — PLU propre absent du GPU (cf. notes `*_BLOCKED_PLU_GPU.md`) |
+
+> **Sainte-Suzanne** (nouveau gold, vague 5, INSEE 97420, **import_complet** d'une commune absente) :
+> 12 527 parcelles · 100 % évaluées · bâti **28 794** · voirie **10 884** (non plafonnée, ≠ 5 000) ·
+> zonage propre **DU_97420 100 %** (idurba `97420_plu_20250929`) · `attendu` confirmé **12 527** ·
+> `plu_gpu_prescription` **481** (02=18, 15/24=0) · DVF **383** · **PPR 4** · 0 doublon de couche.
+> `osm_faux_positif` **0 → 175** corrigé post-run (re-fetch ciblé + re-cascade Sainte-Suzanne uniquement).
+> Verdicts : opportunité **321** (taux **2,6 %**) · à creuser **3 475** · écartée **212** · faux positif probable **8 519**.
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-145720.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=f685f95`, working tree clean,
+  **20 communes / 406 467 parcelles**, **15 gold**, Sainte-Suzanne gold/reliable/`attendu=12527`,
+  Sainte-Marie & Saint-Benoît gold, La Plaine-des-Palmistes & Entre-Deux non-gold, Saint-Leu/André/Philippe non-gold.
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » (communes ex-`partiel_evalue` / re-cascadées ;
+> Sainte-Suzanne porte l'ancien set osm-less + le set osm-aware — verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-lot6-15gold-saintesuzanne-20260623-145720.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-lot6-15gold-saintesuzanne-20260623-145720.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=20 parcels=406467 (puis 15 communes gold)
+```
+
+---
+
+## Baseline précédent — « post-LOT6 : 14 communes gold + 3 communes bloquées » (2026-06-23)
 
 Point de restauration **propre et recommandé** après LOT6 (14 communes gold). État figé : `main` à
 `c87957d` (Sainte-Marie gold mergée), 14 communes validées au standard Saint-Paul, 3 communes bloquées
