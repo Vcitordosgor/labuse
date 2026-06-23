@@ -126,15 +126,15 @@ communes:
     strategie: gold_valide
   - nom: Saint-Benoît
     insee: "97410"
-    etat: partiel_evalue
+    etat: gold              # validée au standard le 2026-06-23 (run réel réussi, exit 0 après dédup ciblée du doublon prescription)
     parcelles_en_base: 21671
     sections: 50
-    eval_pct: 100
-    attendu: a_verifier
+    eval_pct: 100          # re-couches + re-cascade : bâti 0→34683, voirie 14922, opp 2.7% (589), faux positifs 0→15436
+    attendu: 21671         # CONFIRMÉ par l'import Etalab du run (plus « a_verifier »)
     priorite: moyenne
     vague: 3
     risque: moyen
-    strategie: re_couches_re_cascade
+    strategie: gold_valide
   - nom: Le Port
     insee: "97407"
     etat: gold              # validée au standard le 2026-06-22 (run exit 0 après correction faux positif dédup + re-fetch dvf)
