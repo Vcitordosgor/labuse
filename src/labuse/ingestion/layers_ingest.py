@@ -27,6 +27,7 @@ from sqlalchemy.orm import Session
 from .. import constants
 from ..config import get_settings
 from ..connectors.wfs import WfsConnector
+from . import agorah_plu
 
 APICARTO = "https://apicarto.ign.fr/api"
 ODS_BASE = "https://data.regionreunion.com/api/explore/v2.1/catalog/datasets"
@@ -140,22 +141,38 @@ def _ods_records(client: httpx.Client, dataset: str, *, where: str | None = None
 
 # ───────────────────────── couches ─────────────────────────
 
-def ingest_gpu_zones(session, bbox, commune, run_id, sids) -> int:
-    """PLU/GPU zone-urba (API Carto) → kind='plu_gpu_zone', subtype=typezone."""
+def ingest_gpu_zones(session, insee, bbox, commune, run_id, sids) -> int:
+    """PLU/GPU zone-urba (API Carto) → kind='plu_gpu_zone', subtype=typezone.
+
+    Repli AGORAH (Open Data Réunion) si le GPU ne sert AUCUNE zone PROPRE `DU_<insee>`
+    ET la commune est allowlistée (cf. agorah_plu.should_use_agorah_fallback). Sinon
+    comportement inchangé. `attrs.source` distingue API Carto GPU vs AGORAH.
+    """
+    part = agorah_plu.agorah_partition(insee)
     with _client() as c:
         r = c.get(f"{APICARTO}/gpu/zone-urba", params={"geom": json.dumps(_bbox_polygon(bbox))})
         r.raise_for_status()
         feats = r.json().get("features", []) or []
-    n = 0
+    n = propre = 0
     for f in feats:
         if not f.get("geometry"):
             continue
         p = f.get("properties") or {}
+        if p.get("partition") == part:
+            propre += 1
         _insert_layer(session, "plu_gpu_zone", (p.get("typezone") or "").strip() or None,
                       p.get("libelong") or p.get("libelle"), f["geometry"],
                       sids.get(KIND_SOURCE["plu_gpu_zone"]), commune, run_id,
-                      {"libelle": p.get("libelle"), "partition": p.get("partition"), "idurba": p.get("idurba")})
+                      {"source": "API_CARTO_GPU", "libelle": p.get("libelle"),
+                       "partition": p.get("partition"), "idurba": p.get("idurba")})
         n += 1
+    logging.getLogger("labuse").info(
+        "ingest_gpu_zones[%s] : %d zones GPU (%d propres %s)", commune, n, propre, part)
+    if agorah_plu.should_use_agorah_fallback(insee, propre):
+        logging.getLogger("labuse").warning(
+            "ingest_gpu_zones[%s] : 0 zone propre %s au GPU + commune allowlistée → REPLI AGORAH", commune, part)
+        n += agorah_plu.ingest_agorah_plu_zones(
+            session, insee, commune, run_id, sids.get(KIND_SOURCE["plu_gpu_zone"]))
     return n
 
 
@@ -857,7 +874,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
     sids = _source_ids(session)
     counts: dict[str, object] = {}
     jobs = [
-        ("plu_gpu_zone", lambda: ingest_gpu_zones(session, bbox, commune, run_id, sids)),
+        ("plu_gpu_zone", lambda: ingest_gpu_zones(session, insee, bbox, commune, run_id, sids)),
         ("plu_gpu_prescription", lambda: ingest_gpu_prescriptions(session, bbox, commune, run_id, sids)),
         ("parc_national", lambda: ingest_parc_national(session, commune, run_id, sids)),
         ("potentiel_foncier", lambda: ingest_potentiel_foncier(session, insee, commune, run_id, sids)),
