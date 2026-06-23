@@ -68,15 +68,15 @@ def test_communes_partielles_non_fiables():
 
 
 def test_communes_gold_apres_runs():
-    # Verrouille l'état post-runs : Saint-Paul (étalon) + La Possession + L'Étang-Salé + Saint-Pierre + Le Tampon + Saint-Louis + Saint-Denis + Saint-Joseph + Bras-Panon + Les Avirons + Le Port + Petite-Île + Saint-Benoît fiables.
-    for nom in ("Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre", "Le Tampon", "Saint-Louis", "Saint-Denis", "Saint-Joseph", "Bras-Panon", "Les Avirons", "Le Port", "Petite-Île", "Saint-Benoît"):
+    # Verrouille l'état post-runs : Saint-Paul (étalon) + La Possession + L'Étang-Salé + Saint-Pierre + Le Tampon + Saint-Louis + Saint-Denis + Saint-Joseph + Bras-Panon + Les Avirons + Le Port + Petite-Île + Saint-Benoît + Sainte-Marie fiables.
+    for nom in ("Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre", "Le Tampon", "Saint-Louis", "Saint-Denis", "Saint-Joseph", "Bras-Panon", "Les Avirons", "Le Port", "Petite-Île", "Saint-Benoît", "Sainte-Marie"):
         assert communes.is_reliable(nom) is True
         r = communes.reliability(nom)
         assert r["reliable"] is True and r["etat"] == "gold" and r["title"] is None
 
 
 def test_commune_absente_non_fiable():
-    for nom in ("Sainte-Marie", "Cilaos", "Salazie"):
+    for nom in ("Sainte-Suzanne", "Cilaos", "Salazie"):
         assert communes.is_reliable(nom) is False
 
 
@@ -89,8 +89,8 @@ def test_status_list_fiables_gold():
     items = communes.status_list()
     assert len(items) == 24
     fiables = {x["commune"] for x in items if x["reliable"]}
-    # Saint-Paul (étalon) + La Possession + L'Étang-Salé (v1) + Saint-Pierre + Le Tampon + Saint-Louis + Saint-Denis + Saint-Joseph + Bras-Panon + Les Avirons + Le Port + Petite-Île + Saint-Benoît (v2-4 + v3 réussies).
-    assert fiables == {"Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre", "Le Tampon", "Saint-Louis", "Saint-Denis", "Saint-Joseph", "Bras-Panon", "Les Avirons", "Le Port", "Petite-Île", "Saint-Benoît"}
+    # Saint-Paul (étalon) + La Possession + L'Étang-Salé (v1) + Saint-Pierre + Le Tampon + Saint-Louis + Saint-Denis + Saint-Joseph + Bras-Panon + Les Avirons + Le Port + Petite-Île + Saint-Benoît + Sainte-Marie (v2-5 réussies).
+    assert fiables == {"Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre", "Le Tampon", "Saint-Louis", "Saint-Denis", "Saint-Joseph", "Bras-Panon", "Les Avirons", "Le Port", "Petite-Île", "Saint-Benoît", "Sainte-Marie"}
 
 
 def test_commune_known_anti_erreur():
@@ -292,7 +292,7 @@ def test_communes_status_endpoint(engine):
     with TestClient(app) as c:
         r = c.get("/communes/status").json()
     assert len(r["communes"]) == 24
-    assert set(r["fiables"]) == {"Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre", "Le Tampon", "Saint-Louis", "Saint-Denis", "Saint-Joseph", "Bras-Panon", "Les Avirons", "Le Port", "Petite-Île", "Saint-Benoît"}
+    assert set(r["fiables"]) == {"Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre", "Le Tampon", "Saint-Louis", "Saint-Denis", "Saint-Joseph", "Bras-Panon", "Les Avirons", "Le Port", "Petite-Île", "Saint-Benoît", "Sainte-Marie"}
     assert r["gold_reference"] == "Saint-Paul"
 
 

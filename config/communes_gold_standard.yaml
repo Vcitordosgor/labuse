@@ -196,15 +196,15 @@ communes:
   # ── Vague 5 — ABSENTES à valeur moyenne (import complet) ──────────────────────
   - nom: Sainte-Marie
     insee: "97418"
-    etat: absent
-    parcelles_en_base: 0
-    sections: null
-    eval_pct: null
-    attendu: a_verifier
+    etat: gold              # validée au standard le 2026-06-23 (import_complet réussi, exit 0, aucun doublon)
+    parcelles_en_base: 16746
+    sections: 33
+    eval_pct: 100          # import_complet : bâti 0→48795, voirie 12745 (non plafonnée), zonage propre DU_97418 100%, opp 4.5% (757), faux positifs 0→10423, DVF 967
+    attendu: 16746         # CONFIRMÉ par l'import Etalab du run (plus « a_verifier »)
     priorite: moyenne
     vague: 5
     risque: moyen
-    strategie: import_complet
+    strategie: gold_valide
   - nom: Sainte-Suzanne
     insee: "97420"
     etat: absent
