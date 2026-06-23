@@ -104,15 +104,15 @@ communes:
   # ── Vague 3 — MOYENNES (présentes) ───────────────────────────────────────────
   - nom: Saint-André
     insee: "97409"
-    etat: partiel_non_evalue
+    etat: gold              # validée au standard le 2026-06-23 (re_couches_re_cascade, exit 0, run AGORAH fallback, post-checks 22/22 verts)
     parcelles_en_base: 22600
     sections: 33
-    eval_pct: 0
-    attendu: a_verifier
+    eval_pct: 100          # repli AGORAH : 142 zones (DU_97409 coverage 100%), bâti 0→50910, voirie 13264, opp 0.2% (54), faux positifs 0→15147 — profil comparable Saint-Denis gold
+    attendu: 22600         # CONFIRMÉ par l'import Etalab du run (plus « a_verifier »)
     priorite: moyenne
     vague: 3
     risque: moyen
-    strategie: re_couches_re_cascade
+    strategie: gold_valide
   - nom: Saint-Joseph
     insee: "97412"
     etat: gold              # validée au standard le 2026-06-22 (run réel réussi, exit 0 après dédup ciblé)
