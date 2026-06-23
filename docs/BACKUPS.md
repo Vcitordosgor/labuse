@@ -10,7 +10,73 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-15-gold + 2 communes importées NO-GO (Les Trois-Bassins, Sainte-Rose) » (2026-06-23)
+## 🟢 Baseline courant — « post-16-gold : Saint-André (repli AGORAH) + 2 communes NO-GO » (2026-06-23)
+
+Point de restauration **propre et recommandé** de l'état courant : **16 communes gold** — dont **Saint-André**,
+**première commune débloquée par le repli AGORAH** (PLU absent du Géoportail de l'Urbanisme) — **+ 2 communes
+importées techniquement propres mais différées NO-GO** (quasi-0 opportunité : Les Trois-Bassins, Sainte-Rose).
+État figé : `main` à `287d0f0` (`LOT6: validate Saint-André gold`). **Gold count = 16.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-lot6-16gold-saint-andre-agorah-20260623-205249.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-lot6-16gold-saint-andre-agorah-20260623-205249.dump` |
+| **Date / heure** | **2026-06-23 20:52:49 UTC** |
+| **Taille** | **1068 Mo** (1 068 320 420 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `acd81c616dc9d6ceba07adab34f9892d0b917f535e0cd505b532c73f1fca4714` |
+| **Sidecar** | `…-205249.dump.sha256` |
+
+### Contenu du baseline (post-16-gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`287d0f0`** (`LOT6: validate Saint-André gold`) |
+| Communes en base | **22** |
+| Parcelles | **418 068** |
+| Communes **gold** (16) | Saint-Paul · L'Étang-Salé · La Possession · Saint-Pierre · Le Tampon · Saint-Louis · Saint-Denis · Saint-Joseph · Bras-Panon · Les Avirons · Le Port · Petite-Île · Saint-Benoît · Sainte-Marie · Sainte-Suzanne · **Saint-André** |
+| **Importées NO-GO (2)** | **Les Trois-Bassins** (`97423`) · **Sainte-Rose** (`97419`) — quasi-0 opportunité, différées (cf. `*_NO_GO_QUASI_0_OPPORTUNITE.md`) |
+| **Différées scoring/métier (en DB)** | La Plaine-des-Palmistes · Entre-Deux (+ les 2 ci-dessus) |
+| **Bloquées (2)** | **Saint-Leu** (`97413`) · **Saint-Philippe** (`97417`) — PLU/GPU propre absent |
+
+> **Saint-André** (nouveau **16ᵉ** gold, vague 3, INSEE 97409, **re_couches_re_cascade**) — **PREMIER gold
+> débloqué par le repli AGORAH**. PLU absent du Géoportail de l'Urbanisme (0 zone propre `DU_97409` au GPU,
+> API Carto + WFS) → **142 zones** PLU servies par la **Base permanente des PLU de La Réunion** (AGORAH /
+> Open Data Réunion ; `attrs.source=AGORAH_BASE_PERMANENTE_PLU_REUNION`, idurba `97409_20190228`, datappro
+> `2019-02-28`, typezones U=41/AU=40/A=40/N=21), **couverture propre `DU_97409` = 100 %**. 22 600 parcelles ·
+> 33 sections · 100 % évaluées · bâti **50 910** · voirie **13 264** (non plafonnée, ≠ 5 000) · DVF **934** ·
+> PPR **4** · SAR **121** · prescriptions **308** · 0 doublon de couche. Verdicts : opportunité **54** (taux
+> **0,2 %**, profil comparable au gold Saint-Denis — **pas** un quasi-0 façon La Plaine / Trois-Bassins /
+> Sainte-Rose) · à creuser **6 851** · écartée **548** · faux positif probable **15 147**.
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-205249.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=287d0f0`, working tree clean,
+  **22 communes / 418 068 parcelles**, **16 gold**, Saint-André gold/reliable/`attendu=22600`,
+  Sainte-Suzanne & Sainte-Marie & Saint-Benoît gold, Saint-Leu & Saint-Philippe non-gold,
+  La Plaine-des-Palmistes & Entre-Deux & Les Trois-Bassins & Sainte-Rose non-gold.
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » (communes ex-`partiel_evalue` /
+> re-cascadées — verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-lot6-16gold-saint-andre-agorah-20260623-205249.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-lot6-16gold-saint-andre-agorah-20260623-205249.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=22 parcels=418068 (gold = 16)
+```
+
+---
+
+## Baseline précédent — « post-15-gold + 2 communes importées NO-GO (Les Trois-Bassins, Sainte-Rose) » (2026-06-23)
 
 Point de restauration **propre et recommandé** de l'état courant : 15 communes gold (inchangées) **+ 2
 communes importées techniquement propres mais différées NO-GO** (quasi-0 opportunité) — Les Trois-Bassins
