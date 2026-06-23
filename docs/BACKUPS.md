@@ -10,7 +10,66 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-LOT6 : 13 communes gold + 3 communes bloquées » (2026-06-23)
+## 🟢 Baseline courant — « post-LOT6 : 14 communes gold + 3 communes bloquées » (2026-06-23)
+
+Point de restauration **propre et recommandé** après LOT6 (14 communes gold). État figé : `main` à
+`c87957d` (Sainte-Marie gold mergée), 14 communes validées au standard Saint-Paul, 3 communes bloquées
+(PLU/GPU propre absent), base locale propre après tous les runs / dédups.
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-lot6-14gold-saintemarie-20260623-124203.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-lot6-14gold-saintemarie-20260623-124203.dump` |
+| **Date / heure** | **2026-06-23 12:42:03 UTC** |
+| **Taille** | **925 Mo** (925 425 108 octets, `pg_dump -Fc`) |
+| **SHA-256** | `6dbe8e8e541b325232659784ed57121ac8369de00c232b02b219879a6c105ba6` |
+| **Sidecar** | `…-124203.dump.sha256` |
+
+### Contenu du baseline (post-LOT6, 14 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`c87957d`** (`LOT6: validate Sainte-Marie gold`) |
+| Communes en base | **19** |
+| Parcelles | **393 940** |
+| Communes **gold** (14) | Saint-Paul · L'Étang-Salé · La Possession · Saint-Pierre · Le Tampon · Saint-Louis · Saint-Denis · Saint-Joseph · Bras-Panon · Les Avirons · Le Port · Petite-Île · Saint-Benoît · **Sainte-Marie** |
+| **Bloquées** (3) | **Saint-Leu** (`97413`) · **Saint-André** (`97409`) · **Saint-Philippe** (`97417`) — PLU propre absent du GPU (cf. notes `*_BLOCKED_PLU_GPU.md`) |
+
+> **Sainte-Marie** (nouveau gold, vague 5, INSEE 97418, **import_complet** d'une commune absente) :
+> 16 746 parcelles · 100 % évaluées · bâti **48 795** · voirie **12 745** (non plafonnée, ≠ 5 000) ·
+> zonage propre **DU_97418 100 %** (idurba `97418_plu_20251126`) · `attendu` confirmé **16 746** ·
+> `plu_gpu_prescription` **1 093** (vigilance typepsc 02/15/24) · DVF **967** · 0 doublon de couche.
+> Verdicts : opportunité **757** (taux **4,5 %**, accepté avec vigilance < 5 %) · à creuser **5 142** ·
+> écartée **424** · faux positif probable **10 423**. PPR absent (non bloquant).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-124203.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=c87957d`, working tree clean,
+  **19 communes / 393 940 parcelles**, **14 gold**, Sainte-Marie gold/reliable/`attendu=16746`,
+  Saint-Benoît gold, La Plaine-des-Palmistes & Entre-Deux non-gold, Saint-Leu/André/Philippe non-gold.
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » (communes ex-`partiel_evalue` / re-cascadées —
+> verdicts canoniques = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées). Sainte-Marie (import_complet) : éval unique, sans stale.
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-lot6-14gold-saintemarie-20260623-124203.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-lot6-14gold-saintemarie-20260623-124203.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=19 parcels=393940 (puis 14 communes gold)
+```
+
+---
+
+## Baseline précédent — « post-LOT6 : 13 communes gold + 3 communes bloquées » (2026-06-23)
 
 Point de restauration **propre et recommandé** après LOT6 (13 communes gold). État figé : `main` à
 `54a4a52` (Saint-Benoît gold mergée), 13 communes validées au standard Saint-Paul, 3 communes bloquées
