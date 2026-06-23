@@ -10,7 +10,63 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-LOT6 : 15 communes gold + 3 communes bloquées » (2026-06-23)
+## 🟢 Baseline courant — « post-15-gold + 2 communes importées NO-GO (Les Trois-Bassins, Sainte-Rose) » (2026-06-23)
+
+Point de restauration **propre et recommandé** de l'état courant : 15 communes gold (inchangées) **+ 2
+communes importées techniquement propres mais différées NO-GO** (quasi-0 opportunité) — Les Trois-Bassins
+et Sainte-Rose. État figé : `main` à `632e30d` (docs NO-GO Sainte-Rose mergée). **Gold count inchangé = 15.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-nogo-trois-bassins-sainte-rose-20260623-164812.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-nogo-trois-bassins-sainte-rose-20260623-164812.dump` |
+| **Date / heure** | **2026-06-23 16:48:12 UTC** |
+| **Taille** | **1027 Mo** (1 027 482 569 octets, `pg_dump -Fc`) |
+| **SHA-256** | `26ba3c9be6ba489a30dc53ce3386543b2b12abd11db923b2dbff6b5f3771f8ae` |
+| **Sidecar** | `…-164812.dump.sha256` |
+
+### Contenu du baseline (post-no-go)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`632e30d`** (`docs: merge Sainte-Rose no-go documentation`) |
+| Communes en base | **22** (20 + Les Trois-Bassins + Sainte-Rose) |
+| Parcelles | **418 068** (406 467 + 5 314 + 6 287) |
+| Communes **gold** (15) | inchangées (Saint-Paul … Saint-Benoît · Sainte-Marie · Sainte-Suzanne) |
+| **Importées NO-GO (2)** | **Les Trois-Bassins** (97423, 5 314 parc., 1 opp / 0,0 %) · **Sainte-Rose** (97419, 6 287 parc., 8 opp / 0,1 %, après dédup `safer` ciblée) — quasi-0 opportunité, différées (cf. `*_NO_GO_QUASI_0_OPPORTUNITE.md`) |
+| **Différées scoring/métier (en DB)** | La Plaine-des-Palmistes · Entre-Deux (+ les 2 ci-dessus) |
+| **Bloquées (3)** | **Saint-Leu** (`97413`) · **Saint-André** (`97409`) · **Saint-Philippe** (`97417`) — PLU/GPU propre absent |
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-164812.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=632e30d`, working tree clean,
+  **22 communes / 418 068 parcelles**, **15 gold** (inchangé), Sainte-Rose & Les Trois-Bassins non-gold,
+  La Plaine-des-Palmistes & Entre-Deux non-gold, Saint-Leu/André/Philippe non-gold.
+
+> ℹ️ Note : Les Trois-Bassins et Sainte-Rose sont **importées et conservées en DB** (runs techniquement
+> propres — Sainte-Rose après dédup `safer` ciblée `1357421`) **mais non-gold** (NO-GO métier quasi-0
+> opportunité). Lignes `parcel_evaluations` « stale » présentes (re-cascades / sets osm-less) — verdict
+> canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées.
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-nogo-trois-bassins-sainte-rose-20260623-164812.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-nogo-trois-bassins-sainte-rose-20260623-164812.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=22 parcels=418068 (gold inchangé = 15)
+```
+
+---
+
+## Baseline précédent — « post-LOT6 : 15 communes gold + 3 communes bloquées » (2026-06-23)
 
 Point de restauration **propre et recommandé** après LOT6 (15 communes gold). État figé : `main` à
 `f685f95` (Sainte-Suzanne gold mergée), 15 communes validées au standard Saint-Paul, 3 communes bloquées
