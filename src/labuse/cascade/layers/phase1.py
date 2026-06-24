@@ -412,12 +412,26 @@ class RisquesLayer(Layer):
                 # Assiette PPR (servitude PM1) : on connaît le PÉRIMÈTRE réglementaire, pas le
                 # zonage rouge/bleue interne → flag fort PRUDENT, jamais une exclusion automatique.
                 risque = (i.attrs or {}).get("risque") or "risque naturel"
-                pct = f" (~{i.coverage * 100:.0f}% de la parcelle)" if i.coverage < 0.99 else ""
-                verdicts.append(soft_flag(
-                    self.name,
-                    f"Périmètre PPR {risque}{pct} — servitude réglementaire approuvée ; prescriptions "
-                    "applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie).",
-                    Severity.FORT, source=SRC_GPU))
+                cov_pct = i.coverage * 100
+                pct = f" (~{cov_pct:.0f}% de la parcelle)" if i.coverage < 0.99 else ""
+                # Étape A (quick-win PPR v2) : une intersection MARGINALE du périmètre PM1 (couverture
+                # < min_coverage_pct) ne suffit pas à présumer une contrainte forte — on ignore si la
+                # parcelle est en rouge ou bleu, et un bord rogné est rarement la zone critique → note
+                # INFORMATIVE faible (jamais un flag fort bloquant). Le rouge/bleu réglementaire reste
+                # géré séparément (Étape B) ; le seuil de scoring n'est pas modifié.
+                min_cov = float(params.get("min_coverage_pct", 0))
+                if cov_pct < min_cov:
+                    verdicts.append(soft_flag(
+                        self.name,
+                        f"Périmètre PPR {risque}{pct} — intersection marginale (< {min_cov:.0f} %) : "
+                        "à vérifier au règlement, sans présomption de contrainte forte.",
+                        Severity.FAIBLE, source=SRC_GPU))
+                else:
+                    verdicts.append(soft_flag(
+                        self.name,
+                        f"Périmètre PPR {risque}{pct} — servitude réglementaire approuvée ; prescriptions "
+                        "applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie).",
+                        Severity.FORT, source=SRC_GPU))
 
         sev_map = params.get("alea_severity_map", {})
         for i in ctx.intersections(parcel.id, kind_alea):
