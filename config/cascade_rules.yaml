@@ -120,6 +120,12 @@ layers:
       spatial_kind_alea: georisque_alea
       # PPR zone rouge → HARD_EXCLUDE ; aléa fort (inondation / mouvement de terrain) → flag fort
       ppr_red_subtypes: [rouge, R]
+      # Étape A (quick-win PPR v2) : couverture MINIMALE du périmètre PM1 (% de la parcelle) en deçà
+      # de laquelle l'intersection est jugée MARGINALE → note informative FAIBLE au lieu d'un flag FORT
+      # (le périmètre seul ne dit pas rouge/bleu ; un bord rogné n'est pas une contrainte forte présumée).
+      # Conservateur (10 %). Un seuil plus agressif (30 %) nécessiterait une validation séparée.
+      # Le rouge/bleu réglementaire reste géré à part (Étape B) ; le seuil de scoring (65) est inchangé.
+      min_coverage_pct: 10
       alea_severity_map:
         fort: fort
         moyen: moyen
