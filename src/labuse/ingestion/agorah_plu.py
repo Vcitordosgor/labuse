@@ -28,10 +28,14 @@ AGORAH_SOURCE = "AGORAH_BASE_PERMANENTE_PLU_REUNION"
 _ODS_SELECT = "typezone,libelle,libelong,idurba,datappro,geo_shape"
 
 # Communes dont la couverture AGORAH a été VALIDÉE ≥ 99 % en pré-vol lecture seule.
-#   - Saint-André 97409 : 100,00 % (PLU 2019) → activée.
-#   - Saint-Leu  97413 : 99,12 % MAIS PLU 2007 → à activer après validation de fraîcheur
-#     (volontairement HORS allowlist tant que la fraîcheur n'est pas confirmée).
-AGORAH_PLU_ALLOWLIST: frozenset[str] = frozenset({"97409"})
+#   - Saint-André 97409 : 100,00 % (PLU 2019, récent/stable) → activée.
+#   - Saint-Leu  97413 : 99,12 % — repli PROVISOIRE sur le PLU 2007 (idurba 97413_20070226).
+#     Décision produit 2026-06-25 : commune à fort enjeu commercial (DVF 2470) ; révision PLU
+#     enlisée (avis Région défavorable, approbation 2e sem. 2026 non stabilisée, géométrie révisée
+#     non publiée en SIG) → analyse PROVISOIRE autorisée mais NON-GOLD. Saint-Leu RESTE non-gold
+#     tant que le PLU révisé n'est pas approuvé + publié en géométrie exploitable ; le run devra
+#     afficher un disclaimer fort. À réviser/retirer quand le nouveau PLU est disponible.
+AGORAH_PLU_ALLOWLIST: frozenset[str] = frozenset({"97409", "97413"})
 
 
 def agorah_partition(insee: str) -> str:

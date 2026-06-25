@@ -4,8 +4,8 @@ Verrouille : mapping AGORAH → couche `plu_gpu_zone`, conservation typezones U/
 partition `DU_<INSEE>`, attrs (source/idurba/datappro…), et la règle de repli :
 - repli SEULEMENT si le GPU n'a aucune zone propre ET commune allowlistée ;
 - pas de repli si le GPU sert déjà du propre ;
-- pas de repli pour une commune non allowlistée (dont Saint-Leu 97413, hors allowlist
-  tant que la fraîcheur du PLU 2007 n'est pas validée).
+- pas de repli pour une commune non allowlistée (ex. Saint-Paul 97415) ;
+- Saint-Leu 97413 : allowlistée en repli PROVISOIRE (PLU 2007), reste NON-gold.
 """
 from __future__ import annotations
 
@@ -76,12 +76,22 @@ def test_repli_seulement_si_gpu_zero_propre_et_allowliste():
     assert agorah_plu.should_use_agorah_fallback("97409", 0) is True       # Saint-André allowlistée, GPU vide
     assert agorah_plu.should_use_agorah_fallback("97409", 3) is False      # GPU sert déjà du propre → pas de repli
     assert agorah_plu.should_use_agorah_fallback("97415", 0) is False      # Saint-Paul non allowlistée
-    assert agorah_plu.should_use_agorah_fallback("97413", 0) is False      # Saint-Leu hors allowlist (fraîcheur 2007)
+    assert agorah_plu.should_use_agorah_fallback("97413", 0) is True       # Saint-Leu allowlistée (repli PROVISOIRE PLU 2007), GPU vide
+    assert agorah_plu.should_use_agorah_fallback("97413", 5) is False      # Saint-Leu : si le GPU sert du propre → PAS de repli AGORAH
 
 
 def test_allowlist_contenu():
     assert "97409" in agorah_plu.AGORAH_PLU_ALLOWLIST          # Saint-André activée
-    assert "97413" not in agorah_plu.AGORAH_PLU_ALLOWLIST      # Saint-Leu pas (encore)
+    assert "97413" in agorah_plu.AGORAH_PLU_ALLOWLIST          # Saint-Leu : repli PROVISOIRE PLU 2007 (non-gold)
+
+
+def test_allowlist_agorah_n_implique_pas_gold():
+    # L'allowlist AGORAH ne contrôle QUE le repli de zonage PLU, jamais le statut gold.
+    # Saint-Leu reste NON-gold / non fiable (config inchangée) malgré son ajout à l'allowlist.
+    from labuse import communes
+    assert "97413" in agorah_plu.AGORAH_PLU_ALLOWLIST
+    assert communes.is_reliable("Saint-Leu") is False
+    assert communes.reliability("Saint-Leu")["etat"] != "gold"
 
 
 # ── Pré-vol lecture seule (réseau mocké, aucune base) ─────────────────────────
