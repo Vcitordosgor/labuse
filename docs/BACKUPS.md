@@ -10,7 +10,65 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-16-gold : Saint-André (repli AGORAH) + 2 communes NO-GO » (2026-06-23)
+## 🟢 Baseline courant — « post-PPR Étape A : pilote Saint-Paul re-cascadé (quick-win PM1 < 10 %) » (2026-06-25)
+
+Point de restauration **propre et recommandé** après le **pilote Étape A PPR v2** : la commune gold
+**Saint-Paul** a été **re-cascadée** avec le quick-win « périmètre PM1 marginal (< 10 %) → flag faible »
+(le reste du portefeuille est inchangé). État figé : `main` à `8d55016` (`docs: merge Saint-Paul PPR step A
+pilot`). **Gold count inchangé = 16** (Saint-Paul était déjà gold ; aucun passage gold).
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-ppr-stepa-saintpaul-20260625-110124.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-ppr-stepa-saintpaul-20260625-110124.dump` |
+| **Date / heure** | **2026-06-25 11:01:24 UTC** |
+| **Taille** | **1069 Mo** (1 068 754 078 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `e879f0edad704f4ed1542a484f52c7b7d8ede92cc43beb3c0d31f3a1256752bf` |
+| **Sidecar** | `…-110124.dump.sha256` |
+
+### Contenu du baseline (post-PPR Étape A, pilote Saint-Paul)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`8d55016`** (`docs: merge Saint-Paul PPR step A pilot` ; Étape A PPR v2 mergée à `7490f75`) |
+| Communes en base | **22** |
+| Parcelles | **418 068** |
+| Communes **gold** (16) | inchangées (Saint-Paul … Saint-André) |
+| **Re-cascadée Étape A** | **Saint-Paul** (97415) — périmètre PM1 marginal < 10 % → flag **faible** (au lieu de fort bloquant) |
+
+> **Pilote Saint-Paul (Étape A PPR v2)** : 51 129 parcelles re-cascadées (`evaluate_commune`, sans ré-import).
+> Verdicts : opportunité **1 848 → 1 905** (+57 net) · à creuser 15 852→15 397 · écartée 1 532→1 537 · faux
+> positif 31 897→32 290. **Effet Étape A propre = +81 opportunités** (via flag marginal), 0 perte imputable ;
+> **4 742** parcelles déflaguées (PPR fort 17 577→15 081, PPR faible 0→4 742). Seuil 65 inchangé, rouge/bleu
+> non utilisé (0 PPR hard_exclude). Détail : `docs/communes/saint_paul_PPR_STEP_A_PILOT.md`.
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `parcel_evaluations` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-110124.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=8d55016`, working tree clean,
+  **22 communes / 418 068 parcelles**, **16 gold** (inchangé), Saint-Paul re-cascadée Étape A.
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » (Saint-Paul porte désormais l'ancien
+> set + le set Étape A — verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-ppr-stepa-saintpaul-20260625-110124.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-ppr-stepa-saintpaul-20260625-110124.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=22 parcels=418068 (gold = 16)
+```
+
+---
+
+## Baseline précédent — « post-16-gold : Saint-André (repli AGORAH) + 2 communes NO-GO » (2026-06-23)
 
 Point de restauration **propre et recommandé** de l'état courant : **16 communes gold** — dont **Saint-André**,
 **première commune débloquée par le repli AGORAH** (PLU absent du Géoportail de l'Urbanisme) — **+ 2 communes
