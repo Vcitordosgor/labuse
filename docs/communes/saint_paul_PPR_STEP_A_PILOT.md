@@ -16,10 +16,19 @@ l'Étape A**, **rouge/bleu non utilisé**, **seuil 65 inchangé**, **aucune autr
 | Élément | Valeur |
 |---|---|
 | `main` (code) | **`7490f75`** (Étape A mergée) |
-| Backup pré-pilote | `/var/backups/labuse/labuse-pre-saint-paul-ppr-stepa-20260624-212243.dump` (1 068 Mo) |
+| Backup pré-pilote | `/var/backups/labuse/labuse-pre-saint-paul-ppr-stepa-20260624-212243.dump` (1 068 Mo) — **⚠️ supprimé depuis** (cf. § Mise à jour ci-dessous) |
 | SHA-256 | `e4ec5eab26445b925d89017d32642308b9f66f1fd806f7400b83cf537c1bcd48` (sidecar `…dump.sha256`, `sha256sum -c` OK, `pg_restore --list` 190 TOC, tables critiques OK) |
 | Commune pilote | **Saint-Paul / 97415** (gold), 51 129 parcelles |
 | Runner | `run_all.evaluate_commune` (cascade + scoring + déclassement, **sans ré-import couches**) ; exit **0**, 51 129 évaluées en 7 153 s |
+
+> **⚠️ Mise à jour (2026-06-25) — backup pré-pilote SUPPRIMÉ.** Le backup pré-pilote ci-dessus avait bien été
+> **créé et vérifié** (SHA-256 `e4ec5eab…1bcd48`, `sha256sum -c` OK, `pg_restore --list` 190 TOC, tables
+> critiques OK) **avant** la re-cascade. Il a ensuite été **supprimé lors du nettoyage filesystem contrôlé des
+> backups obsolètes** (il n'était pas référencé dans `docs/BACKUPS.md`) → il **n'est donc plus restaurable**.
+> Le **baseline courant post-pilote** `labuse-post-ppr-stepa-saintpaul-20260625-110124.dump` reste **intact et
+> documenté** dans `docs/BACKUPS.md`. Les anciennes `parcel_evaluations` de Saint-Paul restent **en base**
+> (versionnées, non nettoyées — verdict canonique = dernière éval), mais les **`cascade_results` pré-pilote
+> exacts ne sont plus restaurables depuis dump** (remplacés par la re-cascade).
 
 ## Chiffres avant / après (verdicts latest, Saint-Paul)
 
