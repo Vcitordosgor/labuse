@@ -10,7 +10,74 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-Salazie : import complet (23/24 communes, Cilaos seule absente) » (2026-06-25)
+## 🟢 Baseline courant — « post-Cilaos : import complet (24/24 communes — couverture Réunion totale) » (2026-06-25)
+
+Point de restauration **propre et recommandé** après l'**import complet de Cilaos (97424)**, **dernière
+commune** de La Réunion : la base atteint la **complétude 24/24** — **toutes les communes du département sont
+désormais présentes et enrichies au standard**. Cilaos est un **cirque** (cœur de parc national, forêt
+publique, relief fort) : importée et **100 % évaluée**, **4 opportunités (0,1 %)** — quasi-nul, attendu.
+État figé : `main` à `e6f045d` (`docs: merge Cilaos import complet report`). **Cilaos n'est PAS marquée gold**
+(import de complétude) → **gold count inchangé = 16**, scoring et seuil 65 inchangés. **Salazie inchangée.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-cilaos-24communes-20260625-134819.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-cilaos-24communes-20260625-134819.dump` |
+| **Date / heure** | **2026-06-25 13:48:19 UTC** |
+| **Taille** | **1144 Mo** (1 143 550 250 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `a05900d98d4acf5a9ecbaab34e6539043390c3c4c0eca98276f532de4b80174f` |
+| **Sidecar** | `…-134819.dump.sha256` |
+
+### Contenu du baseline (post-Cilaos, 24 communes — COMPLET)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`e6f045d`** (`docs: merge Cilaos import complet report`) |
+| Communes en base | **24 / 24** (toutes les communes de La Réunion) |
+| Parcelles | **431 663** (425 103 + 6 560) |
+| Communes **gold** (16) | inchangées — **Cilaos & Salazie non-gold** (imports de complétude) |
+| **Importée complétude (1)** | **Cilaos** (`97424`, 6 560 parc., 100 % évaluées, **4 opportunités / 0,1 %** — cirque) |
+| **Communes absentes** | **aucune** — couverture Réunion totale atteinte |
+
+> **Cilaos** (vague 6, INSEE 97424, **import_complet** d'une commune absente ; `strategie: attendre`
+> surclassée par décision de complétude) : 6 560 parcelles · 13 sections · 100 % évaluées · bâti **5 584** ·
+> voirie **2 327** · pente **4 080** · zonage propre **DU_97424 100 %** (IDURBA dominant `97424_plu_20240213`,
+> 149 zones · 232 au total avec limitrophes) · `plu_gpu_prescription` **255** · **PPR 2** · SAR **31** ·
+> ravines **402** · DVF **128** · `parc_national` **3** + `foret_publique` **9** (cirque, cœur de parc).
+> 0 doublon de couche. Verdicts : opportunité **4** · à creuser **2 074** · écartée **1 434** · faux positif
+> probable **3 048** (taux **0,1 %**, attendu pour le cirque). Détail : `docs/communes/cilaos_RESULTS.md`.
+> Backup **pré-commune** : `labuse-pre-cilaos-20260625-130353.dump` (SHA `83bdd2f9…1148b`).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `cascade_results`,
+  `parcel_evaluations`, `dvf_mutations`, `bilan_params` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-134819.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=e6f045d`, working tree clean,
+  **24 communes / 431 663 parcelles**, **16 gold** (inchangé), Cilaos présente / 100 % évaluée / **non-gold**,
+  **Salazie inchangée (7 035)**. **Aucun changement scoring / seuil 65 / config gold.**
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » des communes re-cascadées aux jalons
+> précédents (verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées).
+> **Cilaos & Salazie** sont des imports uniques (sans stale).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-cilaos-24communes-20260625-134819.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-cilaos-24communes-20260625-134819.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=24 parcels=431663 (gold = 16, couverture Réunion totale)
+```
+
+---
+
+## Baseline précédent — « post-Salazie : import complet (23/24 communes, Cilaos seule absente) » (2026-06-25)
 
 Point de restauration **propre et recommandé** après l'**import complet de Salazie (97421)** pour la
 **complétude 24/24** de la couverture Réunion : la base passe à **23 communes** — **seule Cilaos (97424)
