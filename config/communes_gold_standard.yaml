@@ -231,15 +231,15 @@ communes:
   # ── Vague 6 — ATYPIQUES / RELIEF (en dernier) ────────────────────────────────
   - nom: Entre-Deux
     insee: "97403"
-    etat: partiel_evalue
+    etat: gold              # validée au standard le 2026-06-25 (re_couches_re_cascade + réparation pente ciblée, exit 0)
     parcelles_en_base: 6312
     sections: 13
-    eval_pct: 100
-    attendu: a_verifier
+    eval_pct: 100          # re_couches + re-cascade : bâti 0→46493, voirie 5000→8802 (déplafonnée), pente réparée 4140 (échec ALTI transitoire au 1er run → re-fetch ciblé), géom invalide 1→0, opp 1 (0.0%), faux positifs 0→3729
+    attendu: 6312          # CONFIRMÉ par l'upsert Etalab du run (plus « a_verifier »)
     priorite: basse
     vague: 6
     risque: moyen
-    strategie: re_couches_re_cascade
+    strategie: gold_valide
   - nom: La Plaine-des-Palmistes
     insee: "97406"
     etat: partiel_evalue
