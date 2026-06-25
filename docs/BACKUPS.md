@@ -43,7 +43,9 @@ de la couche `pente`** (échec ALTI transitoire au 1er run → re-fetch ciblé) 
 > couche critique → exit 1) ; **pas de rollback** (décision), puis **re-fetch ciblé `pente`** (4 140 cellules,
 > couverture parcellaire 100 %) + **re-cascade**. Verdicts finaux fiables : opp **1** · à creuser **1 642** ·
 > écartée **940** · faux positif probable **3 729**. Détails : `docs/communes/entre_deux_RESULTS.md`. Backups de la
-> réparation : `labuse-pre-entre-deux-20260625-140800.dump` + `labuse-pre-entre-deux-pente-fix-20260625-143536.dump`.
+> réparation : `labuse-pre-entre-deux-20260625-140800.dump` + `labuse-pre-entre-deux-pente-fix-20260625-143536.dump`
+> — **⚠️ PURGÉS le 2026-06-25** : points de retour pré-run / pré-fix d'une opération **terminée, validée et mergée** ;
+> **plus disponibles sur disque** ; état restaurable courant = **ce baseline `post-Entre-Deux 17 gold`**.
 
 ### Preuve d'intégrité (à la création)
 
@@ -110,7 +112,8 @@ publique, relief fort) : importée et **100 % évaluée**, **4 opportunités (0,
 > ravines **402** · DVF **128** · `parc_national` **3** + `foret_publique` **9** (cirque, cœur de parc).
 > 0 doublon de couche. Verdicts : opportunité **4** · à creuser **2 074** · écartée **1 434** · faux positif
 > probable **3 048** (taux **0,1 %**, attendu pour le cirque). Détail : `docs/communes/cilaos_RESULTS.md`.
-> Backup **pré-commune** : `labuse-pre-cilaos-20260625-130353.dump` (SHA `83bdd2f9…1148b`).
+> Backup **pré-commune** : `labuse-pre-cilaos-20260625-130353.dump` (SHA `83bdd2f9…1148b`) — **⚠️ PURGÉ le 2026-06-25** :
+> point de retour d'une opération **terminée / validée / mergée** ; **plus sur disque** ; restaurable courant = baseline `post-Entre-Deux 17 gold`.
 
 ### Preuve d'intégrité (à la création)
 
@@ -177,7 +180,8 @@ et seuil 65 inchangés.
 > **13** (cirque, cœur de parc). 0 doublon de couche. Verdicts : opportunité **0** · à creuser **836** ·
 > écartée **761** · faux positif probable **5 438** (taux d'opportunité **0,0 %**, attendu pour le cirque).
 > Détail : `docs/communes/salazie_RESULTS.md`. Backup **pré-commune** :
-> `labuse-pre-salazie-20260625-114234.dump` (SHA `682e06f4…866fa`).
+> `labuse-pre-salazie-20260625-114234.dump` (SHA `682e06f4…866fa`) — **⚠️ PURGÉ le 2026-06-25** :
+> point de retour d'une opération **terminée / validée / mergée** ; **plus sur disque** ; restaurable courant = baseline `post-Entre-Deux 17 gold`.
 
 ### Preuve d'intégrité (à la création)
 
