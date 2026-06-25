@@ -10,7 +10,74 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-PPR Étape A : pilote Saint-Paul re-cascadé (quick-win PM1 < 10 %) » (2026-06-25)
+## 🟢 Baseline courant — « post-Salazie : import complet (23/24 communes, Cilaos seule absente) » (2026-06-25)
+
+Point de restauration **propre et recommandé** après l'**import complet de Salazie (97421)** pour la
+**complétude 24/24** de la couverture Réunion : la base passe à **23 communes** — **seule Cilaos (97424)
+reste absente**. Salazie est un **cirque** (cœur de parc national + forêt publique) : importée et **100 %
+évaluée**, **0 opportunité** (attendu). État figé : `main` à `2bd9a82` (`docs: merge Salazie import complet
+report`). **Salazie n'est PAS marquée gold** (import de complétude) → **gold count inchangé = 16**, scoring
+et seuil 65 inchangés.
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-salazie-23communes-20260625-125248.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-salazie-23communes-20260625-125248.dump` |
+| **Date / heure** | **2026-06-25 12:52:48 UTC** |
+| **Taille** | **1119 Mo** (1 119 162 540 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `efc6ac5220ad9ebcfa20d7df544b4590d0aa65fc54c80fe6c3aa318c6f72423b` |
+| **Sidecar** | `…-125248.dump.sha256` |
+
+### Contenu du baseline (post-Salazie, 23 communes)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`2bd9a82`** (`docs: merge Salazie import complet report`) |
+| Communes en base | **23** (22 + **Salazie**) |
+| Parcelles | **425 103** (418 068 + 7 035) |
+| Communes **gold** (16) | inchangées — **Salazie non-gold** (import de complétude) |
+| **Importée complétude (1)** | **Salazie** (`97421`, 7 035 parc., 100 % évaluées, **0 opportunité** — cirque) |
+| **Seule absente (1)** | **Cilaos** (`97424`) — dernier cirque ; complétude 24/24 en attente |
+
+> **Salazie** (vague 6, INSEE 97421, **import_complet** d'une commune absente ; `strategie: attendre`
+> surclassée par décision de complétude) : 7 035 parcelles · 32 sections · 100 % évaluées · bâti **7 410** ·
+> voirie **2 736** · pente **5 986** · zonage propre **DU_97421 100 %** (336 zones) · `plu_gpu_prescription`
+> **879** · **PPR 2** · SAR **57** · ravines **629** · DVF **109** · `parc_national` **3** + `foret_publique`
+> **13** (cirque, cœur de parc). 0 doublon de couche. Verdicts : opportunité **0** · à creuser **836** ·
+> écartée **761** · faux positif probable **5 438** (taux d'opportunité **0,0 %**, attendu pour le cirque).
+> Détail : `docs/communes/salazie_RESULTS.md`. Backup **pré-commune** :
+> `labuse-pre-salazie-20260625-114234.dump` (SHA `682e06f4…866fa`).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `cascade_results`,
+  `parcel_evaluations`, `dvf_mutations`, `bilan_params` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-125248.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=2bd9a82`, working tree clean,
+  **23 communes / 425 103 parcelles**, **16 gold** (inchangé), Salazie présente / 100 % évaluée / **non-gold**,
+  **Cilaos absente**. **Aucun changement scoring / seuil 65 / config gold.**
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » des communes re-cascadées aux jalons
+> précédents (verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées).
+> **Salazie** est un import unique (sans stale).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-salazie-23communes-20260625-125248.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-salazie-23communes-20260625-125248.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=23 parcels=425103 (gold = 16, Cilaos absente)
+```
+
+---
+
+## Baseline précédent — « post-PPR Étape A : pilote Saint-Paul re-cascadé (quick-win PM1 < 10 %) » (2026-06-25)
 
 Point de restauration **propre et recommandé** après le **pilote Étape A PPR v2** : la commune gold
 **Saint-Paul** a été **re-cascadée** avec le quick-win « périmètre PM1 marginal (< 10 %) → flag faible »
