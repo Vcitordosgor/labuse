@@ -10,7 +10,72 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-Entre-Deux gold : 24/24 communes, 17 gold (Entre-Deux réparée) » (2026-06-25)
+## 🟢 Baseline courant — « post-Saint-Leu provisoire : 24/24 communes, 17 gold + Saint-Leu analysée (AGORAH 2007, non-gold) » (2026-06-25)
+
+Point de restauration **propre et recommandé** après l'**analyse PROVISOIRE de Saint-Leu (97413)** via le repli
+**AGORAH PLU 2007** : la base reste à **24/24 communes** et **17 gold** ; Saint-Leu (22 959 parcelles, 3ᵉ marché
+DVF du département) est désormais **analysée (100 % évaluée)** mais **reste NON-gold** (zonage 2007 en révision).
+État figé : `main` à `6d4f615` (`docs: merge provisional Saint-Leu AGORAH run report`). **Aucun changement
+scoring / seuil 65 / PPR.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-saint-leu-provisional-17gold-24communes-20260625-204545.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-saint-leu-provisional-17gold-24communes-20260625-204545.dump` |
+| **Date / heure** | **2026-06-25 20:45:45 UTC** |
+| **Taille** | **1186 Mo** (1 186 010 566 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `97d165a332faa742be1d92665a48a1f4a609264532f1cb1ef9c1769439f174cb` |
+| **Sidecar** | `…-204545.dump.sha256` |
+
+### Contenu du baseline (post-Saint-Leu provisoire, 24 communes / 17 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`6d4f615`** (`docs: merge provisional Saint-Leu AGORAH run report`) |
+| Communes en base | **24 / 24** |
+| Parcelles | **431 663** |
+| Communes **gold** (17) | inchangées — **Saint-Leu NON-gold** (analyse provisoire) |
+| **Saint-Leu (analysée provisoire)** | 22 959 parc. · **100 % évaluées** · zonage **AGORAH PLU 2007** (`97413_20070226`, 368 zones, couverture propre **99,60 %**) · bâti 0→35 339 · pente 0→6 582 · voirie 5 000→11 761 · **976 opportunités PROVISOIRES** (4,3 %) · DVF 1 307 (geo-dvf 2021-2025) |
+| Non-gold restants (7) | **Saint-Leu** (provisoire AGORAH 2007) · Saint-Philippe (PLU absent GPU) · La Plaine-des-Palmistes · Les Trois-Bassins · Sainte-Rose · Salazie · Cilaos |
+
+> **Saint-Leu** (97413, vague 2, **re_couches_re_cascade via repli AGORAH 2007**) : commune côtière à fort enjeu
+> commercial, débloquée pour analyse alors que son PLU est **absent du GPU** (`DU_97413` = 0). Repli AGORAH
+> `97413_20070226` (datappro 2007-02-26, 368 zones, couverture parcellaire **99,60 %**). **RESTE NON-gold** car le
+> PLU 2007 est en révision (avis Région défavorable, approbation 2ᵉ sem. 2026 non stabilisée, géométrie révisée non
+> publiée en SIG) → **les 976 opportunités sont PROVISOIRES**, à recalculer dès publication du PLU révisé. Détail +
+> disclaimer : `docs/communes/saint_leu_RESULTS.md`. Backup pré-run : `labuse-pre-saint-leu-agorah-20260625-185202.dump`
+> (SHA `35173977…0e9d2c`).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `cascade_results`,
+  `parcel_evaluations`, `dvf_mutations`, `bilan_params` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-204545.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=6d4f615`, working tree clean,
+  **24 communes / 431 663 parcelles**, **17 gold** (Saint-Leu **non-gold**), Saint-Leu **22 959/22 959 évaluées**.
+  **Aucun changement scoring / seuil 65 / PPR / config gold.**
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » des communes re-cascadées aux jalons
+> précédents (verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées). **Saint-Leu**
+> porte une éval AGORAH **provisoire** (set unique — elle n'était pas évaluée avant).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-saint-leu-provisional-17gold-24communes-20260625-204545.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-saint-leu-provisional-17gold-24communes-20260625-204545.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=24 parcels=431663 (gold = 17, Saint-Leu non-gold/provisoire)
+```
+
+---
+
+## Baseline précédent — « post-Entre-Deux gold : 24/24 communes, 17 gold (Entre-Deux réparée) » (2026-06-25)
 
 Point de restauration **propre et recommandé** après le **passage gold d'Entre-Deux (97403)**, réparée puis
 validée au standard : la base reste à **24/24 communes** (couverture Réunion complète) et passe à **17 communes
