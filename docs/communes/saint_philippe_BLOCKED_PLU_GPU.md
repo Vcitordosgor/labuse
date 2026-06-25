@@ -95,3 +95,44 @@ Reprise de Saint-Philippe **conditionnée** à l'une des situations suivantes :
 > ⛔ **Ne pas relancer Saint-Philippe** (run / cascade / re-fetch / passage gold) tant que
 > la **condition de reprise** ci-dessus n'est pas remplie. Toute relance retomberait sur le
 > même échec de zonage garanti (couverture 0 %).
+
+---
+
+## Mise à jour 2026-06-25 — re-vérification (read-only) : confirmé NO-GO temporaire, **aucun fallback**
+
+Re-sondage strictement lecture seule au 2026-06-25 (`main` à `f623fe3`). Le blocage est **confirmé et précisé** :
+aucune géométrie de zonage n'existe dans **aucune** source — y compris AGORAH (ce qui **exclut** un repli à la
+Saint-Leu).
+
+| Source | Constat 2026-06-25 | URL |
+|---|---|---|
+| GPU `document DU_97417` (PLU) | **0** | `apicarto.ign.fr/api/gpu/document?partition=DU_97417` |
+| GPU `zone-urba DU_97417` | **0** (`totalFeatures 0`) | `apicarto.ign.fr/api/gpu/zone-urba?partition=DU_97417` |
+| GPU `document` / `secteur-cc CC_97417` (carte communale) | **0 / 0** | `apicarto.ign.fr/api/gpu/secteur-cc?partition=CC_97417` |
+| GPU `municipality` | `is_rnu=false`, `is_coastline=true` — **ambigu/périmé** (aucune géométrie servie) | `apicarto.ign.fr/api/gpu/municipality?insee=97417` |
+| **AGORAH** Base permanente PLU | **0 zone `97417`** (idurba/datappro = null) | `data.regionreunion.com/.../base-permanente-des-plu-de-la-reunion/records?where=insee="97417"` |
+| **DEAL** — état d'avancement docs d'urbanisme | **RNU + PLU en élaboration** (non approuvé) | `reunion.developpement-durable.gouv.fr/etat-d-avancement-des-documents-d-urbanisme-a121.html` |
+| Commune Saint-Philippe | service urbanisme (suivi PLU) | `saintphilippe.re/urbanisme/` |
+
+**État technique DB (inchangé, lecture seule)** : 4 162 parcelles · 0 doublon · **0 géométrie invalide** ·
+0 `geom_2975` nul · **0 évaluée** · DVF 315 · **zonage propre `97417` = 0** (19 zones = bleed Saint-Joseph
+`97412` 18 + Sainte-Rose `97419` 1, couverture parcellaire **0 %**) · bâti 0 · PPR/SAR/prescriptions/ravine/osm 0
+(pente 5 111, voirie 2 590).
+
+### Conclusion (2026-06-25)
+
+- **Pas de PLU exploitable** (`DU_97417` absent du GPU).
+- **Pas de carte communale exploitable** (`CC_97417` absent du GPU).
+- **Pas de fallback AGORAH possible** — contrairement à Saint-Leu (`97413` : 371 zones AGORAH 2007), AGORAH **n'a
+  aucune zone** pour `97417`. **Il n'y a donc PAS de « Saint-Leu-bis » applicable ici.**
+- **Pas de run recommandé**, **pas de gold possible** : le contrôle `couverture zonage ≥ 99 %` reste à **0 %** → échec garanti.
+- **Ne PAS improviser une cascade « mode RNU »** sans logique réglementaire dédiée et validée (constructibilité RNU
+  subtile : parties urbanisées / règles de continuité — risque fort).
+- **Blocage TEMPORAIRE, réversible** dès publication d'une **géométrie PLU exploitable** (GPU `DU_97417`, ou refresh
+  AGORAH `idurba 97417`, ou autre source officielle SIG).
+- **Priorité FAIBLE** : commune du secteur **volcan** (Piton de la Fournaise, `parc_national` 3 + `foret_publique` 11),
+  4 162 parcelles, DVF 315 → même débloquée, opportunités **quasi-nulles** attendues. À traiter **après** les vrais
+  leviers (PPR Étape B, généralisation Étape A).
+
+> ⛔ **Statut maintenu : NON-gold / non-validable, sous veille PLU.** Aucun run / cascade / re-fetch / passage gold.
+> Config inchangée, DB inchangée (431 663 / 24 / gold 17).
