@@ -10,7 +10,71 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-Cilaos : import complet (24/24 communes — couverture Réunion totale) » (2026-06-25)
+## 🟢 Baseline courant — « post-Entre-Deux gold : 24/24 communes, 17 gold (Entre-Deux réparée) » (2026-06-25)
+
+Point de restauration **propre et recommandé** après le **passage gold d'Entre-Deux (97403)**, réparée puis
+validée au standard : la base reste à **24/24 communes** (couverture Réunion complète) et passe à **17 communes
+gold**. Entre-Deux avait une évaluation **périmée** (bâti=0) ; un `re_couches_re_cascade` + **réparation ciblée
+de la couche `pente`** (échec ALTI transitoire au 1er run → re-fetch ciblé) l'ont fiabilisée. État figé : `main`
+à `096cd87` (`LOT6: validate Entre-Deux gold`). **Aucun changement scoring / seuil 65 / PPR.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-entredeux-17gold-24communes-20260625-164553.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-entredeux-17gold-24communes-20260625-164553.dump` |
+| **Date / heure** | **2026-06-25 16:45:53 UTC** |
+| **Taille** | **1160 Mo** (1 159 602 234 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `6dc66e48eec84148239ab8a0009297b7bc79ae0253cee2ec07cdaaaaa2164a7d` |
+| **Sidecar** | `…-164553.dump.sha256` |
+
+### Contenu du baseline (post-Entre-Deux gold, 24 communes / 17 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`096cd87`** (`LOT6: validate Entre-Deux gold`) |
+| Communes en base | **24 / 24** (couverture Réunion complète) |
+| Parcelles | **431 663** |
+| Communes **gold** (17) | les 16 précédentes + **Entre-Deux** (97403, réparée) |
+| **Entre-Deux (nouvelle gold)** | bâti 0→**46 493** · pente réparée **4 140** · voirie 5 000→**8 802** · géom invalide 1→**0** · PLU propre 97403 **100 %** · opp **1** (0,0 %) · fpp 0→**3 729** |
+| Non-gold restants (7) | Saint-Leu, Saint-Philippe (PLU absent GPU) · La Plaine-des-Palmistes, Les Trois-Bassins, Sainte-Rose, Salazie, Cilaos (faible opportunité structurelle) |
+
+> **Entre-Deux** (97403, vague 6, **re_couches_re_cascade + réparation pente ciblée**) : l'évaluation initiale était
+> périmée (bâti=0, fpp=0, 9 fausses opportunités). Le 1er run a tout réparé sauf `pente` (échec transitoire RGE ALTI,
+> couche critique → exit 1) ; **pas de rollback** (décision), puis **re-fetch ciblé `pente`** (4 140 cellules,
+> couverture parcellaire 100 %) + **re-cascade**. Verdicts finaux fiables : opp **1** · à creuser **1 642** ·
+> écartée **940** · faux positif probable **3 729**. Détails : `docs/communes/entre_deux_RESULTS.md`. Backups de la
+> réparation : `labuse-pre-entre-deux-20260625-140800.dump` + `labuse-pre-entre-deux-pente-fix-20260625-143536.dump`.
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `cascade_results`,
+  `parcel_evaluations`, `dvf_mutations`, `bilan_params` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-164553.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=096cd87`, working tree clean,
+  **24 communes / 431 663 parcelles**, **17 gold** (Entre-Deux incluse), Entre-Deux bâti 46 493 / pente 4 140.
+  **Aucun changement scoring / seuil 65 / PPR ; config gold = seul le passage Entre-Deux validé.**
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » des communes re-cascadées aux jalons
+> précédents (verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées). Entre-Deux porte
+> l'ancien set (bâti=0) + le set réparé (bâti+pente) — verdict canonique = dernière éval.
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-entredeux-17gold-24communes-20260625-164553.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-entredeux-17gold-24communes-20260625-164553.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=24 parcels=431663 (gold = 17, Entre-Deux incluse)
+```
+
+---
+
+## Baseline précédent — « post-Cilaos : import complet (24/24 communes — couverture Réunion totale) » (2026-06-25)
 
 Point de restauration **propre et recommandé** après l'**import complet de Cilaos (97424)**, **dernière
 commune** de La Réunion : la base atteint la **complétude 24/24** — **toutes les communes du département sont
