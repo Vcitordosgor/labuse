@@ -10,7 +10,75 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-Saint-Leu provisoire : 24/24 communes, 17 gold + Saint-Leu analysée (AGORAH 2007, non-gold) » (2026-06-25)
+## 🟢 Baseline courant — « post-Saint-Pierre PPR Étape A : 24/24 communes, 17 gold (Saint-Pierre re-cascadée, assainissement qualité) » (2026-06-26)
+
+Point de restauration **propre et recommandé** après le **pilote de généralisation de l'Étape A PPR** (re-cascade
+**seule** de Saint-Pierre, sans ré-import ni changement de code). La base reste **24/24 communes** et **17 gold** ;
+**Saint-Pierre reste gold** mais ses verdicts sont **re-cascadés** : opportunités **1 534 → 1 380**, dont **+28 via
+l'Étape A** (PPR marginal < 10 % déflagué) et **−182 faux positifs « déjà bâti » / micro-parcelles retirés** par la
+couche `declassement` (**assainissement qualité, pas une perte** ; 120/182 déjà non-opp au baseline 06-08). État
+figé : `main` à `ef65998`. **Aucun changement scoring / seuil 65 / PPR Étape B.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-saint-pierre-ppr-stepa-17gold-24communes-20260626-064042.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-saint-pierre-ppr-stepa-17gold-24communes-20260626-064042.dump` |
+| **Date / heure** | **2026-06-26 06:40:42 UTC** |
+| **Taille** | **1186 Mo** (1 186 477 225 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `f2722380e6ec72da4f18daf1c8936935a675c3374b027868fc34328013425f7b` |
+| **Sidecar** | `…-064042.dump.sha256` |
+
+### Contenu du baseline (post-Saint-Pierre PPR Étape A, 24 communes / 17 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`ef65998`** (`docs: merge Saint-Pierre PPR Step A pilot report`) |
+| Communes en base | **24 / 24** |
+| Parcelles | **431 663** |
+| Communes **gold** (17) | inchangées — **Saint-Pierre reste gold** (re-cascade, pas de re-passage gold) |
+| **Saint-Pierre (re-cascadée Étape A)** | 42 425 parc. · 100 % évaluées · **opp 1 380** (était 1 534) · **PPR fort 9 835→8 219** · **PPR faible 0→2 705** · **+28 via Étape A** · **−182 faux positifs « déjà bâti » assainis** |
+| **Saint-Leu** | analysée provisoirement (AGORAH 2007, **non-gold**) — inchangée |
+| Non-gold restants (7) | Saint-Leu (provisoire) · Saint-Philippe (PLU absent) · La Plaine-des-Palmistes · Les Trois-Bassins · Sainte-Rose · Salazie · Cilaos |
+
+> **Pilote Saint-Pierre (généralisation Étape A)** : re-cascade `evaluate_commune` (42 425 parcelles, sans ré-import).
+> L'Étape A a déflagué **2 705** parcelles PM1-marginales (PPR fort 9 835→8 219) → **+28 opportunités** réelles, 0 perte
+> imputable. La re-cascade a aussi ré-appliqué le code courant (`rules_version 2b45db→fb6a54`) → **−182 anciennes
+> opportunités retirées** par la couche `declassement` : **micro-parcelles (<100 m²) et parcelles déjà bâties (BD TOPO
+> « ensemble bâti »)**, **score inchangé** (statut corrigé). **120/182 étaient déjà non-opp au baseline 06-08** →
+> correction, pas régression. **Net 1 534→1 380 = assainissement qualité** (leads plus fiables). Détail :
+> `docs/communes/saint_pierre_PPR_STEP_A.md`. Backup pré-run : `labuse-pre-saint-pierre-ppr-stepa-20260625-213017.dump`
+> (SHA `5c3ef253…de830`).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — 190 entrées TOC ; tables `parcels`, `spatial_layers`, `cascade_results`,
+  `parcel_evaluations`, `dvf_mutations`, `bilan_params` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-064042.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=ef65998`, working tree clean,
+  **24 communes / 431 663 parcelles**, **17 gold** (Saint-Pierre **reste gold**), Saint-Pierre **1 380 opportunités**.
+  **Aucun changement scoring / seuil 65 / PPR Étape B / config gold.**
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » des communes re-cascadées aux jalons
+> précédents (verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées). **Saint-Pierre**
+> porte désormais 3 jeux d'éval (06-08 / 06-21 / 06-26) — verdict canonique = la dernière (Étape A).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-saint-pierre-ppr-stepa-17gold-24communes-20260626-064042.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-saint-pierre-ppr-stepa-17gold-24communes-20260626-064042.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=24 parcels=431663 (gold = 17, Saint-Pierre 1380 opp)
+```
+
+---
+
+## Baseline précédent — « post-Saint-Leu provisoire : 24/24 communes, 17 gold + Saint-Leu analysée (AGORAH 2007, non-gold) » (2026-06-25)
 
 Point de restauration **propre et recommandé** après l'**analyse PROVISOIRE de Saint-Leu (97413)** via le repli
 **AGORAH PLU 2007** : la base reste à **24/24 communes** et **17 gold** ; Saint-Leu (22 959 parcelles, 3ᵉ marché
