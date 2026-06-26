@@ -47,7 +47,9 @@ figé : `main` à `ef65998`. **Aucun changement scoring / seuil 65 / PPR Étape 
 > « ensemble bâti »)**, **score inchangé** (statut corrigé). **120/182 étaient déjà non-opp au baseline 06-08** →
 > correction, pas régression. **Net 1 534→1 380 = assainissement qualité** (leads plus fiables). Détail :
 > `docs/communes/saint_pierre_PPR_STEP_A.md`. Backup pré-run : `labuse-pre-saint-pierre-ppr-stepa-20260625-213017.dump`
-> (SHA `5c3ef253…de830`).
+> (SHA `5c3ef253…de830`) — **⚠️ PURGÉ le 2026-06-26** : point de retour d'un pilote **terminé et accepté** (pas de
+> rollback) ; **plus sur disque** ; état restaurable = **ce baseline `post-Saint-Pierre`** (l'état pré-pilote =
+> baseline `post-Saint-Leu`, conservé).
 
 ### Preuve d'intégrité (à la création)
 
@@ -112,7 +114,8 @@ scoring / seuil 65 / PPR.**
 > PLU 2007 est en révision (avis Région défavorable, approbation 2ᵉ sem. 2026 non stabilisée, géométrie révisée non
 > publiée en SIG) → **les 976 opportunités sont PROVISOIRES**, à recalculer dès publication du PLU révisé. Détail +
 > disclaimer : `docs/communes/saint_leu_RESULTS.md`. Backup pré-run : `labuse-pre-saint-leu-agorah-20260625-185202.dump`
-> (SHA `35173977…0e9d2c`).
+> (SHA `35173977…0e9d2c`) — **⚠️ PURGÉ le 2026-06-26** : point de retour d'un run **terminé / validé / mergé** ;
+> **plus sur disque** ; état restaurable = baseline `post-Saint-Leu` (l'état pré-run = baseline `post-Entre-Deux`, conservé).
 
 ### Preuve d'intégrité (à la création)
 
