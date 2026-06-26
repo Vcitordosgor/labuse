@@ -10,7 +10,85 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-Saint-Pierre PPR Étape A : 24/24 communes, 17 gold (Saint-Pierre re-cascadée, assainissement qualité) » (2026-06-26)
+## 🟢 Baseline courant — « post-Étape A batch 1 : Le Tampon · La Possession · L'Étang-Salé re-cascadées, 24/24 communes, 17 gold » (2026-06-26)
+
+Point de restauration **propre et recommandé** après le **mini-batch 1 de généralisation de l'Étape A PPR** :
+re-cascade **seule** de **3 communes gold** — **Le Tampon (97422)**, **La Possession (97408)**, **L'Étang-Salé
+(97404)** — qui précédaient l'Étape A (PPR faible = 0 avant). **Sans ré-import de couches, sans changement de
+code / config / scoring / seuil 65 / Étape B.** La base reste **24/24 communes** et **17 gold** ; les 3 communes
+**restent gold** (re-cascade, pas de re-passage gold). Opportunités **1 702 → 1 566** (net **−136**) : **+54 via
+l'Étape A** (PPR marginal < 10 % déflagué) **+ 1 re-scoring montant**, **−191 faux positifs assainis** par
+`declassement` / `prescription_plu` (déjà bâti, micro-parcelles, emplacements réservés — **assainissement qualité,
+pas une perte**). État figé : `main` à `a2fb54f`. **Aucun changement scoring / seuil 65 / PPR Étape B / config gold.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-stepa-batch1-17gold-24communes-20260626-130808.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-stepa-batch1-17gold-24communes-20260626-130808.dump` |
+| **Date / heure** | **2026-06-26 13:08:08 UTC** |
+| **Taille** | **1187 Mo** (1 187 117 140 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `c1566da80a84a21261e98c5b30d2f9d482c1e9dc9a591fc6fe1564b6c6fa748b` |
+| **Sidecar** | `…-130808.dump.sha256` |
+
+### Contenu du baseline (post-Étape A batch 1, 24 communes / 17 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`a2fb54f`** (`docs: merge PPR step A batch 1 report`) |
+| Communes en base | **24 / 24** |
+| Parcelles | **431 663** |
+| Communes **gold** (17) | inchangées — les **3 communes du batch restent gold** (re-cascade, pas de re-passage gold) |
+| **Le Tampon (re-cascadée Étape A)** | 42 756 parc. · 100 % évaluées · **opp 749→657** · **PPR fort 12 421→9 760** · **PPR faible 0→4 342** · **+23 via Étape A** (+1 re-scoring) · **−116 faux positifs assainis** |
+| **La Possession (re-cascadée Étape A)** | 13 338 parc. · 100 % évaluées · **opp 611→620 (+9, seule nette positive)** · **PPR fort 4 294→3 467** · **PPR faible 0→1 251** · **+29 via Étape A** · **−20 assainis** |
+| **L'Étang-Salé (re-cascadée Étape A)** | 9 070 parc. · 100 % évaluées · **opp 342→289** · **PPR fort 3 646→3 305** · **PPR faible 0→837** · **+2 via Étape A** · **−55 assainis** |
+| Non-gold restants (7) | Saint-Leu (provisoire AGORAH 2007) · Saint-Philippe (PLU absent GPU) · La Plaine-des-Palmistes · Les Trois-Bassins · Sainte-Rose · Salazie · Cilaos |
+
+> **Mini-batch 1 (généralisation Étape A)** : re-cascade `evaluate_commune` séquentielle (Le Tampon → La Possession
+> → L'Étang-Salé), **65 164 parcelles, sans ré-import**. L'Étape A a déflagué les parcelles PM1-marginales →
+> **PPR faible 0 → 6 430** → **+54 opportunités** réelles (via flag marginal), **0 perte imputable**. La re-cascade
+> a aussi ré-appliqué le code courant → **−191 anciennes opportunités retirées** : **184 par `declassement`**
+> (micro-parcelles < 100 m² / **déjà bâti** BD TOPO « ensemble bâti »), **2 par `prescription_plu`** (emplacements
+> réservés ER : carrefour 77 % / création de voie 100 %), **5 par re-scoring** borderline sous le seuil 65 ;
+> **score inchangé** (statut corrigé). **Symétrie de seuil** : **+1** parcelle re-scorée vers le haut (Le Tampon
+> 29383 : 64 → 65, sans PPR) → **gains totaux +55**, soit **net 1 702 → 1 566 = −136** (= 55 − 191). **Assainissement
+> qualité** (leads plus fiables), pas une perte commerciale. Détail + contrôle de cohérence arithmétique :
+> `docs/communes/PPR_STEP_A_BATCH1.md`. Backup **pré-batch** :
+> `labuse-pre-stepa-batch1-tampon-possession-etang-sale-20260626-101136.dump` (SHA `eb25b4da…29473`) —
+> **CONSERVÉ sur disque** (aucune purge dans cette mission).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — **175 entrées TOC** (= backup pré-batch 175, identique → aucun objet perdu ;
+  les baselines antérieurs notaient « 190 » = ces 175 entrées **+ 15 lignes d'en-tête `;`**, même contenu, simple
+  différence de comptage) ; tables `parcels`, `spatial_layers`, `cascade_results`, `parcel_evaluations`,
+  `dvf_mutations`, `bilan_params` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-130808.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=a2fb54f` (= `origin/main`), working tree
+  clean, **24 communes / 431 663 parcelles**, **17 gold** (les 3 du batch **restent gold**), opp **Le Tampon 657 /
+  La Possession 620 / L'Étang-Salé 289**. **Aucun changement scoring / seuil 65 / PPR Étape B / config gold.**
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » des communes re-cascadées aux jalons
+> précédents (verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées). **Le Tampon,
+> La Possession et L'Étang-Salé** portent désormais un nouveau set d'éval (Étape A) en plus des sets antérieurs —
+> verdict canonique = la dernière (Étape A).
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-stepa-batch1-17gold-24communes-20260626-130808.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-stepa-batch1-17gold-24communes-20260626-130808.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=24 parcels=431663 (gold = 17, les 3 du batch re-cascadées Étape A)
+```
+
+---
+
+## Baseline précédent — « post-Saint-Pierre PPR Étape A : 24/24 communes, 17 gold (Saint-Pierre re-cascadée, assainissement qualité) » (2026-06-26)
 
 Point de restauration **propre et recommandé** après le **pilote de généralisation de l'Étape A PPR** (re-cascade
 **seule** de Saint-Pierre, sans ré-import ni changement de code). La base reste **24/24 communes** et **17 gold** ;
