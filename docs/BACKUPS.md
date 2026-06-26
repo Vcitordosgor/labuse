@@ -10,7 +10,82 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-Étape A batch 1 : Le Tampon · La Possession · L'Étang-Salé re-cascadées, 24/24 communes, 17 gold » (2026-06-26)
+## 🟢 Baseline courant — « post-Étape A batch 2 : Saint-Louis · Saint-Joseph · Saint-Benoît re-cascadées, 24/24 communes, 17 gold » (2026-06-26)
+
+Point de restauration **propre et recommandé** après le **mini-batch 2 de généralisation de l'Étape A PPR** :
+re-cascade **seule** de **3 communes gold** — **Saint-Louis (97414)**, **Saint-Joseph (97412)**, **Saint-Benoît
+(97410)** — qui précédaient l'Étape A (PPR faible = 0 avant). **Sans ré-import, sans changement de
+code / config / scoring / seuil 65 / Étape B.** La base reste **24/24 communes** et **17 gold** ; les 3 communes
+**restent gold**. Opportunités **1 593 → 1 596** (net **+3**) : **+26 via l'Étape A** (déflag marginal) **+ 2
+re-scoring**, **−25 faux positifs assainis** (`declassement` / `prescription_plu`) — **qualité ↑, volume stable**
+(batch quasi net-neutre, bien plus doux que batch 1 à −136). État figé : `main` à `bfdb3a1`. **Aucun changement
+scoring / seuil 65 / PPR Étape B / config gold.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-stepa-batch2-17gold-24communes-20260626-230000.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-stepa-batch2-17gold-24communes-20260626-230000.dump` |
+| **Date / heure** | **2026-06-26 23:00:00 UTC** |
+| **Taille** | **1188 Mo** (1 187 865 456 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `5680393d09ba903d821ccdeefe33590ff5f0c9b79efddfae2b19eed2a8c734ae` |
+| **Sidecar** | `…-230000.dump.sha256` |
+
+### Contenu du baseline (post-Étape A batch 2, 24 communes / 17 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`bfdb3a1`** (`docs: merge PPR step A batch 2 report`) |
+| Communes en base | **24 / 24** |
+| Parcelles | **431 663** |
+| Communes **gold** (17) | inchangées — les **3 communes du batch restent gold** (re-cascade, pas de re-passage gold) |
+| **Saint-Louis (re-cascadée Étape A)** | 29 241 parc. · 100 % évaluées · **opp 474→489 (+15)** · **PPR fort 8 214→7 163** · **PPR faible 0→2 131** · **+14 via Étape A** |
+| **Saint-Joseph (re-cascadée Étape A)** | 28 959 parc. · 100 % évaluées · **opp 530→514 (−16, assainissement)** · **PPR fort 9 948→8 712** · **PPR faible 0→2 536** · **+5 via Étape A** |
+| **Saint-Benoît (re-cascadée Étape A)** | 21 671 parc. · 100 % évaluées · **opp 589→593 (+4)** · **PPR fort 7 148→5 808** · **PPR faible 0→2 829** · **+7 via Étape A** |
+| Non-gold restants (7) | Saint-Leu (provisoire AGORAH 2007) · Saint-Philippe (PLU absent GPU) · La Plaine-des-Palmistes · Les Trois-Bassins · Sainte-Rose · Salazie · Cilaos |
+
+> **Mini-batch 2 (généralisation Étape A)** : re-cascade `evaluate_commune` séquentielle (Saint-Louis → Saint-Joseph
+> → Saint-Benoît), **79 871 parcelles, sans ré-import**. L'Étape A a déflagué les parcelles PM1-marginales →
+> **PPR faible 0 → 7 496** → **+26 opportunités** réelles (via flag marginal), **0 perte imputable**. La re-cascade
+> a aussi ré-appliqué le code courant → **−25 anciennes opportunités retirées** (21 `declassement` déjà bâti/micro,
+> 1 `prescription_plu` emplacement réservé, 3 re-scoring borderline). **Net 1 593 → 1 596 = +3** (quasi neutre,
+> qualité ↑). **Note perf** : Saint-Joseph/Saint-Benoît **CPU-bound géométrique** (communes denses, ~5–10× plus
+> lentes) — **pas une régression** ; un **`ANALYZE` de maintenance** (stats seules, **zéro impact verdicts**) a été
+> appliqué, et Saint-Joseph **re-cascadée en entier** (idempotent) jusqu'à 100 % propre. Détail :
+> `docs/communes/PPR_STEP_A_BATCH2.md`. Backup **pré-batch** :
+> `labuse-pre-stepa-batch2-saint-louis-saint-joseph-saint-benoit-20260626-140509.dump` (SHA `78ccbb82…f808a`) —
+> **CONSERVÉ sur disque** (aucune purge dans cette mission).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK — **175 entrées TOC** (+ 15 lignes d'en-tête `;` = 190 lignes, convention des
+  baselines antérieurs) ; tables `parcels`, `spatial_layers`, `cascade_results`, `parcel_evaluations`,
+  `dvf_mutations`, `bilan_params` présentes (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-230000.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs avant/après (lecture seule, inchangées par le backup) : `main=bfdb3a1` (= `origin/main`), working tree
+  clean, **24 communes / 431 663 parcelles**, **17 gold** (les 3 du batch **restent gold**), opp **Saint-Louis 489 /
+  Saint-Joseph 514 / Saint-Benoît 593**. **Aucun changement scoring / seuil 65 / PPR Étape B / config gold.**
+
+> ℹ️ Note : ce baseline inclut des lignes `parcel_evaluations` « stale » des communes re-cascadées aux jalons
+> précédents (verdict canonique = dernière éval/parcelle, impact fonctionnel nul ; non nettoyées). **Saint-Joseph**
+> porte en plus le set du run partiel (~10 000) + le run complet (28 959) — verdict canonique = la dernière éval.
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-stepa-batch2-17gold-24communes-20260626-230000.dump.sha256   # attendu : « …dump: OK »
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-stepa-batch2-17gold-24communes-20260626-230000.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=24 parcels=431663 (gold = 17, les 3 du batch re-cascadées Étape A)
+```
+
+---
+
+## Baseline précédent — « post-Étape A batch 1 : Le Tampon · La Possession · L'Étang-Salé re-cascadées, 24/24 communes, 17 gold » (2026-06-26)
 
 Point de restauration **propre et recommandé** après le **mini-batch 1 de généralisation de l'Étape A PPR** :
 re-cascade **seule** de **3 communes gold** — **Le Tampon (97422)**, **La Possession (97408)**, **L'Étang-Salé
