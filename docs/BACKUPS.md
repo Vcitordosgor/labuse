@@ -1172,7 +1172,9 @@ PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
 
 ---
 
-## Baseline précédent — « post-LOT6 : 10 communes gold + 3 communes bloquées » (2026-06-22)
+## 🗑️ Baseline PURGÉE le 2026-06-27 — « post-LOT6 : 10 communes gold + 3 communes bloquées » (2026-06-22)
+
+> **🗑️ Dump + sidecar supprimés le 2026-06-27** (nettoyage disque option A, sur GO explicite) — baseline incrémentale **pré-portefeuille-complet**, superseded. Plus sur disque ; entrée conservée pour l'historique. Pour restaurer : baseline `post-*` conservée (`post-cilaos` … `post-saint-denis`).
 
 Point de restauration **propre et recommandé** après LOT6 (10 communes gold). État figé : `main` à
 `3bb5955` (Les Avirons gold mergée), 10 communes validées au standard Saint-Paul, 3 communes bloquées
@@ -1223,7 +1225,9 @@ PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
 
 ---
 
-## Baseline précédent — « post-LOT6 : 9 communes gold + 3 communes bloquées » (2026-06-22)
+## 🗑️ Baseline PURGÉE le 2026-06-27 — « post-LOT6 : 9 communes gold + 3 communes bloquées » (2026-06-22)
+
+> **🗑️ Dump + sidecar supprimés le 2026-06-27** (nettoyage disque option A, sur GO explicite) — baseline incrémentale **pré-portefeuille-complet**, superseded. Plus sur disque ; entrée conservée pour l'historique. Pour restaurer : baseline `post-*` conservée (`post-cilaos` … `post-saint-denis`).
 
 Point de restauration **propre et recommandé** après LOT6 (9 communes gold). État figé : `main` à
 `b1eabe6` (Bras-Panon gold mergée), 9 communes validées au standard Saint-Paul, 3 communes bloquées
@@ -1274,7 +1278,9 @@ PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
 
 ---
 
-## Baseline précédent — « post-LOT6 : 8 communes gold + Saint-Leu/Saint-André bloquées » (2026-06-22)
+## 🗑️ Baseline PURGÉE le 2026-06-27 — « post-LOT6 : 8 communes gold + Saint-Leu/Saint-André bloquées » (2026-06-22)
+
+> **🗑️ Dump + sidecar supprimés le 2026-06-27** (nettoyage disque option A, sur GO explicite) — baseline incrémentale **pré-portefeuille-complet**, superseded. Plus sur disque ; entrée conservée pour l'historique. Pour restaurer : baseline `post-*` conservée (`post-cilaos` … `post-saint-denis`).
 
 Point de restauration **propre et recommandé** après LOT6 (8 communes gold). État figé : `main` à
 `69748a4` (Saint-Joseph gold mergée), 8 communes validées au standard Saint-Paul, 2 communes bloquées
@@ -1322,7 +1328,9 @@ PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
 
 ---
 
-## Baseline précédent — « post-vague 2 : 6 communes gold + Saint-Leu bloquée » (2026-06-21)
+## 🗑️ Baseline PURGÉE le 2026-06-27 — « post-vague 2 : 6 communes gold + Saint-Leu bloquée » (2026-06-21)
+
+> **🗑️ Dump + sidecar supprimés le 2026-06-27** (nettoyage disque option A, sur GO explicite) — baseline incrémentale **pré-portefeuille-complet**, superseded. Plus sur disque ; entrée conservée pour l'historique. Pour restaurer : baseline `post-*` conservée (`post-cilaos` … `post-saint-denis`).
 
 Point de restauration **propre et recommandé** après la vague 2. État figé : `main` à `cf58f28`
 (Saint-Louis gold mergée + Saint-Leu documentée bloquée), 6 communes validées au standard Saint-Paul,
@@ -1371,7 +1379,9 @@ PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
 
 ---
 
-## Baseline précédent — « 3 communes gold + voirie complète » (2026-06-21)
+## 🗑️ Baseline PURGÉE le 2026-06-27 — « 3 communes gold + voirie complète » (2026-06-21)
+
+> **🗑️ Dump + sidecar supprimés le 2026-06-27** (nettoyage disque option A, sur GO explicite) — baseline incrémentale **pré-portefeuille-complet**, superseded. Plus sur disque ; entrée conservée pour l'historique. Pour restaurer : baseline `post-*` conservée (`post-cilaos` … `post-saint-denis`).
 
 Point de restauration **propre et recommandé** avant la vague 2. État figé : correctif de pagination
 voirie dans `main` + les 3 communes gold re-fetchées au standard voirie complet.
