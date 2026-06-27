@@ -1318,17 +1318,19 @@ SELECT commune||' voirie='||count(*) FROM spatial_layers WHERE kind='voirie'
 
 ## Autres points de restauration disponibles (`/var/backups/labuse`)
 
-Sauvegardes **pré-run** par commune (rollback ponctuel d'un re-fetch voirie ; conserver tant que le
-baseline n'est pas jugé définitif) :
+Sauvegardes **pré-run** par commune (rollback ponctuel d'un re-fetch voirie) — **🗑️ PURGÉES le 2026-06-27**
+(sur GO explicite) pour libérer l'espace disque du chantier canari. Le re-fetch voirie est **validé et
+définitif depuis 06-21** (condition de conservation « tant que le baseline n'est pas jugé définitif » expirée) ;
+ces points de retour pré-run n'avaient plus d'utilité critique.
 
-| Backup | Pris avant |
-|---|---|
-| `labuse-labuse-20260620-214358.dump` | re-fetch voirie L'Étang-Salé |
-| `labuse-labuse-20260620-220104.dump` | re-fetch voirie La Possession |
-| `labuse-labuse-20260621-085854.dump` | re-fetch voirie Saint-Paul |
+| Backup (pré-run re-fetch voirie) | Pris avant | Statut |
+|---|---|---|
+| `labuse-labuse-20260620-214358.dump` | re-fetch voirie L'Étang-Salé | 🗑️ **PURGÉ 2026-06-27** |
+| `labuse-labuse-20260620-220104.dump` | re-fetch voirie La Possession | 🗑️ **PURGÉ 2026-06-27** |
+| `labuse-labuse-20260621-085854.dump` | re-fetch voirie Saint-Paul | 🗑️ **PURGÉ 2026-06-27** |
 
-> Ces dumps pré-run précèdent les re-fetch ; le **baseline post-voirie** ci-dessus est l'état **après**
-> les 3 re-fetch (à privilégier pour repartir propre).
+> État voirie restaurable autrement : baseline `post-voirie-gold-3communes` (état **après** les 3 re-fetch) ou,
+> mieux, le baseline courant `post-batch3`. **Aucune baseline `post-*` n'a été supprimée.**
 
 ---
 
