@@ -604,6 +604,37 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
     }
 
 
+# ───────────────────────────── Radar Mutation (V1, lecture seule) ────────────────────────
+# Score Mutation DISTINCT du verdict d'opportunité (cf. src/labuse/mutation.py /
+# docs/product/RADAR_MUTATION_PHASE1_SPEC.md). Lecture seule : aucune écriture, ne touche NI
+# le scoring d'opportunité NI le verdict. Pas d'UI à ce stade (Phase 2B = API uniquement).
+
+@app.get("/mutation/{idu}")
+def mutation_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
+    """Score Mutation (Radar Mutation) d'une parcelle — potentiel de transformation à étudier."""
+    from .. import mutation as mut
+
+    p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
+    if p is None:
+        raise HTTPException(404, "Parcelle inconnue")
+    m = mut.mutation_for_parcels(db, [p.id]).get(p.id)
+    if m is None:
+        raise HTTPException(404, "Parcelle non évaluée")
+    return {"idu": p.idu, "commune": p.commune, "mutation": m}
+
+
+@app.get("/mutation")
+def mutation_top(commune: str | None = None, niveau: str | None = None,
+                 min_score: int = Query(0, ge=0, le=100), limit: int = Query(20, ge=1, le=100),
+                 db: Session = Depends(get_db)) -> dict:
+    """Top Radar Mutation d'une commune — shortlist premium triée par Score Mutation (lecture seule)."""
+    from .. import mutation as mut
+
+    commune = commune or config.get_settings().pilot_commune_name
+    parcels = mut.top_for_commune(db, commune, niveau=niveau, min_score=min_score, limit=limit)
+    return {"commune": commune, "niveau": niveau, "count": len(parcels), "parcels": parcels}
+
+
 @app.get("/map/permits.geojson")
 def permits_geojson(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Marqueurs SITADEL (Lot C4) : autorisations d'urbanisme géolocalisées (point = parcelle

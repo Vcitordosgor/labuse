@@ -239,3 +239,59 @@ def features_for_parcels(session, parcel_ids: list[int]) -> dict[int, MutationFe
 def mutation_for_parcels(session, parcel_ids: list[int]) -> dict[int, dict]:
     """Score Mutation explicable pour un petit lot de parcelles (LECTURE SEULE)."""
     return {pid: compute_mutation_score(f) for pid, f in features_for_parcels(session, parcel_ids).items()}
+
+
+def top_for_commune(session, commune: str, *, niveau: Optional[str] = None,
+                    min_score: int = 0, limit: int = 20) -> list[dict]:
+    """Top Radar Mutation d'une commune (LECTURE SEULE), trié par Score Mutation décroissant.
+
+    2 étages **bornés** : (1) pré-sélection SQL des meilleurs candidats par un PROXY de rang
+    (formule SANS le bâti spatial), (2) score AUTORITATIF via `compute_mutation_score` (avec
+    bâti) sur ces seuls candidats. Le proxy ne sert qu'à SÉLECTIONNER ; le score renvoyé est
+    toujours celui du moteur. Évite tout calcul bâti massif (≤ ~500 candidats)."""
+    from sqlalchemy import text
+
+    pool = min(2000, max(limit * 5, 200))
+    cand = session.execute(text(
+        """
+        WITH le AS (
+          SELECT DISTINCT ON (pe.parcel_id) pe.parcel_id pid, pe.status s, pe.opportunity_score os
+          FROM parcel_evaluations pe JOIN parcels p ON p.id = pe.parcel_id
+          WHERE p.commune = :c
+          ORDER BY pe.parcel_id, pe.evaluated_at DESC, pe.id DESC),
+        zon AS (SELECT DISTINCT ON (parcel_id) parcel_id pid, result r FROM cascade_results
+                WHERE layer_name='zonage_plu_gpu' ORDER BY parcel_id, evaluated_at DESC, id DESC),
+        pot AS (SELECT DISTINCT ON (parcel_id) parcel_id pid, result r FROM cascade_results
+                WHERE layer_name='potentiel_foncier_region' ORDER BY parcel_id, evaluated_at DESC, id DESC),
+        dvf AS (SELECT DISTINCT ON (parcel_id) parcel_id pid, result r FROM cascade_results
+                WHERE layer_name='dvf' ORDER BY parcel_id, evaluated_at DESC, id DESC),
+        rsq AS (SELECT DISTINCT ON (parcel_id) parcel_id pid, severity sv FROM cascade_results
+                WHERE layer_name='risques' ORDER BY parcel_id, evaluated_at DESC, id DESC),
+        pm AS (SELECT DISTINCT p.id pid FROM parcels p JOIN parcelle_personne_morale m ON m.idu = p.idu)
+        SELECT p.id, p.idu, p.commune,
+          (CASE WHEN le.s='a_creuser' AND le.os BETWEEN 55 AND 64 THEN 25
+                WHEN le.s='a_creuser' AND le.os BETWEEN 45 AND 54 THEN 15
+                WHEN le.s='a_creuser' THEN 8 WHEN le.s='opportunite' THEN 5 ELSE 0 END)
+          + (CASE WHEN p.surface_m2>5000 THEN 30 WHEN p.surface_m2>2000 THEN 22
+                  WHEN p.surface_m2>1000 THEN 14 WHEN p.surface_m2>500 THEN 6 ELSE 0 END)
+          + (CASE WHEN zon.r='POSITIVE' THEN 15 ELSE 0 END)
+          + (CASE WHEN pot.r IN ('POSITIVE','SOFT_FLAG') THEN 15 ELSE 0 END)
+          + (CASE WHEN dvf.r IN ('POSITIVE','SOFT_FLAG') THEN 10 ELSE 0 END)
+          + (CASE WHEN pm.pid IS NOT NULL THEN 8 ELSE 0 END)
+          - (CASE WHEN rsq.sv='fort' THEN 15 ELSE 0 END) AS prescore
+        FROM le JOIN parcels p ON p.id = le.pid
+          LEFT JOIN zon ON zon.pid=le.pid LEFT JOIN pot ON pot.pid=le.pid
+          LEFT JOIN dvf ON dvf.pid=le.pid LEFT JOIN rsq ON rsq.pid=le.pid LEFT JOIN pm ON pm.pid=le.pid
+        ORDER BY prescore DESC LIMIT :k
+        """), {"c": commune, "k": pool}).all()
+
+    id2meta = {int(r[0]): (r[1], r[2]) for r in cand}
+    out: list[dict] = []
+    for pid, f in features_for_parcels(session, list(id2meta)).items():
+        m = compute_mutation_score(f)
+        if m["score_mutation"] < min_score or (niveau and m["niveau"] != niveau):
+            continue
+        idu, com = id2meta[pid]
+        out.append({"idu": idu, "commune": com, **m})
+    out.sort(key=lambda x: x["score_mutation"], reverse=True)
+    return out[:limit]
