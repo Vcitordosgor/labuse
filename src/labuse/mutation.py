@@ -15,6 +15,8 @@ sans endpoint ni UI.
 """
 from __future__ import annotations
 
+import threading
+import time
 from dataclasses import dataclass
 from typing import Optional
 
@@ -31,6 +33,8 @@ SEUIL_PRIORITAIRE = 70
 SEUIL_FORTE = 55
 SEUIL_SURVEILLER = 40
 CONFIANCE_FLOOR = 50            # règle d'or : sous ce seuil, jamais « prioritaire »/« forte »
+
+NIVEAUX = ("prioritaire", "forte", "surveiller", "faible")   # niveaux possibles (rang décroissant)
 
 SURFACE_PLANCHER_M2 = 500.0     # en deçà : aucun bonus surface
 SURFACE_SATURATION_M2 = 5000.0  # courbe saturante (une parcelle géante ne gagne pas mécaniquement)
@@ -241,6 +245,32 @@ def mutation_for_parcels(session, parcel_ids: list[int]) -> dict[int, dict]:
     return {pid: compute_mutation_score(f) for pid, f in features_for_parcels(session, parcel_ids).items()}
 
 
+# ── Cache mémoire TTL pour le top commune (Phase 2D) ──────────────────────────────────────
+# Le top d'une commune ne dépend QUE de la DB (stable hors re-cascade). Le calcul à froid coûte
+# ~4-5 s (4 scans séquentiels de cascade_results, pas d'index layer_name). On mémorise donc le
+# résultat EXACT du moteur quelques minutes : le 1ᵉʳ appel reste identique, les suivants (cas
+# courant : chaque chargement de la sidebar avec les mêmes paramètres) sont quasi-instantanés.
+# 100 % lecture seule, EN MÉMOIRE uniquement (rien en DB), borné en taille, péremption par TTL.
+TOP_CACHE_TTL_S = 300.0       # 5 min — borne la fraîcheur ; au pire des données vieilles de 5 min
+TOP_CACHE_MAX = 256           # garde-fou anti-croissance (clés = commune×niveau×min_score×limit)
+_TOP_CACHE: dict[tuple, tuple[float, list[dict]]] = {}
+_TOP_CACHE_LOCK = threading.Lock()
+
+
+def clear_top_cache() -> None:
+    """Vide le cache mémoire du top mutation (tests / invalidation manuelle). Lecture seule DB."""
+    with _TOP_CACHE_LOCK:
+        _TOP_CACHE.clear()
+
+
+def _top_cache_evict_locked(now: float) -> None:
+    """Retire les entrées périmées ; si encore au-dessus du plafond, retire les plus anciennes."""
+    for k in [k for k, (ts, _) in _TOP_CACHE.items() if now - ts >= TOP_CACHE_TTL_S]:
+        _TOP_CACHE.pop(k, None)
+    while len(_TOP_CACHE) > TOP_CACHE_MAX:
+        _TOP_CACHE.pop(min(_TOP_CACHE, key=lambda k: _TOP_CACHE[k][0]), None)
+
+
 def top_for_commune(session, commune: str, *, niveau: Optional[str] = None,
                     min_score: int = 0, limit: int = 20) -> list[dict]:
     """Top Radar Mutation d'une commune (LECTURE SEULE), trié par Score Mutation décroissant.
@@ -248,8 +278,18 @@ def top_for_commune(session, commune: str, *, niveau: Optional[str] = None,
     2 étages **bornés** : (1) pré-sélection SQL des meilleurs candidats par un PROXY de rang
     (formule SANS le bâti spatial), (2) score AUTORITATIF via `compute_mutation_score` (avec
     bâti) sur ces seuls candidats. Le proxy ne sert qu'à SÉLECTIONNER ; le score renvoyé est
-    toujours celui du moteur. Évite tout calcul bâti massif (≤ ~500 candidats)."""
+    toujours celui du moteur. Évite tout calcul bâti massif (≤ ~500 candidats).
+
+    Résultat mémorisé `TOP_CACHE_TTL_S` (cache mémoire, lecture seule) : sortie identique au
+    moteur, mais les appels répétés (mêmes paramètres) sont quasi-instantanés."""
     from sqlalchemy import text
+
+    key = (commune, niveau, int(min_score), int(limit))
+    now = time.monotonic()
+    with _TOP_CACHE_LOCK:
+        hit = _TOP_CACHE.get(key)
+        if hit is not None and (now - hit[0]) < TOP_CACHE_TTL_S:
+            return hit[1]
 
     pool = min(2000, max(limit * 5, 200))
     cand = session.execute(text(
@@ -294,4 +334,8 @@ def top_for_commune(session, commune: str, *, niveau: Optional[str] = None,
         idu, com = id2meta[pid]
         out.append({"idu": idu, "commune": com, **m})
     out.sort(key=lambda x: x["score_mutation"], reverse=True)
-    return out[:limit]
+    result = out[:limit]
+    with _TOP_CACHE_LOCK:
+        _TOP_CACHE[key] = (time.monotonic(), result)
+        _top_cache_evict_locked(time.monotonic())
+    return result

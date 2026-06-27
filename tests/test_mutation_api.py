@@ -84,3 +84,64 @@ def test_mutation_aucune_ecriture_db(client):
     with session_scope() as s:
         after = s.execute(text("SELECT count(*) FROM parcel_evaluations")).scalar()
     assert before == after   # endpoints lecture seule : aucune écriture
+
+
+# ── Phase 2D : durcissement des paramètres ────────────────────────────────────────────────
+
+def test_mutation_niveau_invalide_422(client):
+    r = client.get("/mutation", params={"commune": "Saint-Paul", "niveau": "bidon"})
+    assert r.status_code == 422                     # avant 2D : 200 + liste vide silencieuse
+    assert "niveau" in r.json()["detail"].lower()
+
+
+def test_mutation_niveaux_valides_ok(client):
+    from labuse.mutation import NIVEAUX
+
+    for niv in NIVEAUX:
+        assert client.get("/mutation", params={"commune": "Saint-Paul", "niveau": niv}).status_code == 200
+
+
+def test_mutation_commune_inconnue_404(client):
+    r = client.get("/mutation", params={"commune": "Atlantis-sur-Mer"})
+    assert r.status_code == 404
+    assert "commune" in r.json()["detail"].lower()
+
+
+def test_mutation_limit_min_score_bornes(client):
+    assert client.get("/mutation", params={"commune": "Saint-Paul", "limit": 999}).status_code == 422
+    assert client.get("/mutation", params={"commune": "Saint-Paul", "limit": 0}).status_code == 422
+    assert client.get("/mutation", params={"commune": "Saint-Paul", "min_score": 250}).status_code == 422
+
+
+# ── Phase 2D : cache mémoire TTL (lecture seule, résultat identique) ───────────────────────
+
+def test_mutation_top_cache_coherent(client):
+    from labuse import mutation as mut
+
+    mut.clear_top_cache()
+    p = {"commune": "Saint-Paul", "niveau": "faible", "limit": 5}
+    a = client.get("/mutation", params=p).json()
+    assert len(mut._TOP_CACHE) >= 1                 # le calcul a bien été mémorisé
+    b = client.get("/mutation", params=p).json()    # 2ᵉ appel : servi par le cache
+    assert a == b                                   # résultat strictement identique (même top, mêmes scores)
+    mut.clear_top_cache()
+    assert len(mut._TOP_CACHE) == 0                 # invalidation manuelle fonctionnelle
+
+
+# ── Phase 2D : calque carte Radar (GeoJSON lecture seule, fondation Phase 2E) ──────────────
+
+def test_mutation_geojson_structure(client):
+    r = client.get("/map/mutation.geojson", params={"commune": "Saint-Paul", "niveau": "faible", "limit": 20})
+    assert r.status_code == 200
+    fc = r.json()
+    assert fc["type"] == "FeatureCollection" and isinstance(fc["features"], list)
+    for ft in fc["features"]:
+        assert ft["type"] == "Feature" and ft["geometry"] and "coordinates" in ft["geometry"]
+        pr = ft["properties"]
+        assert "idu" in pr and pr["niveau"] in NIVEAUX and 0 <= pr["score_mutation"] <= 100
+
+
+def test_mutation_geojson_durci(client):
+    assert client.get("/map/mutation.geojson", params={"niveau": "bidon"}).status_code == 422
+    assert client.get("/map/mutation.geojson", params={"commune": "Atlantis-sur-Mer"}).status_code == 404
+    assert client.get("/map/mutation.geojson", params={"limit": 9999}).status_code == 422
