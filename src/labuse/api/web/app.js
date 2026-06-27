@@ -1478,7 +1478,8 @@ async function loadMutation(idu) {
 }
 
 function renderRadarList(parcels) {
-  if (!parcels || !parcels.length) return `<div class="muted-sm">Aucune parcelle à fort potentiel détectée.</div>`;
+  if (!parcels || !parcels.length)
+    return `<div class="radar-empty">Aucune parcelle à fort potentiel pour l'instant — rien à signaler ici.</div>`;
   return parcels.map((p) => `<button type="button" class="radar-item" data-idu="${esc(p.idu)}" title="Ouvrir la fiche">
     <span class="radar-score mut-${esc(p.niveau)}">${Number(p.score_mutation) || 0}</span>
     <span class="radar-meta"><b>${esc(p.idu)}</b><span class="radar-badge">${esc((p.badges || [])[0] || "potentiel à étudier")}</span></span>
@@ -1488,12 +1489,15 @@ function renderRadarList(parcels) {
 async function loadRadarTop() {
   const box = $("#radar-list");
   if (!box) return;
+  // État de chargement explicite : le 1ᵉʳ calcul d'une commune peut prendre quelques secondes
+  // (mémorisé ensuite). On ne laisse jamais un « — » muet pendant l'analyse.
+  box.innerHTML = `<div class="radar-loading">Analyse des parcelles à fort potentiel…</div>`;
   let data;
   try {
     const r = await fetch(`/mutation?commune=${encodeURIComponent(COMMUNE)}&niveau=prioritaire&limit=8`);
     if (!r.ok) throw new Error(String(r.status));
     data = await r.json();
-  } catch { box.innerHTML = `<div class="muted-sm">—</div>`; return; }
+  } catch { box.innerHTML = `<div class="radar-empty">Radar momentanément indisponible.</div>`; return; }
   box.innerHTML = renderRadarList(data.parcels);
   const cnt = $("#radar-count"); if (cnt) cnt.textContent = String(data.count || 0);
   box.querySelectorAll(".radar-item").forEach((el) => el.addEventListener("click", () => focusParcel(el.dataset.idu)));

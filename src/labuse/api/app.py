@@ -627,12 +627,51 @@ def mutation_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
 def mutation_top(commune: str | None = None, niveau: str | None = None,
                  min_score: int = Query(0, ge=0, le=100), limit: int = Query(20, ge=1, le=100),
                  db: Session = Depends(get_db)) -> dict:
-    """Top Radar Mutation d'une commune — shortlist premium triée par Score Mutation (lecture seule)."""
+    """Top Radar Mutation d'une commune — shortlist premium triée par Score Mutation (lecture seule).
+
+    Paramètres durcis : `niveau` hors nomenclature → 422 ; `commune` inconnue → 404 (plutôt
+    qu'une liste vide silencieuse). `min_score`/`limit` sont déjà bornés par FastAPI."""
     from .. import mutation as mut
 
+    if niveau is not None and niveau not in mut.NIVEAUX:
+        raise HTTPException(422, f"niveau invalide : {niveau!r} (attendu : {', '.join(mut.NIVEAUX)})")
     commune = commune or config.get_settings().pilot_commune_name
+    known = db.execute(text("SELECT 1 FROM parcels WHERE commune = :c LIMIT 1"), {"c": commune}).first()
+    if known is None:
+        raise HTTPException(404, f"Commune inconnue : {commune!r}")
     parcels = mut.top_for_commune(db, commune, niveau=niveau, min_score=min_score, limit=limit)
     return {"commune": commune, "niveau": niveau, "count": len(parcels), "parcels": parcels}
+
+
+@app.get("/map/mutation.geojson")
+def mutation_geojson(commune: str | None = None, niveau: str = "prioritaire",
+                     limit: int = Query(100, ge=1, le=500), db: Session = Depends(get_db)) -> dict:
+    """Calque carte Radar Mutation (LECTURE SEULE) : géométries du TOP mutation d'une commune,
+    `score_mutation`/`niveau` en propriétés. Réutilise le top MÉMORISÉ (léger) — n'évalue JAMAIS
+    toutes les parcelles. Fondation backend d'un futur calque « Radar » optionnel (Phase 2E),
+    distinct des couches verdict ; ne modifie aucune couche carte existante."""
+    from .. import mutation as mut
+
+    if niveau not in mut.NIVEAUX:
+        raise HTTPException(422, f"niveau invalide : {niveau!r} (attendu : {', '.join(mut.NIVEAUX)})")
+    commune = commune or config.get_settings().pilot_commune_name
+    known = db.execute(text("SELECT 1 FROM parcels WHERE commune = :c LIMIT 1"), {"c": commune}).first()
+    if known is None:
+        raise HTTPException(404, f"Commune inconnue : {commune!r}")
+    top = mut.top_for_commune(db, commune, niveau=niveau, min_score=0, limit=limit)
+    by_idu = {p["idu"]: p for p in top}
+    feats = []
+    if by_idu:
+        for idu, g in db.execute(text(
+                "SELECT idu, ST_AsGeoJSON(geom) g FROM parcels WHERE idu = ANY(:idus)"),
+                {"idus": list(by_idu)}).all():
+            if not g:
+                continue
+            p = by_idu.get(idu, {})
+            feats.append({"type": "Feature", "geometry": json.loads(g),
+                          "properties": {"idu": idu, "score_mutation": p.get("score_mutation"),
+                                         "niveau": p.get("niveau")}})
+    return {"type": "FeatureCollection", "features": feats}
 
 
 @app.get("/map/permits.geojson")
