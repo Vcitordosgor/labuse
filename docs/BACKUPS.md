@@ -10,7 +10,71 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-Étape A batch 3 : Bras-Panon · Les Avirons · Le Port · Sainte-Suzanne · Petite-Île · Sainte-Marie re-cascadées, 24/24 communes, 17 gold » (2026-06-27)
+## 🟢 Baseline courant — « post-canaris homogénéisation : Les Trois-Bassins + Saint-André re-cascadées, 24/24 communes, 17 gold » (2026-06-27)
+
+Point de restauration **propre et recommandé** après les **2 canaris du chantier d'homogénéisation cascade** :
+re-cascade **seule** de **Les Trois-Bassins (97423)** puis **Saint-André (97409)** — 2 communes *stale* (vieilles
+règles `2b45db742f40`, cascade 06-23) repassées au code courant `fb6a5478b2bf` (avec Étape A). **Sans ré-import, sans
+changement de code / config / scoring / seuil 65 / Étape B.** **Saint-Denis NON touché.** La base reste **24/24
+communes** et **17 gold** ; **aucun passage gold**. Opportunités globales **9 113 → 9 116** (net **+3**, toutes gains
+Étape A marginal, **0 perte**). État figé : `main` à `a426821`. **Aucun changement scoring / seuil 65 / config gold.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-canaries-trois-bassins-saint-andre-17gold-24communes-20260627-113917.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-canaries-trois-bassins-saint-andre-17gold-24communes-20260627-113917.dump` |
+| **Date / heure** | **2026-06-27 11:39:17 UTC** |
+| **Taille** | **1189 Mo** (1 188 796 189 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `c2abd69ed634ca21e22c38ac1224cc38a26ba1c03c6928cd5da5a022b668acef` |
+| **Sidecar** | `…-113917.dump.sha256` |
+
+### Contenu du baseline (post-canaris, 24 communes / 17 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`a426821`** (`docs: merge canary report Saint-André`) — scoring **inchangé** (rules `fb6a5478b2bf`) ; canaris = re-cascade DB + rapports docs-only |
+| Communes en base | **24 / 24** · Parcelles **431 663** · **gold 17** (aucun passage gold) |
+| Opportunités globales | **9 116** (post-batch 3 : 9 113 ; **+3** via les 2 canaris) |
+| **Les Trois-Bassins (canari 1)** | 5 314 parc. · **opp 1→2 (+1 Étape A)** · compl **79,9→79,9** · **PPR faible 0→183** · assainissement **115 `à creuser`→fpp** · 0 perte |
+| **Saint-André (canari 2)** | 22 600 parc. · **opp 54→56 (+2 Étape A)** · compl **82,9→82,9** · **PPR faible 0→765** · 0 assainissement · 0 perte |
+| **Encore *stale*** (règles `2b45db742f40`, à re-cascader pour cohérence) | **Saint-Denis** (gold, 38 138 parc.) · La Plaine-des-Palmistes · Sainte-Rose (non-gold) |
+
+> **2 canaris (chantier homogénéisation)** : re-cascade `evaluate_commune` de Les Trois-Bassins (490 s) puis
+> Saint-André (2 099 s, **0,093 s/parc**), **sans ré-import**. **Net +3 opportunités (toutes Étape A marginal),
+> 0 perte, complétude inchangée.** **Constat clé** : aucune dérive de complétude en rural NI en urbain → le **+157
+> de Le Port (batch 3) était un événement LOCAL** (couche de données), **pas systémique** ; l'« upside near-threshold
+> urbain » ne se matérialise pas (Saint-André : 765 déflaguées → 2 opportunités). **Re-cascade des *stale* =
+> cohérence/qualité, pas découverte d'opportunités.** Perf confirmée (~59 min pour Saint-Denis) → **optimisation non
+> justifiée**. Détails : `docs/communes/PPR_STEP_A_CANARY_TROIS_BASSINS.md` + `…_SAINT_ANDRE.md`. **Aucun backup
+> pré-canari** (rollback = post-batch 3).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK (rc=0) — **175 entrées TOC** (+ 15 lignes d'en-tête `;` = 190 lignes) ; tables
+  `parcels`, `parcel_evaluations`, `cascade_results`, `spatial_layers`, `dvf_mutations`, `bilan_params` présentes
+  (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-113917.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs (lecture seule) : `main=a426821` (= `origin/main`), working tree clean, **24 communes / 431 663
+  parcelles**, **17 gold**, opp globales **9 116**, Les Trois-Bassins **2** / Saint-André **56**. **Aucun changement
+  scoring / seuil 65 / config gold.**
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-canaries-trois-bassins-saint-andre-17gold-24communes-20260627-113917.dump.sha256
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-canaries-trois-bassins-saint-andre-17gold-24communes-20260627-113917.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=24 parcels=431663 (gold = 17)
+```
+
+---
+
+## Baseline précédent — « post-Étape A batch 3 : Bras-Panon · Les Avirons · Le Port · Sainte-Suzanne · Petite-Île · Sainte-Marie re-cascadées, 24/24 communes, 17 gold » (2026-06-27)
 
 Point de restauration **propre et recommandé** après le **mini-batch 3 de généralisation de l'Étape A PPR** :
 re-cascade **seule** de **6 communes gold** — **Bras-Panon (97402)**, **Les Avirons (97401)**, **Le Port
