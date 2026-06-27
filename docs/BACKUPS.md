@@ -10,7 +10,72 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-Saint-Denis : homogénéisation GOLD terminée (17/17 gold sur règles courantes), 24/24 communes » (2026-06-27)
+## 🟢 Baseline courant — « post-homogénéisation TOTALE : 24/24 communes sur règles courantes (0 stale), 17 gold » (2026-06-27)
+
+Point de restauration **propre et recommandé** — **fin du chantier d'homogénéisation cascade**. Après la re-cascade
+des **2 dernières communes *stale*** (non-gold) — **La Plaine-des-Palmistes (97406)** + **Sainte-Rose (97419)** —
+**les 24/24 communes sont désormais sur le code courant `fb6a5478b2bf`** (Étape A) : **0 parcelle sur les anciennes
+règles `2b45db742f40`**. Re-cascade **seule** (`labuse evaluate --commune`), **sans ré-import, sans changement de
+code / config / scoring / seuil 65 / Étape B**, **aucun passage gold**. La base reste **24/24 communes** et **17
+gold**. Opportunités globales **9 102 → 9 103** (net **+1**, Sainte-Rose ; La Plaine net-neutre, assainissement pur).
+État figé : `main` à `6bf99a5`. **Aucun changement scoring / seuil 65 / config gold.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-homogenisation-totale-17gold-24communes-20260627-140309.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-homogenisation-totale-17gold-24communes-20260627-140309.dump` |
+| **Date / heure** | **2026-06-27 14:03:09 UTC** |
+| **Taille** | **1189 Mo** (1 189 215 596 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `8ea559d419d8a695ee700234747c155f6e87f2cfda0fab5e47f2a3a622afc626` |
+| **Sidecar** | `…-140309.dump.sha256` |
+
+### Contenu du baseline (post-homogénéisation totale, 24 communes / 17 gold)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`6bf99a5`** (`docs: merge non-gold stale homogenization report (24/24 done)`) — scoring **inchangé** (rules `fb6a5478b2bf`) ; re-cascade DB + rapport docs-only |
+| Communes en base | **24 / 24** · Parcelles **431 663** · **gold 17** (aucun passage gold) |
+| **Homogénéisation** | ✅ **TOTALE — 24/24 communes sur `fb6a5478b2bf`, 0 parcelle *stale*** |
+| Opportunités globales | **9 103** (post-Saint-Denis : 9 102 ; **+1** via Sainte-Rose) |
+| **La Plaine-des-Palmistes (re-cascadée)** | 6 450 parc. · opp **0→0** · compl **80,7→80,7** · **PPR faible 0→322** · assainissement **732 `à creuser`→fpp** · 0 gain · 0 perte (100 % PPR fort) |
+| **Sainte-Rose (re-cascadée)** | 6 287 parc. · opp **8→9 (+1 Étape A)** · compl **79,5→79,5** · **PPR faible 0→500** · 0 perte |
+| Non-gold (7, inchangées) | Saint-Leu · Saint-Philippe · La Plaine-des-Palmistes · Les Trois-Bassins · Sainte-Rose · Salazie · Cilaos |
+
+> **Fin du chantier d'homogénéisation** : 6 communes re-cascadées au total au code courant (Le Port en batch 3 ;
+> canaris Les Trois-Bassins + Saint-André ; Saint-Denis ; puis les 2 non-gold La Plaine-des-Palmistes + Sainte-Rose).
+> **24/24 communes désormais homogènes** (`fb6a5478b2bf`, 0 stale). **Enseignement global** : la re-cascade des
+> communes *stale* est un travail de **cohérence/qualité, pas de découverte d'opportunités** (rendement net cumulé
+> quasi nul, voire négatif via l'assainissement de Saint-Denis −14) ; **0 perte imputable au flag marginal** sur les
+> 6 ; la dérive de complétude de Le Port (+157) reste **un événement LOCAL**, non systémique. Détails :
+> `docs/communes/PPR_STEP_A_NONGOLD_STALE.md` (+ rapports canaris / Saint-Denis). **Aucun backup pré-run**
+> (rollback = post-saint-denis).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK (rc=0) — **175 entrées TOC** (+ 15 lignes d'en-tête `;` = 190 lignes) ; tables
+  `parcels`, `parcel_evaluations`, `cascade_results`, `spatial_layers`, `dvf_mutations`, `bilan_params` présentes
+  (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-140309.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs (lecture seule) : `main=6bf99a5` (= `origin/main`), working tree clean, **24 communes / 431 663
+  parcelles**, **17 gold**, **0 parcelle stale**, opp globales **9 103**. **Aucun changement scoring / seuil 65 / config gold.**
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-homogenisation-totale-17gold-24communes-20260627-140309.dump.sha256
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-homogenisation-totale-17gold-24communes-20260627-140309.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=24 parcels=431663 (gold = 17)
+```
+
+---
+
+## Baseline précédent — « post-Saint-Denis : homogénéisation GOLD terminée (17/17 gold sur règles courantes), 24/24 communes » (2026-06-27)
 
 Point de restauration **propre et recommandé** après la re-cascade de **Saint-Denis (97411)** — **dernière commune
 gold *stale*** — qui **clôt l'homogénéisation des 17 communes gold** sur le code courant `fb6a5478b2bf` (avec Étape
