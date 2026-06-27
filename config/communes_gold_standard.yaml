@@ -218,15 +218,15 @@ communes:
     strategie: gold_valide
   - nom: Sainte-Rose
     insee: "97419"
-    etat: absent
-    parcelles_en_base: 0
+    etat: partiel_evalue    # importée + 100% évaluée (homogénéisation 24/24, règles fb6a5478b2bf, 2026-06-27) — non-gold
+    parcelles_en_base: 6287
     sections: null
-    eval_pct: null
+    eval_pct: 100
     attendu: a_verifier
     priorite: basse
     vague: 5
     risque: moyen           # volcan / coulées
-    strategie: import_complet
+    strategie: re_couches_re_cascade
 
   # ── Vague 6 — ATYPIQUES / RELIEF (en dernier) ────────────────────────────────
   - nom: Entre-Deux
@@ -264,34 +264,34 @@ communes:
     strategie: re_couches_re_cascade
   - nom: Les Trois-Bassins
     insee: "97423"
-    etat: absent
-    parcelles_en_base: 0
+    etat: partiel_evalue    # importée + 100% évaluée (homogénéisation 24/24, règles fb6a5478b2bf, 2026-06-27) — non-gold
+    parcelles_en_base: 5314
     sections: null
-    eval_pct: null
+    eval_pct: 100
     attendu: a_verifier
     priorite: basse
     vague: 6
     risque: faible
-    strategie: import_complet
+    strategie: re_couches_re_cascade
   - nom: Salazie
     insee: "97421"
-    etat: absent
-    parcelles_en_base: 0
+    etat: partiel_evalue    # importée + 100% évaluée (homogénéisation 24/24, règles fb6a5478b2bf, 2026-06-27) — non-gold
+    parcelles_en_base: 7035
     sections: null
-    eval_pct: null
+    eval_pct: 100
     attendu: a_verifier
     priorite: basse
     vague: 6
     risque: eleve           # cirque : relief extrême, urbanisme atypique
-    strategie: attendre
+    strategie: re_couches_re_cascade
   - nom: Cilaos
     insee: "97424"
-    etat: absent
-    parcelles_en_base: 0
+    etat: partiel_evalue    # importée + 100% évaluée (homogénéisation 24/24, règles fb6a5478b2bf, 2026-06-27) — non-gold
+    parcelles_en_base: 6560
     sections: null
-    eval_pct: null
+    eval_pct: 100
     attendu: a_verifier
     priorite: basse
     vague: 6
     risque: eleve           # cirque : relief extrême, urbanisme atypique
-    strategie: attendre
+    strategie: re_couches_re_cascade
