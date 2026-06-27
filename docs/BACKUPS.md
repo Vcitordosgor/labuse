@@ -10,7 +10,71 @@ Format : `pg_dump -Fc` (custom, compressé). Restauration via `labuse restore-db
 
 ---
 
-## 🟢 Baseline courant — « post-canaris homogénéisation : Les Trois-Bassins + Saint-André re-cascadées, 24/24 communes, 17 gold » (2026-06-27)
+## 🟢 Baseline courant — « post-Saint-Denis : homogénéisation GOLD terminée (17/17 gold sur règles courantes), 24/24 communes » (2026-06-27)
+
+Point de restauration **propre et recommandé** après la re-cascade de **Saint-Denis (97411)** — **dernière commune
+gold *stale*** — qui **clôt l'homogénéisation des 17 communes gold** sur le code courant `fb6a5478b2bf` (avec Étape
+A). Re-cascade **seule** (`labuse evaluate --commune`), **sans ré-import, sans changement de code / config / scoring /
+seuil 65 / Étape B**, **aucun passage gold**. La base reste **24/24 communes** et **17 gold**. Saint-Denis :
+opportunités **84 → 70** (net **−14**) — l'ancien code (06-21) **sur-flaguait**, le code courant **assainit 3 515
+faux positifs** (`à creuser → fpp`). Opportunités globales **9 116 → 9 102**. État figé : `main` à `6d6d522`.
+**Aucun changement scoring / seuil 65 / config gold.**
+
+| Champ | Valeur |
+|---|---|
+| **Nom** | `labuse-post-saint-denis-17gold-24communes-20260627-123447.dump` |
+| **Chemin exact** | `/var/backups/labuse/labuse-post-saint-denis-17gold-24communes-20260627-123447.dump` |
+| **Date / heure** | **2026-06-27 12:34:47 UTC** |
+| **Taille** | **1189 Mo** (1 189 115 842 octets, `pg_dump -Fc --no-owner`) |
+| **SHA-256** | `fa68c8af8aa10a3a2c34a7d3134873b6f8799f4f4350a5cb44f46ac0be429a6b` |
+| **Sidecar** | `…-123447.dump.sha256` |
+
+### Contenu du baseline (post-Saint-Denis, 24 communes / 17 gold — homogénéisation gold terminée)
+
+| Élément | Valeur |
+|---|---|
+| `main` (code) | **`6d6d522`** (`docs: merge Saint-Denis homogenization report`) — scoring **inchangé** (rules `fb6a5478b2bf`) ; re-cascade DB + rapport docs-only |
+| Communes en base | **24 / 24** · Parcelles **431 663** · **gold 17** (aucun passage gold) |
+| **Homogénéisation gold** | ✅ **TERMINÉE — 17/17 communes gold sur règles courantes `fb6a5478b2bf`** |
+| Opportunités globales | **9 102** (post-canaris : 9 116 ; **−14** via Saint-Denis, assainissement) |
+| **Saint-Denis (re-cascadée)** | 38 138 parc. · **opp 84→70 (−14)** · compl **82,7→82,6** · **PPR faible 0→1 240** · assainissement **3 515 `à creuser`→fpp** · +1 re-scoring pur · **0 gain Étape A** · 0 perte imputable au flag marginal |
+| **Encore *stale*** (règles `2b45db742f40`, NON-gold, basse priorité) | **La Plaine-des-Palmistes** (6 450) · **Sainte-Rose** (6 287) — 12 737 parc. |
+
+> **Fin du chantier d'homogénéisation gold** : 4 communes re-cascadées (Le Port en batch 3, puis canaris Les
+> Trois-Bassins + Saint-André, puis Saint-Denis). **Enseignement** : la re-cascade des communes *stale* est un travail
+> de **cohérence/qualité, pas de découverte d'opportunités** — Saint-Denis le prouve (net **−14**, assainissement de
+> 3 515 faux positifs ; **0 gain via le flag marginal Étape A** sur 1 240 déflaguées). La dérive de complétude de
+> Le Port (+157, batch 3) reste **un événement LOCAL** (couche de données), **non systémique** (complétude plate sur
+> les 3 canaris). **0 perte imputable au flag marginal** sur les 4 communes. Détails :
+> `docs/communes/PPR_STEP_A_SAINT_DENIS.md` (+ `…_CANARY_TROIS_BASSINS.md`, `…_CANARY_SAINT_ANDRE.md`). **Aucun backup
+> pré-run** (rollback = post-canaris).
+
+### Preuve d'intégrité (à la création)
+
+- ✅ **`pg_restore --list`** : OK (rc=0) — **175 entrées TOC** (+ 15 lignes d'en-tête `;` = 190 lignes) ; tables
+  `parcels`, `parcel_evaluations`, `cascade_results`, `spatial_layers`, `dvf_mutations`, `bilan_params` présentes
+  (schéma + TABLE DATA).
+- ✅ **SHA-256** généré (sidecar `…-123447.dump.sha256`), vérifié `sha256sum -c` → « …dump: OK ».
+- ✅ Vérifs (lecture seule) : `main=6d6d522` (= `origin/main`), working tree clean, **24 communes / 431 663
+  parcelles**, **17 gold**, opp globales **9 102**, Saint-Denis **70**. **Aucun changement scoring / seuil 65 / config gold.**
+
+### Restaurer ce baseline
+
+```bash
+# 1) intégrité
+cd /var/backups/labuse
+sha256sum -c labuse-post-saint-denis-17gold-24communes-20260627-123447.dump.sha256
+# 2) restauration (écrase la base de travail ; --yes saute la confirmation)
+labuse restore-db --file /var/backups/labuse/labuse-post-saint-denis-17gold-24communes-20260627-123447.dump --yes
+# 3) vérification
+PGPASSWORD=labuse psql "postgresql://labuse@localhost:5432/labuse" -tA -c \
+  "SELECT 'communes='||count(DISTINCT commune)||' parcels='||count(*) FROM parcels;"
+# attendu : communes=24 parcels=431663 (gold = 17)
+```
+
+---
+
+## Baseline précédent — « post-canaris homogénéisation : Les Trois-Bassins + Saint-André re-cascadées, 24/24 communes, 17 gold » (2026-06-27)
 
 Point de restauration **propre et recommandé** après les **2 canaris du chantier d'homogénéisation cascade** :
 re-cascade **seule** de **Les Trois-Bassins (97423)** puis **Saint-André (97409)** — 2 communes *stale* (vieilles
