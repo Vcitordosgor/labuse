@@ -1325,3 +1325,34 @@ body.view-shortlist .legend, body.view-shortlist .map-empty { display: none !imp
 .pmt-cov { font-weight: 400; font-size: 10.5px; opacity: .85; }
 .pm-exp{margin:6px 0 0;font-size:12px;color:var(--ink-soft)}
 .pm-vuemer{margin:4px 0 0;font-size:12px}.pm-vm-oui{color:#3a8fc0}.pm-vm-non{color:var(--muted)}.pm-vm-partielle{color:var(--gold-soft)}.pm-vm-note{font-size:10px;color:var(--muted)}
+
+/* ───────── Radar Mutation (Phase 2C) — potentiel de transformation, DISTINCT du verdict ───────── */
+/* Accent VIOLET volontairement distinct des couleurs de verdict (vert/orange/gris/rouge). */
+.mut-slot { margin: 12px 0; }
+.mut-card { border: 1px solid var(--line); border-left: 3px solid var(--mut, #8B7FD6); border-radius: 10px; background: var(--panel-2); padding: 12px 14px; }
+.mut-prioritaire { --mut: #8B7FD6; }
+.mut-forte { --mut: #A99BE0; }
+.mut-surveiller { --mut: var(--warn); }
+.mut-faible { --mut: var(--exclue); }
+.mut-head { display: flex; align-items: baseline; gap: 8px; }
+.mut-kicker { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; color: var(--mut, #8B7FD6); }
+.mut-level { font-size: 12px; font-weight: 600; color: var(--txt); }
+.mut-score { margin-left: auto; font-size: 22px; font-weight: 700; color: var(--mut, #8B7FD6); font-variant-numeric: tabular-nums; }
+.mut-score small { font-size: 12px; color: var(--muted); font-weight: 500; }
+.mut-sub { font-size: 12px; color: var(--muted); margin: 6px 0 8px; line-height: 1.45; }
+.mut-sub b { color: var(--txt); font-weight: 600; }
+.mut-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.mut-badge { font-size: 11px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); color: var(--gold-soft); background: var(--panel); }
+.mut-reasons { list-style: none; margin: 0 0 8px; padding: 0; }
+.mut-reasons li { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--txt); padding: 3px 0; border-bottom: 1px solid var(--line); }
+.mut-reasons li:last-child { border-bottom: 0; }
+.mut-pts { color: var(--opp-soft); font-weight: 600; font-variant-numeric: tabular-nums; }
+.mut-note { font-size: 11px; color: var(--muted); font-style: italic; margin: 0; }
+.ck-radar .radar-intro { font-size: 11px; color: var(--muted); margin: 0 0 8px; line-height: 1.4; }
+.radar-list { display: flex; flex-direction: column; gap: 6px; }
+.radar-item { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; cursor: pointer; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); padding: 7px 9px; color: var(--txt); }
+.radar-item:hover { border-color: var(--mut, #8B7FD6); background: var(--panel); }
+.radar-score { flex: 0 0 auto; width: 30px; height: 24px; display: grid; place-items: center; border-radius: 6px; font-size: 13px; font-weight: 700; color: #0B1118; background: var(--mut, #8B7FD6); font-variant-numeric: tabular-nums; }
+.radar-meta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.radar-meta b { font-size: 12px; font-variant-numeric: tabular-nums; }
+.radar-badge { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

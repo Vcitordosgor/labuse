@@ -707,6 +707,7 @@ async function openSheet(idu) {
   $("#sheet-body").innerHTML = renderFiche(f);
   wireSheetActions(idu);
   loadEnrichment(idu, f.parcel && f.parcel.centroid);   // bloc « promoteur » en arrière-plan (lazy)
+  loadMutation(idu);                                    // bloc « Radar Mutation » en arrière-plan (lazy)
 }
 
 // Jauge circulaire du score (signature) : anneau coloré par le verdict (CSS) + remplissage
@@ -1068,6 +1069,8 @@ function renderFiche(f) {
     ${renderEssentiel(f)}
 
     ${renderAiHero(f)}
+
+    <section class="mut-slot" id="mut-block"></section>
 
     <div class="acc-head"><span class="acc-head-t">Le dossier complet</span>
       <span class="acc-head-s">tout le détail, rangé — un clic pour ouvrir</span></div>
@@ -1433,6 +1436,68 @@ async function loadEnrichment(idu, centroid) {
   if (spf) spf.addEventListener("click", () => openSpfLetter(spf.dataset.idu));
 }
 let ENRICH_IDU = null;
+
+// ───────────────────────── Radar Mutation (Phase 2C — UI sobre, lecture seule) ──────────────
+// Score de POTENTIEL DE TRANSFORMATION foncière, DISTINCT du verdict d'opportunité. Bloc fiche
+// chargé en arrière-plan (GET /mutation/{idu}) + petite liste « à surveiller » (GET /mutation?…).
+// Wording prudent imposé : « potentiel à étudier », jamais « constructible »/« à acheter ».
+const MUT_LABELS = { prioritaire: "Prioritaire", forte: "Forte", surveiller: "À surveiller", faible: "Faible" };
+let MUT_IDU = null;
+
+function renderMutation(m) {
+  if (!m) return "";
+  const lvl = m.niveau || "faible";
+  const badges = (m.badges || []).map((b) => `<span class="mut-badge">${esc(b)}</span>`).join("");
+  const reasons = (m.raisons || []).filter((r) => (r.points || 0) > 0)
+    .map((r) => `<li>${esc(r.detail || r.cle)}<span class="mut-pts">+${r.points}</span></li>`).join("");
+  return `<div class="mut-card mut-${esc(lvl)}">
+    <div class="mut-head">
+      <span class="mut-kicker">Radar Mutation</span>
+      <span class="mut-level">${esc(MUT_LABELS[lvl] || lvl)}</span>
+      <span class="mut-score">${Number(m.score_mutation) || 0}<small>/100</small></span>
+    </div>
+    <p class="mut-sub"><b>Potentiel de transformation foncière à étudier</b> — score <b>distinct du verdict d'opportunité</b>. Confiance ${Number(m.confiance) || 0} (${esc(m.confiance_bande || "—")}).</p>
+    ${badges ? `<div class="mut-badges">${badges}</div>` : ""}
+    ${reasons ? `<ul class="mut-reasons">${reasons}</ul>` : ""}
+    <p class="mut-note">${esc((m.limites || [])[0] || "Potentiel à étudier — rien n'est garanti.")}</p>
+  </div>`;
+}
+
+async function loadMutation(idu) {
+  const slot = $("#mut-block");
+  if (!slot) return;
+  MUT_IDU = idu;
+  let m;
+  try {
+    const r = await fetch(`/mutation/${encodeURIComponent(idu)}`);
+    if (!r.ok) throw new Error(String(r.status));
+    m = (await r.json()).mutation;
+  } catch { if (MUT_IDU === idu) slot.innerHTML = ""; return; }   // 404/erreur → masqué, jamais de fiche cassée
+  if (MUT_IDU !== idu) return;                                     // garde anti-course (dernière fiche ouverte gagne)
+  slot.innerHTML = renderMutation(m);
+}
+
+function renderRadarList(parcels) {
+  if (!parcels || !parcels.length) return `<div class="muted-sm">Aucune parcelle à fort potentiel détectée.</div>`;
+  return parcels.map((p) => `<button type="button" class="radar-item" data-idu="${esc(p.idu)}" title="Ouvrir la fiche">
+    <span class="radar-score mut-${esc(p.niveau)}">${Number(p.score_mutation) || 0}</span>
+    <span class="radar-meta"><b>${esc(p.idu)}</b><span class="radar-badge">${esc((p.badges || [])[0] || "potentiel à étudier")}</span></span>
+  </button>`).join("");
+}
+
+async function loadRadarTop() {
+  const box = $("#radar-list");
+  if (!box) return;
+  let data;
+  try {
+    const r = await fetch(`/mutation?commune=${encodeURIComponent(COMMUNE)}&niveau=prioritaire&limit=8`);
+    if (!r.ok) throw new Error(String(r.status));
+    data = await r.json();
+  } catch { box.innerHTML = `<div class="muted-sm">—</div>`; return; }
+  box.innerHTML = renderRadarList(data.parcels);
+  const cnt = $("#radar-count"); if (cnt) cnt.textContent = String(data.count || 0);
+  box.querySelectorAll(".radar-item").forEach((el) => el.addEventListener("click", () => focusParcel(el.dataset.idu)));
+}
 
 // Lot C3 — ouvre le courrier SPF pré-rempli dans un nouvel onglet (texte brut, imprimable).
 function openSpfLetter(idu) {
@@ -2696,7 +2761,7 @@ async function main() {
   initMap();
   // Chargements initiaux INDÉPENDANTS en parallèle (chacun gère déjà son échec) →
   // moins de latence au premier rendu qu'une chaîne de 5 await séquentiels.
-  await Promise.all([loadStats(), loadCoverage(), loadVeille(), loadMeta(), fetchPipeline(), loadAssistantStatus()]);
+  await Promise.all([loadStats(), loadCoverage(), loadVeille(), loadMeta(), fetchPipeline(), loadAssistantStatus(), loadRadarTop()]);
   updateDemoCount();
   // La carte est le cœur de la démo : si le geojson échoue (réseau), on ne laisse jamais
   // un écran mort silencieux — message lisible + filtres encore utilisables au retour.
