@@ -36,7 +36,7 @@ changement scoring / seuil 65 / PPR Étape B / config gold.**
 
 | Élément | Valeur |
 |---|---|
-| `main` (code) | **`88e0b85`** (`docs: merge PPR step A batch 3 report`) — scoring **inchangé** (rules `2b45db742f40`) ; batch = docs-only + re-cascade DB |
+| `main` (code) | **`88e0b85`** (`docs: merge PPR step A batch 3 report`) — scoring **inchangé** (rules `fb6a5478b2bf`) ; batch = docs-only + re-cascade DB |
 | Communes en base | **24 / 24** |
 | Parcelles | **431 663** |
 | Communes **gold** (17) | inchangées — les **6 communes du batch restent gold** (re-cascade, pas de re-passage gold) |
