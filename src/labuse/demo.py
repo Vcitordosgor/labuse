@@ -20,12 +20,13 @@ DEMO_PARCELS = [
      "role": "Parcelle VITRINE — opportunité VACANTE (0 % bâti, vérifiée à l'orthophoto)",
      "montre": "opp ~74, 9723 m² NUS avec accès voirie ; prix de marché FIABLE ~5310 €/m² (14 ventes) ; CA indicatif ~32-35 M€",
      "vigilance": "« vérifiée » = sur couches dispo ; bilan = simulation indicative"},
-    {"idu": "97415000BV0912", "attendu": "a_creuser",
-     "role": "À creuser — EMPLACEMENT RÉSERVÉ (ER 81) + accès à vérifier (affiné par l'import complet LOT 2)",
-     "montre": "score brut 64 mais 2 SOFT_FLAG révélés par la donnée commune COMPLÈTE : « ER 81 - aménagement "
-               "du chemin de la Cigale » (prescription PLU) et « accès non identifié — voirie la plus proche "
-               "à ~93 m » → rétrogradée honnêtement en « à creuser », pas vendue comme opportunité",
-     "vigilance": "ER réservé + accès à confirmer ; l'import complet a AFFINÉ le verdict (donnée plus complète), pas triché"},
+    {"idu": "97415000HP0390", "attendu": "a_creuser",
+     "role": "À creuser — EMPLACEMENT RÉSERVÉ (ER 39) + accès à vérifier + surface limite",
+     "montre": "score 63 en zone U (constructible) mais 3 SOFT_FLAG honnêtes : « ER 39 - Aménagement du chemin "
+               "Bien-Aimé » (prescription PLU), « pas d'accès direct évident à la voirie » et « surface 397 m² "
+               "sous le seuil de valorisation (400 m²) » → rétrogradée honnêtement en « à creuser », pas vendue "
+               "comme opportunité",
+     "vigilance": "ER réservé + accès à confirmer + surface limite ; LA BUSE signale les contraintes, ne survend pas"},
     {"idu": "97415000BP0571", "attendu": "faux_positif_probable",
      "role": "RÉSIDENCE EXISTANTE détectée — correctif « déjà bâti » (ex-fausse vitrine)",
      "montre": "score brut 77 MAIS « ensemble bâti : 4 bâtiments couvrant 18 % (BD TOPO) » → faux positif. "
@@ -34,8 +35,12 @@ DEMO_PARCELS = [
     {"idu": "97415000BN1351", "attendu": "a_creuser", "role": "À creuser — PÉRIMÈTRE PPR (inondation + mvt)",
      "montre": "le PPR rétrograde l'opportunité en « à creuser » + bilan affiché",
      "vigilance": "PPR = prescriptions à vérifier, PAS une exclusion"},
-    {"idu": "97415000BH0283", "attendu": "a_creuser", "role": "SAR compatible (espace urbanisé à densifier)",
-     "montre": "vocation SAR compatible — à croiser avec PLU/PPR", "vigilance": "compatibilité ≠ constructibilité"},
+    {"idu": "97415000DH0145", "attendu": "a_creuser",
+     "role": "À creuser — SAR compatible + zone AUc MAIS PPR fort (compatible ≠ constructible)",
+     "montre": "tout dit « go » (SAR « vocation compatible — espace urbanisé à densifier », zone AUc "
+               "constructible, surface utile 706 m², marché fort ~2 087 €/m²) SAUF le risque réel : « PPR fort "
+               "inondation + mouvement de terrain (~33 %) » + accès non identifié (~18 m) → à creuser",
+     "vigilance": "parcelle tentante mais risque fort réel ; compatibilité SAR/zonage ne vaut pas constructibilité automatique"},
     {"idu": "97415000BO0845", "attendu": "faux_positif_probable", "role": "Faux positif PARKING déclassé",
      "montre": "score brut ~82 mais « faux positif probable » + motif « parking sur 82 % (OSM) »",
      "vigilance": "le score brut reste affiché (transparence)"},
