@@ -9,7 +9,7 @@ window.fetch = async (...args) => {
 };
 let COMMUNE = "Saint-Paul";          // commune COURANTE (currentCommune) — pilotée par le sélecteur (#commune-card)
 let COMMUNES = [];                    // catalogue des 24 communes (/communes/status) : {commune, insee, etat, label, …}
-const COLORS = { opportunite: "#2DBE87", a_creuser: "#C88422", exclue: "#7C8694", faux_positif_probable: "#D76055", inconnu: "#9BA3AF" };
+const COLORS = { opportunite: "#2DBE87", a_creuser: "#E59A3C", exclue: "#7C8694", faux_positif_probable: "#D76055", inconnu: "#9BA3AF" };
 const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue", faux_positif_probable: "Écartée" };
 const VERDICT_GLOSS = {
   opportunite: "Foncier a priori mobilisable — reste à confirmer sur le terrain.",
@@ -332,7 +332,7 @@ function styleFor(p) {
   switch (p.status) {
     case "opportunite":            return { color: "#86EFCC", weight: 2.2, fillColor: "#2DBE87", fillOpacity: 0.86, opacity: 1 };
     case "faux_positif_probable":  return { color: c, weight: 0.6, fillColor: c, fillOpacity: 0.3, opacity: 0.6 };
-    case "a_creuser":              return { color: c, weight: 0.4, fillColor: c, fillOpacity: 0.18, opacity: 0.42 };
+    case "a_creuser":              return { color: c, weight: 0.9, fillColor: c, fillOpacity: 0.34, opacity: 0.75 };
     case "exclue":                 return { color: c, weight: 0.4, fillColor: c, fillOpacity: 0.14, opacity: 0.34 };
     default:                       return { color: c, weight: 0.4, fillColor: c, fillOpacity: 0.16, opacity: 0.4 };
   }
@@ -404,6 +404,14 @@ function updateEmptyState(shown) {
     card.innerHTML = `<div class="me-title">Radar en préparation</div>
       <div class="me-sub">Les parcelles de la commune se chargent, ou la base finalise sa préparation. Réessayez dans un instant.</div>
       <button class="me-reset js-reload" type="button">↻ Recharger</button>`;
+  } else if (!FEATURES.some((ft) => { const s = ft.properties.status; return s && s !== "inconnu"; })) {
+    // Aucune parcelle ÉVALUÉE → ce n'est PAS un problème de filtres (commune non encore analysée).
+    // On l'explique clairement et on oriente vers une commune validée, sans CTA filtres inopérant.
+    card.innerHTML = `<div class="me-title">Commune non encore évaluée</div>
+      <div class="me-sub">Les ${fmt(FEATURES.length)} parcelles de cette commune n'ont pas encore été analysées
+        au standard LA BUSE — le recalcul est prévu. Choisissez une commune validée (badge « Gold »)
+        pour explorer les opportunités.</div>
+      <button class="me-reset js-pick-commune" type="button">Choisir une commune</button>`;
   } else {
     card.innerHTML = `<div class="me-title">Aucune parcelle ne correspond</div>
       <div class="me-sub">Vos filtres masquent les ${fmt(FEATURES.length)} parcelles de la commune.</div>
@@ -1075,9 +1083,11 @@ function renderFiche(f) {
 
     ${renderEssentiel(f)}
 
-    ${renderAiHero(f)}
-
+    <!-- #3 — Radar Mutation remonté juste sous l'essentiel verdict → bloc décisionnel en tête
+         (verdict + score dans l'essentiel, Radar ici, contrainte/action dans l'essentiel). -->
     <section class="mut-slot" id="mut-block"></section>
+
+    ${renderAiHero(f)}
 
     <div class="acc-head"><span class="acc-head-t">Le dossier complet</span>
       <span class="acc-head-s">tout le détail, rangé — un clic pour ouvrir</span></div>
@@ -1819,8 +1829,8 @@ function renderAssistant(idu, rules) {
   if (!ASSISTANT_OK) {
     return `<section class="assistant">
       ${rulesHtml}
-      <p class="ai-activate"><span class="ai-ic">✨</span> <b>Analyse IA enrichie</b> disponible sur activation
-        (clé API côté serveur). La synthèse ci-dessus est dérivée des <b>seules données de la fiche</b> — jamais d'invention.</p>
+      <p class="ai-activate"><span class="ai-ic">✨</span> <b>Analyse IA enrichie</b> disponible sur demande
+        (analyse assistée sécurisée). La synthèse ci-dessus est dérivée des <b>seules données de la fiche</b> — jamais d'invention.</p>
     </section>`;
   }
   return `<section class="assistant">
@@ -2959,6 +2969,11 @@ async function main() {
     if (e.target.closest(".js-showall")) showAllParcels();
     else if (e.target.closest(".js-reload")) location.reload();
     else if (e.target.closest(".js-reset")) resetFilters();
+    else if (e.target.closest(".js-pick-commune")) {                 // commune non évaluée → ouvrir le sélecteur
+      if (isMobile()) setView("list");
+      const card = $("#commune-card"); if (card) card.scrollIntoView({ block: "nearest" });
+      toggleCommuneMenu();
+    }
   });
   setSliderBounds();                              // P3 : curseurs bornés à la plage réelle
   applyFilters();
