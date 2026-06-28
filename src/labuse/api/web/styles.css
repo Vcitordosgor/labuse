@@ -95,8 +95,8 @@ body {
 .ck-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; margin-bottom: 9px; }
 
 /* ═══ 2 · Actions rapides ═══ */
-.qa-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.qa { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; padding: 11px 12px; min-height: 66px;
+.qa-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }   /* #4 — 1 rangée compacte → shortlist remonte */
+.qa { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 9px 10px; min-height: 56px;
   background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius-control, 8px);
   color: var(--txt); font: inherit; cursor: pointer; text-align: left;
   transition: border-color .12s, background .12s, transform .06s; }
@@ -963,6 +963,7 @@ body.view-shortlist .legend, body.view-shortlist .map-empty { display: none !imp
   .mt-demo { background: var(--panel-2); border: 1px dashed var(--line); color: var(--gold-soft);
     border-radius: 9px; padding: 7px 10px; font-size: 15px; cursor: pointer; margin-left: 8px; }
   .mt-demo:active { border-color: var(--gold); }
+  .qa-grid { grid-template-columns: 1fr 1fr; }   /* #4 — 2 colonnes sur mobile (3 trop serré) */
 
   /* sidebar et carte : plein écran sous les onglets, l'un OU l'autre */
   #sidebar, #map { position: fixed; inset: 52px 0 0 0; width: 100%; height: auto; }
