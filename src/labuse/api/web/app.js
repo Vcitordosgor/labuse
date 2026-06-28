@@ -7,7 +7,8 @@ window.fetch = async (...args) => {
   if (r.status === 401) { window.location.href = "/login"; throw new Error("session expirée"); }
   return r;
 };
-const COMMUNE = "Saint-Paul";
+let COMMUNE = "Saint-Paul";          // commune COURANTE (currentCommune) — pilotée par le sélecteur (#commune-card)
+let COMMUNES = [];                    // catalogue des 24 communes (/communes/status) : {commune, insee, etat, label, …}
 const COLORS = { opportunite: "#2DBE87", a_creuser: "#C88422", exclue: "#7C8694", faux_positif_probable: "#D76055", inconnu: "#9BA3AF" };
 const STATUS_LABEL = { opportunite: "Opportunité", a_creuser: "À creuser", exclue: "Exclue", faux_positif_probable: "Écartée" };
 const VERDICT_GLOSS = {
@@ -2826,6 +2827,99 @@ async function finishDraw(e) {
   if (DRAW_LAYER) { map.removeLayer(DRAW_LAYER); DRAW_LAYER = null; }
 }
 
+// ───────────────────────── Multi-commune (sélecteur + bascule) ─────────────────────────
+// Rend l'app dépendante de la commune COURANTE. Le catalogue vient de /communes/status
+// (lecture seule). Changer de commune RECHARGE proprement toutes les briques scoping-commune
+// (stats, carte, Radar sidebar+calque, permis, veille, fiche) en PURGEANT l'état précédent
+// — aucun résultat d'une autre commune ne doit subsister.
+async function loadCommunes() {
+  try { COMMUNES = (await (await fetch("/communes/status")).json()).communes || []; }
+  catch { COMMUNES = []; }
+  buildCommuneMenu();
+  updateCommuneHeader();
+}
+function communeMeta(name) { return COMMUNES.find((c) => c.commune === name) || null; }
+function communeKind(etat) { return etat === "gold" ? "gold" : etat === "partiel_evalue" ? "partiel" : "nonval"; }
+function communeBadge(m) {
+  if (!m) return "";
+  const k = communeKind(m.etat);
+  const t = k === "gold" ? "Gold" : k === "partiel" ? "Partielle" : "Non évaluée";
+  return `<span class="commune-badge cb-${k}" title="${esc(m.label || "")}">${t}</span>`;
+}
+function updateCommuneHeader() {
+  const m = communeMeta(COMMUNE), lbl = $("#commune-label");
+  if (lbl) lbl.innerHTML = `${esc(COMMUNE)}${m ? ` (${esc(m.insee)})` : ""} ${communeBadge(m)}`;
+}
+function buildCommuneMenu() {
+  const menu = $("#commune-menu"); if (!menu) return;
+  // Gold d'abord, puis partielles ; tri alphabétique dans chaque groupe.
+  const sorted = [...COMMUNES].sort((a, b) =>
+    ((a.etat === "gold" ? 0 : 1) - (b.etat === "gold" ? 0 : 1)) || a.commune.localeCompare(b.commune, "fr"));
+  menu.innerHTML = sorted.map((c) => `<button type="button" role="option" class="commune-opt${c.commune === COMMUNE ? " active" : ""}" data-commune="${esc(c.commune)}">
+    <span class="co-dot co-${communeKind(c.etat)}"></span>
+    <span class="co-name">${esc(c.commune)}</span><span class="co-insee">${esc(c.insee)}</span></button>`).join("");
+  menu.querySelectorAll(".commune-opt").forEach((b) =>
+    b.addEventListener("click", (e) => { e.stopPropagation(); closeCommuneMenu(); switchCommune(b.dataset.commune); }));
+}
+function toggleCommuneMenu() {
+  const m = $("#commune-menu"), card = $("#commune-card"); if (!m) return;
+  const open = m.classList.toggle("hidden") === false;
+  if (card) card.setAttribute("aria-expanded", String(open));
+}
+function closeCommuneMenu() {
+  const m = $("#commune-menu"), card = $("#commune-card");
+  if (m) m.classList.add("hidden");
+  if (card) card.setAttribute("aria-expanded", "false");
+}
+
+let COMMUNE_BUSY = false;
+async function switchCommune(name) {
+  if (!name || name === COMMUNE || COMMUNE_BUSY) return;
+  COMMUNE_BUSY = true;
+  COMMUNE = name;
+  updateCommuneHeader();
+  buildCommuneMenu();                                  // met à jour l'option active
+  const vc = $("#visible-count"); if (vc) vc.textContent = "chargement…";
+  // — PURGE de l'état de la commune précédente (jamais de données obsolètes) —
+  closeSheet();
+  DATA_READY = false;
+  for (const k in byIdu) delete byIdu[k];
+  if (layer) { layer.remove(); layer = null; }
+  if (RADAR_LAYER) RADAR_LAYER.clearLayers();
+  RADAR_LOADED = false; showRadarLegend(false);
+  if (PERMITS_LAYER) PERMITS_LAYER.clearLayers();
+  BATI_RATIOS = null;                                  // cache mutabilité (rechargé à la demande)
+  FEATURES = [];
+  // — RECHARGEMENT des briques scoping-commune —
+  loadStats(); loadRadarTop(); loadVeille();
+  let fc = { features: [] };
+  try { fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json(); }
+  catch { showMapError(); }
+  FEATURES = fc.features || [];
+  reconcileKpisFromFeatures();
+  DATA_READY = true;
+  setSliderBounds();
+  applyFilters();
+  if (map && FEATURES.length && layer) map.fitBounds(layer.getBounds(), { maxZoom: 15 });
+  if (map) setTimeout(() => map.invalidateSize(), 80);
+  loadPermitMarkers();
+  if (MAP_MODE === "mutabilite") setMapMode("mutabilite");        // recharge le bâti de la nouvelle commune
+  if (map && RADAR_LAYER && map.hasLayer(RADAR_LAYER)) { showRadarLegend(true); loadRadarLayer(); }  // calque actif → recharge
+  if (document.body.classList.contains("view-shortlist")) loadShortlist();
+  COMMUNE_BUSY = false;
+}
+
+function wireCommuneSelector() {
+  const card = $("#commune-card"); if (!card) return;
+  card.setAttribute("role", "button");
+  card.setAttribute("aria-haspopup", "listbox");
+  card.setAttribute("aria-expanded", "false");
+  card.addEventListener("click", (e) => { e.stopPropagation(); toggleCommuneMenu(); });
+  card.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleCommuneMenu(); } });
+  document.addEventListener("click", (e) => { if (!e.target.closest("#commune-card") && !e.target.closest("#commune-menu")) closeCommuneMenu(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCommuneMenu(); });
+}
+
 // ───────────────────────── Bootstrap ─────────────────────────
 async function main() {
   window.addEventListener("beforeprint", expandCascadeForPrint);
@@ -2833,7 +2927,8 @@ async function main() {
   // Chargements initiaux INDÉPENDANTS en parallèle (chacun gère déjà son échec) →
   // moins de latence au premier rendu qu'une chaîne de 5 await séquentiels.
   wireRadarFilter();
-  await Promise.all([loadStats(), loadCoverage(), loadVeille(), loadMeta(), fetchPipeline(), loadAssistantStatus(), loadRadarTop()]);
+  wireCommuneSelector();
+  await Promise.all([loadStats(), loadCoverage(), loadVeille(), loadMeta(), fetchPipeline(), loadAssistantStatus(), loadRadarTop(), loadCommunes()]);
   updateDemoCount();
   // La carte est le cœur de la démo : si le geojson échoue (réseau), on ne laisse jamais
   // un écran mort silencieux — message lisible + filtres encore utilisables au retour.

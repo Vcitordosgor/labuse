@@ -40,13 +40,15 @@
           <div class="brand-sub">Radar foncier · La Réunion</div>
         </div>
       </div>
-      <div class="ck-commune" id="commune-card" title="Commune analysée">
+      <div class="ck-commune" id="commune-card" title="Changer de commune" tabindex="0">
         <svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 17.5s5-4.6 5-9.2a5 5 0 0 0-10 0c0 4.6 5 9.2 5 9.2z"/><circle cx="10" cy="8" r="1.9"/></svg>
         <span class="ck-commune-tx">
           <b id="commune-label">Saint-Paul (97415)</b>
           <span class="ck-commune-sub"><i class="dot opportunite"></i><span id="visible-count">— parcelles visibles</span></span>
         </span>
         <svg class="ic ck-chev-d" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 8l5 5 5-5"/></svg>
+        <!-- Sélecteur de commune (24 communes) — peuplé par JS depuis /communes/status -->
+        <div class="commune-menu hidden" id="commune-menu" role="listbox" aria-label="Choisir une commune"></div>
       </div>
     </header>
 
