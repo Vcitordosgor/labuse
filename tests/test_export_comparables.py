@@ -64,3 +64,16 @@ def test_export_skips_block_when_no_bilan():
     assert "Comparables de prix utilisés" not in md
     h = fiche_html(_fiche(None, {}, fiable=False))
     assert "Comparables de prix utilisés" not in h
+
+
+def test_html_echappe_les_injections():
+    """#8 — fiche_html ÉCHAPPE toute valeur injectée (idu, commune, disclaimer) : pas d'injection HTML/JS."""
+    f = _fiche(None, {}, fiable=False)
+    f["parcel"]["idu"] = "<script>alert(1)</script>"
+    f["parcel"]["commune"] = "<img src=x onerror=alert(2)>"
+    f["disclaimer"] = "<b>boom</b>"
+    h = fiche_html(f)
+    assert "<script>alert(1)</script>" not in h            # payload brut jamais présent
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in h    # … mais échappé
+    assert "<img src=x onerror=alert(2)>" not in h
+    assert "<b>boom</b>" not in h and "&lt;b&gt;boom&lt;/b&gt;" in h

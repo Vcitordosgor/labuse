@@ -20,25 +20,42 @@ import time
 from dataclasses import dataclass
 from typing import Optional
 
-# ── Pondérations & seuils V1 — PLACEHOLDER, à caler terrain (cf. spec §3/§4) ──────────────
-W_SOUS_EXPLOITATION = 30
-W_INTENSITE_LATENTE = 25
-W_ZONAGE_FAVORABLE = 15
-W_POTENTIEL_REGIONAL = 15
-W_MARCHE_ACTIF = 10
-W_FONCIER_ACQUERABLE = 8
-MALUS_CONTRAINTE_FORTE = 15
+from .numeric import clamp
 
-SEUIL_PRIORITAIRE = 70
-SEUIL_FORTE = 55
-SEUIL_SURVEILLER = 40
-CONFIANCE_FLOOR = 50            # règle d'or : sous ce seuil, jamais « prioritaire »/« forte »
+# ── Pondérations & seuils V1 — PLACEHOLDER, à caler terrain (cf. spec §3/§4) ──────────────
+# Externalisés dans config/mutation_weights.yaml (safe-bugfix #10). Les valeurs ci-dessous
+# restent les DÉFAUTS de référence : un YAML absent/incomplet ne change RIEN au scoring.
+def _load_mutation_weights() -> dict:
+    try:
+        from .config import load_yaml_config
+        return load_yaml_config("mutation_weights") or {}
+    except Exception:
+        return {}   # fichier absent / illisible → on garde les défauts codés (valeurs V1)
+
+
+_W = _load_mutation_weights()
+_P = _W.get("poids") if isinstance(_W.get("poids"), dict) else {}
+_S = _W.get("seuils") if isinstance(_W.get("seuils"), dict) else {}
+_SURF = _W.get("surface") if isinstance(_W.get("surface"), dict) else {}
+
+W_SOUS_EXPLOITATION = int(_P.get("sous_exploitation", 30))
+W_INTENSITE_LATENTE = int(_P.get("intensite_latente", 25))
+W_ZONAGE_FAVORABLE = int(_P.get("zonage_favorable", 15))
+W_POTENTIEL_REGIONAL = int(_P.get("potentiel_regional", 15))
+W_MARCHE_ACTIF = int(_P.get("marche_actif", 10))
+W_FONCIER_ACQUERABLE = int(_P.get("foncier_acquerable", 8))
+MALUS_CONTRAINTE_FORTE = int(_W.get("malus_contrainte_forte", 15))
+
+SEUIL_PRIORITAIRE = int(_S.get("prioritaire", 70))
+SEUIL_FORTE = int(_S.get("forte", 55))
+SEUIL_SURVEILLER = int(_S.get("surveiller", 40))
+CONFIANCE_FLOOR = int(_W.get("confiance_floor", 50))   # règle d'or : sous ce seuil, jamais « prioritaire »/« forte »
 
 NIVEAUX = ("prioritaire", "forte", "surveiller", "faible")   # niveaux possibles (rang décroissant)
 
-SURFACE_PLANCHER_M2 = 500.0     # en deçà : aucun bonus surface
-SURFACE_SATURATION_M2 = 5000.0  # courbe saturante (une parcelle géante ne gagne pas mécaniquement)
-BATI_PLAFOND = 0.30            # ≥ 30 % bâti : plus de sous-exploitation
+SURFACE_PLANCHER_M2 = float(_SURF.get("plancher_m2", 500.0))      # en deçà : aucun bonus surface
+SURFACE_SATURATION_M2 = float(_SURF.get("saturation_m2", 5000.0))  # courbe saturante
+BATI_PLAFOND = float(_W.get("bati_plafond", 0.30))             # ≥ 30 % bâti : plus de sous-exploitation
 
 AVERTISSEMENT = "Potentiel de mutation à étudier — ni constructibilité ni vente garanties."
 
@@ -58,16 +75,12 @@ class MutationFeatures:
     contrainte_forte: bool = False       # PPR fort / pente forte
 
 
-def _clamp(x: float, lo: float, hi: float) -> float:
-    return max(lo, min(hi, x))
-
-
 def _sous_exploitation(surface_m2: float, bati_ratio: Optional[float]):
     """Grand terrain peu bâti → potentiel de restructuration. Courbe saturante × (1 − bâti)."""
     if bati_ratio is None:
         return 0, None, "occupation non vérifiée (couche bâti absente)"   # jamais un faux « vacant »
-    surf_f = _clamp((surface_m2 - SURFACE_PLANCHER_M2) / (SURFACE_SATURATION_M2 - SURFACE_PLANCHER_M2), 0.0, 1.0)
-    bati_f = _clamp(1.0 - (bati_ratio / BATI_PLAFOND), 0.0, 1.0)
+    surf_f = clamp((surface_m2 - SURFACE_PLANCHER_M2) / (SURFACE_SATURATION_M2 - SURFACE_PLANCHER_M2), 0.0, 1.0)
+    bati_f = clamp(1.0 - (bati_ratio / BATI_PLAFOND), 0.0, 1.0)
     pts = round(W_SOUS_EXPLOITATION * surf_f * bati_f)
     if pts <= 0:
         return 0, None, None
@@ -124,8 +137,8 @@ def compute_mutation_score(f: MutationFeatures) -> dict:
                         "detail": "PPR fort / pente forte — vigilance, à confirmer"})
         badges.append("Vigilance contrainte forte")
 
-    score = int(_clamp(base - malus, 0, 100))
-    confiance = int(_clamp(f.completeness_score, 0, 100))
+    score = int(clamp(base - malus, 0, 100))
+    confiance = int(clamp(f.completeness_score, 0, 100))
     niveau = _niveau(score)
     # Règle d'or : données trop minces → on ne déclare jamais un fort potentiel « ferme ».
     if confiance < CONFIANCE_FLOOR and niveau in ("prioritaire", "forte"):

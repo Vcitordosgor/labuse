@@ -6,9 +6,11 @@ officielle), on n'invente pas d'indicateur.
 
 Mesures métriques en **EPSG:2975** (RGR92 UTM 40S — La Réunion) ; jamais en degrés.
 
-Lecture seule : ce module n'écrit rien et NE TOUCHE NI la cascade NI le scoring.
-Il est appelé par `_build_fiche` et chaque section est isolée (un échec réseau d'une
-section ne casse pas la fiche → pas de 500).
+NE TOUCHE NI la cascade NI le scoring NI les verdicts. ATTENTION : ce n'est PAS de la
+lecture seule au sens strict — `enrichment_cached()` ÉCRIT un CACHE (table `parcel_enrichment`,
+créée si absente) au 1ᵉʳ enrichissement d'une parcelle, puis le relit (cache-on-read). Aucune
+donnée MÉTIER (parcels / évaluations / cascade) n'est modifiée. Appelé par `_build_fiche` ;
+chaque section est isolée (un échec réseau d'une section ne casse pas la fiche → pas de 500).
 """
 from __future__ import annotations
 

@@ -1457,6 +1457,9 @@ function renderMutation(m) {
   const badges = (m.badges || []).map((b) => `<span class="mut-badge">${esc(b)}</span>`).join("");
   const reasons = (m.raisons || []).filter((r) => (r.points || 0) > 0)
     .map((r) => `<li>${esc(r.detail || r.cle)}<span class="mut-pts">+${r.points}</span></li>`).join("");
+  // #13 — afficher EXPLICITEMENT le malus (points négatifs, ex. contrainte forte) — jamais masqué
+  const malus = (m.raisons || []).filter((r) => (r.points || 0) < 0)
+    .map((r) => `<li class="mut-r-malus">${esc(r.detail || r.cle)}<span class="mut-pts mut-pts-neg">${r.points} pts</span></li>`).join("");
   return `<div class="mut-card mut-${esc(lvl)}">
     <div class="mut-head">
       <span class="mut-kicker">Radar Mutation</span>
@@ -1465,7 +1468,7 @@ function renderMutation(m) {
     </div>
     <p class="mut-sub"><b>Potentiel de transformation foncière à étudier</b> — score <b>distinct du verdict d'opportunité</b>. Confiance ${Number(m.confiance) || 0} (${esc(m.confiance_bande || "—")}).</p>
     ${badges ? `<div class="mut-badges">${badges}</div>` : ""}
-    ${reasons ? `<ul class="mut-reasons">${reasons}</ul>` : ""}
+    ${(reasons || malus) ? `<ul class="mut-reasons">${reasons}${malus}</ul>` : ""}
     <p class="mut-note">${esc((m.limites || [])[0] || "Potentiel à étudier — rien n'est garanti.")}</p>
   </div>`;
 }

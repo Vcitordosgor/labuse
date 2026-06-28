@@ -145,6 +145,18 @@ def test_stats_endpoint(client):
     assert s["opportunite"] + s["a_creuser"] + s["exclue"] <= s["total"]
 
 
+def test_parcels_list_paginated(client):
+    """#2 — /parcels est BORNÉ (limit) + structure attendue (plus de timeout : no-limit + N+1 corrigés)."""
+    r = client.get("/parcels", params={"commune": "Saint-Paul", "limit": 3})
+    assert r.status_code == 200
+    body = r.json()
+    assert isinstance(body, list) and len(body) <= 3
+    if body:
+        assert {"idu", "commune", "surface_m2", "status", "opportunity_score"} <= set(body[0])
+    assert client.get("/parcels", params={"limit": 9999}).status_code == 422   # borne dure
+    assert client.get("/parcels", params={"limit": 0}).status_code == 422
+
+
 def test_map_geojson(client):
     fc = client.get("/map/parcels.geojson", params={"commune": "Saint-Paul"}).json()
     assert fc["type"] == "FeatureCollection" and len(fc["features"]) >= 8
