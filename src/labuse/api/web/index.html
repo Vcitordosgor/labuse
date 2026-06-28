@@ -192,6 +192,10 @@
         <div class="ck-label">Radar Mutation — à surveiller <span class="ck-count" id="radar-count" title="Parcelles à fort potentiel de mutation">—</span></div>
       </div>
       <p class="radar-intro">Potentiel de transformation foncière à étudier — <b>score distinct du verdict d'opportunité</b>.</p>
+      <div class="radar-filter" id="radar-filter" role="group" aria-label="Niveau de signal">
+        <button type="button" class="radar-chip active" data-niveau="prioritaire">Prioritaire</button>
+        <button type="button" class="radar-chip" data-niveau="forte">Forte</button>
+      </div>
       <div id="radar-list" class="radar-list"><div class="muted-sm">—</div></div>
     </section>
 
@@ -232,6 +236,14 @@
     <span><i class="dot faux_positif_probable"></i> Écartée</span>
     <span><i class="dot exclue"></i> Exclue</span>
     <span><i class="dot inconnu"></i> Non évaluée</span>
+  </div>
+
+  <!-- Légende dédiée du calque Radar Mutation (affichée seulement quand le calque est actif) -->
+  <div class="legend radar-legend hidden" id="radar-legend">
+    <div class="legend-h">Radar Mutation</div>
+    <span><i class="dot" style="background:#8B7FD6"></i> Signal prioritaire</span>
+    <span><i class="dot" style="background:#A99BE0"></i> Signal fort</span>
+    <span class="lg-src" id="radar-legend-state">potentiel à étudier — distinct du verdict</span>
   </div>
 
   <!-- Shortlist promoteur — « les sujets à traiter aujourd'hui » (priorisation métier) -->

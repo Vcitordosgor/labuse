@@ -39,6 +39,7 @@ const byIdu = {};           // idu -> layer (pour highlight)
 let map;
 let PERMITS_LAYER = null;   // couche marqueurs SITADEL (Lot C4)
 let WATCH_LAYER = null, WATCH_ZONES = [];   // 3.C — zones de veille (dessinées sur la carte)
+let RADAR_LAYER = null, RADAR_LOADED = false;   // Phase 2E — calque Radar Mutation (OFF par défaut, lazy)
 let ASSISTANT_OK = false;                   // 3.A — l'assistant IA est-il configuré (clé API) ?
 let COMPARE = [];           // IDU sélectionnés pour le comparateur (Lot D2), max 3
 let COVERAGE = null;        // couverture des couches critiques (/coverage)
@@ -81,12 +82,17 @@ function initMap() {
     const h1961 = ignWmts("ORTHOIMAGERY.EDUGEO.LA-REUNION1961", histOpts);
     PERMITS_LAYER = L.layerGroup();   // marqueurs SITADEL (Lot C4), peuplés en différé
     WATCH_LAYER = L.layerGroup().addTo(map);   // 3.C — zones de veille (visibles par défaut)
+    RADAR_LAYER = L.layerGroup();   // Phase 2E — calque Radar Mutation, OFF par défaut, chargé au 1er affichage
     L.control.layers(
       { "Plan (radar)": plan, "Vue du ciel (IGN)": ortho,
         "Ciel · 2010": h2010, "Ciel · 1989": h1989, "Ciel · 1980": h1980, "Ciel · 1961": h1961 },
-      { "Permis (SITADEL)": PERMITS_LAYER, "Zones de veille": WATCH_LAYER },
+      { "Permis (SITADEL)": PERMITS_LAYER, "Zones de veille": WATCH_LAYER, "Radar Mutation (potentiel)": RADAR_LAYER },
       { position: "topright", collapsed: true }
     ).addTo(map);
+    // Calque Radar Mutation : chargé À LA DEMANDE quand l'utilisateur l'active (défaut prudent
+    // = OFF). On ne charge jamais ce calque tant qu'il n'est pas demandé → carte par défaut intacte.
+    map.on("overlayadd", (e) => { if (e.layer === RADAR_LAYER) { showRadarLegend(true); loadRadarLayer(); } });
+    map.on("overlayremove", (e) => { if (e.layer === RADAR_LAYER) showRadarLegend(false); });
     // LOT 2 — bascule de mode carte : Verdict ⇄ Mutabilité (bâti/non-bâti).
     const ModeCtl = L.Control.extend({
       options: { position: "topright" },
@@ -1486,6 +1492,8 @@ function renderRadarList(parcels) {
   </button>`).join("");
 }
 
+let RADAR_NIVEAU = "prioritaire";   // Phase 2E — niveau affiché dans la sidebar (prioritaire | forte)
+
 async function loadRadarTop() {
   const box = $("#radar-list");
   if (!box) return;
@@ -1494,13 +1502,72 @@ async function loadRadarTop() {
   box.innerHTML = `<div class="radar-loading">Analyse des parcelles à fort potentiel…</div>`;
   let data;
   try {
-    const r = await fetch(`/mutation?commune=${encodeURIComponent(COMMUNE)}&niveau=prioritaire&limit=8`);
+    const r = await fetch(`/mutation?commune=${encodeURIComponent(COMMUNE)}&niveau=${encodeURIComponent(RADAR_NIVEAU)}&limit=8`);
     if (!r.ok) throw new Error(String(r.status));
     data = await r.json();
   } catch { box.innerHTML = `<div class="radar-empty">Radar momentanément indisponible.</div>`; return; }
   box.innerHTML = renderRadarList(data.parcels);
   const cnt = $("#radar-count"); if (cnt) cnt.textContent = String(data.count || 0);
   box.querySelectorAll(".radar-item").forEach((el) => el.addEventListener("click", () => focusParcel(el.dataset.idu)));
+}
+
+// Filtres niveau de la sidebar (prioritaire | forte) — chacun mémorisé côté serveur (cache).
+function wireRadarFilter() {
+  const box = $("#radar-filter");
+  if (!box) return;
+  box.querySelectorAll(".radar-chip").forEach((chip) => chip.addEventListener("click", () => {
+    if (chip.classList.contains("active")) return;
+    box.querySelectorAll(".radar-chip").forEach((c) => c.classList.remove("active"));
+    chip.classList.add("active");
+    RADAR_NIVEAU = chip.dataset.niveau || "prioritaire";
+    loadRadarTop();
+  }));
+}
+
+// ── Calque carte Radar Mutation (Phase 2E) — overlay violet, OFF par défaut, lazy ───────────
+// Couleurs DISTINCTES des verdicts (violet) ; clic → fiche existante ; wording prudent.
+const RADAR_MAP_COLORS = { prioritaire: "#8B7FD6", forte: "#A99BE0" };
+
+function radarStyle(niveau) {
+  const c = RADAR_MAP_COLORS[niveau] || "#8B7FD6";
+  return { color: c, weight: 1.6, fillColor: c, fillOpacity: niveau === "prioritaire" ? 0.5 : 0.32, opacity: 1 };
+}
+
+function showRadarLegend(on) {
+  const el = $("#radar-legend"); if (el) el.classList.toggle("hidden", !on);
+}
+function setRadarLegendState(txt) {
+  const el = $("#radar-legend-state"); if (el) el.textContent = txt;
+}
+
+async function loadRadarLayer() {
+  if (!map || !RADAR_LAYER) return;
+  if (RADAR_LOADED) return;                       // déjà peuplé : ne re-fetch pas à chaque toggle
+  setRadarLegendState("analyse en cours…");
+  // Prioritaire + forte UNIQUEMENT (jamais surveiller/faible), bornés, en parallèle.
+  const fetchLvl = async (niveau) => {
+    try {
+      const r = await fetch(`/map/mutation.geojson?commune=${encodeURIComponent(COMMUNE)}&niveau=${niveau}&limit=80`);
+      if (!r.ok) throw new Error(String(r.status));
+      return (await r.json()).features || [];
+    } catch { return null; }
+  };
+  const [prio, forte] = await Promise.all([fetchLvl("prioritaire"), fetchLvl("forte")]);
+  if (prio === null && forte === null) { setRadarLegendState("momentanément indisponible"); return; }
+  const feats = [...(prio || []), ...(forte || [])];
+  RADAR_LAYER.clearLayers();
+  feats.forEach((ft) => {
+    if (!ft.geometry) return;
+    const niveau = (ft.properties && ft.properties.niveau) || "prioritaire";
+    const score = (ft.properties && ft.properties.score_mutation) || 0;
+    const idu = ft.properties && ft.properties.idu;
+    L.geoJSON(ft, { style: radarStyle(niveau) })
+      .bindTooltip(`Radar Mutation · ${score}/100 — potentiel à étudier`, { sticky: true, direction: "top" })
+      .on("click", () => { if (idu) focusParcel(idu); })
+      .addTo(RADAR_LAYER);
+  });
+  RADAR_LOADED = true;
+  setRadarLegendState(feats.length ? `${feats.length} parcelle(s) — potentiel à étudier` : "aucun signal prioritaire/fort ici");
 }
 
 // Lot C3 — ouvre le courrier SPF pré-rempli dans un nouvel onglet (texte brut, imprimable).
@@ -2765,6 +2832,7 @@ async function main() {
   initMap();
   // Chargements initiaux INDÉPENDANTS en parallèle (chacun gère déjà son échec) →
   // moins de latence au premier rendu qu'une chaîne de 5 await séquentiels.
+  wireRadarFilter();
   await Promise.all([loadStats(), loadCoverage(), loadVeille(), loadMeta(), fetchPipeline(), loadAssistantStatus(), loadRadarTop()]);
   updateDemoCount();
   // La carte est le cœur de la démo : si le geojson échoue (réseau), on ne laisse jamais
