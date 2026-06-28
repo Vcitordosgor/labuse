@@ -15,6 +15,7 @@ import json
 import threading
 import time
 from collections.abc import Iterator
+from urllib.parse import unquote
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -109,6 +110,22 @@ app.add_middleware(
 # échouaient à travers les tunnels d'aperçu distants ; gzip les divise par ~9 (charge fiable).
 # N'affecte NI la DB NI le scoring NI les verdicts — uniquement le transport.
 app.add_middleware(GZipMiddleware, minimum_size=1024)
+
+
+@app.middleware("http")
+async def _fix_double_encoded_query(request, call_next):
+    """Répare les query-strings DOUBLE-ENCODÉES par certains tunnels/proxys d'aperçu.
+
+    Symptôme : le navigateur envoie `?commune=Le%20Tampon` (espace = %20), mais le tunnel
+    ré-encode le « % » → le serveur reçoit `Le%2520Tampon` → décodé une fois en `Le%20Tampon`
+    LITTÉRAL → ne matche aucune commune → réponses VIDES (carte/KPIs à 0) pour toute commune à
+    espace/accent (Le Tampon, Le Port, L'Étang-Salé…). On enlève la couche d'encodage en trop.
+    Transport uniquement : ne touche NI la DB NI le scoring NI les verdicts. Inerte si pas de
+    double-encodage (déclenché seulement si « %25 » est présent dans la query-string)."""
+    qs = request.scope.get("query_string", b"")
+    if b"%25" in qs:
+        request.scope["query_string"] = unquote(qs.decode("latin-1")).encode("latin-1")
+    return await call_next(request)
 
 
 @app.middleware("http")
