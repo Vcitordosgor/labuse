@@ -21,6 +21,7 @@ from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -104,6 +105,10 @@ _cors_origins = (["*"] if config.get_settings().env == "local"
 app.add_middleware(
     CORSMiddleware, allow_origins=_cors_origins, allow_methods=["*"], allow_headers=["*"],
 )
+# Compression gzip : les couches carte (/map/*.geojson) pèsent 20-30 Mo non compressées et
+# échouaient à travers les tunnels d'aperçu distants ; gzip les divise par ~9 (charge fiable).
+# N'affecte NI la DB NI le scoring NI les verdicts — uniquement le transport.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 @app.middleware("http")
