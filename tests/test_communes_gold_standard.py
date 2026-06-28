@@ -67,6 +67,18 @@ def test_communes_partielles_non_fiables():
         assert any("commercialement" in w.lower() for w in r["warnings"])
 
 
+def test_saint_leu_classee_evaluee_pas_non_evaluee():
+    """BUG-L1 — Saint-Leu EST évaluée (22959/22959, 976 opp) : classification cohérente
+    (`partiel_evalue`), jamais le badge trompeur « non évaluée ». Reste NON fiable (non-gold).
+    Saint-Philippe, lui, est réellement non évalué (0 éval) → classification inchangée."""
+    sl = communes.reliability("Saint-Leu")
+    assert sl["etat"] == "partiel_evalue"
+    assert "non évaluée" not in sl["label"].lower()       # plus le badge contradictoire
+    assert sl["reliable"] is False                        # garde-fou commercial intact (non-gold)
+    sp = communes.reliability("Saint-Philippe")
+    assert sp["etat"] == "partiel_non_evalue"             # vraie commune non évaluée → inchangée
+
+
 def test_communes_gold_apres_runs():
     # Verrouille l'état post-runs : Saint-Paul (étalon) + La Possession + L'Étang-Salé + Saint-Pierre + Le Tampon + Saint-Louis + Saint-Denis + Saint-Joseph + Bras-Panon + Les Avirons + Le Port + Petite-Île + Saint-Benoît + Sainte-Marie + Sainte-Suzanne + Saint-André (run AGORAH) + Entre-Deux (réparée pente) fiables.
     for nom in ("Saint-Paul", "La Possession", "L'Étang-Salé", "Saint-Pierre", "Le Tampon", "Saint-Louis", "Saint-Denis", "Saint-Joseph", "Bras-Panon", "Les Avirons", "Le Port", "Petite-Île", "Saint-Benoît", "Sainte-Marie", "Sainte-Suzanne", "Saint-André", "Entre-Deux"):

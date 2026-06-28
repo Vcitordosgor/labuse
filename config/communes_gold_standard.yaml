@@ -80,10 +80,10 @@ communes:
     strategie: gold_valide
   - nom: Saint-Leu
     insee: "97413"
-    etat: partiel_non_evalue
+    etat: partiel_evalue   # corrigé : 22959/22959 parcelles ÉVALUÉES (976 opp) — non « non évaluée »
     parcelles_en_base: 22959
     sections: 50
-    eval_pct: 0
+    eval_pct: 100          # 100 % évaluées (sur couches incomplètes → reste non-gold, reliable=False)
     attendu: a_verifier
     priorite: haute
     vague: 2
