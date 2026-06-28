@@ -12,6 +12,8 @@
 from __future__ import annotations
 
 import json
+import threading
+import time
 from collections.abc import Iterator
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timezone
@@ -226,15 +228,45 @@ def readyz(request: Request, commune: str | None = None):
     return JSONResponse(status_code=200 if st.get("ready") else 503, content=st)
 
 
+# ── Cache mémoire TTL pour endpoints de lecture coûteux (safe-bugfix #6/#7) ───────────────
+# EN MÉMOIRE process uniquement (rien en DB) ; résultat IDENTIQUE au calcul (mêmes données),
+# borné en taille, péremption courte par TTL. Vidé par clear_mem_cache() (tests).
+_MEM_CACHE: dict = {}
+_MEM_LOCK = threading.Lock()
+_MEM_MAX = 256
+
+
+def clear_mem_cache() -> None:
+    """Vide le cache mémoire des endpoints (tests / invalidation manuelle)."""
+    with _MEM_LOCK:
+        _MEM_CACHE.clear()
+
+
+def _mem_cached(key, ttl: float, compute):
+    """Renvoie compute() en le mémorisant `ttl` s sous `key` (lecture seule, en mémoire)."""
+    now = time.monotonic()
+    with _MEM_LOCK:
+        hit = _MEM_CACHE.get(key)
+        if hit is not None and (now - hit[0]) < ttl:
+            return hit[1]
+    val = compute()
+    with _MEM_LOCK:
+        _MEM_CACHE[key] = (time.monotonic(), val)
+        if len(_MEM_CACHE) > _MEM_MAX:                       # éviction simple des plus anciens
+            for k in sorted(_MEM_CACHE, key=lambda k: _MEM_CACHE[k][0])[:64]:
+                _MEM_CACHE.pop(k, None)
+    return val
+
+
 @app.get("/demo-status")
 def demo_status_endpoint(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Niveau 4 — état COMPLET de la démo (healthcheck 13 points, parcelles de démo
     conformes, cache chaud) + actions à lancer. Toujours 200 (informatif, panneau admin) ;
-    le drapeau `ready_for_demo` fait foi."""
+    le drapeau `ready_for_demo` fait foi. Résultat mémorisé (cache mémoire 30 s, #6)."""
     from .. import state
 
     name = commune or config.get_settings().pilot_commune_name
-    return state.demo_status(db, name)
+    return _mem_cached(("demo-status", name), 30.0, lambda: state.demo_status(db, name))
 
 
 @app.get("/coverage")
@@ -325,50 +357,68 @@ def _latest_eval(db: Session, parcel_id: int) -> models.ParcelEvaluation | None:
 
 
 @app.get("/parcels")
-def list_parcels(commune: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
-    stmt = select(models.Parcel).order_by(models.Parcel.idu)
-    if commune:
-        stmt = stmt.where(models.Parcel.commune == commune)
-    parcels = db.execute(stmt).scalars().all()
-    out = []
-    for p in parcels:
-        ev = _latest_eval(db, p.id)
-        out.append({
-            "idu": p.idu, "commune": p.commune, "surface_m2": p.surface_m2,
-            "status": ev.status.value if ev else None,
-            "opportunity_score": ev.opportunity_score if ev else None,
-            "completeness_score": ev.completeness_score if ev else None,
-        })
-    return out
+def list_parcels(commune: str | None = None,
+                 limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
+                 db: Session = Depends(get_db)) -> list[dict]:
+    """Liste PAGINÉE (commune) avec le dernier verdict.
+
+    safe-bugfix #2 : `limit` BORNÉ (défaut 100, max 1000) + `offset`, et le dernier `eval`
+    récupéré en UNE seule requête LATERAL (plus de N+1 qui chargeait toute la commune et
+    bloquait l'endpoint > 45 s). Non utilisé par l'UI (qui passe par /map/parcels.geojson
+    + /parcels/{idu})."""
+    rows = db.execute(text(
+        """
+        SELECT p.idu, p.commune, p.surface_m2,
+               e.status, e.opportunity_score, e.completeness_score
+        FROM parcels p
+        LEFT JOIN LATERAL (
+            SELECT status, opportunity_score, completeness_score
+            FROM parcel_evaluations e WHERE e.parcel_id = p.id
+            ORDER BY evaluated_at DESC LIMIT 1
+        ) e ON true
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+        ORDER BY p.idu
+        LIMIT :lim OFFSET :off
+        """), {"c": commune, "lim": limit, "off": offset}).mappings().all()
+    return [{
+        "idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
+        "status": r["status"], "opportunity_score": r["opportunity_score"],
+        "completeness_score": r["completeness_score"],
+    } for r in rows]
 
 
 @app.get("/stats")
 def stats(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
-    """Cartouches du dashboard : volumétrie + statuts + scores (dernière évaluation)."""
-    row = db.execute(
-        text(
-            """
-            SELECT count(*) AS total,
-                   count(*) FILTER (WHERE e.status = 'opportunite') AS opportunite,
-                   count(*) FILTER (WHERE e.status = 'a_creuser')   AS a_creuser,
-                   count(*) FILTER (WHERE e.status = 'exclue')      AS exclue,
-                   round(avg(e.completeness_score)) AS completeness_avg,
-                   max(e.opportunity_score)         AS opportunity_max
-            FROM parcels p
-            LEFT JOIN LATERAL (
-                SELECT status, opportunity_score, completeness_score
-                FROM parcel_evaluations e WHERE e.parcel_id = p.id
-                ORDER BY evaluated_at DESC LIMIT 1
-            ) e ON true
-            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-            """
-        ), {"c": commune}
-    ).mappings().one()
-    out = {k: (int(v) if v is not None else None) for k, v in row.items()}
-    out["active_signals"] = int(db.execute(
-        text("""SELECT count(*) FROM parcel_signals s JOIN parcels p ON p.id = s.parcel_id
-                WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)"""), {"c": commune}).scalar() or 0)
-    return out
+    """Cartouches du dashboard : volumétrie + statuts + scores (dernière évaluation).
+
+    Résultat mémorisé par commune (cache mémoire 30 s, #7) : sortie identique au calcul."""
+    def _compute() -> dict:
+        row = db.execute(
+            text(
+                """
+                SELECT count(*) AS total,
+                       count(*) FILTER (WHERE e.status = 'opportunite') AS opportunite,
+                       count(*) FILTER (WHERE e.status = 'a_creuser')   AS a_creuser,
+                       count(*) FILTER (WHERE e.status = 'exclue')      AS exclue,
+                       round(avg(e.completeness_score)) AS completeness_avg,
+                       max(e.opportunity_score)         AS opportunity_max
+                FROM parcels p
+                LEFT JOIN LATERAL (
+                    SELECT status, opportunity_score, completeness_score
+                    FROM parcel_evaluations e WHERE e.parcel_id = p.id
+                    ORDER BY evaluated_at DESC LIMIT 1
+                ) e ON true
+                WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+                """
+            ), {"c": commune}
+        ).mappings().one()
+        out = {k: (int(v) if v is not None else None) for k, v in row.items()}
+        out["active_signals"] = int(db.execute(
+            text("""SELECT count(*) FROM parcel_signals s JOIN parcels p ON p.id = s.parcel_id
+                    WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)"""), {"c": commune}).scalar() or 0)
+        return out
+
+    return _mem_cached(("stats", commune), 30.0, _compute)
 
 
 def _owner_famille(groupe, forme, denom) -> str:

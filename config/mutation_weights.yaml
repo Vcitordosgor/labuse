@@ -1,0 +1,28 @@
+# Pondérations & seuils du Score Mutation V1 (Radar Mutation).
+# Externalisés depuis src/labuse/mutation.py SANS changer les valeurs (safe-bugfix #10).
+# Le code conserve EXACTEMENT ces mêmes valeurs en défaut : un fichier absent ou
+# incomplet ne change donc RIEN au scoring (fallback = valeurs ci-dessous).
+# À CALER TERRAIN (cf. RADAR_MUTATION_PHASE1_SPEC §3/§4) — placeholder V1.
+
+poids:
+  sous_exploitation: 30
+  intensite_latente: 25
+  zonage_favorable: 15
+  potentiel_regional: 15
+  marche_actif: 10
+  foncier_acquerable: 8
+
+malus_contrainte_forte: 15
+
+seuils:
+  prioritaire: 70
+  forte: 55
+  surveiller: 40
+
+confiance_floor: 50          # règle d'or : sous ce seuil, jamais « prioritaire »/« forte »
+
+surface:
+  plancher_m2: 500           # en deçà : aucun bonus surface
+  saturation_m2: 5000        # courbe saturante
+
+bati_plafond: 0.30           # >= 30 % bâti : plus de sous-exploitation

@@ -93,3 +93,20 @@ def test_aucun_impact_sur_score_opportunite():
     assert f.opportunity_score == 63                  # entrée non mutée (dataclass gelée)
     assert out["score_mutation"] != f.opportunity_score
     assert "opportunity_score" not in out             # score mutation DISTINCT, n'écrase pas l'opp
+
+
+def test_poids_externalises_non_regression():
+    """#10 — poids externalisés (config/mutation_weights.yaml) : valeurs V1 STRICTEMENT inchangées."""
+    import labuse.mutation as m
+
+    assert (m.W_SOUS_EXPLOITATION, m.W_INTENSITE_LATENTE, m.W_ZONAGE_FAVORABLE,
+            m.W_POTENTIEL_REGIONAL, m.W_MARCHE_ACTIF, m.W_FONCIER_ACQUERABLE) == (30, 25, 15, 15, 10, 8)
+    assert m.MALUS_CONTRAINTE_FORTE == 15
+    assert (m.SEUIL_PRIORITAIRE, m.SEUIL_FORTE, m.SEUIL_SURVEILLER, m.CONFIANCE_FLOOR) == (70, 55, 40, 50)
+    assert (m.SURFACE_PLANCHER_M2, m.SURFACE_SATURATION_M2, m.BATI_PLAFOND) == (500.0, 5000.0, 0.30)
+    # cas connu (type DM0031) : grand terrain public sous-exploité presque-seuil → 100/prioritaire
+    f = _f(opportunity_score=63, completeness_score=92, surface_m2=24000, bati_ratio=0.0,
+           zone_u_au=True, potentiel_regional=True, marche_dvf=True,
+           proprietaire={"public": True, "label": "Collectivité"})
+    out = compute_mutation_score(f)
+    assert out["score_mutation"] == 100 and out["niveau"] == "prioritaire"

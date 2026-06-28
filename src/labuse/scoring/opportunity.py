@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 
 from ..config import opportunity_weights
 from ..enums import CascadeVerdict, Severity
+from ..numeric import clamp
 
 
 @dataclass
@@ -24,8 +25,6 @@ class OpportunityResult:
     ai_adjustment: int = 0
 
 
-def _clamp(x: float, lo: float, hi: float) -> float:
-    return max(lo, min(hi, x))
 
 
 def compute_opportunity(verdicts, ai_adjustment: int = 0, cfg: dict | None = None) -> OpportunityResult:
@@ -36,7 +35,7 @@ def compute_opportunity(verdicts, ai_adjustment: int = 0, cfg: dict | None = Non
     bonuses = cfg["bonuses"]
     lo, hi = cfg["score_bounds"]
     adj_lo, adj_hi = cfg["ai_adjustment_bounds"]
-    ai_adjustment = int(_clamp(ai_adjustment, adj_lo, adj_hi))
+    ai_adjustment = int(clamp(ai_adjustment, adj_lo, adj_hi))
 
     weights = [0.0] * len(verdicts)
 
@@ -66,8 +65,8 @@ def compute_opportunity(verdicts, ai_adjustment: int = 0, cfg: dict | None = Non
             weights[i] = b
             score += b
 
-    score = _clamp(score, lo, hi)
-    score = _clamp(score + ai_adjustment, lo, hi)
+    score = clamp(score, lo, hi)
+    score = clamp(score + ai_adjustment, lo, hi)
     return OpportunityResult(
         score=int(round(score)), hard_exclude=False, exclude_kind=None, has_fort_flag=has_fort,
         weights=weights, ai_adjustment=ai_adjustment,

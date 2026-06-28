@@ -1375,6 +1375,9 @@ body.view-shortlist .legend, body.view-shortlist .map-empty { display: none !imp
 .mut-reasons li { display: flex; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--txt); padding: 3px 0; border-bottom: 1px solid var(--line); }
 .mut-reasons li:last-child { border-bottom: 0; }
 .mut-pts { color: var(--opp-soft); font-weight: 600; font-variant-numeric: tabular-nums; }
+/* #13 — malus (points négatifs, ex. contrainte forte) affiché explicitement en couleur d'alerte */
+.mut-r-malus { color: var(--warn, #C88422); }
+.mut-pts-neg { color: var(--exclue, #D76055); font-weight: 600; font-variant-numeric: tabular-nums; }
 .mut-note { font-size: 11px; color: var(--muted); font-style: italic; margin: 0; }
 .ck-radar .radar-intro { font-size: 11px; color: var(--muted); margin: 0 0 8px; line-height: 1.4; }
 .radar-list { display: flex; flex-direction: column; gap: 6px; }

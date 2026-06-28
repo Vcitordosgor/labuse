@@ -60,6 +60,19 @@ def engine():
     return eng
 
 
+@pytest.fixture(autouse=True)
+def _clear_mem_caches():
+    """Vide les caches mémoire (stats/demo-status #6/#7 + top mutation) AVANT chaque test
+    → aucune fuite de résultat mémorisé entre tests."""
+    for mod, fn in (("labuse.api.app", "clear_mem_cache"), ("labuse.mutation", "clear_top_cache")):
+        try:
+            import importlib
+            getattr(importlib.import_module(mod), fn)()
+        except Exception:
+            pass
+    yield
+
+
 @pytest.fixture
 def db_session(engine):
     """Session transactionnelle rollback-ée après chaque test (pas de pollution)."""
