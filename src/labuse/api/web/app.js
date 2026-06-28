@@ -2876,37 +2876,48 @@ let COMMUNE_BUSY = false;
 async function switchCommune(name) {
   if (!name || name === COMMUNE || COMMUNE_BUSY) return;
   COMMUNE_BUSY = true;
-  COMMUNE = name;
-  updateCommuneHeader();
-  buildCommuneMenu();                                  // met à jour l'option active
-  const vc = $("#visible-count"); if (vc) vc.textContent = "chargement…";
-  // — PURGE de l'état de la commune précédente (jamais de données obsolètes) —
-  closeSheet();
-  DATA_READY = false;
-  for (const k in byIdu) delete byIdu[k];
-  if (layer) { layer.remove(); layer = null; }
-  if (RADAR_LAYER) RADAR_LAYER.clearLayers();
-  RADAR_LOADED = false; showRadarLegend(false);
-  if (PERMITS_LAYER) PERMITS_LAYER.clearLayers();
-  BATI_RATIOS = null;                                  // cache mutabilité (rechargé à la demande)
-  FEATURES = [];
-  // — RECHARGEMENT des briques scoping-commune —
-  loadStats(); loadRadarTop(); loadVeille();
-  let fc = { features: [] };
-  try { fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json(); }
-  catch { showMapError(); }
-  FEATURES = fc.features || [];
-  reconcileKpisFromFeatures();
-  DATA_READY = true;
-  setSliderBounds();
-  applyFilters();
-  if (map && FEATURES.length && layer) map.fitBounds(layer.getBounds(), { maxZoom: 15 });
-  if (map) setTimeout(() => map.invalidateSize(), 80);
-  loadPermitMarkers();
-  if (MAP_MODE === "mutabilite") setMapMode("mutabilite");        // recharge le bâti de la nouvelle commune
-  if (map && RADAR_LAYER && map.hasLayer(RADAR_LAYER)) { showRadarLegend(true); loadRadarLayer(); }  // calque actif → recharge
-  if (document.body.classList.contains("view-shortlist")) loadShortlist();
-  COMMUNE_BUSY = false;
+  try {
+    COMMUNE = name;
+    updateCommuneHeader();
+    buildCommuneMenu();                                  // met à jour l'option active
+    const vc = $("#visible-count"); if (vc) vc.textContent = "chargement…";
+    // — PURGE de l'état de la commune précédente (jamais de données obsolètes) —
+    closeSheet();
+    DATA_READY = false;
+    for (const k in byIdu) delete byIdu[k];
+    if (layer) { layer.remove(); layer = null; }
+    if (RADAR_LAYER) RADAR_LAYER.clearLayers();
+    RADAR_LOADED = false; showRadarLegend(false);
+    if (PERMITS_LAYER) PERMITS_LAYER.clearLayers();
+    BATI_RATIOS = null;                                  // cache mutabilité (rechargé à la demande)
+    FEATURES = [];
+    // — RECHARGEMENT des briques scoping-commune —
+    loadStats(); loadRadarTop(); loadVeille();
+    let fc = { features: [] };
+    try { fc = await (await fetch(`/map/parcels.geojson?commune=${encodeURIComponent(COMMUNE)}`)).json(); }
+    catch { showMapError(); }
+    FEATURES = fc.features || [];
+    reconcileKpisFromFeatures();
+    DATA_READY = true;
+    setSliderBounds();
+    applyFilters();
+    fitToParcels();                                      // recadre la carte (jamais sur une couche vide → pas de crash)
+    if (map) setTimeout(() => map.invalidateSize(), 80);
+    loadPermitMarkers();
+    if (MAP_MODE === "mutabilite") setMapMode("mutabilite");        // recharge le bâti de la nouvelle commune
+    if (map && RADAR_LAYER && map.hasLayer(RADAR_LAYER)) { showRadarLegend(true); loadRadarLayer(); }  // calque actif → recharge
+    if (document.body.classList.contains("view-shortlist")) loadShortlist();
+  } finally {
+    COMMUNE_BUSY = false;                                // le verrou se libère TOUJOURS (jamais de deadlock, même sur erreur)
+  }
+}
+
+// Recadre la carte sur la couche de parcelles — SEULEMENT si les bornes sont valides
+// (une commune sans parcelle affichée → couche vide → getBounds() invalide → fitBounds planterait).
+function fitToParcels() {
+  if (!map || !layer) return;
+  const bb = layer.getBounds();
+  if (bb && bb.isValid()) map.fitBounds(bb, { maxZoom: 15 });
 }
 
 function wireCommuneSelector() {
@@ -2948,7 +2959,7 @@ async function main() {
   });
   setSliderBounds();                              // P3 : curseurs bornés à la plage réelle
   applyFilters();
-  if (map && FEATURES.length && layer) map.fitBounds(layer.getBounds(), { maxZoom: 15 });
+  fitToParcels();                                 // recadrage sûr (couche vide → pas de crash)
   if (map && isMobile()) setTimeout(() => map.invalidateSize(), 120);
   loadPermitMarkers();   // couche SITADEL (Lot C4), différée, désactivée par défaut
 
