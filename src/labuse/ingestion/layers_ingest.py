@@ -51,7 +51,8 @@ KIND_SOURCE = {
     "pente": "RGE ALTI (altimétrie)",
     "trait_de_cote": "DEAL Réunion — trait de côte",
     "osm_faux_positif": "OpenStreetMap / Overpass",
-    "ppr": "Géoportail de l'Urbanisme — PPR (servitude PM1)",
+    "ppr": "DEAL Réunion — PPR / aléas",            # zonage rouge/bleu (fallback PM1 API Carto si commune sans PPR approuvé)
+    "georisque_alea": "DEAL Réunion — PPR / aléas",
     "sar": "data.regionreunion.com — SAR (vocation via potentiel foncier)",
 }
 
