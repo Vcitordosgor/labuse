@@ -16,8 +16,9 @@
 #                d'égout. Mapping : hf_m <- H, he_m <- he. Seul H donné => he_m a_verifier.
 #   - règlement à articles préfixés : 6=recul voirie, 7=recul limites, 9=emprise,
 #                10=hauteur, 12=stationnement, 13=espaces libres.
-#   - LOT 1 (ce fichier) = 6 chapitres du top (~86 % des parcelles) : Um, Ui, Uh,
-#                Uj, Ud, Uavap. Lots suivants : Ua, Uv, AUm, AUh, AUj, AUx, Uu, Uma, Up.
+#   - LOT 1 = Um, Ui (+Uicm,+Uip), Uh, Uj, Ud (+Udp,+Udop,+Udo), Uavap.
+#   - LOT 2 = Ua (+Uac,+Uat,+Uad), Uv (Uva/Uvl/Uvac), Uu, Uma, Up (+Upi,+Upr),
+#                AUm, AUh, AUj, AUa, AUx. Reste à finir : Upi/Upr hauteur (tableau image p.34).
 # =============================================================================
 
 source:
@@ -168,6 +169,132 @@ zones:
        stat_logement: "1 à 1,5 place / logement", stat_note: "renvoi §XVII ; exemption si <=2 logements", stat_src: "Art. Uavap.12, p.29",
        pleine_terre_pct: "a_verifier", pleine_terre_note: "Renvoi AVAP, art. 4.", pleine_terre_src: "Art. Uavap.13, p.29",
        note: "ZONE NON CALIBRÉE — gouvernée par l'AVAP annexée (document séparé). À calibrer ultérieurement depuis l'AVAP."}
+
+  # ========================= LOT 2 =========================
+
+  # ----- Zone Ua + secteurs Uac, Uat, Uad (chap. p.76) — recul limites sép. = 2 m (règle au tiers) -----
+  Ua: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 18, hauteur_note: "Seul H (18 m) donné ; hé non précisé.", hauteur_src: "Art. Ua.10, p.79",
+       emprise_sol_pct: 70, emprise_src: "Art. Ua.9, p.79",
+       recul_voirie_m: 4, recul_voirie_note: "alignement possible (0) ou recul 4 m min", recul_voirie_src: "Art. Ua.6, p.77",
+       recul_limites_sep_m: 2, recul_limites_note: "règle au tiers de h, minimum 2 m (2m ≤ L)", recul_limites_src: "Art. Ua.7, p.78",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_note: "Art. 13 = plantation (1 arbre/100 m²), pas de %", pleine_terre_src: "Art. Ua.13, p.80"}
+  Uac: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 18, hauteur_note: "Seul H (18 m) donné.", hauteur_src: "Art. Ua.10, p.79 (secteur Uac)",
+       emprise_sol_pct: 70, emprise_src: "Art. Ua.9, p.79 (général zone Ua)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua.6, p.77",
+       recul_limites_sep_m: 2, recul_limites_note: "tiers de h, min 2 m", recul_limites_src: "Art. Ua.7, p.78",
+       stat_logement: "1 à 1,5 place / logement", stat_note: "1/3 des places en sous-sol (Art. Ua.12)", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: 20, pleine_terre_note: "« 20 % au moins … laissée libre de toute construction … engazonnée et plantée » (espace libre planté ≈ pleine terre)", pleine_terre_src: "Art. Ua.13, p.80 (secteurs Uac, Uad)"}
+  Uad: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 28, hauteur_note: "Le long du boulevard Sud.", hauteur_src: "Art. Ua.10, p.79 (secteur Uad)",
+       emprise_sol_pct: 70, emprise_src: "Art. Ua.9, p.79 (général zone Ua)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua.6, p.77",
+       recul_limites_sep_m: 2, recul_limites_note: "tiers de h, min 2 m", recul_limites_src: "Art. Ua.7, p.78",
+       stat_logement: "1 à 1,5 place / logement", stat_note: "1/3 des places en sous-sol (Art. Ua.12)", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: 20, pleine_terre_note: "« 20 % … engazonnée et plantée »", pleine_terre_src: "Art. Ua.13, p.80 (secteurs Uac, Uad)"}
+  Uat: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Uat NON cité à l'Art. Ua.10 (hauteur non donnée) → estimation progressive.", hauteur_src: "Art. Ua.10, p.79",
+       emprise_sol_pct: 70, emprise_src: "Art. Ua.9, p.79 (général zone Ua)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua.6, p.77",
+       recul_limites_sep_m: 2, recul_limites_note: "tiers de h, min 2 m", recul_limites_src: "Art. Ua.7, p.78",
+       stat_logement: "1 à 1,5 place / logement", stat_note: "1/3 des places en sous-sol (Art. Ua.12)", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ua.13, p.80"}
+
+  # ----- Zone Uv → Uva, Uvl, Uvac (chap. p.81) — emprise NON réglementée (null) -----
+  Uva: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 4, hauteur_note: "Seul H (4 m) donné.", hauteur_src: "Art. Uv.10, p.84 (secteur Uva)",
+       emprise_sol_pct: null, emprise_note: "« Non réglementé »", emprise_src: "Art. Uv.9, p.84",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uv.6, p.83",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Uv.7, p.83",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_note: "plantation, pas de %", pleine_terre_src: "Art. Uv.13, p.85"}
+  Uvl: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 10, hauteur_note: "Seul H (10 m) donné.", hauteur_src: "Art. Uv.10, p.84 (secteur Uvl)",
+       emprise_sol_pct: null, emprise_note: "« Non réglementé »", emprise_src: "Art. Uv.9, p.84",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uv.6, p.83",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Uv.7, p.83",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Uv.13, p.85"}
+  Uvac: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 10, hauteur_note: "Seul H (10 m) donné.", hauteur_src: "Art. Uv.10, p.84 (secteur Uvac)",
+       emprise_sol_pct: null, emprise_note: "« Non réglementé »", emprise_src: "Art. Uv.9, p.84",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uv.6, p.83",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Uv.7, p.83",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Uv.13, p.85"}
+
+  # ----- Zone Uu (chap. p.47) — emprise calibrée mais hauteur = prospect → ESTIMÉE -----
+  Uu: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "« La hauteur … n'est pas réglementée. La règle de prospect … s'applique » → pas de hauteur absolue.", hauteur_src: "Art. Uu.10, p.49",
+       emprise_sol_pct: 80, emprise_src: "Art. Uu.9, p.49",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uu.6, p.48",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Uu.7, p.49",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Uu.13, p.50"}
+
+  # ----- Zone Uma — maison d'arrêt (chap. p.86) — hauteur « Non réglementée » → ESTIMÉE -----
+  Uma: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "« Non réglementée » (zone maison d'arrêt).", hauteur_src: "Art. Uma.10, p.87",
+       emprise_sol_pct: 60, emprise_src: "Art. Uma.9, p.87",
+       recul_voirie_m: "a_verifier", recul_voirie_note: "alignement possible ou « recul déterminé par les impératifs propres à la maison d'arrêt »", recul_voirie_src: "Art. Uma.6, p.87",
+       recul_limites_sep_m: "a_verifier", recul_limites_note: "implantation sur limites possible ; pas de retrait minimal chiffré", recul_limites_src: "Art. Uma.7, p.87",
+       stat_logement: "a_verifier", stat_note: "« aucune norme de stationnement … pour la maison d'arrêt »", stat_src: "Art. Uma.12, p.88",
+       pleine_terre_pct: null, pleine_terre_note: "« Non réglementés »", pleine_terre_src: "Art. Uma.13, p.88"}
+
+  # ----- Zone Up → Upi, Upr (chap. p.30) — hauteur dans TABLEAU IMAGE p.34 → ESTIMÉES (TODO) -----
+  Upi: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "TODO: hauteur dans tableau image p.34 — lecture manuelle requise (non extractible du texte).", hauteur_src: "Art. Up.10, p.34",
+       emprise_sol_pct: 80, emprise_note: "« ne devra pas excéder 80 % … portée à 100 %, uniquement en rez-de-chaussée »", emprise_src: "Art. Up.9, p.33 (secteur Upi)",
+       recul_voirie_m: 3, recul_voirie_note: "3 m (≤ R+1+combles/attique) / 4 m (> R+1)", recul_voirie_src: "Art. Up.6, p.32",
+       recul_limites_sep_m: 3, recul_limites_note: "3 m (≤ R+1+combles/attique) / 4 m (> R+1)", recul_limites_src: "Art. Up.7, p.33",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Up.13, p.36"}
+  Upr: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "TODO: hauteur dans tableau image p.34 — lecture manuelle requise (non extractible du texte).", hauteur_src: "Art. Up.10, p.34",
+       emprise_sol_pct: 70, emprise_note: "« ne devra pas excéder 70 % … 80 % pour les parcelles … inférieure à 200 m2 »", emprise_src: "Art. Up.9, p.33 (secteur Upr)",
+       recul_voirie_m: 3, recul_voirie_note: "3 m (≤ R+1+combles/attique) / 4 m (> R+1)", recul_voirie_src: "Art. Up.6, p.32",
+       recul_limites_sep_m: 6, recul_limites_note: "« recul de 6 m » (secteur Upr)", recul_limites_src: "Art. Up.7, p.33",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Up.13, p.36"}
+
+  # ----- Zones AU à chapitres propres (PAS de renvoi aux zones U) -----
+  AUm: {bassin: "Saint-Denis",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. AUm.10, p.98",
+       emprise_sol_pct: 50, emprise_src: "Art. AUm.9, p.98",
+       recul_voirie_m: 4, recul_voirie_note: "3 m si voie < 3,50 m", recul_voirie_src: "Art. AUm.6, p.97",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. AUm.7, p.98",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. AUm.13, p.100"}
+  AUh: {bassin: "Saint-Denis",
+       he_m: 4.5, hf_m: 7, hauteur_src: "Art. AUh.10 (Auh.10), p.103",
+       emprise_sol_pct: 30, emprise_src: "Art. AUh.9 (Auh.9), p.103",
+       recul_voirie_m: 4, recul_voirie_note: "3 m si voie < 3,50 m", recul_voirie_src: "Art. AUh.6 (Auh.6), p.102",
+       recul_limites_sep_m: 4, recul_limites_note: "Domenjod : 6 m de l'enceinte de la maison d'arrêt", recul_limites_src: "Art. AUh.7 (Auh.7), p.103",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. AUh.13 (Auh.13), p.105"}
+  AUj: {bassin: "Saint-Denis",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. AUj.10, p.93",
+       emprise_sol_pct: 60, emprise_src: "Art. AUj.9, p.93",
+       recul_voirie_m: 4, recul_voirie_note: "3 m si voie < 3,50 m ; prospect L>=H par rapport à l'axe", recul_voirie_src: "Art. AUj.6, p.92",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. AUj.7, p.92",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. AUj.13, p.95"}
+  AUa: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 10, hauteur_note: "Seul H (10 m) donné.", hauteur_src: "Art. AUa.10, p.108",
+       emprise_sol_pct: 70, emprise_src: "Art. AUa.9, p.108",
+       recul_voirie_m: 4, recul_voirie_note: "alignement possible ou recul 4 m min", recul_voirie_src: "Art. AUa.6, p.107",
+       recul_limites_sep_m: 2, recul_limites_note: "tiers de h, min 2 m", recul_limites_src: "Art. AUa.7, p.107",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. AUa.13, p.109"}
+  AUx: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "« Non réglementé » (zone d'activités). Bandes Domenjod 6/9 m conditionnelles à l'ouverture future.", hauteur_src: "Art. AUx.10, p.111",
+       emprise_sol_pct: null, emprise_note: "« Non réglementée »", emprise_src: "Art. AUx.9, p.111",
+       recul_voirie_m: null, recul_voirie_note: "« Non réglementé »", recul_voirie_src: "Art. AUx.6, p.110",
+       recul_limites_sep_m: null, recul_limites_note: "« Non réglementé »", recul_limites_src: "Art. AUx.7, p.111",
+       stat_logement: "a_verifier", stat_note: "« Non réglementé »", stat_src: "Art. AUx.12, p.111",
+       pleine_terre_pct: null, pleine_terre_note: "« Non réglementé »", pleine_terre_src: "Art. AUx.13, p.111"}
 
 # Zones AU « génériques » : à Saint-Denis, les zones AU (AUj, AUm, AUh, AUa, AUx)
 # ont leurs PROPRES chapitres et articles (PAS de renvoi aux zones U). Hors lot 1.
