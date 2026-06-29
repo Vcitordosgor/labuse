@@ -1,12 +1,12 @@
-# Le Tampon — résultats import gold standard (2026-06-21T14:35:12)
+# Le Tampon — résultats import gold standard (2026-06-28T21:15:42)
 
 - **Commune / INSEE** : Le Tampon / 97422
-- **Stratégie appliquée** : re_couches_re_cascade
+- **Stratégie appliquée** : gold_valide
 - **Verdict** : SUCCÈS — commune prête au standard Saint-Paul (code de sortie 0)
 
 ## État avant → après
 
-- Parcelles : 42756 → **42756**
+- Parcelles : 0 → **42756**
 - Sections : **79**
 - Bâti (couche) : 0 → **74136**
 - Évaluées : **42756 / 42756** (100 %)
@@ -30,18 +30,18 @@
 
 ## Verdicts & opportunités
 
-- Opportunité : **749**
-- À creuser : **10467**
+- Opportunité : **788**
+- À creuser : **11013**
 - Écartée : **1030**
-- Faux positif probable : **30510**
+- Faux positif probable : **29925**
 - Taux d'opportunité : **1.8 %** (repère Saint-Paul ≈ 1 % ; seuil QA ≤ 5 %)
-- Micro-opportunités (251–500 m²) : 169
+- Micro-opportunités (251–500 m²) : 171
 
 ## Temps d'exécution
 
-- parcelles : 42s
-- couches : 374s
-- cascade : 4646s
+- parcelles : 66s
+- couches : 256s
+- cascade : 2658s
 
 ## Contrôles
 
@@ -63,7 +63,7 @@
 - ✓ OK   plu_gpu_prescription : complet — 1386 features
 - ✓ OK  [critique] index GIST présents — tous
 - ✓ OK  [critique] verdicts cohérents (Σ = évaluées) — 42756/42756
-- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 1.8 % (749 opp)
+- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 1.8 % (788 opp)
 - ✓ OK  [critique] pipeline conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] feedback conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] alertes conservé (≥ avant) — 0 → 0

@@ -1,12 +1,12 @@
-# Saint-Benoît — résultats import gold standard (2026-06-23T07:56:01)
+# Saint-Benoît — résultats import gold standard (2026-06-29T00:55:42)
 
 - **Commune / INSEE** : Saint-Benoît / 97410
-- **Stratégie appliquée** : re_couches_re_cascade
-- **Verdict** : SUCCÈS — commune prête au standard Saint-Paul (code de sortie 0)
+- **Stratégie appliquée** : gold_valide
+- **Verdict** : ROLLBACK RECOMMANDÉ — contrôles critiques KO ['aucune duplication de couche'] (code de sortie 1)
 
 ## État avant → après
 
-- Parcelles : 21671 → **21671**
+- Parcelles : 0 → **21671**
 - Sections : **50**
 - Bâti (couche) : 0 → **34683**
 - Évaluées : **21671 / 21671** (100 %)
@@ -20,28 +20,28 @@
 - ppr : 4
 - sar : 118
 - ravine : 1670
-- plu_gpu_prescription : 2078
+- plu_gpu_prescription : 2079
 - osm_faux_positif : 318
 - abf : absent
 
 - Couverture zonage PLU : **100.0 %**
-- Duplication de couches : 0 groupe(s)
+- Duplication de couches : 1 groupe(s)
 - Index GIST présents : 3/3
 
 ## Verdicts & opportunités
 
-- Opportunité : **589**
-- À creuser : **4611**
+- Opportunité : **595**
+- À creuser : **4681**
 - Écartée : **1035**
-- Faux positif probable : **15436**
+- Faux positif probable : **15360**
 - Taux d'opportunité : **2.7 %** (repère Saint-Paul ≈ 1 % ; seuil QA ≤ 5 %)
-- Micro-opportunités (251–500 m²) : 136
+- Micro-opportunités (251–500 m²) : 135
 
 ## Temps d'exécution
 
-- parcelles : 32s
-- couches : 352s
-- cascade : 5807s
+- parcelles : 17s
+- couches : 319s
+- cascade : 3613s
 
 ## Contrôles
 
@@ -56,17 +56,17 @@
 - ✓ OK  [critique] pente présente — 15169
 - ✓ OK  [critique] voirie présente — 14922
 - ✓ OK  [critique] couverture zonage ≥ 99 % — 100.0 %
-- ✓ OK  [critique] aucune duplication de couche — 0 groupes (kind,géom) dupliqués
+- ✗ ÉCHEC [critique] aucune duplication de couche — 1 groupes (kind,géom) dupliqués
 - ✓ OK   ppr : complet — 4 features
 - ✓ OK   sar : complet — 118 features
 - ✓ OK   ravine : complet — 1670 features
-- ✓ OK   plu_gpu_prescription : complet — 2078 features
+- ✓ OK   plu_gpu_prescription : complet — 2079 features
 - ✓ OK  [critique] index GIST présents — tous
 - ✓ OK  [critique] verdicts cohérents (Σ = évaluées) — 21671/21671
-- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 2.7 % (589 opp)
+- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 2.7 % (595 opp)
 - ✓ OK  [critique] pipeline conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] feedback conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] alertes conservé (≥ avant) — 0 → 0
 
-## Conclusion : SUCCÈS — commune prête au standard (peut être marquée gold)
+## Conclusion : ROLLBACK RECOMMANDÉ — restaurer le backup pré-commune
 

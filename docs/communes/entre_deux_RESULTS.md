@@ -1,83 +1,72 @@
-# Entre-Deux — re_couches_re_cascade + réparation ciblée pente : ✅ **réparation COMPLÈTE**
+# Entre-Deux — résultats import gold standard (2026-06-29T02:39:45)
 
-> `re_couches_re_cascade` d'Entre-Deux (97403) pour réparer une **évaluation périmée** (bâti=0, `fpp=0`).
-> **1ᵉʳ run** : réparation majeure réussie (bâti 0→46 493, voirie déplafonnée, PPR/SAR/prescriptions/ravines/OSM
-> apparus, géométrie invalide réparée) **mais la couche `pente` a échoué** (couche critique → exit 1,
-> ROLLBACK recommandé). **Décision validée : PAS de rollback.** **2ᵉ étape** : diagnostic (échec transitoire
-> RGE ALTI), **re-fetch ciblé `pente` seule** (sans purger les autres couches), puis **re-cascade Entre-Deux**.
-> **Résultat final : toutes les couches gold présentes, cascade fiable, 0 géométrie invalide, 0 duplication.**
-> **Aucun passage gold** (étape séparée).
+- **Commune / INSEE** : Entre-Deux / 97403
+- **Stratégie appliquée** : gold_valide
+- **Verdict** : SUCCÈS — commune prête au standard Saint-Paul (code de sortie 0)
 
-## Verdict final : 🟢 **GO technique — Entre-Deux réparée et gold-ready** (NON marquée gold ; décision séparée)
+## État avant → après
 
-## Contexte & backups
+- Parcelles : 0 → **6312**
+- Sections : **13**
+- Bâti (couche) : 0 → **46493**
+- Évaluées : **6312 / 6312** (100 %)
 
-| Élément | Valeur |
-|---|---|
-| `main` (code) | **`e760cb4`** |
-| Backup pré-commune (run 1) | `/var/backups/labuse/labuse-pre-entre-deux-20260625-140800.dump` — SHA `84b7d89e…9ea4a` |
-| Backup pré-fix pente (run 2) | `/var/backups/labuse/labuse-pre-entre-deux-pente-fix-20260625-143536.dump` — SHA `309c87fc…408bd` (sidecar OK, `sha256sum -c` OK, 190 TOC, 6/6 tables critiques) |
-| Commune / INSEE | **Entre-Deux / 97403** |
-| Runs | (1) `import_commune_gold_standard.py` re_couches → **exit 1** (pente échouée) · (2) `ingest_pente` ciblé + `evaluate_commune` re-cascade → **exit 0** |
+## Couches
 
-## Diagnostic de l'échec pente (run 1)
+- batiment : 46493
+- voirie : 8802
+- pente : 4140
+- plu_gpu_zone : 506
+- ppr : 2
+- sar : 18
+- ravine : 280
+- plu_gpu_prescription : 1120
+- osm_faux_positif : 230
+- abf : absent
 
-- Source : **IGN RGE ALTI** (`data.geopf.fr/altimetrie/…/elevation.json`), échantillonnage grille batché (100 pts, quota 5 req/s).
-- Mécanique : `SAVEPOINT` par couche → une exception (timeout/5xx/parse transitoire sur un batch) a annulé **pente seule** ;
-  les autres couches ont été **commitées**. Le purge `[D]` ayant supprimé l'ancienne pente **avant** l'échec → pente = 0.
-- **Cause = transitoire** : sonde read-only ultérieure **HTTP 200**, élévations valides pour Entre-Deux (4 s/point — lent).
-  **Pas** un bug code (16 communes gold OK), **pas** un filtre, **pas** une absence réelle, **pas** une erreur SQL.
-- Fix : appel **direct** `ingest_pente(Entre-Deux)` (pas de purge des autres couches) → **4 140 cellules** (grille déterministe).
+- Couverture zonage PLU : **100.0 %**
+- Duplication de couches : 0 groupe(s)
+- Index GIST présents : 3/3
 
-## Couches : périmé → run 1 → final
+## Verdicts & opportunités
 
-| Couche | Avant (périmé) | Run 1 (pente KO) | **Final** |
-|---|---:|---:|---:|
-| **bâti** | 0 | 46 493 | **46 493** ✅ |
-| **voirie** | 5 000 (plafonné) | 8 802 | **8 802** ✅ |
-| **pente** | 4 140 | **0** ❌ | **4 140** ✅ (couv. parcellaire 100 %) |
-| PPR | 0 | 2 | **2** ✅ |
-| SAR | 0 | 18 | **18** ✅ |
-| prescriptions | 0 | 1 120 | **1 120** ✅ |
-| ravines | 0 | 280 | **280** ✅ |
-| OSM faux positifs | 0 | 230 | **230** ✅ |
-| plu_gpu_zone | 506 (propre 182) | 506 | **506** (couv. 100 %) |
-| géométrie invalide | 1 | 0 | **0** ✅ |
-| DVF | 577 | 233 | **233** (re-fetch single-year — à vérifier ultérieurement, non bloquant) |
+- Opportunité : **1**
+- À creuser : **1642**
+- Écartée : **940**
+- Faux positif probable : **3729**
+- Taux d'opportunité : **0.0 %** (repère Saint-Paul ≈ 1 % ; seuil QA ≤ 5 %)
+- Micro-opportunités (251–500 m²) : 0
 
-## Verdicts : périmé → run 1 → final (latest)
+## Temps d'exécution
 
-| Verdict | Avant (bâti=0) | Run 1 (pente=0) | **Final** |
-|---|---:|---:|---:|
-| Opportunité | 9 | 1 | **1** |
-| À creuser | 5 542 | 1 711 | **1 642** |
-| Écartée | 761 | 802 | **940** |
-| Faux positif probable | 0 | 3 798 | **3 729** |
+- parcelles : 13s
+- couches : 106s
+- cascade : 236s
 
-→ Le `fpp` **0 → 3 729** (cascade enfin **bâti-aware**) ; l'ajout de la **pente** déplace **+138** parcelles vers
-« écartée » (contraintes de pente appliquées — Entre-Deux est en moyenne montagne). Verdicts **désormais fiables**
-(bâti **et** pente pris en compte). **opp = 1** : potentiel structurellement faible (réalité foncière, pas un défaut data).
+## Contrôles
 
-## Contrôles d'intégrité (final)
+- ✓ OK  [critique] parcelles ≥ attendu (6312) — 6312 (min 6312)
+- ✓ OK   sections présentes — 13
+- ✓ OK  [critique] 0 doublon IDU — 6312/6312
+- ✓ OK  [critique] 0 géométrie invalide — 0
+- ✓ OK  [critique] 100 % geom_2975 — nuls : 0
+- ✓ OK  [critique] 100 % évaluées — 6312/6312
+- ✓ OK  [critique] bâti présent (> 0) — 46493
+- ✓ OK  [critique] zonage PLU présent — 506
+- ✓ OK  [critique] pente présente — 4140
+- ✓ OK  [critique] voirie présente — 8802
+- ✓ OK  [critique] couverture zonage ≥ 99 % — 100.0 %
+- ✓ OK  [critique] aucune duplication de couche — 0 groupes (kind,géom) dupliqués
+- ✓ OK   ppr : complet — 2 features
+- ✓ OK   sar : complet — 18 features
+- ✓ OK   ravine : complet — 280 features
+- ✓ OK   plu_gpu_prescription : complet — 1120 features
+- ✓ OK  [critique] index GIST présents — tous
+- ✓ OK  [critique] verdicts cohérents (Σ = évaluées) — 6312/6312
+- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 0.0 % (1 opp)
+- ✓ OK  [critique] pipeline conservé (≥ avant) — 0 → 0
+- ✓ OK  [critique] feedback conservé (≥ avant) — 0 → 0
+- ✓ OK  [critique] alertes conservé (≥ avant) — 0 → 0
 
-- ✅ **Toutes les couches gold présentes** ; **0 géométrie invalide** ; **0 duplication de couche** ; geom_2975 100 %.
-- ✅ **6 312 / 6 312 évaluées** ; verdicts cohérents (Σ = 6 312).
-- ✅ **DB globale 431 663 / 24 communes / gold 16** inchangée. Entre-Deux 6 312 (upsert id-préservant).
-- ✅ **23 autres communes strictement conservées** ; fix `pente` + re-cascade **scopés Entre-Deux uniquement**.
-- ✅ **Aucun rollback** · aucun passage gold · `config/communes_gold_standard.yaml` non modifié · scoring/seuil 65 inchangés ·
-  pas d'Étape B · Étape A non généralisée · `parcel_evaluations` stale non nettoyées · aucun commit · aucun merge.
+## Conclusion : SUCCÈS — commune prête au standard (peut être marquée gold)
 
-## Recommandation
-
-- **🟢 GO technique** : Entre-Deux est désormais **réparée et gold-ready** (tous les post-checks critiques passeraient :
-  bâti>0, pente>0, zonage 100 %, voirie, géométrie valide, 100 % évaluée, 0 duplication).
-- **Passage gold = étape SÉPARÉE, sur validation** (édition `config/communes_gold_standard.yaml` 16→17 + tests + merge).
-  À noter : Entre-Deux restera une commune à **faible opportunité** (1 opp, moyenne montagne) — gold « fiable » mais peu de leads.
-- **Point mineur à vérifier** (non bloquant) : DVF 577→233 après re-fetch (probable passage à un flux mono-année plus propre).
-
----
-
-### Provenance
-- Mutations autorisées : (1) re_couches_re_cascade (run gold), (2) `ingest_pente` ciblé + `evaluate_commune` — toutes scopées Entre-Deux, backups validés avant chaque écriture.
-- Mesures : `SELECT` lecture seule sur `parcels`, `parcel_evaluations` (latest), `spatial_layers`, `dvf_mutations`.
-- Aucune autre commune touchée, aucun rollback, aucun passage gold, aucun commit, aucun merge.

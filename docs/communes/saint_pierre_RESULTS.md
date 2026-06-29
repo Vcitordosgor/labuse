@@ -1,12 +1,12 @@
-# Saint-Pierre — résultats import gold standard (2026-06-21T12:12:21)
+# Saint-Pierre — résultats import gold standard (2026-06-28T20:25:38)
 
 - **Commune / INSEE** : Saint-Pierre / 97416
-- **Stratégie appliquée** : re_couches_re_cascade
-- **Verdict** : SUCCÈS — commune prête au standard Saint-Paul (code de sortie 0)
+- **Stratégie appliquée** : gold_valide
+- **Verdict** : ROLLBACK RECOMMANDÉ — contrôles critiques KO ['aucune duplication de couche'] (code de sortie 1)
 
 ## État avant → après
 
-- Parcelles : 42425 → **42425**
+- Parcelles : 0 → **42425**
 - Sections : **66**
 - Bâti (couche) : 0 → **119094**
 - Évaluées : **42425 / 42425** (100 %)
@@ -20,28 +20,28 @@
 - ppr : 4
 - sar : 174
 - ravine : 411
-- plu_gpu_prescription : 1471
-- osm_faux_positif : 755
+- plu_gpu_prescription : 1473
+- osm_faux_positif : 756
 - abf : absent
 
 - Couverture zonage PLU : **100.0 %**
-- Duplication de couches : 0 groupe(s)
+- Duplication de couches : 2 groupe(s)
 - Index GIST présents : 3/3
 
 ## Verdicts & opportunités
 
-- Opportunité : **1534**
-- À creuser : **11608**
+- Opportunité : **1569**
+- À creuser : **12387**
 - Écartée : **1141**
-- Faux positif probable : **28142**
-- Taux d'opportunité : **3.6 %** (repère Saint-Paul ≈ 1 % ; seuil QA ≤ 5 %)
-- Micro-opportunités (251–500 m²) : 474
+- Faux positif probable : **27328**
+- Taux d'opportunité : **3.7 %** (repère Saint-Paul ≈ 1 % ; seuil QA ≤ 5 %)
+- Micro-opportunités (251–500 m²) : 475
 
 ## Temps d'exécution
 
-- parcelles : 42s
-- couches : 357s
-- cascade : 2475s
+- parcelles : 62s
+- couches : 238s
+- cascade : 613s
 
 ## Contrôles
 
@@ -56,17 +56,17 @@
 - ✓ OK  [critique] pente présente — 7201
 - ✓ OK  [critique] voirie présente — 25949
 - ✓ OK  [critique] couverture zonage ≥ 99 % — 100.0 %
-- ✓ OK  [critique] aucune duplication de couche — 0 groupes (kind,géom) dupliqués
+- ✗ ÉCHEC [critique] aucune duplication de couche — 2 groupes (kind,géom) dupliqués
 - ✓ OK   ppr : complet — 4 features
 - ✓ OK   sar : complet — 174 features
 - ✓ OK   ravine : complet — 411 features
-- ✓ OK   plu_gpu_prescription : complet — 1471 features
+- ✓ OK   plu_gpu_prescription : complet — 1473 features
 - ✓ OK  [critique] index GIST présents — tous
 - ✓ OK  [critique] verdicts cohérents (Σ = évaluées) — 42425/42425
-- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 3.6 % (1534 opp)
+- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 3.7 % (1569 opp)
 - ✓ OK  [critique] pipeline conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] feedback conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] alertes conservé (≥ avant) — 0 → 0
 
-## Conclusion : SUCCÈS — commune prête au standard (peut être marquée gold)
+## Conclusion : ROLLBACK RECOMMANDÉ — restaurer le backup pré-commune
 

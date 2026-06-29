@@ -1,12 +1,12 @@
-# Saint-Denis — résultats import gold standard (2026-06-21T22:52:20)
+# Saint-Denis — résultats import gold standard (2026-06-29T01:41:16)
 
 - **Commune / INSEE** : Saint-Denis / 97411
-- **Stratégie appliquée** : re_couches_re_cascade
+- **Stratégie appliquée** : gold_valide
 - **Verdict** : SUCCÈS — commune prête au standard Saint-Paul (code de sortie 0)
 
 ## État avant → après
 
-- Parcelles : 38138 → **38138**
+- Parcelles : 0 → **38138**
 - Sections : **124**
 - Bâti (couche) : 0 → **61522**
 - Évaluées : **38138 / 38138** (100 %)
@@ -20,8 +20,8 @@
 - ppr : 2
 - sar : 263
 - ravine : 856
-- plu_gpu_prescription : 3066
-- osm_faux_positif : 718
+- plu_gpu_prescription : 3067
+- osm_faux_positif : 719
 - abf : absent
 
 - Couverture zonage PLU : **100.0 %**
@@ -30,8 +30,8 @@
 
 ## Verdicts & opportunités
 
-- Opportunité : **84**
-- À creuser : **11643**
+- Opportunité : **85**
+- À creuser : **11642**
 - Écartée : **2165**
 - Faux positif probable : **24246**
 - Taux d'opportunité : **0.2 %** (repère Saint-Paul ≈ 1 % ; seuil QA ≤ 5 %)
@@ -39,9 +39,9 @@
 
 ## Temps d'exécution
 
-- parcelles : 53s
-- couches : 245s
-- cascade : 2767s
+- parcelles : 65s
+- couches : 170s
+- cascade : 1826s
 
 ## Contrôles
 
@@ -60,10 +60,10 @@
 - ✓ OK   ppr : complet — 2 features
 - ✓ OK   sar : complet — 263 features
 - ✓ OK   ravine : complet — 856 features
-- ✓ OK   plu_gpu_prescription : complet — 3066 features
+- ✓ OK   plu_gpu_prescription : complet — 3067 features
 - ✓ OK  [critique] index GIST présents — tous
 - ✓ OK  [critique] verdicts cohérents (Σ = évaluées) — 38138/38138
-- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 0.2 % (84 opp)
+- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 0.2 % (85 opp)
 - ✓ OK  [critique] pipeline conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] feedback conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] alertes conservé (≥ avant) — 0 → 0

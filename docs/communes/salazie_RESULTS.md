@@ -1,108 +1,72 @@
-# Salazie — import complet (complétude 24/24, **NON gold**)
+# Salazie — résultats import gold standard (2026-06-29T03:16:23)
 
-> **Import complet de Salazie (97421)** réalisé pour la **complétude 24/24** de la couverture Réunion en base
-> — **ce n'est PAS un passage gold**. Salazie est un **cirque** (cœur de parc national + forêt publique,
-> relief extrême) : **0 opportunité attendue et confirmée**. Backup pré-commune **obligatoire créé et vérifié
-> avant toute écriture**. **Aucune autre commune touchée, aucun passage gold, aucun commit, aucun merge.**
-
-## Verdict : 🟢 **SUCCÈS technique** (exit 0, 22/22 post-checks verts) — Salazie **présente + enrichie au standard**, **délibérément NON marquée gold**
-
-Import propre et conservateur : 7 035 parcelles importées et 100 % évaluées, toutes les couches critiques
-présentes, **0 opportunité** (cohérent avec un cirque). La complétude passe à **23/24** (reste **Cilaos**).
-Le rapport auto-généré conclut « peut être marquée gold » (message générique `EXIT_OK`) : **décision produit =
-on ne marque PAS gold** ici — l'objectif est la *présence en base*, pas l'optimisation.
-
-## Contexte
-
-| Élément | Valeur |
-|---|---|
-| `main` (code) | **`a0ab887`** (inclut l'Étape A PPR PM1 < 10 % déjà mergée — **non re-généralisée** ici) |
-| Backup pré-commune | `/var/backups/labuse/labuse-pre-salazie-20260625-114234.dump` (1 020 Mo) |
-| SHA-256 | `682e06f40ca547b95930e93f01c9868b6ddd8fb40ba83e3cded4ead9405866fa` |
-| Vérif. backup | sidecar `.sha256` · `sha256sum -c` **OK** · `pg_restore --list` **190 TOC** · **6/6 tables critiques** · **re-vérifié par le script lui-même avant écriture** (`backup OK + checksum vérifié`) |
-| Commune / INSEE | **Salazie / 97421** (cirque, vague 6, risque élevé) |
-| Stratégie yaml | `attendre` (différée) → **surclassée par décision de complétude** = `import_complet` |
-| État détecté (runtime) | **ABSENT** (0 parcelle) → import complet |
-| Runner | `import_commune_gold_standard.py --commune "Salazie" --insee 97421 --execute --confirm IMPORT_SALAZIE_COMPLET --backup …` |
-| Exit | **0 (EXIT_OK)** · [B] cadastre 33 s · [D] couches 240 s · [F] cascade 1 209 s |
+- **Commune / INSEE** : Salazie / 97421
+- **Stratégie appliquée** : re_couches_re_cascade
+- **Verdict** : SUCCÈS — commune prête au standard Saint-Paul (code de sortie 0)
 
 ## État avant → après
 
-| | Avant | Après |
-|---|---|---|
-| Parcelles Salazie | 0 | **7 035** (idu distincts 7 035 — **0 doublon**) |
-| Sections | — | **32** |
-| Évaluées | 0 | **7 035 / 7 035 (100 %)** |
-| Bâti (couche) | 0 | **7 410** |
-| **DB globale — parcelles** | 418 068 | **425 103** |
-| **DB globale — communes** | 22 | **23** |
-| **DB globale — gold** | 16 | **16 (inchangé)** |
+- Parcelles : 0 → **7035**
+- Sections : **32**
+- Bâti (couche) : 0 → **7410**
+- Évaluées : **7035 / 7035** (100 %)
 
-## Couches ingérées (17 types — enrichissement maximal)
+## Couches
 
-| Couche | n | | Couche | n |
-|---|---|---|---|---|
-| batiment | 7 410 | | plu_gpu_prescription | 879 |
-| voirie | 2 736 | | osm_faux_positif | 74 |
-| pente | 5 986 | | safer | 774 |
-| plu_gpu_zone | 336 (couv. **100 %**) | | trait_de_cote | 1 007 |
-| ppr | 2 | | water | 173 |
-| sar | 57 | | ocs_ge | 59 |
-| ravine | 629 | | potentiel_foncier | 57 |
-| parc_national | 3 | | foret_publique | 13 |
-| ens | 4 | | **abf** | **absent** (non critique) |
+- batiment : 7410
+- voirie : 2736
+- pente : 5986
+- plu_gpu_zone : 336
+- ppr : 2
+- sar : 57
+- ravine : 629
+- plu_gpu_prescription : 879
+- osm_faux_positif : 74
+- abf : absent
 
-- Couverture zonage PLU : **100,0 %** · Duplication de couches : **0** · Index GIST : **3/3** · DVF : **109** (2023).
+- Couverture zonage PLU : **100.0 %**
+- Duplication de couches : 0 groupe(s)
+- Index GIST présents : 3/3
 
-## Verdicts & opportunités (latest / parcelle)
+## Verdicts & opportunités
 
-| Verdict | n |
-|---|---|
-| **Opportunité** | **0** |
-| À creuser | 836 |
-| Écartée | 761 |
-| Faux positif probable | 5 438 |
-| **Σ** | **7 035** (= évaluées ✓) |
+- Opportunité : **0**
+- À creuser : **836**
+- Écartée : **761**
+- Faux positif probable : **5438**
+- Taux d'opportunité : **0.0 %** (repère Saint-Paul ≈ 1 % ; seuil QA ≤ 5 %)
+- Micro-opportunités (251–500 m²) : 0
 
-→ **Taux d'opportunité 0,0 %** — **attendu et correct** pour le cirque : cœur de parc national (`parc_national` 3),
-forêt publique (`foret_publique` 13) et pente sur **5 986 / 7 035** parcelles → quasi-inconstructibilité.
-**Confirme la prévision du pré-vol 24/24.** Salazie pèsera ≈ 0 lead commercial — sa valeur ici est la
-**présence en base** (complétude), pas le volume d'opportunités.
+## Temps d'exécution
 
-## Contrôles d'intégrité
+- parcelles : 16s
+- couches : 129s
+- cascade : 697s
 
-- ✅ **22 post-checks du script tous verts** (parcelles ≥ attendu, 0 doublon IDU, 0 géom invalide, 100 % geom_2975,
-  100 % évaluées, bâti > 0, zonage ≥ 99 %, 0 duplication couche, index GIST, verdicts cohérents, taux QA ≤ 5 %,
-  pipeline/feedback/alertes conservés).
-- ✅ **Conservation** : les **22 communes d'origine ont des comptes de parcelles strictement identiques** avant/après ;
-  seule **Salazie (+7 035)** ajoutée. Aucune autre commune ré-importée ni ré-évaluée.
-- ✅ **Gold inchangé = 16** : `config/communes_gold_standard.yaml` **non modifié** (Salazie reste `etat: absent`).
-- ✅ **Seuil scoring = 65 et tout le scoring inchangés** ; **aucune Étape B** (rouge/bleu) ; **Étape A non re-généralisée**
-  (le code mergé tourne dans la cascade, mais 2 features PPR périmètre + 0 opportunité → **effet nul** ici).
-- ✅ **Cilaos NON touchée** ; aucun dedup / rollback / cleanup ; `parcel_evaluations` d'autres communes intactes
-  (Salazie n'en avait aucune avant — données fraîches, rien d'empilé).
-- ✅ **Aucun commit, aucun merge, aucun passage gold.**
+## Contrôles
 
-## Limites
+- ✓ OK  [critique] parcelles ≥ attendu (7035) — 7035 (min 7035)
+- ✓ OK   sections présentes — 32
+- ✓ OK  [critique] 0 doublon IDU — 7035/7035
+- ✓ OK  [critique] 0 géométrie invalide — 0
+- ✓ OK  [critique] 100 % geom_2975 — nuls : 0
+- ✓ OK  [critique] 100 % évaluées — 7035/7035
+- ✓ OK  [critique] bâti présent (> 0) — 7410
+- ✓ OK  [critique] zonage PLU présent — 336
+- ✓ OK  [critique] pente présente — 5986
+- ✓ OK  [critique] voirie présente — 2736
+- ✓ OK  [critique] couverture zonage ≥ 99 % — 100.0 %
+- ✓ OK  [critique] aucune duplication de couche — 0 groupes (kind,géom) dupliqués
+- ✓ OK   ppr : complet — 2 features
+- ✓ OK   sar : complet — 57 features
+- ✓ OK   ravine : complet — 629 features
+- ✓ OK   plu_gpu_prescription : complet — 879 features
+- ✓ OK  [critique] index GIST présents — tous
+- ✓ OK  [critique] verdicts cohérents (Σ = évaluées) — 7035/7035
+- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 0.0 % (None opp)
+- ✓ OK  [critique] pipeline conservé (≥ avant) — 0 → 0
+- ✓ OK  [critique] feedback conservé (≥ avant) — 0 → 0
+- ✓ OK  [critique] alertes conservé (≥ avant) — 0 → 0
 
-- **0 opportunité = comportement correct**, pas un bug : cirque quasi-inconstructible. Ne pas interpréter comme un échec.
-- **`abf` absent** : aucun périmètre ABF récupéré pour Salazie (non critique — l'absence n'est pas bloquante).
-- **DVF 109 mutations (2023)** : marché foncier très mince — normal pour un cirque.
-- **Mesure « opportunité » ≠ valeur foncière** : ici l'enjeu est la complétude de couverture, pas la génération de leads.
+## Conclusion : SUCCÈS — commune prête au standard (peut être marquée gold)
 
-## Décision & suite
-
-- **Salazie reste NON-gold** (présente + enrichie au standard). **Complétude : 23/24.**
-- **Reste un seul absent : Cilaos (97424)** — dernier cirque — **sur décision séparée** (non lancé ici).
-- **Backup post-commune** (horodaté + sha256) **recommandé** pour figer ce nouvel état 23/24 — **non réalisé dans cette
-  mission** (hors périmètre), à valider séparément.
-
----
-
-### Provenance (lecture seule, hors la mutation autorisée)
-
-- **Mutation autorisée et unique** : `import_complet` Salazie (cadastre + couches scopées `commune='Salazie'` + cascade),
-  backup pré-commune validé **avant** écriture.
-- Mesures Phase 5 : `SELECT` sur `parcels`, `parcel_evaluations` (latest), `spatial_layers`, `dvf_mutations`.
-- Aucun import d'une autre commune, aucune couche d'une autre commune modifiée, aucun passage gold, aucun changement de
-  code/config/scoring, aucune Étape B, aucun commit, aucun merge, aucun contact externe.

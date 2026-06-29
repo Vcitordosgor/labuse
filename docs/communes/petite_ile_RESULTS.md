@@ -1,12 +1,12 @@
-# Petite-Île — résultats import gold standard (2026-06-22T15:09:28)
+# Petite-Île — résultats import gold standard (2026-06-29T01:06:09)
 
 - **Commune / INSEE** : Petite-Île / 97405
-- **Stratégie appliquée** : re_couches_re_cascade
+- **Stratégie appliquée** : gold_valide
 - **Verdict** : SUCCÈS — commune prête au standard Saint-Paul (code de sortie 0)
 
 ## État avant → après
 
-- Parcelles : 13137 → **13137**
+- Parcelles : 0 → **13137**
 - Sections : **25**
 - Bâti (couche) : 0 → **17222**
 - Évaluées : **13137 / 13137** (100 %)
@@ -30,8 +30,8 @@
 
 ## Verdicts & opportunités
 
-- Opportunité : **115**
-- À creuser : **1685**
+- Opportunité : **116**
+- À creuser : **1684**
 - Écartée : **217**
 - Faux positif probable : **11120**
 - Taux d'opportunité : **0.9 %** (repère Saint-Paul ≈ 1 % ; seuil QA ≤ 5 %)
@@ -39,9 +39,9 @@
 
 ## Temps d'exécution
 
-- parcelles : 13s
-- couches : 134s
-- cascade : 382s
+- parcelles : 6s
+- couches : 95s
+- cascade : 307s
 
 ## Contrôles
 
@@ -63,7 +63,7 @@
 - ✓ OK   plu_gpu_prescription : complet — 144 features
 - ✓ OK  [critique] index GIST présents — tous
 - ✓ OK  [critique] verdicts cohérents (Σ = évaluées) — 13137/13137
-- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 0.9 % (115 opp)
+- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 0.9 % (116 opp)
 - ✓ OK  [critique] pipeline conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] feedback conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] alertes conservé (≥ avant) — 0 → 0

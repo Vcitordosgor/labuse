@@ -1,7 +1,7 @@
-# Les Trois-Bassins — résultats import gold standard (2026-06-23T15:46:28)
+# Les Trois-Bassins — résultats import gold standard (2026-06-29T03:02:11)
 
 - **Commune / INSEE** : Les Trois-Bassins / 97423
-- **Stratégie appliquée** : import_complet
+- **Stratégie appliquée** : re_couches_re_cascade
 - **Verdict** : SUCCÈS — commune prête au standard Saint-Paul (code de sortie 0)
 
 ## État avant → après
@@ -30,18 +30,18 @@
 
 ## Verdicts & opportunités
 
-- Opportunité : **1**
-- À creuser : **1265**
-- Écartée : **215**
-- Faux positif probable : **3833**
+- Opportunité : **2**
+- À creuser : **1149**
+- Écartée : **222**
+- Faux positif probable : **3941**
 - Taux d'opportunité : **0.0 %** (repère Saint-Paul ≈ 1 % ; seuil QA ≤ 5 %)
 - Micro-opportunités (251–500 m²) : 0
 
 ## Temps d'exécution
 
-- parcelles : 20s
-- couches : 111s
-- cascade : 504s
+- parcelles : 12s
+- couches : 69s
+- cascade : 355s
 
 ## Contrôles
 
@@ -63,26 +63,10 @@
 - ✓ OK   plu_gpu_prescription : complet — 293 features
 - ✓ OK  [critique] index GIST présents — tous
 - ✓ OK  [critique] verdicts cohérents (Σ = évaluées) — 5314/5314
-- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 0.0 % (1 opp)
+- ✓ OK  [QA] taux d'opportunité non explosif (≤ 5 %) — 0.0 % (2 opp)
 - ✓ OK  [critique] pipeline conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] feedback conservé (≥ avant) — 0 → 0
 - ✓ OK  [critique] alertes conservé (≥ avant) — 0 → 0
 
-## Validation du run & décision (NO-GO gold)
-
-- **Backup pré-commune** : `/var/backups/labuse/labuse-pre-les-trois-bassins-20260623-153129.dump`
-  · SHA-256 `048b944c6798a73190f3a58281490d70ed3b66dcb9969c0022deb4269174f618` (vérifié `sha256sum -c` → OK ; `pg_restore --list` 190 TOC, tables critiques présentes).
-- **Dry-run** : OK (état ABSENT, plan cohérent) · confirm phrase `IMPORT_LES_TROIS_BASSINS_COMPLET`.
-- **Exit code technique** : **0** (SUCCÈS — tous contrôles critiques verts).
-- **Parcelles** : **5 314** · **Évaluées** : **5 314 / 5 314** (100 %) · sections **9** · 0 doublon IDU.
-- **PLU/GPU propre `DU_97423`** : couverture **100 %** (5 314 / 5 314 ; idurba `97423_PLU_20220602`).
-- **Voirie** : **3 625** — **non tronquée** (≠ 5 000).
-- **Bâti** : **7 898** (> 0, dense ≈ 1,49/parcelle).
-- **DVF** : **157** · **PPR** : **4** · **`osm_faux_positif`** : **33** (ingéré OK, pas d'échec Overpass) · **prescriptions** : 293 · **doublons couche** : **0**.
-- **Verdicts** : opportunité **1** · à creuser **1 265** · écartée **215** · faux positif probable **3 833**.
-- **Taux d'opportunité** : **0,0 %**.
-
-> 🔴 **NO-GO GOLD** : run techniquement propre (exit 0) **mais résultat métier = 1 opportunité (0,0 %)** → pattern « quasi-0 opportunité » proche de **La Plaine-des-Palmistes**. Commune **différée** pour arbitrage produit/scoring ultérieur (cf. `les_trois_bassins_NO_GO_QUASI_0_OPPORTUNITE.md`). Data **conservée** en DB, **aucun rollback**, **pas de gold**.
-
-## Conclusion : SUCCÈS TECHNIQUE (exit 0) mais **NO-GO GOLD** — quasi-0 opportunité (1 / 5 314, 0,0 %) ; commune différée (cf. `les_trois_bassins_NO_GO_QUASI_0_OPPORTUNITE.md`)
+## Conclusion : SUCCÈS — commune prête au standard (peut être marquée gold)
 
