@@ -305,6 +305,7 @@ def compute_residuel_cmd(
     from .faisabilite.residuel import compute_residuel_batch
 
     commune = _resolve_commune(commune)
+    models.ensure_residuel_cache(engine())   # idempotent : crée/migre la colonne capacite_estimee
     with session_scope() as session:
         ids = _parcel_ids(session, commune)
     if not ids:

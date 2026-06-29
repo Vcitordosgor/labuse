@@ -93,6 +93,9 @@ def compute_residuel(session: Session, parcel_id: int,
         # hauteur du bâti n'est pas connue → on le dit).
         "libelle": _libelle(taux_emprise, sdp_residuelle, niveaux_reels),
         "estimation_sdp": not niveaux_reels,
+        # Traçabilité capacité : calibré (YAML PLU communal) vs estimation générique.
+        "calibree": f.calibree,
+        "capacite_estimee": not f.calibree,
     }
 
 
@@ -110,14 +113,15 @@ def compute_residuel_batch(session: Session, parcel_ids: list[int]) -> int:
             continue
         session.execute(text(
             """INSERT INTO parcel_residuel
-                 (parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2, computed_at)
-               VALUES (:p, :t, :pp, :sd, :sr, now())
+                 (parcel_id, taux_emprise_pct, pct_potentiel, sous_densite, sdp_residuelle_m2,
+                  capacite_estimee, computed_at)
+               VALUES (:p, :t, :pp, :sd, :sr, :ce, now())
                ON CONFLICT (parcel_id) DO UPDATE SET
                  taux_emprise_pct=EXCLUDED.taux_emprise_pct, pct_potentiel=EXCLUDED.pct_potentiel,
                  sous_densite=EXCLUDED.sous_densite, sdp_residuelle_m2=EXCLUDED.sdp_residuelle_m2,
-                 computed_at=now()"""),
+                 capacite_estimee=EXCLUDED.capacite_estimee, computed_at=now()"""),
             {"p": pid, "t": r["taux_emprise_pct"], "pp": r["pct_potentiel"],
-             "sd": r["sous_densite"], "sr": r["sdp_residuelle_m2"]})
+             "sd": r["sous_densite"], "sr": r["sdp_residuelle_m2"], "ce": r["capacite_estimee"]})
         n += 1
     session.flush()
     return n

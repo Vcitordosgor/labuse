@@ -546,7 +546,10 @@ def ensure_residuel_cache(engine) -> None:
             "CREATE TABLE IF NOT EXISTS parcel_residuel ("
             " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
             " taux_emprise_pct integer, pct_potentiel integer, sous_densite boolean,"
-            " sdp_residuelle_m2 integer, computed_at timestamptz NOT NULL DEFAULT now())"))
+            " sdp_residuelle_m2 integer, capacite_estimee boolean,"
+            " computed_at timestamptz NOT NULL DEFAULT now())"))
+        # Migration des bases existantes (table déjà créée sans la colonne).
+        c.execute(_t("ALTER TABLE parcel_residuel ADD COLUMN IF NOT EXISTS capacite_estimee boolean"))
 
 
 def ensure_schema(engine) -> None:
