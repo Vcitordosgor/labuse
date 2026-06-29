@@ -61,3 +61,4 @@ qa/shots/
 
 # Sources externes brutes (PDF PLH, etc.) — non commitées
 .sources/
+import_all.log
