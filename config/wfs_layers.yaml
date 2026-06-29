@@ -18,9 +18,9 @@ endpoints:
     notes: "✓ live (SPIKE 2026-06) : GetFeature BDTOPO_V3:batiment OK (51 M feat). BD TOPO/parcellaire ; OCS GE typename à confirmer."
 
   deal_reunion:
-    base_url: "https://carto.reunion.developpement-durable.gouv.fr"  # à préciser via catalogue DEAL
-    reliability: a_confirmer
-    notes: "⚠ Hôte injoignable au SPIKE (HTTP 000, 2026-06-07). Risques via Géorisques en proxy ; sinon import."
+    base_url: "https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=01risque"
+    reliability: verifie
+    notes: "✓ validé spike 2026-06 : Lizmap DEAL (projet 02sprinr/01risque). PPR_APPROUVE + ALEA_INONDATION/MOUVEMENT_TERRAIN, EPSG:2975, filtre CODE_INSEE. WFS QGIS Server (outputFormat=GeoJSON)."
 
   peigeo:
     base_url: "https://peigeo.re"  # GeoNetwork/visualiseur AGORAH ; confirmer endpoint OWS
@@ -48,17 +48,26 @@ layers:
     spatial_kind: ocs_ge
     reliability: a_confirmer
 
-  - key: ppr_reunion
+  - key: deal_ppr_zone
     endpoint: deal_reunion
-    typename: "PPRN_974"
+    typename: "PPR_APPROUVE"            # zonage réglementaire rouge/bleu (subtype = DEGRE)
     spatial_kind: ppr
-    reliability: a_confirmer
+    reliability: verifie
 
-  - key: trait_de_cote
+  - key: deal_alea_inond
     endpoint: deal_reunion
-    typename: "TRAIT_DE_COTE"
-    spatial_kind: trait_de_cote
-    reliability: a_confirmer
+    typename: "ALEA_INONDATION"
+    spatial_kind: georisque_alea
+    reliability: verifie
+
+  - key: deal_alea_mvt
+    endpoint: deal_reunion
+    typename: "ALEA_MOUVEMENT_TERRAIN"
+    spatial_kind: georisque_alea
+    reliability: verifie
+
+  # NB : le trait de côte n'est PAS ingéré par ce flux WFS — il a sa propre
+  # fonction ingest_trait_de_cote (SHP Cerema/GéoLittoral). Ancien stub supprimé.
 
   - key: sar_zonage
     endpoint: peigeo
