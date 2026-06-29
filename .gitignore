@@ -45,6 +45,8 @@ labuse_radar*.svg
 shot_*.png
 data/plu_saint_paul/*.pdf
 data/plu_saint_paul/*.txt
+# PDF sources PLU (lourds, ré-édités) : provenance tracée dans les YAML config/plu_*.yaml
+docs/plu_sources/*.pdf
 
 # Sauvegardes DB (jamais committées)
 backups/
