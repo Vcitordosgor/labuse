@@ -29,6 +29,13 @@ source:
   pages_total: 413
   offset_pdf_vs_imprimee: 4
 
+# Mode de résolution des zones (cf. resolve_zone) :
+#   strict     = commune de référence « gold ou rien » — JAMAIS d'estimation générique ;
+#                un code hors de ce YAML, ou une zone sans hauteur, reste « non calculable ».
+#   progressif = (défaut, autres communes) zone hors YAML / sans hauteur → estimation générique.
+# Saint-Paul est la référence calibrée : strict obligatoire.
+mode: strict
+
 # Règles transverses constatées (s'appliquent largement, à pondérer par sous-zone) :
 regles_transverses:
   recul_limites_sep: "Implantation sur limite autorisée (longueur max 10-18 m selon zone) OU retrait >= 3 m. H réduite (6-9 m) dans une bande de 3 m depuis la limite. (Art. 7)"

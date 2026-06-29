@@ -116,23 +116,35 @@ def _to_rules(code: str, v: dict) -> ZoneRules:
 def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
     """Résout le code de zone en ZoneRules applicables.
 
-    Priorité : (1) YAML PLU CALIBRÉ de la commune (Saint-Paul aujourd'hui, autres à venir) ;
-    (2) fallback GÉNÉRIQUE estimé (calibree=False) UNIQUEMENT pour une commune SANS YAML dédié.
-    Une commune outillée (Saint-Paul, future commune calibrée) reste STRICTEMENT calibrée :
-    un code hors de son YAML renvoie None (non calculable — honnête), jamais une estimation.
+    Priorité : (1) YAML PLU CALIBRÉ de la commune ; (2) fallback GÉNÉRIQUE estimé.
+
+    Deux modes (clé `mode:` du YAML, défaut « progressif ») :
+      - `strict`  (Saint-Paul, « gold ou rien ») : un code hors YAML, ou une zone
+        sans hauteur exploitable, renvoie tel quel (→ None / non constructible).
+        JAMAIS d'estimation : la commune de référence ne doit voir que du calibré.
+      - `progressif` (défaut, communes en cours de calibration) : un code hors YAML,
+        ou une zone calibrée mais sans hauteur exploitable (he_m ET hf_m non chiffrés),
+        retombe sur l'ESTIMATION générique (calibree=False) — la couverture ne RECULE
+        jamais quand on ajoute un YAML partiel ; on gagne la précision zone par zone.
     `commune=None` ⇒ Saint-Paul (back-compat). None aussi si code vide.
     """
     if not code:
         return None
     code = code.strip()
     yaml_path = _calibrated_yaml(commune)
-    if yaml_path is not None:                       # commune OUTILLÉE → strictement calibrée
+    if yaml_path is not None:                       # commune OUTILLÉE (YAML PLU présent)
         doc = _doc_for(str(yaml_path))
+        strict = (doc.get("mode") == "strict")      # défaut absent = progressif
         rules = {c: _to_rules(c, v) for c, v in doc.get("zones", {}).items()}
 
         # 1) correspondance directe (U…, Usdu, AU5e…)
         if code in rules:
-            return rules[code]
+            r = rules[code]
+            # PROGRESSIF : zone calibrée mais SANS hauteur exploitable (prospect/AVAP →
+            # he_m et hf_m non chiffrés) → estimation générique plutôt que non constructible.
+            if strict or _has_usable_height(r):
+                return r
+            return _zone_generique(code)
 
         # 2) zones AU*st (secteurs de transition) — pas de construction neuve
         st = doc.get("zones_au_st", {})
@@ -155,9 +167,16 @@ def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
                                f"{doc.get('zones_au_renvoi', {}).get('AU' + m.group(1)[0], 'caractère de zone')})"
                 return r
 
-        return None                                 # commune calibrée, code hors YAML → non calculable
+        # 4) code hors YAML : strict → None (gold ou rien) ; progressif → estimation.
+        return None if strict else _zone_generique(code)
 
     return _zone_generique(code)                    # commune SANS YAML → capacité ESTIMÉE générique
+
+
+def _has_usable_height(r: ZoneRules) -> bool:
+    """Le moteur ne calcule des niveaux que si he_m OU hf_m est chiffré (sinon
+    estimate_capacity renvoie « non constructible »). « a_verifier »/None → non exploitable."""
+    return isinstance(r.he_m, (int, float)) or isinstance(r.hf_m, (int, float))
 
 
 def _positive_prefixes() -> tuple[str, ...]:

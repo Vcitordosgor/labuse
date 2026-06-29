@@ -1,0 +1,181 @@
+# =============================================================================
+# PLU SAINT-DENIS (97411) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Saint-Denis.
+#   document : docs/plu_sources/97411_reglement_20240220.pdf
+#   PLU « Modification simplifiée n°8 », dossier approuvé février 2024 (154 p.).
+#   complément graphique : 97411_prescription_surf_15_00_20240220.pdf (plan, sans texte).
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee  (offset 0 — vérifié : imprimée 65 = PDF 65).
+#   - chaque valeur cite ZONE + ARTICLE + page : champ _src = "Art. X.N, p.PP".
+#   - null         = règle explicitement "non réglementée" / "n'est pas réglementée".
+#   - "a_verifier" = présent mais relatif/conditionnel (prospect L≥H), ou renvoi
+#                    externe (AVAP), ou non attribuable sûrement → on NE chiffre PAS.
+#   - hauteurs : règlement SD donne H = hauteur maximale (≈ faîtage) et he = hauteur
+#                d'égout. Mapping : hf_m <- H, he_m <- he. Seul H donné => he_m a_verifier.
+#   - règlement à articles préfixés : 6=recul voirie, 7=recul limites, 9=emprise,
+#                10=hauteur, 12=stationnement, 13=espaces libres.
+#   - LOT 1 (ce fichier) = 6 chapitres du top (~86 % des parcelles) : Um, Ui, Uh,
+#                Uj, Ud, Uavap. Lots suivants : Ua, Uv, AUm, AUh, AUj, AUx, Uu, Uma, Up.
+# =============================================================================
+
+source:
+  document: "docs/plu_sources/97411_reglement_20240220.pdf"
+  complement_graphique: "docs/plu_sources/97411_prescription_surf_15_00_20240220.pdf"
+  approbation: "2024-02-20"
+  pages_total: 154
+  offset_pdf_vs_imprimee: 0
+
+# Mode de résolution des zones (cf. resolve_zone) :
+#   progressif (défaut) = commune EN COURS de calibration : une zone hors de ce YAML,
+#               ou une zone calibrée sans hauteur exploitable (Ud/Uavap : prospect/AVAP),
+#               retombe sur l'ESTIMATION générique (capacite_estimee=True) — la couverture
+#               ne RECULE jamais. Calibrer une zone = la chiffrer ci-dessous.
+mode: progressif
+
+# Règles transverses constatées (renvois du règlement de zone) :
+regles_transverses:
+  stationnement: "Renvoi systématique (Art. X.12) aux Disposit. générales §XVII (p.19) : logement aidé 1 pl. ; logement < 100 m² SP : 1 pl. ; logement >= 100 m² SP : 1,5 pl."
+  pleine_terre: "Les Art. X.13 fixent des obligations de PLANTATION (1 arbre / 100 m² non bâti), PAS un % de pleine terre — sauf Udp/Udop (30 %, Art. Ud.9)."
+  hauteur_prospect: "Plusieurs zones bornent la hauteur par un prospect L>=H (relatif à la largeur de voie), sans valeur absolue => he_m/hf_m = a_verifier (ex. Ud)."
+
+# Hypothèses de CALCUL (reprises de Saint-Paul ; NB : le moteur lit aujourd'hui les
+# hypothèses GLOBALES de plu_saint_paul.yaml — cette section est documentaire/future).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  cout_construction_m2_bas: 1800.0
+  cout_construction_m2_haut: 2200.0
+  marge_promoteur_pct: 0.09
+  frais_annexes_pct: 0.12
+  dvf_radius_m: 1500.0
+  dvf_min_ventes: 8
+  pct_lls: 30
+  mixite_sdp_seuil_m2: 1500
+  mixite_logements_seuil: 20
+  mixite_terrain_seuil_m2: 6000
+  prix_m2_lls: 0
+  majoration_vrd_pluvial: 0
+  niveaux_bati_existant_defaut: 1
+  sous_densite_seuil_pct: 40
+  he_defaut_generique_m: 9.0
+  assemblage_min_surface_m2: 1000
+  assemblage_individuel_max_m2: 1000
+
+zones:
+
+  # ===================== Zone Um — moyenne densité des pentes (chap. p.65) =====================
+  Um: {bassin: "Saint-Denis",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. Um.10, p.68",
+       hauteur_note: "« 7 m pour la hauteur d'égout he » ; « 10 m pour la hauteur maximale H ». Secteur Domenjod (Uma) : 6 m en bande 0-20 m de la maison d'arrêt.",
+       emprise_sol_pct: 50, emprise_src: "Art. Um.9, p.68",
+       recul_voirie_m: 4, recul_voirie_note: "3 m si voie d'emprise < 3,50 m", recul_voirie_src: "Art. Um.6, p.67",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Um.7, p.67",
+       stat_logement: "1 à 1,5 place / logement", stat_note: "1 pl. <100 m² SP / 1,5 pl. >=100 m² (renvoi §XVII)", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_note: "Art. 13 = plantation (1 arbre/100 m²), pas de % pleine terre", pleine_terre_src: "Art. Um.13, p.70"}
+
+  # ===================== Zone Ui — + secteurs Uicm, Uip (chap. p.51) =====================
+  Ui: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 18, hauteur_note: "Seule la hauteur maximale H (18 m) est donnée ; hé non précisé.", hauteur_src: "Art. Ui.10, p.56",
+       emprise_sol_pct: 60, emprise_src: "Art. Ui.9, p.56",
+       recul_voirie_m: "a_verifier", recul_voirie_note: "prospect L>=H (pas de recul fixe)", recul_voirie_src: "Art. Ui.6, p.53",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Ui.7, p.55",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_note: "Art. 13 = plantation, pas de %", pleine_terre_src: "Art. Ui.13, p.57"}
+  Uicm: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 12, hauteur_note: "Seul H (12 m) donné ; hé non précisé.", hauteur_src: "Art. Ui.10, p.56 (secteur Uicm)",
+       emprise_sol_pct: 40, emprise_src: "Art. Ui.9, p.56 (secteur Uicm)",
+       recul_voirie_m: "a_verifier", recul_voirie_note: "prospect (Art. Ui.6)", recul_voirie_src: "Art. Ui.6, p.53",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Ui.7, p.55 (secteur Uicm : « 5m minimum »)",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ui.13, p.57"}
+  Uip: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 18, hauteur_note: "R+5 = 18 m au faîtage/acrotère (sauf rue Marcadet R+3 = 12 m).", hauteur_src: "Art. Ui.10, p.56 (secteur Uip)",
+       emprise_sol_pct: "a_verifier", emprise_note: "Uip non cité à l'Art. Ui.9", emprise_src: "Art. Ui.9, p.56",
+       recul_voirie_m: "a_verifier", recul_voirie_src: "Art. Ui.6, p.53 (prospect)",
+       recul_limites_sep_m: "a_verifier", recul_limites_note: "Uip non confirmé à l'Art. Ui.7", recul_limites_src: "Art. Ui.7, p.55",
+       stat_logement: "1 à 1,5 place / logement", stat_note: "logements aidés en réhab : 0,8 pl. (Art. Ui.12)", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ui.13, p.57"}
+
+  # ===================== Zone Uh — faible densité (chap. p.71) =====================
+  Uh: {bassin: "Saint-Denis",
+       he_m: 4.5, hf_m: 7, hauteur_src: "Art. Uh.10, p.73",
+       hauteur_note: "« 4,5 m pour la hauteur d'égout he » ; « 7 m pour la hauteur maximale H ».",
+       emprise_sol_pct: 30, emprise_src: "Art. Uh.9, p.73",
+       recul_voirie_m: 4, recul_voirie_note: "3 m si voie < 3,50 m", recul_voirie_src: "Art. Uh.6, p.72",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Uh.7, p.73",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_note: "Art. 13 = plantation, pas de %", pleine_terre_src: "Art. Uh.13, p.75"}
+
+  # ===================== Zone Uj (chap. p.59) =====================
+  Uj: {bassin: "Saint-Denis",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. Uj.10, p.62",
+       hauteur_note: "« 10 m pour la hauteur d'égout he » ; « 13 m pour la hauteur maximale H ». Secteur Montgaillard : he 11,80 m.",
+       emprise_sol_pct: 60, emprise_src: "Art. Uj.9, p.62",
+       recul_voirie_m: 4, recul_voirie_note: "3 m si voie < 3,50 m", recul_voirie_src: "Art. Uj.6, p.61",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Uj.7, p.61",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_note: "Art. 13 = plantation, pas de %", pleine_terre_src: "Art. Uj.13, p.64"}
+
+  # ===================== Zone Ud — dense + secteurs Udp, Udop, Udo (chap. p.37) =====================
+  # NB : hauteur Ud base = prospect L>=H (Art. Ud.10) => he_m/hf_m a_verifier (pas de hauteur absolue).
+  #      En mode progressif, Ud/Udp/Udo (sans hauteur) retombent sur l'estimation générique
+  #      (capacite_estimee=True) ; l'emprise calibrée sera utilisée dès qu'une hauteur sera chiffrée.
+  Ud: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Hauteur bornée par prospect L>=H (relatif à la voie), sans valeur absolue.", hauteur_src: "Art. Ud.10, p.44",
+       emprise_sol_pct: 80, emprise_src: "Art. Ud.9, p.43",
+       recul_voirie_m: 4, recul_voirie_note: "voie >=12 m : alignement OU 4 m ; voie <12 m : 4 m min", recul_voirie_src: "Art. Ud.6, p.40",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Ud.7, p.42",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_note: "Art. 13 = plantation, pas de %", pleine_terre_src: "Art. Ud.13, p.46"}
+  Udp: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Udp non explicité à l'Art. Ud.10 (texte détaille Ud/Udo/Udop).", hauteur_src: "Art. Ud.10, p.44",
+       emprise_sol_pct: 70, emprise_src: "Art. Ud.9, p.44 (secteurs Udop, Udp)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ud.6, p.40",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Ud.7, p.42",
+       stat_logement: "1 à 1,5 place / logement", stat_note: "logements aidés réhab : 0,8 pl. (Art. Ud.12)", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ud.9, p.44 (« 30% minimum de la parcelle doit être en pleine terre »)"}
+  Udop: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: 18, hauteur_note: "R+5 = 18 m au faîtage/acrotère (sauf R+8=27 m / R+3=12 m sur rues précises) ; hé non précisé.", hauteur_src: "Art. Ud.10, p.44 (secteur Udop)",
+       emprise_sol_pct: 70, emprise_src: "Art. Ud.9, p.44 (secteurs Udop, Udp)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ud.6, p.40",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Ud.7, p.42",
+       stat_logement: "1 à 1,5 place / logement", stat_note: "logements aidés réhab : 0,8 pl. (Art. Ud.12)", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ud.9, p.44 (« 30% minimum … en pleine terre »)"}
+  Udo: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Prospect inapplicable en Udo ; H <= 50 m UNIQUEMENT en bordure de la grande place / Bld Leclerc / Bld Nehru — pas de hauteur générale.", hauteur_src: "Art. Ud.10, p.44 (secteur Udo)",
+       emprise_sol_pct: null, emprise_note: "« L'emprise au sol des constructions n'est pas réglementée »", emprise_src: "Art. Ud.9, p.44 (secteur Udo)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ud.6, p.40",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Ud.7, p.42",
+       stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ud.13, p.46"}
+
+  # ===================== Zone Uavap — AVAP (chap. p.26) : NON CALIBRÉE =====================
+  # Tous les articles renvoient à l'AVAP annexée au PLU (document séparé, non fourni).
+  # Aucune valeur chiffrée n'existe dans le règlement => tout a_verifier. En mode progressif,
+  # Uavap reste « estimé » (capacite_estimee=True) tant que l'AVAP n'est pas dépouillée.
+  Uavap: {bassin: "Saint-Denis",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Renvoi AVAP, art. 5 « Hauteur et volume » (annexe non fournie).", hauteur_src: "Art. Uavap.10, p.29",
+       emprise_sol_pct: "a_verifier", emprise_note: "Renvoi AVAP, art. 4 « Emprise au sol, espaces libres et plantés ».", emprise_src: "Art. Uavap.9, p.28",
+       recul_voirie_m: "a_verifier", recul_voirie_note: "Renvoi AVAP, art. 1.", recul_voirie_src: "Art. Uavap.6, p.28",
+       recul_limites_sep_m: "a_verifier", recul_limites_note: "Renvoi AVAP, art. 2.", recul_limites_src: "Art. Uavap.7, p.28",
+       stat_logement: "1 à 1,5 place / logement", stat_note: "renvoi §XVII ; exemption si <=2 logements", stat_src: "Art. Uavap.12, p.29",
+       pleine_terre_pct: "a_verifier", pleine_terre_note: "Renvoi AVAP, art. 4.", pleine_terre_src: "Art. Uavap.13, p.29",
+       note: "ZONE NON CALIBRÉE — gouvernée par l'AVAP annexée (document séparé). À calibrer ultérieurement depuis l'AVAP."}
+
+# Zones AU « génériques » : à Saint-Denis, les zones AU (AUj, AUm, AUh, AUa, AUx)
+# ont leurs PROPRES chapitres et articles (PAS de renvoi aux zones U). Hors lot 1.
+zones_au_renvoi: {}
+
+# Zones AU « st » (secteurs de transition) : AUCUNE détectée dans le règlement de Saint-Denis.
+zones_au_st:
+  liste: []
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU :
+zones_non_constructibles: ["A (chap. p.113)", "N (chap. p.119)"]
