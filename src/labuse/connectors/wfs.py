@@ -34,16 +34,20 @@ class WfsConnector(Connector):
 
     def fetch_layer(self, endpoint_key: str, typename: str, bbox: tuple | None = None,
                     max_features: int = 1000, start_index: int = 0,
-                    sort_by: str | None = None) -> dict:
+                    sort_by: str | None = None, exp_filter: str | None = None) -> dict:
         """GetFeature en GeoJSON (srsName EPSG:4326).
 
         `start_index`/`sort_by` : pagination WFS 2.0 (count + startIndex). Un tri stable
         (ex. `cleabs` en BD TOPO) est requis pour paginer sans doublon ni trou sur les
-        couches volumineuses (bâtiments : >10k entités par commune)."""
-        base = self._endpoint(endpoint_key)["base_url"]
+        couches volumineuses (bâtiments : >10k entités par commune).
+        `exp_filter` : filtre attributaire QGIS Server/Lizmap (ex. "CODE_INSEE = '97411'").
+        `outputFormat` lu par endpoint (clé `output_format` ; défaut application/json — les
+        endpoints Lizmap/QGIS Server veulent « GeoJSON »)."""
+        ep = self._endpoint(endpoint_key)
+        base = ep["base_url"]
         params: dict[str, Any] = {
             "service": "WFS", "version": "2.0.0", "request": "GetFeature",
-            "typeNames": typename, "outputFormat": "application/json",
+            "typeNames": typename, "outputFormat": ep.get("output_format", "application/json"),
             "srsName": "EPSG:4326", "count": max_features,
         }
         if start_index:
@@ -52,6 +56,8 @@ class WfsConnector(Connector):
             params["sortBy"] = sort_by
         if bbox:
             params["bbox"] = ",".join(str(b) for b in bbox) + ",EPSG:4326"
+        if exp_filter:
+            params["EXP_FILTER"] = exp_filter
         with self._client() as c:
             r = c.get(base, params=params)
             r.raise_for_status()

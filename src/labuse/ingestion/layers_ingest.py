@@ -273,6 +273,81 @@ def ingest_ppr_sup(session, bbox, commune, run_id, sids) -> int:
     return n
 
 
+# Aléas DEAL : degré → (niveau cascade faible/moyen/fort, résiduel). Codes RÉELS validés (spike 2026-06).
+_ALEA_NIVEAU = {
+    "FAIBLE": ("faible", False), "MOYEN": ("moyen", False), "FORT": ("fort", False),
+    "RESIDUEL_MOYEN": ("moyen", True), "RESIDUEL_FORT": ("fort", True),
+    "RESIDUEL_FORT_AGGRAVE": ("fort", True),
+}
+
+
+def _normalise_alea(degre: str | None) -> tuple[str, bool]:
+    """`degre` DEAL → (niveau ∈ {faible,moyen,fort} pour alea_severity_map ; résiduel:bool).
+    « résiduel » = derrière une protection (digue) → niveau de base CONSERVÉ + flag (prudence)."""
+    d = (degre or "").strip().upper()
+    if d in _ALEA_NIVEAU:
+        return _ALEA_NIVEAU[d]
+    residuel = d.startswith("RESIDUEL")
+    niveau = "fort" if "FORT" in d else "moyen" if "MOYEN" in d else "faible" if "FAIBLE" in d else "moyen"
+    return niveau, residuel
+
+
+def ingest_ppr_zone(session, bbox, commune, run_id, sids, insee) -> int:
+    """PPR ZONÉ RÉGLEMENTAIRE (rouge/bleu) via WFS DEAL Réunion (Lizmap) → kind='ppr'.
+
+    subtype = DEGRE : 'INTERDICTION' (rouge, inconstructible — cf. ppr_red_subtypes) /
+    'PRESCRIPTION' (bleu, constructible sous conditions). Filtré CODE_INSEE.
+    FALLBACK : si 0 zone DEAL pour la commune (PPR non approuvé/dématérialisé), on retombe
+    sur le PÉRIMÈTRE PM1 (API Carto GPU, ingest_ppr_sup). Une seule fonction alimente
+    kind='ppr', jamais les deux (DELETE-avant-ingestion garantit l'absence de doublon)."""
+    wfs = WfsConnector("deal_reunion")
+    fc = wfs.fetch_layer("deal_reunion", "PPR_APPROUVE", exp_filter=f"CODE_INSEE = '{insee}'")
+    n = 0
+    for f in fc.get("features", []) or []:
+        p = f.get("properties") or {}
+        degre = (p.get("DEGRE") or "").strip()
+        if not f.get("geometry") or not degre:
+            continue
+        code_degre, risque = p.get("CODE_DEGRE"), p.get("RISQUE")
+        _insert_layer(session, "ppr", degre, f"PPR {risque} — {code_degre}", f["geometry"],
+                      sids.get(KIND_SOURCE["ppr"]), commune, run_id,
+                      {"code_degre": code_degre, "risque": risque, "document": p.get("DOCUMENT"),
+                       "code_insee": p.get("CODE_INSEE"), "approbation": p.get("APPROBATIO"),
+                       "statut": "zonage_reglementaire", "source": "DEAL Réunion — Lizmap"})
+        n += 1
+    if n == 0:
+        return ingest_ppr_sup(session, bbox, commune, run_id, sids)   # repli périmètre PM1
+    return n
+
+
+_ALEA_LAYERS = (("ALEA_INONDATION", "inondation"), ("ALEA_MOUVEMENT_TERRAIN", "mouvement_terrain"))
+
+
+def ingest_georisque_alea(session, bbox, commune, run_id, sids, insee) -> int:
+    """Aléas zonés (inondation, mouvement de terrain) via WFS DEAL Réunion → kind='georisque_alea'.
+
+    subtype = type d'aléa ; attrs.niveau ∈ {faible,moyen,fort} (consommé par alea_severity_map),
+    + flag `residuel` (zones derrière protection). Filtré code_insee."""
+    wfs = WfsConnector("deal_reunion")
+    n = 0
+    for typename, subtype in _ALEA_LAYERS:
+        fc = wfs.fetch_layer("deal_reunion", typename, exp_filter=f"code_insee = '{insee}'")
+        for f in fc.get("features", []) or []:
+            p = f.get("properties") or {}
+            degre = (p.get("degre") or "").strip()
+            if not f.get("geometry") or not degre:
+                continue
+            niveau, residuel = _normalise_alea(degre)
+            _insert_layer(session, "georisque_alea", subtype,
+                          f"Aléa {subtype.replace('_', ' ')} — {degre.lower()}", f["geometry"],
+                          sids.get(KIND_SOURCE["georisque_alea"]), commune, run_id,
+                          {"niveau": niveau, "degre": degre, "code_degre": p.get("code_degre"),
+                           "residuel": residuel, "risque": p.get("risque") or p.get("theme"),
+                           "code_insee": p.get("code_insee"), "source": "DEAL Réunion — Lizmap"})
+            n += 1
+    return n
+
+
 def ingest_parc_national(session, commune, run_id, sids) -> int:
     """Parc National (Région ODS pnrun_2021) → subtype 'coeur' | 'adhesion'."""
     with _client() as c:

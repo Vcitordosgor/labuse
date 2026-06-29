@@ -20,6 +20,7 @@ endpoints:
   deal_reunion:
     base_url: "https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=02sprinr&project=01risque"
     reliability: verifie
+    output_format: "GeoJSON"          # QGIS Server/Lizmap (vs application/json pour la Géoplateforme)
     notes: "✓ validé spike 2026-06 : Lizmap DEAL (projet 02sprinr/01risque). PPR_APPROUVE + ALEA_INONDATION/MOUVEMENT_TERRAIN, EPSG:2975, filtre CODE_INSEE. WFS QGIS Server (outputFormat=GeoJSON)."
 
   peigeo:
