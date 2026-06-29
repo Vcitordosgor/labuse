@@ -47,6 +47,7 @@ class Hypotheses:
     # --- Potentiel résiduel (Lot B) — PLACEHOLDERS ---
     niveaux_bati_existant_defaut: float = 1.0   # niveaux supposés du bâti existant (hauteur BD TOPO non ingérée)
     sous_densite_seuil_pct: float = 40.0        # seuil du taux d'emprise sous lequel = « sous-densité »
+    he_defaut_generique_m: float = 9.0          # hé prudent des zones U/AU NON outillées (≈ R+2)
     # --- Prescriptions GPU (Décisions 3.b / 3.c) ---
     pct_lls: float = 0.0              # % de logements aidés (validé Vic : 30 % — Art. 2 règlement PLU)
     prix_m2_lls: float = 0.0          # prix de sortie €/m² des logements aidés (PLACEHOLDER, 0 = non calibré)
@@ -104,6 +105,7 @@ class Faisabilite:
     modulation: list[str]
     fourchette: dict
     bandeau: str
+    calibree: bool = True                       # False ⇒ capacité issue de l'estimation générique
 
 
 _BANDEAU = (
@@ -133,9 +135,14 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     avert: list[str] = []
     modul: list[str] = []
 
+    if not rules.calibree:
+        avert.append("Capacité ESTIMÉE — PLU de la commune non outillé (valeurs génériques "
+                     "prudentes). Calibrage = ajout d'un YAML PLU communal (config/plu_<commune>.yaml).")
+
     def fini(constructible, verdict, fourchette):
         return Faisabilite(rules.code, rules.via_renvoi, constructible, verdict,
-                           steps, hypotheses, avert, modul, fourchette, _BANDEAU)
+                           steps, hypotheses, avert, modul, fourchette, _BANDEAU,
+                           calibree=rules.calibree)
 
     if rules.via_renvoi:
         steps.append(Step("Zone (renvoi AU→U)", rules.via_renvoi, rules.code, "Règlement, caractère de zone"))

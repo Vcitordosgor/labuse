@@ -72,6 +72,9 @@ hypotheses_faisabilite:
   #   BD TOPO dès qu'il est ingéré. Le taux d'emprise, lui, est calculé sans hypothèse de hauteur.
   sous_densite_seuil_pct: 40        # PLACEHOLDER : en deçà de ce taux d'utilisation de l'emprise
   #                                   constructible, une parcelle bâtie est marquée « sous-densité ».
+  he_defaut_generique_m: 9.0        # hé prudent (~R+2) des zones U/AU des communes NON outillées
+  #   (config/plu_<commune>.yaml absent). Capacité alors ESTIMÉE et flaggée. Sans effet sur
+  #   Saint-Paul ni toute commune calibrée. À retirer de l'usage dès qu'un YAML PLU communal existe.
   # --- Assemblage foncier (Lot C5) — PLACEHOLDERS ---
   assemblage_min_surface_m2: 1000   # surface cumulée à partir de laquelle un assemblage « débloque »
   assemblage_individuel_max_m2: 1000  # une parcelle au-dessus n'a pas besoin d'assemblage (exclue des paires)

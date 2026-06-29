@@ -29,7 +29,7 @@ from .plu_rules import resolve_zone
 _CTX = text("""
 SELECT p.idu, p.commune,
        ST_Area(p.geom_2975)                               AS surface_m2,
-       (SELECT z.name FROM spatial_layers z
+       (SELECT COALESCE(z.attrs->>'libelle', z.subtype, z.name) FROM spatial_layers z
           WHERE z.commune = p.commune AND z.kind ILIKE '%plu%'
             AND z.kind NOT ILIKE '%prescription%'  -- les prescriptions (1.B) ne sont PAS des zones
             AND ST_Contains(z.geom, p.centroid)
@@ -140,7 +140,7 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
     ctx = parcel_context(session, parcel_id)
     if ctx is None or not ctx.zone:
         return None
-    rules = resolve_zone(ctx.zone)
+    rules = resolve_zone(ctx.zone, ctx.commune)
     if rules is None:
         return None
 
@@ -239,7 +239,7 @@ def volume3d_payload(session: Session, parcel_id: int,
                 "note": "Parcelle non constructible — aucun gabarit à extruder."}
 
     from .engine import Hypotheses
-    rules = resolve_zone(ctx.zone) if ctx.zone else None
+    rules = resolve_zone(ctx.zone, ctx.commune) if ctx.zone else None
     hyp = Hypotheses.charger()
     recul = (float(rules.recul_limites_sep_m)
              if rules is not None and isinstance(rules.recul_limites_sep_m, (int, float))
@@ -307,7 +307,7 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
             })
             # 1.C — secteur = bassin PLU de la zone ; params résolus (défaut ← global ← secteur).
             secteur = None
-            rules = resolve_zone(ctx.zone) if ctx.zone else None
+            rules = resolve_zone(ctx.zone, ctx.commune) if ctx.zone else None
             secteur = (rules.bassin if rules else None) or "Saint-Paul"
             resolved = bpmod.resolve(session, secteur)
             bp_values = {k: r["value"] for k, r in resolved.items()}
