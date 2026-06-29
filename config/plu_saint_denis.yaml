@@ -18,7 +18,11 @@
 #                10=hauteur, 12=stationnement, 13=espaces libres.
 #   - LOT 1 = Um, Ui (+Uicm,+Uip), Uh, Uj, Ud (+Udp,+Udop,+Udo), Uavap.
 #   - LOT 2 = Ua (+Uac,+Uat,+Uad), Uv (Uva/Uvl/Uvac), Uu, Uma, Up (+Upi,+Upr),
-#                AUm, AUh, AUj, AUa, AUx. Reste à finir : Upi/Upr hauteur (tableau image p.34).
+#                AUm, AUh, AUj, AUa, AUx.
+#   - Reste à finir (TODO) : Upi/Upr hauteur (tableau image p.34, lecture manuelle).
+#   - NON CALIBRABLE PAR NATURE : Uavap — l'AVAP est un règlement architectural
+#                (lucarnes, menuiseries, matériaux, toitures), SANS capacité chiffrée
+#                (ni emprise %, ni hauteur m). Estimation prudente volontaire, pas un manque.
 # =============================================================================
 
 source:
@@ -160,15 +164,15 @@ zones:
   # ===================== Zone Uavap — AVAP (chap. p.26) : NON CALIBRÉE =====================
   # Tous les articles renvoient à l'AVAP annexée au PLU (document séparé, non fourni).
   # Aucune valeur chiffrée n'existe dans le règlement => tout a_verifier. En mode progressif,
-  # Uavap reste « estimé » (capacite_estimee=True) tant que l'AVAP n'est pas dépouillée.
+  # Uavap reste « estimé » (capacite_estimee=True) — l'AVAP n'a pas de capacité chiffrée (cf. note).
   Uavap: {bassin: "Saint-Denis",
-       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Renvoi AVAP, art. 5 « Hauteur et volume » (annexe non fournie).", hauteur_src: "Art. Uavap.10, p.29",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Renvoi AVAP, art. 5 « Hauteur et volume » (AVAP : règle architecturale, pas de valeur chiffrée).", hauteur_src: "Art. Uavap.10, p.29",
        emprise_sol_pct: "a_verifier", emprise_note: "Renvoi AVAP, art. 4 « Emprise au sol, espaces libres et plantés ».", emprise_src: "Art. Uavap.9, p.28",
        recul_voirie_m: "a_verifier", recul_voirie_note: "Renvoi AVAP, art. 1.", recul_voirie_src: "Art. Uavap.6, p.28",
        recul_limites_sep_m: "a_verifier", recul_limites_note: "Renvoi AVAP, art. 2.", recul_limites_src: "Art. Uavap.7, p.28",
        stat_logement: "1 à 1,5 place / logement", stat_note: "renvoi §XVII ; exemption si <=2 logements", stat_src: "Art. Uavap.12, p.29",
        pleine_terre_pct: "a_verifier", pleine_terre_note: "Renvoi AVAP, art. 4.", pleine_terre_src: "Art. Uavap.13, p.29",
-       note: "ZONE NON CALIBRÉE — gouvernée par l'AVAP annexée (document séparé). À calibrer ultérieurement depuis l'AVAP."}
+       note: "NON CALIBRABLE PAR NATURE — l'AVAP est un règlement architectural (lucarnes, menuiseries, matériaux, toitures) SANS capacité chiffrée (ni emprise %, ni hauteur m). Estimation prudente volontaire, pas un manque ni un TODO."}
 
   # ========================= LOT 2 =========================
 
