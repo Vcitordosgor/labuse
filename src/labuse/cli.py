@@ -323,6 +323,57 @@ def ingest_pm_cmd(
     typer.echo(f"✓ {n} parcelles de personnes morales chargées (DGFiP, INSEE {insee}).")
 
 
+@app.command("warm-vue-mer")
+def warm_vue_mer_cmd(
+    commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),
+    max_dist: int = typer.Option(2000, help="Rayon côtier (m) : parcelles à ≤ max_dist du trait de côte."),
+    batch: int = typer.Option(200, help="Commit + log de progression tous les N parcelles."),
+) -> None:
+    """Pré-chauffe le cache VUE MER (parcel_vue_mer) sur les parcelles littorales de la commune.
+    Réutilise api.enrichment.vue_mer (profil RGE ALTI). Idempotent (saute les parcelles déjà
+    en cache), throttlé à la cadence RGE ALTI (~5 req/s, comme _alti_query)."""
+    import time
+    from collections import Counter
+    from .api.enrichment import _live_enabled, vue_mer
+
+    insee = commune if (commune and commune.isdigit()) else get_settings().pilot_commune_insee
+    nom = _commune_nom(insee)
+    if nom is None:
+        typer.echo(f"✗ INSEE {insee} inconnu au référentiel des 24 communes de La Réunion.")
+        raise typer.Exit(1)
+    if not _live_enabled():
+        typer.echo("✗ Mode live RGE ALTI désactivé (LABUSE_ENRICH_LIVE=0) — aucun calcul possible.")
+        raise typer.Exit(1)
+
+    with session_scope() as s:
+        ids = [r[0] for r in s.execute(text(
+            """SELECT p.id FROM parcels p
+               WHERE p.commune = :c
+                 AND EXISTS (SELECT 1 FROM spatial_layers l WHERE l.kind = 'trait_de_cote'
+                             AND ST_DWithin(p.geom_2975, l.geom_2975, :d))
+                 AND NOT EXISTS (SELECT 1 FROM parcel_vue_mer v WHERE v.parcel_id = p.id)
+               ORDER BY p.id"""), {"c": nom, "d": float(max_dist)}).all()]
+        total = len(ids)
+        typer.echo(f"Pré-chauffe vue mer — {nom} : {total} parcelles littorales (≤ {max_dist} m) à calculer.")
+        if not total:
+            typer.echo("✓ Rien à faire (déjà en cache ou aucune parcelle côtière).")
+            return
+        tally: Counter = Counter()
+        for i, pid in enumerate(ids, 1):
+            try:
+                res = vue_mer(s, pid)
+                tally[res.get("vue") if res.get("available") else "indispo"] += 1
+            except Exception:  # noqa: BLE001 - une parcelle ne casse pas le lot
+                tally["erreur"] += 1
+            time.sleep(0.21)   # throttle RGE ALTI ~5 req/s (même cadence que _alti_query)
+            if i % batch == 0 or i == total:
+                s.commit()
+                typer.echo(f"    {i}/{total} · oui={tally['oui']} partielle={tally['partielle']} "
+                           f"non={tally['non']} indispo={tally['indispo']} err={tally['erreur']}")
+    typer.echo(f"✓ Vue mer pré-chauffée : {total} parcelles ({nom}). "
+               f"oui={tally['oui']} · partielle={tally['partielle']} · non={tally['non']}")
+
+
 @app.command("compute-residuel")
 def compute_residuel_cmd(
     commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
