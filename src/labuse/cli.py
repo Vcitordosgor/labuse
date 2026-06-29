@@ -28,6 +28,13 @@ def _resolve_commune(commune: str | None) -> str | None:
     return s.pilot_commune_name if commune == s.pilot_commune_insee else commune
 
 
+def _commune_nom(insee: str) -> str | None:
+    """Nom officiel d'une commune depuis son INSEE (référentiel des 24 communes)."""
+    from . import communes
+    return next((n for n, e in communes.load_communes().items()
+                 if str(e.get("insee")) == str(insee)), None)
+
+
 def _parcel_ids(session, commune: str | None) -> list[int]:
     stmt = select(models.Parcel.id).order_by(models.Parcel.idu)
     if commune:
@@ -267,6 +274,26 @@ def evaluate_cmd(
     typer.echo(f"✓ {len(outcomes)} parcelles évaluées ({commune}).")
     for status, n in counts.most_common():
         typer.echo(f"    {status:24} : {n}")
+
+
+@app.command("ingest-permits")
+def ingest_permits_cmd(
+    commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),
+    cap: int = typer.Option(10000, help="Plafond de permis récupérés (pagination ODS)."),
+) -> None:
+    """Ingère les autorisations d'urbanisme (SITADEL — API Région Réunion ODS) pour la commune,
+    géolocalisées par IDU cadastral. Lancer ensuite `geocode-permits` pour les non géolocalisés."""
+    from .ingestion.permits import ingest_permits
+
+    insee = commune if (commune and commune.isdigit()) else get_settings().pilot_commune_insee
+    nom = _commune_nom(insee)
+    if nom is None:
+        typer.echo(f"✗ INSEE {insee} inconnu au référentiel des 24 communes de La Réunion.")
+        raise typer.Exit(1)
+    with session_scope() as s:
+        n = ingest_permits(s, insee, nom, cap=cap)
+    typer.echo(f"✓ {n} permis (SITADEL) chargés pour {nom} (INSEE {insee}). "
+               f"Géolocalisez les manquants : geocode-permits --commune {insee}")
 
 
 @app.command("geocode-permits")
