@@ -292,6 +292,16 @@ def _normalise_alea(degre: str | None) -> tuple[str, bool]:
     return niveau, residuel
 
 
+def _prop(props: dict, name: str):
+    """Lecture INSENSIBLE À LA CASSE d'une propriété GeoJSON. La casse des champs varie selon
+    la couche WFS DEAL : PPR_APPROUVE en MAJUSCULES (DEGRE…), ALEA_* en casse mixte (Degre…).
+    Verrouillé par test (test_deal_risques)."""
+    if name in props:
+        return props[name]
+    low = name.lower()
+    return next((v for k, v in props.items() if k.lower() == low), None)
+
+
 def ingest_ppr_zone(session, bbox, commune, run_id, sids, insee) -> int:
     """PPR ZONÉ RÉGLEMENTAIRE (rouge/bleu) via WFS DEAL Réunion (Lizmap) → kind='ppr'.
 
@@ -305,14 +315,14 @@ def ingest_ppr_zone(session, bbox, commune, run_id, sids, insee) -> int:
     n = 0
     for f in fc.get("features", []) or []:
         p = f.get("properties") or {}
-        degre = (p.get("DEGRE") or "").strip()
+        degre = (_prop(p, "degre") or "").strip()
         if not f.get("geometry") or not degre:
             continue
-        code_degre, risque = p.get("CODE_DEGRE"), p.get("RISQUE")
+        code_degre, risque = _prop(p, "code_degre"), _prop(p, "risque")
         _insert_layer(session, "ppr", degre, f"PPR {risque} — {code_degre}", f["geometry"],
                       sids.get(KIND_SOURCE["ppr"]), commune, run_id,
-                      {"code_degre": code_degre, "risque": risque, "document": p.get("DOCUMENT"),
-                       "code_insee": p.get("CODE_INSEE"), "approbation": p.get("APPROBATIO"),
+                      {"code_degre": code_degre, "risque": risque, "document": _prop(p, "document"),
+                       "code_insee": _prop(p, "code_insee"), "approbation": _prop(p, "approbatio"),
                        "statut": "zonage_reglementaire", "source": "DEAL Réunion — Lizmap"})
         n += 1
     if n == 0:
@@ -334,16 +344,16 @@ def ingest_georisque_alea(session, bbox, commune, run_id, sids, insee) -> int:
         fc = wfs.fetch_layer("deal_reunion", typename, exp_filter=f"code_insee = '{insee}'")
         for f in fc.get("features", []) or []:
             p = f.get("properties") or {}
-            degre = (p.get("degre") or "").strip()
+            degre = (_prop(p, "degre") or "").strip()
             if not f.get("geometry") or not degre:
                 continue
             niveau, residuel = _normalise_alea(degre)
             _insert_layer(session, "georisque_alea", subtype,
                           f"Aléa {subtype.replace('_', ' ')} — {degre.lower()}", f["geometry"],
                           sids.get(KIND_SOURCE["georisque_alea"]), commune, run_id,
-                          {"niveau": niveau, "degre": degre, "code_degre": p.get("code_degre"),
-                           "residuel": residuel, "risque": p.get("risque") or p.get("theme"),
-                           "code_insee": p.get("code_insee"), "source": "DEAL Réunion — Lizmap"})
+                          {"niveau": niveau, "degre": degre, "code_degre": _prop(p, "code_degre"),
+                           "residuel": residuel, "risque": _prop(p, "risque") or _prop(p, "theme"),
+                           "code_insee": _prop(p, "code_insee"), "source": "DEAL Réunion — Lizmap"})
             n += 1
     return n
 
