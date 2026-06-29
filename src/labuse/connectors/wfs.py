@@ -8,6 +8,7 @@ distant vers un `spatial_kind` LA BUSE. `test_connection` interroge GetCapabilit
 from __future__ import annotations
 
 from typing import Any
+from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
 from .. import config
 from .base import ConnectionTestResult, Connector
@@ -41,15 +42,28 @@ class WfsConnector(Connector):
         (ex. `cleabs` en BD TOPO) est requis pour paginer sans doublon ni trou sur les
         couches volumineuses (bâtiments : >10k entités par commune).
         `exp_filter` : filtre attributaire QGIS Server/Lizmap (ex. "CODE_INSEE = '97411'").
-        `outputFormat` lu par endpoint (clé `output_format` ; défaut application/json — les
-        endpoints Lizmap/QGIS Server veulent « GeoJSON »)."""
+        Par endpoint : `output_format` (défaut application/json ; Lizmap veut GeoJSON) et
+        `wfs_version` (défaut 2.0.0 ; QGIS Server/Lizmap veut 1.1.0 → TYPENAME singulier +
+        maxFeatures). La query string du `base_url` (ex. Lizmap ?repository=…&project=…) est
+        PRÉSERVÉE (httpx ne la fusionne pas avec `params` → on la réinjecte)."""
         ep = self._endpoint(endpoint_key)
-        base = ep["base_url"]
-        params: dict[str, Any] = {
-            "service": "WFS", "version": "2.0.0", "request": "GetFeature",
-            "typeNames": typename, "outputFormat": ep.get("output_format", "application/json"),
-            "srsName": "EPSG:4326", "count": max_features,
-        }
+        # P1 : déplacer la query string du base_url dans `params` (sinon httpx la perd).
+        split = urlsplit(ep["base_url"])
+        base = urlunsplit((split.scheme, split.netloc, split.path, "", ""))
+        params: dict[str, Any] = dict(parse_qsl(split.query, keep_blank_values=True))
+        # P2 : version WFS par endpoint.
+        version = ep.get("wfs_version", "2.0.0")
+        params.update({
+            "service": "WFS", "version": version, "request": "GetFeature",
+            "outputFormat": ep.get("output_format", "application/json"),
+            "srsName": "EPSG:4326",
+        })
+        if version.startswith("1."):          # WFS 1.x (QGIS Server/Lizmap) : TYPENAME + maxFeatures
+            params["typeName"] = typename
+            params["maxFeatures"] = max_features
+        else:                                 # WFS 2.0.0 (Géoplateforme) : typeNames + count
+            params["typeNames"] = typename
+            params["count"] = max_features
         if start_index:
             params["startIndex"] = start_index
         if sort_by:
