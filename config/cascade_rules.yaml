@@ -118,8 +118,10 @@ layers:
     params:
       spatial_kind_ppr: ppr
       spatial_kind_alea: georisque_alea
-      # PPR zone rouge → HARD_EXCLUDE ; aléa fort (inondation / mouvement de terrain) → flag fort
-      ppr_red_subtypes: [rouge, R]
+      # PPR ZONÉ (DEAL Réunion, B2) : subtype = DEGRE. Zone rouge = 'INTERDICTION' → HARD_EXCLUDE
+      # (inconstructible) ; 'PRESCRIPTION' (bleu, constructible sous conditions) → SOFT_FLAG (branche
+      # non-rouge). Aléa (georisque_alea) : niveau faible/moyen/fort → flag gradué.
+      ppr_red_subtypes: ['INTERDICTION']
       # Étape A (quick-win PPR v2) : couverture MINIMALE du périmètre PM1 (% de la parcelle) en deçà
       # de laquelle l'intersection est jugée MARGINALE → note informative FAIBLE au lieu d'un flag FORT
       # (le périmètre seul ne dit pas rouge/bleu ; un bord rogné n'est pas une contrainte forte présumée).
