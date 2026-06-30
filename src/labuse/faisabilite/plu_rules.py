@@ -41,6 +41,7 @@ class ZoneRules:
     via_renvoi: str | None = None            # ex. "AU1a → règles U1a"
     constructible_neuf: bool = True          # False pour les zones AU*st
     calibree: bool = True                    # True = règles d'un YAML PLU communal ; False = estimation générique
+    hauteur_mode: str | None = None          # 'prospect' = hf_m calculé PAR PARCELLE (L≥H, largeur voirie)
     notes: list[str] = field(default_factory=list)
     sources: dict[str, str] = field(default_factory=dict)
     raw: dict = field(default_factory=dict)
@@ -109,6 +110,7 @@ def _to_rules(code: str, v: dict) -> ZoneRules:
         recul_limites_sep_m=_num(v.get("recul_limites_sep_m")),
         stat_logement=v.get("stat_logement"),
         pleine_terre_pct=_num(v.get("pleine_terre_pct")),
+        hauteur_mode=v.get("hauteur_mode"),
         notes=[n for n in notes if n], sources=srcs, raw=v,
     )
 
@@ -175,8 +177,10 @@ def resolve_zone(code: str, commune: str | None = None) -> ZoneRules | None:
 
 def _has_usable_height(r: ZoneRules) -> bool:
     """Le moteur ne calcule des niveaux que si he_m OU hf_m est chiffré (sinon
-    estimate_capacity renvoie « non constructible »). « a_verifier »/None → non exploitable."""
-    return isinstance(r.he_m, (int, float)) or isinstance(r.hf_m, (int, float))
+    estimate_capacity renvoie « non constructible »). « a_verifier »/None → non exploitable.
+    EXCEPTION : zone 'prospect' → hf_m sera calculé PAR PARCELLE (faisabilite/db.py) ; on la
+    considère exploitable, sinon le mode progressif la ferait tomber en estimation générique."""
+    return r.hauteur_mode == 'prospect' or isinstance(r.he_m, (int, float)) or isinstance(r.hf_m, (int, float))
 
 
 def _positive_prefixes() -> tuple[str, ...]:

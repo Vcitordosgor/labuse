@@ -132,14 +132,14 @@ zones:
   # NB : hauteur Ud base = prospect L>=H (Art. Ud.10) => he_m/hf_m a_verifier (pas de hauteur absolue).
   #      En mode progressif, Ud/Udp/Udo (sans hauteur) retombent sur l'estimation générique
   #      (capacite_estimee=True) ; l'emprise calibrée sera utilisée dès qu'une hauteur sera chiffrée.
-  Ud: {bassin: "Saint-Denis",
+  Ud: {bassin: "Saint-Denis", hauteur_mode: prospect,
        he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Hauteur bornée par prospect L>=H (relatif à la voie), sans valeur absolue.", hauteur_src: "Art. Ud.10, p.44",
        emprise_sol_pct: 80, emprise_src: "Art. Ud.9, p.43",
        recul_voirie_m: 4, recul_voirie_note: "voie >=12 m : alignement OU 4 m ; voie <12 m : 4 m min", recul_voirie_src: "Art. Ud.6, p.40",
        recul_limites_sep_m: 4, recul_limites_src: "Art. Ud.7, p.42",
        stat_logement: "1 à 1,5 place / logement", stat_src: "Disp. générales §XVII, p.19",
        pleine_terre_pct: null, pleine_terre_note: "Art. 13 = plantation, pas de %", pleine_terre_src: "Art. Ud.13, p.46"}
-  Udp: {bassin: "Saint-Denis",
+  Udp: {bassin: "Saint-Denis", hauteur_mode: prospect,
        he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Udp non explicité à l'Art. Ud.10 (texte détaille Ud/Udo/Udop).", hauteur_src: "Art. Ud.10, p.44",
        emprise_sol_pct: 70, emprise_src: "Art. Ud.9, p.44 (secteurs Udop, Udp)",
        recul_voirie_m: 4, recul_voirie_src: "Art. Ud.6, p.40",
@@ -230,7 +230,7 @@ zones:
        pleine_terre_pct: null, pleine_terre_src: "Art. Uv.13, p.85"}
 
   # ----- Zone Uu (chap. p.47) — emprise calibrée mais hauteur = prospect → ESTIMÉE -----
-  Uu: {bassin: "Saint-Denis",
+  Uu: {bassin: "Saint-Denis", hauteur_mode: prospect,
        he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "« La hauteur … n'est pas réglementée. La règle de prospect … s'applique » → pas de hauteur absolue.", hauteur_src: "Art. Uu.10, p.49",
        emprise_sol_pct: 80, emprise_src: "Art. Uu.9, p.49",
        recul_voirie_m: 4, recul_voirie_src: "Art. Uu.6, p.48",
