@@ -111,3 +111,35 @@ def test_regression_ravines_paginees(monkeypatch):
     n = layers_ingest.ingest_ravines(None, (0, 0, 1, 1), "Test", 1, {})
     assert n == 2300
     assert [c["start_index"] for c in calls] == [0, 1000, 2000]
+
+
+# ── A1 : voirie stocke largeur/importance/nb_voies ; water garde attrs=None ──
+def test_voirie_stocke_largeur_attrs(monkeypatch):
+    captured: list[tuple] = []
+
+    class FakeWfs:
+        def __init__(self, *a, **k):
+            pass
+
+        def fetch_layer(self, endpoint_key, typename, bbox=None, max_features=1000,
+                        start_index=0, sort_by=None):
+            return {"features": [{
+                "geometry": {"type": "LineString", "coordinates": [[55.0, -21.0], [55.1, -21.0]]},
+                "properties": {"nature": "Route à 1 chaussée", "largeur_de_chaussee": 5.5,
+                               "importance": "4", "nombre_de_voies": 2, "cleabs": "BDTOPO0000001"}}]}
+
+    monkeypatch.setattr(layers_ingest, "WfsConnector", FakeWfs)
+    monkeypatch.setattr(layers_ingest, "_insert_layer",
+                        lambda session, kind, subtype, name, geom, src, commune, run_id, attrs:
+                        captured.append((kind, subtype, attrs)))
+
+    # voirie → attrs largeur/importance/nb_voies peuplés
+    layers_ingest.ingest_bdtopo(None, (0, 0, 1, 1), "Test", 1, {}, "voirie", "BDTOPO_V3:troncon_de_route")
+    kind, sub, attrs = captured[-1]
+    assert kind == "voirie" and sub == "Route à 1 chaussée"
+    assert attrs == {"largeur": 5.5, "importance": "4", "nb_voies": 2}
+
+    # water → attrs None (non-régression : aucun attribut)
+    captured.clear()
+    layers_ingest.ingest_bdtopo(None, (0, 0, 1, 1), "Test", 1, {}, "water", "BDTOPO_V3:surface_hydrographique")
+    assert captured[-1][0] == "water" and captured[-1][2] is None
