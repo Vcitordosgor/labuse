@@ -130,6 +130,55 @@ def parcel_context(session: Session, parcel_id: int) -> ParcelContext | None:
     return ParcelContext(parcel_id, r.idu, r.commune, float(r.surface_m2), r.zone, c)
 
 
+# ── Hauteur PROSPECT (Ud/Uu) : L≥H, L = largeur de la voie desservante (BD TOPO) ──
+_FACADE_SEUIL_M = 25.0          # seuil de desserte (cohérent cascade_rules direct_access_m=25)
+# Largeur par défaut quand la chaussée BD TOPO n'a pas de largeur exploitable (≈28 % des
+# tronçons). Sentier/Escalier/Rond-point = pas une desserte habitée → None. Faible enjeu
+# (le plancher 10 m de _prospect_hauteur écrase presque tout sauf les avenues larges).
+_CLASSE_LARGEUR = {
+    "Route à 2 chaussées": 14.0,
+    "Route à 1 chaussée": 6.0,
+    "Route empierrée": 4.0,
+    "Chemin": 4.0,
+}
+
+_FACADE_SQL = text("""
+    SELECT (s.attrs->>'largeur')::float AS largeur, s.subtype AS nature
+    FROM parcels p JOIN spatial_layers s
+      ON s.commune = :c AND s.kind = 'voirie'
+         AND ST_DWithin(p.geom_2975, s.geom_2975, :seuil)
+    WHERE p.id = :pid
+""")
+
+
+def _facade_largeur(session: Session, parcel_id: int, commune: str) -> tuple[float | None, str]:
+    """Largeur de la voie DESSERVANT la parcelle, pour la hauteur prospect.
+
+    Parmi les tronçons de voirie à ≤ 25 m (ST_DWithin), retient la LARGEUR LA PLUS GRANDE
+    (favorise l'avenue desservante en cas de multi-façades). Largeur réelle BD TOPO si
+    présente ET > 0 (« reel ») ; sinon défaut par classe de voie (« classe ») ; sinon, si
+    aucune voie desservante exploitable, (None, « aucune »). NB : largeur ≤ 0 = dégénérée
+    BD TOPO → traitée comme absente (fallback)."""
+    best: tuple[float, str] | None = None
+    for largeur, nature in session.execute(
+            _FACADE_SQL, {"pid": parcel_id, "c": commune, "seuil": _FACADE_SEUIL_M}).all():
+        if largeur is not None and largeur > 0:
+            cand: tuple[float, str] | None = (float(largeur), "reel")
+        else:
+            d = _CLASSE_LARGEUR.get(nature)
+            cand = (float(d), "classe") if d else None
+        if cand and (best is None or cand[0] > best[0]):
+            best = cand
+    return best if best is not None else (None, "aucune")
+
+
+def _prospect_hauteur(largeur_m: float | None) -> float:
+    """Hauteur prospect L≥H : L = max(largeur de chaussée desservante, plancher 10 m)
+    (« si l'emprise de la voie est inférieure à 10 m → ligne à 10 m », règlement Ud/Uu).
+    Fonction PURE (sans base) — verrouillée par test."""
+    return max(float(largeur_m or 0.0), 10.0)
+
+
 def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext, Faisabilite] | None:
     """Contexte + pré-faisabilité d'une parcelle, EMPRISE SUR GÉOMÉTRIE RÉELLE
     (ST_Buffer du contour cadastral par le recul séparatif, EPSG:2975), clippée à la
