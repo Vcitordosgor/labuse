@@ -71,14 +71,51 @@ class EvalContext:
         for r in self.session.execute(
             text(
                 """
-                SELECT p.id AS pid, sl.kind, sl.subtype, sl.name, sl.attrs,
-                       ST_Area(ST_Intersection(p.geom_2975, sl.geom_2975))
-                         / NULLIF(ST_Area(p.geom_2975), 0) AS coverage,
+                -- ST_Subdivide(256) : certains polygones PPR/aléa DEAL atteignent
+                -- ~221 906 sommets ; ST_Intersection (overlay GEOS) sur ces géométries
+                -- bloque des lots entiers (la cascade restait suspendue >15 min/lot).
+                -- On découpe chaque couche en pièces ≤256 sommets — l'UNION des pièces = la
+                -- géométrie d'origine — puis on RE-SOMME l'aire d'intersection par zone
+                -- logique (GROUP BY sl.id). Coverage EXACTE : Σ aire(∩ pièce) = aire(∩ tout)
+                -- (pièces disjointes), prouvé identique au full à 5×10⁻¹³. La géométrie
+                -- stockée n'est JAMAIS modifiée (découpe à la volée, pas de migration).
+                -- PÉRIMÈTRE INCHANGÉ vs l'ancienne requête : `parts` est restreint aux
+                -- couches dont le bbox chevauche l'emprise du lot (`&&`, indexé GiST) — toute
+                -- couche qui intersecte une parcelle chevauche forcément ce bbox, donc aucune
+                -- intersection n'est perdue ; on évite seulement de subdiviser les couches
+                -- hors-lot. kind='batiment' reste exclu (cf. note ci-dessus).
+                WITH batch AS (
+                    SELECT id, geom_2975 FROM parcels WHERE id = ANY(:ids)
+                ),
+                bbox AS (
+                    SELECT ST_SetSRID(ST_Extent(geom_2975)::geometry, 2975) AS g FROM batch
+                ),
+                parts AS (
+                    -- polygones (dim 2) : découpés ; SEULS concernés par le coût overlay.
+                    SELECT sl.id AS lid, sl.kind, sl.subtype, sl.name, sl.attrs,
+                           sl.data_source_id, ST_Subdivide(sl.geom_2975, 256) AS g
+                    FROM spatial_layers sl, bbox
+                    WHERE sl.kind <> 'batiment' AND sl.geom_2975 && bbox.g
+                      AND ST_Dimension(sl.geom_2975) = 2
+                    UNION ALL
+                    -- points/lignes (dim < 2) : passés TELS QUELS — ST_Subdivide n'émet que
+                    -- des pièces polygonales et supprimerait ces géométries (ex. prescriptions
+                    -- « Point Immeuble »). Aucun gain à les subdiviser, on garde l'exactitude.
+                    SELECT sl.id AS lid, sl.kind, sl.subtype, sl.name, sl.attrs,
+                           sl.data_source_id, sl.geom_2975 AS g
+                    FROM spatial_layers sl, bbox
+                    WHERE sl.kind <> 'batiment' AND sl.geom_2975 && bbox.g
+                      AND ST_Dimension(sl.geom_2975) < 2
+                )
+                SELECT b.id AS pid, parts.kind, parts.subtype, parts.name, parts.attrs,
+                       SUM(ST_Area(ST_Intersection(b.geom_2975, parts.g)))
+                         / NULLIF(MAX(ST_Area(b.geom_2975)), 0) AS coverage,
                        ds.name AS source_name
-                FROM parcels p
-                JOIN spatial_layers sl ON ST_Intersects(p.geom_2975, sl.geom_2975)
-                LEFT JOIN data_sources ds ON ds.id = sl.data_source_id
-                WHERE p.id = ANY(:ids) AND sl.kind <> 'batiment'
+                FROM batch b
+                JOIN parts ON ST_Intersects(b.geom_2975, parts.g)
+                LEFT JOIN data_sources ds ON ds.id = parts.data_source_id
+                GROUP BY b.id, parts.lid, parts.kind, parts.subtype, parts.name,
+                         parts.attrs, ds.name
                 """
             ), {"ids": ids}
         ).mappings().all():
