@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -192,6 +192,14 @@ def parcel_faisabilite(session: Session, parcel_id: int) -> tuple[ParcelContext,
     rules = resolve_zone(ctx.zone, ctx.commune)
     if rules is None:
         return None
+    # PROSPECT (Ud/Uu) : hauteur PAR PARCELLE = L≥H, L = max(largeur voie desservante, 10 m).
+    # Copie par-parcelle (dataclasses.replace) — la règle de zone partagée n'est JAMAIS mutée.
+    if rules.hauteur_mode == 'prospect':
+        largeur, src = _facade_largeur(session, parcel_id, ctx.commune)
+        L = _prospect_hauteur(largeur)
+        rules = replace(rules, hf_m=L, calibree=True,
+                        notes=[*rules.notes,
+                               f"Hauteur prospect L≥H = {L:.0f} m (largeur chaussée BD TOPO : {src})"])
 
     hyp = Hypotheses.charger()
     recul = (float(rules.recul_limites_sep_m)
