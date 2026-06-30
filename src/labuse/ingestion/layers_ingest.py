@@ -490,8 +490,12 @@ def ingest_bdtopo(session, bbox, commune, run_id, sids, kind: str, typename: str
             if not f.get("geometry"):
                 continue
             p = f.get("properties") or {}
+            # voirie : on garde largeur de chaussée + importance + nb voies (même flux WFS, jusque-là
+            # jetés) → alimentent la hauteur PROSPECT (Ud/Uu, A3). water : aucun attribut utile.
+            attrs = ({"largeur": p.get("largeur_de_chaussee"), "importance": p.get("importance"),
+                      "nb_voies": p.get("nombre_de_voies")} if kind == "voirie" else None)
             _insert_layer(session, kind, p.get("nature"), p.get("nature") or typename.split(":")[-1],
-                          f["geometry"], sids.get(KIND_SOURCE[kind]), commune, run_id, None)
+                          f["geometry"], sids.get(KIND_SOURCE[kind]), commune, run_id, attrs)
             n += 1
         pages += 1
         if len(feats) < page_size:        # page incomplète / vide → c'est la dernière
