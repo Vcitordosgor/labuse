@@ -1,25 +1,26 @@
-"""Déclassement des FAUX POSITIFS évidents (garde-fou de confiance, post-scoring).
+"""Déclassement — volet NON-franc du garde-fou faux positifs (flags QUALITÉ, étage 1).
 
-Un score brut élevé ne suffit pas : si une parcelle porte un signal bloquant FRANC
-(elle EST un parking/équipement, elle est minuscule, ou en pente non aménageable),
-on la déclasse vers `à creuser`, `faux positif probable` ou `exclue`, AVEC UN MOTIF
-VISIBLE. Le score brut d'opportunité est conservé tel quel (transparence) ; seul le
-STATUT final est corrigé. On ne REMONTE jamais un statut, on ne fait que déclasser.
+⚠ FUSION ÉTAGE 0 (refonte scoring, session 1) : les bloquants FRANCS qui vivaient ici
+(micro-parcelle < seuil, pente > seuil, équipement OSM ≥ seuil, déjà bâti franc) sont
+désormais des COUCHES D'ÉLIMINATION de phase 1 (cascade), au même titre que `eau` — leurs
+seuils sont passés en YAML (config/cascade_rules.yaml, couches surface/pente/osm_faux_positif
+/bati). Une parcelle franchement fausse est éliminée à l'étage 0, avec un score brut = 0 :
+plus de « 78/100 — faux positif probable ». Ce module ne conserve QUE les cas NON-francs,
+qui rétrogradent une opportunité en `à creuser` sans l'éliminer (surface réduite mais dans la
+bande, pente 40–60 %, OSM 30–50 %, occupation partielle, accès à vérifier). Ils deviendront
+des flags de qualité de l'étage 1 (session suivante) — d'ici là, comportement INCHANGÉ.
 
-Calibré sur données réelles (Saint-Paul) pour NE PAS déclasser à tort une grande
-parcelle qui ne fait qu'effleurer un équipement (chevauchement de bord) : seuls les
-recouvrements FRANCS comptent.
+Le score brut d'opportunité est conservé tel quel (transparence) ; seul le STATUT est nuancé.
+On ne REMONTE jamais un statut. Appliqué UNIQUEMENT aux survivants de l'étage 0 (cf. pipeline).
 """
 from __future__ import annotations
 
 from ..enums import EvaluationStatus as ES
 
-# ── Seuils (tunables). Pensés pour le promoteur : on ne perd que des cas douteux. ──
-SURFACE_FAUX_M2 = 100.0      # < : aucun programme possible → faux positif probable
+# ── Seuils NON-francs (tunables). TODO étage 1 : migrer en YAML avec les flags de qualité. ──
+# (Les seuils ÉLIMINATOIRES francs ont migré en config/cascade_rules.yaml — cf. docstring.)
 SURFACE_MIN_M2 = 250.0      # < : sous le seuil d'un programme → jamais « opportunité »
-PENTE_FAUX_PCT = 60.0       # > : terrain non aménageable → faux positif probable
 PENTE_FORTE_PCT = 40.0      # > : aménagement difficile → jamais « opportunité »
-OSM_FAUX_COVERAGE = 0.50    # ≥ : la parcelle EST l'équipement → faux positif probable
 OSM_FLAG_COVERAGE = 0.30    # ≥ : recouvre en partie un équipement → « à creuser »
 # Accès (audit O1) : aucune voirie BD TOPO à moins de N mètres → enclavement PROBABLE.
 # 6 m = demi-largeur de voie (le filaire BD TOPO est un AXE, pas la limite) — même
@@ -38,38 +39,33 @@ def _osm_label(subtype: str | None) -> str:
 
 
 def apply_declassement(status: ES, signals: dict) -> tuple[ES, str | None]:
-    """Renvoie (statut_corrigé, motif). Motif None si aucun signal bloquant.
+    """Renvoie (statut_nuancé, motif). Motif None si aucun signal NON-franc.
 
-    `signals` : {surface_m2, pente_pct, osm_subtype, osm_coverage} (toutes optionnelles).
-    Plusieurs signaux « faux positif » cumulés → `exclue`.
+    `signals` : {surface_m2, pente_pct, osm_subtype, osm_coverage, acces_dist_m, bati_*}.
+    Volet NON-franc uniquement : ne rétrograde qu'en `à creuser` (les bloquants francs sont
+    éliminés à l'étage 0). Ne remonte jamais un statut. Appliqué aux seuls survivants (pipeline).
     """
     blockers: list[tuple[ES, str]] = []
 
+    # TODO étage 1 : surface réduite mais > seuil franc (bande 100–250 m² sur un survivant).
     s = signals.get("surface_m2")
-    if s is not None:
-        if s < SURFACE_FAUX_M2:
-            blockers.append((ES.FAUX_POSITIF_PROBABLE, f"micro-parcelle {s:.0f} m² — aucun programme possible"))
-        elif s < SURFACE_MIN_M2:
-            blockers.append((ES.A_CREUSER, f"surface réduite {s:.0f} m² — sous le seuil d'un programme"))
+    if s is not None and s < SURFACE_MIN_M2:
+        blockers.append((ES.A_CREUSER, f"surface réduite {s:.0f} m² — sous le seuil d'un programme"))
 
+    # TODO étage 1 : pente forte mais aménageable (bande 40–60 % sur un survivant).
     pente = signals.get("pente_pct")
-    if pente is not None:
-        if pente > PENTE_FAUX_PCT:
-            blockers.append((ES.FAUX_POSITIF_PROBABLE, f"pente {pente:.0f} % — terrain non aménageable"))
-        elif pente > PENTE_FORTE_PCT:
-            blockers.append((ES.A_CREUSER, f"pente {pente:.0f} % — aménagement difficile"))
+    if pente is not None and pente > PENTE_FORTE_PCT:
+        blockers.append((ES.A_CREUSER, f"pente {pente:.0f} % — aménagement difficile"))
 
+    # TODO étage 1 : recouvrement partiel d'un équipement OSM (bande 30–50 % sur un survivant).
     sub, cov = signals.get("osm_subtype"), signals.get("osm_coverage")
-    if sub and cov is not None:
-        if cov >= OSM_FAUX_COVERAGE:
-            blockers.append((ES.FAUX_POSITIF_PROBABLE,
-                             f"{_osm_label(sub)} sur {cov * 100:.0f} % de la parcelle (OSM)"))
-        elif cov >= OSM_FLAG_COVERAGE:
-            blockers.append((ES.A_CREUSER,
-                             f"recouvre en partie un {_osm_label(sub)} (OSM, {cov * 100:.0f} %)"))
+    if sub and cov is not None and cov >= OSM_FLAG_COVERAGE:
+        blockers.append((ES.A_CREUSER,
+                         f"recouvre en partie un {_osm_label(sub)} (OSM, {cov * 100:.0f} %)"))
 
-    # Accès (audit O1) : signal présent UNIQUEMENT si la couche voirie est ingérée
-    # (clé absente sinon — jamais d'« enclavée » déduite d'une couche manquante).
+    # TODO étage 1 — Accès (audit O1) : signal présent UNIQUEMENT si la couche voirie est ingérée
+    # (clé absente sinon — jamais d'« enclavée » déduite d'une couche manquante). Non-franc : un
+    # enclavement PROBABLE reste « à creuser » (servitude/desserte non cartographiée possible).
     if "acces_dist_m" in signals:
         d = signals["acces_dist_m"]
         if d is None or d > ACCES_MAX_M:
@@ -77,23 +73,20 @@ def apply_declassement(status: ES, signals: dict) -> tuple[ES, str | None]:
             blockers.append((ES.A_CREUSER,
                              f"accès non identifié ({txt}, BD TOPO) — desserte ou servitude de passage à vérifier"))
 
-    # Correctif R1 « déjà bâti » : couverture bâtiments BD TOPO (cf. labuse/bati.py —
-    # classification graduée : la règle « ensemble bâti » attrape les résidences dont le
-    # ratio reste sous 30 % à cause des espaces communs, ex. BP0571 = 18 % / 4 bâtiments).
+    # TODO étage 1 — Correctif R1 « déjà bâti » : SEUL le cas NON-franc (partiellement bâti →
+    # « à creuser ») reste ici. Le cas franc (déjà bâti / ensemble bâti, ex. BP0571) est éliminé
+    # à l'étage 0 par la couche `bati` (phase 1) — même source de vérité, labuse/bati.py.
     if signals.get("bati_ratio") is not None:
         from .. import bati as _bati
         cls = _bati.classify(signals.get("bati_ratio"), signals.get("bati_count") or 0,
                              signals.get("bati_max_m2") or 0.0, signals.get("surface_m2"))
-        if cls["declasse"] == "faux_positif":
-            blockers.append((ES.FAUX_POSITIF_PROBABLE, cls["motif"]))
-        elif cls["declasse"] == "a_creuser":
+        if cls["declasse"] == "a_creuser":
             blockers.append((ES.A_CREUSER, cls["motif"]))
 
     if not blockers:
         return status, None
 
-    strong = [b for b in blockers if b[0] == ES.FAUX_POSITIF_PROBABLE]
-    forced = ES.EXCLUE if len(strong) >= 2 else max((b[0] for b in blockers), key=lambda st: _RANK[st])
+    forced = max((b[0] for b in blockers), key=lambda st: _RANK[st])
     final = forced if _RANK[forced] > _RANK[status] else status
     motif = " ; ".join(m for _, m in blockers)
     return final, motif

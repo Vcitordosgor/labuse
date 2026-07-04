@@ -127,6 +127,24 @@ def test_surface_calculee_non_excluante(demo):
     assert v.magnitude == pytest.approx((2000 - 400) / (2500 - 400), abs=0.03)
 
 
+def test_invariant_survivant_aucun_hard_exclude_en_aval(demo):
+    """LIVRABLE 2 (refonte étage 0) : seul l'étage 0 (cascade phase 1) élimine. Une parcelle
+    PROMUE — qui a passé l'étage 0 — ne porte AUCUN HARD_EXCLUDE dans ses verdicts finaux
+    (ni couche phase 2, ni déclassement, désormais fusionné en phase 1)."""
+    for o in demo.values():
+        if o.promoted:
+            assert not any(v.result == CascadeVerdict.HARD_EXCLUDE for v in o.verdicts), \
+                f"{o.idu} promue mais porte un HARD_EXCLUDE en aval — l'étage 0 doit être seul juge"
+
+
+def test_eliminee_na_pas_de_score_fantome(demo):
+    """Corollaire : une parcelle éliminée (non promue) a un score brut d'opportunité = 0 —
+    plus jamais l'absurdité « 78/100 — faux positif probable » que la fusion corrige."""
+    for o in demo.values():
+        if not o.promoted:
+            assert o.opportunity.score == 0, f"{o.idu} éliminée mais score {o.opportunity.score}"
+
+
 def test_persistance_cascade_et_evaluation(db_session, demo):
     pid = db_session.execute(select(models.Parcel.id).limit(1)).scalar_one()
     n_cascade = db_session.execute(

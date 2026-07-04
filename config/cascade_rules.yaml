@@ -165,6 +165,10 @@ layers:
       # (driver de coût terrassement, jamais une exclusion). Seuil PLACEHOLDER (défaut Vic 30 %).
       exclude: false
       seuil_flag_pct: 30      # PLACEHOLDER — au-delà : SOFT_FLAG « pente forte »
+      # ÉTAGE 0 (bloquant FRANC, fusion du déclassement) : au-delà de ce seuil le terrain n'est
+      # pas aménageable → HARD_EXCLUDE (faux positif). 40–60 % → « à creuser » (déclassement,
+      # étage 1). Ex-constante declassement.py PENTE_FAUX_PCT.
+      seuil_faux_positif_pct: 60
       severity: moyen
       slope_labels:           # pente en %, bornes hautes
         faible: 10
@@ -207,6 +211,22 @@ layers:
       hard_exclude_subtypes: [cemetery, school]
       flag_fort_subtypes: [pitch, parking]
       coverage_threshold: 0.3       # part de surface couverte pour déclencher
+      # ÉTAGE 0 (bloquant FRANC, fusion du déclassement) : un équipement OSM couvrant ≥ ce
+      # seuil (quel que soit le subtype) → la parcelle EST l'équipement → HARD_EXCLUDE (faux
+      # positif). En deçà, pitch/parking restent un flag ; 0.3–0.5 → « à creuser » (déclassement,
+      # étage 1). Ex-constante declassement.py OSM_FAUX_COVERAGE.
+      faux_positif_coverage: 0.50
+
+  - name: bati
+    phase: 1
+    enabled: true
+    # ÉTAGE 0 (bloquant FRANC, correctif R1 « déjà bâti ») : occupation bâtie FRANCHE
+    # (déjà bâti / ensemble bâti, cf. bati.classify → declasse == 'faux_positif') → HARD_EXCLUDE.
+    # La classification graduée porte les paliers (source unique de vérité labuse/bati.py,
+    # partagée avec la fiche « Occupation ») : PAS de seuil dupliqué ici. Le cas non-franc
+    # (partiellement bâti → « à creuser ») reste un flag du déclassement (étage 1). Les signaux
+    # bâtis sont lus dans ctx.declass_signals (batch, calculés une seule fois par le pipeline).
+    params: {}
 
   - name: acces
     phase: 1
@@ -227,6 +247,11 @@ layers:
       threshold_enabled: false
       min_surface_m2_bati: 500
       min_surface_m2_vierge: 200
+      # ÉTAGE 0 (bloquant FRANC, fusion du déclassement) : en deçà de ce seuil, aucun programme
+      # n'est possible → micro-parcelle → HARD_EXCLUDE (faux positif). 100–250 m² → « à creuser »
+      # (déclassement, étage 1). Ex-constante declassement.py SURFACE_FAUX_M2. Distinct du seuil
+      # dur de valorisation ci-dessus (désactivé) : celui-ci élimine, il n'est pas une pénalité.
+      faux_positif_max_m2: 100
       # COURBE SATURANTE (bonus surface_utile, magnitude 0..1). Bornes pour la promotion réunionnaise :
       #   < 400 m²  : magnitude 0 (sous le seuil d'une opération de promotion utile)
       #   400→2500 m² : montée linéaire 0→1 (chaque m² ajoute de la capacité programme)

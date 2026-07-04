@@ -22,10 +22,23 @@ app = typer.Typer(add_completion=False, help="LA BUSE — radar foncier intellig
 
 
 def _resolve_commune(commune: str | None) -> str | None:
+    """Résout une entrée commune (nom OU INSEE) vers le NOM stocké en base.
+
+    Les parcelles sont indexées par NOM de commune (Parcel.commune). Un INSEE passé brut ne
+    matcherait aucune parcelle → 0 résultat silencieux (bug historique cli.py). On résout donc
+    tout INSEE (pilote OU non-pilote) via le référentiel des 24 communes avant de renvoyer.
+    """
     s = get_settings()
     if commune is None:
         return s.pilot_commune_name
-    return s.pilot_commune_name if commune == s.pilot_commune_insee else commune
+    if commune == s.pilot_commune_insee:
+        return s.pilot_commune_name
+    # Entrée ressemblant à un INSEE (5 chiffres) : résoudre vers le nom officiel si connu.
+    if commune.isdigit() and len(commune) == 5:
+        nom = _commune_nom(commune)
+        if nom is not None:
+            return nom
+    return commune
 
 
 def _commune_nom(insee: str) -> str | None:
@@ -40,6 +53,23 @@ def _parcel_ids(session, commune: str | None) -> list[int]:
     if commune:
         stmt = stmt.where(models.Parcel.commune == commune)
     return [r[0] for r in session.execute(stmt).all()]
+
+
+def _fail_zero_parcel(session, raw: str | None, resolved: str | None) -> None:
+    """Échec BRUYANT quand une commune résout à 0 parcelle — JAMAIS un succès vide silencieux.
+
+    Distingue « base vide » (aucune parcelle du tout → lancer l'ingestion) de « commune inconnue
+    en base » (résolution INSEE probablement échouée : l'entrée n'a pas matché un nom stocké)."""
+    total = session.execute(select(models.Parcel.id).limit(1)).first()
+    if total is None:
+        typer.echo("Aucune parcelle ingérée en base. Lancer `labuse seed-demo` ou `labuse ingest-real`.")
+        raise typer.Exit(1)
+    hint = ""
+    if raw and str(raw).isdigit():
+        hint = (f" — INSEE « {raw} » résolu en « {resolved} » : résolution probablement échouée "
+                f"(commune non ingérée, ou INSEE hors des 24 communes de La Réunion).")
+    typer.echo(f"✗ Commune « {resolved} » → 0 parcelle en base{hint}")
+    raise typer.Exit(1)
 
 
 def _parcels_bbox(session) -> tuple[float, float, float, float]:
@@ -259,13 +289,13 @@ def evaluate_cmd(
     from .ai import get_provider
     from .cascade import evaluate_parcels
 
+    raw = commune
     commune = _resolve_commune(commune)
     provider = get_provider() if ai else None
     with session_scope() as session:
         ids = _parcel_ids(session, commune)
         if not ids:
-            typer.echo("Aucune parcelle ingérée. Lancer `labuse seed-demo`.")
-            raise typer.Exit(1)
+            _fail_zero_parcel(session, raw, commune)
         outcomes = evaluate_parcels(ids, session, persist=True, ai_provider=provider)
 
     from collections import Counter
@@ -664,9 +694,12 @@ def discover_cmd(
     """Vue Découverte (offre B) : cascade sur la commune → survivantes classées."""
     from .cascade import evaluate_parcels
 
+    raw = commune
     commune = _resolve_commune(commune)
     with session_scope() as session:
         ids = _parcel_ids(session, commune)
+        if not ids:
+            _fail_zero_parcel(session, raw, commune)
         outcomes = evaluate_parcels(ids, session, persist=True)
 
     survivors = [o for o in outcomes if o.status in ("opportunite", "a_creuser")]
