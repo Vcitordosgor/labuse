@@ -450,6 +450,64 @@ def ingest_inpi_gigogne_cmd(
     typer.echo(f"✓ INPI gigogne : {tot_r} cibles résolues, {tot_d} dirigeants physiques rattachés.")
 
 
+@app.command("ingest-georisques")
+def ingest_georisques_cmd(
+    commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
+    throttle: float = typer.Option(0.15, help="Pause (s) entre pages API (rate-limit ~1000/min)."),
+    alea: bool = typer.Option(True, help="Compléter aussi les aléas DEAL (WFS) manquants."),
+    force: bool = typer.Option(False, help="Ré-ingérer même les communes déjà faites."),
+) -> None:
+    """Vague B — couches Géorisques dans spatial_layers : sites/sols pollués, cavités, ICPE
+    (API) + complétion des aléas DEAL (WFS). Une commune = une unité COMMITTÉE → résumable
+    (saute les communes déjà faites sauf --force). Ne touche PAS au score (# TODO étage 1)."""
+    import time
+
+    from .connectors.georisques import GeorisquesConnector
+    from .ingestion import georisques_layers, layers_ingest
+    from .ingestion.run_all import REUNION_COMMUNES, _commune_bbox
+
+    conn = GeorisquesConnector(throttle_s=throttle)
+    targets = [(i, n) for i, n in REUNION_COMMUNES if not (commune and commune.isdigit()) or i == commune]
+    api_kinds = list(georisques_layers.KIND_SOURCE)
+    t0 = time.time()
+    tot: dict[str, int] = {k: 0 for k in api_kinds}
+    tot["georisque_alea"] = 0
+    for insee, nom in targets:
+        with session_scope() as s:
+            has_api = s.execute(text(
+                "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind=ANY(:k)"),
+                {"c": nom, "k": api_kinds}).scalar()
+            if has_api and not force:
+                typer.echo(f"  ⏭ {nom} : couches API déjà là ({has_api}), sauté.")
+            else:
+                counts = georisques_layers.ingest_commune(s, insee, nom, connector=conn)
+                for k, v in counts.items():
+                    tot[k] += v
+                typer.echo(f"  ✓ {nom} API : {counts}")
+            if alea:
+                has_alea = s.execute(text(
+                    "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind='georisque_alea'"),
+                    {"c": nom}).scalar()
+                if has_alea and not force:
+                    typer.echo(f"     aléas déjà là ({has_alea}), sauté.")
+                else:
+                    bbox = _commune_bbox(s, nom)
+                    if bbox is None:
+                        typer.echo(f"     ⚠ {nom} : pas de parcelles → bbox absente, aléas sautés.")
+                    else:
+                        sids = layers_ingest._source_ids(s)
+                        s.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='georisque_alea'"),
+                                  {"c": nom})
+                        try:
+                            n_al = layers_ingest.ingest_georisque_alea(s, bbox, nom, None, sids, insee)
+                            tot["georisque_alea"] += n_al
+                            typer.echo(f"     ✓ aléas DEAL : {n_al}")
+                        except Exception as exc:  # noqa: BLE001 — une commune en échec ne bloque pas les autres
+                            typer.echo(f"     ⚠ aléas {nom} en échec : {type(exc).__name__}: {exc}")
+            s.commit()
+    typer.echo(f"✓ Géorisques île : {tot} ({time.time() - t0:.0f}s)")
+
+
 @app.command("warm-vue-mer")
 def warm_vue_mer_cmd(
     commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),

@@ -64,6 +64,19 @@ module `ingestion/georisques_layers.py` (parsers + `ingest_commune` idempotent +
 3. Couche 1 aléas : compléter 6→24 via WFS DEAL (mécanisme existant) — confirmer périmètre session.
 4. SSP : quelles sous-collections (casias + instructions ; SIS ; SUP ?).
 
+## 🧹 DETTE D'HYGIÈNE — env pyproj (à traiter en session dédiée)
+Repéré pendant la Vague B, **pré-existant** (pas causé par ces changements) :
+- La suite complète a **189 tests en ERREUR** sur `pyproj.exceptions.DataDirError` (test_api,
+  faisabilité, etc.) — PAS des échecs de logique.
+- Cause racine : `pyproj` ne trouve pas son répertoire de données PROJ dans le venv
+  (`UserWarning: Valid PROJ data directory not found`). C'est un problème d'INSTALLATION/ENV,
+  pas de code. Le travail spatial réel se fait côté PostGIS (serveur), pas via pyproj.
+- Impact Vague B : **nul** — les 9 tests `test_georisques_layers.py` n'utilisent pas pyproj (tout
+  le croisement est en SQL/PostGIS) et passent.
+- Fix (session dédiée) : poser `PROJ_DATA` (PROJ 9.1+) / `PROJ_LIB`, ou
+  `pyproj.datadir.set_data_dir(...)`, ou réinstaller pyproj avec ses données embarquées
+  (roue `pyproj` complète / paquet `proj-data`). À faire hors périmètre ingestion.
+
 ## Hors périmètre repéré
 - `/mvt` (mouvements de terrain, 160 à Saint-Paul) : non demandé explicitement, complète le risque —
   à mentionner, pas ingéré sans demande.

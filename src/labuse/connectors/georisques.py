@@ -27,6 +27,10 @@ class GeorisquesConnector(Connector):
     test_url = f"{BASE}/gaspar/catnat"
     test_params = {"code_insee": "97415", "page": 1, "page_size": 1}
 
+    def __init__(self, timeout: float | None = None, throttle_s: float = THROTTLE_S):
+        super().__init__(timeout)
+        self.throttle_s = throttle_s
+
     def _get(self, path: str, params: dict, max_retries: int = 4) -> dict:
         last: Exception | None = None
         for attempt in range(max_retries):
@@ -46,9 +50,10 @@ class GeorisquesConnector(Connector):
         raise RuntimeError(f"Géorisques {path} — échec après {max_retries} essais ({last})")
 
     def _paginate(self, path: str, code_insee: str, subkey: str | None = None,
-                  throttle_s: float = THROTTLE_S) -> Iterator[dict]:
+                  throttle_s: float | None = None) -> Iterator[dict]:
         """Itère les objets d'un endpoint paginé filtré par commune. `subkey` : pour /ssp, la
         sous-collection imbriquée ('casias' | 'instructions'), chacune avec ses propres pages."""
+        throttle_s = self.throttle_s if throttle_s is None else throttle_s
         page = 1
         while True:
             data = self._get(path, {"code_insee": code_insee, "page": page, "page_size": PAGE_SIZE})
