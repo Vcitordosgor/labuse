@@ -311,6 +311,35 @@ class SitadelPermit(Base):
     raw: Mapped[dict | None] = mapped_column(JSONB)
 
 
+class BodaccProcedure(Base):
+    """Annonce BODACC de PROCÉDURE COLLECTIVE (Vague A1 — signal accessibilité du deal).
+
+    Source ouverte DILA (Licence Ouverte v2.0, API Opendatasoft, sans clé). Un SIREN peut
+    porter plusieurs annonces (jugements successifs) → plusieurs lignes ; dédup par `annonce_id`.
+    Le croisement SIREN ↔ parcelle_personne_morale produit le flag « foncier sous pression »
+    (vue v_foncier_sous_pression). NE touche PAS au scoring (# TODO étage 2)."""
+
+    __tablename__ = "bodacc_procedures"
+    __table_args__ = (
+        UniqueConstraint("annonce_id", name="uq_bodacc_annonce"),
+        Index("ix_bodacc_siren", "siren"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    annonce_id: Mapped[str] = mapped_column(String(20))       # id ODS « A200902491993 » (dédup)
+    siren: Mapped[str] = mapped_column(String(9))
+    type_procedure: Mapped[str | None] = mapped_column(String(200))   # jugement.nature
+    famille_jugement: Mapped[str | None] = mapped_column(String(100))  # jugement.famille
+    date_annonce: Mapped[date | None] = mapped_column(Date)            # dateparution (ISO)
+    date_jugement_txt: Mapped[str | None] = mapped_column(String(64))  # jugement.date (texte FR brut)
+    tribunal: Mapped[str | None] = mapped_column(Text)
+    numero_annonce: Mapped[int | None] = mapped_column(Integer)
+    publication: Mapped[str | None] = mapped_column(String(4))         # « A »
+    url_source: Mapped[str | None] = mapped_column(Text)
+    raw: Mapped[dict | None] = mapped_column(JSONB)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 # ─────────────────────── pipeline de prospection (Kanban) ───────────────────────
 
 class PipelineEntry(Base, TimestampMixin):
@@ -344,6 +373,7 @@ def create_all(engine) -> None:
     ensure_residuel_cache(engine)
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
+    ensure_bodacc_view(engine)
     ensure_bilan_params(engine)
     ensure_vue_mer_cache(engine)
     ensure_watch_zones(engine)
@@ -496,6 +526,31 @@ def ensure_personnes_morales(engine) -> None:
             " source varchar(120), url_source text, date_import timestamptz NOT NULL DEFAULT now())"))
 
 
+def ensure_bodacc_view(engine) -> None:
+    """Vue `v_foncier_sous_pression` (Vague A1) : croisement SIREN entre les procédures
+    collectives BODACC et les parcelles détenues par une personne morale. Une ligne par
+    parcelle (idu), la procédure la PLUS RÉCENTE. Signal INTERNE de priorisation (RGPD,
+    règle d'archi #2) — calculable/interrogeable.
+
+    # TODO étage 2 : à brancher au scoring « accessibilité du deal » quand les 3 sources de
+    la Vague A seront en base. Cette session INGÈRE la donnée, ne touche PAS au score.
+
+    Vue reconstruite (CREATE OR REPLACE) sans échouer si les tables sont vides ; suppose
+    bodacc_procedures (ORM) et parcelle_personne_morale (ensure_personnes_morales) déjà créées."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE OR REPLACE VIEW v_foncier_sous_pression AS "
+            "SELECT DISTINCT ON (pm.idu) "
+            "  pm.idu, pm.siren, pm.denomination, "
+            "  b.type_procedure, b.date_annonce, b.tribunal, b.url_source, "
+            "  'BODACC'::text AS source "
+            "FROM parcelle_personne_morale pm "
+            "JOIN bodacc_procedures b ON b.siren = pm.siren "
+            "ORDER BY pm.idu, b.date_annonce DESC NULLS LAST"))
+
+
 def ensure_saved_filters(engine) -> None:
     """Filtres de recherche sauvegardés (Lot D3) — pilote mono-compte, params en JSONB. Idempotent."""
     from sqlalchemy import text as _t
@@ -568,6 +623,7 @@ def ensure_schema(engine) -> None:
     ensure_residuel_cache(engine)
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
+    ensure_bodacc_view(engine)
     ensure_bilan_params(engine)
     ensure_vue_mer_cache(engine)
     ensure_watch_zones(engine)
