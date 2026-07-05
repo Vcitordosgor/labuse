@@ -443,6 +443,25 @@ class DpeRecord(Base):
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class ParcelAmenite(Base):
+    """Signal d'aménités par parcelle (Vague C bonus — OSM). Distance (m, en 2975) au plus proche
+    POI de chaque catégorie depuis le centroïde. Les POI bruts sont dans spatial_layers kind='amenite'.
+
+    Signal CALCULÉ (pas des icônes) : distances stockées BRUTES ; l'agrégation pondérée en
+    « score d'aménités » est # TODO étage 1 (poids tranchés au calibrage). NE touche PAS au score."""
+
+    __tablename__ = "parcel_amenites"
+    __table_args__ = (UniqueConstraint("parcel_id", name="uq_parcel_amenite"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    parcel_id: Mapped[int] = mapped_column(ForeignKey("parcels.id", ondelete="CASCADE"))
+    dist_ecole_m: Mapped[float | None] = mapped_column(Float)
+    dist_sante_m: Mapped[float | None] = mapped_column(Float)
+    dist_commerce_m: Mapped[float | None] = mapped_column(Float)
+    dist_tcsp_m: Mapped[float | None] = mapped_column(Float)
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 # ─────────────────────── pipeline de prospection (Kanban) ───────────────────────
 
 class PipelineEntry(Base, TimestampMixin):
