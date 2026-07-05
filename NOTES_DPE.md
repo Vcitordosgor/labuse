@@ -52,5 +52,21 @@ Branche `ingestion/dpe-ademe` (jamais mergée). Base `openclaw@…/labuse`.
   (Éboulement 136, Glissement 18, Coulée 5, Érosion 1 ; fiabilité Fort 100 / Faible 50 / Moyen 10) ;
   **287 parcelles croisées (≤ 50 m)**. TEMPS 2 : passe île 24/24.
 
+## TEMPS 2 — passes FAITES (05/07, zéro erreur)
+### DPE 974 (`labuse ingest-dpe`, 116 s)
+- **910 DPE**, 20 communes (4 à 0 : base DROM jeune). **866 rattachés parcelle** (géocodage BAN),
+  **256 parcelles** distinctes. Distribution : A15 B22 C482 D212 E136 **F25 G18** (F+G = 4,7 %) ;
+  **27 maisons F/G**.
+- **Signal `passoire_thermique` : 18 parcelles** (maison F/G < 5 ans, dédupliquées) sur 9 communes.
+  Top : Saint-Denis 5, Saint-Pierre 4, Saint-Paul 2. Vue `v_passoire_thermique` (docstring =
+  calendrier DOM : gel loyers F/G 07/2024, interdiction louer G 2028 / F 2034). # TODO étage 2.
+- Rattachement `='geocode'` tracé (approximatif ; lotissements → une parcelle, dédup par le signal).
+
+### /mvt île (`labuse ingest-mvt`, 8 s)
+- **3 085 objets, 24/24 communes.** Top : Salazie 795, Saint-Denis 377, Saint-André 341,
+  Cilaos 252 (cirques = éboulements/glissements, cohérent). spatial_layers kind='mvt'.
+
+Fraîcheur posée sur les 2 sources. Tests : DPE 6 + georisques 10 verts. Branche NON mergée.
+
 ## Hors périmètre
 - DPE pré-2021 / neufs / audits ; UrbanSIMUL. Rien branché au scoring (# TODO étage 1/2).
