@@ -673,9 +673,13 @@ def ingest_amenites_cmd(
             if bbox is None:
                 typer.echo(f"  ⚠ {nom} : pas de parcelles, sauté.")
                 continue
-            counts = amenites.ingest_poi_commune(s, nom, bbox)
-            s.commit()
-            typer.echo(f"  ✓ {nom} POI : {counts}")
+            try:
+                counts = amenites.ingest_poi_commune(s, nom, bbox)
+                s.commit()
+                typer.echo(f"  ✓ {nom} POI : {counts}")
+            except Exception as exc:  # noqa: BLE001 — Overpass saturé : on saute cette commune,
+                s.rollback()          # la passe continue (résumable : reprise au prochain run)
+                typer.echo(f"  ⚠ {nom} POI en échec ({type(exc).__name__}), sauté — reprise au prochain run.")
     # Phase 2 — distances par parcelle (contre TOUS les POI de l'île)
     typer.echo("— calcul des distances par parcelle —")
     for insee, nom in targets:
