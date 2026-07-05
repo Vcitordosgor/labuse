@@ -263,7 +263,7 @@ class InpiRneConnector(Connector):
 
     # -- lecture ------------------------------------------------------------
 
-    def _get_company(self, siren: str, max_retries: int = 4) -> dict | None:
+    def _get_company(self, siren: str, max_retries: int = 6) -> dict | None:
         """GET une société. None si 404 (SIREN inconnu au RNE). Retry poli sur 429/5xx et
         re-login unique sur 401 (jeton expiré)."""
         url = COMPANY_URL.format(siren=siren)
@@ -280,9 +280,11 @@ class InpiRneConnector(Connector):
                     relogin_done = True
                     self._token = None
                     continue
-                if r.status_code == 429 or r.status_code >= 500:  # transitoire → backoff
+                if r.status_code == 429 or r.status_code >= 500:  # transitoire → backoff patient
                     retry_after = r.headers.get("Retry-After")
-                    delay = float(retry_after) if (retry_after or "").isdigit() else 0.5 * (attempt + 1)
+                    # 429 = rate-limit : backoff EXPONENTIEL (1,2,4,8,16,30 s), plafonné, sinon on
+                    # se fait bannir. On respecte Retry-After s'il est fourni.
+                    delay = float(retry_after) if (retry_after or "").isdigit() else min(30.0, 2 ** attempt)
                     last = RuntimeError(f"HTTP {r.status_code}")
                     time.sleep(delay)
                     continue
@@ -307,7 +309,10 @@ class InpiRneConnector(Connector):
         """
         throttle = self.throttle_s if throttle_s is None else throttle_s
         for siren in sorted({_digits(s) for s in sirens if _digits(s)}):
-            parsed = self.fetch_company(siren)
+            try:
+                parsed = self.fetch_company(siren)
+            except Exception:  # noqa: BLE001 — 429 persistant / réseau : on saute ce SIREN plutôt
+                parsed = None   # que de tuer la passe (résumable : réessayé au prochain run)
             if parsed:
                 yield parsed
             if throttle:

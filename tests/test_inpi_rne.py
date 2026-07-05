@@ -353,6 +353,32 @@ def test_gigogne_direct_a_priorite(db_session):
 
 
 @pytest.mark.db
+def test_gigogne_gerant_injoignable_saute_sans_crash(db_session):
+    # Un gérant qui lève (429 persistant simulé) ne doit PAS tuer la passe : cible sautée, comptée.
+    _pm(db_session, "97415000AA0001", "111111118", "SCI ERR")
+    _pm(db_session, "97415000AA0002", "222222229", "SCI OK")
+    db_session.flush()
+    ingest_inpi_rne(db_session, ["111111118", "222222229"], connector=_StubConn([
+        _parsed("111111118", [_entreprise("rg", "480998806")]),   # gérant qui va lever
+        _parsed("222222229", [_entreprise("rg2", "904178050")]),  # gérant OK
+    ]))
+
+    class _FlakyConn(_StubConn):
+        def fetch_company(self, siren):
+            import re
+            if re.sub(r"\D", "", siren) == "480998806":
+                raise RuntimeError("HTTP 429")
+            return super().fetch_company(siren)
+
+    conn = _FlakyConn([_parsed("904178050", [_indiv("rp", "1945-06")])])
+    res = resolve_gigogne(db_session, connector=conn, throttle_s=0)
+    assert res["erreurs_gerant"] == 1                     # le gérant en erreur est compté
+    assert res["cibles_resolues"] == 1                    # l'autre cible est bien résolue
+    assert _band(db_session, "222222229")["age_source"] == "gerant_societe"
+    assert _band(db_session, "111111118")["age_source"] == "aucun_individu"  # sautée → réessayable
+
+
+@pytest.mark.db
 def test_gigogne_idempotent(db_session):
     _pm(db_session, "97415000AA0001", "111111118", "SCI GIGOGNE")
     db_session.flush()

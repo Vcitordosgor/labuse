@@ -205,13 +205,18 @@ def resolve_gigogne(session: Session, connector: InpiRneConnector | None = None,
     if gerant_cache is None:
         gerant_cache = {}                        # gerant_siren → société parsée (ou None), une fois
     n_ind = 0
+    n_erreurs = 0
     cibles_resolues: set[str] = set()
     for cible, gerants in targets.items():
         for g in gerants:
             if g == cible:                         # auto-référence → cycle, sauté
                 continue
             if g not in gerant_cache:
-                gerant_cache[g] = connector.fetch_company(g)
+                try:
+                    gerant_cache[g] = connector.fetch_company(g)
+                except Exception:  # noqa: BLE001 — 429 persistant / réseau : on saute ce gérant,
+                    gerant_cache[g] = None         # la cible n'aura pas de ligne → réessayée au resume
+                    n_erreurs += 1
                 if throttle_s:
                     import time
                     time.sleep(throttle_s)
@@ -232,7 +237,8 @@ def resolve_gigogne(session: Session, connector: InpiRneConnector | None = None,
     _touch_source(session)
     session.flush()
     return {"cibles": len(targets), "gerants_interroges": len(gerant_cache),
-            "dirigeants_gigogne": n_ind, "cibles_resolues": len(cibles_resolues)}
+            "dirigeants_gigogne": n_ind, "cibles_resolues": len(cibles_resolues),
+            "erreurs_gerant": n_erreurs}
 
 
 def _touch_source(session: Session) -> None:
