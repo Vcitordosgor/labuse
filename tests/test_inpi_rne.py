@@ -13,6 +13,8 @@ from sqlalchemy import text
 
 from labuse.connectors.inpi_rne import (
     InpiRneConnector,
+    QuotaExceededError,
+    _is_quota,
     compute_age,
     parse_company,
     propension_band,
@@ -389,3 +391,44 @@ def test_gigogne_idempotent(db_session):
     resolve_gigogne(db_session, connector=depth1, throttle_s=0)   # re-run
     n = db_session.execute(text("SELECT count(*) FROM pm_dirigeant_gigogne")).scalar()
     assert n == 1   # ON CONFLICT (siren, gerant_siren, representant_id) → aucun doublon
+
+
+# ───────────────────────── robustesse quota (incident 3h muettes) ─────────────────────────
+
+def test_is_quota():
+    assert _is_quota(429, '{"errorCode":"quota_exceeded"}')
+    assert _is_quota(429, "... QUOTA_SERVICE ...")
+    assert not _is_quota(429, "rate limited transitoire")   # 429 transitoire ≠ quota
+    assert not _is_quota(500, "quota_exceeded")             # pas un 429
+
+
+class _QuotaConn:
+    """Connecteur qui refuse pour quota épuisé (comme l'API INPI après épuisement)."""
+
+    def fetch_company(self, siren):
+        raise QuotaExceededError("quota épuisé (test)")
+
+
+@pytest.mark.db
+def test_resolve_gigogne_quota_arrete_franc(db_session):
+    # Quota épuisé → resolve_gigogne NE l'avale PAS (plus de 3h muettes) : il propage l'erreur.
+    with pytest.raises(QuotaExceededError):
+        resolve_gigogne(db_session, connector=_QuotaConn(),
+                        targets={"111111118": {"904178050"}}, throttle_s=0)
+
+
+@pytest.mark.db
+def test_resolve_gigogne_progress_appele(db_session):
+    calls = []
+    conn = _StubConn([_parsed("904178050", [_indiv("rp", "1945-06")])])
+    resolve_gigogne(db_session, connector=conn, targets={"111111118": {"904178050"}},
+                    throttle_s=0, progress=lambda *a: calls.append(a))
+    assert calls and calls[-1][0] == 1        # battement émis (i == len(targets))
+
+
+def test_fetch_companies_propage_quota():
+    # depth-0 : le quota n'est pas avalé non plus (fetch_companies re-raise).
+    conn = InpiRneConnector(username="u", password="p")
+    conn.fetch_company = lambda siren: (_ for _ in ()).throw(QuotaExceededError("quota"))
+    with pytest.raises(QuotaExceededError):
+        list(conn.fetch_companies(["111111118"], throttle_s=0))

@@ -368,7 +368,7 @@ def ingest_inpi_rne_cmd(
     (# TODO étage 2)."""
     import time
 
-    from .connectors.inpi_rne import InpiRneConnector
+    from .connectors.inpi_rne import InpiRneConnector, QuotaExceededError
     from .ingestion.inpi_rne import eligible_sirens, ingest_inpi_rne
 
     insee = commune if (commune and commune.isdigit()) else None
@@ -387,14 +387,22 @@ def ingest_inpi_rne_cmd(
             return
         t0 = time.time()
         tot_d = tot_h = 0
-        for k in range(0, len(todo), chunk):
-            part = todo[k:k + chunk]
-            res = ingest_inpi_rne(s, part, connector=conn)
-            s.commit()   # lot committé → reprise possible ; conso mémoire plate
-            tot_d += res["dirigeants"]
-            tot_h += res["sirens_with_dirigeant"]
-            typer.echo(f"  … {min(k + chunk, len(todo))}/{len(todo)} — +{res['dirigeants']} dirigeants "
-                       f"(cumul {tot_d}, sirens_hit {tot_h}, {time.time() - t0:.0f}s)", nl=True)
+        done_global = 0
+        try:
+            for k in range(0, len(todo), chunk):
+                part = todo[k:k + chunk]
+                res = ingest_inpi_rne(s, part, connector=conn)
+                s.commit()   # lot committé → reprise possible ; conso mémoire plate
+                tot_d += res["dirigeants"]
+                tot_h += res["sirens_with_dirigeant"]
+                done_global = min(k + chunk, len(todo))
+                typer.echo(f"  … {done_global}/{len(todo)} — +{res['dirigeants']} dirigeants "
+                           f"(cumul {tot_d}, sirens_hit {tot_h}, {time.time() - t0:.0f}s)")
+        except QuotaExceededError as exc:
+            typer.echo(f"✗ QUOTA INPI ÉPUISÉ après {done_global}/{len(todo)} SIREN "
+                       f"({tot_d} dirigeants écrits). Résumable : relancer plus tard (quota quotidien). "
+                       f"Détail : {exc}")
+            raise typer.Exit(1) from exc
     typer.echo(f"✓ INPI RNE : {tot_d} dirigeants, {tot_h} SIREN avec dirigeant.")
 
 
@@ -412,7 +420,7 @@ def ingest_inpi_gigogne_cmd(
     anti-cycle. Identifiants en env INPI_API_*. Ne touche PAS au score (# TODO étage 2)."""
     import time
 
-    from .connectors.inpi_rne import InpiRneConnector
+    from .connectors.inpi_rne import InpiRneConnector, QuotaExceededError
     from .ingestion.inpi_rne import _gigogne_targets, resolve_gigogne
 
     # Point critique : la table pm_dirigeant_gigogne doit exister AVANT que la vue la référence.
@@ -437,17 +445,34 @@ def ingest_inpi_gigogne_cmd(
             typer.echo("✓ Rien à faire.")
             return
         t0 = time.time()
-        tot_d = tot_r = 0
-        for k in range(0, len(cibles), chunk):
-            sub = {c: all_targets[c] for c in cibles[k:k + chunk]}
-            res = resolve_gigogne(s, connector=conn, targets=sub, throttle_s=throttle,
-                                  gerant_cache=gerant_cache)
-            s.commit()
-            tot_d += res["dirigeants_gigogne"]
-            tot_r += res["cibles_resolues"]
-            typer.echo(f"  … {min(k + chunk, len(cibles))}/{len(cibles)} — +{res['dirigeants_gigogne']} "
-                       f"physiques (cibles résolues {tot_r}, {time.time() - t0:.0f}s)")
-    typer.echo(f"✓ INPI gigogne : {tot_r} cibles résolues, {tot_d} dirigeants physiques rattachés.")
+        tot_d = tot_r = tot_e = 0
+        done_global = 0
+
+        def _progress(i, n, n_ind, n_err):
+            # battement intra-lot : la commande n'est JAMAIS muette plus de ~10 cibles (incident 3h)
+            typer.echo(f"      · lot {done_global + i}/{len(cibles)} — +{n_ind} physiques, "
+                       f"{n_err} gérants injoignables ({time.time() - t0:.0f}s)")
+
+        try:
+            for k in range(0, len(cibles), chunk):
+                sub = {c: all_targets[c] for c in cibles[k:k + chunk]}
+                res = resolve_gigogne(s, connector=conn, targets=sub, throttle_s=throttle,
+                                      gerant_cache=gerant_cache, progress=_progress)
+                s.commit()
+                tot_d += res["dirigeants_gigogne"]
+                tot_r += res["cibles_resolues"]
+                tot_e += res["erreurs_gerant"]
+                done_global = min(k + chunk, len(cibles))
+                typer.echo(f"  … {done_global}/{len(cibles)} — +{res['dirigeants_gigogne']} physiques "
+                           f"(cibles résolues {tot_r}, erreurs {tot_e}, {time.time() - t0:.0f}s)")
+        except QuotaExceededError as exc:
+            # ÉCHEC EXPLICITE : quota INPI épuisé — on ne grince PAS 3h en silence.
+            typer.echo(f"✗ QUOTA INPI ÉPUISÉ après {done_global}/{len(cibles)} cibles "
+                       f"({tot_r} résolues, {tot_d} écrites). Réessayer plus tard (quota quotidien). "
+                       f"Détail : {exc}")
+            raise typer.Exit(1) from exc
+    typer.echo(f"✓ INPI gigogne : {tot_r} cibles résolues, {tot_d} dirigeants physiques rattachés "
+               f"({tot_e} gérants injoignables).")
 
 
 @app.command("ingest-georisques")

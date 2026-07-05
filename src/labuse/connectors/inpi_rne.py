@@ -44,6 +44,18 @@ TOKEN_REFRESH_MARGIN_S = 60      # re-login proactif 60 s avant l'expiration du 
 TOKEN_FALLBACK_TTL_S = 20 * 60   # si l'`exp` du JWT est illisible : re-login toutes les 20 min
 
 
+class QuotaExceededError(RuntimeError):
+    """L'API INPI a refusé pour QUOTA ÉPUISÉ (429 quota_exceeded / QUOTA_SERVICE).
+
+    NON transitoire (le quota ne se réinitialise pas en quelques secondes) → on ARRÊTE FRANC
+    au lieu de brûler des minutes en backoff puis de sauter silencieusement (incident 3h muettes)."""
+
+
+def _is_quota(status: int, body: str) -> bool:
+    """Vrai si la réponse est un refus de QUOTA (à distinguer d'un 429 transitoire de rate-limit)."""
+    return status == 429 and ("quota_exceeded" in body or "QUOTA_SERVICE" in body)
+
+
 def _load_env_file() -> None:
     """Charge `.env` (racine du dépôt) dans os.environ si les clés n'y sont pas déjà.
 
@@ -246,6 +258,8 @@ class InpiRneConnector(Connector):
         body = json.dumps({"username": self._user, "password": self._pwd})
         with self._client() as c:
             r = c.post(LOGIN_URL, content=body, headers={"Content-Type": "application/json"})
+        if _is_quota(r.status_code, r.text):
+            raise QuotaExceededError(f"INPI login refusé — quota épuisé : {r.text[:160]}")
         if r.status_code != 200:
             # message applicatif utile (401 identifiants, 403 accès API non activé…)
             raise RuntimeError(f"INPI login échoué : HTTP {r.status_code} — {r.text[:200]}")
@@ -280,6 +294,8 @@ class InpiRneConnector(Connector):
                     relogin_done = True
                     self._token = None
                     continue
+                if _is_quota(r.status_code, r.text):  # QUOTA épuisé → arrêt franc (pas de backoff inutile)
+                    raise QuotaExceededError(f"INPI quota épuisé (société {siren}) : {r.text[:140]}")
                 if r.status_code == 429 or r.status_code >= 500:  # transitoire → backoff patient
                     retry_after = r.headers.get("Retry-After")
                     # 429 = rate-limit : backoff EXPONENTIEL (1,2,4,8,16,30 s), plafonné, sinon on
@@ -290,6 +306,8 @@ class InpiRneConnector(Connector):
                     continue
                 r.raise_for_status()
                 return r.json()
+            except QuotaExceededError:
+                raise  # non transitoire : ne JAMAIS retenter ni avaler
             except Exception as exc:  # réseau / timeout → retry poli
                 last = exc
                 time.sleep(0.5 * (attempt + 1))
@@ -311,6 +329,8 @@ class InpiRneConnector(Connector):
         for siren in sorted({_digits(s) for s in sirens if _digits(s)}):
             try:
                 parsed = self.fetch_company(siren)
+            except QuotaExceededError:
+                raise            # quota épuisé → arrêt franc et bruyant (pas de skip silencieux)
             except Exception:  # noqa: BLE001 — 429 persistant / réseau : on saute ce SIREN plutôt
                 parsed = None   # que de tuer la passe (résumable : réessayé au prochain run)
             if parsed:

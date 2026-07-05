@@ -19,7 +19,7 @@ from datetime import date
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..connectors.inpi_rne import SOURCE_NAME, InpiRneConnector
+from ..connectors.inpi_rne import SOURCE_NAME, InpiRneConnector, QuotaExceededError
 
 # Groupes de la classification PM manifestement NON marchands (collectivités / établissements
 # publics) → exclus d'emblée. « Dans le doute, garder » : les formes mal classées en groupe 0
@@ -189,7 +189,8 @@ def _gigogne_targets(session: Session, insee: str | None = None) -> dict[str, se
 def resolve_gigogne(session: Session, connector: InpiRneConnector | None = None,
                     insee: str | None = None, throttle_s: float = 0.5,
                     targets: dict[str, set[str]] | None = None,
-                    gerant_cache: dict[str, dict | None] | None = None) -> dict:
+                    gerant_cache: dict[str, dict | None] | None = None,
+                    progress=None) -> dict:
     """DEPTH-1 : pour les SIREN sans dirigeant physique direct, suit le gérant-société (1 SEUL
     niveau) et rattache ses personnes physiques dans `pm_dirigeant_gigogne`. Retourne des compteurs.
 
@@ -204,21 +205,24 @@ def resolve_gigogne(session: Session, connector: InpiRneConnector | None = None,
         targets = _gigogne_targets(session, insee)
     if gerant_cache is None:
         gerant_cache = {}                        # gerant_siren → société parsée (ou None), une fois
+    import time
+
     n_ind = 0
     n_erreurs = 0
     cibles_resolues: set[str] = set()
-    for cible, gerants in targets.items():
+    for i, (cible, gerants) in enumerate(targets.items(), 1):
         for g in gerants:
             if g == cible:                         # auto-référence → cycle, sauté
                 continue
             if g not in gerant_cache:
                 try:
                     gerant_cache[g] = connector.fetch_company(g)
+                except QuotaExceededError:
+                    raise            # quota épuisé → arrêt franc (surtout PAS un skip silencieux)
                 except Exception:  # noqa: BLE001 — 429 persistant / réseau : on saute ce gérant,
                     gerant_cache[g] = None         # la cible n'aura pas de ligne → réessayée au resume
                     n_erreurs += 1
                 if throttle_s:
-                    import time
                     time.sleep(throttle_s)
             comp = gerant_cache[g]
             if not comp:
@@ -234,6 +238,8 @@ def resolve_gigogne(session: Session, connector: InpiRneConnector | None = None,
                         "raw": json.dumps(d["raw"], ensure_ascii=False)})
                     n_ind += 1
                     cibles_resolues.add(cible)
+        if progress and (i % 10 == 0 or i == len(targets)):
+            progress(i, len(targets), n_ind, n_erreurs)
     _touch_source(session)
     session.flush()
     return {"cibles": len(targets), "gerants_interroges": len(gerant_cache),
