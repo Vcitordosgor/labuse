@@ -633,6 +633,20 @@ def ingest_mvt_cmd(
     typer.echo(f"✓ /mvt île : {total} ({time.time() - t0:.0f}s)")
 
 
+@app.command("ingest-qpv")
+def ingest_qpv_cmd() -> None:
+    """Vague C bonus — QPV 2024 (ANCT) → spatial_layers kind='qpv', filtre 974. Sert le BILAN
+    PROMOTEUR (# TODO bilan), PAS le score. Idempotent (purge+réinsère)."""
+    from .ingestion import qpv
+
+    with session_scope() as s:
+        res = qpv.ingest(s)
+        s.commit()
+        b = qpv.bilan(s)
+    typer.echo(f"✓ QPV 2024 : {res['qpv']} QPV ({b['communes']} communes), "
+               f"{b['parcelles_en_qpv']} parcelles en QPV.")
+
+
 @app.command("ingest-abf")
 def ingest_abf_cmd() -> None:
     """Clôture Vague B — abords ABF (base Mérimée, tampon ~500 m) → spatial_layers kind='abf',
