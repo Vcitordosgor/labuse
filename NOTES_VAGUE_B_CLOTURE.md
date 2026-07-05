@@ -43,7 +43,28 @@ Branche `ingestion/vague-b-cloture` (jamais mergée). Base `openclaw@…/labuse`
   data.regionreunion.com (pas de couche ENS départementale), AGORAH (non public). **Proposer
   l'ajout au mail AGORAH/DEAL en attente** (couche ENS départementale officielle).
 
-## Plan de passe recommandé (TEMPS 2, après validation)
+## TEMPS 2 — passes FAITES (05/07)
+### 1a. Saint-Philippe — 3 jointures comblées
+- **permits** : 169 chargés (ODS), géolocalisés par IDU. (était 0)
+- **parcelle_personne_morale** : 614 chargées (DGFiP). (était 0)
+- **parcel_vue_mer** : **4 007 calculées** (RGE ALTI live, 0 erreur ; oui=3178 / partielle=372 /
+  non=457). (était 0)
+→ Saint-Philippe : **plus aucun trou transverse** (vue mer 4007, permits 169, PM 614).
+
+### 1b. ABF Mérimée — île entière
+- **200/204 MH → 200 abords** (tampon 500 m ; 4 MH sans coords valides). **60 618 parcelles
+  intersectées** (le tampon sur-couvre largement — d'où le flag « covisibilité à instruire »).
+- spatial_layers kind='abf' (remplace les 6 GPU AC1). Rattachement 100 % géométrique. # TODO étage 1.
+- data_sources → Mérimée, fraîcheur posée.
+
+### 1c. ENS — N/A documenté
+- 3 communes (Le Port, Saint-André, Sainte-Suzanne) : « vérifié N/A 05/07 » dans data_sources.
+  Aucune ingestion (rien à inventer). À demander au mail AGORAH/DEAL (couche ENS départementale).
+
+Amendements Vic appliqués : flag ABF « covisibilité à instruire » + rattachement géométrique pur
+(pas cog_insee). Tests : ABF 3 verts. Branche NON mergée.
+
+## Plan de passe recommandé (TEMPS 1 — archive)
 1. Saint-Philippe : 3 jointures manquantes (vue mer, permits, PM), chunké, err comptées.
 2. ABF : connecteur Mérimée + buffer 500 m + intersection parcelles île entière, kind='abf'. # TODO étage 1.
 3. ENS : rien à ingérer (N/A documenté) → NOTES + data_sources « vérifié N/A 05/07 » + mail AGORAH/DEAL.
