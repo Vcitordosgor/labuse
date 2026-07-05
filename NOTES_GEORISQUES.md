@@ -83,6 +83,17 @@ Repéré pendant la Vague B, **pré-existant** (pas causé par ces changements) 
   `pyproj.datadir.set_data_dir(...)`, ou réinstaller pyproj avec ses données embarquées
   (roue `pyproj` complète / paquet `proj-data`). À faire hors périmètre ingestion.
 
+## 📌 À INGÉRER — PROCHAINE SESSION : /mvt (mouvements de terrain)
+Validé par Vic (05/07) : ajouter `/mvt` au périmètre Géorisques — vrai risque de constructibilité
+au 974. **Pas maintenant : prochaine session dédiée**, même rituel que Vague B :
+échantillon Saint-Paul → validation → passe île 24/24.
+- Endpoint : `/api/v1/mvt`, param `code_insee` ✓ (vérifié live). **160 objets à Saint-Paul.**
+- Champs vus : `identifiant`, `type`, `fiabilite`, `lieu`, `commentaire_lieu`, région/dépt/code_insee.
+- Réutiliser la mécanique : connecteur Géorisques (`_paginate`), `spatial_layers` kind='mvt'
+  (subtype = type de mouvement), parser + `ingest_commune`-like, croisement parcelles, fraîcheur
+  data_sources « Géorisques — mouvements de terrain ». # TODO étage 1 (data pure).
+- ⚠ Géométrie à vérifier en reco : /mvt renvoie-t-il un point (lon/lat) ou juste un lieu-dit ?
+  (certains objets `mvt` peuvent ne pas avoir de coordonnées → confirmer sur échantillon, leçon SSP).
+
 ## Hors périmètre repéré
-- `/mvt` (mouvements de terrain, 160 à Saint-Paul) : non demandé explicitement, complète le risque —
-  à mentionner, pas ingéré sans demande.
+_(rien d'autre — RGA écartée/documentée ci-dessus, pyproj = dette d'hygiène ci-dessus)_
