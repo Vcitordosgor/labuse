@@ -44,5 +44,14 @@ Branche `ingestion/cartofriches` (jamais mergée). Base `openclaw@…/labuse`.
 - Alternative : table dédiée si on veut requêter en colonnes les 78 champs (plus lourd ; l'étage 1/2
   n'en aura probablement besoin que d'une poignée → jsonb suffit).
 
+## TEMPS 2 — passe 974 FAITE (05/07, 336 s, zéro erreur)
+Commande `labuse ingest-cartofriches` (24 communes, résumable, throttle 0,15 s, détail 78 champs).
+- **372 friches** en base, **22/24 communes** (Saint-Leu & Sainte-Marie = 0 friche).
+- Top : Saint-Pierre 45, La Plaine-des-Palmistes 43, Saint-Louis 42, Cilaos 32. Majorité « sans
+  projet » (inventaire) ; « avec projet » concentré Le Port 9 / Saint-Denis 6 / Saint-Louis 7.
+- **Parcelles croisées île : exact refcad 1 057 · polygone 1 801.**
+- Stockage `spatial_layers` kind='friche' + attrs jsonb (résumé + détail curé + refcad). Fraîcheur
+  `data_sources` posée. # TODO étage 1/2 (data pure). Branche prête, NON mergée.
+
 ## Hors périmètre
 - UrbanSIMUL, Mutafriches (outils de saisie/simulation) — on prend juste l'inventaire open data.
