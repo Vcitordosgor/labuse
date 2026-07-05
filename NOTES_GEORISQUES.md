@@ -54,9 +54,15 @@ Code : connecteur étendu (`sites_pollues`/`cavites`/`installations_classees`, p
 module `ingestion/georisques_layers.py` (parsers + `ingest_commune` idempotent + `sample_report`),
 3 lignes `data_sources`, 9 tests verts.
 
-## RESTE — TEMPS 2 (après validation échantillon)
-- Passe île 24/24 : couches API (sol_pollue/cavite/icpe) sur les 24 communes + aléas DEAL 6→24.
-- Chunké/résumable, throttle 0,15 s. Commande CLI à ajouter (pas de script jetable).
+## TEMPS 2 — passe île FAITE (05/07, 167 s, zéro erreur)
+Commande `labuse ingest-georisques` (24 communes, résumable, throttle 0,15 s) + aléas DEAL 6→24.
+Totaux île (spatial_layers) :
+- **sol_pollue 480** (23 communes ; Entre-Deux 0) — parcelles croisées ≤50 m : **3 849**
+- **cavite 151** (14 communes) — croisées : **380**
+- **icpe 1248** (23 communes) — croisées : **5 366**
+- **georisque_alea 993 (24/24 communes ✓)** — complété de 6→24 via WFS DEAL.
+Fraîcheur posée sur les 3 sources Géorisques. RGA écartée (documenté). # TODO étage 1 (data pure).
+Branche `ingestion/georisques-complet` prête pour revue, NON mergée.
 
 ## Décisions initiales (archive) — voir rapport
 1. Stockage : réutiliser `spatial_layers` (kind='sol_pollue'/'cavite'/'icpe') vs tables dédiées.
