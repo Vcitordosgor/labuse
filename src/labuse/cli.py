@@ -508,6 +508,41 @@ def ingest_georisques_cmd(
     typer.echo(f"✓ Géorisques île : {tot} ({time.time() - t0:.0f}s)")
 
 
+@app.command("ingest-cartofriches")
+def ingest_cartofriches_cmd(
+    commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
+    throttle: float = typer.Option(0.15, help="Pause (s) entre appels (rate-limit non exposé)."),
+    detail: bool = typer.Option(True, help="Enrichir chaque friche des 78 champs détail (1 appel/friche)."),
+    force: bool = typer.Option(False, help="Ré-ingérer même les communes déjà faites."),
+) -> None:
+    """Vague C1 — friches Cartofriches (Cerema) → spatial_layers kind='friche'. Rattachement
+    parcelle EXACT via refcad. Une commune = une unité committée → résumable (saute les faites
+    sauf --force). Ne touche PAS au score (# TODO étage 1/2)."""
+    import time
+
+    from .connectors.cartofriches import CartofrichesConnector
+    from .ingestion import cartofriches
+    from .ingestion.run_all import REUNION_COMMUNES
+
+    conn = CartofrichesConnector(throttle_s=throttle)
+    targets = [(i, n) for i, n in REUNION_COMMUNES if not (commune and commune.isdigit()) or i == commune]
+    t0 = time.time()
+    total = 0
+    for insee, nom in targets:
+        with session_scope() as s:
+            has = s.execute(text(
+                "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind='friche'"),
+                {"c": nom}).scalar()
+            if has and not force:
+                typer.echo(f"  ⏭ {nom} : friches déjà là ({has}), sauté.")
+                continue
+            n = cartofriches.ingest_commune(s, insee, nom, connector=conn, with_detail=detail)
+            s.commit()
+            total += n
+            typer.echo(f"  ✓ {nom} : {n} friches")
+    typer.echo(f"✓ Cartofriches île : {total} friches ({time.time() - t0:.0f}s)")
+
+
 @app.command("warm-vue-mer")
 def warm_vue_mer_cmd(
     commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),
