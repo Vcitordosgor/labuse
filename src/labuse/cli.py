@@ -353,6 +353,51 @@ def ingest_pm_cmd(
     typer.echo(f"✓ {n} parcelles de personnes morales chargées (DGFiP, INSEE {insee}).")
 
 
+@app.command("ingest-inpi-rne")
+def ingest_inpi_rne_cmd(
+    commune: str = typer.Option(None, help="INSEE pour restreindre (défaut = île entière 974)."),
+    throttle: float = typer.Option(0.5, help="Pause (s) entre requêtes SIREN (poli, anti-ban)."),
+    chunk: int = typer.Option(100, help="Commit + log de progression tous les N SIREN (reprise)."),
+    resume: bool = typer.Option(True, help="Sauter les SIREN déjà présents dans pm_dirigeants."),
+) -> None:
+    """Ingère les dirigeants RNE (Vague A3) des personnes morales foncières — signal âge dirigeant.
+
+    SIREN-based (comme BODACC), depth-0. RÉSUMABLE (saute les déjà faits) et CHUNKÉ (commit +
+    progression par lot) → un arrêt ne reperd rien. Identifiants en env INPI_API_* (jamais en dur).
+    ⚠ Appels réseau + écriture : l'île entière ≈ 9 579 SIREN (~1 h 45). Ne touche PAS au score
+    (# TODO étage 2)."""
+    import time
+
+    from .connectors.inpi_rne import InpiRneConnector
+    from .ingestion.inpi_rne import eligible_sirens, ingest_inpi_rne
+
+    insee = commune if (commune and commune.isdigit()) else None
+    conn = InpiRneConnector(throttle_s=throttle)
+    with session_scope() as s:
+        sirens = eligible_sirens(s, insee)
+        done: set[str] = set()
+        if resume:
+            done = {r[0] for r in s.execute(text("SELECT DISTINCT siren FROM pm_dirigeants")).all()}
+        todo = [x for x in sirens if x not in done]
+        scope = f"INSEE {insee}" if insee else "île entière (974)"
+        typer.echo(f"INPI RNE — {scope} : {len(sirens)} éligibles, {len(done)} déjà faits, "
+                   f"{len(todo)} à traiter.")
+        if not todo:
+            typer.echo("✓ Rien à faire.")
+            return
+        t0 = time.time()
+        tot_d = tot_h = 0
+        for k in range(0, len(todo), chunk):
+            part = todo[k:k + chunk]
+            res = ingest_inpi_rne(s, part, connector=conn)
+            s.commit()   # lot committé → reprise possible ; conso mémoire plate
+            tot_d += res["dirigeants"]
+            tot_h += res["sirens_with_dirigeant"]
+            typer.echo(f"  … {min(k + chunk, len(todo))}/{len(todo)} — +{res['dirigeants']} dirigeants "
+                       f"(cumul {tot_d}, sirens_hit {tot_h}, {time.time() - t0:.0f}s)", nl=True)
+    typer.echo(f"✓ INPI RNE : {tot_d} dirigeants, {tot_h} SIREN avec dirigeant.")
+
+
 @app.command("warm-vue-mer")
 def warm_vue_mer_cmd(
     commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),
