@@ -608,6 +608,20 @@ def ingest_mvt_cmd(
     typer.echo(f"✓ /mvt île : {total} ({time.time() - t0:.0f}s)")
 
 
+@app.command("ingest-abf")
+def ingest_abf_cmd() -> None:
+    """Clôture Vague B — abords ABF (base Mérimée, tampon ~500 m) → spatial_layers kind='abf',
+    île entière. FLAG QUALITÉ (# TODO étage 1), PAS exclusion étage 0. Remplace l'ancien GPU AC1."""
+    from .ingestion import abf_merimee
+
+    with session_scope() as s:
+        res = abf_merimee.ingest(s)
+        s.commit()
+        b = abf_merimee.bilan(s)
+    typer.echo(f"✓ ABF Mérimée : {res['mh_geolocalises']}/{res['mh_total']} MH → abords. "
+               f"{b['abords']} abords, {b['parcelles_intersectees']} parcelles intersectées.")
+
+
 @app.command("warm-vue-mer")
 def warm_vue_mer_cmd(
     commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),
