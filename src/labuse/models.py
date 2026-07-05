@@ -547,7 +547,10 @@ def ensure_bodacc_view(engine) -> None:
             "  b.type_procedure, b.date_annonce, b.tribunal, b.url_source, "
             "  'BODACC'::text AS source "
             "FROM parcelle_personne_morale pm "
-            "JOIN bodacc_procedures b ON b.siren = pm.siren "
+            # SIREN normalisé des deux côtés : bodacc_procedures.siren est déjà 9 chiffres nus,
+            # mais parcelle_personne_morale.siren peut arriver formaté (espaces) selon la source.
+            # Un join brut sous-compterait alors silencieusement les parcelles BODACC.
+            "JOIN bodacc_procedures b ON b.siren = regexp_replace(pm.siren, '[^0-9]', '', 'g') "
             "ORDER BY pm.idu, b.date_annonce DESC NULLS LAST"))
 
 
