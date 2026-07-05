@@ -46,6 +46,10 @@ class EvalContext:
         self._sitadel: dict[int, dict] = {}
         self._ff: dict[int, dict] = {}
         self._fbz: dict[int, tuple[int, int, int]] = {}
+        # Signaux du garde-fou faux positifs (surface/pente/OSM/bâti/accès), calculés en batch
+        # par le pipeline (compute_declass_signals) et injectés AVANT la cascade. La couche `bati`
+        # (étage 0) lit ici son signal bâti — la couche kind='batiment' étant exclue du prime().
+        self.declass_signals: dict[int, dict] = {}
 
     # ───────────────────────── batch (commune entière) ─────────────────────────
 

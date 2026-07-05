@@ -57,16 +57,19 @@ def test_classify_motifs_affiches_jamais_supprimes():
 
 # ───────────────────────── Intégration déclassement ─────────────────────────
 
-def test_apply_declassement_deja_bati():
+def test_apply_declassement_deja_bati_franc_deplace_etage0():
+    # FUSION ÉTAGE 0 : le cas franc « déjà bâti » n'est plus classé par le déclassement — il
+    # est éliminé en phase 1 (couche `bati`, cf. test_etage0_filtre_dur.py). Ici : plus de motif.
     st, motif = apply_declassement(ES.OPPORTUNITE, {"surface_m2": 5000.0, "bati_ratio": 0.55,
                                                     "bati_count": 6, "bati_max_m2": 400.0})
-    assert st == ES.FAUX_POSITIF_PROBABLE and "déjà bâtie" in motif
+    assert st == ES.OPPORTUNITE and motif is None
 
 
-def test_apply_declassement_ensemble_bati():
+def test_apply_declassement_ensemble_bati_franc_deplace_etage0():
+    # Idem cas BP0571 (« ensemble bâti ») : franc → éliminé à l'étage 0, plus par le déclassement.
     st, motif = apply_declassement(ES.OPPORTUNITE, {"surface_m2": 9222.0, "bati_ratio": 0.18,
                                                     "bati_count": 4, "bati_max_m2": 418.0})
-    assert st == ES.FAUX_POSITIF_PROBABLE and "ensemble bâti" in motif
+    assert st == ES.OPPORTUNITE and motif is None
 
 
 def test_apply_declassement_partiellement_bati_a_creuser():

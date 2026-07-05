@@ -37,6 +37,14 @@ def _dominant(intersections) -> Any | None:
     return max(intersections, key=lambda i: i.coverage, default=None)
 
 
+_OSM_LABEL = {"parking": "parking", "pitch": "terrain de sport", "sport": "terrain de sport",
+              "cemetery": "cimetière", "school": "école"}
+
+
+def _osm_label(subtype: str | None) -> str:
+    return _OSM_LABEL.get((subtype or "").lower(), subtype or "équipement")
+
+
 _ER_RE = re.compile(r"^ER\s*(\S+)\s*[-–—:]\s*(.+)$", re.IGNORECASE)
 
 
@@ -525,6 +533,15 @@ class PenteLayer(Layer):
         inter = ctx.intersections(parcel.id, "pente")
         slope = max(((i.attrs or {}).get("slope_pct", 0) for i in inter), default=0)
         label = self._label(float(slope), params.get("slope_labels", {}))
+        # ÉTAGE 0 (bloquant FRANC) : pente non aménageable → élimination en phase 1 (fusion du
+        # déclassement). Testé AVANT le flag : au-delà du seuil franc, c'est un faux positif, pas
+        # un simple surcoût. En deçà, la pente reste un flag/PASS (drivers de coût).
+        seuil_fp = params.get("seuil_faux_positif_pct")
+        if seuil_fp is not None and float(slope) > float(seuil_fp):
+            return hard_exclude(
+                self.name,
+                f"Pente {float(slope):.0f} % (> {float(seuil_fp):.0f} %) — terrain non aménageable.",
+                kind="faux_positif", source=SRC_ALTI)
         seuil = float(params.get("seuil_flag_pct", 30))
         if float(slope) > seuil:
             sev = Severity(params.get("severity", "moyen"))
@@ -610,6 +627,18 @@ class OsmFauxPositifLayer(Layer):
                 return hard_exclude(
                     self.name, f"Exclue : {i.subtype} sur la parcelle (faux positif géométrique OSM).", kind="faux_positif", source=SRC_OSM
                 )
+        # ÉTAGE 0 (bloquant FRANC, fusion du déclassement) : un équipement OSM couvrant ≥ le seuil
+        # franc (quel que soit le subtype) → la parcelle EST l'équipement → élimination. Au-delà de
+        # `coverage_threshold` mais en deçà du seuil franc, pitch/parking restent un flag.
+        faux_cov = params.get("faux_positif_coverage")
+        if faux_cov is not None:
+            strong = max(inter, key=lambda i: i.coverage, default=None)
+            if strong is not None and strong.coverage >= float(faux_cov):
+                return hard_exclude(
+                    self.name,
+                    f"{_osm_label(strong.subtype)} sur {strong.coverage * 100:.0f} % de la parcelle "
+                    "(faux positif géométrique OSM).",
+                    kind="faux_positif", source=SRC_OSM)
         for i in inter:
             if i.subtype in ff:
                 return soft_flag(self.name, f"OSM : {i.subtype} sur la parcelle (à vérifier).", Severity.FORT, source=SRC_OSM)
@@ -642,6 +671,15 @@ class SurfaceLayer(Layer):
         s = parcel.surface_m2
         if s is None:
             return unknown(self.name, "Surface non calculée.")
+        # ÉTAGE 0 (bloquant FRANC, fusion du déclassement) : sous le seuil franc, aucun programme
+        # n'est possible → micro-parcelle → élimination en phase 1. Distinct du seuil dur de
+        # valorisation ci-dessous (désactivé) : ici on élimine, on ne pénalise pas.
+        faux_max = params.get("faux_positif_max_m2")
+        if faux_max is not None and float(s) < float(faux_max):
+            return hard_exclude(
+                self.name,
+                f"Micro-parcelle {float(s):.0f} m² (< {float(faux_max):.0f} m²) — aucun programme possible.",
+                kind="faux_positif")
         # Seuil dur présent mais DÉSACTIVÉ par défaut (décision produit) :
         if params.get("threshold_enabled") and params.get("penalize"):
             mini = params.get("min_surface_m2_vierge", 0)
@@ -658,3 +696,35 @@ class SurfaceLayer(Layer):
                 params.get("bonus_key", "surface_utile"), magnitude=mag,
             )
         return passed(self.name, f"Surface {s:.0f} m² — sous le seuil de valorisation ({lo:.0f} m²).", surface_m2=round(float(s), 1))
+
+
+@register
+class BatiLayer(Layer):
+    """Occupation bâtie FRANCHE (correctif R1 « déjà bâti ») → élimination phase 1.
+
+    Réutilise `bati.classify` (source unique de vérité, partagée avec la fiche « Occupation »).
+    Seul le cas FRANC (`declasse == 'faux_positif'` : déjà bâti / ensemble bâti, ex. la résidence
+    BP0571) élimine ici, au même titre que `eau` ou `osm_faux_positif`. Le cas NON-franc
+    (partiellement bâti → « à creuser ») reste un flag qualité du déclassement (étage 1).
+
+    Les signaux bâtis (ratio/nb/plus grand bâtiment) sont lus dans `ctx.declass_signals`
+    (batch, calculés une seule fois par le pipeline via compute_declass_signals) — la couche
+    `kind='batiment'` est volontairement exclue du prime() de la cascade (coût overlay). Si la
+    couche bâtiments n'est pas ingérée, aucun signal → UNKNOWN (jamais un faux « vacant »)."""
+
+    name = "bati"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        from ... import bati as _bati  # import local : la couche batiment est lourde, découplée
+
+        sig = ctx.declass_signals.get(parcel.id, {})
+        ratio = sig.get("bati_ratio")
+        if ratio is None:
+            return unknown(self.name, "Couche bâtiments (BD TOPO) non ingérée — occupation non vérifiée.",
+                           source=_bati.SOURCE)
+        surface = sig.get("surface_m2")
+        cls = _bati.classify(ratio, sig.get("bati_count") or 0, sig.get("bati_max_m2") or 0.0,
+                             surface if surface is not None else parcel.surface_m2)
+        if cls["declasse"] == "faux_positif":
+            return hard_exclude(self.name, cls["motif"], kind="faux_positif", source=_bati.SOURCE)
+        return passed(self.name, cls["label"], source=_bati.SOURCE)
