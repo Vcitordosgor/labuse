@@ -131,9 +131,22 @@ Saint-Paul (1 515) déjà en base → `--resume` traite les 8 064 restants (~90 
 Échantillon Saint-Paul validé par Vic : **taux gigogne 20,5 %**, âges min 22 / médiane 64 /
 max 104, 1 971 parcelles à gérant âgé. Âges extrêmes = fiches non mises à jour (→ A2 décès affinera).
 
-### Récursion gigogne depth-1 — ÉCRITE + TESTÉE, PAS ENCORE LANCÉE
-Itération séparée (commit dédié). À lancer sur les SIREN `age_source='aucun_individu'` APRÈS
-validation, via `resolve_gigogne()`.
+### ⏸️ Gigogne depth-1 — EN PAUSE (rate-limit INPI), reprise = `labuse ingest-inpi-gigogne`
+Lancée sur l'île (918 cibles suivables), **crashée puis rate-limitée** :
+- 1ʳᵉ tentative : crash sur HTTP 429 persistant → corrigé (commit résilience : backoff
+  exponentiel 6 essais + une cible en échec est SAUTÉE, plus de crash).
+- Reprise (throttle 1 s) : INPI **429 sur chaque `GET /companies`** (login SSO OK, lecture
+  bridée) suite aux ~9 000 requêtes depth-0 + tentatives gigogne → mise en PAUSE pour ne pas
+  taper une API bridée.
+- **État persisté : 187 / 918 cibles résolues** (870 lignes `pm_dirigeant_gigogne`). Ces 187
+  sont passées `age_source='gerant_societe'` dans la vue ; reste **731 cibles**.
+- **REPRISE (quota probablement QUOTIDIEN — réessayer le lendemain)** : relancer simplement
+  `labuse ingest-inpi-gigogne` (résumable : les résolues sortent d'elles-mêmes du périmètre
+  `aucun_individu`, repart sur les 731 restantes). Pas de sonde auto (choix Vic).
+- Table `pm_dirigeant_gigogne` + vue enrichie DÉJÀ en prod (créées au 1er lancement).
+
+### Récursion gigogne depth-1 — détail technique
+Itération séparée (commits dédiés). `resolve_gigogne()` / commande `ingest-inpi-gigogne`.
 - Table `pm_dirigeant_gigogne` (depth-0 `pm_dirigeants` NON modifiée).
 - Vue `v_pm_propension_vendre` : fallback → `age_source='gerant_societe'` (COALESCE direct, gigogne).
 - Bornée à 1 niveau (jamais les gérants des gérants), auto-référence écartée (`gerant<>cible`),
