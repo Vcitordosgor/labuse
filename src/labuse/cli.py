@@ -543,6 +543,71 @@ def ingest_cartofriches_cmd(
     typer.echo(f"✓ Cartofriches île : {total} friches ({time.time() - t0:.0f}s)")
 
 
+@app.command("ingest-dpe")
+def ingest_dpe_cmd(
+    commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
+    throttle: float = typer.Option(0.1, help="Pause (s) entre appels."),
+    force: bool = typer.Option(False, help="Ré-ingérer même les communes déjà faites."),
+) -> None:
+    """Vague C2 — DPE ADEME (logements existants) → table dpe_records. Rattachement parcelle par
+    re-géocodage BAN (le _geopoint ADEME est faux au 974). Une commune = une unité committée →
+    résumable. Ne touche PAS au score (# TODO étage 2)."""
+    import time
+
+    from .connectors.dpe import DpeConnector
+    from .ingestion import dpe
+    from .ingestion.run_all import REUNION_COMMUNES
+
+    conn = DpeConnector(throttle_s=throttle)
+    targets = [(i, n) for i, n in REUNION_COMMUNES if not (commune and commune.isdigit()) or i == commune]
+    t0 = time.time()
+    tot = {"dpe": 0, "geocodes": 0, "rattaches_parcelle": 0}
+    for insee, nom in targets:
+        with session_scope() as s:
+            has = s.execute(text("SELECT count(*) FROM dpe_records WHERE code_insee=:c"), {"c": insee}).scalar()
+            if has and not force:
+                typer.echo(f"  ⏭ {nom} : DPE déjà là ({has}), sauté.")
+                continue
+            res = dpe.ingest_commune(s, insee, nom, connector=conn)
+            s.commit()
+            for k in tot:
+                tot[k] += res[k]
+            typer.echo(f"  ✓ {nom} : {res}")
+    typer.echo(f"✓ DPE île : {tot} ({time.time() - t0:.0f}s)")
+
+
+@app.command("ingest-mvt")
+def ingest_mvt_cmd(
+    commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
+    throttle: float = typer.Option(0.15, help="Pause (s) entre pages."),
+    force: bool = typer.Option(False, help="Ré-ingérer même les communes déjà faites."),
+) -> None:
+    """Bonus Vague C2 — mouvements de terrain Géorisques /mvt → spatial_layers kind='mvt'.
+    Une commune = une unité committée → résumable. Ne touche PAS au score (# TODO étage 1)."""
+    import time
+
+    from .connectors.georisques import GeorisquesConnector
+    from .ingestion import georisques_layers
+    from .ingestion.run_all import REUNION_COMMUNES
+
+    conn = GeorisquesConnector(throttle_s=throttle)
+    targets = [(i, n) for i, n in REUNION_COMMUNES if not (commune and commune.isdigit()) or i == commune]
+    t0 = time.time()
+    total = 0
+    for insee, nom in targets:
+        with session_scope() as s:
+            has = s.execute(text(
+                "SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind='mvt'"), {"c": nom}).scalar()
+            if has and not force:
+                typer.echo(f"  ⏭ {nom} : mvt déjà là ({has}), sauté.")
+                continue
+            n = georisques_layers.ingest_mvt_commune(s, insee, nom, connector=conn)
+            s.commit()
+            total += n
+            typer.echo(f"  ✓ {nom} : {n} mvt")
+    typer.echo(f"✓ /mvt île : {total} ({time.time() - t0:.0f}s)")
+
+
 @app.command("warm-vue-mer")
 def warm_vue_mer_cmd(
     commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),

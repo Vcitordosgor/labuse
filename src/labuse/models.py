@@ -404,6 +404,45 @@ class PmDirigeantGigogne(Base):
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class DpeRecord(Base):
+    """Diagnostic de Performance Énergétique (Vague C2 — ADEME `dpe03existant`, logements existants).
+
+    Un DPE par logement (dédup `numero_dpe`). Signal `passoire_thermique` (F/G) = pression
+    réglementaire datée sur le propriétaire (cf. vue v_passoire_thermique). Rattachement parcelle
+    APPROXIMATIF : le `_geopoint` ADEME est FAUX au 974 (100 % hors Réunion), on re-géocode
+    `adresse_ban` via BAN (citycode) puis `ST_Contains` → `rattachement='geocode'` tracé comme tel.
+
+    Représentativité : couvre les biens diagnostiqués depuis 2021 (obligatoire en DROM seulement
+    depuis le 01/07/2024 → jeu jeune, en croissance) — signal « positif quand présent », JAMAIS
+    exhaustif. NE touche PAS au scoring (# TODO étage 2)."""
+
+    __tablename__ = "dpe_records"
+    __table_args__ = (
+        UniqueConstraint("numero_dpe", name="uq_dpe_numero"),
+        Index("ix_dpe_insee", "code_insee"),
+        Index("ix_dpe_parcelle", "parcelle_idu"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    numero_dpe: Mapped[str] = mapped_column(String(40))               # identifiant ADEME (dédup)
+    etiquette_dpe: Mapped[str | None] = mapped_column(String(1))      # A…G (énergie)
+    etiquette_ges: Mapped[str | None] = mapped_column(String(1))      # A…G (climat)
+    type_batiment: Mapped[str | None] = mapped_column(String(20))     # maison / appartement / immeuble
+    surface_habitable: Mapped[float | None] = mapped_column(Float)
+    annee_construction: Mapped[int | None] = mapped_column(Integer)
+    adresse: Mapped[str | None] = mapped_column(Text)
+    code_insee: Mapped[str | None] = mapped_column(String(5))
+    code_postal: Mapped[str | None] = mapped_column(String(5))
+    date_etablissement: Mapped[date | None] = mapped_column(Date)
+    lon: Mapped[float | None] = mapped_column(Float)                  # re-géocodé BAN (pas le _geopoint ADEME)
+    lat: Mapped[float | None] = mapped_column(Float)
+    geocode_score: Mapped[float | None] = mapped_column(Float)
+    parcelle_idu: Mapped[str | None] = mapped_column(String(14))      # ST_Contains, nullable
+    rattachement: Mapped[str | None] = mapped_column(String(16))      # 'geocode' | 'aucun'
+    raw: Mapped[dict | None] = mapped_column(JSONB)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 # ─────────────────────── pipeline de prospection (Kanban) ───────────────────────
 
 class PipelineEntry(Base, TimestampMixin):
@@ -439,6 +478,7 @@ def create_all(engine) -> None:
     ensure_personnes_morales(engine)
     ensure_bodacc_view(engine)
     ensure_pm_propension_view(engine)
+    ensure_passoire_thermique_view(engine)
     ensure_bilan_params(engine)
     ensure_vue_mer_cache(engine)
     ensure_watch_zones(engine)
@@ -686,6 +726,39 @@ def ensure_pm_propension_view(engine) -> None:
             "ORDER BY pm.idu, sig.age_max_dirigeant DESC NULLS LAST"))
 
 
+def ensure_passoire_thermique_view(engine) -> None:
+    """Vue `v_passoire_thermique` (Vague C2 — DPE ADEME) : signal « passoire thermique » par parcelle.
+
+    Une parcelle est signalée si elle porte AU MOINS un DPE de MAISON individuelle classé F ou G
+    et RÉCENT (< 5 ans) — le propriétaire fait face à un mur réglementaire daté (voir ci-dessous),
+    signal de propension à vendre pour l'étage 2.
+
+    ⚖️ Calendrier réglementaire DOM (la pression datée que l'étage 2 exploitera) :
+      - gel des loyers des logements F et G depuis le 01/07/2024 ;
+      - interdiction de LOUER les G au 01/01/2028 ;
+      - interdiction de louer les F en 2034.
+    (En DROM le DPE n'est obligatoire que depuis le 01/07/2024 → base jeune, signal « positif
+    quand présent », jamais exhaustif.)
+
+    # TODO étage 2 : à brancher au score « propension à vendre » quand les sources seront prêtes.
+    NE touche PAS au score dans cette session. Une ligne par parcelle (la pire étiquette, la plus
+    récente). Reconstruite sans échouer si la table est vide."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE OR REPLACE VIEW v_passoire_thermique AS "
+            "SELECT DISTINCT ON (d.parcelle_idu) "
+            "  d.parcelle_idu AS idu, d.code_insee, d.etiquette_dpe, d.type_batiment, "
+            "  d.surface_habitable, d.date_etablissement, d.rattachement "
+            "FROM dpe_records d "
+            "WHERE d.parcelle_idu IS NOT NULL "
+            "  AND d.type_batiment = 'maison' "
+            "  AND d.etiquette_dpe IN ('F', 'G') "
+            "  AND d.date_etablissement >= (CURRENT_DATE - INTERVAL '5 years') "
+            "ORDER BY d.parcelle_idu, d.etiquette_dpe DESC, d.date_etablissement DESC"))
+
+
 def ensure_saved_filters(engine) -> None:
     """Filtres de recherche sauvegardés (Lot D3) — pilote mono-compte, params en JSONB. Idempotent."""
     from sqlalchemy import text as _t
@@ -760,6 +833,7 @@ def ensure_schema(engine) -> None:
     ensure_personnes_morales(engine)
     ensure_bodacc_view(engine)
     ensure_pm_propension_view(engine)
+    ensure_passoire_thermique_view(engine)
     ensure_bilan_params(engine)
     ensure_vue_mer_cache(engine)
     ensure_watch_zones(engine)
