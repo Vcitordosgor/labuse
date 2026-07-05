@@ -121,6 +121,30 @@ leur SIREN (`gerant_siren`) pour la mesure gigogne.
   → à intégrer proprement en `ingestion/run_all` ou commande CLI si Vic valide).
 - Décision récursion gigogne selon le taux mesuré sur Saint-Paul.
 
+---
+
+## MàJ 05/07/2026 — passe île + récursion gigogne depth-1
+
+### Passe île entière (depth-0) — LANCÉE
+Commande `labuse ingest-inpi-rne` (résumable/chunkée). Île = 9 579 SIREN ; échantillon
+Saint-Paul (1 515) déjà en base → `--resume` traite les 8 064 restants (~90 min).
+Échantillon Saint-Paul validé par Vic : **taux gigogne 20,5 %**, âges min 22 / médiane 64 /
+max 104, 1 971 parcelles à gérant âgé. Âges extrêmes = fiches non mises à jour (→ A2 décès affinera).
+
+### Récursion gigogne depth-1 — ÉCRITE + TESTÉE, PAS ENCORE LANCÉE
+Itération séparée (commit dédié). À lancer sur les SIREN `age_source='aucun_individu'` APRÈS
+validation, via `resolve_gigogne()`.
+- Table `pm_dirigeant_gigogne` (depth-0 `pm_dirigeants` NON modifiée).
+- Vue `v_pm_propension_vendre` : fallback → `age_source='gerant_societe'` (COALESCE direct, gigogne).
+- Bornée à 1 niveau (jamais les gérants des gérants), auto-référence écartée (`gerant<>cible`),
+  cache de run (un gérant requêté une fois) → pas de boucle.
+- ⚠ Pas encore de commande CLI dédiée ni d'application au schéma de la BASE RÉELLE (la vue réelle
+  référencera `pm_dirigeant_gigogne` : créer la table AVANT de rejouer `ensure_pm_propension_view`
+  en prod — fait automatiquement par `create_all`/`ensure_schema`, mais à vérifier avant lancement).
+- 5 tests : résolution, cycle, borne 1 niveau, priorité au direct, idempotence. Total A3 = 17 tests.
+
 ## Hors périmètre repéré (à ne PAS faire sans validation)
 - Procédures collectives via RNE : nécessiterait un autre endpoint (actes/évènements) — non fait,
   doublon avec BODACC A1. À ne PAS ajouter sans demande explicite.
+- Erreur ruff **pré-existante** I001 dans `cli.py` (bloc d'imports de `warm-vue-mer`, ligne ~410) :
+  antérieure à cette session, PAS corrigée (hors périmètre). `ruff --fix` la réglerait.

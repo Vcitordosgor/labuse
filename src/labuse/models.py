@@ -376,6 +376,34 @@ class PmDirigeant(Base):
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class PmDirigeantGigogne(Base):
+    """Dirigeant PHYSIQUE résolu par récursion DEPTH-1 (Vague A3, 2ᵉ itération).
+
+    Pour un SIREN foncier dont TOUS les dirigeants sont des personnes morales (`age_source =
+    'aucun_individu'`), on suit le SIREN gérant-société (`gerant_siren`) sur UN seul niveau et on
+    rattache ici les personnes physiques trouvées → la vue calcule alors `age_source =
+    'gerant_societe'`. Bornée à 1 niveau, détection de cycle côté ingestion. La table depth-0
+    `pm_dirigeants` n'est PAS modifiée. RGPD : mêmes gardes (diffusibilité). # TODO étage 2."""
+
+    __tablename__ = "pm_dirigeant_gigogne"
+    __table_args__ = (
+        UniqueConstraint("siren", "gerant_siren", "representant_id", name="uq_pm_dirigeant_gigogne"),
+        Index("ix_pm_gigogne_siren", "siren"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    siren: Mapped[str] = mapped_column(String(9))                      # SIREN foncier CIBLE
+    gerant_siren: Mapped[str] = mapped_column(String(9))              # SIREN de la société gérante suivie
+    representant_id: Mapped[str | None] = mapped_column(String(40))    # UUID RNE du pouvoir chez le gérant
+    nom: Mapped[str | None] = mapped_column(String(120))
+    prenoms: Mapped[str | None] = mapped_column(String(200))
+    date_naissance: Mapped[str | None] = mapped_column(String(7))      # 'YYYY-MM'
+    role_entreprise: Mapped[str | None] = mapped_column(String(8))
+    diffusible: Mapped[bool | None] = mapped_column(Boolean)
+    raw: Mapped[dict | None] = mapped_column(JSONB)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 # ─────────────────────── pipeline de prospection (Kanban) ───────────────────────
 
 class PipelineEntry(Base, TimestampMixin):
@@ -609,6 +637,7 @@ def ensure_pm_propension_view(engine) -> None:
     from sqlalchemy import text as _t
 
     # Bandes de propension (l'étage 2 posera sa propre courbe ; on stocke aussi l'âge brut).
+    # S'applique à l'âge retenu = âge DIRECT sinon âge résolu par gigogne (depth-1).
     band = ("CASE WHEN age_max_dirigeant IS NULL THEN NULL "
             "     WHEN age_max_dirigeant >= 75 THEN 'tres_eleve' "
             "     WHEN age_max_dirigeant >= 65 THEN 'eleve' "
@@ -618,22 +647,32 @@ def ensure_pm_propension_view(engine) -> None:
     with engine.begin() as c:
         c.execute(_t(
             "CREATE OR REPLACE VIEW v_pm_propension_vendre AS "
-            "WITH agg AS ("
+            # depth-0 : dirigeants DIRECTS (pm_dirigeants)
+            "WITH direct AS ("
             "  SELECT d.siren, "
             "    count(*) AS nb_dirigeants, "
             "    count(*) FILTER (WHERE d.type_personne = 'INDIVIDU') AS nb_individus, "
             # âge = plancher en années depuis 'YYYY-MM' (jour inconnu → 1er du mois) ; l'AÎNÉ = max
             "    max(date_part('year', age(to_date(d.date_naissance, 'YYYY-MM')))::int) "
             "      FILTER (WHERE d.type_personne = 'INDIVIDU' AND d.date_naissance IS NOT NULL) "
-            "      AS age_max_dirigeant "
+            "      AS age_direct "
             "  FROM pm_dirigeants d GROUP BY d.siren"
+            "), "
+            # depth-1 : dirigeants physiques du gérant-société (pm_dirigeant_gigogne), fallback
+            "gigogne AS ("
+            "  SELECT g.siren, "
+            "    max(date_part('year', age(to_date(g.date_naissance, 'YYYY-MM')))::int) AS age_gigogne "
+            "  FROM pm_dirigeant_gigogne g WHERE g.date_naissance IS NOT NULL GROUP BY g.siren"
             ") "
-            "SELECT siren, nb_dirigeants, nb_individus, age_max_dirigeant, "
-            f"  {band} AS propension_band, "
-            "  CASE WHEN age_max_dirigeant IS NOT NULL THEN 'direct' "
-            "       WHEN nb_dirigeants = 0 THEN 'sans_dirigeant' "
+            "SELECT direct.siren, direct.nb_dirigeants, direct.nb_individus, "
+            "  COALESCE(direct.age_direct, gigogne.age_gigogne) AS age_max_dirigeant, "
+            f"  {band.replace('age_max_dirigeant', 'COALESCE(direct.age_direct, gigogne.age_gigogne)')}"
+            "     AS propension_band, "
+            "  CASE WHEN direct.age_direct IS NOT NULL THEN 'direct' "
+            "       WHEN gigogne.age_gigogne IS NOT NULL THEN 'gerant_societe' "
+            "       WHEN direct.nb_dirigeants = 0 THEN 'sans_dirigeant' "
             "       ELSE 'aucun_individu' END AS age_source "
-            "FROM agg"))
+            "FROM direct LEFT JOIN gigogne ON gigogne.siren = direct.siren"))
 
         c.execute(_t(
             "CREATE OR REPLACE VIEW v_foncier_propension_vendre AS "

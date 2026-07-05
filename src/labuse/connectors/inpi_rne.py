@@ -293,6 +293,12 @@ class InpiRneConnector(Connector):
                 time.sleep(0.5 * (attempt + 1))
         raise RuntimeError(f"INPI : société {siren} — échec après {max_retries} essais ({last})")
 
+    def fetch_company(self, siren: str) -> dict | None:
+        """Une société parsée par SIREN. None si inconnue au RNE (404) ou non parsable. Ne throttle
+        PAS (l'appelant gère la cadence) — pratique pour la résolution unitaire (gigogne depth-1)."""
+        data = self._get_company(_digits(siren))
+        return parse_company(data) if data is not None else None
+
     def fetch_companies(self, sirens: Iterable[str], throttle_s: float | None = None,
                         ) -> Iterator[dict]:
         """Itère les sociétés parsées pour un ensemble de SIREN (1 requête/SIREN, throttlé).
@@ -301,11 +307,9 @@ class InpiRneConnector(Connector):
         """
         throttle = self.throttle_s if throttle_s is None else throttle_s
         for siren in sorted({_digits(s) for s in sirens if _digits(s)}):
-            data = self._get_company(siren)
-            if data is not None:
-                parsed = parse_company(data)
-                if parsed:
-                    yield parsed
+            parsed = self.fetch_company(siren)
+            if parsed:
+                yield parsed
             if throttle:
                 time.sleep(throttle)
 

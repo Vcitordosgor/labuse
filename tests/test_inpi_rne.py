@@ -21,6 +21,7 @@ from labuse.ingestion.inpi_rne import (
     SOURCE_NAME,
     eligible_sirens,
     ingest_inpi_rne,
+    resolve_gigogne,
     sample_report,
 )
 
@@ -187,6 +188,7 @@ class _StubConn:
 
     def __init__(self, companies):
         self._c = companies
+        self._by_siren = {c["siren"]: c for c in companies}
 
     def fetch_companies(self, sirens, throttle_s=None):
         import re
@@ -194,6 +196,10 @@ class _StubConn:
         for c in self._c:
             if c["siren"] in s:
                 yield c
+
+    def fetch_company(self, siren):
+        import re
+        return self._by_siren.get(re.sub(r"\D", "", siren))
 
 
 @pytest.mark.db
@@ -278,3 +284,82 @@ def test_ingest_idempotent(db_session):
     ingest_inpi_rne(db_session, ["913037362"], connector=conn)   # re-run
     n = db_session.execute(text("SELECT count(*) FROM pm_dirigeants")).scalar()
     assert n == 2   # ON CONFLICT (siren, representant_id) → aucun doublon
+
+
+# ───────────────────────── récursion gigogne depth-1 (DB) ─────────────────────────
+
+def _band(db, siren):
+    return db.execute(text(
+        "SELECT age_max_dirigeant, propension_band, age_source FROM v_pm_propension_vendre "
+        "WHERE siren = :s"), {"s": siren}).mappings().first()
+
+
+@pytest.mark.db
+def test_gigogne_resout_gerant_societe(db_session):
+    # SCI GIGOGNE (111111118) gérée par la société 904178050, elle-même gérée par un physique âgé.
+    _pm(db_session, "97415000AA0001", "111111118", "SCI GIGOGNE")
+    db_session.flush()
+    depth0 = _StubConn([_parsed("111111118", [_entreprise("rg", "904178050")])])
+    ingest_inpi_rne(db_session, ["111111118"], connector=depth0)
+    assert _band(db_session, "111111118")["age_source"] == "aucun_individu"   # avant depth-1
+
+    depth1 = _StubConn([_parsed("904178050", [_indiv("rp", "1945-06")])])     # gérant → physique 1945
+    res = resolve_gigogne(db_session, connector=depth1, throttle_s=0)
+    assert res["cibles"] == 1 and res["cibles_resolues"] == 1 and res["dirigeants_gigogne"] == 1
+
+    row = _band(db_session, "111111118")
+    assert row["age_source"] == "gerant_societe"          # résolu par le gérant-société
+    assert row["age_max_dirigeant"] >= 79
+    assert row["propension_band"] == "tres_eleve"
+
+
+@pytest.mark.db
+def test_gigogne_cycle_auto_reference_saute(db_session):
+    # Gérant = la cible elle-même → cycle : aucun appel, aucune résolution, pas de boucle.
+    _pm(db_session, "97415000AA0001", "111111118", "SCI CYCLE")
+    db_session.flush()
+    ingest_inpi_rne(db_session, ["111111118"],
+                    connector=_StubConn([_parsed("111111118", [_entreprise("rg", "111111118")])]))
+    res = resolve_gigogne(db_session, connector=_StubConn([]), throttle_s=0)
+    assert res["cibles"] == 0 and res["dirigeants_gigogne"] == 0      # écarté par d.gerant_siren <> d.siren
+    assert _band(db_session, "111111118")["age_source"] == "aucun_individu"
+
+
+@pytest.mark.db
+def test_gigogne_bornee_un_niveau(db_session):
+    # Le gérant est LUI AUSSI une holding (que des PM) → on ne redescend pas : cible non résolue.
+    _pm(db_session, "97415000AA0001", "111111118", "SCI GIGOGNE 2")
+    db_session.flush()
+    ingest_inpi_rne(db_session, ["111111118"],
+                    connector=_StubConn([_parsed("111111118", [_entreprise("rg", "904178050")])]))
+    depth1 = _StubConn([_parsed("904178050", [_entreprise("rg2", "503556110")])])  # gérant = holding
+    res = resolve_gigogne(db_session, connector=depth1, throttle_s=0)
+    assert res["cibles"] == 1 and res["cibles_resolues"] == 0 and res["dirigeants_gigogne"] == 0
+    assert _band(db_session, "111111118")["age_source"] == "aucun_individu"   # borné → non résolu
+
+
+@pytest.mark.db
+def test_gigogne_direct_a_priorite(db_session):
+    # Un SIREN qui a DÉJÀ un dirigeant physique direct garde age_source='direct' (COALESCE).
+    _pm(db_session, "97415000AA0001", "111111118", "SCI MIXTE")
+    db_session.flush()
+    ingest_inpi_rne(db_session, ["111111118"], connector=_StubConn([
+        _parsed("111111118", [_indiv("rd", "1990-06"), _entreprise("rg", "904178050")])]))
+    # même si on résout le gérant (physique âgé), le direct (jeune) prime.
+    resolve_gigogne(db_session, connector=_StubConn([
+        _parsed("904178050", [_indiv("rp", "1940-06")])]), throttle_s=0)
+    row = _band(db_session, "111111118")
+    assert row["age_source"] == "direct" and row["propension_band"] == "faible"
+
+
+@pytest.mark.db
+def test_gigogne_idempotent(db_session):
+    _pm(db_session, "97415000AA0001", "111111118", "SCI GIGOGNE")
+    db_session.flush()
+    ingest_inpi_rne(db_session, ["111111118"],
+                    connector=_StubConn([_parsed("111111118", [_entreprise("rg", "904178050")])]))
+    depth1 = _StubConn([_parsed("904178050", [_indiv("rp", "1945-06")])])
+    resolve_gigogne(db_session, connector=depth1, throttle_s=0)
+    resolve_gigogne(db_session, connector=depth1, throttle_s=0)   # re-run
+    n = db_session.execute(text("SELECT count(*) FROM pm_dirigeant_gigogne")).scalar()
+    assert n == 1   # ON CONFLICT (siren, gerant_siren, representant_id) → aucun doublon

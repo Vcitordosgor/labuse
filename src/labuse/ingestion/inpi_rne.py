@@ -150,6 +150,85 @@ def sample_report(session: Session, insee: str, today: date | None = None,
     }
 
 
+# ───────────────────────── récursion gigogne (depth-1, 2ᵉ itération) ─────────────────────────
+
+_UPSERT_GIGOGNE = text(
+    "INSERT INTO pm_dirigeant_gigogne "
+    " (siren, gerant_siren, representant_id, nom, prenoms, date_naissance, role_entreprise, "
+    "  diffusible, raw) "
+    "VALUES (:siren,:gs,:rid,:nom,:pre,:dn,:role,:diff, CAST(:raw AS jsonb)) "
+    "ON CONFLICT (siren, gerant_siren, representant_id) DO UPDATE SET "
+    "  nom=EXCLUDED.nom, prenoms=EXCLUDED.prenoms, date_naissance=EXCLUDED.date_naissance, "
+    "  role_entreprise=EXCLUDED.role_entreprise, diffusible=EXCLUDED.diffusible, "
+    "  raw=EXCLUDED.raw, ingested_at=now()")
+
+
+def _gigogne_targets(session: Session, insee: str | None = None) -> dict[str, set[str]]:
+    """SIREN fonciers à résoudre (age_source='aucun_individu') → ensemble de leurs gérants-sociétés.
+
+    Ne retient que les gérants PM (`gerant_siren` non nul) et écarte l'auto-référence directe
+    (gerant = cible) — première barrière anti-cycle. `insee` : restreint via la vue parcelle.
+    """
+    sql = ("SELECT DISTINCT d.siren, d.gerant_siren "
+           "FROM pm_dirigeants d "
+           "JOIN v_pm_propension_vendre v ON v.siren = d.siren "
+           "WHERE v.age_source = 'aucun_individu' "
+           "  AND d.type_personne = 'ENTREPRISE' AND d.gerant_siren IS NOT NULL "
+           "  AND d.gerant_siren <> d.siren")
+    params: dict = {}
+    if insee:
+        sql += (" AND d.siren IN (SELECT regexp_replace(siren,'[^0-9]','','g') "
+                "FROM parcelle_personne_morale WHERE idu LIKE :pref)")
+        params["pref"] = f"{insee}%"
+    targets: dict[str, set[str]] = {}
+    for cible, gerant in session.execute(text(sql), params).all():
+        targets.setdefault(cible, set()).add(gerant)
+    return targets
+
+
+def resolve_gigogne(session: Session, connector: InpiRneConnector | None = None,
+                    insee: str | None = None, throttle_s: float = 0.5) -> dict:
+    """DEPTH-1 : pour les SIREN sans dirigeant physique direct, suit le gérant-société (1 SEUL
+    niveau) et rattache ses personnes physiques dans `pm_dirigeant_gigogne`. Retourne des compteurs.
+
+    Garde-fous : borné à 1 niveau (on ne suit JAMAIS les gérants des gérants), auto-référence
+    écartée, et un gérant déjà vu n'est requêté qu'une fois (cache de run → pas de boucle). ⚠ ÉCRIT
+    en base et FAIT DES APPELS RÉSEAU — à lancer après validation de l'échantillon depth-0.
+    """
+    connector = connector or InpiRneConnector()
+    targets = _gigogne_targets(session, insee)
+    gerant_cache: dict[str, dict | None] = {}   # gerant_siren → société parsée (ou None), une fois
+    n_ind = 0
+    cibles_resolues: set[str] = set()
+    for cible, gerants in targets.items():
+        for g in gerants:
+            if g == cible:                         # auto-référence → cycle, sauté
+                continue
+            if g not in gerant_cache:
+                gerant_cache[g] = connector.fetch_company(g)
+                if throttle_s:
+                    import time
+                    time.sleep(throttle_s)
+            comp = gerant_cache[g]
+            if not comp:
+                continue
+            for d in comp["dirigeants"]:
+                # on ne rattache QUE des personnes physiques datées (on ne re-descend pas les PM).
+                if (d["type_personne"] == "INDIVIDU" and d["date_naissance"]
+                        and d.get("representant_id")):
+                    session.execute(_UPSERT_GIGOGNE, {
+                        "siren": cible, "gs": g, "rid": d["representant_id"],
+                        "nom": d["nom"], "pre": d["prenoms"], "dn": d["date_naissance"],
+                        "role": d["role_entreprise"], "diff": d["diffusible"],
+                        "raw": json.dumps(d["raw"], ensure_ascii=False)})
+                    n_ind += 1
+                    cibles_resolues.add(cible)
+    _touch_source(session)
+    session.flush()
+    return {"cibles": len(targets), "gerants_interroges": len(gerant_cache),
+            "dirigeants_gigogne": n_ind, "cibles_resolues": len(cibles_resolues)}
+
+
 def _touch_source(session: Session) -> None:
     """Marque la fraîcheur de la source (last_sync_at) si la ligne de catalogue existe."""
     session.execute(text(
