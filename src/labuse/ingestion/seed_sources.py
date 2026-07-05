@@ -207,7 +207,7 @@ SOURCES: list[dict] = [
          access_type="WFS", status=S.PARTIEL, reliability_level=R.A_CONFIRMER,
          documentation_url="https://inpn.mnhn.fr/", endpoint_url="https://data.geopf.fr/wfs/ows",
          legal_notes="Droit de préemption départemental.",
-         technical_notes="ENS départemental propre INTROUVABLE en public. ✓ espaces protégés réglementaires intégrés (APB/RNN/réserve biologique/CEN/conservatoire littoral, patrinat Géoplateforme/INPN)."),
+         technical_notes="ENS départemental propre INTROUVABLE en public. ✓ espaces protégés réglementaires intégrés (APB/RNN/réserve biologique/CEN/conservatoire littoral, patrinat Géoplateforme/INPN) — 21/24 communes. Les 3 restantes (Le Port, Saint-André, Sainte-Suzanne) : « vérifié N/A 05/07/2026 » — passe INPN a tourné (parc national + forêt présents) mais 0 espace protégé de ces types (port urbain / plaines côtières agricoles). Couche ENS départementale officielle À DEMANDER au mail AGORAH/DEAL en attente. Ne rien inventer."),
     dict(name="VRD / assainissement (SPANC)", category="reseaux", provider="EPCI",
          access_type="manuel", status=S.MANUEL, reliability_level=R.A_CONFIRMER,
          documentation_url=None, endpoint_url=None,
