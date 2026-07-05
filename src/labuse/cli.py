@@ -633,6 +633,68 @@ def ingest_mvt_cmd(
     typer.echo(f"✓ /mvt île : {total} ({time.time() - t0:.0f}s)")
 
 
+@app.command("ingest-qpv")
+def ingest_qpv_cmd() -> None:
+    """Vague C bonus — QPV 2024 (ANCT) → spatial_layers kind='qpv', filtre 974. Sert le BILAN
+    PROMOTEUR (# TODO bilan), PAS le score. Idempotent (purge+réinsère)."""
+    from .ingestion import qpv
+
+    with session_scope() as s:
+        res = qpv.ingest(s)
+        s.commit()
+        b = qpv.bilan(s)
+    typer.echo(f"✓ QPV 2024 : {res['qpv']} QPV ({b['communes']} communes), "
+               f"{b['parcelles_en_qpv']} parcelles en QPV.")
+
+
+@app.command("ingest-amenites")
+def ingest_amenites_cmd(
+    commune: str = typer.Option(None, help="INSEE d'une commune (défaut = les 24 communes)."),
+    force: bool = typer.Option(False, help="Recalculer même les communes déjà faites."),
+) -> None:
+    """Vague C bonus — aménités OSM (école/santé/commerce/tcsp) → spatial_layers kind='amenite'
+    + distances par parcelle (parcel_amenites). Résumable. Signal calculé, poids # TODO étage 1."""
+    import time
+
+    from .ingestion import amenites
+    from .ingestion.run_all import REUNION_COMMUNES, _commune_bbox
+
+    targets = [(i, n) for i, n in REUNION_COMMUNES if not (commune and commune.isdigit()) or i == commune]
+    t0 = time.time()
+    # Phase 1 — POI (Overpass, par commune)
+    for insee, nom in targets:
+        with session_scope() as s:
+            has = s.execute(text("SELECT count(*) FROM spatial_layers WHERE commune=:c AND kind='amenite'"),
+                            {"c": nom}).scalar()
+            if has and not force:
+                typer.echo(f"  ⏭ {nom} POI déjà là ({has}), sauté.")
+                continue
+            bbox = _commune_bbox(s, nom)
+            if bbox is None:
+                typer.echo(f"  ⚠ {nom} : pas de parcelles, sauté.")
+                continue
+            try:
+                counts = amenites.ingest_poi_commune(s, nom, bbox)
+                s.commit()
+                typer.echo(f"  ✓ {nom} POI : {counts}")
+            except Exception as exc:  # noqa: BLE001 — Overpass saturé : on saute cette commune,
+                s.rollback()          # la passe continue (résumable : reprise au prochain run)
+                typer.echo(f"  ⚠ {nom} POI en échec ({type(exc).__name__}), sauté — reprise au prochain run.")
+    # Phase 2 — distances par parcelle (contre TOUS les POI de l'île)
+    typer.echo("— calcul des distances par parcelle —")
+    for insee, nom in targets:
+        with session_scope() as s:
+            has = s.execute(text("SELECT count(*) FROM parcel_amenites a JOIN parcels p ON p.id=a.parcel_id "
+                                 "WHERE p.commune=:c"), {"c": nom}).scalar()
+            if has and not force:
+                typer.echo(f"  ⏭ {nom} distances déjà là ({has}), sauté.")
+                continue
+            n = amenites.compute_amenites_commune(s, nom)
+            s.commit()
+            typer.echo(f"  ✓ {nom} : {n} parcelles calculées")
+    typer.echo(f"✓ Aménités île ({time.time() - t0:.0f}s)")
+
+
 @app.command("ingest-abf")
 def ingest_abf_cmd() -> None:
     """Clôture Vague B — abords ABF (base Mérimée, tampon ~500 m) → spatial_layers kind='abf',

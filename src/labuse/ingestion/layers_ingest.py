@@ -890,9 +890,13 @@ def ingest_trait_de_cote(session, commune, run_id, sids) -> int:
 
 
 def _overpass(query: str, tries: int = 3) -> dict:
-    """POST Overpass, résilient : retries + bascule de mirror (Overpass est souvent saturé)."""
+    """POST Overpass, résilient : retries + bascule de mirror (Overpass est souvent saturé).
+
+    ⚠ Client à 180 s : les requêtes portent `[timeout:90]` côté serveur ; le client DOIT attendre
+    plus longtemps (le client par défaut à 60 s provoquait des ReadTimeout sur les grosses communes)."""
     last: Exception | None = None
-    with _client() as c:
+    with httpx.Client(timeout=180.0, headers={"User-Agent": constants.USER_AGENT},
+                      follow_redirects=True) as c:
         for mirror in OVERPASS_MIRRORS:
             for attempt in range(tries):
                 try:
