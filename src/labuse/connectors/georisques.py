@@ -88,6 +88,11 @@ class GeorisquesConnector(Connector):
         """ICPE /installations_classees (régime, statut Seveso, code NAF). [✓ live 974]."""
         yield from self._paginate("installations_classees", code_insee)
 
+    def mvt(self, code_insee: str) -> Iterator[dict]:
+        """Mouvements de terrain /mvt (coulée, glissement, éboulement…) avec lon/lat + fiabilité.
+        [✓ live 974 : 160 objets Saint-Paul, coordonnées réelles]."""
+        yield from self._paginate("mvt", code_insee)
+
     def risques(self, code_insee: str, page_size: int = 50) -> dict:
         """Synthèse des risques de la commune (inondation, mvt de terrain, PPR…). [✓ live]"""
         return self._get("gaspar/risques", {"code_insee": code_insee, "page": 1, "page_size": page_size})

@@ -14,6 +14,7 @@ from labuse.ingestion.georisques_layers import (
     parcelles_croisees,
     parse_cavite,
     parse_icpe,
+    parse_mvt,
     parse_sol_pollue,
     sample_report,
 )
@@ -76,7 +77,18 @@ def test_parse_icpe():
 
 
 def test_kind_source_mapping():
-    assert set(KIND_SOURCE) == {"sol_pollue", "cavite", "icpe"}
+    assert set(KIND_SOURCE) == {"sol_pollue", "cavite", "icpe", "mvt"}
+
+
+def test_parse_mvt():
+    item = {"identifiant": "12700005", "type": "Coulée", "fiabilite": "Fort",
+            "lieu": None, "longitude": 55.300026, "latitude": -21.007004, "code_insee": "97415"}
+    p = parse_mvt(item)
+    assert p["kind"] == "mvt" and p["subtype"] == "Coulée"
+    assert p["name"] == "Coulée"                       # fallback sur le type quand lieu est null
+    assert p["geometry"]["coordinates"] == [55.300026, -21.007004]
+    assert p["attrs"]["fiabilite"] == "Fort"
+    assert parse_mvt({"type": "Glissement"}) is None   # pas de coordonnées → None
 
 
 # ───────────────────────── ingestion / croisement (DB) ─────────────────────────

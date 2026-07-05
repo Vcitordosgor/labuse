@@ -27,7 +27,11 @@ KIND_SOURCE = {
     "sol_pollue": "Géorisques — sites et sols pollués",
     "cavite": "Géorisques — cavités souterraines",
     "icpe": "Géorisques — ICPE",
+    "mvt": "Géorisques — mouvements de terrain",
 }
+
+# Kinds gérés par ingest_commune (les 3 couches API de la Vague B) ; 'mvt' a son propre ingest.
+API_KINDS = ("sol_pollue", "cavite", "icpe")
 
 
 def _point(lon, lat) -> dict | None:
@@ -74,6 +78,26 @@ def parse_cavite(item: dict) -> dict | None:
         "attrs": {
             "identifiant": item.get("identifiant"),
             "type": item.get("type"),
+            "code_insee": item.get("code_insee"),
+        },
+    }
+
+
+def parse_mvt(item: dict) -> dict | None:
+    """Objet /mvt → dict couche 'mvt' (bonus Vague C2). None si pas de coordonnées."""
+    geom = _point(item.get("longitude"), item.get("latitude"))
+    if geom is None:
+        return None
+    return {
+        "kind": "mvt", "subtype": (item.get("type") or None),   # Coulée / Glissement / Éboulement…
+        "name": item.get("lieu") or item.get("type"),
+        "geometry": geom,
+        "attrs": {
+            "identifiant": item.get("identifiant"),
+            "type": item.get("type"),
+            "fiabilite": item.get("fiabilite"),
+            "date_debut": item.get("date_debut"),
+            "commentaire": item.get("commentaire_mvt"),
             "code_insee": item.get("code_insee"),
         },
     }
@@ -129,11 +153,10 @@ def ingest_commune(session: Session, insee: str, commune: str, run_id: int | Non
     """
     connector = connector or GeorisquesConnector()
     sids = _source_ids(session)
-    kinds = tuple(KIND_SOURCE)
     session.execute(
         text("DELETE FROM spatial_layers WHERE commune = :c AND kind = ANY(:k)"),
-        {"c": commune, "k": list(kinds)})
-    counts: dict[str, int] = {k: 0 for k in kinds}
+        {"c": commune, "k": list(API_KINDS)})
+    counts: dict[str, int] = {k: 0 for k in API_KINDS}
     for p in _iter_parsed(connector, insee):
         _insert_layer(session, p["kind"], p["subtype"], p["name"], p["geometry"],
                       sids.get(p["kind"]), commune, run_id, p["attrs"])
@@ -143,11 +166,32 @@ def ingest_commune(session: Session, insee: str, commune: str, run_id: int | Non
     return counts
 
 
-def parcelles_croisees(session: Session, commune: str, rayon_m: float = 50.0) -> dict[str, int]:
+def ingest_mvt_commune(session: Session, insee: str, commune: str, run_id: int | None = None,
+                       connector: GeorisquesConnector | None = None) -> int:
+    """Ingère les mouvements de terrain /mvt d'une commune → spatial_layers kind='mvt' (bonus C2).
+    Idempotent (purge kind='mvt' de la commune avant réinsertion). Ne touche PAS au score."""
+    connector = connector or GeorisquesConnector()
+    sid = _source_ids(session).get("mvt")
+    session.execute(text("DELETE FROM spatial_layers WHERE commune=:c AND kind='mvt'"), {"c": commune})
+    n = 0
+    for item in connector.mvt(insee):
+        p = parse_mvt(item)
+        if p:
+            _insert_layer(session, "mvt", p["subtype"], p["name"], p["geometry"],
+                          sid, commune, run_id, p["attrs"])
+            n += 1
+    session.execute(text("UPDATE data_sources SET last_sync_at=now() WHERE name=:n"),
+                    {"n": KIND_SOURCE["mvt"]})
+    session.flush()
+    return n
+
+
+def parcelles_croisees(session: Session, commune: str, rayon_m: float = 50.0,
+                       kinds: tuple[str, ...] = API_KINDS) -> dict[str, int]:
     """Nombre de parcelles de la commune à ≤ rayon_m d'un objet de chaque couche (indicateur de
     croisement pour le rapport ; PAS un flag de score). Mesure en 2975 (geom_2975)."""
     out: dict[str, int] = {}
-    for kind in KIND_SOURCE:
+    for kind in kinds:
         n = session.execute(text(
             "SELECT count(DISTINCT p.id) FROM parcels p "
             "WHERE p.commune = :c AND EXISTS ("
@@ -162,13 +206,13 @@ def sample_report(session: Session, commune: str, rayon_m: float = 50.0,
                   n_examples: int = 5) -> dict:
     """Rapport de validation (commune) depuis spatial_layers DÉJÀ ingérée — sans réseau."""
     vol = {}
-    for kind in KIND_SOURCE:
+    for kind in API_KINDS:
         vol[kind] = int(session.execute(text(
             "SELECT count(*) FROM spatial_layers WHERE kind = :k AND commune = :c"),
             {"k": kind, "c": commune}).scalar() or 0)
     croise = parcelles_croisees(session, commune, rayon_m)
     # Exemples DIVERSIFIÉS : au plus ceil(n/nb_kinds) par couche (utile pour vérification humaine).
-    per_kind = max(1, -(-n_examples // len(KIND_SOURCE)))
+    per_kind = max(1, -(-n_examples // len(API_KINDS)))
     ex = [dict(r) for r in session.execute(text(
         "SELECT kind, subtype, name, fiche, ident, statut FROM ("
         "  SELECT kind, subtype, name, attrs->>'fiche_risque' AS fiche, "
@@ -176,13 +220,13 @@ def sample_report(session: Session, commune: str, rayon_m: float = 50.0,
         "         row_number() OVER (PARTITION BY kind ORDER BY name) AS rn "
         "  FROM spatial_layers WHERE kind = ANY(:k) AND commune = :c AND name IS NOT NULL"
         ") t WHERE rn <= :pk ORDER BY kind, name LIMIT :n"),
-        {"k": list(KIND_SOURCE), "c": commune, "pk": per_kind, "n": n_examples}).mappings().all()]
+        {"k": list(API_KINDS), "c": commune, "pk": per_kind, "n": n_examples}).mappings().all()]
     return {"commune": commune, "volumetrie": vol, "parcelles_croisees": croise,
             "rayon_m": rayon_m, "exemples": ex}
 
 
 def _touch_sources(session: Session) -> None:
-    """Fraîcheur last_sync_at des 3 sources Géorisques (si les lignes de catalogue existent)."""
+    """Fraîcheur last_sync_at des 3 sources API de ingest_commune (si les lignes existent)."""
     session.execute(
         text("UPDATE data_sources SET last_sync_at = now() WHERE name = ANY(:n)"),
-        {"n": list(KIND_SOURCE.values())})
+        {"n": [KIND_SOURCE[k] for k in API_KINDS]})
