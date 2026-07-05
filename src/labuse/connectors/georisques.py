@@ -1,17 +1,25 @@
-"""Connecteur Géorisques — API REST  [✓ live, SPIKE 2026-06].
+"""Connecteur Géorisques — API REST  [✓ live, SPIKE 2026-06 ; étendu Vague B 2026-07].
 
     https://www.georisques.gouv.fr/api/v1/...
     Confirmés (HTTP 200) : /gaspar/risques, /gaspar/catnat, /gaspar/azi,
-    /rga (argiles), /zonage_sismique. ⚠ pas d'endpoint /ppr en v1 (404).
+    /zonage_sismique. Vague B (vérifié live 05/07/2026, INSEE 97415) :
+      /ssp (sites et sols pollués : casias + instructions), /cavites, /installations_classees.
+    ⚠ pas d'endpoint /ppr en v1 (404). ⚠ /rga (argiles) : 500 sur code_insee, vide sur latlon
+    même en métropole — écarté (N/A géologique à La Réunion, île volcanique).
+    Rate-limit officiel ~1000 req/min/IP → throttle prudent (leçon INPI : on ne se fait pas brider).
     Requête par code_insee, ou par latlon+rayon pour les aléas localisés.
 """
 from __future__ import annotations
 
+import time
+from collections.abc import Iterator
 from typing import Any
 
 from .base import Connector
 
 BASE = "https://www.georisques.gouv.fr/api/v1"
+PAGE_SIZE = 100          # max page raisonnable ; réduit les appels (1000 req/min/IP)
+THROTTLE_S = 0.15        # ~6-7 req/s, très en deçà du plafond
 
 
 class GeorisquesConnector(Connector):
@@ -19,11 +27,61 @@ class GeorisquesConnector(Connector):
     test_url = f"{BASE}/gaspar/catnat"
     test_params = {"code_insee": "97415", "page": 1, "page_size": 1}
 
-    def _get(self, path: str, params: dict) -> dict:
-        with self._client() as c:
-            r = c.get(f"{BASE}/{path.lstrip('/')}", params=params)
-            r.raise_for_status()
-            return r.json()
+    def _get(self, path: str, params: dict, max_retries: int = 4) -> dict:
+        last: Exception | None = None
+        for attempt in range(max_retries):
+            try:
+                with self._client() as c:
+                    r = c.get(f"{BASE}/{path.lstrip('/')}", params=params)
+                if r.status_code == 429 or r.status_code >= 500:  # transitoire → backoff patient
+                    ra = r.headers.get("Retry-After")
+                    time.sleep(float(ra) if (ra or "").isdigit() else min(20.0, 2 ** attempt))
+                    last = RuntimeError(f"HTTP {r.status_code}")
+                    continue
+                r.raise_for_status()
+                return r.json()
+            except Exception as exc:  # réseau / timeout → retry poli
+                last = exc
+                time.sleep(0.5 * (attempt + 1))
+        raise RuntimeError(f"Géorisques {path} — échec après {max_retries} essais ({last})")
+
+    def _paginate(self, path: str, code_insee: str, subkey: str | None = None,
+                  throttle_s: float = THROTTLE_S) -> Iterator[dict]:
+        """Itère les objets d'un endpoint paginé filtré par commune. `subkey` : pour /ssp, la
+        sous-collection imbriquée ('casias' | 'instructions'), chacune avec ses propres pages."""
+        page = 1
+        while True:
+            data = self._get(path, {"code_insee": code_insee, "page": page, "page_size": PAGE_SIZE})
+            block = data.get(subkey) if subkey else data
+            if not isinstance(block, dict):
+                return
+            items = block.get("data") or []
+            for it in items:
+                yield it
+            total_pages = int(block.get("total_pages") or 1)
+            if page >= total_pages or not items:
+                return
+            page += 1
+            if throttle_s:
+                time.sleep(throttle_s)
+
+    # ── Vague B : couches par commune (paginées) ──
+
+    def sites_pollues(self, code_insee: str) -> Iterator[tuple[str, dict]]:
+        """Sites et sols pollués /ssp → (subtype, objet) pour casias (ex-BASIAS) et instructions
+        (ex-BASOL). Les deux sous-collections sont géolocalisées et nommées. [✓ live 974]."""
+        for it in self._paginate("ssp", code_insee, subkey="casias"):
+            yield "casias", it
+        for it in self._paginate("ssp", code_insee, subkey="instructions"):
+            yield "instruction", it
+
+    def cavites(self, code_insee: str) -> Iterator[dict]:
+        """Cavités souterraines /cavites (naturelle, carrière, ouvrage civil…). [✓ live 974]."""
+        yield from self._paginate("cavites", code_insee)
+
+    def installations_classees(self, code_insee: str) -> Iterator[dict]:
+        """ICPE /installations_classees (régime, statut Seveso, code NAF). [✓ live 974]."""
+        yield from self._paginate("installations_classees", code_insee)
 
     def risques(self, code_insee: str, page_size: int = 50) -> dict:
         """Synthèse des risques de la commune (inondation, mvt de terrain, PPR…). [✓ live]"""
