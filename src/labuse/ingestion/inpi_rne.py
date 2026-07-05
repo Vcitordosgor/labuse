@@ -187,17 +187,23 @@ def _gigogne_targets(session: Session, insee: str | None = None) -> dict[str, se
 
 
 def resolve_gigogne(session: Session, connector: InpiRneConnector | None = None,
-                    insee: str | None = None, throttle_s: float = 0.5) -> dict:
+                    insee: str | None = None, throttle_s: float = 0.5,
+                    targets: dict[str, set[str]] | None = None,
+                    gerant_cache: dict[str, dict | None] | None = None) -> dict:
     """DEPTH-1 : pour les SIREN sans dirigeant physique direct, suit le gérant-société (1 SEUL
     niveau) et rattache ses personnes physiques dans `pm_dirigeant_gigogne`. Retourne des compteurs.
 
-    Garde-fous : borné à 1 niveau (on ne suit JAMAIS les gérants des gérants), auto-référence
-    écartée, et un gérant déjà vu n'est requêté qu'une fois (cache de run → pas de boucle). ⚠ ÉCRIT
-    en base et FAIT DES APPELS RÉSEAU — à lancer après validation de l'échantillon depth-0.
+    `targets` : sous-ensemble {cible → gérants} à traiter (défaut = calculé via _gigogne_targets) —
+    permet le chunking/reprise côté CLI. `gerant_cache` : cache partagé entre lots (évite de
+    re-requêter un gérant déjà vu). Garde-fous : borné à 1 niveau (on ne suit JAMAIS les gérants
+    des gérants), auto-référence écartée, un gérant déjà vu n'est requêté qu'une fois → pas de
+    boucle. ⚠ ÉCRIT en base et FAIT DES APPELS RÉSEAU — à lancer après validation depth-0.
     """
     connector = connector or InpiRneConnector()
-    targets = _gigogne_targets(session, insee)
-    gerant_cache: dict[str, dict | None] = {}   # gerant_siren → société parsée (ou None), une fois
+    if targets is None:
+        targets = _gigogne_targets(session, insee)
+    if gerant_cache is None:
+        gerant_cache = {}                        # gerant_siren → société parsée (ou None), une fois
     n_ind = 0
     cibles_resolues: set[str] = set()
     for cible, gerants in targets.items():

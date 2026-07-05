@@ -398,6 +398,58 @@ def ingest_inpi_rne_cmd(
     typer.echo(f"✓ INPI RNE : {tot_d} dirigeants, {tot_h} SIREN avec dirigeant.")
 
 
+@app.command("ingest-inpi-gigogne")
+def ingest_inpi_gigogne_cmd(
+    commune: str = typer.Option(None, help="INSEE pour restreindre (défaut = île entière 974)."),
+    throttle: float = typer.Option(0.5, help="Pause (s) entre requêtes gérant (poli, anti-ban)."),
+    chunk: int = typer.Option(100, help="Commit + log de progression tous les N SIREN cibles."),
+    resume: bool = typer.Option(True, help="Sauter les cibles déjà présentes dans pm_dirigeant_gigogne."),
+) -> None:
+    """DEPTH-1 (2ᵉ itération) : résout l'âge dirigeant des SIREN SANS dirigeant physique direct
+    (age_source='aucun_individu') en suivant le gérant-société sur UN seul niveau.
+
+    À jouer APRÈS la passe depth-0 (`ingest-inpi-rne`). RÉSUMABLE / CHUNKÉE. Bornée à 1 niveau,
+    anti-cycle. Identifiants en env INPI_API_*. Ne touche PAS au score (# TODO étage 2)."""
+    import time
+
+    from .connectors.inpi_rne import InpiRneConnector
+    from .ingestion.inpi_rne import _gigogne_targets, resolve_gigogne
+
+    # Point critique : la table pm_dirigeant_gigogne doit exister AVANT que la vue la référence.
+    # On la crée (idempotent) PUIS on (re)construit la vue — jamais l'inverse.
+    models.PmDirigeantGigogne.__table__.create(engine(), checkfirst=True)
+    models.ensure_pm_propension_view(engine())
+
+    insee = commune if (commune and commune.isdigit()) else None
+    conn = InpiRneConnector(throttle_s=throttle)
+    gerant_cache: dict = {}   # partagé entre lots : un gérant n'est requêté qu'une fois sur toute la passe
+    with session_scope() as s:
+        all_targets = _gigogne_targets(s, insee)
+        done: set[str] = set()
+        if resume:
+            done = {r[0] for r in s.execute(
+                text("SELECT DISTINCT siren FROM pm_dirigeant_gigogne")).all()}
+        cibles = [c for c in all_targets if c not in done]
+        scope = f"INSEE {insee}" if insee else "île entière (974)"
+        typer.echo(f"INPI gigogne (depth-1) — {scope} : {len(all_targets)} cibles 'aucun_individu', "
+                   f"{len(done)} déjà résolues, {len(cibles)} à traiter.")
+        if not cibles:
+            typer.echo("✓ Rien à faire.")
+            return
+        t0 = time.time()
+        tot_d = tot_r = 0
+        for k in range(0, len(cibles), chunk):
+            sub = {c: all_targets[c] for c in cibles[k:k + chunk]}
+            res = resolve_gigogne(s, connector=conn, targets=sub, throttle_s=throttle,
+                                  gerant_cache=gerant_cache)
+            s.commit()
+            tot_d += res["dirigeants_gigogne"]
+            tot_r += res["cibles_resolues"]
+            typer.echo(f"  … {min(k + chunk, len(cibles))}/{len(cibles)} — +{res['dirigeants_gigogne']} "
+                       f"physiques (cibles résolues {tot_r}, {time.time() - t0:.0f}s)")
+    typer.echo(f"✓ INPI gigogne : {tot_r} cibles résolues, {tot_d} dirigeants physiques rattachés.")
+
+
 @app.command("warm-vue-mer")
 def warm_vue_mer_cmd(
     commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),
