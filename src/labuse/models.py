@@ -9,6 +9,7 @@ from datetime import date, datetime
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Date,
     DateTime,
@@ -340,6 +341,41 @@ class BodaccProcedure(Base):
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class PmDirigeant(Base):
+    """Dirigeant / représentant d'une personne morale foncière (Vague A3 — INPI RNE).
+
+    Source : API REST publique du RNE (INPI), croisée par SIREN avec parcelle_personne_morale.
+    Un SIREN porte N dirigeants (`composition.pouvoirs[]`) → N lignes ; dédup par
+    (siren, representant_id). Le signal « âge dirigeant » (aîné des dirigeants PHYSIQUES)
+    alimente `propension_vendre` via la vue v_pm_propension_vendre.
+
+    RGPD (règle d'archi #2) : personnes morales en open data complet ; on ne conserve les
+    données d'une personne PHYSIQUE que si l'entreprise est DIFFUSIBLE (`diffusible`), et le
+    signal reste INTERNE (priorisation), jamais un export nominatif de masse. Date de naissance
+    au MOIS uniquement ('YYYY-MM', granularité diffusible RNE). NE touche PAS au score (# TODO étage 2)."""
+
+    __tablename__ = "pm_dirigeants"
+    __table_args__ = (
+        UniqueConstraint("siren", "representant_id", name="uq_pm_dirigeant"),
+        Index("ix_pm_dirigeant_siren", "siren"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    siren: Mapped[str] = mapped_column(String(9))                      # SIREN de la société détenue
+    representant_id: Mapped[str | None] = mapped_column(String(40))    # UUID RNE du pouvoir (dédup)
+    type_personne: Mapped[str | None] = mapped_column(String(12))      # INDIVIDU | ENTREPRISE
+    nom: Mapped[str | None] = mapped_column(String(120))               # si INDIVIDU diffusible
+    prenoms: Mapped[str | None] = mapped_column(String(200))
+    date_naissance: Mapped[str | None] = mapped_column(String(7))      # 'YYYY-MM' (mois, jamais le jour)
+    role_entreprise: Mapped[str | None] = mapped_column(String(8))     # code rôle RNE (« 30 » = gérant…)
+    date_prise_fonction: Mapped[date | None] = mapped_column(Date)     # dateEffetRoleDeclarant (souvent absent)
+    gerant_siren: Mapped[str | None] = mapped_column(String(9))        # si dirigeant = personne morale (gigogne)
+    actif: Mapped[bool | None] = mapped_column(Boolean)
+    diffusible: Mapped[bool | None] = mapped_column(Boolean)           # entreprise en diffusion commerciale
+    raw: Mapped[dict | None] = mapped_column(JSONB)
+    ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 # ─────────────────────── pipeline de prospection (Kanban) ───────────────────────
 
 class PipelineEntry(Base, TimestampMixin):
@@ -374,6 +410,7 @@ def create_all(engine) -> None:
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
     ensure_bodacc_view(engine)
+    ensure_pm_propension_view(engine)
     ensure_bilan_params(engine)
     ensure_vue_mer_cache(engine)
     ensure_watch_zones(engine)
@@ -554,6 +591,62 @@ def ensure_bodacc_view(engine) -> None:
             "ORDER BY pm.idu, b.date_annonce DESC NULLS LAST"))
 
 
+def ensure_pm_propension_view(engine) -> None:
+    """Vues du signal « propension à vendre » (Vague A3 — INPI RNE, âge dirigeant).
+
+    `v_pm_propension_vendre` (grain SIREN) : agrège pm_dirigeants → âge de l'AÎNÉ des dirigeants
+    PHYSIQUES (un décideur vieillissant = horizon de transmission), effectifs, provenance et
+    bande de propension. L'âge est recalculé À LA REQUÊTE (age(date de naissance)) → jamais
+    périmé. `age_source` : 'direct' (au moins un individu daté) | 'aucun_individu' (dirigeants
+    tous personnes morales / non datés → mesure du taux gigogne, cf. brief) | 'sans_dirigeant'.
+
+    `v_foncier_propension_vendre` (grain PARCELLE, mirroir de v_foncier_sous_pression) : croise
+    par SIREN normalisé avec parcelle_personne_morale.
+
+    Signal INTERNE de priorisation (RGPD, règle d'archi #2), calculable/interrogeable.
+    # TODO étage 2 : à brancher au scoring « accessibilité » quand les sources A seront là.
+    NE touche PAS au score dans cette session. Reconstruit sans échouer si les tables sont vides."""
+    from sqlalchemy import text as _t
+
+    # Bandes de propension (l'étage 2 posera sa propre courbe ; on stocke aussi l'âge brut).
+    band = ("CASE WHEN age_max_dirigeant IS NULL THEN NULL "
+            "     WHEN age_max_dirigeant >= 75 THEN 'tres_eleve' "
+            "     WHEN age_max_dirigeant >= 65 THEN 'eleve' "
+            "     WHEN age_max_dirigeant >= 55 THEN 'modere' "
+            "     ELSE 'faible' END")
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE OR REPLACE VIEW v_pm_propension_vendre AS "
+            "WITH agg AS ("
+            "  SELECT d.siren, "
+            "    count(*) AS nb_dirigeants, "
+            "    count(*) FILTER (WHERE d.type_personne = 'INDIVIDU') AS nb_individus, "
+            # âge = plancher en années depuis 'YYYY-MM' (jour inconnu → 1er du mois) ; l'AÎNÉ = max
+            "    max(date_part('year', age(to_date(d.date_naissance, 'YYYY-MM')))::int) "
+            "      FILTER (WHERE d.type_personne = 'INDIVIDU' AND d.date_naissance IS NOT NULL) "
+            "      AS age_max_dirigeant "
+            "  FROM pm_dirigeants d GROUP BY d.siren"
+            ") "
+            "SELECT siren, nb_dirigeants, nb_individus, age_max_dirigeant, "
+            f"  {band} AS propension_band, "
+            "  CASE WHEN age_max_dirigeant IS NOT NULL THEN 'direct' "
+            "       WHEN nb_dirigeants = 0 THEN 'sans_dirigeant' "
+            "       ELSE 'aucun_individu' END AS age_source "
+            "FROM agg"))
+
+        c.execute(_t(
+            "CREATE OR REPLACE VIEW v_foncier_propension_vendre AS "
+            "SELECT DISTINCT ON (pm.idu) "
+            "  pm.idu, sig.siren, pm.denomination, "
+            "  sig.age_max_dirigeant, sig.propension_band, sig.age_source, "
+            "  sig.nb_dirigeants, sig.nb_individus "
+            "FROM parcelle_personne_morale pm "
+            "JOIN v_pm_propension_vendre sig "
+            "  ON sig.siren = regexp_replace(pm.siren, '[^0-9]', '', 'g') "
+            "ORDER BY pm.idu, sig.age_max_dirigeant DESC NULLS LAST"))
+
+
 def ensure_saved_filters(engine) -> None:
     """Filtres de recherche sauvegardés (Lot D3) — pilote mono-compte, params en JSONB. Idempotent."""
     from sqlalchemy import text as _t
@@ -627,6 +720,7 @@ def ensure_schema(engine) -> None:
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
     ensure_bodacc_view(engine)
+    ensure_pm_propension_view(engine)
     ensure_bilan_params(engine)
     ensure_vue_mer_cache(engine)
     ensure_watch_zones(engine)
