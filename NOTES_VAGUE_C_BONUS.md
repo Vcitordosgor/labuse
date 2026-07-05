@@ -41,7 +41,26 @@ Branche `ingestion/vague-c-bonus` (jamais mergée). Base `openclaw@…/labuse`.
   ingérer** (syndrome KF évité). Alternative future éventuelle : permis PC ≥ 5 logts (déjà en base
   via Sitadel) comme proxy de production neuve, mais ce n'est pas de la VEFA commercialisée.
 
-## Plan de passe recommandé (TEMPS 2, après validation)
+## TEMPS 2 — passes FAITES (05/07)
+### QPV 2024 (`labuse ingest-qpv`)
+- Source **2024 ANCT** validée (fichier ...Outre_Mer_WGS84, insee_dep=974). **57 QPV, 13 communes,
+  43 825 parcelles en QPV.** spatial_layers kind='qpv'. # TODO bilan (non branché au score).
+- TVA 2,1% DOM = règle globale (doc, pas de couche) ; NPNRU absent open data ; VEFA/ECLN N/A DOM.
+
+### Aménités OSM (`labuse ingest-amenites`, 24/24)
+- POI (spatial_layers kind='amenite', 4 catégories) : **tcsp 6 464, école 960, commerce 946,
+  santé 689** (24 communes). Signal `parcel_amenites` : **431 663 parcelles**, distances médianes
+  île — école 560 m, santé 809 m, commerce 648 m, bus 262 m. Distances brutes ; score pondéré = # TODO étage 1.
+- ⚠ Incident géré : Sainte-Marie a échoué (Overpass ReadTimeout) SANS tuer la passe (résilience
+  par commune) → complétée au retry `--commune 97418 --force`. Fix : client _overpass à 180 s
+  (le [timeout:90] serveur dépassait le client 60 s) + skip-and-continue par commune.
+
+### VEFA / ECLN — N/A DOM (rien ingéré)
+- ECLN métropole only → documenté data_sources + NOTES, aucune couche (syndrome KF évité).
+
+Fraîcheur posée (QPV, OSM). Tests : QPV 4 + aménités 5 verts. Branche NON mergée.
+
+## Plan de passe recommandé (TEMPS 1 — archive)
 1. **QPV** → spatial_layers kind='qpv' + intersection parcelles + fraîcheur data_sources. # TODO bilan.
    (millésime à trancher : 2024 ANCT vs 2015 ODS.)
 2. **Aménités** → connecteur Overpass par catégorie + signal distance/parcelle. # TODO étage 1.
