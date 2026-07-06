@@ -36,7 +36,7 @@ bonuses:
   acces_direct_voirie: 3            # binaire
   # ── Étage 1 (dry-run, QUALITÉ) ──
   friche: 8                         # Cartofriches : reconversion. ×1 « avec projet » (+8) / ×0.6 « sans projet » (+5). Signal fort mais pas de la constructibilité brute → plafond 8
-  amenites: 11                      # score d'aménités agrégé (école/commerce/santé/tcsp) — CONFORT, pas constructibilité → plafond ~11 ; magnitude = Σ(pondération × proximité par bande)
+  amenites: 7                       # score d'aménités agrégé (école/commerce/santé/tcsp) — CONFORT de revente qui DÉPARTAGE deux terrains équivalents, PAS un critère d'achat foncier. Plafond baissé 11→7 (Vic 06/07 : à 11 c'était quasi-universel en tissu urbain, +6,8 moyen sur 14k parcelles = peu discriminant). Bandes/pondérations inchangées
   # proximite_equipements_bpe : SUPPRIMÉ — bonus mort (aucune couche ne l'émettait).
   #   Brancher une vraie couche équipements (BPE/OSM) est une tâche d'INGESTION séparée.
 
