@@ -363,6 +363,25 @@ def dryrun_report_cmd(
     typer.echo(json.dumps(rep, ensure_ascii=False, indent=1, default=str))
 
 
+@app.command("dryrun-matrice")
+def dryrun_matrice_cmd(
+    label: str = typer.Option("etape2", help="run_label sur lequel appliquer la matrice Q×A."),
+    commune: str = typer.Option("97415", help="Commune (défaut = 97415)."),
+) -> None:
+    """Post-pass MATRICE Q×A (étape 3) sur un run dry-run existant : calcule Q/A/statut et livre la
+    répartition + top chaudes/à surveiller. Seuils dans config/scoring_matrice.yaml (tunable)."""
+    import json
+
+    from .scoring.dryrun import compute_matrice, matrice_report
+
+    nom = _resolve_commune(commune)
+    with session_scope() as s:
+        compute_matrice(s, label, nom)
+        s.commit()
+        rep = matrice_report(s, label, nom)
+    typer.echo(json.dumps(rep, ensure_ascii=False, indent=1, default=str))
+
+
 @app.command("ingest-permits")
 def ingest_permits_cmd(
     commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),

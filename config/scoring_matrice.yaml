@@ -1,0 +1,24 @@
+# Matrice Q×A (étape 3, dry-run) — tunable. Statut = croisement Qualité × Accessibilité.
+# Q = « vaut-il le coup / peut-on construire » (étages 0/1). A = « peut-on l'acheter » (étage 2).
+# Chaque score = base + Σ(poids de son étage), borné [1,100]. Une parcelle exclue étage 0 = écartée.
+
+base: 50
+
+# Couches d'ACCESSIBILITÉ (A). Tout le reste = Qualité (Q).
+a_layers:
+  - proprietaire
+  - age_dirigeant
+  - dvf
+  - sitadel
+  - bodacc
+  - dpe_passoire
+
+seuils:
+  q_chaude: 65            # Q≥65 (Q65 vs Q70 : le Q pur plafonne ~80, poids pas encore affinés → 70 raterait de bonnes cibles 66-69 pour un simple sous-calibrage)
+  a_chaude: 60            # A≥60 : isole les ~9 % à signal d'accessibilité RÉEL (A bimodale ; la masse « inconnue » stagne à ~50)
+  a_completude_min: 50    # DOUBLE VERROU (règle d'or) : jamais « chaude » sur une accessibilité connue à moins de 50 %
+  q_ecartee: 50           # Q<50 (survivant de faible qualité) → écartée
+
+# Bascule événementielle : BODACC procédure OUVERTE (evenement='rouge') → « chaude » quel que soit Q/A,
+# SUR LES SURVIVANTES (l'exclusion étage 0 — non constructible — n'est pas surchargée par un événement).
+evenement_rouge_force_chaude: true

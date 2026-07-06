@@ -197,7 +197,12 @@ class DryrunParcelEvaluation(Base):
     completeness_score: Mapped[int] = mapped_column(Integer)
     opportunity_score: Mapped[int] = mapped_column(Integer)
     opportunity_base: Mapped[int | None] = mapped_column(Integer)   # base pour tester base+Σ=score
-    status: Mapped[str | None] = mapped_column(String(32))          # String (matrice Q×A étape 3)
+    status: Mapped[str | None] = mapped_column(String(32))          # statut cascade (opportunite/a_creuser…)
+    # Matrice Q×A (étape 3) — remplies par compute_matrice()
+    q_score: Mapped[int | None] = mapped_column(Integer)            # qualité (étages 0/1)
+    a_score: Mapped[int | None] = mapped_column(Integer)            # accessibilité (étage 2)
+    a_completude: Mapped[int | None] = mapped_column(Integer)       # % des signaux A connus (≠ UNKNOWN)
+    matrice_statut: Mapped[str | None] = mapped_column(String(24))  # chaude/a_surveiller/a_creuser/ecartee
     rules_version: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
