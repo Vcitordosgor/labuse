@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { COMMUNE, getParcelsGeojson, getStats } from '../../lib/api'
-import { activeChips, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
+import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
+import { roughCentroid } from '../../lib/geo'
 import { completudeColor, STATUT_META } from '../../lib/status'
 import type { Statut } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -43,6 +44,7 @@ function ResultCard({ p }: { p: ParcelProps }) {
               ● ÉVÉNEMENT
             </span>
           )}
+          {p.vue_mer === 'oui' && <span className="shrink-0 text-[10px] text-[#7DE8E0]" title="Vue mer dégagée">◠</span>}
         </div>
         <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {COMMUNE}</div>
       </div>
@@ -54,6 +56,7 @@ function ResultCard({ p }: { p: ParcelProps }) {
   )
 }
 
+// Chips de statut — MULTI (cliquer = basculer l'appartenance) ; « Tout » vide la sélection.
 function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', number>; partial: boolean }) {
   const { filters, setFilter } = useApp()
   const items: { v: Statut | 'all'; label: string; color?: string }[] = [
@@ -63,13 +66,22 @@ function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', numbe
     { v: 'a_creuser', label: 'À creuser', color: STATUT_META.a_creuser.color },
   ]
   return (
-    <div className="mt-2 flex shrink-0 flex-wrap gap-1.5" title={partial ? 'Comptes recalculés avec les filtres actifs' : 'Comptes exacts (base)'}>
+    <div className="mt-2 flex shrink-0 flex-wrap gap-1.5" title={partial ? 'Comptes recalculés avec les filtres actifs' : 'Comptes exacts (SQL, base entière)'}>
       {items.map((it) => {
-        const on = filters.statut === it.v
+        const on = it.v === 'all' ? filters.statuts.length === 0 : filters.statuts.includes(it.v as Statut)
         return (
-          <button key={it.v} onClick={() => setFilter('statut', it.v)}
+          <button
+            key={it.v}
+            onClick={() => {
+              if (it.v === 'all') setFilter('statuts', [])
+              else {
+                const s = it.v as Statut
+                setFilter('statuts', filters.statuts.includes(s) ? filters.statuts.filter((x) => x !== s) : [...filters.statuts, s])
+              }
+            }}
             className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${
-              on ? 'border-mint bg-[#0F1A14] text-txt-hi' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+              on ? 'border-mint bg-[#0F1A14] text-txt-hi' : 'border-line-2 text-txt-mut hover:text-txt'}`}
+          >
             {it.color && <span className="h-1.5 w-1.5 rounded-full" style={{ background: it.color }} />}
             {it.label}
             <span className="font-mono text-[10px] text-txt-dim">{fmt(counts[it.v] ?? 0)}{partial ? '*' : ''}</span>
@@ -83,47 +95,51 @@ function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', numbe
 const CAP = 200
 
 export function ResultsSection() {
-  const { filters, query } = useApp()
+  const { filters, query, zone, resetFilters } = useApp()
   const [showAll, setShowAll] = useState(false)
   const stats = useQuery({ queryKey: ['stats'], queryFn: getStats })
   const geo = useQuery({ queryKey: ['geojson'], queryFn: getParcelsGeojson })
 
+  // props + centroïde (calculé UNE fois — sert au filtre de zone)
   const props = useMemo(
-    () => (geo.data?.features.map((f) => f.properties as unknown as ParcelProps) ?? []),
+    () => (geo.data?.features ?? []).map((f) => {
+      const p = f.properties as unknown as ParcelProps
+      p.centroid = roughCentroid(f.geometry)
+      return p
+    }),
     [geo.data],
   )
 
-  const hasScope = filters.scoreMin != null || filters.surfaceMin != null
+  const scoped = hasScopeFilters(filters, zone)
   const qNorm = query.trim().toUpperCase().replace(/\s+/g, '')
 
-  // Compteurs : SANS filtre → /stats (SQL-exact). AVEC filtre score/surface → recalcul client, marqué *.
+  // Compteurs : SANS filtre de périmètre → /stats (SQL-exact). AVEC → recalcul client marqué *.
   const counts = useMemo(() => {
-    if (!hasScope && stats.data) {
+    if (!scoped && stats.data) {
       const s = stats.data
       return { all: s.chaude + s.a_surveiller + s.a_creuser, chaude: s.chaude, a_surveiller: s.a_surveiller, a_creuser: s.a_creuser, ecartee: s.ecartee, exclue: 0 }
     }
     const c: Record<Statut | 'all', number> = { all: 0, chaude: 0, a_surveiller: 0, a_creuser: 0, ecartee: 0, exclue: 0 }
     for (const p of props) {
-      if (!matchScope(p, filters)) continue
+      if (!matchScope(p, filters, zone)) continue
       if (PROMUES.includes(p.status)) c.all += 1
       c[p.status] = (c[p.status] ?? 0) + 1
     }
     return c
-  }, [props, filters, hasScope, stats.data])
+  }, [props, filters, zone, scoped, stats.data])
 
-  // Liste : filtre complet + recherche omnibox (IDU / section+numéro), promues, triées par score.
   const list = useMemo(
     () => props
-      .filter((p) => matchAll(p, filters) && PROMUES.includes(p.status))
+      .filter((p) => matchAll(p, filters, zone) && PROMUES.includes(p.status))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
       .sort((a, b) => b.q_score + b.a_score - (a.q_score + a.a_score)),
-    [props, filters, qNorm],
+    [props, filters, zone, qNorm],
   )
   const shown = showAll ? list : list.slice(0, CAP)
 
   const total = stats.data?.total ?? props.length
   const promus = counts.all || 1
-  const chips = activeChips(filters)
+  const nFilters = (filters.statuts.length ? 1 : 0) + (scoped ? 1 : 0)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col px-5">
@@ -136,7 +152,7 @@ export function ResultsSection() {
         <span className="font-medium text-st-chaude">{fmt(counts.chaude)}</span> chaudes ·{' '}
         <span className="font-medium text-st-surveiller">{fmt(counts.a_surveiller)}</span> à surveiller ·{' '}
         <span className="font-medium text-st-creuser">{fmt(counts.a_creuser)}</span> à creuser
-        {hasScope && <span className="text-txt-dim"> (filtres actifs)</span>}
+        {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
       </p>
       <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
         <span className="bg-st-chaude" style={{ width: `${(counts.chaude / promus) * 100}%` }} />
@@ -144,15 +160,31 @@ export function ResultsSection() {
         <span className="bg-st-creuser" style={{ width: `${(counts.a_creuser / promus) * 100}%` }} />
       </div>
       <p className="mt-2 shrink-0 text-[11px] text-txt-dim">
-        sur {fmt(total)} parcelles — filtre dur actif{chips.length > 0 && ` · ${chips.length} filtre${chips.length > 1 ? 's' : ''}`}
+        sur {fmt(total)} parcelles — filtre dur actif{nFilters > 0 && ' · filtres appliqués'}
       </p>
 
-      <StatutChips counts={counts} partial={hasScope} />
+      <StatutChips counts={counts} partial={scoped} />
 
       <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
-        {geo.isLoading && <p className="text-xs text-txt-dim">Chargement…</p>}
-        {geo.isError && <p className="text-xs text-st-ecartee">Erreur de chargement — serveur à relancer ?</p>}
-        {!geo.isLoading && shown.length === 0 && <p className="text-xs text-txt-dim">Aucun résultat pour ces filtres.</p>}
+        {geo.isLoading && (
+          <>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="h-[52px] shrink-0 animate-pulse rounded-[10px] border border-line-2 bg-surface-3" />
+            ))}
+          </>
+        )}
+        {geo.isError && (
+          <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
+            <p className="text-st-ecartee">Erreur de chargement des parcelles.</p>
+            <button onClick={() => geo.refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
+          </div>
+        )}
+        {!geo.isLoading && !geo.isError && shown.length === 0 && (
+          <div className="rounded-lg border border-dashed border-line-2 p-4 text-center">
+            <p className="text-xs text-txt-mut">Aucun résultat pour ces filtres.</p>
+            <button onClick={resetFilters} className="mt-2 text-xs text-mint hover:underline">Réinitialiser les filtres</button>
+          </div>
+        )}
         {shown.map((p) => <ResultCard key={p.idu} p={p} />)}
       </div>
 

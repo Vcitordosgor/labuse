@@ -7,6 +7,7 @@ const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
   { key: 'ppr', label: 'PPR multirisque' },
   { key: 'vue_mer', label: 'Vue mer', hint: 'liseré cyan (vue dégagée)' },
   { key: 'parc', label: 'Parc national' },
+  { key: 'limites', label: 'Limites parcelles', hint: 'contours de toutes les parcelles' },
 ]
 
 function LayersSection() {

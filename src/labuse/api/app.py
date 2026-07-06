@@ -532,13 +532,19 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
                d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
-               (ev.parcel_id IS NOT NULL) AS evenement_rouge
+               (ev.parcel_id IS NOT NULL) AS evenement_rouge, fl.flags
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
+        -- flags actifs par parcelle (filtres métier) : couches en SOFT_FLAG + ABF non instruit
+        LEFT JOIN (SELECT parcel_id, array_agg(DISTINCT layer_name) AS flags
+                   FROM dryrun_cascade_results
+                   WHERE run_label = :run AND (result = 'SOFT_FLAG'
+                         OR (layer_name = 'abf' AND result = 'UNKNOWN'))
+                   GROUP BY parcel_id) fl ON fl.parcel_id = p.id
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
           AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
         LIMIT :lim
@@ -559,6 +565,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
             "sous_densite": r["sous_densite"],
             "vue_mer": r["vue_mer"],
             "evenement": "rouge" if r["evenement_rouge"] else None,
+            "flags": r["flags"] or [],
         },
     } for r in rows if r["g"]]
     return {"type": "FeatureCollection", "features": feats}
