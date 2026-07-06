@@ -1720,6 +1720,23 @@ def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
 
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
 
+# ── Modules outils (Vague 1+) ──
+from .modules import ensure_tables as _modules_ensure  # noqa: E402
+from .modules import router as _modules_router  # noqa: E402
+
+app.include_router(_modules_router)
+
+
+@app.on_event("startup")
+def _startup_modules() -> None:
+    from ..db import engine as _engine
+    try:
+        _modules_ensure(_engine())
+    except Exception as exc:                             # noqa: BLE001 — DB absente : l'API démarre quand même
+        import logging
+        logging.getLogger("labuse").warning("ensure_tables modules KO : %s", exc)
+
+
 #: Socle V1 (front React+MapLibre, build Vite → frontend/dist), servi à la même origine.
 FRONTEND_DIST = Path(__file__).resolve().parents[3] / "frontend" / "dist"
 
