@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { addToPipeline, getFiche, getPipelineForParcel, pdfUrl } from '../../lib/api'
 import { completudeColor, STATUT_META } from '../../lib/status'
 import type { FicheLine, Onglet } from '../../lib/types'
@@ -15,15 +15,15 @@ function Weight({ w, result }: { w: number | null; result: string }) {
   return <span className={`w-10 shrink-0 text-right font-mono text-xs font-semibold ${c}`}>{w > 0 ? `+${w}` : w}</span>
 }
 
-// Source cliquable → page Sources (exigence #5) + référence tracée + date (exigence #9).
+// Source cliquable → DRAWER latéral (jamais un cul-de-sac : la fiche reste ouverte) + référence + date.
 function SourceRef({ line }: { line: FicheLine }) {
-  const openSources = useApp((s) => s.openSources)
+  const openSourceDrawer = useApp((s) => s.openSourceDrawer)
   const trace = line.source_table && line.source_id != null ? `${line.source_table}#${line.source_id}` : null
   return (
     <div className="mt-0.5 flex items-center gap-2 text-[10px] text-txt-dim">
       {line.source && (
-        <button onClick={() => openSources(line.source)} className="truncate text-[#5a7d6c] hover:text-mint hover:underline"
-          title="Ouvrir la page Sources">
+        <button onClick={() => openSourceDrawer(line)} className="truncate text-[#5a7d6c] hover:text-mint hover:underline"
+          title="Voir la source (drawer)">
           {line.source}
         </button>
       )}
@@ -111,6 +111,16 @@ const TABS: { k: 'synthese' | Onglet | 'bilan'; label: string }[] = [
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
+  const sourceLine = useApp((s) => s.sourceLine)
+  // Échap ferme la fiche — sauf si le drawer source est ouvert (il consomme Échap en premier)
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !useApp.getState().sourceLine && !useApp.getState().tool) select(null)
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [select])
+  void sourceLine
   const [tab, setTab] = useState<'synthese' | Onglet | 'bilan'>('synthese')
   const [iaOpen, setIaOpen] = useState(false)
   const { data: f, isLoading, isError, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
@@ -208,6 +218,14 @@ export function Fiche({ idu }: { idu: string }) {
             className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi" title="Exporter la fiche en PDF">
             PDF
           </a>
+          {f && (
+            <a href={`https://www.google.com/maps/@${f.coords[1]},${f.coords[0]},19z/data=!3m1!1e3`}
+              target="_blank" rel="noreferrer"
+              className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi"
+              title="Ouvrir la parcelle dans Google Maps (satellite) — deep-link, pas de tuiles intégrées (CGU)">
+              G
+            </a>
+          )}
           <div className="relative">
             <button onClick={() => setIaOpen((o) => !o)}
               className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi" title="Analyse IA">
