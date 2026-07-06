@@ -24,4 +24,5 @@ export const MODULES: ModuleDef[] = [
   { key: 'assemblage', num: 'M16', label: 'Assemblage', desc: 'Sélection contiguë → assiette fusionnée' },
   { key: 'zan', num: 'M17', label: 'Simulateur ZAN', desc: 'Artificialisation par commune, parcelles compatibles' },
   { key: 'barometre', num: 'M18', label: 'Baromètre foncier', desc: 'Rapport trimestriel île entière + PDF' },
+  { key: 'matching', num: 'M19', label: 'Matching promoteurs', desc: 'Critères enregistrés → alertes quand ça matche (démo)' },
 ]

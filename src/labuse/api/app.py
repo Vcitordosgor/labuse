@@ -1728,11 +1728,14 @@ from .ia import router as _ia_router  # noqa: E402
 from .modules import ensure_tables as _modules_ensure  # noqa: E402
 from .modules import router as _modules_router  # noqa: E402
 from .moteurs import router as _moteurs_router  # noqa: E402
+from .partners import ensure_tables as _partners_ensure  # noqa: E402
+from .partners import router as _partners_router  # noqa: E402
 
 app.include_router(_modules_router)
 app.include_router(_ia_router)
 app.include_router(_events_router)
 app.include_router(_moteurs_router)
+app.include_router(_partners_router)
 
 
 @app.on_event("startup")
@@ -1742,6 +1745,7 @@ def _startup_modules() -> None:
         _modules_ensure(_engine())
         _ia_ensure(_engine())
         _events_ensure(_engine())
+        _partners_ensure(_engine())
     except Exception as exc:                             # noqa: BLE001 — DB absente : l'API démarre quand même
         import logging
         logging.getLogger("labuse").warning("ensure_tables modules KO : %s", exc)

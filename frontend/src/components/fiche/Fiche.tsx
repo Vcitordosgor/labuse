@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, toggleWatch } from '../../lib/api'
+import { addToPipeline, createShare, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, toggleWatch } from '../../lib/api'
 import { completudeColor, STATUT_META } from '../../lib/status'
 import type { FicheLine, Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -91,6 +91,29 @@ function WatchButton({ idu }: { idu: string }) {
       title={on ? 'Suivie — les événements alimentent la cloche' : 'Suivre cette parcelle (alertes sans pipeline)'}>
       {on ? '👁 Suivie' : '👁'}
     </button>
+  )
+}
+
+// M20 — pack apporteur : lien public lecture seule, filigrané + horodaté + compteur de vues.
+function ShareButton({ idu }: { idu: string }) {
+  const share = useMutation({ mutationFn: () => createShare(idu) })
+  return (
+    <div className="relative">
+      <button onClick={() => share.mutate()}
+        className="rounded-lg border border-line-2 px-2.5 py-1.5 text-xs text-txt hover:text-txt-hi"
+        title="Pack apporteur : générer un lien public lecture seule (filigrané, compteur de vues)">
+        ↗
+      </button>
+      {share.data && (
+        <div className="absolute bottom-10 right-0 z-20 w-64 rounded-lg border border-line-2 bg-surface-2 p-3 text-[11px] shadow-xl">
+          <p className="font-mono text-[10px] tracking-widest text-txt-dim">LIEN APPORTEUR</p>
+          <a href={share.data.url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-mint hover:underline">
+            {window.location.origin}{share.data.url}
+          </a>
+          <p className="mt-1 text-[10px] text-txt-dim">Lecture seule · filigrané · consultations comptées.</p>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -278,6 +301,7 @@ export function Fiche({ idu }: { idu: string }) {
         <div className="flex gap-2">
           <PipelineButton idu={idu} />
           <WatchButton idu={idu} />
+          <ShareButton idu={idu} />
           <a href={pdfUrl(idu)} target="_blank" rel="noreferrer"
             className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi" title="Exporter la fiche en PDF">
             PDF

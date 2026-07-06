@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan } from '../../lib/api'
+import { addProfile, getProfiles, motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan, runMatch } from '../../lib/api'
 import { STATUT_META } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 import { VIOLET } from './registry'
@@ -215,6 +215,50 @@ export function M18() {
           </div>
         ))}
       </div>
+    </>
+  )
+}
+
+
+/* ───────────── M19 — MATCHING TERRAIN ↔ PROMOTEUR ───────────── */
+
+export function M19() {
+  const profiles = useQuery({ queryKey: ['m19'], queryFn: getProfiles })
+  const [nom, setNom] = useState('')
+  const [smin, setSmin] = useState('')
+  const add = useMutation({ mutationFn: () => addProfile({ nom, surface_min: smin ? Number(smin) : null }),
+    onSuccess: () => { setNom(''); profiles.refetch() } })
+  const match = useMutation({ mutationFn: runMatch })
+  return (
+    <>
+      <Banner>Profils de recherche enregistrés — quand une parcelle <b>bascule chaude</b> et matche,
+        l'alerte apparaît dans la cloche (M11). Les deux profils fournis sont des <b>démos étiquetées</b>.</Banner>
+      <div className="flex min-h-0 flex-col gap-1.5 overflow-y-auto">
+        {((profiles.data ?? []) as Record<string, any>[]).map((p) => (
+          <div key={p.id} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-[11px]">
+            <div className="flex items-center gap-2">
+              <span className="text-txt">{p.nom}</span>
+              {p.demo && <span className="rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[8.5px] text-[#B497F0]">DÉMO</span>}
+            </div>
+            <div className="mt-0.5 text-[10px] text-txt-dim">
+              {p.commune ?? 'toute commune'} · surface {p.surface_min ?? '—'}–{p.surface_max ?? '—'} m² · SDP ≥ {p.sdp_min ?? '—'}
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-1.5">
+        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom du profil…"
+          className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-[#B497F0] focus:outline-none" />
+        <input value={smin} onChange={(e) => setSmin(e.target.value)} placeholder="surf. min" type="number"
+          className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-[#B497F0] focus:outline-none" />
+        <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()}
+          className="rounded px-2 text-[11px] font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>+</button>
+      </div>
+      <button onClick={() => match.mutate()} disabled={match.isPending}
+        className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt hover:text-txt-hi">
+        {match.isPending ? '…' : 'Tester le matching maintenant'}
+      </button>
+      {match.data && <p className="text-[11px]" style={{ color: VIOLET }}>✓ {match.data.matches} match(s) émis → voir la cloche</p>}
     </>
   )
 }

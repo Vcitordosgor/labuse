@@ -95,3 +95,11 @@ export const motAssemblage = (idus: string[]) =>
   j<Record<string, any>>('/moteurs/assemblage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
 export const motZan = () => j<Record<string, any>>('/moteurs/zan')
 export const motBarometre = () => j<Record<string, any>>('/moteurs/barometre')
+
+// ── Vague 5 : matching + partage ──
+export const getProfiles = () => j<Record<string, any>[]>('/partners/profiles')
+export const addProfile = (p: Record<string, unknown>) =>
+  j<{ ok: boolean }>('/partners/profiles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) })
+export const runMatch = () => j<{ matches: number }>('/partners/match/run', { method: 'POST' })
+export const createShare = (idu: string) => j<{ token: string; url: string }>(`/partners/share/${idu}`, { method: 'POST' })
+export const listShares = (idu: string) => j<{ token: string; date: string; views: number }[]>(`/partners/share/${idu}/list`)
