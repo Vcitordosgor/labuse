@@ -156,6 +156,30 @@ Itération séparée (commits dédiés). `resolve_gigogne()` / commande `ingest-
   en prod — fait automatiquement par `create_all`/`ensure_schema`, mais à vérifier avant lancement).
 - 5 tests : résolution, cycle, borne 1 niveau, priorité au direct, idempotence. Total A3 = 17 tests.
 
+## MàJ 06/07/2026 — rendement gigogne plafonné par `diffusionCommerciale` (VOULU, pas un bug)
+
+Diagnostic (série de `+0 physiques` malgré une API qui répond) : les gérants-sociétés suivis en
+depth-1 sont souvent **`diffusionCommerciale=False`** (cabinets d'audit, holdings — ils optent
+fréquemment pour la non-diffusion commerciale). Or la garde RGPD de `_parse_pouvoir`
+(`connectors/inpi_rne.py:180`, `if diffusible:`) n'attache nom/prénoms/`date_naissance` QUE si
+l'entreprise est diffusible.
+
+⚠ L'API RENVOIE pourtant la date pour ces sociétés (vérifié 06/07 : gérant 338113954 « SFG LA
+VOUGERAIE », dirigeant BINDSCHEDLER `dateDeNaissance=1938-02`, `dateDeNaissancePresent=True`) — on
+la NULLE nous-mêmes, à dessein, car on est un outil de prospection COMMERCIALE et on respecte
+l'opt-out `diffusionCommerciale` (**décision Vic 06/07 : option A, on garde ce comportement**).
+
+Conséquences (assumées, PAS un bug) :
+- Le **rendement gigogne est structurellement plafonné** : seules les cibles dont le gérant est
+  DIFFUSIBLE se résolvent (les 187 d'hier étaient diffusibles). Les séries de `+0` = séries de
+  gérants non diffusibles → normal.
+- La **population `age_source='aucun_individu'` est GONFLÉE** : une société non diffusible qui a
+  pourtant un gérant PHYSIQUE voit sa date nullée → elle apparaît `aucun_individu` (et devient une
+  cible gigogne qui ne pourra pas résoudre non plus). Donc « aucun_individu » ≠ « réellement sans
+  personne physique ».
+- La passe en cours capte les diffusibles ; on la laisse finir. (Option B « âge seul sans nom pour
+  non-diffusibles » = écartée pour l'instant.)
+
 ## Hors périmètre repéré (à ne PAS faire sans validation)
 - Procédures collectives via RNE : nécessiterait un autre endpoint (actes/évènements) — non fait,
   doublon avec BODACC A1. À ne PAS ajouter sans demande explicite.
