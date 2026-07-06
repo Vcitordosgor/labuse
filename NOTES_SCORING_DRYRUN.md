@@ -69,6 +69,12 @@ pas par aménités seul) ; plafond 91→87. Comportement validé, figé.
   `Jugement arrÃªtant le plan de sauvegarde`, `DÃ©pÃ´t de l'Ã©tat des crÃ©ances`). Normalisé au mapping
   BODACC (config `mojibake`), mais la vraie correction est à la ré-ingestion BODACC (décodage UTF-8).
 
+## 📌 DPE passoire — N/A foncier nu (ASSUMÉ, validé Vic)
+Effet de bord vérifié : une passoire (maison F/G) est BÂTIE → exclue à l'étage 0 (couche `bati`) →
+n'atteint jamais la phase 2 → le flag DPE ne se déclenche JAMAIS sur une parcelle scorée
+(Saint-Paul : 2 passoires, 2/2 exclues étage 0). **N/A pour le foncier nu.** Câblage GARDÉ (coût
+nul) — réservé à un FUTUR produit « reconversion / démolition du bâti ». Pas un bug, on n'y touche plus.
+
 ## Reste
 - Étape 3 (matrice Q×A + bascule chaude sur evenement='rouge').
 - Observations baseline différées à l'étape 3 : plafond opportunité ~81 (bonus bas), statut
