@@ -29,6 +29,7 @@ class Intersection:
     coverage: float            # part (0..1) de la parcelle couverte, calculée en 2975
     attrs: dict[str, Any]
     source_name: str | None
+    id: int | None = None      # spatial_layers.id — pour source_table/source_id (cliquable)
 
 
 class EvalContext:
@@ -50,6 +51,10 @@ class EvalContext:
         # par le pipeline (compute_declass_signals) et injectés AVANT la cascade. La couche `bati`
         # (étage 0) lit ici son signal bâti — la couche kind='batiment' étant exclue du prime().
         self.declass_signals: dict[int, dict] = {}
+        # Étage 1 (dry-run) : plus proche POI d'un kind (dist, id, name, attrs) sous un cap, et
+        # distances d'aménités pré-calculées (parcel_amenites).
+        self._nearest: dict[tuple[int, str], dict] = {}
+        self._amenites: dict[int, dict] = {}
 
     # ───────────────────────── batch (commune entière) ─────────────────────────
 
@@ -111,7 +116,7 @@ class EvalContext:
                     WHERE sl.kind <> 'batiment' AND sl.geom_2975 && bbox.g
                       AND ST_Dimension(sl.geom_2975) < 2
                 )
-                SELECT b.id AS pid, parts.kind, parts.subtype, parts.name, parts.attrs,
+                SELECT b.id AS pid, parts.lid AS lid, parts.kind, parts.subtype, parts.name, parts.attrs,
                        SUM(ST_Area(ST_Intersection(b.geom_2975, parts.g)))
                          / NULLIF(MAX(ST_Area(b.geom_2975)), 0) AS coverage,
                        ds.name AS source_name
@@ -124,7 +129,8 @@ class EvalContext:
             ), {"ids": ids}
         ).mappings().all():
             self._inter.setdefault((r["pid"], r["kind"]), []).append(
-                Intersection(r["subtype"], r["name"], float(r["coverage"] or 0.0), r["attrs"] or {}, r["source_name"]))
+                Intersection(r["subtype"], r["name"], float(r["coverage"] or 0.0), r["attrs"] or {},
+                             r["source_name"], id=r["lid"]))
 
         # Centroïde ∈ entité : SEULE la couche « eau » consomme centroid_in (cf. EauLayer).
         # On restreint donc la précomputation au `kind` concerné, sinon on testait
@@ -223,6 +229,44 @@ class EvalContext:
             ), {"ids": ids, "r": radius}
         ).all():
             self._fbz[pid] = (int(fp), int(gl), int(ni))
+
+        # ── Étage 1 (dry-run) : proximité aux POI ponctuels (Géorisques) + aménités ──
+        # Plus proche objet de chaque kind sous un cap (DISTINCT ON = le plus proche par parcelle),
+        # avec son id (cliquable). Cap = param `proximite_m` ou le plus grand seuil `bandes_m`.
+        for name in ("sol_pollue", "cavite", "icpe", "mvt"):
+            p = self._layer_params(name)
+            kind = p.get("spatial_kind")
+            if not kind:
+                continue
+            cap = float(p.get("proximite_m") or max((p.get("bandes_m") or {"x": 50}).values()))
+            for r in self.session.execute(
+                text(
+                    """SELECT DISTINCT ON (pa.id) pa.id AS pid, sl.id AS lid, sl.name, sl.subtype,
+                              sl.attrs, ST_Distance(pa.geom_2975, sl.geom_2975) AS dist
+                       FROM parcels pa JOIN spatial_layers sl ON sl.kind = :k
+                         AND ST_DWithin(pa.geom_2975, sl.geom_2975, :cap)
+                       WHERE pa.id = ANY(:ids)
+                       ORDER BY pa.id, ST_Distance(pa.geom_2975, sl.geom_2975)"""
+                ), {"ids": ids, "k": kind, "cap": cap}
+            ).mappings().all():
+                self._nearest[(r["pid"], kind)] = {
+                    "dist": float(r["dist"]), "id": r["lid"], "name": r["name"],
+                    "subtype": r["subtype"], "attrs": r["attrs"] or {}}
+
+        # Aménités : distances déjà calculées (parcel_amenites) — lues en un coup.
+        for r in self.session.execute(
+            text("SELECT parcel_id, dist_ecole_m, dist_sante_m, dist_commerce_m, dist_tcsp_m "
+                 "FROM parcel_amenites WHERE parcel_id = ANY(:ids)"), {"ids": ids}
+        ).mappings().all():
+            self._amenites[r["parcel_id"]] = dict(r)
+
+    def nearest_point(self, parcel_id: int, kind: str) -> dict | None:
+        """Plus proche objet ponctuel d'un kind sous le cap (dist, id, name, subtype, attrs). None sinon."""
+        return self._nearest.get((parcel_id, kind))
+
+    def amenites(self, parcel_id: int) -> dict | None:
+        """Distances d'aménités pré-calculées (parcel_amenites) pour la parcelle."""
+        return self._amenites.get(parcel_id)
 
     def feedback_counts(self, parcel_id: int) -> tuple[int, int, int]:
         """Agrégat du retour terrain dans la zone : (faux_positif, bon_lead, pas_intéressé) (§10)."""

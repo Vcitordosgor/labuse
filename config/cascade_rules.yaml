@@ -266,6 +266,58 @@ layers:
       sweet_spot_lo_m2: 400
       sweet_spot_hi_m2: 2500
 
+  # ───────────────────── ÉTAGE 1 (dry-run) — QUALITÉ ─────────────────────
+  # Signaux de qualité (bonus/malus/flags) sur les survivants. Non branchés au live (dry-run).
+  - name: friche          # Cartofriches : terrain à reconvertir = signal POSITIF
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: friche
+      bonus_key: friche
+      magnitude_avec_projet: 1.0    # « friche avec projet » → +8 (plafond)
+      magnitude_sans_projet: 0.6    # « friche sans projet »  → +5 (gisement moins mûr)
+  - name: sol_pollue      # coût de dépollution INCONNU → le FLAG prime (survit à la fiche), malus léger
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: sol_pollue
+      proximite_m: 50
+      severity: faible
+      detail: "Site pollué recensé (BASOL/CASIAS) à proximité — étude de sol à prévoir."
+  - name: cavite          # risque d'effondrement → flag prime, malus léger
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: cavite
+      proximite_m: 50
+      severity: faible
+      detail: "Cavité souterraine recensée à proximité — étude à prévoir."
+  - name: icpe            # voisinage industriel → malus GRADUÉ par distance
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: icpe
+      bandes_m: { fort: 50, moyen: 150, faible: 300 }   # ≤50 fort · ≤150 moyen · ≤300 faible · au-delà rien
+      detail: "Installation classée (ICPE) à proximité — nuisances/voisinage industriel."
+  - name: mvt             # mouvement de terrain : FLAG INFORMATIF, 0 point (aléa déjà dans PPR)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: mvt
+      proximite_m: 50
+      severity: info       # multiplicateur ×0 → affiché mais sans double-compter le PPR
+      detail: "Mouvement de terrain recensé à proximité (aléa réglementaire déjà pris en compte via PPR)."
+  - name: amenites        # score d'aménités agrégé (école/commerce/santé/tcsp) — CONFORT, plafond 11
+    phase: 1
+    enabled: true
+    params:
+      bonus_key: amenites
+      # Bandes de proximité (contexte 974 tout-voiture) : plein ≤500 m, 0.5 en 500–1200 m, 0 au-delà.
+      # tcsp se juge à pied → bandes plus serrées (300/800). Pondérations : école+commerce priment.
+      bandes_defaut_m: { plein: 500, demi: 1200 }
+      bandes_tcsp_m: { plein: 300, demi: 800 }
+      ponderations: { ecole: 0.30, commerce: 0.30, sante: 0.20, tcsp: 0.20 }
+
   # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
 
   - name: dvf
