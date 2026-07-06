@@ -1,5 +1,5 @@
 import { Header } from './components/header/Header'
-import { FicheShell } from './components/fiche/FicheShell'
+import { Fiche } from './components/fiche/Fiche'
 import { LeftPanel } from './components/panel/LeftPanel'
 import { MapView } from './components/map/MapView'
 import { Rail } from './components/Rail'
@@ -15,7 +15,7 @@ export default function App() {
         <div className="relative flex flex-1 overflow-hidden">
           <LeftPanel />
           <MapView />
-          {selectedIdu && <FicheShell idu={selectedIdu} />}
+          {selectedIdu && <Fiche idu={selectedIdu} />}
         </div>
       </div>
     </div>

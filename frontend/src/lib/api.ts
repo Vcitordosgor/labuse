@@ -1,4 +1,4 @@
-import type { ParcelResult, Stats } from './types'
+import type { Fiche, ParcelResult, Stats } from './types'
 
 export interface ParcelFeatureCollection {
   type: 'FeatureCollection'
@@ -23,3 +23,4 @@ export const getStats = () => j<Stats>(`/stats?${q()}`)
 export const getResults = () => j<ParcelResult[]>(`/parcels?${q({ limit: 500 })}`)
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
+export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)

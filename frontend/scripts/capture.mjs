@@ -1,4 +1,4 @@
-// Capture + vérification des filtres du Socle V1 (revue Vic). Vérifie aussi console/page.
+// Capture + vérification du Socle V1 (filtres + fiche). Vérifie console/page.
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 
@@ -12,37 +12,32 @@ const errors = []
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })
 page.on('pageerror', (e) => errors.push('PAGEERROR ' + e.message))
 
-const cards = () => page.locator('.overflow-y-auto > button').count()
-const counter = () => page.locator('text=chaudes').first().innerText()
-
 await page.goto(BASE, { waitUntil: 'networkidle', timeout: 30000 })
 await page.waitForSelector('text=chaudes', { timeout: 15000 })
 await page.waitForTimeout(4000)
 await page.screenshot({ path: `${OUT}/01_dashboard.png` })
-console.log('DÉFAUT  :', await cards(), 'cartes ·', await counter())
 
-// Filtre statut « Chaude » (panneau gauche) → doit filtrer carte + liste
-await page.getByRole('button', { name: /^Chaude/ }).first().click()
+// Fiche — top résultat (Synthèse : barres Q/A dépliables)
+await page.locator('.overflow-y-auto > button').first().click()
 await page.waitForTimeout(1200)
-await page.screenshot({ path: `${OUT}/02_filtre_chaude.png` })
-console.log('CHAUDE  :', await cards(), 'cartes')
+await page.screenshot({ path: `${OUT}/04_fiche_synthese.png` })
 
-// + Filtre → Q ≥ 90 (chip omnibox apparaît, compteurs baissent)
-await page.getByRole('button', { name: '+ Filtre' }).click()
-await page.waitForTimeout(300)
-await page.getByPlaceholder('ex. 70').fill('90')
-await page.waitForTimeout(300)
-await page.keyboard.press('Escape').catch(() => {})
-await page.mouse.click(700, 500)
+// Onglet Règles
+await page.getByRole('button', { name: 'Règles', exact: true }).click()
+await page.waitForTimeout(500)
+await page.screenshot({ path: `${OUT}/05_fiche_regles.png` })
+
+// Fiche événementielle : AC 0253 (filtrer Chaude puis cliquer sa carte)
+await page.locator('button[title="Fermer"]').click().catch(() => {})
+await page.getByRole('button', { name: /^Chaude/ }).first().click()
+await page.waitForTimeout(800)
+const ac = page.locator('.overflow-y-auto > button', { hasText: 'AC 0253' }).first()
+await ac.scrollIntoViewIfNeeded()
+await ac.click()
 await page.waitForTimeout(1000)
-await page.screenshot({ path: `${OUT}/03_filtre_score.png` })
-console.log('Q>=90   :', await cards(), 'cartes ·', await counter())
+await page.screenshot({ path: `${OUT}/06_fiche_evenement.png` })
 
-// Retirer le chip « Chaude » via ×
-const chip = page.locator('span', { hasText: 'Chaude' }).locator('button[title="Retirer"]').first()
-await chip.click().catch(() => {})
-await page.waitForTimeout(1000)
-console.log('SANS STATUT (Q>=90 restant) :', await cards(), 'cartes ·', await counter())
-
+const banner = await page.locator('text=ÉVÉNEMENT').count()
+console.log('AC0253 bandeau événement présent :', banner > 0)
 console.log('CONSOLE ERRORS:', errors.length ? errors.slice(0, 10) : 'aucune')
 await browser.close()
