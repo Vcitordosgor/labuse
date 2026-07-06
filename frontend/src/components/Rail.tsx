@@ -48,8 +48,8 @@ export function Rail() {
     <>
       <nav className="flex h-full w-16 shrink-0 flex-col items-center border-r border-line bg-surface-1 py-4">
         {/* logo — la buse */}
-        <svg viewBox="0 0 40 24" className="mb-6 h-6 w-10 shrink-0">
-          <path d="M6 16 Q13 6 20 13 Q27 6 34 16" stroke="#5CE6A1" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        <svg viewBox="-2 -2 36 14" className="mb-6 h-5 w-10 shrink-0">
+          <path d="M0 10 Q8 0 16 8 Q24 0 32 10" stroke="#5CE6A1" strokeWidth="2.2" fill="none" strokeLinecap="round" />
         </svg>
 
         {ZONES.map(({ key, label }) => {

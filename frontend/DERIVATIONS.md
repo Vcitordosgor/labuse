@@ -134,3 +134,15 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
 - **Perf mesurée** (Playwright, serveur local) : DOM 103 ms · UI 329 ms · carte 409 ms (< 2 s ✓) ·
   données+liste 3,7 s (geojson 51 129 parcelles — passage MVT = prochain cycle) · filtre plein
   jeu 575 ms.
+
+## Post-revue Vic (P0/P1)
+- **P0 — leçon de QA** : un popover absolu DANS un conteneur `overflow-x-auto` est rogné
+  (présent au DOM, invisible à l'humain) — et Playwright interagit avec les éléments rognés,
+  d'où une QA faussement verte. Règle : les surfaces flottantes (popover/drawer) vivent HORS
+  des conteneurs défilants, et la suite embarque `qa_filtres_reels.mjs` : clic souris réel,
+  détection de rognage par ancêtre overflow, vérification des effets liste+compteurs+carte,
+  suppression par ×. Le test était ROUGE sur le build fautif, VERT après correction.
+- **P1 — identité** : buse reprise EXACTEMENT du mockup (`M16 34 Q24 24 32 32 Q40 24 48 34`,
+  normalisée `M0 10 Q8 0 16 8 Q24 0 32 10`) — header, rail, favicons regénérés (pixels menthe
+  vérifiés par assertion). La barre d'onglet native n'est pas capturable en headless
+  (permissions macOS) : la capture 20 montre le favicon RÉELLEMENT SERVI + le titre RÉEL.
