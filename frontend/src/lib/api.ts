@@ -74,3 +74,16 @@ export const iaSynthese = (idu: string) =>
   j<{ stub: boolean; texte: string; mention: string }>(`/ia/synthese/${idu}`, { method: 'POST' })
 export const iaPourquoi = (idu: string) =>
   j<{ stub: boolean; texte: string; mention: string }>(`/ia/pourquoi/${idu}`, { method: 'POST' })
+
+// ── Événements (Vague 3 : M11-M14) ──
+export interface LabuseEvent { id: number; date: string; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null }
+export const getEvents = () => j<{ unread: number; items: LabuseEvent[] }>('/events?limit=100')
+export const getEventsCount = () => j<{ unread: number; par_parcelle: Record<string, number> }>('/events/count')
+export const markEventRead = (id: number) => j<{ ok: boolean }>(`/events/${id}/read`, { method: 'POST' })
+export const markAllEventsRead = () => j<{ ok: boolean }>('/events/read-all', { method: 'POST' })
+export const getWatch = (idu: string) => j<{ watched: boolean }>(`/events/watch/${idu}`)
+export const toggleWatch = (idu: string) => j<{ watched: boolean }>(`/events/watch/${idu}`, { method: 'POST' })
+export const getSavedSearches = () => j<{ id: number; nom: string; hash: string; date: string }[]>('/events/searches')
+export const saveSearch = (nom: string, hash: string) =>
+  j<{ ok: boolean }>('/events/searches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, hash }) })
+export const deleteSearch = (id: number) => j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'DELETE' })

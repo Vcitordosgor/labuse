@@ -1721,6 +1721,8 @@ def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
 
 # ── Modules outils (Vague 1+) ──
+from .events import ensure_tables as _events_ensure  # noqa: E402
+from .events import router as _events_router  # noqa: E402
 from .ia import ensure_tables as _ia_ensure  # noqa: E402
 from .ia import router as _ia_router  # noqa: E402
 from .modules import ensure_tables as _modules_ensure  # noqa: E402
@@ -1728,6 +1730,7 @@ from .modules import router as _modules_router  # noqa: E402
 
 app.include_router(_modules_router)
 app.include_router(_ia_router)
+app.include_router(_events_router)
 
 
 @app.on_event("startup")
@@ -1736,6 +1739,7 @@ def _startup_modules() -> None:
     try:
         _modules_ensure(_engine())
         _ia_ensure(_engine())
+        _events_ensure(_engine())
     except Exception as exc:                             # noqa: BLE001 — DB absente : l'API démarre quand même
         import logging
         logging.getLogger("labuse").warning("ensure_tables modules KO : %s", exc)

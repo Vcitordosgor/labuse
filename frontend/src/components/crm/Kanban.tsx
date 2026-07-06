@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { deletePipeline, getPipeline, getPipelineMeta, patchPipeline } from '../../lib/api'
+import { deletePipeline, getEventsCount, getPipeline, getPipelineMeta, patchPipeline } from '../../lib/api'
 import { completudeColor, STATUT_META } from '../../lib/status'
 import type { PipelineEntry } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -9,7 +9,7 @@ const TONE_ACCENT: Record<string, string> = {
   cold: '#5C7268', warm: '#E8B44C', hot: '#5CE6A1', reject: '#E8695A',
 }
 
-function Card({ e, onDragStart }: { e: PipelineEntry; onDragStart: (ev: React.DragEvent) => void }) {
+function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (ev: React.DragEvent) => void; newEvents: number }) {
   const { select, setView } = useApp()
   const qc = useQueryClient()
   const del = useMutation({
@@ -35,6 +35,12 @@ function Card({ e, onDragStart }: { e: PipelineEntry; onDragStart: (ev: React.Dr
         >
           {e.idu.slice(8, 10)} {e.idu.slice(10)}
         </button>
+        {newEvents > 0 && (
+          <span className="shrink-0 rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[9px] font-medium text-[#B497F0]"
+            title="Événements non lus sur cette parcelle (cloche)">
+            {newEvents} nouveau{newEvents > 1 ? 'x' : ''}
+          </span>
+        )}
         <button
           onClick={() => del.mutate()}
           className="shrink-0 text-txt-dim opacity-0 hover:text-st-ecartee group-hover:opacity-100"
@@ -72,6 +78,7 @@ export function Kanban() {
   const qc = useQueryClient()
   const meta = useQuery({ queryKey: ['pipeline-meta'], queryFn: getPipelineMeta })
   const entries = useQuery({ queryKey: ['pipeline'], queryFn: getPipeline })
+  const evCount = useQuery({ queryKey: ['events-count'], queryFn: getEventsCount, refetchInterval: 60_000 })
   const [dragId, setDragId] = useState<number | null>(null)
   const [overCol, setOverCol] = useState<string | null>(null)
   const move = useMutation({
@@ -123,7 +130,8 @@ export function Kanban() {
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
                 {items.map((e) => (
-                  <Card key={e.id} e={e} onDragStart={() => setDragId(e.id)} />
+                  <Card key={e.id} e={e} onDragStart={() => setDragId(e.id)}
+                    newEvents={evCount.data?.par_parcelle[e.idu] ?? 0} />
                 ))}
                 {items.length === 0 && (
                   <div className="rounded-lg border border-dashed border-line-2 py-4 text-center text-[10px] text-txt-dim">vide</div>

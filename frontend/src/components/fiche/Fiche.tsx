@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, getFiche, getPipelineForParcel, iaPourquoi, iaSynthese, pdfUrl } from '../../lib/api'
+import { addToPipeline, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, toggleWatch } from '../../lib/api'
 import { completudeColor, STATUT_META } from '../../lib/status'
 import type { FicheLine, Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -76,6 +76,21 @@ function ScoreBar({ label, value, color, lines, defaultOpen }: {
         </div>
       )}
     </div>
+  )
+}
+
+// M14 — suivi de cible : événements sur cette parcelle SANS l'entrer au pipeline.
+function WatchButton({ idu }: { idu: string }) {
+  const qc = useQueryClient()
+  const w = useQuery({ queryKey: ['watch', idu], queryFn: () => getWatch(idu) })
+  const t = useMutation({ mutationFn: () => toggleWatch(idu), onSuccess: () => qc.invalidateQueries({ queryKey: ['watch', idu] }) })
+  const on = w.data?.watched
+  return (
+    <button onClick={() => t.mutate()}
+      className={`rounded-lg border px-2.5 py-1.5 text-xs ${on ? 'border-mint text-mint' : 'border-line-2 text-txt hover:text-txt-hi'}`}
+      title={on ? 'Suivie — les événements alimentent la cloche' : 'Suivre cette parcelle (alertes sans pipeline)'}>
+      {on ? '👁 Suivie' : '👁'}
+    </button>
   )
 }
 
@@ -262,6 +277,7 @@ export function Fiche({ idu }: { idu: string }) {
       <div className="shrink-0 border-t border-line px-5 py-3">
         <div className="flex gap-2">
           <PipelineButton idu={idu} />
+          <WatchButton idu={idu} />
           <a href={pdfUrl(idu)} target="_blank" rel="noreferrer"
             className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi" title="Exporter la fiche en PDF">
             PDF
