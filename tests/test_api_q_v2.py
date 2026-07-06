@@ -48,3 +48,17 @@ def test_fiche_axe_qa_et_onglets():
     assert m._LAYER_ONGLET["dvf"] == "marche"
     assert m._LAYER_ONGLET["bodacc"] == "proprio"
     assert m._LAYER_ONGLET["icpe"] == "risques"
+
+
+def test_layers_whitelist():
+    # /map/layers.geojson n'expose que la whitelist (pas d'énumération libre de spatial_layers)
+    import pytest
+    from fastapi import HTTPException
+    with pytest.raises(HTTPException):
+        m.map_layers_geojson(kind="batiment", commune=None, limit=10, db=None)
+
+
+def test_pdf_statut_couleurs_completes():
+    # le PDF connaît les 5 statuts de la matrice (jamais de KeyError sur une écartée/exclue)
+    from labuse.api.pdf_premium import STATUT
+    assert set(STATUT) == {"chaude", "a_surveiller", "a_creuser", "ecartee", "exclue"}

@@ -20,7 +20,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from urllib.parse import unquote
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import RedirectResponse
@@ -531,11 +531,12 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
         SELECT p.idu, p.surface_m2,
                ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
-               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite,
+               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
                (ev.parcel_id IS NOT NULL) AS evenement_rouge
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+        LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
@@ -556,6 +557,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
             "completeness_score": r["completeness_score"],
             "sdp_residuelle_m2": r["sdp_residuelle_m2"],
             "sous_densite": r["sous_densite"],
+            "vue_mer": r["vue_mer"],
             "evenement": "rouge" if r["evenement_rouge"] else None,
         },
     } for r in rows if r["g"]]
@@ -677,6 +679,39 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
     if source and source.startswith("q_v2"):
         return _q_v2_fiche(db, idu, run_label=source)
     return _build_fiche(db, idu)
+
+
+@app.get("/parcels/{idu}/export.pdf")
+def parcel_export_pdf(idu: str, source: str = "q_v2", db: Session = Depends(get_db)) -> Response:
+    """Export PDF de la fiche premium (Brique 3) — design system, fiche complète tracée."""
+    from .pdf_premium import render_fiche_pdf
+    fiche = _q_v2_fiche(db, idu, run_label=source)
+    return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
+                    headers={"Content-Disposition": f'inline; filename="labuse_{idu}.pdf"'})
+
+
+#: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
+_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national"}
+
+
+@app.get("/map/layers.geojson")
+def map_layers_geojson(kind: str, commune: str | None = None,
+                       limit: int = Query(6000, ge=1, le=20000), db: Session = Depends(get_db)) -> dict:
+    """Couches carte (zonage PLU, PPR, Parc national) — géométries simplifiées pour l'overlay.
+
+    Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
+    if kind not in _MAP_LAYER_KINDS:
+        raise HTTPException(422, f"kind inconnu : {kind}")
+    rows = db.execute(text(
+        """SELECT sl.id, sl.subtype, sl.name,
+                  ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0002)) AS g
+           FROM spatial_layers sl
+           WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
+           LIMIT :lim"""), {"k": kind, "c": commune, "lim": limit}).mappings().all()
+    feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
+              "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"]}}
+             for r in rows if r["g"]]
+    return {"type": "FeatureCollection", "features": feats}
 
 
 @app.get("/map/bati")
@@ -1545,7 +1580,18 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
             "status": ev.status.value if ev else None,
             "opportunity_score": ev.opportunity_score if ev else None,
         },
+        # scoring premium v2 (source de vérité affichage Socle V1) — pour les cartes Kanban
+        "premium": _premium_head(db, e.parcel_id),
     }
+
+
+def _premium_head(db: Session, parcel_id: int, run_label: str = "q_v2") -> dict | None:
+    r = db.execute(text(
+        "SELECT matrice_statut, q_score, a_score, completeness_score "
+        "FROM dryrun_parcel_evaluations WHERE run_label = :run AND parcel_id = :pid"),
+        {"run": run_label, "pid": parcel_id}).mappings().first()
+    return ({"statut": r["matrice_statut"], "q_score": r["q_score"], "a_score": r["a_score"],
+             "completeness_score": r["completeness_score"]} if r else None)
 
 
 class PipelineAddIn(BaseModel):
@@ -1669,6 +1715,16 @@ def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
 
 #: Socle V1 (front React+MapLibre, build Vite → frontend/dist), servi à la même origine.
 FRONTEND_DIST = Path(__file__).resolve().parents[3] / "frontend" / "dist"
+
+
+@app.middleware("http")
+async def _no_cache_html(request: Request, call_next):
+    """Le HTML du Socle ne doit JAMAIS être mis en cache : un index.html périmé pointe vers un
+    vieux bundle → écrans cassés après déploiement (bug constaté). Les assets hashés restent cacheables."""
+    resp = await call_next(request)
+    if request.url.path.rstrip("/") in ("", "/socle") or request.url.path.endswith(".html"):
+        resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 if WEB_DIR.exists():
     app.mount("/app", StaticFiles(directory=str(WEB_DIR), html=True), name="app")  # UI Vue historique (transition)
