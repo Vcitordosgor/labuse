@@ -13,7 +13,7 @@ import re
 from typing import Any
 
 from ...enums import Severity
-from ..base import Layer, Verdict, hard_exclude, passed, positive, register, soft_flag, unknown
+from ..base import Layer, Verdict, hard_exclude, passed, positive, register, scored, soft_flag, unknown
 from ..context import EvalContext, ParcelRef
 
 # Noms canoniques des sources (doivent matcher le catalogue data_sources, §6).
@@ -30,6 +30,8 @@ SRC_ABF = "ABF / Monuments historiques"
 SRC_ENS = "ENS (Département)"
 SRC_OCSGE = "OCS GE (IGN)"
 SRC_OSM = "OpenStreetMap / Overpass"
+SRC_DGFIP = "Parcellaire propriétaires PM (DGFiP)"
+SRC_CADASTRE = "Géométrie parcellaire (cadastre)"
 
 
 def _dominant(intersections) -> Any | None:
@@ -542,21 +544,26 @@ class PenteLayer(Layer):
                 self.name,
                 f"Pente {float(slope):.0f} % (> {float(seuil_fp):.0f} %) — terrain non aménageable.",
                 kind="faux_positif", source=SRC_ALTI)
-        seuil = float(params.get("seuil_flag_pct", 30))
-        if float(slope) > seuil:
-            sev = Severity(params.get("severity", "moyen"))
-            return soft_flag(
-                self.name,
-                f"Pente forte {label} (~{float(slope):.0f}% > seuil {seuil:.0f}%) — terrassement et "
-                "accès renchéris (majoration VRD du bilan), pas une exclusion.",
-                sev, source=SRC_ALTI)
-        return passed(
+        # GRADUÉE (spec v2 §4.4) : le terrassement se chiffre → MALUS signé par bande (L3), via
+        # weight_override (les bandes −16..0 dépassent le multiplicateur de sévérité). Défaut :
+        # 0–10 %→0 · 10–25 %→−4 · 25–40 %→−10 · 40–60 %→−16 (au-delà : exclu ci-dessus).
+        bandes = params.get("bandes", [{"max": 10, "points": 0}, {"max": 25, "points": -4},
+                                       {"max": 40, "points": -10}, {"max": 60, "points": -16}])
+        pts = 0
+        for b in bandes:
+            if float(slope) <= float(b["max"]):
+                pts = int(b["points"])
+                break
+        else:
+            pts = int(bandes[-1]["points"])
+        if pts == 0:
+            return passed(
+                self.name, f"Pente {label} (~{float(slope):.0f}%) — faible, non pénalisante.",
+                source=SRC_ALTI, slope_pct=float(slope), slope_label=label)
+        return scored(
             self.name,
-            f"Pente {label} (~{float(slope):.0f}%) — calculée, non éliminatoire.",
-            source=SRC_ALTI,
-            slope_pct=float(slope),
-            slope_label=label,
-        )
+            f"Pente {label} (~{float(slope):.0f}%) — terrassement chiffrable ({pts:+g}).",
+            pts, source=SRC_ALTI, slope_pct=float(slope), slope_label=label)
 
     @staticmethod
     def _label(slope_pct: float, labels: dict) -> str:
@@ -610,6 +617,22 @@ class OcsGeLayer(Layer):
             return soft_flag(
                 self.name, f"Sol {dom.subtype} (logique ZAN — artificialisation à justifier).", Severity(params.get("severity", "faible")), source=SRC_OCSGE
             )
+        # ARTIFICIALISÉ non bâti (spec v2 §4.x) : ZAN-compatible → BONUS. Le bâti est déjà exclu à
+        # l'étage 0, donc « artificialisé » survivant = terrain constructible sans dette ZAN.
+        # Cumul PLAFONNÉ à `pair_cap_points` avec la vue mer (signaux distincts mais corrélés
+        # géographiquement : littoral artificialisé) — la vue mer est prioritaire, l'OCS complète.
+        if dom.subtype in set(params.get("artificialise_subtypes", ["artificialise"])):
+            plein = int(params.get("artificialise_points", 4))
+            cap = int(params.get("pair_cap_points", 10))
+            vm = ctx.vue_mer(parcel.id)
+            vue_pts = {"oui": 8, "partielle": 4}.get((vm or {}).get("vue"), 0)
+            pts = max(0, min(plein, cap - vue_pts))
+            if pts == 0:
+                return passed(self.name, "Sol artificialisé (ZAN-compatible) — bonus déjà plafonné par la vue mer.",
+                              source=SRC_OCSGE)
+            return scored(self.name,
+                          f"Sol artificialisé non bâti (ZAN-compatible — pas de dette d'artificialisation) ({pts:+g}).",
+                          pts, source=SRC_OCSGE)
         return passed(self.name, f"Sol déjà {dom.subtype or 'artificialisé'}.", source=SRC_OCSGE)
 
 
@@ -731,3 +754,62 @@ class BatiLayer(Layer):
         if cls["declasse"] == "faux_positif":
             return hard_exclude(self.name, cls["motif"], kind="faux_positif", source=_bati.SOURCE)
         return passed(self.name, cls["label"], source=_bati.SOURCE)
+
+
+@register
+class FoncierPublicLayer(Layer):
+    """G1 (spec v2 §3) — foncier public NON ACQUÉRABLE → HARD_EXCLUDE.
+
+    Propriétaire = personne morale de droit public non marchande (classification DGFiP) :
+    groupes 1 État, 2 Région, 3 Département, 4 Commune, 9 Établissements publics.
+    HLM (5) et SEM (6) sont MARCHANDS — contreparties acquérables, futur segment bailleur —
+    donc VOLONTAIREMENT préservés (jamais dans `groupes_exclus`). Absence de PM = propriétaire
+    physique/privé → PASS. Motif humain nominatif, tracé DGFiP."""
+
+    name = "foncier_public"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        pm = ctx.personne_morale(parcel.id)
+        if not pm or pm.get("groupe") is None:
+            return passed(self.name, "Propriétaire non public (personne physique ou PM privée).", source=SRC_DGFIP)
+        groupe = int(pm["groupe"])
+        label = (pm.get("groupe_label") or "").strip()
+        if groupe in {int(g) for g in params.get("groupes_exclus", [])}:
+            denom = (pm.get("denomination") or label or "personne publique").strip()
+            return hard_exclude(
+                self.name,
+                f"Propriété publique ({denom}) — non acquérable "
+                f"[classification DGFiP groupe {groupe} : {label}].",
+                kind="exclue", source=SRC_DGFIP)
+        return passed(self.name, f"Propriétaire PM « {label} » (groupe {groupe}) — acquérable.", source=SRC_DGFIP)
+
+
+@register
+class EmpriseLineaireLayer(Layer):
+    """G2 (spec v2 §3) — emprise linéaire (rue, délaissé, chemin) → HARD_EXCLUDE.
+
+    Rectangle englobant orienté à la fois TRÈS ALLONGÉ (ratio L/l > `ratio_min`) ET ÉTROIT
+    (largeur < `largeur_max_m`) — les DEUX conditions cumulées. La jambe « largeur » protège
+    les drapeaux (corps large + lanière d'accès : leur enveloppe fait la largeur du corps),
+    validé sur échantillon Saint-Paul (0 / 3 831 drapeaux flaggés ; 2 / 1 183 flaggées à SDP≥300).
+    Sous ces seuils la parcelle EST une lanière → faux positif géométrique."""
+
+    name = "emprise_lineaire"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        f = ctx.forme(parcel.id)
+        if not f or not f.get("larg"):
+            return passed(self.name, "Forme non mesurable (parcelle dégénérée).", source=SRC_CADASTRE)
+        larg = float(f["larg"])
+        ratio = float(f["ratio"])
+        larg_max = float(params.get("largeur_max_m", 8))
+        ratio_min = float(params.get("ratio_min", 8))
+        if larg < larg_max and ratio > ratio_min:
+            return hard_exclude(
+                self.name,
+                f"Emprise linéaire — voirie/délaissé probable (largeur {larg:.0f} m < {larg_max:.0f} m "
+                f"ET allongement {ratio:.0f}× > {ratio_min:.0f}×).",
+                kind="faux_positif", source=SRC_CADASTRE)
+        return passed(
+            self.name,
+            f"Forme non linéaire (largeur {larg:.0f} m, allongement {ratio:.1f}×).", source=SRC_CADASTRE)
