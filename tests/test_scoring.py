@@ -29,9 +29,10 @@ def test_un_flag_fort_retire_15():
 
 
 def test_bonus_et_penalite_se_combinent():
-    v = [positive("zonage_plu_gpu", "U", "zonage_u_au"), soft_flag("safer", "SAFER", Severity.MOYEN)]
+    # (bonus friche=8 stable ; zonage_u_au a été mis à 0 en Phase 2 v2 — L2 subsumé par le socle SDP)
+    v = [positive("friche", "friche", "friche"), soft_flag("safer", "SAFER", Severity.MOYEN)]
     opp = compute_opportunity(v)
-    # 50 + 8 (zonage_u_au) - 10 (moyen ×2 × 5) = 48
+    # 50 + 8 (friche) - 10 (moyen ×2 × 5) = 48
     assert opp.score == 48
     assert opp.weights == [8.0, -10.0]
 
@@ -88,16 +89,17 @@ def test_completude_faible_plafonne_a_creuser():
 
 
 def test_opportunite_exige_seuil_et_pas_de_flag_fort():
+    # (bonus stables : proprietaire=12 + friche=8 ; zonage_u_au/potentiel modifiés en Phase 2 v2)
     strong = compute_opportunity([
-        positive("zonage_plu_gpu", "U", "zonage_u_au"),
-        positive("potentiel_foncier_region", "îlot", "potentiel_foncier_region"),
-    ])  # 50 + 8 + 12 = 70 ≥ 65
+        positive("proprietaire", "PM", "proprietaire_morale_acquerable"),
+        positive("friche", "friche", "friche"),
+    ])  # 50 + 12 + 8 = 70 ≥ 65
     assert decide_status(strong, completeness_score=80) == EvaluationStatus.OPPORTUNITE
 
     with_fort = compute_opportunity([
-        positive("zonage_plu_gpu", "U", "zonage_u_au"),
-        positive("potentiel_foncier_region", "îlot", "potentiel_foncier_region"),
-        positive("dvf", "liquide", "contexte_dvf_favorable"),
+        positive("proprietaire", "PM", "proprietaire_morale_acquerable"),
+        positive("friche", "friche", "friche"),
+        positive("acces", "voirie", "acces_direct_voirie"),
         soft_flag("risques", "aléa fort", Severity.FORT),
     ])  # score ≥ 65 mais flag fort présent → a_creuser
     assert with_fort.has_fort_flag
