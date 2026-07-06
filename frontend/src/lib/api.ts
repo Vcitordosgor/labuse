@@ -64,3 +64,13 @@ export const modCourriers = (idus: string[], contexte: string) =>
 export const modDueDiligence = (refs: string) =>
   j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[] }>('/modules/duediligence', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })
+
+// ── Copilote IA (Vague 2) — jamais d'accès base, filtres validés par schéma côté API ──
+export const iaStatus = () => j<{ provider: string }>('/ia/status')
+export const iaSearch = (text: string) =>
+  j<{ stub: boolean; filters?: Record<string, unknown>; explanation?: string; out_of_scope?: string }>('/ia/search', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+export const iaSynthese = (idu: string) =>
+  j<{ stub: boolean; texte: string; mention: string }>(`/ia/synthese/${idu}`, { method: 'POST' })
+export const iaPourquoi = (idu: string) =>
+  j<{ stub: boolean; texte: string; mention: string }>(`/ia/pourquoi/${idu}`, { method: 'POST' })

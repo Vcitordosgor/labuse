@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, getFiche, getPipelineForParcel, pdfUrl } from '../../lib/api'
+import { addToPipeline, getFiche, getPipelineForParcel, iaPourquoi, iaSynthese, pdfUrl } from '../../lib/api'
 import { completudeColor, STATUT_META } from '../../lib/status'
 import type { FicheLine, Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -101,6 +101,36 @@ function PipelineButton({ idu }: { idu: string }) {
     >
       {add.isPending ? 'Ajout…' : inPipe ? '✓ Dans le pipeline' : '+ Pipeline'}
     </button>
+  )
+}
+
+// Panneau IA de la fiche : synthèse tracée + « pourquoi ce score ? » — mention systématique.
+function IAPanel({ idu, onClose }: { idu: string; onClose: () => void }) {
+  const [mode, setMode] = useState<'synthese' | 'pourquoi' | null>(null)
+  const gen = useMutation({ mutationFn: (m: 'synthese' | 'pourquoi') => (m === 'synthese' ? iaSynthese(idu) : iaPourquoi(idu)) })
+  return (
+    <div className="absolute bottom-10 right-0 z-20 w-[320px] rounded-lg border border-line-2 bg-surface-2 p-3 shadow-xl">
+      <div className="flex items-center justify-between">
+        <p className="font-mono text-[10px] tracking-widest text-txt-dim">ANALYSE IA</p>
+        <button onClick={onClose} className="text-txt-dim hover:text-txt-hi">✕</button>
+      </div>
+      <div className="mt-2 flex gap-1.5">
+        {([['synthese', 'Synthèse'], ['pourquoi', 'Pourquoi ce score ?']] as const).map(([k, l]) => (
+          <button key={k} onClick={() => { setMode(k); gen.mutate(k) }}
+            className={`rounded-full border px-2.5 py-1 text-[11px] ${mode === k ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+            {l}
+          </button>
+        ))}
+      </div>
+      {gen.isPending && <p className="mt-3 text-[11px] text-txt-dim">Génération…</p>}
+      {gen.isError && <p className="mt-3 text-[11px] text-st-ecartee">Erreur — réessayez.</p>}
+      {gen.data && (
+        <>
+          <div className="mt-3 max-h-64 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-txt">{gen.data.texte}</div>
+          <p className="mt-2 border-t border-line pt-2 text-[9.5px] text-txt-dim">{gen.data.mention}</p>
+        </>
+      )}
+    </div>
   )
 }
 
@@ -259,10 +289,7 @@ export function Fiche({ idu }: { idu: string }) {
             {iaOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setIaOpen(false)} />
-                <div className="absolute bottom-10 right-0 z-20 w-56 rounded-lg border border-line-2 bg-surface-2 p-3 text-[11px] leading-relaxed text-txt-mut shadow-xl">
-                  <p className="font-mono text-[10px] tracking-widest text-txt-dim">ANALYSE IA</p>
-                  <p className="mt-1.5">Le narratif IA (synthèse rédigée de la fiche) arrive en V1.x — le scoring reste 100 % déterministe et tracé.</p>
-                </div>
+                <IAPanel idu={idu} onClose={() => setIaOpen(false)} />
               </>
             )}
           </div>
