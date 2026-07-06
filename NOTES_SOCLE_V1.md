@@ -34,3 +34,17 @@ ErrorBoundary global, états d'erreur réseau explicites (« serveur à relancer
 `frontend/qa/qa.mjs` — 2 passes (1440/1280) : console, cliquables (effet réel), compteurs vs psql,
 layout, anti-crash 10 parcelles aléatoires, parcours complet (fiche→PDF→pipeline→sources).
 Sortie : « AUTO-QA 100 % VERTE ». Captures : docs/design/captures/qa/.
+
+## Cycle polish — vu mais PAS fait (matière du prochain cycle)
+- **MVT (tuiles vectorielles)** : le geojson 51k parcelles pèse ~3,7 s au premier chargement.
+  Un passage en MVT (ST_AsMVT côté API) descendrait sous la seconde et préparera l'île entière.
+- **Filtre de zone sur la carte** : la zone filtre liste+compteurs ; assombrir les parcelles hors
+  zone demanderait un masque géométrique (turf difference) ou le MVT — différé.
+- **Orthos annuelles fines** (2016, 2019, 2022…) : les couches WMTS millésimées par département
+  existent mais répondent 400 sur le 974 en accès libre — à recreuser (clés « acces différencié »).
+- **Alti sur mesure de distance** (profil altimétrique le long d'un tracé) : l'API geopf le permet
+  (elevationpath) — beau candidat outil V1.1.
+- **Filtre A-score** : le popover filtre Q mais pas A — attendre le re-jugement du seuil A (Phase 3
+  scoring) avant d'exposer.
+- **575 ms sur le filtre plein jeu** (51k matchAll client) : acceptable, mais un index client
+  (typed arrays) ou le MVT le rendrait instantané.

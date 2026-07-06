@@ -9,7 +9,18 @@ const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/discov
 export default defineConfig({
   base: '/socle/', // servi par FastAPI sous /socle (cf. app.py). Dev vite = racine.
   plugins: [react()],
-  build: { outDir: 'dist', emptyOutDir: true },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          maplibre: ['maplibre-gl'],
+          vendor: ['react', 'react-dom', '@tanstack/react-query', 'zustand'],
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     proxy: Object.fromEntries(apiPaths.map((p) => [p, { target: API, changeOrigin: true }])),

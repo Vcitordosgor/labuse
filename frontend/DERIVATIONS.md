@@ -106,3 +106,31 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   « le narratif arrive en V1.x, le scoring reste déterministe »).
 - **Icônes rail** : redessinées (20 px, trait 1.5-1.6, style contour unifié) — les précédentes
   rendaient brouillon à petite taille.
+
+## Cycle polish (mandat amélioration continue)
+- **PDF = palette IMPRESSION** : fond blanc, encre quasi-noire, menthe déclinée en encre `#0B8A5F`
+  (contraste AA papier) — filet menthe en tête de page, chips pâles. Le dark reste l'écran.
+- **Drawer source** (remplace la navigation) : extrait de la ligne + carte d'identité de la source
+  (fournisseur/fiabilité/synchro/doc) ; ✕, clic-extérieur, Échap ; fiche conservée dessous ;
+  escalade « Toutes les sources → » vers la page complète.
+- **Identité** : logo buse + wordmark header (wordmark masqué < 1350 px), favicons 16/32/180
+  générés (PIL, pastille sombre + buse menthe), titre « LABUSE — Radar foncier ».
+- **Fonds de plan** : Carto dark / Plan IGN / Ortho IGN via WMTS Géoplateforme (libres, tuiles
+  TESTÉES sur le 974). « Remonter le temps » : Actuelle / 2000-2005 / 1950-1965 — les millésimes
+  2006-2015 renvoient 400 sur la zone, exclus. Pas de tuiles Google (CGU) → deep-link fiche.
+- **3D** : MNT terrarium AWS (libre), exaggeration 1.35, bascule pitch 55° auto. Off par défaut.
+- **Mesure** : distance/surface (clics, double-clic fige, Échap quitte), altimétrie au point
+  (API geopf RGE ALTI). Étiquette = Marker HTML (les glyphes Carto sont bloqués CORS → aucun
+  symbol layer). **Zone** : polygone → filtre liste+compteurs libellés « (dans la zone) » ;
+  la carte affiche le tracé mais ne masque pas les parcelles hors zone (filtrage par géométrie
+  côté GPU = liste d'IDU trop lourde ; choix honnête documenté).
+- **Filtres v2** : statuts multi, surface min/max, SDP min, événement, vue mer, flags
+  (pollution/ABF/ICPE/risques/prescription — agrégés par parcelle côté API). Compteurs SQL quand
+  vierges, recalcul marqué `*` sinon. **URL partageable** (#f=…) : filtres + zone restaurés au
+  chargement.
+- **Chasse libre** : focus clavier menthe (:focus-visible), Échap ferme fiche/popovers/drawer,
+  états vides avec action « Réinitialiser », retry sur toutes les erreurs réseau, skeletons de
+  liste, code-split (app 69 Ko · vendor 184 Ko · maplibre 802 Ko parallèle).
+- **Perf mesurée** (Playwright, serveur local) : DOM 103 ms · UI 329 ms · carte 409 ms (< 2 s ✓) ·
+  données+liste 3,7 s (geojson 51 129 parcelles — passage MVT = prochain cycle) · filtre plein
+  jeu 575 ms.

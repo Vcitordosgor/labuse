@@ -12,3 +12,6 @@ body { background: #060A08; color: #C9DCD1; -webkit-font-smoothing: antialiased;
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: #1E2A23; border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
+
+/* Focus clavier visible (accessibilité) — anneau menthe, jamais sur clic souris */
+:focus-visible { outline: 2px solid #5CE6A1; outline-offset: 1px; border-radius: 4px; }
