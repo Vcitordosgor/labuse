@@ -13,7 +13,13 @@ from sqlalchemy.orm import Session
 
 from .. import config
 from ..enums import Severity
-from ..models import CascadeResult, Parcel, ParcelEvaluation
+from ..models import (
+    CascadeResult,
+    DryrunCascadeResult,
+    DryrunParcelEvaluation,
+    Parcel,
+    ParcelEvaluation,
+)
 from ..scoring import (
     CompletenessResult,
     OpportunityResult,
@@ -53,6 +59,7 @@ def evaluate_parcels(
     *,
     persist: bool = True,
     ai_provider=None,
+    dryrun_label: str | None = None,
 ) -> list[EvaluationOutcome]:
     """Évalue un ensemble de parcelles (offre A : N=1 ; offre B : toute la commune).
 
@@ -117,7 +124,11 @@ def evaluate_parcels(
                 opportunity.weights.append(0.0)
 
         if persist:
-            _persist(session, ctx, p, verdicts, completeness, opportunity, status, rules_v, ai_payload, model_version)
+            if dryrun_label:
+                # DRY-RUN : écrit UNIQUEMENT dans les tables parallèles ; ne touche JAMAIS le live.
+                _persist_dryrun(session, ctx, dryrun_label, p, verdicts, completeness, opportunity, status, rules_v)
+            else:
+                _persist(session, ctx, p, verdicts, completeness, opportunity, status, rules_v, ai_payload, model_version)
 
         outcomes.append(outcome)
 
@@ -134,8 +145,9 @@ def _apply_ai(provider, outcome: EvaluationOutcome, parcel: ParcelRef):
         outcome, {"idu": parcel.idu, "commune": parcel.commune, "surface_m2": parcel.surface_m2}
     )
     ai_payload = provider.analyze(payload)
-    adj = int(ai_payload.get("opportunity_score_adjustment", 0))
-    opportunity = compute_opportunity(outcome.verdicts, ai_adjustment=adj)
+    # IA = NARRATIF ONLY (décision produit) : l'ajustement IA n'entre PLUS dans le score.
+    # On conserve ai_payload (affiché) mais ai_adjustment=0 partout — aucun chemin ne l'injecte.
+    opportunity = compute_opportunity(outcome.verdicts, ai_adjustment=0)
     status = decide_status(opportunity, outcome.completeness.score)
     return ai_payload, opportunity, status
 
@@ -175,6 +187,57 @@ def _persist(
             status=status,
             ai_payload=ai_payload,
             model_version=model_version,
+            rules_version=rules_v,
+        )
+    )
+
+
+def _persist_dryrun(
+    session: Session,
+    ctx: EvalContext,
+    run_label: str,
+    parcel: ParcelRef,
+    verdicts: list[Verdict],
+    completeness: CompletenessResult,
+    opportunity: OpportunityResult,
+    status,
+    rules_v: str,
+) -> None:
+    """DRY-RUN : écrit dans les tables PARALLÈLES (jamais le live). Idempotent par
+    (run_label, parcel_id) : on purge d'abord ce couple, puis on réinsère (rejouable/résumable).
+
+    Traçabilité : chaque ligne porte `weight_applied` (base + Σ = score) et `source_table/source_id`
+    (cliquable — lus depuis verdict.extra quand la couche les renseigne, sinon NULL en baseline)."""
+    session.execute(
+        text("DELETE FROM dryrun_cascade_results WHERE run_label=:r AND parcel_id=:p"),
+        {"r": run_label, "p": parcel.id})
+    session.execute(
+        text("DELETE FROM dryrun_parcel_evaluations WHERE run_label=:r AND parcel_id=:p"),
+        {"r": run_label, "p": parcel.id})
+    for v, weight in zip(verdicts, opportunity.weights):
+        session.add(
+            DryrunCascadeResult(
+                run_label=run_label,
+                parcel_id=parcel.id,
+                layer_name=v.layer_name,
+                result=v.result.value,
+                severity=(v.severity.value if isinstance(v.severity, Severity) else v.severity),
+                weight_applied=weight if weight else None,
+                detail=v.detail,
+                data_source_id=ctx.source_id(v.data_source_name),
+                source_table=v.extra.get("source_table"),
+                source_id=(str(v.extra["source_id"]) if v.extra.get("source_id") is not None else None),
+            )
+        )
+    base = int(config.opportunity_weights()["base_score"])
+    session.add(
+        DryrunParcelEvaluation(
+            run_label=run_label,
+            parcel_id=parcel.id,
+            completeness_score=completeness.score,
+            opportunity_score=opportunity.score,
+            opportunity_base=base,
+            status=status.value if hasattr(status, "value") else str(status),
             rules_version=rules_v,
         )
     )

@@ -182,8 +182,13 @@ layers:
     enabled: true
     params:
       spatial_kind: abf
-      severity: faible
-      detail: "Périmètre ABF / monument historique (≈500 m) — avis Architecte des Bâtiments de France."
+      # DÉCISION dry-run étages 1/2 (Vic/Claude) : le tampon 500 m Mérimée SUR-COUVRE (60,6k
+      # parcelles île, covisibilité NON instruite). Un abord non instruit est une INCERTITUDE, pas
+      # un malus → on ne touche NI n'enlève de point d'opportunité. Verdict UNKNOWN → impacte la
+      # COMPLÉTUDE, et le flag reste affiché. (Basculer à soft_flag = mettre as_unknown:false.)
+      as_unknown: true
+      severity: faible   # utilisé seulement si as_unknown:false
+      detail: "Abords MH ~500 m (tampon) — covisibilité à instruire."
 
   - name: ens
     phase: 1

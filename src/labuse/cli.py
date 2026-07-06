@@ -306,6 +306,63 @@ def evaluate_cmd(
         typer.echo(f"    {status:24} : {n}")
 
 
+@app.command("dryrun-evaluate")
+def dryrun_evaluate_cmd(
+    label: str = typer.Option(..., help="run_label du calcul à blanc (baseline/etape1/etape2/etape3)."),
+    commune: str = typer.Option("97415", help="Commune (défaut = 97415 Saint-Paul, périmètre dry-run)."),
+    chunk: int = typer.Option(2000, help="Commit + progression tous les N parcelles."),
+    resume: bool = typer.Option(True, help="Sauter les parcelles déjà calculées pour ce label."),
+) -> None:
+    """DRY-RUN étages 1+2 : cascade + scoring écrits dans les tables PARALLÈLES dryrun_* — n'écrase
+    NI parcel_evaluations NI cascade_results live. Chunké/résumable, progression visible."""
+    import time
+
+    from .cascade import evaluate_parcels
+
+    nom = _resolve_commune(commune)
+    t0 = time.time()
+    with session_scope() as s:
+        ids = _parcel_ids(s, nom)
+        if not ids:
+            _fail_zero_parcel(s, commune, nom)
+        done: set[int] = set()
+        if resume:
+            done = {r[0] for r in s.execute(
+                text("SELECT parcel_id FROM dryrun_parcel_evaluations WHERE run_label=:r"),
+                {"r": label}).all()}
+        todo = [i for i in ids if i not in done]
+        typer.echo(f"DRY-RUN [{label}] {nom} : {len(ids)} parcelles, {len(done)} déjà faites, "
+                   f"{len(todo)} à évaluer à blanc.")
+        if not todo:
+            typer.echo("✓ Rien à faire.")
+            return
+        n = 0
+        for k in range(0, len(todo), chunk):
+            part = todo[k:k + chunk]
+            evaluate_parcels(part, s, persist=True, dryrun_label=label)
+            s.commit()
+            s.expunge_all()   # conso mémoire plate sur 51k parcelles
+            n += len(part)
+            typer.echo(f"  … {n}/{len(todo)} ({time.time() - t0:.0f}s)")
+    typer.echo(f"✓ DRY-RUN [{label}] {nom} : {len(todo)} parcelles évaluées à blanc (tables dryrun_*).")
+
+
+@app.command("dryrun-report")
+def dryrun_report_cmd(
+    label: str = typer.Option("baseline", help="run_label à lire."),
+    commune: str = typer.Option("97415", help="Commune (défaut = 97415)."),
+) -> None:
+    """Livrable d'un run dry-run : distributions, top, UNKNOWN-ABF, contrôle de traçabilité."""
+    import json
+
+    from .scoring.dryrun import report
+
+    nom = _resolve_commune(commune)
+    with session_scope() as s:
+        rep = report(s, label, nom)
+    typer.echo(json.dumps(rep, ensure_ascii=False, indent=1, default=str))
+
+
 @app.command("ingest-permits")
 def ingest_permits_cmd(
     commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),
