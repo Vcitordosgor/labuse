@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; margin: 0; }
+body { background: #060A08; color: #C9DCD1; -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+
+/* MapLibre : fond sombre, pas de halo blanc */
+.maplibregl-map { background: #060A08; }
+.maplibregl-ctrl-attrib { display: none; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #1E2A23; border-radius: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
