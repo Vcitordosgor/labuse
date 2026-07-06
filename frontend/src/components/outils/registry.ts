@@ -20,4 +20,8 @@ export const MODULES: ModuleDef[] = [
   { key: 'temps', num: 'M08', label: 'Remonter le temps', desc: 'Comparateur 1950 ↔ aujourd’hui' },
   { key: 'courriers', num: 'M09', label: 'Courrier propriétaire', desc: 'Courriers types par lot (pipeline/sélection)' },
   { key: 'duediligence', num: 'M10', label: 'Due diligence', desc: 'Liste de références → rapport multi-parcelles' },
+  { key: 'simulplu', num: 'M15', label: 'Simulateur PLU', desc: '« Et si cette zone AU passait en U ? » (à blanc)' },
+  { key: 'assemblage', num: 'M16', label: 'Assemblage', desc: 'Sélection contiguë → assiette fusionnée' },
+  { key: 'zan', num: 'M17', label: 'Simulateur ZAN', desc: 'Artificialisation par commune, parcelles compatibles' },
+  { key: 'barometre', num: 'M18', label: 'Baromètre foncier', desc: 'Rapport trimestriel île entière + PDF' },
 ]

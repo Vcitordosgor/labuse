@@ -1727,10 +1727,12 @@ from .ia import ensure_tables as _ia_ensure  # noqa: E402
 from .ia import router as _ia_router  # noqa: E402
 from .modules import ensure_tables as _modules_ensure  # noqa: E402
 from .modules import router as _modules_router  # noqa: E402
+from .moteurs import router as _moteurs_router  # noqa: E402
 
 app.include_router(_modules_router)
 app.include_router(_ia_router)
 app.include_router(_events_router)
+app.include_router(_moteurs_router)
 
 
 @app.on_event("startup")

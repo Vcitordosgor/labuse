@@ -87,3 +87,11 @@ export const getSavedSearches = () => j<{ id: number; nom: string; hash: string;
 export const saveSearch = (nom: string, hash: string) =>
   j<{ ok: boolean }>('/events/searches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, hash }) })
 export const deleteSearch = (id: number) => j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'DELETE' })
+
+// ── Moteurs (Vague 4) ──
+export const motSimulPluZones = () => j<{ zone: string; n_ilots: number }[]>('/moteurs/simulplu/zones')
+export const motSimulPlu = (zone: string) => j<Record<string, any>>(`/moteurs/simulplu?zone=${encodeURIComponent(zone)}`)
+export const motAssemblage = (idus: string[]) =>
+  j<Record<string, any>>('/moteurs/assemblage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
+export const motZan = () => j<Record<string, any>>('/moteurs/zan')
+export const motBarometre = () => j<Record<string, any>>('/moteurs/barometre')

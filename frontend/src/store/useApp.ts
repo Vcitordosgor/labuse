@@ -81,6 +81,8 @@ interface AppState {
   setModuleFiche: (f: Record<string, { module: string; lines: [string, string][] }>) => void
   flyTo: { center: [number, number]; zoom: number } | null
   setFlyTo: (f: { center: [number, number]; zoom: number } | null) => void
+  msel: string[] // sélection multi-parcelles (module assemblage M16)
+  setMsel: (m: string[]) => void
 }
 
 export const useApp = create<AppState>((set) => ({
@@ -125,4 +127,6 @@ export const useApp = create<AppState>((set) => ({
   setModuleFiche: (moduleFiche) => set({ moduleFiche }),
   flyTo: null,
   setFlyTo: (flyTo) => set({ flyTo }),
+  msel: [],
+  setMsel: (msel) => set({ msel }),
 }))

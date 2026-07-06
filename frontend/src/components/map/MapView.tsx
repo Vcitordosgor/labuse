@@ -164,7 +164,14 @@ export function MapView() {
       m.on('click', 'parcels-fill', (e) => {
         if (toolRef.current) return // un outil actif consomme le clic
         const f = e.features?.[0]
-        if (f) select(String(f.properties?.idu))
+        if (!f) return
+        const idu = String(f.properties?.idu)
+        const st = useApp.getState()
+        if (st.module === 'assemblage') {              // M16 : le clic compose l'assiette
+          st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
+          return
+        }
+        select(idu)
       })
       m.on('mouseenter', 'parcels-fill', () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', 'parcels-fill', () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
