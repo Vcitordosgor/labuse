@@ -1,0 +1,10 @@
+  ✓ panneau filtres présent au DOM après clic réel
+  ✓ panneau filtres VISIBLE à l’écran (non rogné par un overflow)
+  ✓ chip « Vue mer » ajouté et VISIBLE
+  ✓ liste filtrée (5156 → 1471 résultats)
+  ✓ compteurs relibellés « filtres actifs »
+  ✓ filtre propagé à la carte (état + URL vm=1)
+  ✓ × retire le chip (clic réel)
+  ✓ liste restaurée (5156 résultats)
+──────────────────────────────────────────────────
+VERT — parcours filtres utilisateur réel OK

@@ -148,17 +148,22 @@ function FilterChips() {
   const { filters, setFilters } = useApp()
   const chips = activeChips(filters)
   return (
-    <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
-      {/* périmètre fixe (V1 = Saint-Paul) */}
-      <span className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
-        <span className="h-1.5 w-1.5 rounded-full bg-mint" /> Saint-Paul
-      </span>
-      {chips.map((c) => (
-        <span key={c.token} className="flex h-[26px] shrink-0 items-center gap-2 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
-          {c.label}
-          <button onClick={() => setFilters(removeToken(filters, c.token))} className="text-txt-dim hover:text-txt-hi" title="Retirer ce filtre">×</button>
+    // RÈGLE (post-régression P0) : « + Filtre » et son popover vivent HORS du conteneur défilant.
+    // Un popover absolu DANS un overflow-x-auto est rogné (overflow-y calculé auto) : présent au
+    // DOM, invisible à l'utilisateur — le bug exact constaté par Vic. Seuls les chips défilent.
+    <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2 overflow-x-auto" data-chips>
+        {/* périmètre fixe (V1 = Saint-Paul) */}
+        <span className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
+          <span className="h-1.5 w-1.5 rounded-full bg-mint" /> Saint-Paul
         </span>
-      ))}
+        {chips.map((c) => (
+          <span key={c.token} className="flex h-[26px] shrink-0 items-center gap-2 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
+            {c.label}
+            <button onClick={() => setFilters(removeToken(filters, c.token))} className="text-txt-dim hover:text-txt-hi" title="Retirer ce filtre">×</button>
+          </span>
+        ))}
+      </div>
       <AddFilter />
     </div>
   )
@@ -204,8 +209,8 @@ export function Header() {
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-bg px-4">
       {/* identité — la buse + wordmark */}
       <div className="flex shrink-0 items-center gap-2 pr-1" title="LABUSE — Radar foncier premium, La Réunion">
-        <svg viewBox="0 0 40 24" className="h-5 w-8">
-          <path d="M6 16 Q13 6 20 13 Q27 6 34 16" stroke="#5CE6A1" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+        <svg viewBox="-2 -2 36 14" className="h-4 w-9">
+          <path d="M0 10 Q8 0 16 8 Q24 0 32 10" stroke="#5CE6A1" strokeWidth="2.2" fill="none" strokeLinecap="round" />
         </svg>
         <span className="hidden font-display text-sm font-bold tracking-wide text-txt-hi min-[1350px]:inline">LABUSE</span>
       </div>
