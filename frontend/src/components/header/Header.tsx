@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { getParcelsGeojson } from '../../lib/api'
-import { activeChips } from '../../lib/filters'
+import { activeChips, FLAG_DEFS, removeToken } from '../../lib/filters'
 import { STATUT_META } from '../../lib/status'
 import type { Statut } from '../../lib/types'
-import { useApp } from '../../store/useApp'
+import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
 function Omnibox() {
   const { query, setQuery, select, setView } = useApp()
@@ -53,38 +53,90 @@ function Omnibox() {
   )
 }
 
-// Popover d'ajout de filtre : statut, score Q, surface.
+function NumField({ label, value, onChange, placeholder }: {
+  label: string; value: number | null; onChange: (v: number | null) => void; placeholder: string
+}) {
+  return (
+    <div className="min-w-0 flex-1">
+      <label className="font-mono text-[10px] tracking-widest text-txt-dim">{label}</label>
+      <input type="number" min={0} value={value ?? ''} placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
+        className="mt-1 w-full rounded-lg border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none" />
+    </div>
+  )
+}
+
+function CheckRow({ label, on, toggle }: { label: string; on: boolean; toggle: () => void }) {
+  return (
+    <button onClick={toggle} className="flex items-center gap-2 text-left">
+      <span className={`flex h-[13px] w-[13px] items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
+        {on && <svg viewBox="0 0 10 10" className="h-2.5 w-2.5"><polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06130C" strokeWidth="1.8" /></svg>}
+      </span>
+      <span className={`text-[11px] ${on ? 'text-txt' : 'text-txt-mut'}`}>{label}</span>
+    </button>
+  )
+}
+
+// Popover d'ajout de filtre — filtres MÉTIER combinables (statuts multi, plages, booléens, flags).
 function AddFilter() {
-  const { filters, setFilter } = useApp()
+  const { filters, setFilter, setFilters } = useApp()
   const [open, setOpen] = useState(false)
-  const STATUTS: (Statut | 'all')[] = ['all', 'chaude', 'a_surveiller', 'a_creuser', 'ecartee']
+  const STATUTS: Statut[] = ['chaude', 'a_surveiller', 'a_creuser', 'ecartee']
+  useEffect(() => {
+    if (!open) return
+    const h = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [open])
+  const toggleStatut = (s: Statut) =>
+    setFilter('statuts', filters.statuts.includes(s) ? filters.statuts.filter((x) => x !== s) : [...filters.statuts, s])
+  const toggleFlag = (k: string) =>
+    setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])
   return (
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)}
-        className={`flex h-[26px] items-center gap-1 rounded-full border border-dashed px-3 text-xs ${
+        className={`flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-dashed px-3 text-xs ${
           open ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>+ Filtre</button>
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-9 z-20 w-64 rounded-xl border border-line-2 bg-surface-2 p-4 shadow-2xl">
-            <label className="font-mono text-[11px] tracking-widest text-txt-dim">STATUT</label>
-            <div className="mb-3 mt-2 flex flex-wrap gap-1.5">
+          <div className="absolute left-0 top-9 z-20 w-[300px] rounded-xl border border-line-2 bg-surface-2 p-4 shadow-2xl">
+            <label className="font-mono text-[10px] tracking-widest text-txt-dim">STATUT (multi)</label>
+            <div className="mb-3 mt-1.5 flex flex-wrap gap-1.5">
               {STATUTS.map((s) => (
-                <button key={s} onClick={() => setFilter('statut', s)}
+                <button key={s} onClick={() => toggleStatut(s)}
                   className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                    filters.statut === s ? 'border-mint text-txt-hi' : 'border-line-2 text-txt-mut'}`}>
-                  {s === 'all' ? 'Tout' : STATUT_META[s].label}
+                    filters.statuts.includes(s) ? 'border-mint text-txt-hi' : 'border-line-2 text-txt-mut'}`}>
+                  {STATUT_META[s].label}
                 </button>
               ))}
             </div>
-            <label className="font-mono text-[11px] tracking-widest text-txt-dim">SCORE Q ≥</label>
-            <input type="number" min={0} max={100} value={filters.scoreMin ?? ''} placeholder="ex. 70"
-              onChange={(e) => setFilter('scoreMin', e.target.value === '' ? null : Number(e.target.value))}
-              className="mb-3 mt-2 w-full rounded-lg border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none" />
-            <label className="font-mono text-[11px] tracking-widest text-txt-dim">SURFACE ≥ (m²)</label>
-            <input type="number" min={0} value={filters.surfaceMin ?? ''} placeholder="ex. 1000"
-              onChange={(e) => setFilter('surfaceMin', e.target.value === '' ? null : Number(e.target.value))}
-              className="mt-2 w-full rounded-lg border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none" />
+            <div className="mb-3 flex gap-2">
+              <NumField label="SCORE Q ≥" value={filters.scoreMin} onChange={(v) => setFilter('scoreMin', v)} placeholder="70" />
+              <NumField label="SDP ≥ m²" value={filters.sdpMin} onChange={(v) => setFilter('sdpMin', v)} placeholder="800" />
+            </div>
+            <div className="mb-3 flex gap-2">
+              <NumField label="SURFACE ≥" value={filters.surfaceMin} onChange={(v) => setFilter('surfaceMin', v)} placeholder="1 000" />
+              <NumField label="SURFACE ≤" value={filters.surfaceMax} onChange={(v) => setFilter('surfaceMax', v)} placeholder="20 000" />
+            </div>
+            <div className="mb-3 flex flex-col gap-1.5">
+              <CheckRow label="Avec événement (BODACC)" on={filters.evenement} toggle={() => setFilter('evenement', !filters.evenement)} />
+              <CheckRow label="Vue mer dégagée" on={filters.vueMer} toggle={() => setFilter('vueMer', !filters.vueMer)} />
+            </div>
+            <label className="font-mono text-[10px] tracking-widest text-txt-dim">FLAGS ACTIFS (au moins un)</label>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {FLAG_DEFS.map((d) => (
+                <button key={d.key} onClick={() => toggleFlag(d.key)}
+                  className={`rounded-full border px-2 py-0.5 text-[11px] ${
+                    filters.flags.includes(d.key) ? 'border-st-creuser text-st-creuser' : 'border-line-2 text-txt-mut'}`}>
+                  ⚑ {d.label}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => { setFilters(EMPTY_FILTERS); setOpen(false) }}
+              className="mt-3 w-full rounded-lg border border-line-2 py-1 text-[11px] text-txt-dim hover:text-txt">
+              Réinitialiser tous les filtres
+            </button>
           </div>
         </>
       )}
@@ -93,18 +145,18 @@ function AddFilter() {
 }
 
 function FilterChips() {
-  const { filters, clearFilter } = useApp()
+  const { filters, setFilters } = useApp()
   const chips = activeChips(filters)
   return (
-    <div className="flex items-center gap-2">
-      {/* périmètre fixe (Brique 1 = Saint-Paul) */}
-      <span className="flex h-[26px] items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
+    <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
+      {/* périmètre fixe (V1 = Saint-Paul) */}
+      <span className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
         <span className="h-1.5 w-1.5 rounded-full bg-mint" /> Saint-Paul
       </span>
       {chips.map((c) => (
-        <span key={c.key} className="flex h-[26px] items-center gap-2 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
+        <span key={c.token} className="flex h-[26px] shrink-0 items-center gap-2 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
           {c.label}
-          <button onClick={() => clearFilter(c.key)} className="text-txt-dim hover:text-txt-hi" title="Retirer">×</button>
+          <button onClick={() => setFilters(removeToken(filters, c.token))} className="text-txt-dim hover:text-txt-hi" title="Retirer ce filtre">×</button>
         </span>
       ))}
       <AddFilter />
@@ -150,6 +202,13 @@ function NotifBell() {
 export function Header() {
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-bg px-4">
+      {/* identité — la buse + wordmark */}
+      <div className="flex shrink-0 items-center gap-2 pr-1" title="LABUSE — Radar foncier premium, La Réunion">
+        <svg viewBox="0 0 40 24" className="h-5 w-8">
+          <path d="M6 16 Q13 6 20 13 Q27 6 34 16" stroke="#5CE6A1" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+        </svg>
+        <span className="hidden font-display text-sm font-bold tracking-wide text-txt-hi min-[1350px]:inline">LABUSE</span>
+      </div>
       <Omnibox />
       <FilterChips />
       <div className="ml-auto flex items-center gap-3">
