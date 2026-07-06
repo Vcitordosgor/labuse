@@ -25,8 +25,8 @@ attendent son arbitrage (revue Brique 1).
 en montre 5 mais nomme « Opportunité » et **omet « à surveiller »**. Résolution (exigence gagne) :
 | statut (SCHEMA scoring) | libellé UI | couleur |
 |---|---|---|
-| `chaude` | **Chaude** | `#4ADE96` |
-| `a_surveiller` | À surveiller | `#5CE6A1` (menthe claire — **dérivé**, absent de la maquette) |
+| `chaude` | **Chaude** | `#5CE6A1` (menthe vive — statut hero) |
+| `a_surveiller` | À surveiller | `#4ADE96` (vert, un cran sous chaude — **dérivé**, absent de la maquette) |
 | `a_creuser` | À creuser | `#E8B44C` |
 | `ecartee` | Écartée | `#E8695A` |
 | `exclue` (hard-exclude) | Exclue | `#6B7A72` |
