@@ -227,6 +227,7 @@ def _persist_dryrun(
                 data_source_id=ctx.source_id(v.data_source_name),
                 source_table=v.extra.get("source_table"),
                 source_id=(str(v.extra["source_id"]) if v.extra.get("source_id") is not None else None),
+                evenement=v.extra.get("evenement"),
             )
         )
     base = int(config.opportunity_weights()["base_score"])

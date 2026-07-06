@@ -42,7 +42,34 @@ Couches phase 1 (config `cascade_rules.yaml` + `opportunity_weights.yaml`), modu
   Pondérations : école 0.30 + commerce 0.30 + santé 0.20 + tcsp 0.20.
 - Proximité batch (ctx) : plus proche POI ponctuel + son id ; `parcel_amenites` lu en batch.
 
+## Étape 1 FIGÉE (aménités plafond 7)
+Vic 06/07 : à 11, aménités quasi-universel (+6,8 moyen sur 14k) → baissé à 7. Delta : 455 « inflations
+aménités seules » redescendent opportunite→a_creuser ; +803 net vs baseline (promus par fondamentaux,
+pas par aménités seul) ; plafond 91→87. Comportement validé, figé.
+
+## Étape 2 — ACCESSIBILITÉ (implémentée en dry-run, layers/etage2.py)
+- **age_dirigeant** (INPI, v_foncier_propension_vendre) : POINTS, courbe 55/65/75/85 → 4/8/12/14.
+  ⚠ Âge ABSENT (gigogne plafonnée, non-diffusibles) → **UNKNOWN** (impacte la complétude comme ABF),
+  JAMAIS un malus (exigence Vic). Âge <18 → UNKNOWN (fiche incohérente).
+- **bodacc** (v_foncier_sous_pression) : FLAG 0 point (severity info ×0). **Machine à états sur les
+  LIBELLÉS RÉELS** (SELECT DISTINCT validé, listes explicites en config) : rouge (ouverture/conversion/
+  extension/résolution-LJ) · orange (plans) · gris (clôtures) · neutre (reste). Seul **rouge pose
+  evenement='rouge'** → bascule « chaude » (étape 3).
+- **dpe_passoire** (v_passoire_thermique) : FLAG 0 point « pression réglementaire datée » (gel loyers
+  07/2024, G interdit 2028, F 2034). Pas de bascule chaude (réservée BODACC ouverte).
+- Bascule : colonne `dryrun_cascade_results.evenement`.
+
+### Arbitrages BODACC (validés)
+- « Liste des créances… LJ » (9) → NEUTRE. **Orphelins vérifiés = 0/9** : ces 9 SIREN ont TOUS déjà
+  un jugement rouge en base → aucun signal perdu, neutre DÉFINITIF.
+- `type_procedure` vide (8) → neutre.
+
+## 📌 DETTE D'INGESTION NOTÉE (à corriger à la SOURCE un jour, pas seulement mappée ici)
+- **Mojibake dans `bodacc_procedures.type_procedure`** : double-encodage UTF-8 (ex.
+  `Jugement arrÃªtant le plan de sauvegarde`, `DÃ©pÃ´t de l'Ã©tat des crÃ©ances`). Normalisé au mapping
+  BODACC (config `mojibake`), mais la vraie correction est à la ré-ingestion BODACC (décodage UTF-8).
+
 ## Reste
-- Étape 2 (accessibilité : BODACC/INPI/DPE + bascule événementielle), étape 3 (matrice Q×A).
+- Étape 3 (matrice Q×A + bascule chaude sur evenement='rouge').
 - Observations baseline différées à l'étape 3 : plafond opportunité ~81 (bonus bas), statut
   « opportunite » rare (règle sévère).

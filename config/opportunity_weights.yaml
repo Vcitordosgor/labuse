@@ -37,6 +37,8 @@ bonuses:
   # ── Étage 1 (dry-run, QUALITÉ) ──
   friche: 8                         # Cartofriches : reconversion. ×1 « avec projet » (+8) / ×0.6 « sans projet » (+5). Signal fort mais pas de la constructibilité brute → plafond 8
   amenites: 7                       # score d'aménités agrégé (école/commerce/santé/tcsp) — CONFORT de revente qui DÉPARTAGE deux terrains équivalents, PAS un critère d'achat foncier. Plafond baissé 11→7 (Vic 06/07 : à 11 c'était quasi-universel en tissu urbain, +6,8 moyen sur 14k parcelles = peu discriminant). Bandes/pondérations inchangées
+  # ── Étage 2 (dry-run, ACCESSIBILITÉ) ──
+  age_dirigeant: 14                 # INPI : gérant âgé = horizon de transmission. Courbe 55/65/75/85 → 4/8/12/14. Âge ABSENT = UNKNOWN (complétude), jamais un malus
   # proximite_equipements_bpe : SUPPRIMÉ — bonus mort (aucune couche ne l'émettait).
   #   Brancher une vraie couche équipements (BPE/OSM) est une tâche d'INGESTION séparée.
 

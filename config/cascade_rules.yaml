@@ -362,3 +362,49 @@ layers:
       bonus_key: proprietaire_morale_acquerable
       indivision_severity: fort
       indivision_min_droits: 2     # nb_droits_propriete ≥ 2 sur un compte = signal indivision
+
+  # ───────────────────── ÉTAGE 2 (dry-run) — ACCESSIBILITÉ ─────────────────────
+  - name: age_dirigeant          # INPI : gérant âgé = horizon de transmission (POINTS)
+    phase: 2
+    enabled: true
+    params:
+      bonus_key: age_dirigeant
+      courbe: { 55: 4, 65: 8, 75: 12, 85: 14 }   # <55→0 · 55-64→+4 · 65-74→+8 · 75-84→+12 · ≥85→+14
+      age_min_valide: 18                          # <18 = fiche RNE incohérente → UNKNOWN (invalide)
+  - name: dpe_passoire           # DPE F/G maison : FLAG « pression réglementaire datée » (0 point)
+    phase: 2
+    enabled: true
+    params: {}
+  - name: bodacc                 # procédures collectives : FLAG 0 point + bascule « chaude » si ROUGE
+    phase: 2
+    enabled: true
+    params:
+      # MACHINE À ÉTATS sur les LIBELLÉS RÉELS (SELECT DISTINCT v_foncier_sous_pression, validé Vic).
+      # Seul 'rouge' pose evenement='rouge' → force « chaude » (étape 3). orange/gris/neutre = flags 0pt.
+      etats:
+        rouge:   # procédure OUVERTE / aggravée
+          - "Jugement d'ouverture d'une procédure de redressement judiciaire"
+          - "Autre jugement d'ouverture"
+          - "Jugement d'ouverture d'une procédure de sauvegarde"
+          - "Jugement d'ouverture de liquidation judiciaire"
+          - "Jugement de conversion en liquidation judiciaire"
+          - "Jugement de conversion en redressement judiciaire de la procédure de sauvegarde"
+          - "Jugement d'extension d'une procédure de redressement judiciaire"
+          - "Jugement d'extension de liquidation judiciaire"
+          - "Jugement prononçant la résolution du plan de redressement et la liquidation judiciaire"
+        orange:  # sous PLAN (en cours)
+          - "Jugement de plan de redressement"
+          - "Jugement modifiant le plan de sauvegarde"
+          - "Jugement modifiant le plan de redressement"
+          - "Jugement arrêtant le plan de sauvegarde"
+          - "Jugement modifiant le plan de continuation"
+          - "Jugement arrêtant un plan de cession"
+        gris:    # CLÔTURÉE (procédure passée)
+          - "Jugement de clôture pour insuffisance d'actif"
+          - "Jugement de clôture pour extinction du passif"
+          - "Autre jugement de clôture"
+      # « Liste des créances… LJ » (9) = NEUTRE (Vic : la bascule se fait sur le JUGEMENT, pas les
+      # publications de suivi — déjà capté en rouge par ouverture/conversion). Tout le reste = neutre.
+      mojibake:   # double-encodage UTF-8 → libellé propre (cf. dette d'ingestion NOTES)
+        "Jugement arrÃªtant le plan de sauvegarde": "Jugement arrêtant le plan de sauvegarde"
+        "DÃ©pÃ´t de l'Ã©tat des crÃ©ances": "Dépôt de l'état des créances"

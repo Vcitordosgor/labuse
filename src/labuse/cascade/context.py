@@ -55,6 +55,10 @@ class EvalContext:
         # distances d'aménités pré-calculées (parcel_amenites).
         self._nearest: dict[tuple[int, str], dict] = {}
         self._amenites: dict[int, dict] = {}
+        # Étage 2 (dry-run) : signaux d'accessibilité par parcelle (vues INPI/BODACC/DPE).
+        self._bodacc: dict[int, dict] = {}
+        self._propension: dict[int, dict] = {}
+        self._passoire: dict[int, dict] = {}
 
     # ───────────────────────── batch (commune entière) ─────────────────────────
 
@@ -259,6 +263,35 @@ class EvalContext:
                  "FROM parcel_amenites WHERE parcel_id = ANY(:ids)"), {"ids": ids}
         ).mappings().all():
             self._amenites[r["parcel_id"]] = dict(r)
+
+        # ── Étage 2 (dry-run) : vues d'accessibilité, jointes par idu ──
+        for r in self.session.execute(
+            text("SELECT p.id AS pid, v.siren, v.type_procedure, v.date_annonce, v.url_source "
+                 "FROM parcels p JOIN v_foncier_sous_pression v ON v.idu = p.idu WHERE p.id = ANY(:ids)"),
+            {"ids": ids}).mappings().all():
+            self._bodacc[r["pid"]] = dict(r)
+        for r in self.session.execute(
+            text("SELECT p.id AS pid, v.siren, v.age_max_dirigeant, v.propension_band, v.age_source "
+                 "FROM parcels p JOIN v_foncier_propension_vendre v ON v.idu = p.idu WHERE p.id = ANY(:ids)"),
+            {"ids": ids}).mappings().all():
+            self._propension[r["pid"]] = dict(r)
+        for r in self.session.execute(
+            text("SELECT p.id AS pid, v.etiquette_dpe, v.type_batiment, v.date_etablissement "
+                 "FROM parcels p JOIN v_passoire_thermique v ON v.idu = p.idu WHERE p.id = ANY(:ids)"),
+            {"ids": ids}).mappings().all():
+            self._passoire[r["pid"]] = dict(r)
+
+    def bodacc(self, parcel_id: int) -> dict | None:
+        """Procédure collective la plus récente sur la parcelle (v_foncier_sous_pression). None sinon."""
+        return self._bodacc.get(parcel_id)
+
+    def propension(self, parcel_id: int) -> dict | None:
+        """Signal âge dirigeant (v_foncier_propension_vendre). None si pas de PM/âge connu."""
+        return self._propension.get(parcel_id)
+
+    def passoire(self, parcel_id: int) -> dict | None:
+        """Passoire thermique F/G (v_passoire_thermique). None si pas de maison F/G récente."""
+        return self._passoire.get(parcel_id)
 
     def nearest_point(self, parcel_id: int, kind: str) -> dict | None:
         """Plus proche objet ponctuel d'un kind sous le cap (dist, id, name, subtype, attrs). None sinon."""
