@@ -1,5 +1,4 @@
-// Capture Playwright du Socle V1 (revue Vic). Vérifie aussi les erreurs console/page.
-// Usage : BASE=http://127.0.0.1:8010/socle/ node scripts/capture.mjs
+// Capture + vérification des filtres du Socle V1 (revue Vic). Vérifie aussi console/page.
 import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 
@@ -13,23 +12,37 @@ const errors = []
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })
 page.on('pageerror', (e) => errors.push('PAGEERROR ' + e.message))
 
+const cards = () => page.locator('.overflow-y-auto > button').count()
+const counter = () => page.locator('text=chaudes').first().innerText()
+
 await page.goto(BASE, { waitUntil: 'networkidle', timeout: 30000 })
 await page.waitForSelector('text=chaudes', { timeout: 15000 })
-await page.waitForTimeout(4000) // tuiles carte + rendu parcelles
-
+await page.waitForTimeout(4000)
 await page.screenshot({ path: `${OUT}/01_dashboard.png` })
+console.log('DÉFAUT  :', await cards(), 'cartes ·', await counter())
 
-// Ouvrir une fiche : clic sur la 1re carte résultat
-const firstCard = page.locator('.overflow-y-auto > button').first()
-await firstCard.click()
-await page.waitForTimeout(800)
-await page.screenshot({ path: `${OUT}/02_fiche_ouverte.png` })
+// Filtre statut « Chaude » (panneau gauche) → doit filtrer carte + liste
+await page.getByRole('button', { name: /^Chaude/ }).first().click()
+await page.waitForTimeout(1200)
+await page.screenshot({ path: `${OUT}/02_filtre_chaude.png` })
+console.log('CHAUDE  :', await cards(), 'cartes')
 
-// Fermer + bascule Mutabilité
-await page.locator('button[title="Fermer"]').click().catch(() => {})
-await page.locator('button:has-text("Mutabilité")').click()
-await page.waitForTimeout(1500)
-await page.screenshot({ path: `${OUT}/03_mutabilite.png` })
+// + Filtre → Q ≥ 90 (chip omnibox apparaît, compteurs baissent)
+await page.getByRole('button', { name: '+ Filtre' }).click()
+await page.waitForTimeout(300)
+await page.getByPlaceholder('ex. 70').fill('90')
+await page.waitForTimeout(300)
+await page.keyboard.press('Escape').catch(() => {})
+await page.mouse.click(700, 500)
+await page.waitForTimeout(1000)
+await page.screenshot({ path: `${OUT}/03_filtre_score.png` })
+console.log('Q>=90   :', await cards(), 'cartes ·', await counter())
+
+// Retirer le chip « Chaude » via ×
+const chip = page.locator('span', { hasText: 'Chaude' }).locator('button[title="Retirer"]').first()
+await chip.click().catch(() => {})
+await page.waitForTimeout(1000)
+console.log('SANS STATUT (Q>=90 restant) :', await cards(), 'cartes ·', await counter())
 
 console.log('CONSOLE ERRORS:', errors.length ? errors.slice(0, 10) : 'aucune')
 await browser.close()

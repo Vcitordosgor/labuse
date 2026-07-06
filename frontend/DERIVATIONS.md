@@ -76,3 +76,12 @@ labels de section, valeurs · Inter (400/500) → corps.
 - Complétude affichée partout (exigence #1) — non visible dans ce wireframe statique ; ajoutée
   (mini-indicateur sur les cartes résultat, anneau en fiche).
 - Cloche notifications (exigence #7) — ajoutée au header.
+
+## Filtres (Brique 1 — correctif)
+Système de filtres client (source unique = le geojson q_v2, partagé carte/liste/fiche) :
+- **Chips de statut** (panneau gauche) : Tout / Chaude / À surveiller / À creuser, avec compteurs.
+  Filtrent **carte ET liste** simultanément (store partagé `filters.statut`).
+- **Omnibox** : chip « Saint-Paul » = périmètre fixe (Brique 1) ; chips dynamiques par filtre actif
+  (statut, Q ≥ N, surface ≥ N) supprimables via ×. « + Filtre » ouvre un popover (statut, score, surface).
+- **Compteurs** = comptage sur score+surface (indépendant du statut, pour garder le breakdown lisible) ;
+  **liste + carte** = filtre complet (statut inclus). Retirer un chip met à jour les trois instantanément.

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { getResults } from '../../lib/api'
+import { getParcelsGeojson } from '../../lib/api'
+import type { ParcelProps } from '../../lib/filters'
 import { STATUT_META } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 
@@ -7,9 +8,9 @@ const TABS = ['Synthèse', 'Règles', 'Risques', 'Marché', 'Proprio', 'Bilan']
 
 export function FicheShell({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
-  // Coquille Brique 1 : en-tête réel (depuis le cache résultats), corps rempli en Brique 2.
-  const results = useQuery({ queryKey: ['results'], queryFn: getResults })
-  const p = results.data?.find((r) => r.idu === idu)
+  // Coquille Brique 1 : en-tête réel (depuis le cache geojson partagé), corps rempli en Brique 2.
+  const geo = useQuery({ queryKey: ['geojson'], queryFn: getParcelsGeojson })
+  const p = geo.data?.features.map((f) => f.properties as unknown as ParcelProps).find((r) => r.idu === idu)
   const meta = p ? STATUT_META[p.status] : null
 
   return (

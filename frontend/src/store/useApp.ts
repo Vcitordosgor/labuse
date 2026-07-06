@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { MapMode } from '../lib/types'
+import type { MapMode, Statut } from '../lib/types'
 
 export interface LayerToggles {
   zonage: boolean
@@ -8,6 +8,15 @@ export interface LayerToggles {
   vue_mer: boolean
   parc: boolean
 }
+
+// Filtres actifs — appliqués EN MÊME TEMPS à la carte, la liste et les compteurs.
+export interface Filters {
+  statut: Statut | 'all' // piloté par les chips de statut du panneau gauche + chip omnibox
+  scoreMin: number | null // Q ≥ N
+  surfaceMin: number | null // surface ≥ N m²
+}
+
+const EMPTY: Filters = { statut: 'all', scoreMin: null, surfaceMin: null }
 
 interface AppState {
   selectedIdu: string | null
@@ -18,6 +27,9 @@ interface AppState {
   toggleLayer: (k: keyof LayerToggles) => void
   query: string
   setQuery: (q: string) => void
+  filters: Filters
+  setFilter: <K extends keyof Filters>(k: K, v: Filters[K]) => void
+  clearFilter: (k: keyof Filters) => void
 }
 
 export const useApp = create<AppState>((set) => ({
@@ -29,4 +41,7 @@ export const useApp = create<AppState>((set) => ({
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   query: '',
   setQuery: (query) => set({ query }),
+  filters: EMPTY,
+  setFilter: (k, v) => set((s) => ({ filters: { ...s.filters, [k]: v } })),
+  clearFilter: (k) => set((s) => ({ filters: { ...s.filters, [k]: EMPTY[k] } })),
 }))

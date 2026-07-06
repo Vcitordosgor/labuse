@@ -3,8 +3,17 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef } from 'react'
 import { getParcelsGeojson } from '../../lib/api'
-import { useApp } from '../../store/useApp'
+import { useApp, type Filters } from '../../store/useApp'
 import { Legend } from './Legend'
+
+// Expression de filtre MapLibre depuis les filtres actifs (statut + score + surface).
+function toExpr(f: Filters): maplibregl.FilterSpecification {
+  const c: maplibregl.ExpressionSpecification[] = []
+  if (f.statut !== 'all') c.push(['==', ['get', 'status'], f.statut])
+  if (f.scoreMin != null) c.push(['>=', ['coalesce', ['get', 'q_score'], 0], f.scoreMin])
+  if (f.surfaceMin != null) c.push(['>=', ['coalesce', ['get', 'surface_m2'], 0], f.surfaceMin])
+  return ['all', ...c] as maplibregl.FilterSpecification
+}
 
 const CARTO_DARK: maplibregl.StyleSpecification = {
   version: 8,
@@ -44,7 +53,7 @@ export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
-  const { mode, selectedIdu, select } = useApp()
+  const { mode, selectedIdu, select, filters } = useApp()
   const geo = useQuery({ queryKey: ['geojson'], queryFn: getParcelsGeojson })
 
   // init une fois
@@ -77,18 +86,23 @@ export function MapView() {
     if (m && ready.current && geo.data) (m.getSource('parcels') as maplibregl.GeoJSONSource | undefined)?.setData(geo.data as never)
   }, [geo.data])
 
-  // bascule verdict / mutabilité
+  // mode (verdict/mutabilité) + filtres (statut/score/surface) → couleur, opacité, setFilter
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current || !m.getLayer('parcels-fill')) return
+    const expr = toExpr(filters)
+    m.setFilter('parcels-fill', expr)
+    // contours : promues ∩ filtres
+    m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
     if (mode === 'mutabilite') {
       m.setPaintProperty('parcels-fill', 'fill-color', MUTABILITE_COLOR)
       m.setPaintProperty('parcels-fill', 'fill-opacity', 0.7)
     } else {
       m.setPaintProperty('parcels-fill', 'fill-color', STATUS_COLOR)
-      m.setPaintProperty('parcels-fill', 'fill-opacity', STATUS_OPACITY)
+      // un filtre de statut unique → opacité pleine (sinon les écartées à 0.04 seraient invisibles)
+      m.setPaintProperty('parcels-fill', 'fill-opacity', filters.statut === 'all' ? STATUS_OPACITY : 0.72)
     }
-  }, [mode])
+  }, [mode, filters])
 
   // surbrillance sélection
   useEffect(() => {
