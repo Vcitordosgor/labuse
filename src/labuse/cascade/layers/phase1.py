@@ -575,6 +575,9 @@ class AbfLayer(Layer):
         if not ctx.kind_present(kind):
             return unknown(self.name, "Périmètres ABF non ingérés.", source=SRC_ABF)
         if any(i.coverage > 0 for i in ctx.intersections(parcel.id, kind)):
+            # Tampon 500 m qui sur-couvre → covisibilité NON instruite = INCERTITUDE, pas malus.
+            if params.get("as_unknown"):
+                return unknown(self.name, params["detail"], source=SRC_ABF)
             return soft_flag(self.name, params["detail"], Severity(params.get("severity", "faible")), source=SRC_ABF)
         return passed(self.name, "Hors périmètre ABF.", source=SRC_ABF)
 

@@ -182,8 +182,13 @@ layers:
     enabled: true
     params:
       spatial_kind: abf
-      severity: faible
-      detail: "Périmètre ABF / monument historique (≈500 m) — avis Architecte des Bâtiments de France."
+      # DÉCISION dry-run étages 1/2 (Vic/Claude) : le tampon 500 m Mérimée SUR-COUVRE (60,6k
+      # parcelles île, covisibilité NON instruite). Un abord non instruit est une INCERTITUDE, pas
+      # un malus → on ne touche NI n'enlève de point d'opportunité. Verdict UNKNOWN → impacte la
+      # COMPLÉTUDE, et le flag reste affiché. (Basculer à soft_flag = mettre as_unknown:false.)
+      as_unknown: true
+      severity: faible   # utilisé seulement si as_unknown:false
+      detail: "Abords MH ~500 m (tampon) — covisibilité à instruire."
 
   - name: ens
     phase: 1
@@ -261,6 +266,58 @@ layers:
       sweet_spot_lo_m2: 400
       sweet_spot_hi_m2: 2500
 
+  # ───────────────────── ÉTAGE 1 (dry-run) — QUALITÉ ─────────────────────
+  # Signaux de qualité (bonus/malus/flags) sur les survivants. Non branchés au live (dry-run).
+  - name: friche          # Cartofriches : terrain à reconvertir = signal POSITIF
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: friche
+      bonus_key: friche
+      magnitude_avec_projet: 1.0    # « friche avec projet » → +8 (plafond)
+      magnitude_sans_projet: 0.6    # « friche sans projet »  → +5 (gisement moins mûr)
+  - name: sol_pollue      # coût de dépollution INCONNU → le FLAG prime (survit à la fiche), malus léger
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: sol_pollue
+      proximite_m: 50
+      severity: faible
+      detail: "Site pollué recensé (BASOL/CASIAS) à proximité — étude de sol à prévoir."
+  - name: cavite          # risque d'effondrement → flag prime, malus léger
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: cavite
+      proximite_m: 50
+      severity: faible
+      detail: "Cavité souterraine recensée à proximité — étude à prévoir."
+  - name: icpe            # voisinage industriel → malus GRADUÉ par distance
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: icpe
+      bandes_m: { fort: 50, moyen: 150, faible: 300 }   # ≤50 fort · ≤150 moyen · ≤300 faible · au-delà rien
+      detail: "Installation classée (ICPE) à proximité — nuisances/voisinage industriel."
+  - name: mvt             # mouvement de terrain : FLAG INFORMATIF, 0 point (aléa déjà dans PPR)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: mvt
+      proximite_m: 50
+      severity: info       # multiplicateur ×0 → affiché mais sans double-compter le PPR
+      detail: "Mouvement de terrain recensé à proximité (aléa réglementaire déjà pris en compte via PPR)."
+  - name: amenites        # score d'aménités agrégé (école/commerce/santé/tcsp) — CONFORT, plafond 11
+    phase: 1
+    enabled: true
+    params:
+      bonus_key: amenites
+      # Bandes de proximité (contexte 974 tout-voiture) : plein ≤500 m, 0.5 en 500–1200 m, 0 au-delà.
+      # tcsp se juge à pied → bandes plus serrées (300/800). Pondérations : école+commerce priment.
+      bandes_defaut_m: { plein: 500, demi: 1200 }
+      bandes_tcsp_m: { plein: 300, demi: 800 }
+      ponderations: { ecole: 0.30, commerce: 0.30, sante: 0.20, tcsp: 0.20 }
+
   # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
 
   - name: dvf
@@ -305,3 +362,49 @@ layers:
       bonus_key: proprietaire_morale_acquerable
       indivision_severity: fort
       indivision_min_droits: 2     # nb_droits_propriete ≥ 2 sur un compte = signal indivision
+
+  # ───────────────────── ÉTAGE 2 (dry-run) — ACCESSIBILITÉ ─────────────────────
+  - name: age_dirigeant          # INPI : gérant âgé = horizon de transmission (POINTS)
+    phase: 2
+    enabled: true
+    params:
+      bonus_key: age_dirigeant
+      courbe: { 55: 4, 65: 8, 75: 12, 85: 14 }   # <55→0 · 55-64→+4 · 65-74→+8 · 75-84→+12 · ≥85→+14
+      age_min_valide: 18                          # <18 = fiche RNE incohérente → UNKNOWN (invalide)
+  - name: dpe_passoire           # DPE F/G maison : FLAG « pression réglementaire datée » (0 point)
+    phase: 2
+    enabled: true
+    params: {}
+  - name: bodacc                 # procédures collectives : FLAG 0 point + bascule « chaude » si ROUGE
+    phase: 2
+    enabled: true
+    params:
+      # MACHINE À ÉTATS sur les LIBELLÉS RÉELS (SELECT DISTINCT v_foncier_sous_pression, validé Vic).
+      # Seul 'rouge' pose evenement='rouge' → force « chaude » (étape 3). orange/gris/neutre = flags 0pt.
+      etats:
+        rouge:   # procédure OUVERTE / aggravée
+          - "Jugement d'ouverture d'une procédure de redressement judiciaire"
+          - "Autre jugement d'ouverture"
+          - "Jugement d'ouverture d'une procédure de sauvegarde"
+          - "Jugement d'ouverture de liquidation judiciaire"
+          - "Jugement de conversion en liquidation judiciaire"
+          - "Jugement de conversion en redressement judiciaire de la procédure de sauvegarde"
+          - "Jugement d'extension d'une procédure de redressement judiciaire"
+          - "Jugement d'extension de liquidation judiciaire"
+          - "Jugement prononçant la résolution du plan de redressement et la liquidation judiciaire"
+        orange:  # sous PLAN (en cours)
+          - "Jugement de plan de redressement"
+          - "Jugement modifiant le plan de sauvegarde"
+          - "Jugement modifiant le plan de redressement"
+          - "Jugement arrêtant le plan de sauvegarde"
+          - "Jugement modifiant le plan de continuation"
+          - "Jugement arrêtant un plan de cession"
+        gris:    # CLÔTURÉE (procédure passée)
+          - "Jugement de clôture pour insuffisance d'actif"
+          - "Jugement de clôture pour extinction du passif"
+          - "Autre jugement de clôture"
+      # « Liste des créances… LJ » (9) = NEUTRE (Vic : la bascule se fait sur le JUGEMENT, pas les
+      # publications de suivi — déjà capté en rouge par ouverture/conversion). Tout le reste = neutre.
+      mojibake:   # double-encodage UTF-8 → libellé propre (cf. dette d'ingestion NOTES)
+        "Jugement arrÃªtant le plan de sauvegarde": "Jugement arrêtant le plan de sauvegarde"
+        "DÃ©pÃ´t de l'Ã©tat des crÃ©ances": "Dépôt de l'état des créances"

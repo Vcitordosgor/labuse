@@ -27,8 +27,9 @@ class CascadeVerdict(StrEnum):
 
 
 class Severity(StrEnum):
-    """Sévérité d'un SOFT_FLAG. Multiplicateurs : faible ×1, moyen ×2, fort ×3."""
+    """Sévérité d'un SOFT_FLAG. Multiplicateurs : faible ×1, moyen ×2, fort ×3 ; info ×0."""
 
+    INFO = "info"       # flag AFFICHÉ mais 0 point (ex. mvt : aléa déjà compté dans PPR)
     FAIBLE = "faible"
     MOYEN = "moyen"
     FORT = "fort"

@@ -181,6 +181,51 @@ class ParcelEvaluation(Base):
     parcel: Mapped[Parcel] = relationship(back_populates="evaluations")
 
 
+# ─────────────────── DRY-RUN scoring (étages 1+2) — tables PARALLÈLES ───────────────────
+# Isolées : jamais lues par l'app. Le calcul à blanc n'écrase JAMAIS parcel_evaluations /
+# cascade_results live. Plusieurs runs coexistent par `run_label` (baseline/etape1/etape2/etape3)
+# → DIFF entre étapes. Traçabilité : base + Σ(weight_applied) = score, chaque ligne cliquable à sa
+# source (source_table + source_id). # dry-run, bascule réelle = chantier ultérieur.
+
+class DryrunParcelEvaluation(Base):
+    __tablename__ = "dryrun_parcel_evaluations"
+    __table_args__ = (UniqueConstraint("run_label", "parcel_id", name="uq_dryrun_eval"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_label: Mapped[str] = mapped_column(String(32))
+    parcel_id: Mapped[int] = mapped_column(ForeignKey("parcels.id", ondelete="CASCADE"))
+    completeness_score: Mapped[int] = mapped_column(Integer)
+    opportunity_score: Mapped[int] = mapped_column(Integer)
+    opportunity_base: Mapped[int | None] = mapped_column(Integer)   # base pour tester base+Σ=score
+    status: Mapped[str | None] = mapped_column(String(32))          # statut cascade (opportunite/a_creuser…)
+    # Matrice Q×A (étape 3) — remplies par compute_matrice()
+    q_score: Mapped[int | None] = mapped_column(Integer)            # qualité (étages 0/1)
+    a_score: Mapped[int | None] = mapped_column(Integer)            # accessibilité (étage 2)
+    a_completude: Mapped[int | None] = mapped_column(Integer)       # % des signaux A connus (≠ UNKNOWN)
+    matrice_statut: Mapped[str | None] = mapped_column(String(24))  # chaude/a_surveiller/a_creuser/ecartee
+    rules_version: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class DryrunCascadeResult(Base):
+    __tablename__ = "dryrun_cascade_results"
+    __table_args__ = (Index("ix_dryrun_cascade", "run_label", "parcel_id"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_label: Mapped[str] = mapped_column(String(32))
+    parcel_id: Mapped[int] = mapped_column(ForeignKey("parcels.id", ondelete="CASCADE"))
+    layer_name: Mapped[str] = mapped_column(String(64))
+    result: Mapped[str] = mapped_column(String(16))                 # CascadeVerdict.value
+    severity: Mapped[str | None] = mapped_column(String(16))
+    weight_applied: Mapped[float | None] = mapped_column(Float)     # points signés (∅ si 0)
+    detail: Mapped[str | None] = mapped_column(Text)
+    data_source_id: Mapped[int | None] = mapped_column(ForeignKey("data_sources.id"))
+    source_table: Mapped[str | None] = mapped_column(String(48))    # cliquable : table
+    source_id: Mapped[str | None] = mapped_column(String(64))       # cliquable : id de l'enregistrement
+    evenement: Mapped[str | None] = mapped_column(String(16))       # 'rouge' (BODACC ouverte) → bascule chaude (étape 3)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 # ───────────────────────────── ingestion_runs ─────────────────────────────
 
 class IngestionRun(Base):
