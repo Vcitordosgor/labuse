@@ -170,6 +170,12 @@ layers:
       # étage 1). Ex-constante declassement.py PENTE_FAUX_PCT.
       seuil_faux_positif_pct: 60
       severity: moyen
+      # Phase 2 v2 §4.4 : MALUS GRADUÉ signé (terrassement chiffrable, L3), via weight_override.
+      bandes:
+        - { max: 10, points: 0 }
+        - { max: 25, points: -4 }
+        - { max: 40, points: -10 }
+        - { max: 60, points: -16 }
       slope_labels:           # pente en %, bornes hautes
         faible: 10
         modere: 20
@@ -203,9 +209,12 @@ layers:
     enabled: true
     params:
       spatial_kind: ocs_ge
-      # sol naturel/agricole (logique ZAN) → flag faible ; artificialisé → PASS
+      # sol naturel/agricole (logique ZAN) → flag faible ; artificialisé non bâti → BONUS ZAN-compatible
       naturel_subtypes: [naturel, agricole]
       severity: faible
+      artificialise_subtypes: [artificialise]   # Phase 2 v2 : ZAN-compatible → +points
+      artificialise_points: 4
+      pair_cap_points: 10       # cumul vue mer + OCS plafonné à +10 (signaux corrélés, cf. NOTES)
 
   - name: osm_faux_positif
     phase: 1
@@ -266,6 +275,21 @@ layers:
       sweet_spot_lo_m2: 400
       sweet_spot_hi_m2: 2500
 
+  # ── GARDES ÉTAGE 0 v2 (spec §3) — anti-faux-positifs, HARD_EXCLUDE ──
+  # G1 — foncier public non acquérable (classification DGFiP). HLM(5)/SEM(6) MARCHANDS = préservés.
+  - name: foncier_public
+    phase: 1
+    enabled: true
+    params:
+      groupes_exclus: [1, 2, 3, 4, 9]   # État, Région, Département, Commune, Établissements publics
+  # G2 — emprise linéaire (voirie/délaissé) : allongée ET étroite (cumulés). Échantillon : 0 drapeau flaggé.
+  - name: emprise_lineaire
+    phase: 1
+    enabled: true
+    params:
+      largeur_max_m: 8
+      ratio_min: 8
+
   # ───────────────────── ÉTAGE 1 (dry-run) — QUALITÉ ─────────────────────
   # Signaux de qualité (bonus/malus/flags) sur les survivants. Non branchés au live (dry-run).
   - name: friche          # Cartofriches : terrain à reconvertir = signal POSITIF
@@ -318,6 +342,36 @@ layers:
       bandes_tcsp_m: { plein: 300, demi: 800 }
       ponderations: { ecole: 0.30, commerce: 0.30, sante: 0.20, tcsp: 0.20 }
 
+  # Phase 2 v2 §4.2 — vue mer (prime de prix de sortie 974) : oui +8 / partielle +4.
+  - name: vue_mer
+    phase: 1
+    enabled: true
+    params:
+      bonus_key: vue_mer
+  # Phase 2 v2 — assemblage même propriétaire adjacent (ST_DWithin + garde-fou anti-lotissement).
+  - name: assemblage
+    phase: 1
+    enabled: true
+    params:
+      bonus_key: assemblage
+      rayon_m: 1                    # contiguïté (tolérance 1 m)
+      garde_fou_max_parcelles: 10   # anti-lotissement : au-delà = réserve foncière (SCCV/foncière)
+
+  # SOCLE L1 (spec v2 §4.1) — constructibilité résiduelle = facteur Q DOMINANT (−25..+30).
+  # Barème signé par bande de SDP résiduelle. Bornes « < max » (SDP 100 → bande 100–300).
+  # NON CALCULÉ (hors parcel_residuel) = UNKNOWN : jamais −25 (règle absolue Vic).
+  - name: residuel_socle
+    phase: 1
+    enabled: true
+    params:
+      bandes:
+        - { max: 100,  points: -25, lecture: "rien à construire" }
+        - { max: 300,  points: -10, lecture: "une maison — hors cible collectif" }
+        - { max: 800,  points: 5,   lecture: "petit collectif / 2–4 lots" }
+        - { max: 2000, points: 15,  lecture: "opération viable" }
+        - { max: 5000, points: 25,  lecture: "belle opération" }
+        - { max: null, points: 30,  lecture: "opération majeure" }
+
   # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
 
   - name: dvf
@@ -326,16 +380,18 @@ layers:
     params:
       radii_m: [250, 500, 1000]    # rayons d'agrégation autour du centroïde
       lookback_years: 5
-      bonus_key: contexte_dvf_favorable
-      # MARCHÉ CONTINU (magnitude 0..1) = mélange liquidité + niveau de prix, borné.
-      #   liquidité : nb de mutations / liquidity_ref, plafonné à 1
-      #   prix      : médiane €/m² de TERRAIN, normalisée sur [price_lo, price_hi] €/m²
-      #               (calé sur Saint-Paul : p25≈312, médiane≈503, p75≈821 €/m²)
-      liquidity_ref: 8
-      price_lo_eur_m2: 250
-      price_hi_eur_m2: 900
-      w_liquidity: 0.5
-      w_price: 0.5
+      # Phase 2 v2 : le MARCHÉ passe en Q (prix + liquidité) et sort de A (a_layers).
+      # PRIX — quintiles calculés À L'ÉCHELLE DE L'ÎLE sur le €/m² secteur (méthode secteur-médian),
+      # bornes figées (comparabilité multi-communes) → 0/+2/+4/+7/+10.
+      # Base = €/m² BÂTI (prix de sortie promoteur) ; bornes quintiles data-issues île entière
+      # (29 220 mutations bâties valides). Retunables ici sans toucher au code.
+      quintiles_ile_eur_m2: [1719, 2307, 2917, 3968]
+      quintiles_points: [0, 2, 4, 7, 10]
+      liquidity_bonus_key: liquidite_dvf
+      liquidity_ref: 8             # nb de mutations pour +6 plein
+      # ÉCOULEMENT (L3) : grosse SDP dans un secteur peu liquide → flag « profondeur de marché ».
+      ecoulement_sdp_min_m2: 2000
+      ecoulement_liquidite_faible: 4
 
   - name: sitadel
     phase: 2

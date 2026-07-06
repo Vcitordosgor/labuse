@@ -27,16 +27,20 @@ score_bounds: [1, 100]       # plancher 1 quand non exclue (0 réservé à HARD_
 # réelle) ; le score appliqué = round(poids × magnitude). magnitude = 1 pour les
 # signaux binaires (zone U, accès). Tout reste BORNÉ et TRACÉ (weight_applied + libellé).
 bonuses:
-  potentiel_foncier_region: 12      # × taux de recouvrement de l'îlot (largement dedans > effleure)
+  potentiel_foncier_region: 5       # Phase 2 v2 : 12→5 — signal CORROBORANT (la SDP socle porte la constructibilité)
   proprietaire_morale_acquerable: 12
-  permis_sitadel_recent_proximite: 8
-  surface_utile: 8                  # × courbe saturante sur la surface (plafonne : une parcelle géante ne gagne pas mécaniquement)
-  zonage_u_au: 8                    # binaire (zone U/AU)
-  contexte_dvf_favorable: 8         # × marché réel : médiane €/m² (terrain) + liquidité (nb mutations)
+  permis_sitadel_recent_proximite: 4 # Phase 2 v2 : 8→4 — dynamisme secteur (le marché construit ici), côté Q
+  surface_utile: 0                  # Phase 2 v2 (L2) : SUPPRIMÉ — subsumé par le socle SDP résiduelle (anti double-compte)
+  zonage_u_au: 0                    # Phase 2 v2 (L2) : SUPPRIMÉ — subsumé par le socle SDP (le zonage EST déjà dans la SDP)
+  contexte_dvf_favorable: 8         # (obsolète — la couche dvf émet désormais prix-quintile + liquidité ; conservé sans usage)
   acces_direct_voirie: 3            # binaire
+  # ── Phase 2 v2 — Qualité économique (marché → Q) ──
+  vue_mer: 8                        # prime de prix de sortie 974 (oui +8 / partielle +4) — spec §4.2
+  liquidite_dvf: 6                  # dynamisme marché : mutations récentes secteur (0..+6) — spec §4.3
+  assemblage: 6                     # assiette élargissable : voisin contigu même SIREN (garde-fou détention ≤10)
   # ── Étage 1 (dry-run, QUALITÉ) ──
   friche: 8                         # Cartofriches : reconversion. ×1 « avec projet » (+8) / ×0.6 « sans projet » (+5). Signal fort mais pas de la constructibilité brute → plafond 8
-  amenites: 7                       # score d'aménités agrégé (école/commerce/santé/tcsp) — CONFORT de revente qui DÉPARTAGE deux terrains équivalents, PAS un critère d'achat foncier. Plafond baissé 11→7 (Vic 06/07 : à 11 c'était quasi-universel en tissu urbain, +6,8 moyen sur 14k parcelles = peu discriminant). Bandes/pondérations inchangées
+  amenites: 5                       # Phase 2 v2 : 7→5. CONFORT de revente qui DÉPARTAGE deux terrains équivalents, PAS un critère d'achat. Bandes/pondérations inchangées
   # ── Étage 2 (dry-run, ACCESSIBILITÉ) ──
   age_dirigeant: 14                 # INPI : gérant âgé = horizon de transmission. Courbe 55/65/75/85 → 4/8/12/14. Âge ABSENT = UNKNOWN (complétude), jamais un malus
   # proximite_equipements_bpe : SUPPRIMÉ — bonus mort (aucune couche ne l'émettait).

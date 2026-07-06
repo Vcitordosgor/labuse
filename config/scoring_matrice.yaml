@@ -4,12 +4,13 @@
 
 base: 50
 
-# Couches d'ACCESSIBILITÉ (A). Tout le reste = Qualité (Q).
+# Couches d'ACCESSIBILITÉ (A) = PUR VENDEUR (spec v2 §5). Tout le reste = Qualité (Q).
+# Phase 2 v2 : dvf + sitadel RETIRÉS de A → passent en Q (le marché est une qualité du bien : prix
+# de sortie + dynamisme, pas une accessibilité au vendeur). A ne garde que les signaux « qui vend » :
+# propriétaire (PM/indivision), âge dirigeant, procédure BODACC, passoire thermique.
 a_layers:
   - proprietaire
   - age_dirigeant
-  - dvf
-  - sitadel
   - bodacc
   - dpe_passoire
 
