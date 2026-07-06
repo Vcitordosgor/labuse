@@ -602,9 +602,80 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = "q_v2") -> di
     return {k: int(v or 0) for k, v in row.items()}
 
 
+#: axe A (pur vendeur) — cf. config/scoring_matrice.yaml a_layers. Tout le reste = Q.
+_A_LAYERS = {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire"}
+#: rattachement couche → onglet de la fiche (Synthèse/Bilan sont des vues, pas des groupes de lignes).
+_ONGLET = {
+    "regles": {"zonage_plu_gpu", "prescription_plu", "foncier_public", "emprise_lineaire",
+               "residuel_socle", "safer", "sar", "surface", "parc_national", "foret_publique"},
+    "risques": {"risques", "sol_pollue", "cavite", "icpe", "mvt", "pente", "ravine",
+                "trait_de_cote", "abf", "ens", "eau"},
+    "marche": {"dvf", "sitadel", "vue_mer", "amenites", "potentiel_foncier_region", "ocs_ge",
+               "friche", "acces"},
+    "proprio": {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire", "assemblage"},
+}
+_LAYER_ONGLET = {layer: onglet for onglet, layers in _ONGLET.items() for layer in layers}
+
+
+def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
+    """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
+    source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
+    head = db.execute(text(
+        """SELECT p.id, p.idu, p.commune, p.surface_m2,
+                  ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
+                  ST_X(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lon,
+                  d.matrice_statut, d.q_score, d.a_score, d.a_completude, d.completeness_score
+           FROM parcels p JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+           WHERE p.idu = :idu"""), {"idu": idu, "run": run_label}).mappings().first()
+    if not head:
+        raise HTTPException(404, f"Parcelle {idu} absente du run {run_label}")
+
+    rows = db.execute(text(
+        """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
+                  cr.source_table, cr.source_id, cr.evenement, cr.created_at, ds.name AS source
+           FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
+           WHERE cr.run_label = :run AND cr.parcel_id = :pid
+           ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name"""),
+        {"pid": head["id"], "run": run_label}).mappings().all()
+
+    lines, flags, evenement_detail = [], [], None
+    for r in rows:
+        w = r["weight_applied"]
+        line = {
+            "layer": r["layer_name"],
+            "axis": "a" if r["layer_name"] in _A_LAYERS else "q",
+            "onglet": _LAYER_ONGLET.get(r["layer_name"], "regles"),
+            "result": r["result"],
+            "severity": r["severity"],
+            "weight": round(w) if w is not None else None,
+            "detail": r["detail"],
+            "source": r["source"],
+            "source_table": r["source_table"],
+            "source_id": r["source_id"],
+            "date": r["created_at"].date().isoformat() if r["created_at"] else None,
+        }
+        lines.append(line)
+        if r["evenement"] == "rouge":
+            evenement_detail = r["detail"]
+        if (w is None or w == 0) and r["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN"):
+            flags.append(line)
+
+    return {
+        "idu": head["idu"], "commune": head["commune"],
+        "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
+        "statut": head["matrice_statut"], "q_score": head["q_score"], "a_score": head["a_score"],
+        "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
+        "coords": [round(head["lon"], 6), round(head["lat"], 6)],
+        "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
+        "lines": lines, "flags": flags,
+    }
+
+
 @app.get("/parcels/{idu}")
-def parcel_fiche(idu: str, db: Session = Depends(get_db)) -> dict:
-    """Fiche « Tout ce que LA BUSE a trouvé » (§8)."""
+def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Fiche « Tout ce que LA BUSE a trouvé » (§8). `source='q_v2'` → fiche premium (dryrun)."""
+    if source and source.startswith("q_v2"):
+        return _q_v2_fiche(db, idu, run_label=source)
     return _build_fiche(db, idu)
 
 

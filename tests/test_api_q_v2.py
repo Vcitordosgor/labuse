@@ -33,3 +33,18 @@ def test_list_dispatch_q_v2(monkeypatch):
 def test_statuts_matrice_v2_exposes():
     # la matrice premium expose bien les 4 statuts (dont « à surveiller » qui manquait à la maquette)
     assert set(m._Q_V2_STATUTS) >= {"chaude", "a_surveiller", "a_creuser", "ecartee"}
+
+
+def test_fiche_dispatch_q_v2(monkeypatch):
+    monkeypatch.setattr(m, "_q_v2_fiche", lambda db, idu, run_label="q_v2": {"idu": idu, "statut": "chaude", "run": run_label})
+    out = m.parcel_fiche("97415000AC0253", source="q_v2", db=None)
+    assert out["statut"] == "chaude" and out["run"] == "q_v2"
+
+
+def test_fiche_axe_qa_et_onglets():
+    # axe A = pur vendeur (proprietaire/age/bodacc/dpe) ; le reste = Q. Chaque couche a un onglet.
+    assert m._A_LAYERS == {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire"}
+    assert m._LAYER_ONGLET["residuel_socle"] == "regles"
+    assert m._LAYER_ONGLET["dvf"] == "marche"
+    assert m._LAYER_ONGLET["bodacc"] == "proprio"
+    assert m._LAYER_ONGLET["icpe"] == "risques"
