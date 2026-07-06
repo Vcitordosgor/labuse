@@ -1,0 +1,129 @@
+SQL q_v2 : 83 chaudes · 1720 à surveiller · 3353 à creuser · 51129 total
+
+━━ Passe 1440px ━━
+  ✓ titre d’onglet LABUSE
+  ✓ favicon 32px servi
+  ✓ compteur chaudes = SQL (83)
+  ✓ compteur à surveiller = SQL (1720)
+  ✓ compteur à creuser = SQL (3353)
+  ✓ total = SQL (51129)
+  ✓ layout 01_cartes @1440 sans débordement horizontal
+  ✓ couche Zonage PLU → requête layers.geojson
+  ✓ couche PPR → requête layers.geojson
+  ✓ layout 02_couches @1440 sans débordement horizontal
+  ✓ fond Plan IGN → tuiles Géoplateforme
+  ✓ layout 11_fond_plan_ign @1440 sans débordement horizontal
+  ✓ remonter le temps → ortho 1950-1965
+  ✓ layout 12_ortho_1950 @1440 sans débordement horizontal
+  ✓ relief 3D → tuiles MNT terrarium
+  ✓ layout 13_relief_3d @1440 sans débordement horizontal
+  ✓ mesure distance → lecture
+  ✓ zone dessinée → chip « Zone active »
+  ✓ compteurs libellés « dans la zone »
+  ✓ layout 14_zone @1440 sans débordement horizontal
+  ✓ filtre Chaude → 83 cartes
+  ✓ layout 03_filtre_chaude @1440 sans débordement horizontal
+  ✓ chip « Q ≥ 90 » ajouté
+  ✓ × retire le chip statut, Q ≥ 90 conservé
+  ✓ chip « Vue mer » ajouté
+  ✓ filtres sérialisés dans l’URL
+  ✓ URL rechargée → filtres restaurés
+  ✓ layout 15_filtres_v2 @1440 sans débordement horizontal
+  ✓ toggle Mutabilité → légende
+  ✓ layout 04_mutabilite @1440 sans débordement horizontal
+  ✓ panneau repliable
+  ✓ cloche → notifications
+  ✓ omnibox Entrée → fiche AC0253
+  ✓ bandeau événement AC0253 (invariant)
+  ✓ layout 05_fiche_evenement @1440 sans débordement horizontal
+  ✓ barre Accessibilité → age_dirigeant
+  ✓ onglet Risques → lignes
+  ✓ clic source → drawer (extrait + identité)
+  ✓ layout 16_drawer_source @1440 sans débordement horizontal
+  ✓ Échap ferme le drawer
+  ✓ fiche conservée après le drawer
+  ✓ clic-extérieur ferme le drawer
+  ✓ export PDF AC0253 (200, %PDF)
+  ✓ deep-link Google Maps (fiche)
+  ✓ + Pipeline → « ✓ Dans le pipeline »
+  ✓ Échap ferme la fiche
+  ✓ rail CRM → kanban
+  ✓ kanban contient AC 0253
+  ✓ layout 08_crm @1440 sans débordement horizontal
+  ✓ rail IA → stub propre
+  ✓ rail Outils → accueil vide
+  ✓ J-2 → page Sources
+  ✓ layout 07_sources @1440 sans débordement horizontal
+  ✓ zéro erreur console @1440
+
+━━ Passe 1280px ━━
+  ✓ titre d’onglet LABUSE
+  ✓ favicon 32px servi
+  ✓ compteur chaudes = SQL (83)
+  ✓ compteur à surveiller = SQL (1720)
+  ✓ compteur à creuser = SQL (3353)
+  ✓ total = SQL (51129)
+  ✓ layout 01_cartes @1280 sans débordement horizontal
+  ✓ couche Zonage PLU → requête layers.geojson
+  ✓ couche PPR → requête layers.geojson
+  ✓ layout 02_couches @1280 sans débordement horizontal
+  ✓ fond Plan IGN → tuiles Géoplateforme
+  ✓ layout 11_fond_plan_ign @1280 sans débordement horizontal
+  ✓ remonter le temps → ortho 1950-1965
+  ✓ layout 12_ortho_1950 @1280 sans débordement horizontal
+  ✓ relief 3D → tuiles MNT terrarium
+  ✓ layout 13_relief_3d @1280 sans débordement horizontal
+  ✓ mesure distance → lecture
+  ✓ zone dessinée → chip « Zone active »
+  ✓ compteurs libellés « dans la zone »
+  ✓ layout 14_zone @1280 sans débordement horizontal
+  ✓ filtre Chaude → 83 cartes
+  ✓ layout 03_filtre_chaude @1280 sans débordement horizontal
+  ✓ chip « Q ≥ 90 » ajouté
+  ✓ × retire le chip statut, Q ≥ 90 conservé
+  ✓ chip « Vue mer » ajouté
+  ✓ filtres sérialisés dans l’URL
+  ✓ URL rechargée → filtres restaurés
+  ✓ layout 15_filtres_v2 @1280 sans débordement horizontal
+  ✓ toggle Mutabilité → légende
+  ✓ layout 04_mutabilite @1280 sans débordement horizontal
+  ✓ panneau repliable
+  ✓ cloche → notifications
+  ✓ omnibox Entrée → fiche AC0253
+  ✓ bandeau événement AC0253 (invariant)
+  ✓ layout 05_fiche_evenement @1280 sans débordement horizontal
+  ✓ barre Accessibilité → age_dirigeant
+  ✓ onglet Risques → lignes
+  ✓ clic source → drawer (extrait + identité)
+  ✓ layout 16_drawer_source @1280 sans débordement horizontal
+  ✓ Échap ferme le drawer
+  ✓ fiche conservée après le drawer
+  ✓ clic-extérieur ferme le drawer
+  ✓ export PDF AC0253 (200, %PDF)
+  ✓ deep-link Google Maps (fiche)
+  ✓ + Pipeline → « ✓ Dans le pipeline »
+  ✓ Échap ferme la fiche
+  ✓ rail CRM → kanban
+  ✓ kanban contient AC 0253
+  ✓ layout 08_crm @1280 sans débordement horizontal
+  ✓ rail IA → stub propre
+  ✓ rail Outils → accueil vide
+  ✓ J-2 → page Sources
+  ✓ layout 07_sources @1280 sans débordement horizontal
+  ✓ zéro erreur console @1280
+
+━━ Anti-crash : 10 parcelles aléatoires ━━
+  ✓ fiche 97415000AW2362 rendue sans écran noir
+  ✓ fiche 97415000DX0049 rendue sans écran noir
+  ✓ fiche 97415000EX0029 rendue sans écran noir
+  ✓ fiche 97415000BV0816 rendue sans écran noir
+  ✓ fiche 97415000CP1097 rendue sans écran noir
+  ✓ fiche 97415000CY1040 rendue sans écran noir
+  ✓ fiche 97415000DM0238 rendue sans écran noir
+  ✓ fiche 97415000DI0646 rendue sans écran noir
+  ✓ fiche 97415000DR1199 rendue sans écran noir
+  ✓ fiche 97415000ES0927 rendue sans écran noir
+  ✓ zéro erreur console (anti-crash)
+
+════════════════════════════════════════════════════════════
+AUTO-QA 100 % VERTE

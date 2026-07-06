@@ -15,12 +15,12 @@ import json
 import threading
 import time
 from collections.abc import Iterator
-from urllib.parse import unquote
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timezone
 from pathlib import Path
+from urllib.parse import unquote
 
-from fastapi import Depends, FastAPI, HTTPException, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import RedirectResponse
@@ -381,13 +381,17 @@ def _latest_eval(db: Session, parcel_id: int) -> models.ParcelEvaluation | None:
 @app.get("/parcels")
 def list_parcels(commune: str | None = None,
                  limit: int = Query(100, ge=1, le=1000), offset: int = Query(0, ge=0),
-                 db: Session = Depends(get_db)) -> list[dict]:
+                 source: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
     """Liste PAGINÉE (commune) avec le dernier verdict.
+
+    `source='q_v2'` → panneau résultats du Socle V1 (matrice premium, trié par score, lieu-dit).
 
     safe-bugfix #2 : `limit` BORNÉ (défaut 100, max 1000) + `offset`, et le dernier `eval`
     récupéré en UNE seule requête LATERAL (plus de N+1 qui chargeait toute la commune et
     bloquait l'endpoint > 45 s). Non utilisé par l'UI (qui passe par /map/parcels.geojson
     + /parcels/{idu})."""
+    if source and source.startswith("q_v2"):
+        return _q_v2_list(db, commune, limit, offset, run_label=source)
     rows = db.execute(text(
         """
         SELECT p.idu, p.commune, p.surface_m2,
@@ -410,10 +414,14 @@ def list_parcels(commune: str | None = None,
 
 
 @app.get("/stats")
-def stats(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+def stats(commune: str | None = None, source: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Cartouches du dashboard : volumétrie + statuts + scores (dernière évaluation).
 
+    `source='q_v2'` → comptes de la matrice premium (chaude/à surveiller/à creuser/écartée).
     Résultat mémorisé par commune (cache mémoire 30 s, #7) : sortie identique au calcul."""
+    if source and source.startswith("q_v2"):
+        return _mem_cached(("stats_qv2", source, commune), 30.0, lambda: _q_v2_stats(db, commune, run_label=source))
+
     def _compute() -> dict:
         row = db.execute(
             text(
@@ -453,8 +461,15 @@ def _owner_famille(groupe, forme, denom) -> str:
 
 
 @app.get("/map/parcels.geojson")
-def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, le=200000), db: Session = Depends(get_db)) -> dict:
-    """Parcelles (géométrie simplifiée 4326) + verdict, pour la carte colorée."""
+def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, le=200000),
+                    source: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Parcelles (géométrie simplifiée 4326) + verdict, pour la carte colorée.
+
+    `source='q_v2'` (Socle V1) → lit le scoring premium v2 dans `dryrun_parcel_evaluations`
+    (matrice chaude/à surveiller/à creuser/écartée + Q/A + complétude + événement rouge),
+    la SOURCE DE VÉRITÉ. Sans `source`, comportement historique (parcel_evaluations live)."""
+    if source and source.startswith("q_v2"):
+        return _q_v2_geojson(db, commune, limit, run_label=source)
     rows = db.execute(
         text(
             """
@@ -503,10 +518,207 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
     return {"type": "FeatureCollection", "features": feats}
 
 
+#: statuts de la matrice premium v2 (dryrun) — source de vérité du Socle V1.
+_Q_V2_STATUTS = ("chaude", "a_surveiller", "a_creuser", "ecartee", "exclue")
+
+
+def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str = "q_v2") -> dict:
+    """Parcelles + matrice premium v2 (dryrun_parcel_evaluations). `status` = matrice_statut ;
+    Q/A + complétude + événement rouge exposés (exigences #1/#2/#4). Une parcelle exclue à
+    l'étage 0 apparaît en `ecartee` ; les `evenement='rouge'` (BODACC ouvert) sont marquées."""
+    rows = db.execute(text(
+        """
+        SELECT p.idu, p.surface_m2,
+               ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
+               d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
+               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
+               (ev.parcel_id IS NOT NULL) AS evenement_rouge, fl.flags
+        FROM parcels p
+        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+        LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
+        LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
+                   WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
+        -- flags actifs par parcelle (filtres métier) : couches en SOFT_FLAG + ABF non instruit
+        LEFT JOIN (SELECT parcel_id, array_agg(DISTINCT layer_name) AS flags
+                   FROM dryrun_cascade_results
+                   WHERE run_label = :run AND (result = 'SOFT_FLAG'
+                         OR (layer_name = 'abf' AND result = 'UNKNOWN'))
+                   GROUP BY parcel_id) fl ON fl.parcel_id = p.id
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+          AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
+        LIMIT :lim
+        """), {"c": commune, "run": run_label, "lim": limit, "minsurf": MIN_DISPLAY_SURFACE_M2}
+    ).mappings().all()
+    feats = [{
+        "type": "Feature",
+        "geometry": json.loads(r["g"]),
+        "properties": {
+            "idu": r["idu"],
+            "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
+            "status": r["status"],
+            "q_score": r["q_score"],
+            "a_score": r["a_score"],
+            "a_completude": r["a_completude"],
+            "completeness_score": r["completeness_score"],
+            "sdp_residuelle_m2": r["sdp_residuelle_m2"],
+            "sous_densite": r["sous_densite"],
+            "vue_mer": r["vue_mer"],
+            "evenement": "rouge" if r["evenement_rouge"] else None,
+            "flags": r["flags"] or [],
+        },
+    } for r in rows if r["g"]]
+    return {"type": "FeatureCollection", "features": feats}
+
+
+def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str = "q_v2") -> list[dict]:
+    """Liste triée par score (Q+A) pour le panneau résultats — matrice premium v2, avec lieu-dit."""
+    rows = db.execute(text(
+        """
+        SELECT p.idu, p.commune, p.surface_m2, p.section,
+               d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude, d.completeness_score,
+               (ev.parcel_id IS NOT NULL) AS evenement_rouge
+        FROM parcels p
+        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
+                   WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+          AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+        ORDER BY (d.q_score + d.a_score) DESC, d.q_score DESC
+        LIMIT :lim OFFSET :off
+        """), {"c": commune, "run": run_label, "lim": limit, "off": offset}
+    ).mappings().all()
+    return [{
+        "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
+        "lieu_dit": r["commune"], "status": r["status"], "q_score": r["q_score"], "a_score": r["a_score"],
+        "a_completude": r["a_completude"], "completeness_score": r["completeness_score"],
+        "evenement": "rouge" if r["evenement_rouge"] else None,
+    } for r in rows]
+
+
+def _q_v2_stats(db: Session, commune: str | None, run_label: str = "q_v2") -> dict:
+    """Comptes par statut matrice (en-tête + barre de répartition). « N chaudes · M à surveiller »."""
+    row = db.execute(text(
+        """
+        SELECT count(*) AS total,
+               count(*) FILTER (WHERE matrice_statut = 'chaude')       AS chaude,
+               count(*) FILTER (WHERE matrice_statut = 'a_surveiller') AS a_surveiller,
+               count(*) FILTER (WHERE matrice_statut = 'a_creuser')    AS a_creuser,
+               count(*) FILTER (WHERE matrice_statut = 'ecartee')      AS ecartee
+        FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
+        WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+        """), {"c": commune, "run": run_label}).mappings().one()
+    return {k: int(v or 0) for k, v in row.items()}
+
+
+#: axe A (pur vendeur) — cf. config/scoring_matrice.yaml a_layers. Tout le reste = Q.
+_A_LAYERS = {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire"}
+#: rattachement couche → onglet de la fiche (Synthèse/Bilan sont des vues, pas des groupes de lignes).
+_ONGLET = {
+    "regles": {"zonage_plu_gpu", "prescription_plu", "foncier_public", "emprise_lineaire",
+               "residuel_socle", "safer", "sar", "surface", "parc_national", "foret_publique"},
+    "risques": {"risques", "sol_pollue", "cavite", "icpe", "mvt", "pente", "ravine",
+                "trait_de_cote", "abf", "ens", "eau"},
+    "marche": {"dvf", "sitadel", "vue_mer", "amenites", "potentiel_foncier_region", "ocs_ge",
+               "friche", "acces"},
+    "proprio": {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire", "assemblage"},
+}
+_LAYER_ONGLET = {layer: onglet for onglet, layers in _ONGLET.items() for layer in layers}
+
+
+def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
+    """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
+    source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
+    head = db.execute(text(
+        """SELECT p.id, p.idu, p.commune, p.surface_m2,
+                  ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
+                  ST_X(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lon,
+                  d.matrice_statut, d.q_score, d.a_score, d.a_completude, d.completeness_score
+           FROM parcels p JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+           WHERE p.idu = :idu"""), {"idu": idu, "run": run_label}).mappings().first()
+    if not head:
+        raise HTTPException(404, f"Parcelle {idu} absente du run {run_label}")
+
+    rows = db.execute(text(
+        """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
+                  cr.source_table, cr.source_id, cr.evenement, cr.created_at, ds.name AS source
+           FROM dryrun_cascade_results cr LEFT JOIN data_sources ds ON ds.id = cr.data_source_id
+           WHERE cr.run_label = :run AND cr.parcel_id = :pid
+           ORDER BY abs(COALESCE(cr.weight_applied, 0)) DESC, cr.layer_name"""),
+        {"pid": head["id"], "run": run_label}).mappings().all()
+
+    lines, flags, evenement_detail = [], [], None
+    for r in rows:
+        w = r["weight_applied"]
+        line = {
+            "layer": r["layer_name"],
+            "axis": "a" if r["layer_name"] in _A_LAYERS else "q",
+            "onglet": _LAYER_ONGLET.get(r["layer_name"], "regles"),
+            "result": r["result"],
+            "severity": r["severity"],
+            "weight": round(w) if w is not None else None,
+            "detail": r["detail"],
+            "source": r["source"],
+            "source_table": r["source_table"],
+            "source_id": r["source_id"],
+            "date": r["created_at"].date().isoformat() if r["created_at"] else None,
+        }
+        lines.append(line)
+        if r["evenement"] == "rouge":
+            evenement_detail = r["detail"]
+        if (w is None or w == 0) and r["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN"):
+            flags.append(line)
+
+    return {
+        "idu": head["idu"], "commune": head["commune"],
+        "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
+        "statut": head["matrice_statut"], "q_score": head["q_score"], "a_score": head["a_score"],
+        "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
+        "coords": [round(head["lon"], 6), round(head["lat"], 6)],
+        "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
+        "lines": lines, "flags": flags,
+    }
+
+
 @app.get("/parcels/{idu}")
-def parcel_fiche(idu: str, db: Session = Depends(get_db)) -> dict:
-    """Fiche « Tout ce que LA BUSE a trouvé » (§8)."""
+def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """Fiche « Tout ce que LA BUSE a trouvé » (§8). `source='q_v2'` → fiche premium (dryrun)."""
+    if source and source.startswith("q_v2"):
+        return _q_v2_fiche(db, idu, run_label=source)
     return _build_fiche(db, idu)
+
+
+@app.get("/parcels/{idu}/export.pdf")
+def parcel_export_pdf(idu: str, source: str = "q_v2", db: Session = Depends(get_db)) -> Response:
+    """Export PDF de la fiche premium (Brique 3) — design system, fiche complète tracée."""
+    from .pdf_premium import render_fiche_pdf
+    fiche = _q_v2_fiche(db, idu, run_label=source)
+    return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
+                    headers={"Content-Disposition": f'inline; filename="labuse_{idu}.pdf"'})
+
+
+#: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
+_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national"}
+
+
+@app.get("/map/layers.geojson")
+def map_layers_geojson(kind: str, commune: str | None = None,
+                       limit: int = Query(6000, ge=1, le=20000), db: Session = Depends(get_db)) -> dict:
+    """Couches carte (zonage PLU, PPR, Parc national) — géométries simplifiées pour l'overlay.
+
+    Les couches sans commune (île entière, ex. Parc) passent le filtre commune."""
+    if kind not in _MAP_LAYER_KINDS:
+        raise HTTPException(422, f"kind inconnu : {kind}")
+    rows = db.execute(text(
+        """SELECT sl.id, sl.subtype, sl.name,
+                  ST_AsGeoJSON(ST_SimplifyPreserveTopology(sl.geom, 0.0002)) AS g
+           FROM spatial_layers sl
+           WHERE sl.kind = :k AND (CAST(:c AS text) IS NULL OR sl.commune = :c OR sl.commune IS NULL)
+           LIMIT :lim"""), {"k": kind, "c": commune, "lim": limit}).mappings().all()
+    feats = [{"type": "Feature", "geometry": json.loads(r["g"]),
+              "properties": {"id": r["id"], "subtype": r["subtype"], "name": r["name"]}}
+             for r in rows if r["g"]]
+    return {"type": "FeatureCollection", "features": feats}
 
 
 @app.get("/map/bati")
@@ -1375,7 +1587,18 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
             "status": ev.status.value if ev else None,
             "opportunity_score": ev.opportunity_score if ev else None,
         },
+        # scoring premium v2 (source de vérité affichage Socle V1) — pour les cartes Kanban
+        "premium": _premium_head(db, e.parcel_id),
     }
+
+
+def _premium_head(db: Session, parcel_id: int, run_label: str = "q_v2") -> dict | None:
+    r = db.execute(text(
+        "SELECT matrice_statut, q_score, a_score, completeness_score "
+        "FROM dryrun_parcel_evaluations WHERE run_label = :run AND parcel_id = :pid"),
+        {"run": run_label, "pid": parcel_id}).mappings().first()
+    return ({"statut": r["matrice_statut"], "q_score": r["q_score"], "a_score": r["a_score"],
+             "completeness_score": r["completeness_score"]} if r else None)
 
 
 class PipelineAddIn(BaseModel):
@@ -1497,10 +1720,29 @@ def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
 
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
 
+#: Socle V1 (front React+MapLibre, build Vite → frontend/dist), servi à la même origine.
+FRONTEND_DIST = Path(__file__).resolve().parents[3] / "frontend" / "dist"
+
+
+@app.middleware("http")
+async def _no_cache_html(request: Request, call_next):
+    """Le HTML du Socle ne doit JAMAIS être mis en cache : un index.html périmé pointe vers un
+    vieux bundle → écrans cassés après déploiement (bug constaté). Les assets hashés restent cacheables."""
+    resp = await call_next(request)
+    if request.url.path.rstrip("/") in ("", "/socle") or request.url.path.endswith(".html"):
+        resp.headers["Cache-Control"] = "no-store"
+    return resp
+
 if WEB_DIR.exists():
-    app.mount("/app", StaticFiles(directory=str(WEB_DIR), html=True), name="app")
+    app.mount("/app", StaticFiles(directory=str(WEB_DIR), html=True), name="app")  # UI Vue historique (transition)
 
 
 @app.get("/", include_in_schema=False)
 def _root() -> RedirectResponse:
+    if FRONTEND_DIST.exists():
+        return RedirectResponse("/socle/")
     return RedirectResponse("/app/" if WEB_DIR.exists() else "/docs")
+
+
+if FRONTEND_DIST.exists():
+    app.mount("/socle", StaticFiles(directory=str(FRONTEND_DIST), html=True), name="socle")  # Socle V1

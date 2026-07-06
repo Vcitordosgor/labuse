@@ -1,0 +1,91 @@
+SQL q_v2 : 83 chaudes · 1720 à surveiller · 3353 à creuser · 51129 total
+
+━━ Passe 1440px ━━
+  ✓ compteur chaudes = SQL (83)
+  ✓ compteur à surveiller = SQL (1720)
+  ✓ compteur à creuser = SQL (3353)
+  ✓ total = SQL (51129)
+  ✓ layout 01_cartes @1440 sans débordement horizontal
+  ✓ couche Zonage PLU → requête layers.geojson
+  ✓ couche PPR → requête layers.geojson
+  ✓ layout 02_couches @1440 sans débordement horizontal
+  ✓ filtre Chaude → 83 cartes
+  ✓ layout 03_filtre_chaude @1440 sans débordement horizontal
+  ✓ chip « Q ≥ 90 » ajouté
+  ✓ × retire le chip statut, Q ≥ 90 conservé
+  ✓ toggle Mutabilité → légende MUTABILITÉ
+  ✓ layout 04_mutabilite @1440 sans débordement horizontal
+  ✓ panneau repliable (chevron)
+  ✓ cloche → panneau notifications
+  ✓ omnibox Entrée → fiche AC0253
+  ✓ bandeau événement AC0253 (invariant)
+  ✓ layout 05_fiche_evenement @1440 sans débordement horizontal
+  ✓ barre Accessibilité dépliée → age_dirigeant
+  ✓ onglet Risques → lignes
+  ✓ layout 06_fiche_onglet @1440 sans débordement horizontal
+  ✓ export PDF AC0253 (200, %PDF)
+  ✓ + Pipeline → « ✓ Dans le pipeline »
+  ✓ clic source → page Sources
+  ✓ layout 07_sources @1440 sans débordement horizontal
+  ✓ rail CRM → kanban
+  ✓ kanban contient AC 0253 (ajout depuis la fiche)
+  ✓ layout 08_crm @1440 sans débordement horizontal
+  ✓ rail IA → stub propre
+  ✓ layout 09_ia @1440 sans débordement horizontal
+  ✓ rail Outils → tiroir accueil vide
+  ✓ layout 10_outils @1440 sans débordement horizontal
+  ✓ J-2 → page Sources (exigence #9)
+  ✓ zéro erreur console @1440
+
+━━ Passe 1280px ━━
+  ✓ compteur chaudes = SQL (83)
+  ✓ compteur à surveiller = SQL (1720)
+  ✓ compteur à creuser = SQL (3353)
+  ✓ total = SQL (51129)
+  ✓ layout 01_cartes @1280 sans débordement horizontal
+  ✓ couche Zonage PLU → requête layers.geojson
+  ✓ couche PPR → requête layers.geojson
+  ✓ layout 02_couches @1280 sans débordement horizontal
+  ✓ filtre Chaude → 83 cartes
+  ✓ layout 03_filtre_chaude @1280 sans débordement horizontal
+  ✓ chip « Q ≥ 90 » ajouté
+  ✓ × retire le chip statut, Q ≥ 90 conservé
+  ✓ toggle Mutabilité → légende MUTABILITÉ
+  ✓ layout 04_mutabilite @1280 sans débordement horizontal
+  ✓ panneau repliable (chevron)
+  ✓ cloche → panneau notifications
+  ✓ omnibox Entrée → fiche AC0253
+  ✓ bandeau événement AC0253 (invariant)
+  ✓ layout 05_fiche_evenement @1280 sans débordement horizontal
+  ✓ barre Accessibilité dépliée → age_dirigeant
+  ✓ onglet Risques → lignes
+  ✓ layout 06_fiche_onglet @1280 sans débordement horizontal
+  ✓ export PDF AC0253 (200, %PDF)
+  ✓ + Pipeline → « ✓ Dans le pipeline »
+  ✓ clic source → page Sources
+  ✓ layout 07_sources @1280 sans débordement horizontal
+  ✓ rail CRM → kanban
+  ✓ kanban contient AC 0253 (ajout depuis la fiche)
+  ✓ layout 08_crm @1280 sans débordement horizontal
+  ✓ rail IA → stub propre
+  ✓ layout 09_ia @1280 sans débordement horizontal
+  ✓ rail Outils → tiroir accueil vide
+  ✓ layout 10_outils @1280 sans débordement horizontal
+  ✓ J-2 → page Sources (exigence #9)
+  ✓ zéro erreur console @1280
+
+━━ Anti-crash : 10 parcelles aléatoires ━━
+  ✓ fiche 97415000AW2362 rendue sans écran noir
+  ✓ fiche 97415000DX0049 rendue sans écran noir
+  ✓ fiche 97415000EX0029 rendue sans écran noir
+  ✓ fiche 97415000BV0816 rendue sans écran noir
+  ✓ fiche 97415000CP1097 rendue sans écran noir
+  ✓ fiche 97415000CY1040 rendue sans écran noir
+  ✓ fiche 97415000DM0238 rendue sans écran noir
+  ✓ fiche 97415000DI0646 rendue sans écran noir
+  ✓ fiche 97415000DR1199 rendue sans écran noir
+  ✓ fiche 97415000ES0927 rendue sans écran noir
+  ✓ zéro erreur console (anti-crash)
+
+════════════════════════════════════════════════════════════
+AUTO-QA 100 % VERTE
