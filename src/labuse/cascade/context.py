@@ -59,6 +59,13 @@ class EvalContext:
         self._bodacc: dict[int, dict] = {}
         self._propension: dict[int, dict] = {}
         self._passoire: dict[int, dict] = {}
+        # Phase 1 v2 (gardes) : socle SDP résiduelle, propriétaire PM (DGFiP), forme (emprise linéaire).
+        self._residuel: dict[int, dict] = {}
+        self._pm: dict[int, dict] = {}
+        self._forme: dict[int, dict] = {}
+        # Phase 2 v2 (Q économique) : vue mer (prix de sortie), assemblage même propriétaire adjacent.
+        self._vue_mer: dict[int, dict] = {}
+        self._assemblage: dict[int, dict] = {}
 
     # ───────────────────────── batch (commune entière) ─────────────────────────
 
@@ -179,9 +186,11 @@ class EvalContext:
                 text(
                     """SELECT p.id AS pid, count(*) AS n,
                               percentile_cont(0.5) WITHIN GROUP (ORDER BY d.valeur_fonciere) AS med,
+                              -- Phase 2 v2 : PRIX DE SORTIE = €/m² BÂTI (valeur/surf_bati), pas terrain :
+                              -- c'est ce qu'un promoteur vend (SDP × prix de sortie), base des quintiles île.
                               percentile_cont(0.5) WITHIN GROUP (
-                                ORDER BY d.valeur_fonciere / NULLIF(d.surface_terrain, 0))
-                                FILTER (WHERE d.surface_terrain > 0 AND d.valeur_fonciere > 0) AS med_em2
+                                ORDER BY d.valeur_fonciere / NULLIF(d.surface_reelle_bati, 0))
+                                FILTER (WHERE d.surface_reelle_bati > 0 AND d.valeur_fonciere > 0) AS med_em2
                        FROM parcels p JOIN dvf_mutations d
                          ON ST_DWithin(ST_Transform(p.centroid, 2975), ST_Transform(d.geom, 2975), :r)
                        WHERE p.id = ANY(:ids)
@@ -281,6 +290,66 @@ class EvalContext:
             {"ids": ids}).mappings().all():
             self._passoire[r["pid"]] = dict(r)
 
+        # ── Phase 1 v2 : gardes G5 (socle SDP) / G1 (foncier public) / G2 (emprise linéaire) ──
+        # G5 — SDP résiduelle pré-calculée (parcel_residuel). ABSENCE = non calculé (≠ zéro droit).
+        for r in self.session.execute(
+            text("SELECT parcel_id, sdp_residuelle_m2 FROM parcel_residuel WHERE parcel_id = ANY(:ids)"),
+            {"ids": ids}).mappings().all():
+            self._residuel[r["parcel_id"]] = {"sdp": r["sdp_residuelle_m2"]}
+        # G1 — propriétaire personne morale + classification DGFiP (jointure par idu).
+        for r in self.session.execute(
+            text("SELECT p.id AS pid, pm.groupe, pm.groupe_label, pm.denomination "
+                 "FROM parcels p JOIN parcelle_personne_morale pm ON pm.idu = p.idu WHERE p.id = ANY(:ids)"),
+            {"ids": ids}).mappings().all():
+            self._pm[r["pid"]] = dict(r)
+        # G2 — largeur/allongement du rectangle englobant orienté (ST_OrientedEnvelope, 2975).
+        for r in self.session.execute(
+            text("""WITH env AS (
+                      SELECT id, ST_ExteriorRing(ST_OrientedEnvelope(geom_2975)) g
+                      FROM parcels WHERE id = ANY(:ids))
+                    SELECT id AS pid,
+                      LEAST(ST_Distance(ST_PointN(g,1),ST_PointN(g,2)),
+                            ST_Distance(ST_PointN(g,2),ST_PointN(g,3))) AS larg,
+                      GREATEST(ST_Distance(ST_PointN(g,1),ST_PointN(g,2)),
+                               ST_Distance(ST_PointN(g,2),ST_PointN(g,3))) AS lng
+                    FROM env"""),
+            {"ids": ids}).mappings().all():
+            larg = float(r["larg"] or 0.0)
+            lng = float(r["lng"] or 0.0)
+            self._forme[r["pid"]] = {"larg": larg, "lng": lng, "ratio": (lng / larg) if larg else 0.0}
+
+        # ── Phase 2 v2 : vue mer (prix de sortie, spec §4.2) — table parcel_vue_mer déjà calculée ──
+        for r in self.session.execute(
+            text("SELECT parcel_id, vue, distance_cote_m, obstruction_pct FROM parcel_vue_mer "
+                 "WHERE parcel_id = ANY(:ids)"), {"ids": ids}).mappings().all():
+            self._vue_mer[r["parcel_id"]] = dict(r)
+
+        # ── Phase 2 v2 : assemblage même propriétaire adjacent (§ signal nouveau) ──
+        # Voisin CONTIGU (ST_DWithin `rayon_m`, défaut 1 m) partageant le SIREN, avec GARDE-FOU
+        # anti-lotissement : le propriétaire partagé ne détient pas plus de `garde_fou_max_parcelles`
+        # (île) — au-delà c'est une réserve foncière (SCCV/foncière), pas une assiette élargissable.
+        ap = self._layer_params("assemblage")
+        cap = int(ap.get("garde_fou_max_parcelles", 10))
+        rayon = float(ap.get("rayon_m", 1))
+        for r in self.session.execute(
+            text("""WITH bat AS (
+                      SELECT p.id, p.geom_2975, pm.siren
+                      FROM parcels p JOIN parcelle_personne_morale pm ON pm.idu = p.idu
+                      WHERE p.id = ANY(:ids) AND pm.siren IS NOT NULL AND pm.siren <> ''),
+                    hold AS (
+                      SELECT siren, count(*) n FROM parcelle_personne_morale
+                      WHERE siren IS NOT NULL AND siren <> '' GROUP BY siren)
+                    SELECT bat.id AS pid, bat.siren, h.n AS holding,
+                      (SELECT count(*) FROM parcels p2 JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
+                       WHERE pm2.siren = bat.siren AND p2.id <> bat.id
+                         AND ST_DWithin(bat.geom_2975, p2.geom_2975, :rayon)) AS voisins
+                    FROM bat JOIN hold h ON h.siren = bat.siren
+                    WHERE h.n <= :cap"""),
+            {"ids": ids, "cap": cap, "rayon": rayon}).mappings().all():
+            if (r["voisins"] or 0) > 0:
+                self._assemblage[r["pid"]] = {"siren": r["siren"], "holding": int(r["holding"]),
+                                              "voisins": int(r["voisins"])}
+
     def bodacc(self, parcel_id: int) -> dict | None:
         """Procédure collective la plus récente sur la parcelle (v_foncier_sous_pression). None sinon."""
         return self._bodacc.get(parcel_id)
@@ -296,6 +365,27 @@ class EvalContext:
     def nearest_point(self, parcel_id: int, kind: str) -> dict | None:
         """Plus proche objet ponctuel d'un kind sous le cap (dist, id, name, subtype, attrs). None sinon."""
         return self._nearest.get((parcel_id, kind))
+
+    def residuel(self, parcel_id: int) -> dict | None:
+        """SDP résiduelle (parcel_residuel). None = NON CALCULÉ (≠ zéro droit) → UNKNOWN côté socle."""
+        return self._residuel.get(parcel_id)
+
+    def personne_morale(self, parcel_id: int) -> dict | None:
+        """Propriétaire personne morale + classification DGFiP. None = pas de PM (physique/inconnu)."""
+        return self._pm.get(parcel_id)
+
+    def forme(self, parcel_id: int) -> dict | None:
+        """Forme parcellaire : largeur/longueur de l'enveloppe orientée + ratio (emprise linéaire)."""
+        return self._forme.get(parcel_id)
+
+    def vue_mer(self, parcel_id: int) -> dict | None:
+        """Vue mer (parcel_vue_mer) : vue oui/partielle/non + distance_cote_m + obstruction_pct."""
+        return self._vue_mer.get(parcel_id)
+
+    def assemblage(self, parcel_id: int) -> dict | None:
+        """Assemblage possible : voisin(s) contigu(s) même SIREN sous le garde-fou de détention.
+        None = pas d'assiette élargissable. {siren, holding, voisins}."""
+        return self._assemblage.get(parcel_id)
 
     def amenites(self, parcel_id: int) -> dict | None:
         """Distances d'aménités pré-calculées (parcel_amenites) pour la parcelle."""
@@ -413,8 +503,8 @@ class EvalContext:
             SELECT count(*) AS n,
                    percentile_cont(0.5) WITHIN GROUP (ORDER BY d.valeur_fonciere) AS median_value,
                    percentile_cont(0.5) WITHIN GROUP (
-                     ORDER BY d.valeur_fonciere / NULLIF(d.surface_terrain, 0))
-                     FILTER (WHERE d.surface_terrain > 0 AND d.valeur_fonciere > 0) AS median_eur_m2
+                     ORDER BY d.valeur_fonciere / NULLIF(d.surface_reelle_bati, 0))
+                     FILTER (WHERE d.surface_reelle_bati > 0 AND d.valeur_fonciere > 0) AS median_eur_m2
             FROM parcels p
             JOIN dvf_mutations d
               ON ST_DWithin(ST_Transform(p.centroid, 2975), ST_Transform(d.geom, 2975), :r)
