@@ -48,3 +48,27 @@ Sortie : « AUTO-QA 100 % VERTE ». Captures : docs/design/captures/qa/.
   scoring) avant d'exposer.
 - **575 ms sur le filtre plein jeu** (51k matchAll client) : acceptable, mais un index client
   (typed arrays) ou le MVT le rendrait instantané.
+
+---
+
+# NUIT DES OUTILS (feat/outils-ia) — recos, volumétries, backlog
+
+## Recos consignées (avant build, données réelles)
+- M01 : 6 904 candidats bruts → 698 après C1-C5 ; spec officielle ABSENTE → critères définis dans
+  modules.py ; lot = carré inscrit dans le cercle max (conservateur, sous-estime les lots allongés).
+- Sitadel : codes `raw.etat` {2,4,5,6} NON documentés par la source ; 6 = achevé (100 % DAACT) ;
+  données du 02/01/2017 au 31/01/2023 ; 77 % géocodés (91 % sur 24 mois glissants fin de données).
+- M05 : PAS de dates dépôt/décision dans la source → « vélocité » = permis→DAACT (assumé, affiché).
+- M07 : 545 SIREN de PM introuvables au RNE (Q≥50, PM privées SP) ; 0 dirigeant inactif ;
+  indivision/succession non détectables (Fichiers fonciers non branchés).
+- M15 : lecture du zonage via les lignes de cascade (déjà résolu) — 0,7 s au lieu de 2 min 33
+  (jointure spatiale île). Leçon générale : le run q_v2 EST un index thématique par parcelle.
+
+## Backlog prochain cycle (vu, pas fait)
+- M01 : rectangle inscrit exact (grille/rotating calipers) si la spec l'exige ; multi-communes.
+- M08 : curseur d'années supplémentaires quand les millésimes IGN 2006-2015 s'ouvriront sur le 974.
+- M11-14 : brancher le cron réel (labuse detect-events) après le prochain run de scoring ; SMTP digest.
+- M15 : vrai recalcul règlementaire (moteur de faisabilité avec YAML U en mémoire).
+- M17 : surfaces OCS dédoublonnées (ST_Union) + quotas SAR/SCOT officiels quand publiés.
+- M19-21 : vrais comptes (auth), révocation de liens M20, clés API gérées.
+- ia_log : page d'admin coûts (la table existe).
