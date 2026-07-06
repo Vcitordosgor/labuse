@@ -85,3 +85,24 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   (statut, Q ≥ N, surface ≥ N) supprimables via ×. « + Filtre » ouvre un popover (statut, score, surface).
 - **Compteurs** = comptage sur score+surface (indépendant du statut, pour garder le breakdown lisible) ;
   **liste + carte** = filtre complet (statut inclus). Retirer un chip met à jour les trois instantanément.
+
+## Décisions autonomes (mandat socle complet — Vic arbitre à la revue finale)
+- **Compteurs = SQL q_v2** : le mandat cite « 42 chaudes · 486 à surveiller · 13 979 à creuser » mais
+  le SQL direct sur `run_label='q_v2'` (la règle QA du mandat elle-même) donne **83 · 1 720 · 3 353**.
+  Les « 486 » correspondent au run *etape2*. L'UI affiche le SQL ; l'écart est consigné dans NOTES.
+- **Couches COUCHES toutes réelles** : Zonage PLU / PPR / Parc national = overlays `spatial_layers`
+  (endpoint `/map/layers.geojson`, géométries simplifiées) ; Vue mer = liseré cyan sur les promues à
+  vue dégagée (propriété du geojson) ; Parcelles = visibilité des calques. Aucune case morte.
+- **Omnibox** : recherche par IDU (filtre live de la liste ; Entrée ouvre la première fiche) ;
+  raccourci `/`. L'adresse/lieu-dit attendra un géocodeur (hors V1).
+- **Anti-serveur-périmé** : middleware `Cache-Control: no-store` sur le HTML (un index.html en cache
+  pointait vers un vieux bundle → crash au clic parcelle constaté par Vic) + ErrorBoundary global avec
+  consigne de relance.
+- **CRM** : la fiche reste ouvrable par-dessus le kanban (clic IDU d'une carte → vue Cartes + fiche).
+  Suppression d'une carte au survol (✕). Pas de fil événementiel (V1.1, conforme brief).
+- **PDF** : fpdf2 (pur Python) + fontes OFL du design system embarquées (`api/fonts/`) — PDF sombre
+  fidèle, généré serveur, bouton fiche → nouvel onglet.
+- **IA** : stub propre à deux niveaux — zone rail (page vide élégante) et bouton fiche (popover
+  « le narratif arrive en V1.x, le scoring reste déterministe »).
+- **Icônes rail** : redessinées (20 px, trait 1.5-1.6, style contour unifié) — les précédentes
+  rendaient brouillon à petite taille.
