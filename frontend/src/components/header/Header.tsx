@@ -1,21 +1,54 @@
-import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useEffect, useRef, useState } from 'react'
+import { getParcelsGeojson } from '../../lib/api'
 import { activeChips } from '../../lib/filters'
 import { STATUT_META } from '../../lib/status'
 import type { Statut } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
 function Omnibox() {
-  const { query, setQuery } = useApp()
+  const { query, setQuery, select, setView } = useApp()
+  const ref = useRef<HTMLInputElement>(null)
+  const geo = useQuery({ queryKey: ['geojson'], queryFn: getParcelsGeojson })
+
+  // raccourci « / » → focus (comme indiqué par le kbd)
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+        e.preventDefault()
+        ref.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [])
+
+  // Entrée : premier IDU correspondant → ouvre sa fiche (recherche = filtre live de la liste)
+  const onEnter = () => {
+    const qn = query.trim().toUpperCase().replace(/\s+/g, '')
+    if (!qn || !geo.data) return
+    const hit = geo.data.features.find((f) => {
+      const idu = String(f.properties?.idu ?? '').toUpperCase()
+      return idu.includes(qn) || idu.slice(8).includes(qn)
+    })
+    if (hit) {
+      setView('cartes')
+      select(String(hit.properties?.idu))
+    }
+  }
+
   return (
-    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3">
-      <svg viewBox="0 0 20 20" className="h-4 w-4 text-txt-mut">
+    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 focus-within:border-[#2E6B4F]">
+      <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-txt-mut">
         <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
         <line x1="13" y1="13" x2="17" y2="17" stroke="currentColor" strokeWidth="1.5" />
       </svg>
-      <input value={query} onChange={(e) => setQuery(e.target.value)}
-        placeholder="Rechercher : adresse, AB 0234, lieu-dit…"
-        className="flex-1 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none" />
-      <kbd className="rounded border border-line-2 px-1 font-mono text-[11px] text-txt-dim">/</kbd>
+      <input ref={ref} value={query} onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && onEnter()}
+        placeholder="Rechercher un IDU : AB 0234, DE0805…"
+        title="Filtre la liste des résultats ; Entrée ouvre la première fiche correspondante"
+        className="min-w-0 flex-1 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none" />
+      <kbd className="shrink-0 rounded border border-line-2 px-1 font-mono text-[11px] text-txt-dim">/</kbd>
     </div>
   )
 }
