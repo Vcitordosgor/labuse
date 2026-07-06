@@ -1,5 +1,7 @@
-"""Export PDF de la fiche premium (Brique 3) — design system LABUSE (noir #060A08 / menthe #5CE6A1).
+"""Export PDF de la fiche premium (Brique 3) — IMPRESSION : fond BLANC, encre noire.
 
+Le dark est pour l'écran ; un dossier comité s'imprime. L'identité LABUSE reste par la typo
+(Space Grotesk/Inter/JetBrains Mono) et la menthe en ACCENTS FINS (filets, puces, chip statut).
 Rendu fpdf2 (pur Python) avec les fontes du design system (OFL, embarquées dans api/fonts/).
 Contenu = la fiche complète : en-tête (IDU/statut/surface), bandeau événement, scores Q/A +
 complétude, lignes cascade TRACÉES par onglet (poids signé, détail, source, date), flags,
@@ -14,22 +16,23 @@ from fpdf import FPDF
 
 FONTS = Path(__file__).resolve().parent / "fonts"
 
-# Palette design system (hex → RGB)
-BG = (6, 10, 8)            # #060A08
-SURFACE = (17, 24, 20)     # #111814
-LINE = (30, 42, 35)        # #1E2A23
-MINT = (92, 230, 161)      # #5CE6A1
-MINT_INK = (6, 19, 12)
-TXT_HI = (236, 245, 239)
-TXT = (201, 220, 209)
-TXT_MUT = (143, 166, 154)
-TXT_DIM = (92, 114, 104)
-RED = (232, 105, 90)       # #E8695A
-AMBER = (232, 180, 76)     # #E8B44C
+# Palette IMPRESSION (fond blanc). Menthe écran #5CE6A1 → déclinée en encres qui tiennent le papier.
+BG = (255, 255, 255)
+SURFACE = (244, 248, 246)  # cartouches gris-vert très pâle
+LINE = (216, 226, 220)
+MINT = (11, 138, 95)       # menthe d'impression (accents, positifs) — contraste AA sur blanc
+MINT_SOFT = (226, 247, 237)  # fond de chip
+TXT_HI = (17, 24, 20)      # quasi-noir
+TXT = (40, 50, 45)
+TXT_MUT = (95, 108, 101)
+TXT_DIM = (140, 152, 145)
+RED = (183, 63, 50)        # rouge d'impression
+RED_SOFT = (250, 233, 230)
+AMBER = (168, 121, 22)
 
 STATUT = {
     "chaude": ("Chaude", MINT),
-    "a_surveiller": ("À surveiller", (74, 222, 150)),
+    "a_surveiller": ("À surveiller", (23, 122, 88)),
     "a_creuser": ("À creuser", AMBER),
     "ecartee": ("Écartée", RED),
     "exclue": ("Exclue", (107, 122, 114)),
@@ -38,9 +41,11 @@ ONGLETS = [("regles", "RÈGLES"), ("risques", "RISQUES"), ("marche", "MARCHÉ"),
 
 
 class _Pdf(FPDF):
-    def header(self):  # fond sombre pleine page, posé à chaque page
-        self.set_fill_color(*BG)
-        self.rect(0, 0, self.w, self.h, style="F")
+    def header(self):  # fond blanc (papier) — un filet menthe fin signe l'identité en tête de page
+        self.set_draw_color(*MINT)
+        self.set_line_width(0.6)
+        self.line(14, 8, self.w - 14, 8)
+        self.set_line_width(0.2)
         self.set_y(12)
 
     def footer(self):
@@ -57,7 +62,8 @@ class _Pdf(FPDF):
 def _chip(pdf: _Pdf, x: float, y: float, label: str, color: tuple) -> float:
     pdf.set_font("inter", size=7.5)
     w = pdf.get_string_width(label) + 6
-    pdf.set_fill_color(int(color[0] * 0.22), int(color[1] * 0.22), int(color[2] * 0.22))
+    pdf.set_fill_color(*(MINT_SOFT if color == MINT else
+                         RED_SOFT if color == RED else (238, 241, 239)))
     pdf.rect(x, y, w, 5.4, style="F", round_corners=True, corner_radius=2.6)
     pdf.set_text_color(*color)
     pdf.set_xy(x + 3, y + 0.7)
@@ -92,7 +98,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         n_lines = max(1, len(pdf.multi_cell(pdf.w - 36, 3.6, detail, dry_run=True, output="LINES")))
         h = 7.6 + n_lines * 3.6 + 2
         y = pdf.get_y()
-        pdf.set_fill_color(58, 22, 20)
+        pdf.set_fill_color(*RED_SOFT)
         pdf.rect(14, y, pdf.w - 28, h, style="F", round_corners=True, corner_radius=2)
         pdf.set_xy(18, y + 1.6)
         pdf.set_font("inter", size=8.5)
@@ -100,7 +106,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.cell(0, 4, "● ÉVÉNEMENT — force « chaude »", new_x="LMARGIN", new_y="NEXT")
         pdf.set_xy(18, y + 7.2)
         pdf.set_font("inter", size=7)
-        pdf.set_text_color(232, 169, 159)
+        pdf.set_text_color(120, 52, 44)
         pdf.multi_cell(pdf.w - 36, 3.6, detail)
         pdf.set_y(y + h + 3)
 
@@ -122,7 +128,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     # ── Scores (Q / A / complétude — le score ne s'affiche jamais seul)
     y = pdf.get_y()
     cw = (pdf.w - 28 - 8) / 3
-    vals = [("QUALITÉ", fiche["q_score"], MINT), ("ACCESSIBILITÉ", fiche["a_score"], (74, 222, 150)),
+    vals = [("QUALITÉ", fiche["q_score"], MINT), ("ACCESSIBILITÉ", fiche["a_score"], (23, 122, 88)),
             ("COMPLÉTUDE", fiche["completeness_score"],
              MINT if fiche["completeness_score"] >= 50 else AMBER)]
     for i, (k, v, c) in enumerate(vals):
