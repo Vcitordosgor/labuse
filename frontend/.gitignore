@@ -3,3 +3,5 @@ dist/
 *.local
 .vite/
 tsconfig.tsbuildinfo
+*.tsbuildinfo
+vite.config.js
