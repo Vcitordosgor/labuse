@@ -48,3 +48,19 @@ export const deletePipeline = (id: number) => j<{ ok: boolean }>(`/pipeline/${id
 
 // ── Sources ──
 export const getSources = () => j<SourceInfo[]>('/sources')
+
+// ── Modules outils (Vague 1) ──
+export const modDivision = (minScore = 0) => j<{ total: number; items: Record<string, unknown>[] }>(`/modules/division?min_score=${minScore}&limit=300`)
+export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
+export const modPatrimoine = (siren: string) => j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}`)
+export const modPermis = (months: number) => j<Record<string, unknown>>(`/modules/permis?commune=${encodeURIComponent(COMMUNE)}&months=${months}`)
+export const modPromesses = (months: number) => j<Record<string, unknown>>(`/modules/promesses?commune=${encodeURIComponent(COMMUNE)}&months=${months}`)
+export const modVelocite = () => j<{ note: string; communes: Record<string, unknown>[] }>('/modules/velocite')
+export const modBailleur = () => j<Record<string, unknown>>(`/modules/bailleur?commune=${encodeURIComponent(COMMUNE)}`)
+export const modFantome = () => j<Record<string, unknown>>(`/modules/fantome?commune=${encodeURIComponent(COMMUNE)}`)
+export const modCourriers = (idus: string[], contexte: string) =>
+  j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, contexte }) })
+export const modDueDiligence = (refs: string) =>
+  j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[] }>('/modules/duediligence', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })

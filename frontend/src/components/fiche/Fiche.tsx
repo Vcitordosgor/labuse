@@ -111,6 +111,9 @@ const TABS: { k: 'synthese' | Onglet | 'bilan'; label: string }[] = [
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
+  const moduleFiche = useApp((s) => s.moduleFiche)
+  const setModule = useApp((s) => s.setModule)
+  const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
   // Échap ferme la fiche — sauf si le drawer source est ouvert (il consomme Échap en premier)
   useEffect(() => {
@@ -136,6 +139,21 @@ export function Fiche({ idu }: { idu: string }) {
         <div className="shrink-0 border-b border-[#5a2420] bg-[#3a1614] px-5 py-2.5">
           <div className="flex items-center gap-2 text-xs font-medium text-st-ecartee">● ÉVÉNEMENT — force « chaude »</div>
           {f.evenement_detail && <div className="mt-1 text-[11px] leading-snug text-[#e8a99f]">{f.evenement_detail}</div>}
+        </div>
+      )}
+
+      {/* bloc MODULE (doctrine : en tête de fiche, violet) */}
+      {modBlock && (
+        <div className="shrink-0 border-b border-[#2a2138] bg-[#171221] px-5 py-3">
+          <p className="font-mono text-[10px] tracking-widest text-[#B497F0]">MODULE · {modBlock.module.toUpperCase()}</p>
+          <div className="mt-1.5 flex flex-col gap-1">
+            {modBlock.lines.map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-3 text-[11px]">
+                <span className="text-txt-dim">{k}</span>
+                <span className="text-right text-txt">{v}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -218,6 +236,13 @@ export function Fiche({ idu }: { idu: string }) {
             className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi" title="Exporter la fiche en PDF">
             PDF
           </a>
+          {f && (
+            <button onClick={() => setModule('temps')}
+              className="rounded-lg border border-line-2 px-2.5 py-1.5 text-xs text-txt hover:text-txt-hi"
+              title="Ce terrain en 1950 — comparateur temporel (M08)">
+              1950
+            </button>
+          )}
           {f && (
             <a href={`https://www.google.com/maps/@${f.coords[1]},${f.coords[0]},19z/data=!3m1!1e3`}
               target="_blank" rel="noreferrer"

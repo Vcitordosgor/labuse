@@ -85,7 +85,7 @@ export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
-  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone } = useApp()
+  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo } = useApp()
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
   const [measure, setMeasure] = useState<Measure>({ pts: [], alti: null })
@@ -143,6 +143,18 @@ export function MapView() {
       m.addLayer({ id: 'measure-fill', type: 'fill', source: 'measure', filter: ['==', ['geometry-type'], 'Polygon'], paint: { 'fill-color': '#5CE6A1', 'fill-opacity': 0.12 } })
       m.addLayer({ id: 'measure-line', type: 'line', source: 'measure', filter: ['in', ['geometry-type'], ['literal', ['LineString', 'Polygon']]], paint: { 'line-color': '#5CE6A1', 'line-width': 2, 'line-dasharray': [2, 1.5] } })
       m.addLayer({ id: 'measure-pts', type: 'circle', source: 'measure', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 3.5, 'circle-color': '#5CE6A1', 'circle-stroke-color': '#06130C', 'circle-stroke-width': 1.5 } })
+
+      // calques MODULE (violet) : surlignage de parcelles + géométries propres (lots, permis)
+      m.addSource('module-extra', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'module-hl', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''],
+        paint: { 'line-color': '#B497F0', 'line-width': 1.6, 'line-opacity': 0.95 } })
+      m.addLayer({ id: 'module-lot', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'lot'],
+        paint: { 'line-color': '#B497F0', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
+      m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'permis'],
+        paint: { 'circle-radius': 4, 'circle-color': '#B497F0', 'circle-opacity': 0.85,
+                 'circle-stroke-color': '#120d1d', 'circle-stroke-width': 1.2 } })
 
       // zone dessinée persistante (filtre les résultats)
       m.addSource('zone', { type: 'geojson', data: EMPTY_FC as never })
@@ -230,6 +242,23 @@ export function MapView() {
     const m = map.current
     if (m && ready.current && m.getLayer('parcels-sel')) m.setFilter('parcels-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
   }, [selectedIdu])
+
+  // module actif → surlignage + géométries propres
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current || !m.getLayer('module-hl')) return
+    m.setFilter('module-hl', moduleMap.idus.length
+      ? (['in', ['get', 'idu'], ['literal', moduleMap.idus.slice(0, 4000)]] as never)
+      : (['==', ['get', 'idu'], ''] as never))
+    ;(m.getSource('module-extra') as maplibregl.GeoJSONSource | undefined)?.setData((moduleMap.extra ?? EMPTY_FC) as never)
+  }, [moduleMap])
+
+  // flyTo demandé (fiche → « 1950 », modules…)
+  useEffect(() => {
+    if (!flyTo || !map.current) return
+    map.current.flyTo({ center: flyTo.center, zoom: flyTo.zoom, duration: 900 })
+    setFlyTo(null)
+  }, [flyTo, setFlyTo])
 
   // zone dessinée → tracé persistant sur la carte (le filtre des résultats vit dans la liste)
   useEffect(() => {
