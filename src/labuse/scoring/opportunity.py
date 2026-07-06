@@ -50,6 +50,13 @@ def compute_opportunity(verdicts, ai_adjustment: int = 0, cfg: dict | None = Non
     score = float(base)
     has_fort = False
     for i, v in enumerate(verdicts):
+        # Poids SIGNÉ direct (barème à bandes : socle SDP −25..+30) — court-circuite
+        # sévérité/bonus, s'applique tel quel. `scored()` le pose ; None = couche classique.
+        if getattr(v, "weight_override", None) is not None:
+            w = float(v.weight_override)
+            weights[i] = w
+            score += w
+            continue
         if v.result == CascadeVerdict.SOFT_FLAG:
             sev = v.severity.value if isinstance(v.severity, Severity) else (v.severity or "moyen")
             w = -(penalty * mult.get(sev, 1))

@@ -25,6 +25,7 @@ class Verdict:
     severity: Severity | None = None         # requis pour SOFT_FLAG
     bonus_key: str | None = None             # clé de bonus (POSITIVE) → opportunity_weights
     magnitude: float = 1.0                   # POSITIVE : intensité 0..1 du bonus (×poids config). 1.0 = bonus plein/binaire
+    weight_override: float | None = None     # contribution SIGNÉE directe (barème à bandes) : court-circuite sévérité/bonus
     exclude_kind: str | None = None          # "exclue" | "faux_positif" (pour HARD_EXCLUDE)
     data_source_name: str | None = None      # source ayant alimenté ce verdict
     extra: dict[str, Any] = field(default_factory=dict)  # ex. surface_m2, slope_label
@@ -45,6 +46,22 @@ def positive(layer: str, detail: str, bonus_key: str, *, magnitude: float = 1.0,
     # magnitude ∈ [0,1] : part du poids config réellement attribuée (continu, borné, tracé).
     m = max(0.0, min(1.0, float(magnitude)))
     return Verdict(layer, CascadeVerdict.POSITIVE, detail, bonus_key=bonus_key, magnitude=m, data_source_name=source)
+
+
+def scored(layer: str, detail: str, weight: float, *, source: str | None = None, **extra) -> Verdict:
+    """Contribution SIGNÉE directe au score (poids exact, ni sévérité ni magnitude).
+
+    Pour les barèmes à bandes signées inexprimables par le multiplicateur de sévérité
+    (socle SDP résiduelle −25..+30 ; futur : pente graduée −16..0). `result` dérive du
+    signe (POSITIVE / SOFT_FLAG / PASS) pour la lisibilité ; `weight_override` fait foi
+    côté score. Défensif : un poids négatif porte Severity.INFO (×0) — si l'override
+    était un jour ignoré, ZÉRO point plutôt qu'un malus fantôme."""
+    w = float(weight)
+    res = CascadeVerdict.POSITIVE if w > 0 else (CascadeVerdict.SOFT_FLAG if w < 0 else CascadeVerdict.PASS)
+    v = Verdict(layer, res, detail, data_source_name=source, weight_override=w, extra=extra)
+    if res == CascadeVerdict.SOFT_FLAG:
+        v.severity = Severity.INFO
+    return v
 
 
 def passed(layer: str, detail: str = "", *, source: str | None = None, **extra) -> Verdict:
