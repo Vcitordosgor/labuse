@@ -71,7 +71,8 @@ for (const width of [1440, 1280]) {
   assert(header.includes(`${fmtFr(chaude)} chaudes`), `compteur chaudes = SQL (${chaude})`, header)
   assert(header.includes(`${fmtFr(surveiller)} à surveiller`), `compteur à surveiller = SQL (${surveiller})`)
   assert(header.includes(`${fmtFr(creuser)} à creuser`), `compteur à creuser = SQL (${creuser})`)
-  const totalLine = await page.locator('text=/sur .* parcelles/').first().innerText()
+  // C4 (revue Vic) : cadrage positif « N parcelles analysées → M opportunités détectées »
+  const totalLine = await page.locator('text=/parcelles analysées/').first().innerText()
   assert(totalLine.replace(/ | /g, ' ').includes(fmtFr(total)), `total = SQL (${total})`)
   await snap(page, '01_cartes', width)
 
