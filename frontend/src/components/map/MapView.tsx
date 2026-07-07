@@ -293,6 +293,53 @@ export function MapView() {
     m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
   }, [mode, filters, layers, geo.dataUpdatedAt, mapReady, ile])
 
+  // ── VAGUE 0 (île) : sous z10 les tuiles parcellaires ne servent rien — l'île raconte où
+  // sont les cibles via UN marqueur par commune (nom + chaudes, dimensionné/coloré), cliquable
+  // → bascule le sélecteur (fitBounds existant). Marqueurs DOM (pas de dépendance glyphes).
+  const aggMarkers = useRef<maplibregl.Marker[]>([])
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    aggMarkers.current.forEach((mk) => mk.remove())
+    aggMarkers.current = []
+    if (!ile || !communes.data) return
+    const updateVis = () => {
+      const show = m.getZoom() < 10
+      aggMarkers.current.forEach((mk) => { mk.getElement().style.display = show ? '' : 'none' })
+    }
+    for (const c of communes.data) {
+      if (!c.bbox || c.bbox[0] == null) continue
+      const hot = c.chaudes > 0
+      const el = document.createElement('button')
+      el.setAttribute('data-commune-marker', c.commune)
+      el.title = `${c.commune} — ${c.chaudes} chaude${c.chaudes > 1 ? 's' : ''} · cliquer pour ouvrir la commune`
+      el.textContent = `${c.commune.replace(/^(Les|Le|La|L')\s?/, '')} ${c.chaudes > 0 ? c.chaudes : ''}`.trim()
+      const size = Math.min(13, 10 + Math.log10(Math.max(1, c.chaudes)) * 2)
+      el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
+        `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? '#2E6B4F' : '#26302B'};` +
+        `background:${hot ? 'rgba(9,26,18,.92)' : 'rgba(10,14,12,.85)'};color:${hot ? '#5CE6A1' : '#8FA69A'};` +
+        (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
+      el.onclick = (e) => { e.stopPropagation(); useApp.getState().setCommune(c.commune) }
+      aggMarkers.current.push(new maplibregl.Marker({ element: el })
+        .setLngLat([(c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2]).addTo(m))
+    }
+    updateVis()
+    m.on('zoom', updateVis)
+    return () => { m.off('zoom', updateVis); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
+  }, [ile, communes.data, mapReady])
+
+  // le bandeau bas ne donne JAMAIS une instruction inexécutable : sous z10 en mode île,
+  // aucune parcelle n'est cliquable → « Zoomez ou cliquez une commune »
+  const [lowZoom, setLowZoom] = useState(false)
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    const h = () => setLowZoom(m.getZoom() < 10)
+    h()
+    m.on('zoom', h)
+    return () => { m.off('zoom', h) }
+  }, [mapReady])
+
   // changement de commune → recadrage sur son emprise (bbox servie par /communes)
   useEffect(() => {
     const m = map.current
@@ -318,11 +365,12 @@ export function MapView() {
     }
     if (feat) centroidReady(roughCentroid(feat.geometry))
     else {
-      // mode île (ou parcelle hors du GeoJSON chargé) : le centroïde vient de la fiche API —
-      // même clé react-query que la fiche ouverte → zéro requête en plus en pratique
+      // mode île (ou parcelle hors du GeoJSON chargé) : le centroïde vient de la fiche API.
+      // CONTRAT (Vic, 07/07) : un clic dans la liste = je VOIS la parcelle pulser, où qu'elle
+      // soit — le champ est `coords` [lon, lat] (le fallback lat/lon muet était le bug).
       getFiche(selectedIdu).then((f) => {
-        const ff = f as unknown as { lat?: number; lon?: number }
-        if (typeof ff.lon === 'number' && typeof ff.lat === 'number') centroidReady([ff.lon, ff.lat])
+        const c = (f as unknown as { coords?: [number, number] }).coords
+        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]])
       }).catch(() => undefined)
     }
     const pingId = geo.data && feat ? 'parcels-ping' : 'ile-ping'
@@ -339,7 +387,9 @@ export function MapView() {
     const pulse = (ts: number) => {
       if (t0 == null) t0 = ts
       const dt = (ts - t0) / 1000
-      if (dt > 2 || !m.getLayer(pingId)) {
+      // 3 s : en mode île le vol (800 ms) + le chargement des tuiles à destination doivent
+      // laisser un pulse VISIBLE à l'arrivée
+      if (dt > 3 || !m.getLayer(pingId)) {
         if (m.getLayer(pingId)) m.setPaintProperty(pingId, 'line-opacity', 0)
         return
       }
@@ -494,7 +544,7 @@ export function MapView() {
       )}
       {!tool && (
         <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-line-2 bg-surface-2 px-4 py-1.5 text-xs text-txt-mut">
-          Cliquez une parcelle pour ouvrir sa fiche
+          {ile && lowZoom ? 'Zoomez ou cliquez une commune pour voir ses parcelles' : 'Cliquez une parcelle pour ouvrir sa fiche'}
         </div>
       )}
       <div className="absolute bottom-2 right-3 font-sans text-[11px] text-[#3E4C45]">
