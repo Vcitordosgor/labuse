@@ -831,9 +831,20 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
     pm = db.execute(text(
         "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
         {"idu": idu}).mappings().first()
+    # NPNRU (contexte, hors scoring) : parcelle DANS un périmètre de renouvellement urbain,
+    # ou ADJACENTE (<= 100 m) — l'environnement immédiat d'un programme se transforme
+    anru = db.execute(text(
+        """SELECT a.name, a.attrs->>'interet' AS interet,
+                  ST_Intersects(p2.geom_2975, a.geom_2975) AS dans
+           FROM spatial_layers a JOIN parcels p2 ON p2.idu = :idu
+           WHERE a.kind = 'anru' AND ST_DWithin(p2.geom_2975, a.geom_2975, 100)
+           ORDER BY ST_Intersects(p2.geom_2975, a.geom_2975) DESC LIMIT 1"""),
+        {"idu": idu}).mappings().first()
     return {
         "idu": head["idu"], "commune": head["commune"],
         "proprietaire_moral": dict(pm) if pm else None,
+        "anru": {"quartier": anru["name"], "interet": anru["interet"],
+                 "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
         "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
         "statut": head["matrice_statut"], "q_score": head["q_score"], "a_score": head["a_score"],
         "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
@@ -861,7 +872,7 @@ def parcel_export_pdf(idu: str, source: str = "q_v2", db: Session = Depends(get_
 
 
 #: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
-_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national"}
+_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite"}
 
 
 @app.get("/map/layers.geojson")
