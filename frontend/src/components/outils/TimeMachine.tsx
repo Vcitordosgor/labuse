@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
 import { getParcelsGeojson } from '../../lib/api'
+import { useApp } from '../../store/useApp'
 
 const WMTS = (layer: string, format: string) =>
   `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER=${layer}&FORMAT=${format}`
@@ -35,7 +36,10 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   const maps = useRef<[maplibregl.Map, maplibregl.Map] | null>(null)
   const [split, setSplit] = useState(50)
   const dragging = useRef(false)
-  const geo = useQuery({ queryKey: ['geojson'], queryFn: getParcelsGeojson })
+  const commune = useApp((s) => s.commune)
+  // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
+  // surcouche parcelles (l'ortho historique est l'objet de l'outil)
+  const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
 
   useEffect(() => {
     if (!leftRef.current || !rightRef.current || maps.current) return

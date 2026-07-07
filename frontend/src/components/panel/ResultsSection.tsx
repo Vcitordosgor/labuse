@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { COMMUNE, getParcelsGeojson, getStats } from '../../lib/api'
+import { getParcelsGeojson, getResults, getStats } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { completudeColor, STATUT_META } from '../../lib/status'
@@ -25,7 +25,7 @@ function CompletudeRing({ value }: { value: number }) {
   )
 }
 
-function ResultCard({ p }: { p: ParcelProps }) {
+function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
   const { selectedIdu, select } = useApp()
   const meta = STATUT_META[p.status]
   const on = selectedIdu === p.idu
@@ -46,7 +46,7 @@ function ResultCard({ p }: { p: ParcelProps }) {
           )}
           {p.vue_mer === 'oui' && <span className="shrink-0 text-[10px] text-[#7DE8E0]" title="Vue mer dégagée">◠</span>}
         </div>
-        <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {COMMUNE}</div>
+        <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
         <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}>{p.q_score}</span>
@@ -95,12 +95,23 @@ function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', numbe
 const CAP = 200
 
 export function ResultsSection() {
-  const { filters, query, zone, resetFilters } = useApp()
+  const { filters, query, zone, resetFilters, commune } = useApp()
+  const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   const [showAll, setShowAll] = useState(false)
-  const stats = useQuery({ queryKey: ['stats'], queryFn: getStats })
-  const geo = useQuery({ queryKey: ['geojson'], queryFn: getParcelsGeojson })
+  // compteurs par statut sous filtres de PÉRIMÈTRE (jamais le filtre statut lui-même)
+  const scopeOnly = useMemo(() => ({ ...filters, statuts: [] as Statut[] }), [filters])
+  const stats = useQuery({
+    queryKey: ['stats', commune, ile ? scopeOnly : null],
+    queryFn: () => getStats(ile ? scopeOnly : undefined),
+  })
+  const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
+  const serverList = useQuery({
+    queryKey: ['results', commune, filters],
+    queryFn: () => getResults(filters),
+    enabled: ile,
+  })
 
-  // props + centroïde (calculé UNE fois — sert au filtre de zone)
+  // props + centroïde (calculé UNE fois — sert au filtre de zone) — mode commune uniquement
   const props = useMemo(
     () => (geo.data?.features ?? []).map((f) => {
       const p = f.properties as unknown as ParcelProps
@@ -113,9 +124,10 @@ export function ResultsSection() {
   const scoped = hasScopeFilters(filters, zone)
   const qNorm = query.trim().toUpperCase().replace(/\s+/g, '')
 
-  // Compteurs : SANS filtre de périmètre → /stats (SQL-exact). AVEC → recalcul client marqué *.
+  // Compteurs : SANS filtre de périmètre → /stats (SQL-exact). AVEC → île : /stats FILTRÉ
+  // (SQL-exact aussi) ; commune : recalcul client marqué *.
   const counts = useMemo(() => {
-    if (!scoped && stats.data) {
+    if ((!scoped || ile) && stats.data) {
       const s = stats.data
       return { all: s.chaude + s.a_surveiller + s.a_creuser, chaude: s.chaude, a_surveiller: s.a_surveiller, a_creuser: s.a_creuser, ecartee: s.ecartee, exclue: 0 }
     }
@@ -126,21 +138,28 @@ export function ResultsSection() {
       c[p.status] = (c[p.status] ?? 0) + 1
     }
     return c
-  }, [props, filters, zone, scoped, stats.data])
+  }, [props, filters, zone, scoped, ile, stats.data])
 
-  const list = useMemo(
-    () => props
+  const list = useMemo(() => {
+    if (ile) {
+      // serveur : déjà filtré (chips) et trié (événement d'abord, puis score)
+      return ((serverList.data ?? []) as unknown as (ParcelProps & { commune?: string })[])
+        .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
+    }
+    return props
       .filter((p) => matchAll(p, filters, zone) && PROMUES.includes(p.status))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
       .sort((a, b) => {
         // métier : l'ÉVÉNEMENT crée l'urgence de la semaine → toujours en tête, puis le score
         const ev = Number(b.evenement === 'rouge') - Number(a.evenement === 'rouge')
         return ev !== 0 ? ev : b.q_score + b.a_score - (a.q_score + a.a_score)
-      }),
-    [props, filters, zone, qNorm],
-  )
+      })
+  }, [ile, serverList.data, props, filters, zone, qNorm])
   const shown = showAll ? list : list.slice(0, CAP)
 
+  const loading = ile ? serverList.isLoading : geo.isLoading
+  const error = ile ? serverList.isError : geo.isError
+  const refetch = () => (ile ? serverList.refetch() : geo.refetch())
   const total = stats.data?.total ?? props.length
   const promus = counts.all || 1
   const nFilters = (filters.statuts.length ? 1 : 0) + (scoped ? 1 : 0)
@@ -170,31 +189,32 @@ export function ResultsSection() {
       <StatutChips counts={counts} partial={scoped} />
 
       <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
-        {geo.isLoading && (
+        {loading && (
           <>
             {[...Array(5)].map((_, i) => (
               <div key={i} className="h-[52px] shrink-0 animate-pulse rounded-[10px] border border-line-2 bg-surface-3" />
             ))}
           </>
         )}
-        {geo.isError && (
+        {error && (
           <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
             <p className="text-st-ecartee">Erreur de chargement des parcelles.</p>
-            <button onClick={() => geo.refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
+            <button onClick={refetch} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
           </div>
         )}
-        {!geo.isLoading && !geo.isError && shown.length === 0 && (
+        {!loading && !error && shown.length === 0 && (
           <div className="rounded-lg border border-dashed border-line-2 p-4 text-center">
             <p className="text-xs text-txt-mut">Aucun résultat pour ces filtres.</p>
             <button onClick={resetFilters} className="mt-2 text-xs text-mint hover:underline">Réinitialiser les filtres</button>
           </div>
         )}
-        {shown.map((p) => <ResultCard key={p.idu} p={p} />)}
+        {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}
       </div>
 
       <div className="flex shrink-0 items-center justify-between border-t border-line py-3">
         <span className="text-[11px] text-txt-dim">
           {fmt(shown.length)} visibles ici{list.length > shown.length ? ` / ${fmt(list.length)}` : ''}
+          {ile && (serverList.data?.length ?? 0) >= 500 && ' · 500 premiers (île) — affinez les filtres'}
         </span>
         {list.length > CAP && (
           <button onClick={() => setShowAll((v) => !v)} className="text-xs text-mint hover:underline">

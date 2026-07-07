@@ -10,9 +10,10 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Nu
 /** M22 SENS 2 — programme → parcelles. Le formulaire est la vérité ; le copilote ne fait que le
  *  pré-remplir (doctrine : l'IA traduit, le moteur déterministe calcule). */
 export function M22() {
-  const { m22Prefill, setM22Prefill, setModuleMap, select } = useApp()
+  const { m22Prefill, setM22Prefill, setModuleMap, select, commune } = useApp()
   const [form, setForm] = useState({ type: 'logements', batiments: 1, niveaux: 2, logements_par_batiment: 8, surface_unite_m2: 60, parking: true })
-  const run = useMutation({ mutationFn: () => postProgramme(form) })
+  // périmètre = celui du sélecteur (commune active ou île entière)
+  const run = useMutation({ mutationFn: () => postProgramme({ ...form, commune }) })
 
   useEffect(() => {
     if (m22Prefill) {
@@ -85,7 +86,9 @@ export function M22() {
               <button key={i.idu} onClick={() => select(i.idu)}
                 className="flex w-full items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left hover:border-[#6b5a96]">
                 <div className="min-w-0 flex-1">
-                  <div className="font-mono text-xs text-txt-hi">{i.idu.slice(8, 10)} {i.idu.slice(10)}</div>
+                  <div className="font-mono text-xs text-txt-hi">{i.idu.slice(8, 10)} {i.idu.slice(10)}
+                    {!commune && i.commune && <span className="ml-1.5 font-sans text-[9.5px] text-txt-dim">{i.commune}</span>}
+                  </div>
                   <div className="truncate text-[10.5px] text-txt-mut">
                     SDP {fmt(i.sdp)} m² · zone {i.zone ?? '?'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}
                   </div>

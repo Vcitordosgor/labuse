@@ -35,6 +35,10 @@ export type OrthoYear = 'now' | '2000' | '1950'
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
 
 interface AppState {
+  // Commune active — null = « Toute l'île » (défaut). Pilote carte, compteurs, liste, modules,
+  // et vit dans l'URL (#…&c=…). Sélecteur dans le header.
+  commune: string | null
+  setCommune: (c: string | null) => void
   view: View
   setView: (v: View) => void
   outilsOpen: boolean
@@ -90,6 +94,9 @@ interface AppState {
 }
 
 export const useApp = create<AppState>((set) => ({
+  commune: null,
+  // changer de commune remet la zone dessinée à zéro (elle appartenait à l'ancienne emprise)
+  setCommune: (commune) => set({ commune, zone: null }),
   view: 'cartes',
   setView: (view) => set({ view, outilsOpen: false }),
   outilsOpen: false,

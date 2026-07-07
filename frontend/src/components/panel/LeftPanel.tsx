@@ -10,16 +10,23 @@ const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
   { key: 'limites', label: 'Limites parcelles', hint: 'contours de toutes les parcelles' },
 ]
 
+//: couches servies par commune (GeoJSON) — indisponibles en mode « Toute l'île » (payload)
+const COMMUNE_ONLY: (keyof LayerToggles)[] = ['zonage', 'ppr', 'parc']
+
 function LayersSection() {
-  const { layers, toggleLayer } = useApp()
+  const { layers, toggleLayer, commune } = useApp()
+  const ile = commune == null
   return (
     <div className="px-5 pt-4">
       <p className="mb-3 font-mono text-[11px] tracking-widest text-txt-dim">COUCHES</p>
       <div className="flex flex-col gap-2.5">
         {LAYERS.map(({ key, label, hint }) => {
-          const on = layers[key]
+          const off = ile && COMMUNE_ONLY.includes(key)
+          const on = layers[key] && !off
           return (
-            <button key={key} onClick={() => toggleLayer(key)} className="flex items-center gap-3 text-left" title={hint}>
+            <button key={key} disabled={off} onClick={() => toggleLayer(key)}
+              className={`flex items-center gap-3 text-left ${off ? 'cursor-not-allowed opacity-45' : ''}`}
+              title={off ? `${label} — sélectionnez une commune (couche servie par commune)` : hint}>
               <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
                 {on && (
                   <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">

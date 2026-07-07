@@ -30,23 +30,23 @@ def get_db():
 # qui ont un résiduel calculé. Périmètre V1 : une commune, un zonage à la fois.
 
 @router.get("/simulplu/zones")
-def simulplu_zones(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> list[dict]:
+def simulplu_zones(commune: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
     rows = db.execute(text("""
         SELECT sl.subtype AS zone, count(*) AS n_ilots
-        FROM spatial_layers sl WHERE sl.kind = 'plu_gpu_zone' AND sl.commune = :c
+        FROM spatial_layers sl WHERE sl.kind = 'plu_gpu_zone' AND (CAST(:c AS text) IS NULL OR sl.commune = :c)
           AND upper(sl.subtype) LIKE 'AU%'
         GROUP BY sl.subtype ORDER BY n_ilots DESC"""), {"c": commune}).mappings().all()
     return [dict(r) for r in rows]
 
 
 @router.get("/simulplu")
-def simulplu(zone: str, commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
+def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     # PERF : le zonage par parcelle est DÉJÀ résolu dans les lignes de cascade du run (detail
     # « Zone PLU « X » … ») → zéro jointure spatiale (l'ancienne version : 2 min 33 s ; celle-ci < 2 s).
     ratio = db.execute(text("""
         SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY r.sdp_residuelle_m2 / NULLIF(p.surface_m2, 0))
         FROM dryrun_cascade_results cr
-        JOIN parcels p ON p.id = cr.parcel_id AND p.commune = :c
+        JOIN parcels p ON p.id = cr.parcel_id AND (CAST(:c AS text) IS NULL OR p.commune = :c)
         JOIN parcel_residuel r ON r.parcel_id = p.id AND r.sdp_residuelle_m2 > 0
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail LIKE 'Zone PLU « U%'"""),
@@ -55,7 +55,7 @@ def simulplu(zone: str, commune: str = "Saint-Paul", db: Session = Depends(get_d
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut_actuel, d.q_score,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM dryrun_cascade_results cr
-        JOIN parcels p ON p.id = cr.parcel_id AND p.commune = :c
+        JOIN parcels p ON p.id = cr.parcel_id AND (CAST(:c AS text) IS NULL OR p.commune = :c)
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail LIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300
@@ -72,9 +72,9 @@ def simulplu(zone: str, commune: str = "Saint-Paul", db: Session = Depends(get_d
                       "q_actuel": r["q_score"], "sdp_estimee_m2": sdp_est, "bascule_potentielle": bascule,
                       "geom": json.loads(r["g"])})
     return {
-        "zone": zone, "commune": commune, "ratio_analogie": round(float(ratio), 3),
+        "zone": zone, "commune": commune or "Toute l'île", "ratio_analogie": round(float(ratio), 3),
         "methode": ("SIMULATION À BLANC (rien n'est persisté) — SDP estimée par ANALOGIE : "
-                    f"surface × ratio médian SDP/surface des parcelles U de {commune} "
+                    f"surface × ratio médian SDP/surface des parcelles U de {commune or 'toute l’île'} "
                     f"({round(float(ratio), 3)}). Le vrai recalcul = règlement U appliqué au moteur "
                     "de faisabilité (prochain cycle)."),
         "n_parcelles": len(items), "bascules_potentielles": bascules,

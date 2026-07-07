@@ -198,7 +198,7 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
 # ───────────────────────── M03 — RADAR PERMIS ─────────────────────────
 
 @router.get("/permis")
-def permis(commune: str = "Saint-Paul", months: int = 24, db: Session = Depends(get_db)) -> dict:
+def permis(commune: str | None = None, months: int = 24, db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
     rows = db.execute(text("""
@@ -206,11 +206,11 @@ def permis(commune: str = "Saint-Paul", months: int = 24, db: Session = Depends(
                raw->>'etat' AS etat, raw->>'nb_lgt' AS nb_lgt, raw->>'surf_hab' AS surf_hab,
                CASE WHEN geom IS NOT NULL THEN ST_AsGeoJSON(geom) END AS g
         FROM sitadel_permits
-        WHERE commune = :c AND date >= :dmax - (:m || ' months')::interval
+        WHERE (CAST(:c AS text) IS NULL OR commune = :c) AND date >= :dmax - (:m || ' months')::interval
         ORDER BY date DESC LIMIT 2000"""), {"c": commune, "m": months, "dmax": dmax}).mappings().all()
     geo = [r for r in rows if r["g"]]
     return {
-        "commune": commune, "months": months, "total": len(rows),
+        "commune": commune or "Toute l'île", "months": months, "total": len(rows),
         "donnees_jusqu_au": dmax.date().isoformat() if dmax else None,
         "geocodes": len(geo), "pct_geocode": round(100 * len(geo) / len(rows)) if rows else 0,
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "surf_hab")},
@@ -224,7 +224,7 @@ def permis(commune: str = "Saint-Paul", months: int = 24, db: Session = Depends(
 # « Promesse morte » = PC daté > N mois, SANS daact, ET parcelle toujours sans bâti significatif.
 
 @router.get("/promesses")
-def promesses(commune: str = "Saint-Paul", months: int = 24, db: Session = Depends(get_db)) -> dict:
+def promesses(commune: str | None = None, months: int = 24, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT s.permit_id, s.type, s.date::date::text AS date, s.raw->>'etat' AS etat,
                s.raw->>'nb_lgt' AS nb_lgt, p.idu, round(p.surface_m2) AS surface_m2,
@@ -234,7 +234,7 @@ def promesses(commune: str = "Saint-Paul", months: int = 24, db: Session = Depen
         JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
         JOIN parcels p ON p.idu = c.idu
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE s.type = 'PC' AND s.commune = :c
+        WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
           AND s.date < now() - (:m || ' months')::interval
           AND s.raw->>'daact' IS NULL
           -- parcelle toujours non bâtie : pas d'exclusion « déjà bâti » au run q_v2
@@ -243,7 +243,7 @@ def promesses(commune: str = "Saint-Paul", months: int = 24, db: Session = Depen
                             AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')
         ORDER BY s.date ASC LIMIT 500"""),
         {"c": commune, "m": months, "run": RUN}).mappings().all()
-    return {"commune": commune, "months": months, "total": len(rows),
+    return {"commune": commune or "Toute l'île", "months": months, "total": len(rows),
             "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "idu",
                                             "surface_m2", "statut", "q_score")},
                        "geom": json.loads(r["g"])} for r in rows]}
@@ -281,7 +281,7 @@ def velocite(fmt: str = "json", db: Session = Depends(get_db)):
 # ───────────────────────── M07 — FONCIER FANTÔME ─────────────────────────
 
 @router.get("/fantome")
-def fantome(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
+def fantome(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut, d.q_score,
                pm.siren, pm.denomination,
@@ -291,7 +291,7 @@ def fantome(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         JOIN parcelle_personne_morale pm ON pm.idu = p.idu
-        WHERE p.commune = :c AND d.q_score >= 50 AND pm.groupe NOT IN (1, 2, 3, 4, 9)
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.q_score >= 50 AND pm.groupe NOT IN (1, 2, 3, 4, 9)
           AND pm.siren IS NOT NULL
           AND (NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren)
                OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))
@@ -308,7 +308,7 @@ def fantome(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
 # ───────────────────────── M06 — MODE BAILLEUR ─────────────────────────
 
 @router.get("/bailleur")
-def bailleur(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
+def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut,
                d.q_score, d.a_score, r.sdp_residuelle_m2,
@@ -317,7 +317,7 @@ def bailleur(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         JOIN spatial_layers q ON q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975)
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE p.commune = :c AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
         ORDER BY COALESCE(r.sdp_residuelle_m2, 0) DESC LIMIT 500"""),
         {"c": commune, "run": RUN}).mappings().all()
     return {"total": len(rows),

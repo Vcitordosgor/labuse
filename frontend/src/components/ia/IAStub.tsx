@@ -5,9 +5,10 @@ import type { Statut } from '../../lib/types'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 
 const EXAMPLES = [
+  'les chaudes de Saint-Pierre',
   'les chaudes avec vue mer de plus de 1000 m²',
   'à surveiller avec pollution et score > 70',
-  'parcelles avec événement BODACC',
+  'parcelles avec événement BODACC au Tampon',
   'SDP d’au moins 800 m² à creuser',
   'un terrain pour 3 immeubles R+3 étudiants avec parking',
 ]
@@ -16,11 +17,14 @@ const EXAMPLES = [
  *  (jamais un accès base, jamais un score) ; les chips existants font le reste. */
 export function IAStub() {
   const [text, setText] = useState('')
-  const { setFilters, setView, setModule, setM22Prefill } = useApp()
+  const { setFilters, setView, setModule, setM22Prefill, setCommune } = useApp()
   const status = useQuery({ queryKey: ['ia-status'], queryFn: iaStatus })
   const search = useMutation({ mutationFn: iaSearch })
 
   const apply = (f: Record<string, unknown>) => {
+    // la commune est un filtre de PÉRIMÈTRE : elle pilote le sélecteur (« les chaudes de
+    // Saint-Pierre » → périmètre Saint-Pierre + chip Chaude) ; absente = île entière
+    setCommune((f.commune as string | null) ?? null)
     const next: Filters = {
       ...EMPTY_FILTERS,
       statuts: (f.statuts as Statut[]) ?? [],

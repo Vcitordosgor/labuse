@@ -5,10 +5,14 @@ export interface ParcelFeatureCollection {
   features: Array<{ type: 'Feature'; geometry: unknown; properties: Record<string, unknown> }>
 }
 
+import { useApp, type Filters } from '../store/useApp'
+
 // SOURCE DE VÉRITÉ du Socle V1 : le scoring premium v2, run q_v2 (dryrun_parcel_evaluations).
 // JAMAIS parcel_evaluations (éval historique). Cf. brief « NOTE SOURCE DE VÉRITÉ ».
 export const SOURCE = 'q_v2'
-export const COMMUNE = 'Saint-Paul'
+/** Commune active — depuis le store (null = « Toute l'île »). L'ancienne constante Saint-Paul
+ *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
+export const commune = () => useApp.getState().commune
 
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init)
@@ -16,19 +20,41 @@ async function j<T>(url: string, init?: RequestInit): Promise<T> {
   return r.json() as Promise<T>
 }
 
-const q = (extra: Record<string, string | number> = {}) =>
-  new URLSearchParams({
-    source: SOURCE, commune: COMMUNE,
+const q = (extra: Record<string, string | number> = {}) => {
+  const c = commune()
+  return new URLSearchParams({
+    source: SOURCE, ...(c ? { commune: c } : {}),
     ...Object.fromEntries(Object.entries(extra).map(([k, v]) => [k, String(v)])),
   }).toString()
+}
 
-export const getStats = () => j<Stats>(`/stats?${q()}`)
-export const getResults = () => j<ParcelResult[]>(`/parcels?${q({ limit: 500 })}`)
+/** Filtres chips → query params serveur (mode île : la liste et les compteurs sont SQL). */
+export const filterParams = (f: Filters): Record<string, string | number> => ({
+  ...(f.statuts.length ? { statuts: f.statuts.join(',') } : {}),
+  ...(f.scoreMin != null ? { score_min: f.scoreMin } : {}),
+  ...(f.surfaceMin != null ? { surface_min: f.surfaceMin } : {}),
+  ...(f.surfaceMax != null ? { surface_max: f.surfaceMax } : {}),
+  ...(f.sdpMin != null ? { sdp_min: f.sdpMin } : {}),
+  ...(f.evenement ? { evenement: 'true' } : {}),
+  ...(f.vueMer ? { vue_mer: 'true' } : {}),
+  ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
+})
+
+export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number] }
+export const getCommunes = () => j<CommuneInfo[]>('/communes')
+export const searchParcels = (needle: string) =>
+  j<{ idu: string; commune: string; status: string | null; q_score: number | null }[]>(
+    `/parcels/search?q=${encodeURIComponent(needle)}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
+
+export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)
+export const getResults = (f?: Filters) => j<ParcelResult[]>(`/parcels?${q({ limit: 500, ...(f ? filterParams(f) : {}) })}`)
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
-export const getMapLayer = (kind: string) =>
-  j<ParcelFeatureCollection>(`/map/layers.geojson?kind=${kind}&commune=${encodeURIComponent(COMMUNE)}`)
+export const getMapLayer = (kind: string) => {
+  const c = commune()
+  return j<ParcelFeatureCollection>(`/map/layers.geojson?kind=${kind}${c ? `&commune=${encodeURIComponent(c)}` : ''}`)
+}
 export const pdfUrl = (idu: string) => `/parcels/${idu}/export.pdf?source=${SOURCE}`
 
 // ── Pipeline (CRM kanban) ──
@@ -50,14 +76,15 @@ export const deletePipeline = (id: number) => j<{ ok: boolean }>(`/pipeline/${id
 export const getSources = () => j<SourceInfo[]>('/sources')
 
 // ── Modules outils (Vague 1) ──
-export const modDivision = (minScore = 0) => j<{ total: number; items: Record<string, unknown>[] }>(`/modules/division?min_score=${minScore}&limit=300`)
+export const modDivision = (minScore = 0) => j<{ total: number; items: Record<string, unknown>[] }>(`/modules/division?min_score=${minScore}&limit=300&${cq()}`)
 export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
 export const modPatrimoine = (siren: string) => j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}`)
-export const modPermis = (months: number) => j<Record<string, unknown>>(`/modules/permis?commune=${encodeURIComponent(COMMUNE)}&months=${months}`)
-export const modPromesses = (months: number) => j<Record<string, unknown>>(`/modules/promesses?commune=${encodeURIComponent(COMMUNE)}&months=${months}`)
+const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
+export const modPermis = (months: number) => j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}`)
+export const modPromesses = (months: number) => j<Record<string, unknown>>(`/modules/promesses?${cq()}&months=${months}`)
 export const modVelocite = () => j<{ note: string; communes: Record<string, unknown>[] }>('/modules/velocite')
-export const modBailleur = () => j<Record<string, unknown>>(`/modules/bailleur?commune=${encodeURIComponent(COMMUNE)}`)
-export const modFantome = () => j<Record<string, unknown>>(`/modules/fantome?commune=${encodeURIComponent(COMMUNE)}`)
+export const modBailleur = () => j<Record<string, unknown>>(`/modules/bailleur?${cq()}`)
+export const modFantome = () => j<Record<string, unknown>>(`/modules/fantome?${cq()}`)
 export const modCourriers = (idus: string[], contexte: string) =>
   j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, contexte }) })
@@ -89,8 +116,8 @@ export const saveSearch = (nom: string, hash: string) =>
 export const deleteSearch = (id: number) => j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'DELETE' })
 
 // ── Moteurs (Vague 4) ──
-export const motSimulPluZones = () => j<{ zone: string; n_ilots: number }[]>('/moteurs/simulplu/zones')
-export const motSimulPlu = (zone: string) => j<Record<string, any>>(`/moteurs/simulplu?zone=${encodeURIComponent(zone)}`)
+export const motSimulPluZones = () => j<{ zone: string; n_ilots: number }[]>(`/moteurs/simulplu/zones?${cq()}`)
+export const motSimulPlu = (zone: string) => j<Record<string, any>>(`/moteurs/simulplu?zone=${encodeURIComponent(zone)}&${cq()}`)
 export const motAssemblage = (idus: string[]) =>
   j<Record<string, any>>('/moteurs/assemblage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
 export const motZan = () => j<Record<string, any>>('/moteurs/zan')

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { deleteSearch, getEvents, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, saveSearch } from '../../lib/api'
+import { deleteSearch, getCommunes, getEvents, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, saveSearch, searchParcels } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken } from '../../lib/filters'
 import { STATUT_META } from '../../lib/status'
@@ -8,9 +8,9 @@ import type { Statut } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
 function Omnibox() {
-  const { query, setQuery, select, setView } = useApp()
+  const { query, setQuery, select, setView, commune } = useApp()
   const ref = useRef<HTMLInputElement>(null)
-  const geo = useQuery({ queryKey: ['geojson'], queryFn: getParcelsGeojson })
+  const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
 
   // raccourci « / » → focus (comme indiqué par le kbd)
   useEffect(() => {
@@ -24,17 +24,25 @@ function Omnibox() {
     return () => window.removeEventListener('keydown', h)
   }, [])
 
-  // Entrée : premier IDU correspondant → ouvre sa fiche (recherche = filtre live de la liste)
-  const onEnter = () => {
+  // Entrée : premier IDU correspondant → ouvre sa fiche (recherche = filtre live de la liste).
+  // Mode île (ou introuvable localement) : le serveur cherche (/parcels/search) — le client
+  // n'a plus les 431k features en mémoire.
+  const onEnter = async () => {
     const qn = query.trim().toUpperCase().replace(/\s+/g, '')
-    if (!qn || !geo.data) return
-    const hit = geo.data.features.find((f) => {
+    if (!qn) return
+    const hit = geo.data?.features.find((f) => {
       const idu = String(f.properties?.idu ?? '').toUpperCase()
       return idu.includes(qn) || idu.slice(8).includes(qn)
     })
     if (hit) {
       setView('cartes')
       select(String(hit.properties?.idu))
+      return
+    }
+    const remote = await searchParcels(qn).catch(() => [])
+    if (remote[0]) {
+      setView('cartes')
+      select(remote[0].idu)
     }
   }
 
@@ -145,6 +153,57 @@ function AddFilter() {
   )
 }
 
+// Sélecteur de commune — le périmètre n'est plus fixe : les 24 communes + « Toute l'île ».
+// Pilote carte, compteurs, liste, modules ; l'état vit dans l'URL (App.tsx).
+function CommuneSelect() {
+  const { commune, setCommune } = useApp()
+  const [open, setOpen] = useState(false)
+  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  useEffect(() => {
+    if (!open) return
+    const h = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [open])
+  const pick = (c: string | null) => { setCommune(c); setOpen(false) }
+  return (
+    <div className="relative shrink-0">
+      <button onClick={() => setOpen((o) => !o)} data-commune-select
+        title="Changer de commune (périmètre de la carte, des compteurs et des modules)"
+        className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt hover:border-[#2E6B4F]">
+        <span className="h-1.5 w-1.5 rounded-full bg-mint" />
+        {commune ?? 'Toute l’île'}
+        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-txt-dim"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto rounded-lg border border-line-2 bg-surface-2 p-1.5 shadow-xl">
+            <button onClick={() => pick(null)}
+              className={`flex items-center justify-between rounded-md px-3 py-2 text-left text-xs hover:bg-surface-3 ${commune == null ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
+              <span className="font-medium">Toute l’île</span>
+              <span className="font-mono text-[10px] text-txt-dim">24 communes</span>
+            </button>
+            <div className="mx-3 my-1 border-t border-line" />
+            {(communes.data ?? []).map((c) => (
+              <button key={c.insee} onClick={() => pick(c.commune)}
+                className={`flex items-center justify-between rounded-md px-3 py-1.5 text-left text-xs hover:bg-surface-3 ${commune === c.commune ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
+                <span>{c.commune} <span className="font-mono text-[10px] text-txt-dim">{c.insee}</span></span>
+                <span className="font-mono text-[10px]">
+                  {c.evaluees === 0
+                    ? <span className="text-txt-dim">en calcul…</span>
+                    : <span className={c.chaudes > 0 ? 'text-mint' : 'text-txt-dim'}>{c.chaudes} chaude{c.chaudes > 1 ? 's' : ''}</span>}
+                </span>
+              </button>
+            ))}
+            {communes.isLoading && <p className="p-3 text-xs text-txt-dim">Chargement…</p>}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function FilterChips() {
   const { filters, setFilters } = useApp()
   const chips = activeChips(filters)
@@ -153,11 +212,8 @@ function FilterChips() {
     // Un popover absolu DANS un overflow-x-auto est rogné (overflow-y calculé auto) : présent au
     // DOM, invisible à l'utilisateur — le bug exact constaté par Vic. Seuls les chips défilent.
     <div className="flex min-w-0 items-center gap-2">
+      <CommuneSelect />
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto" data-chips>
-        {/* périmètre fixe (V1 = Saint-Paul) */}
-        <span className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
-          <span className="h-1.5 w-1.5 rounded-full bg-mint" /> Saint-Paul
-        </span>
         {chips.map((c) => (
           <span key={c.token} className="flex h-[26px] shrink-0 items-center gap-2 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
             {c.label}

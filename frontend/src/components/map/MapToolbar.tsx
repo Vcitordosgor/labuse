@@ -37,8 +37,9 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] 
 ]
 
 export function MapToolbar() {
-  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone } = useApp()
+  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, commune } = useApp()
   const [bmOpen, setBmOpen] = useState(false)
+  const ile = commune == null
 
   return (
     <div className="absolute right-4 top-4 flex flex-col items-end gap-2">
@@ -100,17 +101,24 @@ export function MapToolbar() {
 
       {/* outils de mesure */}
       <div className="flex flex-col overflow-hidden rounded-[10px] border border-line-2 bg-surface-2">
-        {TOOLS.map((t) => (
-          <button
-            key={t.key}
-            onClick={() => setTool(tool === t.key ? null : t.key)}
-            className={`flex h-9 w-9 items-center justify-center border-b border-line-2 last:border-0 ${
-              tool === t.key ? 'bg-[#0F1A14] text-mint' : 'text-txt-mut hover:text-txt'}`}
-            title={`${t.label} — ${t.hint}`}
-          >
-            <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">{t.icon}</svg>
-          </button>
-        ))}
+        {TOOLS.map((t) => {
+          // le filtre de zone compte côté client sur les features de la commune chargée —
+          // en mode « Toute l'île » il serait menteur : désactivé avec la marche à suivre
+          const off = t.key === 'zone' && ile
+          return (
+            <button
+              key={t.key}
+              disabled={off}
+              onClick={() => setTool(tool === t.key ? null : t.key)}
+              className={`flex h-9 w-9 items-center justify-center border-b border-line-2 last:border-0 ${
+                off ? 'cursor-not-allowed text-[#2E3A33]'
+                  : tool === t.key ? 'bg-[#0F1A14] text-mint' : 'text-txt-mut hover:text-txt'}`}
+              title={off ? 'Zone — sélectionnez d’abord une commune (le filtre de zone est par commune)' : `${t.label} — ${t.hint}`}
+            >
+              <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">{t.icon}</svg>
+            </button>
+          )
+        })}
       </div>
 
       {zone && (

@@ -62,7 +62,8 @@ const featureCollection = (features: unknown[]) => ({ type: 'FeatureCollection',
 
 function M01() {
   const [minScore, setMinScore] = useState(70)
-  const q = useQuery({ queryKey: ['m01', minScore], queryFn: () => modDivision(minScore) })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m01', minScore, commune], queryFn: () => modDivision(minScore) })
   const items = (q.data?.items ?? []) as Record<string, any>[]
   useModuleMap(
     items.map((i) => i['idu'] as string),
@@ -152,7 +153,8 @@ function M02() {
 function M03() {
   const [months, setMonths] = useState(24)
   const zone = useApp((s) => s.zone)
-  const q = useQuery({ queryKey: ['m03', months], queryFn: () => modPermis(months) })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m03', months, commune], queryFn: () => modPermis(months) })
   const d = q.data as Record<string, any> | undefined
   // la ZONE DESSINÉE (outil carte) filtre aussi les permis géocodés — les non-géocodés restent listés
   const items = ((d?.['items'] ?? []) as Record<string, any>[]).filter((i) => {
@@ -199,7 +201,8 @@ function M03() {
 
 function M04() {
   const [months, setMonths] = useState(24)
-  const q = useQuery({ queryKey: ['m04', months], queryFn: () => modPromesses(months) })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m04', months, commune], queryFn: () => modPromesses(months) })
   const d = q.data as Record<string, any> | undefined
   const items = ((d?.['items'] ?? []) as Record<string, any>[])
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
@@ -265,7 +268,8 @@ function M05() {
 /* ───────────────────────────── M06 — MODE BAILLEUR ───────────────────────────── */
 
 function M06() {
-  const q = useQuery({ queryKey: ['m06'], queryFn: modBailleur })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m06', commune], queryFn: modBailleur })
   const d = q.data as Record<string, any> | undefined
   const items = ((d?.['items'] ?? []) as Record<string, any>[])
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
@@ -289,7 +293,8 @@ function M06() {
 /* ───────────────────────────── M07 — FONCIER FANTÔME ───────────────────────────── */
 
 function M07() {
-  const q = useQuery({ queryKey: ['m07'], queryFn: modFantome })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m07', commune], queryFn: modFantome })
   const d = q.data as Record<string, any> | undefined
   const items = ((d?.['items'] ?? []) as Record<string, any>[])
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
