@@ -1,0 +1,20 @@
+# Rattachement commune → EPCI (La Réunion) — référentiel administratif.
+# Source : BANATIC / DGCL, périmètres EPCI au 1er janvier 2025
+#   https://www.banatic.interieur.gouv.fr (recherche département 974)
+# Utilisé par le volet contexte commune (bloc PLH) — donnée de rattachement, pas un chiffre.
+epci:
+  CINOR:
+    nom: "Communauté intercommunale du Nord de La Réunion"
+    communes: [Saint-Denis, Sainte-Marie, Sainte-Suzanne]
+  CIREST:
+    nom: "Communauté intercommunale Réunion Est"
+    communes: [Bras-Panon, La Plaine-des-Palmistes, Saint-André, Saint-Benoît, Sainte-Rose, Salazie]
+  TCO:
+    nom: "Territoire de la Côte Ouest"
+    communes: [Le Port, La Possession, Saint-Leu, Saint-Paul, Les Trois-Bassins]
+  CIVIS:
+    nom: "Communauté intercommunale des Villes solidaires"
+    communes: [Les Avirons, Cilaos, L'Étang-Salé, Petite-Île, Saint-Louis, Saint-Pierre]
+  CASUD:
+    nom: "Communauté d'agglomération du Sud"
+    communes: [Entre-Deux, Saint-Joseph, Saint-Philippe, Le Tampon]
