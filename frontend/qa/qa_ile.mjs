@@ -49,7 +49,8 @@ const pt = await page.evaluate(() => {
   const cx = ring.reduce((s, p) => s + p[0], 0) / ring.length
   const cy = ring.reduce((s, p) => s + p[1], 0) / ring.length
   const px = m.project([cx, cy])
-  return { x: px.x, y: px.y, idu: f.properties.idu }
+  const r = m.getCanvas().getBoundingClientRect()   // coords PAGE — sans l'offset, le clic
+  return { x: r.left + px.x, y: r.top + px.y, idu: f.properties.idu }   // tombait dans la LISTE
 })
 await page.mouse.click(pt.x, pt.y)
 await page.waitForSelector('button[title="Analyse IA"]', { timeout: 10000 })

@@ -196,3 +196,27 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   backup, régénérable par export).
 - **Marqueurs communes = DOM markers** (pas de couche symbol : aucune dépendance glyphes,
   cohérent avec les étiquettes de mesure) ; centroïde = centre bbox (suffisant à z<10).
+
+## Mandat contexte-commune (roadmap promotrice)
+- **Branche depuis feat/ile-entiere** (le merge île n'était pas encore dans main ; le volet
+  s'appuie sur le sélecteur/marqueurs île — un merge île→main rendra celle-ci propre).
+- **SRU** : au millésime 2025, les 24 communes 974 sont TOUTES soumises — le statut réel
+  supplémentaire est « exemptée 2023-2025 » (5 communes), restitué tel quel au lieu du
+  « non soumise » attendu par le mandat (la source prime).
+- **NPNRU** : périmètres DEAL = QPV génération 2015 ; la couche QPV de la base est en
+  génération 2024 → les deux coexistent, correspondance des codes portée dans attrs.
+  « Adjacente » = ≤ 100 m (seuil affiché, arbitraire assumé).
+- **Équipements** : catégories d'affichage (mairie/police/sport) SÉPARÉES des 4 catégories
+  qui nourrissent parcel_amenites (pas de purge croisée — le signal distance du scoring ne
+  dérive pas). Bbox par commune → les POI voisins débordent (voulu : l'école juste de
+  l'autre côté de la limite compte) ; cercles colorés + popup (pas d'icônes symbol : pas de
+  sprite dans le style), plancher z13. Câblage scoring = dette G3, non entamé.
+- **Typologie logement** : l'INSEE ne publie pas le Tn strict à la commune → répartition
+  par nombre de pièces (1p…5p+) affichée comme « proxy T1…T5+ », libellé explicite.
+- **PLH** : périmètre « social » variable selon les documents (LLTS+LLS seul, ou avec PLS)
+  → le % n'est posé QUE quand publié (TCO 47 %, CASUD 40 %) ; ailleurs l'absolu sourcé.
+  Les 5 PLH sont tous en bilan/révision (CASUD échu) — affiché tel quel.
+- **Entrées du volet** : ⓘ par ligne du sélecteur + bouton « ⓘ Contexte » quand une commune
+  est active (le marqueur île mène à la commune, donc au bouton — pas de 3e entrée).
+- **reliability_level** : enum existant (verifie/a_confirmer/sous_convention) — « officielle »
+  n'y est pas ; les 4 nouvelles sources sont « verifie ».
