@@ -61,6 +61,7 @@ export function Rail() {
               onClick={() => (key === 'outils' ? toggleOutils() : setView(key))}
               className="group mb-4 flex w-full flex-col items-center gap-1"
               title={label}
+              aria-current={on ? 'page' : undefined}
             >
               <span
                 className={`flex h-10 w-10 items-center justify-center rounded-[10px] border transition-colors ${

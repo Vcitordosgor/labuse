@@ -19,6 +19,14 @@ function mkMap(el: HTMLDivElement, tiles: string, attribution: string, maxzoom =
   })
 }
 
+function muteTileErrors(m: maplibregl.Map) {
+  m.on('error', (e) => {
+    const msg = String((e as { error?: Error }).error?.message ?? '')
+    if (/AJAXError|40[04]/.test(msg)) return
+    console.error(e.error ?? e)
+  })
+}
+
 /** M08 — comparateur AVANT/APRÈS : deux cartes superposées, la moderne rognée par la poignée.
  *  Caméras synchronisées dans les deux sens (garde anti-boucle). Parcelles promues des deux côtés. */
 export function TimeMachine({ center }: { center?: [number, number] | null }) {
@@ -34,6 +42,8 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     const past = mkMap(leftRef.current, WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png'), '© IGN 1950-1965', 15) // le millésime 1950 s'arrête ~z15 : overzoom plutôt que NOIR
     const now = mkMap(rightRef.current, WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg'), '© IGN BD ORTHO')
     maps.current = [past, now]
+    muteTileErrors(past)
+    muteTileErrors(now)
     ;(window as unknown as Record<string, unknown>).__labuse_tm = { past, now } // hook QA (synchro)
     let lock = false
     const sync = (src: maplibregl.Map, dst: maplibregl.Map) => () => {

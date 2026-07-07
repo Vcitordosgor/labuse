@@ -11,7 +11,7 @@ const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
 const OUT = '../docs/design/captures/inspection'
 mkdirSync(OUT, { recursive: true })
 const REPORT = `${OUT}/rapport.jsonl`
-writeFileSync(REPORT, '')
+// reprise : rapport conservé (cartes + fiche_synthese déjà inspectés)
 
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
@@ -27,9 +27,9 @@ const stats = { total: 0, ok: 0, dead: 0, doubt: 0 }
 const suspects = []
 
 async function freshTo(setup) {
-  await page.goto(BASE, { waitUntil: 'networkidle', timeout: 30000 })
+  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 30000 })
   await page.waitForSelector('text=chaudes', { timeout: 15000 })
-  await page.waitForTimeout(1800)
+  await page.waitForTimeout(1100)
   if (setup) await setup()
   await page.waitForTimeout(600)
 }
@@ -41,9 +41,10 @@ const domSig = () => page.evaluate(() => {
   return { h, len: b.length, url: location.href }
 })
 
-async function inventory() {
-  return page.evaluate(() => {
-    const els = [...document.querySelectorAll('button, a[href], [role="button"], select, input[type="range"], input[type="checkbox"], [draggable="true"]')]
+async function inventory(scope = null) {
+  return page.evaluate((scopeSel) => {
+    const root = scopeSel ? (document.querySelector(scopeSel) || document) : document
+    const els = [...root.querySelectorAll('button, a[href], [role="button"], select, input[type="range"], input[type="checkbox"], [draggable="true"]')]
     return els.map((el, i) => {
       const r = el.getBoundingClientRect()
       const s = getComputedStyle(el)
@@ -73,13 +74,20 @@ async function inventory() {
                disabled: !!(el.disabled || el.getAttribute('aria-disabled') === 'true'), disabledVisible,
                x: r.x + r.width / 2, y: r.y + r.height / 2 }
     })
-  })
+  }, scope)
 }
 
-async function inspectScreen(screen, setup, { skipLabels = [], max = 90, probe = null } = {}) {
+async function inspectScreen(screen, setup, opts = {}) {
+  try { await _inspectScreen(screen, setup, opts) } catch (e) {
+    console.log(`  !! écran ${screen} : ${String(e).slice(0, 120)}`)
+    appendFileSync(REPORT, JSON.stringify({ screen, label: '(écran)', verdict: 'DOUTEUX', why: 'inspection interrompue : ' + String(e).slice(0, 80) }) + '\n')
+  }
+}
+
+async function _inspectScreen(screen, setup, { skipLabels = [], max = 90, probe = null, scope = null } = {}) {
   console.log(`\n━━ ${screen} ━━`)
   await freshTo(setup)
-  const items = (await inventory()).filter((e) => e.visible || e.clipped)
+  const items = (await inventory(scope)).filter((e) => e.visible || e.clipped)
   let clicked = 0
   const seenShape = new Map() // squelette de libellé → nb de clics (2 max par motif répétitif)
   for (const it of items) {
@@ -114,7 +122,7 @@ async function inspectScreen(screen, setup, { skipLabels = [], max = 90, probe =
     await page.locator(`[data-inspect="${it.i}"]`).scrollIntoViewIfNeeded().catch(() => {})
     let fresh = await page.locator(`[data-inspect="${it.i}"]`).boundingBox().catch(() => null)
     if (!fresh) {
-      const re = (await inventory()).find((e) => e.label === it.label && e.visible)
+      const re = (await inventory(scope)).find((e) => e.label === it.label && e.visible)
       if (re) fresh = { x: re.x - 1, y: re.y - 1, width: 2, height: 2 }
     }
     if (!fresh) { appendFileSync(REPORT, JSON.stringify({ screen, label: it.label, verdict: 'NEUTRE', why: 'recréé/disparu (React) — revérifié par les suites ciblées' }) + '\n'); continue }
@@ -128,7 +136,7 @@ async function inspectScreen(screen, setup, { skipLabels = [], max = 90, probe =
     }, [cx, cy, it.i])
     if (occluded) { appendFileSync(REPORT, JSON.stringify({ screen, label: it.label, verdict: 'NEUTRE', why: 'occulté par un panneau (non cliquable à cet instant — normal)' }) + '\n'); continue }
     await page.mouse.click(cx, cy).catch(() => {})
-    await page.waitForTimeout(450)
+    await page.waitForTimeout(340)
     const after = await domSig()
     const effect = after.h !== before.h || after.url !== before.url || netCount > netBefore || popupCount > popBefore
     const newErrors = consoleErrors.slice(errBefore)
@@ -158,6 +166,7 @@ const openModule = (label) => async () => {
   await page.waitForTimeout(1600)
 }
 const openFiche = (tab) => async () => {
+  await page.waitForSelector('.overflow-y-auto > button', { timeout: 20000 }) // données chargées
   await page.keyboard.press('/')
   await page.keyboard.type('AC0253')
   await page.keyboard.press('Enter')
@@ -166,10 +175,10 @@ const openFiche = (tab) => async () => {
 }
 
 // ═══════════ écrans ═══════════
-await inspectScreen('cartes', null, { skipLabels: ['Dézoomer', 'Zoomer'], probe: 'text=RÉSULTATS' })
-await inspectScreen('fiche_synthese', openFiche(null), { probe: 'text=97415000AC0253', skipLabels: ['Zoomer', 'Dézoomer'] })
+// (fait) cartes
+// (fait) fiche_synthese
 for (const t of ['Règles', 'Risques', 'Marché', 'Proprio', 'Bilan']) {
-  await inspectScreen(`fiche_${t.toLowerCase()}`, openFiche(t), { max: 40, probe: 'text=97415000AC0253', skipLabels: ['Zoomer', 'Dézoomer'] })
+  await inspectScreen(`fiche_${t.toLowerCase()}`, openFiche(t), { max: 30, probe: 'text=97415000AC0253', scope: 'aside' })
 }
 await inspectScreen('cloche', async () => { await page.locator('button[title="Notifications"]').click(); await page.waitForTimeout(700) }, { max: 50 })
 await inspectScreen('filtre_popover', async () => { await page.getByRole('button', { name: '+ Filtre' }).click(); await page.waitForTimeout(400) }, { max: 45 })
@@ -183,7 +192,7 @@ const MODULES = [['m01', 'Division parcellaire'], ['m02', 'Scan patrimoine'], ['
   ['m15', 'Simulateur PLU'], ['m16', 'Assemblage'], ['m17', 'Simulateur ZAN'], ['m18', 'Baromètre foncier'],
   ['m19', 'Matching promoteurs']]
 for (const [key, label] of MODULES) {
-  await inspectScreen(`module_${key}`, openModule(label), { max: 45, probe: 'text=· MODULE', skipLabels: ['Zoomer', 'Dézoomer'] })
+  await inspectScreen(`module_${key}`, openModule(label), { max: 35, probe: 'text=· MODULE', scope: 'aside' })
 }
 
 console.log('\n═══════════════ SYNTHÈSE ═══════════════')

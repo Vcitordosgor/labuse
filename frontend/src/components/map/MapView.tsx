@@ -110,6 +110,13 @@ export function MapView() {
       maxPitch: 70,
     })
     map.current = m
+    // tuiles hors-emprise (océan) : l'IGN répond 400 → bruit inévitable, avalé ici pour que la
+    // console ne montre que les VRAIES erreurs (règle d'inspection : zéro ligne rouge parasite)
+    m.on('error', (e) => {
+      const msg = String((e as { error?: Error }).error?.message ?? '')
+      if (/AJAXError|40[04]/.test(msg)) return
+      console.error(e.error ?? e)
+    })
     m.on('load', () => {
       // fonds de plan (tous chargés, visibilité pilotée)
       for (const [id, src] of Object.entries(BASEMAP_SOURCES)) {

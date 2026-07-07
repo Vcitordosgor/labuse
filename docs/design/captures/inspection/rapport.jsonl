@@ -1,0 +1,326 @@
+{"screen":"cartes","label":"IA","verdict":"OK","why":""}
+{"screen":"cartes","label":"Cartes","verdict":"OK","why":""}
+{"screen":"cartes","label":"Outils","verdict":"OK","why":""}
+{"screen":"cartes","label":"CRM","verdict":"OK","why":""}
+{"screen":"cartes","label":"Fraîcheur des données — voir les sources","verdict":"OK","why":""}
+{"screen":"cartes","label":"+ Filtre","verdict":"OK","why":""}
+{"screen":"cartes","label":"Verdict","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Mutabilité","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Notifications","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Replier le panneau","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"U/AU en menthe, A/N en brun","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"colorées par statut","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"PPR multirisque","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"liseré cyan (vue dégagée)","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Parc national","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"contours de toutes les parcelles","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Tout 5 156","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Chaude 83","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"À surveiller 1 720","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"À creuser 3 353","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Fond de plan","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Relief 3D (MNT) — maintenir Ctrl + glisser pour incliner la ","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Distance — Clics = points · double-clic termine · Échap annu","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Surface — Clics = sommets · double-clic ferme le polygone","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Altitude — Clic = altitude au point (RGE ALTI)","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cartes","label":"Zone — Dessinez un polygone : les résultats sont filtrés à l","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"fiche_synthese","label":"IA","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Cartes","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Outils","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"CRM","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Fraîcheur des données — voir les sources","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"+ Filtre","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Verdict","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Mutabilité","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Notifications","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Replier le panneau","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"U/AU en menthe, A/N en brun","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"colorées par statut","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"PPR multirisque","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"liseré cyan (vue dégagée)","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Parc national","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"contours de toutes les parcelles","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Tout 5 156","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Chaude 83","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"À surveiller 1 720","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"À creuser 3 353","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"AC 0253 ● ÉVÉNEMENT ◠ 1 815 m² · Saint-Paul 71 92","verdict":"OK","why":""}
+{"screen":"fiche_synthese","label":"Fond de plan","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"fiche_synthese","label":"Relief 3D (MNT) — maintenir Ctrl + glisser pour incliner la ","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"fiche_synthese","label":"Distance — Clics = points · double-clic termine · Échap annu","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"fiche_synthese","label":"Surface — Clics = sommets · double-clic ferme le polygone","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"fiche_synthese","label":"Altitude — Clic = altitude au point (RGE ALTI)","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"fiche_synthese","label":"Zone — Dessinez un polygone : les résultats sont filtrés à l","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"fiche_règles","label":"Replier le panneau","verdict":"OK","why":""}
+{"screen":"fiche_règles","label":"U/AU en menthe, A/N en brun","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"fiche_règles","label":"colorées par statut","verdict":"MORT","why":"aucun effet visible (DOM/URL/réseau/onglet inchangés)"}
+{"screen":"fiche_règles","label":"PPR multirisque","verdict":"OK","why":""}
+{"screen":"fiche_règles","label":"liseré cyan (vue dégagée)","verdict":"OK","why":""}
+{"screen":"fiche_règles","label":"Parc national","verdict":"OK","why":""}
+{"screen":"fiche_règles","label":"contours de toutes les parcelles","verdict":"OK","why":""}
+{"screen":"fiche_règles","label":"Tout 5 156","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"fiche_règles","label":"Chaude 83","verdict":"OK","why":""}
+{"screen":"fiche_règles","label":"À surveiller 1 720","verdict":"OK","why":""}
+{"screen":"fiche_règles","label":"À creuser 3 353","verdict":"OK","why":""}
+{"screen":"fiche_règles","label":"AC 0253 ● ÉVÉNEMENT ◠ 1 815 m² · Saint-Paul 71 92","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"Replier le panneau","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"U/AU en menthe, A/N en brun","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"fiche_risques","label":"colorées par statut","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"PPR multirisque","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"liseré cyan (vue dégagée)","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"Parc national","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"contours de toutes les parcelles","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"Tout 5 156","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"fiche_risques","label":"Chaude 83","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"À surveiller 1 720","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"À creuser 3 353","verdict":"OK","why":""}
+{"screen":"fiche_risques","label":"AC 0253 ● ÉVÉNEMENT ◠ 1 815 m² · Saint-Paul 71 92","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"Replier le panneau","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"U/AU en menthe, A/N en brun","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"fiche_marché","label":"colorées par statut","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"PPR multirisque","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"liseré cyan (vue dégagée)","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"Parc national","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"contours de toutes les parcelles","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"Tout 5 156","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"fiche_marché","label":"Chaude 83","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"À surveiller 1 720","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"À creuser 3 353","verdict":"OK","why":""}
+{"screen":"fiche_marché","label":"AC 0253 ● ÉVÉNEMENT ◠ 1 815 m² · Saint-Paul 71 92","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"Replier le panneau","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"U/AU en menthe, A/N en brun","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"fiche_proprio","label":"colorées par statut","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"PPR multirisque","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"liseré cyan (vue dégagée)","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"Parc national","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"contours de toutes les parcelles","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"Tout 5 156","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"fiche_proprio","label":"Chaude 83","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"À surveiller 1 720","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"À creuser 3 353","verdict":"OK","why":""}
+{"screen":"fiche_proprio","label":"AC 0253 ● ÉVÉNEMENT ◠ 1 815 m² · Saint-Paul 71 92","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"Replier le panneau","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"U/AU en menthe, A/N en brun","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"fiche_bilan","label":"colorées par statut","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"PPR multirisque","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"liseré cyan (vue dégagée)","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"Parc national","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"contours de toutes les parcelles","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"Tout 5 156","verdict":"OK","why":"no-op volontaire (déjà actif)"}
+{"screen":"fiche_bilan","label":"Chaude 83","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"À surveiller 1 720","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"À creuser 3 353","verdict":"OK","why":""}
+{"screen":"fiche_bilan","label":"AC 0253 ● ÉVÉNEMENT ◠ 1 815 m² · Saint-Paul 71 92","verdict":"OK","why":""}
+{"screen":"cloche","label":"IA","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Cartes","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Outils","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"CRM","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Fraîcheur des données — voir les sources","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"+ Filtre","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Verdict","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Mutabilité","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Notifications","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Digest hebdo (HTML email-ready)","verdict":"OK","why":"no-op volontaire (déjà actif)"}
+{"screen":"cloche","label":"🎯 Match : ET0162 correspond à « Promoteur démo — collectif ","verdict":"OK","why":""}
+{"screen":"cloche","label":"🎯 Match : DH0367 correspond à « Promoteur démo — collectif ","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"cloche","label":"🎯 Match : BO0044 correspond à « CMiste démo — maisons »","verdict":"OK","why":""}
+{"screen":"cloche","label":"▲ ET0162 : a_surveiller → chaude","verdict":"OK","why":""}
+{"screen":"cloche","label":"▼ DM1376 : chaude → a_surveiller","verdict":"MORT","why":"aucun effet visible (DOM/URL/réseau/onglet inchangés)"}
+{"screen":"cloche","label":"▲ DH0367 : a_surveiller → chaude","verdict":"OK","why":""}
+{"screen":"cloche","label":"▼ CR0407 : chaude → a_surveiller","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"+ Veille","verdict":"OK","why":"désactivé VISIBLE"}
+{"screen":"cloche","label":"Replier le panneau","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"U/AU en menthe, A/N en brun","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"colorées par statut","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"PPR multirisque","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"liseré cyan (vue dégagée)","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Parc national","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"contours de toutes les parcelles","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Tout 5 156","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Chaude 83","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"À surveiller 1 720","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"À creuser 3 353","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Zoomer","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Dézoomer","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Fond de plan","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Relief 3D (MNT) — maintenir Ctrl + glisser pour incliner la ","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Distance — Clics = points · double-clic termine · Échap annu","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Surface — Clics = sommets · double-clic ferme le polygone","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Altitude — Clic = altitude au point (RGE ALTI)","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"cloche","label":"Zone — Dessinez un polygone : les résultats sont filtrés à l","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"IA","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Cartes","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Outils","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"CRM","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Fraîcheur des données — voir les sources","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"+ Filtre","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Chaude","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"À surveiller","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"À creuser","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"Écartée","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"Avec événement (BODACC)","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"Vue mer dégagée","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"⚑ Pollution","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"⚑ ABF","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"⚑ ICPE","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"⚑ Risques (PPR/aléa)","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"⚑ Prescription PLU","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"Réinitialiser tous les filtres","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"Verdict","verdict":"OK","why":"no-op volontaire (déjà actif)"}
+{"screen":"filtre_popover","label":"Mutabilité","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"Notifications","verdict":"OK","why":""}
+{"screen":"filtre_popover","label":"Replier le panneau","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"U/AU en menthe, A/N en brun","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"colorées par statut","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"PPR multirisque","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"liseré cyan (vue dégagée)","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Parc national","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"contours de toutes les parcelles","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Tout 5 156","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Chaude 83","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"À surveiller 1 720","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"À creuser 3 353","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Zoomer","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Dézoomer","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Fond de plan","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Relief 3D (MNT) — maintenir Ctrl + glisser pour incliner la ","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Distance — Clics = points · double-clic termine · Échap annu","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Surface — Clics = sommets · double-clic ferme le polygone","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Altitude — Clic = altitude au point (RGE ALTI)","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"filtre_popover","label":"Zone — Dessinez un polygone : les résultats sont filtrés à l","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"crm","label":"IA","verdict":"OK","why":""}
+{"screen":"crm","label":"Cartes","verdict":"OK","why":""}
+{"screen":"crm","label":"Outils","verdict":"OK","why":""}
+{"screen":"crm","label":"CRM","verdict":"OK","why":""}
+{"screen":"crm","label":"Fraîcheur des données — voir les sources","verdict":"OK","why":""}
+{"screen":"crm","label":"+ Filtre","verdict":"OK","why":""}
+{"screen":"crm","label":"Verdict","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"crm","label":"Mutabilité","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"crm","label":"Notifications","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"crm","label":"DE 0805 ✕ 8 921 m² · Saint-Paul Chaude 100 92% moyenne","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"crm","label":"Ouvrir la fiche sur la carte","verdict":"OK","why":""}
+{"screen":"crm","label":"Retirer du pipeline","verdict":"OK","why":""}
+{"screen":"crm","label":"AC 0253 ✕ 1 815 m² · Saint-Paul Chaude 71 92% moyenne","verdict":"MORT","why":"aucun effet visible (DOM/URL/réseau/onglet inchangés)"}
+{"screen":"crm","label":"Ouvrir la fiche sur la carte","verdict":"OK","why":""}
+{"screen":"crm","label":"Retirer du pipeline","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"sources","label":"IA","verdict":"OK","why":""}
+{"screen":"sources","label":"Cartes","verdict":"OK","why":""}
+{"screen":"sources","label":"Outils","verdict":"OK","why":""}
+{"screen":"sources","label":"CRM","verdict":"OK","why":""}
+{"screen":"sources","label":"Fraîcheur des données — voir les sources","verdict":"OK","why":""}
+{"screen":"sources","label":"+ Filtre","verdict":"OK","why":""}
+{"screen":"sources","label":"Verdict","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"sources","label":"Mutabilité","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"sources","label":"Notifications","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"sources","label":"documentation ↗","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"sources","label":"documentation ↗","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"ia","label":"IA","verdict":"MORT","why":"aucun effet visible (DOM/URL/réseau/onglet inchangés)"}
+{"screen":"ia","label":"Cartes","verdict":"OK","why":""}
+{"screen":"ia","label":"Outils","verdict":"OK","why":""}
+{"screen":"ia","label":"CRM","verdict":"OK","why":""}
+{"screen":"ia","label":"Fraîcheur des données — voir les sources","verdict":"OK","why":""}
+{"screen":"ia","label":"+ Filtre","verdict":"OK","why":""}
+{"screen":"ia","label":"Verdict","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"ia","label":"Mutabilité","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"ia","label":"Notifications","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"ia","label":"Chercher","verdict":"NEUTRE","why":"recréé/disparu (React) — revérifié par les suites ciblées"}
+{"screen":"ia","label":"les chaudes avec vue mer de plus de 1000 m²","verdict":"OK","why":""}
+{"screen":"ia","label":"à surveiller avec pollution et score > 70","verdict":"OK","why":""}
+{"screen":"ia","label":"parcelles avec événement BODACC","verdict":"OK","why":""}
+{"screen":"ia","label":"SDP d’au moins 800 m² à creuser","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"IA","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"Cartes","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"Outils","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"CRM","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"Fraîcheur des données — voir les sources","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M01 Division parcellaire Maisons sur grand terrain : lot dét","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M02 Scan patrimoine Un propriétaire → tout son foncier scoré","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M03 Radar permis Sitadel par commune et période","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M04 Promesses mortes PC anciens jamais réalisés","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M05 Vélocité admin Rythmes d’instruction par commune (île)","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M06 Mode bailleur Gisement LLS : QPV, TVA réduite","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M07 Foncier fantôme Constructible mais verrouillé (PM introu","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M08 Remonter le temps Comparateur 1950 ↔ aujourd’hui","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M09 Courrier propriétaire Courriers types par lot (pipeline/","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M10 Due diligence Liste de références → rapport multi-parcel","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M15 Simulateur PLU « Et si cette zone AU passait en U ? » (à","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M16 Assemblage Sélection contiguë → assiette fusionnée","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M17 Simulateur ZAN Artificialisation par commune, parcelles ","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"M18 Baromètre foncier Rapport trimestriel île entière + PDF","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"+ Filtre","verdict":"OK","why":""}
+{"screen":"tiroir_outils","label":"Verdict","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"tiroir_outils","label":"Mutabilité","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"tiroir_outils","label":"Notifications","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"tiroir_outils","label":"Replier le panneau","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"tiroir_outils","label":"U/AU en menthe, A/N en brun","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"tiroir_outils","label":"colorées par statut","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"tiroir_outils","label":"PPR multirisque","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"tiroir_outils","label":"liseré cyan (vue dégagée)","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"tiroir_outils","label":"Parc national","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"tiroir_outils","label":"contours de toutes les parcelles","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"module_m01","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m01","label":"INPUT","verdict":"OK","why":""}
+{"screen":"module_m01","label":"BY 0125 4 679 m² · emprise 5.1% · lot ~564 m² 99","verdict":"OK","why":""}
+{"screen":"module_m01","label":"ER 0454 2 683 m² · emprise 5.3% · lot ~678 m² 99","verdict":"OK","why":""}
+{"screen":"module_m01","label":"DV 0354 4 723 m² · emprise 5.6% · lot ~1 011 m² 99","verdict":"OK","why":""}
+{"screen":"module_m01","label":"BI 0327 4 043 m² · emprise 5.5% · lot ~1 447 m² 99","verdict":"OK","why":""}
+{"screen":"module_m02","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m03","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m03","label":"12 mois","verdict":"OK","why":""}
+{"screen":"module_m03","label":"24 mois","verdict":"OK","why":""}
+{"screen":"module_m04","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m04","label":"24 mois 36 mois 48 mois 60 mois","verdict":"OK","why":""}
+{"screen":"module_m04","label":"EN 0007 PC 2017-01-12 · 691 m² · état 5 À creuser","verdict":"OK","why":""}
+{"screen":"module_m04","label":"EV 0795 PC 2017-01-19 · 9 984 m² · état 5 Écartée","verdict":"OK","why":""}
+{"screen":"module_m04","label":"BW 0880 PC 2017-01-19 · 440 m² · état 5 Écartée","verdict":"OK","why":""}
+{"screen":"module_m04","label":"AW 2085 PC 2017-01-19 · 150 m² · état 5 Écartée","verdict":"OK","why":""}
+{"screen":"module_m04","label":"DE 1077 PC 2017-02-01 · 1 196 m² · état 5 Écartée","verdict":"OK","why":""}
+{"screen":"module_m04","label":"ER 1515 PC 2017-02-01 · 299 m² · état 2 À creuser","verdict":"OK","why":""}
+{"screen":"module_m04","label":"CZ 0456 PC 2017-02-02 · 583 m² · état 5 À surveiller","verdict":"OK","why":""}
+{"screen":"module_m04","label":"ER 1586 PC 2017-02-02 · 1 471 m² · état 4 À surveiller","verdict":"OK","why":""}
+{"screen":"module_m05","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m05","label":"⬇ Export CSV","verdict":"OK","why":""}
+{"screen":"module_m05","label":"PERMIS ↓","verdict":"OK","why":"no-op volontaire (déjà actif)"}
+{"screen":"module_m05","label":"DÉLAI* ↓","verdict":"OK","why":""}
+{"screen":"module_m05","label":"ACHEV. ↓","verdict":"OK","why":""}
+{"screen":"module_m06","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m06","label":"EY 0170 19 787 m² · SDP 16 163 m² À surveiller","verdict":"OK","why":""}
+{"screen":"module_m06","label":"EY 0611 13 477 m² · SDP 13 535 m² À surveiller","verdict":"OK","why":""}
+{"screen":"module_m06","label":"EO 1117 4 657 m² · SDP 6 694 m² À creuser","verdict":"OK","why":""}
+{"screen":"module_m06","label":"EO 0998 6 410 m² · SDP 6 689 m² Chaude","verdict":"OK","why":""}
+{"screen":"module_m06","label":"EO 0997 4 532 m² · SDP 6 115 m² Chaude","verdict":"OK","why":""}
+{"screen":"module_m07","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m07","label":"HK 0141 COMITE SOCIAL ET ECONOMIQUE CENTRAL AIR FRANCE · PM ","verdict":"OK","why":""}
+{"screen":"module_m07","label":"BO 0044 SUCCESSION HOW-PAN-HIE · PM introuvable au RNE 100","verdict":"OK","why":""}
+{"screen":"module_m07","label":"BP 0560 SUCCESSION AH KIEM MARIE ALICE · PM introuvable au R","verdict":"OK","why":""}
+{"screen":"module_m07","label":"AD 0241 ASSOCIATION SYNDICALE LIBRE DU LOT LE GRAND POURPIER","verdict":"OK","why":""}
+{"screen":"module_m07","label":"AD 0060 CENTRE HOSPITALIER GABRIEL MARTIN · PM introuvable a","verdict":"OK","why":""}
+{"screen":"module_m07","label":"DE 0879 LES RESIDENCES PAYSAGERES · PM introuvable au RNE 93","verdict":"OK","why":""}
+{"screen":"module_m07","label":"CT 0307 FEKLER · PM introuvable au RNE 92","verdict":"OK","why":""}
+{"screen":"module_m07","label":"EZ 0173 ASSOC SYND AUTORISEE DE LA RES CAP CHAMPAGNE · PM in","verdict":"OK","why":""}
+{"screen":"module_m07","label":"CS 0188 SUCCESSION CARLO JEANNE · PM introuvable au RNE 91","verdict":"OK","why":""}
+{"screen":"module_m07","label":"CP 0226 COMITE DE PROTECTION TUTELAIRE CROIX MARINE · PM int","verdict":"OK","why":""}
+{"screen":"module_m07","label":"BN 1284 SYNDICAT ECCLESIASTIQUE · PM introuvable au RNE 90","verdict":"OK","why":""}
+{"screen":"module_m07","label":"BN 1283 SYNDICAT ECCLESIASTIQUE DIOCESE DE L · PM introuvabl","verdict":"OK","why":""}
+{"screen":"module_m08","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m09","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m09","label":"standard indivision succession","verdict":"OK","why":""}
+{"screen":"module_m09","label":"Générer 1 courrier","verdict":"OK","why":""}
+{"screen":"module_m10","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m10","label":"Analyser le lot","verdict":"OK","why":"désactivé VISIBLE"}
+{"screen":"module_m15","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m15","label":"AUc → U","verdict":"OK","why":""}
+{"screen":"module_m15","label":"AUs → U","verdict":"OK","why":""}
+{"screen":"module_m16","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m16","label":"Analyser l'assiette (0)","verdict":"OK","why":"désactivé VISIBLE"}
+{"screen":"module_m17","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m17","label":"DE0805 8 921 m² Chaude","verdict":"NEUTRE","why":"occulté par un panneau (non cliquable à cet instant — normal)"}
+{"screen":"module_m17","label":"BO0044 717 m² À surveiller","verdict":"OK","why":""}
+{"screen":"module_m17","label":"CW1070 2 902 m² À surveiller","verdict":"OK","why":""}
+{"screen":"module_m17","label":"HK0141 5 369 m² À surveiller","verdict":"OK","why":""}
+{"screen":"module_m17","label":"DE1136 27 965 m² Chaude","verdict":"OK","why":""}
+{"screen":"module_m18","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m18","label":"⬇ Rapport PDF","verdict":"OK","why":""}
+{"screen":"module_m19","label":"Fermer le module","verdict":"OK","why":""}
+{"screen":"module_m19","label":"+","verdict":"OK","why":"désactivé VISIBLE"}
+{"screen":"module_m19","label":"Tester le matching maintenant","verdict":"OK","why":""}

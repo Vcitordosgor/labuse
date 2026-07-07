@@ -25,7 +25,13 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
     <div
       draggable
       onDragStart={onDragStart}
-      className="group cursor-grab rounded-[10px] border border-line-2 bg-surface-3 p-3 active:cursor-grabbing"
+      onClick={(ev) => {
+        // le CORPS de la carte ouvre la fiche (inspection : zone inerte au clic) — sauf ✕
+        if ((ev.target as HTMLElement).closest('button')) return
+        setView('cartes'); select(e.idu)
+      }}
+      className="group cursor-pointer rounded-[10px] border border-line-2 bg-surface-3 p-3 active:cursor-grabbing"
+      title="Ouvrir la fiche · glisser pour changer d'étape"
     >
       <div className="flex items-center justify-between gap-2">
         <button

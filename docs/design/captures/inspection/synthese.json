@@ -1,0 +1,38 @@
+{
+  "stats": {
+    "total": 273,
+    "ok": 180,
+    "dead": 4,
+    "doubt": 0
+  },
+  "suspects": [
+    {
+      "screen": "fiche_règles",
+      "label": "colorées par statut",
+      "verdict": "✗",
+      "why": "aucun effet visible (DOM/URL/réseau/onglet inchangés)",
+      "snap": "../docs/design/captures/inspection/fiche_r_gles_1.png"
+    },
+    {
+      "screen": "cloche",
+      "label": "▼ DM1376 : chaude → a_surveiller",
+      "verdict": "✗",
+      "why": "aucun effet visible (DOM/URL/réseau/onglet inchangés)",
+      "snap": "../docs/design/captures/inspection/cloche_2.png"
+    },
+    {
+      "screen": "crm",
+      "label": "AC 0253 ✕ 1 815 m² · Saint-Paul Chaude 71 92% moyenne",
+      "verdict": "✗",
+      "why": "aucun effet visible (DOM/URL/réseau/onglet inchangés)",
+      "snap": "../docs/design/captures/inspection/crm_3.png"
+    },
+    {
+      "screen": "ia",
+      "label": "IA",
+      "verdict": "✗",
+      "why": "aucun effet visible (DOM/URL/réseau/onglet inchangés)",
+      "snap": "../docs/design/captures/inspection/ia_4.png"
+    }
+  ]
+}

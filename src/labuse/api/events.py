@@ -186,6 +186,7 @@ def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
 def seed_demo(db: Session) -> dict:
     """Run de DÉMONSTRATION `q_v2_demo` : copie de q_v2 sur 8 parcelles avec statut modifié,
     ÉTIQUETÉ démo — pour voir le système vivre avant le prochain run réel de scoring."""
+    db.execute(text("DELETE FROM event_log WHERE demo"))  # démo REJOUABLE : la cloche se rallume
     db.execute(text("DELETE FROM dryrun_parcel_evaluations WHERE run_label = 'q_v2_demo'"))
     db.execute(text("""
         INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score,

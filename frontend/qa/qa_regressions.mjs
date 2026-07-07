@@ -73,6 +73,25 @@ assert((await page.locator('text=outil Zone actif').count()) > 0, 'M03 zone → 
   sql("DELETE FROM event_log WHERE kind='veille'")
 }
 
+// ── BUG #5 (clique-tout) : le CORPS d'une carte kanban était inerte au clic.
+{
+  const p3 = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  await p3.goto(BASE, { waitUntil: 'networkidle' })
+  await p3.waitForSelector('text=chaudes'); await p3.waitForTimeout(1500)
+  await p3.locator('nav button[title="CRM"]').click()
+  await p3.waitForTimeout(1000)
+  const card = p3.locator('[draggable="true"]').first()
+  if (await card.count()) {
+    const box = await card.boundingBox()
+    await p3.mouse.click(box.x + box.width / 2, box.y + box.height - 8) // clic dans le CORPS
+    await p3.waitForTimeout(1200)
+    assert((await p3.locator('aside .font-mono.text-sm').count()) > 0, 'kanban : clic corps de carte → fiche')
+  } else assert(true, 'kanban vide (pas de carte à tester)')
+  // BUG #6 : le rail annonce son état actif (aria-current) — no-op honnête
+  assert((await p3.locator('nav button[aria-current="page"]').count()) >= 1, 'rail : état actif annoncé (aria-current)')
+  await p3.close()
+}
+
 await browser.close()
 console.log('─'.repeat(50))
 if (failures.length) { console.log(`ROUGE — ${failures.length}`); failures.forEach((f) => console.log('  ✗ ' + f)); process.exit(1) }

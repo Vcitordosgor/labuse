@@ -1,0 +1,255 @@
+════ qa ════
+SQL q_v2 : 83 chaudes · 1720 à surveiller · 3353 à creuser · 51129 total
+
+━━ Passe 1440px ━━
+  ✓ titre d’onglet LABUSE
+  ✓ favicon 32px servi
+  ✓ compteur chaudes = SQL (83)
+  ✓ compteur à surveiller = SQL (1720)
+  ✓ compteur à creuser = SQL (3353)
+  ✓ total = SQL (51129)
+  ✓ layout 01_cartes @1440 sans débordement horizontal
+  ✓ couche Zonage PLU → requête layers.geojson
+  ✓ couche PPR → requête layers.geojson
+  ✓ layout 02_couches @1440 sans débordement horizontal
+  ✓ fond Plan IGN → tuiles Géoplateforme
+  ✓ layout 11_fond_plan_ign @1440 sans débordement horizontal
+  ✓ remonter le temps → ortho 1950-1965
+  ✓ layout 12_ortho_1950 @1440 sans débordement horizontal
+  ✓ relief 3D → tuiles MNT terrarium
+  ✓ layout 13_relief_3d @1440 sans débordement horizontal
+  ✓ mesure distance → lecture
+  ✓ zone dessinée → chip « Zone active »
+  ✓ compteurs libellés « dans la zone »
+  ✓ layout 14_zone @1440 sans débordement horizontal
+  ✓ filtre Chaude → 83 cartes
+  ✓ layout 03_filtre_chaude @1440 sans débordement horizontal
+  ✓ chip « Q ≥ 90 » ajouté
+  ✓ × retire le chip statut, Q ≥ 90 conservé
+  ✓ chip « Vue mer » ajouté
+  ✓ filtres sérialisés dans l’URL
+  ✓ URL rechargée → filtres restaurés
+  ✓ layout 15_filtres_v2 @1440 sans débordement horizontal
+  ✓ toggle Mutabilité → légende
+  ✓ layout 04_mutabilite @1440 sans débordement horizontal
+  ✓ panneau repliable
+  ✓ cloche → notifications
+  ✓ omnibox Entrée → fiche AC0253
+  ✓ bandeau événement AC0253 (invariant)
+  ✓ layout 05_fiche_evenement @1440 sans débordement horizontal
+  ✓ barre Accessibilité → age_dirigeant
+  ✓ onglet Risques → lignes
+  ✓ clic source → drawer (extrait + identité)
+  ✓ layout 16_drawer_source @1440 sans débordement horizontal
+  ✓ Échap ferme le drawer
+  ✓ fiche conservée après le drawer
+  ✓ clic-extérieur ferme le drawer
+  ✓ export PDF AC0253 (200, %PDF)
+  ✓ deep-link Google Maps (fiche)
+  ✓ + Pipeline → « ✓ Dans le pipeline »
+  ✓ Échap ferme la fiche
+  ✓ rail CRM → kanban
+  ✓ kanban contient AC 0253
+  ✓ layout 08_crm @1440 sans débordement horizontal
+  ✓ rail IA → Copilote (recherche NL)
+  ✓ rail Outils → catalogue de modules
+  ✓ J-2 → page Sources
+  ✓ layout 07_sources @1440 sans débordement horizontal
+  ✓ zéro erreur console @1440
+
+━━ Passe 1280px ━━
+  ✓ titre d’onglet LABUSE
+  ✓ favicon 32px servi
+  ✓ compteur chaudes = SQL (83)
+  ✓ compteur à surveiller = SQL (1720)
+  ✓ compteur à creuser = SQL (3353)
+  ✓ total = SQL (51129)
+  ✓ layout 01_cartes @1280 sans débordement horizontal
+  ✓ couche Zonage PLU → requête layers.geojson
+  ✓ couche PPR → requête layers.geojson
+  ✓ layout 02_couches @1280 sans débordement horizontal
+  ✓ fond Plan IGN → tuiles Géoplateforme
+  ✓ layout 11_fond_plan_ign @1280 sans débordement horizontal
+  ✓ remonter le temps → ortho 1950-1965
+  ✓ layout 12_ortho_1950 @1280 sans débordement horizontal
+  ✓ relief 3D → tuiles MNT terrarium
+  ✓ layout 13_relief_3d @1280 sans débordement horizontal
+  ✓ mesure distance → lecture
+  ✓ zone dessinée → chip « Zone active »
+  ✓ compteurs libellés « dans la zone »
+  ✓ layout 14_zone @1280 sans débordement horizontal
+  ✓ filtre Chaude → 83 cartes
+  ✓ layout 03_filtre_chaude @1280 sans débordement horizontal
+  ✓ chip « Q ≥ 90 » ajouté
+  ✓ × retire le chip statut, Q ≥ 90 conservé
+  ✓ chip « Vue mer » ajouté
+  ✓ filtres sérialisés dans l’URL
+  ✓ URL rechargée → filtres restaurés
+  ✓ layout 15_filtres_v2 @1280 sans débordement horizontal
+  ✓ toggle Mutabilité → légende
+  ✓ layout 04_mutabilite @1280 sans débordement horizontal
+  ✓ panneau repliable
+  ✓ cloche → notifications
+  ✓ omnibox Entrée → fiche AC0253
+  ✓ bandeau événement AC0253 (invariant)
+  ✓ layout 05_fiche_evenement @1280 sans débordement horizontal
+  ✓ barre Accessibilité → age_dirigeant
+  ✓ onglet Risques → lignes
+  ✓ clic source → drawer (extrait + identité)
+  ✓ layout 16_drawer_source @1280 sans débordement horizontal
+  ✓ Échap ferme le drawer
+  ✓ fiche conservée après le drawer
+  ✓ clic-extérieur ferme le drawer
+  ✓ export PDF AC0253 (200, %PDF)
+  ✓ deep-link Google Maps (fiche)
+  ✓ + Pipeline → « ✓ Dans le pipeline »
+  ✓ Échap ferme la fiche
+  ✓ rail CRM → kanban
+  ✓ kanban contient AC 0253
+  ✓ layout 08_crm @1280 sans débordement horizontal
+  ✓ rail IA → Copilote (recherche NL)
+  ✓ rail Outils → catalogue de modules
+  ✓ J-2 → page Sources
+  ✓ layout 07_sources @1280 sans débordement horizontal
+  ✓ zéro erreur console @1280
+
+━━ Anti-crash : 10 parcelles aléatoires ━━
+  ✓ fiche 97415000AW2362 rendue sans écran noir
+  ✓ fiche 97415000DX0049 rendue sans écran noir
+  ✓ fiche 97415000EX0029 rendue sans écran noir
+  ✓ fiche 97415000BV0816 rendue sans écran noir
+  ✓ fiche 97415000CP1097 rendue sans écran noir
+  ✓ fiche 97415000CY1040 rendue sans écran noir
+  ✓ fiche 97415000DM0238 rendue sans écran noir
+  ✓ fiche 97415000DI0646 rendue sans écran noir
+  ✓ fiche 97415000DR1199 rendue sans écran noir
+  ✓ fiche 97415000ES0927 rendue sans écran noir
+  ✓ zéro erreur console (anti-crash)
+
+════════════════════════════════════════════════════════════
+AUTO-QA 100 % VERTE
+════ qa_filtres_reels ════
+  ✓ panneau filtres présent au DOM après clic réel
+  ✓ panneau filtres VISIBLE à l’écran (non rogné par un overflow)
+  ✓ chip « Vue mer » ajouté et VISIBLE
+  ✓ liste filtrée (5156 → 1471 résultats)
+  ✓ compteurs relibellés « filtres actifs »
+  ✓ filtre propagé à la carte (état + URL vm=1)
+  ✓ × retire le chip (clic réel)
+  ✓ liste restaurée (5156 résultats)
+──────────────────────────────────────────────────
+VERT — parcours filtres utilisateur réel OK
+════ qa_modules ════
+  ✓ M01 s'ouvre depuis le tiroir
+  ✓ M01 compteur = SQL (698)
+  ✓ M01 fiche : bloc module violet
+  ✓ M01 fiche : lot détachable affiché
+  ✓ M02 s'ouvre depuis le tiroir
+  ✓ M02 patrimoine CBO ≈ SQL (1871, hors parcelles absentes de la table parcels)
+  ✓ M03 s'ouvre depuis le tiroir
+  ✓ M03 bandeau géocodage honnête
+  ✓ M03 non-géocodés listés
+  ✓ M04 s'ouvre depuis le tiroir
+  ✓ M04 résultats affichés
+  ✓ M05 s'ouvre depuis le tiroir
+  ✓ M05 tri par colonne actif
+  ✓ M05 export CSV
+  ✓ M06 s'ouvre depuis le tiroir
+  ✓ M06 compteur = SQL (731, plafonné 500)
+  ✓ M07 s'ouvre depuis le tiroir
+  ✓ M07 résultats
+  ✓ M07 fiche : verrou + levier
+  ✓ M08 s'ouvre depuis le tiroir
+  ✓ M08 tuiles 1950 chargées
+  ✓ M08 comparateur affiché
+  ✓ M09 s'ouvre depuis le tiroir
+  ✓ M09 courrier généré
+  ✓ M09 export .md proposé
+  ✓ M10 s'ouvre depuis le tiroir
+  ✓ M10 2/3 trouvées (honnête)
+  ✓ M10 PDF par parcelle
+  ✓ M10 introuvable signalé
+  ✓ URL #m=fantome → module restauré
+  ✓ zéro erreur console (modules)
+──────────────────────────────────────────────────
+VAGUE 1 — AUTO-QA VERTE
+════ qa_ia ════
+  ✓ NL : « les chaudes avec vue mer »
+  ✓ NL : « parcelles à surveiller de plus de 2000 m² »
+  ✓ NL : « chaudes avec événement bodacc »
+  ✓ NL : « terrains pollués à creuser »
+  ✓ NL : « score > 80 avec vue mer »
+  ✓ NL : « SDP d’au moins 800 m² »
+  ✓ NL : « moins de 5000 m² près d’une usine »
+  ✓ NL : « parcelles avec risque inondation »
+  ✓ NL : « monument historique à proximité »
+  ✓ NL refus : « raconte-moi une blague »
+  ✓ vue Copilote
+  ✓ badge stub affiché (clé absente)
+  ✓ copilote → chip Chaude appliqué
+  ✓ copilote → chip Vue mer appliqué
+  ✓ copilote → URL synchronisée
+  ✓ fiche IA : synthèse + mention
+  ✓ fiche IA : pourquoi + doctrine
+──────────────────────────────────────────────────
+VAGUE 2 — AUTO-QA VERTE
+════ qa_events ════
+  ✓ job démo tourne (run étiqueté)
+  ✓ événements démo en base (8)
+  ✓ événements non lus (8)
+  ✓ cloche → panneau notifications
+  ✓ événements étiquetés DÉMO
+  ✓ marquer lu → SQL décrémenté (8→7)
+  ✓ veille enregistrée (SQL)
+  ✓ veille listée dans le panneau
+  ✓ digest HTML généré
+  ✓ suivi de cible → SQL
+  ✓ bouton passe à « Suivie »
+  ✓ kanban : badge « N nouveaux » (M12)
+──────────────────────────────────────────────────
+VAGUE 3 — AUTO-QA VERTE
+════ qa_moteurs ════
+  ✓ M18 rapport PDF (%PDF)
+  ✓ M15 s'ouvre
+  ✓ M15 simulation AUc → résultats
+  ✓ M15 bandeau « à blanc » (rien persisté)
+  ✓ M16 s'ouvre
+  ✓ M16 API : 2 parcelles contiguës (score 70)
+  ✓ M16 bandeau règlement d'ensemble
+  ✓ M17 s'ouvre
+  ✓ M17 parcelles ZAN-compatibles
+  ✓ M17 bandeau quotas en attente (honnête)
+  ✓ M18 s'ouvre
+  ✓ M18 tendances affichées
+  ✓ M18 lien PDF
+──────────────────────────────────────────────────
+VAGUE 4 — AUTO-QA VERTE
+════ qa_partners ════
+  ✓ M21 sans clé → 401
+  ✓ M21 avec clé → parcelles triées
+  ✓ M21 doc une page
+  ✓ M21 clé inconnue → 401
+  ✓ M20 page publique filigranée + horodatée
+  ✓ M20 scores + noindex
+  ✓ M20 compteur de consultations (2)
+  ✓ M19 deux profils de démo étiquetés
+  ✓ M19 matching → événements en cloche (5)
+  ✓ M19 module ouvert
+  ✓ M19 profils étiquetés DÉMO à l’écran
+  ✓ M19 bouton matching → retour visible
+  ✓ M20 bouton fiche → lien généré
+  ✓ M20 lien de la fiche → page publique 200
+──────────────────────────────────────────────────
+VAGUE 5 — AUTO-QA VERTE
+════ qa_regressions ════
+  ✓ M08 caméras synchronisées à z17
+  ✓ M08 côté 1950 à z17 : image visible (pas un aplat noir)
+  ✓ M03 zone dessinée → libellé « dans la zone »
+  ✓ M03 zone → mention outil actif
+  ✓ M18 médianes entières (plus de .0)
+  ✓ veille enregistrée → notification 🔭 à la détection (5)
+  ✓ notification veille visible dans la cloche
+  ✓ kanban : clic corps de carte → fiche
+  ✓ rail : état actif annoncé (aria-current)
+──────────────────────────────────────────────────
+RÉGRESSIONS INSPECTION — VERTES
