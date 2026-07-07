@@ -112,3 +112,20 @@ DOSSIER aux tops, /communes porte dossiers par commune.
 par propriétaire, fiche dossier multi-parcelles (agrégats SDP/surfaces, pipeline par dossier,
 PDF dossier), tri par dossier ≈ **2-3 jours** (l'unité de compte et la clé sont posées ;
 c'est la V2 naturelle de la prospection).
+
+## Convention de matrice versionnée (mandat mini, vague 1 — 2026-07-07)
+`config/scoring_matrice.yaml` porte désormais version/date/justification (v2). Changer la
+barre = éditer le YAML + `labuse matrice-apply` (matrice ×24 + MVT + tops, idempotent,
+canari AC0253 bloquant). Simuler avant : `labuse matrice-simulate` (à blanc prouvé).
+**Grille de sensibilité** : docs/tops_ile/matrice_sensibilite.html — la falaise est à
+A≥55 (la masse « accessibilité inconnue » stagne à ~50 : A55 l'attrape → ×15 de chaudes) ;
+le plateau utile vit entre Q65-75 × A60-65 :
+| Candidat | Chaudes île | dont évén. | Dossiers | Sans id. |
+|---|---:|---:|---:|---:|
+| **Q≥65 · A≥60 (COURANTE)** | **719** | 42 | 166 | 218 |
+| Q≥70 · A≥60 | 316 | 42 | 82 | 78 |
+| Q≥65 · A≥65 | 460 | 42 | 113 | 103 |
+| Q≥75 · A≥60 | 149 | 42 | 44 | 29 |
+| Q≥70 · A≥65 | 211 | 42 | 61 | 43 |
+**DÉCISION VIC : ______ (en attente — apply en minutes dès qu'elle tombe ; « garder la
+courante » = no-op vérifié, diff zéro).**
