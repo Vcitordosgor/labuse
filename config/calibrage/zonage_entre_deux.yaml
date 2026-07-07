@@ -1,0 +1,1651 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Entre-Deux
+idurba:
+- 97403_plu_20240924
+n_zones: 182
+geoms_sidecar: data/calibrage/zonage_entre_deux.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 78444
+  geom_md5: 45b12a96249c5df9ed05b12a6386077e
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 12941
+  geom_md5: 798e3b588270b4b58a99071fa35493d1
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 3095
+  geom_md5: bdd4f470c60c24b59701d69a5a81912c
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 6312
+  geom_md5: 805fedaeafc775a81584dcf7d62881d0
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 109189
+  geom_md5: 0ad54458c92730858e1892cd8cab8c3b
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 6665
+  geom_md5: 8d1e6538e4b6ba88801a15c3f6782f9b
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 278393
+  geom_md5: 987dd5436e11a1868f1132fbce5fd889
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 6085
+  geom_md5: c7e0cad1777cd3753d18c5dc79d44591
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 35979
+  geom_md5: 019129dc5b7d962dc1716ed26071af02
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 1194028
+  geom_md5: e7f9bb89cbe6b86a9254f7d15b6ce49f
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 1235492
+  geom_md5: bb70fdca953411d02f926ea14bd4e7b0
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 3402
+  geom_md5: cc5feb05dfe2ff9ef33769a6f7a6878c
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 288659
+  geom_md5: 92b98d9d48f86b3f3bb543204029a65c
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 4752
+  geom_md5: a2564aa376457f2ae86cbec7f7dd3691
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 73238
+  geom_md5: 06ec9706f183d98b894643771543bce4
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 85458
+  geom_md5: 93af3d91cafd26cc9be52fc2fb3578e6
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 7409
+  geom_md5: 02ae208d4ea1382949a0b468968c4b3d
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 17076
+  geom_md5: 98e64a84b3d7eadfda00c69c030d00fe
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97403
+  surface_m2: 110964
+  geom_md5: cb0828108330e84b76d356f9bb9dd70b
+- subtype: A
+  name: Zone agricole avec constructibilité limitée
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97403
+  surface_m2: 5310
+  geom_md5: bae0f2276a7b4976db41209c4f540b51
+- subtype: A
+  name: Zone agricole avec constructibilité limitée
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97403
+  surface_m2: 2871
+  geom_md5: 0669077cb522b9c89d9ae2f280704e7c
+- subtype: A
+  name: Zone agricole avec constructibilité limitée
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97403
+  surface_m2: 6462
+  geom_md5: ebe1253ea124546ff37d4ae6280a447e
+- subtype: A
+  name: Zone agricole avec constructibilité limitée
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97403
+  surface_m2: 4492
+  geom_md5: 6c20f49bf5e59646e562f6983f94f58d
+- subtype: A
+  name: Zone agricole avec constructibilité limitée
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97403
+  surface_m2: 3441
+  geom_md5: 53e003bf31dfda2ed1cfb2eeb2d147d6
+- subtype: A
+  name: Zone agricole avec constructibilité limitée
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97403
+  surface_m2: 2696
+  geom_md5: 3905930fe3a48c120391093b71dcae35
+- subtype: A
+  name: Zone agricole avec constructibilité limitée
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97403
+  surface_m2: 8272
+  geom_md5: 511cf9a5e75b6da3e988855a1bc4ed58
+- subtype: A
+  name: Zone agricole avec constructibilité limitée
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97403
+  surface_m2: 1054
+  geom_md5: ebdf2f12fd770e8aeee43ea0035edc9b
+- subtype: A
+  name: Zone agricole avec constructibilité limitée
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97403
+  surface_m2: 2984
+  geom_md5: 3a8266741d9a6ad8fd311088ded40205
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 8731
+  geom_md5: e90c4191f8b17ca04ad4ff2d9082d12d
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 7396
+  geom_md5: 2cb128e3830bb878be17a8beaccc93e6
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 2974
+  geom_md5: 9b5f0bf47c0377555721210dad9b5c9f
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 13010
+  geom_md5: 5172c44815d1eb643be3822518c0fde9
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 49871
+  geom_md5: 60ffc7baabc48a0a311cafabd313b411
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 1356
+  geom_md5: 85d98384bfa63ea1376ad71e28a2ab28
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 2181
+  geom_md5: 92a8acc8b9d02c3eb407def7ca44c413
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 8509
+  geom_md5: efc6b02ae3952dc22dfbd4de15a24030
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 3383
+  geom_md5: 2696e837ed02b75687b4237e1fbc5751
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 3794
+  geom_md5: 366b730e72d876b59c809ef4cb12b412
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 3406
+  geom_md5: 8dcd1ce7bd58a8ae8a6c038c596fc128
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 34417
+  geom_md5: 9a5ae35eea61411a9a4239e4e59c6682
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 1492
+  geom_md5: 7e89bf564dbfa243b225beea34ca8431
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 7230
+  geom_md5: ff656c6a4bd938bb0bedde283f629a2f
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 7438
+  geom_md5: c494e784496494c1a09205780a32a268
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation mixte
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97403
+  surface_m2: 1648
+  geom_md5: 1f8483a40bb2dca716ea117872e5be41
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation économique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUe
+    partition: DU_97403
+  surface_m2: 5595
+  geom_md5: 6f3ee4a298fab002f4772826bc7a3c4f
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation économique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUe
+    partition: DU_97403
+  surface_m2: 4124
+  geom_md5: e273fe99a1427b75d868e07022997105
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation économique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUe
+    partition: DU_97403
+  surface_m2: 13093
+  geom_md5: d5934437da4d782262c8b60f2b6a0491
+- subtype: AUc
+  name: Zone d'urbanisation future à vocation économique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUe
+    partition: DU_97403
+  surface_m2: 16394
+  geom_md5: 49040606dd6053a29575be9537a1ee9d
+- subtype: AUs
+  name: Zone d'urbanisation future
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: AUst
+    partition: DU_97403
+  surface_m2: 18809
+  geom_md5: e8c085bb13e56e057a8bc954df4d0236
+- subtype: N
+  name: Cimetière
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nci
+    partition: DU_97403
+  surface_m2: 13120
+  geom_md5: 62a7dd74371a3cda4d56700c83ad7d28
+- subtype: N
+  name: Parc national de la Réunion
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97403
+  surface_m2: 314016
+  geom_md5: 9d2c7eb13028c14001c85e8b7058a6d6
+- subtype: N
+  name: Parc national de la Réunion
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97403
+  surface_m2: 128934
+  geom_md5: a1e3da917c6046baa9268c3262ced4b4
+- subtype: N
+  name: Parc national de la Réunion
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97403
+  surface_m2: 4963918
+  geom_md5: 609fcb8cb20395cc00a6c2249bab9d9f
+- subtype: N
+  name: Parc national de la Réunion
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97403
+  surface_m2: 12276530
+  geom_md5: d39c2f62d1fc901d4489ebfcfb2e58b6
+- subtype: N
+  name: Parc national de la Réunion
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97403
+  surface_m2: 10605970
+  geom_md5: 5321b201fb3109a923fad5eb1a84343a
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 504293
+  geom_md5: 05fa4910a467dd63b4490483d33c7f43
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 3264
+  geom_md5: d090cbc6f693cebf9836d75f4db282cc
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 1319
+  geom_md5: 4ce4d8b317500a3f77d146ea1fdb3fe2
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 7321
+  geom_md5: 227b701ef160665de12a5deac0bbe0e5
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 18593
+  geom_md5: 8eaac9ae3c04f85f22ea7b46089bd4e8
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 8695
+  geom_md5: 34716abf1d58ed402dddbce4725a8f09
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 227703
+  geom_md5: 728d8a2d1abb1ac9e8383078f36bbf46
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 453193
+  geom_md5: e1a1494ac9fc982c3817f190fa5f3376
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 3657
+  geom_md5: e860d9de9027c2cc48749146d7837d8a
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 31388
+  geom_md5: 10c671b9c128ac68722e42f10577228f
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 115278
+  geom_md5: dd07594bbe153af0143f62f2eeb336c7
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 3080
+  geom_md5: 58e2c1d5bc5558766a373d03e8012673
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 2634
+  geom_md5: 6ae28ba1bf279cae1ecf96e0b78eb873
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 2823
+  geom_md5: 4d314c25f79611de30ae16e6346d9eb2
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 7894
+  geom_md5: a5cde5c02fc53c9281e591eed00e22c5
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 6941
+  geom_md5: 3514fb9bb3206c5587adb03fb3b88a0f
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 892173
+  geom_md5: b6491a2417ead5666123e13b41c7d6d4
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 4163237
+  geom_md5: 6d0248a599d887dbb8345f5789093555
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 5984
+  geom_md5: 3b9ba458cd831ed9d89d1c51808abc67
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 3217
+  geom_md5: 57487be5ac3412366072e116a9b1fe61
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 422
+  geom_md5: eaa1d11780a751102e64fa9d2f271cdc
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 21792
+  geom_md5: 5acb7c1ec914c29d0eda7b2f0c4fec4d
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 771
+  geom_md5: e0e86bd4994ea5aff616c2d85b23448a
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 49910
+  geom_md5: 920093e044b3bae9c8234de6d91e88ac
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 23
+  geom_md5: 3c94219a2c0fcbb03c87880da8c6f265
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 110916
+  geom_md5: f085629a84938d65e7712260bdb1de03
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 253091
+  geom_md5: 32b8d6e215d57cc6cece7a56ddc9b378
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 3367
+  geom_md5: bd7e881a1990b0a5b780c4fcc793cc35
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 80851
+  geom_md5: 8313ff3ad970f6184a7f1e1b7e93a730
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 2703
+  geom_md5: 6874127afe4ffe2779696b49679b79b5
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 6264
+  geom_md5: 73495da58b2a02d6373851abbca136d0
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 11873
+  geom_md5: 9bef102dcd0d0aa1fb1d3ae2d3b75f19
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 1312
+  geom_md5: 6a86691bbb8abaf021ca43c9b0695063
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 733296
+  geom_md5: 61b9b0e42ad6a6aeeef13b8727a7f827
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 1060
+  geom_md5: eea86138a0a57f7817284098d1cff31f
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 884
+  geom_md5: d6c25e56b33767c7a8a9bdd773fc86d9
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 8750
+  geom_md5: 4200eb115f8d339037341fe9b6702dba
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 15879
+  geom_md5: 1d6bb7e1d33bdc4655088817cc3c5d1d
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 13458
+  geom_md5: 05a6d3df556077e9cb746f967ea8498d
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 10333
+  geom_md5: 88e7f59c5928c364dc426cc400ee6b8c
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 350533
+  geom_md5: 091dfba9131c73e9d77cf7f80a7d2369
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 1872
+  geom_md5: 4d7ff824df0c51a54c7b88db9fecb4b0
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 8650
+  geom_md5: 89e5b740be6df0097706e83fa084870b
+- subtype: N
+  name: Réservoir de biodiversité hors pnr
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97403
+  surface_m2: 3636
+  geom_md5: ee33b1cd888396e8cffa59d3f860acb6
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 92
+  geom_md5: 0303cdb6e9a76fdb10c9aab84f88c34e
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 206
+  geom_md5: 105c4ac86719792c69d35d14ca2d5226
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 972
+  geom_md5: 69bd4d342d878e2f6fa3751d0e3a32b7
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 305
+  geom_md5: 3010512abba9821b2ae8ad5bb353a8ee
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 4562
+  geom_md5: 2098c713969d7cf9c0f6a74f44451cde
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 482
+  geom_md5: 422bb2905416041632028e6bef793657
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 249
+  geom_md5: 53610492ad35a7fd827261943b0f1867
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 282
+  geom_md5: c504c9d1bc26a88c33192c34ca6f489c
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 218
+  geom_md5: 1b4a235a9a174ae91190d5a2c2ae70dd
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 260
+  geom_md5: dbd5efed58bee2e67a51df067bdc5d24
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 133
+  geom_md5: 50ba0950845a16d41aa1f2bb4ecf8408
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 3983
+  geom_md5: 93fe7b17090e04715755c13c735e5bca
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 1017
+  geom_md5: d4d61d5c891f2a90bfdb1f1e43826e43
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 328
+  geom_md5: ed44269adc95a0e2be50c7d589bfa542
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 513
+  geom_md5: 6cce258ef117a6c090bc1b767bad63cc
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 652
+  geom_md5: a84f15e945c027836d23325c282c7e72
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 509
+  geom_md5: 57236a3f78f198a7f1efe52acda38b84
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 18784
+  geom_md5: f8ad874b4b485cb628253a2406e85b6e
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 269
+  geom_md5: b7b336f44c7a3d807c20baa9b06e9575
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 154
+  geom_md5: 21204b9403bc458fdf8bad01db55644d
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 1123
+  geom_md5: 909701a5d5101e3002c4852b3804e5e9
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 2221
+  geom_md5: 8cdf25b60ab49474d945591c1501edf7
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 523
+  geom_md5: 80084117c6f12937529dc27ab1f60db2
+- subtype: N
+  name: Secteur naturel à vocation touristique
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nt
+    partition: DU_97403
+  surface_m2: 179
+  geom_md5: 26d9ed2e2efe80a712c11412523c1557
+- subtype: N
+  name: Station d'épuration
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nstep
+    partition: DU_97403
+  surface_m2: 4852
+  geom_md5: 8d767f06fecd68d70bfa424701d11572
+- subtype: N
+  name: Station d'épuration
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Nstep
+    partition: DU_97403
+  surface_m2: 12366
+  geom_md5: 9e6accbc608f19f759039ed044493534
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 5743
+  geom_md5: bd188aa3979ae16c0911292e9eb8ebb4
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 60
+  geom_md5: 8be8d3ccdb103469d0de91fc81257113
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 765
+  geom_md5: fc30c30e9b6ac197c74d461e649ead82
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 145047
+  geom_md5: c25c971500f26e084125d550b0bfa86d
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 1118271
+  geom_md5: cbad142f04a2300f12890f2689e6744e
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 497865
+  geom_md5: e05e87d1c5df7e9d7ba108256309c3a6
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 11676
+  geom_md5: 5520658c2b7f1e1de07c63ad16a8c0ad
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 55
+  geom_md5: 2e3f15ad8c92974a7d3a450eaa90ec6b
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 8238
+  geom_md5: 0266888083123f0025546608ad72c8fa
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 403152
+  geom_md5: 16ea59d8f1991c74a42e03e19c135739
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 381
+  geom_md5: 44e5d123fea7df2bd04dcbd4cc32000a
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 4322
+  geom_md5: 52191daab9e3068422b1d7d262eec201
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 164578
+  geom_md5: 672de1594e7bcd1998202bd95b1f11ec
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 154
+  geom_md5: 1dc082d30280526cb42f4e4b92bb5e96
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 2246
+  geom_md5: be2cb566564ce8b84e210dbd9b245530
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 1806
+  geom_md5: 067c73fd6251e041a56b0c2be4ca9725
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 1931088
+  geom_md5: db72682de629a5424addbc286770fc0f
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 16758
+  geom_md5: 20a066db238c3f8c8af2cb2dfe6f2e98
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 620
+  geom_md5: 74fdd1321bd833a9fa1c4d219ff5caeb
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 10672
+  geom_md5: 8ab62ac8b5bf1b45866615ca08f618fe
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 3241127
+  geom_md5: 079b48fae1de736d2e427bbcd94c4c59
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 304
+  geom_md5: a92b9626b205d62de64927b13d445061
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 31012
+  geom_md5: 9585dcc9a39227f798fecb15c54bbfd9
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 3264
+  geom_md5: b13a53549ccea3b6209b0c7c4c72fb95
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 3585
+  geom_md5: efcbb52b2f85f1e3b556771eaa1b7754
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 209140
+  geom_md5: aaf85102da57db47b29d190c31f86cd8
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 253771
+  geom_md5: a30ec76b5eb62168d9edfee45824a9b0
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 397
+  geom_md5: 5a2512b9a6e57bd5528b298ed125b861
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 690129
+  geom_md5: 8cc606a5032d4cbed878fcaf718300e8
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 6080
+  geom_md5: ca67c4bf81aaa30bc79e12004a1c9adf
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 4283
+  geom_md5: 25eb9364fc37f8cfe3f559762fabb7f6
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 2753
+  geom_md5: 7aa78ba8ba96f91057fa99805fb4b204
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97403
+  surface_m2: 1751
+  geom_md5: cc3342630bd25a4b85c64811efa66cc5
+- subtype: U
+  name: Bourg
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97403
+  surface_m2: 539603
+  geom_md5: 4f85c99e0aa3cf6ffc31ef2c3e8e4527
+- subtype: U
+  name: Bourg
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97403
+  surface_m2: 18972
+  geom_md5: 1c3dd09a9449a1e7ff50dbff86ea754c
+- subtype: U
+  name: Bourg
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97403
+  surface_m2: 4890
+  geom_md5: dd5b3fb82d00bc58a707a955beafb10d
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub1
+    partition: DU_97403
+  surface_m2: 34389
+  geom_md5: bd32a0f12ddd8c213b44137dd0717789
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 224244
+  geom_md5: fd8ecda4a09a0fcd2a42d9075e6c9f7c
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 7012
+  geom_md5: 11e3be706b57a859e787cd70d60e799c
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 89984
+  geom_md5: 3757720d051b38d1a747c020c96a9756
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub1
+    partition: DU_97403
+  surface_m2: 15403
+  geom_md5: 1a1ae33fce87e8e53a0f9ad5848d0c66
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 19310
+  geom_md5: 05bb619fa0355661c647f9283f8f7be5
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 385019
+  geom_md5: 4859ecb1e7be50c2affabc5b1c0699a3
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub2
+    partition: DU_97403
+  surface_m2: 24715
+  geom_md5: 38a039ed536aeec5abc7d094dfc70ca6
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 44574
+  geom_md5: 1c39bd656825738e17eb77bf64d34ec5
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 50099
+  geom_md5: 38717314ed20bae17ad027c6f95a3b86
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub1
+    partition: DU_97403
+  surface_m2: 11043
+  geom_md5: 461a97edd7ac620f5b2062457462a039
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 13280
+  geom_md5: 9884bcbaec82927c5984e5b30def7a27
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub2
+    partition: DU_97403
+  surface_m2: 17721
+  geom_md5: 3e363898f5f41e2bab34f60ca596128d
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 12064
+  geom_md5: d057a6930064041cd7537bb7b80ffd47
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub1
+    partition: DU_97403
+  surface_m2: 8727
+  geom_md5: 2efe1c6a29e6478e795254ab363fbf2b
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 427783
+  geom_md5: ef4225d07124735dc19d0cf7bd503b46
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 79225
+  geom_md5: 4b0ac35ca8c4baf7fbf3e07375b456e4
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 27311
+  geom_md5: bee840b45c326e820f15be9f0c340080
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 94301
+  geom_md5: 78dfb04cb1d2e91597a043d04d9de441
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 4889
+  geom_md5: 590c94d84db850b3c5284c30b8b824a3
+- subtype: U
+  name: Tissu urbain peu dense
+  attrs:
+    idurba: 97403_plu_20240924
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97403
+  surface_m2: 9781
+  geom_md5: f6492f7ed605df4bf8fca5a47622ff4d

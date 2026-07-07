@@ -180,3 +180,19 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   Arbitrage seuils rendu à Vic (BILAN_ILE §2) — une île, une convention.
 - **QA adaptées aux données île** : liste plafonnée à 200 cartes (« Tout voir ») → assertion
   min(n,200) ; module_division porte 24 communes → compteur SQL scoppé commune.
+
+## Mandat mini (convention · dossiers · calibrage)
+- **Convention de matrice** : pas de nouveau fichier — `config/scoring_matrice.yaml` EST
+  l'objet versionné (en-tête convention: version/date/justification). Les seuils étaient
+  déjà en YAML ; l'invariant anti-dérive = empreinte statut×commune identique à convention
+  identique (prouvé simulate ET apply).
+- **Clé dossier = SIREN** (personnes morales DGFiP). Limite : deux parcelles d'une même
+  personne PHYSIQUE ne se regroupent pas (aucune identité en base, doctrine) — comptées au
+  reliquat « sans identité », jamais fusionnées silencieusement.
+- **Calibrage re-gravé = le zonage opposable** (ce que la DB sait). Les RÈGLES par zone
+  (hauteurs/articles des règlements PDF) n'ont JAMAIS été en DB — leurs YAML perdus restent
+  au backlog (re-extraction règlements). Manifestes versionnés config/calibrage/ (1,5 Mo) ;
+  géométries data/calibrage/*.gz (politique du dépôt : pas de dump public en git — couvert
+  backup, régénérable par export).
+- **Marqueurs communes = DOM markers** (pas de couche symbol : aucune dépendance glyphes,
+  cohérent avec les étiquettes de mesure) ; centroïde = centre bbox (suffisant à z<10).

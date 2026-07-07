@@ -1,0 +1,1267 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Bras-Panon
+idurba:
+- 97402_PLU_20260428
+n_zones: 130
+geoms_sidecar: data/calibrage/zonage_bras_panon.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 43314
+  geom_md5: b27fbfaf4147e44d81885cbf6800837a
+- subtype: A
+  name: Secteur correspondant aux espaces de coupure d'urbanisation identifiés par le SAR approuvé en 2011
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97402
+  surface_m2: 24073
+  geom_md5: 2c96641326b671df7e168a5411053e9a
+- subtype: A
+  name: Secteur correspondant aux espaces de coupure d'urbanisation identifiés par le SAR approuvé en 2011
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97402
+  surface_m2: 1829875
+  geom_md5: 87b0198907a40537c4fc0e313559eb7e
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 1229967
+  geom_md5: 3d14ee637ba4a01687a0c84b0d180205
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 16300
+  geom_md5: a61691449683412f512d697eadb47164
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 40456
+  geom_md5: de5d0dfee9c683b54edfd981c5aca233
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 387166
+  geom_md5: 24d3c99de956a42799249898e9accff3
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 22846
+  geom_md5: 06dab613a5d5b5946c32ba4158fc7367
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 13313
+  geom_md5: 72db7faa9a80c54e3ce44b39493b3551
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 15789
+  geom_md5: 456b71368fb373dc8e3a00e222a164f6
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 70268
+  geom_md5: c3fdfb1939163683956dccf283195c76
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 706152
+  geom_md5: a3ab3bd07557eca4eb4889dd6af0bfa7
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 12643
+  geom_md5: bf145a2742f782d81fb5056767f9368f
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 4036160
+  geom_md5: a597bae694c49637e386200fb5f36c8c
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 43935
+  geom_md5: 78d0b08fb02a28869ffbb0007cf9dbb9
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 27332
+  geom_md5: e0ee27fe494a8b9241cd5ab0f8096542
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 122190
+  geom_md5: 06a1c7d8c365d940f045554273995a47
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 77476
+  geom_md5: df10b94fd78d2c020c194e71210d64b8
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 4849
+  geom_md5: 0a21b7eb316a238dd1b32961024287ff
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 234759
+  geom_md5: 22a29160fd0d737c5b6a205721344eda
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 19522
+  geom_md5: 12083ed310656f8b07d922cde8d0e629
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 202456
+  geom_md5: d89b97a9a0e67afc4ae940fbf277e625
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 89913
+  geom_md5: 78ef1e94910188e987fc61a6a4e83d27
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 3698278
+  geom_md5: 96988b572d919292eb57b52731c2c6a4
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 80447
+  geom_md5: 0bec5a1a3985c146f76932a9f54513b9
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 910663
+  geom_md5: fd33b542d78a7d0bd05a146a00fa736d
+- subtype: A
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97402
+  surface_m2: 46514
+  geom_md5: cc9eb869b326c377f43f05dd0826701d
+- subtype: AUc
+  name: Espaces d'extension urbaine dédiées aux constructions liées au tourisme, à l'hôtellerie, restaurant, loisirs
+    et sports et les services liés, sous réserve de présenter un parti architectural et environnemental permettant
+    une intégration au site e
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUt
+    partition: DU_97402
+  surface_m2: 21559
+  geom_md5: 767a6266a7e483f3cff11d33676141b4
+- subtype: AUc
+  name: Espaces d'extension urbaine dédiées aux constructions liées au tourisme, à l'hôtellerie, restaurant, loisirs
+    et sports et les services liés, sous réserve de présenter un parti architectural et environnemental permettant
+    une intégration au site e
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUt
+    partition: DU_97402
+  surface_m2: 1438
+  geom_md5: 154c8ff80272541cdd7b2cc6fbcba2c7
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUe
+    partition: DU_97402
+  surface_m2: 208393
+  geom_md5: 02ff3bde352660d0739defc6cb2e9ec7
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUe
+    partition: DU_97402
+  surface_m2: 13282
+  geom_md5: 63dcad6dddcd13b0693990acb50ab65d
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUd
+    partition: DU_97402
+  surface_m2: 8695
+  geom_md5: edbb1259b0eb60d1f450d3214e312f49
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUb
+    partition: DU_97402
+  surface_m2: 39459
+  geom_md5: ba8680ff5905933d2a2ec3b5976d505c
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUb
+    partition: DU_97402
+  surface_m2: 67530
+  geom_md5: 45bdc6d78a49e122e115f8f46f276ea3
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUb
+    partition: DU_97402
+  surface_m2: 12222
+  geom_md5: 1d7010f5fea2a9d1000d187b13a09a16
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUb
+    partition: DU_97402
+  surface_m2: 43846
+  geom_md5: ee55ff100a2a5a924fc4fc60147c4a3c
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97402
+  surface_m2: 29448
+  geom_md5: 9c67ae0d81040a5f763191abc3872f7b
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUb
+    partition: DU_97402
+  surface_m2: 5727
+  geom_md5: eb503ae47e01247b8c5bcc9574c2ac95
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97402
+  surface_m2: 11324
+  geom_md5: 6275ff21e9d14e476a16b0695efeb2b3
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97402
+  surface_m2: 25396
+  geom_md5: 6b8117de0fc42b26fd0cc6f500852d63
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUd
+    partition: DU_97402
+  surface_m2: 3233
+  geom_md5: 34173af82b0297a057ec24da18fd5b9f
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97402
+  surface_m2: 90779
+  geom_md5: 8647fbe3038598a3ee4d688c697ac19c
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97402
+  surface_m2: 15150
+  geom_md5: fc450e8ea059af3bb16f44ab697427ac
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dans
+    les territoires ruraux habités identifiés par le SAR
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUd
+    partition: DU_97402
+  surface_m2: 4896
+  geom_md5: c1d8fe85edc419a8a908d254c10070cc
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dédiées
+    à l'implantation d'équipements, aux commerces et aux activités économiques autres que de production
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUec
+    partition: DU_97402
+  surface_m2: 12367
+  geom_md5: 16bc25d26bdaee763a814ed7dcb3bf56
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dédiées
+    à l'implantation d'équipements, aux commerces et aux activités économiques autres que de production
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUec
+    partition: DU_97402
+  surface_m2: 28168
+  geom_md5: 83831efc658b2f1f9936ad37d2700bfb
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dédiées
+    à l'implantation d'équipements, aux commerces et aux activités économiques autres que de production
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUec
+    partition: DU_97402
+  surface_m2: 4620
+  geom_md5: d39c1a6a98956322bd55e1f960ace367
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dédiées
+    à l'implantation d'équipements, aux commerces et aux activités économiques autres que de production
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUec
+    partition: DU_97402
+  surface_m2: 13111
+  geom_md5: 1b6c2392e068afa37cf37031143749fe
+- subtype: AUc
+  name: Espaces d'urbanisation prioritaire identifiés par le SAR ainsi que les zones ouvertes à l'urbanisation dédiées
+    à l'implantation d'équipements, aux commerces et aux activités économiques autres que de production
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUec
+    partition: DU_97402
+  surface_m2: 126560
+  geom_md5: 5505948c184e87165f21a21aa47fce0a
+- subtype: AUc
+  name: Zone couvrant les secteurs agricoles
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 1AUe
+    partition: DU_97402
+  surface_m2: 4268
+  geom_md5: 3dc8c0e21da06316bf67a3634bff00b2
+- subtype: AUs
+  name: Espaces d'extension urbaine dédiées à l'implantation d'équipements, aux commerces et aux activités économiques.
+    Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois les zones 1AUindicée aménagées
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: AUst
+    partition: DU_97402
+  surface_m2: 24028
+  geom_md5: a6f03a445ec70fa378c45d9df7b04b85
+- subtype: AUs
+  name: Espaces d'extension urbaine dédiées à l'implantation d'équipements, aux commerces et aux activités économiques.
+    Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois les zones 1AUindicée aménagées
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 2AUec
+    partition: DU_97402
+  surface_m2: 29217
+  geom_md5: 960158867dd75bc71faef1be59d2f5d5
+- subtype: AUs
+  name: Espaces d'extension urbaine situés majoritairement au sein des zones préférentielles d'urbanisation identifiées
+    par le SAR. Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement de l'ensemble des
+    zones 1AUindicée
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 2AUb
+    partition: DU_97402
+  surface_m2: 5465
+  geom_md5: 497c76666e0b21dac156fe5006530e63
+- subtype: AUs
+  name: Espaces d'extension urbaine situés majoritairement au sein des zones préférentielles d'urbanisation identifiées
+    par le SAR. Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement de l'ensemble des
+    zones 1AUindicée
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 2AUa
+    partition: DU_97402
+  surface_m2: 22691
+  geom_md5: 3cc710a5d896464a7312fdec007ba968
+- subtype: AUs
+  name: Espaces d'extension urbaine situés majoritairement au sein des zones préférentielles d'urbanisation identifiées
+    par le SAR. Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement de l'ensemble des
+    zones 1AUindicée
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 2AUc
+    partition: DU_97402
+  surface_m2: 22554
+  geom_md5: 85bcd54f96f1816e6b0ecd14bd8a8c8c
+- subtype: AUs
+  name: Espaces d'extension urbaine situés majoritairement au sein des zones préférentielles d'urbanisation identifiées
+    par le SAR. Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement de l'ensemble des
+    zones 1AUindicée
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 2AUb
+    partition: DU_97402
+  surface_m2: 10683
+  geom_md5: ed8f484ad609b1f8914b27586462414d
+- subtype: AUs
+  name: Espaces d'extension urbaine situés majoritairement au sein des zones préférentielles d'urbanisation identifiées
+    par le SAR. Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement de l'ensemble des
+    zones 1AUindicée
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 2AUc
+    partition: DU_97402
+  surface_m2: 11380
+  geom_md5: 8fc5eb8fca30312208b6f89e99a4675b
+- subtype: AUs
+  name: Espaces d'extension urbaine situés majoritairement au sein des zones préférentielles d'urbanisation identifiées
+    par le SAR. Leur ouverture à l'urbanisation ne pourra intervenir qu'une fois l'aménagement de l'ensemble des
+    zones 1AUindicée
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: 2AUa
+    partition: DU_97402
+  surface_m2: 72213
+  geom_md5: 0575237c87de0a5a9b2a98ec1e29455c
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 80418
+  geom_md5: 716e3ed24af538534cc328df11978336
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 5780
+  geom_md5: 1a3e03b3e8bbde5af91894cb5bc04834
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 9269
+  geom_md5: a18baed81a3556c207b78fa73811bb59
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 1010600
+  geom_md5: aeb4a58d55ccaa8689097ddcc6e3d993
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 9800
+  geom_md5: b26fac133b6db985e211ac0484d5d8ce
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 57480
+  geom_md5: 5f43e494558fe3b5fe3310800064609e
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 3092170
+  geom_md5: 601417f48d13d93b2d1bae64a4fd3351
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 40847
+  geom_md5: aedf942fa93787f57b246bcea39ed30b
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 276616
+  geom_md5: 9aa5f7d8097fdcf9eee3a0ccc415affe
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 349891
+  geom_md5: f9a2d50651b58390231fc2a8d50a89de
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 67972
+  geom_md5: f6fd30fd58a36047ee81a177f59cdaab
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 4463
+  geom_md5: 113df4dbde1805070f17fd77f9bb94ac
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 308689
+  geom_md5: 40da3232e509089abfca99bfd6ca1371
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 933182
+  geom_md5: 9e60fbf71eba97c2dfedcfcbd4576e89
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 25217
+  geom_md5: 0320b22c91d34413eb629c271370c794
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 27325
+  geom_md5: 1bf795118410ddad07671bcf825e3a16
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 7172
+  geom_md5: 620faa1333600c846f6cf74e8396b936
+- subtype: N
+  name: Secteur Nr correspondant aux réservoirs de biodiversité ainsi qu'aux corridors écologiques, synonymes de
+    trames vertes et bleues
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97402
+  surface_m2: 79913
+  geom_md5: 0a7656106beb26a9356cba574304bd24
+- subtype: N
+  name: Secteur correspondant au site classé de la Rivière des Roches dont l'objectif est de conserver les caractéristiques
+    du site et de les préserver de toute atteinte grave
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nsc
+    partition: DU_97402
+  surface_m2: 456074
+  geom_md5: bd1bb60e84c4c794b8ebc55a83ae16d1
+- subtype: N
+  name: Secteur correspondant aux espaces situés dans le Coeur du Parc national de la Réunion, dans lesquels aucune
+    construction n'est admise, sauf autorisation spéciale
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97402
+  surface_m2: 51797133
+  geom_md5: 4bbf815280b0eadd820448c2f0baa8b9
+- subtype: N
+  name: Secteur correspondant à l'espace naturel remarquable du littoral, dans lequel seuls les aménagements légers
+    prévus à l'article R.121-5 du code de l'urbanisme sont admis
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97402
+  surface_m2: 346074
+  geom_md5: ba572dcdad6171abbda38bb9d43c55cf
+- subtype: N
+  name: Secteur correspondant à l'espace naturel remarquable du littoral, dans lequel seuls les aménagements légers
+    prévus à l'article R.121-5 du code de l'urbanisme sont admis
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97402
+  surface_m2: 1104009
+  geom_md5: a2a313c39d678292d3d2572ca79842cf
+- subtype: N
+  name: Secteur correspondant à l'espace naturel remarquable du littoral, dans lequel seuls les aménagements légers
+    prévus à l'article R.121-5 du code de l'urbanisme sont admis
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97402
+  surface_m2: 187356
+  geom_md5: 63b5eaeacf6aa98715a0e6d2d03b4a34
+- subtype: N
+  name: Secteur de taille et de capacité d'accueil limitées sous forme de hameaux nouveaux intégrés à l'environnement
+    en faveur de l'accueil touristique du Domaine de l'Union
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nt3
+    partition: DU_97402
+  surface_m2: 26081
+  geom_md5: 4636d3f05e6cd47b656809ad2a816399
+- subtype: N
+  name: Secteur de taille et de capacité d'accueil limitées sous forme de hameaux nouveaux intégrés à l'environnement
+    en faveur de l'accueil touristique du Domaine de l'Union
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 37332
+  geom_md5: 6081fe3f8a46bbbc8fd0f7a382ea06a6
+- subtype: N
+  name: Secteur de taille et de capacité d'accueil limitées sous forme de hameaux nouveaux intégrés à l'environnement
+    en faveur de l'accueil touristique à la Maison Casimir
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nt2
+    partition: DU_97402
+  surface_m2: 10439
+  geom_md5: f326b67b4abcaae37bf6eea181341042
+- subtype: N
+  name: Secteur réservé à l'implantation d'une station de potabilisation
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Nup
+    partition: DU_97402
+  surface_m2: 1472
+  geom_md5: 88b293b3abbcd5552565c6770b5b0943
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 11136
+  geom_md5: 09a2a594601c61b658cfc91679cc1bf6
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 1189187
+  geom_md5: f51d70470b58dba4f621cb4530b93695
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 32423
+  geom_md5: 3d63d85eb7cfaf7e82c11310aa86f6a1
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 571483
+  geom_md5: 697bdd3dcad57152b91db91c632d2ad0
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 0
+  geom_md5: 8f7181f83c1377adb86811ea662764af
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 74889
+  geom_md5: 0c9a881fbbba0b72e5249d7cd1b3656c
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 195147
+  geom_md5: c4ead0590bcb416e103e2792ddd7e2af
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 122896
+  geom_md5: 3ada553d6369a2cee385fbb4fae697a5
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 110145
+  geom_md5: b1b60250e06308cf2f02bd75f44b4535
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 157249
+  geom_md5: f7670b6357588e011ada353ceb85db42
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 35647
+  geom_md5: 2d2071fca3b41722ba31df29ec61f08b
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 119161
+  geom_md5: fc9072555741519bbe39063428da525c
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 3789
+  geom_md5: 0f86e270cdb627ba536732c834ab1861
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 14599
+  geom_md5: 0c35d7d51499388ab4eeb8b0d428e089
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 36257
+  geom_md5: 9ae1371fd92dc8764d5ebe490dbde4cc
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 5569522
+  geom_md5: 39110f56a6079088d93bbda02d25f03c
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 47744
+  geom_md5: 6aa30c1523b5dd8b042bc8978ebca599
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 284646
+  geom_md5: 1feb33b4fc842e2aa0622bc653c8dde4
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 204490
+  geom_md5: 07f726b01f7acf6741740d9cfd06c9a1
+- subtype: N
+  name: Zone couvrant les secteurs naturels
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97402
+  surface_m2: 6685
+  geom_md5: 1cc915944117f192889f04dba2ad5d6d
+- subtype: U
+  name: Bourg de proximité de Rivière du Mât à l'habitat individuel prédominant
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97402
+  surface_m2: 63929
+  geom_md5: 8f306e8b7fd2d2cf276d06c9bd8a8e04
+- subtype: U
+  name: Bourg de proximité de Rivière du Mât à l'habitat individuel prédominant
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97402
+  surface_m2: 522048
+  geom_md5: 53e6e0ab99d59c3d725623b7df496572
+- subtype: U
+  name: Bourg de proximité de Rivière du Mât à l'habitat individuel prédominant
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97402
+  surface_m2: 5607
+  geom_md5: 41c45795320bea783fcd3d489845f4f7
+- subtype: U
+  name: Centre aggloméré de Bras-Panon, de part et d'autre de la RN2 en entrée ouest jusqu'à la rue des Limites
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97402
+  surface_m2: 98765
+  geom_md5: 6e8ad97dd85bc86a3134ba90f86047b0
+- subtype: U
+  name: Périphérie de « l'hypercentre » jusqu'au littoral, caractérisés par la présence d'un tissu urbain patrimonial
+    à valoriser
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Uba
+    partition: DU_97402
+  surface_m2: 258756
+  geom_md5: 050c0bc1c113310eb3b868d0d08c1fd8
+- subtype: U
+  name: Périphérie de « l'hypercentre » jusqu'au littoral, caractérisés par la présence d'un tissu urbain patrimonial
+    à valoriser
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Uba
+    partition: DU_97402
+  surface_m2: 168824
+  geom_md5: 3b87887484b5f41c20569850f34dd641
+- subtype: U
+  name: Périphérie de « l'hypercentre » jusqu'au littoral. Il s'agit d'un tissu urbain aéré de densité moyenne
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97402
+  surface_m2: 1492025
+  geom_md5: 93ff93ed8aca8a7d9d2bd389cf67b756
+- subtype: U
+  name: Périphérie de « l'hypercentre » jusqu'au littoral. Il s'agit d'un tissu urbain aéré de densité moyenne
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97402
+  surface_m2: 24767
+  geom_md5: 6b363a262cbac1a9ce9691c70acb81cd
+- subtype: U
+  name: Secteur de taille et de capacité d'accueil limitées sous forme de hameaux nouveaux intégrés à l'environnement
+    en faveur de l'accueil touristique du Domaine de l'Union
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Udu
+    partition: DU_97402
+  surface_m2: 71881
+  geom_md5: 5743497eb0ece731cbc9e3101db4369f
+- subtype: U
+  name: Zone couvrant l'ensemble des espaces destinés à accueillir des activités économiques à vocation de production,
+    de transformation, de réparation, de conditionnement et de distribution, et d'autres activités artisanales
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97402
+  surface_m2: 31325
+  geom_md5: 9407e75990dbc9051a176093f56b6b48
+- subtype: U
+  name: Zone couvrant l'ensemble des espaces destinés à accueillir des activités économiques à vocation de production,
+    de transformation, de réparation, de conditionnement et de distribution, et d'autres activités artisanales
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97402
+  surface_m2: 9918
+  geom_md5: 2f0a02196e277983bfdb62dfacbc4a89
+- subtype: U
+  name: Zone couvrant l'ensemble des espaces destinés à accueillir des activités économiques à vocation de production,
+    de transformation, de réparation, de conditionnement et de distribution, et d'autres activités artisanales
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97402
+  surface_m2: 9716
+  geom_md5: ebf9ed3cc4a07fbf5af9217baf408763
+- subtype: U
+  name: Zone couvrant l'ensemble des espaces destinés à accueillir des activités économiques à vocation de production,
+    de transformation, de réparation, de conditionnement et de distribution, et d'autres activités artisanales
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97402
+  surface_m2: 42419
+  geom_md5: 875bf0960fafa1bcb84512b7faecb0b6
+- subtype: U
+  name: Zone couvrant l'ensemble des espaces destinés à accueillir des activités économiques à vocation de production,
+    de transformation, de réparation, de conditionnement et de distribution, et d'autres activités artisanales
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97402
+  surface_m2: 108397
+  geom_md5: 8fb60355d02706cd9d753ef8ab699aa8
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 51251
+  geom_md5: d92bfa714200b8251691bdbcdff95fe8
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 35442
+  geom_md5: e37e28fb309c2d1ae41b30ed029ce2d0
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 33836
+  geom_md5: 02c1cd35256eb61e74a6a9e46409d2fb
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 14054
+  geom_md5: ad0ff16567a6f50abbb11adfb7d6b782
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 4085
+  geom_md5: 6255acbbbaa8b3efa3dfef09717a6cd0
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 35103
+  geom_md5: 0764a0d99f3b1b20ebcbfbf6a821a30d
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 94281
+  geom_md5: 21baa21b77404f4038581c0df8fa3548
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 6816
+  geom_md5: 2affc677d9a4b99aa479777cc6ff19cb
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 71801
+  geom_md5: fae2feb61c5e2b65ca3ab4fc37b949c6
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 4207
+  geom_md5: ba42f96da02a72e761d38a9f2fdd9201
+- subtype: U
+  name: Zone couvrant les écarts agglomérés au caractère semi-rural avec leurs commerces, services et équipements
+    de proximité
+  attrs:
+    idurba: 97402_PLU_20260428
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97402
+  surface_m2: 2851
+  geom_md5: b00207d289091aeab1702c4c42619956

@@ -1,0 +1,185 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Saint-Philippe
+idurba:
+- 97412_PLU_20240320
+- 97419_PLU_20190504
+n_zones: 19
+geoms_sidecar: data/calibrage/zonage_saint_philippe.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97412
+  surface_m2: 163742
+  geom_md5: 45b070e53fad555d8e03d8e2d0b2fb25
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97412
+  surface_m2: 3878818
+  geom_md5: 8f3c74e3aa327d9e09ee7e5745cd5310
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97412
+  surface_m2: 37237
+  geom_md5: fca99b5318d4f1ebe352305fa63831db
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97412
+  surface_m2: 25977
+  geom_md5: e5b8b75a9d0d21ad550b78790cdb0eae
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97412
+  surface_m2: 78340
+  geom_md5: 273ca38aa35237544fa54e9abf566e08
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97412
+  surface_m2: 87465
+  geom_md5: 1cf79ae89167f6126acdeaba07f80bc4
+- subtype: A
+  name: Aba
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97412
+  surface_m2: 30620
+  geom_md5: 9a490009add818e78ae8f839a1cc1fd1
+- subtype: A
+  name: Acu
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97412
+  surface_m2: 1456906
+  geom_md5: ff0b44621afc3cad16b761d16f118b60
+- subtype: AUc
+  name: 1AU5ru
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: 1AU5ru
+    partition: DU_97412
+  surface_m2: 8915
+  geom_md5: bcb15f7bc9296854c8c2bf17924fad40
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97412
+  surface_m2: 33382
+  geom_md5: 653ac5bd20a4a45cc6c82f38839d39d7
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97412
+  surface_m2: 7325930
+  geom_md5: 619a2ad25b43462383d0f7cb172fdd23
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97412
+  surface_m2: 17272
+  geom_md5: e40ae245974765ec8326b9706b42da4e
+- subtype: N
+  name: Nco
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: Nco
+    partition: DU_97412
+  surface_m2: 61037
+  geom_md5: 6626d978f795fae298693900552a9d28
+- subtype: N
+  name: Nco
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: Nco
+    partition: DU_97412
+  surface_m2: 46684
+  geom_md5: a92ce09a46475c1684ca6d44ddb5a0ef
+- subtype: N
+  name: Nli
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97412
+  surface_m2: 3764575
+  geom_md5: a5db6e056c0ebc00945b78913364d5bf
+- subtype: N
+  name: Npnr
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97412
+  surface_m2: 84866080
+  geom_md5: cf665b31e1a1016402b431c242d8670c
+- subtype: N
+  name: espaces situés dans le coeur du parc national de la Réunion
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97419
+  surface_m2: 133813705
+  geom_md5: 2f0a6c2ca8c2d7330f9c81d005d212f0
+- subtype: U
+  name: U5ru
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: U5ru
+    partition: DU_97412
+  surface_m2: 28975
+  geom_md5: f6c2d111bf58242f66726fabface4f69
+- subtype: U
+  name: U5ru
+  attrs:
+    idurba: 97412_PLU_20240320
+    source: API_CARTO_GPU
+    libelle: U5ru
+    partition: DU_97412
+  surface_m2: 77117
+  geom_md5: 1e7745513331308e9fa62933465c5321
