@@ -477,10 +477,15 @@ def list_communes(source: str = "q_v2", db: Session = Depends(get_db)) -> list[d
             LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
             GROUP BY p.commune ORDER BY 4 DESC, 3 DESC
             """), {"run": source}).mappings().all()
+        # cas documenté (pré-vol île) : Saint-Philippe est au RNU — pas de PLU opposable,
+        # capacité non calculable ; le front affiche ce bandeau plutôt qu'un score creux muet
+        notes = {"Saint-Philippe": "RNU — pas de PLU opposable : capacité non calculable, "
+                                   "signaux qualité/accessibilité seuls"}
         return [{
             "commune": r["commune"], "insee": r["insee"], "parcelles": int(r["parcelles"]),
             "chaudes": int(r["chaudes"] or 0), "evaluees": int(r["evaluees"] or 0),
             "bbox": [r["x1"], r["y1"], r["x2"], r["y2"]],
+            "note": notes.get(r["commune"]),
         } for r in rows]
     return _mem_cached(("communes", source), 300.0, _compute)
 

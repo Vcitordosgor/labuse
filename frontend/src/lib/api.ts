@@ -40,7 +40,7 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
 })
 
-export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number] }
+export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
 export const searchParcels = (needle: string) =>
   j<{ idu: string; commune: string; status: string | null; q_score: number | null }[]>(

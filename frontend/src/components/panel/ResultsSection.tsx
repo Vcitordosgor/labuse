@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { getParcelsGeojson, getResults, getStats } from '../../lib/api'
+import { getCommunes, getParcelsGeojson, getResults, getStats } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { completudeColor, STATUT_META } from '../../lib/status'
@@ -161,6 +161,10 @@ export function ResultsSection() {
   const error = ile ? serverList.isError : geo.isError
   const refetch = () => (ile ? serverList.refetch() : geo.refetch())
   const total = stats.data?.total ?? props.length
+
+  // bandeau honnête par commune (ex. Saint-Philippe = RNU) — porté par /communes
+  const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
   const promus = counts.all || 1
   const nFilters = (filters.statuts.length ? 1 : 0) + (scoped ? 1 : 0)
 
@@ -171,6 +175,11 @@ export function ResultsSection() {
         <span className="text-[11px] text-txt-mut">triés par score</span>
       </div>
 
+      {communeNote && (
+        <div className="mt-2 shrink-0 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[10.5px] leading-snug text-st-creuser">
+          ⚠ {communeNote}
+        </div>
+      )}
       <p className="mt-2 shrink-0 text-xs text-txt-mut">
         <span className="font-medium text-st-chaude">{fmt(counts.chaude)}</span> chaudes ·{' '}
         <span className="font-medium text-st-surveiller">{fmt(counts.a_surveiller)}</span> à surveiller ·{' '}
