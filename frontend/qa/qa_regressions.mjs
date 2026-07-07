@@ -48,6 +48,31 @@ assert((await page.locator('text=outil Zone actif').count()) > 0, 'M03 zone → 
   assert(vals.every((v) => v == null || Number.isInteger(v)), 'M18 médianes entières (plus de .0)', JSON.stringify(vals.slice(0, 3)))
 }
 
+// ── BUG #4 (inspection) : les VEILLES ne notifiaient pas (demi-feature vs mandat M11).
+// Condition utilisateur : veille enregistrée + détection → 🔭 dans la cloche.
+{
+  const { execFileSync } = await import('node:child_process')
+  const sql = (q) => execFileSync('psql', [process.env.QA_DB || 'postgresql://openclaw@127.0.0.1:5432/labuse', '-tA', '-c', q], { encoding: 'utf8' }).trim()
+  sql("INSERT INTO saved_searches (nom, hash) VALUES ('Veille régression QA', '#f=1&st=chaude')")
+  sql("DELETE FROM event_log WHERE kind='veille'")
+  await fetch(new URL('/events/detect?run_from=q_v2&run_to=q_v2_demo', BASE).href, { method: 'POST' })
+  const n = Number(sql("SELECT count(*) FROM event_log WHERE kind='veille'"))
+  assert(n >= 1, `veille enregistrée → notification 🔭 à la détection (${n})`)
+  await page2Check()
+  async function page2Check() {
+    const p2 = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+    await p2.goto(BASE, { waitUntil: 'networkidle' })
+    await p2.waitForSelector('text=chaudes')
+    await p2.waitForTimeout(1800)
+    await p2.locator('button[title="Notifications"]').click()
+    await p2.waitForTimeout(700)
+    assert((await p2.locator('text=🔭 Veille').count()) > 0, 'notification veille visible dans la cloche')
+    await p2.close()
+  }
+  sql("DELETE FROM saved_searches WHERE nom='Veille régression QA'")
+  sql("DELETE FROM event_log WHERE kind='veille'")
+}
+
 await browser.close()
 console.log('─'.repeat(50))
 if (failures.length) { console.log(`ROUGE — ${failures.length}`); failures.forEach((f) => console.log('  ✗ ' + f)); process.exit(1) }

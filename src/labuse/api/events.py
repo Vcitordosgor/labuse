@@ -95,6 +95,10 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
              "from": run_from, "to": run_to, "demo": demo}).rowcount
         inserted["bodacc"] += n
 
+    # 2 bis. VEILLES : une bascule vers un statut « montant » qui MATCHE une recherche sauvegardée
+    # → notification nominative (M11 : « une recherche filtrée nommée = une veille »).
+    _veilles_match(db, run_to, demo)
+
     # 3. nouveau permis proche (≤ 300 m) d'une parcelle SUIVIE (pipeline + watched) — permis
     # récents relativement à la fin des données Sitadel (12 derniers mois de données).
     rows = db.execute(text("""
@@ -120,6 +124,63 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
         inserted["permis"] += n
     db.flush()
     return inserted
+
+
+def _parse_hash_filters(h: str) -> dict:
+    """Filtres d'une veille depuis son hash (#f=1&st=…&vm=1…) — même sérialisation que le front."""
+    from urllib.parse import parse_qs
+    q = parse_qs(h.lstrip("#"))
+    g = lambda k: q.get(k, [None])[0]  # noqa: E731
+    return {"st": (g("st") or "").split(",") if g("st") else [], "vm": g("vm") == "1",
+            "ev": g("ev") == "1", "q": int(g("q")) if g("q") else None,
+            "smin": int(g("smin")) if g("smin") else None, "smax": int(g("smax")) if g("smax") else None,
+            "sdp": int(g("sdp")) if g("sdp") else None, "fl": (g("fl") or "").split(",") if g("fl") else []}
+
+
+def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
+    veilles = db.execute(text("SELECT id, nom, hash FROM saved_searches")).mappings().all()
+    if not veilles:
+        return 0
+    # bascules « montantes » de CE diff (déjà en event_log, kind=bascule, run_to)
+    rows = db.execute(text("""
+        SELECT e.idu, p.surface_m2, d.matrice_statut, d.q_score, r.sdp_residuelle_m2,
+               vm.vue AS vue_mer,
+               EXISTS (SELECT 1 FROM dryrun_cascade_results cr WHERE cr.run_label = :to
+                       AND cr.parcel_id = p.id AND cr.evenement = 'rouge') AS a_evenement
+        FROM event_log e
+        JOIN parcels p ON p.idu = e.idu
+        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :to
+        LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+        LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
+        WHERE e.kind = 'bascule' AND e.run_to = :to AND e.titre LIKE '▲%'"""),
+        {"to": run_to}).mappings().all()
+    n = 0
+    for v in veilles:
+        f = _parse_hash_filters(v["hash"])
+        for r in rows:
+            if f["st"] and r["matrice_statut"] not in f["st"]:
+                continue
+            if f["vm"] and r["vue_mer"] != "oui":
+                continue
+            if f["ev"] and not r["a_evenement"]:
+                continue
+            if f["q"] is not None and (r["q_score"] or 0) < f["q"]:
+                continue
+            if f["smin"] is not None and (r["surface_m2"] or 0) < f["smin"]:
+                continue
+            if f["smax"] is not None and (r["surface_m2"] or 0) > f["smax"]:
+                continue
+            if f["sdp"] is not None and (r["sdp_residuelle_m2"] or 0) < f["sdp"]:
+                continue
+            n += db.execute(text("""
+                INSERT INTO event_log (kind, idu, titre, detail, run_to, demo)
+                SELECT 'veille', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text),
+                       CAST(:to AS varchar), CAST(:demo AS boolean)
+                WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='veille' AND idu=:idu AND titre=:titre)"""),
+                {"idu": r["idu"], "titre": f"🔭 Veille « {v['nom']} » : {r['idu'][8:]} correspond",
+                 "detail": f"Bascule vers {r['matrice_statut']} qui matche votre veille (run {run_to}).",
+                 "to": run_to, "demo": demo}).rowcount
+    return n
 
 
 def seed_demo(db: Session) -> dict:

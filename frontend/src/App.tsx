@@ -14,12 +14,12 @@ import { TimeMachine } from './components/outils/TimeMachine'
 import { EMPTY_FILTERS, useApp } from './store/useApp'
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
-    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule }
-  }, [select, setView, setZone, setModule])
+    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo }
+  }, [select, setView, setZone, setModule, setFlyTo])
 
   // URL partageable : filtres + zone sérialisés dans le hash (#f=…). Lecture au chargement,
   // écriture à chaque changement (replaceState : pas de pollution de l'historique).
