@@ -669,8 +669,12 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
         if (w is None or w == 0) and r["result"] in ("SOFT_FLAG", "HARD_EXCLUDE", "UNKNOWN"):
             flags.append(line)
 
+    pm = db.execute(text(
+        "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
+        {"idu": idu}).mappings().first()
     return {
         "idu": head["idu"], "commune": head["commune"],
+        "proprietaire_moral": dict(pm) if pm else None,
         "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
         "statut": head["matrice_statut"], "q_score": head["q_score"], "a_score": head["a_score"],
         "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],

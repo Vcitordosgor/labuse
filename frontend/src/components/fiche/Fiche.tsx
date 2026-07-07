@@ -246,6 +246,20 @@ function BilanTab({ idu }: { idu: string }) {
   )
 }
 
+// M-B (passe directeur) : « qu'a-t-il d'autre ? » → scan patrimoine en un clic depuis la fiche.
+function PatrimoineLink({ siren }: { siren: string }) {
+  const { setModule, setM02Prefill } = useApp()
+  return (
+    <button
+      onClick={() => { setM02Prefill(siren); setModule('patrimoine') }}
+      className="mt-1.5 text-[11px] text-[#B497F0] hover:underline"
+      title="Scan patrimoine (M02) : tout le foncier de ce propriétaire sur l'île"
+    >
+      → tout son patrimoine (M02)
+    </button>
+  )
+}
+
 const TABS: { k: 'synthese' | Onglet | 'bilan'; label: string }[] = [
   { k: 'synthese', label: 'Synthèse' }, { k: 'regles', label: 'Règles' }, { k: 'risques', label: 'Risques' },
   { k: 'marche', label: 'Marché' }, { k: 'proprio', label: 'Proprio' }, { k: 'bilan', label: 'Bilan' },
@@ -353,6 +367,23 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             )}
           </>
+        )}
+        {f && tab === 'proprio' && f.proprietaire_moral && (
+          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+            <p className="font-mono text-[10px] tracking-widest text-txt-dim">PROPRIÉTAIRE (DGFiP)</p>
+            <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
+            <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
+              {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
+              {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
+            </div>
+            {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
+          </div>
+        )}
+        {f && tab === 'proprio' && !f.proprietaire_moral && (
+          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+            Propriétaire : personne physique ou non recensé au fichier des personnes morales
+            (identité nominative : workflow SPF/CERFA, jamais automatisée).
+          </div>
         )}
         {f && (tab === 'regles' || tab === 'risques' || tab === 'marche' || tab === 'proprio') && (
           <div>

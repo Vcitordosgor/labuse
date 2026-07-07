@@ -49,8 +49,8 @@ export function Rail() {
     <>
       <nav className="flex h-full w-16 shrink-0 flex-col items-center border-r border-line bg-surface-1 py-4">
         {/* logo — la buse */}
-        <svg viewBox="-2 -2 36 14" className="mb-6 h-5 w-10 shrink-0">
-          <path d="M0 10 Q8 0 16 8 Q24 0 32 10" stroke="#5CE6A1" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        <svg viewBox="0 0 240 82" className="mb-6 h-4 w-11 shrink-0" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 6px rgba(47,224,160,0.35))' }}>
+          <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
         </svg>
 
         {ZONES.map(({ key, label }) => {

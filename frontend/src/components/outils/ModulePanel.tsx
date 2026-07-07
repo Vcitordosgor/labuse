@@ -95,8 +95,13 @@ function M01() {
 /* ───────────────────────────── M02 — PATRIMOINE ───────────────────────────── */
 
 function M02() {
+  const { m02Prefill, setM02Prefill } = useApp()
   const [q, setQ] = useState('')
   const [siren, setSiren] = useState<string | null>(null)
+  useEffect(() => {
+    if (m02Prefill) { setSiren(m02Prefill); setM02Prefill(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [m02Prefill])
   const sug = useQuery({ queryKey: ['m02s', q], queryFn: () => modPatrimoineSearch(q), enabled: q.length >= 2 && !siren })
   const pat = useQuery({ queryKey: ['m02', siren], queryFn: () => modPatrimoine(siren!), enabled: !!siren })
   const d = pat.data as Record<string, any> | undefined

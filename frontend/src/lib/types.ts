@@ -78,6 +78,7 @@ export interface SourceInfo {
 export interface Fiche {
   idu: string
   commune: string
+  proprietaire_moral: { denomination: string | null; siren: string | null; groupe_label: string | null } | null
   surface_m2: number | null
   statut: Statut
   q_score: number

@@ -85,6 +85,8 @@ interface AppState {
   setMsel: (m: string[]) => void
   m22Prefill: Record<string, unknown> | null // copilote → formulaire programme (M22)
   setM22Prefill: (p: Record<string, unknown> | null) => void
+  m02Prefill: string | null // fiche → scan patrimoine du propriétaire (SIREN)
+  setM02Prefill: (s: string | null) => void
 }
 
 export const useApp = create<AppState>((set) => ({
@@ -133,4 +135,6 @@ export const useApp = create<AppState>((set) => ({
   setMsel: (msel) => set({ msel }),
   m22Prefill: null,
   setM22Prefill: (m22Prefill) => set({ m22Prefill }),
+  m02Prefill: null,
+  setM02Prefill: (m02Prefill) => set({ m02Prefill }),
 }))

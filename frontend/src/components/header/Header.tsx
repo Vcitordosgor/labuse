@@ -265,8 +265,8 @@ export function Header() {
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-bg px-4">
       {/* identité — la buse + wordmark */}
       <div className="flex shrink-0 items-center gap-2 pr-1" title="LABUSE — Radar foncier premium, La Réunion">
-        <svg viewBox="-2 -2 36 14" className="h-4 w-9">
-          <path d="M0 10 Q8 0 16 8 Q24 0 32 10" stroke="#5CE6A1" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        <svg viewBox="0 0 240 82" className="h-4 w-auto" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 6px rgba(47,224,160,0.35))' }}>
+          <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
         </svg>
         <span className="hidden font-display text-sm font-bold tracking-wide text-txt-hi min-[1350px]:inline">LABUSE</span>
       </div>

@@ -85,6 +85,7 @@ export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
+  const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
   const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo } = useApp()
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
@@ -183,6 +184,8 @@ export function MapView() {
       m.on('mouseenter', 'parcels-fill', () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', 'parcels-fill', () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
       ready.current = true
+      setMapReady(true)
+      ;(window as unknown as Record<string, unknown>).__labuse_map = m // hook QA (ping sémantique)
       m.fire('labuse:ready' as never)
     })
     return () => { m.remove(); map.current = null; ready.current = false }
@@ -192,14 +195,14 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (m && ready.current && geo.data) (m.getSource('parcels') as maplibregl.GeoJSONSource | undefined)?.setData(geo.data as never)
-  }, [geo.data, geo.dataUpdatedAt])
+  }, [geo.data, geo.dataUpdatedAt, mapReady])
 
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc]]
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
-  }, [zonage.data, ppr.data, parc.data])
+  }, [zonage.data, ppr.data, parc.data, mapReady])
 
   // ───────────────────────── fond de plan + relief ─────────────────────────
   useEffect(() => {
@@ -214,7 +217,7 @@ export function MapView() {
     if (m.getLayer('parcels-fill') && mode === 'verdict') {
       m.setPaintProperty('parcels-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
     }
-  }, [basemap, orthoYear, mode, filters.statuts])
+  }, [basemap, orthoYear, mode, filters.statuts, mapReady])
 
   useEffect(() => {
     const m = map.current
@@ -250,7 +253,7 @@ export function MapView() {
       m.setPaintProperty('parcels-fill', 'fill-color', STATUS_COLOR)
       m.setPaintProperty('parcels-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
     }
-  }, [mode, filters, layers, geo.dataUpdatedAt])
+  }, [mode, filters, layers, geo.dataUpdatedAt, mapReady])
 
   useEffect(() => {
     const m = map.current
@@ -283,7 +286,7 @@ export function MapView() {
     }
     raf = requestAnimationFrame(pulse)
     return () => cancelAnimationFrame(raf)
-  }, [selectedIdu, geo.data])
+  }, [selectedIdu, geo.data, mapReady])
 
   // module actif → surlignage + géométries propres
   useEffect(() => {
@@ -293,7 +296,7 @@ export function MapView() {
       ? (['in', ['get', 'idu'], ['literal', moduleMap.idus.slice(0, 4000)]] as never)
       : (['==', ['get', 'idu'], ''] as never))
     ;(m.getSource('module-extra') as maplibregl.GeoJSONSource | undefined)?.setData((moduleMap.extra ?? EMPTY_FC) as never)
-  }, [moduleMap])
+  }, [moduleMap, mapReady])
 
   // flyTo demandé (fiche → « 1950 », modules…)
   useEffect(() => {
@@ -310,7 +313,7 @@ export function MapView() {
       ? { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[...zone, zone[0]]] }, properties: {} }] }
       : EMPTY_FC
     ;(m.getSource('zone') as maplibregl.GeoJSONSource | undefined)?.setData(data as never)
-  }, [zone])
+  }, [zone, mapReady])
 
   // ───────────────────────── outils de mesure ─────────────────────────
   // rendu du geojson de mesure

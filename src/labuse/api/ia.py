@@ -165,11 +165,21 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
     return f, "Filtres appliqués : " + ", ".join(hits) + "."
 
 
-_NL_SYSTEM = """Tu traduis une demande de prospection foncière en JSON de filtres.
-Tu renvoies UNIQUEMENT un objet JSON conforme au schéma (aucun texte autour) :
+_NL_SYSTEM = """Tu traduis une demande de prospection foncière (La Réunion) en JSON. Réponds par
+UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Trois formes possibles :
+1. Recherche filtrable → objet conforme à ce schéma (champs non mentionnés = valeur neutre [], null, false) :
 {schema}
-Champs non mentionnés → valeur neutre ([], null, false). Si la demande est hors périmètre
-(pas une recherche foncière filtrable), renvoie {{"out_of_scope": "raison courte"}}."""
+   Correspondances : « vue mer/bord de mer » → vueMer ; « usine/industriel » → flags icpe ;
+   « pollué » → flags sol_pollue ; « inondation/risque » → flags risques ; « monument » → flags abf ;
+   « bodacc/liquidation/événement » → evenement ; les statuts sont chaude/a_surveiller/a_creuser/ecartee.
+2. Programme immobilier (« N immeubles R+n, X logements, parking ») →
+   {{"programme": {{"type": "logements|etudiant|bureaux", "batiments": n, "niveaux": n,
+     "logements_par_batiment": n, "parking": true|false}}}}
+3. Hors périmètre (météo, rédaction, géographie non filtrable, ou TOUTE demande de MODIFIER un
+   score — les scores sont déterministes, tu ne les changes jamais) →
+   {{"out_of_scope": "raison courte et polie"}}
+Sois strict : n'invente JAMAIS un filtre non demandé. Le champ "type" n'existe QUE dans
+"programme" — jamais dans un objet de filtres."""
 
 
 @router.post("/search")
@@ -183,12 +193,20 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
             messages=[{"role": "user", "content": body.text}])
         raw = msg.content[0].text.strip()
         _log(db, "search", MODEL_NL, False, msg.usage.input_tokens, msg.usage.output_tokens)
+        if raw.startswith("```"):
+            raw = raw.strip("`").removeprefix("json").strip()   # le réel enrobe parfois — le stub ne l'apprend pas
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
             return {"stub": False, "out_of_scope": "réponse IA illisible — réessayez"}
         if "out_of_scope" in data:
             return {"stub": False, "out_of_scope": data["out_of_scope"]}
+        if "programme" in data:
+            return {"stub": False, "programme": data["programme"],
+                    "explanation": "Programme détecté → formulaire Faisabilité pré-rempli (le moteur déterministe calcule)."}
+        # dégradation gracieuse : on PROJETTE sur les clés du schéma (une clé parasite ne doit pas
+        # faire échouer une demande par ailleurs valide) — le schéma reste le garde-fou final
+        data = {k: v for k, v in data.items() if k in FILTER_SCHEMA["properties"]}
         try:
             validate(data, FILTER_SCHEMA)   # le schéma est le GARDE-FOU : jamais de filtre inventé
         except ValidationError as exc:
@@ -245,8 +263,11 @@ def _stub_pourquoi(f: dict) -> str:
 
 
 _SYNTH_SYSTEM = ("Tu rédiges une synthèse de prospection foncière EXCLUSIVEMENT à partir du JSON "
-                 "fourni (fiche tracée). INTERDIT d'inventer un fait absent du JSON. Concis, "
-                 "professionnel, français. Termine par les inconnues à lever.")
+                 "fourni (fiche tracée). INTERDIT d'inventer un fait absent du JSON. "
+                 "FORMAT : texte brut UNIQUEMENT — aucun markdown, aucun tableau, aucun titre #. "
+                 "150 mots MAXIMUM, 3 paragraphes : (1) verdict en une phrase, (2) points forts et "
+                 "vigilances chiffrés, (3) inconnues à lever. Vocabulaire promoteur : charge "
+                 "foncière, SDP, prospect, R+n. Le texte s'affiche dans un panneau étroit.")
 
 
 def _real_text(db: Session, kind: str, system: str, payload: dict) -> str:
@@ -274,7 +295,9 @@ def ia_pourquoi(idu: str, db: Session = Depends(get_db)) -> dict:
     f = _fiche_json(db, idu)
     if _has_key():
         sys_p = ("Tu expliques pédagogiquement un score foncier à partir du JSON de lignes tracées. "
-                 "INTERDIT d'inventer. Rappelle que le score est déterministe et tracé.")
+                 "INTERDIT d'inventer. FORMAT : texte brut sans markdown, 150 mots max — les 3 "
+                 "signaux qui pèsent le plus sur Q, puis sur A, chacun en une ligne « ±N — "
+                 "explication ». Rappelle en une phrase que le score est déterministe et tracé.")
         return {"stub": False, "texte": _real_text(db, "pourquoi", sys_p, f),
                 "mention": "Explication générée — le score reste 100 % déterministe."}
     _log(db, "pourquoi", "stub-local", True)

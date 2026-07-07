@@ -132,7 +132,11 @@ export function ResultsSection() {
     () => props
       .filter((p) => matchAll(p, filters, zone) && PROMUES.includes(p.status))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
-      .sort((a, b) => b.q_score + b.a_score - (a.q_score + a.a_score)),
+      .sort((a, b) => {
+        // métier : l'ÉVÉNEMENT crée l'urgence de la semaine → toujours en tête, puis le score
+        const ev = Number(b.evenement === 'rouge') - Number(a.evenement === 'rouge')
+        return ev !== 0 ? ev : b.q_score + b.a_score - (a.q_score + a.a_score)
+      }),
     [props, filters, zone, qNorm],
   )
   const shown = showAll ? list : list.slice(0, CAP)
