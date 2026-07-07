@@ -146,3 +146,11 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   normalisée `M0 10 Q8 0 16 8 Q24 0 32 10`) — header, rail, favicons regénérés (pixels menthe
   vérifiés par assertion). La barre d'onglet native n'est pas capturable en headless
   (permissions macOS) : la capture 20 montre le favicon RÉELLEMENT SERVI + le titre RÉEL.
+
+## Passe expert (IA réelle)
+- **QA provider-aware** : les suites lisent `/ia/status` — stub → bannière « Mode dégradé » EXIGÉE,
+  anthropic → INTERDITE. Un même test décrit les deux mondes ; plus d'assertion périmée au changement de clé.
+- **Latence réelle** : tous les `waitForTimeout` post-IA remplacés par des `waitForSelector`
+  (20-25 s max) — le test attend le résultat, pas une durée devinée.
+- **« score > 80 »** : stub → `scoreMin: 80` (approx.), modèle réel → `81` (strict, filtre inclusif).
+  Les deux fidèles → le test accepte 80|81. Non-déterminisme assumé, borné par le schéma.

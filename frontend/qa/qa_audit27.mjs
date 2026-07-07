@@ -52,13 +52,18 @@ assert((await page.locator('text=Étude d’architecte requise').count()) + (awa
 await page.screenshot({ path: `${OUT}/audit_m22.png` })
 
 // ── COPILOTE → programme pré-rempli (doctrine : IA traduit, moteur calcule)
+// provider-aware : stub → bannière « mode dégradé » OBLIGATOIRE ; réel → INTERDITE
+const provider = (await (await fetch(new URL('/ia/status', BASE).href)).json()).provider
 await page.locator('nav button[title="IA"]').click()
 await page.waitForTimeout(600)
-assert((await page.locator('text=Mode dégradé : stub local').count()) > 0, 'IA : état stub ÉVIDENT + marche à suivre')
+const stubBadge = await page.locator('text=Mode dégradé : stub local').count()
+assert(provider === 'stub' ? stubBadge > 0 : stubBadge === 0,
+  `IA : état évident (provider=${provider} → bannière stub ${provider === 'stub' ? 'exigée' : 'interdite'})`)
 await page.locator('input[placeholder*="vue mer"]').fill('un terrain pour 3 immeubles R+3 étudiants avec parking')
 await page.keyboard.press('Enter')
-await page.waitForTimeout(2500)
+await page.waitForSelector('text=M22 · MODULE', { timeout: 20000 })   // latence IA réelle variable
 assert((await page.locator('text=M22 · MODULE').count()) > 0, 'copilote → module M22 ouvert')
+await page.waitForSelector('text=parcelles candidates', { timeout: 15000 })  // auto-run du moteur après pré-remplissage
 assert((await page.locator('text=parcelles candidates').count()) > 0, 'copilote → formulaire pré-rempli ET calculé')
 const b = await page.locator('label:has-text("BÂTIMENTS") input').inputValue()
 const n = await page.locator('label:has-text("R+N") input').inputValue()
@@ -73,8 +78,10 @@ await page.keyboard.press('/'); await page.keyboard.type('AC0253'); await page.k
 await page.waitForTimeout(1300)
 await page.locator('button[title="Analyse IA"]').click()
 await page.getByRole('button', { name: 'Synthèse' }).last().click()
-await page.waitForTimeout(1300)
-assert((await page.locator('text=Stub local (clé IA absente)').count()) > 0, 'fiche IA : bannière stub explicite')
+await page.waitForSelector('text=vérifier les sources', { timeout: 25000 })   // synthèse (latence réelle)
+const ficheStub = await page.locator('text=Stub local (clé IA absente)').count()
+assert(provider === 'stub' ? ficheStub > 0 : ficheStub === 0,
+  `fiche IA : bannière cohérente avec le provider (${provider})`)
 
 await browser.close()
 console.log('─'.repeat(50))

@@ -15,7 +15,8 @@ const CASES = [
   ['parcelles à surveiller de plus de 2000 m²', (f) => f.statuts.includes('a_surveiller') && f.surfaceMin === 2000],
   ['chaudes avec événement bodacc', (f) => f.statuts.includes('chaude') && f.evenement],
   ['terrains pollués à creuser', (f) => f.statuts.includes('a_creuser') && f.flags.includes('sol_pollue')],
-  ['score > 80 avec vue mer', (f) => f.scoreMin === 80 && f.vueMer],
+  // « > 80 » : stub → 80 (approx.) ; modèle réel → 81 (strict, filtre inclusif). Les deux sont fidèles.
+  ['score > 80 avec vue mer', (f) => (f.scoreMin === 80 || f.scoreMin === 81) && f.vueMer],
   ['SDP d’au moins 800 m²', (f) => f.sdpMin === 800],
   ['moins de 5000 m² près d’une usine', (f) => f.surfaceMax === 5000 && f.flags.includes('icpe')],
   ['parcelles avec risque inondation', (f) => f.flags.includes('risques')],
@@ -43,15 +44,19 @@ await page.goto(BASE, { waitUntil: 'networkidle' })
 await page.waitForSelector('text=chaudes')
 await page.waitForTimeout(2000)
 
+// provider-aware : stub → bannière « mode dégradé » OBLIGATOIRE ; réel → INTERDITE
+const provider = (await (await fetch(new URL('/ia/status', BASE).href)).json()).provider
 await page.locator('nav button[title="IA"]').click()
 await page.waitForTimeout(600)
 assert((await page.locator('text=Copilote').count()) > 0, 'vue Copilote')
-assert((await page.locator('text=Mode dégradé : stub local').count()) > 0, 'état stub évident (carte mode dégradé + marche à suivre)')
+const stubBadge = await page.locator('text=Mode dégradé : stub local').count()
+assert(provider === 'stub' ? stubBadge > 0 : stubBadge === 0,
+  `état IA évident (provider=${provider} → bannière stub ${provider === 'stub' ? 'exigée' : 'interdite'})`)
 await page.locator('input[placeholder*="vue mer"]').fill('les chaudes avec vue mer')
 await page.screenshot({ path: `${OUT}/ia_copilote.png` })
 await page.keyboard.press('Enter')
-await page.waitForTimeout(1500)
-// retour auto sur la carte, chips appliqués
+// retour auto sur la carte, chips appliqués (latence IA réelle variable → on ATTEND le chip)
+await page.waitForSelector('header span:has-text("Chaude")', { timeout: 20000 })
 assert((await page.locator('header span:has-text("Chaude")').count()) > 0, 'copilote → chip Chaude appliqué')
 assert((await page.locator('header span:has-text("Vue mer")').count()) > 0, 'copilote → chip Vue mer appliqué')
 assert(page.url().includes('vm=1'), 'copilote → URL synchronisée')
@@ -65,10 +70,10 @@ await page.waitForTimeout(1200)
 await page.locator('button[title="Analyse IA"]').click()
 await page.waitForTimeout(300)
 await page.getByRole('button', { name: 'Synthèse' }).last().click()
-await page.waitForTimeout(1200)
+await page.waitForSelector('text=vérifier les sources', { timeout: 25000 })   // latence IA réelle
 assert((await page.locator('text=vérifier les sources').count()) > 0, 'fiche IA : synthèse + mention')
 await page.getByRole('button', { name: 'Pourquoi ce score ?' }).click()
-await page.waitForTimeout(1200)
+await page.waitForSelector('text=100 % déterministe', { timeout: 25000 })   // latence IA réelle
 assert((await page.locator('text=100 % déterministe').count()) > 0, 'fiche IA : pourquoi + doctrine')
 await page.screenshot({ path: `${OUT}/ia_fiche.png` })
 
