@@ -220,3 +220,6 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   est active (le marqueur île mène à la commune, donc au bouton — pas de 3e entrée).
 - **reliability_level** : enum existant (verifie/a_confirmer/sous_convention) — « officielle »
   n'y est pas ; les 4 nouvelles sources sont « verifie ».
+- **POI Overpass** : miroirs capricieux (504 en rafale) → ré-ingestions avec retries ; état
+  final 24/24 communes, 5 874 POI d'affichage. Lacune source consignée : la mairie de
+  Bras-Panon n'est pas taguée `amenity=townhall` dans OSM (0 au compteur — honnête).
