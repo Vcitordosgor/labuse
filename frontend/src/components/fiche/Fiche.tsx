@@ -364,6 +364,9 @@ export function Fiche({ idu }: { idu: string }) {
           {meta && (
             <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${meta.color}22`, color: meta.color }}>
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}
+              {f?.evenement === 'rouge' && f.statut === 'chaude' && (
+                <span className="rounded-full bg-[#3a1614] px-1.5 text-[9px] font-semibold text-st-ecartee" title="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">· ÉVÉNEMENT</span>
+              )}
             </span>
           )}
         </div>
@@ -389,6 +392,15 @@ export function Fiche({ idu }: { idu: string }) {
         )}
         {f && tab === 'synthese' && (
           <>
+            {f.evenement === 'rouge' && f.statut === 'chaude' && (
+              <div data-histoire-evenement className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
+                Chaude par <b className="text-st-ecartee">ÉVÉNEMENT</b> : le propriétaire
+                {f.proprietaire_moral?.denomination ? <> (<b>{f.proprietaire_moral.denomination}</b>)</> : ''} est en
+                procédure collective{f.evenement_detail ? <> — {f.evenement_detail.replace(/^.*?:\s*/, '')}</> : ''}.
+                Le score qualité ({f.q_score}) n'a pas déclenché ce statut : c'est l'urgence
+                du dossier vendeur qui prime (doctrine bascule).
+              </div>
+            )}
             <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen />
             <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} />
             <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">

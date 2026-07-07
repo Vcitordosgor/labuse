@@ -17,6 +17,13 @@ const BASEMAP_SOURCES: Record<string, { tiles: string[]; attribution: string; ma
     tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
     attribution: '© OSM · CARTO',
   },
+  // C3 (revue Vic) : sous z10 en mode île, les noms de localités du fond doublonnent nos
+  // marqueurs communes → variante SANS labels (même fournisseur). Aux zooms parcellaires,
+  // les labels du fond redeviennent utiles : on ne les retire QUE là où les marqueurs règnent.
+  'bm-carto-nolabels': {
+    tiles: ['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png'],
+    attribution: '© OSM · CARTO',
+  },
   'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme' },
   'bm-ortho-now': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg')], attribution: '© IGN BD ORTHO' },
   'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
@@ -101,6 +108,17 @@ export function MapView() {
   const measureRef = useRef(measure)
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
+
+  // z<10 : les marqueurs communes règnent (bandeau contextuel + labels du fond retirés — C3)
+  const [lowZoom, setLowZoom] = useState(false)
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    const h = () => setLowZoom(m.getZoom() < 10)
+    h()
+    m.on('zoom', h)
+    return () => { m.off('zoom', h) }
+  }, [mapReady])
 
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   const zonage = useQuery({ queryKey: ['layer', 'zonage', commune], queryFn: () => getMapLayer('plu_gpu_zone'), enabled: layers.zonage && !ile })
@@ -268,7 +286,8 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    const active = basemap === 'dark' ? 'bm-carto' : basemap === 'plan' ? 'bm-plan'
+    const active = basemap === 'dark' ? (ile && lowZoom ? 'bm-carto-nolabels' : 'bm-carto')
+      : basemap === 'plan' ? 'bm-plan'
       : orthoYear === '2000' ? 'bm-ortho-2000' : orthoYear === '1950' ? 'bm-ortho-1950' : 'bm-ortho-now'
     for (const id of Object.keys(BASEMAP_SOURCES)) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none')
@@ -278,7 +297,7 @@ export function MapView() {
       m.setPaintProperty('parcels-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
       m.setPaintProperty('ile-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
     }
-  }, [basemap, orthoYear, mode, filters.statuts, mapReady])
+  }, [basemap, orthoYear, mode, filters.statuts, mapReady, ile, lowZoom])
 
   useEffect(() => {
     const m = map.current
@@ -362,18 +381,6 @@ export function MapView() {
     m.on('zoom', updateVis)
     return () => { m.off('zoom', updateVis); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
   }, [ile, communes.data, mapReady])
-
-  // le bandeau bas ne donne JAMAIS une instruction inexécutable : sous z10 en mode île,
-  // aucune parcelle n'est cliquable → « Zoomez ou cliquez une commune »
-  const [lowZoom, setLowZoom] = useState(false)
-  useEffect(() => {
-    const m = map.current
-    if (!m || !ready.current) return
-    const h = () => setLowZoom(m.getZoom() < 10)
-    h()
-    m.on('zoom', h)
-    return () => { m.off('zoom', h) }
-  }, [mapReady])
 
   // changement de commune → recadrage sur son emprise (bbox servie par /communes)
   useEffect(() => {

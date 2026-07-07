@@ -25,6 +25,7 @@ export interface Stats {
   // « sans identité » est affiché tel quel (honnêteté : jamais un total prétendu exact)
   dossiers_chaudes?: number
   chaudes_sans_identite?: number
+  chaude_evenement?: number   // décomposition « dont N par événement » (survol du compteur)
 }
 
 export type MapMode = 'verdict' | 'mutabilite'

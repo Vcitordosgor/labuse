@@ -51,6 +51,11 @@ export interface ContexteCommune {
   marche: { millesime: string; logements: number; vacants: number; proprietaires_pct: number; locataires_pct: number; maisons_pct: number; apparts_pct: number; typologie: Record<string, any>; source_nom: string; source_url: string } | null
   notes: string[]
 }
+export interface Entonnoir { commune: string | null; analysees: number; opportunites: number; motifs: { motif: string; n: number }[]; note: string }
+export const getEntonnoir = () => {
+  const c = commune()
+  return j<Entonnoir>(`/stats/entonnoir${c ? `?commune=${encodeURIComponent(c)}` : ''}`)
+}
 export const getContexteCommune = (commune: string) =>
   j<ContexteCommune>(`/communes/${encodeURIComponent(commune)}/contexte`)
 export const searchParcels = (needle: string) =>
@@ -104,7 +109,7 @@ export const modDueDiligence = (refs: string) =>
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })
 
 // ── Copilote IA (Vague 2) — jamais d'accès base, filtres validés par schéma côté API ──
-export const iaStatus = () => j<{ provider: string }>('/ia/status')
+export const iaStatus = () => j<{ provider: string; raison: string | null }>('/ia/status')
 export const iaSearch = (text: string) =>
   j<{ stub: boolean; filters?: Record<string, unknown>; explanation?: string; out_of_scope?: string }>('/ia/search', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })

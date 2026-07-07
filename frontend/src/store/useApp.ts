@@ -44,6 +44,9 @@ interface AppState {
   // volet CONTEXTE COMMUNE (SRU/ANRU/PLH/marché) — ouvert depuis le sélecteur ou le header
   contexteCommune: string | null
   setContexteCommune: (c: string | null) => void
+  // toast produit (C6) : une action utilisateur ne tombe JAMAIS dans le vide
+  toast: string | null
+  setToast: (t: string | null) => void
   view: View
   setView: (v: View) => void
   outilsOpen: boolean
@@ -104,6 +107,8 @@ export const useApp = create<AppState>((set) => ({
   setCommune: (commune) => set({ commune, zone: null }),
   contexteCommune: null,
   setContexteCommune: (contexteCommune) => set({ contexteCommune }),
+  toast: null,
+  setToast: (toast) => set({ toast }),
   view: 'cartes',
   setView: (view) => set({ view, outilsOpen: false }),
   outilsOpen: false,

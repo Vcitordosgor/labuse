@@ -550,6 +550,24 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     return [dict(r) for r in rows]
 
 
+@app.get("/stats/entonnoir")
+def stats_entonnoir(commune: str | None = None, source: str = "q_v2",
+                    db: Session = Depends(get_db)) -> dict:
+    """L'ENTONNOIR PAR MOTIF (C4, revue Vic) : « LABUSE a analysé N parcelles et trié pour
+    vous » — décomposition SQL-exacte des écartées par garde (matérialisée post-matrice ;
+    une parcelle peut cumuler des motifs, affiché tel quel). Pédagogique ET auditable."""
+    key = commune or "__ile__"
+    rows = db.execute(text(
+        "SELECT motif, n FROM entonnoir_motifs WHERE run_label = :r AND commune = :c ORDER BY ord"),
+        {"r": source, "c": key}).mappings().all()
+    stats_row = _q_v2_stats(db, commune, run_label=source)
+    return {"commune": commune, "analysees": stats_row["total"],
+            "opportunites": stats_row["chaude"] + stats_row["a_surveiller"] + stats_row["a_creuser"],
+            "motifs": [dict(r) for r in rows],
+            "note": ("Une parcelle peut cumuler plusieurs motifs (les pourcentages se recouvrent). "
+                     "« Qualité insuffisante » = survivante du filtre dur mais Q<50.")}
+
+
 @app.get("/stats")
 def stats(commune: str | None = None, source: str | None = None,
           statuts: str | None = None, score_min: int | None = None,
@@ -781,6 +799,9 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = "q_v2",
         f"""
         SELECT count(*) AS total,
                count(*) FILTER (WHERE matrice_statut = 'chaude')       AS chaude,
+               count(*) FILTER (WHERE matrice_statut = 'chaude' AND EXISTS (
+                   SELECT 1 FROM dryrun_cascade_results ev WHERE ev.parcel_id = d.parcel_id
+                     AND ev.run_label = :run AND ev.evenement = 'rouge')) AS chaude_evenement,
                count(*) FILTER (WHERE matrice_statut = 'a_surveiller') AS a_surveiller,
                count(*) FILTER (WHERE matrice_statut = 'a_creuser')    AS a_creuser,
                count(*) FILTER (WHERE matrice_statut = 'ecartee')      AS ecartee

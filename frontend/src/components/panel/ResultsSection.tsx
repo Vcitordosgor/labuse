@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { getCommunes, getParcelsGeojson, getResults, getStats } from '../../lib/api'
+import { getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { completudeColor, STATUT_META } from '../../lib/status'
@@ -40,8 +40,9 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
         <div className="flex items-center gap-2">
           <span className="font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
           {p.evenement === 'rouge' && (
-            <span className="shrink-0 rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee" title="Événement — procédure BODACC ouverte">
-              ● ÉVÉNEMENT
+            <span className="shrink-0 rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
+              title={p.status === 'chaude' ? 'Chaude PAR ÉVÉNEMENT (procédure BODACC ouverte) — statut forcé, pas issu de la matrice Q×A' : 'Événement — procédure BODACC ouverte'}>
+              {p.status === 'chaude' ? '● CHAUDE · ÉVÉNEMENT' : '● ÉVÉNEMENT'}
             </span>
           )}
           {(p.cluster ?? 0) > 1 && (
@@ -66,7 +67,7 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
 function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', number>; partial: boolean }) {
   const { filters, setFilter } = useApp()
   const items: { v: Statut | 'all'; label: string; color?: string }[] = [
-    { v: 'all', label: 'Tout' },
+    { v: 'all', label: 'Opportunités' },
     { v: 'chaude', label: 'Chaude', color: STATUT_META.chaude.color },
     { v: 'a_surveiller', label: 'À surveiller', color: STATUT_META.a_surveiller.color },
     { v: 'a_creuser', label: 'À creuser', color: STATUT_META.a_creuser.color },
@@ -94,6 +95,47 @@ function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', numbe
           </button>
         )
       })}
+    </div>
+  )
+}
+
+// C4 (revue Vic) : le tri EST le produit — « LABUSE a analysé N parcelles et trié pour
+// vous ». Le popover montre l'entonnoir PAR MOTIF (SQL-exact, matérialisé post-matrice).
+function EntonnoirLine({ total, opportunites, nFilters }: { total: number; opportunites: number; nFilters: number }) {
+  const [open, setOpen] = useState(false)
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['entonnoir', commune], queryFn: getEntonnoir, enabled: open })
+  return (
+    <div className="relative mt-2 shrink-0">
+      <p className="text-[11px] text-txt-dim">
+        <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
+        <button data-entonnoir-btn onClick={() => setOpen((o) => !o)}
+          className="ml-1.5 text-mint hover:underline" title="L'entonnoir par motif — pourquoi le reste est écarté (SQL-exact)">
+          pourquoi ? ▾
+        </button>
+      </p>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div data-entonnoir-popover className="absolute left-0 top-6 z-20 w-[300px] rounded-xl border border-line-2 bg-surface-2 p-3 shadow-2xl">
+            <p className="text-[11px] leading-snug text-txt">
+              LABUSE a analysé <b>{fmt(q.data?.analysees ?? total)}</b> parcelles et trié pour
+              vous : <b className="text-mint">{fmt(q.data?.opportunites ?? opportunites)}</b> opportunités.
+            </p>
+            <p className="mt-1.5 font-mono text-[9.5px] tracking-widest text-txt-dim">LE RESTE, PAR MOTIF</p>
+            {q.isLoading && <p className="mt-1 text-[10px] text-txt-dim">Chargement…</p>}
+            <div className="mt-1 flex flex-col gap-0.5">
+              {(q.data?.motifs ?? []).map((m) => (
+                <div key={m.motif} className={`flex justify-between gap-2 text-[10.5px] ${m.motif.startsWith('écartées') ? 'font-medium text-txt border-b border-line pb-0.5 mb-0.5' : 'text-txt-mut'}`}>
+                  <span className="min-w-0">{m.motif}</span>
+                  <span className="shrink-0 font-mono">{fmt(m.n)}</span>
+                </div>
+              ))}
+            </div>
+            {q.data && <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">{q.data.note}</p>}
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -186,7 +228,8 @@ export function ResultsSection() {
           ⚠ {communeNote}
         </div>
       )}
-      <p className="mt-2 shrink-0 text-xs text-txt-mut">
+      <p className="mt-2 shrink-0 text-xs text-txt-mut"
+        title={stats.data?.chaude_evenement != null ? `${fmt(stats.data.chaude)} chaudes dont ${fmt(stats.data.chaude_evenement)} par événement BODACC (bascule doctrinale)` : undefined}>
         <span className="font-medium text-st-chaude">{fmt(counts.chaude)}</span> chaudes ·{' '}
         <span className="font-medium text-st-surveiller">{fmt(counts.a_surveiller)}</span> à surveiller ·{' '}
         <span className="font-medium text-st-creuser">{fmt(counts.a_creuser)}</span> à creuser
@@ -203,9 +246,7 @@ export function ResultsSection() {
         <span className="bg-st-surveiller" style={{ width: `${(counts.a_surveiller / promus) * 100}%` }} />
         <span className="bg-st-creuser" style={{ width: `${(counts.a_creuser / promus) * 100}%` }} />
       </div>
-      <p className="mt-2 shrink-0 text-[11px] text-txt-dim">
-        sur {fmt(total)} parcelles — filtre dur actif{nFilters > 0 && ' · filtres appliqués'}
-      </p>
+      <EntonnoirLine total={total} opportunites={counts.all} nFilters={nFilters} />
 
       <StatutChips counts={counts} partial={scoped} />
 

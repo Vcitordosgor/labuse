@@ -108,9 +108,13 @@ def render_fiche_pdf(fiche: dict) -> bytes:
              new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
 
-    # ── Bandeau événement (héros)
+    # ── Bandeau événement (héros) — C5 : il raconte SON histoire en une phrase
     if fiche.get("evenement") == "rouge":
-        detail = fiche.get("evenement_detail") or ""
+        pm = (fiche.get("proprietaire_moral") or {}).get("denomination")
+        detail = (f"Chaude par ÉVÉNEMENT : le propriétaire{f' ({pm})' if pm else ''} est en "
+                  f"procédure collective — {fiche.get('evenement_detail') or 'procédure BODACC ouverte'}. "
+                  f"Le score qualité ({fiche.get('q_score')}) n'a pas déclenché ce statut : "
+                  "l'urgence du dossier vendeur prime (doctrine bascule).")
         # hauteur du bandeau = titre + détail wrap (mesuré avant de peindre le fond)
         pdf.set_font("inter", size=7)
         n_lines = max(1, len(pdf.multi_cell(pdf.w - 36, 3.6, detail, dry_run=True, output="LINES")))
