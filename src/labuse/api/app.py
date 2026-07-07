@@ -470,11 +470,16 @@ def list_communes(source: str = "q_v2", db: Session = Depends(get_db)) -> list[d
                    substring(min(p.idu) from 1 for 5)                       AS insee,
                    count(*)                                                 AS parcelles,
                    count(*) FILTER (WHERE d.matrice_statut = 'chaude')      AS chaudes,
+                   count(DISTINCT pm.siren) FILTER (WHERE d.matrice_statut = 'chaude'
+                         AND pm.siren IS NOT NULL)                          AS dossiers,
+                   count(*) FILTER (WHERE d.matrice_statut = 'chaude'
+                         AND pm.siren IS NULL)                              AS chaudes_sans_identite,
                    count(d.parcel_id)                                       AS evaluees,
                    ST_XMin(ST_Extent(p.geom)) AS x1, ST_YMin(ST_Extent(p.geom)) AS y1,
                    ST_XMax(ST_Extent(p.geom)) AS x2, ST_YMax(ST_Extent(p.geom)) AS y2
             FROM parcels p
             LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
             GROUP BY p.commune ORDER BY 4 DESC, 3 DESC
             """), {"run": source}).mappings().all()
         # cas documenté (pré-vol île) : Saint-Philippe est au RNU — pas de PLU opposable,
@@ -483,7 +488,9 @@ def list_communes(source: str = "q_v2", db: Session = Depends(get_db)) -> list[d
                                    "signaux qualité/accessibilité seuls"}
         return [{
             "commune": r["commune"], "insee": r["insee"], "parcelles": int(r["parcelles"]),
-            "chaudes": int(r["chaudes"] or 0), "evaluees": int(r["evaluees"] or 0),
+            "chaudes": int(r["chaudes"] or 0), "dossiers": int(r["dossiers"] or 0),
+            "chaudes_sans_identite": int(r["chaudes_sans_identite"] or 0),
+            "evaluees": int(r["evaluees"] or 0),
             "bbox": [r["x1"], r["y1"], r["x2"], r["y2"]],
             "note": notes.get(r["commune"]),
         } for r in rows]
@@ -638,9 +645,18 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
                d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
-               (ev.parcel_id IS NOT NULL) AS evenement_rouge, fl.flags
+               (ev.parcel_id IS NOT NULL) AS evenement_rouge, fl.flags,
+               cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
+        LEFT JOIN (SELECT pm2.siren, count(*) AS n, max(pm2.denomination) AS denom
+                   FROM dryrun_parcel_evaluations d2
+                   JOIN parcels p2 ON p2.id = d2.parcel_id
+                   JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
+                   WHERE d2.run_label = :run AND d2.matrice_statut = 'chaude'
+                     AND pm2.siren IS NOT NULL
+                   GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
@@ -672,6 +688,8 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
             "vue_mer": r["vue_mer"],
             "evenement": "rouge" if r["evenement_rouge"] else None,
             "flags": r["flags"] or [],
+            "cluster": int(r["cluster"]) if r["cluster"] else None,
+            "proprio": r["proprio"],
         },
     } for r in rows if r["g"]]
     return {"type": "FeatureCollection", "features": feats}
@@ -685,11 +703,20 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         f"""
         SELECT p.idu, p.commune, p.surface_m2, p.section,
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude, d.completeness_score,
-               (ev.parcel_id IS NOT NULL) AS evenement_rouge
+               (ev.parcel_id IS NOT NULL) AS evenement_rouge,
+               cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
+        LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
+        LEFT JOIN (SELECT pm2.siren, count(*) AS n, max(pm2.denomination) AS denom
+                   FROM dryrun_parcel_evaluations d2
+                   JOIN parcels p2 ON p2.id = d2.parcel_id
+                   JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
+                   WHERE d2.run_label = :run AND d2.matrice_statut = 'chaude'
+                     AND pm2.siren IS NOT NULL
+                   GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
           AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
           {extra_where}
@@ -702,13 +729,20 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "lieu_dit": r["commune"], "status": r["status"], "q_score": r["q_score"], "a_score": r["a_score"],
         "a_completude": r["a_completude"], "completeness_score": r["completeness_score"],
         "evenement": "rouge" if r["evenement_rouge"] else None,
+        "cluster": int(r["cluster"]) if r["cluster"] else None,
+        "proprio": r["proprio"],
     } for r in rows]
 
 
 def _q_v2_stats(db: Session, commune: str | None, run_label: str = "q_v2",
                 extra_where: str = "", extra_params: dict | None = None) -> dict:
     """Comptes par statut matrice (en-tête + barre de répartition). « N chaudes · M à surveiller ».
-    `extra_where` = filtres chips en SQL (mode île : les compteurs restent SQL-exacts filtrés)."""
+    `extra_where` = filtres chips en SQL (mode île : les compteurs restent SQL-exacts filtrés).
+
+    DOSSIERS (unité de prospection) : parmi les chaudes, propriétaires uniques identifiés —
+    clé = SIREN (personnes morales, DGFiP). Limite consignée : les personnes physiques n'ont
+    pas d'identité en base (doctrine) → « sans identité », jamais un total prétendu exact."""
+    params = {"c": commune, "run": run_label, **(extra_params or {})}
     row = db.execute(text(
         f"""
         SELECT count(*) AS total,
@@ -719,8 +753,21 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = "q_v2",
         FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
         WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
           {extra_where}
-        """), {"c": commune, "run": run_label, **(extra_params or {})}).mappings().one()
-    return {k: int(v or 0) for k, v in row.items()}
+        """), params).mappings().one()
+    dossiers = db.execute(text(
+        f"""
+        SELECT count(DISTINCT pm.siren) FILTER (WHERE pm.siren IS NOT NULL) AS dossiers,
+               count(*) FILTER (WHERE pm.siren IS NULL)                     AS sans_identite
+        FROM dryrun_parcel_evaluations d
+        JOIN parcels p ON p.id = d.parcel_id
+        LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
+        WHERE d.run_label = :run AND d.matrice_statut = 'chaude'
+          AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+          {extra_where}
+        """), params).mappings().one()
+    return {**{k: int(v or 0) for k, v in row.items()},
+            "dossiers_chaudes": int(dossiers["dossiers"] or 0),
+            "chaudes_sans_identite": int(dossiers["sans_identite"] or 0)}
 
 
 #: axe A (pur vendeur) — cf. config/scoring_matrice.yaml a_layers. Tout le reste = Q.

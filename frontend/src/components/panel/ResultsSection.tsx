@@ -44,6 +44,12 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
               ● ÉVÉNEMENT
             </span>
           )}
+          {(p.cluster ?? 0) > 1 && (
+            <span className="shrink-0 rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]"
+              title={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) parcelle(s) chaude(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}>
+              même proprio ×{p.cluster}
+            </span>
+          )}
           {p.vue_mer === 'oui' && <span className="shrink-0 text-[10px] text-[#7DE8E0]" title="Vue mer dégagée">◠</span>}
         </div>
         <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
@@ -186,6 +192,12 @@ export function ResultsSection() {
         <span className="font-medium text-st-creuser">{fmt(counts.a_creuser)}</span> à creuser
         {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
       </p>
+      {stats.data?.dossiers_chaudes != null && (stats.data.chaude > 0) && (
+        <p className="mt-1 shrink-0 text-[11px] text-txt-dim" title="La vraie unité de prospection : un propriétaire = un dossier, quel que soit son nombre de parcelles. Identification par SIREN (personnes morales) — les personnes physiques n'ont pas d'identité en base (doctrine).">
+          soit <span className="font-medium text-txt">{fmt(stats.data.dossiers_chaudes)}</span> dossier{stats.data.dossiers_chaudes > 1 ? 's' : ''} propriétaire identifié{stats.data.dossiers_chaudes > 1 ? 's' : ''}
+          {(stats.data.chaudes_sans_identite ?? 0) > 0 && <> (+{fmt(stats.data.chaudes_sans_identite ?? 0)} parcelle{(stats.data.chaudes_sans_identite ?? 0) > 1 ? 's' : ''} sans identité)</>}
+        </p>
+      )}
       <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
         <span className="bg-st-chaude" style={{ width: `${(counts.chaude / promus) * 100}%` }} />
         <span className="bg-st-surveiller" style={{ width: `${(counts.a_surveiller / promus) * 100}%` }} />

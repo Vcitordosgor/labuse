@@ -100,3 +100,15 @@ digest île, bandeau RNU, zone/couches commune-scopées honnêtement désactivé
 4. Largeur voirie réelle : SD/SP seulement (prospect en mode « classe » ailleurs).
 5. Divergence d'affichage fiche : l'axe A affiché (4 couches) ≠ axe A calculé (6, avec
    dvf/sitadel) — aligner `_A_LAYERS` (app.py) sur le YAML.
+
+## Dossiers propriétaires (mandat mini, vague 2 — 2026-07-07)
+Les compteurs parlent désormais en DOSSIERS : île = **719 chaudes → 166 dossiers
+propriétaires identifiés (+218 parcelles sans identité)**. Clé d'identité = SIREN (personnes
+morales DGFiP) ; limite consignée : les personnes physiques n'ont pas d'identité en base
+(doctrine SPF/CERFA) → reliquat affiché tel quel, jamais un total prétendu exact. Badge
+« même proprio ×N » dans la liste (SICN ×18 visible à La Possession sans un clic), colonne
+DOSSIER aux tops, /communes porte dossiers par commune.
+**Backlog chiffré (NON entamé, mandat 2.5)** : le « mode dossiers » complet — liste groupée
+par propriétaire, fiche dossier multi-parcelles (agrégats SDP/surfaces, pipeline par dossier,
+PDF dossier), tri par dossier ≈ **2-3 jours** (l'unité de compte et la clé sont posées ;
+c'est la V2 naturelle de la prospection).

@@ -37,6 +37,11 @@ SELECT p.idu, p.commune, d.matrice_statut AS st, d.q_score, d.a_score, d.a_compl
        r.sdp_residuelle_m2, vm.vue AS vue_mer,
        (ev.parcel_id IS NOT NULL) AS evenement,
        pm.denomination AS proprio, pm.siren,
+       (SELECT count(*) FROM dryrun_parcel_evaluations d2
+        JOIN parcels p2 ON p2.id = d2.parcel_id
+        JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
+        WHERE d2.run_label = %(run)s AND d2.matrice_statut = 'chaude'
+          AND pm2.siren = pm.siren) AS cluster,
        ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
        ST_X(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lon,
        zc.detail AS zone_detail
@@ -86,7 +91,7 @@ def rows_html(cur, rows) -> str:
 <td class="num">Q {r['q_score']} · A {r['a_score']}<div class="muted">compl. {r['completeness_score']} %</div></td>
 <td class="num">{int(r['surface'] or 0):,} m²<div class="muted">SDP {int(r['sdp_residuelle_m2'] or 0):,} m²</div></td>
 <td>{esc(zone)}{'<div class="muted">vue mer</div>' if r['vue_mer'] == 'oui' else ''}</td>
-<td class="why">{why or '—'}<div class="muted">{esc(r['proprio'] or 'proprio : personne physique / n.c.')}</div></td>
+<td class="why">{why or '—'}<div class="muted">{esc(r['proprio'] or 'proprio : personne physique / n.c.')}{f" · DOSSIER ×{r['cluster']}" if (r['cluster'] or 0) > 1 else ''}</div></td>
 <td><a href="{gmaps}" target="_blank">satellite ↗</a><br><a href="{app}" target="_blank">produit ↗</a><div class="muted">omnibox : {esc(r['idu'][8:])}</div></td>
 </tr>""".replace(",", " "))
     return "\n".join(out)
