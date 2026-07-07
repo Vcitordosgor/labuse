@@ -36,7 +36,7 @@ async function openModule(num, label) {
 
 // ── M01 division : compteur = SQL + lot dessiné + fiche enrichie
 {
-  const sqlN = Number(sql("SELECT count(*) FROM module_division WHERE score >= 70"))
+  const sqlN = Number(sql("SELECT count(*) FROM module_division m JOIN parcels p ON p.id=m.parcel_id WHERE m.score >= 70 AND p.commune='Saint-Paul'"))   // 24 communes coexistent depuis l'île
   await openModule('M01', 'Division parcellaire')
   const shown = await page.locator('text=candidats (SQL)').innerText()
   assert(digits(shown) === sqlN, `M01 compteur = SQL (${sqlN})`, shown)

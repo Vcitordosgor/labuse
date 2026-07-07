@@ -138,7 +138,8 @@ for (const width of [1440, 1280]) {
   await page.getByRole('button', { name: /^Chaude/ }).first().click()
   await page.waitForTimeout(800)
   const cardsChaude = await page.locator('.overflow-y-auto > button').count()
-  assert(cardsChaude === chaude, `filtre Chaude → ${chaude} cartes`, `${cardsChaude}`)
+  // la liste affiche 200 cartes max (« Tout voir » au-delà) — 375 chaudes à SP depuis l'île
+  assert(cardsChaude === Math.min(chaude, 200), `filtre Chaude → ${Math.min(chaude, 200)} cartes affichées (${chaude} au total)`, `${cardsChaude}`)
   await snap(page, '03_filtre_chaude', width)
   await page.getByRole('button', { name: '+ Filtre' }).click()
   await page.getByPlaceholder('70').fill('90')

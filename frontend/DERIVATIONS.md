@@ -173,3 +173,10 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
 - **Suites historiques** : elles testent le MODE COMMUNE → épinglées sur `#c=Saint-Paul`.
   Piège appris : `goto` vers la même URL à hash différent = navigation fragment SANS
   rechargement → `reload()` explicite quand la suite veut une page fraîche.
+- **Matrice réalignée (île)** : les statuts q_v2 de Saint-Paul dataient d'une convention
+  jamais committée (dvf/sitadel en Q) ; l'invariant du mandat (base+Σ=score) échouait sur
+  SP et passait sur les 23 autres. Rejoué le POST-PASS matrice de SP sur la convention
+  committée (83→375 chaudes, AC0253 toujours chaude, cascade intouchée, traçabilité 20/20).
+  Arbitrage seuils rendu à Vic (BILAN_ILE §2) — une île, une convention.
+- **QA adaptées aux données île** : liste plafonnée à 200 cartes (« Tout voir ») → assertion
+  min(n,200) ; module_division porte 24 communes → compteur SQL scoppé commune.

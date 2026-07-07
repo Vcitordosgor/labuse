@@ -51,7 +51,7 @@ calc AS (
   SELECT s.commune, s.parcel_id, s.q_score,
          GREATEST(1, LEAST(100, 50 + COALESCE((SELECT sum(c.weight_applied) FROM dryrun_cascade_results c
             WHERE c.run_label='q_v2' AND c.parcel_id=s.parcel_id
-              AND c.layer_name NOT IN ('proprietaire','age_dirigeant','bodacc','dpe_passoire')
+              AND c.layer_name NOT IN ('proprietaire','age_dirigeant','dvf','sitadel','bodacc','dpe_passoire')
               AND c.weight_applied IS NOT NULL), 0)))::int AS recompute
   FROM sample s WHERE s.rn <= 5)
 SELECT commune, count(*) AS testees, count(*) FILTER (WHERE q_score = recompute) AS ok
