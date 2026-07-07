@@ -87,6 +87,29 @@ class SearchIn(BaseModel):
     text: str
 
 
+def _stub_programme(low: str) -> dict | None:
+    """Détection « programme immobilier » → préremplissage du formulaire M22 (sens 2)."""
+    if not re.search(r"immeuble|b[âa]timent|r\s*\+\s*\d|programme|r[ée]sidence|logements? pour", low):
+        return None
+    prog: dict = {}
+    m = re.search(r"(\d+)\s*(?:immeubles?|b[âa]timents?)", low)
+    if m:
+        prog["batiments"] = int(m.group(1))
+    m = re.search(r"r\s*\+\s*(\d+)", low)
+    if m:
+        prog["niveaux"] = int(m.group(1))
+    m = re.search(r"(\d+)\s*(?:logements?|unit[ée]s?|studios?)", low)
+    if m:
+        prog["logements_par_batiment"] = max(1, int(m.group(1)) // max(1, prog.get("batiments", 1)))
+    if re.search(r"[ée]tudiant", low):
+        prog["type"] = "etudiant"
+        prog.setdefault("surface_unite_m2", 25)
+    if re.search(r"bureau", low):
+        prog["type"] = "bureaux"
+    prog["parking"] = not re.search(r"sans parking", low)
+    return prog if len(prog) > 1 else None
+
+
 def _stub_nl(t: str) -> tuple[dict | None, str]:
     """Stub local : règles lexicales déterministes. Renvoie (filtres, explication) ou (None, refus)."""
     low = t.lower()
@@ -171,6 +194,11 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
         except ValidationError as exc:
             return {"stub": False, "out_of_scope": f"filtre non conforme ({exc.message[:60]}) — réessayez"}
         return {"stub": False, "filters": data, "explanation": "Filtres proposés par l'IA (validés par schéma)."}
+    prog = _stub_programme(body.text.lower())
+    if prog:
+        _log(db, "search", "stub-local", True)
+        return {"stub": True, "programme": prog,
+                "explanation": "Programme détecté → formulaire Faisabilité pré-rempli (le moteur déterministe calcule)."}
     filters, explanation = _stub_nl(body.text)
     _log(db, "search", "stub-local", True)
     if filters is None:

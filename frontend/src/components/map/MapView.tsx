@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
 import { getMapLayer, getParcelsGeojson } from '../../lib/api'
-import { fmtArea, fmtDistance, pathLength, polygonArea, type LngLat } from '../../lib/geo'
+import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { Legend } from './Legend'
 import { MapToolbar } from './MapToolbar'
@@ -254,8 +254,36 @@ export function MapView() {
 
   useEffect(() => {
     const m = map.current
-    if (m && ready.current && m.getLayer('parcels-sel')) m.setFilter('parcels-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
-  }, [selectedIdu])
+    if (!m || !ready.current || !m.getLayer('parcels-sel')) return
+    m.setFilter('parcels-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
+    // PING SYSTÉMATIQUE : toute sélection (liste, module, CRM, notification) recentre + pulse 2 s
+    if (!selectedIdu || !geo.data) return
+    const feat = geo.data.features.find((f) => (f.properties as { idu?: string }).idu === selectedIdu)
+    if (!feat) return
+    const c = roughCentroid(feat.geometry)
+    if (!c) return
+    m.flyTo({ center: c, zoom: Math.max(m.getZoom(), 16), duration: 800 })
+    if (!m.getLayer('parcels-ping')) {
+      m.addLayer({ id: 'parcels-ping', type: 'line', source: 'parcels',
+        filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 6, 'line-opacity': 0.9, 'line-blur': 3 } })
+    }
+    m.setFilter('parcels-ping', ['==', ['get', 'idu'], selectedIdu])
+    let t0: number | null = null
+    let raf = 0
+    const pulse = (ts: number) => {
+      if (t0 == null) t0 = ts
+      const dt = (ts - t0) / 1000
+      if (dt > 2 || !m.getLayer('parcels-ping')) {
+        if (m.getLayer('parcels-ping')) m.setPaintProperty('parcels-ping', 'line-opacity', 0)
+        return
+      }
+      m.setPaintProperty('parcels-ping', 'line-opacity', 0.45 + 0.45 * Math.abs(Math.sin(dt * Math.PI * 2)))
+      m.setPaintProperty('parcels-ping', 'line-width', 5 + 4 * Math.abs(Math.sin(dt * Math.PI * 2)))
+      raf = requestAnimationFrame(pulse)
+    }
+    raf = requestAnimationFrame(pulse)
+    return () => cancelAnimationFrame(raf)
+  }, [selectedIdu, geo.data])
 
   // module actif → surlignage + géométries propres
   useEffect(() => {

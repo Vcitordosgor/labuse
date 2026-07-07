@@ -83,6 +83,8 @@ interface AppState {
   setFlyTo: (f: { center: [number, number]; zoom: number } | null) => void
   msel: string[] // sélection multi-parcelles (module assemblage M16)
   setMsel: (m: string[]) => void
+  m22Prefill: Record<string, unknown> | null // copilote → formulaire programme (M22)
+  setM22Prefill: (p: Record<string, unknown> | null) => void
 }
 
 export const useApp = create<AppState>((set) => ({
@@ -129,4 +131,6 @@ export const useApp = create<AppState>((set) => ({
   setFlyTo: (flyTo) => set({ flyTo }),
   msel: [],
   setMsel: (msel) => set({ msel }),
+  m22Prefill: null,
+  setM22Prefill: (m22Prefill) => set({ m22Prefill }),
 }))

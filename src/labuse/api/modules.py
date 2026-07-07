@@ -398,3 +398,118 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
                      else {"ref": t, "erreur": "référence introuvable"})
     ok = [i for i in items if "idu" in i]
     return {"n_demandes": len(tokens), "n_trouvees": len(ok), "items": items}
+
+
+# ───────────────── M22 + BILAN — ÉTUDE DE FAISABILITÉ BIDIRECTIONNELLE ─────────────────
+# RÉUTILISE le moteur existant (faisabilite/engine + bilan) — rien de recalculé à la main.
+# Ratios : étage 3 m, place 25 m² (config plu YAML) ; m²/logement = paramètre AFFICHÉ (défaut 60).
+
+@router.get("/faisabilite/{idu}")
+def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
+    """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
+    from ..faisabilite.bilan import compute_bilan, sector_price
+    from ..faisabilite.db import parcel_faisabilite
+    from ..faisabilite.engine import Hypotheses
+
+    row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not row:
+        raise HTTPException(404, "Parcelle inconnue")
+    out: dict = {"idu": idu}
+    fz = parcel_faisabilite(db, row["id"])
+    if fz:
+        _ctx, f = fz
+        out["capacite"] = {"zone": f.zone, "verdict": f.verdict, "calibree": f.calibree,
+                           "fourchette": f.fourchette, "hypotheses": f.hypotheses,
+                           "bandeau": f.bandeau}
+    else:
+        out["capacite"] = None
+    hyp = Hypotheses()
+    prix = sector_price(db, row["id"], hyp)
+    out["marche"] = {k: prix.get(k) for k in ("type_prix", "median", "q1", "q3", "n", "fiabilite",
+                                              "tendance", "volatilite", "radius_m") if k in prix}
+    shab = (f.fourchette or {}).get("shab_vendable_m2") if fz else None
+    if shab and prix.get("median"):
+        b = compute_bilan(float(shab), float(row["s"] or 0), prix, hyp)
+        out["bilan"] = {k: v for k, v in b.__dict__.items() if not k.startswith("_")}
+    else:
+        out["bilan"] = None
+    # fiscal / leviers (bilan promoteur — données en base + hypothèses ÉTIQUETÉES)
+    qpv = bool(db.execute(text("""SELECT 1 FROM spatial_layers q JOIN parcels p ON p.idu = :i
+        WHERE q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975) LIMIT 1"""), {"i": idu}).scalar())
+    vue = db.execute(text("SELECT vue FROM parcel_vue_mer vm JOIN parcels p ON p.id = vm.parcel_id WHERE p.idu = :i"),
+                     {"i": idu}).scalar()
+    out["fiscal"] = {
+        "qpv": qpv,
+        "tva": ("2,1 % (LLS en QPV — LODEOM) au lieu de 8,5 % DOM" if qpv
+                else "8,5 % (taux DOM) — 2,1 % possible en LLS selon montage"),
+        "ta_note": "Taxe d'aménagement : taux communal à confirmer en mairie (non ingéré) — "
+                   "hypothèse indicative 5 % + part départementale.",
+        "vue_mer": vue,
+        "prime_vue_mer": "prime de prix de sortie (vue dégagée)" if vue == "oui" else None,
+    }
+    return out
+
+
+class ProgrammeIn(BaseModel):
+    type: str = "logements"          # logements | etudiant | bureaux
+    batiments: int = 1
+    niveaux: int = 2                 # R+n → n
+    logements_par_batiment: int = 8
+    surface_unite_m2: float = 60     # hypothèse AFFICHÉE (m² SDP par unité)
+    parking: bool = True
+    commune: str = "Saint-Paul"
+
+
+@router.post("/programme")
+def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
+    """SENS 2 (programme → parcelles) : critères CALCULÉS et AFFICHÉS → candidates triées par
+    marge de capacité. La hauteur PLU est vérifiée zone par zone (resolve_zone) quand calibrée."""
+    from ..faisabilite.plu_rules import resolve_zone
+
+    unites = max(1, body.batiments) * max(1, body.logements_par_batiment)
+    sdp_min = round(unites * body.surface_unite_m2 * 1.15)       # +15 % circulations (hypothèse)
+    parking_m2 = round(unites * 25) if body.parking else 0        # 25 m²/place (config PLU)
+    hauteur_min = (body.niveaux + 1) * 3.0                        # R+n → (n+1) niveaux × 3 m
+    rows = db.execute(text("""
+        SELECT p.idu, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
+               d.matrice_statut AS statut, d.q_score, cr.detail AS zonage,
+               ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
+        FROM parcels p
+        JOIN parcel_residuel r ON r.parcel_id = p.id AND r.sdp_residuelle_m2 >= :sdp
+        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+          AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+        LEFT JOIN dryrun_cascade_results cr ON cr.run_label = :run AND cr.parcel_id = p.id
+          AND cr.layer_name = 'zonage_plu_gpu' AND cr.detail LIKE 'Zone PLU%'
+        WHERE p.commune = :c AND p.surface_m2 >= :smin
+        ORDER BY r.sdp_residuelle_m2 DESC LIMIT 300"""),
+        {"sdp": sdp_min, "run": RUN, "c": body.commune,
+         "smin": sdp_min * 0.4 + parking_m2}).mappings().all()
+    import re as _re
+    items = []
+    for r in rows:
+        m = _re.search(r"« ([^»]+) »", r["zonage"] or "")
+        zone = (m.group(1) if m else "").strip()
+        rules = resolve_zone(zone, body.commune) if zone else None
+        h = getattr(rules, "hauteur_max_m", None) if rules else None
+        if h is None and rules is not None:
+            h = getattr(rules, "hf_m", None) or getattr(rules, "he_m", None)
+        hauteur_ok = (h is None) or (float(h) >= hauteur_min)
+        if not hauteur_ok:
+            continue
+        marge = round(float(r["sdp_residuelle_m2"]) / sdp_min, 2)
+        items.append({"idu": r["idu"], "surface_m2": r["surface_m2"], "sdp": round(r["sdp_residuelle_m2"]),
+                      "statut": r["statut"], "q_score": r["q_score"], "zone": zone or None,
+                      "hauteur_plu_m": float(h) if h is not None else None,
+                      "hauteur_verifiee": h is not None, "marge_capacite": marge,
+                      "geom": json.loads(r["g"])})
+    items.sort(key=lambda x: -x["marge_capacite"])
+    return {
+        "criteres": {"unites": unites, "sdp_min_m2": sdp_min,
+                     "calcul": f"{unites} unités × {body.surface_unite_m2} m² × 1,15 (circulations)",
+                     "parking_m2": parking_m2, "hauteur_min_m": hauteur_min,
+                     "hauteur_regle": f"R+{body.niveaux} → {hauteur_min:.0f} m ({body.niveaux + 1} niveaux × 3 m)"},
+        "bandeau": ("Estimation capacitaire — hypothèses affichées (m²/unité, +15 % circulations, "
+                    "25 m²/place) ; hauteur PLU vérifiée quand la zone est calibrée, sinon « à "
+                    "instruire ». Étude d'architecte requise."),
+        "n": len(items), "items": items[:200],
+    }

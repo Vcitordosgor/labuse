@@ -7,6 +7,7 @@ import {
 import { pointInPolygon } from '../../lib/geo'
 import { STATUT_META } from '../../lib/status'
 import { useApp } from '../../store/useApp'
+import { M22 } from './M22Programme'
 import { M15, M16, M17, M18, M19 } from './moteurs'
 import { MODULES, VIOLET } from './registry'
 
@@ -419,7 +420,7 @@ function M10() {
 const COMPONENTS: Record<string, () => JSX.Element> = {
   division: M01, patrimoine: M02, permis: M03, promesses: M04, velocite: M05,
   bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
-  simulplu: M15, assemblage: M16, zan: M17, barometre: M18, matching: M19,
+  simulplu: M15, assemblage: M16, zan: M17, barometre: M18, matching: M19, programme: M22,
 }
 
 export function ModulePanel() {

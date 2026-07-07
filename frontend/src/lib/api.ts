@@ -103,3 +103,8 @@ export const addProfile = (p: Record<string, unknown>) =>
 export const runMatch = () => j<{ matches: number }>('/partners/match/run', { method: 'POST' })
 export const createShare = (idu: string) => j<{ token: string; url: string }>(`/partners/share/${idu}`, { method: 'POST' })
 export const listShares = (idu: string) => j<{ token: string; date: string; views: number }[]>(`/partners/share/${idu}/list`)
+
+// ── M22 + Bilan (faisabilité bidirectionnelle) ──
+export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/faisabilite/${idu}`)
+export const postProgramme = (body: Record<string, unknown>) =>
+  j<Record<string, any>>('/modules/programme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
