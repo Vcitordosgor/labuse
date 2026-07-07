@@ -9,12 +9,14 @@
 # Simuler avant de trancher : `labuse matrice-simulate` (à blanc, grille HTML).
 convention:
   version: 2
-  date: "2026-07-07"
+  date: "2026-07-08"
   justification: >
-    v1 (implicite) = ces mêmes valeurs, appliquées aux 24 communes au run île du 07/07 ;
-    Saint-Paul réaligné dessus (83→375 chaudes, son état venait d'une convention jamais
-    committée). v2 = même barème, désormais objet versionné + simulable + applicable en une
-    commande. Barre en attente d'arbitrage Vic (grille de sensibilité aux tops).
+    CONVENTION OFFICIELLE — tranchée par Vic le 08/07/2026 après revue de la grille de
+    sensibilité (docs/tops_ile/matrice_sensibilite.html) : Q>=65 · A>=60 · complétude>=50
+    = 719 chaudes / 166 dossiers île. Motif : signal jugé déjà resserré ; le simulateur
+    (labuse matrice-simulate) permet de resserrer plus tard en minutes. Historique : v1
+    (implicite) = mêmes valeurs appliquées au run île du 07/07 ; Saint-Paul réaligné
+    (83→375 chaudes, son état venait d'une convention jamais committée).
 
 base: 50
 

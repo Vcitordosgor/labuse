@@ -127,5 +127,7 @@ le plateau utile vit entre Q65-75 × A60-65 :
 | Q≥65 · A≥65 | 460 | 42 | 113 | 103 |
 | Q≥75 · A≥60 | 149 | 42 | 44 | 29 |
 | Q≥70 · A≥65 | 211 | 42 | 61 | 43 |
-**DÉCISION VIC : ______ (en attente — apply en minutes dès qu'elle tombe ; « garder la
-courante » = no-op vérifié, diff zéro).**
+**DÉCISION VIC (tranchée le 08/07/2026) : GARDER LA CONVENTION COURANTE — Q≥65 · A≥60
+(719 chaudes / 166 dossiers). Motif : signal jugé déjà resserré ; le simulateur permet de
+resserrer plus tard en minutes. Application = no-op prouvé diff zéro (rien à rejouer) ;
+seuils gravés comme convention officielle dans scoring_matrice.yaml (en-tête v2 mis à jour).**
