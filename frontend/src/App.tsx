@@ -18,8 +18,8 @@ export default function App() {
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
-    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView }
-  }, [select, setView])
+    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule }
+  }, [select, setView, setZone, setModule])
 
   // URL partageable : filtres + zone sérialisés dans le hash (#f=…). Lecture au chargement,
   // écriture à chaque changement (replaceState : pas de pollution de l'historique).

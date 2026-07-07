@@ -4,6 +4,7 @@ import {
   getPipeline, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
   modPatrimoine, modPatrimoineSearch, modPermis, modPromesses, modVelocite,
 } from '../../lib/api'
+import { pointInPolygon } from '../../lib/geo'
 import { STATUT_META } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 import { M15, M16, M17, M18, M19 } from './moteurs'
@@ -144,9 +145,15 @@ function M02() {
 
 function M03() {
   const [months, setMonths] = useState(24)
+  const zone = useApp((s) => s.zone)
   const q = useQuery({ queryKey: ['m03', months], queryFn: () => modPermis(months) })
   const d = q.data as Record<string, any> | undefined
-  const items = ((d?.['items'] ?? []) as Record<string, any>[])
+  // la ZONE DESSINÉE (outil carte) filtre aussi les permis géocodés — les non-géocodés restent listés
+  const items = ((d?.['items'] ?? []) as Record<string, any>[]).filter((i) => {
+    if (!zone || !i['geom']) return true
+    const c = (i['geom'] as { coordinates: [number, number] }).coordinates
+    return pointInPolygon(c, zone)
+  })
   const geo = items.filter((i) => i['geom'])
   useModuleMap([],
     featureCollection(geo.map((i) => ({ type: 'Feature', geometry: i['geom'], properties: { kind: 'permis', label: `${i['type']} ${i['date']}` } }))),
@@ -163,7 +170,10 @@ function M03() {
           </button>
         ))}
       </div>
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} permis · {geo.length} sur la carte</p>
+      <p className="text-[11px] text-txt-dim">
+        {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(d?.['total'] as never)} permis`} · {geo.length} sur la carte
+        {zone && <span className="text-[#8b76c0]"> · outil Zone actif</span>}
+      </p>
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {items.slice(0, 150).map((i, k) => (
           <div key={k} className={`flex items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-[11px] ${i['geom'] ? 'bg-surface-3' : 'bg-[#141019]'}`}>

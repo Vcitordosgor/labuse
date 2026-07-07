@@ -12,15 +12,15 @@ import { MapToolbar } from './MapToolbar'
 // tuiles Google (CGU) — le deep-link « Ouvrir dans Google Maps » vit dans la fiche.
 const WMTS = (layer: string, format: string) =>
   `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER=${layer}&FORMAT=${format}`
-const BASEMAP_SOURCES: Record<string, { tiles: string[]; attribution: string }> = {
+const BASEMAP_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzoom?: number }> = {
   'bm-carto': {
     tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
     attribution: '© OSM · CARTO',
   },
   'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme' },
   'bm-ortho-now': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg')], attribution: '© IGN BD ORTHO' },
-  'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005' },
-  'bm-ortho-1950': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png')], attribution: '© IGN ortho 1950-1965' },
+  'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
+  'bm-ortho-1950': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png')], attribution: '© IGN ortho 1950-1965', maxzoom: 15 },
 }
 
 const STYLE: maplibregl.StyleSpecification = {
@@ -113,7 +113,7 @@ export function MapView() {
     m.on('load', () => {
       // fonds de plan (tous chargés, visibilité pilotée)
       for (const [id, src] of Object.entries(BASEMAP_SOURCES)) {
-        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution })
+        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}) })
         m.addLayer({ id, type: 'raster', source: id, layout: { visibility: id === 'bm-carto' ? 'visible' : 'none' },
           paint: { 'raster-opacity': id === 'bm-carto' ? 0.55 : 1 } })
       }

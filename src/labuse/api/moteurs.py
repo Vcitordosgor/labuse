@@ -178,7 +178,8 @@ def _barometre_data(db: Session) -> dict:
                count(*) AS mutations,
                round(percentile_cont(0.5) WITHIN GROUP (
                  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0))
-                 FILTER (WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0)) AS median_eur_m2_bati
+                 FILTER (WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0
+                         AND valeur_fonciere / surface_reelle_bati BETWEEN 100 AND 12000))::int AS median_eur_m2_bati
         FROM dvf_mutations WHERE date_mutation IS NOT NULL
         GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
     permis = db.execute(text("""
@@ -188,7 +189,8 @@ def _barometre_data(db: Session) -> dict:
         SELECT commune, count(*) AS mutations,
                round(percentile_cont(0.5) WITHIN GROUP (
                  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0))
-                 FILTER (WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0)) AS median_eur_m2
+                 FILTER (WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0
+                         AND valeur_fonciere / surface_reelle_bati BETWEEN 100 AND 12000))::int AS median_eur_m2
         FROM dvf_mutations GROUP BY commune HAVING count(*) >= 100
         ORDER BY median_eur_m2 DESC NULLS LAST LIMIT 8"""), ).mappings().all()
     return {"perimetre": "île entière (24 communes DVF, flux Sitadel régional)",

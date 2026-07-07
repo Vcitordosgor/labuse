@@ -7,11 +7,11 @@ const WMTS = (layer: string, format: string) =>
   `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER=${layer}&FORMAT=${format}`
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
 
-function mkMap(el: HTMLDivElement, tiles: string, attribution: string) {
+function mkMap(el: HTMLDivElement, tiles: string, attribution: string, maxzoom = 19) {
   return new maplibregl.Map({
     container: el,
     style: {
-      version: 8, sources: { bm: { type: 'raster', tiles: [tiles], tileSize: 256, attribution } },
+      version: 8, sources: { bm: { type: 'raster', tiles: [tiles], tileSize: 256, attribution, maxzoom } },
       layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#060A08' } },
                { id: 'bm', type: 'raster', source: 'bm' }],
     },
@@ -31,9 +31,10 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
 
   useEffect(() => {
     if (!leftRef.current || !rightRef.current || maps.current) return
-    const past = mkMap(leftRef.current, WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png'), '© IGN 1950-1965')
+    const past = mkMap(leftRef.current, WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png'), '© IGN 1950-1965', 15) // le millésime 1950 s'arrête ~z15 : overzoom plutôt que NOIR
     const now = mkMap(rightRef.current, WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg'), '© IGN BD ORTHO')
     maps.current = [past, now]
+    ;(window as unknown as Record<string, unknown>).__labuse_tm = { past, now } // hook QA (synchro)
     let lock = false
     const sync = (src: maplibregl.Map, dst: maplibregl.Map) => () => {
       if (lock) return
