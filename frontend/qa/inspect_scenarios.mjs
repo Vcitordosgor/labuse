@@ -4,6 +4,7 @@ import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const OUT = '../docs/design/captures/inspection'
 const DB = process.env.QA_DB || 'postgresql://openclaw@127.0.0.1:5432/labuse'
 mkdirSync(OUT, { recursive: true })
@@ -17,7 +18,7 @@ const page = await ctx.newPage()
 const errs = []
 page.on('pageerror', (e) => errs.push(e.message))
 page.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 120)) })
-const go = async (url = BASE) => { await page.goto(url, { waitUntil: 'networkidle' }); await page.waitForSelector('text=chaudes'); await page.waitForTimeout(1800) }
+const go = async (url = BASE + SP) => { await page.goto(url, { waitUntil: 'networkidle' }); await page.waitForSelector('text=chaudes'); await page.waitForTimeout(1800) }
 await go()
 
 // ── Time machine : split glisse ? synchro au zoom ?
@@ -86,7 +87,7 @@ await go()
 for (const [key, expect] of [['division', 'M01'], ['patrimoine', 'M02'], ['permis', 'M03'], ['promesses', 'M04'],
   ['velocite', 'M05'], ['bailleur', 'M06'], ['fantome', 'M07'], ['temps', 'M08'], ['courriers', 'M09'],
   ['duediligence', 'M10'], ['simulplu', 'M15'], ['assemblage', 'M16'], ['zan', 'M17'], ['barometre', 'M18'], ['matching', 'M19']]) {
-  await page.goto(BASE + `#f=1&m=${key}`, { waitUntil: 'networkidle' })
+  await page.goto(BASE + SP + `&m=${key}`, { waitUntil: 'networkidle' })
   await page.reload({ waitUntil: 'networkidle' })
   await page.waitForTimeout(1600)
   const ok = key === 'temps'

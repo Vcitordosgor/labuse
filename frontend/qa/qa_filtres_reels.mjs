@@ -13,6 +13,7 @@ import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const OUT = process.env.OUT || '../docs/design/captures/qa'
 mkdirSync(OUT, { recursive: true })
 
@@ -53,7 +54,7 @@ const realClick = async (page, locator) => {
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
-await page.goto(BASE, { waitUntil: 'networkidle', timeout: 30000 })
+await page.goto(BASE + SP, { waitUntil: 'networkidle', timeout: 30000 })
 await page.waitForSelector('text=chaudes', { timeout: 15000 })
 await page.waitForTimeout(2500)
 

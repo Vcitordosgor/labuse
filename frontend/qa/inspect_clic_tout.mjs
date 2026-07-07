@@ -8,6 +8,7 @@ import { appendFileSync, mkdirSync, writeFileSync } from 'node:fs'
 import { chromium } from 'playwright'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const OUT = '../docs/design/captures/inspection'
 mkdirSync(OUT, { recursive: true })
 const REPORT = `${OUT}/rapport.jsonl`
@@ -27,7 +28,7 @@ const stats = { total: 0, ok: 0, dead: 0, doubt: 0 }
 const suspects = []
 
 async function freshTo(setup) {
-  await page.goto(BASE, { waitUntil: 'domcontentloaded', timeout: 30000 })
+  await page.goto(BASE + SP, { waitUntil: 'domcontentloaded', timeout: 30000 })
   await page.waitForSelector('text=chaudes', { timeout: 15000 })
   await page.waitForTimeout(1100)
   if (setup) await setup()

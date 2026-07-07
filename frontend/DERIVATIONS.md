@@ -154,3 +154,22 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   (20-25 s max) — le test attend le résultat, pas une durée devinée.
 - **« score > 80 »** : stub → `scoreMin: 80` (approx.), modèle réel → `81` (strict, filtre inclusif).
   Les deux fidèles → le test accepte 80|81. Non-déterminisme assumé, borné par le schéma.
+
+## Extension île (mandat généralisation)
+- **Défaut = « Toute l'île »** (mandat : compteurs île par défaut) ; la commune vit dans
+  l'URL `#c=` — un lien partagé rouvre le bon périmètre.
+- **Carte hybride** : mode commune = GeoJSON intact (26 Mo à SP, zéro régression) ; mode île
+  = MVT matérialisé (z10-12 promues, z13+ tout — les écartées à 0,04 d'opacité n'apportent
+  rien sous ~10 km d'écran). Mêmes clés de propriétés → mêmes expressions de filtre ;
+  `flags` en CSV dans les tuiles (`['in', flag, ['get','flags']]` marche sur chaîne et tableau).
+- **Honnêteté avant boutons morts** : en mode île, la zone dessinée et les couches
+  commune-scopées (zonage/PPR/parc) sont DÉSACTIVÉES avec la marche à suivre — pas des
+  toggles qui ne font rien.
+- **Copilote & périmètre** : une phrase AVEC commune bascule le sélecteur ; une phrase SANS
+  commune ne touche pas au périmètre courant (`commune: null` est la valeur neutre du modèle,
+  pas une demande de revenir à l'île — le sélecteur est là pour ça).
+- **Liste île = 500 premiers** (tri événement d'abord puis score), affiché honnêtement ;
+  les compteurs restent SQL-exacts (filtres des chips traduits en SQL, mêmes clés que matchScope).
+- **Suites historiques** : elles testent le MODE COMMUNE → épinglées sur `#c=Saint-Paul`.
+  Piège appris : `goto` vers la même URL à hash différent = navigation fragment SANS
+  rechargement → `reload()` explicite quand la suite veut une page fraîche.

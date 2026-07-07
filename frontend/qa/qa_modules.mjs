@@ -6,6 +6,7 @@ import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const OUT = process.env.OUT || '../docs/design/captures/modules'
 const DB = process.env.QA_DB || 'postgresql://openclaw@127.0.0.1:5432/labuse'
 mkdirSync(OUT, { recursive: true })
@@ -21,7 +22,7 @@ page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
 const errors = []
 page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })
 
-await page.goto(BASE, { waitUntil: 'networkidle', timeout: 30000 })
+await page.goto(BASE + SP, { waitUntil: 'networkidle', timeout: 30000 })
 await page.waitForSelector('text=chaudes')
 await page.waitForTimeout(2500)
 
@@ -149,7 +150,7 @@ async function openModule(num, label) {
 
 // ── URL module restaurée
 {
-  await page.goto(BASE + '#f=1&m=fantome', { waitUntil: 'networkidle' })
+  await page.goto(BASE + SP + '&m=fantome', { waitUntil: 'networkidle' })
   await page.reload({ waitUntil: 'networkidle' })   // même document sinon (hash-only) : l'app doit relire l'URL au chargement
   await page.waitForTimeout(2000)
   assert((await page.locator('text=M07 · MODULE').count()) > 0, 'URL #m=fantome → module restauré')

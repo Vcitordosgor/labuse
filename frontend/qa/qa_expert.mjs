@@ -2,6 +2,7 @@
 import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 mkdirSync('../docs/design/captures/modules', { recursive: true })
 const failures = []
 const assert = (c, n, d = '') => (c ? console.log(`  ✓ ${n}`) : (failures.push(n), console.log(`  ✗ ${n} ${d}`)))
@@ -9,7 +10,7 @@ const assert = (c, n, d = '') => (c ? console.log(`  ✓ ${n}`) : (failures.push
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
-const go = async () => { await page.goto(BASE, { waitUntil: 'networkidle' }); await page.waitForSelector('.overflow-y-auto > button', { timeout: 25000 }); await page.waitForTimeout(900) }
+const go = async () => { await page.goto(BASE + SP, { waitUntil: 'networkidle' }); await page.waitForSelector('.overflow-y-auto > button', { timeout: 25000 }); await page.waitForTimeout(900) }
 await go()
 
 // IDU réellement pulsé + centre carte ≈ parcelle ?

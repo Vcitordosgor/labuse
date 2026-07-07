@@ -3,6 +3,7 @@
 import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const OUT = '../docs/design/captures/modules'
 mkdirSync(OUT, { recursive: true })
 const failures = []
@@ -11,7 +12,7 @@ const assert = (c, n, d = '') => (c ? console.log(`  ✓ ${n}`) : (failures.push
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
-await page.goto(BASE, { waitUntil: 'networkidle' })
+await page.goto(BASE + SP, { waitUntil: 'networkidle' })
 await page.waitForSelector('.overflow-y-auto > button', { timeout: 20000 })
 await page.waitForTimeout(1200)
 
@@ -71,7 +72,9 @@ assert(b === '3' && n === '3', `copilote → 3 bâtiments R+3 (${b}, R+${n})`)
 await page.screenshot({ path: `${OUT}/audit_copilote_m22.png` })
 
 // ── fiche IA : bannière stub dans le panneau (page fraîche : le module M22 restait ouvert)
-await page.goto(BASE, { waitUntil: 'networkidle' })
+// goto vers la même URL à hash différent = navigation fragment SANS rechargement → reload explicite
+await page.goto(BASE + SP, { waitUntil: 'domcontentloaded' })
+await page.reload({ waitUntil: 'networkidle' })
 await page.waitForSelector('.overflow-y-auto > button', { timeout: 20000 })
 await page.waitForTimeout(800)
 await page.keyboard.press('/'); await page.keyboard.type('AC0253'); await page.keyboard.press('Enter')

@@ -4,6 +4,7 @@ import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const OUT = process.env.OUT || '../docs/design/captures/modules'
 mkdirSync(OUT, { recursive: true })
 const failures = []
@@ -40,7 +41,7 @@ for (const [text, check] of CASES) {
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
-await page.goto(BASE, { waitUntil: 'networkidle' })
+await page.goto(BASE + SP, { waitUntil: 'networkidle' })
 await page.waitForSelector('text=chaudes')
 await page.waitForTimeout(2000)
 

@@ -22,9 +22,10 @@ export function IAStub() {
   const search = useMutation({ mutationFn: iaSearch })
 
   const apply = (f: Record<string, unknown>) => {
-    // la commune est un filtre de PÉRIMÈTRE : elle pilote le sélecteur (« les chaudes de
-    // Saint-Pierre » → périmètre Saint-Pierre + chip Chaude) ; absente = île entière
-    setCommune((f.commune as string | null) ?? null)
+    // la commune est un filtre de PÉRIMÈTRE : « les chaudes de Saint-Pierre » bascule le
+    // sélecteur. Une phrase SANS commune ne touche PAS au périmètre courant (commune: null
+    // est la valeur neutre du modèle, pas une demande de revenir à l'île — sélecteur pour ça).
+    if (typeof f.commune === 'string' && f.commune) setCommune(f.commune)
     const next: Filters = {
       ...EMPTY_FILTERS,
       statuts: (f.statuts as Statut[]) ?? [],
