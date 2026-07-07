@@ -179,7 +179,7 @@ function M03() {
         ))}
       </div>
       <p className="text-[11px] text-txt-dim">
-        {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(d?.['total'] as never)} permis`} · {geo.length} sur la carte
+        {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(d?.['total'] as never)} permis${(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichés` : ''}`} · {geo.length} sur la carte
         {zone && <span className="text-[#8b76c0]"> · outil Zone actif</span>}
       </p>
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
@@ -218,7 +218,7 @@ function M04() {
           {[24, 36, 48, 60].map((m) => <option key={m} value={m}>{m} mois</option>)}
         </select>
       </label>
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} promesses mortes</p>
+      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} promesses mortes{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i, k) => (
           <Row key={k} idu={i['idu'] as string}
@@ -276,7 +276,7 @@ function M06() {
   return (
     <>
       <Banner>{String(d?.['lecture_lls'] ?? '…')}</Banner>
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles promues en QPV</p>
+      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles promues en QPV{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}
@@ -302,7 +302,7 @@ function M07() {
     <>
       <Banner>Constructible (Q ≥ 50) mais <b>verrouillé</b> : personne morale introuvable au RNE ou
         dirigeant inactif. Levier indiqué par cas — vérification notariale indispensable.</Banner>
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles gelées</p>
+      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles gelées{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}

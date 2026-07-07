@@ -208,9 +208,13 @@ def permis(commune: str | None = None, months: int = 24, db: Session = Depends(g
         FROM sitadel_permits
         WHERE (CAST(:c AS text) IS NULL OR commune = :c) AND date >= :dmax - (:m || ' months')::interval
         ORDER BY date DESC LIMIT 2000"""), {"c": commune, "m": months, "dmax": dmax}).mappings().all()
+    true_total = int(db.execute(text(
+        """SELECT count(*) FROM sitadel_permits
+           WHERE (CAST(:c AS text) IS NULL OR commune = :c) AND date >= :dmax - (:m || ' months')::interval"""),
+        {"c": commune, "m": months, "dmax": dmax}).scalar() or 0)
     geo = [r for r in rows if r["g"]]
     return {
-        "commune": commune or "Toute l'île", "months": months, "total": len(rows),
+        "commune": commune or "Toute l'île", "months": months, "total": true_total, "affiches": len(rows),
         "donnees_jusqu_au": dmax.date().isoformat() if dmax else None,
         "geocodes": len(geo), "pct_geocode": round(100 * len(geo) / len(rows)) if rows else 0,
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "surf_hab")},
@@ -243,7 +247,19 @@ def promesses(commune: str | None = None, months: int = 24, db: Session = Depend
                             AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')
         ORDER BY s.date ASC LIMIT 500"""),
         {"c": commune, "m": months, "run": RUN}).mappings().all()
-    return {"commune": commune or "Toute l'île", "months": months, "total": len(rows),
+    # affichage borné à 500 (tri anciens d'abord = les plus « morts ») ; le compte reste honnête
+    true_total = len(rows) if len(rows) < 500 else int(db.execute(text("""
+        SELECT count(DISTINCT s.id) FROM sitadel_permits s
+        JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
+        JOIN parcels p ON p.idu = c.idu
+        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
+          AND s.date < now() - (:m || ' months')::interval AND s.raw->>'daact' IS NULL
+          AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
+                          WHERE cr.run_label = :run AND cr.parcel_id = p.id
+                            AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
+        {"c": commune, "m": months, "run": RUN}).scalar() or 0)
+    return {"commune": commune or "Toute l'île", "months": months, "total": true_total, "affiches": len(rows),
             "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "idu",
                                             "surface_m2", "statut", "q_score")},
                        "geom": json.loads(r["g"])} for r in rows]}
@@ -297,7 +313,13 @@ def fantome(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
                OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))
         ORDER BY d.q_score DESC LIMIT 600"""),
         {"c": commune, "run": RUN}).mappings().all()
-    return {"total": len(rows), "items": [{
+    true_total = len(rows) if len(rows) < 600 else int(db.execute(text(
+        """SELECT count(*) FROM parcels p
+           JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+           JOIN parcelle_personne_morale pm ON pm.idu = p.idu
+           WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.q_score >= 50
+             AND pm.groupe NOT IN (1, 2, 3, 4, 9)"""), {"c": commune, "run": RUN}).scalar() or 0)
+    return {"total": true_total, "affiches": len(rows), "items": [{
         **{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "siren", "denomination")},
         "verrou": "PM introuvable au RNE" if r["inpi_introuvable"] else "dirigeant inactif (RNE)",
         "levier": "notaire / recherche du représentant" if r["inpi_introuvable"] else "rachat de parts / contact liquidateur",
@@ -320,7 +342,15 @@ def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
         ORDER BY COALESCE(r.sdp_residuelle_m2, 0) DESC LIMIT 500"""),
         {"c": commune, "run": RUN}).mappings().all()
-    return {"total": len(rows),
+    true_total = len(rows) if len(rows) < 500 else int(db.execute(text(
+        """SELECT count(*) FROM parcels p
+           JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+           WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+             AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+             AND EXISTS (SELECT 1 FROM spatial_layers q WHERE q.kind = 'qpv'
+                         AND ST_Intersects(p.geom_2975, q.geom_2975))"""),
+        {"c": commune, "run": RUN}).scalar() or 0)
+    return {"total": true_total, "affiches": len(rows),
             "lecture_lls": ("QPV : TVA 2,1 % (au lieu de 8,5 % DOM), abattement TFPB 30 %, "
                             "éligibilité LLS/LLTS renforcée — bilan bailleur à instruire au cas par cas."),
             "items": [{**{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "a_score")},
