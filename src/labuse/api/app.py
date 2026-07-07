@@ -903,6 +903,7 @@ def parcel_export_pdf(idu: str, source: str = "q_v2", db: Session = Depends(get_
     fiche = _q_v2_fiche(db, idu, run_label=source)
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
     fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
+    fiche["rtaa"] = config.load_yaml_config("rtaa_dom")   # rappel réglementaire (5bis)
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="labuse_{idu}.pdf"'})
 

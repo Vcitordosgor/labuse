@@ -223,3 +223,11 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
 - **POI Overpass** : miroirs capricieux (504 en rafale) → ré-ingestions avec retries ; état
   final 24/24 communes, 5 874 POI d'affichage. Lacune source consignée : la mairie de
   Bras-Panon n'est pas taguée `amenity=townhall` dans OSM (0 au compteur — honnête).
+- **RTAA DOM (5bis)** : tout le contenu vient de `config/rtaa_dom.yaml`, VÉRIFIÉ Légifrance
+  le 08/07/2026 (versions consolidées) — prise majeure : le cadre CCH a été réécrit au
+  01/01/2025 (R.192-1 à 192-4, décret 2024-168) et l'ECS n'est plus « solaire » strict mais
+  « ≥ 50 % chaleur renouvelable ». Seuils Réunion vérifiés : 400 m et 600 m — énoncés DANS
+  chaque exigence ; l'altitude de la parcelle n'est PAS calculée (pas de donnée parcellaire
+  d'altitude en base ; conditionner à la parcelle = backlog si le besoin se confirme).
+  Réserves du vérificateur consignées en tête du YAML (arrêté « indice de confort thermique »
+  introuvable, tableaux acoustiques condensés) — rien de non-vérifié n'est affiché.

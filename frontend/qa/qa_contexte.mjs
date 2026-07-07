@@ -90,12 +90,43 @@ t = ''.join(p.extract_text() for p in PdfReader(io.BytesIO(data)).pages)
 print('CONTEXTE COMMUNE' in t and 'SRU :' in t and 'INSEE RP 2023' in t)`], { encoding: 'utf8' }).trim()
 assert(pdfTxt === 'True', 'PDF AC0253 : bloc CONTEXTE COMMUNE (SRU + INSEE) présent')
 
+// ── RTAA DOM (5bis) : bloc VISIBLE dans le Bilan de la fiche + références cliquables
+await page.goto(BASE + '#f=1&c=Saint-Paul', { waitUntil: 'domcontentloaded' })
+await page.reload({ waitUntil: 'networkidle' })
+await page.waitForSelector('.overflow-y-auto > button', { timeout: 25000 })
+await page.keyboard.press('/'); await page.keyboard.type('AC0253'); await page.keyboard.press('Enter')
+await page.waitForSelector('button[title="Analyse IA"]', { timeout: 12000 })
+await page.getByRole('button', { name: 'Bilan', exact: true }).click()
+await page.waitForSelector('[data-rtaa-block]', { timeout: 15000 })
+const rtaaVisible = await page.locator('[data-rtaa-block]').isVisible()
+assert(rtaaVisible, 'fiche Bilan : bloc RTAA DOM VISIBLE')
+await page.locator('[data-rtaa-block] button').click()
+await page.waitForTimeout(600)
+const refs = await page.locator('[data-rtaa-block] a[target="_blank"]').count()
+assert(refs >= 8, `RTAA : références Légifrance cliquables (${refs})`)
+const legifrance = await page.locator('[data-rtaa-block] a[href*="legifrance"]').count()
+assert(legifrance >= 8, `RTAA : liens Légifrance (${legifrance})`)
+assert((await page.locator('text=seuils d’altitude 400/600 m').count()) + (await page.locator("text=400/600").count()) > 0,
+  'RTAA : seuils d’altitude énoncés')
+await page.screenshot({ path: `${OUT}/contexte_rtaa.png` })
+await page.keyboard.press('Escape')
+
+// PDF : bloc RTAA présent (espaces d'extraction tolérés)
+const rtaaPdf = execFileSync('/Users/openclaw/Desktop/labuse/.venv/bin/python', ['-c', `
+from pypdf import PdfReader
+import io, re, urllib.request
+data = urllib.request.urlopen('${new URL('/parcels/97415000AC0253/export.pdf?source=q_v2', BASE).href}').read()
+t = re.sub(r'\\s+', ' ', ''.join(p.extract_text() for p in PdfReader(io.BytesIO(data)).pages))
+print(all(k in t for k in ('RTAA DOM', 'chaleur renouvelables', 'R.192-2', '17/04/2009')))`], { encoding: 'utf8' }).trim()
+assert(rtaaPdf === 'True', 'PDF AC0253 : bloc RTAA DOM (ECS renouvelable + références) présent')
+
 // ── page Sources : nouvelles sources listées (note ZUS/ZFU incluse)
 const sources = await (await fetch(new URL('/sources', BASE).href)).json()
 const noms = sources.map((s) => s.name).join('|')
 assert(noms.includes('Inventaire SRU'), 'Sources : Inventaire SRU (DHUP) listé')
 assert(noms.includes('NPNRU'), 'Sources : NPNRU (DEAL/ANCT) listé')
 assert(noms.includes('INSEE RP Logement 2023'), 'Sources : INSEE RP 2023 listé')
+assert(noms.includes('RTAA DOM'), 'Sources : RTAA DOM (textes réglementaires) listé')
 
 await browser.close()
 console.log('─'.repeat(50))

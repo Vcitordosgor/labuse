@@ -196,6 +196,38 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                          "INSEE RP 2023 — contexte informatif, hors scoring.", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(2)
 
+    # ── RTAA DOM (5bis) — rappel réglementaire de conception (vérifié Légifrance)
+    rtaa = fiche.get("rtaa") or {}
+    if rtaa:
+        pdf.set_font("mono", size=6.6)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 4, "RTAA DOM — RAPPEL RÉGLEMENTAIRE (CONSTRUCTION NEUVE DE LOGEMENTS)",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=7.2)
+        pdf.set_text_color(40, 50, 45)
+        resume = {
+            "thermique": "Protection solaire (parois : S<=0,03/0,09 ; baies : S max par orientation, "
+                         "seuils 400/600 m) · ventilation naturelle traversante (sejour 22 %, chambres 18 % "
+                         "sous 400 m ; exemption > 600 m, regime isolation) · brasseurs d'air.",
+            "acoustique": "Separatifs >= 350 kg/m2 ou Rw+C >= 54 dB · plancher >= 450 kg/m2 · equipements "
+                          "<= 35 dB(A) pieces principales · isolement de facade en secteur d'infrastructure classee.",
+            "aeration": "Cuisine : baie >= 1 m2 sur l'exterieur · SdB/WC ouvrants ou extraction mecanique · "
+                        "ventilation mecanique obligatoire si pieces climatisees.",
+            "ecs": "ECS obligatoire, produite a >= 50 % par sources de chaleur renouvelables "
+                   "(solaire thermique en pratique) — CCH R.192-2, en vigueur 01/01/2025.",
+        }
+        for volet, txt in resume.items():
+            pdf.set_font("inter", size=7.2)
+            pdf.multi_cell(pdf.w - 28, 3.8, f"{volet.upper()} — {txt}", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=6.2)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.multi_cell(pdf.w - 28, 3.4,
+                       "References : arretes du 17/04/2009 (thermique, acoustique, aeration) modifies par "
+                       "l'arrete du 11/01/2016 (PC/DP depuis le 01/07/2016) ; cadre CCH R.192-1 a R.192-4 "
+                       "(decret n 2024-168, 01/01/2025). Rappel de conception - ne remplace pas l'etude "
+                       "reglementaire du maitre d'oeuvre.", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(2)
+
     # ── Lignes tracées, par onglet
     for key, titre in ONGLETS:
         lines = [ln for ln in fiche["lines"] if ln["onglet"] == key]

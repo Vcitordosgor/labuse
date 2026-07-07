@@ -242,6 +242,48 @@ function BilanTab({ idu }: { idu: string }) {
         {b.fiscal.prime_vue_mer && <div className="mt-0.5 text-[#7DE8E0]">Vue mer dégagée — {b.fiscal.prime_vue_mer}</div>}
         <div className="mt-1 text-[10px] text-txt-dim">{b.fiscal.ta_note}</div>
       </Sec>
+      {b.rtaa && <RtaaBlock rtaa={b.rtaa} />}
+    </div>
+  )
+}
+
+/** RTAA DOM (mandat 5bis) — rappel réglementaire de CONCEPTION, vérifié Légifrance
+ *  (config/rtaa_dom.yaml). Les seuils d'altitude (400/600 m) sont énoncés dans chaque
+ *  exigence — l'altitude de la parcelle n'est pas calculée ici (consigné). */
+function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: { volet: string; exigence: string; reference: string; url: string; condition_altitude?: string }[] } }) {
+  const [open, setOpen] = useState(false)
+  const VOLET_COLOR: Record<string, string> = { cadre: '#8FA69A', thermique: '#E8B44C', acoustique: '#B497F0', aeration: '#7DE8E0', ecs: '#5CE6A1' }
+  return (
+    <div data-rtaa-block>
+      <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">RTAA DOM — RAPPEL RÉGLEMENTAIRE</p>
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
+        Construction neuve de logements : protection solaire, ventilation traversante,
+        acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).
+        <button onClick={() => setOpen((o) => !o)} className="ml-1.5 text-mint hover:underline">
+          {open ? 'replier' : `${rtaa.exigences.length} exigences →`}
+        </button>
+      </div>
+      {open && (
+        <div className="mt-1.5 flex flex-col gap-1.5">
+          {rtaa.exigences.map((e, i) => (
+            <div key={i} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
+              <span className="rounded-full px-1.5 py-0.5 font-mono text-[8.5px] font-semibold uppercase"
+                style={{ color: VOLET_COLOR[e.volet] ?? '#8FA69A', background: `${VOLET_COLOR[e.volet] ?? '#8FA69A'}18` }}>
+                {e.volet}
+              </span>
+              <p className="mt-1 text-[10.5px] leading-snug text-txt">{e.exigence}</p>
+              {e.condition_altitude && <p className="mt-0.5 text-[9.5px] text-st-creuser">altitude : {e.condition_altitude}</p>}
+              <a href={e.url} target="_blank" rel="noreferrer" className="mt-0.5 block text-[9.5px] text-[#7DE8E0] hover:underline">
+                {e.reference} ↗
+              </a>
+            </div>
+          ))}
+          <p className="text-[9px] leading-snug text-txt-dim">
+            {rtaa.meta.champ} Vérifié le {rtaa.meta.verifie_le} — rappel de conception, ne
+            remplace pas l'étude réglementaire du maître d'œuvre.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
