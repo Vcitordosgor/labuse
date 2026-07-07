@@ -163,6 +163,39 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.cell(cw - 10, 4, f"{k} / 100" if k != "COMPLÉTUDE" else f"{k} %")
     pdf.set_y(y + 21)
 
+    # ── CONTEXTE COMMUNE (mandat promotrice) — SRU · QPV/ANRU · marché, sourcé
+    ctx = fiche.get("contexte_commune") or {}
+    if ctx:
+        pdf.set_font("mono", size=6.6)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 4, f"CONTEXTE COMMUNE — {fiche.get('commune', '').upper()}",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=7.6)
+        pdf.set_text_color(40, 50, 45)
+        lignes = []
+        sru = ctx.get("sru")
+        if sru:
+            st = {"carencee": "CARENCÉE", "deficitaire": "déficitaire",
+                  "exemptee": "exemptée 2023-2025", "conforme": "conforme"}.get(sru["statut"], sru["statut"])
+            lignes.append(f"SRU : {sru['taux_lls']} % de logements sociaux — objectif {sru['objectif_pct']} % — {st}"
+                          + (f" (prélèvement 2025 : {int(sru['prelevement_eur']):,} €)".replace(",", " ")
+                             if (sru.get("prelevement_eur") or 0) > 0 else ""))
+        qpv, anru = ctx.get("qpv") or [], ctx.get("anru") or []
+        lignes.append(f"Politique de la ville : {len(qpv)} QPV (génération 2024)"
+                      + (f" · NPNRU : {', '.join(a['nom'] for a in anru)} (intérêt national)" if anru else " · aucun périmètre NPNRU"))
+        mar = ctx.get("marche")
+        if mar:
+            lignes.append(f"Marché (INSEE RP 2023) : {int(mar['logements']):,} logements — "
+                          f"{mar['locataires_pct']} % locataires · {mar['maisons_pct']} % maisons · "
+                          f"{mar['typologie'].get('vacance_pct')} % de vacance".replace(",", " "))
+        for ln_txt in lignes:
+            pdf.multi_cell(pdf.w - 28, 4.0, ln_txt, new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=6.2)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 3.6, "Sources : inventaire SRU DHUP (01/01/2024) · DEAL Réunion/ANCT (NPNRU) · "
+                         "INSEE RP 2023 — contexte informatif, hors scoring.", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(2)
+
     # ── Lignes tracées, par onglet
     for key, titre in ONGLETS:
         lines = [ln for ln in fiche["lines"] if ln["onglet"] == key]

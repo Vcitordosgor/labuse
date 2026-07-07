@@ -8,6 +8,7 @@ import { LeftPanel } from './components/panel/LeftPanel'
 import { MapView } from './components/map/MapView'
 import { Rail } from './components/Rail'
 import { SourcesPage } from './components/sources/SourcesPage'
+import { ContextePanel } from './components/contexte/ContextePanel'
 import { filtersFromHash, filtersToHash } from './lib/filters'
 import { ModulePanel } from './components/outils/ModulePanel'
 import { TimeMachine } from './components/outils/TimeMachine'
@@ -62,6 +63,7 @@ export default function App() {
           {view === 'sources' && <SourcesPage />}
           {view === 'ia' && <IAStub />}
           {selectedIdu && view !== 'sources' && <Fiche idu={selectedIdu} />}
+          <ContextePanel />
           <SourceDrawer />
         </div>
       </div>

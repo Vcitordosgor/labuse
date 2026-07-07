@@ -497,6 +497,40 @@ def list_communes(source: str = "q_v2", db: Session = Depends(get_db)) -> list[d
     return _mem_cached(("communes", source), 300.0, _compute)
 
 
+@app.get("/communes/{commune}/contexte")
+def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
+    """VOLET CONTEXTE COMMUNE (mandat promotrice) — SRU + ANRU + PLH + marché logement INSEE
+    + rappel QPV. Donnée de CONTEXTE sourcée (échelle commune), hors scoring. Chaque bloc
+    porte sa source + millésime ; introuvable = null (le front affiche « non disponible »
+    sourcé, jamais un zéro menteur)."""
+    def _one(sql: str, p: dict) -> dict | None:
+        r = db.execute(text(sql), p).mappings().first()
+        return dict(r) if r else None
+
+    sru = _one("SELECT * FROM commune_contexte_sru WHERE commune = :c", {"c": commune})
+    insee_log = _one("SELECT * FROM commune_insee_logement WHERE commune = :c", {"c": commune})
+    anru = [dict(r) for r in db.execute(text(
+        "SELECT nom, interet, code_qpv, source_nom, source_url FROM anru_quartiers"
+        " WHERE commune = :c ORDER BY nom"), {"c": commune}).mappings().all()]
+    qpv = [dict(r) for r in db.execute(text(
+        "SELECT name AS nom, attrs->>'code_qp' AS code FROM spatial_layers"
+        " WHERE kind = 'qpv' AND commune = :c ORDER BY name"), {"c": commune}).mappings().all()]
+    # rattachement EPCI (référentiel BANATIC, config/epci_974.yaml) + PLH
+    epci_cfg = config.load_yaml_config("epci_974")["epci"]
+    epci = next((k for k, v in epci_cfg.items() if commune in v["communes"]), None)
+    plh = _one("SELECT * FROM plh_epci WHERE epci = :e", {"e": epci}) if epci else None
+    for d in (sru, insee_log, plh):
+        if d:
+            d.pop("importe_le", None)
+    return {"commune": commune, "epci": epci,
+            "epci_nom": epci_cfg[epci]["nom"] if epci else None,
+            "sru": sru, "anru": anru, "qpv": qpv, "plh": plh, "marche": insee_log,
+            "notes": ["ZUS et ZFU sont des zonages abrogés (réforme 2014), devenus QPV — déjà "
+                      "couverts par la couche QPV. Volet fiscal ZFU-Territoires Entrepreneurs : "
+                      "pas de source propre 974 identifiée (écart consigné).",
+                      "Données de CONTEXTE : aucune n'entre dans le scoring."]}
+
+
 @app.get("/parcels/search")
 def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None,
                    source: str = "q_v2", limit: int = Query(10, ge=1, le=50),
@@ -867,6 +901,8 @@ def parcel_export_pdf(idu: str, source: str = "q_v2", db: Session = Depends(get_
     """Export PDF de la fiche premium (Brique 3) — design system, fiche complète tracée."""
     from .pdf_premium import render_fiche_pdf
     fiche = _q_v2_fiche(db, idu, run_label=source)
+    # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
+    fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="labuse_{idu}.pdf"'})
 

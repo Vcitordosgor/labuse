@@ -74,7 +74,13 @@ const OVERLAYS = {
   },
   ppr: { paint: { 'fill-color': '#E8695A', 'fill-opacity': 0.14 } },
   parc: { paint: { 'fill-color': '#4ADE96', 'fill-opacity': 0.10 } },
+  anru: { paint: { 'fill-color': '#8FB4F0', 'fill-opacity': 0.16 } },
 } as const
+
+//: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 5 catégories, couleurs différenciées
+const EQUIP_CATS = ['mairie', 'ecole', 'sante', 'police', 'sport'] as const
+const EQUIP_COLOR: maplibregl.ExpressionSpecification = ['match', ['get', 'subtype'],
+  'mairie', '#B497F0', 'ecole', '#5CE6A1', 'sante', '#E8695A', 'police', '#8FB4F0', 'sport', '#E8B44C', '#8FA69A']
 
 /** Machine à mesurer : points cliqués + rendu geojson + lecture (distance/surface/alti/zone). */
 interface Measure {
@@ -100,6 +106,8 @@ export function MapView() {
   const zonage = useQuery({ queryKey: ['layer', 'zonage', commune], queryFn: () => getMapLayer('plu_gpu_zone'), enabled: layers.zonage && !ile })
   const ppr = useQuery({ queryKey: ['layer', 'ppr', commune], queryFn: () => getMapLayer('ppr'), enabled: layers.ppr && !ile })
   const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc && !ile })
+  const anru = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru && !ile })
+  const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite'), enabled: layers.equipements && !ile })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
 
   // ───────────────────────── init ─────────────────────────
@@ -189,6 +197,27 @@ export function MapView() {
         paint: { 'circle-radius': 4, 'circle-color': '#B497F0', 'circle-opacity': 0.85,
                  'circle-stroke-color': '#120d1d', 'circle-stroke-width': 1.2 } })
 
+      // équipements (points OSM, affichage seul) — cercles colorés, plancher z13 (pas
+      // d'icônes par milliers à l'écran), clic = nom de l'équipement
+      m.addSource('ov-equip', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-equip', type: 'circle', source: 'ov-equip', minzoom: 13,
+        layout: { visibility: 'none' },
+        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 17, 7],
+                 'circle-color': EQUIP_COLOR, 'circle-opacity': 0.9,
+                 'circle-stroke-color': '#06130C', 'circle-stroke-width': 1.2 } })
+      m.on('click', 'ov-equip', (e) => {
+        const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
+        if (!f) return
+        const cat = String(f.properties?.subtype ?? '')
+        const nom = f.properties?.name && f.properties.name !== 'null' ? String(f.properties.name) : '(sans nom OSM)'
+        new maplibregl.Popup({ closeButton: false, className: 'labuse-popup' })
+          .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat)
+          .setHTML(`<div style="background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px">${nom}<div style="color:#8FA69A;font-size:10px">${cat}</div></div>`)
+          .addTo(m)
+      })
+      m.on('mouseenter', 'ov-equip', () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
+      m.on('mouseleave', 'ov-equip', () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
+
       // zone dessinée persistante (filtre les résultats)
       m.addSource('zone', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'zone-fill', type: 'fill', source: 'zone', paint: { 'fill-color': '#5CE6A1', 'fill-opacity': 0.06 } })
@@ -227,9 +256,13 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc]]
+    const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['anru', anru]]
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
-  }, [zonage.data, ppr.data, parc.data, mapReady])
+    if (equip.data) {
+      const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
+      ;(m.getSource('ov-equip') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: feats } as never)
+    }
+  }, [zonage.data, ppr.data, parc.data, anru.data, equip.data, mapReady])
 
   // ───────────────────────── fond de plan + relief ─────────────────────────
   useEffect(() => {
@@ -278,6 +311,8 @@ export function MapView() {
     m.setLayoutProperty('ov-zonage', 'visibility', vis(layers.zonage && !ile))
     m.setLayoutProperty('ov-ppr', 'visibility', vis(layers.ppr && !ile))
     m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc && !ile))
+    m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru && !ile))
+    m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements && !ile))
     const expr = toExpr(filters)
     for (const fill of ['parcels-fill', 'ile-fill']) {
       m.setFilter(fill, expr)

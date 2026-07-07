@@ -42,6 +42,17 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
+export interface ContexteCommune {
+  commune: string; epci: string | null; epci_nom: string | null
+  sru: { taux_lls: number; objectif_pct: number; statut: string; prelevement_eur: number; millesime: string; detail: { nb_lls?: number }; source_nom: string; source_url: string } | null
+  anru: { nom: string; interet: string; code_qpv: string; source_nom: string; source_url: string }[]
+  qpv: { nom: string; code: string }[]
+  plh: { periode: string; statut: string; obj_logements_an: number | null; part_sociale_pct: number | null; refs: { doc: string; url?: string; page?: string | number }[] } | null
+  marche: { millesime: string; logements: number; vacants: number; proprietaires_pct: number; locataires_pct: number; maisons_pct: number; apparts_pct: number; typologie: Record<string, any>; source_nom: string; source_url: string } | null
+  notes: string[]
+}
+export const getContexteCommune = (commune: string) =>
+  j<ContexteCommune>(`/communes/${encodeURIComponent(commune)}/contexte`)
 export const searchParcels = (needle: string) =>
   j<{ idu: string; commune: string; status: string | null; q_score: number | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
