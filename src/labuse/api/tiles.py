@@ -79,9 +79,10 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     exists = db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar()
     if not exists:
         return Response(status_code=204)  # table pas encore construite (run en cours)
-    # z10-12 : promues seules (l'aperçu île = « où sont les cibles ») ; z13+ : tout (les
-    # écartées à 0.04 d'opacité n'apportent rien sous ~10 km d'écran et triplent la tuile)
-    statut_where = "" if z >= 13 else "AND m.status IN ('chaude','a_surveiller','a_creuser')"
+    # C7 (décision Vic : le cadastre ENTIER visible) — z12+ : TOUTES les parcelles (la trame
+    # cadastrale doit exister aux zooms de travail ; tuile dense ~850 Ko mesurée, acceptable) ;
+    # z10-11 : promues seules (parcelles sub-pixel, les marqueurs communes règnent)
+    statut_where = "" if z >= 12 else "AND m.status IN ('chaude','a_surveiller','a_creuser')"
     data = db.execute(text(f"""
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
         mvt AS (

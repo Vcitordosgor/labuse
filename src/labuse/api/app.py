@@ -531,6 +531,17 @@ def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
                       "Données de CONTEXTE : aucune n'entre dans le scoring."]}
 
 
+@app.get("/parcels/at")
+def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
+    """Résolution point → parcelle (C7, décision produit Vic : clic UNIVERSEL — n'importe
+    quelle parcelle de la trame cadastrale ouvre sa fiche, promue ou écartée)."""
+    row = db.execute(text(
+        """SELECT p.idu FROM parcels p
+           WHERE ST_Contains(p.geom, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326))
+           LIMIT 1"""), {"lon": lon, "lat": lat}).first()
+    return {"idu": row[0] if row else None}
+
+
 @app.get("/parcels/search")
 def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None,
                    source: str = "q_v2", limit: int = Query(10, ge=1, le=50),
@@ -770,11 +781,15 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                      AND pm2.siren IS NOT NULL
                    GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-          AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+          AND d.matrice_statut = ANY(:base_statuts)
           {extra_where}
         ORDER BY (ev.parcel_id IS NOT NULL) DESC, (d.q_score + d.a_score) DESC, d.q_score DESC
         LIMIT :lim OFFSET :off
-        """), {"c": commune, "run": run_label, "lim": limit, "off": offset, **(extra_params or {})}
+        """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
+               # opt-in écartées (C7) : le filtre statut explicite ÉLARGIT le périmètre promues
+               "base_statuts": (extra_params or {}).get("f_statuts")
+                               or ["chaude", "a_surveiller", "a_creuser"],
+               **(extra_params or {})}
     ).mappings().all()
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,

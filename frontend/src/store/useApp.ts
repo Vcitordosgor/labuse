@@ -117,7 +117,7 @@ export const useApp = create<AppState>((set) => ({
   select: (idu) => set({ selectedIdu: idu }),
   mode: 'verdict',
   setMode: (mode) => set({ mode }),
-  layers: { zonage: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: false, anru: false, equipements: false },
+  layers: { zonage: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),

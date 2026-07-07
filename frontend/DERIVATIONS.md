@@ -231,3 +231,19 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   d'altitude en base ; conditionner à la parcelle = backlog si le besoin se confirme).
   Réserves du vérificateur consignées en tête du YAML (arrêté « indice de confort thermique »
   introuvable, tableaux acoustiques condensés) — rien de non-vérifié n'est affiché.
+
+## Correctifs revue Vic (08/07)
+- **C2** : logo conservé = combo header (oiseau + « LABUSE ») ; le rail devient pur icônes.
+- **C3** : traitement par fond — Carto sombre → variante `dark_nolabels` sous z10 en mode île
+  (même fournisseur, zéro dépendance) ; ortho sans labels par nature ; Plan IGN inchangé
+  (choix délibéré d'utilisateur, surtout aux zooms parcellaires).
+- **C4** : chip renommé « Opportunités » ; déclencheur du popover = « pourquoi ? ▾ » sur la
+  ligne de cadrage (le chip garde son rôle de filtre).
+- **C7 voie technique** : trame = nos propres données (couche « limites » activée PAR DÉFAUT
+  + tuiles « tout » dès z12 — tuile dense ~850 Ko mesurée) plutôt que le raster PCI IGN
+  (lignes sombres illisibles sur fond sombre, pas d'inversion possible en raster). À z10-11
+  les parcelles sont sub-pixel : marqueurs communes + promues seules, assumé. Clic universel
+  = résolution serveur point→parcelle quand aucune feature vectorielle sous le curseur.
+- **Écartées opt-in** : le filtre statut explicite ÉLARGIT le périmètre promues côté SQL
+  (base_statuts) ; l'opacité 0,72 existante rend les écartées pleinement lisibles une fois
+  filtrées.

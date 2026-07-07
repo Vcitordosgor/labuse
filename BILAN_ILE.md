@@ -131,3 +131,23 @@ le plateau utile vit entre Q65-75 × A60-65 :
 (719 chaudes / 166 dossiers). Motif : signal jugé déjà resserré ; le simulateur permet de
 resserrer plus tard en minutes. Application = no-op prouvé diff zéro (rien à rejouer) ;
 seuils gravés comme convention officielle dans scoring_matrice.yaml (en-tête v2 mis à jour).**
+
+## Correctifs revue Vic (08/07) — audit C4 et chiffrages
+**Décomposition SQL des 393 110 écartées** (motifs cumulables) : déjà bâtie 195 209 (49,7 %) ·
+PPR rouge/aléa 106 798 (27,2 %) · zonage A/N 102 663 (26,1 %) · Q<50 sans exclusion 50 825
+(12,9 %) · surface <100 m² 38 588 · pente 14 831 · forêt/parc 9 697 · prescriptions 5 077 ·
+OSM 1 526 · eau 316. Popover entonnoir servi par `entonnoir_motifs` (matérialisé, rebuild à
+chaque matrice-apply).
+**Verdict G5/UNKNOWN (doute Vic) : RÉFUTÉ** — aucune garde « sans résiduel » n'existe dans la
+cascade ; `residuel_socle` n'émet JAMAIS de HARD_EXCLUDE (UNKNOWN → complétude). Les 39 % de
+couverture SDP manquante n'écartent rien à tort.
+**⚠ DÉCOUVERTE À ARBITRER (cascade asymétrique)** : Saint-Paul a été évalué avec TROIS couches
+jamais committées (foncier_public → 4 769 exclusions, emprise_lineaire → 1 727,
+residuel_socle → poids Q) que les 23 autres communes n'ont pas. Options : (a) recompute
+Saint-Paul avec le code committé (cohérence stricte, ses chiffres bougent) ; (b) implémenter
+les 3 couches île entière (= prep-recompute complet + recompute 4 h). AUCUNE action sans
+décision — la cascade est hors périmètre du mandat correctifs.
+**Chiffrage C6 (couches carte en mode île, MVT)** : zonage PLU = 6 306 polygones / 29 Mo →
+même mécanique que mvt_parcels (table matérialisée + endpoint) ≈ **0,5 jour, candidat n°1
+trivial** ; PPR ≈ 165 polygones (déjà subdivisés) + parc national + équipements (points)
+≈ **+0,5 jour** pour les quatre couches. Total ≈ 1 jour pour ne plus rien désactiver en mode île.

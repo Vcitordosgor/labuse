@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getCommunes, getFiche, getMapLayer, getParcelsGeojson } from '../../lib/api'
+import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, parcelAt } from '../../lib/api'
 import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { Legend } from './Legend'
@@ -257,6 +257,17 @@ export function MapView() {
         m.on('mouseenter', layerId, () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
         m.on('mouseleave', layerId, () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
       }
+      // C7 (décision Vic) : CLIC UNIVERSEL — si aucune feature parcelle vectorielle sous le
+      // curseur (trame raster/limites, zoom promues-only…), le serveur résout point→parcelle.
+      m.on('click', (e) => {
+        if (toolRef.current) return
+        const hits = m.queryRenderedFeatures(e.point, { layers: ['parcels-fill', 'ile-fill'].filter((l) => !!m.getLayer(l)) })
+        if (hits.length > 0) return   // le handler de calque a déjà ouvert la fiche
+        parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => {
+          if (r.idu) select(r.idu)
+        }).catch(() => undefined)
+      })
+
       ready.current = true
       setMapReady(true)
       ;(window as unknown as Record<string, unknown>).__labuse_map = m // hook QA (ping sémantique)

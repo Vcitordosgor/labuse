@@ -71,6 +71,8 @@ function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', numbe
     { v: 'chaude', label: 'Chaude', color: STATUT_META.chaude.color },
     { v: 'a_surveiller', label: 'À surveiller', color: STATUT_META.a_surveiller.color },
     { v: 'a_creuser', label: 'À creuser', color: STATUT_META.a_creuser.color },
+    // C7 : les écartées en OPT-IN — activé, elles colorent la carte et entrent dans la liste
+    { v: 'ecartee', label: 'Écartées', color: STATUT_META.ecartee.color },
   ]
   return (
     <div className="mt-2 flex shrink-0 flex-wrap gap-1.5" title={partial ? 'Comptes recalculés avec les filtres actifs' : 'Comptes exacts (SQL, base entière)'}>
@@ -195,7 +197,8 @@ export function ResultsSection() {
         .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
     }
     return props
-      .filter((p) => matchAll(p, filters, zone) && PROMUES.includes(p.status))
+      .filter((p) => matchAll(p, filters, zone)
+        && (PROMUES.includes(p.status) || filters.statuts.includes(p.status)))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
       .sort((a, b) => {
         // métier : l'ÉVÉNEMENT crée l'urgence de la semaine → toujours en tête, puis le score

@@ -58,6 +58,8 @@ export const getEntonnoir = () => {
 }
 export const getContexteCommune = (commune: string) =>
   j<ContexteCommune>(`/communes/${encodeURIComponent(commune)}/contexte`)
+export const parcelAt = (lon: number, lat: number) =>
+  j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string) =>
   j<{ idu: string; commune: string; status: string | null; q_score: number | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
