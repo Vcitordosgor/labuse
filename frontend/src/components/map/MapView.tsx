@@ -12,15 +12,15 @@ import { MapToolbar } from './MapToolbar'
 // tuiles Google (CGU) — le deep-link « Ouvrir dans Google Maps » vit dans la fiche.
 const WMTS = (layer: string, format: string) =>
   `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER=${layer}&FORMAT=${format}`
-const BASEMAP_SOURCES: Record<string, { tiles: string[]; attribution: string }> = {
+const BASEMAP_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzoom?: number }> = {
   'bm-carto': {
     tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
     attribution: '© OSM · CARTO',
   },
   'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme' },
   'bm-ortho-now': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg')], attribution: '© IGN BD ORTHO' },
-  'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005' },
-  'bm-ortho-1950': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png')], attribution: '© IGN ortho 1950-1965' },
+  'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
+  'bm-ortho-1950': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png')], attribution: '© IGN ortho 1950-1965', maxzoom: 15 },
 }
 
 const STYLE: maplibregl.StyleSpecification = {
@@ -85,7 +85,7 @@ export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
-  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone } = useApp()
+  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo } = useApp()
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
   const [measure, setMeasure] = useState<Measure>({ pts: [], alti: null })
@@ -110,10 +110,17 @@ export function MapView() {
       maxPitch: 70,
     })
     map.current = m
+    // tuiles hors-emprise (océan) : l'IGN répond 400 → bruit inévitable, avalé ici pour que la
+    // console ne montre que les VRAIES erreurs (règle d'inspection : zéro ligne rouge parasite)
+    m.on('error', (e) => {
+      const msg = String((e as { error?: Error }).error?.message ?? '')
+      if (/AJAXError|40[04]/.test(msg)) return
+      console.error(e.error ?? e)
+    })
     m.on('load', () => {
       // fonds de plan (tous chargés, visibilité pilotée)
       for (const [id, src] of Object.entries(BASEMAP_SOURCES)) {
-        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution })
+        m.addSource(id, { type: 'raster', tiles: src.tiles, tileSize: 256, attribution: src.attribution, ...(src.maxzoom ? { maxzoom: src.maxzoom } : {}) })
         m.addLayer({ id, type: 'raster', source: id, layout: { visibility: id === 'bm-carto' ? 'visible' : 'none' },
           paint: { 'raster-opacity': id === 'bm-carto' ? 0.55 : 1 } })
       }
@@ -144,6 +151,18 @@ export function MapView() {
       m.addLayer({ id: 'measure-line', type: 'line', source: 'measure', filter: ['in', ['geometry-type'], ['literal', ['LineString', 'Polygon']]], paint: { 'line-color': '#5CE6A1', 'line-width': 2, 'line-dasharray': [2, 1.5] } })
       m.addLayer({ id: 'measure-pts', type: 'circle', source: 'measure', filter: ['==', ['geometry-type'], 'Point'], paint: { 'circle-radius': 3.5, 'circle-color': '#5CE6A1', 'circle-stroke-color': '#06130C', 'circle-stroke-width': 1.5 } })
 
+      // calques MODULE (violet) : surlignage de parcelles + géométries propres (lots, permis)
+      m.addSource('module-extra', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'module-hl', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''],
+        paint: { 'line-color': '#B497F0', 'line-width': 1.6, 'line-opacity': 0.95 } })
+      m.addLayer({ id: 'module-lot', type: 'line', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'lot'],
+        paint: { 'line-color': '#B497F0', 'line-width': 1.8, 'line-dasharray': [2, 1.6] } })
+      m.addLayer({ id: 'module-pts', type: 'circle', source: 'module-extra',
+        filter: ['==', ['get', 'kind'], 'permis'],
+        paint: { 'circle-radius': 4, 'circle-color': '#B497F0', 'circle-opacity': 0.85,
+                 'circle-stroke-color': '#120d1d', 'circle-stroke-width': 1.2 } })
+
       // zone dessinée persistante (filtre les résultats)
       m.addSource('zone', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'zone-fill', type: 'fill', source: 'zone', paint: { 'fill-color': '#5CE6A1', 'fill-opacity': 0.06 } })
@@ -152,7 +171,14 @@ export function MapView() {
       m.on('click', 'parcels-fill', (e) => {
         if (toolRef.current) return // un outil actif consomme le clic
         const f = e.features?.[0]
-        if (f) select(String(f.properties?.idu))
+        if (!f) return
+        const idu = String(f.properties?.idu)
+        const st = useApp.getState()
+        if (st.module === 'assemblage') {              // M16 : le clic compose l'assiette
+          st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
+          return
+        }
+        select(idu)
       })
       m.on('mouseenter', 'parcels-fill', () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
       m.on('mouseleave', 'parcels-fill', () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
@@ -230,6 +256,23 @@ export function MapView() {
     const m = map.current
     if (m && ready.current && m.getLayer('parcels-sel')) m.setFilter('parcels-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
   }, [selectedIdu])
+
+  // module actif → surlignage + géométries propres
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current || !m.getLayer('module-hl')) return
+    m.setFilter('module-hl', moduleMap.idus.length
+      ? (['in', ['get', 'idu'], ['literal', moduleMap.idus.slice(0, 4000)]] as never)
+      : (['==', ['get', 'idu'], ''] as never))
+    ;(m.getSource('module-extra') as maplibregl.GeoJSONSource | undefined)?.setData((moduleMap.extra ?? EMPTY_FC) as never)
+  }, [moduleMap])
+
+  // flyTo demandé (fiche → « 1950 », modules…)
+  useEffect(() => {
+    if (!flyTo || !map.current) return
+    map.current.flyTo({ center: flyTo.center, zoom: flyTo.zoom, duration: 900 })
+    setFlyTo(null)
+  }, [flyTo, setFlyTo])
 
   // zone dessinée → tracé persistant sur la carte (le filtre des résultats vit dans la liste)
   useEffect(() => {

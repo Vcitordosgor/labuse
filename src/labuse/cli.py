@@ -796,6 +796,7 @@ def warm_vue_mer_cmd(
     en cache), throttlé à la cadence RGE ALTI (~5 req/s, comme _alti_query)."""
     import time
     from collections import Counter
+
     from .api.enrichment import _live_enabled, vue_mer
 
     insee = commune if (commune and commune.isdigit()) else get_settings().pilot_commune_insee
@@ -1286,3 +1287,18 @@ def api_cmd(host: str = "127.0.0.1", port: int = 8000) -> None:
 
 if __name__ == "__main__":
     app()
+
+
+@app.command("detect-events")
+def detect_events_cmd(run_from: str = "q_v2", run_to: str = "q_v2_demo") -> None:
+    """Diffe deux runs de scoring → événements (bascules, BODACC, permis proches). Cronable."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import detect_events, ensure_tables
+    from .db import engine
+
+    ensure_tables(engine())
+    with Session(engine()) as s:
+        out = detect_events(s, run_from, run_to, demo=run_to.endswith("_demo"))
+        s.commit()
+    typer.echo(f"Événements émis {run_from} → {run_to} : {out}")

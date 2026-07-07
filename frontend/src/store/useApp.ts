@@ -70,6 +70,19 @@ interface AppState {
   setTool: (t: MapTool | null) => void
   zone: [number, number][] | null // polygone [lng,lat] dessiné → filtre les résultats
   setZone: (z: [number, number][] | null) => void
+  // ── Modules outils (filtres savants, accent violet) ──
+  module: string | null
+  setModule: (m: string | null) => void
+  // ce que le module affiche sur la carte : parcelles surlignées (idus) + géométries propres (lots, permis)
+  moduleMap: { idus: string[]; extra: unknown | null }
+  setModuleMap: (m: { idus: string[]; extra: unknown | null }) => void
+  // bloc module en tête de fiche : idu → lignes [libellé, valeur]
+  moduleFiche: Record<string, { module: string; lines: [string, string][] }>
+  setModuleFiche: (f: Record<string, { module: string; lines: [string, string][] }>) => void
+  flyTo: { center: [number, number]; zoom: number } | null
+  setFlyTo: (f: { center: [number, number]; zoom: number } | null) => void
+  msel: string[] // sélection multi-parcelles (module assemblage M16)
+  setMsel: (m: string[]) => void
 }
 
 export const useApp = create<AppState>((set) => ({
@@ -106,4 +119,14 @@ export const useApp = create<AppState>((set) => ({
   setTool: (tool) => set({ tool }),
   zone: null,
   setZone: (zone) => set({ zone }),
+  module: null,
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {} }),
+  moduleMap: { idus: [], extra: null },
+  setModuleMap: (moduleMap) => set({ moduleMap }),
+  moduleFiche: {},
+  setModuleFiche: (moduleFiche) => set({ moduleFiche }),
+  flyTo: null,
+  setFlyTo: (flyTo) => set({ flyTo }),
+  msel: [],
+  setMsel: (msel) => set({ msel }),
 }))

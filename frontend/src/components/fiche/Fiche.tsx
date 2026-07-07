@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, getFiche, getPipelineForParcel, pdfUrl } from '../../lib/api'
+import { addToPipeline, createShare, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, toggleWatch } from '../../lib/api'
 import { completudeColor, STATUT_META } from '../../lib/status'
 import type { FicheLine, Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -79,6 +79,44 @@ function ScoreBar({ label, value, color, lines, defaultOpen }: {
   )
 }
 
+// M14 — suivi de cible : événements sur cette parcelle SANS l'entrer au pipeline.
+function WatchButton({ idu }: { idu: string }) {
+  const qc = useQueryClient()
+  const w = useQuery({ queryKey: ['watch', idu], queryFn: () => getWatch(idu) })
+  const t = useMutation({ mutationFn: () => toggleWatch(idu), onSuccess: () => qc.invalidateQueries({ queryKey: ['watch', idu] }) })
+  const on = w.data?.watched
+  return (
+    <button onClick={() => t.mutate()}
+      className={`rounded-lg border px-2.5 py-1.5 text-xs ${on ? 'border-mint text-mint' : 'border-line-2 text-txt hover:text-txt-hi'}`}
+      title={on ? 'Suivie — les événements alimentent la cloche' : 'Suivre cette parcelle (alertes sans pipeline)'}>
+      {on ? '👁 Suivie' : '👁'}
+    </button>
+  )
+}
+
+// M20 — pack apporteur : lien public lecture seule, filigrané + horodaté + compteur de vues.
+function ShareButton({ idu }: { idu: string }) {
+  const share = useMutation({ mutationFn: () => createShare(idu) })
+  return (
+    <div className="relative">
+      <button onClick={() => share.mutate()}
+        className="rounded-lg border border-line-2 px-2.5 py-1.5 text-xs text-txt hover:text-txt-hi"
+        title="Pack apporteur : générer un lien public lecture seule (filigrané, compteur de vues)">
+        ↗
+      </button>
+      {share.data && (
+        <div className="absolute bottom-10 right-0 z-20 w-64 rounded-lg border border-line-2 bg-surface-2 p-3 text-[11px] shadow-xl">
+          <p className="font-mono text-[10px] tracking-widest text-txt-dim">LIEN APPORTEUR</p>
+          <a href={share.data.url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-mint hover:underline">
+            {window.location.origin}{share.data.url}
+          </a>
+          <p className="mt-1 text-[10px] text-txt-dim">Lecture seule · filigrané · consultations comptées.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function PipelineButton({ idu }: { idu: string }) {
   const qc = useQueryClient()
   const state = useQuery({ queryKey: ['pipeline-parcel', idu], queryFn: () => getPipelineForParcel(idu) })
@@ -104,6 +142,36 @@ function PipelineButton({ idu }: { idu: string }) {
   )
 }
 
+// Panneau IA de la fiche : synthèse tracée + « pourquoi ce score ? » — mention systématique.
+function IAPanel({ idu, onClose }: { idu: string; onClose: () => void }) {
+  const [mode, setMode] = useState<'synthese' | 'pourquoi' | null>(null)
+  const gen = useMutation({ mutationFn: (m: 'synthese' | 'pourquoi') => (m === 'synthese' ? iaSynthese(idu) : iaPourquoi(idu)) })
+  return (
+    <div className="absolute bottom-10 right-0 z-20 w-[320px] rounded-lg border border-line-2 bg-surface-2 p-3 shadow-xl">
+      <div className="flex items-center justify-between">
+        <p className="font-mono text-[10px] tracking-widest text-txt-dim">ANALYSE IA</p>
+        <button onClick={onClose} className="text-txt-dim hover:text-txt-hi">✕</button>
+      </div>
+      <div className="mt-2 flex gap-1.5">
+        {([['synthese', 'Synthèse'], ['pourquoi', 'Pourquoi ce score ?']] as const).map(([k, l]) => (
+          <button key={k} onClick={() => { setMode(k); gen.mutate(k) }}
+            className={`rounded-full border px-2.5 py-1 text-[11px] ${mode === k ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+            {l}
+          </button>
+        ))}
+      </div>
+      {gen.isPending && <p className="mt-3 text-[11px] text-txt-dim">Génération…</p>}
+      {gen.isError && <p className="mt-3 text-[11px] text-st-ecartee">Erreur — réessayez.</p>}
+      {gen.data && (
+        <>
+          <div className="mt-3 max-h-64 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-txt">{gen.data.texte}</div>
+          <p className="mt-2 border-t border-line pt-2 text-[9.5px] text-txt-dim">{gen.data.mention}</p>
+        </>
+      )}
+    </div>
+  )
+}
+
 const TABS: { k: 'synthese' | Onglet | 'bilan'; label: string }[] = [
   { k: 'synthese', label: 'Synthèse' }, { k: 'regles', label: 'Règles' }, { k: 'risques', label: 'Risques' },
   { k: 'marche', label: 'Marché' }, { k: 'proprio', label: 'Proprio' }, { k: 'bilan', label: 'Bilan' },
@@ -111,6 +179,9 @@ const TABS: { k: 'synthese' | Onglet | 'bilan'; label: string }[] = [
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
+  const moduleFiche = useApp((s) => s.moduleFiche)
+  const setModule = useApp((s) => s.setModule)
+  const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
   // Échap ferme la fiche — sauf si le drawer source est ouvert (il consomme Échap en premier)
   useEffect(() => {
@@ -136,6 +207,21 @@ export function Fiche({ idu }: { idu: string }) {
         <div className="shrink-0 border-b border-[#5a2420] bg-[#3a1614] px-5 py-2.5">
           <div className="flex items-center gap-2 text-xs font-medium text-st-ecartee">● ÉVÉNEMENT — force « chaude »</div>
           {f.evenement_detail && <div className="mt-1 text-[11px] leading-snug text-[#e8a99f]">{f.evenement_detail}</div>}
+        </div>
+      )}
+
+      {/* bloc MODULE (doctrine : en tête de fiche, violet) */}
+      {modBlock && (
+        <div className="shrink-0 border-b border-[#2a2138] bg-[#171221] px-5 py-3">
+          <p className="font-mono text-[10px] tracking-widest text-[#B497F0]">MODULE · {modBlock.module.toUpperCase()}</p>
+          <div className="mt-1.5 flex flex-col gap-1">
+            {modBlock.lines.map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-3 text-[11px]">
+                <span className="text-txt-dim">{k}</span>
+                <span className="text-right text-txt">{v}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -214,10 +300,19 @@ export function Fiche({ idu }: { idu: string }) {
       <div className="shrink-0 border-t border-line px-5 py-3">
         <div className="flex gap-2">
           <PipelineButton idu={idu} />
+          <WatchButton idu={idu} />
+          <ShareButton idu={idu} />
           <a href={pdfUrl(idu)} target="_blank" rel="noreferrer"
             className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi" title="Exporter la fiche en PDF">
             PDF
           </a>
+          {f && (
+            <button onClick={() => setModule('temps')}
+              className="rounded-lg border border-line-2 px-2.5 py-1.5 text-xs text-txt hover:text-txt-hi"
+              title="Ce terrain en 1950 — comparateur temporel (M08)">
+              1950
+            </button>
+          )}
           {f && (
             <a href={`https://www.google.com/maps/@${f.coords[1]},${f.coords[0]},19z/data=!3m1!1e3`}
               target="_blank" rel="noreferrer"
@@ -234,10 +329,7 @@ export function Fiche({ idu }: { idu: string }) {
             {iaOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setIaOpen(false)} />
-                <div className="absolute bottom-10 right-0 z-20 w-56 rounded-lg border border-line-2 bg-surface-2 p-3 text-[11px] leading-relaxed text-txt-mut shadow-xl">
-                  <p className="font-mono text-[10px] tracking-widest text-txt-dim">ANALYSE IA</p>
-                  <p className="mt-1.5">Le narratif IA (synthèse rédigée de la fiche) arrive en V1.x — le scoring reste 100 % déterministe et tracé.</p>
-                </div>
+                <IAPanel idu={idu} onClose={() => setIaOpen(false)} />
               </>
             )}
           </div>

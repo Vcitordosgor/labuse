@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { getParcelsGeojson } from '../../lib/api'
+import { deleteSearch, getEvents, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, saveSearch } from '../../lib/api'
+import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken } from '../../lib/filters'
 import { STATUT_META } from '../../lib/status'
 import type { Statut } from '../../lib/types'
@@ -185,20 +186,75 @@ function VerdictToggle() {
 
 function NotifBell() {
   const [open, setOpen] = useState(false)
+  const [veilleNom, setVeilleNom] = useState('')
+  const qc = useQueryClient()
+  const { filters, zone, select, setView } = useApp()
+  const ev = useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 })
+  const veilles = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches, enabled: open })
+  const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
+  const readOne = useMutation({ mutationFn: markEventRead, onSuccess: invalidate })
+  const readAll = useMutation({ mutationFn: markAllEventsRead, onSuccess: invalidate })
+  const addVeille = useMutation({ mutationFn: () => saveSearch(veilleNom, filtersToHash(filters, zone) || '#f=1'),
+    onSuccess: () => { setVeilleNom(''); qc.invalidateQueries({ queryKey: ['searches'] }) } })
+  const delVeille = useMutation({ mutationFn: deleteSearch, onSuccess: () => qc.invalidateQueries({ queryKey: ['searches'] }) })
+  const unread = ev.data?.unread ?? 0
   return (
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)} title="Notifications"
-        className="flex h-9 w-9 items-center justify-center rounded-full border border-line-2 bg-surface-3 text-txt-mut hover:text-txt">
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-line-2 bg-surface-3 text-txt-mut hover:text-txt">
         <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">
           <path d="M10 3 a4 4 0 0 1 4 4 v3 l1.5 2.5 h-11 L6 10 V7 a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" strokeWidth="1.4" />
           <path d="M8.5 15 a1.5 1.5 0 0 0 3 0" fill="none" stroke="currentColor" strokeWidth="1.4" />
         </svg>
+        {unread > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-st-ecartee px-1 font-mono text-[9px] font-bold text-white">
+            {unread}
+          </span>
+        )}
       </button>
       {open && (
-        <div className="absolute right-0 top-11 z-20 w-64 rounded-lg border border-line-2 bg-surface-2 p-4 text-xs shadow-xl">
-          <p className="font-mono text-[11px] tracking-widest text-txt-dim">NOTIFICATIONS</p>
-          <p className="mt-3 text-txt-dim">Aucune notification pour l'instant.</p>
-        </div>
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-11 z-20 flex max-h-[70vh] w-[380px] flex-col rounded-lg border border-line-2 bg-surface-2 shadow-xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-line px-4 py-2.5">
+              <p className="font-mono text-[11px] tracking-widest text-txt-dim">NOTIFICATIONS · {unread} non lue{unread > 1 ? 's' : ''}</p>
+              <div className="flex gap-3">
+                <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Digest hebdo (HTML email-ready)">Digest →</a>
+                {unread > 0 && <button onClick={() => readAll.mutate()} className="text-[11px] text-txt-mut hover:text-txt">tout lire</button>}
+              </div>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
+              {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs text-txt-dim">Aucun événement — le prochain run de scoring alimentera cette liste.</p>}
+              {(ev.data?.items ?? []).map((e) => (
+                <div key={e.id} className={`rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-[#3a3050] bg-[#171221]'}`}>
+                  <div className="flex items-center gap-2">
+                    {e.demo && <span className="rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[8.5px] font-medium text-[#B497F0]" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
+                    <button onClick={() => { if (e.idu) { setView('cartes'); select(e.idu) } setOpen(false) }}
+                      className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>
+                    {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[10px] text-txt-dim hover:text-mint" title="Marquer lu">✓</button>}
+                  </div>
+                  {e.detail && <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{e.detail}</p>}
+                  <p className="mt-0.5 font-mono text-[9px] text-txt-dim">{e.date}</p>
+                </div>
+              ))}
+            </div>
+            <div className="shrink-0 border-t border-line p-3">
+              <p className="font-mono text-[10px] tracking-widest text-txt-dim">VEILLES (recherches sauvegardées)</p>
+              {(veilles.data ?? []).map((v) => (
+                <div key={v.id} className="mt-1.5 flex items-center gap-2 text-[11px]">
+                  <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt hover:text-mint" title={v.hash}>{v.nom}</a>
+                  <button onClick={() => delVeille.mutate(v.id)} className="text-txt-dim hover:text-st-ecartee">×</button>
+                </div>
+              ))}
+              <div className="mt-2 flex gap-1.5">
+                <input value={veilleNom} onChange={(e) => setVeilleNom(e.target.value)} placeholder="Nommer la recherche courante…"
+                  className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
+                <button onClick={() => veilleNom.trim() && addVeille.mutate()} disabled={!veilleNom.trim()}
+                  className="rounded bg-mint px-2 text-[11px] font-medium text-mint-ink disabled:opacity-40">+ Veille</button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   )

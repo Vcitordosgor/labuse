@@ -1,4 +1,5 @@
 import { useApp, type View } from '../store/useApp'
+import { MODULES, VIOLET } from './outils/registry'
 
 // Icônes 20×20, trait 1.6, arrondi — redessinées pour être nettes à 20 px (les précédentes
 // rendaient mal). Cohérence : contour simple, pas de remplissage sauf CRM (barres).
@@ -42,7 +43,7 @@ const ZONES: { key: Zone; label: string }[] = [
 ]
 
 export function Rail() {
-  const { view, setView, outilsOpen, toggleOutils, openSources } = useApp()
+  const { view, setView, outilsOpen, toggleOutils, openSources, setModule } = useApp()
 
   return (
     <>
@@ -60,6 +61,7 @@ export function Rail() {
               onClick={() => (key === 'outils' ? toggleOutils() : setView(key))}
               className="group mb-4 flex w-full flex-col items-center gap-1"
               title={label}
+              aria-current={on ? 'page' : undefined}
             >
               <span
                 className={`flex h-10 w-10 items-center justify-center rounded-[10px] border transition-colors ${
@@ -97,15 +99,17 @@ export function Rail() {
         <aside className="flex h-full w-[300px] shrink-0 flex-col border-r border-line bg-surface-1 p-5">
           <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
           <p className="mt-1 font-mono text-[11px] tracking-widest text-txt-dim">MODULES</p>
-          <div className="mt-6 flex flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-line-2 px-6 text-center">
-            <svg viewBox="0 0 20 20" className="h-8 w-8 text-txt-dim">
-              <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.2" />
-              <path d="M12.6 7.4 L11 11 L7.4 12.6 L9 9 Z" fill="none" stroke="currentColor" strokeWidth="1.1" />
-            </svg>
-            <p className="text-xs text-txt-mut">Aucun module actif.</p>
-            <p className="text-[11px] leading-relaxed text-txt-dim">
-              Les outils d'analyse (assemblage, comparaison, étude de zone) s'installeront ici.
-            </p>
+          <div className="mt-4 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
+            {MODULES.map((m) => (
+              <button key={m.key} onClick={() => setModule(m.key)}
+                className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left hover:border-[#6b5a96]">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-[10px]" style={{ color: VIOLET }}>{m.num}</span>
+                  <span className="text-xs font-medium text-txt">{m.label}</span>
+                </div>
+                <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{m.desc}</div>
+              </button>
+            ))}
           </div>
         </aside>
       )}
