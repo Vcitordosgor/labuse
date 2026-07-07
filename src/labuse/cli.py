@@ -363,6 +363,19 @@ def dryrun_report_cmd(
     typer.echo(json.dumps(rep, ensure_ascii=False, indent=1, default=str))
 
 
+@app.command("build-mvt")
+def build_mvt_cmd(
+    label: str = typer.Option("q_v2", help="run_label dont matérialiser les tuiles."),
+) -> None:
+    """(Re)construit la table `mvt_parcels` servie en tuiles vectorielles (carte île entière).
+    À relancer après CHAQUE run de scoring — les tuiles lisent cette matérialisation, pas le run."""
+    from .api.tiles import build_mvt_table
+
+    with session_scope() as s:
+        n = build_mvt_table(s, label)
+    typer.echo(f"✓ mvt_parcels reconstruite : {n} parcelles (label {label}).")
+
+
 @app.command("dryrun-matrice")
 def dryrun_matrice_cmd(
     label: str = typer.Option("etape2", help="run_label sur lequel appliquer la matrice Q×A."),

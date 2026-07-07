@@ -62,9 +62,10 @@ def ensure_tables(engine) -> None:
 
 @router.post("/division/compute")
 def division_compute(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
-    """Pré-calcule les candidats division (C1-C5) — idempotent (recalcule la commune)."""
-    db.execute(text("DELETE FROM module_division WHERE idu LIKE :pfx"),
-               {"pfx": ""})  # V1 mono-commune : on repart propre
+    """Pré-calcule les candidats division (C1-C5) — idempotent PAR COMMUNE (extension île : les
+    24 communes coexistent dans module_division, on ne repart propre que sur celle calculée)."""
+    db.execute(text("DELETE FROM module_division m USING parcels p"
+                    " WHERE p.id = m.parcel_id AND p.commune = :c"), {"c": commune})
     db.execute(text("""
         INSERT INTO module_division (parcel_id, idu, surface_m2, bati_count, emprise_pct, zone,
                                      mic_radius_m, lot_area_m2, lot_geom, acces_voirie, score)
@@ -130,15 +131,20 @@ def division_compute(commune: str = "Saint-Paul", db: Session = Depends(get_db))
 
 
 @router.get("/division")
-def division_list(min_score: int = 0, limit: int = 300, db: Session = Depends(get_db)) -> dict:
+def division_list(min_score: int = 0, limit: int = 300, commune: str | None = None,
+                  db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT m.idu, m.surface_m2, m.bati_count, m.emprise_pct, m.zone, m.mic_radius_m,
                m.lot_area_m2, m.acces_voirie, m.score, ST_AsGeoJSON(m.lot_geom) AS lot,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM module_division m JOIN parcels p ON p.id = m.parcel_id
-        WHERE m.score >= :s ORDER BY m.score DESC LIMIT :lim"""),
-        {"s": min_score, "lim": limit}).mappings().all()
-    total = db.execute(text("SELECT count(*) FROM module_division WHERE score >= :s"), {"s": min_score}).scalar()
+        WHERE m.score >= :s AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+        ORDER BY m.score DESC LIMIT :lim"""),
+        {"s": min_score, "lim": limit, "c": commune}).mappings().all()
+    total = db.execute(text(
+        "SELECT count(*) FROM module_division m JOIN parcels p ON p.id = m.parcel_id"
+        " WHERE m.score >= :s AND (CAST(:c AS text) IS NULL OR p.commune = :c)"),
+        {"s": min_score, "c": commune}).scalar()
     return {"total": int(total or 0), "items": [{
         "idu": r["idu"], "surface_m2": round(r["surface_m2"] or 0), "bati_count": r["bati_count"],
         "emprise_pct": r["emprise_pct"], "zone": r["zone"], "mic_radius_m": r["mic_radius_m"],
@@ -457,7 +463,7 @@ class ProgrammeIn(BaseModel):
     logements_par_batiment: int = 8
     surface_unite_m2: float = 60     # hypothèse AFFICHÉE (m² SDP par unité)
     parking: bool = True
-    commune: str = "Saint-Paul"
+    commune: str | None = None       # None = île entière (extension île)
 
 
 @router.post("/programme")
@@ -471,7 +477,7 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     parking_m2 = round(unites * 25) if body.parking else 0        # 25 m²/place (config PLU)
     hauteur_min = (body.niveaux + 1) * 3.0                        # R+n → (n+1) niveaux × 3 m
     rows = db.execute(text("""
-        SELECT p.idu, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
+        SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
                d.matrice_statut AS statut, d.q_score, cr.detail AS zonage,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM parcels p
@@ -480,7 +486,7 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
           AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
         LEFT JOIN dryrun_cascade_results cr ON cr.run_label = :run AND cr.parcel_id = p.id
           AND cr.layer_name = 'zonage_plu_gpu' AND cr.detail LIKE 'Zone PLU%'
-        WHERE p.commune = :c AND p.surface_m2 >= :smin
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin
         ORDER BY r.sdp_residuelle_m2 DESC LIMIT 300"""),
         {"sdp": sdp_min, "run": RUN, "c": body.commune,
          "smin": sdp_min * 0.4 + parking_m2}).mappings().all()
@@ -489,7 +495,8 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     for r in rows:
         m = _re.search(r"« ([^»]+) »", r["zonage"] or "")
         zone = (m.group(1) if m else "").strip()
-        rules = resolve_zone(zone, body.commune) if zone else None
+        # la hauteur PLU se résout avec la commune DE LA PARCELLE (mode île : elles diffèrent)
+        rules = resolve_zone(zone, r["commune"]) if zone else None
         h = getattr(rules, "hauteur_max_m", None) if rules else None
         if h is None and rules is not None:
             h = getattr(rules, "hf_m", None) or getattr(rules, "he_m", None)
@@ -497,7 +504,8 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
         if not hauteur_ok:
             continue
         marge = round(float(r["sdp_residuelle_m2"]) / sdp_min, 2)
-        items.append({"idu": r["idu"], "surface_m2": r["surface_m2"], "sdp": round(r["sdp_residuelle_m2"]),
+        items.append({"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
+                      "sdp": round(r["sdp_residuelle_m2"]),
                       "statut": r["statut"], "q_score": r["q_score"], "zone": zone or None,
                       "hauteur_plu_m": float(h) if h is not None else None,
                       "hauteur_verifiee": h is not None, "marge_capacite": marge,
