@@ -483,6 +483,11 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
         "vue_mer": vue,
         "prime_vue_mer": "prime de prix de sortie (vue dégagée)" if vue == "oui" else None,
     }
+    # RTAA DOM (mandat contexte-commune, 5bis) — rappel réglementaire de conception,
+    # vérifié sur Légifrance (config/rtaa_dom.yaml), hors scoring
+    from ..config import load_yaml_config
+    rtaa = load_yaml_config("rtaa_dom")
+    out["rtaa"] = {"meta": rtaa["meta"], "exigences": rtaa["exigences"]}
     return out
 
 

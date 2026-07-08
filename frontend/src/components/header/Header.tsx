@@ -156,7 +156,7 @@ function AddFilter() {
 // Sélecteur de commune — le périmètre n'est plus fixe : les 24 communes + « Toute l'île ».
 // Pilote carte, compteurs, liste, modules ; l'état vit dans l'URL (App.tsx).
 function CommuneSelect() {
-  const { commune, setCommune } = useApp()
+  const { commune, setCommune, setContexteCommune } = useApp()
   const [open, setOpen] = useState(false)
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   useEffect(() => {
@@ -186,21 +186,39 @@ function CommuneSelect() {
             </button>
             <div className="mx-3 my-1 border-t border-line" />
             {(communes.data ?? []).map((c) => (
-              <button key={c.insee} onClick={() => pick(c.commune)}
-                className={`flex items-center justify-between rounded-md px-3 py-1.5 text-left text-xs hover:bg-surface-3 ${commune === c.commune ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
-                <span>{c.commune} <span className="font-mono text-[10px] text-txt-dim">{c.insee}</span></span>
-                <span className="font-mono text-[10px]">
-                  {c.evaluees === 0
-                    ? <span className="text-txt-dim">en calcul…</span>
-                    : <span className={c.chaudes > 0 ? 'text-mint' : 'text-txt-dim'}>{c.chaudes} chaude{c.chaudes > 1 ? 's' : ''}</span>}
-                </span>
-              </button>
+              <div key={c.insee} className={`flex items-center rounded-md hover:bg-surface-3 ${commune === c.commune ? 'bg-surface-3' : ''}`}>
+                <button onClick={() => pick(c.commune)}
+                  className={`flex min-w-0 flex-1 items-center justify-between px-3 py-1.5 text-left text-xs ${commune === c.commune ? 'text-mint' : 'text-txt'}`}>
+                  <span>{c.commune} <span className="font-mono text-[10px] text-txt-dim">{c.insee}</span></span>
+                  <span className="font-mono text-[10px]">
+                    {c.evaluees === 0
+                      ? <span className="text-txt-dim">en calcul…</span>
+                      : <span className={c.chaudes > 0 ? 'text-mint' : 'text-txt-dim'}>{c.chaudes} chaude{c.chaudes > 1 ? 's' : ''}</span>}
+                  </span>
+                </button>
+                <button onClick={() => { setContexteCommune(c.commune); setOpen(false) }}
+                  className="shrink-0 px-2 py-1.5 text-[11px] text-txt-dim hover:text-[#B497F0]"
+                  title={`Contexte de ${c.commune} — SRU, ANRU, PLH, marché logement`}>ⓘ</button>
+              </div>
             ))}
             {communes.isLoading && <p className="p-3 text-xs text-txt-dim">Chargement…</p>}
           </div>
         </>
       )}
     </div>
+  )
+}
+
+// bouton CONTEXTE — visible quand une commune est active : le volet SRU/ANRU/PLH/marché
+function ContexteButton() {
+  const { commune, setContexteCommune } = useApp()
+  if (!commune) return null
+  return (
+    <button onClick={() => setContexteCommune(commune)} data-contexte-btn
+      className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-[#4a3d6b] bg-[#1a1526] px-2.5 text-[11px] text-[#B497F0] hover:border-[#B497F0]"
+      title="Contexte commune — SRU, ANRU, PLH, marché logement (sources officielles)">
+      ⓘ Contexte
+    </button>
   )
 }
 
@@ -213,6 +231,7 @@ function FilterChips() {
     // DOM, invisible à l'utilisateur — le bug exact constaté par Vic. Seuls les chips défilent.
     <div className="flex min-w-0 items-center gap-2">
       <CommuneSelect />
+      <ContexteButton />
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto" data-chips>
         {chips.map((c) => (
           <span key={c.token} className="flex h-[26px] shrink-0 items-center gap-2 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">

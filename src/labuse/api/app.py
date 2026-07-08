@@ -497,6 +497,51 @@ def list_communes(source: str = "q_v2", db: Session = Depends(get_db)) -> list[d
     return _mem_cached(("communes", source), 300.0, _compute)
 
 
+@app.get("/communes/{commune}/contexte")
+def commune_contexte(commune: str, db: Session = Depends(get_db)) -> dict:
+    """VOLET CONTEXTE COMMUNE (mandat promotrice) — SRU + ANRU + PLH + marché logement INSEE
+    + rappel QPV. Donnée de CONTEXTE sourcée (échelle commune), hors scoring. Chaque bloc
+    porte sa source + millésime ; introuvable = null (le front affiche « non disponible »
+    sourcé, jamais un zéro menteur)."""
+    def _one(sql: str, p: dict) -> dict | None:
+        r = db.execute(text(sql), p).mappings().first()
+        return dict(r) if r else None
+
+    sru = _one("SELECT * FROM commune_contexte_sru WHERE commune = :c", {"c": commune})
+    insee_log = _one("SELECT * FROM commune_insee_logement WHERE commune = :c", {"c": commune})
+    anru = [dict(r) for r in db.execute(text(
+        "SELECT nom, interet, code_qpv, source_nom, source_url FROM anru_quartiers"
+        " WHERE commune = :c ORDER BY nom"), {"c": commune}).mappings().all()]
+    qpv = [dict(r) for r in db.execute(text(
+        "SELECT name AS nom, attrs->>'code_qp' AS code FROM spatial_layers"
+        " WHERE kind = 'qpv' AND commune = :c ORDER BY name"), {"c": commune}).mappings().all()]
+    # rattachement EPCI (référentiel BANATIC, config/epci_974.yaml) + PLH
+    epci_cfg = config.load_yaml_config("epci_974")["epci"]
+    epci = next((k for k, v in epci_cfg.items() if commune in v["communes"]), None)
+    plh = _one("SELECT * FROM plh_epci WHERE epci = :e", {"e": epci}) if epci else None
+    for d in (sru, insee_log, plh):
+        if d:
+            d.pop("importe_le", None)
+    return {"commune": commune, "epci": epci,
+            "epci_nom": epci_cfg[epci]["nom"] if epci else None,
+            "sru": sru, "anru": anru, "qpv": qpv, "plh": plh, "marche": insee_log,
+            "notes": ["ZUS et ZFU sont des zonages abrogés (réforme 2014), devenus QPV — déjà "
+                      "couverts par la couche QPV. Volet fiscal ZFU-Territoires Entrepreneurs : "
+                      "pas de source propre 974 identifiée (écart consigné).",
+                      "Données de CONTEXTE : aucune n'entre dans le scoring."]}
+
+
+@app.get("/parcels/at")
+def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
+    """Résolution point → parcelle (C7, décision produit Vic : clic UNIVERSEL — n'importe
+    quelle parcelle de la trame cadastrale ouvre sa fiche, promue ou écartée)."""
+    row = db.execute(text(
+        """SELECT p.idu FROM parcels p
+           WHERE ST_Contains(p.geom, ST_SetSRID(ST_MakePoint(:lon, :lat), 4326))
+           LIMIT 1"""), {"lon": lon, "lat": lat}).first()
+    return {"idu": row[0] if row else None}
+
+
 @app.get("/parcels/search")
 def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None,
                    source: str = "q_v2", limit: int = Query(10, ge=1, le=50),
@@ -514,6 +559,24 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
         LIMIT :lim
         """), {"pat": f"%{needle}", "c": commune, "run": source, "lim": limit}).mappings().all()
     return [dict(r) for r in rows]
+
+
+@app.get("/stats/entonnoir")
+def stats_entonnoir(commune: str | None = None, source: str = "q_v2",
+                    db: Session = Depends(get_db)) -> dict:
+    """L'ENTONNOIR PAR MOTIF (C4, revue Vic) : « LABUSE a analysé N parcelles et trié pour
+    vous » — décomposition SQL-exacte des écartées par garde (matérialisée post-matrice ;
+    une parcelle peut cumuler des motifs, affiché tel quel). Pédagogique ET auditable."""
+    key = commune or "__ile__"
+    rows = db.execute(text(
+        "SELECT motif, n FROM entonnoir_motifs WHERE run_label = :r AND commune = :c ORDER BY ord"),
+        {"r": source, "c": key}).mappings().all()
+    stats_row = _q_v2_stats(db, commune, run_label=source)
+    return {"commune": commune, "analysees": stats_row["total"],
+            "opportunites": stats_row["chaude"] + stats_row["a_surveiller"] + stats_row["a_creuser"],
+            "motifs": [dict(r) for r in rows],
+            "note": ("Une parcelle peut cumuler plusieurs motifs (les pourcentages se recouvrent). "
+                     "« Qualité insuffisante » = survivante du filtre dur mais Q<50.")}
 
 
 @app.get("/stats")
@@ -718,11 +781,15 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                      AND pm2.siren IS NOT NULL
                    GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-          AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+          AND d.matrice_statut = ANY(:base_statuts)
           {extra_where}
         ORDER BY (ev.parcel_id IS NOT NULL) DESC, (d.q_score + d.a_score) DESC, d.q_score DESC
         LIMIT :lim OFFSET :off
-        """), {"c": commune, "run": run_label, "lim": limit, "off": offset, **(extra_params or {})}
+        """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
+               # opt-in écartées (C7) : le filtre statut explicite ÉLARGIT le périmètre promues
+               "base_statuts": (extra_params or {}).get("f_statuts")
+                               or ["chaude", "a_surveiller", "a_creuser"],
+               **(extra_params or {})}
     ).mappings().all()
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
@@ -747,6 +814,9 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = "q_v2",
         f"""
         SELECT count(*) AS total,
                count(*) FILTER (WHERE matrice_statut = 'chaude')       AS chaude,
+               count(*) FILTER (WHERE matrice_statut = 'chaude' AND EXISTS (
+                   SELECT 1 FROM dryrun_cascade_results ev WHERE ev.parcel_id = d.parcel_id
+                     AND ev.run_label = :run AND ev.evenement = 'rouge')) AS chaude_evenement,
                count(*) FILTER (WHERE matrice_statut = 'a_surveiller') AS a_surveiller,
                count(*) FILTER (WHERE matrice_statut = 'a_creuser')    AS a_creuser,
                count(*) FILTER (WHERE matrice_statut = 'ecartee')      AS ecartee
@@ -831,9 +901,20 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
     pm = db.execute(text(
         "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
         {"idu": idu}).mappings().first()
+    # NPNRU (contexte, hors scoring) : parcelle DANS un périmètre de renouvellement urbain,
+    # ou ADJACENTE (<= 100 m) — l'environnement immédiat d'un programme se transforme
+    anru = db.execute(text(
+        """SELECT a.name, a.attrs->>'interet' AS interet,
+                  ST_Intersects(p2.geom_2975, a.geom_2975) AS dans
+           FROM spatial_layers a JOIN parcels p2 ON p2.idu = :idu
+           WHERE a.kind = 'anru' AND ST_DWithin(p2.geom_2975, a.geom_2975, 100)
+           ORDER BY ST_Intersects(p2.geom_2975, a.geom_2975) DESC LIMIT 1"""),
+        {"idu": idu}).mappings().first()
     return {
         "idu": head["idu"], "commune": head["commune"],
         "proprietaire_moral": dict(pm) if pm else None,
+        "anru": {"quartier": anru["name"], "interet": anru["interet"],
+                 "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
         "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
         "statut": head["matrice_statut"], "q_score": head["q_score"], "a_score": head["a_score"],
         "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
@@ -856,12 +937,15 @@ def parcel_export_pdf(idu: str, source: str = "q_v2", db: Session = Depends(get_
     """Export PDF de la fiche premium (Brique 3) — design system, fiche complète tracée."""
     from .pdf_premium import render_fiche_pdf
     fiche = _q_v2_fiche(db, idu, run_label=source)
+    # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
+    fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
+    fiche["rtaa"] = config.load_yaml_config("rtaa_dom")   # rappel réglementaire (5bis)
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="labuse_{idu}.pdf"'})
 
 
 #: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
-_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national"}
+_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite"}
 
 
 @app.get("/map/layers.geojson")

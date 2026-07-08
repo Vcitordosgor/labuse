@@ -48,11 +48,11 @@ def ensure_tables(engine) -> None:
         # deux profils de DÉMO étiquetés + une clé API de démo (idempotent)
         c.execute(text("""
             INSERT INTO match_profiles (nom, commune, surface_min, surface_max, sdp_min, demo)
-            SELECT 'Promoteur démo — collectif Ouest', 'Saint-Paul', 800, 20000, 800, true
+            SELECT 'Promoteur démo — collectif (île)', NULL, 800, 20000, 800, true
             WHERE NOT EXISTS (SELECT 1 FROM match_profiles WHERE nom LIKE 'Promoteur démo — collectif%')"""))
         c.execute(text("""
             INSERT INTO match_profiles (nom, commune, surface_min, surface_max, sdp_min, demo)
-            SELECT 'CMiste démo — maisons', 'Saint-Paul', 300, 1500, 150, true
+            SELECT 'CMiste démo — maisons (île)', NULL, 300, 1500, 150, true
             WHERE NOT EXISTS (SELECT 1 FROM match_profiles WHERE nom LIKE 'CMiste démo%')"""))
         c.execute(text("""
             INSERT INTO api_keys (key, nom, quota_jour, demo)

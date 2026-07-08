@@ -8,10 +8,27 @@ import { LeftPanel } from './components/panel/LeftPanel'
 import { MapView } from './components/map/MapView'
 import { Rail } from './components/Rail'
 import { SourcesPage } from './components/sources/SourcesPage'
+import { ContextePanel } from './components/contexte/ContextePanel'
 import { filtersFromHash, filtersToHash } from './lib/filters'
 import { ModulePanel } from './components/outils/ModulePanel'
 import { TimeMachine } from './components/outils/TimeMachine'
 import { EMPTY_FILTERS, useApp } from './store/useApp'
+
+// C6 (revue Vic) : message sobre, VISIBLE, auto-éteint — pas un title de survol
+function Toast() {
+  const { toast, setToast } = useApp()
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [toast, setToast])
+  if (!toast) return null
+  return (
+    <div data-toast className="pointer-events-none absolute bottom-16 left-1/2 z-50 -translate-x-1/2 rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-4 py-2 text-xs text-txt shadow-xl">
+      {toast}
+    </div>
+  )
+}
 
 export default function App() {
   const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune } = useApp()
@@ -62,7 +79,9 @@ export default function App() {
           {view === 'sources' && <SourcesPage />}
           {view === 'ia' && <IAStub />}
           {selectedIdu && view !== 'sources' && <Fiche idu={selectedIdu} />}
+          <ContextePanel />
           <SourceDrawer />
+          <Toast />
         </div>
       </div>
     </div>

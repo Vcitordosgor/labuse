@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -20,10 +21,19 @@ def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
+# ── .env ROBUSTE au mode de lancement (correctif C1, revue Vic 07/07) ──
+# Chargé par l'APPLICATION elle-même, chemin résolu depuis la RACINE DU DÉPÔT — plus jamais
+# dépendant du cwd ni de qui lance quoi d'où (une relance nue du serveur avait privé le
+# copilote d'ANTHROPIC_API_KEY → stub alors que la clé existait). override=False : un
+# environnement explicitement posé par l'opérateur garde la priorité.
+load_dotenv(_repo_root() / ".env", override=False)
+
+
 class Settings(BaseSettings):
     """Réglages d'environnement (préfixe LABUSE_)."""
 
-    model_config = SettingsConfigDict(env_prefix="LABUSE_", env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="LABUSE_", env_file=str(_repo_root() / ".env"),
+                                      extra="ignore")
 
     database_url: str = "postgresql+psycopg://labuse:labuse@localhost:5432/labuse"
 

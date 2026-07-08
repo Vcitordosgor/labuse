@@ -1,0 +1,103 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# RTAA DOM — rappel réglementaire construction neuve de logements (La Réunion)
+# ═══════════════════════════════════════════════════════════════════════════════
+# VÉRIFIÉ SUR LÉGIFRANCE (versions consolidées « en vigueur », lues les 07-08/07/2026).
+# Cadre : CCH art. R.192-1 à R.192-4 (décret n°2024-168 du 01/03/2024, en vigueur
+# 01/01/2025 — réécriture des règles outre-mer ; anciens R.162-1 s. abrogés 01/07/2021).
+# Textes techniques : les TROIS arrêtés du 17/04/2009 (thermique NOR DEVU0906148A,
+# acoustique DEVU0906149A, aération DEVU0906150A) modifiés par l'arrêté du 11/01/2016
+# (NOR ETLL1518649A, PC/DP déposés depuis le 01/07/2016) — AUCUNE modification 2016-2026.
+# Seuils d'altitude Réunion vérifiés : 400 m et 600 m (aucun seuil à 800 m).
+#
+# RÉSERVES (non vérifié, consigné) : arrêté « indice de confort thermique » (R.192-1 II)
+# introuvable sur Légifrance ; plancher 30 dB et tableau « tissu ouvert » de l'isolement
+# de façade non recopiés. Rien de tout cela n'est affiché.
+# Doctrine : rappel de CONCEPTION, pas un cours ; aucun chiffrage de surcoût.
+
+meta:
+  intitule: "RTAA DOM — réglementation thermique, acoustique et aération (logements neufs)"
+  champ: >
+    Bâtiments d'habitation NOUVEAUX et parties nouvelles de bâtiments existants
+    (extensions) — art. 1er des trois arrêtés du 17/04/2009 modifiés ; version 2016
+    applicable aux PC/DP déposés depuis le 01/07/2016 ; cadre CCH R.192-1 à R.192-4
+    en vigueur depuis le 01/01/2025.
+  verifie_le: "2026-07-08"
+  altitude_note: >
+    Deux seuils à La Réunion : 400 m (facteurs solaires des baies, taux d'ouverture)
+    et 600 m (bascule protection solaire + ventilation naturelle → isolation + chauffage).
+
+exigences:
+  - volet: cadre
+    exigence: >
+      Limiter le recours à la climatisation par solutions techniques (protection solaire,
+      ventilation naturelle) fixées par arrêtés — ou atteindre un indice de confort
+      thermique de référence (voie de résultat ouverte par la réécriture 2025).
+    reference: "CCH art. R.192-1 (décret n°2024-168 du 01/03/2024)"
+    url: "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000043819607"
+  - volet: thermique
+    exigence: >
+      Protection solaire des parois opaques des pièces principales : facteur solaire
+      ≤ 0,03 en toiture et ≤ 0,09 en vertical.
+    reference: "Arrêté du 17/04/2009 (thermique) modifié 11/01/2016, art. 5 1°"
+    url: "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547"
+    condition_altitude: "≤ 600 m — au-dessus : isolation U ≤ 0,5 (toiture) / 2 W/m²·K (vertical), art. 5 2°"
+  - volet: thermique
+    exigence: >
+      Facteur solaire maximal des baies PAR ORIENTATION : < 400 m — Nord 0,6 · Sud 0,8 ·
+      Est 0,6 · Ouest 0,6 ; entre 400 et 600 m — 0,8 (pas d'exigence au sud).
+    reference: "Arrêté du 17/04/2009 (thermique) modifié, art. 6"
+    url: "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547"
+    condition_altitude: "seuils 400 m / 600 m"
+  - volet: thermique
+    exigence: >
+      Ventilation naturelle TRAVERSANTE : taux d'ouverture minimal des pièces principales
+      (séjour 22 %, chambres 18 % sous 400 m ; 18 %/14 % entre 400 et 600 m), au moins deux
+      ouvertures > 0,5 m² en parois opposées ou latérales, au plus 70 % des ouvertures sur
+      une même façade.
+    reference: "Arrêté du 17/04/2009 (thermique) modifié, art. 9"
+    url: "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547"
+    condition_altitude: "exemption > 600 m"
+  - volet: thermique
+    exigence: >
+      Brasseurs d'air : ventilateur de plafond fixe dans les chambres mono-orientées,
+      attentes électriques dans les autres pièces principales (2 si séjour > 20 m²) ;
+      au-dessus de 600 m : thermostats sur les équipements de chauffage.
+    reference: "Arrêté du 17/04/2009 (thermique) modifié, art. 10 et 13"
+    url: "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530547"
+    condition_altitude: "art. 10 exempté > 600 m"
+  - volet: acoustique
+    exigence: >
+      Séparatifs entre logements : paroi ≥ 350 kg/m² ou Rw+C ≥ 54 dB (57 dB face aux locaux
+      d'activité) ; plancher ≥ 450 kg/m² ou Rw+C ≥ 57 dB avec L'n,w ≤ 67 dB ; porte palière
+      Rw+C ≥ 28 dB.
+    reference: "Arrêté du 17/04/2009 (acoustique) modifié 11/01/2016, art. 3 et 4"
+    url: "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530580"
+  - volet: acoustique
+    exigence: >
+      Équipements : chauffage/climatisation individuels ≤ 35 dB(A) en pièces principales,
+      ≤ 50 dB(A) en cuisine ; VMC ≤ 35 dB(A). En secteur affecté par une infrastructure
+      classée : isolement de façade DnT,A,tr requis (rue en U : 40/37/33 dB selon catégorie).
+    reference: "Arrêté du 17/04/2009 (acoustique) modifié, art. 7, 8 et 11"
+    url: "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530580"
+  - volet: aeration
+    exigence: >
+      Cuisine : baie ≥ 1 m² sur l'extérieur (dont 0,2 m² au-dessus de 1,9 m) ; salle de
+      bains ≥ 0,30 m² et WC ≥ 0,15 m², sinon extraction mécanique (cuisine 20/30/45 m³/h
+      selon typologie, SdB 15-30, WC 15).
+    reference: "Arrêté du 17/04/2009 (aération) modifié 11/01/2016, art. 3 et 4"
+    url: "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530610"
+  - volet: aeration
+    exigence: >
+      Pièces climatisées ou façades soumises à isolement acoustique : ventilation mécanique
+      obligatoire avec entrées d'air (pièces principales 35 m³/h en dépression, ou
+      insufflation 20/40 m³/h chambre/séjour).
+    reference: "Arrêté du 17/04/2009 (aération) modifié, art. 5 à 7"
+    url: "https://www.legifrance.gouv.fr/loda/id/JORFTEXT000020530610"
+  - volet: ecs
+    exigence: >
+      Tout logement neuf est pourvu d'un système d'ECS ; l'eau chaude est produite à au
+      moins 50 % des besoins par sources de chaleur RENOUVELABLES (solaire thermique en
+      pratique à La Réunion), sauf potentiel insuffisant de la parcelle. Depuis 2025 ce
+      n'est plus « solaire » strict (ancien R.162-2 abrogé).
+    reference: "CCH art. R.192-2 (décret n°2024-168), en vigueur 01/01/2025"
+    url: "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000049228826"

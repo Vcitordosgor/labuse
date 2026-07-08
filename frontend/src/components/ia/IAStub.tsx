@@ -67,12 +67,17 @@ export function IAStub() {
           Décrivez ce que vous cherchez — la demande devient des <b>filtres</b> (validés par schéma),
           appliqués à la carte et à la liste.
         </p>
-        {status.data?.provider === 'stub' && (
+        {(status.data?.provider === 'stub' || status.data?.raison) && (
           <div className="mt-3 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] leading-relaxed text-st-creuser">
-            <b>Mode dégradé : stub local (clé IA absente).</b> Les réponses sont des règles
-            déterministes, pas un modèle. Pour activer Anthropic : ajouter
-            <code className="mx-1 rounded bg-surface-3 px-1 font-mono text-[10px]">ANTHROPIC_API_KEY=…</code>
-            dans <code className="rounded bg-surface-3 px-1 font-mono text-[10px]">.env</code> puis relancer `labuse api`.
+            <b>Mode dégradé : stub local.</b>{' '}
+            {/* C1 : un DIAGNOSTIC, pas une devinette — la cause exacte vient du serveur */}
+            Cause : {status.data?.raison ?? 'indéterminée'}.
+            {status.data?.provider === 'stub' && (
+              <> Pour activer Anthropic : poser
+                <code className="mx-1 rounded bg-surface-3 px-1 font-mono text-[10px]">ANTHROPIC_API_KEY=…</code>
+                dans le <code className="rounded bg-surface-3 px-1 font-mono text-[10px]">.env</code> à la racine
+                (chargé automatiquement quel que soit le lanceur) puis relancer le serveur.</>
+            )}
           </div>
         )}
 

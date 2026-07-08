@@ -127,5 +127,77 @@ le plateau utile vit entre Q65-75 × A60-65 :
 | Q≥65 · A≥65 | 460 | 42 | 113 | 103 |
 | Q≥75 · A≥60 | 149 | 42 | 44 | 29 |
 | Q≥70 · A≥65 | 211 | 42 | 61 | 43 |
-**DÉCISION VIC : ______ (en attente — apply en minutes dès qu'elle tombe ; « garder la
-courante » = no-op vérifié, diff zéro).**
+**DÉCISION VIC (tranchée le 08/07/2026) : GARDER LA CONVENTION COURANTE — Q≥65 · A≥60
+(719 chaudes / 166 dossiers). Motif : signal jugé déjà resserré ; le simulateur permet de
+resserrer plus tard en minutes. Application = no-op prouvé diff zéro (rien à rejouer) ;
+seuils gravés comme convention officielle dans scoring_matrice.yaml (en-tête v2 mis à jour).**
+
+## Correctifs revue Vic (08/07) — audit C4 et chiffrages
+**Décomposition SQL des 393 110 écartées** (motifs cumulables) : déjà bâtie 195 209 (49,7 %) ·
+PPR rouge/aléa 106 798 (27,2 %) · zonage A/N 102 663 (26,1 %) · Q<50 sans exclusion 50 825
+(12,9 %) · surface <100 m² 38 588 · pente 14 831 · forêt/parc 9 697 · prescriptions 5 077 ·
+OSM 1 526 · eau 316. Popover entonnoir servi par `entonnoir_motifs` (matérialisé, rebuild à
+chaque matrice-apply).
+**Verdict G5/UNKNOWN (doute Vic) : RÉFUTÉ** — aucune garde « sans résiduel » n'existe dans la
+cascade ; `residuel_socle` n'émet JAMAIS de HARD_EXCLUDE (UNKNOWN → complétude). Les 39 % de
+couverture SDP manquante n'écartent rien à tort.
+**⚠ DÉCOUVERTE À ARBITRER (cascade asymétrique)** : Saint-Paul a été évalué avec TROIS couches
+jamais committées (foncier_public → 4 769 exclusions, emprise_lineaire → 1 727,
+residuel_socle → poids Q) que les 23 autres communes n'ont pas. Options : (a) recompute
+Saint-Paul avec le code committé (cohérence stricte, ses chiffres bougent) ; (b) implémenter
+les 3 couches île entière (= prep-recompute complet + recompute 4 h). AUCUNE action sans
+décision — la cascade est hors périmètre du mandat correctifs.
+**Chiffrage C6 (couches carte en mode île, MVT)** : zonage PLU = 6 306 polygones / 29 Mo →
+même mécanique que mvt_parcels (table matérialisée + endpoint) ≈ **0,5 jour, candidat n°1
+trivial** ; PPR ≈ 165 polygones (déjà subdivisés) + parc national + équipements (points)
+≈ **+0,5 jour** pour les quatre couches. Total ≈ 1 jour pour ne plus rien désactiver en mode île.
+
+## Cascade homogénéisée — les 3 couches étendues aux 24 communes (08/07/2026)
+**L'asymétrie découverte à l'audit C4 est RÉSOLUE** : foncier_public, emprise_lineaire et
+residuel_socle — actives à Saint-Paul seulement (implémentation jamais committée) — sont
+désormais GRAVÉES dans le code (src/labuse/cascade/layers/etage0_ext.py + cascade_rules.yaml,
+donc présentes dans tous les runs futurs) et appliquées aux 24 communes du run q_v2.
+**Fidélité prouvée deux fois** : le moteur reproduit 120/120 verdicts SP échantillonnés, et le
+générateur set-based reproduit les **153 387 lignes de Saint-Paul à ZÉRO écart** (détails,
+poids, sévérités, sources). Le backfill set-based ≡ re-run (couches indépendantes, poids
+nullifiés sur les parcelles exclues comme au moteur).
+
+**Nouveaux totaux île** : opportunités **38 553 → 23 656** (baisse SAINE : 36 379 parcelles
+publiques + 13 801 délaissés linéaires écartés motivés) · chaudes 719 → **1 083** ·
+à surveiller 2 215 → **6 570** · à creuser 35 619 → 16 003 · dossiers chauds 166 → **365**.
+La hausse des chaudes/surveiller n'est pas un paradoxe : residuel_socle porte aussi des POIDS
+Q (+5…+30) dont Saint-Paul bénéficiait seul — les 23 communes retrouvent le même barème
+(Saint-Paul : delta strictement 0, preuve d'idempotence).
+
+| Commune | Chaudes av→ap | Promues av→ap | Δ promues |
+|---|---|---|---:|
+| Saint-Pierre | 64→137 | 6 443→3 061 | −3 382 |
+| Saint-Leu | 27→64 | 3 931→2 293 | −1 638 |
+| Le Port | 11→52 | 1 815→437 | −1 378 |
+| Saint-Benoît | 16→42 | 3 196→1 819 | −1 377 |
+| Saint-Joseph | 34→57 | 3 650→2 297 | −1 353 |
+| Saint-Louis | 43→49 | 2 609→1 422 | −1 187 |
+| Sainte-Marie | 32→65 | 2 520→1 343 | −1 177 |
+| Le Tampon | 14→54 | 3 653→2 758 | −895 |
+| La Possession | 75→63 | 2 078→1 263 | −815 |
+| L'Étang-Salé | 13→26 | 1 181→631 | −550 |
+| Saint-Denis | 4→40 | 1 056→558 | −498 |
+| Sainte-Suzanne | 3→8 | 958→515 | −443 |
+| Petite-Île | 1→3 | 895→502 | −393 |
+| Bras-Panon | 3→12 | 643→310 | −333 |
+| Les Avirons | 0→6 | 330→270 | −60 |
+| Cilaos | 0→3 | 250→205 | −45 |
+| Saint-Philippe | 0→0 | 29→22 | −7 |
+| **Saint-Paul (réf.)** | **375→375** | **2 349→2 349** | **0** |
+| Sainte-Rose | 1→2 | 363→368 | +5 |
+| Les Trois-Bassins | 1→3 | 66→85 | +19 |
+| Entre-Deux | 0→3 | 233→261 | +28 |
+| Salazie | 0→2 | 66→115 | +49 |
+| Plaine-des-Palmistes | 0→0 | 2→106 | +104 |
+| Saint-André | 2→17 | 237→666 | +429 |
+
+Canaris : AC0253 chaude (événement) ✓ · CR1231 chaude (événement) ✓ · aucune commune à 0
+promue ✓. Échantillon d'absurdité (/tmp/echantillon_absurdite.txt, repris ci-dessous en
+extrait) : prison de Domenjod (État/Justice, 57 554 m²), Groupe hospitalier Sud, syndicat
+des déchets, parcelles communales, délaissés de 1-3 m de large — ce qui sort méritait de
+sortir. L'ancien « arbitrage Vic requis » est levé : **étendu aux 24 le 08/07**.

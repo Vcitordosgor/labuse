@@ -47,7 +47,31 @@ def ensure_tables(engine) -> None:
         c.execute(text(DDL_IA))
 
 
+#: dernier échec du provider réel (diagnostic C1) — None = dernier appel OK
+_DERNIERE_ERREUR: str | None = None
+
+
+def _note_erreur(exc: Exception) -> None:
+    """Classe l'échec pour le bandeau : clé invalide vs erreur API — un diagnostic, pas une
+    devinette. Remis à None au premier appel réussi."""
+    global _DERNIERE_ERREUR
+    name = type(exc).__name__
+    if "Authentication" in name or "401" in str(exc):
+        _DERNIERE_ERREUR = "clé invalide (authentification refusée par l'API Anthropic)"
+    elif "Permission" in name or "403" in str(exc):
+        _DERNIERE_ERREUR = "clé refusée (permissions insuffisantes)"
+    else:
+        _DERNIERE_ERREUR = f"erreur API Anthropic ({name})"
+
+
+def _note_succes() -> None:
+    global _DERNIERE_ERREUR
+    _DERNIERE_ERREUR = None
+
+
 def _has_key() -> bool:
+    # config importe load_dotenv(racine/.env) — la clé est là quel que soit le lanceur (C1)
+    from .. import config as _cfg  # noqa: F401  (garantit le chargement du .env racine)
     return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
@@ -62,6 +86,9 @@ def _log(db: Session, kind: str, model: str, stub: bool, tin: int = 0, tout: int
 @router.get("/status")
 def ia_status() -> dict:
     return {"provider": "anthropic" if _has_key() else "stub",
+            "raison": (None if (_has_key() and not _DERNIERE_ERREUR)
+                       else _DERNIERE_ERREUR if _has_key()
+                       else "ANTHROPIC_API_KEY absente de l'environnement (.env racine non chargé ou clé non posée)"),
             "modeles": {"recherche": MODEL_NL, "synthese": MODEL_SYNTH},
             "doctrine": "l'IA ne calcule ni ne modifie aucun score ; aucun accès base"}
 
@@ -234,10 +261,23 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
     if _has_key():
         import anthropic
         client = anthropic.Anthropic(timeout=20.0, max_retries=2)
-        msg = client.messages.create(
-            model=MODEL_NL, max_tokens=400,
-            system=_NL_SYSTEM.format(schema=json.dumps(FILTER_SCHEMA, ensure_ascii=False)),
-            messages=[{"role": "user", "content": body.text}])
+        try:
+            msg = client.messages.create(
+                model=MODEL_NL, max_tokens=400,
+                system=_NL_SYSTEM.format(schema=json.dumps(FILTER_SCHEMA, ensure_ascii=False)),
+                messages=[{"role": "user", "content": body.text}])
+        except Exception as exc:   # clé invalide / API down → diagnostic + repli stub GRACIEUX
+            _note_erreur(exc)
+            prog = _stub_programme(body.text.lower())
+            if prog:
+                _log(db, "search", "stub-fallback", True)
+                return {"stub": True, "programme": prog, "explanation": "Programme détecté (repli stub)."}
+            filters, explanation = _stub_nl(body.text)
+            _log(db, "search", "stub-fallback", True)
+            if filters is None:
+                return {"stub": True, "out_of_scope": explanation}
+            return {"stub": True, "filters": filters, "explanation": explanation + " (repli stub)"}
+        _note_succes()
         raw = msg.content[0].text.strip()
         _log(db, "search", MODEL_NL, False, msg.usage.input_tokens, msg.usage.output_tokens)
         if raw.startswith("```"):
@@ -322,8 +362,13 @@ _SYNTH_SYSTEM = ("Tu rédiges une synthèse de prospection foncière EXCLUSIVEME
 def _real_text(db: Session, kind: str, system: str, payload: dict) -> str:
     import anthropic
     client = anthropic.Anthropic(timeout=30.0, max_retries=2)
-    msg = client.messages.create(model=MODEL_SYNTH, max_tokens=700, system=system,
-                                 messages=[{"role": "user", "content": json.dumps(payload, ensure_ascii=False)}])
+    try:
+        msg = client.messages.create(model=MODEL_SYNTH, max_tokens=700, system=system,
+                                     messages=[{"role": "user", "content": json.dumps(payload, ensure_ascii=False)}])
+    except Exception as exc:
+        _note_erreur(exc)
+        raise
+    _note_succes()
     _log(db, kind, MODEL_SYNTH, False, msg.usage.input_tokens, msg.usage.output_tokens)
     return msg.content[0].text
 

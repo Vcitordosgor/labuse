@@ -37,7 +37,7 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] 
 ]
 
 export function MapToolbar() {
-  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, commune } = useApp()
+  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, commune, setToast } = useApp()
   const [bmOpen, setBmOpen] = useState(false)
   const ile = commune == null
 
@@ -108,10 +108,11 @@ export function MapToolbar() {
           return (
             <button
               key={t.key}
-              disabled={off}
-              onClick={() => setTool(tool === t.key ? null : t.key)}
+              onClick={() => off
+                ? setToast('Le filtre de zone se dessine par commune — choisissez une commune dans le sélecteur pour l’activer.')
+                : setTool(tool === t.key ? null : t.key)}
               className={`flex h-9 w-9 items-center justify-center border-b border-line-2 last:border-0 ${
-                off ? 'cursor-not-allowed text-[#2E3A33]'
+                off ? 'text-[#2E3A33]'
                   : tool === t.key ? 'bg-[#0F1A14] text-mint' : 'text-txt-mut hover:text-txt'}`}
               title={off ? 'Zone — sélectionnez d’abord une commune (le filtre de zone est par commune)' : `${t.label} — ${t.hint}`}
             >

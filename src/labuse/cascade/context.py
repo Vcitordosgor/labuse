@@ -479,3 +479,30 @@ class EvalContext:
             ).scalar()
             self._source_ids[name] = sid
         return self._source_ids[name]
+
+    # ── helpers ÉTAGE 0 étendu (mandat cascade île, 08/07/2026) ──
+    def owner_pm(self, parcel_id: int) -> dict | None:
+        """Personne morale propriétaire (DGFiP) — None si personne physique / inconnue."""
+        r = self.session.execute(text(
+            """SELECT pm.groupe, pm.groupe_label, pm.denomination
+               FROM parcelle_personne_morale pm JOIN parcels p ON p.idu = pm.idu
+               WHERE p.id = :pid LIMIT 1"""), {"pid": parcel_id}).mappings().first()
+        return dict(r) if r else None
+
+    def oriented_envelope_dims(self, parcel_id: int) -> dict | None:
+        """Largeur (petit côté) et allongement (grand/petit) de l'enveloppe ORIENTÉE (2975)."""
+        r = self.session.execute(text(
+            """WITH e AS (SELECT ST_OrientedEnvelope(geom_2975) AS g FROM parcels WHERE id = :pid)
+               SELECT ST_Distance(ST_PointN(ST_ExteriorRing(g),1), ST_PointN(ST_ExteriorRing(g),2)) AS c1,
+                      ST_Distance(ST_PointN(ST_ExteriorRing(g),2), ST_PointN(ST_ExteriorRing(g),3)) AS c2
+               FROM e WHERE GeometryType(g) = 'POLYGON'"""), {"pid": parcel_id}).first()
+        if not r or not r[0] or not r[1] or min(r[0], r[1]) <= 0:
+            return None
+        w = min(r[0], r[1])
+        return {"largeur_m": float(w), "allongement": float(max(r[0], r[1]) / w)}
+
+    def residuel_sdp(self, parcel_id: int) -> float | None:
+        v = self.session.execute(text(
+            "SELECT sdp_residuelle_m2 FROM parcel_residuel WHERE parcel_id = :pid"),
+            {"pid": parcel_id}).scalar()
+        return float(v) if v is not None else None

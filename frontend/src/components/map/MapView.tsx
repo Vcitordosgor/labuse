@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getCommunes, getFiche, getMapLayer, getParcelsGeojson } from '../../lib/api'
+import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, parcelAt } from '../../lib/api'
 import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { Legend } from './Legend'
@@ -15,6 +15,13 @@ const WMTS = (layer: string, format: string) =>
 const BASEMAP_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzoom?: number }> = {
   'bm-carto': {
     tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
+    attribution: '© OSM · CARTO',
+  },
+  // C3 (revue Vic) : sous z10 en mode île, les noms de localités du fond doublonnent nos
+  // marqueurs communes → variante SANS labels (même fournisseur). Aux zooms parcellaires,
+  // les labels du fond redeviennent utiles : on ne les retire QUE là où les marqueurs règnent.
+  'bm-carto-nolabels': {
+    tiles: ['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png'],
     attribution: '© OSM · CARTO',
   },
   'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme' },
@@ -74,7 +81,13 @@ const OVERLAYS = {
   },
   ppr: { paint: { 'fill-color': '#E8695A', 'fill-opacity': 0.14 } },
   parc: { paint: { 'fill-color': '#4ADE96', 'fill-opacity': 0.10 } },
+  anru: { paint: { 'fill-color': '#8FB4F0', 'fill-opacity': 0.16 } },
 } as const
+
+//: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 5 catégories, couleurs différenciées
+const EQUIP_CATS = ['mairie', 'ecole', 'sante', 'police', 'sport'] as const
+const EQUIP_COLOR: maplibregl.ExpressionSpecification = ['match', ['get', 'subtype'],
+  'mairie', '#B497F0', 'ecole', '#5CE6A1', 'sante', '#E8695A', 'police', '#8FB4F0', 'sport', '#E8B44C', '#8FA69A']
 
 /** Machine à mesurer : points cliqués + rendu geojson + lecture (distance/surface/alti/zone). */
 interface Measure {
@@ -96,10 +109,23 @@ export function MapView() {
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
 
+  // z<10 : les marqueurs communes règnent (bandeau contextuel + labels du fond retirés — C3)
+  const [lowZoom, setLowZoom] = useState(false)
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    const h = () => setLowZoom(m.getZoom() < 10)
+    h()
+    m.on('zoom', h)
+    return () => { m.off('zoom', h) }
+  }, [mapReady])
+
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   const zonage = useQuery({ queryKey: ['layer', 'zonage', commune], queryFn: () => getMapLayer('plu_gpu_zone'), enabled: layers.zonage && !ile })
   const ppr = useQuery({ queryKey: ['layer', 'ppr', commune], queryFn: () => getMapLayer('ppr'), enabled: layers.ppr && !ile })
   const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc && !ile })
+  const anru = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru && !ile })
+  const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite'), enabled: layers.equipements && !ile })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
 
   // ───────────────────────── init ─────────────────────────
@@ -189,6 +215,27 @@ export function MapView() {
         paint: { 'circle-radius': 4, 'circle-color': '#B497F0', 'circle-opacity': 0.85,
                  'circle-stroke-color': '#120d1d', 'circle-stroke-width': 1.2 } })
 
+      // équipements (points OSM, affichage seul) — cercles colorés, plancher z13 (pas
+      // d'icônes par milliers à l'écran), clic = nom de l'équipement
+      m.addSource('ov-equip', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-equip', type: 'circle', source: 'ov-equip', minzoom: 13,
+        layout: { visibility: 'none' },
+        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 17, 7],
+                 'circle-color': EQUIP_COLOR, 'circle-opacity': 0.9,
+                 'circle-stroke-color': '#06130C', 'circle-stroke-width': 1.2 } })
+      m.on('click', 'ov-equip', (e) => {
+        const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
+        if (!f) return
+        const cat = String(f.properties?.subtype ?? '')
+        const nom = f.properties?.name && f.properties.name !== 'null' ? String(f.properties.name) : '(sans nom OSM)'
+        new maplibregl.Popup({ closeButton: false, className: 'labuse-popup' })
+          .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat)
+          .setHTML(`<div style="background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px">${nom}<div style="color:#8FA69A;font-size:10px">${cat}</div></div>`)
+          .addTo(m)
+      })
+      m.on('mouseenter', 'ov-equip', () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
+      m.on('mouseleave', 'ov-equip', () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
+
       // zone dessinée persistante (filtre les résultats)
       m.addSource('zone', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'zone-fill', type: 'fill', source: 'zone', paint: { 'fill-color': '#5CE6A1', 'fill-opacity': 0.06 } })
@@ -210,6 +257,17 @@ export function MapView() {
         m.on('mouseenter', layerId, () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
         m.on('mouseleave', layerId, () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
       }
+      // C7 (décision Vic) : CLIC UNIVERSEL — si aucune feature parcelle vectorielle sous le
+      // curseur (trame raster/limites, zoom promues-only…), le serveur résout point→parcelle.
+      m.on('click', (e) => {
+        if (toolRef.current) return
+        const hits = m.queryRenderedFeatures(e.point, { layers: ['parcels-fill', 'ile-fill'].filter((l) => !!m.getLayer(l)) })
+        if (hits.length > 0) return   // le handler de calque a déjà ouvert la fiche
+        parcelAt(e.lngLat.lng, e.lngLat.lat).then((r) => {
+          if (r.idu) select(r.idu)
+        }).catch(() => undefined)
+      })
+
       ready.current = true
       setMapReady(true)
       ;(window as unknown as Record<string, unknown>).__labuse_map = m // hook QA (ping sémantique)
@@ -227,15 +285,20 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc]]
+    const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc], ['anru', anru]]
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
-  }, [zonage.data, ppr.data, parc.data, mapReady])
+    if (equip.data) {
+      const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
+      ;(m.getSource('ov-equip') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: feats } as never)
+    }
+  }, [zonage.data, ppr.data, parc.data, anru.data, equip.data, mapReady])
 
   // ───────────────────────── fond de plan + relief ─────────────────────────
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    const active = basemap === 'dark' ? 'bm-carto' : basemap === 'plan' ? 'bm-plan'
+    const active = basemap === 'dark' ? (ile && lowZoom ? 'bm-carto-nolabels' : 'bm-carto')
+      : basemap === 'plan' ? 'bm-plan'
       : orthoYear === '2000' ? 'bm-ortho-2000' : orthoYear === '1950' ? 'bm-ortho-1950' : 'bm-ortho-now'
     for (const id of Object.keys(BASEMAP_SOURCES)) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none')
@@ -245,7 +308,7 @@ export function MapView() {
       m.setPaintProperty('parcels-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
       m.setPaintProperty('ile-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
     }
-  }, [basemap, orthoYear, mode, filters.statuts, mapReady])
+  }, [basemap, orthoYear, mode, filters.statuts, mapReady, ile, lowZoom])
 
   useEffect(() => {
     const m = map.current
@@ -278,6 +341,8 @@ export function MapView() {
     m.setLayoutProperty('ov-zonage', 'visibility', vis(layers.zonage && !ile))
     m.setLayoutProperty('ov-ppr', 'visibility', vis(layers.ppr && !ile))
     m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc && !ile))
+    m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru && !ile))
+    m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements && !ile))
     const expr = toExpr(filters)
     for (const fill of ['parcels-fill', 'ile-fill']) {
       m.setFilter(fill, expr)
@@ -327,18 +392,6 @@ export function MapView() {
     m.on('zoom', updateVis)
     return () => { m.off('zoom', updateVis); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
   }, [ile, communes.data, mapReady])
-
-  // le bandeau bas ne donne JAMAIS une instruction inexécutable : sous z10 en mode île,
-  // aucune parcelle n'est cliquable → « Zoomez ou cliquez une commune »
-  const [lowZoom, setLowZoom] = useState(false)
-  useEffect(() => {
-    const m = map.current
-    if (!m || !ready.current) return
-    const h = () => setLowZoom(m.getZoom() < 10)
-    h()
-    m.on('zoom', h)
-    return () => { m.off('zoom', h) }
-  }, [mapReady])
 
   // changement de commune → recadrage sur son emprise (bbox servie par /communes)
   useEffect(() => {

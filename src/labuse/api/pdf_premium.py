@@ -108,9 +108,13 @@ def render_fiche_pdf(fiche: dict) -> bytes:
              new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
 
-    # ── Bandeau événement (héros)
+    # ── Bandeau événement (héros) — C5 : il raconte SON histoire en une phrase
     if fiche.get("evenement") == "rouge":
-        detail = fiche.get("evenement_detail") or ""
+        pm = (fiche.get("proprietaire_moral") or {}).get("denomination")
+        detail = (f"Chaude par ÉVÉNEMENT : le propriétaire{f' ({pm})' if pm else ''} est en "
+                  f"procédure collective — {fiche.get('evenement_detail') or 'procédure BODACC ouverte'}. "
+                  f"Le score qualité ({fiche.get('q_score')}) n'a pas déclenché ce statut : "
+                  "l'urgence du dossier vendeur prime (doctrine bascule).")
         # hauteur du bandeau = titre + détail wrap (mesuré avant de peindre le fond)
         pdf.set_font("inter", size=7)
         n_lines = max(1, len(pdf.multi_cell(pdf.w - 36, 3.6, detail, dry_run=True, output="LINES")))
@@ -162,6 +166,71 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.set_text_color(*TXT_DIM)
         pdf.cell(cw - 10, 4, f"{k} / 100" if k != "COMPLÉTUDE" else f"{k} %")
     pdf.set_y(y + 21)
+
+    # ── CONTEXTE COMMUNE (mandat promotrice) — SRU · QPV/ANRU · marché, sourcé
+    ctx = fiche.get("contexte_commune") or {}
+    if ctx:
+        pdf.set_font("mono", size=6.6)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 4, f"CONTEXTE COMMUNE — {fiche.get('commune', '').upper()}",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=7.6)
+        pdf.set_text_color(40, 50, 45)
+        lignes = []
+        sru = ctx.get("sru")
+        if sru:
+            st = {"carencee": "CARENCÉE", "deficitaire": "déficitaire",
+                  "exemptee": "exemptée 2023-2025", "conforme": "conforme"}.get(sru["statut"], sru["statut"])
+            lignes.append(f"SRU : {sru['taux_lls']} % de logements sociaux — objectif {sru['objectif_pct']} % — {st}"
+                          + (f" (prélèvement 2025 : {int(sru['prelevement_eur']):,} €)".replace(",", " ")
+                             if (sru.get("prelevement_eur") or 0) > 0 else ""))
+        qpv, anru = ctx.get("qpv") or [], ctx.get("anru") or []
+        lignes.append(f"Politique de la ville : {len(qpv)} QPV (génération 2024)"
+                      + (f" · NPNRU : {', '.join(a['nom'] for a in anru)} (intérêt national)" if anru else " · aucun périmètre NPNRU"))
+        mar = ctx.get("marche")
+        if mar:
+            lignes.append(f"Marché (INSEE RP 2023) : {int(mar['logements']):,} logements — "
+                          f"{mar['locataires_pct']} % locataires · {mar['maisons_pct']} % maisons · "
+                          f"{mar['typologie'].get('vacance_pct')} % de vacance".replace(",", " "))
+        for ln_txt in lignes:
+            pdf.multi_cell(pdf.w - 28, 4.0, ln_txt, new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=6.2)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 3.6, "Sources : inventaire SRU DHUP (01/01/2024) · DEAL Réunion/ANCT (NPNRU) · "
+                         "INSEE RP 2023 — contexte informatif, hors scoring.", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(2)
+
+    # ── RTAA DOM (5bis) — rappel réglementaire de conception (vérifié Légifrance)
+    rtaa = fiche.get("rtaa") or {}
+    if rtaa:
+        pdf.set_font("mono", size=6.6)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 4, "RTAA DOM — RAPPEL RÉGLEMENTAIRE (CONSTRUCTION NEUVE DE LOGEMENTS)",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=7.2)
+        pdf.set_text_color(40, 50, 45)
+        resume = {
+            "thermique": "Protection solaire (parois : S<=0,03/0,09 ; baies : S max par orientation, "
+                         "seuils 400/600 m) · ventilation naturelle traversante (sejour 22 %, chambres 18 % "
+                         "sous 400 m ; exemption > 600 m, regime isolation) · brasseurs d'air.",
+            "acoustique": "Separatifs >= 350 kg/m2 ou Rw+C >= 54 dB · plancher >= 450 kg/m2 · equipements "
+                          "<= 35 dB(A) pieces principales · isolement de facade en secteur d'infrastructure classee.",
+            "aeration": "Cuisine : baie >= 1 m2 sur l'exterieur · SdB/WC ouvrants ou extraction mecanique · "
+                        "ventilation mecanique obligatoire si pieces climatisees.",
+            "ecs": "ECS obligatoire, produite a >= 50 % par sources de chaleur renouvelables "
+                   "(solaire thermique en pratique) — CCH R.192-2, en vigueur 01/01/2025.",
+        }
+        for volet, txt in resume.items():
+            pdf.set_font("inter", size=7.2)
+            pdf.multi_cell(pdf.w - 28, 3.8, f"{volet.upper()} — {txt}", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=6.2)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.multi_cell(pdf.w - 28, 3.4,
+                       "References : arretes du 17/04/2009 (thermique, acoustique, aeration) modifies par "
+                       "l'arrete du 11/01/2016 (PC/DP depuis le 01/07/2016) ; cadre CCH R.192-1 a R.192-4 "
+                       "(decret n 2024-168, 01/01/2025). Rappel de conception - ne remplace pas l'etude "
+                       "reglementaire du maitre d'oeuvre.", new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(2)
 
     # ── Lignes tracées, par onglet
     for key, titre in ONGLETS:

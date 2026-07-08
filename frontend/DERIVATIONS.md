@@ -196,3 +196,66 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   backup, régénérable par export).
 - **Marqueurs communes = DOM markers** (pas de couche symbol : aucune dépendance glyphes,
   cohérent avec les étiquettes de mesure) ; centroïde = centre bbox (suffisant à z<10).
+
+## Mandat contexte-commune (roadmap promotrice)
+- **Branche depuis feat/ile-entiere** (le merge île n'était pas encore dans main ; le volet
+  s'appuie sur le sélecteur/marqueurs île — un merge île→main rendra celle-ci propre).
+- **SRU** : au millésime 2025, les 24 communes 974 sont TOUTES soumises — le statut réel
+  supplémentaire est « exemptée 2023-2025 » (5 communes), restitué tel quel au lieu du
+  « non soumise » attendu par le mandat (la source prime).
+- **NPNRU** : périmètres DEAL = QPV génération 2015 ; la couche QPV de la base est en
+  génération 2024 → les deux coexistent, correspondance des codes portée dans attrs.
+  « Adjacente » = ≤ 100 m (seuil affiché, arbitraire assumé).
+- **Équipements** : catégories d'affichage (mairie/police/sport) SÉPARÉES des 4 catégories
+  qui nourrissent parcel_amenites (pas de purge croisée — le signal distance du scoring ne
+  dérive pas). Bbox par commune → les POI voisins débordent (voulu : l'école juste de
+  l'autre côté de la limite compte) ; cercles colorés + popup (pas d'icônes symbol : pas de
+  sprite dans le style), plancher z13. Câblage scoring = dette G3, non entamé.
+- **Typologie logement** : l'INSEE ne publie pas le Tn strict à la commune → répartition
+  par nombre de pièces (1p…5p+) affichée comme « proxy T1…T5+ », libellé explicite.
+- **PLH** : périmètre « social » variable selon les documents (LLTS+LLS seul, ou avec PLS)
+  → le % n'est posé QUE quand publié (TCO 47 %, CASUD 40 %) ; ailleurs l'absolu sourcé.
+  Les 5 PLH sont tous en bilan/révision (CASUD échu) — affiché tel quel.
+- **Entrées du volet** : ⓘ par ligne du sélecteur + bouton « ⓘ Contexte » quand une commune
+  est active (le marqueur île mène à la commune, donc au bouton — pas de 3e entrée).
+- **reliability_level** : enum existant (verifie/a_confirmer/sous_convention) — « officielle »
+  n'y est pas ; les 4 nouvelles sources sont « verifie ».
+- **POI Overpass** : miroirs capricieux (504 en rafale) → ré-ingestions avec retries ; état
+  final 24/24 communes, 5 874 POI d'affichage. Lacune source consignée : la mairie de
+  Bras-Panon n'est pas taguée `amenity=townhall` dans OSM (0 au compteur — honnête).
+- **RTAA DOM (5bis)** : tout le contenu vient de `config/rtaa_dom.yaml`, VÉRIFIÉ Légifrance
+  le 08/07/2026 (versions consolidées) — prise majeure : le cadre CCH a été réécrit au
+  01/01/2025 (R.192-1 à 192-4, décret 2024-168) et l'ECS n'est plus « solaire » strict mais
+  « ≥ 50 % chaleur renouvelable ». Seuils Réunion vérifiés : 400 m et 600 m — énoncés DANS
+  chaque exigence ; l'altitude de la parcelle n'est PAS calculée (pas de donnée parcellaire
+  d'altitude en base ; conditionner à la parcelle = backlog si le besoin se confirme).
+  Réserves du vérificateur consignées en tête du YAML (arrêté « indice de confort thermique »
+  introuvable, tableaux acoustiques condensés) — rien de non-vérifié n'est affiché.
+
+## Correctifs revue Vic (08/07)
+- **C2** : logo conservé = combo header (oiseau + « LABUSE ») ; le rail devient pur icônes.
+- **C3** : traitement par fond — Carto sombre → variante `dark_nolabels` sous z10 en mode île
+  (même fournisseur, zéro dépendance) ; ortho sans labels par nature ; Plan IGN inchangé
+  (choix délibéré d'utilisateur, surtout aux zooms parcellaires).
+- **C4** : chip renommé « Opportunités » ; déclencheur du popover = « pourquoi ? ▾ » sur la
+  ligne de cadrage (le chip garde son rôle de filtre).
+- **C7 voie technique** : trame = nos propres données (couche « limites » activée PAR DÉFAUT
+  + tuiles « tout » dès z12 — tuile dense ~850 Ko mesurée) plutôt que le raster PCI IGN
+  (lignes sombres illisibles sur fond sombre, pas d'inversion possible en raster). À z10-11
+  les parcelles sont sub-pixel : marqueurs communes + promues seules, assumé. Clic universel
+  = résolution serveur point→parcelle quand aucune feature vectorielle sous le curseur.
+- **Écartées opt-in** : le filtre statut explicite ÉLARGIT le périmètre promues côté SQL
+  (base_statuts) ; l'opacité 0,72 existante rend les écartées pleinement lisibles une fois
+  filtrées.
+
+## Extension cascade île (08/07)
+- **Règles extraites des verdicts, pas réinventées** : formats de détail, seuils (largeur<8 m
+  ET allongement>8× sur enveloppe ORIENTÉE ; groupes DGFiP 1/2/3/4/9 ; barème SDP
+  100/300/800/2000/5000) et sémantique des poids (NULL ⟺ parcelle exclue) rétro-déduits des
+  153 387 lignes de Saint-Paul — preuve : diff ZÉRO en régénération complète.
+- **weight_override** : le barème propre de residuel_socle (−25/−10, sévérité info) ne passe
+  par aucune sévérité standard → `Verdict.extra["weight_override"]` honoré par
+  compute_opportunity (additif, aucune couche historique ne pose la clé).
+- **Backfill set-based ≡ re-run** : couches indépendantes des autres verdicts → INSERT direct
+  + nullification des poids des parcelles nouvellement exclues (sémantique weights=[0]* du
+  moteur). Idempotent par commune. Les runs FUTURS passent par le moteur (couches enregistrées).

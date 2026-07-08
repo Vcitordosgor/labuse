@@ -53,6 +53,10 @@ def compute_opportunity(verdicts, ai_adjustment: int = 0, cfg: dict | None = Non
         if v.result == CascadeVerdict.SOFT_FLAG:
             sev = v.severity.value if isinstance(v.severity, Severity) else (v.severity or "moyen")
             w = -(penalty * mult.get(sev, 1))
+            # couches à barème PROPRE (ex. residuel_socle -25/-10) : poids explicite du verdict,
+            # hors sévérités standard — additif, aucune couche historique ne pose cette clé
+            if "weight_override" in (getattr(v, "extra", None) or {}):
+                w = float(v.extra["weight_override"])
             weights[i] = float(w)
             score += w
             if sev == Severity.FORT.value:

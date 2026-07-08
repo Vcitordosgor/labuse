@@ -8,13 +8,15 @@ const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
   { key: 'vue_mer', label: 'Vue mer', hint: 'liseré cyan (vue dégagée)' },
   { key: 'parc', label: 'Parc national' },
   { key: 'limites', label: 'Limites parcelles', hint: 'contours de toutes les parcelles' },
+  { key: 'anru', label: 'ANRU (NPNRU)', hint: 'périmètres de renouvellement urbain (8 quartiers d’intérêt national)' },
+  { key: 'equipements', label: 'Équipements', hint: 'mairie · écoles · santé · police/gendarmerie · sport (OSM, affichage seul)' },
 ]
 
 //: couches servies par commune (GeoJSON) — indisponibles en mode « Toute l'île » (payload)
-const COMMUNE_ONLY: (keyof LayerToggles)[] = ['zonage', 'ppr', 'parc']
+const COMMUNE_ONLY: (keyof LayerToggles)[] = ['zonage', 'ppr', 'parc', 'anru', 'equipements']
 
 function LayersSection() {
-  const { layers, toggleLayer, commune } = useApp()
+  const { layers, toggleLayer, commune, setToast } = useApp()
   const ile = commune == null
   return (
     <div className="px-5 pt-4">
@@ -24,8 +26,11 @@ function LayersSection() {
           const off = ile && COMMUNE_ONLY.includes(key)
           const on = layers[key] && !off
           return (
-            <button key={key} disabled={off} onClick={() => toggleLayer(key)}
-              className={`flex items-center gap-3 text-left ${off ? 'cursor-not-allowed opacity-45' : ''}`}
+            <button key={key}
+              onClick={() => off
+                ? setToast(`La couche « ${label} » s'affiche par commune — choisissez une commune dans le sélecteur pour l'activer.`)
+                : toggleLayer(key)}
+              className={`flex items-center gap-3 text-left ${off ? 'opacity-45' : ''}`}
               title={off ? `${label} — sélectionnez une commune (couche servie par commune)` : hint}>
               <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
                 {on && (

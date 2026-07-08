@@ -21,6 +21,14 @@ CATEGORIES = {
     "commerce": '["shop"~"^(supermarket|convenience|bakery|mall)$"]',
     "tcsp": '["highway"="bus_stop"]',
 }
+# catégories d'AFFICHAGE (mandat contexte-commune, liste promotrice) — la couche carte les
+# montre, le scoring ne les lit PAS (câblage = dette G3 au backlog). Séparées de CATEGORIES :
+# on n'y touche pas pour ne pas purger/dériver les POI qui alimentent parcel_amenites.
+CATEGORIES_AFFICHAGE = {
+    "mairie": '["amenity"="townhall"]',
+    "police": '["amenity"~"^(police)$"]',           # gendarmerie taguée amenity=police en OSM
+    "sport": '["leisure"~"^(sports_centre|stadium|pitch|swimming_pool)$"]',
+}
 DIST_COL = {"ecole": "dist_ecole_m", "sante": "dist_sante_m",
             "commerce": "dist_commerce_m", "tcsp": "dist_tcsp_m"}
 
@@ -63,6 +71,28 @@ def ingest_poi_commune(session: Session, commune: str,
             n += 1
         counts[cat] = n
     session.execute(text("UPDATE data_sources SET last_sync_at=now() WHERE name='OpenStreetMap / Overpass'"))
+    session.flush()
+    return counts
+
+
+def ingest_poi_affichage(session: Session, commune: str,
+                         bbox: tuple[float, float, float, float]) -> dict:
+    """Les 3 catégories d'AFFICHAGE (mairie/police/sport) pour une commune. Idempotent sur CES
+    subtypes uniquement — les 4 catégories du signal distance ne sont ni purgées ni re-tirées."""
+    sid = session.execute(
+        text("SELECT id FROM data_sources WHERE name='OpenStreetMap / Overpass'")).scalar()
+    session.execute(text(
+        "DELETE FROM spatial_layers WHERE commune=:c AND kind='amenite' AND subtype = ANY(:sub)"),
+        {"c": commune, "sub": list(CATEGORIES_AFFICHAGE)})
+    counts: dict[str, int] = {}
+    for cat, sel in CATEGORIES_AFFICHAGE.items():
+        data = _overpass(_query(sel, bbox))
+        n = 0
+        for lon, lat, nom in _points(data):
+            _insert_layer(session, "amenite", cat, nom, {"type": "Point", "coordinates": [lon, lat]},
+                          sid, commune, None, {"categorie": cat, "name": nom, "affichage_seul": True})
+            n += 1
+        counts[cat] = n
     session.flush()
     return counts
 

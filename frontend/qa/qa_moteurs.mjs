@@ -64,6 +64,7 @@ await page.screenshot({ path: `${OUT}/m16_assemblage.png` })
 // M17 ZAN
 await openModule('M17', 'Simulateur ZAN')
 assert((await page.locator('text=ZAN-compatibles').count()) > 0, 'M17 parcelles ZAN-compatibles')
+await page.waitForSelector('text=indicative', { timeout: 20000 })   // agrégat île sous charge
 assert((await page.locator('text=indicative').count()) > 0, 'M17 bandeau quotas en attente (honnête)')
 await page.screenshot({ path: `${OUT}/m17_zan.png` })
 

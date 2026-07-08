@@ -10,6 +10,8 @@ export interface LayerToggles {
   vue_mer: boolean
   parc: boolean
   limites: boolean
+  anru: boolean
+  equipements: boolean
 }
 
 // Filtres actifs — appliqués EN MÊME TEMPS à la carte, la liste et les compteurs, et
@@ -39,6 +41,12 @@ interface AppState {
   // et vit dans l'URL (#…&c=…). Sélecteur dans le header.
   commune: string | null
   setCommune: (c: string | null) => void
+  // volet CONTEXTE COMMUNE (SRU/ANRU/PLH/marché) — ouvert depuis le sélecteur ou le header
+  contexteCommune: string | null
+  setContexteCommune: (c: string | null) => void
+  // toast produit (C6) : une action utilisateur ne tombe JAMAIS dans le vide
+  toast: string | null
+  setToast: (t: string | null) => void
   view: View
   setView: (v: View) => void
   outilsOpen: boolean
@@ -97,6 +105,10 @@ export const useApp = create<AppState>((set) => ({
   commune: null,
   // changer de commune remet la zone dessinée à zéro (elle appartenait à l'ancienne emprise)
   setCommune: (commune) => set({ commune, zone: null }),
+  contexteCommune: null,
+  setContexteCommune: (contexteCommune) => set({ contexteCommune }),
+  toast: null,
+  setToast: (toast) => set({ toast }),
   view: 'cartes',
   setView: (view) => set({ view, outilsOpen: false }),
   outilsOpen: false,
@@ -105,7 +117,7 @@ export const useApp = create<AppState>((set) => ({
   select: (idu) => set({ selectedIdu: idu }),
   mode: 'verdict',
   setMode: (mode) => set({ mode }),
-  layers: { zonage: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: false },
+  layers: { zonage: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),

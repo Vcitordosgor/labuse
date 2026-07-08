@@ -242,7 +242,65 @@ def apply_convention(session: Session, run_label: str = "q_v2") -> dict:
             f"CANARI 97415000AC0253 = {canari!r} (attendu chaude PAR ÉVÉNEMENT) — la bascule "
             "BODACC est cassée, pas un seuil. Application stoppée, tuiles NON reconstruites.")
     n_mvt = build_mvt_table(session, run_label)
+    build_entonnoir(session, run_label)   # le popover entonnoir suit toujours la matrice
     return {"convention": cfg.get("convention"), "seuils": cfg["seuils"],
             "communes": len(communes), "mvt_parcelles": n_mvt, "canari_AC0253": canari,
             "statuts": {k: sum(s.get(k, 0) for s in stats.values())
                         for k in ("chaude", "a_surveiller", "a_creuser", "ecartee")}}
+
+
+#: buckets de l'ENTONNOIR (C4, revue Vic) — libellé humain → couches excluantes
+_ENTONNOIR_BUCKETS: list[tuple[str, list[str]]] = [
+    ("déjà bâtie", ["bati"]),
+    ("PPR rouge / aléa fort", ["risques"]),
+    ("zonage A/N non constructible", ["zonage_plu_gpu"]),
+    ("surface < 100 m²", ["surface"]),
+    ("pente > 60 %", ["pente"]),
+    ("faux positif OSM (école, cimetière, parking…)", ["osm_faux_positif"]),
+    ("forêt domaniale / cœur de parc", ["foret_publique", "parc_national"]),
+    ("prescription PLU (emplacements réservés…)", ["prescription_plu"]),
+    ("eau / trait de côte", ["eau", "trait_de_cote"]),
+    ("foncier public — domaine non acquérable", ["foncier_public"]),
+    ("emprise voirie / délaissé linéaire", ["emprise_lineaire"]),
+]
+
+
+def build_entonnoir(session: Session, run_label: str = "q_v2") -> int:
+    """Matérialise la décomposition des écartées PAR MOTIF (île + par commune) — le popover
+    entonnoir la sert instantanément. Une parcelle peut cumuler des motifs (affiché tel quel).
+    À reconstruire après chaque matrice (matrice-apply le fait)."""
+    session.execute(text("""
+        CREATE TABLE IF NOT EXISTS entonnoir_motifs (
+          run_label text, commune text, ord int, motif text, n bigint,
+          PRIMARY KEY (run_label, commune, motif))"""))
+    session.execute(text("DELETE FROM entonnoir_motifs WHERE run_label = :r"), {"r": run_label})
+    buckets_sql = " UNION ALL ".join(
+        f"SELECT {i + 2} AS ord, '{label.replace(chr(39), chr(39) * 2)}' AS motif, count(*) AS n, commune "
+        f"FROM ec WHERE layers && ARRAY[{', '.join(repr(x) for x in layers)}]::text[] GROUP BY commune"
+        for i, (label, layers) in enumerate(_ENTONNOIR_BUCKETS))
+    session.execute(text(f"""
+        WITH excl AS (
+          SELECT c.parcel_id, array_agg(DISTINCT c.layer_name)::text[] AS layers
+          FROM dryrun_cascade_results c
+          WHERE c.run_label = :r AND c.result = 'HARD_EXCLUDE' GROUP BY c.parcel_id),
+        ec AS (
+          SELECT d.parcel_id, p.commune, e.layers
+          FROM dryrun_parcel_evaluations d
+          JOIN parcels p ON p.id = d.parcel_id
+          LEFT JOIN excl e ON e.parcel_id = d.parcel_id
+          WHERE d.run_label = :r AND d.matrice_statut = 'ecartee'),
+        rows AS (
+          SELECT 0 AS ord, 'écartées (total)' AS motif, count(*) AS n, commune FROM ec GROUP BY commune
+          UNION ALL
+          SELECT 1, 'qualité insuffisante (Q<50, sans exclusion dure)', count(*), commune
+          FROM ec WHERE layers IS NULL GROUP BY commune
+          UNION ALL {buckets_sql})
+        INSERT INTO entonnoir_motifs (run_label, commune, ord, motif, n)
+        SELECT :r, commune, ord, motif, n FROM rows
+        UNION ALL
+        SELECT :r, '__ile__', ord, motif, sum(n) FROM rows GROUP BY ord, motif"""),
+        {"r": run_label})
+    n = session.execute(text("SELECT count(*) FROM entonnoir_motifs WHERE run_label = :r"),
+                        {"r": run_label}).scalar() or 0
+    session.commit()
+    return int(n)

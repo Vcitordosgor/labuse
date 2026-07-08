@@ -318,6 +318,22 @@ layers:
       bandes_tcsp_m: { plein: 300, demi: 800 }
       ponderations: { ecole: 0.30, commerce: 0.30, sante: 0.20, tcsp: 0.20 }
 
+  # ── ÉTAGE 0 ÉTENDU (mandat cascade île 08/07/2026) — actives à Saint-Paul depuis le run
+  # q_v2 (implémentation jamais committée, découverte à l'audit C4), GRAVÉES ici et étendues
+  # aux 24 communes. Règles = reproduction exacte des verdicts SP (diff zéro prouvé).
+  - name: foncier_public
+    phase: 1
+    enabled: true
+    params: {}
+  - name: emprise_lineaire
+    phase: 1
+    enabled: true
+    params: {}
+  - name: residuel_socle
+    phase: 1
+    enabled: true
+    params: {}
+
   # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
 
   - name: dvf

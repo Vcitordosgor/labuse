@@ -242,6 +242,48 @@ function BilanTab({ idu }: { idu: string }) {
         {b.fiscal.prime_vue_mer && <div className="mt-0.5 text-[#7DE8E0]">Vue mer dégagée — {b.fiscal.prime_vue_mer}</div>}
         <div className="mt-1 text-[10px] text-txt-dim">{b.fiscal.ta_note}</div>
       </Sec>
+      {b.rtaa && <RtaaBlock rtaa={b.rtaa} />}
+    </div>
+  )
+}
+
+/** RTAA DOM (mandat 5bis) — rappel réglementaire de CONCEPTION, vérifié Légifrance
+ *  (config/rtaa_dom.yaml). Les seuils d'altitude (400/600 m) sont énoncés dans chaque
+ *  exigence — l'altitude de la parcelle n'est pas calculée ici (consigné). */
+function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: { volet: string; exigence: string; reference: string; url: string; condition_altitude?: string }[] } }) {
+  const [open, setOpen] = useState(false)
+  const VOLET_COLOR: Record<string, string> = { cadre: '#8FA69A', thermique: '#E8B44C', acoustique: '#B497F0', aeration: '#7DE8E0', ecs: '#5CE6A1' }
+  return (
+    <div data-rtaa-block>
+      <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">RTAA DOM — RAPPEL RÉGLEMENTAIRE</p>
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
+        Construction neuve de logements : protection solaire, ventilation traversante,
+        acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).
+        <button onClick={() => setOpen((o) => !o)} className="ml-1.5 text-mint hover:underline">
+          {open ? 'replier' : `${rtaa.exigences.length} exigences →`}
+        </button>
+      </div>
+      {open && (
+        <div className="mt-1.5 flex flex-col gap-1.5">
+          {rtaa.exigences.map((e, i) => (
+            <div key={i} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
+              <span className="rounded-full px-1.5 py-0.5 font-mono text-[8.5px] font-semibold uppercase"
+                style={{ color: VOLET_COLOR[e.volet] ?? '#8FA69A', background: `${VOLET_COLOR[e.volet] ?? '#8FA69A'}18` }}>
+                {e.volet}
+              </span>
+              <p className="mt-1 text-[10.5px] leading-snug text-txt">{e.exigence}</p>
+              {e.condition_altitude && <p className="mt-0.5 text-[9.5px] text-st-creuser">altitude : {e.condition_altitude}</p>}
+              <a href={e.url} target="_blank" rel="noreferrer" className="mt-0.5 block text-[9.5px] text-[#7DE8E0] hover:underline">
+                {e.reference} ↗
+              </a>
+            </div>
+          ))}
+          <p className="text-[9px] leading-snug text-txt-dim">
+            {rtaa.meta.champ} Vérifié le {rtaa.meta.verifie_le} — rappel de conception, ne
+            remplace pas l'étude réglementaire du maître d'œuvre.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -291,6 +333,20 @@ export function Fiche({ idu }: { idu: string }) {
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
+      {f?.statut === 'ecartee' && (
+        <div data-bandeau-ecartee className="shrink-0 border-b border-line-2 bg-surface-2 px-5 py-2.5">
+          <div className="text-xs font-medium text-st-ecartee">LABUSE l'a écartée — voici pourquoi</div>
+          <div className="mt-1 flex flex-col gap-0.5">
+            {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').slice(0, 4).map((l) => (
+              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{l.layer}</b> — {l.detail}</div>
+            ))}
+            {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').length === 0 && (
+              <div className="text-[10.5px] text-txt-mut">Aucune exclusion dure : qualité insuffisante (Q {f.q_score} &lt; 50) — détail dans les onglets.</div>
+            )}
+          </div>
+          <div className="mt-1 text-[9.5px] text-txt-dim">Une écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.</div>
+        </div>
+      )}
       {f?.evenement === 'rouge' && (
         <div className="shrink-0 border-b border-[#5a2420] bg-[#3a1614] px-5 py-2.5">
           <div className="flex items-center gap-2 text-xs font-medium text-st-ecartee">● ÉVÉNEMENT — force « chaude »</div>
@@ -322,6 +378,9 @@ export function Fiche({ idu }: { idu: string }) {
           {meta && (
             <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${meta.color}22`, color: meta.color }}>
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}
+              {f?.evenement === 'rouge' && f.statut === 'chaude' && (
+                <span className="rounded-full bg-[#3a1614] px-1.5 text-[9px] font-semibold text-st-ecartee" title="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">· ÉVÉNEMENT</span>
+              )}
             </span>
           )}
         </div>
@@ -347,6 +406,15 @@ export function Fiche({ idu }: { idu: string }) {
         )}
         {f && tab === 'synthese' && (
           <>
+            {f.evenement === 'rouge' && f.statut === 'chaude' && (
+              <div data-histoire-evenement className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
+                Chaude par <b className="text-st-ecartee">ÉVÉNEMENT</b> : le propriétaire
+                {f.proprietaire_moral?.denomination ? <> (<b>{f.proprietaire_moral.denomination}</b>)</> : ''} est en
+                procédure collective{f.evenement_detail ? <> — {f.evenement_detail.replace(/^.*?:\s*/, '')}</> : ''}.
+                Le score qualité ({f.q_score}) n'a pas déclenché ce statut : c'est l'urgence
+                du dossier vendeur qui prime (doctrine bascule).
+              </div>
+            )}
             <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen />
             <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} />
             <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
