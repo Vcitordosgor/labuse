@@ -51,15 +51,20 @@ assert((await page.locator(`text=${stats.dossiers_chaudes.toLocaleString('fr-FR'
   `en-tête île : « ${stats.dossiers_chaudes} dossiers propriétaires identifiés »`)
 assert((await page.locator('text=sans identité').count()) > 0, 'en-tête île : reliquat « sans identité » affiché')
 
+// la taille du cluster SICN suit la CASCADE (2 délaissés écartés le 08/07 : 18→16) — le
+// test lit le SQL, il ne fige pas un chiffre
+const sicnN = sql(`SELECT count(*) FROM dryrun_parcel_evaluations d
+  JOIN parcels p ON p.id=d.parcel_id JOIN parcelle_personne_morale pm ON pm.idu=p.idu
+  WHERE d.run_label='q_v2' AND d.matrice_statut='chaude' AND pm.denomination='SICN'`)
 await page.goto(BASE + '#f=1&c=La%20Possession&st=chaude', { waitUntil: 'domcontentloaded' })
 await page.reload({ waitUntil: 'networkidle' })
 await page.waitForSelector('.overflow-y-auto > button', { timeout: 25000 })
 await page.waitForTimeout(2500)
-const badge = page.locator('text=même proprio ×18').first()
+const badge = page.locator(`text=même proprio ×${sicnN}`).first()
 const visible = await badge.isVisible().catch(() => false)
 const box = visible ? await badge.boundingBox() : null
 assert(visible && box && box.width > 0 && box.y >= 0 && box.y <= 900,
-  'badge « même proprio ×18 » (SICN) VISIBLE à l’écran dans la liste La Possession')
+  `badge « même proprio ×${sicnN} » (SICN, = SQL) VISIBLE dans la liste La Possession`)
 await page.screenshot({ path: `${OUT}/dossiers_sicn.png` })
 const title = await badge.getAttribute('title').catch(() => '')
 assert((title ?? '').includes('SICN'), 'tooltip du badge : le nom du propriétaire (SICN)')
