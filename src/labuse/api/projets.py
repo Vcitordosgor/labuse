@@ -354,6 +354,18 @@ def projet_patch(pid: int, body: ProjetPatchIn, db: Session = Depends(get_db)) -
     return {"ok": True, "projet": _projet_dict(p)}
 
 
+@router.delete("/{pid}")
+def projet_delete(pid: int, db: Session = Depends(get_db)) -> dict:
+    """Supprime un projet (les pistes CRM rattachées gardent leur parcelle : projet_id → NULL
+    par la FK ON DELETE SET NULL)."""
+    p = db.get(models.Projet, pid)
+    if not p:
+        raise HTTPException(404, "Projet inconnu")
+    db.delete(p)
+    db.flush()
+    return {"ok": True}
+
+
 @router.post("/{pid}/rejouer")
 def projet_rejouer(pid: int, db: Session = Depends(get_db)) -> dict:
     """Ouvrir = REJOUER : horodate l'exécution et rend la recette (filtres + programme)

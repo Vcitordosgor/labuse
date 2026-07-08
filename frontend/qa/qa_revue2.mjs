@@ -61,7 +61,7 @@ await page.locator('input[placeholder*="vue mer"]').fill('les chaudes de Saint-P
 await page.keyboard.press('Enter')
 await page.waitForSelector('header span:has-text("Chaude")', { timeout: 25000 })
 assert((await page.locator('[data-entretien]').count()) === 0, 'R2 : demande précise → ZÉRO question (pas d’entretien)')
-await page.waitForSelector('[data-ia-restitution]', { timeout: 15000 })   // stats+top async après apply
+await page.waitForSelector('[data-ia-restitution]', { timeout: 30000 })   // stats+top async après apply
 assert((await page.locator('[data-ia-restitution]').count()) > 0, 'R2 : restitution posée (précise)')
 await page.locator('[data-ia-restitution] button[title="Fermer"]').click()
 
@@ -81,7 +81,8 @@ await page.locator('[data-entretien-lancer]').click()
 await page.waitForSelector('[data-ia-restitution]', { timeout: 40000 })
 const resti = await page.locator('[data-ia-restitution]').innerText()
 assert(resti.includes('parcelles'), 'R2 : phrase de restitution VISIBLE')
-assert((await page.locator('[data-ia-top]').count()) === 3, 'R2 : les 3 meilleures cliquables')
+const nTop = await page.locator('[data-ia-top]').count()
+assert(nTop >= 3 && nTop <= 5, `R2 : les meilleures cliquables (${nTop}, top 3-5 en mode projet)`)
 // le compteur = SQL (communes du secteur Ouest)
 await page.waitForTimeout(1200)
 const countTxt = await page.locator('[data-ia-count]').innerText()

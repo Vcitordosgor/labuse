@@ -425,7 +425,9 @@ DÉROULÉ :
    Ne RE-DEMANDE JAMAIS une dimension déjà présente dans la fiche. Chaque question porte un
    `defaut` honnête (ce que tu retiens si l'utilisateur passe, ex. "→ toute l'île", "→ sans
    contrainte rédhibitoire"). Chips courtes (2 à 6). Si plus rien ne manque → questions = [].
-4. `pret` = true dès que type_programme ET perimetre sont connus (le reste est optionnel).
+4. `pret` = true dès que le PÉRIMÈTRE est déterminé — un secteur/des communes cités, OU « toute
+   l'île » par défaut quand l'utilisateur reste vague ou passe la question. Le type/l'ampleur
+   raffinent le programme mais NE BLOQUENT PAS le lancement (les questions restent proposées).
 5. `nom` = un nom de projet court et neutre (ex. "Résidence étudiante Ouest").
 Si le dernier message dit « je ne sais pas / passer » sur une dimension → applique le défaut
 honnête dans la fiche (ex. perimetre.mode "ile") et n'y reviens pas."""

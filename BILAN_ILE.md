@@ -201,3 +201,41 @@ promue ✓. Échantillon d'absurdité (/tmp/echantillon_absurdite.txt, repris ci
 extrait) : prison de Domenjod (État/Justice, 57 554 m²), Groupe hospitalier Sud, syndicat
 des déchets, parcelles communales, délaissés de 1-3 m de large — ce qui sort méritait de
 sortir. L'ancien « arbitrage Vic requis » est levé : **étendu aux 24 le 08/07**.
+
+## Copilote-projet — l'entretien qui crée un objet PROJET (08/07/2026)
+
+Le copilote cadreur (R2) devient un ACCOMPAGNEMENT : un entretien formalise l'opération du
+promoteur en une FICHE, produit un OBJET PROJET persistant, et restitue des parcelles dont
+le « pourquoi » est relié à SON programme. Trois vagues, une doctrine (l'IA interroge, le
+moteur répond — l'IA ne produit AUCUN chiffre).
+
+**V1 — l'objet.** Table `projets` (fiche jsonb validée + filtres/programme dérivés + statut +
+`derniere_execution_at`). CRUD (liste / ouvrir=REJOUER sur les données du jour / renommer /
+archiver / supprimer). Lien CRM `pipeline_entries.projet_id` (le kanban sait d'où vient une
+piste). Filtre `flags_exclus` (contraintes rédhibitoires → exclusion SQL).
+
+**V2 — l'entretien.** Deux voies (intention détectée `projet_intent` OU bouton « Décrire mon
+projet »). L'IA re-dérive la fiche entière chaque tour (validée FICHE_SCHEMA, vocabulaire
+fermé), reformule, pose ≤4 questions pour ce qui MANQUE, chacune skippable avec défaut honnête
+affiché ; la fiche se construit à l'écran (jauge). Arbitrages SOURCÉS : `/projets/reperes`
+sert par SQL le nb d'opportunités (q_v2), le prix médian DVF bâti et les communes carencées
+SRU sous les chips secteur. Garde-fou anti-opinion-marché (neutralisation testée).
+
+**V3 — la restitution reliée.** `/projets/apercu` assemble le « pourquoi » par parcelle depuis
+le MOTEUR (SDP résiduelle vs besoin M22, hauteur PLU vérifiée, statut/score, carence SRU).
+« Enregistrer ce projet » → objet ; « Exporter le PDF » (fiche de cadrage + top 5 avec
+pourquoi) ; « Affiner dans M22 » (formulaire pré-rempli — la vérité reste le formulaire).
+Rejouer passe par la même restitution.
+
+**QA :** `qa_projet.mjs` vert — parcours A (précis → entretien, M22, enregistrement, PDF 200),
+B (vague → 4 questions, skips à défaut affiché), C (« les chaudes de X » → zéro question, R2
+intact), D (rejeu → mêmes filtres), + test doctrine adversarial (opinion marché neutralisée).
+Passe finale 19 suites vertes.
+
+### Intention CRON (préparé, RIEN câblé)
+L'objet PROJET est la matière du futur radar personnel : `projets.filtres` est déjà le prédicat
+de match « nouveaux événements/parcelles ↔ projets actifs » ; `derniere_execution_at` donne le
+point de comparaison de fraîcheur ; le lien CRM permet de router une nouvelle piste vers le
+bon projet. Quand la fraîcheur arrivera, un cron n'aura qu'à : pour chaque `statut='actif'`,
+ré-évaluer `filtres` sur les parcelles/événements postérieurs à `derniere_execution_at` et
+notifier. Aucune de cette logique n'est écrite — seul le SCHÉMA la rend possible.

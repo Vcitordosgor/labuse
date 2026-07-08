@@ -380,3 +380,26 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   (`setM22Prefill` + module programme) — la VÉRITÉ reste le formulaire, éditable (doctrine).
 - **Rejouer = même restitution enrichie** : `ProjetsPanel` « Ouvrir » recalcule l'aperçu sur les
   données actuelles ; le projet étant déjà enregistré, le PDF est direct (pas de ré-enregistrement).
+
+## Copilote-projet — V4 : QA + doctrine (08/07)
+- **qa_projet.mjs** (parcours réels, clé posée) : A précis → entretien/fiche/M22/enregistrement/
+  PDF ; B vague → ≤4 questions, skip à défaut affiché ; C « les chaudes de X » → zéro entretien
+  (R2 intact) ; D rejeu → mêmes filtres. Suivi NON destructif (ensemble des ids avant/après —
+  ne supprime que ses créations). SKIP propre si provider ≠ anthropic (entretien réel requis).
+- **pret = périmètre déterminé** (pas type+périmètre) : un projet vague dont on passe le
+  périmètre bascule sur « toute l'île » et devient lançable ; le type/l'ampleur raffinent sans
+  bloquer. Sinon un skip du type (sans défaut de type) laissait `pret` faux à jamais.
+- **L'entretien se referme après « Lancer »** (`onClose`) : ré-ouvrir le copilote = recherche
+  fraîche (plus d'entretien fantôme).
+- **DELETE /projets/{pid}** ajouté (CRUD complet + hygiène QA) — les pistes CRM rattachées
+  gardent leur parcelle (FK ON DELETE SET NULL).
+- **Test doctrine adversarial** : une demande piège (« quel secteur est le plus porteur… »)
+  ne doit produire AUCUNE opinion marché non chiffrée dans la réponse (garde-fou neutralise).
+- **Restitution allégée** : le compteur+top 3 tirait `/parcels?limit=500` — sous la contention
+  réseau des tuiles « tout » (R1), la réponse mettait ~15-20 s à revenir (restitution en retard).
+  La restitution ne demande plus que 20 résultats (`getResults(f, 20)`) : réponse légère, bien
+  plus rapide. Amélioration UX réelle + QA stabilisée (timeouts restitution portés à 30-40 s).
+- **M22 pré-remplissage défensif** : le copilote peut fournir un programme partiel (« 3 immeubles
+  R+3 » sans nombre de logements → `logements_par_batiment: null`) ; le pré-remplissage ne
+  remplace plus QUE les champs non-nuls (les défauts du formulaire tiennent) — sinon `null`
+  écrasait le défaut et l'auto-run M22 échouait (422).

@@ -55,12 +55,14 @@ export function useApplySearch() {
 
     // restitution : compteur + les 3 meilleures, cliquables (best-effort — filtres déjà posés)
     try {
-      const [st, top] = await Promise.all([getStats(next), getResults(next)])
+      // top 3 seulement → limite basse (20) : sous contention de tuiles « tout », une réponse
+      // légère revient bien plus vite qu'un /parcels?limit=500 (la restitution est un flourish)
+      const [st, top] = await Promise.all([getStats(next), getResults(next, 20)])
       setIaRestitution({
         n: st.chaude + st.a_surveiller + st.a_creuser,
         phrase,
         top: top.slice(0, 3).map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score })),
       })
-    } catch { /* restitution best-effort */ }
+    } catch { /* restitution best-effort — les filtres sont déjà posés */ }
   }
 }

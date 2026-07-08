@@ -67,7 +67,7 @@ export const searchParcels = (needle: string) =>
     `/parcels/search?q=${encodeURIComponent(needle)}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
 export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)
-export const getResults = (f?: Filters) => j<ParcelResult[]>(`/parcels?${q({ limit: 500, ...(f ? filterParams(f) : {}) })}`)
+export const getResults = (f?: Filters, limit = 500) => j<ParcelResult[]>(`/parcels?${q({ limit, ...(f ? filterParams(f) : {}) })}`)
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
@@ -200,3 +200,4 @@ export const patchProjet = (id: number, body: { nom?: string; statut?: string; f
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const rejouerProjet = (id: number) =>
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}/rejouer`, { method: 'POST' })
+export const deleteProjet = (id: number) => j<{ ok: boolean }>(`/projets/${id}`, { method: 'DELETE' })

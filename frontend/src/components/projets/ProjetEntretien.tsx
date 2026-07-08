@@ -115,6 +115,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
         projet: { nom: d.nom, fiche: fiche as Record<string, unknown>, programme: d.programme },
       })
       useApp.getState().setProjetBrouillon({ fiche: fiche as Record<string, unknown>, nom: d.nom, filtres: d.filtres, sdp_besoin_m2: d.sdp_besoin_m2 })
+      onClose()   // l'entretien est terminé : ré-ouvrir le copilote = une recherche fraîche
     },
   })
 
