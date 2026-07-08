@@ -191,6 +191,11 @@ export const deriveProjet = (body: { fiche: FicheProjet; nom?: string }) =>
   j<ProjetDerive>('/projets/derive', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const createProjet = (body: { fiche: FicheProjet; nom?: string; filtres_extra?: Record<string, unknown> }) =>
   j<{ ok: boolean; projet: Projet }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export interface ApercuTop { idu: string; commune: string; statut: string | null; q_score: number | null; pourquoi: string[] }
+export interface Apercu { nom: string; n: number; sdp_besoin_m2: number | null; programme_defini: boolean; source: string; top: ApercuTop[] }
+export const getApercu = (fiche: FicheProjet, limit = 5) =>
+  j<Apercu>('/projets/apercu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fiche, limit }) })
+export const projetPdfUrl = (id: number) => `/projets/${id}/export.pdf`
 export const patchProjet = (id: number, body: { nom?: string; statut?: string; fiche?: FicheProjet }) =>
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const rejouerProjet = (id: number) =>

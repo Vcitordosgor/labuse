@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getProjets, patchProjet, rejouerProjet, type FicheProjet, type Projet } from '../../lib/api'
+import { getApercu, getProjets, patchProjet, rejouerProjet, type FicheProjet, type Projet } from '../../lib/api'
 import { useApplySearch } from '../../lib/useApplySearch'
 import { useApp } from '../../store/useApp'
 
@@ -50,11 +50,23 @@ function ProjetCard({ p }: { p: Projet }) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['projets'] }),
   })
   const rejouer = useMutation({
-    mutationFn: () => rejouerProjet(p.id),
-    onSuccess: async (d) => {
+    mutationFn: async () => {
+      const d = await rejouerProjet(p.id)
+      const ap = await getApercu(p.fiche)   // recette + pourquoi recalculés sur les données du JOUR
+      return { d, ap }
+    },
+    onSuccess: async ({ d, ap }) => {
       qc.invalidateQueries({ queryKey: ['projets'] })
-      // OUVRIR = REJOUER : la recette (filtres) réappliquée sur les données ACTUELLES
-      await apply(d.projet.filtres, `parcelles pour « ${d.projet.nom} » — voici les 3 meilleures`)
+      // OUVRIR = REJOUER : filtres réappliqués + restitution enrichie (déjà enregistré → PDF direct)
+      await apply(d.projet.filtres, `parcelles pour « ${d.projet.nom} »`)
+      useApp.getState().setIaRestitution({
+        n: ap.n,
+        phrase: ap.programme_defini
+          ? 'parcelles portent la capacité du programme — voici les meilleures'
+          : 'parcelles correspondent à votre projet — voici les meilleures',
+        top: ap.top.map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score ?? 0, pourquoi: t.pourquoi })),
+        projet: { nom: d.projet.nom, fiche: p.fiche as Record<string, unknown>, id: p.id },
+      })
       setView('cartes')
     },
   })

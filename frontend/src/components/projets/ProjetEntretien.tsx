@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { deriveProjet, getReperes, iaEntretien, type EntretienQuestion, type EntretienRep, type FicheProjet, type RepereOption } from '../../lib/api'
+import { deriveProjet, getApercu, getReperes, iaEntretien, type EntretienQuestion, type EntretienRep, type FicheProjet, type RepereOption } from '../../lib/api'
 import { useApplySearch } from '../../lib/useApplySearch'
 import { useApp } from '../../store/useApp'
 
@@ -96,11 +96,24 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
     (reperesQ.data?.options ?? []).find((o) => o.key === label || o.label === label)
 
   const lancer = useMutation({
-    mutationFn: () => deriveProjet({ fiche, nom }),
-    onSuccess: async (d) => {
-      await apply(d.filtres, `parcelles pour « ${d.nom} » — voici les 3 meilleures`)
+    mutationFn: async () => {
+      const d = await deriveProjet({ fiche, nom })
+      const ap = await getApercu(fiche)   // pourquoi PAR PARCELLE, sorti du moteur
+      return { d, ap }
+    },
+    onSuccess: async ({ d, ap }) => {
+      // la carte : filtres + verdict + vol caméra (chorégraphie partagée)
+      await apply(d.filtres, `parcelles pour « ${d.nom} »`)
       setView('cartes')
-      // transmet la fiche+dérivation à la restitution (bouton « Enregistrer ce projet », V3)
+      // la restitution ENRICHIE : compteur SQL + top avec « pourquoi » + contexte projet
+      useApp.getState().setIaRestitution({
+        n: ap.n,
+        phrase: ap.programme_defini
+          ? `parcelles portent la capacité du programme — voici les meilleures`
+          : `parcelles correspondent à votre projet — voici les meilleures`,
+        top: ap.top.map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score ?? 0, pourquoi: t.pourquoi })),
+        projet: { nom: d.nom, fiche: fiche as Record<string, unknown>, programme: d.programme },
+      })
       useApp.getState().setProjetBrouillon({ fiche: fiche as Record<string, unknown>, nom: d.nom, filtres: d.filtres, sdp_besoin_m2: d.sdp_besoin_m2 })
     },
   })

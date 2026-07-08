@@ -360,3 +360,23 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
 - **derive vs create** : « Lancer la recherche » appelle `POST /projets/derive` (nom + filtres +
   programme + SDP besoin, SANS persister) puis applique — la restitution proposera « Enregistrer
   ce projet » (V3) qui, lui, crée l'objet. `useApplySearch` mutualise la mise en scène.
+
+## Copilote-projet — V3 : la restitution reliée (08/07)
+- **Le « pourquoi » par parcelle sort du MOTEUR** (`POST /projets/apercu`) : si un programme est
+  défini, le top vient de M22 sens 2 (SDP résiduelle vs besoin, hauteur PLU vérifiée, marge de
+  capacité) ; sinon du run q_v2 trié par score. Les lignes sont ASSEMBLÉES depuis les données
+  (statut/score, SDP vs besoin, hauteur, carence SRU) — aucune valeur inventée. Un secteur
+  restreint le balayage île de M22 aux communes du secteur (post-filtre).
+- **derive vs apercu** : « Lancer la recherche » fait `deriveProjet` (filtres, carte) + `getApercu`
+  (pourquoi) → la restitution enrichie ; la carte garde la chorégraphie `useApplySearch`.
+- **Restitution mode PROJET** (panneau élargi) : top vertical avec pourquoi, « Enregistrer ce
+  projet » (crée l'objet), puis « Exporter le PDF » + « Affiner dans M22 » + « Mes projets → ».
+  Le mode recherche simple reste compact (inchangé).
+- **PDF projet** (`GET /projets/{id}/export.pdf`, `pdf_projet.py`) : réutilise fontes/palette de
+  `pdf_premium` (fond blanc, menthe en accents). Contenu = fiche de cadrage + top 5 parcelles
+  avec pourquoi + mention « estimations indicatives / aucun chiffre produit par l'IA ». L'aperçu
+  est RECALCULÉ à l'export (données du jour).
+- **M22 pré-rempli** : « Affiner dans M22 » injecte le programme dérivé dans le formulaire M22
+  (`setM22Prefill` + module programme) — la VÉRITÉ reste le formulaire, éditable (doctrine).
+- **Rejouer = même restitution enrichie** : `ProjetsPanel` « Ouvrir » recalcule l'aperçu sur les
+  données actuelles ; le projet étant déjà enregistré, le PDF est direct (pas de ré-enregistrement).

@@ -43,6 +43,16 @@ export interface ProjetBrouillon {
   sdp_besoin_m2: number | null
 }
 
+// restitution : compteur + top cliquables ; V3 : « pourquoi » par parcelle + contexte projet.
+export interface IaTop { idu: string; commune: string; q_score: number; pourquoi?: string[] }
+export interface IaRestitution {
+  n: number
+  phrase: string
+  top: IaTop[]
+  // présent = restitution de PROJET : active « Enregistrer ce projet » + « Exporter PDF »
+  projet?: { nom: string; fiche: Record<string, unknown>; id?: number; programme?: Record<string, unknown> | null } | null
+}
+
 export type Basemap = 'dark' | 'plan' | 'ortho'
 export type OrthoYear = 'now' | '2000' | '1950'
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
@@ -62,9 +72,10 @@ interface AppState {
   // « LABUSE a trié pour vous » allume couleurs + entonnoir + liste. URL : v=1.
   verdict: boolean
   setVerdict: (v: boolean) => void
-  // R2 : restitution chorégraphiée du copilote (compteur animé + top 3 cliquables)
-  iaRestitution: { n: number; phrase: string; top: { idu: string; commune: string; q_score: number }[] } | null
-  setIaRestitution: (r: { n: number; phrase: string; top: { idu: string; commune: string; q_score: number }[] } | null) => void
+  // R2 : restitution chorégraphiée du copilote (compteur animé + top 3 cliquables).
+  // V3 : le top peut porter le « pourquoi » relié au projet ; `projet` active « Enregistrer / PDF ».
+  iaRestitution: IaRestitution | null
+  setIaRestitution: (r: IaRestitution | null) => void
   // copilote-projet : brouillon issu de l'entretien (« Lancer la recherche ») → « Enregistrer ce projet » (V3)
   projetBrouillon: ProjetBrouillon | null
   setProjetBrouillon: (b: ProjetBrouillon | null) => void

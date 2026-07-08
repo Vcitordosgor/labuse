@@ -192,6 +192,93 @@ def _projet_dict(p: models.Projet) -> dict:
     }
 
 
+_STATUT_LABEL = {"chaude": "Chaude", "a_surveiller": "À surveiller", "a_creuser": "À creuser"}
+
+
+def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) -> list[str]:
+    """Le « pourquoi » d'une parcelle RELIÉ au projet — assemblé depuis les DONNÉES du moteur
+    (aucune valeur inventée). Ordre : verdict, capacité vs besoin, hauteur PLU, contexte."""
+    out: list[str] = []
+    statut = item.get("statut") or item.get("status")   # M22 → statut ; q_v2_list → status
+    st = _STATUT_LABEL.get(statut, statut or "—")
+    if item.get("q_score") is not None:
+        out.append(f"{st} · qualité {item['q_score']}/100")
+    else:
+        out.append(st)
+    sdp = item.get("sdp") or item.get("sdp_residuelle_m2")
+    if sdp and sdp_besoin:
+        pct = round(100 * sdp / sdp_besoin)
+        cmp = "couvre le besoin" if sdp >= sdp_besoin else f"{pct} % du besoin"
+        out.append(f"SDP résiduelle {round(sdp):,} m² pour {sdp_besoin:,} m² requis — {cmp}"
+                   .replace(",", " "))
+    elif sdp:
+        out.append(f"SDP résiduelle {round(sdp):,} m²".replace(",", " "))
+    if item.get("hauteur_plu_m") is not None:
+        ok = "vérifiée" if item.get("hauteur_verifiee") else "à instruire"
+        out.append(f"Hauteur PLU {item['hauteur_plu_m']:.0f} m ({ok})"
+                   + (f", zone {item['zone']}" if item.get("zone") else ""))
+    if item.get("commune") in carencees:
+        out.append("Commune carencée SRU — forte demande de logement social")
+    return out
+
+
+class ApercuIn(BaseModel):
+    fiche: dict
+    limit: int = 5
+
+
+@router.post("/apercu")
+def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
+    """Aperçu RELIÉ au projet : compteur SQL + top parcelles avec leur « pourquoi » SORTI DU
+    MOTEUR (SDP résiduelle vs besoin, hauteur PLU vérifiée, statut/score, carence SRU). Si un
+    programme est défini, le top vient de M22 (sens 2, trié par marge de capacité) ; sinon du
+    run q_v2 trié par score. Aucune valeur inventée."""
+    fiche = _valide_fiche(body.fiche or {})
+    filtres = derive_filtres(fiche)
+    programme = derive_programme(fiche)
+    sdp_besoin = derive_sdp_besoin(fiche)
+    communes = filtres.get("communes")
+    carencees = {r[0] for r in db.execute(text(
+        "SELECT commune FROM commune_contexte_sru WHERE statut = 'carencee'")).all()}
+    lim = max(1, min(body.limit, 20))
+
+    if programme:
+        from .modules import ProgrammeIn, faisabilite_sens2
+        res = faisabilite_sens2(ProgrammeIn(**programme), db)
+        items = res.get("items", [])
+        if communes:                                   # secteur : M22 balaie l'île → on restreint
+            items = [it for it in items if it["commune"] in communes]
+        n = len(items)
+        top = items[:lim]
+        source = "m22"
+    else:
+        from .app import _q_v2_list, _q_v2_where
+        where, params = _q_v2_where("q_v2", ",".join(filtres.get("statuts") or []) or None,
+                                    filtres.get("scoreMin"), filtres.get("surfaceMin"),
+                                    filtres.get("surfaceMax"), filtres.get("sdpMin"),
+                                    bool(filtres.get("evenement")), bool(filtres.get("vueMer")),
+                                    ",".join(filtres.get("flags") or []) or None,
+                                    ",".join(communes) if communes else None,
+                                    ",".join(filtres.get("flagsExclus") or []) or None)
+        n = db.execute(text(
+            "SELECT count(*) FROM parcels p JOIN dryrun_parcel_evaluations d "
+            "ON d.parcel_id = p.id AND d.run_label = 'q_v2' "
+            "AND d.matrice_statut IN ('chaude','a_surveiller','a_creuser')" + where),
+            params).scalar() or 0
+        top = _q_v2_list(db, None, lim, 0, run_label="q_v2",
+                         extra_where=where, extra_params=params)
+        source = "q_v2"
+
+    top_out = [{
+        "idu": it["idu"], "commune": it["commune"],
+        "statut": it.get("statut") or it.get("status"),
+        "q_score": it.get("q_score"),
+        "pourquoi": _pourquoi_lignes(it, sdp_besoin, carencees),
+    } for it in top]
+    return {"nom": derive_nom(fiche), "n": n, "sdp_besoin_m2": sdp_besoin,
+            "programme_defini": programme is not None, "source": source, "top": top_out}
+
+
 class ProjetIn(BaseModel):
     fiche: dict
     nom: str | None = None            # proposé par l'IA ; repli déterministe sinon
@@ -278,3 +365,20 @@ def projet_rejouer(pid: int, db: Session = Depends(get_db)) -> dict:
     p.derniere_execution_at = datetime.now(timezone.utc)
     db.flush()
     return {"ok": True, "projet": _projet_dict(p)}
+
+
+@router.get("/{pid}/export.pdf")
+def projet_export_pdf(pid: int, db: Session = Depends(get_db)):
+    """Dossier PROJET en PDF : la fiche de cadrage + les meilleures parcelles avec leur
+    « pourquoi » (aperçu recalculé sur les données ACTUELLES). Mécanique fpdf2 existante."""
+    from fastapi.responses import Response
+
+    from .pdf_projet import render_projet_pdf
+    p = db.get(models.Projet, pid)
+    if not p:
+        raise HTTPException(404, "Projet inconnu")
+    apercu = projet_apercu(ApercuIn(fiche=p.fiche or {}, limit=5), db)
+    pdf = render_projet_pdf(_projet_dict(p), apercu)
+    slug = "".join(c if c.isalnum() else "-" for c in (p.nom or "projet")).strip("-").lower()[:48]
+    return Response(pdf, media_type="application/pdf",
+                    headers={"Content-Disposition": f'inline; filename="projet-{slug or pid}.pdf"'})
