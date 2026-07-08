@@ -44,7 +44,7 @@ await page.keyboard.press('Escape')
 await page.locator('nav button[title="Outils"]').click()
 await page.getByRole('button', { name: /Faisabilité programme/ }).click()
 await page.waitForTimeout(900)
-assert((await page.locator('text=M22 · MODULE').count()) > 0, 'M22 dans le tiroir')
+assert((await page.locator('aside h2', { hasText: 'Faisabilité programme' }).count()) > 0, 'M22 dans le tiroir')
 await page.getByRole('button', { name: 'Trouver les parcelles' }).click()
 await page.waitForTimeout(2500)
 assert((await page.locator('text=SDP ≥').count()) > 0, 'M22 : critères CALCULÉS affichés')
@@ -62,8 +62,8 @@ assert(provider === 'stub' ? stubBadge > 0 : stubBadge === 0,
   `IA : état évident (provider=${provider} → bannière stub ${provider === 'stub' ? 'exigée' : 'interdite'})`)
 await page.locator('input[placeholder*="vue mer"]').fill('un terrain pour 3 immeubles R+3 étudiants avec parking')
 await page.keyboard.press('Enter')
-await page.waitForSelector('text=M22 · MODULE', { timeout: 20000 })   // latence IA réelle variable
-assert((await page.locator('text=M22 · MODULE').count()) > 0, 'copilote → module M22 ouvert')
+await page.waitForSelector('aside h2:has-text("Faisabilité programme")', { timeout: 20000 })   // latence IA réelle variable
+assert((await page.locator('aside h2', { hasText: 'Faisabilité programme' }).count()) > 0, 'copilote → module M22 ouvert')
 await page.waitForSelector('text=parcelles candidates', { timeout: 15000 })  // auto-run du moteur après pré-remplissage
 assert((await page.locator('text=parcelles candidates').count()) > 0, 'copilote → formulaire pré-rempli ET calculé')
 const b = await page.locator('label:has-text("BÂTIMENTS") input').inputValue()

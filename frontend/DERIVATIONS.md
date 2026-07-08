@@ -403,3 +403,61 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   R+3 » sans nombre de logements → `logements_par_batiment: null`) ; le pré-remplissage ne
   remplace plus QUE les champs non-nuls (les défauts du formulaire tiennent) — sinon `null`
   écrasait le défaut et l'auto-run M22 échouait (422).
+
+## Revue Vic n°3 — mise en valeur IA/outils + wording du tri (08/07)
+Positionnement tranché : la cible est le PROMOTEUR / BAILLEUR SOCIAL / MARCHAND DE BIENS (foncier
+constructible), PAS l'agent immobilier. 100 % présentation/wording/mise en page — rien au
+scoring/cascade/matrice. Suite dédiée `qa_revue3.mjs` (P1+P3) verte, suites existantes vertes.
+
+- **P1 — l'IA en DEUX PORTES** (`IAStub`) : la « recherche simple » et le « montage de projet »
+  ne cohabitent plus au petit bonheur (un champ + un bouton perdu dessous) — deux TUILES à
+  égalité (`data-porte-recherche` menthe · `data-porte-projet` violet). Recherche simple = « Dites
+  en une phrase… » + le champ NL + exemples (chemin rapide, comportement inchangé). Montage =
+  « Le copilote vous aide à cadrer votre opération » → l'entretien (chemin accompagné). L'accent
+  projet violet `#B497F0` reste distinct de la menthe ; la doctrine (« l'IA ne calcule pas »)
+  reste, plus discrète en pied.
+- **P1.2 — entretien enrichi** (Vic : trop court) : plafond `ENTRETIEN_SCHEMA.questions`
+  relevé **4 → 6** ; ids `perimetre/type/ampleur/gabarit/contrainte/budget` (type et ampleur
+  DÉ-fusionnés → l'entretien pose naturellement plus de questions). **Dimension ajoutée =
+  `gabarit` (hauteur souhaitée R+n)** — seule dimension neuve qui IRRIGUE : `ampleur.niveaux`
+  (FICHE_SCHEMA) → `derive_programme.niveaux` de M22 (R+2 par défaut si tu). Écartées faute
+  d'irrigation : « bâti à démolir » (aucun filtre présence-de-bâti) et « horizon » (aucun filtre
+  temporel parcellaire) — jamais un champ qui n'irrigue rien (doctrine). Chaque question reste
+  SKIPPABLE (défaut honnête « → R+2 par défaut »), jauge conservée (les 4 cases essentielles ;
+  le gabarit s'affiche dans « Ampleur » : « 40 logements · R+3 »). `pret` toujours piloté par le
+  périmètre → lançable tôt. Zéro question sur « les chaudes de Saint-Pierre » (inchangé : filtrable
+  → `ia_search` direct, jamais `projet_intent`). Vérifié réel : 5 questions dont gabarit, R+4 →
+  `niveaux:4` jusqu'à M22.
+- **P2 — le tri = un AVIS argumenté, pas une décision** (Vic : « a trié pour vous » présomptueux).
+  Wording retenu (une seule piste, consignée) : **« Afficher l'analyse LABUSE »** (bouton signature),
+  état allumé **« ✓ Analyse LABUSE affichée » / « masquer »**, entonnoir popover **« son avis
+  retient N opportunités. Le reste reste visible et cliquable — voici pourquoi il est écarté »**.
+  Sous-texte : « Rien n'est masqué : le cadastre reste entier, chaque parcelle garde son verdict…
+  Vous gardez la main ». Le GESTE est inchangé (cadastre → clic → couleurs/entonnoir/liste) ; seul
+  le langage évolue — ton d'analyse contredictible, adapté à un pro qui refuse les boîtes noires.
+- **P3 — outils désirables, sans jargon** (Vic : M01…M22 = langage d'ingénieur). Sort des codes M :
+  **gardés EN INTERNE** (`ModuleDef.num` — logs, hash `#m=`, QA) mais **retirés de l'écran** (rail
+  ET en-tête de module, désormais « OUTIL » + intitulé + bénéfice). Chaque outil porte une phrase
+  de BÉNÉFICE métier (ex. Faisabilité programme = « Décrivez votre programme, LABUSE trouve où le
+  poser »). **Curation** : regroupement par INTENTION — `Détecter le foncier` (d'abord = l'argument)
+  · `Analyser & simuler` · `Passer à l'action` — et **PHARES** distingués (carte violette + ★,
+  bénéfice lisible) : Faisabilité programme, Division parcellaire, Foncier fantôme, Scan patrimoine
+  (Détecter) + Assemblage + Due diligence. Choix des phares = les notes « A » de `AUDIT_27_OUTILS`
+  à plus fort « je paie » promoteur. Les 16 outils restent tous ouvrables (aucune perte). Les
+  INTITULÉS d'origine sont conservés (déjà clairs — le jargon était le CODE et les descriptions
+  sèches, tous deux corrigés) : bénéfice côté description, pas côté titre.
+- **P4 — UN SEUL oiseau (3ᵉ passage, chirurgical)** : l'oiseau du RAIL est SUPPRIMÉ ; le combo
+  oiseau + « LABUSE » reste dans le header (ce que Vic veut). Le doublon venait de l'oiseau du rail
+  (haut-gauche) et de celui du header (à sa droite) qui se retrouvaient CÔTE À CÔTE. Le rail est
+  désormais pur icônes de navigation. QA (`qa_revue3` + `qa_correctifs`) : `header svg[240 82] = 1`,
+  `nav svg[240 82] = 0` — prouvé aussi panneau replié + vue Outils (captures jointes).
+- **P5 — badge « J-2 » retiré → entrée « Sources » claire**. ⚠ SIGNALEMENT à Vic : le « J-2 »
+  n'était PAS un reste de debug — il portait la FRAÎCHEUR des données (exigence #9), lien vers la
+  page Sources. Fonction PRÉSERVÉE sous un libellé explicite (icône « base » + « Sources » en bas
+  du rail) au lieu du code cryptique. Le title garde « Fraîcheur des données » ; QA : plus de
+  « J-2 » à l'écran, « Sources » ouvre bien la page.
+- **QA maintenue** : `qa_revue3.mjs` (2 portes + entretien enrichi + outils sans code/phares +
+  1 oiseau + no J-2). Assertions périmées mises à jour : `qa_correctifs` (C2/R3→P4 « 1 oiseau »,
+  C4→P2 « son avis retient »), `qa.mjs` (M01→intitulé métier), et le hook `openModule` de
+  `qa_modules/qa_moteurs/qa_audit27/qa_missions_sp/qa_partners` (`text=M## · MODULE` → `aside h2`
+  par intitulé, l'en-tête ne portant plus le code).

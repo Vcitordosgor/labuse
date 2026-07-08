@@ -45,6 +45,9 @@ FICHE_SCHEMA = {
             "properties": {
                 "logements": {"type": "integer", "minimum": 1, "maximum": 2000},
                 "sdp_m2": {"type": "number", "minimum": 50, "maximum": 200000},
+                # P1.2 (revue Vic n°3) — gabarit souhaité : R+n. Irrigue le paramètre `niveaux`
+                # de M22 (derive_programme). C'est la donnée du promoteur, pas un calcul.
+                "niveaux": {"type": "integer", "minimum": 1, "maximum": 30},
             },
         },
         "perimetre": {

@@ -442,8 +442,10 @@ export function ModulePanel() {
     <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
       <div className="flex shrink-0 items-start justify-between border-b border-[#2a2138] bg-[#171221] px-4 py-3">
         <div>
-          <span className="font-mono text-[10px] tracking-widest" style={{ color: VIOLET }}>{def.num} · MODULE</span>
+          {/* P3 (revue Vic n°3) : plus de code M à l'écran — l'intitulé métier + le bénéfice */}
+          <span className="font-mono text-[10px] tracking-widest" style={{ color: VIOLET }}>OUTIL</span>
           <h2 className="text-sm font-medium text-txt-hi">{def.label}</h2>
+          <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{def.desc}</p>
         </div>
         <button onClick={() => setModule(null)} className="text-txt-mut hover:text-txt-hi" title="Fermer le module">✕</button>
       </div>

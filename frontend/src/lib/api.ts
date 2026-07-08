@@ -159,7 +159,7 @@ export const postProgramme = (body: Record<string, unknown>) =>
 // ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
 export interface FicheProjet {
   type_programme?: 'logements' | 'etudiant' | 'bureaux' | 'autre'
-  ampleur?: { logements?: number; sdp_m2?: number }
+  ampleur?: { logements?: number; sdp_m2?: number; niveaux?: number }
   perimetre?: { mode: 'ile' | 'secteur' | 'communes'; secteur?: string; communes?: string[] }
   contraintes?: string[]
   budget_foncier_eur?: number

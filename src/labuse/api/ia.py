@@ -356,7 +356,9 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
 
 #: l'entretien construit une FICHE par touches successives. Chaque tour renvoie la fiche
 #: MERGÉE (validée FICHE_SCHEMA — vocabulaire fermé), une reformulation, les questions pour
-#: ce qui MANQUE (≤4, chacune skippable avec un défaut honnête affiché) et l'état `pret`.
+#: ce qui MANQUE (≤6, chacune skippable avec un défaut honnête affiché) et l'état `pret`.
+#: P1.2 (revue Vic n°3) : plafond relevé (4→6) + dimension `gabarit` (R+n → M22 niveaux)
+#: pour vraiment affiner — chaque question reste facultative, zéro question si tout est su.
 ENTRETIEN_SCHEMA = {
     "type": "object", "additionalProperties": False,
     "required": ["reformulation", "fiche", "questions", "pret"],
@@ -365,11 +367,11 @@ ENTRETIEN_SCHEMA = {
         "fiche": FICHE_SCHEMA,
         "nom": {"type": "string", "maxLength": 160},
         "pret": {"type": "boolean"},
-        "questions": {"type": "array", "maxItems": 4, "items": {
+        "questions": {"type": "array", "maxItems": 6, "items": {
             "type": "object", "additionalProperties": False,
             "required": ["id", "texte", "chips"],
             "properties": {
-                "id": {"enum": ["perimetre", "type_ampleur", "contrainte", "budget"]},
+                "id": {"enum": ["perimetre", "type", "ampleur", "gabarit", "contrainte", "budget"]},
                 "texte": {"type": "string", "maxLength": 120},
                 # `dimension` déclenche les REPÈRES sourcés côté front (chiffres SQL sous les chips)
                 "dimension": {"enum": ["secteur", "commune"]},
@@ -415,22 +417,31 @@ DÉROULÉ :
 1. `fiche` = la fiche MERGÉE : reprends tout ce qui était déjà connu (fiche fournie) + ce que
    le dernier message apporte. Vocabulaire FERMÉ : type_programme ∈ {types} ; perimetre.mode ∈
    ile|secteur|communes (secteur ∈ Nord/Ouest/Sud/Est) ; contraintes ∈ {contraintes}.
-   « logements étudiants » → type_programme "etudiant". « dans l'Ouest » → perimetre secteur "Ouest".
-   « éviter les zones inondables/PPR » → contraintes ["eviter_ppr"]. Une commune nommée →
-   perimetre mode "communes", communes:["Nom Officiel"]. Budget « 800 k€ » → budget_foncier_eur 800000.
+   « logements étudiants » → type_programme "etudiant". « 40 logements » → ampleur.logements 40.
+   « R+3 / immeuble R+3 / sur 3 niveaux » → ampleur.niveaux 3 (le n de R+n ; « R+2 »→2).
+   « dans l'Ouest » → perimetre secteur "Ouest". « éviter les zones inondables/PPR » →
+   contraintes ["eviter_ppr"]. Une commune nommée → perimetre mode "communes",
+   communes:["Nom Officiel"]. Budget « 800 k€ » → budget_foncier_eur 800000.
 2. `reformulation` = UNE phrase neutre de ce que tu as compris.
-3. `questions` = UNIQUEMENT pour ce qui MANQUE encore, AU MAXIMUM 4, dans cet ordre de priorité :
-   perimetre (id "perimetre", dimension "secteur", chips Nord/Ouest/Sud/Est/Toute l'île),
-   type_ampleur (id "type_ampleur"), contrainte (id "contrainte"), budget (id "budget").
-   Ne RE-DEMANDE JAMAIS une dimension déjà présente dans la fiche. Chaque question porte un
-   `defaut` honnête (ce que tu retiens si l'utilisateur passe, ex. "→ toute l'île", "→ sans
-   contrainte rédhibitoire"). Chips courtes (2 à 6). Si plus rien ne manque → questions = [].
+3. `questions` = UNIQUEMENT pour ce qui MANQUE encore, AU MAXIMUM 6, dans cet ordre de priorité.
+   Pose-en assez pour VRAIMENT cadrer l'opération (une question par dimension manquante), MAIS
+   n'invente rien : si une dimension est déjà connue ou déductible, ne la redemande pas.
+     - perimetre (id "perimetre", dimension "secteur", chips Nord/Ouest/Sud/Est/Toute l'île)
+     - type (id "type", chips Logements/Logement étudiant/Bureaux/Autre)
+     - ampleur (id "ampleur", chips d'ordres de grandeur de logements, ex. ~20/~40/~80/~150)
+     - gabarit (id "gabarit" — la hauteur/gabarit souhaité, chips R+2/R+3/R+4/R+6)
+     - contrainte (id "contrainte", chips des contraintes rédhibitoires)
+     - budget (id "budget")
+   type + ampleur sont DEUX questions distinctes (ne les fusionne pas). Ne RE-DEMANDE JAMAIS une
+   dimension déjà présente dans la fiche. Chaque question porte un `defaut` honnête (ce que tu
+   retiens si l'utilisateur passe, ex. "→ toute l'île", "→ R+2 par défaut", "→ sans contrainte
+   rédhibitoire"). Chips courtes (2 à 6). Si plus rien ne manque → questions = [].
 4. `pret` = true dès que le PÉRIMÈTRE est déterminé — un secteur/des communes cités, OU « toute
-   l'île » par défaut quand l'utilisateur reste vague ou passe la question. Le type/l'ampleur
-   raffinent le programme mais NE BLOQUENT PAS le lancement (les questions restent proposées).
+   l'île » par défaut quand l'utilisateur reste vague ou passe la question. Le type/l'ampleur/le
+   gabarit raffinent le programme mais NE BLOQUENT PAS le lancement (les questions restent proposées).
 5. `nom` = un nom de projet court et neutre (ex. "Résidence étudiante Ouest").
 Si le dernier message dit « je ne sais pas / passer » sur une dimension → applique le défaut
-honnête dans la fiche (ex. perimetre.mode "ile") et n'y reviens pas."""
+honnête dans la fiche (ex. perimetre.mode "ile", ampleur.niveaux 2) et n'y reviens pas."""
 
 
 class EntretienIn(BaseModel):

@@ -69,7 +69,7 @@ interface AppState {
   toast: string | null
   setToast: (t: string | null) => void
   // R1 (revue Vic n°2) : le VERDICT est un GESTE — la carte s'ouvre en cadastre neutre,
-  // « LABUSE a trié pour vous » allume couleurs + entonnoir + liste. URL : v=1.
+  // « Afficher l'analyse LABUSE » (P2, revue n°3) allume couleurs + entonnoir + liste. URL : v=1.
   verdict: boolean
   setVerdict: (v: boolean) => void
   // R2 : restitution chorégraphiée du copilote (compteur animé + top 3 cliquables).

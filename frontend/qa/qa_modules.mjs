@@ -31,7 +31,7 @@ async function openModule(num, label) {
   await page.waitForTimeout(300)
   await page.getByRole('button', { name: new RegExp(label) }).first().click()
   await page.waitForTimeout(1800)
-  assert((await page.locator(`text=${num} · MODULE`).count()) > 0, `${num} s'ouvre depuis le tiroir`)
+  assert((await page.locator("aside h2", { hasText: label }).count()) > 0, `${num} s'ouvre depuis le tiroir (${label})`)
 }
 
 // ── M01 division : compteur = SQL + lot dessiné + fiche enrichie
@@ -153,7 +153,7 @@ async function openModule(num, label) {
   await page.goto(BASE + SP + '&m=fantome', { waitUntil: 'networkidle' })
   await page.reload({ waitUntil: 'networkidle' })   // même document sinon (hash-only) : l'app doit relire l'URL au chargement
   await page.waitForTimeout(2000)
-  assert((await page.locator('text=M07 · MODULE').count()) > 0, 'URL #m=fantome → module restauré')
+  assert((await page.locator('aside h2', { hasText: 'Foncier fantôme' }).count()) > 0, 'URL #m=fantome → module restauré')
 }
 
 assert(errors.length === 0, 'zéro erreur console (modules)', errors.slice(0, 3).join(' | '))

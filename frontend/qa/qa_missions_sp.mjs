@@ -54,7 +54,7 @@ await p.locator('nav button[title="IA"]').click()                         // 1
 await p.waitForTimeout(600)
 await p.locator('input[placeholder*="vue mer"]').fill('2 immeubles R+2, environ 15 logements, avec parking')
 await p.keyboard.press('Enter')                                            // 2
-await p.waitForSelector('text=M22 · MODULE', { timeout: 25000 })
+await p.waitForSelector('aside h2:has-text("Faisabilité programme")', { timeout: 25000 })
 await p.waitForSelector('text=parcelles candidates', { timeout: 20000 })
 assert(true, `M-C : copilote → M22 candidates (2 actions · ${((Date.now() - tC) / 1000).toFixed(0)}s)`)
 await p.screenshot({ path: `${OUT}/mission_sp_C.png` })
