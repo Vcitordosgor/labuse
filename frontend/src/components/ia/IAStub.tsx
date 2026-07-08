@@ -29,9 +29,12 @@ export function IAStub() {
     // la commune est un filtre de PÉRIMÈTRE : « les chaudes de Saint-Pierre » bascule le
     // sélecteur ; un SECTEUR du cadreur (communes multiples) passe le périmètre à l'île
     // avec le filtre communes. Une phrase sans commune ne touche pas au périmètre courant.
-    const communes = (f.communes as string[]) ?? []
+    let communes = (f.communes as string[]) ?? []
+    // normalisation : un « secteur » d'UNE commune = la commune elle-même (périmètre simple)
+    let communeSeule = typeof f.commune === 'string' && f.commune ? f.commune : null
+    if (communes.length === 1) { communeSeule = communes[0]; communes = [] }
     if (communes.length > 0) setCommune(null)
-    else if (typeof f.commune === 'string' && f.commune) setCommune(f.commune)
+    else if (communeSeule) setCommune(communeSeule)
     const next: Filters = {
       ...EMPTY_FILTERS,
       statuts: (f.statuts as Statut[]) ?? [],
@@ -49,7 +52,7 @@ export function IAStub() {
     setView('cartes')
     // vol de caméra vers le périmètre (bbox de la commune, union du secteur, ou île)
     const infos = communesQ.data ?? []
-    const cible = communes.length ? communes : (typeof f.commune === 'string' && f.commune ? [f.commune] : [])
+    const cible = communes.length ? communes : (communeSeule ? [communeSeule] : [])
     const boxes = infos.filter((c) => cible.includes(c.commune)).map((c) => c.bbox)
     if (boxes.length) {
       const x1 = Math.min(...boxes.map((b) => b[0])), y1 = Math.min(...boxes.map((b) => b[1]))

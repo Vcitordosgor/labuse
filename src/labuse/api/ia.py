@@ -284,6 +284,9 @@ UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Tr
    Correspondances : « vue mer/bord de mer » → vueMer ; « usine/industriel » → flags icpe ;
    « pollué » → flags sol_pollue ; « inondation/risque » → flags risques ; « monument » → flags abf ;
    « bodacc/liquidation/événement » → evenement ; les statuts sont chaude/a_surveiller/a_creuser/ecartee.
+   ⚠ Les FLAGS SONT FILTRABLES : « proximité d'un monument historique / bâtiment de France »
+   = {{"flags": ["abf"]}} (périmètre ABF) ; « près d'une usine » = {{"flags": ["icpe"]}} ;
+   « pollué » = sol_pollue ; « inondable » = risques. Ne réponds JAMAIS out_of_scope pour ces cas.
    Une commune de La Réunion nommée dans la demande → commune (nom OFFICIEL de l'enum du schéma,
    ex. « au Tampon » → "Le Tampon", « à l'Étang-Salé » → "L'Étang-Salé"). Les 24 communes de
    l'île sont TOUTES couvertes par le radar — ce n'est jamais hors périmètre.
@@ -293,8 +296,10 @@ UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Tr
 3. Hors périmètre (météo, rédaction, géographie non filtrable, ou TOUTE demande de MODIFIER un
    score — les scores sont déterministes, tu ne les changes jamais) →
    {{"out_of_scope": "raison courte et polie"}}
-4. CADRAGE (uniquement si la demande est un PROJET VAGUE : ni commune ni secteur ni critères
-   chiffrés — ex. « un terrain pour du logement étudiant ») →
+4. CADRAGE — RÉSERVÉ aux demandes de PROJET sans AUCUN critère filtrable. Si la demande
+   contient NE SERAIT-CE QU'UN critère traduisible (surface, SDP, score, statut, vue mer,
+   événement, pollution/usine/monument/risque → flags, commune ou secteur) → forme 1 DIRECTE,
+   même sans commune. Exemple de cadrage légitime : « un terrain pour du logement étudiant » →
    {{"cadrage": {{"reformulation": "UNE phrase : ce que tu as compris",
      "questions": [{{"id": "secteur", "texte": "…", "chips": [{{"label": "Nord"}}, {{"label": "Ouest"}},
        {{"label": "Sud"}}, {{"label": "Est"}}, {{"label": "Toute l'île"}}]}},
@@ -319,7 +324,7 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
         client = anthropic.Anthropic(timeout=20.0, max_retries=2)
         try:
             msg = client.messages.create(
-                model=MODEL_NL, max_tokens=600,
+                model=MODEL_NL, max_tokens=600, temperature=0,   # comportement STABLE (QA réelle)
                 system=_NL_SYSTEM.format(
                     schema=json.dumps(FILTER_SCHEMA, ensure_ascii=False),
                     nord=", ".join(SECTEURS["Nord"]), ouest=", ".join(SECTEURS["Ouest"]),
