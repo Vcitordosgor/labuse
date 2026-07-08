@@ -1,6 +1,20 @@
 # Matrice Q×A (étape 3, dry-run) — tunable. Statut = croisement Qualité × Accessibilité.
 # Q = « vaut-il le coup / peut-on construire » (étages 0/1). A = « peut-on l'acheter » (étage 2).
 # Chaque score = base + Σ(poids de son étage), borné [1,100]. Une parcelle exclue étage 0 = écartée.
+#
+# ═══ CE FICHIER EST LA CONVENTION DE MATRICE — VERSIONNÉE ═══
+# La barre des « chaudes » est un RÉGLAGE, plus jamais une constante enfouie (leçon du run
+# île : deux conventions sous un même label = tops inter-communes faux). Changer la barre =
+# éditer `seuils` ci-dessous + `labuse matrice-apply` (minutes, jamais un re-run de cascade).
+# Simuler avant de trancher : `labuse matrice-simulate` (à blanc, grille HTML).
+convention:
+  version: 2
+  date: "2026-07-07"
+  justification: >
+    v1 (implicite) = ces mêmes valeurs, appliquées aux 24 communes au run île du 07/07 ;
+    Saint-Paul réaligné dessus (83→375 chaudes, son état venait d'une convention jamais
+    committée). v2 = même barème, désormais objet versionné + simulable + applicable en une
+    commande. Barre en attente d'arbitrage Vic (grille de sensibilité aux tops).
 
 base: 50
 
@@ -21,4 +35,8 @@ seuils:
 
 # Bascule événementielle : BODACC procédure OUVERTE (evenement='rouge') → « chaude » quel que soit Q/A,
 # SUR LES SURVIVANTES (l'exclusion étage 0 — non constructible — n'est pas surchargée par un événement).
+# ⚠ DOCTRINE — NE PASSE PAS SOUS LES SEUILS : un vendeur en procédure collective est une
+# urgence de prospection quelle que soit la barre du moment. matrice-simulate ne balaie
+# JAMAIS cette clé ; la parcelle-canari 97415000AC0253 (chaude PAR événement) doit survivre
+# à toute convention — si elle tombe, c'est la bascule qui est cassée, pas un seuil.
 evenement_rouge_force_chaude: true

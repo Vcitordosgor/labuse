@@ -4,6 +4,7 @@ import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const OUT = process.env.OUT || '../docs/design/captures/modules'
 const DB = process.env.QA_DB || 'postgresql://openclaw@127.0.0.1:5432/labuse'
 mkdirSync(OUT, { recursive: true })
@@ -25,7 +26,7 @@ const [iduA, iduB] = sql(`SELECT a.idu || ',' || b.idu FROM parcels a
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
-await page.goto(BASE, { waitUntil: 'networkidle' })
+await page.goto(BASE + SP, { waitUntil: 'networkidle' })
 await page.waitForSelector('text=chaudes')
 await page.waitForTimeout(2200)
 
@@ -40,7 +41,7 @@ async function openModule(num, label) {
 // M15 simulateur PLU : choisir une zone AU → bascules potentielles affichées
 await openModule('M15', 'Simulateur PLU')
 await page.getByRole('button', { name: /AUc → U/ }).click()
-await page.waitForTimeout(1800)
+await page.waitForSelector('text=bascules potentielles', { timeout: 20000 })   // DB sous charge (run) : attendre le résultat
 assert((await page.locator('text=bascules potentielles').count()) > 0, 'M15 simulation AUc → résultats')
 assert((await page.locator('text=à blanc').count()) > 0, 'M15 bandeau « à blanc » (rien persisté)')
 await page.screenshot({ path: `${OUT}/m15_simulplu.png` })

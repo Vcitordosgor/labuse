@@ -1,0 +1,2921 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Saint-Benoît
+idurba:
+- 97410_PLU_20200206
+n_zones: 306
+geoms_sidecar: data/calibrage/zonage_saint_benoit.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 448225
+  geom_md5: 286e780509cf715566ffa0116a18805e
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 7344
+  geom_md5: eedb662500303b90e71729d201244d78
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 24456
+  geom_md5: 845388d6d1e6f96346cc538f41976ee6
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 67700
+  geom_md5: b75c091868b5f4bf0ee08e695a3cd72f
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 1621
+  geom_md5: 25e86af2bdf1ecec89828c40d061d41e
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 979996
+  geom_md5: 0204b4ff74de7b2be52193c79cedcdf5
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 905934
+  geom_md5: 41f84098615bb21759b50266a14811c3
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 1426392
+  geom_md5: 7e0f8dde4534c2d77867314e91545540
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 6110879
+  geom_md5: 64b39a8340c19a8a37cdcca6043b9854
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 1139
+  geom_md5: d9303f79e397bf1d2c2743f05d818f01
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 156187
+  geom_md5: 2ac31c1640905489047d91da56beccba
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 13718
+  geom_md5: 74daf6012d5c86466dc6b690d97842a7
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 2366124
+  geom_md5: c735fd2666040267c425b656fec99213
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 8313
+  geom_md5: 80827aa5843af72417b4b858449c70d5
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 67207
+  geom_md5: 8967c943a719c435b13d6656b6dee450
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 692006
+  geom_md5: 7f0935f3d8e45908ed262d6c1ec25f88
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 25053
+  geom_md5: c35157d5784d3859f56b0d470f3728aa
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 8392709
+  geom_md5: 8940aa0002d1fdf68ca5ca96fcaac0a1
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 107820
+  geom_md5: 50a1a9cbbfeb4d7e5101804d14ce5c3c
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 497115
+  geom_md5: a1d257cb513e470214a42f2872f430fb
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 1617
+  geom_md5: fccc16541928b4ae5312732d5cebc4ec
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 269567
+  geom_md5: 27f62cbffa96698323cd9a40c14655ed
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 18107
+  geom_md5: c9a81c2db9c73bd9082a0fb06088bf97
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 2691610
+  geom_md5: c0021afb5a34de3eddfb84b601700024
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 21242
+  geom_md5: 09c6146444a8977afd7f5262ea15cb61
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 182674
+  geom_md5: 50a7f1988698cafc28f9e840a9b1341a
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 2126
+  geom_md5: baba1b280aaddd9ebdf7b4c8050904ae
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 173477
+  geom_md5: 2e184ab299dded3edcba4238e3ea376e
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 246272
+  geom_md5: e1a6b71c3e0b0f4167a1bc5898c025a5
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 645509
+  geom_md5: 9ec429260d37a7abdaa72c9d65763cfa
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 6571
+  geom_md5: 36c9c431dae5534889ef86cee9a51084
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 14358975
+  geom_md5: 722c6754a7d0c77ed8110f447c123da9
+- subtype: A
+  name: 'A : zones a proteger en raison du potentiel agronomique biologique ou economique des terres agricoles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97410
+  surface_m2: 8552116
+  geom_md5: 6164dd975f50e555cde95f2beded44c8
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 68466
+  geom_md5: 82a28aa5f9469110528e1537cb939a7f
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 4502
+  geom_md5: ca55aff9d129743753322727a07859aa
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 7161
+  geom_md5: ebb11e09fc6748efc2b0e3ba3b189fdc
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 56763
+  geom_md5: 439651671c1979c4eea533c4ca5f96f5
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 23615
+  geom_md5: 10036f225ac62ff5f51f96a1604e67f7
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 111057
+  geom_md5: d1fbcb6a683f07dd93fa27d4ab8b9ad3
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 39798
+  geom_md5: 1da9d985ca8953ba27f44a2690a83c3b
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 3010
+  geom_md5: 23806eef5679840aea48f2aa0dbe3157
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 8649
+  geom_md5: 1dcf7ac2a736347ec72f11fab027f07c
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 334742
+  geom_md5: 66760845b9174409a8bd866f94be6ef2
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 52079
+  geom_md5: 7f786aeeabc9beced87cdb4315e95e01
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 5062
+  geom_md5: 30d0ede15ccf3359b070f98c66da3548
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 2136
+  geom_md5: 460637ca8b53ffb1f0f7d164fc682ecd
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 3358
+  geom_md5: 1b0460c596f6feb15083aa4f3fc83af0
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 5998
+  geom_md5: 5371e14a579d660029f3de28ce46a77d
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 4918
+  geom_md5: f61e8ae478213ad50e6c1466324f29f4
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 3839
+  geom_md5: 2ef7e5318aa4907472c47b58e0dacf17
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1590
+  geom_md5: 5a0f792e5795a18036db2b3fad01f9d1
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 109309
+  geom_md5: 4d5d8859122f0bafa43027494917ece8
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 190190
+  geom_md5: f0c497b02ec236d2454cbba067f6d5db
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 8280
+  geom_md5: 13fd5206f4beab24786b608010e2eac5
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 137134
+  geom_md5: 90c30670b394b322fb3fe0dac6a525b6
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 12088
+  geom_md5: 27b2af236bd7f8696605248295213737
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 83906
+  geom_md5: 4b1984dc30e2425a5701579fb8360bcd
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 73628
+  geom_md5: e3c051663364fa71ed46745a3b236443
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 36135
+  geom_md5: c386cacd6cb3be2a84c3797bc05d1e57
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 7339
+  geom_md5: 60685bf2563992c94041f0f7c90c7489
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 5376
+  geom_md5: ce0de9ebabdf13169250b66396d38d86
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 177458
+  geom_md5: 3b1033bbcc63189cb6b6be19a60a3bd8
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 651
+  geom_md5: 5c6a214f775ad9d80f078dbe87953bdf
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 8916
+  geom_md5: cff7fea8ccbe04ae9b7b073d0c54c581
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 209054
+  geom_md5: 28723b0687de0d8062978e6e27eefae5
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 4225
+  geom_md5: 901b24ce71b77faefc7bd31b722cdc78
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 547
+  geom_md5: 93703bbd0ada18cc1d9ae66eaf64854a
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 5475
+  geom_md5: c1fe22faf271d646ddfa2b46a134cdcd
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 9011
+  geom_md5: 71409d62a36bcf908431cfe955d4f253
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 11351
+  geom_md5: b72a4619a4457899c0f6e53f79e9c170
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 7687
+  geom_md5: e6e6c215016288dcbf10224cbb356df5
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 984
+  geom_md5: 5baf244a6953b134fdb000efe5f1aa6a
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 14411
+  geom_md5: 871fe733d947192748bd595c73be41a2
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 3909
+  geom_md5: 4eb59fa8c266a7d9b468b092469e9d94
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1272
+  geom_md5: 4fd284dc40204471915259d82a3eee48
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 76923
+  geom_md5: d7e8e935171ee76e708d19bb8d4c7dd0
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 2607
+  geom_md5: 2d06e140f2400a7a291421d7afe41fb2
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 191921
+  geom_md5: dfb8a1a0acb0425c786e2b6fbc894429
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 2404
+  geom_md5: cb9fda3745ba422bc804aa1093b9073e
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 3149
+  geom_md5: 50f9356f6c2c4d269eec12495ecf91fa
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 59973
+  geom_md5: cff439ff689aae6544c5c64a7c03acac
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 473
+  geom_md5: b25d3faa619fcd7c964fe60d812f98aa
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 224420
+  geom_md5: 2d002fc9c76cbe3490586d1f851f8869
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 90663
+  geom_md5: 103a545b0bb6efc940277ebe55aa3391
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 12463
+  geom_md5: 39c4cca19c2b7db509367d3cab666785
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 9728
+  geom_md5: a08a6b92d76e7bd19e222c3eadff4299
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 17244
+  geom_md5: 1cc51d78e590862f4fc90501baef1f20
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1126
+  geom_md5: 13570e57b4a6f54991d2214dcdc9ef6a
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 5013
+  geom_md5: db50e6307722371e78027c13360d6793
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 37592
+  geom_md5: edfc6535a8d8ee4cd0834e4460cb4c13
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 532
+  geom_md5: 900c438ed4f9806b543e40ea57e21c4a
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 4606
+  geom_md5: cbfecc83a1a6482ca24e7e4a8b30aff4
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 2766
+  geom_md5: 9bf867e19620cf198c2b3a82d189ee82
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 33716
+  geom_md5: 41d933da14445aee4ea74b5cc1450323
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 5080
+  geom_md5: 3eee0369023336736e322e4494f6fd4f
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 107114
+  geom_md5: e0e2f0efc57dba91e5efb9c0d2dee48b
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 23003
+  geom_md5: 1f7d54e6d8538157ff339e9929753410
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 143266
+  geom_md5: 7d3ffad04a80b36b03e7ca8f0a897c7d
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1465
+  geom_md5: b157abd0d62b0ff822fb768672a4efbb
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 689
+  geom_md5: 9353e2192988917595f0932f0f8beb10
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 9500
+  geom_md5: 745fba905487c84207e7c1e90c7f4171
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 4743
+  geom_md5: 2921690f33c188ecea020cd62c8813d2
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 213100
+  geom_md5: 76540253ba30ed9b92989bdda0a25657
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 8203
+  geom_md5: 91d10d52b2e0bbc7ba07f4c9ad8d103e
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 33203
+  geom_md5: 440d0f6255ed1086fc8e39be21158ee1
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1665
+  geom_md5: 4b007f82a17af0a6a4f8d468de9b0431
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 3360
+  geom_md5: bd5740af58bcb3643b068800fbf967fc
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 3676
+  geom_md5: 862301f4a5cb0dd6eb44938ff04bba36
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 3599
+  geom_md5: 0383e02ee6eb7b76720f5bf6e641b06f
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 11283
+  geom_md5: d423e7e76c409d4a674c1d4c9a3be2e7
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 8316
+  geom_md5: 0a18c65dd15885118761dd1d30c66c1f
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 459
+  geom_md5: 71ab986969276d078c0bfa88800c0fdc
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 987
+  geom_md5: 6e6303c73f0e5e332535d70c4e49a077
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 35802
+  geom_md5: 18a852e73c7a1feaf5b9955de6c779cf
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 57324
+  geom_md5: bc785cd86a13d08ccc5b56d58e6b06f0
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1800
+  geom_md5: e72ebec8f0830cfc668a37afad460368
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1716
+  geom_md5: ab3d585db2aa67ca24cad29ddadb82de
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 65357
+  geom_md5: 476539b5871fdbe705eff044ea071412
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 171726
+  geom_md5: 80d4b4a8d2bb80d3969438779eacfab0
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 352
+  geom_md5: 805c4de3c725a1169307a0497604132b
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 2741
+  geom_md5: c45fb5592355ecedf07cbe60ac99c707
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 6269
+  geom_md5: ad34f7ab0dcf2692d5ee64866d94c8fc
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1188
+  geom_md5: b28645a6add0a7fd98f16def5f4cb974
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1739
+  geom_md5: eeecf792a55dcab0377f5c943d54b342
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 32501
+  geom_md5: e6740e996f75b366239f51831cb00309
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 49102
+  geom_md5: 72417948b3871e25e02f3d3a87de5231
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 27330
+  geom_md5: c7db2996b3a5c408c4661146b9dad1d1
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 69190
+  geom_md5: 027fc60d558eb347b7a6a6d5f3f05ae6
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 143868
+  geom_md5: f35c206760e167d4c27213400701d92b
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 54919
+  geom_md5: 1d40465a3bc62f27c78d205973f68103
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 9330
+  geom_md5: 071317989f83cafa7ab00d162793399d
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1262
+  geom_md5: d8cfa827cf28f936d76a233dfdaf82f3
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 5045
+  geom_md5: 3795b9e30ce30ec6c66c5a4f21b0df42
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1399
+  geom_md5: 73a7a78d6c08f7b4747405c243077702
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 10623
+  geom_md5: 4856d02ab935c5a415fd10d1e2f50079
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 167098
+  geom_md5: ec36a5705bebc080b93bb3318d7e08dd
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 22909
+  geom_md5: 29f56514a630ef3e50a664a9e928eeab
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 1158
+  geom_md5: 852fe9e4409d8ad78f09b8adb9ffcc52
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 2047
+  geom_md5: 5a94a5e8ad9181bc02c1d8f2f7d3fae3
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 2447
+  geom_md5: 07c8a39187c0c6925eb2b968eb59ddf3
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 121879
+  geom_md5: f4f79e4d44a07f12e7ea737b0c997e89
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 558
+  geom_md5: 12ac38f18b2e72dc05b5aacd8a762deb
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 68439
+  geom_md5: b09b9ef76e22104166a5552c20cbd872
+- subtype: A
+  name: 'Acor : corridors ecologiques proteges ou la poursuite de l activite agricole doit se conjuguer avec la
+    protection de la biodiversite'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acor
+    partition: DU_97410
+  surface_m2: 128169
+  geom_md5: d817efa30ddf11834c490b3b34add1e2
+- subtype: A
+  name: 'Acu : zones ayant un caractere de coupure d urbanisation au sens de la loi Littoral dans lesquelles toutes
+    constructions meme agricoles sont interdites'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97410
+  surface_m2: 129539
+  geom_md5: b2a8374b9fe9fec16ce00cecef325842
+- subtype: A
+  name: 'Acu : zones ayant un caractere de coupure d urbanisation au sens de la loi Littoral dans lesquelles toutes
+    constructions meme agricoles sont interdites'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97410
+  surface_m2: 951270
+  geom_md5: 2b7a8cbae6974aac2a3128cd99d60ba1
+- subtype: A
+  name: 'Acu : zones ayant un caractere de coupure d urbanisation au sens de la loi Littoral dans lesquelles toutes
+    constructions meme agricoles sont interdites'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97410
+  surface_m2: 1035176
+  geom_md5: 806bc92610d46661d7df07b045d210aa
+- subtype: A
+  name: 'Acu : zones ayant un caractere de coupure d urbanisation au sens de la loi Littoral dans lesquelles toutes
+    constructions meme agricoles sont interdites'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97410
+  surface_m2: 553706
+  geom_md5: 0177d98b7fb65f8d4333b76ceaa1423a
+- subtype: A
+  name: 'Acu : zones ayant un caractere de coupure d urbanisation au sens de la loi Littoral dans lesquelles toutes
+    constructions meme agricoles sont interdites'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97410
+  surface_m2: 1142365
+  geom_md5: fa393b6e0a83fa08febafe7d043f69ec
+- subtype: A
+  name: 'Acu : zones ayant un caractere de coupure d urbanisation au sens de la loi Littoral dans lesquelles toutes
+    constructions meme agricoles sont interdites'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97410
+  surface_m2: 10244
+  geom_md5: 53ee7d664dba74e5dd53bb100fcbddc8
+- subtype: A
+  name: 'Acu : zones ayant un caractere de coupure d urbanisation au sens de la loi Littoral dans lesquelles toutes
+    constructions meme agricoles sont interdites'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97410
+  surface_m2: 2175682
+  geom_md5: 5a3d01142f21f6c2034507bc9f8bc483
+- subtype: A
+  name: 'Ai : espace a caractere agricole inconstructible situe sur le secteur de Le Conardel'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ai
+    partition: DU_97410
+  surface_m2: 152972
+  geom_md5: a2c12f01466d00bd65b96367cdc41647
+- subtype: AUc
+  name: 'AUa5 : extension des quartiers centraux sur Le Conardel au sentier des Lataniers au chemin des Jonquilles
+    et au chemin Imperial'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUa5
+    partition: DU_97410
+  surface_m2: 89966
+  geom_md5: b4d325348ad1c2124ebd4f2bddbe2996
+- subtype: AUc
+  name: 'AUa8 : extension des quartiers centraux sur Le Conardel au sentier des Lataniers au chemin des Jonquilles
+    et au chemin Imperial'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUa8
+    partition: DU_97410
+  surface_m2: 15241
+  geom_md5: 40151ef04437766fc783f49b9cac944c
+- subtype: AUc
+  name: 'AUa9 : extension des quartiers centraux sur Le Conardel au sentier des Lataniers au chemin des Jonquilles
+    et au chemin Imperial'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUa9
+    partition: DU_97410
+  surface_m2: 15980
+  geom_md5: e9a6e240172f41d4c974a6b9c2b01e6f
+- subtype: AUc
+  name: 'AUb10 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb10
+    partition: DU_97410
+  surface_m2: 15957
+  geom_md5: fc22af0aafc6cbdeeb13f0747386a3b4
+- subtype: AUc
+  name: 'AUb11 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb11
+    partition: DU_97410
+  surface_m2: 20005
+  geom_md5: 076e5a6d9f21f657938cc4ce680f34c5
+- subtype: AUc
+  name: 'AUb12 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb12
+    partition: DU_97410
+  surface_m2: 7976
+  geom_md5: d3d6bacec834b2741352e1d465d187e0
+- subtype: AUc
+  name: 'AUb13 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb13
+    partition: DU_97410
+  surface_m2: 7980
+  geom_md5: a7c3bf401ec5ad7768d979ab16f9f882
+- subtype: AUc
+  name: 'AUb14 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb14
+    partition: DU_97410
+  surface_m2: 40036
+  geom_md5: df22e4c9f60d1032bb1a51a6c31d0a2c
+- subtype: AUc
+  name: 'AUb15 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb15
+    partition: DU_97410
+  surface_m2: 14010
+  geom_md5: b384340780786b01be54b818188e3b75
+- subtype: AUc
+  name: 'AUb16 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb16
+    partition: DU_97410
+  surface_m2: 16992
+  geom_md5: 3c717b1a291769b6ee70b0dc48719897
+- subtype: AUc
+  name: 'AUb17 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb17
+    partition: DU_97410
+  surface_m2: 8987
+  geom_md5: bd4bcfa2f463f640e994c8f2f99e1aaf
+- subtype: AUc
+  name: 'AUb19 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb19
+    partition: DU_97410
+  surface_m2: 45685
+  geom_md5: f4d8437d879d29781ea2537844846200
+- subtype: AUc
+  name: 'AUb2 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb2
+    partition: DU_97410
+  surface_m2: 25032
+  geom_md5: cb92b30fd4a3956c16fb95d8040b8594
+- subtype: AUc
+  name: 'AUb6 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb6
+    partition: DU_97410
+  surface_m2: 46031
+  geom_md5: aa47a49c2b18e73d01aef25b90abba74
+- subtype: AUc
+  name: 'AUb7 : correspond a des extensions de l urbanisation peripherique'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUb7
+    partition: DU_97410
+  surface_m2: 6014
+  geom_md5: e8f68b6a06f0e919e84fbf557d53aec9
+- subtype: AUc
+  name: 'AUe3 : zone affectee aux activites economiques et industrielles a Beaulieu'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUe3
+    partition: DU_97410
+  surface_m2: 53001
+  geom_md5: 1bf3663ca7f0265e453a6e45949320af
+- subtype: AUc
+  name: 'AUp1 : zone affectee aux activites economiques de production dans laquelle les commerces et les services
+    sont strictement limites en application du schema d amenagement regional'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUp1
+    partition: DU_97410
+  surface_m2: 160992
+  geom_md5: d3a9f4744f420b78d6308715d509338a
+- subtype: AUc
+  name: 'Aua18 : extension des quartiers centraux sur Le Conardel au sentier des Lataniers au chemin des Jonquilles
+    et au chemin Imperial'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: AUa18
+    partition: DU_97410
+  surface_m2: 17035
+  geom_md5: 120357c26b9233e8f367b37c87e17850
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 309370
+  geom_md5: 769db42b3e27ec1d2a8fa8c1c3736248
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 81813
+  geom_md5: 59a7eed712279faf5ba33e6de75d3396
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 31327
+  geom_md5: b17d4d4221a42412d1c5223bebaca31c
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 31560
+  geom_md5: 22bc79f05b7ac190354e0044954fa412
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 10855
+  geom_md5: c69567cebe362d83a983552a93a58720
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 16045
+  geom_md5: 7a524bf435ea73b7d68269bcaeded6cd
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 1058482
+  geom_md5: a757654945847528932edf3e976a6bf4
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 143056
+  geom_md5: eb241bb310a08f76174b88d2b9211fb1
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 3018323
+  geom_md5: 4b26a6643035b01421d18873fc3cacc4
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 3372873
+  geom_md5: 4bed9cb8da277a54ed6310ed6f7f8b72
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 19522
+  geom_md5: 8e6d193151a60000ad34434e4f923c22
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 72987
+  geom_md5: 7334526e57b64b4d29797e1a21c9e53a
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 3487595
+  geom_md5: 6ee4c977b9c3341f550c9e194dae1da3
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 599034
+  geom_md5: 62eaebfebe163294429892c3ef547b13
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 12253
+  geom_md5: c201053f81c67c97b9a0edc37a65d3bf
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 38738
+  geom_md5: 2e3884d1bb953e608a768e411f6ca333
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 69810
+  geom_md5: 5d4fcd3a5e360bccfdb92457cde50d46
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 1170
+  geom_md5: 28f7b5382ef04c662a6c26a7d290380f
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 6966526
+  geom_md5: 2d7d2b2b53e269e9e500de9c928490e8
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 14381
+  geom_md5: 683c86ae6d8234c098b191cf2af10e00
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 288177
+  geom_md5: ea80b0b56e9157ed59367f46f77e2501
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 87609
+  geom_md5: 8c8a25cecc427d65f3be74d051ae9df6
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 28372
+  geom_md5: 0388dd3420f62d0b5272a325dd893186
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 19626
+  geom_md5: abb775437290d185492c4c21b2ea5d71
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 753
+  geom_md5: a70457c0c9ea10a21163bd8fe96ea450
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 110169
+  geom_md5: 128a1bfd8fac9c8ad9d0ba7d79007cd9
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 41525
+  geom_md5: bbabed549bc12c958a8729d10c5decc3
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 3104
+  geom_md5: 44fd3245612a72b7c520817df1b6910b
+- subtype: N
+  name: 'N : zones naturelles et forestieres a proteger'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97410
+  surface_m2: 6892
+  geom_md5: 34c193bbb7b2db833c83eb9daa9a4105
+- subtype: N
+  name: 'Nci : cimetieres'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nci
+    partition: DU_97410
+  surface_m2: 44052
+  geom_md5: b2eae4164fd598ba18d34997c4053209
+- subtype: N
+  name: 'Nci : cimetieres'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nci
+    partition: DU_97410
+  surface_m2: 13137
+  geom_md5: b518702625c475eb96283acf2c1862b5
+- subtype: N
+  name: 'Nerl : espaces remarquables du littoral identifies dans le schema d amenagement regional a proteger dans
+    le respect des reglementations applicables'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nerl
+    partition: DU_97410
+  surface_m2: 361396
+  geom_md5: dd7469d1c946fec2ab6fb297d2ede82c
+- subtype: N
+  name: 'Nerl : espaces remarquables du littoral identifies dans le schema d amenagement regional a proteger dans
+    le respect des reglementations applicables'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nerl
+    partition: DU_97410
+  surface_m2: 144747
+  geom_md5: 4c2a993685c1cbcef287ce786d0edd7a
+- subtype: N
+  name: 'Nerl : espaces remarquables du littoral identifies dans le schema d amenagement regional a proteger dans
+    le respect des reglementations applicables'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nerl
+    partition: DU_97410
+  surface_m2: 452703
+  geom_md5: 65e33bbf6668154007132b948eb9e682
+- subtype: N
+  name: 'Np : sites naturels a forte valeur ecologique et floristique a proteger de maniere stricte'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97410
+  surface_m2: 8651
+  geom_md5: 3ad0eb03b773ca51b292c6746ef1be75
+- subtype: N
+  name: 'Np : sites naturels a forte valeur ecologique et floristique a proteger de maniere stricte'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97410
+  surface_m2: 221315
+  geom_md5: 778c7fdf25c683890fe05ab1010817fb
+- subtype: N
+  name: 'Np : sites naturels a forte valeur ecologique et floristique a proteger de maniere stricte'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97410
+  surface_m2: 304974
+  geom_md5: 2bf46fca83cee8d5856bd6a38fb18de8
+- subtype: N
+  name: 'Np : sites naturels a forte valeur ecologique et floristique a proteger de maniere stricte'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97410
+  surface_m2: 649512
+  geom_md5: f192ffbc8fd4efd3a1107f6339fbe523
+- subtype: N
+  name: 'Np : sites naturels a forte valeur ecologique et floristique a proteger de maniere stricte'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97410
+  surface_m2: 434338
+  geom_md5: abef458c17c5d70683e976fb720d99fa
+- subtype: N
+  name: 'Npnr : coeur du parc national de la Reunion a proteger dans le respect des reglementations applicables'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97410
+  surface_m2: 134887742
+  geom_md5: 96e97351a208d270f4ced75058016ea8
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns32
+    partition: DU_97410
+  surface_m2: 8140
+  geom_md5: 5ddd28f541d55ab5da1ab27a016b7012
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns39
+    partition: DU_97410
+  surface_m2: 5446
+  geom_md5: 3db0131c5bdb58965792ae0c2b7a2561
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns30
+    partition: DU_97410
+  surface_m2: 2328
+  geom_md5: 8cc675e6ce217d63bd6ceb41aadb58b3
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns35
+    partition: DU_97410
+  surface_m2: 4882
+  geom_md5: bc43419598fbae9012ae61a38865f42c
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns40
+    partition: DU_97410
+  surface_m2: 21238
+  geom_md5: 63928361a5eef924b4b18a90359655d6
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns38
+    partition: DU_97410
+  surface_m2: 14274
+  geom_md5: a94b996937e9d934de159220ccf94c72
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns25
+    partition: DU_97410
+  surface_m2: 17586
+  geom_md5: 833e7d565b416980f7ee8d94d7b892d7
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns26
+    partition: DU_97410
+  surface_m2: 8796
+  geom_md5: cca86590027e5a29885d728632b4bb21
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns43
+    partition: DU_97410
+  surface_m2: 4254
+  geom_md5: 1fbb3af72ba0ce874d1edf1407688f8e
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns36
+    partition: DU_97410
+  surface_m2: 3159
+  geom_md5: 4c4607dbcfd0a8cb531194467a71e251
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns23
+    partition: DU_97410
+  surface_m2: 4738
+  geom_md5: 6f88312437f8d5990eafc86277e9b3d5
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns46
+    partition: DU_97410
+  surface_m2: 4971
+  geom_md5: 8b9229b0e97834853648c02b4366591e
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns27
+    partition: DU_97410
+  surface_m2: 2794
+  geom_md5: 91302032a13a66b9965cd56a0c87f6c7
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns20
+    partition: DU_97410
+  surface_m2: 10257
+  geom_md5: 5b11a1d6410beb2f87d66ff909a0838e
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns44
+    partition: DU_97410
+  surface_m2: 5481
+  geom_md5: 3152dfd58c6a672f44b52e590f2b955b
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns42
+    partition: DU_97410
+  surface_m2: 5660
+  geom_md5: 4717911c242ca9934d8091bad7c98451
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns37
+    partition: DU_97410
+  surface_m2: 5801
+  geom_md5: ada946963cb63ec234782c733714d107
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns34
+    partition: DU_97410
+  surface_m2: 21204
+  geom_md5: 347c38699dd1b3e910fa610f1204d5d0
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns33
+    partition: DU_97410
+  surface_m2: 3045
+  geom_md5: ebd9eed29fa956871eda030b48028595
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns45
+    partition: DU_97410
+  surface_m2: 3986
+  geom_md5: d7845ae5476767cc9218813a7653a655
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns29
+    partition: DU_97410
+  surface_m2: 2625
+  geom_md5: e0f9ef873736109aface1bec598f8d9f
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns21
+    partition: DU_97410
+  surface_m2: 37043
+  geom_md5: a97a901805be477f646611787a0e0614
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns22
+    partition: DU_97410
+  surface_m2: 3334
+  geom_md5: f2024f6550c4d63d4896a1f6b9c1d4a6
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns31
+    partition: DU_97410
+  surface_m2: 3362
+  geom_md5: 4fe7f4930f03aa219f7a101c60fa8054
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns41
+    partition: DU_97410
+  surface_m2: 54781
+  geom_md5: 2953f8bc6a453e1c7e1f835004575786
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns28
+    partition: DU_97410
+  surface_m2: 12454
+  geom_md5: 181e1c2b8db17629791a6627d1283951
+- subtype: N
+  name: 'Ns : zones correspondant aux anciennes zones Nba pouvant accepter des constructions et qui ont ete delimitees
+    dans le PLU precedant'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ns24
+    partition: DU_97410
+  surface_m2: 10915
+  geom_md5: 8ae18d389e0199d6704dd9ba9989f28c
+- subtype: N
+  name: 'Nta : zones touristiques qui figuraient dans l ancien PLU et ou une activite touristique reelle existe'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nta48
+    partition: DU_97410
+  surface_m2: 3992
+  geom_md5: fffef3dfe0b7d5e1e443d24dde8c204b
+- subtype: N
+  name: 'Nta : zones touristiques qui figuraient dans l ancien PLU et ou une activite touristique reelle existe'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nta52
+    partition: DU_97410
+  surface_m2: 19215
+  geom_md5: fe8271f8a5629c416f089d73d322b0a4
+- subtype: N
+  name: 'Nta : zones touristiques qui figuraient dans l ancien PLU et ou une activite touristique reelle existe'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nta53
+    partition: DU_97410
+  surface_m2: 4391
+  geom_md5: a02396e6b484943332d3c2f029bab4cc
+- subtype: N
+  name: 'Nta : zones touristiques qui figuraient dans l ancien PLU et ou une activite touristique reelle existe'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nta54
+    partition: DU_97410
+  surface_m2: 4046
+  geom_md5: 5e7f80b15238974514fdc45a86425d6a
+- subtype: N
+  name: 'Nta : zones touristiques qui figuraient dans l ancien PLU et ou une activite touristique reelle existe'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nta49
+    partition: DU_97410
+  surface_m2: 11018
+  geom_md5: 570071462aafac9e916b3352b63fa6c6
+- subtype: N
+  name: 'Nta : zones touristiques qui figuraient dans l ancien PLU et ou une activite touristique reelle existe'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nta47
+    partition: DU_97410
+  surface_m2: 28564
+  geom_md5: 88a74a98b7f4e8daf42c193ea80e2bb1
+- subtype: N
+  name: 'Nta : zones touristiques qui figuraient dans l ancien PLU et ou une activite touristique reelle existe'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nta51
+    partition: DU_97410
+  surface_m2: 12067
+  geom_md5: b0e1fd47aa6b38674d18b21e9ab84940
+- subtype: N
+  name: 'Nta : zones touristiques qui figuraient dans l ancien PLU et ou une activite touristique reelle existe'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Nta50
+    partition: DU_97410
+  surface_m2: 18257
+  geom_md5: 43c9fd8afedee705e4e444b96eb91f01
+- subtype: N
+  name: 'Ntb : zones correspondant a des hameaux nouveaux integres a l environnement'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ntb55
+    partition: DU_97410
+  surface_m2: 10001
+  geom_md5: 47eef5ca228e72af64da9ff187fef735
+- subtype: N
+  name: 'Ntb : zones correspondant a des hameaux nouveaux integres a l environnement'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ntb59
+    partition: DU_97410
+  surface_m2: 24961
+  geom_md5: 2818fb00d9d2dc23568b5d4363299ed4
+- subtype: N
+  name: 'Ntb : zones correspondant a des hameaux nouveaux integres a l environnement'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ntb57
+    partition: DU_97410
+  surface_m2: 29754
+  geom_md5: e6385b4c2593bddaecfe19d1ce64a54f
+- subtype: U
+  name: 'Ua10 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 127258
+  geom_md5: 70cd75e8465f0a7c4523b19aad616857
+- subtype: U
+  name: 'Ua10 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 143154
+  geom_md5: 8d0cf9c708f8c8162f5906c6b53d490d
+- subtype: U
+  name: 'Ua10 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 52196
+  geom_md5: 67a680d5521bfc032f64c6a9512331c7
+- subtype: U
+  name: 'Ua10 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 353523
+  geom_md5: b31faf243ecc73e0cf04d7b5fddf60cc
+- subtype: U
+  name: 'Ua10 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 207732
+  geom_md5: ee08395546f9f0baf23782b17526e4a8
+- subtype: U
+  name: 'Ua13 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 125095
+  geom_md5: 66aa10de0895d983fcb6174fc8b946d5
+- subtype: U
+  name: 'Ua13 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 550575
+  geom_md5: 69f7eef0a8495eca540dc06fd0c984e2
+- subtype: U
+  name: 'Ua13 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 515968
+  geom_md5: 8da833361ec465e343ef3c1b32a8e598
+- subtype: U
+  name: 'Ua4 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 45981
+  geom_md5: 7f0ee34cef761fcae7690d2576be76b6
+- subtype: U
+  name: 'Ua7 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 45336
+  geom_md5: d1e88bbe192b35f7cac1466c9b9e8c43
+- subtype: U
+  name: 'Ua7 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97410
+  surface_m2: 141532
+  geom_md5: fdc7532c60237114385e98af06730a4b
+- subtype: U
+  name: 'Uap4 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Uap
+    partition: DU_97410
+  surface_m2: 12899
+  geom_md5: e08c787dd97b49eb1d62a53d78258a8a
+- subtype: U
+  name: 'Uap7 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Uap
+    partition: DU_97410
+  surface_m2: 47767
+  geom_md5: 37b86dbc0b5d7e4ee3fedb62ec01a79c
+- subtype: U
+  name: 'Uap7 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Uap
+    partition: DU_97410
+  surface_m2: 67506
+  geom_md5: ef18940aaabaee7fa33c6f28133d6850
+- subtype: U
+  name: 'Uap7 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Uap
+    partition: DU_97410
+  surface_m2: 38663
+  geom_md5: 6ceb3282a75a9065827bb7f103032b8d
+- subtype: U
+  name: 'Uap7 : centres urbains'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Uap
+    partition: DU_97410
+  surface_m2: 47439
+  geom_md5: 7747b6dc3fca8416771e80a6e6bb6af6
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 332770
+  geom_md5: ae61003ac5e393c32dbb2aeb4f5f7f5e
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 827360
+  geom_md5: 95b57ae42d27df85240f121279f3aede
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 250936
+  geom_md5: 21170a9baa1daf360fcef6bc382d089a
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 193997
+  geom_md5: bdde360ae74bf6e7a6b72796d7c93b02
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 5021
+  geom_md5: afc7e99b106a7f86eacb62bb0aba2947
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 430047
+  geom_md5: 077cd5d8cbe1278fd28ba5a85e24ab51
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 2342
+  geom_md5: 8bd9572c33c9c0b4b8d851091851db0c
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 170750
+  geom_md5: ba8da13432efcd40ea899a8a4cbfe513
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 408118
+  geom_md5: 0c901bbaf9bd145e298bcb8523031ee3
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 521302
+  geom_md5: c78a0ed991fd5dc7ce75b8ce06b7e4a1
+- subtype: U
+  name: 'Ub10 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 612880
+  geom_md5: 99464eff1ee41daba3c9836335e36908
+- subtype: U
+  name: 'Ub13 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 1112617
+  geom_md5: 9dabc3293f4cf6db5649c5bd4d008495
+- subtype: U
+  name: 'Ub4 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 67435
+  geom_md5: c3059b9ae5f94e4aecafb952d9eeecaa
+- subtype: U
+  name: 'Ub4 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 64931
+  geom_md5: 3636dde9b5cd30b483ec97f5e8c03a73
+- subtype: U
+  name: 'Ub4 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 14634
+  geom_md5: de81e691aa7945d9529e0d05da3b0c73
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 106667
+  geom_md5: c9e5b34dc2a105ef79eb2388f3674cce
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 52434
+  geom_md5: 8da2875e317aa2e3eba294eab445294f
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 31460
+  geom_md5: 229b1015d68004e4d8464d99a64ac960
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 19518
+  geom_md5: 86aa883d141f0fe33ee2fa3d61feb216
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 50851
+  geom_md5: 80ac8ed2b68db6d11e15f340a433bca0
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 128485
+  geom_md5: d7285b5ea6082fd581b144c820c3b23d
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 182024
+  geom_md5: 2437de4028ae3bc77c48baf04a470f68
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 45881
+  geom_md5: a7f1e894af2a58f5a427a2fb9d8a251e
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 293981
+  geom_md5: cad740a0165caa18f21270940be27e9f
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 151788
+  geom_md5: d931e610814958ab4af2884296d025ba
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 25922
+  geom_md5: 5964411ebf03614fb9a1fc4d1aec5529
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 183791
+  geom_md5: 7eb14ca8933b36148c27357c805a6d9e
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 19377
+  geom_md5: bff6dc2b7f68e7e1a0d744463d394e01
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 529579
+  geom_md5: 6e08b8caf412a47dd5b3f60a4c3c6f81
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 187180
+  geom_md5: ce7be0bd233fe0a04898de7aa9c4767f
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 18892
+  geom_md5: 35d26c0553bf2f3d9ddac0ba99a25ed9
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 285685
+  geom_md5: 75dfbd76a82482c19b4abe5533f83360
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 32784
+  geom_md5: 9e0238879cafdd0c6b5d4944f883b9cc
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 232874
+  geom_md5: 90a553db958ba0584fb6e6d1362892fe
+- subtype: U
+  name: 'Ub7 : urbanisations peripheriques'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97410
+  surface_m2: 138826
+  geom_md5: 08df2b289993d4b81faa77f147d39c02
+- subtype: U
+  name: 'Ue15 : zones affectees aux activites economiques et industrielles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97410
+  surface_m2: 18244
+  geom_md5: 3a67cbf44d55cad9757b75e9662e8762
+- subtype: U
+  name: 'Ue15 : zones affectees aux activites economiques et industrielles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97410
+  surface_m2: 143358
+  geom_md5: 6306cf09e99997406d5851b480414595
+- subtype: U
+  name: 'Ue15 : zones affectees aux activites economiques et industrielles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97410
+  surface_m2: 540294
+  geom_md5: 58a0d5fbca4f651f779177fb4338fb8d
+- subtype: U
+  name: 'Ue15 : zones affectees aux activites economiques et industrielles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97410
+  surface_m2: 2200
+  geom_md5: 2854e233e46680f979493dd4551a390c
+- subtype: U
+  name: 'Ue15 : zones affectees aux activites economiques et industrielles'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97410
+  surface_m2: 26613
+  geom_md5: de951f926b4eabdb235143bdd9ffcfd6
+- subtype: U
+  name: 'Up15 : zone affectee aux activites economiques de production dans lesquelles les commerces et les services
+    sont strictement limites en application du schema d amenagement regional'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Up
+    partition: DU_97410
+  surface_m2: 105789
+  geom_md5: c10825054fd4e6b39f3f47b684e893bb
+- subtype: U
+  name: 'Ut10 : zone affectee au tourisme aux Orangers'
+  attrs:
+    idurba: 97410_PLU_20200206
+    source: API_CARTO_GPU
+    libelle: Ut
+    partition: DU_97410
+  surface_m2: 19690
+  geom_md5: c8bded454026158fdf5eac5edf7722a2

@@ -18,9 +18,10 @@ function Banner({ children }: { children: React.ReactNode }) {
 /* ───────────── M15 — SIMULATEUR PLU ───────────── */
 
 export function M15() {
-  const zones = useQuery({ queryKey: ['m15z'], queryFn: motSimulPluZones })
+  const commune = useApp((s) => s.commune)
+  const zones = useQuery({ queryKey: ['m15z', commune], queryFn: motSimulPluZones })
   const [zone, setZone] = useState<string | null>(null)
-  const sim = useQuery({ queryKey: ['m15', zone], queryFn: () => motSimulPlu(zone!), enabled: !!zone })
+  const sim = useQuery({ queryKey: ['m15', zone, commune], queryFn: () => motSimulPlu(zone!), enabled: !!zone })
   const { setModuleMap } = useApp()
   const d = sim.data
   useEffect(() => {

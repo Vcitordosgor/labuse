@@ -16,6 +16,8 @@ export interface ParcelProps {
   vue_mer: string | null
   evenement: string | null
   flags: string[]
+  cluster?: number | null  // « même propriétaire ×N » (groupe SIREN parmi les chaudes île)
+  proprio?: string | null
   centroid?: LngLat | null // calculé une fois côté client (filtre zone)
 }
 

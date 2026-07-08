@@ -7,6 +7,7 @@ import {
 import { pointInPolygon } from '../../lib/geo'
 import { STATUT_META } from '../../lib/status'
 import { useApp } from '../../store/useApp'
+import { M22 } from './M22Programme'
 import { M15, M16, M17, M18, M19 } from './moteurs'
 import { MODULES, VIOLET } from './registry'
 
@@ -61,7 +62,8 @@ const featureCollection = (features: unknown[]) => ({ type: 'FeatureCollection',
 
 function M01() {
   const [minScore, setMinScore] = useState(70)
-  const q = useQuery({ queryKey: ['m01', minScore], queryFn: () => modDivision(minScore) })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m01', minScore, commune], queryFn: () => modDivision(minScore) })
   const items = (q.data?.items ?? []) as Record<string, any>[]
   useModuleMap(
     items.map((i) => i['idu'] as string),
@@ -94,8 +96,13 @@ function M01() {
 /* ───────────────────────────── M02 — PATRIMOINE ───────────────────────────── */
 
 function M02() {
+  const { m02Prefill, setM02Prefill } = useApp()
   const [q, setQ] = useState('')
   const [siren, setSiren] = useState<string | null>(null)
+  useEffect(() => {
+    if (m02Prefill) { setSiren(m02Prefill); setM02Prefill(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [m02Prefill])
   const sug = useQuery({ queryKey: ['m02s', q], queryFn: () => modPatrimoineSearch(q), enabled: q.length >= 2 && !siren })
   const pat = useQuery({ queryKey: ['m02', siren], queryFn: () => modPatrimoine(siren!), enabled: !!siren })
   const d = pat.data as Record<string, any> | undefined
@@ -146,7 +153,8 @@ function M02() {
 function M03() {
   const [months, setMonths] = useState(24)
   const zone = useApp((s) => s.zone)
-  const q = useQuery({ queryKey: ['m03', months], queryFn: () => modPermis(months) })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m03', months, commune], queryFn: () => modPermis(months) })
   const d = q.data as Record<string, any> | undefined
   // la ZONE DESSINÉE (outil carte) filtre aussi les permis géocodés — les non-géocodés restent listés
   const items = ((d?.['items'] ?? []) as Record<string, any>[]).filter((i) => {
@@ -171,7 +179,7 @@ function M03() {
         ))}
       </div>
       <p className="text-[11px] text-txt-dim">
-        {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(d?.['total'] as never)} permis`} · {geo.length} sur la carte
+        {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(d?.['total'] as never)} permis${(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichés` : ''}`} · {geo.length} sur la carte
         {zone && <span className="text-[#8b76c0]"> · outil Zone actif</span>}
       </p>
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
@@ -193,7 +201,8 @@ function M03() {
 
 function M04() {
   const [months, setMonths] = useState(24)
-  const q = useQuery({ queryKey: ['m04', months], queryFn: () => modPromesses(months) })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m04', months, commune], queryFn: () => modPromesses(months) })
   const d = q.data as Record<string, any> | undefined
   const items = ((d?.['items'] ?? []) as Record<string, any>[])
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
@@ -209,7 +218,7 @@ function M04() {
           {[24, 36, 48, 60].map((m) => <option key={m} value={m}>{m} mois</option>)}
         </select>
       </label>
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} promesses mortes</p>
+      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} promesses mortes{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i, k) => (
           <Row key={k} idu={i['idu'] as string}
@@ -259,14 +268,15 @@ function M05() {
 /* ───────────────────────────── M06 — MODE BAILLEUR ───────────────────────────── */
 
 function M06() {
-  const q = useQuery({ queryKey: ['m06'], queryFn: modBailleur })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m06', commune], queryFn: modBailleur })
   const d = q.data as Record<string, any> | undefined
   const items = ((d?.['items'] ?? []) as Record<string, any>[])
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
   return (
     <>
       <Banner>{String(d?.['lecture_lls'] ?? '…')}</Banner>
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles promues en QPV</p>
+      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles promues en QPV{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}
@@ -283,7 +293,8 @@ function M06() {
 /* ───────────────────────────── M07 — FONCIER FANTÔME ───────────────────────────── */
 
 function M07() {
-  const q = useQuery({ queryKey: ['m07'], queryFn: modFantome })
+  const commune = useApp((s) => s.commune)
+  const q = useQuery({ queryKey: ['m07', commune], queryFn: modFantome })
   const d = q.data as Record<string, any> | undefined
   const items = ((d?.['items'] ?? []) as Record<string, any>[])
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
@@ -291,7 +302,7 @@ function M07() {
     <>
       <Banner>Constructible (Q ≥ 50) mais <b>verrouillé</b> : personne morale introuvable au RNE ou
         dirigeant inactif. Levier indiqué par cas — vérification notariale indispensable.</Banner>
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles gelées</p>
+      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles gelées{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}
@@ -419,7 +430,7 @@ function M10() {
 const COMPONENTS: Record<string, () => JSX.Element> = {
   division: M01, patrimoine: M02, permis: M03, promesses: M04, velocite: M05,
   bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
-  simulplu: M15, assemblage: M16, zan: M17, barometre: M18, matching: M19,
+  simulplu: M15, assemblage: M16, zan: M17, barometre: M18, matching: M19, programme: M22,
 }
 
 export function ModulePanel() {

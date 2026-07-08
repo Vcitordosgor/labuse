@@ -157,3 +157,92 @@ def report(session: Session, run_label: str, commune: str, top_n: int = 50) -> d
         {"r": run_label, "c": commune}).scalar()
     base["tracabilite_base_plus_somme"] = f"{ok}/{total_non_excl} (hors clamp/hard-exclude)"
     return base
+
+
+# ═══════════════ CONVENTION VERSIONNÉE — SIMULATION & APPLICATION ═══════════════
+
+#: candidat de convention = les 4 seuils (la bascule événementielle est DOCTRINALE : jamais balayée)
+_SIM_STATUT = """
+CASE WHEN s.excl THEN 'ecartee'
+     WHEN s.rouge THEN 'chaude'
+     WHEN s.q >= :qs AND s.a >= :as_ AND s.acompl >= :acm THEN 'chaude'
+     WHEN s.q >= :qs THEN 'a_surveiller'
+     WHEN s.q >= :qe THEN 'a_creuser'
+     ELSE 'ecartee' END
+"""
+
+
+def _sim_base(session: Session, run_label: str) -> None:
+    """Base de simulation : UNE passe sur les 431k (q/a/acompl + excl + rouge + siren) dans une
+    table TEMPORAIRE (session-locale, disparaît à la déconnexion — AUCUNE écriture persistante)."""
+    session.execute(text("DROP TABLE IF EXISTS _sim_matrice"))
+    session.execute(text("""
+        CREATE TEMP TABLE _sim_matrice AS
+        SELECT d.parcel_id, p.commune, d.q_score AS q, d.a_score AS a,
+               COALESCE(d.a_completude, 0) AS acompl,
+               COALESCE(c.excl, false) AS excl, COALESCE(c.rouge, false) AS rouge,
+               pm.siren
+        FROM dryrun_parcel_evaluations d
+        JOIN parcels p ON p.id = d.parcel_id
+        LEFT JOIN (SELECT parcel_id, bool_or(result = 'HARD_EXCLUDE') AS excl,
+                          bool_or(evenement = 'rouge') AS rouge
+                   FROM dryrun_cascade_results WHERE run_label = :r GROUP BY parcel_id) c
+               ON c.parcel_id = d.parcel_id
+        LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
+        WHERE d.run_label = :r"""), {"r": run_label})
+    session.execute(text("CREATE INDEX ON _sim_matrice (commune)"))
+
+
+def simulate_matrice(session: Session, run_label: str, candidates: list[dict]) -> list[dict]:
+    """Simulation À BLANC de conventions candidates (SELECT uniquement, cf. _sim_base).
+    Par candidat : statuts île (chaude SÉPARÉE matrice vs événement), dossiers propriétaires
+    identifiés parmi les chaudes (+ reliquat sans identité), détail chaudes par commune."""
+    _sim_base(session, run_label)
+    out = []
+    for cand in candidates:
+        params = {"qs": cand["q_chaude"], "as_": cand["a_chaude"],
+                  "acm": cand.get("a_completude_min", 50), "qe": cand.get("q_ecartee", 50)}
+        row = session.execute(text(f"""
+            WITH st AS (SELECT s.*, {_SIM_STATUT} AS statut FROM _sim_matrice s)
+            SELECT count(*) FILTER (WHERE statut = 'chaude')                          AS chaude,
+                   count(*) FILTER (WHERE statut = 'chaude' AND rouge)                AS chaude_evenement,
+                   count(*) FILTER (WHERE statut = 'chaude' AND NOT rouge)            AS chaude_matrice,
+                   count(*) FILTER (WHERE statut = 'a_surveiller')                    AS a_surveiller,
+                   count(*) FILTER (WHERE statut = 'a_creuser')                       AS a_creuser,
+                   count(*) FILTER (WHERE statut = 'ecartee')                         AS ecartee,
+                   count(DISTINCT siren) FILTER (WHERE statut = 'chaude' AND siren IS NOT NULL) AS dossiers,
+                   count(*) FILTER (WHERE statut = 'chaude' AND siren IS NULL)        AS chaudes_sans_identite
+            FROM st"""), params).mappings().one()
+        communes = {r["commune"]: int(r["n"]) for r in session.execute(text(f"""
+            WITH st AS (SELECT s.*, {_SIM_STATUT} AS statut FROM _sim_matrice s)
+            SELECT commune, count(*) AS n FROM st WHERE statut = 'chaude' GROUP BY 1"""),
+            params).mappings().all()}
+        out.append({**cand, **{k: int(v or 0) for k, v in row.items()}, "par_commune": communes})
+    return out
+
+
+def apply_convention(session: Session, run_label: str = "q_v2") -> dict:
+    """UN point d'entrée : rejoue la matrice ×24 depuis le YAML versionné + reconstruit les
+    tuiles MVT. Idempotent (deux passes = même état). Les tops HTML sont régénérés par le CLI
+    (script séparé). CANARI : 97415000AC0253 doit rester chaude (par ÉVÉNEMENT) — si elle
+    tombe, la bascule est cassée : on lève, on n'applique pas silencieusement."""
+    from ..api.tiles import build_mvt_table
+
+    cfg = load_yaml_config("scoring_matrice")
+    communes = [r[0] for r in session.execute(text("SELECT DISTINCT commune FROM parcels ORDER BY 1")).all()]
+    stats = {}
+    for c in communes:
+        stats[c] = compute_matrice(session, run_label, c)
+    session.commit()
+    canari = session.execute(text(
+        "SELECT d.matrice_statut FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id"
+        " WHERE d.run_label = :r AND p.idu = '97415000AC0253'"), {"r": run_label}).scalar()
+    if canari != "chaude":
+        raise RuntimeError(
+            f"CANARI 97415000AC0253 = {canari!r} (attendu chaude PAR ÉVÉNEMENT) — la bascule "
+            "BODACC est cassée, pas un seuil. Application stoppée, tuiles NON reconstruites.")
+    n_mvt = build_mvt_table(session, run_label)
+    return {"convention": cfg.get("convention"), "seuils": cfg["seuils"],
+            "communes": len(communes), "mvt_parcelles": n_mvt, "canari_AC0253": canari,
+            "statuts": {k: sum(s.get(k, 0) for s in stats.values())
+                        for k in ("chaude", "a_surveiller", "a_creuser", "ecartee")}}

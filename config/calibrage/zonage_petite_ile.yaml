@@ -1,0 +1,3098 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Petite-Île
+idurba:
+- 97405_PLU_20230609
+n_zones: 335
+geoms_sidecar: data/calibrage/zonage_petite_ile.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 16424
+  geom_md5: f99c509f6fc0fe20aba9f7d8f379dc93
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 2008
+  geom_md5: 620cf14ae7c98dcb0870abfae832f0a9
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 14710
+  geom_md5: 7d95a3ec8caa265660be45a1ef4f0db0
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 15305
+  geom_md5: 29cffc853ec7bbd183af68917bc1641e
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 3713
+  geom_md5: 7076bd82c979ea058859b95d9a8fa4b4
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 11879
+  geom_md5: 9f252624bae06cd6e2d94525f9654d33
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 39377
+  geom_md5: 754157556f590abbfe1fe79b21d83022
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 9581
+  geom_md5: 0af9bcff4c1d3ca677d8b6bb6093033f
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 1759
+  geom_md5: e54ff579b6b7b698a1cb66637d6650a1
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 6913
+  geom_md5: 66f3ddef4f90fd0b76ffd1d19d263138
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 6683
+  geom_md5: a2487215c318d0b28251d78025dbc0be
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 551
+  geom_md5: 189075931de8f50338a6427c70223c6e
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 13866
+  geom_md5: bd94282c9e6f2f7fe6cade4f7ae417aa
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 4185
+  geom_md5: 52417e8158860f45a16dda64ae3bd6a7
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 6340
+  geom_md5: 1e294c41786e487647065357ccf9ea2b
+- subtype: A
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    quelle qu'elle soit, est interdite, ainsi que les élevages, excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ae
+    partition: DU_97405
+  surface_m2: 8083
+  geom_md5: 553c7ff61e147d00b4de90edd3eedc40
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 1158948
+  geom_md5: 59ee383a6077e69ff1a74c5298c7e442
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 106653
+  geom_md5: 9e8073071f189ceb241470e5a448f8d8
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 1162569
+  geom_md5: 5f47a200356ddda3bc64df705cda8234
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 177056
+  geom_md5: 0b857585a1740dff040a8afd1e0fef44
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 25604
+  geom_md5: 88ffd91877bb88c2a6fb3a8820fb7fc5
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 17324
+  geom_md5: cf4954b9ad023ca9aa5038bded2bfab0
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 594982
+  geom_md5: bf56cb947401b5e85d02ca147feb4566
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 24259
+  geom_md5: 60b105daf60fe53242757f562282db8c
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 2268
+  geom_md5: 8edba3a938404c1cb5d8295a25554597
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 44234
+  geom_md5: ab1b71b46fdcbb13775fbc188c732afa
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 36561
+  geom_md5: fb46b921cf6843dbea98507387a5f83a
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 13404
+  geom_md5: f98825d64f54fd6ff3b0b74986464091
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 22774
+  geom_md5: 65dd002a255fd2662c5b729ef1a9935b
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 0
+  geom_md5: 363ea25c5ec15547083d356153dff37f
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 783
+  geom_md5: 9ad17adb97dc1e6ef90287ce91f0b499
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 103445
+  geom_md5: c6089aadcdb131462214d655656d5dbf
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 32378
+  geom_md5: 5ab225357fe4e08d70a38126a82c0e68
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 1359183
+  geom_md5: 109ce77137da87cddbf9c13c50422cda
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 4850
+  geom_md5: b1ceaf40c3abbc532f94fdc1064e9d87
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 0
+  geom_md5: daa61deb53b030a829a14ddeca73cc91
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 36505
+  geom_md5: 44e45092acf5d94c55417e8c840cdfe0
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 9645
+  geom_md5: 45fd2c16798d9689dfc4eb4fd564d2e2
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 3548
+  geom_md5: 3f6c82b2724260c2641bf72e305b8e2e
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 13655
+  geom_md5: 724188471cc94d71bde4e2dc0906de38
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 39786
+  geom_md5: d5b31b73a03d8546f97372fb0c151272
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 4373
+  geom_md5: 05f72a02ad3fd970586de6aa16c32913
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 20589
+  geom_md5: 3a4de8d298292a4dd8b9fdc941945f7f
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 470582
+  geom_md5: 060a2e7770a7de872225a7cd62ca7f4a
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 4174976
+  geom_md5: a027630994ef61dd4c4b6802108945ae
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 13909
+  geom_md5: 20c3d7823b47d43c0be0f4560aad3d79
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 13501
+  geom_md5: e34f611a699c66d991d9594e0ce4ab90
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 2164
+  geom_md5: 9b183a34ddc8449a120b4e62e9e74bb5
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 18685
+  geom_md5: cfcd850355c953889b4711edc993a552
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 41038
+  geom_md5: 5287b9b3cc8502fbff616f7d2c4d0a10
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 512389
+  geom_md5: 62f8d5bc0cd7e6fee411dcef5856f6bf
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 2646
+  geom_md5: 74ae923d165e67abf97e2f1651741d56
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 7884
+  geom_md5: f3bb886f65e2b921683ff46f122e3a8a
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 1331254
+  geom_md5: dd037042537b0bcef35ae53bc63645b6
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 78559
+  geom_md5: 5f8dccaacb1cc39854ce2c5f4686b388
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 17355
+  geom_md5: 8ca76672dc6f903d2c1b5e907b8ff740
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 22208
+  geom_md5: 33c19fc95ef7b4f5297a7118fccd0e57
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 2604
+  geom_md5: a7ef7ddcd9ef1ed5550d1a6201914b17
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 390503
+  geom_md5: 29254548f51c613d12dea9c00677196b
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 272111
+  geom_md5: 0756b231b4ef1046f666b07ff120d60b
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 21215
+  geom_md5: 1a0c754d855bedb0014c5601cd14f81f
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 351701
+  geom_md5: a302021164468e123000a0b63247064b
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 216444
+  geom_md5: a6839dd5f9a024b4540b2aa1479bfd01
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 0
+  geom_md5: 4bbd13937786cc21d64c0bcac3ac1c47
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 211874
+  geom_md5: df1957be8078b77edfb82bc8b3b42a40
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 1100099
+  geom_md5: ec02e7409ff8c1c3359355c9ec05c956
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 111340
+  geom_md5: 8119e4e0b40c628728c8d5d2dc7f3ffd
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 279033
+  geom_md5: 5124161bbe85a9d51bc27e7f53062b31
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 609906
+  geom_md5: e9aaa20a508090d35b47b4e682b72005
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 35120
+  geom_md5: fbb07c25c9a3758e2943affb9f39614f
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 14911
+  geom_md5: 69c36fb319e771965ac52ee9adff04f0
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 869837
+  geom_md5: 2bddbcc6e2a1dbd1dd365b7edc0f1ba2
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 10441
+  geom_md5: 668513c362cae092a511474b596c75b7
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 7109
+  geom_md5: 1a9d2931f876a6c22e34eb0b6d455d44
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 491
+  geom_md5: 8da9a91105d73dd6c7dad6d1febe881b
+- subtype: A
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97405
+  surface_m2: 4989
+  geom_md5: bfe0e288f6b91b1fc08dac140bf1c2e8
+- subtype: A
+  name: zone destinée à  recevoir les constructions et équipements nécessaires au fonctionnement des établissements
+    de formation et d'insertion dans le domaine de l'activité agricole
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97405
+  surface_m2: 14731
+  geom_md5: 56e13c2c65bfb0637f9cc2362858865f
+- subtype: A
+  name: zones agricoles situées dans la zone de coupure d'urbanisation ou toute construction, qu'elle quelle soit,
+    est interdite, ainsi que les élevages
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97405
+  surface_m2: 62734
+  geom_md5: 1591213ebfda0430c1b880819c6d48ae
+- subtype: A
+  name: zones agricoles situées dans la zone de coupure d'urbanisation ou toute construction, qu'elle quelle soit,
+    est interdite, ainsi que les élevages
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97405
+  surface_m2: 97950
+  geom_md5: 345983f53b8ae2c2ca699b025000b767
+- subtype: A
+  name: zones agricoles situées dans la zone de coupure d'urbanisation ou toute construction, qu'elle quelle soit,
+    est interdite, ainsi que les élevages
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97405
+  surface_m2: 242758
+  geom_md5: 5629534682ef5080f66f2d325506bcb5
+- subtype: A
+  name: zones agricoles situées dans la zone de coupure d'urbanisation ou toute construction, qu'elle quelle soit,
+    est interdite, ainsi que les élevages
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97405
+  surface_m2: 14192
+  geom_md5: d2a8e4b401c41293387afc23938f50ce
+- subtype: A
+  name: zones agricoles situées dans la zone de coupure d'urbanisation ou toute construction, qu'elle quelle soit,
+    est interdite, ainsi que les élevages
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97405
+  surface_m2: 337518
+  geom_md5: 980df771a0fa72ae3981bf9755c01e4a
+- subtype: A
+  name: zones agricoles situées dans la zone de coupure d'urbanisation ou toute construction, qu'elle quelle soit,
+    est interdite, ainsi que les élevages
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97405
+  surface_m2: 56907
+  geom_md5: b84d49ce70de5da025b82f22a6a58b1a
+- subtype: A
+  name: zones agricoles situées dans la zone de coupure d'urbanisation ou toute construction, qu'elle quelle soit,
+    est interdite, ainsi que les élevages
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97405
+  surface_m2: 12130
+  geom_md5: 43cf42fb10b41d4f31d7cbcd117da068
+- subtype: A
+  name: zones agricoles situées dans la zone de coupure d'urbanisation ou toute construction, qu'elle quelle soit,
+    est interdite, ainsi que les élevages
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97405
+  surface_m2: 583260
+  geom_md5: 740c1dc0b311df90bf84203b14f64322
+- subtype: A
+  name: zones agricoles à  protéger en raison de leur proximité du site de Grand Anse et aux projets touristiques
+    inclus dans la Zone d'Aménagement Liée à  la Mer du SMVM ou toute construction, quelle qu'elle soit, est interdite,
+    ainsi que les
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ad
+    partition: DU_97405
+  surface_m2: 85929
+  geom_md5: f486bc57569c085a2c598a1513cdc2e0
+- subtype: A
+  name: zones agricoles à  protéger en raison de leur proximité du site de Grand Anse et aux projets touristiques
+    inclus dans la Zone d'Aménagement Liée à  la Mer du SMVM ou toute construction, quelle qu'elle soit, est interdite,
+    ainsi que les
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ad
+    partition: DU_97405
+  surface_m2: 33991
+  geom_md5: 0c1da4b40950ddd5e052b80305c1b499
+- subtype: AUc
+  name: zone correspondant à  la ZAC Cambrai
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AUz
+    partition: DU_97405
+  surface_m2: 78409
+  geom_md5: 72f7020b5b52a3a0fe2aecfd28e79abb
+- subtype: AUc
+  name: zone correspondant à  la ZAC Cambrai
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AUz
+    partition: DU_97405
+  surface_m2: 1374
+  geom_md5: 1b44935f16a35665946818dd15ff9de4
+- subtype: AUc
+  name: zone correspondant à  la ZAC Cambrai
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AUz
+    partition: DU_97405
+  surface_m2: 54365
+  geom_md5: 1b13d5d6ecf95b3d1c0df8504bd14a33
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée destinée à  être urbanisée à  court et moyen terme
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AU
+    partition: DU_97405
+  surface_m2: 7642
+  geom_md5: 3d4286602bef3f7f4e763fe9ba4d63a3
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée destinée à  être urbanisée à  court et moyen terme
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AU
+    partition: DU_97405
+  surface_m2: 4062
+  geom_md5: 1ed46de874ac2a783e489350cf8b8299
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée destinée à  être urbanisée à  court et moyen terme
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AU
+    partition: DU_97405
+  surface_m2: 5836
+  geom_md5: 999be0865473f4aac83b4b8d7279a31a
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée destinée à  être urbanisée à  court et moyen terme
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AU
+    partition: DU_97405
+  surface_m2: 6769
+  geom_md5: 6208ff5475de207ed624bde4d5e5d56f
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée destinée à  être urbanisée à  court et moyen terme
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AU
+    partition: DU_97405
+  surface_m2: 836
+  geom_md5: 579f75e9f7cb9349f9c27e61352ee4d2
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée réservée aux activités industrielles et/ou artisanales
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: AUE
+    partition: DU_97405
+  surface_m2: 9836
+  geom_md5: 792b453a60fbc9c1ae79dbb4c99e41ff
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée réservée aux activités industrielles et/ou artisanales
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: AUE
+    partition: DU_97405
+  surface_m2: 40485
+  geom_md5: 2a09f73cb796ad23da17cca8d09531dd
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée réservée aux activités touristiques et de loisirs.
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: AUT
+    partition: DU_97405
+  surface_m2: 30635
+  geom_md5: 1ef83aeeed7495c1d56ca16164077dce
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée réservée aux équipements publics
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: AUF
+    partition: DU_97405
+  surface_m2: 6422
+  geom_md5: cd3f574b105cc1620308d3b75d41bf9a
+- subtype: AUc
+  name: zone naturelle partiellement ou non équipée réservée aux équipements publics
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: AUF
+    partition: DU_97405
+  surface_m2: 1977
+  geom_md5: a21914e7ea255f4b3ef3e053dc707350
+- subtype: AUc
+  name: zone qui devra s'urbaniser sous forme d'opérations d'ensemble et dont la densité devra tendre vers les objectifs
+    du SAR
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97405
+  surface_m2: 14305
+  geom_md5: e0ac985235e2bd63c55ba9b8ecff8820
+- subtype: AUc
+  name: zone qui devra s'urbaniser sous forme d'opérations d'ensemble et dont la densité devra tendre vers les objectifs
+    du SAR
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97405
+  surface_m2: 6461
+  geom_md5: 35771b7bf0d4160690e577c92efaadde
+- subtype: AUc
+  name: zone qui devra s'urbaniser sous forme d'opérations d'ensemble et dont la densité devra tendre vers les objectifs
+    du SAR
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97405
+  surface_m2: 4523
+  geom_md5: 85f17265c732414146b4ce4e212d4a1b
+- subtype: AUc
+  name: zone qui devra s'urbaniser sous forme d'opérations d'ensemble et dont la densité devra tendre vers les objectifs
+    du SAR
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97405
+  surface_m2: 7553
+  geom_md5: 3463a8feef072f5cb16d04a2421feaf9
+- subtype: AUc
+  name: zone qui devra s'urbaniser sous forme d'opérations d'ensemble et dont la densité devra tendre vers les objectifs
+    du SAR
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97405
+  surface_m2: 12994
+  geom_md5: 2204dc184c2317ec05963c3bed34b5b6
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AUe
+    partition: DU_97405
+  surface_m2: 4039
+  geom_md5: 16eef5ba10764d38e340042bc3681ddd
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 36532
+  geom_md5: c3074cca1c03b08740a8302ad7f85130
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 25272
+  geom_md5: 65cff3bfc0f67115e31344882a94fcb1
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AUe
+    partition: DU_97405
+  surface_m2: 8674
+  geom_md5: e27a1be3e63eef2b9736605b9b9cf56a
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 8310
+  geom_md5: fc2f49c606222a6e3af37d7f9621957a
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 11048
+  geom_md5: d998a11b25bcbcea3b424f2f3a32a073
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 6965
+  geom_md5: 22b977b53136b99394f83b9e416c963d
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 5216
+  geom_md5: 01117d37f07b6a02e210f24b8fa4427f
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 18993
+  geom_md5: 68d9ff21ffa74c2c6bd278674aca454c
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 5758
+  geom_md5: 05fafa1de3eb54caedae8cc611cb31da
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 4075
+  geom_md5: 3a082c81c46836ab27767d6c4bdb1922
+- subtype: AUs
+  name: zone naturelle non équipée destinée à  être urbanisées à  moyen et long terme après modification ou révision
+    du P.L.U
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: 2AU
+    partition: DU_97405
+  surface_m2: 6298
+  geom_md5: b06c6353bd684994832bdd76fae3d14c
+- subtype: AUs
+  name: zone naturelle partiellement ou non équipée réservée aux équipements
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: AUs
+    partition: DU_97405
+  surface_m2: 52386
+  geom_md5: 80fd96c5e47208714b4ed4b418d02d47
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 747667
+  geom_md5: 90acf69b32485104977026eedde5ccee
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 179819
+  geom_md5: e91ddb8597ac006f9967d2de2b1f38cf
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 39430
+  geom_md5: deaf7f9770f6c5c2839089f764e5ca28
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 212699
+  geom_md5: 01825ae45821755b806c3e01e1d8c639
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 16598
+  geom_md5: a7d78eba51a214a94ac3f7166d548595
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 20705
+  geom_md5: f80aaabc47b5f682698f474827e0b4d2
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 239666
+  geom_md5: 05d9ec331caaf19025771c546fd68a65
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 32247
+  geom_md5: 8576b7b66cc91e533db351f223fc0d60
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 186526
+  geom_md5: c4ad4dc5b3d782dbe8f52eb1086a0064
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 468915
+  geom_md5: 993b2d9dedfdfe1f346c9c8b59c958b9
+- subtype: N
+  name: corridors écologiques ou réservoirs de biodiversité ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nce
+    partition: DU_97405
+  surface_m2: 2969987
+  geom_md5: bc567621b0a6fa31814720003d5f6784
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 2152
+  geom_md5: 929d08c78c4adced1b3a80ca41f719fd
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 2051
+  geom_md5: aca594b889372016e3f0284ff0e15416
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 4359
+  geom_md5: f80f49c3ccd4ac5ff2b4dacdb1aa3d34
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 933
+  geom_md5: f486509b2ca290d908673c4e5a569ceb
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 4815
+  geom_md5: ad3da34dfc9c3b9a7760eba4d55202e3
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 1677
+  geom_md5: 520b84528b32c1a9c466614dc2dddea7
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 1438
+  geom_md5: d1fddb4eda2ef6e41c83b6ad49ac6132
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 1904
+  geom_md5: e257eb706d8fcbf31a1052e70a537276
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 5759
+  geom_md5: 8479d4cf29ee311258c7ec01373ea6d1
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 2855
+  geom_md5: cfecd6c4ad9dcec8367bc05103ff8fac
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 7812
+  geom_md5: 21896a33d5a96ed3314d1608dc764803
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 5248
+  geom_md5: 99781409f38c6eb073e4abae869b9a83
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 2990
+  geom_md5: 1e2ed3caf7b0c4fc3cfa5972e00cd8e3
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 3257
+  geom_md5: 19cdb512fad8beb63c31c623140498da
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 2213
+  geom_md5: 205275e076beb9f4e9117cc2e459d495
+- subtype: N
+  name: couloir réservé au doublement de la ligne haute tension Langevin - Bras de la Plaine, ou toute construction,
+    qu'elle quelle soit, est interdite excepté les infrastructures d'intérêt collectif
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ne
+    partition: DU_97405
+  surface_m2: 15950
+  geom_md5: f53293d661f75e2fcb0295880cd21385
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 759
+  geom_md5: bf19d2af5027684acdca80484183609d
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 24445
+  geom_md5: d72fd694cf000ce7adb0841ab86575da
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 403709
+  geom_md5: 7c1b6e41f4c8514ea272aecf8d43e4a6
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 239022
+  geom_md5: f94505e0e72fc2d3af031b33b332f62b
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 139041
+  geom_md5: 76535d9b9a3552774209253d7dd4e572
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 350290
+  geom_md5: f6dba19c5edd4b024997ba5ab5570fcf
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 15
+  geom_md5: ff6173dadabf32fc791d97bf383b8025
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 2382
+  geom_md5: 58139ee68c06deea6196ffeea25fe7c8
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 163822
+  geom_md5: 09d180e7e644221c9df2c82b17ae0eda
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 1188
+  geom_md5: a22dc009d4ccabbe34ae8e3ccf4e72cb
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 4019
+  geom_md5: 534fcf78d0b73562a290184921299b07
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 6030
+  geom_md5: 6a35c69ff7152608e8bfc5ce490dd1fd
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 45744
+  geom_md5: 4604cb0806c2497db057bf4c5f7b7564
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 3107
+  geom_md5: 5b6e2ae8154db0959d591787223d2b48
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 75303
+  geom_md5: 362edda2719b33ada8b92c7352ca3d28
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 29883
+  geom_md5: 5a507e1b74449280fc4a6e8989cfd1fa
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 1718
+  geom_md5: a36d9ef70607a6db887d09fbe0defd6c
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 62636
+  geom_md5: d872e78d0593a856b23a07bca8b52abc
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 156586
+  geom_md5: f7310f8f8c72d16a63eda72441de0a53
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 18565
+  geom_md5: 05dd9a87c39d534c73767567a2ec7493
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 7506
+  geom_md5: c03de85999909220f44daaf3f535f003
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 87054
+  geom_md5: 2a48a7644c6e6537c7569fd11344fbc9
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 0
+  geom_md5: 1bc318a60b835fc86716efd4eaa07aa8
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 6508
+  geom_md5: a1e6bc45102e0c5d047cb95f00a23463
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 2079
+  geom_md5: 15efd963956b98d82d9e664f61049a6e
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 275710
+  geom_md5: c41e8737bc34c6e95388b2f28a769164
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 44564
+  geom_md5: 7fac65c41e0d840c446c99a7e33343ae
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 90431
+  geom_md5: 5f04f53a73c2f06008c8d2c82e06f807
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 2388
+  geom_md5: 3f4ba34758720561c392593a099b5513
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 18673
+  geom_md5: dae63e1067d38ab49fb31160653916d5
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 12181
+  geom_md5: 1eef4159faf966bb295647a243fcdb8f
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 592300
+  geom_md5: a6c03310e13569f03e2600e25812e675
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 6389
+  geom_md5: 422c2ff48b68519e55a7f8878fe3b185
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 0
+  geom_md5: 125eb79ccf646d6d76d443e0496b1a36
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 13002
+  geom_md5: 9c503165dbb3a71f52ace8ccfbe34635
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 2096
+  geom_md5: 77b68b6240192b5e734eae5370043a07
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 14171
+  geom_md5: 7b653f947bc6738c5833f10bac905f8c
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 112832
+  geom_md5: 3e8f8fa19390305405d948d0e94f23e5
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 19800
+  geom_md5: f5a4421fc9ed5e3c517aecf1bd7d89ba
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 825
+  geom_md5: deb749ef517d913a7311e46ef9706aa6
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 61265
+  geom_md5: 0645295aa518cf3308e93b441ca5c4e4
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 13210
+  geom_md5: 5106bf73cd056a2370c356452d1043ff
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 38006
+  geom_md5: 2ed32b7437117798743fa5c917a11022
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 30558
+  geom_md5: e8c2da8db61d9482ca9df4d867657956
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 43932
+  geom_md5: d12206afc2a1d8b8e7293a104455bdd2
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 112790
+  geom_md5: 48c1b6099fb39d680caea5194e4163a8
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 9637
+  geom_md5: e429e4460653e468b1c582efb9ef1d1a
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 1092
+  geom_md5: ee36c8a5be050a63f56a74a604f28929
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 6810
+  geom_md5: 08778b96c283fd4b8d412786ceef5754
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 20
+  geom_md5: 60a1c047c223dc4ca9ab52c4766431ac
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 6980
+  geom_md5: ef29815852324156abb437a52cb29be0
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 129102
+  geom_md5: b743b4b0433f1c4eccb08810f4ae951b
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 17817
+  geom_md5: 287b618a149a2dc33a663e67cc9ab379
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 300958
+  geom_md5: 7acefd448d67e3e4378ae26a5da426cc
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 1711
+  geom_md5: fc10fdff9ecaca754fc2005398e03ce3
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 660
+  geom_md5: f0050c92a8d0af3542e3f343cbdf5299
+- subtype: N
+  name: espaces naturels à  protéger en raison de la qualité de leurs sites ou des risques naturels
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97405
+  surface_m2: 2043
+  geom_md5: 35058e60911317975d78ddae8ad51743
+- subtype: N
+  name: périmètre du c'ur du parc naturel régional ou toute construction, quelle qu'elle soit, est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97405
+  surface_m2: 1630838
+  geom_md5: 461c01184badeac5139deb8f96c454c2
+- subtype: N
+  name: zone correspondant au site de Grand Anse pour la création d'un équipement public compatible avec le SMVM
+    et le SAR
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Nb
+    partition: DU_97405
+  surface_m2: 3129
+  geom_md5: 5c281b4bdcbe32e65ba18a9997ef3a83
+- subtype: N
+  name: zone destinée à  des activités touristiques et de loisirs
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ntla
+    partition: DU_97405
+  surface_m2: 209926
+  geom_md5: 0b652056b003ab63ddbe2cfed053bfb9
+- subtype: N
+  name: zone destinée à  des activités touristiques et de loisirs
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ntl
+    partition: DU_97405
+  surface_m2: 19554
+  geom_md5: c35b01c9f2455e0f5c75fe90587050bb
+- subtype: N
+  name: zone destinée à  des activités touristiques et de loisirs
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ntl
+    partition: DU_97405
+  surface_m2: 33972
+  geom_md5: e483357609f9ce637ea5e04dd2a2ebc4
+- subtype: N
+  name: zone destinée à  des activités touristiques et de loisirs
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ntl
+    partition: DU_97405
+  surface_m2: 6224
+  geom_md5: 2a2691f0035a89becf546296eac2f36d
+- subtype: N
+  name: zone destinée à  des activités touristiques et de loisirs
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ntl
+    partition: DU_97405
+  surface_m2: 11070
+  geom_md5: 497722da315388e9d49ec216e0c046d0
+- subtype: N
+  name: zone destinée à  des activités touristiques et de loisirs
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ntla
+    partition: DU_97405
+  surface_m2: 19167
+  geom_md5: c6cc9ab8c52569485099439f662102a2
+- subtype: N
+  name: zone recouvrant des sites d'habitat situé sur la bande littoral, dans lequel est admis la reconstruction
+    des batiments existants sous certaines conditions
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Na
+    partition: DU_97405
+  surface_m2: 13420
+  geom_md5: 429a021bc4ca8d15446a10f6bacceb97
+- subtype: N
+  name: zone recouvrant des sites d'habitat situé sur la bande littoral, dans lequel est admis la reconstruction
+    des batiments existants sous certaines conditions
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Na
+    partition: DU_97405
+  surface_m2: 11975
+  geom_md5: 487363024b62781806bea8265cfaa39a
+- subtype: N
+  name: zone recouvrant des sites d'habitat situé sur la bande littoral, dans lequel est admis la reconstruction
+    des batiments existants sous certaines conditions
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Na
+    partition: DU_97405
+  surface_m2: 12800
+  geom_md5: 3175f356d996f5752ed5f96fd00aab76
+- subtype: N
+  name: zones naturelles situées dans la zone de coupure d'urbanisation ou toute construction, quelle qu'elle soit,
+    est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ncu
+    partition: DU_97405
+  surface_m2: 420945
+  geom_md5: b6e7b4f61e150cfc96bda276876e15c4
+- subtype: N
+  name: zones naturelles situées dans la zone de coupure d'urbanisation ou toute construction, quelle qu'elle soit,
+    est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ncu
+    partition: DU_97405
+  surface_m2: 61803
+  geom_md5: a9fd6cefc7f23b73bae2faa889618764
+- subtype: N
+  name: zones naturelles situées dans la zone de coupure d'urbanisation ou toute construction, quelle qu'elle soit,
+    est interdite
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: Ncu
+    partition: DU_97405
+  surface_m2: 10578
+  geom_md5: 59ab530ae119c9242d9c6bf19a0b14e1
+- subtype: U
+  name: couloir réservé au doublement de la ligne haute tension Langevin- Bras de la Plaine
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UDe
+    partition: DU_97405
+  surface_m2: 2236
+  geom_md5: 65042fbcceadef021591c6c3bb141053
+- subtype: U
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 979
+  geom_md5: e8dd069dc4ee6b48bcceb27ba0dfb3ec
+- subtype: U
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 551
+  geom_md5: 0983c510171872f69ab80c83a582ef9f
+- subtype: U
+  name: espaces naturels de richesses agricoles correspondant à  des terrains présentant une bonne aptitude physique
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 355
+  geom_md5: 58071fe622b4c5abfcc96b525078aeb1
+- subtype: U
+  name: lotissement de la zone d'activités "Verger Hemery
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UEa
+    partition: DU_97405
+  surface_m2: 43847
+  geom_md5: 99dcb5cde66602066675de13216cc460
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 34380
+  geom_md5: 8aaddf156d98af1ef852396880114256
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 26398
+  geom_md5: 8e1699db5fa63b555e05a37a6ff52873
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 7257
+  geom_md5: 6ff8c5326183e2d625673201381385a5
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 55901
+  geom_md5: 099978156858526f65310fb0c9b3612e
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 5514
+  geom_md5: 4b707b265bd864a66661d83083001f71
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 40978
+  geom_md5: d493e04c8d537da19c63b63ed6247cd7
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 3818
+  geom_md5: 8b0edfdae55a7bc62dd09621768c1951
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 12658
+  geom_md5: 3843adbce82740535609620602a0bc56
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 4690
+  geom_md5: ae17b85476a5c22df5414d334b423c41
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 9185
+  geom_md5: acb2847d1ff04a5c109971de6dd178e3
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 2084
+  geom_md5: 39211d4f2c2e703c1d17e59ec11cf1dc
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 4215
+  geom_md5: 663f68a86f571ac78355e6e9bf275c41
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 177
+  geom_md5: 26c203f3584d7319c9321df61d1dcd95
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 12297
+  geom_md5: 8b30cea8e65b4a42894912a9c0d91431
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 6953
+  geom_md5: 882acfad4d9b510e2fd891973a80bcb6
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 53700
+  geom_md5: 71c868037a880ff45dad2c65d76347c5
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 19172
+  geom_md5: 810a9d2b4c94f91bea35049be5191fcd
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 19144
+  geom_md5: 42a38e777aa9210db24825c8c8397164
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 41185
+  geom_md5: eaaeb06f15d03b4556582f8bd22c2e88
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 44675
+  geom_md5: bdfd2388e4ad463b9a625842a05a47c2
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 13591
+  geom_md5: 151d7ec60a60bc0bdd58998a6d707776
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 9034
+  geom_md5: 32f6d80a63bf4a52ad7029ccf5ba0d60
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 11027
+  geom_md5: 6d2b97ab43a3057cb466ba34f2e8e7a2
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 15260
+  geom_md5: 3a558d24228dc26b7f601077ab95f2bc
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 14273
+  geom_md5: 6c36914c3963a88b7ef3b5cd68c9e704
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 5969
+  geom_md5: 237b57b78a8b8694a0ed956f770db039
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 17301
+  geom_md5: d742d7725ab12cd99d349e327447aeac
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 12503
+  geom_md5: 4deb643e12247049f5bf8e3a3b05fe1b
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 5848
+  geom_md5: 2d73324ca5a491c116608ebc2a0f23cc
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 27278
+  geom_md5: b6eba81e7149f5e86680bab9a667f9e6
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 7578
+  geom_md5: 9e89f2638f28956d31979ce4520a1949
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 9811
+  geom_md5: d36a4131bbd562818cc57505dd806702
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 10420
+  geom_md5: 95eadfe8e3d5cf62071a6025c54bc1bf
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 12494
+  geom_md5: a5eae838656777e357fb41737a32f648
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 20488
+  geom_md5: 5f87b68bd9c6e335a836343fa235ba26
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 44007
+  geom_md5: b9cbd3137e5c00e9b061654edf47313e
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 3116
+  geom_md5: 5d70eebf437afcb85b9fc1a44300d189
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 11144
+  geom_md5: 74228b44d98f3724d1847980facfa90b
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 1816
+  geom_md5: 8961f2b3e88d5a6b9b1c6204cbf4dd4f
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 13323
+  geom_md5: db8ad2df9adea97365441ea0cac9064c
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 9528
+  geom_md5: 5c2902ff0896211168ec6ea7541a4909
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 18153
+  geom_md5: 56f26edc359f6def342a45a0ced00f98
+- subtype: U
+  name: urbanisation diffuse sous la forme de constructions individuelles
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97405
+  surface_m2: 8127
+  geom_md5: 4b6eb2c783a77f66dc1b43d209251dc1
+- subtype: U
+  name: zone correspond à  l'emplacement du futur cimetière
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UFcim
+    partition: DU_97405
+  surface_m2: 23297
+  geom_md5: 0402c43bf26b5a46256621b2e59e27a8
+- subtype: U
+  name: zone correspondant au couloir réservé au doublement de la ligne haute tension Langevin- Bras de la Plaine
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UCe
+    partition: DU_97405
+  surface_m2: 6676
+  geom_md5: ec85a5e5e7bb42bd16070da6128cc9a1
+- subtype: U
+  name: zone correspondant au couloir réservé au doublement de la ligne haute tension Langevin- Bras de la Plaine
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UCe
+    partition: DU_97405
+  surface_m2: 2236
+  geom_md5: 51a02ba42ca673f153b631c162625d4c
+- subtype: U
+  name: zone correspondant à  la ZAC Cambrai
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UZ
+    partition: DU_97405
+  surface_m2: 93175
+  geom_md5: 7c70ad88cd7a01ccffcc0394a4987ac1
+- subtype: U
+  name: zone correspondant à  la ZAC Cambrai
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 3899
+  geom_md5: 359cb0498062ee50830469fa35cf4df4
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 1300
+  geom_md5: fda2e9ad4d2b525ae7ab58edd2121250
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 9541
+  geom_md5: 66e52dd592e889b7b44bf850e25958c4
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 24636
+  geom_md5: f00f14c3168998c0b55c4e0e61c5c4d0
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 97629
+  geom_md5: 4b93dac82f33f4adf634db0d15612302
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 72029
+  geom_md5: 3c880ee298a7ec41fd736735e675483d
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 3394
+  geom_md5: 729701ecd4753fc59c21b39c52f4ad4a
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 6259
+  geom_md5: 75162d4afdacb906f2f389e6ee95f84b
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 31
+  geom_md5: 2dd5a4173a081fcf4879744d55e0a187
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 12935
+  geom_md5: 0797a97b0bb28ab9f30641428adf6cc3
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 322114
+  geom_md5: a7e41bfec70e0fa93bc38a93dc7c4378
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 8714
+  geom_md5: b2304e973c141b8489537078663e0bdc
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 56391
+  geom_md5: 846dfa1af21796fcb40433d196e4f42d
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 7407
+  geom_md5: 702a5937760679695d7a2749613ea55a
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 17009
+  geom_md5: 16232152bafd14cd77d05779ec0aeddb
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 49603
+  geom_md5: 6c7478417fb3cfba4673ef29cd74b329
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 38737
+  geom_md5: 39587d4b81a41355f42989d5601cb864
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 17316
+  geom_md5: 2236b00d1f6a1482c4155a014192b50f
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 2304
+  geom_md5: d706dad9aabdf084f6269bb4cffc01ec
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 11849
+  geom_md5: 17766b85a80a0a40a5763085f7d0e97a
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 57850
+  geom_md5: 740a51d0733b86a4c7a16cfcfd15cc09
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 38869
+  geom_md5: 77b8a67dbbf5ff2c11e9d4a66eea63d3
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 53485
+  geom_md5: cfe4a37d83b8d33c086d692670c33c3d
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 136063
+  geom_md5: eda73a1b247ff6d223d51d936886da40
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 0
+  geom_md5: b9124130a6dbf0e30a6d051d2948d293
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 4
+  geom_md5: 31d277df4ceaa7fb57af479d66ca3dc6
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 45401
+  geom_md5: 75a5a2166a269593679249a8b29a9330
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 1413
+  geom_md5: bbb6b7538ef6ccf7078b7f8c3c63141c
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 32251
+  geom_md5: ef7f948809f439b6abf0bcc43645cae0
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 7244
+  geom_md5: 6d7eced3dc56d84bf4d464e3db78a277
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 496557
+  geom_md5: 60f907488815280fa89ffbc743337bee
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 132061
+  geom_md5: a65b17fb0a5eb89b630a138e2ff5035c
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 22165
+  geom_md5: 97a0873f51b23a80cd9143fffcabd8f0
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 3071
+  geom_md5: 5de070dd435df0ee97fbe0b67d1c2cdc
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 221822
+  geom_md5: 8b5607cf018dcf12c81db6657f0cf7fe
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 0
+  geom_md5: 9f395071aa03c5fb02730f669983b02a
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 89340
+  geom_md5: 4ffab34a0926efa91ec243aac0ef3763
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 276438
+  geom_md5: 5847f116970a57285a930c154f879390
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 4286
+  geom_md5: 0998e4eccac9203d5db3bf94d6debd89
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 7407
+  geom_md5: 5822ca0b597987c544495eb3d6d6d8b2
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 2815
+  geom_md5: 2e8db3e2c53ed5ca0f5b474fd0c46fe5
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 5843
+  geom_md5: ef2049568ffcc516ace55d8a0cb1a414
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 29144
+  geom_md5: b8f815a82ce84dff043bacd9edda9e2f
+- subtype: U
+  name: zone de densité moyenne couvrant le tissu urbain lache et discontinu de la commune
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 46561
+  geom_md5: ad9eeb6bf7581a21d30afd6a2a78fd1d
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 3055
+  geom_md5: 550fe0962220680e2341b46dc13e4ae5
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 391
+  geom_md5: e3921843310da89bfd9d170434bfd8c5
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 5049
+  geom_md5: aeedd271c1b769fec08e191e152eff58
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 11958
+  geom_md5: 4ed9b12264ed1b79800e61ffea6e6caf
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 14603
+  geom_md5: 3775be7b8a31b3d6b8a905560d8c4ff1
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 3931
+  geom_md5: 2f6ab953829ad694560a57defa9682ba
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 4465
+  geom_md5: 9a5ab44495bbdbbf57acae6e4f60d373
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 1223
+  geom_md5: 223017e3e80bdf5b5f73e3f50037f283
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 4152
+  geom_md5: 20a4723a99b3f2ecc48d2dd92a65aa91
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 19554
+  geom_md5: 7e554fc8b6241e69de169fd12aebbe5c
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 40229
+  geom_md5: d565060c58f2b35516e386a65151ae61
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 3730
+  geom_md5: 4f478eac28a7a012276f1dff9a29c7f9
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 2185
+  geom_md5: 98a9b67703d3f989ee458705963ea253
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 5468
+  geom_md5: 1a0624336113cea395d58516bba6ba8a
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 1375
+  geom_md5: b26e8d9665ec4b4acb1949757ecc5be4
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 7700
+  geom_md5: 74b4312f5605519ea668b7f26996fb73
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 23700
+  geom_md5: b6e5f100b5fdf82f3dd56932e8cc3922
+- subtype: U
+  name: zone englobant les secteurs ou sont regroupés les équipements publics structurants
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UF
+    partition: DU_97405
+  surface_m2: 10044
+  geom_md5: 6a7d9423e990385ed71baf270785c62e
+- subtype: U
+  name: zone réservée aux activités industrielles et/ou artisanales
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UE
+    partition: DU_97405
+  surface_m2: 6452
+  geom_md5: 49e2ca0ae3455444705a7e784d4102ad
+- subtype: U
+  name: zone réservée aux activités touristiques et de loisirs
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UT
+    partition: DU_97405
+  surface_m2: 14847
+  geom_md5: c2dac0ef6675f096e5e093808bc46f07
+- subtype: U
+  name: zone réservée aux activités touristiques et de loisirs
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UT
+    partition: DU_97405
+  surface_m2: 38918
+  geom_md5: 3543619ae1417a3c984befa29d5acb65
+- subtype: U
+  name: zone urbaine du centre de l'agglomération de Petite Ile
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97405
+  surface_m2: 494613
+  geom_md5: 5a2253624626bd42d88feb721da60ee4
+- subtype: U
+  name: zones agricoles situées dans la zone de coupure d'urbanisation ou toute construction, qu'elle quelle soit,
+    est interdite, ainsi que les élevages
+  attrs:
+    idurba: 97405_PLU_20230609
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97405
+  surface_m2: 897
+  geom_md5: 90b1a7ee2f888c9c87cd382514766e0f

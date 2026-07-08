@@ -1,0 +1,2496 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Sainte-Marie
+idurba:
+- 97418_plu_20251126
+n_zones: 268
+geoms_sidecar: data/calibrage/zonage_sainte_marie.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 106895
+  geom_md5: 2e4e47267a55e56c9bc75829b259af70
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 30216
+  geom_md5: b9950e793f5a52093f0833aa63880d68
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 97565
+  geom_md5: e22f005e69c2ab47e689976bc2d9fa26
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 7417
+  geom_md5: 16a31577bcb024ae3aa3547cef7bd7be
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 4327
+  geom_md5: 2125110c119dd8d79657370fb5857b14
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 17178
+  geom_md5: c91974c38fc27a2a7561a07074f4f5a4
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 80681
+  geom_md5: 91f856f6b7528cda387efaa92c61567a
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 38857
+  geom_md5: fa566dcbfa7a7728bff23428a0370d82
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 136017
+  geom_md5: ba4cee470cacbff134ffffd2d801333d
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 51912
+  geom_md5: 6a71faed268333676d30a4ce1345452d
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 77464
+  geom_md5: 25e3c1fd7e25c5e0aff50325f1a5ed92
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 5190
+  geom_md5: fee205c5c4b9172890132834ef80f112
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 6555
+  geom_md5: 7bbc310251de62ab16b8115278df3282
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 53533
+  geom_md5: c7c78fbe8b0ea1d5ffeeddf5e9d7d603
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 118390
+  geom_md5: b43c00769fdbca09a89a3a8d7427ea40
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 15425
+  geom_md5: 9632e3c778bfc9936a399b53ba4b9175
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 106497
+  geom_md5: ea05a9d4180f8a2d16e13da7f7b631c1
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 1391
+  geom_md5: d32bbcf10fbd0869101ab545ac54c6ac
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 1283612
+  geom_md5: 2ba6de788173e42edd9102b4419f514e
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 366124
+  geom_md5: e5865cd62714851c382373a9e95f0d9f
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 59059
+  geom_md5: 5826334e72724a5146183304380a584f
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 3646
+  geom_md5: cca3e73692447e4d9e44af6b385ec439
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 15648
+  geom_md5: 91017071292924e2b49b2329d001828b
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 312164
+  geom_md5: 9c8ad1de5afc26280e9a796d407d690f
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 149161
+  geom_md5: ff96994177187f9078a1f01d7d0912ab
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 47077
+  geom_md5: c416c1e33a2bd120e7a0d9f6ba6eea50
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 8282
+  geom_md5: 101c25f9e611bc38d80e43efe3d73307
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 33705
+  geom_md5: 5f8d5593b88db7f1ecd6155202fee9fb
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 79341
+  geom_md5: 4b2793bf6e811fb3de943201d430730d
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 172696
+  geom_md5: ceb9ff767ae435b4c4a42aae0dbb4413
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 7319
+  geom_md5: 78689cdd3c41317227fa863f213e159e
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 564508
+  geom_md5: 6b574fc8c633a99c754dfd5cbe9d17ce
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 1960418
+  geom_md5: c9e513fb7689175986ad7915d1c87bea
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 103547
+  geom_md5: bff2f1226599990f9ff391d3a6e1ed94
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 5752495
+  geom_md5: 84c977c60268b94c866c2619817aec18
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 14238
+  geom_md5: 6f181b98b568fc19b265bd473c747056
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 1399177
+  geom_md5: 8c84569ecd8cb07296442ba8ce56a4df
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 4012
+  geom_md5: bda2075165a03fe4d32af7d8753f4bca
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 8071
+  geom_md5: 4ed120c26b4134d3978881a03b97530c
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 2860
+  geom_md5: 37d27c3fdf039cc5127559c94eeb72a8
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 63103
+  geom_md5: 8b0d342522f0f0a35b978abf73ae5a6a
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 232753
+  geom_md5: 0882e22915d543bae48069d613dbfd9b
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 15915
+  geom_md5: a09b5f1ca09ad6be667394bf25ffb207
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 33889
+  geom_md5: c15d65a57ba6b33cbceccf9862f0af89
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 44104
+  geom_md5: e414e7aa7e538ba7b473c1de502d1bfc
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 130160
+  geom_md5: 91d7b9a0cbfe313fd46367c8659d046b
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 21776
+  geom_md5: e470dc829d3e378681403aae018268e0
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 108139
+  geom_md5: 043ff548c872a04742b2df0554fee3fc
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 200959
+  geom_md5: 8377ad57f8764c500ac77459eb1c8f9e
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 917
+  geom_md5: ca8389d80bb32bf946023a93a7c0a478
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 57301
+  geom_md5: 3c40a03ad74bb32d57b476f8af95ceda
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 5556
+  geom_md5: d5f128fb3033a3769b51fadfbf307d9f
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 1427981
+  geom_md5: 4b6fe051fe289082bca53e96197443a8
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 12343
+  geom_md5: f0192c0f201d312319a6ab19a72f02be
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 8283
+  geom_md5: 00f5aa760e881c767aede0aa681ff3de
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 88071
+  geom_md5: e5cfd68ce1090fe322473139cd67dec0
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 916
+  geom_md5: 7383ce2dbe1af448b4f63db8b57e59ef
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 25267
+  geom_md5: b4bb161837ebcae5df3d55ebd1dc1273
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 3121
+  geom_md5: 3ad94f6b95c52174500d502b66cafd83
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 70340
+  geom_md5: 6cc89e0dc5e4dc3c9a8b030afb395be0
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 5308
+  geom_md5: ebad0229df63ce19a4d3d649c5d9ef6f
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 13847
+  geom_md5: b7da3e5714c7b5fd5e6bbe4cabe929ea
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 2083068
+  geom_md5: 24f4fb11662d8231f816539ebde8ac4a
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 5828
+  geom_md5: 38f18575541bfbfb12e6635058e3edec
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 143314
+  geom_md5: 78562031205d0777f4499b7c6ad9519a
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 21846
+  geom_md5: 720562b42caa54a32483e08951e904d1
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 917
+  geom_md5: 786ccac6c11d76c78f6d49027035222c
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 389622
+  geom_md5: 41672607cb2e4d3da1eb998aae675868
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 11900
+  geom_md5: 341a5f363bae71f63d759c7e8f86644e
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 11350
+  geom_md5: a9a12704810d694cae097b6defb86c6b
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 494555
+  geom_md5: 72cb47e04becd9f57a6ef42db1ad5230
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 11493
+  geom_md5: 91b23f257cd39e9c21a0078c4887ac73
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 185645
+  geom_md5: 5a81bbe7a8f519a22fab02357d652408
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 12852
+  geom_md5: 45d1b83b01f52706e1d0133f947f8b02
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 11210
+  geom_md5: 93c552a28854bbd61b87fbabbabc9b26
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 55722
+  geom_md5: 28f2d44899d61ae42375810c58e3c113
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 11564
+  geom_md5: 186a45a8cfb681b3aee2b2738f59b63c
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 2855676
+  geom_md5: 26821e522f6b57ef96058a4cf69c9fef
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 14824
+  geom_md5: 1b703a78e1d810a35ec624f45bec6131
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 11342
+  geom_md5: 38420b7fe4dd7b10cd78f071efffe7ce
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 7752
+  geom_md5: fe278de01678f2c6a949306b972cc071
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 69124
+  geom_md5: 861efb1a725d0299afbee7f97080f910
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 1124635
+  geom_md5: d21b00b6c602aab7c6c7fbc66cbefd9c
+- subtype: A
+  name: zone agricole en coupure d'urbanisation du SAR
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97418
+  surface_m2: 659087
+  geom_md5: 7df3c40ca7a609c0431d17cc14cb2310
+- subtype: A
+  name: zone agricole en coupure d'urbanisation du SAR
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97418
+  surface_m2: 1685196
+  geom_md5: f02c20f298df1ffd88d8d9be03f6fbb2
+- subtype: A
+  name: zone agricole en coupure d'urbanisation du SAR
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97418
+  surface_m2: 0
+  geom_md5: 5bf3cedfeaccb19bd6ab7adead8e6ea2
+- subtype: A
+  name: zone agricole en coupure d'urbanisation du SAR
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97418
+  surface_m2: 122766
+  geom_md5: 854f5ce8c2823a577abe22b31ad30ab0
+- subtype: A
+  name: zone d'implantation d'un parc éolien
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Aenr
+    partition: DU_97418
+  surface_m2: 189086
+  geom_md5: c6abfb77c9196c60ed39daa00336cb47
+- subtype: A
+  name: zone d'implantation d'un parc éolien
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Aenr
+    partition: DU_97418
+  surface_m2: 45245
+  geom_md5: 85c0ac65b05ad57bcb2f0328947649ec
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 493925
+  geom_md5: a7ce662209c5991f9866cbe0a3b3e732
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 82030
+  geom_md5: dd2b1e08e0af7b37da487da853b07cba
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 21329
+  geom_md5: e198f27bfd8c9c750a1a60c0ac2036ff
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 10093
+  geom_md5: 365b9f97a5ec97274e18b23dee85976a
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 57124
+  geom_md5: ed3f92d94f1216a4354b4efc39ffce40
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 30732
+  geom_md5: a38d761fd90d69a9c23cbbb99427345a
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 550443
+  geom_md5: 026fb21546d7ac9ddce763dd960689f3
+- subtype: AUc
+  name: zone à urbaniser
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 1AUep
+    partition: DU_97418
+  surface_m2: 99604
+  geom_md5: db4f57d44a76bfd57adad371ab819db8
+- subtype: AUc
+  name: zone à urbaniser
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 1AUb
+    partition: DU_97418
+  surface_m2: 13077
+  geom_md5: c70ed256ad5db2b85595b51eff4598ec
+- subtype: AUc
+  name: zone à urbaniser
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97418
+  surface_m2: 45750
+  geom_md5: f3b8b1ce1a2f20ba1318fd660cb21b04
+- subtype: AUc
+  name: zone à urbaniser
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 1AUb
+    partition: DU_97418
+  surface_m2: 101928
+  geom_md5: 82f77dbfa2b444e45434c7619c523a34
+- subtype: AUc
+  name: zone à urbaniser
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 1AUb
+    partition: DU_97418
+  surface_m2: 45073
+  geom_md5: 145bba22e5ece20ab036d4ca0e6bdcc9
+- subtype: AUc
+  name: zone à urbaniser
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97418
+  surface_m2: 16074
+  geom_md5: d284189b4928581b64aa249ddc7d1cae
+- subtype: AUc
+  name: zone à urbaniser
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97418
+  surface_m2: 16406
+  geom_md5: aefa0566293ee12232f71f3d9958ed39
+- subtype: AUc
+  name: zone à urbaniser
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 1AUep
+    partition: DU_97418
+  surface_m2: 67230
+  geom_md5: 05cedcfa12f6c4bb1decb840eaff1cf5
+- subtype: AUs
+  name: zone d'urbanisation future
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 2AUa
+    partition: DU_97418
+  surface_m2: 129772
+  geom_md5: 1646da164ab4c2452c23fd5d77892c5f
+- subtype: AUs
+  name: zone d'urbanisation future
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 2AUb
+    partition: DU_97418
+  surface_m2: 13248
+  geom_md5: a3bba847870b413468a5273e78f784e8
+- subtype: AUs
+  name: zone d'urbanisation future
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 2AUc
+    partition: DU_97418
+  surface_m2: 16623
+  geom_md5: d145bfc9e4759cd4d9ce68d9e2af81df
+- subtype: N
+  name: Zone naturelle du coeur du Parc Narional de la Réunion
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97418
+  surface_m2: 27863538
+  geom_md5: 352c4fc0ddb73d32a7da66527360f278
+- subtype: N
+  name: Zone naturelle du coeur du Parc Narional de la Réunion
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97418
+  surface_m2: 0
+  geom_md5: 872ac81748721c1709a590f12f5b9912
+- subtype: N
+  name: Zone naturelle du littoral de la Pointe des Haziers
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97418
+  surface_m2: 4365
+  geom_md5: e3044fce87c23cdf89d83ef962f0893c
+- subtype: N
+  name: Zone naturelle du littoral de la Pointe des Haziers
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97418
+  surface_m2: 16462
+  geom_md5: fc6cf7726f80c8f2cd100be55324b8f5
+- subtype: N
+  name: Zone naturelle du littoral de la Pointe des Haziers
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97418
+  surface_m2: 30733
+  geom_md5: b271bdfe47090b0d53acc2f9d43a82fa
+- subtype: N
+  name: escpace destinés à l'exploitation d'une centrale photovoltaïque
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Npv
+    partition: DU_97418
+  surface_m2: 153465
+  geom_md5: f8558e1005f1cbb5adc50839848be871
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 95246
+  geom_md5: a4fd9e2a455095f46848032f2f1a1a51
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 482836
+  geom_md5: 41d2428035bcfcd7e9ddee8a7f05e04e
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 2444
+  geom_md5: c4e2bc308768a752ce7b7239d88a216a
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 892821
+  geom_md5: 9f52166deffa0eb5b7beadbee3f12afc
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 19803
+  geom_md5: 3c08eda0db2be3db8c9d41ae985884ad
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 2845
+  geom_md5: 6216f6494a411a02f4d498bd1769516d
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 4336
+  geom_md5: 70a633e167d30ab3b9a9a86c24668f98
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 6603
+  geom_md5: a3ff417e6b94170d464e1473a292785e
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 135609
+  geom_md5: b35a17fe85ce8bd35845af58bc0a7fa2
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 4245
+  geom_md5: 6201a0367c2f07d4a5812f029e4cf33b
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 1732
+  geom_md5: 9c6465ae211874377378a4f2d35549df
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 32207
+  geom_md5: db9a7bf9a883fffa40d72ebf2d3800e4
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 77584
+  geom_md5: f73a1c13845b5293ecb50452a4f62118
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 91068
+  geom_md5: ba67d633875f1061caae27e0744932d2
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 2948
+  geom_md5: a297f638367743037ca25c18300feb54
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 2272
+  geom_md5: 0509ba8524104d38ca3888ff32ddf8e7
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 919
+  geom_md5: 04b2f46c294b016fd23c8869f00103ca
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 27628
+  geom_md5: 15797a5576a0342c7280709a56af1f3a
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 3094
+  geom_md5: 876b4d733648e1f8becd55df24d7c9f8
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 3081
+  geom_md5: 7f6b7294831c71bbbe721d8dd07f6fa0
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 1740
+  geom_md5: 613e7d316933d0798c8fa5591892bfce
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 15935
+  geom_md5: cc252a4353a3a131f71bea7a455920c0
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 18548
+  geom_md5: 7a49215c1ebbbec0b8e9fd0435a2ee53
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 12370
+  geom_md5: 2bcf58b3ff1cb332ffaedc8d31c3fd33
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 61195
+  geom_md5: d1c076f492f8ecba1f7e7adbe7de61d8
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 3682
+  geom_md5: afea6f3d64d91d50f2c07937a191d121
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 5430
+  geom_md5: 7463a670f86bad8a93bd19d64bc91075
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 22171
+  geom_md5: fd7142e6961df543057897c375f02e33
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 7329
+  geom_md5: 9737e394a5a965f8eca4a6ebc59de7f3
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 12419
+  geom_md5: 2dcad9d637b49e9760e16275d24b8cc3
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 8434419
+  geom_md5: 2a0d71faba45d8435581c38441340bfd
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 1671
+  geom_md5: fef9d9b3a97d104f8cc8310a4ba94c6e
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 2408
+  geom_md5: 765e42c782979614b4296b7f9b14eeeb
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 7787
+  geom_md5: 67894f49ab3392beeac94f9547e93803
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 123121
+  geom_md5: 3df876e755eb82553b02636fbaf52209
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 7880055
+  geom_md5: 880c9bd07f3c5aec3d10667275195c42
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 33519
+  geom_md5: 66b6decc56d7173b7187cf9aacbfc13d
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 31793
+  geom_md5: cf2bc2ae6be99503be8a6984c4dc6cf2
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 20512
+  geom_md5: de36d94343e4a83629d56091b9e21dac
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 1828
+  geom_md5: c3881847f56140c764e60fea59b076b7
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 63724
+  geom_md5: 90cf496b6fa4e02f8a4ba2953f7ddfc8
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 441
+  geom_md5: ed997c865555c1b63cc3282fd2efefb6
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 41146
+  geom_md5: 5ee73141b050010e591ba7da9431e7ea
+- subtype: N
+  name: zone naturelle en coupur d'urbanisation du SAR
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ncu
+    partition: DU_97418
+  surface_m2: 110687
+  geom_md5: 5ae357ffa4fba9093fa9bddb9fc1eb9a
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 233213
+  geom_md5: 5a37c9fc7a57f9024667535309466d2b
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UAz
+    partition: DU_97418
+  surface_m2: 2433
+  geom_md5: 45854cded693765e9aa8213f302d374e
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 200480
+  geom_md5: ec19879e116f073134747c5872b657e3
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UAb
+    partition: DU_97418
+  surface_m2: 13686
+  geom_md5: 4ac8388a7ab9159da57c371b4c8e060e
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 287120
+  geom_md5: a322167a74683f393ef9e6e4ebad5a62
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 94365
+  geom_md5: 1fdb5f950d6c7bf4f172c4d123a12e26
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 27317
+  geom_md5: 3e89751343557199737a2496be4e0a86
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 31789
+  geom_md5: 48087449aacd5e4ab491a73b3e5741e1
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UAb
+    partition: DU_97418
+  surface_m2: 3700
+  geom_md5: f54fcee5421448b7021048a39b586801
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 367677
+  geom_md5: a16a7dbf4e94df8f8f2826d560091d3a
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 107018
+  geom_md5: d00de2bb1c1d2b955d3cf2927c01f83b
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UAb
+    partition: DU_97418
+  surface_m2: 4423
+  geom_md5: ec1a600c8390ebdfb4211e21d9480b90
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 398409
+  geom_md5: 184fb5601146aa749bfca32479db48b4
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UAz
+    partition: DU_97418
+  surface_m2: 2921
+  geom_md5: 654d11c904a978360e6db36f7a53c44e
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UAb
+    partition: DU_97418
+  surface_m2: 177908
+  geom_md5: a55c88d7157445edc5a0dea72729b56c
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC1
+    partition: DU_97418
+  surface_m2: 81694
+  geom_md5: 40e329f258334087ccc2c990e8caee5a
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC2
+    partition: DU_97418
+  surface_m2: 2837
+  geom_md5: 67c9e8bb081ed8114eeeb26378b37a89
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC1
+    partition: DU_97418
+  surface_m2: 43077
+  geom_md5: 02e083c39d27ecdb8a51e2fdcf017a8e
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 173716
+  geom_md5: 090f33833e16a5bb31c6d6d8acadb5b0
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 21938
+  geom_md5: a3029279d5f656ca2280e4eb8bafd0ae
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 2946
+  geom_md5: d9e89a859337471daaf75fe92b7b542f
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC2
+    partition: DU_97418
+  surface_m2: 20789
+  geom_md5: 9c741ad61618bc9ade4f779a8b97ae6c
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC1
+    partition: DU_97418
+  surface_m2: 12845
+  geom_md5: c8fe9500b5e95a6b59c0a1628eae0450
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 370092
+  geom_md5: 6f790c6799a14c584732a579a9fe6b1f
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 6489
+  geom_md5: f7bf6b1c9a797ec8900e47028d61e6a5
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 12107
+  geom_md5: 540ae9cb43dd5241f4b1b439238cbc39
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 155057
+  geom_md5: 66ed0d1a453770cfb735e76c77b6eb24
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 8499
+  geom_md5: 81aaae57d375b5129f30d8d4523a333c
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 7127
+  geom_md5: ec44f91c234a46070af666b331e15424
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 321862
+  geom_md5: bc7ce03f19a4576c0b18607346c7f3d7
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 54606
+  geom_md5: 357f1e5bfbfabe86aad43b16df56b6f1
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97418
+  surface_m2: 234315
+  geom_md5: d133e0d3de9f6e3787201d8d67eaef9c
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 2802
+  geom_md5: a1bbb9425ec0301998e2f568ce3a17fe
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 174882
+  geom_md5: b1a29d49fb1189c6e5cea1ffd2ab1115
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 69137
+  geom_md5: 57d265d1fd6e2bc687635fe0baf3d947
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 18818
+  geom_md5: e6cb1d0b38bca6bd4e18b63d7d8e55e5
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 68351
+  geom_md5: 4d18bcbc4596dc02c1a5b23b83f13597
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 175286
+  geom_md5: fbf897ae76e8e5f98af3e92e4c1861e8
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 47466
+  geom_md5: 644e03d4a2576c03366d4d85635f672c
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 128324
+  geom_md5: 672775fa75dd079a436528a13436616d
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 84155
+  geom_md5: cc7dc5112ced46b2550a7737b6532db5
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 19002
+  geom_md5: 7d29d199ab3e321d855191fcddf7e86e
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 171778
+  geom_md5: b37d208caff12a1c7f6ae522da12478a
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 39042
+  geom_md5: 4f3ef13559f1544fa6c8d312e74be4ba
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 23448
+  geom_md5: effc492301864006b0ae91ff33d8f7f3
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 768916
+  geom_md5: be6bb71f6e22ca131d8f62774f19b75f
+- subtype: U
+  name: Zone correspond à la zone dédiée au développement des activités aéroportuaires
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEa
+    partition: DU_97418
+  surface_m2: 319796
+  geom_md5: 03df3e00a1c10730c573cbd61b4a33e5
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 47317
+  geom_md5: bb3bb0c149789321b5755e658b51219b
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 76258
+  geom_md5: f56e0dd2c4ffa5bc6c46fe712b354851
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 34443
+  geom_md5: 69fb2b79b444f9c074a5a6b3c25b2539
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 39284
+  geom_md5: c74d2452187e769188649fe30f581214
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 60936
+  geom_md5: 419eabe972381514285588c3b0a7dd17
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 2044
+  geom_md5: 5bcf7a52afcb2517692ef7ed7f553918
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 15822
+  geom_md5: 272247812dbc8f7ff9d1feb111ab17e9
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 32996
+  geom_md5: 0e03c4dd1706452c87ae7838e7398117
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 90929
+  geom_md5: 020db78e174068fe2915142bf5c014f1
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 70923
+  geom_md5: 7230763d2e014d2e132c0d4fd7c74b2b
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 224621
+  geom_md5: 913bbdfc65c7d2b92a5f62e2c4664517
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 2027
+  geom_md5: f6cc69109c4d09478d14f67bee752a60
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 216288
+  geom_md5: 52314da55353d7c94d667447151769ac
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 3750
+  geom_md5: f54b63b951ddff9df00facfd1c765305
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 316356
+  geom_md5: 896bb48c3ba81d2b45a3cfe02e4ace29
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 52529
+  geom_md5: 680fd025031a3c23a2f5af310e41a74b
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 79735
+  geom_md5: c164531526d63c146092da4498ab2f96
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 19530
+  geom_md5: 6693dc420d5fc752c9ae976607cb9369
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 13030
+  geom_md5: 9e225269fb9f528b49a08ab1dcd2b5a4
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 8249
+  geom_md5: d7387faee0ca44af7e7329009ea6d784
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 418000
+  geom_md5: 0c98b85c8c946bbead3cbc31c8779bf7
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 4106
+  geom_md5: 831f4400bc1e702a72a93222f779d17d
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 7994
+  geom_md5: bf35ebf3811f325d124b661661a27bbe
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 11159
+  geom_md5: fb62a0c17067724aedc8fbf8043921bc
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 42580
+  geom_md5: 86f2d29c44baf6ae4f23f393cfee3392
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 16400
+  geom_md5: 2c0f20dad7f72dc162b4c0482f4c8e85
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 7913
+  geom_md5: 2181175fafcad4a8f811d1065b3332c1
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 9892
+  geom_md5: 2697e252c3a4f808f62512aeb70710c6
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 1647
+  geom_md5: 9692e434c672eef947c038e69ad042ac
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 34186
+  geom_md5: 39744e5a77814d3f13fbd829b630fdd4
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 25520
+  geom_md5: 1e15d8b369599570887586a3585a415d
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 52057
+  geom_md5: d03092dd6ef9014b322034fe6dad2f96
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 35459
+  geom_md5: d7e81ec7b7fe5e64b41bcb33b193eebc
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 175763
+  geom_md5: b008edab90ad5d3c513492d1e20b879b
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 7010
+  geom_md5: 6f512f782e41f7d3aeab7a6f9a763c3b
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 12204
+  geom_md5: d0645f2e2860fc64eb9bf5c9a880ccaf
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 64755
+  geom_md5: 83d5d163dd282f06e1c2654e4bdce30f
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 23881
+  geom_md5: 1f9fc0e4c957cbb68bdcd856663602ee
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 68501
+  geom_md5: 1330633b609280da64e0927c548191d5
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 540120
+  geom_md5: a35b76067c911e591536030a851e77b2
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 19978
+  geom_md5: d65f8ff92fd9b063d5654a255617231a
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 22203
+  geom_md5: 2ac5b4f5589e0f3097e6590aabd26e80
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 40200
+  geom_md5: c87b69ab4891108d107cd178ae2db333
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 58506
+  geom_md5: 00ff3a61eed9455f21915c79df14636a
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 83658
+  geom_md5: 527c98895505f784a77b9fef01edc273
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 72597
+  geom_md5: 521433f0d8baad95089693ffdbabe1c1
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 134112
+  geom_md5: 0e5586da6166023c6480e346ba08d1a1
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 4555
+  geom_md5: 294666be5d54620f389f8a8e33942ef6
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD1
+    partition: DU_97418
+  surface_m2: 146271
+  geom_md5: a0450badd743cfbbbfccc7eb578bddb1
+- subtype: U
+  name: Zone essentiellement les écarts des hauts de Sainte-Marie
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UD
+    partition: DU_97418
+  surface_m2: 201271
+  geom_md5: 1ee20f899d6c92825d7048dddbd6b749
+- subtype: U
+  name: 'zone correspondant à des espaces d''activités mixtes, regroupant des activités de production ou commerciales
+
+    et de services'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEm
+    partition: DU_97418
+  surface_m2: 120876
+  geom_md5: 759ef4755531e6cc4cc047874c87a4e8
+- subtype: U
+  name: 'zone correspondant à des espaces d''activités mixtes, regroupant des activités de production ou commerciales
+
+    et de services'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEm
+    partition: DU_97418
+  surface_m2: 589003
+  geom_md5: cd41576f95df51ab5c2c8b2196253334
+- subtype: U
+  name: 'zone correspondant à des espaces d''activités mixtes, regroupant des activités de production ou commerciales
+
+    et de services'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEm
+    partition: DU_97418
+  surface_m2: 28666
+  geom_md5: 5072aa2fd50332f3830c4fca3e8743f0
+- subtype: U
+  name: zone couvre l'aéroport Rolland Garros et les installations aéroportuaires et activités
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UR
+    partition: DU_97418
+  surface_m2: 2724550
+  geom_md5: 6cb60f8e08d1c651c064c5324d14fdf6
+- subtype: U
+  name: zone couvre les espaces à dominante d'activités de loisirs, de tourisme
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UT
+    partition: DU_97418
+  surface_m2: 14904
+  geom_md5: 1df022d23e4b1147f14c6c3231c4934b
+- subtype: U
+  name: zone couvre les espaces à dominante d'activités de loisirs, de tourisme
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UTp
+    partition: DU_97418
+  surface_m2: 74784
+  geom_md5: 6fca175c73e8ce221b21bc4cb1319774
+- subtype: U
+  name: zone couvre les zones de développement commercial, de services et/ou tertiaire
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEc
+    partition: DU_97418
+  surface_m2: 91017
+  geom_md5: 7b253a84e9f86a517997e1c2fb119011
+- subtype: U
+  name: zone couvre les zones de développement commercial, de services et/ou tertiaire
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEc
+    partition: DU_97418
+  surface_m2: 67634
+  geom_md5: 864bb1787786f4d1f88454e546210962
+- subtype: U
+  name: zone couvre les zones de développement commercial, de services et/ou tertiaire
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEc
+    partition: DU_97418
+  surface_m2: 256058
+  geom_md5: e5279fb327e88cb09aad90a08ac8a1e3
+- subtype: U
+  name: zone couvre les zones de développement commercial, de services et/ou tertiaire
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEc
+    partition: DU_97418
+  surface_m2: 16364
+  geom_md5: 59e5b225f888311f09a1221e5452c1df
+- subtype: U
+  name: zone couvre les zones de développement commercial, de services et/ou tertiaire
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEc
+    partition: DU_97418
+  surface_m2: 85516
+  geom_md5: 878bb1a41b71e74cd361ff010f43bc1d
+- subtype: U
+  name: zone destinés à accueillir des activités économiques à vocation de production,de transformation, de réparation,
+    de conditionnement et de distribution, activités artisanales, de recherche, de formation et d'enseignement
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEp
+    partition: DU_97418
+  surface_m2: 66757
+  geom_md5: b17d3be496c27aaf9c11310ff4e50fdb
+- subtype: U
+  name: zone destinés à accueillir des activités économiques à vocation de production,de transformation, de réparation,
+    de conditionnement et de distribution, activités artisanales, de recherche, de formation et d'enseignement
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEp
+    partition: DU_97418
+  surface_m2: 120948
+  geom_md5: d36fc863448e5e03bd0c869b8912cec7
+- subtype: U
+  name: zone destinés à accueillir des activités économiques à vocation de production,de transformation, de réparation,
+    de conditionnement et de distribution, activités artisanales, de recherche, de formation et d'enseignement
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEp
+    partition: DU_97418
+  surface_m2: 139350
+  geom_md5: 3a348d701afe4fd133263eb5f46e837a

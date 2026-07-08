@@ -14,15 +14,15 @@ import { TimeMachine } from './components/outils/TimeMachine'
 import { EMPTY_FILTERS, useApp } from './store/useApp'
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
-    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo }
-  }, [select, setView, setZone, setModule, setFlyTo])
+    ;(window as unknown as Record<string, unknown>).__labuse = { select, setView, setZone, setModule, setFlyTo, setCommune }
+  }, [select, setView, setZone, setModule, setFlyTo, setCommune])
 
-  // URL partageable : filtres + zone sérialisés dans le hash (#f=…). Lecture au chargement,
-  // écriture à chaque changement (replaceState : pas de pollution de l'historique).
+  // URL partageable : filtres + zone + commune sérialisés dans le hash (#f=…&c=…). Lecture au
+  // chargement, écriture à chaque changement (replaceState : pas de pollution de l'historique).
   useEffect(() => {
     const hash = window.location.hash          // lu AVANT toute écriture (l'effet d'écriture suit)
     const parsed = filtersFromHash(hash)
@@ -30,15 +30,20 @@ export default function App() {
       setFilters({ ...EMPTY_FILTERS, ...parsed.filters })
       if (parsed.zone) setZone(parsed.zone)
     }
-    const m = new URLSearchParams(hash.replace(/^#/, '')).get('m')
+    const p = new URLSearchParams(hash.replace(/^#/, ''))
+    const c = p.get('c')
+    if (c) setCommune(decodeURIComponent(c))
+    const m = p.get('m')
     if (m) setModule(m)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
     let h = filtersToHash(filters, zone)
-    if (module) h = (h ? `${h}&` : '#f=1&') + `m=${module}`
+    const add = (kv: string) => { h = (h ? `${h}&` : '#f=1&') + kv }
+    if (commune) add(`c=${encodeURIComponent(commune)}`)
+    if (module) add(`m=${module}`)
     window.history.replaceState(null, '', h || window.location.pathname + window.location.search)
-  }, [filters, zone, module])
+  }, [filters, zone, module, commune])
 
 
   return (

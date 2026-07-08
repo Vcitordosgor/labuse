@@ -5,21 +5,27 @@ import type { Statut } from '../../lib/types'
 import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
 
 const EXAMPLES = [
+  'les chaudes de Saint-Pierre',
   'les chaudes avec vue mer de plus de 1000 m²',
   'à surveiller avec pollution et score > 70',
-  'parcelles avec événement BODACC',
+  'parcelles avec événement BODACC au Tampon',
   'SDP d’au moins 800 m² à creuser',
+  'un terrain pour 3 immeubles R+3 étudiants avec parking',
 ]
 
 /** Copilote — recherche en langage naturel. L'IA ne renvoie QUE des filtres validés par schéma
  *  (jamais un accès base, jamais un score) ; les chips existants font le reste. */
 export function IAStub() {
   const [text, setText] = useState('')
-  const { setFilters, setView } = useApp()
+  const { setFilters, setView, setModule, setM22Prefill, setCommune } = useApp()
   const status = useQuery({ queryKey: ['ia-status'], queryFn: iaStatus })
   const search = useMutation({ mutationFn: iaSearch })
 
   const apply = (f: Record<string, unknown>) => {
+    // la commune est un filtre de PÉRIMÈTRE : « les chaudes de Saint-Pierre » bascule le
+    // sélecteur. Une phrase SANS commune ne touche PAS au périmètre courant (commune: null
+    // est la valeur neutre du modèle, pas une demande de revenir à l'île — sélecteur pour ça).
+    if (typeof f.commune === 'string' && f.commune) setCommune(f.commune)
     const next: Filters = {
       ...EMPTY_FILTERS,
       statuts: (f.statuts as Statut[]) ?? [],
@@ -37,7 +43,16 @@ export function IAStub() {
 
   const run = (t: string) => {
     setText(t)
-    search.mutate(t, { onSuccess: (d) => { if (d.filters) apply(d.filters) } })
+    search.mutate(t, {
+      onSuccess: (d) => {
+        if ((d as Record<string, unknown>).programme) {
+          setM22Prefill((d as Record<string, unknown>).programme as Record<string, unknown>)
+          setModule('programme')          // → formulaire M22 pré-rempli, moteur déterministe
+          return
+        }
+        if (d.filters) apply(d.filters)
+      },
+    })
   }
 
   return (
@@ -53,10 +68,12 @@ export function IAStub() {
           appliqués à la carte et à la liste.
         </p>
         {status.data?.provider === 'stub' && (
-          <p className="mt-2 inline-block rounded-full border border-line-2 bg-surface-3 px-2.5 py-0.5 text-[10px] text-txt-dim"
-            title="Ajoutez ANTHROPIC_API_KEY dans .env pour activer le provider Anthropic">
-            mode stub local — clé IA absente
-          </p>
+          <div className="mt-3 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] leading-relaxed text-st-creuser">
+            <b>Mode dégradé : stub local (clé IA absente).</b> Les réponses sont des règles
+            déterministes, pas un modèle. Pour activer Anthropic : ajouter
+            <code className="mx-1 rounded bg-surface-3 px-1 font-mono text-[10px]">ANTHROPIC_API_KEY=…</code>
+            dans <code className="rounded bg-surface-3 px-1 font-mono text-[10px]">.env</code> puis relancer `labuse api`.
+          </div>
         )}
 
         <div className="mt-5 flex gap-2">

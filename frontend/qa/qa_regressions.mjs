@@ -3,6 +3,7 @@
 import { chromium } from 'playwright'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const failures = []
 const assert = (c, n, d = '') => (c ? console.log(`  ✓ ${n}`) : (failures.push(n), console.log(`  ✗ ${n} ${d}`)))
 
@@ -12,7 +13,7 @@ page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
 
 // ── BUG #1 (inspection) : M08 côté 1950 NOIR au zoom > 15 (source sans maxzoom → rien à
 // afficher). Condition utilisateur : zoomer fort → le côté 1950 doit MONTRER de l'image.
-await page.goto(BASE + '#f=1&m=temps', { waitUntil: 'networkidle' })
+await page.goto(BASE + SP + '&m=temps', { waitUntil: 'networkidle' })
 await page.reload({ waitUntil: 'networkidle' })
 await page.waitForTimeout(3500)
 await page.evaluate(() => window.__labuse_tm.past.jumpTo({ center: [55.2416, -21.0403], zoom: 17 }))
@@ -32,7 +33,8 @@ await page.waitForTimeout(3500)
 
 // ── BUG #2 (inspection) : M03 ignorait la ZONE DESSINÉE (mandat : « par zone dessinée/commune »).
 // Condition utilisateur : zone active + module permis → liste/compteur filtrés + libellé.
-await page.goto(BASE, { waitUntil: 'networkidle' })
+await page.goto(BASE + SP, { waitUntil: 'domcontentloaded' })
+await page.reload({ waitUntil: 'networkidle' })   // goto même-URL-hash ≠ rechargement (fragment)
 await page.waitForSelector('text=chaudes')
 await page.waitForTimeout(1800)
 await page.evaluate(() => window.__labuse.setZone([[55.24, -21.05], [55.30, -21.05], [55.30, -20.99], [55.24, -20.99]]))

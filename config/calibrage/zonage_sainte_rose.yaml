@@ -1,0 +1,1216 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Sainte-Rose
+idurba:
+- 97419_PLU_20190504
+n_zones: 125
+geoms_sidecar: data/calibrage/zonage_sainte_rose.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: espaces agricoles de coupure d'urbanisation identifiés par le SAR
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97419
+  surface_m2: 44754
+  geom_md5: 0f353051f1d99d6b5821b98144d2c04b
+- subtype: A
+  name: espaces agricoles de coupure d'urbanisation identifiés par le SAR
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97419
+  surface_m2: 748003
+  geom_md5: 410eb0dd283b4b2d884fc5c9bce20c0e
+- subtype: A
+  name: espaces agricoles de coupure d'urbanisation identifiés par le SAR
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97419
+  surface_m2: 222502
+  geom_md5: 54504d98a1f7a91ba471ff9c50274ca5
+- subtype: A
+  name: espaces agricoles de coupure d'urbanisation identifiés par le SAR
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97419
+  surface_m2: 50246
+  geom_md5: b66dc5576917028092d9b89d4b38a314
+- subtype: A
+  name: espaces agricoles de coupure d'urbanisation identifiés par le SAR
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97419
+  surface_m2: 1301031
+  geom_md5: 27f1a2a5bdb8fef566c7d0c8a9fcf1aa
+- subtype: A
+  name: espaces agricoles de coupure d'urbanisation identifiés par le SAR
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97419
+  surface_m2: 10485
+  geom_md5: 5d631d2e37c3c09cd59ed37f4c2b8ece
+- subtype: A
+  name: espaces agricoles de coupure d'urbanisation identifiés par le SAR
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97419
+  surface_m2: 113137
+  geom_md5: 73a97ee2fd028a5a8664639fcb1d9618
+- subtype: A
+  name: espaces agricoles de coupure d'urbanisation identifiés par le SAR
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97419
+  surface_m2: 3141
+  geom_md5: 0127ead158bc3164ff008cfec3aecf41
+- subtype: A
+  name: espaces agricoles de coupure d'urbanisation identifiés par le SAR
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97419
+  surface_m2: 484706
+  geom_md5: 04fd27d3d8bde975ef72d07dcd2385a9
+- subtype: A
+  name: hameau nouveau intègré à l'environnement pour la vocation d'hébergement touristique insolite en milieu rural
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ai
+    partition: DU_97419
+  surface_m2: 11797
+  geom_md5: e87852b6e867e76efe4c61227dda645c
+- subtype: A
+  name: hameau nouveau intègré à l'environnement pour la vocation d'hébergement touristique insolite en milieu rural
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ai
+    partition: DU_97419
+  surface_m2: 1395
+  geom_md5: 67f31daa0e15e470d3c297530e7113fb
+- subtype: A
+  name: hameau nouveau intègré à l'environnement pour la vocation d'hébergement touristique insolite en milieu rural
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ai
+    partition: DU_97419
+  surface_m2: 7511
+  geom_md5: 91ec7974d9db19f5bd4a945bfdc2db7d
+- subtype: A
+  name: hameau nouveau intègré à l'environnement pour la vocation d'hébergement touristique insolite en milieu rural
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ai
+    partition: DU_97419
+  surface_m2: 8139
+  geom_md5: ec4f260c684b6339f71c05987639afd8
+- subtype: A
+  name: hameau nouveau intègré à l'environnement pour la vocation d'hébergement touristique insolite en milieu rural
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ai
+    partition: DU_97419
+  surface_m2: 9956
+  geom_md5: baa0828c6e50c61b671cd06c1fef6df6
+- subtype: A
+  name: hameau nouveau intègré à l'environnement pour la vocation d'hébergement touristique insolite en milieu rural
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ai
+    partition: DU_97419
+  surface_m2: 9085
+  geom_md5: 8b670e9b2da641a0935c50c53578ea62
+- subtype: A
+  name: hameau nouveau intègré à l'environnement pour la vocation d'hébergement touristique insolite en milieu rural
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ai
+    partition: DU_97419
+  surface_m2: 16108
+  geom_md5: fca7a1ab5494d5710a6ea55a98b225ad
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 2586
+  geom_md5: b240b1655b8ca3e6911264bc1b82ee58
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 4411788
+  geom_md5: 96fecc352e3459a6489be62f28142b85
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 48382
+  geom_md5: 5170d1f3d4afa55fcf7eedc50529c834
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 1093
+  geom_md5: 405018bf368fac8c034f8316bff3b919
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 290122
+  geom_md5: 9010a58a0117a31229686cd2f376a696
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 267172
+  geom_md5: 80fccc72c741e2cbefca7bc3043341c8
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 14839
+  geom_md5: b316e2079c15e77cd5b03b5975827a26
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 19192
+  geom_md5: c11520bbd1b61d955c69a4e43c3c6f99
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 24290
+  geom_md5: 8e1ae756a55d943175ebfa42dad9d294
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 731691
+  geom_md5: 3092b7414df40adeeb645b5b80ce42f6
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 2734740
+  geom_md5: d291e998438f47615f80c3b0c16a36d6
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 6991968
+  geom_md5: e4316a17c62e6420e4c0119b90c273e7
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 13759
+  geom_md5: 1b7204cf05d8a17b9d30ccb2f94d9a2d
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 307356
+  geom_md5: a3279615a5b976c7401ea061177e29fd
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 1712060
+  geom_md5: 75f9ab637a55c091e444a7b5b5d49e32
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 165787
+  geom_md5: 95f1692c3e305abe14b0e763af06bf4e
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 308113
+  geom_md5: 0b2a82758b5e5db57c3842aed4bef212
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 1339275
+  geom_md5: 73990539733ea733bac741a06be4c739
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 181862
+  geom_md5: bb5f7eb59c0f78b8c4155f077e8eec1b
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 12731
+  geom_md5: 222920334b953460a10cdc0a70657945
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 4978
+  geom_md5: 10dc026a7bd6f7ad31d5b315cf6109da
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 37443
+  geom_md5: 33a3041a9b0e17e62cfab4986a62b056
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 158482
+  geom_md5: ef40062bf7288fccc1fe72053dcf88a5
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 331
+  geom_md5: eb793bdb81d017ad7d7f55df4f9b9737
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 181165
+  geom_md5: 096cc508ba4bbe615e94ed367ac5bbd4
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 788637
+  geom_md5: 0c9ff739f77a99c23b9af73fa09598c3
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 225270
+  geom_md5: fc63ae7a9730a3f66c91668b8908c086
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 124043
+  geom_md5: 33860efc92eb5f5796debf30bbc70451
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 7975
+  geom_md5: 3bf556f9b720c51d4b6d523e06a7e4d3
+- subtype: A
+  name: secteurs agricoles de la commune, équipés ou non, à protéger en raison du potentiel agronomique, biologique
+    ou économique des terres agricoles
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97419
+  surface_m2: 869045
+  geom_md5: 82f3598cb5ed8bfd60e47006a8d76ddb
+- subtype: AUc
+  name: aménagement d'équipements touristiques et hôteliers au gabarit limité
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUto
+    partition: DU_97419
+  surface_m2: 3898
+  geom_md5: 3507f14702821a6ca2b3ce31fa89b693
+- subtype: AUc
+  name: aménagement d'équipements touristiques et hôteliers au gabarit limité
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUto
+    partition: DU_97419
+  surface_m2: 10588
+  geom_md5: 3fca7ea40df3e9a8f5dc4c1c3388bbed
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUe
+    partition: DU_97419
+  surface_m2: 41169
+  geom_md5: d5a1ef2543cb33fec8ad465a2dca5374
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97419
+  surface_m2: 61035
+  geom_md5: 2fe6edf59d7330f5ca7f56eb9a3b69de
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97419
+  surface_m2: 13287
+  geom_md5: d25d2a072ae7dd902547a6849352f639
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97419
+  surface_m2: 9594
+  geom_md5: 1d403cd629ad90c35baf0a7f7d191ce9
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97419
+  surface_m2: 162904
+  geom_md5: e2d8a4c806c17d14119276344d53384e
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97419
+  surface_m2: 17678
+  geom_md5: 6db6e8b87d822c66055416f2cd98d833
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97419
+  surface_m2: 2188
+  geom_md5: 9bf981b3c477d33ebac12c21f1b99c09
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97419
+  surface_m2: 9753
+  geom_md5: eb75db61463cf6e9cc6d57facf55e42d
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97419
+  surface_m2: 7466
+  geom_md5: f6462db239c5e5dc3104713363ffcd66
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97419
+  surface_m2: 4993
+  geom_md5: f17a481e95cc99b50db5ac15e0a15de5
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97419
+  surface_m2: 20229
+  geom_md5: debf008260fe418b479a45f6e109ca47
+- subtype: AUc
+  name: espaces d'urbanisation prioritaire conservés identifiés par le SAR ainsi qu'une zone ouverte à l'urbanisation
+    dans le territoire rural habité de Bois Blanc
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97419
+  surface_m2: 6908
+  geom_md5: 665ebfc880f6f44f5a689363fee29d93
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUb
+    partition: DU_97419
+  surface_m2: 13225
+  geom_md5: af1f3cb3858bebe8732c2b43f4b1dd11
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUa
+    partition: DU_97419
+  surface_m2: 4504
+  geom_md5: 2114175e4554771380adc53edb215809
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUa
+    partition: DU_97419
+  surface_m2: 5204
+  geom_md5: da8f55e5ce60379aa5fa4f8f4a35f4bc
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUc
+    partition: DU_97419
+  surface_m2: 3513
+  geom_md5: 594923069abb8751d358e6733b576552
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUc
+    partition: DU_97419
+  surface_m2: 5471
+  geom_md5: 6f66d892e6a814493a92e3243e8b3ec8
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUc
+    partition: DU_97419
+  surface_m2: 15886
+  geom_md5: 4b12e8e4abe73cccdb919f1dfaeb09ef
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUc
+    partition: DU_97419
+  surface_m2: 2855
+  geom_md5: 72f205b0b491d595bb29ad1e34847378
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUb
+    partition: DU_97419
+  surface_m2: 8150
+  geom_md5: c429054de96949f18d9359b9d159c891
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUa
+    partition: DU_97419
+  surface_m2: 19287
+  geom_md5: 9c7d191d33cf8d182281bdf6131eb684
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUb
+    partition: DU_97419
+  surface_m2: 14380
+  geom_md5: f818fbabfa5758cd06c80f9689fceec5
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUa
+    partition: DU_97419
+  surface_m2: 4341
+  geom_md5: ada570b309877e7264fd29fa108d5119
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUc
+    partition: DU_97419
+  surface_m2: 4349
+  geom_md5: 70b999a8e3a89ea6920ec5b9da2d5cf6
+- subtype: AUs
+  name: espaces d'urbanisation prioritaire repositionnés dans le cadre de la révision du PLU au sein des zones préférentielles
+    d'urbanisation identifiées par le SAR pour un aménagement à plus long terme
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: 2AUd
+    partition: DU_97419
+  surface_m2: 17364
+  geom_md5: 0faea44823afc6fcf4cf245fb138ebb6
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 688194
+  geom_md5: eee8eab1b1b16259b0ec77792edd1f1b
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 52546
+  geom_md5: 1aa3b1f5ed38815cd92cae474a72ddfc
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 49134
+  geom_md5: 04192a2dd5b73ffcf8b794880cb1e2ee
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 278916
+  geom_md5: 4794d78f494f48216cc1d73da4e809af
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 152722
+  geom_md5: 6f7860bca4647ae7ba2670ab26f177a1
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 22056
+  geom_md5: efddfb046f31743c6fdd4a4e2103547e
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 39495
+  geom_md5: d84c4cd95b3e615fd00ec0a9790195c9
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 38853
+  geom_md5: 84c88c723823196b45b15831a8bfcb39
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 72750
+  geom_md5: 943782b2a008b3598207fb9c441604f9
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ntvb
+    partition: DU_97419
+  surface_m2: 286152
+  geom_md5: d4f6f5264d5f723e6418205227690db6
+- subtype: N
+  name: espaces naturels remarquables du littoral
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97419
+  surface_m2: 2168054
+  geom_md5: 9488d14a1316dca49ce73aa1054bc7fa
+- subtype: N
+  name: espaces naturels remarquables du littoral
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97419
+  surface_m2: 3067599
+  geom_md5: 3ef954899bdc7d4f5c6f3c0a8219bca3
+- subtype: N
+  name: espaces situés dans le coeur du parc national de la Réunion
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97419
+  surface_m2: 133813705
+  geom_md5: 2f0a6c2ca8c2d7330f9c81d005d212f0
+- subtype: N
+  name: secteur de taille et de capacité limitées destiné à la revitalisation des l'Anses des Cascades
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Nrev
+    partition: DU_97419
+  surface_m2: 11793
+  geom_md5: 5093d9399f831f7f1278ccafd35973cd
+- subtype: N
+  name: secteur de taille et de capacité limitées pour la vocation d'hébergement touristique, type écolodge
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Nec
+    partition: DU_97419
+  surface_m2: 23355
+  geom_md5: 281879747c4dbf5ee91671792b8e4710
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 3520
+  geom_md5: 2462b280376f9033b3d5f796c41bc117
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 20790
+  geom_md5: 283eae744aa3b346b33c0c885e62893a
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 5102
+  geom_md5: bcc716324feeec02058af1e7d9276df4
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 337008
+  geom_md5: d09f85638fc4b56840a58c9f178597b2
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 1074530
+  geom_md5: 4303eb97f24fbae10e3aec5665a7bf97
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 27125
+  geom_md5: 160e18cd5b91b050d6a4b9aede5b46c7
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 5020
+  geom_md5: 1016c751c6e3d5797d2783761d4d5aa7
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 25212
+  geom_md5: 2dd72c2d16bf849f2c5105b016cc1bd0
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 61696
+  geom_md5: fc309542887ed0b11bcc3ad9222430dd
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 1717392
+  geom_md5: 36cf8de6b4371eebeb4d58f23eb4c8d7
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 68139
+  geom_md5: 4f2e119bee3420740c2adc506dac5645
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 5897
+  geom_md5: a531f3d5f663872f783499580a46b53c
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 6765
+  geom_md5: 7cbceeb85e0b071913aaadb9555d3c5f
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 9637
+  geom_md5: f8122e42efb5d99ec5e9a971b239bd11
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 19455
+  geom_md5: 844d1d6eb078ed1c194d6d0c428d085d
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 170542
+  geom_md5: d077bdd6e34fa9d91754de40791bb0cc
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 2096235
+  geom_md5: 994e0e101676751a5feeb7c708a5b26b
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 2853163
+  geom_md5: 2de7a4a4ead3ad8695473df9ae16eea3
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 3016
+  geom_md5: 759ade3968dd9f6cb1c997e4b4af94c4
+- subtype: N
+  name: secteurs naturels à protéger en raison soit de la qualité des sites, des milieux naturels, des paysages
+    et de leur intérêt, notamment du point de vue esthétique, historique ou écologique
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97419
+  surface_m2: 56985
+  geom_md5: eb1891a9667e557f524d0ee54660b4c8
+- subtype: U
+  name: centre ville et le quartier historique du Petit Brûlé - densité urbaine et mixité fonctionnelle confortées
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97419
+  surface_m2: 216593
+  geom_md5: e19eb7e260ea2b1684c4f4c3cb3b4a54
+- subtype: U
+  name: centre ville et le quartier historique du Petit Brûlé - densité urbaine et mixité fonctionnelle confortées
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97419
+  surface_m2: 627645
+  geom_md5: 568459ba89c41c9fa5272215028058f4
+- subtype: U
+  name: espaces destinés à accueillir des activités économiques à vocation de production, de transformation, de
+    réparation, de conditionnement et de distribution, et d'autres activités artisanales
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97419
+  surface_m2: 9781
+  geom_md5: 2574fa390c454ac529b9435db616bd07
+- subtype: U
+  name: petite partie du quartier de Piton Sainte-Rose dont le développement est à contenir et l'intégration du
+    bâti à considérer dans le paysage environnant
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97419
+  surface_m2: 16228
+  geom_md5: c538c1e8ce70784fc89fa47b076467af
+- subtype: U
+  name: quartier de Piton Sainte-Rose - densité moyenne et mixité des fonctio,  transition harmonieuse entre le
+    tissu urbain du centre-ville
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97419
+  surface_m2: 515209
+  geom_md5: 6968b1df50526f0ca3401df9a4459b27
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 12715
+  geom_md5: 87068a82cf4391571fca13f2ef778725
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 6872
+  geom_md5: 0113ed379dda373fba169fa6dd734f7e
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 117316
+  geom_md5: 116b6f4406940a39b5d6dd8031df2cb9
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 165969
+  geom_md5: e4782839b51ecd101100b6095c801759
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 148167
+  geom_md5: 760f9aeef34c3e490d8c7eaec2fff2ca
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 108625
+  geom_md5: 412d2aa1d7c192dc80c2d1bafc358526
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 137608
+  geom_md5: 0dda2e158574447626d8c5b2e0a0551c
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 179259
+  geom_md5: b8f77e6a2edce6b52f2276b54a419f12
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 43066
+  geom_md5: 0c7fb5549cb9b79b72ff0d7525e1db1d
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 154155
+  geom_md5: aecc54a0f7ef7d8ed345d8a30a9931d1
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 24003
+  geom_md5: e85e064694470a116d03e57c9021b1a0
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés
+  attrs:
+    idurba: 97419_PLU_20190504
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97419
+  surface_m2: 118415
+  geom_md5: 029b9715d2faed4b97ae620fb978fe1d

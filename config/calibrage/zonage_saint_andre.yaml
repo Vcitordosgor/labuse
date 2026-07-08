@@ -1,0 +1,2121 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Saint-André
+idurba:
+- '97409_20190228'
+n_zones: 142
+geoms_sidecar: data/calibrage/zonage_saint_andre.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: espaces agricoles de coupure d?urbanisation identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Acu
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces agricoles de coupure d?urbanisation identifiés par le SAR
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2363263
+  geom_md5: 58f2430b1b2a58d24b29742e6405a77e
+- subtype: A
+  name: secteur où les constructions peuvent être autorisées dans des secteurs de taille et de capacité d'accueil
+    limitées
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Aba
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteur où les constructions peuvent être autorisées dans des secteurs de taille et de capacité d'accueil
+      limitées
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 16223
+  geom_md5: 323196ef5f9a4389a0f039b414f91360
+- subtype: A
+  name: secteur où les constructions peuvent être autorisées dans des secteurs de taille et de capacité d'accueil
+    limitées
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Aba
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteur où les constructions peuvent être autorisées dans des secteurs de taille et de capacité d'accueil
+      limitées
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 15229
+  geom_md5: 70ddd50d832beb6c34fbbe9e030c8200
+- subtype: A
+  name: secteur où les constructions peuvent être autorisées dans des secteurs de taille et de capacité d'accueil
+    limitées
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Aba
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteur où les constructions peuvent être autorisées dans des secteurs de taille et de capacité d'accueil
+      limitées
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 3889
+  geom_md5: 5824529cdb9b808f8ab1a4c4dfad7cdf
+- subtype: A
+  name: secteur où les constructions peuvent être autorisées dans des secteurs de taille et de capacité d'accueil
+    limitées
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Aba
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteur où les constructions peuvent être autorisées dans des secteurs de taille et de capacité d'accueil
+      limitées
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 36786
+  geom_md5: 71024b250c40555e0a5b9161ef7a2aac
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 15273
+  geom_md5: 74b97d7ecca2bcf9ccaa7c812319e87b
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2039575
+  geom_md5: 95ed79c5e1723a8b9f2b2c256782ba79
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 4931
+  geom_md5: cf446bdbfe23557c8eaebfc1e03b6d79
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 79860
+  geom_md5: 6d9b764da4ba8d69a105921a8c20de9d
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 46681
+  geom_md5: d70f229f774abae9cb28dcbecdab4106
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 40943
+  geom_md5: 50edbe1e32a41de165a1beefc4a4e4a9
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 30161
+  geom_md5: c20cd49b0edcf1341aee796262e4963e
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 490635
+  geom_md5: 8b58d84c133a8416799297f52db72f19
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2431533
+  geom_md5: 586c9a087aa711d06bcdea2324d08b4b
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 76161
+  geom_md5: 4247c8ffdebcf28210aa3556e298114c
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 5980403
+  geom_md5: cecb77922325121f75a41691346f5117
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 169750
+  geom_md5: 2e905d2ca6870ae07849e44ef88fe2bf
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 19332
+  geom_md5: 62e1ddbe99c0221ffae1c81f65b15ff9
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 44234
+  geom_md5: 38f55a546c6862a69c8667615ab8d497
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 22664
+  geom_md5: 0fb3c6b663625396ee2b83e843ca941f
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 22468
+  geom_md5: ffacb58aa6b4bd5d00aca370164b223d
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 39130
+  geom_md5: 844e792c6c16f96da862836086c704fe
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 276406
+  geom_md5: d432e95075b9aa0b5bc4fd33769ec239
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 388624
+  geom_md5: 397a0f1e9b854d5343de25c2113230cb
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 79821
+  geom_md5: a8b2d54ffdae2ea39acf021e33162c0a
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 1553677
+  geom_md5: 6a997e75d79cff54b4715a041007de44
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 185673
+  geom_md5: 6c1872abc989395114cdd6b43b910dca
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 13518
+  geom_md5: 9c932701a4dbb33b6200059935e112d9
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 339741
+  geom_md5: 57578e4b52bb1f7ee4904b94d84cf418
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 11214
+  geom_md5: b337d17b5d3e533359dc30376cb3e441
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 5185938
+  geom_md5: 2b72992692377cccef5d793f5e460e21
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 172115
+  geom_md5: 1fb75cd59e36a09f15846a68c1ce725a
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 671726
+  geom_md5: 93cc6392b791e304fd618f43419d08e0
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 59659
+  geom_md5: ae29fc05de1274f9b0615a275cd80161
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 25467
+  geom_md5: 0da9b40006a8f141dc23808713e7afa4
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 33212
+  geom_md5: a534902c7f1b507209edf838eec4a9e0
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 356638
+  geom_md5: 79a38c2849554882da276d2627f61ce1
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 42305
+  geom_md5: 2f2b7eeb591b98bff45895c4017c961e
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 32363
+  geom_md5: 722137b37740b945e30d2a8cff58ac2d
+- subtype: A
+  name: zone agricole
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: A
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone agricole
+    typezone: A
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2603747
+  geom_md5: 3472448864b260a987f949d92cbcfbc9
+- subtype: AU
+  name: aménagement d?une zone d?activités mixtes dans le quartier de la Cressonnière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUcr
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: aménagement d?une zone d?activités mixtes dans le quartier de la Cressonnière
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 92845
+  geom_md5: aa099a8585b57ec56340ff54f39f4a83
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUe
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 93401
+  geom_md5: b1bce215a2b1bc352a8c35ee18ac4eac
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 5938
+  geom_md5: 7559a4366a6a9818f5f3a1457be50632
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 12751
+  geom_md5: e9d7d173b2f3e8557c0450b208c7cf2d
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUd
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 6705
+  geom_md5: e6e89566ed29b7144487ba61f9d6474e
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 5164
+  geom_md5: cc40fc680b891ca5fc798b89bb9b534c
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 18139
+  geom_md5: 40a9759b52d347d1c4b1b8731e7b7562
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 31209
+  geom_md5: cde4a2fb9f5f2cc326cf85ef36f90a4e
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 4430
+  geom_md5: eed4a2311aefa064c0c935a46b228663
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 10847
+  geom_md5: a3956d0ee09c396a92d900f0c80e3a87
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 24065
+  geom_md5: 0170eda6887134c396d4cea869656852
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 3301
+  geom_md5: 642da1d9b036c319ee37e6290dea42b7
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 8948
+  geom_md5: a411be41b731cc6ae6207e34ff7499df
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUd
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 7898
+  geom_md5: b01e4a18534092142c1eac46943f33fa
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 6596
+  geom_md5: 6b97271230124302a4482ff9bf6822f7
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2020
+  geom_md5: a95c4a47c2a03639196b99f947bcb938
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 30890
+  geom_md5: 2eab1de84fc7ebc1f0c8da2610db0d05
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 5432
+  geom_md5: 629d0f2d8379a332d739112ac890467c
+- subtype: AU
+  name: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR
+    et le SCOT
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 2AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par
+      le SAR et le SCOT
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 35574
+  geom_md5: 4c260b89ef38ce5874b3fbd1707c0a4d
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 31575
+  geom_md5: aa05b0a7ed11a3fec137417fa9c6956b
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUs
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 108293
+  geom_md5: a2bdf13564cfdc9ed9c4c17e1c96b7ac
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 17898
+  geom_md5: 66bcfbfc3ef3d1da3b0429f75cdd4886
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUe
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 24814
+  geom_md5: 00c712a9b7a9b21c72985747f00cb20d
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 4897
+  geom_md5: c6534f998dc994f4fd287f0db7c9b9a0
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 12687
+  geom_md5: cac7176b404d1bce86662ffc5af16266
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 6011
+  geom_md5: 58068d7ccd21725692a6c52282898010
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 8122
+  geom_md5: 0e16f71d2f925046505e69f88ef46a6c
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 24023
+  geom_md5: ed617373f40b652e5aa8bec39166ea22
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 9252
+  geom_md5: 01289496d5b2420e3fceb76014e3d7c3
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 10712
+  geom_md5: 1a9bd9a2a4d497a788c26e13c4699f4e
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 19305
+  geom_md5: 74e7cb3897bfc3f6e84a42395e5a4003
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUt
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 434440
+  geom_md5: c4677f3b1700fe545f1f0eeb162a2413
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 46919
+  geom_md5: cb51b5496b38169fffafc8888341bbc3
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 16188
+  geom_md5: c19fc6a3696ad9ea4f054f696e19590e
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 60725
+  geom_md5: 02855235892db95004d6cb39c97b9ff6
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUs
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 15561
+  geom_md5: 229d33d8e8ac4ee3213a383207a58057
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUd
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 35395
+  geom_md5: d74fcbe535971e7342082ee24071e5c8
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 22050
+  geom_md5: 99cb2e2493e234046d4957e0dcf6c421
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUd
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 18610
+  geom_md5: caddbbe2445b1d32eb7f50171404b1b1
+- subtype: AU
+  name: espaces d?urbanisation prioritaire identifiés par le SAR
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: 1AUc
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces d?urbanisation prioritaire identifiés par le SAR
+    typezone: AU
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 11559
+  geom_md5: 55279f16da35e4ce7980e459b60f15ea
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Ntvb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: corridors écologiques, synonymes de trames vertes et bleues
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 1813822
+  geom_md5: 0677b9f574e08659f3cf48b3e116c78b
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Ntvb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: corridors écologiques, synonymes de trames vertes et bleues
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 113549
+  geom_md5: 5efb541285cf29142c7ada34775f4410
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Ntvb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: corridors écologiques, synonymes de trames vertes et bleues
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 1301158
+  geom_md5: 3657d1a26ed7487c49af756b482cb609
+- subtype: N
+  name: corridors écologiques, synonymes de trames vertes et bleues
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Ntvb
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: corridors écologiques, synonymes de trames vertes et bleues
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 372046
+  geom_md5: 0c84533b23ef89940e64235f8696f781
+- subtype: N
+  name: espaces naturels remarquables du littoral identifiés au SMVM
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Nli
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces naturels remarquables du littoral identifiés au SMVM
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 101061
+  geom_md5: cfff0caa6807071734278f53a6f96bef
+- subtype: N
+  name: espaces naturels remarquables du littoral identifiés au SMVM
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Nli
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces naturels remarquables du littoral identifiés au SMVM
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 1396249
+  geom_md5: 9b9699afcd617ecd1544e432fbf42064
+- subtype: N
+  name: espaces naturels remarquables du littoral identifiés au SMVM
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Nli
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces naturels remarquables du littoral identifiés au SMVM
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 814501
+  geom_md5: 9197a41af77fd27db907e0ab7cdee42f
+- subtype: N
+  name: espaces situés dans le coeur du parc national de la Réunion
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Npnr
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces situés dans le coeur du parc national de la Réunion
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2444696
+  geom_md5: 4a43e17aff2d2959dbeb2ab154b1d11e
+- subtype: N
+  name: réservoirs à biodiversité
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Nr
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: réservoirs à biodiversité
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 754329
+  geom_md5: 6f624bc57e25ceeaad72059f09665fa6
+- subtype: N
+  name: réservoirs à biodiversité
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Nr
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: réservoirs à biodiversité
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 5167
+  geom_md5: 20898f55d1bd5e11d3a613a337513adc
+- subtype: N
+  name: réservoirs à biodiversité
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Nr
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: réservoirs à biodiversité
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 254085
+  geom_md5: be94041a32b67295f88e23e230ddb2ea
+- subtype: N
+  name: réservoirs à biodiversité
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: Nr
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: réservoirs à biodiversité
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 8673
+  geom_md5: 755f877d19627a5c3501cb5fbdb53434
+- subtype: N
+  name: zone naturelle et forestière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: N
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone naturelle et forestière
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2620
+  geom_md5: c4a8a761c1ffbf54f968dc85307a24ed
+- subtype: N
+  name: zone naturelle et forestière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: N
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone naturelle et forestière
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 288665
+  geom_md5: 2048f09c74361508c3290eded11d8acf
+- subtype: N
+  name: zone naturelle et forestière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: N
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone naturelle et forestière
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 17697
+  geom_md5: 03d42d26fe93aab7443f9738de75866a
+- subtype: N
+  name: zone naturelle et forestière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: N
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone naturelle et forestière
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 35908
+  geom_md5: 6f81aa4398d60ae119c7eaa2dab1f193
+- subtype: N
+  name: zone naturelle et forestière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: N
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone naturelle et forestière
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 67661
+  geom_md5: 299083fcbb7b56da6b481252b83d02a3
+- subtype: N
+  name: zone naturelle et forestière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: N
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone naturelle et forestière
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 415604
+  geom_md5: 805df96924290f57d15141f12986efce
+- subtype: N
+  name: zone naturelle et forestière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: N
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone naturelle et forestière
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 73905
+  geom_md5: 49e8df4d47d99c15bcf34458e64fdfe5
+- subtype: N
+  name: zone naturelle et forestière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: N
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone naturelle et forestière
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 16030
+  geom_md5: f47df5803cf0f2995c3ff9cb93aafcc2
+- subtype: N
+  name: zone naturelle et forestière
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: N
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: zone naturelle et forestière
+    typezone: N
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2350713
+  geom_md5: 7c2dec5f06e51b0e79f43a1b5bd1976a
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 61282
+  geom_md5: 6288eb64cc8c2ba2e1aad277d00a053b
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 157868
+  geom_md5: 095d9a24cda71adbc4a5dd68b7c01870
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 168658
+  geom_md5: 18fbc182ac278d5648aeacbe4bbbec08
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 10098
+  geom_md5: fd1ca763357c35b95edf8e764763284d
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 61256
+  geom_md5: 3be79ce4fdf5ea5fd47f1023732909f7
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2056
+  geom_md5: 8b02760d4301f29b4483f79984aaf721
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 204906
+  geom_md5: bde08369475ea8b82a8c4b4663809784
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 148121
+  geom_md5: 39f659fccb3532c7b3d4db3a231b508e
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 46471
+  geom_md5: 58b4555734296aac580f0165fc87c619
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 22902
+  geom_md5: 2b4e6b12f30e9ffcc8909af1d177d929
+- subtype: U
+  name: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration
+    du bâti à considérer dans le paysage agricole environnant
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UD
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et
+      l?intégration du bâti à considérer dans le paysage agricole environnant
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 70624
+  geom_md5: c68d720ca9892fac4c0837db685c8c16
+- subtype: U
+  name: centre-ville où la densité urbaine et les fonctions centrales doivent y être confortées comme l?habitat
+    mais également les commerces, services, activités et équipements
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UA
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: centre-ville où la densité urbaine et les fonctions centrales doivent y être confortées comme l?habitat
+      mais également les commerces, services, activités et équipements
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 761407
+  geom_md5: aefd2de736c754e3f3eab87d93e304e0
+- subtype: U
+  name: espaces destinés à accueillir des activités économiques et commerciales
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: US
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces destinés à accueillir des activités économiques et commerciales
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 262551
+  geom_md5: e8e0700b591c4ee75c0cdd1c10d1f75c
+- subtype: U
+  name: espaces destinés à accueillir des activités économiques à vocation de production, de transformation, de
+    conditionnement et de distribution, ainsi que les activités de recherche, de formation et d?enseignement
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UE
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces destinés à accueillir des activités économiques à vocation de production, de transformation,
+      de conditionnement et de distribution, ainsi que les activités de recherche, de formation et d?enseignement
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 56792
+  geom_md5: c6df507134a83152b67ade626a626d7b
+- subtype: U
+  name: espaces destinés à accueillir des activités économiques à vocation de production, de transformation, de
+    conditionnement et de distribution, ainsi que les activités de recherche, de formation et d?enseignement
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UE
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces destinés à accueillir des activités économiques à vocation de production, de transformation,
+      de conditionnement et de distribution, ainsi que les activités de recherche, de formation et d?enseignement
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 64790
+  geom_md5: 9aea134f97367269d73fdc1d9106fdfd
+- subtype: U
+  name: espaces destinés à accueillir des activités économiques à vocation de production, de transformation, de
+    conditionnement et de distribution, ainsi que les activités de recherche, de formation et d?enseignement
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UE
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces destinés à accueillir des activités économiques à vocation de production, de transformation,
+      de conditionnement et de distribution, ainsi que les activités de recherche, de formation et d?enseignement
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 45780
+  geom_md5: ebf6a70c637f77ac942eef2e4dd4a15f
+- subtype: U
+  name: espaces destinés à accueillir des activités économiques à vocation de production, de transformation, de
+    conditionnement et de distribution, ainsi que les activités de recherche, de formation et d?enseignement
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UE
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces destinés à accueillir des activités économiques à vocation de production, de transformation,
+      de conditionnement et de distribution, ainsi que les activités de recherche, de formation et d?enseignement
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 339018
+  geom_md5: d679c4ed58ef7c90100d81423b61e194
+- subtype: U
+  name: espaces urbains agglomérés du centre ainsi que le quartier Fayard, la zone est caractérisée par une densité
+    moyenne et doit assurer la mixité des fonctions
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UB
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces urbains agglomérés du centre ainsi que le quartier Fayard, la zone est caractérisée par une
+      densité moyenne et doit assurer la mixité des fonctions
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 19960
+  geom_md5: 5ec8363b66c524c4b18c6f4022a1d418
+- subtype: U
+  name: espaces urbains agglomérés du centre ainsi que le quartier Fayard, la zone est caractérisée par une densité
+    moyenne et doit assurer la mixité des fonctions
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UB
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces urbains agglomérés du centre ainsi que le quartier Fayard, la zone est caractérisée par une
+      densité moyenne et doit assurer la mixité des fonctions
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 15492
+  geom_md5: 13d186d7931c5f80466067d3fd3f615e
+- subtype: U
+  name: espaces urbains agglomérés du centre ainsi que le quartier Fayard, la zone est caractérisée par une densité
+    moyenne et doit assurer la mixité des fonctions
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UB
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces urbains agglomérés du centre ainsi que le quartier Fayard, la zone est caractérisée par une
+      densité moyenne et doit assurer la mixité des fonctions
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2164737
+  geom_md5: d2396a90df66106058f6b135b48216de
+- subtype: U
+  name: espaces urbains agglomérés du centre ainsi que le quartier Fayard, la zone est caractérisée par une densité
+    moyenne et doit assurer la mixité des fonctions
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UB
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: espaces urbains agglomérés du centre ainsi que le quartier Fayard, la zone est caractérisée par une
+      densité moyenne et doit assurer la mixité des fonctions
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2681550
+  geom_md5: feb865427943879cea9dec6e171fc977
+- subtype: U
+  name: quartier ancien autour de l?avenue Bourbon
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UA1
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: quartier ancien autour de l?avenue Bourbon
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 81512
+  geom_md5: 08b432af82bb42e70a642d4e93a3564e
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 2976360
+  geom_md5: d1bd375259724d4c079dbd2b5f5caee9
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 176006
+  geom_md5: 3e9901305b0cd4b9acc92e8e70298b66
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 968647
+  geom_md5: 0f9f5c4483d0c170def27d132d474c2d
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 334081
+  geom_md5: c39f5ffd4a500f3763faa3c6cc445c47
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 144435
+  geom_md5: 0540fe4a2748b6cd50c0d17e2619d604
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 29278
+  geom_md5: eafd5dbda7ddc7360546e7027bc1d267
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 42657
+  geom_md5: 6a89d950d85403b829b5e0a7f5263972
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 21984
+  geom_md5: 52f910bf90969914597be3c787542c37
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 1468479
+  geom_md5: 15459d481503b594bd5583afefbc79c6
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 31257
+  geom_md5: 93a645d08fcef5c02d019d00b1464a41
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 409469
+  geom_md5: 6b9a59828a4ca5cb7ba6d2b7e68b7b05
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 6477
+  geom_md5: 2bc58ce5ae42f1e2cbc7ffc1d72837aa
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 12335
+  geom_md5: 1060cfb4e44ef54da4536667920084cf
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 1564
+  geom_md5: fe407e854d8516b5e751c0090fed4395
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 22071
+  geom_md5: 235b7efa0e118f407dc0f82809a55957
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 54095
+  geom_md5: 5efd926edab06c17c93a140e96a147d5
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 12324
+  geom_md5: 98702faf4d6ebd4202a71656a446954d
+- subtype: U
+  name: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre
+    la mixité des occupations et utilisations du sol
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UC
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée
+      à permettre la mixité des occupations et utilisations du sol
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 84028
+  geom_md5: 68d0dcdb986f3e480a981b440207f0e0
+- subtype: U
+  name: site d'accueil d'activités touristiques ou de loisirs, sportifs
+  attrs:
+    insee: '97409'
+    idurba: '97409_20190228'
+    source: AGORAH_BASE_PERMANENTE_PLU_REUNION
+    libelle: UT
+    datappro: '2019-02-28T00:00:00+00:00'
+    libelong: site d'accueil d'activités touristiques ou de loisirs, sportifs
+    typezone: U
+    partition: DU_97409
+    dataset_url: https://data.regionreunion.com/api/explore/v2.1/catalog/datasets/base-permanente-des-plu-de-la-reunion
+  surface_m2: 95785
+  geom_md5: 3618e4d2c68bd96c1492537a81757e1d

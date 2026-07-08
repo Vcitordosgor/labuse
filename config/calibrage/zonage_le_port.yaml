@@ -1,0 +1,1003 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Le Port
+idurba:
+- 97407_PLU_20241209
+n_zones: 110
+geoms_sidecar: data/calibrage/zonage_le_port.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97407
+  surface_m2: 651302
+  geom_md5: ad3d293895bea2ac36cc0a648d6d8b8b
+- subtype: AUc
+  name: 1AUa
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97407
+  surface_m2: 47463
+  geom_md5: 7e96bd6e46d6ae9758a9b4a282c80608
+- subtype: AUc
+  name: 1AUa
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUa
+    partition: DU_97407
+  surface_m2: 56380
+  geom_md5: bd260ef116cf2f893e3cb6f2a18186db
+- subtype: AUc
+  name: 1AUc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUc
+    partition: DU_97407
+  surface_m2: 126387
+  geom_md5: 216773e7471f58bcdcd2ca0dd52e2b7a
+- subtype: AUc
+  name: 1AUe
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUe
+    partition: DU_97407
+  surface_m2: 46629
+  geom_md5: 34756ece2000b2c3d9f129fdc547a3c4
+- subtype: AUc
+  name: 1AUem
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUem
+    partition: DU_97407
+  surface_m2: 37511
+  geom_md5: cc45f7c3038c2e3cf01a286db318a3a0
+- subtype: AUc
+  name: 1AUm
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUm
+    partition: DU_97407
+  surface_m2: 193526
+  geom_md5: 85726f2f2814d0623fabce0bfd00b422
+- subtype: AUc
+  name: 1AUm
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUm
+    partition: DU_97407
+  surface_m2: 33712
+  geom_md5: afcab7d90fdb0a976c0c6e54997d8470
+- subtype: AUc
+  name: 1AUmut
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUmut
+    partition: DU_97407
+  surface_m2: 291558
+  geom_md5: 511d3d4838a797eab8650387b05d0861
+- subtype: AUc
+  name: 1AUs
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUs
+    partition: DU_97407
+  surface_m2: 22360
+  geom_md5: 2bc4c219acbbab7eb3c29ce5a23cdf0e
+- subtype: AUc
+  name: 1AUv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 1AUv
+    partition: DU_97407
+  surface_m2: 2635
+  geom_md5: 91cd75113df6b9d41d0b2d7f9dfbfcea
+- subtype: AUs
+  name: 2AUem
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 2AUem
+    partition: DU_97407
+  surface_m2: 139658
+  geom_md5: 7c9cd8934ff95409ae100313ad127748
+- subtype: AUs
+  name: 2AUmut
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 2AUmut
+    partition: DU_97407
+  surface_m2: 157524
+  geom_md5: 8aeaeb894a01d2acb8b4e58f55dff5f6
+- subtype: AUs
+  name: 2AUp
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: 2AUp
+    partition: DU_97407
+  surface_m2: 724959
+  geom_md5: c9a1887468366b85f9cc43e34604ec73
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97407
+  surface_m2: 3181
+  geom_md5: fddc0b093614d8babb138f1a28c14306
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97407
+  surface_m2: 617657
+  geom_md5: e1ce31d6eb533171a29d64be6d5bc3a9
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97407
+  surface_m2: 896308
+  geom_md5: 36adc84c5fdfda2f3d338fc30b50d861
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97407
+  surface_m2: 25667
+  geom_md5: b06f8924edaa8df3a37ae1c51f85a4fd
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97407
+  surface_m2: 74679
+  geom_md5: 084f9f5e795e65db0c2ee709fb118f3d
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97407
+  surface_m2: 51489
+  geom_md5: 161e3d0bd0f84ee5536641f5a518a028
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97407
+  surface_m2: 440545
+  geom_md5: 49a42834bb47e9da2d0340b7d9eb276a
+- subtype: N
+  name: Nerl
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Nerl
+    partition: DU_97407
+  surface_m2: 267489
+  geom_md5: c7fe6836bfd04e9a8643f252636607cf
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 54376
+  geom_md5: 1448596354d3b041e7c0ddedd45c7e3a
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 124419
+  geom_md5: 3af6d456d81dc4357067b6b9a5edf589
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 89870
+  geom_md5: e523d3102d82df57d650c7d59cd34d1f
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 147764
+  geom_md5: ec719d0ce7d35254e04b6a44686dcc3e
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 63612
+  geom_md5: 6440ca196f73e81a709428b9c7840701
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 18388
+  geom_md5: 0b123b6de3290166eae4fea52a48d352
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 41448
+  geom_md5: 52e1679deefa3090d1d8bded7f3e5663
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 58027
+  geom_md5: f0148251cd6a3906798a99726bd80e96
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 27111
+  geom_md5: b9d9b8b706f127b3e08586ff86a53e9a
+- subtype: U
+  name: Ua
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97407
+  surface_m2: 80502
+  geom_md5: 605bd8417e6a842974331d81edd8d696
+- subtype: U
+  name: Ub
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97407
+  surface_m2: 195767
+  geom_md5: 9684b4c042aafd09731101141c44a036
+- subtype: U
+  name: Ub
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ub
+    partition: DU_97407
+  surface_m2: 162269
+  geom_md5: 9c15ba2a01ad8d5ebbb9554153d42af5
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 215131
+  geom_md5: 583a70e0c6a1757854d824684d5392ed
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 41050
+  geom_md5: 9839aa3dee2bfe316bb80f46f6b8ce65
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 126338
+  geom_md5: 76c32f4d25e66576a2646134f1f1e7b4
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 701414
+  geom_md5: 871b8b3d137fc64b156b13fdf6e59896
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 83913
+  geom_md5: a0de81a18678511d65cdf402aa346a09
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 220910
+  geom_md5: cf6f53fa017973aaa6f7cc6c860982d7
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 2608
+  geom_md5: 1703d9de3808a38f88c8a98ff43d22e0
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 31564
+  geom_md5: ed52aedabc7ea9fc2047e0b1eddaea84
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 250375
+  geom_md5: fe30b6400e422e515aa993d5edb11e1e
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 1703
+  geom_md5: 3c9b0b2d4a61fd487871e76ed7f724a0
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 2226
+  geom_md5: 7d0d13faa5fe13387f634643088e7e02
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 258741
+  geom_md5: 6b7faf57fdb1cf12e280265b1fbc18aa
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 12754
+  geom_md5: cd5da7c0d8e45189b7f5c7e0054e4cd4
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 42813
+  geom_md5: 6e91b31683f94bbfeb5a80fefaecc6e3
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 122899
+  geom_md5: 9e1bad874b6be268235b39c4c1577184
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 4142
+  geom_md5: c754463270355692cd700d12fe9dee18
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 315683
+  geom_md5: 43cf8c043ba58d6c9793417c02bff509
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 56609
+  geom_md5: 85d4550efd5f6a65ae7bc096bfabb93c
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 51063
+  geom_md5: b18a249976d6cb3d639f2c9033e0ea7c
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 872
+  geom_md5: 82f2af161e2963976565336b88ebefe5
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 12624
+  geom_md5: 43e6273b7968698d9abe776e5f680651
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 67649
+  geom_md5: 62255f9ec0a789778374d28af9efcdcd
+- subtype: U
+  name: Uc
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uc
+    partition: DU_97407
+  surface_m2: 24338
+  geom_md5: 27991121231871170b1dc72d4d372cf7
+- subtype: U
+  name: Uca
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uca
+    partition: DU_97407
+  surface_m2: 43759
+  geom_md5: 609b6deb0857cc6e23458099e1c78a75
+- subtype: U
+  name: Uca
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uca
+    partition: DU_97407
+  surface_m2: 64783
+  geom_md5: b00fe2526e964acbdefc93396434f3b2
+- subtype: U
+  name: Uca
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uca
+    partition: DU_97407
+  surface_m2: 29989
+  geom_md5: d2ff1d4f76d47577ff8112c0a0b53ee8
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 46755
+  geom_md5: 3ca200ac291847fcd8a98259c617034a
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 52550
+  geom_md5: c83d3600b8258c08c6a605b112448a8d
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 25499
+  geom_md5: 36471cf8a8f763710ea59ec37b2b3471
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 36041
+  geom_md5: 9b84c418a8b95702dc3a3266546f8659
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 9792
+  geom_md5: a24008b0c235e6d267ce05cea6017a4e
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 40904
+  geom_md5: 3ae3e5b5ed8a159fe2a2b16bca46dc98
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 31044
+  geom_md5: e48a963d82dbf1198eeee157cea957ac
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 50692
+  geom_md5: af55646c5c5628964c95f197c33c937d
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 61103
+  geom_md5: fa9eb6b72d03cee5c77f41736bbdccc0
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 23653
+  geom_md5: fee7c34937394b378c86c7402c89b35d
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 6882
+  geom_md5: 2e407fd39471090c9ffc0f6ca12a36a8
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 70228
+  geom_md5: b294ea0b2c04981c2c8c518a841288a1
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 17271
+  geom_md5: f6dde9acbaa7d71dde1a74b557e0849a
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 24855
+  geom_md5: 5528319e8ac166749fe2b2c0ed75cb11
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 12197
+  geom_md5: 220ed974d052265ad3ec643001ed592d
+- subtype: U
+  name: Ud
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97407
+  surface_m2: 8641
+  geom_md5: c28f2bda22cc24ab75ebbed3168b046d
+- subtype: U
+  name: Ue
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97407
+  surface_m2: 679817
+  geom_md5: 3eb6994e9f417d207d735034a49cb080
+- subtype: U
+  name: Ue
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97407
+  surface_m2: 296095
+  geom_md5: 73a65dc5cb223b4a88f2fabbe9f7b13f
+- subtype: U
+  name: Ue
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97407
+  surface_m2: 669294
+  geom_md5: 0d70de62be4ebd506139fb2cd6c1ff01
+- subtype: U
+  name: Ue
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97407
+  surface_m2: 610208
+  geom_md5: 5a188f224fb3ccfbd5f3d96191e1141b
+- subtype: U
+  name: Uem
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uem
+    partition: DU_97407
+  surface_m2: 89595
+  geom_md5: 41a3094b69ed0cf4d63f90257971165e
+- subtype: U
+  name: Uem
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uem
+    partition: DU_97407
+  surface_m2: 59364
+  geom_md5: 9640fe5a3a89ccb359628d98f64b4534
+- subtype: U
+  name: Uem
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uem
+    partition: DU_97407
+  surface_m2: 113631
+  geom_md5: bb0ee28c6e52f88da3cb4bcbcf5a78a5
+- subtype: U
+  name: Uem
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uem
+    partition: DU_97407
+  surface_m2: 4494
+  geom_md5: d41a93b087c20a96c1ec30722332186e
+- subtype: U
+  name: Uem
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uem
+    partition: DU_97407
+  surface_m2: 114905
+  geom_md5: 3eddc46863bf27bdf7746606726d1e47
+- subtype: U
+  name: Uem
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uem
+    partition: DU_97407
+  surface_m2: 68899
+  geom_md5: e275eb52a0b4da145bbc702e50bc26ba
+- subtype: U
+  name: Uem
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uem
+    partition: DU_97407
+  surface_m2: 90374
+  geom_md5: dd93792eae7b0ff413fbadf7ac9a54c8
+- subtype: U
+  name: Umi
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Umi
+    partition: DU_97407
+  surface_m2: 1063
+  geom_md5: f1e1a9b9d96fbed5a7bd8e592ea7f724
+- subtype: U
+  name: Umi
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Umi
+    partition: DU_97407
+  surface_m2: 22067
+  geom_md5: 53c2e698a00a88528e36ed7523970c40
+- subtype: U
+  name: Uoap
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uoap
+    partition: DU_97407
+  surface_m2: 71819
+  geom_md5: 23df6885ea978e1dc9436178d53174b7
+- subtype: U
+  name: Up
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Up
+    partition: DU_97407
+  surface_m2: 464487
+  geom_md5: d5ff53f79dc9bb04c6f22856b7b69811
+- subtype: U
+  name: Up
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Up
+    partition: DU_97407
+  surface_m2: 1829765
+  geom_md5: f3d061915771aa2010dd46747b5ed9fe
+- subtype: U
+  name: Up
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Up
+    partition: DU_97407
+  surface_m2: 129814
+  geom_md5: 793fee06a95dddca5382cd512a3e14ca
+- subtype: U
+  name: Uppp
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uppp
+    partition: DU_97407
+  surface_m2: 300120
+  geom_md5: 2be54102ab3e9402d3048f09cdce653d
+- subtype: U
+  name: Us
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97407
+  surface_m2: 60132
+  geom_md5: 2673ad5886c5ecdb19f923ffc0263799
+- subtype: U
+  name: Us
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97407
+  surface_m2: 20556
+  geom_md5: 849c5ac436c9173e440e02c06508b330
+- subtype: U
+  name: Us
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97407
+  surface_m2: 141682
+  geom_md5: ba77ba3c3e5fe599b64474b0fd774086
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 42605
+  geom_md5: 6cd72891c79d1b3cb158a7d9a64e926e
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 23924
+  geom_md5: 6f13c11ab1a42071ff2ee713cf89e660
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 1060447
+  geom_md5: 516893567de0f6660a72baf0e253f7e7
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 7080
+  geom_md5: 50005f089e4f024f0b368238e13f9646
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 24913
+  geom_md5: 02efe1a4c554409315821d0859d97d76
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 47226
+  geom_md5: ae701f07638aa5bf79f298a082f558ac
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 600560
+  geom_md5: 007213440706f77e8f451318b61e81d4
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 4968
+  geom_md5: 650ae538d74877e3be784eb932463fbb
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 27149
+  geom_md5: 552888836f2073572a6a7c219ca11ecb
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 22910
+  geom_md5: eec590cabfef350d51930f6827ebe847
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 59283
+  geom_md5: d3b420476495c07a0a5390378fef6ee3
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 114863
+  geom_md5: aead97a88276fa4b3830ebffc0c51425
+- subtype: U
+  name: Uv
+  attrs:
+    idurba: 97407_PLU_20241209
+    source: API_CARTO_GPU
+    libelle: Uv
+    partition: DU_97407
+  surface_m2: 6116
+  geom_md5: cf07eb38a1638b862599d64613569983

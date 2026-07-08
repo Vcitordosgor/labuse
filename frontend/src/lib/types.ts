@@ -11,6 +11,8 @@ export interface ParcelResult {
   a_completude: number | null
   completeness_score: number
   evenement: string | null
+  cluster?: number | null   // taille du groupe « même propriétaire » parmi les chaudes (île)
+  proprio?: string | null
 }
 
 export interface Stats {
@@ -19,6 +21,10 @@ export interface Stats {
   a_surveiller: number
   a_creuser: number
   ecartee: number
+  // dossiers = propriétaires uniques identifiés (SIREN) parmi les chaudes ; le reliquat
+  // « sans identité » est affiché tel quel (honnêteté : jamais un total prétendu exact)
+  dossiers_chaudes?: number
+  chaudes_sans_identite?: number
 }
 
 export type MapMode = 'verdict' | 'mutabilite'
@@ -78,6 +84,7 @@ export interface SourceInfo {
 export interface Fiche {
   idu: string
   commune: string
+  proprietaire_moral: { denomination: string | null; siren: string | null; groupe_label: string | null } | null
   surface_m2: number | null
   statut: Statut
   q_score: number

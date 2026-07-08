@@ -35,6 +35,10 @@ export type OrthoYear = 'now' | '2000' | '1950'
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
 
 interface AppState {
+  // Commune active — null = « Toute l'île » (défaut). Pilote carte, compteurs, liste, modules,
+  // et vit dans l'URL (#…&c=…). Sélecteur dans le header.
+  commune: string | null
+  setCommune: (c: string | null) => void
   view: View
   setView: (v: View) => void
   outilsOpen: boolean
@@ -83,9 +87,16 @@ interface AppState {
   setFlyTo: (f: { center: [number, number]; zoom: number } | null) => void
   msel: string[] // sélection multi-parcelles (module assemblage M16)
   setMsel: (m: string[]) => void
+  m22Prefill: Record<string, unknown> | null // copilote → formulaire programme (M22)
+  setM22Prefill: (p: Record<string, unknown> | null) => void
+  m02Prefill: string | null // fiche → scan patrimoine du propriétaire (SIREN)
+  setM02Prefill: (s: string | null) => void
 }
 
 export const useApp = create<AppState>((set) => ({
+  commune: null,
+  // changer de commune remet la zone dessinée à zéro (elle appartenait à l'ancienne emprise)
+  setCommune: (commune) => set({ commune, zone: null }),
   view: 'cartes',
   setView: (view) => set({ view, outilsOpen: false }),
   outilsOpen: false,
@@ -129,4 +140,8 @@ export const useApp = create<AppState>((set) => ({
   setFlyTo: (flyTo) => set({ flyTo }),
   msel: [],
   setMsel: (msel) => set({ msel }),
+  m22Prefill: null,
+  setM22Prefill: (m22Prefill) => set({ m22Prefill }),
+  m02Prefill: null,
+  setM02Prefill: (m02Prefill) => set({ m02Prefill }),
 }))

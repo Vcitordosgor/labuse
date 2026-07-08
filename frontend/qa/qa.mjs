@@ -10,6 +10,7 @@ import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
+const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const OUT = process.env.OUT || '../docs/design/captures/qa'
 const DB = process.env.QA_DB || 'postgresql://openclaw@127.0.0.1:5432/labuse'
 mkdirSync(OUT, { recursive: true })
@@ -35,7 +36,7 @@ const randomIdus = sql(
 
 const browser = await chromium.launch()
 
-async function newPage(width, url = BASE) {
+async function newPage(width, url = BASE + SP) {
   const page = await browser.newPage({ viewport: { width, height: 900 }, deviceScaleFactor: width === 1440 ? 2 : 1 })
   page._errors = []
   page.on('console', (m) => { if (m.type() === 'error') page._errors.push(m.text()) })
@@ -137,7 +138,8 @@ for (const width of [1440, 1280]) {
   await page.getByRole('button', { name: /^Chaude/ }).first().click()
   await page.waitForTimeout(800)
   const cardsChaude = await page.locator('.overflow-y-auto > button').count()
-  assert(cardsChaude === chaude, `filtre Chaude → ${chaude} cartes`, `${cardsChaude}`)
+  // la liste affiche 200 cartes max (« Tout voir » au-delà) — 375 chaudes à SP depuis l'île
+  assert(cardsChaude === Math.min(chaude, 200), `filtre Chaude → ${Math.min(chaude, 200)} cartes affichées (${chaude} au total)`, `${cardsChaude}`)
   await snap(page, '03_filtre_chaude', width)
   await page.getByRole('button', { name: '+ Filtre' }).click()
   await page.getByPlaceholder('70').fill('90')

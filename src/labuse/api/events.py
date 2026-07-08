@@ -197,7 +197,7 @@ def seed_demo(db: Session) -> dict:
         FROM (
           SELECT d.*, row_number() OVER (ORDER BY d.q_score DESC) AS rn
           FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
-          WHERE d.run_label = :run AND p.commune = 'Saint-Paul'
+          WHERE d.run_label = :run
             AND d.matrice_statut = CASE WHEN true THEN 'a_surveiller' ELSE '' END
           LIMIT 5
         ) monte
@@ -209,7 +209,7 @@ def seed_demo(db: Session) -> dict:
                status, q_score, a_score, a_completude, 'a_surveiller'
         FROM (
           SELECT d.* FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
-          WHERE d.run_label = :run AND p.commune = 'Saint-Paul' AND d.matrice_statut = 'chaude'
+          WHERE d.run_label = :run AND d.matrice_statut = 'chaude'
           ORDER BY d.q_score ASC LIMIT 3
         ) descend
     """), {"run": RUN})
@@ -323,10 +323,10 @@ def _digest_data(db: Session) -> dict:
         ORDER BY (e.kind = 'bascule') DESC, d.q_score DESC NULLS LAST LIMIT 10"""),
         {"run": RUN}).mappings().all()
     top = db.execute(text("""
-        SELECT p.idu, d.q_score, d.a_score, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2
+        SELECT p.idu, p.commune, d.q_score, d.a_score, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2
         FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE d.run_label = :run AND p.commune = 'Saint-Paul' AND d.matrice_statut = 'chaude'
+        WHERE d.run_label = :run AND d.matrice_statut = 'chaude'
         ORDER BY d.q_score + d.a_score DESC LIMIT 5"""), {"run": RUN}).mappings().all()
     return {"evenements": [dict(r) for r in events], "top_chaudes": [dict(r) for r in top]}
 
@@ -348,17 +348,17 @@ def digest_html(db: Session = Depends(get_db)) -> str:
         for e in d["evenements"]) or "<tr><td style='padding:12px;font:13px sans-serif;color:#667'>Aucun événement cette semaine.</td></tr>"
     top_rows = "".join(
         f"<tr><td style='padding:6px 12px;font:600 13px monospace'>{t['idu'][8:]}</td>"
-        f"<td style='padding:6px;font:13px sans-serif'>Q {t['q_score']} · A {t['a_score']}</td>"
+        f"<td style='padding:6px;font:13px sans-serif'>{t.get('commune') or ''} · Q {t['q_score']} · A {t['a_score']}</td>"
         f"<td style='padding:6px;font:12px sans-serif;color:#667'>{t['surface_m2'] or '—'} m² · SDP {round(t['sdp_residuelle_m2'] or 0)} m²</td></tr>"
         for t in d["top_chaudes"])
     return f"""<!doctype html><html><body style="margin:0;background:#f2f5f3;padding:24px">
 <table width="600" align="center" style="background:#fff;border-radius:12px;overflow:hidden">
 <tr><td style="background:#060A08;padding:18px 24px">
-  <span style="font:700 18px sans-serif;color:#5CE6A1">LABUSE</span>
+  <span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(47,224,160,.35))" fill="#2FE0A0"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 16px sans-serif;color:#5CE6A1">LA BUSE</span></span>
   <span style="font:12px sans-serif;color:#8FA69A"> · la chasse au trésor de la semaine</span></td></tr>
 <tr><td style="padding:16px 12px 4px;font:700 13px sans-serif;color:#111">CE QUI A BOUGÉ</td></tr>
 {ev_rows}
-<tr><td style="padding:16px 12px 4px;font:700 13px sans-serif;color:#111">TOP 5 CHAUDES (Saint-Paul)</td></tr>
+<tr><td style="padding:16px 12px 4px;font:700 13px sans-serif;color:#111">TOP 5 CHAUDES (île entière)</td></tr>
 <tr><td><table width="100%">{top_rows}</table></td></tr>
 <tr><td style="padding:14px 24px;font:10px sans-serif;color:#99a">Estimations indicatives issues de
 données publiques — ne valent ni conseil juridique ni garantie de constructibilité.</td></tr>

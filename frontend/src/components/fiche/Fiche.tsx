@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, createShare, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, toggleWatch } from '../../lib/api'
+import { addToPipeline, createShare, getFaisabilite, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, toggleWatch } from '../../lib/api'
 import { completudeColor, STATUT_META } from '../../lib/status'
 import type { FicheLine, Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -146,12 +146,19 @@ function PipelineButton({ idu }: { idu: string }) {
 function IAPanel({ idu, onClose }: { idu: string; onClose: () => void }) {
   const [mode, setMode] = useState<'synthese' | 'pourquoi' | null>(null)
   const gen = useMutation({ mutationFn: (m: 'synthese' | 'pourquoi') => (m === 'synthese' ? iaSynthese(idu) : iaPourquoi(idu)) })
+  const isStub = gen.data?.stub
   return (
     <div className="absolute bottom-10 right-0 z-20 w-[320px] rounded-lg border border-line-2 bg-surface-2 p-3 shadow-xl">
       <div className="flex items-center justify-between">
         <p className="font-mono text-[10px] tracking-widest text-txt-dim">ANALYSE IA</p>
         <button onClick={onClose} className="text-txt-dim hover:text-txt-hi">✕</button>
       </div>
+      {isStub && (
+        <p className="mt-1.5 rounded border border-st-creuser/40 bg-[#211a10] px-2 py-1 text-[9.5px] leading-snug text-st-creuser">
+          Stub local (clé IA absente) — texte généré par règles depuis la fiche tracée.
+          Activer : ANTHROPIC_API_KEY dans .env, puis relancer.
+        </p>
+      )}
       <div className="mt-2 flex gap-1.5">
         {([['synthese', 'Synthèse'], ['pourquoi', 'Pourquoi ce score ?']] as const).map(([k, l]) => (
           <button key={k} onClick={() => { setMode(k); gen.mutate(k) }}
@@ -169,6 +176,87 @@ function IAPanel({ idu, onClose }: { idu: string; onClose: () => void }) {
         </>
       )}
     </div>
+  )
+}
+
+// Onglet BILAN — le moteur de faisabilité/bilan EXISTANT, enfin exposé (P0 revue Vic).
+function BilanTab({ idu }: { idu: string }) {
+  const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
+  if (isLoading) return <p className="text-xs text-txt-dim">Calcul de la pré-faisabilité…</p>
+  if (isError || !b) return (
+    <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
+      <p className="text-st-ecartee">Bilan indisponible.</p>
+      <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt">Réessayer</button>
+    </div>
+  )
+  const cap = b.capacite
+  const fo = cap?.fourchette ?? {}
+  const eur = (x: unknown) => (x == null ? '—' : `${Math.round(Number(x) / 1000).toLocaleString('fr-FR')} k€`)
+  const Sec = ({ t, children }: { t: string; children: React.ReactNode }) => (
+    <div>
+      <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">{t}</p>
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-relaxed text-txt">{children}</div>
+    </div>
+  )
+  return (
+    <div className="flex flex-col gap-3">
+      {cap ? (
+        <Sec t="CAPACITÉ (que peut accueillir ce terrain ?)">
+          <div className="font-medium text-txt-hi">{cap.verdict}</div>
+          <div className="mt-1 text-txt-mut">
+            {fo.niveaux} · emprise bâtie max {fo.emprise_batie_max_m2} m² · SDP {fo.surface_plancher_m2} m² ·
+            SHAB vendable ~{fo.shab_vendable_m2} m² · stationnement : {fo.stationnement_regime}
+          </div>
+          {!cap.calibree && <div className="mt-1 text-[10px] text-st-creuser">⚠ estimation générique (zone non calibrée)</div>}
+          <div className="mt-1.5 text-[9.5px] leading-snug text-txt-dim">{cap.bandeau}</div>
+        </Sec>
+      ) : (
+        <Sec t="CAPACITÉ">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</Sec>
+      )}
+      {b.marche?.median != null && (
+        <Sec t="MARCHÉ (prix de sortie secteur)">
+          médiane <b className="text-mint">{Number(b.marche.median).toLocaleString('fr-FR')} €/m²</b> ({b.marche.type_prix},
+          {' '}{b.marche.n} ventes ≤ {Math.round(b.marche.radius_m)} m) · fiabilité <b>{b.marche.fiabilite}</b>
+          {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
+        </Sec>
+      )}
+      {b.bilan && (
+        <Sec t="BILAN INDICATIF (charge foncière)">
+          <div>{b.bilan.verdict}</div>
+          {b.bilan.charge_fonciere && (
+            <div className="mt-1 text-txt-mut">
+              CF médiane {eur(b.bilan.charge_fonciere.median ?? b.bilan.charge_fonciere.mediane)} —
+              c'est ce qu'un opérateur peut payer CE terrain, hypothèses affichées ci-dessous.
+            </div>
+          )}
+          <details className="mt-1.5">
+            <summary className="cursor-pointer text-[10px] text-txt-dim">hypothèses ({(b.bilan.hypotheses ?? []).length})</summary>
+            <ul className="mt-1 list-inside list-disc text-[10px] text-txt-dim">
+              {(b.bilan.hypotheses ?? []).map((h: string, i: number) => <li key={i}>{h}</li>)}
+            </ul>
+          </details>
+        </Sec>
+      )}
+      <Sec t="FISCAL & LEVIERS">
+        <div>QPV : <b className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</b> · TVA : {b.fiscal.tva}</div>
+        {b.fiscal.prime_vue_mer && <div className="mt-0.5 text-[#7DE8E0]">Vue mer dégagée — {b.fiscal.prime_vue_mer}</div>}
+        <div className="mt-1 text-[10px] text-txt-dim">{b.fiscal.ta_note}</div>
+      </Sec>
+    </div>
+  )
+}
+
+// M-B (passe directeur) : « qu'a-t-il d'autre ? » → scan patrimoine en un clic depuis la fiche.
+function PatrimoineLink({ siren }: { siren: string }) {
+  const { setModule, setM02Prefill } = useApp()
+  return (
+    <button
+      onClick={() => { setM02Prefill(siren); setModule('patrimoine') }}
+      className="mt-1.5 text-[11px] text-[#B497F0] hover:underline"
+      title="Scan patrimoine (M02) : tout le foncier de ce propriétaire sur l'île"
+    >
+      → tout son patrimoine (M02)
+    </button>
   )
 }
 
@@ -280,21 +368,30 @@ export function Fiche({ idu }: { idu: string }) {
             )}
           </>
         )}
+        {f && tab === 'proprio' && f.proprietaire_moral && (
+          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+            <p className="font-mono text-[10px] tracking-widest text-txt-dim">PROPRIÉTAIRE (DGFiP)</p>
+            <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
+            <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
+              {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
+              {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
+            </div>
+            {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
+          </div>
+        )}
+        {f && tab === 'proprio' && !f.proprietaire_moral && (
+          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+            Propriétaire : personne physique ou non recensé au fichier des personnes morales
+            (identité nominative : workflow SPF/CERFA, jamais automatisée).
+          </div>
+        )}
         {f && (tab === 'regles' || tab === 'risques' || tab === 'marche' || tab === 'proprio') && (
           <div>
             {ongletLines(tab).length ? ongletLines(tab).map((l, i) => <Line key={i} line={l} />)
               : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
           </div>
         )}
-        {f && tab === 'bilan' && (
-          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-center">
-            <p className="text-xs text-txt-mut">Bilan promoteur</p>
-            <p className="max-w-[260px] text-[11px] leading-relaxed text-txt-dim">
-              Charge foncière admissible (SDP × prix de sortie − coûts standards 974) — sera calculée
-              quand les coûts seront paramétrés. Le moteur existe, les paramètres restent à valider.
-            </p>
-          </div>
-        )}
+        {f && tab === 'bilan' && <BilanTab idu={idu} />}
       </div>
 
       <div className="shrink-0 border-t border-line px-5 py-3">

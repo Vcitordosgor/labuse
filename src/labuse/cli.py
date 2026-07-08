@@ -363,6 +363,122 @@ def dryrun_report_cmd(
     typer.echo(json.dumps(rep, ensure_ascii=False, indent=1, default=str))
 
 
+@app.command("matrice-simulate")
+def matrice_simulate_cmd(
+    label: str = typer.Option("q_v2", help="run_label à simuler."),
+    candidates: str = typer.Option(
+        "", help="Candidats « q:a » ou « q:a:acompl » séparés par des virgules "
+                 "(défaut : balayage q∈{60..80} × a∈{55..70} autour de la convention courante)."),
+) -> None:
+    """SIMULATION À BLANC de conventions de matrice (aucune écriture persistante — table
+    temporaire de session). Sortie : tableau console + grille HTML docs/tops_ile/
+    matrice_sensibilite.html. La bascule événementielle n'est JAMAIS balayée (doctrine)."""
+    import json as _json
+    from pathlib import Path
+
+    from .config import load_yaml_config
+    from .scoring.dryrun import simulate_matrice
+
+    cur = load_yaml_config("scoring_matrice")["seuils"]
+    if candidates.strip():
+        cands = []
+        for tok in candidates.split(","):
+            parts = [int(x) for x in tok.strip().split(":")]
+            cands.append({"q_chaude": parts[0], "a_chaude": parts[1],
+                          "a_completude_min": parts[2] if len(parts) > 2 else cur["a_completude_min"]})
+    else:
+        cands = [{"q_chaude": q, "a_chaude": a} for q in (60, 65, 70, 75, 80) for a in (55, 60, 65, 70)]
+    # la convention COURANTE d'abord (référence des deltas)
+    cands = [{"q_chaude": cur["q_chaude"], "a_chaude": cur["a_chaude"],
+              "a_completude_min": cur["a_completude_min"]}] + [
+        c for c in cands if not (c["q_chaude"] == cur["q_chaude"] and c["a_chaude"] == cur["a_chaude"])]
+    with session_scope() as s:
+        rows = simulate_matrice(s, label, cands)
+        s.rollback()   # ceinture ET bretelles : rien à committer, on annule même la temp
+    ref = rows[0]
+    typer.echo(f"{'q':>3} {'a':>3} {'acompl':>6} │ {'chaudes':>7} {'(matrice+évén.)':>15} "
+               f"{'Δ vs cour.':>10} {'dossiers':>8} {'sans id.':>8} {'surveiller':>10}")
+    for r in rows:
+        cur_mark = " ◀ COURANTE" if r is ref else ""
+        detail = f"{r['chaude_matrice']}+{r['chaude_evenement']}"
+        typer.echo(f"{r['q_chaude']:>3} {r['a_chaude']:>3} {r.get('a_completude_min', 50):>6} │ "
+                   f"{r['chaude']:>7} {detail:>15} "
+                   f"{r['chaude'] - ref['chaude']:>+10} {r['dossiers']:>8} {r['chaudes_sans_identite']:>8} "
+                   f"{r['a_surveiller']:>10}{cur_mark}")
+    out = Path("docs/tops_ile/matrice_sensibilite.html")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(_sensibilite_html(rows, cur), encoding="utf-8")
+    typer.echo(f"✓ grille écrite : {out} (aucune écriture en base — simulation à blanc)")
+
+
+def _sensibilite_html(rows: list[dict], cur: dict) -> str:
+    """Grille de sensibilité — le support de la DÉCISION Vic (mandat 1.3/1.5)."""
+    communes = sorted({c for r in rows for c in r["par_commune"]})
+    css = ("body{font:13px -apple-system,sans-serif;background:#0b0f0d;color:#dce8e1;margin:24px}"
+           "h1{font-size:18px;color:#5CE6A1}h2{font-size:14px;color:#8FA69A;margin-top:28px}"
+           "table{border-collapse:collapse;margin-top:10px}th{font:600 10px monospace;color:#8FA69A;"
+           "padding:5px 8px;border-bottom:1px solid #2a352f;text-align:right}td{padding:5px 8px;"
+           "border-bottom:1px solid #1a221e;text-align:right;font-family:monospace;font-size:12px}"
+           "tr.cur{background:#0F1A14}tr.cur td{color:#5CE6A1;font-weight:600}"
+           ".muted{color:#5a6b62}.neg{color:#E8695A}.pos{color:#4ADE96}")
+    ref = rows[0]
+    main = "".join(
+        f"<tr class='{'cur' if r is ref else ''}'>"
+        f"<td>Q≥{r['q_chaude']} · A≥{r['a_chaude']} · compl≥{r.get('a_completude_min', 50)}</td>"
+        f"<td>{r['chaude']}</td><td class='muted'>{r['chaude_matrice']} + {r['chaude_evenement']} évén.</td>"
+        f"<td class='{'pos' if r['chaude'] >= ref['chaude'] else 'neg'}'>{r['chaude'] - ref['chaude']:+d}</td>"
+        f"<td>{r['dossiers']}</td><td class='muted'>{r['chaudes_sans_identite']}</td>"
+        f"<td>{r['a_surveiller']}</td><td>{r['a_creuser']}</td><td class='muted'>{r['ecartee']}</td></tr>"
+        for r in rows)
+    det = "".join(
+        f"<tr class='{'cur' if r is ref else ''}'><td>Q≥{r['q_chaude']}·A≥{r['a_chaude']}</td>"
+        + "".join(f"<td>{r['par_commune'].get(c, 0) or '·'}</td>" for c in communes) + "</tr>"
+        for r in rows)
+    return (f"<!doctype html><meta charset='utf-8'><title>Sensibilité matrice</title><style>{css}</style>"
+            f"<h1>Grille de sensibilité — convention de matrice <span class='muted'>(run q_v2, simulation à blanc)</span></h1>"
+            f"<p class='muted'>Ligne verte = convention COURANTE (Q≥{cur['q_chaude']} · A≥{cur['a_chaude']} · compl≥{cur['a_completude_min']}). "
+            f"Les chaudes « + N évén. » = bascule BODACC, doctrinale, insensible aux seuils. "
+            f"Dossiers = propriétaires uniques (SIREN) parmi les chaudes ; « sans id. » = parcelles chaudes sans identité connue.</p>"
+            f"<table><tr><th style='text-align:left'>CANDIDAT</th><th>CHAUDES</th><th>DONT (matrice+évén.)</th>"
+            f"<th>Δ</th><th>DOSSIERS</th><th>SANS ID.</th><th>SURVEILLER</th><th>CREUSER</th><th>ÉCARTÉES</th></tr>{main}</table>"
+            f"<h2>Chaudes par commune</h2><table><tr><th style='text-align:left'>CANDIDAT</th>"
+            + "".join(f"<th>{c[:12]}</th>" for c in communes) + f"</tr>{det}</table>")
+
+
+@app.command("matrice-apply")
+def matrice_apply_cmd(
+    label: str = typer.Option("q_v2", help="run_label sur lequel appliquer la convention."),
+) -> None:
+    """Applique la CONVENTION VERSIONNÉE (config/scoring_matrice.yaml) : matrice ×24 + tuiles
+    MVT + tops HTML — idempotent, minutes. Le canari 97415000AC0253 (chaude PAR événement)
+    stoppe tout s'il tombe."""
+    import json as _json
+    import subprocess
+    import sys as _sys
+
+    from .scoring.dryrun import apply_convention
+
+    with session_scope() as s:
+        out = apply_convention(s, label)
+    typer.echo(_json.dumps(out, ensure_ascii=False, indent=1))
+    r = subprocess.run([_sys.executable, "scripts/gen_tops_ile.py"], capture_output=True, text=True)
+    typer.echo(r.stdout.strip().splitlines()[-1] if r.returncode == 0 else f"✗ tops : {r.stderr[-300:]}")
+    typer.echo("✓ convention appliquée (matrice ×24 + MVT + tops).")
+
+
+@app.command("build-mvt")
+def build_mvt_cmd(
+    label: str = typer.Option("q_v2", help="run_label dont matérialiser les tuiles."),
+) -> None:
+    """(Re)construit la table `mvt_parcels` servie en tuiles vectorielles (carte île entière).
+    À relancer après CHAQUE run de scoring — les tuiles lisent cette matérialisation, pas le run."""
+    from .api.tiles import build_mvt_table
+
+    with session_scope() as s:
+        n = build_mvt_table(s, label)
+    typer.echo(f"✓ mvt_parcels reconstruite : {n} parcelles (label {label}).")
+
+
 @app.command("dryrun-matrice")
 def dryrun_matrice_cmd(
     label: str = typer.Option("etape2", help="run_label sur lequel appliquer la matrice Q×A."),

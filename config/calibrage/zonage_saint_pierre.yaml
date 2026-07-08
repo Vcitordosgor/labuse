@@ -1,0 +1,2578 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Saint-Pierre
+idurba:
+- 97416_PLU_20240625
+n_zones: 285
+geoms_sidecar: data/calibrage/zonage_saint_pierre.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: Sous-secteur autorisant les installations de traitement mobiles
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ac1
+    partition: DU_97416
+  surface_m2: 1213746
+  geom_md5: 9e7908faa81446e3e02e8d854e42d740
+- subtype: A
+  name: Sous-secteur autorisant les installations de traitement mobiles
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ac1
+    partition: DU_97416
+  surface_m2: 232442
+  geom_md5: c87d6b840ee069a9368b633ba13f865f
+- subtype: A
+  name: Sous-secteur autorisant sous condition l'ouverture et l'exploitation de la carrière
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Acu1
+    partition: DU_97416
+  surface_m2: 484497
+  geom_md5: 93c839653d0fd0b87fd5e76ab32418d0
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 694725
+  geom_md5: 838968310ed66322aafa66a3626c8e74
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 2106183
+  geom_md5: f5a09b16cc9f91c07e4784b4c6987d8c
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 125452
+  geom_md5: 3ba3ae12d018dd571fae4557144b984d
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 113538
+  geom_md5: edda4799a8d18cdd68c1e4301ca50996
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 219686
+  geom_md5: 1dd88698b5767fb1b3eecc115fd8d129
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 21286
+  geom_md5: d6048444458eb3fb7258f49b10a46cd9
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 7867647
+  geom_md5: a66856b707534efe7a474d0427c7596f
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 24954
+  geom_md5: 5940f101a4017b90749772b666551309
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 235997
+  geom_md5: 200e1ae739ac0749967fd9f40f205463
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 5426190
+  geom_md5: 61a0bec5202a4caf256a7f7f33f15249
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 355651
+  geom_md5: 1bcd0e5eefb4871205b64b3d45f19cc2
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 112373
+  geom_md5: f87e2303e2cd48ad1d1fbc0122cf6e4a
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 31432
+  geom_md5: b4e0e786a0da5f859a2232797890b959
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 7939483
+  geom_md5: d31f015203aabaf379b61be2a31930ea
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 192147
+  geom_md5: 984ca26667993aec9960d2a888a79dea
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 5073
+  geom_md5: 37fb3f13b1c14d07857718695841f3ea
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 1335178
+  geom_md5: 251f1f2e34869aa8817f2451f625bd04
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 39053
+  geom_md5: 9db1b2ecd75cda15d82d27f627914700
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 1425906
+  geom_md5: fe2333051d15920cd9af79fb010fcb5f
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 130633
+  geom_md5: 25a8f1d64896e23ca22709157ed3275a
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 1313560
+  geom_md5: f8c792078193328294f04e11dbaa2b68
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 10397385
+  geom_md5: 7b4dce165e601d5097e1601743c6af57
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 432326
+  geom_md5: 0aed638e7aaf8549354ae1eb898ae1a7
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 318095
+  geom_md5: 20a2580433065a178540f7301e3124a3
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 7184
+  geom_md5: 0f86faae2f80f0fbc0b8cb29b7baf7c2
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 144121
+  geom_md5: 49bdbc9a78caeb2351ce2de2d9d2a50a
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 1292249
+  geom_md5: 31ad2b86b717c0006b2e86824a1ea02f
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 84183
+  geom_md5: cd28d4f0e628b5dd6d0399e7cda2bae0
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 61389
+  geom_md5: f939c42cd85fe8259eb94a5aa897321c
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 37599
+  geom_md5: 92ac79a8ef03206d4c468e082972ae46
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 194614
+  geom_md5: ed1650acab04b14f9c9de324a6a13af3
+- subtype: A
+  name: Zone agricole
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97416
+  surface_m2: 73323
+  geom_md5: a788b0add45537b326ec45d760dada39
+- subtype: A
+  name: Zone correspondant aux coupures d'urbanisation au sens de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97416
+  surface_m2: 2414729
+  geom_md5: 312bc44fa9486ccd756457ca51a45172
+- subtype: A
+  name: Zone correspondant aux coupures d'urbanisation au sens de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97416
+  surface_m2: 1232525
+  geom_md5: 8ab6f0cea11ca300898d1b0b161a568a
+- subtype: A
+  name: Zone correspondant aux coupures d'urbanisation au sens de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97416
+  surface_m2: 1279617
+  geom_md5: b2c2c17d4a04ba3879670d8c0e2f34a1
+- subtype: A
+  name: Zone correspondant aux coupures d'urbanisation au sens de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Acu
+    partition: DU_97416
+  surface_m2: 106279
+  geom_md5: 46b642708d20db1e5b703f9fcc90f292
+- subtype: A
+  name: Zone correspondant à un secteur de carrière
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97416
+  surface_m2: 196466
+  geom_md5: d89e8c13544a57094e7897ab1f0f0fa8
+- subtype: A
+  name: Zone correspondant à un secteur de carrière
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97416
+  surface_m2: 557855
+  geom_md5: d0833fcd04e97405338b1317729a1828
+- subtype: A
+  name: Zone correspondant à un secteur de carrière
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97416
+  surface_m2: 102945
+  geom_md5: e3d1924f16737188fe924b70116796fb
+- subtype: A
+  name: Zone correspondant à un secteur de carrière
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97416
+  surface_m2: 50580
+  geom_md5: caebe9170e92bec8ddc2e2ec4412a07c
+- subtype: A
+  name: Zone correspondant à un secteur de carrière
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97416
+  surface_m2: 78374
+  geom_md5: 702319a5aa8a5f667e3c59b96484bc22
+- subtype: A
+  name: Zone dans laquelle des activités touristiques peuvent être développées
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: At
+    partition: DU_97416
+  surface_m2: 24705
+  geom_md5: 0f1a54c7fabccc4bd07cecb055d75f10
+- subtype: A
+  name: Zone dans laquelle des activités touristiques peuvent être développées
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: At
+    partition: DU_97416
+  surface_m2: 13035
+  geom_md5: 9d8f13726b487f7dd50b7fb9439f46f3
+- subtype: A
+  name: Zone dans laquelle des activités touristiques peuvent être développées
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: At
+    partition: DU_97416
+  surface_m2: 10908
+  geom_md5: e54bc63fc2504b621c34303b880691be
+- subtype: A
+  name: Zone dans laquelle des activités touristiques peuvent être développées
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: At
+    partition: DU_97416
+  surface_m2: 12835
+  geom_md5: fb813f775a162f4889ad952fe075cb06
+- subtype: A
+  name: Zone dans laquelle des activités touristiques peuvent être développées
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: At
+    partition: DU_97416
+  surface_m2: 21597
+  geom_md5: 286b9bb930a90519c2b6ff52e232213b
+- subtype: AUc
+  name: Zone à urbaniser liée à la ZAC Mairie Annexe
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUdma
+    partition: DU_97416
+  surface_m2: 99847
+  geom_md5: a960d17d7c2f51d390725c4edc2c565c
+- subtype: AUc
+  name: Zone à urbaniser spécifique à Grand Bois
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUfGB
+    partition: DU_97416
+  surface_m2: 28954
+  geom_md5: 5dcb8adbed7d9f3ac1d1682e59451199
+- subtype: AUc
+  name: Zone à urbaniser à vocation d'activités industrielles et artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUazi
+    partition: DU_97416
+  surface_m2: 117777
+  geom_md5: 3070b98d49ee2a40d2f0570f596a3642
+- subtype: AUc
+  name: Zone à urbaniser à vocation d'activités touristiques
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUt1
+    partition: DU_97416
+  surface_m2: 13284
+  geom_md5: 179befd749b95815f6de5afe8f0535ff
+- subtype: AUc
+  name: Zone à urbaniser à vocation d'activités touristiques
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUt1
+    partition: DU_97416
+  surface_m2: 29818
+  geom_md5: f98dd18fc0dfd2678c4e4689de3ccc27
+- subtype: AUc
+  name: Zone à urbaniser à vocation d'activités touristiques
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUt2
+    partition: DU_97416
+  surface_m2: 2730
+  geom_md5: 75cd989f26fcf9df94654f192fd39c4f
+- subtype: AUc
+  name: Zone à urbaniser à vocation d'activités touristiques
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUt2
+    partition: DU_97416
+  surface_m2: 12727
+  geom_md5: 1619c60b7924d7866e6228fe6cf3d8d7
+- subtype: AUc
+  name: Zone à urbaniser à vocation d'activités économiques tertiaires et commerciales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUazc
+    partition: DU_97416
+  surface_m2: 19627
+  geom_md5: 2884e64fe8b49d40c339e57ae2b3e198
+- subtype: AUc
+  name: Zone à urbaniser à vocation d'activités économiques tertiaires et commerciales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUazc
+    partition: DU_97416
+  surface_m2: 32890
+  geom_md5: 18ca225f2a04dc3de128252473736cf2
+- subtype: AUc
+  name: Zone à urbaniser à vocation d'activités économiques tertiaires et commerciales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUazc
+    partition: DU_97416
+  surface_m2: 21008
+  geom_md5: bb2f5f2e3340cad1499284cf013c9dbc
+- subtype: AUc
+  name: Zone à urbaniser à vocation mixte à dominante résidentielle de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUf
+    partition: DU_97416
+  surface_m2: 20311
+  geom_md5: 915ab8877a29f0522043cceeef3d98ac
+- subtype: AUc
+  name: Zone à urbaniser à vocation mixte à dominante résidentielle de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUf
+    partition: DU_97416
+  surface_m2: 8595
+  geom_md5: b7e163a60d9e8175b38cf0ca8b9e4062
+- subtype: AUc
+  name: Zone à urbaniser à vocation mixte à dominante résidentielle de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUf
+    partition: DU_97416
+  surface_m2: 4067
+  geom_md5: 96fc0ecb88c7b04216482d2a53ff63cf
+- subtype: AUc
+  name: Zone à urbaniser à vocation mixte à dominante résidentielle générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUg
+    partition: DU_97416
+  surface_m2: 42997
+  geom_md5: bf8712f8802becaa04718c9b941428dc
+- subtype: AUc
+  name: Zone à urbaniser à vocation mixte à dominante résidentielle générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUg
+    partition: DU_97416
+  surface_m2: 16135
+  geom_md5: 380e7eca810361ff461233f6ddc8b79e
+- subtype: AUc
+  name: Zone à urbaniser à vocation mixte à dominante résidentielle générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AUg
+    partition: DU_97416
+  surface_m2: 14509
+  geom_md5: bb88b1b9cf780e2738265d896e485977
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU01
+    partition: DU_97416
+  surface_m2: 9905
+  geom_md5: 619ea861cc2b8b602438d4b2576aa787
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU01
+    partition: DU_97416
+  surface_m2: 59025
+  geom_md5: b42d7deada0d7ba910c0767a126a35ab
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU0c-1
+    partition: DU_97416
+  surface_m2: 108167
+  geom_md5: 77798b1812703851a5fb83c80b54f430
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU02
+    partition: DU_97416
+  surface_m2: 149429
+  geom_md5: e86db18067b6760801e1797565c9557e
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU02
+    partition: DU_97416
+  surface_m2: 60168
+  geom_md5: 780023d0ca4774885202ae169f285f5b
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU0c-1
+    partition: DU_97416
+  surface_m2: 111878
+  geom_md5: 91d9daf88803b5f7d169e2ad7b8c9540
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU01
+    partition: DU_97416
+  surface_m2: 20471
+  geom_md5: ffa4d7282561e7a12916f6eed3e3d2cc
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU02
+    partition: DU_97416
+  surface_m2: 207541
+  geom_md5: 4620cc22532d7e7eb5b329efe6bbcc99
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU02
+    partition: DU_97416
+  surface_m2: 20035
+  geom_md5: f9387ec11d9587273e9e93f0f95f4580
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU02
+    partition: DU_97416
+  surface_m2: 25897
+  geom_md5: 4a22c7c84faad1784ecad8bec1345942
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU02
+    partition: DU_97416
+  surface_m2: 4992
+  geom_md5: eedb3ee7661c77412d23575b053b44d9
+- subtype: AUs
+  name: Zone à urbaniser insuffisamment équipée pour être urbanisée dans l'immédiat
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: AU03
+    partition: DU_97416
+  surface_m2: 170075
+  geom_md5: 5aea231a6ea563ebb3f29632212585d3
+- subtype: N
+  name: Zone correspondant aux cimetières
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nci
+    partition: DU_97416
+  surface_m2: 7982
+  geom_md5: 14f93ae1bde536e8bd4368b9b99d8cd9
+- subtype: N
+  name: Zone correspondant aux cimetières
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nci
+    partition: DU_97416
+  surface_m2: 59424
+  geom_md5: 35ab981abfcfb360e553468ad053c7e2
+- subtype: N
+  name: Zone correspondant aux espaces situés dans le Coeur du Parc National de la Réunion
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97416
+  surface_m2: 1740893
+  geom_md5: 5a78cb2dd7ceb54ce34fede9d59a70cc
+- subtype: N
+  name: Zone dans laquelle l'ouverture et l'exploitation de carrières sont autorisées
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nc
+    partition: DU_97416
+  surface_m2: 266357
+  geom_md5: 92765f8ccff8bb1c6ca699dffdcf9011
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 4740
+  geom_md5: d37db89622aa35ecd5a55510bf5f2e94
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 2550
+  geom_md5: 3bea85c7676c2d37da30257a1a21b641
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 70945
+  geom_md5: f78c82f75b73cb8f0126de3d6fffca68
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 20891
+  geom_md5: 6a79446c4a66ef5194031e0d71ab7b4f
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 14636
+  geom_md5: 16f7c6b90afcd8128f419261959edb40
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 5173
+  geom_md5: e76617f3b9c58bbc82e4e93e020d1167
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 38074
+  geom_md5: e1350eaa737fdc38ee82f96e121a2f80
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 3949
+  geom_md5: 493797a2c94575700aa14e91e8c48904
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 7042
+  geom_md5: faed20fa12687b2e38fe79e22818f53c
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 39819
+  geom_md5: e7dde95935886fb34d2a3a57a1375d6a
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 36315
+  geom_md5: 541f90a65e66d481bd62a5fc73c040e1
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 11563
+  geom_md5: 9718d08c4128eb2ec418bd089742ffab
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 12847
+  geom_md5: 9bf785acc52d441d79c4bc92cb24a4df
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 13223
+  geom_md5: 6d3dbf69f23253ec3bc53b6dc75bb2b0
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 19487
+  geom_md5: 7a5095b9a80fe413b0a0d6a338c894aa
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 23918
+  geom_md5: 644ac3485c5fc66092930bad71a4b646
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 7961
+  geom_md5: d462ca6fda6d253382ba7e7ad38b3ab2
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 105530
+  geom_md5: 88b6d9daac4fd13fa5858d1c0a4df1f5
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 32364
+  geom_md5: 8fa4f739b1cda5fb62569547daa370e9
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 4015
+  geom_md5: cf014d4250459e92681aa29b6874ce67
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 11833
+  geom_md5: 7b982cf3fb070d57057b21442c2c50b3
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 3811
+  geom_md5: 301042217e959d32f07a850b8d2d87a8
+- subtype: N
+  name: Zone liée aux espaces de parcs où une valorisation sportive et culturelle est autorisée
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Np
+    partition: DU_97416
+  surface_m2: 3637
+  geom_md5: 2c2a32a424b4304abf9df8fe27582ce7
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 7752
+  geom_md5: d92a2d1a12ae22665f18b8095e5ff245
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 7435
+  geom_md5: d03054a8127dd7481ded581f46139b36
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 264668
+  geom_md5: d94ab07a7792fe06dc248048f44ca5d6
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 759
+  geom_md5: 52e2836ed201702fac23e50985cb38d5
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 5602
+  geom_md5: d8f10a2428ff5d1cf457799a13bd924d
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 174596
+  geom_md5: e40b6d4456baec78a6daf5d29a9e39ee
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 25363
+  geom_md5: b029b74b2aa4aec51b5b77c51e8bc10d
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 13249
+  geom_md5: a71b142799f1aebf6c8906fa738e64ae
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 10903
+  geom_md5: 727f8783301e7868918c2270c2e101ad
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 2408
+  geom_md5: d7fbaa8df8475a97facf6827bb838553
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 57478
+  geom_md5: d9aa1292306bde126e9e0ecfbc5bc526
+- subtype: N
+  name: Zone liée aux espaces remarquables au titre de la Loi Littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97416
+  surface_m2: 125614
+  geom_md5: d49f6714b38a9b44b250adb583625266
+- subtype: N
+  name: Zone liée aux secteurs naturels à préserver au titre des coupures d'urbanisation
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ncu
+    partition: DU_97416
+  surface_m2: 162745
+  geom_md5: 56f80df17af7c6d180b394877eb66011
+- subtype: N
+  name: Zone liée à la pratique du golf et des activités de plein air
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nge
+    partition: DU_97416
+  surface_m2: 100940
+  geom_md5: a5200745a9732115313da55417bba7c5
+- subtype: N
+  name: Zone liée à la pratique du golf et des activités de plein air
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Nge
+    partition: DU_97416
+  surface_m2: 10754
+  geom_md5: 7ba9a58506731d7d9b01596475edc6f9
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 176552
+  geom_md5: 296dd2a4765458a91514884da0043ea7
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 1756
+  geom_md5: 7163d63c73dfc2a308994ec97650aaaa
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 137604
+  geom_md5: 971407419fd19205b85a1ea6d372d6f7
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 128532
+  geom_md5: 7fbb6e0bcc0d1b4e156500b7ad0d5c1a
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 205
+  geom_md5: 27fecaf0270c5a81d9fcf16b79af9ff9
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 56155
+  geom_md5: 1ccff55c60cf52e5b92c5018858afaa4
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 2508125
+  geom_md5: 0e06fe0e9b35c3f4ccaee2fa881bf88d
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 10514
+  geom_md5: 0fb29d93394960bbbdf2328f58de105f
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 82577
+  geom_md5: 57ea3d4b361913b7c44f6726fd8603fc
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 20951
+  geom_md5: 73db1367ebd75d86b49383eb6ce007f7
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 8524
+  geom_md5: df5fa3bcbee86f3a02346af33028e00e
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 5757634
+  geom_md5: 7a81e121810bff436e449439e4da8ee4
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 1084
+  geom_md5: cdd4417d7d265147f610e7ee998826e6
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 22525
+  geom_md5: 6509f1248047a96c04fa89bb3a617493
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 10182
+  geom_md5: da64563643145fcdc0d7b6c648b2222e
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 22661
+  geom_md5: 5aaac7901424ef3b442ef7e85b637e40
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 1422877
+  geom_md5: c39d3b2ad6d09ddc1affc4ac5cce983e
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 648832
+  geom_md5: 43e65c5989b7130beb4b01373b241780
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 5136
+  geom_md5: 64315eb115021df645d4ed618d858f34
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 10558
+  geom_md5: 2f07c86f2fccee3032eb6ea8c978cd5a
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 50070
+  geom_md5: 1cfb4d97b95ec589e1a1488c45077d98
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 228002
+  geom_md5: 524f8b6787731e35e67e1a10795682f5
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 24537
+  geom_md5: 0bb787c55c75d3dfe12f5d9e517f4a92
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 189643
+  geom_md5: cbde7248e91f92d834adb061ee6cb039
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 769941
+  geom_md5: 529c8a00abfcc47e7a359f9cd7997c5c
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 33905
+  geom_md5: ec74424da8bebd0ccd5ef0f37483eeb8
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 34592
+  geom_md5: 95f77bd942808117b9a1a565c88b2762
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 10347
+  geom_md5: 971a00a58eddec2ad52f9cec5a32b77b
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 44202
+  geom_md5: 1a6eb2a7cf27167b61610dc0f60fc158
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 111108
+  geom_md5: fbd580a9d14f96eb8e0282c0cd9c5c24
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 3482
+  geom_md5: 3bde59fa962fbad45c7e1be2f6507e07
+- subtype: N
+  name: Zone naturelle
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97416
+  surface_m2: 492
+  geom_md5: e089429ce12793dbb4949e9e536b0114
+- subtype: U
+  name: Zone correspondant aux espaces dévolus aux activités militaires
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uemi
+    partition: DU_97416
+  surface_m2: 26694
+  geom_md5: f7d156f878df713b597eca829375ed43
+- subtype: U
+  name: Zone correspondant aux espaces dévolus aux activités militaires
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uemi
+    partition: DU_97416
+  surface_m2: 617288
+  geom_md5: 210f46c22c05aa314bff19bb71c8077f
+- subtype: U
+  name: Zone correspondant à la ZAC Roland Hoareau (secteur commercial)
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazpc
+    partition: DU_97416
+  surface_m2: 2729
+  geom_md5: d73bcecdd61f762312bf355b9db79086
+- subtype: U
+  name: Zone correspondant à la ZAC Roland Hoareau (secteur commercial)
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazpc
+    partition: DU_97416
+  surface_m2: 2766
+  geom_md5: 7731196a3ce5a471281ac37177f43b7e
+- subtype: U
+  name: Zone correspondant à la ZAC Roland Hoareau (secteur commercial)
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazpc
+    partition: DU_97416
+  surface_m2: 37734
+  geom_md5: 57d19986a91af3b14ac74dc325333a8a
+- subtype: U
+  name: Zone correspondant à la ZAC Roland Hoareau (secteur d'activités)
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazp
+    partition: DU_97416
+  surface_m2: 920055
+  geom_md5: 969d126e32cdca163fb9f785297fbe81
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 71743
+  geom_md5: 35c40726d6df08c9b2d41b061aae446d
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 20899
+  geom_md5: d71bd78683211bc89beba9953cd9c215
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 20575
+  geom_md5: 3f302ecb1e5eba150f4a93a6a9663292
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 51187
+  geom_md5: a138afcf0033d752c57c20475c8be0df
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 20279
+  geom_md5: 71853a9b3c6e66c9b293300abbc9d65b
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 42518
+  geom_md5: 7723d734f0a0c53785116c4e2687e735
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 10848
+  geom_md5: 471cf75e6f85f7806e0dcc238534ac2c
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 17948
+  geom_md5: b10f33a9e7598df304111a999d16e0ca
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 45079
+  geom_md5: 6b7d936a1b102464d3c181b6b9632d1c
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 18150
+  geom_md5: 778fb45ffb6a20122ee0508ce4a87066
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 27962
+  geom_md5: 5a264ce656bb86cb6c419cfababbbc85
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 39819
+  geom_md5: 0339648bb80127fd3da060ef2edde837
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 9722
+  geom_md5: b807883b7953b8b806639a7c9ac80202
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 6063
+  geom_md5: 5bf728c40f625c442963684fd24e46df
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 24795
+  geom_md5: 287e4b34a59523617825522c931166ea
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 14821
+  geom_md5: 1fb9eefd2c46a7c9a06edce399ac318d
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 43094
+  geom_md5: 3e56b0ead9627b333f0110ce9ff86b2b
+- subtype: U
+  name: Zone urbaine correspondant aux SDU définis à l'article L.121-8 du Code de l'Urbanisme
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Us
+    partition: DU_97416
+  surface_m2: 15042
+  geom_md5: a8363f2f6aa152b4ad942d9c8d4fa03f
+- subtype: U
+  name: Zone urbaine correspondant aux parcs et espaces verts paysagers favorisant l'intégration des équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uep
+    partition: DU_97416
+  surface_m2: 4082
+  geom_md5: 75bc8388c7bc556476ab67ae78672120
+- subtype: U
+  name: Zone urbaine correspondant aux parcs et espaces verts paysagers favorisant l'intégration des équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uep
+    partition: DU_97416
+  surface_m2: 40409
+  geom_md5: 421c6fcce8212d0d3704794ebfe78d1f
+- subtype: U
+  name: Zone urbaine correspondant aux parcs et espaces verts paysagers favorisant l'intégration des équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uep
+    partition: DU_97416
+  surface_m2: 18838
+  geom_md5: 0e073d9d48a0891ece3dbc18ebd779b5
+- subtype: U
+  name: Zone urbaine correspondant aux parcs et espaces verts paysagers favorisant l'intégration des équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uep
+    partition: DU_97416
+  surface_m2: 42730
+  geom_md5: eff445a98527df4cfc27fa7adac78133
+- subtype: U
+  name: Zone urbaine correspondant aux parcs et espaces verts paysagers favorisant l'intégration des équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uep
+    partition: DU_97416
+  surface_m2: 20856
+  geom_md5: 5b3b7a25964701fa66628cbc8a5a24a1
+- subtype: U
+  name: Zone urbaine correspondant aux zones d'activités artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uaza
+    partition: DU_97416
+  surface_m2: 9698
+  geom_md5: 9b180e1370cdba31f2070cbad3f2de42
+- subtype: U
+  name: Zone urbaine correspondant aux zones d'activités artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uaza
+    partition: DU_97416
+  surface_m2: 28830
+  geom_md5: d08c45923650e8affee09bb346b48bc7
+- subtype: U
+  name: Zone urbaine correspondant aux zones d'activités artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uaza
+    partition: DU_97416
+  surface_m2: 24638
+  geom_md5: 1238202fb19a67a8d07901470c1dcb3c
+- subtype: U
+  name: Zone urbaine correspondant aux zones d'activités artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uaza
+    partition: DU_97416
+  surface_m2: 6370
+  geom_md5: 77298d8efc3f14836b5c13b09308f3fb
+- subtype: U
+  name: Zone urbaine correspondant aux zones d'activités artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uaza
+    partition: DU_97416
+  surface_m2: 14551
+  geom_md5: b20d6c9fd5871b9d146da46f8948dec3
+- subtype: U
+  name: Zone urbaine correspondant aux zones d'activités artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uaza
+    partition: DU_97416
+  surface_m2: 126391
+  geom_md5: 688cc3c74bb50886c7834e0d24748764
+- subtype: U
+  name: Zone urbaine correspondant aux zones d'activités artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uaza
+    partition: DU_97416
+  surface_m2: 66459
+  geom_md5: 7633704e3bb444f034cb9fc420173ec5
+- subtype: U
+  name: Zone urbaine dédiée aux activités touristiques
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ut
+    partition: DU_97416
+  surface_m2: 4236
+  geom_md5: f7101cfc94ccb506e8d9d69fcf4791e4
+- subtype: U
+  name: Zone urbaine dédiée aux activités touristiques
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ut
+    partition: DU_97416
+  surface_m2: 2876
+  geom_md5: 19e55cf937a2fece18464e5216984682
+- subtype: U
+  name: Zone urbaine dédiée aux activités touristiques
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ut
+    partition: DU_97416
+  surface_m2: 8025
+  geom_md5: e51c7557326cb3308acdc4bd92d3a264
+- subtype: U
+  name: Zone urbaine dédiée aux activités touristiques
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ut
+    partition: DU_97416
+  surface_m2: 4115
+  geom_md5: 56427b7a592dd87389ddce3e50e0404d
+- subtype: U
+  name: Zone urbaine mixte correspondant au centre-ville de Saint-Pierre
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ucv
+    partition: DU_97416
+  surface_m2: 643982
+  geom_md5: 18936ba5132d74142a178d264f20df47
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 4612
+  geom_md5: c55cc03c9995969923d10ca93ce4a355
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 13061
+  geom_md5: 9cf493964279a52c9b02ad424806494a
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 216059
+  geom_md5: 8df16ec2fbe5aebccd2e09a504a6a0d1
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 148099
+  geom_md5: 9f79e40cc98b422dde94e9894b535046
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 473336
+  geom_md5: f78a4a656d687eb69fa56d1f025cc1e0
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 35297
+  geom_md5: 968f499b8c5055d34b2ea6143d9e683c
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 744666
+  geom_md5: b880a0e5928b09f2146e39265a69d8ab
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 29311
+  geom_md5: f0142255ebbc23c3fe132adb3beecd94
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 1740579
+  geom_md5: 55b19e97753cf61edc49e540104bf1e7
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 416035
+  geom_md5: e59b85cce3156829f34c5852385574f4
+- subtype: U
+  name: Zone urbaine mixte de centralité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97416
+  surface_m2: 141110
+  geom_md5: c53014d524207fe78eccf853ce6d4012
+- subtype: U
+  name: Zone urbaine mixte de centralité spécifique au quartier Bois d'Olive
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: UdBO
+    partition: DU_97416
+  surface_m2: 293131
+  geom_md5: df833a004c585d23c7560ff632fa6052
+- subtype: U
+  name: Zone urbaine mixte de centralité spécifique au quartier Bois d'Olive
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: UdBO
+    partition: DU_97416
+  surface_m2: 17956
+  geom_md5: 9fa647029b7b968c2f338161761999b6
+- subtype: U
+  name: Zone urbaine mixte de centralité sur le littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Udl
+    partition: DU_97416
+  surface_m2: 56352
+  geom_md5: f8bbae07c4f029489468873f04369659
+- subtype: U
+  name: Zone urbaine mixte de centralité sur le littoral
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Udl
+    partition: DU_97416
+  surface_m2: 1256
+  geom_md5: 4cb40c5e2d244791c85d216b8ea3cea5
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 13655
+  geom_md5: 4809b33639127c05afd43b543f1aea6c
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 97877
+  geom_md5: 3f783e1ddde6f52b543638fcd535abe3
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 17553
+  geom_md5: 35a2613c05920bbc9b49e3c6e9729411
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 1635270
+  geom_md5: e371606426a018f69ba8448af90038dc
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 323577
+  geom_md5: 8422c908fd3a7c329bbd52659e9a4c5a
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 22819
+  geom_md5: fbacd2b24544a11f1c53a12b877d5a41
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 14677
+  geom_md5: 52cc015c5106a1a1c04f5a3eb64af3f0
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 41446
+  geom_md5: f2e9dc38e9c30ab782b94a37eef5f12f
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 16381
+  geom_md5: f28436bcd5849b39f89cb5a65952a50d
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 127025
+  geom_md5: fc97a23ede6c10a587b2e0e2700726b4
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 141509
+  geom_md5: f5d6311192fb92c9392c7f40c8a8f452
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 17014
+  geom_md5: 5caebad910924cf483158624f5aca3c4
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 188585
+  geom_md5: 7a75218092c9ab55fbb382b8d18c98fc
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 1070994
+  geom_md5: f71f86ccb4d3ff8f3576713e8072dbd3
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 5426
+  geom_md5: a68f6c180d8192af17950e575c81a841
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 59143
+  geom_md5: ed47501486ddbb33f91c3aad97f1ade6
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 107333
+  geom_md5: ead1602895b591835659b2e5c64fed68
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 6992
+  geom_md5: ea118f88d1c347ef9733c07047f829f2
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 23297
+  geom_md5: 79b6dc20d4b6f36360305af6c157faca
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 433433
+  geom_md5: 7ec98861f5b497f69dcc0e68e7aa645c
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 357042
+  geom_md5: 7b2590a6a0a85237dc90ca5863384ee3
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 302514
+  geom_md5: 3ca3781314004d7801589311c75c58c3
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 4408
+  geom_md5: f9cdbc10f4755492a00837c8d0feb18c
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 44518
+  geom_md5: 0604985d52297ac8db74b9781f16b74e
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 212018
+  geom_md5: abda66214973ed75003ff8bd868ece07
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 5297
+  geom_md5: ed574ac38b30a1fc5bcba79aa119397d
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 12275
+  geom_md5: 848d07cdc5cfad6cadab50fb3c6a5844
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 498535
+  geom_md5: 92c5eaf6b3f52d77dd2fa5f8123c07b6
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 48108
+  geom_md5: d367f10c92bb1f4e71da357c1c49da7b
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 424373
+  geom_md5: 002ccbee62cc9fc7542c4048bc3e2d5f
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 127587
+  geom_md5: fbc8fa7a06eaa18dbc6b6baaa96f8cf5
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 417038
+  geom_md5: f4bdcdb94765499192881a7b3db7d437
+- subtype: U
+  name: Zone urbaine mixte de faible densité
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uf
+    partition: DU_97416
+  surface_m2: 195158
+  geom_md5: f85df0b7b406568d2a5ad22852cdb6f8
+- subtype: U
+  name: Zone urbaine mixte de faible densité spécifique à la ZAC Cap Austral à Grand Bois
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: UfCA
+    partition: DU_97416
+  surface_m2: 133446
+  geom_md5: 5fa8e03cb8ae09379b84fcd1cf03023a
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 4783
+  geom_md5: ce8fc8a7b0cd319bfababab1608b8cd0
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 172781
+  geom_md5: 2adf143af0d944fdc366d44bf665ad4e
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 1925241
+  geom_md5: 8ca4054d0858c6279f99fcbb7f8beb6c
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 566137
+  geom_md5: 0a62d7bfa344227a9711f16dc304ffc6
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 58583
+  geom_md5: 9c110f6064cac1dd04da87218ad3c31f
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 111194
+  geom_md5: e9609096a237eb753809fe68e4d516f2
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 138052
+  geom_md5: 83e215315124c809541acdcd283c0ed4
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 17557
+  geom_md5: 4f6db7803acd860adb649de46ff68083
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 1101242
+  geom_md5: d1bcc444676c589608879369b56e483f
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 367191
+  geom_md5: 9e69288c341977884c3b6ba08a41fe00
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 431529
+  geom_md5: 319c96fa0dfa8b540069c609093bc631
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 430927
+  geom_md5: 39b11de3d70f0f99e2ab9afebcec9e4c
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 174589
+  geom_md5: 4892e53571cedbbdfafbaa4868e10c31
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 24972
+  geom_md5: 92c6cc8e44ac712dacb20fb722114177
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 1649010
+  geom_md5: c97e81fe0a6a5925003fee884c327054
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 50847
+  geom_md5: 1e7f27f04c2681a51311c54f91cf0a3d
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 331883
+  geom_md5: 969dfd752b00f8870566bde013369331
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 101823
+  geom_md5: 33b2a25be317c38a8e69540ed088bd8d
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 71702
+  geom_md5: 26b7d583358203ded0ae651abd810bf4
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 49119
+  geom_md5: 6cbbec1608b36f4be789b3c52a71caea
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 486070
+  geom_md5: ab654eb44726a2e9cd9a2d83a2a24031
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 55674
+  geom_md5: c44848d7defe7b9cb8a7a5d66657ef2b
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 77091
+  geom_md5: 15a9539c201756659715ba3f24088e5b
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 159346
+  geom_md5: aba27dc445b1b9e0ee6cf76fd4fa0a03
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 172927
+  geom_md5: e28641304e9460b8ac2dea1585f21e1b
+- subtype: U
+  name: Zone urbaine mixte générale
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ug
+    partition: DU_97416
+  surface_m2: 27854
+  geom_md5: a18c8057b5948264b92db3cde209d1a2
+- subtype: U
+  name: Zone urbaine qui couvre le village de pêcheurs du quartier de Terre Sainte
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Up
+    partition: DU_97416
+  surface_m2: 365772
+  geom_md5: ede6541a602e7c661e48f1d2b527037f
+- subtype: U
+  name: Zone urbaine qui couvre le village de pêcheurs du quartier de Terre Sainte
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Up
+    partition: DU_97416
+  surface_m2: 47652
+  geom_md5: 8806b311d3cbba7d7b59631b06578485
+- subtype: U
+  name: Zone urbaine relative aux activités industrielles et artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazi
+    partition: DU_97416
+  surface_m2: 838615
+  geom_md5: acd3fb131a9f8249a364b8a46fece7a2
+- subtype: U
+  name: Zone urbaine relative aux activités industrielles et artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazi
+    partition: DU_97416
+  surface_m2: 52682
+  geom_md5: eabc080fb8014f6be85be1e0df0b5af8
+- subtype: U
+  name: Zone urbaine relative aux activités industrielles et artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazi
+    partition: DU_97416
+  surface_m2: 121220
+  geom_md5: bf46277331219a9c18c3cc2b7fc2cd69
+- subtype: U
+  name: Zone urbaine relative aux activités industrielles et artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazi
+    partition: DU_97416
+  surface_m2: 76422
+  geom_md5: de19fb827dd5979bc0551fd9a37694ca
+- subtype: U
+  name: Zone urbaine relative aux activités industrielles et artisanales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazi
+    partition: DU_97416
+  surface_m2: 285952
+  geom_md5: 248c021415b04635a5c83a7408e61bb6
+- subtype: U
+  name: Zone urbaine relative aux activités tertiaires et commerciales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazc
+    partition: DU_97416
+  surface_m2: 44978
+  geom_md5: 2501ece70f72b9ae621ae6ef4cbcc250
+- subtype: U
+  name: Zone urbaine relative aux activités tertiaires et commerciales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazc
+    partition: DU_97416
+  surface_m2: 463608
+  geom_md5: 192fd430ee30595693d000e5cc274f4d
+- subtype: U
+  name: Zone urbaine relative aux activités tertiaires et commerciales
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uazc
+    partition: DU_97416
+  surface_m2: 49215
+  geom_md5: 591c55009507ee68ee8c4d8beff2d02a
+- subtype: U
+  name: Zone urbaine relative aux principaux équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97416
+  surface_m2: 214869
+  geom_md5: 34c1ef27e6af60628569a2d35b013492
+- subtype: U
+  name: Zone urbaine relative aux principaux équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97416
+  surface_m2: 8242
+  geom_md5: cb229eaa52e0ef1367e57af5bf792a0b
+- subtype: U
+  name: Zone urbaine relative aux principaux équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97416
+  surface_m2: 176480
+  geom_md5: f9b9e08b24a7be5e7ef631418ba365c1
+- subtype: U
+  name: Zone urbaine relative aux principaux équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97416
+  surface_m2: 609241
+  geom_md5: 29b3794f234c548f74821ee1f613d981
+- subtype: U
+  name: Zone urbaine relative aux principaux équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97416
+  surface_m2: 24387
+  geom_md5: 2ee5672958671a9ff6682d87f61cbaf9
+- subtype: U
+  name: Zone urbaine relative aux principaux équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97416
+  surface_m2: 83465
+  geom_md5: 247178778d1e67b1b8d3ebfb35083788
+- subtype: U
+  name: Zone urbaine relative aux principaux équipements
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Ue
+    partition: DU_97416
+  surface_m2: 138886
+  geom_md5: fcd45f3ab91a942d299bdc845a64c317
+- subtype: U
+  name: Zone urbaine relative à l'aérodrome
+  attrs:
+    idurba: 97416_PLU_20240625
+    source: API_CARTO_GPU
+    libelle: Uea
+    partition: DU_97416
+  surface_m2: 1312972
+  geom_md5: 86c6a293ac69dfa7f93242054a8a0ed3

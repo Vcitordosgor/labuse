@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getMapLayer, getParcelsGeojson } from '../../lib/api'
-import { fmtArea, fmtDistance, pathLength, polygonArea, type LngLat } from '../../lib/geo'
+import { getCommunes, getFiche, getMapLayer, getParcelsGeojson } from '../../lib/api'
+import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { Legend } from './Legend'
 import { MapToolbar } from './MapToolbar'
@@ -60,6 +60,7 @@ function toExpr(f: Filters): maplibregl.FilterSpecification {
 }
 
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
+const ILE_BOUNDS: [number, number, number, number] = [55.20, -21.42, 55.87, -20.85]
 const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const
 
 const OVERLAYS = {
@@ -85,7 +86,9 @@ export function MapView() {
   const ref = useRef<HTMLDivElement>(null)
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
-  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo } = useApp()
+  const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
+  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune } = useApp()
+  const ile = commune == null
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
   const [measure, setMeasure] = useState<Measure>({ pts: [], alti: null })
@@ -93,10 +96,11 @@ export function MapView() {
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
 
-  const geo = useQuery({ queryKey: ['geojson'], queryFn: getParcelsGeojson })
-  const zonage = useQuery({ queryKey: ['layer', 'zonage'], queryFn: () => getMapLayer('plu_gpu_zone'), enabled: layers.zonage })
-  const ppr = useQuery({ queryKey: ['layer', 'ppr'], queryFn: () => getMapLayer('ppr'), enabled: layers.ppr })
-  const parc = useQuery({ queryKey: ['layer', 'parc'], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc })
+  const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
+  const zonage = useQuery({ queryKey: ['layer', 'zonage', commune], queryFn: () => getMapLayer('plu_gpu_zone'), enabled: layers.zonage && !ile })
+  const ppr = useQuery({ queryKey: ['layer', 'ppr', commune], queryFn: () => getMapLayer('ppr'), enabled: layers.ppr && !ile })
+  const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc && !ile })
+  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
 
   // ───────────────────────── init ─────────────────────────
   useEffect(() => {
@@ -104,7 +108,10 @@ export function MapView() {
     const m = new maplibregl.Map({
       container: ref.current,
       style: STYLE,
-      bounds: SP_BOUNDS,
+      // île par défaut ; une commune restaurée par l'URL cadre directement chez elle (Saint-Paul
+      // connu statiquement, les autres via fitBounds dès que /communes répond)
+      bounds: useApp.getState().commune == null ? ILE_BOUNDS
+        : useApp.getState().commune === 'Saint-Paul' ? SP_BOUNDS : ILE_BOUNDS,
       fitBoundsOptions: { padding: 40 },
       attributionControl: false,
       maxPitch: 70,
@@ -145,6 +152,22 @@ export function MapView() {
       })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
 
+      // ── mode ÎLE : calques jumeaux sur tuiles MVT (431k parcelles — le GeoJSON ne tient pas) ──
+      m.addSource('parcels-ile', { type: 'vector', minzoom: 10, maxzoom: 15,
+        tiles: [`${window.location.origin}/map/tiles/{z}/{x}/{y}.pbf`] })
+      const SL = { source: 'parcels-ile', 'source-layer': 'parcels' } as const
+      m.addLayer({ id: 'ile-fill', type: 'fill', ...SL, layout: { visibility: 'none' },
+        paint: { 'fill-color': STATUS_COLOR, 'fill-opacity': STATUS_OPACITY } })
+      m.addLayer({ id: 'ile-limites', type: 'line', ...SL, layout: { visibility: 'none' },
+        paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
+      m.addLayer({ id: 'ile-line', type: 'line', ...SL, layout: { visibility: 'none' },
+        filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
+      m.addLayer({ id: 'ile-vuemer', type: 'line', ...SL, layout: { visibility: 'none' },
+        filter: ['all', PROMUES_FILTER, ['==', ['get', 'vue_mer'], 'oui']] as never,
+        paint: { 'line-color': '#7DE8E0', 'line-width': 1.4, 'line-opacity': 0.95 } })
+      m.addLayer({ id: 'ile-sel', type: 'line', ...SL, layout: { visibility: 'none' },
+        filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
+
       // mesure (ligne + polygone + points + étiquette)
       m.addSource('measure', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'measure-fill', type: 'fill', source: 'measure', filter: ['==', ['geometry-type'], 'Polygon'], paint: { 'fill-color': '#5CE6A1', 'fill-opacity': 0.12 } })
@@ -154,6 +177,9 @@ export function MapView() {
       // calques MODULE (violet) : surlignage de parcelles + géométries propres (lots, permis)
       m.addSource('module-extra', { type: 'geojson', data: EMPTY_FC as never })
       m.addLayer({ id: 'module-hl', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''],
+        paint: { 'line-color': '#B497F0', 'line-width': 1.6, 'line-opacity': 0.95 } })
+      m.addLayer({ id: 'ile-hl', type: 'line', source: 'parcels-ile', 'source-layer': 'parcels',
+        layout: { visibility: 'none' }, filter: ['==', ['get', 'idu'], ''],
         paint: { 'line-color': '#B497F0', 'line-width': 1.6, 'line-opacity': 0.95 } })
       m.addLayer({ id: 'module-lot', type: 'line', source: 'module-extra',
         filter: ['==', ['get', 'kind'], 'lot'],
@@ -168,21 +194,25 @@ export function MapView() {
       m.addLayer({ id: 'zone-fill', type: 'fill', source: 'zone', paint: { 'fill-color': '#5CE6A1', 'fill-opacity': 0.06 } })
       m.addLayer({ id: 'zone-line', type: 'line', source: 'zone', paint: { 'line-color': '#5CE6A1', 'line-width': 1.6, 'line-dasharray': [3, 2] } })
 
-      m.on('click', 'parcels-fill', (e) => {
-        if (toolRef.current) return // un outil actif consomme le clic
-        const f = e.features?.[0]
-        if (!f) return
-        const idu = String(f.properties?.idu)
-        const st = useApp.getState()
-        if (st.module === 'assemblage') {              // M16 : le clic compose l'assiette
-          st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
-          return
-        }
-        select(idu)
-      })
-      m.on('mouseenter', 'parcels-fill', () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
-      m.on('mouseleave', 'parcels-fill', () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
+      for (const layerId of ['parcels-fill', 'ile-fill']) {
+        m.on('click', layerId, (e) => {
+          if (toolRef.current) return // un outil actif consomme le clic
+          const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
+          if (!f) return
+          const idu = String(f.properties?.idu)
+          const st = useApp.getState()
+          if (st.module === 'assemblage') {              // M16 : le clic compose l'assiette
+            st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
+            return
+          }
+          select(idu)
+        })
+        m.on('mouseenter', layerId, () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
+        m.on('mouseleave', layerId, () => { m.getCanvas().style.cursor = toolRef.current ? 'crosshair' : '' })
+      }
       ready.current = true
+      setMapReady(true)
+      ;(window as unknown as Record<string, unknown>).__labuse_map = m // hook QA (ping sémantique)
       m.fire('labuse:ready' as never)
     })
     return () => { m.remove(); map.current = null; ready.current = false }
@@ -192,14 +222,14 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (m && ready.current && geo.data) (m.getSource('parcels') as maplibregl.GeoJSONSource | undefined)?.setData(geo.data as never)
-  }, [geo.data, geo.dataUpdatedAt])
+  }, [geo.data, geo.dataUpdatedAt, mapReady])
 
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
     const pairs: [string, typeof zonage][] = [['zonage', zonage], ['ppr', ppr], ['parc', parc]]
     for (const [k, qy] of pairs) if (qy.data) (m.getSource(`ov-${k}`) as maplibregl.GeoJSONSource | undefined)?.setData(qy.data as never)
-  }, [zonage.data, ppr.data, parc.data])
+  }, [zonage.data, ppr.data, parc.data, mapReady])
 
   // ───────────────────────── fond de plan + relief ─────────────────────────
   useEffect(() => {
@@ -213,8 +243,9 @@ export function MapView() {
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
     if (m.getLayer('parcels-fill') && mode === 'verdict') {
       m.setPaintProperty('parcels-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
+      m.setPaintProperty('ile-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
     }
-  }, [basemap, orthoYear, mode, filters.statuts])
+  }, [basemap, orthoYear, mode, filters.statuts, mapReady])
 
   useEffect(() => {
     const m = map.current
@@ -233,39 +264,154 @@ export function MapView() {
     const m = map.current
     if (!m || !ready.current || !m.getLayer('parcels-fill')) return
     const vis = (on: boolean) => (on ? 'visible' : 'none')
-    m.setLayoutProperty('parcels-fill', 'visibility', vis(layers.parcelles))
-    m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles))
-    m.setLayoutProperty('parcels-limites', 'visibility', vis(layers.limites))
-    m.setLayoutProperty('parcels-vuemer', 'visibility', vis(layers.vue_mer && layers.parcelles))
-    m.setLayoutProperty('ov-zonage', 'visibility', vis(layers.zonage))
-    m.setLayoutProperty('ov-ppr', 'visibility', vis(layers.ppr))
-    m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc))
+    // deux jeux de calques (GeoJSON commune / MVT île) — un seul visible à la fois
+    m.setLayoutProperty('parcels-fill', 'visibility', vis(layers.parcelles && !ile))
+    m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile))
+    m.setLayoutProperty('parcels-limites', 'visibility', vis(layers.limites && !ile))
+    m.setLayoutProperty('parcels-vuemer', 'visibility', vis(layers.vue_mer && layers.parcelles && !ile))
+    m.setLayoutProperty('ile-fill', 'visibility', vis(layers.parcelles && ile))
+    m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile))
+    m.setLayoutProperty('ile-limites', 'visibility', vis(layers.limites && ile))
+    m.setLayoutProperty('ile-vuemer', 'visibility', vis(layers.vue_mer && layers.parcelles && ile))
+    m.setLayoutProperty('ile-sel', 'visibility', vis(ile))
+    m.setLayoutProperty('ile-hl', 'visibility', vis(ile))
+    m.setLayoutProperty('ov-zonage', 'visibility', vis(layers.zonage && !ile))
+    m.setLayoutProperty('ov-ppr', 'visibility', vis(layers.ppr && !ile))
+    m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc && !ile))
     const expr = toExpr(filters)
-    m.setFilter('parcels-fill', expr)
-    m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
-    if (mode === 'mutabilite') {
-      m.setPaintProperty('parcels-fill', 'fill-color', MUTABILITE_COLOR)
-      m.setPaintProperty('parcels-fill', 'fill-opacity', 0.7)
-    } else {
-      m.setPaintProperty('parcels-fill', 'fill-color', STATUS_COLOR)
-      m.setPaintProperty('parcels-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
+    for (const fill of ['parcels-fill', 'ile-fill']) {
+      m.setFilter(fill, expr)
+      if (mode === 'mutabilite') {
+        m.setPaintProperty(fill, 'fill-color', MUTABILITE_COLOR)
+        m.setPaintProperty(fill, 'fill-opacity', 0.7)
+      } else {
+        m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
+        m.setPaintProperty(fill, 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
+      }
     }
-  }, [mode, filters, layers, geo.dataUpdatedAt])
+    m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
+    m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
+  }, [mode, filters, layers, geo.dataUpdatedAt, mapReady, ile])
+
+  // ── VAGUE 0 (île) : sous z10 les tuiles parcellaires ne servent rien — l'île raconte où
+  // sont les cibles via UN marqueur par commune (nom + chaudes, dimensionné/coloré), cliquable
+  // → bascule le sélecteur (fitBounds existant). Marqueurs DOM (pas de dépendance glyphes).
+  const aggMarkers = useRef<maplibregl.Marker[]>([])
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    aggMarkers.current.forEach((mk) => mk.remove())
+    aggMarkers.current = []
+    if (!ile || !communes.data) return
+    const updateVis = () => {
+      const show = m.getZoom() < 10
+      aggMarkers.current.forEach((mk) => { mk.getElement().style.display = show ? '' : 'none' })
+    }
+    for (const c of communes.data) {
+      if (!c.bbox || c.bbox[0] == null) continue
+      const hot = c.chaudes > 0
+      const el = document.createElement('button')
+      el.setAttribute('data-commune-marker', c.commune)
+      el.title = `${c.commune} — ${c.chaudes} chaude${c.chaudes > 1 ? 's' : ''} · cliquer pour ouvrir la commune`
+      el.textContent = `${c.commune.replace(/^(Les|Le|La|L')\s?/, '')} ${c.chaudes > 0 ? c.chaudes : ''}`.trim()
+      const size = Math.min(13, 10 + Math.log10(Math.max(1, c.chaudes)) * 2)
+      el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
+        `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? '#2E6B4F' : '#26302B'};` +
+        `background:${hot ? 'rgba(9,26,18,.92)' : 'rgba(10,14,12,.85)'};color:${hot ? '#5CE6A1' : '#8FA69A'};` +
+        (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
+      el.onclick = (e) => { e.stopPropagation(); useApp.getState().setCommune(c.commune) }
+      aggMarkers.current.push(new maplibregl.Marker({ element: el })
+        .setLngLat([(c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2]).addTo(m))
+    }
+    updateVis()
+    m.on('zoom', updateVis)
+    return () => { m.off('zoom', updateVis); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
+  }, [ile, communes.data, mapReady])
+
+  // le bandeau bas ne donne JAMAIS une instruction inexécutable : sous z10 en mode île,
+  // aucune parcelle n'est cliquable → « Zoomez ou cliquez une commune »
+  const [lowZoom, setLowZoom] = useState(false)
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    const h = () => setLowZoom(m.getZoom() < 10)
+    h()
+    m.on('zoom', h)
+    return () => { m.off('zoom', h) }
+  }, [mapReady])
+
+  // changement de commune → recadrage sur son emprise (bbox servie par /communes)
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    if (ile) { m.fitBounds(ILE_BOUNDS, { padding: 40, duration: 900 }); return }
+    const info = communes.data?.find((c) => c.commune === commune)
+    if (info?.bbox) m.fitBounds(info.bbox as [number, number, number, number], { padding: 40, duration: 900 })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [commune, communes.data, mapReady])
 
   useEffect(() => {
     const m = map.current
-    if (m && ready.current && m.getLayer('parcels-sel')) m.setFilter('parcels-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
-  }, [selectedIdu])
+    if (!m || !ready.current || !m.getLayer('parcels-sel')) return
+    m.setFilter('parcels-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
+    m.setFilter('ile-sel', ['==', ['get', 'idu'], selectedIdu ?? ''])
+    // PING SYSTÉMATIQUE : toute sélection (liste, module, CRM, notification) recentre + pulse 2 s
+    if (!selectedIdu) return
+    const feat = geo.data?.features.find((f) => (f.properties as { idu?: string }).idu === selectedIdu)
+    let cancelled = false
+    const centroidReady = (c: [number, number] | null) => {
+      if (!c || cancelled) return
+      m.flyTo({ center: c, zoom: Math.max(m.getZoom(), 16), duration: 800 })
+    }
+    if (feat) centroidReady(roughCentroid(feat.geometry))
+    else {
+      // mode île (ou parcelle hors du GeoJSON chargé) : le centroïde vient de la fiche API.
+      // CONTRAT (Vic, 07/07) : un clic dans la liste = je VOIS la parcelle pulser, où qu'elle
+      // soit — le champ est `coords` [lon, lat] (le fallback lat/lon muet était le bug).
+      getFiche(selectedIdu).then((f) => {
+        const c = (f as unknown as { coords?: [number, number] }).coords
+        if (Array.isArray(c) && c.length === 2) centroidReady([c[0], c[1]])
+      }).catch(() => undefined)
+    }
+    const pingId = geo.data && feat ? 'parcels-ping' : 'ile-ping'
+    if (!m.getLayer(pingId)) {
+      m.addLayer(pingId === 'parcels-ping'
+        ? { id: 'parcels-ping', type: 'line', source: 'parcels',
+            filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 6, 'line-opacity': 0.9, 'line-blur': 3 } }
+        : { id: 'ile-ping', type: 'line', source: 'parcels-ile', 'source-layer': 'parcels',
+            filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 6, 'line-opacity': 0.9, 'line-blur': 3 } })
+    }
+    m.setFilter(pingId, ['==', ['get', 'idu'], selectedIdu])
+    let t0: number | null = null
+    let raf = 0
+    const pulse = (ts: number) => {
+      if (t0 == null) t0 = ts
+      const dt = (ts - t0) / 1000
+      // 3 s : en mode île le vol (800 ms) + le chargement des tuiles à destination doivent
+      // laisser un pulse VISIBLE à l'arrivée
+      if (dt > 3 || !m.getLayer(pingId)) {
+        if (m.getLayer(pingId)) m.setPaintProperty(pingId, 'line-opacity', 0)
+        return
+      }
+      m.setPaintProperty(pingId, 'line-opacity', 0.45 + 0.45 * Math.abs(Math.sin(dt * Math.PI * 2)))
+      m.setPaintProperty(pingId, 'line-width', 5 + 4 * Math.abs(Math.sin(dt * Math.PI * 2)))
+      raf = requestAnimationFrame(pulse)
+    }
+    raf = requestAnimationFrame(pulse)
+    return () => { cancelAnimationFrame(raf); cancelled = true }
+  }, [selectedIdu, geo.data, mapReady])
 
-  // module actif → surlignage + géométries propres
+  // module actif → surlignage + géométries propres (les DEUX jeux de calques)
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current || !m.getLayer('module-hl')) return
-    m.setFilter('module-hl', moduleMap.idus.length
+    const f = moduleMap.idus.length
       ? (['in', ['get', 'idu'], ['literal', moduleMap.idus.slice(0, 4000)]] as never)
-      : (['==', ['get', 'idu'], ''] as never))
+      : (['==', ['get', 'idu'], ''] as never)
+    m.setFilter('module-hl', f)
+    if (m.getLayer('ile-hl')) m.setFilter('ile-hl', f)
     ;(m.getSource('module-extra') as maplibregl.GeoJSONSource | undefined)?.setData((moduleMap.extra ?? EMPTY_FC) as never)
-  }, [moduleMap])
+  }, [moduleMap, mapReady])
 
   // flyTo demandé (fiche → « 1950 », modules…)
   useEffect(() => {
@@ -282,7 +428,7 @@ export function MapView() {
       ? { type: 'FeatureCollection', features: [{ type: 'Feature', geometry: { type: 'Polygon', coordinates: [[...zone, zone[0]]] }, properties: {} }] }
       : EMPTY_FC
     ;(m.getSource('zone') as maplibregl.GeoJSONSource | undefined)?.setData(data as never)
-  }, [zone])
+  }, [zone, mapReady])
 
   // ───────────────────────── outils de mesure ─────────────────────────
   // rendu du geojson de mesure
@@ -398,7 +544,7 @@ export function MapView() {
       )}
       {!tool && (
         <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-line-2 bg-surface-2 px-4 py-1.5 text-xs text-txt-mut">
-          Cliquez une parcelle pour ouvrir sa fiche
+          {ile && lowZoom ? 'Zoomez ou cliquez une commune pour voir ses parcelles' : 'Cliquez une parcelle pour ouvrir sa fiche'}
         </div>
       )}
       <div className="absolute bottom-2 right-3 font-sans text-[11px] text-[#3E4C45]">

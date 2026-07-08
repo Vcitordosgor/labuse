@@ -1,0 +1,2938 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Salazie
+idurba:
+- 97421_PLU_20220524
+n_zones: 325
+geoms_sidecar: data/calibrage/zonage_salazie.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 7334
+  geom_md5: efd26851e6fc409a4c8f6413c160b163
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 2748
+  geom_md5: 16c0c114305ebfe22c07ff1769814fa8
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 16318
+  geom_md5: 2b42713fe3cbf0a65e091c8c26f98c72
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 9641
+  geom_md5: 957a2e2c3ecbb4cdaef19be2ab401721
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 9445
+  geom_md5: 663a5cb3eae825a875439a1ad01ec272
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 1913
+  geom_md5: 97b320c2bf8acdad504e85776a95927b
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 14724
+  geom_md5: 96d9255697588d1d6ab0184e6f10feec
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 5337
+  geom_md5: ede2dc3cf0ddb6cae2e7357e6573f219
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 12924
+  geom_md5: d23bbb4cf09de9f619cc1149c7eee499
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 7790
+  geom_md5: b7130addf739736a8b106a03e96bb63d
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 11012
+  geom_md5: 917f23baf054e29bbb551a1a3447fd23
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 5764
+  geom_md5: b776785592ad73f32193a2278cd71227
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 17428
+  geom_md5: a9ef7e697e3445650b2216c40d8bc64b
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 8801
+  geom_md5: 1c532062d25fbef32156ebd3bd69a95a
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 3197
+  geom_md5: 2b400f47181d67762024a548782b36b2
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 7976
+  geom_md5: d0019ea8ac5e506c904b715e274342ca
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 4157
+  geom_md5: 222124c86969eb46b43178cf4218898b
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 5819
+  geom_md5: cb8b80a3faa357e9034005704852871b
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 1098
+  geom_md5: e16495b7978e48a2aa9be2d72224d754
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 13749
+  geom_md5: fb1e6f33e75c7b2c33d854a6d2963d2f
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 2107
+  geom_md5: 3ba91f6aaf0d8743b49f56879f7779f2
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 10922
+  geom_md5: 66d34a89b1316e836e16dedc93cf0376
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 8120
+  geom_md5: f4bee823e7a6bf6474643ee04d2b6e95
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 34444
+  geom_md5: 403081d853eb9d4b194ccfba8ba4b02d
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 14912
+  geom_md5: da8a848c3d708ac6cb43f6eba87640ce
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 404
+  geom_md5: da3494eda3ba79b5eecb963307b6b0bc
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 196977
+  geom_md5: e5fae2f3490fc9c525a6f8e994170b5c
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1114
+  geom_md5: f61315f9b45f6e16ea4bc63d042f7c8e
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 37310
+  geom_md5: 4b2088e4b25cf87f5160d49947e6cb89
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 11127
+  geom_md5: 123ceb077b809c5b3d0aa36987124482
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 22025
+  geom_md5: 53c14b692134d159e7fa1add88230fd2
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3361
+  geom_md5: 8543f8fa2ded85e41b634adff591c6e6
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1173
+  geom_md5: 2c8116d5cf03bd2e346190943691293e
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 15621
+  geom_md5: 76297c457a73c6b376af1d5a7ae993d4
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 10364
+  geom_md5: 72f4f6f901c1ca81523211d265284828
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 5820
+  geom_md5: 44971bd6a585a3e9b62938d09fccecdc
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 2900
+  geom_md5: 07021710c276498abb3b4659e0888dd9
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 16107
+  geom_md5: aef696e5cd89bf09f386d683f830ca31
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 4398
+  geom_md5: 28822db702a99b409437735ea23dd3c4
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 130217
+  geom_md5: 205b47b1ce9a96da19f3cb3bd2c7e2b8
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 121090
+  geom_md5: d9355a9230d4c40f9e041f4a4da0b47b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 19060
+  geom_md5: 364f01453555cc93b19717524c13e7c6
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 6554
+  geom_md5: f56907a3c3416b789c7d6a603d8a1344
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 102740
+  geom_md5: f7d89e31fb652bdffca4fb867f0d0497
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 172973
+  geom_md5: 901a7c3b7b9b9fe7af1ea262c949a460
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 13350
+  geom_md5: 3ec5ecfb8bf623211f9c941030155a1e
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8002
+  geom_md5: 0e566021cd30ba305bc5f4f323674920
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 6987
+  geom_md5: 6bd5d861ffe33a97d8ac2d08c2cf8e33
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 9622
+  geom_md5: 9fde23e36210fcdf025e3ce4634a1cec
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 45906
+  geom_md5: 1a99a8407d9bcb2edb6b890b3078e6ad
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3889
+  geom_md5: a6975e4e2e211c71d1ed2b806c44b385
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 25493
+  geom_md5: 53e26756776af9010f1cd5ca76ac2c08
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 23860
+  geom_md5: 4ae8e05ec017de47192db911ff440a90
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 14997
+  geom_md5: 1ff58f49bdf1ad1043f1aa7cf6551732
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 102094
+  geom_md5: b2fd7d399cde25e590a53bbae9cb8fce
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 11986
+  geom_md5: 304f16bfe79d149a3f9a022da54f49db
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 2131
+  geom_md5: a82c1cac413729dfc3b06e3efe27deae
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 40634
+  geom_md5: 76e327a0deabce8ef8e3133e8673877f
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 5158
+  geom_md5: fe380212d6ff53f55f40b7ee08e21c56
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 46180
+  geom_md5: 885306c2800cdc98d91d5c8b72a48e7c
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 2008
+  geom_md5: 7aa711620ec6b31009bce8773dda9f06
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 93224
+  geom_md5: 777bfa8841956659d349589be873884e
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 24151
+  geom_md5: 8a12a75ebf197d631d1ec58da9202b6c
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 76326
+  geom_md5: a485eab8513d174a7db37622f7cf086c
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 796
+  geom_md5: 86b740d23317c606ec3b321d3fb69585
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1760
+  geom_md5: ad4e2aeacca41ed44af60e2712df6d65
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3039
+  geom_md5: 004e6318e5fc4478ba0b0339e49acbcc
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 33028
+  geom_md5: 7f3073e9f5217294ce701f63c13f3533
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 5028
+  geom_md5: c602f271a6f0bae992f625000c915792
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 177632
+  geom_md5: dc1a67bf52dcd03303d6dfbac7db9bbf
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 24640
+  geom_md5: 83e27ebf7dd3595243388a11be89192b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 2726
+  geom_md5: 37363be7bd5a879134b71b32914f0279
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 4401
+  geom_md5: 59e45bc8190713148bd3207e5eb69917
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 24857
+  geom_md5: 1c26d8792c4a84ef6fd5235c79462e59
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 70086
+  geom_md5: 9612fc4ab151109bd248ffad817e8f01
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 241
+  geom_md5: 2eb2205aaea235edf52f60a3134a8e65
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 214182
+  geom_md5: e44b4ea783a92be0e49b1eaad4646562
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 25786
+  geom_md5: 6a3db3e489c8cab4956f041f2d99cfe3
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 57775
+  geom_md5: 68457c7caacd5d25fbb2154be0a6b516
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1951
+  geom_md5: 7ea998e6e46cc5eb16fcc9be563ae46e
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 42435
+  geom_md5: aaac18732df8fcc48dda2766c45e849b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 404451
+  geom_md5: 112ee5c2f30576698b9e3025877b4b84
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 6837
+  geom_md5: 5fed8aa25aa26f00b3b6b144e4fb5a80
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 6326
+  geom_md5: 659b374d1f21b34671574c42655984c6
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 6146
+  geom_md5: 40998e26184379e75f02342426d8b0e2
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 92919
+  geom_md5: adb651977173eb06d61abab17887cb19
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 101661
+  geom_md5: a1239bc944fce0b5bc1d89e1e39a04ab
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 27358
+  geom_md5: 61694bcbe57f25763eccdf1e07111748
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3912
+  geom_md5: cafc861061c762df6c252e643e2ff4fc
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 52440
+  geom_md5: b55c2c72c4b847a55cfceaef605e32cd
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 110548
+  geom_md5: e5ee1a111f1dff414f092ce2bfa5641b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1969
+  geom_md5: b3a501e5212ad67ad82f86e10414e80e
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 333924
+  geom_md5: ffd7fcbdadd30aaced3ed673ce2b6f11
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 26448
+  geom_md5: 4b12d05c8b287354bd841170879be411
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 89895
+  geom_md5: c8046cdcab297f465435b5b0cbbf5ddf
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 484921
+  geom_md5: 59dbf388557038a168288a4e4e1eb490
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8325
+  geom_md5: 27d96bb4675c2a4b794581359ed80a71
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8017
+  geom_md5: 560118631d4a2042d9efa498bba4a2de
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1753621
+  geom_md5: 2f2b6a53065b218d9481dc3c24096a55
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3451
+  geom_md5: de177fea94edacd47491644a96d444e6
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 13289
+  geom_md5: ce3bd55155ea4b4140f14697e8cbdf1b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 2345
+  geom_md5: 869f121deffba6e30bbeef7d51266598
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 99419
+  geom_md5: a665c177650295c2d9f124e3c0f022a5
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 30646
+  geom_md5: 2293b97e86d9ac2ef6381efdde23571d
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 168789
+  geom_md5: f1225d339a1041526b1a6eed1d44f968
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1713
+  geom_md5: e01cf212005b75f0a14f0648c7362713
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8760
+  geom_md5: 8286fcb99d545f1ab43b4722a7ec104f
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 45869
+  geom_md5: cc50bb03a6b54ec3436750210af613a2
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 12390
+  geom_md5: 9e05a1ea14d643f1822e4ba3d58d400d
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8179
+  geom_md5: 713a89e1f1cb63cda96e1fc2ffc28b0f
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1741
+  geom_md5: 50d428be7c0f7d2a6e32287f258f416a
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 23096
+  geom_md5: 7573bf195bcc3c14f10111de1e0f6d0c
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 120938
+  geom_md5: 1a4ccfa7b0d34ae537b2c37eb6267601
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 131890
+  geom_md5: 5c14fb0652b23c8903acb4585491764d
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3242
+  geom_md5: 681ca49c16fb95cfff08e23a4d529461
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 691
+  geom_md5: 986959605f72788690352f4ba77418d7
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 6512
+  geom_md5: bf354c79dc9e2ee58fdaf2b896264bb6
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 60395
+  geom_md5: 2441079cf3fb5bb8127cc4a535707213
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 12082
+  geom_md5: ce2bf6e34b1c3c6b17bc15e0ce282641
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 766
+  geom_md5: e7daa91e615c9a680fe2693c21d629fb
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 10166
+  geom_md5: 4233c59b269092a3d57933ade2922b7a
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 41428
+  geom_md5: 69ebc897141992f78673b4e481365846
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 6213
+  geom_md5: 956869f1a56394a1cfdd780194a06a76
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 41775
+  geom_md5: 30c223e2d6575cba16a03c3b127c9a39
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 111186
+  geom_md5: 6259ca456b4905b8ed16275f0f80e2ae
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8149
+  geom_md5: 648d1ba35a2904e14844a379659b0b9d
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 9896
+  geom_md5: 75bddfa88d3b40732f4e3bbfab2c36f6
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3682
+  geom_md5: 30a4f161aea9890dcdb67a740dc49242
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 27151
+  geom_md5: 6f960f9482aef24a8a2b748a5116d181
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8331
+  geom_md5: 599c7a12a6faec4586c092d008990b26
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 2877
+  geom_md5: 6816671fd1424a0fcc64acee874bdd46
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 4604
+  geom_md5: c56c7ef2119a48b410591acb40b0f944
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 2083047
+  geom_md5: f4ce978a4379c76b981de8e0d3edc31b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 12709
+  geom_md5: 4dd3d0dfe0c98f02484568c27c9ea4ff
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 29301
+  geom_md5: f22f374026b35a319d39ede201ce9b6b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 4116
+  geom_md5: b3f90c17e7ff22086cdc1a2e0b43c650
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8943
+  geom_md5: 601836585cdeb616dffb40b1c2a44a84
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 14528
+  geom_md5: 796cf795603b037a214af8de39752f4b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 7291
+  geom_md5: bbf22f2292a81677f6203709af097210
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8914
+  geom_md5: 7b20875dffcc3bbfb142a8854cfb57da
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 6338
+  geom_md5: 12881e343ed92974b13e2570ac4ad40a
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 30566
+  geom_md5: b5ffafd12468d66c2ade3b234a607164
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 39666
+  geom_md5: 2aa3537252b4bfeb93ba2db7e1427019
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 4090
+  geom_md5: 60c5dc74f5e9076bcc7552eac1c81e06
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 42233
+  geom_md5: 8b8df23e11c29bfa4eb29f9d14e7016d
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 20464
+  geom_md5: 4f98defbf8a4d6acbe2b5434780f2d21
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3665
+  geom_md5: aed114ae4831224a0722fee2926d73da
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 56887
+  geom_md5: aef22467b46f064038df2dec4df36b39
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 18886
+  geom_md5: 24d2caa4f5cae90c67f4c7ddc83e9f53
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 554051
+  geom_md5: 7220e47bd459f654d9a28d8548612351
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8132
+  geom_md5: 0dea7f0e71457056f9fa7c6cfabba3d8
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 138847
+  geom_md5: 9fe7a0c7e01b85ebfe7600e9324440d0
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 53301
+  geom_md5: bdd827f40ea56d80309dd7c550ded9a8
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 12577
+  geom_md5: 67fff2b4a4f94cc3d6c34922c0530d1f
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 10054
+  geom_md5: b9e379fc23e6e21e0e0aa589d61789df
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 5102
+  geom_md5: 42afb3284d8c32d0a81e1bcb78e43e30
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1415
+  geom_md5: e194dc837f075fa5c95069122e0e594b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 2466
+  geom_md5: 50cd41878170a9944d2737204f917ca6
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 120306
+  geom_md5: e1da159f9feb979e6ba84f36251de664
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 15467
+  geom_md5: bdb0eaa8259d2c40481c869f8060597b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 12734
+  geom_md5: 1bd1c5d105b1c31b3b0afbf19b248d72
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 23579
+  geom_md5: 89a0ed465d6c61e911a319033bc29c6a
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 29164
+  geom_md5: 909b02a31abce42c282f272b721090a8
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 126879
+  geom_md5: 70bb95a724642a9e043bf8fbfb5d7883
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 5003
+  geom_md5: 719b83501e58166d98862c4323bea1ab
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 9387
+  geom_md5: 4b3b062ce12ac0c8fe7d249882528083
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 7116
+  geom_md5: 7652262b80b74850a7ab1dbac7e1b4dc
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 10258
+  geom_md5: e4955d6a140e2f3861a9e79f9e2483ce
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 5392
+  geom_md5: 0020cf38125f2718ab844c66b742353c
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 916965
+  geom_md5: 67f73ff5ad2898754e1d739aa62424f2
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 9711
+  geom_md5: 0bfc11bf0b8ce5847d24a4017d8fa6c8
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 446
+  geom_md5: f847bd6f26a4ed8b6f2a2c324236f728
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 5490
+  geom_md5: 592c4315c060e260818a811a655d0422
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1626
+  geom_md5: 5b4a9e3feaee766ca1cff6794bf16154
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 15512
+  geom_md5: 770d75c488c19c998d481326abb15ed9
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1319941
+  geom_md5: 690f7021e4c4c990680759d7a6dfb0ea
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 217608
+  geom_md5: 39e3298855f71888f76e051b16bf0a44
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 6887
+  geom_md5: e52e710373e0bc4ffb20f6a02c8f6908
+- subtype: AUc
+  name: Zone à urbaniser du secteur de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUa1
+    partition: DU_97421
+  surface_m2: 6846
+  geom_md5: af67bb67591b29ef20754807b4277cdd
+- subtype: AUc
+  name: Zone à urbaniser du secteur de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUa1
+    partition: DU_97421
+  surface_m2: 15243
+  geom_md5: e9f4f7955335baf9815e1b64c6f958d6
+- subtype: AUc
+  name: Zone à urbaniser du secteur de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUa1
+    partition: DU_97421
+  surface_m2: 20350
+  geom_md5: a357dd8a243380034a003ed5c1ee4735
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 67844
+  geom_md5: dadb5b39e10f8acec6191069af2545b8
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 19796
+  geom_md5: 918263fe7d29e73fba79fe8e193fd1bc
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 7127
+  geom_md5: beca0bfede66a8b0fe614d9dc1fd7282
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 13583
+  geom_md5: 10ba28d5e9617c092c81334b5ef48151
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 25179
+  geom_md5: 0ca1ccc7c795db0e192b2ece5a0de6cc
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 4429
+  geom_md5: 8f26bad9d5048425672bcc0c67fbaad4
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 9615
+  geom_md5: a8713effa248c989ce07df5f26b85a27
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 7327
+  geom_md5: 5fc9969cf572f3be597ef803ce024897
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 13139
+  geom_md5: 418da903e01c53758142e19f3ca3c3d8
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 14357
+  geom_md5: 85eb6b62251f57e8455382b887aee47a
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 1426
+  geom_md5: 5b6a1d88e0b3320d0b238236af2c671a
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 3380
+  geom_md5: c99a476ca3543f22649acf109bd46785
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 8410
+  geom_md5: 74c38820810df97971e341f71b7e8d02
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 17457
+  geom_md5: 94ec1548175f40ceb89311fa69ffdac8
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 26209
+  geom_md5: 4b2bd263926c5f8d04c5d7109b3b4a53
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 9411
+  geom_md5: 29ada137bc16b1b388f2e32388580f84
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 12177
+  geom_md5: baa9722ac8460c0ca04404e4b97be276
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 10673
+  geom_md5: e532fc6573d8287aa4e14a0a7eddd1cb
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 6093
+  geom_md5: 1bb8990415fb410545254d58b0f1ba4a
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 10461
+  geom_md5: bb2de0ccb786df9eb0a57de9fc57fe7f
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 2810
+  geom_md5: 5416f5f32fd2f6aaafb1f965cd14f8ff
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 4394
+  geom_md5: 945d0a10c40b5b7d7c4ac1f62ed3db3f
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 11379
+  geom_md5: 603449dfa37ad3eeca67246097c0e2e0
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 2156
+  geom_md5: 37345f8221e42ac0dd888a02a8c7f9ee
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 19566
+  geom_md5: c609285fec5e7e55449c4b23d44007b9
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 8591
+  geom_md5: 1fb2285308035a8e9d63191ca0ff57a3
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 2755
+  geom_md5: 288955e1961bb39b1fbd294b1a9d12a1
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 3464
+  geom_md5: 6389b89a15931fd03aa63f1479c9ac9a
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 3781
+  geom_md5: 93e73c74ff575c73e47f04ef47722f60
+- subtype: AUc
+  name: Zone à urbaniser du secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUb
+    partition: DU_97421
+  surface_m2: 23385
+  geom_md5: 1b8ac09f63fe398057ea0c799cdc4bf0
+- subtype: AUc
+  name: Zone à urbaniser du secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUc
+    partition: DU_97421
+  surface_m2: 3946
+  geom_md5: 9587805d414f4c40c5231d2613821bc3
+- subtype: AUc
+  name: Zone à urbaniser du secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUc
+    partition: DU_97421
+  surface_m2: 16020
+  geom_md5: af744cc5b1ca24c98d29bd5c544ac96d
+- subtype: AUc
+  name: Zone à urbaniser du secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUc
+    partition: DU_97421
+  surface_m2: 9214
+  geom_md5: 9cee092b84a38946a71c1a1e9a4f94a4
+- subtype: AUc
+  name: Zone à urbaniser du secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUc
+    partition: DU_97421
+  surface_m2: 1960
+  geom_md5: b37e590605618d6692469bda912b65db
+- subtype: AUc
+  name: Zone à urbaniser du secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUc
+    partition: DU_97421
+  surface_m2: 1316
+  geom_md5: 0636ff62cfeaeeb5cb7d22dde60465b4
+- subtype: AUc
+  name: Zone à urbaniser du secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUc
+    partition: DU_97421
+  surface_m2: 4366
+  geom_md5: fb87d4ba1d214237922e993de762bae3
+- subtype: AUc
+  name: Zone à urbaniser du secteur à vocation touristique
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUt
+    partition: DU_97421
+  surface_m2: 2528
+  geom_md5: 52990de9f7ffa470d2da7433cd0cc88c
+- subtype: AUc
+  name: Zone à urbaniser du secteur à vocation touristique
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUt
+    partition: DU_97421
+  surface_m2: 16213
+  geom_md5: 1db3b38afccd28a2b7d16262727c3692
+- subtype: AUc
+  name: Zone à urbaniser du secteur à vocation touristique
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUt
+    partition: DU_97421
+  surface_m2: 16502
+  geom_md5: b6c9873c4fa12cc7e880fbe08209107d
+- subtype: AUc
+  name: Zone à urbaniser du secteur à vocation touristique
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUt
+    partition: DU_97421
+  surface_m2: 7096
+  geom_md5: f51e634f88278623eef017c70e1dda7d
+- subtype: AUs
+  name: Zone d'urbanisation future
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUe
+    partition: DU_97421
+  surface_m2: 7567
+  geom_md5: e9428c0c2f11bc9c5565ae808b52511a
+- subtype: AUs
+  name: Zone d'urbanisation future
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUe
+    partition: DU_97421
+  surface_m2: 1118
+  geom_md5: cb2a191c0f76652a59e2502818139802
+- subtype: N
+  name: Secteur du Parc National de la Réunion
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97421
+  surface_m2: 52053002
+  geom_md5: b54176f48bece850213aa0f84b5b4188
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 3588
+  geom_md5: e246180c3a597f7c8f925e587bea59d4
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 27524
+  geom_md5: ee0ddf4537cc8ee5f8c5fcac8a2fef6e
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 8754
+  geom_md5: 7ca51b5b95815e4ba41c1065499480ca
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 4030
+  geom_md5: 281a49956465f4e0f682d01b09b04315
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 35652
+  geom_md5: 778f6291ebbc09a9be2e6054983993f5
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 6700
+  geom_md5: e6ef42b2f9603feefdc133a4b03dff12
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 8618387
+  geom_md5: 074f6412e00db27236356fdc4e29ffd5
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 25127
+  geom_md5: fe2009525162b27ebf3887ea65562cea
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 3289
+  geom_md5: 1d885b8398a2956ce8b486a506cd63cb
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 25265
+  geom_md5: 2bb77fdb4e4726b8dbc0a68677daf8d1
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 189969
+  geom_md5: 9892c5ab5bf15ead674c50abfa3f9a73
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 18430
+  geom_md5: 233f6b86966b96d8d5724e3901087533
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 1871
+  geom_md5: 7e8b5ca8620dd9addca6605c33cfc9ad
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 19868
+  geom_md5: b8f88fef715e1e991add274c1a418f85
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 6289
+  geom_md5: b32074ed2771d81731fc977697d0c6cf
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 46570
+  geom_md5: 8de7c0de620fbf074be30147a0ad6b7d
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 391
+  geom_md5: b66210cba38c90b1227353e2f7ccba50
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 4809907
+  geom_md5: a3afae09dc8ad32e0b52124325aaa5b7
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 10624904
+  geom_md5: 8020787c1bac31d4870eadb2caee9c05
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 20592
+  geom_md5: c527bf64ff5cdf5985499025f5d37ab6
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 38342
+  geom_md5: 2126eb5bac08da9eb9b18607d87797d8
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 55649
+  geom_md5: 26f86ee4436038c493d1b6e632af4777
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 2348
+  geom_md5: 0dda9a89b74acc8ff5079cd73908505e
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 13126
+  geom_md5: 829cec75171331c05178ad035f637eca
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 12343
+  geom_md5: 183de166bb8315a86dcaa76ab00bff28
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 6816
+  geom_md5: 905e759535043edae981a91d8c3f6282
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 33420
+  geom_md5: 73ac4ab34e3d18317f7993b07fc4d3bb
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 27499
+  geom_md5: 7700d6bd9d77bc8d41402d1ebf25e57a
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 101421
+  geom_md5: f22f46b97b6facdc1bd4bbe6061d729a
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 63553
+  geom_md5: 06127f2a6140f845e75b501af82281cc
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 31165
+  geom_md5: 81434aea8673364e16cae4451d16f568
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 39256
+  geom_md5: 32d5361024d462590f64a455a560b4bd
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 10074
+  geom_md5: 1e4bec9ff1addb256ddc2d4804ab11f3
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 34492
+  geom_md5: 8c5616857c8b317c1ae244f7d7b44e8e
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 157409
+  geom_md5: d1c6baff56313bcadb50fddee55e5f57
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 37315
+  geom_md5: eb01e21eabaf8139464138bf48cebbfe
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 511970
+  geom_md5: 48e4cf623b1c39c5ec57803727478c48
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 165573
+  geom_md5: e56a63c425b072bd7399f8c2f05762f4
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 22310
+  geom_md5: 721cbb62cac47faedec185fc600fcd6a
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 9357089
+  geom_md5: dcf535de956dc355898869d70b1a40cf
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 29287
+  geom_md5: 4ca129bea556fcd509a3b1a134a50a94
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 139519
+  geom_md5: 9e0d91afdbc45b4746fd3e0afdc2a6a2
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 9174
+  geom_md5: 21091d7058585eceaa7737e293ea7a85
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 12425
+  geom_md5: a9865093cf80f9fea8eb5b7741e6de72
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 22842
+  geom_md5: e6d5c6e1437fab7305ce00ef880aebe6
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 9701
+  geom_md5: c71f8d604ebb7598a69fc98baf7068e1
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 9585
+  geom_md5: fd97804dfe26b0a937112e3495fa1153
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 80390
+  geom_md5: 1c1e08153ce83ae8f42d404a434d062f
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 262942
+  geom_md5: 6149cf1f5c6f95ce4ef5b113f7ad27ab
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 393
+  geom_md5: 5ecaadc7792293795b1452e5783de1da
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 39387
+  geom_md5: af6d3e450b3375f39b7e6c3b097724c6
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 29476
+  geom_md5: a945af55d74f7ba0bf9909c487c0d4ff
+- subtype: U
+  name: Secteur de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UA1
+    partition: DU_97421
+  surface_m2: 331774
+  geom_md5: 3b9672258bf58c024f460e769c375e34
+- subtype: U
+  name: Secteur de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UA1
+    partition: DU_97421
+  surface_m2: 2330
+  geom_md5: bb33c7e341383d96b4945ba6eb48b92d
+- subtype: U
+  name: Secteur de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97421
+  surface_m2: 5903
+  geom_md5: d09122a31622cd3ec98e7cce95105753
+- subtype: U
+  name: Secteur de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97421
+  surface_m2: 89267
+  geom_md5: ff45c1e0ca6df1a395fb4ed1121e3f84
+- subtype: U
+  name: Secteur de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97421
+  surface_m2: 43381
+  geom_md5: 6dc98f604f188efdbeb39d526de430c1
+- subtype: U
+  name: Secteur de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97421
+  surface_m2: 38245
+  geom_md5: 41ee6a38f565a006b56a0bfc5e0c7ec2
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 21029
+  geom_md5: 64f6891cf4f86fa8428bc6f8c0ec9ee0
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 166880
+  geom_md5: 1828ff2e772e5e830f9aaef429d7542c
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 149691
+  geom_md5: e9b5f92794301f1ef8a5177802593563
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 23052
+  geom_md5: 9fd3d619f0ce2231d37a4a3df1d2ee50
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 229786
+  geom_md5: 6b71b35808620e82cd0040b9285fce71
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 49976
+  geom_md5: a392a083f1ca833c4018369f93673e0b
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 26589
+  geom_md5: 949945c8548cfd70de7240dc766b0a55
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 1412
+  geom_md5: 9c628442096b81b5b83752d3c8a81e5d
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 114682
+  geom_md5: 12851c272394f1fb6860a908130b7bdc
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 11625
+  geom_md5: a2a3f6b06693cf6f8cd288cdeec9ca2e
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 57189
+  geom_md5: b3dd0b3303f331be403ab052d34ccf00
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 19387
+  geom_md5: e80cf0e292672cbbd66a46ca9a896d43
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 32568
+  geom_md5: 8368fbc86e3bdfef7955cc78fb7771c2
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 243380
+  geom_md5: d6722ffd3465c7f198229497b6928a74
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 1285
+  geom_md5: 3b9ee4fc9d3765fe53da929773b79aaa
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 337365
+  geom_md5: e77e4b2b0052a0361aaf4b67139a8b7e
+- subtype: U
+  name: Secteur mixte aggloméré des lieux de centralité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97421
+  surface_m2: 49859
+  geom_md5: 0adac12f07335bb6d0880705fb93bac8
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 952
+  geom_md5: 5aad69db471484c56153bfc2455c817e
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 941
+  geom_md5: e6b2a0eed3e6824ef45c551ab4d6c482
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 22685
+  geom_md5: 7fc3f6394e5094e6985d2a27004c05a4
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 2080
+  geom_md5: ea319a0605d348bad95be841c24e6e8f
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 662
+  geom_md5: a06b61e17cb7f17499a0d98fc2e19443
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 6235
+  geom_md5: fcfee4d0f9c79bfa39d5619d516c7a9c
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 2256
+  geom_md5: 9995cf49ca5da3eb3ff8d1bc64c1852f
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 6101
+  geom_md5: ecbe10d023a53262f545325ffa875678
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 21085
+  geom_md5: 5434cefa1f3b82cd93de4f0bae8bafd7
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 27482
+  geom_md5: ac253b7f36d909c52b81c31edf70e483
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 8462
+  geom_md5: 5bc36836876240a018e61ee496728107
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 29282
+  geom_md5: ed787631458e1522d4cbfd1a6b25f1b4
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 2025
+  geom_md5: b5bea10bc3765cf22d97300baa38f151
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 38927
+  geom_md5: 29f56bda4eef97384e4ffadce3a2b420
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 11310
+  geom_md5: 6f788cae4a9dd9549d7cf13f1e1eb867
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 5439
+  geom_md5: 843d347e6e18754c0891d73337e7daca
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 46542
+  geom_md5: 6f31ec72f1c7b4e1394f67843f7a849c
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 41636
+  geom_md5: b6eb226b8ea14a849c81d66582f8f995
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 8340
+  geom_md5: 5da30ea5ac4cadf6b5017ce5701066a9
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 7541
+  geom_md5: 1b93c658ab6bda09d8533bc3d4922dd2
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 12537
+  geom_md5: 32affb78dc6bf61d957048351eaeba29
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 555
+  geom_md5: d115e777e1614b74933f2111eccbf87c
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 471
+  geom_md5: e895d2f536e7fb177b6010bba8ea868a
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 76809
+  geom_md5: 98acd8fb77318efc47ebc87f808206d7
+- subtype: U
+  name: Secteur rural habité, résidentiel ou pavillonnaire
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UC
+    partition: DU_97421
+  surface_m2: 44956
+  geom_md5: f390e401d3361760e5461cdf97d31f4a
+- subtype: U
+  name: Secteur à vocation touristique
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: UT
+    partition: DU_97421
+  surface_m2: 7839
+  geom_md5: 1e2cb466e03338ea8b6746e0696d245a

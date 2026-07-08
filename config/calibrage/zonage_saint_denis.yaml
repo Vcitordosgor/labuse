@@ -1,0 +1,3520 @@
+provenance:
+  extrait_le: '2026-07-07'
+  source_tables:
+  - spatial_layers (kind='plu_gpu_zone')
+  run_de_reference: q_v2
+  note: Zonage OPPOSABLE tel qu'ingéré aux sessions de calibrage (juin-juillet 2026, cf. docs/communes/ et mémoires).
+    Les RÈGLES chiffrées par zone (hauteurs/articles) ne sont PAS en DB — cf. en-tête du script.
+commune: Saint-Denis
+idurba:
+- 97408_PLU_20251217
+- 97411_PLU_20260423
+- 97415_PLU_20251217
+- 97418_plu_20251126
+- 97421_PLU_20220524
+n_zones: 369
+geoms_sidecar: data/calibrage/zonage_saint_denis.geoms.jsonl.gz
+zones:
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97408
+  surface_m2: 299538
+  geom_md5: e17173ce20d4c7e1fcfd7c693c3f6fa4
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97408
+  surface_m2: 1410420
+  geom_md5: b9acf735f2190f0ed9aef9bc327afa91
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97408
+  surface_m2: 85864
+  geom_md5: fca4f977106a8c06281b06f3aa58f83c
+- subtype: A
+  name: A
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97408
+  surface_m2: 165999
+  geom_md5: a0250bb3f284e0ce7a9f6f6fe2607f9b
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 65998
+  geom_md5: ca8001077330b275a729c7ed1593c35e
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 0
+  geom_md5: 741c7ef62c8f1f01e3cd849c02409c4c
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 980719
+  geom_md5: 82a089012a984f42ec2183be78ac1d68
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 280001
+  geom_md5: df3f2494dd7910f08a9523ddf085fc06
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 2775
+  geom_md5: 00411e133a077c8463d97e73dc8f1248
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 230891
+  geom_md5: 10eb5ff593e4a01a769b11ef9cbbdbac
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 71622
+  geom_md5: b899599a59880ace0df1f6c0e9adb411
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 211955
+  geom_md5: bacecfaf33bec090c075411e09a0b2ff
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 114720
+  geom_md5: 9d450e950ec68d61fc4b04e87b074b36
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 290115
+  geom_md5: bf9135713cbaeeb9810105f76fdb4482
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 69142
+  geom_md5: 249d48b4dbdb0f5e692850c78d802924
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 45080
+  geom_md5: a44fbaabee2287c1fc41208cdf080463
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 1013109
+  geom_md5: 03085717fe12957dadf474832329a4bb
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 10839
+  geom_md5: 8f3ed147cdd2aeaf90edae3d95141332
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 350088
+  geom_md5: 41e726130956f0c8058e1689eaeb6116
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 72867
+  geom_md5: 930bf2710cc52533925355e49564ec60
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 39068
+  geom_md5: 111b38a63c808bb3b68f5c23b2b22b24
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 333548
+  geom_md5: 13ed294ad00ef63684727edf22f46bc5
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 152584
+  geom_md5: f42005054c3cb875e35eb0a417190c40
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 347973
+  geom_md5: 8780c3631ac4b49fffa68de59a7ec487
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 567656
+  geom_md5: fc5a7a8e5de3e0206982ae36532897fe
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 36639
+  geom_md5: 8835471cdd660cc8814f599efd3fcdff
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 9087
+  geom_md5: 405ef886c7103c022232bad61e5c75b3
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 211757
+  geom_md5: 7d2238b9160cca04cbcd9069d6830885
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 557744
+  geom_md5: 3a59d17697018b8e64d66662cf616a2f
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 285506
+  geom_md5: 991edf7e8857b82333060bf47d12340e
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 800683
+  geom_md5: c597280bbc9422febaf6ff414ac62e94
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 299948
+  geom_md5: 65da5617026355ece211fe7e68df8780
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 756312
+  geom_md5: b2fc8c3d36d77105f2040a6322dcf315
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 654078
+  geom_md5: af5846187b7e0161ed3b14a7258fb49c
+- subtype: A
+  name: 'A : Zone correspond à l''espace agricole avec un objectif de protection forte'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97411
+  surface_m2: 196051
+  geom_md5: 12a920ff5f99410ece6ecb674ec97897
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 8753
+  geom_md5: 44d98b4b338229436f6c1dc1e60cc728
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 8959
+  geom_md5: 1b08c8b51f5e889f5fc1688a6417aece
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 14315
+  geom_md5: b2f4087ab4c477c094f8d477262ecfb1
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 21259
+  geom_md5: 95cee3ebb8474d58704b9c2218c93536
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 5255
+  geom_md5: 7e3fa8a35042f29b5f7c0e5bd49265b3
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 9824
+  geom_md5: 3dc38bc8ceb9a1de4359c2f41dc3a348
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 4202
+  geom_md5: 04afcf1ddc22a649d540b4c0fd12da71
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 14137
+  geom_md5: 6db575b09531cf878689d490a13f4251
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 4590
+  geom_md5: 877e7362ab5e8beb435be24d0eebfd7e
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 10977
+  geom_md5: 6d4c3785a99003293756099c7042fd8f
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 4590
+  geom_md5: 00f8f364d7a198fe5f146f5ee79bbc81
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 7695
+  geom_md5: 1554d8a56c75a50699e03a628ef6a5f1
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 8453
+  geom_md5: 7ea557491107fbed5270e48459d5c167
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 10023
+  geom_md5: 65817dfe639c4c333765a7fd8a836b5f
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 17648
+  geom_md5: 871577b99a5509379a1a4bc9f9c21a5d
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 7161
+  geom_md5: 917058b5c188fcc1c1035375e3823905
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 5467
+  geom_md5: 8a4cb889d41fb7edc0434d393d70bcf0
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 15945
+  geom_md5: 43e2495748dc4a95b9e295fd99da3023
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 6518
+  geom_md5: 2c81f3290b5dfedfc3b1339ad283e7b5
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 15519
+  geom_md5: be72cc3b064cbd86915e1ddf20af6426
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 12625
+  geom_md5: 705cfab06081e38b3fdddfc029070273
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 0
+  geom_md5: 0ce7855d958da47804fc23088ec5bb45
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 16510
+  geom_md5: a3419d38cab20f95cbaea93318bcb42a
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 7478
+  geom_md5: aad1b44cfa450e558218748c00f3f805
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 16958
+  geom_md5: 79611dd20dc98789f8e6fb22aac214b3
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 7399
+  geom_md5: 5fe6e7219e3942ac0d638508d63530a6
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 3784
+  geom_md5: d82381952472587d299d75e0d7fc3650
+- subtype: A
+  name: 'Ac : Secteur de taille et de capacité d''accueil limitée, qui correspond à une stricte délimitation des
+    constructions existantes stricte délimitation des constructions existantes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ac
+    partition: DU_97411
+  surface_m2: 4258
+  geom_md5: 2b126d9940ea837585eaa677ac2ed7ef
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 2748
+  geom_md5: 16c0c114305ebfe22c07ff1769814fa8
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 9641
+  geom_md5: 957a2e2c3ecbb4cdaef19be2ab401721
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 5337
+  geom_md5: ede2dc3cf0ddb6cae2e7357e6573f219
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 11012
+  geom_md5: 917f23baf054e29bbb551a1a3447fd23
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 5764
+  geom_md5: b776785592ad73f32193a2278cd71227
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 17428
+  geom_md5: a9ef7e697e3445650b2216c40d8bc64b
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 8801
+  geom_md5: 1c532062d25fbef32156ebd3bd69a95a
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 1098
+  geom_md5: e16495b7978e48a2aa9be2d72224d754
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 2107
+  geom_md5: 3ba91f6aaf0d8743b49f56879f7779f2
+- subtype: A
+  name: Milieu rural habité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Aba
+    partition: DU_97421
+  surface_m2: 10922
+  geom_md5: 66d34a89b1316e836e16dedc93cf0376
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 34444
+  geom_md5: 403081d853eb9d4b194ccfba8ba4b02d
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 404
+  geom_md5: da3494eda3ba79b5eecb963307b6b0bc
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1114
+  geom_md5: f61315f9b45f6e16ea4bc63d042f7c8e
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 1173
+  geom_md5: 2c8116d5cf03bd2e346190943691293e
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 102740
+  geom_md5: f7d89e31fb652bdffca4fb867f0d0497
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 9622
+  geom_md5: 9fde23e36210fcdf025e3ce4634a1cec
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3889
+  geom_md5: a6975e4e2e211c71d1ed2b806c44b385
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 93224
+  geom_md5: 777bfa8841956659d349589be873884e
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 796
+  geom_md5: 86b740d23317c606ec3b321d3fb69585
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 24857
+  geom_md5: 1c26d8792c4a84ef6fd5235c79462e59
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 241
+  geom_md5: 2eb2205aaea235edf52f60a3134a8e65
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 27358
+  geom_md5: 61694bcbe57f25763eccdf1e07111748
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3912
+  geom_md5: cafc861061c762df6c252e643e2ff4fc
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 52440
+  geom_md5: b55c2c72c4b847a55cfceaef605e32cd
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3451
+  geom_md5: de177fea94edacd47491644a96d444e6
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 13289
+  geom_md5: ce3bd55155ea4b4140f14697e8cbdf1b
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 168789
+  geom_md5: f1225d339a1041526b1a6eed1d44f968
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 3665
+  geom_md5: aed114ae4831224a0722fee2926d73da
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 18886
+  geom_md5: 24d2caa4f5cae90c67f4c7ddc83e9f53
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 554051
+  geom_md5: 7220e47bd459f654d9a28d8548612351
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 8132
+  geom_md5: 0dea7f0e71457056f9fa7c6cfabba3d8
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 10054
+  geom_md5: b9e379fc23e6e21e0e0aa589d61789df
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 23579
+  geom_md5: 89a0ed465d6c61e911a319033bc29c6a
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 5392
+  geom_md5: 0020cf38125f2718ab844c66b742353c
+- subtype: A
+  name: Secteur agricole
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97421
+  surface_m2: 5490
+  geom_md5: 592c4315c060e260818a811a655d0422
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 15425
+  geom_md5: 9632e3c778bfc9936a399b53ba4b9175
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 172696
+  geom_md5: ceb9ff767ae435b4c4a42aae0dbb4413
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 2083068
+  geom_md5: 24f4fb11662d8231f816539ebde8ac4a
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 11210
+  geom_md5: 93c552a28854bbd61b87fbabbabc9b26
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 69124
+  geom_md5: 861efb1a725d0299afbee7f97080f910
+- subtype: A
+  name: zone agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: A
+    partition: DU_97418
+  surface_m2: 1124635
+  geom_md5: d21b00b6c602aab7c6c7fbc66cbefd9c
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 493925
+  geom_md5: a7ce662209c5991f9866cbe0a3b3e732
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 82030
+  geom_md5: dd2b1e08e0af7b37da487da853b07cba
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 10093
+  geom_md5: 365b9f97a5ec97274e18b23dee85976a
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 30732
+  geom_md5: a38d761fd90d69a9c23cbbb99427345a
+- subtype: A
+  name: zone de culture au potentiel de reconquête agricole
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Ap
+    partition: DU_97418
+  surface_m2: 550443
+  geom_md5: 026fb21546d7ac9ddce763dd960689f3
+- subtype: AUc
+  name: AUBb
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: AUBb
+    partition: DU_97408
+  surface_m2: 9927
+  geom_md5: d42693d9a3a519a4d25c5690613101c8
+- subtype: AUc
+  name: 'AUa : Zone, non équipée, est située chemin Neuf à la Montagne ; elle est destinée à recevoir après aménagement
+    une zone d''activités'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUa
+    partition: DU_97411
+  surface_m2: 114789
+  geom_md5: af5ec0b33734118e99afc1734bf6f9fd
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 97165
+  geom_md5: a8ba19d0c78051168b9c1e5f72c9f480
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 13782
+  geom_md5: be4bd2aaf86ce17b7060721c6c87081b
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 36212
+  geom_md5: b9ea78645d0a61d64e2efc2fe25f4f25
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 21822
+  geom_md5: 8eae40c8c0358cd35713abba6fd61c6f
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 8997
+  geom_md5: faf3b54fed2f19d5b163cc1d30c25abd
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 113988
+  geom_md5: b38460c66189d3f05148a03ded0b6109
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 33767
+  geom_md5: ed811bed52ca05d2e47c60453b2d9f6f
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 67974
+  geom_md5: 8591e7a56ee8b20b2c816594da47c585
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 59296
+  geom_md5: e00e27865b6330c6e977cd92846aa911
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 24905
+  geom_md5: b813f5d7feb171cd1f309b20eb4e4a80
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 20411
+  geom_md5: c3b694f3cb54e4f92730d383265366ed
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 58961
+  geom_md5: d0ff1b2aeb03ef8ecc490da720fe783c
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 19825
+  geom_md5: e04b1832038c3411d5bad6f27032521c
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 88887
+  geom_md5: ae93a04cf738f90c5c0270d84d0f0875
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 10208
+  geom_md5: 407c7284568ad2dbcd19f6908be3c6e4
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 114616
+  geom_md5: e5181b11b9b8b29377118e42871c2f30
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 16791
+  geom_md5: 8e9ccea080d01e6b2a7c0c5b3c70ddb0
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 29553
+  geom_md5: 07042ed039f460c7532bac506429c1de
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 85346
+  geom_md5: 95a451b30ae34901d2b735ad6301d3bd
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 90272
+  geom_md5: 771fd9a7ac5ca1311f75f48822fd0ae7
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 50900
+  geom_md5: b6044c523a837029351b4ed5389dd2dc
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 14963
+  geom_md5: e5eb9409287e1a38a681a70ae32b7304
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 27212
+  geom_md5: f5893ae01ca997b3695bcc049a53bcd1
+- subtype: AUc
+  name: 'AUh : Zone rurale des « hauts », d''aspect verdoyant, comprenant de l''habitation essentiellement individuelle
+    et diffuse'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUh
+    partition: DU_97411
+  surface_m2: 21454
+  geom_md5: d9d373cbd5aadd8186d87963cad4ad50
+- subtype: AUc
+  name: 'AUj : Zone à urbaniser jardin centre de bourg'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUj
+    partition: DU_97411
+  surface_m2: 227375
+  geom_md5: e9fcdc9742413038db90b59c0ff97c98
+- subtype: AUc
+  name: 'AUm : Zone à urbaniser de moyenne densité des pentes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUm
+    partition: DU_97411
+  surface_m2: 75545
+  geom_md5: cd6683dd3ccd56d698c9a53b79e96db9
+- subtype: AUc
+  name: 'AUm : Zone à urbaniser de moyenne densité des pentes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUm
+    partition: DU_97411
+  surface_m2: 36818
+  geom_md5: 06568e6eb86ffee8727f9fdb0ada2ae1
+- subtype: AUc
+  name: 'AUm : Zone à urbaniser de moyenne densité des pentes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUm
+    partition: DU_97411
+  surface_m2: 62396
+  geom_md5: 17381f1bacb421f8e07bab060162899b
+- subtype: AUc
+  name: 'AUm : Zone à urbaniser de moyenne densité des pentes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUm
+    partition: DU_97411
+  surface_m2: 66983
+  geom_md5: 2b88b3fa507af0fd4f489eb51fc5b5d3
+- subtype: AUc
+  name: 'AUm : Zone à urbaniser de moyenne densité des pentes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUm
+    partition: DU_97411
+  surface_m2: 32740
+  geom_md5: edf01d66ad871b2af2a3c30e671a60c2
+- subtype: AUc
+  name: 'AUm : Zone à urbaniser de moyenne densité des pentes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUm
+    partition: DU_97411
+  surface_m2: 128313
+  geom_md5: 5d03c94be86e001a8d4a5ca3754d8bc2
+- subtype: AUc
+  name: 'AUm : Zone à urbaniser de moyenne densité des pentes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUm
+    partition: DU_97411
+  surface_m2: 44660
+  geom_md5: 310e249d85e4900c8f279823e29f7f13
+- subtype: AUc
+  name: 'AUm : Zone à urbaniser de moyenne densité des pentes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUm
+    partition: DU_97411
+  surface_m2: 84166
+  geom_md5: b571104b5a86cb84efd2399ae62fee88
+- subtype: AUc
+  name: 'AUm : Zone à urbaniser de moyenne densité des pentes'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUm
+    partition: DU_97411
+  surface_m2: 89260
+  geom_md5: afb7f6af47b90fb2d7047c7540ccc64e
+- subtype: AUc
+  name: Zone à urbaniser du secteur à vocation touristique
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: AUt
+    partition: DU_97421
+  surface_m2: 16213
+  geom_md5: 1db3b38afccd28a2b7d16262727c3692
+- subtype: AUs
+  name: 'AUx : Zone à urbaniser « stricte » dont L''ouverture à urbanisation est subordonnée à une modification
+    ou à une révision du plan local d''urbanisme'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUx
+    partition: DU_97411
+  surface_m2: 467003
+  geom_md5: eb3bca3877207bbbc3d6f683c845fe60
+- subtype: AUs
+  name: 'AUx : Zone à urbaniser « stricte » dont L''ouverture à urbanisation est subordonnée à une modification
+    ou à une révision du plan local d''urbanisme'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: AUx
+    partition: DU_97411
+  surface_m2: 101684
+  geom_md5: e5563e1b0f5138ef14690f4aa26f447e
+- subtype: AUs
+  name: zone d'urbanisation future
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: 2AUa
+    partition: DU_97418
+  surface_m2: 129772
+  geom_md5: 1646da164ab4c2452c23fd5d77892c5f
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97408
+  surface_m2: 5182
+  geom_md5: d6e39cfca5d897917a0df56e2b9d7e95
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97408
+  surface_m2: 4617
+  geom_md5: 659514c9d2cc3ec55a2ab5ba3dcc0baf
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97408
+  surface_m2: 11425
+  geom_md5: d0721237d3e5d3785b82ff8ad8ed5f8c
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97408
+  surface_m2: 10918
+  geom_md5: c0f8ab817a7df6b17bf7ca3342bbdbf1
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97408
+  surface_m2: 5491
+  geom_md5: dcb1b234ad79caad8603ab7c41058a6a
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97408
+  surface_m2: 27842
+  geom_md5: 22350d2f9b2737a2c1c6502336d7133b
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97408
+  surface_m2: 35680
+  geom_md5: 9355c1db27b6cc69da67f3af27ad79d4
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97408
+  surface_m2: 6660
+  geom_md5: 5570e8fca85e00bb63316270d7f8a4a2
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97415_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97415
+  surface_m2: 87768643
+  geom_md5: 827751d6754ec9e00e67f2f3d84b95c8
+- subtype: N
+  name: N
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97408
+  surface_m2: 1494532
+  geom_md5: 59b3dd1f4298b671a565b5134fed1642
+- subtype: N
+  name: 'N : Zone naturelle et forestière'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97411
+  surface_m2: 27125
+  geom_md5: 747619fd5ddf7ceda08e463f93fe5d6a
+- subtype: N
+  name: 'N : Zone naturelle et forestière'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97411
+  surface_m2: 26917478
+  geom_md5: f9f7abae06324a8874241fa07671fa82
+- subtype: N
+  name: 'N : Zone naturelle et forestière'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97411
+  surface_m2: 1228432
+  geom_md5: cafa69e69193b31e55fc9e60720c8252
+- subtype: N
+  name: 'N : Zone naturelle et forestière'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97411
+  surface_m2: 126079
+  geom_md5: 88fa437f13f12abaaca69619ed88b7a1
+- subtype: N
+  name: 'N : Zone naturelle et forestière'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97411
+  surface_m2: 19934
+  geom_md5: 96c852a497b31a7dc62599ec374a9ba6
+- subtype: N
+  name: Nli
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97408
+  surface_m2: 8538642
+  geom_md5: 208dbae716ced05329f8a6d61c45cc65
+- subtype: N
+  name: Nli
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97408
+  surface_m2: 6573342
+  geom_md5: 7cdd7e3cd19c664253202a2a3a47c612
+- subtype: N
+  name: 'Npf : Secteur pour le coeur du Parc National et les ZNIEFF de type 1'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Npf
+    partition: DU_97411
+  surface_m2: 335263
+  geom_md5: c9ff72e7b26698bc0bf7d334aae52633
+- subtype: N
+  name: 'Npf : Secteur pour le coeur du Parc National et les ZNIEFF de type 1'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Npf
+    partition: DU_97411
+  surface_m2: 860186
+  geom_md5: 94fa7225a8afeefd2457d64de15fff6b
+- subtype: N
+  name: 'Npf : Secteur pour le coeur du Parc National et les ZNIEFF de type 1'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Npf
+    partition: DU_97411
+  surface_m2: 63901154
+  geom_md5: 4ca35c0159e34aba3bc2d28eaf2c23d0
+- subtype: N
+  name: Npnr
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97408
+  surface_m2: 78408626
+  geom_md5: ff36af276f601384e3d1cba96fcb03d4
+- subtype: N
+  name: Nr
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97408
+  surface_m2: 1903217
+  geom_md5: 850550bb63d3c07da9e0931eeabb3d4e
+- subtype: N
+  name: Nr
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97408
+  surface_m2: 33608
+  geom_md5: fa2c7ff5522e116022ce02616fed086a
+- subtype: N
+  name: Nr
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97408
+  surface_m2: 497103
+  geom_md5: 6c669a1a850ae224d34078f338cfef87
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 4848
+  geom_md5: fa611f49254d593374c2cdaad6984997
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 56776
+  geom_md5: b9183e65af56bb0669587201bb0a655c
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 48815
+  geom_md5: 1d7920d3789f19becdab961068b8f7a3
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 3766
+  geom_md5: 056b93d60d0b1fe2a5d6e84b24c00f4b
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 30019
+  geom_md5: 57bcd58a3dfff7bea17b07748bb0832c
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 24955
+  geom_md5: 67af687cebe1045919a8a2d4089f1f82
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 18431
+  geom_md5: 999c7c1b41a80b1aedc7728e3fa572a4
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 5239
+  geom_md5: 8bfaaf93323ee25a892196c806ff73f3
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 29626
+  geom_md5: 9c50a158799601519583aebbb039c044
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 38857
+  geom_md5: 3989bdc0a24e5dd9ba686a88e15b794d
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 66042
+  geom_md5: 56256bf4ef31a6de9d06e742c1c5701c
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 170405
+  geom_md5: e15acde6e3db0b893fc0e7d3d0ffc2d5
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 17283
+  geom_md5: e07b7b6c6e54f72c6e3d850881771e0a
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 18255
+  geom_md5: ac8cbe0e5600402d555e6a82ba43e2fc
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 3779
+  geom_md5: ff451c7131c33653541279da8f0fb1c9
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 16028
+  geom_md5: 1aee724fc7d6d5ec8d76c60c6e7ef0bf
+- subtype: N
+  name: 'Ntc : Secteur à constructibilité limitée ayant une vocation première de développement touristique développement
+    touristique'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntc
+    partition: DU_97411
+  surface_m2: 22735
+  geom_md5: 106786089d1cdbed491f5d75b52ec385
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 5820
+  geom_md5: e2493fe65ac68579d07f62195f7fac44
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 26863
+  geom_md5: 6eb09c1889dfa37fd4c46ac55283723d
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 106954
+  geom_md5: a075ee6234427a641376a9b5466d0755
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 1658055
+  geom_md5: 32a2e6be6c3d07172b3265610e87ccc0
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 27094
+  geom_md5: 1b4ab3e81770478ab81a2867eaabe692
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 12603
+  geom_md5: 22b2d55a9d9023124c0ad1a5fc2e086d
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 37679
+  geom_md5: 467cb1ca08be51f38aa0d55ac5dea6e8
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 17238
+  geom_md5: 35ba74d02d13701e50869635f58d234d
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 11048
+  geom_md5: a798f0a7f970dc133636d2778092edcb
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 2532
+  geom_md5: d2bd8d745b0dba97e98a253a51e64357
+- subtype: N
+  name: 'Ntn : Secteur naturel intégrant une vocation touristique et de loisirs pouvant recevoir des équipements
+    légers de loisirs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ntn
+    partition: DU_97411
+  surface_m2: 90258
+  geom_md5: 5be049d083233716d78ee9ac5b9620ee
+- subtype: N
+  name: Secteur du Parc National de la Réunion
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97421
+  surface_m2: 52053002
+  geom_md5: b54176f48bece850213aa0f84b5b4188
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 8618387
+  geom_md5: 074f6412e00db27236356fdc4e29ffd5
+- subtype: N
+  name: Secteur naturel
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97421
+  surface_m2: 189969
+  geom_md5: 9892c5ab5bf15ead674c50abfa3f9a73
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 34492
+  geom_md5: 8c5616857c8b317c1ae244f7d7b44e8e
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 9357089
+  geom_md5: dcf535de956dc355898869d70b1a40cf
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 12425
+  geom_md5: a9865093cf80f9fea8eb5b7741e6de72
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 9701
+  geom_md5: c71f8d604ebb7598a69fc98baf7068e1
+- subtype: N
+  name: Secteur naturel réservoir de biodiversité
+  attrs:
+    idurba: 97421_PLU_20220524
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97421
+  surface_m2: 262942
+  geom_md5: 6149cf1f5c6f95ce4ef5b113f7ad27ab
+- subtype: N
+  name: Zone naturelle du coeur du Parc Narional de la Réunion
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97418
+  surface_m2: 27863538
+  geom_md5: 352c4fc0ddb73d32a7da66527360f278
+- subtype: N
+  name: Zone naturelle du coeur du Parc Narional de la Réunion
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Npnr
+    partition: DU_97418
+  surface_m2: 0
+  geom_md5: 872ac81748721c1709a590f12f5b9912
+- subtype: N
+  name: Zone naturelle du littoral de la Pointe des Haziers
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97418
+  surface_m2: 4365
+  geom_md5: e3044fce87c23cdf89d83ef962f0893c
+- subtype: N
+  name: Zone naturelle du littoral de la Pointe des Haziers
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nli
+    partition: DU_97418
+  surface_m2: 16462
+  geom_md5: fc6cf7726f80c8f2cd100be55324b8f5
+- subtype: N
+  name: escpace destinés à l'exploitation d'une centrale photovoltaïque
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Npv
+    partition: DU_97418
+  surface_m2: 153465
+  geom_md5: f8558e1005f1cbb5adc50839848be871
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 2444
+  geom_md5: c4e2bc308768a752ce7b7239d88a216a
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 892821
+  geom_md5: 9f52166deffa0eb5b7beadbee3f12afc
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 19803
+  geom_md5: 3c08eda0db2be3db8c9d41ae985884ad
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 6603
+  geom_md5: a3ff417e6b94170d464e1473a292785e
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 4245
+  geom_md5: 6201a0367c2f07d4a5812f029e4cf33b
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 1732
+  geom_md5: 9c6465ae211874377378a4f2d35549df
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 32207
+  geom_md5: db9a7bf9a883fffa40d72ebf2d3800e4
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 91068
+  geom_md5: ba67d633875f1061caae27e0744932d2
+- subtype: N
+  name: reservoir de biodiversité et corridors écologiques
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: Nr
+    partition: DU_97418
+  surface_m2: 2948
+  geom_md5: a297f638367743037ca25c18300feb54
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 7880055
+  geom_md5: 880c9bd07f3c5aec3d10667275195c42
+- subtype: N
+  name: zone naturelle
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: N
+    partition: DU_97418
+  surface_m2: 63724
+  geom_md5: 90cf496b6fa4e02f8a4ba2953f7ddfc8
+- subtype: U
+  name: UBb
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: UBb
+    partition: DU_97408
+  surface_m2: 790735
+  geom_md5: b1ebd0c5a2b67ffcb8b10cd0f45e2ee0
+- subtype: U
+  name: UBc
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: UBc
+    partition: DU_97408
+  surface_m2: 1074
+  geom_md5: 9dc16f5623f6209a5feabf2bb0523751
+- subtype: U
+  name: UBc
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: UBc
+    partition: DU_97408
+  surface_m2: 21914
+  geom_md5: 7ffab39b804b6a33752f69e5778beef8
+- subtype: U
+  name: UBc
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: UBc
+    partition: DU_97408
+  surface_m2: 48321
+  geom_md5: de7b4dc9014d0577d52953b4f5c6c520
+- subtype: U
+  name: UT
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: UT
+    partition: DU_97408
+  surface_m2: 30111
+  geom_md5: 35dfeef39d49aec73e1d03353bc4cec6
+- subtype: U
+  name: UT
+  attrs:
+    idurba: 97408_PLU_20251217
+    source: API_CARTO_GPU
+    libelle: UT
+    partition: DU_97408
+  surface_m2: 15514
+  geom_md5: 12b4388b1841fac9a61d5a7e9cdb527e
+- subtype: U
+  name: 'Ua : Secteur correspondant à la zone d''activités du Chaudron'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97411
+  surface_m2: 99805
+  geom_md5: b259e17836a30f6904da1880adc12df2
+- subtype: U
+  name: 'Ua : Secteur correspondant à la zone d''activités du Chaudron'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97411
+  surface_m2: 65294
+  geom_md5: 2a030350f1e0363820dbade8949ba61e
+- subtype: U
+  name: 'Ua : Secteur correspondant à la zone d''activités du Chaudron'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97411
+  surface_m2: 721789
+  geom_md5: aad8d3e2d26c5055557f31c495eacc9f
+- subtype: U
+  name: 'Ua : Secteur correspondant à la zone d''activités du Chaudron'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ua
+    partition: DU_97411
+  surface_m2: 37757
+  geom_md5: b7d9620263db8210f3513e364229977c
+- subtype: U
+  name: 'Uac : secteurs pour la Technopole'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uac
+    partition: DU_97411
+  surface_m2: 277033
+  geom_md5: 40bd72538dd6485ed0f4f420777942b4
+- subtype: U
+  name: 'Uac : secteurs pour la Technopole'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uac
+    partition: DU_97411
+  surface_m2: 348552
+  geom_md5: 0ee15d3d2774b1c96f8d91324e424abe
+- subtype: U
+  name: 'Uad : secteurs pour la Technopole'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uad
+    partition: DU_97411
+  surface_m2: 51830
+  geom_md5: 29f9ac087cba39d7f2822047f9c4fa71
+- subtype: U
+  name: 'Uat : Secteur recouvrant la ZAC Triangle'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uat
+    partition: DU_97411
+  surface_m2: 81409
+  geom_md5: 3e526645f2e87426d55c7c2825e190d8
+- subtype: U
+  name: 'Uavap : (Urbaine AVAP) concerne le centre-ville y compris le Bas de la Rivière et la Petite-Ile. Il s''agit
+    des contours de la ville urbanisée du début du XX° siècle'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uavap
+    partition: DU_97411
+  surface_m2: 485173
+  geom_md5: 60918f3ed00239e604dca09125b7d32c
+- subtype: U
+  name: 'Uavap : (Urbaine AVAP) concerne le centre-ville y compris le Bas de la Rivière et la Petite-Ile. Il s''agit
+    des contours de la ville urbanisée du début du XX° siècle'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uavap
+    partition: DU_97411
+  surface_m2: 2018534
+  geom_md5: a1d285190d6a68626d5a2af64fd513e3
+- subtype: U
+  name: 'Ud : Zone urbaine dense de la bande littorale'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97411
+  surface_m2: 791316
+  geom_md5: 496b951bdfb3f9167941a4bd8b7eb1ee
+- subtype: U
+  name: 'Ud : Zone urbaine dense de la bande littorale'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97411
+  surface_m2: 365310
+  geom_md5: a9a61f0c573c0c7e0456b59cc82e2e56
+- subtype: U
+  name: 'Ud : Zone urbaine dense de la bande littorale'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97411
+  surface_m2: 868135
+  geom_md5: 795bd270557f0bc4ccd6053d5142c34d
+- subtype: U
+  name: 'Ud : Zone urbaine dense de la bande littorale'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97411
+  surface_m2: 36755
+  geom_md5: 325f8842bd994e2c6cc2a4db13236455
+- subtype: U
+  name: 'Ud : Zone urbaine dense de la bande littorale'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97411
+  surface_m2: 307818
+  geom_md5: 671a3005fd162e6c9fbd9f5baed9ce0b
+- subtype: U
+  name: 'Ud : Zone urbaine dense de la bande littorale'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ud
+    partition: DU_97411
+  surface_m2: 424865
+  geom_md5: 7b194cda5986d6bb9ed1ed847ed1397d
+- subtype: U
+  name: 'Udo : Secteur correspondant aux sites des opérations Océan et Butor, projets majeurs de la Ville pour lesquels
+    des prescriptions particulières s''imposent eu égard à la proximité de la zone patrimonial'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Udo
+    partition: DU_97411
+  surface_m2: 57158
+  geom_md5: e7c60ff4068b2818306f2fafd5722a82
+- subtype: U
+  name: 'Udop : Secteur rattachée au Projet de Renouvellement Urbain Nord Est Littoral correspondant aux sites des
+    opérations, projets majeurs de la Ville pour lesquels des prescriptions particulières s''imposent eu égard à
+    la proximité de la zone patrimonia'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Udop
+    partition: DU_97411
+  surface_m2: 39284
+  geom_md5: 74f154c8bb469627dc147cbf8736c0dc
+- subtype: U
+  name: 'Udp : Zone urbaine dense de la bande littorale rattachée au Projet de Renouvellement Urbain Nord Est Littoral'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Udp
+    partition: DU_97411
+  surface_m2: 38357
+  geom_md5: 0f2c1b884d54ab09b4548f215e7232c7
+- subtype: U
+  name: 'Udp : Zone urbaine dense de la bande littorale rattachée au Projet de Renouvellement Urbain Nord Est Littoral'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Udp
+    partition: DU_97411
+  surface_m2: 13501
+  geom_md5: 9c6ec5b37c50df52cad787c31155eb30
+- subtype: U
+  name: 'Udp : Zone urbaine dense de la bande littorale rattachée au Projet de Renouvellement Urbain Nord Est Littoral'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Udp
+    partition: DU_97411
+  surface_m2: 187362
+  geom_md5: 610bb6761760203f90b00c8d6afb1816
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 227639
+  geom_md5: ddc39e1228bc79e7e5780b05947ef4fd
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 8066
+  geom_md5: bcd84013b7b2f010063a3df7381afdcb
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 43740
+  geom_md5: c3482bdf1038f9482be8ef15c8bf2d4a
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 135064
+  geom_md5: 198b1145c5a03e56e7a81ffa1ea67ab1
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 1094286
+  geom_md5: bf819b8ee553347069f600d4c8b15264
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 128910
+  geom_md5: 3c14e46eaa80d3ccb95290fa2e840f8f
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 422283
+  geom_md5: 64318a91963695391501c091479457d5
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 52634
+  geom_md5: 6538b174d1699528f23db6ef2839928b
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 25744
+  geom_md5: 127c28cffb671756621e7bd27bf12887
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 874903
+  geom_md5: bda686569d2d9554427647b0c2ee53e5
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 135287
+  geom_md5: b3e76822e67c0c717cd00fe0d8584b7f
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 54086
+  geom_md5: c1caa64e49fb1c3e0ec0efa7320d7abc
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 24369
+  geom_md5: 325b9feb35430878852e83877ecfe34f
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 23837
+  geom_md5: 7001da022aa8f4b6ca21b3e6615a9ea2
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 62534
+  geom_md5: 05501f7476053a45e8b3e0d763324e05
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 59276
+  geom_md5: 7d1fe2e2d7a2fbaad0be285fb4b46584
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 20343
+  geom_md5: e680640fa4ddf2e30b87929a8eaf88af
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 20740
+  geom_md5: 82c50cae4939b7419ba45d610eac7849
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 69489
+  geom_md5: e205c0b7bc66610388aabcc2066b8968
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 285930
+  geom_md5: b335d6a7d3d5f8658d4d43823dfb361d
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 7669
+  geom_md5: 27d2a8198393a0a1b09d114650e221bd
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 261111
+  geom_md5: c5fbc2f620b4774b96f57666d67b65ca
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 50285
+  geom_md5: 03307fde23f8c8bed6e2b17b0aec2b27
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 109758
+  geom_md5: eb2a43fd9d783d8eb9d8253b8da217c8
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 12840
+  geom_md5: 15124c34573921b00929df008d43d307
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 116822
+  geom_md5: f2da803d8cd03dd7c74902c1f15d6107
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 24225
+  geom_md5: d52821a565de6ea4c8f1ac2aee6a87de
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 124825
+  geom_md5: 81f0e87ecaab8d8533c45582e0cb1a88
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 10713
+  geom_md5: 76267d3cdbea7a8bcfdccf092024b1e3
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 436497
+  geom_md5: ecb4d43e6f3aad22f04bbddf812eab4f
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 88109
+  geom_md5: 8efd987aba1704088539febb0ec1d85d
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 81357
+  geom_md5: 1439cdb81f1c35661d045100aee2cfef
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 80806
+  geom_md5: 43b19b1973d6faeccbc787172b45555b
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 338327
+  geom_md5: 736b262566a5d72378c317b5121f2835
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 87878
+  geom_md5: 778991cb81d359ddb012f79f83c2f4b1
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 77258
+  geom_md5: 97ae200c1923122b79f787f64a9cec2a
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 151225
+  geom_md5: fae57836f8d328bea5ccbdd5321e57cb
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 40535
+  geom_md5: 5d272a927757f89f43e5851bb0e25133
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 0
+  geom_md5: 5f963f1b62ae5c6ea2d9866cb7dbf1b3
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 307562
+  geom_md5: 2bf54c6a8bd296e4beae815cef066e0a
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 35893
+  geom_md5: 4e0f3d8a424b9438b4b386fb4cd477d9
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 255448
+  geom_md5: 3224caaf30840d6fa18d1f5ec19e95a3
+- subtype: U
+  name: 'Uh : Zone urbaine de densité très modérée des écarts de Domenjod, la Bretagne, Moufia, Saint-François,
+    Bellepierre, Brûlé et la Montagne'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uh
+    partition: DU_97411
+  surface_m2: 114503
+  geom_md5: 1144411902ce63ba978d4ef969d6e2ee
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 315769
+  geom_md5: 670c68aa180f405ed667c557c83801d8
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 865102
+  geom_md5: cc29271149059996c5f87a373469dd55
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 321361
+  geom_md5: a334cb0c1cb0dfe1022c5320dc69c05d
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 937627
+  geom_md5: 287491c8b32053a32b393317edd95bd8
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 361493
+  geom_md5: 3a3827af49cff9049b693bf38f2e406a
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 634795
+  geom_md5: 65fa8e5a386a1eb2a1873f2162c90e89
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 300647
+  geom_md5: 7998283798fb74863e2bd72b4d2756a9
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 202977
+  geom_md5: a299e40f78312263292d1f5f453b6b84
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 636109
+  geom_md5: 622d5fa9f0762e3fe7df8565417ff50b
+- subtype: U
+  name: 'Ui : Zone urbaine de densité intermédiaire de la plaine littorale et du piémont'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Ui
+    partition: DU_97411
+  surface_m2: 175616
+  geom_md5: 85c38b491001edfea7a7e6a67df471c7
+- subtype: U
+  name: 'Uicm : secteur qui concerne le secteur Canne Mapou, situé en piémont dans l''Est du territoire communal'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uicm
+    partition: DU_97411
+  surface_m2: 109345
+  geom_md5: 7327a438fb59d2c3faf8b88ba4b5589e
+- subtype: U
+  name: 'Uip : Zone urbaine de densité intermédiaire de la plaine littorale rattachée au Projet de Renouvellement
+    Urbain Nord Est Littoral'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uip
+    partition: DU_97411
+  surface_m2: 22172
+  geom_md5: 66a44029718e286ec4b6752b9bf90c73
+- subtype: U
+  name: 'Uip : Zone urbaine de densité intermédiaire de la plaine littorale rattachée au Projet de Renouvellement
+    Urbain Nord Est Littoral'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uip
+    partition: DU_97411
+  surface_m2: 79124
+  geom_md5: 7cc6958962126ae2d0e2ca8509517ae8
+- subtype: U
+  name: 'Uj : Zone urbaine « jardin » de centre de bourgs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uj
+    partition: DU_97411
+  surface_m2: 265774
+  geom_md5: 7820a3c23219487caea3d25411393e1e
+- subtype: U
+  name: 'Uj : Zone urbaine « jardin » de centre de bourgs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uj
+    partition: DU_97411
+  surface_m2: 178126
+  geom_md5: 8431bbdc89f0961b881e4cf2791089e2
+- subtype: U
+  name: 'Uj : Zone urbaine « jardin » de centre de bourgs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uj
+    partition: DU_97411
+  surface_m2: 142152
+  geom_md5: 61a14135c48336fdee99d2cd78d0a8ac
+- subtype: U
+  name: 'Uj : Zone urbaine « jardin » de centre de bourgs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uj
+    partition: DU_97411
+  surface_m2: 339028
+  geom_md5: 027bacfef588532346ad024c224a89d8
+- subtype: U
+  name: 'Uj : Zone urbaine « jardin » de centre de bourgs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uj
+    partition: DU_97411
+  surface_m2: 544415
+  geom_md5: 597747c352c62418b95ce6b0ac183cee
+- subtype: U
+  name: 'Uj : Zone urbaine « jardin » de centre de bourgs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uj
+    partition: DU_97411
+  surface_m2: 342893
+  geom_md5: 9cf456c66140b50ad7161cb5177b4299
+- subtype: U
+  name: 'Uj : Zone urbaine « jardin » de centre de bourgs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uj
+    partition: DU_97411
+  surface_m2: 145035
+  geom_md5: ccd3f97f48eddf6ba9a8b9b51b830877
+- subtype: U
+  name: 'Uj : Zone urbaine « jardin » de centre de bourgs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uj
+    partition: DU_97411
+  surface_m2: 241450
+  geom_md5: 457dcb18b170b734f2f79fb7b1d5aa8b
+- subtype: U
+  name: 'Uj : Zone urbaine « jardin » de centre de bourgs'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uj
+    partition: DU_97411
+  surface_m2: 300978
+  geom_md5: fead0cc6805b9fdb7c6c15d56b6e4f56
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 56296
+  geom_md5: e4807f88287734dd1241959637f1fc2e
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 186579
+  geom_md5: 1a3cd1605b10feae889c8a6a71d9b9d3
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 65287
+  geom_md5: 3ba4763683eee2c8232f2691204aa67d
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 112284
+  geom_md5: b1ae70657dffe321aed173aff823f591
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 1995581
+  geom_md5: fdacb434dc03624227cce4c50ffc1db9
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 322255
+  geom_md5: 221befec59f2e7e9a89b66700b3a3d32
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 263283
+  geom_md5: 44c000b0268ade96e0a278499f787c29
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 60021
+  geom_md5: 9fb7ab64781e5f947d66df5174a4e283
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 1369118
+  geom_md5: a3a7d2015933bca1dcdfa218b9e185aa
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 581376
+  geom_md5: 59dc4dc8dd4eea9f75c3bf6c986f5eb6
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 871586
+  geom_md5: a0ece50f11a35531c97d343833cbb6fb
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 313853
+  geom_md5: 123d0b642e268c63e8bb385cc4d3235b
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 395382
+  geom_md5: f2910d7964bb37a0e0190027e53e7cf7
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 194051
+  geom_md5: 8b74877751ab368a0f6df254db0e866e
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 418409
+  geom_md5: bf964b47a70da6c40b2681ce1dbb88f4
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 162475
+  geom_md5: ca6fce75bbd9f3bd3a3ac3e342a620d8
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 73890
+  geom_md5: c234bf1fb75f678a61bc106fb80b6ddf
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 287911
+  geom_md5: 248640e1d3f933636957b526a1beebbc
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 348114
+  geom_md5: 7e417be3c996dd4012d703e031ba140b
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 216957
+  geom_md5: cb3bc134ce20bc3dba99c1fac97364ea
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 898929
+  geom_md5: 61a0eed8c14835f8ebd7882caa66fbf8
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 36574
+  geom_md5: 4f2b78c3973d85a8a0e958f30e0d8cfa
+- subtype: U
+  name: 'Um : Zone urbaine d''habitat dominant, couvre l''ensemble des pentes, cernant notamment les centres de
+    bourgs. Son caractère verdoyant permet une bonne insertion dans le site'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Um
+    partition: DU_97411
+  surface_m2: 158337
+  geom_md5: a956921c834a0bd56bfc8a4db069bea5
+- subtype: U
+  name: 'Uma : Zone située à Domenjod concerne la Maison d''Arrêt'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uma
+    partition: DU_97411
+  surface_m2: 120242
+  geom_md5: 7c37895fa04e087ac4b1652bce1a37fc
+- subtype: U
+  name: 'Upi : Secteur correspondant au domaine Maureau situé au Chaudron, classé à l''Inventaire des Monuments
+    Historiques, à proximité d''une zone d''activité'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Upi
+    partition: DU_97411
+  surface_m2: 33032
+  geom_md5: f84dac1e69547437fd0f74097d4bffda
+- subtype: U
+  name: 'Upr : Secteur correspondant au secteur des hauts du quartier du Bas de la Rivière, caractérisé par les
+    remparts qui l''encadrent'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Upr
+    partition: DU_97411
+  surface_m2: 26328
+  geom_md5: 206fefb9cb364230401f9e280eacb4b1
+- subtype: U
+  name: 'Uu : Zone urbaine du littoral et du piémont, à vocation mixte, avec une prédominance de services publics
+    et de grands équipements'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uu
+    partition: DU_97411
+  surface_m2: 124211
+  geom_md5: 571964f92491931628dec2d8e1e0bdb6
+- subtype: U
+  name: 'Uu : Zone urbaine du littoral et du piémont, à vocation mixte, avec une prédominance de services publics
+    et de grands équipements'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uu
+    partition: DU_97411
+  surface_m2: 106784
+  geom_md5: 7682184b5428e5431284c56104d9fc1c
+- subtype: U
+  name: 'Uu : Zone urbaine du littoral et du piémont, à vocation mixte, avec une prédominance de services publics
+    et de grands équipements'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uu
+    partition: DU_97411
+  surface_m2: 77660
+  geom_md5: ef5d4725b3807728134610b262de2c5f
+- subtype: U
+  name: 'Uu : Zone urbaine du littoral et du piémont, à vocation mixte, avec une prédominance de services publics
+    et de grands équipements'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uu
+    partition: DU_97411
+  surface_m2: 236885
+  geom_md5: aa3104e854e720366a3678a92a055936
+- subtype: U
+  name: 'Uva : Secteur comprenant la coulée verte s''étendant du Chaudron à Moufia - Bois de Nèfles, la Jamaïque,
+    le Parc Urbain, Champ Fleuri, la Providence et le stade de la Redoute'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uva
+    partition: DU_97411
+  surface_m2: 610565
+  geom_md5: 1b8d9ee9df58c55e5b681a8679716c22
+- subtype: U
+  name: 'Uva : Secteur comprenant la coulée verte s''étendant du Chaudron à Moufia - Bois de Nèfles, la Jamaïque,
+    le Parc Urbain, Champ Fleuri, la Providence et le stade de la Redoute'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uva
+    partition: DU_97411
+  surface_m2: 15146
+  geom_md5: 93d5ee7b06b65cf39e5ef52f5d4af7bc
+- subtype: U
+  name: 'Uva : Secteur comprenant la coulée verte s''étendant du Chaudron à Moufia - Bois de Nèfles, la Jamaïque,
+    le Parc Urbain, Champ Fleuri, la Providence et le stade de la Redoute'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uva
+    partition: DU_97411
+  surface_m2: 49128
+  geom_md5: 66274315e1eda96a2efb57ee5041c239
+- subtype: U
+  name: 'Uva : Secteur comprenant la coulée verte s''étendant du Chaudron à Moufia - Bois de Nèfles, la Jamaïque,
+    le Parc Urbain, Champ Fleuri, la Providence et le stade de la Redoute'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uva
+    partition: DU_97411
+  surface_m2: 56238
+  geom_md5: 69b249b9a88ad5006b9a523280aca20c
+- subtype: U
+  name: 'Uva : Secteur comprenant la coulée verte s''étendant du Chaudron à Moufia - Bois de Nèfles, la Jamaïque,
+    le Parc Urbain, Champ Fleuri, la Providence et le stade de la Redoute'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uva
+    partition: DU_97411
+  surface_m2: 166066
+  geom_md5: 6ee6ab5967573ef98f8dbf563cc2e2a0
+- subtype: U
+  name: 'Uva : Secteur comprenant la coulée verte s''étendant du Chaudron à Moufia - Bois de Nèfles, la Jamaïque,
+    le Parc Urbain, Champ Fleuri, la Providence et le stade de la Redoute'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uva
+    partition: DU_97411
+  surface_m2: 102609
+  geom_md5: f1e09d04e9df134c9654b6358c7e03cf
+- subtype: U
+  name: 'Uva : Secteur comprenant la coulée verte s''étendant du Chaudron à Moufia - Bois de Nèfles, la Jamaïque,
+    le Parc Urbain, Champ Fleuri, la Providence et le stade de la Redoute'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uva
+    partition: DU_97411
+  surface_m2: 214613
+  geom_md5: bb58730cb57276d1a33f45fc454d4503
+- subtype: U
+  name: 'Uva : Secteur comprenant la coulée verte s''étendant du Chaudron à Moufia - Bois de Nèfles, la Jamaïque,
+    le Parc Urbain, Champ Fleuri, la Providence et le stade de la Redoute'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uva
+    partition: DU_97411
+  surface_m2: 246057
+  geom_md5: 88df081f8f9222b38ac57c80940b67a8
+- subtype: U
+  name: 'Uva : Secteur comprenant la coulée verte s''étendant du Chaudron à Moufia - Bois de Nèfles, la Jamaïque,
+    le Parc Urbain, Champ Fleuri, la Providence et le stade de la Redoute'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uva
+    partition: DU_97411
+  surface_m2: 68828
+  geom_md5: f3f94a5927f21890e3651408ec9f0374
+- subtype: U
+  name: 'Uvac : Secteur comprenant la coulée verte sur le secteur du Moufia'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uvac
+    partition: DU_97411
+  surface_m2: 44714
+  geom_md5: 666e2fe7debfa2fe5fafa060ff1a8380
+- subtype: U
+  name: 'Uvl : Secteur couvrant l''espace de loisirs littoral de la ravine du Chaudron à la rivière Saint-Denis'
+  attrs:
+    idurba: 97411_PLU_20260423
+    source: API_CARTO_GPU
+    libelle: Uvl
+    partition: DU_97411
+  surface_m2: 765888
+  geom_md5: f71ef21f4afe6b8f46d9d40266859c09
+- subtype: U
+  name: Zone centre-ville
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UA
+    partition: DU_97418
+  surface_m2: 233213
+  geom_md5: 5a37c9fc7a57f9024667535309466d2b
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Convenance, Les Cafés,
+
+    La Grande-Montée et Bois-Rouge'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UC1
+    partition: DU_97418
+  surface_m2: 81694
+  geom_md5: 40e329f258334087ccc2c990e8caee5a
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 174882
+  geom_md5: b1a29d49fb1189c6e5cea1ffd2ab1115
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 19002
+  geom_md5: 7d29d199ab3e321d855191fcddf7e86e
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 23448
+  geom_md5: effc492301864006b0ae91ff33d8f7f3
+- subtype: U
+  name: 'Zone correspond aux quartiers de La Rivière-des-Pluies/Grande-Montée, de Duparc et des
+
+    franges du centre-ville'
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UB
+    partition: DU_97418
+  surface_m2: 768916
+  geom_md5: be6bb71f6e22ca131d8f62774f19b75f
+- subtype: U
+  name: Zone correspond à la zone dédiée au développement des activités aéroportuaires
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEa
+    partition: DU_97418
+  surface_m2: 319796
+  geom_md5: 03df3e00a1c10730c573cbd61b4a33e5
+- subtype: U
+  name: zone couvre l'aéroport Rolland Garros et les installations aéroportuaires et activités
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UR
+    partition: DU_97418
+  surface_m2: 2724550
+  geom_md5: 6cb60f8e08d1c651c064c5324d14fdf6
+- subtype: U
+  name: zone couvre les zones de développement commercial, de services et/ou tertiaire
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEc
+    partition: DU_97418
+  surface_m2: 67634
+  geom_md5: 864bb1787786f4d1f88454e546210962
+- subtype: U
+  name: zone couvre les zones de développement commercial, de services et/ou tertiaire
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEc
+    partition: DU_97418
+  surface_m2: 16364
+  geom_md5: 59e5b225f888311f09a1221e5452c1df
+- subtype: U
+  name: zone destinés à accueillir des activités économiques à vocation de production,de transformation, de réparation,
+    de conditionnement et de distribution, activités artisanales, de recherche, de formation et d'enseignement
+  attrs:
+    idurba: 97418_plu_20251126
+    source: API_CARTO_GPU
+    libelle: UEp
+    partition: DU_97418
+  surface_m2: 139350
+  geom_md5: 3a348d701afe4fd133263eb5f46e837a

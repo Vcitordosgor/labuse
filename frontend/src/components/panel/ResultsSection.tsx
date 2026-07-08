@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
-import { COMMUNE, getParcelsGeojson, getStats } from '../../lib/api'
+import { getCommunes, getParcelsGeojson, getResults, getStats } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { completudeColor, STATUT_META } from '../../lib/status'
@@ -25,7 +25,7 @@ function CompletudeRing({ value }: { value: number }) {
   )
 }
 
-function ResultCard({ p }: { p: ParcelProps }) {
+function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
   const { selectedIdu, select } = useApp()
   const meta = STATUT_META[p.status]
   const on = selectedIdu === p.idu
@@ -44,9 +44,15 @@ function ResultCard({ p }: { p: ParcelProps }) {
               ● ÉVÉNEMENT
             </span>
           )}
+          {(p.cluster ?? 0) > 1 && (
+            <span className="shrink-0 rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]"
+              title={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) parcelle(s) chaude(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}>
+              même proprio ×{p.cluster}
+            </span>
+          )}
           {p.vue_mer === 'oui' && <span className="shrink-0 text-[10px] text-[#7DE8E0]" title="Vue mer dégagée">◠</span>}
         </div>
-        <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {COMMUNE}</div>
+        <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
         <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}>{p.q_score}</span>
@@ -95,12 +101,23 @@ function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', numbe
 const CAP = 200
 
 export function ResultsSection() {
-  const { filters, query, zone, resetFilters } = useApp()
+  const { filters, query, zone, resetFilters, commune } = useApp()
+  const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   const [showAll, setShowAll] = useState(false)
-  const stats = useQuery({ queryKey: ['stats'], queryFn: getStats })
-  const geo = useQuery({ queryKey: ['geojson'], queryFn: getParcelsGeojson })
+  // compteurs par statut sous filtres de PÉRIMÈTRE (jamais le filtre statut lui-même)
+  const scopeOnly = useMemo(() => ({ ...filters, statuts: [] as Statut[] }), [filters])
+  const stats = useQuery({
+    queryKey: ['stats', commune, ile ? scopeOnly : null],
+    queryFn: () => getStats(ile ? scopeOnly : undefined),
+  })
+  const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
+  const serverList = useQuery({
+    queryKey: ['results', commune, filters],
+    queryFn: () => getResults(filters),
+    enabled: ile,
+  })
 
-  // props + centroïde (calculé UNE fois — sert au filtre de zone)
+  // props + centroïde (calculé UNE fois — sert au filtre de zone) — mode commune uniquement
   const props = useMemo(
     () => (geo.data?.features ?? []).map((f) => {
       const p = f.properties as unknown as ParcelProps
@@ -113,9 +130,10 @@ export function ResultsSection() {
   const scoped = hasScopeFilters(filters, zone)
   const qNorm = query.trim().toUpperCase().replace(/\s+/g, '')
 
-  // Compteurs : SANS filtre de périmètre → /stats (SQL-exact). AVEC → recalcul client marqué *.
+  // Compteurs : SANS filtre de périmètre → /stats (SQL-exact). AVEC → île : /stats FILTRÉ
+  // (SQL-exact aussi) ; commune : recalcul client marqué *.
   const counts = useMemo(() => {
-    if (!scoped && stats.data) {
+    if ((!scoped || ile) && stats.data) {
       const s = stats.data
       return { all: s.chaude + s.a_surveiller + s.a_creuser, chaude: s.chaude, a_surveiller: s.a_surveiller, a_creuser: s.a_creuser, ecartee: s.ecartee, exclue: 0 }
     }
@@ -126,18 +144,33 @@ export function ResultsSection() {
       c[p.status] = (c[p.status] ?? 0) + 1
     }
     return c
-  }, [props, filters, zone, scoped, stats.data])
+  }, [props, filters, zone, scoped, ile, stats.data])
 
-  const list = useMemo(
-    () => props
+  const list = useMemo(() => {
+    if (ile) {
+      // serveur : déjà filtré (chips) et trié (événement d'abord, puis score)
+      return ((serverList.data ?? []) as unknown as (ParcelProps & { commune?: string })[])
+        .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
+    }
+    return props
       .filter((p) => matchAll(p, filters, zone) && PROMUES.includes(p.status))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
-      .sort((a, b) => b.q_score + b.a_score - (a.q_score + a.a_score)),
-    [props, filters, zone, qNorm],
-  )
+      .sort((a, b) => {
+        // métier : l'ÉVÉNEMENT crée l'urgence de la semaine → toujours en tête, puis le score
+        const ev = Number(b.evenement === 'rouge') - Number(a.evenement === 'rouge')
+        return ev !== 0 ? ev : b.q_score + b.a_score - (a.q_score + a.a_score)
+      })
+  }, [ile, serverList.data, props, filters, zone, qNorm])
   const shown = showAll ? list : list.slice(0, CAP)
 
+  const loading = ile ? serverList.isLoading : geo.isLoading
+  const error = ile ? serverList.isError : geo.isError
+  const refetch = () => (ile ? serverList.refetch() : geo.refetch())
   const total = stats.data?.total ?? props.length
+
+  // bandeau honnête par commune (ex. Saint-Philippe = RNU) — porté par /communes
+  const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
   const promus = counts.all || 1
   const nFilters = (filters.statuts.length ? 1 : 0) + (scoped ? 1 : 0)
 
@@ -148,12 +181,23 @@ export function ResultsSection() {
         <span className="text-[11px] text-txt-mut">triés par score</span>
       </div>
 
+      {communeNote && (
+        <div className="mt-2 shrink-0 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[10.5px] leading-snug text-st-creuser">
+          ⚠ {communeNote}
+        </div>
+      )}
       <p className="mt-2 shrink-0 text-xs text-txt-mut">
         <span className="font-medium text-st-chaude">{fmt(counts.chaude)}</span> chaudes ·{' '}
         <span className="font-medium text-st-surveiller">{fmt(counts.a_surveiller)}</span> à surveiller ·{' '}
         <span className="font-medium text-st-creuser">{fmt(counts.a_creuser)}</span> à creuser
         {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
       </p>
+      {stats.data?.dossiers_chaudes != null && (stats.data.chaude > 0) && (
+        <p className="mt-1 shrink-0 text-[11px] text-txt-dim" title="La vraie unité de prospection : un propriétaire = un dossier, quel que soit son nombre de parcelles. Identification par SIREN (personnes morales) — les personnes physiques n'ont pas d'identité en base (doctrine).">
+          soit <span className="font-medium text-txt">{fmt(stats.data.dossiers_chaudes)}</span> dossier{stats.data.dossiers_chaudes > 1 ? 's' : ''} propriétaire identifié{stats.data.dossiers_chaudes > 1 ? 's' : ''}
+          {(stats.data.chaudes_sans_identite ?? 0) > 0 && <> (+{fmt(stats.data.chaudes_sans_identite ?? 0)} parcelle{(stats.data.chaudes_sans_identite ?? 0) > 1 ? 's' : ''} sans identité)</>}
+        </p>
+      )}
       <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
         <span className="bg-st-chaude" style={{ width: `${(counts.chaude / promus) * 100}%` }} />
         <span className="bg-st-surveiller" style={{ width: `${(counts.a_surveiller / promus) * 100}%` }} />
@@ -166,31 +210,32 @@ export function ResultsSection() {
       <StatutChips counts={counts} partial={scoped} />
 
       <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
-        {geo.isLoading && (
+        {loading && (
           <>
             {[...Array(5)].map((_, i) => (
               <div key={i} className="h-[52px] shrink-0 animate-pulse rounded-[10px] border border-line-2 bg-surface-3" />
             ))}
           </>
         )}
-        {geo.isError && (
+        {error && (
           <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
             <p className="text-st-ecartee">Erreur de chargement des parcelles.</p>
-            <button onClick={() => geo.refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
+            <button onClick={refetch} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
           </div>
         )}
-        {!geo.isLoading && !geo.isError && shown.length === 0 && (
+        {!loading && !error && shown.length === 0 && (
           <div className="rounded-lg border border-dashed border-line-2 p-4 text-center">
             <p className="text-xs text-txt-mut">Aucun résultat pour ces filtres.</p>
             <button onClick={resetFilters} className="mt-2 text-xs text-mint hover:underline">Réinitialiser les filtres</button>
           </div>
         )}
-        {shown.map((p) => <ResultCard key={p.idu} p={p} />)}
+        {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}
       </div>
 
       <div className="flex shrink-0 items-center justify-between border-t border-line py-3">
         <span className="text-[11px] text-txt-dim">
           {fmt(shown.length)} visibles ici{list.length > shown.length ? ` / ${fmt(list.length)}` : ''}
+          {ile && (serverList.data?.length ?? 0) >= 500 && ' · 500 premiers (île) — affinez les filtres'}
         </span>
         {list.length > CAP && (
           <button onClick={() => setShowAll((v) => !v)} className="text-xs text-mint hover:underline">

@@ -62,9 +62,10 @@ def ensure_tables(engine) -> None:
 
 @router.post("/division/compute")
 def division_compute(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
-    """Pré-calcule les candidats division (C1-C5) — idempotent (recalcule la commune)."""
-    db.execute(text("DELETE FROM module_division WHERE idu LIKE :pfx"),
-               {"pfx": ""})  # V1 mono-commune : on repart propre
+    """Pré-calcule les candidats division (C1-C5) — idempotent PAR COMMUNE (extension île : les
+    24 communes coexistent dans module_division, on ne repart propre que sur celle calculée)."""
+    db.execute(text("DELETE FROM module_division m USING parcels p"
+                    " WHERE p.id = m.parcel_id AND p.commune = :c"), {"c": commune})
     db.execute(text("""
         INSERT INTO module_division (parcel_id, idu, surface_m2, bati_count, emprise_pct, zone,
                                      mic_radius_m, lot_area_m2, lot_geom, acces_voirie, score)
@@ -130,15 +131,20 @@ def division_compute(commune: str = "Saint-Paul", db: Session = Depends(get_db))
 
 
 @router.get("/division")
-def division_list(min_score: int = 0, limit: int = 300, db: Session = Depends(get_db)) -> dict:
+def division_list(min_score: int = 0, limit: int = 300, commune: str | None = None,
+                  db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT m.idu, m.surface_m2, m.bati_count, m.emprise_pct, m.zone, m.mic_radius_m,
                m.lot_area_m2, m.acces_voirie, m.score, ST_AsGeoJSON(m.lot_geom) AS lot,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM module_division m JOIN parcels p ON p.id = m.parcel_id
-        WHERE m.score >= :s ORDER BY m.score DESC LIMIT :lim"""),
-        {"s": min_score, "lim": limit}).mappings().all()
-    total = db.execute(text("SELECT count(*) FROM module_division WHERE score >= :s"), {"s": min_score}).scalar()
+        WHERE m.score >= :s AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+        ORDER BY m.score DESC LIMIT :lim"""),
+        {"s": min_score, "lim": limit, "c": commune}).mappings().all()
+    total = db.execute(text(
+        "SELECT count(*) FROM module_division m JOIN parcels p ON p.id = m.parcel_id"
+        " WHERE m.score >= :s AND (CAST(:c AS text) IS NULL OR p.commune = :c)"),
+        {"s": min_score, "c": commune}).scalar()
     return {"total": int(total or 0), "items": [{
         "idu": r["idu"], "surface_m2": round(r["surface_m2"] or 0), "bati_count": r["bati_count"],
         "emprise_pct": r["emprise_pct"], "zone": r["zone"], "mic_radius_m": r["mic_radius_m"],
@@ -192,7 +198,7 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
 # ───────────────────────── M03 — RADAR PERMIS ─────────────────────────
 
 @router.get("/permis")
-def permis(commune: str = "Saint-Paul", months: int = 24, db: Session = Depends(get_db)) -> dict:
+def permis(commune: str | None = None, months: int = 24, db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
     rows = db.execute(text("""
@@ -200,11 +206,15 @@ def permis(commune: str = "Saint-Paul", months: int = 24, db: Session = Depends(
                raw->>'etat' AS etat, raw->>'nb_lgt' AS nb_lgt, raw->>'surf_hab' AS surf_hab,
                CASE WHEN geom IS NOT NULL THEN ST_AsGeoJSON(geom) END AS g
         FROM sitadel_permits
-        WHERE commune = :c AND date >= :dmax - (:m || ' months')::interval
+        WHERE (CAST(:c AS text) IS NULL OR commune = :c) AND date >= :dmax - (:m || ' months')::interval
         ORDER BY date DESC LIMIT 2000"""), {"c": commune, "m": months, "dmax": dmax}).mappings().all()
+    true_total = int(db.execute(text(
+        """SELECT count(*) FROM sitadel_permits
+           WHERE (CAST(:c AS text) IS NULL OR commune = :c) AND date >= :dmax - (:m || ' months')::interval"""),
+        {"c": commune, "m": months, "dmax": dmax}).scalar() or 0)
     geo = [r for r in rows if r["g"]]
     return {
-        "commune": commune, "months": months, "total": len(rows),
+        "commune": commune or "Toute l'île", "months": months, "total": true_total, "affiches": len(rows),
         "donnees_jusqu_au": dmax.date().isoformat() if dmax else None,
         "geocodes": len(geo), "pct_geocode": round(100 * len(geo) / len(rows)) if rows else 0,
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "surf_hab")},
@@ -218,7 +228,7 @@ def permis(commune: str = "Saint-Paul", months: int = 24, db: Session = Depends(
 # « Promesse morte » = PC daté > N mois, SANS daact, ET parcelle toujours sans bâti significatif.
 
 @router.get("/promesses")
-def promesses(commune: str = "Saint-Paul", months: int = 24, db: Session = Depends(get_db)) -> dict:
+def promesses(commune: str | None = None, months: int = 24, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT s.permit_id, s.type, s.date::date::text AS date, s.raw->>'etat' AS etat,
                s.raw->>'nb_lgt' AS nb_lgt, p.idu, round(p.surface_m2) AS surface_m2,
@@ -228,7 +238,7 @@ def promesses(commune: str = "Saint-Paul", months: int = 24, db: Session = Depen
         JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
         JOIN parcels p ON p.idu = c.idu
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE s.type = 'PC' AND s.commune = :c
+        WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
           AND s.date < now() - (:m || ' months')::interval
           AND s.raw->>'daact' IS NULL
           -- parcelle toujours non bâtie : pas d'exclusion « déjà bâti » au run q_v2
@@ -237,7 +247,19 @@ def promesses(commune: str = "Saint-Paul", months: int = 24, db: Session = Depen
                             AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')
         ORDER BY s.date ASC LIMIT 500"""),
         {"c": commune, "m": months, "run": RUN}).mappings().all()
-    return {"commune": commune, "months": months, "total": len(rows),
+    # affichage borné à 500 (tri anciens d'abord = les plus « morts ») ; le compte reste honnête
+    true_total = len(rows) if len(rows) < 500 else int(db.execute(text("""
+        SELECT count(DISTINCT s.id) FROM sitadel_permits s
+        JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
+        JOIN parcels p ON p.idu = c.idu
+        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
+          AND s.date < now() - (:m || ' months')::interval AND s.raw->>'daact' IS NULL
+          AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
+                          WHERE cr.run_label = :run AND cr.parcel_id = p.id
+                            AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
+        {"c": commune, "m": months, "run": RUN}).scalar() or 0)
+    return {"commune": commune or "Toute l'île", "months": months, "total": true_total, "affiches": len(rows),
             "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "idu",
                                             "surface_m2", "statut", "q_score")},
                        "geom": json.loads(r["g"])} for r in rows]}
@@ -275,7 +297,7 @@ def velocite(fmt: str = "json", db: Session = Depends(get_db)):
 # ───────────────────────── M07 — FONCIER FANTÔME ─────────────────────────
 
 @router.get("/fantome")
-def fantome(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
+def fantome(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut, d.q_score,
                pm.siren, pm.denomination,
@@ -285,13 +307,19 @@ def fantome(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         JOIN parcelle_personne_morale pm ON pm.idu = p.idu
-        WHERE p.commune = :c AND d.q_score >= 50 AND pm.groupe NOT IN (1, 2, 3, 4, 9)
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.q_score >= 50 AND pm.groupe NOT IN (1, 2, 3, 4, 9)
           AND pm.siren IS NOT NULL
           AND (NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren)
                OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))
         ORDER BY d.q_score DESC LIMIT 600"""),
         {"c": commune, "run": RUN}).mappings().all()
-    return {"total": len(rows), "items": [{
+    true_total = len(rows) if len(rows) < 600 else int(db.execute(text(
+        """SELECT count(*) FROM parcels p
+           JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+           JOIN parcelle_personne_morale pm ON pm.idu = p.idu
+           WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.q_score >= 50
+             AND pm.groupe NOT IN (1, 2, 3, 4, 9)"""), {"c": commune, "run": RUN}).scalar() or 0)
+    return {"total": true_total, "affiches": len(rows), "items": [{
         **{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "siren", "denomination")},
         "verrou": "PM introuvable au RNE" if r["inpi_introuvable"] else "dirigeant inactif (RNE)",
         "levier": "notaire / recherche du représentant" if r["inpi_introuvable"] else "rachat de parts / contact liquidateur",
@@ -302,7 +330,7 @@ def fantome(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
 # ───────────────────────── M06 — MODE BAILLEUR ─────────────────────────
 
 @router.get("/bailleur")
-def bailleur(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict:
+def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut,
                d.q_score, d.a_score, r.sdp_residuelle_m2,
@@ -311,10 +339,18 @@ def bailleur(commune: str = "Saint-Paul", db: Session = Depends(get_db)) -> dict
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         JOIN spatial_layers q ON q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975)
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE p.commune = :c AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
         ORDER BY COALESCE(r.sdp_residuelle_m2, 0) DESC LIMIT 500"""),
         {"c": commune, "run": RUN}).mappings().all()
-    return {"total": len(rows),
+    true_total = len(rows) if len(rows) < 500 else int(db.execute(text(
+        """SELECT count(*) FROM parcels p
+           JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+           WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+             AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+             AND EXISTS (SELECT 1 FROM spatial_layers q WHERE q.kind = 'qpv'
+                         AND ST_Intersects(p.geom_2975, q.geom_2975))"""),
+        {"c": commune, "run": RUN}).scalar() or 0)
+    return {"total": true_total, "affiches": len(rows),
             "lecture_lls": ("QPV : TVA 2,1 % (au lieu de 8,5 % DOM), abattement TFPB 30 %, "
                             "éligibilité LLS/LLTS renforcée — bilan bailleur à instruire au cas par cas."),
             "items": [{**{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "a_score")},
@@ -398,3 +434,120 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
                      else {"ref": t, "erreur": "référence introuvable"})
     ok = [i for i in items if "idu" in i]
     return {"n_demandes": len(tokens), "n_trouvees": len(ok), "items": items}
+
+
+# ───────────────── M22 + BILAN — ÉTUDE DE FAISABILITÉ BIDIRECTIONNELLE ─────────────────
+# RÉUTILISE le moteur existant (faisabilite/engine + bilan) — rien de recalculé à la main.
+# Ratios : étage 3 m, place 25 m² (config plu YAML) ; m²/logement = paramètre AFFICHÉ (défaut 60).
+
+@router.get("/faisabilite/{idu}")
+def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
+    """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
+    from ..faisabilite.bilan import compute_bilan, sector_price
+    from ..faisabilite.db import parcel_faisabilite
+    from ..faisabilite.engine import Hypotheses
+
+    row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not row:
+        raise HTTPException(404, "Parcelle inconnue")
+    out: dict = {"idu": idu}
+    fz = parcel_faisabilite(db, row["id"])
+    if fz:
+        _ctx, f = fz
+        out["capacite"] = {"zone": f.zone, "verdict": f.verdict, "calibree": f.calibree,
+                           "fourchette": f.fourchette, "hypotheses": f.hypotheses,
+                           "bandeau": f.bandeau}
+    else:
+        out["capacite"] = None
+    hyp = Hypotheses()
+    prix = sector_price(db, row["id"], hyp)
+    out["marche"] = {k: prix.get(k) for k in ("type_prix", "median", "q1", "q3", "n", "fiabilite",
+                                              "tendance", "volatilite", "radius_m") if k in prix}
+    shab = (f.fourchette or {}).get("shab_vendable_m2") if fz else None
+    if shab and prix.get("median"):
+        b = compute_bilan(float(shab), float(row["s"] or 0), prix, hyp)
+        out["bilan"] = {k: v for k, v in b.__dict__.items() if not k.startswith("_")}
+    else:
+        out["bilan"] = None
+    # fiscal / leviers (bilan promoteur — données en base + hypothèses ÉTIQUETÉES)
+    qpv = bool(db.execute(text("""SELECT 1 FROM spatial_layers q JOIN parcels p ON p.idu = :i
+        WHERE q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975) LIMIT 1"""), {"i": idu}).scalar())
+    vue = db.execute(text("SELECT vue FROM parcel_vue_mer vm JOIN parcels p ON p.id = vm.parcel_id WHERE p.idu = :i"),
+                     {"i": idu}).scalar()
+    out["fiscal"] = {
+        "qpv": qpv,
+        "tva": ("2,1 % (LLS en QPV — LODEOM) au lieu de 8,5 % DOM" if qpv
+                else "8,5 % (taux DOM) — 2,1 % possible en LLS selon montage"),
+        "ta_note": "Taxe d'aménagement : taux communal à confirmer en mairie (non ingéré) — "
+                   "hypothèse indicative 5 % + part départementale.",
+        "vue_mer": vue,
+        "prime_vue_mer": "prime de prix de sortie (vue dégagée)" if vue == "oui" else None,
+    }
+    return out
+
+
+class ProgrammeIn(BaseModel):
+    type: str = "logements"          # logements | etudiant | bureaux
+    batiments: int = 1
+    niveaux: int = 2                 # R+n → n
+    logements_par_batiment: int = 8
+    surface_unite_m2: float = 60     # hypothèse AFFICHÉE (m² SDP par unité)
+    parking: bool = True
+    commune: str | None = None       # None = île entière (extension île)
+
+
+@router.post("/programme")
+def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
+    """SENS 2 (programme → parcelles) : critères CALCULÉS et AFFICHÉS → candidates triées par
+    marge de capacité. La hauteur PLU est vérifiée zone par zone (resolve_zone) quand calibrée."""
+    from ..faisabilite.plu_rules import resolve_zone
+
+    unites = max(1, body.batiments) * max(1, body.logements_par_batiment)
+    sdp_min = round(unites * body.surface_unite_m2 * 1.15)       # +15 % circulations (hypothèse)
+    parking_m2 = round(unites * 25) if body.parking else 0        # 25 m²/place (config PLU)
+    hauteur_min = (body.niveaux + 1) * 3.0                        # R+n → (n+1) niveaux × 3 m
+    rows = db.execute(text("""
+        SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
+               d.matrice_statut AS statut, d.q_score, cr.detail AS zonage,
+               ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
+        FROM parcels p
+        JOIN parcel_residuel r ON r.parcel_id = p.id AND r.sdp_residuelle_m2 >= :sdp
+        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+          AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+        LEFT JOIN dryrun_cascade_results cr ON cr.run_label = :run AND cr.parcel_id = p.id
+          AND cr.layer_name = 'zonage_plu_gpu' AND cr.detail LIKE 'Zone PLU%'
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin
+        ORDER BY r.sdp_residuelle_m2 DESC LIMIT 300"""),
+        {"sdp": sdp_min, "run": RUN, "c": body.commune,
+         "smin": sdp_min * 0.4 + parking_m2}).mappings().all()
+    import re as _re
+    items = []
+    for r in rows:
+        m = _re.search(r"« ([^»]+) »", r["zonage"] or "")
+        zone = (m.group(1) if m else "").strip()
+        # la hauteur PLU se résout avec la commune DE LA PARCELLE (mode île : elles diffèrent)
+        rules = resolve_zone(zone, r["commune"]) if zone else None
+        h = getattr(rules, "hauteur_max_m", None) if rules else None
+        if h is None and rules is not None:
+            h = getattr(rules, "hf_m", None) or getattr(rules, "he_m", None)
+        hauteur_ok = (h is None) or (float(h) >= hauteur_min)
+        if not hauteur_ok:
+            continue
+        marge = round(float(r["sdp_residuelle_m2"]) / sdp_min, 2)
+        items.append({"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
+                      "sdp": round(r["sdp_residuelle_m2"]),
+                      "statut": r["statut"], "q_score": r["q_score"], "zone": zone or None,
+                      "hauteur_plu_m": float(h) if h is not None else None,
+                      "hauteur_verifiee": h is not None, "marge_capacite": marge,
+                      "geom": json.loads(r["g"])})
+    items.sort(key=lambda x: -x["marge_capacite"])
+    return {
+        "criteres": {"unites": unites, "sdp_min_m2": sdp_min,
+                     "calcul": f"{unites} unités × {body.surface_unite_m2} m² × 1,15 (circulations)",
+                     "parking_m2": parking_m2, "hauteur_min_m": hauteur_min,
+                     "hauteur_regle": f"R+{body.niveaux} → {hauteur_min:.0f} m ({body.niveaux + 1} niveaux × 3 m)"},
+        "bandeau": ("Estimation capacitaire — hypothèses affichées (m²/unité, +15 % circulations, "
+                    "25 m²/place) ; hauteur PLU vérifiée quand la zone est calibrée, sinon « à "
+                    "instruire ». Étude d'architecte requise."),
+        "n": len(items), "items": items[:200],
+    }

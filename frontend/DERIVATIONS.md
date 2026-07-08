@@ -146,3 +146,53 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   normalisée `M0 10 Q8 0 16 8 Q24 0 32 10`) — header, rail, favicons regénérés (pixels menthe
   vérifiés par assertion). La barre d'onglet native n'est pas capturable en headless
   (permissions macOS) : la capture 20 montre le favicon RÉELLEMENT SERVI + le titre RÉEL.
+
+## Passe expert (IA réelle)
+- **QA provider-aware** : les suites lisent `/ia/status` — stub → bannière « Mode dégradé » EXIGÉE,
+  anthropic → INTERDITE. Un même test décrit les deux mondes ; plus d'assertion périmée au changement de clé.
+- **Latence réelle** : tous les `waitForTimeout` post-IA remplacés par des `waitForSelector`
+  (20-25 s max) — le test attend le résultat, pas une durée devinée.
+- **« score > 80 »** : stub → `scoreMin: 80` (approx.), modèle réel → `81` (strict, filtre inclusif).
+  Les deux fidèles → le test accepte 80|81. Non-déterminisme assumé, borné par le schéma.
+
+## Extension île (mandat généralisation)
+- **Défaut = « Toute l'île »** (mandat : compteurs île par défaut) ; la commune vit dans
+  l'URL `#c=` — un lien partagé rouvre le bon périmètre.
+- **Carte hybride** : mode commune = GeoJSON intact (26 Mo à SP, zéro régression) ; mode île
+  = MVT matérialisé (z10-12 promues, z13+ tout — les écartées à 0,04 d'opacité n'apportent
+  rien sous ~10 km d'écran). Mêmes clés de propriétés → mêmes expressions de filtre ;
+  `flags` en CSV dans les tuiles (`['in', flag, ['get','flags']]` marche sur chaîne et tableau).
+- **Honnêteté avant boutons morts** : en mode île, la zone dessinée et les couches
+  commune-scopées (zonage/PPR/parc) sont DÉSACTIVÉES avec la marche à suivre — pas des
+  toggles qui ne font rien.
+- **Copilote & périmètre** : une phrase AVEC commune bascule le sélecteur ; une phrase SANS
+  commune ne touche pas au périmètre courant (`commune: null` est la valeur neutre du modèle,
+  pas une demande de revenir à l'île — le sélecteur est là pour ça).
+- **Liste île = 500 premiers** (tri événement d'abord puis score), affiché honnêtement ;
+  les compteurs restent SQL-exacts (filtres des chips traduits en SQL, mêmes clés que matchScope).
+- **Suites historiques** : elles testent le MODE COMMUNE → épinglées sur `#c=Saint-Paul`.
+  Piège appris : `goto` vers la même URL à hash différent = navigation fragment SANS
+  rechargement → `reload()` explicite quand la suite veut une page fraîche.
+- **Matrice réalignée (île)** : les statuts q_v2 de Saint-Paul dataient d'une convention
+  jamais committée (dvf/sitadel en Q) ; l'invariant du mandat (base+Σ=score) échouait sur
+  SP et passait sur les 23 autres. Rejoué le POST-PASS matrice de SP sur la convention
+  committée (83→375 chaudes, AC0253 toujours chaude, cascade intouchée, traçabilité 20/20).
+  Arbitrage seuils rendu à Vic (BILAN_ILE §2) — une île, une convention.
+- **QA adaptées aux données île** : liste plafonnée à 200 cartes (« Tout voir ») → assertion
+  min(n,200) ; module_division porte 24 communes → compteur SQL scoppé commune.
+
+## Mandat mini (convention · dossiers · calibrage)
+- **Convention de matrice** : pas de nouveau fichier — `config/scoring_matrice.yaml` EST
+  l'objet versionné (en-tête convention: version/date/justification). Les seuils étaient
+  déjà en YAML ; l'invariant anti-dérive = empreinte statut×commune identique à convention
+  identique (prouvé simulate ET apply).
+- **Clé dossier = SIREN** (personnes morales DGFiP). Limite : deux parcelles d'une même
+  personne PHYSIQUE ne se regroupent pas (aucune identité en base, doctrine) — comptées au
+  reliquat « sans identité », jamais fusionnées silencieusement.
+- **Calibrage re-gravé = le zonage opposable** (ce que la DB sait). Les RÈGLES par zone
+  (hauteurs/articles des règlements PDF) n'ont JAMAIS été en DB — leurs YAML perdus restent
+  au backlog (re-extraction règlements). Manifestes versionnés config/calibrage/ (1,5 Mo) ;
+  géométries data/calibrage/*.gz (politique du dépôt : pas de dump public en git — couvert
+  backup, régénérable par export).
+- **Marqueurs communes = DOM markers** (pas de couche symbol : aucune dépendance glyphes,
+  cohérent avec les étiquettes de mesure) ; centroïde = centre bbox (suffisant à z<10).

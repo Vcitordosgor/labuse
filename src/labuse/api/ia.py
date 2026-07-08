@@ -79,20 +79,87 @@ FILTER_SCHEMA = {
         "evenement": {"type": "boolean"},
         "vueMer": {"type": "boolean"},
         "flags": {"type": "array", "items": {"enum": ["sol_pollue", "abf", "icpe", "risques", "prescription_plu"]}},
+        "commune": {"type": ["string", "null"], "enum": [
+            "Les Avirons", "Bras-Panon", "Entre-Deux", "L'Étang-Salé", "Petite-Île",
+            "La Plaine-des-Palmistes", "Le Port", "La Possession", "Saint-André", "Saint-Benoît",
+            "Saint-Denis", "Saint-Joseph", "Saint-Leu", "Saint-Louis", "Saint-Paul",
+            "Saint-Pierre", "Saint-Philippe", "Sainte-Marie", "Sainte-Rose", "Sainte-Suzanne",
+            "Salazie", "Le Tampon", "Les Trois-Bassins", "Cilaos", None]},
     },
 }
+
+#: variantes usuelles → nom officiel (le stub ET la projection du réel passent par là)
+_COMMUNE_ALIASES: dict[str, str] = {
+    "avirons": "Les Avirons", "bras-panon": "Bras-Panon", "bras panon": "Bras-Panon",
+    "entre-deux": "Entre-Deux", "entre deux": "Entre-Deux",
+    "etang-sale": "L'Étang-Salé", "etang sale": "L'Étang-Salé", "étang-salé": "L'Étang-Salé", "étang salé": "L'Étang-Salé",
+    "petite-ile": "Petite-Île", "petite ile": "Petite-Île", "petite-île": "Petite-Île", "petite île": "Petite-Île",
+    "plaine-des-palmistes": "La Plaine-des-Palmistes", "plaine des palmistes": "La Plaine-des-Palmistes",
+    "le port": "Le Port", "possession": "La Possession",
+    "saint-andre": "Saint-André", "saint andre": "Saint-André", "saint-andré": "Saint-André", "saint andré": "Saint-André",
+    "saint-benoit": "Saint-Benoît", "saint benoit": "Saint-Benoît", "saint-benoît": "Saint-Benoît", "saint benoît": "Saint-Benoît",
+    "saint-denis": "Saint-Denis", "saint denis": "Saint-Denis",
+    "saint-joseph": "Saint-Joseph", "saint joseph": "Saint-Joseph",
+    "saint-leu": "Saint-Leu", "saint leu": "Saint-Leu",
+    "saint-louis": "Saint-Louis", "saint louis": "Saint-Louis",
+    "saint-paul": "Saint-Paul", "saint paul": "Saint-Paul",
+    "saint-pierre": "Saint-Pierre", "saint pierre": "Saint-Pierre",
+    "saint-philippe": "Saint-Philippe", "saint philippe": "Saint-Philippe",
+    "sainte-marie": "Sainte-Marie", "sainte marie": "Sainte-Marie",
+    "sainte-rose": "Sainte-Rose", "sainte rose": "Sainte-Rose",
+    "sainte-suzanne": "Sainte-Suzanne", "sainte suzanne": "Sainte-Suzanne",
+    "salazie": "Salazie", "tampon": "Le Tampon",
+    "trois-bassins": "Les Trois-Bassins", "trois bassins": "Les Trois-Bassins",
+    "cilaos": "Cilaos",
+}
+
+
+def _detect_commune(low: str) -> str | None:
+    """La commune extraite du texte (l'île entière est couverte — plus de refus « hors périmètre »
+    pour « les chaudes de Saint-Pierre »). Les noms longs d'abord (saint-pierre avant pierre)."""
+    for alias in sorted(_COMMUNE_ALIASES, key=len, reverse=True):
+        if alias in low:
+            return _COMMUNE_ALIASES[alias]
+    return None
 
 
 class SearchIn(BaseModel):
     text: str
 
 
+def _stub_programme(low: str) -> dict | None:
+    """Détection « programme immobilier » → préremplissage du formulaire M22 (sens 2)."""
+    if not re.search(r"immeuble|b[âa]timent|r\s*\+\s*\d|programme|r[ée]sidence|logements? pour", low):
+        return None
+    prog: dict = {}
+    m = re.search(r"(\d+)\s*(?:immeubles?|b[âa]timents?)", low)
+    if m:
+        prog["batiments"] = int(m.group(1))
+    m = re.search(r"r\s*\+\s*(\d+)", low)
+    if m:
+        prog["niveaux"] = int(m.group(1))
+    m = re.search(r"(\d+)\s*(?:logements?|unit[ée]s?|studios?)", low)
+    if m:
+        prog["logements_par_batiment"] = max(1, int(m.group(1)) // max(1, prog.get("batiments", 1)))
+    if re.search(r"[ée]tudiant", low):
+        prog["type"] = "etudiant"
+        prog.setdefault("surface_unite_m2", 25)
+    if re.search(r"bureau", low):
+        prog["type"] = "bureaux"
+    prog["parking"] = not re.search(r"sans parking", low)
+    return prog if len(prog) > 1 else None
+
+
 def _stub_nl(t: str) -> tuple[dict | None, str]:
     """Stub local : règles lexicales déterministes. Renvoie (filtres, explication) ou (None, refus)."""
     low = t.lower()
     f: dict = {"statuts": [], "scoreMin": None, "surfaceMin": None, "surfaceMax": None,
-               "sdpMin": None, "evenement": False, "vueMer": False, "flags": []}
+               "sdpMin": None, "evenement": False, "vueMer": False, "flags": [], "commune": None}
     hits = []
+    commune = _detect_commune(low)
+    if commune:
+        f["commune"] = commune
+        hits.append(f"commune {commune}")
     if re.search(r"chaude", low):
         f["statuts"].append("chaude")
         hits.append("statut chaude")
@@ -138,15 +205,28 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
         hits.append(f"Q ≥ {f['scoreMin']}")
     if not hits:
         return None, ("Hors périmètre : je sais traduire des critères de recherche foncière "
-                      "(statut, vue mer, surface, SDP, score, événement, flags). Reformulez ?")
+                      "(commune, statut, vue mer, surface, SDP, score, événement, flags). Reformulez ?")
     return f, "Filtres appliqués : " + ", ".join(hits) + "."
 
 
-_NL_SYSTEM = """Tu traduis une demande de prospection foncière en JSON de filtres.
-Tu renvoies UNIQUEMENT un objet JSON conforme au schéma (aucun texte autour) :
+_NL_SYSTEM = """Tu traduis une demande de prospection foncière (La Réunion) en JSON. Réponds par
+UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Trois formes possibles :
+1. Recherche filtrable → objet conforme à ce schéma (champs non mentionnés = valeur neutre [], null, false) :
 {schema}
-Champs non mentionnés → valeur neutre ([], null, false). Si la demande est hors périmètre
-(pas une recherche foncière filtrable), renvoie {{"out_of_scope": "raison courte"}}."""
+   Correspondances : « vue mer/bord de mer » → vueMer ; « usine/industriel » → flags icpe ;
+   « pollué » → flags sol_pollue ; « inondation/risque » → flags risques ; « monument » → flags abf ;
+   « bodacc/liquidation/événement » → evenement ; les statuts sont chaude/a_surveiller/a_creuser/ecartee.
+   Une commune de La Réunion nommée dans la demande → commune (nom OFFICIEL de l'enum du schéma,
+   ex. « au Tampon » → "Le Tampon", « à l'Étang-Salé » → "L'Étang-Salé"). Les 24 communes de
+   l'île sont TOUTES couvertes par le radar — ce n'est jamais hors périmètre.
+2. Programme immobilier (« N immeubles R+n, X logements, parking ») →
+   {{"programme": {{"type": "logements|etudiant|bureaux", "batiments": n, "niveaux": n,
+     "logements_par_batiment": n, "parking": true|false}}}}
+3. Hors périmètre (météo, rédaction, géographie non filtrable, ou TOUTE demande de MODIFIER un
+   score — les scores sont déterministes, tu ne les changes jamais) →
+   {{"out_of_scope": "raison courte et polie"}}
+Sois strict : n'invente JAMAIS un filtre non demandé. Le champ "type" n'existe QUE dans
+"programme" — jamais dans un objet de filtres."""
 
 
 @router.post("/search")
@@ -160,17 +240,32 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
             messages=[{"role": "user", "content": body.text}])
         raw = msg.content[0].text.strip()
         _log(db, "search", MODEL_NL, False, msg.usage.input_tokens, msg.usage.output_tokens)
+        if raw.startswith("```"):
+            raw = raw.strip("`").removeprefix("json").strip()   # le réel enrobe parfois — le stub ne l'apprend pas
         try:
             data = json.loads(raw)
         except json.JSONDecodeError:
             return {"stub": False, "out_of_scope": "réponse IA illisible — réessayez"}
         if "out_of_scope" in data:
             return {"stub": False, "out_of_scope": data["out_of_scope"]}
+        if "programme" in data:
+            return {"stub": False, "programme": data["programme"],
+                    "explanation": "Programme détecté → formulaire Faisabilité pré-rempli (le moteur déterministe calcule)."}
+        # dégradation gracieuse : on PROJETTE sur les clés du schéma (une clé parasite ne doit pas
+        # faire échouer une demande par ailleurs valide) — le schéma reste le garde-fou final
+        data = {k: v for k, v in data.items() if k in FILTER_SCHEMA["properties"]}
+        if isinstance(data.get("commune"), str):   # variante non officielle → normalisée, sinon l'enum tranche
+            data["commune"] = _COMMUNE_ALIASES.get(data["commune"].lower().strip(), data["commune"])
         try:
             validate(data, FILTER_SCHEMA)   # le schéma est le GARDE-FOU : jamais de filtre inventé
         except ValidationError as exc:
             return {"stub": False, "out_of_scope": f"filtre non conforme ({exc.message[:60]}) — réessayez"}
         return {"stub": False, "filters": data, "explanation": "Filtres proposés par l'IA (validés par schéma)."}
+    prog = _stub_programme(body.text.lower())
+    if prog:
+        _log(db, "search", "stub-local", True)
+        return {"stub": True, "programme": prog,
+                "explanation": "Programme détecté → formulaire Faisabilité pré-rempli (le moteur déterministe calcule)."}
     filters, explanation = _stub_nl(body.text)
     _log(db, "search", "stub-local", True)
     if filters is None:
@@ -217,8 +312,11 @@ def _stub_pourquoi(f: dict) -> str:
 
 
 _SYNTH_SYSTEM = ("Tu rédiges une synthèse de prospection foncière EXCLUSIVEMENT à partir du JSON "
-                 "fourni (fiche tracée). INTERDIT d'inventer un fait absent du JSON. Concis, "
-                 "professionnel, français. Termine par les inconnues à lever.")
+                 "fourni (fiche tracée). INTERDIT d'inventer un fait absent du JSON. "
+                 "FORMAT : texte brut UNIQUEMENT — aucun markdown, aucun tableau, aucun titre #. "
+                 "150 mots MAXIMUM, 3 paragraphes : (1) verdict en une phrase, (2) points forts et "
+                 "vigilances chiffrés, (3) inconnues à lever. Vocabulaire promoteur : charge "
+                 "foncière, SDP, prospect, R+n. Le texte s'affiche dans un panneau étroit.")
 
 
 def _real_text(db: Session, kind: str, system: str, payload: dict) -> str:
@@ -246,7 +344,9 @@ def ia_pourquoi(idu: str, db: Session = Depends(get_db)) -> dict:
     f = _fiche_json(db, idu)
     if _has_key():
         sys_p = ("Tu expliques pédagogiquement un score foncier à partir du JSON de lignes tracées. "
-                 "INTERDIT d'inventer. Rappelle que le score est déterministe et tracé.")
+                 "INTERDIT d'inventer. FORMAT : texte brut sans markdown, 150 mots max — les 3 "
+                 "signaux qui pèsent le plus sur Q, puis sur A, chacun en une ligne « ±N — "
+                 "explication ». Rappelle en une phrase que le score est déterministe et tracé.")
         return {"stub": False, "texte": _real_text(db, "pourquoi", sys_p, f),
                 "mention": "Explication générée — le score reste 100 % déterministe."}
     _log(db, "pourquoi", "stub-local", True)
