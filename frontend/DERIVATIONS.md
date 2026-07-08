@@ -328,3 +328,35 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
 - **Rail** : nouvelle entrée « Projets » (dossier + étoile) entre Outils et CRM. Vue CRUD
   sobre : liste, ouvrir/renommer/archiver, onglets Actifs/Archivés, création renvoyée à
   l'entretien copilote (« + Décrire un projet » → vue IA).
+
+## Copilote-projet — V2 : l'entretien (08/07)
+- **Deux voies d'entrée** : (1) le champ copilote détecte l'intention projet — `/ia/search`
+  renvoie `{projet_intent: true}` pour une demande d'OPÉRATION sans critère filtrable
+  (« je veux monter… ») ; (2) bouton explicite « Décrire mon projet ». La recherche simple
+  (filtres) et « les chaudes de X » (parcours C) restent inchangées : critère filtrable présent
+  → forme 1 directe.
+- **La forme `cadrage` (R2) est REMPLACÉE par l'entretien** : le cadrage ≤2 questions →
+  filtres jetables devient l'entretien ≤4 questions → objet PROJET persistant. `CADRAGE_SCHEMA`
+  supprimé ; qa_revue2/qa_ia mises à jour (R2-b teste désormais l'entretien).
+- **L'IA re-dérive la fiche ENTIÈRE chaque tour** (prev fiche + nouveau message → fiche mergée,
+  validée par FICHE_SCHEMA à vocabulaire fermé). Les chips sont des raccourcis : cliquer une
+  chip renvoie son LABEL comme message → l'IA re-merge. L'IA reste seule maîtresse de la
+  construction de la fiche, sous garde-fou schéma. `clean_fiche` retire les null/""/vides que
+  l'IA émet pour une dimension pas encore sue (hors enum → casserait le schéma).
+- **Skippable + défaut honnête** : chaque question porte un `defaut` affiché (« → toute l'île »,
+  « → sans contrainte rédhibitoire ») ; le skip envoie « je ne sais pas » → l'IA applique le
+  défaut dans la fiche. Jauge = 4 cases (programme/ampleur/où/contraintes) remplies.
+- **Arbitrages SOURCÉS ou tus** : `GET /projets/reperes?dimension=secteur|commune` sert, par
+  SQL pur, nb d'opportunités (q_v2), prix médian DVF bâti (€/m² habitable), communes carencées
+  SRU. Le front annote les chips d'une question `dimension:secteur`. AUCUN chiffre produit par
+  l'IA. Le prix médian utilise le bâti (aucune mutation terrain-nu en base — consigné).
+- **Interdit d'opinion marché non chiffrée** : gravé dans le prompt système ET vérifié par un
+  garde-fou (`contient_opinion_marche` + `_neutralise_opinion`) — toute réponse portant « plus
+  porteur / meilleur potentiel / je recommande… » dans un champ libre est NEUTRALISÉE
+  (reformulation générique, chips fautives purgées, flag `doctrine_neutralise`).
+- **Mode dégradé stub** : pas d'entretien simulé — `/ia/entretien` renvoie `fallback:true` +
+  message honnête ; le front bascule sur la recherche directe. (Doctrine : jamais de questions
+  fabriquées par le stub.)
+- **derive vs create** : « Lancer la recherche » appelle `POST /projets/derive` (nom + filtres +
+  programme + SDP besoin, SANS persister) puis applique — la restitution proposera « Enregistrer
+  ce projet » (V3) qui, lui, crée l'objet. `useApplySearch` mutualise la mise en scène.

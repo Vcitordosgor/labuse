@@ -170,7 +170,25 @@ export interface Projet {
   fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
 }
+// L'entretien de cadrage (réel uniquement — fallback si stub)
+export interface EntretienChip { label: string; value?: string }
+export interface EntretienQuestion { id: string; texte: string; dimension?: 'secteur' | 'commune'; defaut?: string; chips: EntretienChip[] }
+export interface EntretienRep {
+  stub: boolean; fallback?: boolean; message?: string
+  reformulation?: string; fiche?: FicheProjet; nom?: string; pret?: boolean
+  questions?: EntretienQuestion[]; doctrine_neutralise?: boolean
+}
+export const iaEntretien = (body: { text: string; fiche?: FicheProjet; history?: { role: string; content: string }[] }) =>
+  j<EntretienRep>('/ia/entretien', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+
+export interface RepereOption { key: string; label: string; nb_opportunites: number; dvf_median_eur_m2: number | null; communes_carencees: string[] }
+export const getReperes = (dimension: 'secteur' | 'commune') =>
+  j<{ dimension: string; options: RepereOption[]; note: string }>(`/projets/reperes?dimension=${dimension}`)
+
 export const getProjets = () => j<Projet[]>('/projets')
+export interface ProjetDerive { nom: string; fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null; sdp_besoin_m2: number | null }
+export const deriveProjet = (body: { fiche: FicheProjet; nom?: string }) =>
+  j<ProjetDerive>('/projets/derive', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const createProjet = (body: { fiche: FicheProjet; nom?: string; filtres_extra?: Record<string, unknown> }) =>
   j<{ ok: boolean; projet: Projet }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const patchProjet = (id: number, body: { nom?: string; statut?: string; fiche?: FicheProjet }) =>

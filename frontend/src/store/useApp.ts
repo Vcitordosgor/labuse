@@ -34,6 +34,15 @@ export const EMPTY_FILTERS: Filters = {
   evenement: false, vueMer: false, flags: [], flagsExclus: [], communes: [],
 }
 
+// brouillon d'un projet issu de l'entretien : la fiche + la dérivation moteur (filtres, SDP
+// besoin) — porté jusqu'à la restitution où « Enregistrer ce projet » le persiste (V3).
+export interface ProjetBrouillon {
+  fiche: Record<string, unknown>
+  nom: string
+  filtres: Record<string, unknown>
+  sdp_besoin_m2: number | null
+}
+
 export type Basemap = 'dark' | 'plan' | 'ortho'
 export type OrthoYear = 'now' | '2000' | '1950'
 export type MapTool = 'distance' | 'surface' | 'alti' | 'zone'
@@ -56,6 +65,9 @@ interface AppState {
   // R2 : restitution chorégraphiée du copilote (compteur animé + top 3 cliquables)
   iaRestitution: { n: number; phrase: string; top: { idu: string; commune: string; q_score: number }[] } | null
   setIaRestitution: (r: { n: number; phrase: string; top: { idu: string; commune: string; q_score: number }[] } | null) => void
+  // copilote-projet : brouillon issu de l'entretien (« Lancer la recherche ») → « Enregistrer ce projet » (V3)
+  projetBrouillon: ProjetBrouillon | null
+  setProjetBrouillon: (b: ProjetBrouillon | null) => void
   view: View
   setView: (v: View) => void
   outilsOpen: boolean
@@ -122,6 +134,8 @@ export const useApp = create<AppState>((set) => ({
   setVerdict: (verdict) => set({ verdict }),
   iaRestitution: null,
   setIaRestitution: (iaRestitution) => set({ iaRestitution }),
+  projetBrouillon: null,
+  setProjetBrouillon: (projetBrouillon) => set({ projetBrouillon }),
   view: 'cartes',
   setView: (view) => set({ view, outilsOpen: false }),
   outilsOpen: false,

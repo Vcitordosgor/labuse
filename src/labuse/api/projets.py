@@ -14,13 +14,16 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from jsonschema import ValidationError, validate
 from pydantic import BaseModel
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import models
 from .ia import FILTER_SCHEMA, SECTEURS
+from .projet_schema import (CONTRAINTE_FLAG, FICHE_SCHEMA, M22_SURFACE_UNITE_M2,
+                            TYPE_LABEL, clean_fiche, derive_sdp_besoin)
 
 router = APIRouter(prefix="/projets", tags=["projets"])
 
@@ -55,52 +58,54 @@ def ensure_tables(engine) -> None:
                 c.execute(_t(stmt))
 
 
-#: contrainte rédhibitoire (fiche) → couche flag exclue (même vocabulaire que FILTER_SCHEMA.flags)
-CONTRAINTE_FLAG = {
-    "eviter_ppr": "risques",
-    "eviter_pollution": "sol_pollue",
-    "eviter_abf": "abf",
-    "eviter_icpe": "icpe",
-}
+# ─────────────────── arbitrages SOURCÉS (chiffres servis par la base) ───────────────────
 
-TYPE_LABEL = {"logements": "Logements", "etudiant": "Logement étudiant",
-              "bureaux": "Bureaux", "autre": "Projet"}
+@router.get("/reperes")
+def projet_reperes(dimension: str = Query("secteur", pattern="^(secteur|commune)$"),
+                   db: Session = Depends(get_db)) -> dict:
+    """Chiffres SOURCÉS par option d'un choix de l'entretien (secteur ou commune) : nombre
+    d'opportunités (q_v2 chaude/à surveiller/à creuser), prix médian du bâti (DVF, €/m²
+    habitable) et communes carencées SRU. DÉTERMINISTE, 100 % SQL — l'IA n'en produit AUCUN
+    (doctrine : arbitrages sourcés ou tus). Sous les chips : « N opportunités · ~P €/m² ».
+    """
+    # opportunités par commune (les 3 statuts promus du run premium)
+    opp = {r["commune"]: r["n"] for r in db.execute(text(
+        "SELECT p.commune, count(*) n FROM parcels p "
+        "JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = 'q_v2' "
+        " AND d.matrice_statut IN ('chaude','a_surveiller','a_creuser') "
+        "GROUP BY p.commune")).mappings()}
+    # prix médian bâti DVF (€/m² habitable) — bornes anti-aberration comme l'affichage marché
+    dvf = {r["commune"]: int(r["m"]) for r in db.execute(text(
+        "SELECT commune, percentile_cont(0.5) WITHIN GROUP ("
+        "  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati,0)) m "
+        "FROM dvf_mutations WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0 "
+        "  AND valeur_fonciere / surface_reelle_bati BETWEEN 200 AND 8000 "
+        "GROUP BY commune")).mappings() if r["m"]}
+    carencees = {r["commune"] for r in db.execute(text(
+        "SELECT commune FROM commune_contexte_sru WHERE statut = 'carencee'")).mappings()}
 
-#: hypothèse M22 par défaut (surface_unite_m2 du formulaire M22Programme — la vérité
-#: reste le formulaire, pré-rempli et éditable)
-M22_SURFACE_UNITE_M2 = 60.0
+    def bloc(communes: list[str]) -> dict:
+        meds = [dvf[c] for c in communes if c in dvf]
+        return {
+            "nb_opportunites": sum(opp.get(c, 0) for c in communes),
+            "dvf_median_eur_m2": round(sum(meds) / len(meds)) if meds else None,
+            "communes_carencees": sorted(c for c in communes if c in carencees),
+        }
 
-FICHE_SCHEMA = {
-    "type": "object",
-    "additionalProperties": False,
-    "properties": {
-        "type_programme": {"enum": list(TYPE_LABEL)},
-        "ampleur": {
-            "type": "object", "additionalProperties": False,
-            "properties": {
-                "logements": {"type": "integer", "minimum": 1, "maximum": 2000},
-                "sdp_m2": {"type": "number", "minimum": 50, "maximum": 200000},
-            },
-        },
-        "perimetre": {
-            "type": "object", "additionalProperties": False, "required": ["mode"],
-            "properties": {
-                "mode": {"enum": ["ile", "secteur", "communes"]},
-                "secteur": {"enum": list(SECTEURS)},
-                "communes": {"type": "array", "maxItems": 24, "items": {"type": "string"}},
-            },
-        },
-        "contraintes": {"type": "array", "maxItems": 4,
-                        "items": {"enum": list(CONTRAINTE_FLAG)}},
-        "budget_foncier_eur": {"type": "number", "minimum": 0},
-        "criteres_libres": {"type": "string", "maxLength": 500},
-    },
-}
+    if dimension == "secteur":
+        options = [{"key": s, "label": s, **bloc(SECTEURS[s])} for s in SECTEURS]
+    else:
+        options = [{"key": c, "label": c, **bloc([c])}
+                   for c in sorted(opp, key=lambda x: -opp[x])]
+    return {"dimension": dimension, "options": options,
+            "note": "Opportunités : run premium q_v2. Prix médian : DVF bâti (€/m² habitable). "
+                    "Carencées : inventaire SRU. Aucun chiffre produit par l'IA."}
 
 
 def _valide_fiche(fiche: dict) -> dict:
     """Garde-fou schéma : clé hors schéma = REJET (l'IA ne peut introduire ni champ ni
     valeur hors vocabulaire). Le périmètre secteur/communes doit être cohérent."""
+    fiche = clean_fiche(fiche)              # null/"" = « pas encore su » → drop (hors enum)
     try:
         validate(fiche, FICHE_SCHEMA)
     except ValidationError as exc:
@@ -111,17 +116,6 @@ def _valide_fiche(fiche: dict) -> dict:
     if per.get("mode") == "communes" and not per.get("communes"):
         raise HTTPException(422, "Périmètre communes sans commune")
     return fiche
-
-
-def derive_sdp_besoin(fiche: dict) -> int | None:
-    """SDP besoin (m²) — formule M22 EXISTANTE (unités × surface_unité × 1,15), jamais l'IA.
-    `sdp_m2` explicite prime sur `logements`."""
-    amp = fiche.get("ampleur") or {}
-    if amp.get("sdp_m2") is not None:
-        return round(amp["sdp_m2"])
-    if amp.get("logements"):
-        return round(amp["logements"] * M22_SURFACE_UNITE_M2 * 1.15)
-    return None
 
 
 def derive_filtres(fiche: dict, extra: dict | None = None) -> dict:
@@ -208,6 +202,21 @@ class ProjetPatchIn(BaseModel):
     nom: str | None = None
     statut: str | None = None          # actif | archive
     fiche: dict | None = None          # re-dérive filtres + programme
+
+
+@router.post("/derive")
+def projet_derive(body: ProjetIn) -> dict:
+    """Dérive nom + filtres + programme d'une fiche SANS persister — « Lancer la recherche »
+    prévisualise avant que « Enregistrer ce projet » ne crée l'objet. Même dérivation
+    déterministe que la création (aucun chiffre produit par l'IA)."""
+    fiche = _valide_fiche(body.fiche or {})
+    return {
+        "nom": (body.nom or "").strip()[:160] or derive_nom(fiche),
+        "fiche": fiche,
+        "filtres": derive_filtres(fiche, body.filtres_extra),
+        "programme": derive_programme(fiche),
+        "sdp_besoin_m2": derive_sdp_besoin(fiche),
+    }
 
 
 @router.get("")
