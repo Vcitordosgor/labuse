@@ -2,7 +2,7 @@
 import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
-const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
+const SP = '#f=1&v=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 mkdirSync('../docs/design/captures/modules', { recursive: true })
 const failures = []
 const assert = (c, n, d = '') => (c ? console.log(`  ✓ ${n}`) : (failures.push(n), console.log(`  ✗ ${n} ${d}`)))
@@ -17,8 +17,15 @@ await go()
 const pingState = () => page.evaluate(() => {
   const m = window.__labuse_map
   if (!m) return { idu: null, lng: 0, lat: 0, zoom: 0 }
-  const f = m.getLayer && m.getLayer('parcels-ping') ? m.getFilter('parcels-ping') : null
-  const idu = Array.isArray(f) ? f[2] : null
+  // le ping vit sur parcels-ping (commune GeoJSON) OU ile-ping (MVT île) ; un ancien ping
+  // éteint peut subsister → on lit la couche dont la pulsation est ACTIVE (opacité > 0)
+  let idu = null
+  for (const id of ['parcels-ping', 'ile-ping']) {
+    if (!(m.getLayer && m.getLayer(id))) continue
+    const f = m.getFilter(id)
+    const op = m.getPaintProperty(id, 'line-opacity')
+    if (Array.isArray(f) && (typeof op !== 'number' || op > 0)) idu = f[2]
+  }
   const c = m.getCenter()
   return { idu, lng: c.lng, lat: c.lat, zoom: m.getZoom() }
 })
@@ -73,12 +80,13 @@ async function checkPing(origin, clickedIdu) {
   await go()
   await page.locator('button[title="Notifications"]').click()
   await page.waitForTimeout(800)
+  // les notifications sont ÎLE ENTIÈRE : l'IDU réel vient de l'API (plus de préfixe SP fabriqué)
+  const ev = await (await fetch(new URL('/events?limit=5', BASE).href)).json()
+  const first = (ev.items ?? []).find((e) => e.idu)
   const btn = page.locator('div.rounded-lg button.min-w-0').first()
-  const t = await btn.innerText()
-  const m = t.match(/([A-Z]{2})(\d{4})/)
-  if (m) {
+  if (first && (await btn.count())) {
     await btn.click()
-    await checkPing('notification', '97415000' + m[1] + m[2])
+    await checkPing('notification', first.idu)
   } else assert(true, 'notification : pas d’IDU dans le premier événement (skip)')
 }
 

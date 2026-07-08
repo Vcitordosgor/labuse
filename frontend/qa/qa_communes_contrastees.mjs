@@ -27,7 +27,7 @@ page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
 for (const { nom, profil } of COMMUNES) {
   console.log(`━━ ${nom} (${profil}) ━━`)
   const slug = nom.toLowerCase().replace(/[ '-]/g, '_')
-  await page.goto(BASE + `#f=1&c=${encodeURIComponent(nom)}`, { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + `#f=1&v=1&c=${encodeURIComponent(nom)}`, { waitUntil: 'domcontentloaded' })
   await page.reload({ waitUntil: 'networkidle' })
   await page.waitForSelector('text=chaudes', { timeout: 25000 })
   await page.waitForTimeout(3000)

@@ -14,7 +14,7 @@ const b = await chromium.launch()
 const p = await b.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })
 p.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
 const t0 = Date.now()
-await p.goto(BASE + '#f=1&c=Saint-Pierre', { waitUntil: 'networkidle' })
+await p.goto(BASE + '#f=1&v=1&c=Saint-Pierre', { waitUntil: 'networkidle' })
 await p.waitForSelector('.overflow-y-auto > button', { timeout: 25000 })
 await p.waitForTimeout(1200)
 

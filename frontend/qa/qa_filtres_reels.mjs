@@ -13,7 +13,7 @@ import { chromium } from 'playwright'
 import { mkdirSync } from 'node:fs'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
-const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
+const SP = '#f=1&v=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const OUT = process.env.OUT || '../docs/design/captures/qa'
 mkdirSync(OUT, { recursive: true })
 

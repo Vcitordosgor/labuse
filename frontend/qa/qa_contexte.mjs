@@ -25,7 +25,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, dev
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
 
 for (const { commune, attendu } of CAS) {
-  await page.goto(BASE + `#f=1&c=${encodeURIComponent(commune)}`, { waitUntil: 'domcontentloaded' })
+  await page.goto(BASE + `#f=1&v=1&c=${encodeURIComponent(commune)}`, { waitUntil: 'domcontentloaded' })
   await page.reload({ waitUntil: 'networkidle' })
   await page.waitForSelector('text=chaudes', { timeout: 25000 })
   await page.waitForTimeout(1500)
@@ -51,7 +51,7 @@ for (const { commune, attendu } of CAS) {
 }
 
 // ── NPNRU dans le volet (Le Port) + fiche parcelle « dans / adjacente »
-await page.goto(BASE + '#f=1&c=Le%20Port', { waitUntil: 'domcontentloaded' })
+await page.goto(BASE + '#f=1&v=1&c=Le%20Port', { waitUntil: 'domcontentloaded' })
 await page.reload({ waitUntil: 'networkidle' })
 await page.waitForSelector('text=chaudes', { timeout: 25000 })
 await page.locator('[data-contexte-btn]').click()
@@ -61,7 +61,7 @@ assert((await page.locator('text=1ère et 2ème Couronne').count()) > 0, 'volet 
 await page.keyboard.press('Escape')
 
 // ── couche équipements : visible + cliquable à l'écran
-await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.29, -20.94], zoom: 14.5 }))
+await page.evaluate(() => void window.__labuse_map.jumpTo({ center: [55.29, -20.94], zoom: 14.5 }))
 await page.waitForTimeout(1000)
 await page.getByRole('button', { name: 'Équipements' }).click()
 await page.waitForTimeout(2500)
@@ -91,7 +91,7 @@ print('CONTEXTE COMMUNE' in t and 'SRU :' in t and 'INSEE RP 2023' in t)`], { en
 assert(pdfTxt === 'True', 'PDF AC0253 : bloc CONTEXTE COMMUNE (SRU + INSEE) présent')
 
 // ── RTAA DOM (5bis) : bloc VISIBLE dans le Bilan de la fiche + références cliquables
-await page.goto(BASE + '#f=1&c=Saint-Paul', { waitUntil: 'domcontentloaded' })
+await page.goto(BASE + '#f=1&v=1&c=Saint-Paul', { waitUntil: 'domcontentloaded' })
 await page.reload({ waitUntil: 'networkidle' })
 await page.waitForSelector('.overflow-y-auto > button', { timeout: 25000 })
 await page.keyboard.press('/'); await page.keyboard.type('AC0253'); await page.keyboard.press('Enter')

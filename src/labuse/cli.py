@@ -472,11 +472,12 @@ def build_mvt_cmd(
 ) -> None:
     """(Re)construit la table `mvt_parcels` servie en tuiles vectorielles (carte île entière).
     À relancer après CHAQUE run de scoring — les tuiles lisent cette matérialisation, pas le run."""
-    from .api.tiles import build_mvt_table
+    from .api.tiles import build_mvt_table, build_overlay_mvt
 
     with session_scope() as s:
         n = build_mvt_table(s, label)
-    typer.echo(f"✓ mvt_parcels reconstruite : {n} parcelles (label {label}).")
+        n_ov = build_overlay_mvt(s)
+    typer.echo(f"✓ mvt_parcels reconstruite : {n} parcelles (label {label}) · mvt_overlays : {n_ov} géométries.")
 
 
 @app.command("dryrun-matrice")

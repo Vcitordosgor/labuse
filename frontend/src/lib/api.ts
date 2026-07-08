@@ -38,6 +38,7 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.evenement ? { evenement: 'true' } : {}),
   ...(f.vueMer ? { vue_mer: 'true' } : {}),
   ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
+  ...(f.communes.length ? { communes: f.communes.join(',') } : {}),
 })
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
@@ -112,9 +113,9 @@ export const modDueDiligence = (refs: string) =>
 
 // ── Copilote IA (Vague 2) — jamais d'accès base, filtres validés par schéma côté API ──
 export const iaStatus = () => j<{ provider: string; raison: string | null }>('/ia/status')
-export const iaSearch = (text: string) =>
-  j<{ stub: boolean; filters?: Record<string, unknown>; explanation?: string; out_of_scope?: string }>('/ia/search', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
+export const iaSearch = (body: { text: string; history?: { role: string; content: string }[] }) =>
+  j<{ stub: boolean; filters?: Record<string, unknown>; cadrage?: Record<string, unknown>; explanation?: string; out_of_scope?: string }>('/ia/search', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const iaSynthese = (idu: string) =>
   j<{ stub: boolean; texte: string; mention: string }>(`/ia/synthese/${idu}`, { method: 'POST' })
 export const iaPourquoi = (idu: string) =>

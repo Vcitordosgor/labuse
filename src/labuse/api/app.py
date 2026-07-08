@@ -380,12 +380,16 @@ def _latest_eval(db: Session, parcel_id: int) -> models.ParcelEvaluation | None:
 
 def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 surface_min: int | None, surface_max: int | None, sdp_min: int | None,
-                evenement: bool, vue_mer: bool, flags: str | None) -> tuple[str, dict]:
+                evenement: bool, vue_mer: bool, flags: str | None,
+                communes: str | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front)."""
     conds: list[str] = []
     params: dict = {"runf": run_label}
+    if communes:   # secteurs du copilote cadreur (R2) : plusieurs communes à la fois
+        conds.append("p.commune = ANY(:f_communes)")
+        params["f_communes"] = [c.strip() for c in communes.split(",") if c.strip()]
     if statuts:
         conds.append("d.matrice_statut = ANY(:f_statuts)")
         params["f_statuts"] = [s.strip() for s in statuts.split(",") if s.strip()]
@@ -423,7 +427,8 @@ def list_parcels(commune: str | None = None,
                  statuts: str | None = None, score_min: int | None = None,
                  surface_min: int | None = None, surface_max: int | None = None,
                  sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
-                 flags: str | None = None, db: Session = Depends(get_db)) -> list[dict]:
+                 flags: str | None = None, communes: str | None = None,
+                 db: Session = Depends(get_db)) -> list[dict]:
     """Liste PAGINÉE (commune OU île entière) avec le dernier verdict.
 
     `source='q_v2'` → panneau résultats (matrice premium, trié ÉVÉNEMENT d'abord puis score).
@@ -435,7 +440,7 @@ def list_parcels(commune: str | None = None,
     bloquait l'endpoint > 45 s)."""
     if source and source.startswith("q_v2"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, vue_mer, flags)
+                                          sdp_min, evenement, vue_mer, flags, communes)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
                           extra_where=extra, extra_params=extra_params)
     rows = db.execute(text(
@@ -584,7 +589,8 @@ def stats(commune: str | None = None, source: str | None = None,
           statuts: str | None = None, score_min: int | None = None,
           surface_min: int | None = None, surface_max: int | None = None,
           sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
-          flags: str | None = None, db: Session = Depends(get_db)) -> dict:
+          flags: str | None = None, communes: str | None = None,
+          db: Session = Depends(get_db)) -> dict:
     """Cartouches du dashboard : volumétrie + statuts + scores (dernière évaluation).
 
     `source='q_v2'` → comptes de la matrice premium (chaude/à surveiller/à creuser/écartée),
@@ -592,9 +598,9 @@ def stats(commune: str | None = None, source: str | None = None,
     Résultat mémorisé par commune+filtres (cache mémoire 30 s, #7) : sortie identique au calcul."""
     if source and source.startswith("q_v2"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, vue_mer, flags)
+                                          sdp_min, evenement, vue_mer, flags, communes)
         key = ("stats_qv2", source, commune, statuts, score_min, surface_min, surface_max,
-               sdp_min, evenement, vue_mer, flags)
+               sdp_min, evenement, vue_mer, flags, communes)
         return _mem_cached(key, 30.0, lambda: _q_v2_stats(
             db, commune, run_label=source, extra_where=extra, extra_params=extra_params))
 

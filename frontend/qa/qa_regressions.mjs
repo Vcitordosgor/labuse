@@ -3,7 +3,7 @@
 import { chromium } from 'playwright'
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
-const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
+const SP = '#f=1&v=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 const failures = []
 const assert = (c, n, d = '') => (c ? console.log(`  ✓ ${n}`) : (failures.push(n), console.log(`  ✗ ${n} ${d}`)))
 
@@ -55,7 +55,7 @@ assert((await page.locator('text=outil Zone actif').count()) > 0, 'M03 zone → 
 {
   const { execFileSync } = await import('node:child_process')
   const sql = (q) => execFileSync('psql', [process.env.QA_DB || 'postgresql://openclaw@127.0.0.1:5432/labuse', '-tA', '-c', q], { encoding: 'utf8' }).trim()
-  sql("INSERT INTO saved_searches (nom, hash) VALUES ('Veille régression QA', '#f=1&st=chaude')")
+  sql("INSERT INTO saved_searches (nom, hash) VALUES ('Veille régression QA', '#f=1&v=1&st=chaude')")
   sql("DELETE FROM event_log WHERE kind='veille'")
   await fetch(new URL('/events/detect?run_from=q_v2&run_to=q_v2_demo', BASE).href, { method: 'POST' })
   const n = Number(sql("SELECT count(*) FROM event_log WHERE kind='veille'"))
@@ -63,7 +63,7 @@ assert((await page.locator('text=outil Zone actif').count()) > 0, 'M03 zone → 
   await page2Check()
   async function page2Check() {
     const p2 = await browser.newPage({ viewport: { width: 1440, height: 900 } })
-    await p2.goto(BASE, { waitUntil: 'networkidle' })
+    await p2.goto(BASE + '#f=1&v=1', { waitUntil: 'networkidle' })   // R1 : verdict est un geste
     await p2.waitForSelector('text=chaudes')
     await p2.waitForTimeout(1800)
     await p2.locator('button[title="Notifications"]').click()
@@ -78,7 +78,7 @@ assert((await page.locator('text=outil Zone actif').count()) > 0, 'M03 zone → 
 // ── BUG #5 (clique-tout) : le CORPS d'une carte kanban était inerte au clic.
 {
   const p3 = await browser.newPage({ viewport: { width: 1440, height: 900 } })
-  await p3.goto(BASE, { waitUntil: 'networkidle' })
+  await p3.goto(BASE + '#f=1&v=1', { waitUntil: 'networkidle' })
   await p3.waitForSelector('text=chaudes'); await p3.waitForTimeout(1500)
   await p3.locator('nav button[title="CRM"]').click()
   await p3.waitForTimeout(1000)

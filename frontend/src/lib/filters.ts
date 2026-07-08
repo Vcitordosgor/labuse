@@ -50,7 +50,7 @@ export const matchAll = (p: ParcelProps, f: Filters, zone: LngLat[] | null) =>
 
 export const hasScopeFilters = (f: Filters, zone: LngLat[] | null) =>
   f.scoreMin != null || f.surfaceMin != null || f.surfaceMax != null || f.sdpMin != null ||
-  f.evenement || f.vueMer || f.flags.length > 0 || !!zone
+  f.evenement || f.vueMer || f.flags.length > 0 || f.communes.length > 0 || !!zone
 
 // ── Chips actifs (token → suppression ciblée) ──
 export interface Chip { token: string; label: string }
@@ -65,12 +65,14 @@ export function activeChips(f: Filters): Chip[] {
   if (f.evenement) out.push({ token: 'evenement', label: '● Événement' })
   if (f.vueMer) out.push({ token: 'vueMer', label: 'Vue mer' })
   for (const fl of f.flags) out.push({ token: `flag:${fl}`, label: FLAG_DEFS.find((d) => d.key === fl)?.label ?? fl })
+  if (f.communes.length) out.push({ token: 'communes', label: `Secteur (${f.communes.length} communes)` })
   return out
 }
 
 export function removeToken(f: Filters, token: string): Filters {
   if (token.startsWith('statut:')) return { ...f, statuts: f.statuts.filter((s) => s !== token.slice(7)) }
   if (token.startsWith('flag:')) return { ...f, flags: f.flags.filter((x) => x !== token.slice(5)) }
+  if (token === 'communes') return { ...f, communes: [] }
   if (token === 'evenement') return { ...f, evenement: false }
   if (token === 'vueMer') return { ...f, vueMer: false }
   return { ...f, [token]: null }
@@ -87,6 +89,7 @@ export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   if (f.evenement) p.set('ev', '1')
   if (f.vueMer) p.set('vm', '1')
   if (f.flags.length) p.set('fl', f.flags.join(','))
+  if (f.communes.length) p.set('cs', f.communes.join(','))
   if (zone) p.set('z', zone.map(([x, y]) => `${x.toFixed(5)}_${y.toFixed(5)}`).join('~'))
   const s = p.toString()
   return s ? `#f=1&${s}` : ''
@@ -108,6 +111,7 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
       evenement: p.get('ev') === '1',
       vueMer: p.get('vm') === '1',
       flags: p.get('fl')?.split(',').filter(Boolean) ?? [],
+      communes: p.get('cs')?.split(',').filter(Boolean) ?? [],
     },
     zone: zone && zone.length >= 3 ? zone : null,
   }
