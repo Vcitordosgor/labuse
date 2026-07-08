@@ -33,12 +33,22 @@ const ICONS: Record<Zone, JSX.Element> = {
       <rect x="12.9" y="11.5" width="3.6" height="5" rx="0.8" fill="currentColor" />
     </>
   ),
+  // dossier + étoile : un projet formalisé, gardé (copilote-projet)
+  projets: (
+    <>
+      <path d="M3.5 6 H8.2 L9.6 7.6 H16.5 V15 A0.8 0.8 0 0 1 15.7 15.8 H4.3 A0.8 0.8 0 0 1 3.5 15 Z"
+        fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M10 9 L10.7 10.7 L12.5 10.9 L11.2 12.1 L11.6 13.9 L10 13 L8.4 13.9 L8.8 12.1 L7.5 10.9 L9.3 10.7 Z"
+        fill="currentColor" stroke="none" />
+    </>
+  ),
 }
 
 const ZONES: { key: Zone; label: string }[] = [
   { key: 'ia', label: 'IA' },
   { key: 'cartes', label: 'Cartes' },
   { key: 'outils', label: 'Outils' },
+  { key: 'projets', label: 'Projets' },
   { key: 'crm', label: 'CRM' },
 ]
 

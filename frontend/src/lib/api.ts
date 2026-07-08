@@ -38,6 +38,7 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.evenement ? { evenement: 'true' } : {}),
   ...(f.vueMer ? { vue_mer: 'true' } : {}),
   ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
+  ...(f.flagsExclus.length ? { flags_exclus: f.flagsExclus.join(',') } : {}),
   ...(f.communes.length ? { communes: f.communes.join(',') } : {}),
 })
 
@@ -154,3 +155,25 @@ export const listShares = (idu: string) => j<{ token: string; date: string; view
 export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/faisabilite/${idu}`)
 export const postProgramme = (body: Record<string, unknown>) =>
   j<Record<string, any>>('/modules/programme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+
+// ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
+export interface FicheProjet {
+  type_programme?: 'logements' | 'etudiant' | 'bureaux' | 'autre'
+  ampleur?: { logements?: number; sdp_m2?: number }
+  perimetre?: { mode: 'ile' | 'secteur' | 'communes'; secteur?: string; communes?: string[] }
+  contraintes?: string[]
+  budget_foncier_eur?: number
+  criteres_libres?: string
+}
+export interface Projet {
+  id: number; nom: string; statut: 'actif' | 'archive'
+  fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null
+  created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
+}
+export const getProjets = () => j<Projet[]>('/projets')
+export const createProjet = (body: { fiche: FicheProjet; nom?: string; filtres_extra?: Record<string, unknown> }) =>
+  j<{ ok: boolean; projet: Projet }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const patchProjet = (id: number, body: { nom?: string; statut?: string; fiche?: FicheProjet }) =>
+  j<{ ok: boolean; projet: Projet }>(`/projets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const rejouerProjet = (id: number) =>
+  j<{ ok: boolean; projet: Projet }>(`/projets/${id}/rejouer`, { method: 'POST' })

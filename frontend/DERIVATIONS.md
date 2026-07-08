@@ -293,3 +293,38 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   « Zonage PLU » S'ACTIVE en île (ovmvt-zonage visible) et le SEUL contrôle encore bloqué
   (outil zone — le comptage client mentirait à l'échelle île) montre le hint ANCRÉ au bouton,
   auto-éteint ~2,5 s.
+
+## Copilote-projet — V1 : l'objet PROJET (08/07)
+- **Séparation fiche / recette** : `projets.fiche` (jsonb) = ce que le promoteur A DIT (validé
+  par FICHE_SCHEMA côté serveur) ; `filtres` + `programme` = ce que le moteur EXÉCUTE, DÉRIVÉS
+  de la fiche de façon déterministe (jamais l'IA). Ouvrir un projet = REJOUER (filtres
+  réappliqués sur les données du jour), jamais un snapshot figé — `derniere_execution_at`
+  horodate le rejeu.
+- **La SDP besoin vient de la formule M22 EXISTANTE** (`unités × surface_unité(60) × 1,15`,
+  cf. modules.faisabilite_sens2) — l'IA ne produit aucun m². `ampleur.sdp_m2` explicite prime
+  sur `ampleur.logements`.
+- **Contraintes rédhibitoires → exclusion SQL** : `contraintes:["eviter_ppr"…]` (fiche) →
+  `flags_exclus` sur /parcels et /stats (`NOT EXISTS` sur la couche flag, même vocabulaire que
+  `flags`). Preuve de cohérence : à Saint-Paul, `total = avec_risques + sans_risques`
+  (51 129 = 49 219 + 1 910). Nouveau filtre front `flagsExclus` de bout en bout (chip « Sans …»,
+  hash `fx=`, matchScope client).
+- **Budget foncier = donnée de fiche, PAS un filtre** : aucun prix par parcelle en base → un
+  filtre budget serait menteur. Affiché dans la fiche projet, jamais appliqué au moteur (consigné).
+- **derive_programme** (mapping consigné) : type + logements → ProgrammeIn M22 avec 1 bâtiment,
+  R+2 (défauts du formulaire), `logements_par_batiment = total` (la formule M22
+  `unités = bâtiments × logements/bât` est préservée : 1 × total = total). La vérité reste le
+  formulaire M22 pré-rempli, éditable (V3).
+- **Lien CRM** : `pipeline_entries.projet_id` (FK ON DELETE SET NULL) — une piste ajoutée au
+  kanban depuis un projet porte sa référence (`entry.projet = {id, nom}`). Matière du futur
+  radar cron (rien câblé) : `filtres` est déjà le prédicat de match ; seuls les `statut='actif'`
+  seront matchés.
+- **Boot-heal réparé** : l'ancien `@app.on_event("startup")` était MORT depuis le passage au
+  `lifespan` (FastAPI ignore `on_event` quand un lifespan est fourni) — les `ensure_tables`
+  des routeurs (modules/ia/events/partners/projets) vivent désormais dans `_lifespan`, exécutés
+  au démarrage. Sans ça la colonne `projet_id` n'était jamais créée au boot.
+- **Chorégraphie d'application partagée** (`useApplySearch`) : le copilote R2 ET « ouvrir un
+  projet » passent par le MÊME hook (périmètre → filtres → verdict allumé → vol caméra →
+  restitution SQL). Zéro duplication — `IAStub.apply` en est devenu un simple appel.
+- **Rail** : nouvelle entrée « Projets » (dossier + étoile) entre Outils et CRM. Vue CRUD
+  sobre : liste, ouvrir/renommer/archiver, onglets Actifs/Archivés, création renvoyée à
+  l'entretien copilote (« + Décrire un projet » → vue IA).

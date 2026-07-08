@@ -106,6 +106,8 @@ FILTER_SCHEMA = {
         "evenement": {"type": "boolean"},
         "vueMer": {"type": "boolean"},
         "flags": {"type": "array", "items": {"enum": ["sol_pollue", "abf", "icpe", "risques", "prescription_plu"]}},
+        # contraintes RÉDHIBITOIRES (copilote-projet) : écarter les parcelles portant le flag
+        "flagsExclus": {"type": "array", "items": {"enum": ["sol_pollue", "abf", "icpe", "risques", "prescription_plu"]}},
         "communes": {"type": "array", "maxItems": 24, "items": {"enum": [
             "Les Avirons", "Bras-Panon", "Entre-Deux", "L'Étang-Salé", "Petite-Île",
             "La Plaine-des-Palmistes", "Le Port", "La Possession", "Saint-André", "Saint-Benoît",

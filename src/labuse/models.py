@@ -529,8 +529,42 @@ class PipelineEntry(Base, TimestampMixin):
     # Prospection MANUELLE (Niveau 1) : statut propriétaire, contact saisi, action suivante…
     # AUCUNE donnée nominative externe — tout est renseigné par l'utilisateur. RGPD : effaçable.
     prospection: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
+    # référence du PROJET d'où vient la piste (copilote-projet) — le kanban sait « d'où vient »
+    projet_id: Mapped[int | None] = mapped_column(ForeignKey("projets.id", ondelete="SET NULL"))
 
     parcel: Mapped[Parcel] = relationship()
+
+
+# ─────────────────────── projets (copilote-projet) ───────────────────────
+
+class Projet(Base, TimestampMixin):
+    """Un PROJET de promoteur formalisé par l'entretien copilote.
+
+    L'objet persistant sépare ce que le promoteur A DIT (`fiche`, structurée par
+    l'entretien) de ce que le moteur EXÉCUTE (`filtres` + `programme` M22, dérivés).
+    Ouvrir un projet = REJOUER filtres + programme sur les données actuelles —
+    jamais un snapshot figé.
+
+    Forme de `fiche` (validée par FICHE_SCHEMA, api/projets.py) :
+      type_programme (logements|etudiant|bureaux|autre), ampleur {logements?, sdp_m2?},
+      perimetre {mode: ile|secteur|communes, secteur?, communes?}, contraintes [clés flags],
+      budget_foncier_eur?, criteres_libres?
+
+    Prépa cron (RIEN de câblé) : `filtres` est déjà la matière du futur match
+    « nouveaux événements/parcelles ↔ projets actifs » ; `derniere_execution_at`
+    horodate le dernier rejeu (la fraîcheur comparera à ça) ; seuls les projets
+    `statut='actif'` seront matchés.
+    """
+
+    __tablename__ = "projets"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    nom: Mapped[str] = mapped_column(String(160))             # proposé par l'IA, éditable
+    fiche: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
+    filtres: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
+    programme: Mapped[dict | None] = mapped_column(JSONB)     # paramètres M22 si programme défini
+    statut: Mapped[str] = mapped_column(String(16), default="actif", server_default="actif")
+    derniere_execution_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 def create_all(engine) -> None:
@@ -547,7 +581,19 @@ def create_all(engine) -> None:
     ensure_vue_mer_cache(engine)
     ensure_watch_zones(engine)
     ensure_pipeline_prospection(engine)
+    ensure_pipeline_projet(engine)
     ensure_enrichment_cache(engine)
+
+
+def ensure_pipeline_projet(engine) -> None:
+    """Colonne `projet_id` sur pipeline_entries (copilote-projet) — la piste porte la
+    référence du projet d'où elle vient. Idempotent, durable au rebuild sur base existante."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("ALTER TABLE pipeline_entries "
+                     "ADD COLUMN IF NOT EXISTS projet_id integer "
+                     "REFERENCES projets(id) ON DELETE SET NULL"))
 
 
 def ensure_pipeline_prospection(engine) -> None:
@@ -890,6 +936,7 @@ def ensure_schema(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine, backfill=False)
     ensure_pipeline_prospection(engine)
+    ensure_pipeline_projet(engine)
     ensure_enrichment_cache(engine)
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)

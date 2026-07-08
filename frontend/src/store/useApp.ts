@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { FicheLine, MapMode, Statut } from '../lib/types'
 
-export type View = 'ia' | 'cartes' | 'crm' | 'sources'
+export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets'
 
 export interface LayerToggles {
   zonage: boolean
@@ -25,12 +25,13 @@ export interface Filters {
   evenement: boolean         // seulement les parcelles à événement (BODACC rouge)
   vueMer: boolean            // seulement vue mer dégagée
   flags: string[]            // flags actifs requis (au moins un)
+  flagsExclus: string[]      // copilote-projet : contraintes RÉDHIBITOIRES (aucun de ces flags)
   communes: string[]         // R2 : secteur du cadreur (multi-communes, mode île)
 }
 
 export const EMPTY_FILTERS: Filters = {
   statuts: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
-  evenement: false, vueMer: false, flags: [], communes: [],
+  evenement: false, vueMer: false, flags: [], flagsExclus: [], communes: [],
 }
 
 export type Basemap = 'dark' | 'plan' | 'ortho'

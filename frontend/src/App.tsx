@@ -8,6 +8,7 @@ import { LeftPanel } from './components/panel/LeftPanel'
 import { MapView } from './components/map/MapView'
 import { Rail } from './components/Rail'
 import { SourcesPage } from './components/sources/SourcesPage'
+import { ProjetsPanel } from './components/projets/ProjetsPanel'
 import { ContextePanel } from './components/contexte/ContextePanel'
 import { filtersFromHash, filtersToHash } from './lib/filters'
 import { ModulePanel } from './components/outils/ModulePanel'
@@ -122,6 +123,7 @@ export default function App() {
           )}
           {view === 'crm' && <Kanban />}
           {view === 'sources' && <SourcesPage />}
+          {view === 'projets' && <ProjetsPanel />}
           {view === 'ia' && <IAStub />}
           {selectedIdu && view !== 'sources' && <Fiche idu={selectedIdu} />}
           <ContextePanel />

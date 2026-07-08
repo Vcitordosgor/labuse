@@ -1,8 +1,8 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getCommunes, getResults, getStats, iaSearch, iaStatus } from '../../lib/api'
-import type { Statut } from '../../lib/types'
-import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
+import { iaSearch, iaStatus } from '../../lib/api'
+import { useApplySearch } from '../../lib/useApplySearch'
+import { useApp } from '../../store/useApp'
 
 const EXAMPLES = [
   'les chaudes de Saint-Pierre',
@@ -20,57 +20,10 @@ export function IAStub() {
   // R2 : cadrage conversationnel — la question en cours + les réponses choisies par chips
   const [cadrage, setCadrage] = useState<null | { texte: string; reformulation: string; questions: { id: string; texte: string; chips: { label: string; value?: string }[] }[] }>(null)
   const [reponses, setReponses] = useState<Record<string, { label: string; value?: string }>>({})
-  const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
-  const { setFilters, setView, setModule, setM22Prefill, setCommune, setVerdict, setFlyTo, setIaRestitution } = useApp()
+  const { setModule, setM22Prefill } = useApp()
   const status = useQuery({ queryKey: ['ia-status'], queryFn: iaStatus })
   const search = useMutation({ mutationFn: iaSearch })
-
-  const apply = async (f: Record<string, unknown>) => {
-    // la commune est un filtre de PÉRIMÈTRE : « les chaudes de Saint-Pierre » bascule le
-    // sélecteur ; un SECTEUR du cadreur (communes multiples) passe le périmètre à l'île
-    // avec le filtre communes. Une phrase sans commune ne touche pas au périmètre courant.
-    let communes = (f.communes as string[]) ?? []
-    // normalisation : un « secteur » d'UNE commune = la commune elle-même (périmètre simple)
-    let communeSeule = typeof f.commune === 'string' && f.commune ? f.commune : null
-    if (communes.length === 1) { communeSeule = communes[0]; communes = [] }
-    if (communes.length > 0) setCommune(null)
-    else if (communeSeule) setCommune(communeSeule)
-    const next: Filters = {
-      ...EMPTY_FILTERS,
-      statuts: (f.statuts as Statut[]) ?? [],
-      scoreMin: (f.scoreMin as number | null) ?? null,
-      surfaceMin: (f.surfaceMin as number | null) ?? null,
-      surfaceMax: (f.surfaceMax as number | null) ?? null,
-      sdpMin: (f.sdpMin as number | null) ?? null,
-      evenement: !!f.evenement,
-      vueMer: !!f.vueMer,
-      flags: (f.flags as string[]) ?? [],
-      communes,
-    }
-    setFilters(next)
-    setVerdict(true)          // le copilote ALLUME le tri — c'est sa mise en scène
-    setView('cartes')
-    // vol de caméra vers le périmètre (bbox de la commune, union du secteur, ou île)
-    const infos = communesQ.data ?? []
-    const cible = communes.length ? communes : (communeSeule ? [communeSeule] : [])
-    const boxes = infos.filter((c) => cible.includes(c.commune)).map((c) => c.bbox)
-    if (boxes.length) {
-      const x1 = Math.min(...boxes.map((b) => b[0])), y1 = Math.min(...boxes.map((b) => b[1]))
-      const x2 = Math.max(...boxes.map((b) => b[2])), y2 = Math.max(...boxes.map((b) => b[3]))
-      setFlyTo({ center: [(x1 + x2) / 2, (y1 + y2) / 2], zoom: boxes.length > 1 ? 10.2 : 11.5 })
-    } else {
-      setFlyTo({ center: [55.53, -21.13], zoom: 9.7 })
-    }
-    // restitution : compteur + les 3 meilleures, cliquables
-    try {
-      const [st, top] = await Promise.all([getStats(next), getResults(next)])
-      setIaRestitution({
-        n: st.chaude + st.a_surveiller + st.a_creuser,
-        phrase: 'parcelles correspondent — voici les 3 meilleures',
-        top: top.slice(0, 3).map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score })),
-      })
-    } catch { /* restitution best-effort : les filtres sont déjà appliqués */ }
-  }
+  const apply = useApplySearch()   // chorégraphie partagée (périmètre → filtres → verdict → vol → restitution)
 
   const run = (t: string, history?: { role: string; content: string }[]) => {
     setText(t)
