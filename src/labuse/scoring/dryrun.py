@@ -260,8 +260,8 @@ _ENTONNOIR_BUCKETS: list[tuple[str, list[str]]] = [
     ("forêt domaniale / cœur de parc", ["foret_publique", "parc_national"]),
     ("prescription PLU (emplacements réservés…)", ["prescription_plu"]),
     ("eau / trait de côte", ["eau", "trait_de_cote"]),
-    ("foncier public (Saint-Paul uniquement)", ["foncier_public"]),
-    ("emprise voirie/linéaire (Saint-Paul uniquement)", ["emprise_lineaire"]),
+    ("foncier public — domaine non acquérable", ["foncier_public"]),
+    ("emprise voirie / délaissé linéaire", ["emprise_lineaire"]),
 ]
 
 

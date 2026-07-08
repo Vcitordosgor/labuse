@@ -247,3 +247,15 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
 - **Écartées opt-in** : le filtre statut explicite ÉLARGIT le périmètre promues côté SQL
   (base_statuts) ; l'opacité 0,72 existante rend les écartées pleinement lisibles une fois
   filtrées.
+
+## Extension cascade île (08/07)
+- **Règles extraites des verdicts, pas réinventées** : formats de détail, seuils (largeur<8 m
+  ET allongement>8× sur enveloppe ORIENTÉE ; groupes DGFiP 1/2/3/4/9 ; barème SDP
+  100/300/800/2000/5000) et sémantique des poids (NULL ⟺ parcelle exclue) rétro-déduits des
+  153 387 lignes de Saint-Paul — preuve : diff ZÉRO en régénération complète.
+- **weight_override** : le barème propre de residuel_socle (−25/−10, sévérité info) ne passe
+  par aucune sévérité standard → `Verdict.extra["weight_override"]` honoré par
+  compute_opportunity (additif, aucune couche historique ne pose la clé).
+- **Backfill set-based ≡ re-run** : couches indépendantes des autres verdicts → INSERT direct
+  + nullification des poids des parcelles nouvellement exclues (sémantique weights=[0]* du
+  moteur). Idempotent par commune. Les runs FUTURS passent par le moteur (couches enregistrées).
