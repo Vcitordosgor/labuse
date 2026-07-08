@@ -486,6 +486,18 @@ export function Fiche({ idu }: { idu: string }) {
               G
             </a>
           )}
+          {f?.coords && (
+            /* R8 (revue Vic n°2) : chaque doute géométrique auto-vérifiable — la parcelle sur
+               le CADASTRE OFFICIEL (Géoportail IGN, couche PCI Express, permalien centré ;
+               cadastre.gouv.fr DGFiP n'a pas de deep-link stable sans session — consigné) */
+            <a data-cadastre-link
+              href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
+              target="_blank" rel="noreferrer"
+              className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi"
+              title="Vérifier la géométrie sur le cadastre OFFICIEL (Géoportail IGN — parcellaire PCI Express, centré sur la parcelle)">
+              Cadastre
+            </a>
+          )}
           <div className="relative">
             <button onClick={() => setIaOpen((o) => !o)}
               className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi" title="Analyse IA">

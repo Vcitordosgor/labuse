@@ -13,14 +13,11 @@ import { MapToolbar } from './MapToolbar'
 const WMTS = (layer: string, format: string) =>
   `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER=${layer}&FORMAT=${format}`
 const BASEMAP_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzoom?: number }> = {
+  // R4 (revue Vic n°2, reprise du C3) : sur le fond SOMBRE, les noms de localités disparaissent
+  // À TOUS LES ZOOMS (décision ferme — Saint-Gilles-les-Bains en gros par-dessus la carte).
+  // La variante nolabels retire AUSSI les noms de rues : assumé — la fiche porte l'adresse,
+  // le Plan IGN reste disponible pour qui veut des labels. Ortho : pas de labels par nature.
   'bm-carto': {
-    tiles: ['https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'],
-    attribution: '© OSM · CARTO',
-  },
-  // C3 (revue Vic) : sous z10 en mode île, les noms de localités du fond doublonnent nos
-  // marqueurs communes → variante SANS labels (même fournisseur). Aux zooms parcellaires,
-  // les labels du fond redeviennent utiles : on ne les retire QUE là où les marqueurs règnent.
-  'bm-carto-nolabels': {
     tiles: ['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png'],
     attribution: '© OSM · CARTO',
   },
@@ -123,9 +120,11 @@ export function MapView() {
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   const zonage = useQuery({ queryKey: ['layer', 'zonage', commune], queryFn: () => getMapLayer('plu_gpu_zone'), enabled: layers.zonage && !ile })
   const ppr = useQuery({ queryKey: ['layer', 'ppr', commune], queryFn: () => getMapLayer('ppr'), enabled: layers.ppr && !ile })
-  const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc && !ile })
-  const anru = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru && !ile })
-  const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite'), enabled: layers.equipements && !ile })
+  // (mode île : zonage/PPR passent par les tuiles MVT overlays — sources posées à l'init)
+  // R6 : parc (8 Mo simplifiés, opt-in), ANRU (10 Ko) et équipements (2,3 Mo) servis ÎLE
+  const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc })
+  const anru = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
+  const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite'), enabled: layers.equipements })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
 
   // ───────────────────────── init ─────────────────────────
@@ -177,6 +176,16 @@ export function MapView() {
         paint: { 'line-color': '#7DE8E0', 'line-width': 1.4, 'line-opacity': 0.95 },
       })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
+
+      // R6 : overlays zonage/PPR en tuiles MVT pour le mode ÎLE (29 Mo / 88 Mo en GeoJSON)
+      m.addSource('ovmvt-zonage', { type: 'vector', minzoom: 8, maxzoom: 15,
+        tiles: [`${window.location.origin}/map/tiles/ov/plu_gpu_zone/{z}/{x}/{y}.pbf`] })
+      m.addSource('ovmvt-ppr', { type: 'vector', minzoom: 8, maxzoom: 15,
+        tiles: [`${window.location.origin}/map/tiles/ov/ppr/{z}/{x}/{y}.pbf`] })
+      m.addLayer({ id: 'ovmvt-zonage', type: 'fill', source: 'ovmvt-zonage', 'source-layer': 'plu_gpu_zone',
+        layout: { visibility: 'none' }, paint: OVERLAYS.zonage.paint as never })
+      m.addLayer({ id: 'ovmvt-ppr', type: 'fill', source: 'ovmvt-ppr', 'source-layer': 'ppr',
+        layout: { visibility: 'none' }, paint: OVERLAYS.ppr.paint as never })
 
       // ── mode ÎLE : calques jumeaux sur tuiles MVT (431k parcelles — le GeoJSON ne tient pas) ──
       m.addSource('parcels-ile', { type: 'vector', minzoom: 10, maxzoom: 15,
@@ -297,7 +306,7 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    const active = basemap === 'dark' ? (ile && lowZoom ? 'bm-carto-nolabels' : 'bm-carto')
+    const active = basemap === 'dark' ? 'bm-carto'
       : basemap === 'plan' ? 'bm-plan'
       : orthoYear === '2000' ? 'bm-ortho-2000' : orthoYear === '1950' ? 'bm-ortho-1950' : 'bm-ortho-now'
     for (const id of Object.keys(BASEMAP_SOURCES)) {
@@ -340,9 +349,11 @@ export function MapView() {
     m.setLayoutProperty('ile-hl', 'visibility', vis(ile))
     m.setLayoutProperty('ov-zonage', 'visibility', vis(layers.zonage && !ile))
     m.setLayoutProperty('ov-ppr', 'visibility', vis(layers.ppr && !ile))
-    m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc && !ile))
-    m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru && !ile))
-    m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements && !ile))
+    m.setLayoutProperty('ovmvt-zonage', 'visibility', vis(layers.zonage && ile))
+    m.setLayoutProperty('ovmvt-ppr', 'visibility', vis(layers.ppr && ile))
+    m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc))
+    m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru))
+    m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements))
     const expr = toExpr(filters)
     for (const fill of ['parcels-fill', 'ile-fill']) {
       m.setFilter(fill, expr)

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useApp, type LayerToggles } from '../../store/useApp'
 import { ResultsSection } from './ResultsSection'
 
@@ -13,34 +14,48 @@ const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
 ]
 
 //: couches servies par commune (GeoJSON) — indisponibles en mode « Toute l'île » (payload)
-const COMMUNE_ONLY: (keyof LayerToggles)[] = ['zonage', 'ppr', 'parc', 'anru', 'equipements']
+// R6 (revue Vic n°2) : TOUTES les couches sont servies île (zonage/PPR en MVT, parc en
+// GeoJSON simplifié 8 Mo opt-in, ANRU/équipements en direct) — plus rien de commune-scopé.
+const COMMUNE_ONLY: (keyof LayerToggles)[] = []
 
 function LayersSection() {
-  const { layers, toggleLayer, commune, setToast } = useApp()
+  const { layers, toggleLayer, commune } = useApp()
   const ile = commune == null
+  // R5 (revue Vic n°2) : le hint est ANCRÉ au contrôle cliqué — bref, contigu, auto-éteint
+  const [hintKey, setHintKey] = useState<string | null>(null)
+  useEffect(() => {
+    if (!hintKey) return
+    const t = setTimeout(() => setHintKey(null), 2500)
+    return () => clearTimeout(t)
+  }, [hintKey])
   return (
     <div className="px-5 pt-4">
       <p className="mb-3 font-mono text-[11px] tracking-widest text-txt-dim">COUCHES</p>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-1.5">
         {LAYERS.map(({ key, label, hint }) => {
           const off = ile && COMMUNE_ONLY.includes(key)
           const on = layers[key] && !off
           return (
-            <button key={key}
-              onClick={() => off
-                ? setToast(`La couche « ${label} » s'affiche par commune — choisissez une commune dans le sélecteur pour l'activer.`)
-                : toggleLayer(key)}
-              className={`flex items-center gap-3 text-left ${off ? 'opacity-45' : ''}`}
-              title={off ? `${label} — sélectionnez une commune (couche servie par commune)` : hint}>
-              <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
-                {on && (
-                  <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
-                    <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06130C" strokeWidth="1.8" />
-                  </svg>
-                )}
-              </span>
-              <span className={`text-xs ${on ? 'text-txt' : 'text-txt-mut'}`}>{label}</span>
-            </button>
+            <div key={key}>
+              <button
+                onClick={() => (off ? setHintKey(key) : (setHintKey(null), toggleLayer(key)))}
+                className={`flex items-center gap-3 text-left ${off ? 'opacity-45' : ''}`}
+                title={off ? undefined : hint}>
+                <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
+                  {on && (
+                    <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
+                      <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06130C" strokeWidth="1.8" />
+                    </svg>
+                  )}
+                </span>
+                <span className={`text-xs ${on ? 'text-txt' : 'text-txt-mut'}`}>{label}</span>
+              </button>
+              {hintKey === key && (
+                <p data-hint-couche={key} className="ml-6 mt-0.5 text-[10px] text-st-creuser">
+                  Par commune — choisissez une commune ↑
+                </p>
+              )}
+            </div>
           )
         })}
       </div>

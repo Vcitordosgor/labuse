@@ -23,31 +23,28 @@ await page.goto(BASE, { waitUntil: 'networkidle' })
 await page.waitForSelector('text=chaudes', { timeout: 20000 })
 await page.waitForTimeout(2500)
 
-// ── C2 : UN seul logo (le path officiel) visible à l'écran
-const logos = await page.evaluate(() =>
-  [...document.querySelectorAll('svg path')].filter((p) =>
+// ── C2/R3 (décision finale Vic) : DEUX logos, UN PAR ZONE — l'oiseau en haut du rail,
+// le combo dans le header ; jamais deux dans la même zone
+const logos = await page.evaluate(() => {
+  const paths = [...document.querySelectorAll('svg path')].filter((p) =>
     (p.getAttribute('d') || '').startsWith('M2 15 C58')).filter((p) => {
     const r = p.closest('svg').getBoundingClientRect()
     return r.width > 0 && r.height > 0
-  }).length)
-assert(logos === 1, `C2 : un seul logo à l'écran (${logos})`)
+  })
+  return { total: paths.length,
+           rail: paths.filter((p) => p.closest('nav')).length,
+           header: paths.filter((p) => p.closest('header')).length }
+})
+assert(logos.rail === 1 && logos.header === 1 && logos.total === 2,
+  `C2/R3 : oiseau au rail (${logos.rail}) + combo au header (${logos.header}), total ${logos.total}`)
 await page.screenshot({ path: `${OUT}/correctif_c2_logo.png` })
 
-// ── C3 : sous z10 en île, le fond actif est la variante SANS labels
-const activeBm = await page.evaluate(() => {
-  const m = window.__labuse_map
-  return ['bm-carto', 'bm-carto-nolabels'].find((id) => m.getLayoutProperty(id, 'visibility') === 'visible')
+// ── C3/R4 (décision finale Vic) : fond Sombre = SANS labels à TOUS les zooms
+const cartoTiles = await page.evaluate(() => {
+  const src = window.__labuse_map.getSource('bm-carto')
+  return (src && src.tiles && src.tiles[0]) || ''
 })
-assert(activeBm === 'bm-carto-nolabels', `C3 : fond sans labels sous z10 (${activeBm})`)
-await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.269, -21.01], zoom: 14 }))
-await page.waitForTimeout(1500)
-const activeBm2 = await page.evaluate(() => {
-  const m = window.__labuse_map
-  return ['bm-carto', 'bm-carto-nolabels'].find((id) => m.getLayoutProperty(id, 'visibility') === 'visible')
-})
-assert(activeBm2 === 'bm-carto', `C3 : labels de retour aux zooms parcellaires (${activeBm2})`)
-await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.53, -21.13], zoom: 9.5 }))
-await page.waitForTimeout(1200)
+assert(cartoTiles.includes('dark_nolabels'), `C3/R4 : fond Sombre sans labels à tous les zooms (${cartoTiles.slice(30, 70)})`)
 await page.screenshot({ path: `${OUT}/correctif_c3_labels.png` })
 
 // ── C4 : cadrage positif + popover entonnoir = SQL indépendant

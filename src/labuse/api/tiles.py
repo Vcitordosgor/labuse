@@ -101,3 +101,53 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
         _CACHE.popitem(last=False)
     return Response(content=body, media_type="application/x-protobuf",
                     headers={"Cache-Control": "public, max-age=3600"})
+
+
+# ═══════════ OVERLAYS MVT (R6, revue Vic n°2) — zonage PLU + PPR île entière ═══════════
+# 6 306 zones (29 Mo) + 164 PPR (88 Mo, mégapolygones 320k pts) : le GeoJSON île ne tient
+# pas → même mécanique matérialisée que mvt_parcels. Reconstruit par `labuse build-mvt`.
+
+OVERLAY_KINDS = ("plu_gpu_zone", "ppr")
+
+
+def build_overlay_mvt(db: Session) -> int:
+    db.execute(text("DROP TABLE IF EXISTS mvt_overlays"))
+    db.execute(text("""
+        CREATE TABLE mvt_overlays AS
+        SELECT id, kind, subtype, name, commune, ST_Transform(geom, 3857) AS geom_3857
+        FROM spatial_layers WHERE kind IN ('plu_gpu_zone', 'ppr')"""))
+    db.execute(text("CREATE INDEX mvt_overlays_gix ON mvt_overlays USING GIST (geom_3857)"))
+    db.execute(text("CREATE INDEX mvt_overlays_kind ON mvt_overlays (kind)"))
+    db.execute(text("ANALYZE mvt_overlays"))
+    n = db.execute(text("SELECT count(*) FROM mvt_overlays")).scalar() or 0
+    db.commit()
+    _CACHE.clear()
+    return int(n)
+
+
+@router.get("/map/tiles/ov/{kind}/{z}/{x}/{y}.pbf")
+def mvt_overlay_tile(kind: str, z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
+    """Tuile MVT d'une couche overlay (couche = `kind`) — mode île."""
+    if kind not in OVERLAY_KINDS or z < 8 or z > 22:
+        return Response(status_code=204)
+    key = ("ov", kind, z, x, y)
+    if key in _CACHE:
+        _CACHE.move_to_end(key)
+        return Response(content=_CACHE[key], media_type="application/x-protobuf")
+    if not db.execute(text("SELECT to_regclass('mvt_overlays')")).scalar():
+        return Response(status_code=204)
+    data = db.execute(text("""
+        WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
+        mvt AS (
+          SELECT ST_AsMVTGeom(m.geom_3857, b.env, 4096, 64, true) AS geom,
+                 m.subtype, m.name, m.commune
+          FROM mvt_overlays m, b
+          WHERE m.kind = :k AND m.geom_3857 && b.env)
+        SELECT ST_AsMVT(mvt.*, :k, 4096, 'geom') FROM mvt"""),
+        {"z": z, "x": x, "y": y, "k": kind}).scalar()
+    body = bytes(data) if data else b""
+    _CACHE[key] = body
+    if len(_CACHE) > _CACHE_MAX:
+        _CACHE.popitem(last=False)
+    return Response(content=body, media_type="application/x-protobuf",
+                    headers={"Cache-Control": "public, max-age=3600"})

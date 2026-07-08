@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useApp, type Basemap, type MapTool, type OrthoYear } from '../../store/useApp'
 
 const BASEMAPS: { key: Basemap; label: string }[] = [
@@ -37,9 +37,16 @@ const TOOLS: { key: MapTool; label: string; icon: JSX.Element; hint: string }[] 
 ]
 
 export function MapToolbar() {
-  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, commune, setToast } = useApp()
+  const { basemap, setBasemap, orthoYear, setOrthoYear, terrain3d, toggleTerrain, tool, setTool, zone, setZone, commune } = useApp()
   const [bmOpen, setBmOpen] = useState(false)
   const ile = commune == null
+  // R5 : hint ancré à l'outil (pas un toast lointain), auto-éteint
+  const [zoneHint, setZoneHint] = useState(false)
+  useEffect(() => {
+    if (!zoneHint) return
+    const t = setTimeout(() => setZoneHint(false), 2500)
+    return () => clearTimeout(t)
+  }, [zoneHint])
 
   return (
     <div className="absolute right-4 top-4 flex flex-col items-end gap-2">
@@ -106,18 +113,22 @@ export function MapToolbar() {
           // en mode « Toute l'île » il serait menteur : désactivé avec la marche à suivre
           const off = t.key === 'zone' && ile
           return (
-            <button
-              key={t.key}
-              onClick={() => off
-                ? setToast('Le filtre de zone se dessine par commune — choisissez une commune dans le sélecteur pour l’activer.')
-                : setTool(tool === t.key ? null : t.key)}
-              className={`flex h-9 w-9 items-center justify-center border-b border-line-2 last:border-0 ${
-                off ? 'text-[#2E3A33]'
-                  : tool === t.key ? 'bg-[#0F1A14] text-mint' : 'text-txt-mut hover:text-txt'}`}
-              title={off ? 'Zone — sélectionnez d’abord une commune (le filtre de zone est par commune)' : `${t.label} — ${t.hint}`}
-            >
-              <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">{t.icon}</svg>
-            </button>
+            <div key={t.key} className="relative">
+              <button
+                onClick={() => (off ? setZoneHint(true) : setTool(tool === t.key ? null : t.key))}
+                className={`flex h-9 w-9 items-center justify-center border-b border-line-2 last:border-0 ${
+                  off ? 'text-[#2E3A33]'
+                    : tool === t.key ? 'bg-[#0F1A14] text-mint' : 'text-txt-mut hover:text-txt'}`}
+                title={off ? undefined : `${t.label} — ${t.hint}`}
+              >
+                <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">{t.icon}</svg>
+              </button>
+              {off && zoneHint && (
+                <span data-hint-zone className="absolute right-11 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-st-creuser/40 bg-[#211a10] px-2 py-1 text-[10px] text-st-creuser">
+                  Par commune — choisissez une commune
+                </span>
+              )}
+            </div>
           )
         })}
       </div>

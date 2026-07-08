@@ -48,9 +48,12 @@ export function Rail() {
   return (
     <>
       <nav className="flex h-full w-16 shrink-0 flex-col items-center border-r border-line bg-surface-1 py-4">
-        {/* C2 (revue Vic) : UN seul logo à l'écran — le combo oiseau + « LABUSE » vit dans le
-            header ; le rail est une zone purement icônes (micro-choix consigné). */}
-        <div className="mb-6 h-4" />
+        {/* R3 (revue Vic n°2, reprise du C2) : l'OISEAU SEUL en haut du rail gauche ; le combo
+            oiseau + « LABUSE » reste dans le header — un logo par zone, pas de doublon. */}
+        <svg viewBox="0 0 240 82" className="mb-6 h-4 w-11 shrink-0" fill="#2FE0A0"
+          data-logo-rail style={{ filter: 'drop-shadow(0 0 6px rgba(47,224,160,0.35))' }}>
+          <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
+        </svg>
 
         {ZONES.map(({ key, label }) => {
           const on = key === 'outils' ? outilsOpen : view === key && !outilsOpen
