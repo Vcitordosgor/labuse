@@ -2,28 +2,65 @@
 export const VIOLET = '#B497F0'
 export const VIOLET_DIM = '#8b76c0'
 
+// P3 (revue Vic n°3) — CURATION. Les codes M01…M22 sont un langage d'ingénieur : ils restent
+// EN INTERNE (`num`, utile aux logs/URL/QA) mais ne s'affichent plus. Chaque outil porte un
+// titre clair + une phrase de BÉNÉFICE orientée métier (promoteur / bailleur / marchand de
+// biens), un GROUPE d'intention et un flag `phare` (les outils à plus forte valeur, mis en
+// avant). Regroupement consigné (DERIVATIONS) : Détecter le foncier · Analyser & simuler ·
+// Passer à l'action. Aucune perte de fonctionnalité — tous les outils restent ouvrables.
+
+export type OutilGroup = 'detecter' | 'analyser' | 'agir'
+
 export interface ModuleDef {
   key: string
-  num: string
+  num: string          // code interne (M01…M22) — jamais affiché, gardé pour logs/URL/QA
   label: string
-  desc: string
+  desc: string         // bénéfice métier, orienté « pourquoi je paie »
+  group: OutilGroup
+  phare?: boolean      // outil à forte valeur → mis en avant
 }
 
+//: les 3 intentions métier (ordre = priorité d'affichage ; « Détecter » d'abord = l'argument)
+export const GROUPS: { key: OutilGroup; label: string; hint: string }[] = [
+  { key: 'detecter', label: 'Détecter le foncier', hint: 'trouver les parcelles à potentiel' },
+  { key: 'analyser', label: 'Analyser & simuler', hint: 'jauger une parcelle, un secteur' },
+  { key: 'agir', label: 'Passer à l’action', hint: 'contacter, instruire, distribuer' },
+]
+
 export const MODULES: ModuleDef[] = [
-  { key: 'division', num: 'M01', label: 'Division parcellaire', desc: 'Maisons sur grand terrain : lot détachable dessiné' },
-  { key: 'patrimoine', num: 'M02', label: 'Scan patrimoine', desc: 'Un propriétaire → tout son foncier scoré' },
-  { key: 'permis', num: 'M03', label: 'Radar permis', desc: 'Sitadel par commune et période' },
-  { key: 'promesses', num: 'M04', label: 'Promesses mortes', desc: 'PC anciens jamais réalisés' },
-  { key: 'velocite', num: 'M05', label: 'Vélocité admin', desc: 'Rythmes d’instruction par commune (île)' },
-  { key: 'bailleur', num: 'M06', label: 'Mode bailleur', desc: 'Gisement LLS : QPV, TVA réduite' },
-  { key: 'fantome', num: 'M07', label: 'Foncier fantôme', desc: 'Constructible mais verrouillé (PM introuvable…)' },
-  { key: 'temps', num: 'M08', label: 'Remonter le temps', desc: 'Comparateur 1950 ↔ aujourd’hui' },
-  { key: 'courriers', num: 'M09', label: 'Courrier propriétaire', desc: 'Courriers types par lot (pipeline/sélection)' },
-  { key: 'duediligence', num: 'M10', label: 'Due diligence', desc: 'Liste de références → rapport multi-parcelles' },
-  { key: 'simulplu', num: 'M15', label: 'Simulateur PLU', desc: '« Et si cette zone AU passait en U ? » (à blanc)' },
-  { key: 'assemblage', num: 'M16', label: 'Assemblage', desc: 'Sélection contiguë → assiette fusionnée' },
-  { key: 'zan', num: 'M17', label: 'Simulateur ZAN', desc: 'Artificialisation par commune, parcelles compatibles' },
-  { key: 'barometre', num: 'M18', label: 'Baromètre foncier', desc: 'Rapport trimestriel île entière + PDF' },
-  { key: 'matching', num: 'M19', label: 'Matching promoteurs', desc: 'Critères enregistrés → alertes quand ça matche (démo)' },
-  { key: 'programme', num: 'M22', label: 'Faisabilité programme', desc: 'Un programme → les parcelles qui peuvent l’accueillir' },
+  // ── Détecter le foncier ──
+  { key: 'programme', num: 'M22', group: 'detecter', phare: true,
+    label: 'Faisabilité programme', desc: 'Décrivez votre programme, LABUSE trouve où le poser' },
+  { key: 'division', num: 'M01', group: 'detecter', phare: true,
+    label: 'Division parcellaire', desc: 'Repérez les grands terrains où détacher un lot à bâtir' },
+  { key: 'fantome', num: 'M07', group: 'detecter', phare: true,
+    label: 'Foncier fantôme', desc: 'Le constructible verrouillé que les autres ne voient pas' },
+  { key: 'patrimoine', num: 'M02', group: 'detecter', phare: true,
+    label: 'Scan patrimoine', desc: 'Tout le foncier d’un propriétaire en une recherche' },
+  { key: 'bailleur', num: 'M06', group: 'detecter',
+    label: 'Mode bailleur', desc: 'Le gisement LLS : QPV, TVA réduite, leviers du logement social' },
+  { key: 'matching', num: 'M19', group: 'detecter',
+    label: 'Matching promoteurs', desc: 'Enregistrez vos critères, soyez alerté quand ça matche' },
+  // ── Analyser & simuler ──
+  { key: 'assemblage', num: 'M16', group: 'analyser', phare: true,
+    label: 'Assemblage', desc: 'Fusionnez des parcelles contiguës en une assiette de projet' },
+  { key: 'barometre', num: 'M18', group: 'analyser',
+    label: 'Baromètre foncier', desc: 'Un état du marché foncier prêt à distribuer (PDF)' },
+  { key: 'permis', num: 'M03', group: 'analyser',
+    label: 'Radar permis', desc: 'Qui construit quoi, commune par commune (Sitadel)' },
+  { key: 'promesses', num: 'M04', group: 'analyser',
+    label: 'Promesses mortes', desc: 'Les permis anciens jamais sortis de terre' },
+  { key: 'velocite', num: 'M05', group: 'analyser',
+    label: 'Vélocité admin', desc: 'Comparez les rythmes d’instruction des 24 communes' },
+  { key: 'simulplu', num: 'M15', group: 'analyser',
+    label: 'Simulateur PLU', desc: 'Testez « et si cette zone passait constructible ? »' },
+  { key: 'zan', num: 'M17', group: 'analyser',
+    label: 'Simulateur ZAN', desc: 'La contrainte d’artificialisation, commune par commune' },
+  { key: 'temps', num: 'M08', group: 'analyser',
+    label: 'Remonter le temps', desc: 'Comparez 1950 et aujourd’hui pour lire la mutation' },
+  // ── Passer à l'action ──
+  { key: 'duediligence', num: 'M10', group: 'agir', phare: true,
+    label: 'Due diligence', desc: 'Passez une liste de parcelles au crible avant d’acheter' },
+  { key: 'courriers', num: 'M09', group: 'agir',
+    label: 'Courrier propriétaire', desc: 'Générez vos courriers d’approche par lot' },
 ]

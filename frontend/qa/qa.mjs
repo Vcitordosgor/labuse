@@ -242,7 +242,8 @@ for (const width of [1440, 1280]) {
   assert((await page.locator('text=Copilote').count()) > 0, 'rail IA → Copilote (recherche NL)')
   await page.locator('nav button[title="Cartes"]').click()
   await page.locator('nav button[title="Outils"]').click()
-  assert((await page.locator('text=M01').count()) > 0, 'rail Outils → catalogue de modules')
+  // P3 (revue n°3) : plus de code M à l'écran — le tiroir montre des intitulés métier curés
+  assert((await page.locator('text=Division parcellaire').count()) > 0, 'rail Outils → catalogue de modules (intitulés métier)')
   await page.locator('nav button[title="Outils"]').click()
   await page.locator('button[title*="Fraîcheur"]').click()
   assert((await page.locator('text=Sources de données').count()) > 0, 'J-2 → page Sources')

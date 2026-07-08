@@ -18,7 +18,10 @@ const SLOTS: { key: string; label: string; rempli: (f: FicheProjet) => string | 
   {
     key: 'ampleur', label: 'Ampleur', rempli: (f) => {
       const a = f.ampleur ?? {}
-      return a.logements ? `${a.logements} logements` : a.sdp_m2 ? `${a.sdp_m2} m² SDP` : null
+      const base = a.logements ? `${a.logements} logements` : a.sdp_m2 ? `${a.sdp_m2} m² SDP` : null
+      // le gabarit (R+n) affine l'ampleur — affiché s'il est renseigné
+      if (a.niveaux) return base ? `${base} · R+${a.niveaux}` : `R+${a.niveaux}`
+      return base
     },
   },
   {

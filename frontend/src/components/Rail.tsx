@@ -1,5 +1,5 @@
 import { useApp, type View } from '../store/useApp'
-import { MODULES, VIOLET } from './outils/registry'
+import { GROUPS, MODULES, VIOLET } from './outils/registry'
 
 // Icônes 20×20, trait 1.6, arrondi — redessinées pour être nettes à 20 px (les précédentes
 // rendaient mal). Cohérence : contour simple, pas de remplissage sauf CRM (barres).
@@ -52,19 +52,50 @@ const ZONES: { key: Zone; label: string }[] = [
   { key: 'crm', label: 'CRM' },
 ]
 
+// ── icône « base de données / fraîcheur » : stack de disques (remplace l'ancien badge « J-2 »)
+const SOURCES_ICON = (
+  <>
+    <ellipse cx="10" cy="5.5" rx="5.5" ry="2.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+    <path d="M4.5 5.5 V10 c0 1.2 2.5 2.2 5.5 2.2 s5.5 -1 5.5 -2.2 V5.5" fill="none" stroke="currentColor" strokeWidth="1.4" />
+    <path d="M4.5 10 v4.5 c0 1.2 2.5 2.2 5.5 2.2 s5.5 -1 5.5 -2.2 V10" fill="none" stroke="currentColor" strokeWidth="1.4" />
+  </>
+)
+
+// P3 — une carte OUTIL : phare = mise en avant (bordure/point violet, bénéfice lisible) ;
+// secondaire = ligne compacte. Aucun code M à l'écran (gardé en interne seulement).
+function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boolean; open: (k: string) => void }) {
+  return (
+    <button
+      key={m.key}
+      data-outil={m.key}
+      data-outil-phare={phare ? '1' : undefined}
+      onClick={() => open(m.key)}
+      className={`w-full rounded-lg border px-3 text-left transition-colors ${
+        phare
+          ? 'border-[#4a3d6b] bg-[#171221] py-2.5 hover:border-[#B497F0]'
+          : 'border-line-2 bg-surface-3 py-2 hover:border-[#6b5a96]'
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        {phare && <span className="text-[10px]" style={{ color: VIOLET }} title="Outil phare">★</span>}
+        <span className={`text-xs font-medium ${phare ? 'text-txt-hi' : 'text-txt'}`}>{m.label}</span>
+      </div>
+      <div className={`mt-0.5 leading-snug ${phare ? 'text-[11px] text-[#b8a8de]' : 'text-[10.5px] text-txt-dim'}`}>
+        {m.desc}
+      </div>
+    </button>
+  )
+}
+
 export function Rail() {
   const { view, setView, outilsOpen, toggleOutils, openSources, setModule } = useApp()
 
   return (
     <>
-      <nav className="flex h-full w-16 shrink-0 flex-col items-center border-r border-line bg-surface-1 py-4">
-        {/* R3 (revue Vic n°2, reprise du C2) : l'OISEAU SEUL en haut du rail gauche ; le combo
-            oiseau + « LABUSE » reste dans le header — un logo par zone, pas de doublon. */}
-        <svg viewBox="0 0 240 82" className="mb-6 h-4 w-11 shrink-0" fill="#2FE0A0"
-          data-logo-rail style={{ filter: 'drop-shadow(0 0 6px rgba(47,224,160,0.35))' }}>
-          <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
-        </svg>
-
+      <nav className="flex h-full w-16 shrink-0 flex-col items-center border-r border-line bg-surface-1 py-5">
+        {/* P4 (revue Vic n°3) — UN SEUL oiseau : le combo oiseau + « LABUSE » vit dans le header.
+            Le rail est PUR icônes de navigation, sans logomark redondant (l'oiseau du rail et
+            celui du header se retrouvaient côte à côte en haut-gauche → doublon vu par Vic). */}
         {ZONES.map(({ key, label }) => {
           const on = key === 'outils' ? outilsOpen : view === key && !outilsOpen
           return (
@@ -87,18 +118,25 @@ export function Rail() {
           )
         })}
 
-        <div className="mt-auto flex flex-col items-center gap-1.5">
-          {/* Fraîcheur des données → page Sources (exigence #9) */}
+        <div className="mt-auto flex flex-col items-center gap-2">
+          {/* P5 (revue Vic n°3) — l'ancien badge cryptique « J-2 » devient une entrée « Sources »
+              claire : même fonction (fraîcheur des données → page Sources), libellé explicite. */}
           <button
             onClick={() => openSources()}
-            className="flex flex-col items-center gap-1"
-            title="Fraîcheur des données — voir les sources"
+            className="group flex w-full flex-col items-center gap-1"
+            title="Fraîcheur des données — sources et mises à jour"
           >
-            <span className="h-2 w-2 rounded-full bg-mint" />
-            <span className={`font-mono text-[11px] ${view === 'sources' ? 'text-mint' : 'text-txt-mut'}`}>J-2</span>
+            <span
+              className={`flex h-10 w-10 items-center justify-center rounded-[10px] border transition-colors ${
+                view === 'sources' ? 'border-[#2E6B4F] bg-[#0F1A14] text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
+              }`}
+            >
+              <svg viewBox="0 0 20 20" className="h-5 w-5">{SOURCES_ICON}</svg>
+            </span>
+            <span className={`text-[10.5px] ${view === 'sources' ? 'text-mint' : 'text-txt-mut'}`}>Sources</span>
           </button>
           <span
-            className="mt-2 flex h-7 w-7 items-center justify-center rounded-full border border-line-2 bg-surface-3 font-mono text-[11px] text-mint"
+            className="mt-1 flex h-7 w-7 items-center justify-center rounded-full border border-line-2 bg-surface-3 font-mono text-[11px] text-mint"
             title="Vic — LABUSE"
           >
             VL
@@ -106,22 +144,34 @@ export function Rail() {
         </div>
       </nav>
 
-      {/* Tiroir Outils : mécanisme d'accueil VIDE (V1) — élégant, sans module */}
+      {/* P3 — Tiroir Outils CURÉ : regroupé par intention métier, les outils phares mis en avant.
+          Un promoteur voit d'abord ce qui lui fait dire « je paie », pas 16 cases identiques. */}
       {outilsOpen && (
-        <aside className="flex h-full w-[300px] shrink-0 flex-col border-r border-line bg-surface-1 p-5">
-          <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
-          <p className="mt-1 font-mono text-[11px] tracking-widest text-txt-dim">MODULES</p>
-          <div className="mt-4 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-            {MODULES.map((m) => (
-              <button key={m.key} onClick={() => setModule(m.key)}
-                className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left hover:border-[#6b5a96]">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-mono text-[10px]" style={{ color: VIOLET }}>{m.num}</span>
-                  <span className="text-xs font-medium text-txt">{m.label}</span>
-                </div>
-                <div className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{m.desc}</div>
-              </button>
-            ))}
+        <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
+          <div className="shrink-0 px-5 pb-2 pt-5">
+            <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
+            <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">
+              Les moteurs métier de LABUSE — <span style={{ color: VIOLET }}>★</span> = les plus puissants.
+            </p>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
+            {GROUPS.map((g) => {
+              const outils = MODULES.filter((m) => m.group === g.key)
+              if (!outils.length) return null
+              return (
+                <section key={g.key} data-outil-group={g.key}>
+                  <div className="mb-2 flex items-baseline justify-between">
+                    <p className="font-mono text-[10.5px] font-medium uppercase tracking-widest text-txt-mut">{g.label}</p>
+                    <p className="text-[9.5px] text-txt-dim">{g.hint}</p>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    {outils.map((m) => (
+                      <OutilCard key={m.key} m={m} phare={!!m.phare} open={setModule} />
+                    ))}
+                  </div>
+                </section>
+              )
+            })}
           </div>
         </aside>
       )}

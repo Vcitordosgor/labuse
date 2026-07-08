@@ -23,8 +23,8 @@ await page.goto(BASE + '#f=1&v=1', { waitUntil: 'networkidle' })
 await page.waitForSelector('text=chaudes', { timeout: 20000 })
 await page.waitForTimeout(2500)
 
-// ── C2/R3 (décision finale Vic) : DEUX logos, UN PAR ZONE — l'oiseau en haut du rail,
-// le combo dans le header ; jamais deux dans la même zone
+// ── P4 (revue Vic n°3, remplace C2/R3) : UN SEUL oiseau — le combo oiseau+« LABUSE » dans le
+// header ; le rail est PUR icônes de navigation, sans logomark redondant (le doublon vu par Vic)
 const logos = await page.evaluate(() => {
   const paths = [...document.querySelectorAll('svg path')].filter((p) =>
     (p.getAttribute('d') || '').startsWith('M2 15 C58')).filter((p) => {
@@ -35,8 +35,8 @@ const logos = await page.evaluate(() => {
            rail: paths.filter((p) => p.closest('nav')).length,
            header: paths.filter((p) => p.closest('header')).length }
 })
-assert(logos.rail === 1 && logos.header === 1 && logos.total === 2,
-  `C2/R3 : oiseau au rail (${logos.rail}) + combo au header (${logos.header}), total ${logos.total}`)
+assert(logos.rail === 0 && logos.header === 1,
+  `P4 : UN oiseau (header ${logos.header}, rail ${logos.rail}) — plus de doublon`)
 await page.screenshot({ path: `${OUT}/correctif_c2_logo.png` })
 
 // ── C3/R4 (décision finale Vic) : fond Sombre = SANS labels à TOUS les zooms
@@ -56,7 +56,8 @@ await page.waitForTimeout(1200)
 const sqlBaties = sql(`SELECT n FROM entonnoir_motifs WHERE run_label='q_v2' AND commune='__ile__' AND motif='déjà bâtie'`)
 assert((await page.locator(`[data-entonnoir-popover] >> text=${Number(sqlBaties).toLocaleString('fr-FR')}`).count()) > 0,
   `C4 : motif « déjà bâtie » affiché = SQL (${sqlBaties})`)
-assert((await page.locator('text=trié pour vous').count()) > 0, 'C4 : langage « LABUSE a trié pour vous »')
+// P2 (revue n°3) : le tri est un AVIS argumenté (« son avis retient »), le reste reste visible
+assert((await page.locator('[data-entonnoir-popover] >> text=son avis retient').count()) > 0, 'C4/P2 : langage « son avis retient … » (avis, pas décision)')
 await page.screenshot({ path: `${OUT}/correctif_c4_entonnoir.png` })
 await page.keyboard.press('Escape')
 await page.mouse.click(700, 100)

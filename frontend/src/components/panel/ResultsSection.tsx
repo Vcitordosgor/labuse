@@ -101,8 +101,9 @@ function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', numbe
   )
 }
 
-// C4 (revue Vic) : le tri EST le produit — « LABUSE a analysé N parcelles et trié pour
-// vous ». Le popover montre l'entonnoir PAR MOTIF (SQL-exact, matérialisé post-matrice).
+// C4 + P2 (revue Vic n°3) : LABUSE MONTRE son analyse (avis argumenté), il ne décide pas à
+// votre place. Le popover expose l'entonnoir PAR MOTIF (SQL-exact) : le reste reste visible et
+// cliquable, chaque écartée motivée — vous pouvez contredire.
 function EntonnoirLine({ total, opportunites, nFilters }: { total: number; opportunites: number; nFilters: number }) {
   const [open, setOpen] = useState(false)
   const commune = useApp((s) => s.commune)
@@ -121,8 +122,9 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div data-entonnoir-popover className="absolute left-0 top-6 z-20 w-[300px] rounded-xl border border-line-2 bg-surface-2 p-3 shadow-2xl">
             <p className="text-[11px] leading-snug text-txt">
-              LABUSE a analysé <b>{fmt(q.data?.analysees ?? total)}</b> parcelles et trié pour
-              vous : <b className="text-mint">{fmt(q.data?.opportunites ?? opportunites)}</b> opportunités.
+              LABUSE a analysé <b>{fmt(q.data?.analysees ?? total)}</b> parcelles ; son avis retient
+              <b className="text-mint"> {fmt(q.data?.opportunites ?? opportunites)}</b> opportunités.
+              Le reste reste visible et cliquable — voici pourquoi il est écarté.
             </p>
             <p className="mt-1.5 font-mono text-[9.5px] tracking-widest text-txt-dim">LE RESTE, PAR MOTIF</p>
             {q.isLoading && <p className="mt-1 text-[10px] text-txt-dim">Chargement…</p>}

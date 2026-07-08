@@ -35,7 +35,7 @@ async function openModule(num, label) {
   await page.waitForTimeout(300)
   await page.getByRole('button', { name: new RegExp(label) }).first().click()
   await page.waitForTimeout(1500)
-  assert((await page.locator(`text=${num} · MODULE`).count()) > 0, `${num} s'ouvre`)
+  assert((await page.locator("aside h2", { hasText: label }).count()) > 0, `${num} s'ouvre (${label})`)
 }
 
 // M15 simulateur PLU : choisir une zone AU → bascules potentielles affichées

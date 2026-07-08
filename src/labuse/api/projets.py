@@ -152,13 +152,16 @@ def derive_programme(fiche: dict) -> dict | None:
     M22 `unités = bâtiments × logements/bât` est préservée). La vérité reste le
     formulaire M22 pré-rempli, éditable."""
     t = fiche.get("type_programme")
-    logements = (fiche.get("ampleur") or {}).get("logements")
+    amp = fiche.get("ampleur") or {}
+    logements = amp.get("logements")
     if t in (None, "autre") or not logements:
         return None
     per = fiche.get("perimetre") or {}
     communes = per.get("communes") or []
+    # gabarit souhaité (R+n) → niveaux M22 ; défaut R+2 (défaut du formulaire) si non exprimé
+    niveaux = int(amp["niveaux"]) if amp.get("niveaux") else 2
     return {
-        "type": t, "batiments": 1, "niveaux": 2,
+        "type": t, "batiments": 1, "niveaux": niveaux,
         "logements_par_batiment": int(logements),
         "surface_unite_m2": M22_SURFACE_UNITE_M2, "parking": True,
         "commune": communes[0] if per.get("mode") == "communes" and len(communes) == 1 else None,
