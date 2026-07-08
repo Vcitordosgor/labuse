@@ -461,3 +461,72 @@ scoring/cascade/matrice. Suite dédiée `qa_revue3.mjs` (P1+P3) verte, suites ex
   C4→P2 « son avis retient »), `qa.mjs` (M01→intitulé métier), et le hook `openModule` de
   `qa_modules/qa_moteurs/qa_audit27/qa_missions_sp/qa_partners` (`text=M## · MODULE` → `aside h2`
   par intitulé, l'en-tête ne portant plus le code).
+
+## Mandat bilan-calculette — la charge foncière + finitions UX (08/07)
+La pièce maîtresse : le Bilan cesse d'aligner des ingrédients, il DONNE le chiffre que le
+promoteur attend (« combien puis-je payer ce terrain ? »). Rien au scoring/cascade/matrice.
+Suite dédiée `qa_calculette.mjs` (Bloc A + UX vérifiables) + `tests/test_bilan.py` (arithmétique
+en isolation) verts ; suites existantes vertes.
+
+### Bloc A — LA CALCULETTE DE CHARGE FONCIÈRE
+- **Formule retenue (consignée)** — RÉUTILISE `compute_bilan` (aucune arithmétique réécrite) :
+  `charge foncière = CA × coef − construction`, avec `CA = SDP vendable × prix de sortie DVF`
+  (médiane), `coef = 1 − (marge & frais)/100`, `construction = SDP_plancher × coût/m²` où
+  `SDP_plancher = SDP vendable × coef_plancher_habitable (1,15)`. VRD = 0 hors secteur calibré
+  (comme la fiche aujourd'hui). Vérifié à la main + `test_calculette_arithmetique_independante`.
+- **LIGNE ROUGE respectée** : LABUSE affiche le SOURCÉ (SDP moteur, prix DVF, TVA/leviers) en
+  LECTURE ; le promoteur SAISIT ses hypothèses métier — **coût de construction €/m²** (défaut
+  2500, milieu de la fourchette prudente Réunion 2300–2800) et **marge & frais %** (défaut 21 =
+  marge promoteur 9 % + frais annexes 12 % du moteur), champs marqués « hyp. — ajustez ». Le
+  résultat est titré « selon vos hypothèses », jamais une vérité LABUSE. Micro-choix : marge et
+  frais AGRÉGÉS en un seul champ (le promoteur raisonne en marge tout compris) → `honoraires_pct`
+  et `frais_financiers_pct` neutralisés dans `bilan_params`.
+- **Endpoint dédié** `POST /modules/faisabilite/{idu}/charge` (micro-choix A4 : backend, pas de
+  calcul JS — l'arithmétique vit dans UN seul endroit, le moteur ; le front débounce 350 ms et
+  garde le résultat précédent pendant le recalcul, pas de flash). Cœur pur `compute_calculette`
+  testable sans DB.
+- **Verdict d'achat (A3)** : `prix_demande_eur` optionnel → « Supportable » (charge foncière
+  médiane ≥ prix, marge affichée) / « Trop cher » (écart négatif) — l'aide à la décision.
+- **Cas limites honnêtes (A5)** : capacité non résolue (RNU / zone non constructible → SDP
+  vendable nulle) ou prix DVF insuffisant → `calculable:false` + message, JAMAIS un faux chiffre ;
+  au mieux le prix de sortie secteur est rendu. Le résultat HÉRITE de la fiabilité du prix
+  (fragile → « ordre de grandeur »).
+- **PDF (A6)** : le PDF premium ne portait PAS de charge foncière — on l'AJOUTE quand les
+  hypothèses sont passées (`/parcels/{idu}/export.pdf?cout_construction_m2=…&marge_frais_pct=…&
+  prix_demande_eur=…`, recalcul moteur, bloc « CHARGE FONCIÈRE — SELON VOS HYPOTHÈSES » + verdict
+  d'achat). Les hypothèses courantes transitent par le store (`calculette`) → le bouton PDF de la
+  fiche les joint quand l'onglet Bilan est actif.
+
+### Bloc B — FINITIONS UX
+- **B1 — chargement animé** : composant `Loading` (3 points qui pulsent, `role=status`) + squelettes ;
+  posé où un délai est visible — carte (pastille « Chargement des parcelles »), fiche (skeleton),
+  entretien (« le copilote réfléchit »), calculette (« recalcul… »), sources. Plus d'écran figé.
+- **B2 — navigation EXCLUSIVE (règle consignée)** : « vue principale » = IA/Cartes/Outils/Projets/
+  CRM/Sources. Changer de vue (`setView`/`openSources`) FERME la fiche parcelle ET tout panneau
+  secondaire de la vue quittée : module, contexte commune, drawer source, restitution IA, tiroir
+  outils. Les flux « ouvrir une fiche depuis X » appellent `setView('cartes')` PUIS `select(idu)`
+  (ordre respecté partout). Piège corrigé : `ProjetsPanel` « Ouvrir » posait la restitution PUIS
+  `setView('cartes')` → la nav exclusive la balayait ; `setView` retiré (apply() bascule déjà).
+- **B3 — fraîcheur par source (« Mises à jour »)** : la page Sources devient « Sources & mises à
+  jour » avec un résumé (N/M sources datées · dernière ingestion réelle) et, par source, sa
+  **dernière ingestion** = `data_sources.last_sync_at` (RÉELLE, 16/43 en base). Sources sans
+  métadonnée → « ingestion non tracée » (jamais inventée). Micro-choix : PAS de 2ᵉ entrée rail
+  (l'entrée « Sources » y mène déjà, et B7 libère au contraire de la place) — l'écran est conçu
+  pour accueillir la fraîcheur auto quand le cron arrivera (texte « rafraîchissements manuels
+  aujourd'hui »). Le relatif (« il y a N j/mois ») utilise l'horloge ; la DATE affichée est la
+  vraie date d'ingestion.
+- **B4 — proportions** : (1) tuiles IA — le « Montage de projet » avait un grand vide (bouton
+  poussé en bas par `mt-auto`) → rempli par un flux « 1·2·3 » (équilibre + désirabilité), icônes
+  `shrink-0` ; (2) formulaire M22 — la case PARKING (largeur contenu) cassait l'alignement de la
+  2ᵉ ligne → passée en colonne `flex-1` comme les autres champs.
+- **B5 — exemples** : palette portée à 8, variée (statut, secteur, commune, surface, SDP, score,
+  événement, flags, vue mer) — donne à voir l'étendue du copilote.
+- **B6 — wording** : tiroir Outils « ★ = les plus utilisés » (au lieu de « puissants », qui
+  sous-entendait que les autres sont faibles).
+- **B7 — pastille « VL » du rail retirée** : elle DOUBLAIT l'avatar du header (aucune fonction
+  unique, statique) → suppression, espace vertical rendu.
+
+### HORS PÉRIMÈTRE (backlog, consigné)
+- « Étoffer largement l'IA projet » (plus de questions) : NON touché — l'entretien vient de passer
+  à 6 questions (revue n°3), à tester par Vic avant d'en rajouter.
+- Renommer chaudes/à surveiller/à creuser/écartées : décision de branding non tranchée — rien renommé.

@@ -33,7 +33,7 @@ await page.locator('header').screenshot({ path: `${OUT}/revue3_header_un_oiseau.
 assert((await page.locator('text=J-2').count()) === 0, 'P5 : le badge « J-2 » a disparu')
 assert((await page.locator('nav >> text=Sources').count()) >= 1, 'P5 : entrée « Sources » claire dans le rail')
 await page.locator('nav button[title*="Fraîcheur"]').click()
-await page.waitForSelector('text=Sources de données', { timeout: 8000 })
+await page.waitForSelector('text=Sources & mises à jour', { timeout: 8000 })
 assert(true, 'P5 : « Sources » ouvre bien la page Sources (fonction préservée)')
 
 // ═══ P2 — le tri affirme un AVIS, pas une décision ═══

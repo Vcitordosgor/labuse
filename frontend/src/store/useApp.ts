@@ -131,6 +131,10 @@ interface AppState {
   setM22Prefill: (p: Record<string, unknown> | null) => void
   m02Prefill: string | null // fiche → scan patrimoine du propriétaire (SIREN)
   setM02Prefill: (s: string | null) => void
+  // calculette de charge foncière (mandat bilan-calculette) : les hypothèses courantes du
+  // promoteur, partagées avec le bouton PDF (l'export reflète « selon vos hypothèses »)
+  calculette: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null
+  setCalculette: (c: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => void
 }
 
 export const useApp = create<AppState>((set) => ({
@@ -148,7 +152,13 @@ export const useApp = create<AppState>((set) => ({
   projetBrouillon: null,
   setProjetBrouillon: (projetBrouillon) => set({ projetBrouillon }),
   view: 'cartes',
-  setView: (view) => set({ view, outilsOpen: false }),
+  // B2 (mandat bilan-calculette) — NAVIGATION EXCLUSIVE : changer de vue principale FERME la
+  // fiche parcelle et tout panneau secondaire de la vue quittée (module, contexte commune,
+  // drawer source, restitution IA, tiroir outils). Une seule vue active à la fois — plus de
+  // fiche/kanban fantôme qui persiste à travers les vues. Les flux « ouvrir une fiche depuis
+  // X » appellent setView('cartes') PUIS select(idu) (ordre respecté partout).
+  setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
+    contexteCommune: null, sourceLine: null, iaRestitution: null }),
   outilsOpen: false,
   toggleOutils: () => set((s) => ({ outilsOpen: !s.outilsOpen })),
   selectedIdu: null,
@@ -166,7 +176,9 @@ export const useApp = create<AppState>((set) => ({
   setFilters: (filters) => set({ filters }),
   resetFilters: () => set({ filters: EMPTY_FILTERS, zone: null }),
   sourcesFocus: null,
-  openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus }),
+  // B2 : ouvrir Sources est un changement de vue principale → même nettoyage exclusif
+  openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus, outilsOpen: false,
+    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null }),
   sourceLine: null,
   openSourceDrawer: (line) => set({ sourceLine: line }),
   closeSourceDrawer: () => set({ sourceLine: null }),
@@ -194,4 +206,6 @@ export const useApp = create<AppState>((set) => ({
   setM22Prefill: (m22Prefill) => set({ m22Prefill }),
   m02Prefill: null,
   setM02Prefill: (m02Prefill) => set({ m02Prefill }),
+  calculette: null,
+  setCalculette: (calculette) => set({ calculette }),
 }))

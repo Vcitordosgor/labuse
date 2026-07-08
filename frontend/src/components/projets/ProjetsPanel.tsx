@@ -41,7 +41,6 @@ function frDate(iso: string | null): string {
 function ProjetCard({ p }: { p: Projet }) {
   const qc = useQueryClient()
   const apply = useApplySearch()
-  const { setView } = useApp()
   const [editing, setEditing] = useState(false)
   const [nom, setNom] = useState(p.nom)
 
@@ -57,7 +56,9 @@ function ProjetCard({ p }: { p: Projet }) {
     },
     onSuccess: async ({ d, ap }) => {
       qc.invalidateQueries({ queryKey: ['projets'] })
-      // OUVRIR = REJOUER : filtres réappliqués + restitution enrichie (déjà enregistré → PDF direct)
+      // OUVRIR = REJOUER : filtres réappliqués + restitution enrichie (déjà enregistré → PDF direct).
+      // apply() bascule DÉJÀ sur la vue Cartes (et, avec la nav exclusive B2, nettoie les panneaux) ;
+      // on pose la restitution APRÈS — un setView ici la balaierait (B2 vide iaRestitution).
       await apply(d.projet.filtres, `parcelles pour « ${d.projet.nom} »`)
       useApp.getState().setIaRestitution({
         n: ap.n,
@@ -67,7 +68,6 @@ function ProjetCard({ p }: { p: Projet }) {
         top: ap.top.map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score ?? 0, pourquoi: t.pourquoi })),
         projet: { nom: d.projet.nom, fiche: p.fiche as Record<string, unknown>, id: p.id },
       })
-      setView('cartes')
     },
   })
 

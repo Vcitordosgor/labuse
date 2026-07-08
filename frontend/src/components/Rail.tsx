@@ -135,12 +135,9 @@ export function Rail() {
             </span>
             <span className={`text-[10.5px] ${view === 'sources' ? 'text-mint' : 'text-txt-mut'}`}>Sources</span>
           </button>
-          <span
-            className="mt-1 flex h-7 w-7 items-center justify-center rounded-full border border-line-2 bg-surface-3 font-mono text-[11px] text-mint"
-            title="Vic — LABUSE"
-          >
-            VL
-          </span>
+          {/* B7 (mandat calculette) : la pastille « VL » du rail DOUBLAIT l'avatar déjà présent
+              dans le header — retirée pour libérer de l'espace vertical (au profit des filtres).
+              Aucune fonction unique n'y était attachée (statique) ; l'identité reste au header. */}
         </div>
       </nav>
 
@@ -151,7 +148,7 @@ export function Rail() {
           <div className="shrink-0 px-5 pb-2 pt-5">
             <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
             <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">
-              Les moteurs métier de LABUSE — <span style={{ color: VIOLET }}>★</span> = les plus puissants.
+              Les moteurs métier de LABUSE — <span style={{ color: VIOLET }}>★</span> = les plus utilisés.
             </p>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">

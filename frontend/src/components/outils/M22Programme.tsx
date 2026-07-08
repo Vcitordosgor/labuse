@@ -64,9 +64,10 @@ export function M22() {
       <div className="flex gap-2">
         {F('logements_par_batiment', 'UNITÉS/BÂT')}
         {F('surface_unite_m2', 'M²/UNITÉ (hyp.)', { min: 15 })}
-        <label className="flex flex-col text-[10px] tracking-wide text-txt-dim">PARKING
+        {/* B4 : PARKING aligné en colonne flex-1 comme les autres champs (plus de largeur cassée) */}
+        <label className="flex min-w-0 flex-1 flex-col text-[10px] tracking-wide text-txt-dim">PARKING
           <button onClick={() => setForm({ ...form, parking: !form.parking })}
-            className={`mt-0.5 rounded border px-3 py-1 text-xs ${form.parking ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
+            className={`mt-0.5 w-full rounded border py-1 text-xs ${form.parking ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
             {form.parking ? 'oui' : 'non'}
           </button>
         </label>

@@ -1,5 +1,5 @@
 """Tests du bilan promoteur (PARTIE 1). Cœur pur, sans DB."""
-from labuse.faisabilite.bilan import _comparables, compute_bilan
+from labuse.faisabilite.bilan import _comparables, compute_bilan, compute_calculette
 from labuse.faisabilite.engine import Hypotheses
 
 H = Hypotheses()
@@ -111,3 +111,57 @@ def test_hypotheses_et_bandeau():
     txt = " ".join(b.hypotheses).lower()
     assert "coût de construction" in txt and "marge" in txt and "dvf" in txt
     assert "ne remplace pas un bilan promoteur" in b.bandeau
+
+
+# ── CALCULETTE DE CHARGE FONCIÈRE (mandat bilan-calculette) — arithmétique isolée ──────────
+
+def test_calculette_arithmetique_independante():
+    """Vérifie L'ARITHMÉTIQUE en isolation : entrées connues → charge foncière attendue.
+    shab 6344 m², terrain 9723 m², prix médian 5310 €/m², coût 2500 €/m² SDP, marge+frais 21 %.
+    CA médian = 6344×5310 ; coef = 1−0,21 ; SDP = shab×1,15 ; construction = SDP×2500 ;
+    CF médiane = CA×coef − construction (VRD nulle hors secteur calibré)."""
+    prix = _prix(5310, 5310, 5310, n=14)
+    res = compute_calculette(6344, 9723, prix, cout_construction_m2=2500, marge_frais_pct=21)
+    assert res["calculable"] is True
+    ca = 6344 * 5310
+    coef = 1 - 21 / 100
+    construction = 6344 * H.coef_plancher_habitable * 2500
+    attendu = ca * coef - construction
+    assert res["ca"]["central"] == round(ca)
+    assert abs(res["charge_fonciere"]["central"] - attendu) < 2          # arrondi à l'euro
+    assert res["charge_fonciere"]["par_m2_terrain"] == round(attendu / 9723)
+
+
+def test_calculette_hypotheses_utilisateur_pilotent():
+    """Les saisies du promoteur CHANGENT le résultat (jamais figées) : coût ↑ → charge ↓."""
+    prix = _prix(5000, 5000, 5000)
+    bas_cout = compute_calculette(2000, 2000, prix, cout_construction_m2=2000, marge_frais_pct=20)
+    haut_cout = compute_calculette(2000, 2000, prix, cout_construction_m2=3500, marge_frais_pct=20)
+    assert haut_cout["charge_fonciere"]["central"] < bas_cout["charge_fonciere"]["central"]
+    # marge ↑ → charge ↓
+    plus_marge = compute_calculette(2000, 2000, prix, cout_construction_m2=2000, marge_frais_pct=35)
+    assert plus_marge["charge_fonciere"]["central"] < bas_cout["charge_fonciere"]["central"]
+
+
+def test_calculette_verdict_achat():
+    """Prix demandé → verdict supportable / trop cher (charge foncière médiane vs prix)."""
+    prix = _prix(5310, 5310, 5310, n=14)
+    res = compute_calculette(6344, 9723, prix, 2500, 21, prix_demande_eur=3_000_000)
+    assert res["achat"]["supportable"] is True and res["achat"]["ecart_eur"] > 0
+    cher = compute_calculette(6344, 9723, prix, 2500, 21, prix_demande_eur=20_000_000)
+    assert cher["achat"]["supportable"] is False and cher["achat"]["ecart_eur"] < 0
+
+
+def test_calculette_cas_limite_prix_insuffisant():
+    """Prix DVF insuffisant → PAS de faux chiffre (calculable=false), prix secteur au mieux."""
+    prix = {"fiable": False, "fiabilite": "insuffisant", "n": 3, "median": None, "radius_m": 1500.0}
+    res = compute_calculette(4600, 4500, prix, 2500, 21)
+    assert res["calculable"] is False and res.get("charge_fonciere") is None
+    assert "marche" in res
+
+
+def test_calculette_fiabilite_heritee():
+    """Le résultat HÉRITE de la fiabilité du prix (prix fragile → résultat fragile)."""
+    prix = _prix(2980, 3030, 3080, fiabilite="fragile", raisons=["ventes anciennes (2021)"])
+    res = compute_calculette(1000, 1000, prix, 2500, 21)
+    assert res["fiabilite"] == "fragile"

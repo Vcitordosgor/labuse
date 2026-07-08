@@ -5,11 +5,17 @@ import { useApplySearch } from '../../lib/useApplySearch'
 import { useApp } from '../../store/useApp'
 import { ProjetEntretien } from '../projets/ProjetEntretien'
 
+// B5 (mandat calculette) — palette d'exemples VARIÉE : statut, secteur, commune, surface, SDP,
+// score, événement, flags, vue mer, combinaisons — donne à voir l'étendue du copilote.
 const EXAMPLES = [
   'les chaudes de Saint-Pierre',
-  'les chaudes avec vue mer de plus de 1000 m²',
+  'vue mer de plus de 1 000 m²',
   'à surveiller avec pollution et score > 70',
   'SDP d’au moins 800 m² à creuser',
+  'à creuser dans l’Ouest',
+  'grandes parcelles avec événement BODACC',
+  'hors zone à risque, plus de 2 000 m²',
+  'monument historique à proximité au Tampon',
 ]
 
 const VIOLET = '#B497F0'
@@ -85,7 +91,7 @@ export function IAStub() {
           {/* PORTE 1 — Recherche simple (menthe · chemin rapide) */}
           <section data-porte-recherche className="flex flex-col rounded-2xl border border-[#2E6B4F]/60 bg-[#0F1A14] p-5">
             <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-mint/15 text-mint">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-mint">
                 <svg viewBox="0 0 20 20" className="h-4 w-4">
                   <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
                   <line x1="13" y1="13" x2="17" y2="17" stroke="currentColor" strokeWidth="1.6" />
@@ -123,7 +129,7 @@ export function IAStub() {
           <section data-porte-projet className="flex flex-col rounded-2xl border p-5"
             style={{ borderColor: '#4a3d6b', background: '#161022' }}>
             <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ background: 'rgba(180,151,240,0.15)', color: VIOLET }}>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(180,151,240,0.15)', color: VIOLET }}>
                 <svg viewBox="0 0 20 20" className="h-4 w-4">
                   <path d="M4 16 V7 L10 3.5 L16 7 V16 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
                   <path d="M8 16 V11 H12 V16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
@@ -132,8 +138,21 @@ export function IAStub() {
               <h3 className="font-display text-sm font-bold text-txt-hi">Montage de projet</h3>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-txt-mut">
-              Le copilote vous aide à <b style={{ color: VIOLET }}>cadrer votre opération</b> : programme, ampleur, gabarit, périmètre, contraintes. Il pose les bonnes questions, la fiche prend forme, puis il vous montre les parcelles qui portent votre projet. Le chemin accompagné.
+              Le copilote vous aide à <b style={{ color: VIOLET }}>cadrer votre opération</b> : programme, ampleur, gabarit, périmètre, contraintes. Le chemin accompagné.
             </p>
+            <ol className="mt-4 space-y-2">
+              {[
+                'Il vous pose les bonnes questions (chacune facultative)',
+                'Votre fiche projet se remplit sous vos yeux',
+                'Il vous montre les parcelles qui portent votre projet',
+              ].map((t, i) => (
+                <li key={i} className="flex items-start gap-2.5 text-xs text-txt-mut">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold"
+                    style={{ background: 'rgba(180,151,240,0.15)', color: VIOLET }}>{i + 1}</span>
+                  <span className="leading-snug">{t}</span>
+                </li>
+              ))}
+            </ol>
             <div className="mt-auto pt-4">
               <button
                 data-decrire-projet

@@ -246,7 +246,7 @@ for (const width of [1440, 1280]) {
   assert((await page.locator('text=Division parcellaire').count()) > 0, 'rail Outils → catalogue de modules (intitulés métier)')
   await page.locator('nav button[title="Outils"]').click()
   await page.locator('button[title*="Fraîcheur"]').click()
-  assert((await page.locator('text=Sources de données').count()) > 0, 'J-2 → page Sources')
+  assert((await page.locator('text=Sources & mises à jour').count()) > 0, 'J-2 → page Sources')
   await snap(page, '07_sources', width)
 
   assert(page._errors.length === 0, `zéro erreur console @${width}`, page._errors.slice(0, 3).join(' | '))
