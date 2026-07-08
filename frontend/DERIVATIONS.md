@@ -293,3 +293,113 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
   « Zonage PLU » S'ACTIVE en île (ovmvt-zonage visible) et le SEUL contrôle encore bloqué
   (outil zone — le comptage client mentirait à l'échelle île) montre le hint ANCRÉ au bouton,
   auto-éteint ~2,5 s.
+
+## Copilote-projet — V1 : l'objet PROJET (08/07)
+- **Séparation fiche / recette** : `projets.fiche` (jsonb) = ce que le promoteur A DIT (validé
+  par FICHE_SCHEMA côté serveur) ; `filtres` + `programme` = ce que le moteur EXÉCUTE, DÉRIVÉS
+  de la fiche de façon déterministe (jamais l'IA). Ouvrir un projet = REJOUER (filtres
+  réappliqués sur les données du jour), jamais un snapshot figé — `derniere_execution_at`
+  horodate le rejeu.
+- **La SDP besoin vient de la formule M22 EXISTANTE** (`unités × surface_unité(60) × 1,15`,
+  cf. modules.faisabilite_sens2) — l'IA ne produit aucun m². `ampleur.sdp_m2` explicite prime
+  sur `ampleur.logements`.
+- **Contraintes rédhibitoires → exclusion SQL** : `contraintes:["eviter_ppr"…]` (fiche) →
+  `flags_exclus` sur /parcels et /stats (`NOT EXISTS` sur la couche flag, même vocabulaire que
+  `flags`). Preuve de cohérence : à Saint-Paul, `total = avec_risques + sans_risques`
+  (51 129 = 49 219 + 1 910). Nouveau filtre front `flagsExclus` de bout en bout (chip « Sans …»,
+  hash `fx=`, matchScope client).
+- **Budget foncier = donnée de fiche, PAS un filtre** : aucun prix par parcelle en base → un
+  filtre budget serait menteur. Affiché dans la fiche projet, jamais appliqué au moteur (consigné).
+- **derive_programme** (mapping consigné) : type + logements → ProgrammeIn M22 avec 1 bâtiment,
+  R+2 (défauts du formulaire), `logements_par_batiment = total` (la formule M22
+  `unités = bâtiments × logements/bât` est préservée : 1 × total = total). La vérité reste le
+  formulaire M22 pré-rempli, éditable (V3).
+- **Lien CRM** : `pipeline_entries.projet_id` (FK ON DELETE SET NULL) — une piste ajoutée au
+  kanban depuis un projet porte sa référence (`entry.projet = {id, nom}`). Matière du futur
+  radar cron (rien câblé) : `filtres` est déjà le prédicat de match ; seuls les `statut='actif'`
+  seront matchés.
+- **Boot-heal réparé** : l'ancien `@app.on_event("startup")` était MORT depuis le passage au
+  `lifespan` (FastAPI ignore `on_event` quand un lifespan est fourni) — les `ensure_tables`
+  des routeurs (modules/ia/events/partners/projets) vivent désormais dans `_lifespan`, exécutés
+  au démarrage. Sans ça la colonne `projet_id` n'était jamais créée au boot.
+- **Chorégraphie d'application partagée** (`useApplySearch`) : le copilote R2 ET « ouvrir un
+  projet » passent par le MÊME hook (périmètre → filtres → verdict allumé → vol caméra →
+  restitution SQL). Zéro duplication — `IAStub.apply` en est devenu un simple appel.
+- **Rail** : nouvelle entrée « Projets » (dossier + étoile) entre Outils et CRM. Vue CRUD
+  sobre : liste, ouvrir/renommer/archiver, onglets Actifs/Archivés, création renvoyée à
+  l'entretien copilote (« + Décrire un projet » → vue IA).
+
+## Copilote-projet — V2 : l'entretien (08/07)
+- **Deux voies d'entrée** : (1) le champ copilote détecte l'intention projet — `/ia/search`
+  renvoie `{projet_intent: true}` pour une demande d'OPÉRATION sans critère filtrable
+  (« je veux monter… ») ; (2) bouton explicite « Décrire mon projet ». La recherche simple
+  (filtres) et « les chaudes de X » (parcours C) restent inchangées : critère filtrable présent
+  → forme 1 directe.
+- **La forme `cadrage` (R2) est REMPLACÉE par l'entretien** : le cadrage ≤2 questions →
+  filtres jetables devient l'entretien ≤4 questions → objet PROJET persistant. `CADRAGE_SCHEMA`
+  supprimé ; qa_revue2/qa_ia mises à jour (R2-b teste désormais l'entretien).
+- **L'IA re-dérive la fiche ENTIÈRE chaque tour** (prev fiche + nouveau message → fiche mergée,
+  validée par FICHE_SCHEMA à vocabulaire fermé). Les chips sont des raccourcis : cliquer une
+  chip renvoie son LABEL comme message → l'IA re-merge. L'IA reste seule maîtresse de la
+  construction de la fiche, sous garde-fou schéma. `clean_fiche` retire les null/""/vides que
+  l'IA émet pour une dimension pas encore sue (hors enum → casserait le schéma).
+- **Skippable + défaut honnête** : chaque question porte un `defaut` affiché (« → toute l'île »,
+  « → sans contrainte rédhibitoire ») ; le skip envoie « je ne sais pas » → l'IA applique le
+  défaut dans la fiche. Jauge = 4 cases (programme/ampleur/où/contraintes) remplies.
+- **Arbitrages SOURCÉS ou tus** : `GET /projets/reperes?dimension=secteur|commune` sert, par
+  SQL pur, nb d'opportunités (q_v2), prix médian DVF bâti (€/m² habitable), communes carencées
+  SRU. Le front annote les chips d'une question `dimension:secteur`. AUCUN chiffre produit par
+  l'IA. Le prix médian utilise le bâti (aucune mutation terrain-nu en base — consigné).
+- **Interdit d'opinion marché non chiffrée** : gravé dans le prompt système ET vérifié par un
+  garde-fou (`contient_opinion_marche` + `_neutralise_opinion`) — toute réponse portant « plus
+  porteur / meilleur potentiel / je recommande… » dans un champ libre est NEUTRALISÉE
+  (reformulation générique, chips fautives purgées, flag `doctrine_neutralise`).
+- **Mode dégradé stub** : pas d'entretien simulé — `/ia/entretien` renvoie `fallback:true` +
+  message honnête ; le front bascule sur la recherche directe. (Doctrine : jamais de questions
+  fabriquées par le stub.)
+- **derive vs create** : « Lancer la recherche » appelle `POST /projets/derive` (nom + filtres +
+  programme + SDP besoin, SANS persister) puis applique — la restitution proposera « Enregistrer
+  ce projet » (V3) qui, lui, crée l'objet. `useApplySearch` mutualise la mise en scène.
+
+## Copilote-projet — V3 : la restitution reliée (08/07)
+- **Le « pourquoi » par parcelle sort du MOTEUR** (`POST /projets/apercu`) : si un programme est
+  défini, le top vient de M22 sens 2 (SDP résiduelle vs besoin, hauteur PLU vérifiée, marge de
+  capacité) ; sinon du run q_v2 trié par score. Les lignes sont ASSEMBLÉES depuis les données
+  (statut/score, SDP vs besoin, hauteur, carence SRU) — aucune valeur inventée. Un secteur
+  restreint le balayage île de M22 aux communes du secteur (post-filtre).
+- **derive vs apercu** : « Lancer la recherche » fait `deriveProjet` (filtres, carte) + `getApercu`
+  (pourquoi) → la restitution enrichie ; la carte garde la chorégraphie `useApplySearch`.
+- **Restitution mode PROJET** (panneau élargi) : top vertical avec pourquoi, « Enregistrer ce
+  projet » (crée l'objet), puis « Exporter le PDF » + « Affiner dans M22 » + « Mes projets → ».
+  Le mode recherche simple reste compact (inchangé).
+- **PDF projet** (`GET /projets/{id}/export.pdf`, `pdf_projet.py`) : réutilise fontes/palette de
+  `pdf_premium` (fond blanc, menthe en accents). Contenu = fiche de cadrage + top 5 parcelles
+  avec pourquoi + mention « estimations indicatives / aucun chiffre produit par l'IA ». L'aperçu
+  est RECALCULÉ à l'export (données du jour).
+- **M22 pré-rempli** : « Affiner dans M22 » injecte le programme dérivé dans le formulaire M22
+  (`setM22Prefill` + module programme) — la VÉRITÉ reste le formulaire, éditable (doctrine).
+- **Rejouer = même restitution enrichie** : `ProjetsPanel` « Ouvrir » recalcule l'aperçu sur les
+  données actuelles ; le projet étant déjà enregistré, le PDF est direct (pas de ré-enregistrement).
+
+## Copilote-projet — V4 : QA + doctrine (08/07)
+- **qa_projet.mjs** (parcours réels, clé posée) : A précis → entretien/fiche/M22/enregistrement/
+  PDF ; B vague → ≤4 questions, skip à défaut affiché ; C « les chaudes de X » → zéro entretien
+  (R2 intact) ; D rejeu → mêmes filtres. Suivi NON destructif (ensemble des ids avant/après —
+  ne supprime que ses créations). SKIP propre si provider ≠ anthropic (entretien réel requis).
+- **pret = périmètre déterminé** (pas type+périmètre) : un projet vague dont on passe le
+  périmètre bascule sur « toute l'île » et devient lançable ; le type/l'ampleur raffinent sans
+  bloquer. Sinon un skip du type (sans défaut de type) laissait `pret` faux à jamais.
+- **L'entretien se referme après « Lancer »** (`onClose`) : ré-ouvrir le copilote = recherche
+  fraîche (plus d'entretien fantôme).
+- **DELETE /projets/{pid}** ajouté (CRUD complet + hygiène QA) — les pistes CRM rattachées
+  gardent leur parcelle (FK ON DELETE SET NULL).
+- **Test doctrine adversarial** : une demande piège (« quel secteur est le plus porteur… »)
+  ne doit produire AUCUNE opinion marché non chiffrée dans la réponse (garde-fou neutralise).
+- **Restitution allégée** : le compteur+top 3 tirait `/parcels?limit=500` — sous la contention
+  réseau des tuiles « tout » (R1), la réponse mettait ~15-20 s à revenir (restitution en retard).
+  La restitution ne demande plus que 20 résultats (`getResults(f, 20)`) : réponse légère, bien
+  plus rapide. Amélioration UX réelle + QA stabilisée (timeouts restitution portés à 30-40 s).
+- **M22 pré-remplissage défensif** : le copilote peut fournir un programme partiel (« 3 immeubles
+  R+3 » sans nombre de logements → `logements_par_batiment: null`) ; le pré-remplissage ne
+  remplace plus QUE les champs non-nuls (les défauts du formulaire tiennent) — sinon `null`
+  écrasait le défaut et l'auto-run M22 échouait (422).

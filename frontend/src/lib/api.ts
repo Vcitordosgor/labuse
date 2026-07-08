@@ -38,6 +38,7 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.evenement ? { evenement: 'true' } : {}),
   ...(f.vueMer ? { vue_mer: 'true' } : {}),
   ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
+  ...(f.flagsExclus.length ? { flags_exclus: f.flagsExclus.join(',') } : {}),
   ...(f.communes.length ? { communes: f.communes.join(',') } : {}),
 })
 
@@ -66,7 +67,7 @@ export const searchParcels = (needle: string) =>
     `/parcels/search?q=${encodeURIComponent(needle)}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
 export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)
-export const getResults = (f?: Filters) => j<ParcelResult[]>(`/parcels?${q({ limit: 500, ...(f ? filterParams(f) : {}) })}`)
+export const getResults = (f?: Filters, limit = 500) => j<ParcelResult[]>(`/parcels?${q({ limit, ...(f ? filterParams(f) : {}) })}`)
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
@@ -154,3 +155,49 @@ export const listShares = (idu: string) => j<{ token: string; date: string; view
 export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/faisabilite/${idu}`)
 export const postProgramme = (body: Record<string, unknown>) =>
   j<Record<string, any>>('/modules/programme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+
+// ── Projets (copilote-projet) — l'objet persistant de l'entretien de cadrage ──
+export interface FicheProjet {
+  type_programme?: 'logements' | 'etudiant' | 'bureaux' | 'autre'
+  ampleur?: { logements?: number; sdp_m2?: number }
+  perimetre?: { mode: 'ile' | 'secteur' | 'communes'; secteur?: string; communes?: string[] }
+  contraintes?: string[]
+  budget_foncier_eur?: number
+  criteres_libres?: string
+}
+export interface Projet {
+  id: number; nom: string; statut: 'actif' | 'archive'
+  fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null
+  created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
+}
+// L'entretien de cadrage (réel uniquement — fallback si stub)
+export interface EntretienChip { label: string; value?: string }
+export interface EntretienQuestion { id: string; texte: string; dimension?: 'secteur' | 'commune'; defaut?: string; chips: EntretienChip[] }
+export interface EntretienRep {
+  stub: boolean; fallback?: boolean; message?: string
+  reformulation?: string; fiche?: FicheProjet; nom?: string; pret?: boolean
+  questions?: EntretienQuestion[]; doctrine_neutralise?: boolean
+}
+export const iaEntretien = (body: { text: string; fiche?: FicheProjet; history?: { role: string; content: string }[] }) =>
+  j<EntretienRep>('/ia/entretien', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+
+export interface RepereOption { key: string; label: string; nb_opportunites: number; dvf_median_eur_m2: number | null; communes_carencees: string[] }
+export const getReperes = (dimension: 'secteur' | 'commune') =>
+  j<{ dimension: string; options: RepereOption[]; note: string }>(`/projets/reperes?dimension=${dimension}`)
+
+export const getProjets = () => j<Projet[]>('/projets')
+export interface ProjetDerive { nom: string; fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null; sdp_besoin_m2: number | null }
+export const deriveProjet = (body: { fiche: FicheProjet; nom?: string }) =>
+  j<ProjetDerive>('/projets/derive', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const createProjet = (body: { fiche: FicheProjet; nom?: string; filtres_extra?: Record<string, unknown> }) =>
+  j<{ ok: boolean; projet: Projet }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export interface ApercuTop { idu: string; commune: string; statut: string | null; q_score: number | null; pourquoi: string[] }
+export interface Apercu { nom: string; n: number; sdp_besoin_m2: number | null; programme_defini: boolean; source: string; top: ApercuTop[] }
+export const getApercu = (fiche: FicheProjet, limit = 5) =>
+  j<Apercu>('/projets/apercu', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fiche, limit }) })
+export const projetPdfUrl = (id: number) => `/projets/${id}/export.pdf`
+export const patchProjet = (id: number, body: { nom?: string; statut?: string; fiche?: FicheProjet }) =>
+  j<{ ok: boolean; projet: Projet }>(`/projets/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const rejouerProjet = (id: number) =>
+  j<{ ok: boolean; projet: Projet }>(`/projets/${id}/rejouer`, { method: 'POST' })
+export const deleteProjet = (id: number) => j<{ ok: boolean }>(`/projets/${id}`, { method: 'DELETE' })

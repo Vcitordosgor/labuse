@@ -74,6 +74,16 @@ async def _lifespan(app: FastAPI):
     try:
         from ..db import engine as _engine
         models.ensure_schema(_engine())
+        # tables des routeurs (modules/ia/events/partners/projets) : l'ancien
+        # @app.on_event("startup") était MORT depuis le passage au lifespan (FastAPI
+        # ignore on_event quand lifespan est fourni) — les ensures vivent ICI.
+        from .events import ensure_tables as _events_ens
+        from .ia import ensure_tables as _ia_ens
+        from .modules import ensure_tables as _modules_ens
+        from .partners import ensure_tables as _partners_ens
+        from .projets import ensure_tables as _projets_ens
+        for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens):
+            _ens(_engine())
         app.state.schema_heal = "ok"
     except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
         app.state.schema_heal = f"échec : {type(exc).__name__}: {exc}"
@@ -381,7 +391,7 @@ def _latest_eval(db: Session, parcel_id: int) -> models.ParcelEvaluation | None:
 def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 surface_min: int | None, surface_max: int | None, sdp_min: int | None,
                 evenement: bool, vue_mer: bool, flags: str | None,
-                communes: str | None = None) -> tuple[str, dict]:
+                communes: str | None = None, flags_exclus: str | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front)."""
@@ -417,6 +427,11 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                      " AND c1.run_label = :runf AND c1.layer_name = ANY(:f_flags)"
                      " AND (c1.result = 'SOFT_FLAG' OR (c1.layer_name = 'abf' AND c1.result = 'UNKNOWN')))")
         params["f_flags"] = [f.strip() for f in flags.split(",") if f.strip()]
+    if flags_exclus:   # contraintes RÉDHIBITOIRES (copilote-projet) : écarter les parcelles portant le flag
+        conds.append("NOT EXISTS (SELECT 1 FROM dryrun_cascade_results c2 WHERE c2.parcel_id = p.id"
+                     " AND c2.run_label = :runf AND c2.layer_name = ANY(:f_flags_x)"
+                     " AND (c2.result = 'SOFT_FLAG' OR (c2.layer_name = 'abf' AND c2.result = 'UNKNOWN')))")
+        params["f_flags_x"] = [f.strip() for f in flags_exclus.split(",") if f.strip()]
     return (" AND " + " AND ".join(conds)) if conds else "", params
 
 
@@ -428,6 +443,7 @@ def list_parcels(commune: str | None = None,
                  surface_min: int | None = None, surface_max: int | None = None,
                  sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
                  flags: str | None = None, communes: str | None = None,
+                 flags_exclus: str | None = None,
                  db: Session = Depends(get_db)) -> list[dict]:
     """Liste PAGINÉE (commune OU île entière) avec le dernier verdict.
 
@@ -440,7 +456,7 @@ def list_parcels(commune: str | None = None,
     bloquait l'endpoint > 45 s)."""
     if source and source.startswith("q_v2"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, vue_mer, flags, communes)
+                                          sdp_min, evenement, vue_mer, flags, communes, flags_exclus)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
                           extra_where=extra, extra_params=extra_params)
     rows = db.execute(text(
@@ -590,6 +606,7 @@ def stats(commune: str | None = None, source: str | None = None,
           surface_min: int | None = None, surface_max: int | None = None,
           sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
           flags: str | None = None, communes: str | None = None,
+          flags_exclus: str | None = None,
           db: Session = Depends(get_db)) -> dict:
     """Cartouches du dashboard : volumétrie + statuts + scores (dernière évaluation).
 
@@ -598,9 +615,9 @@ def stats(commune: str | None = None, source: str | None = None,
     Résultat mémorisé par commune+filtres (cache mémoire 30 s, #7) : sortie identique au calcul."""
     if source and source.startswith("q_v2"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, vue_mer, flags, communes)
+                                          sdp_min, evenement, vue_mer, flags, communes, flags_exclus)
         key = ("stats_qv2", source, commune, statuts, score_min, surface_min, surface_max,
-               sdp_min, evenement, vue_mer, flags, communes)
+               sdp_min, evenement, vue_mer, flags, communes, flags_exclus)
         return _mem_cached(key, 30.0, lambda: _q_v2_stats(
             db, commune, run_label=source, extra_where=extra, extra_params=extra_params))
 
@@ -1842,7 +1859,16 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
         },
         # scoring premium v2 (source de vérité affichage Socle V1) — pour les cartes Kanban
         "premium": _premium_head(db, e.parcel_id),
+        # d'où vient la piste (copilote-projet) — None si ajoutée hors projet
+        "projet": _projet_ref(db, e.projet_id),
     }
+
+
+def _projet_ref(db: Session, projet_id: int | None) -> dict | None:
+    if projet_id is None:
+        return None
+    pr = db.get(models.Projet, projet_id)
+    return {"id": pr.id, "nom": pr.nom} if pr else None
 
 
 def _premium_head(db: Session, parcel_id: int, run_label: str = "q_v2") -> dict | None:
@@ -1860,6 +1886,7 @@ class PipelineAddIn(BaseModel):
     priority: str | None = None
     notes: str | None = None
     prospection: dict | None = None      # saisie MANUELLE (statut propriétaire, contact…)
+    projet_id: int | None = None         # référence du projet d'où vient la piste (copilote-projet)
 
 
 class PipelinePatchIn(BaseModel):
@@ -1921,8 +1948,13 @@ def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
         prosp = prospection.merge_prospection(prospection.default_prospection(), body.prospection)
     except ValueError as exc:
         raise HTTPException(422, f"Prospection invalide : {exc}") from None
+    projet_id = None
+    if body.projet_id is not None:
+        if not db.get(models.Projet, body.projet_id):
+            raise HTTPException(404, "Projet inconnu")
+        projet_id = body.projet_id
     e = models.PipelineEntry(parcel_id=p.id, status=status, priority=priority,
-                             notes=(body.notes or ""), prospection=prosp)
+                             notes=(body.notes or ""), prospection=prosp, projet_id=projet_id)
     db.add(e)
     db.flush()
     return {"ok": True, "already": False, "entry": _entry_dict(db, e)}
@@ -1974,15 +2006,12 @@ def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
 
 # ── Modules outils (Vague 1+) ──
-from .events import ensure_tables as _events_ensure  # noqa: E402
 from .events import router as _events_router  # noqa: E402
-from .ia import ensure_tables as _ia_ensure  # noqa: E402
 from .ia import router as _ia_router  # noqa: E402
-from .modules import ensure_tables as _modules_ensure  # noqa: E402
 from .modules import router as _modules_router  # noqa: E402
 from .moteurs import router as _moteurs_router  # noqa: E402
-from .partners import ensure_tables as _partners_ensure  # noqa: E402
 from .partners import router as _partners_router  # noqa: E402
+from .projets import router as _projets_router  # noqa: E402
 
 from .tiles import router as _tiles_router  # noqa: E402
 
@@ -1992,19 +2021,11 @@ app.include_router(_ia_router)
 app.include_router(_events_router)
 app.include_router(_moteurs_router)
 app.include_router(_partners_router)
+app.include_router(_projets_router)
 
 
-@app.on_event("startup")
-def _startup_modules() -> None:
-    from ..db import engine as _engine
-    try:
-        _modules_ensure(_engine())
-        _ia_ensure(_engine())
-        _events_ensure(_engine())
-        _partners_ensure(_engine())
-    except Exception as exc:                             # noqa: BLE001 — DB absente : l'API démarre quand même
-        import logging
-        logging.getLogger("labuse").warning("ensure_tables modules KO : %s", exc)
+# (les ensure_tables des routeurs sont appelés dans _lifespan — un @app.on_event("startup")
+#  serait IGNORÉ par FastAPI quand un lifespan est fourni ; l'ancien bloc était mort.)
 
 
 #: Socle V1 (front React+MapLibre, build Vite → frontend/dist), servi à la même origine.

@@ -54,43 +54,36 @@ assert(true, 'R1 : URL v=1 → ouvre verdict allumé (lien de démo)')
 const st = await (await fetch(new URL('/ia/status', BASE).href)).json()
 assert(st.provider === 'anthropic', `R2 : provider réel (${st.provider})`)
 
-// a) précise → ZÉRO question, exécution directe
+// a) précise → ZÉRO question, exécution directe (comportement inchangé, parcours C)
 await page.locator('nav button[title="IA"]').click()
 await page.waitForTimeout(600)
 await page.locator('input[placeholder*="vue mer"]').fill('les chaudes de Saint-Pierre')
 await page.keyboard.press('Enter')
 await page.waitForSelector('header span:has-text("Chaude")', { timeout: 25000 })
-assert((await page.locator('[data-cadrage]').count()) === 0, 'R2 : demande précise → ZÉRO question')
-await page.waitForSelector('[data-ia-restitution]', { timeout: 15000 })   // stats+top async après apply
+assert((await page.locator('[data-entretien]').count()) === 0, 'R2 : demande précise → ZÉRO question (pas d’entretien)')
+await page.waitForSelector('[data-ia-restitution]', { timeout: 30000 })   // stats+top async après apply
 assert((await page.locator('[data-ia-restitution]').count()) > 0, 'R2 : restitution posée (précise)')
 await page.locator('[data-ia-restitution] button[title="Fermer"]').click()
 
-// b) projet vague → reformulation + ≤2 questions à CHIPS → réponses → mise en scène
+// b) projet vague → ENTRETIEN de cadrage (V2) : reformulation + fiche à l'écran + chips → lancer
 await page.locator('nav button[title="IA"]').click()
 await page.waitForTimeout(600)
-await page.locator('input[placeholder*="vue mer"]').fill('un terrain pour du logement étudiant')
-await page.keyboard.press('Enter')
-await page.waitForSelector('[data-cadrage]', { timeout: 30000 })
-const nQuestions = await page.locator('[data-cadrage] p.text-\\[11px\\]').count()
-assert(nQuestions >= 1 && nQuestions <= 2, `R2 : cadrage avec ${nQuestions} question(s) (≤2)`)
-assert((await page.locator('[data-cadrage-chip]').count()) >= 4, 'R2 : chips cliquables VISIBLES')
+await page.locator('input[placeholder*="vue mer"]').fill('je cherche un terrain pour 40 logements étudiants dans l\'Ouest')
+await page.locator('[data-decrire-projet]').click()
+await page.waitForSelector('[data-entretien-reformulation]', { timeout: 30000 })
+assert(true, 'R2/V2 : l’entretien s’ouvre (reformulation à l’écran)')
+const ficheTxt = await page.locator('[data-entretien-fiche]').innerText()
+assert(/étudiant/i.test(ficheTxt) && /Ouest/i.test(ficheTxt), 'R2/V2 : la fiche se construit à l’écran (type + secteur)')
+assert((await page.locator('[data-entretien-lancer]').count()) >= 1, 'R2/V2 : « Lancer la recherche » disponible')
 await page.screenshot({ path: `${OUT}/revue2_copilote_cadrage.png` })
-// répondre : secteur Ouest + première chip de chaque autre question
-const questions = await page.locator('[data-cadrage] > div').count()
-const ouest = page.locator('[data-cadrage-chip]', { hasText: 'Ouest' }).first()
-if (await ouest.count()) await ouest.click()
-// répond à la 2e question s'il y en a une (première chip non encore choisie)
-await page.waitForTimeout(400)
-if (await page.locator('[data-cadrage]').count()) {
-  const chips2 = page.locator('[data-cadrage] > div').nth(1).locator('[data-cadrage-chip]')
-  if (await chips2.count()) await chips2.first().click()
-}
+await page.locator('[data-entretien-lancer]').click()
 // suivi automatique → filtres + vol caméra + restitution
 await page.waitForSelector('[data-ia-restitution]', { timeout: 40000 })
 const resti = await page.locator('[data-ia-restitution]').innerText()
-assert(resti.includes('parcelles correspondent'), 'R2 : phrase de restitution VISIBLE')
-assert((await page.locator('[data-ia-top]').count()) === 3, 'R2 : les 3 meilleures cliquables')
-// le compteur = SQL (communes du secteur Ouest si choisi)
+assert(resti.includes('parcelles'), 'R2 : phrase de restitution VISIBLE')
+const nTop = await page.locator('[data-ia-top]').count()
+assert(nTop >= 3 && nTop <= 5, `R2 : les meilleures cliquables (${nTop}, top 3-5 en mode projet)`)
+// le compteur = SQL (communes du secteur Ouest)
 await page.waitForTimeout(1200)
 const countTxt = await page.locator('[data-ia-count]').innerText()
 assert(/\d/.test(countTxt), `R2 : compteur animé affiché (${countTxt})`)
@@ -100,7 +93,6 @@ await page.locator('[data-ia-top]').first().click()
 await page.waitForSelector('button[title="Analyse IA"]', { timeout: 12000 })
 assert(true, 'R2 : top 1 → fiche ouverte')
 await page.keyboard.press('Escape')
-void questions
 void sql
 
 await browser.close()

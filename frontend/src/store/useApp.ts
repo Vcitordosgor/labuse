@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { FicheLine, MapMode, Statut } from '../lib/types'
 
-export type View = 'ia' | 'cartes' | 'crm' | 'sources'
+export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets'
 
 export interface LayerToggles {
   zonage: boolean
@@ -25,12 +25,32 @@ export interface Filters {
   evenement: boolean         // seulement les parcelles à événement (BODACC rouge)
   vueMer: boolean            // seulement vue mer dégagée
   flags: string[]            // flags actifs requis (au moins un)
+  flagsExclus: string[]      // copilote-projet : contraintes RÉDHIBITOIRES (aucun de ces flags)
   communes: string[]         // R2 : secteur du cadreur (multi-communes, mode île)
 }
 
 export const EMPTY_FILTERS: Filters = {
   statuts: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
-  evenement: false, vueMer: false, flags: [], communes: [],
+  evenement: false, vueMer: false, flags: [], flagsExclus: [], communes: [],
+}
+
+// brouillon d'un projet issu de l'entretien : la fiche + la dérivation moteur (filtres, SDP
+// besoin) — porté jusqu'à la restitution où « Enregistrer ce projet » le persiste (V3).
+export interface ProjetBrouillon {
+  fiche: Record<string, unknown>
+  nom: string
+  filtres: Record<string, unknown>
+  sdp_besoin_m2: number | null
+}
+
+// restitution : compteur + top cliquables ; V3 : « pourquoi » par parcelle + contexte projet.
+export interface IaTop { idu: string; commune: string; q_score: number; pourquoi?: string[] }
+export interface IaRestitution {
+  n: number
+  phrase: string
+  top: IaTop[]
+  // présent = restitution de PROJET : active « Enregistrer ce projet » + « Exporter PDF »
+  projet?: { nom: string; fiche: Record<string, unknown>; id?: number; programme?: Record<string, unknown> | null } | null
 }
 
 export type Basemap = 'dark' | 'plan' | 'ortho'
@@ -52,9 +72,13 @@ interface AppState {
   // « LABUSE a trié pour vous » allume couleurs + entonnoir + liste. URL : v=1.
   verdict: boolean
   setVerdict: (v: boolean) => void
-  // R2 : restitution chorégraphiée du copilote (compteur animé + top 3 cliquables)
-  iaRestitution: { n: number; phrase: string; top: { idu: string; commune: string; q_score: number }[] } | null
-  setIaRestitution: (r: { n: number; phrase: string; top: { idu: string; commune: string; q_score: number }[] } | null) => void
+  // R2 : restitution chorégraphiée du copilote (compteur animé + top 3 cliquables).
+  // V3 : le top peut porter le « pourquoi » relié au projet ; `projet` active « Enregistrer / PDF ».
+  iaRestitution: IaRestitution | null
+  setIaRestitution: (r: IaRestitution | null) => void
+  // copilote-projet : brouillon issu de l'entretien (« Lancer la recherche ») → « Enregistrer ce projet » (V3)
+  projetBrouillon: ProjetBrouillon | null
+  setProjetBrouillon: (b: ProjetBrouillon | null) => void
   view: View
   setView: (v: View) => void
   outilsOpen: boolean
@@ -121,6 +145,8 @@ export const useApp = create<AppState>((set) => ({
   setVerdict: (verdict) => set({ verdict }),
   iaRestitution: null,
   setIaRestitution: (iaRestitution) => set({ iaRestitution }),
+  projetBrouillon: null,
+  setProjetBrouillon: (projetBrouillon) => set({ projetBrouillon }),
   view: 'cartes',
   setView: (view) => set({ view, outilsOpen: false }),
   outilsOpen: false,

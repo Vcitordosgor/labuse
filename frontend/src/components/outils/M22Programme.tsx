@@ -17,7 +17,10 @@ export function M22() {
 
   useEffect(() => {
     if (m22Prefill) {
-      setForm((f) => ({ ...f, ...m22Prefill }))
+      // le copilote peut ne pas connaître toutes les valeurs (ex. « 3 immeubles R+3 » sans
+      // nombre de logements → null) : on ne remplace QUE les champs fournis, les défauts tiennent
+      const fournis = Object.fromEntries(Object.entries(m22Prefill).filter(([, v]) => v != null))
+      setForm((f) => ({ ...f, ...fournis }))
       setM22Prefill(null)
       setTimeout(() => run.mutate(), 150)
     }

@@ -21,6 +21,8 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from .projet_schema import CONTRAINTE_FLAG, FICHE_SCHEMA, TYPE_LABEL, clean_fiche
+
 router = APIRouter(prefix="/ia", tags=["ia"])
 
 MODEL_NL = "claude-haiku-4-5-20251001"
@@ -106,6 +108,8 @@ FILTER_SCHEMA = {
         "evenement": {"type": "boolean"},
         "vueMer": {"type": "boolean"},
         "flags": {"type": "array", "items": {"enum": ["sol_pollue", "abf", "icpe", "risques", "prescription_plu"]}},
+        # contraintes RÉDHIBITOIRES (copilote-projet) : écarter les parcelles portant le flag
+        "flagsExclus": {"type": "array", "items": {"enum": ["sol_pollue", "abf", "icpe", "risques", "prescription_plu"]}},
         "communes": {"type": "array", "maxItems": 24, "items": {"enum": [
             "Les Avirons", "Bras-Panon", "Entre-Deux", "L'Étang-Salé", "Petite-Île",
             "La Plaine-des-Palmistes", "Le Port", "La Possession", "Saint-André", "Saint-Benoît",
@@ -118,29 +122,6 @@ FILTER_SCHEMA = {
             "Saint-Denis", "Saint-Joseph", "Saint-Leu", "Saint-Louis", "Saint-Paul",
             "Saint-Pierre", "Saint-Philippe", "Sainte-Marie", "Sainte-Rose", "Sainte-Suzanne",
             "Salazie", "Le Tampon", "Les Trois-Bassins", "Cilaos", None]},
-    },
-}
-
-#: cadrage conversationnel (R2) : reformulation + AU PLUS 2 questions à chips — validé
-CADRAGE_SCHEMA = {
-    "type": "object", "additionalProperties": False,
-    "required": ["reformulation", "questions"],
-    "properties": {
-        "reformulation": {"type": "string", "maxLength": 240},
-        "questions": {"type": "array", "minItems": 1, "maxItems": 2, "items": {
-            "type": "object", "additionalProperties": False,
-            "required": ["id", "texte", "chips"],
-            "properties": {
-                "id": {"enum": ["secteur", "ampleur", "contrainte"]},
-                "texte": {"type": "string", "maxLength": 120},
-                "chips": {"type": "array", "minItems": 2, "maxItems": 6, "items": {
-                    "type": "object", "additionalProperties": False,
-                    "required": ["label"],
-                    "properties": {"label": {"type": "string", "maxLength": 40},
-                                   "value": {"type": "string", "maxLength": 80}},
-                }},
-            },
-        }},
     },
 }
 
@@ -296,23 +277,13 @@ UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Tr
 3. Hors périmètre (météo, rédaction, géographie non filtrable, ou TOUTE demande de MODIFIER un
    score — les scores sont déterministes, tu ne les changes jamais) →
    {{"out_of_scope": "raison courte et polie"}}
-4. CADRAGE — RÉSERVÉ aux demandes de PROJET sans AUCUN critère filtrable. Si la demande
-   contient NE SERAIT-CE QU'UN critère traduisible (surface, SDP, score, statut, vue mer,
-   événement, pollution/usine/monument/risque → flags, commune ou secteur) → forme 1 DIRECTE,
-   même sans commune. Exemple de cadrage légitime : « un terrain pour du logement étudiant » →
-   {{"cadrage": {{"reformulation": "UNE phrase : ce que tu as compris",
-     "questions": [{{"id": "secteur", "texte": "…", "chips": [{{"label": "Nord"}}, {{"label": "Ouest"}},
-       {{"label": "Sud"}}, {{"label": "Est"}}, {{"label": "Toute l'île"}}]}},
-      {{"id": "ampleur", "texte": "…", "chips": [{{"label": "…", "value": "sdpMin:300"}}, …]}}]}}}}
-   AU MAXIMUM 2 questions (secteur, ampleur, ou contrainte clé), chips courtes. Le champ
-   value d'un chip d'ampleur/contrainte = fragment "clé:valeur" du schéma de filtres
-   (ex. "sdpMin:800", "surfaceMin:1000"). Un secteur choisi se traduira par "communes"
-   (Nord={nord} ; Ouest={ouest} ; Sud={sud} ; Est={est} ; Toute l'île = communes absent).
-   ⚠ Une demande PRÉCISE (commune nommée, statut, critère chiffré) → JAMAIS de cadrage,
-   filtres DIRECTS (forme 1) : un copilote qui interroge pour rien est pénible.
-   Si l'historique contient déjà tes questions et les réponses de l'utilisateur → réponds
-   TOUJOURS en forme 1 (filtres consolidés : "communes" du secteur choisi, valeurs des chips
-   d'ampleur/contrainte) — JAMAIS en programme ni en nouveau cadrage après un cadrage.
+4. INTENTION PROJET — la demande décrit une OPÉRATION à monter (« je veux monter… »,
+   « je cherche un terrain pour… », « une résidence de X logements ») SANS être une simple
+   recherche filtrable → {{"projet_intent": true, "reformulation": "UNE phrase : ce que tu as compris"}}.
+   Le front ouvrira l'ENTRETIEN de cadrage (fiche projet). ⚠ Une demande PRÉCISE et filtrable
+   (commune nommée + statut, critère chiffré, « les chaudes de X ») → JAMAIS projet_intent :
+   forme 1 DIRECTE (un copilote qui interroge pour rien est pénible). Dans le doute entre une
+   recherche et un projet, si un critère filtrable est présent → forme 1.
 Sois strict : n'invente JAMAIS un filtre non demandé. Le champ "type" n'existe QUE dans
 "programme" — jamais dans un objet de filtres."""
 
@@ -326,9 +297,7 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
             msg = client.messages.create(
                 model=MODEL_NL, max_tokens=600, temperature=0,   # comportement STABLE (QA réelle)
                 system=_NL_SYSTEM.format(
-                    schema=json.dumps(FILTER_SCHEMA, ensure_ascii=False),
-                    nord=", ".join(SECTEURS["Nord"]), ouest=", ".join(SECTEURS["Ouest"]),
-                    sud=", ".join(SECTEURS["Sud"]), est=", ".join(SECTEURS["Est"])),
+                    schema=json.dumps(FILTER_SCHEMA, ensure_ascii=False)),
                 messages=([{"role": m.get("role", "user"), "content": str(m.get("content", ""))[:600]}
                            for m in (body.history or [])[-6:]]
                           + [{"role": "user", "content": body.text}]))
@@ -357,12 +326,9 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
         if "programme" in data:
             return {"stub": False, "programme": data["programme"],
                     "explanation": "Programme détecté → formulaire Faisabilité pré-rempli (le moteur déterministe calcule)."}
-        if "cadrage" in data:
-            try:
-                validate(data["cadrage"], CADRAGE_SCHEMA)   # le garde-fou : jamais de question libre
-            except ValidationError as exc:
-                return {"stub": False, "out_of_scope": f"cadrage non conforme ({exc.message[:60]}) — réessayez"}
-            return {"stub": False, "cadrage": data["cadrage"]}
+        if data.get("projet_intent"):     # projet à cadrer → le front ouvre l'entretien
+            return {"stub": False, "projet_intent": True,
+                    "reformulation": str(data.get("reformulation", ""))[:240]}
         # dégradation gracieuse : on PROJETTE sur les clés du schéma (une clé parasite ne doit pas
         # faire échouer une demande par ailleurs valide) — le schéma reste le garde-fou final
         data = {k: v for k, v in data.items() if k in FILTER_SCHEMA["properties"]}
@@ -384,6 +350,163 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
         return {"stub": True, "out_of_scope": explanation}
     validate(filters, FILTER_SCHEMA)
     return {"stub": True, "filters": filters, "explanation": explanation}
+
+
+# ───────────────────── 1bis. ENTRETIEN DE CADRAGE PROJET (copilote-projet) ─────────────────────
+
+#: l'entretien construit une FICHE par touches successives. Chaque tour renvoie la fiche
+#: MERGÉE (validée FICHE_SCHEMA — vocabulaire fermé), une reformulation, les questions pour
+#: ce qui MANQUE (≤4, chacune skippable avec un défaut honnête affiché) et l'état `pret`.
+ENTRETIEN_SCHEMA = {
+    "type": "object", "additionalProperties": False,
+    "required": ["reformulation", "fiche", "questions", "pret"],
+    "properties": {
+        "reformulation": {"type": "string", "maxLength": 240},
+        "fiche": FICHE_SCHEMA,
+        "nom": {"type": "string", "maxLength": 160},
+        "pret": {"type": "boolean"},
+        "questions": {"type": "array", "maxItems": 4, "items": {
+            "type": "object", "additionalProperties": False,
+            "required": ["id", "texte", "chips"],
+            "properties": {
+                "id": {"enum": ["perimetre", "type_ampleur", "contrainte", "budget"]},
+                "texte": {"type": "string", "maxLength": 120},
+                # `dimension` déclenche les REPÈRES sourcés côté front (chiffres SQL sous les chips)
+                "dimension": {"enum": ["secteur", "commune"]},
+                "defaut": {"type": "string", "maxLength": 80},   # défaut honnête au SKIP
+                "chips": {"type": "array", "minItems": 2, "maxItems": 6, "items": {
+                    "type": "object", "additionalProperties": False, "required": ["label"],
+                    "properties": {"label": {"type": "string", "maxLength": 40},
+                                   "value": {"type": "string", "maxLength": 80}},
+                }},
+            },
+        }},
+    },
+}
+
+#: lexique d'OPINION MARCHÉ non chiffrée — INTERDIT (doctrine : arbitrages sourcés ou tus).
+#: le garde-fou neutralise toute réponse IA qui en contient dans un champ de texte libre.
+_MARCHE_OPINION = re.compile(
+    r"plus porteur|meilleur potentiel|plus rentable|march[ée] porteur|forte demande|"
+    r"tr[èe]s demand[ée]|bon investissement|plus attractif|meilleur choix|meilleure affaire|"
+    r"je (?:te |vous )?recommande|conseill|id[ée]al pour investir|plus int[ée]ressant",
+    re.I)
+
+
+def contient_opinion_marche(*textes: str) -> bool:
+    """True si un texte porte une opinion de marché non chiffrée (à bannir). Pur, testable."""
+    return any(t and _MARCHE_OPINION.search(t) for t in textes)
+
+
+_ENTRETIEN_SYSTEM = """Tu MÈNES un entretien de cadrage pour un promoteur foncier (La Réunion).
+Ton rôle : l'aider à FORMALISER son opération en remplissant une FICHE structurée. Réponds
+par UN SEUL objet JSON brut (pas de markdown, pas de ```), conforme EXACTEMENT à ce schéma :
+{schema}
+
+RÈGLES ABSOLUES (frontière IA/moteur) :
+- Tu ne CALCULES ni n'ESTIMES JAMAIS un chiffre (surface, SDP, prix, marge, capacité, prix au
+  m², rendement). Le moteur déterministe s'en charge. Tu ne fais que RECUEILLIR ce que le
+  promoteur dit (ex. « 40 logements » va dans ampleur.logements — c'est SA donnée, pas un calcul).
+- INTERDIT d'émettre une opinion de marché non chiffrée : jamais « plus porteur », « meilleur
+  potentiel », « plus rentable », « je recommande », « idéal pour investir ». Reste NEUTRE et
+  factuel. Les chiffres d'aide au choix sont servis séparément par la base (tu ne les inventes pas).
+
+DÉROULÉ :
+1. `fiche` = la fiche MERGÉE : reprends tout ce qui était déjà connu (fiche fournie) + ce que
+   le dernier message apporte. Vocabulaire FERMÉ : type_programme ∈ {types} ; perimetre.mode ∈
+   ile|secteur|communes (secteur ∈ Nord/Ouest/Sud/Est) ; contraintes ∈ {contraintes}.
+   « logements étudiants » → type_programme "etudiant". « dans l'Ouest » → perimetre secteur "Ouest".
+   « éviter les zones inondables/PPR » → contraintes ["eviter_ppr"]. Une commune nommée →
+   perimetre mode "communes", communes:["Nom Officiel"]. Budget « 800 k€ » → budget_foncier_eur 800000.
+2. `reformulation` = UNE phrase neutre de ce que tu as compris.
+3. `questions` = UNIQUEMENT pour ce qui MANQUE encore, AU MAXIMUM 4, dans cet ordre de priorité :
+   perimetre (id "perimetre", dimension "secteur", chips Nord/Ouest/Sud/Est/Toute l'île),
+   type_ampleur (id "type_ampleur"), contrainte (id "contrainte"), budget (id "budget").
+   Ne RE-DEMANDE JAMAIS une dimension déjà présente dans la fiche. Chaque question porte un
+   `defaut` honnête (ce que tu retiens si l'utilisateur passe, ex. "→ toute l'île", "→ sans
+   contrainte rédhibitoire"). Chips courtes (2 à 6). Si plus rien ne manque → questions = [].
+4. `pret` = true dès que le PÉRIMÈTRE est déterminé — un secteur/des communes cités, OU « toute
+   l'île » par défaut quand l'utilisateur reste vague ou passe la question. Le type/l'ampleur
+   raffinent le programme mais NE BLOQUENT PAS le lancement (les questions restent proposées).
+5. `nom` = un nom de projet court et neutre (ex. "Résidence étudiante Ouest").
+Si le dernier message dit « je ne sais pas / passer » sur une dimension → applique le défaut
+honnête dans la fiche (ex. perimetre.mode "ile") et n'y reviens pas."""
+
+
+class EntretienIn(BaseModel):
+    text: str
+    fiche: dict = {}                       # la fiche accumulée (front-held) — vérité en cours
+    history: list[dict] = []               # tours précédents (≤6), transmis tel quel
+
+
+def _neutralise_opinion(data: dict, db: Session) -> dict:
+    """Garde-fou doctrine : si l'IA a glissé une opinion de marché non chiffrée dans un champ
+    de texte libre, on la NEUTRALISE (reformulation générique, chips/questions purgées du
+    libellé fautif) et on flague `doctrine_neutralise`. Les arbitrages restent sourcés-ou-tus."""
+    libres = [data.get("reformulation", "")]
+    for q in data.get("questions", []):
+        libres.append(q.get("texte", ""))
+        libres += [c.get("label", "") for c in q.get("chips", [])]
+    if not contient_opinion_marche(*libres):
+        return data
+    _log(db, "entretien-neutralise", MODEL_NL, False)
+    data["reformulation"] = "Voici ce que j'ai compris de votre projet."
+    data["doctrine_neutralise"] = True
+    # purge des questions/chips portant l'opinion (on garde la structure, on retire le fautif)
+    for q in data.get("questions", []):
+        if contient_opinion_marche(q.get("texte", "")):
+            q["texte"] = "Précisez votre choix :"
+        q["chips"] = [c for c in q.get("chips", []) if not contient_opinion_marche(c.get("label", ""))]
+    data["questions"] = [q for q in data.get("questions", []) if len(q.get("chips", [])) >= 2]
+    return data
+
+
+@router.post("/entretien")
+def ia_entretien(body: EntretienIn, db: Session = Depends(get_db)) -> dict:
+    """L'entretien de cadrage projet — RÉEL uniquement (doctrine : pas d'entretien simulé).
+    Sans clé API, on renvoie `fallback` : le front bascule sur la recherche directe."""
+    if not _has_key():
+        _log(db, "entretien", "stub-local", True)
+        return {"stub": True, "fallback": True,
+                "message": "L'entretien de cadrage a besoin du copilote IA (indisponible ici). "
+                           "Décrivez vos critères pour une recherche directe."}
+    import anthropic
+    client = anthropic.Anthropic(timeout=20.0, max_retries=2)
+    try:
+        msg = client.messages.create(
+            model=MODEL_NL, max_tokens=900, temperature=0,
+            system=_ENTRETIEN_SYSTEM.format(
+                schema=json.dumps(ENTRETIEN_SCHEMA, ensure_ascii=False),
+                types="/".join(TYPE_LABEL), contraintes="/".join(CONTRAINTE_FLAG)),
+            messages=([{"role": m.get("role", "user"), "content": str(m.get("content", ""))[:800]}
+                       for m in (body.history or [])[-6:]]
+                      + [{"role": "user", "content": json.dumps(
+                          {"fiche_connue": body.fiche, "message": body.text}, ensure_ascii=False)}]))
+    except Exception as exc:
+        _note_erreur(exc)
+        _log(db, "entretien", "stub-fallback", True)
+        return {"stub": True, "fallback": True,
+                "message": "Le copilote est momentanément indisponible — basculons sur une "
+                           "recherche directe (décrivez vos critères)."}
+    _note_succes()
+    raw = msg.content[0].text.strip()
+    _log(db, "entretien", MODEL_NL, False, msg.usage.input_tokens, msg.usage.output_tokens)
+    if raw.startswith("```"):
+        raw = raw.strip("`").removeprefix("json").strip()
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return {"stub": False, "fallback": True, "message": "réponse IA illisible — réessayez"}
+    if isinstance(data.get("fiche"), dict):
+        data["fiche"] = clean_fiche(data["fiche"])    # null/"" = « pas encore su » → drop (hors enum)
+    try:
+        validate(data, ENTRETIEN_SCHEMA)              # garde-fou : jamais de champ hors vocabulaire
+    except ValidationError as exc:
+        return {"stub": False, "fallback": True,
+                "message": f"cadrage non conforme ({exc.message[:70]}) — réessayez"}
+    data = _neutralise_opinion(data, db)              # garde-fou : aucune opinion marché non chiffrée
+    data["stub"] = False
+    return data
 
 
 # ───────────────────── 2. SYNTHÈSE DE FICHE / 3. POURQUOI CE SCORE ─────────────────────

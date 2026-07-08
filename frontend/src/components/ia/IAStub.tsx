@@ -1,8 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getCommunes, getResults, getStats, iaSearch, iaStatus } from '../../lib/api'
-import type { Statut } from '../../lib/types'
-import { EMPTY_FILTERS, useApp, type Filters } from '../../store/useApp'
+import { iaSearch, iaStatus } from '../../lib/api'
+import { useApplySearch } from '../../lib/useApplySearch'
+import { useApp } from '../../store/useApp'
+import { ProjetEntretien } from '../projets/ProjetEntretien'
 
 const EXAMPLES = [
   'les chaudes de Saint-Pierre',
@@ -13,100 +14,38 @@ const EXAMPLES = [
   'un terrain pour 3 immeubles R+3 étudiants avec parking',
 ]
 
-/** Copilote — recherche en langage naturel. L'IA ne renvoie QUE des filtres validés par schéma
- *  (jamais un accès base, jamais un score) ; les chips existants font le reste. */
+/** Copilote — recherche NL (filtres validés par schéma) OU entretien de cadrage PROJET.
+ *  L'IA ne calcule ni ne modifie aucun score, n'accède jamais à la base. */
 export function IAStub() {
   const [text, setText] = useState('')
-  // R2 : cadrage conversationnel — la question en cours + les réponses choisies par chips
-  const [cadrage, setCadrage] = useState<null | { texte: string; reformulation: string; questions: { id: string; texte: string; chips: { label: string; value?: string }[] }[] }>(null)
-  const [reponses, setReponses] = useState<Record<string, { label: string; value?: string }>>({})
-  const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
-  const { setFilters, setView, setModule, setM22Prefill, setCommune, setVerdict, setFlyTo, setIaRestitution } = useApp()
+  // copilote-projet : l'entretien s'ouvre sur intention projet (auto) ou bouton « Décrire mon projet »
+  const [entretien, setEntretien] = useState<string | null>(null)
+  const { setModule, setM22Prefill } = useApp()
   const status = useQuery({ queryKey: ['ia-status'], queryFn: iaStatus })
   const search = useMutation({ mutationFn: iaSearch })
+  const apply = useApplySearch()   // chorégraphie partagée (périmètre → filtres → verdict → vol → restitution)
 
-  const apply = async (f: Record<string, unknown>) => {
-    // la commune est un filtre de PÉRIMÈTRE : « les chaudes de Saint-Pierre » bascule le
-    // sélecteur ; un SECTEUR du cadreur (communes multiples) passe le périmètre à l'île
-    // avec le filtre communes. Une phrase sans commune ne touche pas au périmètre courant.
-    let communes = (f.communes as string[]) ?? []
-    // normalisation : un « secteur » d'UNE commune = la commune elle-même (périmètre simple)
-    let communeSeule = typeof f.commune === 'string' && f.commune ? f.commune : null
-    if (communes.length === 1) { communeSeule = communes[0]; communes = [] }
-    if (communes.length > 0) setCommune(null)
-    else if (communeSeule) setCommune(communeSeule)
-    const next: Filters = {
-      ...EMPTY_FILTERS,
-      statuts: (f.statuts as Statut[]) ?? [],
-      scoreMin: (f.scoreMin as number | null) ?? null,
-      surfaceMin: (f.surfaceMin as number | null) ?? null,
-      surfaceMax: (f.surfaceMax as number | null) ?? null,
-      sdpMin: (f.sdpMin as number | null) ?? null,
-      evenement: !!f.evenement,
-      vueMer: !!f.vueMer,
-      flags: (f.flags as string[]) ?? [],
-      communes,
-    }
-    setFilters(next)
-    setVerdict(true)          // le copilote ALLUME le tri — c'est sa mise en scène
-    setView('cartes')
-    // vol de caméra vers le périmètre (bbox de la commune, union du secteur, ou île)
-    const infos = communesQ.data ?? []
-    const cible = communes.length ? communes : (communeSeule ? [communeSeule] : [])
-    const boxes = infos.filter((c) => cible.includes(c.commune)).map((c) => c.bbox)
-    if (boxes.length) {
-      const x1 = Math.min(...boxes.map((b) => b[0])), y1 = Math.min(...boxes.map((b) => b[1]))
-      const x2 = Math.max(...boxes.map((b) => b[2])), y2 = Math.max(...boxes.map((b) => b[3]))
-      setFlyTo({ center: [(x1 + x2) / 2, (y1 + y2) / 2], zoom: boxes.length > 1 ? 10.2 : 11.5 })
-    } else {
-      setFlyTo({ center: [55.53, -21.13], zoom: 9.7 })
-    }
-    // restitution : compteur + les 3 meilleures, cliquables
-    try {
-      const [st, top] = await Promise.all([getStats(next), getResults(next)])
-      setIaRestitution({
-        n: st.chaude + st.a_surveiller + st.a_creuser,
-        phrase: 'parcelles correspondent — voici les 3 meilleures',
-        top: top.slice(0, 3).map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score })),
-      })
-    } catch { /* restitution best-effort : les filtres sont déjà appliqués */ }
-  }
-
-  const run = (t: string, history?: { role: string; content: string }[]) => {
+  const run = (t: string) => {
     setText(t)
-    search.mutate({ text: t, history }, {
+    search.mutate({ text: t }, {
       onSuccess: (d) => {
         const dd = d as Record<string, unknown>
+        if (dd.projet_intent) {          // demande de PROJET → on ouvre l'entretien de cadrage
+          setEntretien(t)
+          return
+        }
         if (dd.programme) {
           setM22Prefill(dd.programme as Record<string, unknown>)
           setModule('programme')          // → formulaire M22 pré-rempli, moteur déterministe
           return
         }
-        if (dd.cadrage) {                 // R2 : le copilote CADRE avant d'exécuter
-          setCadrage({ texte: t, ...(dd.cadrage as { reformulation: string; questions: never[] }) })
-          setReponses({})
-          return
-        }
-        if (d.filters) { setCadrage(null); apply(d.filters) }
+        if (d.filters) apply(d.filters)
       },
     })
   }
 
-  // toutes les questions répondues → suivi automatique avec l'historique court
-  const repondre = (qid: string, chip: { label: string; value?: string }) => {
-    if (!cadrage) return
-    const next = { ...reponses, [qid]: chip }
-    setReponses(next)
-    if (Object.keys(next).length === cadrage.questions.length) {
-      const recap = cadrage.questions
-        .map((q) => `${q.id} = ${next[q.id].label}${next[q.id].value ? ` (${next[q.id].value})` : ''}`)
-        .join(' ; ')
-      run(`Réponses de cadrage : ${recap}`, [
-        { role: 'user', content: cadrage.texte },
-        { role: 'assistant', content: JSON.stringify({ cadrage: { reformulation: cadrage.reformulation, questions: cadrage.questions } }) },
-      ])
-      setCadrage(null)
-    }
+  if (entretien !== null) {
+    return <ProjetEntretien initial={entretien} onClose={() => setEntretien(null)} />
   }
 
   return (
@@ -149,6 +88,16 @@ export function IAStub() {
           </button>
         </div>
 
+        {/* copilote-projet — l'autre voie : décrire une OPÉRATION (entretien de cadrage) */}
+        <button
+          data-decrire-projet
+          onClick={() => setEntretien(text.trim() || 'je veux monter une opération immobilière')}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-[#3A4F8F]/50 bg-[#161a2e] py-2.5 text-xs font-medium text-[#B497F0] hover:border-[#B497F0]/60"
+        >
+          <svg viewBox="0 0 20 20" className="h-4 w-4"><path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z" fill="currentColor" /></svg>
+          Décrire mon projet — le copilote vous cadre en 4 questions
+        </button>
+
         <div className="mt-3 flex flex-wrap gap-1.5">
           {EXAMPLES.map((e) => (
             <button key={e} onClick={() => run(e)}
@@ -158,26 +107,6 @@ export function IAStub() {
           ))}
         </div>
 
-        {cadrage && (
-          <div data-cadrage className="mt-4 rounded-xl border border-[#2E6B4F] bg-[#0F1A14] px-4 py-3">
-            <p className="text-xs text-txt">{cadrage.reformulation}</p>
-            {cadrage.questions.map((q) => (
-              <div key={q.id} className="mt-3">
-                <p className="text-[11px] font-medium text-txt-mut">{q.texte}</p>
-                <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  {q.chips.map((c) => (
-                    <button key={c.label} data-cadrage-chip onClick={() => repondre(q.id, c)}
-                      className={`rounded-full border px-2.5 py-1 text-[11px] ${
-                        reponses[q.id]?.label === c.label ? 'border-mint bg-[#12241a] text-mint' : 'border-line-2 text-txt hover:border-[#2E6B4F]'}`}>
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-            <p className="mt-2 text-[9.5px] text-txt-dim">Répondez aux {cadrage.questions.length > 1 ? 'deux questions' : 'questions'} — la recherche part toute seule.</p>
-          </div>
-        )}
         {search.data?.out_of_scope && (
           <div className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-3 text-xs text-txt-mut">
             {search.data.out_of_scope}
