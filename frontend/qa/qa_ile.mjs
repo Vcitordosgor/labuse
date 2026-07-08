@@ -25,7 +25,7 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, dev
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
 const consoleErrors = []
 page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 120)) })
-await page.goto(BASE, { waitUntil: 'networkidle' })
+await page.goto(BASE + '#f=1&v=1', { waitUntil: 'networkidle' })
 await page.waitForSelector('text=chaudes', { timeout: 20000 })
 await page.waitForTimeout(2500)
 assert((await page.locator('[data-commune-select]').innerText()).includes('Toute l’île'), 'défaut = « Toute l’île »')

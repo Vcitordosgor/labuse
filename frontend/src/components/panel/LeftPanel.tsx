@@ -63,8 +63,44 @@ function LayersSection() {
   )
 }
 
+// R1 (revue Vic n°2) : LE geste signature du produit — un interrupteur héroïque, pas une
+// checkbox. Éteint : la carte est un cadastre neutre. Allumé : couleurs + entonnoir + liste.
+function VerdictHero() {
+  const { verdict, setVerdict } = useApp()
+  if (verdict) {
+    return (
+      <div className="mx-5 mb-1 flex shrink-0 items-center justify-between rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-1.5">
+        <span className="text-[11px] font-medium text-mint">✓ Tri LABUSE actif</span>
+        <button data-verdict-off onClick={() => setVerdict(false)}
+          className="text-[10px] text-txt-dim hover:text-txt" title="Revenir au cadastre neutre">
+          éteindre
+        </button>
+      </div>
+    )
+  }
+  return (
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-10 text-center">
+      <svg viewBox="0 0 240 82" className="h-7 w-20" fill="#2FE0A0" style={{ filter: 'drop-shadow(0 0 10px rgba(47,224,160,0.4))' }}>
+        <path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z" />
+      </svg>
+      <p className="mt-4 text-xs leading-relaxed text-txt-mut">
+        Le cadastre de l'île est sous vos yeux — 431 663 parcelles.
+        <br />LABUSE les a toutes analysées.
+      </p>
+      <button data-verdict-on onClick={() => setVerdict(true)}
+        className="mt-5 w-full rounded-xl bg-mint px-4 py-3.5 font-display text-sm font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition hover:shadow-[0_0_36px_rgba(92,230,161,0.55)]">
+        LABUSE a trié pour vous →
+      </button>
+      <p className="mt-3 text-[10px] leading-snug text-txt-dim">
+        Un geste : les couleurs de verdict, l'entonnoir et la liste des opportunités s'allument.
+        <br />Cliquez n'importe quelle parcelle à tout moment : sa fiche porte déjà son verdict.
+      </p>
+    </div>
+  )
+}
+
 export function LeftPanel() {
-  const { panelOpen, togglePanel } = useApp()
+  const { panelOpen, togglePanel, verdict } = useApp()
   if (!panelOpen) {
     return (
       <button
@@ -84,7 +120,8 @@ export function LeftPanel() {
       </div>
       <LayersSection />
       <div className="mx-5 my-3 shrink-0 border-t border-line" />
-      <ResultsSection />
+      <VerdictHero />
+      {verdict && <ResultsSection />}
     </aside>
   )
 }

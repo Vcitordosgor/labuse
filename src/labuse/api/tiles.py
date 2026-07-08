@@ -3,8 +3,8 @@
 Le GeoJSON par commune (26 Mo à Saint-Paul) ne tient pas à l'échelle de l'île : on sert du
 MVT depuis une table MATÉRIALISÉE `mvt_parcels` (statuts + propriétés de filtre pré-joints,
 géométrie en 3857, GIST) reconstruite après chaque run de scoring (`labuse build-mvt`).
-Doctrine perf : z<10 rien (l'île entière = communes colorées par les couches IGN), z10-12
-uniquement les promues (chaude/à surveiller/à creuser), z≥13 tout — un tile reste < ~700 Ko.
+Doctrine perf (R1, revue Vic n°2) : TOUT dès z9 — simplification par palier (z9 : 10 m ≈
+3,4 Mo/tuile · z10 : 5 m · z11 : 2 m · z12+ : brut ≈ 850 Ko max), cache LRU + navigateur.
 Les propriétés portent EXACTEMENT les clés du GeoJSON commune (idu, status, q_score…) pour
 que les expressions de filtre MapLibre soient IDENTIQUES sur les deux sources ; `flags` est
 une chaîne CSV (le MVT ne porte pas de tableaux) — l'expression `['in', flag, ['get','flags']]`
@@ -70,7 +70,7 @@ _CACHE_MAX = 4096
 @router.get("/map/tiles/{z}/{x}/{y}.pbf")
 def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     """Tuile MVT couche `parcels` — mêmes propriétés que le GeoJSON commune."""
-    if z < 10 or z > 22:
+    if z < 9 or z > 22:
         return Response(status_code=204)
     key = (z, x, y)
     if key in _CACHE:
@@ -79,19 +79,26 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     exists = db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar()
     if not exists:
         return Response(status_code=204)  # table pas encore construite (run en cours)
-    # C7 (décision Vic : le cadastre ENTIER visible) — z12+ : TOUTES les parcelles (la trame
-    # cadastrale doit exister aux zooms de travail ; tuile dense ~850 Ko mesurée, acceptable) ;
-    # z10-11 : promues seules (parcelles sub-pixel, les marqueurs communes règnent)
-    statut_where = "" if z >= 12 else "AND m.status IN ('chaude','a_surveiller','a_creuser')"
+    # R1 (revue Vic n°2 : le cadastre d'abord) — TOUTES les parcelles dès z9, simplification
+    # par palier pour tenir les poids (mesurés : z9 « tout » 10 m ≈ 3,4 Mo, z10 5 m ≈ 3,5 Mo,
+    # z12+ brut ≈ 850 Ko max). L'ouverture cadre l'île entière : la trame est là d'emblée.
+    simplify = {9: 10, 10: 5, 11: 2}.get(z, 0)
+    geom_expr = (f"ST_SimplifyPreserveTopology(m.geom_3857, {simplify})" if simplify
+                 else "m.geom_3857")
+    # z ≤ 11 : tuiles MAIGRES (status + commune seulement — 24 et 4 valeurs distinctes,
+    # dédupliquées par l'encodage MVT). Les 13 propriétés complètes (idu unique en tête)
+    # pesaient 15 Mo/tuile à z9 ; le clic passe par /parcels/at, le ping vole à z16.
+    props = ("m.status, m.commune" if z <= 11 else
+             "m.idu, m.commune, m.surface_m2, m.status, m.q_score, m.a_score, "
+             "m.a_completude, m.completeness_score, m.sdp_residuelle_m2, "
+             "m.sous_densite, m.vue_mer, m.evenement, m.flags")
     data = db.execute(text(f"""
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
         mvt AS (
-          SELECT ST_AsMVTGeom(m.geom_3857, b.env, 4096, 64, true) AS geom,
-                 m.idu, m.commune, m.surface_m2, m.status, m.q_score, m.a_score,
-                 m.a_completude, m.completeness_score, m.sdp_residuelle_m2,
-                 m.sous_densite, m.vue_mer, m.evenement, m.flags
+          SELECT ST_AsMVTGeom({geom_expr}, b.env, 4096, 64, true) AS geom,
+                 {props}
           FROM mvt_parcels m, b
-          WHERE m.geom_3857 && b.env {statut_where}
+          WHERE m.geom_3857 && b.env
         )
         SELECT ST_AsMVT(mvt.*, 'parcels', 4096, 'geom') FROM mvt
     """), {"z": z, "x": x, "y": y}).scalar()

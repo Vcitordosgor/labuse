@@ -60,6 +60,7 @@ function toExpr(f: Filters): maplibregl.FilterSpecification {
   if (f.evenement) c.push(['==', ['get', 'evenement'], 'rouge'])
   if (f.vueMer) c.push(['==', ['get', 'vue_mer'], 'oui'])
   if (f.flags.length) c.push(['any', ...f.flags.map((fl) => ['in', fl, ['get', 'flags']] as maplibregl.ExpressionSpecification)])
+  if (f.communes.length) c.push(['in', ['get', 'commune'], ['literal', f.communes]])
   return ['all', ...c] as maplibregl.FilterSpecification
 }
 
@@ -97,7 +98,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune } = useApp()
+  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict } = useApp()
   const ile = commune == null
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
@@ -188,7 +189,7 @@ export function MapView() {
         layout: { visibility: 'none' }, paint: OVERLAYS.ppr.paint as never })
 
       // ── mode ÎLE : calques jumeaux sur tuiles MVT (431k parcelles — le GeoJSON ne tient pas) ──
-      m.addSource('parcels-ile', { type: 'vector', minzoom: 10, maxzoom: 15,
+      m.addSource('parcels-ile', { type: 'vector', minzoom: 9, maxzoom: 15,
         tiles: [`${window.location.origin}/map/tiles/{z}/{x}/{y}.pbf`] })
       const SL = { source: 'parcels-ile', 'source-layer': 'parcels' } as const
       m.addLayer({ id: 'ile-fill', type: 'fill', ...SL, layout: { visibility: 'none' },
@@ -357,7 +358,11 @@ export function MapView() {
     const expr = toExpr(filters)
     for (const fill of ['parcels-fill', 'ile-fill']) {
       m.setFilter(fill, expr)
-      if (mode === 'mutabilite') {
+      if (!verdict) {
+        // R1 : VERDICT ÉTEINT = trame cadastrale NEUTRE (le langage promoteur), aucune couleur
+        m.setPaintProperty(fill, 'fill-color', '#22302A')
+        m.setPaintProperty(fill, 'fill-opacity', 0.28)
+      } else if (mode === 'mutabilite') {
         m.setPaintProperty(fill, 'fill-color', MUTABILITE_COLOR)
         m.setPaintProperty(fill, 'fill-opacity', 0.7)
       } else {
@@ -365,9 +370,12 @@ export function MapView() {
         m.setPaintProperty(fill, 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
       }
     }
+    // liseré des promues : uniquement verdict allumé
+    m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile && verdict))
+    m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && verdict))
     m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
     m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
-  }, [mode, filters, layers, geo.dataUpdatedAt, mapReady, ile])
+  }, [mode, filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict])
 
   // ── VAGUE 0 (île) : sous z10 les tuiles parcellaires ne servent rien — l'île raconte où
   // sont les cibles via UN marqueur par commune (nom + chaudes, dimensionné/coloré), cliquable
@@ -383,26 +391,33 @@ export function MapView() {
       const show = m.getZoom() < 10
       aggMarkers.current.forEach((mk) => { mk.getElement().style.display = show ? '' : 'none' })
     }
+    // anti-chevauchement (côte Nord dense) : décalages pixels manuels, consignés
+    const OFFSETS: Record<string, [number, number]> = {
+      'Saint-Denis': [-14, -10], 'Sainte-Marie': [16, 8], 'Sainte-Suzanne': [26, -6],
+      'Le Port': [-18, -4], 'La Possession': [10, 12],
+    }
     for (const c of communes.data) {
       if (!c.bbox || c.bbox[0] == null) continue
-      const hot = c.chaudes > 0
+      const hot = verdict && c.chaudes > 0   // R1 : sans verdict, les marqueurs restent NEUTRES
       const el = document.createElement('button')
       el.setAttribute('data-commune-marker', c.commune)
-      el.title = `${c.commune} — ${c.chaudes} chaude${c.chaudes > 1 ? 's' : ''} · cliquer pour ouvrir la commune`
-      el.textContent = `${c.commune.replace(/^(Les|Le|La|L')\s?/, '')} ${c.chaudes > 0 ? c.chaudes : ''}`.trim()
-      const size = Math.min(13, 10 + Math.log10(Math.max(1, c.chaudes)) * 2)
+      el.title = verdict
+        ? `${c.commune} — ${c.chaudes} chaude${c.chaudes > 1 ? 's' : ''} · cliquer pour ouvrir la commune`
+        : `${c.commune} · cliquer pour ouvrir la commune`
+      el.textContent = `${c.commune.replace(/^(Les|Le|La|L')\s?/, '')}${verdict && c.chaudes > 0 ? ` ${c.chaudes}` : ''}`.trim()
+      const size = Math.min(13, 10 + (verdict ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0))
       el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
         `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? '#2E6B4F' : '#26302B'};` +
         `background:${hot ? 'rgba(9,26,18,.92)' : 'rgba(10,14,12,.85)'};color:${hot ? '#5CE6A1' : '#8FA69A'};` +
         (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
       el.onclick = (e) => { e.stopPropagation(); useApp.getState().setCommune(c.commune) }
-      aggMarkers.current.push(new maplibregl.Marker({ element: el })
+      aggMarkers.current.push(new maplibregl.Marker({ element: el, offset: OFFSETS[c.commune] ?? [0, 0] })
         .setLngLat([(c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2]).addTo(m))
     }
     updateVis()
     m.on('zoom', updateVis)
     return () => { m.off('zoom', updateVis); aggMarkers.current.forEach((mk) => mk.remove()); aggMarkers.current = [] }
-  }, [ile, communes.data, mapReady])
+  }, [ile, communes.data, mapReady, verdict])
 
   // changement de commune → recadrage sur son emprise (bbox servie par /communes)
   useEffect(() => {

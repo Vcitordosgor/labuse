@@ -16,7 +16,7 @@ const sql = (q) => execFileSync('psql', [DB, '-tA', '-c', q], { encoding: 'utf8'
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
-await page.goto(BASE, { waitUntil: 'networkidle' })
+await page.goto(BASE + '#f=1&v=1', { waitUntil: 'networkidle' })
 await page.waitForSelector('text=chaudes', { timeout: 20000 })
 await page.waitForTimeout(3000)
 

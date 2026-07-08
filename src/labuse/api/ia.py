@@ -106,6 +106,12 @@ FILTER_SCHEMA = {
         "evenement": {"type": "boolean"},
         "vueMer": {"type": "boolean"},
         "flags": {"type": "array", "items": {"enum": ["sol_pollue", "abf", "icpe", "risques", "prescription_plu"]}},
+        "communes": {"type": "array", "maxItems": 24, "items": {"enum": [
+            "Les Avirons", "Bras-Panon", "Entre-Deux", "L'Étang-Salé", "Petite-Île",
+            "La Plaine-des-Palmistes", "Le Port", "La Possession", "Saint-André", "Saint-Benoît",
+            "Saint-Denis", "Saint-Joseph", "Saint-Leu", "Saint-Louis", "Saint-Paul",
+            "Saint-Pierre", "Saint-Philippe", "Sainte-Marie", "Sainte-Rose", "Sainte-Suzanne",
+            "Salazie", "Le Tampon", "Les Trois-Bassins", "Cilaos"]}},
         "commune": {"type": ["string", "null"], "enum": [
             "Les Avirons", "Bras-Panon", "Entre-Deux", "L'Étang-Salé", "Petite-Île",
             "La Plaine-des-Palmistes", "Le Port", "La Possession", "Saint-André", "Saint-Benoît",
@@ -113,6 +119,39 @@ FILTER_SCHEMA = {
             "Saint-Pierre", "Saint-Philippe", "Sainte-Marie", "Sainte-Rose", "Sainte-Suzanne",
             "Salazie", "Le Tampon", "Les Trois-Bassins", "Cilaos", None]},
     },
+}
+
+#: cadrage conversationnel (R2) : reformulation + AU PLUS 2 questions à chips — validé
+CADRAGE_SCHEMA = {
+    "type": "object", "additionalProperties": False,
+    "required": ["reformulation", "questions"],
+    "properties": {
+        "reformulation": {"type": "string", "maxLength": 240},
+        "questions": {"type": "array", "minItems": 1, "maxItems": 2, "items": {
+            "type": "object", "additionalProperties": False,
+            "required": ["id", "texte", "chips"],
+            "properties": {
+                "id": {"enum": ["secteur", "ampleur", "contrainte"]},
+                "texte": {"type": "string", "maxLength": 120},
+                "chips": {"type": "array", "minItems": 2, "maxItems": 6, "items": {
+                    "type": "object", "additionalProperties": False,
+                    "required": ["label"],
+                    "properties": {"label": {"type": "string", "maxLength": 40},
+                                   "value": {"type": "string", "maxLength": 80}},
+                }},
+            },
+        }},
+    },
+}
+
+#: microrégions (secteurs du cadreur) → communes officielles
+SECTEURS = {
+    "Nord": ["Saint-Denis", "Sainte-Marie", "Sainte-Suzanne"],
+    "Ouest": ["Le Port", "La Possession", "Saint-Paul", "Les Trois-Bassins", "Saint-Leu"],
+    "Sud": ["L'Étang-Salé", "Les Avirons", "Saint-Louis", "Cilaos", "Saint-Pierre",
+            "Petite-Île", "Le Tampon", "Entre-Deux", "Saint-Joseph", "Saint-Philippe"],
+    "Est": ["Bras-Panon", "Salazie", "Saint-André", "Saint-Benoît",
+            "La Plaine-des-Palmistes", "Sainte-Rose"],
 }
 
 #: variantes usuelles → nom officiel (le stub ET la projection du réel passent par là)
@@ -152,6 +191,8 @@ def _detect_commune(low: str) -> str | None:
 
 class SearchIn(BaseModel):
     text: str
+    #: historique COURT du cadrage (R2, ≤6 tours) — transmis tel quel au modèle, jamais à la base
+    history: list[dict] = []
 
 
 def _stub_programme(low: str) -> dict | None:
@@ -252,6 +293,21 @@ UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Tr
 3. Hors périmètre (météo, rédaction, géographie non filtrable, ou TOUTE demande de MODIFIER un
    score — les scores sont déterministes, tu ne les changes jamais) →
    {{"out_of_scope": "raison courte et polie"}}
+4. CADRAGE (uniquement si la demande est un PROJET VAGUE : ni commune ni secteur ni critères
+   chiffrés — ex. « un terrain pour du logement étudiant ») →
+   {{"cadrage": {{"reformulation": "UNE phrase : ce que tu as compris",
+     "questions": [{{"id": "secteur", "texte": "…", "chips": [{{"label": "Nord"}}, {{"label": "Ouest"}},
+       {{"label": "Sud"}}, {{"label": "Est"}}, {{"label": "Toute l'île"}}]}},
+      {{"id": "ampleur", "texte": "…", "chips": [{{"label": "…", "value": "sdpMin:300"}}, …]}}]}}}}
+   AU MAXIMUM 2 questions (secteur, ampleur, ou contrainte clé), chips courtes. Le champ
+   value d'un chip d'ampleur/contrainte = fragment "clé:valeur" du schéma de filtres
+   (ex. "sdpMin:800", "surfaceMin:1000"). Un secteur choisi se traduira par "communes"
+   (Nord={nord} ; Ouest={ouest} ; Sud={sud} ; Est={est} ; Toute l'île = communes absent).
+   ⚠ Une demande PRÉCISE (commune nommée, statut, critère chiffré) → JAMAIS de cadrage,
+   filtres DIRECTS (forme 1) : un copilote qui interroge pour rien est pénible.
+   Si l'historique contient déjà tes questions et les réponses de l'utilisateur → réponds
+   TOUJOURS en forme 1 (filtres consolidés : "communes" du secteur choisi, valeurs des chips
+   d'ampleur/contrainte) — JAMAIS en programme ni en nouveau cadrage après un cadrage.
 Sois strict : n'invente JAMAIS un filtre non demandé. Le champ "type" n'existe QUE dans
 "programme" — jamais dans un objet de filtres."""
 
@@ -263,9 +319,14 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
         client = anthropic.Anthropic(timeout=20.0, max_retries=2)
         try:
             msg = client.messages.create(
-                model=MODEL_NL, max_tokens=400,
-                system=_NL_SYSTEM.format(schema=json.dumps(FILTER_SCHEMA, ensure_ascii=False)),
-                messages=[{"role": "user", "content": body.text}])
+                model=MODEL_NL, max_tokens=600,
+                system=_NL_SYSTEM.format(
+                    schema=json.dumps(FILTER_SCHEMA, ensure_ascii=False),
+                    nord=", ".join(SECTEURS["Nord"]), ouest=", ".join(SECTEURS["Ouest"]),
+                    sud=", ".join(SECTEURS["Sud"]), est=", ".join(SECTEURS["Est"])),
+                messages=([{"role": m.get("role", "user"), "content": str(m.get("content", ""))[:600]}
+                           for m in (body.history or [])[-6:]]
+                          + [{"role": "user", "content": body.text}]))
         except Exception as exc:   # clé invalide / API down → diagnostic + repli stub GRACIEUX
             _note_erreur(exc)
             prog = _stub_programme(body.text.lower())
@@ -291,6 +352,12 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
         if "programme" in data:
             return {"stub": False, "programme": data["programme"],
                     "explanation": "Programme détecté → formulaire Faisabilité pré-rempli (le moteur déterministe calcule)."}
+        if "cadrage" in data:
+            try:
+                validate(data["cadrage"], CADRAGE_SCHEMA)   # le garde-fou : jamais de question libre
+            except ValidationError as exc:
+                return {"stub": False, "out_of_scope": f"cadrage non conforme ({exc.message[:60]}) — réessayez"}
+            return {"stub": False, "cadrage": data["cadrage"]}
         # dégradation gracieuse : on PROJETTE sur les clés du schéma (une clé parasite ne doit pas
         # faire échouer une demande par ailleurs valide) — le schéma reste le garde-fou final
         data = {k: v for k, v in data.items() if k in FILTER_SCHEMA["properties"]}

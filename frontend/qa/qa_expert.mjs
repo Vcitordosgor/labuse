@@ -2,7 +2,7 @@
 import { mkdirSync } from 'node:fs'
 import { chromium } from 'playwright'
 const BASE = process.env.BASE || 'http://127.0.0.1:8010/socle/'
-const SP = '#f=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
+const SP = '#f=1&v=1&c=Saint-Paul'   // les suites historiques testent le MODE COMMUNE (défaut produit = île)
 mkdirSync('../docs/design/captures/modules', { recursive: true })
 const failures = []
 const assert = (c, n, d = '') => (c ? console.log(`  ✓ ${n}`) : (failures.push(n), console.log(`  ✗ ${n} ${d}`)))

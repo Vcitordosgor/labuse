@@ -25,11 +25,12 @@ export interface Filters {
   evenement: boolean         // seulement les parcelles à événement (BODACC rouge)
   vueMer: boolean            // seulement vue mer dégagée
   flags: string[]            // flags actifs requis (au moins un)
+  communes: string[]         // R2 : secteur du cadreur (multi-communes, mode île)
 }
 
 export const EMPTY_FILTERS: Filters = {
   statuts: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
-  evenement: false, vueMer: false, flags: [],
+  evenement: false, vueMer: false, flags: [], communes: [],
 }
 
 export type Basemap = 'dark' | 'plan' | 'ortho'
@@ -47,6 +48,13 @@ interface AppState {
   // toast produit (C6) : une action utilisateur ne tombe JAMAIS dans le vide
   toast: string | null
   setToast: (t: string | null) => void
+  // R1 (revue Vic n°2) : le VERDICT est un GESTE — la carte s'ouvre en cadastre neutre,
+  // « LABUSE a trié pour vous » allume couleurs + entonnoir + liste. URL : v=1.
+  verdict: boolean
+  setVerdict: (v: boolean) => void
+  // R2 : restitution chorégraphiée du copilote (compteur animé + top 3 cliquables)
+  iaRestitution: { n: number; phrase: string; top: { idu: string; commune: string; q_score: number }[] } | null
+  setIaRestitution: (r: { n: number; phrase: string; top: { idu: string; commune: string; q_score: number }[] } | null) => void
   view: View
   setView: (v: View) => void
   outilsOpen: boolean
@@ -109,6 +117,10 @@ export const useApp = create<AppState>((set) => ({
   setContexteCommune: (contexteCommune) => set({ contexteCommune }),
   toast: null,
   setToast: (toast) => set({ toast }),
+  verdict: false,
+  setVerdict: (verdict) => set({ verdict }),
+  iaRestitution: null,
+  setIaRestitution: (iaRestitution) => set({ iaRestitution }),
   view: 'cartes',
   setView: (view) => set({ view, outilsOpen: false }),
   outilsOpen: false,

@@ -259,3 +259,23 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
 - **Backfill set-based ≡ re-run** : couches indépendantes des autres verdicts → INSERT direct
   + nullification des poids des parcelles nouvellement exclues (sémantique weights=[0]* du
   moteur). Idempotent par commune. Les runs FUTURS passent par le moteur (couches enregistrées).
+
+## Revue Vic n°2 (08/07)
+- **R1 paliers de tuiles** : TOUT dès z9 (le cadastre d'abord) — le poids venait des PROPRIÉTÉS
+  (idu uniques ×100k = 15 Mo/tuile), pas de la géométrie → tuiles MAIGRES sous z12 (status +
+  commune seulement, valeurs dédupliquées par l'encodage MVT) : z9 ≈ 4,5 Mo + 1,7 Mo (~6 Mo à
+  l'ouverture, cache serveur LRU + navigateur 1 h), z10 4,7 Mo, z11 375 Ko, z12+ complet 850 Ko.
+  Le clic sous z12 passe par /parcels/at, le ping vole à z16 — l'absence d'idu n'ampute rien.
+- **R1 bouton signature** : hero dans le panneau gauche (oiseau + « LABUSE a trié pour vous »,
+  glow menthe) remplaçant la liste quand le verdict est éteint ; « ✓ Tri actif · éteindre »
+  quand allumé. Marqueurs communes NEUTRES verdict éteint (nom seul), comptes quand allumé ;
+  chevauchements Nord réglés par offsets pixels manuels (SD/SM/SS/Le Port/Possession).
+- **R2 secteurs** : nouveau filtre `communes` (multi) de bout en bout (schéma IA, SQL, carte,
+  hash `cs=`) — Nord/Ouest/Sud/Est = microrégions figées dans SECTEURS (ia.py). Le cadrage
+  est UNE réponse (reformulation + ≤2 questions à chips) ; le suivi part seul quand toutes
+  les questions sont répondues ; après cadrage le modèle répond TOUJOURS en filtres (jamais
+  programme). Le copilote ALLUME le verdict (mise en scène cohérente avec R1). Stub : jamais
+  de questions (direct ou refus documenté) — inchangé.
+- **R4** : dark_nolabels à tous les zooms — les noms de rues partent aussi (assumé).
+- **R8** : deep-link cadastre = Géoportail IGN PCI Express (permalien centré) — le site DGFiP
+  n'a pas de deep-link stable sans session.

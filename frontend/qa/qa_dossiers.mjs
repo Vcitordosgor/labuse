@@ -44,7 +44,7 @@ assert(lp.dossiers === lpSql, `/communes La Possession : dossiers = SQL (${lpSql
 const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
-await page.goto(BASE, { waitUntil: 'networkidle' })
+await page.goto(BASE + '#f=1&v=1', { waitUntil: 'networkidle' })
 await page.waitForSelector('text=chaudes', { timeout: 20000 })
 await page.waitForTimeout(2500)
 assert((await page.locator(`text=${stats.dossiers_chaudes.toLocaleString('fr-FR')} dossiers propriétaire`).count()) > 0,
@@ -56,7 +56,7 @@ assert((await page.locator('text=sans identité').count()) > 0, 'en-tête île :
 const sicnN = sql(`SELECT count(*) FROM dryrun_parcel_evaluations d
   JOIN parcels p ON p.id=d.parcel_id JOIN parcelle_personne_morale pm ON pm.idu=p.idu
   WHERE d.run_label='q_v2' AND d.matrice_statut='chaude' AND pm.denomination='SICN'`)
-await page.goto(BASE + '#f=1&c=La%20Possession&st=chaude', { waitUntil: 'domcontentloaded' })
+await page.goto(BASE + '#f=1&v=1&c=La%20Possession&st=chaude', { waitUntil: 'domcontentloaded' })
 await page.reload({ waitUntil: 'networkidle' })
 await page.waitForSelector('.overflow-y-auto > button', { timeout: 25000 })
 await page.waitForTimeout(2500)
