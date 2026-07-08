@@ -73,15 +73,26 @@ assert(htxt.includes('Chaude par') && htxt.includes('procédure'), 'C5 : la phra
 await page.screenshot({ path: `${OUT}/correctif_c5_evenement.png` })
 await page.keyboard.press('Escape')
 
-// ── C6 : clic couche désactivée (île) → toast VISIBLE
+// ── C6 (repris par R5+R6) : plus de toast lointain. R6 : les couches île s'ACTIVENT ;
+// R5 : le seul contrôle encore bloqué en île (filtre de zone, compte client) montre un
+// hint ANCRÉ au bouton, auto-éteint.
 await page.getByRole('button', { name: 'Zonage PLU' }).click()
-await page.waitForSelector('[data-toast]', { timeout: 5000 })
-assert(await page.locator('[data-toast]').isVisible(), 'C6 : toast visible au clic sur couche désactivée')
-assert((await page.locator('[data-toast]').innerText()).includes('commune'), 'C6 : le toast donne la marche à suivre')
+await page.waitForTimeout(400)
+const zonageIle = await page.evaluate(() =>
+  window.__labuse_map.getLayoutProperty('ovmvt-zonage', 'visibility') === 'visible')
+assert(zonageIle, 'C6/R6 : « Zonage PLU » S’ACTIVE en mode île (ovmvt-zonage visible, plus de refus)')
+await page.getByRole('button', { name: 'Zonage PLU' }).click()   // repli
+const zoneBtn = page.locator('div.relative > button.h-9.w-9[class*="2E3A33"]')   // l'outil zone = le seul OFF en île (style éteint)
+await zoneBtn.click()
+await page.waitForSelector('[data-hint-zone]', { timeout: 5000 })
+assert(await page.locator('[data-hint-zone]').isVisible(), 'C6/R5 : hint ANCRÉ au contrôle bloqué (outil zone)')
+assert((await page.locator('[data-hint-zone]').innerText()).includes('commune'), 'C6/R5 : le hint donne la marche à suivre')
 await page.screenshot({ path: `${OUT}/correctif_c6_toast.png` })
+await page.waitForTimeout(3200)
+assert((await page.locator('[data-hint-zone]').count()) === 0, 'C6/R5 : le hint s’auto-éteint')
 
 // ── C7 : trame cadastrale + clic universel + écartées opt-in + omnibox écartée
-await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.269, -21.01], zoom: 14.5 }))
+await page.evaluate(() => void window.__labuse_map.jumpTo({ center: [55.269, -21.01], zoom: 14.5 }))
 await page.waitForTimeout(3500)
 const trame = await page.evaluate(() => window.__labuse_map.queryRenderedFeatures({ layers: ['ile-limites'] }).length)
 assert(trame > 200, `C7 : trame cadastrale VISIBLE par défaut (${trame} contours rendus, mode île z14.5)`)
@@ -123,7 +134,7 @@ assert(true, `C7 : omnibox remonte une écartée explicite (${iduEcartee})`)
 
 // clic universel : un point SANS feature promue à z11 (tuiles promues-only) → résolution serveur
 await page.keyboard.press('Escape')
-await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.47, -20.905], zoom: 11 }))
+await page.evaluate(() => void window.__labuse_map.jumpTo({ center: [55.47, -20.905], zoom: 11 }))
 await page.waitForTimeout(2500)
 const r = await page.evaluate(() => {
   const m = window.__labuse_map

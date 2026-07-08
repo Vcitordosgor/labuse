@@ -279,3 +279,17 @@ Système de filtres client (source unique = le geojson q_v2, partagé carte/list
 - **R4** : dark_nolabels à tous les zooms — les noms de rues partent aussi (assumé).
 - **R8** : deep-link cadastre = Géoportail IGN PCI Express (permalien centré) — le site DGFiP
   n'a pas de deep-link stable sans session.
+- **Stabilisation QA finale (micro-choix)** : `temperature=0` sur l'appel NL (les suites
+  testent le COMPORTEMENT du copilote en réel — la variance créative ne l'améliore pas et
+  rend la QA non reproductible) ; flags gravés dans le prompt comme FILTRABLES (monument →
+  abf, usine → icpe…) avec interdit explicite d'out_of_scope sur ces cas. Suites : jamais
+  renvoyer un objet MapLibre par le pont playwright (`() => void map.jumpTo(...)` — l'objet
+  Map sérialisé avec les tuiles « tout » dépasse 512 Mo) ; pingState lit la couche ping
+  ACTIVE (opacité > 0) parmi parcels-ping/ile-ping — un ancien ping éteint peut subsister ;
+  l'IDU attendu d'une notification vient de l'API /events (les événements sont île entière,
+  plus de préfixe commune fabriqué).
+- **C6 réécrit par R5+R6** : l'assertion « toast au clic couche désactivée » n'a plus d'objet
+  (aucune couche n'est bloquée en île). La suite vérifie désormais les deux remplaçants :
+  « Zonage PLU » S'ACTIVE en île (ovmvt-zonage visible) et le SEUL contrôle encore bloqué
+  (outil zone — le comptage client mentirait à l'échelle île) montre le hint ANCRÉ au bouton,
+  auto-éteint ~2,5 s.

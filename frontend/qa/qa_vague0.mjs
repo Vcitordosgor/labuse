@@ -51,7 +51,7 @@ await page.locator('[data-commune-select]').click()
 await page.waitForTimeout(400)
 await page.getByRole('button', { name: 'Toute l’île 24 communes' }).click()
 await page.waitForTimeout(2500)
-await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.47, -20.90], zoom: 9.2 }))
+await page.evaluate(() => void window.__labuse_map.jumpTo({ center: [55.47, -20.90], zoom: 9.2 }))
 await page.waitForTimeout(800)
 for (let i = 0; i < 3; i++) { await page.mouse.move(720, 450); await page.mouse.wheel(0, -600); await page.waitForTimeout(700) }
 await page.waitForTimeout(3000)
@@ -60,7 +60,7 @@ const featAfter = await page.evaluate(() => window.__labuse_map.queryRenderedFea
 assert(zAfter >= 10 && featAfter > 0, `molette ×3 → parcelles visibles (z=${zAfter.toFixed(1)}, ${featAfter} features)`)
 
 // ── 0.4 : clic sur 3 cartes de la liste (3 communes différentes) → vol + ping VISIBLE
-await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.53, -21.13], zoom: 9.5 }))
+await page.evaluate(() => void window.__labuse_map.jumpTo({ center: [55.53, -21.13], zoom: 9.5 }))
 await page.waitForTimeout(800)
 const clicked = []
 const cards = page.locator('.overflow-y-auto > button')
@@ -73,9 +73,10 @@ for (let i = 0; i < n && clicked.length < 3; i++) {
   await page.waitForTimeout(4000)   // vol (800 ms) + tuiles à destination
   const st = await page.evaluate(() => {
     const m = window.__labuse_map
-    const ping = m.getLayer('ile-ping') ? m.queryRenderedFeatures({ layers: ['ile-ping'] }) : []
-    const sel = m.getLayer('ile-sel') ? m.queryRenderedFeatures({ layers: ['ile-sel'] }) : []
-    return { zoom: m.getZoom(), pingN: ping.length, selN: sel.length,
+    // R1 : tuiles « tout » → NE JAMAIS renvoyer les features par le pont (300k pendant le vol)
+    const pingN = m.getLayer('ile-ping') ? m.queryRenderedFeatures({ layers: ['ile-ping'] }).length : 0
+    const selN = m.getLayer('ile-sel') ? m.queryRenderedFeatures({ layers: ['ile-sel'] }).length : 0
+    return { zoom: m.getZoom(), pingN, selN,
              op: m.getLayer('ile-ping') ? m.getPaintProperty('ile-ping', 'line-opacity') : null }
   })
   // le pulse s'éteint après 3 s — la PREUVE de visibilité = la géométrie sel/ping rendue au viewport à z≥15
@@ -85,7 +86,7 @@ for (let i = 0; i < n && clicked.length < 3; i++) {
   await page.screenshot({ path: `${OUT}/vague0_ping_${clicked.length}.png` })
   await page.keyboard.press('Escape')
   await page.waitForTimeout(400)
-  await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.53, -21.13], zoom: 9.5 }))
+  await page.evaluate(() => void window.__labuse_map.jumpTo({ center: [55.53, -21.13], zoom: 9.5 }))
   await page.waitForTimeout(900)
 }
 assert(clicked.length >= 3 || new Set(clicked.map((c) => c.commune)).size >= 2,

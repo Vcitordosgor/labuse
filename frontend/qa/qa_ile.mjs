@@ -37,7 +37,7 @@ assert(head.includes(Number(stats.chaude).toLocaleString('fr-FR')), `compteur ch
 await page.screenshot({ path: `${OUT}/ile_defaut.png` })
 
 // ── MVT : tuiles rendues + clic → fiche
-await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.269, -21.01], zoom: 15.2 }))
+await page.evaluate(() => void window.__labuse_map.jumpTo({ center: [55.269, -21.01], zoom: 15.2 }))
 await page.waitForTimeout(3500)
 const nFeat = await page.evaluate(() => window.__labuse_map.queryRenderedFeatures({ layers: ['ile-fill'] }).length)
 assert(nFeat > 500, `MVT rendu @z15 (${nFeat} features)`)
@@ -58,11 +58,15 @@ assert((await page.locator('button[title="Analyse IA"]').count()) > 0, `clic tui
 await page.screenshot({ path: `${OUT}/ile_fiche_mvt.png` })
 await page.keyboard.press('Escape')
 
-// ── honnêteté mode île : zone + couches commune-scopées désactivées AVEC marche à suivre
-assert(await page.locator('button[title*="sélectionnez d’abord une commune"]').count() > 0,
-  'outil zone désactivé avec marche à suivre')
-assert(await page.locator('button[title*="couche servie par commune"]').count() >= 3,
-  'couches zonage/PPR/parc désactivées avec marche à suivre')
+// ── R6 (revue Vic n°2) : PLUS AUCUNE couche commune-scopée — toutes activables en île ;
+// seul l'outil zone reste par commune (hint ancré au clic, testé dans qa_correctifs)
+const zonageBtn = page.getByRole('button', { name: 'Zonage PLU' })
+await zonageBtn.click()
+await page.waitForTimeout(2500)
+const zonageOn = await page.evaluate(() =>
+  window.__labuse_map.getLayoutProperty('ovmvt-zonage', 'visibility') === 'visible')
+assert(zonageOn, 'R6 : couche Zonage PLU ACTIVABLE en mode île (tuiles MVT overlays)')
+await zonageBtn.click()
 
 // ── omnibox distante : un IDU d'une AUTRE commune que celles à l'écran
 const remoteIdu = sql(`SELECT p.idu FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id=d.parcel_id

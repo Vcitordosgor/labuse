@@ -63,7 +63,7 @@ assert((await page.locator('text=outil Zone actif').count()) > 0, 'M03 zone → 
   await page2Check()
   async function page2Check() {
     const p2 = await browser.newPage({ viewport: { width: 1440, height: 900 } })
-    await p2.goto(BASE, { waitUntil: 'networkidle' })
+    await p2.goto(BASE + '#f=1&v=1', { waitUntil: 'networkidle' })   // R1 : verdict est un geste
     await p2.waitForSelector('text=chaudes')
     await p2.waitForTimeout(1800)
     await p2.locator('button[title="Notifications"]').click()
@@ -78,7 +78,7 @@ assert((await page.locator('text=outil Zone actif').count()) > 0, 'M03 zone → 
 // ── BUG #5 (clique-tout) : le CORPS d'une carte kanban était inerte au clic.
 {
   const p3 = await browser.newPage({ viewport: { width: 1440, height: 900 } })
-  await p3.goto(BASE, { waitUntil: 'networkidle' })
+  await p3.goto(BASE + '#f=1&v=1', { waitUntil: 'networkidle' })
   await p3.waitForSelector('text=chaudes'); await p3.waitForTimeout(1500)
   await p3.locator('nav button[title="CRM"]').click()
   await p3.waitForTimeout(1000)

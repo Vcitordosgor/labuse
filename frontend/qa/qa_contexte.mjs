@@ -61,7 +61,7 @@ assert((await page.locator('text=1ère et 2ème Couronne').count()) > 0, 'volet 
 await page.keyboard.press('Escape')
 
 // ── couche équipements : visible + cliquable à l'écran
-await page.evaluate(() => window.__labuse_map.jumpTo({ center: [55.29, -20.94], zoom: 14.5 }))
+await page.evaluate(() => void window.__labuse_map.jumpTo({ center: [55.29, -20.94], zoom: 14.5 }))
 await page.waitForTimeout(1000)
 await page.getByRole('button', { name: 'Équipements' }).click()
 await page.waitForTimeout(2500)
