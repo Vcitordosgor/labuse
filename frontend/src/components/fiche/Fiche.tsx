@@ -88,9 +88,9 @@ function WatchButton({ idu }: { idu: string }) {
   const on = w.data?.watched
   return (
     <button onClick={() => t.mutate()}
-      className={`rounded-lg border px-2.5 py-1.5 text-xs ${on ? 'border-mint text-mint' : 'border-line-2 text-txt hover:text-txt-hi'}`}
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs ${on ? 'border-mint text-mint' : 'border-line-2 text-txt hover:text-txt-hi'}`}
       title={on ? 'Suivie — les événements alimentent la cloche' : 'Suivre cette parcelle (alertes sans pipeline)'}>
-      {on ? '👁 Suivie' : '👁'}
+      👁
     </button>
   )
 }
@@ -99,9 +99,9 @@ function WatchButton({ idu }: { idu: string }) {
 function ShareButton({ idu }: { idu: string }) {
   const share = useMutation({ mutationFn: () => createShare(idu) })
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <button onClick={() => share.mutate()}
-        className="rounded-lg border border-line-2 px-2.5 py-1.5 text-xs text-txt hover:text-txt-hi"
+        className="flex h-8 w-8 items-center justify-center rounded-lg border border-line-2 text-xs text-txt hover:text-txt-hi"
         title="Pack apporteur : générer un lien public lecture seule (filigrané, compteur de vues)">
         ↗
       </button>
@@ -134,7 +134,7 @@ function PipelineButton({ idu }: { idu: string }) {
       onClick={() => !inPipe && add.mutate()}
       disabled={!!inPipe || add.isPending}
       aria-disabled={!!inPipe}
-      className={`flex-1 rounded-lg py-1.5 text-xs font-medium ${
+      className={`flex h-8 flex-1 items-center justify-center whitespace-nowrap rounded-lg px-3 text-xs font-medium ${
         inPipe ? 'cursor-default border border-line-2 bg-surface-3 text-txt-mut' : 'bg-mint text-mint-ink hover:brightness-110'}`}
       title={inPipe ? 'Déjà suivie dans le pipeline (voir CRM)' : 'Ajouter au pipeline de prospection'}
     >
@@ -342,6 +342,12 @@ function BilanTab({ idu }: { idu: string }) {
           médiane <b className="text-mint">{Number(b.marche.median).toLocaleString('fr-FR')} €/m²</b> ({b.marche.type_prix},
           {' '}{b.marche.n} ventes ≤ {Math.round(b.marche.radius_m)} m) · fiabilité <b>{b.marche.fiabilite}</b>
           {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
+          {/* P14 : fraîcheur DVF — de QUAND datent les prix (période réelle en base) */}
+          {b.marche.dvf_couverture?.libelle && (
+            <div className="mt-1 text-[10px] text-txt-dim">
+              DVF — {b.marche.dvf_couverture.libelle} (dernière transaction en base · millésime en vigueur)
+            </div>
+          )}
         </Sec>
       )}
       {/* mandat bilan-calculette : le BILAN devient INTERACTIF — LABUSE assemble enfin ses
@@ -495,7 +501,19 @@ export function Fiche({ idu }: { idu: string }) {
             </span>
           )}
         </div>
-        <button onClick={() => select(null)} className="shrink-0 text-txt-mut hover:text-txt-hi" title="Fermer la fiche">✕</button>
+        <div className="flex shrink-0 items-center gap-2">
+          {/* P12.2 : lancer une recherche SANS fermer la fiche — focalise la barre globale */}
+          <button
+            onClick={() => (document.querySelector('input[data-omnibox]') as HTMLInputElement | null)?.focus()}
+            className="flex h-7 w-7 items-center justify-center rounded-md border border-line-2 text-txt-mut hover:border-mint hover:text-mint"
+            title="Rechercher une autre parcelle (sans fermer cette fiche)">
+            <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
+              <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
+              <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+          </button>
+          <button onClick={() => select(null)} className="text-txt-mut hover:text-txt-hi" title="Fermer la fiche">✕</button>
+        </div>
       </div>
 
       <div className="flex shrink-0 gap-4 overflow-x-auto border-b border-line px-5 py-2 text-xs">
@@ -580,45 +598,16 @@ export function Fiche({ idu }: { idu: string }) {
       </div>
 
       <div className="shrink-0 border-t border-line px-5 py-3">
-        <div className="flex gap-2">
+        {/* P6 (dernière passe) : barre d'actions REPRISE — deux rangées régulières, boutons de
+            HAUTEUR UNIFORME (h-8). Rangée 1 = actions (pipeline/suivre/partager/IA), rangée 2 =
+            exports & liens externes, tous à largeur égale. Fini le « bien vilain ». */}
+        <div className="flex items-center gap-2">
           <PipelineButton idu={idu} />
           <WatchButton idu={idu} />
           <ShareButton idu={idu} />
-          <a href={pdfUrl(idu, tab === 'bilan' ? calculette : null)} target="_blank" rel="noreferrer"
-            className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi"
-            title={calculette && tab === 'bilan' ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
-            PDF
-          </a>
-          {f && (
-            <button onClick={() => setModule('temps')}
-              className="rounded-lg border border-line-2 px-2.5 py-1.5 text-xs text-txt hover:text-txt-hi"
-              title="Ce terrain en 1950 — comparateur temporel (M08)">
-              1950
-            </button>
-          )}
-          {f && (
-            <a href={`https://www.google.com/maps/@${f.coords[1]},${f.coords[0]},19z/data=!3m1!1e3`}
-              target="_blank" rel="noreferrer"
-              className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi"
-              title="Ouvrir la parcelle dans Google Maps (satellite) — deep-link, pas de tuiles intégrées (CGU)">
-              G
-            </a>
-          )}
-          {f?.coords && (
-            /* R8 (revue Vic n°2) : chaque doute géométrique auto-vérifiable — la parcelle sur
-               le CADASTRE OFFICIEL (Géoportail IGN, couche PCI Express, permalien centré ;
-               cadastre.gouv.fr DGFiP n'a pas de deep-link stable sans session — consigné) */
-            <a data-cadastre-link
-              href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
-              target="_blank" rel="noreferrer"
-              className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi"
-              title="Vérifier la géométrie sur le cadastre OFFICIEL (Géoportail IGN — parcellaire PCI Express, centré sur la parcelle)">
-              Cadastre
-            </a>
-          )}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button onClick={() => setIaOpen((o) => !o)}
-              className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi" title="Analyse IA">
+              className="flex h-8 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi" title="Analyse IA">
               IA
             </button>
             {iaOpen && (
@@ -628,6 +617,38 @@ export function Fiche({ idu }: { idu: string }) {
               </>
             )}
           </div>
+        </div>
+        <div className="mt-2 flex items-stretch gap-2">
+          <a href={pdfUrl(idu, tab === 'bilan' ? calculette : null)} target="_blank" rel="noreferrer"
+            className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
+            title={calculette && tab === 'bilan' ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
+            PDF
+          </a>
+          {f && (
+            <button onClick={() => setModule('temps')}
+              className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
+              title="Ce terrain en 1950 — comparateur temporel (M08)">
+              1950
+            </button>
+          )}
+          {f?.coords && (
+            /* R8 (revue Vic n°2) : cadastre OFFICIEL (Géoportail IGN, PCI Express, permalien centré) */
+            <a data-cadastre-link
+              href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
+              target="_blank" rel="noreferrer"
+              className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
+              title="Vérifier la géométrie sur le cadastre OFFICIEL (Géoportail IGN — parcellaire PCI Express, centré sur la parcelle)">
+              Cadastre
+            </a>
+          )}
+          {f && (
+            <a href={`https://www.google.com/maps/@${f.coords[1]},${f.coords[0]},19z/data=!3m1!1e3`}
+              target="_blank" rel="noreferrer"
+              className="flex h-8 w-9 shrink-0 items-center justify-center rounded-lg border border-line-2 text-xs text-txt hover:text-txt-hi"
+              title="Ouvrir la parcelle dans Google Maps (satellite)">
+              G
+            </a>
+          )}
         </div>
         <p className="mt-2.5 text-[10px] leading-tight text-txt-dim">
           Estimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni

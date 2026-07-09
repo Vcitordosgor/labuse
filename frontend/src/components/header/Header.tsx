@@ -47,12 +47,15 @@ function Omnibox() {
   }
 
   return (
-    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 focus-within:border-[#2E6B4F]">
-      <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-txt-mut">
-        <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <line x1="13" y1="13" x2="17" y2="17" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-      <input ref={ref} value={query} onChange={(e) => setQuery(e.target.value)}
+    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-2.5 focus-within:border-mint">
+      {/* P12.1 : loupe CLAIRE (menthe, pastille) — l'affordance « ici on cherche » est nette */}
+      <span className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-md bg-mint/15 text-mint">
+        <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
+          <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+          <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
+      </span>
+      <input ref={ref} data-omnibox value={query} onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && onEnter()}
         placeholder="Rechercher un IDU : AB 0234, DE0805…"
         title="Filtre la liste des résultats ; Entrée ouvre la première fiche correspondante"

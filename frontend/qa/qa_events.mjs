@@ -59,7 +59,8 @@ await page.waitForTimeout(1200)
 await page.locator('button[title*="Suivre cette parcelle"]').click()
 await page.waitForTimeout(700)
 assert(Number(sql("SELECT count(*) FROM watched_parcels WHERE idu='97415000DE0805'")) === 1, 'suivi de cible → SQL')
-assert((await page.locator('text=👁 Suivie').count()) > 0, 'bouton passe à « Suivie »')
+// P6 (dernière passe) : bouton suivi = icône (menthe quand actif), l'état est porté par le title
+assert((await page.locator('button[title*="Suivie"]').count()) > 0, 'bouton passe à l\'état « Suivie » (menthe)')
 await page.locator('button[title*="Suivie"]').click()   // nettoyage (toggle off)
 await page.keyboard.press('Escape')
 

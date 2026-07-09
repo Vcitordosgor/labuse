@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { getContexteCommune } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { Loading } from '../Loading'
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 
@@ -82,7 +83,7 @@ export function ContextePanel() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {q.isLoading && <p className="p-5 text-xs text-txt-dim">Chargement…</p>}
+        {q.isLoading && <div className="p-5"><Loading label="Chargement du contexte commune" className="text-xs" /></div>}
         {q.isError && <p className="p-5 text-xs text-st-ecartee">Erreur de chargement — réessayez.</p>}
         {d && (
           <>

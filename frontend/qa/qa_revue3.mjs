@@ -83,7 +83,7 @@ await page.waitForSelector('header span:has-text("Chaude")', { timeout: 25000 })
 assert((await page.locator('[data-entretien]').count()) === 0, 'P1 : « les chaudes de Saint-Pierre » → ZÉRO entretien (recherche directe)')
 await page.waitForSelector('[data-ia-restitution]', { timeout: 30000 })
 assert(true, 'P1 : recherche simple → restitution posée')
-const resti = page.locator('[data-ia-restitution] button[title="Fermer"]')
+const resti = page.locator('[data-ia-restitution] button[title="Fermer le résultat"]')
 if (await resti.count()) await resti.click()
 
 // P1.b — montage de projet → entretien ENRICHI (≥5 questions, dimension gabarit R+n)

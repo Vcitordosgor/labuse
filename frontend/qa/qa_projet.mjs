@@ -30,7 +30,7 @@ const browser = await chromium.launch()
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 2 })
 page.on('pageerror', (e) => failures.push('PAGEERROR ' + e.message))
 const fermerResti = async () => {
-  const x = page.locator('[data-ia-restitution] button[title="Fermer"]')
+  const x = page.locator('[data-ia-restitution] button[title="Fermer le résultat"]')
   if (await x.count()) { await x.click(); await page.waitForTimeout(300) }
 }
 const goIA = async () => {

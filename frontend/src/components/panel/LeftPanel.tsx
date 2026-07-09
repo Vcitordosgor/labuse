@@ -9,6 +9,7 @@ const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
   { key: 'vue_mer', label: 'Vue mer', hint: 'liseré cyan (vue dégagée)' },
   { key: 'parc', label: 'Parc national' },
   { key: 'limites', label: 'Limites parcelles', hint: 'contours de toutes les parcelles' },
+  { key: 'communes', label: 'Limites communes', hint: 'contours communaux officiels (ligne verte)' },
   { key: 'anru', label: 'ANRU (NPNRU)', hint: 'périmètres de renouvellement urbain (8 quartiers d’intérêt national)' },
   { key: 'equipements', label: 'Équipements', hint: 'mairie · écoles · santé · police/gendarmerie · sport (OSM, affichage seul)' },
 ]

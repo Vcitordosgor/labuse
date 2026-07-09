@@ -440,6 +440,27 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
 # RÉUTILISE le moteur existant (faisabilite/engine + bilan) — rien de recalculé à la main.
 # Ratios : étage 3 m, place 25 m² (config plu YAML) ; m²/logement = paramètre AFFICHÉ (défaut 60).
 
+_DVF_COUVERTURE_CACHE: dict = {}
+
+
+def _dvf_couverture(db: Session) -> dict:
+    """Période RÉELLE des transactions DVF en base (min/max date_mutation). Mise en cache
+    process (la donnée ne bouge qu'à une ré-ingestion). Format prêt à afficher."""
+    if "v" not in _DVF_COUVERTURE_CACHE:
+        r = db.execute(text("SELECT to_char(min(date_mutation),'YYYY') AS d0, "
+                            "to_char(max(date_mutation),'YYYY-MM') AS d1, count(*) AS n "
+                            "FROM dvf_mutations")).mappings().first()
+        MOIS = {"01": "janv.", "02": "févr.", "03": "mars", "04": "avr.", "05": "mai", "06": "juin",
+                "07": "juil.", "08": "août", "09": "sept.", "10": "oct.", "11": "nov.", "12": "déc."}
+        d1 = r["d1"] or ""
+        libelle = None
+        if d1 and "-" in d1:
+            an, mo = d1.split("-")
+            libelle = f"ventes jusqu'à {MOIS.get(mo, mo)} {an}"
+        _DVF_COUVERTURE_CACHE["v"] = {"depuis": r["d0"], "jusqu_au": d1, "n": r["n"], "libelle": libelle}
+    return _DVF_COUVERTURE_CACHE["v"]
+
+
 @router.get("/faisabilite/{idu}")
 def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
@@ -463,6 +484,9 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     prix = sector_price(db, row["id"], hyp)
     out["marche"] = {k: prix.get(k) for k in ("type_prix", "median", "q1", "q3", "n", "fiabilite",
                                               "tendance", "volatilite", "radius_m") if k in prix}
+    # P14 (dernière passe) : fraîcheur DVF — période RÉELLE couverte (SQL), pour que l'utilisateur
+    # sache de QUAND datent les prix (« fiabilité fragile » reste, c'est le n de ventes).
+    out["marche"]["dvf_couverture"] = _dvf_couverture(db)
     shab = (f.fourchette or {}).get("shab_vendable_m2") if fz else None
     if shab and prix.get("median"):
         b = compute_bilan(float(shab), float(row["s"] or 0), prix, hyp)
