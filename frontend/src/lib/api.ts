@@ -75,7 +75,15 @@ export const getMapLayer = (kind: string) => {
   const c = commune()
   return j<ParcelFeatureCollection>(`/map/layers.geojson?kind=${kind}${c ? `&commune=${encodeURIComponent(c)}` : ''}`)
 }
-export const pdfUrl = (idu: string) => `/parcels/${idu}/export.pdf?source=${SOURCE}`
+export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
+  const p = new URLSearchParams({ source: SOURCE })
+  if (calc) {
+    p.set('cout_construction_m2', String(calc.cout_construction_m2))
+    p.set('marge_frais_pct', String(calc.marge_frais_pct))
+    if (calc.prix_demande_eur != null) p.set('prix_demande_eur', String(calc.prix_demande_eur))
+  }
+  return `/parcels/${idu}/export.pdf?${p.toString()}`
+}
 
 // ── Pipeline (CRM kanban) ──
 export const getPipelineMeta = () => j<PipelineMeta>('/pipeline/meta')
@@ -153,6 +161,14 @@ export const listShares = (idu: string) => j<{ token: string; date: string; view
 
 // ── M22 + Bilan (faisabilité bidirectionnelle) ──
 export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/faisabilite/${idu}`)
+
+// Calculette de charge foncière (mandat bilan-calculette) : LABUSE calcule le déterministe
+// (SDP, prix DVF) ; le coût de construction et la marge sont les hypothèses SAISIES.
+export interface ChargeIn { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur?: number | null }
+export const postChargeFonciere = (idu: string, body: ChargeIn) =>
+  j<Record<string, any>>(`/modules/faisabilite/${idu}/charge`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })
 export const postProgramme = (body: Record<string, unknown>) =>
   j<Record<string, any>>('/modules/programme', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 

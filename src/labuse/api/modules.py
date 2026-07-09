@@ -19,7 +19,7 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -489,6 +489,48 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     rtaa = load_yaml_config("rtaa_dom")
     out["rtaa"] = {"meta": rtaa["meta"], "exigences": rtaa["exigences"]}
     return out
+
+
+class ChargeIn(BaseModel):
+    # hypothèses métier SAISIES (jamais estimées par LABUSE) — défauts « à ajuster »
+    cout_construction_m2: float = Field(2500.0, ge=500, le=8000)   # €/m² de plancher
+    marge_frais_pct: float = Field(21.0, ge=0, le=60)              # marge promoteur + frais (% du CA)
+    prix_demande_eur: float | None = Field(None, ge=0, le=500_000_000)
+
+
+@router.post("/faisabilite/{idu}/charge")
+def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) -> dict:
+    """CALCULETTE de charge foncière (déterministe, testable). RÉUTILISE le moteur : SDP vendable
+    (capacité) + prix de sortie (DVF) sont SOURCÉS ; le coût de construction et la marge viennent
+    du corps de requête (hypothèses du promoteur). Cas limites honnêtes : capacité non résolue ou
+    prix DVF insuffisant → `calculable:false` + raison, jamais un faux chiffre."""
+    from ..faisabilite.bilan import (CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+                                     compute_calculette, sector_price)
+    from ..faisabilite.db import parcel_faisabilite
+    from ..faisabilite.engine import Hypotheses
+
+    defaults = {"cout_construction_m2": CALCULETTE_COUT_DEFAUT_M2,
+                "marge_frais_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT}
+    row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not row:
+        raise HTTPException(404, "Parcelle inconnue")
+    fz = parcel_faisabilite(db, row["id"])
+    shab = (fz[1].fourchette or {}).get("shab_vendable_m2") if fz else None
+    if not shab:
+        # capacité non résolue (zone PLU non calibrée / RNU) → on ne calcule pas de résultat creux
+        return {"calculable": False, "raison": "capacite_non_resolue", "defaults": defaults,
+                "message": "Capacité constructible non résolue pour cette parcelle (zone PLU "
+                           "non résolue / non constructible) — charge foncière non calculable."}
+    prix = sector_price(db, row["id"], Hypotheses())
+    res = compute_calculette(float(shab), float(row["s"] or 0), prix,
+                             body.cout_construction_m2, body.marge_frais_pct, body.prix_demande_eur)
+    res["defaults"] = defaults
+    if not res.get("calculable"):
+        # prix de sortie insuffisant → au mieux, on rend le prix secteur (déjà dans `marche`)
+        res["raison"] = res.get("raison") or "prix_insuffisant"
+        res["message"] = ("Prix de sortie insuffisant (échantillon DVF) — charge foncière non "
+                          "chiffrée ; le prix de sortie secteur reste indiqué au mieux.")
+    return res
 
 
 class ProgrammeIn(BaseModel):

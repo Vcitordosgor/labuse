@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { deriveProjet, getApercu, getReperes, iaEntretien, type EntretienQuestion, type EntretienRep, type FicheProjet, type RepereOption } from '../../lib/api'
 import { useApplySearch } from '../../lib/useApplySearch'
 import { useApp } from '../../store/useApp'
+import { Loading } from '../Loading'
 
 const TYPE_LABEL: Record<string, string> = {
   logements: 'Logements', etudiant: 'Logement étudiant', bureaux: 'Bureaux', autre: 'Projet',
@@ -190,7 +191,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
         </div>
 
         {/* question active (chips + skip) */}
-        {loading && <p className="mt-5 text-xs text-txt-dim">Le copilote réfléchit…</p>}
+        {loading && <div className="mt-5"><Loading label="Le copilote réfléchit" /></div>}
         {!loading && active && (
           <div className="mt-5" data-entretien-question data-qid={active.id}>
             <p className="text-sm font-medium text-txt-hi">{active.texte}</p>

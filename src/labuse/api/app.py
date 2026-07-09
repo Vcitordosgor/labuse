@@ -956,15 +956,41 @@ def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_
 
 
 @app.get("/parcels/{idu}/export.pdf")
-def parcel_export_pdf(idu: str, source: str = "q_v2", db: Session = Depends(get_db)) -> Response:
-    """Export PDF de la fiche premium (Brique 3) — design system, fiche complète tracée."""
+def parcel_export_pdf(idu: str, source: str = "q_v2",
+                      cout_construction_m2: float | None = Query(None, ge=500, le=8000),
+                      marge_frais_pct: float | None = Query(None, ge=0, le=60),
+                      prix_demande_eur: float | None = Query(None, ge=0, le=500_000_000),
+                      db: Session = Depends(get_db)) -> Response:
+    """Export PDF de la fiche premium (Brique 3) — design system, fiche complète tracée.
+
+    A6 (mandat bilan-calculette) : si les hypothèses de la calculette sont passées, le PDF porte
+    la CHARGE FONCIÈRE « selon vos hypothèses » (recalculée par le moteur, jamais un faux chiffre)."""
     from .pdf_premium import render_fiche_pdf
     fiche = _q_v2_fiche(db, idu, run_label=source)
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
     fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
     fiche["rtaa"] = config.load_yaml_config("rtaa_dom")   # rappel réglementaire (5bis)
+    if cout_construction_m2 is not None and marge_frais_pct is not None:
+        fiche["calculette"] = _calculette_for_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
     return Response(content=render_fiche_pdf(fiche), media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="labuse_{idu}.pdf"'})
+
+
+def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_demande: float | None) -> dict | None:
+    """Recalcule la charge foncière (moteur) pour l'export PDF — None si non calculable."""
+    from ..faisabilite.bilan import compute_calculette, sector_price
+    from ..faisabilite.db import parcel_faisabilite
+    from ..faisabilite.engine import Hypotheses
+    row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not row:
+        return None
+    fz = parcel_faisabilite(db, row["id"])
+    shab = (fz[1].fourchette or {}).get("shab_vendable_m2") if fz else None
+    if not shab:
+        return None
+    prix = sector_price(db, row["id"], Hypotheses())
+    res = compute_calculette(float(shab), float(row["s"] or 0), prix, cout, marge, prix_demande)
+    return res if res.get("calculable") else None
 
 
 #: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.

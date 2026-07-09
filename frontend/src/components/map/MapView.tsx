@@ -7,6 +7,7 @@ import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngL
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { Legend } from './Legend'
 import { MapToolbar } from './MapToolbar'
+import { Loading } from '../Loading'
 
 // ── Fonds de plan. Géoplateforme IGN (tuiles libres « essentiels », TESTÉES sur le 974) ; pas de
 // tuiles Google (CGU) — le deep-link « Ouvrir dans Google Maps » vit dans la fiche.
@@ -614,6 +615,12 @@ export function MapView() {
       </div>
       <MapToolbar />
       <Legend />
+      {/* B1 : chargement carte DISCRET — la carte ne semble jamais figée pendant le fetch */}
+      {geo.isFetching && (
+        <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-line-2 bg-surface-2 px-3 py-1 text-[11px] text-txt-mut shadow-lg">
+          <Loading label="Chargement des parcelles" />
+        </div>
+      )}
       {tool && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-[#0F1A14] px-4 py-1.5 text-xs text-mint">
           {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'

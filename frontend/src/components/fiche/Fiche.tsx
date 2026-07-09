@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, createShare, getFaisabilite, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, toggleWatch } from '../../lib/api'
+import { addToPipeline, createShare, getFaisabilite, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
 import { completudeColor, STATUT_META } from '../../lib/status'
+import { Loading } from '../Loading'
 import type { FicheLine, Onglet } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
@@ -179,10 +180,134 @@ function IAPanel({ idu, onClose }: { idu: string; onClose: () => void }) {
   )
 }
 
+function euros(x: number | null | undefined): string {
+  if (x == null) return '—'
+  const ax = Math.abs(x)
+  if (ax >= 1_000_000) return `${(x / 1_000_000).toFixed(1)} M€`
+  if (ax >= 1_000) return `${Math.round(x / 1_000).toLocaleString('fr-FR')} k€`
+  return `${Math.round(x).toLocaleString('fr-FR')} €`
+}
+
+const CALC_COUT_DEFAUT = 2500
+const CALC_MARGE_DEFAUT = 21
+
+/** Champ éditable d'hypothèse promoteur — valeur SAISIE (jamais estimée par LABUSE). */
+function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
+  label: string; value: number | null; onChange: (v: number | null) => void
+  suffix: string; hint?: boolean; placeholder?: string
+}) {
+  return (
+    <div className="min-w-0 flex-1">
+      <label className="flex items-center gap-1 text-[10px] text-txt-dim">
+        {label}
+        {hint && <span className="rounded bg-[#211a10] px-1 text-[8.5px] text-st-creuser" title="Hypothèse — à ajuster selon votre opération">hyp. — ajustez</span>}
+      </label>
+      <div className="mt-1 flex items-center rounded-lg border border-line-2 bg-surface-3 focus-within:border-mint">
+        <input type="number" min={0} value={value ?? ''} placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
+          className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:outline-none" />
+        <span className="shrink-0 px-2 text-[10px] text-txt-dim">{suffix}</span>
+      </div>
+    </div>
+  )
+}
+
+/** LA CALCULETTE DE CHARGE FONCIÈRE (mandat bilan-calculette). LABUSE affiche le SOURCÉ (SDP,
+ *  prix DVF) ; le promoteur saisit SES hypothèses (coût, marge) ; le résultat « selon vos
+ *  hypothèses » se recalcule côté moteur (endpoint déterministe, aucune arithmétique dupliquée
+ *  en JS). Cas limites honnêtes : capacité non résolue / prix insuffisant → pas de faux chiffre. */
+function Calculette({ idu }: { idu: string }) {
+  const [cout, setCout] = useState<number | null>(CALC_COUT_DEFAUT)
+  const [marge, setMarge] = useState<number | null>(CALC_MARGE_DEFAUT)
+  const [prixDemande, setPrixDemande] = useState<number | null>(null)
+  const [deb, setDeb] = useState({ cout: CALC_COUT_DEFAUT, marge: CALC_MARGE_DEFAUT, prix: null as number | null })
+  useEffect(() => {
+    const t = setTimeout(() => setDeb({ cout: cout ?? CALC_COUT_DEFAUT, marge: marge ?? CALC_MARGE_DEFAUT, prix: prixDemande }), 350)
+    return () => clearTimeout(t)
+  }, [cout, marge, prixDemande])
+  const q = useQuery({
+    queryKey: ['charge', idu, deb.cout, deb.marge, deb.prix],
+    queryFn: () => postChargeFonciere(idu, { cout_construction_m2: deb.cout, marge_frais_pct: deb.marge, prix_demande_eur: deb.prix }),
+    placeholderData: (prev) => prev,   // garde l'ancien résultat pendant le recalcul (pas de flash)
+  })
+  const d = q.data
+  // A6 : partager les hypothèses courantes avec le bouton PDF (l'export les reflète)
+  const setCalculette = useApp((s) => s.setCalculette)
+  useEffect(() => {
+    setCalculette(d?.calculable ? { cout_construction_m2: deb.cout, marge_frais_pct: deb.marge, prix_demande_eur: deb.prix } : null)
+    return () => setCalculette(null)
+  }, [d?.calculable, deb.cout, deb.marge, deb.prix, setCalculette])
+  const cf = d?.charge_fonciere
+  const achat = d?.achat
+  return (
+    <div data-calculette>
+      <p className="mb-1 flex items-center gap-2 font-mono text-[10px] tracking-widest text-txt-dim">
+        CALCULETTE DE CHARGE FONCIÈRE
+        {q.isFetching && <span data-calc-recalc className="animate-pulse text-[9px] text-mint">recalcul…</span>}
+      </p>
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] leading-relaxed text-txt">
+        {q.isLoading && <Loading label="Calcul en cours" />}
+        {d && d.calculable === false && (
+          <div data-calc-indispo>
+            <p className="text-st-creuser">{d.message ?? 'Charge foncière non calculable.'}</p>
+            {d.marche?.median != null && (
+              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie secteur : <b className="text-mint">{Number(d.marche.median).toLocaleString('fr-FR')} €/m²</b> ({d.marche.fiabilite}).</p>
+            )}
+          </div>
+        )}
+        {d && d.calculable && cf && (
+          <>
+            {/* le SOURCÉ (lecture seule) — ce que LABUSE sait */}
+            <p className="text-[10px] text-txt-dim">
+              LABUSE (sourcé) : SDP vendable <b className="text-txt">{Number(d.shab_vendable_m2).toLocaleString('fr-FR')} m²</b> ·
+              prix de sortie <b className="text-txt">{Number(d.prix_sortie_median).toLocaleString('fr-FR')} €/m²</b> ·
+              terrain <b className="text-txt">{Number(d.terrain_m2).toLocaleString('fr-FR')} m²</b>
+            </p>
+            {/* les HYPOTHÈSES — saisies par le promoteur */}
+            <div className="mt-2 flex gap-2">
+              <HypInput label="Coût construction" value={cout} onChange={setCout} suffix="€/m²" hint />
+              <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint />
+            </div>
+            {/* le RÉSULTAT — calcul de VOS hypothèses */}
+            <div data-calc-resultat className="mt-2.5 rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-2">
+              <p className="text-[10px] text-txt-dim">Charge foncière supportable <span className="text-txt-mut">— selon vos hypothèses</span></p>
+              <p className="mt-0.5">
+                <b data-calc-cf className="font-display text-lg font-bold text-mint">{euros(cf.central)}</b>
+                <span className="ml-1.5 text-[10px] text-txt-mut">≈ {Number(cf.par_m2_terrain).toLocaleString('fr-FR')} €/m² de terrain</span>
+              </p>
+              <p className="text-[10px] text-txt-dim">fourchette {euros(cf.bas)} – {euros(cf.haut)}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+            </div>
+            {/* aide à la DÉCISION D'ACHAT — prix demandé optionnel */}
+            <div className="mt-2 flex items-end gap-2">
+              <HypInput label="Prix demandé du terrain" value={prixDemande} onChange={setPrixDemande} suffix="€" placeholder="si connu" />
+            </div>
+            {achat && (
+              <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-[#12241a] text-mint' : 'bg-[#2a1210] text-st-ecartee'}`}>
+                {achat.supportable
+                  ? <>✓ Supportable — le terrain peut valoir {euros(achat.prix_demande_eur)} ; marge de {euros(achat.ecart_eur)} ({achat.ecart_pct > 0 ? '+' : ''}{achat.ecart_pct} %) sous votre charge foncière.</>
+                  : <>✗ Trop cher — à {euros(achat.prix_demande_eur)}, l'opération dépasse de {euros(Math.abs(achat.ecart_eur))} ({achat.ecart_pct} %) ce que vos hypothèses supportent.</>}
+              </div>
+            )}
+            {(d.avertissements ?? []).length > 0 && (
+              <ul className="mt-1.5 list-inside list-disc text-[9.5px] text-st-creuser">
+                {d.avertissements.map((a: string, i: number) => <li key={i}>{a}</li>)}
+              </ul>
+            )}
+            <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">
+              Le coût de construction et la marge sont VOS hypothèses (LABUSE ne les estime pas). Le
+              résultat est un calcul à partir de celles-ci — estimation indicative, ne vaut pas conseil.
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Onglet BILAN — le moteur de faisabilité/bilan EXISTANT, enfin exposé (P0 revue Vic).
 function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
-  if (isLoading) return <p className="text-xs text-txt-dim">Calcul de la pré-faisabilité…</p>
+  if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
   if (isError || !b) return (
     <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
       <p className="text-st-ecartee">Bilan indisponible.</p>
@@ -191,7 +316,6 @@ function BilanTab({ idu }: { idu: string }) {
   )
   const cap = b.capacite
   const fo = cap?.fourchette ?? {}
-  const eur = (x: unknown) => (x == null ? '—' : `${Math.round(Number(x) / 1000).toLocaleString('fr-FR')} k€`)
   const Sec = ({ t, children }: { t: string; children: React.ReactNode }) => (
     <div>
       <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">{t}</p>
@@ -220,23 +344,9 @@ function BilanTab({ idu }: { idu: string }) {
           {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
         </Sec>
       )}
-      {b.bilan && (
-        <Sec t="BILAN INDICATIF (charge foncière)">
-          <div>{b.bilan.verdict}</div>
-          {b.bilan.charge_fonciere && (
-            <div className="mt-1 text-txt-mut">
-              CF médiane {eur(b.bilan.charge_fonciere.median ?? b.bilan.charge_fonciere.mediane)} —
-              c'est ce qu'un opérateur peut payer CE terrain, hypothèses affichées ci-dessous.
-            </div>
-          )}
-          <details className="mt-1.5">
-            <summary className="cursor-pointer text-[10px] text-txt-dim">hypothèses ({(b.bilan.hypotheses ?? []).length})</summary>
-            <ul className="mt-1 list-inside list-disc text-[10px] text-txt-dim">
-              {(b.bilan.hypotheses ?? []).map((h: string, i: number) => <li key={i}>{h}</li>)}
-            </ul>
-          </details>
-        </Sec>
-      )}
+      {/* mandat bilan-calculette : le BILAN devient INTERACTIF — LABUSE assemble enfin ses
+          ingrédients en LE chiffre que le promoteur attend (« combien puis-je payer ? »). */}
+      <Calculette idu={idu} />
       <Sec t="FISCAL & LEVIERS">
         <div>QPV : <b className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</b> · TVA : {b.fiscal.tva}</div>
         {b.fiscal.prime_vue_mer && <div className="mt-0.5 text-[#7DE8E0]">Vue mer dégagée — {b.fiscal.prime_vue_mer}</div>}
@@ -313,6 +423,7 @@ export function Fiche({ idu }: { idu: string }) {
   const setModule = useApp((s) => s.setModule)
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
+  const calculette = useApp((s) => s.calculette)   // A6 : hypothèses courantes → reflétées dans le PDF
   // Échap ferme la fiche — sauf si le drawer source est ouvert (il consomme Échap en premier)
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -396,7 +507,13 @@ export function Fiche({ idu }: { idu: string }) {
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5">
-        {isLoading && <p className="text-xs text-txt-dim">Chargement…</p>}
+        {isLoading && (
+          <div className="flex flex-col gap-2">
+            <Loading label="Chargement de la fiche" className="text-xs" />
+            <div className="mt-1 h-16 animate-pulse rounded-lg bg-surface-2" />
+            <div className="h-24 animate-pulse rounded-lg bg-surface-2" />
+          </div>
+        )}
         {isError && (
           <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-4 text-xs">
             <p className="text-st-ecartee">Impossible de charger la fiche.</p>
@@ -467,8 +584,9 @@ export function Fiche({ idu }: { idu: string }) {
           <PipelineButton idu={idu} />
           <WatchButton idu={idu} />
           <ShareButton idu={idu} />
-          <a href={pdfUrl(idu)} target="_blank" rel="noreferrer"
-            className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi" title="Exporter la fiche en PDF">
+          <a href={pdfUrl(idu, tab === 'bilan' ? calculette : null)} target="_blank" rel="noreferrer"
+            className="rounded-lg border border-line-2 px-3 py-1.5 text-xs text-txt hover:text-txt-hi"
+            title={calculette && tab === 'bilan' ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
             PDF
           </a>
           {f && (

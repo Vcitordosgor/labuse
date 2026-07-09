@@ -455,3 +455,66 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
                  {"bas": max(0, rnd(cf_bas)), "central": rnd(cf_cen), "haut": rnd(cf_haut),
                   "par_m2_terrain": round(par_m2)},
                  steps, hypotheses, avert, calc=calc)
+
+
+# ── CALCULETTE DE CHARGE FONCIÈRE (mandat bilan-calculette) ────────────────────────────────
+#: hypothèses métier PAR DÉFAUT, explicitement marquées « à ajuster » côté fiche — LABUSE ne
+#: prétend pas les connaître (elles relèvent du jugement du promoteur). Le coût de construction
+#: par défaut = milieu de la fourchette prudente Réunion (2300–2800) ; la marge & frais par
+#: défaut = marge promoteur (9 %) + frais annexes (12 %) des hypothèses moteur.
+CALCULETTE_COUT_DEFAUT_M2 = 2500.0
+CALCULETTE_MARGE_FRAIS_DEFAUT_PCT = 21.0
+
+
+def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix: dict,
+                       cout_construction_m2: float, marge_frais_pct: float,
+                       prix_demande_eur: float | None = None) -> dict:
+    """Charge foncière supportable — PURE, testable en isolation (aucun accès DB : `prix` est
+    fourni). LIGNE ROUGE : les valeurs SOURCÉES (SDP vendable, prix de sortie DVF) viennent du
+    moteur ; le coût de construction et la marge sont les HYPOTHÈSES SAISIES par le promoteur —
+    jamais estimées par LABUSE. Réutilise `compute_bilan` (pas de ré-écriture de l'arithmétique) :
+    on injecte les saisies comme `bilan_params` (coût au m² de plancher, marge+frais en % du CA,
+    honoraires/frais financiers neutralisés car agrégés dans « marge & frais »). Le résultat est
+    présenté « selon vos hypothèses ». Si `prix_demande_eur` est fourni : verdict d'achat
+    (supportable si la charge foncière médiane ≥ prix demandé)."""
+    bp = {
+        "cout_construction_m2_sdp": float(cout_construction_m2),
+        "marge_cible_pct": float(marge_frais_pct),
+        "honoraires_pct": 0.0,          # agrégés dans « marge & frais » saisi par l'utilisateur
+        "frais_financiers_pct": 0.0,
+    }
+    b = compute_bilan(float(shab_vendable_m2), float(surface_terrain_m2 or 0), prix, Hypotheses(),
+                      bilan_params=bp)
+    marche = {"median": prix.get("median"), "fiabilite": prix.get("fiabilite"), "n": prix.get("n")}
+    if not b.charge_fonciere:
+        # prix insuffisant / surface nulle → on ne fabrique pas de chiffre creux (doctrine)
+        return {"calculable": False, "fiabilite": b.fiabilite, "raison": b.verdict, "marche": marche}
+    cf = b.charge_fonciere
+    out: dict = {
+        "calculable": True,
+        "fiabilite": b.fiabilite,               # le résultat HÉRITE de la fiabilité du prix (fiable/fragile)
+        "inputs": {
+            "cout_construction_m2": round(float(cout_construction_m2)),
+            "marge_frais_pct": round(float(marge_frais_pct), 1),
+            "prix_demande_eur": round(float(prix_demande_eur)) if prix_demande_eur else None,
+        },
+        "shab_vendable_m2": round(float(shab_vendable_m2)),
+        "terrain_m2": round(float(surface_terrain_m2 or 0)),
+        "prix_sortie_median": prix.get("median"),
+        "ca": b.ca,
+        "charge_fonciere": cf,                  # {bas, central, haut, par_m2_terrain}
+        "verdict": b.verdict,
+        "avertissements": b.avertissements,
+        "marche": marche,
+    }
+    if prix_demande_eur:
+        pd = float(prix_demande_eur)
+        supportable = cf["central"] >= pd
+        ecart = cf["central"] - pd
+        out["achat"] = {
+            "prix_demande_eur": round(pd),
+            "supportable": supportable,
+            "ecart_eur": round(ecart),                                  # + = marge, − = surcoût
+            "ecart_pct": round(100 * ecart / pd) if pd else None,
+        }
+    return out

@@ -271,5 +271,64 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                      new_x="LMARGIN", new_y="NEXT")
             pdf.ln(0.8)
 
+    # ── A6 (mandat bilan-calculette) : CHARGE FONCIÈRE « selon vos hypothèses », si passée à l'export
+    calc = fiche.get("calculette")
+    if calc and calc.get("calculable"):
+        cf = calc.get("charge_fonciere") or {}
+        inp = calc.get("inputs") or {}
+
+        def _e(x: float | None) -> str:
+            if x is None:
+                return "—"
+            ax = abs(x)
+            if ax >= 1_000_000:
+                return f"{x / 1_000_000:.1f} M€"
+            if ax >= 1_000:
+                return f"{round(x / 1_000):,} k€".replace(",", " ")
+            return f"{round(x):,} €".replace(",", " ")
+
+        if pdf.get_y() > pdf.h - 48:
+            pdf.add_page()
+        pdf.ln(2)
+        pdf.set_font("mono", size=7.5)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 5, "CHARGE FONCIÈRE — SELON VOS HYPOTHÈSES", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_draw_color(*LINE)
+        pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
+        pdf.ln(1.4)
+        pdf.set_font("inter", size=7.5)
+        pdf.set_text_color(*TXT_MUT)
+        pdf.multi_cell(pdf.w - 28, 4,
+                       "Hypothèses promoteur (saisies, non estimées par LABUSE) : coût de "
+                       f"construction {round(inp.get('cout_construction_m2') or 0):,} EUR/m2 · "
+                       f"marge & frais {inp.get('marge_frais_pct')} %.".replace(",", " "),
+                       new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(0.5)
+        pdf.set_font("grotesk", size=12)
+        pdf.set_text_color(*MINT)
+        pdf.cell(0, 6, f"Charge foncière supportable : {_e(cf.get('central'))}  "
+                 f"(~ {round(cf.get('par_m2_terrain') or 0):,} EUR/m2 terrain)".replace(",", " "),
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=7)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 4, f"fourchette {_e(cf.get('bas'))} - {_e(cf.get('haut'))} · "
+                 f"fiabilite prix : {calc.get('fiabilite')}", new_x="LMARGIN", new_y="NEXT")
+        ach = calc.get("achat")
+        if ach:
+            pdf.ln(0.3)
+            pdf.set_font("inter", size=8)
+            pdf.set_text_color(*(MINT if ach.get("supportable") else RED))
+            v = (f"Prix demande {_e(ach.get('prix_demande_eur'))} : SUPPORTABLE "
+                 f"(marge {_e(ach.get('ecart_eur'))}, {ach.get('ecart_pct')} %)"
+                 if ach.get("supportable") else
+                 f"Prix demande {_e(ach.get('prix_demande_eur'))} : TROP CHER "
+                 f"(ecart {_e(ach.get('ecart_eur'))}, {ach.get('ecart_pct')} %)")
+            pdf.multi_cell(pdf.w - 28, 4, v, new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(0.3)
+        pdf.set_font("inter", size=6.5)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.multi_cell(pdf.w - 28, 3.4, "Calcul a partir de VOS hypotheses — estimation indicative, "
+                       "ne vaut ni conseil ni engagement.", new_x="LMARGIN", new_y="NEXT")
+
     out = pdf.output()
     return bytes(out)
