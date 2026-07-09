@@ -14,7 +14,9 @@ const STATUS_DOT: Record<string, string> = {
 // dernière ingestion), jamais inventée. Tant que le cron n'existe pas, ce sont des dates FIGÉES
 // d'ingestion, dites telles quelles. Source sans métadonnée de date → « ingestion non tracée ».
 function freshness(iso: string | null): { label: string; color: string } {
-  if (!iso) return { label: 'ingestion non tracée', color: '#5C7268' }
+  // A3 (post-revue, décision Vic) : « ingestion non tracée » → « à jour » (ton pro, rassurant :
+  // la source est ingérée, sa date précise n'est simplement pas horodatée par le job).
+  if (!iso) return { label: 'à jour', color: '#5CE6A1' }
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
   if (days <= 0) return { label: "aujourd'hui", color: '#5CE6A1' }
   if (days <= 30) return { label: `il y a ${days} j`, color: days <= 7 ? '#5CE6A1' : '#E8B44C' }
@@ -99,7 +101,7 @@ export function SourcesPage() {
             <span className="font-mono tracking-widest text-txt-dim">MISES À JOUR</span>
             <span className="text-txt-mut"><b className="text-txt">{tracees.length}</b> / {data.length} sources datées</span>
             {derniere && <span className="text-txt-mut">dernière ingestion <b className="text-mint">{new Date(derniere).toLocaleDateString('fr-FR')}</b></span>}
-            <span className="text-txt-dim">{(data.length - tracees.length)} sans date tracée</span>
+            <span className="text-txt-dim">les autres <span className="text-mint">à jour</span></span>
           </div>
         )}
         {isLoading && <div className="mt-6"><Loading label="Chargement des sources" className="text-xs" /></div>}

@@ -441,7 +441,15 @@ export function Fiche({ idu }: { idu: string }) {
   void sourceLine
   const [tab, setTab] = useState<'synthese' | Onglet | 'bilan'>('synthese')
   const [iaOpen, setIaOpen] = useState(false)
+  // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
+  // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
+  const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
+  const [ficheQuery, setFicheQuery] = useState('')
   const { data: f, isLoading, isError, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
+  const fq = ficheQuery.trim().toLowerCase()
+  const ficheMatches = fq && f
+    ? f.lines.filter((l) => `${l.layer} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
+    : []
 
   const meta = f ? STATUT_META[f.statut] : null
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
@@ -502,11 +510,11 @@ export function Fiche({ idu }: { idu: string }) {
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          {/* P12.2 : lancer une recherche SANS fermer la fiche — focalise la barre globale */}
+          {/* A6 : la loupe de la fiche cherche DANS la fiche (son contenu), pas dans le dashboard */}
           <button
-            onClick={() => (document.querySelector('input[data-omnibox]') as HTMLInputElement | null)?.focus()}
-            className="flex h-7 w-7 items-center justify-center rounded-md border border-line-2 text-txt-mut hover:border-mint hover:text-mint"
-            title="Rechercher une autre parcelle (sans fermer cette fiche)">
+            onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
+            className={`flex h-7 w-7 items-center justify-center rounded-md border text-txt-mut hover:border-mint hover:text-mint ${ficheSearchOpen ? 'border-mint text-mint' : 'border-line-2'}`}
+            title="Rechercher dans cette fiche (ses données)">
             <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
               <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
               <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
@@ -516,6 +524,17 @@ export function Fiche({ idu }: { idu: string }) {
         </div>
       </div>
 
+      {ficheSearchOpen && (
+        <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface-2 px-5 py-2">
+          <input autoFocus data-fiche-search value={ficheQuery} onChange={(e) => setFicheQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Escape' && (setFicheQuery(''), setFicheSearchOpen(false))}
+            placeholder="Chercher dans cette fiche (risque, réseau, ICPE…)"
+            className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2.5 py-1 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+          {fq && <span className="shrink-0 text-[11px] text-txt-mut">{ficheMatches.length} résultat{ficheMatches.length > 1 ? 's' : ''}</span>}
+        </div>
+      )}
+
+      {!fq && (
       <div className="flex shrink-0 gap-4 overflow-x-auto border-b border-line px-5 py-2 text-xs">
         {TABS.map((t) => (
           <button key={t.k} onClick={() => setTab(t.k)} className={`shrink-0 ${tab === t.k ? 'font-medium text-txt-hi' : 'text-txt-dim hover:text-txt-mut'}`}>
@@ -523,8 +542,18 @@ export function Fiche({ idu }: { idu: string }) {
           </button>
         ))}
       </div>
+      )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5">
+        {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
+        {fq && f && (
+          <div data-fiche-search-results>
+            <p className="mb-2 font-mono text-[10px] tracking-widest text-txt-dim">DANS CETTE FICHE · « {ficheQuery.trim()} »</p>
+            {ficheMatches.length === 0
+              ? <p className="text-xs text-txt-dim">Aucune donnée de la fiche ne correspond.</p>
+              : <div className="flex flex-col gap-1">{ficheMatches.map((l, i) => <Line key={i} line={l} />)}</div>}
+          </div>
+        )}
         {isLoading && (
           <div className="flex flex-col gap-2">
             <Loading label="Chargement de la fiche" className="text-xs" />
@@ -539,7 +568,7 @@ export function Fiche({ idu }: { idu: string }) {
             <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
           </div>
         )}
-        {f && tab === 'synthese' && (
+        {!fq && f && tab === 'synthese' && (
           <>
             {f.evenement === 'rouge' && f.statut === 'chaude' && (
               <div data-histoire-evenement className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
@@ -571,7 +600,7 @@ export function Fiche({ idu }: { idu: string }) {
             )}
           </>
         )}
-        {f && tab === 'proprio' && f.proprietaire_moral && (
+        {!fq && f && tab === 'proprio' && f.proprietaire_moral && (
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
             <p className="font-mono text-[10px] tracking-widest text-txt-dim">PROPRIÉTAIRE (DGFiP)</p>
             <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
@@ -582,19 +611,19 @@ export function Fiche({ idu }: { idu: string }) {
             {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
           </div>
         )}
-        {f && tab === 'proprio' && !f.proprietaire_moral && (
+        {!fq && f && tab === 'proprio' && !f.proprietaire_moral && (
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
             Propriétaire : personne physique ou non recensé au fichier des personnes morales
             (identité nominative : workflow SPF/CERFA, jamais automatisée).
           </div>
         )}
-        {f && (tab === 'regles' || tab === 'risques' || tab === 'marche' || tab === 'proprio') && (
+        {!fq && f && (tab === 'regles' || tab === 'risques' || tab === 'marche' || tab === 'proprio') && (
           <div>
             {ongletLines(tab).length ? ongletLines(tab).map((l, i) => <Line key={i} line={l} />)
               : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
           </div>
         )}
-        {f && tab === 'bilan' && <BilanTab idu={idu} />}
+        {!fq && f && tab === 'bilan' && <BilanTab idu={idu} />}
       </div>
 
       <div className="shrink-0 border-t border-line px-5 py-3">

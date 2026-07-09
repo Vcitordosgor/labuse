@@ -48,9 +48,16 @@ function IaRestitution() {
   // P2 (dernière passe) : accès à TOUS les résultats + persistance. « Voir les N résultats »
   // ouvre la liste filtrée à gauche (verdict allumé). La restitution RESTE affichée quand une
   // fiche s'ouvre — on décale légèrement vers la gauche pour ne pas la masquer sous la fiche.
-  // la restitution vit TOUJOURS dans la vue Cartes (apply/ouvrir y bascule) : pas de setView ici
-  // (il viderait iaRestitution via la nav exclusive). On ouvre juste la liste à gauche.
-  const voirTout = () => { setVerdict(true); if (!useApp.getState().panelOpen) togglePanel() }
+  // A1 (post-revue) : le bouton était INERTE car la liste était DÉJÀ affichée derrière la carte-
+  // résumé (rien ne changeait à l'écran). Désormais le clic FERME le résumé flottant et fait
+  // passer la LISTE COMPLÈTE (gauche) au premier plan — transition visible. La liste porte les
+  // filtres du résultat (persistante : ouvrir une fiche ne la perd pas, on enchaîne #1, #2…).
+  const voirTout = () => {
+    setVerdict(true)
+    if (!useApp.getState().panelOpen) togglePanel()
+    setIaRestitution(null)
+    setTimeout(() => document.querySelector('[data-results-scroll]')?.scrollTo({ top: 0 }), 60)
+  }
   return (
     <div data-ia-restitution
       className={`absolute bottom-6 z-40 rounded-xl border border-[#2E6B4F] bg-[#0F1A14] px-4 py-3 shadow-2xl ${wide ? 'w-[520px]' : 'w-[440px]'} ${

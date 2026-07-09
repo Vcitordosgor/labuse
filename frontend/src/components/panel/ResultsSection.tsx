@@ -270,7 +270,7 @@ export function ResultsSection() {
 
       <StatutChips counts={counts} partial={scoped} />
 
-      <div className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
+      <div data-results-scroll className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
         {loading && (
           <>
             {[...Array(5)].map((_, i) => (

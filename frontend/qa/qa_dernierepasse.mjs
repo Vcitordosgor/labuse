@@ -43,22 +43,31 @@ const lineColor = await page.evaluate(() => {
 })
 assert(String(lineColor).toUpperCase().includes('B497F0'), `P3 : contour des résultats VIOLET (${lineColor})`)
 assert((await page.locator('text=contour violet = résultats').count()) > 0, 'P3 : légende du violet affichée')
-// P2 : « Voir les X » → la restitution PERSISTE (ne se ferme pas)
-await page.locator('[data-ia-voir-tout]').click(); await page.waitForTimeout(1000)
-assert((await page.locator('[data-ia-restitution]').count()) > 0, 'P2 : la restitution persiste après « Voir les X »')
-// P2 : cliquer une parcelle → fiche s'ouvre ET la restitution reste
-const card = page.locator('aside button').filter({ hasText: /^[A-Z]{2} \d/ }).first()
-await card.click(); await page.waitForTimeout(1500)
-assert((await page.locator('aside.absolute').count()) > 0, 'P2 : la fiche s\'ouvre au clic d\'une parcelle')
-assert((await page.locator('[data-ia-restitution]').count()) > 0, 'P2 : la restitution PERSISTE quand la fiche est ouverte (accès aux autres)')
-// P12.2 : rechercher depuis la fiche (bouton loupe) sans la fermer
-assert((await page.locator('aside.absolute button[title*="Rechercher une autre"]').count()) > 0, 'P12.2 : accès recherche DEPUIS la fiche')
+// A1 (post-revue) : « Voir les N » FERME le résumé flottant et fait passer la LISTE au premier
+// plan (avant : bouton inerte car la liste était déjà derrière le résumé).
+const listBefore = await page.locator('[data-results-scroll] button').filter({ hasText: /^[A-Z]{2} \d/ }).count()
+await page.locator('[data-ia-voir-tout]').click(); await page.waitForTimeout(1200)
+assert((await page.locator('[data-ia-restitution]').count()) === 0, 'A1 : « Voir les N » FERME le résumé flottant (action effective)')
+const listAfter = await page.locator('[data-results-scroll] button').filter({ hasText: /^[A-Z]{2} \d/ }).count()
+assert(listAfter > 0 && listAfter === listBefore, `A1 : la LISTE complète des résultats est affichée et parcourable (${listAfter} cartes)`)
+// A1 persistance : cliquer une parcelle → fiche + la liste reste (on enchaîne #1, #2…)
+await page.locator('[data-results-scroll] button').filter({ hasText: /^[A-Z]{2} \d/ }).first().click(); await page.waitForTimeout(1500)
+assert((await page.locator('aside.absolute').count()) > 0, 'A1 : la fiche s\'ouvre au clic d\'une parcelle')
+assert((await page.locator('[data-results-scroll] button').filter({ hasText: /^[A-Z]{2} \d/ }).count()) > 0, 'A1 : la liste PERSISTE (accès aux autres résultats)')
+// A6 : la loupe de la FICHE cherche DANS la fiche (≠ barre du haut)
+await page.locator('aside.absolute button[title*="dans cette fiche"]').click(); await page.waitForTimeout(300)
+await page.locator('[data-fiche-search]').fill('accès'); await page.waitForTimeout(600)
+assert((await page.locator('[data-fiche-search-results]').count()) > 0, 'A6 : la loupe fiche filtre le CONTENU de la fiche (bloc « DANS CETTE FICHE »)')
 await page.keyboard.press('Escape'); await page.waitForTimeout(300)
 await page.evaluate(() => window.__labuse.select(null))
 
-// ═══ P12.1 — loupe claire dans la barre ═══
-assert((await page.locator('header input[data-omnibox]').count()) > 0, 'P12.1 : barre de recherche (data-omnibox) présente')
-assert((await page.locator('header svg circle').count()) > 0, 'P12.1 : icône loupe visible dans la barre')
+// ═══ A5 — barre du haut : loupe à DROITE (bouton), « / » retiré, recherche commune ═══
+assert((await page.locator('header input[data-omnibox]').count()) > 0, 'A5 : barre de recherche (data-omnibox) présente')
+assert((await page.locator('header button[title="Lancer la recherche"]').count()) > 0, 'A5 : LOUPE cliquable à DROITE du champ')
+assert((await page.locator('header kbd').count()) === 0, 'A5 : indicateur « / » retiré')
+await page.locator('header input[data-omnibox]').fill('Le Tampon')
+await page.locator('header button[title="Lancer la recherche"]').click(); await page.waitForTimeout(2500)
+assert(page.url().includes('Tampon'), 'A6/A5 : la barre du haut cherche le dashboard (commune « Le Tampon » → périmètre)')
 
 // ═══ P9 — popover entonnoir borné (dans l'écran) ═══
 await page.locator('nav button[title="Cartes"]').click(); await page.waitForTimeout(800)

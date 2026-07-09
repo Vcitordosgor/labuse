@@ -596,3 +596,31 @@ scoring/cascade/matrice (P14 = vérification DVF, pas recalcul). Suite `qa_derni
   ventes jusqu'à déc. 2025 (dernière transaction en base) », servi par endpoint SQL caché
   (`_dvf_couverture`, min/max `date_mutation`). ⚠ à Vic : `last_sync_at` de la source DVF est NULL
   (le job d'ingest ne le pose pas) — la date de la dernière transaction est le signal fiable.
+
+## Ajustements post-revue (dernière passe) — 09/07
+Compléments au commit d0a2d0c après revue Vic sur build rafraîchi. PRÉALABLE (chasse à l'erreur
+JS) : AUCUNE erreur JS trouvée à la reproduction — l'hypothèse « une erreur casse tout » est
+écartée. Les symptômes venaient d'intentions mal comprises / d'effets non visibles, pas d'un bug JS.
+
+- **A1 — « Voir les N » était INERTE (diagnostic)** : le bouton ne « faisait rien » parce que la
+  liste était DÉJÀ affichée (200 cartes) DERRIÈRE la carte-résumé flottante — rien ne changeait à
+  l'écran. Correctif : le clic FERME le résumé flottant (`setIaRestitution(null)`) + garantit le
+  panneau ouvert + scrolle la liste en haut → transition VISIBLE, la liste complète prend le premier
+  plan. Persistance assurée par la LISTE (elle reste quand on ouvre une fiche : on enchaîne #1, #2…).
+- **A2 — libellé marqueur** : « {Commune} » + « · Fiche commune » (le compteur de chaudes a quitté
+  le libellé ; il reste en survol). Le clic entre dans la commune ET ouvre sa fiche contexte (A2/P8).
+- **A3 — wording (décision Vic)** : « ingestion non tracée » → « **à jour** » (menthe) ; le résumé
+  dit « les autres à jour ». Ton pro et rassurant. Le wording millésime (P4.2) reste.
+- **A4 — animation VISIBLE** : refonte du composant `Loading` — GROS points menthe (keyframe
+  `labuse-load` : scale+opacité en vague, glow) au lieu de petits points discrets. Variante `big`
+  sur les spots « est-ce cassé ? » (carte, entretien). Appliqué partout (P5).
+- **A5 — barre du haut** : la LOUPE remplace le « / » et passe à DROITE, cliquable (lance la
+  recherche). Diagnostic : la barre FONCTIONNAIT déjà (IDU → fiche) ; l'impression « ça marche pas »
+  venait du périmètre IDU-only (cf. A6).
+- **A6 — DEUX recherches, périmètres distincts** :
+  · barre du HAUT = dashboard (hors contenu des fiches) : `onEnter` reconnaît une COMMUNE (nom,
+    sans chiffre → bascule le périmètre) OU un IDU (→ ouvre la fiche). Placeholder « commune, IDU ».
+  · loupe DANS la fiche = cherche le CONTENU de la fiche : toggle un champ qui FILTRE toutes les
+    lignes tracées de la fiche (`f.lines`, tous onglets) sur le texte (couche/détail/source) et
+    remplace les onglets par un bloc « DANS CETTE FICHE · N résultats ». (Avant : elle focalisait
+    l'omnibox — pas ce que voulait Vic.) Micro-choix : filtrage plein-texte des lignes, Échap ferme.

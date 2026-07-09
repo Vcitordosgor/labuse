@@ -443,8 +443,8 @@ export function MapView() {
         ? `${c.commune} — ${c.chaudes} chaude${c.chaudes > 1 ? 's' : ''} · ouvrir la fiche commune`
         : `${c.commune} · ouvrir la fiche commune`
       const name = c.commune.replace(/^(Les|Le|La|L')\s?/, '')
-      el.innerHTML = `<span>${name}</span>` +
-        (hot ? `<span style="opacity:.6;font-size:.82em">ⓘ</span>` : '')
+      // A2 (post-revue) : le libellé renvoie à la FICHE COMMUNE (plus de compteur de chaudes visible)
+      el.innerHTML = `<span>${name}</span><span style="opacity:.6;font-size:.82em"> · Fiche commune</span>`
       const size = Math.min(13, 10 + (verdict ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0))
       el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
         `display:inline-flex;align-items:center;gap:4px;` +
@@ -659,8 +659,8 @@ export function MapView() {
       <Legend />
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
       {(geo.isFetching || tilesLoading) && (
-        <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-line-2 bg-surface-2 px-3 py-1 text-[11px] text-txt-mut shadow-lg">
-          <Loading label={geo.isFetching ? 'Chargement des parcelles' : 'Chargement de la carte'} />
+        <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-lg">
+          <Loading big label={geo.isFetching ? 'Chargement des parcelles' : 'Chargement de la carte'} />
         </div>
       )}
       {/* P3 : rappel de ce que signifie le violet pendant une recherche active */}
