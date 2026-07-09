@@ -37,8 +37,11 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
     >
       <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: meta.color }} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
+        {/* FIX (rendu) : les badges DÉBORDAIENT sur le score/anneau à droite (chevauchement).
+            La rangée passe en flex-wrap (min-w-0) et l'IDU reste sur UNE ligne (whitespace-nowrap) :
+            « même proprio ×N » va à la ligne au lieu d'empiéter sur la colonne score. */}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="shrink-0 whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
           {p.evenement === 'rouge' && (
             <span className="shrink-0 rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
               title={p.status === 'chaude' ? 'Chaude PAR ÉVÉNEMENT (procédure BODACC ouverte) — statut forcé, pas issu de la matrice Q×A' : 'Événement — procédure BODACC ouverte'}>
