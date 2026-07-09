@@ -530,3 +530,97 @@ en isolation) verts ; suites existantes vertes.
 - « Étoffer largement l'IA projet » (plus de questions) : NON touché — l'entretien vient de passer
   à 6 questions (revue n°3), à tester par Vic avant d'en rajouter.
 - Renommer chaudes/à surveiller/à creuser/écartées : décision de branding non tranchée — rien renommé.
+
+## Mandat dernière passe — nav, recherche, couleurs, fraîcheur, finitions (09/07)
+Dernière passe avant déploiement. 14 points, chacun avec PREUVE VISUELLE au compte-rendu. Rien au
+scoring/cascade/matrice (P14 = vérification DVF, pas recalcul). Suite `qa_dernierepasse.mjs` (19 ✓)
++ suites existantes vertes.
+
+- **P1 — NAVIGATION EXCLUSIVE** : le bug (Projets restait en fond derrière Outils) venait de
+  `toggleOutils` qui ne changeait pas `view`. Corrigé : ouvrir Outils bascule `view='cartes'` (la
+  carte est le fond) ET ferme fiche/module/contexte/drawer/restitution (comme `setView`). En plus,
+  quand le tiroir Outils est ouvert, le panneau Cartes (COUCHES/résultats) est MASQUÉ (App.tsx) —
+  un seul panneau gauche à la fois. Seule la fiche parcelle s'ouvre par-dessus la carte.
+- **P2 — accès à TOUS les résultats + persistance** : la restitution porte « Voir les N résultats
+  dans la liste → » (ouvre le panneau gauche = liste filtrée complète, jusqu'à 200/500). Piège
+  corrigé : le bouton appelait `setView('cartes')` qui, via la nav exclusive, VIDAIT la restitution
+  — retiré (on est déjà en Cartes). La restitution PERSISTE à l'ouverture d'une fiche (`select` ne
+  la touche pas) ; elle se décale à gauche (`left-6`) quand une fiche est ouverte pour ne pas être
+  masquée. On enchaîne #1, #2… sans la perdre.
+- **P3 — résultats en VIOLET** (micro-choix consigné) : CONTOUR violet `#B497F0` (line 2px) sur les
+  parcelles-résultats quand une recherche est active (`iaRestitution` posée), le REMPLISSAGE de
+  statut est conservé (on voit résultat ET qualité). Sans recherche, le liseré reste couleur de
+  statut. Légende flottante « contour violet = résultats de votre recherche » pendant la recherche.
+- **P4 — volet Mises à jour** : lien OFFICIEL généralisé et rendu VISIBLE (« Source officielle ↗ »
+  menthe, 42/43 sources ont déjà l'URL du portail primaire). Wording « version la plus récente
+  publiée » (P4.2) : note VÉRIFIÉE pour DVF (« ventes jusqu'à déc. 2025 ») + repli sur l'année du
+  nom (INSEE RP 2023, QPV 2024 → « millésime AAAA · version la plus récente publiée »). Micro-choix :
+  PAS de 2ᵉ entrée rail (« Sources » y mène déjà) — l'écran est le volet « Mises à jour ».
+- **P5 — chargement animé partout** : composant `Loading` (points pulsés) + skeletons posés sur —
+  carte (tuiles MVT via events `dataloading`/`idle`), fiche (skeleton), entretien IA, calculette,
+  Sources, CRM (pipeline), contexte commune, et un outil (M01 « Calcul des candidats »). Plus
+  d'écran figé.
+- **P6 — barre d'actions fiche** : deux rangées régulières, boutons de HAUTEUR UNIFORME (h-8) —
+  rangée 1 = actions (Pipeline/👁/↗/IA), rangée 2 = exports (PDF/1950/Cadastre/G) à largeur égale.
+  Fini le « + Pipeline » sur deux lignes et les tailles hétérogènes. Le suivi (👁) devient une icône
+  menthe quand actif (état porté par le title, plus « 👁 Suivie » en texte).
+- **P7 — CRM** : fondu de bord droit (`bg-gradient-to-l`) + pastille « N étapes · défiler → » quand
+  > 4 colonnes — l'affordance de défilement horizontal est explicite.
+- **P8 — marqueur commune → fiche commune** (micro-choix consigné) : le « N chaudes » quitte le
+  libellé (nom + ⓘ) ; le nombre reste en INFO de survol. Clic marqueur = `setCommune` (on ENTRE
+  dans la commune, navigation préservée) ET `setContexteCommune` (la FICHE COMMUNE / contexte
+  s'ouvre) — l'accès « fiche commune complète » voulu par Vic, sans perdre l'entrée dans la commune.
+- **P9 — popover entonnoir non tronqué** : borné `max-h-[52vh]` + scroll interne (en-tête/note
+  fixes), et surtout OUVERTURE DIRECTION-AWARE (vers le haut si le bouton est dans la moitié basse
+  de l'écran) → jamais coupé par un bord. Ferme aussi sur Échap (cohérence des surfaces flottantes).
+- **P10 — Parc national en MARRON** (micro-choix consigné) : `#8B5A2B` (terre) fill 0.22 + liseré
+  `#7A4A1E` — distinct du menthe des statuts et du vert des limites, lisible sur ortho ET sombre
+  (l'ancien vert clair « envahissait »).
+- **P11 — limites communes ligne verte** (micro-choix consigné) : contours OFFICIELS
+  (`geo.api.gouv.fr`, 24 communes 974), simplifiés ~110 m → fichier statique `public/communes974.geojson`
+  (44 Ko), ligne verte charte `#5CE6A1` (largeur zoom-interpolée, opacité 0,55). Couche « Limites
+  communes » dans COUCHES, **défaut ON** (Vic veut les voir). NB : dissoudre les parcelles donnait
+  un blob à trous (intérieurs non parcellés) — écarté au profit du contour administratif officiel.
+- **P12 — loupe + recherche depuis la fiche** : loupe MENTHE (pastille) dans la barre du haut
+  (affordance nette) ; bouton loupe dans l'en-tête de la fiche → focalise l'omnibox global (chercher
+  sans fermer la fiche).
+- **P13 — parcelles corridor : CONFORMES au cadastre** (vérification, pas de code) : la géométrie
+  STOCKÉE (`parcels.geom`) est le PCI/DGFiP Etalab brut, seulement `ST_MakeValid` — JAMAIS simplifiée
+  au stockage ; `surface_m2` = aire géométrique à 0,000 m² près sur tous les échantillons fins ; les
+  lanières ont 8-27 sommets traçant un vrai tracé (pas des slivers dégénérés). La finesse à l'écran
+  vient de la simplification MVT (au RENDU, par palier de zoom), pas d'un artefact de donnée.
+  Exemples réels : `97411000DV0083` (~0,8 m × 153 m), `97415000AX0987`, `97402000AI1059`.
+- **P14 — fraîcheur DVF** : période RÉELLE en base = **2021 → décembre 2025** (29 565 mutations,
+  2025 complet). C'est le millésime PUBLIÉ le plus récent (DGFiP publie par semestre, ~6-12 mois de
+  décalage) → **pas périmé, aucune re-ingestion nécessaire**. Affiché dans le Bilan/marché : « DVF —
+  ventes jusqu'à déc. 2025 (dernière transaction en base) », servi par endpoint SQL caché
+  (`_dvf_couverture`, min/max `date_mutation`). ⚠ à Vic : `last_sync_at` de la source DVF est NULL
+  (le job d'ingest ne le pose pas) — la date de la dernière transaction est le signal fiable.
+
+## Ajustements post-revue (dernière passe) — 09/07
+Compléments au commit d0a2d0c après revue Vic sur build rafraîchi. PRÉALABLE (chasse à l'erreur
+JS) : AUCUNE erreur JS trouvée à la reproduction — l'hypothèse « une erreur casse tout » est
+écartée. Les symptômes venaient d'intentions mal comprises / d'effets non visibles, pas d'un bug JS.
+
+- **A1 — « Voir les N » était INERTE (diagnostic)** : le bouton ne « faisait rien » parce que la
+  liste était DÉJÀ affichée (200 cartes) DERRIÈRE la carte-résumé flottante — rien ne changeait à
+  l'écran. Correctif : le clic FERME le résumé flottant (`setIaRestitution(null)`) + garantit le
+  panneau ouvert + scrolle la liste en haut → transition VISIBLE, la liste complète prend le premier
+  plan. Persistance assurée par la LISTE (elle reste quand on ouvre une fiche : on enchaîne #1, #2…).
+- **A2 — libellé marqueur** : « {Commune} » + « · Fiche commune » (le compteur de chaudes a quitté
+  le libellé ; il reste en survol). Le clic entre dans la commune ET ouvre sa fiche contexte (A2/P8).
+- **A3 — wording (décision Vic)** : « ingestion non tracée » → « **à jour** » (menthe) ; le résumé
+  dit « les autres à jour ». Ton pro et rassurant. Le wording millésime (P4.2) reste.
+- **A4 — animation VISIBLE** : refonte du composant `Loading` — GROS points menthe (keyframe
+  `labuse-load` : scale+opacité en vague, glow) au lieu de petits points discrets. Variante `big`
+  sur les spots « est-ce cassé ? » (carte, entretien). Appliqué partout (P5).
+- **A5 — barre du haut** : la LOUPE remplace le « / » et passe à DROITE, cliquable (lance la
+  recherche). Diagnostic : la barre FONCTIONNAIT déjà (IDU → fiche) ; l'impression « ça marche pas »
+  venait du périmètre IDU-only (cf. A6).
+- **A6 — DEUX recherches, périmètres distincts** :
+  · barre du HAUT = dashboard (hors contenu des fiches) : `onEnter` reconnaît une COMMUNE (nom,
+    sans chiffre → bascule le périmètre) OU un IDU (→ ouvre la fiche). Placeholder « commune, IDU ».
+  · loupe DANS la fiche = cherche le CONTENU de la fiche : toggle un champ qui FILTRE toutes les
+    lignes tracées de la fiche (`f.lines`, tous onglets) sur le texte (couche/détail/source) et
+    remplace les onglets par un bloc « DANS CETTE FICHE · N résultats ». (Avant : elle focalisait
+    l'omnibox — pas ce que voulait Vic.) Micro-choix : filtrage plein-texte des lignes, Échap ferme.

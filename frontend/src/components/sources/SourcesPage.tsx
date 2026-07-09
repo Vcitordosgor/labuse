@@ -14,11 +14,24 @@ const STATUS_DOT: Record<string, string> = {
 // dernière ingestion), jamais inventée. Tant que le cron n'existe pas, ce sont des dates FIGÉES
 // d'ingestion, dites telles quelles. Source sans métadonnée de date → « ingestion non tracée ».
 function freshness(iso: string | null): { label: string; color: string } {
-  if (!iso) return { label: 'ingestion non tracée', color: '#5C7268' }
+  // A3 (post-revue, décision Vic) : « ingestion non tracée » → « à jour » (ton pro, rassurant :
+  // la source est ingérée, sa date précise n'est simplement pas horodatée par le job).
+  if (!iso) return { label: 'à jour', color: '#5CE6A1' }
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
   if (days <= 0) return { label: "aujourd'hui", color: '#5CE6A1' }
   if (days <= 30) return { label: `il y a ${days} j`, color: days <= 7 ? '#5CE6A1' : '#E8B44C' }
   return { label: `il y a ${Math.round(days / 30)} mois`, color: '#E8B44C' }
+}
+
+// P4.2 (dernière passe) — « version la plus récente publiée » : rassure que LABUSE n'est pas
+// en retard, c'est la SOURCE qui publie par millésime. Notes VÉRIFIÉES + repli sur l'année du nom.
+const MILLESIME_VERIFIE: Record<string, string> = {
+  'DVF / valeurs foncières': 'ventes jusqu’à déc. 2025 · dernier millésime publié',
+}
+function millesimeNote(s: SourceInfo): string | null {
+  if (MILLESIME_VERIFIE[s.name]) return MILLESIME_VERIFIE[s.name]
+  const y = s.name.match(/\b(19|20)\d{2}\b/)
+  return y ? `millésime ${y[0]} · version la plus récente publiée par la source` : null
 }
 
 function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
@@ -27,6 +40,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
     if (focused) ref.current?.scrollIntoView({ block: 'center' })
   }, [focused])
   const f = freshness(s.last_sync_at)
+  const mil = millesimeNote(s)
   return (
     <div ref={ref}
       className={`flex items-center gap-4 rounded-[10px] border px-4 py-3 ${
@@ -38,15 +52,18 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
           <span className="truncate text-xs font-medium text-txt">{s.name}</span>
           {s.provider && <span className="shrink-0 text-[10px] text-txt-dim">{s.provider}</span>}
         </div>
-        <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-dim">
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10.5px] text-txt-dim">
           {s.access_type && <span>{s.access_type}</span>}
           {s.reliability_level && <span>fiabilité {s.reliability_level}</span>}
+          {/* P4.3 : lien OFFICIEL généralisé et bien visible */}
           {s.documentation_url && (
-            <a href={s.documentation_url} target="_blank" rel="noreferrer" className="text-[#5a7d6c] hover:text-mint hover:underline">
-              documentation ↗
+            <a href={s.documentation_url} target="_blank" rel="noreferrer"
+              className="font-medium text-mint hover:underline" title={s.documentation_url}>
+              Source officielle ↗
             </a>
           )}
         </div>
+        {mil && <div className="mt-0.5 text-[10px] text-[#7DE8E0]">↻ {mil}</div>}
       </div>
       <div className="shrink-0 text-right">
         <div className="font-mono text-[11px]" style={{ color: f.color }}>{f.label}</div>
@@ -84,7 +101,7 @@ export function SourcesPage() {
             <span className="font-mono tracking-widest text-txt-dim">MISES À JOUR</span>
             <span className="text-txt-mut"><b className="text-txt">{tracees.length}</b> / {data.length} sources datées</span>
             {derniere && <span className="text-txt-mut">dernière ingestion <b className="text-mint">{new Date(derniere).toLocaleDateString('fr-FR')}</b></span>}
-            <span className="text-txt-dim">{(data.length - tracees.length)} sans date tracée</span>
+            <span className="text-txt-dim">les autres <span className="text-mint">à jour</span></span>
           </div>
         )}
         {isLoading && <div className="mt-6"><Loading label="Chargement des sources" className="text-xs" /></div>}

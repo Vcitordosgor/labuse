@@ -191,7 +191,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
         </div>
 
         {/* question active (chips + skip) */}
-        {loading && <div className="mt-5"><Loading label="Le copilote réfléchit" /></div>}
+        {loading && <div className="mt-5"><Loading big label="Le copilote réfléchit" /></div>}
         {!loading && active && (
           <div className="mt-5" data-entretien-question data-qid={active.id}>
             <p className="text-sm font-medium text-txt-hi">{active.texte}</p>

@@ -12,6 +12,7 @@ export interface LayerToggles {
   limites: boolean
   anru: boolean
   equipements: boolean
+  communes: boolean   // P11 : limites communales (ligne verte, contours officiels)
 }
 
 // Filtres actifs — appliqués EN MÊME TEMPS à la carte, la liste et les compteurs, et
@@ -160,12 +161,18 @@ export const useApp = create<AppState>((set) => ({
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
     contexteCommune: null, sourceLine: null, iaRestitution: null }),
   outilsOpen: false,
-  toggleOutils: () => set((s) => ({ outilsOpen: !s.outilsOpen })),
+  // P1 (dernière passe) — NAV EXCLUSIVE : ouvrir Outils bascule sur le fond CARTE (le tiroir
+  // outils vit au-dessus de la carte) et FERME la vue précédente (IA/Projets/CRM) + ses panneaux.
+  // Sans ça, ouvrir Outils depuis Projets laissait « Mes projets » en fond derrière le tiroir.
+  toggleOutils: () => set((s) => s.outilsOpen
+    ? { outilsOpen: false }
+    : { outilsOpen: true, view: 'cartes', selectedIdu: null, module: null,
+        contexteCommune: null, sourceLine: null, iaRestitution: null }),
   selectedIdu: null,
   select: (idu) => set({ selectedIdu: idu }),
   mode: 'verdict',
   setMode: (mode) => set({ mode }),
-  layers: { zonage: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false },
+  layers: { zonage: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false, communes: true },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),

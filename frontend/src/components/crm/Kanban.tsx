@@ -4,6 +4,7 @@ import { deletePipeline, getEventsCount, getPipeline, getPipelineMeta, patchPipe
 import { completudeColor, STATUT_META } from '../../lib/status'
 import type { PipelineEntry } from '../../lib/types'
 import { useApp } from '../../store/useApp'
+import { Loading } from '../Loading'
 
 const TONE_ACCENT: Record<string, string> = {
   cold: '#5C7268', warm: '#E8B44C', hot: '#5CE6A1', reject: '#E8695A',
@@ -109,9 +110,17 @@ export function Kanban() {
             glisser une carte pour changer d'étape · ajout depuis la fiche (+ Pipeline)
           </p>
         </div>
+        {/* P7 (dernière passe) : dire clairement qu'on peut défiler horizontalement */}
+        {cols.length > 4 && (
+          <span className="shrink-0 rounded-full border border-line-2 px-2.5 py-1 text-[10.5px] text-txt-mut">
+            {cols.length} étapes · défiler →
+          </span>
+        )}
       </div>
-      <div className="mt-4 flex min-h-0 flex-1 gap-3 overflow-x-auto px-6 pb-5">
-        {meta.isLoading && <p className="text-xs text-txt-dim">Chargement…</p>}
+      {/* P7 : dégradé de bord droit = affordance « il y a d'autres colonnes » */}
+      <div className="relative mt-4 min-h-0 flex-1">
+        <div className="flex h-full gap-3 overflow-x-auto px-6 pb-5">
+        {meta.isLoading && <div className="p-2"><Loading label="Chargement du pipeline" className="text-xs" /></div>}
         {cols.map((c) => {
           const items = byCol(c.key)
           const accent = TONE_ACCENT[c.tone ?? ''] ?? '#5C7268'
@@ -146,6 +155,11 @@ export function Kanban() {
             </div>
           )
         })}
+        </div>
+        {/* fondu de bord droit — pointer-events-none pour ne pas gêner le drag/scroll */}
+        {cols.length > 4 && (
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-bg to-transparent" />
+        )}
       </div>
     </div>
   )

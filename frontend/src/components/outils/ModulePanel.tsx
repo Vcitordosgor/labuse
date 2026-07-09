@@ -7,6 +7,7 @@ import {
 import { pointInPolygon } from '../../lib/geo'
 import { STATUT_META } from '../../lib/status'
 import { useApp } from '../../store/useApp'
+import { Loading } from '../Loading'
 import { M22 } from './M22Programme'
 import { M15, M16, M17, M18, M19 } from './moteurs'
 import { MODULES, VIOLET } from './registry'
@@ -79,7 +80,9 @@ function M01() {
           onChange={(e) => setMinScore(Number(e.target.value))} className="flex-1 accent-[#B497F0]" />
         <span className="font-mono text-txt">{minScore}</span>
       </label>
-      <p className="text-[11px] text-txt-dim">{fmt(q.data?.total)} candidats (SQL)</p>
+      <p className="text-[11px] text-txt-dim">
+        {q.isFetching ? <Loading label="Calcul des candidats" /> : `${fmt(q.data?.total)} candidats (SQL)`}
+      </p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}

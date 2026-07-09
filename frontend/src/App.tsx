@@ -20,7 +20,7 @@ import { EMPTY_FILTERS, useApp } from './store/useApp'
 // R2/V3 : la restitution du copilote — compteur animé + top cliquables. En mode PROJET, chaque
 // parcelle porte son « pourquoi » (moteur) et l'utilisateur peut ENREGISTRER + exporter le PDF.
 function IaRestitution() {
-  const { iaRestitution, setIaRestitution, select, setView, setM22Prefill, setModule } = useApp()
+  const { iaRestitution, setIaRestitution, select, setView, setM22Prefill, setModule, togglePanel, selectedIdu, setVerdict } = useApp()
   const [count, setCount] = useState(0)
   const [projetId, setProjetId] = useState<number | null>(null)
   useEffect(() => {
@@ -45,15 +45,34 @@ function IaRestitution() {
   if (!iaRestitution) return null
   const projet = iaRestitution.projet
   const wide = !!projet
+  // P2 (dernière passe) : accès à TOUS les résultats + persistance. « Voir les N résultats »
+  // ouvre la liste filtrée à gauche (verdict allumé). La restitution RESTE affichée quand une
+  // fiche s'ouvre — on décale légèrement vers la gauche pour ne pas la masquer sous la fiche.
+  // A1 (post-revue) : le bouton était INERTE car la liste était DÉJÀ affichée derrière la carte-
+  // résumé (rien ne changeait à l'écran). Désormais le clic FERME le résumé flottant et fait
+  // passer la LISTE COMPLÈTE (gauche) au premier plan — transition visible. La liste porte les
+  // filtres du résultat (persistante : ouvrir une fiche ne la perd pas, on enchaîne #1, #2…).
+  const voirTout = () => {
+    setVerdict(true)
+    if (!useApp.getState().panelOpen) togglePanel()
+    setIaRestitution(null)
+    setTimeout(() => document.querySelector('[data-results-scroll]')?.scrollTo({ top: 0 }), 60)
+  }
   return (
-    <div data-ia-restitution className={`absolute bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-xl border border-[#2E6B4F] bg-[#0F1A14] px-4 py-3 shadow-2xl ${wide ? 'w-[520px]' : 'w-[440px]'}`}>
+    <div data-ia-restitution
+      className={`absolute bottom-6 z-40 rounded-xl border border-[#2E6B4F] bg-[#0F1A14] px-4 py-3 shadow-2xl ${wide ? 'w-[520px]' : 'w-[440px]'} ${
+        selectedIdu ? 'left-6' : 'left-1/2 -translate-x-1/2'}`}>
       <div className="flex items-start justify-between">
         <p className="text-sm text-txt">
           <span data-ia-count className="font-display text-xl font-bold text-mint">{count.toLocaleString('fr-FR')}</span>{' '}
           {iaRestitution.phrase}
         </p>
-        <button onClick={() => setIaRestitution(null)} className="ml-2 text-txt-dim hover:text-txt" title="Fermer">✕</button>
+        <button onClick={() => setIaRestitution(null)} className="ml-2 text-txt-dim hover:text-txt" title="Fermer le résultat">✕</button>
       </div>
+      <button data-ia-voir-tout onClick={voirTout}
+        className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/40 bg-mint/10 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20">
+        Voir les {count.toLocaleString('fr-FR')} résultats dans la liste →
+      </button>
 
       {wide ? (
         <div className="mt-2 space-y-1.5">
@@ -137,7 +156,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune, verdict, setVerdict } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune, verdict, setVerdict, outilsOpen } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
@@ -179,7 +198,9 @@ export default function App() {
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
           {view === 'cartes' && (
             <>
-              {module ? <ModulePanel /> : <LeftPanel />}
+              {/* P1 : quand le tiroir Outils est ouvert, il REMPLACE le panneau Cartes (COUCHES/
+                  résultats) — la carte reste derrière. Un seul panneau gauche à la fois. */}
+              {outilsOpen ? null : module ? <ModulePanel /> : <LeftPanel />}
               {module === 'temps' ? <TimeMachine /> : <MapView />}
             </>
           )}

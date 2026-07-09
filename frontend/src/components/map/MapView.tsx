@@ -79,9 +79,12 @@ const OVERLAYS = {
     },
   },
   ppr: { paint: { 'fill-color': '#E8695A', 'fill-opacity': 0.14 } },
-  parc: { paint: { 'fill-color': '#4ADE96', 'fill-opacity': 0.10 } },
+  // P10 (dernière passe) : Parc national en MARRON/terre (#8B5A2B) — distinct du menthe des
+  // statuts et du vert-clair d'avant qui « envahissait ». Lisible sur ortho ET fond sombre.
+  parc: { paint: { 'fill-color': '#8B5A2B', 'fill-opacity': 0.22 } },
   anru: { paint: { 'fill-color': '#8FB4F0', 'fill-opacity': 0.16 } },
 } as const
+const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 5 catégories, couleurs différenciées
 const EQUIP_CATS = ['mairie', 'ecole', 'sante', 'police', 'sport'] as const
@@ -99,7 +102,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict } = useApp()
+  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution } = useApp()
   const ile = commune == null
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
@@ -107,6 +110,7 @@ export function MapView() {
   const measureRef = useRef(measure)
   measureRef.current = measure
   const labelMarker = useRef<maplibregl.Marker | null>(null)
+  const [tilesLoading, setTilesLoading] = useState(false)   // P5 : chargement des tuiles
 
   // z<10 : les marqueurs communes règnent (bandeau contextuel + labels du fond retirés — C3)
   const [lowZoom, setLowZoom] = useState(false)
@@ -167,6 +171,14 @@ export function MapView() {
       for (const [k, o] of Object.entries(OVERLAYS)) {
         m.addLayer({ id: `ov-${k}`, type: 'fill', source: `ov-${k}`, layout: { visibility: 'none' }, paint: o.paint as never })
       }
+      // P10 : liseré marron du Parc national (borne nette)
+      m.addLayer({ id: 'ov-parc-line', type: 'line', source: 'ov-parc', layout: { visibility: 'none' },
+        paint: { 'line-color': PARC_LINE, 'line-width': 1.2, 'line-opacity': 0.7 } })
+      // P11 : limites communales OFFICIELLES (geo.api.gouv 974) — ligne verte de la charte
+      m.addSource('communes-bounds', { type: 'geojson', data: `${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}communes974.geojson` })
+      m.addLayer({ id: 'communes-bounds', type: 'line', source: 'communes-bounds', layout: { visibility: 'none' },
+        paint: { 'line-color': '#5CE6A1', 'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1.1, 13, 1.8],
+                 'line-opacity': 0.55 } })
       m.addLayer({ id: 'parcels-fill', type: 'fill', source: 'parcels', paint: { 'fill-color': STATUS_COLOR, 'fill-opacity': STATUS_OPACITY } })
       // contours : promues (statut) OU toutes (couche « limites parcelles »)
       m.addLayer({ id: 'parcels-limites', type: 'line', source: 'parcels', layout: { visibility: 'none' },
@@ -279,6 +291,11 @@ export function MapView() {
         }).catch(() => undefined)
       })
 
+      // P5 (dernière passe) : indicateur de chargement des TUILES (île MVT + fonds) — la carte
+      // ne semble jamais figée pendant le fetch. `idle` = tout rendu, plus rien en attente.
+      m.on('dataloading', () => setTilesLoading(true))
+      m.on('idle', () => setTilesLoading(false))
+
       ready.current = true
       setMapReady(true)
       ;(window as unknown as Record<string, unknown>).__labuse_map = m // hook QA (ping sémantique)
@@ -354,8 +371,10 @@ export function MapView() {
     m.setLayoutProperty('ovmvt-zonage', 'visibility', vis(layers.zonage && ile))
     m.setLayoutProperty('ovmvt-ppr', 'visibility', vis(layers.ppr && ile))
     m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc))
+    m.setLayoutProperty('ov-parc-line', 'visibility', vis(layers.parc))
     m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru))
     m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements))
+    m.setLayoutProperty('communes-bounds', 'visibility', vis(layers.communes))   // P11
     const expr = toExpr(filters)
     for (const fill of ['parcels-fill', 'ile-fill']) {
       m.setFilter(fill, expr)
@@ -377,6 +396,22 @@ export function MapView() {
     m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
     m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
   }, [mode, filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict])
+
+  // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
+  // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR
+  // VIOLET épais — le remplissage de STATUT est conservé (on voit résultat ET qualité). Sans
+  // recherche, le liseré reste couleur de statut (menthe/vert). Distinction immédiate.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    const active = !!iaRestitution
+    for (const id of ['parcels-line', 'ile-line']) {
+      if (!m.getLayer(id)) continue
+      m.setPaintProperty(id, 'line-color', active ? '#B497F0' : STATUS_COLOR)
+      m.setPaintProperty(id, 'line-width', active ? 2 : 0.6)
+      m.setPaintProperty(id, 'line-opacity', active ? 1 : 0.9)
+    }
+  }, [iaRestitution, mapReady, ile, verdict, filters])
 
   // ── VAGUE 0 (île) : sous z10 les tuiles parcellaires ne servent rien — l'île raconte où
   // sont les cibles via UN marqueur par commune (nom + chaudes, dimensionné/coloré), cliquable
@@ -402,16 +437,23 @@ export function MapView() {
       const hot = verdict && c.chaudes > 0   // R1 : sans verdict, les marqueurs restent NEUTRES
       const el = document.createElement('button')
       el.setAttribute('data-commune-marker', c.commune)
-      el.title = verdict
-        ? `${c.commune} — ${c.chaudes} chaude${c.chaudes > 1 ? 's' : ''} · cliquer pour ouvrir la commune`
-        : `${c.commune} · cliquer pour ouvrir la commune`
-      el.textContent = `${c.commune.replace(/^(Les|Le|La|L')\s?/, '')}${verdict && c.chaudes > 0 ? ` ${c.chaudes}` : ''}`.trim()
+      // P8 (dernière passe) : le marqueur mène à la FICHE COMMUNE (contexte), plus « N chaudes »
+      // en évidence ; le nombre de chaudes reste en INFO secondaire (survol).
+      el.title = verdict && c.chaudes > 0
+        ? `${c.commune} — ${c.chaudes} chaude${c.chaudes > 1 ? 's' : ''} · ouvrir la fiche commune`
+        : `${c.commune} · ouvrir la fiche commune`
+      const name = c.commune.replace(/^(Les|Le|La|L')\s?/, '')
+      // A2 (post-revue) : le libellé renvoie à la FICHE COMMUNE (plus de compteur de chaudes visible)
+      el.innerHTML = `<span>${name}</span><span style="opacity:.6;font-size:.82em"> · Fiche commune</span>`
       const size = Math.min(13, 10 + (verdict ? Math.log10(Math.max(1, c.chaudes)) * 2 : 0))
       el.style.cssText = `cursor:pointer;white-space:nowrap;border-radius:9999px;padding:2px 9px;` +
+        `display:inline-flex;align-items:center;gap:4px;` +
         `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? '#2E6B4F' : '#26302B'};` +
         `background:${hot ? 'rgba(9,26,18,.92)' : 'rgba(10,14,12,.85)'};color:${hot ? '#5CE6A1' : '#8FA69A'};` +
         (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
-      el.onclick = (e) => { e.stopPropagation(); useApp.getState().setCommune(c.commune) }
+      // P8 : le clic ENTRE dans la commune (navigation préservée) ET ouvre sa FICHE COMMUNE
+      // (le contexte) — c'est l'accès « fiche commune complète » voulu, le « N chaudes » disparaît.
+      el.onclick = (e) => { e.stopPropagation(); const st = useApp.getState(); st.setCommune(c.commune); st.setContexteCommune(c.commune) }
       aggMarkers.current.push(new maplibregl.Marker({ element: el, offset: OFFSETS[c.commune] ?? [0, 0] })
         .setLngLat([(c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2]).addTo(m))
     }
@@ -615,10 +657,17 @@ export function MapView() {
       </div>
       <MapToolbar />
       <Legend />
-      {/* B1 : chargement carte DISCRET — la carte ne semble jamais figée pendant le fetch */}
-      {geo.isFetching && (
-        <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-line-2 bg-surface-2 px-3 py-1 text-[11px] text-txt-mut shadow-lg">
-          <Loading label="Chargement des parcelles" />
+      {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
+      {(geo.isFetching || tilesLoading) && (
+        <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-lg">
+          <Loading big label={geo.isFetching ? 'Chargement des parcelles' : 'Chargement de la carte'} />
+        </div>
+      )}
+      {/* P3 : rappel de ce que signifie le violet pendant une recherche active */}
+      {iaRestitution && (
+        <div className="pointer-events-none absolute right-4 top-4 flex items-center gap-1.5 rounded-full border border-[#4a3d6b] bg-[#161022]/90 px-3 py-1 text-[11px] text-[#B497F0] shadow-lg">
+          <span className="h-2 w-2 rounded-full ring-2 ring-[#B497F0]" style={{ background: 'transparent' }} />
+          contour violet = résultats de votre recherche
         </div>
       )}
       {tool && (

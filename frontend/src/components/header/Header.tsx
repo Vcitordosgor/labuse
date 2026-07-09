@@ -8,11 +8,12 @@ import type { Statut } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
 function Omnibox() {
-  const { query, setQuery, select, setView, commune } = useApp()
+  const { query, setQuery, select, setView, setCommune, commune } = useApp()
   const ref = useRef<HTMLInputElement>(null)
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
+  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
 
-  // raccourci « / » → focus (comme indiqué par le kbd)
+  // raccourci « / » → focus (le kbd a disparu mais le raccourci reste, pratique)
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
@@ -24,40 +25,42 @@ function Omnibox() {
     return () => window.removeEventListener('keydown', h)
   }, [])
 
-  // Entrée : premier IDU correspondant → ouvre sa fiche (recherche = filtre live de la liste).
-  // Mode île (ou introuvable localement) : le serveur cherche (/parcels/search) — le client
-  // n'a plus les 431k features en mémoire.
+  // A6 (post-revue) : la barre du HAUT cherche dans TOUT le dashboard (hors contenu des fiches) :
+  //  1) COMMUNE (nom, sans chiffre) → bascule le périmètre ;  2) IDU → ouvre la fiche.
   const onEnter = async () => {
-    const qn = query.trim().toUpperCase().replace(/\s+/g, '')
-    if (!qn) return
+    const raw = query.trim()
+    if (!raw) return
+    if (!/\d/.test(raw)) {
+      const low = raw.toLowerCase()
+      const c = (communes.data ?? []).find((x) => x.commune.toLowerCase() === low)
+        ?? (raw.length >= 3 ? (communes.data ?? []).find((x) => x.commune.toLowerCase().startsWith(low)) : undefined)
+      if (c) { setCommune(c.commune); setView('cartes'); return }
+    }
+    const qn = raw.toUpperCase().replace(/\s+/g, '')
     const hit = geo.data?.features.find((f) => {
       const idu = String(f.properties?.idu ?? '').toUpperCase()
       return idu.includes(qn) || idu.slice(8).includes(qn)
     })
-    if (hit) {
-      setView('cartes')
-      select(String(hit.properties?.idu))
-      return
-    }
+    if (hit) { setView('cartes'); select(String(hit.properties?.idu)); return }
     const remote = await searchParcels(qn).catch(() => [])
-    if (remote[0]) {
-      setView('cartes')
-      select(remote[0].idu)
-    }
+    if (remote[0]) { setView('cartes'); select(remote[0].idu) }
   }
 
   return (
-    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 focus-within:border-[#2E6B4F]">
-      <svg viewBox="0 0 20 20" className="h-4 w-4 shrink-0 text-txt-mut">
-        <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <line x1="13" y1="13" x2="17" y2="17" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-      <input ref={ref} value={query} onChange={(e) => setQuery(e.target.value)}
+    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 pl-3 pr-1.5 focus-within:border-mint">
+      <input ref={ref} data-omnibox value={query} onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && onEnter()}
-        placeholder="Rechercher un IDU : AB 0234, DE0805…"
-        title="Filtre la liste des résultats ; Entrée ouvre la première fiche correspondante"
+        placeholder="Rechercher : commune, IDU (AB 0234)…"
+        title="Recherche du dashboard : une commune (bascule le périmètre) ou un IDU (ouvre la fiche)"
         className="min-w-0 flex-1 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none" />
-      <kbd className="shrink-0 rounded border border-line-2 px-1 font-mono text-[11px] text-txt-dim">/</kbd>
+      {/* A5 (post-revue) : la LOUPE remplace le « / » et passe à DROITE — cliquable pour lancer */}
+      <button onClick={onEnter} title="Lancer la recherche"
+        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md bg-mint text-mint-ink hover:brightness-110">
+        <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
+          <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
+          <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </button>
     </div>
   )
 }

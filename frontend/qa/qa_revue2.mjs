@@ -63,7 +63,7 @@ await page.waitForSelector('header span:has-text("Chaude")', { timeout: 25000 })
 assert((await page.locator('[data-entretien]').count()) === 0, 'R2 : demande précise → ZÉRO question (pas d’entretien)')
 await page.waitForSelector('[data-ia-restitution]', { timeout: 30000 })   // stats+top async après apply
 assert((await page.locator('[data-ia-restitution]').count()) > 0, 'R2 : restitution posée (précise)')
-await page.locator('[data-ia-restitution] button[title="Fermer"]').click()
+await page.locator('[data-ia-restitution] button[title="Fermer le résultat"]').click()
 
 // b) projet vague → ENTRETIEN de cadrage (V2) : reformulation + fiche à l'écran + chips → lancer
 await page.locator('nav button[title="IA"]').click()
