@@ -451,9 +451,10 @@ export function MapView() {
         `font:600 ${size}px Inter,sans-serif;border:1px solid ${hot ? '#2E6B4F' : '#26302B'};` +
         `background:${hot ? 'rgba(9,26,18,.92)' : 'rgba(10,14,12,.85)'};color:${hot ? '#5CE6A1' : '#8FA69A'};` +
         (hot ? 'box-shadow:0 0 10px rgba(92,230,161,.25);' : '')
-      // P8 : le clic ENTRE dans la commune (navigation préservée) ET ouvre sa FICHE COMMUNE
-      // (le contexte) — c'est l'accès « fiche commune complète » voulu, le « N chaudes » disparaît.
-      el.onclick = (e) => { e.stopPropagation(); const st = useApp.getState(); st.setCommune(c.commune); st.setContexteCommune(c.commune) }
+      // FIX (POINT 2) : le clic ouvre UNIQUEMENT la FICHE COMMUNE (contexte SRU/ANRU/PLH…), sans
+      // zoomer/entrer dans la commune — le zoom (setCommune) parasitait l'action et masquait la
+      // fiche. Pour entrer dans une commune, le sélecteur du header reste là.
+      el.onclick = (e) => { e.stopPropagation(); useApp.getState().setContexteCommune(c.commune) }
       aggMarkers.current.push(new maplibregl.Marker({ element: el, offset: OFFSETS[c.commune] ?? [0, 0] })
         .setLngLat([(c.bbox[0] + c.bbox[2]) / 2, (c.bbox[1] + c.bbox[3]) / 2]).addTo(m))
     }

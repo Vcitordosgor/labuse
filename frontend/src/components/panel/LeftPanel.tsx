@@ -30,7 +30,9 @@ function LayersSection() {
     return () => clearTimeout(t)
   }, [hintKey])
   return (
-    <div className="px-5 pt-4">
+    // FIX (rendu liste) : sur un volet court (laptop), COUCHES est PLAFONNÉ + scrollable pour
+    // qu'il n'écrase plus la liste des résultats — il cède la place, la liste garde sa hauteur.
+    <div className="shrink px-5 pt-4 max-h-[34vh] overflow-y-auto">
       <p className="mb-3 font-mono text-[11px] tracking-widest text-txt-dim">COUCHES</p>
       <div className="flex flex-col gap-1.5">
         {LAYERS.map(({ key, label, hint }) => {

@@ -36,13 +36,18 @@ await page.screenshot({ path: `${OUT}/vague0_ile_agregats.png` })
 assert((await page.locator('text=Zoomez ou cliquez une commune').count()) > 0,
   'bandeau <z10 : « Zoomez ou cliquez une commune »')
 
-// ── 0.2 : clic sur le marqueur Saint-Pierre → sélecteur + recadrage
+// ── 0.2 (POINT 2, correction) : clic sur le marqueur → ouvre la FICHE COMMUNE (contexte),
+// SANS zoomer/entrer dans la commune. Pour entrer, on utilise le SÉLECTEUR du header.
 await page.locator('[data-commune-marker="Saint-Pierre"]').click()
+const ctxOk = await page.waitForSelector('text=SRU', { timeout: 10000 }).then(() => true).catch(() => false)
+assert(ctxOk, 'clic marqueur → Fiche commune (contexte SRU/ANRU/PLH) ouverte')
+assert((await page.evaluate(() => window.__labuse_map.getZoom())) < 10, 'clic marqueur → PAS de zoom (l’île reste)')
+await page.keyboard.press('Escape'); await page.waitForTimeout(500)   // ferme le contexte
+await page.locator('[data-commune-select]').click(); await page.waitForTimeout(400)
+await page.getByRole('button', { name: /^Saint-Pierre/ }).click()
 await page.waitForTimeout(4500)
 assert((await page.locator('[data-commune-select]').innerText()).includes('Saint-Pierre'),
-  'clic marqueur → sélecteur sur Saint-Pierre')
-const zSp = await page.evaluate(() => window.__labuse_map.getZoom())
-assert(zSp >= 10, `clic marqueur → recadrage commune (z=${zSp.toFixed(1)})`)
+  'sélecteur → commune Saint-Pierre active')
 assert((await page.locator('text=Cliquez une parcelle').count()) > 0,
   'bandeau commune : « Cliquez une parcelle » (les parcelles servent)')
 
@@ -70,16 +75,23 @@ for (let i = 0; i < n && clicked.length < 3; i++) {
   const communeTxt = (label.match(/·\s*([A-ZÉÈL'][^\n]+)$/m) ?? [])[1] ?? label
   if (clicked.some((c) => c.commune === communeTxt)) continue
   await cards.nth(i).click()
-  await page.waitForTimeout(4000)   // vol (800 ms) + tuiles à destination
-  const st = await page.evaluate(() => {
-    const m = window.__labuse_map
-    // R1 : tuiles « tout » → NE JAMAIS renvoyer les features par le pont (300k pendant le vol)
-    const pingN = m.getLayer('ile-ping') ? m.queryRenderedFeatures({ layers: ['ile-ping'] }).length : 0
-    const selN = m.getLayer('ile-sel') ? m.queryRenderedFeatures({ layers: ['ile-sel'] }).length : 0
-    return { zoom: m.getZoom(), pingN, selN,
-             op: m.getLayer('ile-ping') ? m.getPaintProperty('ile-ping', 'line-opacity') : null }
-  })
-  // le pulse s'éteint après 3 s — la PREUVE de visibilité = la géométrie sel/ping rendue au viewport à z≥15
+  // vol (800 ms) PUIS chargement de la tuile MVT à destination — sur serveur chargé la tuile
+  // peut tarder ; on ATTEND le vol (z≥15) puis on re-teste la géométrie (ile-sel persiste, le
+  // ping pulse s'éteint à 3 s) jusqu'à ~10 s au lieu d'un waitForTimeout fixe (anti-flake).
+  await page.waitForFunction(() => window.__labuse_map.getZoom() >= 15, null, { timeout: 14000 }).catch(() => {})
+  let st = { zoom: 0, pingN: 0, selN: 0 }
+  for (let r = 0; r < 10; r++) {
+    st = await page.evaluate(() => {
+      const m = window.__labuse_map
+      // R1 : tuiles « tout » → NE JAMAIS renvoyer les features par le pont (300k pendant le vol)
+      return { zoom: m.getZoom(),
+        pingN: m.getLayer('ile-ping') ? m.queryRenderedFeatures({ layers: ['ile-ping'] }).length : 0,
+        selN: m.getLayer('ile-sel') ? m.queryRenderedFeatures({ layers: ['ile-sel'] }).length : 0 }
+    })
+    if (st.zoom >= 15 && (st.pingN > 0 || st.selN > 0)) break
+    await page.waitForTimeout(1000)
+  }
+  // PREUVE de visibilité = la géométrie sel/ping rendue au viewport à z≥15
   const visible = st.zoom >= 15 && (st.pingN > 0 || st.selN > 0)
   clicked.push({ commune: communeTxt, ok: visible })
   assert(visible, `clic liste → vol + parcelle visible au viewport (${communeTxt.trim().slice(0, 22)} · z=${st.zoom.toFixed(1)} · ping/sel=${st.pingN}/${st.selN})`)

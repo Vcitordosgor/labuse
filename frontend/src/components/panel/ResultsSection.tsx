@@ -237,7 +237,10 @@ export function ResultsSection() {
   const nFilters = (filters.statuts.length ? 1 : 0) + (scoped ? 1 : 0)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col px-5">
+    // FIX (rendu liste) : la section elle-même défile si le volet est court (laptop) — sinon
+    // l'en-tête fixe (compteurs/chips) écrasait la liste (flex-1) à ~0 px. La liste garde une
+    // hauteur minimale utilisable ET son scroll interne (cf. le conteneur data-results-scroll).
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5">
       <div className="flex shrink-0 items-baseline justify-between">
         <p className="font-mono text-[11px] tracking-widest text-txt-dim">RÉSULTATS</p>
         <span className="text-[11px] text-txt-mut">triés par score</span>
@@ -270,7 +273,7 @@ export function ResultsSection() {
 
       <StatutChips counts={counts} partial={scoped} />
 
-      <div data-results-scroll className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
+      <div data-results-scroll className="mt-3 flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto pb-2">
         {loading && (
           <>
             {[...Array(5)].map((_, i) => (
