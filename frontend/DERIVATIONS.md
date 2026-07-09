@@ -624,3 +624,29 @@ JS) : AUCUNE erreur JS trouvée à la reproduction — l'hypothèse « une erreu
     lignes tracées de la fiche (`f.lines`, tous onglets) sur le texte (couche/détail/source) et
     remplace les onglets par un bloc « DANS CETTE FICHE · N résultats ». (Avant : elle focalisait
     l'omnibox — pas ce que voulait Vic.) Micro-choix : filtrage plein-texte des lignes, Échap ferme.
+
+## Correction rendu — liste parcelles + marqueur commune (09/07)
+Branche dédiée `fix/liste-parcelles-marqueur` (Vic merge lui-même). 100 % rendu/layout, aucun
+scoring/cascade/matrice/filtre touché. Suites vertes.
+
+- **POINT 1 — la liste des parcelles ne s'affichait pas (bande fine vide)**. DIAGNOSTIC (mesuré) :
+  la liste EST dans le DOM (200 cartes) mais son conteneur `data-results-scroll` (flex-1) était
+  ÉCRASÉ à ~0 px sur les volets courts — l'en-tête fixe de la section (compteurs, dossiers, barre,
+  entonnoir, chips = ~280 px) + COUCHES (~254 px) mangeaient toute la hauteur, la liste (flex-1,
+  shrink) tombait à 0. Mesures : viewport 900 → liste 190 px OK ; viewport 720 → liste **10 px**
+  (bande vide). Cause = layout/flex (pas de virtualisation, pas de données). CORRECTION (rendu
+  seul) : (a) `data-results-scroll` reçoit `min-h-[200px]` (jamais écrasée, scroll interne
+  conservé) ; (b) la SECTION résultats devient `overflow-y-auto` (elle défile si le volet est
+  court, sans casser le scroll interne de la liste) ; (c) COUCHES plafonné `max-h-[34vh]
+  overflow-y-auto` pour céder la place. Résultat : liste peuplée + scrollable à toutes les
+  hauteurs (720 → 200 px, 900 → 3 cartes visibles + footer, 1080 → 5). Vérifié aussi en mode
+  commune (rend après chargement du geojson 26 Mo — lenteur de chargement pré-existante, pas la
+  bande vide).
+- **POINT 2 — clic marqueur commune n'ouvrait pas la Fiche commune**. DIAGNOSTIC : le handler
+  (`el.onclick`, MapView) faisait `setCommune(c) + setContexteCommune(c)` — le contexte s'ouvrait
+  BIEN (vérifié) MAIS `setCommune` ZOOMAIT/entrait dans la commune, ce qui parasitait l'action
+  (le vol caméra captait l'attention, la fiche passait inaperçue / comportement « pas ce que je
+  voulais »). CORRECTION : le clic ouvre UNIQUEMENT la Fiche commune (`setContexteCommune(c)`),
+  sans zoom — l'île reste, la fiche (SRU/ANRU/PLH/marché/équipements/RTAA) glisse à droite. Pour
+  ENTRER dans une commune, le sélecteur du header reste la voie. `qa_vague0` mis à jour (marqueur
+  → fiche contexte ; l'entrée commune passe par le sélecteur).

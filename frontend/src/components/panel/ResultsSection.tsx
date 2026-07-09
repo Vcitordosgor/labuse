@@ -37,8 +37,11 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
     >
       <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: meta.color }} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
+        {/* FIX (rendu) : les badges DÉBORDAIENT sur le score/anneau à droite (chevauchement).
+            La rangée passe en flex-wrap (min-w-0) et l'IDU reste sur UNE ligne (whitespace-nowrap) :
+            « même proprio ×N » va à la ligne au lieu d'empiéter sur la colonne score. */}
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="shrink-0 whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
           {p.evenement === 'rouge' && (
             <span className="shrink-0 rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
               title={p.status === 'chaude' ? 'Chaude PAR ÉVÉNEMENT (procédure BODACC ouverte) — statut forcé, pas issu de la matrice Q×A' : 'Événement — procédure BODACC ouverte'}>
@@ -237,7 +240,10 @@ export function ResultsSection() {
   const nFilters = (filters.statuts.length ? 1 : 0) + (scoped ? 1 : 0)
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col px-5">
+    // FIX (rendu liste) : la section elle-même défile si le volet est court (laptop) — sinon
+    // l'en-tête fixe (compteurs/chips) écrasait la liste (flex-1) à ~0 px. La liste garde une
+    // hauteur minimale utilisable ET son scroll interne (cf. le conteneur data-results-scroll).
+    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5">
       <div className="flex shrink-0 items-baseline justify-between">
         <p className="font-mono text-[11px] tracking-widest text-txt-dim">RÉSULTATS</p>
         <span className="text-[11px] text-txt-mut">triés par score</span>
@@ -270,7 +276,7 @@ export function ResultsSection() {
 
       <StatutChips counts={counts} partial={scoped} />
 
-      <div data-results-scroll className="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pb-2">
+      <div data-results-scroll className="mt-3 flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto pb-2">
         {loading && (
           <>
             {[...Array(5)].map((_, i) => (
