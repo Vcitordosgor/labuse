@@ -358,8 +358,11 @@ layers:
     phase: 2
     enabled: true
     params:
-      radius_m: 200                # un permis non rattaché = signal de zone
-      lookback_months: 36
+      # LOT 8 data-gap : dynamique constructive GRADUEE (densite de PC, plus un booleen).
+      radius_m: 400                # 300-500 m au mandat -> 400 m (un permis non rattache = signal de zone)
+      lookback_months: 60          # 5 dernieres annees (etait 36)
+      types: [PC]                  # permis de construire seulement (DP/PA/PD exclus de la densite)
+      saturation_pc: 15            # magnitude = min(1, n_PC / 15) -> bonus plein a 15 PC dans le rayon
       bonus_key: permis_sitadel_recent_proximite
 
   - name: potentiel_foncier_region

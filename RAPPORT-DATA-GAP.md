@@ -75,3 +75,13 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
   **moyen** (pénalité ×2), détail fiche « coût de dépollution potentiel, étude de sol
   obligatoire à la mutation (L.556-2 CE) » ; site CASIAS/instruction ≤ **100 m** (élargi de
   50 m) → SOFT_FLAG faible (×1). Verdicts cliquables (source_table/source_id).
+
+### LOT 8 — Dynamique constructive : FAIT (graduée, ajout session)
+- Couche `sitadel` (scored) passée de binaire à **GRADUÉE** : magnitude = min(1, n_PC/15)
+  dans un rayon **400 m** sur **60 mois**, **PC seulement** (DP/PA/PD exclus de la densité).
+  Détail fiche : « Dynamique constructive : n PC ≤ 400 m sur 5 ans (densité X %) ».
+- **Écart au mandat documenté** : le mandat demandait un bonus Stage 1 — l'audit a montré
+  que le bonus scoré existe déjà (couche `sitadel`, Stage 2/axe A, Socle V1) ; en créer un
+  second en Stage 1 aurait doublonné le même signal (interdit par le lot). Gradué EN PLACE.
+- `new_permit_nearby` (événement de veille) inchangé — rôles désormais distincts :
+  événement (delta) vs densité (niveau). Millésime : sitadel_permits SDES jusqu'au mois courant.
