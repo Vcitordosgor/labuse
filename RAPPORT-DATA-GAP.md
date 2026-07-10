@@ -55,3 +55,14 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
 ## Phase 1 — journal des lots (complété au fil de l'eau)
 
 *(à venir : un bloc par lot avec statut final, règle de scoring exacte, millésime, volumétrie)*
+
+### LOT 1 — DVF : FAIT (variables marché, zéro scoring)
+- `v_parcel_dvf_last` : **37 868 parcelles** avec dernière mutation (date, nature, valeur,
+  prix/m² bâti, prix/m² terrain, flag multi-parcelles). Caveat DVF : valeur = mutation entière.
+- `dvf_secteur_medianes` : **2 357 lignes** (850 secteurs cadastraux × type de bien,
+  39 425 ventes 2021-2025). Moy. des médianes : terrain 295 €/m², maison 2 471 €/m² bâti,
+  appartement 2 361 €/m² — plausibles. Ventes ≤ 1 000 € (symboliques) écartées ; prix/m²
+  bornés [50-20 000]. Grain MUTATION (pas de double compte multi-lignes).
+- Fiche : bloc `dvf_parcelle` (dernière mutation + médianes secteur). CLI `labuse dvf-marche`.
+- **Aucun scoring** (mandat) : dormance = Score V ; « mutation > 20 ans » incalculable
+  (millésimes 2014-2020 retirés). Millésime : géo-DVF 2021→2025 (pub. 04/2026).

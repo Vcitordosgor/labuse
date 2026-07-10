@@ -1030,6 +1030,24 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
     pm = db.execute(text(
         "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
         {"idu": idu}).mappings().first()
+    # LOT 1 (data-gap) : dernière mutation DVF de LA parcelle + médianes du secteur cadastral.
+    dvf_last = db.execute(text(
+        "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles "
+        "FROM v_parcel_dvf_last WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    dvf_secteur = [dict(r) for r in db.execute(text(
+        "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
+        "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
+        "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
+    dvf_parcelle = None
+    if dvf_last or dvf_secteur:
+        dvf_parcelle = {
+            "derniere_mutation": ({**dict(dvf_last),
+                                   "date_mutation": dvf_last["date_mutation"].isoformat()
+                                   if dvf_last["date_mutation"] else None}
+                                  if dvf_last else None),
+            "secteur": dvf_secteur,
+            "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025",
+        }
     # Score V (Vendabilité, Stage 3 additif) : score + panneau « Pourquoi ce score » (signaux
     # JSONB §5.4, lus tels quels) + badges spéciaux (public/bailleur/copro/partiel).
     vrow = db.execute(text(
@@ -1077,6 +1095,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
         "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
         "lines": lines, "flags": flags,
         "score_v": score_v,
+        "dvf_parcelle": dvf_parcelle,
     }
 
 

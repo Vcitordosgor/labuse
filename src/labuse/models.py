@@ -708,6 +708,7 @@ def create_all(engine) -> None:
     ensure_pipeline_projet(engine)
     ensure_enrichment_cache(engine)
     ensure_score_v_view(engine)
+    ensure_dvf_marche(engine)
 
 
 def ensure_pipeline_projet(engine) -> None:
@@ -1074,6 +1075,17 @@ def ensure_schema(engine) -> None:
     ensure_vue_mer_cache(engine)
     ensure_watch_zones(engine)
     ensure_score_v_view(engine)
+    ensure_dvf_marche(engine)
+
+
+def ensure_dvf_marche(engine) -> None:
+    """Vue v_parcel_dvf_last + table dvf_secteur_medianes (LOT 1 data-gap) — idempotent."""
+    from sqlalchemy import text as _t
+
+    from .ingestion.dvf_marche import DDL_MEDIANES, ensure_dvf_views
+    ensure_dvf_views(engine)
+    with engine.begin() as c:
+        c.execute(_t(DDL_MEDIANES.text))
 
 
 def ensure_score_v_view(engine) -> None:

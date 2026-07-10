@@ -1463,3 +1463,14 @@ def score_v_compute_cmd(
     with session_scope() as s:
         stats = compute_all(s, limit=limit, log=typer.echo)
     typer.echo(f"✓ Score V : {stats}")
+
+
+@app.command("dvf-marche")
+def dvf_marche_cmd() -> None:
+    """LOT 1 data-gap : recalcule les médianes €/m² par secteur × type de bien (idempotent)."""
+    from .ingestion.dvf_marche import compute_medianes_secteur
+
+    models.ensure_schema(engine())
+    with session_scope() as s:
+        res = compute_medianes_secteur(s)
+    typer.echo(f"✓ dvf_secteur_medianes : {res}")
