@@ -226,3 +226,59 @@ export const patchProjet = (id: number, body: { nom?: string; statut?: string; f
 export const rejouerProjet = (id: number) =>
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}/rejouer`, { method: 'POST' })
 export const deleteProjet = (id: number) => j<{ ok: boolean }>(`/projets/${id}`, { method: 'DELETE' })
+
+// ── Moteur de segments Habitat (mandat segments) ──
+export interface SegmentFiltreDef {
+  cle: string; libelle: string; type: 'range' | 'bool' | 'enum'; unite: string | null
+  groupe: string; enum_values: string[]; description: string
+  disponible: boolean; raison: string | null; mandat: string | null
+}
+export interface SegmentFiltre { cle?: string; min?: number; max?: number; value?: boolean; values?: string[]; optionnel?: boolean; ou?: SegmentFiltre[] }
+export interface SegmentPreset {
+  slug: string; nom: string; categorie: string; description: string | null; argumentaire: string | null
+  filtres: SegmentFiltre[]; colonnes_export: string[]; tri_defaut: string | null
+  boost_catnat: boolean; actif: boolean; ordre: number; created_by: string | null; updated_at: string | null
+  disponibilite: 'complet' | 'partiel'; filtres_inactifs: { cle: string; libelle: string; raison: string | null; mandat: string | null }[]
+  count: number | null; count_at: string | null
+}
+export interface SegmentsHome {
+  categories: Record<string, string>
+  presets: SegmentPreset[]
+  filtres: SegmentFiltreDef[]
+  tris: { cle: string; libelle: string }[]
+  colonnes_export: { cle: string; libelle: string }[]
+  catnat: { fenetre_mois: number; communes: { commune: string; dernier_arrete: string | null; perils: string }[] }
+  libelle_residuel: string
+}
+export const getSegments = () => j<SegmentsHome>('/segments')
+export interface SegmentQueryBody {
+  slug?: string; filtres?: SegmentFiltre[]; tri?: string | null
+  colonnes_export?: string[]; limit?: number; offset?: number; geojson?: boolean
+}
+export interface SegmentQueryRep {
+  count: number; items: Record<string, unknown>[]; tri: string
+  filtres_actifs: SegmentFiltre[]; filtres_inactifs: { cle: string; libelle: string; raison: string | null; mandat: string | null }[]
+  colonnes: { cle: string; libelle: string }[]
+  limit: number; offset: number
+  geojson?: { type: 'FeatureCollection'; features: unknown[] }
+}
+export const querySegment = (body: SegmentQueryBody) =>
+  j<SegmentQueryRep>('/segments/query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const exportSegmentCsv = async (body: SegmentQueryBody, filename: string) => {
+  const r = await fetch('/segments/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  if (!r.ok) throw new Error(`export → HTTP ${r.status}`)
+  const blob = await r.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = filename
+  document.body.appendChild(a); a.click(); a.remove()
+  URL.revokeObjectURL(url)
+}
+export const createSegmentPreset = (body: Record<string, unknown>) =>
+  j<SegmentPreset>('/segments/presets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const updateSegmentPreset = (slug: string, body: Record<string, unknown>) =>
+  j<SegmentPreset>(`/segments/presets/${slug}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+export const deleteSegmentPreset = (slug: string) =>
+  j<{ supprime: string }>(`/segments/presets/${slug}`, { method: 'DELETE' })
+export const refreshSegmentCounts = () =>
+  j<{ recalcules: Record<string, number> }>('/segments/refresh-counts?stale_hours=0', { method: 'POST' })

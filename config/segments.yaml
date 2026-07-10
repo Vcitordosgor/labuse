@@ -1,0 +1,9 @@
+# Moteur de segments Habitat — paramètres serveur (Lot 3 : signal CATNAT).
+# La fenêtre et les périls du signal « catnat_recent » sont de la CONFIG, pas du code.
+catnat:
+  fenetre_mois: 6
+  # motifs (ILIKE) appliqués à catnat_arretes.type_peril — GASPAR libelle_risque_jo
+  perils:
+    - vent
+    - cyclon
+    - inondation

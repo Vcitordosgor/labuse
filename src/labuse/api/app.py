@@ -83,7 +83,9 @@ async def _lifespan(app: FastAPI):
         from .modules import ensure_tables as _modules_ens
         from .partners import ensure_tables as _partners_ens
         from .projets import ensure_tables as _projets_ens
-        for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens):
+        from .segments import ensure_tables as _segments_ens
+        for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens,
+                     _segments_ens):
             _ens(_engine())
         app.state.schema_heal = "ok"
     except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
@@ -2224,6 +2226,7 @@ from .modules import router as _modules_router  # noqa: E402
 from .moteurs import router as _moteurs_router  # noqa: E402
 from .partners import router as _partners_router  # noqa: E402
 from .projets import router as _projets_router  # noqa: E402
+from .segments import router as _segments_router  # noqa: E402
 
 from .tiles import router as _tiles_router  # noqa: E402
 
@@ -2234,6 +2237,7 @@ app.include_router(_events_router)
 app.include_router(_moteurs_router)
 app.include_router(_partners_router)
 app.include_router(_projets_router)
+app.include_router(_segments_router)
 
 
 # (les ensure_tables des routeurs sont appelés dans _lifespan — un @app.on_event("startup")

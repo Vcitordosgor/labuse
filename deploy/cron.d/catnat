@@ -1,0 +1,11 @@
+# Signal CATNAT (moteur de segments Habitat) — refresh MENSUEL des arrêtés de
+# catastrophe naturelle GASPAR (Géorisques, /gaspar/catnat, 24 communes 974).
+# Idempotent : upsert sur (insee, type_peril, date_arrete, date_debut). Le passage
+# suit celui de Sitadel (le 5 à 04h15) : le 5 à 05h00 — GASPAR n'a pas d'heure de
+# publication garantie, un arrêté pris entre deux passages apparaît au passage suivant.
+# Les compteurs de presets sont recalculés dans la foulée (le bandeau « communes en
+# CATNAT » et le filtre pré-coché reflètent la nouvelle fenêtre de 6 mois).
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/catnat /etc/cron.d/catnat
+SHELL=/bin/sh
+0 5 5 * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-catnat >> /var/log/labuse/catnat_refresh.log 2>&1 && /opt/labuse/venv/bin/labuse segments-counts --force >> /var/log/labuse/catnat_refresh.log 2>&1

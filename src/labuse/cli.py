@@ -1535,3 +1535,66 @@ def ingest_rnic_cmd(
         s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
                   {"n": SOURCE_NAME})
     typer.echo(f"✓ RNIC : {res}")
+
+
+# ───────────────────── Moteur de segments Habitat (mandat segments) ─────────────────────
+
+@app.command("segments-seed")
+def segments_seed_cmd() -> None:
+    """Tables du moteur de segments + seed des presets métiers manquants (Lot 1/4)."""
+    from .api.segments import ensure_tables as seg_ensure
+    from .segments import presets as presets_mod
+
+    seg_ensure(engine())
+    with session_scope() as s:
+        res = presets_mod.seed_presets(s)
+    typer.echo(f"✓ Presets : {len(res['inseres'])} inséré(s), {len(res['ignores'])} déjà en base.")
+    for slug, errs in (res["erreurs"] or {}).items():
+        typer.echo(f"  ⚠ {slug} : {' ; '.join(errs)}")
+
+
+@app.command("segments-counts")
+def segments_counts_cmd(
+    force: bool = typer.Option(False, "--force", help="Recalcule tout (ignore le cache 24 h)."),
+) -> None:
+    """Compteurs live de parcelles par preset (cache 24 h — galerie Segments)."""
+    from .segments import presets as presets_mod
+
+    with session_scope() as s:
+        done = presets_mod.refresh_counts(s, only_stale_hours=None if force else 24.0)
+    for slug, n in sorted(done.items()):
+        typer.echo(f"  {slug:32} {n:>8}")
+    typer.echo(f"✓ {len(done)} compteur(s) recalculé(s).")
+
+
+@app.command("segments-residuel")
+def segments_residuel_cmd(
+    commune: str = typer.Option(None, help="Nom ou INSEE ; défaut = les 24 communes."),
+) -> None:
+    """Lot 2 : droits résiduels sur parcelles bâties → parcel_residuel_bati
+    (emprise max/résiduelle selon règles PLU calibrées, surélévation, confiance)."""
+    from .ingestion.run_all import REUNION_COMMUNES
+    from .segments import residuel_bati
+
+    residuel_bati.ensure_tables(engine())
+    # PAS de repli pilote ici : sans --commune, on traite LES 24 (parc bâti de l'île).
+    noms = [_resolve_commune(commune)] if commune else [nom for _, nom in REUNION_COMMUNES]
+    for nom in noms:
+        with session_scope() as s:
+            res = residuel_bati.compute_commune(s, nom)
+        typer.echo(f"  {nom:24} {res['baties']:>7} bâties · {res['avec_regle']:>7} avec règle")
+    typer.echo("✓ Droits résiduels sur bâti à jour.")
+
+
+@app.command("ingest-catnat")
+def ingest_catnat_cmd() -> None:
+    """Lot 3 : arrêtés CATNAT GASPAR (Géorisques) des 24 communes → catnat_arretes.
+    Refresh mensuel : deploy/cron.d/catnat."""
+    from .segments import catnat as catnat_mod
+
+    catnat_mod.ensure_tables(engine())
+    with session_scope() as s:
+        res = catnat_mod.ingest_catnat(s)
+    typer.echo(f"✓ CATNAT : {res['arretes']} arrêté(s) sur {res['communes_ok']} commune(s).")
+    for insee, err in (res["erreurs"] or {}).items():
+        typer.echo(f"  ⚠ {insee} : {err}")
