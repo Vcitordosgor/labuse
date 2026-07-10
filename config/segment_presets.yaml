@@ -1,0 +1,312 @@
+# Bibliothèque de PRESETS MÉTIERS du moteur de segments (Lot 4) — SEED VERSIONNÉ.
+#
+# Règles :
+#   - le seed n'écrase JAMAIS un preset déjà en base (édité en admin) : slugs manquants
+#     seulement. Modifier un preset vivant = admin (Vic), pas ce fichier.
+#   - tous les seuils vivent ICI (jamais en dur dans le code) ;
+#   - `filtres` : liste de {cle, min|max|value|values} — clés du registry
+#     (src/labuse/segments/registry.py). `{ou: [...]}` = groupe OU.
+#     `optionnel: true` = pré-coché mais décochable dans le query builder (hint UI) ;
+#   - un preset dont une source manque (parcel_solar, parcel_equipements, parcel_anc,
+#     parcel_vegetation) s'affiche « partiel » — il se complètera TOUT SEUL quand le
+#     mandat correspondant livrera sa table (convergence inter-mandats) ;
+#   - `argumentaire` = la ligne de pitch commerciale du segment (sert au commerce).
+
+presets:
+  # ───────────────────────── Extérieur ─────────────────────────
+  - slug: pergolas-terrasses
+    nom: Pergolas & terrasses
+    categorie: exterieur
+    ordre: 10
+    description: >-
+      Maisons à grand jardin achetées récemment, terrain plat, hors périmètre ABF.
+    argumentaire: >-
+      Jardin ≥ 150 m² + achat < 24 mois = la fenêtre d'aménagement extérieur : le
+      nouveau propriétaire investit dans son dehors dans les deux ans qui suivent
+      l'emménagement. Terrain plat (pente ≤ 10°) : pose sans terrassement.
+    filtres:
+      - {cle: jardin_m2, min: 150}
+      - {cle: anciennete_mutation_mois, max: 24}
+      - {cle: pente_moy_deg, max: 10}
+      - {cle: flag_abf, value: false, optionnel: true}
+    colonnes_export: [adresse, surface_m2, jardin_m2, date_mutation, type_bien, pente_moy_deg]
+    tri_defaut: mutation_recente
+
+  - slug: paysagistes
+    nom: Paysagistes
+    categorie: exterieur
+    ordre: 20
+    description: >-
+      Très grands jardins fraîchement acquis — création complète d'extérieur.
+    argumentaire: >-
+      Jardin ≥ 300 m² acheté depuis moins d'un an : un extérieur entier à dessiner,
+      le moment où le budget paysage se décide.
+    filtres:
+      - {cle: jardin_m2, min: 300}
+      - {cle: anciennete_mutation_mois, max: 12}
+    colonnes_export: [adresse, surface_m2, jardin_m2, date_mutation, pente_moy_deg]
+    tri_defaut: jardin_desc
+
+  - slug: clotures-portails
+    nom: Clôtures & portails
+    categorie: exterieur
+    ordre: 30
+    description: >-
+      Acquisitions récentes avec du linéaire à clore.
+    argumentaire: >-
+      Clôturer, c'est le premier chantier après la signature : mutation < 12 mois et
+      jardin ≥ 100 m² = un périmètre à fermer et un chien qui arrive.
+    filtres:
+      - {cle: anciennete_mutation_mois, max: 12}
+      - {cle: jardin_m2, min: 100}
+    colonnes_export: [adresse, surface_m2, jardin_m2, date_mutation, type_bien]
+    tri_defaut: mutation_recente
+
+  - slug: piscinistes-construction
+    nom: Piscinistes — construction
+    categorie: exterieur
+    ordre: 40
+    description: >-
+      Parcelles piscinables (jardin, pente) achetées récemment et SANS piscine détectée.
+    argumentaire: >-
+      Jardin ≥ 200 m² plat, acheté < 24 mois, sans bassin existant : le projet piscine
+      se décide dans les premières années — avant que le budget parte dans la cuisine.
+    filtres:
+      - {cle: jardin_m2, min: 200}
+      - {cle: anciennete_mutation_mois, max: 24}
+      - {cle: pente_moy_deg, max: 10}
+      - {cle: piscine, value: false}          # grisé tant que Détection Ortho n'a pas livré
+    colonnes_export: [adresse, surface_m2, jardin_m2, date_mutation, pente_moy_deg]
+    tri_defaut: jardin_desc
+
+  - slug: parc-piscines-entretien
+    nom: Parc piscines — entretien & rénovation
+    categorie: exterieur
+    ordre: 50
+    description: >-
+      Le parc de piscines existantes (contrats d'entretien, rénovations de bassins).
+      Préset PARTIEL tant que la détection ortho n'est pas livrée : en attendant, on
+      cible les maisons piscinables.
+    argumentaire: >-
+      Chaque bassin existant = un contrat d'entretien récurrent ou une rénovation à
+      7-10 ans. La détection ortho transformera ce segment en liste exhaustive du parc.
+    filtres:
+      - {cle: piscine, value: true}           # LE filtre du segment (Détection Ortho)
+      - {cle: type_bien, values: [Maison]}
+      - {cle: jardin_m2, min: 100}
+    colonnes_export: [adresse, surface_m2, jardin_m2, type_bien]
+    tri_defaut: jardin_desc
+
+  - slug: elagage
+    nom: Élagage & entretien d'arbres
+    categorie: exterieur
+    ordre: 60
+    description: >-
+      Grandes parcelles végétalisées ; la canopée en limite viendra du mandat Végétation.
+    argumentaire: >-
+      Un jardin ≥ 500 m² sous canopée, c'est de l'élagage récurrent ; les houppiers en
+      limite de parcelle (bientôt détectés) sont l'argument voisinage qui fait signer.
+    filtres:
+      - {cle: jardin_m2, min: 500}
+      - {cle: ombrage_vegetal, min: 20}       # grisé tant que ANC & Végétation n'a pas livré
+      - {cle: canopee_limite, value: true}    # idem
+    colonnes_export: [adresse, surface_m2, jardin_m2]
+    tri_defaut: jardin_desc
+
+  # ───────────────────────── Rénovation ─────────────────────────
+  - slug: artisans-renovation
+    nom: Artisans rénovation générale
+    categorie: renovation
+    ordre: 70
+    description: >-
+      Bâti d'avant 1990 racheté récemment — chantiers de remise au goût du jour.
+    argumentaire: >-
+      Acheter de l'ancien (< 1990) c'est acheter des travaux : dans les 18 mois suivant
+      la mutation, le chantier de rénovation est budgété ou déjà commencé.
+    filtres:
+      - {cle: anciennete_mutation_mois, max: 18}
+      - {cle: periode_construction, max: 1990}
+    colonnes_export: [adresse, surface_m2, date_mutation, valeur_mutation, annee_construction, type_bien]
+    tri_defaut: mutation_recente
+
+  - slug: cuisinistes
+    nom: Cuisinistes
+    categorie: renovation
+    ordre: 80
+    description: >-
+      Acquisitions récentes, triées par budget (prix de mutation).
+    argumentaire: >-
+      La cuisine est le premier gros poste d'équipement après un achat : mutation
+      < 12 mois, triée par prix d'acquisition = le pouvoir d'achat en face du devis.
+    filtres:
+      - {cle: anciennete_mutation_mois, max: 12}
+    colonnes_export: [adresse, surface_m2, date_mutation, valeur_mutation, type_bien]
+    tri_defaut: prix_mutation_desc
+
+  - slug: salles-de-bain
+    nom: Salles de bain
+    categorie: renovation
+    ordre: 90
+    description: >-
+      Bâti d'avant 1995 racheté depuis moins de 18 mois.
+    argumentaire: >-
+      Une salle d'eau de plus de 30 ans ne survit pas à un déménagement : bâti < 1995
+      + mutation < 18 mois = la rénovation sanitaire est dans les trois premiers devis.
+    filtres:
+      - {cle: anciennete_mutation_mois, max: 18}
+      - {cle: periode_construction, max: 1995}
+    colonnes_export: [adresse, surface_m2, date_mutation, annee_construction, type_bien]
+    tri_defaut: mutation_recente
+
+  - slug: couvreurs-etancheite
+    nom: Couvreurs & étanchéité
+    categorie: renovation
+    ordre: 100
+    boost_catnat: true
+    description: >-
+      Toitures d'avant 1985 — et bandeau CATNAT après chaque épisode cyclonique.
+    argumentaire: >-
+      Une toiture de 40 ans à La Réunion a subi des dizaines d'alertes cycloniques.
+      Après un arrêté CATNAT « vent cyclonique », chaque commune touchée est un carnet
+      de commandes : le filtre se pré-coche tout seul.
+    filtres:
+      - {cle: periode_construction, max: 1985}
+      - {cle: catnat_recent, value: true, optionnel: true}
+    colonnes_export: [adresse, surface_m2, annee_construction, type_bien, emprise_batie_m2]
+    tri_defaut: age_bati_desc
+
+  - slug: menuiseries-cyclonique
+    nom: Menuiseries cycloniques
+    categorie: renovation
+    ordre: 110
+    boost_catnat: true
+    description: >-
+      Bâti d'avant 1990 (menuiseries pré-normes cycloniques) + boost CATNAT.
+    argumentaire: >-
+      Avant 1990, les menuiseries ne répondent pas aux exigences cycloniques
+      actuelles : chaque arrêté CATNAT vent/inondation réveille la demande de
+      remplacement — volets, baies, protections.
+    filtres:
+      - {cle: periode_construction, max: 1990}
+      - {cle: catnat_recent, value: true, optionnel: true}
+    colonnes_export: [adresse, surface_m2, annee_construction, type_bien]
+    tri_defaut: age_bati_desc
+
+  - slug: termites-charpente
+    nom: Traitement termites & charpente
+    categorie: renovation
+    ordre: 120
+    description: >-
+      Bâti d'avant 1980 — l'île entière est classée zone termites, le zonage n'est
+      donc pas un filtre : l'âge de la charpente fait le segment.
+    argumentaire: >-
+      La Réunion est intégralement classée zone d'infestation termites (arrêté
+      préfectoral L.133-5 CCH) : inutile de filtrer par zone, TOUT le bâti est exposé.
+      Une charpente d'avant 1980 non traitée est statistiquement le meilleur prospect.
+    filtres:
+      - {cle: periode_construction, max: 1980}
+    colonnes_export: [adresse, surface_m2, annee_construction, type_bien]
+    tri_defaut: age_bati_desc
+
+  - slug: anc-travaux
+    nom: Assainissement non collectif — travaux
+    categorie: renovation
+    ordre: 130
+    description: >-
+      Installations ANC vieillissantes ; le zonage ANC arrivera avec le mandat dédié.
+    argumentaire: >-
+      Une fosse d'avant 1995 est non conforme au contrôle SPANC dans l'immense
+      majorité des cas — la mise aux normes est une obligation qui se vend seule.
+      Le zonage ANC (à venir) rendra ce segment exhaustif.
+    filtres:
+      - {cle: zone_anc, value: true}          # grisé tant que ANC & Végétation n'a pas livré
+      - {cle: periode_construction, max: 1995}
+      - {cle: type_bien, values: [Maison]}
+    colonnes_export: [adresse, surface_m2, annee_construction]
+    tri_defaut: age_bati_desc
+
+  # ───────────────────────── Énergie ─────────────────────────
+  - slug: pv-residentiel
+    nom: Photovoltaïque résidentiel
+    categorie: energie
+    ordre: 140
+    description: >-
+      Maisons à fort gisement solaire SANS panneaux existants (mandat Habitat Solaire).
+    argumentaire: >-
+      Toiture bien exposée + pas de PV détecté + facture élevée : le trio qui fait
+      un rendez-vous solaire. Le score toiture arrive avec le mandat Habitat Solaire.
+    filtres:
+      - {cle: type_bien, values: [Maison]}
+      - {cle: score_solaire, min: 60}         # grisé tant qu'Habitat Solaire n'a pas livré
+      - {cle: pv_detecte, value: false}       # grisé tant que Détection Ortho n'a pas livré
+    colonnes_export: [adresse, surface_m2, type_bien, emprise_batie_m2]
+    tri_defaut: surface_desc
+
+  - slug: chauffe-eau-solaire
+    nom: Chauffe-eau solaire
+    categorie: energie
+    ordre: 150
+    description: >-
+      Maisons anciennes (ballon électrique probable) à bon gisement solaire.
+    argumentaire: >-
+      Une maison d'avant 2000 a un ballon électrique en fin de vie : le CESI est LE
+      remplacement réunionnais (obligation RTAA DOM dans le neuf — le parc ancien
+      reste à équiper).
+    filtres:
+      - {cle: type_bien, values: [Maison]}
+      - {cle: periode_construction, max: 2000}
+      - {cle: score_solaire, min: 40}         # grisé tant qu'Habitat Solaire n'a pas livré
+    colonnes_export: [adresse, surface_m2, annee_construction, type_bien]
+    tri_defaut: age_bati_desc
+
+  - slug: clim-pac
+    nom: Climatisation & pompes à chaleur
+    categorie: energie
+    ordre: 160
+    description: >-
+      Bâti ancien des zones chaudes — équipement/renouvellement clim.
+    argumentaire: >-
+      Un logement d'avant 2005 a une clim en fin de cycle ou pas de clim du tout ;
+      la facture estimée (mandat Habitat Solaire) affinera le ciblage par le coût.
+    filtres:
+      - {cle: periode_construction, max: 2005}
+      - {cle: facture_elec_estimee_eur, min: 1200}   # grisé tant qu'Habitat Solaire n'a pas livré
+    colonnes_export: [adresse, surface_m2, annee_construction, type_bien]
+    tri_defaut: age_bati_desc
+
+  # ───────────────────────── Sécurité ─────────────────────────
+  - slug: alarmes-telesurveillance
+    nom: Alarmes & télésurveillance
+    categorie: securite
+    ordre: 170
+    description: >-
+      Emménagements tout frais (mutation < 6 mois).
+    argumentaire: >-
+      Mutation < 6 mois = pic d'équipement alarme à l'emménagement : on protège le
+      nouveau foyer avant même d'avoir fini les cartons.
+    filtres:
+      - {cle: anciennete_mutation_mois, max: 6}
+    colonnes_export: [adresse, surface_m2, date_mutation, type_bien]
+    tri_defaut: mutation_recente
+
+  # ───────────────────────── Foncier bâti ─────────────────────────
+  - slug: extensions-surelevations
+    nom: Extensions & surélévations
+    categorie: foncier_bati
+    ordre: 180
+    description: >-
+      Parcelles bâties avec du droit résiduel (emprise OU hauteur) et une forte
+      probabilité de propriétaire-occupant.
+    argumentaire: >-
+      Il reste des droits à bâtir sous les pieds du propriétaire : ≥ 30 m² d'emprise
+      résiduelle OU une surélévation possible, chez un occupant-propriétaire — le
+      client type de l'extension. Potentiel indicatif estimé : les règles complètes
+      du PLU (retraits, prospects, servitudes) peuvent le réduire.
+    filtres:
+      - ou:
+          - {cle: emprise_residuelle_m2, min: 30}
+          - {cle: surelevation_possible, value: true}
+      - {cle: proprio_occupant_pct, min: 60}
+    colonnes_export: [adresse, surface_m2, emprise_batie_m2, emprise_residuelle_m2,
+                      surelevation_possible, confiance_residuel, proprio_occupant_pct]
+    tri_defaut: residuel_desc
