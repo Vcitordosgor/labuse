@@ -176,7 +176,17 @@ function FiltreRow({ f, defs, onChange, onRemove }: {
 // ───────────────────────── le query builder d'un preset ─────────────────────────
 function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: SegmentPreset; onBack: () => void }) {
   const defs = useMemo(() => new Map(home.filtres.map((f) => [f.cle, f])), [home.filtres])
-  const [filtres, setFiltres] = useState<SegmentFiltre[]>(() => JSON.parse(JSON.stringify(preset.filtres ?? [])))
+  // BOOST CATNAT : quand une commune est sous arrêté récent, le filtre arrive PRÉ-COCHÉ
+  // (décochable) sur les presets marqués — jamais seedé en dur (le segment tomberait à
+  // zéro entre deux événements).
+  const [filtres, setFiltres] = useState<SegmentFiltre[]>(() => {
+    const base: SegmentFiltre[] = JSON.parse(JSON.stringify(preset.filtres ?? []))
+    if (preset.boost_catnat && home.catnat.communes.length > 0
+        && !base.some((f) => f.cle === 'catnat_recent')) {
+      base.push({ cle: 'catnat_recent', value: true, optionnel: true })
+    }
+    return base
+  })
   const [tri, setTri] = useState<string | null>(preset.tri_defaut)
   const [offset, setOffset] = useState(0)
   const [ajout, setAjout] = useState('')

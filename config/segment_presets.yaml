@@ -170,9 +170,11 @@ presets:
       Une toiture de 40 ans à La Réunion a subi des dizaines d'alertes cycloniques.
       Après un arrêté CATNAT « vent cyclonique », chaque commune touchée est un carnet
       de commandes : le filtre se pré-coche tout seul.
+    # catnat_recent n'est PAS un filtre par défaut : c'est le BOOST (bandeau + filtre
+    # pré-coché par l'UI uniquement quand une commune est sous arrêté récent) — sinon
+    # le segment tomberait à zéro entre deux événements.
     filtres:
       - {cle: periode_construction, max: 1985}
-      - {cle: catnat_recent, value: true, optionnel: true}
     colonnes_export: [adresse, surface_m2, annee_construction, type_bien, emprise_batie_m2]
     tri_defaut: age_bati_desc
 
@@ -187,9 +189,8 @@ presets:
       Avant 1990, les menuiseries ne répondent pas aux exigences cycloniques
       actuelles : chaque arrêté CATNAT vent/inondation réveille la demande de
       remplacement — volets, baies, protections.
-    filtres:
+    filtres:                                  # même logique de boost que couvreurs
       - {cle: periode_construction, max: 1990}
-      - {cle: catnat_recent, value: true, optionnel: true}
     colonnes_export: [adresse, surface_m2, annee_construction, type_bien]
     tri_defaut: age_bati_desc
 

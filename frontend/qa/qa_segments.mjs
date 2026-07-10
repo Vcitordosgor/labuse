@@ -103,8 +103,8 @@ assert(n1 !== n2, `filtre à la volée : ${n1} → ${n2}`)
 
 // 6 — ADMIN : dupliquer le preset modifié → nouveau preset en galerie
 const slugQa = `qa-copie-${Date.now().toString(36)}`
-page.once('dialog', (d) => d.accept(slugQa))          // prompt slug
-page.once('dialog', (d) => d.accept('Copie QA'))       // prompt nom (chaîné après le 1er)
+const reponses = [slugQa, 'Copie QA']                  // prompt slug PUIS prompt nom
+page.on('dialog', (d) => d.accept(reponses.shift() ?? ''))
 await page.locator('[data-seg-dupliquer]').click()
 await page.waitForTimeout(1500)
 await page.locator('[data-seg-retour]').click()
