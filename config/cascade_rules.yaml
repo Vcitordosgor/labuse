@@ -281,9 +281,10 @@ layers:
     enabled: true
     params:
       spatial_kind: sol_pollue
-      proximite_m: 50
-      severity: faible
-      detail: "Site pollué recensé (BASOL/CASIAS) à proximité — étude de sol à prévoir."
+      proximite_m: 100          # LOT 2 data-gap : CASIAS sur la parcelle ou < 100 m (etait 50)
+      severity: faible          # CASIAS/instruction : malus leger
+      severity_sis: moyen       # LOT 2 : parcelle DANS un perimetre SIS -> malus Stage 1 moyen
+      detail: "Site pollué recensé (CASIAS/instruction) à proximité — étude de sol à prévoir, coût de dépollution potentiel."
   - name: cavite          # risque d'effondrement → flag prime, malus léger
     phase: 1
     enabled: true

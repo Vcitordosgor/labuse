@@ -69,8 +69,33 @@ class _NearestFlagLayer(Layer):
 
 @register
 class SolPollueLayer(_NearestFlagLayer):
+    """LOT 2 (data-gap) — deux règles distinctes, tracées séparément :
+      1. parcelle ∩ PÉRIMÈTRE SIS (subtype 'sis', MultiPolygon réglementaire) → SOFT_FLAG
+         MOYEN : coût de dépollution potentiel, étude de sol obligatoire à la mutation
+         (art. L.556-2 CE) — mention explicite en fiche via le détail du verdict ;
+      2. site CASIAS / instruction sur la parcelle ou à MOINS DE 100 m → SOFT_FLAG FAIBLE
+         (héritage vague B, rayon élargi 50 → 100 m par le mandat)."""
+
     name = "sol_pollue"
     src = SRC_SOLP
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, f"Couche {kind} non ingérée.", source=self.src)
+        # 1) périmètre SIS intersecté (prime sur la proximité simple)
+        sis = [i for i in ctx.intersections(parcel.id, kind)
+               if (i.subtype or "") == "sis" and i.coverage > 0]
+        if sis:
+            i = max(sis, key=lambda x: x.coverage)
+            return _trace(soft_flag(
+                self.name,
+                f"Parcelle dans un périmètre SIS ({i.name or 'secteur pollué'}) — coût de "
+                "dépollution potentiel, étude de sol obligatoire à la mutation (L.556-2 CE).",
+                Severity(params.get("severity_sis", "moyen")), source=self.src),
+                "spatial_layers", i.id)
+        # 2) site CASIAS / instruction ≤ proximite_m (100 m)
+        return super().evaluate(parcel, ctx, params)
 
 
 @register

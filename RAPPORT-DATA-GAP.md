@@ -66,3 +66,12 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
 - Fiche : bloc `dvf_parcelle` (dernière mutation + médianes secteur). CLI `labuse dvf-marche`.
 - **Aucun scoring** (mandat) : dormance = Score V ; « mutation > 20 ans » incalculable
   (millésimes 2014-2020 retirés). Millésime : géo-DVF 2021→2025 (pub. 04/2026).
+
+### LOT 2 — SIS + CASIAS : FAIT
+- Connecteur Géorisques étendu : sous-collection `/ssp.conclusions_sis` (périmètres SIS
+  MultiPolygon réglementaires) → couche `sol_pollue` subtype `sis`. Ré-ingestion 24 communes :
+  **4 SIS + 426 CASIAS + 56 instructions** (millésime : API Géorisques live 10/07/2026).
+- Règle de scoring (Stage 1, couche `sol_pollue`) : parcelle ∩ périmètre SIS → SOFT_FLAG
+  **moyen** (pénalité ×2), détail fiche « coût de dépollution potentiel, étude de sol
+  obligatoire à la mutation (L.556-2 CE) » ; site CASIAS/instruction ≤ **100 m** (élargi de
+  50 m) → SOFT_FLAG faible (×1). Verdicts cliquables (source_table/source_id).

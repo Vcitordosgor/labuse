@@ -73,12 +73,16 @@ class GeorisquesConnector(Connector):
     # ── Vague B : couches par commune (paginées) ──
 
     def sites_pollues(self, code_insee: str) -> Iterator[tuple[str, dict]]:
-        """Sites et sols pollués /ssp → (subtype, objet) pour casias (ex-BASIAS) et instructions
-        (ex-BASOL). Les deux sous-collections sont géolocalisées et nommées. [✓ live 974]."""
+        """Sites et sols pollués /ssp → (subtype, objet) pour casias (ex-BASIAS), instructions
+        (ex-BASOL) et conclusions_sis (SIS — Secteurs d'Information sur les Sols : PÉRIMÈTRES
+        MultiPolygon réglementaires, LOT 2 data-gap ; champs propres nom/id_sis/
+        statut_classification/superficie, vérifié live 97407). [✓ live 974]."""
         for it in self._paginate("ssp", code_insee, subkey="casias"):
             yield "casias", it
         for it in self._paginate("ssp", code_insee, subkey="instructions"):
             yield "instruction", it
+        for it in self._paginate("ssp", code_insee, subkey="conclusions_sis"):
+            yield "sis", it
 
     def cavites(self, code_insee: str) -> Iterator[dict]:
         """Cavités souterraines /cavites (naturelle, carrière, ouvrage civil…). [✓ live 974]."""

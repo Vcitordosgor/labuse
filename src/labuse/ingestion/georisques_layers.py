@@ -45,19 +45,25 @@ def _point(lon, lat) -> dict | None:
 # ───────────────────────── parsing (pur, sans réseau) ─────────────────────────
 
 def parse_sol_pollue(subtype: str, item: dict) -> dict | None:
-    """Objet /ssp (casias ou instruction) → dict couche. None si pas de géométrie (inexploitable
-    pour un croisement spatial ; on ne fabrique pas de point)."""
+    """Objet /ssp (casias, instruction ou sis) → dict couche. None si pas de géométrie
+    (inexploitable pour un croisement spatial ; on ne fabrique pas de point).
+
+    LOT 2 data-gap : sous-type 'sis' = Secteur d'Information sur les Sols, PÉRIMÈTRE
+    MultiPolygon réglementaire — champs propres (nom, id_sis, statut_classification,
+    superficie) mappés sur le même schéma d'attrs."""
     geom = item.get("geom")
     if not isinstance(geom, dict) or not geom.get("coordinates"):
         return None
     return {
         "kind": "sol_pollue", "subtype": subtype,
-        "name": item.get("nom_etablissement"),
+        "name": item.get("nom_etablissement") or item.get("nom"),
         "geometry": geom,
         "attrs": {
             "identifiant_ssp": item.get("identifiant_ssp"),
             "identifiant_casias": item.get("identifiant_casias"),
-            "statut": item.get("statut"),
+            "id_sis": item.get("id_sis"),
+            "statut": item.get("statut") or item.get("statut_classification"),
+            "superficie": item.get("superficie"),
             "adresse": item.get("adresse"),
             "code_insee": item.get("code_insee"),
             "fiche_risque": item.get("fiche_risque"),
