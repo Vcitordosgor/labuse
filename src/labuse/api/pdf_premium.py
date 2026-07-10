@@ -104,7 +104,7 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.cell(0, 6, "LA BUSE", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("inter", size=7.5)
     pdf.set_text_color(*TXT_DIM)
-    pdf.cell(0, 4, "Radar foncier premium — La Réunion · fiche parcelle (scoring v2, run q_v2)",
+    pdf.cell(0, 4, f"Radar foncier premium — La Réunion · fiche parcelle (scoring v2, run {RUN})",
              new_x="LMARGIN", new_y="NEXT")
     pdf.ln(3)
 

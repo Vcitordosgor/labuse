@@ -21,6 +21,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import models
+from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence
 from .ia import FILTER_SCHEMA, SECTEURS
 from .projet_schema import (CONTRAINTE_FLAG, FICHE_SCHEMA, M22_SURFACE_UNITE_M2,
                             TYPE_LABEL, clean_fiche, derive_sdp_besoin)
@@ -71,9 +72,9 @@ def projet_reperes(dimension: str = Query("secteur", pattern="^(secteur|commune)
     # opportunités par commune (les 3 statuts promus du run premium)
     opp = {r["commune"]: r["n"] for r in db.execute(text(
         "SELECT p.commune, count(*) n FROM parcels p "
-        "JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = 'q_v2' "
+        "JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :runref "
         " AND d.matrice_statut IN ('chaude','a_surveiller','a_creuser') "
-        "GROUP BY p.commune")).mappings()}
+        "GROUP BY p.commune"), {"runref": RUN}).mappings()}
     # prix médian bâti DVF (€/m² habitable) — bornes anti-aberration comme l'affichage marché
     dvf = {r["commune"]: int(r["m"]) for r in db.execute(text(
         "SELECT commune, percentile_cont(0.5) WITHIN GROUP ("
@@ -256,7 +257,7 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
         source = "m22"
     else:
         from .app import _q_v2_list, _q_v2_where
-        where, params = _q_v2_where("q_v2", ",".join(filtres.get("statuts") or []) or None,
+        where, params = _q_v2_where(RUN, ",".join(filtres.get("statuts") or []) or None,
                                     filtres.get("scoreMin"), filtres.get("surfaceMin"),
                                     filtres.get("surfaceMax"), filtres.get("sdpMin"),
                                     bool(filtres.get("evenement")), bool(filtres.get("vueMer")),
@@ -265,12 +266,12 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
                                     ",".join(filtres.get("flagsExclus") or []) or None)
         n = db.execute(text(
             "SELECT count(*) FROM parcels p JOIN dryrun_parcel_evaluations d "
-            "ON d.parcel_id = p.id AND d.run_label = 'q_v2' "
+            "ON d.parcel_id = p.id AND d.run_label = :runref "
             "AND d.matrice_statut IN ('chaude','a_surveiller','a_creuser')" + where),
-            params).scalar() or 0
-        top = _q_v2_list(db, None, lim, 0, run_label="q_v2",
+            {**params, "runref": RUN}).scalar() or 0
+        top = _q_v2_list(db, None, lim, 0, run_label=RUN,
                          extra_where=where, extra_params=params)
-        source = "q_v2"
+        source = RUN
 
     top_out = [{
         "idu": it["idu"], "commune": it["commune"],

@@ -32,7 +32,7 @@ from sqlalchemy.orm import Session
 from .. import config, models, prospection
 from ..db import session_scope
 from ..enums import FeedbackVerdict
-from ..scoring.score_v_constants import V_BAND_LABELS, V_BRULANTE_THRESHOLD
+from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS, V_BRULANTE_THRESHOLD
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
@@ -466,7 +466,7 @@ def list_parcels(commune: str | None = None,
                  db: Session = Depends(get_db)) -> list[dict]:
     """Liste PAGINÉE (commune OU île entière) avec le dernier verdict.
 
-    `source='q_v2'` → panneau résultats (matrice premium, trié ÉVÉNEMENT d'abord puis score).
+    `source=<run q_v*>` (défaut Q_A_RUN_LABEL) → panneau résultats (matrice premium, trié ÉVÉNEMENT d'abord puis score).
     Les paramètres de filtre miroir des chips (statuts CSV, score_min, surface, sdp_min,
     evenement, vue_mer, flags CSV) servent le mode « Toute l'île ».
     Score V : `v_bands` (CSV fort/present/faible/aucun/na), `v_signal` (CSV codes §5.3),
@@ -475,7 +475,7 @@ def list_parcels(commune: str | None = None,
     safe-bugfix #2 : `limit` BORNÉ (défaut 100, max 1000) + `offset`, et le dernier `eval`
     récupéré en UNE seule requête LATERAL (plus de N+1 qui chargeait toute la commune et
     bloquait l'endpoint > 45 s)."""
-    if source and source.startswith("q_v2"):
+    if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
                                           v_bands, v_signal, brulantes)
@@ -503,7 +503,7 @@ def list_parcels(commune: str | None = None,
 
 
 @app.get("/parcels/export.csv")
-def export_parcels_csv(commune: str | None = None, source: str = "q_v2",
+def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                        statuts: str | None = None, score_min: int | None = None,
                        surface_min: int | None = None, surface_max: int | None = None,
                        sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
@@ -546,7 +546,7 @@ def export_parcels_csv(commune: str | None = None, source: str = "q_v2",
 
 
 @app.get("/communes")
-def list_communes(source: str = "q_v2", db: Session = Depends(get_db)) -> list[dict]:
+def list_communes(source: str = Q_A_RUN_LABEL, db: Session = Depends(get_db)) -> list[dict]:
     """Les 24 communes pour le SÉLECTEUR : nom, INSEE, volumétrie, chaudes, bbox (recadrage carte).
     Trié par nombre de chaudes décroissant (l'ordre utile au prospecteur). Cache 5 min."""
     def _compute() -> list[dict]:
@@ -630,7 +630,7 @@ def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
 
 @app.get("/parcels/search")
 def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None,
-                   source: str = "q_v2", limit: int = Query(10, ge=1, le=50),
+                   source: str = Q_A_RUN_LABEL, limit: int = Query(10, ge=1, le=50),
                    db: Session = Depends(get_db)) -> list[dict]:
     """Recherche IDU/section pour l'omnibox en mode île (le client n'a plus les features en
     mémoire). Matche la fin d'IDU (section+numéro, ex. « AC0253 ») ou l'IDU complet."""
@@ -648,7 +648,7 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
 
 
 @app.get("/stats/entonnoir")
-def stats_entonnoir(commune: str | None = None, source: str = "q_v2",
+def stats_entonnoir(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                     db: Session = Depends(get_db)) -> dict:
     """L'ENTONNOIR PAR MOTIF (C4, revue Vic) : « LABUSE a analysé N parcelles et trié pour
     vous » — décomposition SQL-exacte des écartées par garde (matérialisée post-matrice ;
@@ -677,10 +677,10 @@ def stats(commune: str | None = None, source: str | None = None,
           db: Session = Depends(get_db)) -> dict:
     """Cartouches du dashboard : volumétrie + statuts + scores (dernière évaluation).
 
-    `source='q_v2'` → comptes de la matrice premium (chaude/à surveiller/à creuser/écartée),
+    `source=<run q_v*>` (défaut Q_A_RUN_LABEL) → comptes de la matrice premium (chaude/à surveiller/à creuser/écartée),
     filtrables (mêmes paramètres que /parcels — compteurs SQL-exacts du mode île).
     Résultat mémorisé par commune+filtres (cache mémoire 30 s, #7) : sortie identique au calcul."""
-    if source and source.startswith("q_v2"):
+    if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
                                           v_bands, v_signal, brulantes)
@@ -733,10 +733,10 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                     source: str | None = None, db: Session = Depends(get_db)) -> dict:
     """Parcelles (géométrie simplifiée 4326) + verdict, pour la carte colorée.
 
-    `source='q_v2'` (Socle V1) → lit le scoring premium v2 dans `dryrun_parcel_evaluations`
+    `source=<run q_v*>` (défaut Q_A_RUN_LABEL) (Socle V1) → lit le scoring premium v2 dans `dryrun_parcel_evaluations`
     (matrice chaude/à surveiller/à creuser/écartée + Q/A + complétude + événement rouge),
     la SOURCE DE VÉRITÉ. Sans `source`, comportement historique (parcel_evaluations live)."""
-    if source and source.startswith("q_v2"):
+    if source and source.startswith("q_v"):
         return _q_v2_geojson(db, commune, limit, run_label=source)
     rows = db.execute(
         text(
@@ -790,7 +790,7 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
 _Q_V2_STATUTS = ("chaude", "a_surveiller", "a_creuser", "ecartee", "exclue")
 
 
-def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str = "q_v2") -> dict:
+def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str = Q_A_RUN_LABEL) -> dict:
     """Parcelles + matrice premium v2 (dryrun_parcel_evaluations). `status` = matrice_statut ;
     Q/A + complétude + événement rouge exposés (exigences #1/#2/#4). Une parcelle exclue à
     l'étage 0 apparaît en `ecartee` ; les `evenement='rouge'` (BODACC ouvert) sont marquées."""
@@ -860,7 +860,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
     return {"type": "FeatureCollection", "features": feats}
 
 
-def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str = "q_v2",
+def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str = Q_A_RUN_LABEL,
                extra_where: str = "", extra_params: dict | None = None,
                sort: str | None = None) -> list[dict]:
     """Liste triée ÉVÉNEMENT d'abord puis score (Q+A) — même tri métier que le front. `extra_where`
@@ -914,7 +914,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     } for r in rows]
 
 
-def _q_v2_stats(db: Session, commune: str | None, run_label: str = "q_v2",
+def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL,
                 extra_where: str = "", extra_params: dict | None = None) -> dict:
     """Comptes par statut matrice (en-tête + barre de répartition). « N chaudes · M à surveiller ».
     `extra_where` = filtres chips en SQL (mode île : les compteurs restent SQL-exacts filtrés).
@@ -984,7 +984,7 @@ _ONGLET = {
 _LAYER_ONGLET = {layer: onglet for onglet, layers in _ONGLET.items() for layer in layers}
 
 
-def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
+def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
     head = db.execute(text(
@@ -1135,14 +1135,14 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
 
 @app.get("/parcels/{idu}")
 def parcel_fiche(idu: str, source: str | None = None, db: Session = Depends(get_db)) -> dict:
-    """Fiche « Tout ce que LA BUSE a trouvé » (§8). `source='q_v2'` → fiche premium (dryrun)."""
-    if source and source.startswith("q_v2"):
+    """Fiche « Tout ce que LA BUSE a trouvé » (§8). `source=<run q_v*>` (défaut Q_A_RUN_LABEL) → fiche premium (dryrun)."""
+    if source and source.startswith("q_v"):
         return _q_v2_fiche(db, idu, run_label=source)
     return _build_fiche(db, idu)
 
 
 @app.get("/parcels/{idu}/export.pdf")
-def parcel_export_pdf(idu: str, source: str = "q_v2",
+def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
                       cout_construction_m2: float | None = Query(None, ge=500, le=8000),
                       marge_frais_pct: float | None = Query(None, ge=0, le=60),
                       prix_demande_eur: float | None = Query(None, ge=0, le=500_000_000),
@@ -2083,7 +2083,7 @@ def _projet_ref(db: Session, projet_id: int | None) -> dict | None:
     return {"id": pr.id, "nom": pr.nom} if pr else None
 
 
-def _premium_head(db: Session, parcel_id: int, run_label: str = "q_v2") -> dict | None:
+def _premium_head(db: Session, parcel_id: int, run_label: str = Q_A_RUN_LABEL) -> dict | None:
     r = db.execute(text(
         "SELECT matrice_statut, q_score, a_score, completeness_score "
         "FROM dryrun_parcel_evaluations WHERE run_label = :run AND parcel_id = :pid"),

@@ -15,7 +15,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/events", tags=["events"])
-RUN = "q_v2"
+from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
 
 
 def get_db():

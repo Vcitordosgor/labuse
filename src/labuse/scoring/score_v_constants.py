@@ -21,8 +21,10 @@ from __future__ import annotations
 V_BRULANTE_THRESHOLD = 34
 BRULANTE_GUARDRAIL = (30, 120)
 
-# Run de référence de la matrice Q×A (source de vérité Socle V1 — cf. api SOURCE='q_v2').
-Q_A_RUN_LABEL = "q_v2"
+# Run de référence de la matrice Q×A — SOURCE DE VÉRITÉ UNIQUE (API, vue Brûlantes,
+# frontend SOURCE). Bascule q_v2 → q_v3_datagap (mandat data-gap + décision « le signal
+# de zone ne bascule jamais seul », 10/07/2026).
+Q_A_RUN_LABEL = "q_v3_datagap"
 
 # ── Bandes (décision D2) ───────────────────────────────────────────────────────────────────
 # (borne basse incluse, code) — évaluées dans l'ordre. V NULL → 'na'.

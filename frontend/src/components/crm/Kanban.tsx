@@ -74,7 +74,7 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
             </span>
           </>
         )}
-        {!prem && <span className="text-[9.5px] text-txt-dim">hors run q_v2</span>}
+        {!prem && <span className="text-[9.5px] text-txt-dim">hors run de référence</span>}
         <span className="ml-auto text-[9.5px] text-txt-dim">{e.priority}</span>
       </div>
     </div>
