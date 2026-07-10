@@ -162,3 +162,15 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
   287 sans rattachement). Lots, période de construction, syndic (SIRET), mandat en cours.
 - **Pas de scoring** (mandat, cible MdB) : fiche parcelle (bloc `coproprietes`) + table
   filtrable (index parcelle_idu / insee). CLI `labuse ingest-rnic --csv <fichier national>`.
+
+### LOT 11 — Pack marché : FAIT (RPLS + Filosofi ajoutés ; SRU/loyers/INSEE déjà présents)
+- **RPLS 01/01/2025** (SDES/Dido, filtré serveur 974) → `rpls_commune` : 24 communes,
+  **87 553 logements sociaux** (nb, année construction médiane, % QPV, surface moyenne).
+  Script reproductible `scripts/ingest_rpls.py`.
+- **Filosofi 2021 carreaux 200 m** (INSEE — le millésime 2021 couvre bien La Réunion,
+  EPSG:2975) → `filosofi_carreaux_200m` : **14 773 carreaux** (ind, ménages, pauvreté,
+  propriétaires, niveaux de vie, âges, logements par époque).
+- **Déjà présents (audit)** : SRU 2025 (dont 2 communes carencées), carte des loyers DHUP
+  2025, INSEE logement RP 2023, Obsimmo — rien re-fait.
+- Fiche : bloc `marche_secteur` (carreau Filosofi au centroïde + RPLS commune). Pas de
+  scoring parcelle (mandat). Alimentera module bailleur + calculette de charge foncière.

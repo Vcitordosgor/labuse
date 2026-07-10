@@ -1058,6 +1058,27 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
         "       periode_construction, syndic_type, syndic_nom, rattachement "
         "FROM rnic_coproprietes WHERE parcelle_idu = :idu ORDER BY nb_lots_total DESC NULLS LAST"),
         {"idu": idu}).mappings().all()]
+    # LOT 11 (data-gap) : contexte marché du secteur — carreau Filosofi 2021 (200 m, INSEE)
+    # au centroïde + parc social RPLS de la commune. Contexte fiche, hors scoring.
+    carreau = db.execute(text(
+        """SELECT f.ind, f.men, f.men_pauv, f.men_prop,
+                  round((f.ind_snv / NULLIF(f.ind, 0))::numeric) AS nivvie_moyen_eur
+           FROM filosofi_carreaux_200m f JOIN parcels p2 ON p2.idu = :idu
+           WHERE ST_Contains(f.geom, ST_Transform(p2.centroid, 2975)) LIMIT 1"""),
+        {"idu": idu}).mappings().first()
+    rpls = db.execute(text(
+        "SELECT nb_logements, construct_median, pct_qpv FROM rpls_commune "
+        "WHERE insee = substring(:idu FROM 1 FOR 5)"), {"idu": idu}).mappings().first()
+    marche_secteur = None
+    if carreau or rpls:
+        marche_secteur = {
+            "filosofi_200m": ({**dict(carreau),
+                               "taux_pauvrete_pct": round(100 * carreau["men_pauv"] / carreau["men"])
+                               if carreau["men"] else None,
+                               "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)"}
+                              if carreau else None),
+            "rpls_commune": ({**dict(rpls), "millesime": "RPLS 01/01/2025"} if rpls else None),
+        }
     # Score V (Vendabilité, Stage 3 additif) : score + panneau « Pourquoi ce score » (signaux
     # JSONB §5.4, lus tels quels) + badges spéciaux (public/bailleur/copro/partiel).
     vrow = db.execute(text(
@@ -1108,6 +1129,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
         "dvf_parcelle": dvf_parcelle,
         "terrain": dict(terrain) if terrain else None,
         "coproprietes": copros,
+        "marche_secteur": marche_secteur,
     }
 
 
