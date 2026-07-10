@@ -1,13 +1,34 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats } from '../../lib/api'
+import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
-import { completudeColor, STATUT_META } from '../../lib/status'
+import { BRULANTE_COLOR, completudeColor, STATUT_META, vBandColor } from '../../lib/status'
 import type { Statut } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
 const fmt = (n: number) => n.toLocaleString('fr-FR')
+
+// Badge V (Vendabilité) — pastille + valeur, style par bande, 🔥 pour Brûlante (chaude ∧ V≥seuil).
+// V NULL (public/bailleur) → badge spécial « démarche dédiée » à la place du score.
+const OWNER_BADGE: Record<string, { label: string; title: string }> = {
+  public: { label: 'PUBLIC', title: 'Foncier public — démarche dédiée (V non applicable)' },
+  bailleur: { label: 'BAILLEUR', title: 'Bailleur social — V non applicable' },
+  copro: { label: 'COPRO', title: 'Copropriété — acquisition complexe (V calculé)' },
+}
+
+export function VBadge({ v, band, brulante }: { v: number | null | undefined; band: string | null | undefined; brulante?: boolean }) {
+  if (v == null) return null
+  const color = brulante ? BRULANTE_COLOR : vBandColor(band as never)
+  return (
+    <span className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold"
+      style={{ background: `${color}1f`, color }}
+      title={`Vendabilité V ${v}/100${brulante ? ' — 🔥 BRÛLANTE (chaude Q×A + signaux vendeur forts)' : ''} — signaux publics « raisons de vendre » (panneau fiche)`}>
+      {brulante && <span aria-hidden>🔥</span>}
+      V {v}
+    </span>
+  )
+}
 
 // Mini-anneau de complétude — exigence #1 : le score ne s'affiche JAMAIS seul.
 function CompletudeRing({ value }: { value: number }) {
@@ -55,6 +76,13 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
             </span>
           )}
           {p.vue_mer === 'oui' && <span className="shrink-0 text-[10px] text-[#7DE8E0]" title="Vue mer dégagée">◠</span>}
+          <VBadge v={p.v_score} band={p.v_band} brulante={p.brulante} />
+          {p.owner_type && OWNER_BADGE[p.owner_type] && (
+            <span className="shrink-0 rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim"
+              title={OWNER_BADGE[p.owner_type].title}>
+              {OWNER_BADGE[p.owner_type].label}
+            </span>
+          )}
         </div>
         <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
@@ -165,9 +193,11 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
 const CAP = 200
 
 export function ResultsSection() {
-  const { filters, query, zone, resetFilters, commune } = useApp()
+  const { filters, query, zone, resetFilters, commune, setFilter } = useApp()
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   const [showAll, setShowAll] = useState(false)
+  // Tri par défaut de la vue chaudes : V DÉCROISSANT (Score V, Phase 4 §4) — débrayable.
+  const [sortV, setSortV] = useState(true)
   // compteurs par statut sous filtres de PÉRIMÈTRE (jamais le filtre statut lui-même)
   const scopeOnly = useMemo(() => ({ ...filters, statuts: [] as Statut[] }), [filters])
   const stats = useQuery({
@@ -176,8 +206,8 @@ export function ResultsSection() {
   })
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   const serverList = useQuery({
-    queryKey: ['results', commune, filters],
-    queryFn: () => getResults(filters),
+    queryKey: ['results', commune, filters, sortV],
+    queryFn: () => getResults(filters, 500, sortV),
     enabled: ile,
   })
 
@@ -221,11 +251,16 @@ export function ResultsSection() {
         && (PROMUES.includes(p.status) || filters.statuts.includes(p.status)))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
       .sort((a, b) => {
+        // Score V : tri par défaut V décroissant (NULL en queue) — débrayable vers le tri métier.
+        if (sortV) {
+          const dv = (b.v_score ?? -1) - (a.v_score ?? -1)
+          if (dv !== 0) return dv
+        }
         // métier : l'ÉVÉNEMENT crée l'urgence de la semaine → toujours en tête, puis le score
         const ev = Number(b.evenement === 'rouge') - Number(a.evenement === 'rouge')
         return ev !== 0 ? ev : b.q_score + b.a_score - (a.q_score + a.a_score)
       })
-  }, [ile, serverList.data, props, filters, zone, qNorm])
+  }, [ile, serverList.data, props, filters, zone, qNorm, sortV])
   const shown = showAll ? list : list.slice(0, CAP)
 
   const loading = ile ? serverList.isLoading : geo.isLoading
@@ -246,7 +281,10 @@ export function ResultsSection() {
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5">
       <div className="flex shrink-0 items-baseline justify-between">
         <p className="font-mono text-[11px] tracking-widest text-txt-dim">RÉSULTATS</p>
-        <span className="text-[11px] text-txt-mut">triés par score</span>
+        <button onClick={() => setSortV((v) => !v)} className="text-[11px] text-txt-mut hover:text-txt"
+          title="Basculer le tri : Vendabilité (V) décroissante ↔ score Q+A">
+          triés par {sortV ? 'V (vendabilité) ▾' : 'score'}
+        </button>
       </div>
 
       {communeNote && (
@@ -261,6 +299,15 @@ export function ResultsSection() {
         <span className="font-medium text-st-creuser">{fmt(counts.a_creuser)}</span> à creuser
         {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
       </p>
+      {(stats.data?.brulantes ?? 0) > 0 && (
+        <button onClick={() => setFilter('brulantes', !filters.brulantes)}
+          className={`mt-1 flex w-fit shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
+            filters.brulantes ? 'border-[#FF6B35] text-[#FF8A50]' : 'border-line-2 text-txt-mut hover:text-txt'}`}
+          title="Brûlantes 🔥 = chaudes de la matrice Q×A DONT le propriétaire cumule des signaux publics de vente (V ≥ 50) — cliquer pour filtrer">
+          <span aria-hidden>🔥</span>
+          <span className="font-medium" style={{ color: '#FF8A50' }}>{fmt(stats.data?.brulantes ?? 0)}</span> brûlantes
+        </button>
+      )}
       {stats.data?.dossiers_chaudes != null && (stats.data.chaude > 0) && (
         <p className="mt-1 shrink-0 text-[11px] text-txt-dim" title="La vraie unité de prospection : un propriétaire = un dossier, quel que soit son nombre de parcelles. Identification par SIREN (personnes morales) — les personnes physiques n'ont pas d'identité en base (doctrine).">
           soit <span className="font-medium text-txt">{fmt(stats.data.dossiers_chaudes)}</span> dossier{stats.data.dossiers_chaudes > 1 ? 's' : ''} propriétaire identifié{stats.data.dossiers_chaudes > 1 ? 's' : ''}
@@ -299,16 +346,23 @@ export function ResultsSection() {
         {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}
       </div>
 
-      <div className="flex shrink-0 items-center justify-between border-t border-line py-3">
-        <span className="text-[11px] text-txt-dim">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-t border-line py-3">
+        <span className="min-w-0 text-[11px] text-txt-dim">
           {fmt(shown.length)} visibles ici{list.length > shown.length ? ` / ${fmt(list.length)}` : ''}
           {ile && (serverList.data?.length ?? 0) >= 500 && ' · 500 premiers (île) — affinez les filtres'}
         </span>
-        {list.length > CAP && (
-          <button onClick={() => setShowAll((v) => !v)} className="text-xs text-mint hover:underline">
-            {showAll ? 'Réduire' : 'Tout voir →'}
-          </button>
-        )}
+        <span className="flex shrink-0 items-center gap-2">
+          <a href={csvExportUrl(filters, sortV)} download
+            className="text-[11px] text-txt-mut hover:text-mint"
+            title="Exporter la liste filtrée en CSV (colonnes v_score, v_band, top_signaux incluses)">
+            ⬇ CSV
+          </a>
+          {list.length > CAP && (
+            <button onClick={() => setShowAll((v) => !v)} className="text-xs text-mint hover:underline">
+              {showAll ? 'Réduire' : 'Tout voir →'}
+            </button>
+          )}
+        </span>
       </div>
     </div>
   )

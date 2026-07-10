@@ -28,11 +28,15 @@ export interface Filters {
   flags: string[]            // flags actifs requis (au moins un)
   flagsExclus: string[]      // copilote-projet : contraintes RÉDHIBITOIRES (aucun de ces flags)
   communes: string[]         // R2 : secteur du cadreur (multi-communes, mode île)
+  vBands: string[]           // Score V : bandes (fort/present/faible/aucun/na) — au moins une
+  vSignals: string[]         // Score V : codes signaux §5.3 (au moins un présent)
+  brulantes: boolean         // Score V : tier 🔥 (chaude Q×A ∧ V ≥ seuil)
 }
 
 export const EMPTY_FILTERS: Filters = {
   statuts: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
   evenement: false, vueMer: false, flags: [], flagsExclus: [], communes: [],
+  vBands: [], vSignals: [], brulantes: false,
 }
 
 // brouillon d'un projet issu de l'entretien : la fiche + la dérivation moteur (filtres, SDP

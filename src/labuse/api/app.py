@@ -32,6 +32,7 @@ from sqlalchemy.orm import Session
 from .. import config, models, prospection
 from ..db import session_scope
 from ..enums import FeedbackVerdict
+from ..scoring.score_v_constants import V_BAND_LABELS, V_BRULANTE_THRESHOLD
 
 WEB_DIR = Path(__file__).resolve().parent / "web"
 
@@ -391,7 +392,9 @@ def _latest_eval(db: Session, parcel_id: int) -> models.ParcelEvaluation | None:
 def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 surface_min: int | None, surface_max: int | None, sdp_min: int | None,
                 evenement: bool, vue_mer: bool, flags: str | None,
-                communes: str | None = None, flags_exclus: str | None = None) -> tuple[str, dict]:
+                communes: str | None = None, flags_exclus: str | None = None,
+                v_bands: str | None = None, v_signal: str | None = None,
+                brulantes: bool = False) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front)."""
@@ -432,6 +435,19 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                      " AND c2.run_label = :runf AND c2.layer_name = ANY(:f_flags_x)"
                      " AND (c2.result = 'SOFT_FLAG' OR (c2.layer_name = 'abf' AND c2.result = 'UNKNOWN')))")
         params["f_flags_x"] = [f.strip() for f in flags_exclus.split(",") if f.strip()]
+    # ── Score V (Vendabilité, Stage 3) : bandes, signal individuel, tier Brûlante ──
+    if v_bands:
+        conds.append("EXISTS (SELECT 1 FROM parcel_v_score vs0 WHERE vs0.parcelle_id = p.idu"
+                     " AND vs0.v_band = ANY(:f_vbands))")
+        params["f_vbands"] = [b.strip() for b in v_bands.split(",") if b.strip()]
+    if v_signal:
+        # signaux retenus (JSONB §5.4) : au moins UN des codes demandés présent
+        conds.append("EXISTS (SELECT 1 FROM parcel_v_score vs1 WHERE vs1.parcelle_id = p.idu"
+                     " AND EXISTS (SELECT 1 FROM jsonb_array_elements(vs1.signals) s0"
+                     "             WHERE s0->>'code' = ANY(:f_vsig)))")
+        params["f_vsig"] = [c.strip() for c in v_signal.split(",") if c.strip()]
+    if brulantes:  # tier combiné 🔥 — vue DYNAMIQUE (suit l'évolution des chaudes)
+        conds.append("EXISTS (SELECT 1 FROM v_parcelles_brulantes vb WHERE vb.idu = p.idu)")
     return (" AND " + " AND ".join(conds)) if conds else "", params
 
 
@@ -444,21 +460,27 @@ def list_parcels(commune: str | None = None,
                  sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
                  flags: str | None = None, communes: str | None = None,
                  flags_exclus: str | None = None,
+                 v_bands: str | None = None, v_signal: str | None = None,
+                 brulantes: bool = False,
+                 sort: str | None = Query(None, pattern="^(v)$"),
                  db: Session = Depends(get_db)) -> list[dict]:
     """Liste PAGINÉE (commune OU île entière) avec le dernier verdict.
 
     `source='q_v2'` → panneau résultats (matrice premium, trié ÉVÉNEMENT d'abord puis score).
     Les paramètres de filtre miroir des chips (statuts CSV, score_min, surface, sdp_min,
     evenement, vue_mer, flags CSV) servent le mode « Toute l'île ».
+    Score V : `v_bands` (CSV fort/present/faible/aucun/na), `v_signal` (CSV codes §5.3),
+    `brulantes` (tier 🔥), `sort='v'` (V décroissant — tri par défaut de la vue chaudes).
 
     safe-bugfix #2 : `limit` BORNÉ (défaut 100, max 1000) + `offset`, et le dernier `eval`
     récupéré en UNE seule requête LATERAL (plus de N+1 qui chargeait toute la commune et
     bloquait l'endpoint > 45 s)."""
     if source and source.startswith("q_v2"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, vue_mer, flags, communes, flags_exclus)
+                                          sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
+                                          v_bands, v_signal, brulantes)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
-                          extra_where=extra, extra_params=extra_params)
+                          extra_where=extra, extra_params=extra_params, sort=sort)
     rows = db.execute(text(
         """
         SELECT p.idu, p.commune, p.surface_m2,
@@ -478,6 +500,49 @@ def list_parcels(commune: str | None = None,
         "status": r["status"], "opportunity_score": r["opportunity_score"],
         "completeness_score": r["completeness_score"],
     } for r in rows]
+
+
+@app.get("/parcels/export.csv")
+def export_parcels_csv(commune: str | None = None, source: str = "q_v2",
+                       statuts: str | None = None, score_min: int | None = None,
+                       surface_min: int | None = None, surface_max: int | None = None,
+                       sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
+                       flags: str | None = None, communes: str | None = None,
+                       flags_exclus: str | None = None,
+                       v_bands: str | None = None, v_signal: str | None = None,
+                       brulantes: bool = False,
+                       sort: str | None = Query(None, pattern="^(v)$"),
+                       limit: int = Query(1000, ge=1, le=5000),
+                       db: Session = Depends(get_db)) -> Response:
+    """Export CSV de la liste (mêmes filtres que /parcels) — colonnes Score V incluses :
+    `v_score`, `v_band`, `top_signaux` (labels des 3 signaux les plus forts), `brulante`.
+    ⚠ Doit rester déclarée AVANT /parcels/{idu} (ordre de résolution des routes)."""
+    import csv as _csv
+    import io as _io
+
+    extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
+                                      sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
+                                      v_bands, v_signal, brulantes)
+    items = _q_v2_list(db, commune, limit, 0, run_label=source,
+                       extra_where=extra, extra_params=extra_params, sort=sort)
+    tops = {r[0]: r[1] for r in db.execute(text(
+        "SELECT parcelle_id, (SELECT string_agg(s->>'label', ' | ') FROM ("
+        "  SELECT s FROM jsonb_array_elements(signals) s "
+        "  ORDER BY (s->>'points')::int DESC LIMIT 3) t(s)) "
+        "FROM parcel_v_score WHERE parcelle_id = ANY(:idus)"),
+        {"idus": [it["idu"] for it in items]}).all()}
+    buf = _io.StringIO()
+    w = _csv.writer(buf)
+    w.writerow(["idu", "commune", "surface_m2", "statut", "q_score", "a_score",
+                "completeness", "proprio", "v_score", "v_band", "brulante", "top_signaux"])
+    for it in items:
+        w.writerow([it["idu"], it["commune"], it["surface_m2"], it["status"], it["q_score"],
+                    it["a_score"], it["completeness_score"], it["proprio"] or "",
+                    it["v_score"] if it["v_score"] is not None else "",
+                    it["v_band"] or "", "oui" if it["brulante"] else "",
+                    tops.get(it["idu"]) or ""])
+    return Response(buf.getvalue(), media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="labuse_parcelles.csv"'})
 
 
 @app.get("/communes")
@@ -607,6 +672,8 @@ def stats(commune: str | None = None, source: str | None = None,
           sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
           flags: str | None = None, communes: str | None = None,
           flags_exclus: str | None = None,
+          v_bands: str | None = None, v_signal: str | None = None,
+          brulantes: bool = False,
           db: Session = Depends(get_db)) -> dict:
     """Cartouches du dashboard : volumétrie + statuts + scores (dernière évaluation).
 
@@ -615,9 +682,11 @@ def stats(commune: str | None = None, source: str | None = None,
     Résultat mémorisé par commune+filtres (cache mémoire 30 s, #7) : sortie identique au calcul."""
     if source and source.startswith("q_v2"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, vue_mer, flags, communes, flags_exclus)
+                                          sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
+                                          v_bands, v_signal, brulantes)
         key = ("stats_qv2", source, commune, statuts, score_min, surface_min, surface_max,
-               sdp_min, evenement, vue_mer, flags, communes, flags_exclus)
+               sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
+               v_bands, v_signal, brulantes)
         return _mem_cached(key, 30.0, lambda: _q_v2_stats(
             db, commune, run_label=source, extra_where=extra, extra_params=extra_params))
 
@@ -732,9 +801,13 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
                d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
                (ev.parcel_id IS NOT NULL) AS evenement_rouge, fl.flags,
-               cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio
+               cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
+               vs.v_score, vs.v_band, vs.owner_type,
+               (d.matrice_statut = 'chaude' AND vs.v_score >= :vth) AS brulante,
+               (SELECT array_agg(s0->>'code') FROM jsonb_array_elements(vs.signals) s0) AS v_sig
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
         LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
         LEFT JOIN (SELECT pm2.siren, count(*) AS n, max(pm2.denomination) AS denom
                    FROM dryrun_parcel_evaluations d2
@@ -756,7 +829,8 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
           AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
         LIMIT :lim
-        """), {"c": commune, "run": run_label, "lim": limit, "minsurf": MIN_DISPLAY_SURFACE_M2}
+        """), {"c": commune, "run": run_label, "lim": limit, "minsurf": MIN_DISPLAY_SURFACE_M2,
+               "vth": V_BRULANTE_THRESHOLD}
     ).mappings().all()
     feats = [{
         "type": "Feature",
@@ -776,26 +850,39 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
             "flags": r["flags"] or [],
             "cluster": int(r["cluster"]) if r["cluster"] else None,
             "proprio": r["proprio"],
+            "v_score": r["v_score"],
+            "v_band": r["v_band"],
+            "owner_type": r["owner_type"],
+            "brulante": bool(r["brulante"]),
+            "v_sig": r["v_sig"] or [],
         },
     } for r in rows if r["g"]]
     return {"type": "FeatureCollection", "features": feats}
 
 
 def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_label: str = "q_v2",
-               extra_where: str = "", extra_params: dict | None = None) -> list[dict]:
+               extra_where: str = "", extra_params: dict | None = None,
+               sort: str | None = None) -> list[dict]:
     """Liste triée ÉVÉNEMENT d'abord puis score (Q+A) — même tri métier que le front. `extra_where`
-    = fragment de _q_v2_where (mode île : filtres SQL)."""
+    = fragment de _q_v2_where (mode île : filtres SQL). `sort='v'` : V décroissant (NULLS LAST)
+    — tri par défaut de la vue chaudes (Score V, Phase 3)."""
+    order = ("vs.v_score DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC, "
+             "(d.q_score + d.a_score) DESC" if sort == "v" else
+             "(ev.parcel_id IS NOT NULL) DESC, (d.q_score + d.a_score) DESC, d.q_score DESC")
     rows = db.execute(text(
         f"""
         SELECT p.idu, p.commune, p.surface_m2, p.section,
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude, d.completeness_score,
                (ev.parcel_id IS NOT NULL) AS evenement_rouge,
-               cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio
+               cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
+               vs.v_score, vs.v_band, vs.owner_type,
+               (d.matrice_statut = 'chaude' AND vs.v_score >= :vth) AS brulante
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
         LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
+        LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
         LEFT JOIN (SELECT pm2.siren, count(*) AS n, max(pm2.denomination) AS denom
                    FROM dryrun_parcel_evaluations d2
                    JOIN parcels p2 ON p2.id = d2.parcel_id
@@ -806,9 +893,10 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
           AND d.matrice_statut = ANY(:base_statuts)
           {extra_where}
-        ORDER BY (ev.parcel_id IS NOT NULL) DESC, (d.q_score + d.a_score) DESC, d.q_score DESC
+        ORDER BY {order}
         LIMIT :lim OFFSET :off
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
+               "vth": V_BRULANTE_THRESHOLD,
                # opt-in écartées (C7) : le filtre statut explicite ÉLARGIT le périmètre promues
                "base_statuts": (extra_params or {}).get("f_statuts")
                                or ["chaude", "a_surveiller", "a_creuser"],
@@ -821,6 +909,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "evenement": "rouge" if r["evenement_rouge"] else None,
         "cluster": int(r["cluster"]) if r["cluster"] else None,
         "proprio": r["proprio"],
+        "v_score": r["v_score"], "v_band": r["v_band"], "owner_type": r["owner_type"],
+        "brulante": bool(r["brulante"]),
     } for r in rows]
 
 
@@ -858,9 +948,25 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = "q_v2",
           AND (CAST(:c AS text) IS NULL OR p.commune = :c)
           {extra_where}
         """), params).mappings().one()
+    # Score V (Stage 3) : Brûlantes 🔥 + répartition par bande — mêmes filtres, SQL-exact.
+    v_row = db.execute(text(
+        f"""
+        SELECT count(*) FILTER (WHERE d.matrice_statut = 'chaude' AND vs.v_score >= :vth) AS brulantes,
+               count(*) FILTER (WHERE vs.v_band = 'fort')    AS v_fort,
+               count(*) FILTER (WHERE vs.v_band = 'present') AS v_present,
+               count(*) FILTER (WHERE vs.v_band = 'faible')  AS v_faible,
+               count(*) FILTER (WHERE vs.v_band = 'aucun')   AS v_aucun,
+               count(*) FILTER (WHERE vs.v_band = 'na')      AS v_na
+        FROM dryrun_parcel_evaluations d
+        JOIN parcels p ON p.id = d.parcel_id
+        LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
+        WHERE d.run_label = :run AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+          {extra_where}
+        """), {**params, "vth": V_BRULANTE_THRESHOLD}).mappings().one()
     return {**{k: int(v or 0) for k, v in row.items()},
             "dossiers_chaudes": int(dossiers["dossiers"] or 0),
-            "chaudes_sans_identite": int(dossiers["sans_identite"] or 0)}
+            "chaudes_sans_identite": int(dossiers["sans_identite"] or 0),
+            **{k: int(v or 0) for k, v in v_row.items()}}
 
 
 #: axe A (pur vendeur) — cf. config/scoring_matrice.yaml a_layers. Tout le reste = Q.
@@ -924,6 +1030,32 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
     pm = db.execute(text(
         "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
         {"idu": idu}).mappings().first()
+    # Score V (Vendabilité, Stage 3 additif) : score + panneau « Pourquoi ce score » (signaux
+    # JSONB §5.4, lus tels quels) + badges spéciaux (public/bailleur/copro/partiel).
+    vrow = db.execute(text(
+        "SELECT v_score, v_band, v_coverage, v_confidence, owner_type, owner_siren, "
+        "       owner_denomination, signals, computed_at FROM parcel_v_score "
+        "WHERE parcelle_id = :idu"), {"idu": idu}).mappings().first()
+    score_v = None
+    if vrow:
+        badge = {"public": "Foncier public — démarche dédiée",
+                 "bailleur": "Bailleur social",
+                 "copro": "Copro — acquisition complexe"}.get(vrow["owner_type"])
+        if badge is None and vrow["v_coverage"] == "partial":
+            badge = "Signaux partiels"
+        score_v = {
+            "v_score": vrow["v_score"], "v_band": vrow["v_band"],
+            "v_band_label": V_BAND_LABELS.get(vrow["v_band"] or "na"),
+            "v_coverage": vrow["v_coverage"],
+            "v_confidence": float(vrow["v_confidence"]) if vrow["v_confidence"] is not None else None,
+            "owner_type": vrow["owner_type"], "owner_siren": vrow["owner_siren"],
+            "owner_denomination": vrow["owner_denomination"],
+            "brulante": bool(head["matrice_statut"] == "chaude" and vrow["v_score"] is not None
+                             and vrow["v_score"] >= V_BRULANTE_THRESHOLD),
+            "badge": badge,
+            "signals": vrow["signals"] or [],
+            "computed_at": vrow["computed_at"].isoformat() if vrow["computed_at"] else None,
+        }
     # NPNRU (contexte, hors scoring) : parcelle DANS un périmètre de renouvellement urbain,
     # ou ADJACENTE (<= 100 m) — l'environnement immédiat d'un programme se transforme
     anru = db.execute(text(
@@ -944,6 +1076,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
         "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
         "lines": lines, "flags": flags,
+        "score_v": score_v,
     }
 
 

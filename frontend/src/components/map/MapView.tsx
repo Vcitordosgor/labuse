@@ -190,6 +190,25 @@ export function MapView() {
         paint: { 'line-color': '#7DE8E0', 'line-width': 1.4, 'line-opacity': 0.95 },
       })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
+      // Score V (Stage 3) — badge carte : liseré braise sur les Brûlantes 🔥 (toujours), et
+      // pastille « V nn » sur les parcelles à signaux (zoom rapproché, mode commune — le
+      // GeoJSON porte v_score/brulante ; les tuiles MVT île ne les ont pas encore, consigné).
+      m.addLayer({
+        id: 'parcels-brulantes', type: 'line', source: 'parcels',
+        filter: ['==', ['get', 'brulante'], true],
+        paint: { 'line-color': '#FF6B35', 'line-width': 1.8, 'line-opacity': 0.95 },
+      })
+      m.addLayer({
+        id: 'parcels-v-badge', type: 'symbol', source: 'parcels', minzoom: 15,
+        filter: ['all', ['>=', ['coalesce', ['get', 'v_score'], -1], 25]] as never,
+        layout: {
+          'text-field': ['concat', ['case', ['==', ['get', 'brulante'], true], '🔥 ', ''], 'V ',
+                         ['to-string', ['get', 'v_score']]] as never,
+          'text-size': 10, 'text-anchor': 'top', 'text-offset': [0, 0.8], 'text-optional': true,
+        },
+        paint: { 'text-color': ['case', ['==', ['get', 'brulante'], true], '#FF8A50', '#E8B44C'] as never,
+                 'text-halo-color': '#06130C', 'text-halo-width': 1.2 },
+      })
 
       // R6 : overlays zonage/PPR en tuiles MVT pour le mode ÎLE (29 Mo / 88 Mo en GeoJSON)
       m.addSource('ovmvt-zonage', { type: 'vector', minzoom: 8, maxzoom: 15,
@@ -395,6 +414,10 @@ export function MapView() {
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && verdict))
     m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
     m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
+    // Score V : badges carte (liseré Brûlantes + pastille V) — verdict allumé, mode commune
+    for (const id of ['parcels-brulantes', 'parcels-v-badge']) {
+      if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', vis(!ile && verdict))
+    }
   }, [mode, filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est

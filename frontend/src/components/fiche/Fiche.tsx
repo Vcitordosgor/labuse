@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addToPipeline, createShare, getFaisabilite, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
-import { completudeColor, STATUT_META } from '../../lib/status'
+import { BRULANTE_COLOR, completudeColor, STATUT_META, vBandColor } from '../../lib/status'
 import { Loading } from '../Loading'
-import type { FicheLine, Onglet } from '../../lib/types'
+import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
@@ -74,6 +74,104 @@ function ScoreBar({ label, value, color, lines, defaultOpen }: {
       {open && (
         <div className="border-t border-line-2 px-3 py-1">
           {weighted.length ? weighted.map((l, i) => <Line key={i} line={l} />) : <p className="py-2 text-[11px] text-txt-dim">Aucun signal chiffré — tout est neutre ou inconnu.</p>}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Score V (Vendabilité, Stage 3) ─────────────────────────────────────────────
+// Le panneau « Pourquoi ce score » est le différenciateur crédibilité : chaque signal
+// affiche son label, sa source, sa date et son LIEN VÉRIFIABLE (avis BODACC cliquable).
+const FAMILLE_LABEL: Record<string, string> = {
+  A: 'Détresse juridique', B: 'Cycle de vie du propriétaire', C: 'Détachement géographique',
+  D: 'Dormance de l’actif', E: 'Pression réglementaire', malus: 'Malus',
+}
+
+function VSignalRow({ s }: { s: VSignal }) {
+  const neg = s.points < 0
+  return (
+    <div className="flex gap-3 border-b border-[#141d17] py-2 last:border-0">
+      <span className={`w-10 shrink-0 text-right font-mono text-xs font-semibold ${neg ? 'text-st-ecartee' : 'text-[#FF8A50]'}`}>
+        {neg ? s.points : `+${s.points}`}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-txt">{s.label}</span>
+          <span className="shrink-0 rounded-full bg-surface-3 px-1.5 text-[8.5px] text-txt-dim" title={`Famille ${s.famille}`}>
+            {FAMILLE_LABEL[s.famille] ?? s.famille}
+          </span>
+        </div>
+        {s.ref && <div className="text-[11px] leading-snug text-txt-mut">{s.ref}</div>}
+        <div className="mt-0.5 flex items-center gap-2 text-[10px] text-txt-dim">
+          {s.url
+            ? <a href={s.url} target="_blank" rel="noreferrer" className="truncate text-[#5a7d6c] hover:text-mint hover:underline"
+                title="Vérifier à la source (avis officiel)">{s.source} ↗</a>
+            : <span className="truncate">{s.source}</span>}
+          {s.match && s.match.confiance < 1 && (
+            <span className="shrink-0 rounded bg-[#211a10] px-1 text-[8.5px] text-st-creuser"
+              title="Propriétaire rapproché par dénomination (pas de SIREN au fichier DGFiP) — points réduits ×0.7">
+              match {Math.round(s.match.confiance * 100)} %
+            </span>
+          )}
+          {s.date_evenement && <span className="ml-auto shrink-0 font-mono">{s.date_evenement}</span>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function VendabiliteBlock({ sv }: { sv: ScoreV }) {
+  const [open, setOpen] = useState(false)
+  const color = sv.brulante ? BRULANTE_COLOR : vBandColor(sv.v_band)
+  if (sv.v_score == null) {
+    // V non applicable (D4) : badge spécial à la place du score — jamais un « 0 » menteur.
+    return (
+      <div data-score-v className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+        <div className="flex items-center gap-3">
+          <span className="w-24 shrink-0 text-xs text-txt">Vendabilité</span>
+          <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{sv.badge ?? 'N.A.'}</span>
+        </div>
+        <p className="mt-1 text-[10px] leading-snug text-txt-dim">
+          Score V non calculé pour ce type de propriétaire — démarche d'acquisition spécifique.
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div data-score-v className="rounded-lg border border-line-2 bg-surface-2">
+      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
+        title="Vendabilité : signaux publics indiquant que le propriétaire a des raisons objectives de vendre — déplier « Pourquoi ce score »">
+        <span className="w-24 shrink-0 text-left text-xs text-txt">Vendabilité</span>
+        <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
+          <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${sv.v_score}%`, background: color }} />
+        </span>
+        {sv.brulante && <span className="shrink-0 text-xs" title="🔥 BRÛLANTE — chaude Q×A + signaux vendeur forts (V ≥ 50)">🔥</span>}
+        <span className="w-8 shrink-0 text-right font-display text-sm font-bold" style={{ color }}>{sv.v_score}</span>
+        <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
+      </button>
+      {open && (
+        <div className="border-t border-line-2 px-3 py-1">
+          <div className="flex items-center gap-2 py-1.5">
+            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: `${color}1f`, color }}>
+              {sv.v_band_label}{sv.brulante ? ' · 🔥 Brûlante' : ''}
+            </span>
+            {sv.badge && <span className="rounded-full border border-line-2 px-1.5 py-0.5 text-[9px] text-txt-dim">{sv.badge}</span>}
+            {sv.v_coverage === 'partial' && !sv.badge && (
+              <span className="rounded-full border border-line-2 px-1.5 py-0.5 text-[9px] text-txt-dim"
+                title="Propriétaire non identifié (personne physique ou sans SIREN) : seuls les signaux de la parcelle (dormance, DPE) sont évalués">
+                Signaux partiels
+              </span>
+            )}
+          </div>
+          <p className="pb-1 font-mono text-[9.5px] tracking-widest text-txt-dim">POURQUOI CE SCORE</p>
+          {sv.signals.length
+            ? sv.signals.map((s, i) => <VSignalRow key={i} s={s} />)
+            : <p className="py-2 text-[11px] text-txt-dim">Aucun signal public de vente détecté — le propriétaire ne montre aucune raison objective de vendre.</p>}
+          <p className="py-1.5 text-[9px] leading-snug text-txt-dim">
+            V agrège des signaux PUBLICS (BODACC, RNE, DGFiP, DVF, Cartofriches, ADEME) — une
+            propension, jamais une certitude ni une donnée nominative de personne physique.
+          </p>
         </div>
       )}
     </div>
@@ -508,6 +606,21 @@ export function Fiche({ idu }: { idu: string }) {
               )}
             </span>
           )}
+          {f?.score_v?.v_score != null && (
+            <span data-badge-v className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold"
+              style={{
+                background: `${f.score_v.brulante ? BRULANTE_COLOR : vBandColor(f.score_v.v_band)}22`,
+                color: f.score_v.brulante ? BRULANTE_COLOR : vBandColor(f.score_v.v_band),
+              }}
+              title={`Vendabilité ${f.score_v.v_band_label} — détail dans la Synthèse`}>
+              {f.score_v.brulante && <span aria-hidden>🔥</span>}V {f.score_v.v_score}
+            </span>
+          )}
+          {f?.score_v?.badge && (
+            <span className="ml-1.5 mt-1.5 inline-flex rounded-full border border-line-2 px-2 py-0.5 text-[9.5px] text-txt-mut">
+              {f.score_v.badge}
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {/* A6 : la loupe de la fiche cherche DANS la fiche (son contenu), pas dans le dashboard */}
@@ -581,6 +694,7 @@ export function Fiche({ idu }: { idu: string }) {
             )}
             <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen />
             <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} />
+            {f.score_v && <VendabiliteBlock sv={f.score_v} />}
             <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
               <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0 -rotate-90">
                 <circle cx="16" cy="16" r="13" fill="none" stroke="#1E2A23" strokeWidth="3" />
