@@ -1,6 +1,6 @@
 # Score V (Vendabilité) — rapport de fin de session
 
-*Branche `feat/labuse-score-v` — barème v1 verrouillé (D1), seuil Brûlante = 50 (D3), run Q×A de référence `q_v2`.*
+*Branche `feat/labuse-score-v` — barème v1 verrouillé (D1), seuil Brûlante = 34 (D3), run Q×A de référence `q_v2`.*
 
 ## 1. Signaux GO/NO-GO
 
@@ -22,15 +22,13 @@
 
 | Bande | Parcelles | % |
 |---|---|---|
-| Signal fort (50-100) | 315 `█` | 0.1 % |
-| Signaux présents (25-49) | 11474 `█` | 2.7 % |
-| Signal faible (1-24) | 341169 `████████████████████████████████████████` | 79.0 % |
-| Aucun signal (0) | 30763 `████` | 7.1 % |
-| N.A. (public/bailleur) | 47942 `██████` | 11.1 % |
+| Signal fort (50-100) | 169 `█` | 0.0 % |
+| Signaux présents (25-49) | 8880 `█` | 2.1 % |
+| Signal faible (1-24) | 10958 `█` | 2.5 % |
+| Aucun signal (0) | 363714 `████████████████████████████████████████` | 84.3 % |
+| N.A. (public/bailleur) | 47942 `█████` | 11.1 % |
 
-**Brûlantes = 14** (chaude Q×A ∧ V ≥ 50, vue dynamique `v_parcelles_brulantes`).
-
-⚠ **Garde-fou D3 : 14 Brûlantes hors de l'intervalle [30-120].** Le seuil n'a PAS été changé. **Proposition** (méthode top décile V des chaudes) : `V_BRULANTE_THRESHOLD = 41` → 86 Brûlantes. Décision Vic.
+**Brûlantes = 93** (chaude Q×A ∧ V ≥ 34, vue dynamique `v_parcelles_brulantes`).
 
 ## 4. Coverage & type de propriétaire
 
@@ -48,26 +46,52 @@
 
 | Parcelle | Commune | Q | A | V | Propriétaire | Signaux |
 |---|---|---|---|---|---|---|
-| `97414000CV0938` | Saint-Louis | 25 | 56 | **77** | JACKY UNION LUDGE ETHEVE | Liquidation judiciaire en cours · Cessation déclarée / mise en sommeil · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
-| `97414000CV0907` | Saint-Louis | 13 | 56 | **77** | JACKY UNION LUDGE ETHEVE | Liquidation judiciaire en cours · Cessation déclarée / mise en sommeil · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
-| `97414000CV0912` | Saint-Louis | 48 | 55 | **72** | JACKY UNION LUDGE ETHEVE | Liquidation judiciaire en cours · Cessation déclarée / mise en sommeil · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
-| `97411000BL0390` | Saint-Denis | 65 | 66 | **65** | SOCIETE TRANSPORTS MARCHANDISES | Redressement judiciaire en cours · Dirigeant ≥ 75 ans · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
-| `97416000ES2071` | Saint-Pierre | 91 | 57 | **61** | MOURGAPA SARL | Liquidation judiciaire en cours · Dirigeant 70–74 ans · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
-| `97416000ES2069` | Saint-Pierre | 60 | 55 | **61** | MOURGAPA SARL | Liquidation judiciaire en cours · Dirigeant 70–74 ans · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
-| `97411000BL0132` | Saint-Denis | 82 | 66 | **60** | SOCIETE TRANSPORTS MARCHANDISES | Redressement judiciaire en cours · Dirigeant ≥ 75 ans · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
-| `97414000EN1937` | Saint-Louis | 66 | 63 | **59** | SCI WYLDA MASCAREIGNES | Liquidation judiciaire en cours · Dirigeant 65–69 ans · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
-| `97412000BN0900` | Saint-Joseph | 50 | 64 | **59** | SCI WYLDA | Liquidation judiciaire en cours · Dirigeant 65–69 ans · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
-| `97413000CH0229` | Saint-Leu | 69 | 67 | **55** | ORANGE | Dirigeant ≥ 75 ans · Siège hors Réunion (métropole/étranger) · Cession de fonds de commerce < 12 mois |
-| `97416000HV0607` | Saint-Pierre | 66 | 68 | **55** | ORANGE | Dirigeant ≥ 75 ans · Siège hors Réunion (métropole/étranger) · Cession de fonds de commerce < 12 mois |
-| `97407000AS0156` | Le Port | 65 | 68 | **55** | ORANGE | Dirigeant ≥ 75 ans · Siège hors Réunion (métropole/étranger) · Cession de fonds de commerce < 12 mois |
-| `97415000CX0797` | Saint-Paul | 83 | 66 | **52** | BATIPRO | Liquidation judiciaire en cours · Aucune mutation sur la fenêtre DVF observable (2021-2025) · Terrain nu détenu par PM hors construction/immobilier |
-| `97412000BV0421` | Saint-Joseph | 84 | 70 | **51** | LITTORAL DE LA VALLEE | Dirigeant ≥ 75 ans · Friche recensée (Cartofriches) · Aucune mutation sur la fenêtre DVF observable (2021-2025) |
+| `97414000CV0938` | Saint-Louis | 25 | 56 | **77** | JACKY UNION LUDGE ETHEVE | Liquidation judiciaire en cours · Cessation déclarée / mise en sommeil · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97414000CV0907` | Saint-Louis | 13 | 56 | **77** | JACKY UNION LUDGE ETHEVE | Liquidation judiciaire en cours · Cessation déclarée / mise en sommeil · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97414000CV0912` | Saint-Louis | 48 | 55 | **72** | JACKY UNION LUDGE ETHEVE | Liquidation judiciaire en cours · Cessation déclarée / mise en sommeil · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97411000BL0390` | Saint-Denis | 65 | 66 | **65** | SOCIETE TRANSPORTS MARCHANDISES | Redressement judiciaire en cours · Dirigeant ≥ 75 ans · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97416000ES2071` | Saint-Pierre | 91 | 57 | **61** | MOURGAPA SARL | Liquidation judiciaire en cours · Dirigeant 70–74 ans · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97416000ES2069` | Saint-Pierre | 60 | 55 | **61** | MOURGAPA SARL | Liquidation judiciaire en cours · Dirigeant 70–74 ans · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97411000BL0132` | Saint-Denis | 82 | 66 | **60** | SOCIETE TRANSPORTS MARCHANDISES | Redressement judiciaire en cours · Dirigeant ≥ 75 ans · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97414000EN1937` | Saint-Louis | 66 | 63 | **59** | SCI WYLDA MASCAREIGNES | Liquidation judiciaire en cours · Dirigeant 65–69 ans · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97412000BN0900` | Saint-Joseph | 50 | 64 | **59** | SCI WYLDA | Liquidation judiciaire en cours · Dirigeant 65–69 ans · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97415000CX0797` | Saint-Paul | 83 | 66 | **52** | BATIPRO | Liquidation judiciaire en cours · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux · Terrain nu détenu par PM hors construction/immobilier |
+| `97412000BV0421` | Saint-Joseph | 84 | 70 | **51** | LITTORAL DE LA VALLEE | Dirigeant ≥ 75 ans · Friche recensée (Cartofriches) · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97416000CS1391` | Saint-Pierre | 44 | 58 | **50** | DERECA | Liquidation judiciaire en cours · Siège hors Réunion (métropole/étranger) |
+| `97413000DC0543` | Saint-Leu | 93 | 69 | **47** | SCI DU SUD OUEST 974 | Radiation < 36 mois · Dirigeant ≥ 75 ans |
+| `97416000CR0616` | Saint-Pierre | 79 | 50 | **47** | CEDRES PROMOTION | Liquidation judiciaire en cours · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux · Siège Réunion, autre commune que la parcelle |
+| `97416000CR0605` | Saint-Pierre | 73 | 50 | **47** | CEDRES PROMOTION | Liquidation judiciaire en cours · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux · Siège Réunion, autre commune que la parcelle |
+| `97413000DC0561` | Saint-Leu | 71 | 68 | **47** | SCI DU SUD OUEST 974 | Radiation < 36 mois · Dirigeant ≥ 75 ans |
+| `97413000DC0542` | Saint-Leu | 66 | 68 | **47** | SCI DU SUD OUEST 974 | Radiation < 36 mois · Dirigeant ≥ 75 ans |
+| `97416000IM0019` | Saint-Pierre | 93 | 69 | **45** | PROMOTION CREATION D ENTREPRISES TRIPOLI | Dirigeant ≥ 75 ans · Siège hors Réunion (métropole/étranger) · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97422000AH0351` | Le Tampon | 84 | 64 | **45** | CARRARE | Dirigeant ≥ 75 ans · Siège hors Réunion (métropole/étranger) · Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux |
+| `97415000AB0369` | Saint-Paul | 69 | 61 | **45** | PLDC  PLATEFORME LOGISTIQUE DE CORNU | Dirigeant 70–74 ans · Friche recensée (Cartofriches) · Terrain nu détenu par PM hors construction/immobilier |
 
 ## 6. Backtest
 
-Lift top décile : **1.36×** (cible ≥ 2×) — détail complet : [backtest.md](backtest.md) (+ CSV cohorte, graphe SVG).
+Lift top décile : **1.41×** (cible ≥ 2×) — détail complet : [backtest.md](backtest.md) (+ CSV cohorte, graphe SVG).
 
 🔴 **LIFT < 1.5× : poids à retravailler avant tout usage commercial du score.**
+
+## 6bis. Comparatif v1 → v1.1
+
+*v1.1 = tenure conditionnelle (jamais seule) + malus achat récent neutralisé + filtre grands groupes GE/ETI (familles B/C) + seuil Brûlante re-dérivé (top décile V des chaudes).*
+
+| Métrique | v1 | v1.1 |
+|---|---|---|
+| Lift top décile | 1.36× | **1.41×** |
+| Lift bande V ≥ 50 (fort) | 0.64× (n=54) | **0.83×** (n=30) |
+| Lift bande V 25-49 (présents) | 1.01× (n=2342) | **1.02×** (n=1692) |
+| Lift bande V 9-24 | 2.13× (n=3298) | **2.26×** (n=3019) |
+| Lift bande V = 8 (tenure seule) | 0.89× (n=81217) | **0.83×** (n=6) |
+| Lift bande V 0-7 | 2.04× (n=4880) | **0.96×** (n=87044) |
+| Brûlantes 🔥 | 14 (seuil 50, garde-fou déclenché) | **93** (seuil 34 = top décile V des chaudes) |
+| Distribution « fort » | 315 | **169** |
+| Distribution « présents » | 11474 | **8880** |
+| Distribution « faible » | 341169 | **10958** |
+| Distribution « aucun » | 30763 | **363714** |
+| Distribution « N.A. » | 47942 | **47942** |
+| Top Brûlantes v1 conservées dans le top 20 v1.1 | — | **11/14** (les 3 parcelles ORANGE sortent : filtre grands groupes) |
 
 ## 7. Screenshots (375 / 768 / 1440)
 

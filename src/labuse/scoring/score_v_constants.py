@@ -15,7 +15,10 @@ from __future__ import annotations
 # Brûlante = chaude Q×A ∧ v_score ≥ seuil. Garde-fou : si le nombre de Brûlantes sort de
 # [30-120], NE PAS changer le seuil silencieusement — proposer un seuil ajusté dans le rapport
 # final (méthode : top décile V des chaudes).
-V_BRULANTE_THRESHOLD = 50
+# v1.1 (mandat calibration, 10/07/2026) : seuil re-dérivé après recalibration = top décile V
+# des chaudes (p90 = 34, dans la fenêtre d'application [30-60] fixée par Vic) → 93 Brûlantes.
+# Valeur v1 historique : 50 (14 Brûlantes, garde-fou déclenché).
+V_BRULANTE_THRESHOLD = 34
 BRULANTE_GUARDRAIL = (30, 120)
 
 # Run de référence de la matrice Q×A (source de vérité Socle V1 — cf. api SOURCE='q_v2').

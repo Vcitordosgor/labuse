@@ -26,6 +26,20 @@ from labuse.scoring.score_v_constants import (  # noqa: E402
 
 OUT = Path(__file__).resolve().parents[2] / "reports" / "score-v"
 
+# ── Référence v1 (résultats FIGÉS du run du 10/07/2026, barème D1 avant calibration v1.1) ──
+V1_REF = {
+    "lift_top": 1.36,
+    "bandes": [("V ≥ 50 (fort)", 54, 0.64), ("V 25-49 (présents)", 2342, 1.01),
+               ("V 9-24", 3298, 2.13), ("V = 8 (tenure seule)", 81217, 0.89),
+               ("V 0-7", 4880, 2.04)],
+    "brulantes": 14, "seuil": 50,
+    "bands_dist": {"fort": 315, "present": 11474, "faible": 341169, "aucun": 30763, "na": 47942},
+    "top": ["97414000CV0938", "97414000CV0907", "97414000CV0912", "97411000BL0390",
+            "97416000ES2071", "97416000ES2069", "97411000BL0132", "97414000EN1937",
+            "97412000BN0900", "97413000CH0229", "97416000HV0607", "97407000AS0156",
+            "97415000CX0797", "97412000BV0421"],
+}
+
 
 def main() -> None:
     md: list[str] = ["# Score V (Vendabilité) — rapport de fin de session\n",
@@ -123,12 +137,14 @@ def main() -> None:
         # 5. Top 20 Brûlantes
         md += ["## 5. Top 20 Brûlantes 🔥\n",
                "| Parcelle | Commune | Q | A | V | Propriétaire | Signaux |", "|---|---|---|---|---|---|---|"]
+        top20_idus: list[str] = []
         for r in all_("""
             SELECT b.idu, b.commune, b.q_score, b.a_score, b.v_score, b.owner_denomination,
                    (SELECT string_agg(s->>'label', ' · ') FROM (
                       SELECT s FROM jsonb_array_elements(b.signals) s
                       ORDER BY (s->>'points')::int DESC LIMIT 3) t(s)) AS sig
             FROM v_parcelles_brulantes b ORDER BY b.v_score DESC, b.q_score DESC LIMIT 20"""):
+            top20_idus.append(r["idu"])
             md.append(f"| `{r['idu']}` | {r['commune']} | {r['q_score']} | {r['a_score']} | "
                       f"**{r['v_score']}** | {(r['owner_denomination'] or '—')[:40]} | {r['sig'] or ''} |")
         md.append("")
@@ -136,15 +152,41 @@ def main() -> None:
     # 6. Backtest (lit le livrable Phase 5)
     bt = OUT / "backtest.md"
     md += ["## 6. Backtest\n"]
+    lift = None
+    bandes_bt: list[tuple[str, str, str]] = []
     if bt.exists():
         txt = bt.read_text()
         lift = re.search(r"lift top décile = \*\*([\d.]+)×\*\*", txt)
+        for mm in re.finditer(r"\| (V [^|]+?) \| (\d+) \| [\d.]+ \| \*\*([\d.]+)×\*\* \|", txt):
+            bandes_bt.append((mm.group(1).strip(), mm.group(2), mm.group(3)))
         md.append(f"Lift top décile : **{lift.group(1)}×** (cible ≥ 2×) — détail complet : "
                   "[backtest.md](backtest.md) (+ CSV cohorte, graphe SVG).")
         if lift and float(lift.group(1)) < 1.5:
             md.append("\n🔴 **LIFT < 1.5× : poids à retravailler avant tout usage commercial du score.**")
     else:
         md.append("⚠ Mode dégradé : backtest non exécuté — voir spot-check (backtest indisponible).")
+    md.append("")
+
+    # 6bis. Comparatif v1 → v1.1 (mandat calibration : lift, bandes, Brûlantes, top 20)
+    md += ["## 6bis. Comparatif v1 → v1.1\n",
+           "*v1.1 = tenure conditionnelle (jamais seule) + malus achat récent neutralisé + filtre "
+           "grands groupes GE/ETI (familles B/C) + seuil Brûlante re-dérivé (top décile V des chaudes).*\n",
+           "| Métrique | v1 | v1.1 |", "|---|---|---|",
+           f"| Lift top décile | {V1_REF['lift_top']:.2f}× | "
+           f"**{lift.group(1) if lift else '?'}×** |"]
+    v11_bandes = {b[0]: (b[1], b[2]) for b in bandes_bt}
+    for label, n1, l1 in V1_REF["bandes"]:
+        key = next((k for k in v11_bandes if k.split(" (")[0] == label.split(" (")[0]), None)
+        n2, l2 = v11_bandes.get(key, ("—", "—")) if key else ("—", "—")
+        md.append(f"| Lift bande {label} | {l1:.2f}× (n={n1}) | **{l2}×** (n={n2}) |")
+    md.append(f"| Brûlantes 🔥 | {V1_REF['brulantes']} (seuil {V1_REF['seuil']}, garde-fou déclenché) | "
+              f"**{brul}** (seuil {V_BRULANTE_THRESHOLD} = top décile V des chaudes) |")
+    for b, label in [("fort", "fort"), ("present", "présents"), ("faible", "faible"),
+                     ("aucun", "aucun"), ("na", "N.A.")]:
+        md.append(f"| Distribution « {label} » | {V1_REF['bands_dist'][b]} | **{bands.get(b, 0)}** |")
+    communs = len(set(top20_idus) & set(V1_REF["top"]))
+    md.append(f"| Top Brûlantes v1 conservées dans le top 20 v1.1 | — | **{communs}/{len(V1_REF['top'])}** "
+              "(les 3 parcelles ORANGE sortent : filtre grands groupes) |")
     md.append("")
 
     # 7. Screenshots
