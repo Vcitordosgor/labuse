@@ -9,6 +9,7 @@ from datetime import date, datetime
 
 from geoalchemy2 import Geometry
 from sqlalchemy import (
+    BigInteger,
     Boolean,
     CheckConstraint,
     Date,
@@ -17,6 +18,8 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
+    SmallInteger,
     String,
     Text,
     UniqueConstraint,
@@ -567,6 +570,127 @@ class Projet(Base, TimestampMixin):
     derniere_execution_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+# ───────────────────────────── Score V — Vendabilité (Stage 3 additif) ─────────────────────────────
+# Mandat SPEC-LABUSE-SCORE-V v1.0. ADDITIF : ne touche ni la cascade, ni Q/A, ni la matrice.
+
+
+class OwnerEnrichment(Base):
+    """Cache par SIREN des enrichissements propriétaire (Score V).
+
+    Une ligne = la réponse BRUTE cachée d'une source (`rne` — déjà en base via pm_dirigeants —
+    ou `recherche_entreprises`, fallback sans auth). Resumable : un SIREN présent n'est jamais
+    re-requêté ; `payload` garde tout (état administratif, siège, NAF, dirigeants…)."""
+
+    __tablename__ = "owner_enrichment"
+
+    siren: Mapped[str] = mapped_column(String(9), primary_key=True)
+    denomination: Mapped[str | None] = mapped_column(Text)
+    source: Mapped[str | None] = mapped_column(String(32))      # rne | recherche_entreprises
+    payload: Mapped[dict] = mapped_column(JSONB)                # réponse brute cachée (resumable)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class OwnerDenomLookup(Base):
+    """Cache des recherches PAR DÉNOMINATION (fallback matching §4.2 — liens DGFiP sans SIREN).
+
+    Clé = dénomination NORMALISÉE (uppercase, unaccent, sans tokens de forme juridique).
+    `status` : found (1 candidat → siren) | ambiguous (candidats en review queue) | not_found.
+    Table de cache technique (resumabilité) — la vérité du match reste parcel_v_score."""
+
+    __tablename__ = "owner_denom_lookup"
+
+    denomination_norm: Mapped[str] = mapped_column(Text, primary_key=True)
+    status: Mapped[str] = mapped_column(String(12))             # found | ambiguous | not_found
+    siren: Mapped[str | None] = mapped_column(String(9))
+    candidats: Mapped[dict | None] = mapped_column(JSONB)       # liste brute si ambigu
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class BodaccAnnonceOwner(Base):
+    """Annonces BODACC des SIREN propriétaires, TOUTES familles utiles au Score V.
+
+    Familles : `pcl` (procédures collectives), `radiation`, `vente_cession`. Complète
+    bodacc_procedures (Vague A1, procédures collectives seulement) SANS y toucher.
+    Détermination d'état (en cours / clôturée) faite par le moteur, pas ici."""
+
+    __tablename__ = "bodacc_annonces_owner"
+    __table_args__ = (Index("ix_bodacc_owner_siren", "siren"),)
+
+    id: Mapped[str] = mapped_column(String(20), primary_key=True)   # id ODS (dédup)
+    siren: Mapped[str] = mapped_column(String(9))
+    famille: Mapped[str | None] = mapped_column(String(16))         # pcl | radiation | vente_cession
+    nature: Mapped[str | None] = mapped_column(String(200))         # ex. jugement d'ouverture LJ, clôture…
+    date_annonce: Mapped[date | None] = mapped_column(Date)
+    payload: Mapped[dict] = mapped_column(JSONB)
+    fetched_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class MatchingReviewQueue(Base):
+    """File de revue humaine des matchs AMBIGUS (fallback dénomination, plusieurs candidats)."""
+
+    __tablename__ = "matching_review_queue"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    parcelle_id: Mapped[str | None] = mapped_column(String(14))     # idu
+    denomination: Mapped[str | None] = mapped_column(Text)
+    candidats: Mapped[dict | None] = mapped_column(JSONB)           # SIREN candidats ambigus
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ParcelVScore(Base):
+    """Score V (Vendabilité) par parcelle — Stage 3 additif, matérialisé par le batch score-v.
+
+    v_score NULL = non applicable (propriétaire public / bailleur social, D4).
+    `signals` = JSONB des signaux RETENUS (format §5.4), lu tel quel par le panneau UI."""
+
+    __tablename__ = "parcel_v_score"
+    __table_args__ = (
+        Index("ix_parcel_v_score_band", "v_band"),
+        Index("ix_parcel_v_score_siren", "owner_siren"),
+    )
+
+    parcelle_id: Mapped[str] = mapped_column(String(14), primary_key=True)   # idu
+    v_score: Mapped[int | None] = mapped_column(SmallInteger)                # 0-100, NULL si N.A.
+    v_band: Mapped[str | None] = mapped_column(String(8))                    # fort|present|faible|aucun|na
+    v_coverage: Mapped[str] = mapped_column(String(8))                       # full | partial
+    v_confidence: Mapped[float | None] = mapped_column(Numeric(3, 2))
+    owner_type: Mapped[str | None] = mapped_column(String(12))               # pm|pp|public|bailleur|copro
+    owner_siren: Mapped[str | None] = mapped_column(String(9))
+    owner_denomination: Mapped[str | None] = mapped_column(Text)
+    signals: Mapped[dict] = mapped_column(JSONB, default=list, server_default="[]")
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class DvfMutationParcelle(Base):
+    """Mutations géo-DVF au NIVEAU PARCELLE (remédiation P1 Score V).
+
+    Lignes brutes utiles des CSV files.data.gouv.fr/geo-dvf (dept 974). Distincte de
+    dvf_mutations (points, cascade « marché actif ») qui reste intouchée. ⚠ Fenêtre
+    observable : millésimes 2021→2025 seulement (2014-2020 retirés de la distribution
+    officielle — fenêtre glissante 5 ans DGFiP). Un futur mandat data l'étendra."""
+
+    __tablename__ = "dvf_mutations_parcelle"
+    __table_args__ = (
+        Index("ix_dvfp_parcelle", "id_parcelle"),
+        Index("ix_dvfp_date", "date_mutation"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    id_mutation: Mapped[str] = mapped_column(Text)
+    date_mutation: Mapped[date | None] = mapped_column(Date)
+    nature_mutation: Mapped[str | None] = mapped_column(Text)
+    valeur_fonciere: Mapped[float | None] = mapped_column(Float)
+    code_commune: Mapped[str | None] = mapped_column(Text)
+    id_parcelle: Mapped[str] = mapped_column(String(14))
+    type_local: Mapped[str | None] = mapped_column(Text)
+    surface_reelle_bati: Mapped[float | None] = mapped_column(Float)
+    surface_terrain: Mapped[float | None] = mapped_column(Float)
+    nature_culture: Mapped[str | None] = mapped_column(Text)
+    longitude: Mapped[float | None] = mapped_column(Float)
+    latitude: Mapped[float | None] = mapped_column(Float)
+    millesime: Mapped[int] = mapped_column(SmallInteger)
+
+
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine)
@@ -583,6 +707,7 @@ def create_all(engine) -> None:
     ensure_pipeline_prospection(engine)
     ensure_pipeline_projet(engine)
     ensure_enrichment_cache(engine)
+    ensure_score_v_view(engine)
 
 
 def ensure_pipeline_projet(engine) -> None:
@@ -948,6 +1073,32 @@ def ensure_schema(engine) -> None:
     ensure_bilan_params(engine)
     ensure_vue_mer_cache(engine)
     ensure_watch_zones(engine)
+    ensure_score_v_view(engine)
+
+
+def ensure_score_v_view(engine) -> None:
+    """Vue `v_parcelles_brulantes` (Score V, Phase 3) : tier combiné 🔥 Brûlante.
+
+    Brûlante = chaude Q×A (run de référence) ∧ v_score ≥ V_BRULANTE_THRESHOLD. VUE DYNAMIQUE
+    (jamais une liste matérialisée) : la population des chaudes évoluera (mandat data à venir)
+    et Brûlante doit suivre automatiquement. Le seuil (constante configurable) est injecté à la
+    (re)création de la vue — rejouée à chaque boot via ensure_schema. Reconstruite sans échouer
+    si les tables sont vides."""
+    from sqlalchemy import text as _t
+
+    from .scoring.score_v_constants import Q_A_RUN_LABEL, V_BRULANTE_THRESHOLD
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE OR REPLACE VIEW v_parcelles_brulantes AS "
+            "SELECT p.idu, p.commune, d.q_score, d.a_score, d.matrice_statut, "
+            "  v.v_score, v.v_band, v.v_coverage, v.owner_type, v.owner_siren, "
+            "  v.owner_denomination, v.signals "
+            "FROM parcels p "
+            f"JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = '{Q_A_RUN_LABEL}' "
+            "JOIN parcel_v_score v ON v.parcelle_id = p.idu "
+            "WHERE d.matrice_statut = 'chaude' "
+            f"  AND v.v_score >= {int(V_BRULANTE_THRESHOLD)}"))
 
 
 def ensure_parcel_origine(engine) -> None:

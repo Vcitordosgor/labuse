@@ -100,6 +100,57 @@ def _chunks(seq: Iterable[str], n: int) -> Iterator[list[str]]:
         yield seq[i:i + n]
 
 
+# ── Score V : familles élargies (radiations + ventes-cessions, en plus des PC) ──────────────
+# Valeurs RÉELLES du facet `familleavis` (vérifié live 10/07/2026) : dpc, modification,
+# creation, radiation, collective, vente… → famille interne Score V.
+FAMILLES_SCORE_V = {"collective": "pcl", "radiation": "radiation", "vente": "vente_cession"}
+
+
+def extract_all_sirens(registre) -> list[str]:
+    """TOUS les SIREN d'un champ `registre` (une annonce de vente porte acheteur ET vendeur)."""
+    if isinstance(registre, str):
+        registre = [registre]
+    seen: list[str] = []
+    for el in registre or []:
+        d = _digits(el)
+        if len(d) == 9 and d not in seen:
+            seen.append(d)
+    return seen
+
+
+def parse_annonce_score_v(rec: dict) -> dict | None:
+    """Annonce ODS (toute famille Score V) → dict normalisé pour `bodacc_annonces_owner`.
+
+    `nature` : pour les PC c'est `jugement.nature` (chaîne JSON à décoder — piège vérifié en
+    Vague A1) ; pour les radiations/ventes le champ `jugement` est null → on garde le libellé
+    de famille. `sirens` liste TOUS les SIREN de l'annonce ; l'ingestion croisera avec les
+    propriétaires. None si famille hors périmètre ou aucun SIREN valide."""
+    famille = FAMILLES_SCORE_V.get(rec.get("familleavis") or "")
+    if not famille:
+        return None
+    sirens = extract_all_sirens(rec.get("registre"))
+    if not sirens:
+        return None
+    jug = rec.get("jugement")
+    if isinstance(jug, str):
+        try:
+            jug = json.loads(jug)
+        except (ValueError, TypeError):
+            jug = {}
+    if not isinstance(jug, dict):
+        jug = {}
+    return {
+        "annonce_id": rec.get("id"),
+        "sirens": sirens,
+        "famille": famille,
+        "nature": jug.get("nature") or rec.get("familleavis_lib"),
+        "date_annonce": _parse_date_iso(rec.get("dateparution")),
+        "url_source": rec.get("url_complete")
+        or (EXPLORE_URL.format(id=rec.get("id")) if rec.get("id") else None),
+        "raw": rec,
+    }
+
+
 class BodaccConnector(Connector):
     """Procédures collectives BODACC par SIREN. `name` matche data_sources.name."""
 
@@ -129,6 +180,34 @@ class BodaccConnector(Connector):
                 last = exc
                 time.sleep(0.5 * (attempt + 1))
         raise RuntimeError(f"BODACC : page échouée (offset {offset}) — {last}")
+
+    @staticmethod
+    def _where_score_v(sirens: list[str]) -> str:
+        vals = ",".join(f'"{s}"' for s in sirens)
+        fams = ",".join(f'"{f}"' for f in FAMILLES_SCORE_V)
+        return f"familleavis IN ({fams}) AND registre IN ({vals})"
+
+    def fetch_score_v_by_sirens(
+        self, sirens: Iterable[str], batch_size: int = 40, throttle_s: float = 0.25,
+    ) -> Iterator[dict]:
+        """Itère les annonces Score V (PC + radiations + ventes-cessions) d'un ensemble de
+        SIREN — même mécanique batchée/paginée/throttlée que fetch_collective_by_sirens,
+        qu'on ne modifie PAS (elle sert la Vague A1)."""
+        for batch in _chunks(sorted(set(sirens)), batch_size):
+            where = self._where_score_v(batch)
+            offset = 0
+            while True:
+                data = self._get_page(where, offset)
+                for rec in data.get("results") or []:
+                    parsed = parse_annonce_score_v(rec)
+                    if parsed:
+                        yield parsed
+                offset += PAGE_LIMIT
+                total = int(data.get("total_count") or 0)
+                if offset >= total or offset >= OFFSET_CAP:
+                    break
+                time.sleep(throttle_s)
+            time.sleep(throttle_s)
 
     def fetch_collective_by_sirens(
         self, sirens: Iterable[str], batch_size: int = 40, throttle_s: float = 0.25,

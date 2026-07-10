@@ -1419,3 +1419,47 @@ def detect_events_cmd(run_from: str = "q_v2", run_to: str = "q_v2_demo") -> None
         out = detect_events(s, run_from, run_to, demo=run_to.endswith("_demo"))
         s.commit()
     typer.echo(f"Événements émis {run_from} → {run_to} : {out}")
+
+
+@app.command("score-v-fetch")
+def score_v_fetch_cmd(
+    passe: str = typer.Option("all", help="all | owners | denoms | bodacc"),
+    limit: int = typer.Option(None, help="Cap de requêtes (test)."),
+    throttle: float = typer.Option(0.2, help="Pause (s) entre requêtes recherche-entreprises."),
+) -> None:
+    """Récupère les données externes du Score V (Phase 1-2) — RESUMABLE, cache en base.
+
+    owners : recherche-entreprises par SIREN → owner_enrichment ;
+    denoms : fallback dénomination (§4.2) → owner_denom_lookup ;
+    bodacc : annonces PC + radiations + ventes-cessions → bodacc_annonces_owner."""
+    from .connectors.recherche_entreprises import RechercheEntreprisesConnector
+    from .ingestion import score_v_fetch as svf
+
+    models.ensure_schema(engine())
+    conn = RechercheEntreprisesConnector(throttle_s=throttle)
+    with session_scope() as s:
+        if passe in ("all", "owners"):
+            res = svf.fetch_owner_enrichment(s, conn, limit=limit, log=typer.echo)
+            typer.echo(f"✓ owner_enrichment : {res}")
+        if passe in ("all", "denoms"):
+            res = svf.fetch_denom_lookups(s, conn, limit=limit, log=typer.echo)
+            typer.echo(f"✓ owner_denom_lookup : {res}")
+        if passe in ("all", "bodacc"):
+            n = svf.fetch_bodacc_annonces(s, log=typer.echo)
+            typer.echo(f"✓ bodacc_annonces_owner : {n} lignes annonces×SIREN.")
+
+
+@app.command("score-v-compute")
+def score_v_compute_cmd(
+    limit: int = typer.Option(None, help="Cap parcelles (test)."),
+) -> None:
+    """Calcule le Score V (Vendabilité) sur TOUTES les parcelles → parcel_v_score (Phase 2).
+
+    Stage 3 ADDITIF : ne touche ni la cascade, ni Q/A, ni la matrice. Idempotent, relançable
+    (upsert + computed_at). Barème verrouillé : scoring/score_v_constants.py."""
+    from .scoring.score_v import compute_all
+
+    models.ensure_schema(engine())
+    with session_scope() as s:
+        stats = compute_all(s, limit=limit, log=typer.echo)
+    typer.echo(f"✓ Score V : {stats}")
