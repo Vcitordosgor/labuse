@@ -22,3 +22,8 @@ jsonschema>=4.21
 
 # Dev / tests
 pytest>=8.0
+
+# Module Flash (rapport parcelle à l'unité) : PDF HTML/CSS + paiement
+weasyprint>=61
+jinja2>=3.1
+stripe>=8

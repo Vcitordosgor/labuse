@@ -1,0 +1,373 @@
+{# Rapport Flash LA BUSE — template VERSIONNÉ (voir report.TEMPLATE_VERSION).
+   Toute section sans donnée est omise en AMONT (data.py) ou ici par un simple `if` :
+   jamais de section vide. Le score figure en valeur absolue avec sa grille de lecture —
+   jamais de classement ni de comparaison multi-parcelles (mandat §2). #}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>{{ css }}</style>
+</head>
+<body>
+{% if watermark %}<div class="watermark">{{ watermark }}</div>{% endif %}
+{% set p = data.parcelle %}
+
+{# ══ Page de garde ══ #}
+<section class="garde">
+  <div class="marque">
+    <svg width="46" height="13" viewBox="0 0 240 62"><path d="{{ logo_path }}" fill="#0B8A5F"/></svg>
+    <span class="wordmark">LA BUSE</span>
+    <span class="produit">RAPPORT FLASH · parcelle à l'unité</span>
+  </div>
+  <h1>Rapport de faisabilité indicative</h1>
+  {% if data.adresse %}<div class="adresse">{{ data.adresse }}</div>{% endif %}
+  <div class="refs">Parcelle <b>{{ p.idu }}</b> · {{ p.commune }} · section {{ p.section }} n° {{ p.numero }}</div>
+
+  {% if carte %}
+  <div class="carte" style="width:{{ carte.width }}px; height:{{ carte.height }}px;">
+    {% for t in carte.tiles %}<img src="{{ t.data_uri }}" style="left:{{ t.left }}px; top:{{ t.top }}px;">{% endfor %}
+    <svg width="{{ carte.width }}" height="{{ carte.height }}">
+      {% for poly in carte.polygons %}
+      <polygon points="{{ poly }}" fill="rgba(11,138,95,0.18)" stroke="#0B8A5F" stroke-width="2.5"/>
+      {% endfor %}
+    </svg>
+  </div>
+  <div class="carte-attribution">{{ carte.attribution }}</div>
+  {% endif %}
+
+  <table class="meta-table">
+    <tr><td>N° de rapport</td><td>{{ order_ref }}</td></tr>
+    <tr><td>Date de génération</td><td>{{ data.date_generation }}</td></tr>
+    <tr><td>Commune</td><td>{{ p.commune }} ({{ p.insee }})</td></tr>
+    <tr><td>Références cadastrales</td><td>{{ p.reference }}</td></tr>
+    <tr><td>Contenance cadastrale</td><td>{{ p.surface_m2 }} m²</td></tr>
+    <tr><td>Version du modèle de rapport</td><td>{{ template_version }}</td></tr>
+  </table>
+</section>
+
+{# ══ Identité parcellaire ══ #}
+{% set ident = data.identite %}
+<section class="saut">
+  <h2><span class="num">01</span>Identité parcellaire</h2>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Contenance cadastrale</div>
+      <div class="valeur">{{ p.surface_m2 }} <small>m²</small></div></div>
+    {% if ident.zones %}
+    <div class="cartouche"><div class="titre">Zonage PLU</div>
+      <div class="valeur">{{ ident.zones[0].libelle or ident.zones[0].classe }}
+        {% if ident.zones|length > 1 %}<small>+ {{ ident.zones|length - 1 }} zone(s)</small>{% endif %}
+      </div></div>
+    {% endif %}
+    {% if ident.regles and ident.regles.hauteur_max_m %}
+    <div class="cartouche"><div class="titre">Hauteur max (règle calibrée)</div>
+      <div class="valeur">{{ "%.1f"|format(ident.regles.hauteur_max_m) }} <small>m</small></div></div>
+    {% endif %}
+  </div>
+
+  {% if ident.zones %}
+  <h3>Zonage du document d'urbanisme</h3>
+  <table class="donnees">
+    <tr><th>Zone</th><th>Classe</th><th>Part de la parcelle</th><th>Document</th></tr>
+    {% for z in ident.zones %}
+    <tr><td>{{ z.libelle or "—" }}</td><td class="num-cell">{{ z.classe }}</td>
+        <td class="num-cell">{{ z.pct }} %</td><td class="num-cell">{{ z.idurba or "—" }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+
+  {% if ident.regles %}
+  <h3>Règles calibrées LA BUSE (zone {{ ident.regles.zone or "—" }})</h3>
+  <table class="donnees">
+    <tr><th>Règle</th><th>Valeur</th></tr>
+    {% if ident.regles.emprise_max_m2 %}
+    <tr><td>Emprise au sol maximale (appliquée à la parcelle)</td>
+        <td class="num-cell">{{ ident.regles.emprise_max_m2 }} m²</td></tr>
+    {% endif %}
+    {% if ident.regles.hauteur_max_m %}
+    <tr><td>Hauteur maximale de la zone</td>
+        <td class="num-cell">{{ "%.1f"|format(ident.regles.hauteur_max_m) }} m</td></tr>
+    {% endif %}
+    {% if ident.regles.confiance %}
+    <tr><td>Confiance du calibrage</td><td>{{ ident.regles.confiance }}</td></tr>
+    {% endif %}
+  </table>
+  <p class="note">Règles issues du calibrage fin des règlements PLU par LA BUSE.
+     Les règles complètes du règlement (retraits, prospects, servitudes) peuvent
+     modifier ces valeurs.</p>
+  {% endif %}
+
+  {% if ident.prescriptions %}
+  <h3>Prescriptions graphiques du PLU</h3>
+  <ul class="liste">
+    {% for pr in ident.prescriptions %}
+    <li>{{ pr.libelle }}{% if pr.code %} <span class="chip neutre">{{ pr.code }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+{# ══ Constructibilité ══ #}
+{% set c = data.constructibilite %}
+{% if c %}
+<section>
+  <h2><span class="num">02</span>Constructibilité</h2>
+  {% if c.bati and c.bati.emprise_batie_m2 %}
+  <h3>Parcelle bâtie — potentiel indicatif</h3>
+  <table class="donnees">
+    <tr><th>Indicateur</th><th>Valeur</th></tr>
+    <tr><td>Emprise bâtie constatée (BD TOPO)</td>
+        <td class="num-cell">{{ c.bati.emprise_batie_m2 }} m²</td></tr>
+    {% if c.bati.hauteur_bati_m %}
+    <tr><td>Hauteur du bâti existant</td>
+        <td class="num-cell">{{ "%.1f"|format(c.bati.hauteur_bati_m) }} m</td></tr>
+    {% endif %}
+    {% if c.bati.emprise_residuelle_m2 is not none %}
+    <tr><td>Emprise résiduelle constructible (potentiel indicatif)</td>
+        <td class="num-cell">{{ c.bati.emprise_residuelle_m2 }} m²</td></tr>
+    {% endif %}
+    {% if c.bati.surelevation_possible is not none %}
+    <tr><td>Surélévation (hauteur max − hauteur bâtie ≥ 2,8 m)</td>
+        <td>{% if c.bati.surelevation_possible %}<span class="chip">envisageable — potentiel indicatif</span>
+            {% else %}<span class="chip neutre">non identifiée</span>{% endif %}</td></tr>
+    {% endif %}
+  </table>
+  <p class="note">Potentiel indicatif estimé : emprise maximale du zonage − emprise bâtie.
+     Ce n'est pas une étude de faisabilité réglementaire.</p>
+  {% endif %}
+
+  {% if c.residuel and c.residuel.sdp_residuelle_m2 is not none %}
+  <div class="cartouche"><div class="titre">Surface de plancher résiduelle estimée</div>
+    <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² (indicatif)</small></div></div>
+  {% endif %}
+
+  {% if c.score %}
+  <h3>Score LA BUSE de la parcelle (valeur absolue)</h3>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Q — Qualité foncière</div>
+      <div class="valeur">{{ c.score.q }} <small>/100</small></div></div>
+    <div class="cartouche"><div class="titre">A — Accessibilité (mutabilité)</div>
+      <div class="valeur">{{ c.score.a }} <small>/100</small></div></div>
+    {% if c.score.completude is not none %}
+    <div class="cartouche"><div class="titre">Complétude du signal A</div>
+      <div class="valeur">{{ c.score.completude }} <small>%</small></div></div>
+    {% endif %}
+  </div>
+  <table class="donnees grille">
+    <tr><th>Grille de lecture</th><th>Interprétation</th></tr>
+    <tr><td class="num-cell">Q ≥ {{ c.score.grille.q_seuil }}</td>
+        <td>Qualité foncière élevée : la parcelle « vaut le coup » au regard des règles et
+            contraintes analysées.</td></tr>
+    <tr><td class="num-cell">Q &lt; {{ c.score.grille.q_faible }}</td>
+        <td>Qualité foncière faible : contraintes ou déqualifications identifiées.</td></tr>
+    <tr><td class="num-cell">A ≥ {{ c.score.grille.a_seuil }}</td>
+        <td>Signaux de mutabilité réels détectés (cycle de vie du propriétaire, marché…).</td></tr>
+    <tr><td class="num-cell">A ≈ 50</td>
+        <td>Aucun signal particulier — valeur de base, ni positif ni négatif.</td></tr>
+  </table>
+  <p class="note">Score propre à cette parcelle, exprimé en valeur absolue sur la grille
+     LA BUSE — ce rapport ne compare pas la parcelle à d'autres.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{# ══ Risques ══ #}
+{% set r = data.risques %}
+{% if r %}
+<section>
+  <h2><span class="num">03</span>Risques</h2>
+  {% if r.rien %}
+  <p class="ok-vide">✓ Aucun aléa, PPR, site pollué ou ICPE identifié sur la parcelle ou à
+     proximité (500 m) dans les couches analysées.</p>
+  {% else %}
+  {% if r.couches %}
+  <table class="donnees">
+    <tr><th>Couche</th><th>Détail sur la parcelle</th></tr>
+    {% for it in r.couches %}
+    <tr><td>{{ it.label }}</td>
+        <td><span class="chip alerte">{{ it.detail or "concernée" }}</span></td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% if r.icpe %}
+  <h3>Installations classées (ICPE) à proximité</h3>
+  <table class="donnees">
+    <tr><th>Installation</th><th>Régime</th><th>Distance</th></tr>
+    {% for i in r.icpe %}
+    <tr><td>{{ i.name or "—" }}</td><td>{{ i.regime or "—" }}</td>
+        <td class="num-cell">{{ i.dist_m }} m</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% endif %}
+  <p class="note">Sources : Géorisques (BRGM), PPR DEAL Réunion, classement sonore Cerema.
+     L'absence d'une couche dans ce tableau signifie qu'aucune emprise n'intersecte la
+     parcelle dans les données disponibles.</p>
+</section>
+{% endif %}
+
+{# ══ Patrimoine & environnement ══ #}
+{% set pat = data.patrimoine %}
+{% if pat %}
+<section>
+  <h2><span class="num">04</span>Patrimoine &amp; environnement</h2>
+  {% if pat.rien %}
+  <p class="ok-vide">✓ La parcelle n'est concernée par aucun périmètre patrimonial ou
+     environnemental des couches analysées (ABF/Mérimée, ENS, QPV, Cartofriches,
+     Parc national, forêts publiques).</p>
+  {% else %}
+  {% if pat.couches %}
+  <table class="donnees">
+    <tr><th>Périmètre</th><th>Détail</th></tr>
+    {% for it in pat.couches %}
+    <tr><td>{{ it.label }}</td><td>{{ it.detail or "parcelle concernée" }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% if pat.abf %}
+  <h3>Monuments historiques à proximité (abords ABF ~500 m)</h3>
+  <table class="donnees">
+    <tr><th>Monument (Base Mérimée)</th><th>Distance</th></tr>
+    {% for m in pat.abf %}
+    <tr><td>{{ m.name or "—" }}</td><td class="num-cell">{{ m.dist_m }} m</td></tr>
+    {% endfor %}
+  </table>
+  <p class="note">Dans les abords d'un monument historique, l'avis de l'Architecte des
+     Bâtiments de France peut être requis.</p>
+  {% endif %}
+  {% endif %}
+</section>
+{% endif %}
+
+{# ══ Marché ══ #}
+{% set m = data.marche %}
+{% if m %}
+<section>
+  <h2><span class="num">05</span>Marché — mutations à proximité</h2>
+  {% if m.rien %}
+  <p>Aucune vente enregistrée (DVF) dans un rayon de {{ m.rayon_m }} m sur les
+     {{ m.annees }} dernières années.</p>
+  {% else %}
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Ventes ({{ m.rayon_m }} m · {{ m.annees }} ans)</div>
+      <div class="valeur">{{ m.n }}</div></div>
+    {% if m.med_m2_bati %}
+    <div class="cartouche"><div class="titre">Prix médian bâti</div>
+      <div class="valeur">{{ "{:,}".format(m.med_m2_bati).replace(",", " ") }} <small>€/m²</small></div></div>
+    {% endif %}
+    {% if m.med_m2_terrain %}
+    <div class="cartouche"><div class="titre">Prix médian terrain</div>
+      <div class="valeur">{{ "{:,}".format(m.med_m2_terrain).replace(",", " ") }} <small>€/m²</small></div></div>
+    {% endif %}
+  </div>
+
+  {% if m.comparables %}
+  <h3>Comparables récents (anonymisés)</h3>
+  <table class="donnees">
+    <tr><th>Type</th><th>Surface bâtie</th><th>Terrain</th><th>Prix</th><th>Mois</th></tr>
+    {% for cp in m.comparables %}
+    <tr><td>{{ cp.type_local }}</td>
+        <td class="num-cell">{% if cp.surface_reelle_bati %}{{ cp.surface_reelle_bati|int }} m²{% else %}—{% endif %}</td>
+        <td class="num-cell">{% if cp.surface_terrain %}{{ cp.surface_terrain|int }} m²{% else %}—{% endif %}</td>
+        <td class="num-cell">{{ "{:,}".format(cp.valeur_fonciere|int).replace(",", " ") }} €</td>
+        <td class="num-cell">{{ cp.mois }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="note">Comparables anonymisés (type, surface, prix, mois) — l'adresse exacte des
+     biens n'est jamais communiquée.</p>
+  {% endif %}
+
+  {% if m.derniere_mutation %}
+  <h3>Dernière mutation de la parcelle</h3>
+  <p>{{ m.derniere_mutation.nature or "Mutation" }} du {{ m.derniere_mutation.date or "—" }}
+     {% if m.derniere_mutation.valeur %}— {{ "{:,}".format(m.derniere_mutation.valeur|int).replace(",", " ") }} €
+     (mutation entière, plusieurs parcelles possibles){% endif %}.</p>
+  {% endif %}
+  {% endif %}
+</section>
+{% endif %}
+
+{# ══ Dynamique locale ══ #}
+{% set d = data.dynamique %}
+{% if d %}
+<section>
+  <h2><span class="num">06</span>Dynamique locale — autorisations d'urbanisme</h2>
+  {% if d.rien %}
+  <p>Aucune autorisation d'urbanisme géolocalisée (Sitadel) dans un rayon de
+     {{ d.rayon_m }} m sur les {{ d.mois }} derniers mois.</p>
+  {% else %}
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Autorisations ({{ d.rayon_m }} m · {{ d.mois }} mois)</div>
+      <div class="valeur">{{ d.n }}</div></div>
+    <div class="cartouche"><div class="titre">Logements autorisés (total)</div>
+      <div class="valeur">{{ d.total_logements }}</div></div>
+  </div>
+  {% if d.plus_gros %}
+  <h3>Plus gros projets autorisés</h3>
+  <table class="donnees">
+    <tr><th>Type</th><th>Mois</th><th>Logements</th></tr>
+    {% for pr in d.plus_gros %}
+    <tr><td>{{ pr.type }}{% if pr.famille %} ({{ pr.famille }}){% endif %}</td>
+        <td class="num-cell">{{ pr.mois }}</td><td class="num-cell">{{ pr.nb_lgt }}</td></tr>
+    {% endfor %}
+  </table>
+  {% endif %}
+  {% endif %}
+</section>
+{% endif %}
+
+{# ══ Terrain & réseaux ══ #}
+{% set t = data.terrain %}
+{% if t %}
+<section>
+  <h2><span class="num">07</span>Terrain{% if t.anc or t.solaire %} &amp; réseaux{% endif %}</h2>
+  <div class="cartouches">
+    {% if t.pente %}
+    <div class="cartouche"><div class="titre">Pente moyenne (RGE ALTI 5 m)</div>
+      <div class="valeur">{{ t.pente.moy_deg }}<small>°</small>
+        {% if t.pente.max_deg is not none %}<small> · max {{ t.pente.max_deg }}°</small>{% endif %}
+      </div></div>
+    {% endif %}
+    {% if t.solaire %}
+    <div class="cartouche"><div class="titre">Gisement solaire (PVGIS)</div>
+      <div class="valeur">{{ t.solaire.score }} <small>/100</small></div></div>
+    {% endif %}
+    {% if t.canopee %}
+    <div class="cartouche"><div class="titre">Couverture canopée</div>
+      <div class="valeur">{{ t.canopee.ombrage_pct }} <small>%</small></div></div>
+    {% endif %}
+  </div>
+  {% if t.pente and t.pente.terrassement_lourd %}
+  <p><span class="chip alerte">Pente forte — terrassement lourd probable</span></p>
+  {% endif %}
+  {% if t.anc %}
+  <p>Assainissement : {% if t.anc.zone_anc %}zone d'assainissement NON collectif (fosse
+     probable){% else %}hors zonage d'assainissement non collectif connu{% endif %}.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+{# ══ Sources & millésimes ══ #}
+<section class="saut">
+  <h2><span class="num">08</span>Sources &amp; millésimes</h2>
+  <p>Chaque donnée de ce rapport provient d'une source publique identifiée. Le tableau
+     ci-dessous les cite avec leur état de synchronisation dans la base LA BUSE.</p>
+  <table class="donnees">
+    <tr><th>Section</th><th>Source</th><th>Millésime / synchronisation</th></tr>
+    {% for s in data.sources %}
+    <tr><td>{{ data.section_labels.get(s.section, s.section) }}</td>
+        <td>{{ s.source }}</td><td class="num-cell">{{ s.millesime }}</td></tr>
+    {% endfor %}
+  </table>
+
+  <div class="mentions" style="margin-top:6mm">
+    <p><b>Mentions.</b> Document d'information établi à partir de données publiques.
+       Ne constitue ni un document d'urbanisme opposable, ni une étude de faisabilité
+       réglementaire, ni un conseil juridique. Les règles complètes du PLU peuvent
+       modifier les potentiels indiqués.</p>
+    <p>Rapport {{ order_ref }} généré le {{ data.date_generation }} ·
+       modèle v{{ template_version }} · LA BUSE — radar foncier de La Réunion ·
+       labuse.immo</p>
+  </div>
+</section>
+</body>
+</html>
