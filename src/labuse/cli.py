@@ -1635,3 +1635,24 @@ def ingest_ban_cmd(
             rc = ban_adresses.rattacher_copros_par_adresse(s)
         typer.echo(f"✓ Copros RNIC par adresse : {rc['liees']} rattachée(s) sur {rc['candidates']} "
                    f"({rc['ambigues']} ambiguë(s), {rc['sans_match']} sans correspondance)")
+
+
+@app.command("abuse-scan")
+def abuse_scan_cmd(
+    jour: str = typer.Option(None, help="Journée à scorer (YYYY-MM-DD, défaut : hier)."),
+) -> None:
+    """Lot 3 (wave-adresses) : score quotidien des patterns de scraping → abuse_scores.
+    JAMAIS de blocage automatique : alerte admin, gel manuel par Vic. Cron : deploy/cron.d/abuse."""
+    from datetime import date as _date
+
+    from .api.protection import ensure_tables as prot_ensure
+    from .api.protection import scan_abus
+
+    prot_ensure(engine())
+    j = _date.fromisoformat(jour) if jour else None
+    with session_scope() as s:
+        res = scan_abus(s, j)
+    typer.echo(f"✓ abuse-scan {res['jour']} : {res['sujets']} sujet(s), "
+               f"{res['alertes']} alerte(s) admin.")
+    for sujet, det in sorted(res["scores"].items(), key=lambda kv: -kv[1]["score"])[:10]:
+        typer.echo(f"  {sujet:26} score {det['score']:>3}  {det}")

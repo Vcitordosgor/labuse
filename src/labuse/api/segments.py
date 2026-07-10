@@ -20,7 +20,7 @@ import csv
 import io
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import text
@@ -30,8 +30,7 @@ from ..segments import catnat as catnat_mod
 from ..segments import engine as seg
 from ..segments import presets as presets_mod
 from ..segments import residuel_bati
-from ..segments.registry import (EXPORT_COLS, FILTERS, SORTS,
-                                 compute_availability)
+from ..segments.registry import EXPORT_COLS, FILTERS, SORTS, compute_availability
 
 router = APIRouter(prefix="/segments", tags=["segments"])
 
@@ -134,22 +133,11 @@ def segments_query(body: QueryIn, db: Session = Depends(get_db)) -> dict:
     return resp
 
 
-@router.post("/export")
-def segments_export(body: QueryIn, db: Session = Depends(get_db)) -> Response:
-    """Export CSV « à l'occupant » : adresse (si connue), commune, caractéristiques du
-    preset — JAMAIS de nom de personne physique (RGPD). En-têtes en français lisible
-    (c'est l'artisan qui ouvre ce fichier dans Excel)."""
-    filtres, tri, cols = _resolve_body(db, body)
-    try:
-        q = seg.build(db, filtres, tri, colonnes_export=cols)
-    except seg.FiltreInvalide as exc:
-        raise HTTPException(422, str(exc))
-    buf = io.StringIO()
-    w = csv.writer(buf, delimiter=";")           # Excel FR : point-virgule
+def _rows_export(db, q) -> tuple[list[str], list[list]]:
+    """Matérialise l'export (en-têtes lisibles + lignes) — commun CSV/publipostage."""
     headers = ["Parcelle (IDU)", "Commune", "Surface parcelle (m²)"] + \
               [h for k, h in q.export_cols if k != "surface_m2"]
-    w.writerow(headers)
-    n = 0
+    rows: list[list] = []
     for r in seg.run_export_rows(db, q):
         row = [r["idu"], r["commune"], r["surface_m2"]]
         for k, _h in q.export_cols:
@@ -159,14 +147,35 @@ def segments_export(body: QueryIn, db: Session = Depends(get_db)) -> Response:
             if isinstance(v, bool):
                 v = "oui" if v else "non"
             row.append(v if v is not None else "")
-        w.writerow(row)
-        n += 1
+        rows.append(row)
+    return headers, rows
+
+
+@router.post("/export")
+def segments_export(body: QueryIn, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Export CSV « à l'occupant » : adresse (si connue), commune, caractéristiques du
+    preset — JAMAIS de nom de personne physique (RGPD). En-têtes en français lisible
+    (c'est l'artisan qui ouvre ce fichier dans Excel).
+    Watermarking (Lot 3.4) : colonne `ref` + canaris tracés dans export_fingerprints."""
+    filtres, tri, cols = _resolve_body(db, body)
+    try:
+        q = seg.build(db, filtres, tri, colonnes_export=cols)
+    except seg.FiltreInvalide as exc:
+        raise HTTPException(422, str(exc))
+    headers, rows = _rows_export(db, q)
+    from .protection import filigrane_export, sujet_de
+    filigrane_export(db, sujet_de(request), headers, rows,
+                     slug=body.slug or "requete-libre")
+    buf = io.StringIO()
+    w = csv.writer(buf, delimiter=";")           # Excel FR : point-virgule
+    w.writerow(headers)
+    w.writerows(rows)
     name = (body.slug or "segment").replace("/", "-")
     return Response(
         buf.getvalue().encode("utf-8-sig"),      # BOM : accents corrects dans Excel
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{name}_occupants.csv"',
-                 "X-Rows": str(n)})
+                 "X-Rows": str(len(rows))})
 
 
 # ───────────────────────── admin (Vic) ─────────────────────────
