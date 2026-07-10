@@ -47,10 +47,17 @@ def ensure_tables(engine) -> None:
 
 
 def _parse_date(v) -> date | None:
+    """GASPAR livre du JJ/MM/AAAA (vérifié live 2026-07) ; on tolère aussi l'ISO."""
     if not v:
         return None
+    s = str(v).strip()
+    for fmt in ("%d/%m/%Y",):
+        try:
+            return datetime.strptime(s, fmt).date()
+        except ValueError:
+            pass
     try:
-        return datetime.fromisoformat(str(v).replace("Z", "+00:00")).date()
+        return datetime.fromisoformat(s.replace("Z", "+00:00")).date()
     except ValueError:
         return None
 
