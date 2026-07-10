@@ -164,6 +164,10 @@ def main() -> None:
            "`labuse ingest-inpi-gigogne` un autre jour.",
            "- **Badges V sur carte** : mode commune (GeoJSON) seulement — les tuiles MVT île ne portent "
            "pas encore v_score (régénération des tuiles à planifier).",
+           "- **Grands groupes nationaux** (ex. ORANGE dans le top Brûlantes : « dirigeant ≥ 75 ans » "
+           "d'un conseil d'administration + cession d'une boutique) : signaux techniquement exacts mais "
+           "non pertinents pour un foncier stratégique — filtre catégorie d'entreprise (GE/ETI) à "
+           "prévoir avec le raffinement D5.",
            "- v1.1 : raffinement PM promoteurs/marchands de biens (D5), diff quotidien BODACC, LOVAC.",
            "\n---\n*Aucun merge effectué — validation visuelle puis merge `--no-ff` par Vic.*"]
 
