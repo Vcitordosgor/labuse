@@ -178,6 +178,69 @@ def segments_export(body: QueryIn, request: Request, db: Session = Depends(get_d
                  "X-Rows": str(len(rows))})
 
 
+@router.post("/publipostage")
+def segments_publipostage(body: QueryIn, request: Request,
+                          db: Session = Depends(get_db)) -> Response:
+    """Publipostage (Lot 2A wave-adresses) : ZIP = CSV normalisé (« À l'occupant »,
+    Adresse L1/L2, CP, Ville — jamais de nom de personne physique) + planches
+    d'étiquettes PDF (63,5 × 38,1 configurable) + gabarit de lettre du métier.
+    Seules les parcelles avec adresse BAN partent ; watermarking Lot 3 appliqué."""
+    from ..config import get_settings, load_yaml_config
+    from ..segments import publipostage as pub
+    from ..segments.registry import compute_availability
+    from .protection import filigrane_export, sujet_de
+
+    avail = compute_availability(db)
+    if not avail.get("adresse_ban", {}).get("disponible"):
+        raise HTTPException(409, "Adresses BAN non ingérées (labuse ingest-ban) — "
+                                 "le publipostage a besoin d'adresses fiables.")
+    filtres, tri, cols = _resolve_body(db, body)
+    # adresse exigée : filtre serveur ajouté d'office (jamais un courrier sans adresse)
+    filtres = list(filtres) + [{"cle": "adresse_ban", "value": True}]
+    try:
+        q = seg.build(db, filtres, tri, colonnes_export=cols or ["surface_m2"])
+    except seg.FiltreInvalide as exc:
+        raise HTTPException(422, str(exc))
+    rows = [dict(r) for r in seg.run_export_rows(db, q)]
+    lignes = pub.lignes_publipostage(rows)
+
+    headers = list(pub.ENTETES)
+    ref = filigrane_export(db, sujet_de(request), headers, lignes,
+                           slug=body.slug or "requete-libre", fmt="publipostage")
+    gabarits = (load_yaml_config("gabarits_courrier") or {}).get("gabarits", {})
+    categorie = None
+    if body.slug:
+        p = presets_mod.get_preset(db, body.slug)
+        categorie = (p or {}).get("categorie")
+    gab = gabarits.get(categorie or "", {})
+    gabarit_txt = (f"{gab['titre']}\n{'=' * len(gab['titre'])}\n\n{gab['corps']}"
+                   if gab else None)
+
+    data = pub.zip_publipostage(
+        pub.csv_bytes(headers, lignes),
+        pub.etiquettes_pdf(lignes, fmt=get_settings().etiquettes_format, ref=ref),
+        gabarit_txt)
+    name = (body.slug or "segment").replace("/", "-")
+    return Response(data, media_type="application/zip",
+                    headers={"Content-Disposition":
+                             f'attachment; filename="{name}_publipostage.zip"',
+                             "X-Rows": str(len(lignes))})
+
+
+@router.get("/gabarits")
+def segments_gabarits() -> dict:
+    """Gabarits de courrier par famille de métier (page d'aide — textes ÉDITABLES,
+    hors scope juridique : le contenu envoyé reste la responsabilité du client)."""
+    from ..config import load_yaml_config
+    try:
+        g = (load_yaml_config("gabarits_courrier") or {}).get("gabarits", {})
+    except FileNotFoundError:
+        g = {}
+    return {"gabarits": g,
+            "avertissement": "Modèles de départ à adapter — mentions obligatoires de "
+                             "votre métier (SIRET, assurances) à votre charge."}
+
+
 # ───────────────────────── admin (Vic) ─────────────────────────
 
 class PresetIn(BaseModel):

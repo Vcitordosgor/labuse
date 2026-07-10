@@ -1,0 +1,72 @@
+# Gabarits de courrier « à l'occupant » par famille de métier (mandat wave-adresses,
+# Lot 2A.2). TEXTES ÉDITABLES — modèles de départ, HORS SCOPE JURIDIQUE : chaque client
+# reste responsable de son contenu (mentions obligatoires de SON métier, assurances,
+# SIRET…). Variables : {adresse} est remplacée à la fusion par l'adresse de la ligne.
+gabarits:
+  exterieur:
+    titre: "Aménagement extérieur / jardin"
+    corps: |
+      Madame, Monsieur,
+
+      Artisan spécialisé dans l'aménagement extérieur à La Réunion, j'interviens
+      régulièrement dans votre quartier ({adresse}).
+
+      Votre terrain présente des caractéristiques (jardin, clôture, accès) pour
+      lesquelles je propose un diagnostic gratuit et sans engagement : entretien,
+      élagage, clôture, terrasse ou piscine.
+
+      Je me tiens à votre disposition pour un passage à votre convenance.
+
+      [Nom, entreprise, téléphone, SIRET — mentions de votre métier]
+  renovation:
+    titre: "Rénovation / amélioration de l'habitat"
+    corps: |
+      Madame, Monsieur,
+
+      Votre logement ({adresse}) se situe dans un secteur où nous réalisons
+      actuellement plusieurs chantiers de rénovation.
+
+      Bâti ancien, toiture, façades, étanchéité : un diagnostic honnête vous
+      permet d'anticiper les travaux avant qu'ils ne s'imposent. Je vous propose
+      une visite-conseil gratuite, sans aucun engagement.
+
+      [Nom, entreprise, téléphone, SIRET, assurance décennale]
+  energie:
+    titre: "Énergie / photovoltaïque"
+    corps: |
+      Madame, Monsieur,
+
+      À La Réunion, une toiture bien exposée produit une part importante de
+      l'électricité d'un foyer. Votre maison ({adresse}) se trouve dans une zone
+      où nous équipons de nombreux clients.
+
+      Je vous propose une étude de production personnalisée et gratuite, fondée
+      sur votre toiture réelle — pas de démarchage insistant, une estimation
+      chiffrée que vous gardez.
+
+      [Nom, entreprise, téléphone, SIRET — mentions RGE le cas échéant]
+  securite:
+    titre: "Sécurisation / clôture / portail"
+    corps: |
+      Madame, Monsieur,
+
+      Installé à La Réunion, je propose aux propriétaires de votre secteur
+      ({adresse}) un diagnostic de sécurisation du terrain : clôture, portail,
+      éclairage.
+
+      La visite est gratuite et sans engagement.
+
+      [Nom, entreprise, téléphone, SIRET]
+  foncier_bati:
+    titre: "Foncier / extension / surélévation"
+    corps: |
+      Madame, Monsieur,
+
+      Votre parcelle ({adresse}) dispose peut-être d'un potentiel d'extension ou
+      de surélévation au regard du plan local d'urbanisme de votre commune.
+
+      Professionnel de la construction, je vous propose un premier échange
+      gratuit pour évaluer ce que les règles d'urbanisme permettent réellement —
+      sans engagement, et sans promesse : seule une étude sérieuse fait foi.
+
+      [Nom, entreprise, téléphone, SIRET — mentions de votre métier]

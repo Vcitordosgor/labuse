@@ -3,8 +3,8 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  createSegmentPreset, deleteSegmentPreset, exportSegmentCsv, getSegments, nlSegmentsSearch,
-  querySegment, refreshSegmentCounts, updateSegmentPreset,
+  createSegmentPreset, deleteSegmentPreset, exportPublipostage, exportSegmentCsv, getSegments,
+  nlSegmentsSearch, querySegment, refreshSegmentCounts, updateSegmentPreset,
   type NlSegmentsRep, type SegmentFiltre, type SegmentFiltreDef, type SegmentPreset,
   type SegmentsHome,
 } from '../../lib/api'
@@ -218,6 +218,12 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
     onSuccess: () => setToast('Export CSV téléchargé — adresses « à l\'occupant », aucune donnée nominative.'),
     onError: () => setToast("L'export a échoué — réessayer."),
   })
+  const pub = useMutation({
+    mutationFn: () => exportPublipostage({ slug: preset.slug, filtres: effectifs, tri },
+      `${preset.slug || 'recherche'}_publipostage.zip`),
+    onSuccess: () => setToast('Publipostage téléchargé : CSV normalisé + étiquettes + gabarit de lettre.'),
+    onError: (e) => setToast('Publipostage : ' + (e as Error).message),
+  })
   // admin : enregistrer les filtres modifiés comme NOUVEAU preset (un preset modifié
   // à la volée ne s'enregistre jamais sur place — doctrine du mandat)
   const dup = useMutation({
@@ -289,6 +295,14 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
             <button data-seg-dupliquer onClick={() => dup.mutate()} title="Admin : enregistrer ces filtres comme nouveau preset"
               className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt hover:border-mint">
               Enregistrer…
+            </button>
+          </div>
+          {/* Lot 2A (wave-adresses) : publipostage = CSV « À l'occupant » + étiquettes + gabarit */}
+          <div className="mt-2 flex items-center gap-2">
+            <button data-seg-publipostage onClick={() => pub.mutate()} disabled={pub.isPending || !rep?.count}
+              className="flex-1 rounded-lg border border-mint/50 bg-mint/10 px-3 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20 disabled:opacity-40"
+              title="ZIP : CSV normalisé (À l'occupant, adresse BAN), planches d'étiquettes 63,5×38,1, gabarit de lettre du métier">
+              {pub.isPending ? 'Préparation…' : 'Publipostage (CSV + étiquettes)'}
             </button>
           </div>
         </div>
