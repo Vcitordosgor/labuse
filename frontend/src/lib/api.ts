@@ -6,6 +6,7 @@ export interface ParcelFeatureCollection {
 }
 
 import { useApp, type Filters } from '../store/useApp'
+import { vSignalCodes } from './filters'
 
 // SOURCE DE VÉRITÉ du Socle V1 : le scoring premium v2, run q_v2 (dryrun_parcel_evaluations).
 // JAMAIS parcel_evaluations (éval historique). Cf. brief « NOTE SOURCE DE VÉRITÉ ».
@@ -40,6 +41,9 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
   ...(f.flagsExclus.length ? { flags_exclus: f.flagsExclus.join(',') } : {}),
   ...(f.communes.length ? { communes: f.communes.join(',') } : {}),
+  ...(f.vBands.length ? { v_bands: f.vBands.join(',') } : {}),
+  ...(f.vSignals.length ? { v_signal: vSignalCodes(f.vSignals).join(',') } : {}),
+  ...(f.brulantes ? { brulantes: 'true' } : {}),
 })
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
@@ -67,7 +71,11 @@ export const searchParcels = (needle: string) =>
     `/parcels/search?q=${encodeURIComponent(needle)}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
 export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)
-export const getResults = (f?: Filters, limit = 500) => j<ParcelResult[]>(`/parcels?${q({ limit, ...(f ? filterParams(f) : {}) })}`)
+export const getResults = (f?: Filters, limit = 500, sortV = false) =>
+  j<ParcelResult[]>(`/parcels?${q({ limit, ...(sortV ? { sort: 'v' } : {}), ...(f ? filterParams(f) : {}) })}`)
+/** Export CSV de la liste courante (mêmes filtres) — colonnes v_score / v_band / top_signaux. */
+export const csvExportUrl = (f?: Filters, sortV = false) =>
+  `/parcels/export.csv?${q({ limit: 5000, ...(sortV ? { sort: 'v' } : {}), ...(f ? filterParams(f) : {}) })}`
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)

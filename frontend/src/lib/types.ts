@@ -1,5 +1,36 @@
 export type Statut = 'chaude' | 'a_surveiller' | 'a_creuser' | 'ecartee' | 'exclue'
 
+// ── Score V (Vendabilité, Stage 3) ──
+export type VBand = 'fort' | 'present' | 'faible' | 'aucun' | 'na'
+export type OwnerType = 'pm' | 'pp' | 'public' | 'bailleur' | 'copro'
+
+export interface VSignal {
+  code: string
+  famille: string
+  label: string
+  points: number
+  source: string
+  ref: string | null
+  url: string | null
+  date_evenement: string | null
+  match: { type: string; valeur: string; confiance: number } | null
+}
+
+export interface ScoreV {
+  v_score: number | null        // NULL = non applicable (public / bailleur social)
+  v_band: VBand | null
+  v_band_label: string | null
+  v_coverage: 'full' | 'partial'
+  v_confidence: number | null
+  owner_type: OwnerType | null
+  owner_siren: string | null
+  owner_denomination: string | null
+  brulante: boolean
+  badge: string | null          // « Foncier public — démarche dédiée », « Bailleur social »…
+  signals: VSignal[]
+  computed_at: string | null
+}
+
 export interface ParcelResult {
   idu: string
   commune: string
@@ -13,6 +44,10 @@ export interface ParcelResult {
   evenement: string | null
   cluster?: number | null   // taille du groupe « même propriétaire » parmi les chaudes (île)
   proprio?: string | null
+  v_score?: number | null
+  v_band?: VBand | null
+  owner_type?: OwnerType | null
+  brulante?: boolean
 }
 
 export interface Stats {
@@ -26,6 +61,12 @@ export interface Stats {
   dossiers_chaudes?: number
   chaudes_sans_identite?: number
   chaude_evenement?: number   // décomposition « dont N par événement » (survol du compteur)
+  brulantes?: number          // 🔥 chaudes Q×A ∧ V ≥ seuil (tier combiné)
+  v_fort?: number
+  v_present?: number
+  v_faible?: number
+  v_aucun?: number
+  v_na?: number
 }
 
 export type MapMode = 'verdict' | 'mutabilite'
@@ -97,4 +138,5 @@ export interface Fiche {
   evenement_detail: string | null
   lines: FicheLine[]
   flags: FicheLine[]
+  score_v: ScoreV | null
 }

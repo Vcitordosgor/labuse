@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { deleteSearch, getCommunes, getEvents, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, saveSearch, searchParcels } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
-import { activeChips, FLAG_DEFS, removeToken } from '../../lib/filters'
-import { STATUT_META } from '../../lib/status'
+import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
+import { STATUT_META, V_BAND_META } from '../../lib/status'
 import type { Statut } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
@@ -104,6 +104,10 @@ function AddFilter() {
     setFilter('statuts', filters.statuts.includes(s) ? filters.statuts.filter((x) => x !== s) : [...filters.statuts, s])
   const toggleFlag = (k: string) =>
     setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])
+  const toggleVBand = (b: string) =>
+    setFilter('vBands', filters.vBands.includes(b) ? filters.vBands.filter((x) => x !== b) : [...filters.vBands, b])
+  const toggleVSignal = (k: string) =>
+    setFilter('vSignals', filters.vSignals.includes(k) ? filters.vSignals.filter((x) => x !== k) : [...filters.vSignals, k])
   return (
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)}
@@ -142,6 +146,32 @@ function AddFilter() {
                   className={`rounded-full border px-2 py-0.5 text-[11px] ${
                     filters.flags.includes(d.key) ? 'border-st-creuser text-st-creuser' : 'border-line-2 text-txt-mut'}`}>
                   ⚑ {d.label}
+                </button>
+              ))}
+            </div>
+            {/* Score V (Vendabilité, Stage 3) : tier 🔥, bandes, signaux individuels */}
+            <label className="mt-3 block font-mono text-[10px] tracking-widest text-txt-dim">VENDABILITÉ (SCORE V)</label>
+            <div className="mt-1.5">
+              <CheckRow label="🔥 Brûlantes seulement (chaude + V ≥ 50)" on={filters.brulantes}
+                toggle={() => setFilter('brulantes', !filters.brulantes)} />
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {(Object.keys(V_BAND_META) as (keyof typeof V_BAND_META)[]).map((b) => (
+                <button key={b} onClick={() => toggleVBand(b)}
+                  className={`rounded-full border px-2 py-0.5 text-[11px] ${
+                    filters.vBands.includes(b) ? 'border-[#FF8A50] text-[#FF8A50]' : 'border-line-2 text-txt-mut'}`}
+                  title={`Bande V : ${V_BAND_META[b].label}`}>
+                  {V_BAND_META[b].label}
+                </button>
+              ))}
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {V_SIGNAL_DEFS.map((d) => (
+                <button key={d.key} onClick={() => toggleVSignal(d.key)}
+                  className={`rounded-full border px-2 py-0.5 text-[11px] ${
+                    filters.vSignals.includes(d.key) ? 'border-[#FF8A50] text-[#FF8A50]' : 'border-line-2 text-txt-mut'}`}
+                  title={`Au moins un signal « ${d.label} » retenu au Score V`}>
+                  {d.label}
                 </button>
               ))}
             </div>
