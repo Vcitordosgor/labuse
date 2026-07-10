@@ -150,7 +150,7 @@ def score_at(t: date, idu: str, owner, fiche, ages_ym: dict[str, str], annonces,
         cands.append(_signal("DVF_TENURE_OBS5", source="BT", match=m))
     retained, total = _retain(cands, factor)
     if antecedentes and max(antecedentes) >= months_before(t, C.ACHAT_RECENT_WINDOW_MONTHS):
-        total += C.MALUS_ACHAT_RECENT[1]
+        total += C.MALUS_ACHAT_RECENT[1]   # v1.1 : 0 (neutralisé — contre-prédictif au backtest v1)
     return max(0, min(100, total))
 
 

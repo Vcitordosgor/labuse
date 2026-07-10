@@ -88,7 +88,11 @@ SIGNALS_NO_GO = {
 }
 
 # Malus : mutation DVF < 3 ans sur la parcelle.
-MALUS_ACHAT_RECENT = ("DVF_ACHAT_RECENT", -15, "Achat récent (mutation DVF < 3 ans)")
+# v1.1 : NEUTRALISÉ (0, était −15). Le backtest v1 l'a montré CONTRE-prédictif : les parcelles
+# récemment mutées RE-vendent plus souvent (flips de marchands de biens, lift 2.04× sur V 0-7).
+# Le vrai fix est le raffinement D5 (détection MdB) — consigné v1.2. Constante conservée pour
+# que le moteur, l'UI et le backtest gardent le circuit ; à 0, le signal n'est plus émis.
+MALUS_ACHAT_RECENT = ("DVF_ACHAT_RECENT", 0, "Achat récent (mutation DVF < 3 ans)")
 
 # ── Fenêtres temporelles (mois) ────────────────────────────────────────────────────────────
 RADIATION_WINDOW_MONTHS = 36

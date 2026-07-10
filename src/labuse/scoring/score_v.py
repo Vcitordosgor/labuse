@@ -501,7 +501,9 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
                                  match=pmatch))
 
         retained, total = _retain(cands, factor)
-        if mut and mut["date"] and mut["date"] >= achat_recent_seuil:
+        # v1.1 : malus neutralisé (constante à 0) → plus émis ; le garde ci-dessous conserve le
+        # circuit si un futur re-calibrage lui redonne un poids.
+        if C.MALUS_ACHAT_RECENT[1] and mut and mut["date"] and mut["date"] >= achat_recent_seuil:
             code, pts, label = C.MALUS_ACHAT_RECENT
             retained.append({
                 "code": code, "famille": "malus", "label": label, "points": pts,
