@@ -21,6 +21,11 @@ convention:
 base: 50
 
 # Couches d'ACCESSIBILITÉ (A). Tout le reste = Qualité (Q).
+# Couches A dont le SIGNAL DE ZONE (marqueur « SIGNAL DE ZONE » dans le détail, cf. §7bis)
+# est du CONTEXTE : compte dans le score A affiché, EXCLU du test de franchissement « chaude »
+# (décision Vic data-gap 10/07/2026 — un bonus de zone ne bascule jamais une parcelle seul).
+a_zone_layers:
+  - sitadel
 a_layers:
   - proprietaire
   - age_dirigeant

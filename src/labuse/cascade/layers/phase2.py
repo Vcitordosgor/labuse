@@ -79,6 +79,9 @@ class SitadelLayer(Layer):
             )
         if res["nearby"] > 0:
             mag = min(1.0, res["nearby"] / saturation)
+            # ⚠ CONTRAT : le marqueur « SIGNAL DE ZONE » dans le détail est lu par
+            # compute_matrice (dryrun.py) pour exclure ce bonus du test de franchissement
+            # « chaude » (a_zone_layers, décision Vic 10/07/2026). Ne pas reformuler.
             return positive(
                 self.name,
                 f"Dynamique constructive : {res['nearby']} PC à ≤ {radius} m sur {months // 12} ans "

@@ -251,3 +251,32 @@ pertinent à 34, la méthode top-décile ne s'appliquant que si le garde-fou est
 *Fin du mandat data-gap — 11 lots traités (8 FAIT, 1 partiel, 2 BLOQUÉS documentés),
 zéro régression tests (629 verts, 6 échecs préexistants identiques à main),
 Score V intouché, `q_v2` intouché. AUCUN MERGE — validation et merge par Vic.*
+
+## Phase 2bis — Décision Vic appliquée : le signal de zone ne bascule jamais seul
+
+**Règle implémentée** (option « exclusion du franchissement », la plus propre dans l'archi :
+le score A AFFICHÉ garde le contexte, seul le test de bascule l'ignore) :
+- `compute_matrice` calcule `a_hors_zone` = A sans les bonus « SIGNAL DE ZONE » des couches
+  `a_zone_layers` (config, = [sitadel]) ; chaude exige désormais `a ≥ 60 ET a_hors_zone ≥ 60`.
+- Le verdict « RATTACHÉ par IDU » (fait parcellaire, 6 065 parcelles) garde son pouvoir de
+  bascule ; le « SIGNAL DE ZONE » (71 895) devient purement contextuel pour le franchissement.
+- Identification sur les verdicts STOCKÉS via le marqueur « SIGNAL DE ZONE » du détail —
+  contrat documenté des deux côtés (dryrun.py ↔ phase2.py). Recalcul MATRICES SEULES :
+  1 min 50 pour les 24 communes, aucune ré-évaluation.
+
+**Comparatif final :**
+
+| Statut | q_v2 (avant) | q_v3_datagap (final) |
+|---|---|---|
+| chaude | 1 083 | **1 158** |
+| a_surveiller | 6 570 | 5 889 |
+| a_creuser | 16 003 | 15 580 |
+| ecartee | 408 007 | 409 036 |
+
+Décomposition des chaudes : 1 083 − 429 sorties (255 par les nouveaux malus bruit/50 pas/
+SIS-CASIAS/SUP + 174 qui ne tenaient que par l'ANCIEN bonus de zone binaire — sorties conformes
+à la nouvelle doctrine) + **504 entrées justifiées par des faits parcellaires** (SDP résiduelle
++13,3 pts en moyenne, DVF +5,3, zonage +8,0, rattaché-IDU, potentiel foncier).
+
+**Brûlantes 🔥 : 93 (q_v2) → 79 (q_v3 final)** — garde-fou [30-120] **respecté**, seuil 34
+conservé, aucune proposition nécessaire.
