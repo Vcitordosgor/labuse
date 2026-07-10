@@ -75,6 +75,16 @@ class Settings(BaseSettings):
     raison_sociale: str = "Pilote LA BUSE"  # mention « Généré via LABUSE pour … » (Lot 4)
     etiquettes_format: str = "63.5x38.1"  # planche d'étiquettes du publipostage (Lot 2A)
 
+    # ── Courrier postal par API (Lot 2B) — prestataire retenu : Merci Facteur
+    # (couverture DOM confirmée, API publique v1.2, sandbox). Sans clé → provider
+    # « stub » : les endpoints répondent, AUCUN envoi ni bouton côté front. ──
+    courrier_provider: str = "stub"       # stub | mercifacteur
+    mercifacteur_api_key: str | None = None
+    mercifacteur_api_secret: str | None = None
+    courrier_cout_lettre_eur: float = 2.69   # lettre verte 3 pages Merci Facteur (grille 2026)
+    courrier_marge: float = 1.5              # prix client = coût prestataire × marge
+    courrier_max_jour: int = 100             # plafond anti-abus d'envois / jour / sujet
+
     # ── Module Flash : rapport parcelle à l'unité (mandat module-flash) ──
     # Prix TTC affiché/facturé. La valeur de LANCEMENT est décidée par Vic au moment de
     # créer le produit Stripe — 79 € est la suggestion du mandat, jamais une décision.
