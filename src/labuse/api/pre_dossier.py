@@ -232,10 +232,11 @@ def pre_dossier_zip(idu: str, request: Request, db: Session = Depends(get_db)) -
         if plan:
             z.writestr("plan_de_situation.pdf", plan)
         z.writestr("regles_du_zonage_et_pieces.pdf", _regles_et_pieces(db, idu))
-        z.writestr("LISEZMOI.txt",
+        z.writestr(zipfile.ZipInfo("LISEZMOI.txt"),
                    f"Pré-dossier PC — parcelle {idu} ({p['commune']})\n\n{LIBELLE}\n\n"
                    f"CERFA {CERFA_VERSION} : seuls les champs parcelle/terrain sont "
-                   "pré-remplis ; les champs du PROJET sont volontairement vides.\n")
+                   "pré-remplis ; les champs du PROJET sont volontairement vides.\n",
+                   compress_type=zipfile.ZIP_STORED)   # non compressé : libellé vérifiable tel quel
     log.info("pré-dossier PC %s généré", idu)
     return Response(buf.getvalue(), media_type="application/zip",
                     headers={"Content-Disposition":
