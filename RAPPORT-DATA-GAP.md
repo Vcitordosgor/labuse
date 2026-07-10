@@ -111,3 +111,22 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
   → `spatial_layers kind='bruit_route'`. Règle Stage 1 : cat 1-2 → SOFT_FLAG **moyen**,
   cat 3-5 → **faible** (« isolement acoustique renforcé obligatoire, R.571-32 CE »).
   Millésime : Cerema 2022, en vigueur (AP 14-15/12/2023). CLI `labuse ingest-bruit-route`.
+
+### LOT 5 — SAR / SMVM : BLOQUÉ (source réglementaire non diffusée)
+- Le zonage SIG réglementaire du SAR 2011 (espaces urbains/agricoles/naturels, coupures
+  d'urbanisation, ZPU) n'est diffusé NULLE PART en open data exploitable : Région ODS 0/277
+  datasets, PEIGEO fiches sans lien (GeoServer 348 couches : aucune SAR), AGORAH renvoie à
+  PEIGEO, SyOP = PDF 34,6 Mo, Ifremer = WMS raster (ERL SMVM 2010 seulement). La révision du
+  SAR passe au Conseil d'État en 2026 — à requêter à la Région/AGORAH hors open data.
+- Le PROXY existant (vocations via potentiel foncier, couverture partielle) reste en place,
+  INFORMATIF sans pouvoir d'exclusion (décision Vic 08/07/2026 inchangée). Les règles du
+  mandat (coupure = Stage 0/malus très fort, ZPU = bonus) s'appliqueront au SIG réglementaire
+  le jour où il sera obtenu.
+
+### LOT 7 — Périmètres irrigués : BLOQUÉ (donnée existante mais non diffusée)
+- Les fiches PEIGEO « Irrigation Départementale » (secteurs en service / programmés / à
+  l'étude, création 07/2025, Département DAE) existent mais TOUS les liens de distribution
+  sont morts (localhost) ; le GeoServer PEIGEO (348 couches) n'a aucune couche irrigation ;
+  ILO absent de data.gouv/Région/Office de l'eau. **Seule voie : demande directe à la DAE
+  (secretariatdae@cg974.fr)** — consigné pour action Vic. Le renforcement du verrou Stage 0
+  prévu s'appliquera à réception.
