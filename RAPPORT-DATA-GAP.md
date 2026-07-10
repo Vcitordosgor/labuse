@@ -85,3 +85,15 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
   second en Stage 1 aurait doublonné le même signal (interdit par le lot). Gradué EN PLACE.
 - `new_permit_nearby` (événement de veille) inchangé — rôles désormais distincts :
   événement (delta) vs densité (niveau). Millésime : sitadel_permits SDES jusqu'au mois courant.
+
+### LOT 4 — SUP (assiettes GPU) : FAIT / PARTIEL-source
+- Ingestion `sup_gpu.py` (API Carto GPU, assiette-sup-s/l/p, bbox par commune, idempotent) :
+  **417 assiettes** sur les 24 communes. CLI `labuse ingest-sup`.
+- **Constat source** : le GPU 974 n'expose QUE pm1 (311), pm3 (30), pm2 (29), el10 (23),
+  ac1-ac4 (24) — les catégories prioritaires du mandat (**I4 lignes HT, I1/I3 canalisations,
+  T4/T5/T7 aéronautiques) ne sont PAS téléversées au GPU pour le 974** → règles prêtes
+  (SUP_SEVERITES) mais sans données ; elles s'activeront seules au premier téléversement DEAL.
+- Règle de scoring (Stage 1, couche `sup`) : t5 fort ; t4/t7/i4/i1/i3 moyen ; défaut faible ;
+  pm1/pm2/pm3 + ac1/ac2 + el10 = info ×0 (**anti-double-compte** : déjà scorés par `risques`,
+  `abf`, `parc_national`). Liste complète des SUP en fiche (détail du verdict).
+- Millésime : GPU live 10/07/2026.

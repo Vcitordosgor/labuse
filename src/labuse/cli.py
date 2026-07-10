@@ -1474,3 +1474,26 @@ def dvf_marche_cmd() -> None:
     with session_scope() as s:
         res = compute_medianes_secteur(s)
     typer.echo(f"✓ dvf_secteur_medianes : {res}")
+
+
+@app.command("ingest-sup")
+def ingest_sup_cmd(
+    commune: str = typer.Option(None, help="Nom d'une commune (défaut = les 24)."),
+) -> None:
+    """LOT 4 data-gap : assiettes SUP (GPU/API Carto) → spatial_layers kind='sup'.
+    Une commune = une unité committée (résumable). Purge+réinsertion par commune (idempotent)."""
+    from .ingestion.run_all import REUNION_COMMUNES
+    from .ingestion.sup_gpu import SOURCE_NAME, ingest_commune
+
+    targets = [n for _, n in REUNION_COMMUNES if not commune or n == commune]
+    tot = 0
+    for nom in targets:
+        with session_scope() as s:
+            sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                            {"n": SOURCE_NAME}).scalar()
+            res = ingest_commune(s, nom, source_id=sid, log=typer.echo)
+            s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                      {"n": SOURCE_NAME})
+        tot += res["sup"]
+        typer.echo(f"  ✓ {nom} : {res['sup']} assiettes")
+    typer.echo(f"✓ SUP : {tot} assiettes ({len(targets)} communes).")

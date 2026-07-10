@@ -98,6 +98,54 @@ class SolPollueLayer(_NearestFlagLayer):
         return super().evaluate(parcel, ctx, params)
 
 
+SRC_SUP = "SUP — assiettes GPU (API Carto)"
+
+#: LOT 4 (data-gap) — sévérité par catégorie de SUP intersectée. Les catégories DÉJÀ scorées
+#: par une autre couche sont neutralisées (info ×0) : pm* = PPR (couche risques), ac1/ac2 =
+#: monuments/sites (couche abf), el10 = parc national (couche parc_national).
+SUP_SEVERITES = {
+    "t4": "moyen", "t5": "fort", "t7": "moyen",         # servitudes aéronautiques
+    "i4": "moyen",                                       # lignes électriques HT/THT
+    "i1": "moyen", "i1bis": "moyen", "i3": "moyen",      # hydrocarbures / gaz
+    "pm1": "info", "pm2": "info", "pm3": "info",         # PPR — déjà scoré (risques)
+    "ac1": "info", "ac2": "info",                        # MH / sites — déjà scoré (abf)
+    "el10": "info",                                      # parc national — déjà scoré
+}
+SUP_DEFAUT = "faible"
+
+
+@register
+class SupLayer(Layer):
+    """LOT 4 (data-gap) — parcelle ∩ assiette de SUP : flag par TYPE de servitude + liste en
+    fiche. Malus Stage 1 selon la catégorie (SUP_SEVERITES) ; la plus sévère porte le verdict,
+    toutes sont listées dans le détail. Anti-double-compte : cf. SUP_SEVERITES."""
+
+    name = "sup"
+
+    _ORDRE = {"fort": 3, "moyen": 2, "faible": 1, "info": 0}
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Assiettes SUP non ingérées.", source=SRC_SUP)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name, "Aucune servitude d'utilité publique recensée.", source=SRC_SUP)
+        types: dict[str, str] = {}
+        for i in inter:
+            st = (i.subtype or "?").lower()
+            types.setdefault(st, i.name or st)
+        sev_of = lambda st: SUP_SEVERITES.get(st, SUP_DEFAUT)  # noqa: E731
+        pire = max(types, key=lambda st: self._ORDRE[sev_of(st)])
+        liste = " ; ".join(f"{st.upper()} ({nom})" for st, nom in sorted(types.items()))
+        i_ref = next(i for i in inter if (i.subtype or "?").lower() == pire)
+        detail = (f"Servitude(s) d'utilité publique sur la parcelle : {liste}."
+                  + (" Catégorie déjà couverte par une autre couche (0 pt, anti-double-compte)."
+                     if sev_of(pire) == "info" else ""))
+        return _trace(soft_flag(self.name, detail, Severity(sev_of(pire)), source=SRC_SUP),
+                      "spatial_layers", i_ref.id)
+
+
 @register
 class CaviteLayer(_NearestFlagLayer):
     name = "cavite"
