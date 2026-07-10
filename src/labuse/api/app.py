@@ -1030,6 +1030,55 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
     pm = db.execute(text(
         "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :idu"),
         {"idu": idu}).mappings().first()
+    # LOT 1 (data-gap) : dernière mutation DVF de LA parcelle + médianes du secteur cadastral.
+    dvf_last = db.execute(text(
+        "SELECT date_mutation, nature, valeur, prix_m2_bati, prix_m2_terrain, multi_parcelles "
+        "FROM v_parcel_dvf_last WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    dvf_secteur = [dict(r) for r in db.execute(text(
+        "SELECT type_bien, n_ventes, mediane_valeur, mediane_prix_m2, fenetre "
+        "FROM dvf_secteur_medianes WHERE secteur = substring(:idu FROM 1 FOR 10) "
+        "ORDER BY n_ventes DESC"), {"idu": idu}).mappings().all()]
+    dvf_parcelle = None
+    if dvf_last or dvf_secteur:
+        dvf_parcelle = {
+            "derniere_mutation": ({**dict(dvf_last),
+                                   "date_mutation": dvf_last["date_mutation"].isoformat()
+                                   if dvf_last["date_mutation"] else None}
+                                  if dvf_last else None),
+            "secteur": dvf_secteur,
+            "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025",
+        }
+    # LOT 9 (data-gap) : terrain (pente RGE ALTI 5 m) — hypothèses affichées, jamais un « 0 » muet.
+    terrain = db.execute(text(
+        "SELECT pente_moy_deg, pente_max_deg, flag_terrassement_lourd "
+        "FROM parcel_terrain WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    # LOT 10 (data-gap) : copropriété(s) RNIC rattachées à la parcelle (cible MdB, hors scoring).
+    copros = [dict(r) for r in db.execute(text(
+        "SELECT numero_immatriculation, nom_usage, adresse, nb_lots_total, nb_lots_habitation, "
+        "       periode_construction, syndic_type, syndic_nom, rattachement "
+        "FROM rnic_coproprietes WHERE parcelle_idu = :idu ORDER BY nb_lots_total DESC NULLS LAST"),
+        {"idu": idu}).mappings().all()]
+    # LOT 11 (data-gap) : contexte marché du secteur — carreau Filosofi 2021 (200 m, INSEE)
+    # au centroïde + parc social RPLS de la commune. Contexte fiche, hors scoring.
+    carreau = db.execute(text(
+        """SELECT f.ind, f.men, f.men_pauv, f.men_prop,
+                  round((f.ind_snv / NULLIF(f.ind, 0))::numeric) AS nivvie_moyen_eur
+           FROM filosofi_carreaux_200m f JOIN parcels p2 ON p2.idu = :idu
+           WHERE ST_Contains(f.geom, ST_Transform(p2.centroid, 2975)) LIMIT 1"""),
+        {"idu": idu}).mappings().first()
+    rpls = db.execute(text(
+        "SELECT nb_logements, construct_median, pct_qpv FROM rpls_commune "
+        "WHERE insee = substring(:idu FROM 1 FOR 5)"), {"idu": idu}).mappings().first()
+    marche_secteur = None
+    if carreau or rpls:
+        marche_secteur = {
+            "filosofi_200m": ({**dict(carreau),
+                               "taux_pauvrete_pct": round(100 * carreau["men_pauv"] / carreau["men"])
+                               if carreau["men"] else None,
+                               "millesime": "Filosofi 2021 (INSEE, carreaux 200 m)"}
+                              if carreau else None),
+            "rpls_commune": ({**dict(rpls), "millesime": "RPLS 01/01/2025"} if rpls else None),
+        }
     # Score V (Vendabilité, Stage 3 additif) : score + panneau « Pourquoi ce score » (signaux
     # JSONB §5.4, lus tels quels) + badges spéciaux (public/bailleur/copro/partiel).
     vrow = db.execute(text(
@@ -1077,6 +1126,10 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
         "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
         "lines": lines, "flags": flags,
         "score_v": score_v,
+        "dvf_parcelle": dvf_parcelle,
+        "terrain": dict(terrain) if terrain else None,
+        "coproprietes": copros,
+        "marche_secteur": marche_secteur,
     }
 
 

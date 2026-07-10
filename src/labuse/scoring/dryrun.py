@@ -23,16 +23,27 @@ def compute_matrice(session: Session, run_label: str, commune: str) -> dict:
     cfg = load_yaml_config("scoring_matrice")
     s = cfg["seuils"]
     params = {"r": run_label, "c": commune, "a_layers": cfg["a_layers"], "base": cfg["base"],
+              "az_layers": cfg.get("a_zone_layers", []),
               "qs": s["q_chaude"], "as_": s["a_chaude"], "acm": s["a_completude_min"], "qe": s["q_ecartee"]}
+    # Décision Vic (data-gap, 10/07/2026) : un SIGNAL DE ZONE (couches `a_zone_layers`,
+    # ex. sitadel §7bis) est du CONTEXTE, pas un fait parcellaire — il compte dans le score A
+    # AFFICHÉ mais est EXCLU du test de FRANCHISSEMENT « chaude » (a_hors_zone ≥ seuil aussi) :
+    # une parcelle sous le seuil sans lui reste sous le seuil avec. Identification des verdicts
+    # de zone sur les résultats STOCKÉS (pas de ré-évaluation) : marqueur « SIGNAL DE ZONE »
+    # dans le détail — CONTRAT documenté avec SitadelLayer (phase2.py), ne pas reformuler l'un
+    # sans l'autre. Le verdict « RATTACHÉ par IDU » (fait parcellaire) garde son pouvoir.
     session.execute(text(
         "WITH w AS ("
-        "  SELECT cr.parcel_id, (cr.layer_name = ANY(:a_layers)) AS is_a, cr.result, cr.weight_applied, cr.evenement "
+        "  SELECT cr.parcel_id, (cr.layer_name = ANY(:a_layers)) AS is_a, cr.result, cr.weight_applied, cr.evenement, "
+        "    (cr.layer_name = ANY(:az_layers) AND cr.result='POSITIVE' "
+        "     AND cr.detail LIKE '%SIGNAL DE ZONE%') AS is_zone "
         "  FROM dryrun_cascade_results cr JOIN parcels p ON p.id=cr.parcel_id "
         "  WHERE cr.run_label=:r AND p.commune=:c), "
         "qa AS ("
         "  SELECT parcel_id, bool_or(result='HARD_EXCLUDE') AS excl, "
         "    GREATEST(1,LEAST(100, :base + COALESCE(sum(weight_applied) FILTER (WHERE NOT is_a),0)))::int AS q, "
         "    GREATEST(1,LEAST(100, :base + COALESCE(sum(weight_applied) FILTER (WHERE is_a),0)))::int AS a, "
+        "    GREATEST(1,LEAST(100, :base + COALESCE(sum(weight_applied) FILTER (WHERE is_a AND NOT is_zone),0)))::int AS a_hors_zone, "
         "    round(100.0 * count(*) FILTER (WHERE is_a AND result<>'UNKNOWN') "
         "          / NULLIF(count(*) FILTER (WHERE is_a),0))::int AS acompl, "
         "    bool_or(evenement='rouge') AS rouge "
@@ -41,7 +52,8 @@ def compute_matrice(session: Session, run_label: str, commune: str) -> dict:
         "  matrice_statut = CASE "
         "    WHEN qa.excl THEN 'ecartee' "
         "    WHEN qa.rouge THEN 'chaude' "
-        "    WHEN qa.q >= :qs AND qa.a >= :as_ AND COALESCE(qa.acompl,0) >= :acm THEN 'chaude' "
+        "    WHEN qa.q >= :qs AND qa.a >= :as_ AND qa.a_hors_zone >= :as_ "
+        "         AND COALESCE(qa.acompl,0) >= :acm THEN 'chaude' "
         "    WHEN qa.q >= :qs THEN 'a_surveiller' "
         "    WHEN qa.q >= :qe THEN 'a_creuser' "
         "    ELSE 'ecartee' END "

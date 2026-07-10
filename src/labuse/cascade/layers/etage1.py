@@ -69,8 +69,137 @@ class _NearestFlagLayer(Layer):
 
 @register
 class SolPollueLayer(_NearestFlagLayer):
+    """LOT 2 (data-gap) — deux règles distinctes, tracées séparément :
+      1. parcelle ∩ PÉRIMÈTRE SIS (subtype 'sis', MultiPolygon réglementaire) → SOFT_FLAG
+         MOYEN : coût de dépollution potentiel, étude de sol obligatoire à la mutation
+         (art. L.556-2 CE) — mention explicite en fiche via le détail du verdict ;
+      2. site CASIAS / instruction sur la parcelle ou à MOINS DE 100 m → SOFT_FLAG FAIBLE
+         (héritage vague B, rayon élargi 50 → 100 m par le mandat)."""
+
     name = "sol_pollue"
     src = SRC_SOLP
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, f"Couche {kind} non ingérée.", source=self.src)
+        # 1) périmètre SIS intersecté (prime sur la proximité simple)
+        sis = [i for i in ctx.intersections(parcel.id, kind)
+               if (i.subtype or "") == "sis" and i.coverage > 0]
+        if sis:
+            i = max(sis, key=lambda x: x.coverage)
+            return _trace(soft_flag(
+                self.name,
+                f"Parcelle dans un périmètre SIS ({i.name or 'secteur pollué'}) — coût de "
+                "dépollution potentiel, étude de sol obligatoire à la mutation (L.556-2 CE).",
+                Severity(params.get("severity_sis", "moyen")), source=self.src),
+                "spatial_layers", i.id)
+        # 2) site CASIAS / instruction ≤ proximite_m (100 m)
+        return super().evaluate(parcel, ctx, params)
+
+
+SRC_SUP = "SUP — assiettes GPU (API Carto)"
+
+#: LOT 4 (data-gap) — sévérité par catégorie de SUP intersectée. Les catégories DÉJÀ scorées
+#: par une autre couche sont neutralisées (info ×0) : pm* = PPR (couche risques), ac1/ac2 =
+#: monuments/sites (couche abf), el10 = parc national (couche parc_national).
+SUP_SEVERITES = {
+    "t4": "moyen", "t5": "fort", "t7": "moyen",         # servitudes aéronautiques
+    "i4": "moyen",                                       # lignes électriques HT/THT
+    "i1": "moyen", "i1bis": "moyen", "i3": "moyen",      # hydrocarbures / gaz
+    "pm1": "info", "pm2": "info", "pm3": "info",         # PPR — déjà scoré (risques)
+    "ac1": "info", "ac2": "info",                        # MH / sites — déjà scoré (abf)
+    "el10": "info",                                      # parc national — déjà scoré
+}
+SUP_DEFAUT = "faible"
+
+
+@register
+class SupLayer(Layer):
+    """LOT 4 (data-gap) — parcelle ∩ assiette de SUP : flag par TYPE de servitude + liste en
+    fiche. Malus Stage 1 selon la catégorie (SUP_SEVERITES) ; la plus sévère porte le verdict,
+    toutes sont listées dans le détail. Anti-double-compte : cf. SUP_SEVERITES."""
+
+    name = "sup"
+
+    _ORDRE = {"fort": 3, "moyen": 2, "faible": 1, "info": 0}
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Assiettes SUP non ingérées.", source=SRC_SUP)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name, "Aucune servitude d'utilité publique recensée.", source=SRC_SUP)
+        types: dict[str, str] = {}
+        for i in inter:
+            st = (i.subtype or "?").lower()
+            types.setdefault(st, i.name or st)
+        sev_of = lambda st: SUP_SEVERITES.get(st, SUP_DEFAUT)  # noqa: E731
+        pire = max(types, key=lambda st: self._ORDRE[sev_of(st)])
+        liste = " ; ".join(f"{st.upper()} ({nom})" for st, nom in sorted(types.items()))
+        i_ref = next(i for i in inter if (i.subtype or "?").lower() == pire)
+        detail = (f"Servitude(s) d'utilité publique sur la parcelle : {liste}."
+                  + (" Catégorie déjà couverte par une autre couche (0 pt, anti-double-compte)."
+                     if sev_of(pire) == "info" else ""))
+        return _trace(soft_flag(self.name, detail, Severity(sev_of(pire)), source=SRC_SUP),
+                      "spatial_layers", i_ref.id)
+
+
+SRC_BRUIT = "Classement sonore ITT (Cerema)"
+SRC_50PAS = "50 pas géométriques — limite haute (DEAL)"
+
+
+@register
+class CinquantePasLayer(Layer):
+    """LOT 6 (data-gap) — parcelle AU CONTACT de la bande des 50 pas géométriques (corridor
+    ±90 m de la limite haute — la bande polygonale n'est pas diffusée, approximation
+    documentée). Malus Stage 1 faible : régime foncier spécifique, cession encadrée."""
+
+    name = "cinquante_pas"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Limite des 50 pas non ingérée.", source=SRC_50PAS)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name, "Hors zone des 50 pas géométriques.", source=SRC_50PAS)
+        i = max(inter, key=lambda x: x.coverage)
+        return _trace(soft_flag(
+            self.name,
+            "Parcelle au contact de la bande des 50 pas géométriques (corridor ±90 m de la "
+            "limite haute 1877) — régime foncier SPÉCIFIQUE à vérifier : domaine public "
+            "littoral, cession encadrée (agence des 50 pas).",
+            Severity(params.get("severity", "faible")), source=SRC_50PAS),
+            "spatial_layers", i.id)
+
+
+@register
+class BruitRouteLayer(Layer):
+    """LOT 3 (data-gap) — parcelle dans un SECTEUR AFFECTÉ PAR LE BRUIT (bande matérialisée du
+    classement sonore, R.571-32 CE : isolement acoustique renforcé obligatoire). Malus Stage 1 :
+    catégories 1-2 (grands axes, secteurs 250-300 m) → moyen ; 3-5 → faible. Le PEB (zones
+    A/B/C/D aérodromes) est BLOQUÉ (pas de SIG open data 974) — ceci n'en est pas un substitut."""
+
+    name = "bruit_route"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Classement sonore non ingéré.", source=SRC_BRUIT)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name, "Hors secteurs affectés par le bruit routier.", source=SRC_BRUIT)
+        pire = min(inter, key=lambda i: int((i.attrs or {}).get("categorie") or 9))
+        cat = int((pire.attrs or {}).get("categorie") or 0)
+        sev = "moyen" if cat in (1, 2) else "faible"
+        return _trace(soft_flag(
+            self.name,
+            f"Secteur affecté par le bruit routier (classement sonore cat. {cat}, bande "
+            f"{(pire.attrs or {}).get('sect_bruit_m')} m) — isolement acoustique renforcé "
+            "obligatoire (R.571-32 CE).",
+            Severity(sev), source=SRC_BRUIT), "spatial_layers", pire.id)
 
 
 @register

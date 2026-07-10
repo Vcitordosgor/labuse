@@ -203,8 +203,10 @@ class EvalContext:
                         ST_DWithin(ST_Transform(pp.centroid, 2975), ST_Transform(s.geom, 2975), :r)) AS nearby
                    FROM pp LEFT JOIN sitadel_permits s
                      ON (s.date IS NULL OR s.date >= now() - (:mo || ' months')::interval)
+                        AND s.type = ANY(:types)
                    GROUP BY pp.id"""
-            ), {"ids": ids, "r": sp.get("radius_m", 200), "mo": sp.get("lookback_months", 36)}
+            ), {"ids": ids, "r": sp.get("radius_m", 200), "mo": sp.get("lookback_months", 36),
+                "types": sp.get("types", ["PC", "PA", "PD", "DP"])}
         ).mappings().all():
             self._sitadel[r["pid"]] = {"matched_idu": int(r["matched"] or 0), "nearby": int(r["nearby"] or 0)}
 
@@ -427,8 +429,10 @@ class EvalContext:
                 "median_value": float(r["median_value"]) if r["median_value"] else None,
                 "median_eur_m2": float(r["median_eur_m2"]) if r["median_eur_m2"] else None}
 
-    def sitadel_near(self, parcel_id: int, radius_m: float, months: int) -> dict[str, Any]:
-        """Permis SITADEL rattachés (IDU) ou à proximité (rayon = signal de zone, §7bis)."""
+    def sitadel_near(self, parcel_id: int, radius_m: float, months: int,
+                     types: list[str] | None = None) -> dict[str, Any]:
+        """Permis SITADEL rattachés (IDU) ou à proximité (rayon = signal de zone, §7bis).
+        `types` (LOT 8 data-gap) : restreindre aux types de DAU (ex. ['PC'] pour la densité)."""
         if parcel_id in self._primed_ids:
             return self._sitadel.get(parcel_id, {"matched_idu": 0, "nearby": 0})
         sql = text(
@@ -443,10 +447,12 @@ class EvalContext:
             FROM p
             LEFT JOIN sitadel_permits s
               ON (s.date IS NULL OR s.date >= now() - (:mo || ' months')::interval)
+                 AND s.type = ANY(:types)
             GROUP BY p.id
             """
         )
-        r = self.session.execute(sql, {"pid": parcel_id, "r": radius_m, "mo": months}).mappings().first()
+        r = self.session.execute(sql, {"pid": parcel_id, "r": radius_m, "mo": months,
+                                       "types": types or ["PC", "PA", "PD", "DP"]}).mappings().first()
         if not r:
             return {"matched_idu": 0, "nearby": 0}
         return {"matched_idu": int(r["matched_idu"] or 0), "nearby": int(r["nearby"] or 0)}

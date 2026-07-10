@@ -52,7 +52,14 @@ class DvfLayer(Layer):
 
 @register
 class SitadelLayer(Layer):
-    """Appariement SITADEL (§7bis) : rattaché par IDU vs signal de zone (rayon)."""
+    """Appariement SITADEL (§7bis) : rattaché par IDU vs signal de zone (rayon).
+
+    LOT 8 (data-gap) — « dynamique constructive » GRADUÉE : le bonus de zone n'est plus
+    binaire, sa magnitude = densité de PC dans le rayon (n / saturation_pc, plafonnée à 1) —
+    avec 31 499 parcelles touchées sur Saint-Paul seul, un booléen ne discriminait plus rien.
+    Fenêtre élargie 36 → 60 mois, rayon 200 → 400 m, PC seulement (config). Écart au mandat
+    documenté : le bonus reste en Stage 2/A (où il vit depuis le Socle V1) plutôt que d'en
+    créer un second en Stage 1 qui aurait DOUBLONNÉ le même signal — interdit par le lot."""
 
     name = "sitadel"
 
@@ -61,7 +68,8 @@ class SitadelLayer(Layer):
             return unknown(self.name, "SITADEL non ingéré pour la commune.", source=SRC_SITADEL)
         radius = params.get("radius_m", 200)
         months = params.get("lookback_months", 36)
-        res = ctx.sitadel_near(parcel.id, radius, months)
+        saturation = max(1, int(params.get("saturation_pc", 15)))
+        res = ctx.sitadel_near(parcel.id, radius, months, types=params.get("types"))
         if res["matched_idu"] > 0:
             return positive(
                 self.name,
@@ -70,10 +78,16 @@ class SitadelLayer(Layer):
                 source=SRC_SITADEL,
             )
         if res["nearby"] > 0:
+            mag = min(1.0, res["nearby"] / saturation)
+            # ⚠ CONTRAT : le marqueur « SIGNAL DE ZONE » dans le détail est lu par
+            # compute_matrice (dryrun.py) pour exclure ce bonus du test de franchissement
+            # « chaude » (a_zone_layers, décision Vic 10/07/2026). Ne pas reformuler.
             return positive(
                 self.name,
-                f"{res['nearby']} permis récent(s) à ≤ {radius} m — SIGNAL DE ZONE (rayon, pas un fait parcellaire, §7bis).",
+                f"Dynamique constructive : {res['nearby']} PC à ≤ {radius} m sur {months // 12} ans "
+                f"(densité {round(100 * mag)} % du plafond {saturation}) — SIGNAL DE ZONE (§7bis).",
                 params.get("bonus_key", "permis_sitadel_recent_proximite"),
+                magnitude=mag,
                 source=SRC_SITADEL,
             )
         return passed(self.name, "Aucun permis SITADEL récent à proximité.", source=SRC_SITADEL)

@@ -1463,3 +1463,75 @@ def score_v_compute_cmd(
     with session_scope() as s:
         stats = compute_all(s, limit=limit, log=typer.echo)
     typer.echo(f"✓ Score V : {stats}")
+
+
+@app.command("dvf-marche")
+def dvf_marche_cmd() -> None:
+    """LOT 1 data-gap : recalcule les médianes €/m² par secteur × type de bien (idempotent)."""
+    from .ingestion.dvf_marche import compute_medianes_secteur
+
+    models.ensure_schema(engine())
+    with session_scope() as s:
+        res = compute_medianes_secteur(s)
+    typer.echo(f"✓ dvf_secteur_medianes : {res}")
+
+
+@app.command("ingest-sup")
+def ingest_sup_cmd(
+    commune: str = typer.Option(None, help="Nom d'une commune (défaut = les 24)."),
+) -> None:
+    """LOT 4 data-gap : assiettes SUP (GPU/API Carto) → spatial_layers kind='sup'.
+    Une commune = une unité committée (résumable). Purge+réinsertion par commune (idempotent)."""
+    from .ingestion.run_all import REUNION_COMMUNES
+    from .ingestion.sup_gpu import SOURCE_NAME, ingest_commune
+
+    targets = [n for _, n in REUNION_COMMUNES if not commune or n == commune]
+    tot = 0
+    for nom in targets:
+        with session_scope() as s:
+            sid = s.execute(text("SELECT id FROM data_sources WHERE name = :n"),
+                            {"n": SOURCE_NAME}).scalar()
+            res = ingest_commune(s, nom, source_id=sid, log=typer.echo)
+            s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                      {"n": SOURCE_NAME})
+        tot += res["sup"]
+        typer.echo(f"  ✓ {nom} : {res['sup']} assiettes")
+    typer.echo(f"✓ SUP : {tot} assiettes ({len(targets)} communes).")
+
+
+@app.command("ingest-bruit-route")
+def ingest_bruit_route_cmd() -> None:
+    """LOT 3 data-gap : bandes du classement sonore (Cerema) → spatial_layers kind='bruit_route'."""
+    from .ingestion.bruit_route import SOURCE_NAME, ingest_bruit_route
+
+    with session_scope() as s:
+        res = ingest_bruit_route(s, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                  {"n": SOURCE_NAME})
+    typer.echo(f"✓ Classement sonore : {res}")
+
+
+@app.command("ingest-cinquante-pas")
+def ingest_cinquante_pas_cmd() -> None:
+    """LOT 6 data-gap : corridor de la limite haute des 50 pas (DEAL) → kind='cinquante_pas'."""
+    from .ingestion.cinquante_pas import SOURCE_NAME, ingest_cinquante_pas
+
+    with session_scope() as s:
+        res = ingest_cinquante_pas(s, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                  {"n": SOURCE_NAME})
+    typer.echo(f"✓ 50 pas : {res}")
+
+
+@app.command("ingest-rnic")
+def ingest_rnic_cmd(
+    csv: str = typer.Option(..., help="Chemin du CSV national RNIC (data.gouv, ~453 Mo)."),
+) -> None:
+    """LOT 10 data-gap : copropriétés RNIC 974 → rnic_coproprietes (rattachées aux parcelles)."""
+    from .ingestion.rnic import SOURCE_NAME, ingest_rnic
+
+    with session_scope() as s:
+        res = ingest_rnic(s, csv, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                  {"n": SOURCE_NAME})
+    typer.echo(f"✓ RNIC : {res}")

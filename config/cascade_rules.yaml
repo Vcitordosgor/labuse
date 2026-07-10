@@ -281,9 +281,28 @@ layers:
     enabled: true
     params:
       spatial_kind: sol_pollue
-      proximite_m: 50
+      proximite_m: 100          # LOT 2 data-gap : CASIAS sur la parcelle ou < 100 m (etait 50)
+      severity: faible          # CASIAS/instruction : malus leger
+      severity_sis: moyen       # LOT 2 : parcelle DANS un perimetre SIS -> malus Stage 1 moyen
+      detail: "Site pollué recensé (CASIAS/instruction) à proximité — étude de sol à prévoir, coût de dépollution potentiel."
+  - name: sup             # LOT 4 data-gap : assiettes de servitudes d'utilité publique (GPU)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: sup
+      # severites par categorie codees dans SUP_SEVERITES (etage1.py) : t5 fort, t4/t7/i4/i1/i3
+      # moyen, defaut faible ; pm*/ac1/ac2/el10 = info x0 (anti-double-compte risques/abf/parc)
+  - name: bruit_route     # LOT 3 data-gap : secteurs affectes par le bruit (classement sonore Cerema)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: bruit_route
+  - name: cinquante_pas   # LOT 6 data-gap : corridor limite haute des 50 pas (approximation documentee)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: cinquante_pas
       severity: faible
-      detail: "Site pollué recensé (BASOL/CASIAS) à proximité — étude de sol à prévoir."
   - name: cavite          # risque d'effondrement → flag prime, malus léger
     phase: 1
     enabled: true
@@ -357,8 +376,11 @@ layers:
     phase: 2
     enabled: true
     params:
-      radius_m: 200                # un permis non rattaché = signal de zone
-      lookback_months: 36
+      # LOT 8 data-gap : dynamique constructive GRADUEE (densite de PC, plus un booleen).
+      radius_m: 400                # 300-500 m au mandat -> 400 m (un permis non rattache = signal de zone)
+      lookback_months: 60          # 5 dernieres annees (etait 36)
+      types: [PC]                  # permis de construire seulement (DP/PA/PD exclus de la densite)
+      saturation_pc: 15            # magnitude = min(1, n_PC / 15) -> bonus plein a 15 PC dans le rayon
       bonus_key: permis_sitadel_recent_proximite
 
   - name: potentiel_foncier_region
