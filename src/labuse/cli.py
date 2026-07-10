@@ -1577,8 +1577,8 @@ def segments_residuel_cmd(
     from .segments import residuel_bati
 
     residuel_bati.ensure_tables(engine())
-    cible = _resolve_commune(commune)
-    noms = [cible] if cible else [nom for _, nom in REUNION_COMMUNES]
+    # PAS de repli pilote ici : sans --commune, on traite LES 24 (parc bâti de l'île).
+    noms = [_resolve_commune(commune)] if commune else [nom for _, nom in REUNION_COMMUNES]
     for nom in noms:
         with session_scope() as s:
             res = residuel_bati.compute_commune(s, nom)

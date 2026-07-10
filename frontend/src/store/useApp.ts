@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { FicheLine, MapMode, Statut } from '../lib/types'
 
-export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets'
+export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets' | 'segments'
 
 export interface LayerToggles {
   zonage: boolean

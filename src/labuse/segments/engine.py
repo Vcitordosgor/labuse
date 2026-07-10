@@ -61,6 +61,27 @@ def _norm_num(cle: str, v: Any) -> float:
         raise FiltreInvalide(f"filtre « {cle} » : borne numérique attendue, reçu {v!r}")
 
 
+def _validate_values(fd, f: dict, cle: str) -> None:
+    """Contrat des valeurs d'un filtre — indépendant de la disponibilité de sa source."""
+    if fd.type == "range":
+        if f.get("min") is None and f.get("max") is None:
+            raise FiltreInvalide(f"filtre « {cle} » : min et/ou max requis")
+        for b in ("min", "max"):
+            if f.get(b) is not None:
+                _norm_num(cle, f[b])
+    elif fd.type == "bool":
+        if not isinstance(f.get("value", True), bool):
+            raise FiltreInvalide(f"filtre « {cle} » : booléen attendu")
+    elif fd.type == "enum":
+        values = f.get("values") or ([f["value"]] if f.get("value") else [])
+        if not values or not isinstance(values, list):
+            raise FiltreInvalide(f"filtre « {cle} » : values (liste) requis")
+        if fd.enum_values:
+            bad = [v for v in values if str(v) not in fd.enum_values]
+            if bad:
+                raise FiltreInvalide(f"filtre « {cle} » : valeur(s) hors liste {bad}")
+
+
 def build(session, filtres: list[dict], tri: str | None, *,
           colonnes_export: list[str] | None = None,
           avail: dict[str, dict] | None = None,
@@ -87,11 +108,14 @@ def build(session, filtres: list[dict], tri: str | None, *,
 
     def compile_one(f: dict, p: str) -> str | None:
         """Compile UN filtre → condition SQL, ou None si sa source manque (→ inactifs).
-        Lève FiltreInvalide sur clé inconnue / valeur hors contrat."""
+        Lève FiltreInvalide sur clé inconnue / valeur hors contrat — la VALIDATION
+        précède le test de disponibilité : une valeur invalide est refusée même sur
+        un filtre grisé (le contrat client ne dépend pas de l'état de la base)."""
         cle = str(f["cle"])
         fd = FILTERS.get(cle)
         if fd is None:
             raise FiltreInvalide(f"filtre inconnu : « {cle} »")
+        _validate_values(fd, f, cle)
         a = avail.get(cle, {})
         if not a.get("disponible", False):
             inactifs.append({"cle": cle, "libelle": fd.libelle,

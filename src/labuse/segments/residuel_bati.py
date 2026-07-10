@@ -103,54 +103,69 @@ def _num(v) -> float | None:
     return float(v) if isinstance(v, (int, float)) else None
 
 
-def _regles(zone: str | None, commune: str):
-    """(emprise_pct, hauteur_m, calibree, constructible) pour une zone — via le moteur
-    de règles PLU existant. Marqueurs None/'a_verifier' relayés en None (jamais comblés)."""
+def _regles(zone: str | None, commune: str) -> dict:
+    """Règles d'emprise/hauteur d'une zone via le moteur PLU existant.
+
+    {emprise_pct, hauteur_m, constructible, approx} — `approx=True` quand une valeur
+    vient d'une règle CONNEXE ou d'une estimation (→ confiance 'moyenne') :
+      - emprise non réglementée (Art. 9 « pas de règle », ex. Saint-Paul) mais pleine
+        terre chiffrée (Art. 13) → coefficient = 100 − pleine_terre (borne supérieure) ;
+      - hauteur 'prospect' (L≥H par parcelle) → plancher règlement 10 m ;
+      - zone hors YAML calibré → estimation générique du moteur (calibree=False).
+    Les marqueurs 'a_verifier' ne sont JAMAIS comblés (→ None)."""
+    out = {"emprise_pct": None, "hauteur_m": None, "constructible": False, "approx": False}
     if not zone:
-        return None, None, False, False
+        return out
     try:
         r = resolve_zone(zone, commune)
-    except Exception:  # noqa: BLE001 — YAML communal absent/malformé → estimation indisponible
-        return None, None, False, False
+    except Exception:  # noqa: BLE001 — YAML communal malformé → règle indisponible
+        return out
     if r is None or not r.constructible_neuf:
-        return None, None, bool(r and r.calibree), False
-    emprise_pct = _num(r.emprise_sol_pct)
-    hauteur = _num(r.hf_m) or _num(r.he_m)
-    calibree = bool(r.calibree)
-    if hauteur is None and r.hauteur_mode == "prospect":
-        # hauteur par parcelle (L≥H) non calculable en batch → plancher règlement 10 m,
-        # prudent, dégradé en confiance 'moyenne'.
-        hauteur, calibree = PROSPECT_HAUTEUR_PLANCHER_M, False
-    return emprise_pct, hauteur, calibree, True
+        return out
+    out["constructible"] = True
+    out["approx"] = not r.calibree
+    out["emprise_pct"] = _num(r.emprise_sol_pct)
+    if out["emprise_pct"] is None:
+        pleine_terre = _num(r.pleine_terre_pct)
+        if pleine_terre is not None:
+            out["emprise_pct"] = max(0.0, 100.0 - pleine_terre)
+            out["approx"] = True
+    out["hauteur_m"] = _num(r.hf_m) or _num(r.he_m)
+    if out["hauteur_m"] is None and r.hauteur_mode == "prospect":
+        out["hauteur_m"] = PROSPECT_HAUTEUR_PLANCHER_M
+        out["approx"] = True
+    return out
 
 
 def compute_commune(session, commune: str, *, batch: int = 2000) -> dict:
     """Calcule/rafraîchit les droits résiduels des parcelles bâties d'une commune."""
     rows = session.execute(_SCAN, {"c": commune, "emin": EMPRISE_BATIE_MIN_M2}).mappings().all()
-    zone_cache: dict[str, tuple] = {}
+    zone_cache: dict[str, dict] = {}
     payload: list[dict] = []
     for r in rows:
         zone = (r["zone"] or "").strip() or None
         key = zone or "∅"
         if key not in zone_cache:
             zone_cache[key] = _regles(zone, commune)
-        emprise_pct, hauteur_max, calibree, constructible = zone_cache[key]
+        rg = zone_cache[key]
+        emprise_pct, hauteur_max = rg["emprise_pct"], rg["hauteur_m"]
 
         surface = float(r["surface_m2"] or 0.0)
         eb = float(r["emprise_batie_m2"] or 0.0)
         hb = float(r["hauteur_bati_m"]) if r["hauteur_bati_m"] is not None else None
 
-        emax = round(surface * emprise_pct / 100.0, 1) if (constructible and emprise_pct) else None
+        emax = round(surface * emprise_pct / 100.0, 1) if (rg["constructible"] and emprise_pct) else None
         eres = round(max(0.0, emax - eb), 1) if emax is not None else None
         sur = None
-        if constructible and hauteur_max is not None and hb is not None:
+        if rg["constructible"] and hauteur_max is not None and hb is not None:
             sur = (hauteur_max - hb) >= SURELEVATION_MARGE_M
 
-        # confiance : 'haute' = règles chiffrées d'un YAML PLU calibré ; 'moyenne' =
-        # estimation générique / plancher prospect ; NULL = aucune règle exploitable.
+        # confiance : 'haute' = règle directe d'un YAML PLU calibré ; 'moyenne' = règle
+        # connexe (pleine terre), plancher prospect ou estimation générique ; NULL =
+        # aucune règle exploitable (emprise ET surélévation indéfinies).
         conf = None
         if eres is not None or sur is not None:
-            conf = "haute" if calibree else "moyenne"
+            conf = "moyenne" if rg["approx"] else "haute"
 
         payload.append({"idu": r["idu"], "commune": commune, "zone": zone,
                         "eb": round(eb, 1), "hb": hb, "emax": emax, "eres": eres,

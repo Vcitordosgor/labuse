@@ -1,0 +1,474 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import maplibregl from 'maplibre-gl'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createSegmentPreset, deleteSegmentPreset, exportSegmentCsv, getSegments, querySegment,
+  refreshSegmentCounts, updateSegmentPreset,
+  type SegmentFiltre, type SegmentFiltreDef, type SegmentPreset, type SegmentsHome,
+} from '../../lib/api'
+import { useApp } from '../../store/useApp'
+import { Loading } from '../Loading'
+
+// ── Page SEGMENTS (mandat moteur-segments-habitat, Lot 5) ──
+// Galerie de presets métiers groupés par catégorie (badge complet/partiel, compteur
+// 24 h) → query builder pré-rempli (filtres grisés si source absente), carte + table
+// paginée, export CSV « à l'occupant ». Admin (Vic) : CRUD, duplication, act./désact.
+
+const CAT_ORDER = ['exterieur', 'renovation', 'energie', 'securite', 'foncier_bati']
+const PAGE = 50
+
+const fmtN = (n: number | null | undefined) =>
+  n == null ? '—' : n.toLocaleString('fr-FR')
+
+// libellé court d'un filtre de preset (chips de carte + lignes du builder)
+function chipLabel(f: SegmentFiltre, defs: Map<string, SegmentFiltreDef>): string {
+  if (f.ou) return f.ou.map((s) => chipLabel(s, defs)).join(' OU ')
+  const d = f.cle ? defs.get(f.cle) : undefined
+  const lib = d?.libelle ?? f.cle ?? '?'
+  const u = d?.unite ? ` ${d.unite}` : ''
+  if (f.min != null && f.max != null) return `${lib} ${f.min}–${f.max}${u}`
+  if (f.min != null) return `${lib} ≥ ${f.min}${u}`
+  if (f.max != null) return `${lib} ≤ ${f.max}${u}`
+  if (f.values?.length) return `${lib} : ${f.values.join(', ')}`
+  if (f.value === false) return `hors ${lib}`
+  return lib
+}
+
+// ───────────────────────── carte des résultats (MapLibre, fond carto sombre) ─────────────────────────
+function ResultMap({ geojson }: { geojson: { type: string; features: unknown[] } | null }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<maplibregl.Map | null>(null)
+  useEffect(() => {
+    if (!ref.current || mapRef.current) return
+    const m = new maplibregl.Map({
+      container: ref.current,
+      style: {
+        version: 8,
+        sources: {
+          carto: {
+            type: 'raster',
+            tiles: ['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png',
+                    'https://b.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png'],
+            tileSize: 256, attribution: '© OSM · CARTO',
+          },
+        },
+        layers: [{ id: 'bm', type: 'raster', source: 'carto' }],
+      },
+      center: [55.53, -21.13], zoom: 8.6, attributionControl: false,
+    })
+    m.on('load', () => {
+      m.addSource('seg', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } })
+      m.addLayer({
+        id: 'seg-pts', type: 'circle', source: 'seg',
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 2.2, 14, 6],
+          'circle-color': '#5CE6A1', 'circle-opacity': 0.75,
+          'circle-stroke-color': '#06130C', 'circle-stroke-width': 0.6,
+        },
+      })
+      mapRef.current = m
+      setReady((r) => r + 1)
+    })
+    return () => { m.remove(); mapRef.current = null }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const [ready, setReady] = useState(0)
+  useEffect(() => {
+    const m = mapRef.current
+    if (!m || !geojson) return
+    const src = m.getSource('seg') as maplibregl.GeoJSONSource | undefined
+    if (!src) return
+    src.setData(geojson as never)
+    const feats = geojson.features as { geometry: { coordinates: [number, number] } }[]
+    if (feats.length) {
+      const b = new maplibregl.LngLatBounds()
+      feats.forEach((f) => b.extend(f.geometry.coordinates))
+      m.fitBounds(b, { padding: 40, maxZoom: 13, duration: 400 })
+    }
+  }, [geojson, ready])
+  return <div ref={ref} data-seg-map className="h-full w-full rounded-[10px] border border-line-2" />
+}
+
+// ───────────────────────── éditeur d'UN filtre du builder ─────────────────────────
+function FiltreRow({ f, defs, onChange, onRemove }: {
+  f: SegmentFiltre
+  defs: Map<string, SegmentFiltreDef>
+  onChange: (nf: SegmentFiltre) => void
+  onRemove: () => void
+}) {
+  if (f.ou) {
+    return (
+      <div data-seg-filtre className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
+        <div className="mb-1 flex items-center justify-between">
+          <span className="font-mono text-[9.5px] uppercase tracking-widest text-txt-dim">l'un OU l'autre</span>
+          <button onClick={onRemove} className="text-txt-dim hover:text-txt" title="Retirer">✕</button>
+        </div>
+        <div className="space-y-1.5">
+          {f.ou.map((s, i) => (
+            <FiltreRow key={s.cle ?? i} f={s} defs={defs}
+              onChange={(ns) => onChange({ ...f, ou: f.ou!.map((x, j) => (j === i ? ns : x)) })}
+              onRemove={() => {
+                const rest = f.ou!.filter((_, j) => j !== i)
+                onChange(rest.length ? { ...f, ou: rest } : { cle: undefined })
+              }} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+  const d = f.cle ? defs.get(f.cle) : undefined
+  if (!d) return null
+  const off = !d.disponible
+  const num = (v: string) => (v === '' ? undefined : Number(v))
+  return (
+    <div data-seg-filtre data-seg-filtre-off={off ? '1' : undefined}
+      className={`rounded-lg border px-3 py-2 ${off ? 'border-line-2 bg-surface-1 opacity-55' : 'border-line-2 bg-surface-3'}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="min-w-0 truncate text-[11.5px] font-medium text-txt" title={d.description}>
+          {d.libelle}{d.unite ? <span className="ml-1 text-txt-dim">({d.unite})</span> : null}
+        </span>
+        <button onClick={onRemove} className="shrink-0 text-txt-dim hover:text-txt" title="Retirer ce filtre">✕</button>
+      </div>
+      {off ? (
+        <p className="mt-1 text-[10px] italic text-txt-dim">
+          disponible prochainement{d.mandat ? ` — mandat ${d.mandat}` : ''}
+        </p>
+      ) : d.type === 'range' ? (
+        <div className="mt-1.5 flex items-center gap-2">
+          <input type="number" placeholder="min" value={f.min ?? ''}
+            onChange={(e) => onChange({ ...f, min: num(e.target.value) })}
+            className="w-24 rounded-md border border-line-2 bg-bg px-2 py-1 text-[11px] text-txt outline-none focus:border-mint" />
+          <span className="text-[10px] text-txt-dim">à</span>
+          <input type="number" placeholder="max" value={f.max ?? ''}
+            onChange={(e) => onChange({ ...f, max: num(e.target.value) })}
+            className="w-24 rounded-md border border-line-2 bg-bg px-2 py-1 text-[11px] text-txt outline-none focus:border-mint" />
+        </div>
+      ) : d.type === 'bool' ? (
+        <div className="mt-1.5 flex gap-1.5">
+          {[{ v: true, l: 'oui' }, { v: false, l: 'non' }].map(({ v, l }) => (
+            <button key={l} onClick={() => onChange({ ...f, value: v })}
+              className={`rounded-md border px-2.5 py-0.5 text-[10.5px] ${
+                (f.value ?? true) === v ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-dim hover:text-txt'}`}>
+              {l}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {d.enum_values.map((v) => {
+            const on = (f.values ?? []).includes(v)
+            return (
+              <button key={v}
+                onClick={() => onChange({ ...f, values: on ? (f.values ?? []).filter((x) => x !== v) : [...(f.values ?? []), v] })}
+                className={`rounded-md border px-2 py-0.5 text-[10.5px] ${
+                  on ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-dim hover:text-txt'}`}>
+                {v}
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ───────────────────────── le query builder d'un preset ─────────────────────────
+function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: SegmentPreset; onBack: () => void }) {
+  const defs = useMemo(() => new Map(home.filtres.map((f) => [f.cle, f])), [home.filtres])
+  const [filtres, setFiltres] = useState<SegmentFiltre[]>(() => JSON.parse(JSON.stringify(preset.filtres ?? [])))
+  const [tri, setTri] = useState<string | null>(preset.tri_defaut)
+  const [offset, setOffset] = useState(0)
+  const [ajout, setAjout] = useState('')
+  const { setToast } = useApp()
+  const qc = useQueryClient()
+
+  // un filtre en cours de saisie (range sans borne, énum sans valeur) n'est pas envoyé
+  const complet = (f: SegmentFiltre): boolean => {
+    if (f.ou) return f.ou.some(complet)
+    const d = f.cle ? defs.get(f.cle) : undefined
+    if (!d) return false
+    if (d.type === 'range') return f.min != null || f.max != null
+    if (d.type === 'enum') return (f.values?.length ?? 0) > 0
+    return true
+  }
+  const effectifs = useMemo(
+    () => filtres.map((f) => (f.ou ? { ...f, ou: f.ou.filter(complet) } : f)).filter(complet),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filtres, defs])
+  const body = { slug: preset.slug, filtres: effectifs, tri, limit: PAGE, offset, geojson: true }
+  const rq = useQuery({
+    queryKey: ['segments-query', preset.slug, effectifs, tri, offset],
+    queryFn: () => querySegment(body),
+    placeholderData: (prev) => prev,
+  })
+  const exp = useMutation({
+    mutationFn: () => exportSegmentCsv({ slug: preset.slug, filtres: effectifs, tri }, `${preset.slug}_occupants.csv`),
+    onSuccess: () => setToast('Export CSV téléchargé — adresses « à l\'occupant », aucune donnée nominative.'),
+    onError: () => setToast("L'export a échoué — réessayer."),
+  })
+  // admin : enregistrer les filtres modifiés comme NOUVEAU preset (un preset modifié
+  // à la volée ne s'enregistre jamais sur place — doctrine du mandat)
+  const dup = useMutation({
+    mutationFn: () => {
+      const slug = prompt('Slug du nouveau preset (minuscules-et-tirets) :', `${preset.slug}-v2`)
+      if (!slug) return Promise.reject(new Error('annulé'))
+      const nom = prompt('Nom affiché :', `${preset.nom} (variante)`) ?? slug
+      return createSegmentPreset({ slug, nom, categorie: preset.categorie, copie_de: preset.slug, filtres: effectifs, tri_defaut: tri })
+    },
+    onSuccess: (p) => { setToast(`Preset « ${p.nom} » enregistré.`); qc.invalidateQueries({ queryKey: ['segments'] }) },
+    onError: (e) => { if ((e as Error).message !== 'annulé') setToast('Enregistrement refusé : ' + (e as Error).message) },
+  })
+
+  const rep = rq.data
+  const cols = rep?.colonnes ?? []
+  const catnatOn = preset.boost_catnat && home.catnat.communes.length > 0
+  const dejaLa = new Set(filtres.flatMap((f) => (f.ou ? f.ou.map((s) => s.cle!) : [f.cle!])))
+
+  return (
+    <div className="flex h-full min-h-0 flex-1">
+      {/* colonne filtres */}
+      <aside className="flex w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
+        <div className="shrink-0 px-4 pb-2 pt-4">
+          <button data-seg-retour onClick={onBack} className="text-[11px] text-txt-dim hover:text-txt">← Tous les segments</button>
+          <h2 className="mt-1 text-sm font-medium text-txt-hi">{preset.nom}</h2>
+          {preset.argumentaire && <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">{preset.argumentaire}</p>}
+          {(dejaLa.has('emprise_residuelle_m2') || dejaLa.has('surelevation_possible')) && (
+            <p className="mt-1.5 rounded-md border border-[#E8B44C]/30 bg-[#E8B44C]/5 px-2 py-1 text-[10px] leading-snug text-[#E8B44C]">
+              {home.libelle_residuel}
+            </p>
+          )}
+        </div>
+        <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-4 pb-3">
+          {filtres.map((f, i) => (
+            <FiltreRow key={(f.cle ?? 'ou') + i} f={f} defs={defs}
+              onChange={(nf) => { setFiltres(filtres.map((x, j) => (j === i ? nf : x))); setOffset(0) }}
+              onRemove={() => { setFiltres(filtres.filter((_, j) => j !== i)); setOffset(0) }} />
+          ))}
+          <select data-seg-ajout value={ajout}
+            onChange={(e) => {
+              const cle = e.target.value
+              if (!cle) return
+              const d = defs.get(cle)!
+              setFiltres([...filtres, d.type === 'bool' ? { cle, value: true } : d.type === 'enum' ? { cle, values: [] } : { cle }])
+              setAjout(''); setOffset(0)
+            }}
+            className="mt-1 w-full rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] text-txt-dim outline-none focus:border-mint">
+            <option value="">+ Ajouter un filtre…</option>
+            {home.filtres.filter((d) => !dejaLa.has(d.cle)).map((d) => (
+              <option key={d.cle} value={d.cle} disabled={!d.disponible}>
+                {d.groupe} · {d.libelle}{d.disponible ? '' : ` — prochainement (${d.mandat ?? 'à venir'})`}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="shrink-0 border-t border-line px-4 py-3">
+          <div className="mb-2 flex items-center gap-2">
+            <label className="text-[10px] text-txt-dim">Tri</label>
+            <select value={tri ?? ''} onChange={(e) => { setTri(e.target.value || null); setOffset(0) }}
+              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-[10.5px] text-txt outline-none focus:border-mint">
+              {home.tris.map((t) => <option key={t.cle} value={t.cle}>{t.libelle}</option>)}
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button data-seg-export onClick={() => exp.mutate()} disabled={exp.isPending || !rep?.count}
+              className="flex-1 rounded-lg bg-mint px-3 py-1.5 text-[11px] font-semibold text-[#06130C] hover:brightness-110 disabled:opacity-40">
+              {exp.isPending ? 'Export…' : 'Exporter CSV (occupant)'}
+            </button>
+            <button data-seg-dupliquer onClick={() => dup.mutate()} title="Admin : enregistrer ces filtres comme nouveau preset"
+              className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt hover:border-mint">
+              Enregistrer…
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      {/* résultats : compteur + carte + table */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-4">
+        {catnatOn && (
+          <div data-seg-catnat className="mb-3 rounded-lg border border-[#E8695A]/40 bg-[#E8695A]/10 px-3 py-2 text-[11px] text-[#f0a29a]">
+            Communes récemment en état de catastrophe naturelle ({home.catnat.fenetre_mois} mois) :{' '}
+            <span className="font-medium text-txt-hi">{home.catnat.communes.map((c) => c.commune).join(', ')}</span>
+            {' '}— filtre CATNAT proposé pré-coché.
+          </div>
+        )}
+        <div className="mb-3 flex items-baseline gap-3">
+          <span data-seg-count className="font-display text-2xl font-bold text-mint">{fmtN(rep?.count)}</span>
+          <span className="text-xs text-txt-dim">parcelles matchées{rq.isFetching ? ' · calcul…' : ''}</span>
+          {!!rep?.filtres_inactifs?.length && (
+            <span className="rounded-md border border-[#E8B44C]/40 bg-[#E8B44C]/10 px-2 py-0.5 text-[10px] text-[#E8B44C]"
+              title={rep.filtres_inactifs.map((f) => `${f.libelle} — ${f.mandat ? `mandat ${f.mandat}` : f.raison ?? ''}`).join('\n')}>
+              partiel : {rep.filtres_inactifs.length} filtre(s) en attente de données
+            </span>
+          )}
+        </div>
+        <div className="h-[38%] min-h-[180px] shrink-0">
+          <ResultMap geojson={rep?.geojson ?? null} />
+        </div>
+        <div className="mt-3 min-h-0 flex-1 overflow-auto rounded-[10px] border border-line-2">
+          <table className="w-full text-left text-[11px]">
+            <thead className="sticky top-0 bg-surface-1">
+              <tr className="text-[9.5px] uppercase tracking-wider text-txt-dim">
+                <th className="px-3 py-2">Parcelle</th>
+                <th className="px-3 py-2">Commune</th>
+                <th className="px-3 py-2">Surface (m²)</th>
+                {cols.filter((c) => c.cle !== 'surface_m2').map((c) => <th key={c.cle} className="px-3 py-2">{c.libelle}</th>)}
+              </tr>
+            </thead>
+            <tbody>
+              {(rep?.items ?? []).map((it) => (
+                <tr key={String(it.idu)} data-seg-row className="border-t border-line-2 text-txt hover:bg-surface-3">
+                  <td className="px-3 py-1.5 font-mono text-[10.5px] text-txt-hi">{String(it.idu)}</td>
+                  <td className="px-3 py-1.5">{String(it.commune)}</td>
+                  <td className="px-3 py-1.5">{fmtN(it.surface_m2 as number)}</td>
+                  {cols.filter((c) => c.cle !== 'surface_m2').map((c) => {
+                    const v = it[c.cle]
+                    return <td key={c.cle} className="px-3 py-1.5">{v == null ? '—' : typeof v === 'boolean' ? (v ? 'oui' : 'non') : String(v)}</td>
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {rep && rep.items.length === 0 && (
+            <p className="px-3 py-6 text-center text-[11px] text-txt-dim">Aucune parcelle — élargir les filtres.</p>
+          )}
+        </div>
+        <div className="mt-2 flex shrink-0 items-center justify-between text-[10.5px] text-txt-dim">
+          <span>{fmtN(offset + 1)}–{fmtN(offset + (rep?.items.length ?? 0))} sur {fmtN(rep?.count)}</span>
+          <div className="flex gap-1.5">
+            <button disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - PAGE))}
+              className="rounded-md border border-line-2 px-2.5 py-1 hover:border-mint disabled:opacity-30">← Précédent</button>
+            <button disabled={!rep || offset + PAGE >= rep.count} onClick={() => setOffset(offset + PAGE)}
+              className="rounded-md border border-line-2 px-2.5 py-1 hover:border-mint disabled:opacity-30">Suivant →</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ───────────────────────── carte d'un preset (galerie) ─────────────────────────
+function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome; onOpen: () => void }) {
+  const defs = useMemo(() => new Map(home.filtres.map((f) => [f.cle, f])), [home.filtres])
+  const qc = useQueryClient()
+  const { setToast } = useApp()
+  const toggle = useMutation({
+    mutationFn: () => updateSegmentPreset(p.slug, { ...p, actif: !p.actif }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast(p.actif ? 'Preset désactivé.' : 'Preset activé.') },
+  })
+  const dup = useMutation({
+    mutationFn: () => {
+      const slug = prompt('Slug de la copie :', `${p.slug}-copie`)
+      if (!slug) return Promise.reject(new Error('annulé'))
+      return createSegmentPreset({ slug, nom: `${p.nom} (copie)`, categorie: p.categorie, copie_de: p.slug })
+    },
+    onSuccess: (np) => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast(`Preset « ${np.nom} » créé.`) },
+    onError: (e) => { if ((e as Error).message !== 'annulé') setToast('Duplication refusée : ' + (e as Error).message) },
+  })
+  const editArg = useMutation({
+    mutationFn: () => {
+      const argumentaire = prompt('Argumentaire commercial :', p.argumentaire ?? '')
+      if (argumentaire == null) return Promise.reject(new Error('annulé'))
+      return updateSegmentPreset(p.slug, { ...p, argumentaire })
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast('Argumentaire mis à jour.') },
+    onError: (e) => { if ((e as Error).message !== 'annulé') setToast('Édition refusée : ' + (e as Error).message) },
+  })
+  const suppr = useMutation({
+    mutationFn: () => {
+      if (!confirm(`Supprimer le preset « ${p.nom} » ? (définitif)`)) return Promise.reject(new Error('annulé'))
+      return deleteSegmentPreset(p.slug)
+    },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast('Preset supprimé.') },
+    onError: (e) => { if ((e as Error).message !== 'annulé') setToast('Suppression refusée : ' + (e as Error).message) },
+  })
+  const partiel = p.disponibilite === 'partiel'
+  const catnatOn = p.boost_catnat && home.catnat.communes.length > 0
+  return (
+    <div data-seg-preset={p.slug} className={`rounded-xl border bg-surface-3 p-3.5 transition-colors ${
+      p.actif ? 'border-line-2 hover:border-mint' : 'border-line-2 opacity-50'}`}>
+      <button onClick={onOpen} className="block w-full text-left" data-seg-preset-open>
+        <div className="flex items-start justify-between gap-2">
+          <span className="text-[12.5px] font-medium text-txt-hi">{p.nom}</span>
+          <span data-seg-badge className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider ${
+            partiel ? 'border-[#E8B44C]/40 bg-[#E8B44C]/10 text-[#E8B44C]' : 'border-mint/40 bg-mint/10 text-mint'}`}
+            title={partiel ? p.filtres_inactifs.map((f) => `${f.libelle} — ${f.mandat ? `mandat ${f.mandat}` : f.raison ?? ''}`).join('\n') : 'toutes les sources de données sont disponibles'}>
+            {partiel ? `partiel · ${p.filtres_inactifs.length}` : 'complet'}
+          </span>
+        </div>
+        <div className="mt-1 flex items-baseline gap-1.5">
+          <span data-seg-preset-count className="font-display text-lg font-bold text-mint">{fmtN(p.count)}</span>
+          <span className="text-[10px] text-txt-dim">parcelles</span>
+          {catnatOn && <span className="ml-auto rounded-md bg-[#E8695A]/15 px-1.5 py-0.5 text-[9px] font-medium text-[#f0a29a]">CATNAT actif</span>}
+        </div>
+        {p.argumentaire && <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{p.argumentaire}</p>}
+        <div className="mt-2 flex flex-wrap gap-1">
+          {(p.filtres ?? []).map((f, i) => (
+            <span key={i} className="rounded-md border border-line-2 bg-surface-1 px-1.5 py-0.5 text-[9.5px] text-txt-mut">
+              {chipLabel(f, defs)}
+            </span>
+          ))}
+        </div>
+      </button>
+      {/* admin (Vic) : l'app est mono-utilisateur authentifié — ces actions écrivent en base */}
+      <div className="mt-2.5 flex gap-2 border-t border-line-2 pt-2 text-[9.5px] text-txt-dim">
+        <button data-seg-admin-dupliquer onClick={() => dup.mutate()} className="hover:text-txt">dupliquer</button>
+        <button data-seg-admin-argumentaire onClick={() => editArg.mutate()} className="hover:text-txt">argumentaire</button>
+        <button data-seg-admin-toggle onClick={() => toggle.mutate()} className="hover:text-txt">{p.actif ? 'désactiver' : 'activer'}</button>
+        {p.created_by !== 'seed' && <button onClick={() => suppr.mutate()} className="hover:text-[#E8695A]">supprimer</button>}
+      </div>
+    </div>
+  )
+}
+
+// ───────────────────────── la page ─────────────────────────
+export function SegmentsPage() {
+  const [slug, setSlug] = useState<string | null>(null)
+  const { setToast } = useApp()
+  const qc = useQueryClient()
+  const { data: home, isLoading } = useQuery({ queryKey: ['segments'], queryFn: getSegments })
+  const refresh = useMutation({
+    mutationFn: refreshSegmentCounts,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast('Compteurs recalculés.') },
+  })
+  if (isLoading || !home) return <div className="flex flex-1 items-center justify-center"><Loading /></div>
+  const sel = slug ? home.presets.find((p) => p.slug === slug) : null
+  if (sel) return <Builder home={home} preset={sel} onBack={() => setSlug(null)} />
+
+  return (
+    <div data-seg-page className="flex min-w-0 flex-1 flex-col overflow-y-auto px-6 py-5">
+      <div className="mb-4 flex items-baseline justify-between">
+        <div>
+          <h1 className="font-display text-lg font-bold text-txt-hi">Segments métiers</h1>
+          <p className="mt-0.5 max-w-2xl text-[11px] leading-snug text-txt-dim">
+            Un segment = un métier de l'Habitat + les filtres qui trouvent ses clients dans le parc.
+            Les presets « partiels » se complètent automatiquement quand une nouvelle source arrive.
+          </p>
+        </div>
+        <button onClick={() => refresh.mutate()} disabled={refresh.isPending}
+          className="rounded-lg border border-line-2 px-3 py-1.5 text-[10.5px] text-txt-dim hover:border-mint hover:text-txt disabled:opacity-40">
+          {refresh.isPending ? 'Recalcul…' : 'Recalculer les compteurs'}
+        </button>
+      </div>
+      {home.catnat.communes.length > 0 && (
+        <div data-seg-catnat-bandeau className="mb-4 rounded-lg border border-[#E8695A]/40 bg-[#E8695A]/10 px-3 py-2 text-[11px] text-[#f0a29a]">
+          Catastrophe naturelle ({home.catnat.fenetre_mois} derniers mois) :{' '}
+          <span className="font-medium text-txt-hi">{home.catnat.communes.map((c) => c.commune).join(', ')}</span>
+          {' '}— les segments couvreurs/menuiseries proposent le filtre pré-coché.
+        </div>
+      )}
+      {CAT_ORDER.filter((c) => home.presets.some((p) => p.categorie === c)).map((c) => (
+        <section key={c} data-seg-cat={c} className="mb-5">
+          <p className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-widest text-txt-mut">
+            {home.categories[c] ?? c}
+          </p>
+          <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+            {home.presets.filter((p) => p.categorie === c).map((p) => (
+              <PresetCard key={p.slug} p={p} home={home} onOpen={() => setSlug(p.slug)} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+  )
+}

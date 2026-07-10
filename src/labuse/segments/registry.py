@@ -93,13 +93,15 @@ FILTERS: dict[str, FilterDef] = {f.cle: f for f in [
               "(EXTRACT(EPOCH FROM ((SELECT max(date_mutation) FROM dvf_mutations_parcelle)"
               "::timestamp - dvf.date_mutation::timestamp)) / 2629800.0)",
               joins=("dvf",), unite="mois", groupe="Marché",
-              requires=("dvf_mutations_parcelle",), requires_rows="dvf_mutations_parcelle",
+              requires=("dvf_mutations_parcelle", "v_parcel_dvf_last"),
+              requires_rows="dvf_mutations_parcelle",
               description="Mois écoulés depuis la dernière vente DVF de la parcelle, "
                           "comptés depuis la donnée DVF la plus récente en base "
                           "(les parcelles jamais mutées sont exclues quand ce filtre est actif)."),
     FilterDef("prix_mutation_eur", "Prix de la dernière mutation", "range", "dvf.valeur",
               joins=("dvf",), unite="€", groupe="Marché",
-              requires=("dvf_mutations_parcelle",), requires_rows="dvf_mutations_parcelle",
+              requires=("dvf_mutations_parcelle", "v_parcel_dvf_last"),
+              requires_rows="dvf_mutations_parcelle",
               description="Valeur foncière de la dernière vente (DVF)."),
     FilterDef("type_bien", "Type de bien (dernière mutation)", "enum", "tb.type_local",
               joins=("tb",), groupe="Marché",
