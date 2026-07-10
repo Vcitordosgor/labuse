@@ -146,6 +146,36 @@ class SupLayer(Layer):
                       "spatial_layers", i_ref.id)
 
 
+SRC_BRUIT = "Classement sonore ITT (Cerema)"
+
+
+@register
+class BruitRouteLayer(Layer):
+    """LOT 3 (data-gap) — parcelle dans un SECTEUR AFFECTÉ PAR LE BRUIT (bande matérialisée du
+    classement sonore, R.571-32 CE : isolement acoustique renforcé obligatoire). Malus Stage 1 :
+    catégories 1-2 (grands axes, secteurs 250-300 m) → moyen ; 3-5 → faible. Le PEB (zones
+    A/B/C/D aérodromes) est BLOQUÉ (pas de SIG open data 974) — ceci n'en est pas un substitut."""
+
+    name = "bruit_route"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Classement sonore non ingéré.", source=SRC_BRUIT)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name, "Hors secteurs affectés par le bruit routier.", source=SRC_BRUIT)
+        pire = min(inter, key=lambda i: int((i.attrs or {}).get("categorie") or 9))
+        cat = int((pire.attrs or {}).get("categorie") or 0)
+        sev = "moyen" if cat in (1, 2) else "faible"
+        return _trace(soft_flag(
+            self.name,
+            f"Secteur affecté par le bruit routier (classement sonore cat. {cat}, bande "
+            f"{(pire.attrs or {}).get('sect_bruit_m')} m) — isolement acoustique renforcé "
+            "obligatoire (R.571-32 CE).",
+            Severity(sev), source=SRC_BRUIT), "spatial_layers", pire.id)
+
+
 @register
 class CaviteLayer(_NearestFlagLayer):
     name = "cavite"

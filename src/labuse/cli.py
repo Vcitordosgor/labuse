@@ -1497,3 +1497,15 @@ def ingest_sup_cmd(
         tot += res["sup"]
         typer.echo(f"  ✓ {nom} : {res['sup']} assiettes")
     typer.echo(f"✓ SUP : {tot} assiettes ({len(targets)} communes).")
+
+
+@app.command("ingest-bruit-route")
+def ingest_bruit_route_cmd() -> None:
+    """LOT 3 data-gap : bandes du classement sonore (Cerema) → spatial_layers kind='bruit_route'."""
+    from .ingestion.bruit_route import SOURCE_NAME, ingest_bruit_route
+
+    with session_scope() as s:
+        res = ingest_bruit_route(s, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                  {"n": SOURCE_NAME})
+    typer.echo(f"✓ Classement sonore : {res}")

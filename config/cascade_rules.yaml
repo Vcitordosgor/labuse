@@ -292,6 +292,11 @@ layers:
       spatial_kind: sup
       # severites par categorie codees dans SUP_SEVERITES (etage1.py) : t5 fort, t4/t7/i4/i1/i3
       # moyen, defaut faible ; pm*/ac1/ac2/el10 = info x0 (anti-double-compte risques/abf/parc)
+  - name: bruit_route     # LOT 3 data-gap : secteurs affectes par le bruit (classement sonore Cerema)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: bruit_route
   - name: cavite          # risque d'effondrement → flag prime, malus léger
     phase: 1
     enabled: true

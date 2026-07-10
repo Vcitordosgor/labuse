@@ -97,3 +97,17 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
   pm1/pm2/pm3 + ac1/ac2 + el10 = info ×0 (**anti-double-compte** : déjà scorés par `risques`,
   `abf`, `parc_national`). Liste complète des SUP en fiche (détail du verdict).
 - Millésime : GPU live 10/07/2026.
+
+### LOT 3 — PEB + classement sonore : PARTIEL (sonore FAIT, PEB BLOQUÉ)
+- **PEB : BLOQUÉ** — les zonages A/B/C/D de Roland-Garros (AP 2017-2123 du 17/10/2017, qui
+  remplace le PEB 1996) et de Pierrefonds (AP 29/03/2017) n'existent **qu'en PDF préfecture**
+  (~25 Mo). Vérifié : geo-ide (décommissionné, 0 fiche 974), WFS geopf `dgac_peb_arrete_wfs`
+  (0 objet sur la bbox 974), dataset national 2020 (métropole seule), GPU (pas de PEB 974),
+  PEIGEO/Lizmap DEAL (aucune couche). Digitalisation des PDF = hors périmètre du mandat.
+  Les règles Stage 0/1 prévues (A/B exclusion, C malus fort, D info) restent à brancher au
+  premier SIG disponible.
+- **Classement sonore : FAIT** — flux Cerema/Cartagène (ArcGIS REST, export intégral),
+  **1 004 tronçons** cat. 1-5, bandes MATÉRIALISÉES (buffer `sect_bruit` 10-300 m en 2975)
+  → `spatial_layers kind='bruit_route'`. Règle Stage 1 : cat 1-2 → SOFT_FLAG **moyen**,
+  cat 3-5 → **faible** (« isolement acoustique renforcé obligatoire, R.571-32 CE »).
+  Millésime : Cerema 2022, en vigueur (AP 14-15/12/2023). CLI `labuse ingest-bruit-route`.
