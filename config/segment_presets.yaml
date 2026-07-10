@@ -108,6 +108,7 @@ presets:
       limite de parcelle (bientôt détectés) sont l'argument voisinage qui fait signer.
     filtres:
       - {cle: jardin_m2, min: 500}
+      - {cle: emprise_batie_m2, min: 20}      # parcelle HABITÉE (le client élagage est un occupant)
       - {cle: ombrage_vegetal, min: 20}       # grisé tant que ANC & Végétation n'a pas livré
       - {cle: canopee_limite, value: true}    # idem
     colonnes_export: [adresse, surface_m2, jardin_m2]
@@ -201,8 +202,9 @@ presets:
       donc pas un filtre : l'âge de la charpente fait le segment.
     argumentaire: >-
       La Réunion est intégralement classée zone d'infestation termites (arrêté
-      préfectoral L.133-5 CCH) : inutile de filtrer par zone, TOUT le bâti est exposé.
-      Une charpente d'avant 1980 non traitée est statistiquement le meilleur prospect.
+      préfectoral du 11 avril 2001, art. L.133-5 CCH — toutes les communes de l'île) :
+      inutile de filtrer par zone, TOUT le bâti est exposé. Une charpente d'avant 1980
+      non traitée est statistiquement le meilleur prospect.
     filtres:
       - {cle: periode_construction, max: 1980}
     colonnes_export: [adresse, surface_m2, annee_construction, type_bien]
