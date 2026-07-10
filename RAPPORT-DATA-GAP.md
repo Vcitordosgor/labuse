@@ -174,3 +174,80 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
   2025, INSEE logement RP 2023, Obsimmo — rien re-fait.
 - Fiche : bloc `marche_secteur` (carreau Filosofi au centroïde + RPLS commune). Pas de
   scoring parcelle (mandat). Alimentera module bailleur + calculette de charge foncière.
+
+## Phase 2 — Sanity check chiffré (nouveaux flags, sur 431 663 parcelles)
+
+| Flag | Parcelles | Lecture |
+|---|---|---|
+| Périmètre SIS intersecté (malus moyen) | **35** | 4 périmètres au 974 — rare et localisé, attendu |
+| CASIAS/instruction < 100 m (malus faible) | **10 318** | 2,4 % — rayon élargi 50→100 m |
+| Bruit routier cat 1-2 (malus moyen) | 23 016 + 25 433 | bandes 250-300 m des grands axes |
+| Bruit routier cat 3-5 (malus faible) | 67 890 + 13 897 + 6 | |
+| Bruit routier — toutes catégories (distinct) | **111 228** | 25,8 % — élevé mais attendu (réseau dense en zone urbanisée, bandes réglementaires jusqu'à 300 m) ; signalé, pas suspect |
+| SUP scorées ac3/ac4 (malus faible) | **3 959** | 0,9 % |
+| SUP toutes catégories (distinct, surtout pm1 info ×0) | 188 692 | 43,7 % — dominé par pm1 (PPR), NEUTRALISÉ anti-double-compte, aucun impact score |
+| 50 pas — corridor limite haute (malus faible) | **16 099** | 3,7 % du parc, littoral |
+| Terrassement lourd (pente 5 m) | **86 885** | 20,5 % — île volcanique, attendu ; parcel_terrain couvre 423 452 parcelles (98,1 %) |
+| Dernière mutation DVF connue | 37 868 | fenêtre 2021-2025 |
+| RNIC rattachées parcelle | 1 933 / 2 220 | 87 % |
+
+Aucun flag à 0 % ni ≥ 90 % : rien de masqué, deux valeurs hautes expliquées ci-dessus.
+
+## Phase 2 — Impact chaudes (recalcul île complet, label isolé `q_v3_datagap`)
+
+⚠ **`q_v2` reste la source de vérité de l'app** — le recalcul vit sous un label dry-run
+séparé ; la bascule (et sa calibration) est une décision Vic au merge.
+
+| Statut | q_v2 (avant) | q_v3_datagap (après) |
+|---|---|---|
+| chaude | 1 083 | **5 455** |
+| a_surveiller | 6 570 | 1 592 |
+| a_creuser | 16 003 | 15 580 |
+| ecartee | 408 007 | 409 036 |
+
+**Diagnostic du ×5 sur les chaudes — entièrement imputable au LOT 8** (vérifié en base) :
+les 4 627 nouvelles chaudes n'avaient AUCUN bonus sitadel en q_v2 (0 permis ≤ 200 m/36 mois)
+et gagnent **+7,1 pts d'A en moyenne** avec la fenêtre du mandat (400 m / 5 ans) — l'axe A
+gagne +6,3 pts en moyenne sur ces parcelles et franchit le seuil A≥60. Les nouveaux MALUS
+(bruit, SIS, 50 pas, SUP) jouent dans l'autre sens : **255 chaudes perdues**.
+
+**Proposition de calibration (SIMULÉE en lecture seule, PAS appliquée)** — réduire le poids
+du bonus « dynamique constructive » devenu beaucoup plus large :
+| Poids sitadel | Chaudes simulées |
+|---|---|
+| ×1,0 (tel que calculé) | 5 455 |
+| ×0,5 | 2 987 |
+| **×0,25** | **1 362** (proche des 1 083 historiques) |
+Décision Vic : adopter q_v3 tel quel (lecture large), ou re-matricer avec poids sitadel
+réduit (opération SQL rapide, sans ré-évaluation), ou ajuster `saturation_pc`/le poids
+opportunity et relancer.
+
+**Top 10 des chaudes perdues (les malus font leur travail)** — corridor RN1/littoral de
+Saint-Paul en tête, cumul bruit cat 1-2 + 50 pas + sols pollués :
+
+| Parcelle | Commune | Q | Nouveaux flags |
+|---|---|---|---|
+| 97415000DE1161 | Saint-Paul | 69→47 | bruit_route, cinquante_pas |
+| 97415000BP0879 | Saint-Paul | 73→51 | bruit_route, cinquante_pas |
+| 97415000BP0925 | Saint-Paul | 75→53 | bruit_route, cinquante_pas |
+| 97415000DE0900 | Saint-Paul | 69→47 | bruit_route, cinquante_pas |
+| 97415000BO0005 | Saint-Paul | 75→54 | bruit_route, cinquante_pas |
+| 97415000BP0374 | Saint-Paul | 69→49 | bruit_route, cinquante_pas, sol_pollue |
+| 97408000AP0961 | La Possession | 69→49 | bruit_route |
+| 97415000BP0372 | Saint-Paul | 69→49 | bruit_route, cinquante_pas, sol_pollue |
+| 97415000BP0365 | Saint-Paul | 69→50 | bruit_route, cinquante_pas, sol_pollue |
+| 97415000BP0794 | Saint-Paul | 70→53 | bruit_route, cinquante_pas |
+
+## Phase 2 — Impact Brûlantes 🔥
+
+La vue `v_parcelles_brulantes` (dynamique, liée à q_v2 + seuil 34) donne **93 Brûlantes** ;
+avec la population de chaudes q_v3_datagap (seuil 34 inchangé) : **89 Brûlantes**.
+**Garde-fou [30-120] : RESPECTÉ dans les deux cas** → aucun changement de seuil proposé.
+(À titre indicatif : le top décile V des 5 455 chaudes q_v3 tombe à 4 — la masse des
+nouvelles chaudes est à V faible ; si q_v3 était adopté TEL QUEL, le seuil resterait
+pertinent à 34, la méthode top-décile ne s'appliquant que si le garde-fou est quitté.)
+
+---
+*Fin du mandat data-gap — 11 lots traités (8 FAIT, 1 partiel, 2 BLOQUÉS documentés),
+zéro régression tests (629 verts, 6 échecs préexistants identiques à main),
+Score V intouché, `q_v2` intouché. AUCUN MERGE — validation et merge par Vic.*

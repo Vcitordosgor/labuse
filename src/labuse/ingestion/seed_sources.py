@@ -173,7 +173,7 @@ SOURCES: list[dict] = [
          legal_notes="RGPD : personnes morales en open data complet ; données d'une personne PHYSIQUE conservées seulement si l'entreprise est diffusible. Signal INTERNE de priorisation, jamais un export nominatif de masse (règle d'archi #2). Naissance au MOIS.",
          technical_notes="✓ login live 05/07/2026 (schéma vérifié, siren 913037362 SCI ALOE). Auth POST /api/sso/login (compte portail, identifiants en env INPI_API_*, JAMAIS en dur ; SFTP abandonné = firewall IP). GET /api/companies/{siren}. Champs : composition.pouvoirs[].individu.descriptionPersonne.dateDeNaissance (AAAA-MM). ⚠ pas de procédures collectives dans cet endpoint (restent BODACC A1). Vague A3 : signal propension_vendre / âge dirigeant (# TODO étage 2). last_sync_at posé à l'ingestion."),
     dict(name="50 pas géométriques — limite haute (DEAL)", category="reglement", provider="DEAL Réunion (Lizmap)",
-         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.MOYEN, rate_limit="1 requête",
+         access_type="WFS/GeoJSON", status=S.CONNECTE, reliability_level=R.A_CONFIRMER, rate_limit="1 requête",
          documentation_url="https://deal974.lizmap.com/cartes/",
          endpoint_url="https://deal974.lizmap.com/cartes/index.php/lizmap/service?repository=00cartogenerale&project=deal_reunion",
          legal_notes="Limite numérisée du cadastre 1877 (géoréf. orthos 2012/1950) — indicative, la bande polygonale officielle n'est pas diffusée.",
