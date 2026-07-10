@@ -60,7 +60,9 @@ def pdf_path_for(idu: str, order_ref: str) -> Path:
 
 
 def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | None = None,
-                       watermark: str | None = None, with_map: bool = True) -> str:
+                       watermark: str | None = None, with_map: bool = True,
+                       produit: str = "Rapport Flash",
+                       produit_sous_titre: str = "RAPPORT FLASH · parcelle à l'unité") -> str:
     """Assemble les données et rend le HTML complet du rapport (CSS inliné)."""
     data = collect_report_data(db, idu, adresse=adresse)
     carte = None
@@ -69,10 +71,11 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
                                     cache_dir=storage_dir() / "tiles",
                                     timeout_s=get_settings().http_timeout_s)
     css = _env.get_template("rapport.css").render(
-        fonts_dir=_FONTS.as_uri(), order_ref=order_ref,
+        fonts_dir=_FONTS.as_uri(), order_ref=order_ref, produit=produit,
         date_generation=data["date_generation"], watermark=watermark)
     return _env.get_template("rapport.html.j2").render(
         data=data, carte=carte, css=Markup(css), order_ref=order_ref,
+        produit_sous_titre=produit_sous_titre,
         watermark=watermark, template_version=TEMPLATE_VERSION,
         logo_path=_logo_svg_path())
 

@@ -2229,6 +2229,7 @@ def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
 
 # ── Modules outils (Vague 1+) ──
+from .dossier import router as _dossier_router  # noqa: E402
 from .events import router as _events_router  # noqa: E402
 from .ia import router as _ia_router  # noqa: E402
 from .modules import router as _modules_router  # noqa: E402
@@ -2240,6 +2241,7 @@ from .segments import router as _segments_router  # noqa: E402
 from .tiles import router as _tiles_router  # noqa: E402
 
 app.include_router(_modules_router)
+app.include_router(_dossier_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
 app.include_router(_ia_router)

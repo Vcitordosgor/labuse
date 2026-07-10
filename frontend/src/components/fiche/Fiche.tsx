@@ -767,6 +767,14 @@ export function Fiche({ idu }: { idu: string }) {
             title={calculette && tab === 'bilan' ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
             PDF
           </a>
+          {/* Lot 4 (wave-adresses) : Dossier parcelle brandé — comité d'engagement, banque,
+              client final. Quota mensuel selon plan ; 501 tant que le générateur (module
+              Flash) n'est pas mergé — le serveur répond un message honnête. */}
+          <a href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer"
+            className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
+            title="Dossier parcelle PDF brandé (carte, zonage calibré, risques, DVF, permis) — usage interne">
+            Dossier
+          </a>
           {f && (
             <button onClick={() => setModule('temps')}
               className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
