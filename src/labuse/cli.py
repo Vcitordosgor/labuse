@@ -373,7 +373,6 @@ def matrice_simulate_cmd(
     """SIMULATION À BLANC de conventions de matrice (aucune écriture persistante — table
     temporaire de session). Sortie : tableau console + grille HTML docs/tops_ile/
     matrice_sensibilite.html. La bascule événementielle n'est JAMAIS balayée (doctrine)."""
-    import json as _json
     from pathlib import Path
 
     from .config import load_yaml_config
@@ -1598,3 +1597,41 @@ def ingest_catnat_cmd() -> None:
     typer.echo(f"✓ CATNAT : {res['arretes']} arrêté(s) sur {res['communes_ok']} commune(s).")
     for insee, err in (res["erreurs"] or {}).items():
         typer.echo(f"  ⚠ {insee} : {err}")
+
+
+# ───────────── Wave Adresses, Courrier, Protection & Recherche IA ─────────────
+
+@app.command("ingest-ban")
+def ingest_ban_cmd(
+    csv: str = typer.Option(None, help="CSV BAN 974 local (sinon --download)."),
+    download: bool = typer.Option(False, "--download",
+                                  help="Télécharge l'export officiel BAN 974 (Licence Ouverte)."),
+    copros: bool = typer.Option(True, help="Rattache aussi les copros RNIC sans parcelle."),
+) -> None:
+    """Lot 1 (wave-adresses) : BAN 974 → table `adresses` rattachée aux parcelles.
+    Refresh mensuel : deploy/cron.d/ban. Référence locale de TOUT géocodage du produit."""
+    from pathlib import Path
+
+    from .ingestion import ban_adresses
+
+    if download or not csv:
+        path = ban_adresses.download_ban_csv(Path("data/ban"))
+    else:
+        path = Path(csv)
+    with session_scope() as s:
+        res = ban_adresses.ingest_ban(s, path)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
+                       "WHERE name = 'Base Adresse Nationale'"))
+    typer.echo(f"✓ BAN : {res['adresses']} adresses, {res['liees']} rattachées "
+               f"({100 * res['taux_liees']:.1f} %) en {res['duree_s']} s "
+               f"[parcelle {res['parcelle']} · ban_cad {res['ban_cad']} · proche {res['proche_20m']}]")
+    with session_scope() as s:
+        cov = ban_adresses.couverture_bati_residentiel(s)
+    seuil = "✓" if cov["taux"] >= 0.90 else "⚠"
+    typer.echo(f"{seuil} Couverture bâti résidentiel : {cov['avec_adresse']}/{cov['parcelles_baties']} "
+               f"({100 * cov['taux']:.1f} % — acceptation ≥ 90 %)")
+    if copros:
+        with session_scope() as s:
+            rc = ban_adresses.rattacher_copros_par_adresse(s)
+        typer.echo(f"✓ Copros RNIC par adresse : {rc['liees']} rattachée(s) sur {rc['candidates']} "
+                   f"({rc['ambigues']} ambiguë(s), {rc['sans_match']} sans correspondance)")
