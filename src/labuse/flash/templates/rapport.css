@@ -1,0 +1,134 @@
+/* Rapport Flash — DA IMPRESSION LA BUSE : fond BLANC (un notaire imprime), typos de la
+   marque (Space Grotesk / Inter / JetBrains Mono, OFL embarquées api/fonts), accents
+   vert menthe #0B8A5F (déclinaison print de la menthe écran). Pas le thème sombre. */
+
+@font-face { font-family: "Inter"; src: url("{{ fonts_dir }}/Inter-Regular.ttf"); }
+@font-face { font-family: "JetBrains Mono"; src: url("{{ fonts_dir }}/JetBrainsMono-Regular.ttf"); }
+@font-face { font-family: "Space Grotesk"; font-weight: 700;
+             src: url("{{ fonts_dir }}/SpaceGrotesk-Bold.ttf"); }
+
+:root {
+  --mint: #0B8A5F;
+  --mint-soft: #E2F7ED;
+  --surface: #F4F8F6;
+  --line: #D8E2DC;
+  --txt-hi: #111814;
+  --txt: #28322D;
+  --txt-mut: #5F6C65;
+  --txt-dim: #8C9891;
+  --red: #B73F32;
+  --red-soft: #FAE9E6;
+  --amber: #A87916;
+}
+
+@page {
+  size: A4;
+  margin: 22mm 16mm 20mm 16mm;
+  @top-left {
+    content: "LA BUSE — Rapport Flash · {{ order_ref }}";
+    font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
+    border-bottom: 0.6pt solid #0B8A5F; width: 100%; padding-bottom: 4pt;
+    margin-bottom: 8pt; vertical-align: bottom;
+  }
+  @top-right {
+    content: "{{ date_generation }}";
+    font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
+    border-bottom: 0.6pt solid #0B8A5F; vertical-align: bottom;
+    padding-bottom: 4pt; margin-bottom: 8pt;
+  }
+  @bottom-center {
+    content: "Document d'information — ne vaut ni document d'urbanisme opposable, ni étude de faisabilité, ni conseil juridique · page " counter(page) "/" counter(pages);
+    font-family: "Inter"; font-size: 6.5pt; color: #8C9891;
+  }
+}
+@page garde { @top-left { content: none; } @top-right { content: none; } }
+
+html { font-size: 9.5pt; }
+body { font-family: "Inter", sans-serif; color: var(--txt); line-height: 1.45; margin: 0; }
+
+h1, h2, h3 { font-family: "Space Grotesk", "Inter", sans-serif; font-weight: 700;
+             color: var(--txt-hi); }
+h2 { font-size: 13pt; margin: 0 0 3mm 0; padding-bottom: 1.5mm;
+     border-bottom: 1.4pt solid var(--mint); break-after: avoid; }
+h2 .num { color: var(--mint); font-family: "JetBrains Mono", monospace;
+          font-size: 9pt; margin-right: 2mm; }
+h3 { font-size: 10pt; margin: 4mm 0 1.5mm 0; break-after: avoid; }
+
+section { margin-bottom: 8mm; }
+p { margin: 0 0 2mm 0; }
+
+/* ── Page de garde ── */
+.garde { page: garde; }
+.garde .marque { display: flex; align-items: center; margin-bottom: 10mm; }
+.garde .wordmark { font-family: "Space Grotesk"; font-weight: 700; font-size: 16pt;
+                   color: var(--mint); letter-spacing: 0.04em; margin-left: 4mm; }
+.garde .produit { font-family: "JetBrains Mono", monospace; font-size: 8pt;
+                  color: var(--txt-mut); margin-left: 4mm; }
+.garde h1 { font-size: 21pt; margin: 0 0 2mm 0; line-height: 1.2; }
+.garde .adresse { font-size: 12pt; color: var(--txt); margin-bottom: 6mm; }
+.garde .refs { font-family: "JetBrains Mono", monospace; font-size: 9pt;
+               color: var(--txt-mut); margin-bottom: 8mm; }
+.garde .refs b { color: var(--txt-hi); }
+.meta-table { width: 100%; border-collapse: collapse; margin-top: 6mm; }
+.meta-table td { border-top: 0.5pt solid var(--line); padding: 1.6mm 0; font-size: 8.5pt; }
+.meta-table td:first-child { color: var(--txt-mut); width: 38%; }
+.meta-table td:last-child { font-family: "JetBrains Mono", monospace; }
+
+/* ── Carte ── */
+.carte { position: relative; overflow: hidden; border: 0.8pt solid var(--line);
+         border-radius: 2mm; }
+.carte img { position: absolute; width: 256px; height: 256px; }
+.carte svg { position: absolute; left: 0; top: 0; }
+.carte-attribution { font-size: 6.5pt; color: var(--txt-dim); text-align: right;
+                     margin-top: 1mm; }
+
+/* ── Tableaux & cartouches ── */
+table.donnees { width: 100%; border-collapse: collapse; margin: 2mm 0; }
+table.donnees th { text-align: left; font-family: "JetBrains Mono", monospace;
+                   font-size: 7pt; text-transform: uppercase; letter-spacing: 0.06em;
+                   color: var(--txt-mut); border-bottom: 0.8pt solid var(--mint);
+                   padding: 1.2mm 2mm 1.2mm 0; font-weight: normal; }
+table.donnees td { border-bottom: 0.5pt solid var(--line); padding: 1.6mm 2mm 1.6mm 0;
+                   font-size: 8.8pt; vertical-align: top; }
+table.donnees tr { break-inside: avoid; }
+.num-cell { font-family: "JetBrains Mono", monospace; }
+
+.cartouche { background: var(--surface); border-radius: 2mm; padding: 3mm 4mm;
+             margin: 2mm 0; break-inside: avoid; }
+.cartouche .titre { font-family: "JetBrains Mono", monospace; font-size: 7pt;
+                    text-transform: uppercase; letter-spacing: 0.06em;
+                    color: var(--txt-mut); margin-bottom: 1mm; }
+.cartouche .valeur { font-family: "Space Grotesk"; font-weight: 700; font-size: 15pt;
+                     color: var(--txt-hi); }
+.cartouche .valeur small { font-size: 8.5pt; color: var(--txt-mut); font-family: "Inter";
+                           font-weight: normal; }
+.cartouches { display: flex; gap: 3mm; }
+.cartouches .cartouche { flex: 1; margin: 0; }
+
+.chip { display: inline-block; border-radius: 2mm; padding: 0.6mm 2.4mm; font-size: 7.8pt;
+        background: var(--mint-soft); color: var(--mint); }
+.chip.alerte { background: var(--red-soft); color: var(--red); }
+.chip.neutre { background: #EEF1EF; color: var(--txt-mut); }
+
+.note { font-size: 7.8pt; color: var(--txt-mut); }
+.ok-vide { color: var(--mint); font-size: 9pt; }
+
+ul.liste { margin: 1mm 0 2mm 0; padding-left: 5mm; }
+ul.liste li { margin-bottom: 1mm; }
+
+/* ── Grille de lecture du score (valeur absolue, jamais un classement) ── */
+.grille td { font-size: 8.2pt; }
+
+/* ── Mentions ── */
+.mentions { font-size: 8pt; color: var(--txt-mut); border-top: 0.8pt solid var(--line);
+            padding-top: 3mm; }
+
+/* ── Watermark EXEMPLE (rapport démo uniquement) ── */
+{% if watermark %}
+.watermark { position: fixed; top: 42%; left: 0; width: 100%; text-align: center;
+             transform: rotate(-32deg); font-family: "Space Grotesk"; font-weight: 700;
+             font-size: 64pt; color: rgba(11, 138, 95, 0.13); letter-spacing: 0.1em;
+             z-index: 99; }
+{% endif %}
+
+.saut { break-before: page; }

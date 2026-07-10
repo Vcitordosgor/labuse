@@ -62,6 +62,31 @@ class Settings(BaseSettings):
     ai_provider: str = "stub"
     ai_model: str = "claude-sonnet-4-6"
 
+    # ── Module Flash : rapport parcelle à l'unité (mandat module-flash) ──
+    # Prix TTC affiché/facturé. La valeur de LANCEMENT est décidée par Vic au moment de
+    # créer le produit Stripe — 79 € est la suggestion du mandat, jamais une décision.
+    flash_price_eur: float = 79.0
+    # Stockage local des PDF générés (relatif à la racine du dépôt si non absolu).
+    flash_storage_dir: str = "outputs/flash"
+    # Validité du lien de téléchargement signé (jours) — re-téléchargeable jusque-là.
+    flash_token_days: int = 30
+    # Stripe — clés JAMAIS committées ; mode test (sk_test_…) en dev, bascule documentée.
+    # Sans clé : la page d'achat affiche « bientôt disponible », AUCUN bouton de paiement
+    # factice (leçon P0 TANIA, non négociable).
+    stripe_secret_key: str | None = None
+    stripe_webhook_secret: str | None = None
+    stripe_price_id: str | None = None
+    # SMTP (livraison des rapports) — provider en config ; sans hôte configuré, provider
+    # « console » (le mail est journalisé, jamais envoyé) : acceptable en dev seulement.
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    smtp_from: str = "LA BUSE <no-reply@labuse.immo>"
+    smtp_starttls: bool = True
+    # Alertes exploitation (génération en échec après paiement, etc.).
+    admin_email: str | None = None
+
     @property
     def config_path(self) -> Path:
         p = Path(self.config_dir)
