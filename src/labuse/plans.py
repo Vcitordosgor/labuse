@@ -23,6 +23,13 @@ FEATURES: dict[str, str] = {
 }
 
 
+#: filtres du moteur de segments réservés au plan Intégral (Lot 6.6 — « même mécanique
+#: que les presets » : résultat grisé + CTA upgrade). VIDE aujourd'hui : la classification
+#: commerciale des filtres (Q×A, BODACC…) sera tranchée avec le mandat Auth & Plans —
+#: le branchement (api/ia.py segments-search) est prêt.
+FILTRES_INTEGRAL: frozenset[str] = frozenset()
+
+
 def plan_courant() -> str:
     """Plan du « compte » courant. STUB : lit LABUSE_PLAN_DEFAUT (pilote = intégral).
     Auth & Plans branchera ici le plan réel du compte/siège connecté."""

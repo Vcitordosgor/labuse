@@ -282,3 +282,16 @@ export const deleteSegmentPreset = (slug: string) =>
   j<{ supprime: string }>(`/segments/presets/${slug}`, { method: 'DELETE' })
 export const refreshSegmentCounts = () =>
   j<{ recalcules: Record<string, number> }>('/segments/refresh-counts?stale_hours=0', { method: 'POST' })
+
+// Recherche en langage naturel → filtres du registry (wave-adresses Lot 6). Le serveur
+// valide CHAQUE clé contre le registry — jamais de SQL, jamais de champ inconnu exécuté.
+export interface NlSegmentsRep {
+  stub: boolean
+  filtres?: SegmentFiltre[]
+  filtres_rejetes?: { filtre: unknown; raison: string }[]
+  filtres_gates?: (SegmentFiltre & { plan_requis?: string; raison?: string; cta?: string })[]
+  explication?: string
+  out_of_scope?: string; message?: string; groupes_disponibles?: string[]; quota?: boolean
+}
+export const nlSegmentsSearch = (text: string) =>
+  j<NlSegmentsRep>('/ia/segments-search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })

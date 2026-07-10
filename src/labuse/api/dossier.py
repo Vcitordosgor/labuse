@@ -31,11 +31,13 @@ def get_db():
 
 
 def _quota_mois(db: Session, sujet: str) -> int:
-    """Dossiers générés par ce sujet depuis le début du mois (usage_compteurs)."""
+    """Dossiers générés par ce sujet depuis le début du mois (usage_compteurs).
+    Jour de référence = heure LOCALE python (cohérent avec protection._aujourdhui)."""
+    premier = date.today().replace(day=1)
     return int(db.execute(text(
         "SELECT COALESCE(sum(n), 0) FROM usage_compteurs "
-        "WHERE kind = 'dossier' AND sujet = :s AND jour >= date_trunc('month', CURRENT_DATE)"),
-        {"s": sujet}).scalar() or 0)
+        "WHERE kind = 'dossier' AND sujet = :s AND jour >= :p"),
+        {"s": sujet, "p": premier}).scalar() or 0)
 
 
 @router.get("/statut")
@@ -101,11 +103,12 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
     from weasyprint import HTML
     pdf = HTML(string=html).write_pdf()
 
+    from .protection import _aujourdhui
     db.execute(text(
         "INSERT INTO usage_compteurs (jour, sujet, kind, n) "
-        "VALUES (CURRENT_DATE, :s, 'dossier', 1) "
+        "VALUES (:j, :s, 'dossier', 1) "
         "ON CONFLICT (jour, sujet, kind) DO UPDATE SET n = usage_compteurs.n + 1"),
-        {"s": sujet})
+        {"j": _aujourdhui(), "s": sujet})
     log.info("dossier parcelle %s généré (%s)", idu, ref)
     return Response(content=pdf, media_type="application/pdf",
                     headers={"Content-Disposition":

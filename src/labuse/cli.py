@@ -1656,3 +1656,47 @@ def abuse_scan_cmd(
                f"{res['alertes']} alerte(s) admin.")
     for sujet, det in sorted(res["scores"].items(), key=lambda kv: -kv[1]["score"])[:10]:
         typer.echo(f"  {sujet:26} score {det['score']:>3}  {det}")
+
+
+@app.command("nl-eval")
+def nl_eval_cmd(
+    fichier: str = typer.Option("tests/nl_queries.txt", help="Jeu de questions annotées."),
+) -> None:
+    """Lot 6 (wave-adresses) : évalue la recherche NL sur le jeu de test (acceptation
+    ≥ 16/20, 0 champ hors registry exécuté). Appelle l'API Anthropic (clé .env)."""
+    import json as _json
+    from pathlib import Path
+
+    from .ai.nl_segments import traduire
+    from .api.ia import MODEL_NL
+
+    lignes = [ln for ln in Path(fichier).read_text(encoding="utf-8").splitlines()
+              if ln.strip() and not ln.startswith("#")]
+    ok, echecs, hors_registry = 0, [], 0
+    with session_scope() as s:
+        for ln in lignes:
+            question, _, attendu_raw = ln.partition("||")
+            question, attendu = question.strip(), _json.loads(attendu_raw)
+            res = traduire(s, question, model=MODEL_NL)
+            if res.get("stub"):
+                typer.echo("⚠ repli stub (clé/API indisponible) — évaluation non probante")
+            if attendu.get("out_of_scope"):
+                reussi = "out_of_scope" in res
+                obtenu = res.get("out_of_scope", [f["cle"] for f in res.get("filtres", [])])
+            else:
+                cles = {f["cle"] for f in res.get("filtres", [])}
+                reussi = "out_of_scope" not in res and set(attendu["cles"]) <= cles
+                obtenu = sorted(cles) if "out_of_scope" not in res else res["out_of_scope"]
+            hors_registry += len(res.get("rejetes", []))
+            if reussi:
+                ok += 1
+            else:
+                echecs.append((question, attendu, obtenu))
+            typer.echo(f"  {'✓' if reussi else '✗'} {question[:70]}")
+    typer.echo(f"\nScore : {ok}/{len(lignes)} (acceptation ≥ 16) · "
+               f"champs hors registry REJETÉS par le garde-fou : {hors_registry} "
+               f"(0 exécuté, par construction)")
+    for q, att, obt in echecs:
+        typer.echo(f"  ✗ {q}\n    attendu {att} · obtenu {obt}")
+    if ok < 16:
+        raise typer.Exit(1)
