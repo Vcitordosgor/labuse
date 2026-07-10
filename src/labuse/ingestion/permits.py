@@ -1,4 +1,11 @@
-"""Ingestion des autorisations d'urbanisme (permis/SITADEL) — Région ODS 974  [✓ live].
+"""Ingestion des autorisations d'urbanisme (permis/SITADEL) — Région ODS 974.
+
+[† mort depuis 2023-09, remplacé par SDES/Dido] Le dataset ODS Région n'est PLUS ALIMENTÉ
+depuis que le SDES a rapatrié la diffusion sur Dido (sept. 2023) — les données s'arrêtent au
+31/01/2023. La voie VIVANTE est permits_sdes.py (flux national SDES/Dido, Sitadel3, MAJ
+mensuelle). `ingest_permits` (ODS) reste en LEGACY documenté, non appelé ; les helpers
+(_idu, _nature, _statut, nearby_permits, geocode_permits_via_cadastre) restent la référence
+partagée avec la voie SDES.
 
 Le dataset ODS « liste des permis de construire… » porte les références cadastrales
 (sec_cadastre / num_cadastre) : on reconstruit l'IDU 14 caractères et on géolocalise
