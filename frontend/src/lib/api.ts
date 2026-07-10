@@ -8,9 +8,10 @@ export interface ParcelFeatureCollection {
 import { useApp, type Filters } from '../store/useApp'
 import { vSignalCodes } from './filters'
 
-// SOURCE DE VÉRITÉ du Socle V1 : le scoring premium v2, run q_v2 (dryrun_parcel_evaluations).
+// SOURCE DE VÉRITÉ : run de référence q_v3_datagap (bascule 10/07/2026 — data-gap +
+// règle « le signal de zone ne bascule jamais seul »). Doit rester aligné sur Q_A_RUN_LABEL.
 // JAMAIS parcel_evaluations (éval historique). Cf. brief « NOTE SOURCE DE VÉRITÉ ».
-export const SOURCE = 'q_v2'
+export const SOURCE = 'q_v3_datagap'
 /** Commune active — depuis le store (null = « Toute l'île »). L'ancienne constante Saint-Paul
  *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
 export const commune = () => useApp.getState().commune
