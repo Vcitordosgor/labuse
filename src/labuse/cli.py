@@ -1521,3 +1521,17 @@ def ingest_cinquante_pas_cmd() -> None:
         s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
                   {"n": SOURCE_NAME})
     typer.echo(f"✓ 50 pas : {res}")
+
+
+@app.command("ingest-rnic")
+def ingest_rnic_cmd(
+    csv: str = typer.Option(..., help="Chemin du CSV national RNIC (data.gouv, ~453 Mo)."),
+) -> None:
+    """LOT 10 data-gap : copropriétés RNIC 974 → rnic_coproprietes (rattachées aux parcelles)."""
+    from .ingestion.rnic import SOURCE_NAME, ingest_rnic
+
+    with session_scope() as s:
+        res = ingest_rnic(s, csv, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                  {"n": SOURCE_NAME})
+    typer.echo(f"✓ RNIC : {res}")

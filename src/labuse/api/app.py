@@ -1048,6 +1048,16 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
             "secteur": dvf_secteur,
             "caveat": "valeur = mutation entière (multi-parcelles possible) ; fenêtre 2021-2025",
         }
+    # LOT 9 (data-gap) : terrain (pente RGE ALTI 5 m) — hypothèses affichées, jamais un « 0 » muet.
+    terrain = db.execute(text(
+        "SELECT pente_moy_deg, pente_max_deg, flag_terrassement_lourd "
+        "FROM parcel_terrain WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    # LOT 10 (data-gap) : copropriété(s) RNIC rattachées à la parcelle (cible MdB, hors scoring).
+    copros = [dict(r) for r in db.execute(text(
+        "SELECT numero_immatriculation, nom_usage, adresse, nb_lots_total, nb_lots_habitation, "
+        "       periode_construction, syndic_type, syndic_nom, rattachement "
+        "FROM rnic_coproprietes WHERE parcelle_idu = :idu ORDER BY nb_lots_total DESC NULLS LAST"),
+        {"idu": idu}).mappings().all()]
     # Score V (Vendabilité, Stage 3 additif) : score + panneau « Pourquoi ce score » (signaux
     # JSONB §5.4, lus tels quels) + badges spéciaux (public/bailleur/copro/partiel).
     vrow = db.execute(text(
@@ -1096,6 +1106,8 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = "q_v2") -> dict:
         "lines": lines, "flags": flags,
         "score_v": score_v,
         "dvf_parcelle": dvf_parcelle,
+        "terrain": dict(terrain) if terrain else None,
+        "coproprietes": copros,
     }
 
 

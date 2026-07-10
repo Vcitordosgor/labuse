@@ -139,3 +139,26 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
   bande des 50 pas — régime foncier spécifique à vérifier, cession encadrée ». Libellé
   volontairement prudent (« au contact », jamais « dans la bande ») — sur-inclusif côté terre.
 - Sanity : **16 099 parcelles** au contact. CLI `labuse ingest-cinquante-pas`.
+
+### LOT 9 — Potentiel résiduel (bâti + MNT) : FAIT (complète l'existant)
+- **Audit confirmé** : `parcel_residuel` (263 626 parcelles) consomme DÉJÀ la hauteur/étages
+  réels BD TOPO quand présents (85,7 % des 817 506 bâtiments ont `hauteur`) — le volet
+  « bâti existant » était couvert, rien re-fait.
+- **Pente 5 m** : RGE ALTI 5M D974 (millésime 2023-09-05, archive 251 Mo) → `gdaldem slope`
+  → raster `data/rgealti/pente974_5m.tif` (378 Mo, **CONSERVÉ pour le mandat ortho**, dalles
+  brutes et archive NETTOYÉES) → PostGIS `rgealti_pente_5m` (2 793 tuiles 200×200) →
+  **`parcel_terrain`** (schéma canonique du mandat : idu PK, pente_moy_deg, pente_max_deg,
+  flag_terrassement_lourd) : **423 452 parcelles** (98,1 % — le reliquat = hors emprise MNT),
+  pente moyenne 9,2°, **86 885 en terrassement lourd** (moy > 15° ou max > 30°, choix documenté).
+- Fiche : bloc `terrain`. La couche cascade `pente` (grille 180 m) reste en place pour le
+  scoring Stage 1 (déjà branchée) — parcel_terrain est la table canonique fine (ortho, fiche).
+- ⚠ Extraction : archive 7z SOLIDE → /vsi7z/ GDAL inutilisable en accès aléatoire (constaté :
+  20 min pour 22 Ko) ; extraction py7zr (3 s) ajoutée au venv, consignée.
+
+### LOT 10 — RNIC copropriétés : FAIT
+- Fichier national ANAH T3 2025 (453 Mo, URL stable data.gouv) filtré 974 → table
+  `rnic_coproprietes` : **2 220 copropriétés**, rattachement parcelle **87 %** (1 083 par
+  référence cadastrale — déjà au format IDU dans le fichier —, 850 par point long/lat,
+  287 sans rattachement). Lots, période de construction, syndic (SIRET), mandat en cours.
+- **Pas de scoring** (mandat, cible MdB) : fiche parcelle (bloc `coproprietes`) + table
+  filtrable (index parcelle_idu / insee). CLI `labuse ingest-rnic --csv <fichier national>`.
