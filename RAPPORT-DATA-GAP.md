@@ -130,3 +130,12 @@ La Phase 1 (colonnes « Décision Phase 1 ») sera complétée lot par lot.
   ILO absent de data.gouv/Région/Office de l'eau. **Seule voie : demande directe à la DAE
   (secretariatdae@cg974.fr)** — consigné pour action Vic. Le renforcement du verrou Stage 0
   prévu s'appliquera à réception.
+
+### LOT 6 — 50 pas géométriques : FAIT (approximation documentée)
+- Source : WFS Lizmap DEAL (`LIMITE_HA`, 163 tronçons ~184 km, cadastre 1877 géoréférencé,
+  5 tronçons mis à jour « étude documentaire 02/2026 »). La **bande polygonale n'est diffusée
+  nulle part** → CORRIDOR ±90 m autour de la limite haute matérialisé (kind='cinquante_pas').
+- Règle Stage 1 : parcelle intersectant le corridor → SOFT_FLAG **faible** « au contact de la
+  bande des 50 pas — régime foncier spécifique à vérifier, cession encadrée ». Libellé
+  volontairement prudent (« au contact », jamais « dans la bande ») — sur-inclusif côté terre.
+- Sanity : **16 099 parcelles** au contact. CLI `labuse ingest-cinquante-pas`.

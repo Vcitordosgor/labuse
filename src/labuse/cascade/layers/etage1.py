@@ -147,6 +147,32 @@ class SupLayer(Layer):
 
 
 SRC_BRUIT = "Classement sonore ITT (Cerema)"
+SRC_50PAS = "50 pas géométriques — limite haute (DEAL)"
+
+
+@register
+class CinquantePasLayer(Layer):
+    """LOT 6 (data-gap) — parcelle AU CONTACT de la bande des 50 pas géométriques (corridor
+    ±90 m de la limite haute — la bande polygonale n'est pas diffusée, approximation
+    documentée). Malus Stage 1 faible : régime foncier spécifique, cession encadrée."""
+
+    name = "cinquante_pas"
+
+    def evaluate(self, parcel: ParcelRef, ctx: EvalContext, params: dict) -> Verdict:
+        kind = params["spatial_kind"]
+        if not ctx.kind_present(kind):
+            return unknown(self.name, "Limite des 50 pas non ingérée.", source=SRC_50PAS)
+        inter = [i for i in ctx.intersections(parcel.id, kind) if i.coverage > 0]
+        if not inter:
+            return passed(self.name, "Hors zone des 50 pas géométriques.", source=SRC_50PAS)
+        i = max(inter, key=lambda x: x.coverage)
+        return _trace(soft_flag(
+            self.name,
+            "Parcelle au contact de la bande des 50 pas géométriques (corridor ±90 m de la "
+            "limite haute 1877) — régime foncier SPÉCIFIQUE à vérifier : domaine public "
+            "littoral, cession encadrée (agence des 50 pas).",
+            Severity(params.get("severity", "faible")), source=SRC_50PAS),
+            "spatial_layers", i.id)
 
 
 @register

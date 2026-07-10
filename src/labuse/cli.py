@@ -1509,3 +1509,15 @@ def ingest_bruit_route_cmd() -> None:
         s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
                   {"n": SOURCE_NAME})
     typer.echo(f"✓ Classement sonore : {res}")
+
+
+@app.command("ingest-cinquante-pas")
+def ingest_cinquante_pas_cmd() -> None:
+    """LOT 6 data-gap : corridor de la limite haute des 50 pas (DEAL) → kind='cinquante_pas'."""
+    from .ingestion.cinquante_pas import SOURCE_NAME, ingest_cinquante_pas
+
+    with session_scope() as s:
+        res = ingest_cinquante_pas(s, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() WHERE name = :n"),
+                  {"n": SOURCE_NAME})
+    typer.echo(f"✓ 50 pas : {res}")

@@ -297,6 +297,12 @@ layers:
     enabled: true
     params:
       spatial_kind: bruit_route
+  - name: cinquante_pas   # LOT 6 data-gap : corridor limite haute des 50 pas (approximation documentee)
+    phase: 1
+    enabled: true
+    params:
+      spatial_kind: cinquante_pas
+      severity: faible
   - name: cavite          # risque d'effondrement → flag prime, malus léger
     phase: 1
     enabled: true
