@@ -112,7 +112,8 @@ _defis: dict[str, tuple[int, int, float]] = {}          # sujet → (a, b, expir
 #: préfixes des endpoints métier soumis au rate limiting (jamais les statiques/tuiles —
 #: une carte qui panne charge des dizaines de tuiles/s, ce n'est pas du scraping).
 PREFIXES_PROTEGES = ("/parcels", "/segments", "/discover", "/ia", "/moteurs", "/map/parcels",
-                     "/map/mutation", "/map/permits", "/map/layers", "/map/bati", "/dossier")
+                     "/map/mutation", "/map/permits", "/map/layers", "/map/bati", "/dossier",
+                     "/pre-dossier")
 
 _FICHE_RE = re.compile(r"^/parcels/([0-9]{5}[0-9A-Z]{9})$")
 

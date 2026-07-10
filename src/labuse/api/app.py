@@ -2235,6 +2235,7 @@ from .ia import router as _ia_router  # noqa: E402
 from .modules import router as _modules_router  # noqa: E402
 from .moteurs import router as _moteurs_router  # noqa: E402
 from .partners import router as _partners_router  # noqa: E402
+from .pre_dossier import router as _pre_dossier_router  # noqa: E402
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .segments import router as _segments_router  # noqa: E402
@@ -2242,6 +2243,7 @@ from .tiles import router as _tiles_router  # noqa: E402
 
 app.include_router(_modules_router)
 app.include_router(_dossier_router)
+app.include_router(_pre_dossier_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
 app.include_router(_ia_router)
