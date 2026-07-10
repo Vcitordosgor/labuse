@@ -194,17 +194,28 @@ def ingest_sdes(session: Session, since: str | None = None, log=print) -> dict:
 def geocode_missing(session: Session, log=print, cap_pairs: int = 400) -> dict:
     """Fallback géoloc des permis SANS geom : centroïdes cadastraux via API Carto, PAR
     (commune, section) réellement référencée — version CIBLÉE de
-    permits.geocode_permits_via_cadastre (qui balaye toutes les sections d'UNE commune)."""
+    permits.geocode_permits_via_cadastre (qui balaye toutes les sections d'UNE commune).
+
+    ⚠ Portée réelle (mesuré au backfill 10/07/2026) : le référentiel `parcels` EST le cadastre
+    courant complet des 24 communes → une référence qui échoue la jointure parcels échoue
+    aussi API Carto (parcelle disparue : remembrement/division depuis le permis). On ne
+    requête donc QUE les sections ABSENTES du référentiel (bbox partielle, commune ajoutée…) ;
+    le reliquat non géolocalisable est un état de fait de la source, pas un manque à combler."""
     from ..connectors.cadastre import CadastreConnector, parse_parcelles
     before = session.execute(text(
         "SELECT count(*) FROM sitadel_permits WHERE geom IS NOT NULL")).scalar()
     pairs = session.execute(text(
-        """SELECT DISTINCT substring(idu FROM 1 FOR 5) AS insee, substring(idu FROM 9 FOR 2) AS sec
-           FROM (SELECT jsonb_array_elements_text(idu_codes) AS idu
-                 FROM sitadel_permits WHERE geom IS NULL) q
-           WHERE idu IS NOT NULL ORDER BY 1, 2""")).all()
+        """WITH miss AS (
+             SELECT DISTINCT substring(idu FROM 1 FOR 5) AS insee, substring(idu FROM 9 FOR 2) AS sec
+             FROM (SELECT jsonb_array_elements_text(idu_codes) AS idu
+                   FROM sitadel_permits WHERE geom IS NULL) q WHERE idu IS NOT NULL)
+           SELECT m.insee, m.sec FROM miss m
+           WHERE NOT EXISTS (SELECT 1 FROM parcels p
+                             WHERE p.idu LIKE m.insee || '000' || m.sec || '%')
+           ORDER BY 1, 2""")).all()
+    log(f"  géoloc fallback : {len(pairs)} sections hors référentiel à interroger")
     if len(pairs) > cap_pairs:
-        log(f"  ⚠ {len(pairs)} couples (commune, section) — plafonné à {cap_pairs} (relancer pour la suite)")
+        log(f"  ⚠ plafonné à {cap_pairs} (relancer pour la suite)")
         pairs = pairs[:cap_pairs]
     conn = CadastreConnector()
     lookup: dict[str, str] = {}
