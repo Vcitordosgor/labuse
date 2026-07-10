@@ -107,6 +107,8 @@ def score_at(t: date, idu: str, owner, fiche, ages_ym: dict[str, str], annonces,
     factor = (C.FALLBACK_AFFECTED_FAMILIES
               if (matched and owner["confiance"] == C.CONF_DENOMINATION) else None)
     m = {"type": "bt", "valeur": idu, "confiance": 1.0}
+    # v1.1 : grands groupes (GE/ETI) → familles B et C supprimées (miroir du moteur).
+    grand_groupe = bool(fiche and fiche.get("categorie_entreprise") in C.GRANDS_GROUPES_CATEGORIES)
     if matched:
         a_pts = famille_a_at(annonces or [], t)
         if a_pts:  # code porteur du même nombre de points (le détail importe peu au backtest)
@@ -114,20 +116,22 @@ def score_at(t: date, idu: str, owner, fiche, ages_ym: dict[str, str], annonces,
                     20: "BODACC_SAUVEGARDE", 10: "BODACC_CESSION_FONDS"}[a_pts]
             cands.append(_signal(code, source="BT", match=m))
         # B — cessation datée ≤ t seulement (une cessation non datée serait de la fuite)
-        if fiche and fiche.get("etat_administratif") == "C" and fiche.get("date_fermeture"):
+        if grand_groupe:
+            pass
+        elif fiche and fiche.get("etat_administratif") == "C" and fiche.get("date_fermeture"):
             try:
                 if date.fromisoformat(fiche["date_fermeture"]) <= t:
                     cands.append(_signal("RNE_CESSATION", source="BT", match=m))
             except ValueError:
                 pass
         ym = ages_ym.get(owner["siren"])
-        if ym:
+        if ym and not grand_groupe:
             age_t = t.year - int(ym[:4]) - (1 if t.month < int(ym[5:7] or 12) else 0)
             code = ("RNE_DIRIGEANT_75" if age_t >= 75 else "RNE_DIRIGEANT_70" if age_t >= 70
                     else "RNE_DIRIGEANT_65" if age_t >= 65 else None)
             if code:
                 cands.append(_signal(code, source="BT", match=m))
-        if fiche and fiche.get("date_creation"):
+        if fiche and fiche.get("date_creation") and not grand_groupe:
             est_sci = str(fiche.get("nature_juridique")) == "6540" or "SCI" in (owner.get("forme") or "")
             try:
                 creation = date.fromisoformat(fiche["date_creation"])
@@ -136,7 +140,7 @@ def score_at(t: date, idu: str, owner, fiche, ages_ym: dict[str, str], annonces,
             except ValueError:
                 pass
         # C — siège (millésime courant, caveat fuite documenté)
-        if fiche:
+        if fiche and not grand_groupe:
             siege = fiche.get("siege") or {}
             if siege.get("code_pays_etranger") or (siege.get("departement") and siege["departement"] != "974"):
                 cands.append(_signal("GEO_HORS_ILE", source="BT", match=m))

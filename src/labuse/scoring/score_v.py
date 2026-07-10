@@ -463,16 +463,21 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
             fiche = fiches.get(siren)
             a_cands = famille_a(siren, bodacc.get(siren, []), match)
             cands += a_cands
-            age = ages.get(siren)
-            if age is None and fiche:
-                age = _age_from_enrichment(fiche, today)
-            b_cands = famille_b(siren, fiche, age, ow["forme"], match, today)
-            # Dédup D6 : radiation (A) retenue == cessation (B) → même événement, deux sources.
-            a_ret = max(a_cands, key=lambda s: s["points"], default=None)
-            if a_ret and a_ret["code"] == "BODACC_RADIATION":
-                b_cands = [s for s in b_cands if s["code"] != "RNE_CESSATION"]
-            cands += b_cands
-            cands += famille_c(idu, fiche, match)
+            # v1.1 : grands groupes (GE/ETI) → familles B et C supprimées (un administrateur
+            # d'Orange de 75 ans ou un siège parisien ne signalent pas une vente foncière).
+            grand_groupe = bool(fiche and fiche.get("categorie_entreprise")
+                                in C.GRANDS_GROUPES_CATEGORIES)
+            if not grand_groupe:
+                age = ages.get(siren)
+                if age is None and fiche:
+                    age = _age_from_enrichment(fiche, today)
+                b_cands = famille_b(siren, fiche, age, ow["forme"], match, today)
+                # Dédup D6 : radiation (A) retenue == cessation (B) → même événement, deux sources.
+                a_ret = max(a_cands, key=lambda s: s["points"], default=None)
+                if a_ret and a_ret["code"] == "BODACC_RADIATION":
+                    b_cands = [s for s in b_cands if s["code"] != "RNE_CESSATION"]
+                cands += b_cands
+                cands += famille_c(idu, fiche, match)
 
         pmatch = {"type": "parcelle", "valeur": idu, "confiance": 1.0}
         fr = friches.get(idu)

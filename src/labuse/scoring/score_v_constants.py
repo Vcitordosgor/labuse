@@ -132,6 +132,11 @@ BAILLEURS_SOCIAUX_SIREN = {
 # Pattern dénomination complémentaire (uppercase, sans accents).
 BAILLEUR_DENOM_PATTERN = r"\b(HABITAT|HLM)\b"
 
+# v1.1 : GRANDS GROUPES (catégorie INSEE, payload recherche-entreprises). Pour un GE/ETI, les
+# familles B (âge dirigeant, cessation, dormance) et C (détachement géo) ne signalent RIEN d'une
+# vente foncière — un administrateur d'Orange de 75 ans n'est pas un signal. A/D/E restent.
+GRANDS_GROUPES_CATEGORIES = {"GE", "ETI"}
+
 # Codes NAF « construction / immobilier » (préfixes) — un PM DANS ces codes n'est pas un
 # détenteur passif de terrain nu (signal NU_PM_HORS_IMMO non émis).
 NAF_IMMO_PREFIXES = ("41", "42", "43", "68")

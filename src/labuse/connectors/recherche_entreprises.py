@@ -68,6 +68,7 @@ def parse_result(rec: dict) -> dict:
         "denomination": rec.get("nom_raison_sociale") or rec.get("nom_complet"),
         "etat_administratif": rec.get("etat_administratif"),    # 'A' actif | 'C' cessée
         "nature_juridique": rec.get("nature_juridique"),        # catégorie juridique INSEE (7xxx = public)
+        "categorie_entreprise": rec.get("categorie_entreprise"),  # PME | ETI | GE (INSEE)
         "activite_principale": rec.get("activite_principale"),  # NAF
         "date_creation": rec.get("date_creation"),
         "date_fermeture": rec.get("date_fermeture"),

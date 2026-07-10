@@ -121,6 +121,16 @@ def test_dedup_d6_radiation_vs_cessation():
 
 # ── Famille C ──────────────────────────────────────────────────────────────────
 
+def test_grands_groupes_filtre_v11():
+    """v1.1 : GE/ETI (catégorie INSEE) → familles B et C supprimées ; A/D/E restent."""
+    from labuse.scoring.score_v_constants import GRANDS_GROUPES_CATEGORIES
+    assert GRANDS_GROUPES_CATEGORIES == {"GE", "ETI"}
+    from labuse.connectors.recherche_entreprises import parse_result
+    rec = {"siren": "310895172", "nom_raison_sociale": "SHLMR", "categorie_entreprise": "GE",
+           "etat_administratif": "A", "siege": {}, "dirigeants": []}
+    assert parse_result(rec)["categorie_entreprise"] == "GE"
+
+
 def test_geo_hors_ile_et_autre_commune():
     hors = famille_c("97415000AB0001", _fiche(siege={"departement": "75", "commune_insee": "75101",
                                                      "adresse": "Paris", "code_pays_etranger": None,
