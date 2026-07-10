@@ -143,6 +143,16 @@ def test_retain_max_intra_famille():
     assert [s["code"] for s in retained] == ["BODACC_LJ"] and total == 35
 
 
+def test_tenure_conditionnelle_v11():
+    """v1.1 : la tenure ne qualifie QUE combinée à A/B/C, FRICHE ou DPE — pas seule, pas avec NU."""
+    from labuse.scoring.score_v import _tenure_qualifiee
+    assert not _tenure_qualifiee([])
+    assert not _tenure_qualifiee([_signal("NU_PM_HORS_IMMO", source="x", match=MATCH)])
+    assert _tenure_qualifiee([_signal("FRICHE", source="x", match=MATCH)])
+    assert _tenure_qualifiee([_signal("DPE_F", source="x", match=MATCH)])
+    assert _tenure_qualifiee([_signal("RNE_DIRIGEANT_65", source="x", match=MATCH)])
+
+
 def test_retain_somme_plafonnee_famille_d():
     cands = [_signal("FRICHE", source="x", match=MATCH),           # 18
              _signal("DVF_TENURE_OBS5", source="x", match=MATCH),  # 8

@@ -63,7 +63,10 @@ SIGNALS = {
     "GEO_AUTRE_COMMUNE":    ("C", 4, "Siège Réunion, autre commune que la parcelle"),
     # Famille D — Dormance de l'actif (somme plafonnée à 25)
     "FRICHE":               ("D", 18, "Friche recensée (Cartofriches)"),
-    "DVF_TENURE_OBS5":      ("D", 8, "Aucune mutation sur la fenêtre DVF observable (2021-2025)"),
+    # v1.1 : CONDITIONNEL — ne compte que si un AUTRE signal est retenu (A/B/C, FRICHE ou DPE).
+    # Tenure seule = 0 pt : au backtest v1, la masse « tenure seule » (81k parcelles) faisait 0.89×
+    # de lift (bruit) ; la détention longue n'est un signal QUE combinée (succession, dormance).
+    "DVF_TENURE_OBS5":      ("D", 8, "Détention longue (aucune mutation DVF 2021-2025) — combinée à d'autres signaux"),
     "NU_PM_HORS_IMMO":      ("D", 5, "Terrain nu détenu par PM hors construction/immobilier"),
     # Famille E — Pression réglementaire (DPE) — ⚠ libellés UI = calendrier DOM :
     # interdiction de location classe G au 01/01/2028, classe F au 01/01/2031
@@ -72,6 +75,11 @@ SIGNALS = {
     "DPE_G":                ("E", 12, "DPE classe G — location interdite au 01/01/2028 (DOM)"),
     "DPE_F":                ("E", 8, "DPE classe F — location interdite au 01/01/2031 (DOM)"),
 }
+
+# Familles/codes QUALIFIANTS pour la tenure conditionnelle (v1.1) : la détention longue ne
+# compte que si l'un d'eux est aussi présent. NU_PM_HORS_IMMO n'en fait PAS partie.
+TENURE_QUALIFYING_FAMILIES = {"A", "B", "C", "E"}
+TENURE_QUALIFYING_CODES = {"FRICHE"}
 
 # Signaux du barème D1 NON calculables (fenêtre DVF) — flaggés au rapport, jamais émis.
 SIGNALS_NO_GO = {

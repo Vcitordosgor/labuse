@@ -41,6 +41,7 @@ from labuse.scoring.score_v import (  # noqa: E402
     _load_owner_links,
     _retain,
     _signal,
+    _tenure_qualifiee,
     classify_owner,
     resolve_owner,
 )
@@ -144,7 +145,8 @@ def score_at(t: date, idu: str, owner, fiche, ages_ym: dict[str, str], annonces,
     if idu in friches:   # millésime courant (caveat)
         cands.append(_signal("FRICHE", source="BT", match=m))
     antecedentes = [d for d, _ in mutations if d <= t]
-    if not antecedentes:
+    # v1.1 : tenure CONDITIONNELLE (miroir du moteur) — seule = 0 pt.
+    if not antecedentes and _tenure_qualifiee(cands):
         cands.append(_signal("DVF_TENURE_OBS5", source="BT", match=m))
     retained, total = _retain(cands, factor)
     if antecedentes and max(antecedentes) >= months_before(t, C.ACHAT_RECENT_WINDOW_MONTHS):

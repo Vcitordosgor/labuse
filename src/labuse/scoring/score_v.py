@@ -343,6 +343,13 @@ def famille_c(idu: str, fiche: dict | None, match: dict) -> list[dict]:
 
 # ─────────────────────────── moteur ───────────────────────────
 
+def _tenure_qualifiee(cands: list[dict]) -> bool:
+    """v1.1 : la tenure OBS5 ne compte que combinée à un signal A/B/C, FRICHE ou DPE (famille E).
+    NU_PM_HORS_IMMO ne qualifie pas (deux signaux de dormance passive ne se valident pas entre eux)."""
+    return any(s["famille"] in C.TENURE_QUALIFYING_FAMILIES
+               or s["code"] in C.TENURE_QUALIFYING_CODES for s in cands)
+
+
 def _retain(cands: list[dict], factor_families: set[str] | None) -> tuple[list[dict], int]:
     """Applique MAX (A/B/C/E) ou SOMME plafonnée (D) + facteur fallback ; retourne
     (signaux retenus toutes familles, total points)."""
@@ -473,11 +480,6 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
             cands.append(_signal("FRICHE", source="Cartofriches (Cerema)",
                                  ref=fr["nom"] or f"Site {fr['site_id']}",
                                  url=CARTOFRICHES_URL, match=pmatch))
-        mut = dvf.get(idu)
-        if mut is None:
-            cands.append(_signal("DVF_TENURE_OBS5", source="DVF (géo-DVF)",
-                                 ref="Aucune mutation 2021-2025 (fenêtre observable)",
-                                 match=pmatch))
         if idu in nu:
             cands.append(_signal("NU_PM_HORS_IMMO", source="BD TOPO IGN + recherche-entreprises",
                                  ref="Parcelle nue, NAF propriétaire hors construction/immobilier",
@@ -489,6 +491,14 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
                                  ref=f"DPE n° {d['numero']}" + (f" (+{d['g'] + d['f'] - 1})"
                                                                 if d["g"] + d["f"] > 1 else ""),
                                  date_evenement=str(d["date"] or ""), match=pmatch))
+        # v1.1 : tenure CONDITIONNELLE, évaluée APRÈS la collecte des autres signaux — seule,
+        # la détention longue est du bruit (backtest v1 : 0.89× sur 81k parcelles) ; combinée
+        # (A/B/C, friche, DPE), elle raconte la dormance/succession.
+        mut = dvf.get(idu)
+        if mut is None and _tenure_qualifiee(cands):
+            cands.append(_signal("DVF_TENURE_OBS5", source="DVF (géo-DVF)",
+                                 ref="Aucune mutation 2021-2025 (fenêtre observable)",
+                                 match=pmatch))
 
         retained, total = _retain(cands, factor)
         if mut and mut["date"] and mut["date"] >= achat_recent_seuil:
