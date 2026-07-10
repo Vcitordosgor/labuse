@@ -225,7 +225,12 @@ def main() -> None:
             rows.append({"idu": idu, "vendue": 0, "t": t_ref.isoformat(), "v": v})
 
     # ── lift par décile (V NULL exclus : non applicables) ──
+    # ⚠ ÉGALITÉS MASSIVES : à T, beaucoup de parcelles partagent le même V (ex. 8 = tenure
+    # seule). Un tri stable mettrait les vendues en tête des ex æquo (ordre d'assemblage) et
+    # fabriquerait un faux lift — on MÉLANGE (seed fixe) avant le tri pour que la coupe des
+    # déciles soit neutre dans les blocs d'égalité.
     scored = [r for r in rows if r["v"] is not None]
+    rng.shuffle(scored)
     scored.sort(key=lambda r: r["v"], reverse=True)
     base_rate = sum(r["vendue"] for r in scored) / len(scored)
     n10 = max(1, len(scored) // 10)
@@ -237,6 +242,18 @@ def main() -> None:
                         "v_max": chunk[0]["v"] if chunk else 0, "taux_vente": rate,
                         "lift": rate / base_rate if base_rate else 0.0})
     lift_top = deciles[0]["lift"]
+    # Métrique complémentaire SANS artefact de coupe : lift par BANDE de score (les seuils
+    # sont ceux du produit, pas une coupe arbitraire dans des ex æquo).
+    bandes = []
+    for label, lo, hi in [("V ≥ 50 (fort)", 50, 101), ("V 25-49 (présents)", 25, 50),
+                          ("V 9-24 (faible, au-delà de la tenure seule)", 9, 25),
+                          ("V = 8 (tenure seule)", 8, 9), ("V 0-7", 0, 8)]:
+        grp = [r for r in scored if lo <= r["v"] < hi]
+        if not grp:
+            continue
+        rate = sum(r["vendue"] for r in grp) / len(grp)
+        bandes.append({"bande": label, "n": len(grp), "taux": rate,
+                       "lift": rate / base_rate if base_rate else 0.0})
 
     with open(OUT / "backtest_cohorte.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["idu", "vendue", "t", "v"])
@@ -283,6 +300,10 @@ def main() -> None:
     for d in deciles:
         md.append(f"| D{d['decile']} | {d['v_min']}–{d['v_max']} | {d['n']} | {d['taux_vente']:.3f} | "
                   f"**{d['lift']:.2f}×** |")
+    md += ["\n## Lift par bande de score (coupe produit, sans artefact d'ex æquo)\n",
+           "| Bande | n | Taux de vente | Lift |", "|---|---|---|---|"]
+    for b in bandes:
+        md.append(f"| {b['bande']} | {b['n']} | {b['taux']:.3f} | **{b['lift']:.2f}×** |")
     md += [
         "\n![lift](backtest_lift.svg)\n",
         "## Caveats (à lire avant tout usage commercial)",
