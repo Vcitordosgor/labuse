@@ -616,7 +616,7 @@ class BodaccAnnonceOwner(Base):
     __tablename__ = "bodacc_annonces_owner"
     __table_args__ = (Index("ix_bodacc_owner_siren", "siren"),)
 
-    id: Mapped[str] = mapped_column(String(20), primary_key=True)   # id ODS (dédup)
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)   # « <id ODS>:<siren> » (dédup)
     siren: Mapped[str] = mapped_column(String(9))
     famille: Mapped[str | None] = mapped_column(String(16))         # pcl | radiation | vente_cession
     nature: Mapped[str | None] = mapped_column(String(200))         # ex. jugement d'ouverture LJ, clôture…
