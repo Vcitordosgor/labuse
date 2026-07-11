@@ -14,6 +14,8 @@ from pathlib import Path
 
 from fpdf import FPDF
 
+from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
+
 FONTS = Path(__file__).resolve().parent / "fonts"
 
 # Palette IMPRESSION (fond blanc). Menthe écran #5CE6A1 → déclinée en encres qui tiennent le papier.
