@@ -48,6 +48,34 @@ def test_px_to_wkt_georef():
                           "338002.00 7661510.00")
 
 
+def test_detect_pv_ces_et_ombres():
+    """PV ≥ 8 m² vs CES 4-8 m² ; les bandes fines (ombres de rive) sont rejetées."""
+    import cv2
+
+    from labuse.ingestion.ortho_pv import _detect_pv
+
+    cfg = load_yaml_config("detection_ortho")["pv"]
+    img = np.full((512, 512, 3), (140, 150, 160), np.uint8)  # toit clair
+    zones = np.full((512, 512), 255, np.uint8)
+    # panneau PV 6×4 m (30×20 px) anthracite bleuté
+    cv2.rectangle(img, (100, 100), (130, 120), (60, 40, 30), -1)
+    # CES 2,4×2 m (12×10 px)
+    cv2.rectangle(img, (300, 300), (312, 310), (60, 40, 30), -1)
+    # ombre de rive : bande de 0,6 m × 20 m (3×100 px)
+    cv2.rectangle(img, (400, 50), (403, 150), (60, 40, 30), -1)
+    cands = _detect_pv(img, zones, cfg)
+    assert len(cands) == 2
+    ces = {c["scores"]["ces"] for c in cands}
+    assert ces == {True, False}  # un CES, un PV
+
+
+def test_rings_parser():
+    from labuse.ingestion.ortho_pv import _rings
+
+    rings = _rings("MULTIPOLYGON(((0 0, 10 0, 10 10, 0 0)), ((20 20, 30 20, 30 30, 20 20)))")
+    assert len(rings) == 2 and rings[0][1] == (10.0, 0.0)
+
+
 pytestmark_db = pytest.mark.db
 
 

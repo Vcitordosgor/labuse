@@ -1898,3 +1898,16 @@ def ortho_materialise_cmd() -> None:
     with session_scope() as s:
         res = ortho_equipements.run(s, log=typer.echo)
     typer.echo(f"✓ matérialisation : {res}")
+
+
+@app.command("ortho-detect-pv")
+def ortho_detect_pv_cmd(limit: int = typer.Option(None, help="Nb max de tuiles (tests).")) -> None:
+    """Lot 4 (wave-ortho) : détection PV V0 sur emprises bâties + parkings (candidats
+    SCORÉS, cible ≥ 75 % à la validation) — CES 4-8 m² séparés, ombrières → equipe."""
+    from .ingestion import ortho_pv
+
+    with session_scope() as s:
+        res = ortho_pv.detect_tiles(s, limit=limit, log=typer.echo)
+        typer.echo(f"✓ détection PV : {res}")
+        post = ortho_pv.post_traitement(s, log=typer.echo)
+        typer.echo(f"✓ post-traitement PV : {post}")

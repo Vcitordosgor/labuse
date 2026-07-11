@@ -41,11 +41,18 @@ piscines:
 # ── Lot 4 : PV V0 (candidats scorés) ──────────────────────────────────────────
 pv:
   surface_min_m2: 4
+  surface_max_m2: 400             # au-delà : ombrière/centrale — géré à part (parkings)
   ces_max_m2: 8                   # 4-8 m² → pv_probable_ces (chauffe-eau, RTAA DOM)
   rectangularite_min: 0.75
-  toit_uniforme_max: 0.80         # rejet si le masque couvre > 80 % de l'emprise
-  hsv_s_max: 90                   # sombre bleuté/anthracite, faible réflectance
-  hsv_v_max: 110
+  toit_uniforme_max: 0.80         # rejet si le masque couvre > 80 % de l'emprise du bâtiment
+  hsv_h: [90, 150]                # bleuté à anthracite froid
+  hsv_s: [20, 170]
+  hsv_v: [25, 110]                # réflectance faible (V max = l'essentiel du signal)
+  morpho_px: 3
+  largeur_min_m: 1.0             # ombres de rive = bandes fines ; un panneau fait >= 1 m
+  poids_rectangularite: 0.40
+  poids_couleur: 0.30
+  poids_taille: 0.30              # plateau 8-100 m² (résidentiel typique 10-40 m²)
 
 # ── Lot 5 : matérialisation ────────────────────────────────────────────────────
 materialisation:
