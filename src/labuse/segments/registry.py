@@ -152,15 +152,18 @@ FILTERS: dict[str, FilterDef] = {f.cle: f for f in [
               joins=("ter",), unite="°", groupe="Terrain",
               requires=("parcel_terrain.pente_max_deg",), requires_rows="parcel_terrain",
               description="Pente maximale de la parcelle (RGE ALTI 5 m)."),
-    # ── Équipements détectés (mandat Détection Ortho — pas encore ingéré) ──
-    FilterDef("piscine", "Piscine détectée", "bool", "eq.piscine", joins=("eq",),
-              groupe="Équipements", requires=("parcel_equipements",),
-              description="Piscine détectée sur orthophoto.",
+    # ── Équipements détectés (mandat Détection Ortho) ──
+    FilterDef("piscine", "Piscine détectée", "bool", "coalesce(eq.piscine, false)",
+              joins=("eq",), groupe="Équipements",
+              requires=("parcel_equipements.piscine",), requires_rows="parcel_equipements",
+              description="Piscine détectée sur orthophoto IGN 2025 — fiabilité "
+                          "statistique (précision mesurée ~79 %), non contractuelle.",
               mandat="Détection Ortho"),
-    FilterDef("pv_detecte", "Panneaux PV détectés", "bool", "eq.pv", joins=("eq",),
-              groupe="Équipements", requires=("parcel_equipements",),
-              description="Panneaux photovoltaïques détectés sur orthophoto.",
-              mandat="Détection Ortho"),
+    FilterDef("pv_detecte", "Panneaux PV détectés", "bool", "coalesce(eq.pv_detecte, false)",
+              joins=("eq",), groupe="Équipements",
+              requires=("parcel_equipements.pv_detecte",), requires_rows="parcel_equipements",
+              description="Panneaux photovoltaïques détectés sur orthophoto (candidats "
+                          "scorés V0).", mandat="Détection Ortho"),
     # ── Solaire (mandat Habitat Solaire) ──
     FilterDef("score_solaire", "Score solaire", "range", "sol.score_solaire", joins=("sol",),
               unite="/100", groupe="Énergie",
@@ -292,6 +295,8 @@ SORTS: dict[str, SortDef] = {s.cle: s for s in [
             "sol.score_solaire DESC NULLS LAST", ("sol",), "parcel_solar"),
     SortDef("facture_desc", "Facture estimée décroissante",
             "sol.facture_est_eur_mois DESC NULLS LAST", ("sol",), "parcel_solar"),
+    SortDef("piscine_surface_desc", "Bassin le plus grand d'abord",
+            "eq.piscine_surface_m2 DESC NULLS LAST", ("eq",), "parcel_equipements"),
 ]}
 
 # ── Colonnes d'export « à l'occupant » (RGPD : JAMAIS de nom de personne physique) ──
@@ -329,6 +334,9 @@ EXPORT_COLS: dict[str, tuple[str, str, tuple[str, ...]]] = {
                     "round(sol.azimut_bati_deg::numeric)", ("sol",)),
     "proba_proprio_occupant": ("Proprio-occupant (probabilité /100)",
                                "sol.proba_proprio_occupant", ("sol",)),
+    # ── Détection Ortho ──
+    "piscine_surface_m2": ("Bassin détecté (~m², statistique)",
+                           "round(eq.piscine_surface_m2)", ("eq",)),
 }
 
 # Jointures/colonnes utilisées par une colonne d'export dont la source manque → colonne omise.
@@ -344,6 +352,7 @@ _EXPORT_REQUIRES: dict[str, str] = {
     "score_solaire": "score_solaire", "prod_spec": "score_solaire",
     "facture_estimee": "facture_elec_estimee_eur", "azimut_bati": "score_solaire",
     "proba_proprio_occupant": "proba_proprio_occupant",
+    "piscine_surface_m2": "piscine",
 }
 
 

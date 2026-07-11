@@ -27,6 +27,21 @@ router = APIRouter(prefix="/ortho", tags=["ortho"])
 CONTEXTE_M = 50.0
 M_PER_PX = 0.2
 
+#: prédicat SQL du profil « strict » retenu sur les 966 verdicts (79,3 % mesuré) —
+#: la session de confirmation (quota) ne tire QUE dans ce profil.
+SQL_PROFIL_STRICT = (
+    " (d.criteres->'hsv_moyen'->>0)::float BETWEEN :ph0 AND :ph1"
+    " AND (d.criteres->'hsv_moyen'->>1)::float >= :ps"
+    " AND (d.criteres->'hsv_moyen'->>2)::float >= :pv"
+    " AND d.surface_m2 BETWEEN :ps0 AND :ps1"
+)
+
+
+def _profil_params() -> dict:
+    m = load_yaml_config("detection_ortho")["materialisation"]["piscine_profil_strict"]
+    return {"ph0": m["hsv_h"][0], "ph1": m["hsv_h"][1], "ps": m["hsv_s_min"],
+            "pv": m["hsv_v_min"], "ps0": m["surface_m2"][0], "ps1": m["surface_m2"][1]}
+
 
 def get_db():
     from .app import get_db as _g
@@ -34,14 +49,23 @@ def get_db():
 
 
 @router.get("/validation/api/suivante")
-def suivante(type: str = "piscine", db: Session = Depends(get_db)) -> dict:
-    row = db.execute(text("""
+def suivante(type: str = "piscine", profil: str | None = None,
+             db: Session = Depends(get_db)) -> dict:
+    """profil=strict : tire UNIQUEMENT au-dessus du seuil retenu (session de
+    confirmation) ; l'arrêt au quota est géré par la page (compteur de session)."""
+    where, params = "", {"t": type}
+    if profil == "strict" and type == "piscine":
+        where = " AND " + SQL_PROFIL_STRICT
+        params.update(_profil_params())
+    row = db.execute(text(f"""
         SELECT d.id, d.surface_m2, d.confiance, d.criteres, p.commune
         FROM ortho_detections d LEFT JOIN parcels p ON p.idu = d.idu
-        WHERE d.type = :t AND d.validation IS NULL
+        WHERE d.type = :t AND d.validation IS NULL{where}
         ORDER BY random() LIMIT 1
-    """), {"t": type}).mappings().first()
+    """), params).mappings().first()
     stats = _stats(db, type)
+    stats["quota_session"] = int(load_yaml_config("detection_ortho")
+                                 .get("validation", {}).get("quota_session", 100))
     if row is None:
         return {"fini": True, **stats}
     return {"fini": False, "id": row["id"], "surface_m2": row["surface_m2"],
@@ -144,14 +168,19 @@ _PAGE = """<!doctype html><html lang="fr"><head><meta charset="utf-8">
   <button class="skip" onclick="suivante()">Passer <kbd>espace</kbd></button>
 </div>
 <script>
-let cur=null;
+let cur=null, faites=0, quota=null;
+const params=new URLSearchParams(location.search);
+const profil=params.get('profil')||'';
 async function suivante(){
-  const d=await (await fetch('/ortho/validation/api/suivante?type=piscine')).json();
+  const d=await (await fetch('/ortho/validation/api/suivante?type=piscine'+(profil?`&profil=${profil}`:''))).json();
+  quota = +(params.get('quota')||d.quota_session||100);
   const prec=d.precision==null?'—':(100*d.precision).toFixed(1)+' %';
   document.getElementById('stats').innerHTML=
-    `<b>${d.valides}</b>/${d.objectif} validées · OK ${d.ok} · faux positifs ${d.faux_positifs} · précision <b>${prec}</b>`;
-  document.getElementById('prog').style.width=Math.min(100,100*d.valides/d.objectif)+'%';
-  if(d.fini){document.getElementById('meta').textContent='Plus rien à valider.';return}
+    `session <b>${faites}</b>/${quota}${profil?` (profil ${profil})`:''} · total ${d.valides} · OK ${d.ok} · FP ${d.faux_positifs} · précision globale <b>${prec}</b>`;
+  document.getElementById('prog').style.width=Math.min(100,100*faites/quota)+'%';
+  if(faites>=quota){cur=null;document.getElementById('meta').innerHTML='<b>Quota de session atteint — merci !</b> Tu peux fermer.';
+    document.getElementById('vig').src='';return}
+  if(d.fini){document.getElementById('meta').textContent='Plus rien à valider dans ce profil.';return}
   cur=d.id;
   document.getElementById('vig').src=`/ortho/validation/api/vignette/${d.id}.jpg`;
   document.getElementById('meta').innerHTML=
@@ -160,6 +189,7 @@ async function suivante(){
 async function verdict(v){ if(cur==null)return;
   await fetch(`/ortho/validation/api/${cur}`,{method:'POST',
     headers:{'Content-Type':'application/json'},body:JSON.stringify({verdict:v})});
+  faites+=1;
   suivante();
 }
 document.addEventListener('keydown',e=>{

@@ -1887,3 +1887,14 @@ def ortho_detect_cmd(
         if not skip_post:
             post = ortho_piscines.post_traitement(s, log=typer.echo)
             typer.echo(f"✓ post-traitement : {post}")
+
+
+@app.command("ortho-materialise")
+def ortho_materialise_cmd() -> None:
+    """Lot 5 (wave-ortho) : matérialise parcel_equipements depuis les détections
+    (profil strict + verdicts Vic) + signal piscine_detectee. Relançable."""
+    from .ingestion import ortho_equipements
+
+    with session_scope() as s:
+        res = ortho_equipements.run(s, log=typer.echo)
+    typer.echo(f"✓ matérialisation : {res}")
