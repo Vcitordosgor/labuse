@@ -149,9 +149,11 @@ def vignette(det_id: int, db: Session = Depends(get_db)) -> Response:
         px, py = to_px(x, y)
         pts.append([px - cx0, py - cy0])
     cv2.polylines(crop, [np.array(pts, np.int32)], True, (0, 0, 255), 2)
-    scale = max(1, 480 // max(1, crop.shape[0]))
-    if scale > 1:
-        crop = cv2.resize(crop, None, fx=scale, fy=scale, interpolation=cv2.INTER_NEAREST)
+    # petits objets (CES 4-8 m²) : zoom systématique vers ~600 px, pixels nets
+    cible = 600
+    if max(crop.shape[:2]) < cible:
+        f = cible / max(crop.shape[:2])
+        crop = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_NEAREST)
     ok, buf = cv2.imencode(".jpg", crop, [cv2.IMWRITE_JPEG_QUALITY, 90])
     return Response(buf.tobytes(), media_type="image/jpeg",
                     headers={"Cache-Control": "no-store"})
@@ -180,12 +182,30 @@ def equipements(idu: str, db: Session = Depends(get_db)) -> dict:
 class VerdictIn(BaseModel):
     verdict: str  # 'ok' | 'faux_positif'
     profil: str | None = None  # tag de session (quota serveur)
+    quota: int | None = None
 
 
 @router.post("/validation/api/{det_id}")
 def valider(det_id: int, body: VerdictIn, db: Session = Depends(get_db)) -> dict:
+    """Le quota est appliqué ICI (pas seulement au tirage) : leçon des sessions du
+    11/07 — le clavier auto-répété postait plus vite que la page ne tirait, 272
+    verdicts au lieu de 150 et des verdicts décalés d'une vignette. 409 = stop dur."""
     if body.verdict not in ("ok", "faux_positif"):
         raise HTTPException(422, "verdict : ok | faux_positif")
+    if body.profil:
+        quota = body.quota if body.quota is not None else int(
+            load_yaml_config("detection_ortho").get("validation", {}).get("quota_session", 100))
+        faites = db.execute(text(
+            "SELECT count(*) FROM ortho_detections WHERE valide_profil = :pr"),
+            {"pr": body.profil}).scalar_one()
+        if faites >= quota:
+            raise HTTPException(409, f"Quota de session atteint ({faites}/{quota}) — verdict refusé.")
+        # une vignette déjà validée dans cette session ne se revalide pas (double-tir)
+        deja = db.execute(text(
+            "SELECT validation IS NOT NULL FROM ortho_detections WHERE id = :i"),
+            {"i": det_id}).scalar()
+        if deja:
+            raise HTTPException(409, "Détection déjà validée — verdict ignoré (double envoi).")
     n = db.execute(text(
         "UPDATE ortho_detections SET validation = :v, valide_profil = :pr WHERE id = :i"),
         {"v": body.verdict, "pr": body.profil, "i": det_id}).rowcount
@@ -222,9 +242,11 @@ _PAGE = """<!doctype html><html lang="fr"><head><meta charset="utf-8">
 <script>
 let cur=null;
 const params=new URLSearchParams(location.search);
-const profil=params.get('profil')||'';
 const type=params.get('type')||'piscine';
+const profil=params.get('profil')||('session-'+type);   // session TOUJOURS taguée (quota POST)
 const quotaUrl=params.get('quota');
+let pret=false, dernierVerdict=0;
+document.getElementById('vig').addEventListener('load',()=>{pret=true});
 const libelles={bande:"bande d'incertitude du juge",juge:'CERTIFICATION (100 fraîches au-dessus du juge)',strict:'profil strict V0'};
 document.getElementById('mode').textContent=(type==='pv'?'PV':'piscines')+(profil?` · ${libelles[profil]??profil}`:' · file brute');
 async function suivante(){
@@ -250,16 +272,24 @@ async function suivante(){
   document.getElementById('meta').innerHTML=
     `#${d.id} · ${d.commune??'?'} · ~<b>${Math.round(d.surface_m2)} m²</b> · confiance ${d.confiance}`;
 }
-async function verdict(v){ if(cur==null)return;
-  await fetch(`/ortho/validation/api/${cur}`,{method:'POST',
+async function verdict(v){
+  const now=Date.now();
+  if(cur==null||!pret||now-dernierVerdict<300)return;  // image affichée + 300 ms mini
+  dernierVerdict=now; pret=false;
+  const id=cur; cur=null;                               // un verdict par vignette, point
+  const r=await fetch(`/ortho/validation/api/${id}`,{method:'POST',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({verdict:v, profil: profil||null})});
+    body:JSON.stringify({verdict:v, profil, quota:+(quotaUrl||0)||null})});
+  if(r.status===409){const d=await r.json();
+    document.getElementById('meta').innerHTML='<b>'+(d.detail??'Quota atteint')+'</b>';
+    document.getElementById('vig').src='';return}
   suivante();
 }
 document.addEventListener('keydown',e=>{
+  if(e.repeat)return;                                   // touche MAINTENUE = ignorée
   if(e.key==='o'||e.key==='O')verdict('ok');
   if(e.key==='f'||e.key==='F')verdict('faux_positif');
-  if(e.key===' '){e.preventDefault();suivante()}
+  if(e.key===' '){e.preventDefault();if(pret)suivante()}
 });
 suivante();
 </script></body></html>"""
