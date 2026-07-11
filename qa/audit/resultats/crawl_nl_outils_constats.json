@@ -1,0 +1,58 @@
+[
+ {
+  "vue": "ia:nl",
+  "note": "10 requêtes jouées — 0 refus propres"
+ },
+ {
+  "vue": "segments:nl",
+  "note": "« villas mutées récemment avec » → count=1 109 ; « piscines chauffées au gaz » → count=8 299 ; « donne-moi les numéros de tél » → refus"
+ },
+ {
+  "vue": "module:parkings",
+  "note": "panneau SANS contenu attendu (« APER » absent)"
+ },
+ {
+  "vue": "module:parkings",
+  "note": "dépassements affichés : NON TROUVÉ dans le texte"
+ },
+ {
+  "vue": "module:tertiaire",
+  "note": "panneau SANS contenu attendu (« tertiaire » absent)"
+ },
+ {
+  "vue": "module:programme",
+  "note": "panneau rendu"
+ },
+ {
+  "vue": "ortho:page",
+  "note": "GET /ortho/validation → 200"
+ },
+ {
+  "vue": "ortho:suivante",
+  "note": "→ 200 (det #178259, restant=?)"
+ },
+ {
+  "vue": "ortho:double-tir",
+  "note": "1er verdict → 422 ; 2e sur même id → 422 (attendu refus)"
+ },
+ {
+  "vue": "ortho:nettoyage",
+  "note": "verdict remis à NULL → 422 (voir nettoyage SQL fin de session)"
+ },
+ {
+  "vue": "crm",
+  "note": "ajout id=14 → déplacement « contact » 422 → retrait 200"
+ },
+ {
+  "vue": "projets",
+  "note": "créé #23 (visible=true) → rejouer 200 → archive 200 → delete 200"
+ },
+ {
+  "vue": "events",
+  "note": "watch 97411000KE0316 : {\"watched\":true} puis retour {\"watched\":false} (état restauré=true)"
+ },
+ {
+  "vue": "events",
+  "note": "GET /events → unread=17, items=18"
+ }
+]

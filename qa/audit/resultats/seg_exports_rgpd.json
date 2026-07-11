@@ -1,0 +1,47 @@
+[
+ {
+  "slug": "pergolas-terrasses",
+  "lignes": 5315,
+  "entetes": "﻿Parcelle (IDU);Commune;Surface parcelle (m²);Numéro;Voie (BAN);Code postal;Ville;Adresse (source DPE, si connue);Jardin estimé (m²);Dernière vente (date);Type de bien;Pente moyenne (°);ref\r",
+  "entetes_fr": true,
+  "colonne_nominative": false,
+  "civilite_dans_contenu": false,
+  "ref_watermark": true
+ },
+ {
+  "slug": "paysagistes",
+  "lignes": 3992,
+  "entetes": "﻿Parcelle (IDU);Commune;Surface parcelle (m²);Numéro;Voie (BAN);Code postal;Ville;Adresse (source DPE, si connue);Jardin estimé (m²);Dernière vente (date);Pente moyenne (°);ref\r",
+  "entetes_fr": true,
+  "colonne_nominative": false,
+  "civilite_dans_contenu": false,
+  "ref_watermark": true
+ },
+ {
+  "slug": "piscinistes-construction",
+  "lignes": 5541,
+  "entetes": "﻿Parcelle (IDU);Commune;Surface parcelle (m²);Numéro;Voie (BAN);Code postal;Ville;Adresse (source DPE, si connue);Jardin estimé (m²);Dernière vente (date);Pente moyenne (°);ref\r",
+  "entetes_fr": true,
+  "colonne_nominative": false,
+  "civilite_dans_contenu": false,
+  "ref_watermark": true
+ },
+ {
+  "slug": "parc-piscines-entretien",
+  "lignes": 497,
+  "entetes": "﻿Parcelle (IDU);Commune;Surface parcelle (m²);Numéro;Voie (BAN);Code postal;Ville;Adresse (source DPE, si connue);Jardin estimé (m²);Type de bien;ref\r",
+  "entetes_fr": true,
+  "colonne_nominative": false,
+  "civilite_dans_contenu": false,
+  "ref_watermark": true
+ },
+ {
+  "slug": "pv-residentiel",
+  "lignes": 2381,
+  "entetes": "﻿Parcelle (IDU);Commune;Surface parcelle (m²);Numéro;Voie (BAN);Code postal;Ville;Adresse (source DPE, si connue);Type de bien;Score solaire (/100);Facture élec. ESTIMÉE (€/mois);Azimut du bâti (°, nord optimal);Proprio-occupant (probabilité /100);ref\r",
+  "entetes_fr": true,
+  "colonne_nominative": false,
+  "civilite_dans_contenu": false,
+  "ref_watermark": true
+ }
+]

@@ -1,0 +1,54 @@
+[
+ {
+  "vue": "carte:couches",
+  "note": "0 couches : "
+ },
+ {
+  "vue": "carte:verdict",
+  "note": "liste résultats : 0 éléments interactifs"
+ },
+ {
+  "vue": "carte:clic-parcelle",
+  "note": "fiche ouverte : 97414000CV0907 (attendu 97414000CV0907 ou voisine immédiate)"
+ },
+ {
+  "vue": "fiche:score-v",
+  "note": "total affiché=77 ; points listés=[35,25,4,8,5] somme=77 (attendu total 77 = somme si plafonds non tronqués)"
+ },
+ {
+  "vue": "fiche:bodacc",
+  "note": "liens signaux : https://www.bodacc.fr/pages/annonces-commerciales-detail/?q.id=id:A202501112392 | https://annuaire-entreprises.data.gouv.fr/entreprise/540092202"
+ },
+ {
+  "vue": "fiche:pdf",
+  "note": "GET /parcels/97414000CV0907/export.pdf?source=q_v3_datagap → 500 text/plain; charset=utf-8"
+ },
+ {
+  "vue": "fiche:pre-dossier",
+  "note": "GET /pre-dossier → 404 (—)"
+ },
+ {
+  "vue": "header:omnibox",
+  "note": "« Saint-Pierre » → sélecteur commune : « Saint-Pierre »"
+ },
+ {
+  "vue": "header:omnibox",
+  "note": "IDU direct → fiche ouverte : false"
+ },
+ {
+  "vue": "header:omnibox",
+  "note": "valeurs limites saisies (vide, espaces, script, inexistant, 0) — voir anomalies auto"
+ },
+ {
+  "vue": "carte:etat-vide",
+  "note": "Cilaos verdict ON → «  »"
+ },
+ {
+  "vue": "etats-limites:lent",
+  "note": "pendant 4 s d'attente : loader visible = true"
+ },
+ {
+  "vue": "etats-limites:offline",
+  "note": "BLOQUÉ sur le loader"
+ }
+]
