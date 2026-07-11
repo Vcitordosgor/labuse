@@ -1,0 +1,63 @@
+# Module Habitat Solaire — coefficients métier et seuils réglementaires.
+# TOUT paramètre métier vit ici (mandat : « jamais en dur »). Les valeurs par défaut
+# sont celles du mandat ; à faire valider par Vic (voir rapport de fin).
+
+# ── Lot 1 : baseline PVGIS ─────────────────────────────────────────────────────
+pvgis:
+  # Paramètres PVcalc du mandat. aspect=180 = plein NORD (convention PVGIS 0=sud) :
+  # hémisphère sud, le versant nord est le versant optimal (+15 % mesuré vs sud).
+  peakpower_kwc: 1
+  loss_pct: 14
+  angle_deg: 15
+  aspect_deg: 180
+  # flag_topo_ombrage : prod spécifique du point < seuil × médiane de sa commune
+  # (capte fonds de cirque / remparts, l'horizon PVGIS faisant le travail).
+  ombrage_seuil_mediane: 0.80
+
+# ── Lot 2 : modèle de consommation électrique estimée ────────────────────────
+conso:
+  # Additif simple et documenté : base = baseline maille × ratio de surface, puis bonus.
+  # Ratio de surface borné pour ne pas extrapoler n'importe quoi.
+  ratio_surface_min: 0.5
+  ratio_surface_max: 2.5
+  surface_ref_fallback_m2: 90     # surface moyenne de repli si la maille n'en fournit pas
+  clim_littoral_pct: 20           # +20 % si refroidissement (DPE) en zone littorale
+  clim_altitude_max_m: 400        # « littoral » ≈ sous cette altitude (clim quasi générale)
+  ecs_electrique_kwh_an: 1500     # +1 500 kWh/an si ECS électrique (DPE)
+  piscine_kwh_an: 2000            # +2 000 kWh/an si piscine détectée (pompe)
+  piscine_haut_de_gamme_pct: 50   # +50 % du bonus piscine si bâti haut de gamme
+  # facture = conso × tarif (settings LABUSE_TARIF_ELEC_EUR_KWH) / 12, arrondie à la dizaine
+
+# ── Lot 3 : parkings APER (loi n° 2023-175 du 10/03/2023, art. 40 ; décret
+# n° 2024-1023 du 13/11/2024). Seuils/dates VÉRIFIÉS dans les textes — voir
+# ingestion/parkings_aper.py pour les références précises. ────────────────────
+aper:
+  surface_assujettie_m2: 1500     # parcs extérieurs > 1 500 m² (art. 40 I)
+  surface_detection_min_m2: 1200  # marge de détection sous le seuil (cas limites)
+  tranche_haute_m2: 10000
+  echeance_tranche_haute: "2026-07-01"   # ≥ 10 000 m² — PASSÉE au 10/07/2026
+  echeance_tranche_basse: "2028-07-01"   # 1 500 - 10 000 m²
+  couverture_ombriere_pct: 50     # ≥ 50 % de la surface en ombrières PV
+  signal_fenetre_mois: 24         # signal aper_deadline : échéance < 24 mois OU dépassée
+
+# ── Lot 4 : registre PV & repowering ──────────────────────────────────────────
+pv_registry:
+  repowering_debut: "2006-01-01"  # boom défisc + contrats d'achat 20 ans
+  repowering_fin: "2013-12-31"    # → échéances 2026-2033
+  individualise_seuil_kw: 36      # ≥ 36 kVA : installations individualisées au registre
+  # pv_existant = 'commune_forte_densite' pour le top quartile de densité de petites
+  # installations (proxy d'équipement, honnête sur sa granularité communale).
+  densite_quartile: 0.75
+
+# ── Lot 5 : flags de qualification ────────────────────────────────────────────
+flags:
+  amiante_annee_max: 1997         # bâti pré-1997 → risque amiante toiture À VÉRIFIER
+  azimut_elongation_min: 1.4      # ratio L/l au-delà duquel l'orientation est significative
+  proprio_bonus_mutation_pts: 15  # +15 pts si mutation DVF < 24 mois sur maison
+  proprio_bonus_fenetre_mois: 24
+  proprio_min: 5                  # plancher/plafond du score (jamais 0 ni 100 : statistique)
+  proprio_max: 95
+
+# ── Lot 6 : vue tertiaire ──────────────────────────────────────────────────────
+tertiaire:
+  emprise_min_m2: 500             # grandes toitures : emprise bâtie > 500 m²

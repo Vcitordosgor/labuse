@@ -85,6 +85,21 @@ class Settings(BaseSettings):
     courrier_marge: float = 1.5              # prix client = coût prestataire × marge
     courrier_max_jour: int = 100             # plafond anti-abus d'envois / jour / sujet
 
+    # ── Module Habitat Solaire (mandat habitat-solaire) ──
+    # Tarif de l'électricité TTC (€/kWh) pour la facture ESTIMÉE — à ajuster par Vic
+    # (tarif bleu EDF SEI, La Réunion étant alignée sur le tarif réglementé métropole).
+    tarif_elec_eur_kwh: float = 0.25
+    # PVGIS : version d'API et pas de la grille (m). v5_3 = SARAH3, couvre l'océan Indien.
+    pvgis_version: str = "v5_3"
+    pvgis_grid_step_m: int = 400
+    pvgis_rps: float = 10.0               # requêtes/s max (politesse ; PVGIS tolère ~25)
+    # Google Solar API (Lot 8 — CONDITIONNEL, stub tant que Vic n'a pas confirmé la
+    # couverture 974). Clé JAMAIS committée ; sans clé → 501 honnête, aucun bouton front.
+    solar_api_key: str | None = None
+    solar_api_cache_ttl_jours: int = 30   # ToS Google : re-téléchargement 30 j STRICT
+    solar_api_quota_client_jour: int = 100
+    solar_api_max_global_jour: int = 350  # circuit-breaker global (en plus du hard cap GCP)
+
     # ── Module Flash : rapport parcelle à l'unité (mandat module-flash) ──
     # Prix TTC affiché/facturé. La valeur de LANCEMENT est décidée par Vic au moment de
     # créer le produit Stripe — 79 € est la suggestion du mandat, jamais une décision.
@@ -166,6 +181,12 @@ def shortlist() -> dict[str, Any]:
 def plh() -> dict[str, Any]:
     """Orientations habitat du PLH du TCO (config/plh_tco.yaml) — LOT 4.1, données extraites."""
     return load_yaml_config("plh_tco")
+
+
+def habitat_solaire() -> dict[str, Any]:
+    """Coefficients métier du module Habitat Solaire (config/habitat_solaire.yaml) :
+    modèle de conso, seuils/échéances APER, fenêtre repowering. Jamais en dur."""
+    return load_yaml_config("habitat_solaire")
 
 
 @lru_cache(maxsize=1)
