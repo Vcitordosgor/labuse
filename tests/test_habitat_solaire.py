@@ -122,6 +122,42 @@ def test_conso_facture_estimee(db_session, parcelle):
     assert facture % 10 == 0
 
 
+def test_parkings_aper(db_session, parcelle):
+    """Tranches au seuil Réunion (1 000 m², décret 2025-802), échéances config,
+    badge « échéance dépassée » distinct dans le signal."""
+    from datetime import date
+
+    from labuse.ingestion.parkings_aper import build_parkings, rattacher, signaux_deadline
+
+    # grand parking ~11 400 m² SUR la parcelle de test + petit ~2 900 m² ailleurs
+    grand = ("POLYGON((55.4495 -21.3005, 55.4505 -21.3005, 55.4505 -21.2995, "
+             "55.4495 -21.2995, 55.4495 -21.3005))")
+    petit = ("POLYGON((55.46 -21.3005, 55.4605 -21.3005, 55.4605 -21.3, "
+             "55.46 -21.3, 55.46 -21.3005))")
+    for osm_id, wkt in (("111", grand), ("222", petit)):
+        db_session.execute(text(
+            """INSERT INTO spatial_layers (kind, subtype, name, geom, attrs)
+               VALUES ('osm_faux_positif', 'parking', 'parking (OSM)',
+                       ST_GeomFromText(:wkt, 4326),
+                       jsonb_build_object('osm_id', CAST(:oid AS text)))"""),
+            {"wkt": wkt, "oid": osm_id})
+    db_session.execute(text(
+        "INSERT INTO parcelle_personne_morale (idu, denomination, siren)"
+        " VALUES (:idu, 'SCI TEST PARKING', '123456789')"), {"idu": parcelle})
+    res = build_parkings(db_session)
+    assert res.get("sup_10000") == 1 and res.get("1000_10000") == 1
+    rattacher(db_session)
+    pm = db_session.execute(text(
+        "SELECT proprio_pm FROM parkings_aper WHERE tranche = 'sup_10000'")).scalar_one()
+    assert pm == "SCI TEST PARKING"
+    n = signaux_deadline(db_session, aujourd_hui=date(2026, 7, 10))
+    assert n >= 1
+    statut = db_session.execute(text(
+        "SELECT payload ->> 'statut' FROM parcel_signals WHERE signal_type = 'aper_deadline'"
+        " AND payload ->> 'tranche' = 'sup_10000'")).scalar_one()
+    assert statut == "depassee"  # 01/07/2026 passée au 10/07/2026
+
+
 def test_score_percentile_et_ombrage(db_session, parcelle):
     """score_solaire = percentile île ; flag_topo_ombrage sous 80 % de la médiane commune."""
     from labuse.ingestion.solaire_pvgis import interpolate

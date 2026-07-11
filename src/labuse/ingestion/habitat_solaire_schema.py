@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS parkings_aper (
   idus          jsonb,                         -- parcelles support
   proprio_pm    text,
   proprio_siren varchar(9),
-  tranche       varchar(16),                   -- '1500_10000'|'sup_10000'
+  tranche       varchar(16),                   -- '1000_10000'|'sup_10000' (seuil Réunion : décret 2025-802)
   echeance      date,
   equipe        boolean,                       -- NULL = inconnu (pas de détection ombrière)
   exempt_probable varchar(16),                 -- null|'arbres'|'autre'

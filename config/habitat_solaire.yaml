@@ -32,16 +32,21 @@ conso:
   piscine_haut_de_gamme_pct: 50   # +50 % du bonus piscine si bâti haut de gamme
   # facture = conso × tarif (settings LABUSE_TARIF_ELEC_EUR_KWH) / 12, arrondie à la dizaine
 
-# ── Lot 3 : parkings APER (loi n° 2023-175 du 10/03/2023, art. 40 ; décret
-# n° 2024-1023 du 13/11/2024). Seuils/dates VÉRIFIÉS dans les textes — voir
-# ingestion/parkings_aper.py pour les références précises. ────────────────────
+# ── Lot 3 : parkings APER — seuils/dates VÉRIFIÉS dans les textes (11/07/2026) :
+# loi n° 2023-175 du 10/03/2023 art. 40 ; décret n° 2024-1023 du 13/11/2024
+# (calcul de surface : places + voies de circulation ; exemptions) ; décret
+# n° 2025-802 du 11/08/2025 : seuil ADAPTÉ OUTRE-MER = 1 000 m² à LA RÉUNION
+# (métropole 1 500, Guyane 2 500). Sanctions annuelles jusqu'à mise en
+# conformité : 20 k€ (< 10 000 m²) / 40 k€ (≥ 10 000 m²). ─────────────────────
 aper:
-  surface_assujettie_m2: 1500     # parcs extérieurs > 1 500 m² (art. 40 I)
-  surface_detection_min_m2: 1200  # marge de détection sous le seuil (cas limites)
+  surface_assujettie_m2: 1000     # LA RÉUNION (décret 2025-802) — 1 500 en métropole
+  surface_detection_min_m2: 800   # marge de détection sous le seuil (cas limites)
   tranche_haute_m2: 10000
   echeance_tranche_haute: "2026-07-01"   # ≥ 10 000 m² — PASSÉE au 10/07/2026
-  echeance_tranche_basse: "2028-07-01"   # 1 500 - 10 000 m²
-  couverture_ombriere_pct: 50     # ≥ 50 % de la surface en ombrières PV
+  echeance_tranche_basse: "2028-07-01"   # 1 000 - 10 000 m²
+  couverture_ombriere_pct: 50     # ≥ 50 % de la surface (mixte PV/végétal depuis loi Huwart)
+  sanction_basse_eur: 20000       # €/an, < 10 000 m²
+  sanction_haute_eur: 40000       # €/an, ≥ 10 000 m²
   signal_fenetre_mois: 24         # signal aper_deadline : échéance < 24 mois OU dépassée
 
 # ── Lot 4 : registre PV & repowering ──────────────────────────────────────────

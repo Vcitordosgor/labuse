@@ -1771,3 +1771,17 @@ def solaire_tertiaire_cmd(
             Path(export).parent.mkdir(parents=True, exist_ok=True)
             Path(export).write_text(solaire_tertiaire.export_csv(s), encoding="utf-8-sig")
             typer.echo(f"✓ export : {export}")
+
+
+@app.command("solaire-parkings")
+def solaire_parkings_cmd() -> None:
+    """Lot 3 (habitat-solaire) : parkings assujettis loi APER (OSM déjà en base,
+    seuil Réunion 1 000 m² — décret 2025-802), rattachement parcelles + PM DGFiP,
+    signal aper_deadline (échéance < 24 mois OU dépassée)."""
+    from .ingestion import parkings_aper
+
+    with session_scope() as s:
+        res = parkings_aper.run(s, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
+                       "WHERE name = 'Parkings OSM (loi APER)'"))
+    typer.echo(f"✓ Parkings APER : {res}")
