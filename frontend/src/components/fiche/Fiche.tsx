@@ -1,12 +1,30 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
+import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
 import { BRULANTE_COLOR, completudeColor, STATUT_META, vBandColor } from '../../lib/status'
 import { Loading } from '../Loading'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
+
+/** 429 (rate-limit / quota) : message dédié + nouvel essai automatique après la fenêtre.
+ *  Ne JAMAIS afficher « serveur périmé » ici — le serveur va très bien, il protège. */
+function RateLimit429({ error, refetch }: { error: unknown; refetch: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(() => refetch(), 65_000)   // fenêtre de rate-limit = 60 s
+    return () => clearTimeout(t)
+  }, [refetch])
+  const detail = error instanceof ApiError ? error.detail : undefined
+  return (
+    <div data-ratelimit-429 className="rounded-lg border border-line-2 bg-surface-2 p-4 text-xs">
+      <p className="text-txt-hi">Trop de requêtes — réessayez dans une minute.</p>
+      {detail && <p className="mt-1 text-txt-dim">{detail}</p>}
+      <p className="mt-1 text-txt-dim">Nouvel essai automatique dans ~1 min.</p>
+      <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer maintenant</button>
+    </div>
+  )
+}
 
 function Weight({ w, result }: { w: number | null; result: string }) {
   if (w == null) {
@@ -650,7 +668,7 @@ export function Fiche({ idu }: { idu: string }) {
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
   const [ficheQuery, setFicheQuery] = useState('')
-  const { data: f, isLoading, isError, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
+  const { data: f, isLoading, isError, error, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
   const fq = ficheQuery.trim().toLowerCase()
   const ficheMatches = fq && f
     ? f.lines.filter((l) => `${l.layer} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
@@ -781,13 +799,15 @@ export function Fiche({ idu }: { idu: string }) {
             <div className="h-24 animate-pulse rounded-lg bg-surface-2" />
           </div>
         )}
-        {isError && (
+        {isError && (is429(error) ? (
+          <RateLimit429 error={error} refetch={refetch} />
+        ) : (
           <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-4 text-xs">
             <p className="text-st-ecartee">Impossible de charger la fiche.</p>
             <p className="mt-1 text-txt-dim">Le serveur est peut-être périmé — relancer `labuse api`.</p>
             <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
           </div>
-        )}
+        ))}
         {!fq && f && tab === 'synthese' && (
           <>
             {f.evenement === 'rouge' && f.statut === 'chaude' && (

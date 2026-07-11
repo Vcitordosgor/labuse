@@ -16,9 +16,26 @@ export const SOURCE = 'q_v3_datagap'
  *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
 export const commune = () => useApp.getState().commune
 
+/** Erreur API typée : le statut HTTP voyage avec l'erreur (le 429 a son propre message
+ *  côté UI — ne jamais afficher « serveur périmé » sur un rate-limit). */
+export class ApiError extends Error {
+  status: number
+  detail?: string
+  constructor(url: string, status: number, detail?: string) {
+    super(detail || `${url} → HTTP ${status}`)
+    this.status = status
+    this.detail = detail
+  }
+}
+
+export const is429 = (e: unknown): boolean => e instanceof ApiError && e.status === 429
+
 async function j<T>(url: string, init?: RequestInit): Promise<T> {
   const r = await fetch(url, init)
-  if (!r.ok) throw new Error(`${url} → HTTP ${r.status}`)
+  if (!r.ok) {
+    const detail = (await r.json().catch(() => null))?.detail
+    throw new ApiError(url, r.status, typeof detail === 'string' ? detail : undefined)
+  }
   return r.json() as Promise<T>
 }
 
