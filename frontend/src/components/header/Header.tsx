@@ -8,7 +8,7 @@ import type { Statut } from '../../lib/types'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
 function Omnibox() {
-  const { query, setQuery, select, setView, setCommune, commune } = useApp()
+  const { query, setQuery, select, setView, setCommune, commune, setToast } = useApp()
   const ref = useRef<HTMLInputElement>(null)
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
@@ -42,8 +42,12 @@ function Omnibox() {
       return idu.includes(qn) || idu.slice(8).includes(qn)
     })
     if (hit) { setView('cartes'); select(String(hit.properties?.idu)); return }
-    const remote = await searchParcels(qn).catch(() => [])
-    if (remote[0]) { setView('cartes'); select(remote[0].idu) }
+    // un IDU est unique à l'échelle de l'île : la recherche parcelle IGNORE le périmètre
+    // commune actif (sinon : no-op silencieux dès que la parcelle est ailleurs).
+    const remote = await searchParcels(qn, { ileEntiere: true }).catch(() => [])
+    if (remote[0]) { setView('cartes'); select(remote[0].idu); return }
+    // jamais de no-op muet : dire à l'utilisateur que la recherche n'a rien donné
+    setToast(`Aucune commune ni parcelle trouvée pour « ${raw} »`)
   }
 
   return (

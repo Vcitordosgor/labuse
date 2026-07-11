@@ -84,9 +84,9 @@ export const getContexteCommune = (commune: string) =>
   j<ContexteCommune>(`/communes/${encodeURIComponent(commune)}/contexte`)
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
-export const searchParcels = (needle: string) =>
+export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
   j<{ idu: string; commune: string; status: string | null; q_score: number | null }[]>(
-    `/parcels/search?q=${encodeURIComponent(needle)}${commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
+    `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
 export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)
 export const getResults = (f?: Filters, limit = 500, sortV = false) =>
