@@ -40,8 +40,10 @@ def _profil() -> dict[str, Any]:
 
 
 def materialiser_piscines(session: Session) -> dict[str, Any]:
+    """Depuis la cascade (11/07 soir) : le JUGE FLAIR × probe (90,7 % mesuré) remplace
+    le profil colorimétrique — vérité humaine (validation) toujours prioritaire."""
     session.execute(text(DDL))
-    p = _profil()
+    j = load_yaml_config("detection_ortho")["materialisation"]["juge"]
     n = session.execute(text("""
         WITH retenues AS (
           SELECT d.idu, d.surface_m2, d.confiance
@@ -49,11 +51,8 @@ def materialiser_piscines(session: Session) -> dict[str, Any]:
           WHERE d.type = 'piscine' AND d.idu IS NOT NULL
             AND (
               d.validation = 'ok'                       -- vérité humaine, prime
-              OR (d.validation IS NULL                  -- profil strict non invalidé
-                  AND (d.criteres->'hsv_moyen'->>0)::float BETWEEN :h0 AND :h1
-                  AND (d.criteres->'hsv_moyen'->>1)::float >= :smin
-                  AND (d.criteres->'hsv_moyen'->>2)::float >= :vmin
-                  AND d.surface_m2 BETWEEN :su0 AND :su1)
+              OR (d.validation IS NULL                  -- juge de la cascade
+                  AND d.juge_flair >= :fmin AND d.probe_score >= :pmin)
             )
         )
         INSERT INTO parcel_equipements (idu, piscine, piscine_surface_m2,
@@ -63,8 +62,18 @@ def materialiser_piscines(session: Session) -> dict[str, Any]:
         ON CONFLICT (idu) DO UPDATE SET
           piscine = true, piscine_surface_m2 = EXCLUDED.piscine_surface_m2,
           piscine_confiance = EXCLUDED.piscine_confiance, updated_at = now()
-    """), {"h0": p["hsv_h"][0], "h1": p["hsv_h"][1], "smin": p["hsv_s_min"],
-           "vmin": p["hsv_v_min"], "su0": p["surface_m2"][0], "su1": p["surface_m2"][1]}).rowcount
+    """), {"fmin": j["flair_min"], "pmin": j["probe_min"]}).rowcount
+    # les parcelles que le juge ne retient plus (et sans verdict ok) repassent à false
+    session.execute(text("""
+        UPDATE parcel_equipements pe SET piscine = false, piscine_surface_m2 = NULL,
+               piscine_confiance = NULL, updated_at = now()
+        WHERE pe.piscine AND NOT EXISTS (
+          SELECT 1 FROM ortho_detections d
+          WHERE d.idu = pe.idu AND d.type = 'piscine'
+            AND (d.validation = 'ok'
+                 OR (d.validation IS NULL
+                     AND d.juge_flair >= :fmin AND d.probe_score >= :pmin)))
+    """), {"fmin": j["flair_min"], "pmin": j["probe_min"]})
     # les faux positifs de Vic RETIRENT la piscine si plus aucune détection retenue
     session.execute(text("""
         UPDATE parcel_equipements pe SET piscine = false, piscine_surface_m2 = NULL,

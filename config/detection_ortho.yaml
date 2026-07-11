@@ -66,6 +66,14 @@ materialisation:
     hsv_v_min: 160
     surface_m2: [15, 80]
   precision_mesuree_piscine: 0.793   # sur les 966 verdicts (460 dans le profil)
+  # JUGE FINAL (cascade 11/07, mesuré sur les 300 sanctuarisés : 90,7 % @ 74,5 %) :
+  # FLAIR-INC (fraction pixels piscine, Etalab 2.0) × probe DINOv2+logreg — 100 % local.
+  juge:
+    flair_min: 0.30
+    probe_min: 0.50
+    # bande d'incertitude soumise à Vic (outil ?profil=bande, cap 300)
+    bande_flair: [0.15, 0.30]
+    bande_probe: [0.35, 0.50]
   seuil_confiance_pv: 0.80
   precision_min_piscine: 0.90     # cible mandat — NON atteinte en V0 (→ Lot 8 ML)
   precision_min_pv: 0.75          # en dessous : les PV restent candidats en base

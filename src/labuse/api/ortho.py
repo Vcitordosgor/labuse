@@ -57,6 +57,17 @@ def suivante(type: str = "piscine", profil: str | None = None,
     if profil == "strict" and type == "piscine":
         where = " AND " + SQL_PROFIL_STRICT
         params.update(_profil_params())
+    elif profil == "bande" and type == "piscine":
+        j = load_yaml_config("detection_ortho")["materialisation"]["juge"]
+        where = (" AND ((d.juge_flair BETWEEN :bf0 AND :bf1 AND d.probe_score >= :pmin)"
+                 " OR (d.juge_flair >= :fmin AND d.probe_score BETWEEN :bp0 AND :bp1))")
+        params.update(bf0=j["bande_flair"][0], bf1=j["bande_flair"][1],
+                      bp0=j["bande_probe"][0], bp1=j["bande_probe"][1],
+                      fmin=j["flair_min"], pmin=j["probe_min"])
+    elif profil == "juge" and type == "piscine":
+        j = load_yaml_config("detection_ortho")["materialisation"]["juge"]
+        where = " AND d.juge_flair >= :fmin AND d.probe_score >= :pmin"
+        params.update(fmin=j["flair_min"], pmin=j["probe_min"])
     row = db.execute(text(f"""
         SELECT d.id, d.surface_m2, d.confiance, d.criteres, p.commune
         FROM ortho_detections d LEFT JOIN parcels p ON p.idu = d.idu
