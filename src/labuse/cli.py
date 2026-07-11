@@ -1989,3 +1989,78 @@ def ortho_juge_vlm_cmd(
                            f"rappel des vrais {pt['rappel_vrais']} ({pt['gardees']} gardées)")
             typer.echo(f"{'✓ CRITÈRE ATTEINT' if m['critere_atteint'] else '✗ critère non atteint'}"
                        f" : {m.get('point')}")
+
+
+@app.command("anc")
+def anc_cmd(
+    etape: str = typer.Option("tout", help="insee | iris | zonages | proba | signal | tout"),
+    fichier: str = typer.Option(None, help="Zip RP local déjà téléchargé (sinon download INSEE)."),
+) -> None:
+    """Lot A (wave ANC & Végétation) : couche probabiliste ANC (INSEE EGOUL RP2022 à
+    l'IRIS), zonages officiels d'assainissement (GPU typeinf 19), proba par parcelle
+    bâtie (modulation zone U), signal anc_mutation (fenêtre DVF 12 mois)."""
+    from .ingestion import anc
+
+    with session_scope() as s:
+        if etape in ("insee", "tout"):
+            typer.echo(f"✓ INSEE EGOUL : {anc.ingest_insee_egoul(s, fichier=fichier, log=typer.echo)}")
+        if etape in ("iris", "tout"):
+            typer.echo(f"✓ contours IRIS : {anc.ingest_iris_contours(s, log=typer.echo)}")
+        if etape in ("zonages", "tout"):
+            typer.echo(f"✓ zonages officiels GPU : {anc.ingest_zonages_gpu(s, log=typer.echo)}")
+        if etape in ("proba", "tout"):
+            typer.echo(f"✓ proba_anc : {anc.compute_proba(s, log=typer.echo)}")
+            typer.echo(f"✓ calage Office de l'eau : {anc.calage_office_eau(s)}")
+        if etape in ("signal", "tout"):
+            typer.echo(f"✓ signal anc_mutation : {anc.signal_mutation(s)}")
+
+
+@app.command("vegetation-irc")
+def vegetation_irc_cmd(
+    limit: int = typer.Option(None, help="Nb max de tuiles (tests)."),
+) -> None:
+    """Lot B1 (wave ANC & Végétation) : acquisition BD ORTHO IRC sur la grille ortho
+    existante (5 041 tuiles, cache séparé, checkpoint irc_acquise_at). Relançable."""
+    from .ingestion import vegetation
+
+    with session_scope() as s:
+        res = vegetation.acquire_irc(s, limit=limit, log=typer.echo)
+    typer.echo(f"✓ acquisition IRC : {res}")
+
+
+@app.command("vegetation")
+def vegetation_cmd(
+    etape: str = typer.Option("tout", help="tuiles | finalize | flags | signal | tout"),
+    limit: int = typer.Option(None, help="Nb max de tuiles (tests)."),
+) -> None:
+    """Lot B2-B3 (wave ANC & Végétation) : NDVI (IRC) × MNH LiDAR HD streamé par tuile,
+    agrégats canopée par parcelle (parcelle / bande limite 3 m / buffer bâti 8 m),
+    flag_ombrage_vegetal (solaire) + signal vegetation_haute_limite. Relançable."""
+    from .ingestion import vegetation
+
+    with session_scope() as s:
+        if etape in ("tuiles", "tout"):
+            typer.echo(f"✓ tuiles : {vegetation.process_tiles(s, limit=limit, log=typer.echo)}")
+        if etape in ("finalize", "tout"):
+            typer.echo(f"✓ agrégats : {vegetation.finalize(s, log=typer.echo)}")
+            sanity = vegetation.sanity_est_ouest(s)
+            typer.echo(f"  sanity Est > Ouest : {sanity}")
+            if not sanity["ok"]:
+                typer.echo("✗ SANITY : NDVI Est ≤ Ouest — inversion de canaux probable, INVESTIGUER.")
+                raise typer.Exit(1)
+        if etape in ("flags", "tout"):
+            typer.echo(f"✓ flag_ombrage_vegetal : {vegetation.flag_solaire(s)}")
+        if etape in ("signal", "tout"):
+            typer.echo(f"✓ signal vegetation_haute_limite : {vegetation.signal_vegetation(s)}")
+
+
+@app.command("vegetation-validation")
+def vegetation_validation_cmd() -> None:
+    """Session de validation Vic : 20 vignettes « végétation haute en limite » dans
+    l'outil ortho (quota CÔTÉ SERVEUR, anti-rafale) — re-télécharge les seules tuiles
+    RVB nécessaires aux vignettes (cache purgé)."""
+    from .ingestion import vegetation
+
+    with session_scope() as s:
+        res = vegetation.preparer_validation(s, log=typer.echo)
+    typer.echo(f"✓ session prête : {res['vignettes']} vignettes — `labuse api` puis {res['url']}")

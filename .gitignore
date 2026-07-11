@@ -25,6 +25,9 @@ data/*
 !data/carte_loyers_reunion_2025.json
 # …et l'extrait INSEE statut d'occupation RP 2022 (open data, petit, requis par la fiche LOT 4-B)
 !data/insee_occupation_reunion_2022.json
+# …et le seed de calage Office de l'eau du mandat ANC & Végétation (petit, versionné)
+!data/anc/
+!data/anc/*.csv
 *.gpkg
 *.shp
 *.shx

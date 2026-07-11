@@ -298,6 +298,56 @@ SOURCES: list[dict] = [
          technical_notes="Déjà ingéré au data-gap : raster de PENTE dérivé conservé "
                          "(rgealti_pente_5m, PostGIS raster SRID 2975, 2 793 dalles) — réutilisé "
                          "tel quel par wave-ortho Lot 1 (pente non bâtie), aucun re-téléchargement."),
+    # ── Mandat Wave ANC & Végétation ──
+    dict(name="INSEE RP2022 — fichier détail Logements (EGOUL)", category="assainissement",
+         provider="INSEE", access_type="import CSV/zip", status=S.CONNECTE,
+         reliability_level=R.VERIFIE,
+         documentation_url="https://www.insee.fr/fr/statistiques/8647099",
+         endpoint_url="https://www.insee.fr/fr/statistiques/fichier/8647099/RP2022_logemt.zip",
+         legal_notes="Licence Ouverte Etalab — attribution INSEE obligatoire (UI).",
+         technical_notes="✓ live 11/07/2026. Variable EGOUL (mode d'évacuation des eaux usées, "
+                         "DOM uniquement : 1=égout, 2=fosse, 3=puisard, 4=sol), pondérée IPONDL, "
+                         "diffusée à l'IRIS (330 IRIS 974). Agrégé → anc_maille_taux (iris + commune). "
+                         "148 307 rés. principales 974."),
+    dict(name="GPU — zonages d'assainissement (info-surf typeinf 19)", category="assainissement",
+         provider="IGN / Géoportail de l'urbanisme", access_type="REST/GeoJSON",
+         status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://apicarto.ign.fr/api/doc/gpu",
+         endpoint_url="https://apicarto.ign.fr/api/gpu/info-surf",
+         legal_notes="Données publiques GPU.",
+         technical_notes="Constat 11/07/2026 : 4 communes/24 en SIG (L'Étang-Salé, Le Port, "
+                         "Saint-Denis, Saint-Paul) → spatial_layers kind='zonage_assainissement'. "
+                         "Les 20 autres : PDF d'enquête publique au mieux (intercos) — noté, passé. "
+                         "Classification des libellés en config (anc_vegetation.yaml)."),
+    dict(name="Office de l'eau Réunion — Chroniques de l'eau", category="assainissement",
+         provider="Office de l'eau Réunion", access_type="seed CSV (PDF)", status=S.CONNECTE,
+         reliability_level=R.A_CONFIRMER,
+         documentation_url="https://eaureunion.fr/fileadmin/user_upload/Chroniques/2025/"
+                           "25.12.17_CHRONIQUES_de_L_EAU_149.pdf",
+         endpoint_url=None,
+         legal_notes="Publication publique — utilisée en calage/contrôle croisé uniquement.",
+         technical_notes="Chronique n°149 (déc. 2025, données 2023) : ~189 000 installations ANC "
+                         "= 46 % des foyers. Chiffres par commune du texte p. 13 → seed versionné "
+                         "data/anc/office_eau_chronique_149_2023.csv (pas de scraping du PDF)."),
+    dict(name="BD ORTHO IRC (IGN)", category="imagerie", provider="IGN / Géoplateforme",
+         access_type="WMS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         rate_limit="gratuit sans clé ; 4 requêtes simultanées (politesse)",
+         documentation_url="https://geoservices.ign.fr/bdortho",
+         endpoint_url="https://data.geopf.fr/wms-r (ORTHOIMAGERY.ORTHOPHOTOS.IRC)",
+         legal_notes="Licence Ouverte Etalab — attribution IGN obligatoire (UI).",
+         technical_notes="✓ live 11/07/2026 (couverture 974 constatée). Infrarouge fausses "
+                         "couleurs : PIR=canal R, rouge=canal G → pseudo-NDVI. Même grille "
+                         "ortho_tiles (512 m), 0,4 m/px suffit (cache data/ortho_irc ≈ 2 Go)."),
+    dict(name="LiDAR HD — MNH 50 cm (IGN)", category="terrain", provider="IGN / Géoplateforme",
+         access_type="WMS GeoTIFF", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://diffusion-lidarhd.ign.fr/mnx/",
+         endpoint_url="https://data.geopf.fr/wms-r "
+                      "(IGNF_LIDAR-HD_MNH_ELEVATION.ELEVATIONGRIDCOVERAGE.RGR92UTM40S)",
+         legal_notes="Licence Ouverte Etalab — attribution IGN obligatoire (UI).",
+         technical_notes="✓ constaté 11/07/2026 : couverture 974 COMPLÈTE (2 665 dalles MNH "
+                         "publiées 25/06/2025 — 1er DROM couvert). Streamé par tuile à 1 m/px "
+                         "en GeoTIFF float32, jamais stocké. MNH inclut le sursol bâti → croisé "
+                         "NDVI. Fallbacks MNS Corrélé/texture du mandat : non nécessaires."),
     dict(name="Parkings OSM (loi APER)", category="energie", provider="OpenStreetMap",
          access_type="Overpass/GeoJSON", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dparking",

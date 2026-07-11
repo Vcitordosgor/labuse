@@ -95,12 +95,16 @@ def seed_presets(session) -> dict:
                                          actif, ordre, created_by)
             VALUES (:slug, :nom, :categorie, :description, :argumentaire,
                     CAST(:filtres AS jsonb), CAST(:colonnes AS jsonb), :tri, :boost,
-                    true, :ordre, 'seed')"""), {
+                    :actif, :ordre, 'seed')"""), {
             "slug": slug, "nom": p["nom"], "categorie": p["categorie"],
             "description": p.get("description"), "argumentaire": p.get("argumentaire"),
             "filtres": json.dumps(p.get("filtres") or [], ensure_ascii=False),
             "colonnes": json.dumps(p.get("colonnes_export") or [], ensure_ascii=False),
             "tri": p.get("tri_defaut"), "boost": bool(p.get("boost_catnat")),
+            # Offre packagée : un preset seedé avec `actif: false` reste EN BASE (données,
+            # filtres, signaux intacts) mais n'apparaît pas dans la galerie ; réactivation
+            # = passer le flag (admin). Défaut actif si non spécifié.
+            "actif": bool(p.get("actif", True)),
             "ordre": int(p.get("ordre", (i + 1) * 10)),
         })
         inseres.append(slug)

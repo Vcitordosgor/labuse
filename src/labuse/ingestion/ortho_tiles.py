@@ -80,7 +80,10 @@ def tile_path(tile_id: str) -> Path:
     return cache_dir() / f"{tile_id}.jpg"
 
 
-async def _fetch_tile(client: httpx.AsyncClient, cfg: dict, tile_id: str) -> bool:
+async def _fetch_tile(client: httpx.AsyncClient, cfg: dict, tile_id: str,
+                      dest: Path | None = None) -> bool:
+    """`dest` : chemin cible optionnel (mandat ANC & Végétation : cache IRC séparé) —
+    par défaut le cache RVB historique, comportement inchangé."""
     xmin, ymin = (int(v) for v in tile_id.split("_"))
     taille, px = int(cfg["taille_m"]), int(cfg["pixels"])
     params = {
@@ -93,7 +96,7 @@ async def _fetch_tile(client: httpx.AsyncClient, cfg: dict, tile_id: str) -> boo
         try:
             r = await client.get(cfg["wms_url"] + "/wms", params=params, timeout=60)
             if r.status_code == 200 and r.headers.get("content-type", "").startswith("image/"):
-                tile_path(tile_id).write_bytes(r.content)
+                (dest or tile_path(tile_id)).write_bytes(r.content)
                 return True
         except httpx.HTTPError:
             pass

@@ -51,21 +51,82 @@ def ensure_tables(engine) -> None:
         s.commit()
 
 
+# ── Mentions informatives par preset (mandat ANC & Végétation) : références VÉRIFIÉES
+#    sur Légifrance le 11/07/2026, formulation factuelle courte — JAMAIS un conseil
+#    juridique. Le délai d'un an est au L.271-4 CCH, pas au L.1331-11-1 CSP.
+MENTIONS_LEGALES: dict[str, dict] = {
+    "anc-prospection": {
+        "texte": ("En cas de vente d'un logement non raccordé au réseau public de "
+                  "collecte, le document de contrôle de l'installation d'assainissement "
+                  "non collectif (daté de moins de 3 ans) est joint au dossier de "
+                  "diagnostic technique (art. L.1331-11-1 du Code de la santé publique). "
+                  "En cas de non-conformité constatée à la vente, les travaux de mise en "
+                  "conformité sont réalisés par l'acquéreur dans un délai d'un an après "
+                  "l'acte de vente (art. L.271-4 du Code de la construction et de "
+                  "l'habitation). Source : Légifrance."),
+        "liens": [
+            {"texte": "Art. L.1331-11-1 CSP",
+             "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000043975559"},
+            {"texte": "Art. L.271-4 CCH",
+             "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000049398848"},
+        ],
+        "sources_donnees": ("Probabilité ANC : INSEE, RP2022 (fichier détail Logements, "
+                            "variable EGOUL) agrégé à l'IRIS — statistique, jamais un "
+                            "diagnostic. Zonages officiels : Géoportail de l'urbanisme. "
+                            "Contours IRIS © IGN/INSEE. Calage : Office de l'eau Réunion, "
+                            "Chronique de l'eau n°149 (2025)."),
+    },
+    "anc-travaux": None,   # rempli ci-dessous (mêmes références)
+    "elagage-limite": {
+        "texte": ("Le propriétaire sur le terrain duquel avancent les branches des "
+                  "arbres du voisin peut contraindre celui-ci à les couper ; les "
+                  "racines, ronces et brindilles peuvent être coupées soi-même à la "
+                  "limite séparative. Ce droit est imprescriptible (art. 673 du Code "
+                  "civil). Source : Légifrance."),
+        "liens": [
+            {"texte": "Art. 673 Code civil",
+             "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000006430148/"},
+        ],
+        "sources_donnees": ("Canopée : BD ORTHO IRC (NDVI) × MNH LiDAR HD © IGN "
+                            "(Licence Ouverte) — détection statistique de végétation "
+                            "haute (> 3 m), pas un métré."),
+    },
+    "elagage": {
+        "texte": ("Végétation en limite : art. 673 du Code civil (élagage des branches "
+                  "qui avancent chez le voisin — droit imprescriptible). "
+                  "Source : Légifrance."),
+        "liens": [
+            {"texte": "Art. 673 Code civil",
+             "url": "https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000006430148/"},
+        ],
+        "sources_donnees": "Canopée : BD ORTHO IRC × MNH LiDAR HD © IGN (Licence Ouverte).",
+    },
+}
+MENTIONS_LEGALES["anc-travaux"] = MENTIONS_LEGALES["anc-prospection"]
+
+
 # ───────────────────────── lecture ─────────────────────────
 
 @router.get("")
-def segments_home(db: Session = Depends(get_db)) -> dict:
+def segments_home(inclure_inactifs: bool = False, db: Session = Depends(get_db)) -> dict:
     """Galerie : presets par catégorie, disponibilité (complet/partiel), compteurs
     (cache 24 h — recalcul par /segments/refresh-counts ou le job), registry de
-    filtres pour le query builder (filtres indisponibles = grisés côté UI)."""
+    filtres pour le query builder (filtres indisponibles = grisés côté UI).
+
+    Par défaut la galerie ne liste que les presets ACTIFS (l'offre packagée — décision
+    produit du 11/07/2026 : 5 presets). Les presets désactivés restent en base (données,
+    filtres du builder et signaux intacts) et se pilotent via `?inclure_inactifs=true`
+    (vue admin) puis le PUT de réactivation. Le query builder complet et TOUS les filtres
+    du registry restent servis ci-dessous quels que soient les presets actifs."""
     avail = compute_availability(db)
     cnts = presets_mod.counts(db)
     cat = catnat_mod.communes_recentes(db)
     out = []
-    for p in presets_mod.list_presets(db):
+    for p in presets_mod.list_presets(db, actifs_seulement=not inclure_inactifs):
         dispo, inactifs = presets_mod.preset_disponibilite(p, avail)
         out.append({**p,
                     "disponibilite": dispo, "filtres_inactifs": inactifs,
+                    "mention_legale": MENTIONS_LEGALES.get(p["slug"]),
                     "count": cnts.get(p["slug"], {}).get("n"),
                     "count_at": (cnts.get(p["slug"], {}).get("computed_at") or None)})
     return {
@@ -120,6 +181,7 @@ def segments_query(body: QueryIn, db: Session = Depends(get_db)) -> dict:
         "filtres_actifs": q.actifs, "filtres_inactifs": q.inactifs,
         "colonnes": [{"cle": k, "libelle": h} for k, h in q.export_cols],
         "limit": body.limit, "offset": body.offset,
+        "mention_legale": MENTIONS_LEGALES.get(body.slug) if body.slug else None,
     }
     if body.geojson:
         rows = seg.run_items(db, q, seg.MAX_GEOJSON, 0)

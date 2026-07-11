@@ -250,6 +250,19 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
           <button data-seg-retour onClick={onBack} className="text-[11px] text-txt-dim hover:text-txt">← Tous les segments</button>
           <h2 className="mt-1 text-sm font-medium text-txt-hi">{preset.nom}</h2>
           {preset.argumentaire && <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">{preset.argumentaire}</p>}
+          {preset.mention_legale && (
+            <div data-seg-mention className="mt-1.5 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[10px] leading-snug text-txt-dim">
+              <p>{preset.mention_legale.texte}</p>
+              <p className="mt-1">
+                {preset.mention_legale.liens.map((l, i) => (
+                  <a key={l.url} href={l.url} target="_blank" rel="noreferrer" className="text-mint hover:underline">
+                    {i > 0 ? ' · ' : ''}{l.texte}
+                  </a>
+                ))}
+              </p>
+              <p className="mt-1 text-[9.5px] text-txt-dim/80">{preset.mention_legale.sources_donnees}</p>
+            </div>
+          )}
           {(dejaLa.has('emprise_residuelle_m2') || dejaLa.has('surelevation_possible')) && (
             <p className="mt-1.5 rounded-md border border-[#E8B44C]/30 bg-[#E8B44C]/5 px-2 py-1 text-[10px] leading-snug text-[#E8B44C]">
               {home.libelle_residuel}

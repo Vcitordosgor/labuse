@@ -246,6 +246,11 @@ export interface SegmentPreset {
   boost_catnat: boolean; actif: boolean; ordre: number; created_by: string | null; updated_at: string | null
   disponibilite: 'complet' | 'partiel'; filtres_inactifs: { cle: string; libelle: string; raison: string | null; mandat: string | null }[]
   count: number | null; count_at: string | null
+  // Mention informative sourcée (mandat ANC & Végétation) — références Légifrance
+  // vérifiées, formulation factuelle : JAMAIS un conseil juridique.
+  mention_legale?: {
+    texte: string; liens: { texte: string; url: string }[]; sources_donnees: string
+  } | null
 }
 export interface SegmentsHome {
   categories: Record<string, string>

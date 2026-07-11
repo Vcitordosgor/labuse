@@ -74,6 +74,16 @@ _CATNAT_EXPR = ("EXISTS (SELECT 1 FROM catnat_arretes ca WHERE ca.commune = p.co
 _QPV_EXPR = ("EXISTS (SELECT 1 FROM spatial_layers q WHERE q.kind = 'qpv'"
              " AND ST_Intersects(q.geom_2975, p.geom_2975))")
 
+# Seuil « végétation haute en limite » (mandat ANC & Végétation) : paramètre SERVEUR
+# (config), figé à l'import comme les autres expressions — jamais une valeur client.
+try:
+    from .. import config as _config
+    _VEG_LIMITE_SEUIL = float(_config.load_yaml_config("anc_vegetation")
+                              ["vegetation"]["seuils"]["vegetation_haute_limite_pct"])
+except Exception:  # noqa: BLE001 — config absente (tests unitaires hors repo)
+    _VEG_LIMITE_SEUIL = 40.0
+_CANOPEE_LIMITE_EXPR = f"(veg.canopee_limite_pct >= {_VEG_LIMITE_SEUIL})"
+
 
 @dataclass(frozen=True)
 class FilterDef:
@@ -203,17 +213,63 @@ FILTERS: dict[str, FilterDef] = {f.cle: f for f in [
               requires=("parcel_solar.proba_proprio_occupant",), requires_rows="parcel_solar",
               description="Score statistique 5-95 : carreau Filosofi 200 m + bonus mutation "
                           "récente sur maison. Jamais nominatif.", mandat="Habitat Solaire"),
-    # ── Végétation / ANC (mandat ANC & Végétation — pas encore ingéré) ──
-    FilterDef("ombrage_vegetal", "Ombrage végétal", "range", "veg.ombrage_pct",
-              joins=("veg",), unite="%", groupe="Végétation", requires=("parcel_vegetation",),
-              description="Part de la parcelle sous canopée.", mandat="ANC & Végétation"),
-    FilterDef("canopee_limite", "Canopée en limite de parcelle", "bool", "veg.canopee_limite",
-              joins=("veg",), groupe="Végétation", requires=("parcel_vegetation",),
-              description="Arbres en limite (élagage).", mandat="ANC & Végétation"),
-    FilterDef("zone_anc", "Zone d'assainissement non collectif", "bool", "anc.zone_anc",
-              joins=("anc",), groupe="Réseaux", requires=("parcel_anc",),
-              description="Parcelle en zonage ANC (probabilité de fosse).",
+    # ── Végétation / ANC (mandat ANC & Végétation) ──
+    FilterDef("ombrage_vegetal", "Canopée sur la parcelle", "range", "veg.canopee_pct",
+              joins=("veg",), unite="%", groupe="Végétation",
+              requires=("parcel_vegetation.canopee_pct",), requires_rows="parcel_vegetation",
+              description="Part de la parcelle sous canopée (NDVI BD ORTHO IRC × hauteur "
+                          "MNH LiDAR HD — © IGN).", mandat="ANC & Végétation"),
+    FilterDef("canopee_limite", "Canopée en limite de parcelle", "bool",
+              _CANOPEE_LIMITE_EXPR, joins=("veg",), groupe="Végétation",
+              requires=("parcel_vegetation.canopee_limite_pct",),
+              requires_rows="parcel_vegetation",
+              description="Végétation haute dans la bande de 3 m le long des limites, "
+                          "au-dessus du seuil élagage (config).", mandat="ANC & Végétation"),
+    FilterDef("canopee_limite_pct", "Canopée en limite (%)", "range",
+              "veg.canopee_limite_pct", joins=("veg",), unite="%", groupe="Végétation",
+              requires=("parcel_vegetation.canopee_limite_pct",),
+              requires_rows="parcel_vegetation",
+              description="Part de la bande limite (3 m) sous canopée — le lead élagueur.",
               mandat="ANC & Végétation"),
+    FilterDef("bati_voisin_limite", "Bâti voisin proche de la limite (< 10 m)", "bool",
+              "veg.bati_voisin_10m", joins=("veg",), groupe="Végétation",
+              requires=("parcel_vegetation.bati_voisin_10m",),
+              requires_rows="parcel_vegetation",
+              description="Un bâtiment d'une AUTRE parcelle à moins de 10 m — l'argument "
+                          "voisinage/risque cyclonique.", mandat="ANC & Végétation"),
+    FilterDef("confiance_vegetation", "Confiance de la détection végétation", "enum",
+              "veg.confiance", joins=("veg",), groupe="Végétation",
+              requires=("parcel_vegetation.confiance",), requires_rows="parcel_vegetation",
+              enum_values=("haute", "moyenne"),
+              description="haute = hauteur mesurée (LiDAR HD/MNS) ; moyenne = texture "
+                          "(végétation arborée probable).", mandat="ANC & Végétation"),
+    FilterDef("flag_ombrage_vegetal", "Ombrage végétal du bâti (canopée à < 8 m)", "bool",
+              "coalesce(sol.flag_ombrage_vegetal, false)", joins=("sol",), groupe="Énergie",
+              requires=("parcel_solar.flag_ombrage_vegetal",), requires_rows="parcel_solar",
+              description="Toit sous canopée (buffer bâti 8 m > seuil config) — mauvais "
+                          "lead PV même bien exposé.", mandat="ANC & Végétation"),
+    FilterDef("zone_anc", "Zone officielle d'assainissement non collectif", "bool",
+              "(anc.zone_anc = 'anc')", joins=("anc",), groupe="Réseaux",
+              requires=("parcel_anc.zone_anc",), requires_rows="parcel_anc",
+              description="Zonage d'assainissement OFFICIEL (annexe PLU/GPU) classant la "
+                          "parcelle en non collectif.", mandat="ANC & Végétation"),
+    FilterDef("proba_anc", "Probabilité d'assainissement non collectif", "range",
+              "anc.proba_anc", joins=("anc",), unite="/100", groupe="Réseaux",
+              requires=("parcel_anc.proba_anc",), requires_rows="parcel_anc",
+              description="Taux de non-raccordement à l'égout de la maille INSEE "
+                          "(RP2022, IRIS) modulé par l'éloignement des zones U — "
+                          "statistique, jamais un diagnostic.", mandat="ANC & Végétation"),
+    FilterDef("source_anc", "Source du zonage ANC", "enum", "anc.source",
+              joins=("anc",), groupe="Réseaux",
+              requires=("parcel_anc.source",), requires_rows="parcel_anc",
+              enum_values=("zonage_officiel", "proba_insee"),
+              description="zonage_officiel = annexe SIG au GPU ; proba_insee = couche "
+                          "probabiliste seule.", mandat="ANC & Végétation"),
+    FilterDef("pente_non_batie_deg", "Pente de la partie non bâtie", "range",
+              "ter.pente_non_batie_deg", joins=("ter",), unite="°", groupe="Terrain",
+              requires=("parcel_terrain.pente_non_batie_deg",), requires_rows="parcel_terrain",
+              description="Pente moyenne hors emprise bâtie (RGE ALTI 5 m) — un terrain "
+                          "pentu complique la filière ANC.", mandat="Détection Ortho"),
     # ── Réglementaire / contexte ──
     FilterDef("flag_abf", "Périmètre ABF / abords MH", "bool", "(ab.result = 'UNKNOWN')",
               joins=("ab",), groupe="Réglementaire",
@@ -297,6 +353,10 @@ SORTS: dict[str, SortDef] = {s.cle: s for s in [
             "sol.facture_est_eur_mois DESC NULLS LAST", ("sol",), "parcel_solar"),
     SortDef("piscine_surface_desc", "Bassin le plus grand d'abord",
             "eq.piscine_surface_m2 DESC NULLS LAST", ("eq",), "parcel_equipements"),
+    SortDef("canopee_limite_desc", "Canopée en limite décroissante",
+            "veg.canopee_limite_pct DESC NULLS LAST", ("veg",), "parcel_vegetation"),
+    SortDef("proba_anc_desc", "Probabilité ANC décroissante",
+            "anc.proba_anc DESC NULLS LAST", ("anc",), "parcel_anc"),
 ]}
 
 # ── Colonnes d'export « à l'occupant » (RGPD : JAMAIS de nom de personne physique) ──
@@ -337,6 +397,15 @@ EXPORT_COLS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     # ── Détection Ortho ──
     "piscine_surface_m2": ("Bassin détecté (~m², statistique)",
                            "round(eq.piscine_surface_m2)", ("eq",)),
+    # ── ANC & Végétation ──
+    "proba_anc": ("Probabilité ANC (/100, statistique)", "anc.proba_anc", ("anc",)),
+    "zone_anc": ("Zonage assainissement officiel", "anc.zone_anc", ("anc",)),
+    "source_anc": ("Source du zonage ANC", "anc.source", ("anc",)),
+    "canopee_pct": ("Canopée parcelle (%)", "veg.canopee_pct", ("veg",)),
+    "canopee_limite_pct": ("Canopée en limite (%)", "veg.canopee_limite_pct", ("veg",)),
+    "confiance_vegetation": ("Confiance végétation", "veg.confiance", ("veg",)),
+    "pente_non_batie_deg": ("Pente hors bâti (°)",
+                            "round(ter.pente_non_batie_deg::numeric, 1)", ("ter",)),
 }
 
 # Jointures/colonnes utilisées par une colonne d'export dont la source manque → colonne omise.
@@ -353,6 +422,10 @@ _EXPORT_REQUIRES: dict[str, str] = {
     "facture_estimee": "facture_elec_estimee_eur", "azimut_bati": "score_solaire",
     "proba_proprio_occupant": "proba_proprio_occupant",
     "piscine_surface_m2": "piscine",
+    "proba_anc": "proba_anc", "zone_anc": "zone_anc", "source_anc": "source_anc",
+    "canopee_pct": "ombrage_vegetal", "canopee_limite_pct": "canopee_limite_pct",
+    "confiance_vegetation": "confiance_vegetation",
+    "pente_non_batie_deg": "pente_non_batie_deg",
 }
 
 
