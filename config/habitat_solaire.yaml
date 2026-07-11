@@ -17,14 +17,18 @@ pvgis:
 # ── Lot 2 : modèle de consommation électrique estimée ────────────────────────
 conso:
   # Additif simple et documenté : base = baseline maille × ratio de surface, puis bonus.
-  # Ratio de surface borné pour ne pas extrapoler n'importe quoi.
+  # Maille retenue : COMMUNE (EDF SEI « Consommation annuelle par commune - La Réunion »,
+  # secteur Résidentiel, conso/nb points de soutirage) — l'IRIS n'existe que chez Enedis
+  # (métropole). Ratio de surface borné pour ne pas extrapoler n'importe quoi.
   ratio_surface_min: 0.5
   ratio_surface_max: 2.5
-  surface_ref_fallback_m2: 90     # surface moyenne de repli si la maille n'en fournit pas
-  clim_littoral_pct: 20           # +20 % si refroidissement (DPE) en zone littorale
-  clim_altitude_max_m: 400        # « littoral » ≈ sous cette altitude (clim quasi générale)
-  ecs_electrique_kwh_an: 1500     # +1 500 kWh/an si ECS électrique (DPE)
-  piscine_kwh_an: 2000            # +2 000 kWh/an si piscine détectée (pompe)
+  surface_ref_m2: 90              # surface de référence du logement « moyen » de la maille
+  surface_habitable_coef: 0.9     # surface estimée = emprise bâtie × coef (maison de plain-pied)
+  surface_est_min_m2: 30
+  surface_est_max_m2: 300
+  clim_littoral_pct: 20           # +20 % si refroidissement (DPE) — champ absent de la vague
+  ecs_electrique_kwh_an: 1500     # +1 500 kWh/an si ECS électrique (DPE) — idem
+  piscine_kwh_an: 2000            # +2 000 kWh/an si piscine détectée (mandat Détection Ortho)
   piscine_haut_de_gamme_pct: 50   # +50 % du bonus piscine si bâti haut de gamme
   # facture = conso × tarif (settings LABUSE_TARIF_ELEC_EUR_KWH) / 12, arrondie à la dizaine
 

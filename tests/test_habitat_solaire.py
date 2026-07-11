@@ -92,6 +92,36 @@ def test_proba_proprio_fallback_commune(db_session, parcelle):
     assert score == 65  # 50 (commune) + 15 (mutation récente)
 
 
+def test_conso_facture_estimee(db_session, parcelle):
+    """Modèle additif : baseline commune × ratio surface, facture arrondie à la dizaine."""
+    from labuse.ingestion.solaire_conso import DDL_BASELINE, compute_conso
+
+    db_session.execute(text(DDL_BASELINE))
+    db_session.execute(text(
+        """CREATE TABLE IF NOT EXISTS parcel_residuel_bati
+             (idu varchar(14) PRIMARY KEY, emprise_batie_m2 double precision)"""))
+    db_session.execute(text(
+        "INSERT INTO conso_baseline_commune (insee, commune, annee, kwh_an_logement)"
+        " VALUES ('97416', 'Saint-Pierre', 2024, 3000)"))
+    db_session.execute(text(
+        "INSERT INTO parcel_residuel_bati (idu, emprise_batie_m2) VALUES (:idu, 100)"),
+        {"idu": parcelle})
+    db_session.execute(text(
+        """INSERT INTO spatial_layers (kind, name, geom, attrs)
+           VALUES ('batiment', 'test-res', ST_GeomFromText(:wkt, 4326),
+                   '{"usage": "Résidentiel"}'::jsonb)"""),
+        {"wkt": ("POLYGON((55.4499 -21.3003, 55.45 -21.3003, 55.45 -21.2998, "
+                 "55.4499 -21.2998, 55.4499 -21.3003))")})
+    res = compute_conso(db_session)
+    assert res["parcelles"] == 1
+    conso, facture = db_session.execute(text(
+        "SELECT conso_est_kwh_an, facture_est_eur_mois FROM parcel_solar WHERE idu = :idu"),
+        {"idu": parcelle}).one()
+    assert conso == 3000  # 100 m² × 0.9 = 90 m² = surface_ref → ratio 1.0
+    assert facture == round(3000 * 0.25 / 12 / 10) * 10 == 60
+    assert facture % 10 == 0
+
+
 def test_score_percentile_et_ombrage(db_session, parcelle):
     """score_solaire = percentile île ; flag_topo_ombrage sous 80 % de la médiane commune."""
     from labuse.ingestion.solaire_pvgis import interpolate

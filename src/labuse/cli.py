@@ -1736,3 +1736,19 @@ def solaire_flags_cmd() -> None:
     with session_scope() as s:
         res = solaire_flags.run(s, log=typer.echo)
     typer.echo(f"✓ Flags solaire : {res}")
+
+
+@app.command("solaire-conso")
+def solaire_conso_cmd() -> None:
+    """Lot 2 (habitat-solaire) : baseline EDF SEI (conso résidentielle par commune,
+    dernier millésime) puis facture ESTIMÉE par parcelle bâtie résidentielle —
+    estimation statistique, coefficients en config/habitat_solaire.yaml."""
+    from .ingestion import solaire_conso
+
+    with session_scope() as s:
+        res = solaire_conso.run(s, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
+                       "WHERE name = 'EDF SEI Réunion — open data'"))
+    typer.echo(f"✓ Conso/facture estimées : {res}")
+    if not res.get("plausible", True):
+        raise typer.Exit(1)
