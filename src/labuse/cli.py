@@ -1811,3 +1811,16 @@ def solaire_grid_capacity_cmd() -> None:
     with session_scope() as s:
         res = solaire_grid_capacity.ingest(s)
     typer.echo(f"✓ Capacités réseau : {res}")
+
+
+@app.command("solaire-cache-purge")
+def solaire_cache_purge_cmd() -> None:
+    """Lot 8 (habitat-solaire) : purge STRICTE du cache Google Solar API au-delà du
+    TTL 30 jours (conformité ToS Google — pas de stockage permanent). Le refresh
+    est LAZY : une entrée purgée n'est re-téléchargée que si elle est re-consultée."""
+    ttl = get_settings().solar_api_cache_ttl_jours
+    with session_scope() as s:
+        n = s.execute(text(
+            "DELETE FROM solar_api_cache WHERE fetched_at < now() - make_interval(days => :d)"),
+            {"d": ttl}).rowcount
+    typer.echo(f"✓ Cache Solar API : {n} entrée(s) purgée(s) (TTL {ttl} j)")
