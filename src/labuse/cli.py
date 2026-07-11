@@ -1960,3 +1960,32 @@ def ortho_juge_probe_cmd(
                            f"rappel des vrais {pt['rappel_vrais']} ({pt['gardees']} gardées)")
             typer.echo(f"{'✓ CRITÈRE ATTEINT' if res['critere_atteint'] else '✗ critère non atteint'}"
                        f" : {res.get('point')}")
+
+
+@app.command("ortho-juge-vlm")
+def ortho_juge_vlm_cmd(
+    cible: str = typer.Option("sanctuaire", help="sanctuaire (mesure 300) | tout (re-score complet)"),
+    type_: str = typer.Option("piscine", "--type", help="piscine | pv"),
+) -> None:
+    """Cascade de juges, étage 2 : juge VLM (Haiku 4.5, prompt binaire + confiance,
+    cadre rouge sur le candidat). Coût estimé : 0,16 $ (mesure 300) / ~10-11 $
+    (re-score 19 899). Mesure TOUJOURS sur le jeu sanctuarisé."""
+    from .ml import juge_vlm
+
+    with session_scope() as s:
+        if cible == "sanctuaire":
+            ids = [i for (i,) in s.execute(text(
+                "SELECT id FROM ortho_detections WHERE jeu = 'validation'")).all()]
+        else:
+            ids = [i for (i,) in s.execute(text(
+                "SELECT id FROM ortho_detections WHERE type = :t"), {"t": type_}).all()]
+        typer.echo(f"→ {len(ids)} détections à juger ({cible})")
+        res = juge_vlm.juger(s, ids, log=typer.echo)
+        typer.echo(f"✓ juge VLM : {res}")
+        if cible == "sanctuaire":
+            m = juge_vlm.mesurer_sur_sanctuaire(s)
+            for pt in m["courbe"]:
+                typer.echo(f"  conf ≥ {pt['conf_min']} : précision {pt['precision']}, "
+                           f"rappel des vrais {pt['rappel_vrais']} ({pt['gardees']} gardées)")
+            typer.echo(f"{'✓ CRITÈRE ATTEINT' if m['critere_atteint'] else '✗ critère non atteint'}"
+                       f" : {m.get('point')}")
