@@ -71,9 +71,10 @@ materialisation:
   juge:
     flair_min: 0.30
     probe_min: 0.50
-    # bande d'incertitude soumise à Vic (outil ?profil=bande, cap 300)
-    bande_flair: [0.15, 0.30]
-    bande_probe: [0.35, 0.50]
+    # bande d'incertitude soumise à Vic (outil ?profil=bande, cap 300) —
+    # bornes resserrées le 11/07 pour tenir le cap : 298 détections
+    bande_flair: [0.26, 0.30]
+    bande_probe: [0.48, 0.50]
   seuil_confiance_pv: 0.80
   precision_min_piscine: 0.90     # cible mandat — NON atteinte en V0 (→ Lot 8 ML)
   precision_min_pv: 0.75          # en dessous : les PV restent candidats en base
