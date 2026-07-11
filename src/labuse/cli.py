@@ -1825,3 +1825,167 @@ def solaire_cache_purge_cmd() -> None:
             "DELETE FROM solar_api_cache WHERE fetched_at < now() - make_interval(days => :d)"),
             {"d": ttl}).rowcount
     typer.echo(f"✓ Cache Solar API : {n} entrée(s) purgée(s) (TTL {ttl} j)")
+
+
+# ─────────────────────────── Wave Détection Ortho ───────────────────────────
+
+@app.command("ortho-pente")
+def ortho_pente_cmd(batch: int = typer.Option(2000, help="Parcelles par lot (checkpoint).")) -> None:
+    """Lot 1 (wave-ortho) : pente de la partie NON BÂTIE des parcelles bâties, depuis
+    le raster de pente RGE ALTI 5 m conservé — complète parcel_terrain (réutilisée,
+    jamais de table concurrente). Relançable (ne recalcule que les NULL)."""
+    from .ingestion import ortho_pente
+
+    with session_scope() as s:
+        res = ortho_pente.run(s, log=typer.echo)
+    typer.echo(f"✓ Pente non bâtie : {res}")
+    if not res["sanity"]["ok"]:
+        typer.echo("✗ SANITY : médiane bâties ≥ médiane île — bug projection/unités, INVESTIGUER.")
+        raise typer.Exit(1)
+
+
+@app.command("ortho-tiles")
+def ortho_tiles_cmd(
+    limit: int = typer.Option(None, help="Nb max de tuiles à acquérir (tests)."),
+    grid_only: bool = typer.Option(False, "--grid-only", help="Construit la grille sans télécharger."),
+) -> None:
+    """Lot 2 (wave-ortho) : grille 512 m (bâti ∪ parkings) + acquisition BD ORTHO 20 cm
+    par WMS Géoplateforme (millésime 974 = 2025), cache disque, reprise par tuile."""
+    from .ingestion import ortho_tiles
+    from .models import IngestionRun
+
+    with session_scope() as s:
+        n = ortho_tiles.build_grid(s)
+        typer.echo(f"✓ grille : {n} nouvelle(s) tuile(s) utiles")
+        if grid_only:
+            return
+        run = IngestionRun(commune="974 (tuiles ortho)", status="running")
+        s.add(run)
+        s.commit()  # libère les verrous : l'acquisition dure, d'autres jobs lisent ortho_tiles
+        res = ortho_tiles.acquire(s, limit=limit, log=typer.echo)
+        run.status = "ok" if not res["echecs"] else "partiel"
+        run.parcels_count = res["acquises"]
+        from sqlalchemy import func as _f
+        run.finished_at = _f.now()
+    typer.echo(f"✓ acquisition : {res}")
+
+
+@app.command("ortho-detect")
+def ortho_detect_cmd(
+    limit: int = typer.Option(None, help="Nb max de tuiles (tests)."),
+    skip_post: bool = typer.Option(False, "--skip-post", help="Détection seule, sans post-traitement SQL."),
+) -> None:
+    """Lot 3 (wave-ortho) : détection piscines V0 (HSV calibré config) sur les tuiles
+    acquises + post-traitement contextuel (rattachement, rejets eau/toits bleus,
+    confiance composite). Relançable (checkpoint = ortho_tiles.traite_at).
+    Validation Vic : `labuse api` → /ortho/validation."""
+    from .ingestion import ortho_piscines
+
+    with session_scope() as s:
+        res = ortho_piscines.detect_tiles(s, limit=limit, log=typer.echo)
+        typer.echo(f"✓ détection : {res}")
+        if not skip_post:
+            post = ortho_piscines.post_traitement(s, log=typer.echo)
+            typer.echo(f"✓ post-traitement : {post}")
+
+
+@app.command("ortho-materialise")
+def ortho_materialise_cmd() -> None:
+    """Lot 5 (wave-ortho) : matérialise parcel_equipements depuis les détections
+    (profil strict + verdicts Vic) + signal piscine_detectee. Relançable."""
+    from .ingestion import ortho_equipements
+
+    with session_scope() as s:
+        res = ortho_equipements.run(s, log=typer.echo)
+    typer.echo(f"✓ matérialisation : {res}")
+
+
+@app.command("ortho-detect-pv")
+def ortho_detect_pv_cmd(limit: int = typer.Option(None, help="Nb max de tuiles (tests).")) -> None:
+    """Lot 4 (wave-ortho) : détection PV V0 sur emprises bâties + parkings (candidats
+    SCORÉS, cible ≥ 75 % à la validation) — CES 4-8 m² séparés, ombrières → equipe."""
+    from .ingestion import ortho_pv
+
+    with session_scope() as s:
+        res = ortho_pv.detect_tiles(s, limit=limit, log=typer.echo)
+        typer.echo(f"✓ détection PV : {res}")
+        post = ortho_pv.post_traitement(s, log=typer.echo)
+        typer.echo(f"✓ post-traitement PV : {post}")
+
+
+@app.command("ortho-refresh")
+def ortho_refresh_cmd(
+    purge_cache: bool = typer.Option(False, "--purge-cache",
+                                     help="Supprime les images du cache (garde les tables)."),
+) -> None:
+    """Lot 7 (wave-ortho) : la BD ORTHO 974 est re-survolée tous les ~3-4 ans — pas de
+    cron. Détecte un changement de millésime (constante vs ortho_tiles), remet les
+    tuiles concernées en file (acquisition + détections piscines/PV) et rejoue."""
+    from .ingestion import ortho_tiles as ot
+
+    with session_scope() as s:
+        n = s.execute(text(
+            "UPDATE ortho_tiles SET acquise_at = NULL, traite_at = NULL,"
+            " pv_traite_at = NULL, millesime = :m WHERE millesime IS DISTINCT FROM :m"),
+            {"m": ot.MILLESIME}).rowcount
+    if n:
+        typer.echo(f"✓ {n} tuile(s) remises en file (millésime {ot.MILLESIME}) — "
+                   "enchaîner : labuse ortho-tiles && labuse ortho-detect && "
+                   "labuse ortho-detect-pv && labuse ortho-materialise")
+    else:
+        typer.echo(f"✓ millésime {ot.MILLESIME} inchangé — rien à rejouer.")
+    if purge_cache:
+        n_p = ot.purge_cache()
+        typer.echo(f"✓ cache purgé : {n_p} image(s) supprimée(s) (tables conservées)")
+
+
+@app.command("ortho-juge-probe")
+def ortho_juge_probe_cmd(
+    etape: str = typer.Option("tout", help="crops | embeddings | mesure | tout"),
+) -> None:
+    """Cascade de juges, étage 1 : probe linéaire (DINOv2 gelé + logreg) —
+    entraînée sur jeu='train', MESURÉE sur les 300 sanctuarisés. Critère Vic :
+    précision ≥ 90 % en gardant ≥ 80 % des vrais → juge retenu, STOP cascade."""
+    from .ml import probe
+
+    with session_scope() as s:
+        if etape in ("crops", "tout"):
+            typer.echo(f"✓ crops : {probe.extraire_crops(s, log=typer.echo)}")
+        if etape in ("embeddings", "tout"):
+            typer.echo(f"✓ embeddings : {probe.calculer_embeddings(log=typer.echo)}")
+        if etape in ("mesure", "tout"):
+            res = probe.entrainer_et_mesurer(s, log=typer.echo)
+            for pt in res["courbe"]:
+                typer.echo(f"  seuil {pt['seuil']} : précision {pt['precision']}, "
+                           f"rappel des vrais {pt['rappel_vrais']} ({pt['gardees']} gardées)")
+            typer.echo(f"{'✓ CRITÈRE ATTEINT' if res['critere_atteint'] else '✗ critère non atteint'}"
+                       f" : {res.get('point')}")
+
+
+@app.command("ortho-juge-vlm")
+def ortho_juge_vlm_cmd(
+    cible: str = typer.Option("sanctuaire", help="sanctuaire (mesure 300) | tout (re-score complet)"),
+    type_: str = typer.Option("piscine", "--type", help="piscine | pv"),
+) -> None:
+    """Cascade de juges, étage 2 : juge VLM (Haiku 4.5, prompt binaire + confiance,
+    cadre rouge sur le candidat). Coût estimé : 0,16 $ (mesure 300) / ~10-11 $
+    (re-score 19 899). Mesure TOUJOURS sur le jeu sanctuarisé."""
+    from .ml import juge_vlm
+
+    with session_scope() as s:
+        if cible == "sanctuaire":
+            ids = [i for (i,) in s.execute(text(
+                "SELECT id FROM ortho_detections WHERE jeu = 'validation'")).all()]
+        else:
+            ids = [i for (i,) in s.execute(text(
+                "SELECT id FROM ortho_detections WHERE type = :t"), {"t": type_}).all()]
+        typer.echo(f"→ {len(ids)} détections à juger ({cible})")
+        res = juge_vlm.juger(s, ids, log=typer.echo)
+        typer.echo(f"✓ juge VLM : {res}")
+        if cible == "sanctuaire":
+            m = juge_vlm.mesurer_sur_sanctuaire(s)
+            for pt in m["courbe"]:
+                typer.echo(f"  conf ≥ {pt['conf_min']} : précision {pt['precision']}, "
+                           f"rappel des vrais {pt['rappel_vrais']} ({pt['gardees']} gardées)")
+            typer.echo(f"{'✓ CRITÈRE ATTEINT' if m['critere_atteint'] else '✗ critère non atteint'}"
+                       f" : {m.get('point')}")

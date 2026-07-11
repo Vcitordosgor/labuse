@@ -1,0 +1,88 @@
+# Wave Détection Ortho — TOUS les seuils du pipeline (mandat : jamais en dur).
+# V0 déterministe (colorimétrie calibrée) ; le ML (Lot 8) n'arrive que sur décision
+# de Vic après lecture des métriques de validation.
+
+# ── Lot 1 : pente terrain ──────────────────────────────────────────────────────
+pente:
+  terrassement_lourd_deg: 15      # flag_terrassement_lourd (déjà appliqué au data-gap)
+  # la pente NON BÂTIE (parcelle − emprise BD TOPO) n'est calculée que pour les
+  # parcelles bâties ; ailleurs pente_moy_deg fait foi.
+  emprise_min_m2: 20              # en dessous, parcelle traitée comme non bâtie
+
+# ── Lot 2 : tuiles & acquisition ───────────────────────────────────────────────
+tuiles:
+  taille_m: 512                   # grille 512×512 m (2560×2560 px à 20 cm)
+  pixels: 2560
+  wms_url: "https://data.geopf.fr/wms-r"
+  wms_layer: "ORTHOIMAGERY.ORTHOPHOTOS"
+  concurrence: 4                  # requêtes WMS simultanées (politesse Géoplateforme)
+  cache_dir: "data/ortho_tiles"   # nettoyé en fin de run (Lot 7) — on garde les tables
+
+# ── Lot 3 : piscines V0 (HSV OpenCV, H∈[0,179]) ───────────────────────────────
+piscines:
+  hsv_h_min: 85                   # calibration planches 11/07 (départ mandat : 80)
+  hsv_h_max: 112                  # au-delà : bleu roi des bâches/voitures (planches)
+  hsv_s_min: 80                   # saturation élevée (eau traitée, pas béton bleuté)
+  hsv_v_min: 135                  # valeur élevée (exclut trampolines ET bâches sombres)
+  morpho_px: 5                    # noyau ouverture/fermeture
+  surface_min_m2: 10              # pré-calibration 11/07 : 6 → 10 (voitures ~8-10 m²)
+  surface_max_m2: 150
+  exclusion_voirie_m: 4           # rejet si centroïde à < 4 m d'une voirie (voitures bleues)
+  solidite_min: 0.72              # aire/enveloppe convexe — formes de bassin
+  aspect_max: 6.0                 # ratio grand/petit côté du rectangle orienté
+  contexte_bati_m: 30             # centroïde dans une parcelle bâtie ou à < 30 m
+  toit_bleu_recouvrement_bati: 0.25   # rejet si > 25 % sur bâti (objets sur toits, planches 11/07)
+  # confiance composite : pondérations (somme = 1)
+  poids_couleur: 0.35
+  poids_forme: 0.25
+  poids_taille: 0.20              # taille typique 15-50 m²
+  poids_contexte: 0.20
+
+# ── Lot 4 : PV V0 (candidats scorés) ──────────────────────────────────────────
+pv:
+  surface_min_m2: 4
+  surface_max_m2: 400             # au-delà : ombrière/centrale — géré à part (parkings)
+  ces_max_m2: 8                   # 4-8 m² → pv_probable_ces (chauffe-eau, RTAA DOM)
+  rectangularite_min: 0.75
+  toit_uniforme_max: 0.80         # rejet si le masque couvre > 80 % de l'emprise du bâtiment
+  hsv_h: [90, 150]                # bleuté à anthracite froid
+  hsv_s: [20, 170]
+  hsv_v: [25, 110]                # réflectance faible (V max = l'essentiel du signal)
+  morpho_px: 3
+  largeur_min_m: 1.0             # ombres de rive = bandes fines ; un panneau fait >= 1 m
+  poids_rectangularite: 0.40
+  poids_couleur: 0.30
+  poids_taille: 0.30              # plateau 8-100 m² (résidentiel typique 10-40 m²)
+
+# ── Lot 5 : matérialisation ────────────────────────────────────────────────────
+materialisation:
+  # PROFIL « STRICT » retenu le 11/07 sur les 966 verdicts Vic : précision MESURÉE
+  # 79,3 % (n=460) — meilleur sous-ensemble V0, AUCUN seuil n'atteint les 90 % du
+  # mandat (critère GO Lot 8 ML acté, verdicts = dataset d'amorce). Matérialisé en
+  # V0 avec fiabilité affichée, sous réserve de la session de confirmation (100).
+  piscine_profil_strict:
+    hsv_h: [88, 104]
+    hsv_s_min: 130
+    hsv_v_min: 160
+    surface_m2: [15, 80]
+  precision_mesuree_piscine: 0.793   # sur les 966 verdicts (460 dans le profil)
+  # JUGE FINAL (cascade 11/07, mesuré sur les 300 sanctuarisés : 90,7 % @ 74,5 %) :
+  # FLAIR-INC (fraction pixels piscine, Etalab 2.0) × probe DINOv2+logreg — 100 % local.
+  juge:
+    flair_min: 0.30
+    probe_min: 0.50
+    # bande d'incertitude soumise à Vic (outil ?profil=bande, cap 300) —
+    # bornes resserrées le 11/07 pour tenir le cap : 298 détections
+    bande_flair: [0.26, 0.30]
+    bande_probe: [0.48, 0.50]
+  seuil_confiance_pv: 0.80
+  precision_min_piscine: 0.90     # cible mandat — NON atteinte en V0 (→ Lot 8 ML)
+  precision_min_pv: 0.75          # en dessous : les PV restent candidats en base
+
+  # Option B (clôture Vic 12/07) : exports ROUVERTS avec la mention de précision
+  # mesurée ; la re-certification sur vignettes fraîches est une dette v1.1.
+  exports_suspendus: []
+
+# ── Outil de validation : session de confirmation ─────────────────────────────
+validation:
+  quota_session: 100              # l'outil S'ARRÊTE au quota (demande Vic 11/07)

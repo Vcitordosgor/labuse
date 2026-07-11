@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, createShare, getFaisabilite, getFiche, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
+import { addToPipeline, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
 import { BRULANTE_COLOR, completudeColor, STATUT_META, vBandColor } from '../../lib/status'
 import { Loading } from '../Loading'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
@@ -402,6 +402,35 @@ function Calculette({ idu }: { idu: string }) {
   )
 }
 
+// Badges ÉQUIPEMENTS (mandat wave-ortho Lot 6) : piscine / PV / CES / pente — dans la
+// synthèse, sourcés « ortho IGN 2025, fiabilité statistique, non contractuelle ».
+function EquipementsBadges({ idu }: { idu: string }) {
+  const { data: e } = useQuery({
+    queryKey: ['equip', idu], queryFn: () => getOrthoEquipements(idu), retry: false,
+  })
+  if (!e) return null
+  const b: [string, string, string][] = []
+  if (e['piscine']) b.push([`Piscine ~${e['piscine_m2']} m²`, '#4fc3d9',
+    `détection ortho — confiance ${e['piscine_confiance']}`])
+  if (e['pv_detecte']) b.push([`PV détecté${e['pv_m2'] ? ` ~${e['pv_m2']} m²` : ''}`, '#5CE6A1', 'panneaux photovoltaïques (candidat scoré)'])
+  if (e['pv_probable_ces']) b.push(['CES probable', '#e8b84d', 'chauffe-eau solaire probable (4-8 m²)'])
+  if (e['pente_moy_deg'] != null) b.push([`Pente ${Math.round(Number(e['pente_non_batie_deg'] ?? e['pente_moy_deg']))}°`,
+    e['flag_terrassement_lourd'] ? '#e8734d' : '#7d9488',
+    `pente moyenne ${e['pente_non_batie_deg'] != null ? 'hors bâti ' : ''}(RGE ALTI 5 m)${e['flag_terrassement_lourd'] ? ' — terrassement lourd probable' : ''}`])
+  if (!b.length) return null
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1.5">
+        {b.map(([label, color, title]) => (
+          <span key={label} title={title} className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+            style={{ background: `${color}22`, color }}>{label}</span>
+        ))}
+      </div>
+      <p className="mt-1 text-[9px] text-txt-dim">{String(e['source'] ?? '')}</p>
+    </div>
+  )
+}
+
 // Onglet SOLAIRE — mandat Habitat Solaire (Lot 9.1) : chaque donnée est SOURCÉE, la
 // facture est une ESTIMATION statistique, jamais une donnée réelle.
 function SolaireTab({ idu }: { idu: string }) {
@@ -770,6 +799,7 @@ export function Fiche({ idu }: { idu: string }) {
                 du dossier vendeur qui prime (doctrine bascule).
               </div>
             )}
+            <EquipementsBadges idu={idu} />
             <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen />
             <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} />
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}
