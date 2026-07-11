@@ -231,6 +231,25 @@ def post_traitement(session: Session, log=print) -> dict[str, Any]:
     rejets["toit_bleu"] = session.execute(text(
         "DELETE FROM ortho_detections WHERE type = 'piscine' AND confiance IS NULL"
         " AND sur_bati")).rowcount
+    # pré-calibration 11/07 (planche visuelle : faux positifs dominants = VOITURES BLEUES)
+    # → rejet des détections sur voirie (BD TOPO lignes, buffer config) et parkings OSM
+    rejets["voirie"] = session.execute(text("""
+        DELETE FROM ortho_detections d
+        WHERE d.type = 'piscine' AND d.confiance IS NULL
+          AND EXISTS (SELECT 1 FROM spatial_layers sl
+                      WHERE sl.kind = 'voirie'
+                        AND ST_DWithin(sl.geom_2975, ST_Centroid(d.geom_2975), :vbuf))
+    """), {"vbuf": float(cfg["exclusion_voirie_m"])}).rowcount
+    rejets["parking_pitch"] = session.execute(text("""
+        DELETE FROM ortho_detections d
+        WHERE d.type = 'piscine' AND d.confiance IS NULL
+          AND EXISTS (SELECT 1 FROM spatial_layers sl
+                      WHERE sl.kind = 'osm_faux_positif' AND sl.subtype IN ('parking', 'pitch')
+                        AND ST_Intersects(sl.geom_2975, ST_Centroid(d.geom_2975)))
+    """)).rowcount
+    rejets["sous_surface_min"] = session.execute(text(
+        "DELETE FROM ortho_detections WHERE type = 'piscine' AND confiance IS NULL"
+        " AND surface_m2 < :smin"), {"smin": float(cfg["surface_min_m2"])}).rowcount
     # 3. contexte bâti : parcelle bâtie (1.0) ou bâtiment < 30 m (0.7), sinon rejet
     n_final = session.execute(text("""
         WITH ctx AS (

@@ -20,17 +20,18 @@ tuiles:
 
 # ── Lot 3 : piscines V0 (HSV OpenCV, H∈[0,179]) ───────────────────────────────
 piscines:
-  hsv_h_min: 80                   # cyan/turquoise — point de départ du mandat
-  hsv_h_max: 130
-  hsv_s_min: 60                   # saturation élevée (eau traitée, pas béton bleuté)
-  hsv_v_min: 90                   # valeur élevée (exclut trampolines sombres)
+  hsv_h_min: 85                   # calibration planches 11/07 (départ mandat : 80)
+  hsv_h_max: 112                  # au-delà : bleu roi des bâches/voitures (planches)
+  hsv_s_min: 80                   # saturation élevée (eau traitée, pas béton bleuté)
+  hsv_v_min: 135                  # valeur élevée (exclut trampolines ET bâches sombres)
   morpho_px: 5                    # noyau ouverture/fermeture
-  surface_min_m2: 6
+  surface_min_m2: 10              # pré-calibration 11/07 : 6 → 10 (voitures ~8-10 m²)
   surface_max_m2: 150
+  exclusion_voirie_m: 4           # rejet si centroïde à < 4 m d'une voirie (voitures bleues)
   solidite_min: 0.72              # aire/enveloppe convexe — formes de bassin
   aspect_max: 6.0                 # ratio grand/petit côté du rectangle orienté
   contexte_bati_m: 30             # centroïde dans une parcelle bâtie ou à < 30 m
-  toit_bleu_recouvrement_bati: 0.60   # rejet si > 60 % du masque sur emprise bâtie
+  toit_bleu_recouvrement_bati: 0.25   # rejet si > 25 % sur bâti (objets sur toits, planches 11/07)
   # confiance composite : pondérations (somme = 1)
   poids_couleur: 0.35
   poids_forme: 0.25
