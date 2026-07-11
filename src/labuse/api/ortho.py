@@ -201,12 +201,14 @@ def valider(det_id: int, body: VerdictIn, db: Session = Depends(get_db)) -> dict
             {"pr": body.profil}).scalar_one()
         if faites >= quota:
             raise HTTPException(409, f"Quota de session atteint ({faites}/{quota}) — verdict refusé.")
-        # une vignette déjà validée dans cette session ne se revalide pas (double-tir)
-        deja = db.execute(text(
-            "SELECT validation IS NOT NULL FROM ortho_detections WHERE id = :i"),
-            {"i": det_id}).scalar()
-        if deja:
-            raise HTTPException(409, "Détection déjà validée — verdict ignoré (double envoi).")
+    # une détection déjà validée ne se revalide JAMAIS silencieusement (double-tir, double
+    # clic, replay) — AVEC ou SANS profil : les verdicts sont le dataset d'amorce ML, un
+    # POST nu écrasait un verdict existant (audit UI 12/07). Annulation → SQL explicite.
+    deja = db.execute(text(
+        "SELECT validation IS NOT NULL FROM ortho_detections WHERE id = :i"),
+        {"i": det_id}).scalar()
+    if deja:
+        raise HTTPException(409, "Détection déjà validée — verdict ignoré (double envoi).")
     n = db.execute(text(
         "UPDATE ortho_detections SET validation = :v, valide_profil = :pr WHERE id = :i"),
         {"v": body.verdict, "pr": body.profil, "i": det_id}).rowcount

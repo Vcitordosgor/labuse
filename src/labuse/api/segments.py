@@ -104,6 +104,19 @@ MENTIONS_LEGALES: dict[str, dict] = {
 }
 MENTIONS_LEGALES["anc-travaux"] = MENTIONS_LEGALES["anc-prospection"]
 
+# Clôture Option B wave-ortho (12/07) : exports piscine ROUVERTS **avec la mention de
+# précision mesurée** — la mention suit le preset (galerie/builder) ET le pied d'export.
+_MENTION_PISCINE = {
+    "texte": ("Piscines détectées automatiquement sur orthophoto — précision mesurée "
+              "90,7 % sur un échantillon interne (300 vignettes sanctuarisées, cascade "
+              "de juges du 11/07/2026). Fiabilité statistique, non contractuelle : la "
+              "présence ou l'absence réelle d'un bassin se vérifie sur place."),
+    "liens": [],
+    "sources_donnees": "Orthophoto © IGN BD ORTHO 2025 (Licence Ouverte) — détection LABUSE.",
+}
+MENTIONS_LEGALES["piscinistes-construction"] = _MENTION_PISCINE
+MENTIONS_LEGALES["parc-piscines-entretien"] = _MENTION_PISCINE
+
 
 # ───────────────────────── lecture ─────────────────────────
 
@@ -245,6 +258,12 @@ def segments_export(body: QueryIn, request: Request, db: Session = Depends(get_d
     w = csv.writer(buf, delimiter=";")           # Excel FR : point-virgule
     w.writerow(headers)
     w.writerows(rows)
+    mention = MENTIONS_LEGALES.get(body.slug or "")
+    if mention:
+        # pied d'export (décision Option B : la fiabilité VOYAGE avec la donnée) —
+        # ligne unique après les données, inoffensive pour les tris Excel.
+        w.writerow([])
+        w.writerow([f"Mention : {mention['texte']}"])
     name = (body.slug or "segment").replace("/", "-")
     return Response(
         buf.getvalue().encode("utf-8-sig"),      # BOM : accents corrects dans Excel
