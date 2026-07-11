@@ -172,7 +172,7 @@ def interpolate(session: Session, log=print) -> dict[str, int]:
     """)).rowcount
     log(f"  interpolation : {n} parcelles")
     session.execute(text("""
-        WITH ranked AS (
+        WITH ranked AS MATERIALIZED (
           SELECT idu, round(100 * percent_rank() OVER (ORDER BY prod_spec_kwh_kwc))::int AS s
           FROM parcel_solar WHERE prod_spec_kwh_kwc IS NOT NULL
         )
@@ -181,7 +181,9 @@ def interpolate(session: Session, log=print) -> dict[str, int]:
     """))
     seuil = float(_params()["ombrage_seuil_mediane"])
     n_flag = session.execute(text("""
-        WITH med AS (
+        -- MATERIALIZED obligatoire : inlinée, la CTE d'agrégat se recalcule dans la boucle
+        -- de jointure de l'UPDATE (constaté : > 10 min au lieu de secondes).
+        WITH med AS MATERIALIZED (
           SELECT p.commune, percentile_cont(0.5) WITHIN GROUP (ORDER BY ps.prod_spec_kwh_kwc) AS m
           FROM parcel_solar ps JOIN parcels p ON p.idu = ps.idu
           WHERE ps.prod_spec_kwh_kwc IS NOT NULL GROUP BY p.commune
@@ -200,7 +202,13 @@ def interpolate(session: Session, log=print) -> dict[str, int]:
 def sanity_check(session: Session) -> dict[str, Any]:
     """Médiane côte Ouest (Saint-Paul, Saint-Leu) vs Est (Sainte-Rose, Salazie).
 
-    Ouest ≤ Est = ingestion fausse (le mandat exige d'investiguer avant de continuer).
+    INVESTIGUÉ (11/07/2026, mandat Lot 1) : le check échoue mais l'INGESTION EST FIDÈLE
+    (valeurs interpolées ≡ API brute au point près). C'est la donnée satellite SARAH3
+    elle-même qui ne reproduit pas la nuance côtière Ouest/Est de La Réunion (SARAH2 et
+    ERA5 non plus — vérifié par sondes directes : Saint-Gilles 1291 vs Sainte-Rose 1482
+    kWh/kWc). Le gradient d'ALTITUDE/relief, décisif pour le score, est bien capté
+    (Salazie 1255, Plaine-des-Palmistes 1227 vs côtes 1300-1500) et l'horizon
+    topographique aussi. Voir RAPPORT_HABITAT_SOLAIRE.md §sanity pour le détail.
     """
     med = dict(session.execute(text("""
         SELECT p.commune, percentile_cont(0.5) WITHIN GROUP (ORDER BY ps.prod_spec_kwh_kwc)

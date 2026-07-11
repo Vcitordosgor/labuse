@@ -190,7 +190,8 @@ def build(session, filtres: list[dict], tri: str | None, *,
     if sd.requires_rows:
         # même détection que les filtres : une source de tri vide → repli surface
         probe = {"dvf_mutations_parcelle": "anciennete_mutation_mois",
-                 "parcel_residuel_bati": "jardin_m2", "dpe_records": "periode_construction"}
+                 "parcel_residuel_bati": "jardin_m2", "dpe_records": "periode_construction",
+                 "parcel_solar": "score_solaire"}
         dep = probe.get(sd.requires_rows)
         if dep and not avail.get(dep, {}).get("disponible"):
             sd = SORTS["surface_desc"]
