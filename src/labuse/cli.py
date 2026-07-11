@@ -1752,3 +1752,22 @@ def solaire_conso_cmd() -> None:
     typer.echo(f"✓ Conso/facture estimées : {res}")
     if not res.get("plausible", True):
         raise typer.Exit(1)
+
+
+@app.command("solaire-tertiaire")
+def solaire_tertiaire_cmd(
+    export: str = typer.Option(None, help="Chemin d'export CSV (optionnel)."),
+) -> None:
+    """Lot 6 (habitat-solaire) : vue matérialisée toitures tertiaires > 500 m²
+    × propriétaire PM × bilan INPI × gisement PVGIS × poste source. Zéro ingestion."""
+    from pathlib import Path
+
+    from .ingestion import solaire_tertiaire
+
+    with session_scope() as s:
+        res = solaire_tertiaire.refresh(s)
+        typer.echo(f"✓ mv_toitures_tertiaires : {res}")
+        if export:
+            Path(export).parent.mkdir(parents=True, exist_ok=True)
+            Path(export).write_text(solaire_tertiaire.export_csv(s), encoding="utf-8-sig")
+            typer.echo(f"✓ export : {export}")
