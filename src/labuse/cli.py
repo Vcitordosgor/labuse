@@ -1544,6 +1544,18 @@ def ingest_rnic_cmd(
     typer.echo(f"✓ RNIC : {res}")
 
 
+@app.command("rnic-complements")
+def rnic_complements_cmd() -> None:
+    """Compléments RNIC sans CSV (Wave copro re-scopée 11/07) : purge RGPD des syndics non
+    professionnels (nom/SIRET + clés représentant dans raw) + rattachement proche_20m du
+    reliquat non rattaché. Idempotent."""
+    from .ingestion.rnic import complements
+
+    with session_scope() as s:
+        res = complements(s, log=typer.echo)
+    typer.echo(f"✓ RNIC compléments : {res}")
+
+
 # ───────────────────── Moteur de segments Habitat (mandat segments) ─────────────────────
 
 @app.command("segments-seed")
