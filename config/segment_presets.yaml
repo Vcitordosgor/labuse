@@ -240,10 +240,14 @@ presets:
       un rendez-vous solaire. Le score toiture arrive avec le mandat Habitat Solaire.
     filtres:
       - {cle: type_bien, values: [Maison]}
-      - {cle: score_solaire, min: 60}         # grisé tant qu'Habitat Solaire n'a pas livré
+      - {cle: score_solaire, min: 60}                          # livré (Habitat Solaire)
       - {cle: pv_detecte, value: false}       # grisé tant que Détection Ortho n'a pas livré
-    colonnes_export: [adresse, surface_m2, type_bien, emprise_batie_m2]
-    tri_defaut: surface_desc
+      - {cle: facture_elec_estimee_eur, min: 1200, optionnel: true}
+      - {cle: flag_topo_ombrage, value: false, optionnel: true}
+      - {cle: proba_proprio_occupant, min: 50, optionnel: true}
+    colonnes_export: [adresse, surface_m2, type_bien, score_solaire, facture_estimee,
+                      azimut_bati, proba_proprio_occupant]
+    tri_defaut: score_solaire_desc
 
   - slug: chauffe-eau-solaire
     nom: Chauffe-eau solaire
@@ -258,8 +262,8 @@ presets:
     filtres:
       - {cle: type_bien, values: [Maison]}
       - {cle: periode_construction, max: 2000}
-      - {cle: score_solaire, min: 40}         # grisé tant qu'Habitat Solaire n'a pas livré
-    colonnes_export: [adresse, surface_m2, annee_construction, type_bien]
+      - {cle: score_solaire, min: 40}                          # livré (Habitat Solaire)
+    colonnes_export: [adresse, surface_m2, annee_construction, type_bien, score_solaire]
     tri_defaut: age_bati_desc
 
   - slug: clim-pac

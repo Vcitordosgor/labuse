@@ -254,6 +254,37 @@ SOURCES: list[dict] = [
          endpoint_url="https://geolittoral.din.developpement-durable.gouv.fr/telechargement/couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip",
          legal_notes=None,
          technical_notes="✓ intégré : SHP indicateur national d'érosion côtière (Réunion, EPSG:2975→4326). Champ `taux` (m/an) : recul fort ≤ -1 → exclude, recul modéré → flag."),
+    # ── Mandat Habitat Solaire ──
+    dict(name="PVGIS (Commission européenne)", category="energie", provider="CE / JRC",
+         access_type="REST/JSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         rate_limit="~25 req/s tolérées ; ingestion à 10 req/s + backoff 429",
+         documentation_url="https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis_en",
+         endpoint_url="https://re.jrc.ec.europa.eu/api/v5_3/PVcalc",
+         legal_notes="Gratuit, sans clé, réutilisation et stockage libres (données CE).",
+         technical_notes="✓ live 11/07/2026 : v5_3 = base SARAH3 (2005-2023), couvre l'océan Indien, "
+                         "horizon topographique DEM intégré (usehorizon=1). Grille ~400 m → solar_grid, "
+                         "interpolation → parcel_solar.prod_spec_kwh_kwc. aspect=180 (nord, hémisphère sud)."),
+    dict(name="EDF SEI Réunion — open data", category="energie", provider="EDF SEI",
+         access_type="REST/JSON (Opendatasoft)", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://opendata-reunion.edf.fr",
+         endpoint_url="https://opendata-reunion.edf.fr/api/explore/v2.1/",
+         legal_notes="Licence Ouverte (jeux publiés par EDF SEI, ZNI).",
+         technical_notes="Baseline de consommation résidentielle (Lot 2) + capacités d'accueil "
+                         "réseau si publiées (Lot 7 best effort). Dataset retenu documenté au rapport de fin."),
+    dict(name="Registre national des installations (ODRÉ)", category="energie", provider="ODRÉ / data.gouv.fr",
+         access_type="REST/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://odre.opendatasoft.com",
+         endpoint_url="https://odre.opendatasoft.com/api/explore/v2.1/",
+         legal_notes="Licence Ouverte. Installations ≥ 36 kVA individualisées, petites agrégées par commune.",
+         technical_notes="Filtré dép. 974, filière solaire → pv_registry. Repowering : mises en service "
+                         "2006-2013 (contrats d'achat 20 ans en fin de vie 2026-2033)."),
+    dict(name="Parkings OSM (loi APER)", category="energie", provider="OpenStreetMap",
+         access_type="Overpass/GeoJSON", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
+         documentation_url="https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dparking",
+         endpoint_url="https://overpass-api.de/api/interpreter",
+         legal_notes="ODbL — attribution OSM.",
+         technical_notes="amenity=parking (polygones) → parkings_aper, seuils loi APER n° 2023-175 "
+                         "art. 40 en config. Complétude déclarative OSM : volumétrie = plancher, pas un recensement."),
 ]
 
 

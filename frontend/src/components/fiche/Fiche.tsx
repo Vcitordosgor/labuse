@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, createShare, getFaisabilite, getFiche, getPipelineForParcel, getWatch, iaPourquoi, iaSynthese, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
+import { addToPipeline, createShare, getFaisabilite, getFiche, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
 import { BRULANTE_COLOR, completudeColor, STATUT_META, vBandColor } from '../../lib/status'
 import { Loading } from '../Loading'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
@@ -402,6 +402,83 @@ function Calculette({ idu }: { idu: string }) {
   )
 }
 
+// Onglet SOLAIRE — mandat Habitat Solaire (Lot 9.1) : chaque donnée est SOURCÉE, la
+// facture est une ESTIMATION statistique, jamais une donnée réelle.
+function SolaireTab({ idu }: { idu: string }) {
+  const { data: sol, isLoading, isError } = useQuery({
+    queryKey: ['solaire', idu], queryFn: () => getSolaireFiche(idu), retry: false,
+  })
+  if (isLoading) return <Loading label="Données solaires" className="text-xs" />
+  if (isError || !sol) return (
+    <p className="text-xs text-txt-dim">
+      Pas de données solaires pour cette parcelle (parcelle non bâtie ou module en cours
+      d'ingestion — mandat Habitat Solaire).
+    </p>
+  )
+  const src = (sol['sources'] ?? {}) as Record<string, string>
+  const score = sol['score_solaire'] as number | null
+  const facture = sol['facture_est_eur_mois'] as number | null
+  const azimut = sol['azimut_bati_deg'] as number | null
+  const aper = (sol['aper_deadline'] ?? []) as Record<string, unknown>[]
+  const badges: [string, string, string][] = []  // [label, couleur, titre]
+  if (sol['flag_abf']) badges.push(['ABF', '#e8b84d', 'Périmètre ABF — déclaration préalable renforcée probable'])
+  if (sol['flag_amiante']) badges.push(['Bâti pré-1997', '#e8734d', String(src['amiante'] ?? '')])
+  if (sol['flag_topo_ombrage']) badges.push(['Ombrage topo', '#7d8fa8', 'Production < 80 % de la médiane communale (cirque/rempart)'])
+  if (sol['pv_existant']) badges.push([sol['pv_existant'] === 'detecte' ? 'PV détecté' : 'Commune très équipée PV', '#5CE6A1', String(src['pv_existant'] ?? '')])
+  if (sol['repowering']) badges.push(['Repowering', '#B497F0', 'Contrat d\'achat 2006-2013 en fin de vie'])
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+        <p className="font-mono text-[10px] tracking-widest text-txt-dim">GISEMENT SOLAIRE</p>
+        <div className="mt-1.5 flex items-center gap-3">
+          <span className="flex-1 h-1.5 overflow-hidden rounded-full bg-line">
+            <span style={{ width: `${score ?? 0}%` }} className="block h-full bg-[#f5c84b]" />
+          </span>
+          <span className="font-display text-sm font-bold text-[#f5c84b]">{score ?? '—'}<span className="text-[10px] text-txt-dim">/100</span></span>
+        </div>
+        <div className="mt-1 text-[11px] text-txt-mut">
+          {sol['prod_spec_kwh_kwc'] ? `${Math.round(Number(sol['prod_spec_kwh_kwc']))} kWh/an par kWc installé` : 'Production spécifique en cours de calcul'}
+        </div>
+        <p className="mt-1 text-[9.5px] text-txt-dim">{src['gisement']}</p>
+      </div>
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+        <p className="font-mono text-[10px] tracking-widest text-txt-dim">FACTURE ÉLECTRIQUE — ESTIMATION STATISTIQUE</p>
+        <div className="mt-1 text-sm font-bold text-txt-hi">{facture != null ? `~${facture} €/mois` : '—'}</div>
+        {sol['conso_est_kwh_an'] != null && <div className="text-[11px] text-txt-mut">{String(sol['conso_est_kwh_an'])} kWh/an estimés</div>}
+        <p className="mt-1 text-[9.5px] text-txt-dim">{src['facture']}</p>
+      </div>
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+        <p className="font-mono text-[10px] tracking-widest text-txt-dim">ORIENTATION DU BÂTI</p>
+        <div className="mt-1 text-xs text-txt">
+          {azimut != null ? <>Grand axe à <b>{Math.round(azimut)}°</b> (confiance {String(sol['azimut_confiance'] ?? '—')})</> : 'Bâti non significatif ou absent'}
+        </div>
+        <p className="mt-1 text-[9.5px] text-txt-dim">{src['azimut']}</p>
+      </div>
+      {badges.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {badges.map(([label, color, title]) => (
+            <span key={label} title={title} className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+              style={{ background: `${color}22`, color }}>{label}</span>
+          ))}
+        </div>
+      )}
+      {sol['proba_proprio_occupant'] != null && (
+        <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+          Probabilité propriétaire-occupant : <b className="text-txt">{String(sol['proba_proprio_occupant'])}/100</b>
+          <span className="text-txt-dim"> (statistique — carreau INSEE + mutation récente)</span>
+        </div>
+      )}
+      {aper.length > 0 && aper.map((a, i) => (
+        <div key={i} className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2 text-[11px] text-st-ecartee">
+          ● Parking APER {String(a['surface_m2'])} m² — échéance {String(a['echeance'])}
+          {a['statut'] === 'depassee' ? ' DÉPASSÉE' : ''} · sanction jusqu\'à {String(a['sanction_eur_an'])} €/an
+        </div>
+      ))}
+      <p className="text-[9.5px] text-txt-dim">{src['aper']}</p>
+    </div>
+  )
+}
+
 // Onglet BILAN — le moteur de faisabilité/bilan EXISTANT, enfin exposé (P0 revue Vic).
 function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
@@ -516,9 +593,10 @@ function PatrimoineLink({ siren }: { siren: string }) {
   )
 }
 
-const TABS: { k: 'synthese' | Onglet | 'bilan'; label: string }[] = [
+const TABS: { k: 'synthese' | Onglet | 'bilan' | 'solaire'; label: string }[] = [
   { k: 'synthese', label: 'Synthèse' }, { k: 'regles', label: 'Règles' }, { k: 'risques', label: 'Risques' },
-  { k: 'marche', label: 'Marché' }, { k: 'proprio', label: 'Proprio' }, { k: 'bilan', label: 'Bilan' },
+  { k: 'marche', label: 'Marché' }, { k: 'proprio', label: 'Proprio' }, { k: 'solaire', label: 'Solaire' },
+  { k: 'bilan', label: 'Bilan' },
 ]
 
 export function Fiche({ idu }: { idu: string }) {
@@ -537,7 +615,7 @@ export function Fiche({ idu }: { idu: string }) {
     return () => window.removeEventListener('keydown', h)
   }, [select])
   void sourceLine
-  const [tab, setTab] = useState<'synthese' | Onglet | 'bilan'>('synthese')
+  const [tab, setTab] = useState<'synthese' | Onglet | 'bilan' | 'solaire'>('synthese')
   const [iaOpen, setIaOpen] = useState(false)
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
@@ -737,6 +815,7 @@ export function Fiche({ idu }: { idu: string }) {
               : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
           </div>
         )}
+        {!fq && f && tab === 'solaire' && <SolaireTab idu={idu} />}
         {!fq && f && tab === 'bilan' && <BilanTab idu={idu} />}
       </div>
 

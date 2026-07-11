@@ -161,14 +161,45 @@ FILTERS: dict[str, FilterDef] = {f.cle: f for f in [
               groupe="Équipements", requires=("parcel_equipements",),
               description="Panneaux photovoltaïques détectés sur orthophoto.",
               mandat="Détection Ortho"),
-    # ── Solaire (mandat Habitat Solaire — pas encore ingéré) ──
-    FilterDef("score_solaire", "Score solaire", "range", "sol.score", joins=("sol",),
-              unite="/100", groupe="Énergie", requires=("parcel_solar",),
-              description="Gisement solaire de la toiture.", mandat="Habitat Solaire"),
+    # ── Solaire (mandat Habitat Solaire) ──
+    FilterDef("score_solaire", "Score solaire", "range", "sol.score_solaire", joins=("sol",),
+              unite="/100", groupe="Énergie",
+              requires=("parcel_solar.score_solaire",), requires_rows="parcel_solar",
+              description="Gisement solaire (percentile île, PVGIS — Commission européenne).",
+              mandat="Habitat Solaire"),
     FilterDef("facture_elec_estimee_eur", "Facture électrique estimée", "range",
-              "sol.facture_estimee", joins=("sol",), unite="€/an", groupe="Énergie",
-              requires=("parcel_solar",),
-              description="Facture électricité estimée du ménage.", mandat="Habitat Solaire"),
+              "(sol.facture_est_eur_mois * 12)", joins=("sol",), unite="€/an", groupe="Énergie",
+              requires=("parcel_solar.facture_est_eur_mois",), requires_rows="parcel_solar",
+              description="Facture électricité ESTIMÉE (statistique, jamais une donnée réelle).",
+              mandat="Habitat Solaire"),
+    FilterDef("flag_topo_ombrage", "Ombrage topographique (cirque/rempart)", "bool",
+              "coalesce(sol.flag_topo_ombrage, false)", joins=("sol",), groupe="Énergie",
+              requires=("parcel_solar.flag_topo_ombrage",), requires_rows="parcel_solar",
+              description="Production < 80 % de la médiane communale (relief PVGIS) — "
+                          "à exclure d'une prospection solaire.", mandat="Habitat Solaire"),
+    FilterDef("pv_existant", "PV existant (proxy)", "enum", "sol.pv_existant",
+              joins=("sol",), groupe="Énergie",
+              requires=("parcel_solar.pv_existant",), requires_rows="parcel_solar",
+              enum_values=("commune_forte_densite", "detecte"),
+              description="Équipement PV probable : commune du top quartile de densité "
+                          "de petites installations (registre national), ou détecté "
+                          "(mandat Détection Ortho).", mandat="Habitat Solaire"),
+    FilterDef("repowering", "Repowering (contrat d'achat en fin de vie)", "bool",
+              "coalesce(sol.repowering, false)", joins=("sol",), groupe="Énergie",
+              requires=("parcel_solar.repowering",), requires_rows="parcel_solar",
+              description="Installation 2006-2013 rattachée : contrat d'achat 20 ans "
+                          "arrivant à échéance 2026-2033.", mandat="Habitat Solaire"),
+    FilterDef("flag_amiante", "Bâti pré-1997 (amiante à vérifier)", "bool",
+              "coalesce(sol.flag_amiante, false)", joins=("sol",), groupe="Bâti",
+              requires=("parcel_solar.flag_amiante",), requires_rows="parcel_solar",
+              description="Bâti antérieur à 1997 au DPE — signal de PRUDENCE commerciale "
+                          "(risque amiante toiture), jamais un diagnostic.",
+              mandat="Habitat Solaire"),
+    FilterDef("proba_proprio_occupant", "Probabilité propriétaire-occupant", "range",
+              "sol.proba_proprio_occupant", joins=("sol",), unite="/100", groupe="Contexte",
+              requires=("parcel_solar.proba_proprio_occupant",), requires_rows="parcel_solar",
+              description="Score statistique 5-95 : carreau Filosofi 200 m + bonus mutation "
+                          "récente sur maison. Jamais nominatif.", mandat="Habitat Solaire"),
     # ── Végétation / ANC (mandat ANC & Végétation — pas encore ingéré) ──
     FilterDef("ombrage_vegetal", "Ombrage végétal", "range", "veg.ombrage_pct",
               joins=("veg",), unite="%", groupe="Végétation", requires=("parcel_vegetation",),
@@ -257,6 +288,10 @@ SORTS: dict[str, SortDef] = {s.cle: s for s in [
     SortDef("residuel_desc", "Emprise résiduelle décroissante",
             "rb.emprise_residuelle_m2 DESC NULLS LAST", ("rb",), "parcel_residuel_bati"),
     SortDef("surface_desc", "Surface de parcelle décroissante", "p.surface_m2 DESC"),
+    SortDef("score_solaire_desc", "Score solaire décroissant",
+            "sol.score_solaire DESC NULLS LAST", ("sol",), "parcel_solar"),
+    SortDef("facture_desc", "Facture estimée décroissante",
+            "sol.facture_est_eur_mois DESC NULLS LAST", ("sol",), "parcel_solar"),
 ]}
 
 # ── Colonnes d'export « à l'occupant » (RGPD : JAMAIS de nom de personne physique) ──
@@ -285,6 +320,15 @@ EXPORT_COLS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "zonage_plu": ("Classe de zone PLU", _ZONE_EXPR, ("zc",)),
     "proprio_occupant_pct": ("Ménages propriétaires du carreau (%)",
                              "round(fil.prop_pct)", ("fil",)),
+    # ── Habitat Solaire ──
+    "score_solaire": ("Score solaire (/100)", "sol.score_solaire", ("sol",)),
+    "prod_spec": ("Production spécifique (kWh/kWc/an)",
+                  "round(sol.prod_spec_kwh_kwc)", ("sol",)),
+    "facture_estimee": ("Facture élec. ESTIMÉE (€/mois)", "sol.facture_est_eur_mois", ("sol",)),
+    "azimut_bati": ("Azimut du bâti (°, nord optimal)",
+                    "round(sol.azimut_bati_deg::numeric)", ("sol",)),
+    "proba_proprio_occupant": ("Proprio-occupant (probabilité /100)",
+                               "sol.proba_proprio_occupant", ("sol",)),
 }
 
 # Jointures/colonnes utilisées par une colonne d'export dont la source manque → colonne omise.
@@ -297,6 +341,9 @@ _EXPORT_REQUIRES: dict[str, str] = {
     "pente_moy_deg": "pente_moy_deg", "emprise_residuelle_m2": "emprise_residuelle_m2",
     "surelevation_possible": "surelevation_possible", "confiance_residuel": "emprise_residuelle_m2",
     "zonage_plu": "zonage_plu", "proprio_occupant_pct": "proprio_occupant_pct",
+    "score_solaire": "score_solaire", "prod_spec": "score_solaire",
+    "facture_estimee": "facture_elec_estimee_eur", "azimut_bati": "score_solaire",
+    "proba_proprio_occupant": "proba_proprio_occupant",
 }
 
 

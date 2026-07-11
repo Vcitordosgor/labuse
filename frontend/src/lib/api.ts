@@ -122,6 +122,11 @@ export const modPromesses = (months: number) => j<Record<string, unknown>>(`/mod
 export const modVelocite = () => j<{ note: string; communes: Record<string, unknown>[] }>('/modules/velocite')
 export const modBailleur = () => j<Record<string, unknown>>(`/modules/bailleur?${cq()}`)
 export const modFantome = () => j<Record<string, unknown>>(`/modules/fantome?${cq()}`)
+// Habitat Solaire (mandat habitat-solaire)
+export const getSolaireFiche = (idu: string) => j<Record<string, unknown>>(`/solaire/fiche/${idu}`)
+export const modSolaireParkings = (tranche?: string | null) =>
+  j<Record<string, unknown>>(`/solaire/parkings${tranche ? `?tranche=${tranche}` : ''}`)
+export const modSolaireTertiaire = () => j<Record<string, unknown>>('/solaire/tertiaire')
 export const modCourriers = (idus: string[], contexte: string) =>
   j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, contexte }) })

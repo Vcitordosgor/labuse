@@ -31,6 +31,10 @@ export const MODULES: ModuleDef[] = [
   // ── Détecter le foncier ──
   { key: 'programme', num: 'M22', group: 'detecter', phare: true,
     label: 'Faisabilité programme', desc: 'Décrivez votre programme, LABUSE trouve où le poser' },
+  { key: 'parkings-aper', num: 'M23', group: 'detecter', phare: true,
+    label: 'Parkings APER', desc: 'Ombrières obligatoires : parkings > 1 000 m², échéances légales, propriétaires' },
+  { key: 'toitures-tertiaires', num: 'M24', group: 'detecter',
+    label: 'Toitures tertiaires', desc: 'Grandes toitures × santé financière du propriétaire — le B2B solaire' },
   { key: 'division', num: 'M01', group: 'detecter', phare: true,
     label: 'Division parcellaire', desc: 'Repérez les grands terrains où détacher un lot à bâtir' },
   { key: 'fantome', num: 'M07', group: 'detecter', phare: true,
