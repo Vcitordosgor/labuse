@@ -50,9 +50,23 @@ def get_db():
 
 @router.get("/validation/api/suivante")
 def suivante(type: str = "piscine", profil: str | None = None,
-             db: Session = Depends(get_db)) -> dict:
-    """profil=strict : tire UNIQUEMENT au-dessus du seuil retenu (session de
-    confirmation) ; l'arrêt au quota est géré par la page (compteur de session)."""
+             quota: int | None = None, db: Session = Depends(get_db)) -> dict:
+    """Tire une vignette aléatoire non validée ; avec `profil`, la file est filtrée
+    ET l'arrêt au quota est CÔTÉ SERVEUR (compteur persistant `valide_profil` —
+    survit aux rechargements de page, demande Vic 11/07)."""
+    db.execute(text(
+        "ALTER TABLE ortho_detections ADD COLUMN IF NOT EXISTS valide_profil varchar(16)"))
+    quota_cfg = int(load_yaml_config("detection_ortho")
+                    .get("validation", {}).get("quota_session", 100))
+    quota = quota if quota is not None else quota_cfg
+    if profil:
+        faites = db.execute(text(
+            "SELECT count(*) FROM ortho_detections WHERE valide_profil = :pr"
+            " AND type = :t"), {"pr": profil, "t": type}).scalar_one()
+        if faites >= quota:
+            stats = _stats(db, type, profil=profil)
+            return {"fini": True, "quota_atteint": True, "quota": quota,
+                    "faites_profil": faites, **stats}
     where, params = "", {"t": type}
     if profil == "strict" and type == "piscine":
         where = " AND " + SQL_PROFIL_STRICT
@@ -74,24 +88,30 @@ def suivante(type: str = "piscine", profil: str | None = None,
         WHERE d.type = :t AND d.validation IS NULL{where}
         ORDER BY random() LIMIT 1
     """), params).mappings().first()
-    stats = _stats(db, type)
-    stats["quota_session"] = int(load_yaml_config("detection_ortho")
-                                 .get("validation", {}).get("quota_session", 100))
+    stats = _stats(db, type, profil=profil)
+    stats["quota_session"] = quota
     if row is None:
-        return {"fini": True, **stats}
+        return {"fini": True, "quota_atteint": False, **stats}
     return {"fini": False, "id": row["id"], "surface_m2": row["surface_m2"],
             "confiance": row["confiance"], "commune": row["commune"],
             "criteres": row["criteres"], **stats}
 
 
-def _stats(db: Session, type_: str) -> dict:
-    ok, fp = db.execute(text(
+def _stats(db: Session, type_: str, profil: str | None = None) -> dict:
+    ok, fp, fp_prof, ok_prof = db.execute(text(
         "SELECT count(*) FILTER (WHERE validation = 'ok'),"
-        " count(*) FILTER (WHERE validation = 'faux_positif')"
-        " FROM ortho_detections WHERE type = :t"), {"t": type_}).one()
+        " count(*) FILTER (WHERE validation = 'faux_positif'),"
+        " count(*) FILTER (WHERE validation = 'faux_positif' AND valide_profil = :pr),"
+        " count(*) FILTER (WHERE validation = 'ok' AND valide_profil = :pr)"
+        " FROM ortho_detections WHERE type = :t"), {"t": type_, "pr": profil}).one()
     total = ok + fp
-    return {"valides": total, "ok": ok, "faux_positifs": fp,
-            "precision": round(ok / total, 3) if total else None, "objectif": 200}
+    out = {"valides": total, "ok": ok, "faux_positifs": fp,
+           "precision": round(ok / total, 3) if total else None}
+    if profil:
+        tp = ok_prof + fp_prof
+        out.update(faites_profil=tp, ok_profil=ok_prof,
+                   precision_profil=round(ok_prof / tp, 3) if tp else None)
+    return out
 
 
 @router.get("/validation/api/vignette/{det_id}.jpg")
@@ -159,6 +179,7 @@ def equipements(idu: str, db: Session = Depends(get_db)) -> dict:
 
 class VerdictIn(BaseModel):
     verdict: str  # 'ok' | 'faux_positif'
+    profil: str | None = None  # tag de session (quota serveur)
 
 
 @router.post("/validation/api/{det_id}")
@@ -166,8 +187,8 @@ def valider(det_id: int, body: VerdictIn, db: Session = Depends(get_db)) -> dict
     if body.verdict not in ("ok", "faux_positif"):
         raise HTTPException(422, "verdict : ok | faux_positif")
     n = db.execute(text(
-        "UPDATE ortho_detections SET validation = :v WHERE id = :i"),
-        {"v": body.verdict, "i": det_id}).rowcount
+        "UPDATE ortho_detections SET validation = :v, valide_profil = :pr WHERE id = :i"),
+        {"v": body.verdict, "pr": body.profil, "i": det_id}).rowcount
     if not n:
         raise HTTPException(404)
     db.commit()
@@ -188,30 +209,42 @@ _PAGE = """<!doctype html><html lang="fr"><head><meta charset="utf-8">
  .bar>div{height:100%;background:#5ce6a1}
  kbd{background:#16211b;border-radius:4px;padding:1px 6px;font-size:11px}
 </style></head><body>
-<h3 style="margin:0">Validation piscines — ortho IGN __MILLESIME__ <span class="meta">(qualification commerciale)</span></h3>
+<h3 style="margin:0">Validation <span id="mode">…</span> — ortho IGN __MILLESIME__ <span class="meta">(qualification commerciale)</span></h3>
 <div class="bar"><div id="prog" style="width:0%"></div></div>
 <div class="meta" id="stats">…</div>
 <img id="vig" alt="vignette" src="">
 <div class="meta" id="meta"></div>
 <div class="btns">
-  <button class="ok" onclick="verdict('ok')">✓ Piscine <kbd>O</kbd></button>
+  <button class="ok" onclick="verdict('ok')">✓ Vrai <kbd>O</kbd></button>
   <button class="fp" onclick="verdict('faux_positif')">✗ Faux positif <kbd>F</kbd></button>
   <button class="skip" onclick="suivante()">Passer <kbd>espace</kbd></button>
 </div>
 <script>
-let cur=null, faites=0, quota=null;
+let cur=null;
 const params=new URLSearchParams(location.search);
 const profil=params.get('profil')||'';
+const type=params.get('type')||'piscine';
+const quotaUrl=params.get('quota');
+const libelles={bande:"bande d'incertitude du juge",juge:'CERTIFICATION (100 fraîches au-dessus du juge)',strict:'profil strict V0'};
+document.getElementById('mode').textContent=(type==='pv'?'PV':'piscines')+(profil?` · ${libelles[profil]??profil}`:' · file brute');
 async function suivante(){
-  const d=await (await fetch('/ortho/validation/api/suivante?type=piscine'+(profil?`&profil=${profil}`:''))).json();
-  quota = +(params.get('quota')||d.quota_session||100);
+  let url=`/ortho/validation/api/suivante?type=${type}`;
+  if(profil)url+=`&profil=${profil}`;
+  if(quotaUrl)url+=`&quota=${quotaUrl}`;
+  const d=await (await fetch(url)).json();
+  const quota=d.quota_session??+(quotaUrl||100);
+  const faites=d.faites_profil??0;
   const prec=d.precision==null?'—':(100*d.precision).toFixed(1)+' %';
-  document.getElementById('stats').innerHTML=
-    `session <b>${faites}</b>/${quota}${profil?` (profil ${profil})`:''} · total ${d.valides} · OK ${d.ok} · FP ${d.faux_positifs} · précision globale <b>${prec}</b>`;
-  document.getElementById('prog').style.width=Math.min(100,100*faites/quota)+'%';
-  if(faites>=quota){cur=null;document.getElementById('meta').innerHTML='<b>Quota de session atteint — merci !</b> Tu peux fermer.';
+  const precP=d.precision_profil==null?'—':(100*d.precision_profil).toFixed(1)+' %';
+  document.getElementById('stats').innerHTML= profil
+    ? `session <b>${faites}</b>/${quota} · précision session <b>${precP}</b> · (historique total ${d.valides}, ${prec})`
+    : `total ${d.valides} · OK ${d.ok} · FP ${d.faux_positifs} · précision <b>${prec}</b>`;
+  document.getElementById('prog').style.width=Math.min(100,100*faites/Math.max(1,quota))+'%';
+  if(d.quota_atteint){cur=null;
+    document.getElementById('meta').innerHTML=`<b>Quota de ${quota} atteint — merci !</b> Précision de la session : <b>${precP}</b>. Tu peux fermer.`;
     document.getElementById('vig').src='';return}
-  if(d.fini){document.getElementById('meta').textContent='Plus rien à valider dans ce profil.';return}
+  if(d.fini){cur=null;document.getElementById('vig').src='';
+    document.getElementById('meta').textContent='Plus rien à valider dans cette file.';return}
   cur=d.id;
   document.getElementById('vig').src=`/ortho/validation/api/vignette/${d.id}.jpg`;
   document.getElementById('meta').innerHTML=
@@ -219,8 +252,8 @@ async function suivante(){
 }
 async function verdict(v){ if(cur==null)return;
   await fetch(`/ortho/validation/api/${cur}`,{method:'POST',
-    headers:{'Content-Type':'application/json'},body:JSON.stringify({verdict:v})});
-  faites+=1;
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({verdict:v, profil: profil||null})});
   suivante();
 }
 document.addEventListener('keydown',e=>{
