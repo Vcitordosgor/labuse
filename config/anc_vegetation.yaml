@@ -59,7 +59,12 @@ vegetation:
     wms_layer: "IGNF_LIDAR-HD_MNH_ELEVATION.ELEVATIONGRIDCOVERAGE.RGR92UTM40S"
     pixels: 512                     # 512 m → 1 m/px
   seuils:
-    ndvi_canopee: 0.5               # masque canopée : NDVI >= seuil
+    # CALIBRÉ le 11/07/2026 (défaut mandat 0.5 = NDVI réflectance vraie) : le pseudo-NDVI
+    # depuis l'IRC WMS JPEG est compressé — NDVI médian des pixels MNH>3 m mesuré à 0,32
+    # (5 tuiles, 465 k px). À 0,5 on ne garde que 8 % de la canopée réelle ; à 0,3 on en
+    # garde 56 % (le reste = toits, exclus voulus). L'herbe/canne contaminée par 0,3 est
+    # neutralisée par la condition MNH > 3 m.
+    ndvi_canopee: 0.3               # masque canopée : NDVI >= seuil
     hauteur_vegetation_haute_m: 3.0 # ∧ MNH > seuil
     bande_limite_m: 3.0             # bande intérieure le long des limites parcellaires
     buffer_bati_m: 8.0              # buffer autour de l'emprise bâtie (V0 omnidirectionnel)

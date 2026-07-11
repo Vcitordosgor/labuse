@@ -2013,3 +2013,54 @@ def anc_cmd(
             typer.echo(f"✓ calage Office de l'eau : {anc.calage_office_eau(s)}")
         if etape in ("signal", "tout"):
             typer.echo(f"✓ signal anc_mutation : {anc.signal_mutation(s)}")
+
+
+@app.command("vegetation-irc")
+def vegetation_irc_cmd(
+    limit: int = typer.Option(None, help="Nb max de tuiles (tests)."),
+) -> None:
+    """Lot B1 (wave ANC & Végétation) : acquisition BD ORTHO IRC sur la grille ortho
+    existante (5 041 tuiles, cache séparé, checkpoint irc_acquise_at). Relançable."""
+    from .ingestion import vegetation
+
+    with session_scope() as s:
+        res = vegetation.acquire_irc(s, limit=limit, log=typer.echo)
+    typer.echo(f"✓ acquisition IRC : {res}")
+
+
+@app.command("vegetation")
+def vegetation_cmd(
+    etape: str = typer.Option("tout", help="tuiles | finalize | flags | signal | tout"),
+    limit: int = typer.Option(None, help="Nb max de tuiles (tests)."),
+) -> None:
+    """Lot B2-B3 (wave ANC & Végétation) : NDVI (IRC) × MNH LiDAR HD streamé par tuile,
+    agrégats canopée par parcelle (parcelle / bande limite 3 m / buffer bâti 8 m),
+    flag_ombrage_vegetal (solaire) + signal vegetation_haute_limite. Relançable."""
+    from .ingestion import vegetation
+
+    with session_scope() as s:
+        if etape in ("tuiles", "tout"):
+            typer.echo(f"✓ tuiles : {vegetation.process_tiles(s, limit=limit, log=typer.echo)}")
+        if etape in ("finalize", "tout"):
+            typer.echo(f"✓ agrégats : {vegetation.finalize(s, log=typer.echo)}")
+            sanity = vegetation.sanity_est_ouest(s)
+            typer.echo(f"  sanity Est > Ouest : {sanity}")
+            if not sanity["ok"]:
+                typer.echo("✗ SANITY : NDVI Est ≤ Ouest — inversion de canaux probable, INVESTIGUER.")
+                raise typer.Exit(1)
+        if etape in ("flags", "tout"):
+            typer.echo(f"✓ flag_ombrage_vegetal : {vegetation.flag_solaire(s)}")
+        if etape in ("signal", "tout"):
+            typer.echo(f"✓ signal vegetation_haute_limite : {vegetation.signal_vegetation(s)}")
+
+
+@app.command("vegetation-validation")
+def vegetation_validation_cmd() -> None:
+    """Session de validation Vic : 20 vignettes « végétation haute en limite » dans
+    l'outil ortho (quota CÔTÉ SERVEUR, anti-rafale) — re-télécharge les seules tuiles
+    RVB nécessaires aux vignettes (cache purgé)."""
+    from .ingestion import vegetation
+
+    with session_scope() as s:
+        res = vegetation.preparer_validation(s, log=typer.echo)
+    typer.echo(f"✓ session prête : {res['vignettes']} vignettes — `labuse api` puis {res['url']}")

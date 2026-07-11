@@ -248,8 +248,9 @@ const profil=params.get('profil')||('session-'+type);   // session TOUJOURS tagu
 const quotaUrl=params.get('quota');
 let pret=false, dernierVerdict=0;
 document.getElementById('vig').addEventListener('load',()=>{pret=true});
-const libelles={bande:"bande d'incertitude du juge",juge:'CERTIFICATION (100 fraîches au-dessus du juge)',strict:'profil strict V0'};
-document.getElementById('mode').textContent=(type==='pv'?'PV':'piscines')+(profil?` · ${libelles[profil]??profil}`:' · file brute');
+const libelles={bande:"bande d'incertitude du juge",juge:'CERTIFICATION (100 fraîches au-dessus du juge)',strict:'profil strict V0',vegetation:'canopée haute (> 3 m) en limite — la PARCELLE est entourée en rouge'};
+const typeLabels={pv:'PV',piscine:'piscines',vegetation:'végétation'};
+document.getElementById('mode').textContent=(typeLabels[type]??type)+(profil?` · ${libelles[profil]??profil}`:' · file brute');
 async function suivante(){
   let url=`/ortho/validation/api/suivante?type=${type}`;
   if(profil)url+=`&profil=${profil}`;
