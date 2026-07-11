@@ -1785,3 +1785,17 @@ def solaire_parkings_cmd() -> None:
         s.execute(text("UPDATE data_sources SET last_sync_at = now() "
                        "WHERE name = 'Parkings OSM (loi APER)'"))
     typer.echo(f"✓ Parkings APER : {res}")
+
+
+@app.command("solaire-pv-registry")
+def solaire_pv_registry_cmd() -> None:
+    """Lot 4 (habitat-solaire) : registre national des installations (extrait 974,
+    EDF SEI/ODRÉ) → pv_registry, communes à forte densité de petites installations,
+    vivier repowering 2006-2013 (contrats d'achat 20 ans en fin de vie)."""
+    from .ingestion import solaire_pv_registry
+
+    with session_scope() as s:
+        res = solaire_pv_registry.run(s, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
+                       "WHERE name = 'Registre national des installations (ODRÉ)'"))
+    typer.echo(f"✓ Registre PV : {res}")
