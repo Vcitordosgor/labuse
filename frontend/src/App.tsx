@@ -32,8 +32,10 @@ function IaRestitution() {
     const t0 = performance.now()
     let raf = 0
     const tick = (ts: number) => {
-      const p = Math.min(1, (ts - t0) / 900)
-      setCount(Math.round(n * (1 - Math.pow(1 - p, 3))))
+      // clamp bas : le 1er timestamp rAF peut PRÉCÉDER t0 (début de frame) → p négatif
+      // → compteur négatif affiché (« -9 parcelles »), figé si la carte affame les frames.
+      const p = Math.min(1, Math.max(0, (ts - t0) / 900))
+      setCount(Math.max(0, Math.round(n * (1 - Math.pow(1 - p, 3)))))
       if (p < 1) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
