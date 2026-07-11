@@ -1,0 +1,8 @@
+# LA BUSE — dépendances ML de la cascade de juges ortho (mandat Détection Ortho).
+# Séparées du cœur car lourdes (~2 Go) et inutiles à `labuse api` : elles ne sont
+# tirées que par `labuse ortho-juge-probe` / `ortho-juge-vlm` (probe DINOv2 gelé +
+# régression logistique). Installer avec :  pip install -r requirements-ml.txt
+#
+# -r requirements.txt   # (le cœur, si environnement vierge)
+torch>=2.2
+scikit-learn>=1.4
