@@ -1799,3 +1799,15 @@ def solaire_pv_registry_cmd() -> None:
         s.execute(text("UPDATE data_sources SET last_sync_at = now() "
                        "WHERE name = 'Registre national des installations (ODRÉ)'"))
     typer.echo(f"✓ Registre PV : {res}")
+
+
+@app.command("solaire-grid-capacity")
+def solaire_grid_capacity_cmd() -> None:
+    """Lot 7 (habitat-solaire, best effort) : capacités d'accueil réseau EDF SEI
+    par poste source (S3REnR). Géométries des postes NON publiées (sécurité) —
+    capacités seules, geom NULL."""
+    from .ingestion import solaire_grid_capacity
+
+    with session_scope() as s:
+        res = solaire_grid_capacity.ingest(s)
+    typer.echo(f"✓ Capacités réseau : {res}")
