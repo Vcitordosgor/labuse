@@ -1700,3 +1700,39 @@ def nl_eval_cmd(
         typer.echo(f"  ✗ {q}\n    attendu {att} · obtenu {obt}")
     if ok < 16:
         raise typer.Exit(1)
+
+
+# ───────────────────────────── Mandat Habitat Solaire ─────────────────────────────
+
+@app.command("solaire-pvgis")
+def solaire_pvgis_cmd(
+    rebuild: bool = typer.Option(False, "--rebuild", help="Reconstruit la grille (repart de zéro)."),
+    rps: float = typer.Option(None, help="Requêtes/s vers PVGIS (défaut settings, 10)."),
+    limit: int = typer.Option(None, help="Nb max de points à récupérer (tests)."),
+) -> None:
+    """Lot 1 (habitat-solaire) : baseline PVGIS — grille ~400 m, E_y par point (SARAH3,
+    horizon topo intégré), interpolation IDW → parcel_solar + score percentile île.
+    One-shot LONG (~17 000 appels à 10 req/s ≈ 30 min), relançable sans perte."""
+    from .ingestion import solaire_pvgis
+
+    with session_scope() as s:
+        res = solaire_pvgis.run(s, rebuild=rebuild, rps=rps, limit=limit, log=typer.echo)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
+                       "WHERE name = 'PVGIS (Commission européenne)'"))
+    typer.echo(f"✓ PVGIS : {res}")
+    sanity = res.get("sanity")
+    if sanity and not sanity["ouest_sup_est"]:
+        typer.echo("✗ SANITY CHECK PHYSIQUE EN ÉCHEC : médiane Ouest ≤ Est — INVESTIGUER (mandat Lot 1).")
+        raise typer.Exit(1)
+
+
+@app.command("solaire-flags")
+def solaire_flags_cmd() -> None:
+    """Lot 5 (habitat-solaire) : flags de qualification — amiante (DPE pré-1997),
+    ABF (cascade), azimut du bâti (BD TOPO), proba propriétaire-occupant
+    (Filosofi 200 m + bonus mutation DVF). Zéro ingestion, pures dérivations."""
+    from .ingestion import solaire_flags
+
+    with session_scope() as s:
+        res = solaire_flags.run(s, log=typer.echo)
+    typer.echo(f"✓ Flags solaire : {res}")
