@@ -67,6 +67,15 @@ class Settings(BaseSettings):
     # Auth & Plans » remplacera plan_defaut par le plan du compte connecté) ──
     quota_fiches_jour: int = 300          # consultations de fiches parcelle / jour / sujet
     rate_limit_rpm: int = 60              # requêtes / minute / sujet (endpoints métier)
+    # Exemption DEV de la protection (audit local, crawl QA). ⚠ JAMAIS d'exemption
+    # « localhost » : derrière nginx sur un VPS, TOUT le trafic arrive en 127.0.0.1 et une
+    # telle exemption tuerait la protection en prod. En prod derrière proxy de confiance,
+    # l'IP réelle vient de X-Forwarded-For (voir trusted_proxies).
+    dev_mode: bool = False                # LABUSE_DEV_MODE=1 → quotas/rate-limit désactivés
+    # IPs des proxys de confiance (séparées par des virgules, ex. "127.0.0.1"). Quand le
+    # pair TCP est l'un d'eux, le sujet anti-scraping = 1er hop non-proxy de X-Forwarded-For
+    # (en partant de la droite : la partie gauche de l'en-tête est forgeable par le client).
+    trusted_proxies: str = ""
     rate_burst_gel: int = 3               # bursts le même jour avant gel + alerte admin
     abuse_alert_seuil: int = 60           # score abuse_scores déclenchant l'alerte
     nl_quota_jour: int = 30               # requêtes de recherche NL / jour / sujet (Lot 6)

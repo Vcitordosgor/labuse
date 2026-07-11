@@ -116,3 +116,65 @@ def test_abuse_scan_sequences_regulieres(db_session, engine):
     sc = res["scores"]["s:robot"]
     assert sc["seq_idu_max"] >= 10 and sc["score"] >= 60
     assert res["alertes"] >= 1
+
+
+# ── Phase A audit UI (11/07) : exemption dev + IP réelle derrière proxy ──────────────────
+
+def test_dev_mode_exempte_rate_limit_et_quota(client, monkeypatch):
+    """LABUSE_DEV_MODE=1 → ni rate-limit ni quota (audit/crawl local). Le flag est
+    EXPLICITE : jamais d'exemption localhost (derrière nginx tout arrive en 127.0.0.1)."""
+    monkeypatch.setenv("LABUSE_RATE_LIMIT_RPM", "5")
+    monkeypatch.setenv("LABUSE_QUOTA_FICHES_JOUR", "3")
+    monkeypatch.setenv("LABUSE_DEV_MODE", "1")
+    from labuse import config
+    config.get_settings.cache_clear()
+
+    for _ in range(25):                       # 25 req > 5 rpm : aucun 429
+        assert client.get("/discover").status_code != 429
+    for i in range(8):                        # 8 fiches distinctes > quota 3 : aucun 429
+        assert client.get(f"/parcels/97416000AA00{i:02d}").status_code != 429
+
+
+def test_dev_mode_absent_la_garde_reste_active(client, monkeypatch):
+    """Sans le flag, le rate-limit répond bien 429 (la garde n'est pas cassée par l'ajout)."""
+    monkeypatch.setenv("LABUSE_RATE_LIMIT_RPM", "5")
+    monkeypatch.delenv("LABUSE_DEV_MODE", raising=False)
+    from labuse import config
+    config.get_settings.cache_clear()
+
+    for _ in range(6):
+        client.get("/discover")
+    assert client.get("/discover").status_code == 429
+
+
+class _ReqStub:
+    def __init__(self, peer, xff=None):
+        self.client = type("C", (), {"host": peer})()
+        self.headers = {"x-forwarded-for": xff} if xff else {}
+        self.cookies = {}
+
+
+def test_ip_reelle_sans_proxy_de_confiance(monkeypatch):
+    """Pair inconnu → IP du pair, X-Forwarded-For IGNORÉ (en-tête forgeable)."""
+    monkeypatch.delenv("LABUSE_TRUSTED_PROXIES", raising=False)
+    from labuse import config
+    from labuse.api import protection
+    config.get_settings.cache_clear()
+    assert protection.ip_reelle(_ReqStub("203.0.113.7", xff="1.2.3.4")) == "203.0.113.7"
+
+
+def test_ip_reelle_derriere_proxy_de_confiance(monkeypatch):
+    """Pair = proxy de confiance → 1er hop non-proxy DEPUIS LA DROITE de X-Forwarded-For
+    (la gauche est forgeable : un client qui envoie son propre XFF ne choisit pas son IP)."""
+    monkeypatch.setenv("LABUSE_TRUSTED_PROXIES", "127.0.0.1, 10.0.0.2")
+    from labuse import config
+    from labuse.api import protection
+    config.get_settings.cache_clear()
+    # chaîne : client réel 203.0.113.7 → proxy 10.0.0.2 → nginx 127.0.0.1 → app
+    assert protection.ip_reelle(
+        _ReqStub("127.0.0.1", xff="6.6.6.6, 203.0.113.7, 10.0.0.2")) == "203.0.113.7"
+    # XFF forgé entièrement par un pair NON proxy : ignoré
+    assert protection.ip_reelle(_ReqStub("198.51.100.9", xff="127.0.0.1")) == "198.51.100.9"
+    # proxy de confiance sans XFF : on retombe sur le pair (pas de crash)
+    assert protection.ip_reelle(_ReqStub("127.0.0.1")) == "127.0.0.1"
+    config.get_settings.cache_clear()
