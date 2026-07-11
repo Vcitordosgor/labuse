@@ -126,6 +126,26 @@ def vignette(det_id: int, db: Session = Depends(get_db)) -> Response:
                     headers={"Cache-Control": "no-store"})
 
 
+@router.get("/equipements/{idu}")
+def equipements(idu: str, db: Session = Depends(get_db)) -> dict:
+    """Badges fiche parcelle (Lot 6) : piscine, PV, CES, pente — sourcés ortho IGN."""
+    row = db.execute(text("""
+        SELECT pe.piscine, round(pe.piscine_surface_m2) AS piscine_m2,
+               pe.piscine_confiance, pe.pv_detecte, round(pe.pv_surface_m2) AS pv_m2,
+               pe.pv_probable_ces,
+               t.pente_moy_deg, t.pente_non_batie_deg, t.flag_terrassement_lourd
+        FROM parcels p
+        LEFT JOIN parcel_equipements pe ON pe.idu = p.idu
+        LEFT JOIN parcel_terrain t ON t.idu = p.idu
+        WHERE p.idu = :idu
+    """), {"idu": idu}).mappings().first()
+    if row is None:
+        raise HTTPException(404)
+    return {**dict(row), "millesime": MILLESIME,
+            "source": f"Détection automatique sur orthophotographie IGN {MILLESIME} — "
+                      "fiabilité statistique, non contractuelle. © IGN (Licence Ouverte)."}
+
+
 class VerdictIn(BaseModel):
     verdict: str  # 'ok' | 'faux_positif'
 

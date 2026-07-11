@@ -127,6 +127,7 @@ export const getSolaireFiche = (idu: string) => j<Record<string, unknown>>(`/sol
 export const modSolaireParkings = (tranche?: string | null) =>
   j<Record<string, unknown>>(`/solaire/parkings${tranche ? `?tranche=${tranche}` : ''}`)
 export const modSolaireTertiaire = () => j<Record<string, unknown>>('/solaire/tertiaire')
+export const getOrthoEquipements = (idu: string) => j<Record<string, unknown>>(`/ortho/equipements/${idu}`)
 export const modCourriers = (idus: string[], contexte: string) =>
   j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, contexte }) })

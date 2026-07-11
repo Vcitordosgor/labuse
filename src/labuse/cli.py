@@ -1911,3 +1911,29 @@ def ortho_detect_pv_cmd(limit: int = typer.Option(None, help="Nb max de tuiles (
         typer.echo(f"✓ détection PV : {res}")
         post = ortho_pv.post_traitement(s, log=typer.echo)
         typer.echo(f"✓ post-traitement PV : {post}")
+
+
+@app.command("ortho-refresh")
+def ortho_refresh_cmd(
+    purge_cache: bool = typer.Option(False, "--purge-cache",
+                                     help="Supprime les images du cache (garde les tables)."),
+) -> None:
+    """Lot 7 (wave-ortho) : la BD ORTHO 974 est re-survolée tous les ~3-4 ans — pas de
+    cron. Détecte un changement de millésime (constante vs ortho_tiles), remet les
+    tuiles concernées en file (acquisition + détections piscines/PV) et rejoue."""
+    from .ingestion import ortho_tiles as ot
+
+    with session_scope() as s:
+        n = s.execute(text(
+            "UPDATE ortho_tiles SET acquise_at = NULL, traite_at = NULL,"
+            " pv_traite_at = NULL, millesime = :m WHERE millesime IS DISTINCT FROM :m"),
+            {"m": ot.MILLESIME}).rowcount
+    if n:
+        typer.echo(f"✓ {n} tuile(s) remises en file (millésime {ot.MILLESIME}) — "
+                   "enchaîner : labuse ortho-tiles && labuse ortho-detect && "
+                   "labuse ortho-detect-pv && labuse ortho-materialise")
+    else:
+        typer.echo(f"✓ millésime {ot.MILLESIME} inchangé — rien à rejouer.")
+    if purge_cache:
+        n_p = ot.purge_cache()
+        typer.echo(f"✓ cache purgé : {n_p} image(s) supprimée(s) (tables conservées)")
