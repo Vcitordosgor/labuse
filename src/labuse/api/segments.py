@@ -20,7 +20,7 @@ import csv
 import io
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 from sqlalchemy import text
@@ -30,8 +30,7 @@ from ..segments import catnat as catnat_mod
 from ..segments import engine as seg
 from ..segments import presets as presets_mod
 from ..segments import residuel_bati
-from ..segments.registry import (EXPORT_COLS, FILTERS, SORTS,
-                                 compute_availability)
+from ..segments.registry import EXPORT_COLS, FILTERS, SORTS, compute_availability
 
 router = APIRouter(prefix="/segments", tags=["segments"])
 
@@ -134,22 +133,11 @@ def segments_query(body: QueryIn, db: Session = Depends(get_db)) -> dict:
     return resp
 
 
-@router.post("/export")
-def segments_export(body: QueryIn, db: Session = Depends(get_db)) -> Response:
-    """Export CSV « à l'occupant » : adresse (si connue), commune, caractéristiques du
-    preset — JAMAIS de nom de personne physique (RGPD). En-têtes en français lisible
-    (c'est l'artisan qui ouvre ce fichier dans Excel)."""
-    filtres, tri, cols = _resolve_body(db, body)
-    try:
-        q = seg.build(db, filtres, tri, colonnes_export=cols)
-    except seg.FiltreInvalide as exc:
-        raise HTTPException(422, str(exc))
-    buf = io.StringIO()
-    w = csv.writer(buf, delimiter=";")           # Excel FR : point-virgule
+def _rows_export(db, q) -> tuple[list[str], list[list]]:
+    """Matérialise l'export (en-têtes lisibles + lignes) — commun CSV/publipostage."""
     headers = ["Parcelle (IDU)", "Commune", "Surface parcelle (m²)"] + \
               [h for k, h in q.export_cols if k != "surface_m2"]
-    w.writerow(headers)
-    n = 0
+    rows: list[list] = []
     for r in seg.run_export_rows(db, q):
         row = [r["idu"], r["commune"], r["surface_m2"]]
         for k, _h in q.export_cols:
@@ -159,14 +147,98 @@ def segments_export(body: QueryIn, db: Session = Depends(get_db)) -> Response:
             if isinstance(v, bool):
                 v = "oui" if v else "non"
             row.append(v if v is not None else "")
-        w.writerow(row)
-        n += 1
+        rows.append(row)
+    return headers, rows
+
+
+@router.post("/export")
+def segments_export(body: QueryIn, request: Request, db: Session = Depends(get_db)) -> Response:
+    """Export CSV « à l'occupant » : adresse (si connue), commune, caractéristiques du
+    preset — JAMAIS de nom de personne physique (RGPD). En-têtes en français lisible
+    (c'est l'artisan qui ouvre ce fichier dans Excel).
+    Watermarking (Lot 3.4) : colonne `ref` + canaris tracés dans export_fingerprints."""
+    filtres, tri, cols = _resolve_body(db, body)
+    try:
+        q = seg.build(db, filtres, tri, colonnes_export=cols)
+    except seg.FiltreInvalide as exc:
+        raise HTTPException(422, str(exc))
+    headers, rows = _rows_export(db, q)
+    from .protection import filigrane_export, sujet_de
+    filigrane_export(db, sujet_de(request), headers, rows,
+                     slug=body.slug or "requete-libre")
+    buf = io.StringIO()
+    w = csv.writer(buf, delimiter=";")           # Excel FR : point-virgule
+    w.writerow(headers)
+    w.writerows(rows)
     name = (body.slug or "segment").replace("/", "-")
     return Response(
         buf.getvalue().encode("utf-8-sig"),      # BOM : accents corrects dans Excel
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="{name}_occupants.csv"',
-                 "X-Rows": str(n)})
+                 "X-Rows": str(len(rows))})
+
+
+@router.post("/publipostage")
+def segments_publipostage(body: QueryIn, request: Request,
+                          db: Session = Depends(get_db)) -> Response:
+    """Publipostage (Lot 2A wave-adresses) : ZIP = CSV normalisé (« À l'occupant »,
+    Adresse L1/L2, CP, Ville — jamais de nom de personne physique) + planches
+    d'étiquettes PDF (63,5 × 38,1 configurable) + gabarit de lettre du métier.
+    Seules les parcelles avec adresse BAN partent ; watermarking Lot 3 appliqué."""
+    from ..config import get_settings, load_yaml_config
+    from ..segments import publipostage as pub
+    from ..segments.registry import compute_availability
+    from .protection import filigrane_export, sujet_de
+
+    avail = compute_availability(db)
+    if not avail.get("adresse_ban", {}).get("disponible"):
+        raise HTTPException(409, "Adresses BAN non ingérées (labuse ingest-ban) — "
+                                 "le publipostage a besoin d'adresses fiables.")
+    filtres, tri, cols = _resolve_body(db, body)
+    # adresse exigée : filtre serveur ajouté d'office (jamais un courrier sans adresse)
+    filtres = list(filtres) + [{"cle": "adresse_ban", "value": True}]
+    try:
+        q = seg.build(db, filtres, tri, colonnes_export=cols or ["surface_m2"])
+    except seg.FiltreInvalide as exc:
+        raise HTTPException(422, str(exc))
+    rows = [dict(r) for r in seg.run_export_rows(db, q)]
+    lignes = pub.lignes_publipostage(rows)
+
+    headers = list(pub.ENTETES)
+    ref = filigrane_export(db, sujet_de(request), headers, lignes,
+                           slug=body.slug or "requete-libre", fmt="publipostage")
+    gabarits = (load_yaml_config("gabarits_courrier") or {}).get("gabarits", {})
+    categorie = None
+    if body.slug:
+        p = presets_mod.get_preset(db, body.slug)
+        categorie = (p or {}).get("categorie")
+    gab = gabarits.get(categorie or "", {})
+    gabarit_txt = (f"{gab['titre']}\n{'=' * len(gab['titre'])}\n\n{gab['corps']}"
+                   if gab else None)
+
+    data = pub.zip_publipostage(
+        pub.csv_bytes(headers, lignes),
+        pub.etiquettes_pdf(lignes, fmt=get_settings().etiquettes_format, ref=ref),
+        gabarit_txt)
+    name = (body.slug or "segment").replace("/", "-")
+    return Response(data, media_type="application/zip",
+                    headers={"Content-Disposition":
+                             f'attachment; filename="{name}_publipostage.zip"',
+                             "X-Rows": str(len(lignes))})
+
+
+@router.get("/gabarits")
+def segments_gabarits() -> dict:
+    """Gabarits de courrier par famille de métier (page d'aide — textes ÉDITABLES,
+    hors scope juridique : le contenu envoyé reste la responsabilité du client)."""
+    from ..config import load_yaml_config
+    try:
+        g = (load_yaml_config("gabarits_courrier") or {}).get("gabarits", {})
+    except FileNotFoundError:
+        g = {}
+    return {"gabarits": g,
+            "avertissement": "Modèles de départ à adapter — mentions obligatoires de "
+                             "votre métier (SIRET, assurances) à votre charge."}
 
 
 # ───────────────────────── admin (Vic) ─────────────────────────

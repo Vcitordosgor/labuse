@@ -1,0 +1,8 @@
+# Wave Adresses (Lot 3) — scan QUOTIDIEN des patterns de scraping (séquences d'IDU,
+# régularité machinale, volume nocturne, ratio consultations/exports) sur la journée
+# écoulée → abuse_scores + alertes admin. AUCUN blocage automatique (faux positifs) :
+# le gel est une décision manuelle de Vic (table acces_gels).
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/abuse /etc/cron.d/abuse
+SHELL=/bin/sh
+0 6 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse abuse-scan >> /var/log/labuse/abuse_scan.log 2>&1

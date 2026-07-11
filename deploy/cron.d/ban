@@ -1,0 +1,10 @@
+# Wave Adresses (Lot 1) — refresh MENSUEL de la Base Adresse Nationale 974 (la BAN bouge :
+# adressage communal continu). Export officiel départemental (Licence Ouverte), remplacement
+# complet idempotent + rattachement parcelles (point-dans-parcelle, cad_parcelles, < 20 m)
+# + index inverse adresse_parcelles (assiette multi-parcelles, bâtiments à cheval)
+# + rattachement des copropriétés RNIC restées sans parcelle.
+# Passage le 5 à 03h30 — avant Sitadel (04h15) et CATNAT (05h00), la nuit du même jour.
+#
+# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/ban /etc/cron.d/ban
+SHELL=/bin/sh
+30 3 5 * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-ban --download >> /var/log/labuse/ban_refresh.log 2>&1

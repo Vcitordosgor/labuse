@@ -274,6 +274,21 @@ export const exportSegmentCsv = async (body: SegmentQueryBody, filename: string)
   document.body.appendChild(a); a.click(); a.remove()
   URL.revokeObjectURL(url)
 }
+// Publipostage (wave-adresses Lot 2A) : ZIP = CSV normalisé « À l'occupant » + planches
+// d'étiquettes PDF + gabarit de lettre du métier. Adresse BAN exigée côté serveur.
+export const exportPublipostage = async (body: SegmentQueryBody, filename: string) => {
+  const r = await fetch('/segments/publipostage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  if (!r.ok) throw new Error((await r.json().catch(() => null))?.detail ?? `publipostage → HTTP ${r.status}`)
+  const blob = await r.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url; a.download = filename
+  document.body.appendChild(a); a.click(); a.remove()
+  URL.revokeObjectURL(url)
+}
+export const getGabarits = () =>
+  j<{ gabarits: Record<string, { titre: string; corps: string }>; avertissement: string }>('/segments/gabarits')
+
 export const createSegmentPreset = (body: Record<string, unknown>) =>
   j<SegmentPreset>('/segments/presets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const updateSegmentPreset = (slug: string, body: Record<string, unknown>) =>
@@ -282,3 +297,16 @@ export const deleteSegmentPreset = (slug: string) =>
   j<{ supprime: string }>(`/segments/presets/${slug}`, { method: 'DELETE' })
 export const refreshSegmentCounts = () =>
   j<{ recalcules: Record<string, number> }>('/segments/refresh-counts?stale_hours=0', { method: 'POST' })
+
+// Recherche en langage naturel → filtres du registry (wave-adresses Lot 6). Le serveur
+// valide CHAQUE clé contre le registry — jamais de SQL, jamais de champ inconnu exécuté.
+export interface NlSegmentsRep {
+  stub: boolean
+  filtres?: SegmentFiltre[]
+  filtres_rejetes?: { filtre: unknown; raison: string }[]
+  filtres_gates?: (SegmentFiltre & { plan_requis?: string; raison?: string; cta?: string })[]
+  explication?: string
+  out_of_scope?: string; message?: string; groupes_disponibles?: string[]; quota?: boolean
+}
+export const nlSegmentsSearch = (text: string) =>
+  j<NlSegmentsRep>('/ia/segments-search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })

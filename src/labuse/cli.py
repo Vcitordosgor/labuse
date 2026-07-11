@@ -373,7 +373,6 @@ def matrice_simulate_cmd(
     """SIMULATION À BLANC de conventions de matrice (aucune écriture persistante — table
     temporaire de session). Sortie : tableau console + grille HTML docs/tops_ile/
     matrice_sensibilite.html. La bascule événementielle n'est JAMAIS balayée (doctrine)."""
-    import json as _json
     from pathlib import Path
 
     from .config import load_yaml_config
@@ -1598,3 +1597,106 @@ def ingest_catnat_cmd() -> None:
     typer.echo(f"✓ CATNAT : {res['arretes']} arrêté(s) sur {res['communes_ok']} commune(s).")
     for insee, err in (res["erreurs"] or {}).items():
         typer.echo(f"  ⚠ {insee} : {err}")
+
+
+# ───────────── Wave Adresses, Courrier, Protection & Recherche IA ─────────────
+
+@app.command("ingest-ban")
+def ingest_ban_cmd(
+    csv: str = typer.Option(None, help="CSV BAN 974 local (sinon --download)."),
+    download: bool = typer.Option(False, "--download",
+                                  help="Télécharge l'export officiel BAN 974 (Licence Ouverte)."),
+    copros: bool = typer.Option(True, help="Rattache aussi les copros RNIC sans parcelle."),
+) -> None:
+    """Lot 1 (wave-adresses) : BAN 974 → table `adresses` rattachée aux parcelles.
+    Refresh mensuel : deploy/cron.d/ban. Référence locale de TOUT géocodage du produit."""
+    from pathlib import Path
+
+    from .ingestion import ban_adresses
+
+    if download or not csv:
+        path = ban_adresses.download_ban_csv(Path("data/ban"))
+    else:
+        path = Path(csv)
+    with session_scope() as s:
+        res = ban_adresses.ingest_ban(s, path)
+        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
+                       "WHERE name = 'Base Adresse Nationale'"))
+    typer.echo(f"✓ BAN : {res['adresses']} adresses, {res['liees']} rattachées "
+               f"({100 * res['taux_liees']:.1f} %) en {res['duree_s']} s "
+               f"[parcelle {res['parcelle']} · ban_cad {res['ban_cad']} · proche {res['proche_20m']}]")
+    with session_scope() as s:
+        cov = ban_adresses.couverture_bati_residentiel(s)
+    seuil = "✓" if cov["taux"] >= 0.90 else "⚠"
+    typer.echo(f"{seuil} Couverture bâti résidentiel : {cov['avec_adresse']}/{cov['parcelles_baties']} "
+               f"({100 * cov['taux']:.1f} % — acceptation ≥ 90 %)")
+    if copros:
+        with session_scope() as s:
+            rc = ban_adresses.rattacher_copros_par_adresse(s)
+        typer.echo(f"✓ Copros RNIC par adresse : {rc['liees']} rattachée(s) sur {rc['candidates']} "
+                   f"({rc['ambigues']} ambiguë(s), {rc['sans_match']} sans correspondance)")
+
+
+@app.command("abuse-scan")
+def abuse_scan_cmd(
+    jour: str = typer.Option(None, help="Journée à scorer (YYYY-MM-DD, défaut : hier)."),
+) -> None:
+    """Lot 3 (wave-adresses) : score quotidien des patterns de scraping → abuse_scores.
+    JAMAIS de blocage automatique : alerte admin, gel manuel par Vic. Cron : deploy/cron.d/abuse."""
+    from datetime import date as _date
+
+    from .api.protection import ensure_tables as prot_ensure
+    from .api.protection import scan_abus
+
+    prot_ensure(engine())
+    j = _date.fromisoformat(jour) if jour else None
+    with session_scope() as s:
+        res = scan_abus(s, j)
+    typer.echo(f"✓ abuse-scan {res['jour']} : {res['sujets']} sujet(s), "
+               f"{res['alertes']} alerte(s) admin.")
+    for sujet, det in sorted(res["scores"].items(), key=lambda kv: -kv[1]["score"])[:10]:
+        typer.echo(f"  {sujet:26} score {det['score']:>3}  {det}")
+
+
+@app.command("nl-eval")
+def nl_eval_cmd(
+    fichier: str = typer.Option("tests/nl_queries.txt", help="Jeu de questions annotées."),
+) -> None:
+    """Lot 6 (wave-adresses) : évalue la recherche NL sur le jeu de test (acceptation
+    ≥ 16/20, 0 champ hors registry exécuté). Appelle l'API Anthropic (clé .env)."""
+    import json as _json
+    from pathlib import Path
+
+    from .ai.nl_segments import traduire
+    from .api.ia import MODEL_NL
+
+    lignes = [ln for ln in Path(fichier).read_text(encoding="utf-8").splitlines()
+              if ln.strip() and not ln.startswith("#")]
+    ok, echecs, hors_registry = 0, [], 0
+    with session_scope() as s:
+        for ln in lignes:
+            question, _, attendu_raw = ln.partition("||")
+            question, attendu = question.strip(), _json.loads(attendu_raw)
+            res = traduire(s, question, model=MODEL_NL)
+            if res.get("stub"):
+                typer.echo("⚠ repli stub (clé/API indisponible) — évaluation non probante")
+            if attendu.get("out_of_scope"):
+                reussi = "out_of_scope" in res
+                obtenu = res.get("out_of_scope", [f["cle"] for f in res.get("filtres", [])])
+            else:
+                cles = {f["cle"] for f in res.get("filtres", [])}
+                reussi = "out_of_scope" not in res and set(attendu["cles"]) <= cles
+                obtenu = sorted(cles) if "out_of_scope" not in res else res["out_of_scope"]
+            hors_registry += len(res.get("rejetes", []))
+            if reussi:
+                ok += 1
+            else:
+                echecs.append((question, attendu, obtenu))
+            typer.echo(f"  {'✓' if reussi else '✗'} {question[:70]}")
+    typer.echo(f"\nScore : {ok}/{len(lignes)} (acceptation ≥ 16) · "
+               f"champs hors registry REJETÉS par le garde-fou : {hors_registry} "
+               f"(0 exécuté, par construction)")
+    for q, att, obt in echecs:
+        typer.echo(f"  ✗ {q}\n    attendu {att} · obtenu {obt}")
+    if ok < 16:
+        raise typer.Exit(1)

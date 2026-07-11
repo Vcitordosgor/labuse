@@ -3,9 +3,10 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  createSegmentPreset, deleteSegmentPreset, exportSegmentCsv, getSegments, querySegment,
-  refreshSegmentCounts, updateSegmentPreset,
-  type SegmentFiltre, type SegmentFiltreDef, type SegmentPreset, type SegmentsHome,
+  createSegmentPreset, deleteSegmentPreset, exportPublipostage, exportSegmentCsv, getSegments,
+  nlSegmentsSearch, querySegment, refreshSegmentCounts, updateSegmentPreset,
+  type NlSegmentsRep, type SegmentFiltre, type SegmentFiltreDef, type SegmentPreset,
+  type SegmentsHome,
 } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -217,6 +218,12 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
     onSuccess: () => setToast('Export CSV téléchargé — adresses « à l\'occupant », aucune donnée nominative.'),
     onError: () => setToast("L'export a échoué — réessayer."),
   })
+  const pub = useMutation({
+    mutationFn: () => exportPublipostage({ slug: preset.slug, filtres: effectifs, tri },
+      `${preset.slug || 'recherche'}_publipostage.zip`),
+    onSuccess: () => setToast('Publipostage téléchargé : CSV normalisé + étiquettes + gabarit de lettre.'),
+    onError: (e) => setToast('Publipostage : ' + (e as Error).message),
+  })
   // admin : enregistrer les filtres modifiés comme NOUVEAU preset (un preset modifié
   // à la volée ne s'enregistre jamais sur place — doctrine du mandat)
   const dup = useMutation({
@@ -288,6 +295,14 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
             <button data-seg-dupliquer onClick={() => dup.mutate()} title="Admin : enregistrer ces filtres comme nouveau preset"
               className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt hover:border-mint">
               Enregistrer…
+            </button>
+          </div>
+          {/* Lot 2A (wave-adresses) : publipostage = CSV « À l'occupant » + étiquettes + gabarit */}
+          <div className="mt-2 flex items-center gap-2">
+            <button data-seg-publipostage onClick={() => pub.mutate()} disabled={pub.isPending || !rep?.count}
+              className="flex-1 rounded-lg border border-mint/50 bg-mint/10 px-3 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20 disabled:opacity-40"
+              title="ZIP : CSV normalisé (À l'occupant, adresse BAN), planches d'étiquettes 63,5×38,1, gabarit de lettre du métier">
+              {pub.isPending ? 'Préparation…' : 'Publipostage (CSV + étiquettes)'}
             </button>
           </div>
         </div>
@@ -431,9 +446,56 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
   )
 }
 
+// ── barre de recherche NL (wave-adresses Lot 6) : question libre → filtres du registry,
+//    ouverts dans le query builder STANDARD (visibles, modifiables — l'utilisateur voit
+//    la « traduction » et corrige les erreurs du LLM). Hors périmètre → réponse honnête.
+function BarreNL({ onFiltres }: { onFiltres: (filtres: SegmentFiltre[], explication: string) => void }) {
+  const [q, setQ] = useState('')
+  const [rep, setRep] = useState<NlSegmentsRep | null>(null)
+  const chercher = useMutation({
+    mutationFn: (text: string) => nlSegmentsSearch(text),
+    onSuccess: (r) => {
+      setRep(r)
+      if (r.filtres?.length) onFiltres(r.filtres, r.explication ?? '')
+    },
+    onError: () => setRep({ stub: true, out_of_scope: 'recherche indisponible — réessayez' }),
+  })
+  return (
+    <div data-seg-nl className="mb-4">
+      <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); if (q.trim()) chercher.mutate(q.trim()) }}>
+        <input data-seg-nl-input value={q} onChange={(e) => setQ(e.target.value)}
+          placeholder="Décrivez votre cible : « villas mutées récemment avec grand jardin sans piscine au Tampon »"
+          className="h-9 flex-1 rounded-lg border border-line-2 bg-surface-1 px-3 text-[12px] text-txt-hi placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+        <button type="submit" disabled={chercher.isPending || !q.trim()}
+          className="rounded-lg border border-mint/50 bg-mint/10 px-4 text-[11.5px] font-medium text-mint hover:bg-mint/20 disabled:opacity-40">
+          {chercher.isPending ? 'Traduction…' : 'Rechercher'}
+        </button>
+      </form>
+      {rep?.out_of_scope && (
+        <p data-seg-nl-oos className="mt-1.5 text-[11px] leading-snug text-[#E8B44C]">
+          {rep.out_of_scope}{rep.message ? ` — ${rep.message}` : ''}
+        </p>
+      )}
+      {!!rep?.filtres_rejetes?.length && (
+        <p className="mt-1.5 text-[10.5px] text-txt-dim">
+          Ignoré (hors registry) : {rep.filtres_rejetes.map((r) => r.raison).join(' · ')}
+        </p>
+      )}
+      {!!rep?.filtres_gates?.length && (
+        /* même mécanique que les presets : filtre réservé à un plan supérieur → grisé + CTA */
+        <p data-seg-nl-upgrade className="mt-1.5 text-[10.5px] text-[#E8B44C]">
+          {rep.filtres_gates.length} filtre(s) réservé(s) au plan Intégral —{' '}
+          <span className="underline">passer au plan Intégral</span> pour les activer.
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ───────────────────────── la page ─────────────────────────
 export function SegmentsPage() {
   const [slug, setSlug] = useState<string | null>(null)
+  const [nlPreset, setNlPreset] = useState<SegmentPreset | null>(null)
   const { setToast } = useApp()
   const qc = useQueryClient()
   const { data: home, isLoading } = useQuery({ queryKey: ['segments'], queryFn: getSegments })
@@ -442,6 +504,7 @@ export function SegmentsPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast('Compteurs recalculés.') },
   })
   if (isLoading || !home) return <div className="flex flex-1 items-center justify-center"><Loading /></div>
+  if (nlPreset) return <Builder home={home} preset={nlPreset} onBack={() => setNlPreset(null)} />
   const sel = slug ? home.presets.find((p) => p.slug === slug) : null
   if (sel) return <Builder home={home} preset={sel} onBack={() => setSlug(null)} />
 
@@ -460,6 +523,16 @@ export function SegmentsPage() {
           {refresh.isPending ? 'Recalcul…' : 'Recalculer les compteurs'}
         </button>
       </div>
+      <BarreNL onFiltres={(filtres, explication) => {
+        setToast(explication || 'Filtres proposés par l\'IA — vérifiez-les dans le builder.')
+        setNlPreset({
+          slug: '', nom: 'Recherche IA (filtres à vérifier)', categorie: 'foncier_bati',
+          description: null, argumentaire: null, filtres, colonnes_export: [],
+          tri_defaut: null, boost_catnat: false, actif: true, ordre: 0, created_by: null,
+          updated_at: null, disponibilite: 'complet', filtres_inactifs: [],
+          count: null, count_at: null,
+        })
+      }} />
       {home.catnat.communes.length > 0 && (
         <div data-seg-catnat-bandeau className="mb-4 rounded-lg border border-[#E8695A]/40 bg-[#E8695A]/10 px-3 py-2 text-[11px] text-[#f0a29a]">
           Catastrophe naturelle ({home.catnat.fenetre_mois} derniers mois) :{' '}

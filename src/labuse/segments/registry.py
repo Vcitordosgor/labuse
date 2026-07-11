@@ -14,7 +14,7 @@ donnent un filtre GRISÉ « disponible prochainement », jamais une erreur.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from sqlalchemy import text
 
@@ -41,6 +41,15 @@ JOINS: dict[str, str] = {
     "zc": ("LEFT JOIN LATERAL (SELECT cr.detail FROM dryrun_cascade_results cr"
            " WHERE cr.parcel_id = p.id AND cr.run_label = :cascade_run"
            " AND cr.layer_name = 'zonage_plu_gpu' ORDER BY cr.id LIMIT 1) zc ON true"),
+    # Adresse BAN de la parcelle (mandat wave-adresses Lot 1.5) : la MEILLEURE adresse de
+    # l'index inverse — priorité au rattachement direct du point, puis numéro le plus bas
+    # (déterministe). Le publipostage « à l'occupant » se fonde sur CES champs normalisés.
+    "ban": ("LEFT JOIN LATERAL (SELECT a.numero, a.rep, a.voie, a.code_postal,"
+            " a.commune AS ban_commune FROM adresse_parcelles ap"
+            " JOIN adresses a ON a.id_ban = ap.id_ban WHERE ap.idu = p.idu"
+            " ORDER BY (ap.source = 'principal') DESC, (a.numero IS NULL),"
+            " NULLIF(regexp_replace(a.numero, '\\D', '', 'g'), '')::int NULLS LAST, a.id_ban"
+            " LIMIT 1) ban ON true"),
     "ab": ("LEFT JOIN LATERAL (SELECT cr2.result FROM dryrun_cascade_results cr2"
            " WHERE cr2.parcel_id = p.id AND cr2.run_label = :cascade_run"
            " AND cr2.layer_name = 'abf' ORDER BY cr2.id LIMIT 1) ab ON true"),
@@ -211,6 +220,12 @@ FILTERS: dict[str, FilterDef] = {f.cle: f for f in [
               groupe="Signaux", requires=("catnat_arretes",), requires_rows="catnat_arretes",
               description="Commune sous arrêté de catastrophe naturelle (vent cyclonique, "
                           "inondation) récent — fenêtre configurable."),
+    # ── Adresse (mandat wave-adresses Lot 1) ──
+    FilterDef("adresse_ban", "Adresse BAN connue", "bool", "(ban.voie IS NOT NULL)",
+              joins=("ban",), groupe="Parcelle",
+              requires=("adresses", "adresse_parcelles"), requires_rows="adresses",
+              description="La parcelle porte au moins une adresse BAN rattachée — "
+                          "prérequis d'un courrier « à l'occupant » fiable."),
 ]}
 
 # Jointures vers des tables FUTURES (mandats non mergés) : déclarées pour mémoire, jamais
@@ -248,6 +263,12 @@ SORTS: dict[str, SortDef] = {s.cle: s for s in [
 # clé → (en-tête CSV lisible en français, expression SQL, jointures).
 EXPORT_COLS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "adresse": ("Adresse (source DPE, si connue)", "adr.adresse", ("adr",)),
+    # Adresse BAN NORMALISÉE (mandat wave-adresses Lot 1.5) : émise d'office sur tous les
+    # exports quand la table est là (cf. engine.BAN_EXPORT_KEYS) — remplace l'approximation DPE.
+    "adresse_numero": ("Numéro", "NULLIF(concat_ws(' ', ban.numero, ban.rep), '')", ("ban",)),
+    "adresse_voie": ("Voie (BAN)", "ban.voie", ("ban",)),
+    "adresse_cp": ("Code postal", "ban.code_postal", ("ban",)),
+    "adresse_ville": ("Ville", "ban.ban_commune", ("ban",)),
     "surface_m2": ("Surface parcelle (m²)", "round(p.surface_m2)", ()),
     "jardin_m2": ("Jardin estimé (m²)", f"round({_JARDIN_EXPR})", ("rb",)),
     "emprise_batie_m2": ("Emprise bâtie (m²)", "round(rb.emprise_batie_m2)", ("rb",)),
@@ -268,6 +289,8 @@ EXPORT_COLS: dict[str, tuple[str, str, tuple[str, ...]]] = {
 
 # Jointures/colonnes utilisées par une colonne d'export dont la source manque → colonne omise.
 _EXPORT_REQUIRES: dict[str, str] = {
+    "adresse_numero": "adresse_ban", "adresse_voie": "adresse_ban",
+    "adresse_cp": "adresse_ban", "adresse_ville": "adresse_ban",
     "jardin_m2": "jardin_m2", "emprise_batie_m2": "emprise_batie_m2",
     "date_mutation": "anciennete_mutation_mois", "valeur_mutation": "prix_mutation_eur",
     "type_bien": "type_bien", "annee_construction": "periode_construction",

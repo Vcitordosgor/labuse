@@ -16,12 +16,16 @@ from typing import Any
 from sqlalchemy import text
 
 from .. import config
-from .registry import (CASCADE_RUN, EXPORT_COLS, FILTERS, JOINS, SORTS,
-                       compute_availability, export_col_available)
+from .registry import CASCADE_RUN, EXPORT_COLS, FILTERS, JOINS, SORTS, compute_availability, export_col_available
 
 MAX_LIMIT = 500
 MAX_EXPORT = 10_000
 MAX_GEOJSON = 5_000
+
+#: Adresse BAN normalisée émise D'OFFICE en tête de tout export (mandat wave-adresses
+#: Lot 1.5) — tous les presets en profitent sans toucher leur seed ; omise si la table
+#: `adresses` manque (résilience habituelle).
+BAN_EXPORT_KEYS = ("adresse_numero", "adresse_voie", "adresse_cp", "adresse_ville")
 
 # Les slivers cadastraux (artefacts < 2 m²) sont masqués partout ailleurs dans le produit
 # (cf. api/app.py MIN_DISPLAY_SURFACE_M2) — même règle ici.
@@ -194,9 +198,14 @@ def build(session, filtres: list[dict], tri: str | None, *,
     add_joins(sd.joins)
 
     # Colonnes d'export/table : celles du preset dont la source est disponible.
+    # L'adresse BAN normalisée est PRÉPENDUE d'office dès qu'un export a des colonnes.
+    keys_export = list(colonnes_export or [])
+    if keys_export and export_col_available("adresse_numero", avail):
+        keys_export = list(BAN_EXPORT_KEYS) + [k for k in keys_export
+                                               if k not in BAN_EXPORT_KEYS]
     export_cols: list[tuple[str, str]] = []
     select_extra: list[str] = []
-    for key in (colonnes_export or []):
+    for key in keys_export:
         if key not in EXPORT_COLS:
             raise FiltreInvalide(f"colonne d'export inconnue : « {key} »")
         if not export_col_available(key, avail):

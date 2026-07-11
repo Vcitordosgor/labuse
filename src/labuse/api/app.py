@@ -78,14 +78,16 @@ async def _lifespan(app: FastAPI):
         # tables des routeurs (modules/ia/events/partners/projets) : l'ancien
         # @app.on_event("startup") était MORT depuis le passage au lifespan (FastAPI
         # ignore on_event quand lifespan est fourni) — les ensures vivent ICI.
+        from .courrier import ensure_tables as _courrier_ens
         from .events import ensure_tables as _events_ens
         from .ia import ensure_tables as _ia_ens
         from .modules import ensure_tables as _modules_ens
         from .partners import ensure_tables as _partners_ens
         from .projets import ensure_tables as _projets_ens
+        from .protection import ensure_tables as _protection_ens
         from .segments import ensure_tables as _segments_ens
         for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens,
-                     _segments_ens):
+                     _segments_ens, _protection_ens, _courrier_ens):
             _ens(_engine())
         app.state.schema_heal = "ok"
     except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
@@ -139,6 +141,14 @@ async def _fix_double_encoded_query(request, call_next):
     if b"%25" in qs:
         request.scope["query_string"] = unquote(qs.decode("latin-1")).encode("latin-1")
     return await call_next(request)
+
+
+# Anti-scraping (mandat wave-adresses Lot 3) — enregistré AVANT _auth_guard donc exécuté
+# APRÈS lui (Starlette : dernier enregistré = plus externe) : seuls les appels authentifiés
+# consomment quotas et rate limit.
+from .protection import garde_protection as _garde_protection  # noqa: E402
+
+app.middleware("http")(_garde_protection)
 
 
 @app.middleware("http")
@@ -2220,17 +2230,24 @@ def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
 # ───────────────────────────── Front statique (carte + dashboard + fiche §8) ─────────────────────────────
 
 # ── Modules outils (Vague 1+) ──
+from .courrier import router as _courrier_router  # noqa: E402
+from .dossier import router as _dossier_router  # noqa: E402
 from .events import router as _events_router  # noqa: E402
 from .ia import router as _ia_router  # noqa: E402
 from .modules import router as _modules_router  # noqa: E402
 from .moteurs import router as _moteurs_router  # noqa: E402
 from .partners import router as _partners_router  # noqa: E402
+from .pre_dossier import router as _pre_dossier_router  # noqa: E402
 from .projets import router as _projets_router  # noqa: E402
+from .protection import router as _protection_router  # noqa: E402
 from .segments import router as _segments_router  # noqa: E402
-
 from .tiles import router as _tiles_router  # noqa: E402
 
 app.include_router(_modules_router)
+app.include_router(_courrier_router)
+app.include_router(_dossier_router)
+app.include_router(_pre_dossier_router)
+app.include_router(_protection_router)
 app.include_router(_tiles_router)
 app.include_router(_ia_router)
 app.include_router(_events_router)

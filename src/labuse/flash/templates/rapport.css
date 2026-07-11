@@ -25,7 +25,7 @@
   size: A4;
   margin: 22mm 16mm 20mm 16mm;
   @top-left {
-    content: "LA BUSE — Rapport Flash · {{ order_ref }}";
+    content: "LA BUSE — {{ produit }} · {{ order_ref }}";
     font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
     border-bottom: 0.6pt solid #0B8A5F; width: 100%; padding-bottom: 4pt;
     margin-bottom: 8pt; vertical-align: bottom;

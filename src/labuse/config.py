@@ -62,6 +62,29 @@ class Settings(BaseSettings):
     ai_provider: str = "stub"
     ai_model: str = "claude-sonnet-4-6"
 
+    # ── Wave adresses/courrier/IA : protection & plans (Phase 0 : PAS de système de
+    # comptes — quotas au niveau session/IP, gating par plan STUBBÉ ; le « mandat
+    # Auth & Plans » remplacera plan_defaut par le plan du compte connecté) ──
+    quota_fiches_jour: int = 300          # consultations de fiches parcelle / jour / sujet
+    rate_limit_rpm: int = 60              # requêtes / minute / sujet (endpoints métier)
+    rate_burst_gel: int = 3               # bursts le même jour avant gel + alerte admin
+    abuse_alert_seuil: int = 60           # score abuse_scores déclenchant l'alerte
+    nl_quota_jour: int = 30               # requêtes de recherche NL / jour / sujet (Lot 6)
+    dossier_quota_mois: int = 20          # Dossiers parcelle / mois (plan Essentiel, Lot 4)
+    plan_defaut: str = "integral"         # stub : essentiel | integral (pilote = intégral)
+    raison_sociale: str = "Pilote LA BUSE"  # mention « Généré via LABUSE pour … » (Lot 4)
+    etiquettes_format: str = "63.5x38.1"  # planche d'étiquettes du publipostage (Lot 2A)
+
+    # ── Courrier postal par API (Lot 2B) — prestataire retenu : Merci Facteur
+    # (couverture DOM confirmée, API publique v1.2, sandbox). Sans clé → provider
+    # « stub » : les endpoints répondent, AUCUN envoi ni bouton côté front. ──
+    courrier_provider: str = "stub"       # stub | mercifacteur
+    mercifacteur_api_key: str | None = None
+    mercifacteur_api_secret: str | None = None
+    courrier_cout_lettre_eur: float = 2.69   # lettre verte 3 pages Merci Facteur (grille 2026)
+    courrier_marge: float = 1.5              # prix client = coût prestataire × marge
+    courrier_max_jour: int = 100             # plafond anti-abus d'envois / jour / sujet
+
     # ── Module Flash : rapport parcelle à l'unité (mandat module-flash) ──
     # Prix TTC affiché/facturé. La valeur de LANCEMENT est décidée par Vic au moment de
     # créer le produit Stripe — 79 € est la suggestion du mandat, jamais une décision.
