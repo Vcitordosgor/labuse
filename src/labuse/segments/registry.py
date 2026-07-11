@@ -156,8 +156,8 @@ FILTERS: dict[str, FilterDef] = {f.cle: f for f in [
     FilterDef("piscine", "Piscine détectée", "bool", "coalesce(eq.piscine, false)",
               joins=("eq",), groupe="Équipements",
               requires=("parcel_equipements.piscine",), requires_rows="parcel_equipements",
-              description="Piscine détectée sur orthophoto IGN 2025 — fiabilité "
-                          "statistique (précision mesurée ~79 %), non contractuelle.",
+              description="Piscine détectée sur orthophoto IGN 2025 — précision 90,7 % "
+                          "mesurée sur échantillon indépendant interne, non contractuelle.",
               mandat="Détection Ortho"),
     FilterDef("pv_detecte", "Panneaux PV détectés", "bool", "coalesce(eq.pv_detecte, false)",
               joins=("eq",), groupe="Équipements",

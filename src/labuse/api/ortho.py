@@ -176,6 +176,7 @@ def equipements(idu: str, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(404)
     return {**dict(row), "millesime": MILLESIME,
             "source": f"Détection automatique sur orthophotographie IGN {MILLESIME} — "
+                      "précision 90,7 % mesurée sur échantillon indépendant interne ; "
                       "fiabilité statistique, non contractuelle. © IGN (Licence Ouverte)."}
 
 

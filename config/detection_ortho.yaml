@@ -79,9 +79,9 @@ materialisation:
   precision_min_piscine: 0.90     # cible mandat — NON atteinte en V0 (→ Lot 8 ML)
   precision_min_pv: 0.75          # en dessous : les PV restent candidats en base
 
-  # Cascade de juges (GO Vic 11/07) : le temps du juge ML, les presets piscine
-  # restent VISIBLES (badge fiabilité V0) mais l'export commercial est SUSPENDU.
-  exports_suspendus: [piscinistes-construction, parc-piscines-entretien]
+  # Option B (clôture Vic 12/07) : exports ROUVERTS avec la mention de précision
+  # mesurée ; la re-certification sur vignettes fraîches est une dette v1.1.
+  exports_suspendus: []
 
 # ── Outil de validation : session de confirmation ─────────────────────────────
 validation:
