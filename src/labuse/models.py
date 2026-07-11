@@ -457,12 +457,13 @@ class DpeRecord(Base):
 
     Un DPE par logement (dédup `numero_dpe`). Signal `passoire_thermique` (F/G) = pression
     réglementaire datée sur le propriétaire (cf. vue v_passoire_thermique). Rattachement parcelle
-    APPROXIMATIF : le `_geopoint` ADEME est FAUX au 974 (100 % hors Réunion), on re-géocode
-    `adresse_ban` via BAN (citycode) puis `ST_Contains` → `rattachement='geocode'` tracé comme tel.
+    100 % LOCAL (le `_geopoint` ADEME est FAUX au 974) : `identifiant_ban` → table `adresses`
+    ('ban_locale'), sinon point BAN natif EPSG:2975 → ST_Contains ('point_ban'), sinon adresse
+    brute normalisée → `adresses` ('adresse_locale'), sinon 'aucun'.
 
-    Représentativité : couvre les biens diagnostiqués depuis 2021 (obligatoire en DROM seulement
-    depuis le 01/07/2024 → jeu jeune, en croissance) — signal « positif quand présent », JAMAIS
-    exhaustif. NE touche PAS au scoring (# TODO étage 2)."""
+    Représentativité : gisement ADEME complet = ~912 DPE pour toute l'île (11/07/2026), flux
+    ~10/mois depuis 07/2021 — signal « positif quand présent », JAMAIS exhaustif. Alimente le
+    Score V (famille E)."""
 
     __tablename__ = "dpe_records"
     __table_args__ = (
@@ -482,11 +483,11 @@ class DpeRecord(Base):
     code_insee: Mapped[str | None] = mapped_column(String(5))
     code_postal: Mapped[str | None] = mapped_column(String(5))
     date_etablissement: Mapped[date | None] = mapped_column(Date)
-    lon: Mapped[float | None] = mapped_column(Float)                  # re-géocodé BAN (pas le _geopoint ADEME)
+    lon: Mapped[float | None] = mapped_column(Float)                  # point local (pas le _geopoint ADEME)
     lat: Mapped[float | None] = mapped_column(Float)
-    geocode_score: Mapped[float | None] = mapped_column(Float)
-    parcelle_idu: Mapped[str | None] = mapped_column(String(14))      # ST_Contains, nullable
-    rattachement: Mapped[str | None] = mapped_column(String(16))      # 'geocode' | 'aucun'
+    geocode_score: Mapped[float | None] = mapped_column(Float)        # score_ban ADEME
+    parcelle_idu: Mapped[str | None] = mapped_column(String(14))      # rattachement local, nullable
+    rattachement: Mapped[str | None] = mapped_column(String(16))      # 'ban_locale'|'point_ban'|'adresse_locale'|'aucun'
     raw: Mapped[dict | None] = mapped_column(JSONB)
     ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 

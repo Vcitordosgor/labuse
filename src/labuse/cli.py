@@ -766,9 +766,10 @@ def ingest_dpe_cmd(
     throttle: float = typer.Option(0.1, help="Pause (s) entre appels."),
     force: bool = typer.Option(False, help="Ré-ingérer même les communes déjà faites."),
 ) -> None:
-    """Vague C2 — DPE ADEME (logements existants) → table dpe_records. Rattachement parcelle par
-    re-géocodage BAN (le _geopoint ADEME est faux au 974). Une commune = une unité committée →
-    résumable. Ne touche PAS au score (# TODO étage 2)."""
+    """DPE ADEME (logements existants) → table dpe_records. Rattachement parcelle 100 % LOCAL
+    (id_ban → adresses, point BAN EPSG:2975, adresse brute — le _geopoint ADEME est faux au 974).
+    Une commune = une unité committée → résumable. Termine par la passe « orphelins » (CP brut
+    974xx sans code_insee_ban). Ne touche PAS au score (recalcul Score V séparé)."""
     import time
 
     from .connectors.dpe import DpeConnector
@@ -790,6 +791,13 @@ def ingest_dpe_cmd(
             for k in tot:
                 tot[k] += res[k]
             typer.echo(f"  ✓ {nom} : {res}")
+    if not commune:
+        with session_scope() as s:
+            res = dpe.ingest_orphelins(s, connector=conn)
+            s.commit()
+            tot["dpe"] += res["dpe"]
+            tot["rattaches_parcelle"] += res["rattaches_parcelle"]
+            typer.echo(f"  ✓ orphelins (CP brut 974xx sans code_insee_ban) : {res}")
     typer.echo(f"✓ DPE île : {tot} ({time.time() - t0:.0f}s)")
 
 
