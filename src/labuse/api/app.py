@@ -2241,6 +2241,7 @@ from .pre_dossier import router as _pre_dossier_router  # noqa: E402
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .segments import router as _segments_router  # noqa: E402
+from .ortho import router as _ortho_router  # noqa: E402
 from .solaire import router as _solaire_router  # noqa: E402
 from .tiles import router as _tiles_router  # noqa: E402
 
@@ -2257,6 +2258,7 @@ app.include_router(_partners_router)
 app.include_router(_projets_router)
 app.include_router(_segments_router)
 app.include_router(_solaire_router)
+app.include_router(_ortho_router)
 
 
 # (les ensure_tables des routeurs sont appelés dans _lifespan — un @app.on_event("startup")

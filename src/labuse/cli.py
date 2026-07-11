@@ -1825,3 +1825,65 @@ def solaire_cache_purge_cmd() -> None:
             "DELETE FROM solar_api_cache WHERE fetched_at < now() - make_interval(days => :d)"),
             {"d": ttl}).rowcount
     typer.echo(f"✓ Cache Solar API : {n} entrée(s) purgée(s) (TTL {ttl} j)")
+
+
+# ─────────────────────────── Wave Détection Ortho ───────────────────────────
+
+@app.command("ortho-pente")
+def ortho_pente_cmd(batch: int = typer.Option(2000, help="Parcelles par lot (checkpoint).")) -> None:
+    """Lot 1 (wave-ortho) : pente de la partie NON BÂTIE des parcelles bâties, depuis
+    le raster de pente RGE ALTI 5 m conservé — complète parcel_terrain (réutilisée,
+    jamais de table concurrente). Relançable (ne recalcule que les NULL)."""
+    from .ingestion import ortho_pente
+
+    with session_scope() as s:
+        res = ortho_pente.run(s, log=typer.echo)
+    typer.echo(f"✓ Pente non bâtie : {res}")
+    if not res["sanity"]["ok"]:
+        typer.echo("✗ SANITY : médiane bâties ≥ médiane île — bug projection/unités, INVESTIGUER.")
+        raise typer.Exit(1)
+
+
+@app.command("ortho-tiles")
+def ortho_tiles_cmd(
+    limit: int = typer.Option(None, help="Nb max de tuiles à acquérir (tests)."),
+    grid_only: bool = typer.Option(False, "--grid-only", help="Construit la grille sans télécharger."),
+) -> None:
+    """Lot 2 (wave-ortho) : grille 512 m (bâti ∪ parkings) + acquisition BD ORTHO 20 cm
+    par WMS Géoplateforme (millésime 974 = 2025), cache disque, reprise par tuile."""
+    from .ingestion import ortho_tiles
+    from .models import IngestionRun
+
+    with session_scope() as s:
+        n = ortho_tiles.build_grid(s)
+        typer.echo(f"✓ grille : {n} nouvelle(s) tuile(s) utiles")
+        if grid_only:
+            return
+        run = IngestionRun(commune="974 (tuiles ortho)", status="running")
+        s.add(run)
+        s.commit()  # libère les verrous : l'acquisition dure, d'autres jobs lisent ortho_tiles
+        res = ortho_tiles.acquire(s, limit=limit, log=typer.echo)
+        run.status = "ok" if not res["echecs"] else "partiel"
+        run.parcels_count = res["acquises"]
+        from sqlalchemy import func as _f
+        run.finished_at = _f.now()
+    typer.echo(f"✓ acquisition : {res}")
+
+
+@app.command("ortho-detect")
+def ortho_detect_cmd(
+    limit: int = typer.Option(None, help="Nb max de tuiles (tests)."),
+    skip_post: bool = typer.Option(False, "--skip-post", help="Détection seule, sans post-traitement SQL."),
+) -> None:
+    """Lot 3 (wave-ortho) : détection piscines V0 (HSV calibré config) sur les tuiles
+    acquises + post-traitement contextuel (rattachement, rejets eau/toits bleus,
+    confiance composite). Relançable (checkpoint = ortho_tiles.traite_at).
+    Validation Vic : `labuse api` → /ortho/validation."""
+    from .ingestion import ortho_piscines
+
+    with session_scope() as s:
+        res = ortho_piscines.detect_tiles(s, limit=limit, log=typer.echo)
+        typer.echo(f"✓ détection : {res}")
+        if not skip_post:
+            post = ortho_piscines.post_traitement(s, log=typer.echo)
+            typer.echo(f"✓ post-traitement : {post}")

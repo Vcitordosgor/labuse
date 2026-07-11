@@ -1,0 +1,54 @@
+# Wave Détection Ortho — TOUS les seuils du pipeline (mandat : jamais en dur).
+# V0 déterministe (colorimétrie calibrée) ; le ML (Lot 8) n'arrive que sur décision
+# de Vic après lecture des métriques de validation.
+
+# ── Lot 1 : pente terrain ──────────────────────────────────────────────────────
+pente:
+  terrassement_lourd_deg: 15      # flag_terrassement_lourd (déjà appliqué au data-gap)
+  # la pente NON BÂTIE (parcelle − emprise BD TOPO) n'est calculée que pour les
+  # parcelles bâties ; ailleurs pente_moy_deg fait foi.
+  emprise_min_m2: 20              # en dessous, parcelle traitée comme non bâtie
+
+# ── Lot 2 : tuiles & acquisition ───────────────────────────────────────────────
+tuiles:
+  taille_m: 512                   # grille 512×512 m (2560×2560 px à 20 cm)
+  pixels: 2560
+  wms_url: "https://data.geopf.fr/wms-r"
+  wms_layer: "ORTHOIMAGERY.ORTHOPHOTOS"
+  concurrence: 4                  # requêtes WMS simultanées (politesse Géoplateforme)
+  cache_dir: "data/ortho_tiles"   # nettoyé en fin de run (Lot 7) — on garde les tables
+
+# ── Lot 3 : piscines V0 (HSV OpenCV, H∈[0,179]) ───────────────────────────────
+piscines:
+  hsv_h_min: 80                   # cyan/turquoise — point de départ du mandat
+  hsv_h_max: 130
+  hsv_s_min: 60                   # saturation élevée (eau traitée, pas béton bleuté)
+  hsv_v_min: 90                   # valeur élevée (exclut trampolines sombres)
+  morpho_px: 5                    # noyau ouverture/fermeture
+  surface_min_m2: 6
+  surface_max_m2: 150
+  solidite_min: 0.72              # aire/enveloppe convexe — formes de bassin
+  aspect_max: 6.0                 # ratio grand/petit côté du rectangle orienté
+  contexte_bati_m: 30             # centroïde dans une parcelle bâtie ou à < 30 m
+  toit_bleu_recouvrement_bati: 0.60   # rejet si > 60 % du masque sur emprise bâtie
+  # confiance composite : pondérations (somme = 1)
+  poids_couleur: 0.35
+  poids_forme: 0.25
+  poids_taille: 0.20              # taille typique 15-50 m²
+  poids_contexte: 0.20
+
+# ── Lot 4 : PV V0 (candidats scorés) ──────────────────────────────────────────
+pv:
+  surface_min_m2: 4
+  ces_max_m2: 8                   # 4-8 m² → pv_probable_ces (chauffe-eau, RTAA DOM)
+  rectangularite_min: 0.75
+  toit_uniforme_max: 0.80         # rejet si le masque couvre > 80 % de l'emprise
+  hsv_s_max: 90                   # sombre bleuté/anthracite, faible réflectance
+  hsv_v_max: 110
+
+# ── Lot 5 : matérialisation ────────────────────────────────────────────────────
+materialisation:
+  seuil_confiance_piscine: 0.70
+  seuil_confiance_pv: 0.80
+  precision_min_piscine: 0.90     # acceptation sur l'échantillon validé (200)
+  precision_min_pv: 0.75          # en dessous : les PV restent candidats en base
