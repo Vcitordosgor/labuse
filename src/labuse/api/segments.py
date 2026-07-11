@@ -151,6 +151,19 @@ def _rows_export(db, q) -> tuple[list[str], list[list]]:
     return headers, rows
 
 
+def _garde_export_suspendu(slug: str | None) -> None:
+    """Cascade de juges (11/07) : presets piscine V0 — export commercial suspendu
+    tant que le juge ML n'a pas re-certifié la précision (badge « fiabilité V0 »)."""
+    from ..config import load_yaml_config
+
+    suspendus = (load_yaml_config("detection_ortho").get("materialisation", {})
+                 .get("exports_suspendus") or [])
+    if slug in suspendus:
+        raise HTTPException(423, f"Export suspendu pour « {slug} » : détection piscine "
+                                 "en fiabilité V0 (~79 %), re-certification ML en cours. "
+                                 "Consultation et carte restent ouvertes.")
+
+
 @router.post("/export")
 def segments_export(body: QueryIn, request: Request, db: Session = Depends(get_db)) -> Response:
     """Export CSV « à l'occupant » : adresse (si connue), commune, caractéristiques du
@@ -185,6 +198,7 @@ def segments_publipostage(body: QueryIn, request: Request,
     Adresse L1/L2, CP, Ville — jamais de nom de personne physique) + planches
     d'étiquettes PDF (63,5 × 38,1 configurable) + gabarit de lettre du métier.
     Seules les parcelles avec adresse BAN partent ; watermarking Lot 3 appliqué."""
+    _garde_export_suspendu(body.slug)
     from ..config import get_settings, load_yaml_config
     from ..segments import publipostage as pub
     from ..segments.registry import compute_availability
