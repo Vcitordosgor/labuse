@@ -114,6 +114,25 @@ presets:
     colonnes_export: [adresse, surface_m2, jardin_m2]
     tri_defaut: jardin_desc
 
+  - slug: elagage-limite
+    nom: Prospection élagage — canopée en limite
+    categorie: exterieur
+    ordre: 61
+    description: >-
+      Végétation haute (> 3 m, LiDAR HD) dans la bande de 3 m le long des limites,
+      avec bâti voisin à moins de 10 m — le chantier d'élagage qualifié.
+    argumentaire: >-
+      Des houppiers en limite avec un toit voisin à moins de 10 m : l'argument
+      voisinage (art. 673 C. civ.) et le risque cyclonique font signer. Service au
+      propriétaire de la végétation ou à son voisin exposé — jamais de délation.
+    filtres:
+      - {cle: canopee_limite_pct, min: 40}
+      - {cle: bati_voisin_limite, value: true}
+      - {cle: confiance_vegetation, values: [haute], optionnel: true}
+    colonnes_export: [adresse, surface_m2, jardin_m2, canopee_limite_pct, canopee_pct,
+                      confiance_vegetation]
+    tri_defaut: canopee_limite_desc
+
   # ───────────────────────── Rénovation ─────────────────────────
   - slug: artisans-renovation
     nom: Artisans rénovation générale
@@ -228,6 +247,28 @@ presets:
     colonnes_export: [adresse, surface_m2, annee_construction]
     tri_defaut: age_bati_desc
 
+  - slug: anc-prospection
+    nom: Prospection ANC — mutations récentes
+    categorie: renovation
+    ordre: 131
+    description: >-
+      Parcelles bâties en zone d'assainissement non collectif (zonage officiel ou
+      probabilité INSEE) vendues il y a moins de 12 mois — travaux quasi obligatoires.
+    argumentaire: >-
+      Une vente en zone ANC déclenche le diagnostic au dossier de vente ; en cas de
+      non-conformité, l'acquéreur fait les travaux sous un an (L.271-4 CCH). Mutation
+      < 12 mois + zone ANC = le lead terrassier/fosse/bureau d'études au bon moment.
+    filtres:
+      - ou:
+          - {cle: zone_anc, value: true}
+          - {cle: proba_anc, min: 70}
+      - {cle: anciennete_mutation_mois, max: 12}
+      - {cle: emprise_batie_m2, min: 20}
+      - {cle: pente_non_batie_deg, max: 15, optionnel: true}   # un terrain pentu complique la filière
+    colonnes_export: [adresse, surface_m2, date_mutation, valeur_mutation, type_bien,
+                      proba_anc, zone_anc, source_anc, pente_non_batie_deg]
+    tri_defaut: mutation_recente
+
   # ───────────────────────── Énergie ─────────────────────────
   - slug: pv-residentiel
     nom: Photovoltaïque résidentiel
@@ -244,6 +285,7 @@ presets:
       - {cle: pv_detecte, value: false}       # grisé tant que Détection Ortho n'a pas livré
       - {cle: facture_elec_estimee_eur, min: 1200, optionnel: true}
       - {cle: flag_topo_ombrage, value: false, optionnel: true}
+      - {cle: flag_ombrage_vegetal, value: false, optionnel: true}  # exclusion par défaut, décochable (ANC & Végétation)
       - {cle: proba_proprio_occupant, min: 50, optionnel: true}
     colonnes_export: [adresse, surface_m2, type_bien, score_solaire, facture_estimee,
                       azimut_bati, proba_proprio_occupant]

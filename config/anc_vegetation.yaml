@@ -1,0 +1,70 @@
+# Mandat Wave ANC & Végétation — TOUS les seuils du mandat vivent ici (jamais en dur).
+
+# ── LOT A : assainissement non collectif ──────────────────────────────────────
+anc:
+  # A1 — couche probabiliste (INSEE RP, fichier détail Logements, variable EGOUL,
+  # DOM uniquement : 1=égout, 2=fosse septique, 3=puisard, 4=à même le sol).
+  insee:
+    millesime: "RP2022"
+    url_zip: "https://www.insee.fr/fr/statistiques/fichier/8647099/RP2022_logemt.zip"
+    url_dictionnaire: "https://www.insee.fr/fr/statistiques/fichier/8647099/varmod_logemt_2022.csv"
+    # le fichier national fait ~400 Mo compressés : cache local hors dépôt
+    cache_dir: "data/insee_rp"
+  # contours IRIS (IGN Géoplateforme WFS, Licence Ouverte)
+  iris:
+    wfs_url: "https://data.geopf.fr/wfs/ows"
+    typename: "STATISTICALUNITS.IRIS:contours_iris"
+    bbox: [-21.45, 55.15, -20.80, 55.90]   # lat/lon urn:ogc EPSG:4326
+  # A2 — zonages officiels : couches d'information GPU (CNIG typeinf 19)
+  gpu:
+    url_info_surf: "https://apicarto.ign.fr/api/gpu/info-surf"
+    typeinf_assainissement: "19"
+    # classification des libellés rencontrés (minuscules, `in` sur le libellé) :
+    # premier motif qui matche. Saint-Denis publie des zones d'EXTENSION du réseau
+    # (court/moyen/long terme) : aujourd'hui NON raccordées → 'anc'.
+    classification:
+      - {contient: "non collectif", zone: "anc"}
+      - {contient: "autonome", zone: "anc"}
+      - {contient: "court terme", zone: "anc"}
+      - {contient: "moyen terme", zone: "anc"}
+      - {contient: "long terme", zone: "anc"}
+      - {contient: "semi-collectif", zone: "collectif"}
+      - {contient: "collectif", zone: "collectif"}
+      - {contient: "actuel", zone: "collectif"}
+  # A1.3 — modulation de proba_anc
+  proba:
+    emprise_batie_min_m2: 20        # parcelle « bâtie » (convention du produit)
+    bonus_hors_zone_u_pts: 15       # + si à > distance de toute zone U (proxy réseau absent)
+    distance_zone_u_m: 100
+    plancher: 5
+    plafond: 95
+  # A3 — signal anc_mutation (ancré sur le dernier millésime DVF, jamais now())
+  signal:
+    proba_seuil: 70                 # zone_anc='anc' OU proba_anc >= seuil
+    fenetre_mois: 12
+
+# ── LOT B : végétation (IRC + LiDAR HD) ──────────────────────────────────────
+vegetation:
+  irc:
+    wms_url: "https://data.geopf.fr/wms-r"
+    wms_layer: "ORTHOIMAGERY.ORTHOPHOTOS.IRC"   # BD ORTHO infrarouge fausses couleurs
+    pixels: 1280                    # 512 m → 0,4 m/px (le NDVI n'a pas besoin des 20 cm)
+    cache_dir: "data/ortho_irc"
+    concurrence: 4
+  mnh:
+    # MNH LiDAR HD 50 cm — couverture 974 COMPLÈTE constatée le 11/07/2026
+    # (2 665 dalles publiées 2025-06-25). Streamé par tuile en GeoTIFF via WMS-R,
+    # à 1 m/px (512 px), jamais stocké : seuls les agrégats parcellaires persistent.
+    wms_url: "https://data.geopf.fr/wms-r"
+    wms_layer: "IGNF_LIDAR-HD_MNH_ELEVATION.ELEVATIONGRIDCOVERAGE.RGR92UTM40S"
+    pixels: 512                     # 512 m → 1 m/px
+  seuils:
+    ndvi_canopee: 0.5               # masque canopée : NDVI >= seuil
+    hauteur_vegetation_haute_m: 3.0 # ∧ MNH > seuil
+    bande_limite_m: 3.0             # bande intérieure le long des limites parcellaires
+    buffer_bati_m: 8.0              # buffer autour de l'emprise bâtie (V0 omnidirectionnel)
+    ombrage_vegetal_pct: 30         # flag_ombrage_vegetal = canopee_bati_pct > seuil
+    vegetation_haute_limite_pct: 40 # signal élagueur = canopee_limite_pct > seuil
+    bati_voisin_m: 10               # bâti voisin proche de la limite (argument voisinage)
+  validation:
+    quota: 20                       # session Vic : 20 vignettes « végétation haute »

@@ -89,8 +89,15 @@ class FeedbackVerdict(StrEnum):
 
 
 class SignalType(StrEnum):
-    """Type de signal de veille (offre C, brief §5 — post-MVP)."""
+    """Type de signal de veille (offre C, brief §5 — post-MVP).
+
+    Les mandats suivants insèrent en SQL brut mais les valeurs vivent ICI (la longueur
+    du varchar généré par create_all = la plus longue valeur de l'enum)."""
 
     NEW_PERMIT_NEARBY = "new_permit_nearby"
     MUTATION_DVF = "mutation_dvf"
     ZONAGE_CHANGE = "zonage_change"
+    PISCINE_DETECTEE = "piscine_detectee"                    # Détection Ortho
+    APER_DEADLINE = "aper_deadline"                          # Habitat Solaire
+    ANC_MUTATION = "anc_mutation"                            # ANC & Végétation (Lot A)
+    VEGETATION_HAUTE_LIMITE = "vegetation_haute_limite"      # ANC & Végétation (Lot B)
