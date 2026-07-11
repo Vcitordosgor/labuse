@@ -278,6 +278,26 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte. Installations ≥ 36 kVA individualisées, petites agrégées par commune.",
          technical_notes="Filtré dép. 974, filière solaire → pv_registry. Repowering : mises en service "
                          "2006-2013 (contrats d'achat 20 ans en fin de vie 2026-2033)."),
+    # ── Mandat Wave Détection Ortho ──
+    dict(name="BD ORTHO 20 cm (IGN)", category="imagerie", provider="IGN / Géoplateforme",
+         access_type="WMS", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         rate_limit="gratuit sans clé ; 4 requêtes simultanées (politesse)",
+         documentation_url="https://geoservices.ign.fr/bdortho",
+         endpoint_url="https://data.geopf.fr/wms-r (ORTHOIMAGERY.ORTHOPHOTOS)",
+         legal_notes="Licence Ouverte Etalab — usage commercial OK, attribution IGN obligatoire (UI).",
+         technical_notes="✓ live 11/07/2026. MILLÉSIME 974 = 2025 (fiche IGN dates de prises de vues) "
+                         "— l'âge de l'image = l'âge de la vérité terrain. Mode retenu : WMS EPSG:2975 "
+                         "natif 2560×2560 px (512 m à 20 cm), 5 041 tuiles ciblées (bâti ∪ parkings) "
+                         "≈ 6 Go de cache temporaire vs ~50-80 Go de dalles JP2. Re-survol ~3-4 ans "
+                         "→ pas de cron, commande --refresh (Lot 7)."),
+    dict(name="RGE ALTI 5 m (IGN)", category="terrain", provider="IGN / Géoplateforme",
+         access_type="import raster", status=S.CONNECTE, reliability_level=R.VERIFIE,
+         documentation_url="https://geoservices.ign.fr/rgealti",
+         endpoint_url=None,
+         legal_notes="Licence Ouverte Etalab.",
+         technical_notes="Déjà ingéré au data-gap : raster de PENTE dérivé conservé "
+                         "(rgealti_pente_5m, PostGIS raster SRID 2975, 2 793 dalles) — réutilisé "
+                         "tel quel par wave-ortho Lot 1 (pente non bâtie), aucun re-téléchargement."),
     dict(name="Parkings OSM (loi APER)", category="energie", provider="OpenStreetMap",
          access_type="Overpass/GeoJSON", status=S.CONNECTE, reliability_level=R.A_CONFIRMER,
          documentation_url="https://wiki.openstreetmap.org/wiki/Tag:amenity%3Dparking",

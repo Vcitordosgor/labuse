@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS ortho_detections (
   idu           varchar(14),
   sur_bati      boolean,
   validation    varchar(16),                    -- null | 'ok' | 'faux_positif' (outil Lot 3)
-  tile_id       varchar(24) REFERENCES ortho_tiles (tile_id),
+  tile_id       varchar(24),  -- pas de FK : la détection ne doit jamais attendre le job d'acquisition
   detected_at   timestamptz DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS ortho_detections_geom_2975_gix ON ortho_detections USING gist (geom_2975);
@@ -136,8 +136,9 @@ def detect_tiles(session: Session, *, limit: int | None = None, log=print) -> di
         "SELECT tile_id FROM ortho_tiles WHERE acquise_at IS NOT NULL AND traite_at IS NULL"
         " ORDER BY tile_id" + (" LIMIT :lim" if limit else "")),
         {"lim": limit} if limit else {}).scalars().all()
-    n_cand = n_tiles = 0
+    n_cand = n_garde = n_tiles = 0
     t0 = time.monotonic()
+    dist_ctx = float(cfg["contexte_bati_m"])
     for tid in rows:
         p = tile_path(tid)
         if not p.exists():
@@ -147,28 +148,40 @@ def detect_tiles(session: Session, *, limit: int | None = None, log=print) -> di
             continue
         xmin, ymin = (int(v) for v in tid.split("_"))
         cands = _detect_in_image(img, cfg)
-        for cand in cands:
-            wkt = _px_to_wkt_2975(cand["px"], xmin, ymin, tile_px)
-            session.execute(text("""
+        n_ins = 0
+        if cands:
+            # une seule requête par tuile ; le lagon fragmenté produit des centaines de
+            # blobs « taille piscine » hors cadastre → filtrés ICI (< 30 m d'une parcelle)
+            payload = json.dumps([
+                {"wkt": _px_to_wkt_2975(c["px"], xmin, ymin, tile_px),
+                 "surf": c["surface_m2"], "scores": c["scores"]} for c in cands
+            ])
+            n_ins = session.execute(text("""
+                WITH cand AS (
+                  SELECT ST_MakeValid(ST_GeomFromText(e ->> 'wkt', 2975)) AS g,
+                         (e ->> 'surf')::float AS surf, e -> 'scores' AS scores
+                  FROM jsonb_array_elements(CAST(:payload AS jsonb)) e
+                )
                 INSERT INTO ortho_detections (type, geom, geom_2975, surface_m2,
                                               confiance, criteres, tile_id)
-                SELECT 'piscine', ST_Transform(g, 4326), g, :surf, NULL,
-                       CAST(:crit AS jsonb), :tid
-                FROM (SELECT ST_MakeValid(ST_GeomFromText(:wkt, 2975)) AS g) t
-                WHERE ST_GeometryType(ST_MakeValid(ST_GeomFromText(:wkt, 2975))) = 'ST_Polygon'
-            """), {"wkt": wkt, "surf": cand["surface_m2"],
-                   "crit": json.dumps(cand["scores"]), "tid": tid})
+                SELECT 'piscine', ST_Transform(g, 4326), g, surf, NULL, scores, :tid
+                FROM cand
+                WHERE ST_GeometryType(g) = 'ST_Polygon'
+                  AND EXISTS (SELECT 1 FROM parcels p
+                              WHERE ST_DWithin(p.geom_2975, ST_Centroid(cand.g), :dist))
+            """), {"payload": payload, "tid": tid, "dist": dist_ctx}).rowcount
         session.execute(text(
             "UPDATE ortho_tiles SET traite_at = now(), nb_detections = :n WHERE tile_id = :tid"),
-            {"n": len(cands), "tid": tid})
+            {"n": n_ins, "tid": tid})
         n_cand += len(cands)
+        n_garde += n_ins
         n_tiles += 1
         if n_tiles % 100 == 0:
             session.commit()  # checkpoint
-            log(f"  détection {n_tiles}/{len(rows)} tuiles, {n_cand} candidats"
+            log(f"  détection {n_tiles}/{len(rows)} tuiles, {n_garde}/{n_cand} candidats"
                 f" ({n_tiles / (time.monotonic() - t0):.1f} t/s)")
     session.commit()
-    return {"tuiles": n_tiles, "candidats_bruts": n_cand}
+    return {"tuiles": n_tiles, "candidats_bruts": n_cand, "candidats_inseres": n_garde}
 
 
 def post_traitement(session: Session, log=print) -> dict[str, Any]:
