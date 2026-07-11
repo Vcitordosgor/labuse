@@ -1937,3 +1937,26 @@ def ortho_refresh_cmd(
     if purge_cache:
         n_p = ot.purge_cache()
         typer.echo(f"✓ cache purgé : {n_p} image(s) supprimée(s) (tables conservées)")
+
+
+@app.command("ortho-juge-probe")
+def ortho_juge_probe_cmd(
+    etape: str = typer.Option("tout", help="crops | embeddings | mesure | tout"),
+) -> None:
+    """Cascade de juges, étage 1 : probe linéaire (DINOv2 gelé + logreg) —
+    entraînée sur jeu='train', MESURÉE sur les 300 sanctuarisés. Critère Vic :
+    précision ≥ 90 % en gardant ≥ 80 % des vrais → juge retenu, STOP cascade."""
+    from .ml import probe
+
+    with session_scope() as s:
+        if etape in ("crops", "tout"):
+            typer.echo(f"✓ crops : {probe.extraire_crops(s, log=typer.echo)}")
+        if etape in ("embeddings", "tout"):
+            typer.echo(f"✓ embeddings : {probe.calculer_embeddings(log=typer.echo)}")
+        if etape in ("mesure", "tout"):
+            res = probe.entrainer_et_mesurer(s, log=typer.echo)
+            for pt in res["courbe"]:
+                typer.echo(f"  seuil {pt['seuil']} : précision {pt['precision']}, "
+                           f"rappel des vrais {pt['rappel_vrais']} ({pt['gardees']} gardées)")
+            typer.echo(f"{'✓ CRITÈRE ATTEINT' if res['critere_atteint'] else '✗ critère non atteint'}"
+                       f" : {res.get('point')}")
