@@ -108,15 +108,21 @@ MENTIONS_LEGALES["anc-travaux"] = MENTIONS_LEGALES["anc-prospection"]
 # ───────────────────────── lecture ─────────────────────────
 
 @router.get("")
-def segments_home(db: Session = Depends(get_db)) -> dict:
+def segments_home(inclure_inactifs: bool = False, db: Session = Depends(get_db)) -> dict:
     """Galerie : presets par catégorie, disponibilité (complet/partiel), compteurs
     (cache 24 h — recalcul par /segments/refresh-counts ou le job), registry de
-    filtres pour le query builder (filtres indisponibles = grisés côté UI)."""
+    filtres pour le query builder (filtres indisponibles = grisés côté UI).
+
+    Par défaut la galerie ne liste que les presets ACTIFS (l'offre packagée — décision
+    produit du 11/07/2026 : 5 presets). Les presets désactivés restent en base (données,
+    filtres du builder et signaux intacts) et se pilotent via `?inclure_inactifs=true`
+    (vue admin) puis le PUT de réactivation. Le query builder complet et TOUS les filtres
+    du registry restent servis ci-dessous quels que soient les presets actifs."""
     avail = compute_availability(db)
     cnts = presets_mod.counts(db)
     cat = catnat_mod.communes_recentes(db)
     out = []
-    for p in presets_mod.list_presets(db):
+    for p in presets_mod.list_presets(db, actifs_seulement=not inclure_inactifs):
         dispo, inactifs = presets_mod.preset_disponibilite(p, avail)
         out.append({**p,
                     "disponibilite": dispo, "filtres_inactifs": inactifs,

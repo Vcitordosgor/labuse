@@ -48,6 +48,7 @@ presets:
     tri_defaut: jardin_desc
 
   - slug: clotures-portails
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Clôtures & portails
     categorie: exterieur
     ordre: 30
@@ -98,6 +99,7 @@ presets:
     tri_defaut: jardin_desc
 
   - slug: elagage
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Élagage & entretien d'arbres
     categorie: exterieur
     ordre: 60
@@ -115,6 +117,7 @@ presets:
     tri_defaut: jardin_desc
 
   - slug: elagage-limite
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Prospection élagage — canopée en limite
     categorie: exterieur
     ordre: 61
@@ -135,6 +138,7 @@ presets:
 
   # ───────────────────────── Rénovation ─────────────────────────
   - slug: artisans-renovation
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Artisans rénovation générale
     categorie: renovation
     ordre: 70
@@ -150,6 +154,7 @@ presets:
     tri_defaut: mutation_recente
 
   - slug: cuisinistes
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Cuisinistes
     categorie: renovation
     ordre: 80
@@ -164,6 +169,7 @@ presets:
     tri_defaut: prix_mutation_desc
 
   - slug: salles-de-bain
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Salles de bain
     categorie: renovation
     ordre: 90
@@ -179,6 +185,7 @@ presets:
     tri_defaut: mutation_recente
 
   - slug: couvreurs-etancheite
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Couvreurs & étanchéité
     categorie: renovation
     ordre: 100
@@ -198,6 +205,7 @@ presets:
     tri_defaut: age_bati_desc
 
   - slug: menuiseries-cyclonique
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Menuiseries cycloniques
     categorie: renovation
     ordre: 110
@@ -214,6 +222,7 @@ presets:
     tri_defaut: age_bati_desc
 
   - slug: termites-charpente
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Traitement termites & charpente
     categorie: renovation
     ordre: 120
@@ -231,6 +240,7 @@ presets:
     tri_defaut: age_bati_desc
 
   - slug: anc-travaux
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Assainissement non collectif — travaux
     categorie: renovation
     ordre: 130
@@ -248,6 +258,7 @@ presets:
     tri_defaut: age_bati_desc
 
   - slug: anc-prospection
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Prospection ANC — mutations récentes
     categorie: renovation
     ordre: 131
@@ -292,6 +303,7 @@ presets:
     tri_defaut: score_solaire_desc
 
   - slug: chauffe-eau-solaire
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Chauffe-eau solaire
     categorie: energie
     ordre: 150
@@ -309,6 +321,7 @@ presets:
     tri_defaut: age_bati_desc
 
   - slug: clim-pac
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Climatisation & pompes à chaleur
     categorie: energie
     ordre: 160
@@ -325,6 +338,7 @@ presets:
 
   # ───────────────────────── Sécurité ─────────────────────────
   - slug: alarmes-telesurveillance
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Alarmes & télésurveillance
     categorie: securite
     ordre: 170
@@ -340,6 +354,7 @@ presets:
 
   # ───────────────────────── Foncier bâti ─────────────────────────
   - slug: extensions-surelevations
+    actif: false   # désactivé — offre packagée 11/07/2026 (données/filtres/signaux conservés)
     nom: Extensions & surélévations
     categorie: foncier_bati
     ordre: 180

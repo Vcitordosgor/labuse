@@ -141,6 +141,39 @@ le MNS Corrélé D974 (2017/2023/2025) reste noté pour la dynamique en v1.1.
   Les seules tuiles RVB nécessaires aux vignettes sont re-téléchargées.
   URL : `labuse api` → http://127.0.0.1:8000/ortho/validation?type=vegetation&profil=vegetation&quota=20
 
+## Décision produit — catalogue Segments packagé (11/07/2026)
+
+L'offre packagée passe à **5 presets ACTIFS** ; tous les autres presets du seed
+passent `actif=false`. **Aucune suppression** : les rows presets, les données
+(`parcel_anc`, `parcel_vegetation`, signaux), et TOUS les filtres du query builder
+restent en base — réactiver = repasser le flag `actif` (admin, `PUT /segments/presets/{slug}`).
+Le module Solaire (parkings APER M23, toitures tertiaires M24) n'est **pas** un preset
+Segments : il reste actif tel quel, inchangé.
+
+**Correspondance libellés → slugs réels** (les 5 existaient déjà, aucun à créer) :
+
+| Libellé décision | Slug | Statut |
+|---|---|---|
+| Pergolas & terrasses | `pergolas-terrasses` | actif |
+| Paysagistes | `paysagistes` | actif |
+| Piscinistes (prospection installation) | `piscinistes-construction` | actif |
+| Parc piscine (entretien/rénovation, piscines détectées) | `parc-piscines-entretien` | actif |
+| Photovoltaïque résidentiel | `pv-residentiel` | actif |
+
+**Désactivés (15, conservés en base)** : `clotures-portails`, `elagage`,
+`elagage-limite`, `artisans-renovation`, `cuisinistes`, `salles-de-bain`,
+`couvreurs-etancheite`, `menuiseries-cyclonique`, `termites-charpente`, `anc-travaux`,
+`anc-prospection`, `chauffe-eau-solaire`, `clim-pac`, `alarmes-telesurveillance`,
+`extensions-surelevations`.
+
+Mécanique : le seed YAML porte désormais `actif: false` sur les 15 (le seed honore le
+flag — fresh install correct) ; la base existante est passée par un `UPDATE` idempotent
+(flag seulement). La galerie `GET /segments` ne liste que les actifs ; `?inclure_inactifs=true`
+donne la vue admin. On réduit l'OFFRE packagée, **pas l'outil** : builder complet + 37
+filtres du registry toujours servis, query/export par slug fonctionnent même sur un
+preset inactif (les recherches sauvegardées ne cassent pas). E2E : `1a.galerie-5-actifs`
++ `1b.anc-elagage-hors-galerie` + `1e.inactifs-recuperables` verts.
+
 ## Attribution & conformité
 
 - UI : © IGN (BD ORTHO IRC, LiDAR HD, contours IRIS), INSEE (RP2022), Géoportail de

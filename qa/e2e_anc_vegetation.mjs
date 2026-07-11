@@ -14,22 +14,37 @@ const browser = await chromium.launch();
 const ctx = await browser.newContext();
 const rq = ctx.request;
 
-// 1 — galerie : presets servis, filtres ANC dégrisés, mention légale présente
+// 1 — OFFRE PACKAGÉE (décision 11/07/2026) : la galerie par défaut ne liste QUE les 5
+//     presets actifs ; anc-prospection / elagage-limite restent EN BASE (inactifs),
+//     visibles via ?inclure_inactifs=true, avec leur mention légale intacte. Le builder
+//     et TOUS les filtres du registry restent servis (on réduit l'offre, pas l'outil).
+const CINQ_ACTIFS = ['pergolas-terrasses', 'paysagistes', 'piscinistes-construction',
+  'parc-piscines-entretien', 'pv-residentiel'];
 let vegDisponible = false;
 {
   const home = await (await rq.get(`${BASE}/segments`)).json();
-  const anc = (home.presets ?? []).find((p) => p.slug === 'anc-prospection');
-  const ela = (home.presets ?? []).find((p) => p.slug === 'elagage-limite');
+  const slugs = (home.presets ?? []).map((p) => p.slug).sort();
+  ok('1a.galerie-5-actifs', JSON.stringify(slugs) === JSON.stringify([...CINQ_ACTIFS].sort()),
+    slugs.join(', '));
+  ok('1b.anc-elagage-hors-galerie',
+    !slugs.includes('anc-prospection') && !slugs.includes('elagage-limite'));
+  // le builder complet : filtres ANC & Végétation toujours servis et dégrisés
   const fProba = (home.filtres ?? []).find((f) => f.cle === 'proba_anc');
   const fCanopee = (home.filtres ?? []).find((f) => f.cle === 'canopee_limite_pct');
   vegDisponible = fCanopee?.disponible === true;
-  ok('1a.presets-servis', !!anc && !!ela);
-  ok('1b.filtre-proba-anc-degrise', fProba?.disponible === true,
+  ok('1c.builder-filtre-proba-anc', fProba?.disponible === true,
     `disponible=${fProba?.disponible} (${fProba?.raison ?? ''})`);
-  ok('1c.mention-anc-legifrance', !!anc?.mention_legale?.texte
+  ok('1d.builder-filtres-complets', (home.filtres ?? []).length >= 35,
+    `${(home.filtres ?? []).length} filtres servis`);
+  // vue admin : les presets désactivés sont récupérables + mention légale conservée
+  const all = await (await rq.get(`${BASE}/segments?inclure_inactifs=true`)).json();
+  const anc = (all.presets ?? []).find((p) => p.slug === 'anc-prospection');
+  const ela = (all.presets ?? []).find((p) => p.slug === 'elagage-limite');
+  ok('1e.inactifs-recuperables', !!anc && anc.actif === false && !!ela && ela.actif === false);
+  ok('1f.mention-anc-legifrance', !!anc?.mention_legale?.texte
     && anc.mention_legale.texte.includes('L.1331-11-1')
     && anc.mention_legale.texte.includes('L.271-4'));
-  ok('1d.mention-elagage-art673', !!ela?.mention_legale?.texte
+  ok('1g.mention-elagage-art673', !!ela?.mention_legale?.texte
     && ela.mention_legale.texte.includes('673'));
 }
 
