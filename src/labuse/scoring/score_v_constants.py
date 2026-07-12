@@ -18,7 +18,12 @@ from __future__ import annotations
 # v1.1 (mandat calibration, 10/07/2026) : seuil re-dérivé après recalibration = top décile V
 # des chaudes (p90 = 34, dans la fenêtre d'application [30-60] fixée par Vic) → 93 Brûlantes.
 # Valeur v1 historique : 50 (14 Brûlantes, garde-fou déclenché).
-V_BRULANTE_THRESHOLD = 34
+# v1.3 (M1, 12/07/2026) : l'échelle a changé (famille B sortie, anti-signaux à 0) — 34 est
+# caduc (29 brûlantes seulement, et la bande 25-49 était morte au backtest). Recalibrage
+# MÉCANIQUE : plus petit V tel que l'effectif tombe dans le garde-fou [30-120] → 17
+# (120 brûlantes, dont 94 avec ≥ 1 événement daté — cession de fonds en tête).
+# Sensibilité : seuil 12 → 212 (hors garde-fou) · seuil 22 → 39. Détail : reports/m1-v13/.
+V_BRULANTE_THRESHOLD = 17
 BRULANTE_GUARDRAIL = (30, 120)
 
 # Run de référence de la matrice Q×A — SOURCE DE VÉRITÉ UNIQUE (API, vue Brûlantes,
