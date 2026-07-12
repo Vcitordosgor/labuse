@@ -60,6 +60,9 @@ export interface IaRestitution {
   // ne prend JAMAIS un repli mots-clés pour une vraie traduction (badge « mode mots-clés »).
   explanation?: string | null
   stub?: boolean
+  // Ajout C (UX V1) : à 0 résultat, proposition de relâchement — le critère numérique le plus
+  // serré est retiré et la recherche relancée d'un clic (jamais un zéro sec).
+  relance?: { label: string; raw: Record<string, unknown> } | null
 }
 
 export type Basemap = 'dark' | 'plan' | 'ortho'

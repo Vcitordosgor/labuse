@@ -14,6 +14,7 @@ import { SegmentsPage } from './components/segments/SegmentsPage'
 import { ProjetsPanel } from './components/projets/ProjetsPanel'
 import { ContextePanel } from './components/contexte/ContextePanel'
 import { filtersFromHash, filtersToHash } from './lib/filters'
+import { useApplySearch } from './lib/useApplySearch'
 import { ModulePanel } from './components/outils/ModulePanel'
 import { TimeMachine } from './components/outils/TimeMachine'
 import { EMPTY_FILTERS, useApp } from './store/useApp'
@@ -22,6 +23,7 @@ import { EMPTY_FILTERS, useApp } from './store/useApp'
 // parcelle porte son « pourquoi » (moteur) et l'utilisateur peut ENREGISTRER + exporter le PDF.
 function IaRestitution() {
   const { iaRestitution, setIaRestitution, select, setView, setM22Prefill, setModule, togglePanel, selectedIdu, setVerdict } = useApp()
+  const apply = useApplySearch()   // ajout C (UX V1) : relance sans le critère le plus serré
   const [count, setCount] = useState(0)
   const [projetId, setProjetId] = useState<number | null>(null)
   useEffect(() => {
@@ -88,10 +90,33 @@ function IaRestitution() {
           )}
         </p>
       )}
-      <button data-ia-voir-tout onClick={voirTout}
-        className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/40 bg-mint/10 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20">
-        Voir les {count.toLocaleString('fr-FR')} résultats dans la liste →
-      </button>
+      {/* Ajout C (UX V1) : jamais de zéro sec — à 0 résultat on propose le relâchement du
+          critère numérique le plus serré, relançable d'un clic. */}
+      {iaRestitution.n === 0 ? (
+        <div data-ia-zero className="mt-1.5 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] leading-snug text-st-creuser">
+          Aucun résultat avec tous ces critères.
+          {iaRestitution.relance ? (
+            <button data-ia-relance
+              onClick={() => {
+                const r = iaRestitution.relance!
+                apply(r.raw, iaRestitution.phrase, {
+                  explanation: `Critère « ${r.label} » retiré. ${iaRestitution.explanation ?? ''}`.trim(),
+                  stub: iaRestitution.stub,
+                })
+              }}
+              className="mt-1.5 flex w-full items-center justify-center rounded-lg border border-st-creuser/60 bg-st-creuser/10 py-1.5 font-medium text-st-creuser hover:bg-st-creuser/20">
+              Réessayer sans le critère « {iaRestitution.relance.label} » →
+            </button>
+          ) : (
+            <span className="text-txt-dim"> Élargissez le périmètre ou retirez un critère.</span>
+          )}
+        </div>
+      ) : (
+        <button data-ia-voir-tout onClick={voirTout}
+          className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/40 bg-mint/10 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20">
+          Voir les {count.toLocaleString('fr-FR')} résultats dans la liste →
+        </button>
+      )}
 
       {wide ? (
         <div className="mt-2 space-y-1.5">
