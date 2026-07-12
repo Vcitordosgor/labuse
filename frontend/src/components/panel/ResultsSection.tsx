@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
-import { ageSignal, BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
+import { ageSignal, BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import type { Statut } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
@@ -57,7 +57,9 @@ function CompletudeRing({ value }: { value: number }) {
 
 function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
   const { selectedIdu, select } = useApp()
-  const meta = STATUT_META[p.status]
+  // correctif M5 : la barre + le score prennent la couleur du VERDICT EFFECTIF (tier v2
+  // quand un run existe, étage 0 prime) — le statut matrice n'est plus le verdict affiché
+  const meta = verdictMeta(p.status, p.tier_v2, p.etage0)
   const on = selectedIdu === p.idu
   return (
     <button
@@ -82,6 +84,13 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
             <span className="shrink-0 rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]"
               title={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) parcelle(s) chaude(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}>
               même proprio ×{p.cluster}
+            </span>
+          )}
+          {meta.v2 && (meta.tier === 'brulante' || meta.tier === 'chaude') && (
+            <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+              style={{ background: `${meta.color}1f`, color: meta.color }}
+              title={`Verdict scoring v2 (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}`}>
+              {meta.label}{p.rang_v2 != null ? ` · ${p.rang_v2}` : ''}
             </span>
           )}
           {p.vue_mer === 'oui' && <span className="shrink-0 text-[10px] text-[#7DE8E0]" title="Vue mer dégagée">◠</span>}

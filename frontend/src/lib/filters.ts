@@ -25,6 +25,11 @@ export interface ParcelProps {
   owner_type?: string | null
   brulante?: boolean
   v_sig?: string[]         // codes des signaux V retenus (filtre par signal)
+  // correctif M5 : verdict effectif (tier v2 + étage 0 du run servi) — cf. verdictMeta()
+  tier_v2?: string | null
+  rang_v2?: number | null
+  mult_v2?: number | null
+  etage0?: boolean | number
 }
 
 export const PROMUES: Statut[] = ['chaude', 'a_surveiller', 'a_creuser']

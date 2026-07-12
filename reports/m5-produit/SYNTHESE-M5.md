@@ -57,6 +57,52 @@ Matrice historique toujours servie, marquée deprecated. UI React : bloc
 Outils « Scoring v2 (P) » (3 onglets + toggle copro), bloc modèle + avertissement
 censure sur la page Sources. `tsc` + `vite build` verts.
 
+## Correctif verdict d'en-tête ✅ (12/07, avant merge)
+
+**Symptôme (Vic)** : fiche 97410000AS1425 ouverte sur « LABUSE l'a écartée »
+(matrice legacy, Q 44 < 50, aucune exclusion dure) alors que le bloc v2 la
+classe **Brûlante v2 rang 16** — deux verdicts contradictoires sur un écran.
+Le cas n'était pas marginal : **101 des 119 brûlantes v2 et 734 des 1 032
+chaudes v2 étaient « écartée » matrice** (croisement q_v3_datagap × run v2).
+
+**Règle implémentée (verdictMeta, unique, partout)** :
+1. exclusion dure étage 0 **du run SERVI** → en-tête « écartée » + motifs
+   sourcés (l'étage 0 prime, inchangé) ;
+2. sinon, un run v2 existe → bannière + badge pilotés par le **tier v2**
+   (Brûlante v2 / Chaude v2 / À creuser / Réserve foncière), avec rang (tiers
+   pipeline) et ×N ;
+3. le statut matrice legacy descend en « **Statut matrice (historique)** »
+   dans la section Qualité (fiche + PDF) — visible, plus jamais verdict.
+
+Le point 1 est vérifié sur le run servi (`d.status IN (exclue,
+faux_positif_probable)`) et non via le tier v2 seul : le pipeline v2 lit
+l'étage 0 du run `q_v2` alors que l'app sert `q_v3_datagap` — **74 chaudes/
+brûlantes v2 sont exclues étage 0 au run servi** et gardent l'en-tête écartée
+(testé, capture `apres_3_etage0_prime.png`).
+
+**Surfaces alignées** : fiche (bannière + badge `data-badge-verdict`), PDF
+premium (chip + ligne historique), listes/recherche (`ResultCard` : barre,
+couleur score, chip « Brûlante v2 · rang »), carte commune (GeoJSON) **et**
+île (tuiles MVT — colonnes `tier_v2/rang_v2/mult_v2/etage0`, repli legacy si
+table pas rebuildée), légende (tiers v2 quand un run existe), Kanban CRM,
+export CSV (colonnes `tier_v2`, `rang_v2`, statut renommé `statut_matrice`).
+Palette v2 = celle du bloc « Pourquoi ce score » (source unique
+`TIER_V2_META`, lib/status.ts).
+
+Au passage : `labuse build-mvt` matérialisait par défaut le run `q_v2` alors
+que l'app sert `q_v3_datagap` (carte île sur un autre run que les fiches) —
+défaut aligné sur `Q_A_RUN_LABEL` + table rebuildée ; 2 tests dispatch
+`test_api_q_v2` cassés de longue date (mocks) remis au vert.
+
+**Preuves** : `audit_shots/m5_verdict/` (avant/après, zoom fiche, étage 0
+prime) ; `tests/test_verdict_effectif.py` (4 scénarios, validés aussi sur la
+base réelle en transaction annulée). **Restes assumés** : les FILTRES/compteurs
+(chips statuts, entonnoir, stats) restent sur la matrice legacy — une brûlante
+v2 « écartée matrice » n'apparaît dans la liste qu'en opt-in Écartées ; les
+listes des modules Outils (moteurs/segments) affichent encore le statut legacy
+en label secondaire. À traiter si Vic veut basculer le pilotage des vues sur
+les tiers v2.
+
 ## Lot 5 — Monitoring forward ✅
 
 Snapshot `m5-2026-07-12` gelé aux côtés de v1.2/v1.3. `labuse monitor-forward`

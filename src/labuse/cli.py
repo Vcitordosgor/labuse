@@ -467,12 +467,16 @@ def matrice_apply_cmd(
 
 @app.command("build-mvt")
 def build_mvt_cmd(
-    label: str = typer.Option("q_v2", help="run_label dont matérialiser les tuiles."),
+    # correctif M5 : défaut aligné sur le run SERVI (Q_A_RUN_LABEL) — « q_v2 » codé en dur
+    # matérialisait la carte île sur un autre run que les fiches/listes.
+    label: str = typer.Option(None, help="run_label dont matérialiser les tuiles "
+                                         "(défaut : run de référence Q_A_RUN_LABEL)."),
 ) -> None:
     """(Re)construit la table `mvt_parcels` servie en tuiles vectorielles (carte île entière).
     À relancer après CHAQUE run de scoring — les tuiles lisent cette matérialisation, pas le run."""
-    from .api.tiles import build_mvt_table, build_overlay_mvt
+    from .api.tiles import RUN, build_mvt_table, build_overlay_mvt
 
+    label = label or RUN
     with session_scope() as s:
         n = build_mvt_table(s, label)
         n_ov = build_overlay_mvt(s)

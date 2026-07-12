@@ -35,17 +35,41 @@ const STYLE: maplibregl.StyleSpecification = {
   layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#060A08' } }],
 }
 
-const STATUS_COLOR: maplibregl.ExpressionSpecification = [
+// Correctif M5 (verdict effectif) : la couleur EST le verdict sur la carte — étage 0 prime
+// (écartée quasi invisible, inchangé), puis tier v2 quand un run existe (palette TIER_V2_META,
+// cf. lib/status.ts), repli statut matrice legacy (tuiles/geojson d'avant le rebuild MVT).
+// `etage0` est bool en GeoJSON et int (0/1) en MVT → to-number.
+const LEGACY_COLOR: maplibregl.ExpressionSpecification = [
   'match', ['get', 'status'],
   'chaude', '#5CE6A1', 'a_surveiller', '#4ADE96', 'a_creuser', '#E8B44C', 'ecartee', '#E8695A',
   '#39463F',
 ]
-const STATUS_OPACITY: maplibregl.ExpressionSpecification = [
+const LEGACY_OPACITY: maplibregl.ExpressionSpecification = [
   'match', ['get', 'status'],
   'chaude', 0.92, 'a_surveiller', 0.85, 'a_creuser', 0.55, 'ecartee', 0.04,
   0.03,
 ]
-const PROMUES_FILTER: maplibregl.FilterSpecification = ['in', ['get', 'status'], ['literal', ['chaude', 'a_surveiller', 'a_creuser']]]
+const ETAGE0: maplibregl.ExpressionSpecification = ['>=', ['to-number', ['coalesce', ['get', 'etage0'], 0]], 1]
+const TIER_V2: maplibregl.ExpressionSpecification = ['coalesce', ['get', 'tier_v2'], '']
+const STATUS_COLOR: maplibregl.ExpressionSpecification = [
+  'case', ETAGE0, '#E8695A',
+  ['match', TIER_V2,
+    'brulante', '#E8695A', 'chaude', '#E8B44C', 'a_creuser', '#8FA69A',
+    'reserve_fonciere', '#6FA8DC', 'ecartee', '#E8695A',
+    LEGACY_COLOR],
+]
+const STATUS_OPACITY: maplibregl.ExpressionSpecification = [
+  'case', ETAGE0, 0.04,
+  ['match', TIER_V2,
+    'brulante', 0.95, 'chaude', 0.9, 'a_creuser', 0.45,
+    'reserve_fonciere', 0.55, 'ecartee', 0.04,
+    LEGACY_OPACITY],
+]
+// liseré des promues : pipeline v2 (brûlante/chaude, hors étage 0) OU promues legacy
+const PROMUES_FILTER: maplibregl.FilterSpecification = ['any',
+  ['all', ['in', TIER_V2, ['literal', ['brulante', 'chaude']]], ['!', ETAGE0]],
+  ['all', ['==', TIER_V2, ''], ['in', ['get', 'status'], ['literal', ['chaude', 'a_surveiller', 'a_creuser']]]],
+] as unknown as maplibregl.FilterSpecification
 const MUTABILITE_COLOR: maplibregl.ExpressionSpecification = [
   'interpolate', ['linear'], ['coalesce', ['get', 'sdp_residuelle_m2'], 0],
   0, '#1E2A23', 300, '#2E6B4F', 2000, '#46A88A', 5000, '#5CE6A1',

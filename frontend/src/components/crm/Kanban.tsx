@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { deletePipeline, getEventsCount, getPipeline, getPipelineMeta, patchPipeline } from '../../lib/api'
-import { completudeColor, SCORE_TIP, STATUT_META } from '../../lib/status'
+import { completudeColor, SCORE_TIP, verdictMeta } from '../../lib/status'
 import type { PipelineEntry } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -21,7 +21,8 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
     },
   })
   const prem = e.premium
-  const meta = prem ? STATUT_META[prem.statut] : null
+  // correctif M5 : le badge de carte suit le verdict effectif (tier v2, étage 0 prime)
+  const meta = prem ? verdictMeta(prem.statut, prem.tier_v2, prem.etage0) : null
   return (
     <div
       draggable

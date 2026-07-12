@@ -109,7 +109,8 @@ export interface PipelineEntry {
   notes: string
   created_at: string | null
   parcel: { commune: string; section: string; surface_m2: number | null }
-  premium: { statut: Statut; q_score: number; a_score: number; completeness_score: number } | null
+  premium: { statut: Statut; q_score: number; a_score: number; completeness_score: number;
+             etage0?: boolean; tier_v2?: string | null; rang_v2?: number | null } | null
 }
 
 export interface SourceInfo {
@@ -148,4 +149,8 @@ export interface Fiche {
   lines: FicheLine[]
   flags: FicheLine[]
   score_v: ScoreV | null
+  // correctif M5 : verdict d'en-tête piloté par le tier v2 quand un run existe ;
+  // etage0 = exclusion dure du run SERVI (prime toujours sur le tier v2)
+  score_v2: { tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean } | null
+  etage0: boolean
 }

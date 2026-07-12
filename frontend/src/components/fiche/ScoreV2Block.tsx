@@ -8,6 +8,7 @@
  * sur la fiche existante s'il échoue (bloc absent, jamais d'erreur bloquante).
  */
 import { useQuery } from '@tanstack/react-query'
+import { TIER_V2_META } from '../../lib/status'
 
 type Contribution = { feature: string; bin: string; signe: '+' | '-'; libelle: string; log_hazard: number }
 type ScoreV2 = {
@@ -17,13 +18,9 @@ type ScoreV2 = {
   model_version: string; avertissement: string
 }
 
-const TIER_META: Record<string, { label: string; color: string }> = {
-  brulante: { label: 'Brûlante v2', color: '#E8695A' },
-  chaude: { label: 'Chaude v2', color: '#E8B44C' },
-  a_creuser: { label: 'À creuser', color: '#8FA69A' },
-  reserve_fonciere: { label: 'Réserve foncière', color: '#6FA8DC' },
-  ecartee: { label: 'Écartée', color: '#4A5A52' },
-}
+// palette des tiers v2 : source unique dans lib/status.ts (correctif M5 — le verdict
+// d'en-tête et ce bloc doivent être rigoureusement raccord)
+const TIER_META = TIER_V2_META as Record<string, { label: string; color: string }>
 
 export function ScoreV2Block({ idu }: { idu: string }) {
   const { data } = useQuery<ScoreV2>({

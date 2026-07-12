@@ -39,6 +39,15 @@ STATUT = {
     "ecartee": ("Écartée", RED),
     "exclue": ("Exclue", (107, 122, 114)),
 }
+
+# correctif M5 : tiers v2 (P×C) — verdict d'en-tête quand un run v2 existe (étage 0 prime)
+TIER_V2 = {
+    "brulante": ("Brûlante v2", RED),
+    "chaude": ("Chaude v2", AMBER),
+    "a_creuser": ("À creuser", (95, 108, 101)),
+    "reserve_fonciere": ("Réserve foncière", (58, 100, 148)),
+    "ecartee": ("Écartée", RED),
+}
 ONGLETS = [("regles", "RÈGLES"), ("risques", "RISQUES"), ("marche", "MARCHÉ"), ("proprio", "PROPRIO")]
 
 
@@ -138,7 +147,18 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_font("mono", size=14)
     pdf.set_text_color(*TXT_HI)
     pdf.cell(0, 7, fiche["idu"], new_x="LMARGIN", new_y="NEXT")
-    label, color = STATUT.get(fiche["statut"], ("?", TXT_MUT))
+    # verdict d'en-tête (correctif M5) : étage 0 → écartée ; sinon tier v2 s'il existe ;
+    # sinon statut matrice. Le statut matrice descend en « historique » (ligne dim).
+    s2 = fiche.get("score_v2")
+    v2_pilote = bool(s2) and not fiche.get("etage0")
+    if v2_pilote:
+        label, color = TIER_V2.get(s2["tier"], (s2["tier"], TXT_MUT))
+        if s2["tier"] in ("brulante", "chaude") and s2.get("rang") is not None:
+            label += f" · rang {s2['rang']}"
+        if s2.get("mult_base") is not None:
+            label += f" · ×{s2['mult_base']:.1f}"
+    else:
+        label, color = STATUT.get(fiche["statut"], ("?", TXT_MUT))
     y = pdf.get_y() + 1
     w = _chip(pdf, 14, y, label, color)
     pdf.set_font("inter", size=8)
@@ -148,6 +168,13 @@ def render_fiche_pdf(fiche: dict) -> bytes:
     pdf.set_xy(14 + w + 4, y + 0.4)
     pdf.cell(0, 4.6, f"{surf} · {fiche.get('commune', '')} · {lat}, {lon}")
     pdf.set_y(y + 9)
+    if v2_pilote:
+        hist, _ = STATUT.get(fiche["statut"], ("?", TXT_MUT))
+        pdf.set_font("inter", size=6.5)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 3.6, f"Statut matrice (historique) : {hist} — remplacé par le scoring v2 (P×C)",
+                 new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(1)
 
     # ── Scores (Q / A / complétude — le score ne s'affiche jamais seul)
     y = pdf.get_y()

@@ -14,6 +14,37 @@ export const STATUT_META: Record<Statut, { label: string; color: string }> = {
 // Ordre d'affichage de la légende (les 4 statuts de la matrice).
 export const LEGEND_ORDER: Statut[] = ['chaude', 'a_surveiller', 'a_creuser', 'ecartee']
 
+// ── Scoring v2 (M5, P×C) — tiers et verdict effectif ─────────────────────────
+// Palette gravée au lot 4 (bloc « Pourquoi ce score ») : source de vérité UNIQUE ici.
+export type TierV2 = 'brulante' | 'chaude' | 'a_creuser' | 'reserve_fonciere' | 'ecartee'
+export const TIER_V2_META: Record<TierV2, { label: string; color: string }> = {
+  brulante: { label: 'Brûlante v2', color: '#E8695A' },
+  chaude: { label: 'Chaude v2', color: '#E8B44C' },
+  a_creuser: { label: 'À creuser', color: '#8FA69A' },
+  reserve_fonciere: { label: 'Réserve foncière', color: '#6FA8DC' },
+  ecartee: { label: 'Écartée', color: '#4A5A52' },
+}
+export const LEGEND_V2_ORDER: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
+
+// Correctif M5 (verdict d'en-tête) — règle UNIQUE, partout où un verdict s'affiche :
+// 1. exclusion dure étage 0 (run servi) → « Écartée » legacy, motifs sourcés (l'étage 0 prime) ;
+// 2. sinon, un run v2 existe → le TIER v2 est le verdict (avec rang/×N côté appelant) ;
+// 3. sinon → statut matrice legacy (parcs sans run v2).
+export function verdictMeta(
+  statut: Statut | null | undefined,
+  tierV2: string | null | undefined,
+  etage0?: boolean | number | null,
+): { label: string; color: string; v2: boolean; tier: TierV2 | null } {
+  if (etage0) return { ...STATUT_META.ecartee, v2: false, tier: null }
+  const t = tierV2 as TierV2 | null | undefined
+  if (t && TIER_V2_META[t]) {
+    // tier v2 « ecartee » = étage 0 vu du pipeline v2 → rendu écartée legacy (règle 1)
+    if (t === 'ecartee') return { ...STATUT_META.ecartee, v2: true, tier: t }
+    return { ...TIER_V2_META[t], v2: true, tier: t }
+  }
+  return { ...(statut ? STATUT_META[statut] : { label: '—', color: NONE_COLOR }), v2: false, tier: null }
+}
+
 export const NONE_COLOR = '#39463F'
 
 export const statutColor = (s: Statut | null | undefined) =>
