@@ -99,3 +99,18 @@ def test_liste_sert_la_fraicheur_du_dernier_signal_v(db_session):
         assert v is None or re.fullmatch(r"\d{4}-\d{2}-\d{2}", v), v
         if r.get("v_score") is None:
             assert v is None
+
+
+@pytest.mark.db
+def test_sources_verified_at_jamais_invente(db_session):
+    """VUES item 4 : /sources sert verified_at depuis source_checks — NULL tant que le mandat
+    d'audit data n'a pas tourné. La mention front n'existe qu'avec cette date."""
+    from labuse.api.app import list_sources
+    rows = list_sources(db_session)
+    assert rows, "catalogue de sources vide ?"
+    assert all("verified_at" in r for r in rows)
+    # table source_checks vide → aucune date de vérification (rien d'inventé)
+    from sqlalchemy import text as _t
+    n_checks = db_session.execute(_t("SELECT count(*) FROM source_checks")).scalar()
+    if n_checks == 0:
+        assert all(r["verified_at"] is None for r in rows)

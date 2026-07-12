@@ -56,7 +56,9 @@ const ZONES: { key: Zone; label: string }[] = [
   { key: 'ia', label: 'IA' },
   { key: 'cartes', label: 'Cartes' },
   { key: 'outils', label: 'Outils' },
-  { key: 'segments', label: 'Segments' },
+  // Décision produit 12/07 : LABUSE = plateforme d'intelligence foncière — « Vues », plus
+  // « Segments » (la clé interne reste `segments` : zéro refactor d'état, wording seul).
+  { key: 'segments', label: 'Vues' },
   { key: 'projets', label: 'Projets' },
   { key: 'crm', label: 'CRM' },
 ]
