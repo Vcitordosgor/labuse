@@ -374,6 +374,12 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     runs = db.execute(text(
         "SELECT commune, max(coalesce(finished_at, started_at)) AS fin, count(*) AS n "
         "FROM ingestion_runs WHERE status IN ('ok', 'success') GROUP BY commune")).mappings().all()
+    # VUES item 4 : dernière VÉRIFICATION « à la dernière version publiée » par source —
+    # lue dans source_checks (vide tant que le mandat d'audit data n'a pas tourné).
+    # Le front n'affiche la mention QUE si la date existe : jamais une date inventée.
+    checks = {int(r["data_source_id"]): r["verified_at"] for r in db.execute(text(
+        "SELECT data_source_id, max(verified_at) AS verified_at "
+        "FROM source_checks GROUP BY data_source_id")).mappings().all()}
     ingestions: dict[str, dict] = {}
     for r in runs:
         name = _source_pour_run(r["commune"])
@@ -395,6 +401,7 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "testable": s.name in _connector_names(),
             "derniere_ingestion": ingestions.get(s.name, {}).get("derniere"),
             "ingestion_runs": ingestions.get(s.name, {}).get("runs", 0),
+            "verified_at": checks.get(s.id),
         }
         for s in rows
     ]

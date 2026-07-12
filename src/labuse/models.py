@@ -243,6 +243,24 @@ class IngestionRun(Base):
     status: Mapped[str | None] = mapped_column(String(32))
 
 
+# ─────────────────────── source_checks (VUES item 4, 12/07/2026) ───────────────────────
+
+class SourceCheck(Base):
+    """Vérification qu'une source est bien à sa DERNIÈRE version publiée (fraîcheur prouvée).
+
+    Remplie par le mandat d'audit data — vide en attendant. Le front n'affiche la mention
+    « dernière version publiée — vérifié le X » QUE si une ligne existe ici : on n'invente
+    JAMAIS une date de vérification."""
+
+    __tablename__ = "source_checks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    data_source_id: Mapped[int] = mapped_column(
+        ForeignKey("data_sources.id", ondelete="CASCADE"), index=True)
+    verified_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    note: Mapped[str | None] = mapped_column(Text)
+
+
 # ─────────────────────── parcel_signals (offre C) ───────────────────────
 
 class ParcelSignal(Base):

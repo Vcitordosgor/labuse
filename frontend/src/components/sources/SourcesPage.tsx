@@ -11,27 +11,17 @@ const STATUS_DOT: Record<string, string> = {
   error: '#E8695A', down: '#E8695A',
 }
 
-// B3 (mandat calculette) — FRAÎCHEUR PAR SOURCE. La date affichée est RÉELLE (last_sync_at posé
-// par les jobs, ou ingestion_runs côté serveur — UX V1 ajout A), jamais inventée.
-function freshness(iso: string | null): { label: string; color: string } {
-  // A3 (post-revue, décision Vic) : « ingestion non tracée » → « à jour » (ton pro, rassurant :
-  // la source est ingérée, sa date précise n'est simplement pas horodatée par le job).
-  if (!iso) return { label: 'à jour', color: '#5CE6A1' }
-  const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
-  if (days <= 0) return { label: "aujourd'hui", color: '#5CE6A1' }
-  if (days <= 30) return { label: `il y a ${days} j`, color: days <= 7 ? '#5CE6A1' : '#E8B44C' }
-  return { label: `il y a ${Math.round(days / 30)} mois`, color: '#E8B44C' }
-}
-
 // P4.2 (dernière passe) — « version la plus récente publiée » : rassure que LABUSE n'est pas
 // en retard, c'est la SOURCE qui publie par millésime. Notes VÉRIFIÉES + repli sur l'année du nom.
+// VUES item 4 : la mention « dernière version publiée » est RÉSERVÉE aux lignes vérifiées
+// (source_checks.verified_at) — les notes de millésime redeviennent purement factuelles.
 const MILLESIME_VERIFIE: Record<string, string> = {
-  'DVF / valeurs foncières': 'ventes jusqu’à déc. 2025 · dernier millésime publié',
+  'DVF / valeurs foncières': 'ventes jusqu’à déc. 2025',
 }
 function millesimeNote(s: SourceInfo): string | null {
   if (MILLESIME_VERIFIE[s.name]) return MILLESIME_VERIFIE[s.name]
   const y = s.name.match(/\b(19|20)\d{2}\b/)
-  return y ? `millésime ${y[0]} · dernière version publiée` : null
+  return y ? `millésime ${y[0]}` : null
 }
 
 // ── UX V1 ajout A : PRÉCISION MESURÉE quand elle existe — jamais un chiffre inventé. ──
@@ -89,7 +79,6 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
     if (focused) ref.current?.scrollIntoView({ block: 'center' })
   }, [focused])
   const maj = majReelle(s)
-  const f = freshness(maj.iso)
   const mil = millesimeNote(s)
   const prec = PRECISION_PAR_SOURCE[s.name]
   return (
@@ -119,11 +108,18 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         {prec && <div data-source-precision className="mt-0.5 text-[11px] text-mint">✓ précision mesurée : {prec}</div>}
       </div>
       <div className="shrink-0 text-right">
-        <div className="font-mono text-[11px]" style={{ color: f.color }}>{f.label}</div>
-        <div className="text-[11px] text-txt-dim"
+        {/* VUES item 4 : « donnée du X » (réelle : jobs/ingestion_runs, sinon millésime) ;
+            la 2e ligne n'existe QUE vérifiée (source_checks) — jamais de date inventée. */}
+        <div data-source-donnee className="font-mono text-[11px] text-txt"
           title={maj.viaRuns ? `Dernière ingestion tracée (ingestion_runs, ${s.ingestion_runs} runs)` : undefined}>
-          {maj.iso ? new Date(maj.iso).toLocaleDateString('fr-FR') : '—'}
+          {maj.iso ? `donnée du ${new Date(maj.iso).toLocaleDateString('fr-FR')}`
+            : mil ? `donnée du ${mil}` : '—'}
         </div>
+        {s.verified_at && (
+          <div data-source-verifiee className="mt-0.5 text-[11px] text-mint">
+            dernière version publiée — vérifié le {new Date(s.verified_at).toLocaleDateString('fr-FR')}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -138,10 +134,6 @@ export function SourcesPage() {
     const k = s.category || 'Autres'
     cats.set(k, [...(cats.get(k) ?? []), s])
   }
-  // résumé « mises à jour » — dates RÉELLES uniquement (aucune inventée)
-  const tracees = (data ?? []).filter((s) => majReelle(s).iso)
-  const derniere = tracees.map((s) => majReelle(s).iso as string).sort().slice(-1)[0]
-
   return (
     <div data-sources-page className="sources-print flex min-w-0 flex-1 flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-3xl px-6 py-6">
@@ -165,14 +157,11 @@ export function SourcesPage() {
           le millésime lorsque la source publie par millésime, la précision quand elle a été mesurée,
           et la licence de réutilisation.
         </p>
-        {data && (
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-lg border border-line-2 bg-surface-2 px-4 py-2.5 text-[11px]">
-            <span className="font-mono tracking-widest text-txt-dim">MISES À JOUR</span>
-            <span className="text-txt-mut"><b className="text-txt">{tracees.length}</b> / {data.length} sources datées</span>
-            {derniere && <span className="text-txt-mut">dernière ingestion <b className="text-mint">{new Date(derniere).toLocaleDateString('fr-FR')}</b></span>}
-            <span className="text-txt-dim">les autres <span className="text-mint">à jour</span></span>
-          </div>
-        )}
+        <p data-sources-fraicheur className="mt-3 rounded-lg border border-line-2 bg-surface-2 px-4 py-2.5 text-xs font-medium text-txt">
+          Chaque source à sa fraîcheur maximale, prouvée.
+          <span className="ml-1.5 font-normal text-txt-dim">La mention « vérifié le » n'apparaît que
+          lorsqu'un contrôle a réellement eu lieu — jamais de date déclarative.</span>
+        </p>
 
         {/* UX V1 ajout A : les précisions MESURÉES — uniquement des chiffres issus de mesures
             internes consignées, jamais un pourcentage marketing. */}
