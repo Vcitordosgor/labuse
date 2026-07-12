@@ -85,17 +85,22 @@ presets:
     categorie: exterieur
     ordre: 50
     description: >-
-      Le parc de piscines existantes (contrats d'entretien, rénovations de bassins).
-      Préset PARTIEL tant que la détection ortho n'est pas livrée : en attendant, on
-      cible les maisons piscinables.
+      Le parc de piscines existantes (contrats d'entretien, rénovations de bassins),
+      détecté sur ortho IGN 2025. Profil maison individuelle par l'emprise bâtie
+      BD TOPO (indépendant des mutations DVF).
     argumentaire: >-
       Chaque bassin existant = un contrat d'entretien récurrent ou une rénovation à
       7-10 ans. La détection ortho transformera ce segment en liste exhaustive du parc.
     filtres:
       - {cle: piscine, value: true}           # LE filtre du segment (Détection Ortho)
-      - {cle: type_bien, values: [Maison]}
+      # fix 12/07/2026 : type_bien=Maison (proxy DVF) ne couvrait que les parcelles VENDUES
+      # récemment → 497/8 299 (6 % du parc). Proxy bâti indépendant des mutations : emprise
+      # BD TOPO 40-400 m² = gabarit maison individuelle (écarte terrains nus, grandes emprises
+      # hôtelières/commerciales). Limite connue, mesurée : 12 des 22 « Appartement » DVF ont
+      # une emprise dans la fenêtre (petits collectifs) — pollution résiduelle ≤ 0,2 %.
+      - {cle: emprise_batie_m2, min: 40, max: 400}
       - {cle: jardin_m2, min: 100}
-    colonnes_export: [adresse, surface_m2, jardin_m2, type_bien]
+    colonnes_export: [adresse, surface_m2, jardin_m2, emprise_batie_m2]
     tri_defaut: jardin_desc
 
   - slug: elagage
