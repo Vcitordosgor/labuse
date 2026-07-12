@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
-import { ageSignal, BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
+import { ageSignal, BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { Loading } from '../Loading'
+import { ScoreV2Block } from './ScoreV2Block'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
@@ -697,6 +698,12 @@ export function Fiche({ idu }: { idu: string }) {
     ? f.lines.filter((l) => `${l.layer} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
     : []
 
+  // Correctif M5 (verdict d'en-tête) : étage 0 prime (bannière écartée + motifs, inchangé) ;
+  // sinon un run v2 présent pilote bannière + badge (tier, rang, ×N) ; le statut matrice
+  // legacy descend en « historique » dans la section Qualité — plus jamais verdict principal.
+  const verdict = f ? verdictMeta(f.statut, f.score_v2?.tier, f.etage0) : null
+  const v2Pilote = !!(f?.score_v2 && !f.etage0)
+  const verdictEcartee = f ? (f.etage0 || (v2Pilote ? f.score_v2!.tier === 'ecartee' : f.statut === 'ecartee')) : false
   const meta = f ? STATUT_META[f.statut] : null
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
@@ -704,7 +711,7 @@ export function Fiche({ idu }: { idu: string }) {
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
-      {f?.statut === 'ecartee' && (
+      {f && verdictEcartee && (
         <div data-bandeau-ecartee className="shrink-0 border-b border-line-2 bg-surface-2 px-5 py-2.5">
           <div className="text-xs font-medium text-st-ecartee">LABUSE l'a écartée — voici pourquoi</div>
           <div className="mt-1 flex flex-col gap-0.5">
@@ -746,10 +753,18 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="mt-0.5 text-[11px] text-txt-mut">
             {f?.surface_m2 ? `${f.surface_m2.toLocaleString('fr-FR')} m² · ` : ''}{f?.commune ?? ''}
           </div>
-          {meta && (
-            <span className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${meta.color}22`, color: meta.color }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}
-              {f?.evenement === 'rouge' && f.statut === 'chaude' && (
+          {verdict && (
+            <span data-badge-verdict className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${verdict.color}22`, color: verdict.color }}
+              title={verdict.v2 ? 'Verdict scoring v2 (P×C) — le statut matrice historique est dans la section Qualité' : undefined}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ background: verdict.color }} />{verdict.label}
+              {v2Pilote && f?.score_v2 && (
+                <span className="font-mono text-[10px] opacity-90"
+                  title="Rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc — détail dans « Probabilité de mutation (P v2) »">
+                  {(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? `rang ${f.score_v2.rang}` : ''}
+                  {f.score_v2.mult_base != null ? `${(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? ' · ' : ''}×${f.score_v2.mult_base.toFixed(1)}` : ''}
+                </span>
+              )}
+              {!v2Pilote && f?.evenement === 'rouge' && f.statut === 'chaude' && (
                 <span className="rounded-full bg-[#3a1614] px-1.5 text-[9px] font-semibold text-st-ecartee" title="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">· ÉVÉNEMENT</span>
               )}
             </span>
@@ -865,8 +880,21 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             )}
             <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen tip={SCORE_TIP.q} />
+            {/* correctif M5 : le statut matrice legacy n'est PLUS le verdict d'en-tête quand un
+                run v2 existe — il reste visible ici, en historique, jamais en verdict principal */}
+            {v2Pilote && meta && (
+              <div data-statut-matrice-historique className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]"
+                title="Classement de la matrice Q×A historique — remplacé par le scoring v2 (P×C) comme verdict d'en-tête">
+                <span className="text-txt-dim">Statut matrice (historique)</span>
+                <span className="ml-auto inline-flex items-center gap-1.5" style={{ color: meta.color }}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}
+                </span>
+              </div>
+            )}
             <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}
+            {/* M5 : scoring v2 (P×C) — additif, auto-porté (fetch /v2/score, absent si pas de run) */}
+            <ScoreV2Block idu={idu} />
             <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
               <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0 -rotate-90">
                 <circle cx="16" cy="16" r="13" fill="none" stroke="#1E2A23" strokeWidth="3" />

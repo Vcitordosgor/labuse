@@ -581,10 +581,13 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
         {"idus": [it["idu"] for it in items]}).all()}
     buf = _io.StringIO()
     w = _csv.writer(buf)
-    w.writerow(["idu", "commune", "surface_m2", "statut", "q_score", "a_score",
+    w.writerow(["idu", "commune", "surface_m2", "tier_v2", "rang_v2", "statut_matrice",
+                "q_score", "a_score",
                 "completeness", "proprio", "v_score", "v_band", "brulante", "top_signaux"])
     for it in items:
-        w.writerow([it["idu"], it["commune"], it["surface_m2"], it["status"], it["q_score"],
+        w.writerow([it["idu"], it["commune"], it["surface_m2"],
+                    it["tier_v2"] or "", it["rang_v2"] if it["rang_v2"] is not None else "",
+                    it["status"], it["q_score"],
                     it["a_score"], it["completeness_score"], it["proprio"] or "",
                     it["v_score"] if it["v_score"] is not None else "",
                     it["v_band"] or "", "oui" if it["brulante"] else "",
@@ -838,6 +841,18 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
 _Q_V2_STATUTS = ("chaude", "a_surveiller", "a_creuser", "ecartee", "exclue")
 
 
+def _score_v2_run_id(db: Session) -> str | None:
+    """Dernier run scoring v2 (P×C) — None si la table n'existe pas ou est vide.
+    Correctif M5 (verdict d'en-tête) : quand un run v2 existe, le tier v2 pilote le
+    verdict affiché partout (fiche, listes, carte) ; l'étage 0 du run SERVI prime
+    (`etage0`, calculé sur d.status — le pipeline v2 peut lire un autre run cascade).
+    None → LEFT JOIN sur run_id NULL → colonnes NULL → repli legacy silencieux."""
+    if not db.execute(text("SELECT to_regclass('p_score_v2_runs')")).scalar():
+        return None
+    return db.execute(text(
+        "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).scalar()
+
+
 def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str = Q_A_RUN_LABEL) -> dict:
     """Parcelles + matrice premium v2 (dryrun_parcel_evaluations). `status` = matrice_statut ;
     Q/A + complétude + événement rouge exposés (exigences #1/#2/#4). Une parcelle exclue à
@@ -846,6 +861,8 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
         """
         SELECT p.idu, p.surface_m2,
                ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
+               s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
                d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
                (ev.parcel_id IS NOT NULL) AS evenement_rouge, fl.flags,
@@ -858,6 +875,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                (SELECT array_agg(s0->>'code') FROM jsonb_array_elements(vs.signals) s0) AS v_sig
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
         LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
         LEFT JOIN (SELECT pm2.siren, count(*) AS n, max(pm2.denomination) AS denom
@@ -881,7 +899,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
           AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
         LIMIT :lim
         """), {"c": commune, "run": run_label, "lim": limit, "minsurf": MIN_DISPLAY_SURFACE_M2,
-               "vth": V_BRULANTE_THRESHOLD}
+               "vth": V_BRULANTE_THRESHOLD, "v2run": _score_v2_run_id(db)}
     ).mappings().all()
     feats = [{
         "type": "Feature",
@@ -890,6 +908,10 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
             "idu": r["idu"],
             "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
             "status": r["status"],
+            # correctif M5 : verdict effectif = tier v2 quand un run existe (étage 0 prime)
+            "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"],
+            "mult_v2": float(r["mult_v2"]) if r["mult_v2"] is not None else None,
+            "etage0": bool(r["etage0"]),
             "q_score": r["q_score"],
             "a_score": r["a_score"],
             "a_completude": r["a_completude"],
@@ -925,6 +947,8 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         f"""
         SELECT p.idu, p.commune, p.surface_m2, p.section,
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude, d.completeness_score,
+               s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                (ev.parcel_id IS NOT NULL) AS evenement_rouge,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
@@ -934,6 +958,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                (d.matrice_statut = 'chaude' AND vs.v_score >= :vth) AS brulante
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
         LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
@@ -951,7 +976,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         ORDER BY {order}
         LIMIT :lim OFFSET :off
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
-               "vth": V_BRULANTE_THRESHOLD,
+               "vth": V_BRULANTE_THRESHOLD, "v2run": _score_v2_run_id(db),
                # opt-in écartées (C7) : le filtre statut explicite ÉLARGIT le périmètre promues
                "base_statuts": (extra_params or {}).get("f_statuts")
                                or ["chaude", "a_surveiller", "a_creuser"],
@@ -967,6 +992,9 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "v_score": r["v_score"], "v_band": r["v_band"], "owner_type": r["owner_type"],
         "v_dernier_signal": r["v_dernier_signal"],
         "brulante": bool(r["brulante"]),
+        "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"],
+        "mult_v2": float(r["mult_v2"]) if r["mult_v2"] is not None else None,
+        "etage0": bool(r["etage0"]),
     } for r in rows]
 
 
@@ -1063,11 +1091,24 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         """SELECT p.id, p.idu, p.commune, p.surface_m2,
                   ST_Y(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lat,
                   ST_X(ST_Transform(ST_Centroid(p.geom_2975), 4326)) AS lon,
-                  d.matrice_statut, d.q_score, d.a_score, d.a_completude, d.completeness_score
+                  d.matrice_statut, d.q_score, d.a_score, d.a_completude, d.completeness_score,
+                  (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
            FROM parcels p JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
            WHERE p.idu = :idu"""), {"idu": idu, "run": run_label}).mappings().first()
     if not head:
         raise HTTPException(404, f"Parcelle {idu} absente du run {run_label}")
+
+    # Correctif M5 (verdict d'en-tête) : tier v2 du dernier run — pilote la bannière/badge
+    # quand il existe ; l'étage 0 du run SERVI (head.etage0) prime toujours (règle 1).
+    v2run = _score_v2_run_id(db)
+    s2 = db.execute(text(
+        "SELECT tier, rang, mult_base, percentile, copro FROM parcel_p_score_v2 "
+        "WHERE run_id = :r AND parcelle_id = :idu"),
+        {"r": v2run, "idu": idu}).mappings().first() if v2run else None
+    score_v2 = ({"tier": s2["tier"], "rang": s2["rang"],
+                 "mult_base": float(s2["mult_base"]) if s2["mult_base"] is not None else None,
+                 "percentile": float(s2["percentile"]) if s2["percentile"] is not None else None,
+                 "copro": bool(s2["copro"])} if s2 else None)
 
     rows = db.execute(text(
         """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
@@ -1193,6 +1234,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
                  "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
         "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
         "statut": head["matrice_statut"], "q_score": head["q_score"], "a_score": head["a_score"],
+        "score_v2": score_v2, "etage0": bool(head["etage0"]),
         "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
         "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
@@ -2157,11 +2199,17 @@ def _projet_ref(db: Session, projet_id: int | None) -> dict | None:
 
 def _premium_head(db: Session, parcel_id: int, run_label: str = Q_A_RUN_LABEL) -> dict | None:
     r = db.execute(text(
-        "SELECT matrice_statut, q_score, a_score, completeness_score "
-        "FROM dryrun_parcel_evaluations WHERE run_label = :run AND parcel_id = :pid"),
-        {"run": run_label, "pid": parcel_id}).mappings().first()
+        "SELECT d.matrice_statut, d.q_score, d.a_score, d.completeness_score, "
+        "       (d.status IN ('exclue', 'faux_positif_probable')) AS etage0, "
+        "       s2.tier AS tier_v2, s2.rang AS rang_v2 "
+        "FROM dryrun_parcel_evaluations d "
+        "LEFT JOIN parcels p ON p.id = d.parcel_id "
+        "LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run "
+        "WHERE d.run_label = :run AND d.parcel_id = :pid"),
+        {"run": run_label, "pid": parcel_id, "v2run": _score_v2_run_id(db)}).mappings().first()
     return ({"statut": r["matrice_statut"], "q_score": r["q_score"], "a_score": r["a_score"],
-             "completeness_score": r["completeness_score"]} if r else None)
+             "completeness_score": r["completeness_score"], "etage0": bool(r["etage0"]),
+             "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"]} if r else None)
 
 
 class PipelineAddIn(BaseModel):
@@ -2304,7 +2352,9 @@ from .segments import router as _segments_router  # noqa: E402
 from .ortho import router as _ortho_router  # noqa: E402
 from .solaire import router as _solaire_router  # noqa: E402
 from .tiles import router as _tiles_router  # noqa: E402
+from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 
+app.include_router(_score_v2_router)
 app.include_router(_modules_router)
 app.include_router(_courrier_router)
 app.include_router(_dossier_router)

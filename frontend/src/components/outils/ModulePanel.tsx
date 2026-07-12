@@ -12,6 +12,7 @@ import { Loading } from '../Loading'
 import { M22 } from './M22Programme'
 import { M15, M16, M17, M18, M19 } from './moteurs'
 import { MODULES, VIOLET } from './registry'
+import { ScoringV2Module } from './ScoringV2'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -521,6 +522,7 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
   simulplu: M15, assemblage: M16, zan: M17, barometre: M18, matching: M19, programme: M22,
   'parkings-aper': M23, 'toitures-tertiaires': M24,
+  'scoring-v2': ScoringV2Module,
 }
 
 export function ModulePanel() {

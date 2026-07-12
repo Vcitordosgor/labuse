@@ -10,7 +10,7 @@ from labuse.api import app as m
 
 
 def test_stats_dispatch_q_v2(monkeypatch):
-    monkeypatch.setattr(m, "_q_v2_stats", lambda db, commune, run_label="q_v2": {"chaude": 83, "run": run_label})
+    monkeypatch.setattr(m, "_q_v2_stats", lambda db, commune, run_label="q_v2", **kw: {"chaude": 83, "run": run_label})
     monkeypatch.setattr(m, "_mem_cached", lambda key, ttl, fn: fn())
     out = m.stats(commune="Saint-Paul", source="q_v2", db=None)
     assert out["chaude"] == 83 and out["run"] == "q_v2"
@@ -25,7 +25,7 @@ def test_geojson_dispatch_q_v2(monkeypatch):
 
 def test_list_dispatch_q_v2(monkeypatch):
     monkeypatch.setattr(m, "_q_v2_list",
-                        lambda db, commune, limit, offset, run_label="q_v2": [{"idu": "97415000AC0253", "status": "chaude"}])
+                        lambda db, commune, limit, offset, run_label="q_v2", **kw: [{"idu": "97415000AC0253", "status": "chaude"}])
     out = m.list_parcels(commune="Saint-Paul", source="q_v2", db=None)
     assert out[0]["idu"] == "97415000AC0253" and out[0]["status"] == "chaude"
 

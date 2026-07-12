@@ -776,6 +776,55 @@ class DvfMutationParcelle(Base):
     millesime: Mapped[int] = mapped_column(SmallInteger)
 
 
+# ──────────────── scoring v2 produit — P × C (M5, 12/07/2026) ────────────────
+
+class PScoreV2Run(Base):
+    """Un RUN de scoring v2 = une exécution de `labuse score-v2` — versionné,
+    jamais d'écrasement silencieux (run_id unique, refus si existant)."""
+
+    __tablename__ = "p_score_v2_runs"
+
+    run_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    model_version: Mapped[str] = mapped_column(String(32))
+    model_sha256: Mapped[str] = mapped_column(String(64))
+    params: Mapped[dict | None] = mapped_column(JSONB)      # N_e, N_s, seuils brûlante…
+    n_parcelles: Mapped[int | None] = mapped_column(Integer)
+    duration_s: Mapped[int | None] = mapped_column(Integer)
+    snapshot_label: Mapped[str | None] = mapped_column(String(64))
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ParcelPScoreV2(Base):
+    """Score P v2 par parcelle et par run (M5 lot 1.1).
+
+    p_raw est STOCKÉ mais jamais montré par défaut (saturation isotonique en
+    tête) : l'affichage produit = mult_base (« ×N vs moyenne ») + percentile +
+    rang. Le rang est calculé HORS copro (univers produit par défaut)."""
+
+    __tablename__ = "parcel_p_score_v2"
+    __table_args__ = (
+        UniqueConstraint("run_id", "parcelle_id", name="uq_p_v2_run_parcelle"),
+        Index("ix_p_v2_run_rang", "run_id", "rang"),
+        Index("ix_p_v2_run_tier", "run_id", "tier"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    run_id: Mapped[str] = mapped_column(String(64), index=True)
+    parcelle_id: Mapped[str] = mapped_column(String(14), index=True)
+    p_raw: Mapped[float] = mapped_column(Float)
+    mult_base: Mapped[float] = mapped_column(Float)          # P / taux de base
+    percentile: Mapped[float | None] = mapped_column(Float)  # 0-100 ; NULL = copro
+    rang: Mapped[int | None] = mapped_column(Integer)        # NULL = copro (hors ranking)
+    contrib_z: Mapped[float] = mapped_column(Float)
+    contrib_d: Mapped[float] = mapped_column(Float)
+    top5_contributions: Mapped[list | None] = mapped_column(JSONB)
+    copro: Mapped[bool] = mapped_column(default=False)
+    tier: Mapped[str | None] = mapped_column(String(24))
+    event_date: Mapped[date | None] = mapped_column(Date)    # dernier événement daté v1.3
+    model_version: Mapped[str] = mapped_column(String(32))
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 def create_all(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine)

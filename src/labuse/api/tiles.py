@@ -33,16 +33,24 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
     """(Re)construit la table matérialisée servie en tuiles. À lancer APRÈS un run de scoring
     (le script d'extension île le fait) ; idempotent, ~1-2 min pour 431k parcelles."""
     db.execute(text("DROP TABLE IF EXISTS mvt_parcels"))
+    # correctif M5 (verdict) : tier v2 embarqué dans les tuiles — la carte colore par le
+    # verdict effectif (tier v2 quand un run existe, étage 0 du run servi prime).
+    v2run = db.execute(text(
+        "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).scalar() \
+        if db.execute(text("SELECT to_regclass('p_score_v2_runs')")).scalar() else None
     db.execute(text("""
         CREATE TABLE mvt_parcels AS
         SELECT p.id, p.idu, p.commune, p.surface_m2,
                ST_Transform(p.geom, 3857) AS geom_3857,
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
+               s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
+               (d.status IN ('exclue', 'faux_positif_probable'))::int AS etage0,
                d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
                CASE WHEN ev.parcel_id IS NOT NULL THEN 'rouge' END AS evenement,
                COALESCE(fl.flags, '') AS flags
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
@@ -52,7 +60,7 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
                    WHERE run_label = :run AND (result = 'SOFT_FLAG'
                          OR (layer_name = 'abf' AND result = 'UNKNOWN'))
                    GROUP BY parcel_id) fl ON fl.parcel_id = p.id
-    """), {"run": run_label})
+    """), {"run": run_label, "v2run": v2run})
     db.execute(text("CREATE INDEX mvt_parcels_gix ON mvt_parcels USING GIST (geom_3857)"))
     db.execute(text("CREATE INDEX mvt_parcels_status ON mvt_parcels (status)"))
     db.execute(text("ANALYZE mvt_parcels"))
@@ -79,6 +87,10 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     exists = db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar()
     if not exists:
         return Response(status_code=204)  # table pas encore construite (run en cours)
+    # table d'avant le correctif M5 (sans tier_v2) : repli legacy jusqu'au `labuse build-mvt`
+    has_v2 = db.execute(text(
+        "SELECT 1 FROM information_schema.columns "
+        "WHERE table_name = 'mvt_parcels' AND column_name = 'tier_v2'")).scalar()
     # R1 (revue Vic n°2 : le cadastre d'abord) — TOUTES les parcelles dès z9, simplification
     # par palier pour tenir les poids (mesurés : z9 « tout » 10 m ≈ 3,4 Mo, z10 5 m ≈ 3,5 Mo,
     # z12+ brut ≈ 850 Ko max). L'ouverture cadre l'île entière : la trame est là d'emblée.
@@ -88,8 +100,12 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     # z ≤ 11 : tuiles MAIGRES (status + commune seulement — 24 et 4 valeurs distinctes,
     # dédupliquées par l'encodage MVT). Les 13 propriétés complètes (idu unique en tête)
     # pesaient 15 Mo/tuile à z9 ; le clic passe par /parcels/at, le ping vole à z16.
-    props = ("m.status, m.commune" if z <= 11 else
+    # tier_v2/etage0 dans les tuiles maigres aussi : c'est la couleur (verdict effectif)
+    v2_props = "m.tier_v2, m.etage0, " if has_v2 else ""
+    v2_props_full = "m.tier_v2, m.rang_v2, m.mult_v2, m.etage0, " if has_v2 else ""
+    props = (f"m.status, {v2_props}m.commune" if z <= 11 else
              "m.idu, m.commune, m.surface_m2, m.status, m.q_score, m.a_score, "
+             f"{v2_props_full}"
              "m.a_completude, m.completeness_score, m.sdp_residuelle_m2, "
              "m.sous_densite, m.vue_mer, m.evenement, m.flags")
     data = db.execute(text(f"""

@@ -1,0 +1,46 @@
+{
+  "artifact": "reports/m36-foncier/artifacts-m36-scoring2026.joblib",
+  "sha256": "00a58008143d5260b9aea192eb73b94bd11693cba6cc4f99fd622da3a4959b64",
+  "gel": "2026-07-12 19:54:19",
+  "provenance": {
+    "mandat": "M3.6 lot 3 (scripts/m36-foncier/lot3_verdict_final.py)",
+    "train": "2017-2024 (dataset p_model_ext_dataset, label L2-F)",
+    "calibration": "isotonique sur 2025",
+    "interactions": [
+      [
+        "tenure_bin",
+        "permis_bin"
+      ],
+      [
+        "tenure_bin",
+        "surface_m2"
+      ],
+      [
+        "ndvi_moyen",
+        "zone_plu"
+      ],
+      [
+        "tenure_bin",
+        "rot_nu"
+      ],
+      [
+        "surface_m2",
+        "permis_bin"
+      ]
+    ],
+    "year_dummies": [
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023
+    ],
+    "C": 5.0,
+    "n_features": 29,
+    "seed": 974
+  },
+  "verdict_reference": "walk-forward 6 folds RR@1158 6,9-11,0 (hors copro 6,7-9,4), fold 2025 = 6,73 [5,53-7,84] vs M3 2,91 — PROMU (decision-promotion.csv)",
+  "politique": "recalage d'intercept sur la dernière année labellisée à chaque run ; re-train complet = décision humaine annuelle, jamais automatique"
+}

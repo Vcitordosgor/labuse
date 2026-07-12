@@ -467,12 +467,16 @@ def matrice_apply_cmd(
 
 @app.command("build-mvt")
 def build_mvt_cmd(
-    label: str = typer.Option("q_v2", help="run_label dont matérialiser les tuiles."),
+    # correctif M5 : défaut aligné sur le run SERVI (Q_A_RUN_LABEL) — « q_v2 » codé en dur
+    # matérialisait la carte île sur un autre run que les fiches/listes.
+    label: str = typer.Option(None, help="run_label dont matérialiser les tuiles "
+                                         "(défaut : run de référence Q_A_RUN_LABEL)."),
 ) -> None:
     """(Re)construit la table `mvt_parcels` servie en tuiles vectorielles (carte île entière).
     À relancer après CHAQUE run de scoring — les tuiles lisent cette matérialisation, pas le run."""
-    from .api.tiles import build_mvt_table, build_overlay_mvt
+    from .api.tiles import RUN, build_mvt_table, build_overlay_mvt
 
+    label = label or RUN
     with session_scope() as s:
         n = build_mvt_table(s, label)
         n_ov = build_overlay_mvt(s)
@@ -1407,6 +1411,49 @@ def api_cmd(host: str = "127.0.0.1", port: int = 8000) -> None:
     import uvicorn
 
     uvicorn.run("labuse.api.app:app", host=host, port=port, reload=False)
+
+
+# ─────────────────────── scoring v2 produit — P × C (M5) ───────────────────────
+
+@app.command("score-v2")
+def score_v2_cmd(
+    run_id: str = typer.Option(None, help="Identifiant de run (défaut : m36-l2f-2026-<date>). Refus si existant."),
+    rebuild: bool = typer.Option(True, help="Re-matérialise les features ext (DVF/Sitadel frais)."),
+    snapshot: bool = typer.Option(True, help="Gèle un snapshot m5-<date> (protocole M1)."),
+) -> None:
+    """Scoring v2 production : artifact M3.6 gelé (sha256 vérifié, refus si mismatch),
+    features as-of, tiers v2 avec hystérésis, écriture versionnée + snapshot.
+
+    Politique de recalibration : intercept seul à chaque run (dernière année
+    labellisée) ; re-train complet = décision humaine annuelle (cf. pipeline.py)."""
+    from .scoring.p_v2.pipeline import run_score_v2
+
+    with session_scope() as session:
+        res = run_score_v2(session, run_id=run_id, rebuild=rebuild, snapshot=snapshot)
+    typer.echo(f"✓ run {res['run_id']} : {res['n']} parcelles scorées "
+               f"({res['duree_s']}s, modèle sha {res['sha256']}…)")
+    typer.echo(f"  tiers : {res['tiers']}")
+    typer.echo(f"  N_entrée={res['params'].n_entree} N_sortie={res['params'].n_sortie} "
+               f"seuil_D_brûlante={res['params'].brulante_seuil_d:.3f}")
+    if res["snapshot"]:
+        typer.echo(f"  snapshot gelé : {res['snapshot']}")
+
+
+@app.command("monitor-forward")
+def monitor_forward_cmd(
+    snapshot_label: str = typer.Option(None, help="Snapshot gelé à suivre (défaut : dernier m5-*)."),
+) -> None:
+    """Monitoring forward mensuel (manuel) : hits du top gelé vs nouvelles mutations
+    L2-F et permis, sonde faux négatifs, churn observé → reports/monitoring/AAAA-MM.md.
+
+    Protocole B0 : le CLASSEMENT se suit en continu ; les NIVEAUX ne se jugent
+    qu'à l'édition N+2 (censure DVF 974 : ~40 % de complétude à 18 mois)."""
+    from .scoring.p_v2.monitoring import run_monitor
+
+    with session_scope() as session:
+        res = run_monitor(session, snapshot_label=snapshot_label)
+    typer.echo(f"✓ rapport : {res['rapport']} ({res['hits']} hits top gelé, "
+               f"{res['faux_negatifs']} faux négatifs sondés)")
 
 
 if __name__ == "__main__":
