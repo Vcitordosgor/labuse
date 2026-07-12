@@ -129,6 +129,18 @@ export function SourcesPage() {
   const { data, isLoading, isError } = useQuery({ queryKey: ['sources'], queryFn: getSources })
   const sourcesFocus = useApp((s) => s.sourcesFocus)
 
+  // M5 : version du modèle P v2 (sha court + gel) et avertissement censure — additif.
+  const modele = useQuery({
+    queryKey: ['v2-modele'],
+    queryFn: async () => {
+      const r = await fetch('/v2/modele')
+      if (!r.ok) throw new Error(`v2 ${r.status}`)
+      return r.json() as Promise<{ model_version: string; sha256_court: string; gel: string;
+        avertissement_censure: string; politique_recalibration: string }>
+    },
+    retry: false, staleTime: 5 * 60_000,
+  }).data
+
   const cats = new Map<string, SourceInfo[]>()
   for (const s of data ?? []) {
     const k = s.category || 'Autres'
@@ -157,6 +169,20 @@ export function SourcesPage() {
           le millésime lorsque la source publie par millésime, la précision quand elle a été mesurée,
           et la licence de réutilisation.
         </p>
+        {modele && (
+          <div data-sources-modele className="mt-3 rounded-lg border border-line-2 bg-surface-2 px-4 py-2.5">
+            <p className="text-xs font-medium text-txt">
+              Modèle de scoring v2 : <span className="font-mono">{modele.model_version}</span>
+              <span className="ml-1.5 font-mono text-[10.5px] text-txt-dim">
+                sha {modele.sha256_court} — gelé le {modele.gel.slice(0, 10)}
+              </span>
+            </p>
+            <p className="mt-1 text-[11px] leading-snug text-st-creuser">
+              ⚠ {modele.avertissement_censure}.
+            </p>
+            <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{modele.politique_recalibration}.</p>
+          </div>
+        )}
         <p data-sources-fraicheur className="mt-3 rounded-lg border border-line-2 bg-surface-2 px-4 py-2.5 text-xs font-medium text-txt">
           Chaque source à sa fraîcheur maximale, prouvée.
           <span className="ml-1.5 font-normal text-txt-dim">La mention « vérifié le » n'apparaît que

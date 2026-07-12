@@ -1,0 +1,5 @@
+scenario,n_entree,n_sortie,chaudes_2024,chaudes_2025,sortants,entrants,churn_pct,cible_15pct
+sans hystérésis,2367,2367,1150,1145,647,642,56.3,False
+N_s = 1.4 × N_e,2367,3314,1150,1184,608,642,52.9,False
+N_s = 1.6 × N_e,2367,3787,1150,1200,592,642,51.5,False
+N_s = 1.8 × N_e,2367,4261,1150,1212,580,642,50.4,False

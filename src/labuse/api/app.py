@@ -2304,7 +2304,9 @@ from .segments import router as _segments_router  # noqa: E402
 from .ortho import router as _ortho_router  # noqa: E402
 from .solaire import router as _solaire_router  # noqa: E402
 from .tiles import router as _tiles_router  # noqa: E402
+from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 
+app.include_router(_score_v2_router)
 app.include_router(_modules_router)
 app.include_router(_courrier_router)
 app.include_router(_dossier_router)

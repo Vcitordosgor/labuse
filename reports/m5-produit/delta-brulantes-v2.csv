@@ -1,0 +1,240 @@
+parcelle_id,mouvement,motif
+97404000AW0166,sortie,rang P 316622 > N_sortie 3423
+97407000AH0577,sortie,rang P 325377 > N_sortie 3423
+97407000AS0156,sortie,rang P 240573 > N_sortie 3423
+97407000AX0191,sortie,"chaude, D 1.44 ≥ seuil mais ni événement < 12 mois ni top décile D (1.75)"
+97407000AX0192,sortie,rang P 4628 > N_sortie 3423
+97408000AP1203,sortie,rang P 19644 > N_sortie 3423
+97408000AP1327,sortie,"chaude, D 1.63 ≥ seuil mais ni événement < 12 mois ni top décile D (1.75)"
+97409000AK1223,sortie,rang P 71295 > N_sortie 3423
+97409000AT1072,sortie,rang P 87592 > N_sortie 3423
+97410000AR0224,sortie,rang P 342777 > N_sortie 3423
+97410000BE0309,sortie,rang P 7048 > N_sortie 3423
+97411000AZ0005,sortie,rang P 19645 > N_sortie 3423
+97411000BL0132,sortie,rang P 161404 > N_sortie 3423
+97411000BL0390,sortie,rang P 85028 > N_sortie 3423
+97412000BK1700,sortie,rang P 18064 > N_sortie 3423
+97412000BN0900,sortie,rang P 355645 > N_sortie 3423
+97412000BV0421,sortie,rang P 377706 > N_sortie 3423
+97413000BM0568,sortie,rang P 292915 > N_sortie 3423
+97413000CH0229,sortie,rang P 217685 > N_sortie 3423
+97413000CW0238,sortie,rang P 165911 > N_sortie 3423
+97413000CX0109,sortie,rang P 301846 > N_sortie 3423
+97413000CX2201,sortie,rang P 270723 > N_sortie 3423
+97413000CY0489,sortie,rang P 152294 > N_sortie 3423
+97413000CY0761,sortie,rang P 238348 > N_sortie 3423
+97413000CY1358,sortie,rang P 202670 > N_sortie 3423
+97413000DA0412,sortie,rang P 316823 > N_sortie 3423
+97413000DA0494,sortie,rang P 253639 > N_sortie 3423
+97413000DB0435,sortie,rang P 55889 > N_sortie 3423
+97413000DL0261,sortie,rang P 294384 > N_sortie 3423
+97413000DM0122,sortie,rang P 254016 > N_sortie 3423
+97413000DM0175,sortie,rang P 180285 > N_sortie 3423
+97413000DM0204,sortie,rang P 282459 > N_sortie 3423
+97413000DM0228,sortie,rang P 224540 > N_sortie 3423
+97413000DM0374,sortie,rang P 220208 > N_sortie 3423
+97414000CV0907,sortie,rang P 124495 > N_sortie 3423
+97414000CV0912,sortie,rang P 22743 > N_sortie 3423
+97414000CV0938,sortie,rang P 3884 > N_sortie 3423
+97414000DM0041,sortie,rang P 271917 > N_sortie 3423
+97414000EN1937,sortie,rang P 58739 > N_sortie 3423
+97415000AB0369,sortie,rang P 5670 > N_sortie 3423
+97415000AB0739,sortie,rang P 19443 > N_sortie 3423
+97415000AB0740,sortie,rang P 3447 > N_sortie 3423
+97415000AB0741,sortie,rang P 4027 > N_sortie 3423
+97415000AB0742,sortie,rang P 59986 > N_sortie 3423
+97415000AB0743,sortie,rang P 20534 > N_sortie 3423
+97415000AC0253,sortie,chaude mais contribution D 0.62 < seuil 1.42
+97415000AX0988,sortie,rang P 161384 > N_sortie 3423
+97415000AX1105,sortie,rang P 10555 > N_sortie 3423
+97415000AY1294,sortie,rang P 51762 > N_sortie 3423
+97415000AY1424,sortie,rang P 33000 > N_sortie 3423
+97415000AY1637,sortie,rang P 17045 > N_sortie 3423
+97415000CR0403,sortie,rang P 208892 > N_sortie 3423
+97415000CT0316,sortie,rang P 231635 > N_sortie 3423
+97415000CW0132,sortie,rang P 149225 > N_sortie 3423
+97415000DE0805,sortie,rang P 63464 > N_sortie 3423
+97415000DE1136,sortie,rang P 88600 > N_sortie 3423
+97415000DE1139,sortie,rang P 159879 > N_sortie 3423
+97415000DE1234,sortie,rang P 74649 > N_sortie 3423
+97415000DK0881,sortie,rang P 59332 > N_sortie 3423
+97415000DM0487,sortie,rang P 245532 > N_sortie 3423
+97415000ER0819,sortie,rang P 262163 > N_sortie 3423
+97415000ET0162,sortie,rang P 72075 > N_sortie 3423
+97415000ET0883,sortie,rang P 256352 > N_sortie 3423
+97415000ET1507,sortie,rang P 40895 > N_sortie 3423
+97415000EV0159,sortie,rang P 214930 > N_sortie 3423
+97415000EV0732,sortie,rang P 98498 > N_sortie 3423
+97415000EV0740,sortie,rang P 160627 > N_sortie 3423
+97415000EV0772,sortie,copro (hors univers produit v2)
+97415000EV0774,sortie,rang P 134091 > N_sortie 3423
+97415000EV0837,sortie,rang P 71826 > N_sortie 3423
+97415000EY0111,sortie,rang P 295192 > N_sortie 3423
+97415000HI0508,sortie,rang P 174816 > N_sortie 3423
+97415000HR0264,sortie,rang P 224622 > N_sortie 3423
+97416000CR0605,sortie,rang P 11248 > N_sortie 3423
+97416000CR0616,sortie,rang P 53494 > N_sortie 3423
+97416000CR0728,sortie,rang P 103584 > N_sortie 3423
+97416000CR0729,sortie,rang P 92905 > N_sortie 3423
+97416000CR0815,sortie,rang P 353599 > N_sortie 3423
+97416000CR0817,sortie,rang P 358528 > N_sortie 3423
+97416000CR0847,sortie,rang P 216057 > N_sortie 3423
+97416000CR1228,sortie,rang P 358195 > N_sortie 3423
+97416000CR1229,sortie,rang P 351392 > N_sortie 3423
+97416000CR1230,sortie,rang P 424824 > N_sortie 3423
+97416000CR1231,sortie,rang P 35971 > N_sortie 3423
+97416000CS1391,sortie,rang P 14253 > N_sortie 3423
+97416000EK0516,sortie,rang P 248289 > N_sortie 3423
+97416000ES2069,sortie,rang P 208801 > N_sortie 3423
+97416000ES2071,sortie,rang P 9751 > N_sortie 3423
+97416000ET1976,sortie,rang P 167521 > N_sortie 3423
+97416000ET1978,sortie,rang P 87580 > N_sortie 3423
+97416000ET2045,sortie,rang P 263679 > N_sortie 3423
+97416000ET2105,sortie,rang P 4378 > N_sortie 3423
+97416000ET2185,sortie,rang P 168896 > N_sortie 3423
+97416000ET2188,sortie,rang P 94077 > N_sortie 3423
+97416000IM0019,sortie,rang P 357603 > N_sortie 3423
+97418000AC0593,sortie,rang P 315873 > N_sortie 3423
+97418000AC1323,sortie,rang P 399257 > N_sortie 3423
+97418000AC1612,sortie,rang P 341438 > N_sortie 3423
+97418000AC1615,sortie,rang P 296551 > N_sortie 3423
+97418000AS0007,sortie,rang P 368751 > N_sortie 3423
+97418000AS0509,sortie,rang P 12810 > N_sortie 3423
+97418000AS1121,sortie,rang P 68238 > N_sortie 3423
+97418000AS1125,sortie,rang P 291961 > N_sortie 3423
+97418000AS1147,sortie,rang P 47169 > N_sortie 3423
+97418000AS1269,sortie,rang P 111182 > N_sortie 3423
+97418000AS1276,sortie,rang P 169280 > N_sortie 3423
+97418000AS1281,sortie,rang P 21082 > N_sortie 3423
+97418000AS1295,sortie,rang P 268536 > N_sortie 3423
+97418000AS1309,sortie,rang P 230582 > N_sortie 3423
+97418000AS1334,sortie,rang P 65904 > N_sortie 3423
+97418000AT0956,sortie,rang P 227564 > N_sortie 3423
+97418000AT0957,sortie,rang P 206590 > N_sortie 3423
+97418000AT1754,sortie,rang P 314244 > N_sortie 3423
+97418000BD0393,sortie,rang P 102732 > N_sortie 3423
+97418000BD0396,sortie,rang P 63530 > N_sortie 3423
+97419000AR0814,sortie,rang P 363068 > N_sortie 3423
+97420000AB1313,sortie,rang P 271742 > N_sortie 3423
+97422000AH0351,sortie,rang P 37212 > N_sortie 3423
+97422000CX0848,sortie,rang P 225512 > N_sortie 3423
+97422000DH0982,sortie,chaude mais contribution D 1.07 < seuil 1.42
+97401000AI1188,entrée,"rang P 382, D 1.75 ≥ seuil, top décile de contribution D"
+97402000AD1052,entrée,"rang P 733, D 2.35 ≥ seuil, top décile de contribution D"
+97403000AM0815,entrée,"rang P 1664, D 2.56 ≥ seuil, top décile de contribution D"
+97403000AR1423,entrée,"rang P 28, D 1.75 ≥ seuil, top décile de contribution D"
+97403000AR1511,entrée,"rang P 105, D 1.96 ≥ seuil, top décile de contribution D"
+97404000AW0199,entrée,"rang P 252, D 1.78 ≥ seuil, top décile de contribution D"
+97406000AI1016,entrée,"rang P 486, D 2.08 ≥ seuil, top décile de contribution D"
+97406000AL0413,entrée,"rang P 477, D 1.75 ≥ seuil, top décile de contribution D"
+97407000AH0233,entrée,"rang P 101, D 2.18 ≥ seuil, top décile de contribution D"
+97407000AH1188,entrée,"rang P 620, D 1.75 ≥ seuil, top décile de contribution D"
+97407000AS1056,entrée,"rang P 271, D 1.77 ≥ seuil, top décile de contribution D"
+97407000AS1075,entrée,"rang P 304, D 1.75 ≥ seuil, top décile de contribution D"
+97407000AS1160,entrée,"rang P 339, D 1.75 ≥ seuil, top décile de contribution D"
+97408000AP1496,entrée,"rang P 2041, D 2.28 ≥ seuil, top décile de contribution D"
+97408000AT2026,entrée,"rang P 2116, D 2.15 ≥ seuil, top décile de contribution D"
+97408000BN3751,entrée,"rang P 140, D 1.77 ≥ seuil, top décile de contribution D"
+97409000AR1260,entrée,"rang P 98, D 1.95 ≥ seuil, top décile de contribution D"
+97409000AS1328,entrée,"rang P 317, D 1.77 ≥ seuil, top décile de contribution D"
+97409000AV0861,entrée,"rang P 421, D 1.81 ≥ seuil, top décile de contribution D"
+97409000AV1036,entrée,"rang P 113, D 2.08 ≥ seuil, top décile de contribution D"
+97409000AW1508,entrée,"rang P 876, D 1.91 ≥ seuil, top décile de contribution D"
+97409000BI0029,entrée,"rang P 2286, D 2.27 ≥ seuil, top décile de contribution D"
+97410000AS1425,entrée,"rang P 16, D 1.75 ≥ seuil, top décile de contribution D"
+97410000CD0893,entrée,"rang P 1946, D 2.05 ≥ seuil, top décile de contribution D"
+97410000CD0897,entrée,"rang P 1233, D 2.12 ≥ seuil, top décile de contribution D"
+97410000CD0905,entrée,"rang P 8, D 1.79 ≥ seuil, top décile de contribution D"
+97410000CD0907,entrée,"rang P 509, D 2.20 ≥ seuil, top décile de contribution D"
+97410000CD0934,entrée,"rang P 1753, D 2.38 ≥ seuil, top décile de contribution D"
+97410000CD0939,entrée,"rang P 731, D 2.17 ≥ seuil, top décile de contribution D"
+97410000CD0943,entrée,"rang P 945, D 2.17 ≥ seuil, top décile de contribution D"
+97411000AW1042,entrée,"rang P 328, D 1.76 ≥ seuil, top décile de contribution D"
+97411000BP0966,entrée,"rang P 133, D 2.01 ≥ seuil, top décile de contribution D"
+97411000CE1132,entrée,"rang P 36, D 1.80 ≥ seuil, top décile de contribution D"
+97411000CE1133,entrée,"rang P 68, D 1.80 ≥ seuil, top décile de contribution D"
+97411000EL0656,entrée,"rang P 134, D 1.77 ≥ seuil, top décile de contribution D"
+97411000EL0665,entrée,"rang P 24, D 1.79 ≥ seuil, top décile de contribution D"
+97411000ER0095,entrée,"rang P 269, D 1.77 ≥ seuil, top décile de contribution D"
+97411000KA0296,entrée,"rang P 7, D 1.79 ≥ seuil, top décile de contribution D"
+97411000KE0436,entrée,"rang P 130, D 1.76 ≥ seuil, top décile de contribution D"
+97412000BX1903,entrée,"rang P 78, D 1.94 ≥ seuil, top décile de contribution D"
+97412000CE2776,entrée,"rang P 111, D 1.75 ≥ seuil, top décile de contribution D"
+97412000CP0461,entrée,"rang P 58, D 1.77 ≥ seuil, top décile de contribution D"
+97412000CP0462,entrée,"rang P 41, D 1.78 ≥ seuil, top décile de contribution D"
+97412000CP0463,entrée,"rang P 112, D 1.78 ≥ seuil, top décile de contribution D"
+97413000AV2267,entrée,"rang P 53, D 1.78 ≥ seuil, top décile de contribution D"
+97413000AV2297,entrée,"rang P 89, D 1.80 ≥ seuil, top décile de contribution D"
+97413000BM0899,entrée,"rang P 747, D 1.75 ≥ seuil, top décile de contribution D"
+97413000CD0729,entrée,"rang P 194, D 1.75 ≥ seuil, top décile de contribution D"
+97413000CM0749,entrée,"rang P 224, D 1.85 ≥ seuil, top décile de contribution D"
+97413000CO0665,entrée,"rang P 511, D 1.77 ≥ seuil, top décile de contribution D"
+97413000CT0129,entrée,"rang P 94, D 2.01 ≥ seuil, top décile de contribution D"
+97413000CX2191,entrée,"rang P 1097, D 1.81 ≥ seuil, top décile de contribution D"
+97413000CX2555,entrée,"rang P 1010, D 1.44 ≥ seuil, événement daté 2025-08-28"
+97413000CX2822,entrée,"rang P 172, D 1.75 ≥ seuil, top décile de contribution D"
+97413000DE2325,entrée,"rang P 106, D 1.80 ≥ seuil, top décile de contribution D"
+97414000CH1740,entrée,"rang P 118, D 1.81 ≥ seuil, top décile de contribution D"
+97414000EL0117,entrée,"rang P 587, D 1.75 ≥ seuil, top décile de contribution D"
+97414000EL2067,entrée,"rang P 490, D 1.77 ≥ seuil, top décile de contribution D"
+97414000EM1037,entrée,"rang P 501, D 1.78 ≥ seuil, top décile de contribution D"
+97414000EN3984,entrée,"rang P 2326, D 2.26 ≥ seuil, top décile de contribution D"
+97415000AX1100,entrée,"rang P 47, D 1.80 ≥ seuil, événement daté 2025-08-28"
+97415000AY1535,entrée,"rang P 119, D 1.76 ≥ seuil, événement daté 2025-08-28"
+97415000AY1541,entrée,"rang P 49, D 1.79 ≥ seuil, événement daté 2025-08-28"
+97415000AY1587,entrée,"rang P 39, D 1.78 ≥ seuil, événement daté 2025-08-28"
+97415000AY1592,entrée,"rang P 120, D 1.81 ≥ seuil, événement daté 2025-08-28"
+97415000AY1608,entrée,"rang P 97, D 1.54 ≥ seuil, événement daté 2025-08-28"
+97415000AY1622,entrée,"rang P 25, D 1.79 ≥ seuil, événement daté 2025-08-28"
+97415000AY1625,entrée,"rang P 65, D 1.78 ≥ seuil, événement daté 2025-08-28"
+97415000BV0606,entrée,"rang P 1617, D 1.86 ≥ seuil, top décile de contribution D"
+97415000BV1395,entrée,"rang P 416, D 1.75 ≥ seuil, top décile de contribution D"
+97415000BW1480,entrée,"rang P 86, D 1.77 ≥ seuil, top décile de contribution D"
+97415000BW1482,entrée,"rang P 84, D 1.78 ≥ seuil, top décile de contribution D"
+97415000BW1486,entrée,"rang P 403, D 1.76 ≥ seuil, top décile de contribution D"
+97415000BW1673,entrée,"rang P 126, D 2.00 ≥ seuil, top décile de contribution D"
+97415000CL0917,entrée,"rang P 71, D 1.79 ≥ seuil, top décile de contribution D"
+97415000DE1325,entrée,"rang P 67, D 1.77 ≥ seuil, événement daté 2025-08-28"
+97415000DK1032,entrée,"rang P 79, D 2.61 ≥ seuil, top décile de contribution D"
+97415000DK1119,entrée,"rang P 1585, D 2.37 ≥ seuil, top décile de contribution D"
+97415000DK1120,entrée,"rang P 1054, D 2.36 ≥ seuil, top décile de contribution D"
+97415000DK1121,entrée,"rang P 2186, D 2.36 ≥ seuil, top décile de contribution D"
+97415000DK1149,entrée,"rang P 859, D 2.11 ≥ seuil, top décile de contribution D"
+97415000DK1152,entrée,"rang P 763, D 2.13 ≥ seuil, top décile de contribution D"
+97415000EP1157,entrée,"rang P 1591, D 2.80 ≥ seuil, top décile de contribution D"
+97415000EP1159,entrée,"rang P 1676, D 2.20 ≥ seuil, top décile de contribution D"
+97415000EP1170,entrée,"rang P 2164, D 2.13 ≥ seuil, top décile de contribution D"
+97415000ET1407,entrée,"rang P 2146, D 2.77 ≥ seuil, top décile de contribution D"
+97415000HO1112,entrée,"rang P 2321, D 2.83 ≥ seuil, top décile de contribution D"
+97416000ET1952,entrée,"rang P 177, D 1.77 ≥ seuil, top décile de contribution D"
+97416000ET2108,entrée,"rang P 85, D 1.76 ≥ seuil, top décile de contribution D"
+97416000ET2116,entrée,"rang P 268, D 1.79 ≥ seuil, événement daté 2025-08-28"
+97416000ET2141,entrée,"rang P 69, D 1.75 ≥ seuil, événement daté 2025-08-28"
+97416000ET2164,entrée,"rang P 92, D 1.82 ≥ seuil, événement daté 2025-08-28"
+97416000ET2166,entrée,"rang P 121, D 1.79 ≥ seuil, événement daté 2025-08-28"
+97416000ET2167,entrée,"rang P 87, D 1.79 ≥ seuil, événement daté 2025-08-28"
+97416000ET2242,entrée,"rang P 123, D 1.79 ≥ seuil, top décile de contribution D"
+97416000ET2243,entrée,"rang P 124, D 1.79 ≥ seuil, top décile de contribution D"
+97416000EY1406,entrée,"rang P 27, D 2.17 ≥ seuil, top décile de contribution D"
+97416000HP0798,entrée,"rang P 243, D 1.76 ≥ seuil, top décile de contribution D"
+97416000HP0860,entrée,"rang P 298, D 1.75 ≥ seuil, top décile de contribution D"
+97418000AT2300,entrée,"rang P 1956, D 1.45 ≥ seuil, événement daté 2025-08-28"
+97418000AT2317,entrée,"rang P 11, D 1.79 ≥ seuil, événement daté 2025-08-28"
+97418000AT2374,entrée,"rang P 374, D 2.64 ≥ seuil, top décile de contribution D"
+97418000AT2379,entrée,"rang P 9, D 1.82 ≥ seuil, événement daté 2025-08-28"
+97418000AT2381,entrée,"rang P 1608, D 2.81 ≥ seuil, top décile de contribution D"
+97418000BH0995,entrée,"rang P 2058, D 2.14 ≥ seuil, top décile de contribution D"
+97421000AV0615,entrée,"rang P 389, D 1.79 ≥ seuil, top décile de contribution D"
+97421000AV0815,entrée,"rang P 308, D 1.75 ≥ seuil, top décile de contribution D"
+97422000AD1237,entrée,"rang P 17, D 2.07 ≥ seuil, top décile de contribution D"
+97422000AP1216,entrée,"rang P 2267, D 2.18 ≥ seuil, top décile de contribution D"
+97422000BX1123,entrée,"rang P 50, D 1.81 ≥ seuil, top décile de contribution D"
+97422000CS1506,entrée,"rang P 1190, D 2.50 ≥ seuil, top décile de contribution D"
+97422000DM0647,entrée,"rang P 109, D 1.86 ≥ seuil, top décile de contribution D"
+97423000AB1904,entrée,"rang P 1510, D 2.38 ≥ seuil, top décile de contribution D"
+97423000AB1905,entrée,"rang P 1250, D 2.34 ≥ seuil, top décile de contribution D"
+97423000AB1907,entrée,"rang P 1647, D 2.37 ≥ seuil, top décile de contribution D"
+97423000AB1908,entrée,"rang P 1, D 1.75 ≥ seuil, top décile de contribution D"
+97423000AB1910,entrée,"rang P 4, D 1.78 ≥ seuil, top décile de contribution D"
+97423000AB1911,entrée,"rang P 6, D 1.77 ≥ seuil, top décile de contribution D"
+97423000AB1912,entrée,"rang P 1172, D 2.36 ≥ seuil, top décile de contribution D"
