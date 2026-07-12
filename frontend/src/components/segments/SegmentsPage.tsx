@@ -265,7 +265,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col sm:flex-row">
       {/* onglets mobile < 640 px */}
       <div data-seg-onglets className="flex shrink-0 items-center gap-1.5 border-b border-line px-3 py-2 sm:hidden">
-        <button onClick={onBack} className="mr-1 px-1 text-sm text-txt-dim hover:text-txt" title="Tous les segments">←</button>
+        <button onClick={onBack} className="mr-1 px-1 text-sm text-txt-dim hover:text-txt" title="Toutes les vues">←</button>
         {([['filtres', 'Filtres'], ['resultats', `Résultats${rep?.count != null ? ` (${fmtN(rep.count)})` : ''}`]] as const).map(([k, l]) => (
           <button key={k} data-seg-onglet={k} onClick={() => setOngletMobile(k)}
             className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
@@ -277,7 +277,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
       {/* colonne filtres */}
       <aside className={`${ongletMobile === 'filtres' ? 'flex' : 'hidden'} min-h-0 w-full flex-1 flex-col border-r border-line bg-surface-1 sm:flex sm:w-[320px] sm:flex-none sm:shrink-0`}>
         <div className="shrink-0 px-4 pb-2 pt-4">
-          <button data-seg-retour onClick={onBack} className="text-[11px] text-txt-dim hover:text-txt">← Tous les segments</button>
+          <button data-seg-retour onClick={onBack} className="text-[11px] text-txt-dim hover:text-txt">← Toutes les vues</button>
           <h2 className="mt-1 text-sm font-medium text-txt-hi">{preset.nom}</h2>
           {preset.argumentaire && <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">{preset.argumentaire}</p>}
           {preset.mention_legale && (
@@ -672,7 +672,7 @@ export function SegmentsPage() {
         <div data-seg-catnat-bandeau className="mb-4 rounded-lg border border-[#E8695A]/40 bg-[#E8695A]/10 px-3 py-2 text-[11px] text-[#f0a29a]">
           Catastrophe naturelle ({home.catnat.fenetre_mois} derniers mois) :{' '}
           <span className="font-medium text-txt-hi">{home.catnat.communes.map((c) => c.commune).join(', ')}</span>
-          {' '}— les segments couvreurs/menuiseries proposent le filtre pré-coché.
+          {' '}— les vues couvreurs/menuiseries proposent le filtre pré-coché.
         </div>
       )}
       {CAT_ORDER.filter((c) => home.presets.some((p) => p.categorie === c)).map((c) => (

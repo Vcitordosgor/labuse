@@ -223,6 +223,10 @@ export default function App() {
     if (p.get('v') === '1') setVerdict(true)   // les liens de démo ouvrent verdict allumé
     const m = p.get('m')
     if (m) setModule(m)
+    // Vues (décision produit 12/07) : la page est adressable (#…&pg=vues) ; l'ancien nom
+    // « segments » reste accepté en alias — les liens partagés avant le renommage tiennent.
+    const pg = p.get('pg')
+    if (pg === 'vues' || pg === 'segments') setView('segments')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
@@ -231,8 +235,9 @@ export default function App() {
     if (commune) add(`c=${encodeURIComponent(commune)}`)
     if (verdict) add('v=1')
     if (module) add(`m=${module}`)
+    if (view === 'segments') add('pg=vues')   // la page Vues est partageable (alias legacy : segments)
     window.history.replaceState(null, '', h || window.location.pathname + window.location.search)
-  }, [filters, zone, module, commune, verdict])
+  }, [filters, zone, module, commune, verdict, view])
 
 
   return (
