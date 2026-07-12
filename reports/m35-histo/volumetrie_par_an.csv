@@ -1,0 +1,8 @@
+millesime,lignes,mutations,ventes,parcelles,source_archive,edition,mutations_consolide_ed201904,ecart_pct
+2014,11541,5647,4981,6320,http://data.cquest.org/dgfip_dvf/201910/valeursfoncieres-2014.txt.gz,201910,5647,0.0
+2015,12017,5953,5361,6674,http://data.cquest.org/dgfip_dvf/201910/valeursfoncieres-2015.txt.gz,201910,5951,0.0
+2016,13549,6770,6175,7360,http://data.cquest.org/dgfip_dvf/202110/valeursfoncieres-2016.txt,202110,6760,0.1
+2017,15597,7475,6630,8021,http://data.cquest.org/dgfip_dvf/202204/valeursfoncieres-2017.txt,202204,6997,6.8
+2018,16631,7185,6451,7962,http://data.cquest.org/dgfip_dvf/202304/valeursfoncieres-2018.txt,202304,2350,205.7
+2019,19171,7969,7256,8448,http://data.cquest.org/dgfip_dvf/202404/valeursfoncieres-2019.txt,202404,,
+2020,21957,7733,7041,8281,http://data.cquest.org/dgfip_dvf/202504/valeursfoncieres-2020.txt.zip,202504,,
