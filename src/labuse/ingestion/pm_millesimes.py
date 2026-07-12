@@ -31,6 +31,8 @@ _BASE = ("https://data.economie.gouv.fr/api/v2/catalog/datasets/"
 #: attachment data.economie par millésime (reconnaissance M2 lot 1 — ids RÉELS du catalogue,
 #: graphies irrégulières comprises : « dept_61 » en 2021, « fichiers_ » pluriel en 2024).
 MILLESIME_ATTACHMENTS = {
+    2019: "fichier_des_parcelles_situation_2019_dept_62_a_976_zip",
+    2020: "fichier_des_parcelles_situation_2020_dept_62_a_976_zip",
     2021: "fichier_des_parcelles_situation_2021_dept_61_a_976_zip",
     2022: "fichier_des_parcelles_situation_2022_dept_62_a_976_zip",
     2023: "fichier_des_parcelles_situation_2023_dept_62_a_976_zip",
