@@ -132,7 +132,7 @@ function FiltreRow({ f, defs, onChange, onRemove }: {
         <button onClick={onRemove} className="shrink-0 text-txt-dim hover:text-txt" title="Retirer ce filtre">✕</button>
       </div>
       {off ? (
-        <p className="mt-1 text-[10px] italic text-txt-dim">
+        <p className="mt-1 text-[11px] italic text-txt-dim">
           disponible prochainement{d.mandat ? ` — mandat ${d.mandat}` : ''}
         </p>
       ) : d.type === 'range' ? (
@@ -140,7 +140,7 @@ function FiltreRow({ f, defs, onChange, onRemove }: {
           <input type="number" placeholder="min" value={f.min ?? ''}
             onChange={(e) => onChange({ ...f, min: num(e.target.value) })}
             className="w-24 rounded-md border border-line-2 bg-bg px-2 py-1 text-[11px] text-txt outline-none focus:border-mint" />
-          <span className="text-[10px] text-txt-dim">à</span>
+          <span className="text-[11px] text-txt-dim">à</span>
           <input type="number" placeholder="max" value={f.max ?? ''}
             onChange={(e) => onChange({ ...f, max: num(e.target.value) })}
             className="w-24 rounded-md border border-line-2 bg-bg px-2 py-1 text-[11px] text-txt outline-none focus:border-mint" />
@@ -265,7 +265,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
           <h2 className="mt-1 text-sm font-medium text-txt-hi">{preset.nom}</h2>
           {preset.argumentaire && <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">{preset.argumentaire}</p>}
           {preset.mention_legale && (
-            <div data-seg-mention className="mt-1.5 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[10px] leading-snug text-txt-dim">
+            <div data-seg-mention className="mt-1.5 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] leading-snug text-txt-dim">
               <p>{preset.mention_legale.texte}</p>
               <p className="mt-1">
                 {preset.mention_legale.liens.map((l, i) => (
@@ -274,11 +274,11 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
                   </a>
                 ))}
               </p>
-              <p className="mt-1 text-[9.5px] text-txt-dim/80">{preset.mention_legale.sources_donnees}</p>
+              <p className="mt-1 text-[11px] text-txt-dim/80">{preset.mention_legale.sources_donnees}</p>
             </div>
           )}
           {(dejaLa.has('emprise_residuelle_m2') || dejaLa.has('surelevation_possible')) && (
-            <p className="mt-1.5 rounded-md border border-[#E8B44C]/30 bg-[#E8B44C]/5 px-2 py-1 text-[10px] leading-snug text-[#E8B44C]">
+            <p className="mt-1.5 rounded-md border border-[#E8B44C]/30 bg-[#E8B44C]/5 px-2 py-1 text-[11px] leading-snug text-[#E8B44C]">
               {home.libelle_residuel}
             </p>
           )}
@@ -308,7 +308,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
         </div>
         <div className="shrink-0 border-t border-line px-4 py-3">
           <div className="mb-2 flex items-center gap-2">
-            <label className="text-[10px] text-txt-dim">Tri</label>
+            <label className="text-[11px] text-txt-dim">Tri</label>
             <select value={tri ?? ''} onChange={(e) => { setTri(e.target.value || null); setOffset(0) }}
               className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-[10.5px] text-txt outline-none focus:border-mint">
               {home.tris.map((t) => <option key={t.cle} value={t.cle}>{t.libelle}</option>)}
@@ -348,7 +348,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
           <span data-seg-count className="font-display text-2xl font-bold text-mint">{fmtN(rep?.count)}</span>
           <span className="text-xs text-txt-dim">parcelles matchées{rq.isFetching ? ' · calcul…' : ''}</span>
           {!!rep?.filtres_inactifs?.length && (
-            <span className="rounded-md border border-[#E8B44C]/40 bg-[#E8B44C]/10 px-2 py-0.5 text-[10px] text-[#E8B44C]"
+            <span className="rounded-md border border-[#E8B44C]/40 bg-[#E8B44C]/10 px-2 py-0.5 text-[11px] text-[#E8B44C]"
               title={rep.filtres_inactifs.map((f) => `${f.libelle} — ${f.mandat ? `mandat ${f.mandat}` : f.raison ?? ''}`).join('\n')}>
               partiel : {rep.filtres_inactifs.length} filtre(s) en attente de données
             </span>
@@ -360,7 +360,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
         <div className="mt-3 min-h-0 flex-1 overflow-auto rounded-[10px] border border-line-2">
           <table className="w-full text-left text-[11px]">
             <thead className="sticky top-0 bg-surface-1">
-              <tr className="text-[9.5px] uppercase tracking-wider text-txt-dim">
+              <tr className="text-[11px] uppercase tracking-wider text-txt-dim">
                 <th className="px-3 py-2">Parcelle</th>
                 <th className="px-3 py-2">Commune</th>
                 <th className="px-3 py-2">Surface (m²)</th>
@@ -450,20 +450,20 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
         </div>
         <div className="mt-1 flex items-baseline gap-1.5">
           <span data-seg-preset-count className="font-display text-lg font-bold text-mint">{fmtN(p.count)}</span>
-          <span className="text-[10px] text-txt-dim">parcelles</span>
+          <span className="text-[11px] text-txt-dim">parcelles</span>
           {catnatOn && <span className="ml-auto rounded-md bg-[#E8695A]/15 px-1.5 py-0.5 text-[9px] font-medium text-[#f0a29a]">CATNAT actif</span>}
         </div>
         {p.argumentaire && <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{p.argumentaire}</p>}
         <div className="mt-2 flex flex-wrap gap-1">
           {(p.filtres ?? []).map((f, i) => (
-            <span key={i} className="rounded-md border border-line-2 bg-surface-1 px-1.5 py-0.5 text-[9.5px] text-txt-mut">
+            <span key={i} className="rounded-md border border-line-2 bg-surface-1 px-1.5 py-0.5 text-[11px] text-txt-mut">
               {chipLabel(f, defs)}
             </span>
           ))}
         </div>
       </button>
       {/* admin (Vic) : l'app est mono-utilisateur authentifié — ces actions écrivent en base */}
-      <div className="mt-2.5 flex gap-2 border-t border-line-2 pt-2 text-[9.5px] text-txt-dim">
+      <div className="mt-2.5 flex gap-2 border-t border-line-2 pt-2 text-[11px] text-txt-dim">
         <button data-seg-admin-dupliquer onClick={() => dup.mutate()} className="hover:text-txt">dupliquer</button>
         <button data-seg-admin-argumentaire onClick={() => editArg.mutate()} className="hover:text-txt">argumentaire</button>
         <button data-seg-admin-toggle onClick={() => toggle.mutate()} className="hover:text-txt">{p.actif ? 'désactiver' : 'activer'}</button>

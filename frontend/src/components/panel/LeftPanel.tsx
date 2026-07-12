@@ -55,7 +55,7 @@ function LayersSection() {
                 <span className={`text-xs ${on ? 'text-txt' : 'text-txt-mut'}`}>{label}</span>
               </button>
               {hintKey === key && (
-                <p data-hint-couche={key} className="ml-6 mt-0.5 text-[10px] text-st-creuser">
+                <p data-hint-couche={key} className="ml-6 mt-0.5 text-[11px] text-st-creuser">
                   Par commune — choisissez une commune ↑
                 </p>
               )}
@@ -77,7 +77,7 @@ function VerdictHero() {
       <div className="mx-5 mb-1 flex shrink-0 items-center justify-between rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-1.5">
         <span className="text-[11px] font-medium text-mint">✓ Analyse LABUSE affichée</span>
         <button data-verdict-off onClick={() => setVerdict(false)}
-          className="text-[10px] text-txt-dim hover:text-txt" title="Masquer l'analyse — revenir au cadastre brut">
+          className="text-[11px] text-txt-dim hover:text-txt" title="Masquer l'analyse — revenir au cadastre brut">
           masquer
         </button>
       </div>
@@ -96,7 +96,7 @@ function VerdictHero() {
         className="mt-5 w-full rounded-xl bg-mint px-4 py-3.5 font-display text-sm font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition hover:shadow-[0_0_36px_rgba(92,230,161,0.55)]">
         Afficher l'analyse LABUSE →
       </button>
-      <p className="mt-3 text-[10px] leading-snug text-txt-dim">
+      <p className="mt-3 text-[11px] leading-snug text-txt-dim">
         Rien n'est masqué : le cadastre reste entier, chaque parcelle garde son verdict —
         <br />cliquez-en une pour voir pourquoi. Vous gardez la main.
       </p>

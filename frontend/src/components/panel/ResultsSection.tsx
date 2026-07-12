@@ -41,7 +41,7 @@ function CompletudeRing({ value }: { value: number }) {
         <circle cx="9" cy="9" r={r} fill="none" stroke={completudeColor(value)} strokeWidth="2"
           strokeDasharray={c} strokeDashoffset={c * (1 - value / 100)} strokeLinecap="round" />
       </svg>
-      <span className="font-mono text-[10px] text-txt-dim">{value}</span>
+      <span className="font-mono text-[11px] text-txt-dim">{value}</span>
     </span>
   )
 }
@@ -124,7 +124,7 @@ function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', numbe
           >
             {it.color && <span className="h-1.5 w-1.5 rounded-full" style={{ background: it.color }} />}
             {it.label}
-            <span className="font-mono text-[10px] text-txt-dim">{fmt(counts[it.v] ?? 0)}{partial ? '*' : ''}</span>
+            <span className="font-mono text-[11px] text-txt-dim">{fmt(counts[it.v] ?? 0)}{partial ? '*' : ''}</span>
           </button>
         )
       })}
@@ -173,7 +173,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
               Le reste reste visible et cliquable — voici pourquoi il est écarté.
             </p>
             <p className="mt-1.5 shrink-0 font-mono text-[9.5px] tracking-widest text-txt-dim">LE RESTE, PAR MOTIF</p>
-            {q.isLoading && <p className="mt-1 text-[10px] text-txt-dim">Chargement…</p>}
+            {q.isLoading && <p className="mt-1 text-[11px] text-txt-dim">Chargement…</p>}
             <div className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
               {(q.data?.motifs ?? []).map((m) => (
                 <div key={m.motif} className={`flex shrink-0 justify-between gap-2 text-[10.5px] ${m.motif.startsWith('écartées') ? 'font-medium text-txt border-b border-line pb-0.5 mb-0.5' : 'text-txt-mut'}`}>

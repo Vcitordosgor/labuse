@@ -80,7 +80,7 @@ function IaRestitution() {
       {(iaRestitution.explanation || iaRestitution.stub) && (
         <p data-ia-explication className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px] leading-snug text-txt-mut">
           {iaRestitution.stub && (
-            <span data-ia-badge-stub className="mr-1.5 inline-block rounded-full border border-st-creuser/50 bg-[#211a10] px-1.5 py-0.5 text-[10px] font-medium text-st-creuser">
+            <span data-ia-badge-stub className="mr-1.5 inline-block rounded-full border border-st-creuser/50 bg-[#211a10] px-1.5 py-0.5 text-[11px] font-medium text-st-creuser">
               mode mots-clés
             </span>
           )}
@@ -125,11 +125,11 @@ function IaRestitution() {
               className="block w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left hover:border-mint">
               <span className="font-mono text-[10px] text-mint">#{i + 1}</span>
               <span className="ml-1.5 font-mono text-[11px] text-txt-hi">{t.idu.slice(8)}</span>
-              <span className="ml-1.5 text-[10px] text-txt-dim">{t.commune}</span>
+              <span className="ml-1.5 text-[11px] text-txt-dim">{t.commune}</span>
               {t.pourquoi && (
                 <ul data-ia-pourquoi className="mt-1 space-y-0.5">
                   {t.pourquoi.map((l, k) => (
-                    <li key={k} className="text-[10px] leading-snug text-txt-mut">· {l}</li>
+                    <li key={k} className="text-[11px] leading-snug text-txt-mut">· {l}</li>
                   ))}
                 </ul>
               )}
@@ -141,9 +141,9 @@ function IaRestitution() {
           {iaRestitution.top.map((t, i) => (
             <button key={t.idu} data-ia-top onClick={() => select(t.idu)}
               className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-left hover:border-mint">
-              <span className="font-mono text-[10px] text-mint">#{i + 1} · Q {t.q_score}</span>
+              <span className="font-mono text-[11px] text-mint">#{i + 1} · Q {t.q_score}</span>
               <span className="block truncate font-mono text-[11px] text-txt-hi">{t.idu.slice(8)}</span>
-              <span className="block truncate text-[9.5px] text-txt-dim">{t.commune}</span>
+              <span className="block truncate text-[11px] text-txt-dim">{t.commune}</span>
             </button>
           ))}
         </div>

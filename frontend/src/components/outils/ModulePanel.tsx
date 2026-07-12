@@ -120,7 +120,7 @@ function M02() {
       {!siren && (sug.data ?? []).map((s) => (
         <button key={s.siren} onClick={() => setSiren(s.siren)}
           className="flex items-center justify-between rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt hover:border-[#6b5a96]">
-          <span className="truncate">{s.nom}</span><span className="font-mono text-[10px] text-txt-dim">{s.n} parc.</span>
+          <span className="truncate">{s.nom}</span><span className="font-mono text-[11px] text-txt-dim">{s.n} parc.</span>
         </button>
       ))}
       {d && (
@@ -141,7 +141,7 @@ function M02() {
             {items.map((i) => (
               <Row key={i['idu'] as string} idu={i['idu'] as string}
                 sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
-                right={i['statut'] ? <span className="text-[10px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label}</span> : <span className="text-[10px] text-txt-dim">hors run</span>}
+                right={i['statut'] ? <span className="text-[11px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label}</span> : <span className="text-[11px] text-txt-dim">hors run</span>}
                 fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                   ['Patrimoine', `${d['n_parcelles']} parcelles · SDP ${fmt(d['sdp_totale_m2'] as number)} m²`]]} />
             ))}
@@ -193,7 +193,7 @@ function M03() {
             <span className="text-txt-mut">{i['date'] as string}</span>
             <span className="text-txt-dim">état {i['etat'] as string}</span>
             {i['nb_lgt'] != null && <span className="text-txt-dim">{String(i['nb_lgt'])} lgt</span>}
-            {!i['geom'] && <span className="ml-auto text-[9.5px] text-[#8b76c0]">non géocodé</span>}
+            {!i['geom'] && <span className="ml-auto text-[11px] text-[#8b76c0]">non géocodé</span>}
           </div>
         ))}
       </div>
@@ -227,7 +227,7 @@ function M04() {
         {items.map((i, k) => (
           <Row key={k} idu={i['idu'] as string}
             sub={`PC ${i['date']} · ${fmt(i['surface_m2'] as number)} m² · état ${i['etat']}`}
-            right={<span className="text-[10px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label}</span>}
+            right={<span className="text-[11px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label}</span>}
             fiche={[['Permis', `${i['permit_id']} (${i['date']})`], ['État source', `code ${i['etat']} — sans achèvement déclaré`],
               ['Lecture', 'PC ancien jamais réalisé — réalisation à vérifier']]} />
         ))}
@@ -249,7 +249,7 @@ function M05() {
         ⬇ Export CSV
       </a>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="sticky top-0 grid grid-cols-[1fr_54px_58px_54px] gap-1 bg-surface-1 py-1 text-[9.5px] tracking-wide text-txt-dim">
+        <div className="sticky top-0 grid grid-cols-[1fr_54px_58px_54px] gap-1 bg-surface-1 py-1 text-[11px] tracking-wide text-txt-dim">
           <span>COMMUNE (ÎLE)</span>
           {([['permis', 'PERMIS'], ['delai_median_mois', 'DÉLAI*'], ['pct_acheves', 'ACHEV.']] as const).map(([k, l]) => (
             <button key={k} onClick={() => setSort(k)} className={`text-right ${sort === k ? 'text-[#B497F0]' : ''}`}>{l} ↓</button>
@@ -263,7 +263,7 @@ function M05() {
             <span className="text-right font-mono text-txt-mut">{String(c['pct_acheves'])}%</span>
           </div>
         ))}
-        <p className="py-2 text-[9.5px] text-txt-dim">* médiane permis → déclaration d'achèvement (DAACT)</p>
+        <p className="py-2 text-[11px] text-txt-dim">* médiane permis → déclaration d'achèvement (DAACT)</p>
       </div>
     </>
   )
@@ -285,7 +285,7 @@ function M06() {
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}
             sub={`${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)} m²`}
-            right={<span className="text-[10px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label}</span>}
+            right={<span className="text-[11px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label}</span>}
             fiche={[['Mode bailleur', 'Parcelle en QPV'], ['Leviers LLS', 'TVA 2,1 % · abattement TFPB 30 %'],
               ['SDP résiduelle', `${fmt(i['sdp'] as number)} m²`]]} />
         ))}
@@ -378,7 +378,7 @@ function M09() {
             {gen.data.courriers.map((c) => (
               <div key={c.idu} className="rounded-lg border border-line-2 bg-surface-3 p-2">
                 <div className="font-mono text-[10.5px] text-txt-hi">{c.idu}</div>
-                <div className="mt-1 line-clamp-3 whitespace-pre-wrap text-[10px] leading-snug text-txt-mut">{c.texte ?? c.erreur}</div>
+                <div className="mt-1 line-clamp-3 whitespace-pre-wrap text-[11px] leading-snug text-txt-mut">{c.texte ?? c.erreur}</div>
               </div>
             ))}
           </div>
@@ -413,7 +413,7 @@ function M10() {
               <div key={k} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                 <div className="flex items-center gap-2">
                   <Row idu={i['idu'] as string} sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · ${i['flags']} flags · ${i['exclusions']} exclusion(s)`}
-                    right={<span className="text-[10px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color ?? '#5C7268' }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label ?? 'hors run'}</span>} />
+                    right={<span className="text-[11px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color ?? '#5C7268' }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label ?? 'hors run'}</span>} />
                 </div>
                 <a href={i['pdf'] as string} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[10.5px] text-[#8b76c0] hover:text-[#B497F0] hover:underline">⬇ PDF</a>
               </div>
@@ -464,7 +464,7 @@ function M23() {
               <div className="font-mono text-[10.5px]" style={{ color: i['echeance_depassee'] ? '#ff7a68' : VIOLET }}>
                 {i['echeance_depassee'] ? 'DÉPASSÉE' : String(i['echeance'] ?? '')}
               </div>
-              <div className="text-[9.5px] text-txt-dim">{fmt(i['surface_m2'])} m²</div>
+              <div className="text-[11px] text-txt-dim">{fmt(i['surface_m2'])} m²</div>
             </div>
           )
           return idu ? (

@@ -101,7 +101,7 @@ function ProjetCard({ p }: { p: Projet }) {
           </h3>
         )}
         {archived && (
-          <span className="shrink-0 rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-dim">archivé</span>
+          <span className="shrink-0 rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-dim">archivé</span>
         )}
       </div>
 
@@ -117,7 +117,7 @@ function ProjetCard({ p }: { p: Projet }) {
       )}
 
       <div className="mt-3 flex items-center justify-between">
-        <span className="font-mono text-[10px] text-txt-dim">
+        <span className="font-mono text-[11px] text-txt-dim">
           {p.derniere_execution_at ? `rejoué ${frDate(p.derniere_execution_at)}` : `créé ${frDate(p.created_at)}`}
         </span>
         <div className="flex items-center gap-1.5">

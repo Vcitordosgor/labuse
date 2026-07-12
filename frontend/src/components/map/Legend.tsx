@@ -23,7 +23,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
       ) : (
         <div className="flex flex-col gap-1.5">
           <div className="h-2 w-28 rounded-full" style={{ background: 'linear-gradient(90deg,#1E2A23,#2E6B4F,#46A88A,#5CE6A1)' }} />
-          <div className="flex justify-between text-[10px] text-txt-dim">
+          <div className="flex justify-between text-[11px] text-txt-dim">
             <span>0 m²</span>
             <span>SDP résiduelle</span>
             <span>5 000+</span>

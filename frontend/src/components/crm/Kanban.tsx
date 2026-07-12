@@ -61,21 +61,21 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
       </div>
       <div className="mt-2 flex items-center gap-2">
         {meta && (
-          <span className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9.5px]" style={{ background: `${meta.color}22`, color: meta.color }}>
+          <span className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px]" style={{ background: `${meta.color}22`, color: meta.color }}>
             <span className="h-1 w-1 rounded-full" style={{ background: meta.color }} />{meta.label}
           </span>
         )}
         {prem && (
           <>
             <span className="font-display text-xs font-bold" style={{ color: meta?.color }}>{prem.q_score}</span>
-            <span className="flex items-center gap-1 text-[9.5px] text-txt-dim" title={`Complétude ${prem.completeness_score}%`}>
+            <span className="flex items-center gap-1 text-[11px] text-txt-dim" title={`Complétude ${prem.completeness_score}%`}>
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: completudeColor(prem.completeness_score) }} />
               {prem.completeness_score}%
             </span>
           </>
         )}
-        {!prem && <span className="text-[9.5px] text-txt-dim">hors run de référence</span>}
-        <span className="ml-auto text-[9.5px] text-txt-dim">{e.priority}</span>
+        {!prem && <span className="text-[11px] text-txt-dim">hors run de référence</span>}
+        <span className="ml-auto text-[11px] text-txt-dim">{e.priority}</span>
       </div>
     </div>
   )
@@ -141,7 +141,7 @@ export function Kanban() {
               <div className="flex shrink-0 items-center gap-2 px-3 py-2.5">
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: accent }} />
                 <span className="truncate text-[11px] font-medium text-txt">{c.label}</span>
-                <span className="ml-auto font-mono text-[10px] text-txt-dim">{items.length}</span>
+                <span className="ml-auto font-mono text-[11px] text-txt-dim">{items.length}</span>
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
                 {items.map((e) => (
@@ -149,7 +149,7 @@ export function Kanban() {
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0} />
                 ))}
                 {items.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-line-2 py-4 text-center text-[10px] text-txt-dim">vide</div>
+                  <div className="rounded-lg border border-dashed border-line-2 py-4 text-center text-[11px] text-txt-dim">vide</div>
                 )}
               </div>
             </div>
