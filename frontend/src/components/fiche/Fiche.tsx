@@ -802,9 +802,13 @@ export function Fiche({ idu }: { idu: string }) {
         {isError && (is429(error) ? (
           <RateLimit429 error={error} refetch={refetch} />
         ) : (
-          <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-4 text-xs">
-            <p className="text-st-ecartee">Impossible de charger la fiche.</p>
-            <p className="mt-1 text-txt-dim">Le serveur est peut-être périmé — relancer `labuse api`.</p>
+          <div data-fiche-erreur className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-4 text-xs">
+            {/* Item 3 (UX V1) : wording client — plus jamais « relancer labuse api » face à un
+                utilisateur. Le détail technique reste lisible, en ligne discrète. */}
+            <p className="text-st-ecartee">Connexion au serveur impossible — vérifiez votre réseau ou réessayez.</p>
+            {error instanceof Error && error.message && (
+              <p className="mt-1 break-all font-mono text-[10px] text-txt-dim">détail : {error.message}</p>
+            )}
             <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
           </div>
         ))}

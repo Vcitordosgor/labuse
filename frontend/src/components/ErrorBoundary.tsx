@@ -19,9 +19,10 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, State> {
         <div className="max-w-md rounded-xl border border-line-2 bg-surface-2 p-6 text-center">
           <p className="font-display text-lg font-bold text-st-ecartee">Une erreur est survenue</p>
           <p className="mt-2 break-all font-mono text-[11px] text-txt-mut">{this.state.error.message}</p>
+          {/* Item 3 (UX V1) : wording client — le jargon « labuse api » disparaît de l'écran */}
           <p className="mt-3 text-xs text-txt-dim">
-            Si le problème persiste après rechargement, relancer le serveur (`labuse api`) — un
-            serveur périmé est la cause la plus fréquente.
+            Si le problème persiste après rechargement, vérifiez votre connexion réseau
+            ou réessayez dans quelques instants.
           </p>
           <button
             onClick={() => window.location.reload()}
