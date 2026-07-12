@@ -79,6 +79,16 @@ P1 ambigus, P2, P3 = backlog, non touchés.**
 - **P2-7** · PUT `/segments/presets/{slug}` exige l'objet complet (422 sur `{actif}` seul) —
   sémantique PUT stricte cohérente, mais aucun PATCH n'existe pour l'admin ; à documenter.
 
+### P2-X · Enclavement v2 — signal gradué (distance + topologie) — ⏳ BACKLOG (décision Vic 12/07)
+- **Constat** (mandat crédibilité 12/07) : « pas d'accès direct » = 293 078 parcelles dont
+  601 chaudes — les limites de la BD TOPO (axes publics seuls, dessertes privées et
+  servitudes invisibles), pas de l'enclavement réel. **Décision : PAS de pondération** ;
+  le badge « Accès à vérifier » (Synthèse) suffit. Un malus -5 Q aurait basculé 259/601
+  chaudes (chiffrage : RAPPORT_CREDIBILITE.md §1).
+- **v2 souhaitée** : signal GRADUÉ — distance réelle à la voirie (contact / ≤ 6 m / > 6 m)
+  + topologie (parcelle voisine desservie ? chemin cadastré ?), après ré-ingestion voirie
+  post-fix A1 sur les 22 communes restantes. Seulement alors, rediscuter une pondération.
+
 ## P3 — cosmétique (backlog)
 
 - **P3-1** · Warning MapLibre « Map cannot fit within canvas » au boot 375.

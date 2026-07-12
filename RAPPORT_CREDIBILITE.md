@@ -26,6 +26,10 @@ veut un jour peser l'enclavement, le faire APRÈS (a) ré-ingestion voirie post-
 les 22 communes restantes et (b) un signal gradué par distance réelle (contact / ≤ 6 m /
 > 6 m) plutôt qu'un booléen — l'étage intermédiaire est déjà « à creuser » via O1.
 
+**DÉCISION (Vic, 12/07/2026) — dossier clos** : NON à la pondération — les 293 k parcelles
+flaggées reflètent les limites de la BD TOPO, pas l'enclavement réel ; le badge suffit.
+« Enclavement v2 (signal gradué distance + topologie) » consigné au backlog (BUGS.md P2-X).
+
 ## 2. Prix au m² — `52b58c7`
 
 **Diagnostic : pas un bug, deux métriques légitimes jamais nommées.**
