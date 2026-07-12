@@ -193,7 +193,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
 const CAP = 200
 
 export function ResultsSection() {
-  const { filters, query, zone, resetFilters, commune, setFilter } = useApp()
+  const { filters, query, zone, resetFilters, commune, setCommune, setFilter } = useApp()
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   const [showAll, setShowAll] = useState(false)
   // Tri par défaut de la vue chaudes : V DÉCROISSANT (Score V, Phase 4 §4) — débrayable.
@@ -338,9 +338,27 @@ export function ResultsSection() {
           </div>
         )}
         {!loading && !error && shown.length === 0 && (
-          <div className="rounded-lg border border-dashed border-line-2 p-4 text-center">
-            <p className="text-xs text-txt-mut">Aucun résultat pour ces filtres.</p>
-            <button onClick={resetFilters} className="mt-2 text-xs text-mint hover:underline">Réinitialiser les filtres</button>
+          /* Item 4 (UX V1) : état vide EXPLICITE — dit où on est et comment en sortir
+             (élargir à l'île / réinitialiser), aligné sur le #map-empty historique. */
+          <div data-liste-vide className="rounded-lg border border-dashed border-line-2 p-4 text-center">
+            <p className="text-xs leading-relaxed text-txt-mut">
+              {commune ? (
+                <>Aucune parcelle {filters.statuts.length === 1
+                  ? STATUT_META[filters.statuts[0]].label.toLowerCase()
+                  : scoped || filters.statuts.length ? 'correspondante' : 'chaude'} à {commune} —
+                  élargissez à l'île ou ajustez les filtres.</>
+              ) : (
+                <>Aucune parcelle ne correspond à ces filtres sur l'île — retirez un critère.</>
+              )}
+            </p>
+            <div className="mt-2 flex items-center justify-center gap-4">
+              {commune && (
+                <button data-vide-ile onClick={() => setCommune(null)} className="text-xs text-mint hover:underline">
+                  Élargir à toute l'île
+                </button>
+              )}
+              <button onClick={resetFilters} className="text-xs text-mint hover:underline">Réinitialiser les filtres</button>
+            </div>
           </div>
         )}
         {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}
