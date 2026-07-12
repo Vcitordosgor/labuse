@@ -18,7 +18,12 @@ from __future__ import annotations
 # v1.1 (mandat calibration, 10/07/2026) : seuil re-dérivé après recalibration = top décile V
 # des chaudes (p90 = 34, dans la fenêtre d'application [30-60] fixée par Vic) → 93 Brûlantes.
 # Valeur v1 historique : 50 (14 Brûlantes, garde-fou déclenché).
-V_BRULANTE_THRESHOLD = 34
+# v1.3 (M1, 12/07/2026) : l'échelle a changé (famille B sortie, anti-signaux à 0) — 34 est
+# caduc (29 brûlantes seulement, et la bande 25-49 était morte au backtest). Recalibrage
+# MÉCANIQUE : plus petit V tel que l'effectif tombe dans le garde-fou [30-120] → 17
+# (120 brûlantes, dont 94 avec ≥ 1 événement daté — cession de fonds en tête).
+# Sensibilité : seuil 12 → 212 (hors garde-fou) · seuil 22 → 39. Détail : reports/m1-v13/.
+V_BRULANTE_THRESHOLD = 17
 BRULANTE_GUARDRAIL = (30, 120)
 
 # Run de référence de la matrice Q×A — SOURCE DE VÉRITÉ UNIQUE (API, vue Brûlantes,
@@ -49,20 +54,27 @@ FAMILY_CAPS = {"A": 35, "B": 25, "C": 15, "D": 25, "E": 15}
 SUM_FAMILIES = {"D"}
 
 # ── Barème par signal : code → (famille, points, label UI) ────────────────────────────────
+# v1.3 « CORRECTION DES SIGNES » (mandat M1 12/07/2026 — Phase 0, reports/phase0-validite) :
+# le backtest daté montre que cessation/radiation vendent à ~0,35× la base, SCI dormante à
+# 12,5 %, dirigeant 70-75 ans ~nul — pendant que la cession de fonds vend à 72 % (~3,6×).
+# Correction de SIGNE uniquement (aucune magnitude re-tunée) : anti-signaux → 0 point, les
+# ÉVÉNEMENTS restent tracés (cf. V13_ANTI_SIGNAL_NOTE). Dirigeant âgé + SCI dormante sortent
+# de V vers le tag `veille_succession` (radar patrimonial 3-7 ans — jamais compté dans V).
 SIGNALS = {
     # Famille A — Détresse juridique (BODACC)
-    "BODACC_LJ":            ("A", 35, "Liquidation judiciaire en cours"),
-    "BODACC_LJ_CLOT":       ("A", 30, "Liquidation clôturée, parcelle toujours au nom"),
-    "BODACC_RJ":            ("A", 30, "Redressement judiciaire en cours"),
-    "BODACC_RADIATION":     ("A", 25, "Radiation < 36 mois"),
-    "BODACC_SAUVEGARDE":    ("A", 20, "Sauvegarde en cours"),
-    "BODACC_CESSION_FONDS": ("A", 10, "Cession de fonds de commerce < 12 mois"),
-    # Famille B — Cycle de vie du propriétaire (RNE / recherche-entreprises)
-    "RNE_CESSATION":        ("B", 25, "Cessation déclarée / mise en sommeil"),
-    "RNE_DIRIGEANT_75":     ("B", 22, "Dirigeant ≥ 75 ans"),
-    "RNE_DIRIGEANT_70":     ("B", 18, "Dirigeant 70–74 ans"),
-    "RNE_DIRIGEANT_65":     ("B", 12, "Dirigeant 65–69 ans"),
-    "RNE_SCI_DORMANTE":     ("B", 8, "SCI ≥ 20 ans sans événement RNE récent"),
+    "BODACC_LJ":            ("A", 35, "Liquidation judiciaire en cours"),   # TODO v2 : non tranché Phase 0
+    "BODACC_LJ_CLOT":       ("A", 30, "Liquidation clôturée, parcelle toujours au nom"),  # TODO v2
+    "BODACC_RJ":            ("A", 30, "Redressement judiciaire en cours"),  # TODO v2
+    "BODACC_RADIATION":     ("A", 0, "Radiation < 36 mois"),                # v1.3 : anti-signal → 0 (tracé)
+    "BODACC_SAUVEGARDE":    ("A", 20, "Sauvegarde en cours"),               # TODO v2 (idem LJ/RJ)
+    "BODACC_CESSION_FONDS": ("A", 10, "Cession de fonds de commerce < 12 mois"),  # v1.3 : CONSERVÉ à l'identique
+    # Famille B — Cycle de vie du propriétaire — v1.3 : SORTIE INTÉGRALE de V (0 point).
+    # Cessation reste tracée à 0 ; dirigeant/SCI dormante → tag veille_succession (lot 2).
+    "RNE_CESSATION":        ("B", 0, "Cessation déclarée / mise en sommeil"),
+    "RNE_DIRIGEANT_75":     ("B", 0, "Dirigeant ≥ 75 ans"),
+    "RNE_DIRIGEANT_70":     ("B", 0, "Dirigeant 70–74 ans"),
+    "RNE_DIRIGEANT_65":     ("B", 0, "Dirigeant 65–69 ans"),
+    "RNE_SCI_DORMANTE":     ("B", 0, "SCI ≥ 20 ans sans événement RNE récent"),
     # Famille C — Détachement géographique (siège du propriétaire)
     "GEO_HORS_ILE":         ("C", 15, "Siège hors Réunion (métropole/étranger)"),
     "GEO_AUTRE_COMMUNE":    ("C", 4, "Siège Réunion, autre commune que la parcelle"),
@@ -83,8 +95,18 @@ SIGNALS = {
 
 # Familles/codes QUALIFIANTS pour la tenure conditionnelle (v1.1) : la détention longue ne
 # compte que si l'un d'eux est aussi présent. NU_PM_HORS_IMMO n'en fait PAS partie.
+# v1.3 : seuls les signaux à POINTS > 0 qualifient (un anti-signal tracé à 0 — cessation,
+# radiation — ne réveille plus la tenure : c'était exactement la bande morte 25-49 de Phase 0).
 TENURE_QUALIFYING_FAMILIES = {"A", "B", "C", "E"}
 TENURE_QUALIFYING_CODES = {"FRICHE"}
+
+# v1.3 — motif de traçabilité des anti-signaux (événement détecté, jamais compté dans V).
+V13_ANTI_SIGNAL_NOTE = "détecté, non compté — anti-signal Phase 0 (v1.3)"
+
+# v1.3 — tag veille_succession (lot 2 M1) : radar patrimonial 3-7 ans, HORS V, jamais brûlante.
+# PM à identité SIREN confirmée (jamais match nom) ∧ (dirigeant ≥ 70 ans OU SCI dormante).
+VEILLE_SUCCESSION_AGE_MIN = 70
+VEILLE_SUCCESSION_HORIZON = "3-7 ans"
 
 # Signaux du barème D1 NON calculables (fenêtre DVF) — flaggés au rapport, jamais émis.
 SIGNALS_NO_GO = {

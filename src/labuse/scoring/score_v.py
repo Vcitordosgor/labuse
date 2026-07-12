@@ -345,9 +345,20 @@ def famille_c(idu: str, fiche: dict | None, match: dict) -> list[dict]:
 
 def _tenure_qualifiee(cands: list[dict]) -> bool:
     """v1.1 : la tenure OBS5 ne compte que combinée à un signal A/B/C, FRICHE ou DPE (famille E).
-    NU_PM_HORS_IMMO ne qualifie pas (deux signaux de dormance passive ne se valident pas entre eux)."""
-    return any(s["famille"] in C.TENURE_QUALIFYING_FAMILIES
-               or s["code"] in C.TENURE_QUALIFYING_CODES for s in cands)
+    NU_PM_HORS_IMMO ne qualifie pas (deux signaux de dormance passive ne se valident pas entre eux).
+    v1.3 : seuls les signaux à POINTS > 0 qualifient — un anti-signal tracé à 0 (cessation,
+    radiation) ne réveille plus la tenure (bande morte 25-49, Phase 0)."""
+    return any(s["points"] > 0 and (s["famille"] in C.TENURE_QUALIFYING_FAMILIES
+                                    or s["code"] in C.TENURE_QUALIFYING_CODES) for s in cands)
+
+
+def veille_succession_eligible(owner_type: str, confiance: float | None,
+                               age: int | None, sci_dormante: bool) -> bool:
+    """v1.3 lot 2 — tag radar patrimonial (3-7 ans), HORS V : PM à identité SIREN CONFIRMÉE
+    (jamais un match par dénomination) ∧ (dirigeant ≥ 70 ans OU SCI dormante). Pur, testé."""
+    if owner_type != "pm" or confiance != C.CONF_SIREN_DIRECT:
+        return False
+    return (age is not None and age >= C.VEILLE_SUCCESSION_AGE_MIN) or sci_dormante
 
 
 def _retain(cands: list[dict], factor_families: set[str] | None) -> tuple[list[dict], int]:
@@ -437,6 +448,7 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
 
     achat_recent_seuil = _months_ago(C.ACHAT_RECENT_WINDOW_MONTHS)
     rows: list[tuple] = []
+    veille_rows: list[tuple] = []   # v1.3 lot 2 : (idu, siren, dirigeant_age|None, sci_dormante)
     counts = {"full": 0, "partial": 0, "na": 0, "review": n_review,
               "direct": 0, "fallback": 0}
 
@@ -462,6 +474,10 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
                      "valeur": siren, "confiance": conf}
             fiche = fiches.get(siren)
             a_cands = famille_a(siren, bodacc.get(siren, []), match)
+            # v1.3 : la radiation est un ANTI-SIGNAL (0 pt) — l'événement reste tracé, motivé.
+            for s_ in a_cands:
+                if s_["points"] == 0:
+                    s_["ref"] = f"{s_['ref']} — {C.V13_ANTI_SIGNAL_NOTE}"
             cands += a_cands
             # v1.1 : grands groupes (GE/ETI) → familles B et C supprimées (un administrateur
             # d'Orange de 75 ans ou un siège parisien ne signalent pas une vente foncière).
@@ -472,11 +488,19 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
                 if age is None and fiche:
                     age = _age_from_enrichment(fiche, today)
                 b_cands = famille_b(siren, fiche, age, ow["forme"], match, today)
-                # Dédup D6 : radiation (A) retenue == cessation (B) → même événement, deux sources.
-                a_ret = max(a_cands, key=lambda s: s["points"], default=None)
-                if a_ret and a_ret["code"] == "BODACC_RADIATION":
-                    b_cands = [s for s in b_cands if s["code"] != "RNE_CESSATION"]
-                cands += b_cands
+                # v1.3 : la famille B SORT de V. La cessation reste TRACÉE à 0 pt (motif M1) ;
+                # dirigeant âgé / SCI dormante partent au tag veille_succession (lot 2).
+                # La dédup D6 (radiation vs cessation) est SANS OBJET à 0/0 : retirée — les
+                # deux événements restent visibles dans la traçabilité.
+                for s_ in b_cands:
+                    if s_["code"] == "RNE_CESSATION":
+                        s_["ref"] = f"{s_['ref']} — {C.V13_ANTI_SIGNAL_NOTE}"
+                        cands.append(s_)
+                sci_dormante = any(s_["code"] == "RNE_SCI_DORMANTE" for s_ in b_cands)
+                if veille_succession_eligible(otype, conf, age, sci_dormante):
+                    veille_rows.append((idu, siren,
+                                        age if (age is not None and age >= C.VEILLE_SUCCESSION_AGE_MIN) else None,
+                                        sci_dormante))
                 cands += famille_c(idu, fiche, match)
 
         pmatch = {"type": "parcelle", "valeur": idu, "confiance": 1.0}
@@ -538,5 +562,43 @@ def compute_all(session: Session, limit: int | None = None, log=print) -> dict:
             for r in rows:
                 cp.write_row((*r[:8], r[8], now))
     session.commit()
+    # v1.3 lot 2 : tag veille_succession — table SÉPARÉE, jamais comptée dans V ni brûlante.
+    log(f"Score V — tag veille_succession : {len(veille_rows)} parcelles…")
+    session.execute(text("DELETE FROM parcel_veille_succession"))
+    for k in range(0, len(veille_rows), 5000):
+        session.execute(text(
+            "INSERT INTO parcel_veille_succession (parcelle_id, siren, dirigeant_age, sci_dormante) "
+            "VALUES (:idu, :siren, :age, :sci)"),
+            [{"idu": a, "siren": b, "age": c, "sci": d} for a, b, c, d in veille_rows[k:k + 5000]])
+    session.commit()
     counts["parcelles"] = len(rows)
+    counts["veille_succession"] = len(veille_rows)
     return counts
+
+
+def snapshot_scores(session: Session, label: str, notes: str,
+                    brulante_threshold: int, run_label: str = C.Q_A_RUN_LABEL) -> int:
+    """GEL d'un état (M1 lot 4) : statuts matrice + V + brûlantes + veille_succession, figés
+    sous un label. Base de la validation forward (RR prospectif au millésime DVF 2026).
+    N'écrase JAMAIS un label existant (erreur si présent)."""
+    exists = session.execute(text("SELECT id FROM score_snapshots WHERE label = :l"),
+                             {"l": label}).scalar()
+    if exists:
+        raise ValueError(f"snapshot « {label} » existe déjà — un gel ne s'écrase pas")
+    sid = session.execute(text(
+        "INSERT INTO score_snapshots (label, notes, brulante_threshold, run_label) "
+        "VALUES (:l, :n, :t, :r) RETURNING id"),
+        {"l": label, "n": notes, "t": brulante_threshold, "r": run_label}).scalar()
+    n = session.execute(text(
+        """INSERT INTO score_snapshot_parcelles
+             (snapshot_id, parcelle_id, statut, v_score, v_band, brulante, veille_succession)
+           SELECT :sid, p.idu, d.matrice_statut, vs.v_score, vs.v_band,
+                  COALESCE(d.matrice_statut = 'chaude' AND vs.v_score >= :t, false),
+                  (vv.parcelle_id IS NOT NULL)
+           FROM parcels p
+           JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :r
+           LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
+           LEFT JOIN parcel_veille_succession vv ON vv.parcelle_id = p.idu"""),
+        {"sid": sid, "t": brulante_threshold, "r": run_label}).rowcount
+    session.commit()
+    return sid

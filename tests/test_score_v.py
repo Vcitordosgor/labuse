@@ -60,6 +60,7 @@ def test_radiation_fenetre_36_mois():
     vieille = famille_a("123456789", [
         _annonce("radiation", "Radiations", TODAY - timedelta(days=36 * 31))], MATCH)
     assert [s["code"] for s in recente] == ["BODACC_RADIATION"]
+    assert recente[0]["points"] == 0        # v1.3 : anti-signal — tracé, jamais compté
     assert vieille == []
 
 
@@ -108,15 +109,15 @@ def test_sci_dormante():
     assert sigs == []
 
 
-def test_dedup_d6_radiation_vs_cessation():
-    """D6 : radiation retenue en A → cessation supprimée en B (même événement, deux sources)."""
+def test_v13_radiation_et_cessation_sont_des_anti_signaux():
+    """v1.3 : la dédup D6 est SANS OBJET — radiation (A) et cessation (B) valent 0 toutes
+    les deux ; les DEUX événements restent tracés (rien n'est supprimé de la traçabilité)."""
     a = famille_a("123456789", [
         _annonce("radiation", "Radiations", TODAY - timedelta(days=100))], MATCH)
     b = famille_b("123456789", _fiche(etat_administratif="C"), None, "", MATCH, TODAY)
-    a_ret = max(a, key=lambda s: s["points"])
-    assert a_ret["code"] == "BODACC_RADIATION"
-    b_dedup = [s for s in b if s["code"] != "RNE_CESSATION"]  # règle appliquée par le moteur
-    assert b and not b_dedup
+    assert [s["code"] for s in a] == ["BODACC_RADIATION"] and a[0]["points"] == 0
+    assert "RNE_CESSATION" in [s["code"] for s in b]
+    assert all(s["points"] == 0 for s in b)
 
 
 # ── Famille C ──────────────────────────────────────────────────────────────────
@@ -153,14 +154,19 @@ def test_retain_max_intra_famille():
     assert [s["code"] for s in retained] == ["BODACC_LJ"] and total == 35
 
 
-def test_tenure_conditionnelle_v11():
-    """v1.1 : la tenure ne qualifie QUE combinée à A/B/C, FRICHE ou DPE — pas seule, pas avec NU."""
+def test_tenure_conditionnelle_v13():
+    """v1.1 : la tenure ne qualifie QUE combinée — v1.3 : et seulement par un signal à
+    POINTS > 0 (un anti-signal tracé à 0 ne la réveille plus : bande morte 25-49, Phase 0)."""
     from labuse.scoring.score_v import _tenure_qualifiee
     assert not _tenure_qualifiee([])
     assert not _tenure_qualifiee([_signal("NU_PM_HORS_IMMO", source="x", match=MATCH)])
     assert _tenure_qualifiee([_signal("FRICHE", source="x", match=MATCH)])
     assert _tenure_qualifiee([_signal("DPE_F", source="x", match=MATCH)])
-    assert _tenure_qualifiee([_signal("RNE_DIRIGEANT_65", source="x", match=MATCH)])
+    assert _tenure_qualifiee([_signal("BODACC_CESSION_FONDS", source="x", match=MATCH)])
+    # v1.3 : dirigeant âgé / cessation / radiation (0 pt) ne qualifient PLUS la tenure
+    assert not _tenure_qualifiee([_signal("RNE_DIRIGEANT_65", source="x", match=MATCH)])
+    assert not _tenure_qualifiee([_signal("RNE_CESSATION", source="x", match=MATCH)])
+    assert not _tenure_qualifiee([_signal("BODACC_RADIATION", source="x", match=MATCH)])
 
 
 def test_retain_somme_plafonnee_famille_d():
