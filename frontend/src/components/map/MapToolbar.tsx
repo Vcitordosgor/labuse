@@ -124,7 +124,7 @@ export function MapToolbar() {
                 <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">{t.icon}</svg>
               </button>
               {off && zoneHint && (
-                <span data-hint-zone className="absolute right-11 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-st-creuser/40 bg-[#211a10] px-2 py-1 text-[10px] text-st-creuser">
+                <span data-hint-zone className="absolute right-11 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-st-creuser/40 bg-[#211a10] px-2 py-1 text-[11px] text-st-creuser">
                   Par commune — choisissez une commune
                 </span>
               )}

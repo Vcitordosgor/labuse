@@ -168,7 +168,7 @@ export function Rail() {
                 <section key={g.key} data-outil-group={g.key}>
                   <div className="mb-2 flex items-baseline justify-between">
                     <p className="font-mono text-[10.5px] font-medium uppercase tracking-widest text-txt-mut">{g.label}</p>
-                    <p className="text-[9.5px] text-txt-dim">{g.hint}</p>
+                    <p className="text-[11px] text-txt-dim">{g.hint}</p>
                   </div>
                   <div className="flex flex-col gap-1.5">
                     {outils.map((m) => (

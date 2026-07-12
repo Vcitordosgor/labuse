@@ -28,7 +28,8 @@ export function useApplySearch() {
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const { setFilters, setView, setCommune, setVerdict, setFlyTo, setIaRestitution } = useApp()
 
-  return async (raw: Record<string, unknown>, phrase = 'parcelles correspondent — voici les 3 meilleures') => {
+  return async (raw: Record<string, unknown>, phrase = 'parcelles correspondent — voici les 3 meilleures',
+                meta?: { explanation?: string | null; stub?: boolean }) => {
     // la commune est un filtre de PÉRIMÈTRE : un secteur d'UNE commune = la commune elle-même
     let communes = (raw.communes as string[]) ?? []
     let communeSeule = typeof raw.commune === 'string' && raw.commune ? raw.commune : null
@@ -58,10 +59,31 @@ export function useApplySearch() {
       // top 3 seulement → limite basse (20) : sous contention de tuiles « tout », une réponse
       // légère revient bien plus vite qu'un /parcels?limit=500 (la restitution est un flourish)
       const [st, top] = await Promise.all([getStats(next), getResults(next, 20)])
+      const n = st.chaude + st.a_surveiller + st.a_creuser
+      // ajout C (UX V1) : 0 résultat → proposer de retirer le critère numérique le plus serré
+      // (heuristique simple : SDP puis surface min puis score puis surface max), relançable d'un clic
+      let relance: { label: string; raw: Record<string, unknown> } | null = null
+      if (n === 0) {
+        const NUMERIQUES: [string, (v: number) => string][] = [
+          ['sdpMin', (v) => `SDP ≥ ${v.toLocaleString('fr-FR')} m²`],
+          ['surfaceMin', (v) => `surface ≥ ${v.toLocaleString('fr-FR')} m²`],
+          ['scoreMin', (v) => `score ≥ ${v}`],
+          ['surfaceMax', (v) => `surface ≤ ${v.toLocaleString('fr-FR')} m²`],
+        ]
+        for (const [cle, libelle] of NUMERIQUES) {
+          const v = raw[cle]
+          if (typeof v === 'number') { relance = { label: libelle(v), raw: { ...raw, [cle]: null } }; break }
+        }
+      }
       setIaRestitution({
-        n: st.chaude + st.a_surveiller + st.a_creuser,
+        n,
         phrase,
         top: top.slice(0, 3).map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score })),
+        // item 2 (UX V1) : l'explication du serveur (et le drapeau stub) restent VISIBLES
+        // dans la restitution — pas seulement sur la vue IA qu'on vient de quitter
+        explanation: meta?.explanation ?? null,
+        stub: !!meta?.stub,
+        relance,
       })
     } catch { /* restitution best-effort — les filtres sont déjà posés */ }
   }

@@ -1,0 +1,37 @@
+[
+ {
+  "vp": 375,
+  "type": "warning",
+  "text": "[.WebGL-0x11400514200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+ },
+ {
+  "vp": 375,
+  "type": "warning",
+  "text": "[.WebGL-0x11400514200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+ },
+ {
+  "vp": 375,
+  "type": "warning",
+  "text": "[.WebGL-0x11400514200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+ },
+ {
+  "vp": 375,
+  "type": "warning",
+  "text": "[.WebGL-0x11400514200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)"
+ },
+ {
+  "vp": 1440,
+  "type": "error",
+  "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+ },
+ {
+  "vp": 1440,
+  "type": "error",
+  "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+ },
+ {
+  "vp": 1440,
+  "type": "error",
+  "text": "Failed to load resource: net::ERR_CONNECTION_REFUSED"
+ }
+]

@@ -35,3 +35,11 @@ export const V_BAND_META: Record<VBand, { label: string; color: string }> = {
 }
 export const vBandColor = (b: VBand | null | undefined) => (b && V_BAND_META[b]?.color) || NONE_COLOR
 export const BRULANTE_COLOR = '#FF6B35'
+
+// Item 7 (UX V1) : définitions Q/A/V — UNE phrase chacune, identique partout où la lettre
+// apparaît (fiche, liste, restitution, CRM). Jamais un sigle nu pour un nouvel utilisateur.
+export const SCORE_TIP = {
+  q: 'Q — Qualité intrinsèque de la parcelle (règles PLU, risques, terrain)',
+  a: 'A — Accessibilité du dossier (contraintes d’acquisition et de montage)',
+  v: 'V — Vendabilité : signaux publics indiquant un propriétaire susceptible de vendre',
+} as const

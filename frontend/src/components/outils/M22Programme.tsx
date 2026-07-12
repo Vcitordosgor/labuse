@@ -36,7 +36,7 @@ export function M22() {
   }, [d])
 
   const F = (k: keyof typeof form, label: string, opts?: { min?: number }) => (
-    <label className="min-w-0 flex-1 text-[10px] tracking-wide text-txt-dim">{label}
+    <label className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">{label}
       <input type="number" min={opts?.min ?? 1} value={form[k] as number}
         onChange={(e) => setForm({ ...form, [k]: Number(e.target.value) })}
         className="mt-0.5 w-full rounded border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-[#B497F0] focus:outline-none" />
@@ -50,7 +50,7 @@ export function M22() {
         Le copilote sait pré-remplir : « un terrain pour 3 immeubles R+3 avec parking ».
       </div>
       <div className="flex gap-2">
-        <label className="min-w-0 flex-1 text-[10px] tracking-wide text-txt-dim">TYPE
+        <label className="min-w-0 flex-1 text-[11px] tracking-wide text-txt-dim">TYPE
           <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}
             className="mt-0.5 w-full rounded border border-line-2 bg-surface-3 px-1 py-1 text-xs text-txt">
             <option value="logements">logements</option>
@@ -65,7 +65,7 @@ export function M22() {
         {F('logements_par_batiment', 'UNITÉS/BÂT')}
         {F('surface_unite_m2', 'M²/UNITÉ (hyp.)', { min: 15 })}
         {/* B4 : PARKING aligné en colonne flex-1 comme les autres champs (plus de largeur cassée) */}
-        <label className="flex min-w-0 flex-1 flex-col text-[10px] tracking-wide text-txt-dim">PARKING
+        <label className="flex min-w-0 flex-1 flex-col text-[11px] tracking-wide text-txt-dim">PARKING
           <button onClick={() => setForm({ ...form, parking: !form.parking })}
             className={`mt-0.5 w-full rounded border py-1 text-xs ${form.parking ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
             {form.parking ? 'oui' : 'non'}
@@ -82,7 +82,7 @@ export function M22() {
             <div><b className="text-txt">{d.criteres.unites}</b> unités → SDP ≥ <b style={{ color: VIOLET }}>{fmt(d.criteres.sdp_min_m2)} m²</b>
               <span className="text-txt-dim"> ({d.criteres.calcul})</span></div>
             <div className="mt-0.5">{d.criteres.hauteur_regle}{form.parking ? ` · parking ~${fmt(d.criteres.parking_m2)} m²` : ''}</div>
-            <div className="mt-1 text-[9.5px] leading-snug text-txt-dim">{d.bandeau}</div>
+            <div className="mt-1 text-[11px] leading-snug text-txt-dim">{d.bandeau}</div>
           </div>
           <p className="text-[11px] text-txt-dim">{fmt(d.n)} parcelles candidates (marge décroissante)</p>
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
@@ -91,7 +91,7 @@ export function M22() {
                 className="flex w-full items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left hover:border-[#6b5a96]">
                 <div className="min-w-0 flex-1">
                   <div className="font-mono text-xs text-txt-hi">{i.idu.slice(8, 10)} {i.idu.slice(10)}
-                    {!commune && i.commune && <span className="ml-1.5 font-sans text-[9.5px] text-txt-dim">{i.commune}</span>}
+                    {!commune && i.commune && <span className="ml-1.5 font-sans text-[11px] text-txt-dim">{i.commune}</span>}
                   </div>
                   <div className="truncate text-[10.5px] text-txt-mut">
                     SDP {fmt(i.sdp)} m² · zone {i.zone ?? '?'} {i.hauteur_verifiee ? `(h ${i.hauteur_plu_m} m ✓)` : '(hauteur à instruire)'}

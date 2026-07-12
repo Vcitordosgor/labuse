@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
-import { BRULANTE_COLOR, completudeColor, STATUT_META, vBandColor } from '../../lib/status'
+import { BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
 import type { Statut } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
@@ -23,7 +23,7 @@ export function VBadge({ v, band, brulante }: { v: number | null | undefined; ba
   return (
     <span className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold"
       style={{ background: `${color}1f`, color }}
-      title={`Vendabilité V ${v}/100${brulante ? ' — 🔥 BRÛLANTE (chaude Q×A + signaux vendeur forts)' : ''} — signaux publics « raisons de vendre » (panneau fiche)`}>
+      title={`${SCORE_TIP.v} (${v}/100)${brulante ? ' — 🔥 BRÛLANTE (chaude Q×A + signaux vendeur forts)' : ''} — détail dans la fiche`}>
       {brulante && <span aria-hidden>🔥</span>}
       V {v}
     </span>
@@ -41,7 +41,7 @@ function CompletudeRing({ value }: { value: number }) {
         <circle cx="9" cy="9" r={r} fill="none" stroke={completudeColor(value)} strokeWidth="2"
           strokeDasharray={c} strokeDashoffset={c * (1 - value / 100)} strokeLinecap="round" />
       </svg>
-      <span className="font-mono text-[10px] text-txt-dim">{value}</span>
+      <span className="font-mono text-[11px] text-txt-dim">{value}</span>
     </span>
   )
 }
@@ -87,7 +87,7 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
         <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
-        <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}>{p.q_score}</span>
+        <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }} title={SCORE_TIP.q}>{p.q_score}</span>
         <CompletudeRing value={p.completeness_score} />
       </div>
     </button>
@@ -124,7 +124,7 @@ function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', numbe
           >
             {it.color && <span className="h-1.5 w-1.5 rounded-full" style={{ background: it.color }} />}
             {it.label}
-            <span className="font-mono text-[10px] text-txt-dim">{fmt(counts[it.v] ?? 0)}{partial ? '*' : ''}</span>
+            <span className="font-mono text-[11px] text-txt-dim">{fmt(counts[it.v] ?? 0)}{partial ? '*' : ''}</span>
           </button>
         )
       })}
@@ -173,7 +173,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
               Le reste reste visible et cliquable — voici pourquoi il est écarté.
             </p>
             <p className="mt-1.5 shrink-0 font-mono text-[9.5px] tracking-widest text-txt-dim">LE RESTE, PAR MOTIF</p>
-            {q.isLoading && <p className="mt-1 text-[10px] text-txt-dim">Chargement…</p>}
+            {q.isLoading && <p className="mt-1 text-[11px] text-txt-dim">Chargement…</p>}
             <div className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
               {(q.data?.motifs ?? []).map((m) => (
                 <div key={m.motif} className={`flex shrink-0 justify-between gap-2 text-[10.5px] ${m.motif.startsWith('écartées') ? 'font-medium text-txt border-b border-line pb-0.5 mb-0.5' : 'text-txt-mut'}`}>
@@ -193,7 +193,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
 const CAP = 200
 
 export function ResultsSection() {
-  const { filters, query, zone, resetFilters, commune, setFilter } = useApp()
+  const { filters, query, zone, resetFilters, commune, setCommune, setFilter } = useApp()
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   const [showAll, setShowAll] = useState(false)
   // Tri par défaut de la vue chaudes : V DÉCROISSANT (Score V, Phase 4 §4) — débrayable.
@@ -338,9 +338,27 @@ export function ResultsSection() {
           </div>
         )}
         {!loading && !error && shown.length === 0 && (
-          <div className="rounded-lg border border-dashed border-line-2 p-4 text-center">
-            <p className="text-xs text-txt-mut">Aucun résultat pour ces filtres.</p>
-            <button onClick={resetFilters} className="mt-2 text-xs text-mint hover:underline">Réinitialiser les filtres</button>
+          /* Item 4 (UX V1) : état vide EXPLICITE — dit où on est et comment en sortir
+             (élargir à l'île / réinitialiser), aligné sur le #map-empty historique. */
+          <div data-liste-vide className="rounded-lg border border-dashed border-line-2 p-4 text-center">
+            <p className="text-xs leading-relaxed text-txt-mut">
+              {commune ? (
+                <>Aucune parcelle {filters.statuts.length === 1
+                  ? STATUT_META[filters.statuts[0]].label.toLowerCase()
+                  : scoped || filters.statuts.length ? 'correspondante' : 'chaude'} à {commune} —
+                  élargissez à l'île ou ajustez les filtres.</>
+              ) : (
+                <>Aucune parcelle ne correspond à ces filtres sur l'île — retirez un critère.</>
+              )}
+            </p>
+            <div className="mt-2 flex items-center justify-center gap-4">
+              {commune && (
+                <button data-vide-ile onClick={() => setCommune(null)} className="text-xs text-mint hover:underline">
+                  Élargir à toute l'île
+                </button>
+              )}
+              <button onClick={resetFilters} className="text-xs text-mint hover:underline">Réinitialiser les filtres</button>
+            </div>
           </div>
         )}
         {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}

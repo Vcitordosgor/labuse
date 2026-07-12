@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
-import { BRULANTE_COLOR, completudeColor, STATUT_META, vBandColor } from '../../lib/status'
+import { BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
 import { Loading } from '../Loading'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -39,7 +39,7 @@ function SourceRef({ line }: { line: FicheLine }) {
   const openSourceDrawer = useApp((s) => s.openSourceDrawer)
   const trace = line.source_table && line.source_id != null ? `${line.source_table}#${line.source_id}` : null
   return (
-    <div className="mt-0.5 flex items-center gap-2 text-[10px] text-txt-dim">
+    <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
       {line.source && (
         <button onClick={() => openSourceDrawer(line)} className="truncate text-[#5a7d6c] hover:text-mint hover:underline"
           title="Voir la source (drawer)">
@@ -74,14 +74,16 @@ function Line({ line }: { line: FicheLine }) {
 }
 
 // Barre de sous-score dépliable (exigence #2 : DEUX barres, Q et A, vers leurs lignes tracées).
-function ScoreBar({ label, value, color, lines, defaultOpen }: {
-  label: string; value: number; color: string; lines: FicheLine[]; defaultOpen?: boolean
+// Item 7 (UX V1) : `tip` = la définition du score au survol (Q et A ne restent jamais des sigles).
+function ScoreBar({ label, value, color, lines, defaultOpen, tip }: {
+  label: string; value: number; color: string; lines: FicheLine[]; defaultOpen?: boolean; tip?: string
 }) {
   const [open, setOpen] = useState(!!defaultOpen)
   const weighted = lines.filter((l) => l.weight != null && l.weight !== 0).sort((a, b) => Math.abs(b.weight!) - Math.abs(a.weight!))
   return (
     <div className="rounded-lg border border-line-2 bg-surface-2">
-      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5" title={`${label} : déplier les signaux`}>
+      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
+        title={tip ? `${tip} — déplier les signaux` : `${label} : déplier les signaux`}>
         <span className="w-24 shrink-0 text-left text-xs text-txt">{label}</span>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${value}%`, background: color }} />
@@ -121,7 +123,7 @@ function VSignalRow({ s }: { s: VSignal }) {
           </span>
         </div>
         {s.ref && <div className="text-[11px] leading-snug text-txt-mut">{s.ref}</div>}
-        <div className="mt-0.5 flex items-center gap-2 text-[10px] text-txt-dim">
+        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
           {s.url
             ? <a href={s.url} target="_blank" rel="noreferrer" className="truncate text-[#5a7d6c] hover:text-mint hover:underline"
                 title="Vérifier à la source (avis officiel)">{s.source} ↗</a>
@@ -150,7 +152,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
           <span className="w-24 shrink-0 text-xs text-txt">Vendabilité</span>
           <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{sv.badge ?? 'N.A.'}</span>
         </div>
-        <p className="mt-1 text-[10px] leading-snug text-txt-dim">
+        <p className="mt-1 text-[11px] leading-snug text-txt-dim">
           Score V non calculé pour ce type de propriétaire — démarche d'acquisition spécifique.
         </p>
       </div>
@@ -159,7 +161,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
   return (
     <div data-score-v className="rounded-lg border border-line-2 bg-surface-2">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title="Vendabilité : signaux publics indiquant que le propriétaire a des raisons objectives de vendre — déplier « Pourquoi ce score »">
+        title={`${SCORE_TIP.v} — déplier « Pourquoi ce score »`}>
         <span className="w-24 shrink-0 text-left text-xs text-txt">Vendabilité</span>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${sv.v_score}%`, background: color }} />
@@ -227,7 +229,7 @@ function ShareButton({ idu }: { idu: string }) {
           <a href={share.data.url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-mint hover:underline">
             {window.location.origin}{share.data.url}
           </a>
-          <p className="mt-1 text-[10px] text-txt-dim">Lecture seule · filigrané · consultations comptées.</p>
+          <p className="mt-1 text-[11px] text-txt-dim">Lecture seule · filigrané · consultations comptées.</p>
         </div>
       )}
     </div>
@@ -271,7 +273,7 @@ function IAPanel({ idu, onClose }: { idu: string; onClose: () => void }) {
         <button onClick={onClose} className="text-txt-dim hover:text-txt-hi">✕</button>
       </div>
       {isStub && (
-        <p className="mt-1.5 rounded border border-st-creuser/40 bg-[#211a10] px-2 py-1 text-[9.5px] leading-snug text-st-creuser">
+        <p className="mt-1.5 rounded border border-st-creuser/40 bg-[#211a10] px-2 py-1 text-[11px] leading-snug text-st-creuser">
           Stub local (clé IA absente) — texte généré par règles depuis la fiche tracée.
           Activer : ANTHROPIC_API_KEY dans .env, puis relancer.
         </p>
@@ -289,7 +291,7 @@ function IAPanel({ idu, onClose }: { idu: string; onClose: () => void }) {
       {gen.data && (
         <>
           <div className="mt-3 max-h-64 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-txt">{gen.data.texte}</div>
-          <p className="mt-2 border-t border-line pt-2 text-[9.5px] text-txt-dim">{gen.data.mention}</p>
+          <p className="mt-2 border-t border-line pt-2 text-[11px] text-txt-dim">{gen.data.mention}</p>
         </>
       )}
     </div>
@@ -314,7 +316,7 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
 }) {
   return (
     <div className="min-w-0 flex-1">
-      <label className="flex items-center gap-1 text-[10px] text-txt-dim">
+      <label className="flex items-center gap-1 text-[11px] text-txt-dim">
         {label}
         {hint && <span className="rounded bg-[#211a10] px-1 text-[8.5px] text-st-creuser" title="Hypothèse — à ajuster selon votre opération">hyp. — ajustez</span>}
       </label>
@@ -322,7 +324,7 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
         <input type="number" min={0} value={value ?? ''} placeholder={placeholder}
           onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
           className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:outline-none" />
-        <span className="shrink-0 px-2 text-[10px] text-txt-dim">{suffix}</span>
+        <span className="shrink-0 px-2 text-[11px] text-txt-dim">{suffix}</span>
       </div>
     </div>
   )
@@ -374,7 +376,7 @@ function Calculette({ idu }: { idu: string }) {
         {d && d.calculable && cf && (
           <>
             {/* le SOURCÉ (lecture seule) — ce que LABUSE sait */}
-            <p className="text-[10px] text-txt-dim">
+            <p className="text-[11px] text-txt-dim">
               LABUSE (sourcé) : SDP vendable <b className="text-txt">{Number(d.shab_vendable_m2).toLocaleString('fr-FR')} m²</b> ·
               prix de sortie <b className="text-txt">{Number(d.prix_sortie_median).toLocaleString('fr-FR')} €/m²</b> ·
               terrain <b className="text-txt">{Number(d.terrain_m2).toLocaleString('fr-FR')} m²</b>
@@ -386,12 +388,12 @@ function Calculette({ idu }: { idu: string }) {
             </div>
             {/* le RÉSULTAT — calcul de VOS hypothèses */}
             <div data-calc-resultat className="mt-2.5 rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-2">
-              <p className="text-[10px] text-txt-dim">Charge foncière supportable <span className="text-txt-mut">— selon vos hypothèses</span></p>
+              <p className="text-[11px] text-txt-dim">Charge foncière supportable <span className="text-txt-mut">— selon vos hypothèses</span></p>
               <p className="mt-0.5">
                 <b data-calc-cf className="font-display text-lg font-bold text-mint">{euros(cf.central)}</b>
-                <span className="ml-1.5 text-[10px] text-txt-mut">≈ {Number(cf.par_m2_terrain).toLocaleString('fr-FR')} €/m² de terrain</span>
+                <span className="ml-1.5 text-[11px] text-txt-mut">≈ {Number(cf.par_m2_terrain).toLocaleString('fr-FR')} €/m² de terrain</span>
               </p>
-              <p className="text-[10px] text-txt-dim">fourchette {euros(cf.bas)} – {euros(cf.haut)}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+              <p className="text-[11px] text-txt-dim">fourchette {euros(cf.bas)} – {euros(cf.haut)}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
             </div>
             {/* aide à la DÉCISION D'ACHAT — prix demandé optionnel */}
             <div className="mt-2 flex items-end gap-2">
@@ -405,7 +407,7 @@ function Calculette({ idu }: { idu: string }) {
               </div>
             )}
             {(d.avertissements ?? []).length > 0 && (
-              <ul className="mt-1.5 list-inside list-disc text-[9.5px] text-st-creuser">
+              <ul className="mt-1.5 list-inside list-disc text-[11px] text-st-creuser">
                 {d.avertissements.map((a: string, i: number) => <li key={i}>{a}</li>)}
               </ul>
             )}
@@ -440,7 +442,7 @@ function EquipementsBadges({ idu }: { idu: string }) {
     <div>
       <div className="flex flex-wrap gap-1.5">
         {b.map(([label, color, title]) => (
-          <span key={label} title={title} className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+          <span key={label} title={title} className="rounded-full px-2 py-0.5 text-[11px] font-medium"
             style={{ background: `${color}22`, color }}>{label}</span>
         ))}
       </div>
@@ -481,30 +483,30 @@ function SolaireTab({ idu }: { idu: string }) {
           <span className="flex-1 h-1.5 overflow-hidden rounded-full bg-line">
             <span style={{ width: `${score ?? 0}%` }} className="block h-full bg-[#f5c84b]" />
           </span>
-          <span className="font-display text-sm font-bold text-[#f5c84b]">{score ?? '—'}<span className="text-[10px] text-txt-dim">/100</span></span>
+          <span className="font-display text-sm font-bold text-[#f5c84b]">{score ?? '—'}<span className="text-[11px] text-txt-dim">/100</span></span>
         </div>
         <div className="mt-1 text-[11px] text-txt-mut">
           {sol['prod_spec_kwh_kwc'] ? `${Math.round(Number(sol['prod_spec_kwh_kwc']))} kWh/an par kWc installé` : 'Production spécifique en cours de calcul'}
         </div>
-        <p className="mt-1 text-[9.5px] text-txt-dim">{src['gisement']}</p>
+        <p className="mt-1 text-[11px] text-txt-dim">{src['gisement']}</p>
       </div>
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <p className="font-mono text-[10px] tracking-widest text-txt-dim">FACTURE ÉLECTRIQUE — ESTIMATION STATISTIQUE</p>
         <div className="mt-1 text-sm font-bold text-txt-hi">{facture != null ? `~${facture} €/mois` : '—'}</div>
         {sol['conso_est_kwh_an'] != null && <div className="text-[11px] text-txt-mut">{String(sol['conso_est_kwh_an'])} kWh/an estimés</div>}
-        <p className="mt-1 text-[9.5px] text-txt-dim">{src['facture']}</p>
+        <p className="mt-1 text-[11px] text-txt-dim">{src['facture']}</p>
       </div>
       <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <p className="font-mono text-[10px] tracking-widest text-txt-dim">ORIENTATION DU BÂTI</p>
         <div className="mt-1 text-xs text-txt">
           {azimut != null ? <>Grand axe à <b>{Math.round(azimut)}°</b> (confiance {String(sol['azimut_confiance'] ?? '—')})</> : 'Bâti non significatif ou absent'}
         </div>
-        <p className="mt-1 text-[9.5px] text-txt-dim">{src['azimut']}</p>
+        <p className="mt-1 text-[11px] text-txt-dim">{src['azimut']}</p>
       </div>
       {badges.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {badges.map(([label, color, title]) => (
-            <span key={label} title={title} className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+            <span key={label} title={title} className="rounded-full px-2 py-0.5 text-[11px] font-medium"
               style={{ background: `${color}22`, color }}>{label}</span>
           ))}
         </div>
@@ -521,7 +523,7 @@ function SolaireTab({ idu }: { idu: string }) {
           {a['statut'] === 'depassee' ? ' DÉPASSÉE' : ''} · sanction jusqu\'à {String(a['sanction_eur_an'])} €/an
         </div>
       ))}
-      <p className="text-[9.5px] text-txt-dim">{src['aper']}</p>
+      <p className="text-[11px] text-txt-dim">{src['aper']}</p>
     </div>
   )
 }
@@ -553,8 +555,8 @@ function BilanTab({ idu }: { idu: string }) {
             {fo.niveaux} · emprise bâtie max {fo.emprise_batie_max_m2} m² · SDP {fo.surface_plancher_m2} m² ·
             SHAB vendable ~{fo.shab_vendable_m2} m² · stationnement : {fo.stationnement_regime}
           </div>
-          {!cap.calibree && <div className="mt-1 text-[10px] text-st-creuser">⚠ estimation générique (zone non calibrée)</div>}
-          <div className="mt-1.5 text-[9.5px] leading-snug text-txt-dim">{cap.bandeau}</div>
+          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">⚠ estimation générique (zone non calibrée)</div>}
+          <div className="mt-1.5 text-[11px] leading-snug text-txt-dim">{cap.bandeau}</div>
         </Sec>
       ) : (
         <Sec t="CAPACITÉ">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</Sec>
@@ -566,7 +568,7 @@ function BilanTab({ idu }: { idu: string }) {
           {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
           {/* P14 : fraîcheur DVF — de QUAND datent les prix (période réelle en base) */}
           {b.marche.dvf_couverture?.libelle && (
-            <div className="mt-1 text-[10px] text-txt-dim">
+            <div className="mt-1 text-[11px] text-txt-dim">
               DVF — {b.marche.dvf_couverture.libelle} (dernière transaction en base · millésime en vigueur)
             </div>
           )}
@@ -578,7 +580,7 @@ function BilanTab({ idu }: { idu: string }) {
       <Sec t="FISCAL & LEVIERS">
         <div>QPV : <b className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</b> · TVA : {b.fiscal.tva}</div>
         {b.fiscal.prime_vue_mer && <div className="mt-0.5 text-[#7DE8E0]">Vue mer dégagée — {b.fiscal.prime_vue_mer}</div>}
-        <div className="mt-1 text-[10px] text-txt-dim">{b.fiscal.ta_note}</div>
+        <div className="mt-1 text-[11px] text-txt-dim">{b.fiscal.ta_note}</div>
       </Sec>
       {b.rtaa && <RtaaBlock rtaa={b.rtaa} />}
     </div>
@@ -610,8 +612,8 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
                 {e.volet}
               </span>
               <p className="mt-1 text-[10.5px] leading-snug text-txt">{e.exigence}</p>
-              {e.condition_altitude && <p className="mt-0.5 text-[9.5px] text-st-creuser">altitude : {e.condition_altitude}</p>}
-              <a href={e.url} target="_blank" rel="noreferrer" className="mt-0.5 block text-[9.5px] text-[#7DE8E0] hover:underline">
+              {e.condition_altitude && <p className="mt-0.5 text-[11px] text-st-creuser">altitude : {e.condition_altitude}</p>}
+              <a href={e.url} target="_blank" rel="noreferrer" className="mt-0.5 block text-[11px] text-[#7DE8E0] hover:underline">
                 {e.reference} ↗
               </a>
             </div>
@@ -692,7 +694,7 @@ export function Fiche({ idu }: { idu: string }) {
               <div className="text-[10.5px] text-txt-mut">Aucune exclusion dure : qualité insuffisante (Q {f.q_score} &lt; 50) — détail dans les onglets.</div>
             )}
           </div>
-          <div className="mt-1 text-[9.5px] text-txt-dim">Une écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.</div>
+          <div className="mt-1 text-[11px] text-txt-dim">Une écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.</div>
         </div>
       )}
       {f?.evenement === 'rouge' && (
@@ -732,17 +734,17 @@ export function Fiche({ idu }: { idu: string }) {
             </span>
           )}
           {f?.score_v?.v_score != null && (
-            <span data-badge-v className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold"
+            <span data-badge-v className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold"
               style={{
                 background: `${f.score_v.brulante ? BRULANTE_COLOR : vBandColor(f.score_v.v_band)}22`,
                 color: f.score_v.brulante ? BRULANTE_COLOR : vBandColor(f.score_v.v_band),
               }}
-              title={`Vendabilité ${f.score_v.v_band_label} — détail dans la Synthèse`}>
+              title={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans la Synthèse`}>
               {f.score_v.brulante && <span aria-hidden>🔥</span>}V {f.score_v.v_score}
             </span>
           )}
           {f?.score_v?.badge && (
-            <span className="ml-1.5 mt-1.5 inline-flex rounded-full border border-line-2 px-2 py-0.5 text-[9.5px] text-txt-mut">
+            <span className="ml-1.5 mt-1.5 inline-flex rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-mut">
               {f.score_v.badge}
             </span>
           )}
@@ -802,9 +804,13 @@ export function Fiche({ idu }: { idu: string }) {
         {isError && (is429(error) ? (
           <RateLimit429 error={error} refetch={refetch} />
         ) : (
-          <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-4 text-xs">
-            <p className="text-st-ecartee">Impossible de charger la fiche.</p>
-            <p className="mt-1 text-txt-dim">Le serveur est peut-être périmé — relancer `labuse api`.</p>
+          <div data-fiche-erreur className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-4 text-xs">
+            {/* Item 3 (UX V1) : wording client — plus jamais « relancer labuse api » face à un
+                utilisateur. Le détail technique reste lisible, en ligne discrète. */}
+            <p className="text-st-ecartee">Connexion au serveur impossible — vérifiez votre réseau ou réessayez.</p>
+            {error instanceof Error && error.message && (
+              <p className="mt-1 break-all font-mono text-[10px] text-txt-dim">détail : {error.message}</p>
+            )}
             <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
           </div>
         ))}
@@ -820,8 +826,8 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             )}
             <EquipementsBadges idu={idu} />
-            <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen />
-            <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} />
+            <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen tip={SCORE_TIP.q} />
+            <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}
             <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
               <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0 -rotate-90">
@@ -930,7 +936,7 @@ export function Fiche({ idu }: { idu: string }) {
             </a>
           )}
         </div>
-        <p className="mt-2.5 text-[10px] leading-tight text-txt-dim">
+        <p className="mt-2.5 text-[11px] leading-tight text-txt-dim">
           Estimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni
           garantie de constructibilité. À vérifier au règlement et auprès des services.
         </p>

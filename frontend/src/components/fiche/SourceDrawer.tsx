@@ -40,7 +40,7 @@ export function SourceDrawer() {
           <div className="rounded-lg border border-line-2 bg-surface-3 p-3">
             <p className="font-mono text-[10px] tracking-widest text-txt-dim">EXTRAIT — {sourceLine.layer}</p>
             <p className="mt-1.5 text-xs leading-relaxed text-txt">{sourceLine.detail}</p>
-            <div className="mt-2 flex items-center gap-3 text-[10px] text-txt-dim">
+            <div className="mt-2 flex items-center gap-3 text-[11px] text-txt-dim">
               {trace && <span className="font-mono" title="Référence de l'enregistrement source">{trace}</span>}
               {sourceLine.date && <span className="ml-auto font-mono" title="Date du fait">{sourceLine.date}</span>}
             </div>

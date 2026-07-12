@@ -84,7 +84,7 @@ export function M16() {
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}
-            className="rounded-full border border-[#6b5a96] px-2 py-0.5 font-mono text-[10px] text-[#B497F0]"
+            className="rounded-full border border-[#6b5a96] px-2 py-0.5 font-mono text-[11px] text-[#B497F0]"
             title="Retirer de la sélection">
             {i.slice(8)} ×
           </button>
@@ -107,7 +107,7 @@ export function M16() {
             <div className="flex items-center gap-2">
               <span className="font-display text-lg font-bold" style={{ color: VIOLET }}>{d.score_assemblage}</span>
               <span className="text-txt-mut">score d'assemblage</span>
-              <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] ${d.contigu ? 'bg-[#0F1A14] text-mint' : 'bg-[#3a1614] text-st-ecartee'}`}>
+              <span className={`ml-auto rounded-full px-2 py-0.5 text-[11px] ${d.contigu ? 'bg-[#0F1A14] text-mint' : 'bg-[#3a1614] text-st-ecartee'}`}>
                 {d.contigu ? "d'un seul tenant" : 'NON contiguë'}
               </span>
             </div>
@@ -115,7 +115,7 @@ export function M16() {
               {fmt(d.surface_totale_m2)} m² cumulés · SDP <b style={{ color: VIOLET }}>{fmt(d.sdp_cumulee_m2)} m²</b> ·{' '}
               {d.n_proprietaires} propriétaire{d.n_proprietaires > 1 ? 's' : ''}
             </div>
-            <div className="mt-1 text-[10px] text-txt-dim">{d.note_sdp}</div>
+            <div className="mt-1 text-[11px] text-txt-dim">{d.note_sdp}</div>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {(d.items as Record<string, any>[]).map((i) => (
@@ -123,9 +123,9 @@ export function M16() {
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
                   <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_residuelle_m2)}</span>
-                  {i.statut && <span className="ml-auto text-[10px]" style={{ color: STATUT_META[i.statut as keyof typeof STATUT_META]?.color }}>{STATUT_META[i.statut as keyof typeof STATUT_META]?.label}</span>}
+                  {i.statut && <span className="ml-auto text-[11px]" style={{ color: STATUT_META[i.statut as keyof typeof STATUT_META]?.color }}>{STATUT_META[i.statut as keyof typeof STATUT_META]?.label}</span>}
                 </div>
-                <div className="truncate text-[10px] text-txt-dim">{i.proprietaire}</div>
+                <div className="truncate text-[11px] text-txt-dim">{i.proprietaire}</div>
               </div>
             ))}
           </div>
@@ -169,7 +169,7 @@ export function M17() {
             className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] hover:border-[#6b5a96]">
             <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
             <span className="text-txt-dim">{fmt(i.surface_m2)} m²</span>
-            <span className="ml-auto text-[10px]" style={{ color: STATUT_META[i.statut as keyof typeof STATUT_META]?.color }}>
+            <span className="ml-auto text-[11px]" style={{ color: STATUT_META[i.statut as keyof typeof STATUT_META]?.color }}>
               {STATUT_META[i.statut as keyof typeof STATUT_META]?.label}
             </span>
           </button>
@@ -241,7 +241,7 @@ export function M19() {
               <span className="text-txt">{p.nom}</span>
               {p.demo && <span className="rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[8.5px] text-[#B497F0]">DÉMO</span>}
             </div>
-            <div className="mt-0.5 text-[10px] text-txt-dim">
+            <div className="mt-0.5 text-[11px] text-txt-dim">
               {p.commune ?? 'toute commune'} · surface {p.surface_min ?? '—'}–{p.surface_max ?? '—'} m² · SDP ≥ {p.sdp_min ?? '—'}
             </div>
           </div>

@@ -69,6 +69,11 @@ const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.9
 const ILE_BOUNDS: [number, number, number, number] = [55.20, -21.42, 55.87, -20.85]
 const EMPTY_FC = { type: 'FeatureCollection', features: [] } as const
 
+// Item 11 (UX V1) : padding de fitBounds BORNÉ au canvas — 40 px fixes déclenchaient
+// « Map cannot fit within canvas » au boot 375 (le panneau ne laissait presque rien à la
+// carte). Jamais plus d'un dixième de la plus petite dimension, plancher 8 px.
+const fitPadding = (w: number, h: number) => Math.max(8, Math.min(40, Math.floor(Math.min(w, h) / 10)))
+
 const OVERLAYS = {
   zonage: {
     paint: {
@@ -143,7 +148,7 @@ export function MapView() {
       // connu statiquement, les autres via fitBounds dès que /communes répond)
       bounds: useApp.getState().commune == null ? ILE_BOUNDS
         : useApp.getState().commune === 'Saint-Paul' ? SP_BOUNDS : ILE_BOUNDS,
-      fitBoundsOptions: { padding: 40 },
+      fitBoundsOptions: { padding: fitPadding(ref.current.clientWidth, ref.current.clientHeight) },
       attributionControl: false,
       maxPitch: 70,
     })
@@ -490,9 +495,10 @@ export function MapView() {
   useEffect(() => {
     const m = map.current
     if (!m || !ready.current) return
-    if (ile) { m.fitBounds(ILE_BOUNDS, { padding: 40, duration: 900 }); return }
+    const pad = fitPadding(m.getContainer().clientWidth, m.getContainer().clientHeight)
+    if (ile) { m.fitBounds(ILE_BOUNDS, { padding: pad, duration: 900 }); return }
     const info = communes.data?.find((c) => c.commune === commune)
-    if (info?.bbox) m.fitBounds(info.bbox as [number, number, number, number], { padding: 40, duration: 900 })
+    if (info?.bbox) m.fitBounds(info.bbox as [number, number, number, number], { padding: pad, duration: 900 })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [commune, communes.data, mapReady])
 

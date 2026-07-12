@@ -13,8 +13,23 @@ body { background: #060A08; color: #C9DCD1; -webkit-font-smoothing: antialiased;
 ::-webkit-scrollbar-thumb { background: #1E2A23; border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 
-/* Focus clavier visible (accessibilité) — anneau menthe, jamais sur clic souris */
+/* Focus clavier visible (accessibilité, item 9 UX V1) — anneau menthe 2 px sur TOUT le
+   parcours clavier (Rail, chips, toggles de couches, boutons), jamais sur clic souris.
+   Les inputs qui posent outline-none compensent par focus:border-mint / focus-within. */
 :focus-visible { outline: 2px solid #5CE6A1; outline-offset: 1px; border-radius: 4px; }
+
+/* UX V1 (ajout A) — page « Sources & fraîcheur » IMPRIMABLE : seule la page s'imprime,
+   fond clair sobre, couleurs d'accent rabattues sur un gris lisible. */
+@media print {
+  body * { visibility: hidden; }
+  .sources-print, .sources-print * { visibility: visible; }
+  .sources-print { position: absolute; inset: 0; overflow: visible !important; }
+  body, .sources-print, .sources-print * {
+    background: #fff !important; color: #111 !important;
+    border-color: #bbb !important; box-shadow: none !important;
+  }
+  .sources-print a { text-decoration: none; }
+}
 
 /* A4 (ajustements post-revue) — animation de chargement VISIBLE : gros points menthe qui
    ondulent en séquence (« ça charge, ce n'est pas cassé » — impossible à rater). */

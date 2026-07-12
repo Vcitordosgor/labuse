@@ -45,7 +45,7 @@ const SLOTS: { key: string; label: string; rempli: (f: FicheProjet) => string | 
 function RepereBadge({ opt }: { opt: RepereOption | undefined }) {
   if (!opt) return null
   return (
-    <span data-repere className="mt-0.5 block text-[9.5px] leading-tight text-txt-dim">
+    <span data-repere className="mt-0.5 block text-[11px] leading-tight text-txt-dim">
       {opt.nb_opportunites.toLocaleString('fr-FR')} opp.
       {opt.dvf_median_eur_m2 ? ` · ~${opt.dvf_median_eur_m2.toLocaleString('fr-FR')} €/m²` : ''}
       {opt.communes_carencees.length ? <span className="text-st-surveiller"> · SRU carencée</span> : null}
@@ -215,7 +215,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
                 title={active.defaut ?? 'Passer'}
               >
                 Je ne sais pas encore
-                {active.defaut && <span className="ml-1 text-[10px] text-txt-dim">{active.defaut}</span>}
+                {active.defaut && <span className="ml-1 text-[11px] text-txt-dim">{active.defaut}</span>}
               </button>
             </div>
           </div>

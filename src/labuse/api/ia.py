@@ -204,9 +204,23 @@ def _stub_programme(low: str) -> dict | None:
     return prog if len(prog) > 1 else None
 
 
+#: UX V1 item 10 — verbes d'ACTION hors périmètre : demander de supprimer/modifier/écrire/
+#: envoyer n'est JAMAIS une recherche. Le stub refusait mal (« supprime toutes les parcelles »
+#: → « flag risques ») : refus SYSTÉMATIQUE, avant toute extraction de critères.
+_VERBES_HORS_PERIMETRE = re.compile(
+    r"\b(supprim\w*|efface\w*|d[ée]trui\w*|vide[rz]?\b\w*|modifi\w*|corrig\w*|change[rz]?\w*|"
+    r"[ée]cri[stv]\w*|r[ée]dige\w*|ajoute\w*|cr[ée][ée]\w*|ins[éè]re\w*|"
+    r"envoie\w*|envoy\w*|transmet\w*|transmett\w*|publie\w*|ignore\w*)\b", re.I)
+
+
 def _stub_nl(t: str) -> tuple[dict | None, str]:
     """Stub local : règles lexicales déterministes. Renvoie (filtres, explication) ou (None, refus)."""
     low = t.lower()
+    if _VERBES_HORS_PERIMETRE.search(low):
+        return None, ("Hors périmètre : je ne peux ni modifier, ni supprimer, ni rédiger, ni "
+                      "envoyer quoi que ce soit — je traduis seulement votre demande en critères "
+                      "de recherche foncière (commune, statut, vue mer, surface, SDP, score). "
+                      "Reformulez avec des critères ?")
     f: dict = {"statuts": [], "scoreMin": None, "surfaceMin": None, "surfaceMax": None,
                "sdpMin": None, "evenement": False, "vueMer": False, "flags": [], "commune": None}
     hits = []
@@ -311,12 +325,15 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
             prog = _stub_programme(body.text.lower())
             if prog:
                 _log(db, "search", "stub-fallback", True)
-                return {"stub": True, "programme": prog, "explanation": "Programme détecté (repli stub)."}
+                return {"stub": True, "programme": prog,
+                        "explanation": "Programme détecté → formulaire Faisabilité pré-rempli (le moteur déterministe calcule)."}
             filters, explanation = _stub_nl(body.text)
             _log(db, "search", "stub-fallback", True)
             if filters is None:
                 return {"stub": True, "out_of_scope": explanation}
-            return {"stub": True, "filters": filters, "explanation": explanation + " (repli stub)"}
+            # UX V1 item 2 : plus de « (repli stub) » face client — le front affiche le badge
+            # « mode mots-clés » depuis le drapeau stub, l'explication reste factuelle.
+            return {"stub": True, "filters": filters, "explanation": explanation}
         _note_succes()
         raw = msg.content[0].text.strip()
         _log(db, "search", MODEL_NL, False, msg.usage.input_tokens, msg.usage.output_tokens)

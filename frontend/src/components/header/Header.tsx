@@ -219,15 +219,15 @@ function CommuneSelect() {
             <button onClick={() => pick(null)}
               className={`flex items-center justify-between rounded-md px-3 py-2 text-left text-xs hover:bg-surface-3 ${commune == null ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
               <span className="font-medium">Toute l’île</span>
-              <span className="font-mono text-[10px] text-txt-dim">24 communes</span>
+              <span className="font-mono text-[11px] text-txt-dim">24 communes</span>
             </button>
             <div className="mx-3 my-1 border-t border-line" />
             {(communes.data ?? []).map((c) => (
               <div key={c.insee} className={`flex items-center rounded-md hover:bg-surface-3 ${commune === c.commune ? 'bg-surface-3' : ''}`}>
                 <button onClick={() => pick(c.commune)}
                   className={`flex min-w-0 flex-1 items-center justify-between px-3 py-1.5 text-left text-xs ${commune === c.commune ? 'text-mint' : 'text-txt'}`}>
-                  <span>{c.commune} <span className="font-mono text-[10px] text-txt-dim">{c.insee}</span></span>
-                  <span className="font-mono text-[10px]">
+                  <span>{c.commune} <span className="font-mono text-[11px] text-txt-dim">{c.insee}</span></span>
+                  <span className="font-mono text-[11px]">
                     {c.evaluees === 0
                       ? <span className="text-txt-dim">en calcul…</span>
                       : <span className={c.chaudes > 0 ? 'text-mint' : 'text-txt-dim'}>{c.chaudes} chaude{c.chaudes > 1 ? 's' : ''}</span>}
@@ -343,9 +343,9 @@ function NotifBell() {
                     {e.demo && <span className="rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[8.5px] font-medium text-[#B497F0]" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
                     <button onClick={() => { if (e.idu) { setView('cartes'); select(e.idu) } setOpen(false) }}
                       className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>
-                    {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[10px] text-txt-dim hover:text-mint" title="Marquer lu">✓</button>}
+                    {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" title="Marquer lu">✓</button>}
                   </div>
-                  {e.detail && <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{e.detail}</p>}
+                  {e.detail && <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">{e.detail}</p>}
                   <p className="mt-0.5 font-mono text-[9px] text-txt-dim">{e.date}</p>
                 </div>
               ))}

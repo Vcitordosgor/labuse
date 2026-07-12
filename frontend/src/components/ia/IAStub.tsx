@@ -47,7 +47,8 @@ export function IAStub() {
           setModule('programme')          // → formulaire M22 pré-rempli, moteur déterministe
           return
         }
-        if (d.filters) apply(d.filters)
+        // item 2 (UX V1) : l'explication + le drapeau stub VOYAGENT jusqu'à la restitution
+        if (d.filters) apply(d.filters, undefined, { explanation: d.explanation, stub: d.stub })
       },
     })
   }

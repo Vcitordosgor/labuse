@@ -91,6 +91,12 @@ function ResultMap({ geojson }: { geojson: { type: string; features: unknown[] }
   return <div ref={ref} data-seg-map className="h-full w-full rounded-[10px] border border-line-2" />
 }
 
+// Item 5 (UX V1) : plus jamais de −50 silencieusement traité comme 0 — hors domaine
+// (négatif, ou min > max) → garde visuelle ambre ET critère non envoyé au serveur.
+const rangeHorsDomaine = (f: SegmentFiltre) =>
+  (f.min != null && f.min < 0) || (f.max != null && f.max < 0)
+  || (f.min != null && f.max != null && f.min > f.max)
+
 // ───────────────────────── éditeur d'UN filtre du builder ─────────────────────────
 function FiltreRow({ f, defs, onChange, onRemove }: {
   f: SegmentFiltre
@@ -132,19 +138,28 @@ function FiltreRow({ f, defs, onChange, onRemove }: {
         <button onClick={onRemove} className="shrink-0 text-txt-dim hover:text-txt" title="Retirer ce filtre">✕</button>
       </div>
       {off ? (
-        <p className="mt-1 text-[10px] italic text-txt-dim">
+        <p className="mt-1 text-[11px] italic text-txt-dim">
           disponible prochainement{d.mandat ? ` — mandat ${d.mandat}` : ''}
         </p>
       ) : d.type === 'range' ? (
-        <div className="mt-1.5 flex items-center gap-2">
-          <input type="number" placeholder="min" value={f.min ?? ''}
-            onChange={(e) => onChange({ ...f, min: num(e.target.value) })}
-            className="w-24 rounded-md border border-line-2 bg-bg px-2 py-1 text-[11px] text-txt outline-none focus:border-mint" />
-          <span className="text-[10px] text-txt-dim">à</span>
-          <input type="number" placeholder="max" value={f.max ?? ''}
-            onChange={(e) => onChange({ ...f, max: num(e.target.value) })}
-            className="w-24 rounded-md border border-line-2 bg-bg px-2 py-1 text-[11px] text-txt outline-none focus:border-mint" />
-        </div>
+        <>
+          <div className="mt-1.5 flex items-center gap-2">
+            <input type="number" min={0} placeholder="min" value={f.min ?? ''}
+              onChange={(e) => onChange({ ...f, min: num(e.target.value) })}
+              className={`w-24 rounded-md border bg-bg px-2 py-1 text-[11px] text-txt outline-none ${
+                rangeHorsDomaine(f) ? 'border-[#E8B44C] focus:border-[#E8B44C]' : 'border-line-2 focus:border-mint'}`} />
+            <span className="text-[11px] text-txt-dim">à</span>
+            <input type="number" min={0} placeholder="max" value={f.max ?? ''}
+              onChange={(e) => onChange({ ...f, max: num(e.target.value) })}
+              className={`w-24 rounded-md border bg-bg px-2 py-1 text-[11px] text-txt outline-none ${
+                rangeHorsDomaine(f) ? 'border-[#E8B44C] focus:border-[#E8B44C]' : 'border-line-2 focus:border-mint'}`} />
+          </div>
+          {rangeHorsDomaine(f) && (
+            <p data-seg-garde className="mt-1 text-[11px] leading-snug text-[#E8B44C]">
+              Valeurs hors domaine (≥ 0, min ≤ max) — critère ignoré tant qu'il n'est pas corrigé.
+            </p>
+          )}
+        </>
       ) : d.type === 'bool' ? (
         <div className="mt-1.5 flex gap-1.5">
           {[{ v: true, l: 'oui' }, { v: false, l: 'non' }].map(({ v, l }) => (
@@ -194,12 +209,13 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
   const { setToast } = useApp()
   const qc = useQueryClient()
 
-  // un filtre en cours de saisie (range sans borne, énum sans valeur) n'est pas envoyé
+  // un filtre en cours de saisie (range sans borne, énum sans valeur) n'est pas envoyé —
+  // ni un range HORS DOMAINE (item 5 UX V1 : la garde visuelle l'annonce, rien ne part muet)
   const complet = (f: SegmentFiltre): boolean => {
     if (f.ou) return f.ou.some(complet)
     const d = f.cle ? defs.get(f.cle) : undefined
     if (!d) return false
-    if (d.type === 'range') return f.min != null || f.max != null
+    if (d.type === 'range') return (f.min != null || f.max != null) && !rangeHorsDomaine(f)
     if (d.type === 'enum') return (f.values?.length ?? 0) > 0
     return true
   }
@@ -241,17 +257,31 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
   const cols = rep?.colonnes ?? []
   const catnatOn = preset.boost_catnat && home.catnat.communes.length > 0
   const dejaLa = new Set(filtres.flatMap((f) => (f.ou ? f.ou.map((s) => s.cle!) : [f.cle!])))
+  // Item 6 (UX V1, mobile) : sous 640 px la colonne filtres fixe 320 px rendait la table
+  // inutilisable → onglets « Filtres / Résultats » (la galerie, elle, passe très bien).
+  const [ongletMobile, setOngletMobile] = useState<'filtres' | 'resultats'>('resultats')
 
   return (
-    <div className="flex h-full min-h-0 flex-1">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col sm:flex-row">
+      {/* onglets mobile < 640 px */}
+      <div data-seg-onglets className="flex shrink-0 items-center gap-1.5 border-b border-line px-3 py-2 sm:hidden">
+        <button onClick={onBack} className="mr-1 px-1 text-sm text-txt-dim hover:text-txt" title="Tous les segments">←</button>
+        {([['filtres', 'Filtres'], ['resultats', `Résultats${rep?.count != null ? ` (${fmtN(rep.count)})` : ''}`]] as const).map(([k, l]) => (
+          <button key={k} data-seg-onglet={k} onClick={() => setOngletMobile(k)}
+            className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
+              ongletMobile === k ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut'}`}>
+            {l}
+          </button>
+        ))}
+      </div>
       {/* colonne filtres */}
-      <aside className="flex w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
+      <aside className={`${ongletMobile === 'filtres' ? 'flex' : 'hidden'} min-h-0 w-full flex-1 flex-col border-r border-line bg-surface-1 sm:flex sm:w-[320px] sm:flex-none sm:shrink-0`}>
         <div className="shrink-0 px-4 pb-2 pt-4">
           <button data-seg-retour onClick={onBack} className="text-[11px] text-txt-dim hover:text-txt">← Tous les segments</button>
           <h2 className="mt-1 text-sm font-medium text-txt-hi">{preset.nom}</h2>
           {preset.argumentaire && <p className="mt-1 text-[10.5px] leading-snug text-txt-dim">{preset.argumentaire}</p>}
           {preset.mention_legale && (
-            <div data-seg-mention className="mt-1.5 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[10px] leading-snug text-txt-dim">
+            <div data-seg-mention className="mt-1.5 rounded-md border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] leading-snug text-txt-dim">
               <p>{preset.mention_legale.texte}</p>
               <p className="mt-1">
                 {preset.mention_legale.liens.map((l, i) => (
@@ -260,11 +290,11 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
                   </a>
                 ))}
               </p>
-              <p className="mt-1 text-[9.5px] text-txt-dim/80">{preset.mention_legale.sources_donnees}</p>
+              <p className="mt-1 text-[11px] text-txt-dim/80">{preset.mention_legale.sources_donnees}</p>
             </div>
           )}
           {(dejaLa.has('emprise_residuelle_m2') || dejaLa.has('surelevation_possible')) && (
-            <p className="mt-1.5 rounded-md border border-[#E8B44C]/30 bg-[#E8B44C]/5 px-2 py-1 text-[10px] leading-snug text-[#E8B44C]">
+            <p className="mt-1.5 rounded-md border border-[#E8B44C]/30 bg-[#E8B44C]/5 px-2 py-1 text-[11px] leading-snug text-[#E8B44C]">
               {home.libelle_residuel}
             </p>
           )}
@@ -294,7 +324,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
         </div>
         <div className="shrink-0 border-t border-line px-4 py-3">
           <div className="mb-2 flex items-center gap-2">
-            <label className="text-[10px] text-txt-dim">Tri</label>
+            <label className="text-[11px] text-txt-dim">Tri</label>
             <select value={tri ?? ''} onChange={(e) => { setTri(e.target.value || null); setOffset(0) }}
               className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-[10.5px] text-txt outline-none focus:border-mint">
               {home.tris.map((t) => <option key={t.cle} value={t.cle}>{t.libelle}</option>)}
@@ -322,7 +352,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
       </aside>
 
       {/* résultats : compteur + carte + table */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-4">
+      <div className={`${ongletMobile === 'resultats' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4 sm:flex`}>
         {catnatOn && (
           <div data-seg-catnat className="mb-3 rounded-lg border border-[#E8695A]/40 bg-[#E8695A]/10 px-3 py-2 text-[11px] text-[#f0a29a]">
             Communes récemment en état de catastrophe naturelle ({home.catnat.fenetre_mois} mois) :{' '}
@@ -334,7 +364,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
           <span data-seg-count className="font-display text-2xl font-bold text-mint">{fmtN(rep?.count)}</span>
           <span className="text-xs text-txt-dim">parcelles matchées{rq.isFetching ? ' · calcul…' : ''}</span>
           {!!rep?.filtres_inactifs?.length && (
-            <span className="rounded-md border border-[#E8B44C]/40 bg-[#E8B44C]/10 px-2 py-0.5 text-[10px] text-[#E8B44C]"
+            <span className="rounded-md border border-[#E8B44C]/40 bg-[#E8B44C]/10 px-2 py-0.5 text-[11px] text-[#E8B44C]"
               title={rep.filtres_inactifs.map((f) => `${f.libelle} — ${f.mandat ? `mandat ${f.mandat}` : f.raison ?? ''}`).join('\n')}>
               partiel : {rep.filtres_inactifs.length} filtre(s) en attente de données
             </span>
@@ -346,7 +376,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
         <div className="mt-3 min-h-0 flex-1 overflow-auto rounded-[10px] border border-line-2">
           <table className="w-full text-left text-[11px]">
             <thead className="sticky top-0 bg-surface-1">
-              <tr className="text-[9.5px] uppercase tracking-wider text-txt-dim">
+              <tr className="text-[11px] uppercase tracking-wider text-txt-dim">
                 <th className="px-3 py-2">Parcelle</th>
                 <th className="px-3 py-2">Commune</th>
                 <th className="px-3 py-2">Surface (m²)</th>
@@ -383,6 +413,70 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
       </div>
     </div>
   )
+}
+
+// ── Ajout B (UX V1) : copy COMMERCIALE de la galerie — un picto par offre + une phrase de
+// bénéfice client (zéro jargon filtre). La description filtre (argumentaire) passe en
+// sous-texte. Le compteur du parc piscines est RÉEL (count du segment), jamais codé en dur.
+const BENEFICE_PAR_SLUG: Record<string, (n: number | null) => string> = {
+  'pergolas-terrasses': () => 'Les maisons avec du jardin nu à équiper — vos prochains chantiers d\'ombre et de terrasse.',
+  'paysagistes': () => 'Grands jardins, végétation dense : les adresses où un paysagiste a du travail.',
+  'piscinistes-construction': () => 'Du jardin, de la place, pas encore de bassin : vos prospects installation.',
+  'parc-piscines-entretien': (n) => n != null
+    ? `${n.toLocaleString('fr-FR')} piscines localisées sur l'île : entretien, rénovation, sécurité.`
+    : 'Des piscines localisées sur l\'île : entretien, rénovation, sécurité.',
+  'pv-residentiel': () => 'Toits bien exposés, factures élevées, pas de panneaux : le solaire qui a du sens.',
+}
+const PICTO_PAR_SLUG: Record<string, JSX.Element> = {
+  // pergola : toile + deux montants
+  'pergolas-terrasses': (
+    <><path d="M3 7.5 Q10 4.5 17 7.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="5" y1="7" x2="5" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="15" y1="7" x2="15" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="3.5" y1="16" x2="16.5" y2="16" stroke="currentColor" strokeWidth="1.3" opacity="0.6" /></>
+  ),
+  // feuille
+  'paysagistes': (
+    <><path d="M10 16.5 C4.5 13 4.5 6.5 10 3.5 C15.5 6.5 15.5 13 10 16.5 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <line x1="10" y1="6" x2="10" y2="16.5" stroke="currentColor" strokeWidth="1.2" opacity="0.6" /></>
+  ),
+  // bassin en creusement : vagues + truelle (trait plus)
+  'piscinistes-construction': (
+    <><path d="M3 13 Q5 11.5 7 13 T11 13 T15 13 T17 13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="13.5" y1="3.5" x2="13.5" y2="8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="11" y1="6" x2="16" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>
+  ),
+  // eau : double vague
+  'parc-piscines-entretien': (
+    <><path d="M3 8.5 Q5 7 7 8.5 T11 8.5 T15 8.5 T17 8.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M3 13 Q5 11.5 7 13 T11 13 T15 13 T17 13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.65" /></>
+  ),
+  // soleil + panneau
+  'pv-residentiel': (
+    <><circle cx="6.5" cy="6.5" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <line x1="6.5" y1="2" x2="6.5" y2="3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <line x1="2" y1="6.5" x2="3" y2="6.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <rect x="9.5" y="10" width="7.5" height="6" rx="0.8" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <line x1="13.25" y1="10" x2="13.25" y2="16" stroke="currentColor" strokeWidth="1.1" opacity="0.6" /></>
+  ),
+}
+//: repli par catégorie pour les presets créés après coup (dupliqués, variantes admin)
+const PICTO_PAR_CATEGORIE: Record<string, JSX.Element> = {
+  exterieur: PICTO_PAR_SLUG['paysagistes'],
+  renovation: (
+    <><path d="M4 16 V8 L10 3.5 L16 8 V16 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M8 16 V11 H12 V16" fill="none" stroke="currentColor" strokeWidth="1.3" /></>
+  ),
+  energie: (
+    <path d="M11 3 L5.5 11 H9.5 L9 17 L14.5 9 H10.5 Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+  ),
+  securite: (
+    <path d="M10 3.5 L16 5.5 V10 C16 13.5 13.5 15.8 10 17 C6.5 15.8 4 13.5 4 10 V5.5 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+  ),
+  foncier_bati: (
+    <><path d="M3.5 9 L10 3.5 L16.5 9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.5 8.5 V16 H14.5 V8.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></>
+  ),
 }
 
 // ───────────────────────── carte d'un preset (galerie) ─────────────────────────
@@ -427,29 +521,57 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
       p.actif ? 'border-line-2 hover:border-mint' : 'border-line-2 opacity-50'}`}>
       <button onClick={onOpen} className="block w-full text-left" data-seg-preset-open>
         <div className="flex items-start justify-between gap-2">
-          <span className="text-[12.5px] font-medium text-txt-hi">{p.nom}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            {/* Ajout B (UX V1) : un picto par offre — l'artisan reconnaît son métier d'un œil */}
+            <span data-seg-picto className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-mint/10 text-mint">
+              <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">
+                {PICTO_PAR_SLUG[p.slug] ?? PICTO_PAR_CATEGORIE[p.categorie] ?? PICTO_PAR_CATEGORIE.foncier_bati}
+              </svg>
+            </span>
+            <span className="truncate text-[12.5px] font-medium text-txt-hi">{p.nom}</span>
+          </span>
           <span data-seg-badge className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider ${
             partiel ? 'border-[#E8B44C]/40 bg-[#E8B44C]/10 text-[#E8B44C]' : 'border-mint/40 bg-mint/10 text-mint'}`}
             title={partiel ? p.filtres_inactifs.map((f) => `${f.libelle} — ${f.mandat ? `mandat ${f.mandat}` : f.raison ?? ''}`).join('\n') : 'toutes les sources de données sont disponibles'}>
             {partiel ? `partiel · ${p.filtres_inactifs.length}` : 'complet'}
           </span>
         </div>
+        {/* Ajout B : LA phrase de bénéfice client — le pourquoi, pas le comment */}
+        {BENEFICE_PAR_SLUG[p.slug] && (
+          <p data-seg-benefice className="mt-1.5 text-xs leading-snug text-txt">
+            {BENEFICE_PAR_SLUG[p.slug](p.count)}
+          </p>
+        )}
         <div className="mt-1 flex items-baseline gap-1.5">
           <span data-seg-preset-count className="font-display text-lg font-bold text-mint">{fmtN(p.count)}</span>
-          <span className="text-[10px] text-txt-dim">parcelles</span>
+          <span className="text-[11px] text-txt-dim">parcelles</span>
+          {/* Item 14 (UX V1) : le compteur est un cache 24 h — sa date évite la question
+              quand le builder (calcul direct) diffère après un recalcul. */}
+          {p.count != null && p.count_at && (
+            <span data-seg-count-date className="text-[11px] text-txt-dim"
+              title="Compteur recalculé au plus toutes les 24 h — le builder calcule en direct">
+              · compteur du {new Date(p.count_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} à{' '}
+              {new Date(p.count_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
           {catnatOn && <span className="ml-auto rounded-md bg-[#E8695A]/15 px-1.5 py-0.5 text-[9px] font-medium text-[#f0a29a]">CATNAT actif</span>}
         </div>
-        {p.argumentaire && <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{p.argumentaire}</p>}
+        {/* la description filtre (argumentaire) passe en SOUS-TEXTE quand un bénéfice existe */}
+        {p.argumentaire && (
+          <p data-seg-argumentaire className={`mt-1.5 text-[10.5px] leading-snug text-txt-dim ${BENEFICE_PAR_SLUG[p.slug] ? 'opacity-80' : ''}`}>
+            {p.argumentaire}
+          </p>
+        )}
         <div className="mt-2 flex flex-wrap gap-1">
           {(p.filtres ?? []).map((f, i) => (
-            <span key={i} className="rounded-md border border-line-2 bg-surface-1 px-1.5 py-0.5 text-[9.5px] text-txt-mut">
+            <span key={i} className="rounded-md border border-line-2 bg-surface-1 px-1.5 py-0.5 text-[11px] text-txt-mut">
               {chipLabel(f, defs)}
             </span>
           ))}
         </div>
       </button>
       {/* admin (Vic) : l'app est mono-utilisateur authentifié — ces actions écrivent en base */}
-      <div className="mt-2.5 flex gap-2 border-t border-line-2 pt-2 text-[9.5px] text-txt-dim">
+      <div className="mt-2.5 flex gap-2 border-t border-line-2 pt-2 text-[11px] text-txt-dim">
         <button data-seg-admin-dupliquer onClick={() => dup.mutate()} className="hover:text-txt">dupliquer</button>
         <button data-seg-admin-argumentaire onClick={() => editArg.mutate()} className="hover:text-txt">argumentaire</button>
         <button data-seg-admin-toggle onClick={() => toggle.mutate()} className="hover:text-txt">{p.actif ? 'désactiver' : 'activer'}</button>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useApp, type LayerToggles } from '../../store/useApp'
+import { Legend } from '../map/Legend'
 import { ResultsSection } from './ResultsSection'
 
 const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
@@ -54,7 +55,7 @@ function LayersSection() {
                 <span className={`text-xs ${on ? 'text-txt' : 'text-txt-mut'}`}>{label}</span>
               </button>
               {hintKey === key && (
-                <p data-hint-couche={key} className="ml-6 mt-0.5 text-[10px] text-st-creuser">
+                <p data-hint-couche={key} className="ml-6 mt-0.5 text-[11px] text-st-creuser">
                   Par commune — choisissez une commune ↑
                 </p>
               )}
@@ -76,7 +77,7 @@ function VerdictHero() {
       <div className="mx-5 mb-1 flex shrink-0 items-center justify-between rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-1.5">
         <span className="text-[11px] font-medium text-mint">✓ Analyse LABUSE affichée</span>
         <button data-verdict-off onClick={() => setVerdict(false)}
-          className="text-[10px] text-txt-dim hover:text-txt" title="Masquer l'analyse — revenir au cadastre brut">
+          className="text-[11px] text-txt-dim hover:text-txt" title="Masquer l'analyse — revenir au cadastre brut">
           masquer
         </button>
       </div>
@@ -95,7 +96,7 @@ function VerdictHero() {
         className="mt-5 w-full rounded-xl bg-mint px-4 py-3.5 font-display text-sm font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition hover:shadow-[0_0_36px_rgba(92,230,161,0.55)]">
         Afficher l'analyse LABUSE →
       </button>
-      <p className="mt-3 text-[10px] leading-snug text-txt-dim">
+      <p className="mt-3 text-[11px] leading-snug text-txt-dim">
         Rien n'est masqué : le cadastre reste entier, chaque parcelle garde son verdict —
         <br />cliquez-en une pour voir pourquoi. Vous gardez la main.
       </p>
@@ -105,27 +106,66 @@ function VerdictHero() {
 
 export function LeftPanel() {
   const { panelOpen, togglePanel, verdict } = useApp()
-  if (!panelOpen) {
-    return (
-      <button
-        onClick={togglePanel}
-        className="flex h-full w-8 shrink-0 items-start justify-center border-r border-line bg-surface-1 pt-5 text-txt-dim hover:text-txt"
-        title="Déplier le panneau"
-      >
-        ›
-      </button>
-    )
-  }
+  // Item 1 (UX V1, mobile) : sous 640 px le panneau occupait 100 % de l'écran — la carte
+  // n'existait pas. Désormais la CARTE est l'écran d'accueil mobile ; COUCHES + légende
+  // VERDICT vivent dans un tiroir escamotable (bouton « Couches » flottant).
+  const [mobileOpen, setMobileOpen] = useState(false)
   return (
-    <aside className="flex h-full w-[300px] shrink-0 flex-col border-r border-line bg-surface-1">
-      <div className="flex shrink-0 items-center justify-between px-5 pt-4">
-        <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
-        <button onClick={togglePanel} className="text-txt-dim hover:text-txt" title="Replier le panneau">‹</button>
-      </div>
-      <LayersSection />
-      <div className="mx-5 my-3 shrink-0 border-t border-line" />
-      <VerdictHero />
-      {verdict && <ResultsSection />}
-    </aside>
+    <>
+      {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}
+      {!panelOpen ? (
+        <button
+          onClick={togglePanel}
+          className="hidden h-full w-8 shrink-0 items-start justify-center border-r border-line bg-surface-1 pt-5 text-txt-dim hover:text-txt sm:flex"
+          title="Déplier le panneau"
+        >
+          ›
+        </button>
+      ) : (
+        <aside className="hidden h-full w-[300px] shrink-0 flex-col border-r border-line bg-surface-1 sm:flex">
+          <div className="flex shrink-0 items-center justify-between px-5 pt-4">
+            <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
+            <button onClick={togglePanel} className="text-txt-dim hover:text-txt" title="Replier le panneau">‹</button>
+          </div>
+          <LayersSection />
+          <div className="mx-5 my-3 shrink-0 border-t border-line" />
+          <VerdictHero />
+          {verdict && <ResultsSection />}
+        </aside>
+      )}
+
+      {/* ── mobile < 640 px : carte plein écran, panneau en tiroir ── */}
+      {!mobileOpen && (
+        <button
+          data-couches-mobile
+          onClick={() => setMobileOpen(true)}
+          className="absolute bottom-16 left-4 z-30 flex items-center gap-2 rounded-full border border-line-2 bg-surface-2 px-4 py-2 text-xs font-medium text-txt shadow-lg sm:hidden"
+          title="Couches, analyse et résultats"
+        >
+          <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint">
+            <path d="M10 3.5 L17 7 L10 10.5 L3 7 Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M3 10.5 L10 14 L17 10.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+            <path d="M3 13.5 L10 17 L17 13.5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" opacity="0.55" />
+          </svg>
+          Couches
+        </button>
+      )}
+      {mobileOpen && (
+        <div data-couches-drawer className="absolute inset-0 z-40 flex sm:hidden">
+          <div className="absolute inset-0 bg-black/55" onClick={() => setMobileOpen(false)} />
+          <aside className="relative flex h-full w-[300px] max-w-[86%] flex-col border-r border-line bg-surface-1 shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between px-5 pt-4">
+              <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
+              <button data-couches-fermer onClick={() => setMobileOpen(false)} className="text-txt-dim hover:text-txt" title="Revenir à la carte">✕</button>
+            </div>
+            <LayersSection />
+            <div className="mx-5 my-3 shrink-0 border-t border-line" />
+            <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
+            <VerdictHero />
+            {verdict && <ResultsSection />}
+          </aside>
+        </div>
+      )}
+    </>
   )
 }

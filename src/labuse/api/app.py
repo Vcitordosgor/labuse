@@ -353,9 +353,36 @@ def demo_overview_endpoint(commune: str | None = None, db: Session = Depends(get
 
 # ───────────────────────────── Sources de données ─────────────────────────────
 
+#: UX V1 ajout A — rattache un run d'ingestion (libellé `commune`) à sa source de catalogue.
+#: Les runs par commune sont l'ingestion du PARCELLAIRE (cadastre bulk) ; les runs « 974 (…) »
+#: portent leur famille dans le libellé. Fonction pure, testée.
+def _source_pour_run(commune: str | None) -> str | None:
+    if not commune:
+        return None
+    if commune.startswith("974 (SDES Sitadel3"):
+        return "SITADEL (autorisations d'urbanisme)"
+    if commune.startswith("974 (tuiles ortho"):
+        return "Géoplateforme IGN"
+    return "Cadastre Etalab (bulk DGFiP/Etalab)"
+
+
 @app.get("/sources")
 def list_sources(db: Session = Depends(get_db)) -> list[dict]:
     rows = db.execute(select(models.DataSource).order_by(models.DataSource.category, models.DataSource.name)).scalars().all()
+    # UX V1 ajout A (page « Sources & fraîcheur ») : la date affichée est LUE dans
+    # ingestion_runs (jamais codée en dur) — max(finished_at|started_at) des runs ok par source.
+    runs = db.execute(text(
+        "SELECT commune, max(coalesce(finished_at, started_at)) AS fin, count(*) AS n "
+        "FROM ingestion_runs WHERE status IN ('ok', 'success') GROUP BY commune")).mappings().all()
+    ingestions: dict[str, dict] = {}
+    for r in runs:
+        name = _source_pour_run(r["commune"])
+        if not name:
+            continue
+        cur = ingestions.setdefault(name, {"derniere": None, "runs": 0})
+        cur["runs"] += int(r["n"])
+        if cur["derniere"] is None or (r["fin"] and r["fin"] > cur["derniere"]):
+            cur["derniere"] = r["fin"]
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
@@ -366,6 +393,8 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "documentation_url": s.documentation_url, "endpoint_url": s.endpoint_url,
             "legal_notes": s.legal_notes, "technical_notes": s.technical_notes,
             "testable": s.name in _connector_names(),
+            "derniere_ingestion": ingestions.get(s.name, {}).get("derniere"),
+            "ingestion_runs": ingestions.get(s.name, {}).get("runs", 0),
         }
         for s in rows
     ]

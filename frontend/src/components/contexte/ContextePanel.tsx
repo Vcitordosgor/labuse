@@ -21,7 +21,7 @@ const SRU_META: Record<string, { color: string; bg: string; label: string; lectu
 function Source({ nom, url }: { nom?: string | null; url?: string | null }) {
   if (!nom) return null
   return (
-    <p className="mt-1.5 text-[9.5px] leading-snug text-txt-dim">
+    <p className="mt-1.5 text-[11px] leading-snug text-txt-dim">
       Source :{' '}
       {url ? <a href={url} target="_blank" rel="noreferrer" className="text-[#7DE8E0] hover:underline">{nom} ↗</a> : nom}
     </p>
@@ -36,7 +36,7 @@ function Bar({ parts }: { parts: { label: string; pct: number; color: string }[]
       </div>
       <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5">
         {parts.map((p) => (
-          <span key={p.label} className="flex items-center gap-1 text-[10px] text-txt-mut">
+          <span key={p.label} className="flex items-center gap-1 text-[11px] text-txt-mut">
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: p.color }} />{p.label} {p.pct.toLocaleString('fr-FR')} %
           </span>
         ))}
@@ -97,13 +97,13 @@ export function ContextePanel() {
                         SRU {Number(d.sru.taux_lls).toLocaleString('fr-FR')} %
                       </span>
                       <span className="ml-2 text-xs text-txt-mut">objectif {Number(d.sru.objectif_pct).toLocaleString('fr-FR')} %</span>
-                      <span className="ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ color: m.color, background: `${m.color}22` }}>{m.label}</span>
+                      <span className="ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold" style={{ color: m.color, background: `${m.color}22` }}>{m.label}</span>
                       {Number(d.sru.prelevement_eur) > 0 && (
                         <p className="mt-1 text-[10.5px] text-txt-mut">Prélèvement 2025 : {fmt(d.sru.prelevement_eur)} €</p>
                       )}
                     </div>
                     <p className="mt-2 text-[11px] leading-relaxed text-txt">{m.lecture}</p>
-                    <p className="mt-1 text-[10px] text-txt-dim">{fmt(d.sru.detail?.nb_lls)} LLS à l’inventaire · {d.sru.millesime}</p>
+                    <p className="mt-1 text-[11px] text-txt-dim">{fmt(d.sru.detail?.nb_lls)} LLS à l’inventaire · {d.sru.millesime}</p>
                     <Source nom={d.sru.source_nom} url={d.sru.source_url} />
                   </>
                 )
@@ -116,14 +116,14 @@ export function ContextePanel() {
                   {d.anru.map((a) => (
                     <div key={a.nom} className="mb-1.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                       <span className="text-xs font-medium text-txt-hi">{a.nom}</span>
-                      <span className="ml-2 rounded-full bg-[#1a2340] px-2 py-0.5 text-[9.5px] font-medium text-[#8FB4F0]">intérêt {a.interet}</span>
-                      <p className="mt-0.5 text-[10px] text-txt-dim">{a.code_qpv} · activer la couche « ANRU » sur la carte</p>
+                      <span className="ml-2 rounded-full bg-[#1a2340] px-2 py-0.5 text-[11px] font-medium text-[#8FB4F0]">intérêt {a.interet}</span>
+                      <p className="mt-0.5 text-[11px] text-txt-dim">{a.code_qpv} · activer la couche « ANRU » sur la carte</p>
                     </div>
                   ))}
                   <Source nom={d.anru[0].source_nom} url={d.anru[0].source_url} />
                 </>
               ) : <p className="text-xs text-txt-mut">Aucun périmètre NPNRU sur cette commune (8 quartiers d’intérêt national à La Réunion, aucun régional).</p>}
-              <p className="mt-2 text-[9.5px] leading-snug text-txt-dim">{d.notes[0]}</p>
+              <p className="mt-2 text-[11px] leading-snug text-txt-dim">{d.notes[0]}</p>
             </Section>
 
             <Section title={`PLH ${d.epci ?? ''} — PROGRAMME LOCAL DE L'HABITAT`}>
@@ -132,16 +132,16 @@ export function ContextePanel() {
                   <div className="flex gap-4">
                     {d.plh.obj_logements_an != null && (
                       <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.plh.obj_logements_an)}</p>
-                        <p className="text-[10px] text-txt-dim">logements / an (objectif)</p></div>
+                        <p className="text-[11px] text-txt-dim">logements / an (objectif)</p></div>
                     )}
                     {d.plh.part_sociale_pct != null && (
                       <div><p className="font-display text-lg font-bold text-txt-hi">{Number(d.plh.part_sociale_pct).toLocaleString('fr-FR')} %</p>
-                        <p className="text-[10px] text-txt-dim">part sociale visée</p></div>
+                        <p className="text-[11px] text-txt-dim">part sociale visée</p></div>
                     )}
                   </div>
                   <p className="mt-1 text-[10.5px] text-txt-mut">{d.plh.periode} · {d.plh.statut}</p>
                   {(d.plh.refs ?? []).map((r: { doc: string; url?: string; page?: string | number }, i: number) => (
-                    <p key={i} className="mt-0.5 text-[9.5px] text-txt-dim">
+                    <p key={i} className="mt-0.5 text-[11px] text-txt-dim">
                       Réf. : {r.url ? <a className="text-[#7DE8E0] hover:underline" href={r.url} target="_blank" rel="noreferrer">{r.doc} ↗</a> : r.doc}{r.page ? ` — p. ${r.page}` : ''}
                     </p>
                   ))}
@@ -158,8 +158,8 @@ export function ContextePanel() {
               {d.marche ? (
                 <>
                   <div className="mb-2 flex gap-4">
-                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.marche.logements)}</p><p className="text-[10px] text-txt-dim">logements</p></div>
-                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.marche.vacants)}</p><p className="text-[10px] text-txt-dim">vacants ({d.marche.typologie?.vacance_pct?.toLocaleString?.('fr-FR') ?? d.marche.typologie?.vacance_pct} %)</p></div>
+                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.marche.logements)}</p><p className="text-[11px] text-txt-dim">logements</p></div>
+                    <div><p className="font-display text-lg font-bold text-txt-hi">{fmt(d.marche.vacants)}</p><p className="text-[11px] text-txt-dim">vacants ({d.marche.typologie?.vacance_pct?.toLocaleString?.('fr-FR') ?? d.marche.typologie?.vacance_pct} %)</p></div>
                   </div>
                   <div className="flex flex-col gap-2.5">
                     <Bar parts={[
@@ -173,7 +173,7 @@ export function ContextePanel() {
                   </div>
                   {d.marche.typologie && (
                     <div className="mt-3">
-                      <p className="mb-1 text-[10px] text-txt-dim" title={d.marche.typologie.libelle}>
+                      <p className="mb-1 text-[11px] text-txt-dim" title={d.marche.typologie.libelle}>
                         Résidences principales par nombre de pièces (proxy T1…T5+)
                       </p>
                       <Bar parts={(['p1', 'p2', 'p3', 'p4', 'p5p'] as const).map((k, i) => {
@@ -193,7 +193,7 @@ export function ContextePanel() {
               {d.qpv.length > 0 ? (
                 <p className="text-xs text-txt">{d.qpv.length} QPV (génération 2024) : {d.qpv.map((x) => x.nom).join(' · ')}</p>
               ) : <p className="text-xs text-txt-mut">Aucun QPV sur cette commune.</p>}
-              <p className="mt-2 text-[9.5px] leading-snug text-txt-dim">{d.notes[1]}</p>
+              <p className="mt-2 text-[11px] leading-snug text-txt-dim">{d.notes[1]}</p>
             </Section>
           </>
         )}

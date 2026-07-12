@@ -14,6 +14,8 @@ import { SegmentsPage } from './components/segments/SegmentsPage'
 import { ProjetsPanel } from './components/projets/ProjetsPanel'
 import { ContextePanel } from './components/contexte/ContextePanel'
 import { filtersFromHash, filtersToHash } from './lib/filters'
+import { SCORE_TIP } from './lib/status'
+import { useApplySearch } from './lib/useApplySearch'
 import { ModulePanel } from './components/outils/ModulePanel'
 import { TimeMachine } from './components/outils/TimeMachine'
 import { EMPTY_FILTERS, useApp } from './store/useApp'
@@ -22,6 +24,7 @@ import { EMPTY_FILTERS, useApp } from './store/useApp'
 // parcelle porte son « pourquoi » (moteur) et l'utilisateur peut ENREGISTRER + exporter le PDF.
 function IaRestitution() {
   const { iaRestitution, setIaRestitution, select, setView, setM22Prefill, setModule, togglePanel, selectedIdu, setVerdict } = useApp()
+  const apply = useApplySearch()   // ajout C (UX V1) : relance sans le critère le plus serré
   const [count, setCount] = useState(0)
   const [projetId, setProjetId] = useState<number | null>(null)
   useEffect(() => {
@@ -72,10 +75,49 @@ function IaRestitution() {
         </p>
         <button onClick={() => setIaRestitution(null)} className="ml-2 text-txt-dim hover:text-txt" title="Fermer le résultat">✕</button>
       </div>
-      <button data-ia-voir-tout onClick={voirTout}
-        className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/40 bg-mint/10 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20">
-        Voir les {count.toLocaleString('fr-FR')} résultats dans la liste →
-      </button>
+      {/* Item 2 (UX V1) : la traduction EXACTE du serveur, DANS la restitution. En mode
+          mots-clés (stub), le badge + la phrase disent ce qui n'a PAS été traduit — un repli
+          ne se fait jamais passer pour une vraie traduction. */}
+      {(iaRestitution.explanation || iaRestitution.stub) && (
+        <p data-ia-explication className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px] leading-snug text-txt-mut">
+          {iaRestitution.stub && (
+            <span data-ia-badge-stub className="mr-1.5 inline-block rounded-full border border-st-creuser/50 bg-[#211a10] px-1.5 py-0.5 text-[11px] font-medium text-st-creuser">
+              mode mots-clés
+            </span>
+          )}
+          {iaRestitution.explanation}
+          {iaRestitution.stub && (
+            <span className="text-txt-dim"> Les critères absents de cette liste n'ont pas été traduits — réessayez plus tard pour la traduction complète.</span>
+          )}
+        </p>
+      )}
+      {/* Ajout C (UX V1) : jamais de zéro sec — à 0 résultat on propose le relâchement du
+          critère numérique le plus serré, relançable d'un clic. */}
+      {iaRestitution.n === 0 ? (
+        <div data-ia-zero className="mt-1.5 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] leading-snug text-st-creuser">
+          Aucun résultat avec tous ces critères.
+          {iaRestitution.relance ? (
+            <button data-ia-relance
+              onClick={() => {
+                const r = iaRestitution.relance!
+                apply(r.raw, iaRestitution.phrase, {
+                  explanation: `Critère « ${r.label} » retiré. ${iaRestitution.explanation ?? ''}`.trim(),
+                  stub: iaRestitution.stub,
+                })
+              }}
+              className="mt-1.5 flex w-full items-center justify-center rounded-lg border border-st-creuser/60 bg-st-creuser/10 py-1.5 font-medium text-st-creuser hover:bg-st-creuser/20">
+              Réessayer sans le critère « {iaRestitution.relance.label} » →
+            </button>
+          ) : (
+            <span className="text-txt-dim"> Élargissez le périmètre ou retirez un critère.</span>
+          )}
+        </div>
+      ) : (
+        <button data-ia-voir-tout onClick={voirTout}
+          className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/40 bg-mint/10 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20">
+          Voir les {count.toLocaleString('fr-FR')} résultats dans la liste →
+        </button>
+      )}
 
       {wide ? (
         <div className="mt-2 space-y-1.5">
@@ -84,11 +126,11 @@ function IaRestitution() {
               className="block w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left hover:border-mint">
               <span className="font-mono text-[10px] text-mint">#{i + 1}</span>
               <span className="ml-1.5 font-mono text-[11px] text-txt-hi">{t.idu.slice(8)}</span>
-              <span className="ml-1.5 text-[10px] text-txt-dim">{t.commune}</span>
+              <span className="ml-1.5 text-[11px] text-txt-dim">{t.commune}</span>
               {t.pourquoi && (
                 <ul data-ia-pourquoi className="mt-1 space-y-0.5">
                   {t.pourquoi.map((l, k) => (
-                    <li key={k} className="text-[10px] leading-snug text-txt-mut">· {l}</li>
+                    <li key={k} className="text-[11px] leading-snug text-txt-mut">· {l}</li>
                   ))}
                 </ul>
               )}
@@ -100,9 +142,9 @@ function IaRestitution() {
           {iaRestitution.top.map((t, i) => (
             <button key={t.idu} data-ia-top onClick={() => select(t.idu)}
               className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-left hover:border-mint">
-              <span className="font-mono text-[10px] text-mint">#{i + 1} · Q {t.q_score}</span>
+              <span className="font-mono text-[11px] text-mint" title={SCORE_TIP.q}>#{i + 1} · Q {t.q_score}</span>
               <span className="block truncate font-mono text-[11px] text-txt-hi">{t.idu.slice(8)}</span>
-              <span className="block truncate text-[9.5px] text-txt-dim">{t.commune}</span>
+              <span className="block truncate text-[11px] text-txt-dim">{t.commune}</span>
             </button>
           ))}
         </div>
