@@ -826,6 +826,23 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             )}
             <EquipementsBadges idu={idu} />
+            {/* CRED-1 (revue externe 12/07) : le « pas d'accès direct » était une ligne neutre
+                enterrée dans Marché — un Q 91 s'affichait sans que l'enclavement possible saute
+                aux yeux. Remonté ICI, au niveau des scores, en avertissement HONNÊTE : le signal
+                n'est PAS pondéré (BD TOPO = axes publics ; dessertes privées et servitudes de
+                passage n'y figurent pas — 293 078 parcelles concernées, trop de faux positifs
+                pour un malus en l'état). */}
+            {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
+              <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2">
+                <span aria-hidden className="text-st-creuser">⚠</span>
+                <p className="text-[11px] leading-snug text-st-creuser">
+                  <b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact de la parcelle.
+                  <span className="text-txt-mut"> Signal informatif, non pondéré dans les scores : la BD TOPO
+                  trace les voies publiques — une desserte privée ou une servitude de passage n'y figure pas.
+                  À lever sur place ou au plan cadastral avant d'engager le dossier.</span>
+                </p>
+              </div>
+            )}
             <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen tip={SCORE_TIP.q} />
             <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}
