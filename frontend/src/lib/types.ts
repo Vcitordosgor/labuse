@@ -59,6 +59,7 @@ export interface Stats {
   // dossiers = propriétaires uniques identifiés (SIREN) parmi les chaudes ; le reliquat
   // « sans identité » est affiché tel quel (honnêteté : jamais un total prétendu exact)
   dossiers_chaudes?: number
+  chaudes_avec_dossier?: number   // CRED-3 : parcelles chaudes COUVERTES par un dossier (la somme redevient lisible)
   chaudes_sans_identite?: number
   chaude_evenement?: number   // décomposition « dont N par événement » (survol du compteur)
   brulantes?: number          // 🔥 chaudes Q×A ∧ V ≥ seuil (tier combiné)

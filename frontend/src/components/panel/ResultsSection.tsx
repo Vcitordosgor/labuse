@@ -308,10 +308,18 @@ export function ResultsSection() {
           <span className="font-medium" style={{ color: '#FF8A50' }}>{fmt(stats.data?.brulantes ?? 0)}</span> brûlantes
         </button>
       )}
+      {/* CRED-3 (revue externe 12/07) : « 80 dossiers (+36 sans identité) » pour 167 chaudes ne
+          s'additionnait pas à l'œil. Les PARCELLES sont l'unité de la somme : avec dossier +
+          personnes physiques = le compteur chaudes affiché juste au-dessus. */}
       {stats.data?.dossiers_chaudes != null && (stats.data.chaude > 0) && (
-        <p className="mt-1 shrink-0 text-[11px] text-txt-dim" title="La vraie unité de prospection : un propriétaire = un dossier, quel que soit son nombre de parcelles. Identification par SIREN (personnes morales) — les personnes physiques n'ont pas d'identité en base (doctrine).">
-          soit <span className="font-medium text-txt">{fmt(stats.data.dossiers_chaudes)}</span> dossier{stats.data.dossiers_chaudes > 1 ? 's' : ''} propriétaire identifié{stats.data.dossiers_chaudes > 1 ? 's' : ''}
-          {(stats.data.chaudes_sans_identite ?? 0) > 0 && <> (+{fmt(stats.data.chaudes_sans_identite ?? 0)} parcelle{(stats.data.chaudes_sans_identite ?? 0) > 1 ? 's' : ''} sans identité)</>}
+        <p data-dossiers-detail className="mt-1 shrink-0 text-[11px] leading-snug text-txt-dim"
+          title="Un propriétaire = un dossier, quel que soit son nombre de parcelles (identification par SIREN, personnes morales DGFiP). Les personnes physiques n'ont pas d'identité en open data — doctrine RGPD : jamais de donnée nominative en base.">
+          soit <span className="font-medium text-txt">{fmt(stats.data.chaudes_avec_dossier ?? 0)}</span> parcelle{(stats.data.chaudes_avec_dossier ?? 0) > 1 ? 's' : ''} avec
+          dossier propriétaire ({fmt(stats.data.dossiers_chaudes)} propriétaire{stats.data.dossiers_chaudes > 1 ? 's' : ''} identifié{stats.data.dossiers_chaudes > 1 ? 's' : ''})
+          {(stats.data.chaudes_sans_identite ?? 0) > 0 && (
+            <> · <span className="font-medium text-txt">{fmt(stats.data.chaudes_sans_identite ?? 0)}</span> personnes
+            physiques — non couvertes par l'open data</>
+          )}
         </p>
       )}
       <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">

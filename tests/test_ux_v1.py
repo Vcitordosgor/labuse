@@ -71,3 +71,12 @@ def test_relabel_dvf_terrain_nomme_la_mediane():
     assert _relabel_dvf_terrain("dvf", nouveau) == nouveau
     assert _relabel_dvf_terrain("amenites", ancien) == ancien
     assert _relabel_dvf_terrain("dvf", None) is None
+
+
+@pytest.mark.db
+def test_stats_compteurs_dossiers_sommables(db_session):
+    """CRED-3 : avec_dossier + sans_identite = chaudes — la somme est lisible par construction."""
+    from labuse.api.app import _q_v2_stats
+    s = _q_v2_stats(db_session, commune="Saint-Pierre")
+    assert s["chaudes_avec_dossier"] + s["chaudes_sans_identite"] == s["chaude"]
+    assert s["dossiers_chaudes"] <= s["chaudes_avec_dossier"]   # N parcelles ≥ N propriétaires

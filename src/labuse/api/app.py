@@ -981,6 +981,9 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
     dossiers = db.execute(text(
         f"""
         SELECT count(DISTINCT pm.siren) FILTER (WHERE pm.siren IS NOT NULL) AS dossiers,
+               -- CRED-3 : le compteur MANQUANT qui rend la somme lisible — les PARCELLES
+               -- couvertes par un dossier (131 + 36 = 167, au lieu de « 80 (+36) » illisible)
+               count(*) FILTER (WHERE pm.siren IS NOT NULL)                 AS chaudes_avec_dossier,
                count(*) FILTER (WHERE pm.siren IS NULL)                     AS sans_identite
         FROM dryrun_parcel_evaluations d
         JOIN parcels p ON p.id = d.parcel_id
@@ -1006,6 +1009,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
         """), {**params, "vth": V_BRULANTE_THRESHOLD}).mappings().one()
     return {**{k: int(v or 0) for k, v in row.items()},
             "dossiers_chaudes": int(dossiers["dossiers"] or 0),
+            "chaudes_avec_dossier": int(dossiers["chaudes_avec_dossier"] or 0),
             "chaudes_sans_identite": int(dossiers["sans_identite"] or 0),
             **{k: int(v or 0) for k, v in v_row.items()}}
 
