@@ -243,6 +243,50 @@ class IngestionRun(Base):
     status: Mapped[str | None] = mapped_column(String(32))
 
 
+# ──────────────── veille_succession + gel des scores (M1 v1.3, 12/07/2026) ────────────────
+
+class ParcelVeilleSuccession(Base):
+    """Tag RADAR PATRIMONIAL (horizon 3-7 ans) — HORS Score V, jamais brûlante.
+
+    PM à identité SIREN confirmée (jamais match nom) ∧ (dirigeant ≥ 70 ans OU SCI dormante).
+    Reconstruite à chaque run Score V (idempotent)."""
+
+    __tablename__ = "parcel_veille_succession"
+
+    parcelle_id: Mapped[str] = mapped_column(String(14), primary_key=True)
+    siren: Mapped[str] = mapped_column(String(9))
+    dirigeant_age: Mapped[int | None] = mapped_column(Integer)   # NULL = motif SCI seule
+    sci_dormante: Mapped[bool] = mapped_column(default=False)
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ScoreSnapshot(Base):
+    """GEL d'un état de scoring (M1 lot 4) — base de la validation forward DVF 2026.
+    Un label ne s'écrase JAMAIS (protocole d'arbitrage : reports/m1-v13/snapshots.md)."""
+
+    __tablename__ = "score_snapshots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    label: Mapped[str] = mapped_column(String(64), unique=True)
+    run_label: Mapped[str] = mapped_column(String(32))
+    brulante_threshold: Mapped[int] = mapped_column(Integer)
+    notes: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ScoreSnapshotParcelle(Base):
+    __tablename__ = "score_snapshot_parcelles"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    snapshot_id: Mapped[int] = mapped_column(ForeignKey("score_snapshots.id", ondelete="CASCADE"), index=True)
+    parcelle_id: Mapped[str] = mapped_column(String(14), index=True)
+    statut: Mapped[str | None] = mapped_column(String(24))
+    v_score: Mapped[int | None] = mapped_column(Integer)
+    v_band: Mapped[str | None] = mapped_column(String(8))
+    brulante: Mapped[bool] = mapped_column(default=False)
+    veille_succession: Mapped[bool] = mapped_column(default=False)
+
+
 # ─────────────────────── source_checks (VUES item 4, 12/07/2026) ───────────────────────
 
 class SourceCheck(Base):
