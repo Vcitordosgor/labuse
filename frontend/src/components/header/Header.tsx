@@ -51,7 +51,7 @@ function Omnibox() {
   }
 
   return (
-    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 pl-3 pr-1.5 focus-within:border-mint">
+    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 pl-3 pr-[3px] focus-within:border-mint">
       <input ref={ref} data-omnibox value={query} onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && onEnter()}
         placeholder="Rechercher : commune, IDU (AB 0234)…"
@@ -222,20 +222,20 @@ function CommuneSelect() {
               <span className="font-mono text-[11px] text-txt-dim">24 communes</span>
             </button>
             <div className="mx-3 my-1 border-t border-line" />
+            {/* VUES item 6 (12/07) : les « N chaudes » par ligne disparaissent (bruit de
+                vente dans un simple sélecteur de périmètre) ; le ⓘ devient un lien explicite
+                « voir la fiche commune → » — même action (volet contexte SRU/ANRU/PLH/marché). */}
             {(communes.data ?? []).map((c) => (
               <div key={c.insee} className={`flex items-center rounded-md hover:bg-surface-3 ${commune === c.commune ? 'bg-surface-3' : ''}`}>
                 <button onClick={() => pick(c.commune)}
-                  className={`flex min-w-0 flex-1 items-center justify-between px-3 py-1.5 text-left text-xs ${commune === c.commune ? 'text-mint' : 'text-txt'}`}>
-                  <span>{c.commune} <span className="font-mono text-[11px] text-txt-dim">{c.insee}</span></span>
-                  <span className="font-mono text-[11px]">
-                    {c.evaluees === 0
-                      ? <span className="text-txt-dim">en calcul…</span>
-                      : <span className={c.chaudes > 0 ? 'text-mint' : 'text-txt-dim'}>{c.chaudes} chaude{c.chaudes > 1 ? 's' : ''}</span>}
-                  </span>
+                  className={`min-w-0 flex-1 px-3 py-1.5 text-left text-xs ${commune === c.commune ? 'text-mint' : 'text-txt'}`}>
+                  {c.commune} <span className="font-mono text-[11px] text-txt-dim">{c.insee}</span>
                 </button>
-                <button onClick={() => { setContexteCommune(c.commune); setOpen(false) }}
-                  className="shrink-0 px-2 py-1.5 text-[11px] text-txt-dim hover:text-[#B497F0]"
-                  title={`Contexte de ${c.commune} — SRU, ANRU, PLH, marché logement`}>ⓘ</button>
+                <button data-fiche-commune onClick={() => { setContexteCommune(c.commune); setOpen(false) }}
+                  className="shrink-0 whitespace-nowrap px-3 py-1.5 text-[11px] text-txt-dim hover:text-mint"
+                  title={`Fiche de ${c.commune} — SRU, ANRU, PLH, marché logement (sources officielles)`}>
+                  voir la fiche commune →
+                </button>
               </div>
             ))}
             {communes.isLoading && <p className="p-3 text-xs text-txt-dim">Chargement…</p>}
