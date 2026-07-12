@@ -45,6 +45,7 @@ export interface ParcelResult {
   cluster?: number | null   // taille du groupe « même propriétaire » parmi les chaudes (île)
   proprio?: string | null
   v_score?: number | null
+  v_dernier_signal?: string | null   // CRED-4 : date du signal V daté le plus récent
   v_band?: VBand | null
   owner_type?: OwnerType | null
   brulante?: boolean
@@ -59,6 +60,7 @@ export interface Stats {
   // dossiers = propriétaires uniques identifiés (SIREN) parmi les chaudes ; le reliquat
   // « sans identité » est affiché tel quel (honnêteté : jamais un total prétendu exact)
   dossiers_chaudes?: number
+  chaudes_avec_dossier?: number   // CRED-3 : parcelles chaudes COUVERTES par un dossier (la somme redevient lisible)
   chaudes_sans_identite?: number
   chaude_evenement?: number   // décomposition « dont N par événement » (survol du compteur)
   brulantes?: number          // 🔥 chaudes Q×A ∧ V ≥ seuil (tier combiné)

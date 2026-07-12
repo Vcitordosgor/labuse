@@ -36,7 +36,11 @@ class DvfLayer(Layer):
             if stats["count"] > 0:
                 count = stats["count"]
                 em2 = stats.get("median_eur_m2")
-                em2_txt = f"{em2:,.0f} €/m²".replace(",", " ") if em2 else "prix/m² n/d"
+                # CRED-2 (revue externe 12/07) : cette médiane est un prix au m² de TERRAIN
+                # (valeur ÷ surface terrain, tous types de biens) — la NOMMER, sinon elle se
+                # lit comme un prix bâti (699 vs 2 745 €/m² sur la même fiche, incompréhensible).
+                em2_txt = (f"terrain {em2:,.0f} €/m² (valeur ÷ surface terrain, tous biens)".replace(",", " ")
+                           if em2 else "prix/m² n/d")
                 detail = f"Marché : {count} mutation(s) ≤ {radius} m / {years} ans, médiane {em2_txt}."
                 # magnitude = mélange borné liquidité + niveau de prix (terrain).
                 liq = max(0.0, min(1.0, count / liq_ref)) if liq_ref > 0 else 0.0

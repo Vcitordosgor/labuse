@@ -20,6 +20,7 @@ export interface ParcelProps {
   proprio?: string | null
   centroid?: LngLat | null // calculé une fois côté client (filtre zone)
   v_score?: number | null  // Score V (Vendabilité, Stage 3)
+  v_dernier_signal?: string | null   // CRED-4 : fraîcheur du dernier signal daté
   v_band?: string | null
   owner_type?: string | null
   brulante?: boolean

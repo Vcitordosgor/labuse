@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
-import { BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
+import { ageSignal, BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
 import { Loading } from '../Loading'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -121,6 +121,15 @@ function VSignalRow({ s }: { s: VSignal }) {
           <span className="shrink-0 rounded-full bg-surface-3 px-1.5 text-[8.5px] text-txt-dim" title={`Famille ${s.famille}`}>
             {FAMILLE_LABEL[s.famille] ?? s.famille}
           </span>
+          {/* CRED-4 : le statut des procédures saute aux yeux (en cours / clôturée) */}
+          {/en cours/i.test(s.label) && (
+            <span data-v-statut="en-cours" className="shrink-0 rounded-full bg-[#3a1614] px-1.5 text-[8.5px] font-semibold text-st-ecartee"
+              title="Procédure toujours ouverte au dernier avis BODACC ingéré">EN COURS</span>
+          )}
+          {/clôtur/i.test(s.label) && (
+            <span data-v-statut="cloturee" className="shrink-0 rounded-full border border-line-2 px-1.5 text-[8.5px] font-medium text-txt-dim"
+              title="Procédure clôturée — le signal reste pertinent tant que la parcelle est au nom de la société">CLÔTURÉE</span>
+          )}
         </div>
         {s.ref && <div className="text-[11px] leading-snug text-txt-mut">{s.ref}</div>}
         <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
@@ -134,7 +143,17 @@ function VSignalRow({ s }: { s: VSignal }) {
               match {Math.round(s.match.confiance * 100)} %
             </span>
           )}
-          {s.date_evenement && <span className="ml-auto shrink-0 font-mono">{s.date_evenement}</span>}
+          {/* CRED-4 : l'ÂGE du signal d'un coup d'œil — pastille < 6 mois / 6-18 / > 18 */}
+          {s.date_evenement && (() => {
+            const a = ageSignal(s.date_evenement)!
+            return (
+              <span className="ml-auto flex shrink-0 items-center gap-1.5 font-mono"
+                title={`Signal daté du ${new Date(s.date_evenement).toLocaleDateString('fr-FR')} — ${a.label}`}>
+                <span data-v-age className="h-2 w-2 rounded-full" style={{ background: a.color }} />
+                {a.label} · {s.date_evenement}
+              </span>
+            )
+          })()}
         </div>
       </div>
     </div>
@@ -369,7 +388,7 @@ function Calculette({ idu }: { idu: string }) {
           <div data-calc-indispo>
             <p className="text-st-creuser">{d.message ?? 'Charge foncière non calculable.'}</p>
             {d.marche?.median != null && (
-              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie secteur : <b className="text-mint">{Number(d.marche.median).toLocaleString('fr-FR')} €/m²</b> ({d.marche.fiabilite}).</p>
+              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie bâti secteur : <b className="text-mint">{Number(d.marche.median).toLocaleString('fr-FR')} €/m²</b> ({d.marche.fiabilite}).</p>
             )}
           </div>
         )}
@@ -378,7 +397,7 @@ function Calculette({ idu }: { idu: string }) {
             {/* le SOURCÉ (lecture seule) — ce que LABUSE sait */}
             <p className="text-[11px] text-txt-dim">
               LABUSE (sourcé) : SDP vendable <b className="text-txt">{Number(d.shab_vendable_m2).toLocaleString('fr-FR')} m²</b> ·
-              prix de sortie <b className="text-txt">{Number(d.prix_sortie_median).toLocaleString('fr-FR')} €/m²</b> ·
+              prix de sortie bâti <b className="text-txt">{Number(d.prix_sortie_median).toLocaleString('fr-FR')} €/m²</b> ·
               terrain <b className="text-txt">{Number(d.terrain_m2).toLocaleString('fr-FR')} m²</b>
             </p>
             {/* les HYPOTHÈSES — saisies par le promoteur */}
@@ -562,8 +581,10 @@ function BilanTab({ idu }: { idu: string }) {
         <Sec t="CAPACITÉ">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</Sec>
       )}
       {b.marche?.median != null && (
-        <Sec t="MARCHÉ (prix de sortie secteur)">
-          médiane <b className="text-mint">{Number(b.marche.median).toLocaleString('fr-FR')} €/m²</b> ({b.marche.type_prix},
+        /* CRED-2 : cette médiane est un prix BÂTI (par type de bien) — la nommer, pour qu'elle
+           coexiste lisiblement avec la « médiane terrain » de l'onglet Marché. */
+        <Sec t="MARCHÉ — PRIX DE SORTIE BÂTI (SECTEUR)">
+          médiane bâti <b className="text-mint">{Number(b.marche.median).toLocaleString('fr-FR')} €/m²</b> ({b.marche.type_prix},
           {' '}{b.marche.n} ventes ≤ {Math.round(b.marche.radius_m)} m) · fiabilité <b>{b.marche.fiabilite}</b>
           {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
           {/* P14 : fraîcheur DVF — de QUAND datent les prix (période réelle en base) */}
@@ -826,6 +847,23 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             )}
             <EquipementsBadges idu={idu} />
+            {/* CRED-1 (revue externe 12/07) : le « pas d'accès direct » était une ligne neutre
+                enterrée dans Marché — un Q 91 s'affichait sans que l'enclavement possible saute
+                aux yeux. Remonté ICI, au niveau des scores, en avertissement HONNÊTE : le signal
+                n'est PAS pondéré (BD TOPO = axes publics ; dessertes privées et servitudes de
+                passage n'y figurent pas — 293 078 parcelles concernées, trop de faux positifs
+                pour un malus en l'état). */}
+            {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
+              <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2">
+                <span aria-hidden className="text-st-creuser">⚠</span>
+                <p className="text-[11px] leading-snug text-st-creuser">
+                  <b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact de la parcelle.
+                  <span className="text-txt-mut"> Signal informatif, non pondéré dans les scores : la BD TOPO
+                  trace les voies publiques — une desserte privée ou une servitude de passage n'y figure pas.
+                  À lever sur place ou au plan cadastral avant d'engager le dossier.</span>
+                </p>
+              </div>
+            )}
             <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen tip={SCORE_TIP.q} />
             <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}

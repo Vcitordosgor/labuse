@@ -845,6 +845,9 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
                (d.matrice_statut = 'chaude' AND vs.v_score >= :vth) AS brulante,
+               -- CRED-4 : fraîcheur du signal V daté le plus récent (BODACC/cessation/DPE)
+               (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
+                 WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal,
                (SELECT array_agg(s0->>'code') FROM jsonb_array_elements(vs.signals) s0) AS v_sig
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -892,6 +895,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
             "cluster": int(r["cluster"]) if r["cluster"] else None,
             "proprio": r["proprio"],
             "v_score": r["v_score"],
+            "v_dernier_signal": r["v_dernier_signal"],
             "v_band": r["v_band"],
             "owner_type": r["owner_type"],
             "brulante": bool(r["brulante"]),
@@ -917,6 +921,9 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                (ev.parcel_id IS NOT NULL) AS evenement_rouge,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
+               -- CRED-4 : fraîcheur du signal V daté le plus récent (BODACC/cessation/DPE)
+               (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
+                 WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal,
                (d.matrice_statut = 'chaude' AND vs.v_score >= :vth) AS brulante
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -951,6 +958,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "cluster": int(r["cluster"]) if r["cluster"] else None,
         "proprio": r["proprio"],
         "v_score": r["v_score"], "v_band": r["v_band"], "owner_type": r["owner_type"],
+        "v_dernier_signal": r["v_dernier_signal"],
         "brulante": bool(r["brulante"]),
     } for r in rows]
 
@@ -981,6 +989,9 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
     dossiers = db.execute(text(
         f"""
         SELECT count(DISTINCT pm.siren) FILTER (WHERE pm.siren IS NOT NULL) AS dossiers,
+               -- CRED-3 : le compteur MANQUANT qui rend la somme lisible — les PARCELLES
+               -- couvertes par un dossier (131 + 36 = 167, au lieu de « 80 (+36) » illisible)
+               count(*) FILTER (WHERE pm.siren IS NOT NULL)                 AS chaudes_avec_dossier,
                count(*) FILTER (WHERE pm.siren IS NULL)                     AS sans_identite
         FROM dryrun_parcel_evaluations d
         JOIN parcels p ON p.id = d.parcel_id
@@ -1006,6 +1017,7 @@ def _q_v2_stats(db: Session, commune: str | None, run_label: str = Q_A_RUN_LABEL
         """), {**params, "vth": V_BRULANTE_THRESHOLD}).mappings().one()
     return {**{k: int(v or 0) for k, v in row.items()},
             "dossiers_chaudes": int(dossiers["dossiers"] or 0),
+            "chaudes_avec_dossier": int(dossiers["chaudes_avec_dossier"] or 0),
             "chaudes_sans_identite": int(dossiers["sans_identite"] or 0),
             **{k: int(v or 0) for k, v in v_row.items()}}
 
@@ -1023,6 +1035,18 @@ _ONGLET = {
     "proprio": {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire", "assemblage"},
 }
 _LAYER_ONGLET = {layer: onglet for onglet, layers in _ONGLET.items() for layer in layers}
+
+
+#: CRED-2 (revue externe 12/07) — les lignes DVF STOCKÉES des runs antérieurs disent
+#: « médiane 699 €/m² » sans dire que c'est un prix de TERRAIN (valeur ÷ surface terrain,
+#: tous biens) : illisible face à la médiane BÂTI du Bilan (2 745 €/m²). Re-libellé à la
+#: LECTURE (les données stockées ne bougent pas) ; les nouveaux runs sont nommés à la
+#: source (cascade/layers/phase2.py). Fonction pure, testée.
+def _relabel_dvf_terrain(layer: str, detail: str | None) -> str | None:
+    if layer == "dvf" and detail and "médiane " in detail and "terrain" not in detail:
+        return detail.replace("médiane ", "médiane terrain ", 1).replace(
+            " €/m².", " €/m² (valeur ÷ surface terrain, tous biens).", 1)
+    return detail
 
 
 def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
@@ -1056,7 +1080,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
             "result": r["result"],
             "severity": r["severity"],
             "weight": round(w) if w is not None else None,
-            "detail": r["detail"],
+            "detail": _relabel_dvf_terrain(r["layer_name"], r["detail"]),
             "source": r["source"],
             "source_table": r["source_table"],
             "source_id": r["source_id"],
