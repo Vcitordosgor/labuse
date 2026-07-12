@@ -369,7 +369,7 @@ function Calculette({ idu }: { idu: string }) {
           <div data-calc-indispo>
             <p className="text-st-creuser">{d.message ?? 'Charge foncière non calculable.'}</p>
             {d.marche?.median != null && (
-              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie secteur : <b className="text-mint">{Number(d.marche.median).toLocaleString('fr-FR')} €/m²</b> ({d.marche.fiabilite}).</p>
+              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie bâti secteur : <b className="text-mint">{Number(d.marche.median).toLocaleString('fr-FR')} €/m²</b> ({d.marche.fiabilite}).</p>
             )}
           </div>
         )}
@@ -378,7 +378,7 @@ function Calculette({ idu }: { idu: string }) {
             {/* le SOURCÉ (lecture seule) — ce que LABUSE sait */}
             <p className="text-[11px] text-txt-dim">
               LABUSE (sourcé) : SDP vendable <b className="text-txt">{Number(d.shab_vendable_m2).toLocaleString('fr-FR')} m²</b> ·
-              prix de sortie <b className="text-txt">{Number(d.prix_sortie_median).toLocaleString('fr-FR')} €/m²</b> ·
+              prix de sortie bâti <b className="text-txt">{Number(d.prix_sortie_median).toLocaleString('fr-FR')} €/m²</b> ·
               terrain <b className="text-txt">{Number(d.terrain_m2).toLocaleString('fr-FR')} m²</b>
             </p>
             {/* les HYPOTHÈSES — saisies par le promoteur */}
@@ -562,8 +562,10 @@ function BilanTab({ idu }: { idu: string }) {
         <Sec t="CAPACITÉ">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</Sec>
       )}
       {b.marche?.median != null && (
-        <Sec t="MARCHÉ (prix de sortie secteur)">
-          médiane <b className="text-mint">{Number(b.marche.median).toLocaleString('fr-FR')} €/m²</b> ({b.marche.type_prix},
+        /* CRED-2 : cette médiane est un prix BÂTI (par type de bien) — la nommer, pour qu'elle
+           coexiste lisiblement avec la « médiane terrain » de l'onglet Marché. */
+        <Sec t="MARCHÉ — PRIX DE SORTIE BÂTI (SECTEUR)">
+          médiane bâti <b className="text-mint">{Number(b.marche.median).toLocaleString('fr-FR')} €/m²</b> ({b.marche.type_prix},
           {' '}{b.marche.n} ventes ≤ {Math.round(b.marche.radius_m)} m) · fiabilité <b>{b.marche.fiabilite}</b>
           {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
           {/* P14 : fraîcheur DVF — de QUAND datent les prix (période réelle en base) */}

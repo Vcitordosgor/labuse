@@ -1025,6 +1025,18 @@ _ONGLET = {
 _LAYER_ONGLET = {layer: onglet for onglet, layers in _ONGLET.items() for layer in layers}
 
 
+#: CRED-2 (revue externe 12/07) — les lignes DVF STOCKÉES des runs antérieurs disent
+#: « médiane 699 €/m² » sans dire que c'est un prix de TERRAIN (valeur ÷ surface terrain,
+#: tous biens) : illisible face à la médiane BÂTI du Bilan (2 745 €/m²). Re-libellé à la
+#: LECTURE (les données stockées ne bougent pas) ; les nouveaux runs sont nommés à la
+#: source (cascade/layers/phase2.py). Fonction pure, testée.
+def _relabel_dvf_terrain(layer: str, detail: str | None) -> str | None:
+    if layer == "dvf" and detail and "médiane " in detail and "terrain" not in detail:
+        return detail.replace("médiane ", "médiane terrain ", 1).replace(
+            " €/m².", " €/m² (valeur ÷ surface terrain, tous biens).", 1)
+    return detail
+
+
 def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     """Fiche premium v2 (dryrun) : en-tête matrice + lignes cascade TRACÉES (axe Q/A, onglet,
     source cliquable, date), flags, événement. « La traçabilité EST le produit »."""
@@ -1056,7 +1068,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
             "result": r["result"],
             "severity": r["severity"],
             "weight": round(w) if w is not None else None,
-            "detail": r["detail"],
+            "detail": _relabel_dvf_terrain(r["layer_name"], r["detail"]),
             "source": r["source"],
             "source_table": r["source_table"],
             "source_id": r["source_id"],

@@ -55,3 +55,19 @@ def test_stub_traduit_toujours_les_recherches_legitimes(q, attendu):
     for cle, val in attendu.items():
         assert filters[cle] == val
     assert explication.startswith("Filtres appliqués")
+
+
+def test_relabel_dvf_terrain_nomme_la_mediane():
+    """CRED-2 : la médiane DVF de la cascade est un prix de TERRAIN — nommée à la lecture
+    pour les runs stockés, à la source pour les futurs runs."""
+    from labuse.api.app import _relabel_dvf_terrain
+
+    ancien = "Marché : 10 mutation(s) ≤ 250 m / 5 ans, médiane 699 €/m². Contexte de marché favorable."
+    assert _relabel_dvf_terrain("dvf", ancien) == (
+        "Marché : 10 mutation(s) ≤ 250 m / 5 ans, médiane terrain 699 €/m² "
+        "(valeur ÷ surface terrain, tous biens). Contexte de marché favorable.")
+    # déjà nommé (nouveau run) → intouché ; autre couche → intouchée ; None → None
+    nouveau = "Marché : 3 mutation(s) ≤ 250 m / 5 ans, médiane terrain 512 €/m² (valeur ÷ surface terrain, tous biens)."
+    assert _relabel_dvf_terrain("dvf", nouveau) == nouveau
+    assert _relabel_dvf_terrain("amenites", ancien) == ancien
+    assert _relabel_dvf_terrain("dvf", None) is None
