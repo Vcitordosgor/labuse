@@ -311,12 +311,15 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
             prog = _stub_programme(body.text.lower())
             if prog:
                 _log(db, "search", "stub-fallback", True)
-                return {"stub": True, "programme": prog, "explanation": "Programme détecté (repli stub)."}
+                return {"stub": True, "programme": prog,
+                        "explanation": "Programme détecté → formulaire Faisabilité pré-rempli (le moteur déterministe calcule)."}
             filters, explanation = _stub_nl(body.text)
             _log(db, "search", "stub-fallback", True)
             if filters is None:
                 return {"stub": True, "out_of_scope": explanation}
-            return {"stub": True, "filters": filters, "explanation": explanation + " (repli stub)"}
+            # UX V1 item 2 : plus de « (repli stub) » face client — le front affiche le badge
+            # « mode mots-clés » depuis le drapeau stub, l'explication reste factuelle.
+            return {"stub": True, "filters": filters, "explanation": explanation}
         _note_succes()
         raw = msg.content[0].text.strip()
         _log(db, "search", MODEL_NL, False, msg.usage.input_tokens, msg.usage.output_tokens)

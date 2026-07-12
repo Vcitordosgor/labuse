@@ -28,7 +28,8 @@ export function useApplySearch() {
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const { setFilters, setView, setCommune, setVerdict, setFlyTo, setIaRestitution } = useApp()
 
-  return async (raw: Record<string, unknown>, phrase = 'parcelles correspondent — voici les 3 meilleures') => {
+  return async (raw: Record<string, unknown>, phrase = 'parcelles correspondent — voici les 3 meilleures',
+                meta?: { explanation?: string | null; stub?: boolean }) => {
     // la commune est un filtre de PÉRIMÈTRE : un secteur d'UNE commune = la commune elle-même
     let communes = (raw.communes as string[]) ?? []
     let communeSeule = typeof raw.commune === 'string' && raw.commune ? raw.commune : null
@@ -62,6 +63,10 @@ export function useApplySearch() {
         n: st.chaude + st.a_surveiller + st.a_creuser,
         phrase,
         top: top.slice(0, 3).map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score })),
+        // item 2 (UX V1) : l'explication du serveur (et le drapeau stub) restent VISIBLES
+        // dans la restitution — pas seulement sur la vue IA qu'on vient de quitter
+        explanation: meta?.explanation ?? null,
+        stub: !!meta?.stub,
       })
     } catch { /* restitution best-effort — les filtres sont déjà posés */ }
   }

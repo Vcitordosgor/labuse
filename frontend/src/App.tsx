@@ -72,6 +72,22 @@ function IaRestitution() {
         </p>
         <button onClick={() => setIaRestitution(null)} className="ml-2 text-txt-dim hover:text-txt" title="Fermer le résultat">✕</button>
       </div>
+      {/* Item 2 (UX V1) : la traduction EXACTE du serveur, DANS la restitution. En mode
+          mots-clés (stub), le badge + la phrase disent ce qui n'a PAS été traduit — un repli
+          ne se fait jamais passer pour une vraie traduction. */}
+      {(iaRestitution.explanation || iaRestitution.stub) && (
+        <p data-ia-explication className="mt-2 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-1.5 text-[11px] leading-snug text-txt-mut">
+          {iaRestitution.stub && (
+            <span data-ia-badge-stub className="mr-1.5 inline-block rounded-full border border-st-creuser/50 bg-[#211a10] px-1.5 py-0.5 text-[10px] font-medium text-st-creuser">
+              mode mots-clés
+            </span>
+          )}
+          {iaRestitution.explanation}
+          {iaRestitution.stub && (
+            <span className="text-txt-dim"> Les critères absents de cette liste n'ont pas été traduits — réessayez plus tard pour la traduction complète.</span>
+          )}
+        </p>
+      )}
       <button data-ia-voir-tout onClick={voirTout}
         className="mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg border border-mint/40 bg-mint/10 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20">
         Voir les {count.toLocaleString('fr-FR')} résultats dans la liste →

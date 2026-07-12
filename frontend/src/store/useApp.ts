@@ -56,6 +56,10 @@ export interface IaRestitution {
   top: IaTop[]
   // présent = restitution de PROJET : active « Enregistrer ce projet » + « Exporter PDF »
   projet?: { nom: string; fiche: Record<string, unknown>; id?: number; programme?: Record<string, unknown> | null } | null
+  // Item 2 (UX V1) : la traduction EXACTE du serveur voyage jusqu'à la restitution — l'utilisateur
+  // ne prend JAMAIS un repli mots-clés pour une vraie traduction (badge « mode mots-clés »).
+  explanation?: string | null
+  stub?: boolean
 }
 
 export type Basemap = 'dark' | 'plan' | 'ortho'
