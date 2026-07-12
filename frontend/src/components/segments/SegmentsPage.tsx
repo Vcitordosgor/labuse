@@ -415,6 +415,70 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
   )
 }
 
+// ── Ajout B (UX V1) : copy COMMERCIALE de la galerie — un picto par offre + une phrase de
+// bénéfice client (zéro jargon filtre). La description filtre (argumentaire) passe en
+// sous-texte. Le compteur du parc piscines est RÉEL (count du segment), jamais codé en dur.
+const BENEFICE_PAR_SLUG: Record<string, (n: number | null) => string> = {
+  'pergolas-terrasses': () => 'Les maisons avec du jardin nu à équiper — vos prochains chantiers d\'ombre et de terrasse.',
+  'paysagistes': () => 'Grands jardins, végétation dense : les adresses où un paysagiste a du travail.',
+  'piscinistes-construction': () => 'Du jardin, de la place, pas encore de bassin : vos prospects installation.',
+  'parc-piscines-entretien': (n) => n != null
+    ? `${n.toLocaleString('fr-FR')} piscines localisées sur l'île : entretien, rénovation, sécurité.`
+    : 'Des piscines localisées sur l\'île : entretien, rénovation, sécurité.',
+  'pv-residentiel': () => 'Toits bien exposés, factures élevées, pas de panneaux : le solaire qui a du sens.',
+}
+const PICTO_PAR_SLUG: Record<string, JSX.Element> = {
+  // pergola : toile + deux montants
+  'pergolas-terrasses': (
+    <><path d="M3 7.5 Q10 4.5 17 7.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="5" y1="7" x2="5" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="15" y1="7" x2="15" y2="16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="3.5" y1="16" x2="16.5" y2="16" stroke="currentColor" strokeWidth="1.3" opacity="0.6" /></>
+  ),
+  // feuille
+  'paysagistes': (
+    <><path d="M10 16.5 C4.5 13 4.5 6.5 10 3.5 C15.5 6.5 15.5 13 10 16.5 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <line x1="10" y1="6" x2="10" y2="16.5" stroke="currentColor" strokeWidth="1.2" opacity="0.6" /></>
+  ),
+  // bassin en creusement : vagues + truelle (trait plus)
+  'piscinistes-construction': (
+    <><path d="M3 13 Q5 11.5 7 13 T11 13 T15 13 T17 13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="13.5" y1="3.5" x2="13.5" y2="8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="11" y1="6" x2="16" y2="6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></>
+  ),
+  // eau : double vague
+  'parc-piscines-entretien': (
+    <><path d="M3 8.5 Q5 7 7 8.5 T11 8.5 T15 8.5 T17 8.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M3 13 Q5 11.5 7 13 T11 13 T15 13 T17 13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.65" /></>
+  ),
+  // soleil + panneau
+  'pv-residentiel': (
+    <><circle cx="6.5" cy="6.5" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <line x1="6.5" y1="2" x2="6.5" y2="3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <line x1="2" y1="6.5" x2="3" y2="6.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <rect x="9.5" y="10" width="7.5" height="6" rx="0.8" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <line x1="13.25" y1="10" x2="13.25" y2="16" stroke="currentColor" strokeWidth="1.1" opacity="0.6" /></>
+  ),
+}
+//: repli par catégorie pour les presets créés après coup (dupliqués, variantes admin)
+const PICTO_PAR_CATEGORIE: Record<string, JSX.Element> = {
+  exterieur: PICTO_PAR_SLUG['paysagistes'],
+  renovation: (
+    <><path d="M4 16 V8 L10 3.5 L16 8 V16 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M8 16 V11 H12 V16" fill="none" stroke="currentColor" strokeWidth="1.3" /></>
+  ),
+  energie: (
+    <path d="M11 3 L5.5 11 H9.5 L9 17 L14.5 9 H10.5 Z" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
+  ),
+  securite: (
+    <path d="M10 3.5 L16 5.5 V10 C16 13.5 13.5 15.8 10 17 C6.5 15.8 4 13.5 4 10 V5.5 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+  ),
+  foncier_bati: (
+    <><path d="M3.5 9 L10 3.5 L16.5 9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.5 8.5 V16 H14.5 V8.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" /></>
+  ),
+}
+
 // ───────────────────────── carte d'un preset (galerie) ─────────────────────────
 function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome; onOpen: () => void }) {
   const defs = useMemo(() => new Map(home.filtres.map((f) => [f.cle, f])), [home.filtres])
@@ -457,13 +521,27 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
       p.actif ? 'border-line-2 hover:border-mint' : 'border-line-2 opacity-50'}`}>
       <button onClick={onOpen} className="block w-full text-left" data-seg-preset-open>
         <div className="flex items-start justify-between gap-2">
-          <span className="text-[12.5px] font-medium text-txt-hi">{p.nom}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            {/* Ajout B (UX V1) : un picto par offre — l'artisan reconnaît son métier d'un œil */}
+            <span data-seg-picto className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-mint/10 text-mint">
+              <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">
+                {PICTO_PAR_SLUG[p.slug] ?? PICTO_PAR_CATEGORIE[p.categorie] ?? PICTO_PAR_CATEGORIE.foncier_bati}
+              </svg>
+            </span>
+            <span className="truncate text-[12.5px] font-medium text-txt-hi">{p.nom}</span>
+          </span>
           <span data-seg-badge className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider ${
             partiel ? 'border-[#E8B44C]/40 bg-[#E8B44C]/10 text-[#E8B44C]' : 'border-mint/40 bg-mint/10 text-mint'}`}
             title={partiel ? p.filtres_inactifs.map((f) => `${f.libelle} — ${f.mandat ? `mandat ${f.mandat}` : f.raison ?? ''}`).join('\n') : 'toutes les sources de données sont disponibles'}>
             {partiel ? `partiel · ${p.filtres_inactifs.length}` : 'complet'}
           </span>
         </div>
+        {/* Ajout B : LA phrase de bénéfice client — le pourquoi, pas le comment */}
+        {BENEFICE_PAR_SLUG[p.slug] && (
+          <p data-seg-benefice className="mt-1.5 text-xs leading-snug text-txt">
+            {BENEFICE_PAR_SLUG[p.slug](p.count)}
+          </p>
+        )}
         <div className="mt-1 flex items-baseline gap-1.5">
           <span data-seg-preset-count className="font-display text-lg font-bold text-mint">{fmtN(p.count)}</span>
           <span className="text-[11px] text-txt-dim">parcelles</span>
@@ -478,7 +556,12 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
           )}
           {catnatOn && <span className="ml-auto rounded-md bg-[#E8695A]/15 px-1.5 py-0.5 text-[9px] font-medium text-[#f0a29a]">CATNAT actif</span>}
         </div>
-        {p.argumentaire && <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{p.argumentaire}</p>}
+        {/* la description filtre (argumentaire) passe en SOUS-TEXTE quand un bénéfice existe */}
+        {p.argumentaire && (
+          <p data-seg-argumentaire className={`mt-1.5 text-[10.5px] leading-snug text-txt-dim ${BENEFICE_PAR_SLUG[p.slug] ? 'opacity-80' : ''}`}>
+            {p.argumentaire}
+          </p>
+        )}
         <div className="mt-2 flex flex-wrap gap-1">
           {(p.filtres ?? []).map((f, i) => (
             <span key={i} className="rounded-md border border-line-2 bg-surface-1 px-1.5 py-0.5 text-[11px] text-txt-mut">
