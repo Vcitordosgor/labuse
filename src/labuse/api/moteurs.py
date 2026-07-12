@@ -23,6 +23,12 @@ def get_db():
     yield from _g()
 
 
+def _v2run(db: Session) -> str | None:
+    """Run scoring v2 servi (M5.1 lot 3.1) — import différé (cycle app ↔ moteurs)."""
+    from .app import _score_v2_run_id
+    return _score_v2_run_id(db)
+
+
 # ───────────────────────── M15 — SIMULATEUR PLU ─────────────────────────
 # « Et si cette zone AU passait en U ? » — recalcul À BLANC, JAMAIS persisté.
 # Méthode (documentée, honnête) : ESTIMATION PAR ANALOGIE — la SDP estimée des parcelles AU
@@ -53,14 +59,17 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
         {"c": commune, "run": RUN}).scalar() or 0.0
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut_actuel, d.q_score,
+               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM dryrun_cascade_results cr
         JOIN parcels p ON p.id = cr.parcel_id AND (CAST(:c AS text) IS NULL OR p.commune = :c)
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         WHERE cr.run_label = :run AND cr.layer_name = 'zonage_plu_gpu'
           AND cr.detail LIKE ('%« ' || :z || ' »%') AND p.surface_m2 >= 300
         ORDER BY p.surface_m2 DESC LIMIT 400"""),
-        {"c": commune, "z": zone, "run": RUN}).mappings().all()
+        {"c": commune, "z": zone, "run": RUN, "v2run": _v2run(db)}).mappings().all()
     items = []
     bascules = 0
     for r in rows:
@@ -69,6 +78,7 @@ def simulplu(zone: str, commune: str | None = None, db: Session = Depends(get_db
         bascule = sdp_est >= 300 and r["statut_actuel"] in ("ecartee", "a_creuser")
         bascules += bascule
         items.append({"idu": r["idu"], "surface_m2": r["surface_m2"], "statut_actuel": r["statut_actuel"],
+                      "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                       "q_actuel": r["q_score"], "sdp_estimee_m2": sdp_est, "bascule_potentielle": bascule,
                       "geom": json.loads(r["g"])})
     return {
@@ -97,12 +107,15 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT p.id, p.idu, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
                d.matrice_statut AS statut, d.q_score,
+               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                COALESCE(pm.denomination, 'particulier / personne physique') AS proprietaire
         FROM parcels p
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcelle_personne_morale pm ON pm.idu = p.idu
-        WHERE p.idu = ANY(:idus)"""), {"idus": idus, "run": RUN}).mappings().all()
+        WHERE p.idu = ANY(:idus)"""), {"idus": idus, "run": RUN, "v2run": _v2run(db)}).mappings().all()
     if len(rows) < 2:
         raise HTTPException(404, f"{len(rows)} parcelle(s) trouvée(s) sur {len(idus)}")
     # contiguïté : graphe des adjacences (≤ 1 m) → l'assiette est-elle d'un seul tenant ?
@@ -135,7 +148,8 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
                     "(assiette fusionnée) est à instruire : la vraie SDP peut différer.",
         "proprietaires": owners, "n_proprietaires": len(owners),
         "score_assemblage": score,
-        "items": [{k: r[k] for k in ("idu", "surface_m2", "sdp_residuelle_m2", "statut", "q_score", "proprietaire")}
+        "items": [{**{k: r[k] for k in ("idu", "surface_m2", "sdp_residuelle_m2", "statut", "q_score", "proprietaire")},
+                   "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"])}
                   for r in rows],
     }
 
@@ -153,19 +167,23 @@ def zan(db: Session = Depends(get_db)) -> dict:
     # parcelles « ZAN-compatibles » : artificialisées NON bâties, promues (bonus ocs_ge > 0 au run)
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut, d.q_score,
+               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM dryrun_cascade_results cr
         JOIN parcels p ON p.id = cr.parcel_id
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         WHERE cr.run_label = :run AND cr.layer_name = 'ocs_ge' AND cr.weight_applied > 0
           AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
-        ORDER BY d.q_score DESC LIMIT 400"""), {"run": RUN}).mappings().all()
+        ORDER BY d.q_score DESC LIMIT 400"""), {"run": RUN, "v2run": _v2run(db)}).mappings().all()
     return {
         "bandeau": ("Quotas SAR/SCOT en attente de données officielles — lecture INDICATIVE. "
                     "OCS GE partiel (communes ingérées uniquement). Construire sur de l'artificialisé "
                     "= zéro dette ZAN."),
         "communes": [dict(r) for r in communes],
         "zan_compatibles": [{**{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score")},
+                             "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                              "geom": json.loads(r["g"])} for r in rows],
     }
 

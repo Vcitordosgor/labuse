@@ -44,9 +44,12 @@ def test_source_pour_run_rattache_les_runs_au_catalogue():
 @pytest.mark.parametrize(
     ("q", "attendu"),
     [
-        ("les chaudes de Saint-Pierre", {"commune": "Saint-Pierre", "statuts": ["chaude"]}),
+        # M5.1 : le stub NL émet les TIERS v2 (« brûlante » = tier v2 ; « à surveiller »
+        # n'existe plus → réserve foncière) — plus jamais `statuts` (matrice, deprecated).
+        ("les chaudes de Saint-Pierre", {"commune": "Saint-Pierre", "tiers": ["chaude"]}),
+        ("les brûlantes de Saint-Paul", {"commune": "Saint-Paul", "tiers": ["brulante"]}),
         ("vue mer de plus de 1 000 m²", {"vueMer": True, "surfaceMin": 1000}),
-        ("à surveiller avec pollution", {"statuts": ["a_surveiller"], "flags": ["sol_pollue"]}),
+        ("à surveiller avec pollution", {"tiers": ["reserve_fonciere"], "flags": ["sol_pollue"]}),
     ],
 )
 def test_stub_traduit_toujours_les_recherches_legitimes(q, attendu):
@@ -75,11 +78,13 @@ def test_relabel_dvf_terrain_nomme_la_mediane():
 
 @pytest.mark.db
 def test_stats_compteurs_dossiers_sommables(db_session):
-    """CRED-3 : avec_dossier + sans_identite = chaudes — la somme est lisible par construction."""
+    """CRED-3 (adapté M5.1) : avec_dossier + sans_identite = opportunités v2 (brûlantes +
+    chaudes) — la somme est lisible par construction. La ventilation est par TIER v2."""
     from labuse.api.app import _q_v2_stats
     s = _q_v2_stats(db_session, commune="Saint-Pierre")
-    assert s["chaudes_avec_dossier"] + s["chaudes_sans_identite"] == s["chaude"]
-    assert s["dossiers_chaudes"] <= s["chaudes_avec_dossier"]   # N parcelles ≥ N propriétaires
+    assert s["opportunites"] == s["tiers"]["brulante"] + s["tiers"]["chaude"]
+    assert s["opportunites_avec_dossier"] + s["opportunites_sans_identite"] == s["opportunites"]
+    assert s["dossiers_opportunites"] <= s["opportunites_avec_dossier"]   # N parcelles ≥ N propriétaires
 
 
 @pytest.mark.db

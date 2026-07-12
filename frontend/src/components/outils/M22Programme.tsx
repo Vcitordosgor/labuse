@@ -1,9 +1,9 @@
 import { useMutation } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { postProgramme } from '../../lib/api'
-import { STATUT_META } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 import { VIOLET } from './registry'
+import { TierBadge } from './TierBadge'
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 
@@ -99,8 +99,8 @@ export function M22() {
                 </div>
                 <div className="shrink-0 text-right">
                   <div className="font-display text-sm font-bold" style={{ color: VIOLET }}>×{i.marge_capacite}</div>
-                  <div className="text-[9px]" style={{ color: STATUT_META[i.statut as keyof typeof STATUT_META]?.color }}>
-                    {STATUT_META[i.statut as keyof typeof STATUT_META]?.label}
+                  <div>
+                    <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
                   </div>
                 </div>
               </button>

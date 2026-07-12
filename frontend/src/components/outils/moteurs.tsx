@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addProfile, getProfiles, motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan, runMatch } from '../../lib/api'
-import { STATUT_META } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 import { VIOLET } from './registry'
+import { TierBadge } from './TierBadge'
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 
@@ -123,7 +123,9 @@ export function M16() {
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
                   <span className="text-txt-dim">{fmt(i.surface_m2)} m² · SDP {fmt(i.sdp_residuelle_m2)}</span>
-                  {i.statut && <span className="ml-auto text-[11px]" style={{ color: STATUT_META[i.statut as keyof typeof STATUT_META]?.color }}>{STATUT_META[i.statut as keyof typeof STATUT_META]?.label}</span>}
+                  <span className="ml-auto">
+                    <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
+                  </span>
                 </div>
                 <div className="truncate text-[11px] text-txt-dim">{i.proprietaire}</div>
               </div>
@@ -169,8 +171,8 @@ export function M17() {
             className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] hover:border-[#6b5a96]">
             <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
             <span className="text-txt-dim">{fmt(i.surface_m2)} m²</span>
-            <span className="ml-auto text-[11px]" style={{ color: STATUT_META[i.statut as keyof typeof STATUT_META]?.color }}>
-              {STATUT_META[i.statut as keyof typeof STATUT_META]?.label}
+            <span className="ml-auto">
+              <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
             </span>
           </button>
         ))}

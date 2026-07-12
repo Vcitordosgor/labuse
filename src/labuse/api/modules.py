@@ -33,6 +33,12 @@ def get_db():  # branché sur la session app au moment de l'inclusion (cf. app.p
     yield from _g()
 
 
+def _v2run(db: Session) -> str | None:
+    """Run scoring v2 servi (M5.1 lot 3.1) — import différé (cycle app ↔ modules)."""
+    from .app import _score_v2_run_id
+    return _score_v2_run_id(db)
+
+
 DDL = """
 CREATE TABLE IF NOT EXISTS module_division (
   parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,
@@ -170,16 +176,23 @@ def patrimoine_search(q: str, db: Session = Depends(get_db)) -> list[dict]:
 
 @router.get("/patrimoine")
 def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
+    """M5.1 lot 3.1 : le TIER v2 effectif (étage 0 du run servi prime) est le label
+    principal de chaque parcelle du patrimoine ; le statut matrice reste servi en
+    secondaire (« (matrice : X) » côté UI). Tri par rang P."""
+    from .app import _score_v2_run_id
     rows = db.execute(text("""
         SELECT p.idu, p.commune, p.surface_m2, d.matrice_statut AS statut, d.q_score, d.a_score,
                d.completeness_score, r.sdp_residuelle_m2,
+               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM parcelle_personne_morale pm
         JOIN parcels p ON p.idu = pm.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        WHERE pm.siren = :s ORDER BY d.q_score DESC NULLS LAST"""),
-        {"s": siren, "run": RUN}).mappings().all()
+        WHERE pm.siren = :s ORDER BY s2.rang ASC NULLS LAST, d.q_score DESC NULLS LAST"""),
+        {"s": siren, "run": RUN, "v2run": _score_v2_run_id(db)}).mappings().all()
     bodacc = db.execute(text(
         "SELECT type_procedure, date_annonce FROM v_foncier_sous_pression WHERE siren = :s LIMIT 1"),
         {"s": siren}).mappings().first()
@@ -190,6 +203,7 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
         "sdp_totale_m2": round(sum(r["sdp_residuelle_m2"] or 0 for r in rows)),
         "bodacc": dict(bodacc) if bodacc else None,
         "items": [{**{k: r[k] for k in ("idu", "commune", "statut", "q_score", "a_score", "completeness_score")},
+                   "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                    "surface_m2": round(r["surface_m2"] or 0), "sdp": r["sdp_residuelle_m2"],
                    "geom": json.loads(r["g"])} for r in rows],
     }
@@ -233,11 +247,14 @@ def promesses(commune: str | None = None, months: int = 24, db: Session = Depend
         SELECT s.permit_id, s.type, s.date::date::text AS date, s.raw->>'etat' AS etat,
                s.raw->>'nb_lgt' AS nb_lgt, p.idu, round(p.surface_m2) AS surface_m2,
                d.matrice_statut AS statut, d.q_score,
+               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM sitadel_permits s
         JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
         JOIN parcels p ON p.idu = c.idu
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
           AND s.date < now() - (:m || ' months')::interval
           AND s.raw->>'daact' IS NULL
@@ -246,7 +263,7 @@ def promesses(commune: str | None = None, months: int = 24, db: Session = Depend
                           WHERE cr.run_label = :run AND cr.parcel_id = p.id
                             AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')
         ORDER BY s.date ASC LIMIT 500"""),
-        {"c": commune, "m": months, "run": RUN}).mappings().all()
+        {"c": commune, "m": months, "run": RUN, "v2run": _v2run(db)}).mappings().all()
     # affichage borné à 500 (tri anciens d'abord = les plus « morts ») ; le compte reste honnête
     true_total = len(rows) if len(rows) < 500 else int(db.execute(text("""
         SELECT count(DISTINCT s.id) FROM sitadel_permits s
@@ -262,6 +279,7 @@ def promesses(commune: str | None = None, months: int = 24, db: Session = Depend
     return {"commune": commune or "Toute l'île", "months": months, "total": true_total, "affiches": len(rows),
             "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "idu",
                                             "surface_m2", "statut", "q_score")},
+                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                        "geom": json.loads(r["g"])} for r in rows]}
 
 
@@ -301,18 +319,21 @@ def fantome(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut, d.q_score,
                pm.siren, pm.denomination,
+               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren) AS inpi_introuvable,
                EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false) AS dirigeant_inactif,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         JOIN parcelle_personne_morale pm ON pm.idu = p.idu
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.q_score >= 50 AND pm.groupe NOT IN (1, 2, 3, 4, 9)
           AND pm.siren IS NOT NULL
           AND (NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren)
                OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))
         ORDER BY d.q_score DESC LIMIT 600"""),
-        {"c": commune, "run": RUN}).mappings().all()
+        {"c": commune, "run": RUN, "v2run": _v2run(db)}).mappings().all()
     true_total = len(rows) if len(rows) < 600 else int(db.execute(text(
         """SELECT count(*) FROM parcels p
            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -321,6 +342,7 @@ def fantome(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
              AND pm.groupe NOT IN (1, 2, 3, 4, 9)"""), {"c": commune, "run": RUN}).scalar() or 0)
     return {"total": true_total, "affiches": len(rows), "items": [{
         **{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "siren", "denomination")},
+        "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
         "verrou": "PM introuvable au RNE" if r["inpi_introuvable"] else "dirigeant inactif (RNE)",
         "levier": "notaire / recherche du représentant" if r["inpi_introuvable"] else "rachat de parts / contact liquidateur",
         "geom": json.loads(r["g"]),
@@ -334,14 +356,17 @@ def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut,
                d.q_score, d.a_score, r.sdp_residuelle_m2,
+               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         JOIN spatial_layers q ON q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975)
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
         ORDER BY COALESCE(r.sdp_residuelle_m2, 0) DESC LIMIT 500"""),
-        {"c": commune, "run": RUN}).mappings().all()
+        {"c": commune, "run": RUN, "v2run": _v2run(db)}).mappings().all()
     true_total = len(rows) if len(rows) < 500 else int(db.execute(text(
         """SELECT count(*) FROM parcels p
            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -354,6 +379,7 @@ def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
             "lecture_lls": ("QPV : TVA 2,1 % (au lieu de 8,5 % DOM), abattement TFPB 30 %, "
                             "éligibilité LLS/LLTS renforcée — bilan bailleur à instruire au cas par cas."),
             "items": [{**{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "a_score")},
+                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                        "sdp": r["sdp_residuelle_m2"], "geom": json.loads(r["g"])} for r in rows]}
 
 
@@ -417,20 +443,25 @@ class DueDiligenceIn(BaseModel):
 def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
     import re
     tokens = [t.strip().upper().replace(" ", "") for t in re.split(r"[\n,;]+", body.refs) if t.strip()]
+    v2run = _v2run(db)
     items = []
     for t in tokens[:60]:
         row = db.execute(text("""
             SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2,
                    d.matrice_statut AS statut, d.q_score, d.a_score, d.completeness_score,
+                   s2.tier AS tier_v2, s2.rang AS rang_v2,
+                   (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                    (SELECT count(*) FROM dryrun_cascade_results cr WHERE cr.run_label = :run
                      AND cr.parcel_id = p.id AND cr.result = 'SOFT_FLAG') AS flags,
                    (SELECT count(*) FROM dryrun_cascade_results cr WHERE cr.run_label = :run
                      AND cr.parcel_id = p.id AND cr.result = 'HARD_EXCLUDE') AS exclusions
             FROM parcels p
             LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
             WHERE p.idu = :t OR (p.section || p.numero) = :t OR (p.section || lpad(p.numero, 4, '0')) = :t
-            LIMIT 1"""), {"t": t, "run": RUN}).mappings().first()
-        items.append(dict(row) | {"pdf": f"/parcels/{row['idu']}/export.pdf?source={RUN}"} if row
+            LIMIT 1"""), {"t": t, "run": RUN, "v2run": v2run}).mappings().first()
+        items.append(dict(row) | {"etage0": bool(row["etage0"]),
+                                  "pdf": f"/parcels/{row['idu']}/export.pdf?source={RUN}"} if row
                      else {"ref": t, "erreur": "référence introuvable"})
     ok = [i for i in items if "idu" in i]
     return {"n_demandes": len(tokens), "n_trouvees": len(ok), "items": items}
@@ -580,16 +611,19 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
         SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
                d.matrice_statut AS statut, d.q_score, cr.detail AS zonage,
+               s2.tier AS tier_v2, s2.rang AS rang_v2,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM parcels p
         JOIN parcel_residuel r ON r.parcel_id = p.id AND r.sdp_residuelle_m2 >= :sdp
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
           AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
+        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN dryrun_cascade_results cr ON cr.run_label = :run AND cr.parcel_id = p.id
           AND cr.layer_name = 'zonage_plu_gpu' AND cr.detail LIKE 'Zone PLU%'
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin
         ORDER BY r.sdp_residuelle_m2 DESC LIMIT 300"""),
-        {"sdp": sdp_min, "run": RUN, "c": body.commune,
+        {"sdp": sdp_min, "run": RUN, "c": body.commune, "v2run": _v2run(db),
          "smin": sdp_min * 0.4 + parking_m2}).mappings().all()
     import re as _re
     items = []
@@ -607,7 +641,9 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
         marge = round(float(r["sdp_residuelle_m2"]) / sdp_min, 2)
         items.append({"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
                       "sdp": round(r["sdp_residuelle_m2"]),
-                      "statut": r["statut"], "q_score": r["q_score"], "zone": zone or None,
+                      "statut": r["statut"], "q_score": r["q_score"],
+                      "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
+                      "zone": zone or None,
                       "hauteur_plu_m": float(h) if h is not None else None,
                       "hauteur_verifiee": h is not None, "marge_capacite": marge,
                       "geom": json.loads(r["g"])})

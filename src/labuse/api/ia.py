@@ -105,6 +105,12 @@ def ia_status() -> dict:
 FILTER_SCHEMA = {
     "type": "object", "additionalProperties": False,
     "properties": {
+        # M5.1 : les TIERS v2 pilotent (« brûlante » = tier v2). `statuts` (matrice)
+        # reste accepté — deprecated, plus jamais émis par le stub ni par le prompt.
+        "tiers": {"type": "array", "items": {"enum": [
+            "brulante", "chaude", "reserve_fonciere", "a_creuser", "ecartee"]}},
+        "veille": {"type": "boolean"},
+        "horsCopro": {"type": "boolean"},
         "statuts": {"type": "array", "items": {"enum": ["chaude", "a_surveiller", "a_creuser", "ecartee"]}},
         "scoreMin": {"type": ["integer", "null"], "minimum": 0, "maximum": 100},
         "surfaceMin": {"type": ["integer", "null"], "minimum": 0},
@@ -221,22 +227,31 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
                       "envoyer quoi que ce soit — je traduis seulement votre demande en critères "
                       "de recherche foncière (commune, statut, vue mer, surface, SDP, score). "
                       "Reformulez avec des critères ?")
-    f: dict = {"statuts": [], "scoreMin": None, "surfaceMin": None, "surfaceMax": None,
-               "sdpMin": None, "evenement": False, "vueMer": False, "flags": [], "commune": None}
+    f: dict = {"tiers": [], "scoreMin": None, "surfaceMin": None, "surfaceMax": None,
+               "sdpMin": None, "evenement": False, "vueMer": False, "veille": False,
+               "flags": [], "commune": None}
     hits = []
     commune = _detect_commune(low)
     if commune:
         f["commune"] = commune
         hits.append(f"commune {commune}")
+    # M5.1 : les mots du verdict pointent vers les TIERS v2 (« brûlante » = tier v2 ;
+    # « à surveiller » n'existe plus — l'équivalent capacité est la réserve foncière)
+    if re.search(r"br[ûu]lant", low):
+        f["tiers"].append("brulante")
+        hits.append("brûlantes v2")
     if re.search(r"chaude", low):
-        f["statuts"].append("chaude")
-        hits.append("statut chaude")
-    if re.search(r"surveill", low):
-        f["statuts"].append("a_surveiller")
-        hits.append("à surveiller")
+        f["tiers"].append("chaude")
+        hits.append("chaudes v2")
+    if re.search(r"r[ée]serve\s*fonci|surveill", low):
+        f["tiers"].append("reserve_fonciere")
+        hits.append("réserve foncière")
     if re.search(r"creuser", low):
-        f["statuts"].append("a_creuser")
+        f["tiers"].append("a_creuser")
         hits.append("à creuser")
+    if re.search(r"succession|h[ée]ritage|veille", low):
+        f["veille"] = True
+        hits.append("veille succession")
     if re.search(r"vue\s*mer|front de mer|voit la mer", low):
         f["vueMer"] = True
         hits.append("vue mer")
@@ -283,7 +298,11 @@ UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Tr
 {schema}
    Correspondances : « vue mer/bord de mer » → vueMer ; « usine/industriel » → flags icpe ;
    « pollué » → flags sol_pollue ; « inondation/risque » → flags risques ; « monument » → flags abf ;
-   « bodacc/liquidation/événement » → evenement ; les statuts sont chaude/a_surveiller/a_creuser/ecartee.
+   « bodacc/liquidation/événement » → evenement ; « succession/héritage » → veille.
+   Les VERDICTS sont les tiers du scoring v2 : « brûlantes » → tiers ["brulante"] ;
+   « chaudes » → tiers ["chaude"] ; « réserve foncière / à surveiller » → tiers
+   ["reserve_fonciere"] ; « à creuser » → tiers ["a_creuser"]. N'utilise JAMAIS le champ
+   deprecated `statuts`.
    ⚠ Les FLAGS SONT FILTRABLES : « proximité d'un monument historique / bâtiment de France »
    = {{"flags": ["abf"]}} (périmètre ABF) ; « près d'une usine » = {{"flags": ["icpe"]}} ;
    « pollué » = sol_pollue ; « inondable » = risques. Ne réponds JAMAIS out_of_scope pour ces cas.

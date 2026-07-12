@@ -16,6 +16,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..scoring.p_v2 import MODEL_FREEZE, MODEL_VERSION
+from ..scoring.p_v2.libelles_client import enrichir_contributions
 
 router = APIRouter(prefix="/v2", tags=["scoring-v2"])
 
@@ -49,7 +50,9 @@ def _row_payload(r, run: dict) -> dict:
         "rang": r["rang"],
         "tier": r["tier"],
         "contrib_z": r["contrib_z"], "contrib_d": r["contrib_d"],
-        "pourquoi": top5,                          # 5 contributions lisibles (signe + bin)
+        # M5.1 lot 3.3 : chaque contribution porte sa `phrase` en français client
+        # (table versionnée libelles_client) — les champs techniques restent pour l'audit
+        "pourquoi": enrichir_contributions(top5),
         "badges": {
             "copro": bool(r["copro"]),
             "evenement_date": str(r["event_date"]) if r["event_date"] else None,

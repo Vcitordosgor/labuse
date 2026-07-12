@@ -25,7 +25,6 @@ export interface ScoreV {
   owner_type: OwnerType | null
   owner_siren: string | null
   owner_denomination: string | null
-  brulante: boolean
   badge: string | null          // « Foncier public — démarche dédiée », « Bailleur social »…
   signals: VSignal[]
   computed_at: string | null
@@ -42,33 +41,36 @@ export interface ParcelResult {
   a_completude: number | null
   completeness_score: number
   evenement: string | null
-  cluster?: number | null   // taille du groupe « même propriétaire » parmi les chaudes (île)
+  evenement_date?: string | null   // événement daté v1.3 (badge secondaire)
+  cluster?: number | null   // taille du groupe « même propriétaire » parmi les opportunités v2 (île)
   proprio?: string | null
   v_score?: number | null
   v_dernier_signal?: string | null   // CRED-4 : date du signal V daté le plus récent
   v_band?: VBand | null
   owner_type?: OwnerType | null
-  brulante?: boolean
+  // M5.1 : le scoring v2 pilote — tier/rang/×N + étage 0 servi, copro, veille succession
+  tier_v2?: string | null
+  rang_v2?: number | null
+  mult_v2?: number | null
+  copro_v2?: boolean
+  veille?: boolean
+  etage0?: boolean
 }
 
+// M5.1 : /stats ventile par TIERS v2 effectifs (l'étage 0 du run servi prime).
+// « Opportunités » = brûlantes v2 + chaudes v2. La ventilation matrice n'existe
+// plus qu'en legacy=1 (non requêtée par le front).
 export interface Stats {
   total: number
-  chaude: number
-  a_surveiller: number
-  a_creuser: number
-  ecartee: number
-  // dossiers = propriétaires uniques identifiés (SIREN) parmi les chaudes ; le reliquat
-  // « sans identité » est affiché tel quel (honnêteté : jamais un total prétendu exact)
-  dossiers_chaudes?: number
-  chaudes_avec_dossier?: number   // CRED-3 : parcelles chaudes COUVERTES par un dossier (la somme redevient lisible)
-  chaudes_sans_identite?: number
-  chaude_evenement?: number   // décomposition « dont N par événement » (survol du compteur)
-  brulantes?: number          // 🔥 chaudes Q×A ∧ V ≥ seuil (tier combiné)
-  v_fort?: number
-  v_present?: number
-  v_faible?: number
-  v_aucun?: number
-  v_na?: number
+  tiers: { brulante: number; chaude: number; reserve_fonciere: number;
+           a_creuser: number; ecartee: number }
+  opportunites: number
+  opportunites_evenement: number
+  // dossiers = propriétaires uniques identifiés (SIREN) parmi les opportunités v2 ; le
+  // reliquat « sans identité » est affiché tel quel (jamais un total prétendu exact)
+  dossiers_opportunites: number
+  opportunites_avec_dossier: number
+  opportunites_sans_identite: number
 }
 
 export type MapMode = 'verdict' | 'mutabilite'

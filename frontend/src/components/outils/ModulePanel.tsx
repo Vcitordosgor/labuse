@@ -6,13 +6,13 @@ import {
   modSolaireTertiaire, modVelocite,
 } from '../../lib/api'
 import { pointInPolygon } from '../../lib/geo'
-import { STATUT_META } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { M22 } from './M22Programme'
 import { M15, M16, M17, M18, M19 } from './moteurs'
 import { MODULES, VIOLET } from './registry'
 import { ScoringV2Module } from './ScoringV2'
+import { TierBadge } from './TierBadge'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
 
@@ -142,7 +142,7 @@ function M02() {
             {items.map((i) => (
               <Row key={i['idu'] as string} idu={i['idu'] as string}
                 sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)}`}
-                right={i['statut'] ? <span className="text-[11px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label}</span> : <span className="text-[11px] text-txt-dim">hors run</span>}
+                right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />}
                 fiche={[['Propriétaire', String(d['nom'])], ['SIREN', String(d['siren'])],
                   ['Patrimoine', `${d['n_parcelles']} parcelles · SDP ${fmt(d['sdp_totale_m2'] as number)} m²`]]} />
             ))}
@@ -228,7 +228,7 @@ function M04() {
         {items.map((i, k) => (
           <Row key={k} idu={i['idu'] as string}
             sub={`PC ${i['date']} · ${fmt(i['surface_m2'] as number)} m² · état ${i['etat']}`}
-            right={<span className="text-[11px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label}</span>}
+            right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />}
             fiche={[['Permis', `${i['permit_id']} (${i['date']})`], ['État source', `code ${i['etat']} — sans achèvement déclaré`],
               ['Lecture', 'PC ancien jamais réalisé — réalisation à vérifier']]} />
         ))}
@@ -286,7 +286,7 @@ function M06() {
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}
             sub={`${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)} m²`}
-            right={<span className="text-[11px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label}</span>}
+            right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />}
             fiche={[['Mode bailleur', 'Parcelle en QPV'], ['Leviers LLS', 'TVA 2,1 % · abattement TFPB 30 %'],
               ['SDP résiduelle', `${fmt(i['sdp'] as number)} m²`]]} />
         ))}
@@ -414,7 +414,7 @@ function M10() {
               <div key={k} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                 <div className="flex items-center gap-2">
                   <Row idu={i['idu'] as string} sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · ${i['flags']} flags · ${i['exclusions']} exclusion(s)`}
-                    right={<span className="text-[11px]" style={{ color: STATUT_META[i['statut'] as keyof typeof STATUT_META]?.color ?? '#5C7268' }}>{STATUT_META[i['statut'] as keyof typeof STATUT_META]?.label ?? 'hors run'}</span>} />
+                    right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />} />
                 </div>
                 <a href={i['pdf'] as string} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[10.5px] text-[#8b76c0] hover:text-[#B497F0] hover:underline">⬇ PDF</a>
               </div>
