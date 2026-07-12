@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  createSegmentPreset, deleteSegmentPreset, exportPublipostage, exportSegmentCsv, getSegments,
+  createSegmentPreset, deleteSegmentPreset, exportPublipostage, exportSegmentCsv, getSegments, getStats,
   nlSegmentsSearch, querySegment, refreshSegmentCounts, updateSegmentPreset,
   type NlSegmentsRep, type SegmentFiltre, type SegmentFiltreDef, type SegmentPreset,
   type SegmentsHome,
@@ -244,12 +244,12 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
   // à la volée ne s'enregistre jamais sur place — doctrine du mandat)
   const dup = useMutation({
     mutationFn: () => {
-      const slug = prompt('Slug du nouveau preset (minuscules-et-tirets) :', `${preset.slug}-v2`)
+      const slug = prompt('Slug de la nouvelle vue (minuscules-et-tirets) :', `${preset.slug}-v2`)
       if (!slug) return Promise.reject(new Error('annulé'))
       const nom = prompt('Nom affiché :', `${preset.nom} (variante)`) ?? slug
       return createSegmentPreset({ slug, nom, categorie: preset.categorie, copie_de: preset.slug, filtres: effectifs, tri_defaut: tri })
     },
-    onSuccess: (p) => { setToast(`Preset « ${p.nom} » enregistré.`); qc.invalidateQueries({ queryKey: ['segments'] }) },
+    onSuccess: (p) => { setToast(`Vue « ${p.nom} » enregistrée.`); qc.invalidateQueries({ queryKey: ['segments'] }) },
     onError: (e) => { if ((e as Error).message !== 'annulé') setToast('Enregistrement refusé : ' + (e as Error).message) },
   })
 
@@ -486,7 +486,7 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
   const { setToast } = useApp()
   const toggle = useMutation({
     mutationFn: () => updateSegmentPreset(p.slug, { ...p, actif: !p.actif }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast(p.actif ? 'Preset désactivé.' : 'Preset activé.') },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast(p.actif ? 'Modèle désactivé.' : 'Modèle activé.') },
   })
   const dup = useMutation({
     mutationFn: () => {
@@ -494,7 +494,7 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
       if (!slug) return Promise.reject(new Error('annulé'))
       return createSegmentPreset({ slug, nom: `${p.nom} (copie)`, categorie: p.categorie, copie_de: p.slug })
     },
-    onSuccess: (np) => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast(`Preset « ${np.nom} » créé.`) },
+    onSuccess: (np) => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast(`Modèle « ${np.nom} » créé.`) },
     onError: (e) => { if ((e as Error).message !== 'annulé') setToast('Duplication refusée : ' + (e as Error).message) },
   })
   const editArg = useMutation({
@@ -508,10 +508,10 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
   })
   const suppr = useMutation({
     mutationFn: () => {
-      if (!confirm(`Supprimer le preset « ${p.nom} » ? (définitif)`)) return Promise.reject(new Error('annulé'))
+      if (!confirm(`Supprimer le modèle « ${p.nom} » ? (définitif)`)) return Promise.reject(new Error('annulé'))
       return deleteSegmentPreset(p.slug)
     },
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast('Preset supprimé.') },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['segments'] }); setToast('Modèle supprimé.') },
     onError: (e) => { if ((e as Error).message !== 'annulé') setToast('Suppression refusée : ' + (e as Error).message) },
   })
   const partiel = p.disponibilite === 'partiel'
@@ -631,7 +631,9 @@ function BarreNL({ onFiltres }: { onFiltres: (filtres: SegmentFiltre[], explicat
 export function SegmentsPage() {
   const [slug, setSlug] = useState<string | null>(null)
   const [nlPreset, setNlPreset] = useState<SegmentPreset | null>(null)
-  const { setToast } = useApp()
+  const { setToast, setView, setVerdict } = useApp()
+  // tuile Foncier : compteurs RÉELS du périmètre courant (SQL-exact, jamais codés en dur)
+  const statsIle = useQuery({ queryKey: ['stats-vues'], queryFn: () => getStats() })
   const qc = useQueryClient()
   const { data: home, isLoading } = useQuery({ queryKey: ['segments'], queryFn: getSegments })
   const refresh = useMutation({
@@ -647,10 +649,10 @@ export function SegmentsPage() {
     <div data-seg-page className="flex min-w-0 flex-1 flex-col overflow-y-auto px-6 py-5">
       <div className="mb-4 flex items-baseline justify-between">
         <div>
-          <h1 className="font-display text-lg font-bold text-txt-hi">Segments métiers</h1>
+          <h1 className="font-display text-lg font-bold text-txt-hi">Vues</h1>
           <p className="mt-0.5 max-w-2xl text-[11px] leading-snug text-txt-dim">
-            Un segment = un métier de l'Habitat + les filtres qui trouvent ses clients dans le parc.
-            Les presets « partiels » se complètent automatiquement quand une nouvelle source arrive.
+            Une vue = un ciblage sur le parc foncier de l'île, composable critère par critère,
+            exportable et réutilisable. Les modèles ci-dessous sont des points de départ, pas des limites.
           </p>
         </div>
         <button onClick={() => refresh.mutate()} disabled={refresh.isPending}
@@ -658,16 +660,64 @@ export function SegmentsPage() {
           {refresh.isPending ? 'Recalcul…' : 'Recalculer les compteurs'}
         </button>
       </div>
-      <BarreNL onFiltres={(filtres, explication) => {
-        setToast(explication || 'Filtres proposés par l\'IA — vérifiez-les dans le builder.')
-        setNlPreset({
-          slug: '', nom: 'Recherche IA (filtres à vérifier)', categorie: 'foncier_bati',
-          description: null, argumentaire: null, filtres, colonnes_export: [],
-          tri_defaut: null, boost_catnat: false, actif: true, ordre: 0, created_by: null,
-          updated_at: null, disponibilite: 'complet', filtres_inactifs: [],
-          count: null, count_at: null,
-        })
-      }} />
+
+      {/* ── HÉROS (décision produit 12/07) : le BUILDER d'abord — c'est l'écran qui faisait
+          dire « outil pour piscinistes » : le ciblage libre passe devant les métiers. ── */}
+      <section data-vues-hero className="mb-4 rounded-2xl border border-[#2E6B4F]/60 bg-[#0F1A14] p-5">
+        <h2 className="font-display text-[15px] font-bold text-txt-hi">
+          Composez votre ciblage sur {home.filtres.filter((f) => f.disponible).length} critères,
+          ou décrivez-le en français
+        </h2>
+        <p className="mt-1 text-[11px] leading-snug text-txt-mut">
+          Votre phrase devient des filtres visibles et modifiables dans le builder — jamais une boîte noire.
+        </p>
+        <div className="mt-3">
+          <BarreNL onFiltres={(filtres, explication) => {
+            setToast(explication || 'Filtres proposés par l\'IA — vérifiez-les dans le builder.')
+            setNlPreset({
+              slug: '', nom: 'Recherche IA (filtres à vérifier)', categorie: 'foncier_bati',
+              description: null, argumentaire: null, filtres, colonnes_export: [],
+              tri_defaut: null, boost_catnat: false, actif: true, ordre: 0, created_by: null,
+              updated_at: null, disponibilite: 'complet', filtres_inactifs: [],
+              count: null, count_at: null,
+            })
+          }} />
+        </div>
+        <button data-vues-builder-vierge
+          onClick={() => setNlPreset({
+            slug: '', nom: 'Nouvelle vue', categorie: 'foncier_bati',
+            description: null, argumentaire: null, filtres: [], colonnes_export: [],
+            tri_defaut: null, boost_catnat: false, actif: true, ordre: 0, created_by: null,
+            updated_at: null, disponibilite: 'complet', filtres_inactifs: [],
+            count: null, count_at: null,
+          })}
+          className="text-[11px] font-medium text-mint hover:underline">
+          ou partez d'une vue vierge et composez critère par critère →
+        </button>
+      </section>
+
+      {/* ── LA première vue : le cœur du produit — Foncier (chaudes & Brûlantes) ── */}
+      <button data-vue-fonciere
+        onClick={() => { setVerdict(true); setView('cartes') }}
+        className="mb-5 w-full rounded-2xl border border-mint/40 bg-surface-2 p-5 text-left transition-colors hover:border-mint">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+          <h2 className="font-display text-[15px] font-bold text-txt-hi">Foncier — parcelles chaudes & Brûlantes 🔥</h2>
+          {statsIle.data && (
+            <span className="font-mono text-[11px] text-txt-mut">
+              <b className="text-mint">{fmtN(statsIle.data.chaude)}</b> chaudes ·{' '}
+              <b style={{ color: '#FF8A50' }}>{fmtN(statsIle.data.brulantes ?? 0)}</b> brûlantes
+            </span>
+          )}
+        </div>
+        <p className="mt-1 max-w-3xl text-xs leading-relaxed text-txt-mut">
+          Les parcelles à potentiel dont le propriétaire a des raisons de vendre — chaque signal
+          sourcé et daté.
+        </p>
+        <span className="mt-2 inline-block text-[11px] font-medium text-mint">
+          Ouvrir sur la carte — liste triée par vendabilité →
+        </span>
+      </button>
+
       {home.catnat.communes.length > 0 && (
         <div data-seg-catnat-bandeau className="mb-4 rounded-lg border border-[#E8695A]/40 bg-[#E8695A]/10 px-3 py-2 text-[11px] text-[#f0a29a]">
           Catastrophe naturelle ({home.catnat.fenetre_mois} derniers mois) :{' '}
@@ -675,18 +725,18 @@ export function SegmentsPage() {
           {' '}— les vues couvreurs/menuiseries proposent le filtre pré-coché.
         </div>
       )}
-      {CAT_ORDER.filter((c) => home.presets.some((p) => p.categorie === c)).map((c) => (
-        <section key={c} data-seg-cat={c} className="mb-5">
-          <p className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-widest text-txt-mut">
-            {home.categories[c] ?? c}
-          </p>
-          <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
-            {home.presets.filter((p) => p.categorie === c).map((p) => (
-              <PresetCard key={p.slug} p={p} home={home} onOpen={() => setSlug(p.slug)} />
-            ))}
-          </div>
-        </section>
-      ))}
+
+      {/* ── les presets métiers deviennent des MODÈLES — secondaires, dupliquables ── */}
+      <section data-vues-modeles>
+        <p className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-widest text-txt-mut">
+          Modèles — des exemples à dupliquer, pas des limites
+        </p>
+        <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 xl:grid-cols-3">
+          {[...home.presets]
+            .sort((a, b) => (CAT_ORDER.indexOf(a.categorie) - CAT_ORDER.indexOf(b.categorie)) || (a.ordre - b.ordre))
+            .map((p) => <PresetCard key={p.slug} p={p} home={home} onOpen={() => setSlug(p.slug)} />)}
+        </div>
+      </section>
     </div>
   )
 }
