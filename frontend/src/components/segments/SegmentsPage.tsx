@@ -241,11 +241,25 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
   const cols = rep?.colonnes ?? []
   const catnatOn = preset.boost_catnat && home.catnat.communes.length > 0
   const dejaLa = new Set(filtres.flatMap((f) => (f.ou ? f.ou.map((s) => s.cle!) : [f.cle!])))
+  // Item 6 (UX V1, mobile) : sous 640 px la colonne filtres fixe 320 px rendait la table
+  // inutilisable → onglets « Filtres / Résultats » (la galerie, elle, passe très bien).
+  const [ongletMobile, setOngletMobile] = useState<'filtres' | 'resultats'>('resultats')
 
   return (
-    <div className="flex h-full min-h-0 flex-1">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col sm:flex-row">
+      {/* onglets mobile < 640 px */}
+      <div data-seg-onglets className="flex shrink-0 items-center gap-1.5 border-b border-line px-3 py-2 sm:hidden">
+        <button onClick={onBack} className="mr-1 px-1 text-sm text-txt-dim hover:text-txt" title="Tous les segments">←</button>
+        {([['filtres', 'Filtres'], ['resultats', `Résultats${rep?.count != null ? ` (${fmtN(rep.count)})` : ''}`]] as const).map(([k, l]) => (
+          <button key={k} data-seg-onglet={k} onClick={() => setOngletMobile(k)}
+            className={`rounded-full border px-3 py-1 text-[11px] font-medium ${
+              ongletMobile === k ? 'border-mint bg-mint/10 text-mint' : 'border-line-2 text-txt-mut'}`}>
+            {l}
+          </button>
+        ))}
+      </div>
       {/* colonne filtres */}
-      <aside className="flex w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
+      <aside className={`${ongletMobile === 'filtres' ? 'flex' : 'hidden'} min-h-0 w-full flex-1 flex-col border-r border-line bg-surface-1 sm:flex sm:w-[320px] sm:flex-none sm:shrink-0`}>
         <div className="shrink-0 px-4 pb-2 pt-4">
           <button data-seg-retour onClick={onBack} className="text-[11px] text-txt-dim hover:text-txt">← Tous les segments</button>
           <h2 className="mt-1 text-sm font-medium text-txt-hi">{preset.nom}</h2>
@@ -322,7 +336,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
       </aside>
 
       {/* résultats : compteur + carte + table */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden p-4">
+      <div className={`${ongletMobile === 'resultats' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4 sm:flex`}>
         {catnatOn && (
           <div data-seg-catnat className="mb-3 rounded-lg border border-[#E8695A]/40 bg-[#E8695A]/10 px-3 py-2 text-[11px] text-[#f0a29a]">
             Communes récemment en état de catastrophe naturelle ({home.catnat.fenetre_mois} mois) :{' '}
