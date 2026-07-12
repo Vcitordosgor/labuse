@@ -287,6 +287,28 @@ class ScoreSnapshotParcelle(Base):
     veille_succession: Mapped[bool] = mapped_column(default=False)
 
 
+# ──────────── pm_proprietaires_millesimes (M2 panel point-in-time, 12/07/2026) ────────────
+
+class PmProprietaireMillesime(Base):
+    """Panel POINT-IN-TIME des propriétaires PM (DGFiP, situation au 1er janvier du
+    millésime) — département 974 entier, millésimes 2021-2024. Table VERSIONNÉE, séparée :
+    `parcelle_personne_morale` (situation 2025, prod) et le moteur V restent intacts."""
+
+    __tablename__ = "pm_proprietaires_millesimes"
+    __table_args__ = (UniqueConstraint("millesime", "idu", name="uq_pm_millesime_idu"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    millesime: Mapped[int] = mapped_column(Integer, index=True)
+    idu: Mapped[str] = mapped_column(String(14), index=True)
+    groupe: Mapped[int | None] = mapped_column(Integer)
+    groupe_label: Mapped[str | None] = mapped_column(String(80))
+    forme_juridique: Mapped[str | None] = mapped_column(String(20))
+    denomination: Mapped[str | None] = mapped_column(String(200))
+    siren: Mapped[str | None] = mapped_column(String(20))
+    url_source: Mapped[str | None] = mapped_column(Text)
+    date_import: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 # ─────────────────────── source_checks (VUES item 4, 12/07/2026) ───────────────────────
 
 class SourceCheck(Base):
