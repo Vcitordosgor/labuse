@@ -104,8 +104,10 @@ def badges(sujet: dict[str, Any]) -> list[str]:
         out.append("Risque fort")
     if prop.get("famille") in OWNER_ACTIONABLE and not prop.get("in_pipeline"):
         out.append("À appeler")
+    # M5.1 lexical : « À surveiller » a disparu de l'app (le tier v2 « réserve foncière »
+    # couvre l'ancien sens matrice) — le badge dit ce que c'est : à creuser.
     if sujet.get("verdict_status") == "a_creuser":
-        out.append("À surveiller")
+        out.append("À creuser")
     # Données à consolider : faible complétude OU bilan non chiffrable.
     low_conf = (conf.get("score") is not None and conf["score"] < 50)
     if low_conf or sujet.get("ca") is None:

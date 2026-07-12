@@ -988,7 +988,8 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
 
 
 #: tris de la liste (M5.1 lot 1.3) — rang P par défaut ; ×N, surface, commune en options ;
-#: 'v' (vendabilité) accepté mais deprecated (disparu du sélecteur).
+#: 'v' (vendabilité) accepté mais deprecated (disparu du sélecteur). Deux formes : sur les
+#: alias de la requête de page (p/d/s2/ev/vs) et sur la page matérialisée (pg).
 _Q_V2_ORDERS = {
     "rang": "s2.rang ASC NULLS LAST, s2.mult_base DESC NULLS LAST, "
             "(ev.parcel_id IS NOT NULL) DESC, (d.q_score + d.a_score) DESC",
@@ -997,6 +998,15 @@ _Q_V2_ORDERS = {
     "commune": "p.commune ASC, s2.rang ASC NULLS LAST",
     "v": "vs.v_score DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC, "
          "(d.q_score + d.a_score) DESC",
+}
+_Q_V2_ORDERS_PAGE = {
+    "rang": "pg.rang_v2 ASC NULLS LAST, pg.mult_v2 DESC NULLS LAST, "
+            "pg.evenement_rouge DESC, (pg.q_score + pg.a_score) DESC",
+    "mult": "pg.mult_v2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
+    "surface": "pg.surface_m2 DESC NULLS LAST, pg.rang_v2 ASC NULLS LAST",
+    "commune": "pg.commune ASC, pg.rang_v2 ASC NULLS LAST",
+    "v": "vs.v_score DESC NULLS LAST, pg.evenement_rouge DESC, "
+         "(pg.q_score + pg.a_score) DESC",
 }
 
 
@@ -1007,34 +1017,48 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     en queue), périmètre par défaut = univers v2 HORS étage 0 du run servi — une brûlante
     v2 « écartée matrice » APPARAÎT. Un filtre `tiers`/`statuts` explicite (extra_where)
     remplace ce périmètre (l'opt-in « ecartee » = étage 0 dur uniquement)."""
-    order = _Q_V2_ORDERS.get(sort or "rang", _Q_V2_ORDERS["rang"])
+    sort_key = sort if (sort or "rang") in _Q_V2_ORDERS else "rang"
+    order = _Q_V2_ORDERS[sort_key or "rang"]
     xp = extra_params or {}
     # périmètre par défaut : hors étage 0 servi, sauf filtre tier/statut explicite qui scope déjà
     base = "" if ("f_tiers" in xp or "f_statuts" in xp
                   or "s2.tier" in extra_where or _ETAGE0_SQL in extra_where) \
         else f"AND NOT {_ETAGE0_SQL}"
+    # perf (M5.1) : tri + filtres d'abord (page de :lim lignes), PUIS les jointures
+    # d'affichage (propriétaire, cluster, veille, signaux) sur cette page seulement —
+    # 3,6 s → <1 s sur l'île entière (baseline legacy : 4,1 s).
     rows = db.execute(text(
         f"""
-        SELECT p.idu, p.commune, p.surface_m2, p.section,
-               d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude, d.completeness_score,
-               s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
-               s2.copro AS copro_v2, s2.event_date,
-               (vw.parcelle_id IS NOT NULL) AS veille,
-               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-               (ev.parcel_id IS NOT NULL) AS evenement_rouge,
+        WITH page AS (
+            SELECT p.id, p.idu, p.commune, p.surface_m2, p.section,
+                   d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
+                   d.completeness_score,
+                   s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
+                   s2.copro AS copro_v2, s2.event_date,
+                   (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
+                   (ev.parcel_id IS NOT NULL) AS evenement_rouge
+            FROM parcels p
+            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+            LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
+            LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
+                       WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
+            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
+              {base}
+              {extra_where}
+            ORDER BY {order}
+            LIMIT :lim OFFSET :off
+        )
+        SELECT pg.*, (vw.parcelle_id IS NOT NULL) AS veille,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
                -- CRED-4 : fraîcheur du signal V daté le plus récent (BODACC/cessation/DPE)
                (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
                  WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal
-        FROM parcels p
-        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
-        LEFT JOIN parcel_veille_succession vw ON vw.parcelle_id = p.idu
-        LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
-                   WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
-        LEFT JOIN parcelle_personne_morale own ON own.idu = p.idu
-        LEFT JOIN parcel_v_score vs ON vs.parcelle_id = p.idu
+        FROM page pg
+        LEFT JOIN parcel_veille_succession vw ON vw.parcelle_id = pg.idu
+        LEFT JOIN parcelle_personne_morale own ON own.idu = pg.idu
+        LEFT JOIN parcel_v_score vs ON vs.parcelle_id = pg.idu
         LEFT JOIN (SELECT pm2.siren, count(*) AS n, max(pm2.denomination) AS denom
                    FROM dryrun_parcel_evaluations d2
                    JOIN parcels p2 ON p2.id = d2.parcel_id
@@ -1044,11 +1068,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                      AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
                      AND pm2.siren IS NOT NULL
                    GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
-        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
-          {base}
-          {extra_where}
-        ORDER BY {order}
-        LIMIT :lim OFFSET :off
+        ORDER BY {_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
                "v2run": _score_v2_run_id(db), **xp}
     ).mappings().all()

@@ -170,7 +170,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
     return (
       <div data-score-v className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <div className="flex items-center gap-3">
-          <span className="w-24 shrink-0 text-xs text-txt">Vendabilité</span>
+          <span className="w-24 shrink-0 text-xs text-txt">Signaux vendeur</span>
           <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{sv.badge ?? 'N.A.'}</span>
         </div>
         <p className="mt-1 text-[11px] leading-snug text-txt-dim">
@@ -183,7 +183,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
     <div data-score-v className="rounded-lg border border-line-2 bg-surface-2">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
         title={`${SCORE_TIP.v} — déplier « Pourquoi ce score »`}>
-        <span className="w-24 shrink-0 text-left text-xs text-txt">Vendabilité</span>
+        <span className="w-24 shrink-0 text-left text-xs text-txt">Signaux vendeur</span>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${sv.v_score}%`, background: color }} />
         </span>

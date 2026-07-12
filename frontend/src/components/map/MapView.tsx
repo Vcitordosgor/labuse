@@ -449,7 +449,7 @@ export function MapView() {
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && verdict))
     m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
     m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
-    // Score V : badges carte (liseré Brûlantes + pastille V) — verdict allumé, mode commune
+    // M5.1 : badges carte v2 (liseré brûlantes v2 + pastille #rang) — verdict allumé, mode commune
     for (const id of ['parcels-brulantes', 'parcels-v-badge']) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', vis(!ile && verdict))
     }
