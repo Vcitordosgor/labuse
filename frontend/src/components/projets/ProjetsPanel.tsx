@@ -89,7 +89,7 @@ function ProjetCard({ p }: { p: Projet }) {
               if (e.key === 'Escape') { setNom(p.nom); setEditing(false) }
             }}
             onBlur={() => { if (nom.trim() && nom !== p.nom) patch.mutate({ nom: nom.trim() }); setEditing(false) }}
-            className="min-w-0 flex-1 rounded-md border border-mint/40 bg-surface-3 px-2 py-1 text-sm text-txt-hi outline-none"
+            className="min-w-0 flex-1 rounded-md border border-mint/40 bg-surface-3 px-2 py-1 text-sm text-txt-hi outline-none focus:border-mint"
           />
         ) : (
           <h3
