@@ -87,12 +87,26 @@ def ensure_tables(engine) -> None:
 
 # ── Sujet (session sinon IP) ────────────────────────────────────────────────────────────
 
+def ip_reelle(request: Request) -> str:
+    """IP du client. Derrière un proxy de CONFIANCE (config trusted_proxies), l'IP réelle
+    est extraite de X-Forwarded-For — 1er hop non-proxy en partant de la DROITE (la gauche
+    de l'en-tête est forgeable par le client). Pair inconnu → on garde l'IP du pair :
+    jamais de confiance aveugle dans un en-tête."""
+    peer = getattr(getattr(request, "client", None), "host", "?") or "?"
+    proxies = {p.strip() for p in config.get_settings().trusted_proxies.split(",") if p.strip()}
+    if peer in proxies:
+        hops = [h.strip() for h in request.headers.get("x-forwarded-for", "").split(",")]
+        for hop in reversed(hops):
+            if hop and hop not in proxies:
+                return hop
+    return peer
+
+
 def sujet_de(request: Request) -> str:
     cookie = request.cookies.get("labuse_session")
     if cookie:
         return "s:" + hashlib.sha256(cookie.encode()).hexdigest()[:20]
-    ip = getattr(getattr(request, "client", None), "host", "?") or "?"
-    return "ip:" + hashlib.sha256(ip.encode()).hexdigest()[:20]
+    return "ip:" + hashlib.sha256(ip_reelle(request).encode()).hexdigest()[:20]
 
 
 def _cle_hmac() -> bytes:
@@ -217,6 +231,10 @@ async def garde_protection(request: Request, call_next):
             or not _actif_sous_pytest():
         return await call_next(request)
     s = config.get_settings()
+    if s.dev_mode:
+        # Exemption DEV EXPLICITE (flag d'env, jamais une détection localhost — derrière
+        # nginx tout arrive en 127.0.0.1). Quotas + rate-limit court-circuités.
+        return await call_next(request)
     sujet = sujet_de(request)
     jour = _aujourdhui()
     now = time.time()

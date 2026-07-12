@@ -1,0 +1,187 @@
+[
+ {
+  "cle": "anciennete_mutation_mois",
+  "count": 36310,
+  "base": 430813
+ },
+ {
+  "cle": "prix_mutation_eur",
+  "count": 36960,
+  "base": 430813
+ },
+ {
+  "cle": "type_bien",
+  "count": 2378,
+  "base": 430813
+ },
+ {
+  "cle": "periode_construction",
+  "count": 209,
+  "base": 430813
+ },
+ {
+  "cle": "flag_amiante",
+  "count": 132,
+  "base": 430813
+ },
+ {
+  "cle": "emprise_batie_m2",
+  "count": 292056,
+  "base": 430813
+ },
+ {
+  "cle": "jardin_m2",
+  "count": 409191,
+  "base": 430813
+ },
+ {
+  "cle": "ces_probable_pct",
+  "count": 283854,
+  "base": 430813
+ },
+ {
+  "cle": "pente_moy_deg",
+  "count": 421404,
+  "base": 430813
+ },
+ {
+  "cle": "pente_max_deg",
+  "count": 422805,
+  "base": 430813
+ },
+ {
+  "cle": "piscine",
+  "count": 8299,
+  "base": 430813
+ },
+ {
+  "cle": "pv_detecte",
+  "count": 0,
+  "base": 430813
+ },
+ {
+  "cle": "score_solaire",
+  "count": 428654,
+  "base": 430813
+ },
+ {
+  "cle": "facture_elec_estimee_eur",
+  "count": 266056,
+  "base": 430813
+ },
+ {
+  "cle": "flag_topo_ombrage",
+  "count": 264,
+  "base": 430813
+ },
+ {
+  "cle": "pv_existant",
+  "count": 430813,
+  "base": 430813
+ },
+ {
+  "cle": "repowering",
+  "count": 0,
+  "base": 430813
+ },
+ {
+  "cle": "proba_proprio_occupant",
+  "count": 430813,
+  "base": 430813
+ },
+ {
+  "cle": "ombrage_vegetal",
+  "count": 322189,
+  "base": 430813
+ },
+ {
+  "cle": "canopee_limite",
+  "count": 57939,
+  "base": 430813
+ },
+ {
+  "cle": "canopee_limite_pct",
+  "count": 327459,
+  "base": 430813
+ },
+ {
+  "cle": "bati_voisin_limite",
+  "count": 39169,
+  "base": 430813
+ },
+ {
+  "cle": "confiance_vegetation",
+  "count": 430813,
+  "base": 430813
+ },
+ {
+  "cle": "flag_ombrage_vegetal",
+  "count": 17670,
+  "base": 430813
+ },
+ {
+  "cle": "zone_anc",
+  "count": 9909,
+  "base": 430813
+ },
+ {
+  "cle": "proba_anc",
+  "count": 278685,
+  "base": 430813
+ },
+ {
+  "cle": "source_anc",
+  "count": 430813,
+  "base": 430813
+ },
+ {
+  "cle": "pente_non_batie_deg",
+  "count": 420511,
+  "base": 430813
+ },
+ {
+  "cle": "flag_abf",
+  "count": 430813,
+  "base": 430813
+ },
+ {
+  "cle": "zonage_plu",
+  "count": 430813,
+  "base": 430813
+ },
+ {
+  "cle": "qpv",
+  "count": 430813,
+  "base": 430813
+ },
+ {
+  "cle": "communes",
+  "count": 430813,
+  "base": 430813
+ },
+ {
+  "cle": "proprio_occupant_pct",
+  "count": 382743,
+  "base": 430813
+ },
+ {
+  "cle": "emprise_residuelle_m2",
+  "count": 31473,
+  "base": 430813
+ },
+ {
+  "cle": "surelevation_possible",
+  "count": 161050,
+  "base": 430813
+ },
+ {
+  "cle": "catnat_recent",
+  "count": 0,
+  "base": 430813
+ },
+ {
+  "cle": "adresse_ban",
+  "count": 257138,
+  "base": 430813
+ }
+]

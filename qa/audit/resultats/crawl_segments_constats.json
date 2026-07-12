@@ -1,0 +1,54 @@
+[
+ {
+  "vue": "segments:galerie",
+  "note": "5 presets : pergolas-terrasses=5 315, paysagistes=3 992, piscinistes-construction=5 541, parc-piscines-entretien=497, pv-residentiel=2 381"
+ },
+ {
+  "vue": "segments:builder",
+  "note": "baseline sans filtre : 430813 parcelles"
+ },
+ {
+  "vue": "segments:builder",
+  "note": "37 filtres au registre, dont 0 grisés"
+ },
+ {
+  "vue": "segments:builder",
+  "note": "37 filtres exercés un par un"
+ },
+ {
+  "vue": "segments:builder",
+  "note": "limites : 0→37173 ; -50→37173 ; 999999999→0 ; 1e3→0"
+ },
+ {
+  "vue": "segments:builder",
+  "note": "combo 3 filtres : 36310 → 36097 → 2259"
+ },
+ {
+  "vue": "segments:builder",
+  "note": "11 tris exercés"
+ },
+ {
+  "vue": "segments:duplication",
+  "note": "toast : Preset « TEST_AUDIT_ preset (à nettoyer) » enregistré."
+ },
+ {
+  "vue": "segments:inactifs",
+  "note": "inclure_inactifs=true → 21 presets dont 15 inactifs ; TEST présent=true"
+ },
+ {
+  "vue": "segments:reactivation",
+  "note": "PUT actif=false→422 puis true→422 ; visible dans la galerie=true"
+ },
+ {
+  "vue": "segments:nettoyage",
+  "note": "DELETE test-audit-preset → 200"
+ },
+ {
+  "vue": "segments:publipostage",
+  "note": "ZIP reçu : pergolas-terrasses_publipostage.zip"
+ },
+ {
+  "vue": "segments:publipostage",
+  "note": "contenu : publipostage.csv · etiquettes.pdf · gabarit_courrier.txt · ------- · files"
+ }
+]
