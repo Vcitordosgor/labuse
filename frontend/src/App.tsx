@@ -14,6 +14,7 @@ import { SegmentsPage } from './components/segments/SegmentsPage'
 import { ProjetsPanel } from './components/projets/ProjetsPanel'
 import { ContextePanel } from './components/contexte/ContextePanel'
 import { filtersFromHash, filtersToHash } from './lib/filters'
+import { SCORE_TIP } from './lib/status'
 import { useApplySearch } from './lib/useApplySearch'
 import { ModulePanel } from './components/outils/ModulePanel'
 import { TimeMachine } from './components/outils/TimeMachine'
@@ -141,7 +142,7 @@ function IaRestitution() {
           {iaRestitution.top.map((t, i) => (
             <button key={t.idu} data-ia-top onClick={() => select(t.idu)}
               className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-left hover:border-mint">
-              <span className="font-mono text-[11px] text-mint">#{i + 1} · Q {t.q_score}</span>
+              <span className="font-mono text-[11px] text-mint" title={SCORE_TIP.q}>#{i + 1} · Q {t.q_score}</span>
               <span className="block truncate font-mono text-[11px] text-txt-hi">{t.idu.slice(8)}</span>
               <span className="block truncate text-[11px] text-txt-dim">{t.commune}</span>
             </button>

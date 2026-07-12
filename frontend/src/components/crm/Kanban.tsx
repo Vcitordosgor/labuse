@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { deletePipeline, getEventsCount, getPipeline, getPipelineMeta, patchPipeline } from '../../lib/api'
-import { completudeColor, STATUT_META } from '../../lib/status'
+import { completudeColor, SCORE_TIP, STATUT_META } from '../../lib/status'
 import type { PipelineEntry } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -67,7 +67,7 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
         )}
         {prem && (
           <>
-            <span className="font-display text-xs font-bold" style={{ color: meta?.color }}>{prem.q_score}</span>
+            <span className="font-display text-xs font-bold" style={{ color: meta?.color }} title={SCORE_TIP.q}>{prem.q_score}</span>
             <span className="flex items-center gap-1 text-[11px] text-txt-dim" title={`Complétude ${prem.completeness_score}%`}>
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: completudeColor(prem.completeness_score) }} />
               {prem.completeness_score}%

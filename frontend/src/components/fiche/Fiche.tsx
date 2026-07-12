@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
-import { BRULANTE_COLOR, completudeColor, STATUT_META, vBandColor } from '../../lib/status'
+import { BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
 import { Loading } from '../Loading'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -74,14 +74,16 @@ function Line({ line }: { line: FicheLine }) {
 }
 
 // Barre de sous-score dépliable (exigence #2 : DEUX barres, Q et A, vers leurs lignes tracées).
-function ScoreBar({ label, value, color, lines, defaultOpen }: {
-  label: string; value: number; color: string; lines: FicheLine[]; defaultOpen?: boolean
+// Item 7 (UX V1) : `tip` = la définition du score au survol (Q et A ne restent jamais des sigles).
+function ScoreBar({ label, value, color, lines, defaultOpen, tip }: {
+  label: string; value: number; color: string; lines: FicheLine[]; defaultOpen?: boolean; tip?: string
 }) {
   const [open, setOpen] = useState(!!defaultOpen)
   const weighted = lines.filter((l) => l.weight != null && l.weight !== 0).sort((a, b) => Math.abs(b.weight!) - Math.abs(a.weight!))
   return (
     <div className="rounded-lg border border-line-2 bg-surface-2">
-      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5" title={`${label} : déplier les signaux`}>
+      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
+        title={tip ? `${tip} — déplier les signaux` : `${label} : déplier les signaux`}>
         <span className="w-24 shrink-0 text-left text-xs text-txt">{label}</span>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${value}%`, background: color }} />
@@ -159,7 +161,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
   return (
     <div data-score-v className="rounded-lg border border-line-2 bg-surface-2">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title="Vendabilité : signaux publics indiquant que le propriétaire a des raisons objectives de vendre — déplier « Pourquoi ce score »">
+        title={`${SCORE_TIP.v} — déplier « Pourquoi ce score »`}>
         <span className="w-24 shrink-0 text-left text-xs text-txt">Vendabilité</span>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${sv.v_score}%`, background: color }} />
@@ -737,7 +739,7 @@ export function Fiche({ idu }: { idu: string }) {
                 background: `${f.score_v.brulante ? BRULANTE_COLOR : vBandColor(f.score_v.v_band)}22`,
                 color: f.score_v.brulante ? BRULANTE_COLOR : vBandColor(f.score_v.v_band),
               }}
-              title={`Vendabilité ${f.score_v.v_band_label} — détail dans la Synthèse`}>
+              title={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans la Synthèse`}>
               {f.score_v.brulante && <span aria-hidden>🔥</span>}V {f.score_v.v_score}
             </span>
           )}
@@ -824,8 +826,8 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             )}
             <EquipementsBadges idu={idu} />
-            <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen />
-            <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} />
+            <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen tip={SCORE_TIP.q} />
+            <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}
             <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
               <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0 -rotate-90">

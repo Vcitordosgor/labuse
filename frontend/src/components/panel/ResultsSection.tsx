@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
-import { BRULANTE_COLOR, completudeColor, STATUT_META, vBandColor } from '../../lib/status'
+import { BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
 import type { Statut } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
@@ -23,7 +23,7 @@ export function VBadge({ v, band, brulante }: { v: number | null | undefined; ba
   return (
     <span className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold"
       style={{ background: `${color}1f`, color }}
-      title={`Vendabilité V ${v}/100${brulante ? ' — 🔥 BRÛLANTE (chaude Q×A + signaux vendeur forts)' : ''} — signaux publics « raisons de vendre » (panneau fiche)`}>
+      title={`${SCORE_TIP.v} (${v}/100)${brulante ? ' — 🔥 BRÛLANTE (chaude Q×A + signaux vendeur forts)' : ''} — détail dans la fiche`}>
       {brulante && <span aria-hidden>🔥</span>}
       V {v}
     </span>
@@ -87,7 +87,7 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
         <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
-        <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}>{p.q_score}</span>
+        <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }} title={SCORE_TIP.q}>{p.q_score}</span>
         <CompletudeRing value={p.completeness_score} />
       </div>
     </button>
