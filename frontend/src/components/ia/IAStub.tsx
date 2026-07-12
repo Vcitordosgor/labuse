@@ -5,17 +5,18 @@ import { useApplySearch } from '../../lib/useApplySearch'
 import { useApp } from '../../store/useApp'
 import { ProjetEntretien } from '../projets/ProjetEntretien'
 
-// B5 (mandat calculette) — palette d'exemples VARIÉE : statut, secteur, commune, surface, SDP,
-// score, événement, flags, vue mer, combinaisons — donne à voir l'étendue du copilote.
+// VUES item 3 (12/07) — exemples qui VENDENT les signaux différenciants (BODACC, vue mer,
+// pollution, ICPE, SDP, exclusions), chacun VÉRIFIÉ en réel : traduction non-stub + > 0
+// résultats (mapping exemple → filtres au RAPPORT_VUES_POLISH.md). « dirigeant âgé »,
+// « hors île/détention longue », « Brûlantes », « clôture piscine » ne sont PAS traduisibles
+// par le schéma NL du dashboard (out_of_scope vérifié) — reformulés au plus près.
 const EXAMPLES = [
-  'les chaudes de Saint-Pierre',
-  'vue mer de plus de 1 000 m²',
-  'à surveiller avec pollution et score > 70',
-  'SDP d’au moins 800 m² à creuser',
-  'à creuser dans l’Ouest',
-  'grandes parcelles avec événement BODACC',
-  'hors zone à risque, plus de 2 000 m²',
-  'monument historique à proximité au Tampon',
+  'les parcelles en procédure collective',
+  'chaudes avec vue mer de plus de 1 000 m²',
+  'les chaudes de Saint-Paul en procédure collective',
+  'sol pollué de plus de 2 000 m² dans l’Ouest',
+  'SDP d’au moins 800 m² hors zone à risque',
+  'à creuser près d’une usine ICPE',
 ]
 
 const VIOLET = '#B497F0'
