@@ -91,6 +91,12 @@ function ResultMap({ geojson }: { geojson: { type: string; features: unknown[] }
   return <div ref={ref} data-seg-map className="h-full w-full rounded-[10px] border border-line-2" />
 }
 
+// Item 5 (UX V1) : plus jamais de −50 silencieusement traité comme 0 — hors domaine
+// (négatif, ou min > max) → garde visuelle ambre ET critère non envoyé au serveur.
+const rangeHorsDomaine = (f: SegmentFiltre) =>
+  (f.min != null && f.min < 0) || (f.max != null && f.max < 0)
+  || (f.min != null && f.max != null && f.min > f.max)
+
 // ───────────────────────── éditeur d'UN filtre du builder ─────────────────────────
 function FiltreRow({ f, defs, onChange, onRemove }: {
   f: SegmentFiltre
@@ -136,15 +142,24 @@ function FiltreRow({ f, defs, onChange, onRemove }: {
           disponible prochainement{d.mandat ? ` — mandat ${d.mandat}` : ''}
         </p>
       ) : d.type === 'range' ? (
-        <div className="mt-1.5 flex items-center gap-2">
-          <input type="number" placeholder="min" value={f.min ?? ''}
-            onChange={(e) => onChange({ ...f, min: num(e.target.value) })}
-            className="w-24 rounded-md border border-line-2 bg-bg px-2 py-1 text-[11px] text-txt outline-none focus:border-mint" />
-          <span className="text-[11px] text-txt-dim">à</span>
-          <input type="number" placeholder="max" value={f.max ?? ''}
-            onChange={(e) => onChange({ ...f, max: num(e.target.value) })}
-            className="w-24 rounded-md border border-line-2 bg-bg px-2 py-1 text-[11px] text-txt outline-none focus:border-mint" />
-        </div>
+        <>
+          <div className="mt-1.5 flex items-center gap-2">
+            <input type="number" min={0} placeholder="min" value={f.min ?? ''}
+              onChange={(e) => onChange({ ...f, min: num(e.target.value) })}
+              className={`w-24 rounded-md border bg-bg px-2 py-1 text-[11px] text-txt outline-none ${
+                rangeHorsDomaine(f) ? 'border-[#E8B44C] focus:border-[#E8B44C]' : 'border-line-2 focus:border-mint'}`} />
+            <span className="text-[11px] text-txt-dim">à</span>
+            <input type="number" min={0} placeholder="max" value={f.max ?? ''}
+              onChange={(e) => onChange({ ...f, max: num(e.target.value) })}
+              className={`w-24 rounded-md border bg-bg px-2 py-1 text-[11px] text-txt outline-none ${
+                rangeHorsDomaine(f) ? 'border-[#E8B44C] focus:border-[#E8B44C]' : 'border-line-2 focus:border-mint'}`} />
+          </div>
+          {rangeHorsDomaine(f) && (
+            <p data-seg-garde className="mt-1 text-[11px] leading-snug text-[#E8B44C]">
+              Valeurs hors domaine (≥ 0, min ≤ max) — critère ignoré tant qu'il n'est pas corrigé.
+            </p>
+          )}
+        </>
       ) : d.type === 'bool' ? (
         <div className="mt-1.5 flex gap-1.5">
           {[{ v: true, l: 'oui' }, { v: false, l: 'non' }].map(({ v, l }) => (
@@ -194,12 +209,13 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
   const { setToast } = useApp()
   const qc = useQueryClient()
 
-  // un filtre en cours de saisie (range sans borne, énum sans valeur) n'est pas envoyé
+  // un filtre en cours de saisie (range sans borne, énum sans valeur) n'est pas envoyé —
+  // ni un range HORS DOMAINE (item 5 UX V1 : la garde visuelle l'annonce, rien ne part muet)
   const complet = (f: SegmentFiltre): boolean => {
     if (f.ou) return f.ou.some(complet)
     const d = f.cle ? defs.get(f.cle) : undefined
     if (!d) return false
-    if (d.type === 'range') return f.min != null || f.max != null
+    if (d.type === 'range') return (f.min != null || f.max != null) && !rangeHorsDomaine(f)
     if (d.type === 'enum') return (f.values?.length ?? 0) > 0
     return true
   }
