@@ -845,6 +845,9 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
                (d.matrice_statut = 'chaude' AND vs.v_score >= :vth) AS brulante,
+               -- CRED-4 : fraîcheur du signal V daté le plus récent (BODACC/cessation/DPE)
+               (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
+                 WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal,
                (SELECT array_agg(s0->>'code') FROM jsonb_array_elements(vs.signals) s0) AS v_sig
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -892,6 +895,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
             "cluster": int(r["cluster"]) if r["cluster"] else None,
             "proprio": r["proprio"],
             "v_score": r["v_score"],
+            "v_dernier_signal": r["v_dernier_signal"],
             "v_band": r["v_band"],
             "owner_type": r["owner_type"],
             "brulante": bool(r["brulante"]),
@@ -917,6 +921,9 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                (ev.parcel_id IS NOT NULL) AS evenement_rouge,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
+               -- CRED-4 : fraîcheur du signal V daté le plus récent (BODACC/cessation/DPE)
+               (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
+                 WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal,
                (d.matrice_statut = 'chaude' AND vs.v_score >= :vth) AS brulante
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -951,6 +958,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         "cluster": int(r["cluster"]) if r["cluster"] else None,
         "proprio": r["proprio"],
         "v_score": r["v_score"], "v_band": r["v_band"], "owner_type": r["owner_type"],
+        "v_dernier_signal": r["v_dernier_signal"],
         "brulante": bool(r["brulante"]),
     } for r in rows]
 

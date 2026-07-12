@@ -43,3 +43,16 @@ export const SCORE_TIP = {
   a: 'A — Accessibilité du dossier (contraintes d’acquisition et de montage)',
   v: 'V — Vendabilité : signaux publics indiquant un propriétaire susceptible de vendre',
 } as const
+
+
+// CRED-4 (revue externe 12/07) : âge d'un signal V d'un coup d'œil — pastille verte < 6 mois,
+// ambre 6-18, rouge > 18. Affichage seulement : aucune re-pondération.
+export function ageSignal(dateIso: string | null | undefined): { mois: number; color: string; label: string } | null {
+  if (!dateIso) return null
+  const mois = Math.max(0, Math.floor((Date.now() - new Date(dateIso).getTime()) / (30.44 * 86_400_000)))
+  return {
+    mois,
+    color: mois < 6 ? '#5CE6A1' : mois <= 18 ? '#E8B44C' : '#E8695A',
+    label: mois < 1 ? 'ce mois-ci' : mois === 1 ? 'il y a 1 mois' : `il y a ${mois} mois`,
+  }
+}

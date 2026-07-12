@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
-import { BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
+import { ageSignal, BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
 import type { Statut } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
@@ -17,15 +17,24 @@ const OWNER_BADGE: Record<string, { label: string; title: string }> = {
   copro: { label: 'COPRO', title: 'Copropriété — acquisition complexe (V calculé)' },
 }
 
-export function VBadge({ v, band, brulante }: { v: number | null | undefined; band: string | null | undefined; brulante?: boolean }) {
+export function VBadge({ v, band, brulante, dernierSignal }: {
+  v: number | null | undefined; band: string | null | undefined; brulante?: boolean
+  dernierSignal?: string | null
+}) {
   if (v == null) return null
   const color = brulante ? BRULANTE_COLOR : vBandColor(band as never)
+  // CRED-4 : l'âge du dernier signal DATÉ (BODACC/cessation/DPE) d'un coup d'œil —
+  // pastille < 6 mois / 6-18 / > 18. Sans signal daté : signaux d'état courant, pas de pastille.
+  const age = ageSignal(dernierSignal)
   return (
     <span className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold"
       style={{ background: `${color}1f`, color }}
-      title={`${SCORE_TIP.v} (${v}/100)${brulante ? ' — 🔥 BRÛLANTE (chaude Q×A + signaux vendeur forts)' : ''} — détail dans la fiche`}>
+      title={`${SCORE_TIP.v} (${v}/100)${brulante ? ' — 🔥 BRÛLANTE (chaude Q×A + signaux vendeur forts)' : ''}${
+        age ? ` — dernier signal daté : ${age.label} (${new Date(dernierSignal!).toLocaleDateString('fr-FR')})`
+            : ' — signaux d\'état courant (sans date d\'événement)'} — détail dans la fiche`}>
       {brulante && <span aria-hidden>🔥</span>}
       V {v}
+      {age && <span data-v-age-liste className="h-1.5 w-1.5 rounded-full" style={{ background: age.color }} />}
     </span>
   )
 }
@@ -76,7 +85,7 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
             </span>
           )}
           {p.vue_mer === 'oui' && <span className="shrink-0 text-[10px] text-[#7DE8E0]" title="Vue mer dégagée">◠</span>}
-          <VBadge v={p.v_score} band={p.v_band} brulante={p.brulante} />
+          <VBadge v={p.v_score} band={p.v_band} brulante={p.brulante} dernierSignal={p.v_dernier_signal} />
           {p.owner_type && OWNER_BADGE[p.owner_type] && (
             <span className="shrink-0 rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim"
               title={OWNER_BADGE[p.owner_type].title}>

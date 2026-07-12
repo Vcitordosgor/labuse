@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
-import { BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
+import { ageSignal, BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor } from '../../lib/status'
 import { Loading } from '../Loading'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -121,6 +121,15 @@ function VSignalRow({ s }: { s: VSignal }) {
           <span className="shrink-0 rounded-full bg-surface-3 px-1.5 text-[8.5px] text-txt-dim" title={`Famille ${s.famille}`}>
             {FAMILLE_LABEL[s.famille] ?? s.famille}
           </span>
+          {/* CRED-4 : le statut des procédures saute aux yeux (en cours / clôturée) */}
+          {/en cours/i.test(s.label) && (
+            <span data-v-statut="en-cours" className="shrink-0 rounded-full bg-[#3a1614] px-1.5 text-[8.5px] font-semibold text-st-ecartee"
+              title="Procédure toujours ouverte au dernier avis BODACC ingéré">EN COURS</span>
+          )}
+          {/clôtur/i.test(s.label) && (
+            <span data-v-statut="cloturee" className="shrink-0 rounded-full border border-line-2 px-1.5 text-[8.5px] font-medium text-txt-dim"
+              title="Procédure clôturée — le signal reste pertinent tant que la parcelle est au nom de la société">CLÔTURÉE</span>
+          )}
         </div>
         {s.ref && <div className="text-[11px] leading-snug text-txt-mut">{s.ref}</div>}
         <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
@@ -134,7 +143,17 @@ function VSignalRow({ s }: { s: VSignal }) {
               match {Math.round(s.match.confiance * 100)} %
             </span>
           )}
-          {s.date_evenement && <span className="ml-auto shrink-0 font-mono">{s.date_evenement}</span>}
+          {/* CRED-4 : l'ÂGE du signal d'un coup d'œil — pastille < 6 mois / 6-18 / > 18 */}
+          {s.date_evenement && (() => {
+            const a = ageSignal(s.date_evenement)!
+            return (
+              <span className="ml-auto flex shrink-0 items-center gap-1.5 font-mono"
+                title={`Signal daté du ${new Date(s.date_evenement).toLocaleDateString('fr-FR')} — ${a.label}`}>
+                <span data-v-age className="h-2 w-2 rounded-full" style={{ background: a.color }} />
+                {a.label} · {s.date_evenement}
+              </span>
+            )
+          })()}
         </div>
       </div>
     </div>

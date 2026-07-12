@@ -45,6 +45,7 @@ export interface ParcelResult {
   cluster?: number | null   // taille du groupe « même propriétaire » parmi les chaudes (île)
   proprio?: string | null
   v_score?: number | null
+  v_dernier_signal?: string | null   // CRED-4 : date du signal V daté le plus récent
   v_band?: VBand | null
   owner_type?: OwnerType | null
   brulante?: boolean

@@ -80,3 +80,22 @@ def test_stats_compteurs_dossiers_sommables(db_session):
     s = _q_v2_stats(db_session, commune="Saint-Pierre")
     assert s["chaudes_avec_dossier"] + s["chaudes_sans_identite"] == s["chaude"]
     assert s["dossiers_chaudes"] <= s["chaudes_avec_dossier"]   # N parcelles ≥ N propriétaires
+
+
+@pytest.mark.db
+def test_liste_sert_la_fraicheur_du_dernier_signal_v(db_session):
+    """CRED-4 : /parcels expose v_dernier_signal (date max des signaux V DATÉS, jamais
+    computed_at qui est toujours récent). Test structurel — indépendant du jeu de données :
+    la clé existe sur chaque ligne, NULL ou date ISO ; sans score V, jamais de date inventée."""
+    import re
+
+    from labuse.api.app import _q_v2_list
+    rows = _q_v2_list(db_session, None, 200, 0)
+    if not rows:
+        pytest.skip("labuse_test sans évaluations pour le run de référence — propriété vérifiée sur la base réelle (2025-07-17 pour 97416000ES2071)")
+    for r in rows:
+        assert "v_dernier_signal" in r
+        v = r["v_dernier_signal"]
+        assert v is None or re.fullmatch(r"\d{4}-\d{2}-\d{2}", v), v
+        if r.get("v_score") is None:
+            assert v is None
