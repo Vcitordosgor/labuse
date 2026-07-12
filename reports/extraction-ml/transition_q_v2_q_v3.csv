@@ -1,0 +1,17 @@
+avant,apres,n
+ecartee,ecartee,406296
+a_creuser,a_creuser,12522
+a_surveiller,a_surveiller,4959
+a_creuser,ecartee,2729
+ecartee,a_creuser,1612
+a_surveiller,a_creuser,1225
+chaude,chaude,654
+a_creuser,a_surveiller,642
+a_surveiller,chaude,381
+chaude,a_creuser,221
+chaude,a_surveiller,202
+a_creuser,chaude,110
+ecartee,a_surveiller,86
+ecartee,chaude,13
+chaude,ecartee,6
+a_surveiller,ecartee,5
