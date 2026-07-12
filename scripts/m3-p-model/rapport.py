@@ -98,6 +98,25 @@ Aucun taux absolu extrapolé — RR relatifs et taux observés avec IC uniquemen
 
 {md_table(lift)}
 
+## Lecture critique — ce que le modèle a réellement trouvé
+
+Analyse post-hoc du top-1158 test (aucune retouche du modèle) :
+{md_table(pd.read_csv(REPORTS / 'test-2025-composition-top.csv'))}
+
+Nature des mutations captées par le top-1158 :
+{md_table(pd.read_csv(REPORTS / 'test-2025-nature-hits.csv'))}
+
+**La tête extrême du classement est dominée par les reventes d'appartements en
+copropriété** (le label L2 au grain parcelle rend un immeuble « mutant » dès qu'un
+lot se vend). Zéro fuite temporelle — l'information était disponible au 01/01/Y —
+mais pour l'usage radar foncier, la préversion 2026 doit être lue avec le filtre
+produit adéquat. Recommandation Phase 3 : label variante excluant les locaux
+« Appartement » (mutation foncière stricte : maison / nu / immeuble entier), ou
+exclusion des parcelles copro de la vue produit. Le lift au-delà de la tête
+(percentiles 1-10, cf. table ci-dessous) reste très supérieur aux baselines et
+porte le signal foncier de fond. Autre constat : « permis < 24 mois » est
+POSITIF (5,6 % vs 1,8 %), contrairement à l'attente Phase 0 (signe libre assumé).
+
 ## Churn
 
 Top-1158 au 01/01/2024 vs 01/01/2025 : overlap {int(churn['overlap'][0])}

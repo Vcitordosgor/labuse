@@ -1,0 +1,34 @@
+{
+  "sha256": "9042ee9dd3bcdefdeaae9ef59811a672f39c638ce3ea25ca097468570e7307ff",
+  "gel": "2026-07-12 15:17:54",
+  "meta": {
+    "C": 5.0,
+    "n_train": 431663,
+    "train": "2023",
+    "interactions": [
+      [
+        "tenure_bin",
+        "rot_bati"
+      ],
+      [
+        "tenure_bin",
+        "surface_m2"
+      ],
+      [
+        "tenure_bin",
+        "filo_pct_prop"
+      ],
+      [
+        "tenure_bin",
+        "ndvi_moyen"
+      ],
+      [
+        "rot_bati",
+        "nu_constructible"
+      ]
+    ],
+    "seed": 974,
+    "gel": "2026-07-12 15:17:54"
+  },
+  "protocole": "modèle gelé sur val 2024 — le test 2025 n'a PAS été lu"
+}

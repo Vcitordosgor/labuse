@@ -176,35 +176,76 @@ def build_static(session: Session) -> None:
                      "parcel_residuel_bati", "parcel_amenites", "ortho_detections",
                      "filosofi_carreaux_200m", "parcel_v_score", "spatial_layers")}
 
-    zone_sql, qpv_sql, friche_sql = "NULL::text", "false", "false"
+    # Couches polygonales : passage OBLIGATOIRE par ST_Subdivide (les zones PLU
+    # A/N font parfois >100k sommets ; un point-dans-polygone brut y est CPU-bound,
+    # constaté : >40 min — subdivisé : ~1-2 min pour tout le parc).
     if opt["spatial_layers"]:
-        zone_sql = """(
-            SELECT CASE WHEN sl.subtype IN ('AUc', 'AUs') THEN 'AU' ELSE sl.subtype END
-            FROM spatial_layers sl
-            WHERE sl.kind = 'plu_gpu_zone' AND f.centroid IS NOT NULL
-              AND ST_Intersects(sl.geom, f.centroid)
-            LIMIT 1)"""
-        qpv_sql = """EXISTS (
-            SELECT 1 FROM spatial_layers sl WHERE sl.kind = 'qpv'
-              AND f.centroid IS NOT NULL AND ST_Intersects(sl.geom, f.centroid))"""
-        friche_sql = """EXISTS (
-            SELECT 1 FROM spatial_layers sl WHERE sl.kind = 'friche'
-              AND f.centroid IS NOT NULL AND ST_Intersects(sl.geom, f.centroid))"""
+        _exec(session, """
+            DROP TABLE IF EXISTS p_model_layers_sub;
+            CREATE TABLE p_model_layers_sub AS
+            SELECT kind,
+                   CASE WHEN kind = 'plu_gpu_zone' AND subtype IN ('AUc', 'AUs')
+                        THEN 'AU' ELSE subtype END AS subtype,
+                   ST_Subdivide(ST_MakeValid(geom), 64) AS geom
+            FROM spatial_layers
+            WHERE kind IN ('plu_gpu_zone', 'qpv', 'friche');
+            CREATE INDEX ON p_model_layers_sub USING gist (geom);
+            ANALYZE p_model_layers_sub;
+        """)
+        _exec(session, """
+            DROP TABLE IF EXISTS p_model_geo;
+            CREATE TABLE p_model_geo AS
+            WITH zone AS (
+                SELECT DISTINCT ON (f.idu) f.idu, s.subtype
+                FROM p_model_frame f
+                JOIN p_model_layers_sub s
+                  ON s.kind = 'plu_gpu_zone' AND ST_Intersects(s.geom, f.centroid)
+                ORDER BY f.idu, s.subtype
+            ), qpv AS (
+                SELECT DISTINCT f.idu FROM p_model_frame f
+                JOIN p_model_layers_sub s
+                  ON s.kind = 'qpv' AND ST_Intersects(s.geom, f.centroid)
+            ), friche AS (
+                SELECT DISTINCT f.idu FROM p_model_frame f
+                JOIN p_model_layers_sub s
+                  ON s.kind = 'friche' AND ST_Intersects(s.geom, f.centroid)
+            )
+            SELECT f.idu, z.subtype AS zone_plu,
+                   (q.idu IS NOT NULL) AS qpv, (fr.idu IS NOT NULL) AS friche
+            FROM p_model_frame f
+            LEFT JOIN zone z ON z.idu = f.idu
+            LEFT JOIN qpv q ON q.idu = f.idu
+            LEFT JOIN friche fr ON fr.idu = f.idu;
+            CREATE UNIQUE INDEX ON p_model_geo (idu);
+        """)
+    else:
+        _exec(session, """
+            DROP TABLE IF EXISTS p_model_geo;
+            CREATE TABLE p_model_geo AS
+            SELECT idu, NULL::text AS zone_plu, false AS qpv, false AS friche
+            FROM p_model_frame;
+        """)
 
     filo_join = ""
     filo_cols = ("NULL::float AS filo_snv_pp, NULL::float AS filo_pct_pauv, "
                  "NULL::float AS filo_pct_prop, NULL::float AS filo_dens_pop")
     if opt["filosofi_carreaux_200m"]:
-        filo_join = """
-            LEFT JOIN LATERAL (
-                SELECT fc.ind_snv / nullif(fc.ind, 0)  AS snv_pp,
-                       fc.men_pauv / nullif(fc.men, 0) AS pct_pauv,
-                       fc.men_prop / nullif(fc.men, 0) AS pct_prop,
-                       fc.ind / 0.04                   AS dens_pop
-                FROM filosofi_carreaux_200m fc
-                WHERE f.centroid IS NOT NULL
-                  AND ST_Intersects(fc.geom, ST_Transform(f.centroid, 2975))
-                LIMIT 1) filo ON true"""
+        # carreaux 200 m = petits carrés → jointure set-based directe sur le point 2975
+        _exec(session, """
+            DROP TABLE IF EXISTS p_model_filo;
+            CREATE TABLE p_model_filo AS
+            SELECT DISTINCT ON (f.idu) f.idu,
+                   fc.ind_snv / nullif(fc.ind, 0)  AS snv_pp,
+                   fc.men_pauv / nullif(fc.men, 0) AS pct_pauv,
+                   fc.men_prop / nullif(fc.men, 0) AS pct_prop,
+                   fc.ind / 0.04                   AS dens_pop
+            FROM p_model_frame f
+            JOIN filosofi_carreaux_200m fc
+              ON ST_Intersects(fc.geom, ST_Transform(f.centroid, 2975))
+            ORDER BY f.idu;
+            CREATE UNIQUE INDEX ON p_model_filo (idu);
+        """)
+        filo_join = "LEFT JOIN p_model_filo filo ON filo.idu = f.idu"
         filo_cols = ("filo.snv_pp AS filo_snv_pp, filo.pct_pauv AS filo_pct_pauv, "
                      "filo.pct_prop AS filo_pct_prop, filo.dens_pop AS filo_dens_pop")
 
@@ -231,6 +272,10 @@ def build_static(session: Session) -> None:
                         "LEFT JOIN parcel_v_score vs ON vs.parcelle_id = f.idu",
                         "NULL::text AS owner_type")
 
+    zone_sql = "geo.zone_plu"
+    qpv_sql = "geo.qpv"
+    friche_sql = "geo.friche"
+
     pisc_sql = pv_sql = "false"
     if opt["ortho_detections"]:
         pisc_sql = """EXISTS (SELECT 1 FROM ortho_detections od
@@ -254,6 +299,7 @@ def build_static(session: Session) -> None:
                ({pv_sql}) AS pv_candidat,
                {vsc_c}
         FROM p_model_frame f
+        LEFT JOIN p_model_geo geo ON geo.idu = f.idu
         LEFT JOIN p_model_bati pb ON pb.idu = f.idu
         {filo_join} {terr_j} {veg_j} {res_j} {am_j} {vsc_j};
         CREATE UNIQUE INDEX ON p_model_static (idu);

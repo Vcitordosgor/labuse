@@ -56,6 +56,8 @@ class BinnedFeature:
             return " / ".join(sorted(cats))
         lo = self.edges[i - 1] if i > 0 else None
         hi = self.edges[i] if i < len(self.edges) else None
+        if lo is None and hi is None:
+            return "toutes valeurs"
         if lo is None:
             return f"≤ {hi:.4g}"
         if hi is None:
