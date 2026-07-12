@@ -120,7 +120,11 @@ export interface SourceInfo {
   reliability_level: string | null
   last_sync_at: string | null
   documentation_url: string | null
+  legal_notes: string | null
   testable: boolean
+  // UX V1 ajout A : fraîcheur RÉELLE lue dans ingestion_runs (jamais codée en dur)
+  derniere_ingestion: string | null
+  ingestion_runs: number
 }
 
 export interface Fiche {

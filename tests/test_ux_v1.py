@@ -30,6 +30,17 @@ def test_stub_refuse_les_verbes_hors_perimetre(q):
     assert "stub" not in message.lower()
 
 
+def test_source_pour_run_rattache_les_runs_au_catalogue():
+    """Ajout A : la page Sources lit la fraîcheur dans ingestion_runs — le rattachement
+    run → source de catalogue est une fonction pure."""
+    from labuse.api.app import _source_pour_run
+
+    assert _source_pour_run("Saint-Paul") == "Cadastre Etalab (bulk DGFiP/Etalab)"
+    assert _source_pour_run("974 (SDES Sitadel3 — refresh)") == "SITADEL (autorisations d'urbanisme)"
+    assert _source_pour_run("974 (tuiles ortho)") == "Géoplateforme IGN"
+    assert _source_pour_run(None) is None
+
+
 @pytest.mark.parametrize(
     ("q", "attendu"),
     [
