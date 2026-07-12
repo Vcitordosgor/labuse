@@ -451,6 +451,15 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
         <div className="mt-1 flex items-baseline gap-1.5">
           <span data-seg-preset-count className="font-display text-lg font-bold text-mint">{fmtN(p.count)}</span>
           <span className="text-[11px] text-txt-dim">parcelles</span>
+          {/* Item 14 (UX V1) : le compteur est un cache 24 h — sa date évite la question
+              quand le builder (calcul direct) diffère après un recalcul. */}
+          {p.count != null && p.count_at && (
+            <span data-seg-count-date className="text-[11px] text-txt-dim"
+              title="Compteur recalculé au plus toutes les 24 h — le builder calcule en direct">
+              · compteur du {new Date(p.count_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} à{' '}
+              {new Date(p.count_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
           {catnatOn && <span className="ml-auto rounded-md bg-[#E8695A]/15 px-1.5 py-0.5 text-[9px] font-medium text-[#f0a29a]">CATNAT actif</span>}
         </div>
         {p.argumentaire && <p className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{p.argumentaire}</p>}
