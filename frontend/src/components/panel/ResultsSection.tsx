@@ -80,6 +80,10 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
             </span>
           )}
         </div>
+        {/* M6 2a (§1.8) : adresse postale BAN sur la carte de résultat — jamais un vide */}
+        <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
+          {p.adresse ?? 'Adresse non disponible'}
+        </div>
         <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
@@ -187,6 +191,12 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
             )}
             <p className="mt-1.5 shrink-0 font-mono text-[9.5px] tracking-widest text-txt-dim">LE RESTE, PAR MOTIF</p>
             {q.isLoading && <p className="mt-1 text-[11px] text-txt-dim">Chargement…</p>}
+            {/* M6 2a (§1.6) : état vide EXPLICITE — jamais une section muette */}
+            {q.data && (q.data.motifs ?? []).length === 0 && (
+              <p className="mt-1 text-[10.5px] text-txt-dim">
+                Détail par motif non disponible sur ce périmètre.
+              </p>
+            )}
             <div className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
               {(q.data?.motifs ?? []).map((m) => (
                 <div key={m.motif} className={`flex shrink-0 justify-between gap-2 text-[10.5px] ${m.motif.startsWith('écartées') ? 'font-medium text-txt border-b border-line pb-0.5 mb-0.5' : 'text-txt-mut'}`}>

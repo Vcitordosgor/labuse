@@ -94,7 +94,8 @@ export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
   j<{ idu: string; commune: string; status: string | null; q_score: number | null;
-      tier_v2: string | null; rang_v2: number | null; etage0: boolean }[]>(
+      tier_v2: string | null; rang_v2: number | null; etage0: boolean;
+      adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
 export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)

@@ -373,6 +373,13 @@ export function MapView() {
       const feats = equip.data.features.filter((f) => EQUIP_CATS.includes((f.properties as { subtype?: string }).subtype as never))
       ;(m.getSource('ov-equip') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: feats } as never)
     }
+    // M6 2a (§1.6, anomalie A3) : couche activée mais VIDE sur le périmètre → le dire,
+    // jamais un silence (l'utilisateur ne sait pas si la couche est vide ou cassée).
+    if (layers.anru && anru.data && anru.data.features.length === 0) {
+      useApp.getState().setToast(
+        commune ? `Aucun périmètre ANRU (NPNRU) sur ${commune} — 6 communes en portent un.`
+                : 'Aucun périmètre ANRU (NPNRU) sur ce cadrage.')
+    }
   }, [zonage.data, ppr.data, parc.data, anru.data, equip.data, mapReady])
 
   // ───────────────────────── fond de plan + relief ─────────────────────────

@@ -5,6 +5,7 @@ import type { Statut } from './types'
 
 export interface ParcelProps {
   idu: string
+  adresse?: string | null   // M6 2a (§1.8) : adresse postale BAN (properties geojson)
   surface_m2: number | null
   status: Statut
   q_score: number
