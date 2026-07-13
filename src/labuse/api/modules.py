@@ -139,19 +139,29 @@ def division_compute(commune: str = "Saint-Paul", db: Session = Depends(get_db))
 @router.get("/division")
 def division_list(min_score: int = 0, limit: int = 300, commune: str | None = None,
                   db: Session = Depends(get_db)) -> dict:
-    rows = db.execute(text("""
+    # M6 2a (ticket M6-INC-03) : l'étage 0 du run SERVI prime PARTOUT — une parcelle en
+    # exclusion dure (PPR rouge, foncier public, zonage…) ne peut pas être servie comme
+    # candidate à la division, quel que soit son score géométrique. Les exclues sont
+    # retirées du gisement et comptées (`etage0_exclus`) pour la transparence.
+    etage0 = ("EXISTS(SELECT 1 FROM dryrun_parcel_evaluations d WHERE d.parcel_id = m.parcel_id"
+              " AND d.run_label = :run AND d.status IN ('exclue', 'faux_positif_probable'))")
+    rows = db.execute(text(f"""
         SELECT m.idu, m.surface_m2, m.bati_count, m.emprise_pct, m.zone, m.mic_radius_m,
                m.lot_area_m2, m.acces_voirie, m.score, ST_AsGeoJSON(m.lot_geom) AS lot,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM module_division m JOIN parcels p ON p.id = m.parcel_id
         WHERE m.score >= :s AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+          AND NOT {etage0}
         ORDER BY m.score DESC LIMIT :lim"""),
-        {"s": min_score, "lim": limit, "c": commune}).mappings().all()
-    total = db.execute(text(
-        "SELECT count(*) FROM module_division m JOIN parcels p ON p.id = m.parcel_id"
+        {"s": min_score, "lim": limit, "c": commune, "run": RUN}).mappings().all()
+    counts = db.execute(text(
+        f"SELECT count(*) FILTER (WHERE NOT {etage0}) AS total,"
+        f"       count(*) FILTER (WHERE {etage0}) AS exclus"
+        " FROM module_division m JOIN parcels p ON p.id = m.parcel_id"
         " WHERE m.score >= :s AND (CAST(:c AS text) IS NULL OR p.commune = :c)"),
-        {"s": min_score, "c": commune}).scalar()
-    return {"total": int(total or 0), "items": [{
+        {"s": min_score, "c": commune, "run": RUN}).mappings().one()
+    return {"total": int(counts["total"] or 0), "etage0_exclus": int(counts["exclus"] or 0),
+            "items": [{
         "idu": r["idu"], "surface_m2": round(r["surface_m2"] or 0), "bati_count": r["bati_count"],
         "emprise_pct": r["emprise_pct"], "zone": r["zone"], "mic_radius_m": r["mic_radius_m"],
         "lot_area_m2": r["lot_area_m2"], "acces_voirie": r["acces_voirie"], "score": r["score"],
