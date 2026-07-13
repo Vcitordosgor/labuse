@@ -480,6 +480,17 @@ def build_mvt_cmd(
     with session_scope() as s:
         n = build_mvt_table(s, label)
         n_ov = build_overlay_mvt(s)
+        # M6 post-merge : le label matérialisé est ENREGISTRÉ — le test de cohérence
+        # (tests/test_run_serving_coherence.py) pète si tuiles et run servi divergent.
+        s.execute(text(
+            """CREATE TABLE IF NOT EXISTS mvt_meta
+               (key varchar(48) PRIMARY KEY, value varchar(64), updated_at timestamptz)"""))
+        s.execute(text(
+            """INSERT INTO mvt_meta (key, value, updated_at) VALUES ('run_label', :l, now())
+               ON CONFLICT (key) DO UPDATE SET value = :l, updated_at = now()"""), {"l": label})
+    if label != RUN:
+        typer.echo(f"⚠ ATTENTION : tuiles matérialisées sur « {label} » ≠ run servi « {RUN} » "
+                   f"(Q_A_RUN_LABEL) — les fiches/listes et la carte raconteront deux mondes.")
     typer.echo(f"✓ mvt_parcels reconstruite : {n} parcelles (label {label}) · mvt_overlays : {n_ov} géométries.")
 
 
