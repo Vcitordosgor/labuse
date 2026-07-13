@@ -141,8 +141,29 @@
     <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² (indicatif)</small></div></div>
   {% endif %}
 
+  {% if c.verdict_v2 %}
+  <h3>Verdict LA BUSE (scoring v2)</h3>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Verdict</div>
+      <div class="valeur">{{ c.verdict_v2.libelle }}{% if c.verdict_v2.tier in ('brulante', 'chaude') %} <small>v2</small>{% endif %}</div></div>
+    {% if c.verdict_v2.rang %}
+    <div class="cartouche"><div class="titre">Rang île (hors copropriétés)</div>
+      <div class="valeur">{{ c.verdict_v2.rang }}</div></div>
+    {% endif %}
+    {% if c.verdict_v2.mult %}
+    <div class="cartouche"><div class="titre">Probabilité de mutation vs base</div>
+      <div class="valeur">×{{ c.verdict_v2.mult }}</div></div>
+    {% endif %}
+  </div>
+  {% if c.verdict_v2.etage0 %}
+  <p class="note">Parcelle écartée par une exclusion dure (risques, zonage, foncier public…) —
+     le détail figure dans les sections risques et règles de ce rapport.</p>
+  {% endif %}
+  {% endif %}
+
   {% if c.score %}
-  <h3>Score LA BUSE de la parcelle (valeur absolue)</h3>
+  <h3>Score LA BUSE de la parcelle ({% if c.verdict_v2 %}grille historique Q/A — complément
+      du verdict v2 ci-dessus{% else %}valeur absolue{% endif %})</h3>
   <div class="cartouches">
     <div class="cartouche"><div class="titre">Q — Qualité foncière</div>
       <div class="valeur">{{ c.score.q }} <small>/100</small></div></div>
