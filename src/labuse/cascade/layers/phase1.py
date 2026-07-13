@@ -254,7 +254,49 @@ class ZonagePluGpuLayer(Layer):
                 kind="faux_positif", source=SRC_GPU,
             )]
 
+        # M6 2b (A-03) : zones U/AU CALIBRÉES (YAML PLU communal) dont le règlement
+        # INTERDIT l'habitat (zones à vocation économique — ex. U1e/U2e/U3e/AU*e à
+        # Saint-Paul, Art. 1.2 cité dans le YAML). Même sensibilité au recouvrement que
+        # l'exclusion A/N : ≥ seuil → HARD_EXCLUDE « exclue » ; entre plancher et seuil →
+        # SOFT_FLAG FORT + bonus réduit à la part habitat-admis. Ne concerne QUE les zones
+        # calibrées (habitat=interdit explicite au YAML) — jamais l'estimation générique.
+        # NB : `subtype` porte la CLASSE typezone (U/AU/AUc…) ; le libellé fin de zone
+        # (« U1e », « AU1ec ») vit dans `name` — c'est lui que le YAML calibre.
+        def _zone_lib(i) -> str:
+            return ((i.name or i.subtype) or "").strip()
+
+        def _habitat_interdit(libelle: str) -> bool:
+            from ...faisabilite.plu_rules import resolve_zone
+            r = resolve_zone(libelle, parcel.commune)
+            return r is not None and r.calibree and r.habitat == "interdit"
+
+        eco = [i for i in uau if _habitat_interdit(_zone_lib(i))]
+        eco_cov = min(1.0, sum(i.coverage for i in eco))
+        if eco and eco_cov >= seuil:
+            lib_eco = _zone_lib(_dominant(eco))
+            from ...faisabilite.plu_rules import resolve_zone
+            r_eco = resolve_zone(lib_eco, parcel.commune)
+            src_eco = (r_eco.raw.get("habitat_src") or "règlement de zone") if r_eco else "règlement de zone"
+            return [hard_exclude(
+                self.name,
+                f"Zone « {lib_eco} » à vocation économique — habitat interdit au règlement "
+                f"({src_eco}) ; recouvrement {eco_cov * 100:.0f} %.",
+                kind="exclue", source=SRC_GPU,
+            )]
+
         verdicts: list[Verdict] = []
+        if eco and eco_cov >= plancher:
+            lib_eco = _zone_lib(_dominant(eco))
+            verdicts.append(soft_flag(
+                self.name,
+                f"Partiellement en zone à vocation économique « {lib_eco} » (habitat interdit "
+                f"au règlement sur ~{eco_cov * 100:.0f} % de la parcelle).",
+                Severity.FORT, source=SRC_GPU,
+            ))
+            uau = [i for i in uau if i not in eco]
+            uau_cov = min(1.0, sum(i.coverage for i in uau))
+            if not uau:
+                return verdicts
         mixte = bool(an) and an_cov >= plancher and bool(uau)
         if mixte:
             lib_an = (_dominant(an).subtype or "").strip()
