@@ -28,8 +28,9 @@ BRULANTE_GUARDRAIL = (30, 120)
 
 # Run de référence de la matrice Q×A — SOURCE DE VÉRITÉ UNIQUE (API, vue Brûlantes,
 # frontend SOURCE). Bascule q_v2 → q_v3_datagap (mandat data-gap + décision « le signal
-# de zone ne bascule jamais seul », 10/07/2026).
-Q_A_RUN_LABEL = "q_v3_datagap"
+# de zone ne bascule jamais seul », 10/07/2026) ; q_v3_datagap → q_v4_m6a (M6 Phase 2a,
+# 13/07/2026 : exclusion emprise routière A-01, delta 1 254 entrées étage 0, 0 brûlante).
+Q_A_RUN_LABEL = "q_v4_m6a"
 
 # ── Bandes (décision D2) ───────────────────────────────────────────────────────────────────
 # (borne basse incluse, code) — évaluées dans l'ordre. V NULL → 'na'.
