@@ -190,30 +190,76 @@ def zan(db: Session = Depends(get_db)) -> dict:
 
 # ───────────────────────── M18 — BAROMÈTRE FONCIER ─────────────────────────
 
+#: Critère P1-03 (M6 Phase 2a) : une mutation n'entre dans le Baromètre — médianes ET
+#: volumes affichés — que si elle est une VENTE au sens strict. Voir `_barometre_data`.
+_BAROMETRE_RETENUE = """nature_mutation = 'Vente'
+                 AND valeur_fonciere > 1000
+                 AND valeur_fonciere / NULLIF(surface_reelle_bati, 0) BETWEEN 100 AND 12000"""
+
+
 def _barometre_data(db: Session) -> dict:
-    dvf = db.execute(text("""
+    """Baromètre foncier M18 — séries DVF et Sitadel, île entière (JSON + PDF marketing).
+
+    Critère outliers (P1-03, audit M6 §1.1b BLOC B) — appliqué aux MÉDIANES ET AUX
+    VOLUMES (`_BAROMETRE_RETENUE`) ; avant P1-03 les volumes n'avaient AUCUN filtre :
+
+    - ``nature_mutation = 'Vente'`` : écarte la VEFA (du neuf — comparable à part, pas
+      la même série de prix que l'ancien : médiane VEFA ~4 700-5 300 €/m² contre ~2 800
+      servis), les adjudications, échanges, expropriations et « vente terrain à bâtir »
+      (hors-objet d'une médiane €/m² bâti) ;
+    - ``valeur_fonciere > 1000`` € : prix symboliques — donations déguisées, apports,
+      régularisations (211 mutations ≤ 1 € au grain source, 31 ≤ 1 000 € dans la table).
+      Seuil 1 000 € retenu car (a) déjà la convention du module marché (`dvf_marche.py`,
+      « ventes à 1 € symbolique écartées ») et (b) creux net de la distribution : 18
+      mutations ≤ 100 €, 13 entre 100 et 1 000 €, puis reprise (77 entre 1 et 5 k€) —
+      aucun bien bâti réel ne se vend sous 1 000 € ;
+    - ``€/m² ∈ [100, 12 000]`` : garde-fou historique contre les ratios aberrants
+      (surfaces mal agrégées résiduelles). La cause principale — lignes d'un même local
+      répétées par nature de culture et SOMMÉES (1 440 surfaces ×2,6) — est corrigée à
+      la racine dans `_geo_dvf_aggregate` (layers_ingest.py) + re-fabrication SQL
+      `reports/m6-audit/sql/p1_03_dvf_surfaces_fix.sql` (rollback fourni).
+
+    Transparence : chaque trimestre porte `ecartees` (mutations hors critère) et le
+    payload global `ecartees` ventile la fenêtre entière — « médiane sur N ventes,
+    M écartées (VEFA, prix symboliques…) ».
+    """
+    dvf = db.execute(text(f"""
         SELECT to_char(date_trunc('quarter', date_mutation), 'YYYY"T"Q') AS trimestre,
-               count(*) AS mutations,
+               count(*) FILTER (WHERE {_BAROMETRE_RETENUE}) AS mutations,
+               (count(*) - count(*) FILTER (WHERE {_BAROMETRE_RETENUE}))::int AS ecartees,
                round(percentile_cont(0.5) WITHIN GROUP (
                  ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0))
-                 FILTER (WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0
-                         AND valeur_fonciere / surface_reelle_bati BETWEEN 100 AND 12000))::int AS median_eur_m2_bati
+                 FILTER (WHERE {_BAROMETRE_RETENUE}))::int AS median_eur_m2_bati
         FROM dvf_mutations WHERE date_mutation IS NOT NULL
         GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
     permis = db.execute(text("""
         SELECT to_char(date_trunc('quarter', date), 'YYYY"T"Q') AS trimestre, count(*) AS permis
         FROM sitadel_permits GROUP BY 1 ORDER BY 1 DESC LIMIT 8"""), ).mappings().all()
-    top_communes = db.execute(text("""
+    top_communes = db.execute(text(f"""
         SELECT commune, count(*) AS mutations,
                round(percentile_cont(0.5) WITHIN GROUP (
-                 ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0))
-                 FILTER (WHERE surface_reelle_bati > 0 AND valeur_fonciere > 0
-                         AND valeur_fonciere / surface_reelle_bati BETWEEN 100 AND 12000))::int AS median_eur_m2
-        FROM dvf_mutations GROUP BY commune HAVING count(*) >= 100
+                 ORDER BY valeur_fonciere / NULLIF(surface_reelle_bati, 0)))::int AS median_eur_m2
+        FROM dvf_mutations WHERE {_BAROMETRE_RETENUE}
+        GROUP BY commune HAVING count(*) >= 100
         ORDER BY median_eur_m2 DESC NULLS LAST LIMIT 8"""), ).mappings().all()
+    ecartees = db.execute(text(f"""
+        SELECT (count(*) - count(*) FILTER (WHERE {_BAROMETRE_RETENUE}))::int AS total,
+               count(*) FILTER (WHERE nature_mutation = 'Vente en l''état futur d''achèvement')::int AS vefa,
+               count(*) FILTER (WHERE nature_mutation NOT IN
+                 ('Vente', 'Vente en l''état futur d''achèvement'))::int AS autres_natures,
+               count(*) FILTER (WHERE nature_mutation = 'Vente'
+                 AND (valeur_fonciere IS NULL OR valeur_fonciere <= 1000))::int AS prix_symboliques,
+               count(*) FILTER (WHERE nature_mutation = 'Vente' AND valeur_fonciere > 1000
+                 AND (surface_reelle_bati IS NULL OR surface_reelle_bati <= 0
+                      OR valeur_fonciere / NULLIF(surface_reelle_bati, 0)
+                         NOT BETWEEN 100 AND 12000))::int AS ratio_hors_bande
+        FROM dvf_mutations"""), ).mappings().one()
     return {"perimetre": "île entière (24 communes DVF, flux Sitadel régional)",
+            "criteres": ("Ventes strictes uniquement (P1-03) : nature 'Vente', prix > 1 000 €, "
+                         "€/m² bâti dans [100, 12 000] — médianes ET volumes. Écartées : VEFA (neuf), "
+                         "adjudications/échanges/expropriations, prix symboliques, ratios aberrants."),
             "dvf_trimestres": [dict(r) for r in dvf], "permis_trimestres": [dict(r) for r in permis],
-            "top_communes_prix": [dict(r) for r in top_communes]}
+            "top_communes_prix": [dict(r) for r in top_communes], "ecartees": dict(ecartees)}
 
 
 @router.get("/barometre")
@@ -265,9 +311,9 @@ def barometre_pdf(db: Session = Depends(get_db)) -> Response:
             pdf.ln()
         pdf.ln(4)
 
-    table("MARCHÉ DVF PAR TRIMESTRE", ["Trimestre", "Mutations", "Médiane €/m² bâti"],
-          [[r["trimestre"], r["mutations"], r["median_eur_m2_bati"]] for r in d["dvf_trimestres"]],
-          [50, 40, 60])
+    table("MARCHÉ DVF PAR TRIMESTRE (VENTES STRICTES)", ["Trimestre", "Ventes", "Écartées", "Médiane €/m² bâti"],
+          [[r["trimestre"], r["mutations"], r["ecartees"], r["median_eur_m2_bati"]] for r in d["dvf_trimestres"]],
+          [40, 35, 30, 55])
     table("PERMIS (SITADEL) PAR TRIMESTRE", ["Trimestre", "Permis"],
           [[r["trimestre"], r["permis"]] for r in d["permis_trimestres"]], [50, 40])
     table("PRIX PAR COMMUNE (TOP)", ["Commune", "Mutations", "Médiane €/m²"],
@@ -277,6 +323,11 @@ def barometre_pdf(db: Session = Depends(get_db)) -> Response:
     pdf.set_text_color(*TXT_DIM)
     pdf.set_text_color(*TXT_HI)
     pdf.set_text_color(*TXT_DIM)
+    e = d["ecartees"]
+    pdf.multi_cell(0, 4, f"Périmètre DVF : ventes strictes uniquement — {e['total']} mutations écartées "
+                         f"de la fenêtre (VEFA {e['vefa']}, adjudications/échanges/expropriations "
+                         f"{e['autres_natures']}, prix ≤ 1 000 € {e['prix_symboliques']}, "
+                         f"€/m² hors bande 100-12 000 : {e['ratio_hors_bande']}).")
     pdf.multi_cell(0, 4, "Données publiques (DVF, Sitadel régional) — indicateurs indicatifs, "
                          "ne valent pas expertise. © LABUSE")
     return Response(bytes(pdf.output()), media_type="application/pdf",

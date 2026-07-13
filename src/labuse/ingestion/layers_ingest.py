@@ -686,6 +686,16 @@ def _geo_dvf_aggregate(rows: list[dict]) -> list[dict]:
     On ne garde que les mutations mono-type, géolocalisées et avec surface : aucun prix
     fabriqué. La VEFA est conservée SI elle a une surface (geo-dvf la fournit, au contraire
     du flux ODS où elle vaut 0) — c'est le comparable « neuf » que vend un promoteur.
+
+    DÉDOUBLONNAGE DES SURFACES (P1-03, audit M6 §1.1b B4) : geo-dvf répète la ligne d'un
+    MÊME local pour chaque subdivision fiscale (nature_culture) et chaque disposition —
+    sommer toutes les lignes résidentielles double/triple la surface (1 440 mutations
+    gonflées ×2,6 en moyenne constatées). On ne somme donc qu'une ligne par local
+    identifié par (id_parcelle, numero_disposition, lot1_numero, type_local, surface) :
+    les répétitions par nature de culture partagent toutes ces clés, deux locaux réels
+    distincts diffèrent d'au moins une (lot ou surface). Limite documentée : deux locaux
+    STRICTEMENT identiques sur les cinq clés seraient fusionnés — borne basse assumée
+    (audit §1.1b B4), sans effet sur le Baromètre qui exclut désormais la VEFA multi-lots.
     """
     from collections import defaultdict
     by: dict[str, list[dict]] = defaultdict(list)
@@ -693,8 +703,18 @@ def _geo_dvf_aggregate(rows: list[dict]) -> list[dict]:
         by[r["id_mutation"]].append(r)
     out: list[dict] = []
     for mid, rs in by.items():
-        locs = [r for r in rs if r["type_local"] in ("Maison", "Appartement")
-                and r["surface_reelle_bati"] and float(r["surface_reelle_bati"]) > 0]
+        locs = []
+        seen: set[tuple] = set()      # P1-03 : dédoublonnage des lignes répétées par
+        for r in rs:                  # nature de culture / disposition (cf. docstring)
+            if not (r["type_local"] in ("Maison", "Appartement")
+                    and r["surface_reelle_bati"] and float(r["surface_reelle_bati"]) > 0):
+                continue
+            key = (r.get("id_parcelle"), r.get("numero_disposition"), r.get("lot1_numero"),
+                   r["type_local"], r["surface_reelle_bati"])
+            if key in seen:
+                continue
+            seen.add(key)
+            locs.append(r)
         if not locs:
             continue
         types = {r["type_local"] for r in locs}
