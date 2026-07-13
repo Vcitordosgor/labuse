@@ -42,21 +42,46 @@ const PRECISIONS_MESUREES: { couche: string; precision: string; methode: string 
     methode: 'zonages SPANC + EGOUL RP à l’IRIS — signal de priorisation, pas un diagnostic' },
 ]
 
-// Licence : lue dans legal_notes quand la base la porte, sinon référentiel vérifié par famille.
+// ── M6 Phase 2a (audit §1.11) : licence RÉELLE par source — plus jamais le repli
+// « Données publiques » (R6). Le libellé est lu dans legal_notes (rempli ligne à ligne
+// au 2a-p1, seed_sources.py = source de vérité) ; le référentiel par nom ne garde que
+// les cas particuliers (usage encadré, non intégré, lignes hors seed).
 const LICENCE_PAR_SOURCE: Record<string, string> = {
-  'OpenStreetMap / Overpass': 'ODbL — attribution OSM',
-  'Parkings OSM (loi APER)': 'ODbL — attribution OSM',
-  'PVGIS (Commission européenne)': 'Données CE — réutilisation libre',
-  'INPI RNE (dirigeants)': 'Réutilisation encadrée INPI',
-  'Fichiers fonciers (Cerema)': 'Convention Cerema (usage interne)',
-  'DVF / valeurs foncières': 'Licence Ouverte — usage encadré (R112 A-3 LPF)',
+  'DVF / valeurs foncières': 'Licence Ouverte — usage encadré (art. L.112 A LPF)',
+  'INPI RNE (dirigeants)': 'Licence INPI — réutilisation encadrée (L. 323-2 CRPA)',
+  'Fichiers fonciers (Cerema)': 'Convention Cerema — non intégré',
+  'PLH des 5 EPCI (extraction documentaire)': 'Documents publics — licence à confirmer',
+  'RTAA DOM (textes réglementaires)': 'Textes officiels (Légifrance) — réutilisation libre',
+  'DEAL Réunion (WMS/WFS)': 'Licence Ouverte (données État)',
+  'DEAL Réunion — PPR / aléas': 'Licence Ouverte (données État)',
+  '50 pas géométriques — limite haute (DEAL)': 'Licence Ouverte (données État)',
 }
 function licence(s: SourceInfo): string {
-  const notes = s.legal_notes ?? ''
-  if (/licence ouverte/i.test(notes)) return 'Licence Ouverte (Etalab)'
-  if (/odbl/i.test(notes)) return 'ODbL — attribution OSM'
   if (LICENCE_PAR_SOURCE[s.name]) return LICENCE_PAR_SOURCE[s.name]
-  return 'Données publiques'
+  const notes = s.legal_notes ?? ''
+  if (/licence ouverte/i.test(notes)) return 'Licence Ouverte 2.0 (Etalab)'
+  if (/odbl/i.test(notes)) return 'ODbL 1.0 (OpenStreetMap)'
+  if (/CC BY 4\.0/i.test(notes)) return 'CC BY 4.0'
+  // Jamais un libellé inventé : sans licence vérifiée à l'audit, on l'affiche tel quel.
+  return 'Licence à confirmer'
+}
+// Lien vers le TEXTE de la licence (audit §1.11 : « lien licence » exigé par le mandat).
+const LICENCE_URL: Record<string, string> = {
+  'Licence Ouverte 2.0 (Etalab)': 'https://www.etalab.gouv.fr/licence-ouverte-open-licence',
+  'Licence Ouverte (données État)': 'https://www.etalab.gouv.fr/licence-ouverte-open-licence',
+  'Licence Ouverte — usage encadré (art. L.112 A LPF)': 'https://www.etalab.gouv.fr/licence-ouverte-open-licence',
+  'ODbL 1.0 (OpenStreetMap)': 'https://www.openstreetmap.org/copyright',
+  'CC BY 4.0': 'https://creativecommons.org/licenses/by/4.0/deed.fr',
+  'Licence INPI — réutilisation encadrée (L. 323-2 CRPA)':
+    'https://www.inpi.fr/sites/default/files/Licence%20donnees%20RNE_2024_0.pdf',
+}
+/** Attribution EXIGÉE par la licence, lue dans legal_notes (motif « attribution : « … » »
+ *  posé au 2a-p1). Le jeton [date …] (INPI art. 2.4 : source + date de dernière mise à
+ *  jour) est remplacé par la date réelle de synchronisation — jamais une date inventée. */
+function attribution(s: SourceInfo, majIso: string | null): string | null {
+  const m = (s.legal_notes ?? '').match(/(?:attribution[^«]*|mention )«\s*([^»]+?)\s*»/i)
+  if (!m) return null
+  return majIso ? m[1].replace(/\[date[^\]]*\]/i, new Date(majIso).toLocaleDateString('fr-FR')) : m[1]
 }
 
 //: enums techniques → libellés produit (jamais de valeur brute face client)
@@ -95,7 +120,12 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-txt-dim">
           {s.access_type && <span>{s.access_type}</span>}
           {s.reliability_level && <span>fiabilité {FIABILITE_LABEL[s.reliability_level] ?? s.reliability_level.replace(/_/g, ' ')}</span>}
-          <span data-source-licence>{licence(s)}</span>
+          {LICENCE_URL[licence(s)] ? (
+            <a data-source-licence href={LICENCE_URL[licence(s)]} target="_blank" rel="noreferrer"
+              className="hover:underline" title="Texte de la licence">{licence(s)}</a>
+          ) : (
+            <span data-source-licence>{licence(s)}</span>
+          )}
           {/* P4.3 : lien OFFICIEL généralisé et bien visible */}
           {s.documentation_url && (
             <a href={s.documentation_url} target="_blank" rel="noreferrer"
@@ -104,6 +134,11 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
             </a>
           )}
         </div>
+        {attribution(s, maj.iso) && (
+          <div data-source-attribution className="mt-0.5 text-[11px] text-txt-dim">
+            {attribution(s, maj.iso)}
+          </div>
+        )}
         {mil && <div className="mt-0.5 text-[11px] text-[#7DE8E0]">↻ {mil}</div>}
         {prec && <div data-source-precision className="mt-0.5 text-[11px] text-mint">✓ précision mesurée : {prec}</div>}
       </div>
