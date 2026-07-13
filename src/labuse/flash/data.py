@@ -413,7 +413,8 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
     """Assemble toutes les sections du rapport pour UNE parcelle.
 
     Lève ValueError si la parcelle est inconnue ; toute autre absence de donnée se traduit
-    par une section None (le template l'omet proprement).
+    par une section None (le template l'omet proprement). M6 2a : si aucune adresse n'est
+    fournie par l'appelant, l'adresse postale BAN rattachée en base est utilisée.
     """
     avail = _existing_tables(db, _NEEDED_TABLES)
     if "parcels" not in avail:
@@ -421,6 +422,10 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
     parcelle = _parcelle(db, idu)
     if not parcelle:
         raise ValueError(f"Parcelle {idu} inconnue.")
+    if adresse is None:
+        # import paresseux (évite tout cycle flash ↔ api au chargement des modules)
+        from ..api.export_commun import adresse_ban_texte
+        adresse = adresse_ban_texte(db, idu)
 
     data: dict[str, Any] = {
         "parcelle": parcelle,

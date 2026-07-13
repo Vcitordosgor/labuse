@@ -9,7 +9,6 @@ footer non-garantie. Les données viennent de _q_v2_fiche — même source que l
 """
 from __future__ import annotations
 
-from datetime import date
 from pathlib import Path
 
 from fpdf import FPDF
@@ -60,14 +59,10 @@ class _Pdf(FPDF):
         self.set_y(12)
 
     def footer(self):
-        self.set_y(-16)
-        self.set_font("inter", size=6.5)
-        self.set_text_color(*TXT_DIM)
-        self.cell(0, 4, "Estimations indicatives issues de données publiques — ne valent ni conseil "
-                        "juridique/notarial ni garantie de constructibilité. À vérifier au règlement et "
-                        "auprès des services.", align="C", new_x="LMARGIN", new_y="NEXT")
-        self.cell(0, 4, f"LA BUSE · radar foncier La Réunion · export du {date.today().isoformat()} · "
-                        f"page {self.page_no()}/{{nb}}", align="C")
+        # M6 2a : pied de page commun (non-garantie + disclaimer CU au mot près +
+        # attributions sources + date de génération) — une seule vérité, export_commun.
+        from .export_commun import pied_de_page_pdf
+        pied_de_page_pdf(self, f"fiche parcelle (run {RUN})")
 
 
 #: silhouette officielle (path labuse.immo, échantillonné) — polygone rempli
@@ -100,7 +95,7 @@ def _chip(pdf: _Pdf, x: float, y: float, label: str, color: tuple) -> float:
 
 def render_fiche_pdf(fiche: dict) -> bytes:
     pdf = _Pdf(format="A4")
-    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.set_auto_page_break(auto=True, margin=26)   # pied de page commun (4 lignes)
     pdf.add_font("inter", fname=str(FONTS / "Inter-Regular.ttf"))
     pdf.add_font("mono", fname=str(FONTS / "JetBrainsMono-Regular.ttf"))
     pdf.add_font("grotesk", fname=str(FONTS / "SpaceGrotesk-Bold.ttf"))
@@ -143,10 +138,16 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.multi_cell(pdf.w - 36, 3.6, detail)
         pdf.set_y(y + h + 3)
 
-    # ── IDU + statut + méta
+    # ── IDU + adresse postale BAN + statut + méta
     pdf.set_font("mono", size=14)
     pdf.set_text_color(*TXT_HI)
     pdf.cell(0, 7, fiche["idu"], new_x="LMARGIN", new_y="NEXT")
+    # M6 2a : l'adresse BAN sous l'IDU — « Adresse non disponible » si aucune rattachée
+    adr = fiche.get("adresse_ban")
+    pdf.set_font("inter", size=8.5)
+    pdf.set_text_color(*(TXT if adr else TXT_DIM))
+    pdf.cell(0, 4.6, adr or "Adresse non disponible", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(0.6)
     # verdict d'en-tête (correctif M5) : étage 0 → écartée ; sinon tier v2 s'il existe ;
     # sinon statut matrice. Le statut matrice descend en « historique » (ligne dim).
     s2 = fiche.get("score_v2")

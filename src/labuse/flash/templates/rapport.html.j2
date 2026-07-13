@@ -20,7 +20,8 @@
     <span class="produit">{{ produit_sous_titre }}</span>
   </div>
   <h1>Rapport de faisabilité indicative</h1>
-  {% if data.adresse %}<div class="adresse">{{ data.adresse }}</div>{% endif %}
+  {% if data.adresse %}<div class="adresse">{{ data.adresse }}</div>
+  {% else %}<div class="adresse adresse-nd">Adresse non disponible</div>{% endif %}
   <div class="refs">Parcelle <b>{{ p.idu }}</b> · {{ p.commune }} · section {{ p.section }} n° {{ p.numero }}</div>
 
   {% if carte %}
@@ -362,8 +363,10 @@
   <div class="mentions" style="margin-top:6mm">
     <p><b>Mentions.</b> Document d'information établi à partir de données publiques.
        Ne constitue ni un document d'urbanisme opposable, ni une étude de faisabilité
-       réglementaire, ni un conseil juridique. Les règles complètes du PLU peuvent
-       modifier les potentiels indiqués.</p>
+       réglementaire, ni un conseil juridique. Ces informations ne remplacent pas un
+       certificat d'urbanisme. Les règles complètes du PLU peuvent modifier les
+       potentiels indiqués.</p>
+    <p>{{ sources_attribution }}</p>
     <p>Rapport {{ order_ref }} généré le {{ data.date_generation }} ·
        modèle v{{ template_version }} · LA BUSE — radar foncier de La Réunion ·
        labuse.immo</p>

@@ -5,10 +5,9 @@ fontes de pdf_premium ; les chiffres viennent du MOTEUR (aperçu), jamais de l'I
 """
 from __future__ import annotations
 
-from datetime import date
-
 from fpdf import FPDF
 
+from .export_commun import pied_de_page_pdf
 from .pdf_premium import (FONTS, LINE, MINT, MINT_SOFT, SURFACE, TXT, TXT_DIM,
                           TXT_HI, TXT_MUT, _logo)
 
@@ -28,14 +27,9 @@ class _Pdf(FPDF):
         self.set_y(12)
 
     def footer(self):
-        self.set_y(-16)
-        self.set_font("inter", size=6.5)
-        self.set_text_color(*TXT_DIM)
-        self.cell(0, 4, "Estimations indicatives issues de données publiques — ne valent ni conseil "
-                        "juridique/notarial ni garantie de constructibilité. À vérifier au règlement.",
-                  align="C", new_x="LMARGIN", new_y="NEXT")
-        self.cell(0, 4, f"LA BUSE · radar foncier La Réunion · projet exporté le {date.today().isoformat()} · "
-                        f"page {self.page_no()}/{{nb}}", align="C")
+        # M6 2a : pied de page commun (non-garantie + disclaimer CU au mot près +
+        # attributions sources + date de génération) — une seule vérité, export_commun.
+        pied_de_page_pdf(self, "dossier projet")
 
 
 def _perimetre_label(fiche: dict) -> str:
@@ -51,7 +45,7 @@ def _perimetre_label(fiche: dict) -> str:
 def render_projet_pdf(projet: dict, apercu: dict) -> bytes:
     fiche = projet.get("fiche") or {}
     pdf = _Pdf(format="A4")
-    pdf.set_auto_page_break(auto=True, margin=20)
+    pdf.set_auto_page_break(auto=True, margin=26)   # pied de page commun (4 lignes)
     pdf.add_font("inter", fname=str(FONTS / "Inter-Regular.ttf"))
     pdf.add_font("mono", fname=str(FONTS / "JetBrainsMono-Regular.ttf"))
     pdf.add_font("grotesk", fname=str(FONTS / "SpaceGrotesk-Bold.ttf"))
@@ -122,8 +116,15 @@ def render_projet_pdf(projet: dict, apercu: dict) -> bytes:
         pdf.set_font("mono", size=8.5)
         pdf.set_text_color(*TXT_HI)
         idu = it.get("idu", "")
-        pdf.cell(0, 5, f"{i}.  {idu[8:10]} {idu[10:]}  ·  {it.get('commune', '')}",
+        # M6 2a : référence parcelle COMPLÈTE (IDU) + rappel section/n° lisible
+        pdf.cell(0, 5, f"{i}.  {idu}  ({idu[8:10]} {idu[10:]})  ·  {it.get('commune', '')}",
                  new_x="LMARGIN", new_y="NEXT")
+        # M6 2a : adresse postale BAN de la parcelle (injectée par l'endpoint)
+        adr = it.get("adresse_ban")
+        pdf.set_font("inter", size=7.5)
+        pdf.set_text_color(*(TXT_MUT if adr else TXT_DIM))
+        pdf.cell(4, 4.4, "")
+        pdf.cell(0, 4.4, adr or "Adresse non disponible", new_x="LMARGIN", new_y="NEXT")
         pdf.set_font("inter", size=7.5)
         pdf.set_text_color(*TXT)
         for l in it.get("pourquoi", []):
