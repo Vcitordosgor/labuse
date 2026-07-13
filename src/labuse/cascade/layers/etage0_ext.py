@@ -110,6 +110,8 @@ class EmpriseRoutiereLayer(Layer):
 
     def evaluate(self, parcel, ctx, params: dict[str, Any]) -> Verdict:
         s = ctx.emprise_routiere_signals(parcel.id)
+        if s and s.get("no_road"):
+            return passed(self.name, "Aucun axe routier carrossable ne touche la parcelle.")
         if not s or not s["surf"] or s["surf"] <= 0:
             return passed(self.name, "Signal voirie non évaluable (surface nulle).")
         road_len = float(s["road_len"])

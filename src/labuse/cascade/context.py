@@ -511,7 +511,23 @@ class EvalContext:
         """Signaux « emprise routière » (M6 Phase 2a, A-01) : longueur des axes routiers
         BD TOPO carrossables DÉDOUBLONNÉS (md5 — les tronçons sont ingérés une fois par
         commune, cf. M6-01) clippée à la parcelle, emprise bâtie dédoublonnée, et signaux
-        privés (PM privée propriétaire, mutation DVF connue)."""
+        privés (PM privée propriétaire, mutation DVF connue).
+
+        Court-circuit perf : ~77 % des parcelles ne touchent aucun axe carrossable —
+        une sonde EXISTS légère évite la requête complète (md5/intersections) qui
+        coûtait ~50 ms de planning+exécution par parcelle sur le run île."""
+        probe = self.session.execute(text(
+            """SELECT EXISTS(
+                 SELECT 1 FROM spatial_layers sl
+                 WHERE sl.kind = 'voirie'
+                   AND sl.subtype IN ('Route à 1 chaussée','Route à 2 chaussées',
+                                      'Type autoroutier','Rond-point','Bretelle',
+                                      'Route empierrée')
+                   AND sl.geom_2975 && (SELECT geom_2975 FROM parcels WHERE id = :pid))"""),
+            {"pid": parcel_id}).scalar()
+        if not probe:
+            return {"surf": None, "road_len": 0.0, "bati_m2": 0.0,
+                    "pm_privee": False, "mutation_dvf": False, "no_road": True}
         r = self.session.execute(text(
             """WITH p AS (SELECT idu, geom_2975 AS g,
                                  coalesce(surface_m2, ST_Area(geom_2975)) AS surf
