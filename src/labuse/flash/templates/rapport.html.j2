@@ -20,7 +20,8 @@
     <span class="produit">{{ produit_sous_titre }}</span>
   </div>
   <h1>Rapport de faisabilité indicative</h1>
-  {% if data.adresse %}<div class="adresse">{{ data.adresse }}</div>{% endif %}
+  {% if data.adresse %}<div class="adresse">{{ data.adresse }}</div>
+  {% else %}<div class="adresse adresse-nd">Adresse non disponible</div>{% endif %}
   <div class="refs">Parcelle <b>{{ p.idu }}</b> · {{ p.commune }} · section {{ p.section }} n° {{ p.numero }}</div>
 
   {% if carte %}
@@ -140,8 +141,29 @@
     <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² (indicatif)</small></div></div>
   {% endif %}
 
+  {% if c.verdict_v2 %}
+  <h3>Verdict LA BUSE (scoring v2)</h3>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Verdict</div>
+      <div class="valeur">{{ c.verdict_v2.libelle }}{% if c.verdict_v2.tier in ('brulante', 'chaude') %} <small>v2</small>{% endif %}</div></div>
+    {% if c.verdict_v2.rang %}
+    <div class="cartouche"><div class="titre">Rang île (hors copropriétés)</div>
+      <div class="valeur">{{ c.verdict_v2.rang }}</div></div>
+    {% endif %}
+    {% if c.verdict_v2.mult %}
+    <div class="cartouche"><div class="titre">Probabilité de mutation vs base</div>
+      <div class="valeur">×{{ c.verdict_v2.mult }}</div></div>
+    {% endif %}
+  </div>
+  {% if c.verdict_v2.etage0 %}
+  <p class="note">Parcelle écartée par une exclusion dure (risques, zonage, foncier public…) —
+     le détail figure dans les sections risques et règles de ce rapport.</p>
+  {% endif %}
+  {% endif %}
+
   {% if c.score %}
-  <h3>Score LA BUSE de la parcelle (valeur absolue)</h3>
+  <h3>Score LA BUSE de la parcelle ({% if c.verdict_v2 %}grille historique Q/A — complément
+      du verdict v2 ci-dessus{% else %}valeur absolue{% endif %})</h3>
   <div class="cartouches">
     <div class="cartouche"><div class="titre">Q — Qualité foncière</div>
       <div class="valeur">{{ c.score.q }} <small>/100</small></div></div>
@@ -362,8 +384,10 @@
   <div class="mentions" style="margin-top:6mm">
     <p><b>Mentions.</b> Document d'information établi à partir de données publiques.
        Ne constitue ni un document d'urbanisme opposable, ni une étude de faisabilité
-       réglementaire, ni un conseil juridique. Les règles complètes du PLU peuvent
-       modifier les potentiels indiqués.</p>
+       réglementaire, ni un conseil juridique. Ces informations ne remplacent pas un
+       certificat d'urbanisme. Les règles complètes du PLU peuvent modifier les
+       potentiels indiqués.</p>
+    <p>{{ sources_attribution }}</p>
     <p>Rapport {{ order_ref }} généré le {{ data.date_generation }} ·
        modèle v{{ template_version }} · LA BUSE — radar foncier de La Réunion ·
        labuse.immo</p>

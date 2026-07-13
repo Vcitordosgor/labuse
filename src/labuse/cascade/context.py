@@ -507,6 +507,56 @@ class EvalContext:
         w = min(r[0], r[1])
         return {"largeur_m": float(w), "allongement": float(max(r[0], r[1]) / w)}
 
+    def emprise_routiere_signals(self, parcel_id: int) -> dict | None:
+        """Signaux « emprise routière » (M6 Phase 2a, A-01) : longueur des axes routiers
+        BD TOPO carrossables DÉDOUBLONNÉS (md5 — les tronçons sont ingérés une fois par
+        commune, cf. M6-01) clippée à la parcelle, emprise bâtie dédoublonnée, et signaux
+        privés (PM privée propriétaire, mutation DVF connue).
+
+        Court-circuit perf : ~77 % des parcelles ne touchent aucun axe carrossable —
+        une sonde EXISTS légère évite la requête complète (md5/intersections) qui
+        coûtait ~50 ms de planning+exécution par parcelle sur le run île."""
+        probe = self.session.execute(text(
+            """SELECT EXISTS(
+                 SELECT 1 FROM spatial_layers sl
+                 WHERE sl.kind = 'voirie'
+                   AND sl.subtype IN ('Route à 1 chaussée','Route à 2 chaussées',
+                                      'Type autoroutier','Rond-point','Bretelle',
+                                      'Route empierrée')
+                   AND sl.geom_2975 && (SELECT geom_2975 FROM parcels WHERE id = :pid))"""),
+            {"pid": parcel_id}).scalar()
+        if not probe:
+            return {"surf": None, "road_len": 0.0, "bati_m2": 0.0,
+                    "pm_privee": False, "mutation_dvf": False, "no_road": True}
+        r = self.session.execute(text(
+            """WITH p AS (SELECT idu, geom_2975 AS g,
+                                 coalesce(surface_m2, ST_Area(geom_2975)) AS surf
+                          FROM parcels WHERE id = :pid),
+               v AS (SELECT DISTINCT ON (md5(ST_AsBinary(sl.geom))) sl.geom_2975
+                     FROM spatial_layers sl, p
+                     WHERE sl.kind = 'voirie'
+                       AND sl.subtype IN ('Route à 1 chaussée','Route à 2 chaussées',
+                                          'Type autoroutier','Rond-point','Bretelle',
+                                          'Route empierrée')
+                       AND sl.geom_2975 && p.g AND ST_Intersects(sl.geom_2975, p.g)
+                     ORDER BY md5(ST_AsBinary(sl.geom))),
+               b AS (SELECT DISTINCT ON (md5(ST_AsBinary(sl.geom))) sl.geom_2975
+                     FROM spatial_layers sl, p
+                     WHERE sl.kind = 'batiment'
+                       AND sl.geom_2975 && p.g AND ST_Intersects(sl.geom_2975, p.g)
+                     ORDER BY md5(ST_AsBinary(sl.geom)))
+               SELECT (SELECT surf FROM p) AS surf,
+                      coalesce((SELECT sum(ST_Length(ST_Intersection(v.geom_2975, p.g)))
+                                FROM v, p), 0) AS road_len,
+                      coalesce((SELECT sum(ST_Area(ST_Intersection(b.geom_2975, p.g)))
+                                FROM b, p), 0) AS bati_m2,
+                      EXISTS(SELECT 1 FROM parcelle_personne_morale pm, p
+                             WHERE pm.idu = p.idu AND pm.groupe NOT IN (1,2,3,4,9)) AS pm_privee,
+                      EXISTS(SELECT 1 FROM dvf_mutations_parcelle d, p
+                             WHERE d.id_parcelle = p.idu) AS mutation_dvf"""),
+            {"pid": parcel_id}).mappings().first()
+        return dict(r) if r else None
+
     def residuel_sdp(self, parcel_id: int) -> float | None:
         v = self.session.execute(text(
             "SELECT sdp_residuelle_m2 FROM parcel_residuel WHERE parcel_id = :pid"),

@@ -1,0 +1,122 @@
+[
+ {
+  "label": "Basemap Ortho IGN",
+  "attendu": "fond ortho",
+  "statut": "OK",
+  "px": true,
+  "net": [],
+  "errs": []
+ },
+ {
+  "label": "Ortho \"1950-1965\"",
+  "attendu": "ortho historique 1950",
+  "statut": "OK",
+  "px": true,
+  "net": [],
+  "errs": []
+ },
+ {
+  "label": "Retour \"Sombre (Carto)\"",
+  "attendu": "fond sombre",
+  "statut": "OK",
+  "px": true,
+  "net": [],
+  "errs": []
+ },
+ {
+  "label": "\"3D\" on",
+  "attendu": "relief MNT",
+  "statut": "OK",
+  "px": true,
+  "net": [
+   {
+    "url": "/elevation-tiles-prod/terrarium/9/334/286.png",
+    "status": 200
+   },
+   {
+    "url": "/elevation-tiles-prod/terrarium/10/669/573.png",
+    "status": 200
+   },
+   {
+    "url": "/elevation-tiles-prod/terrarium/5/20/17.png",
+    "status": 200
+   },
+   {
+    "url": "/elevation-tiles-prod/terrarium/10/669/572.png",
+    "status": 200
+   },
+   {
+    "url": "/elevation-tiles-prod/terrarium/9/335/286.png",
+    "status": 200
+   }
+  ],
+  "errs": []
+ },
+ {
+  "label": "\"3D\" off",
+  "attendu": "plat",
+  "statut": "OK",
+  "px": true,
+  "net": [],
+  "errs": []
+ },
+ {
+  "label": "Outil Distance",
+  "attendu": "trace + mesure",
+  "statut": "OK",
+  "px": true,
+  "net": [],
+  "errs": []
+ },
+ {
+  "label": "Outil Surface",
+  "attendu": "polygone + m²",
+  "statut": "OK",
+  "px": true,
+  "net": [],
+  "errs": []
+ },
+ {
+  "label": "Outil Altitude",
+  "attendu": "altitude RGE ALTI au point",
+  "statut": "OK",
+  "px": true,
+  "net": [
+   {
+    "url": "/altimetrie/1.0/calcul/alti/rest/elevation.json?lon=55.31548726867857&lat=-21.030982612336132&resource=ign_rge_alti_wld",
+    "status": 200
+   }
+  ],
+  "errs": []
+ },
+ {
+  "label": "Outil Zone",
+  "attendu": "polygone filtre les résultats",
+  "statut": "OK",
+  "px": true,
+  "net": [],
+  "errs": []
+ },
+ {
+  "label": "\"Zone active ×\"",
+  "attendu": "retire le filtre",
+  "statut": "OK",
+  "px": true,
+  "net": [],
+  "errs": []
+ },
+ {
+  "label": "\"Tout voir →\" (recompte)",
+  "attendu": "plus de cartes listées",
+  "statut": "OK",
+  "avant": 200,
+  "apres": 13400
+ },
+ {
+  "label": "Chip \"Tout\" (recompte)",
+  "attendu": "retour au périmètre complet",
+  "statut": "voir compte",
+  "ecartees_listees": 0,
+  "apres_tout": "5\n92\n13 400 visibles ici"
+ }
+]

@@ -99,7 +99,7 @@ def test_badges_risque_et_a_consolider():
              "confiance": {"score": 30}, "ca": None,
              "risque_principal": "déclassée"}
     b = sl.badges(sujet)
-    assert "À surveiller" in b                          # à creuser
+    assert "À creuser" in b                             # lexique v2 (M5.1) — ex-« À surveiller »
     assert "Risque fort" in b                           # downgrade
     assert "Données à consolider" in b                  # complétude faible + ca absent
 

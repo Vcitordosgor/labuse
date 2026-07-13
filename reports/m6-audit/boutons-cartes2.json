@@ -1,0 +1,372 @@
+[
+ {
+  "label": "Chip tier \"Brûlantes v2\"",
+  "attendu": "liste filtrée tiers=brulante",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Chip tier \"Chaudes\"",
+  "attendu": "tiers=chaude",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Chip tier \"Réserve foncière\"",
+  "attendu": "tiers=reserve_fonciere",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Chip tier \"À creuser\"",
+  "attendu": "tiers=a_creuser",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Chip tier \"Écartées\"",
+  "attendu": "tiers=ecartee",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Chip \"Tout\"",
+  "attendu": "retour périmètre hors étage 0",
+  "statut": "MORT?",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Tri \"×N\"",
+  "attendu": "tri par multiplicateur",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Tri \"surface\"",
+  "attendu": "tri par surface",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Tri \"commune\"",
+  "attendu": "tri par commune",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Tri \"rang P\"",
+  "attendu": "tri par rang (défaut)",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "\"pourquoi ? ▾\" entonnoir",
+  "attendu": "déplie l’entonnoir par motif",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/stats/entonnoir?commune=Saint-Paul",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "\"pourquoi ?\" replier",
+  "attendu": "replie",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"entonnoir\"]')\u001b[)",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Toggle \"masquer les copropriétés\" (panneau)",
+  "attendu": "hors_copro=true",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('aside input[type=\"checkbox\"]'))",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Toggle copro — retour",
+  "attendu": "retire le filtre",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('aside input[type=\"checkbox\"]'))",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "\"Tout voir →\"",
+  "attendu": "étend la liste au-delà du cap",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Tout voir\")'))",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Carte de résultat (1re)",
+  "attendu": "ouvre la fiche",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('aside button').filter({ hasTex)",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Fermer la fiche (✕)",
+  "attendu": "referme",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Fermer la fiche\")",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "\"masquer\" (analyse LABUSE)",
+  "attendu": "cadastre brut",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "\"Afficher l’analyse LABUSE →\"",
+  "attendu": "ré-affiche",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Replier le panneau \"‹\"",
+  "attendu": "panneau replié",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/dark_nolabels/12/2675/2291.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/12/2675/2292.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/12/2675/2294.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/12/2675/2293.png",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Déplier le panneau \"›\"",
+  "attendu": "panneau rouvert",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true
+ },
+ {
+  "label": "Zoom \"+\"",
+  "attendu": "zoom avant",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/dark_nolabels/13/5355/4585.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5354/4586.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5356/4586.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5355/4584.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5356/4585.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5354/4585.png",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Zoom \"−\"",
+  "attendu": "zoom arrière",
+  "statut": "MORT?",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Fond de plan (popover)",
+  "attendu": "popover des basemaps + Remonter le temps",
+  "statut": "MORT?",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Basemap \"Ortho IGN\"",
+  "attendu": "bascule le fond en ortho",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=12&TILEROW=2293&TILECOL=2679&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=12&TILEROW=2294&TILECOL=2677&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=12&TILEROW=2291&TILECOL=2679&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=12&TILEROW=2291&TILECOL=2677&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=12&TILEROW=2294&TILECOL=2679&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=12&TILEROW=2291&TILECOL=2676&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Ortho année \"1950-1965\"",
+  "attendu": "ortho historique",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Fond de plan\"]'))",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Retour basemap \"Sombre (Carto)\"",
+  "attendu": "fond sombre",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Fond de plan\"]'))",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "\"3D\" on",
+  "attendu": "relief MNT",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Relief 3D\"]')\u001b[)",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "\"3D\" off",
+  "attendu": "désactive",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Relief 3D\"]')\u001b[)",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Outil Distance",
+  "attendu": "2 points + double-clic → mesure",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Distance\"]')\u001b[2)",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Outil Surface",
+  "attendu": "polygone → surface",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Surface\"]')\u001b[22)",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Outil Altitude",
+  "attendu": "clic = altitude RGE ALTI",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Altitude\"]')\u001b[2)",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Outil Zone",
+  "attendu": "polygone → filtre résultats",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Zone\"]')\u001b[22m\n\u001b)",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "\"Zone active ×\"",
+  "attendu": "retire le filtre zone",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Zone active\"))",
+  "net": [],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Notifications — ouvrir",
+  "attendu": "popover événements + veilles",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/events/searches",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false
+ },
+ {
+  "label": "Notifications — Échap",
+  "attendu": "ferme le popover",
+  "statut": "ANOMALIE (Échap ne ferme pas)"
+ },
+ {
+  "label": "Notifications — re-clic cloche",
+  "attendu": "referme le popover",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Notifications\"]')",
+  "net": [],
+  "errs": [],
+  "changed": false
+ }
+]

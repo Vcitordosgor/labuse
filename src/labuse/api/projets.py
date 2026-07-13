@@ -399,11 +399,16 @@ def projet_export_pdf(pid: int, db: Session = Depends(get_db)):
     « pourquoi » (aperçu recalculé sur les données ACTUELLES). Mécanique fpdf2 existante."""
     from fastapi.responses import Response
 
+    from .export_commun import adresses_ban, format_adresse
     from .pdf_projet import render_projet_pdf
     p = db.get(models.Projet, pid)
     if not p:
         raise HTTPException(404, "Projet inconnu")
     apercu = projet_apercu(ApercuIn(fiche=p.fiche or {}, limit=5), db)
+    # M6 2a : adresse postale BAN de chaque parcelle du top (1 requête, page 1 du PDF)
+    adrs = adresses_ban(db, [it["idu"] for it in apercu.get("top", [])])
+    for it in apercu.get("top", []):
+        it["adresse_ban"] = format_adresse(adrs.get(it["idu"]))
     pdf = render_projet_pdf(_projet_dict(p), apercu)
     slug = "".join(c if c.isalnum() else "-" for c in (p.nom or "projet")).strip("-").lower()[:48]
     return Response(pdf, media_type="application/pdf",

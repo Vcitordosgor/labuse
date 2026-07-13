@@ -40,6 +40,8 @@ class ZoneRules:
     # provenance / contexte
     via_renvoi: str | None = None            # ex. "AU1a → règles U1a"
     constructible_neuf: bool = True          # False pour les zones AU*st
+    habitat: str | None = None               # "interdit" = vocation non résidentielle au
+                                             # règlement (zones éco — M6 2b, A-03) ; None = admis
     calibree: bool = True                    # True = règles d'un YAML PLU communal ; False = estimation générique
     hauteur_mode: str | None = None          # 'prospect' = hf_m calculé PAR PARCELLE (L≥H, largeur voirie)
     notes: list[str] = field(default_factory=list)
@@ -111,6 +113,7 @@ def _to_rules(code: str, v: dict) -> ZoneRules:
         stat_logement=v.get("stat_logement"),
         pleine_terre_pct=_num(v.get("pleine_terre_pct")),
         hauteur_mode=v.get("hauteur_mode"),
+        habitat=v.get("habitat"),
         notes=[n for n in notes if n], sources=srcs, raw=v,
     )
 

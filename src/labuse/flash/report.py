@@ -70,6 +70,7 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
         carte = build_situation_map(data["parcelle"]["geojson"],
                                     cache_dir=storage_dir() / "tiles",
                                     timeout_s=get_settings().http_timeout_s)
+    from ..api.export_commun import SOURCES_ATTRIBUTION  # source unique (M6 2a)
     css = _env.get_template("rapport.css").render(
         fonts_dir=_FONTS.as_uri(), order_ref=order_ref, produit=produit,
         date_generation=data["date_generation"], watermark=watermark)
@@ -77,7 +78,7 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
         data=data, carte=carte, css=Markup(css), order_ref=order_ref,
         produit_sous_titre=produit_sous_titre,
         watermark=watermark, template_version=TEMPLATE_VERSION,
-        logo_path=_logo_svg_path())
+        logo_path=_logo_svg_path(), sources_attribution=SOURCES_ATTRIBUTION)
 
 
 def generate_flash_report(idu: str, *, order_ref: str = "DEMO", adresse: str | None = None,

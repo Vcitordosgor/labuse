@@ -154,13 +154,20 @@ def ingest_gpu_zones(session, insee, bbox, commune, run_id, sids) -> int:
         r = c.get(f"{APICARTO}/gpu/zone-urba", params={"geom": json.dumps(_bbox_polygon(bbox))})
         r.raise_for_status()
         feats = r.json().get("features", []) or []
-    n = propre = 0
+    n = propre = hors_doc = 0
     for f in feats:
         if not f.get("geometry"):
             continue
         p = f.get("properties") or {}
         if p.get("partition") == part:
             propre += 1
+        elif p.get("partition"):
+            # M6 2b (A-02) : la requête bbox capture les zones des documents VOISINS —
+            # les ingérer dupliquerait les polygones frontaliers une fois par commune
+            # (441 doublons corrigés à l'audit ; la cascade sommait les recouvrements).
+            # Une zone n'est rattachée qu'à la commune dont le document GPU la porte.
+            hors_doc += 1
+            continue
         _insert_layer(session, "plu_gpu_zone", (p.get("typezone") or "").strip() or None,
                       p.get("libelong") or p.get("libelle"), f["geometry"],
                       sids.get(KIND_SOURCE["plu_gpu_zone"]), commune, run_id,
@@ -168,7 +175,8 @@ def ingest_gpu_zones(session, insee, bbox, commune, run_id, sids) -> int:
                        "partition": p.get("partition"), "idurba": p.get("idurba")})
         n += 1
     logging.getLogger("labuse").info(
-        "ingest_gpu_zones[%s] : %d zones GPU (%d propres %s)", commune, n, propre, part)
+        "ingest_gpu_zones[%s] : %d zones GPU (%d propres %s, %d hors-document écartées)",
+        commune, n, propre, part, hors_doc)
     if agorah_plu.should_use_agorah_fallback(insee, propre):
         logging.getLogger("labuse").warning(
             "ingest_gpu_zones[%s] : 0 zone propre %s au GPU + commune allowlistée → REPLI AGORAH", commune, part)
@@ -181,7 +189,7 @@ def ingest_gpu_zones(session, insee, bbox, commune, run_id, sids) -> int:
 _PRESCRIPTION_ENDPOINTS = (("surf", "prescription-surf"), ("lin", "prescription-lin"), ("pct", "prescription-pct"))
 
 
-def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids) -> int:
+def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids, insee: str | None = None) -> int:
     """Prescriptions du PLU (API Carto GPU) → kind='plu_gpu_prescription', subtype=typepsc.
 
     Surfaciques + linéaires + ponctuelles : emplacements réservés (ER), secteurs de mixité
@@ -192,6 +200,9 @@ def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids) -> int:
     Source/url/millésime (idurba) tracés. Idempotent à l'appelant (purge avant rechargement)."""
     poly = json.dumps(_bbox_polygon(bbox))
     src = sids.get(KIND_SOURCE["plu_gpu_prescription"])
+    # M6 2b (A-02) : même garde que les zones — une prescription n'est rattachée qu'à la
+    # commune dont le document GPU la porte (41 % de doublons bbox corrigés à l'audit).
+    part = agorah_plu.agorah_partition(insee) if insee else None
     n = 0
     with _client() as c:
         for geom_kind, endpoint in _PRESCRIPTION_ENDPOINTS:
@@ -205,6 +216,8 @@ def ingest_gpu_prescriptions(session, bbox, commune, run_id, sids) -> int:
                 if not f.get("geometry"):
                     continue
                 p = f.get("properties") or {}
+                if part and p.get("partition") and p.get("partition") != part:
+                    continue    # document d'une commune voisine (débordement bbox)
                 typepsc = (p.get("typepsc") or "").strip() or None
                 libelle = (p.get("libelle") or p.get("txt") or "prescription PLU").strip()
                 _insert_layer(
@@ -686,6 +699,16 @@ def _geo_dvf_aggregate(rows: list[dict]) -> list[dict]:
     On ne garde que les mutations mono-type, géolocalisées et avec surface : aucun prix
     fabriqué. La VEFA est conservée SI elle a une surface (geo-dvf la fournit, au contraire
     du flux ODS où elle vaut 0) — c'est le comparable « neuf » que vend un promoteur.
+
+    DÉDOUBLONNAGE DES SURFACES (P1-03, audit M6 §1.1b B4) : geo-dvf répète la ligne d'un
+    MÊME local pour chaque subdivision fiscale (nature_culture) et chaque disposition —
+    sommer toutes les lignes résidentielles double/triple la surface (1 440 mutations
+    gonflées ×2,6 en moyenne constatées). On ne somme donc qu'une ligne par local
+    identifié par (id_parcelle, numero_disposition, lot1_numero, type_local, surface) :
+    les répétitions par nature de culture partagent toutes ces clés, deux locaux réels
+    distincts diffèrent d'au moins une (lot ou surface). Limite documentée : deux locaux
+    STRICTEMENT identiques sur les cinq clés seraient fusionnés — borne basse assumée
+    (audit §1.1b B4), sans effet sur le Baromètre qui exclut désormais la VEFA multi-lots.
     """
     from collections import defaultdict
     by: dict[str, list[dict]] = defaultdict(list)
@@ -693,8 +716,18 @@ def _geo_dvf_aggregate(rows: list[dict]) -> list[dict]:
         by[r["id_mutation"]].append(r)
     out: list[dict] = []
     for mid, rs in by.items():
-        locs = [r for r in rs if r["type_local"] in ("Maison", "Appartement")
-                and r["surface_reelle_bati"] and float(r["surface_reelle_bati"]) > 0]
+        locs = []
+        seen: set[tuple] = set()      # P1-03 : dédoublonnage des lignes répétées par
+        for r in rs:                  # nature de culture / disposition (cf. docstring)
+            if not (r["type_local"] in ("Maison", "Appartement")
+                    and r["surface_reelle_bati"] and float(r["surface_reelle_bati"]) > 0):
+                continue
+            key = (r.get("id_parcelle"), r.get("numero_disposition"), r.get("lot1_numero"),
+                   r["type_local"], r["surface_reelle_bati"])
+            if key in seen:
+                continue
+            seen.add(key)
+            locs.append(r)
         if not locs:
             continue
         types = {r["type_local"] for r in locs}
@@ -969,7 +1002,7 @@ def ingest_layers(session: Session, insee: str, commune: str,
     counts: dict[str, object] = {}
     jobs = [
         ("plu_gpu_zone", lambda: ingest_gpu_zones(session, insee, bbox, commune, run_id, sids)),
-        ("plu_gpu_prescription", lambda: ingest_gpu_prescriptions(session, bbox, commune, run_id, sids)),
+        ("plu_gpu_prescription", lambda: ingest_gpu_prescriptions(session, bbox, commune, run_id, sids, insee=insee)),
         ("parc_national", lambda: ingest_parc_national(session, commune, run_id, sids)),
         ("potentiel_foncier", lambda: ingest_potentiel_foncier(session, insee, commune, run_id, sids)),
         ("abf", lambda: ingest_abf(session, bbox, commune, run_id, sids)),

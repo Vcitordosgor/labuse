@@ -1,0 +1,2632 @@
+idu,tier_v2,commune,surface_m2,road_len_m,classe
+97403000AR1279,a_creuser,Entre-Deux,670,79,mutation_dvf
+97403000AS1646,a_creuser,Entre-Deux,512,52,mutation_dvf
+97404000AL0940,a_creuser,L'Étang-Salé,537,48,mutation_dvf
+97404000AL0942,a_creuser,L'Étang-Salé,2468,314,mutation_dvf
+97406000AI1062,a_creuser,La Plaine-des-Palmistes,410,85,mutation_dvf
+97406000AV1022,a_creuser,La Plaine-des-Palmistes,1065,156,mutation_dvf
+97408000AC3428,a_creuser,La Possession,395,33,mutation_dvf
+97408000AM0419,a_creuser,La Possession,1576,171,mutation_dvf
+97408000AM0639,a_creuser,La Possession,827,83,mutation_dvf
+97408000AM0909,a_creuser,La Possession,332,33,mutation_dvf
+97408000AN1404,a_creuser,La Possession,1422,200,mutation_dvf
+97408000AN1484,a_creuser,La Possession,341,40,mutation_dvf
+97408000AO0327,a_creuser,La Possession,1415,125,mutation_dvf
+97408000AP1674,a_creuser,La Possession,429,37,mutation_dvf
+97408000AR0862,chaude,La Possession,5492,744,mutation_dvf
+97408000AT1631,a_creuser,La Possession,4520,486,mutation_dvf
+97408000AT2039,chaude,La Possession,1494,190,mutation_dvf
+97422000AK0772,a_creuser,Le Tampon,1605,205,mutation_dvf
+97422000AV0553,a_creuser,Le Tampon,204,37,mutation_dvf
+97422000BD3280,a_creuser,Le Tampon,295,47,mutation_dvf
+97422000BH1572,a_creuser,Le Tampon,1202,177,mutation_dvf
+97422000BK2236,a_creuser,Le Tampon,400,61,mutation_dvf
+97422000BP0907,a_creuser,Le Tampon,1938,183,mutation_dvf
+97422000BV2041,a_creuser,Le Tampon,365,49,mutation_dvf
+97422000CX1171,a_creuser,Le Tampon,328,42,mutation_dvf
+97401000AN0760,a_creuser,Les Avirons,1416,177,mutation_dvf
+97423000AH1780,a_creuser,Les Trois-Bassins,346,46,mutation_dvf
+97423000AI0538,a_creuser,Les Trois-Bassins,742,120,mutation_dvf
+97405000AL1523,a_creuser,Petite-Île,1295,213,mutation_dvf
+97405000AO0509,a_creuser,Petite-Île,624,73,mutation_dvf
+97405000AW0934,a_creuser,Petite-Île,1135,187,mutation_dvf
+97405000AW1076,a_creuser,Petite-Île,2976,261,mutation_dvf
+97405000AX0320,a_creuser,Petite-Île,609,53,mutation_dvf
+97409000AM0620,a_creuser,Saint-André,383,63,mutation_dvf
+97409000AS1705,a_creuser,Saint-André,394,66,mutation_dvf
+97409000AX0526,a_creuser,Saint-André,211,37,mutation_dvf
+97409000AY1051,a_creuser,Saint-André,926,130,mutation_dvf
+97409000BM0634,a_creuser,Saint-André,417,56,mutation_dvf
+97409000BM0984,a_creuser,Saint-André,321,68,mutation_dvf
+97409000BM0997,a_creuser,Saint-André,289,36,mutation_dvf
+97409000BN0216,a_creuser,Saint-André,326,58,mutation_dvf
+97409000BR0114,a_creuser,Saint-André,683,61,mutation_dvf
+97410000AC0583,a_creuser,Saint-Benoît,955,101,mutation_dvf
+97410000AT1076,a_creuser,Saint-Benoît,294,60,mutation_dvf
+97410000AV0389,a_creuser,Saint-Benoît,904,102,mutation_dvf
+97410000BE0558,a_creuser,Saint-Benoît,570,69,mutation_dvf
+97410000BH0640,a_creuser,Saint-Benoît,567,95,mutation_dvf
+97410000BX1757,a_creuser,Saint-Benoît,276,41,mutation_dvf
+97411000AW0265,a_creuser,Saint-Denis,723,128,mutation_dvf
+97411000AY0558,a_creuser,Saint-Denis,299,57,mutation_dvf
+97411000BD0563,a_creuser,Saint-Denis,361,46,mutation_dvf
+97411000BH0111,a_creuser,Saint-Denis,1010,150,mutation_dvf
+97411000BH0236,a_creuser,Saint-Denis,250,36,mutation_dvf
+97411000BH0292,a_creuser,Saint-Denis,564,88,mutation_dvf
+97411000BH0361,a_creuser,Saint-Denis,617,74,mutation_dvf
+97411000BZ0422,a_creuser,Saint-Denis,2314,251,mutation_dvf
+97411000CI0176,a_creuser,Saint-Denis,419,76,mutation_dvf
+97411000DV0061,a_creuser,Saint-Denis,414,37,mutation_dvf
+97411000DV0068,a_creuser,Saint-Denis,266,33,mutation_dvf
+97411000DV0071,a_creuser,Saint-Denis,943,122,mutation_dvf
+97411000DX0003,a_creuser,Saint-Denis,316,39,mutation_dvf
+97411000EK0060,a_creuser,Saint-Denis,396,63,mutation_dvf
+97411000EK0090,a_creuser,Saint-Denis,268,48,mutation_dvf
+97411000EZ0017,a_creuser,Saint-Denis,2709,302,mutation_dvf
+97411000EZ0088,a_creuser,Saint-Denis,278,42,mutation_dvf
+97411000HB0167,a_creuser,Saint-Denis,1782,160,mutation_dvf
+97411000HB0371,chaude,Saint-Denis,2206,235,mutation_dvf
+97411000HE0066,a_creuser,Saint-Denis,487,86,mutation_dvf
+97411000HO0011,a_creuser,Saint-Denis,436,94,mutation_dvf
+97411000HW0179,a_creuser,Saint-Denis,443,75,mutation_dvf
+97411000HX0135,a_creuser,Saint-Denis,319,57,mutation_dvf
+97411000IC0364,a_creuser,Saint-Denis,1483,260,mutation_dvf
+97411000IH0185,a_creuser,Saint-Denis,1268,214,mutation_dvf
+97411000IH0407,a_creuser,Saint-Denis,322,30,mutation_dvf
+97411000IL0182,a_creuser,Saint-Denis,444,85,mutation_dvf
+97411000IT0591,a_creuser,Saint-Denis,251,42,mutation_dvf
+97411000IW0117,a_creuser,Saint-Denis,834,115,mutation_dvf
+97411000IW0123,a_creuser,Saint-Denis,459,43,mutation_dvf
+97411000IW0133,a_creuser,Saint-Denis,243,36,mutation_dvf
+97411000IW0255,a_creuser,Saint-Denis,1476,169,mutation_dvf
+97411000KC0315,a_creuser,Saint-Denis,2532,256,mutation_dvf
+97412000AV0975,a_creuser,Saint-Joseph,523,114,mutation_dvf
+97412000BC0749,a_creuser,Saint-Joseph,218,37,mutation_dvf
+97412000BK0970,a_creuser,Saint-Joseph,847,94,mutation_dvf
+97412000BK1342,a_creuser,Saint-Joseph,299,44,mutation_dvf
+97412000BM0363,a_creuser,Saint-Joseph,388,40,mutation_dvf
+97412000BP0492,a_creuser,Saint-Joseph,322,60,mutation_dvf
+97412000BT0679,a_creuser,Saint-Joseph,205,51,mutation_dvf
+97412000BX1212,a_creuser,Saint-Joseph,323,42,mutation_dvf
+97412000CD0781,a_creuser,Saint-Joseph,592,50,mutation_dvf
+97412000CV0683,a_creuser,Saint-Joseph,344,60,mutation_dvf
+97412000CZ1052,a_creuser,Saint-Joseph,344,31,mutation_dvf
+97413000AC0848,a_creuser,Saint-Leu,485,42,mutation_dvf
+97413000BM0715,chaude,Saint-Leu,895,124,mutation_dvf
+97413000BM0791,a_creuser,Saint-Leu,465,61,mutation_dvf
+97413000CA0170,a_creuser,Saint-Leu,2140,178,mutation_dvf
+97413000CI0573,a_creuser,Saint-Leu,277,36,mutation_dvf
+97413000CN0821,a_creuser,Saint-Leu,1150,178,mutation_dvf
+97413000CN1039,a_creuser,Saint-Leu,338,83,mutation_dvf
+97413000CR1108,a_creuser,Saint-Leu,355,45,mutation_dvf
+97413000CT0364,a_creuser,Saint-Leu,433,43,mutation_dvf
+97413000CX1157,a_creuser,Saint-Leu,314,48,mutation_dvf
+97413000CX2870,a_creuser,Saint-Leu,361,35,mutation_dvf
+97413000CX2892,a_creuser,Saint-Leu,244,53,mutation_dvf
+97413000CX2893,chaude,Saint-Leu,1292,191,mutation_dvf
+97413000CX2896,chaude,Saint-Leu,1323,199,mutation_dvf
+97413000CX2897,chaude,Saint-Leu,2411,249,mutation_dvf
+97413000DE2172,a_creuser,Saint-Leu,216,33,mutation_dvf
+97414000DT0270,a_creuser,Saint-Louis,524,64,mutation_dvf
+97414000EK0274,a_creuser,Saint-Louis,890,80,mutation_dvf
+97414000EM0989,a_creuser,Saint-Louis,898,95,mutation_dvf
+97414000EM0993,a_creuser,Saint-Louis,372,33,mutation_dvf
+97414000EN2862,a_creuser,Saint-Louis,980,96,mutation_dvf
+97414000EN2984,a_creuser,Saint-Louis,952,140,mutation_dvf
+97414000ES0721,chaude,Saint-Louis,1052,88,mutation_dvf
+97414000ET1190,a_creuser,Saint-Louis,700,149,mutation_dvf
+97414000ET1269,a_creuser,Saint-Louis,184,40,mutation_dvf
+97414000ET1356,a_creuser,Saint-Louis,234,47,mutation_dvf
+97414000ET1881,a_creuser,Saint-Louis,256,50,mutation_dvf
+97414000ET2181,a_creuser,Saint-Louis,444,55,mutation_dvf
+97414000HH0382,a_creuser,Saint-Louis,347,54,mutation_dvf
+97414000HI1616,a_creuser,Saint-Louis,192,38,mutation_dvf
+97414000HL0574,a_creuser,Saint-Louis,283,38,mutation_dvf
+97415000AS1920,a_creuser,Saint-Paul,571,74,mutation_dvf
+97415000AV0361,chaude,Saint-Paul,2336,262,mutation_dvf
+97415000AV0362,chaude,Saint-Paul,1506,163,mutation_dvf
+97415000AV0369,a_creuser,Saint-Paul,362,34,mutation_dvf
+97415000AW1764,a_creuser,Saint-Paul,646,74,mutation_dvf
+97415000AW1816,a_creuser,Saint-Paul,516,71,mutation_dvf
+97415000AX0286,a_creuser,Saint-Paul,338,54,mutation_dvf
+97415000AY0144,chaude,Saint-Paul,12447,1161,mutation_dvf
+97415000AZ1818,a_creuser,Saint-Paul,347,46,mutation_dvf
+97415000BV1441,a_creuser,Saint-Paul,390,46,mutation_dvf
+97415000BW1022,a_creuser,Saint-Paul,1518,154,mutation_dvf
+97415000BW1307,a_creuser,Saint-Paul,366,51,mutation_dvf
+97415000BW1315,a_creuser,Saint-Paul,269,43,mutation_dvf
+97415000BW2148,a_creuser,Saint-Paul,324,36,mutation_dvf
+97415000BX0276,a_creuser,Saint-Paul,737,63,mutation_dvf
+97415000CH3372,a_creuser,Saint-Paul,425,51,mutation_dvf
+97415000CI0532,a_creuser,Saint-Paul,1083,112,mutation_dvf
+97415000CK0912,chaude,Saint-Paul,972,122,mutation_dvf
+97415000CL0451,a_creuser,Saint-Paul,262,37,mutation_dvf
+97415000CM0833,a_creuser,Saint-Paul,406,85,mutation_dvf
+97415000CP0737,a_creuser,Saint-Paul,1179,207,mutation_dvf
+97415000CP0973,chaude,Saint-Paul,1471,158,mutation_dvf
+97415000CP0974,a_creuser,Saint-Paul,335,56,mutation_dvf
+97415000CT1213,chaude,Saint-Paul,1253,132,mutation_dvf
+97415000CT2431,a_creuser,Saint-Paul,451,66,mutation_dvf
+97415000CV0703,a_creuser,Saint-Paul,447,87,mutation_dvf
+97415000CV1296,a_creuser,Saint-Paul,726,151,mutation_dvf
+97415000CX0802,chaude,Saint-Paul,2534,215,mutation_dvf
+97415000CY1041,chaude,Saint-Paul,2690,282,mutation_dvf
+97415000CY1060,chaude,Saint-Paul,607,56,mutation_dvf
+97415000DP0499,a_creuser,Saint-Paul,167,33,mutation_dvf
+97415000DR0538,chaude,Saint-Paul,1031,191,mutation_dvf
+97415000EP0871,a_creuser,Saint-Paul,350,47,mutation_dvf
+97415000ER1589,a_creuser,Saint-Paul,1071,126,mutation_dvf
+97415000EY0829,a_creuser,Saint-Paul,1064,130,mutation_dvf
+97415000HP0389,a_creuser,Saint-Paul,105,37,mutation_dvf
+97416000CT0965,a_creuser,Saint-Pierre,423,47,mutation_dvf
+97416000CV2367,a_creuser,Saint-Pierre,634,61,mutation_dvf
+97416000CW0457,a_creuser,Saint-Pierre,517,44,mutation_dvf
+97416000CW1999,a_creuser,Saint-Pierre,473,60,mutation_dvf
+97416000CX1356,a_creuser,Saint-Pierre,578,52,mutation_dvf
+97416000CX1372,a_creuser,Saint-Pierre,499,67,mutation_dvf
+97416000DE1815,a_creuser,Saint-Pierre,937,84,mutation_dvf
+97416000ET2002,a_creuser,Saint-Pierre,178,37,mutation_dvf
+97416000HO0939,a_creuser,Saint-Pierre,302,46,mutation_dvf
+97416000HY1056,a_creuser,Saint-Pierre,266,47,mutation_dvf
+97416000HY1565,a_creuser,Saint-Pierre,1515,144,mutation_dvf
+97418000AR1049,a_creuser,Sainte-Marie,832,89,mutation_dvf
+97418000AV1575,chaude,Sainte-Marie,1235,152,mutation_dvf
+97418000AX0068,a_creuser,Sainte-Marie,592,121,mutation_dvf
+97418000AY0416,a_creuser,Sainte-Marie,2017,190,mutation_dvf
+97418000AY0495,a_creuser,Sainte-Marie,1521,180,mutation_dvf
+97418000BT0371,a_creuser,Sainte-Marie,228,42,mutation_dvf
+97418000BV0483,a_creuser,Sainte-Marie,1847,292,mutation_dvf
+97418000BV0485,a_creuser,Sainte-Marie,1061,132,mutation_dvf
+97418000BV0489,a_creuser,Sainte-Marie,852,123,mutation_dvf
+97420000AR0362,a_creuser,Sainte-Suzanne,726,65,mutation_dvf
+97420000AS0650,a_creuser,Sainte-Suzanne,174,57,mutation_dvf
+97420000BE0596,a_creuser,Sainte-Suzanne,412,100,mutation_dvf
+97421000AL0550,a_creuser,Salazie,1397,250,mutation_dvf
+97421000AS0278,a_creuser,Salazie,289,49,mutation_dvf
+97402000AB0848,a_creuser,Bras-Panon,557,124,pm_privee
+97402000AB0941,a_creuser,Bras-Panon,2689,256,pm_privee
+97402000AB0976,a_creuser,Bras-Panon,657,78,pm_privee
+97402000AB1010,a_creuser,Bras-Panon,716,102,pm_privee
+97402000AD1058,a_creuser,Bras-Panon,329,39,pm_privee
+97402000AE0363,a_creuser,Bras-Panon,1050,91,pm_privee
+97402000AI1135,chaude,Bras-Panon,3468,398,pm_privee
+97402000AI1156,a_creuser,Bras-Panon,273,31,pm_privee
+97402000AK1431,a_creuser,Bras-Panon,426,46,pm_privee
+97402000AK1609,a_creuser,Bras-Panon,383,34,pm_privee
+97402000AN0204,a_creuser,Bras-Panon,319,57,pm_privee
+97424000AE1523,a_creuser,Cilaos,1032,155,pm_privee
+97424000AE1547,a_creuser,Cilaos,1517,161,pm_privee
+97424000AM0918,a_creuser,Cilaos,2015,271,pm_privee
+97424000AM0922,a_creuser,Cilaos,1514,189,pm_privee
+97424000AM0986,a_creuser,Cilaos,1214,186,pm_privee
+97403000AP1243,a_creuser,Entre-Deux,662,83,pm_privee
+97403000AP1376,a_creuser,Entre-Deux,911,105,pm_privee
+97403000AP1457,a_creuser,Entre-Deux,720,67,pm_privee
+97403000AP1753,a_creuser,Entre-Deux,265,50,pm_privee
+97403000AS1759,a_creuser,Entre-Deux,733,111,pm_privee
+97404000AD0865,a_creuser,L'Étang-Salé,2022,314,pm_privee
+97404000AL1606,a_creuser,L'Étang-Salé,1022,129,pm_privee
+97404000AL1722,a_creuser,L'Étang-Salé,318,48,pm_privee
+97404000AM0954,a_creuser,L'Étang-Salé,845,97,pm_privee
+97404000AS0169,a_creuser,L'Étang-Salé,418,73,pm_privee
+97404000AS0233,a_creuser,L'Étang-Salé,502,89,pm_privee
+97404000AS0241,a_creuser,L'Étang-Salé,931,137,pm_privee
+97404000AT0452,a_creuser,L'Étang-Salé,188,41,pm_privee
+97404000AT0453,a_creuser,L'Étang-Salé,786,94,pm_privee
+97404000AT0482,a_creuser,L'Étang-Salé,265,59,pm_privee
+97404000AT0638,a_creuser,L'Étang-Salé,252,37,pm_privee
+97404000AT0704,a_creuser,L'Étang-Salé,372,34,pm_privee
+97404000AT0799,a_creuser,L'Étang-Salé,286,50,pm_privee
+97404000AV0221,a_creuser,L'Étang-Salé,672,138,pm_privee
+97404000AV0223,a_creuser,L'Étang-Salé,171,43,pm_privee
+97404000AW0105,a_creuser,L'Étang-Salé,492,48,pm_privee
+97404000AW0166,reserve_fonciere,L'Étang-Salé,2508,288,pm_privee
+97404000AW0395,a_creuser,L'Étang-Salé,2496,331,pm_privee
+97404000AW0396,a_creuser,L'Étang-Salé,3612,487,pm_privee
+97404000AW0500,a_creuser,L'Étang-Salé,265,31,pm_privee
+97404000AX0231,a_creuser,L'Étang-Salé,396,40,pm_privee
+97404000AX0598,a_creuser,L'Étang-Salé,224,38,pm_privee
+97404000AY0018,a_creuser,L'Étang-Salé,371,47,pm_privee
+97404000AY0360,a_creuser,L'Étang-Salé,683,84,pm_privee
+97404000AZ0021,a_creuser,L'Étang-Salé,1348,161,pm_privee
+97406000AC0339,reserve_fonciere,La Plaine-des-Palmistes,3870,353,pm_privee
+97406000AC0370,a_creuser,La Plaine-des-Palmistes,3030,304,pm_privee
+97406000AD0614,a_creuser,La Plaine-des-Palmistes,1060,91,pm_privee
+97406000AD0625,a_creuser,La Plaine-des-Palmistes,1073,139,pm_privee
+97406000AH0438,a_creuser,La Plaine-des-Palmistes,1818,185,pm_privee
+97406000AI0516,a_creuser,La Plaine-des-Palmistes,1468,135,pm_privee
+97406000AI0547,a_creuser,La Plaine-des-Palmistes,668,116,pm_privee
+97406000AK0228,a_creuser,La Plaine-des-Palmistes,186,35,pm_privee
+97406000AM0793,a_creuser,La Plaine-des-Palmistes,1915,167,pm_privee
+97406000AV0876,a_creuser,La Plaine-des-Palmistes,3830,475,pm_privee
+97406000AV0968,a_creuser,La Plaine-des-Palmistes,656,120,pm_privee
+97406000AV1005,a_creuser,La Plaine-des-Palmistes,455,79,pm_privee
+97406000AV1012,a_creuser,La Plaine-des-Palmistes,461,80,pm_privee
+97406000AV1118,a_creuser,La Plaine-des-Palmistes,815,69,pm_privee
+97408000AC1372,a_creuser,La Possession,3142,301,pm_privee
+97408000AC1667,a_creuser,La Possession,303,32,pm_privee
+97408000AC2455,a_creuser,La Possession,429,92,pm_privee
+97408000AC2940,chaude,La Possession,1081,160,pm_privee
+97408000AC2972,chaude,La Possession,4292,445,pm_privee
+97408000AC3431,a_creuser,La Possession,2062,195,pm_privee
+97408000AC3641,a_creuser,La Possession,305,32,pm_privee
+97408000AC3660,a_creuser,La Possession,560,77,pm_privee
+97408000AH0233,a_creuser,La Possession,1243,175,pm_privee
+97408000AM1254,a_creuser,La Possession,1790,156,pm_privee
+97408000AM1256,a_creuser,La Possession,2342,231,pm_privee
+97408000AN0885,a_creuser,La Possession,746,64,pm_privee
+97408000AN1201,a_creuser,La Possession,3843,463,pm_privee
+97408000AN1708,a_creuser,La Possession,1057,110,pm_privee
+97408000AN1857,a_creuser,La Possession,420,60,pm_privee
+97408000AO1007,a_creuser,La Possession,4040,566,pm_privee
+97408000AO1328,a_creuser,La Possession,3135,442,pm_privee
+97408000AO1447,a_creuser,La Possession,382,38,pm_privee
+97408000AO1639,a_creuser,La Possession,1242,147,pm_privee
+97408000AP0293,a_creuser,La Possession,429,39,pm_privee
+97408000AP0682,a_creuser,La Possession,384,45,pm_privee
+97408000AP0950,a_creuser,La Possession,558,57,pm_privee
+97408000AP0961,a_creuser,La Possession,622,59,pm_privee
+97408000AP1120,a_creuser,La Possession,993,86,pm_privee
+97408000AP1201,a_creuser,La Possession,279,36,pm_privee
+97408000AP1225,a_creuser,La Possession,349,33,pm_privee
+97408000AP1525,a_creuser,La Possession,5798,511,pm_privee
+97408000AP1631,chaude,La Possession,4866,480,pm_privee
+97408000AR0414,a_creuser,La Possession,5270,695,pm_privee
+97408000AR0880,chaude,La Possession,613,53,pm_privee
+97408000AR1051,reserve_fonciere,La Possession,4387,480,pm_privee
+97408000AR1203,a_creuser,La Possession,397,53,pm_privee
+97408000AS0257,a_creuser,La Possession,3339,334,pm_privee
+97408000AS0279,a_creuser,La Possession,1814,239,pm_privee
+97408000AS0584,a_creuser,La Possession,2174,223,pm_privee
+97408000AS0620,a_creuser,La Possession,4308,417,pm_privee
+97408000AT0895,a_creuser,La Possession,2451,237,pm_privee
+97408000AV1052,a_creuser,La Possession,177,33,pm_privee
+97408000AV1071,a_creuser,La Possession,253,36,pm_privee
+97408000BK0297,reserve_fonciere,La Possession,4147,403,pm_privee
+97408000BK0298,a_creuser,La Possession,1850,168,pm_privee
+97407000AH1288,a_creuser,Le Port,602,73,pm_privee
+97407000AI1032,a_creuser,Le Port,343,31,pm_privee
+97407000AI1666,a_creuser,Le Port,623,91,pm_privee
+97407000AI1727,a_creuser,Le Port,887,98,pm_privee
+97407000AI1773,a_creuser,Le Port,728,72,pm_privee
+97407000AI1836,a_creuser,Le Port,885,131,pm_privee
+97407000AI1860,reserve_fonciere,Le Port,11434,1378,pm_privee
+97407000AI1874,reserve_fonciere,Le Port,3635,350,pm_privee
+97407000AI1877,a_creuser,Le Port,762,110,pm_privee
+97407000AI1890,reserve_fonciere,Le Port,10670,921,pm_privee
+97407000AI1892,a_creuser,Le Port,213,34,pm_privee
+97407000AK0829,a_creuser,Le Port,1243,127,pm_privee
+97407000AO0803,a_creuser,Le Port,302,44,pm_privee
+97407000AS0506,a_creuser,Le Port,5273,553,pm_privee
+97407000AS0869,a_creuser,Le Port,320,38,pm_privee
+97407000AS0907,a_creuser,Le Port,222,42,pm_privee
+97407000AS0932,a_creuser,Le Port,1333,121,pm_privee
+97407000AS0937,a_creuser,Le Port,165,33,pm_privee
+97407000AS0943,a_creuser,Le Port,448,66,pm_privee
+97407000AS0971,reserve_fonciere,Le Port,4038,355,pm_privee
+97407000AT0086,a_creuser,Le Port,785,87,pm_privee
+97407000AV0102,a_creuser,Le Port,2926,257,pm_privee
+97407000AY0217,a_creuser,Le Port,721,73,pm_privee
+97407000BA0309,a_creuser,Le Port,991,162,pm_privee
+97407000BA0371,chaude,Le Port,872,78,pm_privee
+97407000BB0007,a_creuser,Le Port,1170,235,pm_privee
+97407000BC0422,a_creuser,Le Port,690,77,pm_privee
+97407000BC0482,a_creuser,Le Port,1067,100,pm_privee
+97407000BC0483,a_creuser,Le Port,885,104,pm_privee
+97407000BD0250,a_creuser,Le Port,2795,321,pm_privee
+97407000BE0121,reserve_fonciere,Le Port,14028,1326,pm_privee
+97407000BE0171,a_creuser,Le Port,265,44,pm_privee
+97407000BE0199,a_creuser,Le Port,515,65,pm_privee
+97407000BI0074,a_creuser,Le Port,213,41,pm_privee
+97407000BI0348,a_creuser,Le Port,323,46,pm_privee
+97407000BI0350,chaude,Le Port,683,94,pm_privee
+97407000BI0382,a_creuser,Le Port,609,95,pm_privee
+97407000BI0396,a_creuser,Le Port,373,47,pm_privee
+97407000BI0417,a_creuser,Le Port,1467,206,pm_privee
+97407000BL0318,a_creuser,Le Port,356,44,pm_privee
+97407000BM0012,a_creuser,Le Port,1348,121,pm_privee
+97422000AK0722,a_creuser,Le Tampon,2292,278,pm_privee
+97422000AK1016,a_creuser,Le Tampon,2329,231,pm_privee
+97422000AP0390,a_creuser,Le Tampon,4060,378,pm_privee
+97422000AW0719,a_creuser,Le Tampon,280,51,pm_privee
+97422000BD1161,a_creuser,Le Tampon,170,37,pm_privee
+97422000BD2012,a_creuser,Le Tampon,490,66,pm_privee
+97422000BD2305,a_creuser,Le Tampon,806,103,pm_privee
+97422000BD2341,a_creuser,Le Tampon,593,77,pm_privee
+97422000BD2347,a_creuser,Le Tampon,593,56,pm_privee
+97422000BD2766,a_creuser,Le Tampon,1788,185,pm_privee
+97422000BE1000,a_creuser,Le Tampon,1926,171,pm_privee
+97422000BE1597,a_creuser,Le Tampon,1314,163,pm_privee
+97422000BH1311,a_creuser,Le Tampon,1483,140,pm_privee
+97422000BH1750,a_creuser,Le Tampon,397,51,pm_privee
+97422000BI0381,chaude,Le Tampon,2992,262,pm_privee
+97422000BI0732,a_creuser,Le Tampon,2770,418,pm_privee
+97422000BN2346,a_creuser,Le Tampon,1042,117,pm_privee
+97422000BN2574,a_creuser,Le Tampon,540,72,pm_privee
+97422000BN2811,a_creuser,Le Tampon,873,80,pm_privee
+97422000BP1039,a_creuser,Le Tampon,479,45,pm_privee
+97422000BP1838,a_creuser,Le Tampon,1548,179,pm_privee
+97422000BS0736,a_creuser,Le Tampon,752,120,pm_privee
+97422000BT1255,a_creuser,Le Tampon,744,107,pm_privee
+97422000BV2234,a_creuser,Le Tampon,245,51,pm_privee
+97422000BW1797,a_creuser,Le Tampon,200,30,pm_privee
+97422000BW1936,a_creuser,Le Tampon,2799,261,pm_privee
+97422000BW2068,reserve_fonciere,Le Tampon,3563,331,pm_privee
+97422000BW2396,a_creuser,Le Tampon,363,42,pm_privee
+97422000BW2531,a_creuser,Le Tampon,571,78,pm_privee
+97422000BW2614,a_creuser,Le Tampon,682,84,pm_privee
+97422000BW3035,a_creuser,Le Tampon,321,56,pm_privee
+97422000BW3446,a_creuser,Le Tampon,796,102,pm_privee
+97422000BX0643,a_creuser,Le Tampon,326,49,pm_privee
+97422000BY0176,a_creuser,Le Tampon,699,89,pm_privee
+97422000CD0285,a_creuser,Le Tampon,1204,174,pm_privee
+97422000CE0505,a_creuser,Le Tampon,449,65,pm_privee
+97422000CI0613,a_creuser,Le Tampon,394,33,pm_privee
+97422000CI0676,a_creuser,Le Tampon,446,47,pm_privee
+97422000CL0768,a_creuser,Le Tampon,897,121,pm_privee
+97422000CM0446,a_creuser,Le Tampon,738,129,pm_privee
+97422000CM0944,a_creuser,Le Tampon,1759,150,pm_privee
+97422000CS0296,a_creuser,Le Tampon,2233,264,pm_privee
+97422000CS1002,a_creuser,Le Tampon,245,32,pm_privee
+97422000CS1020,a_creuser,Le Tampon,3694,378,pm_privee
+97422000CS1045,a_creuser,Le Tampon,224,34,pm_privee
+97422000CS1046,a_creuser,Le Tampon,265,58,pm_privee
+97422000CS1166,a_creuser,Le Tampon,2474,314,pm_privee
+97422000CS1303,a_creuser,Le Tampon,1564,209,pm_privee
+97422000CS1506,brulante,Le Tampon,535,47,pm_privee
+97422000CS1519,a_creuser,Le Tampon,788,133,pm_privee
+97422000CZ0584,a_creuser,Le Tampon,342,54,pm_privee
+97422000DE0558,a_creuser,Le Tampon,1477,128,pm_privee
+97422000DL0583,a_creuser,Le Tampon,402,34,pm_privee
+97422000DM0466,a_creuser,Le Tampon,196,30,pm_privee
+97422000ED0507,a_creuser,Le Tampon,639,54,pm_privee
+97422000EH0158,a_creuser,Le Tampon,1349,120,pm_privee
+97422000EI0128,a_creuser,Le Tampon,699,121,pm_privee
+97422000EI0257,a_creuser,Le Tampon,1260,117,pm_privee
+97422000EM0031,a_creuser,Le Tampon,938,133,pm_privee
+97422000EM0275,a_creuser,Le Tampon,1475,222,pm_privee
+97422000EN0064,a_creuser,Le Tampon,959,163,pm_privee
+97422000EN0081,a_creuser,Le Tampon,309,35,pm_privee
+97422000EN0147,a_creuser,Le Tampon,743,104,pm_privee
+97401000AD1149,a_creuser,Les Avirons,630,71,pm_privee
+97401000AK0191,a_creuser,Les Avirons,219,44,pm_privee
+97401000AL0899,a_creuser,Les Avirons,1722,222,pm_privee
+97401000AM0737,chaude,Les Avirons,1413,155,pm_privee
+97401000AM0876,a_creuser,Les Avirons,1210,131,pm_privee
+97401000AM1134,a_creuser,Les Avirons,1634,197,pm_privee
+97401000AM1149,a_creuser,Les Avirons,434,86,pm_privee
+97401000AM1495,a_creuser,Les Avirons,240,46,pm_privee
+97401000AM1496,a_creuser,Les Avirons,287,41,pm_privee
+97401000AN1196,a_creuser,Les Avirons,377,43,pm_privee
+97401000AP0282,a_creuser,Les Avirons,207,31,pm_privee
+97401000AS0786,a_creuser,Les Avirons,1974,226,pm_privee
+97401000AS0981,a_creuser,Les Avirons,1071,152,pm_privee
+97401000AS1029,a_creuser,Les Avirons,502,100,pm_privee
+97423000AB1803,a_creuser,Les Trois-Bassins,187,37,pm_privee
+97423000AB1823,a_creuser,Les Trois-Bassins,950,160,pm_privee
+97423000AD0106,a_creuser,Les Trois-Bassins,275,33,pm_privee
+97423000AH1424,a_creuser,Les Trois-Bassins,496,67,pm_privee
+97423000AH1767,a_creuser,Les Trois-Bassins,275,44,pm_privee
+97423000AI0381,a_creuser,Les Trois-Bassins,663,93,pm_privee
+97423000AK1800,a_creuser,Les Trois-Bassins,246,38,pm_privee
+97423000AK1801,a_creuser,Les Trois-Bassins,328,43,pm_privee
+97423000AK1802,a_creuser,Les Trois-Bassins,408,78,pm_privee
+97423000AK1809,chaude,Les Trois-Bassins,910,162,pm_privee
+97405000AE0671,a_creuser,Petite-Île,767,103,pm_privee
+97405000AE0694,a_creuser,Petite-Île,2161,206,pm_privee
+97405000AK1321,a_creuser,Petite-Île,177,45,pm_privee
+97405000AK1581,a_creuser,Petite-Île,803,121,pm_privee
+97405000AL1001,a_creuser,Petite-Île,488,56,pm_privee
+97405000AL1389,a_creuser,Petite-Île,435,49,pm_privee
+97405000AO0536,a_creuser,Petite-Île,295,73,pm_privee
+97405000AR1177,a_creuser,Petite-Île,126,32,pm_privee
+97405000AS0567,a_creuser,Petite-Île,1213,197,pm_privee
+97405000BE0805,a_creuser,Petite-Île,264,54,pm_privee
+97405000BE1245,a_creuser,Petite-Île,2617,232,pm_privee
+97405000BE1725,a_creuser,Petite-Île,138,35,pm_privee
+97405000BE1730,a_creuser,Petite-Île,274,41,pm_privee
+97405000BI0771,a_creuser,Petite-Île,307,35,pm_privee
+97409000AB0438,a_creuser,Saint-André,2116,241,pm_privee
+97409000AB0489,a_creuser,Saint-André,3428,376,pm_privee
+97409000AC1080,a_creuser,Saint-André,1102,121,pm_privee
+97409000AD0393,a_creuser,Saint-André,1657,142,pm_privee
+97409000AD0578,a_creuser,Saint-André,487,69,pm_privee
+97409000AH0275,a_creuser,Saint-André,587,112,pm_privee
+97409000AH0312,a_creuser,Saint-André,418,50,pm_privee
+97409000AI1389,a_creuser,Saint-André,110,32,pm_privee
+97409000AK0838,a_creuser,Saint-André,1783,155,pm_privee
+97409000AK1265,a_creuser,Saint-André,294,36,pm_privee
+97409000AL1479,a_creuser,Saint-André,572,87,pm_privee
+97409000AL2355,a_creuser,Saint-André,5517,553,pm_privee
+97409000AP0391,reserve_fonciere,Saint-André,2779,243,pm_privee
+97409000AR1233,a_creuser,Saint-André,2674,273,pm_privee
+97409000AR1675,reserve_fonciere,Saint-André,5639,605,pm_privee
+97409000AR1804,a_creuser,Saint-André,1689,302,pm_privee
+97409000AR2612,chaude,Saint-André,2555,264,pm_privee
+97409000AS0410,a_creuser,Saint-André,2252,226,pm_privee
+97409000AS0428,a_creuser,Saint-André,1055,96,pm_privee
+97409000AS0715,reserve_fonciere,Saint-André,4076,365,pm_privee
+97409000AS0920,a_creuser,Saint-André,1620,166,pm_privee
+97409000AS1166,a_creuser,Saint-André,4225,492,pm_privee
+97409000AS1172,a_creuser,Saint-André,4213,401,pm_privee
+97409000AV0914,a_creuser,Saint-André,787,76,pm_privee
+97409000AW0190,a_creuser,Saint-André,1470,134,pm_privee
+97409000AW0230,a_creuser,Saint-André,703,91,pm_privee
+97409000AW0275,a_creuser,Saint-André,887,94,pm_privee
+97409000AW0482,a_creuser,Saint-André,1589,192,pm_privee
+97409000AW0656,a_creuser,Saint-André,1493,160,pm_privee
+97409000AY0924,a_creuser,Saint-André,1090,187,pm_privee
+97409000AY1427,a_creuser,Saint-André,651,116,pm_privee
+97409000BD1575,a_creuser,Saint-André,451,64,pm_privee
+97409000BD1829,reserve_fonciere,Saint-André,18324,1588,pm_privee
+97409000BE0759,a_creuser,Saint-André,1185,168,pm_privee
+97409000BE0794,a_creuser,Saint-André,384,39,pm_privee
+97409000BE0797,a_creuser,Saint-André,377,36,pm_privee
+97409000BE0842,a_creuser,Saint-André,1245,131,pm_privee
+97409000BE0877,a_creuser,Saint-André,275,34,pm_privee
+97409000BE0951,a_creuser,Saint-André,283,51,pm_privee
+97409000BE1178,a_creuser,Saint-André,1054,148,pm_privee
+97409000BE1181,a_creuser,Saint-André,911,176,pm_privee
+97409000BE1457,a_creuser,Saint-André,383,45,pm_privee
+97409000BE1484,a_creuser,Saint-André,3575,397,pm_privee
+97409000BE1516,a_creuser,Saint-André,484,71,pm_privee
+97409000BE1593,a_creuser,Saint-André,1111,96,pm_privee
+97409000BE1621,a_creuser,Saint-André,480,59,pm_privee
+97409000BE1911,a_creuser,Saint-André,10924,963,pm_privee
+97409000BE1945,a_creuser,Saint-André,442,47,pm_privee
+97409000BE2099,a_creuser,Saint-André,487,68,pm_privee
+97409000BE2100,a_creuser,Saint-André,300,34,pm_privee
+97409000BE2129,a_creuser,Saint-André,306,57,pm_privee
+97409000BE2194,a_creuser,Saint-André,566,67,pm_privee
+97409000BE2255,a_creuser,Saint-André,1499,134,pm_privee
+97409000BE2271,a_creuser,Saint-André,610,51,pm_privee
+97409000BL0213,chaude,Saint-André,864,127,pm_privee
+97409000BM0428,a_creuser,Saint-André,1033,175,pm_privee
+97409000BM1161,a_creuser,Saint-André,432,48,pm_privee
+97409000BM1168,a_creuser,Saint-André,579,50,pm_privee
+97409000BM1285,a_creuser,Saint-André,1741,235,pm_privee
+97409000BM1457,a_creuser,Saint-André,905,114,pm_privee
+97409000BM1472,a_creuser,Saint-André,1284,172,pm_privee
+97410000AC0502,a_creuser,Saint-Benoît,987,94,pm_privee
+97410000AD0164,a_creuser,Saint-Benoît,689,75,pm_privee
+97410000AD0716,a_creuser,Saint-Benoît,576,66,pm_privee
+97410000AE0459,a_creuser,Saint-Benoît,1631,180,pm_privee
+97410000AE1346,a_creuser,Saint-Benoît,1158,104,pm_privee
+97410000AI0780,a_creuser,Saint-Benoît,566,57,pm_privee
+97410000AI0794,a_creuser,Saint-Benoît,2177,245,pm_privee
+97410000AI0806,a_creuser,Saint-Benoît,1004,116,pm_privee
+97410000AI1063,a_creuser,Saint-Benoît,1116,118,pm_privee
+97410000AI1065,a_creuser,Saint-Benoît,3002,251,pm_privee
+97410000AI1201,a_creuser,Saint-Benoît,1999,192,pm_privee
+97410000AI1329,a_creuser,Saint-Benoît,414,37,pm_privee
+97410000AI1330,a_creuser,Saint-Benoît,1284,113,pm_privee
+97410000AL0227,a_creuser,Saint-Benoît,1242,149,pm_privee
+97410000AL0252,a_creuser,Saint-Benoît,268,43,pm_privee
+97410000AL0265,a_creuser,Saint-Benoît,1287,140,pm_privee
+97410000AL0384,a_creuser,Saint-Benoît,293,56,pm_privee
+97410000AL0430,a_creuser,Saint-Benoît,637,97,pm_privee
+97410000AL0549,a_creuser,Saint-Benoît,666,76,pm_privee
+97410000AM0344,a_creuser,Saint-Benoît,403,71,pm_privee
+97410000AM0377,a_creuser,Saint-Benoît,120,42,pm_privee
+97410000AM0439,a_creuser,Saint-Benoît,350,50,pm_privee
+97410000AM0440,a_creuser,Saint-Benoît,235,30,pm_privee
+97410000AM0499,a_creuser,Saint-Benoît,275,42,pm_privee
+97410000AN0655,a_creuser,Saint-Benoît,2113,212,pm_privee
+97410000AP0335,a_creuser,Saint-Benoît,429,36,pm_privee
+97410000AP0471,a_creuser,Saint-Benoît,624,110,pm_privee
+97410000AP0603,a_creuser,Saint-Benoît,745,109,pm_privee
+97410000AR0608,a_creuser,Saint-Benoît,660,77,pm_privee
+97410000AR0721,reserve_fonciere,Saint-Benoît,4595,588,pm_privee
+97410000AR0838,reserve_fonciere,Saint-Benoît,4180,370,pm_privee
+97410000AS0469,a_creuser,Saint-Benoît,1520,309,pm_privee
+97410000AX0895,a_creuser,Saint-Benoît,792,89,pm_privee
+97410000AX0926,a_creuser,Saint-Benoît,354,71,pm_privee
+97410000AX0928,a_creuser,Saint-Benoît,248,44,pm_privee
+97410000AX0935,a_creuser,Saint-Benoît,851,81,pm_privee
+97410000BE0668,a_creuser,Saint-Benoît,8964,899,pm_privee
+97410000BE0893,a_creuser,Saint-Benoît,3557,360,pm_privee
+97410000BK0139,a_creuser,Saint-Benoît,957,139,pm_privee
+97410000BK0482,a_creuser,Saint-Benoît,379,37,pm_privee
+97410000BM0325,a_creuser,Saint-Benoît,321,81,pm_privee
+97410000BM0712,a_creuser,Saint-Benoît,1129,110,pm_privee
+97410000BN0857,a_creuser,Saint-Benoît,1006,139,pm_privee
+97410000BV0551,a_creuser,Saint-Benoît,1137,103,pm_privee
+97410000BW0819,a_creuser,Saint-Benoît,812,94,pm_privee
+97410000BX1228,a_creuser,Saint-Benoît,1987,226,pm_privee
+97410000BX1445,a_creuser,Saint-Benoît,899,123,pm_privee
+97410000BX1470,a_creuser,Saint-Benoît,2116,287,pm_privee
+97410000BX1474,a_creuser,Saint-Benoît,402,46,pm_privee
+97410000CD0584,a_creuser,Saint-Benoît,1323,132,pm_privee
+97411000AB0798,reserve_fonciere,Saint-Denis,10708,1037,pm_privee
+97411000AI0193,a_creuser,Saint-Denis,593,72,pm_privee
+97411000AN0126,a_creuser,Saint-Denis,396,58,pm_privee
+97411000AP0495,a_creuser,Saint-Denis,517,52,pm_privee
+97411000AR0285,a_creuser,Saint-Denis,470,74,pm_privee
+97411000AS0233,a_creuser,Saint-Denis,217,42,pm_privee
+97411000AS0537,a_creuser,Saint-Denis,1538,156,pm_privee
+97411000AS0747,a_creuser,Saint-Denis,437,42,pm_privee
+97411000AT0586,a_creuser,Saint-Denis,313,32,pm_privee
+97411000AW0698,a_creuser,Saint-Denis,484,52,pm_privee
+97411000AW0857,a_creuser,Saint-Denis,517,92,pm_privee
+97411000AY0564,a_creuser,Saint-Denis,735,86,pm_privee
+97411000AZ0424,a_creuser,Saint-Denis,172,33,pm_privee
+97411000AZ0679,a_creuser,Saint-Denis,385,35,pm_privee
+97411000BE0150,a_creuser,Saint-Denis,486,78,pm_privee
+97411000BE0156,a_creuser,Saint-Denis,587,102,pm_privee
+97411000BE0646,a_creuser,Saint-Denis,765,82,pm_privee
+97411000BH0319,a_creuser,Saint-Denis,338,66,pm_privee
+97411000BH0656,a_creuser,Saint-Denis,215,31,pm_privee
+97411000BH0724,a_creuser,Saint-Denis,1240,109,pm_privee
+97411000BK0008,a_creuser,Saint-Denis,198,40,pm_privee
+97411000BK0234,a_creuser,Saint-Denis,1295,129,pm_privee
+97411000BK0327,a_creuser,Saint-Denis,460,90,pm_privee
+97411000BL0312,a_creuser,Saint-Denis,616,83,pm_privee
+97411000BP0702,a_creuser,Saint-Denis,262,38,pm_privee
+97411000BP0708,a_creuser,Saint-Denis,2704,229,pm_privee
+97411000BX0153,a_creuser,Saint-Denis,1291,142,pm_privee
+97411000BZ1183,a_creuser,Saint-Denis,246,59,pm_privee
+97411000BZ1280,a_creuser,Saint-Denis,349,40,pm_privee
+97411000BZ1638,a_creuser,Saint-Denis,306,33,pm_privee
+97411000CE1278,a_creuser,Saint-Denis,973,82,pm_privee
+97411000CM0594,a_creuser,Saint-Denis,547,46,pm_privee
+97411000CM0898,a_creuser,Saint-Denis,421,58,pm_privee
+97411000CR0341,a_creuser,Saint-Denis,1278,139,pm_privee
+97411000DH0084,a_creuser,Saint-Denis,173,32,pm_privee
+97411000DH0216,a_creuser,Saint-Denis,2228,295,pm_privee
+97411000DL0133,a_creuser,Saint-Denis,1240,135,pm_privee
+97411000DL0138,a_creuser,Saint-Denis,440,64,pm_privee
+97411000DN0041,a_creuser,Saint-Denis,3115,510,pm_privee
+97411000DN0107,reserve_fonciere,Saint-Denis,4928,454,pm_privee
+97411000DN0139,a_creuser,Saint-Denis,761,104,pm_privee
+97411000DP0496,a_creuser,Saint-Denis,3182,322,pm_privee
+97411000DP0506,a_creuser,Saint-Denis,215,41,pm_privee
+97411000DR0559,a_creuser,Saint-Denis,3042,313,pm_privee
+97411000DR0668,a_creuser,Saint-Denis,2277,264,pm_privee
+97411000DR0775,a_creuser,Saint-Denis,1981,295,pm_privee
+97411000DS0201,a_creuser,Saint-Denis,4479,459,pm_privee
+97411000DS0222,a_creuser,Saint-Denis,186,32,pm_privee
+97411000DS0643,a_creuser,Saint-Denis,1926,177,pm_privee
+97411000DS0823,reserve_fonciere,Saint-Denis,2960,265,pm_privee
+97411000DT0238,a_creuser,Saint-Denis,886,106,pm_privee
+97411000DW0187,a_creuser,Saint-Denis,1076,115,pm_privee
+97411000DY0005,a_creuser,Saint-Denis,204,53,pm_privee
+97411000DY0135,a_creuser,Saint-Denis,520,58,pm_privee
+97411000DZ0058,a_creuser,Saint-Denis,1304,179,pm_privee
+97411000DZ0186,a_creuser,Saint-Denis,1809,244,pm_privee
+97411000EI0241,a_creuser,Saint-Denis,465,60,pm_privee
+97411000EI0245,chaude,Saint-Denis,3125,341,pm_privee
+97411000EK0102,a_creuser,Saint-Denis,504,122,pm_privee
+97411000EK0147,a_creuser,Saint-Denis,1303,165,pm_privee
+97411000EK0167,a_creuser,Saint-Denis,3665,390,pm_privee
+97411000EL0370,a_creuser,Saint-Denis,663,103,pm_privee
+97411000EL0652,a_creuser,Saint-Denis,878,106,pm_privee
+97411000EL0669,a_creuser,Saint-Denis,876,136,pm_privee
+97411000EM0294,a_creuser,Saint-Denis,238,49,pm_privee
+97411000EN0169,a_creuser,Saint-Denis,472,74,pm_privee
+97411000EN0613,a_creuser,Saint-Denis,1810,157,pm_privee
+97411000EO0174,a_creuser,Saint-Denis,267,33,pm_privee
+97411000EP0243,a_creuser,Saint-Denis,393,60,pm_privee
+97411000ER0032,a_creuser,Saint-Denis,2042,270,pm_privee
+97411000ER0059,a_creuser,Saint-Denis,891,117,pm_privee
+97411000ER0070,a_creuser,Saint-Denis,1139,149,pm_privee
+97411000ER0096,a_creuser,Saint-Denis,389,52,pm_privee
+97411000ER0138,a_creuser,Saint-Denis,1689,188,pm_privee
+97411000ER0139,a_creuser,Saint-Denis,419,68,pm_privee
+97411000ER0185,a_creuser,Saint-Denis,2321,237,pm_privee
+97411000ES0035,a_creuser,Saint-Denis,837,126,pm_privee
+97411000ET0039,a_creuser,Saint-Denis,1647,154,pm_privee
+97411000EY0112,a_creuser,Saint-Denis,2658,226,pm_privee
+97411000EZ0067,a_creuser,Saint-Denis,797,90,pm_privee
+97411000EZ0075,a_creuser,Saint-Denis,659,85,pm_privee
+97411000EZ0171,a_creuser,Saint-Denis,1826,219,pm_privee
+97411000HA0097,a_creuser,Saint-Denis,6254,657,pm_privee
+97411000HA0140,a_creuser,Saint-Denis,2246,362,pm_privee
+97411000HB0191,a_creuser,Saint-Denis,423,58,pm_privee
+97411000HC0105,a_creuser,Saint-Denis,333,30,pm_privee
+97411000HC0221,a_creuser,Saint-Denis,480,52,pm_privee
+97411000HD0056,a_creuser,Saint-Denis,566,56,pm_privee
+97411000HE0054,a_creuser,Saint-Denis,200,44,pm_privee
+97411000HK0015,a_creuser,Saint-Denis,8062,687,pm_privee
+97411000HK0044,a_creuser,Saint-Denis,490,54,pm_privee
+97411000HK0128,a_creuser,Saint-Denis,739,109,pm_privee
+97411000HM0082,a_creuser,Saint-Denis,429,63,pm_privee
+97411000HM0234,a_creuser,Saint-Denis,279,32,pm_privee
+97411000HM0283,a_creuser,Saint-Denis,1191,112,pm_privee
+97411000HN0343,a_creuser,Saint-Denis,349,41,pm_privee
+97411000HO0032,a_creuser,Saint-Denis,1697,167,pm_privee
+97411000HO0211,a_creuser,Saint-Denis,984,89,pm_privee
+97411000HO0223,a_creuser,Saint-Denis,1609,155,pm_privee
+97411000HO0240,a_creuser,Saint-Denis,2100,182,pm_privee
+97411000HP0289,a_creuser,Saint-Denis,567,86,pm_privee
+97411000HP0527,a_creuser,Saint-Denis,841,125,pm_privee
+97411000HR0054,a_creuser,Saint-Denis,1781,167,pm_privee
+97411000HS0343,a_creuser,Saint-Denis,568,116,pm_privee
+97411000HV0164,a_creuser,Saint-Denis,6177,575,pm_privee
+97411000HW0305,a_creuser,Saint-Denis,314,48,pm_privee
+97411000HX0280,a_creuser,Saint-Denis,447,47,pm_privee
+97411000HX0283,a_creuser,Saint-Denis,444,84,pm_privee
+97411000HX0354,a_creuser,Saint-Denis,506,52,pm_privee
+97411000HY0090,a_creuser,Saint-Denis,931,78,pm_privee
+97411000IE0321,a_creuser,Saint-Denis,797,110,pm_privee
+97411000IH0433,a_creuser,Saint-Denis,336,81,pm_privee
+97411000IK0108,a_creuser,Saint-Denis,835,88,pm_privee
+97411000IK0122,a_creuser,Saint-Denis,1044,121,pm_privee
+97411000IK0202,a_creuser,Saint-Denis,330,46,pm_privee
+97411000IR0393,a_creuser,Saint-Denis,1287,176,pm_privee
+97411000IS0038,a_creuser,Saint-Denis,561,93,pm_privee
+97411000IS0454,a_creuser,Saint-Denis,878,81,pm_privee
+97411000IW0019,a_creuser,Saint-Denis,853,163,pm_privee
+97411000KA0233,a_creuser,Saint-Denis,556,65,pm_privee
+97411000KA0234,a_creuser,Saint-Denis,215,35,pm_privee
+97411000KA0235,a_creuser,Saint-Denis,198,32,pm_privee
+97411000KA0236,a_creuser,Saint-Denis,220,34,pm_privee
+97411000KA0271,a_creuser,Saint-Denis,302,42,pm_privee
+97411000KA0272,a_creuser,Saint-Denis,209,34,pm_privee
+97411000KA0273,a_creuser,Saint-Denis,272,41,pm_privee
+97411000KC0006,a_creuser,Saint-Denis,604,82,pm_privee
+97411000KE0299,a_creuser,Saint-Denis,2280,326,pm_privee
+97412000AM0734,a_creuser,Saint-Joseph,300,38,pm_privee
+97412000AM1001,a_creuser,Saint-Joseph,450,43,pm_privee
+97412000AM1106,a_creuser,Saint-Joseph,565,50,pm_privee
+97412000AM1115,a_creuser,Saint-Joseph,303,80,pm_privee
+97412000AM1246,a_creuser,Saint-Joseph,1071,162,pm_privee
+97412000AM1259,a_creuser,Saint-Joseph,1155,115,pm_privee
+97412000AO0741,a_creuser,Saint-Joseph,384,69,pm_privee
+97412000AV0967,a_creuser,Saint-Joseph,112,33,pm_privee
+97412000AZ0558,a_creuser,Saint-Joseph,296,56,pm_privee
+97412000AZ0559,a_creuser,Saint-Joseph,204,47,pm_privee
+97412000AZ0587,a_creuser,Saint-Joseph,217,40,pm_privee
+97412000AZ0589,a_creuser,Saint-Joseph,192,37,pm_privee
+97412000AZ0721,a_creuser,Saint-Joseph,2140,302,pm_privee
+97412000AZ0942,a_creuser,Saint-Joseph,962,80,pm_privee
+97412000AZ0953,a_creuser,Saint-Joseph,543,90,pm_privee
+97412000BC0726,a_creuser,Saint-Joseph,570,63,pm_privee
+97412000BK1010,a_creuser,Saint-Joseph,2067,174,pm_privee
+97412000BK1185,a_creuser,Saint-Joseph,585,90,pm_privee
+97412000BK1265,a_creuser,Saint-Joseph,629,105,pm_privee
+97412000BK1715,chaude,Saint-Joseph,757,75,pm_privee
+97412000BM0926,a_creuser,Saint-Joseph,1784,249,pm_privee
+97412000BM1267,reserve_fonciere,Saint-Joseph,5769,678,pm_privee
+97412000BN1209,a_creuser,Saint-Joseph,344,34,pm_privee
+97412000BT0111,a_creuser,Saint-Joseph,323,46,pm_privee
+97412000BT0612,a_creuser,Saint-Joseph,947,88,pm_privee
+97412000BT0625,a_creuser,Saint-Joseph,462,76,pm_privee
+97412000CE2291,a_creuser,Saint-Joseph,1430,222,pm_privee
+97412000CW0563,a_creuser,Saint-Joseph,1517,211,pm_privee
+97412000CX0672,a_creuser,Saint-Joseph,4331,424,pm_privee
+97413000AV1716,a_creuser,Saint-Leu,539,48,pm_privee
+97413000AV1918,a_creuser,Saint-Leu,335,50,pm_privee
+97413000AV2046,a_creuser,Saint-Leu,549,71,pm_privee
+97413000AV2070,a_creuser,Saint-Leu,189,47,pm_privee
+97413000AV2169,a_creuser,Saint-Leu,248,40,pm_privee
+97413000AV2173,a_creuser,Saint-Leu,490,47,pm_privee
+97413000AV2181,a_creuser,Saint-Leu,363,61,pm_privee
+97413000AV2290,a_creuser,Saint-Leu,1329,136,pm_privee
+97413000BD0196,a_creuser,Saint-Leu,2077,371,pm_privee
+97413000BH0519,a_creuser,Saint-Leu,2102,406,pm_privee
+97413000BH0544,a_creuser,Saint-Leu,574,60,pm_privee
+97413000BH1006,a_creuser,Saint-Leu,581,74,pm_privee
+97413000BM0916,a_creuser,Saint-Leu,5110,649,pm_privee
+97413000BW0262,a_creuser,Saint-Leu,471,81,pm_privee
+97413000CC0443,reserve_fonciere,Saint-Leu,6627,694,pm_privee
+97413000CD0403,a_creuser,Saint-Leu,413,44,pm_privee
+97413000CG0520,reserve_fonciere,Saint-Leu,2028,209,pm_privee
+97413000CG0553,a_creuser,Saint-Leu,1596,169,pm_privee
+97413000CM0526,a_creuser,Saint-Leu,390,81,pm_privee
+97413000CM0787,a_creuser,Saint-Leu,234,34,pm_privee
+97413000CN0742,a_creuser,Saint-Leu,2536,296,pm_privee
+97413000CO0452,a_creuser,Saint-Leu,1126,128,pm_privee
+97413000CO0632,a_creuser,Saint-Leu,158,37,pm_privee
+97413000CQ0451,a_creuser,Saint-Leu,1094,131,pm_privee
+97413000CQ0810,a_creuser,Saint-Leu,444,73,pm_privee
+97413000CU0884,a_creuser,Saint-Leu,1219,158,pm_privee
+97413000CU1031,a_creuser,Saint-Leu,7273,622,pm_privee
+97413000CX0605,a_creuser,Saint-Leu,1594,182,pm_privee
+97413000CX1837,a_creuser,Saint-Leu,279,42,pm_privee
+97413000CX1845,a_creuser,Saint-Leu,375,40,pm_privee
+97413000CX1869,a_creuser,Saint-Leu,209,47,pm_privee
+97413000CX1920,a_creuser,Saint-Leu,598,66,pm_privee
+97413000CX1966,a_creuser,Saint-Leu,831,123,pm_privee
+97413000CX2121,a_creuser,Saint-Leu,1659,212,pm_privee
+97413000CX2179,chaude,Saint-Leu,949,143,pm_privee
+97413000CX2297,a_creuser,Saint-Leu,1297,211,pm_privee
+97413000CX2538,chaude,Saint-Leu,2409,248,pm_privee
+97413000CX2539,a_creuser,Saint-Leu,247,33,pm_privee
+97413000CX2640,a_creuser,Saint-Leu,805,128,pm_privee
+97413000CX2665,chaude,Saint-Leu,1657,176,pm_privee
+97413000CY0489,a_creuser,Saint-Leu,1724,187,pm_privee
+97413000CY0531,a_creuser,Saint-Leu,412,78,pm_privee
+97413000CY0761,a_creuser,Saint-Leu,2357,324,pm_privee
+97413000CY0993,a_creuser,Saint-Leu,688,103,pm_privee
+97413000CY1039,a_creuser,Saint-Leu,586,102,pm_privee
+97413000CY1079,a_creuser,Saint-Leu,1663,177,pm_privee
+97413000CY1080,a_creuser,Saint-Leu,766,85,pm_privee
+97413000CY1358,a_creuser,Saint-Leu,2089,375,pm_privee
+97413000CY1413,a_creuser,Saint-Leu,214,34,pm_privee
+97413000CY1414,a_creuser,Saint-Leu,511,56,pm_privee
+97413000CY1465,a_creuser,Saint-Leu,2040,239,pm_privee
+97413000DA0495,a_creuser,Saint-Leu,535,63,pm_privee
+97413000DB0427,a_creuser,Saint-Leu,476,66,pm_privee
+97413000DB0435,a_creuser,Saint-Leu,1892,217,pm_privee
+97413000DB0466,a_creuser,Saint-Leu,436,40,pm_privee
+97413000DC0561,chaude,Saint-Leu,4266,463,pm_privee
+97413000DC1597,a_creuser,Saint-Leu,2420,337,pm_privee
+97413000DC1598,a_creuser,Saint-Leu,283,38,pm_privee
+97413000DC1681,a_creuser,Saint-Leu,257,35,pm_privee
+97413000DC1706,a_creuser,Saint-Leu,980,84,pm_privee
+97413000DD1464,a_creuser,Saint-Leu,1316,133,pm_privee
+97413000DE1238,a_creuser,Saint-Leu,1963,329,pm_privee
+97413000DE1427,a_creuser,Saint-Leu,960,197,pm_privee
+97413000DE1428,a_creuser,Saint-Leu,601,70,pm_privee
+97413000DE1861,a_creuser,Saint-Leu,234,42,pm_privee
+97413000DG0936,a_creuser,Saint-Leu,504,63,pm_privee
+97413000DG1036,a_creuser,Saint-Leu,1128,183,pm_privee
+97413000DG1041,a_creuser,Saint-Leu,398,43,pm_privee
+97413000DG1060,a_creuser,Saint-Leu,911,112,pm_privee
+97413000DG1076,a_creuser,Saint-Leu,783,81,pm_privee
+97413000DG1087,a_creuser,Saint-Leu,1135,147,pm_privee
+97413000DK0371,a_creuser,Saint-Leu,2835,399,pm_privee
+97413000DL0261,reserve_fonciere,Saint-Leu,14801,1737,pm_privee
+97413000DM0013,a_creuser,Saint-Leu,4865,630,pm_privee
+97413000DM0138,a_creuser,Saint-Leu,728,83,pm_privee
+97413000DM0149,a_creuser,Saint-Leu,295,44,pm_privee
+97413000DM0159,a_creuser,Saint-Leu,460,74,pm_privee
+97413000DM0175,a_creuser,Saint-Leu,3833,485,pm_privee
+97413000DM0228,a_creuser,Saint-Leu,3114,290,pm_privee
+97413000DM0374,a_creuser,Saint-Leu,817,81,pm_privee
+97414000CI0691,a_creuser,Saint-Louis,1872,234,pm_privee
+97414000CV0912,a_creuser,Saint-Louis,472,123,pm_privee
+97414000DH0571,a_creuser,Saint-Louis,794,66,pm_privee
+97414000DH0615,a_creuser,Saint-Louis,1049,180,pm_privee
+97414000DH1238,reserve_fonciere,Saint-Louis,1775,152,pm_privee
+97414000DI0561,a_creuser,Saint-Louis,409,49,pm_privee
+97414000DK0631,a_creuser,Saint-Louis,371,47,pm_privee
+97414000DK0651,a_creuser,Saint-Louis,353,36,pm_privee
+97414000DK0771,a_creuser,Saint-Louis,455,63,pm_privee
+97414000DM0433,a_creuser,Saint-Louis,330,31,pm_privee
+97414000DR0654,a_creuser,Saint-Louis,280,53,pm_privee
+97414000DT0635,a_creuser,Saint-Louis,1676,181,pm_privee
+97414000DT0788,a_creuser,Saint-Louis,1857,296,pm_privee
+97414000EK0391,a_creuser,Saint-Louis,550,51,pm_privee
+97414000EK0653,a_creuser,Saint-Louis,3411,375,pm_privee
+97414000EL0689,a_creuser,Saint-Louis,1115,136,pm_privee
+97414000EL0691,a_creuser,Saint-Louis,712,86,pm_privee
+97414000EL1188,reserve_fonciere,Saint-Louis,4721,471,pm_privee
+97414000EL1469,a_creuser,Saint-Louis,367,38,pm_privee
+97414000EL1573,a_creuser,Saint-Louis,382,41,pm_privee
+97414000EL1607,a_creuser,Saint-Louis,609,83,pm_privee
+97414000EL1610,a_creuser,Saint-Louis,446,66,pm_privee
+97414000EL1682,reserve_fonciere,Saint-Louis,5850,553,pm_privee
+97414000EL1684,a_creuser,Saint-Louis,806,85,pm_privee
+97414000EL1692,a_creuser,Saint-Louis,824,75,pm_privee
+97414000EL1767,a_creuser,Saint-Louis,1296,137,pm_privee
+97414000EL1769,a_creuser,Saint-Louis,1443,152,pm_privee
+97414000EL1967,a_creuser,Saint-Louis,329,38,pm_privee
+97414000EL2024,a_creuser,Saint-Louis,296,41,pm_privee
+97414000EL2203,a_creuser,Saint-Louis,224,35,pm_privee
+97414000EL2204,a_creuser,Saint-Louis,578,78,pm_privee
+97414000EL2240,a_creuser,Saint-Louis,924,101,pm_privee
+97414000EM0767,a_creuser,Saint-Louis,556,76,pm_privee
+97414000EM0801,a_creuser,Saint-Louis,330,57,pm_privee
+97414000EN2589,a_creuser,Saint-Louis,307,38,pm_privee
+97414000EN2688,a_creuser,Saint-Louis,716,94,pm_privee
+97414000EN3351,a_creuser,Saint-Louis,287,43,pm_privee
+97414000EN3672,a_creuser,Saint-Louis,385,63,pm_privee
+97414000EN3944,chaude,Saint-Louis,453,50,pm_privee
+97414000ER0716,a_creuser,Saint-Louis,187,40,pm_privee
+97414000ER0730,a_creuser,Saint-Louis,784,121,pm_privee
+97414000ER0740,a_creuser,Saint-Louis,678,72,pm_privee
+97414000ET0570,a_creuser,Saint-Louis,229,46,pm_privee
+97414000ET1328,a_creuser,Saint-Louis,426,86,pm_privee
+97414000ET1337,a_creuser,Saint-Louis,791,121,pm_privee
+97414000ET1344,a_creuser,Saint-Louis,392,37,pm_privee
+97414000ET2251,a_creuser,Saint-Louis,300,75,pm_privee
+97414000ET2257,a_creuser,Saint-Louis,334,55,pm_privee
+97414000EV0726,a_creuser,Saint-Louis,676,74,pm_privee
+97414000EV0731,a_creuser,Saint-Louis,276,49,pm_privee
+97414000EV0749,a_creuser,Saint-Louis,257,49,pm_privee
+97414000EV0771,a_creuser,Saint-Louis,369,38,pm_privee
+97414000EX0687,a_creuser,Saint-Louis,1463,173,pm_privee
+97414000EY0227,a_creuser,Saint-Louis,472,71,pm_privee
+97414000HA0440,chaude,Saint-Louis,1497,135,pm_privee
+97414000HA0476,a_creuser,Saint-Louis,250,36,pm_privee
+97414000HC0239,a_creuser,Saint-Louis,319,31,pm_privee
+97414000HE0391,a_creuser,Saint-Louis,998,130,pm_privee
+97414000HH0330,a_creuser,Saint-Louis,431,61,pm_privee
+97414000HH0332,a_creuser,Saint-Louis,143,32,pm_privee
+97414000HH0453,a_creuser,Saint-Louis,469,52,pm_privee
+97414000HH0477,a_creuser,Saint-Louis,1078,154,pm_privee
+97414000HH0490,a_creuser,Saint-Louis,186,39,pm_privee
+97414000HH0518,a_creuser,Saint-Louis,658,61,pm_privee
+97414000HK0425,a_creuser,Saint-Louis,363,99,pm_privee
+97415000AB0325,a_creuser,Saint-Paul,1363,142,pm_privee
+97415000AB0421,a_creuser,Saint-Paul,3672,367,pm_privee
+97415000AB0464,a_creuser,Saint-Paul,2986,293,pm_privee
+97415000AB0639,a_creuser,Saint-Paul,2653,259,pm_privee
+97415000AB0779,a_creuser,Saint-Paul,131,31,pm_privee
+97415000AD0241,a_creuser,Saint-Paul,6931,683,pm_privee
+97415000AD0302,a_creuser,Saint-Paul,2018,252,pm_privee
+97415000AH1335,a_creuser,Saint-Paul,534,49,pm_privee
+97415000AS1153,a_creuser,Saint-Paul,316,39,pm_privee
+97415000AW0295,a_creuser,Saint-Paul,902,106,pm_privee
+97415000AX0319,a_creuser,Saint-Paul,369,35,pm_privee
+97415000AX0323,a_creuser,Saint-Paul,531,66,pm_privee
+97415000AX0485,a_creuser,Saint-Paul,567,64,pm_privee
+97415000AX0945,a_creuser,Saint-Paul,1246,175,pm_privee
+97415000AX0990,chaude,Saint-Paul,2114,222,pm_privee
+97415000AX1099,a_creuser,Saint-Paul,253,34,pm_privee
+97415000AY0329,a_creuser,Saint-Paul,683,87,pm_privee
+97415000AY0612,a_creuser,Saint-Paul,701,136,pm_privee
+97415000AY0634,a_creuser,Saint-Paul,2989,333,pm_privee
+97415000AY1091,a_creuser,Saint-Paul,243,40,pm_privee
+97415000AY1294,a_creuser,Saint-Paul,1877,214,pm_privee
+97415000AY1299,a_creuser,Saint-Paul,441,39,pm_privee
+97415000AY1301,a_creuser,Saint-Paul,527,75,pm_privee
+97415000AY1302,a_creuser,Saint-Paul,403,56,pm_privee
+97415000AY1480,a_creuser,Saint-Paul,783,92,pm_privee
+97415000AY1523,a_creuser,Saint-Paul,395,61,pm_privee
+97415000AY1548,chaude,Saint-Paul,660,88,pm_privee
+97415000AY1549,a_creuser,Saint-Paul,333,47,pm_privee
+97415000AY1588,a_creuser,Saint-Paul,891,127,pm_privee
+97415000AY1629,a_creuser,Saint-Paul,567,79,pm_privee
+97415000AZ1035,a_creuser,Saint-Paul,345,40,pm_privee
+97415000AZ1078,a_creuser,Saint-Paul,392,117,pm_privee
+97415000AZ1467,a_creuser,Saint-Paul,1857,188,pm_privee
+97415000AZ1500,a_creuser,Saint-Paul,2223,234,pm_privee
+97415000AZ1720,a_creuser,Saint-Paul,430,103,pm_privee
+97415000AZ1773,a_creuser,Saint-Paul,312,65,pm_privee
+97415000BC0290,a_creuser,Saint-Paul,2410,265,pm_privee
+97415000BE0031,a_creuser,Saint-Paul,523,52,pm_privee
+97415000BH0133,a_creuser,Saint-Paul,439,44,pm_privee
+97415000BH0250,a_creuser,Saint-Paul,2140,270,pm_privee
+97415000BI0586,a_creuser,Saint-Paul,396,67,pm_privee
+97415000BN0048,a_creuser,Saint-Paul,595,112,pm_privee
+97415000BN1229,a_creuser,Saint-Paul,692,79,pm_privee
+97415000BO0172,a_creuser,Saint-Paul,701,108,pm_privee
+97415000BO0853,a_creuser,Saint-Paul,419,40,pm_privee
+97415000BV0624,a_creuser,Saint-Paul,528,60,pm_privee
+97415000BV0816,a_creuser,Saint-Paul,315,36,pm_privee
+97415000BV0990,a_creuser,Saint-Paul,264,32,pm_privee
+97415000BW0580,a_creuser,Saint-Paul,2134,204,pm_privee
+97415000BW1457,a_creuser,Saint-Paul,2139,228,pm_privee
+97415000BW2079,a_creuser,Saint-Paul,370,44,pm_privee
+97415000CH2116,a_creuser,Saint-Paul,720,89,pm_privee
+97415000CH2372,a_creuser,Saint-Paul,2667,314,pm_privee
+97415000CH2522,a_creuser,Saint-Paul,744,81,pm_privee
+97415000CI0343,a_creuser,Saint-Paul,799,88,pm_privee
+97415000CI0363,a_creuser,Saint-Paul,600,72,pm_privee
+97415000CI0364,a_creuser,Saint-Paul,911,104,pm_privee
+97415000CI0474,a_creuser,Saint-Paul,358,45,pm_privee
+97415000CM0503,a_creuser,Saint-Paul,533,106,pm_privee
+97415000CM0624,a_creuser,Saint-Paul,2252,190,pm_privee
+97415000CM0807,a_creuser,Saint-Paul,496,45,pm_privee
+97415000CM0808,a_creuser,Saint-Paul,454,46,pm_privee
+97415000CM2091,a_creuser,Saint-Paul,601,51,pm_privee
+97415000CM2165,a_creuser,Saint-Paul,378,48,pm_privee
+97415000CM2339,a_creuser,Saint-Paul,568,68,pm_privee
+97415000CP1129,a_creuser,Saint-Paul,347,66,pm_privee
+97415000CP1312,a_creuser,Saint-Paul,275,49,pm_privee
+97415000CR1124,a_creuser,Saint-Paul,1133,116,pm_privee
+97415000CS0527,a_creuser,Saint-Paul,394,37,pm_privee
+97415000CS0578,a_creuser,Saint-Paul,784,72,pm_privee
+97415000CS0655,a_creuser,Saint-Paul,312,56,pm_privee
+97415000CT0676,reserve_fonciere,Saint-Paul,4243,504,pm_privee
+97415000CT1220,a_creuser,Saint-Paul,405,45,pm_privee
+97415000CT1409,a_creuser,Saint-Paul,867,129,pm_privee
+97415000CT1410,a_creuser,Saint-Paul,478,66,pm_privee
+97415000CT1414,a_creuser,Saint-Paul,459,92,pm_privee
+97415000CT1431,a_creuser,Saint-Paul,262,35,pm_privee
+97415000CT1448,a_creuser,Saint-Paul,1130,94,pm_privee
+97415000CT1550,a_creuser,Saint-Paul,401,59,pm_privee
+97415000CT1559,a_creuser,Saint-Paul,556,54,pm_privee
+97415000CT1567,a_creuser,Saint-Paul,724,105,pm_privee
+97415000CT1631,a_creuser,Saint-Paul,598,96,pm_privee
+97415000CT1645,a_creuser,Saint-Paul,1300,164,pm_privee
+97415000CT1669,a_creuser,Saint-Paul,1405,215,pm_privee
+97415000CT1690,a_creuser,Saint-Paul,167,39,pm_privee
+97415000CT1696,a_creuser,Saint-Paul,2558,350,pm_privee
+97415000CT1697,a_creuser,Saint-Paul,7008,783,pm_privee
+97415000CT1917,a_creuser,Saint-Paul,619,72,pm_privee
+97415000CT1977,a_creuser,Saint-Paul,642,91,pm_privee
+97415000CT2232,a_creuser,Saint-Paul,401,34,pm_privee
+97415000CT2255,a_creuser,Saint-Paul,2302,319,pm_privee
+97415000CT2264,a_creuser,Saint-Paul,224,30,pm_privee
+97415000CT2310,a_creuser,Saint-Paul,580,71,pm_privee
+97415000CT2313,a_creuser,Saint-Paul,591,110,pm_privee
+97415000CT2329,a_creuser,Saint-Paul,259,34,pm_privee
+97415000CT2340,a_creuser,Saint-Paul,584,56,pm_privee
+97415000CT2375,a_creuser,Saint-Paul,314,54,pm_privee
+97415000CT2444,a_creuser,Saint-Paul,282,33,pm_privee
+97415000CT2454,a_creuser,Saint-Paul,238,34,pm_privee
+97415000CT2646,a_creuser,Saint-Paul,1252,124,pm_privee
+97415000CT2838,a_creuser,Saint-Paul,473,72,pm_privee
+97415000CT2841,a_creuser,Saint-Paul,2031,287,pm_privee
+97415000CT3093,a_creuser,Saint-Paul,3885,363,pm_privee
+97415000CT3094,a_creuser,Saint-Paul,654,75,pm_privee
+97415000CT3095,a_creuser,Saint-Paul,1182,124,pm_privee
+97415000CT3096,a_creuser,Saint-Paul,1146,144,pm_privee
+97415000CT3097,a_creuser,Saint-Paul,1911,225,pm_privee
+97415000CT3114,reserve_fonciere,Saint-Paul,9114,1046,pm_privee
+97415000CT3115,a_creuser,Saint-Paul,282,44,pm_privee
+97415000CT3116,a_creuser,Saint-Paul,209,39,pm_privee
+97415000CT3185,a_creuser,Saint-Paul,743,132,pm_privee
+97415000CT3201,a_creuser,Saint-Paul,306,39,pm_privee
+97415000CV0314,a_creuser,Saint-Paul,1931,281,pm_privee
+97415000CV0658,a_creuser,Saint-Paul,1726,165,pm_privee
+97415000CV0768,a_creuser,Saint-Paul,578,81,pm_privee
+97415000CV0771,a_creuser,Saint-Paul,463,41,pm_privee
+97415000CV0783,a_creuser,Saint-Paul,772,102,pm_privee
+97415000CV0889,a_creuser,Saint-Paul,1088,181,pm_privee
+97415000CV0954,a_creuser,Saint-Paul,392,34,pm_privee
+97415000CV1067,reserve_fonciere,Saint-Paul,3761,386,pm_privee
+97415000CV1395,a_creuser,Saint-Paul,591,51,pm_privee
+97415000CW0958,a_creuser,Saint-Paul,385,43,pm_privee
+97415000CW0969,a_creuser,Saint-Paul,738,93,pm_privee
+97415000CW0974,a_creuser,Saint-Paul,405,54,pm_privee
+97415000CW1041,reserve_fonciere,Saint-Paul,7676,783,pm_privee
+97415000CX0465,a_creuser,Saint-Paul,954,117,pm_privee
+97415000CX0728,a_creuser,Saint-Paul,1061,106,pm_privee
+97415000CX1593,a_creuser,Saint-Paul,13922,1491,pm_privee
+97415000CY0746,a_creuser,Saint-Paul,268,30,pm_privee
+97415000CY0752,a_creuser,Saint-Paul,868,126,pm_privee
+97415000CZ0519,a_creuser,Saint-Paul,4689,539,pm_privee
+97415000CZ0841,a_creuser,Saint-Paul,1121,161,pm_privee
+97415000CZ0986,a_creuser,Saint-Paul,827,103,pm_privee
+97415000CZ1004,a_creuser,Saint-Paul,2106,184,pm_privee
+97415000DE0210,a_creuser,Saint-Paul,9213,965,pm_privee
+97415000DE0239,a_creuser,Saint-Paul,5155,597,pm_privee
+97415000DE0285,a_creuser,Saint-Paul,2325,286,pm_privee
+97415000DE0356,reserve_fonciere,Saint-Paul,3778,389,pm_privee
+97415000DE0399,a_creuser,Saint-Paul,1514,175,pm_privee
+97415000DE0415,a_creuser,Saint-Paul,623,79,pm_privee
+97415000DE0469,reserve_fonciere,Saint-Paul,5207,498,pm_privee
+97415000DE1192,a_creuser,Saint-Paul,479,62,pm_privee
+97415000DE1196,a_creuser,Saint-Paul,217,40,pm_privee
+97415000DE1223,a_creuser,Saint-Paul,573,78,pm_privee
+97415000DE1234,a_creuser,Saint-Paul,1503,147,pm_privee
+97415000DE1272,a_creuser,Saint-Paul,2773,300,pm_privee
+97415000DE1337,a_creuser,Saint-Paul,926,133,pm_privee
+97415000DH0112,a_creuser,Saint-Paul,906,90,pm_privee
+97415000DH0166,a_creuser,Saint-Paul,393,47,pm_privee
+97415000DH0294,a_creuser,Saint-Paul,948,165,pm_privee
+97415000DH0442,a_creuser,Saint-Paul,301,38,pm_privee
+97415000DI0565,a_creuser,Saint-Paul,280,53,pm_privee
+97415000DK0842,a_creuser,Saint-Paul,1884,203,pm_privee
+97415000DK0863,chaude,Saint-Paul,688,87,pm_privee
+97415000DK1055,a_creuser,Saint-Paul,4054,407,pm_privee
+97415000DK1156,a_creuser,Saint-Paul,575,59,pm_privee
+97415000DM0751,a_creuser,Saint-Paul,1748,189,pm_privee
+97415000DM0823,a_creuser,Saint-Paul,534,66,pm_privee
+97415000DM0897,a_creuser,Saint-Paul,1249,121,pm_privee
+97415000DM0957,a_creuser,Saint-Paul,660,98,pm_privee
+97415000DT1033,a_creuser,Saint-Paul,770,119,pm_privee
+97415000DV0288,a_creuser,Saint-Paul,1401,177,pm_privee
+97415000DV0419,a_creuser,Saint-Paul,1773,177,pm_privee
+97415000DX0347,a_creuser,Saint-Paul,711,106,pm_privee
+97415000EH0178,a_creuser,Saint-Paul,1395,177,pm_privee
+97415000EI0188,a_creuser,Saint-Paul,1062,208,pm_privee
+97415000EM0374,a_creuser,Saint-Paul,2181,191,pm_privee
+97415000EM0384,a_creuser,Saint-Paul,4663,658,pm_privee
+97415000EO0272,a_creuser,Saint-Paul,338,54,pm_privee
+97415000EO0415,a_creuser,Saint-Paul,8515,922,pm_privee
+97415000EO0453,a_creuser,Saint-Paul,1274,221,pm_privee
+97415000EO0706,a_creuser,Saint-Paul,701,67,pm_privee
+97415000EP0511,a_creuser,Saint-Paul,773,95,pm_privee
+97415000EP1085,a_creuser,Saint-Paul,181,55,pm_privee
+97415000ER0447,a_creuser,Saint-Paul,811,105,pm_privee
+97415000ER1165,a_creuser,Saint-Paul,7041,771,pm_privee
+97415000ER1533,a_creuser,Saint-Paul,2601,334,pm_privee
+97415000ER1543,a_creuser,Saint-Paul,751,79,pm_privee
+97415000ER1744,a_creuser,Saint-Paul,244,33,pm_privee
+97415000ER1745,a_creuser,Saint-Paul,452,67,pm_privee
+97415000ET1587,a_creuser,Saint-Paul,2752,362,pm_privee
+97415000ET1612,a_creuser,Saint-Paul,6828,729,pm_privee
+97415000ET1738,a_creuser,Saint-Paul,7269,622,pm_privee
+97415000ET1745,a_creuser,Saint-Paul,2670,329,pm_privee
+97415000EV0221,a_creuser,Saint-Paul,285,35,pm_privee
+97415000EV0509,a_creuser,Saint-Paul,238,45,pm_privee
+97415000EV0517,a_creuser,Saint-Paul,332,48,pm_privee
+97415000EV0721,a_creuser,Saint-Paul,225,45,pm_privee
+97415000EV0732,a_creuser,Saint-Paul,1826,249,pm_privee
+97415000EV0772,a_creuser,Saint-Paul,4360,524,pm_privee
+97415000EV0774,a_creuser,Saint-Paul,3683,455,pm_privee
+97415000EV0782,a_creuser,Saint-Paul,4541,429,pm_privee
+97415000EV0783,a_creuser,Saint-Paul,1264,128,pm_privee
+97415000EV0784,a_creuser,Saint-Paul,383,46,pm_privee
+97415000EV0837,a_creuser,Saint-Paul,6375,548,pm_privee
+97415000EV0881,chaude,Saint-Paul,1673,168,pm_privee
+97415000EW0715,a_creuser,Saint-Paul,2255,203,pm_privee
+97415000EW0734,a_creuser,Saint-Paul,508,54,pm_privee
+97415000EW0803,a_creuser,Saint-Paul,2582,345,pm_privee
+97415000EW0906,a_creuser,Saint-Paul,1960,201,pm_privee
+97415000EW1624,a_creuser,Saint-Paul,1822,205,pm_privee
+97415000EW1827,a_creuser,Saint-Paul,432,37,pm_privee
+97415000EW1957,a_creuser,Saint-Paul,130,31,pm_privee
+97415000EX0135,a_creuser,Saint-Paul,252,36,pm_privee
+97415000EY0073,a_creuser,Saint-Paul,629,113,pm_privee
+97415000EY0074,a_creuser,Saint-Paul,661,95,pm_privee
+97415000EY0105,a_creuser,Saint-Paul,586,52,pm_privee
+97415000EY0147,a_creuser,Saint-Paul,645,93,pm_privee
+97415000EY0160,a_creuser,Saint-Paul,4093,506,pm_privee
+97415000EY0307,a_creuser,Saint-Paul,1897,178,pm_privee
+97415000EY0388,a_creuser,Saint-Paul,1114,143,pm_privee
+97415000EY0389,a_creuser,Saint-Paul,322,30,pm_privee
+97415000EY0436,reserve_fonciere,Saint-Paul,2109,208,pm_privee
+97415000EY0611,reserve_fonciere,Saint-Paul,13477,1275,pm_privee
+97415000EY0736,reserve_fonciere,Saint-Paul,6112,627,pm_privee
+97415000EY0986,a_creuser,Saint-Paul,398,38,pm_privee
+97415000EY1019,a_creuser,Saint-Paul,404,65,pm_privee
+97415000EY1240,a_creuser,Saint-Paul,240,34,pm_privee
+97415000EY1273,a_creuser,Saint-Paul,559,61,pm_privee
+97415000EY1390,a_creuser,Saint-Paul,688,96,pm_privee
+97415000EY1420,a_creuser,Saint-Paul,1294,136,pm_privee
+97415000EY1453,a_creuser,Saint-Paul,942,132,pm_privee
+97415000EY1479,a_creuser,Saint-Paul,1641,197,pm_privee
+97415000EY1513,a_creuser,Saint-Paul,1906,238,pm_privee
+97415000EY1567,a_creuser,Saint-Paul,924,87,pm_privee
+97415000EY1727,a_creuser,Saint-Paul,555,108,pm_privee
+97415000EY1750,reserve_fonciere,Saint-Paul,4933,478,pm_privee
+97415000EY1789,a_creuser,Saint-Paul,599,75,pm_privee
+97415000EY1816,a_creuser,Saint-Paul,511,68,pm_privee
+97415000EY1886,a_creuser,Saint-Paul,2841,271,pm_privee
+97415000EY1989,a_creuser,Saint-Paul,2812,242,pm_privee
+97415000HK0170,a_creuser,Saint-Paul,526,168,pm_privee
+97415000HK0238,a_creuser,Saint-Paul,2674,260,pm_privee
+97415000HK0501,a_creuser,Saint-Paul,597,72,pm_privee
+97415000HL0011,a_creuser,Saint-Paul,797,112,pm_privee
+97415000HL0063,a_creuser,Saint-Paul,695,80,pm_privee
+97415000HM0172,a_creuser,Saint-Paul,308,41,pm_privee
+97415000HM0190,a_creuser,Saint-Paul,387,72,pm_privee
+97417000AT1003,a_creuser,Saint-Philippe,171,35,pm_privee
+97417000AT1478,a_creuser,Saint-Philippe,219,34,pm_privee
+97416000CS1152,a_creuser,Saint-Pierre,3259,397,pm_privee
+97416000CS1356,a_creuser,Saint-Pierre,4658,515,pm_privee
+97416000CS1397,a_creuser,Saint-Pierre,328,84,pm_privee
+97416000CT0454,a_creuser,Saint-Pierre,1510,209,pm_privee
+97416000CT0788,a_creuser,Saint-Pierre,1793,205,pm_privee
+97416000CT0828,a_creuser,Saint-Pierre,513,107,pm_privee
+97416000CW0572,a_creuser,Saint-Pierre,405,60,pm_privee
+97416000CW0641,a_creuser,Saint-Pierre,1743,155,pm_privee
+97416000CW0939,a_creuser,Saint-Pierre,1075,123,pm_privee
+97416000CW1118,a_creuser,Saint-Pierre,370,48,pm_privee
+97416000CW1553,chaude,Saint-Pierre,794,97,pm_privee
+97416000CW1554,chaude,Saint-Pierre,10023,1058,pm_privee
+97416000CW1643,a_creuser,Saint-Pierre,1974,180,pm_privee
+97416000CW1931,a_creuser,Saint-Pierre,595,62,pm_privee
+97416000CW2617,a_creuser,Saint-Pierre,308,70,pm_privee
+97416000CW2884,a_creuser,Saint-Pierre,123,31,pm_privee
+97416000CX0597,a_creuser,Saint-Pierre,1843,229,pm_privee
+97416000CX0830,a_creuser,Saint-Pierre,291,35,pm_privee
+97416000CX0839,a_creuser,Saint-Pierre,782,95,pm_privee
+97416000CX0842,a_creuser,Saint-Pierre,695,60,pm_privee
+97416000CX0930,a_creuser,Saint-Pierre,989,89,pm_privee
+97416000CX1227,a_creuser,Saint-Pierre,3588,330,pm_privee
+97416000CZ0595,a_creuser,Saint-Pierre,613,104,pm_privee
+97416000CZ1775,a_creuser,Saint-Pierre,1373,134,pm_privee
+97416000CZ1818,a_creuser,Saint-Pierre,192,42,pm_privee
+97416000DE0657,a_creuser,Saint-Pierre,595,79,pm_privee
+97416000DE0900,a_creuser,Saint-Pierre,1386,137,pm_privee
+97416000DE1856,a_creuser,Saint-Pierre,390,55,pm_privee
+97416000DH1878,a_creuser,Saint-Pierre,757,69,pm_privee
+97416000DK0171,a_creuser,Saint-Pierre,507,43,pm_privee
+97416000DK0182,reserve_fonciere,Saint-Pierre,1690,148,pm_privee
+97416000DK0186,a_creuser,Saint-Pierre,1318,119,pm_privee
+97416000DK0188,a_creuser,Saint-Pierre,692,68,pm_privee
+97416000DK0193,a_creuser,Saint-Pierre,1461,127,pm_privee
+97416000DK0205,a_creuser,Saint-Pierre,415,39,pm_privee
+97416000DK0214,a_creuser,Saint-Pierre,732,70,pm_privee
+97416000DK0218,a_creuser,Saint-Pierre,1324,114,pm_privee
+97416000DM0992,a_creuser,Saint-Pierre,216,31,pm_privee
+97416000DO0077,a_creuser,Saint-Pierre,896,81,pm_privee
+97416000DO0160,a_creuser,Saint-Pierre,1296,170,pm_privee
+97416000DO0225,a_creuser,Saint-Pierre,699,60,pm_privee
+97416000DO0227,a_creuser,Saint-Pierre,741,100,pm_privee
+97416000DR0531,a_creuser,Saint-Pierre,670,68,pm_privee
+97416000DV0307,a_creuser,Saint-Pierre,549,52,pm_privee
+97416000DV0373,a_creuser,Saint-Pierre,421,50,pm_privee
+97416000DV0384,a_creuser,Saint-Pierre,307,38,pm_privee
+97416000DW0306,a_creuser,Saint-Pierre,307,55,pm_privee
+97416000EI0255,a_creuser,Saint-Pierre,314,33,pm_privee
+97416000EI1362,a_creuser,Saint-Pierre,773,80,pm_privee
+97416000EK0468,a_creuser,Saint-Pierre,437,45,pm_privee
+97416000EM0253,a_creuser,Saint-Pierre,121,37,pm_privee
+97416000EM0260,a_creuser,Saint-Pierre,669,86,pm_privee
+97416000ER0766,a_creuser,Saint-Pierre,993,115,pm_privee
+97416000ET0512,a_creuser,Saint-Pierre,988,140,pm_privee
+97416000ET1460,reserve_fonciere,Saint-Pierre,3507,303,pm_privee
+97416000ET1816,a_creuser,Saint-Pierre,882,169,pm_privee
+97416000ET1858,a_creuser,Saint-Pierre,1334,156,pm_privee
+97416000ET1861,a_creuser,Saint-Pierre,987,148,pm_privee
+97416000ET1862,a_creuser,Saint-Pierre,244,36,pm_privee
+97416000ET1982,a_creuser,Saint-Pierre,2477,225,pm_privee
+97416000ET2033,a_creuser,Saint-Pierre,286,45,pm_privee
+97416000ET2215,a_creuser,Saint-Pierre,894,108,pm_privee
+97416000ET2217,a_creuser,Saint-Pierre,611,91,pm_privee
+97416000EV1111,a_creuser,Saint-Pierre,293,37,pm_privee
+97416000EV1208,a_creuser,Saint-Pierre,178,37,pm_privee
+97416000EV1816,a_creuser,Saint-Pierre,798,102,pm_privee
+97416000EV1818,a_creuser,Saint-Pierre,619,65,pm_privee
+97416000EW0831,a_creuser,Saint-Pierre,281,51,pm_privee
+97416000EX0739,a_creuser,Saint-Pierre,469,67,pm_privee
+97416000EX1606,a_creuser,Saint-Pierre,550,52,pm_privee
+97416000EX1790,a_creuser,Saint-Pierre,285,45,pm_privee
+97416000EY1068,a_creuser,Saint-Pierre,704,83,pm_privee
+97416000EY1300,a_creuser,Saint-Pierre,576,85,pm_privee
+97416000HI0765,a_creuser,Saint-Pierre,395,66,pm_privee
+97416000HN1076,a_creuser,Saint-Pierre,897,81,pm_privee
+97416000HN1292,a_creuser,Saint-Pierre,521,89,pm_privee
+97416000HN1317,chaude,Saint-Pierre,667,123,pm_privee
+97416000HN1466,a_creuser,Saint-Pierre,618,64,pm_privee
+97416000HO1085,a_creuser,Saint-Pierre,335,56,pm_privee
+97416000HP0347,chaude,Saint-Pierre,2019,171,pm_privee
+97416000HV0246,a_creuser,Saint-Pierre,253,52,pm_privee
+97416000HX0735,a_creuser,Saint-Pierre,601,68,pm_privee
+97416000HX0736,a_creuser,Saint-Pierre,228,37,pm_privee
+97416000HX1208,a_creuser,Saint-Pierre,378,84,pm_privee
+97416000HY1225,a_creuser,Saint-Pierre,2254,252,pm_privee
+97416000HY1438,a_creuser,Saint-Pierre,897,131,pm_privee
+97416000HY1680,a_creuser,Saint-Pierre,524,67,pm_privee
+97416000HY1683,a_creuser,Saint-Pierre,1604,140,pm_privee
+97416000HZ0970,a_creuser,Saint-Pierre,382,38,pm_privee
+97416000IB0484,reserve_fonciere,Saint-Pierre,5467,751,pm_privee
+97416000IE0800,a_creuser,Saint-Pierre,176,39,pm_privee
+97416000IE1161,a_creuser,Saint-Pierre,269,97,pm_privee
+97416000IE1983,a_creuser,Saint-Pierre,2369,299,pm_privee
+97416000IK0257,a_creuser,Saint-Pierre,1533,141,pm_privee
+97416000IK0416,a_creuser,Saint-Pierre,1794,207,pm_privee
+97416000IK0452,reserve_fonciere,Saint-Pierre,7510,669,pm_privee
+97416000IL0550,a_creuser,Saint-Pierre,1580,201,pm_privee
+97418000AC1023,a_creuser,Sainte-Marie,344,44,pm_privee
+97418000AC1451,a_creuser,Sainte-Marie,1243,110,pm_privee
+97418000AC1459,a_creuser,Sainte-Marie,378,36,pm_privee
+97418000AC1465,a_creuser,Sainte-Marie,2062,227,pm_privee
+97418000AC1469,a_creuser,Sainte-Marie,1292,131,pm_privee
+97418000AD0701,a_creuser,Sainte-Marie,280,35,pm_privee
+97418000AO1822,a_creuser,Sainte-Marie,933,109,pm_privee
+97418000AP0534,a_creuser,Sainte-Marie,372,38,pm_privee
+97418000AP1553,a_creuser,Sainte-Marie,2266,283,pm_privee
+97418000AR1207,a_creuser,Sainte-Marie,962,130,pm_privee
+97418000AR1222,a_creuser,Sainte-Marie,414,53,pm_privee
+97418000AR1575,a_creuser,Sainte-Marie,652,77,pm_privee
+97418000AS0903,a_creuser,Sainte-Marie,546,59,pm_privee
+97418000AS1121,a_creuser,Sainte-Marie,1349,144,pm_privee
+97418000AT0865,a_creuser,Sainte-Marie,366,53,pm_privee
+97418000AT1136,a_creuser,Sainte-Marie,538,83,pm_privee
+97418000AT1226,a_creuser,Sainte-Marie,329,31,pm_privee
+97418000AT1620,a_creuser,Sainte-Marie,811,118,pm_privee
+97418000AT1775,a_creuser,Sainte-Marie,607,77,pm_privee
+97418000AT1811,a_creuser,Sainte-Marie,725,77,pm_privee
+97418000AT1906,a_creuser,Sainte-Marie,4408,558,pm_privee
+97418000AT2148,a_creuser,Sainte-Marie,986,129,pm_privee
+97418000AT2300,brulante,Sainte-Marie,384,45,pm_privee
+97418000AT2398,a_creuser,Sainte-Marie,1009,145,pm_privee
+97418000AV1263,reserve_fonciere,Sainte-Marie,4540,531,pm_privee
+97418000AV1307,a_creuser,Sainte-Marie,186,31,pm_privee
+97418000AV1520,a_creuser,Sainte-Marie,2885,337,pm_privee
+97418000AV1749,a_creuser,Sainte-Marie,913,96,pm_privee
+97418000AV2144,a_creuser,Sainte-Marie,761,117,pm_privee
+97418000AW0227,a_creuser,Sainte-Marie,4276,393,pm_privee
+97418000AW0771,a_creuser,Sainte-Marie,6193,580,pm_privee
+97418000AY0377,a_creuser,Sainte-Marie,273,36,pm_privee
+97418000AY0385,a_creuser,Sainte-Marie,984,113,pm_privee
+97418000AY0705,a_creuser,Sainte-Marie,725,83,pm_privee
+97418000BD0015,a_creuser,Sainte-Marie,334,38,pm_privee
+97418000BD0337,a_creuser,Sainte-Marie,221,44,pm_privee
+97418000BE0057,a_creuser,Sainte-Marie,767,147,pm_privee
+97418000BH0421,a_creuser,Sainte-Marie,1224,174,pm_privee
+97418000BH0450,reserve_fonciere,Sainte-Marie,7425,736,pm_privee
+97418000BH0474,a_creuser,Sainte-Marie,4499,428,pm_privee
+97418000BH0541,a_creuser,Sainte-Marie,1460,164,pm_privee
+97418000BH0763,a_creuser,Sainte-Marie,4996,642,pm_privee
+97418000BH0970,a_creuser,Sainte-Marie,6999,1047,pm_privee
+97418000BH1046,a_creuser,Sainte-Marie,8303,1134,pm_privee
+97418000BI0226,a_creuser,Sainte-Marie,1823,235,pm_privee
+97418000BM0224,a_creuser,Sainte-Marie,1050,108,pm_privee
+97418000BM0343,a_creuser,Sainte-Marie,682,67,pm_privee
+97418000BM0493,a_creuser,Sainte-Marie,735,105,pm_privee
+97418000BO0226,a_creuser,Sainte-Marie,2850,322,pm_privee
+97418000BP0335,a_creuser,Sainte-Marie,1055,89,pm_privee
+97418000BT0016,a_creuser,Sainte-Marie,499,54,pm_privee
+97419000AL1115,a_creuser,Sainte-Rose,778,87,pm_privee
+97419000AL1118,a_creuser,Sainte-Rose,1414,166,pm_privee
+97419000AN0164,a_creuser,Sainte-Rose,798,126,pm_privee
+97419000AR0044,a_creuser,Sainte-Rose,654,101,pm_privee
+97419000AR0587,a_creuser,Sainte-Rose,385,51,pm_privee
+97419000AX0046,a_creuser,Sainte-Rose,288,30,pm_privee
+97420000AB1313,a_creuser,Sainte-Suzanne,2824,310,pm_privee
+97420000AB1876,a_creuser,Sainte-Suzanne,2060,187,pm_privee
+97420000AB1947,a_creuser,Sainte-Suzanne,552,69,pm_privee
+97420000AC0453,a_creuser,Sainte-Suzanne,418,64,pm_privee
+97420000AC0571,a_creuser,Sainte-Suzanne,287,34,pm_privee
+97420000AC1108,a_creuser,Sainte-Suzanne,1336,128,pm_privee
+97420000AL0521,a_creuser,Sainte-Suzanne,1860,205,pm_privee
+97420000AL0601,a_creuser,Sainte-Suzanne,639,81,pm_privee
+97420000AM0023,a_creuser,Sainte-Suzanne,826,96,pm_privee
+97420000AO0659,a_creuser,Sainte-Suzanne,1636,146,pm_privee
+97420000AR0747,a_creuser,Sainte-Suzanne,1246,176,pm_privee
+97420000AZ0844,a_creuser,Sainte-Suzanne,387,61,pm_privee
+97420000BC0026,a_creuser,Sainte-Suzanne,1028,115,pm_privee
+97420000BC0469,a_creuser,Sainte-Suzanne,206,39,pm_privee
+97420000BC0987,a_creuser,Sainte-Suzanne,2540,272,pm_privee
+97420000BC1288,a_creuser,Sainte-Suzanne,415,58,pm_privee
+97420000BC1496,a_creuser,Sainte-Suzanne,657,83,pm_privee
+97420000BC1543,a_creuser,Sainte-Suzanne,809,109,pm_privee
+97420000BC1544,a_creuser,Sainte-Suzanne,906,89,pm_privee
+97420000BC1617,a_creuser,Sainte-Suzanne,425,47,pm_privee
+97420000BC1650,a_creuser,Sainte-Suzanne,355,54,pm_privee
+97420000BC1654,a_creuser,Sainte-Suzanne,608,81,pm_privee
+97420000BC1814,a_creuser,Sainte-Suzanne,1838,228,pm_privee
+97420000BC1881,a_creuser,Sainte-Suzanne,2979,281,pm_privee
+97421000AV0704,a_creuser,Salazie,636,68,pm_privee
+97421000AV0712,a_creuser,Salazie,226,31,pm_privee
+97402000AB0676,a_creuser,Bras-Panon,744,132,sans_signal_prive
+97402000AB0984,a_creuser,Bras-Panon,1370,164,sans_signal_prive
+97402000AE0269,a_creuser,Bras-Panon,299,31,sans_signal_prive
+97402000AH1302,a_creuser,Bras-Panon,386,43,sans_signal_prive
+97402000AH1833,a_creuser,Bras-Panon,1010,125,sans_signal_prive
+97402000AH1834,a_creuser,Bras-Panon,263,38,sans_signal_prive
+97402000AH2047,a_creuser,Bras-Panon,654,97,sans_signal_prive
+97402000AI0249,a_creuser,Bras-Panon,302,37,sans_signal_prive
+97402000AI1191,a_creuser,Bras-Panon,518,58,sans_signal_prive
+97402000AI1197,a_creuser,Bras-Panon,556,51,sans_signal_prive
+97402000AK0166,a_creuser,Bras-Panon,423,58,sans_signal_prive
+97402000AK0221,a_creuser,Bras-Panon,244,34,sans_signal_prive
+97402000AK0285,a_creuser,Bras-Panon,612,57,sans_signal_prive
+97402000AK0776,a_creuser,Bras-Panon,597,51,sans_signal_prive
+97402000AK0795,a_creuser,Bras-Panon,287,52,sans_signal_prive
+97402000AK0873,a_creuser,Bras-Panon,5964,597,sans_signal_prive
+97402000AK0891,a_creuser,Bras-Panon,367,33,sans_signal_prive
+97402000AK1633,a_creuser,Bras-Panon,326,34,sans_signal_prive
+97402000AK1968,a_creuser,Bras-Panon,237,31,sans_signal_prive
+97424000AC1005,a_creuser,Cilaos,429,40,sans_signal_prive
+97424000AH0645,a_creuser,Cilaos,310,39,sans_signal_prive
+97424000AI1656,a_creuser,Cilaos,203,51,sans_signal_prive
+97424000AI2096,a_creuser,Cilaos,171,37,sans_signal_prive
+97424000AL0650,a_creuser,Cilaos,188,30,sans_signal_prive
+97424000AL1057,a_creuser,Cilaos,489,73,sans_signal_prive
+97424000AL1271,a_creuser,Cilaos,425,56,sans_signal_prive
+97403000AM0470,a_creuser,Entre-Deux,400,35,sans_signal_prive
+97403000AP0164,a_creuser,Entre-Deux,330,35,sans_signal_prive
+97403000AP1768,a_creuser,Entre-Deux,644,60,sans_signal_prive
+97403000AP1968,a_creuser,Entre-Deux,265,33,sans_signal_prive
+97403000AP2075,a_creuser,Entre-Deux,1008,88,sans_signal_prive
+97403000AP2080,a_creuser,Entre-Deux,158,31,sans_signal_prive
+97403000AP2094,a_creuser,Entre-Deux,448,104,sans_signal_prive
+97403000AR1050,a_creuser,Entre-Deux,308,38,sans_signal_prive
+97403000AS0502,a_creuser,Entre-Deux,235,78,sans_signal_prive
+97403000AS0693,a_creuser,Entre-Deux,263,82,sans_signal_prive
+97403000AS1566,a_creuser,Entre-Deux,199,37,sans_signal_prive
+97403000AS1585,a_creuser,Entre-Deux,245,30,sans_signal_prive
+97403000AS1606,a_creuser,Entre-Deux,111,34,sans_signal_prive
+97404000AC0426,a_creuser,L'Étang-Salé,252,31,sans_signal_prive
+97404000AD0895,a_creuser,L'Étang-Salé,358,42,sans_signal_prive
+97404000AE1136,a_creuser,L'Étang-Salé,206,42,sans_signal_prive
+97404000AE1377,a_creuser,L'Étang-Salé,310,76,sans_signal_prive
+97404000AH0532,a_creuser,L'Étang-Salé,292,47,sans_signal_prive
+97404000AI2258,a_creuser,L'Étang-Salé,692,90,sans_signal_prive
+97404000AL1622,a_creuser,L'Étang-Salé,543,45,sans_signal_prive
+97404000AR0319,a_creuser,L'Étang-Salé,344,66,sans_signal_prive
+97404000AS0337,a_creuser,L'Étang-Salé,303,55,sans_signal_prive
+97404000AS0373,a_creuser,L'Étang-Salé,948,124,sans_signal_prive
+97404000AT0290,a_creuser,L'Étang-Salé,181,39,sans_signal_prive
+97404000AT0377,a_creuser,L'Étang-Salé,837,117,sans_signal_prive
+97404000AT0384,a_creuser,L'Étang-Salé,1067,114,sans_signal_prive
+97404000AT0549,a_creuser,L'Étang-Salé,265,46,sans_signal_prive
+97404000AV0339,a_creuser,L'Étang-Salé,1182,135,sans_signal_prive
+97404000AV0405,a_creuser,L'Étang-Salé,445,57,sans_signal_prive
+97404000AW0023,a_creuser,L'Étang-Salé,213,30,sans_signal_prive
+97404000AW0210,a_creuser,L'Étang-Salé,316,61,sans_signal_prive
+97404000AW0513,a_creuser,L'Étang-Salé,396,70,sans_signal_prive
+97404000AX0224,a_creuser,L'Étang-Salé,351,31,sans_signal_prive
+97404000AX0371,a_creuser,L'Étang-Salé,144,33,sans_signal_prive
+97404000AX0372,a_creuser,L'Étang-Salé,925,115,sans_signal_prive
+97404000AX0426,a_creuser,L'Étang-Salé,233,33,sans_signal_prive
+97404000AX0608,a_creuser,L'Étang-Salé,307,33,sans_signal_prive
+97404000AX0631,a_creuser,L'Étang-Salé,660,70,sans_signal_prive
+97404000AY0191,a_creuser,L'Étang-Salé,155,35,sans_signal_prive
+97404000AY0219,a_creuser,L'Étang-Salé,148,34,sans_signal_prive
+97404000AY0222,a_creuser,L'Étang-Salé,147,32,sans_signal_prive
+97404000AY0223,a_creuser,L'Étang-Salé,139,32,sans_signal_prive
+97406000AC0096,a_creuser,La Plaine-des-Palmistes,915,91,sans_signal_prive
+97406000AC0460,a_creuser,La Plaine-des-Palmistes,519,48,sans_signal_prive
+97406000AC0557,a_creuser,La Plaine-des-Palmistes,292,37,sans_signal_prive
+97406000AD0150,a_creuser,La Plaine-des-Palmistes,498,62,sans_signal_prive
+97406000AD0605,a_creuser,La Plaine-des-Palmistes,343,60,sans_signal_prive
+97406000AD0677,a_creuser,La Plaine-des-Palmistes,574,88,sans_signal_prive
+97406000AE0102,a_creuser,La Plaine-des-Palmistes,659,69,sans_signal_prive
+97406000AE0423,a_creuser,La Plaine-des-Palmistes,933,99,sans_signal_prive
+97406000AE0598,a_creuser,La Plaine-des-Palmistes,301,38,sans_signal_prive
+97406000AI0665,a_creuser,La Plaine-des-Palmistes,226,46,sans_signal_prive
+97406000AI0668,a_creuser,La Plaine-des-Palmistes,230,42,sans_signal_prive
+97406000AI1024,a_creuser,La Plaine-des-Palmistes,1917,237,sans_signal_prive
+97406000AL0266,a_creuser,La Plaine-des-Palmistes,707,161,sans_signal_prive
+97406000AL0467,a_creuser,La Plaine-des-Palmistes,352,91,sans_signal_prive
+97406000AL0590,a_creuser,La Plaine-des-Palmistes,2815,290,sans_signal_prive
+97406000AM0297,a_creuser,La Plaine-des-Palmistes,2609,266,sans_signal_prive
+97406000AM0394,a_creuser,La Plaine-des-Palmistes,813,85,sans_signal_prive
+97406000AM0628,a_creuser,La Plaine-des-Palmistes,298,34,sans_signal_prive
+97406000AM0674,a_creuser,La Plaine-des-Palmistes,266,59,sans_signal_prive
+97406000AO0263,a_creuser,La Plaine-des-Palmistes,262,38,sans_signal_prive
+97406000AO0305,a_creuser,La Plaine-des-Palmistes,480,43,sans_signal_prive
+97406000AP0126,a_creuser,La Plaine-des-Palmistes,502,51,sans_signal_prive
+97406000AT0680,a_creuser,La Plaine-des-Palmistes,259,30,sans_signal_prive
+97406000AV0723,a_creuser,La Plaine-des-Palmistes,255,40,sans_signal_prive
+97406000AV0818,a_creuser,La Plaine-des-Palmistes,496,107,sans_signal_prive
+97406000AV0947,a_creuser,La Plaine-des-Palmistes,402,56,sans_signal_prive
+97406000AV1063,a_creuser,La Plaine-des-Palmistes,703,82,sans_signal_prive
+97406000AV1257,a_creuser,La Plaine-des-Palmistes,389,77,sans_signal_prive
+97406000AW0307,a_creuser,La Plaine-des-Palmistes,1745,391,sans_signal_prive
+97406000AW1206,a_creuser,La Plaine-des-Palmistes,166,32,sans_signal_prive
+97408000AC0870,a_creuser,La Possession,551,74,sans_signal_prive
+97408000AC0936,a_creuser,La Possession,542,46,sans_signal_prive
+97408000AC0984,a_creuser,La Possession,989,148,sans_signal_prive
+97408000AC1238,a_creuser,La Possession,402,52,sans_signal_prive
+97408000AC1611,a_creuser,La Possession,423,45,sans_signal_prive
+97408000AC1747,a_creuser,La Possession,163,38,sans_signal_prive
+97408000AC1865,a_creuser,La Possession,957,131,sans_signal_prive
+97408000AC3172,a_creuser,La Possession,498,68,sans_signal_prive
+97408000AC3682,a_creuser,La Possession,370,85,sans_signal_prive
+97408000AC3759,a_creuser,La Possession,185,33,sans_signal_prive
+97408000AM0221,a_creuser,La Possession,1070,99,sans_signal_prive
+97408000AM0746,a_creuser,La Possession,406,53,sans_signal_prive
+97408000AM1215,a_creuser,La Possession,387,53,sans_signal_prive
+97408000AM1338,a_creuser,La Possession,1755,221,sans_signal_prive
+97408000AM1353,a_creuser,La Possession,1168,103,sans_signal_prive
+97408000AM1354,a_creuser,La Possession,2366,250,sans_signal_prive
+97408000AM1355,a_creuser,La Possession,4722,432,sans_signal_prive
+97408000AN0517,reserve_fonciere,La Possession,11250,1195,sans_signal_prive
+97408000AO0267,a_creuser,La Possession,230,33,sans_signal_prive
+97408000AO0429,a_creuser,La Possession,472,48,sans_signal_prive
+97408000AO0533,a_creuser,La Possession,572,63,sans_signal_prive
+97408000AO0534,a_creuser,La Possession,317,33,sans_signal_prive
+97408000AO0726,a_creuser,La Possession,907,81,sans_signal_prive
+97408000AO1197,a_creuser,La Possession,446,38,sans_signal_prive
+97408000AO1440,a_creuser,La Possession,1228,162,sans_signal_prive
+97408000AO1442,a_creuser,La Possession,1123,110,sans_signal_prive
+97408000AO1797,a_creuser,La Possession,1166,136,sans_signal_prive
+97408000AP1240,a_creuser,La Possession,785,86,sans_signal_prive
+97408000AP1244,a_creuser,La Possession,454,48,sans_signal_prive
+97408000AR0811,a_creuser,La Possession,566,89,sans_signal_prive
+97408000AR1000,a_creuser,La Possession,1310,140,sans_signal_prive
+97408000AT0294,a_creuser,La Possession,401,35,sans_signal_prive
+97408000AT0736,a_creuser,La Possession,1182,101,sans_signal_prive
+97408000AT1756,a_creuser,La Possession,278,56,sans_signal_prive
+97408000AV0512,a_creuser,La Possession,266,31,sans_signal_prive
+97408000AV0706,a_creuser,La Possession,1162,149,sans_signal_prive
+97408000AW0044,a_creuser,La Possession,387,33,sans_signal_prive
+97408000BI0249,a_creuser,La Possession,1448,193,sans_signal_prive
+97408000BL0185,a_creuser,La Possession,942,127,sans_signal_prive
+97408000BM0023,a_creuser,La Possession,198,37,sans_signal_prive
+97408000BN0131,a_creuser,La Possession,246,62,sans_signal_prive
+97408000BN0159,a_creuser,La Possession,883,108,sans_signal_prive
+97408000BN0237,a_creuser,La Possession,278,53,sans_signal_prive
+97408000BN3659,a_creuser,La Possession,280,37,sans_signal_prive
+97407000AE0631,a_creuser,Le Port,562,72,sans_signal_prive
+97407000AE0839,a_creuser,Le Port,763,69,sans_signal_prive
+97407000AH1330,a_creuser,Le Port,299,38,sans_signal_prive
+97407000AK1947,a_creuser,Le Port,284,39,sans_signal_prive
+97407000AV0185,a_creuser,Le Port,1408,122,sans_signal_prive
+97407000AY0070,a_creuser,Le Port,188,34,sans_signal_prive
+97407000AY0588,a_creuser,Le Port,187,51,sans_signal_prive
+97407000BA0396,reserve_fonciere,Le Port,18890,2184,sans_signal_prive
+97422000AD0915,a_creuser,Le Tampon,634,57,sans_signal_prive
+97422000AD1245,a_creuser,Le Tampon,474,72,sans_signal_prive
+97422000AE0057,a_creuser,Le Tampon,714,75,sans_signal_prive
+97422000AE0698,a_creuser,Le Tampon,858,147,sans_signal_prive
+97422000AH0131,a_creuser,Le Tampon,2065,183,sans_signal_prive
+97422000AH0413,a_creuser,Le Tampon,2936,256,sans_signal_prive
+97422000AK0896,a_creuser,Le Tampon,280,34,sans_signal_prive
+97422000AL1159,a_creuser,Le Tampon,133,31,sans_signal_prive
+97422000AL1195,a_creuser,Le Tampon,264,45,sans_signal_prive
+97422000AL1203,a_creuser,Le Tampon,541,46,sans_signal_prive
+97422000AP0261,a_creuser,Le Tampon,547,46,sans_signal_prive
+97422000AP1161,a_creuser,Le Tampon,467,63,sans_signal_prive
+97422000AR0001,a_creuser,Le Tampon,336,36,sans_signal_prive
+97422000AR0418,a_creuser,Le Tampon,219,57,sans_signal_prive
+97422000AS0309,a_creuser,Le Tampon,158,39,sans_signal_prive
+97422000AY0441,a_creuser,Le Tampon,336,38,sans_signal_prive
+97422000AY0671,a_creuser,Le Tampon,428,54,sans_signal_prive
+97422000AY1325,a_creuser,Le Tampon,1185,157,sans_signal_prive
+97422000BD0305,a_creuser,Le Tampon,271,38,sans_signal_prive
+97422000BD1831,a_creuser,Le Tampon,452,66,sans_signal_prive
+97422000BD1836,a_creuser,Le Tampon,276,38,sans_signal_prive
+97422000BD1889,a_creuser,Le Tampon,215,37,sans_signal_prive
+97422000BD1981,a_creuser,Le Tampon,202,36,sans_signal_prive
+97422000BD3380,a_creuser,Le Tampon,710,68,sans_signal_prive
+97422000BD3434,a_creuser,Le Tampon,221,37,sans_signal_prive
+97422000BD3437,a_creuser,Le Tampon,264,44,sans_signal_prive
+97422000BE2159,a_creuser,Le Tampon,284,48,sans_signal_prive
+97422000BE2255,a_creuser,Le Tampon,1353,154,sans_signal_prive
+97422000BE2836,a_creuser,Le Tampon,728,109,sans_signal_prive
+97422000BE2903,a_creuser,Le Tampon,266,37,sans_signal_prive
+97422000BE2943,a_creuser,Le Tampon,1077,153,sans_signal_prive
+97422000BH0795,a_creuser,Le Tampon,254,49,sans_signal_prive
+97422000BH1088,a_creuser,Le Tampon,282,41,sans_signal_prive
+97422000BI0971,a_creuser,Le Tampon,389,43,sans_signal_prive
+97422000BK0818,a_creuser,Le Tampon,234,37,sans_signal_prive
+97422000BK1856,a_creuser,Le Tampon,430,83,sans_signal_prive
+97422000BK1868,a_creuser,Le Tampon,359,47,sans_signal_prive
+97422000BL0078,a_creuser,Le Tampon,426,37,sans_signal_prive
+97422000BL0544,a_creuser,Le Tampon,543,96,sans_signal_prive
+97422000BL0601,a_creuser,Le Tampon,549,111,sans_signal_prive
+97422000BL0646,a_creuser,Le Tampon,216,31,sans_signal_prive
+97422000BL0672,a_creuser,Le Tampon,491,91,sans_signal_prive
+97422000BN0051,a_creuser,Le Tampon,322,38,sans_signal_prive
+97422000BN0729,a_creuser,Le Tampon,490,49,sans_signal_prive
+97422000BN1669,a_creuser,Le Tampon,567,56,sans_signal_prive
+97422000BN1956,a_creuser,Le Tampon,309,42,sans_signal_prive
+97422000BN2024,a_creuser,Le Tampon,623,79,sans_signal_prive
+97422000BN2587,a_creuser,Le Tampon,631,87,sans_signal_prive
+97422000BN2735,a_creuser,Le Tampon,426,52,sans_signal_prive
+97422000BO0162,a_creuser,Le Tampon,345,49,sans_signal_prive
+97422000BO0863,a_creuser,Le Tampon,382,37,sans_signal_prive
+97422000BO0864,a_creuser,Le Tampon,225,33,sans_signal_prive
+97422000BO1244,a_creuser,Le Tampon,313,37,sans_signal_prive
+97422000BP0571,a_creuser,Le Tampon,193,39,sans_signal_prive
+97422000BP0580,a_creuser,Le Tampon,477,130,sans_signal_prive
+97422000BP0653,a_creuser,Le Tampon,988,108,sans_signal_prive
+97422000BP1066,a_creuser,Le Tampon,2700,368,sans_signal_prive
+97422000BP1412,a_creuser,Le Tampon,303,36,sans_signal_prive
+97422000BP1536,a_creuser,Le Tampon,215,35,sans_signal_prive
+97422000BP1706,a_creuser,Le Tampon,377,33,sans_signal_prive
+97422000BP1879,a_creuser,Le Tampon,690,86,sans_signal_prive
+97422000BP2111,a_creuser,Le Tampon,243,38,sans_signal_prive
+97422000BR0461,a_creuser,Le Tampon,488,42,sans_signal_prive
+97422000BR0818,a_creuser,Le Tampon,432,56,sans_signal_prive
+97422000BR0820,a_creuser,Le Tampon,186,42,sans_signal_prive
+97422000BS0253,a_creuser,Le Tampon,250,30,sans_signal_prive
+97422000BS1133,a_creuser,Le Tampon,366,41,sans_signal_prive
+97422000BS1433,a_creuser,Le Tampon,185,36,sans_signal_prive
+97422000BS1436,a_creuser,Le Tampon,377,80,sans_signal_prive
+97422000BS1798,a_creuser,Le Tampon,277,50,sans_signal_prive
+97422000BT0852,a_creuser,Le Tampon,1344,146,sans_signal_prive
+97422000BT1223,a_creuser,Le Tampon,581,50,sans_signal_prive
+97422000BT1372,a_creuser,Le Tampon,118,32,sans_signal_prive
+97422000BT1390,a_creuser,Le Tampon,155,31,sans_signal_prive
+97422000BV1248,a_creuser,Le Tampon,347,68,sans_signal_prive
+97422000BV1633,a_creuser,Le Tampon,271,39,sans_signal_prive
+97422000BV2412,a_creuser,Le Tampon,207,37,sans_signal_prive
+97422000BV2520,a_creuser,Le Tampon,178,33,sans_signal_prive
+97422000BV3244,a_creuser,Le Tampon,333,65,sans_signal_prive
+97422000BW0235,a_creuser,Le Tampon,454,59,sans_signal_prive
+97422000BW1076,a_creuser,Le Tampon,476,55,sans_signal_prive
+97422000BW1346,a_creuser,Le Tampon,1584,145,sans_signal_prive
+97422000BW2392,a_creuser,Le Tampon,429,43,sans_signal_prive
+97422000BW2410,a_creuser,Le Tampon,199,38,sans_signal_prive
+97422000BX0019,a_creuser,Le Tampon,498,68,sans_signal_prive
+97422000BX0371,a_creuser,Le Tampon,466,81,sans_signal_prive
+97422000BX0704,a_creuser,Le Tampon,241,31,sans_signal_prive
+97422000BY0247,a_creuser,Le Tampon,651,75,sans_signal_prive
+97422000BY0773,a_creuser,Le Tampon,307,55,sans_signal_prive
+97422000CD0355,a_creuser,Le Tampon,319,47,sans_signal_prive
+97422000CD0390,a_creuser,Le Tampon,499,82,sans_signal_prive
+97422000CH0341,a_creuser,Le Tampon,489,89,sans_signal_prive
+97422000CH0370,a_creuser,Le Tampon,175,36,sans_signal_prive
+97422000CH0404,a_creuser,Le Tampon,209,33,sans_signal_prive
+97422000CH0605,a_creuser,Le Tampon,1027,170,sans_signal_prive
+97422000CI0432,a_creuser,Le Tampon,502,73,sans_signal_prive
+97422000CI0595,a_creuser,Le Tampon,440,51,sans_signal_prive
+97422000CL0481,a_creuser,Le Tampon,316,32,sans_signal_prive
+97422000CL1096,a_creuser,Le Tampon,1185,132,sans_signal_prive
+97422000CM0589,a_creuser,Le Tampon,184,36,sans_signal_prive
+97422000CM0624,a_creuser,Le Tampon,439,82,sans_signal_prive
+97422000CM0630,a_creuser,Le Tampon,562,90,sans_signal_prive
+97422000CN1019,a_creuser,Le Tampon,362,43,sans_signal_prive
+97422000CR0677,a_creuser,Le Tampon,741,77,sans_signal_prive
+97422000CS0795,a_creuser,Le Tampon,263,61,sans_signal_prive
+97422000CS1082,a_creuser,Le Tampon,457,44,sans_signal_prive
+97422000CT0198,a_creuser,Le Tampon,406,35,sans_signal_prive
+97422000CX0635,a_creuser,Le Tampon,961,80,sans_signal_prive
+97422000CX1109,a_creuser,Le Tampon,469,46,sans_signal_prive
+97422000CX1252,a_creuser,Le Tampon,755,63,sans_signal_prive
+97422000DH0618,a_creuser,Le Tampon,395,92,sans_signal_prive
+97422000DN0078,a_creuser,Le Tampon,616,64,sans_signal_prive
+97422000EC0325,a_creuser,Le Tampon,217,40,sans_signal_prive
+97422000ED0604,a_creuser,Le Tampon,504,50,sans_signal_prive
+97422000EH0032,a_creuser,Le Tampon,382,66,sans_signal_prive
+97422000EH0167,a_creuser,Le Tampon,516,55,sans_signal_prive
+97422000EI0078,a_creuser,Le Tampon,585,110,sans_signal_prive
+97422000EI0083,a_creuser,Le Tampon,623,83,sans_signal_prive
+97422000EK0247,a_creuser,Le Tampon,286,42,sans_signal_prive
+97422000EL0137,a_creuser,Le Tampon,412,71,sans_signal_prive
+97422000EL0357,a_creuser,Le Tampon,118,32,sans_signal_prive
+97422000EL0381,a_creuser,Le Tampon,178,36,sans_signal_prive
+97422000EM0139,a_creuser,Le Tampon,777,124,sans_signal_prive
+97422000EM0309,a_creuser,Le Tampon,571,137,sans_signal_prive
+97422000EN0010,a_creuser,Le Tampon,532,65,sans_signal_prive
+97422000EN0546,a_creuser,Le Tampon,692,76,sans_signal_prive
+97401000AD0539,a_creuser,Les Avirons,266,50,sans_signal_prive
+97401000AI0725,a_creuser,Les Avirons,281,51,sans_signal_prive
+97401000AI0900,a_creuser,Les Avirons,151,34,sans_signal_prive
+97401000AL0696,a_creuser,Les Avirons,147,41,sans_signal_prive
+97401000AM1588,a_creuser,Les Avirons,343,36,sans_signal_prive
+97401000AM1841,a_creuser,Les Avirons,406,34,sans_signal_prive
+97401000AN1290,a_creuser,Les Avirons,316,57,sans_signal_prive
+97401000AP0144,a_creuser,Les Avirons,356,30,sans_signal_prive
+97401000AR0451,a_creuser,Les Avirons,684,68,sans_signal_prive
+97401000AR0682,a_creuser,Les Avirons,565,59,sans_signal_prive
+97401000AR1375,a_creuser,Les Avirons,497,69,sans_signal_prive
+97401000AR1429,a_creuser,Les Avirons,215,42,sans_signal_prive
+97401000AR1509,a_creuser,Les Avirons,547,51,sans_signal_prive
+97401000AR1759,a_creuser,Les Avirons,450,63,sans_signal_prive
+97401000AS0219,a_creuser,Les Avirons,637,60,sans_signal_prive
+97401000AS0589,a_creuser,Les Avirons,303,44,sans_signal_prive
+97401000AS1276,a_creuser,Les Avirons,188,36,sans_signal_prive
+97423000AB0455,a_creuser,Les Trois-Bassins,672,85,sans_signal_prive
+97423000AH1019,a_creuser,Les Trois-Bassins,488,47,sans_signal_prive
+97423000AH1510,a_creuser,Les Trois-Bassins,141,36,sans_signal_prive
+97423000AI0750,a_creuser,Les Trois-Bassins,394,37,sans_signal_prive
+97405000AI0840,a_creuser,Petite-Île,466,55,sans_signal_prive
+97405000AI1168,a_creuser,Petite-Île,612,53,sans_signal_prive
+97405000AK0486,a_creuser,Petite-Île,202,33,sans_signal_prive
+97405000AK0979,a_creuser,Petite-Île,191,31,sans_signal_prive
+97405000AK1040,a_creuser,Petite-Île,740,69,sans_signal_prive
+97405000AK1448,a_creuser,Petite-Île,347,39,sans_signal_prive
+97405000AK1456,a_creuser,Petite-Île,664,67,sans_signal_prive
+97405000AK1534,a_creuser,Petite-Île,267,33,sans_signal_prive
+97405000AK1538,a_creuser,Petite-Île,745,73,sans_signal_prive
+97405000AK1757,a_creuser,Petite-Île,346,43,sans_signal_prive
+97405000AL0837,a_creuser,Petite-Île,655,146,sans_signal_prive
+97405000AL1339,a_creuser,Petite-Île,424,59,sans_signal_prive
+97405000AL1501,a_creuser,Petite-Île,285,46,sans_signal_prive
+97405000AM0076,a_creuser,Petite-Île,880,77,sans_signal_prive
+97405000AN0379,a_creuser,Petite-Île,212,36,sans_signal_prive
+97405000AN0678,a_creuser,Petite-Île,366,31,sans_signal_prive
+97405000AR1139,a_creuser,Petite-Île,1054,94,sans_signal_prive
+97405000AR1243,a_creuser,Petite-Île,961,101,sans_signal_prive
+97405000AR1670,a_creuser,Petite-Île,189,54,sans_signal_prive
+97405000AR1780,a_creuser,Petite-Île,118,38,sans_signal_prive
+97405000AW0810,a_creuser,Petite-Île,421,45,sans_signal_prive
+97405000AW1590,a_creuser,Petite-Île,568,51,sans_signal_prive
+97405000AW1701,a_creuser,Petite-Île,5117,520,sans_signal_prive
+97405000AY0589,a_creuser,Petite-Île,440,38,sans_signal_prive
+97405000AY0794,a_creuser,Petite-Île,605,86,sans_signal_prive
+97405000BE0572,a_creuser,Petite-Île,401,45,sans_signal_prive
+97405000BE1484,a_creuser,Petite-Île,247,42,sans_signal_prive
+97405000BE1489,a_creuser,Petite-Île,380,42,sans_signal_prive
+97405000BE1501,a_creuser,Petite-Île,820,133,sans_signal_prive
+97405000BE1513,a_creuser,Petite-Île,881,160,sans_signal_prive
+97405000BE1557,a_creuser,Petite-Île,534,87,sans_signal_prive
+97405000BE1776,a_creuser,Petite-Île,1243,161,sans_signal_prive
+97405000BH0949,a_creuser,Petite-Île,196,31,sans_signal_prive
+97405000BI0399,a_creuser,Petite-Île,187,32,sans_signal_prive
+97405000BI0777,a_creuser,Petite-Île,1084,169,sans_signal_prive
+97405000BI0891,a_creuser,Petite-Île,151,48,sans_signal_prive
+97405000BI1125,a_creuser,Petite-Île,582,78,sans_signal_prive
+97409000AB0311,a_creuser,Saint-André,2146,321,sans_signal_prive
+97409000AB0699,a_creuser,Saint-André,426,69,sans_signal_prive
+97409000AC0600,a_creuser,Saint-André,260,60,sans_signal_prive
+97409000AC0701,a_creuser,Saint-André,708,74,sans_signal_prive
+97409000AC0702,a_creuser,Saint-André,608,61,sans_signal_prive
+97409000AC0728,a_creuser,Saint-André,781,93,sans_signal_prive
+97409000AC0771,a_creuser,Saint-André,516,48,sans_signal_prive
+97409000AC0885,a_creuser,Saint-André,427,37,sans_signal_prive
+97409000AC0904,a_creuser,Saint-André,634,66,sans_signal_prive
+97409000AC1019,a_creuser,Saint-André,600,53,sans_signal_prive
+97409000AD0256,a_creuser,Saint-André,307,30,sans_signal_prive
+97409000AE0436,a_creuser,Saint-André,676,69,sans_signal_prive
+97409000AH0448,a_creuser,Saint-André,1534,178,sans_signal_prive
+97409000AI0123,a_creuser,Saint-André,620,52,sans_signal_prive
+97409000AI0370,a_creuser,Saint-André,1071,160,sans_signal_prive
+97409000AI0791,a_creuser,Saint-André,1984,217,sans_signal_prive
+97409000AI0895,reserve_fonciere,Saint-André,8525,715,sans_signal_prive
+97409000AI0918,a_creuser,Saint-André,817,109,sans_signal_prive
+97409000AI1066,a_creuser,Saint-André,1789,271,sans_signal_prive
+97409000AI1353,a_creuser,Saint-André,112,30,sans_signal_prive
+97409000AI1455,a_creuser,Saint-André,452,46,sans_signal_prive
+97409000AK0060,a_creuser,Saint-André,738,63,sans_signal_prive
+97409000AK0636,a_creuser,Saint-André,730,92,sans_signal_prive
+97409000AK0691,a_creuser,Saint-André,307,33,sans_signal_prive
+97409000AK0720,a_creuser,Saint-André,843,106,sans_signal_prive
+97409000AK1232,a_creuser,Saint-André,665,94,sans_signal_prive
+97409000AL0615,a_creuser,Saint-André,429,39,sans_signal_prive
+97409000AL0849,a_creuser,Saint-André,794,136,sans_signal_prive
+97409000AL1231,a_creuser,Saint-André,425,41,sans_signal_prive
+97409000AL1498,a_creuser,Saint-André,319,36,sans_signal_prive
+97409000AL1505,a_creuser,Saint-André,499,44,sans_signal_prive
+97409000AL1925,a_creuser,Saint-André,1361,135,sans_signal_prive
+97409000AO0451,a_creuser,Saint-André,361,34,sans_signal_prive
+97409000AP0889,a_creuser,Saint-André,522,54,sans_signal_prive
+97409000AP1293,a_creuser,Saint-André,400,58,sans_signal_prive
+97409000AP1307,a_creuser,Saint-André,245,40,sans_signal_prive
+97409000AP1334,a_creuser,Saint-André,1506,148,sans_signal_prive
+97409000AP1489,a_creuser,Saint-André,272,46,sans_signal_prive
+97409000AR0089,a_creuser,Saint-André,468,43,sans_signal_prive
+97409000AR0654,a_creuser,Saint-André,581,61,sans_signal_prive
+97409000AR0873,a_creuser,Saint-André,1115,141,sans_signal_prive
+97409000AR0891,a_creuser,Saint-André,417,38,sans_signal_prive
+97409000AR0899,a_creuser,Saint-André,2322,235,sans_signal_prive
+97409000AR0943,a_creuser,Saint-André,503,43,sans_signal_prive
+97409000AR1073,a_creuser,Saint-André,485,44,sans_signal_prive
+97409000AR1310,a_creuser,Saint-André,175,31,sans_signal_prive
+97409000AR1351,a_creuser,Saint-André,291,49,sans_signal_prive
+97409000AR1362,a_creuser,Saint-André,175,33,sans_signal_prive
+97409000AR1525,a_creuser,Saint-André,4200,636,sans_signal_prive
+97409000AR1726,a_creuser,Saint-André,690,62,sans_signal_prive
+97409000AR2193,a_creuser,Saint-André,217,31,sans_signal_prive
+97409000AR2204,a_creuser,Saint-André,183,37,sans_signal_prive
+97409000AR2218,a_creuser,Saint-André,614,57,sans_signal_prive
+97409000AS0403,a_creuser,Saint-André,554,46,sans_signal_prive
+97409000AS0678,a_creuser,Saint-André,303,38,sans_signal_prive
+97409000AS0734,a_creuser,Saint-André,1371,118,sans_signal_prive
+97409000AS0879,a_creuser,Saint-André,474,41,sans_signal_prive
+97409000AS1143,a_creuser,Saint-André,3049,452,sans_signal_prive
+97409000AS1286,a_creuser,Saint-André,250,50,sans_signal_prive
+97409000AS1422,a_creuser,Saint-André,1874,295,sans_signal_prive
+97409000AS1679,a_creuser,Saint-André,494,69,sans_signal_prive
+97409000AS2098,chaude,Saint-André,478,67,sans_signal_prive
+97409000AT0705,a_creuser,Saint-André,345,60,sans_signal_prive
+97409000AT1023,a_creuser,Saint-André,1400,227,sans_signal_prive
+97409000AT1141,a_creuser,Saint-André,1025,146,sans_signal_prive
+97409000AT1142,a_creuser,Saint-André,575,53,sans_signal_prive
+97409000AT1432,a_creuser,Saint-André,518,47,sans_signal_prive
+97409000AV0768,a_creuser,Saint-André,470,46,sans_signal_prive
+97409000AV0862,a_creuser,Saint-André,190,37,sans_signal_prive
+97409000AW0948,a_creuser,Saint-André,555,48,sans_signal_prive
+97409000AW0949,a_creuser,Saint-André,323,51,sans_signal_prive
+97409000AX0650,a_creuser,Saint-André,1046,130,sans_signal_prive
+97409000AX0653,a_creuser,Saint-André,883,112,sans_signal_prive
+97409000AX0717,a_creuser,Saint-André,1027,125,sans_signal_prive
+97409000AY1383,a_creuser,Saint-André,373,47,sans_signal_prive
+97409000AZ0104,a_creuser,Saint-André,424,43,sans_signal_prive
+97409000AZ0135,a_creuser,Saint-André,327,71,sans_signal_prive
+97409000BD0735,a_creuser,Saint-André,1913,189,sans_signal_prive
+97409000BD1261,a_creuser,Saint-André,3533,431,sans_signal_prive
+97409000BD1299,a_creuser,Saint-André,540,52,sans_signal_prive
+97409000BD1301,reserve_fonciere,Saint-André,2773,292,sans_signal_prive
+97409000BE0003,a_creuser,Saint-André,355,34,sans_signal_prive
+97409000BE0574,a_creuser,Saint-André,2563,301,sans_signal_prive
+97409000BE0586,a_creuser,Saint-André,479,46,sans_signal_prive
+97409000BE1099,a_creuser,Saint-André,430,37,sans_signal_prive
+97409000BE2044,a_creuser,Saint-André,408,94,sans_signal_prive
+97409000BH0225,a_creuser,Saint-André,1486,230,sans_signal_prive
+97409000BH0228,a_creuser,Saint-André,1120,143,sans_signal_prive
+97409000BH0288,reserve_fonciere,Saint-André,5050,479,sans_signal_prive
+97409000BH0372,a_creuser,Saint-André,2437,349,sans_signal_prive
+97409000BH0417,reserve_fonciere,Saint-André,4029,366,sans_signal_prive
+97409000BH0483,a_creuser,Saint-André,746,110,sans_signal_prive
+97409000BI0270,a_creuser,Saint-André,249,66,sans_signal_prive
+97409000BI0329,a_creuser,Saint-André,529,74,sans_signal_prive
+97409000BI0365,a_creuser,Saint-André,869,105,sans_signal_prive
+97409000BI0372,a_creuser,Saint-André,658,105,sans_signal_prive
+97409000BI0528,a_creuser,Saint-André,253,47,sans_signal_prive
+97409000BK0253,a_creuser,Saint-André,404,64,sans_signal_prive
+97409000BM0502,a_creuser,Saint-André,1089,120,sans_signal_prive
+97409000BM0533,a_creuser,Saint-André,1692,292,sans_signal_prive
+97409000BM0676,a_creuser,Saint-André,2222,232,sans_signal_prive
+97409000BM0759,a_creuser,Saint-André,463,51,sans_signal_prive
+97409000BM0867,a_creuser,Saint-André,613,99,sans_signal_prive
+97409000BM0880,a_creuser,Saint-André,408,37,sans_signal_prive
+97409000BM0998,a_creuser,Saint-André,266,45,sans_signal_prive
+97409000BM1112,a_creuser,Saint-André,1484,150,sans_signal_prive
+97409000BM1227,a_creuser,Saint-André,493,65,sans_signal_prive
+97409000BM1250,a_creuser,Saint-André,328,70,sans_signal_prive
+97409000BM1257,a_creuser,Saint-André,331,35,sans_signal_prive
+97409000BN0292,a_creuser,Saint-André,925,136,sans_signal_prive
+97409000BN0491,a_creuser,Saint-André,823,107,sans_signal_prive
+97409000BN0536,a_creuser,Saint-André,219,39,sans_signal_prive
+97409000BP0198,a_creuser,Saint-André,1273,217,sans_signal_prive
+97410000AB0343,a_creuser,Saint-Benoît,368,46,sans_signal_prive
+97410000AC0330,a_creuser,Saint-Benoît,392,53,sans_signal_prive
+97410000AC0396,a_creuser,Saint-Benoît,287,60,sans_signal_prive
+97410000AD0731,a_creuser,Saint-Benoît,565,52,sans_signal_prive
+97410000AE0766,a_creuser,Saint-Benoît,206,44,sans_signal_prive
+97410000AE0784,a_creuser,Saint-Benoît,306,42,sans_signal_prive
+97410000AE0815,a_creuser,Saint-Benoît,1406,120,sans_signal_prive
+97410000AE0964,a_creuser,Saint-Benoît,2034,221,sans_signal_prive
+97410000AE1025,a_creuser,Saint-Benoît,1060,143,sans_signal_prive
+97410000AH0360,a_creuser,Saint-Benoît,516,77,sans_signal_prive
+97410000AH0387,a_creuser,Saint-Benoît,345,39,sans_signal_prive
+97410000AH0642,a_creuser,Saint-Benoît,231,42,sans_signal_prive
+97410000AH0645,a_creuser,Saint-Benoît,1341,151,sans_signal_prive
+97410000AH1112,a_creuser,Saint-Benoît,519,46,sans_signal_prive
+97410000AH1212,a_creuser,Saint-Benoît,560,57,sans_signal_prive
+97410000AI0610,a_creuser,Saint-Benoît,555,50,sans_signal_prive
+97410000AI0822,a_creuser,Saint-Benoît,558,115,sans_signal_prive
+97410000AI0926,a_creuser,Saint-Benoît,1777,234,sans_signal_prive
+97410000AI1215,a_creuser,Saint-Benoît,650,61,sans_signal_prive
+97410000AI1220,a_creuser,Saint-Benoît,284,54,sans_signal_prive
+97410000AI1461,a_creuser,Saint-Benoît,358,37,sans_signal_prive
+97410000AK0512,a_creuser,Saint-Benoît,293,50,sans_signal_prive
+97410000AK0590,a_creuser,Saint-Benoît,527,50,sans_signal_prive
+97410000AK0625,a_creuser,Saint-Benoît,605,142,sans_signal_prive
+97410000AK0712,a_creuser,Saint-Benoît,489,81,sans_signal_prive
+97410000AO0576,a_creuser,Saint-Benoît,442,80,sans_signal_prive
+97410000AS0890,a_creuser,Saint-Benoît,339,68,sans_signal_prive
+97410000AS0981,a_creuser,Saint-Benoît,320,31,sans_signal_prive
+97410000AS1410,a_creuser,Saint-Benoît,221,31,sans_signal_prive
+97410000AT0130,a_creuser,Saint-Benoît,396,42,sans_signal_prive
+97410000AV0286,a_creuser,Saint-Benoît,279,32,sans_signal_prive
+97410000AV0432,a_creuser,Saint-Benoît,1947,213,sans_signal_prive
+97410000AW0782,a_creuser,Saint-Benoît,344,33,sans_signal_prive
+97410000AW0830,a_creuser,Saint-Benoît,589,49,sans_signal_prive
+97410000BD0864,a_creuser,Saint-Benoît,519,45,sans_signal_prive
+97410000BD0865,a_creuser,Saint-Benoît,363,39,sans_signal_prive
+97410000BE1156,a_creuser,Saint-Benoît,1188,155,sans_signal_prive
+97410000BK0181,a_creuser,Saint-Benoît,348,39,sans_signal_prive
+97410000BK0324,a_creuser,Saint-Benoît,1139,126,sans_signal_prive
+97410000BM0448,a_creuser,Saint-Benoît,676,57,sans_signal_prive
+97410000BM0518,a_creuser,Saint-Benoît,369,35,sans_signal_prive
+97410000BM0599,a_creuser,Saint-Benoît,566,94,sans_signal_prive
+97410000BM0835,a_creuser,Saint-Benoît,221,35,sans_signal_prive
+97410000BM0899,a_creuser,Saint-Benoît,224,34,sans_signal_prive
+97410000BM1142,a_creuser,Saint-Benoît,641,90,sans_signal_prive
+97410000BM1296,a_creuser,Saint-Benoît,1050,106,sans_signal_prive
+97410000BN0249,a_creuser,Saint-Benoît,2024,256,sans_signal_prive
+97410000BN0572,a_creuser,Saint-Benoît,261,78,sans_signal_prive
+97410000BV0735,a_creuser,Saint-Benoît,330,37,sans_signal_prive
+97410000BW0317,a_creuser,Saint-Benoît,296,42,sans_signal_prive
+97410000BX0819,a_creuser,Saint-Benoît,596,57,sans_signal_prive
+97410000BX0957,a_creuser,Saint-Benoît,405,70,sans_signal_prive
+97410000BX1824,a_creuser,Saint-Benoît,483,52,sans_signal_prive
+97410000BY0796,a_creuser,Saint-Benoît,1376,125,sans_signal_prive
+97411000AN0234,a_creuser,Saint-Denis,525,64,sans_signal_prive
+97411000AN0255,a_creuser,Saint-Denis,352,69,sans_signal_prive
+97411000AN0300,a_creuser,Saint-Denis,568,69,sans_signal_prive
+97411000AN0348,a_creuser,Saint-Denis,1341,209,sans_signal_prive
+97411000AO0235,a_creuser,Saint-Denis,465,52,sans_signal_prive
+97411000AP0440,a_creuser,Saint-Denis,158,36,sans_signal_prive
+97411000AS0085,a_creuser,Saint-Denis,315,54,sans_signal_prive
+97411000AS0098,a_creuser,Saint-Denis,662,125,sans_signal_prive
+97411000AS0116,a_creuser,Saint-Denis,859,132,sans_signal_prive
+97411000AS0269,a_creuser,Saint-Denis,1655,202,sans_signal_prive
+97411000AS0303,a_creuser,Saint-Denis,439,44,sans_signal_prive
+97411000AS0370,a_creuser,Saint-Denis,734,126,sans_signal_prive
+97411000AS0515,a_creuser,Saint-Denis,2158,278,sans_signal_prive
+97411000AS0669,a_creuser,Saint-Denis,1493,267,sans_signal_prive
+97411000AV0017,a_creuser,Saint-Denis,803,83,sans_signal_prive
+97411000AV0037,a_creuser,Saint-Denis,1169,186,sans_signal_prive
+97411000AV0104,a_creuser,Saint-Denis,594,64,sans_signal_prive
+97411000AV0442,a_creuser,Saint-Denis,378,67,sans_signal_prive
+97411000AY0357,a_creuser,Saint-Denis,341,42,sans_signal_prive
+97411000BD0133,a_creuser,Saint-Denis,393,60,sans_signal_prive
+97411000BD0141,a_creuser,Saint-Denis,522,76,sans_signal_prive
+97411000BD0176,a_creuser,Saint-Denis,419,70,sans_signal_prive
+97411000BD0215,a_creuser,Saint-Denis,450,65,sans_signal_prive
+97411000BD0378,a_creuser,Saint-Denis,457,84,sans_signal_prive
+97411000BD0681,a_creuser,Saint-Denis,668,90,sans_signal_prive
+97411000BE0025,a_creuser,Saint-Denis,667,124,sans_signal_prive
+97411000BE0054,a_creuser,Saint-Denis,269,41,sans_signal_prive
+97411000BE0106,a_creuser,Saint-Denis,521,86,sans_signal_prive
+97411000BE0114,a_creuser,Saint-Denis,340,90,sans_signal_prive
+97411000BE0135,a_creuser,Saint-Denis,341,59,sans_signal_prive
+97411000BE0142,a_creuser,Saint-Denis,356,68,sans_signal_prive
+97411000BE0199,a_creuser,Saint-Denis,626,93,sans_signal_prive
+97411000BE0275,a_creuser,Saint-Denis,534,76,sans_signal_prive
+97411000BE0651,a_creuser,Saint-Denis,443,72,sans_signal_prive
+97411000BH0011,a_creuser,Saint-Denis,787,114,sans_signal_prive
+97411000BH0027,a_creuser,Saint-Denis,475,91,sans_signal_prive
+97411000BH0076,a_creuser,Saint-Denis,415,69,sans_signal_prive
+97411000BH0131,a_creuser,Saint-Denis,430,46,sans_signal_prive
+97411000BH0600,a_creuser,Saint-Denis,505,87,sans_signal_prive
+97411000BH0674,a_creuser,Saint-Denis,469,51,sans_signal_prive
+97411000BK0129,a_creuser,Saint-Denis,445,70,sans_signal_prive
+97411000BK0152,a_creuser,Saint-Denis,412,73,sans_signal_prive
+97411000BK0311,a_creuser,Saint-Denis,390,70,sans_signal_prive
+97411000BK0319,a_creuser,Saint-Denis,1604,203,sans_signal_prive
+97411000BK0351,a_creuser,Saint-Denis,409,59,sans_signal_prive
+97411000BK0411,a_creuser,Saint-Denis,282,49,sans_signal_prive
+97411000BK0593,a_creuser,Saint-Denis,1174,206,sans_signal_prive
+97411000BX0306,a_creuser,Saint-Denis,353,38,sans_signal_prive
+97411000BZ0223,a_creuser,Saint-Denis,747,125,sans_signal_prive
+97411000BZ0242,a_creuser,Saint-Denis,568,107,sans_signal_prive
+97411000BZ0303,a_creuser,Saint-Denis,379,59,sans_signal_prive
+97411000BZ0521,a_creuser,Saint-Denis,138,44,sans_signal_prive
+97411000BZ0525,a_creuser,Saint-Denis,365,82,sans_signal_prive
+97411000BZ0806,a_creuser,Saint-Denis,307,39,sans_signal_prive
+97411000BZ0853,a_creuser,Saint-Denis,300,52,sans_signal_prive
+97411000BZ1236,a_creuser,Saint-Denis,415,75,sans_signal_prive
+97411000CD0048,a_creuser,Saint-Denis,1424,188,sans_signal_prive
+97411000CD0282,a_creuser,Saint-Denis,590,56,sans_signal_prive
+97411000CD0367,a_creuser,Saint-Denis,294,46,sans_signal_prive
+97411000CD0560,a_creuser,Saint-Denis,162,37,sans_signal_prive
+97411000CD0609,a_creuser,Saint-Denis,958,91,sans_signal_prive
+97411000CD0866,a_creuser,Saint-Denis,154,31,sans_signal_prive
+97411000CD1177,a_creuser,Saint-Denis,327,38,sans_signal_prive
+97411000CE0751,a_creuser,Saint-Denis,224,31,sans_signal_prive
+97411000CH0241,a_creuser,Saint-Denis,412,50,sans_signal_prive
+97411000CM0208,a_creuser,Saint-Denis,688,84,sans_signal_prive
+97411000CM0255,a_creuser,Saint-Denis,654,65,sans_signal_prive
+97411000CM0581,a_creuser,Saint-Denis,1445,201,sans_signal_prive
+97411000CP0110,a_creuser,Saint-Denis,193,32,sans_signal_prive
+97411000CV0604,a_creuser,Saint-Denis,930,84,sans_signal_prive
+97411000CX1828,a_creuser,Saint-Denis,5051,722,sans_signal_prive
+97411000CY0867,a_creuser,Saint-Denis,405,41,sans_signal_prive
+97411000DH0033,a_creuser,Saint-Denis,271,46,sans_signal_prive
+97411000DH0039,a_creuser,Saint-Denis,641,117,sans_signal_prive
+97411000DI0089,a_creuser,Saint-Denis,397,53,sans_signal_prive
+97411000DL0031,a_creuser,Saint-Denis,224,38,sans_signal_prive
+97411000DL0038,a_creuser,Saint-Denis,345,45,sans_signal_prive
+97411000DL0164,a_creuser,Saint-Denis,269,52,sans_signal_prive
+97411000DN0090,a_creuser,Saint-Denis,498,71,sans_signal_prive
+97411000DN0096,a_creuser,Saint-Denis,261,52,sans_signal_prive
+97411000DN0158,a_creuser,Saint-Denis,3313,343,sans_signal_prive
+97411000DR0452,a_creuser,Saint-Denis,419,77,sans_signal_prive
+97411000DR0471,a_creuser,Saint-Denis,369,67,sans_signal_prive
+97411000DT0039,a_creuser,Saint-Denis,567,101,sans_signal_prive
+97411000DW0021,a_creuser,Saint-Denis,485,54,sans_signal_prive
+97411000DW0060,a_creuser,Saint-Denis,997,163,sans_signal_prive
+97411000DW0069,a_creuser,Saint-Denis,913,109,sans_signal_prive
+97411000DY0257,a_creuser,Saint-Denis,261,49,sans_signal_prive
+97411000DY0263,a_creuser,Saint-Denis,254,43,sans_signal_prive
+97411000DY0275,a_creuser,Saint-Denis,246,44,sans_signal_prive
+97411000DZ0079,a_creuser,Saint-Denis,312,52,sans_signal_prive
+97411000EH0009,a_creuser,Saint-Denis,581,72,sans_signal_prive
+97411000EH0014,a_creuser,Saint-Denis,518,71,sans_signal_prive
+97411000EH0172,a_creuser,Saint-Denis,229,45,sans_signal_prive
+97411000EH0174,a_creuser,Saint-Denis,709,93,sans_signal_prive
+97411000EI0093,a_creuser,Saint-Denis,1139,101,sans_signal_prive
+97411000EK0049,a_creuser,Saint-Denis,1177,101,sans_signal_prive
+97411000EK0118,a_creuser,Saint-Denis,238,34,sans_signal_prive
+97411000EK0219,a_creuser,Saint-Denis,183,46,sans_signal_prive
+97411000EL0085,a_creuser,Saint-Denis,1025,113,sans_signal_prive
+97411000EL0482,a_creuser,Saint-Denis,289,31,sans_signal_prive
+97411000EL0607,a_creuser,Saint-Denis,296,48,sans_signal_prive
+97411000EM0175,a_creuser,Saint-Denis,607,85,sans_signal_prive
+97411000EN0026,a_creuser,Saint-Denis,1147,120,sans_signal_prive
+97411000EN0032,a_creuser,Saint-Denis,324,32,sans_signal_prive
+97411000EN0038,a_creuser,Saint-Denis,647,107,sans_signal_prive
+97411000EN0182,a_creuser,Saint-Denis,1132,121,sans_signal_prive
+97411000EN0579,a_creuser,Saint-Denis,366,56,sans_signal_prive
+97411000ES0134,a_creuser,Saint-Denis,250,53,sans_signal_prive
+97411000ET0196,a_creuser,Saint-Denis,630,69,sans_signal_prive
+97411000EV0077,a_creuser,Saint-Denis,356,75,sans_signal_prive
+97411000EV0313,a_creuser,Saint-Denis,127,31,sans_signal_prive
+97411000EW0026,a_creuser,Saint-Denis,284,61,sans_signal_prive
+97411000EX0027,a_creuser,Saint-Denis,186,37,sans_signal_prive
+97411000EX0093,a_creuser,Saint-Denis,311,47,sans_signal_prive
+97411000EZ0062,a_creuser,Saint-Denis,421,77,sans_signal_prive
+97411000HA0047,a_creuser,Saint-Denis,323,64,sans_signal_prive
+97411000HA0067,a_creuser,Saint-Denis,948,204,sans_signal_prive
+97411000HA0096,a_creuser,Saint-Denis,1663,191,sans_signal_prive
+97411000HA0117,a_creuser,Saint-Denis,860,77,sans_signal_prive
+97411000HB0015,a_creuser,Saint-Denis,337,50,sans_signal_prive
+97411000HB0083,a_creuser,Saint-Denis,538,71,sans_signal_prive
+97411000HB0248,a_creuser,Saint-Denis,601,58,sans_signal_prive
+97411000HB0269,a_creuser,Saint-Denis,296,37,sans_signal_prive
+97411000HC0021,a_creuser,Saint-Denis,237,60,sans_signal_prive
+97411000HC0146,a_creuser,Saint-Denis,335,71,sans_signal_prive
+97411000HC0384,a_creuser,Saint-Denis,223,45,sans_signal_prive
+97411000HD0052,a_creuser,Saint-Denis,291,47,sans_signal_prive
+97411000HD0079,a_creuser,Saint-Denis,543,113,sans_signal_prive
+97411000HD0089,a_creuser,Saint-Denis,1383,167,sans_signal_prive
+97411000HD0105,a_creuser,Saint-Denis,474,57,sans_signal_prive
+97411000HE0041,a_creuser,Saint-Denis,810,125,sans_signal_prive
+97411000HE0050,a_creuser,Saint-Denis,381,75,sans_signal_prive
+97411000HE0109,a_creuser,Saint-Denis,616,96,sans_signal_prive
+97411000HE0134,a_creuser,Saint-Denis,1247,199,sans_signal_prive
+97411000HE0460,a_creuser,Saint-Denis,176,47,sans_signal_prive
+97411000HE0580,a_creuser,Saint-Denis,1312,188,sans_signal_prive
+97411000HH0116,a_creuser,Saint-Denis,318,55,sans_signal_prive
+97411000HH0233,a_creuser,Saint-Denis,141,30,sans_signal_prive
+97411000HI0020,a_creuser,Saint-Denis,278,53,sans_signal_prive
+97411000HI0135,a_creuser,Saint-Denis,647,68,sans_signal_prive
+97411000HI0156,a_creuser,Saint-Denis,379,53,sans_signal_prive
+97411000HI0314,a_creuser,Saint-Denis,642,97,sans_signal_prive
+97411000HM0046,a_creuser,Saint-Denis,176,37,sans_signal_prive
+97411000HN0055,a_creuser,Saint-Denis,168,32,sans_signal_prive
+97411000HN0060,a_creuser,Saint-Denis,173,42,sans_signal_prive
+97411000HN0090,a_creuser,Saint-Denis,308,45,sans_signal_prive
+97411000HN0136,a_creuser,Saint-Denis,551,114,sans_signal_prive
+97411000HN0202,a_creuser,Saint-Denis,2855,377,sans_signal_prive
+97411000HN0268,a_creuser,Saint-Denis,372,58,sans_signal_prive
+97411000HN0300,a_creuser,Saint-Denis,228,38,sans_signal_prive
+97411000HN0507,a_creuser,Saint-Denis,384,32,sans_signal_prive
+97411000HO0062,a_creuser,Saint-Denis,332,39,sans_signal_prive
+97411000HO0073,a_creuser,Saint-Denis,374,89,sans_signal_prive
+97411000HO0102,a_creuser,Saint-Denis,592,109,sans_signal_prive
+97411000HO0252,a_creuser,Saint-Denis,429,80,sans_signal_prive
+97411000HO0593,a_creuser,Saint-Denis,138,33,sans_signal_prive
+97411000HO0690,a_creuser,Saint-Denis,512,76,sans_signal_prive
+97411000HO0859,a_creuser,Saint-Denis,2410,283,sans_signal_prive
+97411000HR0022,a_creuser,Saint-Denis,369,50,sans_signal_prive
+97411000HS0104,a_creuser,Saint-Denis,859,119,sans_signal_prive
+97411000HS0117,a_creuser,Saint-Denis,542,86,sans_signal_prive
+97411000HW0051,a_creuser,Saint-Denis,205,39,sans_signal_prive
+97411000HW0101,a_creuser,Saint-Denis,349,71,sans_signal_prive
+97411000HW0105,a_creuser,Saint-Denis,235,57,sans_signal_prive
+97411000HW0148,a_creuser,Saint-Denis,164,37,sans_signal_prive
+97411000HW0166,a_creuser,Saint-Denis,282,44,sans_signal_prive
+97411000HW0224,a_creuser,Saint-Denis,441,92,sans_signal_prive
+97411000HW0418,a_creuser,Saint-Denis,934,146,sans_signal_prive
+97411000HX0057,a_creuser,Saint-Denis,262,55,sans_signal_prive
+97411000HX0414,a_creuser,Saint-Denis,621,55,sans_signal_prive
+97411000HZ0195,a_creuser,Saint-Denis,390,76,sans_signal_prive
+97411000HZ0214,a_creuser,Saint-Denis,234,48,sans_signal_prive
+97411000HZ0228,a_creuser,Saint-Denis,865,122,sans_signal_prive
+97411000HZ0414,a_creuser,Saint-Denis,1052,144,sans_signal_prive
+97411000IA0026,a_creuser,Saint-Denis,513,58,sans_signal_prive
+97411000IA0076,a_creuser,Saint-Denis,514,84,sans_signal_prive
+97411000IA0108,a_creuser,Saint-Denis,702,124,sans_signal_prive
+97411000IA0387,a_creuser,Saint-Denis,200,46,sans_signal_prive
+97411000IA0467,a_creuser,Saint-Denis,265,38,sans_signal_prive
+97411000IB0044,a_creuser,Saint-Denis,1015,132,sans_signal_prive
+97411000IB0100,a_creuser,Saint-Denis,1038,185,sans_signal_prive
+97411000IB0205,a_creuser,Saint-Denis,219,34,sans_signal_prive
+97411000IB0391,a_creuser,Saint-Denis,633,64,sans_signal_prive
+97411000IC0240,a_creuser,Saint-Denis,329,62,sans_signal_prive
+97411000ID0030,a_creuser,Saint-Denis,450,40,sans_signal_prive
+97411000ID0117,a_creuser,Saint-Denis,228,43,sans_signal_prive
+97411000ID0301,a_creuser,Saint-Denis,571,93,sans_signal_prive
+97411000IE0177,a_creuser,Saint-Denis,890,87,sans_signal_prive
+97411000IE0220,a_creuser,Saint-Denis,514,100,sans_signal_prive
+97411000IE0343,a_creuser,Saint-Denis,563,94,sans_signal_prive
+97411000IE0544,a_creuser,Saint-Denis,449,55,sans_signal_prive
+97411000IE0582,a_creuser,Saint-Denis,471,83,sans_signal_prive
+97411000IH0046,a_creuser,Saint-Denis,598,113,sans_signal_prive
+97411000IH0074,a_creuser,Saint-Denis,550,105,sans_signal_prive
+97411000IH0121,a_creuser,Saint-Denis,314,71,sans_signal_prive
+97411000IH0351,a_creuser,Saint-Denis,426,60,sans_signal_prive
+97411000IK0088,a_creuser,Saint-Denis,353,77,sans_signal_prive
+97411000IK0174,a_creuser,Saint-Denis,156,38,sans_signal_prive
+97411000IK0237,a_creuser,Saint-Denis,180,36,sans_signal_prive
+97411000IM0010,a_creuser,Saint-Denis,725,149,sans_signal_prive
+97411000IM0021,a_creuser,Saint-Denis,887,77,sans_signal_prive
+97411000IM0041,a_creuser,Saint-Denis,253,42,sans_signal_prive
+97411000IM0044,a_creuser,Saint-Denis,255,51,sans_signal_prive
+97411000IM0054,a_creuser,Saint-Denis,793,135,sans_signal_prive
+97411000IN0027,a_creuser,Saint-Denis,488,72,sans_signal_prive
+97411000IN0036,a_creuser,Saint-Denis,768,162,sans_signal_prive
+97411000IR0311,a_creuser,Saint-Denis,327,43,sans_signal_prive
+97411000IR0322,a_creuser,Saint-Denis,391,55,sans_signal_prive
+97411000IR0490,a_creuser,Saint-Denis,201,35,sans_signal_prive
+97411000IR0508,a_creuser,Saint-Denis,509,57,sans_signal_prive
+97411000IR0542,a_creuser,Saint-Denis,382,44,sans_signal_prive
+97411000IR0564,a_creuser,Saint-Denis,314,42,sans_signal_prive
+97411000IS0434,a_creuser,Saint-Denis,1574,182,sans_signal_prive
+97411000IW0060,a_creuser,Saint-Denis,240,45,sans_signal_prive
+97411000IW0178,a_creuser,Saint-Denis,168,56,sans_signal_prive
+97411000IW0303,a_creuser,Saint-Denis,640,152,sans_signal_prive
+97411000IZ0142,a_creuser,Saint-Denis,193,41,sans_signal_prive
+97411000IZ0192,a_creuser,Saint-Denis,579,98,sans_signal_prive
+97411000IZ0296,a_creuser,Saint-Denis,290,48,sans_signal_prive
+97411000KA0300,a_creuser,Saint-Denis,477,117,sans_signal_prive
+97411000KA0328,a_creuser,Saint-Denis,175,40,sans_signal_prive
+97411000KC0047,a_creuser,Saint-Denis,260,32,sans_signal_prive
+97411000KC0109,a_creuser,Saint-Denis,302,47,sans_signal_prive
+97411000KC0205,a_creuser,Saint-Denis,358,60,sans_signal_prive
+97411000KC0235,a_creuser,Saint-Denis,264,69,sans_signal_prive
+97411000KC0268,a_creuser,Saint-Denis,613,102,sans_signal_prive
+97411000KD0120,a_creuser,Saint-Denis,217,42,sans_signal_prive
+97411000KE0214,a_creuser,Saint-Denis,240,46,sans_signal_prive
+97411000KE0217,a_creuser,Saint-Denis,419,50,sans_signal_prive
+97412000AH1124,a_creuser,Saint-Joseph,319,30,sans_signal_prive
+97412000AH1126,a_creuser,Saint-Joseph,391,69,sans_signal_prive
+97412000AM0912,a_creuser,Saint-Joseph,444,49,sans_signal_prive
+97412000AM1235,a_creuser,Saint-Joseph,224,39,sans_signal_prive
+97412000AM1602,a_creuser,Saint-Joseph,496,42,sans_signal_prive
+97412000AM1777,a_creuser,Saint-Joseph,557,47,sans_signal_prive
+97412000AM1814,a_creuser,Saint-Joseph,463,91,sans_signal_prive
+97412000AM1889,a_creuser,Saint-Joseph,434,40,sans_signal_prive
+97412000AO0808,a_creuser,Saint-Joseph,257,39,sans_signal_prive
+97412000AO0886,a_creuser,Saint-Joseph,115,38,sans_signal_prive
+97412000AS0429,a_creuser,Saint-Joseph,407,39,sans_signal_prive
+97412000AS0538,a_creuser,Saint-Joseph,184,30,sans_signal_prive
+97412000AV0670,a_creuser,Saint-Joseph,427,36,sans_signal_prive
+97412000AV0739,a_creuser,Saint-Joseph,364,32,sans_signal_prive
+97412000AV0901,a_creuser,Saint-Joseph,467,45,sans_signal_prive
+97412000AZ0490,a_creuser,Saint-Joseph,328,103,sans_signal_prive
+97412000BH0703,a_creuser,Saint-Joseph,248,68,sans_signal_prive
+97412000BK0614,a_creuser,Saint-Joseph,108,30,sans_signal_prive
+97412000BK1016,a_creuser,Saint-Joseph,639,59,sans_signal_prive
+97412000BK1244,a_creuser,Saint-Joseph,431,65,sans_signal_prive
+97412000BK1561,a_creuser,Saint-Joseph,1222,136,sans_signal_prive
+97412000BK1751,a_creuser,Saint-Joseph,200,49,sans_signal_prive
+97412000BL0331,a_creuser,Saint-Joseph,227,31,sans_signal_prive
+97412000BL0334,a_creuser,Saint-Joseph,754,126,sans_signal_prive
+97412000BL0877,a_creuser,Saint-Joseph,284,38,sans_signal_prive
+97412000BM0200,a_creuser,Saint-Joseph,686,74,sans_signal_prive
+97412000BM0667,a_creuser,Saint-Joseph,453,64,sans_signal_prive
+97412000BM0834,a_creuser,Saint-Joseph,595,107,sans_signal_prive
+97412000BM0898,a_creuser,Saint-Joseph,535,53,sans_signal_prive
+97412000BM0965,a_creuser,Saint-Joseph,1045,133,sans_signal_prive
+97412000BN0750,a_creuser,Saint-Joseph,427,45,sans_signal_prive
+97412000BR0775,a_creuser,Saint-Joseph,346,45,sans_signal_prive
+97412000BT0465,a_creuser,Saint-Joseph,247,34,sans_signal_prive
+97412000BW0906,a_creuser,Saint-Joseph,366,31,sans_signal_prive
+97412000BW1067,a_creuser,Saint-Joseph,151,37,sans_signal_prive
+97412000BW1337,a_creuser,Saint-Joseph,1966,227,sans_signal_prive
+97412000BW1381,a_creuser,Saint-Joseph,175,32,sans_signal_prive
+97412000BW1607,a_creuser,Saint-Joseph,901,102,sans_signal_prive
+97412000BW1655,a_creuser,Saint-Joseph,415,41,sans_signal_prive
+97412000BW1755,a_creuser,Saint-Joseph,250,55,sans_signal_prive
+97412000BX1013,a_creuser,Saint-Joseph,323,32,sans_signal_prive
+97412000BY1353,a_creuser,Saint-Joseph,429,65,sans_signal_prive
+97412000BY1491,a_creuser,Saint-Joseph,333,35,sans_signal_prive
+97412000CD0771,a_creuser,Saint-Joseph,708,84,sans_signal_prive
+97412000CD0923,a_creuser,Saint-Joseph,102,36,sans_signal_prive
+97412000CD1006,a_creuser,Saint-Joseph,242,33,sans_signal_prive
+97412000CD1559,a_creuser,Saint-Joseph,1190,113,sans_signal_prive
+97412000CE2391,a_creuser,Saint-Joseph,845,121,sans_signal_prive
+97412000CH0166,a_creuser,Saint-Joseph,263,39,sans_signal_prive
+97412000CI0254,a_creuser,Saint-Joseph,2541,419,sans_signal_prive
+97412000CI0336,a_creuser,Saint-Joseph,483,42,sans_signal_prive
+97412000CI0337,a_creuser,Saint-Joseph,372,41,sans_signal_prive
+97412000CV0435,a_creuser,Saint-Joseph,223,36,sans_signal_prive
+97412000CW0412,a_creuser,Saint-Joseph,2558,352,sans_signal_prive
+97412000CW1178,a_creuser,Saint-Joseph,354,38,sans_signal_prive
+97412000CX0165,a_creuser,Saint-Joseph,290,36,sans_signal_prive
+97412000CZ0975,a_creuser,Saint-Joseph,539,68,sans_signal_prive
+97412000CZ1055,a_creuser,Saint-Joseph,392,33,sans_signal_prive
+97413000AV1523,a_creuser,Saint-Leu,903,136,sans_signal_prive
+97413000AV1711,a_creuser,Saint-Leu,362,49,sans_signal_prive
+97413000AV1831,a_creuser,Saint-Leu,509,58,sans_signal_prive
+97413000AV1976,a_creuser,Saint-Leu,182,38,sans_signal_prive
+97413000BD0243,a_creuser,Saint-Leu,578,67,sans_signal_prive
+97413000BD0337,a_creuser,Saint-Leu,292,35,sans_signal_prive
+97413000BH0511,a_creuser,Saint-Leu,499,57,sans_signal_prive
+97413000BH0961,a_creuser,Saint-Leu,299,36,sans_signal_prive
+97413000BH1121,a_creuser,Saint-Leu,549,67,sans_signal_prive
+97413000BM0738,a_creuser,Saint-Leu,747,135,sans_signal_prive
+97413000CC0570,a_creuser,Saint-Leu,522,100,sans_signal_prive
+97413000CC0746,a_creuser,Saint-Leu,740,119,sans_signal_prive
+97413000CC0752,a_creuser,Saint-Leu,372,58,sans_signal_prive
+97413000CC0817,a_creuser,Saint-Leu,623,80,sans_signal_prive
+97413000CD0347,a_creuser,Saint-Leu,6313,630,sans_signal_prive
+97413000CD0359,a_creuser,Saint-Leu,377,82,sans_signal_prive
+97413000CF0569,a_creuser,Saint-Leu,319,48,sans_signal_prive
+97413000CG0836,a_creuser,Saint-Leu,799,139,sans_signal_prive
+97413000CH0467,a_creuser,Saint-Leu,521,94,sans_signal_prive
+97413000CH0591,a_creuser,Saint-Leu,315,54,sans_signal_prive
+97413000CI0566,a_creuser,Saint-Leu,307,43,sans_signal_prive
+97413000CJ1076,a_creuser,Saint-Leu,497,57,sans_signal_prive
+97413000CK0221,a_creuser,Saint-Leu,386,36,sans_signal_prive
+97413000CL0366,a_creuser,Saint-Leu,169,41,sans_signal_prive
+97413000CL0616,a_creuser,Saint-Leu,374,36,sans_signal_prive
+97413000CM0752,a_creuser,Saint-Leu,514,60,sans_signal_prive
+97413000CM0763,a_creuser,Saint-Leu,135,34,sans_signal_prive
+97413000CN0898,a_creuser,Saint-Leu,556,76,sans_signal_prive
+97413000CP0210,a_creuser,Saint-Leu,126,33,sans_signal_prive
+97413000CP0238,a_creuser,Saint-Leu,216,41,sans_signal_prive
+97413000CQ0725,a_creuser,Saint-Leu,515,44,sans_signal_prive
+97413000CQ0902,a_creuser,Saint-Leu,477,88,sans_signal_prive
+97413000CR0837,a_creuser,Saint-Leu,282,44,sans_signal_prive
+97413000CR1030,a_creuser,Saint-Leu,259,33,sans_signal_prive
+97413000CS0493,a_creuser,Saint-Leu,490,43,sans_signal_prive
+97413000CS0556,a_creuser,Saint-Leu,850,97,sans_signal_prive
+97413000CU0648,a_creuser,Saint-Leu,2153,238,sans_signal_prive
+97413000CU0650,a_creuser,Saint-Leu,2956,373,sans_signal_prive
+97413000CU0653,a_creuser,Saint-Leu,1333,113,sans_signal_prive
+97413000CX0672,a_creuser,Saint-Leu,269,34,sans_signal_prive
+97413000CX0676,a_creuser,Saint-Leu,383,64,sans_signal_prive
+97413000CX1189,a_creuser,Saint-Leu,507,56,sans_signal_prive
+97413000CX1472,a_creuser,Saint-Leu,540,67,sans_signal_prive
+97413000CX1728,a_creuser,Saint-Leu,174,30,sans_signal_prive
+97413000CX1794,a_creuser,Saint-Leu,268,43,sans_signal_prive
+97413000CX1800,a_creuser,Saint-Leu,232,31,sans_signal_prive
+97413000CX2064,a_creuser,Saint-Leu,211,34,sans_signal_prive
+97413000CX2855,a_creuser,Saint-Leu,1681,287,sans_signal_prive
+97413000CY0856,a_creuser,Saint-Leu,328,32,sans_signal_prive
+97413000CY1028,a_creuser,Saint-Leu,1793,190,sans_signal_prive
+97413000CY1184,a_creuser,Saint-Leu,144,30,sans_signal_prive
+97413000CY1242,a_creuser,Saint-Leu,655,59,sans_signal_prive
+97413000CY1572,a_creuser,Saint-Leu,2230,369,sans_signal_prive
+97413000DB0019,a_creuser,Saint-Leu,1715,159,sans_signal_prive
+97413000DB0429,a_creuser,Saint-Leu,740,84,sans_signal_prive
+97413000DC0050,a_creuser,Saint-Leu,964,143,sans_signal_prive
+97413000DC0417,a_creuser,Saint-Leu,452,59,sans_signal_prive
+97413000DC0679,a_creuser,Saint-Leu,533,56,sans_signal_prive
+97413000DD1121,a_creuser,Saint-Leu,970,144,sans_signal_prive
+97413000DD1246,a_creuser,Saint-Leu,380,34,sans_signal_prive
+97413000DD1247,a_creuser,Saint-Leu,602,94,sans_signal_prive
+97413000DD1249,a_creuser,Saint-Leu,227,33,sans_signal_prive
+97413000DD1273,a_creuser,Saint-Leu,518,44,sans_signal_prive
+97413000DD1324,a_creuser,Saint-Leu,928,97,sans_signal_prive
+97413000DE0218,a_creuser,Saint-Leu,317,39,sans_signal_prive
+97413000DE0221,a_creuser,Saint-Leu,584,93,sans_signal_prive
+97413000DE0390,a_creuser,Saint-Leu,253,35,sans_signal_prive
+97413000DE1497,a_creuser,Saint-Leu,4279,414,sans_signal_prive
+97413000DE1655,a_creuser,Saint-Leu,1941,174,sans_signal_prive
+97413000DE2308,a_creuser,Saint-Leu,117,31,sans_signal_prive
+97413000DF0275,a_creuser,Saint-Leu,490,82,sans_signal_prive
+97414000CI0862,a_creuser,Saint-Louis,557,171,sans_signal_prive
+97414000CI0942,a_creuser,Saint-Louis,360,73,sans_signal_prive
+97414000CO1652,a_creuser,Saint-Louis,474,89,sans_signal_prive
+97414000CV0643,a_creuser,Saint-Louis,320,31,sans_signal_prive
+97414000CV1011,chaude,Saint-Louis,522,44,sans_signal_prive
+97414000CY0382,a_creuser,Saint-Louis,728,127,sans_signal_prive
+97414000DE1855,a_creuser,Saint-Louis,2875,266,sans_signal_prive
+97414000DH0902,reserve_fonciere,Saint-Louis,1606,134,sans_signal_prive
+97414000DH1429,a_creuser,Saint-Louis,194,34,sans_signal_prive
+97414000DH1535,a_creuser,Saint-Louis,533,86,sans_signal_prive
+97414000DH1575,a_creuser,Saint-Louis,926,78,sans_signal_prive
+97414000DH1578,a_creuser,Saint-Louis,2095,202,sans_signal_prive
+97414000DI0367,a_creuser,Saint-Louis,247,34,sans_signal_prive
+97414000DK0778,a_creuser,Saint-Louis,260,45,sans_signal_prive
+97414000DL0012,a_creuser,Saint-Louis,347,88,sans_signal_prive
+97414000DL0811,a_creuser,Saint-Louis,479,55,sans_signal_prive
+97414000DS0872,a_creuser,Saint-Louis,371,50,sans_signal_prive
+97414000DT0259,a_creuser,Saint-Louis,324,36,sans_signal_prive
+97414000DT0472,a_creuser,Saint-Louis,488,57,sans_signal_prive
+97414000DT0477,a_creuser,Saint-Louis,355,31,sans_signal_prive
+97414000DT0771,a_creuser,Saint-Louis,780,128,sans_signal_prive
+97414000DV0628,a_creuser,Saint-Louis,799,99,sans_signal_prive
+97414000EK0672,a_creuser,Saint-Louis,279,30,sans_signal_prive
+97414000EL1465,a_creuser,Saint-Louis,298,31,sans_signal_prive
+97414000EL2632,a_creuser,Saint-Louis,2110,183,sans_signal_prive
+97414000EN0611,a_creuser,Saint-Louis,801,79,sans_signal_prive
+97414000EN0732,a_creuser,Saint-Louis,556,52,sans_signal_prive
+97414000EN1965,a_creuser,Saint-Louis,166,36,sans_signal_prive
+97414000EN2169,a_creuser,Saint-Louis,400,40,sans_signal_prive
+97414000EN2229,a_creuser,Saint-Louis,318,32,sans_signal_prive
+97414000EN2456,a_creuser,Saint-Louis,307,39,sans_signal_prive
+97414000EN2472,a_creuser,Saint-Louis,337,48,sans_signal_prive
+97414000EN2964,a_creuser,Saint-Louis,377,36,sans_signal_prive
+97414000EN3179,a_creuser,Saint-Louis,143,32,sans_signal_prive
+97414000EO0212,a_creuser,Saint-Louis,529,47,sans_signal_prive
+97414000EO0222,a_creuser,Saint-Louis,342,31,sans_signal_prive
+97414000EO1367,a_creuser,Saint-Louis,924,131,sans_signal_prive
+97414000EO1470,a_creuser,Saint-Louis,692,148,sans_signal_prive
+97414000ER0323,a_creuser,Saint-Louis,591,69,sans_signal_prive
+97414000ER0529,a_creuser,Saint-Louis,445,37,sans_signal_prive
+97414000ER0928,a_creuser,Saint-Louis,646,76,sans_signal_prive
+97414000ER0929,a_creuser,Saint-Louis,390,81,sans_signal_prive
+97414000ES0301,a_creuser,Saint-Louis,139,50,sans_signal_prive
+97414000ES0308,a_creuser,Saint-Louis,147,47,sans_signal_prive
+97414000ES0840,a_creuser,Saint-Louis,163,33,sans_signal_prive
+97414000ET0918,a_creuser,Saint-Louis,627,75,sans_signal_prive
+97414000ET1873,a_creuser,Saint-Louis,227,36,sans_signal_prive
+97414000ET2276,a_creuser,Saint-Louis,283,70,sans_signal_prive
+97414000EX0718,a_creuser,Saint-Louis,135,33,sans_signal_prive
+97414000EX0791,a_creuser,Saint-Louis,564,111,sans_signal_prive
+97414000EZ0332,a_creuser,Saint-Louis,368,61,sans_signal_prive
+97414000HB0272,a_creuser,Saint-Louis,671,118,sans_signal_prive
+97414000HC0300,a_creuser,Saint-Louis,159,33,sans_signal_prive
+97414000HD0369,a_creuser,Saint-Louis,505,86,sans_signal_prive
+97414000HD0408,a_creuser,Saint-Louis,441,85,sans_signal_prive
+97414000HE0185,a_creuser,Saint-Louis,254,45,sans_signal_prive
+97414000HI0710,a_creuser,Saint-Louis,326,34,sans_signal_prive
+97414000HI0719,a_creuser,Saint-Louis,180,47,sans_signal_prive
+97414000HI1168,a_creuser,Saint-Louis,202,38,sans_signal_prive
+97414000HI1284,a_creuser,Saint-Louis,310,44,sans_signal_prive
+97414000HI1446,a_creuser,Saint-Louis,743,62,sans_signal_prive
+97414000HL0522,a_creuser,Saint-Louis,228,51,sans_signal_prive
+97415000AB0703,a_creuser,Saint-Paul,517,69,sans_signal_prive
+97415000AV0660,a_creuser,Saint-Paul,811,114,sans_signal_prive
+97415000AW0257,a_creuser,Saint-Paul,1325,178,sans_signal_prive
+97415000AW0867,a_creuser,Saint-Paul,209,37,sans_signal_prive
+97415000AW0883,a_creuser,Saint-Paul,1120,138,sans_signal_prive
+97415000AW0995,reserve_fonciere,Saint-Paul,3513,351,sans_signal_prive
+97415000AW1177,a_creuser,Saint-Paul,432,72,sans_signal_prive
+97415000AW1243,a_creuser,Saint-Paul,819,89,sans_signal_prive
+97415000AW1381,a_creuser,Saint-Paul,159,46,sans_signal_prive
+97415000AW1408,a_creuser,Saint-Paul,908,140,sans_signal_prive
+97415000AX0904,a_creuser,Saint-Paul,149,34,sans_signal_prive
+97415000AY0600,a_creuser,Saint-Paul,667,57,sans_signal_prive
+97415000AY0650,a_creuser,Saint-Paul,294,54,sans_signal_prive
+97415000AY1115,a_creuser,Saint-Paul,4351,551,sans_signal_prive
+97415000AZ1049,a_creuser,Saint-Paul,268,43,sans_signal_prive
+97415000AZ1103,a_creuser,Saint-Paul,322,56,sans_signal_prive
+97415000AZ1107,a_creuser,Saint-Paul,360,52,sans_signal_prive
+97415000AZ1311,a_creuser,Saint-Paul,386,66,sans_signal_prive
+97415000AZ1516,a_creuser,Saint-Paul,890,144,sans_signal_prive
+97415000AZ1757,a_creuser,Saint-Paul,588,92,sans_signal_prive
+97415000AZ1783,a_creuser,Saint-Paul,610,97,sans_signal_prive
+97415000BC0442,a_creuser,Saint-Paul,360,39,sans_signal_prive
+97415000BH0218,a_creuser,Saint-Paul,564,52,sans_signal_prive
+97415000BI0185,a_creuser,Saint-Paul,420,61,sans_signal_prive
+97415000BO0608,a_creuser,Saint-Paul,772,96,sans_signal_prive
+97415000BO0692,a_creuser,Saint-Paul,223,39,sans_signal_prive
+97415000BO0960,a_creuser,Saint-Paul,524,77,sans_signal_prive
+97415000BP0373,a_creuser,Saint-Paul,486,48,sans_signal_prive
+97415000BS0018,a_creuser,Saint-Paul,248,39,sans_signal_prive
+97415000BV1157,a_creuser,Saint-Paul,294,34,sans_signal_prive
+97415000BV1706,a_creuser,Saint-Paul,954,92,sans_signal_prive
+97415000BW0302,a_creuser,Saint-Paul,456,79,sans_signal_prive
+97415000BW0511,a_creuser,Saint-Paul,656,65,sans_signal_prive
+97415000BW0940,a_creuser,Saint-Paul,437,67,sans_signal_prive
+97415000BW1623,a_creuser,Saint-Paul,561,67,sans_signal_prive
+97415000BW1683,a_creuser,Saint-Paul,260,32,sans_signal_prive
+97415000BW1795,a_creuser,Saint-Paul,175,32,sans_signal_prive
+97415000BW2106,a_creuser,Saint-Paul,433,68,sans_signal_prive
+97415000CD0698,a_creuser,Saint-Paul,399,37,sans_signal_prive
+97415000CH0201,a_creuser,Saint-Paul,395,36,sans_signal_prive
+97415000CH1945,a_creuser,Saint-Paul,236,33,sans_signal_prive
+97415000CH2363,a_creuser,Saint-Paul,757,109,sans_signal_prive
+97415000CI0121,a_creuser,Saint-Paul,729,69,sans_signal_prive
+97415000CI0510,a_creuser,Saint-Paul,349,77,sans_signal_prive
+97415000CK0926,a_creuser,Saint-Paul,479,46,sans_signal_prive
+97415000CK0966,a_creuser,Saint-Paul,278,48,sans_signal_prive
+97415000CK0969,a_creuser,Saint-Paul,401,39,sans_signal_prive
+97415000CK0993,a_creuser,Saint-Paul,726,61,sans_signal_prive
+97415000CK1058,a_creuser,Saint-Paul,426,90,sans_signal_prive
+97415000CL0041,a_creuser,Saint-Paul,422,38,sans_signal_prive
+97415000CL0162,a_creuser,Saint-Paul,716,83,sans_signal_prive
+97415000CL0214,a_creuser,Saint-Paul,385,34,sans_signal_prive
+97415000CL0531,a_creuser,Saint-Paul,567,62,sans_signal_prive
+97415000CL0608,a_creuser,Saint-Paul,399,84,sans_signal_prive
+97415000CL0657,a_creuser,Saint-Paul,594,54,sans_signal_prive
+97415000CM0753,a_creuser,Saint-Paul,873,87,sans_signal_prive
+97415000CM1447,a_creuser,Saint-Paul,389,53,sans_signal_prive
+97415000CM1542,a_creuser,Saint-Paul,282,33,sans_signal_prive
+97415000CM1660,a_creuser,Saint-Paul,632,76,sans_signal_prive
+97415000CM1764,a_creuser,Saint-Paul,183,37,sans_signal_prive
+97415000CM2101,a_creuser,Saint-Paul,1038,195,sans_signal_prive
+97415000CM2245,a_creuser,Saint-Paul,514,58,sans_signal_prive
+97415000CP0426,a_creuser,Saint-Paul,671,61,sans_signal_prive
+97415000CP1152,a_creuser,Saint-Paul,324,38,sans_signal_prive
+97415000CP1498,a_creuser,Saint-Paul,549,62,sans_signal_prive
+97415000CP1646,a_creuser,Saint-Paul,1102,141,sans_signal_prive
+97415000CP2081,a_creuser,Saint-Paul,905,103,sans_signal_prive
+97415000CP2084,a_creuser,Saint-Paul,335,39,sans_signal_prive
+97415000CR0347,a_creuser,Saint-Paul,124,35,sans_signal_prive
+97415000CR0572,a_creuser,Saint-Paul,561,83,sans_signal_prive
+97415000CR0792,a_creuser,Saint-Paul,563,55,sans_signal_prive
+97415000CR1226,a_creuser,Saint-Paul,390,43,sans_signal_prive
+97415000CS0944,a_creuser,Saint-Paul,512,82,sans_signal_prive
+97415000CS1118,a_creuser,Saint-Paul,621,81,sans_signal_prive
+97415000CT0452,a_creuser,Saint-Paul,342,36,sans_signal_prive
+97415000CT0967,a_creuser,Saint-Paul,659,65,sans_signal_prive
+97415000CT1486,a_creuser,Saint-Paul,681,78,sans_signal_prive
+97415000CT1841,a_creuser,Saint-Paul,326,38,sans_signal_prive
+97415000CT2753,a_creuser,Saint-Paul,398,45,sans_signal_prive
+97415000CT3242,reserve_fonciere,Saint-Paul,14099,1372,sans_signal_prive
+97415000CT3260,a_creuser,Saint-Paul,789,115,sans_signal_prive
+97415000CT3271,a_creuser,Saint-Paul,1174,139,sans_signal_prive
+97415000CV0444,reserve_fonciere,Saint-Paul,3404,293,sans_signal_prive
+97415000CV0561,a_creuser,Saint-Paul,367,82,sans_signal_prive
+97415000CV0815,a_creuser,Saint-Paul,583,49,sans_signal_prive
+97415000CV0979,a_creuser,Saint-Paul,176,32,sans_signal_prive
+97415000CV1106,a_creuser,Saint-Paul,614,77,sans_signal_prive
+97415000CV1380,a_creuser,Saint-Paul,1281,141,sans_signal_prive
+97415000CV1381,a_creuser,Saint-Paul,300,35,sans_signal_prive
+97415000CY0763,a_creuser,Saint-Paul,467,54,sans_signal_prive
+97415000DE0952,a_creuser,Saint-Paul,236,38,sans_signal_prive
+97415000DM0699,a_creuser,Saint-Paul,261,36,sans_signal_prive
+97415000DM0769,a_creuser,Saint-Paul,513,49,sans_signal_prive
+97415000DM0842,a_creuser,Saint-Paul,1464,234,sans_signal_prive
+97415000DM1092,a_creuser,Saint-Paul,259,46,sans_signal_prive
+97415000DN0375,a_creuser,Saint-Paul,561,48,sans_signal_prive
+97415000DP0510,a_creuser,Saint-Paul,361,40,sans_signal_prive
+97415000DP0724,a_creuser,Saint-Paul,599,70,sans_signal_prive
+97415000DR0638,a_creuser,Saint-Paul,245,41,sans_signal_prive
+97415000DR0922,a_creuser,Saint-Paul,152,34,sans_signal_prive
+97415000DR1277,a_creuser,Saint-Paul,226,31,sans_signal_prive
+97415000DR1281,a_creuser,Saint-Paul,802,99,sans_signal_prive
+97415000DR1295,a_creuser,Saint-Paul,662,91,sans_signal_prive
+97415000DT0463,a_creuser,Saint-Paul,1754,219,sans_signal_prive
+97415000DT0702,a_creuser,Saint-Paul,444,96,sans_signal_prive
+97415000DT0951,a_creuser,Saint-Paul,559,54,sans_signal_prive
+97415000DV0174,a_creuser,Saint-Paul,448,56,sans_signal_prive
+97415000DV0185,a_creuser,Saint-Paul,1488,156,sans_signal_prive
+97415000DV0238,a_creuser,Saint-Paul,213,40,sans_signal_prive
+97415000DV0528,a_creuser,Saint-Paul,614,139,sans_signal_prive
+97415000EH0160,a_creuser,Saint-Paul,470,46,sans_signal_prive
+97415000EH0568,a_creuser,Saint-Paul,473,68,sans_signal_prive
+97415000EK0592,a_creuser,Saint-Paul,1319,130,sans_signal_prive
+97415000EM0351,a_creuser,Saint-Paul,129,32,sans_signal_prive
+97415000EP0527,a_creuser,Saint-Paul,417,100,sans_signal_prive
+97415000EP0618,a_creuser,Saint-Paul,159,33,sans_signal_prive
+97415000EP0756,a_creuser,Saint-Paul,115,32,sans_signal_prive
+97415000EP0896,a_creuser,Saint-Paul,144,30,sans_signal_prive
+97415000EP0933,a_creuser,Saint-Paul,1536,168,sans_signal_prive
+97415000EP1010,a_creuser,Saint-Paul,244,46,sans_signal_prive
+97415000ER0391,reserve_fonciere,Saint-Paul,3705,329,sans_signal_prive
+97415000ER0752,a_creuser,Saint-Paul,308,65,sans_signal_prive
+97415000ER1555,a_creuser,Saint-Paul,332,67,sans_signal_prive
+97415000EW0812,a_creuser,Saint-Paul,435,39,sans_signal_prive
+97415000EW1288,a_creuser,Saint-Paul,1014,140,sans_signal_prive
+97415000EW1558,a_creuser,Saint-Paul,685,58,sans_signal_prive
+97415000EW1646,a_creuser,Saint-Paul,1534,157,sans_signal_prive
+97415000EY0452,a_creuser,Saint-Paul,395,49,sans_signal_prive
+97415000EY0460,a_creuser,Saint-Paul,367,48,sans_signal_prive
+97415000EY1341,a_creuser,Saint-Paul,3564,437,sans_signal_prive
+97415000HM0079,a_creuser,Saint-Paul,453,74,sans_signal_prive
+97415000HM0082,a_creuser,Saint-Paul,426,66,sans_signal_prive
+97415000HO0771,a_creuser,Saint-Paul,456,90,sans_signal_prive
+97415000HO0905,a_creuser,Saint-Paul,184,47,sans_signal_prive
+97415000HO1034,a_creuser,Saint-Paul,1010,152,sans_signal_prive
+97415000HR0248,a_creuser,Saint-Paul,621,60,sans_signal_prive
+97417000AT1181,a_creuser,Saint-Philippe,182,32,sans_signal_prive
+97417000AT1365,a_creuser,Saint-Philippe,401,41,sans_signal_prive
+97417000BC0330,a_creuser,Saint-Philippe,568,54,sans_signal_prive
+97417000BC0958,a_creuser,Saint-Philippe,421,39,sans_signal_prive
+97417000BD0105,a_creuser,Saint-Philippe,242,33,sans_signal_prive
+97417000BD1137,a_creuser,Saint-Philippe,513,76,sans_signal_prive
+97417000BH0020,a_creuser,Saint-Philippe,497,51,sans_signal_prive
+97417000BI0013,a_creuser,Saint-Philippe,285,32,sans_signal_prive
+97416000CT0380,a_creuser,Saint-Pierre,421,43,sans_signal_prive
+97416000CT0902,a_creuser,Saint-Pierre,151,31,sans_signal_prive
+97416000CV0635,a_creuser,Saint-Pierre,656,90,sans_signal_prive
+97416000CW0736,a_creuser,Saint-Pierre,502,71,sans_signal_prive
+97416000CW0912,a_creuser,Saint-Pierre,522,49,sans_signal_prive
+97416000CW0983,a_creuser,Saint-Pierre,149,39,sans_signal_prive
+97416000CW1067,a_creuser,Saint-Pierre,1098,198,sans_signal_prive
+97416000CW1731,a_creuser,Saint-Pierre,957,83,sans_signal_prive
+97416000CW2147,a_creuser,Saint-Pierre,1232,138,sans_signal_prive
+97416000CW2222,a_creuser,Saint-Pierre,923,99,sans_signal_prive
+97416000CW2414,a_creuser,Saint-Pierre,492,109,sans_signal_prive
+97416000CW2460,a_creuser,Saint-Pierre,129,34,sans_signal_prive
+97416000CW2974,a_creuser,Saint-Pierre,374,42,sans_signal_prive
+97416000CW2977,reserve_fonciere,Saint-Pierre,2969,287,sans_signal_prive
+97416000CX0381,a_creuser,Saint-Pierre,762,134,sans_signal_prive
+97416000CX0719,a_creuser,Saint-Pierre,4869,551,sans_signal_prive
+97416000CX1394,a_creuser,Saint-Pierre,273,37,sans_signal_prive
+97416000CX1410,a_creuser,Saint-Pierre,580,54,sans_signal_prive
+97416000CY0359,a_creuser,Saint-Pierre,386,40,sans_signal_prive
+97416000CY0727,a_creuser,Saint-Pierre,400,77,sans_signal_prive
+97416000CZ0481,a_creuser,Saint-Pierre,431,40,sans_signal_prive
+97416000CZ0667,reserve_fonciere,Saint-Pierre,3730,426,sans_signal_prive
+97416000CZ0852,a_creuser,Saint-Pierre,1139,131,sans_signal_prive
+97416000CZ0955,a_creuser,Saint-Pierre,828,110,sans_signal_prive
+97416000CZ1085,a_creuser,Saint-Pierre,2887,344,sans_signal_prive
+97416000CZ1095,a_creuser,Saint-Pierre,341,49,sans_signal_prive
+97416000CZ1096,a_creuser,Saint-Pierre,301,34,sans_signal_prive
+97416000CZ1183,a_creuser,Saint-Pierre,232,51,sans_signal_prive
+97416000CZ1901,a_creuser,Saint-Pierre,165,44,sans_signal_prive
+97416000CZ2173,a_creuser,Saint-Pierre,126,32,sans_signal_prive
+97416000DE0769,a_creuser,Saint-Pierre,516,95,sans_signal_prive
+97416000DE0814,a_creuser,Saint-Pierre,151,31,sans_signal_prive
+97416000DE0817,a_creuser,Saint-Pierre,546,56,sans_signal_prive
+97416000DE0842,a_creuser,Saint-Pierre,452,59,sans_signal_prive
+97416000DE0883,a_creuser,Saint-Pierre,559,77,sans_signal_prive
+97416000DE1123,a_creuser,Saint-Pierre,454,43,sans_signal_prive
+97416000DE1339,a_creuser,Saint-Pierre,162,37,sans_signal_prive
+97416000DE1413,a_creuser,Saint-Pierre,314,50,sans_signal_prive
+97416000DO0004,a_creuser,Saint-Pierre,764,107,sans_signal_prive
+97416000DS0466,a_creuser,Saint-Pierre,490,82,sans_signal_prive
+97416000DX0360,a_creuser,Saint-Pierre,300,31,sans_signal_prive
+97416000DZ0340,a_creuser,Saint-Pierre,214,41,sans_signal_prive
+97416000DZ0456,a_creuser,Saint-Pierre,344,36,sans_signal_prive
+97416000EH0628,a_creuser,Saint-Pierre,130,37,sans_signal_prive
+97416000EI0102,a_creuser,Saint-Pierre,425,98,sans_signal_prive
+97416000EI1425,a_creuser,Saint-Pierre,578,92,sans_signal_prive
+97416000EI1530,a_creuser,Saint-Pierre,610,67,sans_signal_prive
+97416000EN0104,a_creuser,Saint-Pierre,546,65,sans_signal_prive
+97416000EN1501,a_creuser,Saint-Pierre,7288,696,sans_signal_prive
+97416000EP0071,a_creuser,Saint-Pierre,503,42,sans_signal_prive
+97416000EP0799,a_creuser,Saint-Pierre,395,35,sans_signal_prive
+97416000EP0972,a_creuser,Saint-Pierre,317,31,sans_signal_prive
+97416000ES1868,a_creuser,Saint-Pierre,196,60,sans_signal_prive
+97416000ES2244,a_creuser,Saint-Pierre,1247,109,sans_signal_prive
+97416000ES2248,a_creuser,Saint-Pierre,734,65,sans_signal_prive
+97416000ET0536,a_creuser,Saint-Pierre,407,40,sans_signal_prive
+97416000ET0917,a_creuser,Saint-Pierre,284,33,sans_signal_prive
+97416000ET1562,a_creuser,Saint-Pierre,204,33,sans_signal_prive
+97416000ET1798,a_creuser,Saint-Pierre,452,61,sans_signal_prive
+97416000ET2269,a_creuser,Saint-Pierre,2910,249,sans_signal_prive
+97416000ET2270,a_creuser,Saint-Pierre,725,87,sans_signal_prive
+97416000EV1286,a_creuser,Saint-Pierre,617,69,sans_signal_prive
+97416000EW0084,a_creuser,Saint-Pierre,2282,332,sans_signal_prive
+97416000EW0701,a_creuser,Saint-Pierre,355,44,sans_signal_prive
+97416000EW0936,a_creuser,Saint-Pierre,417,41,sans_signal_prive
+97416000EW1191,a_creuser,Saint-Pierre,1614,187,sans_signal_prive
+97416000EX0548,a_creuser,Saint-Pierre,1478,211,sans_signal_prive
+97416000EX0976,a_creuser,Saint-Pierre,1643,183,sans_signal_prive
+97416000EX1364,a_creuser,Saint-Pierre,224,76,sans_signal_prive
+97416000EX1397,a_creuser,Saint-Pierre,1352,118,sans_signal_prive
+97416000EX1659,a_creuser,Saint-Pierre,410,41,sans_signal_prive
+97416000EY1387,a_creuser,Saint-Pierre,138,39,sans_signal_prive
+97416000EZ0453,a_creuser,Saint-Pierre,751,66,sans_signal_prive
+97416000EZ0522,a_creuser,Saint-Pierre,212,36,sans_signal_prive
+97416000HI0766,a_creuser,Saint-Pierre,269,48,sans_signal_prive
+97416000HI0946,a_creuser,Saint-Pierre,424,75,sans_signal_prive
+97416000HM0216,a_creuser,Saint-Pierre,264,40,sans_signal_prive
+97416000HM0530,a_creuser,Saint-Pierre,515,44,sans_signal_prive
+97416000HN0787,a_creuser,Saint-Pierre,287,69,sans_signal_prive
+97416000HN1120,a_creuser,Saint-Pierre,883,100,sans_signal_prive
+97416000HN1252,a_creuser,Saint-Pierre,382,64,sans_signal_prive
+97416000HN1379,a_creuser,Saint-Pierre,531,121,sans_signal_prive
+97416000HN1412,a_creuser,Saint-Pierre,453,53,sans_signal_prive
+97416000HN1423,a_creuser,Saint-Pierre,417,71,sans_signal_prive
+97416000HN1523,a_creuser,Saint-Pierre,291,40,sans_signal_prive
+97416000HN1671,a_creuser,Saint-Pierre,358,34,sans_signal_prive
+97416000HO0484,a_creuser,Saint-Pierre,131,32,sans_signal_prive
+97416000HO0487,a_creuser,Saint-Pierre,356,56,sans_signal_prive
+97416000HO0533,a_creuser,Saint-Pierre,208,33,sans_signal_prive
+97416000HP0028,a_creuser,Saint-Pierre,266,58,sans_signal_prive
+97416000HP0354,a_creuser,Saint-Pierre,225,36,sans_signal_prive
+97416000HP0660,a_creuser,Saint-Pierre,157,36,sans_signal_prive
+97416000HP0661,a_creuser,Saint-Pierre,879,156,sans_signal_prive
+97416000HP0709,a_creuser,Saint-Pierre,551,83,sans_signal_prive
+97416000HP0817,a_creuser,Saint-Pierre,331,38,sans_signal_prive
+97416000HR0089,a_creuser,Saint-Pierre,189,33,sans_signal_prive
+97416000HR0090,a_creuser,Saint-Pierre,209,34,sans_signal_prive
+97416000HR0091,a_creuser,Saint-Pierre,226,38,sans_signal_prive
+97416000HR0092,a_creuser,Saint-Pierre,223,42,sans_signal_prive
+97416000HT0413,a_creuser,Saint-Pierre,461,47,sans_signal_prive
+97416000HT0522,a_creuser,Saint-Pierre,205,35,sans_signal_prive
+97416000HV0459,a_creuser,Saint-Pierre,532,100,sans_signal_prive
+97416000HV0666,a_creuser,Saint-Pierre,588,52,sans_signal_prive
+97416000HW0117,a_creuser,Saint-Pierre,969,128,sans_signal_prive
+97416000HX0490,a_creuser,Saint-Pierre,972,150,sans_signal_prive
+97416000HX0536,a_creuser,Saint-Pierre,302,30,sans_signal_prive
+97416000HX0813,a_creuser,Saint-Pierre,603,66,sans_signal_prive
+97416000HX0836,a_creuser,Saint-Pierre,459,44,sans_signal_prive
+97416000HX0841,a_creuser,Saint-Pierre,248,76,sans_signal_prive
+97416000HY0383,a_creuser,Saint-Pierre,262,38,sans_signal_prive
+97416000HY0384,a_creuser,Saint-Pierre,259,33,sans_signal_prive
+97416000HY0388,a_creuser,Saint-Pierre,305,65,sans_signal_prive
+97416000HY0465,a_creuser,Saint-Pierre,148,34,sans_signal_prive
+97416000HY0471,a_creuser,Saint-Pierre,467,76,sans_signal_prive
+97416000HY0844,a_creuser,Saint-Pierre,525,50,sans_signal_prive
+97416000HY1556,a_creuser,Saint-Pierre,360,32,sans_signal_prive
+97416000HY1634,a_creuser,Saint-Pierre,226,36,sans_signal_prive
+97416000HY1708,a_creuser,Saint-Pierre,744,131,sans_signal_prive
+97416000HZ0734,a_creuser,Saint-Pierre,495,103,sans_signal_prive
+97416000IA0976,a_creuser,Saint-Pierre,248,32,sans_signal_prive
+97416000ID0305,a_creuser,Saint-Pierre,141,32,sans_signal_prive
+97416000ID0663,a_creuser,Saint-Pierre,673,82,sans_signal_prive
+97416000IE0359,a_creuser,Saint-Pierre,350,41,sans_signal_prive
+97416000IE0383,a_creuser,Saint-Pierre,160,33,sans_signal_prive
+97416000IE0642,a_creuser,Saint-Pierre,218,32,sans_signal_prive
+97416000IE0643,a_creuser,Saint-Pierre,233,34,sans_signal_prive
+97416000IE0753,a_creuser,Saint-Pierre,826,76,sans_signal_prive
+97416000IE1012,a_creuser,Saint-Pierre,388,35,sans_signal_prive
+97416000IE1523,a_creuser,Saint-Pierre,300,61,sans_signal_prive
+97416000IE1577,a_creuser,Saint-Pierre,362,73,sans_signal_prive
+97416000IE1751,a_creuser,Saint-Pierre,483,62,sans_signal_prive
+97416000IE1899,chaude,Saint-Pierre,308,31,sans_signal_prive
+97416000IL0261,a_creuser,Saint-Pierre,297,62,sans_signal_prive
+97416000IL0471,reserve_fonciere,Saint-Pierre,5650,715,sans_signal_prive
+97416000IL0472,a_creuser,Saint-Pierre,662,79,sans_signal_prive
+97416000IM0273,a_creuser,Saint-Pierre,686,57,sans_signal_prive
+97416000IM0667,a_creuser,Saint-Pierre,450,45,sans_signal_prive
+97418000AC1468,a_creuser,Sainte-Marie,350,47,sans_signal_prive
+97418000AE0154,a_creuser,Sainte-Marie,416,54,sans_signal_prive
+97418000AE0375,a_creuser,Sainte-Marie,352,39,sans_signal_prive
+97418000AE0397,a_creuser,Sainte-Marie,236,31,sans_signal_prive
+97418000AO0592,a_creuser,Sainte-Marie,928,166,sans_signal_prive
+97418000AO1348,a_creuser,Sainte-Marie,385,35,sans_signal_prive
+97418000AP1908,a_creuser,Sainte-Marie,880,76,sans_signal_prive
+97418000AP2314,a_creuser,Sainte-Marie,1189,172,sans_signal_prive
+97418000AP2616,a_creuser,Sainte-Marie,214,39,sans_signal_prive
+97418000AP2759,a_creuser,Sainte-Marie,607,69,sans_signal_prive
+97418000AP3005,a_creuser,Sainte-Marie,743,62,sans_signal_prive
+97418000AP3098,a_creuser,Sainte-Marie,337,32,sans_signal_prive
+97418000AP3099,a_creuser,Sainte-Marie,249,31,sans_signal_prive
+97418000AP3138,a_creuser,Sainte-Marie,1112,101,sans_signal_prive
+97418000AP3176,a_creuser,Sainte-Marie,374,32,sans_signal_prive
+97418000AP3271,a_creuser,Sainte-Marie,156,39,sans_signal_prive
+97418000AP3280,a_creuser,Sainte-Marie,541,83,sans_signal_prive
+97418000AP3612,a_creuser,Sainte-Marie,442,55,sans_signal_prive
+97418000AP3751,a_creuser,Sainte-Marie,385,33,sans_signal_prive
+97418000AP3840,a_creuser,Sainte-Marie,369,48,sans_signal_prive
+97418000AP3841,a_creuser,Sainte-Marie,235,40,sans_signal_prive
+97418000AP3970,a_creuser,Sainte-Marie,770,67,sans_signal_prive
+97418000AP4084,a_creuser,Sainte-Marie,368,36,sans_signal_prive
+97418000AP4265,a_creuser,Sainte-Marie,268,40,sans_signal_prive
+97418000AP4306,a_creuser,Sainte-Marie,913,153,sans_signal_prive
+97418000AR0355,a_creuser,Sainte-Marie,799,141,sans_signal_prive
+97418000AR0676,a_creuser,Sainte-Marie,1887,302,sans_signal_prive
+97418000AR0887,a_creuser,Sainte-Marie,1508,233,sans_signal_prive
+97418000AR1014,a_creuser,Sainte-Marie,346,41,sans_signal_prive
+97418000AR1480,a_creuser,Sainte-Marie,1826,229,sans_signal_prive
+97418000AR1492,a_creuser,Sainte-Marie,496,45,sans_signal_prive
+97418000AR2070,a_creuser,Sainte-Marie,320,32,sans_signal_prive
+97418000AS0331,a_creuser,Sainte-Marie,188,35,sans_signal_prive
+97418000AS0866,a_creuser,Sainte-Marie,208,30,sans_signal_prive
+97418000AS1360,a_creuser,Sainte-Marie,134,30,sans_signal_prive
+97418000AS1369,a_creuser,Sainte-Marie,541,126,sans_signal_prive
+97418000AT1483,a_creuser,Sainte-Marie,204,37,sans_signal_prive
+97418000AT1485,a_creuser,Sainte-Marie,376,35,sans_signal_prive
+97418000AT1514,a_creuser,Sainte-Marie,502,42,sans_signal_prive
+97418000AT1699,a_creuser,Sainte-Marie,477,61,sans_signal_prive
+97418000AT2082,a_creuser,Sainte-Marie,287,35,sans_signal_prive
+97418000AT2215,a_creuser,Sainte-Marie,788,107,sans_signal_prive
+97418000AT2550,a_creuser,Sainte-Marie,1274,116,sans_signal_prive
+97418000AT2551,a_creuser,Sainte-Marie,165,33,sans_signal_prive
+97418000AT2561,a_creuser,Sainte-Marie,3705,334,sans_signal_prive
+97418000AT2562,a_creuser,Sainte-Marie,794,73,sans_signal_prive
+97418000AT2563,a_creuser,Sainte-Marie,474,49,sans_signal_prive
+97418000AT2564,a_creuser,Sainte-Marie,712,77,sans_signal_prive
+97418000AV0395,a_creuser,Sainte-Marie,886,90,sans_signal_prive
+97418000AV0786,a_creuser,Sainte-Marie,1042,133,sans_signal_prive
+97418000AV0841,a_creuser,Sainte-Marie,288,71,sans_signal_prive
+97418000AV1006,a_creuser,Sainte-Marie,991,108,sans_signal_prive
+97418000AV1022,a_creuser,Sainte-Marie,2255,194,sans_signal_prive
+97418000AV1053,a_creuser,Sainte-Marie,526,59,sans_signal_prive
+97418000AV1583,a_creuser,Sainte-Marie,451,167,sans_signal_prive
+97418000AV1605,a_creuser,Sainte-Marie,183,38,sans_signal_prive
+97418000AV1646,a_creuser,Sainte-Marie,804,90,sans_signal_prive
+97418000AV1788,a_creuser,Sainte-Marie,105,32,sans_signal_prive
+97418000AV1970,a_creuser,Sainte-Marie,350,30,sans_signal_prive
+97418000AV1978,a_creuser,Sainte-Marie,198,34,sans_signal_prive
+97418000AV1984,a_creuser,Sainte-Marie,219,38,sans_signal_prive
+97418000AV2227,a_creuser,Sainte-Marie,4762,609,sans_signal_prive
+97418000AV2366,a_creuser,Sainte-Marie,540,76,sans_signal_prive
+97418000AV2630,a_creuser,Sainte-Marie,239,52,sans_signal_prive
+97418000AV2651,a_creuser,Sainte-Marie,325,35,sans_signal_prive
+97418000AV2708,a_creuser,Sainte-Marie,270,54,sans_signal_prive
+97418000AV2920,a_creuser,Sainte-Marie,424,70,sans_signal_prive
+97418000AW0172,a_creuser,Sainte-Marie,431,83,sans_signal_prive
+97418000AW0599,a_creuser,Sainte-Marie,851,102,sans_signal_prive
+97418000AW0780,a_creuser,Sainte-Marie,324,52,sans_signal_prive
+97418000AX0221,a_creuser,Sainte-Marie,428,41,sans_signal_prive
+97418000AX0531,a_creuser,Sainte-Marie,389,51,sans_signal_prive
+97418000AY0206,a_creuser,Sainte-Marie,336,52,sans_signal_prive
+97418000AY0283,a_creuser,Sainte-Marie,4823,573,sans_signal_prive
+97418000AY0320,a_creuser,Sainte-Marie,462,64,sans_signal_prive
+97418000AY0359,a_creuser,Sainte-Marie,228,40,sans_signal_prive
+97418000AY0441,a_creuser,Sainte-Marie,628,74,sans_signal_prive
+97418000AY0598,a_creuser,Sainte-Marie,213,52,sans_signal_prive
+97418000AY0732,a_creuser,Sainte-Marie,2597,298,sans_signal_prive
+97418000AY0737,a_creuser,Sainte-Marie,546,79,sans_signal_prive
+97418000AY0745,a_creuser,Sainte-Marie,606,67,sans_signal_prive
+97418000BH0015,a_creuser,Sainte-Marie,626,70,sans_signal_prive
+97418000BH0171,a_creuser,Sainte-Marie,1083,233,sans_signal_prive
+97418000BH0505,reserve_fonciere,Sainte-Marie,3524,380,sans_signal_prive
+97418000BI0006,a_creuser,Sainte-Marie,1934,178,sans_signal_prive
+97418000BI0075,a_creuser,Sainte-Marie,1567,172,sans_signal_prive
+97418000BI0123,a_creuser,Sainte-Marie,3686,481,sans_signal_prive
+97418000BI0184,a_creuser,Sainte-Marie,253,59,sans_signal_prive
+97418000BI0301,a_creuser,Sainte-Marie,373,62,sans_signal_prive
+97418000BI0304,a_creuser,Sainte-Marie,188,35,sans_signal_prive
+97418000BI0345,a_creuser,Sainte-Marie,302,51,sans_signal_prive
+97418000BK0114,a_creuser,Sainte-Marie,1137,167,sans_signal_prive
+97418000BM0509,a_creuser,Sainte-Marie,389,54,sans_signal_prive
+97418000BO0008,a_creuser,Sainte-Marie,162,36,sans_signal_prive
+97418000BO0084,a_creuser,Sainte-Marie,1088,105,sans_signal_prive
+97418000BO0229,a_creuser,Sainte-Marie,267,70,sans_signal_prive
+97418000BP0129,a_creuser,Sainte-Marie,1375,224,sans_signal_prive
+97418000BP0328,a_creuser,Sainte-Marie,647,94,sans_signal_prive
+97418000BS0083,a_creuser,Sainte-Marie,215,50,sans_signal_prive
+97418000BS0134,a_creuser,Sainte-Marie,568,100,sans_signal_prive
+97418000BT0172,a_creuser,Sainte-Marie,454,93,sans_signal_prive
+97418000BT0305,a_creuser,Sainte-Marie,433,100,sans_signal_prive
+97418000BT0382,a_creuser,Sainte-Marie,482,94,sans_signal_prive
+97418000BT0406,a_creuser,Sainte-Marie,380,54,sans_signal_prive
+97418000BT0417,a_creuser,Sainte-Marie,902,113,sans_signal_prive
+97418000BT0432,a_creuser,Sainte-Marie,1286,247,sans_signal_prive
+97418000BT0454,a_creuser,Sainte-Marie,297,60,sans_signal_prive
+97418000BT0742,a_creuser,Sainte-Marie,130,31,sans_signal_prive
+97418000BT0786,a_creuser,Sainte-Marie,296,48,sans_signal_prive
+97418000BT0827,a_creuser,Sainte-Marie,283,46,sans_signal_prive
+97418000BT0870,a_creuser,Sainte-Marie,452,77,sans_signal_prive
+97418000BV0016,a_creuser,Sainte-Marie,459,50,sans_signal_prive
+97418000BV0103,a_creuser,Sainte-Marie,238,47,sans_signal_prive
+97418000BV0281,a_creuser,Sainte-Marie,241,31,sans_signal_prive
+97418000BV0347,a_creuser,Sainte-Marie,215,30,sans_signal_prive
+97418000BV0431,a_creuser,Sainte-Marie,677,131,sans_signal_prive
+97419000AD0133,a_creuser,Sainte-Rose,227,34,sans_signal_prive
+97419000AK0069,a_creuser,Sainte-Rose,254,35,sans_signal_prive
+97419000AK0389,a_creuser,Sainte-Rose,203,33,sans_signal_prive
+97419000AK0836,a_creuser,Sainte-Rose,114,31,sans_signal_prive
+97419000AW0234,a_creuser,Sainte-Rose,679,59,sans_signal_prive
+97419000AX0191,a_creuser,Sainte-Rose,632,54,sans_signal_prive
+97419000AX0577,a_creuser,Sainte-Rose,364,35,sans_signal_prive
+97419000AX0665,a_creuser,Sainte-Rose,332,38,sans_signal_prive
+97420000AC0341,a_creuser,Sainte-Suzanne,700,80,sans_signal_prive
+97420000AC0376,a_creuser,Sainte-Suzanne,648,81,sans_signal_prive
+97420000AC0900,a_creuser,Sainte-Suzanne,229,35,sans_signal_prive
+97420000AC1016,a_creuser,Sainte-Suzanne,847,151,sans_signal_prive
+97420000AE0138,a_creuser,Sainte-Suzanne,184,41,sans_signal_prive
+97420000AE0153,a_creuser,Sainte-Suzanne,299,52,sans_signal_prive
+97420000AI0434,a_creuser,Sainte-Suzanne,739,91,sans_signal_prive
+97420000AL0183,a_creuser,Sainte-Suzanne,471,48,sans_signal_prive
+97420000AR0445,a_creuser,Sainte-Suzanne,536,82,sans_signal_prive
+97420000AR0481,a_creuser,Sainte-Suzanne,274,35,sans_signal_prive
+97420000AS0535,a_creuser,Sainte-Suzanne,176,30,sans_signal_prive
+97420000AS1278,a_creuser,Sainte-Suzanne,558,99,sans_signal_prive
+97420000AS1296,a_creuser,Sainte-Suzanne,1002,97,sans_signal_prive
+97420000AS1338,a_creuser,Sainte-Suzanne,153,79,sans_signal_prive
+97420000AS1355,a_creuser,Sainte-Suzanne,1302,109,sans_signal_prive
+97420000AV0309,a_creuser,Sainte-Suzanne,707,67,sans_signal_prive
+97420000AV0607,a_creuser,Sainte-Suzanne,221,32,sans_signal_prive
+97420000AX0546,a_creuser,Sainte-Suzanne,734,70,sans_signal_prive
+97420000AY0458,a_creuser,Sainte-Suzanne,421,61,sans_signal_prive
+97420000AZ0708,a_creuser,Sainte-Suzanne,279,53,sans_signal_prive
+97420000AZ0756,a_creuser,Sainte-Suzanne,674,118,sans_signal_prive
+97420000AZ0782,a_creuser,Sainte-Suzanne,589,54,sans_signal_prive
+97420000AZ0803,a_creuser,Sainte-Suzanne,322,47,sans_signal_prive
+97420000BC0345,a_creuser,Sainte-Suzanne,3263,359,sans_signal_prive
+97420000BC1907,a_creuser,Sainte-Suzanne,8102,1022,sans_signal_prive
+97420000BD0210,a_creuser,Sainte-Suzanne,288,40,sans_signal_prive
+97420000BD0646,a_creuser,Sainte-Suzanne,202,34,sans_signal_prive
+97420000BD0647,a_creuser,Sainte-Suzanne,538,94,sans_signal_prive
+97420000BD0661,a_creuser,Sainte-Suzanne,227,37,sans_signal_prive
+97420000BD0662,a_creuser,Sainte-Suzanne,389,73,sans_signal_prive
+97420000BE0301,a_creuser,Sainte-Suzanne,1663,159,sans_signal_prive
+97420000BE0528,a_creuser,Sainte-Suzanne,922,162,sans_signal_prive
+97420000BE0671,a_creuser,Sainte-Suzanne,560,48,sans_signal_prive
+97420000BH1069,a_creuser,Sainte-Suzanne,224,42,sans_signal_prive
+97420000BH1222,a_creuser,Sainte-Suzanne,389,62,sans_signal_prive
+97420000BH1299,a_creuser,Sainte-Suzanne,1281,190,sans_signal_prive
+97421000AC0191,a_creuser,Salazie,407,37,sans_signal_prive
+97421000AH0445,a_creuser,Salazie,371,56,sans_signal_prive
+97421000AN0454,a_creuser,Salazie,436,39,sans_signal_prive
+97421000AV0825,a_creuser,Salazie,309,57,sans_signal_prive
+97421000AZ0163,a_creuser,Salazie,359,30,sans_signal_prive
+97421000BC0003,a_creuser,Salazie,324,34,sans_signal_prive
+97421000BO0242,a_creuser,Salazie,397,48,sans_signal_prive
+97421000BO0567,a_creuser,Salazie,668,62,sans_signal_prive

@@ -138,6 +138,7 @@ export interface SourceInfo {
 export interface Fiche {
   idu: string
   commune: string
+  adresse?: string | null   // M6 2a (§1.8) : meilleure adresse postale BAN — null si aucune
   proprietaire_moral: { denomination: string | null; siren: string | null; groupe_label: string | null } | null
   surface_m2: number | null
   statut: Statut

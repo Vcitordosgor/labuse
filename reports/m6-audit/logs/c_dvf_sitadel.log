@@ -1,0 +1,61 @@
+SET
+=== dvf_mutations ===
+   n   |    dmin    |    dmax    | d_null | vf_null | vf_le0 | vf_min |  vf_max  | vf_gt20m | geom_null | geom_inval | st_null | ncom 
+-------+------------+------------+--------+---------+--------+--------+----------+----------+-----------+------------+---------+------
+ 29565 | 2021-01-01 | 2025-12-31 |      0 |       0 |      0 |      1 | 30000000 |        4 |         0 |          0 |   14610 |   24
+(1 ligne)
+
+=== dvf_mutations_parcelle ===
+   n    |    dmin    |    dmax    | mmin | mmax |  nk   | idu_null | vf_null | vf_le0 |  vf_max  
+--------+------------+------------+------+------+-------+----------+---------+--------+----------
+ 102551 | 2021-01-01 | 2025-12-31 | 2021 | 2025 | 37868 |        0 |     698 |      0 | 64000000
+(1 ligne)
+
+=== dvf_mutations_parcelle orphelins vs parcels ===
+ idu_orphelins | lignes_orphelines 
+---------------+-------------------
+           554 |              1154
+(1 ligne)
+
+=== dvf_mutations_parcelle couverture parcelles ===
+ parcelles_couvertes 
+---------------------
+               37314
+(1 ligne)
+
+=== dvf_mutations_histo ===
+   n    |    dmin    |    dmax    | mmin | mmax |  nk   | idu_null | vf_null | vf_le0 |  vf_max  
+--------+------------+------------+------+------+-------+----------+---------+--------+----------
+ 110463 | 2014-01-03 | 2020-12-31 | 2014 | 2020 | 45078 |        0 |     133 |    222 | 49762837
+(1 ligne)
+
+=== dvf_mutations_histo orphelins vs parcels ===
+ idu_orphelins | lignes_orphelines 
+---------------+-------------------
+          1957 |              3261
+(1 ligne)
+
+=== dvf_secteur_medianes ===
+  n   | n_secteurs | pm2_min | pm2_max | pm2_null | nv_min | nv_max |    maj     
+------+------------+---------+---------+----------+--------+--------+------------
+ 2357 |        850 |      50 |    9882 |      439 |      1 |    477 | 2026-07-10
+(1 ligne)
+
+=== sitadel_permits ===
+   n   |  nk   |    dmin    |    dmax    | dates_futures | d_null | com_null | ncom | geom_null | sans_idu 
+-------+-------+------------+------------+---------------+--------+----------+------+-----------+----------
+ 50043 | 50043 | 2013-01-02 | 2026-08-17 |             1 |      0 |        0 |   24 |     10749 |        0
+(1 ligne)
+
+=== sitadel_permits orphelins idu ===
+ idu_refs | idu_orphelins | idu_orphelins_distincts 
+----------+---------------+-------------------------
+    58946 |         13644 |                    9295
+(1 ligne)
+
+=== sitadel couverture parcelles ===
+ parcelles_couvertes 
+---------------------
+               38987
+(1 ligne)
+

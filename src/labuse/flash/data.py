@@ -170,7 +170,8 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                                "sdp_residuelle_m2": _i(r["sdp_residuelle_m2"])}
     if "dryrun_parcel_evaluations" in avail:
         r = db.execute(text(
-            """SELECT d.q_score, d.a_score, d.a_completude
+            """SELECT d.q_score, d.a_score, d.a_completude,
+                      (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
                FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
                WHERE p.idu = :idu AND d.run_label = :run"""),
             {"idu": idu, "run": Q_A_RUN_LABEL}).mappings().first()
@@ -182,6 +183,31 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                             "grille": {"q_seuil": seuils.get("q_chaude", 65),
                                        "a_seuil": seuils.get("a_chaude", 60),
                                        "q_faible": seuils.get("q_ecartee", 50)}}
+        # M6 2a (P0 « une seule vérité ») : verdict v2 EN PREMIER — même doctrine que la
+        # fiche et pdf_premium (le tier v2 pilote, l'étage 0 du run SERVI prime) ; la
+        # grille matrice Q/A ci-dessus est reléguée en complément « historique ».
+        etage0 = bool(r["etage0"]) if r else False
+        v2 = None
+        if db.execute(text("SELECT to_regclass('p_score_v2_runs') IS NOT NULL")).scalar():
+            v2 = db.execute(text(
+                """SELECT s2.tier, s2.rang, s2.mult_base
+                   FROM parcel_p_score_v2 s2
+                   WHERE s2.parcelle_id = :idu
+                     AND s2.run_id = (SELECT run_id FROM p_score_v2_runs
+                                      ORDER BY computed_at DESC LIMIT 1)"""),
+                {"idu": idu}).mappings().first()
+        if v2 or etage0:
+            libelles = {"brulante": "Brûlante", "chaude": "Chaude",
+                        "reserve_fonciere": "Réserve foncière", "a_creuser": "À creuser",
+                        "ecartee": "Écartée"}
+            tier_eff = "ecartee" if etage0 else (v2["tier"] if v2 else None)
+            if tier_eff:
+                out["verdict_v2"] = {
+                    "tier": tier_eff, "libelle": libelles.get(tier_eff, tier_eff),
+                    "etage0": etage0,
+                    "rang": (None if etage0 or not v2 else v2["rang"]),
+                    "mult": (None if etage0 or not v2 or v2["mult_base"] is None
+                             else round(float(v2["mult_base"]), 1))}
     return out or None
 
 
@@ -413,7 +439,8 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
     """Assemble toutes les sections du rapport pour UNE parcelle.
 
     Lève ValueError si la parcelle est inconnue ; toute autre absence de donnée se traduit
-    par une section None (le template l'omet proprement).
+    par une section None (le template l'omet proprement). M6 2a : si aucune adresse n'est
+    fournie par l'appelant, l'adresse postale BAN rattachée en base est utilisée.
     """
     avail = _existing_tables(db, _NEEDED_TABLES)
     if "parcels" not in avail:
@@ -421,6 +448,10 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
     parcelle = _parcelle(db, idu)
     if not parcelle:
         raise ValueError(f"Parcelle {idu} inconnue.")
+    if adresse is None:
+        # import paresseux (évite tout cycle flash ↔ api au chargement des modules)
+        from ..api.export_commun import adresse_ban_texte
+        adresse = adresse_ban_texte(db, idu)
 
     data: dict[str, Any] = {
         "parcelle": parcelle,

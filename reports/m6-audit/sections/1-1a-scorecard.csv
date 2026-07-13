@@ -1,0 +1,87 @@
+table,volumetrie,pct_couverture,nulls_cles,bornes,orphelins,geom_invalides,doublons,verdict
+parcels,431663,100 (referentiel 24 communes),idu 0 / commune 0 / surface 0,"surface 0.03 m2 - 28 174 868 m2 ; 850 <2 m2 ; 242 >100 ha ; updated 28-29/06/2026",0 (idu unique),0,0 md5 ; 497 parcelles a cheval 2 communes (810 paires >1 m2),COMPLETE (vigilance M6-08)
+spatial_layers:batiment,817506,24 communes,geom 0,created 28-29/06/2026,n/a,0,303576 exced. 100% inter-communes,A CORRIGER (M6-01)
+spatial_layers:voirie,235643,24 communes,geom 0,created 28/06-01/07,n/a,0,90551 exced. 100% inter-communes,A CORRIGER (M6-01)
+spatial_layers:pente,147398,24 communes,geom 0,,n/a,0,0,COMPLETE
+spatial_layers:safer,38460,24 communes,geom 0,,n/a,0,15740 exced. inter-communes,A CORRIGER (M6-01)
+spatial_layers:trait_de_cote,24168,24 communes,geom 0,,n/a,0,23161 exced. (1007 geoms x24),A CORRIGER (M6-01)
+spatial_layers:plu_gpu_prescription,17765,24 communes,geom 0,,n/a,0,7284 exced. inter-communes,A CORRIGER (M6-01)
+spatial_layers:amenite,14933,24 communes,geom 0,created 05-08/07,n/a,0,5305 exced. inter-communes,A CORRIGER (M6-01 + A4 M5.1)
+spatial_layers:ravine,12716,24 communes,geom 0,,n/a,0,6368 exced. inter-communes,A CORRIGER (M6-01)
+spatial_layers:osm_faux_positif,6347,24 communes,geom 0,,n/a,0,1894 exced. inter-communes,A CORRIGER (M6-01)
+spatial_layers:plu_gpu_zone,6306,24 communes,geom 0,created 28/06-03/07,n/a,0,458 exced. (441 groupes inter-communes = A1),A CORRIGER (A1/M6-01)
+spatial_layers:water,6120,24 communes,geom 0,,n/a,0,2857 exced. inter-communes,A CORRIGER (M6-01)
+spatial_layers:ocs_ge,3250,24 communes,geom 0,millesime non trace (FRAICHEUR),n/a,0,1607 exced. inter-communes,A CORRIGER (M6-01)
+spatial_layers:mvt,3085,24 communes,geom 0,created 05/07,n/a,0,395 exced.,A CORRIGER (M6-01 leger)
+spatial_layers:sar,2453,24 communes,geom 0,,n/a,0,0,COMPLETE
+spatial_layers:potentiel_foncier,2453,24 communes,geom 0,,n/a,0,0,COMPLETE
+spatial_layers:icpe,1252,23 communes,geom 0,created 10/07,n/a,0,511 exced. 119 groupes 100% INTRA-commune,A CORRIGER (M6-03)
+spatial_layers:bruit_route,1004,25 libelles commune tous hors referentiel,geom 0,created 10/07,n/a,0,0,A CORRIGER (M6-02 filtre commune inoperant)
+spatial_layers:georisque_alea,993,24 communes (mouvement_terrain 917 / inondation 76),geom 0,,n/a,0,0,COMPLETE
+spatial_layers:sol_pollue,486,23 communes,geom 0,,n/a,0,66 exced. (28 intra / 3 inter),A CORRIGER (M6-03 leger)
+spatial_layers:sup,417,24 communes,geom 0,,n/a,0,294 exced. (70%) inter-communes,A CORRIGER (M6-01)
+spatial_layers:friche,372,22 communes (2 sans friche plausible),geom 0,sync 05/07,n/a,0,0,COMPLETE
+spatial_layers:iris_insee,344,24 communes,geom 0,created 11/07,n/a,0,0,COMPLETE
+spatial_layers:zonage_assainissement,258,4/24 communes,geom 0,created 11/07,n/a,0,0,PARTIELLE 4/24 (communes SIG connues)
+spatial_layers:foret_publique,227,24 communes,geom 0,,n/a,0,162 exced. (71%) inter-communes,A CORRIGER (M6-01)
+spatial_layers:abf,200,21 communes (3 sans MH plausible),geom 0,created 05/07,n/a,0,0,COMPLETE
+spatial_layers:ppr,164,24 communes,geom 0,subtypes PRESCRIPTION 88 / INTERDICTION 74 / 'i' 2,n/a,0,0,A CORRIGER mineur (M6-07) + PARTIELLE littoral 2/14 cotieres
+spatial_layers:cinquante_pas,163,commune NULL partout (ile),geom 0,created 10/07,n/a,0,0,COMPLETE (non commune-scopee)
+spatial_layers:cavite,151,14 communes,geom 0,,n/a,0,8 exced.,COMPLETE (purge avec M6-03)
+spatial_layers:ens,73,21 communes,geom 0,,n/a,0,39 exced. inter-communes,A CORRIGER (M6-01)
+spatial_layers:parc_national,72,24 communes,geom 0,3 geometries x24,n/a,0,69 exced. (= A2),A CORRIGER (A2/M6-01)
+spatial_layers:qpv,57,13 communes + 1 libelle composite,geom 0,generation 2024 uniquement (2025 applicable OM),n/a,0,0,A CORRIGER (M6-04)
+spatial_layers:anru,8,6 communes,geom 0,created 08/07,n/a,0,0,COMPLETE
+dvf_mutations,29565,n/a (geolocalisee),vf 0 / date 0 / geom 0 / surface_terrain 14610 (49% bati sans terrain),2021-01-01 - 2025-12-31 ; VF 1 - 30 M EUR (4 >20M),n/a,0,0,COMPLETE
+dvf_mutations_parcelle,102551,"37314 parcelles (8.6%, by design)",vf 698 (0.7%),2021-2025 ; VF max 64M ; 1409 <100 EUR symboliques,554 idus orphelins (1154 lignes 1.1%) M6-09,n/a,n/a,COMPLETE (vigilance M6-09)
+dvf_mutations_histo,110463,45078 idus (2014-2020),vf 133,2014-2020 ; VF max 49.8M ; 222 VF<=0 aberrantes,1957 idus orphelins (3261 lignes 3.0%) M6-09,n/a,n/a,COMPLETE (vigilances)
+dvf_secteur_medianes,2357,850 secteurs,mediane_prix_m2 439 (18.6%),prix m2 50-9882 ; n_ventes min=1,n/a,n/a,n/a,PARTIELLE 81.4% (M6-06)
+sitadel_permits,50043,"38987 parcelles (9.0%, by design)",date 0 / commune 0 / geom 10749 (21.5%),2013-01-02 - 2026-05-30 + 1 outlier 2026-08-17 (connu),13644/58946 refs idu orphelines (23.1% ; 9295 idus),0,0 (permit_id unique),A CORRIGER (M6-05)
+bodacc_procedures,662,191 sirens dont 175 raccordes proprietaires PM,siren 0 / type 3,2008-03-19 - 2026-07-02 (retard ~8j connu),16 sirens sans parcelle (plausible),n/a,n/a,COMPLETE
+bodacc_annonces_owner,1418,569 sirens,famille 0,2008-02-03 - 2026-07-09,n/a,n/a,n/a,COMPLETE
+parcelle_personne_morale,82701,82066 parcelles (19.0%),siren 1 / denomination 0,millesime 2025 unique,635 idus orphelins (0.8%) M6-09,n/a,0 (idu unique),COMPLETE (vigilance M6-09 ; note millesime)
+pm_proprietaires_millesimes,461570,72709-81161 idus/an (2019-2024),siren 7868 en 2019 (10.8%) puis <=30,millesimes 2019-2024 (6 points ; 2025 a ajouter),idus obsoletes 3754 (2019) -> 1067 (2024) M6-09,n/a,0 (uq millesime+idu),COMPLETE (qualite siren 2019)
+pm_dirigeants,27146,9337 sirens (100% raccordes),nom 3185 (11.7%) / date_naissance 7294 (26.9%),26318 actifs,0 orphelin siren,n/a,n/a,COMPLETE
+pm_dirigeant_gigogne,2124,586 sirens,,,n/a,n/a,n/a,COMPLETE
+owner_enrichment,9730,9730 sirens,denomination 27,source recherche_entreprises,n/a,n/a,n/a,COMPLETE
+owner_denom_lookup,2650,n/a,,not_found 2412 (91%) / found 134 / ambiguous 104,n/a,n/a,n/a,PARTIELLE 9% resolus (M6-06)
+dpe_records,914,903 rattachees (0.21% parcelles ; gisement 974 complet),parcelle_idu 11 / etiquette 0,2021-07-06 - 2026-07-03 ; surf 13-930 ; annee constr min 1761 (6 aberrantes),0 idu orphelin,n/a,0 (numero_dpe unique),COMPLETE (perimetre connu)
+adresses,339941,24 communes,idu 21 (0.006%) / geom 0 / voie 0,refreshed 11/07/2026,0 idu orphelin,0,0 (id_ban unique),COMPLETE
+adresse_parcelles,416357,257145 parcelles (59.6%),0,,0 orphelin cote parcels ET cote adresses,n/a,n/a,COMPLETE
+rnic_coproprietes,2220,22/24 communes (97419 & 97424 absentes plausible),parcelle_idu 0 / nb_lots 0 / geom 0,lots 2-860,0 idu orphelin,0,0 (immatriculation unique),COMPLETE
+rpls_commune,24,24/24 communes,0,millesime 2025-01 ; 62-25185 logts ; total 87553,n/a,n/a,n/a,COMPLETE
+filosofi_carreaux_200m,14773,carroyage ile,geom 0,ind 1-1258 ; men 0.2-520 ; 0 incoherence pauv>men,n/a,0,0 (idcar unique),COMPLETE
+catnat_arretes,239,24 communes 100% insee 974,type_peril 0,1993-05-18 - 2025-07-08,n/a,n/a,n/a,COMPLETE
+parcel_veille_succession,7092,"1.6% (by design PM dirigeant age)",age 7,ages 70-117 ; 3 >110 aberrants,0 idu orphelin,n/a,0 (idu unique),COMPLETE (vigilance ages)
+parcel_terrain,423452,98.1%,pente_moy 0,pentes moy 0-69.4 / max 0-88.7 ; 0 hors [0;90] ; 86885 terrassement lourd,0,n/a,0,PARTIELLE 98.1%
+parcel_solar,431663,100%,prod 0,prod 950-1598 kWh/kWc ; score 0-100,0,n/a,0,COMPLETE
+parcel_vegetation,426107,98.7%,ndvi 0,NDVI -0.698 - 0.905 ; canopee 0-100 ; 0 aberrant,0,n/a,0,PARTIELLE 98.7%
+vegetation_zonal_acc,1156556,98.7% (426107 idus raccord parcel_vegetation),0,,0,n/a,n/a,COMPLETE
+parcel_anc,278685,64.6%,zone_anc vide 220973 (79% hors zonage connu),proba 5-95,0,n/a,0,PARTIELLE 64.6% (zonage 4/24 communes)
+parcel_residuel_bati,292056,"67.7% (perimetre bati by design)",0,emprise resid. 0-106279 m2 (0 neg) ; hauteur max 4-34 m,0,n/a,0,COMPLETE (perimetre)
+parcel_residuel,263626,"61.1% (perimetre calcul by design)",0,,0,n/a,0,COMPLETE (perimetre)
+parcel_vue_mer,150642,"34.9% (perimetre littoral by design)",0,oui 92420 / partielle 17144 / non 41078 ; dist 0-8143 m ; obstruction coherente par classe,0,n/a,0,COMPLETE (perimetre)
+parcel_amenites,431663,100%,dist_ecole 0,distances 0 - 8.7-14.6 km ; 0 negative,0,n/a,0,COMPLETE
+parcel_equipements,11558,"2.7% (detections by design)",0,8299 piscines 10-144.8 m2 ; pv_detecte 0 partout (stub Option B connu),0,n/a,0,COMPLETE (PV en attente)
+module_division,4433,"1.0% (perimetre module)",0,lots 200-1675 m2 ; score 69-99,0,n/a,0,COMPLETE (perimetre)
+parcel_signals,69357,"67969 parcelles (15.7%, evenementiel)",0,,0,n/a,n/a,COMPLETE
+mvt_parcels,431663,100%,status 0 / tier 0 / geom 0,vue_mer oui 92419 (raccord M5.1),0,0,0 (idu unique),COMPLETE
+mvt_overlays,6470,plu_gpu_zone 6306 + ppr 164 (raccord spatial_layers),geom 0,herite doublons M6-01/A1,n/a,0,herites,COMPLETE (raccord)
+ortho_detections,43448,pv 23529 / piscine 19899 / vegetation 20,idu 70 (pv),confiance 0.295-1 ; surf piscine 10-149.9 / pv 4-383 ; validation NULL 41815 (96%) ok 819 fp 814,0 idu orphelin,n/a,n/a,COMPLETE
+ortho_tiles,5041,ile ; millesime 2025 ; 0 non traitee (ortho/pv/veg),geom 0,,n/a,n/a,0 (tile_id unique),COMPLETE
+parkings_aper,901,1696 refs idu,idus vides 31 ; geom 0,surf 800-27406 m2 ; echeances 2026-2028 dont 24 depassees (connu),0 ref idu orpheline,n/a,n/a,COMPLETE
+pv_registry,686,24 communes,geom 686 (100% NULL),puissance 37-10452 kW ; dates 2003-2025,n/a,n/a,n/a,PARTIELLE (non geolocalise M6-06)
+solar_grid,15680,grille ile,geom 0,prod 759.9-1603.5 (1 <800 marge) ; GHI 989-2095,n/a,n/a,n/a,COMPLETE
+grid_capacity,24,n/a,geom 24/24 NULL,capa_dispo_mw = 0 sur 24/24,n/a,n/a,n/a,A CORRIGER (M6-10 placeholder vide)
+anru_quartiers,8,6 communes,code_qpv 0,,n/a,n/a,n/a,COMPLETE
+rgealti_pente_5m,2793 tuiles raster,ile,0,source RGE ALTI gelee -> MNT LiDAR HD (FRAICHEUR),n/a,n/a,n/a,COMPLETE
+anc_maille_taux,350,24 communes,0,taux 0-100 (echelle %) ; millesime RP2022,n/a,n/a,n/a,COMPLETE
+commune_insee_logement,24,24/24,0,RP 2023 ; logements 2515-76819,n/a,n/a,n/a,COMPLETE
+commune_contexte_sru,24,24/24,0,inventaire LLS 2024 ; taux 2.8-60.7%,n/a,n/a,n/a,COMPLETE
+plh_epci,5,5/5 EPCI,0,obj 800-1800 logts/an,n/a,n/a,n/a,COMPLETE
+conso_baseline_commune,24,24/24 (2024),0,2388-3826 kWh/an/logement,n/a,n/a,n/a,COMPLETE
+cascade_results,9206258,431663 parcelles (100%),0,,0 parcel_id orphelin,n/a,n/a,COMPLETE (derive scoring)
+parcel_evaluations,1001622,431663 parcelles (100%),0,,0,n/a,n/a,COMPLETE (derive scoring)
+dryrun_parcel_evaluations,1118979,431663 parcelles (100%),0,,non controle (volume) - couvert via cascade_results,n/a,n/a,COMPLETE (derive scoring)
+parcel_p_score_v2,431663,100%,0,,0 idu orphelin,n/a,0 doublon,COMPLETE (derive scoring)
+parcel_v_score,431663,100%,0,,0,n/a,n/a,COMPLETE (derive scoring)

@@ -1,0 +1,82 @@
+SET
+=== couverture & orphelins — tables idu ===
+          t           |    n    |   nk   | idu_orphelins | parcelles_couvertes 
+----------------------+---------+--------+---------------+---------------------
+ module_division      |    4433 |   4433 |             0 |                4433
+ parcel_equipements   |   11558 |  11558 |             0 |               11558
+ parcel_anc           |  278685 | 278685 |             0 |              278685
+ parcel_residuel_bati |  292056 | 292056 |             0 |              292056
+ parcel_vegetation    |  426107 | 426107 |             0 |              426107
+ parcel_terrain       |  423452 | 423452 |             0 |              423452
+ vegetation_zonal_acc | 1156556 | 426107 |             0 |              426107
+ mvt_parcels          |  431663 | 431663 |             0 |              431663
+ parcel_solar         |  431663 | 431663 |             0 |              431663
+(9 lignes)
+
+=== couverture & orphelins — tables parcel_id ===
+        t        |   n    |   nk   | orphelins | parcelles_couvertes 
+-----------------+--------+--------+-----------+---------------------
+ parcel_vue_mer  | 150642 | 150642 |         0 |              150642
+ parcel_signals  |  69357 |  67969 |         0 |               67969
+ parcel_residuel | 263626 | 263626 |         0 |              263626
+ parcel_amenites | 431663 | 431663 |         0 |              431663
+(4 lignes)
+
+=== bornes parcel_terrain ===
+ pmoy_min | pmoy_max | pmax_min | pmax_max | aberrants | pmoy_null | terrassement_lourd 
+----------+----------+----------+----------+-----------+-----------+--------------------
+        0 |     69.4 |        0 |     88.7 |         0 |         0 |              86885
+(1 ligne)
+
+=== bornes parcel_solar ===
+     prod_min      |      prod_max      | prod_null | prod_aberrant | sc_min | sc_max | pv_existant 
+-------------------+--------------------+-----------+---------------+--------+--------+-------------
+ 949.9575826170021 | 1597.7874955294105 |         0 |             0 |      0 |    100 |       73427
+(1 ligne)
+
+=== bornes parcel_vegetation ===
+ ndvi_min | ndvi_max | ndvi_aberrant | can_min | can_max | can_aberrant | ndvi_null 
+----------+----------+---------------+---------+---------+--------------+-----------
+   -0.698 |    0.905 |             0 |       0 |     100 |            0 |         0
+(1 ligne)
+
+=== bornes parcel_vue_mer ===
+    vue    |   n   | d_min | d_max | d_neg | o_min | o_max 
+-----------+-------+-------+-------+-------+-------+-------
+ non       | 41078 |   120 |  8143 |     0 |    35 |   100
+ partielle | 17144 |   120 |  2000 |     0 |    10 |    35
+ oui       | 92420 |     0 |  4851 |     0 |     0 |    10
+(3 lignes)
+
+=== bornes parcel_amenites ===
+ ecole_min |     ecole_max      | sante_min |     sante_max      | com_min |      com_max       | tcsp_min |     tcsp_max      | negatifs | ecole_null 
+-----------+--------------------+-----------+--------------------+---------+--------------------+----------+-------------------+----------+------------
+         0 | 10512.811066266373 |         0 | 14601.471044704183 |       0 | 10719.773464547989 |        0 | 8683.507094870023 |        0 |          0
+(1 ligne)
+
+=== bornes parcel_anc ===
+ zone_anc  |   n    | p_min | p_max | p_aberrant 
+-----------+--------+-------+-------+------------
+           | 220973 |     5 |    95 |          0
+ collectif |  47803 |     5 |    95 |          0
+ anc       |   9909 |     8 |    94 |          0
+(3 lignes)
+
+=== bornes parcel_residuel_bati ===
+ emr_min | emr_max  | emr_neg | h_min | h_max | h_bati_aberrant | surelevation 
+---------+----------+---------+-------+-------+-----------------+--------------
+       0 | 106279.3 |       0 |     4 |    34 |               0 |       161050
+(1 ligne)
+
+=== bornes parcel_equipements ===
+ piscines | pv | pisc_smin | pisc_smax | pisc_aberrant 
+----------+----+-----------+-----------+---------------
+     8299 |  0 |        10 |     144.8 |             0
+(1 ligne)
+
+=== bornes module_division ===
+ lot_min | lot_max | lot_le0 | sc_min | sc_max 
+---------+---------+---------+--------+--------
+     200 |    1675 |       0 |     69 |     99
+(1 ligne)
+

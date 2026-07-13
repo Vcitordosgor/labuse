@@ -1,0 +1,180 @@
+[
+ {
+  "label": "\"pourquoi ? ▾\" entonnoir (ouvrir)",
+  "attendu": "popover motifs SQL-exacts",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/stats/entonnoir?commune=Saint-Paul",
+    "status": 200
+   }
+  ],
+  "pxChanged": null,
+  "errs": []
+ },
+ {
+  "label": "Entonnoir — clic hors popover",
+  "attendu": "referme",
+  "statut": "OK",
+  "net": [],
+  "pxChanged": null,
+  "errs": []
+ },
+ {
+  "label": "Toggle \"masquer les copropriétés\"",
+  "attendu": "hors_copro=true, compteurs recalculés",
+  "statut": "OK",
+  "net": [],
+  "pxChanged": null,
+  "errs": []
+ },
+ {
+  "label": "Toggle copro — retour",
+  "attendu": "filtre retiré",
+  "statut": "OK",
+  "net": [],
+  "pxChanged": null,
+  "errs": []
+ },
+ {
+  "label": "\"Tout voir →\"",
+  "attendu": "étend la liste",
+  "statut": "MORT?",
+  "net": [],
+  "pxChanged": null,
+  "errs": []
+ },
+ {
+  "label": "Carte de résultat (1re)",
+  "attendu": "ouvre la fiche",
+  "statut": "CASSÉ",
+  "net": [
+   {
+    "url": "/events/watch/97415000DK1044",
+    "status": 200
+   },
+   {
+    "url": "/pipeline/parcel/97415000DK1044",
+    "status": 200
+   },
+   {
+    "url": "/parcels/97415000DK1044?source=q_v3_datagap",
+    "status": 200
+   }
+  ],
+  "pxChanged": null,
+  "errs": [
+   "Access to fetch at 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/Open%20Sans%20Regular,Arial%20Unicode%20MS%20Regular/0-255.pbf' from origin 'http://12",
+   "Failed to load resource: net::ERR_FAILED",
+   "Error"
+  ]
+ },
+ {
+  "label": "Fermer la fiche",
+  "attendu": "referme",
+  "statut": "MORT?",
+  "net": [],
+  "pxChanged": null,
+  "errs": []
+ },
+ {
+  "label": "Zoom \"−\" (diff pixel)",
+  "attendu": "dézoome",
+  "statut": "CASSÉ",
+  "net": [],
+  "pxChanged": true,
+  "errs": [
+   "Error",
+   "Error",
+   "Error"
+  ]
+ },
+ {
+  "label": "Fond de plan → \"Ortho IGN\" puis \"1950-1965\"",
+  "attendu": "ortho historique",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Fond de plan\"]'))",
+  "net": [],
+  "pxChanged": true,
+  "errs": []
+ },
+ {
+  "label": "Retour fond \"Sombre (Carto)\"",
+  "attendu": "fond sombre",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Fond de plan\"]'))",
+  "net": [],
+  "pxChanged": false,
+  "errs": []
+ },
+ {
+  "label": "\"3D\" on",
+  "attendu": "relief",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Relief 3D\"]')\u001b[)",
+  "net": [],
+  "pxChanged": false,
+  "errs": []
+ },
+ {
+  "label": "\"3D\" off",
+  "attendu": "plat",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Relief 3D\"]')\u001b[)",
+  "net": [],
+  "pxChanged": false,
+  "errs": []
+ },
+ {
+  "label": "Outil Distance",
+  "attendu": "mesure affichée",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Distance\"]')\u001b[2)",
+  "net": [],
+  "pxChanged": false,
+  "errs": []
+ },
+ {
+  "label": "Outil Surface",
+  "attendu": "surface affichée",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Surface\"]')\u001b[22)",
+  "net": [],
+  "pxChanged": false,
+  "errs": []
+ },
+ {
+  "label": "Outil Altitude",
+  "attendu": "altitude au point (API)",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Altitude\"]')\u001b[2)",
+  "net": [],
+  "pxChanged": false,
+  "errs": []
+ },
+ {
+  "label": "Outil Zone (polygone)",
+  "attendu": "résultats filtrés à la zone",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Zone\"]')\u001b[22m\n\u001b)",
+  "net": [],
+  "pxChanged": false,
+  "errs": []
+ },
+ {
+  "label": "\"Zone active ×\"",
+  "attendu": "retire le filtre zone",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Zone active\"))",
+  "net": [],
+  "pxChanged": null,
+  "errs": []
+ },
+ {
+  "label": "Notifications — ouvrir",
+  "attendu": "popover",
+  "statut": "CASSÉ (clic: locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Notifications\"]')",
+  "net": [],
+  "pxChanged": null,
+  "errs": []
+ },
+ {
+  "label": "Notifications — clic hors popover",
+  "attendu": "referme (l’overlay)",
+  "statut": "MORT?",
+  "net": [],
+  "pxChanged": null,
+  "errs": []
+ }
+]

@@ -750,6 +750,12 @@ export function Fiche({ idu }: { idu: string }) {
       <div className="flex shrink-0 items-start justify-between border-b border-line px-5 py-4">
         <div className="min-w-0">
           <div className="truncate font-mono text-sm font-medium text-txt-hi">{idu}</div>
+          {/* M6 2a (§1.8) : adresse postale BAN en tête de fiche — jamais un champ vide */}
+          {f && (
+            <div data-fiche-adresse className={`mt-0.5 truncate text-[11px] ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
+              {f.adresse ?? 'Adresse non disponible'}
+            </div>
+          )}
           <div className="mt-0.5 text-[11px] text-txt-mut">
             {f?.surface_m2 ? `${f.surface_m2.toLocaleString('fr-FR')} m² · ` : ''}{f?.commune ?? ''}
           </div>
@@ -1006,7 +1012,8 @@ export function Fiche({ idu }: { idu: string }) {
         </div>
         <p className="mt-2.5 text-[11px] leading-tight text-txt-dim">
           Estimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni
-          garantie de constructibilité. À vérifier au règlement et auprès des services.
+          garantie de constructibilité. <span data-disclaimer-cu className="text-txt-mut">Ces informations
+          ne remplacent pas un certificat d'urbanisme.</span> À vérifier au règlement et auprès des services.
         </p>
       </div>
     </aside>

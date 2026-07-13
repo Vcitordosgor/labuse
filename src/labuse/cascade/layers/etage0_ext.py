@@ -40,6 +40,15 @@ SOCLE_TIERS: list[tuple[float, int, str]] = [
 LINEAIRE_LARGEUR_MAX_M = 8.0
 LINEAIRE_ALLONGEMENT_MIN = 8.0
 
+#: critère « emprise routière » (M6 Phase 2a, A-01 — validé sur échantillon de 20, cf.
+#: reports/m6-audit/REVIEW-PACK : 18/20 emprises viaires confirmées à l'ortho, les 2 faux
+#: positifs étaient des parcelles bâties → garde-fou bâti < 10 %, qui les sépare exactement
+#: de l'échantillon confirmé, tous ≤ 8,8 %)
+ROUTIERE_LEN_MIN_M = 30.0          # longueur cumulée d'axes clippés à la parcelle
+ROUTIERE_LARGEUR_NOMINALE_M = 6.0  # largeur nominale d'emprise par mètre d'axe
+ROUTIERE_DENSITE_MIN = 0.5         # (longueur × largeur nominale) / surface parcelle
+ROUTIERE_BATI_RATIO_MAX = 0.10     # emprise bâtie dédoublonnée / surface
+
 
 @register
 class FoncierPublicLayer(Layer):
@@ -82,6 +91,51 @@ class EmpriseLineaireLayer(Layer):
                 f"ET allongement {round(r)}× > 8×).",
                 kind="faux_positif")
         return passed(self.name, f"Forme non linéaire (largeur {round(w)} m, allongement {round(r, 1)}×).")
+
+
+@register
+class EmpriseRoutiereLayer(Layer):
+    """Emprise routière cadastrée (M6 Phase 2a, A-01) — parcelle majoritairement occupée
+    par des axes routiers BD TOPO carrossables (dédoublonnés md5) et quasi sans bâti.
+
+    - SANS aucun signal privé (ni PM privée propriétaire, ni mutation DVF 2014-2025) →
+      HARD_EXCLUDE « faux_positif » : voirie publique ou rétrocédée cadastrée par
+      exception, non marchande — une rue n'est pas une opportunité.
+    - AVEC signal privé → SOFT_FLAG « voirie/délaissé privé potentiel » : peut être une
+      VRAIE opportunité (délaissé acquérable) — compté à part, jamais exclu (garde-fou
+      Vic, GO 2a). Diagnostic, critère et échantillon de 20 vérifié à l'ortho : REVIEW-PACK M6.
+    """
+
+    name = "emprise_routiere"
+
+    def evaluate(self, parcel, ctx, params: dict[str, Any]) -> Verdict:
+        s = ctx.emprise_routiere_signals(parcel.id)
+        if s and s.get("no_road"):
+            return passed(self.name, "Aucun axe routier carrossable ne touche la parcelle.")
+        if not s or not s["surf"] or s["surf"] <= 0:
+            return passed(self.name, "Signal voirie non évaluable (surface nulle).")
+        road_len = float(s["road_len"])
+        densite = road_len * ROUTIERE_LARGEUR_NOMINALE_M / float(s["surf"])
+        bati_ratio = float(s["bati_m2"]) / float(s["surf"])
+        if (road_len >= ROUTIERE_LEN_MIN_M and densite >= ROUTIERE_DENSITE_MIN
+                and bati_ratio < ROUTIERE_BATI_RATIO_MAX):
+            detail = (f"{round(road_len)} m d'axes routiers sur la parcelle "
+                      f"(densité d'emprise {densite:.2f} ≥ 0.5, bâti {bati_ratio:.0%} < 10 %)")
+            if not s["pm_privee"] and not s["mutation_dvf"]:
+                return hard_exclude(
+                    self.name,
+                    f"Emprise routière — {detail} ; aucun signal privé (ni PM privée, "
+                    f"ni mutation DVF) : voirie publique/rétrocédée probable, non marchande.",
+                    kind="faux_positif")
+            signal = "PM privée propriétaire" if s["pm_privee"] else "mutation DVF connue"
+            return soft_flag(
+                self.name,
+                f"Voirie/délaissé PRIVÉ potentiel — {detail} mais {signal} : "
+                f"peut être une vraie opportunité (délaissé acquérable), conservée.",
+                Severity.INFO)
+        return passed(self.name,
+                      f"Pas une emprise routière ({round(road_len)} m d'axes, "
+                      f"densité {densite:.2f}, bâti {bati_ratio:.0%}).")
 
 
 @register

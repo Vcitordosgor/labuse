@@ -441,6 +441,52 @@ def _latest_eval(db: Session, parcel_id: int) -> models.ParcelEvaluation | None:
 _ETAGE0_SQL = "(d.status IN ('exclue', 'faux_positif_probable'))"
 
 
+# ── Adresse BAN (M6 Phase 2a, §1.8) ──────────────────────────────────────────
+# La MEILLEURE adresse BAN de la parcelle (index inverse `adresse_parcelles`, indexé idu) :
+# priorité au rattachement direct du point ('principal'), puis numéro le plus bas —
+# déterministe, MÊME règle que segments/registry.py (publipostage) et pre_dossier (CERFA).
+_BAN_ORDER = ("(ap.source = 'principal') DESC, (a.numero IS NULL), "
+              "NULLIF(regexp_replace(a.numero, '\\D', '', 'g'), '')::int NULLS LAST, a.id_ban")
+
+
+def _ban_lateral(idu_expr: str) -> str:
+    """Fragment LEFT JOIN LATERAL (colonnes ban_voie/ban_cp/ban_commune) — à joindre APRÈS
+    la pagination (page de :lim lignes) : jamais de N+1, coût = 1 lookup indexé par ligne."""
+    return ("LEFT JOIN LATERAL (SELECT trim(concat_ws(' ', a.numero, a.rep, a.voie)) AS ban_voie, "
+            "a.code_postal AS ban_cp, a.commune AS ban_commune "
+            "FROM adresse_parcelles ap JOIN adresses a ON a.id_ban = ap.id_ban "
+            f"WHERE ap.idu = {idu_expr} ORDER BY {_BAN_ORDER} LIMIT 1) ban ON true")
+
+
+def _ban_ready(db: Session) -> bool:
+    """Tables BAN présentes ? (ingestion ban_adresses) — mémorisé 5 min. Absentes (base de
+    test nue, install sans ingestion) → adresse None partout, le front affiche
+    « Adresse non disponible » (jamais un champ vide ni une 500)."""
+    return _mem_cached(("ban-ready",), 300.0, lambda: bool(db.execute(text(
+        "SELECT to_regclass('adresses') IS NOT NULL"
+        " AND to_regclass('adresse_parcelles') IS NOT NULL")).scalar()))
+
+
+def _fmt_ban(voie: str | None, cp: str | None, commune: str | None) -> str | None:
+    """« 2 Impasse des Caramboles, 97414 Entre-Deux » — None si aucune adresse (le front
+    porte le libellé d'absence, le payload reste honnête)."""
+    if not voie:
+        return None
+    tail = " ".join(x for x in (cp, commune) if x)
+    return f"{voie}, {tail}" if tail else voie
+
+
+def _ban_adresse(db: Session, idu: str) -> str | None:
+    """Adresse BAN de LA parcelle (fiche, pipeline) — 1 lookup indexé, None si aucune."""
+    if not _ban_ready(db):
+        return None
+    r = db.execute(text(
+        "SELECT trim(concat_ws(' ', a.numero, a.rep, a.voie)) AS voie, a.code_postal AS cp, "
+        "a.commune AS com FROM adresse_parcelles ap JOIN adresses a ON a.id_ban = ap.id_ban "
+        f"WHERE ap.idu = :idu ORDER BY {_BAN_ORDER} LIMIT 1"), {"idu": idu}).mappings().first()
+    return _fmt_ban(r["voie"], r["cp"], r["com"]) if r else None
+
+
 def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 surface_min: int | None, surface_max: int | None, sdp_min: int | None,
                 evenement: bool, vue_mer: bool, flags: str | None,
@@ -592,9 +638,13 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
     """Export CSV de la liste (mêmes filtres que /parcels) — le tier v2 EN PREMIER (M5.1,
     même vérité que l'app), statut matrice en secondaire, signaux propriétaire (Score V)
     en fin de ligne. La colonne « brûlante » v1.3 disparaît : brûlante = tier v2.
+    M6 2a : encodage utf-8-sig (BOM Excel) + séparateur « ; » (standard maison, cf.
+    /segments/export) + adresse postale BAN (référence parcelle = idu, 1re colonne).
     ⚠ Doit rester déclarée AVANT /parcels/{idu} (ordre de résolution des routes)."""
     import csv as _csv
     import io as _io
+
+    from .export_commun import adresses_ban
 
     extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                       sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
@@ -607,13 +657,18 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
         "  ORDER BY (s->>'points')::int DESC LIMIT 3) t(s)) "
         "FROM parcel_v_score WHERE parcelle_id = ANY(:idus)"),
         {"idus": [it["idu"] for it in items]}).all()}
+    adrs = adresses_ban(db, [it["idu"] for it in items])
     buf = _io.StringIO()
-    w = _csv.writer(buf)
-    w.writerow(["idu", "commune", "surface_m2", "tier_v2", "rang_v2", "mult_v2", "copro",
+    w = _csv.writer(buf, delimiter=";")          # Excel FR : point-virgule (standard maison)
+    w.writerow(["idu", "commune", "adresse_ban", "code_postal", "ville",
+                "surface_m2", "tier_v2", "rang_v2", "mult_v2", "copro",
                 "veille_succession", "statut_matrice", "q_score", "a_score",
                 "completeness", "proprio", "v_score", "v_band", "top_signaux"])
     for it in items:
-        w.writerow([it["idu"], it["commune"], it["surface_m2"],
+        a = adrs.get(it["idu"]) or {}
+        w.writerow([it["idu"], it["commune"],
+                    a.get("adresse") or "", a.get("code_postal") or "", a.get("ville") or "",
+                    it["surface_m2"],
                     ("ecartee" if it["etage0"] else it["tier_v2"]) or "",
                     it["rang_v2"] if it["rang_v2"] is not None else "",
                     f"{it['mult_v2']:.1f}" if it.get("mult_v2") is not None else "",
@@ -623,8 +678,10 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                     it["a_score"], it["completeness_score"], it["proprio"] or "",
                     it["v_score"] if it["v_score"] is not None else "",
                     it["v_band"] or "", tops.get(it["idu"]) or ""])
-    return Response(buf.getvalue(), media_type="text/csv; charset=utf-8",
-                    headers={"Content-Disposition": 'attachment; filename="labuse_parcelles.csv"'})
+    return Response(buf.getvalue().encode("utf-8-sig"),   # BOM : accents corrects dans Excel
+                    media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="labuse_parcelles.csv"',
+                             "X-Rows": str(len(items))})
 
 
 @app.get("/communes")
@@ -717,26 +774,41 @@ def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None
     """Recherche IDU/section pour l'omnibox en mode île (le client n'a plus les features en
     mémoire). Matche la fin d'IDU (section+numéro, ex. « AC0253 ») ou l'IDU complet.
     M5.1 : le tier v2 effectif accompagne chaque résultat (chip v2 en premier) et pilote
-    l'ordre (brûlante → chaude → réserve → à creuser → écartée, puis rang)."""
+    l'ordre (brûlante → chaude → réserve → à creuser → écartée, puis rang).
+    M6 2a (§1.8) : l'adresse BAN accompagne chaque résultat — jointure APRÈS le LIMIT
+    (sous-requête paginée), jamais un lookup par parcelle scannée."""
     needle = q.strip().upper().replace(" ", "")
+    ban_ok = _ban_ready(db)
+    ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
+                else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
+    ban_join = _ban_lateral("s.idu") if ban_ok else ""
     rows = db.execute(text(
         f"""
-        SELECT p.idu, p.commune, d.matrice_statut AS status, d.q_score, d.a_score,
-               s2.tier AS tier_v2, s2.rang AS rang_v2,
-               {_ETAGE0_SQL} AS etage0
-        FROM parcels p
-        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
-        WHERE p.idu ILIKE :pat AND (CAST(:c AS text) IS NULL OR p.commune = :c)
-        ORDER BY CASE WHEN {_ETAGE0_SQL} THEN 5
-                      WHEN s2.tier = 'brulante' THEN 0 WHEN s2.tier = 'chaude' THEN 1
-                      WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier = 'a_creuser' THEN 3
-                      ELSE 4 END,
-                 s2.rang ASC NULLS LAST, p.idu
-        LIMIT :lim
+        SELECT s.idu, s.commune, s.status, s.q_score, s.a_score, s.tier_v2, s.rang_v2, s.etage0
+               {ban_cols}
+        FROM (
+            SELECT p.idu, p.commune, d.matrice_statut AS status, d.q_score, d.a_score,
+                   s2.tier AS tier_v2, s2.rang AS rang_v2,
+                   {_ETAGE0_SQL} AS etage0,
+                   CASE WHEN {_ETAGE0_SQL} THEN 5
+                        WHEN s2.tier = 'brulante' THEN 0 WHEN s2.tier = 'chaude' THEN 1
+                        WHEN s2.tier = 'reserve_fonciere' THEN 2 WHEN s2.tier = 'a_creuser' THEN 3
+                        ELSE 4 END AS ord
+            FROM parcels p
+            LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+            WHERE p.idu ILIKE :pat AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+            ORDER BY ord, s2.rang ASC NULLS LAST, p.idu
+            LIMIT :lim
+        ) s
+        {ban_join}
+        ORDER BY s.ord, s.rang_v2 ASC NULLS LAST, s.idu
         """), {"pat": f"%{needle}", "c": commune, "run": source, "lim": limit,
                "v2run": _score_v2_run_id(db)}).mappings().all()
-    return [{**dict(r), "etage0": bool(r["etage0"])} for r in rows]
+    return [{"idu": r["idu"], "commune": r["commune"], "status": r["status"],
+             "q_score": r["q_score"], "a_score": r["a_score"], "tier_v2": r["tier_v2"],
+             "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
+             "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"])} for r in rows]
 
 
 @app.get("/stats/entonnoir")
@@ -903,9 +975,15 @@ def _score_v2_run_id(db: Session) -> str | None:
 def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str = Q_A_RUN_LABEL) -> dict:
     """Parcelles + matrice premium v2 (dryrun_parcel_evaluations). `status` = matrice_statut ;
     Q/A + complétude + événement rouge exposés (exigences #1/#2/#4). Une parcelle exclue à
-    l'étage 0 apparaît en `ecartee` ; les `evenement='rouge'` (BODACC ouvert) sont marquées."""
+    l'étage 0 apparaît en `ecartee` ; les `evenement='rouge'` (BODACC ouvert) sont marquées.
+    M6 2a (§1.8) : l'adresse BAN entre dans les properties (cartes de résultats mode commune) —
+    lateral indexé, mesuré +0,3 s / +1,7 MB sur Saint-Paul (51k parcelles, base 8,2 s / 38,6 Mo)."""
+    ban_ok = _ban_ready(db)
+    ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
+                else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
+    ban_join = _ban_lateral("p.idu") if ban_ok else ""
     rows = db.execute(text(
-        """
+        f"""
         SELECT p.idu, p.surface_m2,
                ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
@@ -921,7 +999,9 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
                  WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal,
                (SELECT array_agg(s0->>'code') FROM jsonb_array_elements(vs.signals) s0) AS v_sig
+               {ban_cols}
         FROM parcels p
+        {ban_join}
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_veille_succession vw ON vw.parcelle_id = p.idu
@@ -958,6 +1038,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
         "properties": {
             "idu": r["idu"],
             "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
+            "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"]),
             "status": r["status"],
             # correctif M5 : verdict effectif = tier v2 quand un run existe (étage 0 prime)
             "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"],
@@ -1024,6 +1105,12 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     base = "" if ("f_tiers" in xp or "f_statuts" in xp
                   or "s2.tier" in extra_where or _ETAGE0_SQL in extra_where) \
         else f"AND NOT {_ETAGE0_SQL}"
+    # Adresse BAN (M6 2a) : jointure APRÈS pagination (page de :lim lignes seulement) —
+    # 1 lookup indexé par ligne servie, mesuré +0,03 s sur la liste île (contrainte 1,5 s OK).
+    ban_ok = _ban_ready(db)
+    ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
+                else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
+    ban_join = _ban_lateral("pg.idu") if ban_ok else ""
     # perf (M5.1) : tri + filtres d'abord (page de :lim lignes), PUIS les jointures
     # d'affichage (propriétaire, cluster, veille, signaux) sur cette page seulement —
     # 3,6 s → <1 s sur l'île entière (baseline legacy : 4,1 s).
@@ -1055,7 +1142,9 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
                -- CRED-4 : fraîcheur du signal V daté le plus récent (BODACC/cessation/DPE)
                (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
                  WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal
+               {ban_cols}
         FROM page pg
+        {ban_join}
         LEFT JOIN parcel_veille_succession vw ON vw.parcelle_id = pg.idu
         LEFT JOIN parcelle_personne_morale own ON own.idu = pg.idu
         LEFT JOIN parcel_v_score vs ON vs.parcelle_id = pg.idu
@@ -1074,6 +1163,7 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     ).mappings().all()
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
+        "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"]),
         "lieu_dit": r["commune"], "status": r["status"], "q_score": r["q_score"], "a_score": r["a_score"],
         "a_completude": r["a_completude"], "completeness_score": r["completeness_score"],
         "evenement": "rouge" if r["evenement_rouge"] else None,
@@ -1338,6 +1428,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         {"idu": idu}).mappings().first()
     return {
         "idu": head["idu"], "commune": head["commune"],
+        # M6 2a (§1.8) : la meilleure adresse BAN rattachée — None si aucune (le front
+        # affiche « Adresse non disponible », jamais un champ vide)
+        "adresse": _ban_adresse(db, idu),
         "proprietaire_moral": dict(pm) if pm else None,
         "anru": {"quartier": anru["name"], "interet": anru["interet"],
                  "position": "dans" if anru["dans"] else "adjacente"} if anru else None,
@@ -1374,8 +1467,11 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
 
     A6 (mandat bilan-calculette) : si les hypothèses de la calculette sont passées, le PDF porte
     la CHARGE FONCIÈRE « selon vos hypothèses » (recalculée par le moteur, jamais un faux chiffre)."""
+    from .export_commun import adresse_ban_texte
     from .pdf_premium import render_fiche_pdf
     fiche = _q_v2_fiche(db, idu, run_label=source)
+    # M6 2a : adresse postale BAN en tête du PDF (l'écran l'a, le papier doit l'avoir)
+    fiche["adresse_ban"] = adresse_ban_texte(db, idu)
     # bloc CONTEXTE COMMUNE (mandat promotrice) : SRU + QPV/ANRU + 2-3 chiffres marché
     fiche["contexte_commune"] = commune_contexte(fiche["commune"], db)
     fiche["rtaa"] = config.load_yaml_config("rtaa_dom")   # rappel réglementaire (5bis)
@@ -1827,6 +1923,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
             "surface_m2": p.surface_m2, "centroid": {"lon": lon, "lat": lat},
+            "adresse": _ban_adresse(db, p.idu),   # M6 2a (§1.8) — meilleure adresse BAN
             "origine": p.origine,  # 'audit' → bandeau « audit à la demande » sur la fiche
         },
         "resume": resume,
@@ -2287,7 +2384,9 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
         "prospection": e.prospection or {},
         "proprietaire_label": prospection.statut_label((e.prospection or {}).get("statut_proprietaire")),
         "has_manual_contact": prospection.has_manual_contact(e.prospection),
-        "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2},
+        "parcel": {"commune": p.commune, "section": p.section, "surface_m2": p.surface_m2,
+                   # M6 2a (§1.8) : l'adresse BAN sur les cartes CRM (pipeline = volume faible)
+                   "adresse": _ban_adresse(db, p.idu)},
         "verdict": {
             "status": ev.status.value if ev else None,
             "opportunity_score": ev.opportunity_score if ev else None,

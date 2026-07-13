@@ -1,0 +1,46 @@
+{
+ "verdict": {
+  "titre": "VERDICT · SCORING V2",
+  "texte": "VERDICT · SCORING V2\n\nBrûlante v2\nChaude v2\nRéserve foncière\nÀ creuser\nÉcartée",
+  "items": [
+   {
+    "label": "Brûlante v2 Chaude v2 Réserve foncière À creuser Écartée",
+    "bg": "rgb(232, 105, 90)"
+   },
+   {
+    "label": "Brûlante v2",
+    "bg": "rgb(232, 105, 90)"
+   },
+   {
+    "label": "Chaude v2",
+    "bg": "rgb(232, 180, 76)"
+   },
+   {
+    "label": "Réserve foncière",
+    "bg": "rgb(111, 168, 220)"
+   },
+   {
+    "label": "À creuser",
+    "bg": "rgb(143, 166, 154)"
+   },
+   {
+    "label": "Écartée",
+    "bg": "rgb(74, 90, 82)"
+   }
+  ]
+ },
+ "mutabilite": {
+  "titre": "MUTABILITÉ",
+  "texte": "MUTABILITÉ\n\n0 m²\nSDP résiduelle\n5 000+",
+  "items": [
+   {
+    "label": "0 m² SDP résiduelle 5 000+",
+    "bg": null
+   },
+   {
+    "label": "0 m² SDP résiduelle 5 000+",
+    "bg": null
+   }
+  ]
+ }
+}

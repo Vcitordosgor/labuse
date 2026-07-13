@@ -1,0 +1,388 @@
+[
+ {
+  "module": "Scoring v2 (P)",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/v2/brulantes",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nScoring v2 (P)\n\nProbabilité de mutation à 12 mois — brûlantes v2, réserve foncière, top P\n\n✕\nBrûlantes v2\nRéserve foncière\nTop P\n×64.0\n97423000AB1908\n#1\n×64.0\n97423000AB1910\n#4\n×34.5\n97423000AB1911\n#6\n×22.0\n97411000KA0296\n#7\n×22.0\n97410000CD0905\n#8\n×22.0\n97418000AT2379\névén.\n#9\n×22.0\n97418000AT2317\névén.\n#11\n×22.0\n97410000AS1425\n#16\n×22.0\n97422000AD1237\n#17\n×13.3\n97411000EL0665\n#24\n×13.1\n974"
+ },
+ {
+  "module": "Faisabilité programme",
+  "statut": "OK",
+  "net": [],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nFaisabilité programme\n\nDécrivez votre programme, LABUSE trouve où le poser\n\n✕\nDécrivez le programme — les critères sont calculés et affichés (SDP, hauteur PLU). Le copilote sait pré-remplir : « un terrain pour 3 immeubles R+3 avec parking ».\nTYPE\nlogements\nrés. étudiante\nbureaux\nBÂTIMENTS\nR+N\nUNITÉS/BÂT\nM²/UNITÉ (hyp.)\nPARKING\noui\nTrouver les parcelles"
+ },
+ {
+  "module": "Parkings APER",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/solaire/parkings",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nParkings APER\n\nOmbrières obligatoires : parkings > 1 000 m², échéances légales, propriétaires\n\n✕\nLoi APER art. 40 — seuil Réunion 1 000 m² (décret 2025-802) : ombrières PV sur ≥ 50 % de la surface. ≥ 10 000 m² : échéance 01/07/2026 DÉPASSÉE (jusqu'à 40 k€/an). Détection OSM = plancher, pas un recensement ; exemptions non déduites.\ntous\n≥ 10 000 m²\n1 000-10 000 m²\n\n500 parkings assujettis · 2"
+ },
+ {
+  "module": "Toitures tertiaires",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/solaire/tertiaire",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nToitures tertiaires\n\nGrandes toitures × santé financière du propriétaire — le B2B solaire\n\n✕\nEmprises bâties > 500 m² (hors résidentiel) × propriétaire personne morale × dernier bilan INPI × gisement PVGIS — triées par potentiel (surface × score). Distance au poste source indisponible : cartographie EDF SEI dépubliée (sécurité). Capacité S3REnR restante : 0 MW sur l'île (avril 2026) — argume"
+ },
+ {
+  "module": "Division parcellaire",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/modules/division?min_score=70&limit=300&commune=Saint-Paul",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nDivision parcellaire\n\nRepérez les grands terrains où détacher un lot à bâtir\n\n✕\nLot candidat = approximation (plus grand cercle inscrit, recul bâti 3 m) — dessiné en pointillés, indicatif. Règles de division (PLU, accès, réseaux) à instruire.\nScore division ≥\n70\n\n698 candidats (SQL)\n\nBY 0125\n4 679 m² · emprise 5.1% · lot ~564 m²\n99\nER 0454\n2 683 m² · emprise 5.3% · lot ~678 m²\n99\nDV 0354\n4 7"
+ },
+ {
+  "module": "Foncier fantôme",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/modules/fantome?commune=Saint-Paul",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nFoncier fantôme\n\nLe constructible verrouillé que les autres ne voient pas\n\n✕\nConstructible (Q ≥ 50) mais verrouillé : personne morale introuvable au RNE ou dirigeant inactif. Levier indiqué par cas — vérification notariale indispensable.\n\n6 131 parcelles gelées · 600 affichées\n\nCK 0293\nCOMITE DE PROTECTION TUTELAIRE CROIX MARINE · PM introuvable au RNE\n96\nCP 0226\nCOMITE DE PROTECTION TUTELAI"
+ },
+ {
+  "module": "Scan patrimoine",
+  "statut": "OK",
+  "net": [],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nScan patrimoine\n\nTout le foncier d’un propriétaire en une recherche\n\n✕"
+ },
+ {
+  "module": "Mode bailleur",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   },
+   {
+    "url": "/modules/bailleur?commune=Saint-Paul",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nMode bailleur\n\nLe gisement LLS : QPV, TVA réduite, leviers du logement social\n\n✕\nQPV : TVA 2,1 % (au lieu de 8,5 % DOM), abattement TFPB 30 %, éligibilité LLS/LLTS renforcée — bilan bailleur à instruire au cas par cas.\n\n463 parcelles promues en QPV\n\nEY 0170\n19 787 m² · SDP 16 163 m²\nRéserve foncière(matrice : Chaude)\nEY 0611\n13 477 m² · SDP 13 535 m²\nRéserve foncière(matrice : Chaude)\nEY 061"
+ },
+ {
+  "module": "Matching promoteurs",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/partners/profiles",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nMatching promoteurs\n\nEnregistrez vos critères, soyez alerté quand ça matche\n\n✕\nProfils de recherche enregistrés — quand une parcelle bascule chaude et matche, l'alerte apparaît dans la cloche (M11). Les deux profils fournis sont des démos étiquetées.\nPromoteur démo — collectif (île)\nDÉMO\ntoute commune · surface 800–20000 m² · SDP ≥ 800\nCMiste démo — maisons (île)\nDÉMO\ntoute commune · surface"
+ },
+ {
+  "module": "Assemblage",
+  "statut": "OK",
+  "net": [],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nAssemblage\n\nFusionnez des parcelles contiguës en une assiette de projet\n\n✕\nCliquez les parcelles sur la carte pour composer l'assiette (re-cliquer retire). SDP cumulée = somme des résiduels — le règlement d'ensemble reste à instruire.\naucune parcelle sélectionnée\nAnalyser l'assiette (0)"
+ },
+ {
+  "module": "Baromètre foncier",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/moteurs/barometre",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nBaromètre foncier\n\nUn état du marché foncier prêt à distribuer (PDF)\n\n✕\nÎle entière (DVF 24 communes, Sitadel régional). Le PDF est le rapport distribuable — canal marketing.\n⬇ Rapport PDF\n\nDVF PAR TRIMESTRE\n\n2025T4\n1 230\n2 700 €/m²\n2025T3\n1 404\n2 826 €/m²\n2025T2\n1 216\n2 743 €/m²\n2025T1\n1 052\n2 735 €/m²\n2024T4\n1 367\n2 652 €/m²\n2024T3\n1 336\n2 694 €/m²\n2024T2\n1 128\n2 708 €/m²\n2024T1\n1 009\n2 59"
+ },
+ {
+  "module": "Radar permis",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/modules/permis?commune=Saint-Paul&months=24",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nRadar permis\n\nQui construit quoi, commune par commune (Sitadel)\n\n✕\nGéocodage 94 % — les non-géocodés restent listés. Données jusqu'au 2026-08-17 (flux Sitadel régional).\n12 mois\n24 mois\n48 mois\n72 mois\n\n548 permis · 514 sur la carte\n\nPC\n2026-05-27\nétat 2\n1 lgt\nPC\n2026-05-27\nétat 2\n1 lgt\nPC\n2026-05-27\nétat 2\n1 lgt\nPC\n2026-05-27\nétat 2\n1 lgt\nPD\n2026-05-27\nétat 2\nPD\n2026-05-27\nétat 2\nPC\n2026-05"
+ },
+ {
+  "module": "Promesses mortes",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/modules/promesses?commune=Saint-Paul&months=24",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nPromesses mortes\n\nLes permis anciens jamais sortis de terre\n\n✕\nPC accordé, aucune déclaration d'achèvement, parcelle toujours non bâtie au scoring — « réalisation à vérifier » sur place. Codes d'état de la source non documentés (affichés bruts).\nPermis plus vieux que\n24 mois\n36 mois\n48 mois\n60 mois\n\n1 823 promesses mortes · 500 affichées\n\nDR 0167\nPC 2013-02-15 · 897 m² · état 4\nÉcartée(matri"
+ },
+ {
+  "module": "Vélocité admin",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/modules/velocite",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nVélocité admin\n\nComparez les rythmes d’instruction des 24 communes\n\n✕\ndélai = date permis → déclaration d'achèvement (dépôt→décision non porté par la source) — la source ne porte pas les dates de dépôt/décision.\n⬇ Export CSV\nCOMMUNE (ÎLE)\nPERMIS ↓\nDÉLAI* ↓\nACHEV. ↓\nSaint-Pierre\n6 410\n17 m\n50%\nSaint-Paul\n6 325\n22 m\n32%\nLe Tampon\n4 449\n15 m\n46%\nSaint-Denis\n3 851\n18 m\n37%\nSaint-Louis\n3 128\n17 m"
+ },
+ {
+  "module": "Simulateur PLU",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/moteurs/simulplu/zones?commune=Saint-Paul",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nSimulateur PLU\n\nTestez « et si cette zone passait constructible ? »\n\n✕\nRecalcul à blanc — rien n'est persisté. SDP estimée par analogie aux parcelles U de la commune (méthode affichée). Le vrai recalcul règlementaire = prochain cycle.\nAUc → U\nAUs → U"
+ },
+ {
+  "module": "Simulateur ZAN",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/moteurs/zan",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nSimulateur ZAN\n\nLa contrainte d’artificialisation, commune par commune\n\n✕\nQuotas SAR/SCOT en attente de données officielles — lecture INDICATIVE. OCS GE partiel (communes ingérées uniquement). Construire sur de l'artificialisé = zéro dette ZAN.\n\nARTIFICIALISATION (OCS GE, île)\n\nSaint-Paul\n152 îlots artif.\n54 %\nLa Possession\n110 îlots artif.\n55 %\nSaint-Leu\n82 îlots artif.\n51 %\nSaint-Denis\n82 "
+ },
+ {
+  "module": "Remonter le temps",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=13&TILEROW=4586&TILECOL=5355&LAYER=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&FORMAT=ima",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=13&TILEROW=4587&TILECOL=5352&LAYER=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&FORMAT=ima",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=13&TILEROW=4587&TILECOL=5355&LAYER=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&FORMAT=ima",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=13&TILEROW=4585&TILECOL=5353&LAYER=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&FORMAT=ima",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=13&TILEROW=4588&TILECOL=5353&LAYER=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&FORMAT=ima",
+    "status": 200
+   },
+   {
+    "url": "/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX=13&TILEROW=4586&TILECOL=5352&LAYER=ORTHOIMAGERY.ORTHOPHOTOS.1950-1965&FORMAT=ima",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nRemonter le temps\n\nComparez 1950 et aujourd’hui pour lire la mutation\n\n✕\nComparateur 1950-1965 ↔ aujourd'hui (orthos IGN libres). Glissez la poignée au centre de la carte. Les parcelles promues restent affichées des deux côtés.\n\nLe split est actif sur la carte. Accès direct depuis toute fiche : bouton « 1950 »."
+ },
+ {
+  "module": "Due diligence",
+  "statut": "OK",
+  "net": [],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nDue diligence\n\nPassez une liste de parcelles au crible avant d’acheter\n\n✕\nCollez une liste de références (IDU complet ou SECTION+NUMÉRO, ex. AC0253) — un rapport par parcelle, PDF individuel réutilisant l'export fiche.\nAnalyser le lot"
+ },
+ {
+  "module": "Courrier propriétaire",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/pipeline",
+    "status": 200
+   }
+  ],
+  "bad": [],
+  "errs": [],
+  "extrait": "OUTIL\nCourrier propriétaire\n\nGénérez vos courriers d’approche par lot\n\n✕\nGénération de courriers types — aucun envoi. Identité du propriétaire : workflow SPF/CERFA existant (fiche → export SPF), aucune donnée nominative automatisée.\nContexte\nstandard\nindivision\nsuccession\nGénérer 6 courriers"
+ },
+ {
+  "module": "Vues — Recalculer les compteurs",
+  "statut": "OK",
+  "net": [],
+  "errs": []
+ },
+ {
+  "module": "Vues — ouvrir « Foncier — Brûlantes & chaudes »",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/dark_nolabels/13/5353/4586.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5354/4586.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5353/4585.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5354/4585.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5353/4587.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5354/4587.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5352/4586.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5355/4586.png",
+    "status": 200
+   }
+  ],
+  "errs": []
+ },
+ {
+  "module": "Vues — argumentaire",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/segments",
+    "status": 200
+   },
+   {
+    "url": "/map/parcels.geojson?source=q_v3_datagap&commune=Saint-Paul&limit=60000",
+    "status": 200
+   }
+  ]
+ },
+ {
+  "module": "Projets — Ouvrir (rejouer)",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/projets/22/rejouer",
+    "status": 200
+   },
+   {
+    "url": "/projets/apercu",
+    "status": 200
+   },
+   {
+    "url": "/projets",
+    "status": 200
+   },
+   {
+    "url": "/stats?source=q_v3_datagap&sdp_min=2760&communes=Le+Port%2CLa+Possession%2CSaint-Paul%2CLes+Trois-Bassins%2CSaint-Leu",
+    "status": 200
+   },
+   {
+    "url": "/stats?source=q_v3_datagap&sdp_min=2760&communes=Le+Port%2CLa+Possession%2CSaint-Paul%2CLes+Trois-Bassins%2CSaint-Leu",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/11/1339/1147.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/11/1339/1146.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/11/1340/1147.png",
+    "status": 200
+   }
+  ],
+  "errs": []
+ },
+ {
+  "module": "CRM — ouvrir fiche depuis kanban",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/events/watch/97410000AD0448",
+    "status": 200
+   },
+   {
+    "url": "/pipeline/parcel/97410000AD0448",
+    "status": 200
+   },
+   {
+    "url": "/parcels/97410000AD0448?source=q_v3_datagap",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/11/1339/1147.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/11/1339/1146.png",
+    "status": 200
+   }
+  ],
+  "errs": []
+ },
+ {
+  "module": "IA — recherche NL",
+  "statut": "CASSÉ (clic)",
+  "err": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Che"
+ },
+ {
+  "module": "Sources — Imprimer",
+  "statut": "OK (window.print)",
+  "net": []
+ }
+]

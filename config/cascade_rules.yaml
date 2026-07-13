@@ -352,6 +352,14 @@ layers:
     phase: 1
     enabled: true
     params: {}
+  # M6 Phase 2a (A-01) — emprise routière cadastrée : axes BD TOPO dédoublonnés ≥ 30 m
+  # clippés à la parcelle, densité d'emprise ≥ 0.5 (largeur nominale 6 m), bâti < 10 % ;
+  # sans signal privé → HARD_EXCLUDE faux_positif ; avec signal privé (PM privée ou
+  # mutation DVF) → SOFT_FLAG « voirie/délaissé privé potentiel », parcelle CONSERVÉE.
+  - name: emprise_routiere
+    phase: 1
+    enabled: true
+    params: {}
 
   # ───────────────────────── PHASE 2 — coûteuse / externe ─────────────────────────
 

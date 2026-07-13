@@ -1,0 +1,18 @@
+51 129 parcelles analysées → 249 opportunités détectéespourquoi ? ▴
+
+LABUSE a analysé 51 129 parcelles ; son avis retient 249 opportunités (brûlantes v2 + chaudes v2). Le reste reste visible et cliquable — voici pourquoi il est écarté.
+
+Brûlante v2
+27
+Chaude v2
+222
+Réserve foncière
+444
+À creuser
+12 707
+Écartée
+37 729
+
+LE RESTE, PAR MOTIF
+
+Opportunités = brûlantes v2 + chaudes v2 (scoring P×C, hors étage 0 du run servi). Une parcelle peut cumuler plusieurs motifs (les pourcentages se recouvrent). « Qualité insuffisante » = survivante du filtre dur mais Q<50.

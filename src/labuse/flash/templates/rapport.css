@@ -37,7 +37,7 @@
     padding-bottom: 4pt; margin-bottom: 8pt;
   }
   @bottom-center {
-    content: "Document d'information — ne vaut ni document d'urbanisme opposable, ni étude de faisabilité, ni conseil juridique · page " counter(page) "/" counter(pages);
+    content: "Document d'information — ne remplace pas un certificat d'urbanisme ; ne vaut ni document opposable, ni conseil juridique · page " counter(page) "/" counter(pages);
     font-family: "Inter"; font-size: 6.5pt; color: #8C9891;
   }
 }
@@ -66,6 +66,7 @@ p { margin: 0 0 2mm 0; }
                   color: var(--txt-mut); margin-left: 4mm; }
 .garde h1 { font-size: 21pt; margin: 0 0 2mm 0; line-height: 1.2; }
 .garde .adresse { font-size: 12pt; color: var(--txt); margin-bottom: 6mm; }
+.garde .adresse-nd { font-size: 10pt; color: #8C9891; }
 .garde .refs { font-family: "JetBrains Mono", monospace; font-size: 9pt;
                color: var(--txt-mut); margin-bottom: 8mm; }
 .garde .refs b { color: var(--txt-hi); }

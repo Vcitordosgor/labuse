@@ -1,0 +1,58 @@
+SET
+=== commune_insee_logement ===
+ n  | n_insee |                          m_min                           |                          m_max                           | log_null | log_min | log_max 
+----+---------+----------------------------------------------------------+----------------------------------------------------------+----------+---------+---------
+ 24 |      24 | RP 2023 (exploitation principale, géographie 01/01/2026) | RP 2023 (exploitation principale, géographie 01/01/2026) |        0 |    2515 |   76819
+(1 ligne)
+
+=== commune_contexte_sru ===
+ n  | n_insee |                                m_min                                |                                m_max                                | taux_null | t_min | t_max 
+----+---------+---------------------------------------------------------------------+---------------------------------------------------------------------+-----------+-------+-------
+ 24 |      24 | inventaire LLS 01/01/2024 · périmètre 01/01/2025 · prélèvement 2025 | inventaire LLS 01/01/2024 · périmètre 01/01/2025 · prélèvement 2025 |         0 |   2.8 | 60.71
+(1 ligne)
+
+=== plh_epci ===
+ n | n_epci | obj_null | o_min | o_max 
+---+--------+----------+-------+-------
+ 5 |      5 |        0 |   800 |  1800
+(1 ligne)
+
+=== conso_baseline_commune ===
+ n  | n_insee | a_min | a_max | k_min  | k_max  | k_aberrant 
+----+---------+-------+-------+--------+--------+------------
+ 24 |      24 |  2024 |  2024 | 2387.9 | 3825.5 |          0
+(1 ligne)
+
+=== data_sources apercu ===
+ n  | count 
+----+-------
+ 51 |    51
+(1 ligne)
+
+=== qpv generation (attrs) ===
+ jsonb_object_keys 
+-------------------
+ insee_com
+ code_qp
+ generation
+ insee_dep
+ siren_epci
+ lib_qp
+ lib_com
+(7 lignes)
+
+=== georisque_alea subtypes ===
+      subtype      | count 
+-------------------+-------
+ mouvement_terrain |   917
+ inondation        |    76
+(2 lignes)
+
+=== ppr subtypes ===
+   subtype    | count | count 
+--------------+-------+-------
+ PRESCRIPTION |    88 |    23
+ INTERDICTION |    74 |    23
+ i            |     2 |     1
+(3 lignes)
+

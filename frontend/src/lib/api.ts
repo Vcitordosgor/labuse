@@ -8,10 +8,10 @@ export interface ParcelFeatureCollection {
 import { useApp, type Filters } from '../store/useApp'
 import { vSignalCodes } from './filters'
 
-// SOURCE DE VÉRITÉ : run de référence q_v3_datagap (bascule 10/07/2026 — data-gap +
-// règle « le signal de zone ne bascule jamais seul »). Doit rester aligné sur Q_A_RUN_LABEL.
-// JAMAIS parcel_evaluations (éval historique). Cf. brief « NOTE SOURCE DE VÉRITÉ ».
-export const SOURCE = 'q_v3_datagap'
+// SOURCE DE VÉRITÉ : run de référence q_v4_m6a (bascule M6 2a 13/07/2026 — exclusion
+// emprise routière A-01 ; précédent : q_v3_datagap, 10/07/2026). Doit rester aligné sur
+// Q_A_RUN_LABEL. JAMAIS parcel_evaluations (éval historique). Cf. « NOTE SOURCE DE VÉRITÉ ».
+export const SOURCE = 'q_v4_m6a'
 /** Commune active — depuis le store (null = « Toute l'île »). L'ancienne constante Saint-Paul
  *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
 export const commune = () => useApp.getState().commune
@@ -94,7 +94,8 @@ export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
   j<{ idu: string; commune: string; status: string | null; q_score: number | null;
-      tier_v2: string | null; rang_v2: number | null; etage0: boolean }[]>(
+      tier_v2: string | null; rang_v2: number | null; etage0: boolean;
+      adresse?: string | null }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
 export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)

@@ -152,6 +152,14 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                     "(AU*st) : travaux mineurs de mise aux normes, H max 4 m.",
                     {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
 
+    # M6 2b (A-03) : zone à vocation économique — l'habitat y est interdit au règlement
+    # (exceptions résiduelles type logement de gardiennage/fonction, hors cible produit).
+    if rules.habitat == "interdit":
+        return fini(False, "Habitat interdit au règlement — zone à vocation économique/"
+                    "activités (seules exceptions : gardiennage/logement de fonction). "
+                    "Aucune capacité logement calculée.",
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+
     # reculs (avec hypothèse prudente si "a_verifier")
     if _is_num(rules.recul_voirie_m):
         recul_v, rv_src = float(rules.recul_voirie_m), rules.sources.get("recul_voirie", "Art. 6")
