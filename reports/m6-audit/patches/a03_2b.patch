@@ -1,0 +1,148 @@
+diff --git a/config/plu_saint_paul.yaml b/config/plu_saint_paul.yaml
+index 5b511fc..08d8514 100644
+--- a/config/plu_saint_paul.yaml
++++ b/config/plu_saint_paul.yaml
+@@ -129,7 +129,8 @@ zones:
+   U1e: {bassin: "Saint-Paul Centre", he_m: null, hf_m: 14, hauteur_note: "Seul hf donné (14 m au faîtage) ; hé non précisé.",
+         hauteur_src: "Zones U1e/U1l, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9",
+         recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6", recul_limites_sep_m: 3, recul_limites_src: "Art. 7",
+-        stat_logement: "a_verifier", stat_src: "Art. 12", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
++        stat_logement: "a_verifier", stat_src: "Art. 12", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13",
++        habitat: interdit, habitat_src: "Art. 1.2 p.37-38 (M6 2b A-03) : zone d'activités économiques, industrielles, artisanales et commerciales — habitat interdit hors gardiennage"}
+   U1l: {bassin: "Saint-Paul Centre", he_m: null, hf_m: 14, hauteur_note: "Idem U1e (section commune). hé non précisé.",
+         hauteur_src: "Zones U1e/U1l, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9",
+         recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6", recul_limites_sep_m: 3, recul_limites_src: "Art. 7",
+@@ -138,7 +139,8 @@ zones:
+         hauteur_note: "18 m au faîtage ; porté à 21 m pour parcs de stationnement communs à <250 m de l'axe de la RN7. hé non précisé.",
+         hauteur_src: "Zone U1ec, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9",
+         recul_voirie_m: "a_verifier", recul_limites_sep_m: 3, stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
+-        note: "Mentionnée dans la section U1e/U1l ; non listée séparément au sommaire."}
++        note: "Mentionnée dans la section U1e/U1l ; non listée séparément au sommaire.",
++        habitat: interdit, habitat_src: "Art. 1.2 p.37-38, même article que U1e (M6 2b A-03)"}
+   U1lec: {bassin: "Saint-Paul Centre", he_m: "a_verifier", hf_m: "a_verifier",
+         note: "Zone citée comme renvoi par AU1lec ; règles propres non localisées précisément — à vérifier.",
+         hauteur_src: "a_verifier", emprise_sol_pct: "a_verifier", recul_voirie_m: "a_verifier",
+@@ -168,7 +170,8 @@ zones:
+         pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
+   U2e: {bassin: "Saint-Gilles", he_m: null, hf_m: 14, hauteur_note: "Seul hf (14 m) ; hé non précisé.", hauteur_src: "Zone U2e, Art. 10.2, p.~92",
+         emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_limites_sep_m: 3,
+-        stat_logement: "a_verifier", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
++        stat_logement: "a_verifier", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13",
++        habitat: interdit, habitat_src: "Art. 1.2 p.88 (M6 2b A-03) : occupation spécialisée (Carrosse, Bruniquel, STEP Ermitage) — habitat interdit"}
+ 
+   # ============== BASSIN PLATEAU CAILLOU (p. 101-161) ==============
+   U3a: {bassin: "Plateau Caillou", he_m: 15, hf_m: 19, hauteur_note: "Sous-cas : hé 18 / hf 22 (secteur spécifique).", hauteur_src: "Zone U3a, Art. 10.2, p.~115",
+@@ -189,7 +192,8 @@ zones:
+         pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+   U3e: {bassin: "Plateau Caillou", he_m: null, hf_m: 14, hauteur_note: "Seul hf (14 m) ; ZAC Savane des Tamarins : 19 m. hé non précisé.", hauteur_src: "Zone U3e, Art. 10.2, p.~149",
+         emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_limites_sep_m: 3,
+-        stat_logement: "a_verifier", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
++        stat_logement: "a_verifier", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13",
++        habitat: interdit, habitat_src: "Art. 1.2 p.145 (M6 2b A-03) : espaces à vocation d'activités économiques et artisanales (Eperon, Plateau Caillou) — habitat interdit"}
+   Usdu_PlateauCaillou: {bassin: "Plateau Caillou", he_m: 6, hf_m: 9, hauteur_src: "Zone Usdu, Art. 10.2, p.~131",
+         emprise_sol_pct: "a_verifier", emprise_note: "Emprise liée aux surfaces perméables imposées (règle propre, ≠ « pas de règle ») — à détailler", emprise_src: "Art. 9",
+         recul_voirie_m: "a_verifier", recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
+@@ -224,7 +228,8 @@ zones:
+         pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+   AU5e: {bassin: "La Saline", he_m: null, hf_m: 14, hauteur_note: "Zone AU avec règle PROPRE (ne renvoie pas à un U) : hf 14 m ; hé non précisé.",
+         hauteur_src: "Zone AU5e, Art. 10.2, p.~254", emprise_sol_pct: "a_verifier", recul_voirie_m: "a_verifier",
+-        recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier"}
++        recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
++        habitat: interdit, habitat_src: "Art. 1.2 p.254 (M6 2b A-03) : espace à vocation d'activités économiques et artisanales (La Saline) — habitat interdit"}
+ 
+   # ============== BASSIN DU GUILLAUME (p. 269-313) ==============
+   U6a: {bassin: "Le Guillaume", he_m: 12, hf_m: 16, hauteur_src: "Zone U6a, Art. 10.2, p.~283",
+diff --git a/src/labuse/cascade/layers/phase1.py b/src/labuse/cascade/layers/phase1.py
+index de0258a..aa807bf 100644
+--- a/src/labuse/cascade/layers/phase1.py
++++ b/src/labuse/cascade/layers/phase1.py
+@@ -254,7 +254,49 @@ class ZonagePluGpuLayer(Layer):
+                 kind="faux_positif", source=SRC_GPU,
+             )]
+ 
++        # M6 2b (A-03) : zones U/AU CALIBRÉES (YAML PLU communal) dont le règlement
++        # INTERDIT l'habitat (zones à vocation économique — ex. U1e/U2e/U3e/AU*e à
++        # Saint-Paul, Art. 1.2 cité dans le YAML). Même sensibilité au recouvrement que
++        # l'exclusion A/N : ≥ seuil → HARD_EXCLUDE « exclue » ; entre plancher et seuil →
++        # SOFT_FLAG FORT + bonus réduit à la part habitat-admis. Ne concerne QUE les zones
++        # calibrées (habitat=interdit explicite au YAML) — jamais l'estimation générique.
++        # NB : `subtype` porte la CLASSE typezone (U/AU/AUc…) ; le libellé fin de zone
++        # (« U1e », « AU1ec ») vit dans `name` — c'est lui que le YAML calibre.
++        def _zone_lib(i) -> str:
++            return ((i.name or i.subtype) or "").strip()
++
++        def _habitat_interdit(libelle: str) -> bool:
++            from ...faisabilite.plu_rules import resolve_zone
++            r = resolve_zone(libelle, parcel.commune)
++            return r is not None and r.calibree and r.habitat == "interdit"
++
++        eco = [i for i in uau if _habitat_interdit(_zone_lib(i))]
++        eco_cov = min(1.0, sum(i.coverage for i in eco))
++        if eco and eco_cov >= seuil:
++            lib_eco = _zone_lib(_dominant(eco))
++            from ...faisabilite.plu_rules import resolve_zone
++            r_eco = resolve_zone(lib_eco, parcel.commune)
++            src_eco = (r_eco.raw.get("habitat_src") or "règlement de zone") if r_eco else "règlement de zone"
++            return [hard_exclude(
++                self.name,
++                f"Zone « {lib_eco} » à vocation économique — habitat interdit au règlement "
++                f"({src_eco}) ; recouvrement {eco_cov * 100:.0f} %.",
++                kind="exclue", source=SRC_GPU,
++            )]
++
+         verdicts: list[Verdict] = []
++        if eco and eco_cov >= plancher:
++            lib_eco = _zone_lib(_dominant(eco))
++            verdicts.append(soft_flag(
++                self.name,
++                f"Partiellement en zone à vocation économique « {lib_eco} » (habitat interdit "
++                f"au règlement sur ~{eco_cov * 100:.0f} % de la parcelle).",
++                Severity.FORT, source=SRC_GPU,
++            ))
++            uau = [i for i in uau if i not in eco]
++            uau_cov = min(1.0, sum(i.coverage for i in uau))
++            if not uau:
++                return verdicts
+         mixte = bool(an) and an_cov >= plancher and bool(uau)
+         if mixte:
+             lib_an = (_dominant(an).subtype or "").strip()
+diff --git a/src/labuse/faisabilite/engine.py b/src/labuse/faisabilite/engine.py
+index f574f83..31fd83d 100644
+--- a/src/labuse/faisabilite/engine.py
++++ b/src/labuse/faisabilite/engine.py
+@@ -152,6 +152,14 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
+                     "(AU*st) : travaux mineurs de mise aux normes, H max 4 m.",
+                     {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+ 
++    # M6 2b (A-03) : zone à vocation économique — l'habitat y est interdit au règlement
++    # (exceptions résiduelles type logement de gardiennage/fonction, hors cible produit).
++    if rules.habitat == "interdit":
++        return fini(False, "Habitat interdit au règlement — zone à vocation économique/"
++                    "activités (seules exceptions : gardiennage/logement de fonction). "
++                    "Aucune capacité logement calculée.",
++                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
++
+     # reculs (avec hypothèse prudente si "a_verifier")
+     if _is_num(rules.recul_voirie_m):
+         recul_v, rv_src = float(rules.recul_voirie_m), rules.sources.get("recul_voirie", "Art. 6")
+diff --git a/src/labuse/faisabilite/plu_rules.py b/src/labuse/faisabilite/plu_rules.py
+index 42ad480..16abc3c 100644
+--- a/src/labuse/faisabilite/plu_rules.py
++++ b/src/labuse/faisabilite/plu_rules.py
+@@ -40,6 +40,8 @@ class ZoneRules:
+     # provenance / contexte
+     via_renvoi: str | None = None            # ex. "AU1a → règles U1a"
+     constructible_neuf: bool = True          # False pour les zones AU*st
++    habitat: str | None = None               # "interdit" = vocation non résidentielle au
++                                             # règlement (zones éco — M6 2b, A-03) ; None = admis
+     calibree: bool = True                    # True = règles d'un YAML PLU communal ; False = estimation générique
+     hauteur_mode: str | None = None          # 'prospect' = hf_m calculé PAR PARCELLE (L≥H, largeur voirie)
+     notes: list[str] = field(default_factory=list)
+@@ -111,6 +113,7 @@ def _to_rules(code: str, v: dict) -> ZoneRules:
+         stat_logement=v.get("stat_logement"),
+         pleine_terre_pct=_num(v.get("pleine_terre_pct")),
+         hauteur_mode=v.get("hauteur_mode"),
++        habitat=v.get("habitat"),
+         notes=[n for n in notes if n], sources=srcs, raw=v,
+     )
+ 
