@@ -3,8 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { deleteSearch, getCommunes, getEvents, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, saveSearch, searchParcels } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
-import { STATUT_META, V_BAND_META } from '../../lib/status'
-import type { Statut } from '../../lib/types'
+import { TIER_V2_META, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 
 function Omnibox() {
@@ -93,23 +92,22 @@ function CheckRow({ label, on, toggle }: { label: string; on: boolean; toggle: (
   )
 }
 
-// Popover d'ajout de filtre — filtres MÉTIER combinables (statuts multi, plages, booléens, flags).
+// Popover d'ajout de filtre — filtres MÉTIER combinables (M5.1 : tiers v2 multi, plages,
+// booléens, flags, signaux propriétaire). Le tier v1.3 « 🔥 » et les bandes V ont disparu.
 function AddFilter() {
   const { filters, setFilter, setFilters } = useApp()
   const [open, setOpen] = useState(false)
-  const STATUTS: Statut[] = ['chaude', 'a_surveiller', 'a_creuser', 'ecartee']
+  const TIERS: TierV2[] = ['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee']
   useEffect(() => {
     if (!open) return
     const h = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false)
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [open])
-  const toggleStatut = (s: Statut) =>
-    setFilter('statuts', filters.statuts.includes(s) ? filters.statuts.filter((x) => x !== s) : [...filters.statuts, s])
+  const toggleTier = (t: TierV2) =>
+    setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
   const toggleFlag = (k: string) =>
     setFilter('flags', filters.flags.includes(k) ? filters.flags.filter((x) => x !== k) : [...filters.flags, k])
-  const toggleVBand = (b: string) =>
-    setFilter('vBands', filters.vBands.includes(b) ? filters.vBands.filter((x) => x !== b) : [...filters.vBands, b])
   const toggleVSignal = (k: string) =>
     setFilter('vSignals', filters.vSignals.includes(k) ? filters.vSignals.filter((x) => x !== k) : [...filters.vSignals, k])
   return (
@@ -121,13 +119,15 @@ function AddFilter() {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-9 z-20 w-[300px] rounded-xl border border-line-2 bg-surface-2 p-4 shadow-2xl">
-            <label className="font-mono text-[10px] tracking-widest text-txt-dim">STATUT (multi)</label>
+            <label className="font-mono text-[10px] tracking-widest text-txt-dim">VERDICT · SCORING V2 (multi)</label>
             <div className="mb-3 mt-1.5 flex flex-wrap gap-1.5">
-              {STATUTS.map((s) => (
-                <button key={s} onClick={() => toggleStatut(s)}
+              {TIERS.map((t) => (
+                <button key={t} onClick={() => toggleTier(t)}
+                  title={t === 'ecartee' ? 'Exclusions dures de l\'étage 0 (run servi)' : undefined}
                   className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                    filters.statuts.includes(s) ? 'border-mint text-txt-hi' : 'border-line-2 text-txt-mut'}`}>
-                  {STATUT_META[s].label}
+                    filters.tiers.includes(t) ? 'border-mint text-txt-hi' : 'border-line-2 text-txt-mut'}`}>
+                  <span className="mr-1 inline-block h-1.5 w-1.5 rounded-full" style={{ background: TIER_V2_META[t].color }} />
+                  {TIER_V2_META[t].label}
                 </button>
               ))}
             </div>
@@ -142,6 +142,8 @@ function AddFilter() {
             <div className="mb-3 flex flex-col gap-1.5">
               <CheckRow label="Avec événement (BODACC)" on={filters.evenement} toggle={() => setFilter('evenement', !filters.evenement)} />
               <CheckRow label="Vue mer dégagée" on={filters.vueMer} toggle={() => setFilter('vueMer', !filters.vueMer)} />
+              <CheckRow label="Veille succession" on={filters.veille} toggle={() => setFilter('veille', !filters.veille)} />
+              <CheckRow label="Masquer les copropriétés" on={filters.horsCopro} toggle={() => setFilter('horsCopro', !filters.horsCopro)} />
             </div>
             <label className="font-mono text-[10px] tracking-widest text-txt-dim">FLAGS ACTIFS (au moins un)</label>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -153,28 +155,14 @@ function AddFilter() {
                 </button>
               ))}
             </div>
-            {/* Score V (Vendabilité, Stage 3) : tier 🔥, bandes, signaux individuels */}
-            <label className="mt-3 block font-mono text-[10px] tracking-widest text-txt-dim">VENDABILITÉ (SCORE V)</label>
-            <div className="mt-1.5">
-              <CheckRow label="🔥 Brûlantes seulement (chaude + V ≥ 50)" on={filters.brulantes}
-                toggle={() => setFilter('brulantes', !filters.brulantes)} />
-            </div>
-            <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {(Object.keys(V_BAND_META) as (keyof typeof V_BAND_META)[]).map((b) => (
-                <button key={b} onClick={() => toggleVBand(b)}
-                  className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                    filters.vBands.includes(b) ? 'border-[#FF8A50] text-[#FF8A50]' : 'border-line-2 text-txt-mut'}`}
-                  title={`Bande V : ${V_BAND_META[b].label}`}>
-                  {V_BAND_META[b].label}
-                </button>
-              ))}
-            </div>
+            {/* Signaux propriétaire (dossier de la fiche) — libellés métier, au moins un présent */}
+            <label className="mt-3 block font-mono text-[10px] tracking-widest text-txt-dim">SIGNAUX PROPRIÉTAIRE</label>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {V_SIGNAL_DEFS.map((d) => (
                 <button key={d.key} onClick={() => toggleVSignal(d.key)}
                   className={`rounded-full border px-2 py-0.5 text-[11px] ${
                     filters.vSignals.includes(d.key) ? 'border-[#FF8A50] text-[#FF8A50]' : 'border-line-2 text-txt-mut'}`}
-                  title={`Au moins un signal « ${d.label} » retenu au Score V`}>
+                  title={`Au moins un signal « ${d.label} » au dossier propriétaire`}>
                   {d.label}
                 </button>
               ))}

@@ -1,0 +1,199 @@
+[
+  {
+    "couche": "_chargement",
+    "mode": "commune",
+    "net": [
+      {
+        "url": "/socle/communes974.geojson",
+        "status": 200,
+        "n": null,
+        "vueMerOui": null
+      },
+      {
+        "url": "/map/parcels.geojson?source=q_v3_datagap&commune=Saint-Paul&limit=60000",
+        "status": 200,
+        "n": null,
+        "vueMerOui": null
+      }
+    ]
+  },
+  {
+    "couche": "zonage",
+    "label": "Zonage PLU",
+    "mode": "commune",
+    "active": true,
+    "rendu": true,
+    "net": [
+      {
+        "url": "/map/layers.geojson?kind=plu_gpu_zone&commune=Saint-Paul",
+        "status": 200,
+        "n": 1097,
+        "vueMerOui": null
+      }
+    ],
+    "note": ""
+  },
+  {
+    "couche": "ppr",
+    "label": "PPR multirisque",
+    "mode": "commune",
+    "active": true,
+    "rendu": true,
+    "net": [
+      {
+        "url": "/map/layers.geojson?kind=ppr&commune=Saint-Paul",
+        "status": 200,
+        "n": 11,
+        "vueMerOui": null
+      }
+    ],
+    "note": ""
+  },
+  {
+    "couche": "vue_mer",
+    "label": "Vue mer",
+    "mode": "commune",
+    "active": true,
+    "rendu": true,
+    "net": [],
+    "note": ""
+  },
+  {
+    "couche": "parc",
+    "label": "Parc national",
+    "mode": "commune",
+    "active": true,
+    "rendu": true,
+    "net": [
+      {
+        "url": "/map/layers.geojson?kind=parc_national&commune=Saint-Paul",
+        "status": 200,
+        "n": 3,
+        "vueMerOui": null
+      }
+    ],
+    "note": ""
+  },
+  {
+    "couche": "anru",
+    "label": "ANRU (NPNRU)",
+    "mode": "commune",
+    "active": true,
+    "rendu": false,
+    "net": [
+      {
+        "url": "/map/layers.geojson?kind=anru&commune=Saint-Paul",
+        "status": 200,
+        "n": 0,
+        "vueMerOui": null
+      }
+    ],
+    "note": ""
+  },
+  {
+    "couche": "equipements",
+    "label": "Équipements",
+    "mode": "commune",
+    "active": true,
+    "rendu": true,
+    "net": [
+      {
+        "url": "/map/layers.geojson?kind=amenite&commune=Saint-Paul",
+        "status": 200,
+        "n": 1437,
+        "vueMerOui": null
+      }
+    ],
+    "note": ""
+  },
+  {
+    "couche": "parcelles",
+    "label": "Parcelles",
+    "mode": "commune",
+    "active": true,
+    "rendu": true,
+    "net": [],
+    "note": ""
+  },
+  {
+    "couche": "limites",
+    "label": "Limites parcelles",
+    "mode": "commune",
+    "active": true,
+    "rendu": true,
+    "net": [],
+    "note": ""
+  },
+  {
+    "couche": "communes",
+    "label": "Limites communes",
+    "mode": "commune",
+    "active": true,
+    "rendu": true,
+    "net": [],
+    "note": ""
+  },
+  {
+    "couche": "_chargement",
+    "mode": "ile",
+    "net": [
+      {
+        "url": "/socle/communes974.geojson",
+        "status": 200,
+        "n": null,
+        "vueMerOui": null
+      },
+      {
+        "url": "/map/tiles/{z}/{x}/{y}.pbf (×4)",
+        "status": "200",
+        "n": null
+      }
+    ]
+  },
+  {
+    "couche": "zonage",
+    "label": "Zonage PLU",
+    "mode": "ile",
+    "active": true,
+    "rendu": true,
+    "net": [
+      {
+        "url": "/map/tiles/ov/plu_gpu_zone/{z}/{x}/{y}.pbf (×4)",
+        "status": "200",
+        "n": null
+      }
+    ],
+    "note": ""
+  },
+  {
+    "couche": "ppr",
+    "label": "PPR multirisque",
+    "mode": "ile",
+    "active": true,
+    "rendu": true,
+    "net": [
+      {
+        "url": "/map/tiles/ov/ppr/{z}/{x}/{y}.pbf (×4)",
+        "status": "200",
+        "n": null
+      }
+    ],
+    "note": ""
+  },
+  {
+    "couche": "anru",
+    "label": "ANRU (NPNRU)",
+    "mode": "ile",
+    "active": true,
+    "rendu": true,
+    "net": [
+      {
+        "url": "/map/layers.geojson?kind=anru",
+        "status": 200,
+        "n": 8,
+        "vueMerOui": null
+      }
+    ],
+    "note": ""
+  }
+]

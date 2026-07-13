@@ -10,7 +10,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { TIER_V2_META } from '../../lib/status'
 
-type Contribution = { feature: string; bin: string; signe: '+' | '-'; libelle: string; log_hazard: number }
+type Contribution = { feature: string; bin: string; signe: '+' | '-'; libelle: string; log_hazard: number; phrase?: string }
 type ScoreV2 = {
   parcelle_id: string; mult_base: number; percentile: number | null; rang: number | null
   tier: string; contrib_z: number; contrib_d: number; pourquoi: Contribution[]
@@ -72,7 +72,11 @@ export function ScoreV2Block({ idu }: { idu: string }) {
               c.signe === '+' ? 'text-st-chaude' : 'text-st-ecartee'}`}>
               {c.signe}{Math.abs(c.log_hazard).toFixed(2)}
             </span>
-            <span className="text-txt">{c.libelle}{c.bin ? <span className="text-txt-dim"> [{c.bin}]</span> : null}</span>
+            {/* M5.1 lot 3.3 : la phrase client (table versionnée serveur) remplace le
+                « libellé [bin] » technique ; le bin exact reste au survol (audit) */}
+            <span className="text-txt" title={c.bin ? `${c.libelle} — tranche ${c.bin}` : c.libelle}>
+              {c.phrase ?? c.libelle}
+            </span>
           </li>
         ))}
       </ul>

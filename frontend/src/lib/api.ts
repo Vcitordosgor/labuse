@@ -47,22 +47,26 @@ const q = (extra: Record<string, string | number> = {}) => {
   }).toString()
 }
 
-/** Filtres chips → query params serveur (mode île : la liste et les compteurs sont SQL). */
+/** Filtres chips → query params serveur (mode île : la liste et les compteurs sont SQL).
+ *  M5.1 : `tiers` (v2) pilote — plus jamais `statuts` (matrice) ni `brulantes` (v1.3). */
 export const filterParams = (f: Filters): Record<string, string | number> => ({
-  ...(f.statuts.length ? { statuts: f.statuts.join(',') } : {}),
+  ...(f.tiers.length ? { tiers: f.tiers.join(',') } : {}),
   ...(f.scoreMin != null ? { score_min: f.scoreMin } : {}),
   ...(f.surfaceMin != null ? { surface_min: f.surfaceMin } : {}),
   ...(f.surfaceMax != null ? { surface_max: f.surfaceMax } : {}),
   ...(f.sdpMin != null ? { sdp_min: f.sdpMin } : {}),
   ...(f.evenement ? { evenement: 'true' } : {}),
   ...(f.vueMer ? { vue_mer: 'true' } : {}),
+  ...(f.veille ? { veille: 'true' } : {}),
+  ...(f.horsCopro ? { hors_copro: 'true' } : {}),
   ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
   ...(f.flagsExclus.length ? { flags_exclus: f.flagsExclus.join(',') } : {}),
   ...(f.communes.length ? { communes: f.communes.join(',') } : {}),
-  ...(f.vBands.length ? { v_bands: f.vBands.join(',') } : {}),
   ...(f.vSignals.length ? { v_signal: vSignalCodes(f.vSignals).join(',') } : {}),
-  ...(f.brulantes ? { brulantes: 'true' } : {}),
 })
+
+/** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
+export type SortKey = 'rang' | 'mult' | 'surface' | 'commune'
 
 export interface CommuneInfo { commune: string; insee: string; parcelles: number; chaudes: number; evaluees: number; bbox: [number, number, number, number]; note: string | null }
 export const getCommunes = () => j<CommuneInfo[]>('/communes')
@@ -75,7 +79,11 @@ export interface ContexteCommune {
   marche: { millesime: string; logements: number; vacants: number; proprietaires_pct: number; locataires_pct: number; maisons_pct: number; apparts_pct: number; typologie: Record<string, any>; source_nom: string; source_url: string } | null
   notes: string[]
 }
-export interface Entonnoir { commune: string | null; analysees: number; opportunites: number; motifs: { motif: string; n: number }[]; note: string }
+export interface Entonnoir {
+  commune: string | null; analysees: number; opportunites: number
+  tiers?: { brulante: number; chaude: number; reserve_fonciere: number; a_creuser: number; ecartee: number }
+  motifs: { motif: string; n: number }[]; note: string
+}
 export const getEntonnoir = () => {
   const c = commune()
   return j<Entonnoir>(`/stats/entonnoir${c ? `?commune=${encodeURIComponent(c)}` : ''}`)
@@ -85,15 +93,16 @@ export const getContexteCommune = (commune: string) =>
 export const parcelAt = (lon: number, lat: number) =>
   j<{ idu: string | null }>(`/parcels/at?lon=${lon}&lat=${lat}`)
 export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =>
-  j<{ idu: string; commune: string; status: string | null; q_score: number | null }[]>(
+  j<{ idu: string; commune: string; status: string | null; q_score: number | null;
+      tier_v2: string | null; rang_v2: number | null; etage0: boolean }[]>(
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
 export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)
-export const getResults = (f?: Filters, limit = 500, sortV = false) =>
-  j<ParcelResult[]>(`/parcels?${q({ limit, ...(sortV ? { sort: 'v' } : {}), ...(f ? filterParams(f) : {}) })}`)
-/** Export CSV de la liste courante (mêmes filtres) — colonnes v_score / v_band / top_signaux. */
-export const csvExportUrl = (f?: Filters, sortV = false) =>
-  `/parcels/export.csv?${q({ limit: 5000, ...(sortV ? { sort: 'v' } : {}), ...(f ? filterParams(f) : {}) })}`
+export const getResults = (f?: Filters, limit = 500, sort: SortKey = 'rang') =>
+  j<ParcelResult[]>(`/parcels?${q({ limit, sort, ...(f ? filterParams(f) : {}) })}`)
+/** Export CSV de la liste courante (mêmes filtres, même tri) — tier v2 en premier. */
+export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') =>
+  `/parcels/export.csv?${q({ limit: 5000, sort, ...(f ? filterParams(f) : {}) })}`
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)

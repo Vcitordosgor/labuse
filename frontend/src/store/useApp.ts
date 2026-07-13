@@ -1,5 +1,6 @@
 import { create } from 'zustand'
-import type { FicheLine, MapMode, Statut } from '../lib/types'
+import type { FicheLine, MapMode } from '../lib/types'
+import type { TierV2 } from '../lib/status'
 
 export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets' | 'segments'
 
@@ -17,26 +18,28 @@ export interface LayerToggles {
 
 // Filtres actifs — appliqués EN MÊME TEMPS à la carte, la liste et les compteurs, et
 // SÉRIALISÉS DANS L'URL (#f=…) : une recherche = un lien partageable.
+// M5.1 : le PILOTAGE passe aux TIERS v2 (`tiers`) — le filtre `statuts` (matrice) et le
+// tier v1.3 `brulantes` disparaissent de l'app (API : deprecated, servis par legacy=1).
 export interface Filters {
-  statuts: Statut[]          // vide = tous
+  tiers: TierV2[]            // vide = univers v2 hors étage 0 servi
   scoreMin: number | null
   surfaceMin: number | null
   surfaceMax: number | null
   sdpMin: number | null      // SDP résiduelle minimale (m²)
   evenement: boolean         // seulement les parcelles à événement (BODACC rouge)
   vueMer: boolean            // seulement vue mer dégagée
+  veille: boolean            // veille succession (radar patrimonial)
+  horsCopro: boolean         // toggle copro : masquer les copropriétés
   flags: string[]            // flags actifs requis (au moins un)
   flagsExclus: string[]      // copilote-projet : contraintes RÉDHIBITOIRES (aucun de ces flags)
   communes: string[]         // R2 : secteur du cadreur (multi-communes, mode île)
-  vBands: string[]           // Score V : bandes (fort/present/faible/aucun/na) — au moins une
-  vSignals: string[]         // Score V : codes signaux §5.3 (au moins un présent)
-  brulantes: boolean         // Score V : tier 🔥 (chaude Q×A ∧ V ≥ seuil)
+  vSignals: string[]         // signaux propriétaire (dossier V, §5.3) — au moins un présent
 }
 
 export const EMPTY_FILTERS: Filters = {
-  statuts: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
-  evenement: false, vueMer: false, flags: [], flagsExclus: [], communes: [],
-  vBands: [], vSignals: [], brulantes: false,
+  tiers: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
+  evenement: false, vueMer: false, veille: false, horsCopro: false,
+  flags: [], flagsExclus: [], communes: [], vSignals: [],
 }
 
 // brouillon d'un projet issu de l'entretien : la fiche + la dérivation moteur (filtres, SDP
@@ -49,7 +52,7 @@ export interface ProjetBrouillon {
 }
 
 // restitution : compteur + top cliquables ; V3 : « pourquoi » par parcelle + contexte projet.
-export interface IaTop { idu: string; commune: string; q_score: number; pourquoi?: string[] }
+export interface IaTop { idu: string; commune: string; q_score: number; mult_v2?: number | null; rang_v2?: number | null; pourquoi?: string[] }
 export interface IaRestitution {
   n: number
   phrase: string

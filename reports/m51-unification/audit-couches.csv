@@ -1,0 +1,13 @@
+couche,active,source_table,n_objets_base,n_objets_reseau,http,statut
+zonage,oui,spatial_layers(plu_gpu_zone),1097,1097,200,OK
+parcelles,oui,parcels+dryrun_parcel_evaluations,51129,51005,200,OK (124 parcelles <2 m2 filtrees a l'affichage)
+ppr,oui,spatial_layers(ppr),11,11,200,OK
+vue_mer,oui,parcel_vue_mer,11384,11359,-,OK (propriete vue_mer du geojson parcelles - aucune requete propre)
+parc,oui,spatial_layers(parc_national),3,3,200,OK (voir anomalie A2 en mode ile)
+limites,oui,parcels,51129,51005,-,OK (meme source que parcelles)
+communes,oui,fichier statique communes974.geojson,24,24,200,OK
+anru,oui,spatial_layers(anru),0,0,200,OK-VIDE (aucun perimetre NPNRU a Saint-Paul ; 8 servis et rendus en mode ile)
+equipements,oui,spatial_layers(amenite),1437,1437,200,OK (minzoom 13 ; 7 subtypes dont tcsp/commerce hors legende)
+zonage_ile,oui,mvt_overlays(plu_gpu_zone),6306,tuiles MVT x4,200,OK
+ppr_ile,oui,mvt_overlays(ppr),164,tuiles MVT x4,200,OK
+anru_ile,oui,spatial_layers(anru),8,8,200,OK

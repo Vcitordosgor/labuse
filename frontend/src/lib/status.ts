@@ -45,6 +45,18 @@ export function verdictMeta(
   return { ...(statut ? STATUT_META[statut] : { label: '—', color: NONE_COLOR }), v2: false, tier: null }
 }
 
+// M5.1 : le TIER EFFECTIF d'une parcelle — la même règle que verdictMeta, sous forme de
+// valeur filtrable (compteurs, chips, filtres carte/liste du mode commune).
+// étage 0 servi → 'ecartee' ; sinon tier v2 ; sans run v2 → null (repli legacy).
+export function effectiveTier(
+  tierV2: string | null | undefined,
+  etage0?: boolean | number | null,
+): TierV2 | null {
+  if (etage0) return 'ecartee'
+  const t = tierV2 as TierV2 | null | undefined
+  return t && TIER_V2_META[t] ? t : null
+}
+
 export const NONE_COLOR = '#39463F'
 
 export const statutColor = (s: Statut | null | undefined) =>
@@ -65,7 +77,6 @@ export const V_BAND_META: Record<VBand, { label: string; color: string }> = {
   na: { label: 'N.A.', color: '#4A5A52' },
 }
 export const vBandColor = (b: VBand | null | undefined) => (b && V_BAND_META[b]?.color) || NONE_COLOR
-export const BRULANTE_COLOR = '#FF6B35'
 
 // Item 7 (UX V1) : définitions Q/A/V — UNE phrase chacune, identique partout où la lettre
 // apparaît (fiche, liste, restitution, CRM). Jamais un sigle nu pour un nouvel utilisateur.

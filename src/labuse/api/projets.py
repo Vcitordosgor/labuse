@@ -197,6 +197,11 @@ def _projet_dict(p: models.Projet) -> dict:
 
 
 _STATUT_LABEL = {"chaude": "Chaude", "a_surveiller": "À surveiller", "a_creuser": "À creuser"}
+#: M5.1 : le TIER v2 est le verdict énoncé au client (l'étage 0 du run servi prime) ;
+#: le statut matrice ne sert plus que de repli (item sans run v2).
+_TIER_LABEL = {"brulante": "Brûlante v2", "chaude": "Chaude v2",
+               "reserve_fonciere": "Réserve foncière", "a_creuser": "À creuser",
+               "ecartee": "Écartée"}
 
 
 def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) -> list[str]:
@@ -204,7 +209,12 @@ def _pourquoi_lignes(item: dict, sdp_besoin: int | None, carencees: set[str]) ->
     (aucune valeur inventée). Ordre : verdict, capacité vs besoin, hauteur PLU, contexte."""
     out: list[str] = []
     statut = item.get("statut") or item.get("status")   # M22 → statut ; q_v2_list → status
-    st = _STATUT_LABEL.get(statut, statut or "—")
+    if item.get("etage0"):
+        st = "Écartée (exclusion dure)"
+    elif item.get("tier_v2") in _TIER_LABEL:
+        st = _TIER_LABEL[item["tier_v2"]]
+    else:
+        st = _STATUT_LABEL.get(statut, statut or "—")
     if item.get("q_score") is not None:
         out.append(f"{st} · qualité {item['q_score']}/100")
     else:

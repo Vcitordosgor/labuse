@@ -1,20 +1,30 @@
 import { useQuery } from '@tanstack/react-query'
 import { getCommunes, getResults, getStats } from './api'
-import type { Statut } from './types'
+import type { TierV2 } from './status'
 import { EMPTY_FILTERS, useApp, type Filters } from '../store/useApp'
 
 /** Filtres (forme FILTER_SCHEMA serveur) → objet Filters du store. Pur, déterministe.
+ *  M5.1 : `tiers` v2 pilote — un `statuts` matrice résiduel (vieux modèle/lien) est
+ *  TRADUIT vers son équivalent v2 (chaude→chaude, a_surveiller→réserve foncière).
  *  La commune n'est PAS ici : c'est un filtre de périmètre géré par le geste d'application. */
+const STATUT_VERS_TIER: Record<string, TierV2> = {
+  chaude: 'chaude', a_surveiller: 'reserve_fonciere', a_creuser: 'a_creuser', ecartee: 'ecartee',
+}
+
 export function filtresToFilters(f: Record<string, unknown>): Filters {
+  const tiers = (f.tiers as TierV2[]) ?? []
+  const traduits = ((f.statuts as string[]) ?? []).map((s) => STATUT_VERS_TIER[s]).filter(Boolean)
   return {
     ...EMPTY_FILTERS,
-    statuts: (f.statuts as Statut[]) ?? [],
+    tiers: [...new Set([...tiers, ...traduits])],
     scoreMin: (f.scoreMin as number | null) ?? null,
     surfaceMin: (f.surfaceMin as number | null) ?? null,
     surfaceMax: (f.surfaceMax as number | null) ?? null,
     sdpMin: (f.sdpMin as number | null) ?? null,
     evenement: !!f.evenement,
     vueMer: !!f.vueMer,
+    veille: !!f.veille,
+    horsCopro: !!f.horsCopro,
     flags: (f.flags as string[]) ?? [],
     flagsExclus: (f.flagsExclus as string[]) ?? [],
     communes: (f.communes as string[]) ?? [],
@@ -59,7 +69,8 @@ export function useApplySearch() {
       // top 3 seulement → limite basse (20) : sous contention de tuiles « tout », une réponse
       // légère revient bien plus vite qu'un /parcels?limit=500 (la restitution est un flourish)
       const [st, top] = await Promise.all([getStats(next), getResults(next, 20)])
-      const n = st.chaude + st.a_surveiller + st.a_creuser
+      // M5.1 : le compteur de la restitution = l'univers v2 filtré (hors écartées)
+      const n = st.tiers.brulante + st.tiers.chaude + st.tiers.reserve_fonciere + st.tiers.a_creuser
       // ajout C (UX V1) : 0 résultat → proposer de retirer le critère numérique le plus serré
       // (heuristique simple : SDP puis surface min puis score puis surface max), relançable d'un clic
       let relance: { label: string; raw: Record<string, unknown> } | null = null
@@ -78,7 +89,8 @@ export function useApplySearch() {
       setIaRestitution({
         n,
         phrase,
-        top: top.slice(0, 3).map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score })),
+        top: top.slice(0, 3).map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score,
+                                           mult_v2: t.mult_v2, rang_v2: t.rang_v2 })),
         // item 2 (UX V1) : l'explication du serveur (et le drapeau stub) restent VISIBLES
         // dans la restitution — pas seulement sur la vue IA qu'on vient de quitter
         explanation: meta?.explanation ?? null,

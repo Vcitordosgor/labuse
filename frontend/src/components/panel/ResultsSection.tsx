@@ -1,42 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats } from '../../lib/api'
-import { hasScopeFilters, matchAll, matchScope, PROMUES, type ParcelProps } from '../../lib/filters'
+import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats, type SortKey } from '../../lib/api'
+import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
-import { ageSignal, BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
-import type { Statut } from '../../lib/types'
+import { completudeColor, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
 import { useApp } from '../../store/useApp'
 
 const fmt = (n: number) => n.toLocaleString('fr-FR')
 
-// Badge V (Vendabilité) — pastille + valeur, style par bande, 🔥 pour Brûlante (chaude ∧ V≥seuil).
-// V NULL (public/bailleur) → badge spécial « démarche dédiée » à la place du score.
+// M5.1 : le badge « V nn » a disparu de la liste (le dossier propriétaire reste dans la
+// fiche) ; les badges secondaires conservés : même proprio ×N, événement daté, veille
+// succession, vue mer, propriétaire spécial.
 const OWNER_BADGE: Record<string, { label: string; title: string }> = {
-  public: { label: 'PUBLIC', title: 'Foncier public — démarche dédiée (V non applicable)' },
-  bailleur: { label: 'BAILLEUR', title: 'Bailleur social — V non applicable' },
-  copro: { label: 'COPRO', title: 'Copropriété — acquisition complexe (V calculé)' },
-}
-
-export function VBadge({ v, band, brulante, dernierSignal }: {
-  v: number | null | undefined; band: string | null | undefined; brulante?: boolean
-  dernierSignal?: string | null
-}) {
-  if (v == null) return null
-  const color = brulante ? BRULANTE_COLOR : vBandColor(band as never)
-  // CRED-4 : l'âge du dernier signal DATÉ (BODACC/cessation/DPE) d'un coup d'œil —
-  // pastille < 6 mois / 6-18 / > 18. Sans signal daté : signaux d'état courant, pas de pastille.
-  const age = ageSignal(dernierSignal)
-  return (
-    <span className="inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[9px] font-semibold"
-      style={{ background: `${color}1f`, color }}
-      title={`${SCORE_TIP.v} (${v}/100)${brulante ? ' — 🔥 BRÛLANTE (chaude Q×A + signaux vendeur forts)' : ''}${
-        age ? ` — dernier signal daté : ${age.label} (${new Date(dernierSignal!).toLocaleDateString('fr-FR')})`
-            : ' — signaux d\'état courant (sans date d\'événement)'} — détail dans la fiche`}>
-      {brulante && <span aria-hidden>🔥</span>}
-      V {v}
-      {age && <span data-v-age-liste className="h-1.5 w-1.5 rounded-full" style={{ background: age.color }} />}
-    </span>
-  )
+  public: { label: 'PUBLIC', title: 'Foncier public — démarche dédiée' },
+  bailleur: { label: 'BAILLEUR', title: 'Bailleur social — démarche dédiée' },
+  copro: { label: 'COPRO', title: 'Copropriété — acquisition complexe (hors classement foncier)' },
 }
 
 // Mini-anneau de complétude — exigence #1 : le score ne s'affiche JAMAIS seul.
@@ -57,8 +35,8 @@ function CompletudeRing({ value }: { value: number }) {
 
 function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
   const { selectedIdu, select } = useApp()
-  // correctif M5 : la barre + le score prennent la couleur du VERDICT EFFECTIF (tier v2
-  // quand un run existe, étage 0 prime) — le statut matrice n'est plus le verdict affiché
+  // M5.1 : le VERDICT v2 pilote la carte de résultat — chip tier EN PREMIER (couleur
+  // verdictMeta), rang + ×N ; l'étage 0 du run servi prime.
   const meta = verdictMeta(p.status, p.tier_v2, p.etage0)
   const on = selectedIdu === p.idu
   return (
@@ -69,32 +47,32 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
     >
       <span className="absolute left-0 top-0 h-full w-[3px]" style={{ background: meta.color }} />
       <div className="min-w-0 flex-1">
-        {/* FIX (rendu) : les badges DÉBORDAIENT sur le score/anneau à droite (chevauchement).
-            La rangée passe en flex-wrap (min-w-0) et l'IDU reste sur UNE ligne (whitespace-nowrap) :
-            « même proprio ×N » va à la ligne au lieu d'empiéter sur la colonne score. */}
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="shrink-0 whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
+          <span data-tier-chip className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+            style={{ background: `${meta.color}1f`, color: meta.color }}
+            title={`Verdict scoring v2 (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}>
+            {meta.label}{p.rang_v2 != null && !p.etage0 ? ` · ${p.rang_v2}` : ''}
+          </span>
           {p.evenement === 'rouge' && (
             <span className="shrink-0 rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
-              title={p.status === 'chaude' ? 'Chaude PAR ÉVÉNEMENT (procédure BODACC ouverte) — statut forcé, pas issu de la matrice Q×A' : 'Événement — procédure BODACC ouverte'}>
-              {p.status === 'chaude' ? '● CHAUDE · ÉVÉNEMENT' : '● ÉVÉNEMENT'}
+              title={`Événement — procédure BODACC ouverte${p.evenement_date ? ` (${new Date(p.evenement_date).toLocaleDateString('fr-FR')})` : ''}`}>
+              ● ÉVÉNEMENT{p.evenement_date ? ` · ${new Date(p.evenement_date).toLocaleDateString('fr-FR')}` : ''}
             </span>
           )}
           {(p.cluster ?? 0) > 1 && (
             <span className="shrink-0 rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]"
-              title={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) parcelle(s) chaude(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}>
+              title={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) opportunité(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}>
               même proprio ×{p.cluster}
             </span>
           )}
-          {meta.v2 && (meta.tier === 'brulante' || meta.tier === 'chaude') && (
-            <span className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
-              style={{ background: `${meta.color}1f`, color: meta.color }}
-              title={`Verdict scoring v2 (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}`}>
-              {meta.label}{p.rang_v2 != null ? ` · ${p.rang_v2}` : ''}
+          {p.veille && (
+            <span className="shrink-0 rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[9px] font-medium text-[#B497F0]"
+              title="Veille succession — radar patrimonial (signal d'état, pas un événement daté)">
+              veille succession
             </span>
           )}
           {p.vue_mer === 'oui' && <span className="shrink-0 text-[10px] text-[#7DE8E0]" title="Vue mer dégagée">◠</span>}
-          <VBadge v={p.v_score} band={p.v_band} brulante={p.brulante} dernierSignal={p.v_dernier_signal} />
           {p.owner_type && OWNER_BADGE[p.owner_type] && (
             <span className="shrink-0 rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim"
               title={OWNER_BADGE[p.owner_type].title}>
@@ -105,36 +83,42 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
         <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
-        <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }} title={SCORE_TIP.q}>{p.q_score}</span>
+        {/* ×N = l'affichage produit du scoring v2 (probabilité relative de mutation) */}
+        <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}
+          title={p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)} vs moyenne du parc (scoring v2)` : 'Scoring v2 non disponible'}>
+          {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
+        </span>
         <CompletudeRing value={p.completeness_score} />
       </div>
     </button>
   )
 }
 
-// Chips de statut — MULTI (cliquer = basculer l'appartenance) ; « Tout » vide la sélection.
-function StatutChips({ counts, partial }: { counts: Record<Statut | 'all', number>; partial: boolean }) {
+// Chips de tier v2 — MULTI (cliquer = basculer l'appartenance) ; « Tout » vide la sélection
+// (périmètre par défaut = univers v2 hors étage 0 servi). « Écartées » (opt-in) = étage 0 dur.
+function TierChips({ counts, partial }: { counts: Record<TierV2 | 'all', number>; partial: boolean }) {
   const { filters, setFilter } = useApp()
-  const items: { v: Statut | 'all'; label: string; color?: string }[] = [
-    { v: 'all', label: 'Opportunités' },
-    { v: 'chaude', label: 'Chaude', color: STATUT_META.chaude.color },
-    { v: 'a_surveiller', label: 'À surveiller', color: STATUT_META.a_surveiller.color },
-    { v: 'a_creuser', label: 'À creuser', color: STATUT_META.a_creuser.color },
-    // C7 : les écartées en OPT-IN — activé, elles colorent la carte et entrent dans la liste
-    { v: 'ecartee', label: 'Écartées', color: STATUT_META.ecartee.color },
+  const items: { v: TierV2 | 'all'; label: string; color?: string }[] = [
+    { v: 'all', label: 'Tout' },
+    { v: 'brulante', label: 'Brûlantes v2', color: TIER_V2_META.brulante.color },
+    { v: 'chaude', label: 'Chaudes', color: TIER_V2_META.chaude.color },
+    { v: 'reserve_fonciere', label: 'Réserve foncière', color: TIER_V2_META.reserve_fonciere.color },
+    { v: 'a_creuser', label: 'À creuser', color: TIER_V2_META.a_creuser.color },
+    // opt-in : les exclusions dures de l'étage 0 (run servi) — motifs dans l'entonnoir
+    { v: 'ecartee', label: 'Écartées', color: TIER_V2_META.ecartee.color },
   ]
   return (
     <div className="mt-2 flex shrink-0 flex-wrap gap-1.5" title={partial ? 'Comptes recalculés avec les filtres actifs' : 'Comptes exacts (SQL, base entière)'}>
       {items.map((it) => {
-        const on = it.v === 'all' ? filters.statuts.length === 0 : filters.statuts.includes(it.v as Statut)
+        const on = it.v === 'all' ? filters.tiers.length === 0 : filters.tiers.includes(it.v as TierV2)
         return (
           <button
             key={it.v}
             onClick={() => {
-              if (it.v === 'all') setFilter('statuts', [])
+              if (it.v === 'all') setFilter('tiers', [])
               else {
-                const s = it.v as Statut
-                setFilter('statuts', filters.statuts.includes(s) ? filters.statuts.filter((x) => x !== s) : [...filters.statuts, s])
+                const t = it.v as TierV2
+                setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
               }
             }}
             className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${
@@ -172,7 +156,8 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
   }, [open])
   return (
     <div className="relative mt-2 shrink-0">
-      <p className="text-[11px] text-txt-dim">
+      <p className="text-[11px] text-txt-dim"
+        title="Opportunités détectées = brûlantes v2 + chaudes v2 (scoring P×C, hors étage 0 du run servi)">
         <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
         <button ref={btnRef} data-entonnoir-btn onClick={toggle}
           className="ml-1.5 text-mint hover:underline" title="L'entonnoir par motif — pourquoi le reste est écarté (SQL-exact)">
@@ -187,9 +172,19 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
           <div data-entonnoir-popover className={`absolute left-0 z-20 flex max-h-[52vh] w-[300px] flex-col rounded-xl border border-line-2 bg-surface-2 p-3 shadow-2xl ${openUp ? 'bottom-full mb-1' : 'top-6'}`}>
             <p className="shrink-0 text-[11px] leading-snug text-txt">
               LABUSE a analysé <b>{fmt(q.data?.analysees ?? total)}</b> parcelles ; son avis retient
-              <b className="text-mint"> {fmt(q.data?.opportunites ?? opportunites)}</b> opportunités.
-              Le reste reste visible et cliquable — voici pourquoi il est écarté.
+              <b className="text-mint"> {fmt(q.data?.opportunites ?? opportunites)}</b> opportunités
+              (brûlantes v2 + chaudes v2). Le reste reste visible et cliquable — voici pourquoi il est écarté.
             </p>
+            {q.data?.tiers && (
+              <div className="mt-1.5 flex shrink-0 flex-wrap gap-x-3 gap-y-0.5">
+                {(['brulante', 'chaude', 'reserve_fonciere', 'a_creuser', 'ecartee'] as TierV2[]).map((t) => (
+                  <span key={t} className="flex items-center gap-1 text-[10px] text-txt-mut">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: TIER_V2_META[t].color }} />
+                    {TIER_V2_META[t].label} <span className="font-mono">{fmt(q.data!.tiers![t])}</span>
+                  </span>
+                ))}
+              </div>
+            )}
             <p className="mt-1.5 shrink-0 font-mono text-[9.5px] tracking-widest text-txt-dim">LE RESTE, PAR MOTIF</p>
             {q.isLoading && <p className="mt-1 text-[11px] text-txt-dim">Chargement…</p>}
             <div className="mt-1 flex min-h-0 flex-1 flex-col gap-0.5 overflow-y-auto">
@@ -210,22 +205,34 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
 
 const CAP = 200
 
+//: tris (M5.1 lot 1.3) — rang P par défaut ; le tri par V a disparu du sélecteur.
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: 'rang', label: 'rang P' },
+  { key: 'mult', label: '×N' },
+  { key: 'surface', label: 'surface' },
+  { key: 'commune', label: 'commune' },
+]
+
+const TIER_ZERO: Record<TierV2 | 'all', number> = {
+  all: 0, brulante: 0, chaude: 0, reserve_fonciere: 0, a_creuser: 0, ecartee: 0,
+}
+
 export function ResultsSection() {
   const { filters, query, zone, resetFilters, commune, setCommune, setFilter } = useApp()
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   const [showAll, setShowAll] = useState(false)
-  // Tri par défaut de la vue chaudes : V DÉCROISSANT (Score V, Phase 4 §4) — débrayable.
-  const [sortV, setSortV] = useState(true)
-  // compteurs par statut sous filtres de PÉRIMÈTRE (jamais le filtre statut lui-même)
-  const scopeOnly = useMemo(() => ({ ...filters, statuts: [] as Statut[] }), [filters])
+  // Tri par défaut (M5.1) : RANG P croissant — ×N / surface / commune en options.
+  const [sort, setSort] = useState<SortKey>('rang')
+  // compteurs par tier sous filtres de PÉRIMÈTRE (jamais le filtre tier lui-même)
+  const scopeOnly = useMemo(() => ({ ...filters, tiers: [] as TierV2[] }), [filters])
   const stats = useQuery({
     queryKey: ['stats', commune, ile ? scopeOnly : null],
     queryFn: () => getStats(ile ? scopeOnly : undefined),
   })
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   const serverList = useQuery({
-    queryKey: ['results', commune, filters, sortV],
-    queryFn: () => getResults(filters, 500, sortV),
+    queryKey: ['results', commune, filters, sort],
+    queryFn: () => getResults(filters, 500, sort),
     enabled: ile,
   })
 
@@ -246,39 +253,42 @@ export function ResultsSection() {
   // (SQL-exact aussi) ; commune : recalcul client marqué *.
   const counts = useMemo(() => {
     if ((!scoped || ile) && stats.data) {
-      const s = stats.data
-      return { all: s.chaude + s.a_surveiller + s.a_creuser, chaude: s.chaude, a_surveiller: s.a_surveiller, a_creuser: s.a_creuser, ecartee: s.ecartee, exclue: 0 }
+      const t = stats.data.tiers
+      return { all: t.brulante + t.chaude + t.reserve_fonciere + t.a_creuser,
+               brulante: t.brulante, chaude: t.chaude, reserve_fonciere: t.reserve_fonciere,
+               a_creuser: t.a_creuser, ecartee: t.ecartee }
     }
-    const c: Record<Statut | 'all', number> = { all: 0, chaude: 0, a_surveiller: 0, a_creuser: 0, ecartee: 0, exclue: 0 }
+    const c: Record<TierV2 | 'all', number> = { ...TIER_ZERO }
     for (const p of props) {
       if (!matchScope(p, filters, zone)) continue
-      if (PROMUES.includes(p.status)) c.all += 1
-      c[p.status] = (c[p.status] ?? 0) + 1
+      const t = effectiveTier(p.tier_v2, p.etage0)
+      if (!t) continue
+      if (t !== 'ecartee') c.all += 1
+      c[t] += 1
     }
     return c
   }, [props, filters, zone, scoped, ile, stats.data])
 
   const list = useMemo(() => {
     if (ile) {
-      // serveur : déjà filtré (chips) et trié (événement d'abord, puis score)
+      // serveur : déjà filtré (chips) et trié (rang P par défaut)
       return ((serverList.data ?? []) as unknown as (ParcelProps & { commune?: string })[])
         .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
     }
     return props
-      .filter((p) => matchAll(p, filters, zone)
-        && (PROMUES.includes(p.status) || filters.statuts.includes(p.status)))
+      .filter((p) => matchAll(p, filters, zone))
       .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
       .sort((a, b) => {
-        // Score V : tri par défaut V décroissant (NULL en queue) — débrayable vers le tri métier.
-        if (sortV) {
-          const dv = (b.v_score ?? -1) - (a.v_score ?? -1)
-          if (dv !== 0) return dv
-        }
-        // métier : l'ÉVÉNEMENT crée l'urgence de la semaine → toujours en tête, puis le score
-        const ev = Number(b.evenement === 'rouge') - Number(a.evenement === 'rouge')
-        return ev !== 0 ? ev : b.q_score + b.a_score - (a.q_score + a.a_score)
+        // même sémantique que le serveur : rang P (copros/sans rang en queue), ×N, surface, commune
+        if (sort === 'mult') return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
+        if (sort === 'surface') return (b.surface_m2 ?? -1) - (a.surface_m2 ?? -1)
+        if (sort === 'commune') return String((a as { commune?: string }).commune ?? '').localeCompare(String((b as { commune?: string }).commune ?? ''))
+        const ra = a.rang_v2 ?? Infinity
+        const rb = b.rang_v2 ?? Infinity
+        if (ra !== rb) return ra - rb
+        return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
       })
-  }, [ile, serverList.data, props, filters, zone, qNorm, sortV])
+  }, [ile, serverList.data, props, filters, zone, qNorm, sort])
   const shown = showAll ? list : list.slice(0, CAP)
 
   const loading = ile ? serverList.isLoading : geo.isLoading
@@ -290,7 +300,8 @@ export function ResultsSection() {
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   const communeNote = commune ? communesQ.data?.find((c) => c.commune === commune)?.note : null
   const promus = counts.all || 1
-  const nFilters = (filters.statuts.length ? 1 : 0) + (scoped ? 1 : 0)
+  const nFilters = (filters.tiers.length ? 1 : 0) + (scoped ? 1 : 0)
+  const opportunites = ile && stats.data ? stats.data.opportunites : counts.brulante + counts.chaude
 
   return (
     // FIX (rendu liste) : la section elle-même défile si le volet est court (laptop) — sinon
@@ -299,10 +310,16 @@ export function ResultsSection() {
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5">
       <div className="flex shrink-0 items-baseline justify-between">
         <p className="font-mono text-[11px] tracking-widest text-txt-dim">RÉSULTATS</p>
-        <button onClick={() => setSortV((v) => !v)} className="text-[11px] text-txt-mut hover:text-txt"
-          title="Basculer le tri : Vendabilité (V) décroissante ↔ score Q+A">
-          triés par {sortV ? 'V (vendabilité) ▾' : 'score'}
-        </button>
+        <span className="flex items-center gap-1 text-[11px] text-txt-mut">
+          triés par
+          {SORTS.map((s) => (
+            <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
+              className={`rounded px-1 ${sort === s.key ? 'text-mint underline' : 'hover:text-txt'}`}
+              title={s.key === 'rang' ? 'Rang P (scoring v2) — copropriétés en queue' : `Trier par ${s.label}`}>
+              {s.label}
+            </button>
+          ))}
+        </span>
       </div>
 
       {communeNote && (
@@ -311,43 +328,42 @@ export function ResultsSection() {
         </div>
       )}
       <p className="mt-2 shrink-0 text-xs text-txt-mut"
-        title={stats.data?.chaude_evenement != null ? `${fmt(stats.data.chaude)} chaudes dont ${fmt(stats.data.chaude_evenement)} par événement BODACC (bascule doctrinale)` : undefined}>
-        <span className="font-medium text-st-chaude">{fmt(counts.chaude)}</span> chaudes ·{' '}
-        <span className="font-medium text-st-surveiller">{fmt(counts.a_surveiller)}</span> à surveiller ·{' '}
-        <span className="font-medium text-st-creuser">{fmt(counts.a_creuser)}</span> à creuser
+        title={ile && stats.data ? `${fmt(stats.data.opportunites)} opportunités (brûlantes v2 + chaudes v2) dont ${fmt(stats.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
+        <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes v2 ·{' '}
+        <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
+        <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> réserve foncière
         {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
       </p>
-      {(stats.data?.brulantes ?? 0) > 0 && (
-        <button onClick={() => setFilter('brulantes', !filters.brulantes)}
-          className={`mt-1 flex w-fit shrink-0 items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
-            filters.brulantes ? 'border-[#FF6B35] text-[#FF8A50]' : 'border-line-2 text-txt-mut hover:text-txt'}`}
-          title="Brûlantes 🔥 = chaudes de la matrice Q×A DONT le propriétaire cumule des signaux publics de vente (V ≥ 50) — cliquer pour filtrer">
-          <span aria-hidden>🔥</span>
-          <span className="font-medium" style={{ color: '#FF8A50' }}>{fmt(stats.data?.brulantes ?? 0)}</span> brûlantes
-        </button>
-      )}
-      {/* CRED-3 (revue externe 12/07) : « 80 dossiers (+36 sans identité) » pour 167 chaudes ne
-          s'additionnait pas à l'œil. Les PARCELLES sont l'unité de la somme : avec dossier +
-          personnes physiques = le compteur chaudes affiché juste au-dessus. */}
-      {stats.data?.dossiers_chaudes != null && (stats.data.chaude > 0) && (
+      {/* CRED-3 (revue externe 12/07) : les PARCELLES sont l'unité de la somme — avec dossier +
+          personnes physiques = les opportunités affichées juste au-dessus. */}
+      {ile && stats.data != null && stats.data.opportunites > 0 && (
         <p data-dossiers-detail className="mt-1 shrink-0 text-[11px] leading-snug text-txt-dim"
           title="Un propriétaire = un dossier, quel que soit son nombre de parcelles (identification par SIREN, personnes morales DGFiP). Les personnes physiques n'ont pas d'identité en open data — doctrine RGPD : jamais de donnée nominative en base.">
-          soit <span className="font-medium text-txt">{fmt(stats.data.chaudes_avec_dossier ?? 0)}</span> parcelle{(stats.data.chaudes_avec_dossier ?? 0) > 1 ? 's' : ''} avec
-          dossier propriétaire ({fmt(stats.data.dossiers_chaudes)} propriétaire{stats.data.dossiers_chaudes > 1 ? 's' : ''} identifié{stats.data.dossiers_chaudes > 1 ? 's' : ''})
-          {(stats.data.chaudes_sans_identite ?? 0) > 0 && (
-            <> · <span className="font-medium text-txt">{fmt(stats.data.chaudes_sans_identite ?? 0)}</span> personnes
+          soit <span className="font-medium text-txt">{fmt(stats.data.opportunites_avec_dossier)}</span> parcelle{stats.data.opportunites_avec_dossier > 1 ? 's' : ''} avec
+          dossier propriétaire ({fmt(stats.data.dossiers_opportunites)} propriétaire{stats.data.dossiers_opportunites > 1 ? 's' : ''} identifié{stats.data.dossiers_opportunites > 1 ? 's' : ''})
+          {stats.data.opportunites_sans_identite > 0 && (
+            <> · <span className="font-medium text-txt">{fmt(stats.data.opportunites_sans_identite)}</span> personnes
             physiques — non couvertes par l'open data</>
           )}
         </p>
       )}
       <div className="mt-2 flex h-1.5 shrink-0 overflow-hidden rounded-full bg-line">
-        <span className="bg-st-chaude" style={{ width: `${(counts.chaude / promus) * 100}%` }} />
-        <span className="bg-st-surveiller" style={{ width: `${(counts.a_surveiller / promus) * 100}%` }} />
-        <span className="bg-st-creuser" style={{ width: `${(counts.a_creuser / promus) * 100}%` }} />
+        <span style={{ background: TIER_V2_META.brulante.color, width: `${(counts.brulante / promus) * 100}%` }} />
+        <span style={{ background: TIER_V2_META.chaude.color, width: `${(counts.chaude / promus) * 100}%` }} />
+        <span style={{ background: TIER_V2_META.reserve_fonciere.color, width: `${(counts.reserve_fonciere / promus) * 100}%` }} />
+        <span style={{ background: TIER_V2_META.a_creuser.color, width: `${(counts.a_creuser / promus) * 100}%` }} />
       </div>
-      <EntonnoirLine total={total} opportunites={counts.all} nFilters={nFilters} />
+      <EntonnoirLine total={total} opportunites={opportunites} nFilters={nFilters} />
 
-      <StatutChips counts={counts} partial={scoped} />
+      <TierChips counts={counts} partial={scoped} />
+
+      {/* toggle copro (M5.1 lot 1.5) — les copropriétés restent visibles par défaut (badge COPRO) */}
+      <label className="mt-1.5 flex w-fit shrink-0 cursor-pointer items-center gap-1.5 text-[11px] text-txt-mut hover:text-txt"
+        title="Les copropriétés sont hors classement foncier (rang) mais restent dans l'univers — cocher pour les masquer">
+        <input data-toggle-copro type="checkbox" checked={filters.horsCopro}
+          onChange={(e) => setFilter('horsCopro', e.target.checked)} className="h-3 w-3" />
+        masquer les copropriétés
+      </label>
 
       <div data-results-scroll className="mt-3 flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto pb-2">
         {loading && (
@@ -369,9 +385,9 @@ export function ResultsSection() {
           <div data-liste-vide className="rounded-lg border border-dashed border-line-2 p-4 text-center">
             <p className="text-xs leading-relaxed text-txt-mut">
               {commune ? (
-                <>Aucune parcelle {filters.statuts.length === 1
-                  ? STATUT_META[filters.statuts[0]].label.toLowerCase()
-                  : scoped || filters.statuts.length ? 'correspondante' : 'chaude'} à {commune} —
+                <>Aucune parcelle {filters.tiers.length === 1
+                  ? TIER_V2_META[filters.tiers[0]].label.toLowerCase()
+                  : scoped || filters.tiers.length ? 'correspondante' : ''} à {commune} —
                   élargissez à l'île ou ajustez les filtres.</>
               ) : (
                 <>Aucune parcelle ne correspond à ces filtres sur l'île — retirez un critère.</>
@@ -396,9 +412,9 @@ export function ResultsSection() {
           {ile && (serverList.data?.length ?? 0) >= 500 && ' · 500 premiers (île) — affinez les filtres'}
         </span>
         <span className="flex shrink-0 items-center gap-2">
-          <a href={csvExportUrl(filters, sortV)} download
+          <a href={csvExportUrl(filters, sort)} download
             className="text-[11px] text-txt-mut hover:text-mint"
-            title="Exporter la liste filtrée en CSV (colonnes v_score, v_band, top_signaux incluses)">
+            title="Exporter la liste filtrée en CSV (tier v2, rang, ×N — mêmes filtres, même tri)">
             ⬇ CSV
           </a>
           {list.length > CAP && (

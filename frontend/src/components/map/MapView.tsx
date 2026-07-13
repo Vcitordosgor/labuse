@@ -75,15 +75,21 @@ const MUTABILITE_COLOR: maplibregl.ExpressionSpecification = [
   0, '#1E2A23', 300, '#2E6B4F', 2000, '#46A88A', 5000, '#5CE6A1',
 ]
 
+// tier v2 EFFECTIF en expression MapLibre (même règle que effectiveTier côté lib) :
+// étage 0 → 'ecartee', sinon tier_v2 (les tuiles/geojson d'avant run v2 → chaîne vide)
+const EFFECTIVE_TIER: maplibregl.ExpressionSpecification = ['case', ETAGE0, 'ecartee', TIER_V2]
+
 function toExpr(f: Filters): maplibregl.FilterSpecification {
   const c: maplibregl.ExpressionSpecification[] = []
-  if (f.statuts.length) c.push(['in', ['get', 'status'], ['literal', f.statuts]])
+  if (f.tiers.length) c.push(['in', EFFECTIVE_TIER, ['literal', f.tiers]])
   if (f.scoreMin != null) c.push(['>=', ['coalesce', ['get', 'q_score'], 0], f.scoreMin])
   if (f.surfaceMin != null) c.push(['>=', ['coalesce', ['get', 'surface_m2'], 0], f.surfaceMin])
   if (f.surfaceMax != null) c.push(['<=', ['coalesce', ['get', 'surface_m2'], 0], f.surfaceMax])
   if (f.sdpMin != null) c.push(['>=', ['coalesce', ['get', 'sdp_residuelle_m2'], -1], f.sdpMin])
   if (f.evenement) c.push(['==', ['get', 'evenement'], 'rouge'])
   if (f.vueMer) c.push(['==', ['get', 'vue_mer'], 'oui'])
+  if (f.veille) c.push(['==', ['coalesce', ['get', 'veille'], false], true])
+  if (f.horsCopro) c.push(['!=', ['coalesce', ['get', 'copro_v2'], false], true])
   if (f.flags.length) c.push(['any', ...f.flags.map((fl) => ['in', fl, ['get', 'flags']] as maplibregl.ExpressionSpecification)])
   if (f.communes.length) c.push(['in', ['get', 'commune'], ['literal', f.communes]])
   return ['all', ...c] as maplibregl.FilterSpecification
@@ -219,23 +225,23 @@ export function MapView() {
         paint: { 'line-color': '#7DE8E0', 'line-width': 1.4, 'line-opacity': 0.95 },
       })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
-      // Score V (Stage 3) — badge carte : liseré braise sur les Brûlantes 🔥 (toujours), et
-      // pastille « V nn » sur les parcelles à signaux (zoom rapproché, mode commune — le
-      // GeoJSON porte v_score/brulante ; les tuiles MVT île ne les ont pas encore, consigné).
+      // M5.1 — badge carte : liseré braise sur les BRÛLANTES v2 (hors étage 0), et pastille
+      // « #rang » sur les opportunités v2 au zoom rapproché (mode commune). Le badge « V nn »
+      // v1.3 a disparu : un seul monde visible, le v2.
       m.addLayer({
         id: 'parcels-brulantes', type: 'line', source: 'parcels',
-        filter: ['==', ['get', 'brulante'], true],
+        filter: ['all', ['==', TIER_V2, 'brulante'], ['!', ETAGE0]] as never,
         paint: { 'line-color': '#FF6B35', 'line-width': 1.8, 'line-opacity': 0.95 },
       })
       m.addLayer({
         id: 'parcels-v-badge', type: 'symbol', source: 'parcels', minzoom: 15,
-        filter: ['all', ['>=', ['coalesce', ['get', 'v_score'], -1], 25]] as never,
+        filter: ['all', ['in', TIER_V2, ['literal', ['brulante', 'chaude']]], ['!', ETAGE0],
+                 ['!=', ['coalesce', ['get', 'rang_v2'], -1], -1]] as never,
         layout: {
-          'text-field': ['concat', ['case', ['==', ['get', 'brulante'], true], '🔥 ', ''], 'V ',
-                         ['to-string', ['get', 'v_score']]] as never,
+          'text-field': ['concat', '#', ['to-string', ['get', 'rang_v2']]] as never,
           'text-size': 10, 'text-anchor': 'top', 'text-offset': [0, 0.8], 'text-optional': true,
         },
-        paint: { 'text-color': ['case', ['==', ['get', 'brulante'], true], '#FF8A50', '#E8B44C'] as never,
+        paint: { 'text-color': ['case', ['==', TIER_V2, 'brulante'], '#FF8A50', '#E8B44C'] as never,
                  'text-halo-color': '#06130C', 'text-halo-width': 1.2 },
       })
 
@@ -381,10 +387,10 @@ export function MapView() {
     }
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
     if (m.getLayer('parcels-fill') && mode === 'verdict') {
-      m.setPaintProperty('parcels-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
-      m.setPaintProperty('ile-fill', 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
+      m.setPaintProperty('parcels-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
+      m.setPaintProperty('ile-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
     }
-  }, [basemap, orthoYear, mode, filters.statuts, mapReady, ile, lowZoom])
+  }, [basemap, orthoYear, mode, filters.tiers, mapReady, ile, lowZoom])
 
   useEffect(() => {
     const m = map.current
@@ -435,7 +441,7 @@ export function MapView() {
         m.setPaintProperty(fill, 'fill-opacity', 0.7)
       } else {
         m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
-        m.setPaintProperty(fill, 'fill-opacity', filters.statuts.length === 0 ? STATUS_OPACITY : 0.72)
+        m.setPaintProperty(fill, 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
       }
     }
     // liseré des promues : uniquement verdict allumé
@@ -443,7 +449,7 @@ export function MapView() {
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile && verdict))
     m.setFilter('parcels-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
     m.setFilter('ile-line', ['all', PROMUES_FILTER, expr] as maplibregl.FilterSpecification)
-    // Score V : badges carte (liseré Brûlantes + pastille V) — verdict allumé, mode commune
+    // M5.1 : badges carte v2 (liseré brûlantes v2 + pastille #rang) — verdict allumé, mode commune
     for (const id of ['parcels-brulantes', 'parcels-v-badge']) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', vis(!ile && verdict))
     }

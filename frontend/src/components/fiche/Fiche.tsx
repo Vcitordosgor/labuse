@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
-import { ageSignal, BRULANTE_COLOR, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
+import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { Loading } from '../Loading'
 import { ScoreV2Block } from './ScoreV2Block'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
@@ -163,13 +163,14 @@ function VSignalRow({ s }: { s: VSignal }) {
 
 function VendabiliteBlock({ sv }: { sv: ScoreV }) {
   const [open, setOpen] = useState(false)
-  const color = sv.brulante ? BRULANTE_COLOR : vBandColor(sv.v_band)
+  // M5.1 lexical : « brûlante » = tier v2 uniquement — le flag v1.3 a disparu du dossier
+  const color = vBandColor(sv.v_band)
   if (sv.v_score == null) {
     // V non applicable (D4) : badge spécial à la place du score — jamais un « 0 » menteur.
     return (
       <div data-score-v className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
         <div className="flex items-center gap-3">
-          <span className="w-24 shrink-0 text-xs text-txt">Vendabilité</span>
+          <span className="w-24 shrink-0 text-xs text-txt">Signaux vendeur</span>
           <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{sv.badge ?? 'N.A.'}</span>
         </div>
         <p className="mt-1 text-[11px] leading-snug text-txt-dim">
@@ -182,11 +183,10 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
     <div data-score-v className="rounded-lg border border-line-2 bg-surface-2">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
         title={`${SCORE_TIP.v} — déplier « Pourquoi ce score »`}>
-        <span className="w-24 shrink-0 text-left text-xs text-txt">Vendabilité</span>
+        <span className="w-24 shrink-0 text-left text-xs text-txt">Signaux vendeur</span>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${sv.v_score}%`, background: color }} />
         </span>
-        {sv.brulante && <span className="shrink-0 text-xs" title="🔥 BRÛLANTE — chaude Q×A + signaux vendeur forts (V ≥ 50)">🔥</span>}
         <span className="w-8 shrink-0 text-right font-display text-sm font-bold" style={{ color }}>{sv.v_score}</span>
         <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
       </button>
@@ -194,7 +194,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
         <div className="border-t border-line-2 px-3 py-1">
           <div className="flex items-center gap-2 py-1.5">
             <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: `${color}1f`, color }}>
-              {sv.v_band_label}{sv.brulante ? ' · 🔥 Brûlante' : ''}
+              {sv.v_band_label}
             </span>
             {sv.badge && <span className="rounded-full border border-line-2 px-1.5 py-0.5 text-[9px] text-txt-dim">{sv.badge}</span>}
             {sv.v_coverage === 'partial' && !sv.badge && (
@@ -769,14 +769,16 @@ export function Fiche({ idu }: { idu: string }) {
               )}
             </span>
           )}
+          {/* M5.1 : le badge « V nn » disparaît — le dossier propriétaire (signaux vendeur)
+              reste dans la fiche, libellé en clair, sans le sigle nu */}
           {f?.score_v?.v_score != null && (
-            <span data-badge-v className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-mono text-[11px] font-semibold"
+            <span data-badge-signaux className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
               style={{
-                background: `${f.score_v.brulante ? BRULANTE_COLOR : vBandColor(f.score_v.v_band)}22`,
-                color: f.score_v.brulante ? BRULANTE_COLOR : vBandColor(f.score_v.v_band),
+                background: `${vBandColor(f.score_v.v_band)}22`,
+                color: vBandColor(f.score_v.v_band),
               }}
               title={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans la Synthèse`}>
-              {f.score_v.brulante && <span aria-hidden>🔥</span>}V {f.score_v.v_score}
+              signaux vendeur {f.score_v.v_score}/100
             </span>
           )}
           {f?.score_v?.badge && (

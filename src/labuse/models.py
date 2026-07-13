@@ -24,6 +24,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy import (
     Enum as SAEnum,
@@ -212,7 +213,13 @@ class DryrunParcelEvaluation(Base):
 
 class DryrunCascadeResult(Base):
     __tablename__ = "dryrun_cascade_results"
-    __table_args__ = (Index("ix_dryrun_cascade", "run_label", "parcel_id"),)
+    __table_args__ = (
+        Index("ix_dryrun_cascade", "run_label", "parcel_id"),
+        # M5.1 perf : la sous-requête « événement rouge » du panneau seq-scannait 14,2 M
+        # de lignes (2,8 s) pour en retenir ~40 — index PARTIEL minuscule, requête en ms.
+        Index("ix_dryrun_cascade_evenement", "run_label", "parcel_id",
+              postgresql_where=text("evenement = 'rouge'")),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     run_label: Mapped[str] = mapped_column(String(32))

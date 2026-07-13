@@ -696,25 +696,25 @@ export function SegmentsPage() {
         </button>
       </section>
 
-      {/* ── LA première vue : le cœur du produit — Foncier (chaudes & Brûlantes) ── */}
+      {/* ── LA première vue : le cœur du produit — Foncier (brûlantes & chaudes v2) ── */}
       <button data-vue-fonciere
         onClick={() => { setVerdict(true); setView('cartes') }}
         className="mb-5 w-full rounded-2xl border border-mint/40 bg-surface-2 p-5 text-left transition-colors hover:border-mint">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-          <h2 className="font-display text-[15px] font-bold text-txt-hi">Foncier — parcelles chaudes & Brûlantes 🔥</h2>
+          <h2 className="font-display text-[15px] font-bold text-txt-hi">Foncier — Brûlantes & chaudes</h2>
           {statsIle.data && (
             <span className="font-mono text-[11px] text-txt-mut">
-              <b className="text-mint">{fmtN(statsIle.data.chaude)}</b> chaudes ·{' '}
-              <b style={{ color: '#FF8A50' }}>{fmtN(statsIle.data.brulantes ?? 0)}</b> brûlantes
+              <b style={{ color: '#E8695A' }}>{fmtN(statsIle.data.tiers.brulante)}</b> brûlantes ·{' '}
+              <b style={{ color: '#E8B44C' }}>{fmtN(statsIle.data.tiers.chaude)}</b> chaudes
             </span>
           )}
         </div>
         <p className="mt-1 max-w-3xl text-xs leading-relaxed text-txt-mut">
-          Les parcelles à potentiel dont le propriétaire a des raisons de vendre — chaque signal
+          Les parcelles les plus susceptibles de muter à 12 mois (scoring v2) — chaque signal
           sourcé et daté.
         </p>
         <span className="mt-2 inline-block text-[11px] font-medium text-mint">
-          Ouvrir sur la carte — liste triée par vendabilité →
+          Ouvrir sur la carte — liste triée par rang →
         </span>
       </button>
 
