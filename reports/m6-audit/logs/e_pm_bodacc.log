@@ -1,0 +1,86 @@
+SET
+=== parcelle_personne_morale ===
+   n   |  nk   | siren_null | denom_null | n_millesimes | mmin | mmax 
+-------+-------+------------+------------+--------------+------+------
+ 82701 | 82701 |          1 |          0 |            1 | 2025 | 2025
+(1 ligne)
+
+=== parcelle_personne_morale orphelins + couverture ===
+ idu_orphelins | parcelles_couvertes 
+---------------+---------------------
+           635 |               82066
+(1 ligne)
+
+=== pm_proprietaires_millesimes par millesime + idu obsoletes ===
+ millesime |   n   |  nk   | idu_obsoletes | siren_null 
+-----------+-------+-------+---------------+------------
+      2019 | 72709 | 72709 |          3754 |       7868
+      2020 | 74029 | 74029 |          3279 |         30
+      2021 | 76270 | 76270 |          2590 |         27
+      2022 | 78056 | 78056 |          2161 |          3
+      2023 | 79345 | 79345 |          1525 |          7
+      2024 | 81161 | 81161 |          1067 |          3
+(6 lignes)
+
+=== bodacc_procedures ===
+  n  |    dmin    |    dmax    | siren_null | n_siren | type_null 
+-----+------------+------------+------------+---------+-----------
+ 662 | 2008-03-19 | 2026-07-02 |          0 |     191 |         3
+(1 ligne)
+
+=== bodacc_procedures raccord siren proprietaires ===
+ siren_matches 
+---------------
+           175
+(1 ligne)
+
+=== bodacc_annonces_owner ===
+  n   |    dmin    |    dmax    | n_siren | fam_null 
+------+------------+------------+---------+----------
+ 1418 | 2008-02-03 | 2026-07-09 |     569 |        0
+(1 ligne)
+
+=== pm_dirigeants ===
+   n   | n_siren | nom_null | ddn_null | actifs 
+-------+---------+----------+----------+--------
+ 27146 |    9337 |     3185 |     7294 |  26318
+(1 ligne)
+
+=== pm_dirigeants raccord siren ===
+ siren_matches 
+---------------
+          9337
+(1 ligne)
+
+=== pm_dirigeant_gigogne ===
+  n   | n_siren 
+------+---------
+ 2124 |     586
+(1 ligne)
+
+=== owner_enrichment ===
+  n   | n_siren |        source         | denom_null 
+------+---------+-----------------------+------------
+ 9730 |    9730 | recherche_entreprises |         27
+(1 ligne)
+
+=== owner_denom_lookup ===
+  status   | count 
+-----------+-------
+ not_found |  2412
+ found     |   134
+ ambiguous |   104
+(3 lignes)
+
+=== parcel_veille_succession ===
+  n   |  nk  | age_min | age_max | age_null | age_aberrant | sci_dormantes 
+------+------+---------+---------+----------+--------------+---------------
+ 7092 | 7092 |      70 |     117 |        7 |            3 |             7
+(1 ligne)
+
+=== parcel_veille_succession orphelins ===
+ idu_orphelins 
+---------------
+             0
+(1 ligne)
+

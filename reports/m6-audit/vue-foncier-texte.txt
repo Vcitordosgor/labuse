@@ -1,0 +1,141 @@
+IA
+Cartes
+Outils
+Vues
+Projets
+CRM
+Sources
+LABUSE
+Saint-Paul
+ⓘ Contexte
++ Filtre
+Verdict
+Mutabilité
+17
+VL
+Cartes
+‹
+
+COUCHES
+
+Zonage PLU
+Parcelles
+PPR multirisque
+Vue mer
+Parc national
+Limites parcelles
+Limites communes
+ANRU (NPNRU)
+Équipements
+✓ Analyse LABUSE affichée
+masquer
+
+RÉSULTATS
+
+triés par
+rang P
+×N
+surface
+commune
+
+27 brûlantes v2 · 222 chaudes · 444 réserve foncière
+
+51 129 parcelles analysées → 249 opportunités détectéespourquoi ? ▾
+
+Tout
+13 400
+Brûlantes v2
+27
+Chaudes
+222
+Réserve foncière
+444
+À creuser
+12 707
+Écartées
+37 729
+masquer les copropriétés
+DK 1044
+Chaude v2 · 10
+même proprio ×5
+426 m² · Saint-Paul
+×22.0
+92
+CX 1395
+Chaude v2 · 22
+608 m² · Saint-Paul
+×18.0
+92
+AY 1622
+Brûlante v2 · 25
+même proprio ×33
+311 m² · Saint-Paul
+×13.1
+92
+CW 1056
+À creuser · 33
+130 m² · Saint-Paul
+×13.1
+92
+CX 0639
+Chaude v2 · 34
+◠
+1 122 m² · Saint-Paul
+×13.1
+92
+AY 1587
+Brûlante v2 · 39
+même proprio ×33
+106 m² · Saint-Paul
+×13.1
+92
+AX 1100
+Brûlante v2 · 47
+même proprio ×33
+209 m² · Saint-Paul
+×13.1
+92
+AB 0847
+Chaude v2 · 48
+même proprio ×5
+◠
+7 015 m² · Saint-Paul
+×13.1
+92
+AY 1541
+Brûlante v2 · 49
+même proprio ×33
+322 m² · Saint-Paul
+×13.1
+92
+ET 1707
+Chaude v2 · 61
+même proprio ×3
+BAILLEUR
+431 m² · Saint-Paul
+×13.1
+92
+AY 1625
+Brûlante v2 · 65
+même proprio ×33
+297 m² · Saint-Paul
+×13.1
+92
+DE 1325
+Brûlante v2 · 67
+même proprio ×33
+346 m² · Saint-Paul
+×13.1
+92
+CL 0917
+Brûlante v2 · 71
+433 m² · Saint-Paul
+×13.1
+92
+DK 1032
+Brûlante v2 · 79
+veille succession
+337 m² · Saint-Paul
+×13.1
+92
+BW 

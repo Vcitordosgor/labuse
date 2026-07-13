@@ -1,0 +1,106 @@
+SET
+=== ortho_detections ===
+    type    |   n   | idu_null |       s_min        |       s_max       | c_min | c_max | c_aberrant 
+------------+-------+----------+--------------------+-------------------+-------+-------+------------
+ pv         | 23529 |       70 |                  4 |             383.2 | 0.295 | 0.877 |          0
+ piscine    | 19899 |        0 |                 10 |             149.9 | 0.437 |     1 |          0
+ vegetation |    20 |        0 | 22.792569458826637 | 66482.00807669942 | 0.416 |  0.93 |          0
+(3 lignes)
+
+=== ortho_detections orphelins idu ===
+ lignes_orphelines | idu_orphelins 
+-------------------+---------------
+                 0 |             0
+(1 ligne)
+
+=== ortho_detections validation ===
+  validation  | count 
+--------------+-------
+              | 41815
+ ok           |   819
+ faux_positif |   814
+(3 lignes)
+
+=== ortho_tiles ===
+  n   | n_mill | m_min | m_max | non_traitees | pv_non_traitees | veg_non_traitees | geom_null 
+------+--------+-------+-------+--------------+-----------------+------------------+-----------
+ 5041 |      1 | 2025  | 2025  |            0 |               0 |                0 |         0
+(1 ligne)
+
+=== parkings_aper ===
+  n  | s_min | s_max | s_lt500 |   e_min    |   e_max    | echeance_depassee | geom_null | sans_idu 
+-----+-------+-------+---------+------------+------------+-------------------+-----------+----------
+ 901 |   800 | 27406 |       0 | 2026-07-01 | 2028-07-01 |                24 |         0 |       31
+(1 ligne)
+
+=== parkings_aper orphelins idus ===
+ idu_refs | idu_orphelins 
+----------+---------------
+     1696 |             0
+(1 ligne)
+
+=== pv_registry ===
+  n  | p_min | p_max | p_le0 |   d_min    |   d_max    | d_futures | geom_null | n_insee 
+-----+-------+-------+-------+------------+------------+-----------+-----------+---------
+ 686 |    37 | 10452 |     0 | 2003-10-23 | 2025-11-10 |         0 |       686 |      24
+(1 ligne)
+
+=== solar_grid ===
+   n   | prod_min | prod_max | prod_aberrant | ghi_min | ghi_max | geom_null 
+-------+----------+----------+---------------+---------+---------+-----------
+ 15680 |   759.92 |  1603.52 |             1 |  989.48 | 2095.44 |         0
+(1 ligne)
+
+=== grid_capacity ===
+ n  | c_min | c_max | c_neg | geom_null 
+----+-------+-------+-------+-----------
+ 24 |     0 |     0 |     0 |        24
+(1 ligne)
+
+=== anru_quartiers ===
+ n | n_insee | qpv_null 
+---+---------+----------
+ 8 |       6 |        0
+(1 ligne)
+
+=== rgealti_pente_5m ===
+ n_tuiles 
+----------
+     2793
+(1 ligne)
+
+=== anc_maille_taux ===
+  n  | n_insee | t_min | t_max | t_aberrant | m_min  | m_max  
+-----+---------+-------+-------+------------+--------+--------
+ 350 |      24 |     0 |   100 |        347 | RP2022 | RP2022
+(1 ligne)
+
+=== mvt_overlays ===
+     kind     | count | geom_null 
+--------------+-------+-----------
+ ppr          |   164 |         0
+ plu_gpu_zone |  6306 |         0
+(2 lignes)
+
+=== mvt_parcels bornes ===
+   n    | status_null | tier_null | geom_null | vue_mer_oui 
+--------+-------------+-----------+-----------+-------------
+ 431663 |           0 |         0 |         0 |       92419
+(1 ligne)
+
+=== scoring derives (volumetries + orphelins) ===
+psql:/Users/openclaw/Desktop/labuse/reports/m6-audit/sql/h_misc.sql:72: ERROR:  column "parcel_id" does not exist
+LIGNE 3 : ...ECT 'parcel_p_score_v2', count(*), count(DISTINCT parcel_id)...
+                                                               ^
+ASTUCE : Perhaps you meant to reference the column "parcel_p_score_v2.parcelle_id".
+=== cascade_results orphelins parcel_id ===
+ orphelins 
+-----------
+         0
+(1 ligne)
+
+=== parcel_p_score_v2 doublons parcel_id ===
+psql:/Users/openclaw/Desktop/labuse/reports/m6-audit/sql/h_misc.sql:77: ERROR:  column "parcel_id" does not exist
+LIGNE 1 : SELECT count(*) - count(DISTINCT parcel_id) doublons FROM pa...
+                                           ^
+ASTUCE : Perhaps you meant to reference the column "parcel_p_score_v2.parcelle_id".

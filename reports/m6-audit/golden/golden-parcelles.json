@@ -1,0 +1,3724 @@
+{
+ "meta": {
+  "api_base": "http://127.0.0.1:8010",
+  "genere_le": "2026-07-13T08:43:54",
+  "mandat": "M6 Phase 1 §1.2 — golden dataset",
+  "n_parcelles": 32,
+  "run_cascade": "q_v3_datagap",
+  "run_v2_servi": "m36-l2f-2026-2026-07-12",
+  "tolerances": {
+   "canopee_pct": 2.0,
+   "distance_cote_m": 10.0,
+   "mult_base": 0.011,
+   "ndvi_moyen": 0.03,
+   "obstruction_pct": 2.0,
+   "pente_moy_deg": 0.5,
+   "percentile": 0.11,
+   "prod_spec_kwh_kwc": 5.0,
+   "surface_m2": 1.0
+  }
+ },
+ "parcelles": {
+  "97402000AK1725": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 64,
+     "commune": "Bras-Panon",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 38,
+     "proprietaire_moral_siren": null,
+     "q_score": 37,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 1.31,
+      "percentile": 86.85,
+      "rang": 56295,
+      "tier": "a_creuser"
+     },
+     "statut": "ecartee",
+     "surface_m2": 735,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.31,
+     "percentile": 86.85,
+     "rang": 56295,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "a_creuser"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 64,
+    "adresse_ban": {
+     "code_postal": "97412",
+     "numero": "8",
+     "voie": "Chemin d'Afrique"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Bras-Panon",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "1725",
+    "permis_sitadel": {
+     "dernier": "2016-12-22",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 37,
+    "residuel": {
+     "sdp_residuelle_m2": 0,
+     "sous_densite": false,
+     "taux_emprise_pct": 49
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.31,
+     "percentile": 86.9,
+     "rang": 56295,
+     "tier": "a_creuser"
+    },
+    "section": "AK",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1501,
+     "pv_existant": null,
+     "score_solaire": 76
+    },
+    "surface_m2": 735,
+    "vegetation": {
+     "canopee_pct": 4,
+     "ndvi_moyen": -0.03
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 1427,
+     "obstruction_pct": 9,
+     "vue": "oui"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97403000AR1423": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 62,
+     "commune": "Entre-Deux",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": null,
+     "q_score": 46,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 13.07,
+      "percentile": 99.99,
+      "rang": 28,
+      "tier": "brulante"
+     },
+     "statut": "ecartee",
+     "surface_m2": 298,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 99.99,
+     "rang": 28,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "brulante"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 62,
+    "adresse_ban": null,
+    "cascade_status": "a_creuser",
+    "commune": "Entre-Deux",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "1423",
+    "permis_sitadel": {
+     "dernier": "2025-11-13",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 46,
+    "residuel": {
+     "sdp_residuelle_m2": 146,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 100.0,
+     "rang": 28,
+     "tier": "brulante"
+    },
+    "section": "AR",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1341,
+     "pv_existant": "commune_forte_densite",
+     "score_solaire": 28
+    },
+    "surface_m2": 298,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": 0.0
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97405000AB0168": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Petite-Île",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 34,
+     "proprietaire_moral_siren": null,
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 0.7,
+      "percentile": 25.32,
+      "rang": 319800,
+      "tier": "ecartee"
+     },
+     "statut": "ecartee",
+     "surface_m2": 4403,
+     "zonage_detail": "Zone A PLU — inconstructible (recouvrement 100 %)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.7,
+     "percentile": 25.32,
+     "rang": 319800,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "ecartee"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": null,
+    "cascade_status": "exclue",
+    "commune": "Petite-Île",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "bati",
+     "risques",
+     "zonage_plu_gpu"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "168",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 50,
+    "residuel": null,
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible.",
+     "Aléa mouvement_terrain — niveau moyen.",
+     "Aléa mouvement_terrain — niveau moyen.",
+     "Exclue : PPR zone rouge (inconstructible).",
+     "Exclue : PPR zone rouge (inconstructible)."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.7,
+     "percentile": 25.3,
+     "rang": 319800,
+     "tier": "ecartee"
+    },
+    "section": "AB",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1373,
+     "pv_existant": "commune_forte_densite",
+     "score_solaire": 38
+    },
+    "surface_m2": 4403,
+    "vegetation": {
+     "canopee_pct": 1,
+     "ndvi_moyen": 0.02
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone A PLU — inconstructible (recouvrement 100 %).",
+     "recouvrement_pct": 100,
+     "zone": "A"
+    }
+   }
+  },
+  "97407000BI0350": {
+   "api": {
+    "fiche": {
+     "a_completude": 83,
+     "a_score": 72,
+     "commune": "Le Port",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": "2025-04-16",
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 39,
+     "proprietaire_moral_siren": "820238707",
+     "q_score": 53,
+     "score_v": {
+      "owner_type": "pm",
+      "v_band": "faible",
+      "v_score": 4
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 5.85,
+      "percentile": 99.84,
+      "rang": 707,
+      "tier": "chaude"
+     },
+     "statut": "a_creuser",
+     "surface_m2": 683,
+     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": true,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 5.85,
+     "percentile": 99.84,
+     "rang": 707,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "chaude"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 83,
+    "a_score": 72,
+    "adresse_ban": null,
+    "cascade_status": "opportunite",
+    "commune": "Le Port",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": {
+     "derniere": "2025-04-16",
+     "n_mutations": 1
+    },
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "a_creuser",
+    "numero": "350",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "SCCV LOTUS SACRE",
+     "siren": "820238707"
+    },
+    "q_score": 53,
+    "residuel": null,
+    "risques": [
+     "Aucun risque PPR/aléa intersecté."
+    ],
+    "score_v": {
+     "owner_type": "pm",
+     "v_band": "faible",
+     "v_score": 4
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 5.85,
+     "percentile": 99.8,
+     "rang": 707,
+     "tier": "chaude"
+    },
+    "section": "BI",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1383,
+     "pv_existant": null,
+     "score_solaire": 44
+    },
+    "surface_m2": 683,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": 0.0
+    },
+    "veille_succession": {
+     "dirigeant_age": 74,
+     "sci_dormante": false
+    },
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUc"
+    }
+   }
+  },
+  "97408000AC1870": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 64,
+     "commune": "La Possession",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": null,
+     "q_score": 87,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 0.91,
+      "percentile": 46.27,
+      "rang": 230109,
+      "tier": "reserve_fonciere"
+     },
+     "statut": "a_surveiller",
+     "surface_m2": 3462,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.91,
+     "percentile": 46.27,
+     "rang": 230109,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "reserve_fonciere"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 64,
+    "adresse_ban": null,
+    "cascade_status": "opportunite",
+    "commune": "La Possession",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "a_surveiller",
+    "numero": "1870",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 87,
+    "residuel": {
+     "sdp_residuelle_m2": 3553,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.91,
+     "percentile": 46.3,
+     "rang": 230109,
+     "tier": "reserve_fonciere"
+    },
+    "section": "AC",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1324,
+     "pv_existant": "commune_forte_densite",
+     "score_solaire": 22
+    },
+    "surface_m2": 3462,
+    "vegetation": {
+     "canopee_pct": 87,
+     "ndvi_moyen": 0.46
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 1381,
+     "obstruction_pct": 82,
+     "vue": "non"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97408000AP1647": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 66,
+     "commune": "La Possession",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": null,
+     "q_score": 60,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 63.97,
+      "percentile": 100.0,
+      "rang": 2,
+      "tier": "chaude"
+     },
+     "statut": "a_creuser",
+     "surface_m2": 382,
+     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 63.97,
+     "percentile": 100.0,
+     "rang": 2,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "chaude"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 66,
+    "adresse_ban": {
+     "code_postal": "97419",
+     "numero": "1",
+     "voie": "Impasse Marie Curie"
+    },
+    "cascade_status": "opportunite",
+    "commune": "La Possession",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "a_creuser",
+    "numero": "1647",
+    "permis_sitadel": {
+     "dernier": "2025-10-27",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 60,
+    "residuel": {
+     "sdp_residuelle_m2": 234,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 63.97,
+     "percentile": 100.0,
+     "rang": 2,
+     "tier": "chaude"
+    },
+    "section": "AP",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1382,
+     "pv_existant": "commune_forte_densite",
+     "score_solaire": 42
+    },
+    "surface_m2": 382,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": -0.04
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUc"
+    }
+   }
+  },
+  "97409000AX0289": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 57,
+     "commune": "Saint-André",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 39,
+     "proprietaire_moral_siren": null,
+     "q_score": 65,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 0.91,
+      "percentile": 46.4,
+      "rang": 229538,
+      "tier": "reserve_fonciere"
+     },
+     "statut": "a_surveiller",
+     "surface_m2": 2599,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.91,
+     "percentile": 46.4,
+     "rang": 229538,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "reserve_fonciere"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 57,
+    "adresse_ban": {
+     "code_postal": "97440",
+     "numero": "230",
+     "voie": "Chemin Sorect"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Saint-André",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "a_surveiller",
+    "numero": "289",
+    "permis_sitadel": {
+     "dernier": "2020-12-30",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 65,
+    "residuel": {
+     "sdp_residuelle_m2": 2406,
+     "sous_densite": true,
+     "taux_emprise_pct": 16
+    },
+    "risques": [
+     "Aléa inondation — niveau faible.",
+     "Aléa mouvement_terrain — niveau faible.",
+     "Périmètre PPR INONDATION+MOUVEMENTS_DE_TERRAIN — servitude réglementaire approuvée ; prescriptions applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie)."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.91,
+     "percentile": 46.4,
+     "rang": 229538,
+     "tier": "reserve_fonciere"
+    },
+    "section": "AX",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1533,
+     "pv_existant": null,
+     "score_solaire": 86
+    },
+    "surface_m2": 2599,
+    "vegetation": {
+     "canopee_pct": 6,
+     "ndvi_moyen": 0.02
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 83,
+     "obstruction_pct": null,
+     "vue": "oui"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97410000AS1425": {
+   "api": {
+    "fiche": {
+     "a_completude": 83,
+     "a_score": 67,
+     "commune": "Saint-Benoît",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": "912933710",
+     "q_score": 44,
+     "score_v": {
+      "owner_type": "pm",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 21.99,
+      "percentile": 100.0,
+      "rang": 16,
+      "tier": "brulante"
+     },
+     "statut": "ecartee",
+     "surface_m2": 300,
+     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": true,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 16,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "brulante"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 83,
+    "a_score": 67,
+    "adresse_ban": {
+     "code_postal": "97470",
+     "numero": "20",
+     "voie": "Rue des Eaux Vives"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Saint-Benoît",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "1425",
+    "permis_sitadel": {
+     "dernier": "2025-05-15",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "BLEU CONARDEL",
+     "siren": "912933710"
+    },
+    "q_score": 44,
+    "residuel": {
+     "sdp_residuelle_m2": 173,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pm",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 16,
+     "tier": "brulante"
+    },
+    "section": "AS",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1541,
+     "pv_existant": null,
+     "score_solaire": 92
+    },
+    "surface_m2": 300,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": -0.03
+    },
+    "veille_succession": {
+     "dirigeant_age": 73,
+     "sci_dormante": false
+    },
+    "vue_mer": {
+     "distance_cote_m": 1254,
+     "obstruction_pct": 0,
+     "vue": "oui"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUc"
+    }
+   }
+  },
+  "97410000AS1450": {
+   "api": {
+    "fiche": {
+     "a_completude": 83,
+     "a_score": 67,
+     "commune": "Saint-Benoît",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": "912933710",
+     "q_score": 44,
+     "score_v": {
+      "owner_type": "pm",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 13.07,
+      "percentile": 99.99,
+      "rang": 37,
+      "tier": "chaude"
+     },
+     "statut": "ecartee",
+     "surface_m2": 477,
+     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": true,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 99.99,
+     "rang": 37,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "chaude"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 83,
+    "a_score": 67,
+    "adresse_ban": {
+     "code_postal": "97470",
+     "numero": "2",
+     "voie": "Rue des Eaux Vives"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Saint-Benoît",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "1450",
+    "permis_sitadel": {
+     "dernier": "2024-02-12",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "BLEU CONARDEL",
+     "siren": "912933710"
+    },
+    "q_score": 44,
+    "residuel": {
+     "sdp_residuelle_m2": 295,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pm",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 100.0,
+     "rang": 37,
+     "tier": "chaude"
+    },
+    "section": "AS",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1541,
+     "pv_existant": null,
+     "score_solaire": 92
+    },
+    "surface_m2": 477,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": 0.34
+    },
+    "veille_succession": {
+     "dirigeant_age": 73,
+     "sci_dormante": false
+    },
+    "vue_mer": {
+     "distance_cote_m": 1284,
+     "obstruction_pct": 38,
+     "vue": "non"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUc"
+    }
+   }
+  },
+  "97410000CD0905": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 60,
+     "commune": "Saint-Benoît",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": null,
+     "q_score": 41,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 21.99,
+      "percentile": 100.0,
+      "rang": 8,
+      "tier": "brulante"
+     },
+     "statut": "ecartee",
+     "surface_m2": 334,
+     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 8,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "brulante"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 60,
+    "adresse_ban": {
+     "code_postal": "97470",
+     "numero": "16",
+     "voie": "Rue des Conflores"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Saint-Benoît",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "905",
+    "permis_sitadel": {
+     "dernier": "2024-06-05",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 41,
+    "residuel": {
+     "sdp_residuelle_m2": 176,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 8,
+     "tier": "brulante"
+    },
+    "section": "CD",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1313,
+     "pv_existant": null,
+     "score_solaire": 17
+    },
+    "surface_m2": 334,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": -0.3
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUc"
+    }
+   }
+  },
+  "97411000AL0360": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 66,
+     "commune": "Saint-Denis",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": "2024-12-10",
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 1,
+     "n_lignes_cascade": 40,
+     "proprietaire_moral_siren": null,
+     "q_score": 1,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": true,
+      "mult_base": 1.82,
+      "percentile": null,
+      "rang": null,
+      "tier": "a_creuser"
+     },
+     "statut": "ecartee",
+     "surface_m2": 439,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.82,
+     "percentile": null,
+     "rang": null,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "a_creuser"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 66,
+    "adresse_ban": null,
+    "cascade_status": "a_creuser",
+    "commune": "Saint-Denis",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 31,
+     "n": 1
+    },
+    "dpe": null,
+    "dvf": {
+     "derniere": "2024-12-10",
+     "n_mutations": 2
+    },
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "360",
+    "permis_sitadel": {
+     "dernier": "2015-12-23",
+     "n": 2
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 1,
+    "residuel": {
+     "sdp_residuelle_m2": 0,
+     "sous_densite": false,
+     "taux_emprise_pct": 76
+    },
+    "risques": [
+     "Aucun risque PPR/aléa intersecté."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": true,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.82,
+     "percentile": null,
+     "rang": null,
+     "tier": "a_creuser"
+    },
+    "section": "AL",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1553,
+     "pv_existant": null,
+     "score_solaire": 96
+    },
+    "surface_m2": 439,
+    "vegetation": {
+     "canopee_pct": 10,
+     "ndvi_moyen": 0.04
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 1087,
+     "obstruction_pct": 42,
+     "vue": "non"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97411000AO0748": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Saint-Denis",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 31,
+     "proprietaire_moral_siren": "U23691569",
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "public",
+      "v_band": "na",
+      "v_score": null
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 0.92,
+      "percentile": 48.94,
+      "rang": 218645,
+      "tier": "a_creuser"
+     },
+     "statut": "ecartee",
+     "surface_m2": 7483,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.92,
+     "percentile": 48.94,
+     "rang": 218645,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "a_creuser"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": null,
+    "cascade_status": "exclue",
+    "commune": "Saint-Denis",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "foncier_public"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "748",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "ETAT PAR DIRECTION DE L IMMOBILIER DE L ETAT",
+     "siren": "U23691569"
+    },
+    "q_score": 50,
+    "residuel": {
+     "sdp_residuelle_m2": 7013,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aucun risque PPR/aléa intersecté."
+    ],
+    "score_v": {
+     "owner_type": "public",
+     "v_band": "na",
+     "v_score": null
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.92,
+     "percentile": 48.9,
+     "rang": 218645,
+     "tier": "a_creuser"
+    },
+    "section": "AO",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1553,
+     "pv_existant": null,
+     "score_solaire": 96
+    },
+    "surface_m2": 7483,
+    "vegetation": {
+     "canopee_pct": 2,
+     "ndvi_moyen": -0.01
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 0,
+     "obstruction_pct": null,
+     "vue": "oui"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97411000KA0296": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 66,
+     "commune": "Saint-Denis",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": null,
+     "q_score": 19,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 21.99,
+      "percentile": 100.0,
+      "rang": 7,
+      "tier": "brulante"
+     },
+     "statut": "ecartee",
+     "surface_m2": 300,
+     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 7,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "brulante"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 66,
+    "adresse_ban": {
+     "code_postal": "97400",
+     "numero": "145",
+     "voie": "Chemin Lory Lebreton"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Saint-Denis",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "296",
+    "permis_sitadel": {
+     "dernier": "2025-01-29",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 19,
+    "residuel": {
+     "sdp_residuelle_m2": 72,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Périmètre PPR INONDATION_MOUVEMENT_DE_TERRAIN — servitude réglementaire approuvée ; prescriptions applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie)."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 7,
+     "tier": "brulante"
+    },
+    "section": "KA",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1445,
+     "pv_existant": null,
+     "score_solaire": 64
+    },
+    "surface_m2": 300,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": -0.04
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUc"
+    }
+   }
+  },
+  "97413000CD0729": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Saint-Leu",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 30,
+     "proprietaire_moral_siren": "249740101",
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "public",
+      "v_band": "na",
+      "v_score": null
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 7.09,
+      "percentile": 99.95,
+      "rang": 194,
+      "tier": "brulante"
+     },
+     "statut": "ecartee",
+     "surface_m2": 337,
+     "zonage_detail": "Zone PLU « AU » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 7.09,
+     "percentile": 99.95,
+     "rang": 194,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "brulante"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": null,
+    "cascade_status": "exclue",
+    "commune": "Saint-Leu",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "foncier_public"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "729",
+    "permis_sitadel": {
+     "dernier": "2025-04-04",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "COMMUNAUTE AGGLO TERRITOIRE COTE OUEST",
+     "siren": "249740101"
+    },
+    "q_score": 50,
+    "residuel": {
+     "sdp_residuelle_m2": 159,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "public",
+     "v_band": "na",
+     "v_score": null
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 7.09,
+     "percentile": 100.0,
+     "rang": 194,
+     "tier": "brulante"
+    },
+    "section": "CD",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1336,
+     "pv_existant": "commune_forte_densite",
+     "score_solaire": 26
+    },
+    "surface_m2": 337,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": 0.0
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 909,
+     "obstruction_pct": 88,
+     "vue": "non"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « AU » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AU"
+    }
+   }
+  },
+  "97413000CS0160": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 65,
+     "commune": "Saint-Leu",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": "2025-08-28",
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 38,
+     "proprietaire_moral_siren": null,
+     "q_score": 41,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "faible",
+      "v_score": 12
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 2.63,
+      "percentile": 98.41,
+      "rang": 6817,
+      "tier": "a_creuser"
+     },
+     "statut": "ecartee",
+     "surface_m2": 581,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 2.63,
+     "percentile": 98.41,
+     "rang": 6817,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "a_creuser"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 65,
+    "adresse_ban": {
+     "code_postal": "97436",
+     "numero": "288",
+     "voie": "Chemin Dubuisson"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Saint-Leu",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": {
+     "derniere_date": "2023-07-27",
+     "n": 1,
+     "pire_etiquette": "G"
+    },
+    "dvf": {
+     "derniere": "2025-08-28",
+     "n_mutations": 2
+    },
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "160",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 41,
+    "residuel": {
+     "sdp_residuelle_m2": 212,
+     "sous_densite": false,
+     "taux_emprise_pct": 50
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "faible",
+     "v_score": 12
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 2.63,
+     "percentile": 98.4,
+     "rang": 6817,
+     "tier": "a_creuser"
+    },
+    "section": "CS",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1376,
+     "pv_existant": "commune_forte_densite",
+     "score_solaire": 39
+    },
+    "surface_m2": 581,
+    "vegetation": {
+     "canopee_pct": 1,
+     "ndvi_moyen": -0.08
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 739,
+     "obstruction_pct": 0,
+     "vue": "oui"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97413000DM0210": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Saint-Leu",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 30,
+     "proprietaire_moral_siren": null,
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "faible",
+      "v_score": 16
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 1.31,
+      "percentile": 88.69,
+      "rang": 48453,
+      "tier": "ecartee"
+     },
+     "statut": "ecartee",
+     "surface_m2": 687,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.31,
+     "percentile": 88.69,
+     "rang": 48453,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "ecartee"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": {
+     "code_postal": "97424",
+     "numero": "10",
+     "voie": "Rue de la Balance"
+    },
+    "cascade_status": "faux_positif_probable",
+    "commune": "Saint-Leu",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": {
+     "derniere_date": "2021-08-26",
+     "n": 2,
+     "pire_etiquette": "F"
+    },
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "bati"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "210",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 1,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 50,
+    "residuel": {
+     "sdp_residuelle_m2": 215,
+     "sous_densite": true,
+     "taux_emprise_pct": 40
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "faible",
+     "v_score": 16
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.31,
+     "percentile": 88.7,
+     "rang": 48453,
+     "tier": "ecartee"
+    },
+    "section": "DM",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1365,
+     "pv_existant": "commune_forte_densite",
+     "score_solaire": 35
+    },
+    "surface_m2": 687,
+    "vegetation": {
+     "canopee_pct": 7,
+     "ndvi_moyen": -0.02
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 1265,
+     "obstruction_pct": 35,
+     "vue": "non"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97415000CW1056": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 64,
+     "commune": "Saint-Paul",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 40,
+     "proprietaire_moral_siren": null,
+     "q_score": 43,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 13.07,
+      "percentile": 99.99,
+      "rang": 33,
+      "tier": "a_creuser"
+     },
+     "statut": "ecartee",
+     "surface_m2": 130,
+     "zonage_detail": "Zonage mixte — constructibilité limitée à l'emprise U/AU (« N » inconstructible sur ~33 % ; emprise clippée en pré-faisabilité)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 99.99,
+     "rang": 33,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "a_creuser"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 64,
+    "adresse_ban": null,
+    "cascade_status": "a_creuser",
+    "commune": "Saint-Paul",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "1056",
+    "permis_sitadel": {
+     "dernier": "2025-05-15",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 43,
+    "residuel": null,
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 100.0,
+     "rang": 33,
+     "tier": "a_creuser"
+    },
+    "section": "CW",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1277,
+     "pv_existant": null,
+     "score_solaire": 6
+    },
+    "surface_m2": 130,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": 0.06
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 1314,
+     "obstruction_pct": 82,
+     "vue": "non"
+    },
+    "zonage_plu": {
+     "detail": "Zonage mixte — constructibilité limitée à l'emprise U/AU (« N » inconstructible sur ~33 % ; emprise clippée en pré-faisabilité).",
+     "recouvrement_pct": null,
+     "zone": null
+    }
+   }
+  },
+  "97415000CX1395": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 64,
+     "commune": "Saint-Paul",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 39,
+     "proprietaire_moral_siren": null,
+     "q_score": 55,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 18.02,
+      "percentile": 100.0,
+      "rang": 22,
+      "tier": "chaude"
+     },
+     "statut": "a_creuser",
+     "surface_m2": 608,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 18.02,
+     "percentile": 100.0,
+     "rang": 22,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "chaude"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 64,
+    "adresse_ban": {
+     "code_postal": "97435",
+     "numero": "33",
+     "voie": "Rue Bois de Lait"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Saint-Paul",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "a_creuser",
+    "numero": "1395",
+    "permis_sitadel": {
+     "dernier": "2024-06-05",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 1,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 55,
+    "residuel": {
+     "sdp_residuelle_m2": 354,
+     "sous_densite": true,
+     "taux_emprise_pct": 33
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 18.02,
+     "percentile": 100.0,
+     "rang": 22,
+     "tier": "chaude"
+    },
+    "section": "CX",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1277,
+     "pv_existant": null,
+     "score_solaire": 6
+    },
+    "surface_m2": 608,
+    "vegetation": {
+     "canopee_pct": 2,
+     "ndvi_moyen": -0.05
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97415000EY1509": {
+   "api": {
+    "fiche": {
+     "a_completude": 83,
+     "a_score": 61,
+     "commune": "Saint-Paul",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 39,
+     "proprietaire_moral_siren": "310863378",
+     "q_score": 71,
+     "score_v": {
+      "owner_type": "bailleur",
+      "v_band": "na",
+      "v_score": null
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 0.91,
+      "percentile": 46.03,
+      "rang": 231138,
+      "tier": "reserve_fonciere"
+     },
+     "statut": "chaude",
+     "surface_m2": 1352,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.91,
+     "percentile": 46.03,
+     "rang": 231138,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "reserve_fonciere"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 83,
+    "a_score": 61,
+    "adresse_ban": {
+     "code_postal": "97460",
+     "numero": "140",
+     "voie": "Rue Gabriel Guist'hau"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Saint-Paul",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "chaude",
+    "numero": "1509",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "SOCIETE D'EQUIPEMENT DU DEPARTEMENT DE LA REUNION",
+     "siren": "310863378"
+    },
+    "q_score": 71,
+    "residuel": {
+     "sdp_residuelle_m2": 1866,
+     "sous_densite": true,
+     "taux_emprise_pct": 24
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "bailleur",
+     "v_band": "na",
+     "v_score": null
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.91,
+     "percentile": 46.0,
+     "rang": 231138,
+     "tier": "reserve_fonciere"
+    },
+    "section": "EY",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1277,
+     "pv_existant": null,
+     "score_solaire": 6
+    },
+    "surface_m2": 1352,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": -0.13
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 656,
+     "obstruction_pct": 37,
+     "vue": "non"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97416000CD0765": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Saint-Pierre",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 30,
+     "proprietaire_moral_siren": null,
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 1.16,
+      "percentile": 71.87,
+      "rang": 120447,
+      "tier": "ecartee"
+     },
+     "statut": "ecartee",
+     "surface_m2": 95,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.16,
+     "percentile": 71.87,
+     "rang": 120447,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "ecartee"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": null,
+    "cascade_status": "faux_positif_probable",
+    "commune": "Saint-Pierre",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "bati",
+     "surface"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "765",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 50,
+    "residuel": null,
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.16,
+     "percentile": 71.9,
+     "rang": 120447,
+     "tier": "ecartee"
+    },
+    "section": "CD",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1393,
+     "pv_existant": null,
+     "score_solaire": 48
+    },
+    "surface_m2": 95,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": 0.06
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97416000CR1351": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Saint-Pierre",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 30,
+     "proprietaire_moral_siren": "249740077",
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "public",
+      "v_band": "na",
+      "v_score": null
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 0.91,
+      "percentile": 46.37,
+      "rang": 229673,
+      "tier": "reserve_fonciere"
+     },
+     "statut": "ecartee",
+     "surface_m2": 3562,
+     "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.91,
+     "percentile": 46.37,
+     "rang": 229673,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "reserve_fonciere"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": null,
+    "cascade_status": "exclue",
+    "commune": "Saint-Pierre",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "foncier_public"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "1351",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "COMMUNAUTE INTERCOMMUNALE DES VILLES SOLIDAIRES",
+     "siren": "249740077"
+    },
+    "q_score": 50,
+    "residuel": {
+     "sdp_residuelle_m2": 3903,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "public",
+     "v_band": "na",
+     "v_score": null
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.91,
+     "percentile": 46.4,
+     "rang": 229673,
+     "tier": "reserve_fonciere"
+    },
+    "section": "CR",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1537,
+     "pv_existant": null,
+     "score_solaire": 90
+    },
+    "surface_m2": 3562,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": 0.04
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 1251,
+     "obstruction_pct": 0,
+     "vue": "oui"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUs"
+    }
+   }
+  },
+  "97418000AT2379": {
+   "api": {
+    "fiche": {
+     "a_completude": 83,
+     "a_score": 78,
+     "commune": "Sainte-Marie",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": "452038805",
+     "q_score": 41,
+     "score_v": {
+      "owner_type": "pm",
+      "v_band": "faible",
+      "v_score": 18
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 21.99,
+      "percentile": 100.0,
+      "rang": 9,
+      "tier": "brulante"
+     },
+     "statut": "ecartee",
+     "surface_m2": 253,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 9,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "brulante"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 83,
+    "a_score": 78,
+    "adresse_ban": {
+     "code_postal": "97438",
+     "numero": "228",
+     "voie": "Chemin Belle Vue sur Mer"
+    },
+    "cascade_status": "opportunite",
+    "commune": "Sainte-Marie",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "2379",
+    "permis_sitadel": {
+     "dernier": "2025-11-19",
+     "n": 2
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "CBO TERRITORIA",
+     "siren": "452038805"
+    },
+    "q_score": 41,
+    "residuel": {
+     "sdp_residuelle_m2": 108,
+     "sous_densite": true,
+     "taux_emprise_pct": 7
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pm",
+     "v_band": "faible",
+     "v_score": 18
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": "2025-08-28",
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 9,
+     "tier": "brulante"
+    },
+    "section": "AT",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1501,
+     "pv_existant": null,
+     "score_solaire": 74
+    },
+    "surface_m2": 253,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": -0.17
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97419000AC0159": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Sainte-Rose",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 30,
+     "proprietaire_moral_siren": null,
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 0.81,
+      "percentile": 32.3,
+      "rang": 289940,
+      "tier": "ecartee"
+     },
+     "statut": "ecartee",
+     "surface_m2": 43,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.81,
+     "percentile": 32.3,
+     "rang": 289940,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "ecartee"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": null,
+    "cascade_status": "faux_positif_probable",
+    "commune": "Sainte-Rose",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "emprise_lineaire",
+     "surface"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "159",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 50,
+    "residuel": null,
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.81,
+     "percentile": 32.3,
+     "rang": 289940,
+     "tier": "ecartee"
+    },
+    "section": "AC",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1482,
+     "pv_existant": null,
+     "score_solaire": 71
+    },
+    "surface_m2": 43,
+    "vegetation": {
+     "canopee_pct": 50,
+     "ndvi_moyen": 0.33
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 896,
+     "obstruction_pct": 59,
+     "vue": "non"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97420000AO0654": {
+   "api": {
+    "fiche": {
+     "a_completude": 83,
+     "a_score": 70,
+     "commune": "Sainte-Suzanne",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": "444841241",
+     "q_score": 44,
+     "score_v": {
+      "owner_type": "pm",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 13.07,
+      "percentile": 99.99,
+      "rang": 35,
+      "tier": "chaude"
+     },
+     "statut": "ecartee",
+     "surface_m2": 366,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 99.99,
+     "rang": 35,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "chaude"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 83,
+    "a_score": 70,
+    "adresse_ban": {
+     "code_postal": "97441",
+     "numero": "11",
+     "voie": "Rue RAPHAEL HAGEN"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Sainte-Suzanne",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "654",
+    "permis_sitadel": {
+     "dernier": "2026-05-12",
+     "n": 2
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "DOMAINE DE LA REUNION",
+     "siren": "444841241"
+    },
+    "q_score": 44,
+    "residuel": {
+     "sdp_residuelle_m2": 176,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pm",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 100.0,
+     "rang": 35,
+     "tier": "chaude"
+    },
+    "section": "AO",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1519,
+     "pv_existant": null,
+     "score_solaire": 81
+    },
+    "surface_m2": 366,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": 0.28
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 1828,
+     "obstruction_pct": 6,
+     "vue": "oui"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97421000AC0156": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Salazie",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 36,
+     "proprietaire_moral_siren": null,
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 0.51,
+      "percentile": 5.06,
+      "rang": 406570,
+      "tier": "ecartee"
+     },
+     "statut": "ecartee",
+     "surface_m2": 1092,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible sur ~56 % de la parcelle)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.51,
+     "percentile": 5.06,
+     "rang": 406570,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "ecartee"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": {
+     "code_postal": "97433",
+     "numero": "12",
+     "voie": "Allée des Pensées"
+    },
+    "cascade_status": "exclue",
+    "commune": "Salazie",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "pente",
+     "risques"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "156",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 50,
+    "residuel": null,
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible.",
+     "Aléa mouvement_terrain — niveau moyen.",
+     "Aléa mouvement_terrain — niveau moyen.",
+     "Aléa mouvement_terrain — niveau moyen.",
+     "Exclue : PPR zone rouge (inconstructible).",
+     "Exclue : PPR zone rouge (inconstructible)."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.51,
+     "percentile": 5.1,
+     "rang": 406570,
+     "tier": "ecartee"
+    },
+    "section": "AC",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1275,
+     "pv_existant": null,
+     "score_solaire": 5
+    },
+    "surface_m2": 1092,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": 0.09
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zonage mixte — constructibilité limitée à l'emprise U/AU (« A » inconstructible sur ~88 % ; emprise clippée en pré-faisabilité).",
+     "recouvrement_pct": null,
+     "zone": null
+    }
+   }
+  },
+  "97422000AD1237": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 61,
+     "commune": "Le Tampon",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 38,
+     "proprietaire_moral_siren": null,
+     "q_score": 63,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 21.99,
+      "percentile": 100.0,
+      "rang": 17,
+      "tier": "brulante"
+     },
+     "statut": "a_creuser",
+     "surface_m2": 599,
+     "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 17,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "brulante"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 61,
+    "adresse_ban": {
+     "code_postal": "97418",
+     "numero": "11",
+     "voie": "Impasse Techer Alberti"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Le Tampon",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "a_creuser",
+    "numero": "1237",
+    "permis_sitadel": {
+     "dernier": "2025-02-05",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 2,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 63,
+    "residuel": {
+     "sdp_residuelle_m2": 453,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 17,
+     "tier": "brulante"
+    },
+    "section": "AD",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1470,
+     "pv_existant": null,
+     "score_solaire": 69
+    },
+    "surface_m2": 599,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": -0.13
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUs"
+    }
+   }
+  },
+  "97422000AX1253": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 57,
+     "commune": "Le Tampon",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": "2025-09-05",
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": null,
+     "q_score": 31,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 13.07,
+      "percentile": 99.99,
+      "rang": 56,
+      "tier": "chaude"
+     },
+     "statut": "ecartee",
+     "surface_m2": 27084,
+     "zonage_detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 99.99,
+     "rang": 56,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "chaude"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 57,
+    "adresse_ban": {
+     "code_postal": "97418",
+     "numero": "5",
+     "voie": "Impasse des Menuisiers"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Le Tampon",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": {
+     "derniere": "2025-09-05",
+     "n_mutations": 1
+    },
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "1253",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 31,
+    "residuel": null,
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 13.07,
+     "percentile": 100.0,
+     "rang": 56,
+     "tier": "chaude"
+    },
+    "section": "AX",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1391,
+     "pv_existant": null,
+     "score_solaire": 45
+    },
+    "surface_m2": 27084,
+    "vegetation": {
+     "canopee_pct": 1,
+     "ndvi_moyen": 0.1
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « AUs » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUs"
+    }
+   }
+  },
+  "97422000BY0489": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Le Tampon",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": "2025-03-11",
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 31,
+     "proprietaire_moral_siren": "U23640598",
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "copro",
+      "v_band": "faible",
+      "v_score": 8
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 2.11,
+      "percentile": 97.7,
+      "rang": 9845,
+      "tier": "ecartee"
+     },
+     "statut": "ecartee",
+     "surface_m2": 481,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 2.11,
+     "percentile": 97.7,
+     "rang": 9845,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "ecartee"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": null,
+    "cascade_status": "faux_positif_probable",
+    "commune": "Le Tampon",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": {
+     "derniere_date": "2024-10-21",
+     "n": 13,
+     "pire_etiquette": "F"
+    },
+    "dvf": {
+     "derniere": "2025-03-11",
+     "n_mutations": 2
+    },
+    "etage0": true,
+    "etage0_motifs": [
+     "prescription_plu"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "489",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "LES PROPRIETAIRES DU LOT LES JACARANDAS",
+     "siren": "U23640598"
+    },
+    "q_score": 50,
+    "residuel": null,
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "copro",
+     "v_band": "faible",
+     "v_score": 8
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 2.11,
+     "percentile": 97.7,
+     "rang": 9845,
+     "tier": "ecartee"
+    },
+    "section": "BY",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1321,
+     "pv_existant": null,
+     "score_solaire": 19
+    },
+    "surface_m2": 481,
+    "vegetation": {
+     "canopee_pct": 4,
+     "ndvi_moyen": 0.0
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  },
+  "97423000AB1341": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Les Trois-Bassins",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 35,
+     "proprietaire_moral_siren": "807931308",
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "pm",
+      "v_band": "faible",
+      "v_score": 12
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 21.99,
+      "percentile": 100.0,
+      "rang": 19,
+      "tier": "ecartee"
+     },
+     "statut": "ecartee",
+     "surface_m2": 355,
+     "zonage_detail": "Zone N PLU — inconstructible (recouvrement 95 %)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 19,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "ecartee"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": {
+     "code_postal": "97426",
+     "numero": "24",
+     "voie": "Chemin Bellevue"
+    },
+    "cascade_status": "exclue",
+    "commune": "Les Trois-Bassins",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "risques",
+     "zonage_plu_gpu"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "1341",
+    "permis_sitadel": {
+     "dernier": "2024-11-08",
+     "n": 3
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": {
+     "denomination": "SCCV URANTIA",
+     "siren": "807931308"
+    },
+    "q_score": 50,
+    "residuel": {
+     "sdp_residuelle_m2": 199,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa inondation — niveau fort.",
+     "Aléa mouvement_terrain — niveau faible.",
+     "Aléa mouvement_terrain — niveau moyen.",
+     "Exclue : PPR zone rouge (inconstructible).",
+     "Exclue : PPR zone rouge (inconstructible).",
+     "Périmètre PPR INONDATION_MOUVEMENT_DE_TERRAIN (~52% de la parcelle) — servitude réglementaire approuvée ; prescriptions applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie)."
+    ],
+    "score_v": {
+     "owner_type": "pm",
+     "v_band": "faible",
+     "v_score": 12
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 21.99,
+     "percentile": 100.0,
+     "rang": 19,
+     "tier": "ecartee"
+    },
+    "section": "AB",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1337,
+     "pv_existant": null,
+     "score_solaire": 27
+    },
+    "surface_m2": 355,
+    "vegetation": {
+     "canopee_pct": 7,
+     "ndvi_moyen": 0.07
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 203,
+     "obstruction_pct": 0,
+     "vue": "oui"
+    },
+    "zonage_plu": {
+     "detail": "Zone N PLU — inconstructible (recouvrement 95 %).",
+     "recouvrement_pct": 95,
+     "zone": "N"
+    }
+   }
+  },
+  "97423000AB1908": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 64,
+     "commune": "Les Trois-Bassins",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 39,
+     "proprietaire_moral_siren": null,
+     "q_score": 44,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 63.97,
+      "percentile": 100.0,
+      "rang": 1,
+      "tier": "brulante"
+     },
+     "statut": "ecartee",
+     "surface_m2": 313,
+     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 63.97,
+     "percentile": 100.0,
+     "rang": 1,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "brulante"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 64,
+    "adresse_ban": {
+     "code_postal": "97426",
+     "numero": "27",
+     "voie": "Impasse des Pétrels"
+    },
+    "cascade_status": "a_creuser",
+    "commune": "Les Trois-Bassins",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "ecartee",
+    "numero": "1908",
+    "permis_sitadel": {
+     "dernier": "2024-03-11",
+     "n": 1
+    },
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 44,
+    "residuel": {
+     "sdp_residuelle_m2": 183,
+     "sous_densite": true,
+     "taux_emprise_pct": 0
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible.",
+     "Périmètre PPR INONDATION_MOUVEMENT_DE_TERRAIN — servitude réglementaire approuvée ; prescriptions applicables, zonage rouge/bleue à vérifier au règlement (constructibilité non garantie)."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 63.97,
+     "percentile": 100.0,
+     "rang": 1,
+     "tier": "brulante"
+    },
+    "section": "AB",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1337,
+     "pv_existant": null,
+     "score_solaire": 27
+    },
+    "surface_m2": 313,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": -0.06
+    },
+    "veille_succession": null,
+    "vue_mer": {
+     "distance_cote_m": 194,
+     "obstruction_pct": 0,
+     "vue": "oui"
+    },
+    "zonage_plu": {
+     "detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "AUc"
+    }
+   }
+  },
+  "97424000AD0409": {
+   "api": {
+    "fiche": {
+     "a_completude": null,
+     "a_score": 50,
+     "commune": "Cilaos",
+     "completeness_score": 74,
+     "dvf_derniere_mutation": null,
+     "etage0": true,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 31,
+     "proprietaire_moral_siren": null,
+     "q_score": 50,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 1.16,
+      "percentile": 74.39,
+      "rang": 109664,
+      "tier": "ecartee"
+     },
+     "statut": "ecartee",
+     "surface_m2": 8,
+     "zonage_detail": "Zone A PLU — inconstructible (recouvrement 100 %)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.16,
+     "percentile": 74.39,
+     "rang": 109664,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "ecartee"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": null,
+    "a_score": 50,
+    "adresse_ban": null,
+    "cascade_status": "exclue",
+    "commune": "Cilaos",
+    "completeness_score": 74,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": true,
+    "etage0_motifs": [
+     "bati",
+     "risques",
+     "surface",
+     "zonage_plu_gpu"
+    ],
+    "matrice_statut": "ecartee",
+    "numero": "409",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 50,
+    "residuel": null,
+    "risques": [
+     "Aléa mouvement_terrain — niveau moyen.",
+     "Exclue : PPR zone rouge (inconstructible)."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 1.16,
+     "percentile": 74.4,
+     "rang": 109664,
+     "tier": "ecartee"
+    },
+    "section": "AD",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1378,
+     "pv_existant": null,
+     "score_solaire": 40
+    },
+    "surface_m2": 8,
+    "vegetation": {
+     "canopee_pct": 0,
+     "ndvi_moyen": -0.04
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone A PLU — inconstructible (recouvrement 100 %).",
+     "recouvrement_pct": 100,
+     "zone": "A"
+    }
+   }
+  },
+  "97424000AI0355": {
+   "api": {
+    "fiche": {
+     "a_completude": 67,
+     "a_score": 57,
+     "commune": "Cilaos",
+     "completeness_score": 92,
+     "dvf_derniere_mutation": null,
+     "etage0": false,
+     "evenement": null,
+     "n_coproprietes": 0,
+     "n_lignes_cascade": 37,
+     "proprietaire_moral_siren": null,
+     "q_score": 58,
+     "score_v": {
+      "owner_type": "pp",
+      "v_band": "aucun",
+      "v_score": 0
+     },
+     "score_v2": {
+      "copro": false,
+      "mult_base": 0.99,
+      "percentile": 64.79,
+      "rang": 150803,
+      "tier": "a_creuser"
+     },
+     "statut": "a_creuser",
+     "surface_m2": 679,
+     "zonage_detail": "Zone PLU « U » (urbaine / à urbaniser — constructible)."
+    },
+    "score_v2": {
+     "badge_veille_succession": false,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.99,
+     "percentile": 64.79,
+     "rang": 150803,
+     "run_id": "m36-l2f-2026-2026-07-12",
+     "tier": "a_creuser"
+    }
+   },
+   "coherence_db_api": [],
+   "db": {
+    "a_completude": 67,
+    "a_score": 57,
+    "adresse_ban": {
+     "code_postal": "97413",
+     "numero": "19",
+     "voie": "Ruelle des Lianes"
+    },
+    "cascade_status": "opportunite",
+    "commune": "Cilaos",
+    "completeness_score": 92,
+    "copro_rnic": {
+     "lots_total": 0,
+     "n": 0
+    },
+    "dpe": null,
+    "dvf": null,
+    "etage0": false,
+    "etage0_motifs": [],
+    "matrice_statut": "a_creuser",
+    "numero": "355",
+    "permis_sitadel": null,
+    "piscine": {
+     "detections": 0,
+     "validees": 0
+    },
+    "proprietaire_moral": null,
+    "q_score": 58,
+    "residuel": {
+     "sdp_residuelle_m2": 395,
+     "sous_densite": true,
+     "taux_emprise_pct": 27
+    },
+    "risques": [
+     "Aléa mouvement_terrain — niveau faible."
+    ],
+    "score_v": {
+     "owner_type": "pp",
+     "v_band": "aucun",
+     "v_score": 0
+    },
+    "score_v2": {
+     "copro": false,
+     "event_date": null,
+     "model_version": "m36-l2f-2026",
+     "mult_base": 0.99,
+     "percentile": 64.8,
+     "rang": 150803,
+     "tier": "a_creuser"
+    },
+    "section": "AI",
+    "solaire": {
+     "prod_spec_kwh_kwc": 1289,
+     "pv_existant": null,
+     "score_solaire": 9
+    },
+    "surface_m2": 679,
+    "vegetation": {
+     "canopee_pct": 9,
+     "ndvi_moyen": 0.04
+    },
+    "veille_succession": null,
+    "vue_mer": null,
+    "zonage_plu": {
+     "detail": "Zone PLU « U » (urbaine / à urbaniser — constructible).",
+     "recouvrement_pct": null,
+     "zone": "U"
+    }
+   }
+  }
+ }
+}

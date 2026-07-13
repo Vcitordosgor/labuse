@@ -1,0 +1,836 @@
+Bras-Panon|1AUa|AUc||3|15|0|
+Bras-Panon|1AUb|AUc||5|17|0|
+Bras-Panon|1AUc|AUc||2|3|0|
+Bras-Panon|1AUd|AUc||3|2|0|
+Bras-Panon|1AUe|AUc||3|23|0|
+Bras-Panon|1AUec|AUc||5|18|0|
+Bras-Panon|1AUt|AUc||2|2|0|
+Bras-Panon|2AUa|AUs||2|9|0|
+Bras-Panon|2AUb|AUs||2|2|0|
+Bras-Panon|2AUc|AUs||2|3|0|
+Bras-Panon|2AUec|AUs||1|3|0|
+Bras-Panon|A|A||25|1215|0|
+Bras-Panon|AUst|AUs||1|2|0|
+Bras-Panon|Acu|A||2|185|0|
+Bras-Panon|N|N||21|882|0|
+Bras-Panon|Nli|N||3|164|0|
+Bras-Panon|Npnr|N||1|5180|0|
+Bras-Panon|Nr|N||18|639|0|
+Bras-Panon|Nsc|N||1|46|0|
+Bras-Panon|Nt2|N||1|1|0|
+Bras-Panon|Nt3|N||1|3|0|
+Bras-Panon|Nup|N||1|0|0|
+Bras-Panon|Ua|U||1|10|0|
+Bras-Panon|Ub|U||2|152|0|
+Bras-Panon|Uba|U||2|43|0|
+Bras-Panon|Uc|U||3|59|0|
+Bras-Panon|Ud|U||11|35|0|
+Bras-Panon|Udu|U||1|7|0|
+Bras-Panon|Ue|U||5|20|0|
+Cilaos|A|A||66|636|0|
+Cilaos|AUb|AUc||11|27|0|
+Cilaos|AUb1|AUc||1|1|0|
+Cilaos|AUb2|AUc||1|2|0|
+Cilaos|AUst|AUs||1|2|0|
+Cilaos|Anc|A||22|21|0|
+Cilaos|N|N||8|7408|0|
+Cilaos|Ndé|N||1|4|0|
+Cilaos|Nto|N||5|12|0|
+Cilaos|NtoPOS|N||1|13|0|
+Cilaos|Ua|U||1|16|0|
+Cilaos|Uah|U||2|8|0|
+Cilaos|Ub|U||18|267|0|
+Cilaos|Ub1|U||1|1|0|
+Cilaos|Uc|U||10|19|0|
+Entre-Deux|A|A||19|356|0|
+Entre-Deux|AUb|AUc||16|16|0|
+Entre-Deux|AUe|AUc||4|4|0|
+Entre-Deux|AUst|AUs||1|2|0|
+Entre-Deux|Aba|A||9|4|0|
+Entre-Deux|N|N||33|877|0|
+Entre-Deux|Nci|N||1|1|0|
+Entre-Deux|Npnr|N||5|2829|0|
+Entre-Deux|Nr|N||44|815|0|
+Entre-Deux|Nstep|N||2|2|0|
+Entre-Deux|Nt|N||24|4|0|
+Entre-Deux|Ua|U||3|56|0|
+Entre-Deux|Ub|U||15|149|0|
+Entre-Deux|Ub1|U||4|7|0|
+Entre-Deux|Ub2|U||2|4|0|
+L'Étang-Salé|A|A||14|1062|0|
+L'Étang-Salé|AUa|AUc||1|5|0|
+L'Étang-Salé|AUb|AUc||3|7|0|
+L'Étang-Salé|AUc|AUc||3|5|0|
+L'Étang-Salé|AUe|AUc||1|6|0|
+L'Étang-Salé|AUs|AUs||2|15|0|
+L'Étang-Salé|AUt|AUc||2|6|0|
+L'Étang-Salé|Acu|A||1|53|0|
+L'Étang-Salé|N|N||14|119|0|
+L'Étang-Salé|Na|N||1|2|0|
+L'Étang-Salé|Nce|N||3|463|0|
+L'Étang-Salé|Ne|N||1|4|0|
+L'Étang-Salé|Nep|N||1|2|0|
+L'Étang-Salé|Nerl|N||1|900|0|
+L'Étang-Salé|Nparc|N||1|640|0|
+L'Étang-Salé|Nt|N||2|68|0|
+L'Étang-Salé|Nt1|N||1|16|0|
+L'Étang-Salé|UA|U||2|118|0|
+L'Étang-Salé|UB|U||3|41|0|
+L'Étang-Salé|UBv|U||2|49|0|
+L'Étang-Salé|UC|U||10|188|0|
+L'Étang-Salé|UD|U||4|19|0|
+L'Étang-Salé|UE|U||3|56|0|
+L'Étang-Salé|UT|U||2|12|0|
+La Plaine-des-Palmistes|A|A||60|909|0|
+La Plaine-des-Palmistes|AUb|AUc||22|30|0|
+La Plaine-des-Palmistes|AUc|AUc||7|13|0|
+La Plaine-des-Palmistes|AUe|AUc||1|4|0|
+La Plaine-des-Palmistes|AUr|AUc||7|12|0|
+La Plaine-des-Palmistes|AUs1|AUc||10|12|0|
+La Plaine-des-Palmistes|AUs2|AUs||13|20|0|
+La Plaine-des-Palmistes|Aco|A||22|88|0|
+La Plaine-des-Palmistes|Ama|A||1|44|0|
+La Plaine-des-Palmistes|N|N||41|552|0|
+La Plaine-des-Palmistes|Nco|N||5|184|0|
+La Plaine-des-Palmistes|Nma|N||1|2|0|
+La Plaine-des-Palmistes|Np|N||3|620|0|
+La Plaine-des-Palmistes|Nr|N||7|5285|0|
+La Plaine-des-Palmistes|Nto|N||8|28|0|
+La Plaine-des-Palmistes|Nu|N||6|10|0|
+La Plaine-des-Palmistes|Ua|U||1|10|0|
+La Plaine-des-Palmistes|Ub|U||8|238|0|
+La Plaine-des-Palmistes|Uc|U||16|89|0|
+La Plaine-des-Palmistes|Ue|U||1|3|0|
+La Plaine-des-Palmistes|Ur|U||34|139|0|
+La Possession|A|A||19|420|0|
+La Possession|AUAv|AUc||2|16|0|
+La Possession|AUB|AUc||4|28|0|
+La Possession|AUBb|AUc||1|1|0|
+La Possession|AUBm|AUc||3|14|0|
+La Possession|AUBpsfr2|AUc||1|4|0|
+La Possession|AUEm|AUc||3|6|0|
+La Possession|AUT|AUc||1|2|0|
+La Possession|AUst|AUs||5|14|0|
+La Possession|N|N||32|525|0|
+La Possession|Ni1|N||54|42|0|
+La Possession|Ni2|N||48|51|0|
+La Possession|Nli|N||2|1511|0|
+La Possession|Npnr|N||1|7841|0|
+La Possession|Nr|N||9|527|0|
+La Possession|UA|U||13|144|0|
+La Possession|UAa|U||4|15|0|
+La Possession|UAm|U||1|23|0|
+La Possession|UApsfr2|U||1|32|0|
+La Possession|UAv|U||2|13|0|
+La Possession|UB|U||11|351|0|
+La Possession|UBa|U||1|10|0|
+La Possession|UBb|U||1|79|0|
+La Possession|UBc|U||9|88|0|
+La Possession|UBpsfr2|U||4|55|0|
+La Possession|UBpszc|U||1|1|0|
+La Possession|UE|U||6|37|0|
+La Possession|UEm|U||3|5|0|
+La Possession|UT|U||3|6|0|
+La Possession|UTfr2|U||1|1|0|
+Le Port|1AUa|AUc||2|10|0|
+Le Port|1AUc|AUc||1|13|0|
+Le Port|1AUe|AUc||1|5|0|
+Le Port|1AUem|AUc||1|4|0|
+Le Port|1AUm|AUc||2|23|0|
+Le Port|1AUmut|AUc||1|29|0|
+Le Port|1AUs|AUc||1|2|0|
+Le Port|1AUv|AUc||1|0|0|
+Le Port|2AUem|AUs||1|14|0|
+Le Port|2AUmut|AUs||1|16|0|
+Le Port|2AUp|AUs||1|72|0|
+Le Port|A|A||1|65|0|
+Le Port|N|N||7|211|0|
+Le Port|Nerl|N||1|27|0|
+Le Port|Ua|U||10|71|0|
+Le Port|Ub|U||2|36|0|
+Le Port|Uc|U||23|265|0|
+Le Port|Uca|U||3|14|0|
+Le Port|Ud|U||16|52|0|
+Le Port|Ue|U||4|226|0|
+Le Port|Uem|U||7|54|0|
+Le Port|Umi|U||2|2|0|
+Le Port|Uoap|U||1|7|0|
+Le Port|Up|U||3|242|0|
+Le Port|Uppp|U||1|30|0|
+Le Port|Us|U||3|22|0|
+Le Port|Uv|U||13|204|0|
+Le Tampon|1AUa|AUc||6|19|0|
+Le Tampon|1AUb|AUc||10|47|0|
+Le Tampon|1AUc|AUc||9|19|0|
+Le Tampon|1AUcto|AUc||2|4|0|
+Le Tampon|1AUe|AUc||4|30|0|
+Le Tampon|1AUto|AUc||2|51|0|
+Le Tampon|2AUa|AUs||2|2|0|
+Le Tampon|2AUb|AUs||3|6|0|
+Le Tampon|2AUc|AUs||18|33|0|
+Le Tampon|2AUd|AUs||7|6|0|
+Le Tampon|2AUe|AUs||2|21|0|
+Le Tampon|A|A||62|8423|0|
+Le Tampon|Aba|A||6|10|0|
+Le Tampon|N|N||34|757|0|
+Le Tampon|Nco|N||35|2845|0|
+Le Tampon|Npnr|N||4|3401|0|
+Le Tampon|Nto1|N||1|1|0|
+Le Tampon|Nto2|N||1|4|0|
+Le Tampon|Nto3|N||1|1|0|
+Le Tampon|Nto4|N||2|20|0|
+Le Tampon|Nto5|N||1|6|0|
+Le Tampon|UCto|U||2|5|0|
+Le Tampon|UCtom|U||1|12|0|
+Le Tampon|Ua|U||42|396|0|
+Le Tampon|Uav|U||49|340|0|
+Le Tampon|Ub|U||15|470|0|
+Le Tampon|Uc|U||53|1080|0|
+Le Tampon|Ucm|U||1|14|0|
+Le Tampon|Ud|U||14|81|0|
+Le Tampon|Ue|U||2|15|0|
+Les Avirons|A|A||25|728|0|
+Les Avirons|AUa|AUc||2|3|0|
+Les Avirons|AUc|AUc||15|9|0|
+Les Avirons|AUd|AUc||12|17|0|
+Les Avirons|AUec|AUc||1|3|0|
+Les Avirons|AUes|AUc||2|4|0|
+Les Avirons|AUt|AUc||4|4|0|
+Les Avirons|N|N||27|195|0|
+Les Avirons|Nli|N||1|16|0|
+Les Avirons|Npnr|N||2|987|0|
+Les Avirons|Nr|N||10|284|0|
+Les Avirons|Nto|N||1|2|0|
+Les Avirons|Ua|U||2|46|0|
+Les Avirons|Ub|U||2|3|0|
+Les Avirons|Ub1|U||1|1|0|
+Les Avirons|Ub2|U||1|4|0|
+Les Avirons|Ub3|U||4|9|0|
+Les Avirons|Ub4|U||1|1|0|
+Les Avirons|Ub5|U||1|0|0|
+Les Avirons|Uc|U||11|122|0|
+Les Avirons|Uc1|U||1|6|0|
+Les Avirons|Uc3|U||6|19|0|
+Les Avirons|Ud|U||15|101|0|
+Les Avirons|Ud1|U||8|13|0|
+Les Avirons|Ud2|U||1|3|0|
+Les Avirons|Ud3|U||6|44|0|
+Les Avirons|Ue|U||1|2|0|
+Les Trois-Bassins|1AUa|AUc||5|6|0|
+Les Trois-Bassins|1AUb|AUc||22|47|0|
+Les Trois-Bassins|1AUc|AUc||2|3|0|
+Les Trois-Bassins|1AUe|AUc||1|2|0|
+Les Trois-Bassins|1AUt|AUc||1|4|0|
+Les Trois-Bassins|2AUa|AUc||1|2|0|
+Les Trois-Bassins|2AUb|AUc||11|17|0|
+Les Trois-Bassins|2AUc|AUc||1|1|0|
+Les Trois-Bassins|A|A||24|1214|0|
+Les Trois-Bassins|AUs|AUs||3|1|0|
+Les Trois-Bassins|AUse|AUs||1|1|0|
+Les Trois-Bassins|Acu|A||2|136|0|
+Les Trois-Bassins|Arh|A||4|2|0|
+Les Trois-Bassins|N|N||17|639|0|
+Les Trois-Bassins|Nco|N||13|566|0|
+Les Trois-Bassins|Nli|N||1|59|0|
+Les Trois-Bassins|Nr|N||6|1323|0|
+Les Trois-Bassins|Nto|N||2|1|0|
+Les Trois-Bassins|Nto1|N||1|1|0|
+Les Trois-Bassins|Nto2|N||1|1|0|
+Les Trois-Bassins|Nto3|N||1|2|0|
+Les Trois-Bassins|Nto4|N||1|3|0|
+Les Trois-Bassins|Nto5|N||1|3|0|
+Les Trois-Bassins|Nto6|N||1|3|0|
+Les Trois-Bassins|Nu|N||4|3|0|
+Les Trois-Bassins|Ua|U||3|55|0|
+Les Trois-Bassins|Uaa|U||3|3|0|
+Les Trois-Bassins|Ub|U||19|114|0|
+Les Trois-Bassins|Uc|U||12|61|0|
+Les Trois-Bassins|Ue|U||1|2|0|
+Petite-Île|1AU|AUc||5|3|0|
+Petite-Île|1AUa|AUc||5|5|0|
+Petite-Île|1AUz|AUc||3|13|0|
+Petite-Île|2AU|AUs||10|13|0|
+Petite-Île|2AUe|AUs||2|1|0|
+Petite-Île|A|A||59|1623|0|
+Petite-Île|AUE|AUc||2|5|0|
+Petite-Île|AUF|AUc||2|1|0|
+Petite-Île|AUT|AUc||1|3|0|
+Petite-Île|AUs|AUs||1|5|0|
+Petite-Île|Ac|A||1|1|0|
+Petite-Île|Acu|A||8|141|0|
+Petite-Île|Ad|A||2|12|0|
+Petite-Île|Ae|A||16|16|0|
+Petite-Île|N|N||57|381|0|
+Petite-Île|Na|N||3|4|0|
+Petite-Île|Nb|N||1|0|0|
+Petite-Île|Nce|N||11|511|0|
+Petite-Île|Ncu|N||3|49|0|
+Petite-Île|Ne|N||16|7|0|
+Petite-Île|Np|N||1|163|0|
+Petite-Île|Ntl|N||4|7|0|
+Petite-Île|Ntla|N||2|23|0|
+Petite-Île|UB|U||1|49|0|
+Petite-Île|UC|U||48|248|0|
+Petite-Île|UCe|U||2|1|0|
+Petite-Île|UD|A||1|0|0|
+Petite-Île|UD|U||44|71|0|
+Petite-Île|UDe|U||1|0|0|
+Petite-Île|UE|U||1|1|0|
+Petite-Île|UEa|U||1|4|0|
+Petite-Île|UF|U||17|16|0|
+Petite-Île|UFcim|U||1|2|0|
+Petite-Île|UT|U||2|5|0|
+Petite-Île|UZ|U||1|9|0|
+Saint-André|1AUb|AU|espaces d?urbanisation prioritaire identifiés par le SAR|4|7|0|
+Saint-André|1AUc|AU|espaces d?urbanisation prioritaire identifiés par le SAR|11|23|0|
+Saint-André|1AUcr|AU|aménagement d?une zone d?activités mixtes dans le quartier de la Cressonnière|1|9|0|
+Saint-André|1AUd|AU|espaces d?urbanisation prioritaire identifiés par le SAR|2|5|0|
+Saint-André|1AUe|AU|espaces d?urbanisation prioritaire identifiés par le SAR|1|2|0|
+Saint-André|1AUs|AU|espaces d?urbanisation prioritaire identifiés par le SAR|2|12|0|
+Saint-André|1AUt|AU|espaces d?urbanisation prioritaire identifiés par le SAR|1|43|0|
+Saint-André|2AUb|AU|espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR et le SCOT|3|4|0|
+Saint-André|2AUc|AU|espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR et le SCOT|12|16|0|
+Saint-André|2AUd|AU|espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR et le SCOT|2|1|0|
+Saint-André|2AUe|AU|espaces d?extension urbaine situés au sein des zones préférentielles d'urbanisation identifiées par le SAR et le SCOT|1|9|0|
+Saint-André|A|A|zone agricole|35|2359|0|
+Saint-André|Aba|A|secteur où les constructions peuvent être autorisées dans des secteurs de taille et de capacité d'accueil limitées|4|7|0|
+Saint-André|Acu|A|espaces agricoles de coupure d?urbanisation identifiés par le SAR|1|236|0|
+Saint-André|N|N|zone naturelle et forestière|9|327|0|
+Saint-André|Nli|N|espaces naturels remarquables du littoral identifiés au SMVM|3|231|0|
+Saint-André|Npnr|N|espaces situés dans le coeur du parc national de la Réunion|1|244|0|
+Saint-André|Nr|N|réservoirs à biodiversité|4|102|0|
+Saint-André|Ntvb|N|corridors écologiques, synonymes de trames vertes et bleues|4|360|0|
+Saint-André|UA|U|centre-ville où la densité urbaine et les fonctions centrales doivent y être confortées comme l?habitat mais également les commerces, services, activités et équipements|1|76|0|
+Saint-André|UA1|U|quartier ancien autour de l?avenue Bourbon|1|8|0|
+Saint-André|UB|U|espaces urbains agglomérés du centre ainsi que le quartier Fayard, la zone est caractérisée par une densité moyenne et doit assurer la mixité des fonctions|4|488|0|
+Saint-André|UC|U|secteurs résidentiels, pavillonnaires, traditionnels et agglomérés de la commune. Elle est destinée à permettre la mixité des occupations et utilisations du sol|18|680|0|
+Saint-André|UD|U|bourgs des hauts à dominante d?habitat individuel et rural dont le développement est à contenir et l?intégration du bâti à considérer dans le paysage agricole environnant|11|95|0|
+Saint-André|UE|U|espaces destinés à accueillir des activités économiques à vocation de production, de transformation, de conditionnement et de distribution, ainsi que les activités de recherche, de formation et d?enseignement|4|51|0|
+Saint-André|US|U|espaces destinés à accueillir des activités économiques et commerciales|1|26|0|
+Saint-André|UT|U|site d'accueil d'activités touristiques ou de loisirs, sportifs|1|10|0|
+Saint-Benoît|A|A||33|4947|0|
+Saint-Benoît|AUa18|AUc||1|2|0|
+Saint-Benoît|AUa5|AUc||1|9|0|
+Saint-Benoît|AUa8|AUc||1|2|0|
+Saint-Benoît|AUa9|AUc||1|2|0|
+Saint-Benoît|AUb10|AUc||1|2|0|
+Saint-Benoît|AUb11|AUc||1|2|0|
+Saint-Benoît|AUb12|AUc||1|1|0|
+Saint-Benoît|AUb13|AUc||1|1|0|
+Saint-Benoît|AUb14|AUc||1|4|0|
+Saint-Benoît|AUb15|AUc||1|1|0|
+Saint-Benoît|AUb16|AUc||1|2|0|
+Saint-Benoît|AUb17|AUc||1|1|0|
+Saint-Benoît|AUb19|AUc||1|5|0|
+Saint-Benoît|AUb2|AUc||1|3|0|
+Saint-Benoît|AUb6|AUc||1|5|0|
+Saint-Benoît|AUb7|AUc||1|1|0|
+Saint-Benoît|AUe3|AUc||1|5|0|
+Saint-Benoît|AUp1|AUc||1|16|0|
+Saint-Benoît|Acor|A||111|448|0|
+Saint-Benoît|Acu|A||7|600|0|
+Saint-Benoît|Ai|A||1|15|0|
+Saint-Benoît|N|N||29|1994|0|
+Saint-Benoît|Nci|N||2|6|0|
+Saint-Benoît|Nerl|N||3|96|0|
+Saint-Benoît|Np|N||5|162|0|
+Saint-Benoît|Npnr|N||1|13489|0|
+Saint-Benoît|Ns20|N||1|1|0|
+Saint-Benoît|Ns21|N||1|4|0|
+Saint-Benoît|Ns22|N||1|0|0|
+Saint-Benoît|Ns23|N||1|0|0|
+Saint-Benoît|Ns24|N||1|1|0|
+Saint-Benoît|Ns25|N||1|2|0|
+Saint-Benoît|Ns26|N||1|1|0|
+Saint-Benoît|Ns27|N||1|0|0|
+Saint-Benoît|Ns28|N||1|1|0|
+Saint-Benoît|Ns29|N||1|0|0|
+Saint-Benoît|Ns30|N||1|0|0|
+Saint-Benoît|Ns31|N||1|0|0|
+Saint-Benoît|Ns32|N||1|1|0|
+Saint-Benoît|Ns33|N||1|0|0|
+Saint-Benoît|Ns34|N||1|2|0|
+Saint-Benoît|Ns35|N||1|0|0|
+Saint-Benoît|Ns36|N||1|0|0|
+Saint-Benoît|Ns37|N||1|1|0|
+Saint-Benoît|Ns38|N||1|1|0|
+Saint-Benoît|Ns39|N||1|1|0|
+Saint-Benoît|Ns40|N||1|2|0|
+Saint-Benoît|Ns41|N||1|5|0|
+Saint-Benoît|Ns42|N||1|1|0|
+Saint-Benoît|Ns43|N||1|0|0|
+Saint-Benoît|Ns44|N||1|1|0|
+Saint-Benoît|Ns45|N||1|0|0|
+Saint-Benoît|Ns46|N||1|0|0|
+Saint-Benoît|Nta47|N||1|3|0|
+Saint-Benoît|Nta48|N||1|0|0|
+Saint-Benoît|Nta49|N||1|1|0|
+Saint-Benoît|Nta50|N||1|2|0|
+Saint-Benoît|Nta51|N||1|1|0|
+Saint-Benoît|Nta52|N||1|2|0|
+Saint-Benoît|Nta53|N||1|0|0|
+Saint-Benoît|Nta54|N||1|0|0|
+Saint-Benoît|Ntb55|N||1|1|0|
+Saint-Benoît|Ntb57|N||1|3|0|
+Saint-Benoît|Ntb59|N||1|2|0|
+Saint-Benoît|Ua|U||11|231|0|
+Saint-Benoît|Uap|U||5|21|0|
+Saint-Benoît|Ub|U||35|773|0|
+Saint-Benoît|Ue|U||5|73|0|
+Saint-Benoît|Up|U||1|11|0|
+Saint-Benoît|Ut|U||1|2|0|
+Saint-Denis|2AUa|AUs||1|13|1|97418_plu_20251126
+Saint-Denis|A|A||66|1567|35|97408_PLU_20251217;97418_plu_20251126;97421_PLU_20220524
+Saint-Denis|AUBb|AUc||1|1|1|97408_PLU_20251217
+Saint-Denis|AUa|AUc||1|11|0|
+Saint-Denis|AUh|AUc||24|113|0|
+Saint-Denis|AUj|AUc||1|23|0|
+Saint-Denis|AUm|AUc||9|62|0|
+Saint-Denis|AUt|AUc||1|2|1|97421_PLU_20220524
+Saint-Denis|AUx|AUs||2|57|0|
+Saint-Denis|Aba|A||10|7|10|97421_PLU_20220524
+Saint-Denis|Ac|A||28|27|0|
+Saint-Denis|Ap|A||5|117|5|97418_plu_20251126
+Saint-Denis|N|N||19|13444|14|97408_PLU_20251217;97415_PLU_20251217;97418_plu_20251126;97421_PLU_20220524
+Saint-Denis|Nli|N||4|1513|4|97408_PLU_20251217;97418_plu_20251126
+Saint-Denis|Npf|N||3|6510|0|
+Saint-Denis|Npnr|N||4|15833|4|97408_PLU_20251217;97418_plu_20251126;97421_PLU_20220524
+Saint-Denis|Npv|N||1|15|1|97418_plu_20251126
+Saint-Denis|Nr|N||17|1316|17|97408_PLU_20251217;97418_plu_20251126;97421_PLU_20220524
+Saint-Denis|Ntc|N||17|58|0|
+Saint-Denis|Ntn|N||11|200|0|
+Saint-Denis|UA|U||1|23|1|97418_plu_20251126
+Saint-Denis|UB|U||4|99|4|97418_plu_20251126
+Saint-Denis|UBb|U||1|79|1|97408_PLU_20251217
+Saint-Denis|UBc|U||3|7|3|97408_PLU_20251217
+Saint-Denis|UC1|U||1|8|1|97418_plu_20251126
+Saint-Denis|UEa|U||1|32|1|97418_plu_20251126
+Saint-Denis|UEc|U||2|8|2|97418_plu_20251126
+Saint-Denis|UEp|U||1|14|1|97418_plu_20251126
+Saint-Denis|UR|U||1|272|1|97418_plu_20251126
+Saint-Denis|UT|U||2|5|2|97408_PLU_20251217
+Saint-Denis|Ua|U||4|92|0|
+Saint-Denis|Uac|U||2|63|0|
+Saint-Denis|Uad|U||1|5|0|
+Saint-Denis|Uat|U||1|8|0|
+Saint-Denis|Uavap|U||2|250|0|
+Saint-Denis|Ud|U||6|279|0|
+Saint-Denis|Udo|U||1|6|0|
+Saint-Denis|Udop|U||1|4|0|
+Saint-Denis|Udp|U||3|24|0|
+Saint-Denis|Uh|U||43|658|0|
+Saint-Denis|Ui|U||10|475|0|
+Saint-Denis|Uicm|U||1|11|0|
+Saint-Denis|Uip|U||2|10|0|
+Saint-Denis|Uj|U||9|250|0|
+Saint-Denis|Um|U||23|939|0|
+Saint-Denis|Uma|U||1|12|0|
+Saint-Denis|Upi|U||1|3|0|
+Saint-Denis|Upr|U||1|3|0|
+Saint-Denis|Uu|U||4|55|0|
+Saint-Denis|Uva|U||9|153|0|
+Saint-Denis|Uvac|U||1|4|0|
+Saint-Denis|Uvl|U||1|77|0|
+Saint-Joseph|1AU3|AUc||1|3|0|
+Saint-Joseph|1AU3a|AUc||2|2|0|
+Saint-Joseph|1AU5|AUc||11|12|0|
+Saint-Joseph|1AU5ru|AUc||7|8|0|
+Saint-Joseph|1AU5vi|AUc||6|10|0|
+Saint-Joseph|1AU6|AUc||1|9|0|
+Saint-Joseph|1AU6c|AUc||1|13|0|
+Saint-Joseph|1AUto|AUc||3|8|0|
+Saint-Joseph|1AUtok|AUc||1|2|0|
+Saint-Joseph|2AU2|AUc||1|2|0|
+Saint-Joseph|2AU3|AUc||1|2|0|
+Saint-Joseph|2AU3a|AUc||1|1|0|
+Saint-Joseph|2AU5|AUc||5|6|0|
+Saint-Joseph|2AU5cvd|AUc||1|1|0|
+Saint-Joseph|2AU5ma|AUc||1|1|0|
+Saint-Joseph|2AU5ru|AUc||1|0|0|
+Saint-Joseph|2AU5st|AUs||1|4|0|
+Saint-Joseph|2AU5vi|AUc||1|0|0|
+Saint-Joseph|2AU6|AUc||1|8|0|
+Saint-Joseph|2AU6ch|AUc||1|1|0|
+Saint-Joseph|3AU3|AUc||2|2|0|
+Saint-Joseph|3AU3a|AUc||1|3|0|
+Saint-Joseph|3AU3st|AUs||1|5|0|
+Saint-Joseph|3AU5|AUc||3|3|0|
+Saint-Joseph|3AU5ma|AUc||1|2|0|
+Saint-Joseph|3AU5st|AUs||2|4|0|
+Saint-Joseph|3AU5vist|AUs||2|3|0|
+Saint-Joseph|3AU6|AUc||1|5|0|
+Saint-Joseph|3AU6ch|AUc||1|2|0|
+Saint-Joseph|3AUto|AUc||1|1|0|
+Saint-Joseph|A|A||64|4211|0|
+Saint-Joseph|Aba|A||21|26|0|
+Saint-Joseph|Acu|A||3|182|0|
+Saint-Joseph|N|N||43|1251|0|
+Saint-Joseph|Nba|N||2|3|0|
+Saint-Joseph|Nci|N||3|5|0|
+Saint-Joseph|Nco|N||21|1946|0|
+Saint-Joseph|Nli|N||3|408|0|
+Saint-Joseph|Nma|N||1|15|0|
+Saint-Joseph|Npnr|N||1|8487|0|
+Saint-Joseph|Ntoh|N||7|4|0|
+Saint-Joseph|Ntok|N||1|4|0|
+Saint-Joseph|Ntol|N||1|4|0|
+Saint-Joseph|U1|U||2|6|0|
+Saint-Joseph|U2|U||4|30|0|
+Saint-Joseph|U2a|U||3|14|0|
+Saint-Joseph|U3|U||4|165|0|
+Saint-Joseph|U3a|U||11|176|0|
+Saint-Joseph|U3ar|U||1|1|0|
+Saint-Joseph|U4|U||1|21|0|
+Saint-Joseph|U5|U||31|388|0|
+Saint-Joseph|U5cv|U||2|6|0|
+Saint-Joseph|U5cvd|U||2|16|0|
+Saint-Joseph|U5ma|U||2|38|0|
+Saint-Joseph|U5ru|U||33|146|0|
+Saint-Joseph|U5vi|U||10|99|0|
+Saint-Joseph|U6|U||2|12|0|
+Saint-Joseph|U6c|U||1|2|0|
+Saint-Leu|A|A||53|1256|0|
+Saint-Leu|AD|A||11|722|0|
+Saint-Leu|APF|A||57|2255|0|
+Saint-Leu|APF1|A||1|9|0|
+Saint-Leu|AUA|AU||7|22|0|
+Saint-Leu|AUB|AU||8|21|0|
+Saint-Leu|AUC|AU||8|23|0|
+Saint-Leu|AUD|AU||2|7|0|
+Saint-Leu|AUE|AU||3|29|0|
+Saint-Leu|AUS|AU||7|23|0|
+Saint-Leu|AUT|AU||1|6|0|
+Saint-Leu|N|N||15|5876|0|
+Saint-Leu|NB|N||9|1|0|
+Saint-Leu|NH|N||11|17|0|
+Saint-Leu|NL|N||9|75|0|
+Saint-Leu|NSC|N||1|120|0|
+Saint-Leu|NT|N||1|1|0|
+Saint-Leu|UA|U||12|39|0|
+Saint-Leu|UAA|U||1|4|0|
+Saint-Leu|UAT|U||1|1|0|
+Saint-Leu|UB|U||20|90|0|
+Saint-Leu|UC|U||43|455|0|
+Saint-Leu|UCA|U||7|50|0|
+Saint-Leu|UCC|U||2|1|0|
+Saint-Leu|UD|U||58|440|0|
+Saint-Leu|UDB|U||1|1|0|
+Saint-Leu|UDP|U||1|1|0|
+Saint-Leu|UE|U||3|13|0|
+Saint-Leu|UF|U||13|54|0|
+Saint-Leu|UFe|U||1|1|0|
+Saint-Leu|UP|U||1|2|0|
+Saint-Louis|1AUa|AUc||2|4|0|
+Saint-Louis|1AUa oap1|AUc||2|29|0|
+Saint-Louis|1AUa oap3|AUc||1|4|0|
+Saint-Louis|1AUb1|AUc||7|7|0|
+Saint-Louis|1AUb2|AUc||12|21|0|
+Saint-Louis|1AUc|AUc||4|5|0|
+Saint-Louis|1AUc oap4|AUc||1|8|0|
+Saint-Louis|1AUc oap5|AUc||1|2|0|
+Saint-Louis|1AUc1|AUc||1|1|0|
+Saint-Louis|1AUc2|AUc||3|6|0|
+Saint-Louis|1AUd|AUc||5|8|0|
+Saint-Louis|1AUd1|AUc||3|3|0|
+Saint-Louis|1AUe|AUc||2|9|0|
+Saint-Louis|1AUe oap1|AUc||1|4|0|
+Saint-Louis|1AUst|AUc||1|4|0|
+Saint-Louis|1AUst oap1|AUc||1|9|0|
+Saint-Louis|1AUste|AUc||1|10|0|
+Saint-Louis|2AUb1|AUs||1|2|0|
+Saint-Louis|2AUb2|AUs||8|8|0|
+Saint-Louis|2AUd|AUs||1|0|0|
+Saint-Louis|2AUd1|AUs||2|3|0|
+Saint-Louis|2AUe|AUs||1|2|0|
+Saint-Louis|2AUst|AUs||2|4|0|
+Saint-Louis|2AUste|AUs||1|5|0|
+Saint-Louis|A|A||33|2252|0|
+Saint-Louis|Aco|A||5|135|0|
+Saint-Louis|Acu|A||3|357|0|
+Saint-Louis|Ama|A||2|229|0|
+Saint-Louis|Arh|A||4|5|0|
+Saint-Louis|Ato|A||10|69|0|
+Saint-Louis|N|N||19|465|0|
+Saint-Louis|Nco|N||6|1372|0|
+Saint-Louis|Nli|N||1|25|0|
+Saint-Louis|Nma|N||1|5|0|
+Saint-Louis|Npnr|N||4|3164|0|
+Saint-Louis|Nr|N||12|201|0|
+Saint-Louis|Nstep|N||1|6|0|
+Saint-Louis|Nto|N||13|72|0|
+Saint-Louis|Nto 1|N||1|2|0|
+Saint-Louis|Nto2|N||1|2|0|
+Saint-Louis|Nto3|N||1|3|0|
+Saint-Louis|UA|U||7|313|0|
+Saint-Louis|UA1|U||1|31|0|
+Saint-Louis|UB|U||6|150|0|
+Saint-Louis|UC|U||3|249|0|
+Saint-Louis|UC1|U||2|3|0|
+Saint-Louis|UC2|U||7|232|0|
+Saint-Louis|UD|U||26|140|0|
+Saint-Louis|UD1|U||6|108|0|
+Saint-Louis|UE|U||4|61|0|
+Saint-Louis|US|U||1|37|0|
+Saint-Louis|UZ|U||1|35|0|
+Saint-Paul|1AUa|AUc||3|4|3|97423_PLU_20220602
+Saint-Paul|1AUb|AUc||19|27|19|97423_PLU_20220602
+Saint-Paul|1AUc|AUc||2|3|2|97423_PLU_20220602
+Saint-Paul|1AUe|AUc||1|2|1|97423_PLU_20220602
+Saint-Paul|2AUb|AUc||8|13|8|97423_PLU_20220602
+Saint-Paul|2AUc|AUc||1|1|1|97423_PLU_20220602
+Saint-Paul|A|A||204|8008|42|97407_PLU_20241209;97408_PLU_20251217;97421_PLU_20220524;97423_PLU_20220602;97424_plu_20240213
+Saint-Paul|AU1b|AUc||2|6|0|
+Saint-Paul|AU1e|AUc||3|80|0|
+Saint-Paul|AU1ec|AUc||1|26|0|
+Saint-Paul|AU1est|AUs||1|28|0|
+Saint-Paul|AU1lec|AUc||1|3|0|
+Saint-Paul|AU1st|AUs||3|218|0|
+Saint-Paul|AU2c|AUc||9|34|0|
+Saint-Paul|AU2h|AUc||8|68|0|
+Saint-Paul|AU3a|AUc||1|37|0|
+Saint-Paul|AU3b|AUc||3|4|0|
+Saint-Paul|AU3c|AUc||10|42|0|
+Saint-Paul|AU3e|AUc||3|7|0|
+Saint-Paul|AU3h|AUc||1|2|0|
+Saint-Paul|AU3st|AUs||2|58|0|
+Saint-Paul|AU4b|AUc||1|3|0|
+Saint-Paul|AU4c|AUc||2|38|0|
+Saint-Paul|AU5a|AUc||1|9|0|
+Saint-Paul|AU5b|AUc||7|18|0|
+Saint-Paul|AU5c|AUc||1|3|0|
+Saint-Paul|AU5e|AUc||1|4|0|
+Saint-Paul|AU5st|AUs||2|23|0|
+Saint-Paul|AU6a|AUc||1|4|0|
+Saint-Paul|AU6b|AUc||3|5|0|
+Saint-Paul|AU6c|AUc||7|21|0|
+Saint-Paul|AU6st|AUs||2|24|0|
+Saint-Paul|AUB|AUc||2|22|2|97408_PLU_20251217
+Saint-Paul|AUBb|AUc||1|1|1|97408_PLU_20251217
+Saint-Paul|AUBm|AUc||2|9|2|97408_PLU_20251217
+Saint-Paul|AUEm|AUc||2|5|2|97408_PLU_20251217
+Saint-Paul|AUb|AUc||2|5|2|97421_PLU_20220524
+Saint-Paul|AUs|AUs||3|1|3|97423_PLU_20220602
+Saint-Paul|AUse|AUs||1|1|1|97423_PLU_20220602
+Saint-Paul|AUst|AUs||2|5|2|97408_PLU_20251217
+Saint-Paul|Acu|A||27|1029|0|
+Saint-Paul|An|A||89|709|0|
+Saint-Paul|Arh|A||4|2|4|97423_PLU_20220602
+Saint-Paul|N|N||148|19038|28|97407_PLU_20241209;97408_PLU_20251217;97421_PLU_20220524;97423_PLU_20220602;97424_plu_20240213
+Saint-Paul|Nco|N||13|566|13|97423_PLU_20220602
+Saint-Paul|Ncor|N||12|466|0|
+Saint-Paul|Ncu|N||21|457|0|
+Saint-Paul|Nerl|N||3|1501|0|
+Saint-Paul|Ni|N||20|61|0|
+Saint-Paul|Ni1|N||54|42|54|97408_PLU_20251217
+Saint-Paul|Ni2|N||48|51|48|97408_PLU_20251217
+Saint-Paul|Nli|N||1|59|1|97423_PLU_20220602
+Saint-Paul|Npf|N||1|6390|1|97411_PLU_20260423
+Saint-Paul|Npnr|N||2|13046|2|97408_PLU_20251217;97421_PLU_20220524
+Saint-Paul|Nr|N||16|1654|16|97408_PLU_20251217;97421_PLU_20220524;97423_PLU_20220602
+Saint-Paul|Nrh|N||4|6|0|
+Saint-Paul|Ntc|N||1|5|1|97411_PLU_20260423
+Saint-Paul|Ntn|N||1|3|1|97411_PLU_20260423
+Saint-Paul|Nto|N||9|60|1|97423_PLU_20220602
+Saint-Paul|Nto1|N||1|1|1|97423_PLU_20220602
+Saint-Paul|Nto2|N||1|1|1|97423_PLU_20220602
+Saint-Paul|Nto3|N||1|2|1|97423_PLU_20220602
+Saint-Paul|Nto5|N||1|3|1|97423_PLU_20220602
+Saint-Paul|Nto6|N||1|3|1|97423_PLU_20220602
+Saint-Paul|Ntoa|N||1|3|0|
+Saint-Paul|Ntol|N||1|19|0|
+Saint-Paul|Nu|N||4|3|4|97423_PLU_20220602
+Saint-Paul|U1a|U||2|28|0|
+Saint-Paul|U1b|U||3|137|0|
+Saint-Paul|U1c|U||1|54|0|
+Saint-Paul|U1d|U||1|5|0|
+Saint-Paul|U1e|U||2|53|0|
+Saint-Paul|U1f|U||7|79|0|
+Saint-Paul|U1g|U||5|39|0|
+Saint-Paul|U1l|U||1|24|0|
+Saint-Paul|U1pru|U||2|8|0|
+Saint-Paul|U1pso|U||1|9|0|
+Saint-Paul|U2a|U||1|18|0|
+Saint-Paul|U2b|U||1|16|0|
+Saint-Paul|U2c|U||14|322|0|
+Saint-Paul|U2d|U||11|149|0|
+Saint-Paul|U2e|U||2|18|0|
+Saint-Paul|U2h|U||21|69|0|
+Saint-Paul|U3a|U||1|44|0|
+Saint-Paul|U3b|U||2|23|0|
+Saint-Paul|U3c|U||10|532|0|
+Saint-Paul|U3e|U||3|9|0|
+Saint-Paul|U4a|U||5|74|0|
+Saint-Paul|U4b|U||7|269|0|
+Saint-Paul|U4c|U||17|258|0|
+Saint-Paul|U5a|U||1|14|0|
+Saint-Paul|U5b|U||7|229|0|
+Saint-Paul|U5c|U||4|58|0|
+Saint-Paul|U6a|U||1|18|0|
+Saint-Paul|U6b|U||3|65|0|
+Saint-Paul|U6c|U||32|527|0|
+Saint-Paul|UA|U||4|21|4|97408_PLU_20251217
+Saint-Paul|UAm|U||1|23|1|97408_PLU_20251217
+Saint-Paul|UB|U||5|267|5|97408_PLU_20251217;97421_PLU_20220524
+Saint-Paul|UBb|U||1|79|1|97408_PLU_20251217
+Saint-Paul|UBc|U||1|4|1|97408_PLU_20251217
+Saint-Paul|UC|U||5|8|5|97421_PLU_20220524
+Saint-Paul|UE|U||1|2|1|97408_PLU_20251217
+Saint-Paul|UEm|U||1|1|1|97408_PLU_20251217
+Saint-Paul|UT|U||2|5|2|97408_PLU_20251217
+Saint-Paul|Ua|U||5|73|5|97407_PLU_20241209;97423_PLU_20220602
+Saint-Paul|Uaa|U||3|3|3|97423_PLU_20220602
+Saint-Paul|Ub|U||14|96|14|97423_PLU_20220602
+Saint-Paul|Uc|U||12|70|12|97407_PLU_20241209;97423_PLU_20220602
+Saint-Paul|Uca|U||1|6|1|97407_PLU_20241209
+Saint-Paul|Ud|U||2|6|2|97407_PLU_20241209
+Saint-Paul|Ue|U||1|2|1|97423_PLU_20220602
+Saint-Paul|Us|U||1|2|1|97407_PLU_20241209
+Saint-Paul|Usdu|U||53|150|0|
+Saint-Paul|Uv|U||2|65|2|97407_PLU_20241209
+Saint-Philippe|1AU5ru|AUc||1|1|1|97412_PLU_20240320
+Saint-Philippe|A|A||6|427|6|97412_PLU_20240320
+Saint-Philippe|Aba|A||1|3|1|97412_PLU_20240320
+Saint-Philippe|Acu|A||1|146|1|97412_PLU_20240320
+Saint-Philippe|N|N||3|738|3|97412_PLU_20240320
+Saint-Philippe|Nco|N||2|11|2|97412_PLU_20240320
+Saint-Philippe|Nli|N||1|376|1|97412_PLU_20240320
+Saint-Philippe|Npnr|N||2|21868|2|97412_PLU_20240320;97419_PLU_20190504
+Saint-Philippe|U5ru|U||2|11|2|97412_PLU_20240320
+Saint-Pierre|A|A||32|4276|0|
+Saint-Pierre|AU01|AUs||3|9|0|
+Saint-Pierre|AU02|AUs||6|47|0|
+Saint-Pierre|AU03|AUs||1|17|0|
+Saint-Pierre|AU0c-1|AUs||2|22|0|
+Saint-Pierre|AUazc|AUc||3|7|0|
+Saint-Pierre|AUazi|AUc||1|12|0|
+Saint-Pierre|AUdma|AUc||1|10|0|
+Saint-Pierre|AUf|AUc||3|3|0|
+Saint-Pierre|AUfGB|AUc||1|3|0|
+Saint-Pierre|AUg|AUc||3|7|0|
+Saint-Pierre|AUt1|AUc||2|4|0|
+Saint-Pierre|AUt2|AUc||2|2|0|
+Saint-Pierre|Ac|A||5|99|0|
+Saint-Pierre|Ac1|A||2|145|0|
+Saint-Pierre|Acu|A||4|503|0|
+Saint-Pierre|Acu1|A||1|48|0|
+Saint-Pierre|At|A||5|8|0|
+Saint-Pierre|N|N||32|1253|0|
+Saint-Pierre|Nc|N||1|27|0|
+Saint-Pierre|Nci|N||2|7|0|
+Saint-Pierre|Ncu|N||1|16|0|
+Saint-Pierre|Nge|N||2|11|0|
+Saint-Pierre|Np|N||23|49|0|
+Saint-Pierre|Npnr|N||1|174|0|
+Saint-Pierre|Nr|N||12|70|0|
+Saint-Pierre|Uaza|U||7|28|0|
+Saint-Pierre|Uazc|U||3|56|0|
+Saint-Pierre|Uazi|U||5|137|0|
+Saint-Pierre|Uazp|U||1|92|0|
+Saint-Pierre|Uazpc|U||3|4|0|
+Saint-Pierre|Ucv|U||1|64|0|
+Saint-Pierre|Ud|U||11|396|0|
+Saint-Pierre|UdBO|U||2|31|0|
+Saint-Pierre|Udl|U||2|6|0|
+Saint-Pierre|Ue|U||7|126|0|
+Saint-Pierre|Uea|U||1|131|0|
+Saint-Pierre|Uemi|U||2|64|0|
+Saint-Pierre|Uep|U||5|13|0|
+Saint-Pierre|Uf|U||33|701|0|
+Saint-Pierre|UfCA|U||1|13|0|
+Saint-Pierre|Ug|U||26|876|0|
+Saint-Pierre|Up|U||2|41|0|
+Saint-Pierre|Us|U||18|50|0|
+Saint-Pierre|Ut|U||4|2|0|
+Sainte-Marie|1AUb|AUc||3|16|0|
+Sainte-Marie|1AUc|AUc||3|8|0|
+Sainte-Marie|1AUep|AUc||2|17|0|
+Sainte-Marie|2AUa|AUs||1|13|0|
+Sainte-Marie|2AUb|AUs||1|1|0|
+Sainte-Marie|2AUc|AUs||1|2|0|
+Sainte-Marie|A|A||83|2341|0|
+Sainte-Marie|Acu|A||4|247|0|
+Sainte-Marie|Aenr|A||2|23|0|
+Sainte-Marie|Ap|A||7|125|0|
+Sainte-Marie|N|N||28|1684|0|
+Sainte-Marie|Ncu|N||1|11|0|
+Sainte-Marie|Nli|N||3|5|0|
+Sainte-Marie|Npnr|N||2|2786|0|
+Sainte-Marie|Npv|N||1|15|0|
+Sainte-Marie|Nr|N||15|185|0|
+Sainte-Marie|UA|U||9|175|0|
+Sainte-Marie|UAb|U||4|20|0|
+Sainte-Marie|UAz|U||2|1|0|
+Sainte-Marie|UB|U||14|179|0|
+Sainte-Marie|UC|U||12|137|0|
+Sainte-Marie|UC1|U||3|14|0|
+Sainte-Marie|UC2|U||2|2|0|
+Sainte-Marie|UD|U||30|296|0|
+Sainte-Marie|UD1|U||20|79|0|
+Sainte-Marie|UEa|U||1|32|0|
+Sainte-Marie|UEc|U||5|52|0|
+Sainte-Marie|UEm|U||3|74|0|
+Sainte-Marie|UEp|U||3|33|0|
+Sainte-Marie|UR|U||1|272|0|
+Sainte-Marie|UT|U||1|1|0|
+Sainte-Marie|UTp|U||1|7|0|
+Sainte-Rose|1AUa|AUc||5|26|0|
+Sainte-Rose|1AUc|AUc||6|6|0|
+Sainte-Rose|1AUe|AUc||1|4|0|
+Sainte-Rose|1AUto|AUc||2|1|0|
+Sainte-Rose|2AUa|AUs||4|3|0|
+Sainte-Rose|2AUb|AUs||3|4|0|
+Sainte-Rose|2AUc|AUs||5|3|0|
+Sainte-Rose|2AUd|AUs||1|2|0|
+Sainte-Rose|A|A||30|2198|0|
+Sainte-Rose|Acu|A||9|298|0|
+Sainte-Rose|Ai|A||7|6|0|
+Sainte-Rose|N|N||20|857|0|
+Sainte-Rose|Nec|N||1|2|0|
+Sainte-Rose|Nli|N||2|524|0|
+Sainte-Rose|Npnr|N||1|13381|0|
+Sainte-Rose|Nrev|N||1|1|0|
+Sainte-Rose|Ntvb|N||10|168|0|
+Sainte-Rose|Ua|U||2|84|0|
+Sainte-Rose|Ub|U||1|52|0|
+Sainte-Rose|Uc|U||12|122|0|
+Sainte-Rose|Ud|U||1|2|0|
+Sainte-Rose|Ue|U||1|1|0|
+Sainte-Suzanne|1AUa|AUc||5|9|0|
+Sainte-Suzanne|1AUac|AUc||1|3|0|
+Sainte-Suzanne|1AUb|AUc||7|13|0|
+Sainte-Suzanne|1AUc|AUc||2|1|0|
+Sainte-Suzanne|1AUe|AUc||3|9|0|
+Sainte-Suzanne|2AUa|AUs||4|10|0|
+Sainte-Suzanne|2AUb|AUs||2|4|0|
+Sainte-Suzanne|A|A||46|2363|0|
+Sainte-Suzanne|Acu|A||2|545|0|
+Sainte-Suzanne|Aenr|A||5|20|0|
+Sainte-Suzanne|N|N||36|764|0|
+Sainte-Suzanne|Ndé|N||1|44|0|
+Sainte-Suzanne|Nenr|N||2|3|0|
+Sainte-Suzanne|Nlit|N||1|130|0|
+Sainte-Suzanne|Npnr|N||1|801|0|
+Sainte-Suzanne|Nr|N||5|441|0|
+Sainte-Suzanne|Nt|N||1|1|0|
+Sainte-Suzanne|UA|U||10|201|0|
+Sainte-Suzanne|UAc|U||2|1|0|
+Sainte-Suzanne|UAv|U||1|2|0|
+Sainte-Suzanne|UB|U||15|289|0|
+Sainte-Suzanne|UC|U||17|87|0|
+Sainte-Suzanne|UC1|U||18|28|0|
+Sainte-Suzanne|UE|U||4|14|0|
+Salazie|A|A||155|1277|0|
+Salazie|AUa1|AUc||3|4|0|
+Salazie|AUb|AUc||30|37|0|
+Salazie|AUc|AUc||6|4|0|
+Salazie|AUe|AUs||2|1|0|
+Salazie|AUt|AUc||4|4|0|
+Salazie|Aba|A||23|19|0|
+Salazie|N|N||33|2493|0|
+Salazie|Npnr|N||1|5205|0|
+Salazie|Nr|N||19|1093|0|
+Salazie|UA|U||4|18|0|
+Salazie|UA1|U||2|33|0|
+Salazie|UB|U||17|154|0|
+Salazie|UC|U||25|43|0|
+Salazie|UT|U||1|1|0|

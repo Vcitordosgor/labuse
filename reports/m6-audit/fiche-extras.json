@@ -1,0 +1,46 @@
+{
+ "recherche": "?",
+ "drawer": "KO locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('t",
+ "calculette": "KO locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:tex",
+ "ia": "KO locator.click: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[titl",
+ "hrefs": [
+  {
+   "t": "⬇ CSV",
+   "href": "/parcels/export.csv?source=q_v3_datagap&commune=Saint-Paul&limit=5000&sort=rang"
+  }
+ ],
+ "errs": [
+  "Access to fetch at 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/Open%20Sans%20Regular,Arial%20Unicode%20MS%20Regular/0-255.pbf' from origin 'http://127.0.0.1:8010' has be",
+  "Failed to load resource: net::ERR_FAILED",
+  "Error",
+  "Error",
+  "Error"
+ ],
+ "anru": {
+  "net": [
+   {
+    "url": "/map/layers.geojson?kind=anru&commune=Entre-Deux",
+    "status": 200,
+    "n": 0
+   }
+  ],
+  "feedback": "(aucun message utilisateur)"
+ },
+ "ia_search": {
+  "net": [
+   {
+    "url": "/ia/search",
+    "status": 200
+   },
+   {
+    "url": "/stats?source=q_v3_datagap&commune=Saint-Paul&tiers=chaude&surface_min=1000&vue_mer=true",
+    "status": 200
+   },
+   {
+    "url": "/parcels?source=q_v3_datagap&commune=Saint-Paul&limit=20&sort=rang&tiers=chaude&surface_min=1000&vue_mer=true",
+    "status": 200
+   }
+  ],
+  "texte": "IA\nCartes\nOutils\nVues\nProjets\nCRM\nSources\nLABUSE\nSaint-Paul\nⓘ Contexte\nChaude v2\n×\n≥ 1 000 m²\n×\nVue mer\n×\n+ Filtre\nVerdict\nMutabilité\n17\nVL\nCartes\n‹\n\nCOUCHES\n\nZonage PLU\nParcelles\nPPR multirisque\nVue mer\nParc national\nLimites parcelles\nLimites communes\nANRU (NPNRU)\nÉquipements\n✓ Analyse LABUSE affichée\nmasquer\n\nRÉSULTATS\n\ntriés par\nrang P\n×N\nsurface\ncommune\n\n0 brûlantes v2 · 16 chaudes · 47 réserve foncière (filtres actifs)\n\n51 129 parcelles analysées → 16 opportunités détectées · filtres appliquéspourquoi ? ▾\n\nTout\n517*\nBrûlantes v2\n0*\nChaudes\n16*\nRéserve foncière\n47*\nÀ creuser\n454*\nÉcartées\n2 351*\nmasquer les copropriétés\nCX 0639\nChaude v2 · 34\n◠\n1 122 m² · Saint-Paul\n×13.1\n92\nAB 0847\nChaude v2 · 48\nmême proprio ×5\n◠\n7 015 m² · Saint-Paul\n×13.1\n92\nCY 1041\nChaude v2 · 88\n◠\n2 690 m² · Saint-Paul\n×13.1\n92\nAB 0833\nChaude v2 · 122\nmême proprio ×5\n◠\n1 237 m² · Saint-Paul\n×13.1\n92\nAB 0799\nCha"
+ }
+}

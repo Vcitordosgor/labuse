@@ -1,0 +1,170 @@
+{
+ "fiches": [
+  {
+   "tag": "riche",
+   "idu": "97415000AC0253",
+   "tabs": {
+    "Synthèse": "● ÉVÉNEMENT — force « chaude »\nBODACC — procédure collective OUVERTE : « Jugement de conversion en redressement judiciaire de la procédure de sauvegarde ».\n97415000AC0253\n1 815 m² · Saint-Paul\nChaude v2\nrang 1454 · ×5.0\nsignaux vendeur 35/100\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\nChaude par ÉVÉNEMENT : le propriétaire (SOFICOOP) est en procédure collective — « Jugement de conversion en redressement judiciaire de la procédure de sauvegarde ».. Le score qualité (53) n'a pas déclenché ce statut : c'est l'urgence du dossier vendeur qui prime (doctrine bascule).\nPente 2°\n\nDétection automatique sur orthophotographie IGN 2025 — précision 90,7 % mesurée sur échantillon indépendant interne ; fiabilité statistique, non contractuelle. © IGN (Licence Ouverte).\n\nQualité\n53\n▾\n+15\nresiduel_socle\nSDP résiduelle 1066 m² — opération viable (socle +15).\nparcel_residuel#12059\n2026-07-10\n-10\nbruit_route\nSecteur affecté par le bruit routier (classement sonore cat. 1, bande 300 m) — isolement acoustique renforcé obligatoire (R.571-32 CE).\nClassement sonore ITT (Cerema)\nspatial_layers#1397547\n2026-07-10\n-10\nicpe\nInstallation classée (ICPE) à proximité — nuisances/voisinage industriel. (SEMBIN-APOU Gilles, 87 m)\nGéorisques — ICPE\nspatial_layers#1395741\n2026-07-10\n+8\nzonage_plu_gpu\nZone PLU « U » (urbaine / à urbaniser — constructible).\nUrbanisme PLU/GPU (API Carto)\n2026-07-10\n-5\nrisques\nAléa mouvement_terrain — niveau faible.\nGéorisques\n2026-07-10\n-5\nsol_pollue\nSite pollué recensé (CASIAS/instruction) à proximité — étude de sol à prévoir, coût de dépollution potentiel. (Sucrerie Distillerie du Piton, Saint-Paul, 45 m)\nGéorisques — sites et sols pollués\nspatial_layers#1395612\n2026-07-10\n+5\nsurface\nSurface utile 1815 m² — gisement (valorisation 67%, plafond 2500 m²).\n2026-07-10\n+3\nacces\nAccès direct à la voirie (tronçon au contact de la parcelle).\nBD TOPO IGN\n2026-07-10\n+2\namenites\nAménités : école 1615m, commerce 1956m, santé 904m, bus 289m (score 0.30).\nOpenStreetMap / Overpass\nparcel_amenites#12059\n2026-07-10\n+1\ndvf\nMarché : 1 mutation(s) ≤ 250 m / 5 ans, médiane terrain 379 €/m² (valeur ÷ surface terrain, tous biens). Contexte de marché favorable.\nDVF / valeurs foncières\n2026-07-10\n+1\nsitadel\nDynamique constructive : 2 PC à ≤ 400 m sur 5 ans (densité 13 % du plafond 15) — SIGNAL DE ZONE (§7bis).\nSITADEL (autorisations d'urbanisme)\n2026-07-10\nStatut matrice (historique)\nChaude\nAccessibilité\n64\n▸\nSignaux vendeur\n35\n▸\nProbabilité de mutation (P v2)\nChaude v2\névénement 2025-05-23\n×5.0\nvs moyenne du parc hors copro\npercentile 99.7\nrang 1454\n\nPOURQUOI CE SCORE\n\n+0.8",
+    "Règles": "● ÉVÉNEMENT — force « chaude »\nBODACC — procédure collective OUVERTE : « Jugement de conversion en redressement judiciaire de la procédure de sauvegarde ».\n97415000AC0253\n1 815 m² · Saint-Paul\nChaude v2\nrang 1454 · ×5.0\nsignaux vendeur 35/100\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n+15\nresiduel_socle\nSDP résiduelle 1066 m² — opération viable (socle +15).\nparcel_residuel#12059\n2026-07-10\n-10\nbruit_route\nSecteur affecté par le bruit routier (classement sonore cat. 1, bande 300 m) — isolement acoustique renforcé obligatoire (R.571-32 CE).\nClassement sonore ITT (Cerema)\nspatial_layers#1397547\n2026-07-10\n+8\nzonage_plu_gpu\nZone PLU « U » (urbaine / à urbaniser — constructible).\nUrbanisme PLU/GPU (API Carto)\n2026-07-10\n+5\nsurface\nSurface utile 1815 m² — gisement (valorisation 67%, plafond 2500 m²).\n2026-07-10\n·\nbati\nAucun bâti significatif détecté\n2026-07-10\n·\ncinquante_pas\nHors zone des 50 pas géométriques.\n2026-07-10\n·\nemprise_lineaire\nForme non linéaire (largeur 32 m, allongement 2.5×).\n2026-07-10\n·\nfoncier_public\nPropriétaire PM « Personnes morales non remarquables » (groupe 0) — acquérable.\n2026-07-10\n·\nforet_publique\nHors forêt publique.\nForêts publiques (ONF)\n2026-07-10\n·\nosm_faux_positif\nAucun faux positif géométrique OSM.\nOpenStreetMap / Overpass\n2026-07-10\n·\nparc_national\nHors Parc National.\nParc National de La Réunion (INPN)\n2026-07-10\n·\nprescription_plu\nZonage des eaux pluviales : zonage d'eau pluviale - zone reglt Modérée — rétention/infiltration imposée (impacte la conception, pas la constructibilité).\nUrbanisme PLU/GPU (API Carto)\n2026-07-10\n·\nprescription_plu\nSecteur de mixité sociale : Clause logements aidés — quota de logements aidés imposé (impacte le bilan, pas la constructibilité).\nUrbanisme PLU/GPU (API Carto)\n2026-07-10\n·\nsafer\nHors zonage SAFER.\nZonage SAFER (DAAF)\n2026-07-10\n·\nsar\nSAR : hors îlot cartographié — aucune contrainte SAR déduite automatiquement.\nSAR Réunion (PEIGEO)\n2026-07-10\n·\nsup\nAucune servitude d'utilité publique recensée.\nSUP — assiettes GPU (API Carto)\n2026-07-10\n✓ Dans le pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Risques": "● ÉVÉNEMENT — force « chaude »\nBODACC — procédure collective OUVERTE : « Jugement de conversion en redressement judiciaire de la procédure de sauvegarde ».\n97415000AC0253\n1 815 m² · Saint-Paul\nChaude v2\nrang 1454 · ×5.0\nsignaux vendeur 35/100\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n-10\nicpe\nInstallation classée (ICPE) à proximité — nuisances/voisinage industriel. (SEMBIN-APOU Gilles, 87 m)\nGéorisques — ICPE\nspatial_layers#1395741\n2026-07-10\n-5\nrisques\nAléa mouvement_terrain — niveau faible.\nGéorisques\n2026-07-10\n-5\nsol_pollue\nSite pollué recensé (CASIAS/instruction) à proximité — étude de sol à prévoir, coût de dépollution potentiel. (Sucrerie Distillerie du Piton, Saint-Paul, 45 m)\nGéorisques — sites et sols pollués\nspatial_layers#1395612\n2026-07-10\n?\nabf\ninconnu\nAbords MH ~500 m (tampon) — covisibilité à instruire.\nABF / Monuments historiques\n2026-07-10\n·\ncavite\nAucun objet recensé à proximité.\nGéorisques — cavités souterraines\n2026-07-10\n·\neau\nHors hydrographie.\nBD TOPO IGN\n2026-07-10\n·\nens\nHors ENS.\nENS (Département)\n2026-07-10\n·\nmvt\nAucun objet recensé à proximité.\nGéorisques — mouvements de terrain\n2026-07-10\n·\npente\nPente faible (~4%) — calculée, non éliminatoire.\nRGE ALTI (altimétrie)\n2026-07-10\n·\nravine\nHors voisinage immédiat d'une ravine.\nBD TOPO IGN\n2026-07-10\n·\ntrait_de_cote\nHors zone de recul du trait de côte.\nDEAL Réunion — trait de côte\n2026-07-10\n✓ Dans le pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Marché": "● ÉVÉNEMENT — force « chaude »\nBODACC — procédure collective OUVERTE : « Jugement de conversion en redressement judiciaire de la procédure de sauvegarde ».\n97415000AC0253\n1 815 m² · Saint-Paul\nChaude v2\nrang 1454 · ×5.0\nsignaux vendeur 35/100\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n+3\nacces\nAccès direct à la voirie (tronçon au contact de la parcelle).\nBD TOPO IGN\n2026-07-10\n+2\namenites\nAménités : école 1615m, commerce 1956m, santé 904m, bus 289m (score 0.30).\nOpenStreetMap / Overpass\nparcel_amenites#12059\n2026-07-10\n+1\ndvf\nMarché : 1 mutation(s) ≤ 250 m / 5 ans, médiane terrain 379 €/m² (valeur ÷ surface terrain, tous biens). Contexte de marché favorable.\nDVF / valeurs foncières\n2026-07-10\n+1\nsitadel\nDynamique constructive : 2 PC à ≤ 400 m sur 5 ans (densité 13 % du plafond 15) — SIGNAL DE ZONE (§7bis).\nSITADEL (autorisations d'urbanisme)\n2026-07-10\n·\nfriche\nAucune friche recensée.\nCartofriches (Cerema)\n2026-07-10\n·\nocs_ge\nSol déjà artificialise.\nOCS GE (IGN)\n2026-07-10\n·\npotentiel_foncier_region\nHors îlot « Potentiel foncier » Région.\ndata.regionreunion.com — Potentiel foncier\n2026-07-10\n✓ Dans le pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Proprio": "● ÉVÉNEMENT — force « chaude »\nBODACC — procédure collective OUVERTE : « Jugement de conversion en redressement judiciaire de la procédure de sauvegarde ».\n97415000AC0253\n1 815 m² · Saint-Paul\nChaude v2\nrang 1454 · ×5.0\nsignaux vendeur 35/100\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n\nPROPRIÉTAIRE (DGFiP)\n\nSOFICOOP\nSIREN 383755949\nPersonnes morales non remarquables\n→ tout son patrimoine (M02)\n+12\nage_dirigeant\nGérant âgé (75 ans) — horizon de transmission.\nINPI RNE (dirigeants)\nv_foncier_propension_vendre#383755949\n2026-07-10\n·\nbodacc\ninfo\nBODACC — procédure collective OUVERTE : « Jugement de conversion en redressement judiciaire de la procédure de sauvegarde ».\nBODACC (procédures collectives)\nv_foncier_sous_pression#383755949\n2026-07-10\n·\ndpe_passoire\nPas de passoire thermique F/G recensée.\nDPE ADEME (logements existants)\n2026-07-10\n?\nproprietaire\ninconnu\nPropriétaire inconnu (Fichiers fonciers sous convention non branchés).\nFichiers fonciers (Cerema)\n2026-07-10\n✓ Dans le pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Solaire": "● ÉVÉNEMENT — force « chaude »\nBODACC — procédure collective OUVERTE : « Jugement de conversion en redressement judiciaire de la procédure de sauvegarde ».\n97415000AC0253\n1 815 m² · Saint-Paul\nChaude v2\nrang 1454 · ×5.0\nsignaux vendeur 35/100\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n\nGISEMENT SOLAIRE\n\n36/100\n1367 kWh/an par kWc installé\n\nPVGIS v5.3 (SARAH3) — Commission européenne, horizon topographique inclus\n\nFACTURE ÉLECTRIQUE — ESTIMATION STATISTIQUE\n\n~60 €/mois\n3044 kWh/an estimés\n\nEstimation statistique (EDF SEI par commune × surface) — jamais une donnée réelle\n\nORIENTATION DU BÂTI\n\nGrand axe à 47° (confiance haute)\n\nBD TOPO IGN — grand axe du bâti ; hémisphère sud : le versant NORD est optimal\n\nABF\nProbabilité propriétaire-occupant : 70/100 (statistique — carreau INSEE + mutation récente)\n\nLoi n° 2023-175 art. 40 · décrets 2024-1023 et 2025-802 (seuil Réunion 1 000 m²)\n\n✓ Dans le pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Bilan": "● ÉVÉNEMENT — force « chaude »\nBODACC — procédure collective OUVERTE : « Jugement de conversion en redressement judiciaire de la procédure de sauvegarde ».\n97415000AC0253\n1 815 m² · Saint-Paul\nChaude v2\nrang 1454 · ×5.0\nsignaux vendeur 35/100\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n\nCAPACITÉ (que peut accueillir ce terrain ?)\n\nR+1 · au sol ~10-11 / sous-sol ~10-11 logts\nR+1 · emprise bâtie max 574 m² · SDP 1148 m² · SHAB vendable ~790 m² · stationnement : borne\nPré-faisabilité indicative sur règlement PLU public — ne remplace pas une étude de faisabilité réglementaire par un professionnel.\n\nMARCHÉ — PRIX DE SORTIE BÂTI (SECTEUR)\n\nmédiane bâti 3 846 €/m² (appartement, 14 ventes ≤ 1000 m) · fiabilité fiable · tendance hausse\nDVF — ventes jusqu'à déc. 2025 (dernière transaction en base · millésime en vigueur)\n\nCALCULETTE DE CHARGE FONCIÈRE\n\nLABUSE (sourcé) : SDP vendable 790 m² · prix de sortie bâti 3 846 €/m² · terrain 1 815 m²\n\nCoût construction\nhyp. — ajustez\n€/m²\nMarge & frais\nhyp. — ajustez\n%\n\nCharge foncière supportable — selon vos hypothèses\n\n129 k€≈ 71 €/m² de terrain\n\nfourchette 0 € – 341 k€\n\nPrix demandé du terrain\n€\nCharge foncière NÉGATIVE en bas de fourchette : aux prix bas / coûts hauts, l'opération ne dégage pas de valeur pour le terrain.\n\nLe coût de construction et la marge sont VOS hypothèses (LABUSE ne les estime pas). Le résultat est un calcul à partir de celles-ci — estimation indicative, ne vaut pas conseil.\n\nFISCAL & LEVIERS\n\nQPV : non · TVA : 8,5 % (taux DOM) — 2,1 % possible en LLS selon montage\nVue mer dégagée — prime de prix de sortie (vue dégagée)\nTaxe d'aménagement : taux communal à confirmer en mairie (non ingéré) — hypothèse indicative 5 % + part départementale.\n\nRTAA DOM — RAPPEL RÉGLEMENTAIRE\n\nConstruction neuve de logements : protection solaire, ventilation traversante, acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).10 exigences →\n✓ Dans le pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services."
+   },
+   "header": "",
+   "actions": [
+    {
+     "tag": "BUTTON",
+     "text": "10 exigences →",
+     "title": ""
+    },
+    {
+     "tag": "BUTTON",
+     "text": "✓ Dans le pipeline",
+     "title": "Déjà suivie dans le pipeline (voir CRM)",
+     "disabled": true
+    },
+    {
+     "tag": "BUTTON",
+     "text": "👁",
+     "title": "Suivie — les événements alimentent la cloche"
+    },
+    {
+     "tag": "BUTTON",
+     "text": "↗",
+     "title": "Pack apporteur : générer un lien public lecture seule (filigrané, compteur de vues)"
+    },
+    {
+     "tag": "BUTTON",
+     "text": "IA",
+     "title": "Analyse IA"
+    },
+    {
+     "tag": "A",
+     "text": "PDF",
+     "title": "Exporter la fiche en PDF (avec votre charge foncière)",
+     "href": "/parcels/97415000AC0253/export.pdf?source=q_v3_datagap&cout_construction_m2=2500&marge_frais_pct=21"
+    },
+    {
+     "tag": "A",
+     "text": "Dossier",
+     "title": "Dossier parcelle PDF brandé (carte, zonage calibré, risques, DVF, permis) — usage interne",
+     "href": "/dossier/97415000AC0253.pdf"
+    },
+    {
+     "tag": "BUTTON",
+     "text": "1950",
+     "title": "Ce terrain en 1950 — comparateur temporel (M08)"
+    },
+    {
+     "tag": "A",
+     "text": "Cadastre",
+     "title": "Vérifier la géométrie sur le cadastre OFFICIEL (Géoportail IGN — parcellaire PCI Express, centré sur la parcelle)",
+     "href": "https://www.geoportail.gouv.fr/carte?c=55.300258,-20.967881&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes"
+    },
+    {
+     "tag": "A",
+     "text": "G",
+     "title": "Ouvrir la parcelle dans Google Maps (satellite)",
+     "href": "https://www.google.com/maps/@-20.967881,55.300258,19z/data=!3m1!1e3"
+    }
+   ],
+   "net": [],
+   "errs": []
+  },
+  {
+   "tag": "pauvre",
+   "idu": "97415000AH0586",
+   "tabs": {
+    "Synthèse": "LABUSE l'a écartée — voici pourquoi\n✕ bati — déjà bâtie : 4 bâtiment(s) couvrant 90 % de la parcelle (BD TOPO)\nUne écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.\n97415000AH0586\n506 m² · Saint-Paul\nÉcartéesignaux vendeur 0/100Signaux partiels\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\nPiscine ~22 m²\nPente 6°\n\nDétection automatique sur orthophotographie IGN 2025 — précision 90,7 % mesurée sur échantillon indépendant interne ; fiabilité statistique, non contractuelle. © IGN (Licence Ouverte).\n\n⚠\n\nAccès à vérifier — aucun tronçon de voirie cartographié au contact de la parcelle. Signal informatif, non pondéré dans les scores : la BD TOPO trace les voies publiques — une desserte privée ou une servitude de passage n'y figure pas. À lever sur place ou au plan cadastral avant d'engager le dossier.\n\nQualité\n50\n▾\n\nAucun signal chiffré — tout est neutre ou inconnu.\n\nAccessibilité\n50\n▸\nSignaux vendeur\n0\n▸\nProbabilité de mutation (P v2)\nÉcartée\n×1.3\nvs moyenne du parc hors copro\npercentile 88.0\nrang 51453\n\nPOURQUOI CE SCORE\n\n+0.41\npiscine détectée\n+0.34\ndernière mutation il y a 2 à 3 ans\n-0.26\nrotation du bâti faible dans le secteur\n-0.09\nancienneté de mutation combinée à la surface\n-0.09\nrotation du foncier nu modérée dans le secteur\n\nmodèle m36-l2f-2026 — les ventes récentes apparaissent dans DVF avec 1 à 3 ans de retard — les niveaux 2025-2026 sont provisoires, le classement est fiable\n\nComplétude 74%\nDossier suffisant pour trancher\n\nFLAGS\n\n·\nbati\ndéjà bâtie : 4 bâtiment(s) couvrant 90 % de la parcelle (BD TOPO)\n2026-07-10\n·\nparc_national\nmoyen\nAire d'adhésion du Parc National — contraintes de charte.\nParc National de La Réunion (INPN)\n2026-07-10\n·\nresiduel_socle\ninfo\nSDP résiduelle 0 m² — rien à construire (socle -25).\nparcel_residuel#12737\n2026-07-10\n·\nrisques\nfaible\nAléa mouvement_terrain — niveau faible.\nGéorisques\n2026-07-10\n+ Pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Règles": "LABUSE l'a écartée — voici pourquoi\n✕ bati — déjà bâtie : 4 bâtiment(s) couvrant 90 % de la parcelle (BD TOPO)\nUne écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.\n97415000AH0586\n506 m² · Saint-Paul\nÉcartéesignaux vendeur 0/100Signaux partiels\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n·\nbati\ndéjà bâtie : 4 bâtiment(s) couvrant 90 % de la parcelle (BD TOPO)\n2026-07-10\n·\nbruit_route\nHors secteurs affectés par le bruit routier.\nClassement sonore ITT (Cerema)\n2026-07-10\n·\ncinquante_pas\nHors zone des 50 pas géométriques.\n2026-07-10\n·\nemprise_lineaire\nForme non linéaire (largeur 18 m, allongement 1.7×).\n2026-07-10\n·\nfoncier_public\nPropriétaire non public (personne physique ou PM privée).\n2026-07-10\n·\nforet_publique\nHors forêt publique.\nForêts publiques (ONF)\n2026-07-10\n·\nosm_faux_positif\nAucun faux positif géométrique OSM.\nOpenStreetMap / Overpass\n2026-07-10\n·\nparc_national\nmoyen\nAire d'adhésion du Parc National — contraintes de charte.\nParc National de La Réunion (INPN)\n2026-07-10\n·\nprescription_plu\nSecteur de mixité sociale : Clause logements aidés — quota de logements aidés imposé (impacte le bilan, pas la constructibilité).\nUrbanisme PLU/GPU (API Carto)\n2026-07-10\n·\nprescription_plu\nZonage des eaux pluviales : zonage d'eau pluviale - zone reglt Modérée — rétention/infiltration imposée (impacte la conception, pas la constructibilité).\nUrbanisme PLU/GPU (API Carto)\n2026-07-10\n·\nresiduel_socle\ninfo\nSDP résiduelle 0 m² — rien à construire (socle -25).\nparcel_residuel#12737\n2026-07-10\n·\nsafer\nHors zonage SAFER.\nZonage SAFER (DAAF)\n2026-07-10\n·\nsar\nSAR : hors îlot cartographié — aucune contrainte SAR déduite automatiquement.\nSAR Réunion (PEIGEO)\n2026-07-10\n·\nsup\nAucune servitude d'utilité publique recensée.\nSUP — assiettes GPU (API Carto)\n2026-07-10\n·\nsurface\nSurface utile 506 m² — gisement (valorisation 5%, plafond 2500 m²).\n2026-07-10\n·\nzonage_plu_gpu\nZone PLU « U » (urbaine / à urbaniser — constructible).\nUrbanisme PLU/GPU (API Carto)\n2026-07-10\n+ Pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Risques": "LABUSE l'a écartée — voici pourquoi\n✕ bati — déjà bâtie : 4 bâtiment(s) couvrant 90 % de la parcelle (BD TOPO)\nUne écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.\n97415000AH0586\n506 m² · Saint-Paul\nÉcartéesignaux vendeur 0/100Signaux partiels\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n·\nabf\nHors périmètre ABF.\nABF / Monuments historiques\n2026-07-10\n·\ncavite\nAucun objet recensé à proximité.\nGéorisques — cavités souterraines\n2026-07-10\n·\neau\nHors hydrographie.\nBD TOPO IGN\n2026-07-10\n·\nens\nHors ENS.\nENS (Département)\n2026-07-10\n·\nicpe\nAucun objet recensé à proximité.\nGéorisques — ICPE\n2026-07-10\n·\nmvt\nAucun objet recensé à proximité.\nGéorisques — mouvements de terrain\n2026-07-10\n·\npente\nPente fort (~29%) — calculée, non éliminatoire.\nRGE ALTI (altimétrie)\n2026-07-10\n·\nravine\nHors voisinage immédiat d'une ravine.\nBD TOPO IGN\n2026-07-10\n·\nrisques\nfaible\nAléa mouvement_terrain — niveau faible.\nGéorisques\n2026-07-10\n·\nsol_pollue\nAucun objet recensé à proximité.\nGéorisques — sites et sols pollués\n2026-07-10\n·\ntrait_de_cote\nHors zone de recul du trait de côte.\nDEAL Réunion — trait de côte\n2026-07-10\n+ Pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Marché": "LABUSE l'a écartée — voici pourquoi\n✕ bati — déjà bâtie : 4 bâtiment(s) couvrant 90 % de la parcelle (BD TOPO)\nUne écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.\n97415000AH0586\n506 m² · Saint-Paul\nÉcartéesignaux vendeur 0/100Signaux partiels\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n·\nacces\nPas d'accès direct évident à la voirie.\nBD TOPO IGN\n2026-07-10\n·\namenites\nAménités : école 238m, commerce 510m, santé 1155m, bus 278m (score 0.75).\nOpenStreetMap / Overpass\nparcel_amenites#12737\n2026-07-10\n·\nfriche\nAucune friche recensée.\nCartofriches (Cerema)\n2026-07-10\n·\nocs_ge\nSol déjà artificialise.\nOCS GE (IGN)\n2026-07-10\n+ Pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Proprio": "LABUSE l'a écartée — voici pourquoi\n✕ bati — déjà bâtie : 4 bâtiment(s) couvrant 90 % de la parcelle (BD TOPO)\nUne écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.\n97415000AH0586\n506 m² · Saint-Paul\nÉcartéesignaux vendeur 0/100Signaux partiels\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\nPropriétaire : personne physique ou non recensé au fichier des personnes morales (identité nominative : workflow SPF/CERFA, jamais automatisée).\n\nAucun signal sur cet onglet.\n\n+ Pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Solaire": "LABUSE l'a écartée — voici pourquoi\n✕ bati — déjà bâtie : 4 bâtiment(s) couvrant 90 % de la parcelle (BD TOPO)\nUne écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.\n97415000AH0586\n506 m² · Saint-Paul\nÉcartéesignaux vendeur 0/100Signaux partiels\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n\nGISEMENT SOLAIRE\n\n42/100\n1382 kWh/an par kWc installé\n\nPVGIS v5.3 (SARAH3) — Commission européenne, horizon topographique inclus\n\nFACTURE ÉLECTRIQUE — ESTIMATION STATISTIQUE\n\n~190 €/mois\n9270 kWh/an estimés\n\nEstimation statistique (EDF SEI par commune × surface) — jamais une donnée réelle\n\nORIENTATION DU BÂTI\n\nGrand axe à 46° (confiance basse)\n\nBD TOPO IGN — grand axe du bâti ; hémisphère sud : le versant NORD est optimal\n\nProbabilité propriétaire-occupant : 58/100 (statistique — carreau INSEE + mutation récente)\n\nLoi n° 2023-175 art. 40 · décrets 2024-1023 et 2025-802 (seuil Réunion 1 000 m²)\n\n+ Pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services.",
+    "Bilan": "LABUSE l'a écartée — voici pourquoi\n✕ bati — déjà bâtie : 4 bâtiment(s) couvrant 90 % de la parcelle (BD TOPO)\nUne écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.\n97415000AH0586\n506 m² · Saint-Paul\nÉcartéesignaux vendeur 0/100Signaux partiels\n✕\nSynthèse\nRègles\nRisques\nMarché\nProprio\nSolaire\nBilan\n\nCAPACITÉ (que peut accueillir ce terrain ?)\n\nR+1 · au sol ~1-3 / sous-sol ~1-3 logts\nR+1 · emprise bâtie max 119 m² · SDP 237 m² · SHAB vendable ~134 m² · stationnement : borne\nPré-faisabilité indicative sur règlement PLU public — ne remplace pas une étude de faisabilité réglementaire par un professionnel.\n\nMARCHÉ — PRIX DE SORTIE BÂTI (SECTEUR)\n\nmédiane bâti 2 986 €/m² (appartement, 26 ventes ≤ 1000 m) · fiabilité fiable · tendance stable\nDVF — ventes jusqu'à déc. 2025 (dernière transaction en base · millésime en vigueur)\n\nCALCULETTE DE CHARGE FONCIÈRE\n\nLABUSE (sourcé) : SDP vendable 134 m² · prix de sortie bâti 2 986 €/m² · terrain 506 m²\n\nCoût construction\nhyp. — ajustez\n€/m²\nMarge & frais\nhyp. — ajustez\n%\n\nCharge foncière supportable — selon vos hypothèses\n\n-69 k€≈ -137 €/m² de terrain\n\nfourchette 0 € – -23 k€\n\nPrix demandé du terrain\n€\nCharge foncière NÉGATIVE en bas de fourchette : aux prix bas / coûts hauts, l'opération ne dégage pas de valeur pour le terrain.\n\nLe coût de construction et la marge sont VOS hypothèses (LABUSE ne les estime pas). Le résultat est un calcul à partir de celles-ci — estimation indicative, ne vaut pas conseil.\n\nFISCAL & LEVIERS\n\nQPV : OUI · TVA : 2,1 % (LLS en QPV — LODEOM) au lieu de 8,5 % DOM\nTaxe d'aménagement : taux communal à confirmer en mairie (non ingéré) — hypothèse indicative 5 % + part départementale.\n\nRTAA DOM — RAPPEL RÉGLEMENTAIRE\n\nConstruction neuve de logements : protection solaire, ventilation traversante, acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).10 exigences →\n+ Pipeline\n👁\n↗\nIA\nPDF\nDossier\n1950\nCadastre\nG\n\nEstimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité. À vérifier au règlement et auprès des services."
+   },
+   "header": "GN 2025 — précision 90,7 % mesurée sur échantillon indépendant interne ; fiabilité statistique, non contractuelle. © IGN (Licence Ouverte).\n\n⚠\n\nAccès à vérifier — aucun tronçon de voirie cartographié au contact de la parcelle. Signal informatif, non pondéré dans les scores : la BD TOPO trace les voi",
+   "actions": [
+    {
+     "tag": "BUTTON",
+     "text": "10 exigences →",
+     "title": ""
+    },
+    {
+     "tag": "BUTTON",
+     "text": "+ Pipeline",
+     "title": "Ajouter au pipeline de prospection"
+    },
+    {
+     "tag": "BUTTON",
+     "text": "👁",
+     "title": "Suivre cette parcelle (alertes sans pipeline)"
+    },
+    {
+     "tag": "BUTTON",
+     "text": "↗",
+     "title": "Pack apporteur : générer un lien public lecture seule (filigrané, compteur de vues)"
+    },
+    {
+     "tag": "BUTTON",
+     "text": "IA",
+     "title": "Analyse IA"
+    },
+    {
+     "tag": "A",
+     "text": "PDF",
+     "title": "Exporter la fiche en PDF (avec votre charge foncière)",
+     "href": "/parcels/97415000AH0586/export.pdf?source=q_v3_datagap&cout_construction_m2=2500&marge_frais_pct=21"
+    },
+    {
+     "tag": "A",
+     "text": "Dossier",
+     "title": "Dossier parcelle PDF brandé (carte, zonage calibré, risques, DVF, permis) — usage interne",
+     "href": "/dossier/97415000AH0586.pdf"
+    },
+    {
+     "tag": "BUTTON",
+     "text": "1950",
+     "title": "Ce terrain en 1950 — comparateur temporel (M08)"
+    },
+    {
+     "tag": "A",
+     "text": "Cadastre",
+     "title": "Vérifier la géométrie sur le cadastre OFFICIEL (Géoportail IGN — parcellaire PCI Express, centré sur la parcelle)",
+     "href": "https://www.geoportail.gouv.fr/carte?c=55.337484,-20.979572&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes"
+    },
+    {
+     "tag": "A",
+     "text": "G",
+     "title": "Ouvrir la parcelle dans Google Maps (satellite)",
+     "href": "https://www.google.com/maps/@-20.979572,55.337484,19z/data=!3m1!1e3"
+    }
+   ],
+   "net": [],
+   "errs": []
+  }
+ ],
+ "anru": {
+  "net": [
+   {
+    "url": "/map/layers.geojson?kind=anru",
+    "status": 200
+   }
+  ],
+  "message": "ANRU (NPNRU)"
+ },
+ "erreurs_console": [],
+ "ia_popover_net": "bouton IA non trouvé: locator.click: Timeout 3000ms exceeded.\nCall log:\n\u001b[2m  - wa",
+ "idu_inexistant": {
+  "net": [
+   {
+    "url": "/parcels/search?q=97499000ZZ9999",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "message": "Aucune parcelle ne correspond à ces filtres sur l'île — retirez un critère."
+ }
+}

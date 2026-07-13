@@ -1,0 +1,94 @@
+         commune         |    lib    | n_parcelles | ev_opportunite | ev_a_creuser | ev_exclue_fp | v2_brulante | v2_chaude | v2_a_creuser | v2_reserve 
+-------------------------+-----------+-------------+----------------+--------------+--------------+-------------+-----------+--------------+------------
+ Bras-Panon              | 1AUe      |          42 |              4 |           13 |           25 |           0 |         0 |           17 |          0
+ Bras-Panon              | 1AUec     |          27 |              4 |           12 |           11 |           0 |         0 |           16 |          0
+ Bras-Panon              | 2AUec     |           3 |              0 |            3 |            0 |           0 |         0 |            3 |          0
+ Bras-Panon              | Ue        |         145 |              7 |           25 |          113 |           0 |         0 |           30 |          2
+ Entre-Deux              | AUe       |          16 |              0 |            4 |           12 |           0 |         0 |            2 |          2
+ L'Étang-Salé            | AUe       |          16 |              0 |            8 |            8 |           0 |         0 |            8 |          0
+ L'Étang-Salé            | UE        |         193 |              7 |           50 |          136 |           0 |         0 |           53 |          4
+ La Plaine-des-Palmistes | AUe       |           5 |              0 |            0 |            5 |           0 |         0 |            0 |          0
+ La Plaine-des-Palmistes | Ue        |          29 |              0 |           18 |           11 |           0 |         0 |           15 |          3
+ La Possession           | AUEm      |          26 |              5 |            6 |           15 |           0 |         3 |            8 |          0
+ La Possession           | UE        |         153 |              7 |           14 |          132 |           0 |         1 |           17 |          3
+ La Possession           | UEm       |          48 |              7 |           13 |           28 |           0 |         0 |           20 |          0
+ Le Port                 | 1AUe      |           4 |              0 |            3 |            1 |           0 |         2 |            1 |          0
+ Le Port                 | 1AUem     |          10 |              0 |            3 |            7 |           0 |         0 |            3 |          0
+ Le Port                 | 2AUem     |           3 |              0 |            3 |            0 |           0 |         0 |            2 |          1
+ Le Port                 | Ue        |         440 |             46 |          127 |          267 |           0 |         1 |          129 |         43
+ Le Port                 | Uem       |         200 |             28 |           36 |          136 |           0 |         0 |           58 |          6
+ Le Port                 | Umi       |          21 |              1 |            9 |           11 |           0 |         0 |            9 |          1
+ Le Tampon               | 1AUe      |         153 |             29 |           65 |           59 |           0 |        35 |           52 |          7
+ Le Tampon               | 2AUe      |          42 |              1 |           27 |           14 |           0 |         3 |           23 |          2
+ Le Tampon               | Ue        |         107 |              2 |           24 |           81 |           0 |         0 |           19 |          7
+ Les Avirons             | AUec      |           1 |              0 |            1 |            0 |           0 |         0 |            1 |          0
+ Les Avirons             | AUes      |          15 |              2 |            5 |            8 |           0 |         0 |            3 |          4
+ Les Avirons             | Ue        |           6 |              1 |            0 |            5 |           0 |         0 |            1 |          0
+ Les Trois-Bassins       | 1AUe      |           7 |              0 |            4 |            3 |           0 |         0 |            4 |          0
+ Les Trois-Bassins       | Ue        |           6 |              0 |            2 |            4 |           0 |         0 |            2 |          0
+ Petite-Île              | 1AUz      |          74 |             18 |           33 |           23 |           0 |         0 |           48 |          3
+ Petite-Île              | 2AUe      |          11 |              0 |            9 |            2 |           0 |         0 |            9 |          0
+ Petite-Île              | AUE       |           5 |              0 |            4 |            1 |           0 |         0 |            4 |          0
+ Petite-Île              | UE        |           2 |              0 |            0 |            2 |           0 |         0 |            0 |          0
+ Petite-Île              | UEa       |          27 |              0 |           11 |           16 |           0 |         0 |           11 |          0
+ Petite-Île              | UZ        |         131 |              2 |           30 |           99 |           0 |         1 |           31 |          0
+ Saint-André             | 1AUe      |           7 |              0 |            6 |            1 |           0 |         0 |            5 |          1
+ Saint-André             | UE        |         116 |              0 |           31 |           85 |           0 |         2 |           26 |          3
+ Saint-André             | US        |         132 |              0 |           43 |           89 |           0 |         0 |           37 |          6
+ Saint-Benoît            | AUe3      |           3 |              0 |            1 |            2 |           0 |         0 |            1 |          0
+ Saint-Benoît            | Ue        |         301 |             26 |          123 |          152 |           0 |         0 |          119 |         30
+ Saint-Denis             | AUx       |          92 |              0 |           51 |           41 |           0 |         1 |           46 |          4
+ Saint-Denis             | UEa       |          49 |              9 |           26 |           14 |           0 |         0 |           16 |         19
+ Saint-Denis             | UEc       |          30 |              8 |            8 |           14 |           0 |         0 |           14 |          2
+ Saint-Denis             | UEp       |          23 |              8 |            5 |           10 |           0 |         0 |            6 |          7
+ Saint-Denis             | Ui        |        6099 |             18 |          876 |         5205 |           1 |         8 |          834 |         51
+ Saint-Denis             | Uicm      |          42 |              0 |           11 |           31 |           0 |         0 |            8 |          3
+ Saint-Denis             | Uip       |         100 |              0 |           13 |           87 |           0 |         1 |           11 |          1
+ Saint-Leu               | AUE       |         140 |             20 |           49 |           71 |           1 |         8 |           60 |          0
+ Saint-Leu               | UE        |          80 |             20 |           20 |           40 |           0 |         1 |           33 |          6
+ Saint-Leu               | UF        |          96 |             20 |           14 |           62 |           0 |         0 |           22 |         12
+ Saint-Leu               | UFe       |           4 |              0 |            2 |            2 |           0 |         0 |            2 |          0
+ Saint-Louis             | 1AUe      |          33 |              2 |           15 |           16 |           0 |         1 |           16 |          0
+ Saint-Louis             | 1AUe oap1 |           3 |              3 |            0 |            0 |           0 |         0 |            2 |          1
+ Saint-Louis             | 1AUste    |          11 |              1 |            1 |            9 |           0 |         0 |            2 |          0
+ Saint-Louis             | 2AUe      |           8 |              0 |            5 |            3 |           0 |         0 |            5 |          0
+ Saint-Louis             | 2AUste    |           8 |              0 |            2 |            6 |           0 |         0 |            2 |          0
+ Saint-Louis             | UE        |         149 |             14 |           27 |          108 |           0 |         0 |           21 |         20
+ Saint-Louis             | US        |         146 |              9 |           41 |           96 |           0 |         0 |           42 |          8
+ Saint-Louis             | UZ        |         314 |             17 |           64 |          233 |           0 |         0 |           73 |          8
+ Saint-Paul              | 1AUe      |           7 |              0 |            5 |            2 |           0 |         1 |            4 |          0
+ Saint-Paul              | AU1e      |          90 |              3 |           34 |           53 |           0 |         0 |           28 |          0
+ Saint-Paul              | AU1ec     |          81 |              0 |           52 |           29 |           0 |         9 |           23 |          0
+ Saint-Paul              | AU1est    |          32 |              0 |           28 |            4 |           0 |         0 |            7 |          0
+ Saint-Paul              | AU1lec    |           1 |              0 |            1 |            0 |           0 |         1 |            0 |          0
+ Saint-Paul              | AU3e      |           6 |              1 |            2 |            3 |           0 |         0 |            1 |          0
+ Saint-Paul              | AU5e      |           5 |              0 |            2 |            3 |           0 |         0 |            2 |          0
+ Saint-Paul              | AUEm      |          13 |              2 |            4 |            7 |           0 |         2 |            4 |          0
+ Saint-Paul              | AUse      |           2 |              0 |            0 |            2 |           0 |         0 |            0 |          0
+ Saint-Paul              | U1e       |         263 |              1 |           48 |          214 |           0 |         1 |           29 |          2
+ Saint-Paul              | U2e       |          48 |              1 |           11 |           36 |           0 |         0 |           11 |          1
+ Saint-Paul              | U3e       |          96 |              1 |           24 |           71 |           0 |         0 |           21 |          0
+ Saint-Paul              | UE        |           7 |              2 |            2 |            3 |           0 |         0 |            3 |          1
+ Saint-Paul              | UEm       |           9 |              4 |            1 |            4 |           0 |         0 |            5 |          0
+ Saint-Paul              | Ue        |           6 |              0 |            1 |            5 |           0 |         0 |            1 |          0
+ Saint-Pierre            | AUazc     |           5 |              0 |            4 |            1 |           0 |         0 |            4 |          0
+ Saint-Pierre            | AUazi     |          18 |              5 |            9 |            4 |           0 |         0 |           11 |          3
+ Saint-Pierre            | Uaza      |         227 |              3 |           83 |          141 |           0 |         1 |           76 |          9
+ Saint-Pierre            | Uazc      |         127 |              4 |           59 |           64 |           0 |         3 |           52 |          8
+ Saint-Pierre            | Uazi      |         560 |             42 |          184 |          334 |           0 |         6 |          203 |         17
+ Saint-Pierre            | Uazp      |         369 |              3 |          201 |          165 |           0 |         1 |          131 |         72
+ Saint-Pierre            | Uazpc     |          10 |              0 |            4 |            6 |           0 |         0 |            4 |          0
+ Saint-Pierre            | Uemi      |           3 |              0 |            3 |            0 |           0 |         0 |            3 |          0
+ Sainte-Marie            | 1AUep     |          27 |             12 |           12 |            3 |           0 |         3 |           21 |          0
+ Sainte-Marie            | UAz       |           4 |              2 |            1 |            1 |           0 |         1 |            2 |          0
+ Sainte-Marie            | UEa       |          32 |              7 |           19 |            6 |           0 |         0 |           13 |         13
+ Sainte-Marie            | UEc       |         124 |             11 |           40 |           73 |           0 |         1 |           44 |          6
+ Sainte-Marie            | UEm       |         605 |             40 |          194 |          371 |           0 |         3 |          209 |         22
+ Sainte-Marie            | UEp       |         117 |             21 |           27 |           69 |           0 |         0 |           39 |          9
+ Sainte-Rose             | 1AUe      |           6 |              0 |            0 |            6 |           0 |         0 |            0 |          0
+ Sainte-Rose             | Ue        |           3 |              0 |            0 |            3 |           0 |         0 |            0 |          0
+ Sainte-Suzanne          | 1AUe      |           6 |              0 |            0 |            6 |           0 |         0 |            0 |          0
+ Sainte-Suzanne          | UE        |          95 |              6 |           28 |           61 |           0 |         0 |           34 |          0
+ Salazie                 | AUe       |           1 |              0 |            1 |            0 |           0 |         0 |            1 |          0
+(90 lignes)
+

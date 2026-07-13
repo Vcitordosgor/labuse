@@ -1,0 +1,559 @@
+[
+ {
+  "label": "Omnibox — recherche commune \"Saint-Denis\" + Entrée",
+  "attendu": "bascule le périmètre commune",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/stats?source=q_v3_datagap&commune=Saint-Denis",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5357/4584.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5357/4582.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5356/4583.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5358/4583.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5358/4584.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5356/4584.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5358/4582.png",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&c=Saint-Denis&v=1"
+ },
+ {
+  "label": "Omnibox — recherche IDU \"AC 0253\"",
+  "attendu": "ouvre la fiche de la parcelle",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/parcels/search?q=AC0253",
+    "status": 200
+   },
+   {
+    "url": "/events/watch/97415000AC0253",
+    "status": 200
+   },
+   {
+    "url": "/pipeline/parcel/97415000AC0253",
+    "status": 200
+   },
+   {
+    "url": "/parcels/97415000AC0253?source=q_v3_datagap",
+    "status": 200
+   },
+   {
+    "url": "/parcels/97415000AC0253?source=q_v3_datagap",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&c=Saint-Denis&v=1"
+ },
+ {
+  "label": "Bouton loupe \"Lancer la recherche\"",
+  "attendu": "même action que Entrée",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/dark_nolabels/17/85667/73346.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/17/85667/73348.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/17/85667/73345.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/17/85667/73347.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/17/85667/73344.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5354/4585.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5354/4583.png",
+    "status": 200
+   },
+   {
+    "url": "/dark_nolabels/13/5353/4585.png",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&c=Sainte-Marie&v=1"
+ },
+ {
+  "label": "Sélecteur commune (header)",
+  "attendu": "ouvre un menu de communes",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "ⓘ Contexte",
+  "attendu": "ouvre le panneau contexte commune (SRU, ANRU, PLH…)",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/communes/Sainte-Marie/contexte",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Header — bouton \"Verdict\"",
+  "attendu": "mode couleur carte = verdict",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Header — bouton \"Mutabilité\"",
+  "attendu": "mode couleur carte = mutabilité (dégradé ×N ?)",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Header — retour mode \"Verdict\"",
+  "attendu": "retour couleur verdict",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Notifications (badge 17)",
+  "attendu": "ouvre le centre de notifications",
+  "statut": "OK",
+  "net": [
+   {
+    "url": "/events/searches",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Chip tier \"Brûlantes v2\"",
+  "attendu": "filtre liste+carte tiers=brulante",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Brûlantes v2\")').first()",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Chip tier \"Chaudes\"",
+  "attendu": "tiers=chaude",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Chaudes\")').first()\u001b[22)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Chip tier \"Réserve foncière\"",
+  "attendu": "tiers=reserve_fonciere",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Réserve foncière\")').fi)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Chip tier \"À creuser\"",
+  "attendu": "tiers=a_creuser",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"À creuser\")').first()\u001b[)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Chip tier \"Écartées\"",
+  "attendu": "tiers=ecartee (étage 0 dur)",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Écartées\")').first()\u001b[2)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Chip \"Tout\"",
+  "attendu": "retour périmètre complet hors étage 0",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button').filter({ hasText: /^Tout/ }).fi)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Tri \"×N\"",
+  "attendu": "liste triée par multiplicateur",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"Trier par ×N\"]').first()\u001b)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Tri \"surface\"",
+  "attendu": "liste triée par surface",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"Trier par surface\"]').fir)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Tri \"commune\"",
+  "attendu": "liste triée par commune",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"Trier par commune\"]').fir)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Tri \"rang P\" (défaut)",
+  "attendu": "liste triée par rang",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"Rang P (scoring v2)\"]').f)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "\"pourquoi ? ▾\" (entonnoir)",
+  "attendu": "déplie l’entonnoir par motif (stats/entonnoir)",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"entonnoir par motif\"]').f)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "\"pourquoi ? ▴\" (replier)",
+  "attendu": "replie l’entonnoir",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"entonnoir\"]').first()\u001b[22)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Checkbox panneau \"masquer les copropriétés\"",
+  "attendu": "toggle filtre",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('aside input[type=\"checkbox\"]').first()\u001b[)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Checkbox panneau — retour",
+  "attendu": "retour état initial",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('aside input[type=\"checkbox\"]').first()\u001b[)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Lien \"⬇ CSV\"",
+  "attendu": "export CSV mêmes filtres",
+  "statut": "OK (href relevé, non cliqué)",
+  "net": [
+   {
+    "url": "/parcels/export.csv?source=q_v3_datagap&commune=Sainte-Marie&limit=5000&sort=rang",
+    "status": "-"
+   }
+  ]
+ },
+ {
+  "label": "\"Tout voir →\"",
+  "attendu": "ouvre la liste complète (page Vues/segment ?)",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Tout voir\")').first()\u001b[)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Carte de résultat (1er de la liste)",
+  "attendu": "ouvre la fiche parcelle",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('aside button:has-text(\"m²\")').first()\u001b[2)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Bouton \"masquer\" (analyse)",
+  "attendu": "revient au cadastre brut (couleurs off)",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"Masquer l\\'analyse\"]').fi)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Bouton \"afficher\" (analyse)",
+  "attendu": "ré-affiche l’analyse",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"analyse\"], button:has-tex)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Replier le panneau \"‹\"",
+  "attendu": "replie le panneau gauche",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Replier le panneau\"]')\u001b[22)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Déplier le panneau",
+  "attendu": "ré-ouvre",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title*=\"panneau\"]').first()\u001b[22m\n)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Zoom \"+\"",
+  "attendu": "zoom avant",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Zoomer\"]')\u001b[22m\n\u001b[2m    - )",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Zoom \"−\"",
+  "attendu": "zoom arrière",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Dézoomer\"]')\u001b[22m\n\u001b[2m    )",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Fond de plan \"Sombre (Carto)\"",
+  "attendu": "cycle le fond de plan",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title=\"Fond de plan\"]')\u001b[22m\n\u001b[2m)",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Fond de plan — cycle retour",
+  "attendu": "revient au sombre",
+  "statut": "MORT?",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Bouton \"3D\"",
+  "attendu": "active le relief MNT",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Relief 3D\"]')\u001b[22m\n\u001b[2m  )",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Bouton \"3D\" off",
+  "attendu": "désactive",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Relief 3D\"]')\u001b[22m\n\u001b[2m  )",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Outil Distance",
+  "attendu": "mesure une distance (2 clics + double-clic)",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Distance\"]')\u001b[22m\n\u001b[2m   )",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Outil Surface",
+  "attendu": "mesure une surface (3 sommets + double-clic)",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Surface\"]')\u001b[22m\n\u001b[2m    )",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Outil Altitude",
+  "attendu": "clic = altitude RGE ALTI au point",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Altitude\"]')\u001b[22m\n\u001b[2m   )",
+  "net": [
+   {
+    "url": "/events?limit=100",
+    "status": 200
+   }
+  ],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Outil Zone (polygone filtre)",
+  "attendu": "dessine un polygone → résultats filtrés à la zone",
+  "statut": "CASSÉ (clic impossible : locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button[title^=\"Zone\"]')\u001b[22m\n\u001b[2m    - l)",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Zone — annuler (Échap / re-clic)",
+  "attendu": "retire le filtre zone",
+  "statut": "MORT?",
+  "net": [],
+  "errs": [],
+  "changed": false,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ },
+ {
+  "label": "Clic carte sur une parcelle",
+  "attendu": "ouvre fiche ou popup",
+  "statut": "OK",
+  "net": [],
+  "errs": [],
+  "changed": true,
+  "hash": "#f=1&v=1&c=Saint-Paul"
+ }
+]

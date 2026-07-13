@@ -1,0 +1,73 @@
+SET
+=== adresses ===
+   n    |   nk   | idu_null | geom_null | voie_null | n_insee |    rmin    |    rmax    
+--------+--------+----------+-----------+-----------+---------+------------+------------
+ 339941 | 339941 |       21 |         0 |         0 |      24 | 2026-07-11 | 2026-07-11
+(1 ligne)
+
+=== adresses orphelins idu ===
+ lignes_orphelines 
+-------------------
+                 0
+(1 ligne)
+
+=== adresse_parcelles ===
+   n    |   nk   | n_ban  
+--------+--------+--------
+ 416357 | 257145 | 339920
+(1 ligne)
+
+=== adresse_parcelles orphelins + couverture ===
+ idu_orphelins | parcelles_couvertes 
+---------------+---------------------
+             0 |              257145
+(1 ligne)
+
+=== adresse_parcelles id_ban orphelins vs adresses ===
+ ban_orphelins 
+---------------
+             0
+(1 ligne)
+
+=== dpe_records ===
+  n  | nk  | idu_null | etiq_null |    dmin    |    dmax    | dates_futures | surf_min | surf_max | surf_aberrante | an_min | an_max | an_aberrant 
+-----+-----+----------+-----------+------------+------------+---------------+----------+----------+----------------+--------+--------+-------------
+ 914 | 914 |       11 |         0 | 2021-07-06 | 2026-07-03 |             0 |       13 |      930 |              0 |   1761 |   2025 |           6
+(1 ligne)
+
+=== dpe_records orphelins idu ===
+ lignes_orphelines 
+-------------------
+                 0
+(1 ligne)
+
+=== rnic_coproprietes ===
+  n   |  nk  | idu_null | lots_null | lots_min | lots_max | lots_le0 | geom_null | n_insee 
+------+------+----------+-----------+----------+----------+----------+-----------+---------
+ 2220 | 2220 |        0 |         0 |        2 |      860 |        0 |         0 |      22
+(1 ligne)
+
+=== rnic orphelins idu ===
+ lignes_orphelines 
+-------------------
+                 0
+(1 ligne)
+
+=== rpls_commune ===
+ n  | n_insee |  mmin   |  mmax   | log_min | log_max | log_total 
+----+---------+---------+---------+---------+---------+-----------
+ 24 |      24 | 2025-01 | 2025-01 |      62 |   25185 |     87553
+(1 ligne)
+
+=== filosofi_carreaux_200m ===
+   n   |  nk   | geom_null | geom_inval | ind_min | ind_max | ind_neg | men_min | men_max | pauv_gt_men 
+-------+-------+-----------+------------+---------+---------+---------+---------+---------+-------------
+ 14773 | 14773 |         0 |          0 |       1 |    1258 |       0 |     0.2 |     520 |           0
+(1 ligne)
+
+=== catnat_arretes ===
+  n  |    dmin    |    dmax    | n_insee | insee_hors_974 | peril_null 
+-----+------------+------------+---------+----------------+------------
+ 239 | 1993-05-18 | 2025-07-08 |      24 |              0 |          0
+(1 ligne)
+
