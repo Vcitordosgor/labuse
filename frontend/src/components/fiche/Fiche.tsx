@@ -4,6 +4,8 @@ import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrth
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { Loading } from '../Loading'
 import { ScoreV2Block } from './ScoreV2Block'
+import { ViabilisationBlock } from './ViabilisationBlock'
+import { GestionnairesBlock } from './GestionnairesBlock'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
@@ -903,6 +905,9 @@ export function Fiche({ idu }: { idu: string }) {
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}
             {/* M5 : scoring v2 (P×C) — additif, auto-porté (fetch /v2/score, absent si pas de run) */}
             <ScoreV2Block idu={idu} />
+            {/* M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires */}
+            {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
+            {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
             <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
               <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0 -rotate-90">
                 <circle cx="16" cy="16" r="13" fill="none" stroke="#1E2A23" strokeWidth="3" />

@@ -1562,7 +1562,33 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "terrain": dict(terrain) if terrain else None,
         "coproprietes": copros,
         "marche_secteur": marche_secteur,
+        # M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires.
+        "viabilisation": _viabilisation_block(db, idu),
+        "gestionnaires": _gestionnaires_block(head["commune"]),
     }
+
+
+def _viabilisation_block(db: Session, idu: str) -> dict | None:
+    """M-VIA lot 2 — indicateur de viabilisation de la parcelle (None si non calculé).
+    Aucun tracé réseau : uniquement le faisceau de preuves stocké dans parcel_viabilisation."""
+    from ..faisabilite import viabilisation as V
+    from ..faisabilite.viabilisation_build import ilot_s3renr_note
+    row = db.execute(text(
+        "SELECT zone_fam, c100, c200, c100_recent, c100_acheve, voie10, voie75, "
+        "       bati10, bati30, bati75, assainissement_zonage "
+        "FROM parcel_viabilisation WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    if not row:
+        return None
+    return V.build_indicateur(dict(row), elec_pv=ilot_s3renr_note(db))
+
+
+def _gestionnaires_block(commune: str) -> dict | None:
+    """M-VIA lot 1 — bloc gestionnaires (contact administratif, aucune donnée sensible)."""
+    from ..faisabilite import viabilisation as V
+    try:
+        return V.resolve_gestionnaires(commune)
+    except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
+        return None
 
 
 @app.get("/parcels/{idu}")

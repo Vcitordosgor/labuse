@@ -1,0 +1,193 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# M-VIA · Lot 1 — Mapping GESTIONNAIRES par commune (eau · assainissement · élec)
+# ─────────────────────────────────────────────────────────────────────────────
+# Rôle : bloc « Gestionnaires » de la fiche. Contact ADMINISTRATIF uniquement —
+# AUCUNE donnée sensible, AUCUN tracé de réseau (Vigipirate / rediffusion interdite).
+#
+# Cadre (haute confiance) :
+#  - Compétences EAU POTABLE + ASSAINISSEMENT transférées aux 5 EPCI le 01/01/2020
+#    (loi NOTRe). Les communes ne détiennent plus la compétence : le gestionnaire
+#    est l'EPCI (en régie communautaire) ou son délégataire (DSP / concession).
+#  - ÉLECTRICITÉ = EDF SEI partout à La Réunion (zone non interconnectée, hors Enedis).
+#  - Marques : Runéo = Veolia ; CISE Réunion / Sudéau / SAUR Derichebourg Aqua OI =
+#    groupe SAUR ; Dionéo = entité CINOR+Runéo (St-Denis) ; La Créole = régie TCO ;
+#    Saphir (SEM) = eau BRUTE/irrigation Sud seulement (pas opérateur eau potable).
+#
+# ⚠ Les délégations changent aux renouvellements de contrat : CHAQUE association est
+#    datée « à jour au 2026-07 » et À REVÉRIFIER ANNUELLEMENT. Les incertitudes sont
+#    signalées explicitement (confidence + note) — aucune donnée fabriquée.
+#
+# Sources : SISPEA (services.eaufrance.fr), sites EPCI (cinor.re, cirest.fr, tco.re,
+#   civis.re, casud.re), RPQS, opérateurs (runeo.re, cise-reunion.re, sudeau.re,
+#   lacreole.re, dioneo.re, sourceo.re, eauxdelapossession.re), BOAMP 25-38872 (2025),
+#   Contrat de Progrès CINOR, Cour des comptes (La Créole). Recon interne M-VIA 2026-07.
+
+meta:
+  a_jour_au: "2026-07"
+  revue: "annuelle"
+  disclaimer: >-
+    Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement
+    (les délégations changent aux renouvellements de contrat). Contact
+    administratif uniquement — aucun tracé de réseau (donnée sensible).
+    Viabilité (eau, électricité, assainissement) à confirmer auprès des
+    concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+  electricite_partout:
+    gestionnaire: "EDF SEI"
+    detail: "La Réunion = zone non interconnectée, gérée par EDF SEI (hors Enedis)."
+    raccordement: "EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re"
+
+# Détenteur de la compétence eau/assainissement (EPCI depuis 01/01/2020).
+epci_competence:
+  CINOR:  { nom: "Communauté intercommunale du Nord de La Réunion", contact: "cinor.re" }
+  CIREST: { nom: "Communauté intercommunale Réunion Est",           contact: "cirest.fr" }
+  TCO:    { nom: "Territoire de la Côte Ouest",                       contact: "tco.re" }
+  CIVIS:  { nom: "Communauté intercommunale des Villes solidaires",   contact: "civis.re" }
+  CASUD:  { nom: "Communauté d'agglomération du Sud",                 contact: "casud.re" }
+
+# Par commune : opérateur eau potable / assainissement collectif + confidence + note.
+# confidence : high | med | low.  (élec = EDF SEI partout, cf. meta.electricite_partout)
+communes:
+  Saint-Denis:
+    epci: CINOR
+    eau: { operateur: "Dionéo (CINOR + Runéo/Veolia)", type: "DSP concession → 30/06/2030", confidence: high }
+    assainissement: { operateur: "Dionéo ; STEP Grand Prado (Runéo)", type: "DSP → 16/06/2030", confidence: med }
+    spanc: "Régie SPANC CINOR"
+    note: "2023 : bascule Runéo → Dionéo (entité CINOR+Runéo). Collecte CISE, contrat 2020-2024 échu — à revérifier."
+  Sainte-Marie:
+    epci: CINOR
+    eau: { operateur: "CISE Réunion (SAUR)", type: "DSP 01/05/2022 → 31/12/2029", confidence: high }
+    assainissement: { operateur: "STEP Grand Prado (Runéo) ; collecte CISE", type: "→ 16/06/2030", confidence: med }
+    spanc: "Régie SPANC CINOR"
+    note: "Eaux usées traitées à Grand Prado (Runéo)."
+  Sainte-Suzanne:
+    epci: CINOR
+    eau: { operateur: "Runéo (Veolia)", type: "DSP concession → 30/06/2030", confidence: high }
+    assainissement: { operateur: "STEP Terre des Trois Frères (CISE) ; collecte CISE", type: "→ 28/08/2031", confidence: med }
+    spanc: "Régie SPANC CINOR"
+    note: "Runéo ici NON rebrandé Dionéo (Dionéo = Saint-Denis seulement)."
+  Saint-André:
+    epci: CIREST
+    eau: { operateur: "CISE Réunion (SAUR)", type: "DSP — concession unifiée CIREST depuis 05/05/2025", confidence: high }
+    assainissement: { operateur: "CISE Réunion (SAUR)", type: "DSP", confidence: high }
+    spanc: "Régie CIREST"
+    note: "Sur le contrat unifié CISE depuis le 05/05/2025."
+  Bras-Panon:
+    epci: CIREST
+    eau: { operateur: "Runéo (Veolia) → CISE au 01/01/2027", type: "Runéo jusqu'au 31/12/2026", confidence: high }
+    assainissement: { operateur: "Runéo → CISE au 01/01/2027", type: "Runéo jusqu'au 31/12/2026", confidence: high }
+    spanc: "Régie CIREST"
+    note: "⚠ Seule commune encore Runéo/Veolia au 2026-07. Bascule CISE 01/01/2027."
+  Saint-Benoît:
+    epci: CIREST
+    eau: { operateur: "CISE Réunion (SAUR)", type: "DSP affermage ; contrat unifié CISE 01/01/2027", confidence: high }
+    assainissement: { operateur: "CISE Réunion (SAUR)", type: "DSP", confidence: high }
+    spanc: "Régie CIREST"
+    note: "Déjà CISE → continuité ; intégration formelle 01/01/2027."
+  Salazie:
+    epci: CIREST
+    eau: { operateur: "CISE Réunion (SAUR)", type: "DSP", confidence: high }
+    assainissement: { operateur: "Pas d'assainissement collectif (ANC)", type: "territoire ANC", confidence: high }
+    spanc: "Régie CIREST"
+    note: "Territoire majoritairement en assainissement non collectif."
+  La Plaine-des-Palmistes:
+    epci: CIREST
+    eau: { operateur: "CISE Réunion (SAUR)", type: "DSP (ex-régie CIREST, bascule 2024-2025)", confidence: med }
+    assainissement: { operateur: "Pas d'assainissement collectif (ANC)", type: "territoire ANC", confidence: high }
+    spanc: "Régie CIREST"
+    note: "Ex-régie communautaire CIREST → CISE."
+  Sainte-Rose:
+    epci: CIREST
+    eau: { operateur: "CISE Réunion (SAUR) depuis 05/05/2025", type: "ex-Régie des eaux de Sainte-Rose", confidence: high }
+    assainissement: { operateur: "CISE (depuis 05/05/2025)", type: "DSP", confidence: med }
+    spanc: "Régie CIREST"
+    note: "Dernière régie municipale, absorbée par CISE le 05/05/2025."
+  Le Port:
+    epci: TCO
+    eau: { operateur: "Runéo (Veolia)", type: "DSP 01/01/2022 → 31/12/2025", confidence: high }
+    assainissement: { operateur: "Runéo ; STEP SIAPP (Port+Possession)", type: "collecte Runéo", confidence: high }
+    spanc: "Régie La Créole (TCO)"
+    note: "⚠ Eau DSP échue 31/12/2025 → successeur 2026 à vérifier."
+  La Possession:
+    epci: TCO
+    eau: { operateur: "SEMOP « Eaux de La Possession » (Runéo 51% + Ville 49%)", type: "concession 10 ans dès 01/05/2018", confidence: high }
+    assainissement: { operateur: "Eaux de La Possession (SEMOP) ; STEP SIAPP (Runéo)", type: "concession", confidence: high }
+    spanc: "Régie La Créole (TCO)"
+    note: "1ʳᵉ SEMOP d'Outre-mer. Concession → ~2028."
+  Saint-Paul:
+    epci: TCO
+    eau: { operateur: "Régie La Créole (régie communautaire TCO)", type: "régie", confidence: high }
+    assainissement: { operateur: "Régie La Créole", type: "régie", confidence: high }
+    spanc: "La Créole (SPANC)"
+    note: "Ex-régie communale transférée au TCO le 01/01/2020. Pas de délégataire."
+  Les Trois-Bassins:
+    epci: TCO
+    eau: { operateur: "Régie La Créole", type: "régie", confidence: high }
+    assainissement: { operateur: "Régie La Créole", type: "régie", confidence: high }
+    spanc: "La Créole (SPANC)"
+    note: "Même régie que Saint-Paul."
+  Saint-Leu:
+    epci: TCO
+    eau: { operateur: "SAUR Derichebourg Aqua OI (SAUR)", type: "DSP 01/07/2017 → 30/06/2027", confidence: high }
+    assainissement: { operateur: "CISE Réunion (SAUR)", type: "DSP 02/01/2017 → 30/06/2027", confidence: high }
+    spanc: "La Créole (SPANC)"
+    note: "⚠ Eau ≠ assainissement (deux entités SAUR distinctes). Les 2 DSP expirent 30/06/2027."
+  Saint-Louis:
+    epci: CIVIS
+    eau: { operateur: "Runéo (Veolia)", type: "DSP", confidence: med }
+    assainissement: { operateur: "Runéo", type: "DSP", confidence: med }
+    spanc: "SPIANC / Runéo"
+    note: "Concernée par la concession globale CIVIS 2025 — délégataire retenu à confirmer."
+  Cilaos:
+    epci: CIVIS
+    eau: { operateur: "Régie CIVIS — SPIEP", type: "régie", confidence: high }
+    assainissement: { operateur: "Régie CIVIS — SPIAC", type: "régie", confidence: high }
+    spanc: "SPIANC (régie)"
+    note: "Seule commune CIVIS en régie complète."
+  L'Étang-Salé:
+    epci: CIVIS
+    eau: { operateur: "Runéo (Veolia)", type: "DSP — contrat échu 01/01/2025", confidence: med }
+    assainissement: { operateur: "Runéo", type: "DSP", confidence: med }
+    spanc: "SPIANC / Runéo"
+    note: "⚠ Contrat expiré 01/01/2025 → nouvelle concession CIVIS 2025, délégataire à confirmer."
+  Les Avirons:
+    epci: CIVIS
+    eau: { operateur: "CISE Réunion (SAUR)", type: "DSP", confidence: high }
+    assainissement: { operateur: "CISE Réunion (SAUR)", type: "DSP", confidence: high }
+    spanc: "SPIANC"
+    note: "CISE assure eau + collecte/traitement."
+  Saint-Pierre:
+    epci: CIVIS
+    eau: { operateur: "Runéo (Veolia)", type: "DSP", confidence: med }
+    assainissement: { operateur: "Runéo", type: "DSP", confidence: med }
+    spanc: "SPIANC / Runéo"
+    note: "Secteurs marginaux Sudéau/SI Hirondelles ; opérateur principal Runéo. Concernée concession CIVIS 2025."
+  Petite-Île:
+    epci: CIVIS
+    eau: { operateur: "SPL Sources & Eaux (SOURCEO)", type: "SPL locale", confidence: high }
+    assainissement: { operateur: "Sudéau (SAUR) sur secteurs", type: "à préciser", confidence: low }
+    spanc: "SPIANC"
+    note: "Eau via SPL locale (particularité). Organisation assainissement collectif à préciser."
+  Le Tampon:
+    epci: CASUD
+    eau: { operateur: "Sudéau (SAUR)", type: "DSP affermage CASUD 01/07/2023 → 01/07/2033", confidence: high }
+    assainissement: { operateur: "Sud Assainissement Réunion (Runéo/Veolia)", type: "DSP dès 01/07/2023", confidence: high }
+    spanc: "Régie CASUD"
+    note: "⚠ Ancienne régie municipale des eaux transférée à CASUD, opérée par Sudéau depuis 2023."
+  Saint-Joseph:
+    epci: CASUD
+    eau: { operateur: "Sudéau (SAUR)", type: "DSP CASUD (unifiée)", confidence: high }
+    assainissement: { operateur: "Sud Assainissement Réunion (Runéo/Veolia)", type: "DSP", confidence: high }
+    spanc: "Régie CASUD"
+    note: "Intégré au contrat CASUD unifié."
+  Entre-Deux:
+    epci: CASUD
+    eau: { operateur: "Sudéau (SAUR)", type: "DSP CASUD (unifiée)", confidence: high }
+    assainissement: { operateur: "Sud Assainissement Réunion (Runéo/Veolia)", type: "DSP", confidence: high }
+    spanc: "Régie CASUD"
+    note: ""
+  Saint-Philippe:
+    epci: CASUD
+    eau: { operateur: "Sudéau (SAUR)", type: "DSP CASUD (unifiée)", confidence: high }
+    assainissement: { operateur: "Sud Assainissement Réunion (Runéo/Veolia)", type: "DSP", confidence: high }
+    spanc: "Régie CASUD"
+    note: ""

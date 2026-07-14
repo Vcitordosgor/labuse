@@ -23,6 +23,19 @@ labuse score-v2 --no-snapshot         # sans gel snapshot
 - Tiers : brûlante / chaude / à creuser / réserve foncière / écartée (étage 0).
   Hystérésis N_sortie ≈ 1,4 × N_entrée, bypass événement daté < 6 mois.
 
+## Viabilisation & raccordement (M-VIA)
+
+```bash
+labuse viabilisation                  # construit parcel_viabilisation (les 24 communes)
+labuse viabilisation --commune "Le Tampon"   # une seule commune
+```
+
+- Indicateur 0-100 par FAISCEAU DE PREUVES (permis < 100 m, façade voie urbanisée,
+  adjacence bâti, zone PLU). **Aucun tracé réseau** (donnée sensible). Seuils calibrés,
+  cf. `reports/m-via/SYNTHESE-M-VIA.md`. Bloc fiche + gestionnaires (`config/gestionnaires_via.yaml`).
+- E2E : `IDU_CONF=97408000AM1255 IDU_LOURDE=97422000DY0010 node qa/e2e_m_via.mjs`
+  (serveur `labuse api` + front buildé) → captures `reports/m-via/captures/`.
+
 ## Monitoring forward (mensuel, manuel)
 
 ```bash

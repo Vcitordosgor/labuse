@@ -1467,6 +1467,22 @@ def monitor_forward_cmd(
                f"{res['faux_negatifs']} faux négatifs sondés)")
 
 
+@app.command("viabilisation")
+def viabilisation_cmd(
+    commune: str = typer.Option(None, help="Une commune (défaut : les 24)."),
+) -> None:
+    """M-VIA lot 2 — construit parcel_viabilisation (indicateur de viabilisation par
+    faisceau de preuves : permis proximité, façade voie urbanisée, adjacence bâti,
+    zone PLU). Seuils calibrés (cf. reports/m-via/SYNTHESE-M-VIA.md). Aucun tracé réseau."""
+    from .faisabilite.viabilisation_build import build_viabilisation
+
+    communes = [commune] if commune else None
+    with session_scope() as session:
+        res = build_viabilisation(session, communes=communes)
+    typer.echo(f"✓ parcel_viabilisation : {res['n']} parcelles, {res['communes']} commune(s), "
+               f"{res['duree_s']}s")
+
+
 if __name__ == "__main__":
     app()
 
