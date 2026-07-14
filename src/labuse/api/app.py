@@ -279,6 +279,56 @@ def readyz(request: Request, commune: str | None = None):
 _MEM_CACHE: dict = {}
 _MEM_LOCK = threading.Lock()
 _MEM_MAX = 256
+# M6.2 perf : verrous single-flight PAR CLÉ — sans eux, N requêtes concurrentes sur une clé
+# expirée recalculent TOUTES en même temps (stampede : /stats P95 mesuré à ~4 s sous 10 req).
+_MEM_FLIGHT: dict = {}
+_MEM_FLIGHT_LOCK = threading.Lock()
+
+# M6.2 perf : cache du GEOJSON COMMUNE (string). Le json_build_object de 51k features × 26
+# propriétés coûte ~11 s côté Postgres (plancher incompressible, mesuré EXPLAIN ANALYZE) —
+# on le paie UNE fois par (commune, run), pas à chaque requête. Borné en OCTETS (les grosses
+# communes pèsent ~47 Mo) ; single-flight (une seule génération concurrente) ; TTL aligné sur
+# le Cache-Control navigateur. Invalidé naturellement au changement de run (clé = source).
+from collections import OrderedDict as _OrderedDict  # noqa: E402
+
+_GEOJSON_CACHE: "_OrderedDict[tuple, tuple[float, str]]" = _OrderedDict()
+_GEOJSON_BYTES = 0
+_GEOJSON_MAX_BYTES = 220 * 1024 * 1024   # ~4-5 grosses communes ; le reste évincé (LRU)
+_GEOJSON_TTL = 600.0
+_GEOJSON_LOCK = threading.Lock()
+_GEOJSON_FLIGHT: dict = {}
+
+
+def _geojson_cached(key: tuple, compute) -> str:
+    """Renvoie le geojson-string mémorisé sous `key` (single-flight + LRU borné en octets)."""
+    now = time.monotonic()
+    with _GEOJSON_LOCK:
+        hit = _GEOJSON_CACHE.get(key)
+        if hit is not None and (now - hit[0]) < _GEOJSON_TTL:
+            _GEOJSON_CACHE.move_to_end(key)
+            return hit[1]
+    with _MEM_FLIGHT_LOCK:
+        flight = _GEOJSON_FLIGHT.get(key)
+        if flight is None:
+            flight = _GEOJSON_FLIGHT[key] = threading.Lock()
+    with flight:
+        with _GEOJSON_LOCK:
+            hit = _GEOJSON_CACHE.get(key)
+            if hit is not None and (time.monotonic() - hit[0]) < _GEOJSON_TTL:
+                _GEOJSON_CACHE.move_to_end(key)
+                return hit[1]
+        val = compute()
+        global _GEOJSON_BYTES
+        with _GEOJSON_LOCK:
+            old = _GEOJSON_CACHE.pop(key, None)
+            if old is not None:
+                _GEOJSON_BYTES -= len(old[1])
+            _GEOJSON_CACHE[key] = (time.monotonic(), val)
+            _GEOJSON_BYTES += len(val)
+            while _GEOJSON_BYTES > _GEOJSON_MAX_BYTES and len(_GEOJSON_CACHE) > 1:
+                _, (_, ev) = _GEOJSON_CACHE.popitem(last=False)
+                _GEOJSON_BYTES -= len(ev)
+    return val
 
 
 def clear_mem_cache() -> None:
@@ -288,18 +338,32 @@ def clear_mem_cache() -> None:
 
 
 def _mem_cached(key, ttl: float, compute):
-    """Renvoie compute() en le mémorisant `ttl` s sous `key` (lecture seule, en mémoire)."""
+    """Renvoie compute() en le mémorisant `ttl` s sous `key` (lecture seule, en mémoire).
+
+    M6.2 : SINGLE-FLIGHT — une seule exécution de `compute()` par clé à la fois. Les requêtes
+    concurrentes sur une clé expirée attendent la 1re et réutilisent son résultat (fin du
+    stampede) au lieu de recalculer chacune."""
     now = time.monotonic()
     with _MEM_LOCK:
         hit = _MEM_CACHE.get(key)
         if hit is not None and (now - hit[0]) < ttl:
             return hit[1]
-    val = compute()
-    with _MEM_LOCK:
-        _MEM_CACHE[key] = (time.monotonic(), val)
-        if len(_MEM_CACHE) > _MEM_MAX:                       # éviction simple des plus anciens
-            for k in sorted(_MEM_CACHE, key=lambda k: _MEM_CACHE[k][0])[:64]:
-                _MEM_CACHE.pop(k, None)
+    # un verrou par clé : le 1er calcule, les autres attendent puis relisent le cache frais.
+    with _MEM_FLIGHT_LOCK:
+        flight = _MEM_FLIGHT.get(key)
+        if flight is None:
+            flight = _MEM_FLIGHT[key] = threading.Lock()
+    with flight:
+        with _MEM_LOCK:                                      # re-vérif : déjà calculé pendant l'attente ?
+            hit = _MEM_CACHE.get(key)
+            if hit is not None and (time.monotonic() - hit[0]) < ttl:
+                return hit[1]
+        val = compute()
+        with _MEM_LOCK:
+            _MEM_CACHE[key] = (time.monotonic(), val)
+            if len(_MEM_CACHE) > _MEM_MAX:                   # éviction simple des plus anciens
+                for k in sorted(_MEM_CACHE, key=lambda k: _MEM_CACHE[k][0])[:64]:
+                    _MEM_CACHE.pop(k, None)
     return val
 
 
@@ -473,6 +537,14 @@ def _zone_plu_ready(db: Session) -> bool:
     zone_lib/zone_fam NULL dans le geojson, le front replie proprement."""
     return _mem_cached(("zone-plu-ready",), 60.0, lambda: bool(db.execute(text(
         "SELECT to_regclass('parcel_zone_plu') IS NOT NULL")).scalar()))
+
+
+def _adresse_ready(db: Session) -> bool:
+    """Table dérivée `parcel_adresse` (M6.2 — meilleure adresse BAN matérialisée) présente ?
+    Mémorisé 60 s. Présente → LEFT JOIN indexé (remplace le LATERAL par-parcelle coûteux) ;
+    absente → repli sur le lateral BAN (`_ban_ready`), sémantiquement identique."""
+    return _mem_cached(("adresse-ready",), 60.0, lambda: bool(db.execute(text(
+        "SELECT to_regclass('parcel_adresse') IS NOT NULL")).scalar()))
 
 
 def _fmt_ban(voie: str | None, cp: str | None, commune: str | None) -> str | None:
@@ -986,17 +1058,34 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
     l'étage 0 apparaît en `ecartee` ; les `evenement='rouge'` (BODACC ouvert) sont marquées.
     M6 2a (§1.8) : l'adresse BAN entre dans les properties (cartes de résultats mode commune) —
     lateral indexé, mesuré +0,3 s / +1,7 MB sur Saint-Paul (51k parcelles, base 8,2 s / 38,6 Mo)."""
-    ban_ok = _ban_ready(db)
-    ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
-                else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
-    ban_join = _ban_lateral("p.idu") if ban_ok else ""
+    # M6.2 perf (#1) : adresse BAN via la table matérialisée `parcel_adresse` (LEFT JOIN PK
+    # indexé) quand elle existe — sinon repli sur le LATERAL par-parcelle (~5,4 s pour 21k en
+    # commune). Les deux produisent la MÊME adresse (DISTINCT ON = même ORDER BY que le lateral).
+    if _adresse_ready(db):
+        ban_cols = ", pa.ban_voie, pa.ban_cp, pa.ban_commune"
+        ban_join = "LEFT JOIN parcel_adresse pa ON pa.idu = p.idu"
+    elif _ban_ready(db):
+        ban_cols = ", ban.ban_voie, ban.ban_cp, ban.ban_commune"
+        ban_join = _ban_lateral("p.idu")
+    else:
+        ban_cols = ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune"
+        ban_join = ""
     # M6.1 item 1 : zone PLU dominante (jointure PK légère) — NULL si table pas encore bâtie
     zone_ok = _zone_plu_ready(db)
     zone_cols = (", zp.zone_lib, zp.zone_fam" if zone_ok
                  else ", NULL AS zone_lib, NULL AS zone_fam")
     zone_join = "LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu" if zone_ok else ""
-    rows = db.execute(text(
+    # M6.2 perf (#1) : la FeatureCollection est assemblée EN SQL (json_build_object + json_agg) et
+    # renvoyée en STRING BRUTE — l'ancienne version faisait `json.loads(g)` × 51k puis FastAPI
+    # re-sérialisait (~13 s côté Python pour ~1 s de SQL). Le SELECT interne est INCHANGÉ (mêmes
+    # colonnes/jointures) ; les transformations Python (round, _fmt_ban, "rouge", bool…) sont
+    # traduites 1:1 en SQL. Sortie vérifiée BYTE-À-BYTE identique (Salazie 7032 + Saint-Paul 51005).
+    # Le json_build de 51k features reste ~11 s côté Postgres (plancher mesuré) → résultat CACHÉ
+    # par (commune, run) via _geojson_cached : payé une fois, instantané ensuite.
+    v2run = _score_v2_run_id(db)
+    _geo_sql = text(
         f"""
+        WITH base AS (
         SELECT p.idu, p.surface_m2,
                ST_AsGeoJSON(ST_SimplifyPreserveTopology(p.geom, 0.00002)) AS g,
                s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
@@ -1034,55 +1123,65 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
         LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
-        -- flags actifs par parcelle (filtres métier) : couches en SOFT_FLAG + ABF non instruit
-        LEFT JOIN (SELECT parcel_id, array_agg(DISTINCT layer_name) AS flags
-                   FROM dryrun_cascade_results
-                   WHERE run_label = :run AND (result = 'SOFT_FLAG'
-                         OR (layer_name = 'abf' AND result = 'UNKNOWN'))
-                   GROUP BY parcel_id) fl ON fl.parcel_id = p.id
+        -- flags actifs par parcelle (filtres métier) : couches en SOFT_FLAG + ABF non instruit.
+        -- M6.2 perf (#1) : SCOPÉ à la commune (join parcels) — sinon cette agrégation scanne les
+        -- 14 M lignes de dryrun_cascade_results à l'île entière (~5,4 s FIXE) à CHAQUE requête
+        -- commune. Les flags sont PAR PARCELLE (indépendants entre parcelles) → scoper est
+        -- sémantiquement identique. Commune NULL (mode île, rare en geojson) = comportement inchangé.
+        LEFT JOIN (SELECT cr.parcel_id, array_agg(DISTINCT cr.layer_name) AS flags
+                   FROM dryrun_cascade_results cr
+                   JOIN parcels pf ON pf.id = cr.parcel_id
+                        AND (CAST(:c AS text) IS NULL OR pf.commune = :c)
+                   WHERE cr.run_label = :run AND (cr.result = 'SOFT_FLAG'
+                         OR (cr.layer_name = 'abf' AND cr.result = 'UNKNOWN'))
+                   GROUP BY cr.parcel_id) fl ON fl.parcel_id = p.id
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c)
           AND (p.surface_m2 IS NULL OR p.surface_m2 >= :minsurf)
         LIMIT :lim
-        """), {"c": commune, "run": run_label, "lim": limit, "minsurf": MIN_DISPLAY_SURFACE_M2,
-               "v2run": _score_v2_run_id(db)}
-    ).mappings().all()
-    feats = [{
-        "type": "Feature",
-        "geometry": json.loads(r["g"]),
-        "properties": {
-            "idu": r["idu"],
-            "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
-            "adresse": _fmt_ban(r["ban_voie"], r["ban_cp"], r["ban_commune"]),
-            "status": r["status"],
-            # correctif M5 : verdict effectif = tier v2 quand un run existe (étage 0 prime)
-            "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"],
-            "mult_v2": float(r["mult_v2"]) if r["mult_v2"] is not None else None,
-            "etage0": bool(r["etage0"]),
-            "q_score": r["q_score"],
-            "a_score": r["a_score"],
-            "a_completude": r["a_completude"],
-            "completeness_score": r["completeness_score"],
-            "sdp_residuelle_m2": r["sdp_residuelle_m2"],
-            "sous_densite": r["sous_densite"],
-            "vue_mer": r["vue_mer"],
-            "evenement": "rouge" if r["evenement_rouge"] else None,
-            "evenement_date": str(r["event_date"]) if r["event_date"] else None,
-            "flags": r["flags"] or [],
-            "cluster": int(r["cluster"]) if r["cluster"] else None,
-            "proprio": r["proprio"],
-            "v_score": r["v_score"],
-            "v_dernier_signal": r["v_dernier_signal"],
-            "v_band": r["v_band"],
-            "owner_type": r["owner_type"],
-            "copro_v2": bool(r["copro_v2"]),
-            "veille": bool(r["veille"]),
-            "v_sig": r["v_sig"] or [],
-            # M6.1 item 1 : zonage PLU par parcelle (couche carte) — null si hors zonage GPU
-            "zone_lib": r["zone_lib"],
-            "zone_fam": r["zone_fam"],
-        },
-    } for r in rows if r["g"]]
-    return {"type": "FeatureCollection", "features": feats}
+        )
+        SELECT json_build_object('type', 'FeatureCollection', 'features',
+          coalesce(json_agg(json_build_object(
+            'type', 'Feature',
+            'geometry', b.g::json,
+            'properties', json_build_object(
+              'idu', b.idu,
+              'surface_m2', CASE WHEN b.surface_m2 IS NULL OR b.surface_m2 = 0 THEN NULL
+                                 ELSE round(b.surface_m2)::int END,
+              'adresse', CASE WHEN b.ban_voie IS NULL OR b.ban_voie = '' THEN NULL
+                              ELSE b.ban_voie || CASE
+                                WHEN NULLIF(concat_ws(' ', b.ban_cp, b.ban_commune), '') IS NOT NULL
+                                THEN ', ' || concat_ws(' ', b.ban_cp, b.ban_commune) ELSE '' END END,
+              'status', b.status,
+              'tier_v2', b.tier_v2, 'rang_v2', b.rang_v2, 'mult_v2', b.mult_v2,
+              'etage0', b.etage0,
+              'q_score', b.q_score, 'a_score', b.a_score, 'a_completude', b.a_completude,
+              'completeness_score', b.completeness_score,
+              'sdp_residuelle_m2', b.sdp_residuelle_m2, 'sous_densite', b.sous_densite,
+              'vue_mer', b.vue_mer,
+              'evenement', CASE WHEN b.evenement_rouge THEN 'rouge' ELSE NULL END,
+              'evenement_date', CASE WHEN b.event_date IS NULL THEN NULL ELSE b.event_date::text END,
+              'flags', to_jsonb(coalesce(b.flags, '{{}}')),
+              'cluster', CASE WHEN b.cluster IS NULL OR b.cluster = 0 THEN NULL ELSE b.cluster::int END,
+              'proprio', b.proprio, 'v_score', b.v_score, 'v_dernier_signal', b.v_dernier_signal,
+              'v_band', b.v_band, 'owner_type', b.owner_type,
+              'copro_v2', coalesce(b.copro_v2, false), 'veille', b.veille,
+              'v_sig', to_jsonb(coalesce(b.v_sig, '{{}}')),
+              'zone_lib', b.zone_lib, 'zone_fam', b.zone_fam
+            )
+          )), '[]'::json))::text
+        FROM base b WHERE b.g IS NOT NULL
+        """)
+
+    def _compute() -> str:
+        return db.execute(_geo_sql, {"c": commune, "run": run_label, "lim": limit,
+                                     "minsurf": MIN_DISPLAY_SURFACE_M2, "v2run": v2run}).scalar() \
+            or '{"type":"FeatureCollection","features":[]}'
+
+    # Cache serveur en mode COMMUNE (le cas lourd, 51k features) ; île = tuiles (pas ce chemin).
+    fc = _geojson_cached((commune, run_label, v2run, limit), _compute) if commune else _compute()
+    # source=<run> pinné dans l'URL → le contenu ne change qu'au re-run (rare) : cache navigateur court.
+    return Response(content=fc, media_type="application/json",
+                    headers={"Cache-Control": "public, max-age=600"})
 
 
 #: tris de la liste (M5.1 lot 1.3) — rang P par défaut ; ×N, surface, commune en options ;

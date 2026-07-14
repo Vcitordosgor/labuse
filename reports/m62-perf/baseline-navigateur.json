@@ -1,0 +1,537 @@
+{
+  "meta": {
+    "base": "http://127.0.0.1:8011/socle/",
+    "repetitions": 5,
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "date": "2026-07-14T09:38:16.580Z",
+    "branch": "feat/m62-perf"
+  },
+  "load": {
+    "cold": {
+      "timing": {
+        "ttfb": {
+          "median": 3.6,
+          "p95": 5.6
+        },
+        "fcp": {
+          "median": 152,
+          "p95": 176
+        },
+        "tti": {
+          "median": 1160.3,
+          "p95": 1249.9
+        },
+        "domContentLoaded": {
+          "median": 75.1,
+          "p95": 93.8
+        },
+        "load": {
+          "median": 82.7,
+          "p95": 103.1
+        }
+      },
+      "network": {
+        "byType": {
+          "html": {
+            "transferKB": 1,
+            "decodedKB": 1,
+            "medianReq": 1
+          },
+          "css": {
+            "transferKB": 17,
+            "decodedKB": 110,
+            "medianReq": 2
+          },
+          "js": {
+            "transferKB": 346,
+            "decodedKB": 1240,
+            "medianReq": 3
+          },
+          "fonts": {
+            "transferKB": 100,
+            "decodedKB": 100,
+            "medianReq": 3
+          },
+          "json": {
+            "transferKB": 20,
+            "decodedKB": 235,
+            "medianReq": 5
+          },
+          "tiles_pbf": {
+            "transferKB": 0,
+            "decodedKB": 0,
+            "medianReq": 1
+          },
+          "images": {
+            "transferKB": 89,
+            "decodedKB": 84,
+            "medianReq": 24
+          }
+        },
+        "medianTransferKB": 574,
+        "medianDecodedKB": 1770,
+        "medianReq": 39,
+        "medianCacheHits": 0,
+        "p95TransferKB": 574
+      }
+    },
+    "hot": {
+      "timing": {
+        "ttfb": {
+          "median": 3.7,
+          "p95": 4
+        },
+        "fcp": {
+          "median": 104,
+          "p95": 108
+        },
+        "tti": {
+          "median": 726.6,
+          "p95": 1087.2
+        },
+        "domContentLoaded": {
+          "median": 58.1,
+          "p95": 59.5
+        },
+        "load": {
+          "median": 59.2,
+          "p95": 59.7
+        }
+      },
+      "network": {
+        "byType": {
+          "css": {
+            "transferKB": 0,
+            "decodedKB": 110,
+            "medianReq": 2
+          },
+          "js": {
+            "transferKB": 0,
+            "decodedKB": 1240,
+            "medianReq": 3
+          },
+          "html": {
+            "transferKB": 1,
+            "decodedKB": 1,
+            "medianReq": 1
+          },
+          "fonts": {
+            "transferKB": 0,
+            "decodedKB": 100,
+            "medianReq": 3
+          },
+          "json": {
+            "transferKB": 20,
+            "decodedKB": 235,
+            "medianReq": 5
+          },
+          "tiles_pbf": {
+            "transferKB": 0,
+            "decodedKB": 0,
+            "medianReq": 1
+          },
+          "images": {
+            "transferKB": 0,
+            "decodedKB": 84,
+            "medianReq": 24
+          }
+        },
+        "medianTransferKB": 21,
+        "medianDecodedKB": 1770,
+        "medianReq": 39,
+        "medianCacheHits": 24,
+        "p95TransferKB": 21
+      }
+    },
+    "raw": {
+      "cold": {
+        "ttfb": [
+          5.5999999940395355,
+          3.5,
+          3.5999999940395355,
+          3.9000000059604645,
+          3.5
+        ],
+        "fcp": [
+          176,
+          148,
+          152,
+          108,
+          152
+        ],
+        "tti": [
+          1249.9000000059605,
+          1176.5,
+          1160.300000011921,
+          1044.2000000178814,
+          747.2999999821186
+        ],
+        "dcl": [
+          93.80000001192093,
+          75.09999999403954,
+          74.7000000178814,
+          74.59999999403954,
+          75.09999999403954
+        ],
+        "load": [
+          103.09999999403954,
+          82.69999998807907,
+          82.40000000596046,
+          82.30000001192093,
+          82.69999998807907
+        ]
+      },
+      "hot": {
+        "ttfb": [
+          3.100000023841858,
+          4,
+          3.399999976158142,
+          3.7000000178813934,
+          3.800000011920929
+        ],
+        "fcp": [
+          100,
+          108,
+          100,
+          104,
+          104
+        ],
+        "tti": [
+          1087.2000000178814,
+          726.5999999940395,
+          795.3999999761581,
+          617.0999999940395,
+          588.8000000119209
+        ],
+        "dcl": [
+          51.400000005960464,
+          59.5,
+          53.19999998807907,
+          58.099999994039536,
+          58.5
+        ],
+        "load": [
+          51.60000002384186,
+          59.69999998807907,
+          54.29999998211861,
+          59.20000001788139,
+          59.599999994039536
+        ]
+      }
+    }
+  },
+  "map": {
+    "firstTileMs": {
+      "median": 2100,
+      "p95": 2532
+    },
+    "panzoom": {
+      "fpsRenderMedian": 1.7,
+      "interFrameP95MsMedian": 771.9,
+      "interFrameMaxMsMedian": 771.9,
+      "droppedPctMedian": 100,
+      "renderFramesMedian": 7,
+      "caveat": "headless : fpsRender = frames MapLibre réellement dessinées (borne basse, pas de vsync continu). Proxy jank = interFrame p95/max ms."
+    },
+    "layers": {
+      "Zonage PLU (parcelles)": {
+        "msMedian": 3612,
+        "msP95": 3640,
+        "netMedianKB": 0,
+        "reqMedian": 0,
+        "declencheReseau": false
+      },
+      "50 pas géométriques": {
+        "msMedian": 5036,
+        "msP95": 5132,
+        "netMedianKB": 91,
+        "reqMedian": 1,
+        "declencheReseau": true
+      },
+      "PPR multirisque": {
+        "msMedian": 6359,
+        "msP95": 6549,
+        "netMedianKB": 4496,
+        "reqMedian": 6,
+        "declencheReseau": true
+      },
+      "Vue mer": {
+        "msMedian": 4339,
+        "msP95": 5260,
+        "netMedianKB": 0,
+        "reqMedian": 0,
+        "declencheReseau": false
+      },
+      "Équipements": {
+        "msMedian": 5223,
+        "msP95": 5242,
+        "netMedianKB": 921,
+        "reqMedian": 1,
+        "declencheReseau": true
+      },
+      "ANRU (NPNRU)": {
+        "msMedian": 2767,
+        "msP95": 2803,
+        "netMedianKB": 0,
+        "reqMedian": 1,
+        "declencheReseau": false
+      }
+    },
+    "raw": {
+      "firstTile": [
+        1459,
+        2100,
+        1539,
+        2532,
+        2107
+      ],
+      "panzoom": [
+        {
+          "renderFrames": 7,
+          "elapsedMs": 3882,
+          "fpsRender": 1.8,
+          "interFrameP95Ms": 802.6,
+          "interFrameMaxMs": 802.6,
+          "framesOver16ms": 6,
+          "totalGaps": 6,
+          "droppedPct": 100
+        },
+        {
+          "renderFrames": 7,
+          "elapsedMs": 3894,
+          "fpsRender": 1.8,
+          "interFrameP95Ms": 754.4,
+          "interFrameMaxMs": 754.4,
+          "framesOver16ms": 6,
+          "totalGaps": 6,
+          "droppedPct": 100
+        },
+        {
+          "renderFrames": 7,
+          "elapsedMs": 4024,
+          "fpsRender": 1.7,
+          "interFrameP95Ms": 771.9,
+          "interFrameMaxMs": 771.9,
+          "framesOver16ms": 6,
+          "totalGaps": 6,
+          "droppedPct": 100
+        },
+        {
+          "renderFrames": 7,
+          "elapsedMs": 4097,
+          "fpsRender": 1.7,
+          "interFrameP95Ms": 822.8,
+          "interFrameMaxMs": 822.8,
+          "framesOver16ms": 6,
+          "totalGaps": 6,
+          "droppedPct": 100
+        },
+        {
+          "renderFrames": 7,
+          "elapsedMs": 4075,
+          "fpsRender": 1.7,
+          "interFrameP95Ms": 769.9,
+          "interFrameMaxMs": 769.9,
+          "framesOver16ms": 6,
+          "totalGaps": 6,
+          "droppedPct": 100
+        }
+      ],
+      "layerTimes": {
+        "Zonage PLU (parcelles)": [
+          3506,
+          3637,
+          3569,
+          3640,
+          3612
+        ],
+        "50 pas géométriques": [
+          4118,
+          4999,
+          5036,
+          5089,
+          5132
+        ],
+        "PPR multirisque": [
+          4597,
+          6245,
+          6452,
+          6549,
+          6359
+        ],
+        "Vue mer": [
+          4221,
+          4304,
+          4339,
+          5212,
+          5260
+        ],
+        "Équipements": [
+          5100,
+          5223,
+          5237,
+          4359,
+          5242
+        ],
+        "ANRU (NPNRU)": [
+          2710,
+          2732,
+          2767,
+          2803,
+          2781
+        ]
+      },
+      "layerNet": {
+        "Zonage PLU (parcelles)": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "50 pas géométriques": [
+          0,
+          93198,
+          93198,
+          93198,
+          93198
+        ],
+        "PPR multirisque": [
+          4604199,
+          4604199,
+          4604199,
+          4604199,
+          4604199
+        ],
+        "Vue mer": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "Équipements": [
+          942949,
+          943036,
+          942963,
+          0,
+          942934
+        ],
+        "ANRU (NPNRU)": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "layerReq": {
+        "Zonage PLU (parcelles)": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "50 pas géométriques": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "PPR multirisque": [
+          6,
+          6,
+          6,
+          6,
+          6
+        ],
+        "Vue mer": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "Équipements": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "ANRU (NPNRU)": [
+          1,
+          1,
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  },
+  "fiche": {
+    "cold": {
+      "p50": 3350.5,
+      "p95": 3382,
+      "n": 10,
+      "perParcel": {
+        "97410000AS1425": 3382,
+        "97423000AB1908": 3303,
+        "97423000AB1341": 3308,
+        "97404000AT0870": 3375,
+        "97411000KA0296": 3362,
+        "97413000AV2267": 3308,
+        "97408000AP1647": 3336,
+        "97416000EY1406": 3341,
+        "97419000AE0500": 3380,
+        "97406000AI0941": 3360
+      }
+    },
+    "warmReopen": {
+      "p50": 223.5,
+      "p95": 326,
+      "n": 10,
+      "perParcel": {
+        "97410000AS1425": 195,
+        "97423000AB1908": 217,
+        "97423000AB1341": 230,
+        "97404000AT0870": 203,
+        "97411000KA0296": 326,
+        "97413000AV2267": 282,
+        "97408000AP1647": 241,
+        "97416000EY1406": 265,
+        "97419000AE0500": 161,
+        "97406000AI0941": 156
+      }
+    }
+  },
+  "filters": {
+    "tierBrulante": {
+      "median": 2415,
+      "p95": 2509,
+      "samples": [
+        2509,
+        2427,
+        2407,
+        2405,
+        2415
+      ]
+    },
+    "commune": {
+      "median": 10294,
+      "p95": 10330,
+      "samples": [
+        10328,
+        10259,
+        10330,
+        10281,
+        10294
+      ]
+    }
+  }
+}
