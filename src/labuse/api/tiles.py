@@ -78,6 +78,32 @@ def build_parcel_zone_plu(db: Session) -> int:
     return int(n)
 
 
+def build_parcel_adresse(db: Session) -> int:
+    """M6.2 perf — table dérivée `parcel_adresse` (idu PK, ban_voie/ban_cp/ban_commune) : la
+    MEILLEURE adresse BAN par parcelle, matérialisée une fois. Élimine le LATERAL par parcelle
+    (regexp + tri, ~5,4 s pour 21k parcelles en mode commune) qui pesait sur geojson/liste/CSV.
+    Sélection STRICTEMENT identique au lateral (_BAN_ORDER) via DISTINCT ON → mêmes adresses.
+    Rebuild rapide (~1,5 s pour 257k) ; à relancer si la BAN est ré-ingérée (build-mvt le fait)."""
+    if not db.execute(text("SELECT to_regclass('adresse_parcelles') IS NOT NULL"
+                           " AND to_regclass('adresses') IS NOT NULL")).scalar():
+        return 0
+    db.execute(text("DROP TABLE IF EXISTS parcel_adresse"))
+    db.execute(text(r"""
+        CREATE TABLE parcel_adresse AS
+        SELECT DISTINCT ON (ap.idu) ap.idu,
+               trim(concat_ws(' ', a.numero, a.rep, a.voie)) AS ban_voie,
+               a.code_postal AS ban_cp, a.commune AS ban_commune
+        FROM adresse_parcelles ap JOIN adresses a ON a.id_ban = ap.id_ban
+        ORDER BY ap.idu, (ap.source = 'principal') DESC, (a.numero IS NULL),
+                 NULLIF(regexp_replace(a.numero, '\D', '', 'g'), '')::int NULLS LAST, a.id_ban
+    """))
+    db.execute(text("ALTER TABLE parcel_adresse ADD PRIMARY KEY (idu)"))
+    db.execute(text("ANALYZE parcel_adresse"))
+    n = db.execute(text("SELECT count(*) FROM parcel_adresse")).scalar() or 0
+    db.commit()
+    return int(n)
+
+
 def build_mvt_table(db: Session, run_label: str = RUN) -> int:
     """(Re)construit la table matérialisée servie en tuiles. À lancer APRÈS un run de scoring
     (le script d'extension île le fait) ; idempotent, ~1-2 min pour 431k parcelles."""
@@ -85,6 +111,8 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
     # (long) puis réutilisé tel quel à chaque rebuild (le zonage ne bouge pas avec les runs).
     if not db.execute(text("SELECT to_regclass('parcel_zone_plu')")).scalar():
         build_parcel_zone_plu(db)
+    # M6.2 : adresse BAN matérialisée (rapide) — reconstruite à chaque build-mvt (suit la BAN).
+    build_parcel_adresse(db)
     db.execute(text("DROP TABLE IF EXISTS mvt_parcels"))
     # correctif M5 (verdict) : tier v2 embarqué dans les tuiles — la carte colore par le
     # verdict effectif (tier v2 quand un run existe, étage 0 du run servi prime).

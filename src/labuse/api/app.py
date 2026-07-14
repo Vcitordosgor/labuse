@@ -475,6 +475,14 @@ def _zone_plu_ready(db: Session) -> bool:
         "SELECT to_regclass('parcel_zone_plu') IS NOT NULL")).scalar()))
 
 
+def _adresse_ready(db: Session) -> bool:
+    """Table dérivée `parcel_adresse` (M6.2 — meilleure adresse BAN matérialisée) présente ?
+    Mémorisé 60 s. Présente → LEFT JOIN indexé (remplace le LATERAL par-parcelle coûteux) ;
+    absente → repli sur le lateral BAN (`_ban_ready`), sémantiquement identique."""
+    return _mem_cached(("adresse-ready",), 60.0, lambda: bool(db.execute(text(
+        "SELECT to_regclass('parcel_adresse') IS NOT NULL")).scalar()))
+
+
 def _fmt_ban(voie: str | None, cp: str | None, commune: str | None) -> str | None:
     """« 2 Impasse des Caramboles, 97414 Entre-Deux » — None si aucune adresse (le front
     porte le libellé d'absence, le payload reste honnête)."""
@@ -986,10 +994,18 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
     l'étage 0 apparaît en `ecartee` ; les `evenement='rouge'` (BODACC ouvert) sont marquées.
     M6 2a (§1.8) : l'adresse BAN entre dans les properties (cartes de résultats mode commune) —
     lateral indexé, mesuré +0,3 s / +1,7 MB sur Saint-Paul (51k parcelles, base 8,2 s / 38,6 Mo)."""
-    ban_ok = _ban_ready(db)
-    ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
-                else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
-    ban_join = _ban_lateral("p.idu") if ban_ok else ""
+    # M6.2 perf (#1) : adresse BAN via la table matérialisée `parcel_adresse` (LEFT JOIN PK
+    # indexé) quand elle existe — sinon repli sur le LATERAL par-parcelle (~5,4 s pour 21k en
+    # commune). Les deux produisent la MÊME adresse (DISTINCT ON = même ORDER BY que le lateral).
+    if _adresse_ready(db):
+        ban_cols = ", pa.ban_voie, pa.ban_cp, pa.ban_commune"
+        ban_join = "LEFT JOIN parcel_adresse pa ON pa.idu = p.idu"
+    elif _ban_ready(db):
+        ban_cols = ", ban.ban_voie, ban.ban_cp, ban.ban_commune"
+        ban_join = _ban_lateral("p.idu")
+    else:
+        ban_cols = ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune"
+        ban_join = ""
     # M6.1 item 1 : zone PLU dominante (jointure PK légère) — NULL si table pas encore bâtie
     zone_ok = _zone_plu_ready(db)
     zone_cols = (", zp.zone_lib, zp.zone_fam" if zone_ok
