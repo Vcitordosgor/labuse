@@ -892,7 +892,23 @@ def ensure_geom_2975(engine, commune: str | None = None, backfill: bool = True) 
     from sqlalchemy import text as _t
 
     scope = " AND commune = :c" if commune else ""
-    ddl = [
+    # Boot SANS verrou (M6.1 ops) : quand colonnes ET triggers sont déjà en place, on ne
+    # rejoue AUCUN DDL sur parcels/spatial_layers — un ALTER « IF NOT EXISTS » ou un
+    # DROP/CREATE TRIGGER même no-op prend un verrou ACCESS EXCLUSIVE et, pendant un run
+    # cascade ou un build, met en FILE toutes les lectures derrière lui (prod gelée sur
+    # /parcels — vécu 3 fois pendant M6). Le chemin nominal (schéma déjà posé) ne prend
+    # plus aucun verrou exclusif ; le chemin réparation reste identique. ⚠ Si la fonction
+    # trigger labuse_set_geom_2975 doit évoluer un jour : DROP TRIGGER au préalable pour
+    # repasser par le chemin de pose complet.
+    with engine.connect() as _c:
+        schema_pose = bool(_c.execute(_t(
+            """SELECT (SELECT count(*) FROM information_schema.columns
+                       WHERE table_name IN ('parcels', 'spatial_layers')
+                         AND column_name = 'geom_2975') = 2
+                  AND (SELECT count(*) FROM pg_trigger
+                       WHERE tgname IN ('trg_parcels_geom_2975', 'trg_layers_geom_2975')
+                         AND NOT tgisinternal) = 2""")).scalar())
+    ddl = [] if schema_pose else [
         "ALTER TABLE parcels ADD COLUMN IF NOT EXISTS geom_2975 geometry(Geometry, 2975)",
         "ALTER TABLE spatial_layers ADD COLUMN IF NOT EXISTS geom_2975 geometry(Geometry, 2975)",
         # ST_MakeValid : la reprojection 4326→2975 d'une géométrie pourtant valide peut
