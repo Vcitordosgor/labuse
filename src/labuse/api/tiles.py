@@ -29,9 +29,62 @@ def get_db():  # branché sur la session app au moment de l'inclusion (cf. app.p
     yield from _g()
 
 
+def build_parcel_zone_plu(db: Session) -> int:
+    """M6.1 item 1 — table dérivée `parcel_zone_plu` (idu PK, zone_lib, zone_fam) : la zone
+    PLU DOMINANTE par surface d'intersection (spatial_layers kind='plu_gpu_zone', dédoublonné
+    M6-2b). `zone_lib` = CODE COURT de zone (« U1e », « 1AUc ») : le name GPU est hétérogène
+    selon les communes (code nu, « Ud : libellé long », phrase entière sans code) — on garde le
+    1er token quand il ressemble à un code de la famille, sinon la famille seule (honnête :
+    jamais une phrase en étiquette carte). `zone_fam` = famille dérivée du typezone (AU* → AU,
+    U* → U, A, N, sinon autre). Build one-shot ~20-40 min sous charge — appelée par
+    build_mvt_table SI la table est absente, jointe ensuite en LEFT JOIN (une parcelle hors
+    zonage GPU n'apparaît pas ici → colonnes NULL côté tuiles/geojson)."""
+    db.execute(text("SET statement_timeout = 0"))
+    db.execute(text("DROP TABLE IF EXISTS parcel_zone_plu"))
+    # ST_MakeValid sur les 5 848 zones (une géométrie GPU invalide ferait échouer
+    # ST_Intersection) ; la jointure s'appuie sur idx_parcels_geom_2975 (nested loop côté zones).
+    db.execute(text("""
+        CREATE TABLE parcel_zone_plu AS
+        WITH z0 AS (
+            SELECT name, subtype, ST_MakeValid(geom_2975) AS g,
+                   rtrim(split_part(btrim(name), ' ', 1), ':') AS tok,
+                   CASE WHEN subtype ILIKE 'AU%' THEN 'AU'
+                        WHEN subtype ILIKE 'U%'  THEN 'U'
+                        WHEN subtype = 'A'       THEN 'A'
+                        WHEN subtype = 'N'       THEN 'N'
+                        ELSE 'autre' END AS fam
+            FROM spatial_layers WHERE kind = 'plu_gpu_zone'
+        ), z AS (
+            SELECT g, CAST(fam AS varchar) AS fam,
+                   CAST(CASE WHEN name NOT LIKE '% %' THEN name
+                             WHEN length(tok) BETWEEN 1 AND 10 AND (
+                                  (fam = 'AU' AND tok ~* '^[0-9]{0,2}AU')
+                               OR (fam = 'U'  AND tok ~* '^[0-9]{0,2}U')
+                               OR (fam = 'A'  AND tok ~* '^A')
+                               OR (fam = 'N'  AND tok ~* '^N'))
+                             THEN tok ELSE fam END AS varchar) AS lib
+            FROM z0
+        )
+        SELECT DISTINCT ON (p.idu)
+               p.idu, z.lib AS zone_lib, z.fam AS zone_fam
+        FROM parcels p
+        JOIN z ON p.geom_2975 && z.g AND ST_Intersects(p.geom_2975, z.g)
+        ORDER BY p.idu, ST_Area(ST_Intersection(p.geom_2975, z.g)) DESC
+    """))
+    db.execute(text("ALTER TABLE parcel_zone_plu ADD PRIMARY KEY (idu)"))
+    db.execute(text("ANALYZE parcel_zone_plu"))
+    n = db.execute(text("SELECT count(*) FROM parcel_zone_plu")).scalar() or 0
+    db.commit()
+    return int(n)
+
+
 def build_mvt_table(db: Session, run_label: str = RUN) -> int:
     """(Re)construit la table matérialisée servie en tuiles. À lancer APRÈS un run de scoring
     (le script d'extension île le fait) ; idempotent, ~1-2 min pour 431k parcelles."""
+    # M6.1 : le zonage PLU par parcelle est un prérequis des tuiles — construit une seule fois
+    # (long) puis réutilisé tel quel à chaque rebuild (le zonage ne bouge pas avec les runs).
+    if not db.execute(text("SELECT to_regclass('parcel_zone_plu')")).scalar():
+        build_parcel_zone_plu(db)
     db.execute(text("DROP TABLE IF EXISTS mvt_parcels"))
     # correctif M5 (verdict) : tier v2 embarqué dans les tuiles — la carte colore par le
     # verdict effectif (tier v2 quand un run existe, étage 0 du run servi prime).
@@ -47,10 +100,12 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
                (d.status IN ('exclue', 'faux_positif_probable'))::int AS etage0,
                d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
                CASE WHEN ev.parcel_id IS NOT NULL THEN 'rouge' END AS evenement,
-               COALESCE(fl.flags, '') AS flags
+               COALESCE(fl.flags, '') AS flags,
+               zp.zone_lib, zp.zone_fam
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
+        LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
@@ -75,6 +130,25 @@ _CACHE: OrderedDict[tuple, bytes] = OrderedDict()
 _CACHE_MAX = 4096
 
 
+def _mvt_has_zone(db: Session) -> bool:
+    """La table mvt_parcels SERVIE porte-t-elle zone_lib/zone_fam (build post-M6.1) ?"""
+    return bool(db.execute(text(
+        "SELECT 1 FROM information_schema.columns "
+        "WHERE table_name = 'mvt_parcels' AND column_name = 'zone_fam'")).scalar())
+
+
+@router.get("/map/tiles/meta")
+def mvt_tiles_meta(db: Session = Depends(get_db)) -> dict:
+    """Capacités des tuiles servies — le front grise la couche « Zonage PLU (parcelles) »
+    en mode île tant que mvt_parcels n'embarque pas zone_fam (prochain build-mvt)."""
+    run = None
+    if db.execute(text("SELECT to_regclass('mvt_meta')")).scalar():
+        run = db.execute(text("SELECT value FROM mvt_meta WHERE key = 'run_label'")).scalar()
+    return {"run_label": run,
+            "zonage_parcelle": _mvt_has_zone(db)
+            if db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar() else False}
+
+
 @router.get("/map/tiles/{z}/{x}/{y}.pbf")
 def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     """Tuile MVT couche `parcels` — mêmes propriétés que le GeoJSON commune."""
@@ -91,6 +165,9 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     has_v2 = db.execute(text(
         "SELECT 1 FROM information_schema.columns "
         "WHERE table_name = 'mvt_parcels' AND column_name = 'tier_v2'")).scalar()
+    # M6.1 : table d'avant l'item 1 (sans zone_lib/zone_fam) : repli — les tuiles embarqueront
+    # le zonage au prochain `labuse build-mvt` (bascule q_v5), RIEN ne casse d'ici là.
+    has_zone = _mvt_has_zone(db)
     # R1 (revue Vic n°2 : le cadastre d'abord) — TOUTES les parcelles dès z9, simplification
     # par palier pour tenir les poids (mesurés : z9 « tout » 10 m ≈ 3,4 Mo, z10 5 m ≈ 3,5 Mo,
     # z12+ brut ≈ 850 Ko max). L'ouverture cadre l'île entière : la trame est là d'emblée.
@@ -103,9 +180,13 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     # tier_v2/etage0 dans les tuiles maigres aussi : c'est la couleur (verdict effectif)
     v2_props = "m.tier_v2, m.etage0, " if has_v2 else ""
     v2_props_full = "m.tier_v2, m.rang_v2, m.mult_v2, m.etage0, " if has_v2 else ""
-    props = (f"m.status, {v2_props}m.commune" if z <= 11 else
+    # zone_fam dans les tuiles maigres aussi (5 valeurs distinctes, dédupliquées par le MVT) :
+    # c'est la COULEUR de la couche « Zonage PLU (parcelles) », visible dès z9 en mode île.
+    zone_props = "m.zone_fam, " if has_zone else ""
+    zone_props_full = "m.zone_lib, m.zone_fam, " if has_zone else ""
+    props = (f"m.status, {v2_props}{zone_props}m.commune" if z <= 11 else
              "m.idu, m.commune, m.surface_m2, m.status, m.q_score, m.a_score, "
-             f"{v2_props_full}"
+             f"{v2_props_full}{zone_props_full}"
              "m.a_completude, m.completeness_score, m.sdp_residuelle_m2, "
              "m.sous_densite, m.vue_mer, m.evenement, m.flags")
     data = db.execute(text(f"""

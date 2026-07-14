@@ -111,6 +111,9 @@ export const getMapLayer = (kind: string) => {
   const c = commune()
   return j<ParcelFeatureCollection>(`/map/layers.geojson?kind=${kind}${c ? `&commune=${encodeURIComponent(c)}` : ''}`)
 }
+// M6.1 : capacités des tuiles île — `zonage_parcelle` dit si mvt_parcels embarque zone_fam
+// (sinon la couche « Zonage PLU (parcelles) » est grisée en mode île jusqu'au prochain build).
+export const getTilesMeta = () => j<{ run_label: string | null; zonage_parcelle: boolean }>('/map/tiles/meta')
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
   if (calc) {

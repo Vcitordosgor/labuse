@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, parcelAt } from '../../lib/api'
+import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, getTilesMeta, parcelAt } from '../../lib/api'
+import { CINQUANTE_PAS_COLOR, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { Legend } from './Legend'
@@ -30,7 +31,10 @@ const BASEMAP_SOURCES: Record<string, { tiles: string[]; attribution: string; ma
 
 const STYLE: maplibregl.StyleSpecification = {
   version: 8,
-  glyphs: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/{fontstack}/{range}.pbf',
+  // M6.1 : hôte glyphs CORRIGÉ — l'ancien (basemaps.cartocdn.com/gl/<style>/…) répond 404
+  // sans en-têtes CORS : AUCUN calque symbol ne rendait (étiquettes de zone, pastilles #rang
+  // M5.1). Le bon endpoint vient du style.json Carto ; vérifié 200 + Access-Control-Allow-Origin.
+  glyphs: 'https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf',
   sources: {},
   layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#060A08' } }],
 }
@@ -73,6 +77,18 @@ const PROMUES_FILTER: maplibregl.FilterSpecification = ['any',
 const MUTABILITE_COLOR: maplibregl.ExpressionSpecification = [
   'interpolate', ['linear'], ['coalesce', ['get', 'sdp_residuelle_m2'], 0],
   0, '#1E2A23', 300, '#2E6B4F', 2000, '#46A88A', 5000, '#5CE6A1',
+]
+
+// M6.1 item 1 — couche « Zonage PLU (parcelles) » : le REMPLISSAGE passe en couleur par
+// famille (palette ZONE_FAM_META, distincte du verdict v2). Hors zonage GPU (zone_fam
+// null) : trame neutre quasi éteinte — on ne peint pas ce qu'on ne sait pas.
+const ZONE_FAM_COLOR: maplibregl.ExpressionSpecification = [
+  'match', ['coalesce', ['get', 'zone_fam'], ''],
+  ...ZONE_FAM_ORDER.flatMap((f) => [f as string, ZONE_FAM_META[f].color]),
+  '#39463F',
+] as unknown as maplibregl.ExpressionSpecification
+const ZONE_FAM_OPACITY: maplibregl.ExpressionSpecification = [
+  'case', ['==', ['coalesce', ['get', 'zone_fam'], ''], ''], 0.06, 0.55,
 ]
 
 // tier v2 EFFECTIF en expression MapLibre (même règle que effectiveTier côté lib) :
@@ -126,6 +142,19 @@ const EQUIP_CATS = ['mairie', 'ecole', 'sante', 'police', 'sport'] as const
 const EQUIP_COLOR: maplibregl.ExpressionSpecification = ['match', ['get', 'subtype'],
   'mairie', '#B497F0', 'ecole', '#5CE6A1', 'sante', '#E8695A', 'police', '#8FB4F0', 'sport', '#E8B44C', '#8FA69A']
 
+// M6.1 item 2 : une géométrie de la collection touche-t-elle la bbox de la commune ?
+// Test sommet-dans-bbox, suffisant pour le toast « commune sans littoral » (les bandes des
+// 50 pas sont étroites et longent le rivage — pas besoin d'intersection géométrique fine).
+function fcTouchesBbox(fc: { features: { geometry: unknown }[] },
+                       bbox: (number | null)[]): boolean {
+  const [minX, minY, maxX, maxY] = bbox as number[]
+  const touch = (c: unknown): boolean => Array.isArray(c) && (
+    typeof c[0] === 'number'
+      ? c[0] >= minX && c[0] <= maxX && (c[1] as number) >= minY && (c[1] as number) <= maxY
+      : (c as unknown[]).some(touch))
+  return fc.features.some((f) => touch((f.geometry as { coordinates?: unknown })?.coordinates))
+}
+
 /** Machine à mesurer : points cliqués + rendu geojson + lecture (distance/surface/alti/zone). */
 interface Measure {
   pts: LngLat[]
@@ -166,7 +195,14 @@ export function MapView() {
   const parc = useQuery({ queryKey: ['layer', 'parc', commune], queryFn: () => getMapLayer('parc_national'), enabled: layers.parc })
   const anru = useQuery({ queryKey: ['layer', 'anru', commune], queryFn: () => getMapLayer('anru'), enabled: layers.anru })
   const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite'), enabled: layers.equipements })
+  // M6.1 item 2 : 50 pas géométriques (163 polygones île, commune NULL → servis partout)
+  const cinquantePas = useQuery({ queryKey: ['layer', 'cinquante_pas'], queryFn: () => getMapLayer('cinquante_pas'), enabled: layers.cinquante_pas })
+  // M6.1 item 1 : les tuiles île portent-elles zone_fam ? (sinon repli honnête au prochain build)
+  const tilesMeta = useQuery({ queryKey: ['tiles-meta'], queryFn: getTilesMeta, staleTime: 60_000, retry: false })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  // le remplissage zonage n'est appliqué que si la source ACTIVE porte zone_fam :
+  // geojson commune = toujours (jointure live) ; tuiles île = au prochain build-mvt
+  const zonageFill = layers.zonage_parcelle && (!ile || tilesMeta.data?.zonage_parcelle === true)
 
   // ───────────────────────── init ─────────────────────────
   useEffect(() => {
@@ -209,6 +245,13 @@ export function MapView() {
       // P10 : liseré marron du Parc national (borne nette)
       m.addLayer({ id: 'ov-parc-line', type: 'line', source: 'ov-parc', layout: { visibility: 'none' },
         paint: { 'line-color': PARC_LINE, 'line-width': 1.2, 'line-opacity': 0.7 } })
+      // M6.1 item 2 : 50 pas géométriques — remplissage léger + CONTOUR CÔTIER tireté
+      // (style distinct : bande littorale, pas une couche de zonage pleine)
+      m.addSource('ov-50pas', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-50pas', type: 'fill', source: 'ov-50pas', layout: { visibility: 'none' },
+        paint: { 'fill-color': CINQUANTE_PAS_COLOR, 'fill-opacity': 0.16 } })
+      m.addLayer({ id: 'ov-50pas-line', type: 'line', source: 'ov-50pas', layout: { visibility: 'none' },
+        paint: { 'line-color': CINQUANTE_PAS_COLOR, 'line-width': 1.6, 'line-dasharray': [2, 1.4], 'line-opacity': 0.9 } })
       // P11 : limites communales OFFICIELLES (geo.api.gouv 974) — ligne verte de la charte
       m.addSource('communes-bounds', { type: 'geojson', data: `${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}communes974.geojson` })
       m.addLayer({ id: 'communes-bounds', type: 'line', source: 'communes-bounds', layout: { visibility: 'none' },
@@ -244,6 +287,13 @@ export function MapView() {
         paint: { 'text-color': ['case', ['==', TIER_V2, 'brulante'], '#FF8A50', '#E8B44C'] as never,
                  'text-halo-color': '#06130C', 'text-halo-width': 1.2 },
       })
+      // M6.1 item 1 : étiquette de la zone PLU PRÉCISE (zone_lib) au zoom ≥ 16 — mode commune
+      m.addLayer({
+        id: 'parcels-zone-label', type: 'symbol', source: 'parcels', minzoom: 16,
+        layout: { visibility: 'none', 'text-field': ['coalesce', ['get', 'zone_lib'], ''] as never,
+          'text-size': 11, 'text-optional': true },
+        paint: { 'text-color': '#ECF5EF', 'text-halo-color': '#06130C', 'text-halo-width': 1.3 },
+      })
 
       // R6 : overlays zonage/PPR en tuiles MVT pour le mode ÎLE (29 Mo / 88 Mo en GeoJSON)
       m.addSource('ovmvt-zonage', { type: 'vector', minzoom: 8, maxzoom: 15,
@@ -270,6 +320,14 @@ export function MapView() {
         paint: { 'line-color': '#7DE8E0', 'line-width': 1.4, 'line-opacity': 0.95 } })
       m.addLayer({ id: 'ile-sel', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
+      // M6.1 : étiquette zone PLU en mode île — ne rend que si les tuiles portent zone_lib
+      // (prochain build-mvt) ; d'ici là text-field vide = aucun rendu, rien ne casse
+      m.addLayer({
+        id: 'ile-zone-label', type: 'symbol', ...SL, minzoom: 16,
+        layout: { visibility: 'none', 'text-field': ['coalesce', ['get', 'zone_lib'], ''] as never,
+          'text-size': 11, 'text-optional': true },
+        paint: { 'text-color': '#ECF5EF', 'text-halo-color': '#06130C', 'text-halo-width': 1.3 },
+      })
 
       // mesure (ligne + polygone + points + étiquette)
       m.addSource('measure', { type: 'geojson', data: EMPTY_FC as never })
@@ -329,6 +387,18 @@ export function MapView() {
             st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
             return
           }
+          // M6.1 : couche zonage active → la zone PLU précise s'affiche AUSSI au clic
+          // (popup éphémère, même gabarit que les équipements) — la fiche s'ouvre normalement
+          if (st.layers.zonage_parcelle) {
+            const lib = f.properties?.zone_lib && f.properties.zone_lib !== 'null' ? String(f.properties.zone_lib) : null
+            const fam = f.properties?.zone_fam ? String(f.properties.zone_fam) : null
+            if (lib || fam) {
+              new maplibregl.Popup({ closeButton: false, className: 'labuse-popup' })
+                .setLngLat((e as maplibregl.MapLayerMouseEvent).lngLat)
+                .setHTML(`<div style="background:#0F1A14;border:1px solid #2E6B4F;color:#ECF5EF;font:12px Inter,sans-serif;padding:6px 10px;border-radius:8px">Zone ${lib ?? fam}<div style="color:#8FA69A;font-size:10px">zonage PLU (GPU)${fam && lib ? ` · famille ${fam}` : ''}</div></div>`)
+                .addTo(m)
+            }
+          }
           select(idu)
         })
         m.on('mouseenter', layerId, () => { if (!toolRef.current) m.getCanvas().style.cursor = 'pointer' })
@@ -380,7 +450,28 @@ export function MapView() {
         commune ? `Aucun périmètre ANRU (NPNRU) sur ${commune} — 6 communes en portent un.`
                 : 'Aucun périmètre ANRU (NPNRU) sur ce cadrage.')
     }
-  }, [zonage.data, ppr.data, parc.data, anru.data, equip.data, mapReady])
+    // M6.1 item 2 : 50 pas — servis île entière (commune NULL en base) ; en mode commune,
+    // même pattern honnête que l'ANRU : commune SANS littoral → toast, jamais un silence.
+    if (cinquantePas.data) {
+      ;(m.getSource('ov-50pas') as maplibregl.GeoJSONSource | undefined)?.setData(cinquantePas.data as never)
+      if (layers.cinquante_pas && commune) {
+        const bbox = communes.data?.find((c) => c.commune === commune)?.bbox
+        if (bbox && bbox[0] != null && !fcTouchesBbox(cinquantePas.data, bbox)) {
+          useApp.getState().setToast(
+            `Aucune bande des 50 pas géométriques sur ${commune} — commune sans littoral.`)
+        }
+      }
+    }
+  }, [zonage.data, ppr.data, parc.data, anru.data, equip.data, cinquantePas.data, layers.cinquante_pas, commune, communes.data, mapReady])
+
+  // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
+  // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
+  useEffect(() => {
+    if (ile && layers.zonage_parcelle && tilesMeta.data && !tilesMeta.data.zonage_parcelle) {
+      useApp.getState().setToast(
+        'Zonage PLU (parcelles) en mode île : disponible au prochain build de tuiles — choisissez une commune pour l’utiliser dès maintenant.')
+    }
+  }, [ile, layers.zonage_parcelle, tilesMeta.data])
 
   // ───────────────────────── fond de plan + relief ─────────────────────────
   useEffect(() => {
@@ -393,11 +484,12 @@ export function MapView() {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', id === active ? 'visible' : 'none')
     }
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
-    if (m.getLayer('parcels-fill') && mode === 'verdict') {
+    // M6.1 : couche zonage parcelle active → NE PAS écraser son opacité dédiée
+    if (m.getLayer('parcels-fill') && mode === 'verdict' && !zonageFill) {
       m.setPaintProperty('parcels-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
       m.setPaintProperty('ile-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
     }
-  }, [basemap, orthoYear, mode, filters.tiers, mapReady, ile, lowZoom])
+  }, [basemap, orthoYear, mode, filters.tiers, mapReady, ile, lowZoom, zonageFill])
 
   useEffect(() => {
     const m = map.current
@@ -434,12 +526,24 @@ export function MapView() {
     m.setLayoutProperty('ov-parc', 'visibility', vis(layers.parc))
     m.setLayoutProperty('ov-parc-line', 'visibility', vis(layers.parc))
     m.setLayoutProperty('ov-anru', 'visibility', vis(layers.anru))
+    // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
+    m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
+    m.setLayoutProperty('ov-50pas-line', 'visibility', vis(layers.cinquante_pas))
+    // M6.1 item 1 : étiquette de zone PRÉCISE (zone_lib, z ≥ 16) — suit la couche zonage
+    m.setLayoutProperty('parcels-zone-label', 'visibility', vis(layers.zonage_parcelle && !ile))
+    m.setLayoutProperty('ile-zone-label', 'visibility', vis(layers.zonage_parcelle && ile))
     m.setLayoutProperty('ov-equip', 'visibility', vis(layers.equipements))
     m.setLayoutProperty('communes-bounds', 'visibility', vis(layers.communes))   // P11
     const expr = toExpr(filters)
     for (const fill of ['parcels-fill', 'ile-fill']) {
       m.setFilter(fill, expr)
-      if (!verdict) {
+      // M6.1 item 1 : la couche « Zonage PLU (parcelles) » PRIME sur le verdict — le
+      // remplissage devient la famille de zone (palette dédiée), verdict rallumé au toggle off.
+      // `zonageFill` déjà conditionné : geojson commune toujours, tuiles île si zone_fam servie.
+      if (zonageFill) {
+        m.setPaintProperty(fill, 'fill-color', ZONE_FAM_COLOR)
+        m.setPaintProperty(fill, 'fill-opacity', ZONE_FAM_OPACITY)
+      } else if (!verdict) {
         // R1 : VERDICT ÉTEINT = trame cadastrale NEUTRE (le langage promoteur), aucune couleur
         m.setPaintProperty(fill, 'fill-color', '#22302A')
         m.setPaintProperty(fill, 'fill-opacity', 0.28)
@@ -460,7 +564,7 @@ export function MapView() {
     for (const id of ['parcels-brulantes', 'parcels-v-badge']) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', vis(!ile && verdict))
     }
-  }, [mode, filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict])
+  }, [mode, filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, zonageFill])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
   // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR

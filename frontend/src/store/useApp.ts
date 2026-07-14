@@ -6,6 +6,7 @@ export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets' | 'segments'
 
 export interface LayerToggles {
   zonage: boolean
+  zonage_parcelle: boolean // M6.1 : remplissage des PARCELLES par famille PLU (U/AU/A/N)
   parcelles: boolean
   ppr: boolean
   vue_mer: boolean
@@ -14,6 +15,7 @@ export interface LayerToggles {
   anru: boolean
   equipements: boolean
   communes: boolean   // P11 : limites communales (ligne verte, contours officiels)
+  cinquante_pas: boolean // M6.1 : réserve des 50 pas géométriques (bande littorale outre-mer)
 }
 
 // Filtres actifs — appliqués EN MÊME TEMPS à la carte, la liste et les compteurs, et
@@ -186,7 +188,7 @@ export const useApp = create<AppState>((set) => ({
   select: (idu) => set({ selectedIdu: idu }),
   mode: 'verdict',
   setMode: (mode) => set({ mode }),
-  layers: { zonage: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false, communes: true },
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
