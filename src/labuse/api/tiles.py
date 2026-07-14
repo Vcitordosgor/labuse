@@ -156,6 +156,10 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
 # cache LRU en mémoire (les tuiles sont chères à générer et très re-demandées en navigation)
 _CACHE: OrderedDict[tuple, bytes] = OrderedDict()
 _CACHE_MAX = 4096
+# M6.2 perf : cache navigateur des tuiles (le contenu ne change qu'au build-mvt). Appliqué
+# AUSSI au chemin servi depuis le cache LRU serveur — il l'omettait, donc le navigateur
+# re-téléchargeait les tuiles CHAUDES à chaque navigation.
+_TILE_HEADERS = {"Cache-Control": "public, max-age=3600"}
 
 
 def _mvt_has_zone(db: Session) -> bool:
@@ -185,7 +189,7 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     key = (z, x, y)
     if key in _CACHE:
         _CACHE.move_to_end(key)
-        return Response(content=_CACHE[key], media_type="application/x-protobuf")
+        return Response(content=_CACHE[key], media_type="application/x-protobuf", headers=_TILE_HEADERS)
     exists = db.execute(text("SELECT to_regclass('mvt_parcels')")).scalar()
     if not exists:
         return Response(status_code=204)  # table pas encore construite (run en cours)
@@ -231,8 +235,7 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     _CACHE[key] = body
     if len(_CACHE) > _CACHE_MAX:
         _CACHE.popitem(last=False)
-    return Response(content=body, media_type="application/x-protobuf",
-                    headers={"Cache-Control": "public, max-age=3600"})
+    return Response(content=body, media_type="application/x-protobuf", headers=_TILE_HEADERS)
 
 
 # ═══════════ OVERLAYS MVT (R6, revue Vic n°2) — zonage PLU + PPR île entière ═══════════
@@ -265,7 +268,7 @@ def mvt_overlay_tile(kind: str, z: int, x: int, y: int, db: Session = Depends(ge
     key = ("ov", kind, z, x, y)
     if key in _CACHE:
         _CACHE.move_to_end(key)
-        return Response(content=_CACHE[key], media_type="application/x-protobuf")
+        return Response(content=_CACHE[key], media_type="application/x-protobuf", headers=_TILE_HEADERS)
     if not db.execute(text("SELECT to_regclass('mvt_overlays')")).scalar():
         return Response(status_code=204)
     data = db.execute(text("""
@@ -281,5 +284,4 @@ def mvt_overlay_tile(kind: str, z: int, x: int, y: int, db: Session = Depends(ge
     _CACHE[key] = body
     if len(_CACHE) > _CACHE_MAX:
         _CACHE.popitem(last=False)
-    return Response(content=body, media_type="application/x-protobuf",
-                    headers={"Cache-Control": "public, max-age=3600"})
+    return Response(content=body, media_type="application/x-protobuf", headers=_TILE_HEADERS)
