@@ -233,12 +233,15 @@ def simulate_matrice(session: Session, run_label: str, candidates: list[dict]) -
     return out
 
 
-def apply_convention(session: Session, run_label: str = "q_v2") -> dict:
+def apply_convention(session: Session, run_label: str | None = None) -> dict:
     """UN point d'entrée : rejoue la matrice ×24 depuis le YAML versionné + reconstruit les
     tuiles MVT. Idempotent (deux passes = même état). Les tops HTML sont régénérés par le CLI
     (script séparé). CANARI : 97415000AC0253 doit rester chaude (par ÉVÉNEMENT) — si elle
     tombe, la bascule est cassée : on lève, on n'applique pas silencieusement."""
     from ..api.tiles import build_mvt_table
+    from .score_v_constants import Q_A_RUN_LABEL
+
+    run_label = run_label or Q_A_RUN_LABEL   # ANO-1 : défaut = run SERVI (source unique), jamais « q_v2 » gelé
 
     cfg = load_yaml_config("scoring_matrice")
     communes = [r[0] for r in session.execute(text("SELECT DISTINCT commune FROM parcels ORDER BY 1")).all()]
@@ -277,10 +280,13 @@ _ENTONNOIR_BUCKETS: list[tuple[str, list[str]]] = [
 ]
 
 
-def build_entonnoir(session: Session, run_label: str = "q_v2") -> int:
+def build_entonnoir(session: Session, run_label: str | None = None) -> int:
     """Matérialise la décomposition des écartées PAR MOTIF (île + par commune) — le popover
     entonnoir la sert instantanément. Une parcelle peut cumuler des motifs (affiché tel quel).
     À reconstruire après chaque matrice (matrice-apply le fait)."""
+    from .score_v_constants import Q_A_RUN_LABEL
+
+    run_label = run_label or Q_A_RUN_LABEL   # ANO-1 : défaut = run SERVI, jamais « q_v2 » gelé
     session.execute(text("""
         CREATE TABLE IF NOT EXISTS entonnoir_motifs (
           run_label text, commune text, ord int, motif text, n bigint,

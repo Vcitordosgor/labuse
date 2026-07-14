@@ -99,6 +99,23 @@ layers:
       mixite_sociale_typepsc: ["16", "17"]
       oap_typepsc: ["18"]
       eaux_pluviales_typepsc: ["48"]
+      # M8a — GARDE PAR LIBELLÉ (les codes typepsc varient d'une commune à l'autre, cf.
+      # reports/m8-ingestion/DIAGNOSTIC-ER.md). Complète le mapping par code, ne le remplace pas.
+      # RESCUE : un libellé ER reconnaissable (typo-tolérant : « Empalcement réservé », « ER n° »)
+      # est traité ER même si le code n'est pas mappé — capte les 6 ER réels de Saint-Louis codés « 02 »
+      # SANS ajouter « 02 » globalement (02 = secteur environnemental ailleurs). Ne touche PAS les
+      # ~5 221 ER déjà captés en 05 (typos + numéros nus inclus = de vrais ER, conservés).
+      er_libelle_rescue: '(emp[al]{1,4}cement\s*r[ée]serv|emplacement\s*r[ée]serv|\bER\s*n?°?\s*[0-9])'
+      # VETO : libellés EXPLICITEMENT non-ER routés hors famille ER même codés « 05 » (fausses écartées
+      # du diagnostic). Motif honnête, jamais « emplacement réservé ». ≥ seuil → reste écartée.
+      non_er_libelle_veto:
+        # Saint-Benoît (7 parcelles) : corridor écologique protégé (L.151-23), pas un ER. Reste
+        # ÉCARTÉE (protection forte, zones Ub/A grevées à ≥50 %, anti-aberration ; cf. SYNTHESE-M8A §Lot1).
+        - pattern: 'corridors?\s+[ée]cologiques?'
+          motif: "Corridor écologique protégé (continuité écologique — préservation de la biodiversité, art. L.151-23 CU) — emprise majoritairement grevée, incompatible avec un projet de construction"
+        # Sainte-Marie (9 parcelles) + « périmètre de projet » : périmètre d'attente (L.151-41), gel réel.
+        - pattern: 'p[ée]rim[èe]tre\s+(d.attente|de\s+projet)|attente\s+de\s+projet|L\.?\s*151-?41'
+          motif: "Périmètre d'attente de projet d'aménagement (art. L.151-41 CU) — constructibilité gelée temporairement (projet d'ensemble à définir sous ~5 ans)"
       # DÉCISION 3.a : recouvrement ER (en % de la parcelle) à partir duquel la parcelle est
       # exclue (emprise majoritairement grevée) ; en deçà → SOFT_FLAG + surface ER déduite de
       # l'emprise constructible dans la pré-faisabilité.

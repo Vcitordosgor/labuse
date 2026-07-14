@@ -365,7 +365,8 @@ def dryrun_report_cmd(
 
 @app.command("matrice-simulate")
 def matrice_simulate_cmd(
-    label: str = typer.Option("q_v2", help="run_label à simuler."),
+    # ANO-1 (M8a) : défaut = run SERVI (Q_A_RUN_LABEL), source unique — plus de « q_v2 » gelé en dur.
+    label: str = typer.Option(None, help="run_label à simuler (défaut : run de référence Q_A_RUN_LABEL)."),
     candidates: str = typer.Option(
         "", help="Candidats « q:a » ou « q:a:acompl » séparés par des virgules "
                  "(défaut : balayage q∈{60..80} × a∈{55..70} autour de la convention courante)."),
@@ -375,9 +376,11 @@ def matrice_simulate_cmd(
     matrice_sensibilite.html. La bascule événementielle n'est JAMAIS balayée (doctrine)."""
     from pathlib import Path
 
+    from .api.tiles import RUN
     from .config import load_yaml_config
     from .scoring.dryrun import simulate_matrice
 
+    label = label or RUN
     cur = load_yaml_config("scoring_matrice")["seuils"]
     if candidates.strip():
         cands = []
@@ -434,7 +437,7 @@ def _sensibilite_html(rows: list[dict], cur: dict) -> str:
         + "".join(f"<td>{r['par_commune'].get(c, 0) or '·'}</td>" for c in communes) + "</tr>"
         for r in rows)
     return (f"<!doctype html><meta charset='utf-8'><title>Sensibilité matrice</title><style>{css}</style>"
-            f"<h1>Grille de sensibilité — convention de matrice <span class='muted'>(run q_v2, simulation à blanc)</span></h1>"
+            f"<h1>Grille de sensibilité — convention de matrice <span class='muted'>(simulation à blanc, run de référence)</span></h1>"
             f"<p class='muted'>Ligne verte = convention COURANTE (Q≥{cur['q_chaude']} · A≥{cur['a_chaude']} · compl≥{cur['a_completude_min']}). "
             f"Les chaudes « + N évén. » = bascule BODACC, doctrinale, insensible aux seuils. "
             f"Dossiers = propriétaires uniques (SIREN) parmi les chaudes ; « sans id. » = parcelles chaudes sans identité connue.</p>"
@@ -446,7 +449,10 @@ def _sensibilite_html(rows: list[dict], cur: dict) -> str:
 
 @app.command("matrice-apply")
 def matrice_apply_cmd(
-    label: str = typer.Option("q_v2", help="run_label sur lequel appliquer la convention."),
+    # ANO-1 (M8a) : défaut aligné sur le run SERVI (Q_A_RUN_LABEL), source unique — « q_v2 » codé
+    # en dur appliquait la convention (matrice ×24 + tuiles + tops) sur un run gelé ≠ run servi.
+    label: str = typer.Option(None, help="run_label sur lequel appliquer la convention "
+                                         "(défaut : run de référence Q_A_RUN_LABEL)."),
 ) -> None:
     """Applique la CONVENTION VERSIONNÉE (config/scoring_matrice.yaml) : matrice ×24 + tuiles
     MVT + tops HTML — idempotent, minutes. Le canari 97415000AC0253 (chaude PAR événement)
@@ -455,8 +461,10 @@ def matrice_apply_cmd(
     import subprocess
     import sys as _sys
 
+    from .api.tiles import RUN
     from .scoring.dryrun import apply_convention
 
+    label = label or RUN
     with session_scope() as s:
         out = apply_convention(s, label)
     typer.echo(_json.dumps(out, ensure_ascii=False, indent=1))

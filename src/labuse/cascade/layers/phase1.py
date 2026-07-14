@@ -367,6 +367,13 @@ class PrescriptionPluLayer(Layer):
         oap = set(params.get("oap_typepsc", []))
         eaux = set(params.get("eaux_pluviales_typepsc", []))
         er_seuil = float(params.get("er_hard_exclude_pct", 50)) / 100.0
+        # M8a — garde par LIBELLÉ (les codes typepsc sont hétérogènes entre communes) :
+        #  · RESCUE : un libellé ER reconnaissable (typo-tolérant) est traité ER même si le code
+        #    n'est pas dans `emplacement_reserve_typepsc` (ex. Saint-Louis : 6 ER réels codés « 02 »).
+        #  · VETO : un libellé explicitement NON-ER (corridor écologique, périmètre d'attente L.151-41)
+        #    est routé HORS famille ER même codé « 05 » → motif honnête, plus jamais « emplacement réservé ».
+        er_rescue = params.get("er_libelle_rescue")
+        veto_rules = params.get("non_er_libelle_veto") or []
 
         verdicts: list[Verdict] = []
         seen: set[tuple[str | None, str]] = set()
@@ -377,8 +384,20 @@ class PrescriptionPluLayer(Layer):
                 continue
             seen.add((tp, lib))
             pct = f" (~{i.coverage * 100:.0f}% de la parcelle)" if i.coverage >= 0.01 else ""
+            # M8a VETO — libellés explicitement NON-ER routés hors famille ER (même codés « 05 ») :
+            # ≥ seuil → HARD_EXCLUDE (reste écartée, motif honnête) ; en deçà → SOFT_FLAG fort.
+            veto = next((r for r in veto_rules if re.search(r["pattern"], lib, re.I)), None)
+            if veto:
+                motif = f"{veto['motif']} ({i.coverage * 100:.0f} %). Libellé GPU : « {lib} »."
+                if i.coverage >= er_seuil:
+                    verdicts.append(hard_exclude(self.name, motif, kind="faux_positif", source=SRC_GPU))
+                else:
+                    verdicts.append(soft_flag(self.name, motif, Severity.FORT, source=SRC_GPU))
+                continue
+            # M8a RESCUE — un libellé ER reconnaissable vaut ER quel que soit le code typepsc.
+            is_er = tp in er or bool(er_rescue and re.search(er_rescue, lib, re.I))
             # Contraintes DISCRIMINANTES (spécifiques à la parcelle).
-            if tp in er:
+            if is_er:
                 num, objet = _er_split(lib)
                 if i.coverage >= er_seuil:
                     titre = f"Emplacement réservé {num}" if num else "Emplacement réservé"
