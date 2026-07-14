@@ -33,6 +33,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from .. import score_v  # mécanisme snapshot M1 (lecture seule, réutilisé)
+from ..score_v_constants import Q_A_RUN_LABEL  # source unique du run SERVI (bascule centralisée)
 from ..p_model import ext_sql
 from ..p_model.features import derive
 from ..p_model.model import PModel
@@ -212,11 +213,13 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     pct[hors] = 100.0 * (1 - (rang_h - 1) / hors.sum())
     taux_base = float(p[hors].mean())
 
-    # étage 0 + événements datés
+    # étage 0 + événements datés — l'étage 0 est lu sur le run SERVI (Q_A_RUN_LABEL,
+    # source unique / bascule centralisée), PAS un run gelé en dur (ANO-1 : « q_v2 »
+    # codé en dur = dette, le servi ré-appliquait déjà q_v5_m6b → on aligne le calcul interne).
     etage0 = pd.read_sql(text("""
         SELECT p.idu FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
-        WHERE d.run_label = 'q_v2' AND d.status IN ('exclue', 'faux_positif_probable')
-    """), session.connection())
+        WHERE d.run_label = :run AND d.status IN ('exclue', 'faux_positif_probable')
+    """), session.connection(), params={"run": Q_A_RUN_LABEL})
     df["ecartee_etage0"] = df["idu"].isin(set(etage0["idu"]))
     events = load_events(session)
     df = df.merge(events, on="idu", how="left")
