@@ -284,6 +284,52 @@ _MEM_MAX = 256
 _MEM_FLIGHT: dict = {}
 _MEM_FLIGHT_LOCK = threading.Lock()
 
+# M6.2 perf : cache du GEOJSON COMMUNE (string). Le json_build_object de 51k features × 26
+# propriétés coûte ~11 s côté Postgres (plancher incompressible, mesuré EXPLAIN ANALYZE) —
+# on le paie UNE fois par (commune, run), pas à chaque requête. Borné en OCTETS (les grosses
+# communes pèsent ~47 Mo) ; single-flight (une seule génération concurrente) ; TTL aligné sur
+# le Cache-Control navigateur. Invalidé naturellement au changement de run (clé = source).
+from collections import OrderedDict as _OrderedDict  # noqa: E402
+
+_GEOJSON_CACHE: "_OrderedDict[tuple, tuple[float, str]]" = _OrderedDict()
+_GEOJSON_BYTES = 0
+_GEOJSON_MAX_BYTES = 220 * 1024 * 1024   # ~4-5 grosses communes ; le reste évincé (LRU)
+_GEOJSON_TTL = 600.0
+_GEOJSON_LOCK = threading.Lock()
+_GEOJSON_FLIGHT: dict = {}
+
+
+def _geojson_cached(key: tuple, compute) -> str:
+    """Renvoie le geojson-string mémorisé sous `key` (single-flight + LRU borné en octets)."""
+    now = time.monotonic()
+    with _GEOJSON_LOCK:
+        hit = _GEOJSON_CACHE.get(key)
+        if hit is not None and (now - hit[0]) < _GEOJSON_TTL:
+            _GEOJSON_CACHE.move_to_end(key)
+            return hit[1]
+    with _MEM_FLIGHT_LOCK:
+        flight = _GEOJSON_FLIGHT.get(key)
+        if flight is None:
+            flight = _GEOJSON_FLIGHT[key] = threading.Lock()
+    with flight:
+        with _GEOJSON_LOCK:
+            hit = _GEOJSON_CACHE.get(key)
+            if hit is not None and (time.monotonic() - hit[0]) < _GEOJSON_TTL:
+                _GEOJSON_CACHE.move_to_end(key)
+                return hit[1]
+        val = compute()
+        global _GEOJSON_BYTES
+        with _GEOJSON_LOCK:
+            old = _GEOJSON_CACHE.pop(key, None)
+            if old is not None:
+                _GEOJSON_BYTES -= len(old[1])
+            _GEOJSON_CACHE[key] = (time.monotonic(), val)
+            _GEOJSON_BYTES += len(val)
+            while _GEOJSON_BYTES > _GEOJSON_MAX_BYTES and len(_GEOJSON_CACHE) > 1:
+                _, (_, ev) = _GEOJSON_CACHE.popitem(last=False)
+                _GEOJSON_BYTES -= len(ev)
+    return val
+
 
 def clear_mem_cache() -> None:
     """Vide le cache mémoire des endpoints (tests / invalidation manuelle)."""
@@ -1034,7 +1080,10 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
     # re-sérialisait (~13 s côté Python pour ~1 s de SQL). Le SELECT interne est INCHANGÉ (mêmes
     # colonnes/jointures) ; les transformations Python (round, _fmt_ban, "rouge", bool…) sont
     # traduites 1:1 en SQL. Sortie vérifiée BYTE-À-BYTE identique (Salazie 7032 + Saint-Paul 51005).
-    fc = db.execute(text(
+    # Le json_build de 51k features reste ~11 s côté Postgres (plancher mesuré) → résultat CACHÉ
+    # par (commune, run) via _geojson_cached : payé une fois, instantané ensuite.
+    v2run = _score_v2_run_id(db)
+    _geo_sql = text(
         f"""
         WITH base AS (
         SELECT p.idu, p.surface_m2,
@@ -1121,12 +1170,17 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
             )
           )), '[]'::json))::text
         FROM base b WHERE b.g IS NOT NULL
-        """), {"c": commune, "run": run_label, "lim": limit, "minsurf": MIN_DISPLAY_SURFACE_M2,
-               "v2run": _score_v2_run_id(db)}
-    ).scalar()
+        """)
+
+    def _compute() -> str:
+        return db.execute(_geo_sql, {"c": commune, "run": run_label, "lim": limit,
+                                     "minsurf": MIN_DISPLAY_SURFACE_M2, "v2run": v2run}).scalar() \
+            or '{"type":"FeatureCollection","features":[]}'
+
+    # Cache serveur en mode COMMUNE (le cas lourd, 51k features) ; île = tuiles (pas ce chemin).
+    fc = _geojson_cached((commune, run_label, v2run, limit), _compute) if commune else _compute()
     # source=<run> pinné dans l'URL → le contenu ne change qu'au re-run (rare) : cache navigateur court.
-    return Response(content=fc or '{"type":"FeatureCollection","features":[]}',
-                    media_type="application/json",
+    return Response(content=fc, media_type="application/json",
                     headers={"Cache-Control": "public, max-age=600"})
 
 
