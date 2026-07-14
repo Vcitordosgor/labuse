@@ -1,11 +1,11 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8010",
-  "genere_le": "2026-07-13T08:43:54",
+  "genere_le": "2026-07-14T08:50:25",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 32,
   "run_cascade": "q_v3_datagap",
-  "run_v2_servi": "m36-l2f-2026-2026-07-12",
+  "run_v2_servi": "m36-l2f-2026-2026-07-14",
   "tolerances": {
    "canopee_pct": 2.0,
    "distance_cote_m": 10.0,
@@ -41,8 +41,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 1.31,
-      "percentile": 86.85,
-      "rang": 56295,
+      "percentile": 86.86,
+      "rang": 56293,
       "tier": "a_creuser"
      },
      "statut": "ecartee",
@@ -53,9 +53,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 1.31,
-     "percentile": 86.85,
-     "rang": 56295,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "percentile": 86.86,
+     "rang": 56293,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "a_creuser"
     }
    },
@@ -110,7 +110,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 1.31,
      "percentile": 86.9,
-     "rang": 56295,
+     "rang": 56293,
      "tier": "a_creuser"
     },
     "section": "AK",
@@ -173,7 +173,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 28,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "brulante"
     }
    },
@@ -270,7 +270,7 @@
       "copro": false,
       "mult_base": 0.7,
       "percentile": 25.32,
-      "rang": 319800,
+      "rang": 319830,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -282,8 +282,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.7,
      "percentile": 25.32,
-     "rang": 319800,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 319830,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "ecartee"
     }
    },
@@ -335,7 +335,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.7,
      "percentile": 25.3,
-     "rang": 319800,
+     "rang": 319830,
      "tier": "ecartee"
     },
     "section": "AB",
@@ -381,7 +381,7 @@
       "copro": false,
       "mult_base": 5.85,
       "percentile": 99.84,
-      "rang": 707,
+      "rang": 706,
       "tier": "chaude"
      },
      "statut": "a_creuser",
@@ -393,8 +393,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 5.85,
      "percentile": 99.84,
-     "rang": 707,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 706,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "chaude"
     }
    },
@@ -444,7 +444,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 5.85,
      "percentile": 99.8,
-     "rang": 707,
+     "rang": 706,
      "tier": "chaude"
     },
     "section": "BI",
@@ -493,7 +493,7 @@
       "copro": false,
       "mult_base": 0.91,
       "percentile": 46.27,
-      "rang": 230109,
+      "rang": 230108,
       "tier": "reserve_fonciere"
      },
      "statut": "a_surveiller",
@@ -505,8 +505,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
      "percentile": 46.27,
-     "rang": 230109,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 230108,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "reserve_fonciere"
     }
    },
@@ -554,7 +554,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
      "percentile": 46.3,
-     "rang": 230109,
+     "rang": 230108,
      "tier": "reserve_fonciere"
     },
     "section": "AC",
@@ -617,7 +617,7 @@
      "mult_base": 63.97,
      "percentile": 100.0,
      "rang": 2,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "chaude"
     }
    },
@@ -718,7 +718,7 @@
       "copro": false,
       "mult_base": 0.91,
       "percentile": 46.4,
-      "rang": 229538,
+      "rang": 229536,
       "tier": "reserve_fonciere"
      },
      "statut": "a_surveiller",
@@ -730,8 +730,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
      "percentile": 46.4,
-     "rang": 229538,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 229536,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "reserve_fonciere"
     }
    },
@@ -788,7 +788,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
      "percentile": 46.4,
-     "rang": 229538,
+     "rang": 229536,
      "tier": "reserve_fonciere"
     },
     "section": "AX",
@@ -851,7 +851,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 16,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "brulante"
     }
    },
@@ -975,7 +975,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 37,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "chaude"
     }
    },
@@ -1099,7 +1099,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 8,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "brulante"
     }
    },
@@ -1213,7 +1213,7 @@
      "mult_base": 1.82,
      "percentile": null,
      "rang": null,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "a_creuser"
     }
    },
@@ -1316,8 +1316,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.92,
-      "percentile": 48.94,
-      "rang": 218645,
+      "percentile": 48.95,
+      "rang": 218635,
       "tier": "a_creuser"
      },
      "statut": "ecartee",
@@ -1328,9 +1328,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.92,
-     "percentile": 48.94,
-     "rang": 218645,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "percentile": 48.95,
+     "rang": 218635,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "a_creuser"
     }
    },
@@ -1382,8 +1382,8 @@
      "event_date": null,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.92,
-     "percentile": 48.9,
-     "rang": 218645,
+     "percentile": 49.0,
+     "rang": 218635,
      "tier": "a_creuser"
     },
     "section": "AO",
@@ -1446,7 +1446,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 7,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "brulante"
     }
    },
@@ -1560,7 +1560,7 @@
      "mult_base": 7.09,
      "percentile": 99.95,
      "rang": 194,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "brulante"
     }
    },
@@ -1666,7 +1666,7 @@
       "copro": false,
       "mult_base": 2.63,
       "percentile": 98.41,
-      "rang": 6817,
+      "rang": 6820,
       "tier": "a_creuser"
      },
      "statut": "ecartee",
@@ -1678,8 +1678,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 2.63,
      "percentile": 98.41,
-     "rang": 6817,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 6820,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "a_creuser"
     }
    },
@@ -1738,7 +1738,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 2.63,
      "percentile": 98.4,
-     "rang": 6817,
+     "rang": 6820,
      "tier": "a_creuser"
     },
     "section": "CS",
@@ -1788,7 +1788,7 @@
       "copro": false,
       "mult_base": 1.31,
       "percentile": 88.69,
-      "rang": 48453,
+      "rang": 48451,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -1800,8 +1800,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 1.31,
      "percentile": 88.69,
-     "rang": 48453,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 48451,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "ecartee"
     }
    },
@@ -1859,7 +1859,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 1.31,
      "percentile": 88.7,
-     "rang": 48453,
+     "rang": 48451,
      "tier": "ecartee"
     },
     "section": "DM",
@@ -1922,7 +1922,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 33,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "a_creuser"
     }
    },
@@ -2032,7 +2032,7 @@
      "mult_base": 18.02,
      "percentile": 100.0,
      "rang": 22,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "chaude"
     }
    },
@@ -2133,7 +2133,7 @@
       "copro": false,
       "mult_base": 0.91,
       "percentile": 46.03,
-      "rang": 231138,
+      "rang": 231134,
       "tier": "reserve_fonciere"
      },
      "statut": "chaude",
@@ -2145,8 +2145,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
      "percentile": 46.03,
-     "rang": 231138,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 231134,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "reserve_fonciere"
     }
    },
@@ -2201,7 +2201,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
      "percentile": 46.0,
-     "rang": 231138,
+     "rang": 231134,
      "tier": "reserve_fonciere"
     },
     "section": "EY",
@@ -2251,7 +2251,7 @@
       "copro": false,
       "mult_base": 1.16,
       "percentile": 71.87,
-      "rang": 120447,
+      "rang": 120454,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2263,8 +2263,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
      "percentile": 71.87,
-     "rang": 120447,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 120454,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "ecartee"
     }
    },
@@ -2311,7 +2311,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
      "percentile": 71.9,
-     "rang": 120447,
+     "rang": 120454,
      "tier": "ecartee"
     },
     "section": "CD",
@@ -2357,7 +2357,7 @@
       "copro": false,
       "mult_base": 0.91,
       "percentile": 46.37,
-      "rang": 229673,
+      "rang": 229671,
       "tier": "reserve_fonciere"
      },
      "statut": "ecartee",
@@ -2369,8 +2369,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
      "percentile": 46.37,
-     "rang": 229673,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 229671,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "reserve_fonciere"
     }
    },
@@ -2423,7 +2423,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.91,
      "percentile": 46.4,
-     "rang": 229673,
+     "rang": 229671,
      "tier": "reserve_fonciere"
     },
     "section": "CR",
@@ -2486,7 +2486,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 9,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "brulante"
     }
    },
@@ -2589,8 +2589,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.81,
-      "percentile": 32.3,
-      "rang": 289940,
+      "percentile": 32.29,
+      "rang": 289961,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2601,9 +2601,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.81,
-     "percentile": 32.3,
-     "rang": 289940,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "percentile": 32.29,
+     "rang": 289961,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "ecartee"
     }
    },
@@ -2650,7 +2650,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.81,
      "percentile": 32.3,
-     "rang": 289940,
+     "rang": 289961,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -2713,7 +2713,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 35,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "chaude"
     }
    },
@@ -2820,8 +2820,8 @@
      "score_v2": {
       "copro": false,
       "mult_base": 0.51,
-      "percentile": 5.06,
-      "rang": 406570,
+      "percentile": 5.05,
+      "rang": 406606,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -2832,9 +2832,9 @@
      "badge_veille_succession": false,
      "model_version": "m36-l2f-2026",
      "mult_base": 0.51,
-     "percentile": 5.06,
-     "rang": 406570,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "percentile": 5.05,
+     "rang": 406606,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "ecartee"
     }
    },
@@ -2890,7 +2890,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.51,
      "percentile": 5.1,
-     "rang": 406570,
+     "rang": 406606,
      "tier": "ecartee"
     },
     "section": "AC",
@@ -2949,7 +2949,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 17,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "brulante"
     }
    },
@@ -3063,7 +3063,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 56,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "chaude"
     }
    },
@@ -3160,7 +3160,7 @@
       "copro": false,
       "mult_base": 2.11,
       "percentile": 97.7,
-      "rang": 9845,
+      "rang": 9849,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -3172,8 +3172,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 2.11,
      "percentile": 97.7,
-     "rang": 9845,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 9849,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "ecartee"
     }
    },
@@ -3229,7 +3229,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 2.11,
      "percentile": 97.7,
-     "rang": 9845,
+     "rang": 9849,
      "tier": "ecartee"
     },
     "section": "BY",
@@ -3288,7 +3288,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 19,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "ecartee"
     }
    },
@@ -3417,7 +3417,7 @@
      "mult_base": 63.97,
      "percentile": 100.0,
      "rang": 1,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "brulante"
     }
    },
@@ -3523,7 +3523,7 @@
       "copro": false,
       "mult_base": 1.16,
       "percentile": 74.39,
-      "rang": 109664,
+      "rang": 109674,
       "tier": "ecartee"
      },
      "statut": "ecartee",
@@ -3535,8 +3535,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
      "percentile": 74.39,
-     "rang": 109664,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 109674,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "ecartee"
     }
    },
@@ -3586,7 +3586,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 1.16,
      "percentile": 74.4,
-     "rang": 109664,
+     "rang": 109674,
      "tier": "ecartee"
     },
     "section": "AD",
@@ -3632,7 +3632,7 @@
       "copro": false,
       "mult_base": 0.99,
       "percentile": 64.79,
-      "rang": 150803,
+      "rang": 150799,
       "tier": "a_creuser"
      },
      "statut": "a_creuser",
@@ -3644,8 +3644,8 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.99,
      "percentile": 64.79,
-     "rang": 150803,
-     "run_id": "m36-l2f-2026-2026-07-12",
+     "rang": 150799,
+     "run_id": "m36-l2f-2026-2026-07-14",
      "tier": "a_creuser"
     }
    },
@@ -3697,7 +3697,7 @@
      "model_version": "m36-l2f-2026",
      "mult_base": 0.99,
      "percentile": 64.8,
-     "rang": 150803,
+     "rang": 150799,
      "tier": "a_creuser"
     },
     "section": "AI",

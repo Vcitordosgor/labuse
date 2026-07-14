@@ -22,6 +22,9 @@ os.environ.setdefault("LABUSE_ENRICH_LIVE", "0")
 _APP_URL = os.environ.get("LABUSE_DATABASE_URL", "postgresql+psycopg://labuse:labuse@localhost:5432/labuse")
 _TEST_URL = os.environ.get("LABUSE_TEST_DATABASE_URL") or (_APP_URL.rsplit("/", 1)[0] + "/labuse_test")
 os.environ["LABUSE_DATABASE_URL"] = _TEST_URL
+# Base APPLICATIVE d'origine, exposée aux tests qui vérifient l'état SERVI (cohérence du
+# run des tuiles) — setdefault : un premier chargement fait foi, les réimports n'écrasent pas.
+os.environ.setdefault("LABUSE_APP_DATABASE_URL", _APP_URL)
 
 
 @pytest.fixture(scope="session")

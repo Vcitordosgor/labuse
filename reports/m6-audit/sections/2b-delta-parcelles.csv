@@ -1,0 +1,472 @@
+idu,commune,statut_avant,statut_apres,etage0_avant,etage0_apres,tier_avant,tier_apres,rang_avant,rang_apres,motifs_he_v5
+97424000AL0897,Cilaos,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,363239,363275,
+97406000AL0563,La Plaine-des-Palmistes,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,325948,325973,
+97408000AC1744,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,320013,320039,
+97408000AC2480,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,109603,109613,
+97408000AC3147,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,96572,96580,
+97408000AN2046,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,385772,385807,
+97408000AO1344,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,327220,327249,
+97408000AO1380,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,342483,342500,
+97408000AO1519,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,326362,326387,
+97408000AS0572,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,393797,393832,
+97408000AS0622,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,341382,341399,
+97408000AS0625,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,192109,192105,
+97408000AV1127,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,360790,360821,
+97408000AV1128,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,399659,399693,
+97408000AV1131,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,414810,414844,
+97408000AW0929,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,356946,356976,
+97408000AY0023,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,399273,399307,
+97408000AY0218,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,322778,322796,
+97408000AY0514,La Possession,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,43253,43252,
+97407000AY0040,Le Port,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,317153,317183,
+97423000AB0593,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,216015,216006,
+97423000AB1229,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,158237,158229,
+97423000AB1435,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,258755,258754,
+97423000AB1436,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,231825,231818,
+97423000AB1437,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,185891,185881,
+97423000AC0161,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,385460,385494,
+97423000AC0521,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,399317,399351,
+97423000AD0149,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,375941,375975,
+97423000AD0545,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,367691,367728,
+97423000AD0546,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,372433,372473,
+97423000AD0720,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,421026,421051,
+97423000AI0676,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,157950,157942,
+97423000AI0706,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,356839,356869,
+97423000AK1130,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,317457,317488,
+97423000AK1237,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,284100,284117,
+97423000AK1328,Les Trois-Bassins,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,195133,195127,
+97412000AZ0024,Saint-Joseph,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,72938,72924,
+97412000AZ0277,Saint-Joseph,a_creuser,faux_positif_probable,0,1,a_creuser,a_creuser,80796,80790,prescription_plu:HARD_EXCLUDE
+97412000CZ0840,Saint-Joseph,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,409158,409196,
+97412000CZ0841,Saint-Joseph,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,396152,396188,
+97412000CZ0883,Saint-Joseph,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,381630,381658,
+97412000CZ1159,Saint-Joseph,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,396269,396305,
+97412000CZ1191,Saint-Joseph,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,325714,325740,
+97412000CZ1225,Saint-Joseph,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,37427,37417,
+97415000AB0279,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,11646,11649,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0284,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,9939,9943,prescription_plu:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0286,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,21975,21972,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0287,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,64654,64648,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0292,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,39069,39062,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0295,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,30077,30070,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0296,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,23841,23842,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0297,Saint-Paul,opportunite,exclue,0,1,a_creuser,a_creuser,38222,38215,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0334,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,12663,12665,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0335,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,7149,7153,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0361,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,59235,59230,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0369,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,5670,5673,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0370,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,33652,33643,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0397,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,38930,38923,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0400,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,5357,5359,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0402,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,14368,14368,prescription_plu:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0404,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,3979,3979,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0406,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,10288,10292,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0447,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,112073,112084,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0449,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,2385,2386,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0450,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,467,467,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0451,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,4083,4081,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0459,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,103288,103297,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0460,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,11802,11805,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0461,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,10650,10654,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0462,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,12961,12963,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0464,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,33144,33135,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0480,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,4590,4590,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0509,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,15148,15147,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0510,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,14685,14684,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0511,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,17708,17707,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0618,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,27026,27022,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0619,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,60906,60901,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0620,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,20013,20015,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0621,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,9749,9753,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0622,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,15753,15753,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0623,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,45534,45531,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0624,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,85362,85366,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0625,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,153808,153799,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0626,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,48567,48565,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0627,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,69286,69274,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0628,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,54574,54573,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0629,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,43389,43387,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0630,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,19522,19521,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0631,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,54171,54170,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0632,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,82209,82210,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0633,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,11505,11508,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0634,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,6582,6585,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0635,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,8766,8769,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0636,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,6585,6588,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0637,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,10250,10254,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0638,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,32103,32095,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0639,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,14344,14344,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0640,Saint-Paul,opportunite,exclue,0,1,a_creuser,a_creuser,47786,47784,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0641,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,73211,73199,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0642,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,29726,29719,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0643,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,38591,38584,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0662,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,35009,35000,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0663,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,9139,9143,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0672,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,74637,74627,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0673,Saint-Paul,opportunite,exclue,0,1,a_creuser,a_creuser,27187,27183,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0674,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,107894,107905,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0675,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,119448,119455,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0676,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,30522,30513,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0677,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,38620,38613,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0678,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,11905,11907,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0721,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,12481,12483,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0722,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,11381,11384,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0723,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,10852,10856,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0724,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,17653,17652,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0725,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,66320,66309,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0726,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,67001,66990,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0727,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,14950,14949,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0728,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,125681,125685,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0736,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,3573,3574,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0737,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,40440,40436,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0739,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,19443,19441,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0740,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,3447,3448,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0741,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,4027,4025,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0742,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,59986,59981,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0743,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,20534,20534,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0748,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,5383,5385,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0760,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,35673,35662,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0761,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,58018,58017,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0762,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,25798,25796,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0763,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,30027,30020,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0764,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,20376,20378,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0765,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,6886,6890,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0797,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,373,373,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0798,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,2247,2248,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0799,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,163,163,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0800,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,1679,1679,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0801,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,1170,1169,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0802,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,1328,1328,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0818,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,4652,4652,prescription_plu:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0819,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,2437,2438,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0820,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,3233,3233,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0821,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,3895,3894,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0823,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,821,820,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0824,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,4150,4148,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0825,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,6576,6579,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0826,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,138441,138432,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0828,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,756,755,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0830,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,9000,9004,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0832,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,1116,1115,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0833,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,122,122,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0834,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,15145,15144,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0835,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,12710,12712,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0836,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,117003,117011,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0837,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,18662,18662,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0838,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,9120,9124,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0839,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,2965,2965,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0840,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,363,363,prescription_plu:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0841,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,2881,2881,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0842,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,7776,7779,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0843,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,43379,43377,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0844,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,35674,35663,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0845,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,32782,32774,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0846,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,61243,61240,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0847,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,48,48,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0848,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,83087,83089,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0849,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,21644,21643,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0850,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,17635,17634,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0851,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,6300,6304,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0852,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,10089,10093,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0853,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,28419,28413,bati:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0854,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,40717,40713,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0861,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,110691,110702,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0862,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,77250,77243,bati:HARD_EXCLUDE | emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0863,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,38476,38469,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0864,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,6710,6713,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0865,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,16752,16752,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0866,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,30417,30409,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0867,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,14603,14603,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0868,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,91093,91102,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0869,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,28276,28271,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0870,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,2518,2519,prescription_plu:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0871,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,3018,3018,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0872,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,2549,2550,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0873,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,261338,261340,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0874,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,17964,17963,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0875,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,167102,167099,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0876,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,3402,3403,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0877,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,6437,6441,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0878,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,215670,215661,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0879,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,182055,182045,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0880,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,6821,6824,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0884,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,28611,28605,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0885,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,69824,69812,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0886,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,4335,4335,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0887,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,6557,6560,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0897,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,119416,119423,zonage_plu_gpu:HARD_EXCLUDE
+97415000AB0898,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,23653,23654,zonage_plu_gpu:HARD_EXCLUDE
+97415000BC0047,Saint-Paul,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,408085,408120,
+97415000BC0049,Saint-Paul,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,419940,419970,
+97415000BC0207,Saint-Paul,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,426437,426437,
+97415000BH0022,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,8141,8144,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0045,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,248006,247997,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0049,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,78704,78699,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0051,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,45375,45372,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0064,Saint-Paul,a_creuser,exclue,0,1,chaude,chaude,1268,1268,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0070,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,215712,215703,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0135,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,244422,244413,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0144,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,33669,33660,bati:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0145,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,67712,67702,bati:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0146,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,91790,91799,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0147,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,128714,128711,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0153,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,58395,58393,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0154,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,44839,44835,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0155,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,119181,119187,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0158,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,115084,115093,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0164,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,27063,27059,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0165,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,27817,27814,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0166,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,23439,23438,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0167,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,27391,27386,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0172,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,51168,51168,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0183,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,81912,81911,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0203,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,59552,59547,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0217,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,27845,27842,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0218,Saint-Paul,faux_positif_probable,exclue,1,1,a_creuser,a_creuser,75093,75084,emprise_routiere:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0220,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,8265,8268,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0222,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,43708,43706,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0227,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,66973,66962,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0230,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,89132,89138,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0232,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,223592,223587,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0237,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,302179,302199,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0238,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,25045,25044,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0239,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,234814,234809,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0240,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,31796,31787,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0248,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,52846,52846,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0250,Saint-Paul,opportunite,a_creuser,0,0,a_creuser,a_creuser,214963,214955,
+97415000BH0251,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,94017,94025,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0252,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,112994,113005,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0257,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,74690,74680,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0264,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,7194,7198,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0265,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,9746,9750,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0270,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,78652,78647,zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0271,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,17334,17333,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0272,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,87240,87243,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BH0273,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,12056,12057,zonage_plu_gpu:HARD_EXCLUDE
+97415000BK0089,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,30169,30162,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BK0115,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,19848,19849,bati:HARD_EXCLUDE | emprise_lineaire:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000BW1624,Saint-Paul,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,162135,162126,
+97415000CT0368,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,20498,20498,bati:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0369,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,36243,36235,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0370,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,126417,126421,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0373,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,80242,80237,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0374,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,42330,42326,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0441,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,93349,93357,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0442,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,28630,28624,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0443,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,34362,34353,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0444,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,155076,155069,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0445,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,46655,46651,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0446,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,52584,52584,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0481,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,139177,139167,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0610,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,45969,45965,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0611,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,71868,71853,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0709,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,39546,39540,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0728,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,53521,53519,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0887,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,67452,67442,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0907,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,103639,103648,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT0909,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,82611,82611,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1088,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,53409,53407,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1090,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,223976,223971,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1091,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,180963,180953,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1240,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,36091,36082,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1243,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,91398,91407,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1331,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,135345,135339,emprise_lineaire:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1334,Saint-Paul,opportunite,exclue,0,1,a_creuser,a_creuser,145772,145760,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1583,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,8028,8031,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1584,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,28922,28915,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1585,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,94547,94556,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1592,Saint-Paul,opportunite,a_creuser,0,0,a_creuser,a_creuser,228426,228422,
+97415000CT1593,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,32856,32848,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1800,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,55142,55141,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1801,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,61526,61523,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1861,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,51283,51283,bati:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1866,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,158843,158834,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT1867,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,66573,66562,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT2576,Saint-Paul,opportunite,a_creuser,0,0,a_creuser,a_creuser,230159,230158,
+97415000CT2618,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,58788,58784,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT2645,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,424,424,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT2646,Saint-Paul,opportunite,exclue,0,1,a_creuser,a_creuser,64320,64314,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT2647,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,15695,15695,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT2741,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,25162,25161,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT2742,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,38590,38583,bati:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT2743,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,13726,13728,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3090,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,51688,51688,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3091,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,30512,30503,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3102,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,150845,150841,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3103,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,63856,63851,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3104,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,159895,159886,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3105,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,161925,161917,emprise_lineaire:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3106,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,51613,51612,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3111,Saint-Paul,opportunite,exclue,0,1,a_creuser,a_creuser,10118,10122,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3112,Saint-Paul,opportunite,a_creuser,0,0,a_creuser,a_creuser,76492,76485,
+97415000CT3168,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,54235,54234,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3170,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,34189,34180,zonage_plu_gpu:HARD_EXCLUDE
+97415000CT3171,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,40153,40149,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CX1304,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,36256,36248,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CX1307,Saint-Paul,opportunite,a_creuser,0,0,a_creuser,a_creuser,48171,48169,
+97415000CX1331,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,2086,2086,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CX1332,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,32952,32944,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CX1353,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,49738,49739,zonage_plu_gpu:HARD_EXCLUDE
+97415000CX1516,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,4588,4588,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000CX1593,Saint-Paul,opportunite,a_creuser,0,0,a_creuser,a_creuser,45022,45019,
+97415000CX1594,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,5816,5820,zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0133,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,276305,276315,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0134,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,290928,290949,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0135,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,120703,120710,zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0346,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,309651,309672,bati:HARD_EXCLUDE | osm_faux_positif:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0360,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,50167,50167,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0361,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,306128,306146,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0362,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,240122,240114,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0363,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,252130,252123,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0364,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,291039,291060,bati:HARD_EXCLUDE | osm_faux_positif:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0365,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,318504,318536,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0378,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,7416,7420,zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0379,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,173770,173761,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0380,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,264588,264595,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0398,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,289892,289913,zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0399,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,332205,332232,zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0401,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,344768,344792,zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0402,Saint-Paul,a_creuser,exclue,0,1,reserve_fonciere,reserve_fonciere,311159,311181,zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0405,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,207809,207802,emprise_lineaire:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0431,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,338485,338509,bati:HARD_EXCLUDE | osm_faux_positif:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0432,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,207603,207596,emprise_lineaire:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0433,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,49878,49879,zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0434,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,323150,323172,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EX0435,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,28068,28064,zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0771,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,26610,26609,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0772,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,49519,49520,zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0773,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,11544,11547,zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0774,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,66578,66567,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0776,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,9190,9194,zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0777,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,16265,16265,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0778,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,64490,64484,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0809,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,221186,221177,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0810,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,100717,100728,bati:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY0817,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,229510,229508,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY1141,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,264255,264261,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY1142,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,140994,140983,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY1156,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,102795,102805,bati:HARD_EXCLUDE | emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000EY1488,Saint-Paul,opportunite,exclue,0,1,a_creuser,a_creuser,16359,16359,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0471,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,67142,67132,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0472,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,187343,187333,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0473,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,254974,254970,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0474,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,198350,198342,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0476,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,32921,32913,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0477,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,299589,299606,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0478,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,35325,35315,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0479,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,192266,192261,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0480,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,211554,211546,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0481,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,190432,190426,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0482,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,215999,215990,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0483,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,190717,190711,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0484,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,273089,273103,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0485,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,273746,273762,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0486,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,276898,276909,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0487,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,128266,128265,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0488,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,134351,134345,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0489,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,215927,215918,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0490,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,,,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0491,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,,,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0492,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,,,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0493,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,30218,30211,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0494,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,11105,11108,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0495,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,73916,73903,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0496,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,217442,217433,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0497,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,123675,123680,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0498,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,157537,157528,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0499,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,231744,231735,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0500,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,10346,10350,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0501,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,21702,21702,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0502,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,23296,23296,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0503,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,43625,43623,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0504,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,157941,157933,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0505,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,353482,353507,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0508,Saint-Paul,opportunite,exclue,0,1,a_creuser,a_creuser,174816,174809,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0509,Saint-Paul,a_creuser,exclue,0,1,reserve_fonciere,reserve_fonciere,252519,252512,zonage_plu_gpu:HARD_EXCLUDE
+97415000HI0510,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,173167,173159,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0022,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,29139,29131,zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0026,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,30517,30508,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0032,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,197791,156799,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0033,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,156558,156549,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0035,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,99006,99015,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0036,Saint-Paul,a_creuser,exclue,0,1,reserve_fonciere,reserve_fonciere,320341,315260,zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0038,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,370023,370064,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0040,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,357583,345085,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0041,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,172962,142889,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0043,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,297379,297396,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0050,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,74251,55951,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0051,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,68345,42543,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0052,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,388317,388351,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0063,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,101035,101045,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0064,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,83053,83055,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0065,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,309866,296963,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0066,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,279304,271127,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0069,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,310182,299155,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0076,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,300004,270556,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0080,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,188374,188366,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0082,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,248804,248795,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0083,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,51397,51397,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0085,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,20618,17970,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0087,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,28945,21596,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0088,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,248343,248335,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0090,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,211438,211430,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0091,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,259051,259050,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0093,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,43794,43792,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0094,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,212761,212753,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0095,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,267925,267931,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0097,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,166039,166032,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0100,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,258202,258203,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0101,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,200737,200730,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0102,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,238150,182701,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0103,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,316446,310812,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0104,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,302748,302767,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0105,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,11318,11321,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0106,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,7878,7881,zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0107,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,98734,98744,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0113,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,305153,305171,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0114,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,162393,137021,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0116,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,30853,30844,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0117,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,12055,5641,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0118,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,197205,197199,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0119,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,16880,6877,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0120,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,24950,24951,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0121,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,197760,197754,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0122,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,238798,238788,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0123,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,216541,216532,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0129,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,331241,318980,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0131,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,311499,306651,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0133,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,322104,311674,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0134,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,283099,283113,zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0135,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,220265,220255,zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0136,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,393952,393987,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0137,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,376864,360875,zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0140,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,173758,173749,zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0142,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,275328,259296,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0194,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,310804,302928,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0195,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,371610,371650,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0222,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,169776,169770,surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0223,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,258707,213398,emprise_lineaire:HARD_EXCLUDE | surface:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0224,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,365122,365162,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0225,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,318738,313351,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0226,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,255995,255993,emprise_lineaire:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0227,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,287972,287989,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0228,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,289095,289117,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0267,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,314555,309271,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0269,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,277474,234405,osm_faux_positif:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0270,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,318688,313286,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0290,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,299980,299998,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0291,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,115654,115661,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HN0301,Saint-Paul,faux_positif_probable,exclue,1,1,ecartee,ecartee,289439,289461,bati:HARD_EXCLUDE | zonage_plu_gpu:HARD_EXCLUDE
+97415000HR0003,Saint-Paul,opportunite,exclue,0,1,a_creuser,a_creuser,172303,172294,zonage_plu_gpu:HARD_EXCLUDE
+97415000HR0264,Saint-Paul,a_creuser,exclue,0,1,a_creuser,a_creuser,224622,224618,zonage_plu_gpu:HARD_EXCLUDE
+97418000AO0080,Sainte-Marie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,290326,290346,
+97418000AP2637,Sainte-Marie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,344982,345005,
+97418000AP3293,Sainte-Marie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,403402,403436,
+97418000AP4190,Sainte-Marie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,11686,11689,
+97418000AR0360,Sainte-Marie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,393245,393281,
+97418000AR0696,Sainte-Marie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,345365,345387,
+97418000AR1869,Sainte-Marie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,303112,303131,
+97418000AR1953,Sainte-Marie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,345021,345044,
+97418000AR2397,Sainte-Marie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,349540,349571,
+97421000BN0523,Salazie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,369123,369161,
+97421000BO0220,Salazie,faux_positif_probable,a_creuser,1,0,ecartee,ecartee,416129,416163,

@@ -110,10 +110,27 @@ Contrôles post-bascule : golden dataset **32/32 PASS** ; `/stats` SQL-exact.
 - Faisabilité : gate `habitat=interdit` → capacité logement zéro ; `compute-residuel` Saint-Paul
   relancé (SDP des zones e purgée).
 
-### Delta 2b (q_v4_m6a → q_v5_m6b) — À COMPLÉTER à la fin du run
+### Delta 2b (q_v4_m6a → q_v5_m6b) — FINAL (bascule GO Vic 14/07/2026)
 
-- ⏳ run île `q_v5_m6b` en cours · score-v2 · build-mvt · delta par parcelle (statut/tier,
-  avant/après, motif) · contrôle seuil 10 % · snapshot gelé post-2b.
+Run île complet (431 663 × 24, fin 14/07 04:28) · `score-v2` : run `m36-l2f-2026-2026-07-14`
+(sha M3.6 conforme, snapshot gelé `m5-2026-07-14`) · bascule validée par Vic sur rapport
+pré-bascule (compteurs + delta + golden) puis exécutée.
+
+| Indicateur | Valeur |
+|---|---|
+| Changements de statut | **471** (détail par parcelle : `sections/2b-delta-parcelles.csv` — avant/après + motifs HARD_EXCLUDE) |
+| Entrées à l'étage 0 | **126** (A-03 : 572 exclusions « vocation économique » au total, majoritairement déjà écartées par d'autres couches) |
+| Sorties d'étage 0 (réintégrations A-02) | **58** (La Possession 17, Trois-Bassins 16, Sainte-Marie 9… — les HE zonage infondés par doublons, cohérent avec les 28 candidates minimales de l'audit élargies par le dédoublonnage des prescriptions) |
+| Bascule de tiers (seuil d'arrêt 10 % du parc non-écarté) | **0,00 %** — 912 probabilités P modifiées (zones e + prescriptions), rangs réajustés (dérives de quelques places), aucune frontière de tier franchie (hystérésis + calibrage à effectifs) |
+| Compteurs effectifs servis | **117 brûlantes** · 948 chaudes · **1 065 opportunités** · 3 589 réserve · 73 009 à creuser · 354 000 écartées |
+| Test de cohérence du run servi | **3/3 PASS** (constante ↔ front ↔ bundle ↔ tuiles `mvt_meta=q_v5_m6b`) |
+| Golden dataset | écarts = run_id + rangs de quelques places UNIQUEMENT (0 tier/statut/étage 0 touché sur les 32) → référence re-versionnée sur le run 14/07, **32/32 PASS** |
+| Snapshots gelés | `m6_snapshot_mvt_post2a` · `m6_snapshot_mvt_post2b` · v2 `m5-2026-07-12` / `m5-2026-07-14` · labels cascade immuables q_v4_m6a / q_v5_m6b |
+
+Note attendue vs observée : le « ~104 brûlantes » évoqué en amont n'avait pas de table source ;
+le périmètre 2b (A-02 + A-03 Saint-Paul seul) ne touchait pas les 2 brûlantes en zone éco des
+communes non calibrées (Saint-Leu AUE rang 194, Le Tampon 2AUd) → **117 effectives**, chiffre
+constaté. Le calibrage des 23 autres communes = M8.
 
 ---
 
