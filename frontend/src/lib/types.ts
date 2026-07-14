@@ -156,4 +156,30 @@ export interface Fiche {
   // etage0 = exclusion dure du run SERVI (prime toujours sur le tier v2)
   score_v2: { tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean } | null
   etage0: boolean
+  // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).
+  viabilisation?: Viabilisation | null
+  gestionnaires?: Gestionnaires | null
+}
+
+export interface ViaContribution { libelle: string; points: number; detail: string; signe: '+' | '−' | '·' }
+export interface Viabilisation {
+  score: number
+  band: 'confirmee' | 'probable' | 'incertaine' | 'lourde'
+  libelle: string
+  contributions: ViaContribution[]
+  cout_raccordement: { niveau: string; assainissement: string; disclaimer: string }
+  disclaimer: string
+  elec_pv?: { statut: string; note: string; source?: string; disclaimer: string } | null
+}
+export interface GestOperateur { operateur: string; type?: string; confidence?: 'high' | 'med' | 'low' }
+export interface Gestionnaires {
+  commune: string
+  a_jour_au: string | null
+  epci: { code: string | null; nom: string | null; contact: string | null }
+  eau: GestOperateur | null
+  assainissement: GestOperateur | null
+  spanc: string | null
+  electricite: { gestionnaire: string; detail?: string; raccordement?: string } | null
+  note: string | null
+  disclaimer: string | null
 }
