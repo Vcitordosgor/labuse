@@ -147,9 +147,15 @@ export const modDivision = (minScore = 0) => j<{ total: number; items: Record<st
 export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
 export const modPatrimoine = (siren: string) => j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}`)
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
-export const modPermis = (months: number) => j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}`)
+export const modPermis = (months: number, nature?: string | null) =>
+  j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}`)
+export const modPermisFiche = (permitId: string) =>
+  j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)
+export const modParcellePermis = (idu: string) =>
+  j<Record<string, unknown>>(`/modules/parcelle-permis?idu=${encodeURIComponent(idu)}`)
 export const modPromesses = (months: number) => j<Record<string, unknown>>(`/modules/promesses?${cq()}&months=${months}`)
-export const modVelocite = () => j<{ note: string; communes: Record<string, unknown>[] }>('/modules/velocite')
+export const modVelocite = (nature?: string | null) =>
+  j<{ communes: Record<string, unknown>[]; [k: string]: unknown }>(`/modules/velocite${nature ? `?nature=${nature}` : ''}`)
 export const modBailleur = () => j<Record<string, unknown>>(`/modules/bailleur?${cq()}`)
 export const modFantome = () => j<Record<string, unknown>>(`/modules/fantome?${cq()}`)
 // Habitat Solaire (mandat habitat-solaire)
