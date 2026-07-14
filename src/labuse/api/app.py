@@ -279,6 +279,10 @@ def readyz(request: Request, commune: str | None = None):
 _MEM_CACHE: dict = {}
 _MEM_LOCK = threading.Lock()
 _MEM_MAX = 256
+# M6.2 perf : verrous single-flight PAR CLÉ — sans eux, N requêtes concurrentes sur une clé
+# expirée recalculent TOUTES en même temps (stampede : /stats P95 mesuré à ~4 s sous 10 req).
+_MEM_FLIGHT: dict = {}
+_MEM_FLIGHT_LOCK = threading.Lock()
 
 
 def clear_mem_cache() -> None:
@@ -288,18 +292,32 @@ def clear_mem_cache() -> None:
 
 
 def _mem_cached(key, ttl: float, compute):
-    """Renvoie compute() en le mémorisant `ttl` s sous `key` (lecture seule, en mémoire)."""
+    """Renvoie compute() en le mémorisant `ttl` s sous `key` (lecture seule, en mémoire).
+
+    M6.2 : SINGLE-FLIGHT — une seule exécution de `compute()` par clé à la fois. Les requêtes
+    concurrentes sur une clé expirée attendent la 1re et réutilisent son résultat (fin du
+    stampede) au lieu de recalculer chacune."""
     now = time.monotonic()
     with _MEM_LOCK:
         hit = _MEM_CACHE.get(key)
         if hit is not None and (now - hit[0]) < ttl:
             return hit[1]
-    val = compute()
-    with _MEM_LOCK:
-        _MEM_CACHE[key] = (time.monotonic(), val)
-        if len(_MEM_CACHE) > _MEM_MAX:                       # éviction simple des plus anciens
-            for k in sorted(_MEM_CACHE, key=lambda k: _MEM_CACHE[k][0])[:64]:
-                _MEM_CACHE.pop(k, None)
+    # un verrou par clé : le 1er calcule, les autres attendent puis relisent le cache frais.
+    with _MEM_FLIGHT_LOCK:
+        flight = _MEM_FLIGHT.get(key)
+        if flight is None:
+            flight = _MEM_FLIGHT[key] = threading.Lock()
+    with flight:
+        with _MEM_LOCK:                                      # re-vérif : déjà calculé pendant l'attente ?
+            hit = _MEM_CACHE.get(key)
+            if hit is not None and (time.monotonic() - hit[0]) < ttl:
+                return hit[1]
+        val = compute()
+        with _MEM_LOCK:
+            _MEM_CACHE[key] = (time.monotonic(), val)
+            if len(_MEM_CACHE) > _MEM_MAX:                   # éviction simple des plus anciens
+                for k in sorted(_MEM_CACHE, key=lambda k: _MEM_CACHE[k][0])[:64]:
+                    _MEM_CACHE.pop(k, None)
     return val
 
 
