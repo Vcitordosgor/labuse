@@ -5,6 +5,7 @@ import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdict
 import { Loading } from '../Loading'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
+import { PermitsProximityBlock } from './PermitsProximityBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
 import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -907,6 +908,8 @@ export function Fiche({ idu }: { idu: string }) {
             <ScoreV2Block idu={idu} />
             {/* M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires */}
             {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
+            {/* M10 : permis à proximité, cliquables (preuve derrière le signal viabilisation) */}
+            <PermitsProximityBlock idu={idu} />
             {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
             <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
               <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0 -rotate-90">

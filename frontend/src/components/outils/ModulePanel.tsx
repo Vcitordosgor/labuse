@@ -2,8 +2,8 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
   getPipeline, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
-  modPatrimoine, modPatrimoineSearch, modPermis, modPromesses, modSolaireParkings,
-  modSolaireTertiaire, modVelocite,
+  modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
+  modPromesses, modSolaireParkings, modSolaireTertiaire, modVelocite,
 } from '../../lib/api'
 import { pointInPolygon } from '../../lib/geo'
 import { useApp } from '../../store/useApp'
@@ -155,11 +155,60 @@ function M02() {
 
 /* ───────────────────────────── M03 — RADAR PERMIS ───────────────────────────── */
 
+const NATURES = [['', 'Tout'], ['PC', 'PC'], ['DP', 'DP'], ['PA', 'PA'], ['PD', 'PD']] as const
+
+/** Tiroir « fiche permis » (M10 lot 1.1) — s'ouvre au clic sur un permis, partagé radar/fiche. */
+export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
+  const q = useQuery({ queryKey: ['permis-fiche', permitId], queryFn: () => modPermisFiche(permitId) })
+  const d = q.data as Record<string, any> | undefined
+  const F = ({ label, value }: { label: string; value: React.ReactNode }) =>
+    value == null || value === '' ? null : (
+      <div className="flex justify-between gap-3 border-b border-[#141d17] py-1.5 text-[11px]">
+        <span className="text-txt-dim">{label}</span>
+        <span className="text-right text-txt">{value}</span>
+      </div>
+    )
+  return (
+    <div data-permis-drawer className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
+      <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-[#4a3d6b] bg-surface-1 p-4 sm:rounded-2xl"
+        onClick={(e) => e.stopPropagation()}>
+        {q.isLoading && <Loading />}
+        {d && (
+          <>
+            <div className="mb-2 flex items-start justify-between gap-2">
+              <div>
+                <div className="font-display text-sm font-bold text-txt-hi">{d['nature_libelle']}</div>
+                <div className="font-mono text-[11px] text-txt-mut">{d['permit_id']} · {d['commune']}</div>
+              </div>
+              <button onClick={onClose} className="rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-mut">✕</button>
+            </div>
+            <F label="Statut" value={d['statut']} />
+            <F label="Porteur" value={d['porteur'] ?? <span className="text-txt-dim">{d['porteur_note']}</span>} />
+            {d['porteur_siren'] && <F label="SIREN" value={<span className="font-mono">{d['porteur_siren']}</span>} />}
+            <F label="Nombre de lots" value={d['nb_lots']} />
+            <F label="Surface habitable" value={d['surface_hab_m2'] != null ? `${fmt(d['surface_hab_m2'])} m²` : null} />
+            <F label="Date de dépôt" value={d['date_depot']} />
+            <F label="Date d'autorisation" value={d['date_autorisation']} />
+            <F label="Achèvement (DAACT)" value={d['date_achevement']} />
+            {d['delai_instruction'] && (
+              <F label="Délai d'instruction" value={<span style={{ color: VIOLET }} className="font-semibold">{d['delai_instruction']['libelle']}</span>} />
+            )}
+            <F label="Parcelle(s)" value={<span className="font-mono text-[10px]">{(d['parcelles'] as string[]).join(', ')}</span>} />
+            <p className="mt-2 text-[10px] text-txt-dim">{d['source']}</p>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function M03() {
   const [months, setMonths] = useState(24)
+  const [nature, setNature] = useState('')
+  const [open, setOpen] = useState<string | null>(null)
   const zone = useApp((s) => s.zone)
   const commune = useApp((s) => s.commune)
-  const q = useQuery({ queryKey: ['m03', months, commune], queryFn: () => modPermis(months) })
+  const q = useQuery({ queryKey: ['m03', months, nature, commune], queryFn: () => modPermis(months, nature || null) })
   const d = q.data as Record<string, any> | undefined
   // la ZONE DESSINÉE (outil carte) filtre aussi les permis géocodés — les non-géocodés restent listés
   const items = ((d?.['items'] ?? []) as Record<string, any>[]).filter((i) => {
@@ -174,12 +223,20 @@ function M03() {
   return (
     <>
       <Banner>Géocodage {String(d?.['pct_geocode'] ?? '…')} % — les non-géocodés restent listés.
-        Données jusqu'au <b>{String(d?.['donnees_jusqu_au'] ?? '…')}</b> (flux Sitadel régional).</Banner>
-      <div className="flex gap-1.5">
+        Données jusqu'au <b>{String(d?.['donnees_jusqu_au'] ?? '…')}</b> (flux Sitadel régional).
+        Cliquez un permis pour sa fiche (porteur, lots, surfaces, délai d'instruction).</Banner>
+      <div className="flex flex-wrap gap-1.5">
         {[12, 24, 48, 72].map((m) => (
           <button key={m} onClick={() => setMonths(m)}
             className={`rounded-full border px-2.5 py-1 text-[11px] ${months === m ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
             {m} mois
+          </button>
+        ))}
+        <span className="mx-1 self-center text-line-2">|</span>
+        {NATURES.map(([v, l]) => (
+          <button key={v} onClick={() => setNature(v)}
+            className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
+            {l}
           </button>
         ))}
       </div>
@@ -189,15 +246,17 @@ function M03() {
       </p>
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {items.slice(0, 150).map((i, k) => (
-          <div key={k} className={`flex items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-[11px] ${i['geom'] ? 'bg-surface-3' : 'bg-[#141019]'}`}>
+          <button key={k} onClick={() => setOpen(i['permit_id'] as string)}
+            className={`flex items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] hover:border-[#6b5a96] ${i['geom'] ? 'bg-surface-3' : 'bg-[#141019]'}`}>
             <span className="font-mono text-txt">{i['type'] as string}</span>
             <span className="text-txt-mut">{i['date'] as string}</span>
-            <span className="text-txt-dim">état {i['etat'] as string}</span>
+            {i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
             {i['nb_lgt'] != null && <span className="text-txt-dim">{String(i['nb_lgt'])} lgt</span>}
             {!i['geom'] && <span className="ml-auto text-[11px] text-[#8b76c0]">non géocodé</span>}
-          </div>
+          </button>
         ))}
       </div>
+      {open && <PermitDrawer permitId={open} onClose={() => setOpen(null)} />}
     </>
   )
 }
@@ -240,31 +299,48 @@ function M04() {
 /* ───────────────────────────── M05 — VÉLOCITÉ ADMIN ───────────────────────────── */
 
 function M05() {
-  const q = useQuery({ queryKey: ['m05'], queryFn: modVelocite })
-  const [sort, setSort] = useState<'permis' | 'delai_median_mois' | 'pct_acheves'>('permis')
-  const rows = useMemo(() => ([...(q.data?.communes ?? [])] as Record<string, any>[]).sort((a, b) => Number(b[sort] ?? 0) - Number(a[sort] ?? 0)), [q.data, sort])
+  const [nature, setNature] = useState('PC')
+  const q = useQuery({ queryKey: ['m05', nature], queryFn: () => modVelocite(nature || null) })
+  const d = q.data as Record<string, any> | undefined
+  const [sort, setSort] = useState<'n_valide' | 'delai_median_mois'>('delai_median_mois')
+  const rows = useMemo(() => ([...((d?.['communes'] ?? []) as Record<string, any>[])])
+    .sort((a, b) => Number(b[sort] ?? 0) - Number(a[sort] ?? 0)), [d, sort])
+  const natLabel = { PC: 'PC', DP: 'DP', PA: 'PA', PD: 'PD', '': 'toutes natures' }[nature]
   return (
     <>
-      <Banner>{q.data?.note ?? '…'} — la source ne porte pas les dates de dépôt/décision.</Banner>
-      <a href="/modules/velocite?fmt=csv" className="self-start rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">
-        ⬇ Export CSV
-      </a>
+      <Banner><b>{d?.['indicateur'] ?? 'Délai médian d\'instruction dépôt → autorisation'}</b> ({natLabel},
+        cohortes {String(d?.['cohortes'] ?? '…')}). {d?.['note']}
+        <div className="mt-1 text-[#8b76c0]">⚠ {d?.['censure']}</div>
+        <div className="mt-1 italic">{d?.['disclaimer']}</div>
+      </Banner>
+      <div className="flex flex-wrap gap-1.5">
+        {NATURES.filter(([v]) => v).map(([v, l]) => (
+          <button key={v} onClick={() => setNature(v)}
+            className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
+            {l}
+          </button>
+        ))}
+        <a href={`/modules/velocite?fmt=csv${nature ? `&nature=${nature}` : ''}`}
+          className="ml-auto self-center rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ CSV</a>
+      </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
-        <div className="sticky top-0 grid grid-cols-[1fr_54px_58px_54px] gap-1 bg-surface-1 py-1 text-[11px] tracking-wide text-txt-dim">
+        <div className="sticky top-0 grid grid-cols-[1fr_64px_60px] gap-1 bg-surface-1 py-1 text-[11px] tracking-wide text-txt-dim">
           <span>COMMUNE (ÎLE)</span>
-          {([['permis', 'PERMIS'], ['delai_median_mois', 'DÉLAI*'], ['pct_acheves', 'ACHEV.']] as const).map(([k, l]) => (
+          {([['delai_median_mois', 'MÉDIANE'], ['n_valide', 'N']] as const).map(([k, l]) => (
             <button key={k} onClick={() => setSort(k)} className={`text-right ${sort === k ? 'text-[#B497F0]' : ''}`}>{l} ↓</button>
           ))}
         </div>
         {rows.map((c) => (
-          <div key={c['commune'] as string} className="grid grid-cols-[1fr_54px_58px_54px] gap-1 border-b border-[#141d17] py-1.5 text-[11px]">
+          <div key={c['commune'] as string} className="grid grid-cols-[1fr_64px_60px] gap-1 border-b border-[#141d17] py-1.5 text-[11px]"
+            title={`${c['commune']} : délai médian d'instruction ${natLabel} = ${c['delai_median_mois']} mois (IQR ${c['delai_p25_mois']}–${c['delai_p75_mois']}), sur ${c['n_mur']} dossiers mûrs. ${c['n_recent_exclu']} dépôts récents exclus (non mûrs), ${c['n_exclus_qualite']} exclus (dépôt>autorisation).`}>
             <span className="truncate text-txt">{c['commune'] as string}</span>
-            <span className="text-right font-mono text-txt-mut">{fmt(c['permis'] as number)}</span>
             <span className="text-right font-mono" style={{ color: VIOLET }}>{c['delai_median_mois'] == null ? '—' : `${c['delai_median_mois']} m`}</span>
-            <span className="text-right font-mono text-txt-mut">{String(c['pct_acheves'])}%</span>
+            <span className="text-right font-mono text-txt-mut">{fmt(c['n_mur'] as number)}</span>
           </div>
         ))}
-        <p className="py-2 text-[11px] text-txt-dim">* médiane permis → déclaration d'achèvement (DAACT)</p>
+        <p className="py-2 text-[11px] text-txt-dim">
+          Médiane dépôt→autorisation en mois · N = dossiers mûrs (dépôts &lt; {String(d?.['maturite_cutoff'] ?? '…')}).
+          Survolez une ligne pour l'IQR et les exclusions.</p>
       </div>
     </>
   )

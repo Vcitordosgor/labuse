@@ -222,27 +222,120 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
 # ───────────────────────── M03 — RADAR PERMIS ─────────────────────────
 
 @router.get("/permis")
-def permis(commune: str | None = None, months: int = 24, db: Session = Depends(get_db)) -> dict:
+def permis(commune: str | None = None, months: int = 24, nature: str | None = None,
+           db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
+    # M10 : jointure sur la date de dépôt + délai d'instruction rapatriés (m10_permit_delais)
     rows = db.execute(text("""
-        SELECT permit_id, type, date::date::text AS date, commune,
-               raw->>'etat' AS etat, raw->>'nb_lgt' AS nb_lgt, raw->>'surf_hab' AS surf_hab,
-               CASE WHEN geom IS NOT NULL THEN ST_AsGeoJSON(geom) END AS g
-        FROM sitadel_permits
-        WHERE (CAST(:c AS text) IS NULL OR commune = :c) AND date >= :dmax - (:m || ' months')::interval
-        ORDER BY date DESC LIMIT 2000"""), {"c": commune, "m": months, "dmax": dmax}).mappings().all()
+        SELECT s.permit_id, s.type, s.date::date::text AS date, s.commune,
+               s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
+               d.date_depot::text AS depot, CASE WHEN d.valide THEN d.delai_mois END AS delai_mois,
+               CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
+        FROM sitadel_permits s
+        LEFT JOIN m10_permit_delais d ON d.permit_id = s.permit_id
+        WHERE (CAST(:c AS text) IS NULL OR s.commune = :c)
+          AND (CAST(:nat AS text) IS NULL OR s.type = :nat)
+          AND s.date >= :dmax - (:m || ' months')::interval
+        ORDER BY s.date DESC LIMIT 2000"""),
+        {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().all()
     true_total = int(db.execute(text(
         """SELECT count(*) FROM sitadel_permits
-           WHERE (CAST(:c AS text) IS NULL OR commune = :c) AND date >= :dmax - (:m || ' months')::interval"""),
-        {"c": commune, "m": months, "dmax": dmax}).scalar() or 0)
+           WHERE (CAST(:c AS text) IS NULL OR commune = :c)
+             AND (CAST(:nat AS text) IS NULL OR type = :nat)
+             AND date >= :dmax - (:m || ' months')::interval"""),
+        {"c": commune, "m": months, "nat": nature, "dmax": dmax}).scalar() or 0)
     geo = [r for r in rows if r["g"]]
     return {
-        "commune": commune or "Toute l'île", "months": months, "total": true_total, "affiches": len(rows),
+        "commune": commune or "Toute l'île", "months": months, "nature": nature,
+        "total": true_total, "affiches": len(rows),
         "donnees_jusqu_au": dmax.date().isoformat() if dmax else None,
         "geocodes": len(geo), "pct_geocode": round(100 * len(geo) / len(rows)) if rows else 0,
-        "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "surf_hab")},
+        "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "depot", "delai_mois",
+                                        "etat", "nb_lgt", "surf_hab")},
                    "geom": json.loads(r["g"]) if r["g"] else None} for r in rows],
+    }
+
+
+# Libellés lisibles (nature d'autorisation + état d'avancement, codes source non documentés)
+_NATURE_LABELS = {"PC": "Permis de construire", "DP": "Déclaration préalable",
+                  "PA": "Permis d'aménager", "PD": "Permis de démolir"}
+_ETAT_LABELS = {"2": "Autorisé", "4": "Chantier ouvert", "5": "En cours",
+                "6": "Travaux achevés (DAACT)"}
+
+
+@router.get("/permis/{permit_id}")
+def permis_fiche(permit_id: str, db: Session = Depends(get_db)) -> dict:
+    """Fiche permis cliquable (M10 lot 1.1) : référence, porteur (si PM), nature, lots,
+    surfaces, dates clés (dépôt / autorisation / achèvement) + délai d'instruction, statut."""
+    r = db.execute(text("""
+        SELECT s.permit_id, s.type, s.commune, s.date::date::text AS date_autorisation,
+               s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
+               s.raw->>'daact' AS daact, s.raw->>'destination' AS destination,
+               s.raw->>'petitioner_name' AS porteur, s.raw->>'petitioner_siren' AS porteur_siren,
+               s.idu_codes,
+               d.date_depot::text AS date_depot, d.valide AS delai_valide,
+               d.delai_mois, d.date_achevement::text AS date_achevement,
+               CASE WHEN s.geom IS NOT NULL THEN ST_AsGeoJSON(s.geom) END AS g
+        FROM sitadel_permits s
+        LEFT JOIN m10_permit_delais d ON d.permit_id = s.permit_id
+        WHERE s.permit_id = :pid"""), {"pid": permit_id}).mappings().first()
+    if not r:
+        raise HTTPException(404, "Permis introuvable")
+    delai = None
+    if r["delai_valide"] and r["delai_mois"] is not None:
+        delai = {"mois": r["delai_mois"],
+                 "libelle": f"{r['delai_mois']} mois entre dépôt et autorisation"}
+    return {
+        "permit_id": r["permit_id"], "commune": r["commune"],
+        "nature": r["type"], "nature_libelle": _NATURE_LABELS.get(r["type"], r["type"]),
+        "porteur": r["porteur"], "porteur_siren": r["porteur_siren"],
+        "porteur_note": None if r["porteur"] else "Pétitionnaire personne physique (anonymisé à la source)",
+        "nb_lots": int(r["nb_lgt"]) if (r["nb_lgt"] or "").isdigit() else None,
+        "surface_hab_m2": float(r["surf_hab"]) if r["surf_hab"] else None,
+        "date_depot": r["date_depot"], "date_autorisation": r["date_autorisation"],
+        "date_achevement": r["date_achevement"] or r["daact"],
+        "delai_instruction": delai,
+        "statut": _ETAT_LABELS.get(r["etat"], f"état {r['etat']}"), "etat_code": r["etat"],
+        "parcelles": list(r["idu_codes"]) if r["idu_codes"] else [],
+        "geom": json.loads(r["g"]) if r["g"] else None,
+        "source": "SITADEL (SDES/Dido) — autorisations d'urbanisme, dép. 974",
+    }
+
+
+@router.get("/parcelle-permis")
+def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
+    """M10 lot 1.2/1.3 — permis SUR ou À PROXIMITÉ d'une parcelle, cliquables.
+
+    Lit EXACTEMENT `via_permits_geo` (permis géolocalisés autorisés, EPSG 2975) — la même
+    table que le score de viabilisation M-VIA — pour que les permis affichés soient LA PREUVE
+    derrière les compteurs c100/c200 de la fiche (cohérence garantie, rayons 100/200 m). Chaque
+    entrée porte son `permit_id` → fiche permis (/modules/permis/{id})."""
+    exists = db.execute(text(
+        "SELECT to_regclass('public.via_permits_geo') IS NOT NULL")).scalar()
+    if not exists:
+        return {"idu": idu, "indisponible": "via_permits_geo non construit (relancer M-VIA)",
+                "c100": 0, "c200": 0, "items": []}
+    rows = db.execute(text("""
+        WITH p AS (SELECT geom_2975 AS g FROM parcels WHERE idu = :idu)
+        SELECT w.permit_id, s.type, s.date::date::text AS date, s.commune,
+               s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
+               s.raw->>'petitioner_name' AS porteur,
+               round(ST_Distance(p.g, w.g))::int AS dist_m
+        FROM p JOIN via_permits_geo w ON ST_DWithin(p.g, w.g, 200)
+               JOIN sitadel_permits s ON s.permit_id = w.permit_id
+        ORDER BY dist_m ASC LIMIT 100"""), {"idu": idu}).mappings().all()
+    items = [{"permit_id": r["permit_id"], "nature": r["type"],
+              "nature_libelle": _NATURE_LABELS.get(r["type"], r["type"]),
+              "date": r["date"], "etat": r["etat"], "nb_lgt": r["nb_lgt"],
+              "porteur": r["porteur"], "distance_m": r["dist_m"],
+              "rayon": "100m" if r["dist_m"] <= 100 else "200m"} for r in rows]
+    return {
+        "idu": idu,
+        "c100": sum(1 for i in items if i["distance_m"] <= 100),
+        "c200": len(items),
+        "note": "Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA).",
+        "items": items,
     }
 
 
@@ -294,23 +387,54 @@ def promesses(commune: str | None = None, months: int = 24, db: Session = Depend
 
 
 # ───────────────────────── M05 — VÉLOCITÉ ADMIN ─────────────────────────
-# LIMITE HONNÊTE : la base ne porte NI date de dépôt NI date de décision (une seule `date` +
-# `daact`). Le délai médian dépôt→décision est IMPOSSIBLE ici → on livre ce qui est mesurable :
-# volumes, part achevée (daact), délai médian date→achèvement. Consigné.
+# M10 : le VRAI délai d'instruction dépôt→autorisation, en MÉDIANE (robuste aux outliers).
+# La date de dépôt (DR_DEPOT) manquait de `sitadel_permits` ; M10 l'a rapatriée de la source
+# SDES/Dido dans la table additive `m10_permit_delais` (cf. ingestion.permit_delais_m10).
+#
+# HONNÊTETÉ (3 limites consignées, exposées telles quelles au client) :
+#  1. CENSURE STRUCTURELLE : le fichier Sitadel ne contient QUE des dossiers ACCORDÉS
+#     (0 dossier « déposé non tranché ») → le « taux de dossiers en cours » n'est PAS
+#     observable ici. La médiane est conditionnelle à « a fini par être autorisé ».
+#  2. SURVIE DES COHORTES RÉCENTES : un dépôt récent instruit lentement n'est pas encore
+#     visible (biais à la baisse) → la médiane de tête EXCLUT les 12 derniers mois de dépôts
+#     (cohortes non mûres), séparément comptés (`en_cours_estime` = non mesurable → null).
+#  3. QUALITÉ SOURCE : DR_DEPOT est au MOIS (délai en mois, pas en jours) et ~15 % des lignes
+#     ont dépôt > autorisation (erreur de saisie) → EXCLUES (`valide=false`), taux affiché.
+# Indicateur HISTORIQUE, pas une promesse de délai futur (disclaimer).
+
+_VELOCITE_MATURITE_MOIS = 12  # cohortes de dépôt < (dernier dépôt − 12 mois) = « mûres »
+
 
 @router.get("/velocite")
-def velocite(fmt: str = "json", db: Session = Depends(get_db)):
+def velocite(fmt: str = "json", nature: str | None = None, db: Session = Depends(get_db)):
+    # borne de maturité : dernier mois de dépôt observé − 12 mois (au-delà = cohorte non mûre)
+    cutoff = db.execute(text(
+        "SELECT (max(date_depot) - make_interval(months => :m))::date "
+        "FROM m10_permit_delais WHERE valide"), {"m": _VELOCITE_MATURITE_MOIS}).scalar()
     rows = db.execute(text("""
-        SELECT commune, count(*) AS permis,
-               count(*) FILTER (WHERE raw->>'daact' IS NOT NULL) AS acheves,
-               round(100.0 * count(*) FILTER (WHERE raw->>'daact' IS NOT NULL) / count(*)) AS pct_acheves,
-               round(percentile_cont(0.5) WITHIN GROUP (
-                 ORDER BY ((raw->>'daact')::date - date::date))
-                 FILTER (WHERE raw->>'daact' IS NOT NULL) / 30.44) AS delai_median_mois,
-               count(*) FILTER (WHERE date >= now() - interval '24 months') AS depuis_24m
-        FROM sitadel_permits GROUP BY commune ORDER BY permis DESC"""),
-    ).mappings().all()
+        SELECT commune,
+          count(*) FILTER (WHERE valide) AS n_valide,
+          count(*) FILTER (WHERE valide AND date_depot <= :cutoff) AS n_mur,
+          count(*) FILTER (WHERE valide AND date_depot > :cutoff) AS n_recent_exclu,
+          count(*) FILTER (WHERE NOT valide AND date_depot IS NOT NULL
+                             AND date_autorisation IS NOT NULL) AS n_exclus_qualite,
+          round(percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois)
+                FILTER (WHERE valide AND date_depot <= :cutoff)) AS delai_median_mois,
+          round(percentile_cont(0.25) WITHIN GROUP (ORDER BY delai_mois)
+                FILTER (WHERE valide AND date_depot <= :cutoff)) AS delai_p25_mois,
+          round(percentile_cont(0.75) WITHIN GROUP (ORDER BY delai_mois)
+                FILTER (WHERE valide AND date_depot <= :cutoff)) AS delai_p75_mois
+        FROM m10_permit_delais
+        WHERE (CAST(:nat AS text) IS NULL OR nature = :nat)
+        GROUP BY commune HAVING count(*) FILTER (WHERE valide) > 0
+        ORDER BY n_valide DESC"""),
+        {"cutoff": cutoff, "nat": nature}).mappings().all()
     data = [dict(r) for r in rows]
+    # période de couverture = années d'AUTORISATION (le fichier Sitadel des dossiers accordés)
+    an = db.execute(text(
+        "SELECT min(extract(year FROM date_autorisation))::int lo, "
+        "max(extract(year FROM date_autorisation))::int hi "
+        "FROM m10_permit_delais WHERE valide")).mappings().first()
     if fmt == "csv":
         buf = io.StringIO()
         w = csv.DictWriter(buf, fieldnames=list(data[0].keys()))
@@ -318,8 +442,16 @@ def velocite(fmt: str = "json", db: Session = Depends(get_db)):
         w.writerows(data)
         return Response(buf.getvalue(), media_type="text/csv",
                         headers={"Content-Disposition": 'attachment; filename="velocite_admin.csv"'})
-    return {"note": "délai = date permis → déclaration d'achèvement (dépôt→décision non porté par la source)",
-            "communes": data}
+    return {
+        "indicateur": "Délai médian d'instruction dépôt → autorisation",
+        "unite": "mois", "nature": nature, "cohortes": f"{an['lo']}–{an['hi']}",
+        "maturite_cutoff": cutoff.isoformat() if cutoff else None,
+        "note": ("Médiane robuste (pas moyenne). Dépôts des 12 derniers mois exclus "
+                 "(cohortes non mûres, biais de survie). Lignes dépôt>autorisation exclues."),
+        "censure": ("Source Sitadel = dossiers ACCORDÉS uniquement : refusés et en cours "
+                    "d'instruction non observables → taux de dossiers en cours non mesurable ici."),
+        "disclaimer": "Indicateur HISTORIQUE (2013+), pas une promesse de délai futur.",
+        "communes": data}
 
 
 # ───────────────────────── M07 — FONCIER FANTÔME ─────────────────────────
