@@ -270,19 +270,10 @@ function FilterChips() {
   )
 }
 
-function VerdictToggle() {
-  const { mode, setMode } = useApp()
-  return (
-    <div className="flex items-center gap-0.5 rounded-lg border border-line-2 bg-surface-2 p-1">
-      {(['verdict', 'mutabilite'] as const).map((m) => (
-        <button key={m} onClick={() => setMode(m)}
-          className={`rounded-md px-3 py-1 text-xs ${m === mode ? 'bg-mint font-medium text-mint-ink' : 'text-txt-mut hover:text-txt'}`}>
-          {m === 'verdict' ? 'Verdict' : 'Mutabilité'}
-        </button>
-      ))}
-    </div>
-  )
-}
+// M9 lot 4 : le toggle carte « Verdict / Mutabilité » est RETIRÉ. Le potentiel de
+// transformation (fond de l'ancien mode Mutabilité) vit désormais dans la fiche, à la
+// parcelle (bloc « Potentiel de transformation »), alimenté par le ratio SDP consommée/
+// autorisée du bloc D + le signal surélévation. Cf. reports/m9-fiche/SYNTHESE-M9.md.
 
 function NotifBell() {
   const [open, setOpen] = useState(false)
@@ -373,7 +364,6 @@ export function Header() {
       <Omnibox />
       <FilterChips />
       <div className="ml-auto flex items-center gap-3">
-        <VerdictToggle />
         <NotifBell />
         <span className="flex h-8 w-8 items-center justify-center rounded-full border border-line-2 bg-surface-3 font-mono text-[11px] text-mint">VL</span>
       </div>

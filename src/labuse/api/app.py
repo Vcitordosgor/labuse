@@ -738,14 +738,24 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
         "FROM parcel_v_score WHERE parcelle_id = ANY(:idus)"),
         {"idus": [it["idu"] for it in items]}).all()}
     adrs = adresses_ban(db, [it["idu"] for it in items])
+    # M9 lot 1 — ICD (indice de confiance données) du run servi. Colonne annexe, jointe ici
+    # (comme top_signaux) pour ne pas alourdir _q_v2_list ; CLOISONNÉE du score P.
+    from ..scoring import icd as _icd
+    v2run = _score_v2_run_id(db)
+    icd_map = {r[0]: r[1] for r in db.execute(text(
+        "SELECT parcelle_id, icd FROM parcel_p_score_v2 "
+        "WHERE run_id = :r AND parcelle_id = ANY(:idus)"),
+        {"r": v2run, "idus": [it["idu"] for it in items]}).all()} if v2run else {}
     buf = _io.StringIO()
     w = _csv.writer(buf, delimiter=";")          # Excel FR : point-virgule (standard maison)
     w.writerow(["idu", "commune", "adresse_ban", "code_postal", "ville",
                 "surface_m2", "tier_v2", "rang_v2", "mult_v2", "copro",
                 "veille_succession", "statut_matrice", "q_score", "a_score",
-                "completeness", "proprio", "v_score", "v_band", "top_signaux"])
+                "completeness", "icd", "confiance_donnees",
+                "proprio", "v_score", "v_band", "top_signaux"])
     for it in items:
         a = adrs.get(it["idu"]) or {}
+        icd_val = icd_map.get(it["idu"])
         w.writerow([it["idu"], it["commune"],
                     a.get("adresse") or "", a.get("code_postal") or "", a.get("ville") or "",
                     it["surface_m2"],
@@ -755,7 +765,10 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                     "oui" if it.get("copro_v2") else "",
                     "oui" if it.get("veille") else "",
                     it["status"], it["q_score"],
-                    it["a_score"], it["completeness_score"], it["proprio"] or "",
+                    it["a_score"], it["completeness_score"],
+                    icd_val if icd_val is not None else "",
+                    _icd.libelle_bande(icd_val) if icd_val is not None else "",
+                    it["proprio"] or "",
                     it["v_score"] if it["v_score"] is not None else "",
                     it["v_band"] or "", tops.get(it["idu"]) or ""])
     return Response(buf.getvalue().encode("utf-8-sig"),   # BOM : accents corrects dans Excel
@@ -1417,13 +1430,17 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
     # quand il existe ; l'étage 0 du run SERVI (head.etage0) prime toujours (règle 1).
     v2run = _score_v2_run_id(db)
     s2 = db.execute(text(
-        "SELECT tier, rang, mult_base, percentile, copro FROM parcel_p_score_v2 "
+        "SELECT tier, rang, mult_base, percentile, copro, icd, icd_detail "
+        "FROM parcel_p_score_v2 "
         "WHERE run_id = :r AND parcelle_id = :idu"),
         {"r": v2run, "idu": idu}).mappings().first() if v2run else None
     score_v2 = ({"tier": s2["tier"], "rang": s2["rang"],
                  "mult_base": float(s2["mult_base"]) if s2["mult_base"] is not None else None,
                  "percentile": float(s2["percentile"]) if s2["percentile"] is not None else None,
                  "copro": bool(s2["copro"])} if s2 else None)
+    # M9 lot 1 — Indice de confiance données (ICD). Méta d'AFFICHAGE, CLOISONNÉE du score P :
+    # ne modifie ni le tier, ni le rang, ni p_raw (cf. scoring/icd.py). Bloc annexe.
+    icd_block = _icd_block(s2)
 
     rows = db.execute(text(
         """SELECT cr.layer_name, cr.result, cr.severity, cr.weight_applied, cr.detail,
@@ -1553,6 +1570,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "surface_m2": round(head["surface_m2"]) if head["surface_m2"] else None,
         "statut": head["matrice_statut"], "q_score": head["q_score"], "a_score": head["a_score"],
         "score_v2": score_v2, "etage0": bool(head["etage0"]),
+        "icd": icd_block,
+        "reglement_plu": _reglement_plu_block(db, idu, head["commune"]),
+        "potentiel_transformation": _potentiel_transformation_block(db, idu),
         "a_completude": head["a_completude"], "completeness_score": head["completeness_score"],
         "coords": [round(head["lon"], 6), round(head["lat"], 6)],
         "evenement": "rouge" if evenement_detail else None, "evenement_detail": evenement_detail,
@@ -1589,6 +1609,97 @@ def _gestionnaires_block(commune: str) -> dict | None:
         return V.resolve_gestionnaires(commune)
     except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
         return None
+
+
+def _icd_block(s2) -> dict | None:
+    """M9 lot 1 — bloc Indice de confiance données (ICD) pour la fiche.
+
+    Méta d'AFFICHAGE lue telle quelle depuis parcel_p_score_v2 (colonnes icd/icd_detail,
+    backfill scoring/icd.py). CLOISONNÉE du score P : n'entre ni dans le tier ni dans le
+    rang. None si le run n'a pas d'ICD (repli silencieux)."""
+    if not s2 or s2.get("icd") is None:
+        return None
+    from ..scoring import icd as _icd
+    val = int(s2["icd"])
+    detail = s2["icd_detail"] or {}
+    return {
+        "score": val,
+        "bande": _icd.bande(val),                 # haute | partielle | faible
+        "libelle": _icd.libelle_bande(val),
+        "detail": detail,                         # {groupe: bool}
+        "manquants": _icd.manquants(detail),      # libellés client des groupes absents
+        "cloisonnement": "Complétude des données de la parcelle — n'entre PAS dans le "
+                         "score d'opportunité (score P gelé, calculé indépendamment).",
+    }
+
+
+def _reglement_plu_block(db: Session, idu: str, commune: str) -> dict | None:
+    """M9 lot 2 — lien règlement PLU par zone. Croise plu_gpu_zone au centroïde/emprise
+    de la parcelle → (zone, idurba) → référence article/page (config/plu_<commune>.yaml).
+    Repli propre si la commune n'est pas outillée (cf. plu_reglement.reglement_block)."""
+    from ..plu_reglement import reglement_block
+    zones = [dict(r) for r in db.execute(text(
+        """SELECT DISTINCT sl.subtype AS zone,
+                  sl.attrs->>'libelle' AS libelle, sl.attrs->>'idurba' AS idurba
+             FROM spatial_layers sl JOIN parcels p ON p.idu = :idu
+            WHERE sl.kind = 'plu_gpu_zone'
+              AND ST_Intersects(sl.geom_2975, p.geom_2975)"""), {"idu": idu}).mappings().all()]
+    try:
+        return reglement_block(zones, commune)
+    except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche
+        return None
+
+
+def _potentiel_transformation_block(db: Session, idu: str) -> dict | None:
+    """M9 lot 4 — indicateur « Potentiel de transformation » (fond de l'ancien outil Mutabilité).
+
+    Alimenté par le ratio SDP consommée/autorisée déjà calculé (bloc D : parcel_residuel.
+    pct_potentiel) et enrichi du signal SURÉLÉVATION (parcel_residuel_bati), qui n'est PAS
+    couvert par le seul ratio SDP — cf. SYNTHESE-M9 (avant/après). None si aucune donnée
+    résiduelle (repli propre : parcelle non bâtie / hors périmètre calcul)."""
+    try:
+        row = db.execute(text(
+            """SELECT r.pct_potentiel, r.sdp_residuelle_m2, r.sous_densite, r.capacite_estimee,
+                      rb.surelevation_possible, rb.hauteur_bati_m, rb.hauteur_max_m, rb.confiance
+                 FROM parcels p
+                 LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+                 LEFT JOIN parcel_residuel_bati rb ON rb.idu = p.idu
+                WHERE p.idu = :idu"""), {"idu": idu}).mappings().first()
+    except Exception:  # noqa: BLE001 — jamais de 500 sur la fiche (tables résiduel absentes)
+        return None
+    if not row or (row["pct_potentiel"] is None and row["surelevation_possible"] is None):
+        return None
+    pct = row["pct_potentiel"]
+    if pct is None:
+        niveau, libelle = "indetermine", "Marge SDP non calculée"
+    elif pct < 40:
+        niveau, libelle = "fort", "Fort potentiel — parcelle en forte sous-densité"
+    elif pct < 70:
+        niveau, libelle = "modere", "Potentiel modéré — droits à bâtir partiellement dormants"
+    elif pct < 100:
+        niveau, libelle = "faible", "Potentiel faible — parcelle proche de sa densité autorisée"
+    else:
+        niveau, libelle = "nul", "Densité autorisée atteinte ou dépassée"
+    hauteur_marge = (round(row["hauteur_max_m"] - row["hauteur_bati_m"], 1)
+                     if row["hauteur_max_m"] is not None and row["hauteur_bati_m"] is not None
+                     else None)
+    return {
+        "niveau": niveau, "libelle": libelle,
+        "pct_consomme": pct,                                  # SDP consommée / autorisée (%)
+        "pct_residuel": (max(0, 100 - pct) if pct is not None else None),
+        "sdp_residuelle_m2": row["sdp_residuelle_m2"],
+        "sous_densite": row["sous_densite"],
+        "capacite_estimee": row["capacite_estimee"],
+        # Signal surélévation : NON couvert par le seul ratio SDP → conservé de l'outil Mutabilité.
+        "surelevation_possible": row["surelevation_possible"],
+        "hauteur_bati_m": row["hauteur_bati_m"], "hauteur_max_m": row["hauteur_max_m"],
+        "hauteur_marge_m": hauteur_marge,
+        "confiance": row["confiance"],
+        "source": "Ratio SDP consommée/autorisée (bloc D du modèle P) + potentiel bâti "
+                  "résiduel (BD TOPO × règles PLU calibrées)",
+        "note": "Remplace l'ancien mode carte « Mutabilité » : même donnée résiduelle, "
+                "à la parcelle, complétée du signal surélévation.",
+    }
 
 
 @app.get("/parcels/{idu}")
@@ -2250,6 +2361,82 @@ def save_filter(body: SavedFilterIn, db: Session = Depends(get_db)) -> dict:
 def delete_filter(filter_id: int, db: Session = Depends(get_db)) -> dict:
     db.execute(text("DELETE FROM saved_filters WHERE id = :i"), {"i": filter_id})
     return {"ok": True}
+
+
+# ── M9 lot 3 — Signalement d'erreur (file de QA HUMAINE, aucune action automatique) ──
+# Types d'erreur proposés au formulaire (le back accepte aussi « autre »).
+SIGNALEMENT_TYPES = {"zonage", "bati", "adresse", "proprietaire", "risque",
+                     "faux_positif", "score", "viabilisation", "autre"}
+
+
+class SignalementIn(BaseModel):
+    idu: str
+    type_erreur: str
+    champ: str | None = None
+    commentaire: str | None = None
+    utilisateur: str | None = None
+
+
+@app.post("/signalements")
+def creer_signalement(body: SignalementIn, db: Session = Depends(get_db)) -> dict:
+    """Enregistre un signalement d'erreur horodaté. AUCUNE modification des données :
+    c'est un ticket dans une file de QA humaine (utile notamment aux faux positifs —
+    piscines 90,7 %, futurs verrous). Le champ `statut` démarre à « nouveau »."""
+    idu = (body.idu or "").strip()
+    if not idu:
+        raise HTTPException(422, "IDU de la parcelle requis.")
+    type_err = (body.type_erreur or "").strip().lower()
+    if type_err not in SIGNALEMENT_TYPES:
+        type_err = "autre"
+    sid = db.execute(text(
+        """INSERT INTO signalements (parcelle_id, type_erreur, champ, commentaire, utilisateur)
+           VALUES (:idu, :t, :c, :com, :u) RETURNING id"""),
+        {"idu": idu[:14], "t": type_err,
+         "c": (body.champ or None), "com": (body.commentaire or None),
+         "u": (body.utilisateur or None)}).scalar()
+    return {"ok": True, "id": sid, "statut": "nouveau"}
+
+
+@app.get("/signalements")
+def liste_signalements(statut: str | None = None,
+                       limit: int = Query(500, ge=1, le=5000),
+                       db: Session = Depends(get_db)) -> list[dict]:
+    """File des signalements (revue QA). Filtrable par statut."""
+    where = " WHERE statut = :s" if statut else ""
+    rows = db.execute(text(
+        f"""SELECT id, parcelle_id, type_erreur, champ, commentaire, utilisateur,
+                   statut, created_at
+              FROM signalements{where} ORDER BY created_at DESC LIMIT :lim"""),
+        {"s": statut, "lim": limit}).mappings().all()
+    return [{**dict(r), "created_at": r["created_at"].isoformat() if r["created_at"] else None}
+            for r in rows]
+
+
+@app.get("/signalements/export.csv")
+def export_signalements_csv(statut: str | None = None,
+                            db: Session = Depends(get_db)) -> Response:
+    """Export CSV des signalements pour revue (utf-8-sig BOM + séparateur « ; »)."""
+    import csv as _csv
+    import io as _io
+
+    where = " WHERE statut = :s" if statut else ""
+    rows = db.execute(text(
+        f"""SELECT id, parcelle_id, type_erreur, champ, commentaire, utilisateur,
+                   statut, created_at
+              FROM signalements{where} ORDER BY created_at DESC"""),
+        {"s": statut}).mappings().all()
+    buf = _io.StringIO()
+    w = _csv.writer(buf, delimiter=";")
+    w.writerow(["id", "idu", "type_erreur", "champ", "commentaire",
+                "utilisateur", "statut", "date"])
+    for r in rows:
+        w.writerow([r["id"], r["parcelle_id"], r["type_erreur"], r["champ"] or "",
+                    (r["commentaire"] or "").replace("\n", " "), r["utilisateur"] or "",
+                    r["statut"], r["created_at"].isoformat() if r["created_at"] else ""])
+    return Response(buf.getvalue().encode("utf-8-sig"),
+                    media_type="text/csv; charset=utf-8",
+                    headers={"Content-Disposition": 'attachment; filename="labuse_signalements.csv"',
+                             "X-Rows": str(len(rows))})
 
 
 class BilanParamIn(BaseModel):

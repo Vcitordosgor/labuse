@@ -16,41 +16,29 @@ export function useV2Actif(): boolean {
 /** `inline` : rendu dans un flux (tiroir mobile) au lieu du coin de carte. Sous 640 px la
  *  légende flottante recouvrait le hero (item 1 UX V1) → elle vit dans le tiroir « Couches ». */
 export function Legend({ inline = false }: { inline?: boolean }) {
-  const mode = useApp((s) => s.mode)
   const layers = useApp((s) => s.layers)
   const v2 = useV2Actif()
   return (
     <div className={`rounded-[10px] border border-line-2 bg-surface-2 px-4 py-3 ${
       inline ? '' : 'absolute bottom-4 right-4 hidden sm:block'}`}>
       <p className="mb-2 font-mono text-[11px] tracking-widest text-txt-dim">
-        {mode === 'verdict' ? (v2 ? 'VERDICT · SCORING V2' : 'VERDICT') : 'MUTABILITÉ'}
+        {v2 ? 'VERDICT · SCORING V2' : 'VERDICT'}
       </p>
-      {mode === 'verdict' ? (
-        <div className="flex flex-col gap-1.5">
-          {v2
-            ? LEGEND_V2_ORDER.map((t) => (
-                <div key={t} className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full" style={{ background: TIER_V2_META[t].color }} />
-                  <span className="text-[11px] text-txt">{TIER_V2_META[t].label}</span>
-                </div>
-              ))
-            : LEGEND_ORDER.map((s) => (
-                <div key={s} className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full" style={{ background: STATUT_META[s].color }} />
-                  <span className="text-[11px] text-txt">{STATUT_META[s].label}</span>
-                </div>
-              ))}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-1.5">
-          <div className="h-2 w-28 rounded-full" style={{ background: 'linear-gradient(90deg,#1E2A23,#2E6B4F,#46A88A,#5CE6A1)' }} />
-          <div className="flex justify-between text-[11px] text-txt-dim">
-            <span>0 m²</span>
-            <span>SDP résiduelle</span>
-            <span>5 000+</span>
-          </div>
-        </div>
-      )}
+      <div className="flex flex-col gap-1.5">
+        {v2
+          ? LEGEND_V2_ORDER.map((t) => (
+              <div key={t} className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full" style={{ background: TIER_V2_META[t].color }} />
+                <span className="text-[11px] text-txt">{TIER_V2_META[t].label}</span>
+              </div>
+            ))
+          : LEGEND_ORDER.map((s) => (
+              <div key={s} className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full" style={{ background: STATUT_META[s].color }} />
+                <span className="text-[11px] text-txt">{STATUT_META[s].label}</span>
+              </div>
+            ))}
+      </div>
       {/* M6.1 item 1 : légende DÉDIÉE quand la couche « Zonage PLU (parcelles) » est active —
           la vignette verdict reste intacte au-dessus (deux lectures simultanées assumées). */}
       {layers.zonage_parcelle && (

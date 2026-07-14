@@ -133,6 +133,12 @@ export const addToPipeline = (idu: string) =>
   j<{ ok: boolean; already: boolean; entry: PipelineEntry }>('/pipeline', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu }),
   })
+
+// ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
+export const postSignalement = (body: { idu: string; type_erreur: string; champ?: string; commentaire?: string }) =>
+  j<{ ok: boolean; id: number; statut: string }>('/signalements', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  })
 export const patchPipeline = (id: number, body: Record<string, unknown>) =>
   j<{ ok: boolean; entry: PipelineEntry }>(`/pipeline/${id}`, {
     method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),

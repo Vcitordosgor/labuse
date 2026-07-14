@@ -830,6 +830,11 @@ class ParcelPScoreV2(Base):
     event_date: Mapped[date | None] = mapped_column(Date)    # dernier événement daté v1.3
     model_version: Mapped[str] = mapped_column(String(32))
     computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # Indice de confiance données (M9 lot 1) — méta d'affichage, CLOISONNÉE du score P.
+    # Ne participe NI au rang NI au tier NI à p_raw : complétude pondérée des 9 groupes
+    # nullables (spec §1.4 A.4). Backfill LECTURE depuis p_model_ext_dataset, cf. scoring/icd.py.
+    icd: Mapped[int | None] = mapped_column(SmallInteger)    # 0-100, NULL = non évalué
+    icd_detail: Mapped[dict | None] = mapped_column(JSONB)   # {groupe: bool} des 9 groupes
 
 
 def create_all(engine) -> None:
@@ -850,6 +855,44 @@ def create_all(engine) -> None:
     ensure_enrichment_cache(engine)
     ensure_score_v_view(engine)
     ensure_dvf_marche(engine)
+    ensure_icd_columns(engine)
+    ensure_signalements(engine)
+
+
+def ensure_icd_columns(engine) -> None:
+    """Colonnes ICD (indice de confiance données) sur parcel_p_score_v2 — M9 lot 1.
+    Méta d'affichage annexe (cf. scoring/icd.py), CLOISONNÉE du score P. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("ALTER TABLE parcel_p_score_v2 "
+                     "ADD COLUMN IF NOT EXISTS icd smallint"))
+        c.execute(_t("ALTER TABLE parcel_p_score_v2 "
+                     "ADD COLUMN IF NOT EXISTS icd_detail jsonb"))
+
+
+def ensure_signalements(engine) -> None:
+    """Table `signalements` (M9 lot 3) — file de QA humaine. Aucune action
+    automatique sur les données : un signalement est un ticket horodaté.
+    Idempotent (CREATE TABLE IF NOT EXISTS) ; durable au rebuild."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("""
+            CREATE TABLE IF NOT EXISTS signalements (
+                id           bigserial PRIMARY KEY,
+                parcelle_id  varchar(14) NOT NULL,
+                type_erreur  varchar(48) NOT NULL,
+                champ        varchar(64),
+                commentaire  text,
+                utilisateur  varchar(128),
+                statut       varchar(24) NOT NULL DEFAULT 'nouveau',
+                created_at   timestamptz NOT NULL DEFAULT now()
+            )"""))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_signalements_parcelle "
+                     "ON signalements (parcelle_id)"))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_signalements_statut "
+                     "ON signalements (statut, created_at)"))
 
 
 def ensure_pipeline_projet(engine) -> None:

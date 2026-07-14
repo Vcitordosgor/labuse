@@ -197,6 +197,50 @@ def render_fiche_pdf(fiche: dict) -> bytes:
         pdf.cell(cw - 10, 4, f"{k} / 100" if k != "COMPLÉTUDE" else f"{k} %")
     pdf.set_y(y + 21)
 
+    # ── M9 lot 1 — INDICE DE CONFIANCE DONNÉES (ICD). Méta d'affichage CLOISONNÉE du
+    # score : dit la complétude des données, pas l'opportunité. Mention OBLIGATOIRE si < 60.
+    icd = fiche.get("icd")
+    if icd and icd.get("score") is not None:
+        val, bande = icd["score"], icd.get("bande")
+        col = AMBER if bande == "faible" else (TXT_MUT if bande == "partielle" else (23, 122, 88))
+        pdf.set_font("inter", size=7.4)
+        pdf.set_text_color(*col)
+        txt = f"Confiance des données : {val}/100 — {icd.get('libelle', '')}"
+        manque = icd.get("manquants") or []
+        if manque:
+            txt += " · manque : " + ", ".join(manque[:4]) + ("…" if len(manque) > 4 else "")
+        pdf.multi_cell(pdf.w - 28, 3.8, txt)
+        if bande == "faible":
+            pdf.set_font("inter", size=6.6)
+            pdf.set_text_color(*AMBER)
+            pdf.multi_cell(pdf.w - 28, 3.4,
+                           "⚠ Confiance faible : données de la parcelle incomplètes — "
+                           "verdict à confirmer par vérification terrain/CU.")
+        pdf.set_text_color(*TXT_DIM)
+        pdf.set_font("inter", size=6.2)
+        pdf.multi_cell(pdf.w - 28, 3.2,
+                       "L'indice mesure la complétude des données ; il n'entre pas dans le score d'opportunité.")
+        pdf.ln(1.2)
+
+    # ── M9 lot 4 — POTENTIEL DE TRANSFORMATION (fond de l'ancien outil Mutabilité)
+    pt = fiche.get("potentiel_transformation")
+    if pt and pt.get("niveau") and pt["niveau"] != "indetermine":
+        pdf.set_font("mono", size=6.6)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.cell(0, 4, "POTENTIEL DE TRANSFORMATION", new_x="LMARGIN", new_y="NEXT")
+        pdf.set_font("inter", size=7.6)
+        pdf.set_text_color(40, 50, 45)
+        ligne = pt.get("libelle", "")
+        if pt.get("pct_consomme") is not None:
+            ligne += f" · SDP consommée {pt['pct_consomme']} % de l'autorisé"
+        if pt.get("sdp_residuelle_m2"):
+            ligne += f" · ~{pt['sdp_residuelle_m2']:,} m² SDP résiduelle".replace(",", " ")
+        if pt.get("surelevation_possible"):
+            marge = pt.get("hauteur_marge_m")
+            ligne += f" · surélévation possible" + (f" (marge ~{marge} m)" if marge else "")
+        pdf.multi_cell(pdf.w - 28, 3.8, ligne)
+        pdf.ln(1.2)
+
     # ── CONTEXTE COMMUNE (mandat promotrice) — SRU · QPV/ANRU · marché, sourcé
     ctx = fiche.get("contexte_commune") or {}
     if ctx:
