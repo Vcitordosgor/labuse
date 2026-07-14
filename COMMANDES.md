@@ -64,3 +64,49 @@ Endpoints v2 (lecture précalculée uniquement, P95 < 200 ms) :
 python scripts/m5-produit/churn_simulation.py   # churn chaude 2024→2025 par scénario d'hystérésis
 python scripts/m5-produit/brulantes_delta.py    # brulantes-v2.csv + delta vs 120 v1.3 + sensibilité ±
 ```
+
+## Validation post-merge — les 2 gates (à relancer à CHAQUE merge)
+
+Après un merge dans `main`, le serveur API en mémoire sert encore l'ANCIEN code : il faut
+le **redémarrer** sur le worktree `main`, puis passer les deux gates. Tout en LECTURE SEULE
+(aucun re-score). Env commun : la base tourne en local, le rôle `labuse` n'existe pas → on
+se connecte en `openclaw` ; `PROJ_DATA` évite l'erreur pyproj (cf. mémoire dette-pyproj).
+
+```bash
+# Env commun aux 3 commandes
+export LABUSE_DATABASE_URL="postgresql+psycopg://openclaw@localhost:5432/labuse"
+export PROJ_DATA="$HOME/miniforge3/envs/labusedb/share/proj"
+```
+
+### 1. Redémarrer l'API sur le code mergé (port servi = 8010)
+
+```bash
+cd /Users/openclaw/Desktop/labuse
+# tuer PROPREMENT (SIGTERM) le process qui sert le vieux code sur :8010
+kill "$(lsof -tiTCP:8010 -sTCP:LISTEN)"
+# attendre la libération du port, puis relancer depuis le worktree main
+until ! lsof -iTCP:8010 -sTCP:LISTEN -n >/dev/null 2>&1; do sleep 0.5; done
+nohup .venv/bin/labuse api --port 8010 > /tmp/labuse_api_8010.log 2>&1 &
+# vérifier que le code mergé est bien servi (ex. M9 : le champ `icd` doit exister)
+until curl -sf -m 3 http://127.0.0.1:8010/health >/dev/null; do sleep 0.5; done
+curl -s "http://127.0.0.1:8010/parcels/97415000BE0027?source=q_v5_m6b" | python3 -c "import sys,json;print('icd:', 'icd' in json.load(sys.stdin))"
+```
+
+### 2. Golden dataset — 32 parcelles témoins, base ↔ API (attendu 32/32)
+
+```bash
+LABUSE_API_BASE="http://127.0.0.1:8010" python qa/golden_check.py
+# 0 = 100 % PASS ; 1 = au moins un FAIL ; 2 = erreur d'exécution
+```
+
+### 3. Cohérence du run servi — 3 tests, AUCUN skip toléré (attendu 3/3)
+
+```bash
+# LABUSE_DATABASE_URL (openclaw) est INDISPENSABLE : le test #3 interroge la base
+# APPLICATIVE (mvt_meta.run_label) ; sans URL valide il SKIPPE (≠ pass). -rs montre tout skip.
+python -m pytest tests/test_run_serving_coherence.py -v -rs
+# 1) front SOURCE == Q_A_RUN_LABEL   2) bundle dist contient le run   3) tuiles mvt sur le run servi
+```
+
+Règle : un gate non vert (golden < 32/32, cohérence < 3/3, ou un skip) = **stop et rapport**,
+on ne répare rien à l'aveugle (une divergence = bascule de run incomplète, cf. docstring du test).
