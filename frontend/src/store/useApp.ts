@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { FicheLine, MapMode } from '../lib/types'
+import type { FicheLine } from '../lib/types'
 import type { TierV2 } from '../lib/status'
 
 export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets' | 'segments'
@@ -102,8 +102,6 @@ interface AppState {
   toggleOutils: () => void
   selectedIdu: string | null
   select: (idu: string | null) => void
-  mode: MapMode
-  setMode: (m: MapMode) => void
   layers: LayerToggles
   toggleLayer: (k: keyof LayerToggles) => void
   panelOpen: boolean
@@ -186,8 +184,6 @@ export const useApp = create<AppState>((set) => ({
         contexteCommune: null, sourceLine: null, iaRestitution: null }),
   selectedIdu: null,
   select: (idu) => set({ selectedIdu: idu }),
-  mode: 'verdict',
-  setMode: (mode) => set({ mode }),
   layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,

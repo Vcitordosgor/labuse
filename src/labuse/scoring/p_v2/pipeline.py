@@ -288,10 +288,20 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
                          "taux_base": taux_base, "prev_run": prev_run}),
         "n": len(rows), "d": int(time.time() - t0), "l": snapshot_label})
 
+    # M9 lot 1 — Indice de confiance données (ICD) : backfill LECTURE depuis le dataset
+    # qui vient d'être matérialisé pour CE run. Colonnes annexes icd/icd_detail,
+    # CLOISONNÉES du score P (n'altèrent ni tier, ni rang, ni p_raw). Best-effort :
+    # une absence de dataset (ex. run sans rebuild) ne doit pas faire échouer le scoring.
+    try:
+        from ..icd import backfill_run as _icd_backfill
+        n_icd = _icd_backfill(session, run_id, annee=annee)
+    except Exception as _e:  # noqa: BLE001
+        n_icd = 0
+
     tiers_counts = tier.value_counts().to_dict()
     return {"run_id": run_id, "n": len(rows), "duree_s": int(time.time() - t0),
             "params": params, "tiers": tiers_counts, "taux_base": taux_base,
-            "snapshot": snapshot_label, "sha256": sha[:16]}
+            "snapshot": snapshot_label, "sha256": sha[:16], "icd_backfill": n_icd}
 
 
 def _snapshot_v2(session: Session, label: str, run_id: str, rows: pd.DataFrame) -> None:

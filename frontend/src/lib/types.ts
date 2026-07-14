@@ -73,8 +73,6 @@ export interface Stats {
   opportunites_sans_identite: number
 }
 
-export type MapMode = 'verdict' | 'mutabilite'
-
 export type Onglet = 'regles' | 'risques' | 'marche' | 'proprio'
 
 export interface FicheLine {
@@ -156,9 +154,55 @@ export interface Fiche {
   // etage0 = exclusion dure du run SERVI (prime toujours sur le tier v2)
   score_v2: { tier: string; rang: number | null; mult_base: number | null; percentile: number | null; copro: boolean } | null
   etage0: boolean
+  // M9 lot 1 : indice de confiance données (ICD) — méta d'affichage, CLOISONNÉE du score P.
+  icd?: IcdBlock | null
+  // M9 lot 2 : lien règlement PLU par zone (article/page ou document + repli GPU).
+  reglement_plu?: ReglementPlu | null
+  // M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité).
+  potentiel_transformation?: PotentielTransformation | null
   // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).
   viabilisation?: Viabilisation | null
   gestionnaires?: Gestionnaires | null
+}
+
+export interface IcdBlock {
+  score: number
+  bande: 'haute' | 'partielle' | 'faible' | 'inconnu'
+  libelle: string
+  detail: Record<string, boolean>
+  manquants: string[]
+  cloisonnement: string
+}
+
+export interface ReglementZone {
+  zone: string
+  calibree: boolean
+  document: string | null
+  url: string | null
+  url_document?: string | null
+  approbation?: string | null
+  edition?: string | null
+  idurba?: string | null
+  articles: { regle: string; reference: string; page_imprimee: number | null; url: string | null }[]
+  note: string | null
+}
+export interface ReglementPlu { zones: ReglementZone[]; disclaimer: string }
+
+export interface PotentielTransformation {
+  niveau: 'fort' | 'modere' | 'faible' | 'nul' | 'indetermine'
+  libelle: string
+  pct_consomme: number | null
+  pct_residuel: number | null
+  sdp_residuelle_m2: number | null
+  sous_densite: boolean | null
+  capacite_estimee: boolean | null
+  surelevation_possible: boolean | null
+  hauteur_bati_m: number | null
+  hauteur_max_m: number | null
+  hauteur_marge_m: number | null
+  confiance: string | null
+  source: string
+  note: string
 }
 
 export interface ViaContribution { libelle: string; points: number; detail: string; signe: '+' | '−' | '·' }

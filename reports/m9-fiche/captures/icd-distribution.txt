@@ -1,0 +1,16 @@
+       bande       | count  | pct  
+-------------------+--------+------
+ faible (<60)      |  29819 |  6.9
+ haute (>=85)      | 250106 | 57.9
+ partielle (60-84) | 151738 | 35.2
+(3 lignes)
+
+       tier       | count  | icd_moy | icd_min 
+------------------+--------+---------+---------
+ ecartee          | 342285 |    79.2 |       5
+ a_creuser        |  83680 |    87.2 |       5
+ reserve_fonciere |   4547 |    87.6 |      40
+ chaude           |   1032 |    91.9 |      60
+ brulante         |    119 |    92.0 |      80
+(5 lignes)
+

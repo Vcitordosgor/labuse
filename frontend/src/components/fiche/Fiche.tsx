@@ -1,13 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, toggleWatch } from '../../lib/api'
+import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { Loading } from '../Loading'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
-import type { FicheLine, Onglet, ScoreV, VSignal } from '../../lib/types'
+import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu, ScoreV, VSignal } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
@@ -160,6 +160,156 @@ function VSignalRow({ s }: { s: VSignal }) {
           })()}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── M9 lot 1 — Indice de confiance données (ICD) ────────────────────────────
+const ICD_COLORS: Record<string, string> = { haute: '#4ADE96', partielle: '#9AA6A0', faible: '#F5A524', inconnu: '#9AA6A0' }
+const icdColor = (b: string) => ICD_COLORS[b] ?? '#9AA6A0'
+
+function IcdBlockView({ icd }: { icd: IcdBlock }) {
+  const [open, setOpen] = useState(false)
+  const color = icdColor(icd.bande)
+  return (
+    <div data-icd className="rounded-lg border border-line-2 bg-surface-2">
+      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
+        title="Indice de confiance des données — complétude des couches pour cette parcelle. N'entre PAS dans le score d'opportunité (score P calculé indépendamment).">
+        <span className="w-24 shrink-0 text-left text-xs text-txt">Confiance données</span>
+        <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
+          <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${icd.score}%`, background: color }} />
+        </span>
+        <span data-icd-score className="w-8 shrink-0 text-right font-display text-sm font-bold" style={{ color }}>{icd.score}</span>
+        <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
+      </button>
+      {open && (
+        <div className="border-t border-line-2 px-3 py-2">
+          <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: `${color}1f`, color }}>{icd.libelle}</span>
+          {icd.manquants.length > 0 ? (
+            <>
+              <p className="mt-2 pb-1 font-mono text-[9.5px] tracking-widest text-txt-dim">CE QUI MANQUE</p>
+              <ul data-icd-manquants className="flex flex-col gap-0.5">
+                {icd.manquants.map((m, i) => (
+                  <li key={i} className="flex items-start gap-1.5 text-[11px] text-txt-mut"><span className="text-st-ecartee">•</span>{m}</li>
+                ))}
+              </ul>
+            </>
+          ) : <p className="mt-2 text-[11px] text-txt-dim">Toutes les couches de données sont présentes pour cette parcelle.</p>}
+          <p className="mt-2 text-[10px] leading-snug text-txt-dim">{icd.cloisonnement}</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── M9 lot 4 — Potentiel de transformation (fond de l'ancien outil Mutabilité) ──
+const PT_COLORS: Record<string, string> = { fort: '#4ADE96', modere: '#F5C244', faible: '#9AA6A0', nul: '#6B7280', indetermine: '#6B7280' }
+function PtRow({ k, v }: { k: string; v: string }) {
+  return (<div className="flex justify-between gap-3"><span className="text-txt-dim">{k}</span><span className="text-right text-txt">{v}</span></div>)
+}
+function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
+  const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
+  return (
+    <div data-transformation className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-txt">Potentiel de transformation</span>
+        <span className="ml-auto rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{pt.niveau}</span>
+      </div>
+      <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
+      <div className="mt-1.5 flex flex-col gap-0.5 text-[11px]">
+        {pt.pct_consomme != null && <PtRow k="SDP consommée / autorisée" v={`${pt.pct_consomme} %`} />}
+        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k="SDP résiduelle estimée" v={`~${pt.sdp_residuelle_m2.toLocaleString('fr-FR')} m²`} />}
+        {pt.surelevation_possible != null && <PtRow k="Surélévation" v={pt.surelevation_possible ? `possible${pt.hauteur_marge_m != null ? ` (marge ~${pt.hauteur_marge_m} m)` : ''}` : 'non'} />}
+      </div>
+      <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{pt.source}</p>
+    </div>
+  )
+}
+
+// ── M9 lot 2 — Lien règlement PLU par zone ──────────────────────────────────
+function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
+  return (
+    <div data-reglement-plu className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+      <p className="font-mono text-[10px] tracking-widest text-txt-dim">RÈGLEMENT PLU</p>
+      <div className="mt-1.5 flex flex-col gap-2">
+        {rp.zones.map((z, i) => (
+          <div key={i}>
+            <div className="flex items-center gap-2">
+              <span className="rounded-md bg-surface-3 px-1.5 py-0.5 font-mono text-[11px] text-txt">{z.zone}</span>
+              {z.url && <a data-plu-link href={z.url} target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline">
+                {z.calibree ? 'Voir l’article' : 'Voir le règlement'} ↗
+              </a>}
+            </div>
+            {z.articles.length > 0 && (
+              <ul className="mt-1 flex flex-col gap-0.5">
+                {z.articles.slice(0, 6).map((a, j) => (
+                  <li key={j} className="text-[10.5px] text-txt-mut">
+                    <a href={a.url ?? z.url ?? '#'} target="_blank" rel="noreferrer" className="hover:text-mint hover:underline" title={a.reference}>{a.reference}</a>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {z.note && <p className="mt-0.5 text-[10px] text-txt-dim">{z.note}</p>}
+          </div>
+        ))}
+      </div>
+      <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{rp.disclaimer}</p>
+    </div>
+  )
+}
+
+// ── M9 lot 3 — Signaler une erreur (file de QA humaine, aucune action automatique) ──
+const SIGNALEMENT_TYPES: [string, string][] = [
+  ['faux_positif', 'Faux positif (piscine, PV…)'], ['zonage', 'Zonage PLU'],
+  ['bati', 'Bâti / occupation'], ['adresse', 'Adresse'], ['proprietaire', 'Propriétaire'],
+  ['risque', 'Risque'], ['score', 'Score / verdict'], ['viabilisation', 'Viabilisation'], ['autre', 'Autre'],
+]
+function SignalerErreur({ idu }: { idu: string }) {
+  const [open, setOpen] = useState(false)
+  const [type, setType] = useState('faux_positif')
+  const [champ, setChamp] = useState('')
+  const [commentaire, setCommentaire] = useState('')
+  const m = useMutation({ mutationFn: () => postSignalement({ idu, type_erreur: type, champ: champ || undefined, commentaire: commentaire || undefined }) })
+  if (m.isSuccess) {
+    return (
+      <div data-signalement-ok className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] text-txt-mut">
+        ✓ Signalement enregistré (n°{m.data.id}) — merci. Il sera revu manuellement.
+      </div>
+    )
+  }
+  if (!open) {
+    return (
+      <button data-signaler-erreur onClick={() => setOpen(true)}
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut hover:border-mint hover:text-mint">
+        ⚑ Signaler une erreur
+      </button>
+    )
+  }
+  return (
+    <div data-signalement-form className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+      <p className="font-mono text-[10px] tracking-widest text-txt-dim">SIGNALER UNE ERREUR</p>
+      <label className="mt-2 block text-[11px] text-txt-mut">Type d’erreur
+        <select data-signalement-type value={type} onChange={(e) => setType(e.target.value)} className="mt-0.5 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt">
+          {SIGNALEMENT_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+      </label>
+      <label className="mt-2 block text-[11px] text-txt-mut">Champ concerné (optionnel)
+        <input value={champ} onChange={(e) => setChamp(e.target.value)} placeholder="ex. piscine, zonage, adresse"
+          className="mt-0.5 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt placeholder:text-txt-dim" />
+      </label>
+      <label className="mt-2 block text-[11px] text-txt-mut">Commentaire
+        <textarea data-signalement-commentaire value={commentaire} onChange={(e) => setCommentaire(e.target.value)} rows={2} placeholder="Décrivez l’erreur constatée"
+          className="mt-0.5 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt placeholder:text-txt-dim" />
+      </label>
+      <div className="mt-2 flex items-center gap-2">
+        <button data-signalement-submit onClick={() => m.mutate()} disabled={m.isPending}
+          className="rounded-md bg-mint px-3 py-1 text-xs font-medium text-mint-ink disabled:opacity-50">
+          {m.isPending ? 'Envoi…' : 'Envoyer'}
+        </button>
+        <button onClick={() => setOpen(false)} className="text-[11px] text-txt-mut hover:text-txt">Annuler</button>
+        {m.isError && <span className="text-[11px] text-st-ecartee">Échec — réessayez.</span>}
+      </div>
+      <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">Aucune modification automatique des données : votre signalement entre dans une file de vérification humaine.</p>
     </div>
   )
 }
@@ -795,6 +945,15 @@ export function Fiche({ idu }: { idu: string }) {
               {f.score_v.badge}
             </span>
           )}
+          {/* M9 lot 1 : chip Indice de confiance données (ICD) — affiché seulement si < 85
+              (cas nominal = pas de badge). Méta d'affichage, indépendante du score P. */}
+          {f?.icd && f.icd.score < 85 && (
+            <span data-badge-icd className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style={{ background: `${icdColor(f.icd.bande)}22`, color: icdColor(f.icd.bande) }}
+              title={`Confiance des données : ${f.icd.score}/100 — ${f.icd.libelle}. ${f.icd.cloisonnement}`}>
+              {f.icd.libelle} {f.icd.score}/100
+            </span>
+          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {/* A6 : la loupe de la fiche cherche DANS la fiche (son contenu), pas dans le dashboard */}
@@ -906,11 +1065,19 @@ export function Fiche({ idu }: { idu: string }) {
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}
             {/* M5 : scoring v2 (P×C) — additif, auto-porté (fetch /v2/score, absent si pas de run) */}
             <ScoreV2Block idu={idu} />
+            {/* M9 lot 1 : indice de confiance données (ICD) — méta d'affichage, cloisonnée du score P */}
+            {f.icd && <IcdBlockView icd={f.icd} />}
+            {/* M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité) */}
+            {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+            {/* M9 lot 2 : lien règlement PLU par zone */}
+            {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
             {/* M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires */}
             {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
             {/* M10 : permis à proximité, cliquables (preuve derrière le signal viabilisation) */}
             <PermitsProximityBlock idu={idu} />
             {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
+            {/* M9 lot 3 : signaler une erreur (file de QA humaine) */}
+            <SignalerErreur idu={idu} />
             <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
               <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0 -rotate-90">
                 <circle cx="16" cy="16" r="13" fill="none" stroke="#1E2A23" strokeWidth="3" />

@@ -1,0 +1,16 @@
+                                          Table « public.signalements »
+   Colonne   |           Type           | Collationnement | NULL-able |                Par défaut                
+-------------+--------------------------+-----------------+-----------+------------------------------------------
+ id          | bigint                   |                 | not null  | nextval('signalements_id_seq'::regclass)
+ parcelle_id | character varying(14)    |                 | not null  | 
+ type_erreur | character varying(48)    |                 | not null  | 
+ champ       | character varying(64)    |                 |           | 
+ commentaire | text                     |                 |           | 
+ utilisateur | character varying(128)   |                 |           | 
+ statut      | character varying(24)    |                 | not null  | 'nouveau'::character varying
+ created_at  | timestamp with time zone |                 | not null  | now()
+Index :
+    "signalements_pkey" PRIMARY KEY, btree (id)
+    "ix_signalements_parcelle" btree (parcelle_id)
+    "ix_signalements_statut" btree (statut, created_at)
+

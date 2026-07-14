@@ -74,10 +74,6 @@ const PROMUES_FILTER: maplibregl.FilterSpecification = ['any',
   ['all', ['in', TIER_V2, ['literal', ['brulante', 'chaude']]], ['!', ETAGE0]],
   ['all', ['==', TIER_V2, ''], ['in', ['get', 'status'], ['literal', ['chaude', 'a_surveiller', 'a_creuser']]]],
 ] as unknown as maplibregl.FilterSpecification
-const MUTABILITE_COLOR: maplibregl.ExpressionSpecification = [
-  'interpolate', ['linear'], ['coalesce', ['get', 'sdp_residuelle_m2'], 0],
-  0, '#1E2A23', 300, '#2E6B4F', 2000, '#46A88A', 5000, '#5CE6A1',
-]
 
 // M6.1 item 1 — couche « Zonage PLU (parcelles) » : le REMPLISSAGE passe en couleur par
 // famille (palette ZONE_FAM_META, distincte du verdict v2). Hors zonage GPU (zone_fam
@@ -166,7 +162,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { mode, selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution } = useApp()
   const ile = commune == null
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
@@ -485,11 +481,11 @@ export function MapView() {
     }
     // sur ortho/plan (fonds clairs ou photo), les écartées quasi invisibles gênent moins que le voile sombre
     // M6.1 : couche zonage parcelle active → NE PAS écraser son opacité dédiée
-    if (m.getLayer('parcels-fill') && mode === 'verdict' && !zonageFill) {
+    if (m.getLayer('parcels-fill') && !zonageFill) {
       m.setPaintProperty('parcels-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
       m.setPaintProperty('ile-fill', 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
     }
-  }, [basemap, orthoYear, mode, filters.tiers, mapReady, ile, lowZoom, zonageFill])
+  }, [basemap, orthoYear, filters.tiers, mapReady, ile, lowZoom, zonageFill])
 
   useEffect(() => {
     const m = map.current
@@ -547,9 +543,6 @@ export function MapView() {
         // R1 : VERDICT ÉTEINT = trame cadastrale NEUTRE (le langage promoteur), aucune couleur
         m.setPaintProperty(fill, 'fill-color', '#22302A')
         m.setPaintProperty(fill, 'fill-opacity', 0.28)
-      } else if (mode === 'mutabilite') {
-        m.setPaintProperty(fill, 'fill-color', MUTABILITE_COLOR)
-        m.setPaintProperty(fill, 'fill-opacity', 0.7)
       } else {
         m.setPaintProperty(fill, 'fill-color', STATUS_COLOR)
         m.setPaintProperty(fill, 'fill-opacity', filters.tiers.length === 0 ? STATUS_OPACITY : 0.72)
@@ -564,7 +557,7 @@ export function MapView() {
     for (const id of ['parcels-brulantes', 'parcels-v-badge']) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', vis(!ile && verdict))
     }
-  }, [mode, filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, zonageFill])
+  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, zonageFill])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
   // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR

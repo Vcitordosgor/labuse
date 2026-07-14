@@ -1,0 +1,23 @@
+✓ 1a.icd-present — score=65 bande=partielle
+✓ 1b.icd-manquants — 4 groupe(s) manquant(s)
+✓ 1c.icd-cloisonne — mention de cloisonnement
+✓ 1d.icd-independant-du-tier — un même ICD couvre 5 tiers distincts (ICD ≠ tier)
+✓ 2a.csv-colonne-icd — colonnes icd + confiance_donnees
+✓ 2b.pdf-genere — http=200
+✓ 3a.reglement-present — 2 zone(s)
+✓ 3b.reglement-lien — https://www.mairie-saintpaul.re/wp-content/uploads/2026/03/04_REGLT_PLU_st_paul_approuve_27septembre2012__Edition_mars2026.pdf
+✓ 3c.reglement-article-page — U1b: 6 art., deep-link page=20
+✓ 4a.signalement-post-ok — id=4
+✓ 4b.signalement-en-base — 1 ligne(s) horodatée(s) en base
+✓ 4c.signalement-export-csv — export CSV des signalements
+✓ 5a.transformation-present — niveau=fort SDP consommée=30%
+✓ 5b.transformation-sdp-ratio — alimenté par le ratio SDP consommée/autorisée (bloc D)
+✓ 6.0.mutabilite-retiree-nav — boutons « Mutabilité » = 0
+✓ 6.1.ui-icd-bloc — bloc Confiance données visible
+✓ 6.2.ui-plu-lien — lien règlement PLU visible
+✓ 6.3.ui-transformation — bloc Potentiel de transformation visible
+✓ 6.4.ui-bouton-signaler — bouton « Signaler une erreur » visible
+✓ 6.5.ui-signalement-enregistre — confirmation affichée
+✓ 6.6.no-console-errors
+
+✓ E2E M9 : tout est vert
