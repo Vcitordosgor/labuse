@@ -89,6 +89,45 @@ const FIABILITE_LABEL: Record<string, string> = {
   verifie: 'vérifiée', a_confirmer: 'à confirmer', fragile: 'fragile', haute: 'haute', bonne: 'bonne',
 }
 
+// ── M6.1 item 4 : cadence de publication du PRODUCTEUR — référentiel prudent. ──
+// Uniquement des cadences documentées par le producteur ; toute source absente de cette
+// liste reste « À VÉRIFIER » avec prochaine MAJ « — » (jamais une cadence inventée).
+const CADENCE_PAR_SOURCE: Record<string, { label: string; jours: number }> = {
+  'DVF / valeurs foncières': { label: 'semestrielle (DGFiP — avril & octobre)', jours: 184 },
+  "SITADEL (autorisations d'urbanisme)": { label: 'mensuelle (SDES)', jours: 31 },
+  'BODACC (procédures collectives)': { label: 'quotidienne (DILA, jours ouvrés)', jours: 4 },
+  'Cadastre (API Carto PCI)': { label: 'semestrielle (PCI vecteur)', jours: 184 },
+  'Cadastre Etalab (bulk DGFiP/Etalab)': { label: 'semestrielle (Etalab)', jours: 184 },
+  'BD TOPO IGN': { label: 'trimestrielle (IGN)', jours: 92 },
+  'RGE ALTI (altimétrie)': { label: 'ponctuelle (campagnes IGN)', jours: 0 },
+  'DPE ADEME (logements existants)': { label: 'hebdomadaire (ADEME)', jours: 10 },
+  'BPE INSEE': { label: 'annuelle (millésime INSEE)', jours: 366 },
+  'Filosofi INSEE (carreaux 200 m)': { label: 'annuelle (millésime INSEE)', jours: 366 },
+  'INSEE RP Logement 2023': { label: 'annuelle (millésime INSEE)', jours: 366 },
+  'Fichiers fonciers (Cerema)': { label: 'annuelle (millésime DGFiP/Cerema)', jours: 366 },
+}
+// NB SITADEL/DPE : petite marge (31 j, 10 j) pour ne pas passer orange le jour même de la
+// cadence théorique — le badge juge le retard, pas l'heure de publication.
+
+type Badge = 'a_jour' | 'maj_attendue' | 'a_verifier'
+const BADGE_META: Record<Badge, { label: string; color: string; title: string }> = {
+  a_jour: { label: 'À JOUR', color: '#5CE6A1',
+    title: 'Donnée plus récente que la cadence de publication du producteur' },
+  maj_attendue: { label: 'MAJ ATTENDUE', color: '#E8B44C',
+    title: 'La date de prochaine publication du producteur est dépassée — rafraîchissement à lancer' },
+  a_verifier: { label: 'À VÉRIFIER', color: '#5C7268',
+    title: 'Cadence du producteur non documentée ici (ou aucune date de donnée tracée) — pas de verdict inventé' },
+}
+
+/** Fraîcheur HONNÊTE : date de donnée réelle (majReelle) × cadence documentée du producteur.
+ *  Sans cadence documentée ou sans date tracée → « À VÉRIFIER », jamais un vert par défaut. */
+function fraicheur(s: SourceInfo, majIso: string | null): { badge: Badge; prochaine: Date | null; cadence: string | null } {
+  const cad = CADENCE_PAR_SOURCE[s.name]
+  if (!cad || !cad.jours || !majIso) return { badge: 'a_verifier', prochaine: null, cadence: cad?.label ?? null }
+  const prochaine = new Date(new Date(majIso).getTime() + cad.jours * 86_400_000)
+  return { badge: prochaine.getTime() >= Date.now() ? 'a_jour' : 'maj_attendue', prochaine, cadence: cad.label }
+}
+
 /** La date de mise à jour AFFICHÉE : la plus récente entre last_sync_at (posé par les jobs)
  *  et la dernière ingestion tracée dans ingestion_runs (servie par l'API — jamais en dur). */
 function majReelle(s: SourceInfo): { iso: string | null; viaRuns: boolean } {
@@ -106,6 +145,9 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   const maj = majReelle(s)
   const mil = millesimeNote(s)
   const prec = PRECISION_PAR_SOURCE[s.name]
+  // M6.1 item 4 : badge calculé sur la date de donnée RÉELLE × cadence du producteur
+  const f = fraicheur(s, maj.iso)
+  const badge = BADGE_META[f.badge]
   return (
     <div ref={ref} data-source-row
       className={`flex items-center gap-4 rounded-[10px] border px-4 py-3 ${
@@ -116,6 +158,14 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         <div className="flex items-baseline gap-2">
           <span className="truncate text-xs font-medium text-txt">{s.name}</span>
           {s.provider && <span className="shrink-0 text-[11px] text-txt-dim">{s.provider}</span>}
+          {/* M6.1 item 4 : badge de fraîcheur honnête — vert/orange seulement si la cadence
+              du producteur est documentée, gris « À VÉRIFIER » sinon. */}
+          <span data-source-badge={f.badge}
+            className="shrink-0 rounded-full px-2 py-0.5 font-mono text-[9.5px] font-semibold tracking-wide"
+            style={{ backgroundColor: `${badge.color}22`, color: badge.color }}
+            title={`${badge.title}${f.cadence ? ` — cadence ${f.cadence}` : ''}`}>
+            {badge.label}
+          </span>
         </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-txt-dim">
           {s.access_type && <span>{s.access_type}</span>}
@@ -150,9 +200,24 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
           {maj.iso ? `donnée du ${new Date(maj.iso).toLocaleDateString('fr-FR')}`
             : mil ? `donnée du ${mil}` : '—'}
         </div>
-        {s.verified_at && (
+        {/* M6.1 item 4 : prochaine MAJ calculée depuis la cadence du producteur — « — »
+            quand la cadence n'est pas documentée, jamais une date inventée. */}
+        <div data-source-prochaine className="mt-0.5 text-[11px] text-txt-dim"
+          title={f.cadence ? `Cadence du producteur : ${f.cadence}` : 'Cadence du producteur non documentée'}>
+          prochaine MAJ attendue : {f.prochaine
+            ? <span className={f.badge === 'maj_attendue' ? 'font-medium text-[#E8B44C]' : undefined}>
+                {f.prochaine.toLocaleDateString('fr-FR')}</span>
+            : '—'}
+        </div>
+        {/* M6.1 item 4 : « vérifié le » = source_checks uniquement ; sinon mention discrète
+            « jamais vérifiée » — la table est vide tant que l'audit data n'a pas tourné. */}
+        {s.verified_at ? (
           <div data-source-verifiee className="mt-0.5 text-[11px] text-mint">
             dernière version publiée — vérifié le {new Date(s.verified_at).toLocaleDateString('fr-FR')}
+          </div>
+        ) : (
+          <div data-source-verifiee="jamais" className="mt-0.5 text-[10.5px] italic text-txt-dim opacity-70">
+            jamais vérifiée
           </div>
         )}
       </div>
@@ -222,6 +287,21 @@ export function SourcesPage() {
           Chaque source à sa fraîcheur maximale, prouvée.
           <span className="ml-1.5 font-normal text-txt-dim">La mention « vérifié le » n'apparaît que
           lorsqu'un contrôle a réellement eu lieu — jamais de date déclarative.</span>
+          {/* M6.1 item 4 : légende des badges — le verdict vient de la cadence DOCUMENTÉE
+              du producteur ; cadence inconnue = gris, pas un vert de complaisance. */}
+          <span data-sources-legende className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-normal text-[10.5px] text-txt-dim">
+            {(Object.keys(BADGE_META) as Badge[]).map((b) => (
+              <span key={b} className="flex items-center gap-1">
+                <span className="rounded-full px-1.5 py-px font-mono text-[9px] font-semibold"
+                  style={{ backgroundColor: `${BADGE_META[b].color}22`, color: BADGE_META[b].color }}>
+                  {BADGE_META[b].label}
+                </span>
+                {b === 'a_jour' && 'donnée dans la cadence du producteur'}
+                {b === 'maj_attendue' && 'prochaine publication dépassée'}
+                {b === 'a_verifier' && 'cadence non documentée — pas de verdict inventé'}
+              </span>
+            ))}
+          </span>
         </p>
 
         {/* UX V1 ajout A : les précisions MESURÉES — uniquement des chiffres issus de mesures

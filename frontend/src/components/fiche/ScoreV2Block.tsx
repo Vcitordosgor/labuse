@@ -4,8 +4,12 @@
  * Décisions produit gravées : JAMAIS de probabilité brute (saturation isotonique
  * en tête) — affichage = « ×N vs moyenne » + percentile + rang + tier ; badges
  * copro / veille succession / événement daté ; 5 contributions lisibles (signe +
- * libellé de bin en français). Auto-porté : fetch /v2/score/{idu}, aucun impact
- * sur la fiche existante s'il échoue (bloc absent, jamais d'erreur bloquante).
+ * libellé de bin en français). Auto-porté : fetch /v2/score/{idu}.
+ *
+ * M6.1 item 5 — fin du silent-fail : une ERREUR de requête (réseau, 5xx) affiche un
+ * état visible « Score momentanément indisponible » + bouton réessayer (même gabarit) ;
+ * un 404 (parcelle absente du run v2 : copro non classée, hors périmètre) affiche un
+ * état honnête « Non scorée » au lieu d'un bloc qui disparaît sans explication.
  */
 import { useQuery } from '@tanstack/react-query'
 import { TIER_V2_META } from '../../lib/status'
@@ -22,16 +26,55 @@ type ScoreV2 = {
 // d'en-tête et ce bloc doivent être rigoureusement raccord)
 const TIER_META = TIER_V2_META as Record<string, { label: string; color: string }>
 
+type ErreurV2 = Error & { status?: number }
+
 export function ScoreV2Block({ idu }: { idu: string }) {
-  const { data } = useQuery<ScoreV2>({
+  const { data, isError, error, refetch, isFetching } = useQuery<ScoreV2, ErreurV2>({
     queryKey: ['score-v2', idu],
     queryFn: async () => {
       const r = await fetch(`/v2/score/${idu}`)
-      if (!r.ok) throw new Error(`v2 ${r.status}`)
+      if (!r.ok) {
+        const e: ErreurV2 = new Error(`v2 ${r.status}`)
+        e.status = r.status
+        throw e
+      }
       return r.json()
     },
     retry: false, staleTime: 5 * 60_000,
   })
+  if (isError) {
+    // 404 = la parcelle n'est pas dans le run v2 (copro non classée / hors périmètre) :
+    // état honnête, pas de bouton réessayer (re-demander ne changera rien).
+    if (error?.status === 404) {
+      return (
+        <div data-score-v2="non-scoree" className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P v2)</span>
+            <span className="rounded-full bg-[#2A2438] px-2 py-0.5 text-[10.5px] text-[#B7A8E0]">non scorée</span>
+          </div>
+          <p className="mt-1.5 text-[11px] leading-snug text-txt-dim">
+            Parcelle absente du dernier run du modèle v2 — copropriété ou hors périmètre du scoring.
+          </p>
+        </div>
+      )
+    }
+    // Toute autre erreur (réseau, 5xx, run absent) : état visible + réessayer, même gabarit.
+    return (
+      <div data-score-v2="erreur" className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P v2)</span>
+          <span className="rounded-full bg-[#33201A] px-2 py-0.5 text-[10.5px] text-st-chaude">indisponible</span>
+        </div>
+        <p className="mt-1.5 text-[11px] leading-snug text-txt-dim">
+          Score momentanément indisponible — le reste de la fiche n'est pas affecté.
+        </p>
+        <button onClick={() => refetch()} disabled={isFetching}
+          className="mt-2 rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-txt-hi disabled:opacity-40">
+          {isFetching ? 'Nouvel essai…' : 'Réessayer'}
+        </button>
+      </div>
+    )
+  }
   if (!data) return null
   const tier = TIER_META[data.tier] ?? { label: data.tier, color: '#8FA69A' }
   return (

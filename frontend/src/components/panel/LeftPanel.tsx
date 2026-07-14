@@ -5,6 +5,9 @@ import { ResultsSection } from './ResultsSection'
 
 const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
   { key: 'zonage', label: 'Zonage PLU', hint: 'U/AU en menthe, A/N en brun' },
+  // M6.1 item 1 : recoloration des PARCELLES par famille de zone (palette dédiée) +
+  // étiquette de la zone précise (U1e, 1AUc…) au zoom rapproché et au clic
+  { key: 'zonage_parcelle', label: 'Zonage PLU (parcelles)', hint: 'parcelles colorées par famille U/AU/A/N — zone précise au zoom ≥ 16 et au clic' },
   { key: 'parcelles', label: 'Parcelles', hint: 'colorées par statut' },
   { key: 'ppr', label: 'PPR multirisque' },
   { key: 'vue_mer', label: 'Vue mer', hint: 'liseré cyan (vue dégagée)' },
@@ -12,6 +15,8 @@ const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
   { key: 'limites', label: 'Limites parcelles', hint: 'contours de toutes les parcelles' },
   { key: 'communes', label: 'Limites communes', hint: 'contours communaux officiels (ligne verte)' },
   { key: 'anru', label: 'ANRU (NPNRU)', hint: 'périmètres de renouvellement urbain (8 quartiers d’intérêt national)' },
+  // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
+  { key: 'cinquante_pas', label: '50 pas géométriques', hint: 'Réserve des 50 pas géométriques — bande de 81,20 m depuis le rivage (spécifique outre-mer)' },
   { key: 'equipements', label: 'Équipements', hint: 'mairie · écoles · santé · police/gendarmerie · sport (OSM, affichage seul)' },
 ]
 

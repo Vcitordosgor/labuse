@@ -137,8 +137,10 @@
   {% endif %}
 
   {% if c.residuel and c.residuel.sdp_residuelle_m2 is not none %}
-  <div class="cartouche"><div class="titre">Surface de plancher résiduelle estimée</div>
-    <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² (indicatif)</small></div></div>
+  {# M6.1 item 6 (sprint personas) : libellé client — la « SDP résiduelle » est du jargon ;
+     on dit ce que c'est : ce qu'il reste à construire au regard du PLU. #}
+  <div class="cartouche"><div class="titre">Surface constructible restante (estimation)</div>
+    <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² de plancher (indicatif)</small></div></div>
   {% endif %}
 
   {% if c.verdict_v2 %}

@@ -78,6 +78,22 @@ export const V_BAND_META: Record<VBand, { label: string; color: string }> = {
 }
 export const vBandColor = (b: VBand | null | undefined) => (b && V_BAND_META[b]?.color) || NONE_COLOR
 
+// ── M6.1 : couche « Zonage PLU (parcelles) » — familles U/AU/A/N ────────────────────────
+// Palette DISTINCTE du verdict v2 (braise #E8695A, ambre #E8B44C, gris-vert #8FA69A, bleu
+// #6FA8DC, menthe #5CE6A1) pour éviter toute confusion : rose (U), violet (AU), jaune-vert
+// (A), vert forêt (N). `autre` = typezone hors U/AU/A/N (rare) ; hors zonage GPU = null.
+export type ZoneFam = 'U' | 'AU' | 'A' | 'N' | 'autre'
+export const ZONE_FAM_META: Record<ZoneFam, { label: string; color: string }> = {
+  U: { label: 'U — urbaine', color: '#E8579B' },
+  AU: { label: 'AU — à urbaniser', color: '#9F6BF0' },
+  A: { label: 'A — agricole', color: '#C9D44B' },
+  N: { label: 'N — naturelle', color: '#3E8E6E' },
+  autre: { label: 'Autre zonage', color: '#8A94A6' },
+}
+export const ZONE_FAM_ORDER: ZoneFam[] = ['U', 'AU', 'A', 'N', 'autre']
+//: couleur « 50 pas géométriques » (M6.1 item 2) — bande littorale, cyan-bleu côtier
+export const CINQUANTE_PAS_COLOR = '#4CC3E8'
+
 // Item 7 (UX V1) : définitions Q/A/V — UNE phrase chacune, identique partout où la lettre
 // apparaît (fiche, liste, restitution, CRM). Jamais un sigle nu pour un nouvel utilisateur.
 export const SCORE_TIP = {

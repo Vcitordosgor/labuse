@@ -467,6 +467,14 @@ def _ban_ready(db: Session) -> bool:
         " AND to_regclass('adresse_parcelles') IS NOT NULL")).scalar()))
 
 
+def _zone_plu_ready(db: Session) -> bool:
+    """Table dérivée `parcel_zone_plu` (M6.1 item 1 — zone PLU dominante par parcelle)
+    présente ? Mémorisé 60 s (elle apparaît après le build one-shot) ; absente → colonnes
+    zone_lib/zone_fam NULL dans le geojson, le front replie proprement."""
+    return _mem_cached(("zone-plu-ready",), 60.0, lambda: bool(db.execute(text(
+        "SELECT to_regclass('parcel_zone_plu') IS NOT NULL")).scalar()))
+
+
 def _fmt_ban(voie: str | None, cp: str | None, commune: str | None) -> str | None:
     """« 2 Impasse des Caramboles, 97414 Entre-Deux » — None si aucune adresse (le front
     porte le libellé d'absence, le payload reste honnête)."""
@@ -982,6 +990,11 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
     ban_cols = (", ban.ban_voie, ban.ban_cp, ban.ban_commune" if ban_ok
                 else ", NULL AS ban_voie, NULL AS ban_cp, NULL AS ban_commune")
     ban_join = _ban_lateral("p.idu") if ban_ok else ""
+    # M6.1 item 1 : zone PLU dominante (jointure PK légère) — NULL si table pas encore bâtie
+    zone_ok = _zone_plu_ready(db)
+    zone_cols = (", zp.zone_lib, zp.zone_fam" if zone_ok
+                 else ", NULL AS zone_lib, NULL AS zone_fam")
+    zone_join = "LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu" if zone_ok else ""
     rows = db.execute(text(
         f"""
         SELECT p.idu, p.surface_m2,
@@ -999,9 +1012,10 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                (SELECT max(s1->>'date_evenement') FROM jsonb_array_elements(vs.signals) s1
                  WHERE s1->>'date_evenement' IS NOT NULL)    AS v_dernier_signal,
                (SELECT array_agg(s0->>'code') FROM jsonb_array_elements(vs.signals) s0) AS v_sig
-               {ban_cols}
+               {ban_cols}{zone_cols}
         FROM parcels p
         {ban_join}
+        {zone_join}
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_veille_succession vw ON vw.parcelle_id = p.idu
@@ -1063,6 +1077,9 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
             "copro_v2": bool(r["copro_v2"]),
             "veille": bool(r["veille"]),
             "v_sig": r["v_sig"] or [],
+            # M6.1 item 1 : zonage PLU par parcelle (couche carte) — null si hors zonage GPU
+            "zone_lib": r["zone_lib"],
+            "zone_fam": r["zone_fam"],
         },
     } for r in rows if r["g"]]
     return {"type": "FeatureCollection", "features": feats}
@@ -1499,7 +1516,8 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
 
 
 #: kinds de couches carte exposées au front (Brique 1) — whitelist stricte.
-_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite"}
+#: M6.1 item 2 : + cinquante_pas (réserve des 50 pas géométriques, 163 polygones île).
+_MAP_LAYER_KINDS = {"plu_gpu_zone", "ppr", "parc_national", "anru", "amenite", "cinquante_pas"}
 
 
 @app.get("/map/layers.geojson")

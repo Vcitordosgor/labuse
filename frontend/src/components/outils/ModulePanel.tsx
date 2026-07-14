@@ -526,20 +526,48 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
 }
 
 export function ModulePanel() {
-  const { module, setModule } = useApp()
+  const { module, setModule, toggleOutils } = useApp()
   const def = MODULES.find((m) => m.key === module)
+  // M6.1 item 3 : Échap ferme le panneau (cohérent fiche/contexte). La fiche et les
+  // tiroirs gardent la priorité : si l'un d'eux est ouvert, c'est LUI qu'Échap ferme.
+  // Phase CAPTURE : il faut lire l'état AVANT que le handler de la fiche (bulle,
+  // Fiche.tsx) ne fasse select(null) — sinon, fiche montée avant le panneau = un seul
+  // Échap fermerait les deux d'un coup (zustand est synchrone).
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      const st = useApp.getState()
+      if (st.selectedIdu || st.sourceLine || st.tool) return
+      st.setModule(null)
+    }
+    window.addEventListener('keydown', h, true)
+    return () => window.removeEventListener('keydown', h, true)
+  }, [])
   if (!def) return null
   const Body = COMPONENTS[def.key]
   return (
     <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
-      <div className="flex shrink-0 items-start justify-between border-b border-[#2a2138] bg-[#171221] px-4 py-3">
-        <div>
+      <div className="flex shrink-0 flex-col border-b border-[#2a2138] bg-[#171221] px-4 py-3">
+        {/* M6.1 item 3 : retour direct au menu Outils (fil d'Ariane) — plus besoin de
+            repasser par le rail pour changer d'outil. */}
+        <div className="flex items-center justify-between gap-2">
+          <nav data-module-breadcrumb className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] tracking-widest">
+            <button data-module-retour onClick={toggleOutils}
+              className="shrink-0 rounded px-1 py-0.5 -mx-1 hover:bg-[#241c33]"
+              style={{ color: VIOLET }} title="Revenir au menu Outils">
+              ← OUTILS
+            </button>
+            <span className="text-txt-dim">›</span>
+            <span className="truncate text-txt-mut">{def.label.toUpperCase()}</span>
+          </nav>
+          <button onClick={() => setModule(null)} className="shrink-0 text-txt-mut hover:text-txt-hi"
+            title="Fermer le module (Échap)">✕</button>
+        </div>
+        <div className="mt-1">
           {/* P3 (revue Vic n°3) : plus de code M à l'écran — l'intitulé métier + le bénéfice */}
-          <span className="font-mono text-[10px] tracking-widest" style={{ color: VIOLET }}>OUTIL</span>
           <h2 className="text-sm font-medium text-txt-hi">{def.label}</h2>
           <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{def.desc}</p>
         </div>
-        <button onClick={() => setModule(null)} className="text-txt-mut hover:text-txt-hi" title="Fermer le module">✕</button>
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden p-4">
         <Body />
