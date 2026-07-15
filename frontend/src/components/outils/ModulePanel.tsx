@@ -528,7 +528,7 @@ function M23() {
         ))}
       </div>
       <p className="text-[11px] text-txt-dim">
-        {q.isFetching ? <Loading label="Chargement" /> : <>{fmt(d?.['total'])} parkings assujettis · <b className="text-st-ecartee">{fmt(d?.['echeances_depassees'])} échéance(s) dépassée(s)</b></>}
+        {q.isFetching ? <Loading label="Chargement" /> : <>{fmt(d?.['total'])} parkings assujettis · <b className="text-st-ecartee">{fmt(d?.['echeances_depassees'])} échéance(s) dépassée(s)</b>{typeof d?.['affiches'] === 'number' && d['affiches'] < d['total'] ? <span className="text-txt-dim"> · {fmt(d['affiches'])} affichés</span> : null}</>}
       </p>
       <a href={`/solaire/parkings?fmt=csv${tranche ? `&tranche=${tranche}` : ''}`}
         className="self-start rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ Export CSV</a>
@@ -573,7 +573,7 @@ function M24() {
         dernier bilan INPI × gisement PVGIS — triées par potentiel (surface × score).
         {d?.['note'] ? <> {String(d['note'])}</> : null}</Banner>
       <p className="text-[11px] text-txt-dim">
-        {q.isFetching ? <Loading label="Chargement" /> : `${fmt(d?.['total'])} toitures`}
+        {q.isFetching ? <Loading label="Chargement" /> : <>{fmt(d?.['total'])} toitures{typeof d?.['affiches'] === 'number' && d['affiches'] < d['total'] ? <span className="text-txt-dim"> · {fmt(d['affiches'])} affichées</span> : null}</>}
       </p>
       <a href="/solaire/tertiaire?fmt=csv" className="self-start rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ Export CSV</a>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
