@@ -784,8 +784,12 @@ def _faisa_explain_facts(db: Session, row, core_mod) -> dict | None:
     Le bilan est calculé avec les MÊMES hypothèses PAR DÉFAUT que la calculette (coût/marge affichés
     au client) → l'explication porte sur les chiffres RÉELLEMENT vus, pas une variante. Ces hypothèses
     sont des ESTIMATIONS ajustables (jamais présentées comme certaines)."""
-    from ..faisabilite.bilan import (CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
-                                     compute_bilan, sector_price)
+    from ..faisabilite.bilan import (
+        CALCULETTE_COUT_DEFAUT_M2,
+        CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+        compute_bilan,
+        sector_price,
+    )
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
     fz = parcel_faisabilite(db, row["id"])
@@ -878,12 +882,16 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
     sdp_min = round(unites * body.surface_unite_m2 * 1.15)       # +15 % circulations (hypothèse)
     parking_m2 = round(unites * 25) if body.parking else 0        # 25 m²/place (config PLU)
     hauteur_min = (body.niveaux + 1) * 3.0                        # R+n → (n+1) niveaux × 3 m
+    # Fix LOT 3 : requête LÉGÈRE (sans la géométrie lourde) et SANS LIMIT prématuré — TOUTES les
+    # parcelles satisfaisant les filtres SQL (SDP, surface, statut, run servi) sont ramenées, PUIS
+    # le filtre HAUTEUR (résolu en Python via resolve_zone) s'applique, PUIS le tri marge, PUIS la
+    # troncature d'AFFICHAGE. Avant, `LIMIT 300` sur SDP DESC coupait AVANT le filtre hauteur →
+    # des parcelles valides (hors des 300 plus grosses SDP) étaient jetées sans être examinées.
     rows = db.execute(text("""
         SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2,
                d.matrice_statut AS statut, d.q_score, cr.detail AS zonage,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
-               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-               ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
         FROM parcels p
         JOIN parcel_residuel r ON r.parcel_id = p.id AND r.sdp_residuelle_m2 >= :sdp
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -891,22 +899,26 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN dryrun_cascade_results cr ON cr.run_label = :run AND cr.parcel_id = p.id
           AND cr.layer_name = 'zonage_plu_gpu' AND cr.detail LIKE 'Zone PLU%'
-        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin
-        ORDER BY r.sdp_residuelle_m2 DESC LIMIT 300"""),
+        WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND p.surface_m2 >= :smin"""),
         {"sdp": sdp_min, "run": RUN, "c": body.commune, "v2run": _v2run(db),
          "smin": sdp_min * 0.4 + parking_m2}).mappings().all()
     import re as _re
+    hcache: dict = {}   # (zone, commune) → hauteur — resolve_zone n'est appelé qu'une fois par couple
     items = []
     for r in rows:
         m = _re.search(r"« ([^»]+) »", r["zonage"] or "")
         zone = (m.group(1) if m else "").strip()
-        # la hauteur PLU se résout avec la commune DE LA PARCELLE (mode île : elles diffèrent)
-        rules = resolve_zone(zone, r["commune"]) if zone else None
-        h = getattr(rules, "hauteur_max_m", None) if rules else None
-        if h is None and rules is not None:
-            h = getattr(rules, "hf_m", None) or getattr(rules, "he_m", None)
+        key = (zone, r["commune"])
+        if key not in hcache:
+            # la hauteur PLU se résout avec la commune DE LA PARCELLE (mode île : elles diffèrent)
+            rules = resolve_zone(zone, r["commune"]) if zone else None
+            h = getattr(rules, "hauteur_max_m", None) if rules else None
+            if h is None and rules is not None:
+                h = getattr(rules, "hf_m", None) or getattr(rules, "he_m", None)
+            hcache[key] = h
+        h = hcache[key]
         hauteur_ok = (h is None) or (float(h) >= hauteur_min)
-        if not hauteur_ok:
+        if not hauteur_ok:                # filtre hauteur AVANT toute troncature (Fix A)
             continue
         marge = round(float(r["sdp_residuelle_m2"]) / sdp_min, 2)
         items.append({"idu": r["idu"], "commune": r["commune"], "surface_m2": r["surface_m2"],
@@ -915,9 +927,16 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                       "zone": zone or None,
                       "hauteur_plu_m": float(h) if h is not None else None,
-                      "hauteur_verifiee": h is not None, "marge_capacite": marge,
-                      "geom": json.loads(r["g"])})
+                      "hauteur_verifiee": h is not None, "marge_capacite": marge})
     items.sort(key=lambda x: -x["marge_capacite"])
+    top = items[:200]                     # troncature d'AFFICHAGE seulement — `n` reste le vrai total
+    if top:                               # géométries ramenées UNIQUEMENT pour les 200 affichées
+        geoms = {gr["idu"]: json.loads(gr["g"]) for gr in db.execute(text(
+            "SELECT idu, ST_AsGeoJSON(ST_Transform(geom_2975, 4326)) AS g "
+            "FROM parcels WHERE idu = ANY(:idus)"),
+            {"idus": [i["idu"] for i in top]}).mappings()}
+        for i in top:
+            i["geom"] = geoms.get(i["idu"])
     return {
         "criteres": {"unites": unites, "sdp_min_m2": sdp_min,
                      "calcul": f"{unites} unités × {body.surface_unite_m2} m² × 1,15 (circulations)",
@@ -926,5 +945,5 @@ def faisabilite_sens2(body: ProgrammeIn, db: Session = Depends(get_db)) -> dict:
         "bandeau": ("Estimation capacitaire — hypothèses affichées (m²/unité, +15 % circulations, "
                     "25 m²/place) ; hauteur PLU vérifiée quand la zone est calibrée, sinon « à "
                     "instruire ». Étude d'architecte requise."),
-        "n": len(items), "items": items[:200],
+        "n": len(items), "items": top,   # n = VRAI nombre de correspondances ; items = top 200 affichées
     }
