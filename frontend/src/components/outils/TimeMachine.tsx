@@ -3,21 +3,37 @@ import maplibregl from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
 import { getParcelsGeojson } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { BASEMAP_CHOICES, BASEMAP_SOURCES, basemapLabel, type BasemapDef } from '../map/basemaps'
 
-const WMTS = (layer: string, format: string) =>
-  `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER=${layer}&FORMAT=${format}`
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
 
-function mkMap(el: HTMLDivElement, tiles: string, attribution: string, maxzoom = 19) {
+// Comparateur générique : les deux fonds sont choisis (défaut 1950 ↔ aujourd'hui, l'usage « 1950 »).
+const DEFAULT_LEFT = 'bm-ortho-1950'
+const DEFAULT_RIGHT = 'bm-ortho-now'
+
+/** Carte nue (fond sombre) — le fond de plan est posé/échangé ensuite par applyBasemap. */
+function mkMap(el: HTMLDivElement) {
   return new maplibregl.Map({
     container: el,
     style: {
-      version: 8, sources: { bm: { type: 'raster', tiles: [tiles], tileSize: 256, attribution, maxzoom } },
-      layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#060A08' } },
-               { id: 'bm', type: 'raster', source: 'bm' }],
+      version: 8, sources: {},
+      layers: [{ id: 'bg', type: 'background', paint: { 'background-color': '#060A08' } }],
     },
     bounds: SP_BOUNDS, fitBoundsOptions: { padding: 40 }, attributionControl: false,
   })
+}
+
+/** Pose/échange le fond de plan SUR PLACE (même instance → caméra, synchro et parcelles préservées).
+ *  Le raster 'bm' est réinséré SOUS la couche parcelles 'p' pour que le contour reste au-dessus. */
+function applyBasemap(m: maplibregl.Map, def: BasemapDef) {
+  const add = () => {
+    if (m.getLayer('bm')) m.removeLayer('bm')
+    if (m.getSource('bm')) m.removeSource('bm')
+    m.addSource('bm', { type: 'raster', tiles: def.tiles, tileSize: 256, attribution: def.attribution, maxzoom: def.maxzoom ?? 19 })
+    m.addLayer({ id: 'bm', type: 'raster', source: 'bm' }, m.getLayer('p') ? 'p' : undefined)
+  }
+  if (m.isStyleLoaded()) add()
+  else m.once('load', add)
 }
 
 function muteTileErrors(m: maplibregl.Map) {
@@ -28,23 +44,28 @@ function muteTileErrors(m: maplibregl.Map) {
   })
 }
 
-/** M08 — comparateur AVANT/APRÈS : deux cartes superposées, la moderne rognée par la poignée.
- *  Caméras synchronisées dans les deux sens (garde anti-boucle). Parcelles promues des deux côtés. */
+/** M08 / point 24 — comparateur SWIPE de fonds de plan : deux cartes superposées, celle de droite
+ *  rognée par la poignée (clip-path). Caméras synchronisées dans les deux sens (garde anti-boucle).
+ *  Défaut = 1950 ↔ aujourd'hui (l'usage historique « 1950 ») ; les deux fonds sont maintenant
+ *  librement choisis. Parcelles promues affichées des deux côtés. */
 export function TimeMachine({ center }: { center?: [number, number] | null }) {
   const leftRef = useRef<HTMLDivElement>(null)
   const rightRef = useRef<HTMLDivElement>(null)
   const maps = useRef<[maplibregl.Map, maplibregl.Map] | null>(null)
   const [split, setSplit] = useState(50)
+  const [leftKey, setLeftKey] = useState<string>(DEFAULT_LEFT)
+  const [rightKey, setRightKey] = useState<string>(DEFAULT_RIGHT)
   const dragging = useRef(false)
   const commune = useApp((s) => s.commune)
+  const setModule = useApp((s) => s.setModule)   // sortie propre → carte à fond unique
   // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
   // surcouche parcelles (l'ortho historique est l'objet de l'outil)
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
 
   useEffect(() => {
     if (!leftRef.current || !rightRef.current || maps.current) return
-    const past = mkMap(leftRef.current, WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png'), '© IGN 1950-1965', 15) // le millésime 1950 s'arrête ~z15 : overzoom plutôt que NOIR
-    const now = mkMap(rightRef.current, WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg'), '© IGN BD ORTHO')
+    const past = mkMap(leftRef.current)
+    const now = mkMap(rightRef.current)
     maps.current = [past, now]
     muteTileErrors(past)
     muteTileErrors(now)
@@ -69,6 +90,16 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     return () => { past.remove(); now.remove(); maps.current = null }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Fond de gauche / de droite : posés au montage, ré-échangés sur place si le choix change.
+  useEffect(() => {
+    const m = maps.current?.[0]
+    if (m && BASEMAP_SOURCES[leftKey]) applyBasemap(m, BASEMAP_SOURCES[leftKey])
+  }, [leftKey])
+  useEffect(() => {
+    const m = maps.current?.[1]
+    if (m && BASEMAP_SOURCES[rightKey]) applyBasemap(m, BASEMAP_SOURCES[rightKey])
+  }, [rightKey])
 
   useEffect(() => {
     for (const m of maps.current ?? []) {
@@ -95,6 +126,22 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     >
       <div ref={leftRef} className="absolute inset-0" />
       <div ref={rightRef} className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${split}%)` }} />
+      {/* barre de contrôle : choix des DEUX fonds + sortie vers la carte à fond unique */}
+      <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-line-2 bg-surface-2/95 px-3 py-2 shadow-2xl backdrop-blur">
+        <span className="font-mono text-[10px] tracking-widest text-txt-dim">COMPARER</span>
+        <select data-cmp-left value={leftKey} onChange={(e) => setLeftKey(e.target.value)}
+          className="rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none">
+          {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+        </select>
+        <span className="text-mint" title="glisser la poignée pour révéler">⇔</span>
+        <select data-cmp-right value={rightKey} onChange={(e) => setRightKey(e.target.value)}
+          className="rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none">
+          {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+        </select>
+        <button onClick={() => setModule(null)}
+          className="ml-1 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut hover:border-mint hover:text-txt"
+          title="Revenir à la carte (fond unique)">✕ Quitter</button>
+      </div>
       {/* poignée */}
       <div className="absolute inset-y-0 z-10 w-[2px] bg-mint" style={{ left: `${split}%` }}>
         <button
@@ -105,8 +152,8 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
           ⇔
         </button>
       </div>
-      <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-surface-2 px-3 py-1 font-mono text-[11px] text-txt">1950-1965</span>
-      <span className="absolute bottom-3 right-3 rounded-full border border-line-2 bg-surface-2 px-3 py-1 font-mono text-[11px] text-txt">aujourd'hui</span>
+      <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-surface-2 px-3 py-1 font-mono text-[11px] text-txt">{basemapLabel(leftKey)}</span>
+      <span className="absolute bottom-3 right-3 rounded-full border border-line-2 bg-surface-2 px-3 py-1 font-mono text-[11px] text-txt">{basemapLabel(rightKey)}</span>
     </div>
   )
 }
