@@ -89,15 +89,34 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
     except Exception:  # noqa: BLE001 — la faisabilité ne casse jamais la fiche
         faisa = None
 
+    # ── ZONAGE PLU : le bloc premium = {"zones": [{"zone","articles":[{regle,reference,url}], "url"...}]}.
+    # MULTI-ZONES : on JOINT toutes les zones (une parcelle bizone affiche « U4b + UD », jamais une seule
+    # présentée comme certaine). DEEP-LINK : 1re URL RÉELLEMENT présente (article puis document), sinon aucun.
+    zones = regl.get("zones") or []
+    zone_labels = [z.get("zone") for z in zones if z.get("zone")]
+    zone_str = " + ".join(dict.fromkeys(zone_labels)) or None   # dédup en gardant l'ordre
+    regles_zones = [{"zone": z.get("zone"), "regle": a.get("regle"), "reference": a.get("reference")}
+                    for z in zones for a in (z.get("articles") or [])
+                    if a.get("regle") or a.get("reference")] or None
+    reglement_url = None
+    for z in zones:                                            # deep-link VÉRIFIÉ mécaniquement, jamais mort
+        for a in (z.get("articles") or []):
+            if a.get("url"):
+                reglement_url = a["url"]
+                break
+        if reglement_url:
+            break
+    if not reglement_url:
+        reglement_url = next((z.get("url") for z in zones if z.get("url")), None)
+
     facts: dict[str, core.Fact] = {
         # ── identité / zonage (SOURCÉ) ──
         "idu": _F(f.get("idu")),
         "commune": _F(f.get("commune")),
         "surface_m2": _F(f.get("surface_m2")),
         "statut_tier": _F(f.get("statut")),
-        "zone_plu": _F(regl.get("zone")),
-        "zone_plu_libelle": _F(regl.get("libelle")),
-        "reglement_regles": _F(regl.get("regles") or regl.get("bloc")),
+        "zone_plu": _F(zone_str),                     # toutes les zones jointes (« U4b + UD » si bizone)
+        "reglement_regles": _F(regles_zones),         # règles + références par zone
         # ── viabilisation M-VIA (SOURCÉ) ──
         "viabilisation_indice": _F(via.get("band") or via.get("score")),
         "viabilisation_eau": _F((via.get("contributions") or {}).get("eau") if isinstance(via.get("contributions"), dict) else None),
@@ -123,8 +142,10 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         "faisabilite": _F(faisa, "ESTIME"),
     }
     deeplinks = {}
-    if regl.get("url") or regl.get("deep_link"):
-        deeplinks["reglement_plu"] = regl.get("deep_link") or regl.get("url")
+    if reglement_url:   # SEULEMENT si une URL existe réellement — jamais de lien mort côté client.
+        # rattaché aux clés que le modèle cite pour le PLU (zone / règles) → étiquette « Sourcé · … ↗ »
+        deeplinks["zone_plu"] = reglement_url
+        deeplinks["reglement_regles"] = reglement_url
     return facts, deeplinks
 
 

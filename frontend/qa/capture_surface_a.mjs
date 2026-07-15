@@ -46,7 +46,7 @@ async function shot(name) {
 await openFiche()
 await shot('01-barre-vide')                                  // la barre au repos (chips + champ premium)
 
-await ask('Combien je peux construire ?', { chip: 'Combien je peux construire ?' })
+await ask('Quelle est la zone PLU de cette parcelle ?')      // zonage → cité SOURCÉ (plus de déduction)
 await shot('02-reponse-sourcee')                             // réponse SOURCÉE + étiquettes de provenance
 
 await ask("Y a-t-il de l'amiante dans le bâti ?")
