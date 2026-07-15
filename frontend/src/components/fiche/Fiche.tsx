@@ -944,6 +944,7 @@ export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
+  const setBasemap = useApp((s) => s.setBasemap)   // Fix LOT 2 : « Cadastre » = fond officiel IGN + halo
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
   const calculette = useApp((s) => s.calculette)   // A6 : hypothèses courantes → reflétées dans le PDF
@@ -1288,14 +1289,16 @@ export function Fiche({ idu }: { idu: string }) {
             </button>
           )}
           {f?.coords && (
-            /* R8 (revue Vic n°2) : cadastre OFFICIEL (Géoportail IGN, PCI Express, permalien centré) */
-            <a data-cadastre-link
-              href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
-              target="_blank" rel="noreferrer"
+            /* Fix LOT 2 : « Cadastre » CENTRE ET SÉLECTIONNE la parcelle. Aucun viewer cadastre externe
+               gratuit (Géoportail — qui ferme 09/2026 — ni Etalab) n'expose de sélection par IDU via URL ;
+               un lien externe ne faisait que CENTRER sur la zone. On bascule donc sur le fond officiel
+               IGN Plan (parcellaire) DANS l'app + halo de sélection (`select` → contour + recentrage). */
+            <button data-cadastre-link
+              onClick={() => { setBasemap('plan'); select(f.idu) }}
               className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-              title="Vérifier la géométrie sur le cadastre OFFICIEL (Géoportail IGN — parcellaire PCI Express, centré sur la parcelle)">
+              title="Voir la parcelle SÉLECTIONNÉE sur le cadastre officiel (fond IGN Plan)">
               Cadastre
-            </a>
+            </button>
           )}
           {f?.coords && (
             /* Fix LOT 2 : « Maps » (ex-« G ») → ÉPINGLE sur la parcelle (search?query=lat,lng pose un
