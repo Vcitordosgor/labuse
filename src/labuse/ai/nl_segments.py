@@ -172,28 +172,27 @@ def traduire(session, question: str, *, model: str, timeout_s: float = 20.0) -> 
 
     Retour : {"filtres", "rejetes", "explication", "stub"} | {"out_of_scope", "stub"}.
     """
-    import os
-
     from ..segments.registry import compute_availability
+    from . import core  # M11 socle 0 : client IA unique (clé, appel, log) — plus de client propre ici
     avail = compute_availability(session)
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    if not core.has_key():
         data, stub = stub_nl_segments(question), True
     else:
-        import anthropic
-        try:
-            client = anthropic.Anthropic(timeout=timeout_s, max_retries=2)
-            msg = client.messages.create(
-                model=model, max_tokens=700, temperature=0,
-                system=prompt_systeme(avail),
-                messages=[{"role": "user", "content": question[:600]}])
-            raw = msg.content[0].text.strip()
+        res = core.complete(None, kind="segments-search", model=model, max_tokens=700,
+                            system=prompt_systeme(avail), context=question[:600], timeout=timeout_s)
+        if res.degraded:  # repli honnête, jamais un 500
+            log.warning("segments-search : repli stub (%s)", res.reason)
+            data, stub = stub_nl_segments(question), True
+        else:
+            raw = res.text.strip()
             if raw.startswith("```"):
                 raw = raw.strip("`").removeprefix("json").strip()
-            data, stub = json.loads(raw), False
-            data["_usage"] = (msg.usage.input_tokens, msg.usage.output_tokens)
-        except Exception as exc:  # noqa: BLE001 — repli honnête, jamais un 500
-            log.warning("segments-search : repli stub (%s)", type(exc).__name__)
-            data, stub = stub_nl_segments(question), True
+            try:
+                data, stub = json.loads(raw), False
+                data["_usage"] = (res.tokens_in, res.tokens_out)
+            except Exception as exc:  # noqa: BLE001 — JSON illisible → repli stub
+                log.warning("segments-search : repli stub JSON (%s)", type(exc).__name__)
+                data, stub = stub_nl_segments(question), True
     if "out_of_scope" in data:
         return {"out_of_scope": str(data["out_of_scope"])[:240], "stub": stub,
                 "groupes": groupes_disponibles(avail)}
