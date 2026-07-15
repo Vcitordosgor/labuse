@@ -187,6 +187,17 @@ export const iaSynthese = (idu: string) =>
 export const iaPourquoi = (idu: string) =>
   j<{ stub: boolean; texte: string; mention: string }>(`/ia/pourquoi/${idu}`, { method: 'POST' })
 
+// M11 Surface A — barre de fiche : question libre → réponse SOURCÉE (grounding du socle IA)
+export type Provenance = 'SOURCE' | 'ESTIME' | 'ABSENT'
+export type AskResponse = {
+  texte: string; sources: string[]; deeplinks?: Record<string, string>
+  provenance?: Record<string, Provenance>; model?: string
+  rejected?: boolean; cached?: boolean; absent?: boolean; quota_atteint?: boolean; degraded?: boolean
+}
+export const askParcel = (idu: string, question: string) =>
+  j<AskResponse>(`/parcels/${idu}/ask`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question }) })
+
 // ── Événements (Vague 3 : M11-M14) ──
 export interface LabuseEvent { id: number; date: string; kind: string; idu: string | null; titre: string; detail: string | null; demo: boolean; lu: boolean; statut: string | null }
 export const getEvents = () => j<{ unread: number; items: LabuseEvent[] }>('/events?limit=100')

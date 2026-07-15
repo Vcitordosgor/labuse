@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { Loading } from '../Loading'
+import { AskBar } from './AskBar'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
@@ -899,6 +900,9 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         </div>
       )}
+
+      {/* M11 Surface A — barre de recherche IA (premium, en haut de fiche) */}
+      {f && <AskBar idu={idu} zone={null} />}
 
       <div className="flex shrink-0 items-start justify-between border-b border-line px-5 py-4">
         <div className="min-w-0">
