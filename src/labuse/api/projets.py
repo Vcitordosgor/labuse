@@ -398,6 +398,22 @@ def projet_rejouer(pid: int, db: Session = Depends(get_db)) -> dict:
 # ecartee/a_analyser). Zéro re-scoring : les parcelles viennent du run servi, on rattache un statut.
 
 _STATUTS = {"proposee", "retenue", "ecartee", "a_analyser"}
+_RETENUE_CRM_STATUS = "contact_a_preparer"    # colonne « Contact à préparer » (cf config/pipeline.yaml)
+
+
+def _sync_crm_retenue(db: Session, pid: int, parcel_id: int, statut: str, now: datetime) -> None:
+    """Auto-CRM + cohérence (Phase 2). `retenue` ⇒ crée l'entrée pipeline liée au projet (à
+    contacter) ; quitter `retenue` ⇒ retire l'entrée AUTO-liée à CE projet (une entrée manuelle
+    d'un autre projet est préservée : ON CONFLICT DO NOTHING / DELETE ciblé sur projet_id)."""
+    if statut == "retenue":
+        db.execute(text(
+            "INSERT INTO pipeline_entries (parcel_id, status, priority, notes, prospection, "
+            "projet_id, created_at, updated_at) VALUES (:pc, :st, 'moyenne', '', '{}'::jsonb, "
+            ":pid, :now, :now) ON CONFLICT (parcel_id) DO NOTHING"),
+            {"pc": parcel_id, "st": _RETENUE_CRM_STATUS, "pid": pid, "now": now})
+    else:
+        db.execute(text("DELETE FROM pipeline_entries WHERE parcel_id = :pc AND projet_id = :pid"),
+                   {"pc": parcel_id, "pid": pid})
 
 
 def _projet_or_404(db: Session, pid: int) -> models.Projet:
@@ -415,10 +431,13 @@ def _counts(db: Session, pid: int) -> dict:
     return {"counts": {s: c.get(s, 0) for s in ("proposee", "retenue", "ecartee", "a_analyser")}}
 
 
-def _search_items(db: Session, fiche: dict, limit: int) -> list[dict]:
+def _search_items(db: Session, fiche: dict, limit: int, overrides: dict | None = None) -> list[dict]:
     """RÉUTILISE la recherche existante (M22 si programme, sinon run servi q_v6_m8) — même
-    source que /apercu, jamais un re-scoring. Renvoie les items ordonnés (best-first)."""
+    source que /apercu, jamais un re-scoring. Renvoie les items ordonnés (best-first).
+    `overrides` assouplit les filtres dérivés (chercher plus : communes=None → île, surfaceMin↓)."""
     filtres = derive_filtres(fiche)
+    if overrides:
+        filtres = {**filtres, **overrides}      # None efface un filtre (ex. communes → toute l'île)
     programme = derive_programme(fiche)
     communes = filtres.get("communes")
     if programme:
@@ -541,8 +560,75 @@ def projet_parcelle_statut(pid: int, idu: str, body: StatutIn, db: Session = Dep
         "VALUES (:pj, :pc, :st, :now, :now) "
         "ON CONFLICT (projet_id, parcel_id) DO UPDATE SET statut = :st, updated_at = :now"),
         {"pj": pid, "pc": pc, "st": body.statut, "now": now})
+    _sync_crm_retenue(db, pid, pc, body.statut, now)   # auto-CRM + cohérence (Phase 2)
     db.flush()
     return {"ok": True, "idu": idu, "statut": body.statut, **_counts(db, pid)}
+
+
+# ─── Chercher plus (Phase 2) : élargir la recherche / ajouter une parcelle à la main ───
+
+def _upsert_proposee(db: Session, pid: int, parcel_id: int, rang: int, now: datetime) -> bool:
+    """Rattache une parcelle en `proposee` — DÉDUP par la contrainte unique (une parcelle déjà
+    dans le projet, quel que soit son statut, n'est PAS re-proposée). True si réellement ajoutée."""
+    res = db.execute(text(
+        "INSERT INTO projet_parcelles (projet_id, parcel_id, statut, rang, proposee_at, "
+        "created_at, updated_at) VALUES (:pj, :pc, 'proposee', :rg, :now, :now, :now) "
+        "ON CONFLICT (projet_id, parcel_id) DO NOTHING"),
+        {"pj": pid, "pc": parcel_id, "rg": rang, "now": now})
+    return res.rowcount == 1
+
+
+class ChercherPlusIn(BaseModel):
+    limit: int = 24
+    surface_min: float | None = None    # assouplir la surface minimale
+    ile: bool = False                   # élargir le périmètre à toute l'île
+
+
+@router.post("/{pid}/chercher-plus")
+def projet_chercher_plus(pid: int, body: ChercherPlusIn, db: Session = Depends(get_db)) -> dict:
+    """Élargit la recherche (critères assouplis) et ajoute les NOUVELLES parcelles en `proposee`
+    (dédupliquées). Zéro re-scoring : même moteur que la proposition, filtres relâchés."""
+    p = _projet_or_404(db, pid)
+    overrides: dict = {}
+    if body.ile:
+        overrides["communes"] = None
+    if body.surface_min is not None:
+        overrides["surfaceMin"] = body.surface_min
+    lim = max(1, min(body.limit, 60))
+    items = _search_items(db, p.fiche, lim, overrides=overrides or None)
+    idus = [it["idu"] for it in items]
+    id_by_idu = {r.idu: r.id for r in db.execute(
+        text("SELECT id, idu FROM parcels WHERE idu = ANY(:idus)"), {"idus": idus})}
+    maxr = db.execute(text("SELECT COALESCE(MAX(rang), -1) FROM projet_parcelles WHERE projet_id = :p"),
+                      {"p": pid}).scalar() or -1
+    now = datetime.now(timezone.utc)
+    added = 0
+    for i, it in enumerate(items):
+        pc = id_by_idu.get(it["idu"])
+        if pc and _upsert_proposee(db, pid, pc, maxr + 1 + i, now):
+            added += 1
+    db.flush()
+    return {"ok": True, "n_added": added, "n_search": len(items),
+            "elargi": bool(overrides), **_counts(db, pid)}
+
+
+class AjouterIn(BaseModel):
+    idu: str
+
+
+@router.post("/{pid}/ajouter")
+def projet_ajouter(pid: int, body: AjouterIn, db: Session = Depends(get_db)) -> dict:
+    """Ajoute UNE parcelle précise (par IDU, ou clic-carte côté front) en `proposee`. Dédupliqué :
+    `already=true` si elle est déjà dans le projet (quel que soit son statut)."""
+    _projet_or_404(db, pid)
+    pc = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": body.idu}).scalar()
+    if not pc:
+        raise HTTPException(404, f"Parcelle {body.idu} inconnue")
+    maxr = db.execute(text("SELECT COALESCE(MAX(rang), -1) FROM projet_parcelles WHERE projet_id = :p"),
+                      {"p": pid}).scalar() or -1
+    added = _upsert_proposee(db, pid, pc, maxr + 1, datetime.now(timezone.utc))
+    db.flush()
+    return {"ok": True, "added": added, "already": not added, "idu": body.idu, **_counts(db, pid)}
 
 
 @router.get("/{pid}/export.pdf")

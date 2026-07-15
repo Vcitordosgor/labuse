@@ -2750,6 +2750,8 @@ def _entry_dict(db: Session, e: models.PipelineEntry) -> dict:
         "premium": _premium_head(db, e.parcel_id),
         # d'où vient la piste (copilote-projet) — None si ajoutée hors projet
         "projet": _projet_ref(db, e.projet_id),
+        # contact proprio (PRIVACY : personne morale publique seulement, jamais un particulier)
+        "proprietaire_public": _proprietaire_public(db, p.idu),
     }
 
 
@@ -2758,6 +2760,19 @@ def _projet_ref(db: Session, projet_id: int | None) -> dict | None:
         return None
     pr = db.get(models.Projet, projet_id)
     return {"id": pr.id, "nom": pr.nom} if pr else None
+
+
+def _proprietaire_public(db: Session, idu: str) -> dict:
+    """Contact propriétaire pour le CRM — PRIVACY (ligne rouge) : `parcelle_personne_morale` ne
+    contient QUE des personnes morales (DGFiP public). Présent → dénomination + SIREN affichables ;
+    absent → propriétaire PARTICULIER, AUCUNE identité exposée (jamais nommé)."""
+    pm = db.execute(text(
+        "SELECT denomination, siren, groupe_label FROM parcelle_personne_morale WHERE idu = :i"),
+        {"i": idu}).mappings().first()
+    if pm and pm["denomination"]:
+        return {"type": "personne_morale", "denomination": pm["denomination"],
+                "siren": pm["siren"], "groupe": pm["groupe_label"]}
+    return {"type": "particulier"}    # aucune identité — non communiqué
 
 
 def _premium_head(db: Session, parcel_id: int, run_label: str = Q_A_RUN_LABEL) -> dict | None:
