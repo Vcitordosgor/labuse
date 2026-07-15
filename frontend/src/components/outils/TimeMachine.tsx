@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
 import { getParcelsGeojson } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { BASEMAP_SOURCES, basemapLabel, type BasemapDef } from '../map/basemaps'
+import { BASEMAP_CHOICES, BASEMAP_SOURCES, basemapLabel, type BasemapDef } from '../map/basemaps'
 
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
 
@@ -53,10 +53,11 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   const rightRef = useRef<HTMLDivElement>(null)
   const maps = useRef<[maplibregl.Map, maplibregl.Map] | null>(null)
   const [split, setSplit] = useState(50)
-  const [leftKey] = useState<string>(DEFAULT_LEFT)
-  const [rightKey] = useState<string>(DEFAULT_RIGHT)
+  const [leftKey, setLeftKey] = useState<string>(DEFAULT_LEFT)
+  const [rightKey, setRightKey] = useState<string>(DEFAULT_RIGHT)
   const dragging = useRef(false)
   const commune = useApp((s) => s.commune)
+  const setModule = useApp((s) => s.setModule)   // sortie propre → carte à fond unique
   // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
   // surcouche parcelles (l'ortho historique est l'objet de l'outil)
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
@@ -125,6 +126,22 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     >
       <div ref={leftRef} className="absolute inset-0" />
       <div ref={rightRef} className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${split}%)` }} />
+      {/* barre de contrôle : choix des DEUX fonds + sortie vers la carte à fond unique */}
+      <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-line-2 bg-surface-2/95 px-3 py-2 shadow-2xl backdrop-blur">
+        <span className="font-mono text-[10px] tracking-widest text-txt-dim">COMPARER</span>
+        <select data-cmp-left value={leftKey} onChange={(e) => setLeftKey(e.target.value)}
+          className="rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none">
+          {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+        </select>
+        <span className="text-mint" title="glisser la poignée pour révéler">⇔</span>
+        <select data-cmp-right value={rightKey} onChange={(e) => setRightKey(e.target.value)}
+          className="rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none">
+          {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+        </select>
+        <button onClick={() => setModule(null)}
+          className="ml-1 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut hover:border-mint hover:text-txt"
+          title="Revenir à la carte (fond unique)">✕ Quitter</button>
+      </div>
       {/* poignée */}
       <div className="absolute inset-y-0 z-10 w-[2px] bg-mint" style={{ left: `${split}%` }}>
         <button
