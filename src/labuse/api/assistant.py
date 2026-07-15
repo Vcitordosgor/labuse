@@ -20,12 +20,10 @@ import json
 import os
 from typing import Any
 
-import httpx
+# M11 socle 0 : plus de client httpx propre ici — l'appel modèle passe par labuse.ai.core.
+from ..ai.core import ENV_KEY  # noqa: F401 — nom de la variable d'env (source unique = core ; rétro-compat)
 
-API_URL = "https://api.anthropic.com/v1/messages"
-DEFAULT_MODEL = "claude-sonnet-4-6"
-ENV_KEY = "ANTHROPIC_API_KEY"
-ENV_MODEL = "LABUSE_ASSISTANT_MODEL"
+ENV_MODEL = "LABUSE_ASSISTANT_MODEL"  # surcharge de modèle éventuelle (rétro-compat)
 
 # Prompt système STRICT (chantiers « sécuriser » + « prompt 5 blocs »). Tout est imposé ici : la
 # structure, la provenance, le refus de conclure et l'interdiction d'inventer.
@@ -67,8 +65,10 @@ def _num(x: Any) -> Any:
 
 
 def is_configured() -> bool:
-    """Vrai si la clé API Anthropic est présente → l'assistant LLM peut être activé côté UI."""
-    return bool(os.environ.get(ENV_KEY, "").strip())
+    """Vrai si la clé API Anthropic est présente → l'assistant LLM peut être activé côté UI.
+    M11 socle 0 : source unique = core.has_key (plus de lecture d'env dupliquée)."""
+    from ..ai import core
+    return core.has_key()
 
 
 def _completude_band(score: Any) -> str:
@@ -273,35 +273,21 @@ def _no_key(facts: dict) -> dict[str, Any]:
 def explain_parcel(fiche: dict, *, timeout: float = 25.0) -> dict[str, Any]:
     """Synthèse en prose via l'API Anthropic. Dégrade PROPREMENT : clé absente / réseau / timeout
     → `available=False` + synthèse règles + message clair, jamais d'exception remontée à l'endpoint."""
+    from ..ai import core  # M11 socle 0 : client IA unique (plus de httpx propre ici)
     facts = assistant_facts(fiche)
-    key = os.environ.get(ENV_KEY, "").strip()
-    if not key:
+    if not core.has_key():
         return _no_key(facts)
-    model = os.environ.get(ENV_MODEL, "").strip() or DEFAULT_MODEL
-    payload = {
-        "model": model, "max_tokens": 700, "system": SYSTEM,
-        "messages": [{"role": "user",
-                      "content": "Données structurées de la fiche (n'utilise QUE ceci) :\n"
-                                 + json.dumps(facts, ensure_ascii=False, indent=2)}],
-    }
-    try:
-        r = httpx.post(API_URL, json=payload, timeout=timeout, headers={
-            "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"})
-        r.raise_for_status()
-        data = r.json()
-        prose = "".join(b.get("text", "") for b in data.get("content", [])
-                        if b.get("type") == "text").strip()
-        if not prose:
-            return {"available": False, "reason": "empty", "facts": facts,
-                    "rules_summary": rules_summary(facts),
-                    "message": "Réponse vide de l'assistant — synthèse automatique ci-dessous."}
-        return {"available": True, "explanation": prose, "model": data.get("model", model)}
-    except httpx.TimeoutException:
-        return {"available": False, "reason": "timeout", "facts": facts,
+    model = os.environ.get(ENV_MODEL, "").strip() or core.MODEL_REASONING
+    res = core.complete(
+        None, kind="explain", model=model, max_tokens=700, timeout=timeout, system=SYSTEM,
+        context="Données structurées de la fiche (n'utilise QUE ceci) :\n"
+                + json.dumps(facts, ensure_ascii=False, indent=2, default=str))
+    if res.degraded:  # clé/réseau/timeout/API → dégrade PROPREMENT (jamais de 500 sur la fiche)
+        return {"available": False, "reason": res.reason or "error", "facts": facts,
                 "rules_summary": rules_summary(facts),
-                "message": "L'assistant IA n'a pas répondu à temps — synthèse automatique ci-dessous."}
-    except Exception as exc:  # noqa: BLE001 — jamais de 500 sur la fiche
-        return {"available": False, "reason": "error", "facts": facts,
+                "message": "Assistant IA momentanément indisponible — synthèse automatique ci-dessous."}
+    if not res.text:
+        return {"available": False, "reason": "empty", "facts": facts,
                 "rules_summary": rules_summary(facts),
-                "message": f"Assistant IA momentanément indisponible ({type(exc).__name__}) — "
-                           "synthèse automatique ci-dessous."}
+                "message": "Réponse vide de l'assistant — synthèse automatique ci-dessous."}
+    return {"available": True, "explanation": res.text, "model": res.model}

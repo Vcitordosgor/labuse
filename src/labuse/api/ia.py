@@ -12,7 +12,6 @@ affiché à l'écran). Chaque appel est journalisé (table ia_log : modèle, tok
 from __future__ import annotations
 
 import json
-import os
 import re
 
 from fastapi import APIRouter, Depends, Request
@@ -21,14 +20,15 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..ai import core  # M11 socle 0 : client IA unique (clé, modèles, log, appel, validation, cache)
 from .projet_schema import CONTRAINTE_FLAG, FICHE_SCHEMA, TYPE_LABEL, clean_fiche
 
 router = APIRouter(prefix="/ia", tags=["ia"])
 
-MODEL_NL = "claude-haiku-4-5-20251001"
-MODEL_SYNTH = "claude-sonnet-4-6"
-#: €/Mtoken approx (log de coût indicatif)
-PRICE = {MODEL_NL: (1.0, 5.0), MODEL_SYNTH: (3.0, 15.0)}
+# Alias vers le socle — plus de constantes IA dupliquées ici (source unique = core).
+MODEL_NL = core.MODEL_FACTUAL
+MODEL_SYNTH = core.MODEL_REASONING
+PRICE = core.PRICE
 
 
 def get_db():
@@ -54,47 +54,29 @@ def ensure_tables(engine) -> None:
         c.execute(text(DDL_IA))
 
 
-#: dernier échec du provider réel (diagnostic C1) — None = dernier appel OK
-_DERNIERE_ERREUR: str | None = None
-
-
+# Diagnostic/clé/log : délégués au socle (source unique) — plus de duplication ici.
 def _note_erreur(exc: Exception) -> None:
-    """Classe l'échec pour le bandeau : clé invalide vs erreur API — un diagnostic, pas une
-    devinette. Remis à None au premier appel réussi."""
-    global _DERNIERE_ERREUR
-    name = type(exc).__name__
-    if "Authentication" in name or "401" in str(exc):
-        _DERNIERE_ERREUR = "clé invalide (authentification refusée par l'API Anthropic)"
-    elif "Permission" in name or "403" in str(exc):
-        _DERNIERE_ERREUR = "clé refusée (permissions insuffisantes)"
-    else:
-        _DERNIERE_ERREUR = f"erreur API Anthropic ({name})"
+    core._note_error(exc)
 
 
 def _note_succes() -> None:
-    global _DERNIERE_ERREUR
-    _DERNIERE_ERREUR = None
+    core._note_success()
 
 
 def _has_key() -> bool:
-    # config importe load_dotenv(racine/.env) — la clé est là quel que soit le lanceur (C1)
-    from .. import config as _cfg  # noqa: F401  (garantit le chargement du .env racine)
-    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+    return core.has_key()
 
 
 def _log(db: Session, kind: str, model: str, stub: bool, tin: int = 0, tout: int = 0) -> None:
-    pin, pout = PRICE.get(model, (0, 0))
-    db.execute(text("INSERT INTO ia_log (kind, model, stub, tokens_in, tokens_out, cout_eur) "
-                    "VALUES (:k, :m, :s, :ti, :to, :c)"),
-               {"k": kind, "m": model, "s": stub, "ti": tin, "to": tout,
-                "c": (tin * pin + tout * pout) / 1_000_000})
+    core._log_cost(db, kind, model, stub, tin, tout)
 
 
 @router.get("/status")
 def ia_status() -> dict:
+    err = core.last_error()
     return {"provider": "anthropic" if _has_key() else "stub",
-            "raison": (None if (_has_key() and not _DERNIERE_ERREUR)
-                       else _DERNIERE_ERREUR if _has_key()
+            "raison": (None if (_has_key() and not err)
+                       else err if _has_key()
                        else "ANTHROPIC_API_KEY absente de l'environnement (.env racine non chargé ou clé non posée)"),
             "modeles": {"recherche": MODEL_NL, "synthese": MODEL_SYNTH},
             "doctrine": "l'IA ne calcule ni ne modifie aucun score ; aucun accès base"}
@@ -329,18 +311,13 @@ Sois strict : n'invente JAMAIS un filtre non demandé. Le champ "type" n'existe 
 @router.post("/search")
 def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
     if _has_key():
-        import anthropic
-        client = anthropic.Anthropic(timeout=20.0, max_retries=2)
-        try:
-            msg = client.messages.create(
-                model=MODEL_NL, max_tokens=600, temperature=0,   # comportement STABLE (QA réelle)
-                system=_NL_SYSTEM.format(
-                    schema=json.dumps(FILTER_SCHEMA, ensure_ascii=False)),
-                messages=([{"role": m.get("role", "user"), "content": str(m.get("content", ""))[:600]}
-                           for m in (body.history or [])[-6:]]
-                          + [{"role": "user", "content": body.text}]))
-        except Exception as exc:   # clé invalide / API down → diagnostic + repli stub GRACIEUX
-            _note_erreur(exc)
+        res = core.complete(
+            db, kind="search", model=MODEL_NL, max_tokens=600,   # temp 0 (défaut socle) — QA stable
+            system=_NL_SYSTEM.format(schema=json.dumps(FILTER_SCHEMA, ensure_ascii=False)),
+            history=[{"role": m.get("role", "user"), "content": str(m.get("content", ""))[:600]}
+                     for m in (body.history or [])[-6:]],
+            context=body.text)
+        if res.degraded:   # clé invalide / API down → repli stub GRACIEUX (diagnostic dans core.last_error)
             prog = _stub_programme(body.text.lower())
             if prog:
                 _log(db, "search", "stub-fallback", True)
@@ -353,9 +330,7 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
             # UX V1 item 2 : plus de « (repli stub) » face client — le front affiche le badge
             # « mode mots-clés » depuis le drapeau stub, l'explication reste factuelle.
             return {"stub": True, "filters": filters, "explanation": explanation}
-        _note_succes()
-        raw = msg.content[0].text.strip()
-        _log(db, "search", MODEL_NL, False, msg.usage.input_tokens, msg.usage.output_tokens)
+        raw = res.text.strip()
         if raw.startswith("```"):
             raw = raw.strip("`").removeprefix("json").strip()   # le réel enrobe parfois — le stub ne l'apprend pas
         try:
@@ -592,27 +567,20 @@ def ia_entretien(body: EntretienIn, db: Session = Depends(get_db)) -> dict:
         return {"stub": True, "fallback": True,
                 "message": "L'entretien de cadrage a besoin du copilote IA (indisponible ici). "
                            "Décrivez vos critères pour une recherche directe."}
-    import anthropic
-    client = anthropic.Anthropic(timeout=20.0, max_retries=2)
-    try:
-        msg = client.messages.create(
-            model=MODEL_NL, max_tokens=900, temperature=0,
-            system=_ENTRETIEN_SYSTEM.format(
-                schema=json.dumps(ENTRETIEN_SCHEMA, ensure_ascii=False),
-                types="/".join(TYPE_LABEL), contraintes="/".join(CONTRAINTE_FLAG)),
-            messages=([{"role": m.get("role", "user"), "content": str(m.get("content", ""))[:800]}
-                       for m in (body.history or [])[-6:]]
-                      + [{"role": "user", "content": json.dumps(
-                          {"fiche_connue": body.fiche, "message": body.text}, ensure_ascii=False)}]))
-    except Exception as exc:
-        _note_erreur(exc)
+    res = core.complete(
+        db, kind="entretien", model=MODEL_NL, max_tokens=900,
+        system=_ENTRETIEN_SYSTEM.format(
+            schema=json.dumps(ENTRETIEN_SCHEMA, ensure_ascii=False),
+            types="/".join(TYPE_LABEL), contraintes="/".join(CONTRAINTE_FLAG)),
+        history=[{"role": m.get("role", "user"), "content": str(m.get("content", ""))[:800]}
+                 for m in (body.history or [])[-6:]],
+        context=json.dumps({"fiche_connue": body.fiche, "message": body.text}, ensure_ascii=False))
+    if res.degraded:
         _log(db, "entretien", "stub-fallback", True)
         return {"stub": True, "fallback": True,
                 "message": "Le copilote est momentanément indisponible — basculons sur une "
                            "recherche directe (décrivez vos critères)."}
-    _note_succes()
-    raw = msg.content[0].text.strip()
-    _log(db, "entretien", MODEL_NL, False, msg.usage.input_tokens, msg.usage.output_tokens)
+    raw = res.text.strip()
     if raw.startswith("```"):
         raw = raw.strip("`").removeprefix("json").strip()
     try:
@@ -677,17 +645,13 @@ _SYNTH_SYSTEM = ("Tu rédiges une synthèse de prospection foncière EXCLUSIVEME
 
 
 def _real_text(db: Session, kind: str, system: str, payload: dict) -> str:
-    import anthropic
-    client = anthropic.Anthropic(timeout=30.0, max_retries=2)
-    try:
-        msg = client.messages.create(model=MODEL_SYNTH, max_tokens=700, system=system,
-                                     messages=[{"role": "user", "content": json.dumps(payload, ensure_ascii=False)}])
-    except Exception as exc:
-        _note_erreur(exc)
-        raise
-    _note_succes()
-    _log(db, kind, MODEL_SYNTH, False, msg.usage.input_tokens, msg.usage.output_tokens)
-    return msg.content[0].text
+    # Via le socle : sérialisation SÛRE (default=str) → plus de 500 `Decimal not JSON serializable`
+    # (la fiche contient des numeric DVF/RPLS/filosofi). timeout=30 pour la synthèse (sonnet).
+    res = core.complete(db, kind=kind, system=system, context=payload,
+                        model=MODEL_SYNTH, max_tokens=700, timeout=30.0)
+    if res.degraded:
+        raise RuntimeError(res.reason or "IA indisponible")
+    return res.text
 
 
 @router.post("/synthese/{idu}")
