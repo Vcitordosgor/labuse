@@ -170,6 +170,17 @@ const NATURES = [['', 'Tout'], ['PC', 'PC'], ['DP', 'DP'], ['PA', 'PA'], ['PD', 
 export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose: () => void }) {
   const q = useQuery({ queryKey: ['permis-fiche', permitId], queryFn: () => modPermisFiche(permitId) })
   const d = q.data as Record<string, any> | undefined
+  const select = useApp((s) => s.select)      // Fix LOT 2 : localiser la parcelle du permis
+  const setFlyTo = useApp((s) => s.setFlyTo)
+  // géom du permis (centroïde parcelle) : présente ssi géocodé ; sinon on ne peut pas localiser.
+  const geom = d?.['geom'] as { coordinates?: [number, number] } | null | undefined
+  const parcelle = (d?.['parcelles'] as string[] | undefined)?.[0]
+  const localiser = () => {
+    if (!geom?.coordinates) return
+    setFlyTo({ center: geom.coordinates, zoom: 18 })
+    if (parcelle && parcelle.length === 14) select(parcelle)   // halo sur la parcelle rattachée
+    onClose()
+  }
   const F = ({ label, value }: { label: string; value: React.ReactNode }) =>
     value == null || value === '' ? null : (
       <div className="flex justify-between gap-3 border-b border-[#141d17] py-1.5 text-[11px]">
@@ -203,6 +214,19 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
               <F label="Délai d'instruction" value={<span style={{ color: VIOLET }} className="font-semibold">{d['delai_instruction']['libelle']}</span>} />
             )}
             <F label="Parcelle(s)" value={<span className="font-mono text-[10px]">{(d['parcelles'] as string[]).join(', ')}</span>} />
+            {/* Fix LOT 2 : localiser la parcelle sur la carte (géocodé) ou message clair (non géocodé) —
+                jamais un clic mort. La géom d'un permis = centroïde de la parcelle rattachée. */}
+            {geom?.coordinates ? (
+              <button data-permis-localiser onClick={localiser}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#4a3d6b] bg-[#171221] py-2 text-[12px] font-medium text-[#B497F0] hover:bg-[#1d1630]">
+                ◎ Voir la parcelle sur la carte
+              </button>
+            ) : (
+              <div data-permis-nongeocode className="mt-3 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] leading-snug text-st-creuser">
+                <b>Permis non géocodé</b> — son adresse n'a pas pu être rattachée à une parcelle du
+                cadastre, il ne peut pas être localisé sur la carte.
+              </div>
+            )}
             <p className="mt-2 text-[10px] text-txt-dim">{d['source']}</p>
           </>
         )}
@@ -255,13 +279,14 @@ function M03() {
       </p>
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {items.slice(0, 150).map((i, k) => (
-          <button key={k} onClick={() => setOpen(i['permit_id'] as string)}
+          <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} onClick={() => setOpen(i['permit_id'] as string)}
             className={`flex items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] hover:border-[#6b5a96] ${i['geom'] ? 'bg-surface-3' : 'bg-[#141019]'}`}>
             <span className="font-mono text-txt">{i['type'] as string}</span>
             <span className="text-txt-mut">{i['date'] as string}</span>
             {i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
             {i['nb_lgt'] != null && <span className="text-txt-dim">{String(i['nb_lgt'])} lgt</span>}
-            {!i['geom'] && <span className="ml-auto text-[11px] text-[#8b76c0]">non géocodé</span>}
+            {!i['geom'] && <span className="ml-auto text-[11px] text-[#8b76c0]"
+              title="Permis dont l'adresse n'a pas pu être rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
           </button>
         ))}
       </div>
