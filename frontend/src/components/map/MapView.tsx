@@ -6,28 +6,12 @@ import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, getTilesMeta, pa
 import { CINQUANTE_PAS_COLOR, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
+import { BASEMAP_SOURCES } from './basemaps'
 import { Legend } from './Legend'
 import { MapToolbar } from './MapToolbar'
 import { Loading } from '../Loading'
 
-// ── Fonds de plan. Géoplateforme IGN (tuiles libres « essentiels », TESTÉES sur le 974) ; pas de
-// tuiles Google (CGU) — le deep-link « Ouvrir dans Google Maps » vit dans la fiche.
-const WMTS = (layer: string, format: string) =>
-  `https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}&LAYER=${layer}&FORMAT=${format}`
-const BASEMAP_SOURCES: Record<string, { tiles: string[]; attribution: string; maxzoom?: number }> = {
-  // R4 (revue Vic n°2, reprise du C3) : sur le fond SOMBRE, les noms de localités disparaissent
-  // À TOUS LES ZOOMS (décision ferme — Saint-Gilles-les-Bains en gros par-dessus la carte).
-  // La variante nolabels retire AUSSI les noms de rues : assumé — la fiche porte l'adresse,
-  // le Plan IGN reste disponible pour qui veut des labels. Ortho : pas de labels par nature.
-  'bm-carto': {
-    tiles: ['https://a.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png', 'https://b.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}.png'],
-    attribution: '© OSM · CARTO',
-  },
-  'bm-plan': { tiles: [WMTS('GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2', 'image/png')], attribution: '© IGN Géoplateforme' },
-  'bm-ortho-now': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS', 'image/jpeg')], attribution: '© IGN BD ORTHO' },
-  'bm-ortho-2000': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS2000-2005', 'image/jpeg')], attribution: '© IGN ortho 2000-2005', maxzoom: 17 },
-  'bm-ortho-1950': { tiles: [WMTS('ORTHOIMAGERY.ORTHOPHOTOS.1950-1965', 'image/png')], attribution: '© IGN ortho 1950-1965', maxzoom: 15 },
-}
+// ── Fonds de plan : registre PARTAGÉ (carte principale + comparateur swipe). Voir ./basemaps.
 
 const STYLE: maplibregl.StyleSpecification = {
   version: 8,
