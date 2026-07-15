@@ -944,6 +944,8 @@ export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
+  const setBasemap = useApp((s) => s.setBasemap)   // Fix LOT 2 : « Cadastre » = fond officiel IGN + halo
+  const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
   const calculette = useApp((s) => s.calculette)   // A6 : hypothèses courantes → reflétées dans le PDF
@@ -1280,29 +1282,35 @@ export function Fiche({ idu }: { idu: string }) {
             title="Dossier parcelle PDF brandé (carte, zonage calibré, risques, DVF, permis) — usage interne">
             Dossier
           </a>
-          {f && (
-            <button onClick={() => setModule('temps')}
+          {f?.coords && (
+            /* Fix LOT 2 : recentrer sur LA parcelle en ouvrant la vue historique (sinon la carte
+               restait où elle était → on voyait l'île, pas le terrain). */
+            <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }}
               className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
               title="Ce terrain en 1950 — comparateur temporel (M08)">
               1950
             </button>
           )}
           {f?.coords && (
-            /* R8 (revue Vic n°2) : cadastre OFFICIEL (Géoportail IGN, PCI Express, permalien centré) */
-            <a data-cadastre-link
-              href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
+            /* Fix LOT 2 : « Cadastre » CENTRE ET SÉLECTIONNE la parcelle. Aucun viewer cadastre externe
+               gratuit (Géoportail — qui ferme 09/2026 — ni Etalab) n'expose de sélection par IDU via URL ;
+               un lien externe ne faisait que CENTRER sur la zone. On bascule donc sur le fond officiel
+               IGN Plan (parcellaire) DANS l'app + halo de sélection (`select` → contour + recentrage). */
+            <button data-cadastre-link
+              onClick={() => { setBasemap('plan'); select(f.idu) }}
+              className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
+              title="Voir la parcelle SÉLECTIONNÉE sur le cadastre officiel (fond IGN Plan)">
+              Cadastre
+            </button>
+          )}
+          {f?.coords && (
+            /* Fix LOT 2 : « Maps » (ex-« G ») → ÉPINGLE sur la parcelle (search?query=lat,lng pose un
+               marqueur), au lieu du simple centrage caméra `@lat,lng` qui n'épinglait rien. */
+            <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`}
               target="_blank" rel="noreferrer"
               className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-              title="Vérifier la géométrie sur le cadastre OFFICIEL (Géoportail IGN — parcellaire PCI Express, centré sur la parcelle)">
-              Cadastre
-            </a>
-          )}
-          {f && (
-            <a href={`https://www.google.com/maps/@${f.coords[1]},${f.coords[0]},19z/data=!3m1!1e3`}
-              target="_blank" rel="noreferrer"
-              className="flex h-8 w-9 shrink-0 items-center justify-center rounded-lg border border-line-2 text-xs text-txt hover:text-txt-hi"
-              title="Ouvrir la parcelle dans Google Maps (satellite)">
-              G
+              title="Ouvrir la parcelle dans Google Maps (épingle sur la parcelle)">
+              Maps
             </a>
           )}
         </div>
