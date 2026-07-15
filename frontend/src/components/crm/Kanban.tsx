@@ -32,7 +32,7 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
         if ((ev.target as HTMLElement).closest('button')) return
         setView('cartes'); select(e.idu)
       }}
-      className="group cursor-pointer rounded-[10px] border border-line-2 bg-surface-3 p-3 active:cursor-grabbing"
+      className="group cursor-pointer rounded-[10px] border border-line-2 bg-surface-3 p-3.5 active:cursor-grabbing"
       title="Ouvrir la fiche · glisser pour changer d'étape"
     >
       <div className="flex items-center justify-between gap-2">
@@ -57,12 +57,12 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
           ✕
         </button>
       </div>
-      <div className="mt-0.5 truncate text-[11px] text-txt-mut">
+      <div className="mt-1 truncate text-[11px] text-txt-mut">
         {e.parcel.surface_m2 ? `${Math.round(e.parcel.surface_m2).toLocaleString('fr-FR')} m² · ` : ''}{e.parcel.commune}
       </div>
-      <div className="mt-2 flex items-center gap-2">
+      <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         {meta && (
-          <span className="flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[11px]" style={{ background: `${meta.color}22`, color: meta.color }}>
+          <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${meta.color}22`, color: meta.color }}>
             <span className="h-1 w-1 rounded-full" style={{ background: meta.color }} />{meta.label}
           </span>
         )}
@@ -76,7 +76,7 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
           </>
         )}
         {!prem && <span className="text-[11px] text-txt-dim">hors run de référence</span>}
-        <span className="ml-auto text-[11px] text-txt-dim">{e.priority}</span>
+        <span className="ml-auto shrink-0 text-[11px] text-txt-dim">{e.priority}</span>
       </div>
     </div>
   )
@@ -144,7 +144,7 @@ export function Kanban() {
                 <span className="truncate text-[11px] font-medium text-txt">{c.label}</span>
                 <span className="ml-auto font-mono text-[11px] text-txt-dim">{items.length}</span>
               </div>
-              <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 pb-2">
+              <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-2.5 pb-2.5">
                 {items.map((e) => (
                   <Card key={e.id} e={e} onDragStart={() => setDragId(e.id)}
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0} />

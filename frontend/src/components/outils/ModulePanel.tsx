@@ -309,6 +309,7 @@ function M04() {
       <Banner>PC accordé, <b>aucune déclaration d'achèvement</b>, parcelle toujours non bâtie au
         scoring — « réalisation à vérifier » sur place. Codes d'état de la source non documentés
         (affichés bruts).</Banner>
+      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Analyse en cours…" big /></div>}
       <label className="flex items-center gap-2 text-[11px] text-txt-mut">
         Permis plus vieux que
         <select value={months} onChange={(e) => setMonths(Number(e.target.value))}
@@ -391,6 +392,7 @@ function M06() {
   return (
     <>
       <Banner>{String(d?.['lecture_lls'] ?? '…')}</Banner>
+      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Analyse en cours…" big /></div>}
       <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles promues en QPV{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (
@@ -661,11 +663,13 @@ export function ModulePanel() {
         {/* M6.1 item 3 : retour direct au menu Outils (fil d'Ariane) — plus besoin de
             repasser par le rail pour changer d'outil. */}
         <div className="flex items-center justify-between gap-2">
-          <nav data-module-breadcrumb className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] tracking-widest">
+          <nav data-module-breadcrumb className="flex min-w-0 items-center gap-2 font-mono text-[10px] tracking-widest">
+            {/* Fix cosmétique (point 27) : flèche retour PLUS VISIBLE — pastille bordée mauve, plus
+                grosse, zone de clic élargie + libellé « ← Outils » clair (avant : 10 px inline, on la cherchait). */}
             <button data-module-retour onClick={toggleOutils}
-              className="shrink-0 rounded px-1 py-0.5 -mx-1 hover:bg-[#241c33]"
+              className="shrink-0 flex items-center gap-1 rounded-md border border-[#4a3d6b] bg-[#1d1630] px-2.5 py-1 text-[11px] font-semibold tracking-wide hover:border-[#B497F0] hover:bg-[#241c33]"
               style={{ color: VIOLET }} title="Revenir au menu Outils">
-              ← OUTILS
+              ← Outils
             </button>
             <span className="text-txt-dim">›</span>
             <span className="truncate text-txt-mut">{def.label.toUpperCase()}</span>
