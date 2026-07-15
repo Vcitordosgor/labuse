@@ -21,6 +21,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..ai import core  # M11 socle 0 : client IA unique (clé, modèles, log, appel, validation, cache)
+from .nl_aggregate import answer_aggregate, is_aggregate  # M11 B2 : questions agrégées (SQL sourcé)
 from .nl_semantics import check_semantics  # M11 B1 : validation SÉMANTIQUE (schéma ≠ sens)
 from .projet_schema import CONTRAINTE_FLAG, FICHE_SCHEMA, TYPE_LABEL, clean_fiche
 
@@ -101,6 +102,9 @@ FILTER_SCHEMA = {
         "sdpMin": {"type": ["integer", "null"], "minimum": 0},
         "evenement": {"type": "boolean"},
         "vueMer": {"type": "boolean"},
+        # M11 B2 : propriétaire personne morale (DGFiP public — SCI/société/commune/HLM…) + zonage PLU par famille
+        "personneMorale": {"type": "boolean"},
+        "zonage": {"type": "array", "items": {"enum": ["U", "AU", "A", "N"]}},
         "flags": {"type": "array", "items": {"enum": ["sol_pollue", "abf", "icpe", "risques", "prescription_plu"]}},
         # contraintes RÉDHIBITOIRES (copilote-projet) : écarter les parcelles portant le flag
         "flagsExclus": {"type": "array", "items": {"enum": ["sol_pollue", "abf", "icpe", "risques", "prescription_plu"]}},
@@ -212,7 +216,7 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
                       "Reformulez avec des critères ?")
     f: dict = {"tiers": [], "scoreMin": None, "surfaceMin": None, "surfaceMax": None,
                "sdpMin": None, "evenement": False, "vueMer": False, "veille": False,
-               "flags": [], "commune": None}
+               "flags": [], "commune": None, "personneMorale": False, "zonage": []}
     hits = []
     commune = _detect_commune(low)
     if commune:
@@ -253,6 +257,15 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
     if re.search(r"risque|ppr|inond", low):
         f["flags"].append("risques")
         hits.append("flag risques")
+    # M11 B2 : propriétaire personne morale (DGFiP public) + zonage par famille
+    if re.search(r"personne\s*morale|\bsci\b|soci[ée]t[ée]|\bsarl\b|\bsas[u]?\b|entreprise", low):
+        f["personneMorale"] = True
+        hits.append("propriétaire personne morale")
+    for rx, fam in ((r"zone\s*u\b|constructible|urbaine?s?\b", "U"), (r"zone\s*au\b|à\s*urbaniser", "AU"),
+                    (r"zone\s*a\b|agricole", "A"), (r"zone\s*n\b|naturelle?s?\b", "N")):
+        if re.search(rx, low) and fam not in f["zonage"]:
+            f["zonage"].append(fam)
+            hits.append(f"zonage {fam}")
     m = re.search(r"(?:plus de|au moins|>\s*|≥\s*|superieure? à|supérieure? à)\s*([\d\s]{2,9})\s*(?:m2|m²)", low)
     if m:
         f["surfaceMin"] = int(m.group(1).replace(" ", ""))
@@ -282,6 +295,9 @@ UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Tr
    Correspondances : « vue mer/bord de mer » → vueMer ; « usine/industriel » → flags icpe ;
    « pollué » → flags sol_pollue ; « inondation/risque » → flags risques ; « monument » → flags abf ;
    « bodacc/liquidation/événement » → evenement ; « succession/héritage » → veille.
+   « détenue/détenues par une personne morale / une société / une SCI / une entreprise » →
+   personneMorale true (donnée DGFiP publique). « zone U / constructible / urbaine » → zonage ["U"] ;
+   « zone à urbaniser / AU » → ["AU"] ; « zone agricole / A » → ["A"] ; « zone naturelle / N » → ["N"].
    Les VERDICTS sont les tiers du scoring v2 : « brûlantes » → tiers ["brulante"] ;
    « chaudes » → tiers ["chaude"] ; « réserve foncière / à surveiller » → tiers
    ["reserve_fonciere"] ; « à creuser » → tiers ["a_creuser"]. N'utilise JAMAIS le champ
@@ -311,6 +327,14 @@ Sois strict : n'invente JAMAIS un filtre non demandé. Le champ "type" n'existe 
 
 @router.post("/search")
 def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
+    # M11 B2 : question AGRÉGÉE (compter/classer) → réponse CHIFFRÉE SQL-sourcée, ≠ filtre.
+    # Le chiffre vient d'un COUNT/GROUP BY réel ; la couche 2 du socle rejette tout compte inventé.
+    # Repli gracieux : answer_aggregate renvoie None (API indispo / question inexploitable) → flux filtres.
+    if is_aggregate(body.text):
+        agg = answer_aggregate(db, body.text)
+        if agg is not None:
+            _log(db, "search-aggregate", MODEL_NL, bool(agg.get("rejected")))
+            return {"stub": False, **agg}
     if _has_key():
         res = core.complete(
             db, kind="search", model=MODEL_NL, max_tokens=600,   # temp 0 (défaut socle) — QA stable

@@ -28,6 +28,8 @@ export function filtresToFilters(f: Record<string, unknown>): Filters {
     flags: (f.flags as string[]) ?? [],
     flagsExclus: (f.flagsExclus as string[]) ?? [],
     communes: (f.communes as string[]) ?? [],
+    personneMorale: !!f.personneMorale,                 // M11 B2 : propriétaire personne morale
+    zonagePlu: (f.zonage as string[]) ?? [],            // M11 B2 : zonage PLU par famille (U/AU/A/N)
   }
 }
 

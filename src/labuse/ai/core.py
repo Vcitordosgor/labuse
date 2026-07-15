@@ -182,6 +182,26 @@ def _norm_number(s: str) -> float | None:
         return None
 
 
+# Nombres « DE TOURNURE » (rôle rédactionnel, PAS un compte factuel) : gabarit R+n, quantités de
+# programme (logements/niveaux/places…), rangs #n. En mode strict (comptes agrégés) ils sont tolérés
+# par leur RÔLE (reconnus ici), pas par leur taille — un compte faux, lui, n'est jamais de tournure.
+_EDITORIAL_NUM_RE = re.compile(
+    r"r\s*\+\s*\d+"
+    r"|\d+(?:\s*(?:à|-|et)\s*\d+)?\s*"
+    r"(?:logements?|niveaux?|[ée]tages?|places?|lots?|pi[èe]ces?|chambres?|stationnements?)"
+    r"|#\s*\d+",
+    re.I)
+
+
+def _editorial_spans(prose: str) -> list[tuple[int, int]]:
+    return [m.span() for m in _EDITORIAL_NUM_RE.finditer(prose)]
+
+
+def _within(span: tuple[int, int], spans: list[tuple[int, int]]) -> bool:
+    s, e = span
+    return any(a <= s and e <= b for a, b in spans)
+
+
 def _numbers_in_context(context: dict[str, Any]) -> set[float]:
     nums: set[float] = set()
     for v in context_values(context):
@@ -197,12 +217,19 @@ def _numbers_in_context(context: dict[str, Any]) -> set[float]:
     return nums
 
 
-def _number_ok(n: float, allowed: set[float], *, tol_ratio: float = 0.02) -> bool:
+def _number_ok(n: float, allowed: set[float], *, tol_ratio: float = 0.02, strict: bool = False) -> bool:
     """Un nombre de la réponse est admis s'il figure au contexte (tolérance arrondi/format), ou s'il
     dérive trivialement (ex. arrondi k€) d'une valeur du contexte. Les petits entiers 0-12 (numéros de
-    liste, R+n, nb logements) sont tolérés (bruit rédactionnel non factuel)."""
+    liste, R+n, nb logements) sont tolérés (bruit rédactionnel non factuel).
+
+    `strict=True` (rôle « COMPTE agrégé ») : match EXACT obligatoire (au format près, déjà normalisé) —
+    NI tolérance de taille (le blanc-seing 0-12 est l'angle mort à supprimer : un compte 3→8 doit être
+    rejeté même si 8 ≤ 12), NI tolérance d'échelle k€/M€ (sans objet pour un compte). Les nombres de
+    TOURNURE (R+2, « 3 logements ») ne passent pas par ici : ils sont écartés en amont (spans éditoriaux)."""
     if n in allowed:
         return True
+    if strict:
+        return False
     if 0 <= n <= 12 and float(n).is_integer():
         return True
     for a in allowed:
@@ -217,13 +244,18 @@ def _number_ok(n: float, allowed: set[float], *, tol_ratio: float = 0.02) -> boo
     return False
 
 
-def validate_output(prose: str, context: dict[str, Any], *, require_sources: bool = True) -> OutputCheck:
+def validate_output(prose: str, context: dict[str, Any], *, require_sources: bool = True,
+                    strict_numbers: bool = False) -> OutputCheck:
     """VALIDATION DE SORTIE — deux couches mécaniques (HORS IA), appliquées AVANT de renvoyer au client.
 
     Couche 1 (sources forcées) : chaque marqueur `⟨src:champ⟩` doit pointer un champ RÉELLEMENT présent
       dans le contexte autorisé. Un marqueur invalide → réponse rejetée.
     Couche 2 (chiffres) : tout nombre de la réponse doit figurer (à tolérance de format) dans les valeurs
       du contexte. Un chiffre inventé (hallucination numérique, le pire cas) → réponse rejetée.
+
+    `strict_numbers=True` (réponses AGRÉGÉES, où le chiffre EST la donnée) : la tolérance de TAILLE (0-12)
+      est levée — un compte faux, même petit (3 annoncé 8), est rejeté. Les nombres de TOURNURE (R+2,
+      « 3 logements », rang #n) restent tolérés par leur RÔLE (reconnus par motif, pas par leur taille).
 
     En cas de rejet : `ok=False` + `reason`. L'appelant N'AFFICHE PAS la prose douteuse (règle : en cas
     de doute, on n'affiche pas). Les `sources` valides alimentent les étiquettes UI « Sourcé · … »."""
@@ -236,12 +268,16 @@ def validate_output(prose: str, context: dict[str, Any], *, require_sources: boo
         return OutputCheck(False, prose, reason="aucune source citée (⟨src:…⟩ requis)")
 
     allowed_nums = _numbers_in_context(context)
-    for m in _NUM_RE.findall(prose):
-        n = _norm_number(m)
+    edspans = _editorial_spans(prose) if strict_numbers else []
+    for m in _NUM_RE.finditer(prose):
+        n = _norm_number(m.group())
         if n is None:
             continue
-        if not _number_ok(n, allowed_nums):
-            return OutputCheck(False, prose, reason=f"chiffre non sourcé « {m.strip()} » (absent du contexte)")
+        # rôle « tournure » : R+2, « 3 logements », rang #1 → jamais un compte, toléré (mode strict)
+        if strict_numbers and _within(m.span(), edspans):
+            continue
+        if not _number_ok(n, allowed_nums, strict=strict_numbers):
+            return OutputCheck(False, prose, reason=f"chiffre non sourcé « {m.group().strip()} » (absent du contexte)")
 
     # nettoyage : on retire les marqueurs du texte affiché, on les renvoie comme sources structurées
     clean = _SRC_MARKER.sub("", prose)
@@ -322,7 +358,8 @@ def complete(db: Session | None, *, kind: str, system: str, context: dict[str, A
              model: str = MODEL_FACTUAL, max_tokens: int = 700,
              temperature: float = DEFAULT_TEMPERATURE, timeout: float = DEFAULT_TIMEOUT,
              history: list[dict] | None = None,
-             validate: bool = False, require_sources: bool = True) -> IAResult:
+             validate: bool = False, require_sources: bool = True,
+             strict_numbers: bool = False) -> IAResult:
     """Appel modèle UNIQUE (routeur haiku/sonnet via `model`). Sérialisation SÛRE (`default=str`) →
     plus jamais de 500 Decimal. Repli `degraded` flaggé si pas de clé. Log de coût centralisé.
 
@@ -349,7 +386,7 @@ def complete(db: Session | None, *, kind: str, system: str, context: dict[str, A
     if validate:
         if isinstance(context, str):
             raise ValueError("validate=True exige un contexte structuré (dict), pas une chaîne")
-        chk = validate_output(prose, context, require_sources=require_sources)
+        chk = validate_output(prose, context, require_sources=require_sources, strict_numbers=strict_numbers)
         if not chk.ok:
             return IAResult(text="Je ne peux pas répondre de façon sourcée sur ce point.",
                             model=model, reason=chk.reason, rejected=True, raw=prose,

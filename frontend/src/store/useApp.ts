@@ -36,12 +36,15 @@ export interface Filters {
   flagsExclus: string[]      // copilote-projet : contraintes RÉDHIBITOIRES (aucun de ces flags)
   communes: string[]         // R2 : secteur du cadreur (multi-communes, mode île)
   vSignals: string[]         // signaux propriétaire (dossier V, §5.3) — au moins un présent
+  personneMorale: boolean    // M11 B2 : détenue par une personne morale (DGFiP public — SCI/société/…)
+  zonagePlu: string[]        // M11 B2 : zonage PLU par famille (U/AU/A/N) — au moins une
 }
 
 export const EMPTY_FILTERS: Filters = {
   tiers: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
   evenement: false, vueMer: false, veille: false, horsCopro: false,
   flags: [], flagsExclus: [], communes: [], vSignals: [],
+  personneMorale: false, zonagePlu: [],
 }
 
 // brouillon d'un projet issu de l'entretien : la fiche + la dérivation moteur (filtres, SDP

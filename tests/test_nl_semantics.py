@@ -42,29 +42,68 @@ def test_flag_partiel_garde_le_justifie_retire_le_mistraduit():
 
 # ─────────────────────── LOT 2 — le drop silencieux est tué ───────────────────────
 
-def test_personne_morale_est_signalee_pas_avalee():
-    """« brûlantes Saint-Pierre propriétaire personne morale » : le tier+commune s'appliquent,
-    le critère non supporté est LISTÉ (jamais avalé en silence)."""
-    q = "les brûlantes de Saint-Pierre avec un propriétaire personne morale"
-    model_out = {"commune": "Saint-Pierre", "tiers": ["brulante"]}
-    filters, non_appliques = check_semantics(q, model_out)
-
-    assert filters == {"commune": "Saint-Pierre", "tiers": ["brulante"]}, "le supporté reste appliqué"
-    assert any("personne morale" in c for c in non_appliques), "PM doit être signalée"
-
-
-def test_sci_reconnue_comme_personne_morale():
-    q = "terrains détenus par une SCI à Saint-Paul"
-    _, non_appliques = check_semantics(q, {"commune": "Saint-Paul"})
-    assert any("personne morale" in c for c in non_appliques)
+def test_criteres_encore_non_supportes_toujours_signales():
+    """Non-régression du mécanisme B1 : un critère TOUJOURS non supporté (assainissement) reste
+    listé, jamais avalé. (Le drop de « personne morale » est désormais tué par B2 en l'APPLIQUANT
+    — cf. test_b2_personne_morale_appliquee_pas_signalee.)"""
+    q = "les brûlantes de Saint-Pierre raccordées à l'assainissement collectif"
+    filters, non_appliques = check_semantics(q, {"commune": "Saint-Pierre", "tiers": ["brulante"]})
+    assert filters == {"commune": "Saint-Pierre", "tiers": ["brulante"]}
+    assert any("assainissement" in c for c in non_appliques)
 
 
 def test_plusieurs_criteres_non_supportes_tous_listes():
+    # B2 : « zone U » et « société » sont désormais SUPPORTÉS → PAS signalés ; DPE + assainissement le restent.
     q = "passoires thermiques en zone U avec assainissement collectif détenues par une société"
     _, non_appliques = check_semantics(q, {})
     labels = " | ".join(non_appliques)
-    assert "DPE" in labels and "zonage" in labels and "assainissement" in labels and "personne morale" in labels
+    assert "DPE" in labels and "assainissement" in labels
+    assert "zonage" not in labels and "personne morale" not in labels, "PM/zonage supportés par B2"
     assert len(non_appliques) == len(set(non_appliques)), "pas de doublon"
+
+
+# ─────────────────────── B2 — personne morale & zonage désormais SUPPORTÉS ───────────────────────
+
+def test_b2_personne_morale_appliquee_pas_signalee():
+    """« brûlantes SP propriétaire personne morale » : le filtre s'applique ET ne figure PLUS
+    dans criteres_non_appliques (B2 l'a rendu supporté — plus jamais avalé ni signalé)."""
+    q = "les brûlantes de Saint-Pierre avec un propriétaire personne morale"
+    f, non_appliques = check_semantics(q, {"commune": "Saint-Pierre", "tiers": ["brulante"], "personneMorale": True})
+    assert f.get("personneMorale") is True
+    assert non_appliques == []
+
+
+def test_b2_sci_ne_declenche_plus_de_signalement():
+    q = "terrains détenus par une SCI à Saint-Paul"
+    _, non_appliques = check_semantics(q, {"commune": "Saint-Paul", "personneMorale": True})
+    assert non_appliques == []
+
+
+def test_b2_personne_morale_injectee_sans_mot_retiree():
+    """Anti-mistraduction : personneMorale produit sans aucun mot justificatif → retiré (jamais appliqué)."""
+    q = "les grandes parcelles de Saint-Leu de plus de 1000 m²"
+    f, _ = check_semantics(q, {"commune": "Saint-Leu", "personneMorale": True})
+    assert "personneMorale" not in f
+
+
+def test_b2_zonage_applique_pas_signale():
+    q = "parcelles constructibles en zone U à Saint-Paul"
+    f, non_appliques = check_semantics(q, {"commune": "Saint-Paul", "zonage": ["U"]})
+    assert f.get("zonage") == ["U"]
+    assert non_appliques == []
+
+
+def test_b2_zonage_injecte_sans_mot_retire():
+    """Anti-mistraduction : une famille de zonage non justifiée par la requête est retirée."""
+    q = "les chaudes de Saint-Denis"
+    f, _ = check_semantics(q, {"commune": "Saint-Denis", "zonage": ["A"]})
+    assert "zonage" not in f
+
+
+def test_b2_zonage_agricole_garde_le_bon_retire_le_mistraduit():
+    q = "terrains en zone agricole à Sainte-Rose"       # A justifié, U non
+    f, _ = check_semantics(q, {"commune": "Sainte-Rose", "zonage": ["A", "U"]})
+    assert f["zonage"] == ["A"]
 
 
 # ─────────────────────── LOT 4 — non-régression & pas de faux positif ───────────────────────

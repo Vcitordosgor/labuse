@@ -16,19 +16,16 @@ from __future__ import annotations
 
 import re
 
-# ── A. Familles de critères NON couvertes par les 14 champs de /ia/search → signalées au client ──
-# (B1 ne les IMPLÉMENTE pas — c'est B2 ; ici on refuse proprement, on ne ment pas.)
+# ── A. Familles de critères NON couvertes par /ia/search → signalées au client ──
+# NB (M11 B2) : « propriétaire personne morale » et « zonage PLU » NE SONT PLUS ici — ils sont
+# désormais SUPPORTÉS (filtres personneMorale + zonage) → ils sortent de criteres_non_appliques.
 _UNSUPPORTED: list[tuple[re.Pattern, str]] = [
     (re.compile(r"passoire|\bdpe\b|classe[s]?\s*[ée]nerg|[ée]nerg[ée]tique|thermique|[ée]tiquette\s*[ée]nerg", re.I),
      "DPE / classe énergétique"),
-    (re.compile(r"personne\s*morale|soci[ée]t[ée]|\bsci\b|\bsarl\b|\bsas[u]?\b|\bsa\b|siren|d[ée]tenu[e]?s?\s+par\s+une\s+(soci|entrepr)|propri[ée]taire\s+(moral|pm|personne\s*morale)", re.I),
-     "propriétaire (personne morale)"),
     (re.compile(r"dirigeant|g[ée]rant|[âa]g[ée]|succession|h[ée]riti|retrait[ée]", re.I),
      "profil du propriétaire (âge / succession)"),
     (re.compile(r"liquidation|redressement|\bbodacc\b|proc[ée]dure\s+collective|faillite|cessation", re.I),
      "état juridique du propriétaire (BODACC)"),
-    (re.compile(r"zonage|zone\s+(u[a-z0-9]*|au[a-z0-9]*|\ba\b|\bn\b)|constructible.*zone|\bplu\b\s*zone|classe[e]?\s+de\s+zone", re.I),
-     "zonage PLU"),
     (re.compile(r"assainissement|tout\s*[àa]\s*l['’ ]?[ée]gout|raccord|viabilis|\banc\b|eaux\s+us[ée]es", re.I),
      "viabilisation / assainissement"),
     (re.compile(r"piscine", re.I), "piscine"),
@@ -51,26 +48,35 @@ _FLAG_KW: dict[str, re.Pattern] = {
 _BOOL_KW: dict[str, re.Pattern] = {
     "vueMer": re.compile(r"vue\s*mer|mer|littoral|oc[ée]an|c[ôo]ti[èe]", re.I),
     "evenement": re.compile(r"[ée]v[ée]nement|bodacc|cession|liquidation|redressement|permis|d[ée]p[ôo]t", re.I),
-    "veille": re.compile(r"veille|succession|dirigeant|dormante|sci", re.I),
+    "veille": re.compile(r"veille|succession|dirigeant|dormante", re.I),
     "horsCopro": re.compile(r"copro|hors\s*copro|copropri[ée]t", re.I),
+    # M11 B2 : propriétaire personne morale (DGFiP public) — justifié par SCI/société/SIREN/…
+    "personneMorale": re.compile(r"personne\s*morale|soci[ée]t[ée]|\bsci\b|\bsarl\b|\bsas[u]?\b|siren|entreprise|d[ée]tenu", re.I),
+}
+# M11 B2 : zonage PLU par famille — chaque famille produite doit être justifiée (anti-mistraduction)
+_ZONE_KW: dict[str, re.Pattern] = {
+    "U": re.compile(r"zone\s*u\b|constructible|urbaine?s?\b|urbanis[ée]", re.I),
+    "AU": re.compile(r"zone\s*au\b|[àa]\s*urbaniser|urbaniser", re.I),
+    "A": re.compile(r"zone\s*a\b|agricole", re.I),
+    "N": re.compile(r"zone\s*n\b|naturel", re.I),
 }
 
 
 def check_semantics(query: str, filters: dict) -> tuple[dict, list[str]]:
     """Valide le SENS des filtres vs la requête. Retourne (filtres_nettoyés, criteres_non_appliques).
 
-    - Retire tout filtre catégoriel (flags/flagsExclus/vueMer/evenement/veille/horsCopro) NON justifié
-      par un mot de la requête → un filtre mistraduit ou non demandé n'est JAMAIS appliqué.
+    - Retire tout filtre catégoriel (flags/flagsExclus/zonage/vueMer/evenement/veille/horsCopro/
+      personneMorale) NON justifié par un mot de la requête → un filtre mistraduit n'est JAMAIS appliqué.
     - Liste les familles de critères présentes dans la requête mais non couvertes par les 14 champs.
     """
     q = query or ""
     out = dict(filters or {})
 
-    # A. filtres à énumération de flags — chaque valeur doit être justifiée
-    for key in ("flags", "flagsExclus"):
+    # A. filtres à énumération — chaque valeur doit être justifiée par un mot de la requête
+    for key, kw in (("flags", _FLAG_KW), ("flagsExclus", _FLAG_KW), ("zonage", _ZONE_KW)):
         vals = out.get(key)
         if isinstance(vals, list):
-            kept = [v for v in vals if v not in _FLAG_KW or _FLAG_KW[v].search(q)]
+            kept = [v for v in vals if v not in kw or kw[v].search(q)]
             if kept:
                 out[key] = kept
             else:

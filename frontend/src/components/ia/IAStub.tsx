@@ -48,6 +48,9 @@ export function IAStub() {
           setModule('programme')          // → formulaire M22 pré-rempli, moteur déterministe
           return
         }
+        // M11 B2 : réponse AGRÉGÉE (compte/classement chiffré, SQL-sourcé) — pas une liste de
+        // parcelles. On RESTE sur la vue IA et on affiche la réponse chiffrée sous la barre.
+        if (dd.aggregate) return
         // item 2 (UX V1) : l'explication + le drapeau stub VOYAGENT jusqu'à la restitution
         // B1 : les critères non appliqués voyagent avec la restitution (on quitte la vue IA
         // dès que des filtres s'appliquent → la bannière doit s'afficher LÀ où l'utilisateur atterrit).
@@ -173,6 +176,33 @@ export function IAStub() {
           </section>
         </div>
 
+        {/* M11 B2 : réponse AGRÉGÉE chiffrée — le chiffre vient d'un COUNT/GROUP BY réel (SQL),
+            validé par le socle (couche 2). Étiquette « Sourcé » : jamais un compte inventé. */}
+        {search.data?.aggregate && !search.data.rejected && (
+          <div data-ia-aggregate className="mt-4 rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-4 py-3">
+            <p className="text-sm leading-relaxed text-txt">{search.data.texte}</p>
+            {!!search.data.data?.classement?.length && (
+              <ol data-ia-classement className="mt-2.5 space-y-1 border-t border-line pt-2">
+                {search.data.data.classement.slice(0, 6).map((c, i) => (
+                  <li key={c.commune} className="flex items-center justify-between text-xs">
+                    <span className="text-txt-mut"><span className="font-mono text-mint">#{i + 1}</span> {c.commune}</span>
+                    <span className="font-display font-bold text-txt-hi">{c.nombre.toLocaleString('fr-FR')}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+            <div className="mt-2.5 border-t border-line pt-2">
+              <span className="inline-flex items-center gap-1 rounded-full border border-mint/40 bg-[#0f1a15] px-2 py-0.5 text-[10px] text-mint">
+                <b className="font-semibold">Sourcé</b> · comptage SQL du run servi (chiffres vérifiés, non calculés par l'IA)
+              </span>
+            </div>
+          </div>
+        )}
+        {search.data?.aggregate && search.data.rejected && (
+          <div className="mt-4 rounded-lg border border-st-creuser/40 bg-[#211a10] px-4 py-3 text-xs text-st-creuser">
+            {search.data.texte}
+          </div>
+        )}
         {search.data?.out_of_scope && (
           <div className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-3 text-xs text-txt-mut">
             {search.data.out_of_scope}
