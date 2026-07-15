@@ -5,14 +5,42 @@ import { Fragment, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { askParcel, type AskResponse, type Provenance } from '../../lib/api'
 
-// Rend le Markdown minimal du modèle (**gras**) → <strong>, et nettoie les artefacts d'espacement
-// (espace avant ponctuation laissé par le retrait des marqueurs de source du socle). Zéro astérisque visible.
+// Rend le Markdown minimal du modèle et GARANTIT qu'aucun marqueur brut ne reste visible côté client
+// (filet de sécurité : répare aussi les réponses DÉJÀ EN CACHE — cf. incident zonage 15/07 où un
+// serveur pré-fix avait caché du « ## » et des « > »). Inline : **gras**, *italique*, `code`, [texte](url).
+// Bloc (par ligne) : titres ##/###, citations >, listes - / * → stylés, marqueur retiré.
+
+// Inline : découpe sur les motifs (ordre lien → gras → code → italique) — aucun astérisque/backtick résiduel.
+function renderInline(text: string, kp: string) {
+  return text.split(/(\[[^\]]+\]\([^)]+\)|\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g).map((seg, i) => {
+    const key = `${kp}-${i}`
+    let m: RegExpMatchArray | null
+    if ((m = seg.match(/^\[([^\]]+)\]\(([^)]+)\)$/)))
+      return <a key={key} href={m[2]} target="_blank" rel="noreferrer" className="text-mint underline">{m[1]}</a>
+    if (seg.length > 4 && seg.startsWith('**') && seg.endsWith('**'))
+      return <strong key={key} className="font-semibold text-txt-hi">{seg.slice(2, -2)}</strong>
+    if (seg.length > 2 && seg.startsWith('`') && seg.endsWith('`'))
+      return <code key={key} className="rounded bg-surface-3 px-1 font-mono text-[11px]">{seg.slice(1, -1)}</code>
+    if (seg.length > 2 && seg.startsWith('*') && seg.endsWith('*'))
+      return <em key={key}>{seg.slice(1, -1)}</em>
+    return <Fragment key={key}>{seg}</Fragment>
+  })
+}
+
 function renderRich(text: string) {
   const clean = text.replace(/\s+([.,;:!?%€])/g, '$1').replace(/[ \t]{2,}/g, ' ')
-  return clean.split(/(\*\*[^*]+\*\*)/g).map((seg, i) =>
-    seg.startsWith('**') && seg.endsWith('**')
-      ? <strong key={i} className="font-semibold text-txt-hi">{seg.slice(2, -2)}</strong>
-      : <Fragment key={i}>{seg}</Fragment>)
+  return clean.split('\n').map((raw, i) => {
+    const line = raw.trim()
+    if (!line) return <span key={i} className="block h-1.5" />       // ligne vide → petit espace, jamais de vide brut
+    let m: RegExpMatchArray | null
+    if ((m = line.match(/^#{1,6}\s+(.*)$/)))                          // titre ## → ligne en gras (marqueur retiré)
+      return <strong key={i} className="mt-1 block font-semibold text-txt-hi">{renderInline(m[1], `h${i}`)}</strong>
+    if ((m = line.match(/^>\s?(.*)$/)))                               // citation > → filet gauche discret
+      return <span key={i} className="mt-0.5 block border-l-2 border-line-2 pl-2 text-txt-mut">{renderInline(m[1], `q${i}`)}</span>
+    if ((m = line.match(/^[-*]\s+(.*)$/)))                            // liste - / * → puce
+      return <span key={i} className="block pl-2">· {renderInline(m[1], `l${i}`)}</span>
+    return <span key={i} className="block">{renderInline(line, `p${i}`)}</span>
+  })
 }
 
 // clé de champ → libellé lisible pour l'étiquette de source

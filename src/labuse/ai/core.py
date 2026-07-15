@@ -258,6 +258,23 @@ def _ensure_cache_table(db: Session) -> None:
         " PRIMARY KEY (idu, run_label, question_hash))"))
 
 
+# ── VERSION DU CONTEXTE de grounding (FAIT PARTIE de la clé de cache) ──────────────────────────
+# La réponse cachée dépend du CONTEXTE envoyé au modèle (Facts construits par _ask_context :
+# quels champs, quel mapping, quelle structure). Le run_label capture le changement de DONNÉES ;
+# CONTEXT_VERSION capture le changement de CODE du contexte. Les deux salent le hash de cache.
+#
+# ⇒ RÈGLE : tout changement de `fiche_ask._ask_context` (nouveau champ, correction de mapping,
+#   structure de Fact, changement du _SYSTEM qui altère la forme de réponse) DOIT bumper ce nombre.
+#   Effet : tous les `question_hash` changent → les réponses cachées AVANT le changement deviennent
+#   automatiquement inatteignables (cache miss → régénération avec le code corrigé), SANS purge
+#   manuelle. C'est le garde-fou contre le « bugfix masqué par le cache » (incident zonage 15/07).
+#
+# Historique :
+#   v1 — contexte initial de la barre de fiche (M11 surface A).
+#   v2 — fix zonage /ask : multi-zones joint depuis reglement_plu.zones (commit 234c978, 15/07).
+CONTEXT_VERSION = 2
+
+
 def normalize_question(q: str) -> str:
     """Normalise une question pour maximiser les hits de cache (casse, espaces, ponctuation de bord)."""
     q = (q or "").strip().lower()
@@ -266,7 +283,9 @@ def normalize_question(q: str) -> str:
 
 
 def _qhash(q: str) -> str:
-    return hashlib.sha256(normalize_question(q).encode("utf-8")).hexdigest()[:32]
+    # le sel de version orphelinise tout le cache antérieur à un changement de contexte (cf. CONTEXT_VERSION)
+    salted = f"ctx{CONTEXT_VERSION}|{normalize_question(q)}"
+    return hashlib.sha256(salted.encode("utf-8")).hexdigest()[:32]
 
 
 def cache_get(db: Session, idu: str, run_label: str, question: str) -> dict | None:
