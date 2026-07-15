@@ -107,8 +107,14 @@ def solaire_parkings(tranche: str | None = None, fmt: str | None = None,
     geojson = {"type": "FeatureCollection", "features": [
         {"type": "Feature", "geometry": r["geometry"],
          "properties": {"kind": "lot", "label": f"{r['surface_m2']} m²"}} for r in rows]}
-    depasses = sum(1 for r in rows if r["echeance_depassee"])
-    return {"total": len(items), "echeances_depassees": depasses, "items": items,
+    # `total`/`echeances_depassees` = VRAIS COUNT (mêmes filtres, SANS le LIMIT d'affichage) —
+    # le nombre annoncé ne doit jamais être la longueur de la liste tronquée. `affiches` = rendu.
+    cnt = db.execute(text(f"SELECT count(*) AS total, "
+                          f"count(*) FILTER (WHERE pk.echeance < CURRENT_DATE) AS depasses "
+                          f"FROM parkings_aper pk {where}"),
+                     {k: v for k, v in params.items() if k != "lim"}).mappings().one()
+    return {"total": int(cnt["total"]), "echeances_depassees": int(cnt["depasses"]),
+            "affiches": len(items), "items": items,
             "geojson": geojson, "source": SOURCES["aper"],
             "note": "Détection OSM (déclaratif) : volumétrie plancher, pas un recensement. "
                     "Surface mesurée sur le polygone OSM ; exemptions non déduites."}
@@ -135,7 +141,9 @@ def solaire_tertiaire_view(fmt: str | None = None,
                                 "proprio_pm", "proprio_siren", "bilan_annee", "ca",
                                 "resultat_net", "prod_spec_kwh_kwc", "score_solaire",
                                 "dist_poste_source_m", "lat", "lon")} for r in rows]
-    return {"total": len(items), "items": items,
+    # `total` = VRAI COUNT du gisement (sans le LIMIT d'affichage) ; `affiches` = rendu tronqué.
+    total = int(db.execute(text("SELECT count(*) FROM mv_toitures_tertiaires")).scalar() or 0)
+    return {"total": total, "affiches": len(items), "items": items,
             "note": "Distance au poste source indisponible : cartographie EDF SEI "
                     "dépubliée (sécurité). Capacité S3REnR restante : 0 MW sur l'île "
                     "(avril 2026) — argument autoconsommation."}

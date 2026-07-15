@@ -124,6 +124,15 @@ function M02() {
           <span className="truncate">{s.nom}</span><span className="font-mono text-[11px] text-txt-dim">{s.n} parc.</span>
         </button>
       ))}
+      {/* Fix pré-lancement : distinguer un « 0 résultat LÉGITIME » d'une panne — sans ça, une boîte
+          absente des fichiers fonciers (ex. VISHOR MATERIAUX) donne un écran muet lu comme « cassé ». */}
+      {!siren && q.length >= 2 && !sug.isFetching && (sug.data?.length ?? 0) === 0 && (
+        <div data-m02-vide className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
+          « <b className="text-txt">{q}</b> » n'a pas de foncier connu dans les fichiers fonciers (DGFiP),
+          ou n'y figure pas. Ces fichiers ne recensent que les <b>personnes morales</b> détentrices de
+          foncier à La Réunion — une personne physique ou une société sans bien détecté n'apparaît pas.
+        </div>
+      )}
       {d && (
         <>
           {d['bodacc'] != null && (
@@ -528,7 +537,7 @@ function M23() {
         ))}
       </div>
       <p className="text-[11px] text-txt-dim">
-        {q.isFetching ? <Loading label="Chargement" /> : <>{fmt(d?.['total'])} parkings assujettis · <b className="text-st-ecartee">{fmt(d?.['echeances_depassees'])} échéance(s) dépassée(s)</b></>}
+        {q.isFetching ? <Loading label="Chargement" /> : <>{fmt(d?.['total'])} parkings assujettis · <b className="text-st-ecartee">{fmt(d?.['echeances_depassees'])} échéance(s) dépassée(s)</b>{typeof d?.['affiches'] === 'number' && d['affiches'] < d['total'] ? <span className="text-txt-dim"> · {fmt(d['affiches'])} affichés</span> : null}</>}
       </p>
       <a href={`/solaire/parkings?fmt=csv${tranche ? `&tranche=${tranche}` : ''}`}
         className="self-start rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ Export CSV</a>
@@ -573,7 +582,7 @@ function M24() {
         dernier bilan INPI × gisement PVGIS — triées par potentiel (surface × score).
         {d?.['note'] ? <> {String(d['note'])}</> : null}</Banner>
       <p className="text-[11px] text-txt-dim">
-        {q.isFetching ? <Loading label="Chargement" /> : `${fmt(d?.['total'])} toitures`}
+        {q.isFetching ? <Loading label="Chargement" /> : <>{fmt(d?.['total'])} toitures{typeof d?.['affiches'] === 'number' && d['affiches'] < d['total'] ? <span className="text-txt-dim"> · {fmt(d['affiches'])} affichées</span> : null}</>}
       </p>
       <a href="/solaire/tertiaire?fmt=csv" className="self-start rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ Export CSV</a>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
