@@ -318,18 +318,22 @@ export function ResultsSection() {
     // l'en-tête fixe (compteurs/chips) écrasait la liste (flex-1) à ~0 px. La liste garde une
     // hauteur minimale utilisable ET son scroll interne (cf. le conteneur data-results-scroll).
     <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5">
-      <div className="flex shrink-0 items-baseline justify-between">
+      {/* Fix cosmétique (point 3) : ligne de tri LISIBLE et alignée (contrôle segmenté), au lieu
+          des options qui flottaient collées à droite sans hiérarchie. Fonction inchangée. */}
+      <div className="shrink-0">
         <p className="font-mono text-[11px] tracking-widest text-txt-dim">RÉSULTATS</p>
-        <span className="flex items-center gap-1 text-[11px] text-txt-mut">
-          triés par
-          {SORTS.map((s) => (
-            <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
-              className={`rounded px-1 ${sort === s.key ? 'text-mint underline' : 'hover:text-txt'}`}
-              title={s.key === 'rang' ? 'Rang P (scoring v2) — copropriétés en queue' : `Trier par ${s.label}`}>
-              {s.label}
-            </button>
-          ))}
-        </span>
+        <div className="mt-1.5 flex items-center gap-2">
+          <span className="shrink-0 text-[10px] uppercase tracking-wide text-txt-dim">Trier</span>
+          <div className="flex items-center gap-0.5 rounded-full border border-line-2 bg-surface-2 p-0.5">
+            {SORTS.map((s) => (
+              <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
+                className={`rounded-full px-2 py-0.5 text-[11px] transition-colors ${sort === s.key ? 'bg-mint/15 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}
+                title={s.key === 'rang' ? 'Rang P (scoring v2) — copropriétés en queue' : `Trier par ${s.label}`}>
+                {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       {communeNote && (
@@ -337,7 +341,7 @@ export function ResultsSection() {
           ⚠ {communeNote}
         </div>
       )}
-      <p className="mt-2 shrink-0 text-xs text-txt-mut"
+      <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
         title={ile && stats.data ? `${fmt(stats.data.opportunites)} opportunités (brûlantes v2 + chaudes v2) dont ${fmt(stats.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
         <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes v2 ·{' '}
         <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
