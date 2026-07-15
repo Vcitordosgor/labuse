@@ -1,9 +1,19 @@
 // M11 · SURFACE A — barre de recherche IA par fiche (maquette CADRE-M11 §1.4).
 // Question libre sur LA parcelle → réponse SOURCÉE via le socle IA. L'IA cite ses sources
 // et dit « non disponible » quand la donnée n'existe pas — jamais d'invention.
-import { useState } from 'react'
+import { Fragment, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { askParcel, type AskResponse, type Provenance } from '../../lib/api'
+
+// Rend le Markdown minimal du modèle (**gras**) → <strong>, et nettoie les artefacts d'espacement
+// (espace avant ponctuation laissé par le retrait des marqueurs de source du socle). Zéro astérisque visible.
+function renderRich(text: string) {
+  const clean = text.replace(/\s+([.,;:!?%€])/g, '$1').replace(/[ \t]{2,}/g, ' ')
+  return clean.split(/(\*\*[^*]+\*\*)/g).map((seg, i) =>
+    seg.startsWith('**') && seg.endsWith('**')
+      ? <strong key={i} className="font-semibold text-txt-hi">{seg.slice(2, -2)}</strong>
+      : <Fragment key={i}>{seg}</Fragment>)
+}
 
 // clé de champ → libellé lisible pour l'étiquette de source
 const SRC_LABEL: Record<string, string> = {
@@ -82,7 +92,7 @@ export function AskBar({ idu, zone }: { idu: string; zone?: string | null }) {
             <p className="text-[12px] text-st-ecartee">{d.texte}</p>
           ) : (
             <>
-              <p className={`whitespace-pre-wrap text-[12px] leading-relaxed ${d.absent ? 'text-txt-dim italic' : 'text-txt'}`}>{d.texte}</p>
+              <p className={`whitespace-pre-wrap text-[12px] leading-relaxed ${d.absent ? 'text-txt-dim italic' : 'text-txt'}`}>{renderRich(d.texte)}</p>
               {(d.sources?.length ?? 0) > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1.5 border-t border-line pt-2">
                   {d.sources!.map((s) => (
