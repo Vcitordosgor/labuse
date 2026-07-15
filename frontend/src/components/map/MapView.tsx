@@ -118,9 +118,37 @@ const OVERLAYS = {
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
 //: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 5 catégories, couleurs différenciées
-const EQUIP_CATS = ['mairie', 'ecole', 'sante', 'police', 'sport'] as const
-const EQUIP_COLOR: maplibregl.ExpressionSpecification = ['match', ['get', 'subtype'],
-  'mairie', '#B497F0', 'ecole', '#5CE6A1', 'sante', '#E8695A', 'police', '#8FB4F0', 'sport', '#E8B44C', '#8FA69A']
+// Point 13 : un SYMBOLE parlant par type d'équipement (pastille couleur + pictogramme), au lieu
+// de simples pastilles indistinctes. Émoji rendu via canvas → addImage (aucune lib ; repli =
+// la pastille colorée + la légende si l'OS n'a pas la police émoji).
+const EQUIP_META: { key: string; emoji: string; color: string; label: string }[] = [
+  { key: 'mairie', emoji: '🏛️', color: '#B497F0', label: 'Mairie' },
+  { key: 'ecole', emoji: '🏫', color: '#5CE6A1', label: 'École' },
+  { key: 'sante', emoji: '🏥', color: '#E8695A', label: 'Santé' },
+  { key: 'commerce', emoji: '🛒', color: '#F0A868', label: 'Commerce' },
+  { key: 'tcsp', emoji: '🚌', color: '#6FD3C6', label: 'Transport' },
+  { key: 'police', emoji: '🚓', color: '#8FB4F0', label: 'Police / gendarmerie' },
+  { key: 'sport', emoji: '⚽', color: '#E8B44C', label: 'Sport' },
+]
+const EQUIP_CATS = EQUIP_META.map((e) => e.key)
+
+function makeEquipIcons(m: maplibregl.Map) {
+  const S = 46
+  for (const { key, emoji, color } of EQUIP_META) {
+    if (m.hasImage(`equip-${key}`)) continue
+    const cv = document.createElement('canvas')
+    cv.width = cv.height = S
+    const ctx = cv.getContext('2d')
+    if (!ctx) continue
+    ctx.beginPath(); ctx.arc(S / 2, S / 2, S / 2 - 3, 0, Math.PI * 2)
+    ctx.fillStyle = color; ctx.globalAlpha = 0.95; ctx.fill()
+    ctx.globalAlpha = 1; ctx.lineWidth = 2; ctx.strokeStyle = '#06130C'; ctx.stroke()
+    ctx.font = `${Math.round(S * 0.5)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui`
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+    ctx.fillText(emoji, S / 2, S / 2 + 1)
+    m.addImage(`equip-${key}`, ctx.getImageData(0, 0, S, S), { pixelRatio: 2 })
+  }
+}
 
 // M6.1 item 2 : une géométrie de la collection touche-t-elle la bbox de la commune ?
 // Test sommet-dans-bbox, suffisant pour le toast « commune sans littoral » (les bandes des
@@ -242,10 +270,14 @@ export function MapView() {
       m.addLayer({ id: 'parcels-limites', type: 'line', source: 'parcels', layout: { visibility: 'none' },
         paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       m.addLayer({ id: 'parcels-line', type: 'line', source: 'parcels', filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
+      // Point 10 : la couche « Vue mer » montre TOUTES les parcelles à vue dégagée (plus seulement
+      // les promues) — liseré cyan épaissi + halo, pour un effet nettement visible quand activée.
       m.addLayer({
         id: 'parcels-vuemer', type: 'line', source: 'parcels', layout: { visibility: 'none' },
-        filter: ['all', PROMUES_FILTER, ['==', ['get', 'vue_mer'], 'oui']] as never,
-        paint: { 'line-color': '#7DE8E0', 'line-width': 1.4, 'line-opacity': 0.95 },
+        filter: ['==', ['get', 'vue_mer'], 'oui'] as never,
+        paint: { 'line-color': '#7DE8E0',
+                 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.6, 14, 2.6],
+                 'line-opacity': 0.95, 'line-blur': 0.4 },
       })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
       // M5.1 — badge carte : liseré braise sur les BRÛLANTES v2 (hors étage 0), et pastille
@@ -296,8 +328,10 @@ export function MapView() {
       m.addLayer({ id: 'ile-line', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
       m.addLayer({ id: 'ile-vuemer', type: 'line', ...SL, layout: { visibility: 'none' },
-        filter: ['all', PROMUES_FILTER, ['==', ['get', 'vue_mer'], 'oui']] as never,
-        paint: { 'line-color': '#7DE8E0', 'line-width': 1.4, 'line-opacity': 0.95 } })
+        filter: ['==', ['get', 'vue_mer'], 'oui'] as never,
+        paint: { 'line-color': '#7DE8E0',
+                 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.6, 14, 2.6],
+                 'line-opacity': 0.95, 'line-blur': 0.4 } })
       m.addLayer({ id: 'ile-sel', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
       // M6.1 : étiquette zone PLU en mode île — ne rend que si les tuiles portent zone_lib
@@ -332,12 +366,13 @@ export function MapView() {
 
       // équipements (points OSM, affichage seul) — cercles colorés, plancher z13 (pas
       // d'icônes par milliers à l'écran), clic = nom de l'équipement
+      makeEquipIcons(m)
       m.addSource('ov-equip', { type: 'geojson', data: EMPTY_FC as never })
-      m.addLayer({ id: 'ov-equip', type: 'circle', source: 'ov-equip', minzoom: 13,
-        layout: { visibility: 'none' },
-        paint: { 'circle-radius': ['interpolate', ['linear'], ['zoom'], 13, 3, 17, 7],
-                 'circle-color': EQUIP_COLOR, 'circle-opacity': 0.9,
-                 'circle-stroke-color': '#06130C', 'circle-stroke-width': 1.2 } })
+      m.addLayer({ id: 'ov-equip', type: 'symbol', source: 'ov-equip', minzoom: 12,
+        layout: { visibility: 'none',
+                  'icon-image': ['concat', 'equip-', ['get', 'subtype']] as never,
+                  'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.32, 17, 0.6],
+                  'icon-allow-overlap': true } })
       m.on('click', 'ov-equip', (e) => {
         const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
         if (!f) return
@@ -805,6 +840,19 @@ export function MapView() {
       </div>
       <MapToolbar />
       <Legend />
+      {/* Point 13 : légende des équipements — chaque symbole = un type (visible quand la couche l'est) */}
+      {layers.equipements && (
+        <div className="pointer-events-none absolute bottom-16 right-4 rounded-lg border border-line-2 bg-surface-2/95 px-3 py-2 shadow-lg">
+          <p className="mb-1 font-mono text-[9px] tracking-widest text-txt-dim">ÉQUIPEMENTS</p>
+          <div className="flex flex-col gap-0.5 text-[11px]">
+            {EQUIP_META.map((e) => (
+              <span key={e.key} className="flex items-center gap-1.5 text-txt-mut">
+                <span className="text-[13px] leading-none">{e.emoji}</span>{e.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
       {(geo.isFetching || tilesLoading) && (
         <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-lg">
