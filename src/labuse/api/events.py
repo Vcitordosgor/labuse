@@ -257,7 +257,7 @@ def mark_all_read(db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/detect")
-def api_detect(run_from: str = "q_v2", run_to: str = "q_v2_demo", db: Session = Depends(get_db)) -> dict:
+def api_detect(run_from: str = RUN, run_to: str = "q_v2_demo", db: Session = Depends(get_db)) -> dict:
     return detect_events(db, run_from, run_to, demo=run_to.endswith("_demo"))
 
 

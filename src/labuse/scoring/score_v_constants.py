@@ -32,7 +32,11 @@ BRULANTE_GUARDRAIL = (30, 120)
 # 13/07/2026 : exclusion emprise routière A-01, delta 1 254 entrées étage 0, 0 brûlante) ;
 # q_v4_m6a → q_v5_m6b (M6 Phase 2b, 14/07/2026 : A-02 doublons PLU + A-03 zones e Saint-Paul,
 # delta 471 statuts, 126 entrées / 58 sorties étage 0, 0 bascule de tier).
-Q_A_RUN_LABEL = "q_v5_m6b"
+# q_v5_m6b → q_v6_m8 (BASCULE M8, 15/07/2026 : étage 0 q_v5_m6b enfin reflété dans le tier P
+# (ANO-1 : q_v2 éradiqué du monde servi) + fix mapping ER (rescue St-Louis 02, veto corridors
+# L.151-23 / PAPA L.151-41). Delta : 11 718 atterrissent en écartée, 58 ANO-1 restaurées,
+# 89 churn recalibration ; 0 mouvement inexpliqué ; golden 32/32 régénéré, cohérence 3/3, canari OK).
+Q_A_RUN_LABEL = "q_v6_m8"
 
 # ── Bandes (décision D2) ───────────────────────────────────────────────────────────────────
 # (borne basse incluse, code) — évaluées dans l'ordre. V NULL → 'na'.

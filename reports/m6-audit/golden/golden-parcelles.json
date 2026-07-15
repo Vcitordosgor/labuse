@@ -1,11 +1,11 @@
 {
  "meta": {
   "api_base": "http://127.0.0.1:8010",
-  "genere_le": "2026-07-14T08:50:25",
+  "genere_le": "2026-07-15T11:28:12",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 32,
-  "run_cascade": "q_v3_datagap",
-  "run_v2_servi": "m36-l2f-2026-2026-07-14",
+  "run_cascade": "q_v6_m8",
+  "run_v2_servi": "q_v6_m8",
   "tolerances": {
    "canopee_pct": 2.0,
    "distance_cote_m": 10.0,
@@ -30,7 +30,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
      "q_score": 37,
      "score_v": {
@@ -55,7 +55,7 @@
      "mult_base": 1.31,
      "percentile": 86.86,
      "rang": 56293,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "a_creuser"
     }
    },
@@ -148,7 +148,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 46,
      "score_v": {
@@ -173,7 +173,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 28,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "brulante"
     }
    },
@@ -258,7 +258,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 34,
+     "n_lignes_cascade": 35,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "score_v": {
@@ -283,7 +283,7 @@
      "mult_base": 0.7,
      "percentile": 25.32,
      "rang": 319830,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "ecartee"
     }
    },
@@ -369,7 +369,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 39,
+     "n_lignes_cascade": 40,
      "proprietaire_moral_siren": "820238707",
      "q_score": 53,
      "score_v": {
@@ -394,7 +394,7 @@
      "mult_base": 5.85,
      "percentile": 99.84,
      "rang": 706,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "chaude"
     }
    },
@@ -481,7 +481,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 87,
      "score_v": {
@@ -506,7 +506,7 @@
      "mult_base": 0.91,
      "percentile": 46.27,
      "rang": 230108,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "reserve_fonciere"
     }
    },
@@ -592,7 +592,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 60,
      "score_v": {
@@ -617,7 +617,7 @@
      "mult_base": 63.97,
      "percentile": 100.0,
      "rang": 2,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "chaude"
     }
    },
@@ -706,7 +706,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 39,
+     "n_lignes_cascade": 40,
      "proprietaire_moral_siren": null,
      "q_score": 65,
      "score_v": {
@@ -731,7 +731,7 @@
      "mult_base": 0.91,
      "percentile": 46.4,
      "rang": 229536,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "reserve_fonciere"
     }
    },
@@ -826,7 +826,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": "912933710",
      "q_score": 44,
      "score_v": {
@@ -851,7 +851,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 16,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "brulante"
     }
    },
@@ -950,7 +950,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": "912933710",
      "q_score": 44,
      "score_v": {
@@ -975,7 +975,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 37,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "chaude"
     }
    },
@@ -1074,7 +1074,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 41,
      "score_v": {
@@ -1099,7 +1099,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 8,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "brulante"
     }
    },
@@ -1188,7 +1188,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 1,
-     "n_lignes_cascade": 40,
+     "n_lignes_cascade": 41,
      "proprietaire_moral_siren": null,
      "q_score": 1,
      "score_v": {
@@ -1213,7 +1213,7 @@
      "mult_base": 1.82,
      "percentile": null,
      "rang": null,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "a_creuser"
     }
    },
@@ -1305,7 +1305,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 31,
+     "n_lignes_cascade": 32,
      "proprietaire_moral_siren": "U23691569",
      "q_score": 50,
      "score_v": {
@@ -1318,7 +1318,7 @@
       "mult_base": 0.92,
       "percentile": 48.95,
       "rang": 218635,
-      "tier": "a_creuser"
+      "tier": "ecartee"
      },
      "statut": "ecartee",
      "surface_m2": 7483,
@@ -1330,8 +1330,8 @@
      "mult_base": 0.92,
      "percentile": 48.95,
      "rang": 218635,
-     "run_id": "m36-l2f-2026-2026-07-14",
-     "tier": "a_creuser"
+     "run_id": "q_v6_m8",
+     "tier": "ecartee"
     }
    },
    "coherence_db_api": [],
@@ -1350,6 +1350,7 @@
     "dvf": null,
     "etage0": true,
     "etage0_motifs": [
+     "emprise_routiere",
      "foncier_public"
     ],
     "matrice_statut": "ecartee",
@@ -1384,7 +1385,7 @@
      "mult_base": 0.92,
      "percentile": 49.0,
      "rang": 218635,
-     "tier": "a_creuser"
+     "tier": "ecartee"
     },
     "section": "AO",
     "solaire": {
@@ -1421,7 +1422,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 19,
      "score_v": {
@@ -1446,7 +1447,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 7,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "brulante"
     }
    },
@@ -1535,7 +1536,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 30,
+     "n_lignes_cascade": 31,
      "proprietaire_moral_siren": "249740101",
      "q_score": 50,
      "score_v": {
@@ -1548,7 +1549,7 @@
       "mult_base": 7.09,
       "percentile": 99.95,
       "rang": 194,
-      "tier": "brulante"
+      "tier": "ecartee"
      },
      "statut": "ecartee",
      "surface_m2": 337,
@@ -1560,8 +1561,8 @@
      "mult_base": 7.09,
      "percentile": 99.95,
      "rang": 194,
-     "run_id": "m36-l2f-2026-2026-07-14",
-     "tier": "brulante"
+     "run_id": "q_v6_m8",
+     "tier": "ecartee"
     }
    },
    "coherence_db_api": [],
@@ -1617,7 +1618,7 @@
      "mult_base": 7.09,
      "percentile": 100.0,
      "rang": 194,
-     "tier": "brulante"
+     "tier": "ecartee"
     },
     "section": "CD",
     "solaire": {
@@ -1654,7 +1655,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
      "q_score": 41,
      "score_v": {
@@ -1679,7 +1680,7 @@
      "mult_base": 2.63,
      "percentile": 98.41,
      "rang": 6820,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "a_creuser"
     }
    },
@@ -1776,7 +1777,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 30,
+     "n_lignes_cascade": 31,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "score_v": {
@@ -1801,7 +1802,7 @@
      "mult_base": 1.31,
      "percentile": 88.69,
      "rang": 48451,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "ecartee"
     }
    },
@@ -1897,7 +1898,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 40,
+     "n_lignes_cascade": 41,
      "proprietaire_moral_siren": null,
      "q_score": 43,
      "score_v": {
@@ -1922,7 +1923,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 33,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "a_creuser"
     }
    },
@@ -2007,7 +2008,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 39,
+     "n_lignes_cascade": 40,
      "proprietaire_moral_siren": null,
      "q_score": 55,
      "score_v": {
@@ -2032,7 +2033,7 @@
      "mult_base": 18.02,
      "percentile": 100.0,
      "rang": 22,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "chaude"
     }
    },
@@ -2121,7 +2122,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 39,
+     "n_lignes_cascade": 40,
      "proprietaire_moral_siren": "310863378",
      "q_score": 71,
      "score_v": {
@@ -2146,7 +2147,7 @@
      "mult_base": 0.91,
      "percentile": 46.03,
      "rang": 231134,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "reserve_fonciere"
     }
    },
@@ -2239,7 +2240,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 30,
+     "n_lignes_cascade": 31,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "score_v": {
@@ -2264,7 +2265,7 @@
      "mult_base": 1.16,
      "percentile": 71.87,
      "rang": 120454,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "ecartee"
     }
    },
@@ -2345,7 +2346,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 30,
+     "n_lignes_cascade": 31,
      "proprietaire_moral_siren": "249740077",
      "q_score": 50,
      "score_v": {
@@ -2358,7 +2359,7 @@
       "mult_base": 0.91,
       "percentile": 46.37,
       "rang": 229671,
-      "tier": "reserve_fonciere"
+      "tier": "ecartee"
      },
      "statut": "ecartee",
      "surface_m2": 3562,
@@ -2370,8 +2371,8 @@
      "mult_base": 0.91,
      "percentile": 46.37,
      "rang": 229671,
-     "run_id": "m36-l2f-2026-2026-07-14",
-     "tier": "reserve_fonciere"
+     "run_id": "q_v6_m8",
+     "tier": "ecartee"
     }
    },
    "coherence_db_api": [],
@@ -2424,7 +2425,7 @@
      "mult_base": 0.91,
      "percentile": 46.4,
      "rang": 229671,
-     "tier": "reserve_fonciere"
+     "tier": "ecartee"
     },
     "section": "CR",
     "solaire": {
@@ -2461,7 +2462,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": "452038805",
      "q_score": 41,
      "score_v": {
@@ -2486,7 +2487,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 9,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "brulante"
     }
    },
@@ -2578,7 +2579,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 30,
+     "n_lignes_cascade": 31,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "score_v": {
@@ -2603,7 +2604,7 @@
      "mult_base": 0.81,
      "percentile": 32.29,
      "rang": 289961,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "ecartee"
     }
    },
@@ -2688,7 +2689,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": "444841241",
      "q_score": 44,
      "score_v": {
@@ -2713,7 +2714,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 35,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "chaude"
     }
    },
@@ -2809,7 +2810,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 36,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "score_v": {
@@ -2834,7 +2835,7 @@
      "mult_base": 0.51,
      "percentile": 5.05,
      "rang": 406606,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "ecartee"
     }
    },
@@ -2907,7 +2908,7 @@
     "veille_succession": null,
     "vue_mer": null,
     "zonage_plu": {
-     "detail": "Zonage mixte — constructibilité limitée à l'emprise U/AU (« A » inconstructible sur ~88 % ; emprise clippée en pré-faisabilité).",
+     "detail": "Zonage mixte — constructibilité limitée à l'emprise U/AU (« A » inconstructible sur ~44 % ; emprise clippée en pré-faisabilité).",
      "recouvrement_pct": null,
      "zone": null
     }
@@ -2924,7 +2925,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 38,
+     "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
      "q_score": 63,
      "score_v": {
@@ -2949,7 +2950,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 17,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "brulante"
     }
    },
@@ -3038,7 +3039,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 31,
      "score_v": {
@@ -3063,7 +3064,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 56,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "chaude"
     }
    },
@@ -3148,7 +3149,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 31,
+     "n_lignes_cascade": 32,
      "proprietaire_moral_siren": "U23640598",
      "q_score": 50,
      "score_v": {
@@ -3173,7 +3174,7 @@
      "mult_base": 2.11,
      "percentile": 97.7,
      "rang": 9849,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "ecartee"
     }
    },
@@ -3263,7 +3264,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 35,
+     "n_lignes_cascade": 37,
      "proprietaire_moral_siren": "807931308",
      "q_score": 50,
      "score_v": {
@@ -3280,7 +3281,7 @@
      },
      "statut": "ecartee",
      "surface_m2": 355,
-     "zonage_detail": "Zone N PLU — inconstructible (recouvrement 95 %)."
+     "zonage_detail": "Zone PLU « AUc » (urbaine / à urbaniser — constructible sur ~53 % de la parcelle)."
     },
     "score_v2": {
      "badge_veille_succession": false,
@@ -3288,7 +3289,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 19,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "ecartee"
     }
    },
@@ -3312,8 +3313,7 @@
     "dvf": null,
     "etage0": true,
     "etage0_motifs": [
-     "risques",
-     "zonage_plu_gpu"
+     "risques"
     ],
     "matrice_statut": "ecartee",
     "numero": "1341",
@@ -3375,9 +3375,9 @@
      "vue": "oui"
     },
     "zonage_plu": {
-     "detail": "Zone N PLU — inconstructible (recouvrement 95 %).",
-     "recouvrement_pct": 95,
-     "zone": "N"
+     "detail": "Zonage mixte — constructibilité limitée à l'emprise U/AU (« N » inconstructible sur ~47 % ; emprise clippée en pré-faisabilité).",
+     "recouvrement_pct": null,
+     "zone": null
     }
    }
   },
@@ -3392,7 +3392,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 39,
+     "n_lignes_cascade": 40,
      "proprietaire_moral_siren": null,
      "q_score": 44,
      "score_v": {
@@ -3417,7 +3417,7 @@
      "mult_base": 63.97,
      "percentile": 100.0,
      "rang": 1,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "brulante"
     }
    },
@@ -3511,7 +3511,7 @@
      "etage0": true,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 31,
+     "n_lignes_cascade": 32,
      "proprietaire_moral_siren": null,
      "q_score": 50,
      "score_v": {
@@ -3536,7 +3536,7 @@
      "mult_base": 1.16,
      "percentile": 74.39,
      "rang": 109674,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "ecartee"
     }
    },
@@ -3620,7 +3620,7 @@
      "etage0": false,
      "evenement": null,
      "n_coproprietes": 0,
-     "n_lignes_cascade": 37,
+     "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 58,
      "score_v": {
@@ -3645,7 +3645,7 @@
      "mult_base": 0.99,
      "percentile": 64.79,
      "rang": 150799,
-     "run_id": "m36-l2f-2026-2026-07-14",
+     "run_id": "q_v6_m8",
      "tier": "a_creuser"
     }
    },

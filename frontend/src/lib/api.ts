@@ -8,10 +8,10 @@ export interface ParcelFeatureCollection {
 import { useApp, type Filters } from '../store/useApp'
 import { vSignalCodes } from './filters'
 
-// SOURCE DE VÉRITÉ : run de référence q_v5_m6b (bascule M6 2b 14/07/2026 — A-02 doublons
-// PLU + A-03 zones e Saint-Paul ; précédents : q_v4_m6a 13/07, q_v3_datagap 10/07). Doit
-// rester aligné sur Q_A_RUN_LABEL. JAMAIS parcel_evaluations. Cf. « NOTE SOURCE DE VÉRITÉ ».
-export const SOURCE = 'q_v5_m6b'
+// SOURCE DE VÉRITÉ : run de référence q_v6_m8 (BASCULE M8 15/07/2026 — étage 0 q_v5_m6b reflété
+// dans le tier P, q_v2 éradiqué + fix mapping ER ; précédents : q_v5_m6b 14/07, q_v4_m6a 13/07,
+// q_v3_datagap 10/07). Doit rester aligné sur Q_A_RUN_LABEL. JAMAIS parcel_evaluations.
+export const SOURCE = 'q_v6_m8'
 /** Commune active — depuis le store (null = « Toute l'île »). L'ancienne constante Saint-Paul
  *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
 export const commune = () => useApp.getState().commune

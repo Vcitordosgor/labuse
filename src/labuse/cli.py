@@ -1496,13 +1496,16 @@ if __name__ == "__main__":
 
 
 @app.command("detect-events")
-def detect_events_cmd(run_from: str = "q_v2", run_to: str = "q_v2_demo") -> None:
-    """Diffe deux runs de scoring → événements (bascules, BODACC, permis proches). Cronable."""
+def detect_events_cmd(run_from: str | None = None, run_to: str = "q_v2_demo") -> None:
+    """Diffe deux runs de scoring → événements (bascules, BODACC, permis proches). Cronable.
+    Défaut run_from = run servi (Q_A_RUN_LABEL), plus « q_v2 » codé en dur (bascule M8)."""
     from sqlalchemy.orm import Session
 
     from .api.events import detect_events, ensure_tables
+    from .api.tiles import RUN
     from .db import engine
 
+    run_from = run_from or RUN
     ensure_tables(engine())
     with Session(engine()) as s:
         out = detect_events(s, run_from, run_to, demo=run_to.endswith("_demo"))
