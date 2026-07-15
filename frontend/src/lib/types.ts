@@ -111,6 +111,10 @@ export interface PipelineEntry {
   parcel: { commune: string; section: string; surface_m2: number | null }
   premium: { statut: Statut; q_score: number; a_score: number; completeness_score: number;
              etage0?: boolean; tier_v2?: string | null; rang_v2?: number | null } | null
+  // Phase 2 : d'où vient la piste (projet) + contact proprio (PRIVACY : PM publique OU particulier masqué)
+  projet?: { id: number; nom: string } | null
+  proprietaire_public?: { type: 'personne_morale'; denomination: string; siren: string | null; groupe: string | null }
+    | { type: 'particulier' } | null
 }
 
 export interface SourceInfo {

@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import {
-  getCarteDecision, getParcoursEtat, proposerProjet, setStatutParcelle,
+  ajouterParcelle, chercherPlus, getCarteDecision, getParcoursEtat, proposerProjet, setStatutParcelle,
   type ParcoursEtat, type ParcoursItem, type StatutParcelle,
 } from '../../lib/api'
 import { useApp } from '../../store/useApp'
@@ -13,11 +13,27 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Nu
  *  les proposées, flyTo centre la courante), une carte de décision flotte par-dessus. Écarter est
  *  RÉVERSIBLE (pile écartées récupérable). Lot 3 (tri) + Lot 4 (sections) du parcours projet. */
 export function ParcoursTinder() {
-  const { parcours, setView, setModuleMap, setFlyTo, select } = useApp()
+  const { parcours, setView, setModuleMap, setFlyTo, select, selectedIdu } = useApp()
   const qc = useQueryClient()
   const pid = parcours?.id ?? 0
   const proposed = useRef(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
+  const [plusOpen, setPlusOpen] = useState(false)
+  const [iduInput, setIduInput] = useState('')
+  const [plusMsg, setPlusMsg] = useState('')
+  // clic-carte : une parcelle cliquée sur la carte pré-remplit le champ IDU d'ajout manuel
+  useEffect(() => { if (plusOpen && selectedIdu) setIduInput(selectedIdu) }, [plusOpen, selectedIdu])
+  const refreshDeck = () => qc.invalidateQueries({ queryKey: ['parcours', pid] })
+  const elargir = useMutation({
+    // limit plus profond que la proposition initiale (24) → atteint de NOUVELLES parcelles au-delà du top
+    mutationFn: () => chercherPlus(pid, { limit: 48, ile: true }),
+    onSuccess: (r) => { setPlusMsg(r.n_added > 0 ? `+${r.n_added} parcelle(s) ajoutée(s) (élargi à l'île)` : 'aucune nouvelle parcelle (déjà toutes proposées)'); refreshDeck() },
+  })
+  const ajouter = useMutation({
+    mutationFn: (idu: string) => ajouterParcelle(pid, idu),
+    onSuccess: (r) => { setPlusMsg(r.already ? `${r.idu} est déjà dans le projet` : `${r.idu} ajoutée au tri`); setIduInput(''); refreshDeck() },
+    onError: () => setPlusMsg('IDU inconnu — vérifiez la saisie'),
+  })
 
   // À l'entrée : (re)proposer les parcelles du jour (idempotent, préserve les décisions) puis lire l'état.
   const etatQ = useQuery({ queryKey: ['parcours', pid], queryFn: () => getParcoursEtat(pid), enabled: pid > 0 })
@@ -52,7 +68,11 @@ export function ParcoursTinder() {
       return { prev }
     },
     onError: (_e, _v, ctx) => { if (ctx?.prev) qc.setQueryData(['parcours', pid], ctx.prev) },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['parcours', pid] }),
+    // Phase 2 : retenir/retirer change AUSSI le CRM (auto-CRM) → resynchroniser le Kanban
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['parcours', pid] })
+      qc.invalidateQueries({ queryKey: ['pipeline'] })
+    },
   })
 
   if (!parcours) return null
@@ -73,6 +93,10 @@ export function ParcoursTinder() {
             {decided} / {total} triées · <span className="text-mint">{c?.retenue ?? 0} retenues</span>
           </span>
         </div>
+        <button data-parcours-plus onClick={() => { setPlusOpen((o) => !o); setPlusMsg('') }}
+          className={`rounded-md border px-2.5 py-1 text-[11px] ${plusOpen ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+          ＋ Chercher plus
+        </button>
         <button data-parcours-sections onClick={() => setSectionsOpen((o) => !o)}
           className={`rounded-md border px-2.5 py-1 text-[11px] ${sectionsOpen ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
           Retenues ({c?.retenue ?? 0}) · Écartées ({c?.ecartee ?? 0})
@@ -81,6 +105,29 @@ export function ParcoursTinder() {
           className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-mut hover:border-mint hover:text-txt"
           title="Revenir aux projets (l'état est gardé)">✕ Quitter</button>
       </div>
+
+      {plusOpen && (
+        <div data-parcours-plus-panel className="pointer-events-auto absolute right-3 top-14 z-40 w-[300px] rounded-xl border border-line-2 bg-surface-2 p-3 shadow-2xl">
+          <p className="font-mono text-[10px] tracking-widest text-txt-dim">CHERCHER PLUS DE PARCELLES</p>
+          <button data-plus-elargir onClick={() => elargir.mutate()} disabled={elargir.isPending}
+            className="mt-2 w-full rounded-md border border-line-2 py-1.5 text-[11px] text-txt hover:border-mint hover:text-txt-hi disabled:opacity-50">
+            {elargir.isPending ? '…' : 'Élargir la recherche à toute l’île'}
+          </button>
+          <div className="mt-3 border-t border-line-2 pt-3">
+            <p className="text-[10.5px] text-txt-dim">Ajouter une parcelle précise (IDU, ou cliquez-la sur la carte) :</p>
+            <div className="mt-1.5 flex gap-1.5">
+              <input data-plus-idu value={iduInput} onChange={(e) => setIduInput(e.target.value.trim())}
+                placeholder="97415000CW0658"
+                className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
+              <button data-plus-ajouter onClick={() => iduInput && ajouter.mutate(iduInput)} disabled={!iduInput || ajouter.isPending}
+                className="shrink-0 rounded-md bg-mint px-2.5 py-1 text-[11px] font-medium text-[#06130C] hover:brightness-110 disabled:opacity-40">
+                Ajouter
+              </button>
+            </div>
+          </div>
+          {plusMsg && <p data-plus-msg className="mt-2 text-[10.5px] text-mint">{plusMsg}</p>}
+        </div>
+      )}
 
       <div className="flex min-h-0 flex-1">
         <div className="min-w-0 flex-1" /> {/* la carte reste visible/agissable ici */}
