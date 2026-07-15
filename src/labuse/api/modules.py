@@ -493,21 +493,43 @@ def fantome(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
 
 # ───────────────────────── M06 — MODE BAILLEUR ─────────────────────────
 
+def _sru_bloc(db: Session, commune: str) -> dict | None:
+    """Contexte SRU d'une commune (données réelles commune_contexte_sru) : statut + déficit LLS
+    DÉRIVÉ des chiffres sourcés (nb_lls, taux, objectif) — jamais inventé. None si pas de donnée."""
+    r = db.execute(text(
+        "SELECT statut, taux_lls, objectif_pct, prelevement_eur, millesime, "
+        "(detail->>'nb_lls')::float AS nb_lls FROM commune_contexte_sru WHERE commune = :c"),
+        {"c": commune}).mappings().first()
+    if not r:
+        return None
+    nb_lls, taux, obj = r["nb_lls"], (float(r["taux_lls"]) if r["taux_lls"] is not None else None), \
+        (float(r["objectif_pct"]) if r["objectif_pct"] is not None else None)
+    deficit = None
+    if nb_lls and taux and obj and obj > taux:
+        # unités LLS manquantes pour atteindre l'objectif : nb_lls × (objectif − taux) / taux
+        deficit = round(float(nb_lls) * (obj - taux) / taux)
+    return {"statut": r["statut"], "taux_lls": taux, "objectif_pct": obj,
+            "deficit_logements": deficit,
+            "prelevement_eur": float(r["prelevement_eur"]) if r["prelevement_eur"] is not None else None,
+            "millesime": r["millesime"]}
+
+
 @router.get("/bailleur")
 def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
     rows = db.execute(text("""
-        SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut,
+        SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut,
                d.q_score, d.a_score, r.sdp_residuelle_m2,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
-               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
+               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0, cs.statut AS sru_statut,
                ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         JOIN spatial_layers q ON q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975)
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+        LEFT JOIN commune_contexte_sru cs ON cs.commune = p.commune
         WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
-        ORDER BY COALESCE(r.sdp_residuelle_m2, 0) DESC LIMIT 500"""),
+        ORDER BY (cs.statut = 'carencee') DESC NULLS LAST, COALESCE(r.sdp_residuelle_m2, 0) DESC LIMIT 500"""),
         {"c": commune, "run": RUN, "v2run": _v2run(db)}).mappings().all()
     true_total = len(rows) if len(rows) < 500 else int(db.execute(text(
         """SELECT count(*) FROM parcels p
@@ -517,10 +539,13 @@ def bailleur(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
              AND EXISTS (SELECT 1 FROM spatial_layers q WHERE q.kind = 'qpv'
                          AND ST_Intersects(p.geom_2975, q.geom_2975))"""),
         {"c": commune, "run": RUN}).scalar() or 0)
-    return {"total": true_total, "affiches": len(rows),
+    sru = _sru_bloc(db, commune) if commune else None
+    n_carencees = len({r["commune"] for r in rows if r["sru_statut"] == "carencee"}) if not commune else None
+    return {"total": true_total, "affiches": len(rows), "sru": sru, "n_communes_carencees": n_carencees,
             "lecture_lls": ("QPV : TVA 2,1 % (au lieu de 8,5 % DOM), abattement TFPB 30 %, "
                             "éligibilité LLS/LLTS renforcée — bilan bailleur à instruire au cas par cas."),
-            "items": [{**{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "a_score")},
+            "items": [{**{k: r[k] for k in ("idu", "commune", "surface_m2", "statut", "q_score", "a_score")},
+                       "carencee": r["sru_statut"] == "carencee",
                        "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
                        "sdp": r["sdp_residuelle_m2"], "geom": json.loads(r["g"])} for r in rows]}
 
