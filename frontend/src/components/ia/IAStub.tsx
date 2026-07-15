@@ -49,7 +49,10 @@ export function IAStub() {
           return
         }
         // item 2 (UX V1) : l'explication + le drapeau stub VOYAGENT jusqu'à la restitution
-        if (d.filters) apply(d.filters, undefined, { explanation: d.explanation, stub: d.stub })
+        // B1 : les critères non appliqués voyagent avec la restitution (on quitte la vue IA
+        // dès que des filtres s'appliquent → la bannière doit s'afficher LÀ où l'utilisateur atterrit).
+        if (d.filters) apply(d.filters, undefined,
+          { explanation: d.explanation, stub: d.stub, criteres_non_appliques: d.criteres_non_appliques })
       },
     })
   }

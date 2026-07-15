@@ -65,6 +65,9 @@ export interface IaRestitution {
   // ne prend JAMAIS un repli mots-clés pour une vraie traduction (badge « mode mots-clés »).
   explanation?: string | null
   stub?: boolean
+  // M11 B1 : critères compris mais hors des 14 champs — voyagent jusqu'ici (on quitte la vue IA),
+  // affichés en bannière ⚠ sur la restitution : jamais avalés, jamais confondus avec un résultat servi.
+  criteres_non_appliques?: string[]
   // Ajout C (UX V1) : à 0 résultat, proposition de relâchement — le critère numérique le plus
   // serré est retiré et la recherche relancée d'un clic (jamais un zéro sec).
   relance?: { label: string; raw: Record<string, unknown> } | null
