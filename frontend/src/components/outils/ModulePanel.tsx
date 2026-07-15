@@ -663,11 +663,13 @@ export function ModulePanel() {
         {/* M6.1 item 3 : retour direct au menu Outils (fil d'Ariane) — plus besoin de
             repasser par le rail pour changer d'outil. */}
         <div className="flex items-center justify-between gap-2">
-          <nav data-module-breadcrumb className="flex min-w-0 items-center gap-1.5 font-mono text-[10px] tracking-widest">
+          <nav data-module-breadcrumb className="flex min-w-0 items-center gap-2 font-mono text-[10px] tracking-widest">
+            {/* Fix cosmétique (point 27) : flèche retour PLUS VISIBLE — pastille bordée mauve, plus
+                grosse, zone de clic élargie + libellé « ← Outils » clair (avant : 10 px inline, on la cherchait). */}
             <button data-module-retour onClick={toggleOutils}
-              className="shrink-0 rounded px-1 py-0.5 -mx-1 hover:bg-[#241c33]"
+              className="shrink-0 flex items-center gap-1 rounded-md border border-[#4a3d6b] bg-[#1d1630] px-2.5 py-1 text-[11px] font-semibold tracking-wide hover:border-[#B497F0] hover:bg-[#241c33]"
               style={{ color: VIOLET }} title="Revenir au menu Outils">
-              ← OUTILS
+              ← Outils
             </button>
             <span className="text-txt-dim">›</span>
             <span className="truncate text-txt-mut">{def.label.toUpperCase()}</span>
