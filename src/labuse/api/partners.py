@@ -130,6 +130,58 @@ def share_list(idu: str, db: Session = Depends(get_db)) -> list[dict]:
            WHERE idu = :i ORDER BY created_at DESC"""), {"i": idu}).mappings()]
 
 
+# Points clés = FORMATAGE déterministe des facteurs de scoring (aucune IA). Titre de pitch par
+# couche ; le `detail` déjà tracé donne les spécifiques. Forces = poids > 0 ; attentions = poids < 0
+# (les pénalités RÉELLES apparaissent — honnêteté : ex. residuel_socle « hors cible collectif »).
+_FORCE_TITLE = {
+    "zonage_plu_gpu": "Terrain constructible", "sitadel": "Dynamique de construction active",
+    "dvf": "Marché porteur", "amenites": "Équipements à proximité", "acces": "Accès voirie",
+    "viabilisation": "Réseaux au contact", "residuel_socle": "Potentiel de densification",
+    "vue_mer": "Vue mer dégagée", "assemblage": "Regroupement possible",
+}
+_ATTENTION_TITLE = {
+    "residuel_socle": "SDP résiduelle limitée", "parc_national": "Zonage protégé (Parc national)",
+    "risques": "Aléa naturel", "abf": "Périmètre patrimonial (ABF)", "sol_pollue": "Sol à vérifier",
+    "icpe": "Installation classée à proximité", "cinquante_pas": "Bande littorale (50 pas)",
+    "safer": "Vocation agricole (SAFER)", "foret_publique": "Forêt publique / régime forestier",
+}
+
+
+def _points_cles(lines: list) -> tuple[list, list]:
+    """Dérive (forces, attentions) des facteurs — pur formatage, jamais d'invention."""
+    forces, attentions = [], []
+    for ln in lines:
+        w = ln.get("weight") or 0
+        layer = ln.get("layer") or ""
+        detail = (ln.get("detail") or "").strip()
+        if not detail:
+            continue
+        if w > 0:
+            forces.append((w, _FORCE_TITLE.get(layer, layer.replace("_", " ").capitalize()), detail))
+        elif w < 0:
+            attentions.append((w, _ATTENTION_TITLE.get(layer, layer.replace("_", " ").capitalize()), detail))
+    forces.sort(key=lambda x: -x[0])
+    attentions.sort(key=lambda x: x[0])            # la pénalité la plus forte d'abord
+    return forces[:5], attentions[:4]
+
+
+def _points_cles_html(lines: list) -> str:
+    forces, attentions = _points_cles(lines)
+    if not forces and not attentions:
+        return ""
+
+    def row(icon: str, color: str, title: str, detail: str) -> str:
+        return (f"<div style='display:flex;gap:8px;padding:5px 0'>"
+                f"<span style='color:{color};font-size:12px;line-height:1.4'>{icon}</span>"
+                f"<div style='min-width:0'><b style='font:600 12px sans-serif;color:#ECF5EF'>{title}</b>"
+                f"<span style='font:12px sans-serif;color:#8FA69A'> — {detail}</span></div></div>")
+    fh = "".join(row("✓", "#5CE6A1", t, d) for _, t, d in forces)
+    ah = "".join(row("⚠", "#E8B44C", t, d) for _, t, d in attentions)
+    return ("<div style='margin:16px 0;background:#0d1310;border:1px solid #1E2A23;border-radius:10px;padding:12px 14px'>"
+            "<p style='font:10px monospace;letter-spacing:1.5px;color:#5C7268;margin:0 0 4px'>POINTS CLÉS</p>"
+            + fh + ah + "</div>")
+
+
 def _pack_photo_html(m: dict, target_w: int = 596) -> str:
     """Photo aérienne STATIQUE (tuiles ortho IGN positionnées + contour parcelle en SVG), mise à
     l'échelle pour la largeur du pack. data-URI → imprimable, aucune carte interactive."""
@@ -173,6 +225,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
             photo = _pack_photo_html(m)
     except Exception:  # noqa: BLE001 — la photo est un plus, jamais un bloqueur
         photo = ""
+    points_cles = _points_cles_html(f["lines"])   # pitch dérivé des facteurs (forces + attentions)
     horodatage = datetime.now().strftime("%d/%m/%Y à %H:%M")
     cree = link["created_at"].strftime("%d/%m/%Y à %H:%M")
     lignes = "".join(
@@ -215,6 +268,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
       <div style="font:700 22px sans-serif;color:#5CE6A1">{f['completeness_score']}</div>
       <div style="font:9px monospace;color:#5C7268">COMPLÉTUDE %</div></div>
   </div>
+  {points_cles}
   {lignes}
   <p style="margin-top:18px;font:10px sans-serif;color:#5C7268;line-height:1.5">Estimations indicatives
   issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité.
