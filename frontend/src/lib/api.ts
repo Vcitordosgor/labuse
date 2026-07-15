@@ -63,6 +63,8 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.flagsExclus.length ? { flags_exclus: f.flagsExclus.join(',') } : {}),
   ...(f.communes.length ? { communes: f.communes.join(',') } : {}),
   ...(f.vSignals.length ? { v_signal: vSignalCodes(f.vSignals).join(',') } : {}),
+  ...(f.personneMorale ? { personne_morale: 'true' } : {}),        // M11 B2 : propriétaire personne morale
+  ...(f.zonagePlu.length ? { zonage: f.zonagePlu.join(',') } : {}), // M11 B2 : zonage PLU (familles U/AU/A/N)
 })
 
 /** Tris de la liste (M5.1) : rang P par défaut ; ×N, surface, commune en options. */
@@ -180,7 +182,10 @@ export const modDueDiligence = (refs: string) =>
 // ── Copilote IA (Vague 2) — jamais d'accès base, filtres validés par schéma côté API ──
 export const iaStatus = () => j<{ provider: string; raison: string | null }>('/ia/status')
 export const iaSearch = (body: { text: string; history?: { role: string; content: string }[] }) =>
-  j<{ stub: boolean; filters?: Record<string, unknown>; cadrage?: Record<string, unknown>; explanation?: string; out_of_scope?: string; criteres_non_appliques?: string[] }>('/ia/search', {
+  j<{ stub: boolean; filters?: Record<string, unknown>; cadrage?: Record<string, unknown>; explanation?: string; out_of_scope?: string; criteres_non_appliques?: string[];
+      // M11 B2 : réponse AGRÉGÉE (compte/classement) — chiffre SQL-sourcé, pas une liste de parcelles
+      aggregate?: boolean; texte?: string; sources?: string[]; provenance?: Record<string, string>; rejected?: boolean;
+      data?: { kind: 'count' | 'superlative' | 'distribution'; commune?: string; tier?: string; nombre?: number; classement?: { commune: string; nombre: number }[] } }>('/ia/search', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const iaSynthese = (idu: string) =>
   j<{ stub: boolean; texte: string; mention: string }>(`/ia/synthese/${idu}`, { method: 'POST' })

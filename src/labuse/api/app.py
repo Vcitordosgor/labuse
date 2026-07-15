@@ -573,7 +573,8 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 communes: str | None = None, flags_exclus: str | None = None,
                 v_bands: str | None = None, v_signal: str | None = None,
                 brulantes: bool = False, tiers: str | None = None,
-                hors_copro: bool = False, veille: bool = False) -> tuple[str, dict]:
+                hors_copro: bool = False, veille: bool = False,
+                personne_morale: bool = False, zonage: str | None = None) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -647,6 +648,17 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
         params["f_vsig"] = [c.strip() for c in v_signal.split(",") if c.strip()]
     if brulantes:  # deprecated (v1.3) : « brûlante » = le tier v2, un seul mot dans l'app (M5.1)
         conds.append(f"(s2.tier = 'brulante' AND NOT {_ETAGE0_SQL})")
+    # ── M11 B2 : propriétaire PERSONNE MORALE (DGFiP open-data — SCI/société/commune/HLM/État…).
+    # PRIVACY : parcelle_personne_morale ne contient QUE des personnes morales (données publiques :
+    # SIREN, dénomination, forme juridique) ; une parcelle ABSENTE de la table = personne physique
+    # (particulier) → JAMAIS exposée, jamais nommée. Le filtre est un simple test de présence.
+    if personne_morale:
+        conds.append("EXISTS (SELECT 1 FROM parcelle_personne_morale pm0 WHERE pm0.idu = p.idu)")
+    # ── M11 B2 : ZONAGE PLU par famille (U/AU/A/N) — parcel_zone_plu, granularité fiable inter-communes.
+    if zonage:
+        conds.append("EXISTS (SELECT 1 FROM parcel_zone_plu z0 WHERE z0.idu = p.idu"
+                     " AND z0.zone_fam = ANY(:f_zonage))")
+        params["f_zonage"] = [z.strip().upper() for z in zonage.split(",") if z.strip()]
     return (" AND " + " AND ".join(conds)) if conds else "", params
 
 
@@ -662,6 +674,7 @@ def list_parcels(commune: str | None = None,
                  v_bands: str | None = None, v_signal: str | None = None,
                  brulantes: bool = False, tiers: str | None = None,
                  hors_copro: bool = False, veille: bool = False,
+                 personne_morale: bool = False, zonage: str | None = None,
                  sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
                  db: Session = Depends(get_db)) -> list[dict]:
     """Liste PAGINÉE (commune OU île entière) avec le dernier verdict.
@@ -678,7 +691,8 @@ def list_parcels(commune: str | None = None,
     if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
-                                          v_bands, v_signal, brulantes, tiers, hors_copro, veille)
+                                          v_bands, v_signal, brulantes, tiers, hors_copro, veille,
+                                          personne_morale, zonage)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
                           extra_where=extra, extra_params=extra_params, sort=sort)
     rows = db.execute(text(
@@ -712,6 +726,7 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                        v_bands: str | None = None, v_signal: str | None = None,
                        brulantes: bool = False, tiers: str | None = None,
                        hors_copro: bool = False, veille: bool = False,
+                       personne_morale: bool = False, zonage: str | None = None,
                        sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
                        limit: int = Query(1000, ge=1, le=5000),
                        db: Session = Depends(get_db)) -> Response:
@@ -937,6 +952,7 @@ def stats(commune: str | None = None, source: str | None = None,
           v_bands: str | None = None, v_signal: str | None = None,
           brulantes: bool = False, tiers: str | None = None,
           hors_copro: bool = False, veille: bool = False, legacy: bool = False,
+          personne_morale: bool = False, zonage: str | None = None,
           db: Session = Depends(get_db)) -> dict:
     """Cartouches du dashboard : volumétrie + TIERS v2 effectifs (M5.1 — le run v2 est la
     source ; l'étage 0 du run servi prime). `legacy=1` (deprecated) ajoute la ventilation
@@ -945,10 +961,12 @@ def stats(commune: str | None = None, source: str | None = None,
     if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
-                                          v_bands, v_signal, brulantes, tiers, hors_copro, veille)
+                                          v_bands, v_signal, brulantes, tiers, hors_copro, veille,
+                                          personne_morale, zonage)
         key = ("stats_qv2", source, commune, statuts, score_min, surface_min, surface_max,
                sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
-               v_bands, v_signal, brulantes, tiers, hors_copro, veille, legacy)
+               v_bands, v_signal, brulantes, tiers, hors_copro, veille, legacy,
+               personne_morale, zonage)
         return _mem_cached(key, 30.0, lambda: _q_v2_stats(
             db, commune, run_label=source, extra_where=extra, extra_params=extra_params,
             legacy=legacy))
