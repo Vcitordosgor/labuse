@@ -1076,11 +1076,18 @@ def _score_v2_run_id(db: Session) -> str | None:
     Correctif M5 (verdict d'en-tête) : quand un run v2 existe, le tier v2 pilote le
     verdict affiché partout (fiche, listes, carte) ; l'étage 0 du run SERVI prime
     (`etage0`, calculé sur d.status — le pipeline v2 peut lire un autre run cascade).
-    None → LEFT JOIN sur run_id NULL → colonnes NULL → repli legacy silencieux."""
+    None → LEFT JOIN sur run_id NULL → colonnes NULL → repli legacy silencieux.
+
+    ÉPINGLÉ AU LABEL (fix pré-lancement) : le run v2 servi est celui de `Q_A_RUN_LABEL`
+    (source unique de vérité du run servi), PAS « le dernier run v2 par timestamp ». Un run
+    v2 futur sous un autre label ne devient donc JAMAIS servi tant que Q_A_RUN_LABEL n'a pas
+    été changé (= décision explicite, comme une bascule) — ferme la bombe latente du diagnostic.
+    Si le label n'est pas (encore) présent en table → None → repli legacy."""
     if not db.execute(text("SELECT to_regclass('p_score_v2_runs')")).scalar():
         return None
     return db.execute(text(
-        "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).scalar()
+        "SELECT run_id FROM p_score_v2_runs WHERE run_id = :label LIMIT 1"),
+        {"label": Q_A_RUN_LABEL}).scalar()
 
 
 def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str = Q_A_RUN_LABEL) -> dict:
