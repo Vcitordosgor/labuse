@@ -167,8 +167,9 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
     identifié par {link['created_by']} le {cree} · consulté le {horodatage} · lien traçable
   </div>
   {ev}
-  <h1 style="font:600 20px monospace;color:#ECF5EF;margin:16px 0 2px">{f['idu']}</h1>
-  <p style="color:#8FA69A;font-size:12px;margin:0">{f['surface_m2'] or '?'} m² · {f['commune']}</p>
+  <h1 style="font:600 18px monospace;color:#8FA69A;margin:16px 0 2px">{f['idu']}</h1>
+  {f'''<p style="font:600 17px sans-serif;color:#ECF5EF;margin:2px 0 0">{f["adresse"]}</p>''' if f.get("adresse") else ""}
+  <p style="color:#8FA69A;font-size:12px;margin:3px 0 0">{f['surface_m2'] or '?'} m² · {f['commune']}</p>
   <div style="display:flex;gap:10px;margin:14px 0">
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
       <div style="font:700 22px sans-serif;color:#5CE6A1">{f['q_score']}</div>
