@@ -201,6 +201,39 @@ def _pack_photo_html(m: dict, target_w: int = 596) -> str:
             f'{m["attribution"]} · vue aérienne · contour cadastral</div>')
 
 
+# Variante IMPRESSION / PDF en thème CLAIR — l'écran reste en charte sombre, mais un apporteur
+# imprime/partage ce document à un promoteur : le sombre bave sur papier et fait cheap. On n'inverse
+# QU'À l'impression, sans dupliquer le HTML : sélecteurs d'attribut sur les hex des styles inline
+# (une règle @media print `!important` prime sur un style inline non-important). Zéro impact écran.
+_PACK_PRINT_CSS = """<style>
+@media print {
+  @page { margin: 14mm; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* fonds sombres → clairs */
+  [style*="#060A08"] { background: #ffffff !important; }
+  [style*="#171221"] { background: #f4f1fb !important; }
+  [style*="#3a1614"] { background: #fdecea !important; }
+  [style*="#111814"] { background: #f4f6f5 !important; }
+  [style*="#0d1310"] { background: #f6f8f7 !important; }
+  /* bordures sombres → claires */
+  [style*="#2a2138"] { border-color: #e4e0f0 !important; }
+  [style*="#1E2A23"] { border-color: #e6e9e7 !important; }
+  /* textes neutres clairs → sombres sur blanc */
+  [style*="#ECF5EF"] { color: #121814 !important; }
+  [style*="#C9DCD1"] { color: #2a322d !important; }
+  [style*="#8FA69A"] { color: #55635b !important; }
+  [style*="#5C7268"] { color: #6b746f !important; }
+  /* accents assombris pour rester lisibles sur papier (mais reconnaissables) */
+  [style*="#5CE6A1"] { color: #0c8a4f !important; }
+  [style*="#4ADE96"] { color: #0c8a4f !important; }
+  [style*="#B497F0"] { color: #5b3fa6 !important; }
+  [style*="#E8695A"] { color: #c0392b !important; }
+  [style*="#E8B44C"] { color: #9a6510 !important; }
+  svg[fill] { fill: #0c8a4f !important; }   /* logo LA BUSE (fill en attribut) */
+}
+</style>"""
+
+
 @router.get("/p/{token}", response_class=HTMLResponse)
 def share_public(token: str, db: Session = Depends(get_db)) -> str:
     """Page publique MINIMALE, lecture seule, filigranée + horodatée, compteur de consultations."""
@@ -241,7 +274,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
           f"color:#E8695A;font:12px sans-serif'>● ÉVÉNEMENT — {f['evenement_detail']}</div>"
           if f.get("evenement") == "rouge" else "")
     return f"""<!doctype html><html lang=fr><head><meta charset=utf-8><meta name=robots content=noindex>
-<title>LABUSE — {f['idu']} (lecture seule)</title></head>
+<title>LABUSE — {f['idu']} (lecture seule)</title>{_PACK_PRINT_CSS}</head>
 <body style="margin:0;background:#060A08;font-family:sans-serif">
 <div style="max-width:640px;margin:0 auto;padding:28px 20px">
   <div style="display:flex;justify-content:space-between;align-items:baseline">
