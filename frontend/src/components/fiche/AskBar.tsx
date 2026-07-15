@@ -51,7 +51,9 @@ const SRC_LABEL: Record<string, string> = {
   viabilisation_cout_raccordement: 'coût raccordement (M-VIA)',
   risques: 'risques (PPR/Géorisques)', sdp_residuelle_m2: 'potentiel de transformation',
   potentiel_niveau: 'potentiel de transformation', faisabilite: 'moteur faisabilité',
-  dvf_prix_m2_bati: 'prix DVF', motif_exclusion: 'cascade (motif)', surface_m2: 'cadastre',
+  dvf_prix_m2_bati: 'prix DVF', dvf_derniere_mutation: 'DVF (dernière vente)',
+  motif_exclusion: 'cascade (motif)', surface_m2: 'cadastre',
+  amenites: 'équipements à proximité (OSM)',
 }
 
 function ProvChip({ src, prov, href }: { src: string; prov?: Provenance; href?: string }) {
@@ -67,7 +69,7 @@ function ProvChip({ src, prov, href }: { src: string; prov?: Provenance; href?: 
   return href ? <a href={href} target="_blank" rel="noreferrer" title="Voir la source">{body}</a> : body
 }
 
-export function AskBar({ idu, zone }: { idu: string; zone?: string | null }) {
+export function AskBar({ idu }: { idu: string; zone?: string | null }) {
   const [q, setQ] = useState('')
   const [open, setOpen] = useState(false)   // Fix point 6 : REPLIÉE par défaut — la fiche d'abord
   const ask = useMutation({ mutationFn: (question: string) => askParcel(idu, question) })
@@ -76,10 +78,12 @@ export function AskBar({ idu, zone }: { idu: string; zone?: string | null }) {
   // à chaque changement de fiche : on replie et on repart propre (l'IA ne s'impose jamais).
   useEffect(() => { setOpen(false); setQ(''); ask.reset() }, [idu])   // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Exemples curés (point 15) — tous GROUNDÉS sur la liste blanche de /ask (aménités = ajout backend).
   const chips = [
-    zone ? `Ça veut dire quoi la zone ${zone} ?` : 'Ça veut dire quoi cette zone ?',
+    'Y a-t-il des équipements à proximité ?',
     'Combien je peux construire ?',
     'C’est raccordé à l’assainissement ?',
+    'Des ventes récentes dans le secteur ?',
     'Y a-t-il un risque inondation ?',
     'Pourquoi ce statut ?',
   ]

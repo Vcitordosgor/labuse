@@ -317,7 +317,8 @@ def _ensure_cache_table(db: Session) -> None:
 #   v2 — fix zonage /ask : multi-zones joint depuis reglement_plu.zones (commit 234c978, 15/07).
 #   v3 — M11 Surface C : le contexte IA de fiche gagne l'explication de faisabilité par STEPS
 #        (kind="explain-faisa", question "explication_faisabilite") — nouveau format groundé.
-CONTEXT_VERSION = 3
+#   v4 — barre de fiche : ajout du champ `amenites` (équipements à proximité, distances OSM).
+CONTEXT_VERSION = 4
 
 
 def normalize_question(q: str) -> str:
