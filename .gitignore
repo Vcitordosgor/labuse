@@ -71,3 +71,12 @@ import_all.log
 # Artefacts régénérables (captures d'audit, sorties de jobs)
 audit_shots/
 outputs/
+
+# Orphelins M6 — artefacts d'audit lourds (PNG/PDF/exports), hors historique git
+reports/m6-audit/captures/
+reports/m6-audit/captures-1-5/
+reports/m6-audit/captures-2a-a01/
+reports/m6-audit/exports-samples/
+reports/m6-audit/reglements/
+reports/health-check-post-m6/
+frontend/reports/
