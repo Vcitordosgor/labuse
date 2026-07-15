@@ -41,6 +41,7 @@ function frDate(iso: string | null): string {
 function ProjetCard({ p }: { p: Projet }) {
   const qc = useQueryClient()
   const apply = useApplySearch()
+  const openParcours = useApp((s) => s.openParcours)
   const [editing, setEditing] = useState(false)
   const [nom, setNom] = useState(p.nom)
 
@@ -141,10 +142,18 @@ function ProjetCard({ p }: { p: Projet }) {
             data-projet-ouvrir
             onClick={() => rejouer.mutate()}
             disabled={rejouer.isPending}
-            className="rounded-md bg-mint px-3 py-1 text-[11px] font-medium text-[#06130C] hover:brightness-110 disabled:opacity-50"
-            title="Ouvrir = rejouer les filtres sur les données actuelles"
+            className="rounded-md border border-line-2 px-3 py-1 text-[11px] font-medium text-txt hover:border-mint hover:text-txt-hi disabled:opacity-50"
+            title="Ouvrir = rejouer les filtres sur la carte (restitution)"
           >
             {rejouer.isPending ? '…' : 'Ouvrir'}
+          </button>
+          <button
+            data-projet-trier
+            onClick={() => openParcours({ id: p.id, nom: p.nom })}
+            className="rounded-md bg-mint px-3 py-1 text-[11px] font-medium text-[#06130C] hover:brightness-110"
+            title="Trier les parcelles proposées (parcelle par parcelle, sur la carte)"
+          >
+            Trier les parcelles
           </button>
         </div>
       </div>

@@ -102,6 +102,13 @@ interface AppState {
   // copilote-projet : brouillon issu de l'entretien (« Lancer la recherche ») → « Enregistrer ce projet » (V3)
   projetBrouillon: ProjetBrouillon | null
   setProjetBrouillon: (b: ProjetBrouillon | null) => void
+  // Parcours de sélection (Tinder) : projet en cours de tri — la carte passe en fond plein,
+  // la carte de décision flotte par-dessus. null = pas de parcours actif.
+  parcours: { id: number; nom: string } | null
+  setParcours: (p: { id: number; nom: string } | null) => void
+  // entrée dans le parcours : bascule sur la carte (fond) ET arme le parcours en un seul geste
+  // (setView nettoierait parcours — nav exclusive) ; ferme les panneaux de la vue quittée.
+  openParcours: (p: { id: number; nom: string }) => void
   view: View
   setView: (v: View) => void
   outilsOpen: boolean
@@ -179,7 +186,11 @@ export const useApp = create<AppState>((set) => ({
   // fiche/kanban fantôme qui persiste à travers les vues. Les flux « ouvrir une fiche depuis
   // X » appellent setView('cartes') PUIS select(idu) (ordre respecté partout).
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
-    contexteCommune: null, sourceLine: null, iaRestitution: null }),
+    contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null }),
+  parcours: null,
+  setParcours: (parcours) => set({ parcours }),
+  openParcours: (parcours) => set({ parcours, view: 'cartes', outilsOpen: false,
+    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null }),
   outilsOpen: false,
   // P1 (dernière passe) — NAV EXCLUSIVE : ouvrir Outils bascule sur le fond CARTE (le tiroir
   // outils vit au-dessus de la carte) et FERME la vue précédente (IA/Projets/CRM) + ses panneaux.
@@ -187,7 +198,7 @@ export const useApp = create<AppState>((set) => ({
   toggleOutils: () => set((s) => s.outilsOpen
     ? { outilsOpen: false }
     : { outilsOpen: true, view: 'cartes', selectedIdu: null, module: null,
-        contexteCommune: null, sourceLine: null, iaRestitution: null }),
+        contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null }),
   selectedIdu: null,
   select: (idu) => set({ selectedIdu: idu }),
   layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
@@ -218,7 +229,7 @@ export const useApp = create<AppState>((set) => ({
   zone: null,
   setZone: (zone) => set({ zone }),
   module: null,
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {} }),
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
   moduleFiche: {},
