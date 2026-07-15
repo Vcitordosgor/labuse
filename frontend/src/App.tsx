@@ -91,6 +91,15 @@ function IaRestitution() {
           )}
         </p>
       )}
+      {/* M11 B1 : critères COMPRIS mais hors des 14 champs de la recherche simple — signalés,
+          jamais avalés en silence, jamais confondus avec un résultat servi. Coexiste avec les
+          résultats valides ci-dessous : on ne cache rien, on prévient de l'écart. */}
+      {!!iaRestitution.criteres_non_appliques?.length && (
+        <p data-ia-non-appliques className="mt-1.5 rounded-lg border border-[#6b5a2e] bg-[#1a170f] px-2.5 py-1.5 text-[11px] leading-snug text-txt">
+          ⚠ Certains critères n'ont pas pu être appliqués :{' '}
+          <span className="text-txt-dim">{iaRestitution.criteres_non_appliques.join(', ')}.</span>
+        </p>
+      )}
       {/* Ajout C (UX V1) : jamais de zéro sec — à 0 résultat on propose le relâchement du
           critère numérique le plus serré, relançable d'un clic. */}
       {iaRestitution.n === 0 ? (

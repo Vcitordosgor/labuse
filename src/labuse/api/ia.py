@@ -21,6 +21,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from ..ai import core  # M11 socle 0 : client IA unique (clé, modèles, log, appel, validation, cache)
+from .nl_semantics import check_semantics  # M11 B1 : validation SÉMANTIQUE (schéma ≠ sens)
 from .projet_schema import CONTRAINTE_FLAG, FICHE_SCHEMA, TYPE_LABEL, clean_fiche
 
 router = APIRouter(prefix="/ia", tags=["ia"])
@@ -329,7 +330,9 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
                 return {"stub": True, "out_of_scope": explanation}
             # UX V1 item 2 : plus de « (repli stub) » face client — le front affiche le badge
             # « mode mots-clés » depuis le drapeau stub, l'explication reste factuelle.
-            return {"stub": True, "filters": filters, "explanation": explanation}
+            filters, non_appliques = check_semantics(body.text, filters)  # B1 : sens > schéma
+            return {"stub": True, "filters": filters, "explanation": explanation,
+                    "criteres_non_appliques": non_appliques}
         raw = res.text.strip()
         if raw.startswith("```"):
             raw = raw.strip("`").removeprefix("json").strip()   # le réel enrobe parfois — le stub ne l'apprend pas
@@ -354,7 +357,12 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
             validate(data, FILTER_SCHEMA)   # le schéma est le GARDE-FOU : jamais de filtre inventé
         except ValidationError as exc:
             return {"stub": False, "out_of_scope": f"filtre non conforme ({exc.message[:60]}) — réessayez"}
-        return {"stub": False, "filters": data, "explanation": "Filtres proposés par l'IA (validés par schéma)."}
+        # B1 : le schéma valide la CLÉ, pas le SENS. Un flag mistraduit (passoire→risques) est
+        # retiré, un critère non supporté (personne morale) est signalé — jamais avalé, jamais faux.
+        data, non_appliques = check_semantics(body.text, data)
+        return {"stub": False, "filters": data,
+                "explanation": "Filtres proposés par l'IA (validés par schéma).",
+                "criteres_non_appliques": non_appliques}
     prog = _stub_programme(body.text.lower())
     if prog:
         _log(db, "search", "stub-local", True)
@@ -365,7 +373,9 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
     if filters is None:
         return {"stub": True, "out_of_scope": explanation}
     validate(filters, FILTER_SCHEMA)
-    return {"stub": True, "filters": filters, "explanation": explanation}
+    filters, non_appliques = check_semantics(body.text, filters)  # B1 : sens > schéma (stub local aussi)
+    return {"stub": True, "filters": filters, "explanation": explanation,
+            "criteres_non_appliques": non_appliques}
 
 
 # ─────────────── 1ter. RECHERCHE NL → MOTEUR DE SEGMENTS (mandat wave-adresses, Lot 6) ───────────

@@ -39,7 +39,7 @@ export function useApplySearch() {
   const { setFilters, setView, setCommune, setVerdict, setFlyTo, setIaRestitution } = useApp()
 
   return async (raw: Record<string, unknown>, phrase = 'parcelles correspondent — voici les 3 meilleures',
-                meta?: { explanation?: string | null; stub?: boolean }) => {
+                meta?: { explanation?: string | null; stub?: boolean; criteres_non_appliques?: string[] }) => {
     // la commune est un filtre de PÉRIMÈTRE : un secteur d'UNE commune = la commune elle-même
     let communes = (raw.communes as string[]) ?? []
     let communeSeule = typeof raw.commune === 'string' && raw.commune ? raw.commune : null
@@ -95,6 +95,7 @@ export function useApplySearch() {
         // dans la restitution — pas seulement sur la vue IA qu'on vient de quitter
         explanation: meta?.explanation ?? null,
         stub: !!meta?.stub,
+        criteres_non_appliques: meta?.criteres_non_appliques ?? [],
         relance,
       })
     } catch { /* restitution best-effort — les filtres sont déjà posés */ }

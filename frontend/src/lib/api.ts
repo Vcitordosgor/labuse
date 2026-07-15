@@ -180,7 +180,7 @@ export const modDueDiligence = (refs: string) =>
 // ── Copilote IA (Vague 2) — jamais d'accès base, filtres validés par schéma côté API ──
 export const iaStatus = () => j<{ provider: string; raison: string | null }>('/ia/status')
 export const iaSearch = (body: { text: string; history?: { role: string; content: string }[] }) =>
-  j<{ stub: boolean; filters?: Record<string, unknown>; cadrage?: Record<string, unknown>; explanation?: string; out_of_scope?: string }>('/ia/search', {
+  j<{ stub: boolean; filters?: Record<string, unknown>; cadrage?: Record<string, unknown>; explanation?: string; out_of_scope?: string; criteres_non_appliques?: string[] }>('/ia/search', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const iaSynthese = (idu: string) =>
   j<{ stub: boolean; texte: string; mention: string }>(`/ia/synthese/${idu}`, { method: 'POST' })
