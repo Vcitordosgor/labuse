@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, ApiError, createShare, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
+import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { Loading } from '../Loading'
-import { AskBar } from './AskBar'
+import { AskBar, renderRich } from './AskBar'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
@@ -703,6 +703,117 @@ function SolaireTab({ idu }: { idu: string }) {
 }
 
 // Onglet BILAN — le moteur de faisabilité/bilan EXISTANT, enfin exposé (P0 revue Vic).
+/** Badge de source d'un step (transparence) : Sourcé (règle/géométrie, vert) · Estimé (hypothèse,
+ *  ambre) · Dérivé (calcul, gris). Rendu du `prov` déjà porté par le moteur — jamais recalculé. */
+function StepProv({ prov }: { prov?: string }) {
+  const map: Record<string, [string, string]> = {
+    sourcee: ['Sourcé', 'border-mint/40 bg-[#0f1a15] text-mint'],
+    estimee: ['Estimé', 'border-st-creuser/40 bg-[#211a10] text-st-creuser'],
+    derive: ['Dérivé', 'border-line-2 bg-surface-2 text-txt-dim'],
+  }
+  const [label, cls] = map[prov ?? ''] ?? ['—', 'border-line-2 bg-surface-2 text-txt-dim']
+  return <span className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[9px] font-medium ${cls}`}>{label}</span>
+}
+
+/** M11 · SURFACE C — onglet FAISABILITÉ : le résultat, le calcul TRACÉ étape par étape (déterministe,
+ *  exact, sourcé), l'explication IA À LA DEMANDE (violet premium, ancrée sur les steps), et la
+ *  calculette de charge foncière rapatriée (financier au même endroit). L'IA explique, ne recalcule pas. */
+function FaisabiliteTab({ idu }: { idu: string }) {
+  const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
+  const [showSteps, setShowSteps] = useState(true)
+  const explain = useMutation({ mutationFn: () => faisabiliteExplain(idu) })
+  if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
+  if (isError || !b) return (
+    <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
+      <p className="text-st-ecartee">Faisabilité indisponible.</p>
+      <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt">Réessayer</button>
+    </div>
+  )
+  const cap = b.capacite
+  const fo = cap?.fourchette ?? {}
+  const steps: { label: string; valeur: string; source: string; prov: string }[] = cap?.steps ?? []
+  const ex = explain.data
+  return (
+    <div className="flex flex-col gap-3">
+      {/* ── LE RÉSULTAT ── */}
+      {cap ? (
+        <div className="rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-2.5">
+          <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">CAPACITÉ CONSTRUCTIBLE</p>
+          <div className="text-sm font-medium text-txt-hi">{cap.verdict}</div>
+          <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-txt-mut">
+            <div>Gabarit : <b className="text-txt">{fo.niveaux}</b> ({fo.hauteur_m} m)</div>
+            <div>SDP : <b className="text-txt">{fo.surface_plancher_m2} m²</b></div>
+            <div>Logements : <b className="text-txt">{Array.isArray(fo.logements_au_sol) ? `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]}` : '—'}</b></div>
+            <div>SHAB vendable : <b className="text-txt">~{fo.shab_vendable_m2} m²</b></div>
+          </div>
+          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">⚠ estimation générique (zone non calibrée)</div>}
+          <div className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{cap.bandeau}</div>
+        </div>
+      ) : (
+        <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+          Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).
+        </div>
+      )}
+
+      {/* ── LE CALCUL, ÉTAPE PAR ÉTAPE (déterministe) ── */}
+      {steps.length > 0 && (
+        <div>
+          <button onClick={() => setShowSteps((s) => !s)} className="mb-1 flex w-full items-center justify-between font-mono text-[10px] tracking-widest text-txt-dim hover:text-txt-mut">
+            <span>LE CALCUL, ÉTAPE PAR ÉTAPE ({steps.length})</span>
+            <span>{showSteps ? '−' : '+'}</span>
+          </button>
+          {showSteps && (
+            <ol data-faisa-steps className="overflow-hidden rounded-lg border border-line-2">
+              {steps.map((s, i) => (
+                <li key={i} className={`flex items-start gap-2 px-3 py-1.5 text-[11px] ${i % 2 ? 'bg-surface-2' : 'bg-surface-1'}`}>
+                  <span className="shrink-0 font-mono text-[9px] text-txt-dim">{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-txt">{s.label}</span>
+                      <b className="shrink-0 text-txt-hi">{s.valeur}</b>
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      <StepProv prov={s.prov} />
+                      <span className="truncate text-[9.5px] text-txt-dim">{s.source}</span>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      )}
+
+      {/* ── EXPLIQUER CE CALCUL EN CLAIR (IA, sur clic, premium violet) ── */}
+      {cap && (
+        <div data-faisa-explain>
+          {!ex && !explain.isPending && (
+            <button onClick={() => explain.mutate()} data-faisa-explain-btn
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#B497F0]/50 bg-[#171221] py-2 text-[12px] font-medium text-[#B497F0] hover:bg-[#1d1630]">
+              <svg viewBox="0 0 20 20" className="h-3.5 w-3.5"><path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z" fill="currentColor" /></svg>
+              Expliquer ce calcul en clair
+            </button>
+          )}
+          {explain.isPending && <p className="flex items-center gap-2 py-2 text-[11px] text-[#B497F0]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B497F0]" /> L'IA lit les étapes du calcul…</p>}
+          {explain.isError && <p className="py-1 text-[11px] text-st-ecartee">Explication indisponible — réessayez.</p>}
+          {ex && ex.disponible === false && <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">{ex.message}</p>}
+          {ex && ex.disponible && ex.rejected && <p className="rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] text-st-creuser">{ex.texte}</p>}
+          {ex && ex.disponible && !ex.rejected && (
+            <div className="rounded-lg border border-[#B497F0]/40 bg-[#171221] px-3 py-2.5">
+              <p className="mb-1 font-mono text-[10px] tracking-widest text-[#B497F0]">✦ EXPLICATION IA — À PARTIR DES ÉTAPES</p>
+              <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-txt">{renderRich(ex.texte ?? '')}</p>
+              <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">L'IA narre les étapes ci-dessus (elle ne recalcule rien) ; chaque chiffre est ancré sur une étape. Estimation indicative, ne vaut pas conseil.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── CHARGE FONCIÈRE rapatriée (le financier au même endroit) ── */}
+      <Calculette idu={idu} />
+    </div>
+  )
+}
+
 function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
@@ -750,9 +861,12 @@ function BilanTab({ idu }: { idu: string }) {
           )}
         </Sec>
       )}
-      {/* mandat bilan-calculette : le BILAN devient INTERACTIF — LABUSE assemble enfin ses
-          ingrédients en LE chiffre que le promoteur attend (« combien puis-je payer ? »). */}
-      <Calculette idu={idu} />
+      {/* M11 Surface C : la calculette de charge foncière est RAPATRIÉE dans l'onglet Faisabilité
+          (le financier au même endroit que la capacité et son explication). */}
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+        La <b className="text-txt">charge foncière</b> (« combien puis-je payer ce terrain ? ») est
+        désormais dans l'onglet <b className="text-[#B497F0]">Faisabilité</b>, avec le calcul détaillé.
+      </div>
       <Sec t="FISCAL & LEVIERS">
         <div>QPV : <b className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</b> · TVA : {b.fiscal.tva}</div>
         {b.fiscal.prime_vue_mer && <div className="mt-0.5 text-[#7DE8E0]">Vue mer dégagée — {b.fiscal.prime_vue_mer}</div>}
@@ -818,9 +932,11 @@ function PatrimoineLink({ siren }: { siren: string }) {
   )
 }
 
-const TABS: { k: 'synthese' | Onglet | 'bilan' | 'solaire'; label: string }[] = [
+const TABS: { k: 'synthese' | Onglet | 'bilan' | 'solaire' | 'faisabilite'; label: string }[] = [
   { k: 'synthese', label: 'Synthèse' }, { k: 'regles', label: 'Règles' }, { k: 'risques', label: 'Risques' },
-  { k: 'marche', label: 'Marché' }, { k: 'proprio', label: 'Proprio' }, { k: 'solaire', label: 'Solaire' },
+  { k: 'marche', label: 'Marché' }, { k: 'proprio', label: 'Proprio' },
+  // M11 Surface C : onglet Faisabilité (prendra la place de « Solaire » lors du spin-off aménités).
+  { k: 'faisabilite', label: 'Faisabilité' }, { k: 'solaire', label: 'Solaire' },
   { k: 'bilan', label: 'Bilan' },
 ]
 
@@ -840,7 +956,7 @@ export function Fiche({ idu }: { idu: string }) {
     return () => window.removeEventListener('keydown', h)
   }, [select])
   void sourceLine
-  const [tab, setTab] = useState<'synthese' | Onglet | 'bilan' | 'solaire'>('synthese')
+  const [tab, setTab] = useState<'synthese' | Onglet | 'bilan' | 'solaire' | 'faisabilite'>('synthese')
   const [iaOpen, setIaOpen] = useState(false)
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
@@ -1124,6 +1240,7 @@ export function Fiche({ idu }: { idu: string }) {
               : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
           </div>
         )}
+        {!fq && f && tab === 'faisabilite' && <FaisabiliteTab idu={idu} />}
         {!fq && f && tab === 'solaire' && <SolaireTab idu={idu} />}
         {!fq && f && tab === 'bilan' && <BilanTab idu={idu} />}
       </div>
@@ -1150,9 +1267,9 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         </div>
         <div className="mt-2 flex items-stretch gap-2">
-          <a href={pdfUrl(idu, tab === 'bilan' ? calculette : null)} target="_blank" rel="noreferrer"
+          <a href={pdfUrl(idu, (tab === 'bilan' || tab === 'faisabilite') ? calculette : null)} target="_blank" rel="noreferrer"
             className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-            title={calculette && tab === 'bilan' ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
+            title={calculette && (tab === 'bilan' || tab === 'faisabilite') ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
             PDF
           </a>
           {/* Lot 4 (wave-adresses) : Dossier parcelle brandé — comité d'engagement, banque,

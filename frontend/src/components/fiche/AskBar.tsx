@@ -27,7 +27,7 @@ function renderInline(text: string, kp: string) {
   })
 }
 
-function renderRich(text: string) {
+export function renderRich(text: string) {
   const clean = text.replace(/\s+([.,;:!?%€])/g, '$1').replace(/[ \t]{2,}/g, ' ')
   return clean.split('\n').map((raw, i) => {
     const line = raw.trim()

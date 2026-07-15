@@ -234,6 +234,10 @@ export const listShares = (idu: string) => j<{ token: string; date: string; view
 
 // ── M22 + Bilan (faisabilité bidirectionnelle) ──
 export const getFaisabilite = (idu: string) => j<Record<string, any>>(`/modules/faisabilite/${idu}`)
+// M11 Surface C : explication IA de la dérivation du chiffrage (ancrée sur les steps, sur clic).
+export const faisabiliteExplain = (idu: string) =>
+  j<{ disponible: boolean; rejected?: boolean; degraded?: boolean; texte?: string; message?: string;
+      sources?: string[]; provenance?: Record<string, string>; cached?: boolean }>(`/modules/faisabilite/${idu}/explain`)
 
 // Calculette de charge foncière (mandat bilan-calculette) : LABUSE calcule le déterministe
 // (SDP, prix DVF) ; le coût de construction et la marge sont les hypothèses SAISIES.
