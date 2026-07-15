@@ -309,6 +309,7 @@ function M04() {
       <Banner>PC accordé, <b>aucune déclaration d'achèvement</b>, parcelle toujours non bâtie au
         scoring — « réalisation à vérifier » sur place. Codes d'état de la source non documentés
         (affichés bruts).</Banner>
+      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Analyse en cours…" big /></div>}
       <label className="flex items-center gap-2 text-[11px] text-txt-mut">
         Permis plus vieux que
         <select value={months} onChange={(e) => setMonths(Number(e.target.value))}
@@ -391,6 +392,7 @@ function M06() {
   return (
     <>
       <Banner>{String(d?.['lecture_lls'] ?? '…')}</Banner>
+      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Analyse en cours…" big /></div>}
       <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles promues en QPV{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (

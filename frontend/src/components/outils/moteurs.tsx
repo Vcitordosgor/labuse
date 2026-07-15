@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addProfile, getProfiles, motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan, runMatch } from '../../lib/api'
 import { useApp } from '../../store/useApp'
+import { Loading } from '../Loading'
 import { VIOLET } from './registry'
 import { TierBadge } from './TierBadge'
 
@@ -42,6 +43,7 @@ export function M15() {
           </button>
         ))}
       </div>
+      {sim.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Recalcul à blanc en cours…" big /></div>}
       {d && (
         <>
           <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
@@ -154,6 +156,7 @@ export function M17() {
   return (
     <>
       <Banner>{d?.bandeau ?? '…'}</Banner>
+      {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Analyse en cours…" big /></div>}
       <p className="font-mono text-[10px] tracking-widest text-txt-dim">ARTIFICIALISATION (OCS GE, île)</p>
       <div className="flex max-h-40 shrink-0 flex-col overflow-y-auto">
         {((d?.communes ?? []) as Record<string, any>[]).slice(0, 12).map((c) => (
