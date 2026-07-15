@@ -945,6 +945,7 @@ export function Fiche({ idu }: { idu: string }) {
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
   const setBasemap = useApp((s) => s.setBasemap)   // Fix LOT 2 : « Cadastre » = fond officiel IGN + halo
+  const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
   const calculette = useApp((s) => s.calculette)   // A6 : hypothèses courantes → reflétées dans le PDF
@@ -1281,8 +1282,10 @@ export function Fiche({ idu }: { idu: string }) {
             title="Dossier parcelle PDF brandé (carte, zonage calibré, risques, DVF, permis) — usage interne">
             Dossier
           </a>
-          {f && (
-            <button onClick={() => setModule('temps')}
+          {f?.coords && (
+            /* Fix LOT 2 : recentrer sur LA parcelle en ouvrant la vue historique (sinon la carte
+               restait où elle était → on voyait l'île, pas le terrain). */
+            <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }}
               className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
               title="Ce terrain en 1950 — comparateur temporel (M08)">
               1950
