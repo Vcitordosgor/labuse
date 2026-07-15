@@ -22,7 +22,7 @@ export function M15() {
   const zones = useQuery({ queryKey: ['m15z', commune], queryFn: motSimulPluZones })
   const [zone, setZone] = useState<string | null>(null)
   const sim = useQuery({ queryKey: ['m15', zone, commune], queryFn: () => motSimulPlu(zone!), enabled: !!zone })
-  const { setModuleMap } = useApp()
+  const { setModuleMap, select } = useApp()   // fix : la liste était inerte (select non branché)
   const d = sim.data
   useEffect(() => {
     const items = (d?.items ?? []) as Record<string, any>[]
@@ -51,13 +51,15 @@ export function M15() {
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             {(d.items as Record<string, any>[]).slice(0, 120).map((i) => (
-              <div key={i.idu} className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
+              <button key={i.idu} data-m15-item onClick={() => select(i.idu)}
+                title="Ouvrir la parcelle"
+                className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-[11px] hover:border-[#B497F0]">
                 <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
                 <span className="text-txt-dim">{fmt(i.surface_m2)} m²</span>
                 <span className="ml-auto" style={{ color: i.bascule_potentielle ? VIOLET : '#5C7268' }}>
                   SDP est. {fmt(i.sdp_estimee_m2)} m²{i.bascule_potentielle ? ' ▲' : ''}
                 </span>
-              </div>
+              </button>
             ))}
           </div>
         </>
