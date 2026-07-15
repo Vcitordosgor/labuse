@@ -75,12 +75,21 @@ Un agrégat n'est PAS une liste filtrée : le client veut un **nombre**. Module 
   « Saint-Paul compte 28 parcelles brûlantes. », `sources:[nombre]`, `rejected:false`.
   `« quelle commune a le plus de brûlantes ? »` → tête Saint-Paul 28, classement complet SQL.
 
-### La RÈGLE DE FER prouvée — un faux compte est REJETÉ
-`validate_output` avec un contexte `{nombre: 28}` :
-- prose « … 28 … ⟨src:nombre⟩ » → **ok=True** ;
-- prose « … 35 … ⟨src:nombre⟩ » → **ok=False**, raison « chiffre non sourcé « 35 » (absent du contexte) ».
-Un compte inventé/arrondi/halluciné n'est jamais servi. (NB socle : les petits entiers 0-12 sont tolérés
-comme bruit rédactionnel — le garde-fou mord sur les comptes réels > 12, cas des volumétries.)
+### La RÈGLE DE FER prouvée — un faux compte est REJETÉ (tolérance par RÔLE, pas par TAILLE)
+Le socle validait les chiffres avec une tolérance de **taille** (petits entiers 0-12 tolérés comme bruit
+rédactionnel) — angle mort sur les comptes agrégés, souvent petits (classement 28/12/9/9/8/8 ; Salazie 1,
+Cilaos 0-3). **Corrigé** : `validate_output(strict_numbers=True)` (activé par l'agrégat) distingue par **rôle** :
+- le **compte** (valeur du contexte SQL) → vérifié **EXACTEMENT**, quelle que soit sa taille ;
+- les nombres de **tournure** (R+2, « 3 logements », rang #n) → tolérés par leur motif, pas leur taille.
+
+Preuves (`validate_output`) :
+- contexte `{nombre: 28}` : prose « 28 » → **ok** ; prose « 35 » → **rejet** « chiffre non sourcé « 35 » ».
+- contexte `{nombre: 2}` (Cilaos) : prose « **5** brûlantes » → **REJET** *bien que 5 ≤ 12* ; prose « 2 » → ok.
+- coexistence : « Cilaos compte **2** parcelles, du **R+2** avec **3 logements** » → **ok** (compte strict + tournures tolérées).
+- non-régression Surface A : hors mode strict, la tolérance 0-12 de la barre de fiche est **inchangée**.
+
+Live (mode strict) : petits comptes corrects servis sans faux rejet — Salazie « compte 1 parcelle
+brûlante », Entre-Deux « 3 parcelles », Saint-Paul « 28 parcelles ».
 
 ---
 

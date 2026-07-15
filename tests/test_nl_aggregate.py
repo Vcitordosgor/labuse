@@ -63,3 +63,36 @@ def test_socle_valide_un_classement():
                                       "provenance": "SOURCE"}}}
     chk = core.validate_output("Saint-Paul arrive en tête avec 28 parcelles ⟨src:classement⟩.", ctx)
     assert chk.ok is True
+
+
+# ───────── tolérance par RÔLE, pas par TAILLE : les PETITS comptes sont vérifiés strict ─────────
+
+def test_petit_compte_faux_rejete_meme_sous_12():
+    """LE test demandé : Cilaos a 2 brûlantes → une prose qui dit « 5 » est REJETÉE, alors que 5 ≤ 12.
+    L'angle mort de la tolérance par taille est fermé."""
+    chk = core.validate_output("Cilaos compte 5 parcelles brûlantes ⟨src:nombre⟩.",
+                               _ctx(2), strict_numbers=True)
+    assert chk.ok is False
+    assert "5" in (chk.reason or "")
+
+
+def test_petit_compte_correct_accepte():
+    chk = core.validate_output("Cilaos compte 2 parcelles brûlantes ⟨src:nombre⟩.",
+                               _ctx(2), strict_numbers=True)
+    assert chk.ok is True
+
+
+def test_compte_petit_et_tournure_coexistent():
+    """Compte petit correct (2) ET tournure rédactionnelle (R+2, « 3 logements ») coexistent sans
+    faux rejet — la tournure est tolérée par son RÔLE (motif), pas par sa taille."""
+    prose = "Cilaos compte 2 parcelles brûlantes ⟨src:nombre⟩, plutôt du R+2 avec 3 logements par lot."
+    chk = core.validate_output(prose, _ctx(2), strict_numbers=True)
+    assert chk.ok is True
+
+
+def test_mode_non_strict_inchange_pour_la_fiche():
+    """Non-régression Surface A : HORS mode strict, la tolérance 0-12 reste (R+n de la barre de fiche
+    ne doit pas se mettre à être rejeté)."""
+    ctx = {"zone": {"valeur": "AUst", "provenance": "SOURCE"}}
+    chk = core.validate_output("Gabarit R+2 envisageable en zone AUst ⟨src:zone⟩.", ctx)
+    assert chk.ok is True   # « 2 » toléré comme avant (bruit rédactionnel), fiche non cassée
