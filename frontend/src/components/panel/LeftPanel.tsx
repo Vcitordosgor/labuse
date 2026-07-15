@@ -4,10 +4,12 @@ import { Legend } from '../map/Legend'
 import { ResultsSection } from './ResultsSection'
 
 const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
-  { key: 'zonage', label: 'Zonage PLU', hint: 'U/AU en menthe, A/N en brun' },
+  // Point 12 : deux couches distinctes clarifiées — zones OFFICIELLES du GPU (polygones bruts)
+  // vs zone rattachée PAR PARCELLE (parcel_zone_plu). Libellés + hints qui lèvent la confusion.
+  { key: 'zonage', label: 'Zonage PLU (zones officielles)', hint: 'carte officielle des zones du GPU — polygones bruts (U/AU en menthe, A/N en brun)' },
   // M6.1 item 1 : recoloration des PARCELLES par famille de zone (palette dédiée) +
   // étiquette de la zone précise (U1e, 1AUc…) au zoom rapproché et au clic
-  { key: 'zonage_parcelle', label: 'Zonage PLU (parcelles)', hint: 'parcelles colorées par famille U/AU/A/N — zone précise au zoom ≥ 16 et au clic' },
+  { key: 'zonage_parcelle', label: 'Zonage PLU (par parcelle)', hint: 'chaque parcelle colorée par sa zone rattachée (U/AU/A/N) — zone précise au zoom ≥ 16 et au clic' },
   { key: 'parcelles', label: 'Parcelles', hint: 'colorées par statut' },
   { key: 'ppr', label: 'PPR multirisque' },
   { key: 'vue_mer', label: 'Vue mer', hint: 'liseré cyan (vue dégagée)' },
