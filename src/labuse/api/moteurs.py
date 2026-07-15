@@ -324,11 +324,15 @@ def barometre_pdf(db: Session = Depends(get_db)) -> Response:
     pdf.set_text_color(*TXT_HI)
     pdf.set_text_color(*TXT_DIM)
     e = d["ecartees"]
+    # new_x/new_y : sans quoi fpdf2 laisse le curseur X à la marge DROITE après un multi_cell
+    # pleine largeur → le multi_cell suivant démarre avec 0 mm d'espace → FPDFException (le 500).
     pdf.multi_cell(0, 4, f"Périmètre DVF : ventes strictes uniquement — {e['total']} mutations écartées "
                          f"de la fenêtre (VEFA {e['vefa']}, adjudications/échanges/expropriations "
                          f"{e['autres_natures']}, prix ≤ 1 000 € {e['prix_symboliques']}, "
-                         f"€/m² hors bande 100-12 000 : {e['ratio_hors_bande']}).")
+                         f"€/m² hors bande 100-12 000 : {e['ratio_hors_bande']}).",
+                   new_x="LMARGIN", new_y="NEXT")
     pdf.multi_cell(0, 4, "Données publiques (DVF, Sitadel régional) — indicateurs indicatifs, "
-                         "ne valent pas expertise. © LABUSE")
+                         "ne valent pas expertise. © LABUSE",
+                   new_x="LMARGIN", new_y="NEXT")
     return Response(bytes(pdf.output()), media_type="application/pdf",
                     headers={"Content-Disposition": 'inline; filename="barometre_labuse.pdf"'})
