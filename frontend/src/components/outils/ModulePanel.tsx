@@ -124,6 +124,15 @@ function M02() {
           <span className="truncate">{s.nom}</span><span className="font-mono text-[11px] text-txt-dim">{s.n} parc.</span>
         </button>
       ))}
+      {/* Fix pré-lancement : distinguer un « 0 résultat LÉGITIME » d'une panne — sans ça, une boîte
+          absente des fichiers fonciers (ex. VISHOR MATERIAUX) donne un écran muet lu comme « cassé ». */}
+      {!siren && q.length >= 2 && !sug.isFetching && (sug.data?.length ?? 0) === 0 && (
+        <div data-m02-vide className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-snug text-txt-mut">
+          « <b className="text-txt">{q}</b> » n'a pas de foncier connu dans les fichiers fonciers (DGFiP),
+          ou n'y figure pas. Ces fichiers ne recensent que les <b>personnes morales</b> détentrices de
+          foncier à La Réunion — une personne physique ou une société sans bien détecté n'apparaît pas.
+        </div>
+      )}
       {d && (
         <>
           {d['bodacc'] != null && (
