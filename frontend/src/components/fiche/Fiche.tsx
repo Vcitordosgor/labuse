@@ -1297,12 +1297,14 @@ export function Fiche({ idu }: { idu: string }) {
               Cadastre
             </a>
           )}
-          {f && (
-            <a href={`https://www.google.com/maps/@${f.coords[1]},${f.coords[0]},19z/data=!3m1!1e3`}
+          {f?.coords && (
+            /* Fix LOT 2 : « Maps » (ex-« G ») → ÉPINGLE sur la parcelle (search?query=lat,lng pose un
+               marqueur), au lieu du simple centrage caméra `@lat,lng` qui n'épinglait rien. */
+            <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`}
               target="_blank" rel="noreferrer"
-              className="flex h-8 w-9 shrink-0 items-center justify-center rounded-lg border border-line-2 text-xs text-txt hover:text-txt-hi"
-              title="Ouvrir la parcelle dans Google Maps (satellite)">
-              G
+              className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
+              title="Ouvrir la parcelle dans Google Maps (épingle sur la parcelle)">
+              Maps
             </a>
           )}
         </div>
