@@ -393,6 +393,158 @@ def projet_rejouer(pid: int, db: Session = Depends(get_db)) -> dict:
     return {"ok": True, "projet": _projet_dict(p)}
 
 
+# ───────────────────────── Parcours de sélection (Tinder) — statuts parcelle×projet ─────────────────────────
+# Le projet reste piloté par les critères ; ces routes gèrent l'ÉTAT de tri (proposee/retenue/
+# ecartee/a_analyser). Zéro re-scoring : les parcelles viennent du run servi, on rattache un statut.
+
+_STATUTS = {"proposee", "retenue", "ecartee", "a_analyser"}
+
+
+def _projet_or_404(db: Session, pid: int) -> models.Projet:
+    p = db.get(models.Projet, pid)
+    if not p:
+        raise HTTPException(404, "Projet inconnu")
+    return p
+
+
+def _counts(db: Session, pid: int) -> dict:
+    """Compteurs par statut (progression + sections)."""
+    rows = db.execute(text("SELECT statut, count(*) AS n FROM projet_parcelles "
+                           "WHERE projet_id = :p GROUP BY statut"), {"p": pid}).all()
+    c = {r.statut: r.n for r in rows}
+    return {"counts": {s: c.get(s, 0) for s in ("proposee", "retenue", "ecartee", "a_analyser")}}
+
+
+def _search_items(db: Session, fiche: dict, limit: int) -> list[dict]:
+    """RÉUTILISE la recherche existante (M22 si programme, sinon run servi q_v6_m8) — même
+    source que /apercu, jamais un re-scoring. Renvoie les items ordonnés (best-first)."""
+    filtres = derive_filtres(fiche)
+    programme = derive_programme(fiche)
+    communes = filtres.get("communes")
+    if programme:
+        from .modules import ProgrammeIn, faisabilite_sens2
+        res = faisabilite_sens2(ProgrammeIn(**programme), db)
+        items = res.get("items", [])
+        if communes:                                   # secteur : M22 balaie l'île → on restreint
+            items = [it for it in items if it["commune"] in communes]
+    else:
+        from .app import _q_v2_list, _q_v2_where
+        where, params = _q_v2_where(RUN, ",".join(filtres.get("statuts") or []) or None,
+                                    filtres.get("scoreMin"), filtres.get("surfaceMin"),
+                                    filtres.get("surfaceMax"), filtres.get("sdpMin"),
+                                    bool(filtres.get("evenement")), bool(filtres.get("vueMer")),
+                                    ",".join(filtres.get("flags") or []) or None,
+                                    ",".join(communes) if communes else None,
+                                    ",".join(filtres.get("flagsExclus") or []) or None)
+        items = _q_v2_list(db, None, limit, 0, run_label=RUN, extra_where=where, extra_params=params)
+    return items[:limit]
+
+
+class ProposerIn(BaseModel):
+    limit: int = 24
+
+
+@router.post("/{pid}/proposer")
+def projet_proposer(pid: int, body: ProposerIn, db: Session = Depends(get_db)) -> dict:
+    """Propose au projet les parcelles de la recherche (statut `proposee`, best-first). UPSERT
+    NON destructif : une parcelle déjà décidée (retenue/ecartee) n'est JAMAIS re-proposée
+    (ON CONFLICT DO NOTHING) — une écartée ne ressuscite pas. Rejoue les critères du jour."""
+    p = _projet_or_404(db, pid)
+    lim = max(1, min(body.limit, 60))
+    items = _search_items(db, p.fiche, lim)
+    idus = [it["idu"] for it in items]
+    id_by_idu = {r.idu: r.id for r in db.execute(
+        text("SELECT id, idu FROM parcels WHERE idu = ANY(:idus)"), {"idus": idus})}
+    now = datetime.now(timezone.utc)
+    for rang, it in enumerate(items):
+        pc = id_by_idu.get(it["idu"])
+        if not pc:
+            continue
+        db.execute(text(
+            "INSERT INTO projet_parcelles (projet_id, parcel_id, statut, rang, proposee_at, "
+            "created_at, updated_at) VALUES (:pj, :pc, 'proposee', :rg, :now, :now, :now) "
+            "ON CONFLICT (projet_id, parcel_id) DO NOTHING"),
+            {"pj": pid, "pc": pc, "rg": rang, "now": now})
+    db.flush()
+    return {"ok": True, "propose": len(idus), "n_total": len(items),
+            "sdp_besoin_m2": derive_sdp_besoin(p.fiche), **_counts(db, pid)}
+
+
+@router.get("/{pid}/parcelles")
+def projet_parcelles(pid: int, db: Session = Depends(get_db)) -> dict:
+    """L'ÉTAT du parcours : les parcelles du projet groupées par statut (proposées best-first),
+    avec centroïde pour la carte. Base de la reprise (fermer/rouvrir = relire cet état)."""
+    p = _projet_or_404(db, pid)
+    from .app import _score_v2_run_id
+    v2 = _score_v2_run_id(db)
+    rows = db.execute(text(
+        """SELECT pp.statut, pp.rang, par.idu, par.commune, d.q_score, s2.tier,
+                  ST_X(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lng,
+                  ST_Y(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lat
+           FROM projet_parcelles pp
+           JOIN parcels par ON par.id = pp.parcel_id
+           LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = par.id AND d.run_label = :run
+           LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = par.idu AND s2.run_id = :v2
+           WHERE pp.projet_id = :pid
+           ORDER BY pp.rang NULLS LAST, pp.id"""),
+        {"run": RUN, "v2": v2, "pid": pid}).mappings().all()
+    groups: dict[str, list] = {s: [] for s in ("proposee", "retenue", "ecartee", "a_analyser")}
+    for r in rows:
+        groups.setdefault(r["statut"], []).append({
+            "idu": r["idu"], "commune": r["commune"], "statut": r["statut"],
+            "q_score": r["q_score"], "tier": r["tier"],
+            "center": [round(r["lng"], 6), round(r["lat"], 6)] if r["lng"] is not None else None,
+        })
+    return {"nom": p.nom, "sdp_besoin_m2": derive_sdp_besoin(p.fiche),
+            "proposees": groups["proposee"], "retenues": groups["retenue"],
+            "ecartees": groups["ecartee"], "a_analyser": groups["a_analyser"], **_counts(db, pid)}
+
+
+@router.get("/{pid}/carte/{idu}")
+def projet_carte_decision(pid: int, idu: str, db: Session = Depends(get_db)) -> dict:
+    """Carte de DÉCISION d'une parcelle : adresse, tier, scores + POINTS CLÉS (forces/attentions
+    dérivés des facteurs — même logique déterministe que le pack apporteur). Aucune valeur
+    inventée : tout vient de `_q_v2_fiche` (run servi). Le front ajoute « voir la fiche complète »."""
+    _projet_or_404(db, pid)
+    from .app import _q_v2_fiche
+    from .partners import _points_cles
+    f = _q_v2_fiche(db, idu)
+    forces, attentions = _points_cles(f.get("lines") or [])
+    sv = f.get("score_v2") or {}
+    return {
+        "idu": f["idu"], "adresse": f.get("adresse"), "commune": f.get("commune"),
+        "surface_m2": f.get("surface_m2"), "tier": sv.get("tier"), "statut": f.get("statut"),
+        "q_score": f.get("q_score"), "a_score": f.get("a_score"),
+        "completeness": f.get("completeness_score"), "center": f.get("coords"),
+        "forces": [{"titre": t, "detail": d} for _, t, d in forces],
+        "attentions": [{"titre": t, "detail": d} for _, t, d in attentions],
+    }
+
+
+class StatutIn(BaseModel):
+    statut: str
+
+
+@router.patch("/{pid}/parcelle/{idu}")
+def projet_parcelle_statut(pid: int, idu: str, body: StatutIn, db: Session = Depends(get_db)) -> dict:
+    """Fixe le statut d'une parcelle dans le projet (le geste Tinder ET la récupération d'une
+    écartée). RÉVERSIBLE : repasser en `proposee`/`retenue` depuis `ecartee` ne perd rien."""
+    _projet_or_404(db, pid)
+    if body.statut not in _STATUTS:
+        raise HTTPException(422, f"Statut invalide : {body.statut}")
+    pc = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if not pc:
+        raise HTTPException(404, f"Parcelle {idu} inconnue")
+    now = datetime.now(timezone.utc)
+    db.execute(text(
+        "INSERT INTO projet_parcelles (projet_id, parcel_id, statut, created_at, updated_at) "
+        "VALUES (:pj, :pc, :st, :now, :now) "
+        "ON CONFLICT (projet_id, parcel_id) DO UPDATE SET statut = :st, updated_at = :now"),
+        {"pj": pid, "pc": pc, "st": body.statut, "now": now})
+    db.flush()
+    return {"ok": True, "idu": idu, "statut": body.statut, **_counts(db, pid)}
+
+
 @router.get("/{pid}/export.pdf")
 def projet_export_pdf(pid: int, db: Session = Depends(get_db)):
     """Dossier PROJET en PDF : la fiche de cadrage + les meilleures parcelles avec leur
