@@ -269,6 +269,8 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
       <div style="font:9px monospace;color:#5C7268">COMPLÉTUDE %</div></div>
   </div>
   {points_cles}
+  <p style="font:10px monospace;letter-spacing:1.5px;color:#5C7268;margin:18px 0 4px">DÉTAIL SOURCÉ</p>
+  <p style="font:10.5px sans-serif;color:#5C7268;margin:0 0 6px">Chaque donnée porte sa source — pour le promoteur qui vérifie.</p>
   {lignes}
   <p style="margin-top:18px;font:10px sans-serif;color:#5C7268;line-height:1.5">Estimations indicatives
   issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité.
