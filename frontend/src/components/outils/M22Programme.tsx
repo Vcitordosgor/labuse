@@ -93,6 +93,13 @@ export function M22() {
               parcelle{d.n > 1 ? 's' : ''} correspond{d.n > 1 ? 'ent' : ''} à vos critères
               <span className="text-txt-dim">{commune ? ` à ${commune}` : ' (toute l’île)'}</span>
             </p>
+            {/* Fix point 28 : lever la confusion « N = plafond ». N est le TOTAL des correspondances ;
+                la liste n'en montre que les premières (triées par marge). */}
+            <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">
+              {d.n > (d.items as unknown[]).length
+                ? `Total des correspondances (pas une limite) — les ${(d.items as unknown[]).length} premières, par marge de capacité décroissante, sont affichées.`
+                : 'Triées par marge de capacité décroissante.'}
+            </p>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {(d.items as Record<string, any>[]).map((i) => (
