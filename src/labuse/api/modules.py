@@ -634,6 +634,22 @@ def _dvf_couverture(db: Session) -> dict:
     return _DVF_COUVERTURE_CACHE["v"]
 
 
+def _faisa_step_prov(source: str, prov: str) -> str:
+    """Provenance d'AFFICHAGE d'un step (transparence — n'altère AUCUN calcul). Si le moteur l'a
+    posée (bilan), on la garde ; sinon (steps capacité, prov='') on la DÉRIVE du libellé de source :
+    article PLU / géométrie réelle → « sourcee » ; hypothèse → « estimee » ; calcul dérivé → « derive »."""
+    if prov:
+        return prov
+    s = (source or "").lower()
+    if "hypoth" in s:
+        return "estimee"
+    if "dériv" in s or "deriv" in s:
+        return "derive"
+    if "art." in s or "zone" in s or "géomét" in s or "geomet" in s or "cadastr" in s or "règl" in s or "regl" in s:
+        return "sourcee"
+    return "estimee"   # défaut prudent : jamais présenter un chiffre non sourcé comme « sourcé »
+
+
 @router.get("/faisabilite/{idu}")
 def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
@@ -650,7 +666,14 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
         _ctx, f = fz
         out["capacite"] = {"zone": f.zone, "verdict": f.verdict, "calibree": f.calibree,
                            "fourchette": f.fourchette, "hypotheses": f.hypotheses,
-                           "bandeau": f.bandeau}
+                           "bandeau": f.bandeau,
+                           # M11 Surface C : les 11 étapes TRACÉES du moteur, exposées telles quelles
+                           # (aucune reformulation). `prov` d'affichage dérivé du `source` quand le
+                           # moteur ne le pose pas (les steps capacité ont prov='' ; le sens reste exact).
+                           "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur,
+                                      "source": s.source, "prov": _faisa_step_prov(s.source, s.prov)}
+                                     for s in f.steps],
+                           "avertissements": f.avertissements, "modulation": f.modulation}
     else:
         out["capacite"] = None
     hyp = Hypotheses()
@@ -701,8 +724,12 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
     (capacité) + prix de sortie (DVF) sont SOURCÉS ; le coût de construction et la marge viennent
     du corps de requête (hypothèses du promoteur). Cas limites honnêtes : capacité non résolue ou
     prix DVF insuffisant → `calculable:false` + raison, jamais un faux chiffre."""
-    from ..faisabilite.bilan import (CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
-                                     compute_calculette, sector_price)
+    from ..faisabilite.bilan import (
+        CALCULETTE_COUT_DEFAUT_M2,
+        CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+        compute_calculette,
+        sector_price,
+    )
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
 
@@ -728,6 +755,107 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
         res["message"] = ("Prix de sortie insuffisant (échantillon DVF) — charge foncière non "
                           "chiffrée ; le prix de sortie secteur reste indiqué au mieux.")
     return res
+
+
+# ── M11 · SURFACE C — l'IA EXPLIQUE le chiffrage (à partir des STEPS tracés, jamais elle ne recalcule) ──
+_PROV_SOCLE = {"sourcee": "SOURCE", "estimee": "ESTIME", "derive": "ESTIME"}  # derive hérite d'estimé (prudence)
+
+_EXPLAIN_FAISA_SYSTEM = (
+    "Tu es l'assistant foncier de LA BUSE. On te donne les ÉTAPES DÉJÀ CALCULÉES d'un chiffrage de "
+    "pré-faisabilité (capacité constructible + bilan promoteur) pour UNE parcelle. Explique en français "
+    "clair et pédagogique COMMENT on arrive au résultat, en suivant le fil des étapes.\n"
+    "RÈGLES ABSOLUES :\n"
+    "- Tu n'inventes ni ne recalcules AUCUN chiffre. Chaque nombre que tu écris vient d'une étape du "
+    "contexte et est suivi de sa source au format ⟨src:etape_N⟩ ou ⟨src:bilan_N⟩ (ex. « ~2 001 m² de "
+    "surface de plancher ⟨src:etape_6⟩ »).\n"
+    "- Distingue SOURCÉ (règle PLU, géométrie, prix de marché) et ESTIMÉ (hypothèses : coût de "
+    "construction, marge, taux d'occupation, rendement) — dis explicitement quand un chiffre est une hypothèse.\n"
+    "- HONNÊTETÉ SUR LE PRIX : si la fiabilité du prix DVF est « fragile », signale-le — la charge foncière "
+    "est alors un ORDRE DE GRANDEUR à confirmer, jamais un chiffre certain. Ne survends jamais une estimation.\n"
+    "- Ne conclus pas sur l'opportunité d'acheter (le promoteur décide).\n"
+    "- FORME : phrases simples, un ou deux courts paragraphes. PAS de titres (##), PAS de séparateurs (---), "
+    "PAS de listes. Gras (**…**) autorisé pour les chiffres clés uniquement. 4 à 8 phrases au total."
+)
+
+
+def _faisa_explain_facts(db: Session, row, core_mod) -> dict | None:
+    """Construit le CONTEXTE AUTORISÉ (les steps étiquetés) pour l'explication IA. None si pas de capacité.
+
+    Le bilan est calculé avec les MÊMES hypothèses PAR DÉFAUT que la calculette (coût/marge affichés
+    au client) → l'explication porte sur les chiffres RÉELLEMENT vus, pas une variante. Ces hypothèses
+    sont des ESTIMATIONS ajustables (jamais présentées comme certaines)."""
+    from ..faisabilite.bilan import (CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+                                     compute_bilan, sector_price)
+    from ..faisabilite.db import parcel_faisabilite
+    from ..faisabilite.engine import Hypotheses
+    fz = parcel_faisabilite(db, row["id"])
+    if not fz:
+        return None
+    _ctx, f = fz
+    facts: dict = {}
+    for i, s in enumerate(f.steps, 1):
+        pv = _PROV_SOCLE.get(_faisa_step_prov(s.source, s.prov), "ESTIME")
+        facts[f"etape_{i}"] = core_mod.Fact(f"{s.label} : {s.valeur} (source : {s.source})", pv)
+    fo = f.fourchette or {}
+    facts["resultat"] = core_mod.Fact(
+        f"gabarit {fo.get('niveaux')}, SDP {fo.get('surface_plancher_m2')} m², "
+        f"{fo.get('logements_au_sol')} logements, hauteur {fo.get('hauteur_m')} m", "ESTIME")
+    # bilan (si capacité vendable + prix) — hypothèses = celles de la calculette par défaut
+    hyp = Hypotheses()
+    prix = sector_price(db, row["id"], hyp)
+    shab = fo.get("shab_vendable_m2")
+    if shab and prix.get("median"):
+        bp = {"cout_construction_m2_sdp": CALCULETTE_COUT_DEFAUT_M2,
+              "marge_cible_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+              "honoraires_pct": 0.0, "frais_financiers_pct": 0.0}
+        b = compute_bilan(float(shab), float(row["s"] or 0), prix, hyp, bilan_params=bp)
+        for i, s in enumerate(b.steps, 1):
+            facts[f"bilan_{i}"] = core_mod.Fact(f"{s.label} : {s.valeur}", _PROV_SOCLE.get(s.prov, "ESTIME"))
+        cf = b.charge_fonciere or {}
+        facts["charge_fonciere"] = core_mod.Fact(
+            f"charge foncière médiane {cf.get('central')} € (~{cf.get('par_m2_terrain')} €/m² de terrain), "
+            f"hypothèses par défaut coût {CALCULETTE_COUT_DEFAUT_M2:.0f} €/m² et marge+frais "
+            f"{CALCULETTE_MARGE_FRAIS_DEFAUT_PCT:.0f} % (ajustables)", "ESTIME")
+        facts["prix_dvf_fiabilite"] = core_mod.Fact(
+            f"prix de sortie DVF — fiabilité {prix.get('fiabilite')}",
+            "SOURCE" if prix.get("fiabilite") == "fiable" else "ESTIME")
+    return facts
+
+
+@router.get("/faisabilite/{idu}/explain")
+def faisabilite_explain(idu: str, db: Session = Depends(get_db)) -> dict:
+    """M11 Surface C : explication EN CLAIR de la dérivation du chiffrage, ancrée sur les STEPS du
+    moteur (déterministes). L'IA narre, elle ne recalcule pas ; la couche 2 du socle rejette tout
+    chiffre absent des étapes. Sur clic uniquement (coût) ; caché par (idu, run, question)."""
+    from ..ai import core
+    from ..scoring.score_v_constants import Q_A_RUN_LABEL
+    QUESTION = "explication_faisabilite"
+
+    hit = core.cache_get(db, idu, Q_A_RUN_LABEL, QUESTION)
+    if hit is not None:
+        return {**hit, "cached": True}
+    row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not row:
+        raise HTTPException(404, "Parcelle inconnue")
+    facts = _faisa_explain_facts(db, row, core)
+    if not facts:
+        return {"disponible": False,
+                "message": "Capacité constructible non résolue pour cette parcelle — rien à expliquer."}
+    ctx = core.build_context(facts, allowed_fields=set(facts))
+    res = core.complete(db, kind="explain-faisa", model=core.MODEL_REASONING, max_tokens=800,
+                        system=_EXPLAIN_FAISA_SYSTEM, context=ctx, validate=True, require_sources=True)
+    if res.degraded:
+        return {"disponible": True, "degraded": True,
+                "texte": "Explication momentanément indisponible — réessayez.", "reason": res.reason}
+    if res.rejected:
+        out = {"disponible": True, "rejected": True,
+               "texte": "Je ne peux pas expliquer ce calcul de façon sûrement sourcée.",
+               "sources": [], "provenance": {}}
+    else:
+        out = {"disponible": True, "rejected": False, "texte": res.text, "sources": res.sources,
+               "provenance": {k: facts[k].provenance for k in res.sources if k in facts}}
+    core.cache_put(db, idu, Q_A_RUN_LABEL, QUESTION, out, kind="explain-faisa")
+    return out
 
 
 class ProgrammeIn(BaseModel):

@@ -237,10 +237,13 @@ def _number_ok(n: float, allowed: set[float], *, tol_ratio: float = 0.02, strict
             continue
         if abs(n - a) / abs(a) <= tol_ratio:
             return True
-        # arrondi k€ / M€ : 834 ~ 834000, 2.9 ~ 2960000…
-        for scale in (1_000.0, 1_000_000.0):
-            if abs(n * scale - a) / abs(a) <= tol_ratio or abs(n / scale - a) / max(abs(a), 1e-9) <= tol_ratio:
-                return True
+        # arrondi k€ / M€ : « 834 k€ » ~ 834000, « 1,5 M€ » ~ 1500000. On n'applique l'échelle QUE
+        # contre une valeur de contexte RÉELLEMENT grande (≥ 1000) : sinon « 9999/1000 ≈ 10,2 »
+        # (le 10,2 d'un « Art. 10.2 ») laisserait passer n'importe quel grand nombre inventé.
+        if abs(a) >= 1_000.0:
+            for scale in (1_000.0, 1_000_000.0):
+                if abs(n * scale - a) / abs(a) <= tol_ratio or abs(n / scale - a) / abs(a) <= tol_ratio:
+                    return True
     return False
 
 
@@ -279,8 +282,12 @@ def validate_output(prose: str, context: dict[str, Any], *, require_sources: boo
         if not _number_ok(n, allowed_nums, strict=strict_numbers):
             return OutputCheck(False, prose, reason=f"chiffre non sourcé « {m.group().strip()} » (absent du contexte)")
 
-    # nettoyage : on retire les marqueurs du texte affiché, on les renvoie comme sources structurées
+    # nettoyage : on retire les marqueurs du texte affiché, on les renvoie comme sources structurées.
+    # Filet : on strippe AUSSI tout ⟨…⟩ résiduel (un marqueur MALFORMÉ — « ⟨src:a / b⟩ » — n'est pas
+    # capté par _SRC_MARKER et fuirait sinon en clair côté client). Les sources structurées restent
+    # celles des marqueurs bien formés (validées couche 1).
     clean = _SRC_MARKER.sub("", prose)
+    clean = re.sub(r"⟨[^⟩]*⟩", "", clean)
     clean = re.sub(r"[ \t]+", " ", clean).strip()
     return OutputCheck(True, clean, sources=sorted(set(markers)))
 
@@ -308,7 +315,9 @@ def _ensure_cache_table(db: Session) -> None:
 # Historique :
 #   v1 — contexte initial de la barre de fiche (M11 surface A).
 #   v2 — fix zonage /ask : multi-zones joint depuis reglement_plu.zones (commit 234c978, 15/07).
-CONTEXT_VERSION = 2
+#   v3 — M11 Surface C : le contexte IA de fiche gagne l'explication de faisabilité par STEPS
+#        (kind="explain-faisa", question "explication_faisabilite") — nouveau format groundé.
+CONTEXT_VERSION = 3
 
 
 def normalize_question(q: str) -> str:
