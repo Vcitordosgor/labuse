@@ -130,6 +130,110 @@ def share_list(idu: str, db: Session = Depends(get_db)) -> list[dict]:
            WHERE idu = :i ORDER BY created_at DESC"""), {"i": idu}).mappings()]
 
 
+# Points clés = FORMATAGE déterministe des facteurs de scoring (aucune IA). Titre de pitch par
+# couche ; le `detail` déjà tracé donne les spécifiques. Forces = poids > 0 ; attentions = poids < 0
+# (les pénalités RÉELLES apparaissent — honnêteté : ex. residuel_socle « hors cible collectif »).
+_FORCE_TITLE = {
+    "zonage_plu_gpu": "Terrain constructible", "sitadel": "Dynamique de construction active",
+    "dvf": "Marché porteur", "amenites": "Équipements à proximité", "acces": "Accès voirie",
+    "viabilisation": "Réseaux au contact", "residuel_socle": "Potentiel de densification",
+    "vue_mer": "Vue mer dégagée", "assemblage": "Regroupement possible",
+}
+_ATTENTION_TITLE = {
+    "residuel_socle": "SDP résiduelle limitée", "parc_national": "Zonage protégé (Parc national)",
+    "risques": "Aléa naturel", "abf": "Périmètre patrimonial (ABF)", "sol_pollue": "Sol à vérifier",
+    "icpe": "Installation classée à proximité", "cinquante_pas": "Bande littorale (50 pas)",
+    "safer": "Vocation agricole (SAFER)", "foret_publique": "Forêt publique / régime forestier",
+}
+
+
+def _points_cles(lines: list) -> tuple[list, list]:
+    """Dérive (forces, attentions) des facteurs — pur formatage, jamais d'invention."""
+    forces, attentions = [], []
+    for ln in lines:
+        w = ln.get("weight") or 0
+        layer = ln.get("layer") or ""
+        detail = (ln.get("detail") or "").strip()
+        if not detail:
+            continue
+        if w > 0:
+            forces.append((w, _FORCE_TITLE.get(layer, layer.replace("_", " ").capitalize()), detail))
+        elif w < 0:
+            attentions.append((w, _ATTENTION_TITLE.get(layer, layer.replace("_", " ").capitalize()), detail))
+    forces.sort(key=lambda x: -x[0])
+    attentions.sort(key=lambda x: x[0])            # la pénalité la plus forte d'abord
+    return forces[:5], attentions[:4]
+
+
+def _points_cles_html(lines: list) -> str:
+    forces, attentions = _points_cles(lines)
+    if not forces and not attentions:
+        return ""
+
+    def row(icon: str, color: str, title: str, detail: str) -> str:
+        return (f"<div style='display:flex;gap:8px;padding:5px 0'>"
+                f"<span style='color:{color};font-size:12px;line-height:1.4'>{icon}</span>"
+                f"<div style='min-width:0'><b style='font:600 12px sans-serif;color:#ECF5EF'>{title}</b>"
+                f"<span style='font:12px sans-serif;color:#8FA69A'> — {detail}</span></div></div>")
+    fh = "".join(row("✓", "#5CE6A1", t, d) for _, t, d in forces)
+    ah = "".join(row("⚠", "#E8B44C", t, d) for _, t, d in attentions)
+    return ("<div style='margin:16px 0;background:#0d1310;border:1px solid #1E2A23;border-radius:10px;padding:12px 14px'>"
+            "<p style='font:10px monospace;letter-spacing:1.5px;color:#5C7268;margin:0 0 4px'>POINTS CLÉS</p>"
+            + fh + ah + "</div>")
+
+
+def _pack_photo_html(m: dict, target_w: int = 596) -> str:
+    """Photo aérienne STATIQUE (tuiles ortho IGN positionnées + contour parcelle en SVG), mise à
+    l'échelle pour la largeur du pack. data-URI → imprimable, aucune carte interactive."""
+    scale = target_w / m["width"]
+    h = round(m["height"] * scale)
+    imgs = "".join(f'<img src="{t["data_uri"]}" width="256" height="256" '
+                   f'style="position:absolute;left:{t["left"]}px;top:{t["top"]}px">' for t in m["tiles"])
+    polys = "".join(f'<polygon points="{p}" fill="rgba(180,151,240,0.20)" stroke="#B497F0" '
+                    f'stroke-width="2.5" stroke-linejoin="round"/>' for p in m["polygons"])
+    return (f'<div style="position:relative;width:{target_w}px;height:{h}px;overflow:hidden;'
+            f'border-radius:10px;border:1px solid #2a2138;margin:14px 0 3px">'
+            f'<div style="position:absolute;top:0;left:0;width:{m["width"]}px;height:{m["height"]}px;'
+            f'transform:scale({scale:.4f});transform-origin:top left">{imgs}'
+            f'<svg width="{m["width"]}" height="{m["height"]}" style="position:absolute;top:0;left:0">{polys}</svg>'
+            f'</div></div>'
+            f'<div style="font:9px monospace;color:#5C7268;margin-bottom:6px">'
+            f'{m["attribution"]} · vue aérienne · contour cadastral</div>')
+
+
+# Variante IMPRESSION / PDF en thème CLAIR — l'écran reste en charte sombre, mais un apporteur
+# imprime/partage ce document à un promoteur : le sombre bave sur papier et fait cheap. On n'inverse
+# QU'À l'impression, sans dupliquer le HTML : sélecteurs d'attribut sur les hex des styles inline
+# (une règle @media print `!important` prime sur un style inline non-important). Zéro impact écran.
+_PACK_PRINT_CSS = """<style>
+@media print {
+  @page { margin: 14mm; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  /* fonds sombres → clairs */
+  [style*="#060A08"] { background: #ffffff !important; }
+  [style*="#171221"] { background: #f4f1fb !important; }
+  [style*="#3a1614"] { background: #fdecea !important; }
+  [style*="#111814"] { background: #f4f6f5 !important; }
+  [style*="#0d1310"] { background: #f6f8f7 !important; }
+  /* bordures sombres → claires */
+  [style*="#2a2138"] { border-color: #e4e0f0 !important; }
+  [style*="#1E2A23"] { border-color: #e6e9e7 !important; }
+  /* textes neutres clairs → sombres sur blanc */
+  [style*="#ECF5EF"] { color: #121814 !important; }
+  [style*="#C9DCD1"] { color: #2a322d !important; }
+  [style*="#8FA69A"] { color: #55635b !important; }
+  [style*="#5C7268"] { color: #6b746f !important; }
+  /* accents assombris pour rester lisibles sur papier (mais reconnaissables) */
+  [style*="#5CE6A1"] { color: #0c8a4f !important; }
+  [style*="#4ADE96"] { color: #0c8a4f !important; }
+  [style*="#B497F0"] { color: #5b3fa6 !important; }
+  [style*="#E8695A"] { color: #c0392b !important; }
+  [style*="#E8B44C"] { color: #9a6510 !important; }
+  svg[fill] { fill: #0c8a4f !important; }   /* logo LA BUSE (fill en attribut) */
+}
+</style>"""
+
+
 @router.get("/p/{token}", response_class=HTMLResponse)
 def share_public(token: str, db: Session = Depends(get_db)) -> str:
     """Page publique MINIMALE, lecture seule, filigranée + horodatée, compteur de consultations."""
@@ -140,6 +244,21 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
     db.execute(text("UPDATE share_links SET views = views + 1 WHERE token = :t"), {"t": token})
     from .app import _q_v2_fiche
     f = _q_v2_fiche(db, link["idu"])
+    # Photo aérienne IGN (ortho) + contour — image STATIQUE. Défensif : réseau/géométrie absents → pas
+    # de photo (jamais d'erreur), le pack reste valide.
+    photo = ""
+    try:
+        from ..flash.carte import IGN_ORTHO_ATTRIBUTION, IGN_ORTHO_URL, build_situation_map
+        from ..flash.report import storage_dir
+        gj = db.execute(text("SELECT ST_AsGeoJSON(ST_Transform(geom_2975, 4326)) FROM parcels WHERE idu = :i"),
+                        {"i": link["idu"]}).scalar()
+        m = build_situation_map(gj, storage_dir() / "tiles", tile_url=IGN_ORTHO_URL, tile_mime="image/jpeg",
+                                cache_prefix="ign_ortho", attribution=IGN_ORTHO_ATTRIBUTION) if gj else None
+        if m:
+            photo = _pack_photo_html(m)
+    except Exception:  # noqa: BLE001 — la photo est un plus, jamais un bloqueur
+        photo = ""
+    points_cles = _points_cles_html(f["lines"])   # pitch dérivé des facteurs (forces + attentions)
     horodatage = datetime.now().strftime("%d/%m/%Y à %H:%M")
     cree = link["created_at"].strftime("%d/%m/%Y à %H:%M")
     lignes = "".join(
@@ -155,7 +274,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
           f"color:#E8695A;font:12px sans-serif'>● ÉVÉNEMENT — {f['evenement_detail']}</div>"
           if f.get("evenement") == "rouge" else "")
     return f"""<!doctype html><html lang=fr><head><meta charset=utf-8><meta name=robots content=noindex>
-<title>LABUSE — {f['idu']} (lecture seule)</title></head>
+<title>LABUSE — {f['idu']} (lecture seule)</title>{_PACK_PRINT_CSS}</head>
 <body style="margin:0;background:#060A08;font-family:sans-serif">
 <div style="max-width:640px;margin:0 auto;padding:28px 20px">
   <div style="display:flex;justify-content:space-between;align-items:baseline">
@@ -167,8 +286,10 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
     identifié par {link['created_by']} le {cree} · consulté le {horodatage} · lien traçable
   </div>
   {ev}
-  <h1 style="font:600 20px monospace;color:#ECF5EF;margin:16px 0 2px">{f['idu']}</h1>
-  <p style="color:#8FA69A;font-size:12px;margin:0">{f['surface_m2'] or '?'} m² · {f['commune']}</p>
+  <h1 style="font:600 18px monospace;color:#8FA69A;margin:16px 0 2px">{f['idu']}</h1>
+  {f'''<p style="font:600 17px sans-serif;color:#ECF5EF;margin:2px 0 0">{f["adresse"]}</p>''' if f.get("adresse") else ""}
+  <p style="color:#8FA69A;font-size:12px;margin:3px 0 0">{f['surface_m2'] or '?'} m² · {f['commune']}</p>
+  {photo}
   <div style="display:flex;gap:10px;margin:14px 0">
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
       <div style="font:700 22px sans-serif;color:#5CE6A1">{f['q_score']}</div>
@@ -180,6 +301,9 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
       <div style="font:700 22px sans-serif;color:#5CE6A1">{f['completeness_score']}</div>
       <div style="font:9px monospace;color:#5C7268">COMPLÉTUDE %</div></div>
   </div>
+  {points_cles}
+  <p style="font:10px monospace;letter-spacing:1.5px;color:#5C7268;margin:18px 0 4px">DÉTAIL SOURCÉ</p>
+  <p style="font:10.5px sans-serif;color:#5C7268;margin:0 0 6px">Chaque donnée porte sa source — pour le promoteur qui vérifie.</p>
   {lignes}
   <p style="margin-top:18px;font:10px sans-serif;color:#5C7268;line-height:1.5">Estimations indicatives
   issues de données publiques — ne valent ni conseil juridique/notarial ni garantie de constructibilité.

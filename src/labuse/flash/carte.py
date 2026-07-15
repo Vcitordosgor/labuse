@@ -51,19 +51,28 @@ def _rings(geojson: dict) -> list[list[tuple[float, float]]]:
     return []
 
 
-def _fetch_tile(z: int, x: int, y: int, cache_dir: Path, client: httpx.Client) -> bytes | None:
-    cached = cache_dir / f"{z}_{x}_{y}.png"
+def _fetch_tile(z: int, x: int, y: int, cache_dir: Path, client: httpx.Client,
+                tile_url: str = TILE_URL, prefix: str = "osm") -> bytes | None:
+    cached = cache_dir / f"{prefix}_{z}_{x}_{y}.bin"
     if cached.exists():
         return cached.read_bytes()
-    resp = client.get(TILE_URL.format(z=z, x=x, y=y))
+    resp = client.get(tile_url.format(z=z, x=x, y=y))
     resp.raise_for_status()
     cache_dir.mkdir(parents=True, exist_ok=True)
     cached.write_bytes(resp.content)
     return resp.content
 
 
-def build_situation_map(parcel_geojson: str, cache_dir: Path,
-                        timeout_s: float = 10.0) -> dict | None:
+# Fond ORTHO IGN (Géoplateforme WMTS, grille PM = même Z/X/Y que OSM) — libre, sans clé Maps.
+IGN_ORTHO_URL = ("https://data.geopf.fr/wmts?SERVICE=WMTS&REQUEST=GetTile&VERSION=1.0.0&STYLE=normal"
+                 "&TILEMATRIXSET=PM&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}"
+                 "&LAYER=ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg")
+IGN_ORTHO_ATTRIBUTION = "© IGN — BD ORTHO"
+
+
+def build_situation_map(parcel_geojson: str, cache_dir: Path, timeout_s: float = 10.0,
+                        tile_url: str = TILE_URL, tile_mime: str = "image/png",
+                        cache_prefix: str = "osm", attribution: str = ATTRIBUTION) -> dict | None:
     """Prépare la carte de situation : tuiles positionnées + tracé SVG de la parcelle.
 
     Retourne un dict prêt pour le template (tiles, polygones en px, dimensions,
@@ -100,11 +109,12 @@ def build_situation_map(parcel_geojson: str, cache_dir: Path,
                 for ty in range(ty0, ty1 + 1):
                     if not (0 <= tx <= n_max and 0 <= ty <= n_max):
                         continue
-                    png = _fetch_tile(zoom, tx, ty, cache_dir, client)
+                    png = _fetch_tile(zoom, tx, ty, cache_dir, client,
+                                      tile_url=tile_url, prefix=cache_prefix)
                     tiles.append({
                         "left": round(tx * TILE_PX - left),
                         "top": round(ty * TILE_PX - top),
-                        "data_uri": "data:image/png;base64," + base64.b64encode(png).decode(),
+                        "data_uri": f"data:{tile_mime};base64," + base64.b64encode(png).decode(),
                     })
         polygons = []
         for ring in rings:
@@ -114,7 +124,7 @@ def build_situation_map(parcel_geojson: str, cache_dir: Path,
                 pts.append(f"{px - left:.1f},{py - top:.1f}")
             polygons.append(" ".join(pts))
         return {"width": VIEW_W, "height": VIEW_H, "tiles": tiles,
-                "polygons": polygons, "attribution": ATTRIBUTION, "zoom": zoom}
+                "polygons": polygons, "attribution": attribution, "zoom": zoom}
     except Exception as exc:  # noqa: BLE001 — la carte est un plus, jamais un bloqueur
         log.warning("carte de situation indisponible (%s: %s) — rapport sans carte",
                     type(exc).__name__, exc)
