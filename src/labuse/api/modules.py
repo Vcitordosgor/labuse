@@ -430,6 +430,32 @@ def velocite(fmt: str = "json", nature: str | None = None, db: Session = Depends
         ORDER BY n_valide DESC"""),
         {"cutoff": cutoff, "nat": nature}).mappings().all()
     data = [dict(r) for r in rows]
+    # Point 39 — CLASSEMENT : rang par délai médian croissant (1 = commune la plus rapide).
+    for rang, c in enumerate(sorted([c for c in data if c["delai_median_mois"] is not None],
+                                    key=lambda x: x["delai_median_mois"]), start=1):
+        c["rang_delai"] = rang
+    # Point 39 — TENDANCE : médiane des cohortes ANCIENNES vs RÉCENTES (coupe au milieu de la période).
+    trend = {r["commune"]: r for r in db.execute(text("""
+        WITH mid AS (SELECT (min(date_depot) + (max(date_depot) - min(date_depot)) / 2) AS m
+                     FROM m10_permit_delais WHERE valide AND date_depot <= :cutoff)
+        SELECT commune,
+          round(percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois)
+                FILTER (WHERE date_depot < (SELECT m FROM mid))) AS med_ancien,
+          round(percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois)
+                FILTER (WHERE date_depot >= (SELECT m FROM mid))) AS med_recent,
+          count(*) FILTER (WHERE date_depot < (SELECT m FROM mid)) AS n_a,
+          count(*) FILTER (WHERE date_depot >= (SELECT m FROM mid)) AS n_r
+        FROM m10_permit_delais
+        WHERE valide AND date_depot <= :cutoff AND (CAST(:nat AS text) IS NULL OR nature = :nat)
+        GROUP BY commune"""), {"cutoff": cutoff, "nat": nature}).mappings()}
+    for c in data:
+        t = trend.get(c["commune"])
+        tend = None
+        if t and t["n_a"] and t["n_r"] and t["n_a"] >= 8 and t["n_r"] >= 8 \
+                and t["med_ancien"] is not None and t["med_recent"] is not None:
+            diff = float(t["med_recent"]) - float(t["med_ancien"])
+            tend = "accelere" if diff <= -1 else "ralentit" if diff >= 1 else "stable"
+        c["tendance"] = tend
     # période de couverture = années d'AUTORISATION (le fichier Sitadel des dossiers accordés)
     an = db.execute(text(
         "SELECT min(extract(year FROM date_autorisation))::int lo, "
