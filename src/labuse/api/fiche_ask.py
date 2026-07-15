@@ -89,6 +89,19 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
     except Exception:  # noqa: BLE001 — la faisabilité ne casse jamais la fiche
         faisa = None
 
+    # ── ÉQUIPEMENTS À PROXIMITÉ (parcel_amenites, distances OSM au plus proche, en mètres) ──
+    amenites = None
+    try:
+        am = db.execute(text(
+            "SELECT round(a.dist_ecole_m) AS ecole_m, round(a.dist_sante_m) AS sante_m, "
+            "       round(a.dist_commerce_m) AS commerce_m, round(a.dist_tcsp_m) AS transport_commun_m "
+            "FROM parcel_amenites a JOIN parcels p ON p.id = a.parcel_id WHERE p.idu = :i"),
+            {"i": idu}).mappings().first()
+        if am and any(v is not None for v in am.values()):
+            amenites = {k: (int(v) if v is not None else None) for k, v in am.items()}
+    except Exception:  # noqa: BLE001 — les aménités ne cassent jamais la fiche
+        amenites = None
+
     # ── ZONAGE PLU : le bloc premium = {"zones": [{"zone","articles":[{regle,reference,url}], "url"...}]}.
     # MULTI-ZONES : on JOINT toutes les zones (une parcelle bizone affiche « U4b + UD », jamais une seule
     # présentée comme certaine). DEEP-LINK : 1re URL RÉELLEMENT présente (article puis document), sinon aucun.
@@ -136,6 +149,8 @@ def _ask_context(db: Session, idu: str) -> tuple[dict, dict]:
         # ── DVF (SOURCÉ) ──
         "dvf_prix_m2_bati": _F(dvf.get("prix_m2_bati")),
         "dvf_derniere_mutation": _F(dvf.get("date")),
+        # ── équipements à proximité (SOURCÉ — distances OSM au plus proche, en mètres) ──
+        "amenites": _F(amenites),
         # ── motif d'exclusion (SOURCÉ) ──
         "motif_exclusion": _F(motifs_exclusion or None),
         # ── faisabilité (ESTIMÉ) ──

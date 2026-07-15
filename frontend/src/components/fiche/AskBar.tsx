@@ -1,7 +1,7 @@
 // M11 · SURFACE A — barre de recherche IA par fiche (maquette CADRE-M11 §1.4).
 // Question libre sur LA parcelle → réponse SOURCÉE via le socle IA. L'IA cite ses sources
 // et dit « non disponible » quand la donnée n'existe pas — jamais d'invention.
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { askParcel, type AskResponse, type Provenance } from '../../lib/api'
 
@@ -51,7 +51,9 @@ const SRC_LABEL: Record<string, string> = {
   viabilisation_cout_raccordement: 'coût raccordement (M-VIA)',
   risques: 'risques (PPR/Géorisques)', sdp_residuelle_m2: 'potentiel de transformation',
   potentiel_niveau: 'potentiel de transformation', faisabilite: 'moteur faisabilité',
-  dvf_prix_m2_bati: 'prix DVF', motif_exclusion: 'cascade (motif)', surface_m2: 'cadastre',
+  dvf_prix_m2_bati: 'prix DVF', dvf_derniere_mutation: 'DVF (dernière vente)',
+  motif_exclusion: 'cascade (motif)', surface_m2: 'cadastre',
+  amenites: 'équipements à proximité (OSM)',
 }
 
 function ProvChip({ src, prov, href }: { src: string; prov?: Provenance; href?: string }) {
@@ -67,25 +69,48 @@ function ProvChip({ src, prov, href }: { src: string; prov?: Provenance; href?: 
   return href ? <a href={href} target="_blank" rel="noreferrer" title="Voir la source">{body}</a> : body
 }
 
-export function AskBar({ idu, zone }: { idu: string; zone?: string | null }) {
+export function AskBar({ idu }: { idu: string; zone?: string | null }) {
   const [q, setQ] = useState('')
+  const [open, setOpen] = useState(false)   // Fix point 6 : REPLIÉE par défaut — la fiche d'abord
   const ask = useMutation({ mutationFn: (question: string) => askParcel(idu, question) })
   const d: AskResponse | undefined = ask.data
   const run = (question: string) => { const t = question.trim(); if (t) { setQ(t); ask.mutate(t) } }
+  // à chaque changement de fiche : on replie et on repart propre (l'IA ne s'impose jamais).
+  useEffect(() => { setOpen(false); setQ(''); ask.reset() }, [idu])   // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Exemples curés (point 15) — tous GROUNDÉS sur la liste blanche de /ask (aménités = ajout backend).
   const chips = [
-    zone ? `Ça veut dire quoi la zone ${zone} ?` : 'Ça veut dire quoi cette zone ?',
+    'Y a-t-il des équipements à proximité ?',
     'Combien je peux construire ?',
     'C’est raccordé à l’assainissement ?',
+    'Des ventes récentes dans le secteur ?',
     'Y a-t-il un risque inondation ?',
     'Pourquoi ce statut ?',
   ]
 
+  // ── REPLIÉE (défaut) : juste un bouton découvrable — la fiche reste PLEINEMENT visible (point 6) ──
+  if (!open) {
+    return (
+      <div data-askbar className="shrink-0 border-b border-[#B497F0]/50 bg-[#171221] px-5 py-2">
+        <button data-askbar-open onClick={() => setOpen(true)}
+          className="group flex w-full items-center gap-2 rounded-lg border border-[#B497F0]/40 bg-[#1d1630] px-3 py-1.5 hover:border-[#B497F0] hover:bg-[#241833]">
+          <span className="font-mono text-[10px] tracking-widest text-[#B497F0]">✦ DEMANDER À L'IA</span>
+          <span className="rounded bg-[#B497F0]/15 px-1.5 py-0.5 text-[9px] font-semibold text-[#B497F0]">PREMIUM</span>
+          <span className="ml-auto text-[11px] text-txt-dim group-hover:text-txt-mut">une question sur cette parcelle →</span>
+        </button>
+      </div>
+    )
+  }
+
+  // ── DÉPLIÉE : la zone complète (champ + exemples + réponse), refermable à tout moment ──
   return (
     <div data-askbar className="shrink-0 border-b border-[#B497F0]/50 bg-[#171221] px-5 py-3">
       <div className="flex items-center gap-2">
         <span className="font-mono text-[10px] tracking-widest text-[#B497F0]">✦ DEMANDER À L'IA</span>
         <span className="rounded bg-[#B497F0]/15 px-1.5 py-0.5 text-[9px] font-semibold text-[#B497F0]">PREMIUM</span>
+        <button data-askbar-close onClick={() => setOpen(false)}
+          className="ml-auto rounded px-1.5 py-0.5 text-[11px] text-txt-dim hover:bg-[#241833] hover:text-txt"
+          title="Replier — afficher toute la fiche">✕ fermer</button>
       </div>
       <div className="mt-2 flex items-center gap-2">
         <input

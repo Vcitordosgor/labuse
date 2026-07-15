@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, iaPourquoi, iaSynthese, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
+import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getSolaireFiche, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { Loading } from '../Loading'
 import { AskBar, renderRich } from './AskBar'
@@ -432,43 +432,6 @@ function PipelineButton({ idu }: { idu: string }) {
     >
       {add.isPending ? 'Ajout…' : inPipe ? '✓ Dans le pipeline' : '+ Pipeline'}
     </button>
-  )
-}
-
-// Panneau IA de la fiche : synthèse tracée + « pourquoi ce score ? » — mention systématique.
-function IAPanel({ idu, onClose }: { idu: string; onClose: () => void }) {
-  const [mode, setMode] = useState<'synthese' | 'pourquoi' | null>(null)
-  const gen = useMutation({ mutationFn: (m: 'synthese' | 'pourquoi') => (m === 'synthese' ? iaSynthese(idu) : iaPourquoi(idu)) })
-  const isStub = gen.data?.stub
-  return (
-    <div className="absolute bottom-10 right-0 z-20 w-[320px] rounded-lg border border-line-2 bg-surface-2 p-3 shadow-xl">
-      <div className="flex items-center justify-between">
-        <p className="font-mono text-[10px] tracking-widest text-txt-dim">ANALYSE IA</p>
-        <button onClick={onClose} className="text-txt-dim hover:text-txt-hi">✕</button>
-      </div>
-      {isStub && (
-        <p className="mt-1.5 rounded border border-st-creuser/40 bg-[#211a10] px-2 py-1 text-[11px] leading-snug text-st-creuser">
-          Stub local (clé IA absente) — texte généré par règles depuis la fiche tracée.
-          Activer : ANTHROPIC_API_KEY dans .env, puis relancer.
-        </p>
-      )}
-      <div className="mt-2 flex gap-1.5">
-        {([['synthese', 'Synthèse'], ['pourquoi', 'Pourquoi ce score ?']] as const).map(([k, l]) => (
-          <button key={k} onClick={() => { setMode(k); gen.mutate(k) }}
-            className={`rounded-full border px-2.5 py-1 text-[11px] ${mode === k ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
-            {l}
-          </button>
-        ))}
-      </div>
-      {gen.isPending && <p className="mt-3 text-[11px] text-txt-dim">Génération…</p>}
-      {gen.isError && <p className="mt-3 text-[11px] text-st-ecartee">Erreur — réessayez.</p>}
-      {gen.data && (
-        <>
-          <div className="mt-3 max-h-64 overflow-y-auto whitespace-pre-wrap text-[11px] leading-relaxed text-txt">{gen.data.texte}</div>
-          <p className="mt-2 border-t border-line pt-2 text-[11px] text-txt-dim">{gen.data.mention}</p>
-        </>
-      )}
-    </div>
   )
 }
 
@@ -959,7 +922,6 @@ export function Fiche({ idu }: { idu: string }) {
   }, [select])
   void sourceLine
   const [tab, setTab] = useState<'synthese' | Onglet | 'bilan' | 'solaire' | 'faisabilite'>('synthese')
-  const [iaOpen, setIaOpen] = useState(false)
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
@@ -1255,18 +1217,8 @@ export function Fiche({ idu }: { idu: string }) {
           <PipelineButton idu={idu} />
           <WatchButton idu={idu} />
           <ShareButton idu={idu} />
-          <div className="relative shrink-0">
-            <button onClick={() => setIaOpen((o) => !o)}
-              className="flex h-8 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi" title="Analyse IA">
-              IA
-            </button>
-            {iaOpen && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setIaOpen(false)} />
-                <IAPanel idu={idu} onClose={() => setIaOpen(false)} />
-              </>
-            )}
-          </div>
+          {/* Fix point 18 : le vieux bouton « IA » (panneau Synthèse/Pourquoi) est retiré —
+              redondant avec la barre « Demander à l'IA » repliable en haut de fiche. */}
         </div>
         <div className="mt-2 flex items-stretch gap-2">
           <a href={pdfUrl(idu, (tab === 'bilan' || tab === 'faisabilite') ? calculette : null)} target="_blank" rel="noreferrer"
