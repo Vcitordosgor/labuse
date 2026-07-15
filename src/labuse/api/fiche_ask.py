@@ -169,6 +169,8 @@ _SYSTEM = (
     "- Distingue SOURCÉ (donnée réelle) et ESTIMÉ (capacité/SDP/bilan — dis « estimé »).\n"
     "- Si la question sort du périmètre de la fiche (ex. amiante, diagnostic non couvert), dis-le franchement : "
     "« cette information n'est pas disponible pour cette parcelle ».\n"
+    "- FORME : réponds en phrases simples, SANS titres (##), SANS listes (-), SANS citations (>). "
+    "Gras (**…**) au besoin uniquement, pour un chiffre ou un terme clé. Pas d'autre Markdown.\n"
     "Réponse : 1 à 4 phrases maximum."
 )
 
