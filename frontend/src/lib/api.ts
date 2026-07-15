@@ -175,6 +175,9 @@ export const getOrthoEquipements = (idu: string) => j<Record<string, unknown>>(`
 export const modCourriers = (idus: string[], contexte: string) =>
   j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus, contexte }) })
+export const courrierDemande = (body: { idu: string | null; motif: string; texte: string }) =>
+  j<{ ok: boolean; message: string }>('/courrier/demande', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const modDueDiligence = (refs: string) =>
   j<{ n_demandes: number; n_trouvees: number; items: Record<string, unknown>[] }>('/modules/duediligence', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ refs }) })

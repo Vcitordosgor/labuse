@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  getPipeline, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
+  courrierDemande, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
   modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modSolaireParkings, modSolaireTertiaire, modVelocite,
 } from '../../lib/api'
@@ -449,53 +449,114 @@ function M08() {
 
 /* ───────────────────────────── M09 — COURRIERS ───────────────────────────── */
 
+// M09 — parcours GUIDÉ en 4 étapes (parcelle → motif → rédaction → demande). C'est une DEMANDE
+// d'envoi (l'équipe LABUSE la traite), pas un envoi auto. Le brouillon est GROUNDÉ (faits réels de
+// la parcelle, gabarit serveur) et ÉDITABLE. Privacy : adressage générique, aucun particulier nommé.
+const MOTIFS: { key: string; label: string; desc: string }[] = [
+  { key: 'standard', label: 'Approche standard', desc: 'prise de contact foncière' },
+  { key: 'indivision', label: 'Indivision', desc: 'plusieurs co-indivisaires' },
+  { key: 'succession', label: 'Succession', desc: 'bien en cours de succession' },
+]
+
 function M09() {
-  const pipeline = useQuery({ queryKey: ['pipeline'], queryFn: getPipeline })
-  const [contexte, setContexte] = useState('standard')
-  const [manual, setManual] = useState('')
-  const gen = useMutation({ mutationFn: (idus: string[]) => modCourriers(idus, contexte) })
-  const idus = manual.trim()
-    ? manual.split(/[\n,;\s]+/).filter(Boolean)
-    : (pipeline.data ?? []).map((e) => e.idu)
-  const download = () => {
-    const txt = (gen.data?.courriers ?? []).filter((c) => c.texte)
-      .map((c) => `── ${c.idu} ${'─'.repeat(40)}\n\n${c.texte}`).join('\n\n\n')
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([txt], { type: 'text/markdown' }))
-    a.download = `courriers_${contexte}.md`
-    a.click()
-  }
+  const selectedIdu = useApp((s) => s.selectedIdu)
+  const [step, setStep] = useState(1)
+  const [idu, setIdu] = useState(selectedIdu ?? '')
+  const [motif, setMotif] = useState('standard')
+  const [texte, setTexte] = useState('')
+  const [done, setDone] = useState<string | null>(null)
+  const gen = useMutation({
+    mutationFn: () => modCourriers([idu.trim()], motif),
+    onSuccess: (d) => { setTexte(d.courriers[0]?.texte ?? d.courriers[0]?.erreur ?? ''); setStep(3) },
+  })
+  const envoi = useMutation({
+    mutationFn: () => courrierDemande({ idu: idu.trim() || null, motif, texte }),
+    onSuccess: (r) => setDone(r.message),
+  })
+  const Stepper = () => (
+    <div className="flex items-center gap-1 text-[10px]">
+      {['Parcelle', 'Motif', 'Rédaction', 'Demande'].map((l, i) => (
+        <div key={l} className={`flex items-center gap-1 ${step === i + 1 ? 'text-[#B497F0]' : step > i + 1 ? 'text-mint' : 'text-txt-dim'}`}>
+          <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[9px] ${step === i + 1 ? 'border-[#B497F0]' : step > i + 1 ? 'border-mint' : 'border-line-2'}`}>{step > i + 1 ? '✓' : i + 1}</span>
+          {l}{i < 3 && <span className="text-txt-dim">›</span>}
+        </div>
+      ))}
+    </div>
+  )
+  if (done) return (
+    <>
+      <Banner>Demande enregistrée.</Banner>
+      <div data-courrier-done className="rounded-xl border border-mint/40 bg-[#0F1A14] p-4 text-center">
+        <p className="font-display text-sm font-bold text-mint">✓ {done}</p>
+        <button onClick={() => { setDone(null); setStep(1); setIdu(''); setTexte('') }}
+          className="mt-3 text-[11px] text-txt-mut hover:text-txt">Nouvelle demande</button>
+      </div>
+    </>
+  )
   return (
     <>
-      <Banner>Génération de courriers types — <b>aucun envoi</b>. Identité du propriétaire : workflow
-        SPF/CERFA existant (fiche → export SPF), aucune donnée nominative automatisée.</Banner>
-      <label className="text-[11px] text-txt-mut">Contexte
-        <select value={contexte} onChange={(e) => setContexte(e.target.value)}
-          className="ml-2 rounded border border-line-2 bg-surface-3 px-1 py-0.5 text-txt">
-          <option value="standard">standard</option>
-          <option value="indivision">indivision</option>
-          <option value="succession">succession</option>
-        </select>
-      </label>
-      <textarea value={manual} onChange={(e) => setManual(e.target.value)} rows={3}
-        placeholder={`IDU (un par ligne) — vide = le pipeline CRM (${(pipeline.data ?? []).length} parcelles)`}
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:border-[#B497F0] focus:outline-none" />
-      <button onClick={() => idus.length && gen.mutate(idus)} disabled={!idus.length || gen.isPending}
-        className="rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>
-        {gen.isPending ? 'Génération…' : `Générer ${idus.length} courrier${idus.length > 1 ? 's' : ''}`}
-      </button>
-      {gen.data && (
-        <>
-          <button onClick={download} className="rounded-lg border border-line-2 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ Télécharger le lot (.md)</button>
-          <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-            {gen.data.courriers.map((c) => (
-              <div key={c.idu} className="rounded-lg border border-line-2 bg-surface-3 p-2">
-                <div className="font-mono text-[10.5px] text-txt-hi">{c.idu}</div>
-                <div className="mt-1 line-clamp-3 whitespace-pre-wrap text-[11px] leading-snug text-txt-mut">{c.texte ?? c.erreur}</div>
-              </div>
-            ))}
+      <Banner>Demande d'envoi guidée — <b>pas un envoi automatique</b> : notre équipe la traite. Le
+        courrier est <b>adressé génériquement</b> (aucune identité de propriétaire particulier utilisée ;
+        identification via le workflow SPF/CERFA).</Banner>
+      <Stepper />
+
+      {step === 1 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-[11px] text-txt-mut">Parcelle concernée (IDU) — ou sélectionnez-en une sur la carte.</p>
+          <input data-courrier-idu value={idu} onChange={(e) => setIdu(e.target.value.trim())}
+            placeholder="97415000CW0658"
+            className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-[#B497F0] focus:outline-none" />
+          {selectedIdu && selectedIdu !== idu && (
+            <button onClick={() => setIdu(selectedIdu)} className="self-start text-[10.5px] text-[#B497F0] hover:underline">utiliser la parcelle sélectionnée ({selectedIdu.slice(8)})</button>
+          )}
+          <button data-courrier-next onClick={() => idu.trim().length >= 10 && setStep(2)} disabled={idu.trim().length < 10}
+            className="rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>Suivant ›</button>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="flex flex-col gap-2">
+          <p className="text-[11px] text-txt-mut">Motif de l'approche :</p>
+          {MOTIFS.map((m) => (
+            <button key={m.key} data-courrier-motif={m.key} onClick={() => setMotif(m.key)}
+              className={`rounded-lg border px-3 py-2 text-left ${motif === m.key ? 'border-[#B497F0] bg-[#171221]' : 'border-line-2 bg-surface-3'}`}>
+              <div className="text-[11px] font-medium text-txt">{m.label}</div>
+              <div className="text-[10.5px] text-txt-dim">{m.desc}</div>
+            </button>
+          ))}
+          <div className="flex gap-2">
+            <button onClick={() => setStep(1)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
+            <button data-courrier-next onClick={() => gen.mutate()} disabled={gen.isPending}
+              className="flex-1 rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>
+              {gen.isPending ? 'Rédaction…' : 'Rédiger le brouillon ›'}</button>
           </div>
-        </>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
+          <p className="text-[11px] text-txt-mut">Brouillon (faits réels de la parcelle) — <b>éditable</b> :</p>
+          <textarea data-courrier-texte value={texte} onChange={(e) => setTexte(e.target.value)}
+            className="min-h-[180px] flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] leading-snug text-txt focus:border-[#B497F0] focus:outline-none" />
+          <div className="flex gap-2">
+            <button onClick={() => setStep(2)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
+            <button data-courrier-next onClick={() => setStep(4)} disabled={texte.trim().length < 10}
+              className="flex-1 rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>Prévisualiser ›</button>
+          </div>
+        </div>
+      )}
+
+      {step === 4 && (
+        <div className="flex min-h-0 flex-1 flex-col gap-2">
+          <p className="text-[11px] text-txt-mut">Aperçu — {MOTIFS.find((m) => m.key === motif)?.label} · {idu}</p>
+          <div data-courrier-apercu className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap rounded-lg border border-line-2 bg-[#0d1310] p-3 text-[11px] leading-snug text-txt">{texte}</div>
+          <div className="flex gap-2">
+            <button onClick={() => setStep(3)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Modifier</button>
+            <button data-courrier-envoyer onClick={() => envoi.mutate()} disabled={envoi.isPending}
+              className="flex-1 rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>
+              {envoi.isPending ? 'Envoi…' : 'Demander l\'envoi'}</button>
+          </div>
+        </div>
       )}
     </>
   )
