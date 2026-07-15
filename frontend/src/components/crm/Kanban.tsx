@@ -60,6 +60,25 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
       <div className="mt-1 truncate text-[11px] text-txt-mut">
         {e.parcel.surface_m2 ? `${Math.round(e.parcel.surface_m2).toLocaleString('fr-FR')} m² · ` : ''}{e.parcel.commune}
       </div>
+      {/* Phase 2 : d'où vient la piste (projet) */}
+      {e.projet && (
+        <div className="mt-1 truncate text-[10.5px] text-[#B497F0]" title={`Piste du projet « ${e.projet.nom} »`}>
+          ▸ {e.projet.nom}
+        </div>
+      )}
+      {/* Phase 2 : contact proprio — PRIVACY : personne morale publique OU particulier JAMAIS nommé */}
+      {e.proprietaire_public && (
+        e.proprietaire_public.type === 'personne_morale' ? (
+          <div className="mt-1 truncate text-[10.5px] text-txt-mut" title={`Personne morale · SIREN ${e.proprietaire_public.siren ?? '—'}`}>
+            <span className="text-txt">{e.proprietaire_public.denomination}</span>
+            {e.proprietaire_public.siren ? <span className="text-txt-dim"> · SIREN {e.proprietaire_public.siren}</span> : null}
+          </div>
+        ) : (
+          <div className="mt-1 truncate text-[10.5px] italic text-txt-dim" title="Propriétaire personne physique — non communiqué (privacy)">
+            Propriétaire particulier — non communiqué
+          </div>
+        )
+      )}
       <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1">
         {meta && (
           <span className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${meta.color}22`, color: meta.color }}>
