@@ -295,6 +295,29 @@ export const rejouerProjet = (id: number) =>
   j<{ ok: boolean; projet: Projet }>(`/projets/${id}/rejouer`, { method: 'POST' })
 export const deleteProjet = (id: number) => j<{ ok: boolean }>(`/projets/${id}`, { method: 'DELETE' })
 
+// ── Parcours de sélection (Tinder) — statuts parcelle×projet ──
+export type StatutParcelle = 'proposee' | 'retenue' | 'ecartee' | 'a_analyser'
+export interface ParcoursCounts { proposee: number; retenue: number; ecartee: number; a_analyser: number }
+export interface ParcoursItem { idu: string; commune: string; statut: StatutParcelle; q_score: number | null; tier: string | null; center: [number, number] | null }
+export interface ParcoursEtat {
+  nom: string; sdp_besoin_m2: number | null; counts: ParcoursCounts
+  proposees: ParcoursItem[]; retenues: ParcoursItem[]; ecartees: ParcoursItem[]; a_analyser: ParcoursItem[]
+}
+export interface CarteDecision {
+  idu: string; adresse: string | null; commune: string; surface_m2: number | null
+  tier: string | null; statut: string | null; q_score: number | null; a_score: number | null
+  completeness: number | null; center: [number, number] | null
+  forces: { titre: string; detail: string }[]; attentions: { titre: string; detail: string }[]
+}
+export const proposerProjet = (id: number, limit = 24) =>
+  j<{ ok: boolean; propose: number; sdp_besoin_m2: number | null; counts: ParcoursCounts }>(
+    `/projets/${id}/proposer`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ limit }) })
+export const getParcoursEtat = (id: number) => j<ParcoursEtat>(`/projets/${id}/parcelles`)
+export const getCarteDecision = (id: number, idu: string) => j<CarteDecision>(`/projets/${id}/carte/${idu}`)
+export const setStatutParcelle = (id: number, idu: string, statut: StatutParcelle) =>
+  j<{ ok: boolean; idu: string; statut: StatutParcelle; counts: ParcoursCounts }>(
+    `/projets/${id}/parcelle/${idu}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ statut }) })
+
 // ── Moteur de segments Habitat (mandat segments) ──
 export interface SegmentFiltreDef {
   cle: string; libelle: string; type: 'range' | 'bool' | 'enum'; unite: string | null

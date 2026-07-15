@@ -12,6 +12,7 @@ import { Rail } from './components/Rail'
 import { SourcesPage } from './components/sources/SourcesPage'
 import { SegmentsPage } from './components/segments/SegmentsPage'
 import { ProjetsPanel } from './components/projets/ProjetsPanel'
+import { ParcoursTinder } from './components/projets/ParcoursTinder'
 import { ContextePanel } from './components/contexte/ContextePanel'
 import { filtersFromHash, filtersToHash } from './lib/filters'
 import { SCORE_TIP } from './lib/status'
@@ -213,7 +214,7 @@ function Toast() {
 }
 
 export default function App() {
-  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune, verdict, setVerdict, outilsOpen } = useApp()
+  const { view, selectedIdu, select, setView, filters, setFilters, zone, setZone, module, setModule, setFlyTo, commune, setCommune, verdict, setVerdict, outilsOpen, parcours } = useApp()
 
   // Hook d'auto-QA (stable, sans effet produit) : sélection directe d'une parcelle / d'une vue.
   useEffect(() => {
@@ -262,8 +263,9 @@ export default function App() {
             <>
               {/* P1 : quand le tiroir Outils est ouvert, il REMPLACE le panneau Cartes (COUCHES/
                   résultats) — la carte reste derrière. Un seul panneau gauche à la fois. */}
-              {outilsOpen ? null : module ? <ModulePanel /> : <LeftPanel />}
+              {outilsOpen ? null : module ? <ModulePanel /> : parcours ? null : <LeftPanel />}
               {module === 'temps' ? <TimeMachine /> : <MapView />}
+              {parcours && <ParcoursTinder />}
             </>
           )}
           {view === 'crm' && <Kanban />}

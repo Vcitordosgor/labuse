@@ -662,6 +662,30 @@ class Projet(Base, TimestampMixin):
     derniere_execution_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class ProjetParcelle(Base, TimestampMixin):
+    """Liaison projet × parcelle × STATUT — le cœur du parcours de sélection (Tinder).
+
+    ADDITIVE : le modèle Projet reste piloté par les critères (fiche/filtres) ; cette table
+    porte l'ÉTAT de tri d'une parcelle DANS un projet. Le tri fait passer `proposee` →
+    `retenue` | `ecartee`. RIEN n'est détruit : `ecartee` reste en base, récupérable (la
+    boussole « ne jamais perdre une parcelle »). `rang` = ordre de proposition (best-first,
+    rejoué à chaque proposition) ; `proposee_at` fige la 1re proposition. Aucune touche au
+    scoring : les parcelles viennent du run servi, on ne stocke qu'un statut.
+    """
+
+    __tablename__ = "projet_parcelles"
+    __table_args__ = (UniqueConstraint("projet_id", "parcel_id", name="uq_projet_parcelle"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    projet_id: Mapped[int] = mapped_column(ForeignKey("projets.id", ondelete="CASCADE"), index=True)
+    parcel_id: Mapped[int] = mapped_column(ForeignKey("parcels.id", ondelete="CASCADE"))
+    statut: Mapped[str] = mapped_column(String(16))   # proposee | retenue | ecartee | a_analyser
+    rang: Mapped[int | None] = mapped_column()        # ordre de proposition (best-first)
+    proposee_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    parcel: Mapped[Parcel] = relationship()
+
+
 # ───────────────────────────── Score V — Vendabilité (Stage 3 additif) ─────────────────────────────
 # Mandat SPEC-LABUSE-SCORE-V v1.0. ADDITIF : ne touche ni la cascade, ni Q/A, ni la matrice.
 
