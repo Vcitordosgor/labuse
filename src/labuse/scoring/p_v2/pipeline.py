@@ -23,6 +23,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 import time
 from datetime import date
 from pathlib import Path
@@ -216,10 +217,14 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     # étage 0 + événements datés — l'étage 0 est lu sur le run SERVI (Q_A_RUN_LABEL,
     # source unique / bascule centralisée), PAS un run gelé en dur (ANO-1 : « q_v2 »
     # codé en dur = dette, le servi ré-appliquait déjà q_v5_m6b → on aligne le calcul interne).
+    # M8a — override NON DESTRUCTIF pour scorer un run CANDIDAT sur SA propre cascade sans
+    # toucher la constante servie : `LABUSE_ETAGE0_RUN` (défaut = Q_A_RUN_LABEL, comportement
+    # inchangé pour l'app et les tests). Utilisé uniquement en batch candidat, jamais en prod.
+    etage0_run = os.environ.get("LABUSE_ETAGE0_RUN", Q_A_RUN_LABEL)
     etage0 = pd.read_sql(text("""
         SELECT p.idu FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
         WHERE d.run_label = :run AND d.status IN ('exclue', 'faux_positif_probable')
-    """), session.connection(), params={"run": Q_A_RUN_LABEL})
+    """), session.connection(), params={"run": etage0_run})
     df["ecartee_etage0"] = df["idu"].isin(set(etage0["idu"]))
     events = load_events(session)
     df = df.merge(events, on="idu", how="left")

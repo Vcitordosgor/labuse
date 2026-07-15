@@ -50,7 +50,14 @@ from psycopg.rows import dict_row
 DB_URL = (os.environ.get("LABUSE_DATABASE_URL")
           or "postgresql://openclaw@localhost:5432/labuse").replace("+psycopg", "")
 API_BASE = os.environ.get("LABUSE_API_BASE", "http://127.0.0.1:8010").rstrip("/")
-RUN_LABEL = "q_v3_datagap"          # run cascade servi par la fiche premium
+# M8b — run cascade lu par le golden. Défaut = run SERVI (source unique Q_A_RUN_LABEL), plus
+# « q_v3_datagap » codé en dur (run mort). Override `LABUSE_GOLDEN_RUN_LABEL` pour tester un candidat.
+RUN_LABEL = os.environ.get("LABUSE_GOLDEN_RUN_LABEL")
+if not RUN_LABEL:
+    try:
+        from labuse.scoring.score_v_constants import Q_A_RUN_LABEL as RUN_LABEL
+    except Exception:
+        RUN_LABEL = "q_v5_m6b"
 DEFAULT_GOLDEN = os.path.join(os.path.dirname(__file__), "..",
                               "reports", "m6-audit", "golden", "golden-parcelles.json")
 
