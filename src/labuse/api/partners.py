@@ -130,6 +130,25 @@ def share_list(idu: str, db: Session = Depends(get_db)) -> list[dict]:
            WHERE idu = :i ORDER BY created_at DESC"""), {"i": idu}).mappings()]
 
 
+def _pack_photo_html(m: dict, target_w: int = 596) -> str:
+    """Photo aérienne STATIQUE (tuiles ortho IGN positionnées + contour parcelle en SVG), mise à
+    l'échelle pour la largeur du pack. data-URI → imprimable, aucune carte interactive."""
+    scale = target_w / m["width"]
+    h = round(m["height"] * scale)
+    imgs = "".join(f'<img src="{t["data_uri"]}" width="256" height="256" '
+                   f'style="position:absolute;left:{t["left"]}px;top:{t["top"]}px">' for t in m["tiles"])
+    polys = "".join(f'<polygon points="{p}" fill="rgba(180,151,240,0.20)" stroke="#B497F0" '
+                    f'stroke-width="2.5" stroke-linejoin="round"/>' for p in m["polygons"])
+    return (f'<div style="position:relative;width:{target_w}px;height:{h}px;overflow:hidden;'
+            f'border-radius:10px;border:1px solid #2a2138;margin:14px 0 3px">'
+            f'<div style="position:absolute;top:0;left:0;width:{m["width"]}px;height:{m["height"]}px;'
+            f'transform:scale({scale:.4f});transform-origin:top left">{imgs}'
+            f'<svg width="{m["width"]}" height="{m["height"]}" style="position:absolute;top:0;left:0">{polys}</svg>'
+            f'</div></div>'
+            f'<div style="font:9px monospace;color:#5C7268;margin-bottom:6px">'
+            f'{m["attribution"]} · vue aérienne · contour cadastral</div>')
+
+
 @router.get("/p/{token}", response_class=HTMLResponse)
 def share_public(token: str, db: Session = Depends(get_db)) -> str:
     """Page publique MINIMALE, lecture seule, filigranée + horodatée, compteur de consultations."""
@@ -140,6 +159,20 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
     db.execute(text("UPDATE share_links SET views = views + 1 WHERE token = :t"), {"t": token})
     from .app import _q_v2_fiche
     f = _q_v2_fiche(db, link["idu"])
+    # Photo aérienne IGN (ortho) + contour — image STATIQUE. Défensif : réseau/géométrie absents → pas
+    # de photo (jamais d'erreur), le pack reste valide.
+    photo = ""
+    try:
+        from ..flash.carte import IGN_ORTHO_ATTRIBUTION, IGN_ORTHO_URL, build_situation_map
+        from ..flash.report import storage_dir
+        gj = db.execute(text("SELECT ST_AsGeoJSON(ST_Transform(geom_2975, 4326)) FROM parcels WHERE idu = :i"),
+                        {"i": link["idu"]}).scalar()
+        m = build_situation_map(gj, storage_dir() / "tiles", tile_url=IGN_ORTHO_URL, tile_mime="image/jpeg",
+                                cache_prefix="ign_ortho", attribution=IGN_ORTHO_ATTRIBUTION) if gj else None
+        if m:
+            photo = _pack_photo_html(m)
+    except Exception:  # noqa: BLE001 — la photo est un plus, jamais un bloqueur
+        photo = ""
     horodatage = datetime.now().strftime("%d/%m/%Y à %H:%M")
     cree = link["created_at"].strftime("%d/%m/%Y à %H:%M")
     lignes = "".join(
@@ -170,6 +203,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
   <h1 style="font:600 18px monospace;color:#8FA69A;margin:16px 0 2px">{f['idu']}</h1>
   {f'''<p style="font:600 17px sans-serif;color:#ECF5EF;margin:2px 0 0">{f["adresse"]}</p>''' if f.get("adresse") else ""}
   <p style="color:#8FA69A;font-size:12px;margin:3px 0 0">{f['surface_m2'] or '?'} m² · {f['commune']}</p>
+  {photo}
   <div style="display:flex;gap:10px;margin:14px 0">
     <div style="flex:1;background:#111814;border-radius:8px;padding:10px 14px">
       <div style="font:700 22px sans-serif;color:#5CE6A1">{f['q_score']}</div>
