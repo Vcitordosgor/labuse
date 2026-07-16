@@ -109,7 +109,7 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
                d.matrice_statut AS statut, d.q_score,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-               COALESCE(pm.denomination, 'particulier / personne physique') AS proprietaire
+               pm.denomination, pm.siren, pm.groupe_label
         FROM parcels p
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
@@ -135,22 +135,48 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
                 seen.add(nb)
                 stack.append(nb)
     contigu = len(seen) == len(ids)
-    owners = sorted({r["proprietaire"] for r in rows})
+    # PRIVACY (B) : personne morale = dénomination + SIREN (public) ; particulier = JAMAIS nommé.
+    def _proprio(r: dict) -> dict:
+        if r["denomination"]:
+            return {"type": "personne_morale", "denomination": r["denomination"],
+                    "siren": r["siren"], "groupe": r["groupe_label"]}
+        return {"type": "particulier"}   # aucune identité — non communiqué
+    proprios = [_proprio(r) for r in rows]
+    n_particuliers = sum(1 for pr in proprios if pr["type"] == "particulier")
+    tous_pm = n_particuliers == 0
+    owners_pm = sorted({pr["denomination"] for pr in proprios if pr["type"] == "personne_morale"})
     surface = sum(r["surface_m2"] or 0 for r in rows)
-    sdp = sum(r["sdp_residuelle_m2"] or 0 for r in rows)
-    # score d'assemblage simple : d'un seul tenant + peu de propriétaires + SDP cumulée
-    score = round(min(100, (45 if contigu else 10) + 25 * min(1, 2 / max(1, len(owners)))
-                  + 30 * min(1, sdp / 3000)))
+    sdp_vals = [r["sdp_residuelle_m2"] or 0 for r in rows]
+    sdp = sum(sdp_vals)
+    # A — GAIN : SDP combinée (assiette) vs la meilleure parcelle SEULE → programme débloqué.
+    M2_PAR_LOGT = 70   # hypothèse AFFICHÉE (m² SDP / logement), cohérente avec M22
+    sdp_max_seule = max(sdp_vals) if sdp_vals else 0
+    gain_ratio = round(sdp / sdp_max_seule, 1) if sdp_max_seule else None
+    # score : d'un seul tenant + interlocuteurs peu nombreux/moraux (B) + SDP cumulée
+    score = round(min(100, (45 if contigu else 10) + 20 * min(1, 2 / max(1, len(owners_pm) + n_particuliers))
+                  + (10 if tous_pm else 0) + 25 * min(1, sdp / 3000)))
     return {
         "n": len(rows), "contigu": contigu, "surface_totale_m2": round(surface),
         "sdp_cumulee_m2": round(sdp),
-        "note_sdp": "SDP cumulée = SOMME des résiduels parcellaires — le règlement d'ensemble "
-                    "(assiette fusionnée) est à instruire : la vraie SDP peut différer.",
-        "proprietaires": owners, "n_proprietaires": len(owners),
+        # A — gain d'assemblage
+        "sdp_combinee_m2": round(sdp), "sdp_max_seule_m2": round(sdp_max_seule),
+        "gain_ratio": gain_ratio,
+        "logements_combine": round(sdp / M2_PAR_LOGT), "logements_max_seule": round(sdp_max_seule / M2_PAR_LOGT),
+        "m2_par_logement": M2_PAR_LOGT,
+        "note_sdp": "SDP combinée = SOMME des résiduels parcellaires — le règlement d'ensemble "
+                    "(assiette fusionnée) est à instruire : la vraie SDP peut différer. Le gain vient "
+                    "d'atteindre une taille de programme qu'aucune parcelle seule ne permet.",
+        # B — approche propriétaire (privacy)
+        "proprietaires_pm": owners_pm, "n_proprietaires": len(owners_pm) + n_particuliers,
+        "n_personnes_morales": len(owners_pm), "n_particuliers": n_particuliers,
+        "tous_personnes_morales": tous_pm,
+        # C — indivision : NON détectable en base (aucune structure de propriété physique en open data)
+        "indivision_detectable": False,
         "score_assemblage": score,
-        "items": [{**{k: r[k] for k in ("idu", "surface_m2", "sdp_residuelle_m2", "statut", "q_score", "proprietaire")},
-                   "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"])}
-                  for r in rows],
+        "items": [{**{k: r[k] for k in ("idu", "surface_m2", "sdp_residuelle_m2", "statut", "q_score")},
+                   "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
+                   "proprio": pr}
+                  for r, pr in zip(rows, proprios)],
     }
 
 

@@ -1,0 +1,21 @@
+import { chromium } from 'playwright'
+const OUT = '../../reports/pre-lancement/captures'
+const IDUS = ['97415000DK1169','97415000EX0503','97415000BV1193'] // 2 PM + 1 particulier
+const b = await chromium.launch()
+const p = await b.newPage({ viewport: { width: 430, height: 950 } })
+await p.goto('http://127.0.0.1:8010/socle/', { waitUntil: 'networkidle' })
+await p.waitForFunction(() => window.__labuse && window.__labuse.setMsel, { timeout: 10000 })
+await p.evaluate(() => window.__labuse.setModule('assemblage'))
+await p.evaluate((idus) => window.__labuse.setMsel(idus), IDUS)
+await p.waitForTimeout(600)
+await p.locator('button:has-text("Analyser l\'assiette")').click()
+await p.waitForSelector('[data-asm-gain]', { timeout: 10000 })
+await p.waitForTimeout(1000)
+console.log('gain:', (await p.locator('[data-asm-gain]').innerText()).replace(/\s+/g,' '))
+console.log('proprio:', (await p.locator('[data-asm-proprio]').innerText()).replace(/\s+/g,' '))
+const body = await p.evaluate(() => document.body.innerText)
+console.log('PM nommée (SIREN présent):', /SIREN/.test(body))
+console.log('particulier masqué:', body.includes('non communiqué'))
+console.log('indivision notée:', body.includes('non détectable'))
+await p.screenshot({ path: `${OUT}/assemblage-plus.png` })
+await b.close(); console.log('assemblage capture OK')
