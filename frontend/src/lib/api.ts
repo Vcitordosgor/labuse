@@ -225,6 +225,7 @@ export const motSimulPlu = (zone: string) => j<Record<string, any>>(`/moteurs/si
 export const motAssemblage = (idus: string[]) =>
   j<Record<string, any>>('/moteurs/assemblage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idus }) })
 export const motZan = () => j<Record<string, any>>('/moteurs/zan')
+export const zanParcelle = (idu: string) => j<Record<string, any>>(`/moteurs/zan/parcelle/${idu}`)
 export const motBarometre = () => j<Record<string, any>>('/moteurs/barometre')
 
 // ── Vague 5 : matching + partage ──

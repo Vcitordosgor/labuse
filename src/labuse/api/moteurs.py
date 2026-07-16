@@ -156,6 +156,83 @@ def assemblage(body: AssemblageIn, db: Session = Depends(get_db)) -> dict:
 
 # ───────────────────────── M17 — SIMULATEUR ZAN ─────────────────────────
 
+# Point 41 — RÈGLE D'OR : distinction Sourcé (observé) / Estimé (dérivé) stricte, caveat systématique.
+_ZAN_CAVEAT = ("Estimation — cadre ZAN en réforme (loi TRACE : échéance 2031 possiblement reportée à "
+               "2034). Le SAR de La Réunion n'a pas finalisé la territorialisation → règle par défaut de "
+               "-50 % appliquée. À confirmer auprès des documents d'urbanisme.")
+_ENAF_SOURCE = "Portail national de l'artificialisation · Cerema · Fichiers fonciers (CONSOENAF 2009-2024)"
+
+
+def _zan_indicateur(db: Session, commune: str | None = None) -> list[dict]:
+    """Indicateur ZAN par commune : consommé OBSERVÉ (Sourcé) + budget/reste DÉRIVÉS -50 % (Estimé).
+    Aucune fabrication : uniquement les communes présentes dans commune_conso_enaf."""
+    rows = db.execute(text(
+        "SELECT commune, conso_2011_2021_m2 AS c1121, conso_2021_2024_m2 AS c2124, "
+        "hab_2011_2021_m2 AS h1121, millesime, source_nom FROM commune_conso_enaf "
+        "WHERE (CAST(:c AS text) IS NULL OR commune = :c) ORDER BY conso_2011_2021_m2 DESC NULLS LAST"),
+        {"c": commune}).mappings().all()
+    out = []
+    for r in rows:
+        c1121, c2124 = float(r["c1121"] or 0), float(r["c2124"] or 0)
+        budget = c1121 / 2.0                       # règle -50 % (Estimé)
+        reste = budget - c2124                     # peut être négatif (commune ayant « dépassé »)
+        out.append({
+            "commune": r["commune"],
+            "conso_2011_2021_ha": round(c1121 / 10000, 1),          # Sourcé
+            "part_habitat_pct": round(100 * float(r["h1121"] or 0) / c1121) if c1121 else None,
+            "conso_2021_2024_ha": round(c2124 / 10000, 1),          # Sourcé
+            "budget_2021_2031_ha": round(budget / 10000, 1),        # Estimé (-50 %)
+            "reste_theorique_ha": round(reste / 10000, 1),          # Estimé (± )
+            "depasse": reste < 0,
+            "millesime": r["millesime"], "source": r["source_nom"],
+        })
+    return out
+
+
+@router.get("/zan/parcelle/{idu}")
+def zan_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
+    """Signal ZAN PAR PARCELLE — robuste, indépendant des quotas mouvants, entièrement SOURCÉ
+    (OCS-GE + Cartofriches + zonage + SRU). Déterministe, pas d'IA. `aligne` = va dans le sens du
+    ZAN (densification/friche/zone U) ; `contrainte` = consomme de l'ENAF en extension (AU)."""
+    p = db.execute(text("SELECT id, commune FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
+    if not p:
+        raise HTTPException(404, "Parcelle inconnue")
+    ocs = db.execute(text(
+        "SELECT sl.subtype, sum(ST_Area(ST_Intersection(sl.geom_2975, pp.geom_2975))) AS cov "
+        "FROM spatial_layers sl JOIN parcels pp ON pp.id = :pid "
+        "WHERE sl.kind = 'ocs_ge' AND ST_Intersects(sl.geom_2975, pp.geom_2975) "
+        "GROUP BY sl.subtype ORDER BY cov DESC LIMIT 1"), {"pid": p["id"]}).scalar()
+    friche = db.execute(text(
+        "SELECT EXISTS (SELECT 1 FROM spatial_layers sl JOIN parcels pp ON pp.id = :pid "
+        "WHERE sl.kind = 'friche' AND ST_Intersects(sl.geom_2975, pp.geom_2975))"),
+        {"pid": p["id"]}).scalar()
+    zone_fam = db.execute(text("SELECT zone_fam FROM parcel_zone_plu WHERE idu = :i"),
+                          {"i": idu}).scalar()
+    sru = db.execute(text("SELECT statut FROM commune_contexte_sru WHERE commune = :c"),
+                     {"c": p["commune"]}).scalar()
+    raisons: list[str] = []
+    if ocs == "artificialise":
+        raisons.append("Sol déjà artificialisé (OCS-GE) — densification, le sens du ZAN")
+    if friche:
+        raisons.append("Friche recensée (Cartofriches) — mobilisation bonifiée par la loi TRACE")
+    if zone_fam == "U":
+        raisons.append("Zone U (renouvellement urbain)")
+    aligne = ocs == "artificialise" or bool(friche) or zone_fam == "U"
+    contrainte = ocs in ("naturel", "agricole") and zone_fam == "AU"
+    if contrainte:
+        raisons.append(f"Sol {ocs} (OCS-GE) en zone AU — extension qui consomme de l'ENAF")
+    signal = "aligne" if aligne else "contrainte" if contrainte else "neutre"
+    exemption_sru = None
+    if sru == "carencee":
+        exemption_sru = ("Commune carencée SRU — le logement social est exempté du décompte ZAN "
+                         "jusqu'en 2036 (loi TRACE) : atout majeur pour un projet social.")
+    ind = _zan_indicateur(db, p["commune"])
+    return {"idu": idu, "commune": p["commune"], "signal": signal,
+            "ocs_ge": ocs, "friche": bool(friche), "zone_fam": zone_fam,
+            "raisons": raisons, "exemption_sru": exemption_sru,
+            "indicateur": ind[0] if ind else None, "caveat": _ZAN_CAVEAT}
+
+
 @router.get("/zan")
 def zan(db: Session = Depends(get_db)) -> dict:
     communes = db.execute(text("""
@@ -178,9 +255,11 @@ def zan(db: Session = Depends(get_db)) -> dict:
           AND d.matrice_statut IN ('chaude', 'a_surveiller', 'a_creuser')
         ORDER BY d.q_score DESC LIMIT 400"""), {"run": RUN, "v2run": _v2run(db)}).mappings().all()
     return {
-        "bandeau": ("Quotas SAR/SCOT en attente de données officielles — lecture INDICATIVE. "
-                    "OCS GE partiel (communes ingérées uniquement). Construire sur de l'artificialisé "
-                    "= zéro dette ZAN."),
+        "bandeau": ("Signal parcelle robuste (OCS-GE + friches + zonage) + consommation ENAF OBSERVÉE "
+                    "par commune. Le budget/reste ZAN est une ESTIMATION (règle -50 %) — pas un droit "
+                    "à construire ferme. Construire sur de l'artificialisé = zéro dette ZAN."),
+        "caveat": _ZAN_CAVEAT, "source_conso": _ENAF_SOURCE,
+        "indicateurs": _zan_indicateur(db),   # consommé Sourcé + budget/reste Estimé, par commune
         "communes": [dict(r) for r in communes],
         "zan_compatibles": [{**{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score")},
                              "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
