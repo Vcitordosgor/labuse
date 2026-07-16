@@ -115,14 +115,32 @@ export function M16() {
                 {d.contigu ? "d'un seul tenant" : 'NON contiguë'}
               </span>
             </div>
-            <div className="mt-1.5 text-txt-mut">
-              {fmt(d.surface_totale_m2)} m² cumulés · SDP <b style={{ color: VIOLET }}>{fmt(d.sdp_cumulee_m2)} m²</b> ·{' '}
-              {d.n_proprietaires} propriétaire{d.n_proprietaires > 1 ? 's' : ''}
+            {/* A — GAIN d'assemblage : combinée vs meilleure parcelle seule */}
+            <div data-asm-gain className="mt-1.5 rounded-md bg-[#0F1A14] px-2 py-1.5">
+              <div className="text-txt">Ensemble : <b style={{ color: '#5CE6A1' }}>{fmt(d.sdp_combinee_m2)} m²</b> SDP · ~{fmt(d.logements_combine)} logements
+                {d.gain_ratio && <span className="text-mint"> (×{d.gain_ratio} vs la meilleure parcelle seule)</span>}
+              </div>
+              <div className="mt-0.5 text-txt-dim">Séparément, la meilleure parcelle = {fmt(d.sdp_max_seule_m2)} m² (~{fmt(d.logements_max_seule)} logements) — l'assemblage débloque la taille de programme.</div>
             </div>
             <div className="mt-1 text-[11px] text-txt-dim">{d.note_sdp}</div>
           </div>
+
+          {/* B — approche propriétaire (privacy : PM nommée / particulier masqué) */}
+          <div data-asm-proprio className={`rounded-lg border px-3 py-1.5 text-[11px] ${d.tous_personnes_morales ? 'border-mint/40 bg-[#0F1A14]' : 'border-line-2 bg-surface-2'}`}>
+            {d.tous_personnes_morales ? (
+              <span className="text-mint">✓ Approche simplifiée — {d.n_personnes_morales} propriétaire(s) <b>personne(s) morale(s)</b>, aucun particulier</span>
+            ) : (
+              <span className="text-txt-mut">{d.n_personnes_morales} personne(s) morale(s) · <b className="text-[#E8B44C]">{d.n_particuliers} particulier(s)</b> (approche plus lourde)</span>
+            )}
+            {(d.proprietaires_pm as string[]).length > 0 && (
+              <div className="mt-0.5 truncate text-txt-dim" title={(d.proprietaires_pm as string[]).join(' · ')}>PM : {(d.proprietaires_pm as string[]).join(' · ')}</div>
+            )}
+          </div>
+
           <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-            {(d.items as Record<string, any>[]).map((i) => (
+            {(d.items as Record<string, any>[]).map((i) => {
+              const pr = i.proprio as Record<string, any>
+              return (
               <div key={i.idu} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-[11px]">
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-txt-hi">{i.idu.slice(8)}</span>
@@ -131,10 +149,17 @@ export function M16() {
                     <TierBadge tier={i.tier_v2 as string | null} etage0={i.etage0 as boolean | null} statut={i.statut as string | null} />
                   </span>
                 </div>
-                <div className="truncate text-[11px] text-txt-dim">{i.proprietaire}</div>
+                {/* PRIVACY : PM = dénomination + SIREN (public) ; particulier = jamais nommé */}
+                <div className="truncate text-[11px] text-txt-dim" title={pr.type === 'personne_morale' ? `SIREN ${pr.siren ?? '—'}${pr.groupe ? ' · ' + pr.groupe : ''}` : 'personne physique — non communiqué'}>
+                  {pr.type === 'personne_morale'
+                    ? <><span className="text-txt">{pr.denomination}</span>{pr.siren ? <span> · SIREN {pr.siren}</span> : null}</>
+                    : <span className="italic">propriétaire particulier — non communiqué</span>}
+                </div>
               </div>
-            ))}
+            )})}
           </div>
+          {/* C — indivision non détectable en base (honnête, pas fabriqué) */}
+          <p className="shrink-0 text-[10px] leading-snug text-txt-dim">Indivision : non détectable en open data (aucune structure de propriété physique publiée) — signal non affiché plutôt qu'inventé.</p>
         </>
       )}
     </>
