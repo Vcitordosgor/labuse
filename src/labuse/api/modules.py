@@ -606,6 +606,35 @@ class DueDiligenceIn(BaseModel):
     refs: str   # texte libre : IDU complets ou « SECTION NUMERO » séparés par lignes/virgules
 
 
+_SEV_RISK = {"fort": 70, "moyen": 50, "faible": 30, "info": 10}
+
+
+def _diligence_dossier(db: Session, parcel_id: int, idu: str) -> dict:
+    """Point 42 — dossier de diligence DÉTERMINISTE depuis les facteurs EXISTANTS (cascade + proprio) :
+    checklist des points à vérifier avant d'acheter + score de risque consolidé. Aucun re-scoring.
+    PRIVACY : personne morale nommée (public) ; particulier JAMAIS nommé."""
+    concerns = db.execute(text(
+        "SELECT cr.layer_name, cr.severity, cr.result, cr.detail FROM dryrun_cascade_results cr "
+        "WHERE cr.run_label = :run AND cr.parcel_id = :pid "
+        "  AND cr.result IN ('HARD_EXCLUDE', 'SOFT_FLAG', 'UNKNOWN') "
+        "ORDER BY CASE cr.result WHEN 'HARD_EXCLUDE' THEN 0 WHEN 'SOFT_FLAG' THEN 1 ELSE 2 END, "
+        "         CASE cr.severity WHEN 'fort' THEN 0 WHEN 'moyen' THEN 1 WHEN 'faible' THEN 2 ELSE 3 END"),
+        {"run": RUN, "pid": parcel_id}).mappings().all()
+    checklist = [{"layer": c["layer_name"], "severity": c["severity"], "result": c["result"],
+                  "detail": c["detail"]} for c in concerns]
+    pm = db.execute(text("SELECT denomination, siren FROM parcelle_personne_morale WHERE idu = :i"),
+                    {"i": idu}).mappings().first()
+    proprio = ({"type": "personne_morale", "denomination": pm["denomination"], "siren": pm["siren"]}
+               if pm and pm["denomination"] else {"type": "particulier"})
+    if any(c["result"] == "HARD_EXCLUDE" for c in checklist):
+        risque = 100
+    else:
+        risque = max([_SEV_RISK.get(c["severity"], 20) for c in checklist if c["result"] == "SOFT_FLAG"] or [0])
+    if proprio["type"] == "particulier" and risque < 100:   # accès proprio via SPF (démarche +)
+        risque = min(100, risque + 10)
+    return {"checklist": checklist, "risque": risque, "proprio": proprio}
+
+
 @router.post("/duediligence")
 def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
     import re
@@ -614,7 +643,7 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
     items = []
     for t in tokens[:60]:
         row = db.execute(text("""
-            SELECT p.idu, p.commune, round(p.surface_m2) AS surface_m2,
+            SELECT p.id AS parcel_id, p.idu, p.commune, round(p.surface_m2) AS surface_m2,
                    d.matrice_statut AS statut, d.q_score, d.a_score, d.completeness_score,
                    s2.tier AS tier_v2, s2.rang AS rang_v2,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
@@ -627,9 +656,13 @@ def duediligence(body: DueDiligenceIn, db: Session = Depends(get_db)) -> dict:
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
             WHERE p.idu = :t OR (p.section || p.numero) = :t OR (p.section || lpad(p.numero, 4, '0')) = :t
             LIMIT 1"""), {"t": t, "run": RUN, "v2run": v2run}).mappings().first()
-        items.append(dict(row) | {"etage0": bool(row["etage0"]),
-                                  "pdf": f"/parcels/{row['idu']}/export.pdf?source={RUN}"} if row
-                     else {"ref": t, "erreur": "référence introuvable"})
+        if row:
+            dossier = _diligence_dossier(db, row["parcel_id"], row["idu"])
+            items.append({k: row[k] for k in row.keys() if k != "parcel_id"}
+                         | {"etage0": bool(row["etage0"]), **dossier,
+                            "pdf": f"/parcels/{row['idu']}/export.pdf?source={RUN}"})
+        else:
+            items.append({"ref": t, "erreur": "référence introuvable"})
     ok = [i for i in items if "idu" in i]
     return {"n_demandes": len(tokens), "n_trouvees": len(ok), "items": items}
 

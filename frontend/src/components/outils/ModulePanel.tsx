@@ -597,15 +597,42 @@ function M10() {
         <>
           <p className="text-[11px] text-txt-dim">{run.data.n_trouvees}/{run.data.n_demandes} références trouvées</p>
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-            {items.map((i, k) => 'idu' in i ? (
-              <div key={k} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
+            {items.map((i, k) => 'idu' in i ? (() => {
+              const risque = i['risque'] as number
+              const rColor = risque >= 100 ? '#E8695A' : risque >= 60 ? '#E8695A' : risque >= 30 ? '#E8B44C' : '#5CE6A1'
+              const rLabel = risque >= 100 ? 'bloquant' : risque >= 60 ? 'élevé' : risque >= 30 ? 'modéré' : 'faible'
+              const proprio = i['proprio'] as Record<string, any>
+              const checklist = (i['checklist'] ?? []) as Record<string, any>[]
+              return (
+              <div key={k} data-diligence-item className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                 <div className="flex items-center gap-2">
-                  <Row idu={i['idu'] as string} sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m² · ${i['flags']} flags · ${i['exclusions']} exclusion(s)`}
+                  <Row idu={i['idu'] as string} sub={`${i['commune']} · ${fmt(i['surface_m2'] as number)} m²`}
                     right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />} />
                 </div>
+                {/* Point 42 : score de risque consolidé (déterministe) */}
+                <div className="mt-1.5 flex items-center gap-2 text-[11px]">
+                  <span data-diligence-risque className="rounded-full px-2 py-0.5 font-medium" style={{ background: `${rColor}22`, color: rColor }}>risque {rLabel} · {risque}/100</span>
+                  <span className="truncate text-txt-dim" title={proprio['type'] === 'personne_morale' ? `SIREN ${proprio['siren'] ?? '—'}` : 'propriétaire personne physique — non communiqué'}>
+                    {proprio['type'] === 'personne_morale' ? proprio['denomination'] : 'propriétaire particulier'}
+                  </span>
+                </div>
+                {/* checklist — points à vérifier avant achat (facteurs cascade existants) */}
+                {checklist.length > 0 && (
+                  <div className="mt-1.5 flex flex-col gap-0.5">
+                    {checklist.slice(0, 5).map((c, ci) => (
+                      <div key={ci} className="flex gap-1.5 text-[10.5px] leading-snug">
+                        <span style={{ color: c['result'] === 'HARD_EXCLUDE' ? '#E8695A' : c['severity'] === 'fort' ? '#E8B44C' : '#8FA69A' }}>
+                          {c['result'] === 'HARD_EXCLUDE' ? '✕' : '☐'}</span>
+                        <span className="text-txt-mut"><b className="text-txt">{c['layer']}</b> — {c['detail']}</span>
+                      </div>
+                    ))}
+                    {checklist.length === 0 && <span className="text-[10.5px] text-mint">✓ aucun point de vigilance</span>}
+                  </div>
+                )}
+                {checklist.length === 0 && <p className="mt-1.5 text-[10.5px] text-mint">✓ aucun point de vigilance cascade</p>}
                 <a href={i['pdf'] as string} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[10.5px] text-[#8b76c0] hover:text-[#B497F0] hover:underline">⬇ PDF</a>
               </div>
-            ) : (
+              )})() : (
               <div key={k} className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2 text-[11px] text-st-ecartee">
                 {i['ref'] as string} — {i['erreur'] as string}
               </div>
