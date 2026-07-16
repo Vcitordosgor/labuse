@@ -393,14 +393,28 @@ function M06() {
     <>
       <Banner>{String(d?.['lecture_lls'] ?? '…')}</Banner>
       {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Analyse en cours…" big /></div>}
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles promues en QPV{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
+      {/* Point 33 : contexte SRU (déficit logement social) — commune carencée = forte demande LLS */}
+      {(d?.['sru'] as Record<string, any> | undefined) && (
+        <div data-bailleur-sru className={`rounded-lg border px-3 py-2 text-[11px] ${d!['sru']['statut'] === 'carencee' ? 'border-[#C4704B] bg-[#2a1a10]' : 'border-line-2 bg-surface-2'}`}>
+          <div className="flex items-center gap-2">
+            <span className={`font-medium ${d!['sru']['statut'] === 'carencee' ? 'text-[#E8A368]' : 'text-txt'}`}>
+              SRU {String(d!['sru']['statut'])}
+            </span>
+            <span className="text-txt-dim">· LLS {d!['sru']['taux_lls']}% / objectif {d!['sru']['objectif_pct']}%</span>
+          </div>
+          {d!['sru']['deficit_logements'] != null && (
+            <div className="mt-1 text-txt-mut">Besoin estimé : <b style={{ color: '#E8A368' }}>{fmt(d!['sru']['deficit_logements'] as number)}</b> logements sociaux pour atteindre l'objectif</div>
+          )}
+        </div>
+      )}
+      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles promues en QPV{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}{d?.['n_communes_carencees'] ? ` · ${fmt(d['n_communes_carencees'] as number)} en communes carencées SRU` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}
-            sub={`${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)} m²`}
+            sub={`${fmt(i['surface_m2'] as number)} m² · SDP ${fmt(i['sdp'] as number)} m²${i['carencee'] ? ' · SRU carencée' : ''}`}
             right={<TierBadge tier={i['tier_v2'] as string | null} etage0={i['etage0'] as boolean | null} statut={i['statut'] as string | null} />}
-            fiche={[['Mode bailleur', 'Parcelle en QPV'], ['Leviers LLS', 'TVA 2,1 % · abattement TFPB 30 %'],
-              ['SDP résiduelle', `${fmt(i['sdp'] as number)} m²`]]} />
+            fiche={[['Mode bailleur', 'Parcelle en QPV'], ['SRU commune', i['carencee'] ? 'Carencée — forte demande LLS' : '—'],
+              ['Leviers LLS', 'TVA 2,1 % · abattement TFPB 30 %'], ['SDP résiduelle', `${fmt(i['sdp'] as number)} m²`]]} />
         ))}
       </div>
     </>
