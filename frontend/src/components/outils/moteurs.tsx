@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addProfile, getProfiles, motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan, runMatch, zanParcelle } from '../../lib/api'
+import { addProfile, getProfiles, matchCompatibilite, motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, runMatch, zanParcelle } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { VIOLET } from './registry'
@@ -310,8 +310,17 @@ export function M18() {
 
 /* ───────────── M19 — MATCHING TERRAIN ↔ PROMOTEUR ───────────── */
 
+const DemoTag = () => <span className="ml-1 rounded px-1 py-0.5 text-[8px] font-medium" style={{ background: '#2a2138', color: '#B497F0' }}>DÉMO · ILLUSTRATIF</span>
+const RealTag = () => <span className="ml-1 rounded px-1 py-0.5 text-[8px] font-medium" style={{ background: '#0F1A14', color: '#5CE6A1' }}>RÉEL · SITADEL</span>
+
 export function M19() {
   const profiles = useQuery({ queryKey: ['m19'], queryFn: getProfiles })
+  const { selectedIdu, commune } = useApp()
+  const [idu, setIdu] = useState(selectedIdu ?? '')
+  useEffect(() => { if (selectedIdu) setIdu(selectedIdu) }, [selectedIdu])
+  const compat = useQuery({ queryKey: ['m19-compat', idu], queryFn: () => matchCompatibilite(idu.trim()), enabled: idu.trim().length >= 10 })
+  const secteur = commune ?? (compat.data?.commune as string | undefined)
+  const actifs = useQuery({ queryKey: ['m19-actifs', secteur], queryFn: () => promoteursActifs(secteur!), enabled: !!secteur })
   const [nom, setNom] = useState('')
   const [smin, setSmin] = useState('')
   const add = useMutation({ mutationFn: () => addProfile({ nom, surface_min: smin ? Number(smin) : null }),
@@ -319,8 +328,48 @@ export function M19() {
   const match = useMutation({ mutationFn: runMatch })
   return (
     <>
-      <Banner>Profils de recherche enregistrés — quand une parcelle <b>bascule chaude</b> et matche,
-        l'alerte apparaît dans la cloche (M11). Les deux profils fournis sont des <b>démos étiquetées</b>.</Banner>
+      <Banner>Deux volets : la <b>compatibilité</b> avec des profils <b>démo</b> (illustratif) et les
+        <b>promoteurs réellement actifs</b> du secteur via <b>SITADEL</b> (donnée réelle).</Banner>
+
+      {/* A + B — compatibilité parcelle × profil (DÉMO), score décomposé */}
+      <p className="font-mono text-[10px] tracking-widest text-txt-dim">COMPATIBILITÉ PARCELLE × PROFIL<DemoTag /></p>
+      <input data-m19-idu value={idu} onChange={(e) => setIdu(e.target.value.trim())}
+        placeholder="IDU (ou sélectionnez une parcelle sur la carte)"
+        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-[#B497F0] focus:outline-none" />
+      {compat.data && (compat.data.profils as Record<string, any>[]).map((pr, k) => (
+        <div key={k} data-m19-compat className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-[11px]">
+          <div className="flex items-center gap-2">
+            <span className="font-display text-base font-bold" style={{ color: pr.score >= 70 ? '#5CE6A1' : pr.score >= 40 ? '#E8B44C' : '#8FA69A' }}>{pr.score}</span>
+            <span className="text-txt-dim">/100 · {pr.profil}</span>
+            {pr.demo && <DemoTag />}
+          </div>
+          <div className="mt-1 flex flex-col gap-0.5">
+            {(pr.facteurs as Record<string, any>[]).map((f, i) => (
+              <div key={i} className="flex gap-1.5 text-[10.5px]">
+                <span style={{ color: f.ok ? '#5CE6A1' : '#5C7268' }}>{f.ok ? '✓' : '○'}</span>
+                <span className={f.ok ? 'text-txt-mut' : 'text-txt-dim'}>{f.critere} <span className="text-txt-dim">— {f.valeur}</span></span>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {/* C — promoteurs réellement actifs (SITADEL, réel, PM only) */}
+      <p className="mt-1 font-mono text-[10px] tracking-widest text-txt-dim">PROMOTEURS ACTIFS DU SECTEUR<RealTag /></p>
+      {actifs.data ? (
+        <div data-m19-actifs className="flex max-h-48 flex-col gap-1 overflow-y-auto">
+          <p className="text-[9.5px] leading-snug text-txt-dim">{actifs.data.source}</p>
+          {(actifs.data.promoteurs as Record<string, any>[]).map((p, k) => (
+            <div key={k} className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px]">
+              <div className="truncate text-txt" title={`SIREN ${p.siren}`}>{p.nom}</div>
+              <div className="text-[10.5px] text-txt-dim">SIREN {p.siren} · <b className="text-txt-mut">{p.n_permis}</b> permis (5 ans){p.logements ? ` · ${p.logements} logements` : ''}</div>
+            </div>
+          ))}
+          {(actifs.data.promoteurs as unknown[]).length === 0 && <p className="text-[10.5px] text-txt-dim">Aucun promoteur (personne morale) avec ≥ 2 permis récents ici.</p>}
+        </div>
+      ) : <p className="text-[10.5px] text-txt-dim">Choisissez une commune ou une parcelle pour voir les promoteurs actifs réels.</p>}
+
+      <p className="mt-1 font-mono text-[10px] tracking-widest text-txt-dim">PROFILS DE RECHERCHE (alertes cloche)<DemoTag /></p>
       <div className="flex min-h-0 flex-col gap-1.5 overflow-y-auto">
         {((profiles.data ?? []) as Record<string, any>[]).map((p) => (
           <div key={p.id} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-[11px]">

@@ -112,6 +112,71 @@ def match_run(db: Session = Depends(get_db)) -> dict:
     return {"matches": n}
 
 
+@router.get("/partners/match/compatibilite/{idu}")
+def match_compatibilite(idu: str, db: Session = Depends(get_db)) -> dict:
+    """A + B — pour UNE parcelle, score de compatibilité DÉCOMPOSÉ contre chaque profil (les critères
+    qui collent, plus de oui/non opaque). Déterministe. Les profils sont des DÉMOS (labellisés)."""
+    p = db.execute(text("""
+        SELECT p.commune, round(p.surface_m2) AS surf, COALESCE(r.sdp_residuelle_m2, 0) AS sdp,
+               zp.zone_fam, zp.zone_lib, d.matrice_statut AS statut
+        FROM parcels p
+        LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
+        LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
+        LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+        WHERE p.idu = :idu"""), {"idu": idu, "run": RUN}).mappings().first()
+    if not p:
+        raise HTTPException(404, "Parcelle inconnue")
+    profs = db.execute(text("SELECT id, nom, commune, surface_min, surface_max, sdp_min, demo "
+                            "FROM match_profiles ORDER BY id")).mappings().all()
+    surf, sdp = float(p["surf"] or 0), float(p["sdp"] or 0)
+    constructible = p["zone_fam"] in ("U", "AU")
+    chaude = p["statut"] in ("chaude", "a_surveiller")
+    out = []
+    for mp in profs:
+        s_ok = ((mp["surface_min"] is None or surf >= mp["surface_min"])
+                and (mp["surface_max"] is None or surf <= mp["surface_max"]))
+        sdp_ok = mp["sdp_min"] is None or sdp >= mp["sdp_min"]
+        c_ok = mp["commune"] is None or mp["commune"] == p["commune"]
+        fac = [
+            {"critere": f"Surface {int(mp['surface_min'] or 0)}–{int(mp['surface_max'] or 0)} m²",
+             "ok": s_ok, "valeur": f"{int(surf)} m²", "poids": 30},
+            {"critere": f"SDP résiduelle ≥ {int(mp['sdp_min'] or 0)} m²",
+             "ok": sdp_ok, "valeur": f"{int(sdp)} m²", "poids": 30},
+            {"critere": f"Commune ({mp['commune'] or 'toute l’île'})",
+             "ok": c_ok, "valeur": p["commune"], "poids": 20},
+            {"critere": "Terrain constructible (U/AU)", "ok": constructible,
+             "valeur": p["zone_lib"] or "—", "poids": 10},
+            {"critere": "Signal marché (chaude)", "ok": chaude, "valeur": p["statut"] or "—", "poids": 10},
+        ]
+        score = sum(f["poids"] for f in fac if f["ok"])
+        out.append({"profil": mp["nom"], "demo": bool(mp["demo"]), "score": score, "facteurs": fac})
+    out.sort(key=lambda x: -x["score"])
+    return {"idu": idu, "commune": p["commune"], "demo": True, "profils": out}
+
+
+@router.get("/partners/promoteurs-actifs")
+def promoteurs_actifs(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+    """C — ANCRAGE RÉEL : promoteurs (personnes morales) ayant déposé des permis récemment dans le
+    secteur (SITADEL). Donnée réelle, distincte du matching démo. PRIVACY : seuls les déposants avec
+    SIREN (personnes morales, public) — les particuliers ne sont JAMAIS exposés."""
+    rows = db.execute(text("""
+        SELECT raw->>'petitioner_name' AS nom, raw->>'petitioner_siren' AS siren,
+               count(*) AS n_permis, max(date)::date AS dernier,
+               sum(CASE WHEN raw->>'nb_lgt' ~ '^[0-9]+$' THEN (raw->>'nb_lgt')::int ELSE 0 END) AS logements
+        FROM sitadel_permits
+        WHERE (CAST(:c AS text) IS NULL OR commune = :c)
+          AND raw->>'petitioner_siren' ~ '^[0-9]{9}$'          -- PM (SIREN public) uniquement
+          AND date > now() - interval '5 years'
+        GROUP BY 1, 2 HAVING count(*) >= 2
+        ORDER BY count(*) DESC, sum(CASE WHEN raw->>'nb_lgt' ~ '^[0-9]+$' THEN (raw->>'nb_lgt')::int ELSE 0 END) DESC NULLS LAST
+        LIMIT 12"""), {"c": commune}).mappings().all()
+    return {"commune": commune, "reel": True,
+            "source": "SITADEL — permis déposés, 5 dernières années (déposants personnes morales, SIREN public)",
+            "promoteurs": [{"nom": r["nom"], "siren": r["siren"], "n_permis": r["n_permis"],
+                            "dernier": r["dernier"].isoformat() if r["dernier"] else None,
+                            "logements": r["logements"] or None} for r in rows]}
+
+
 # ───────────────────────── M20 — PACK APPORTEUR (lien de partage) ─────────────────────────
 
 @router.post("/partners/share/{idu}")

@@ -233,6 +233,8 @@ export const getProfiles = () => j<Record<string, any>[]>('/partners/profiles')
 export const addProfile = (p: Record<string, unknown>) =>
   j<{ ok: boolean }>('/partners/profiles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(p) })
 export const runMatch = () => j<{ matches: number }>('/partners/match/run', { method: 'POST' })
+export const matchCompatibilite = (idu: string) => j<Record<string, any>>(`/partners/match/compatibilite/${idu}`)
+export const promoteursActifs = (commune: string) => j<Record<string, any>>(`/partners/promoteurs-actifs?commune=${encodeURIComponent(commune)}`)
 export const createShare = (idu: string) => j<{ token: string; url: string }>(`/partners/share/${idu}`, { method: 'POST' })
 export const listShares = (idu: string) => j<{ token: string; date: string; views: number }[]>(`/partners/share/${idu}/list`)
 
