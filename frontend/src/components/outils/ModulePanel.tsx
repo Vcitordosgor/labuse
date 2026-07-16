@@ -365,14 +365,26 @@ function M05() {
             <button key={k} onClick={() => setSort(k)} className={`text-right ${sort === k ? 'text-[#B497F0]' : ''}`}>{l} ↓</button>
           ))}
         </div>
-        {rows.map((c) => (
-          <div key={c['commune'] as string} className="grid grid-cols-[1fr_64px_60px] gap-1 border-b border-[#141d17] py-1.5 text-[11px]"
-            title={`${c['commune']} : délai médian d'instruction ${natLabel} = ${c['delai_median_mois']} mois (IQR ${c['delai_p25_mois']}–${c['delai_p75_mois']}), sur ${c['n_mur']} dossiers mûrs. ${c['n_recent_exclu']} dépôts récents exclus (non mûrs), ${c['n_exclus_qualite']} exclus (dépôt>autorisation).`}>
-            <span className="truncate text-txt">{c['commune'] as string}</span>
-            <span className="text-right font-mono" style={{ color: VIOLET }}>{c['delai_median_mois'] == null ? '—' : `${c['delai_median_mois']} m`}</span>
-            <span className="text-right font-mono text-txt-mut">{fmt(c['n_mur'] as number)}</span>
-          </div>
-        ))}
+        {rows.map((c) => {
+          const rang = c['rang_delai'] as number | null
+          // rapides (rang bas) en mint, lentes (rang haut) en rouge — repère visuel
+          const rgColor = rang == null ? '#5C7268' : rang <= 5 ? '#5CE6A1' : rang >= 20 ? '#E8695A' : VIOLET
+          const tend = c['tendance'] as string | null
+          const tIcon = tend === 'accelere' ? '↓' : tend === 'ralentit' ? '↑' : tend === 'stable' ? '→' : ''
+          const tColor = tend === 'accelere' ? '#5CE6A1' : tend === 'ralentit' ? '#E8695A' : '#5C7268'
+          return (
+            <div key={c['commune'] as string} className="grid grid-cols-[1fr_64px_60px] gap-1 border-b border-[#141d17] py-1.5 text-[11px]"
+              title={`${c['commune']} : rang ${rang ?? '—'}/24 par vélocité · délai médian ${natLabel} = ${c['delai_median_mois']} mois (IQR ${c['delai_p25_mois']}–${c['delai_p75_mois']}), sur ${c['n_mur']} dossiers mûrs. Tendance : ${tend ?? 'indéterminée (cohortes insuffisantes)'}.`}>
+              <span className="flex min-w-0 items-center gap-1.5 truncate text-txt">
+                {rang != null && <span className="shrink-0 font-mono text-[9px]" style={{ color: rgColor }}>#{rang}</span>}
+                <span className="truncate">{c['commune'] as string}</span>
+                {tIcon && <span className="shrink-0" style={{ color: tColor }} title={`Tendance ${tend}`}>{tIcon}</span>}
+              </span>
+              <span className="text-right font-mono" style={{ color: rgColor }}>{c['delai_median_mois'] == null ? '—' : `${c['delai_median_mois']} m`}</span>
+              <span className="text-right font-mono text-txt-mut">{fmt(c['n_mur'] as number)}</span>
+            </div>
+          )
+        })}
         <p className="py-2 text-[11px] text-txt-dim">
           Médiane dépôt→autorisation en mois · N = dossiers mûrs (dépôts &lt; {String(d?.['maturite_cutoff'] ?? '…')}).
           Survolez une ligne pour l'IQR et les exclusions.</p>
