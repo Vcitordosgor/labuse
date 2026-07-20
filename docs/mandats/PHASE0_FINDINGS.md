@@ -49,10 +49,15 @@ Les 9 échecs sont **pré-existants** (branche neuve, zéro modif de code) et se
 - **Pourquoi S1 / STOP** : le finding **touche la couche d'exclusion**. Le mandat interdit de modifier
   une attendue de test d'exclusion sans validation explicite de Vic (zone gelée, règle 3) et impose le
   STOP (règle 1). **Je ne touche donc NI le jeu démo NI la config NI le test.**
-- **Correctif possible (à décider par Vic, hors de ma main)** : soit aligner le jeu démo sur
-  `subtype='INTERDICTION'` (changement fixture-only), soit réintroduire `'rouge'` dans
-  `ppr_red_subtypes`. Trancher côté doctrine PPR-v2.
-- **Statut** : **`S1-EN ATTENTE DE VIC`**.
+- **Arbitrage Vic** : **option A** (la fixture s'aligne sur la config). **Vérification préalable
+  exigée par Vic, faite** : les subtypes PPR réels en base = `INTERDICTION`(74), `PRESCRIPTION`(88),
+  `i`(2). Le `i` est une **assiette PM1** (`suptype:"PM1"`, `code_risque:"i"`=inondation, périmètre —
+  pas un degré), **PAS un équivalent-interdiction** → aucun trou de couverture, pas de nouveau S1.
+- **Correctif appliqué** (commit `PHASE0-J1: F1+F2`) : `demo_saint_paul.py` pose désormais la PPR en
+  `subtype='INTERDICTION'`. `RisquesLayer` HARD_EXCLUDE de nouveau P3. `seed-demo` → 9 parcelles,
+  `demo-healthcheck` sans crash (les ✗ bâtiments/déclassement sont pré-existants, hors F1). `warm-demo`
+  (IDU pilotes réels) non concerné par le seed synthétique.
+- **Statut** : **`traité`**.
 
 ---
 
@@ -62,47 +67,79 @@ Les 9 échecs sont **pré-existants** (branche neuve, zéro modif de code) et se
   résiduel, P3 est tantôt `exclue` (via `foncier_public` — ex. « OFFICE NATIONAL DES FORETS »), tantôt
   `a_creuser`. Observé : run direct → P3 `exclue` (foncier_public) ; run pytest → P3 `a_creuser`.
 - **Nature** : défaut d'**isolation de test** (une table d'exclusion non purgée entre seeds). N'affecte
-  pas le run servi. Renforce F1 (le résultat P3 dépend d'un état non réinitialisé).
-- **Statut** : **`reporté`** (dépend de la décision F1 ; ne rien changer sans Vic — touche `foncier_public`).
+  pas le run servi.
+- **Correctif appliqué** (arbitrage Vic, commit `F1+F2`) : `demo_saint_paul` **contrôle** désormais
+  `parcelle_personne_morale` — ajoutée à `_RESET_TABLES` + helper `_add_pm` : P1 = PM privée (groupe 6,
+  acquérable), nouvelle **P9 = propriété publique** (Commune, groupe 4) → `foncier_public` HARD_EXCLUDE
+  déterministe ET démontrable. `test_cascade.py` : 12/12.
+- **Statut** : **`traité`**.
 
 ---
 
 ### F3 — `test_verdict_effectif` (×4) : table `parcel_terrain` absente de `labuse_test` *(environnement)*
 - **Tests** : `test_fiche_expose_score_v2_et_etage0`, `test_etage0_du_run_servi_prime`,
   `test_repli_legacy_sans_ligne_v2`, `test_liste_porte_le_verdict_effectif`.
-- **Réel** : `sqlalchemy … UndefinedTable: relation "parcel_terrain" does not exist`. La table n'est pas
-  créée par `models.create_all` (probablement produite par un `ensure_*` en SQL brut non appelé par
-  `conftest`). Échec d'**environnement de test**, pas de logique.
-- **Statut** : **`reporté`** — hors périmètre J1 (schéma test). À signaler ; ne pas « réparer » ici.
+- **Réel** : `sqlalchemy … UndefinedTable: relation "parcel_terrain" does not exist` — puis, une fois
+  celle-ci créée, `rnic_coproprietes`, `filosofi_carreaux_200m`, `parcel_adresse`, `parcel_zone_plu`,
+  `parcel_viabilisation`. `_q_v2_fiche` lit une DIZAINE de tables « data-gap » créées hors ORM en prod.
+- **Correctif appliqué** (arbitrage Vic « fix trivial », commit `F3+F4+F5+F6`) : `conftest.py` provisionne
+  ces tables VIDES en base de test (rnic via sa DDL d'ingesteur ; les autres en CREATE minimal) → le
+  contrat data-gap (0 ligne, jamais une erreur) est rétabli. **Puis F5** (voir ci-dessous) a levé
+  l'échec logique restant. `test_verdict_effectif` : 4/4.
+- **Statut** : **`traité`**.
 
 ---
 
-### F4 — Échecs d'environnement divers *(environnement)*
-- `test_saint_paul_quality` (9 skips) : « base applicative indisponible » — nécessite la base *app*.
-- `test_backup::test_backup_puis_restore_sur_base_temporaire` : nécessite droits admin PG / base temporaire.
-- `test_ortho_detection::test_post_traitement_rejets` : `sqlalchemy` (table/at absente en `labuse_test`).
-- **Statut** : **`reporté`** — dépendances d'environnement, hors périmètre du chemin critique J1.
+### F5 — `test_verdict_effectif` seedait un run v2 sous un label NON servi *(caractérisation, touche verdict servi)*
+- **Réel (une fois F3 levée)** : le test seedait le run v2 sous un label custom (`test-verdict-v2`),
+  mais `_score_v2_run_id` est **ÉPINGLÉ à `Q_A_RUN_LABEL`** (« fix pré-lancement — ferme la bombe
+  latente » : le run v2 servi n'est plus le dernier par timestamp, il est pinné au label servi) →
+  renvoyait `None`, les cas v2 ne s'exerçaient pas.
+- **Nature** : **test périmé** ; le CODE est correct (pinning volontaire). Aligné le run de test sur
+  `Q_A_RUN_LABEL` — **assertions inchangées** (tier v2 pilote, étage 0 prime). ⚠ Touche la logique de
+  **verdict servi** → signalé ici pour revue Vic (aucun changement de code/served ; seul le label du
+  seed de test change).
+- **Statut** : **`traité`** (à confirmer en revue).
 
 ---
 
-## Décision de lot (J1)
+### F4 — Rouges d'environnement → skips DOCUMENTÉS *(arbitrage Vic : « des skips oui, des rouges non »)*
+- `test_backup` : `pg_dump` 16 (Homebrew) < serveur PostgreSQL 18 → « server version mismatch ». **Skip
+  gardé** (compare pg_dump vs version serveur ; s'exécute dans un env où elles concordent).
+- `test_saint_paul_quality` / `test_ux_v1` : skips PRÉ-EXISTANTS (base applicative indisponible en
+  sandbox) — inchangés, déjà documentés dans les tests.
+- **Statut** : **`traité`** (skips explicites documentés).
 
-Le **gate boussole est vert** (golden 32/32, run servi intact) et `git` est propre. **Mais** la baseline
-`pytest` n'est pas verte, et **F1 touche la couche d'exclusion** (fixture démo périmée vs
-`ppr_red_subtypes`). Conformément au mandat (baseline « sinon STOP » + règle 1 « STOP si le finding
-touche une exclusion » + zone gelée règle 3 « ne jamais modifier une attendue sans Vic »), **je m'arrête
-avant d'écrire les tests J1** et je remonte à Vic :
+---
 
-- **Aucune** modification de code, de config, de jeu démo ou de test existant n'a été faite.
-- Les tests J1 à écrire portent en partie sur les **couches d'exclusion** (`test_etage0_ext.py`,
-  complétion de `test_cascade.py`, `test_phase2_layers.py`) : les caractériser suppose de savoir si le
-  comportement d'exclusion démo est **volontaire (PPR-v2)** ou **à corriger** — c'est la décision de Vic.
+### F6 — `test_ortho_detection::test_post_traitement_rejets` : drift ortho *(hors périmètre scoring J1)*
+- **Réel** : un candidat piscine rattaché à une parcelle bâtie (emprise 120 m² > 20, contexte attendu
+  1.0) ne survit plus au `post_traitement` (0 restant au lieu de 1 → `NoResultFound`). Cause non triviale
+  dans la chaîne `ortho_piscines.post_traitement` (hors chemin critique SCORING de J1).
+- **Correctif** : `@pytest.mark.skip` DOCUMENTÉ (raison + renvoi ici). **Triage propriétaire ortho requis.**
+- **Statut** : **`skip documenté`** (finding ouvert pour l'équipe ortho).
 
-**Question à Vic (déblocage J1)** :
-1. F1 — aligner le jeu démo sur `subtype='INTERDICTION'` (fixture-only), OU rétablir `'rouge'` dans
-   `ppr_red_subtypes` ? (Cela conditionne les attendues d'exclusion que J1 doit encoder.)
-2. F0 — golden = 32 confirmé comme noyau pour J3 ?
-3. F3/F4 — j'encode le comportement ACTUEL et laisse ces tests d'environnement en l'état (findings), OK ?
+---
 
-Dès l'arbitrage F1, je reprends J1.a→c (les tests d'exclusion à ctx stubé — `test_etage0_ext.py` — sont
-d'ailleurs **indépendants** de la fixture démo et pourront être écrits sans risque).
+## Décision de lot (J1) — CLÔTURE
+
+Après arbitrage Vic (F1 = option A vérifiée en base ; F0 = golden 32 confirmé ; F3/F4 = 0 failed via
+fix trivial ou skip documenté ; F2 = seed contrôle `parcelle_personne_morale`), **J1 est livré** :
+
+- **Baseline → verte** : `pytest` **929 passed, 16 skipped, 0 failed** (852 au départ ; +77 tests J1).
+  **Golden 32/32 PASS** sur `q_v6_m8` — boussole intacte.
+- **F1–F6 tous traités** (F6 = skip documenté, finding ouvert ortho ; F5 signalé pour revue verdict).
+- **Tests J1 ajoutés** :
+  - J1.a (41) : `test_etage0_ext.py`, `test_cascade_engine.py`, `test_phase2_layers.py`.
+  - J1.b (13) : `test_p_model_ext_sql.py` (label L2-F, copro), `test_p_model_sql.py` (fenêtres anti-leakage).
+  - J1.c (16) : `test_p_model_features.py` (équipements, shrinkage), `test_scoring_pure.py` (ICD, status).
+- **Zones gelées respectées** : zéro touche scoring/cascade/config/étage 0 ; modèle P M3.6, `q_v6_m8`,
+  golden 32 intacts. Seuls modifiés : `demo_saint_paul.py` (fixture, arbitré Vic), `conftest.py` (schéma
+  test), 3 tests pré-existants (skips/label), + les nouveaux fichiers de test.
+
+**Points à confirmer en revue Vic** :
+1. **F5** — l'alignement du run de test sur `Q_A_RUN_LABEL` touche la logique de verdict servi
+   (test-only, assertions inchangées) : OK ?
+2. **F6** — skip ortho documenté, à router vers l'équipe ortho (hors scoring).
+
+**STOP — review et merge Vic (branche `phase0/j1-tests`).**
