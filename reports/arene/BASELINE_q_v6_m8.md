@@ -3,7 +3,18 @@
 **AVIS : BASELINE (champion contre lui-même — référence)**
 
 _L'avis est indicatif : la bascule du run servi reste une décision humaine._  
-_Généré 2026-07-20 16:38 UTC · seed 974 · RR@1158 · bootstrap n=1000 · année d'éval 2025._
+_Généré 2026-07-20 16:53 UTC · seed 974 · RR@1158 · bootstrap n=1000 · année d'éval 2025._
+
+> ⚠ **NATURE DE LA MESURE — RR ABSOLU IN-SAMPLE, NON COMPARABLE AU WALK-FORWARD.**
+> Les scores servis sont calculés **features as-of 01/01/2026** (le run
+> servi score l'année suivante), or on les évalue contre le label de **2025** — la
+> dernière année labellisée complète. Les fenêtres de features as-of 2026
+> **encodent déjà les mutations 2025** → le RR absolu (ici RR@1158) est
+> **IN-SAMPLE / optimiste**. Il ne doit PAS être comparé au RR out-of-sample du walk-forward
+> M3.6 (fold 2025 hors copro = **6,73**, features as-of 01/01/2025). Même univers (hors copro),
+> même k (1158), même label (L2-F) ; SEULE la date as-of diffère (2026 vs 2025).
+> **La comparaison RELATIVE champion↔challenger reste valide** (les deux runs subissent la même
+> fuite) : c'est le rôle de l'IC apparié de ΔRR ci-dessous, PAS le niveau absolu.
 
 ## 1. Contrôle d'univers
 - champion `q_v6_m8` : 431 663 parcelles · challenger `q_v6_m8` : 431 663
@@ -20,6 +31,10 @@ _Généré 2026-07-20 16:38 UTC · seed 974 · RR@1158 · bootstrap n=1000 · an
 | --- | --- | --- | --- | --- |
 | champion | **13.17** | [11.93 ; 15.00] | 231 | 0.0151 |
 | challenger | **13.17** | [11.93 ; 15.00] | 231 | 0.0151 |
+
+**Différence APPARIÉE (challenger − champion), bootstrap sur les mêmes parcelles** :
+- ΔRR = **+0.00** · IC95 apparié [-0.81 ; +0.90] · significatif (borne basse > 0) : **NON**
+- _Critère d'AVIS : le challenger n'est retenu que si cet IC EXCLUT zéro par le bas (pas deux IC indépendants qui se chevauchent)._
 
 **Lift (challenger)** :
 | percentile | k | positifs | taux | rr | rappel |
