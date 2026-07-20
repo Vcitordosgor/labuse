@@ -96,7 +96,9 @@ export function AskBar({ idu }: { idu: string; zone?: string | null }) {
           className="group flex w-full items-center gap-2 rounded-lg border border-[#B497F0]/40 bg-[#1d1630] px-3 py-1.5 hover:border-[#B497F0] hover:bg-[#241833]">
           <span className="font-mono text-[10px] tracking-widest text-[#B497F0]">✦ DEMANDER À L'IA</span>
           <span className="rounded bg-[#B497F0]/15 px-1.5 py-0.5 text-[9px] font-semibold text-[#B497F0]">PREMIUM</span>
-          <span className="ml-auto text-[11px] text-txt-dim group-hover:text-txt-mut">une question sur cette parcelle →</span>
+          <span className="ml-auto text-[11px] text-txt-dim group-hover:text-txt-mut">
+            {d && !ask.isPending ? 'dernière réponse gardée — rouvrir →' : 'une question sur cette parcelle →'}
+          </span>
         </button>
       </div>
     )
@@ -162,6 +164,17 @@ export function AskBar({ idu }: { idu: string; zone?: string | null }) {
             </>
           )}
         </div>
+      )}
+
+      {/* FIX post-validation E : quand une réponse occupe l'espace, un lien CLAIR replie toute la
+          zone IA (réponse comprise) et rend la place à la fiche. La réponse reste gardée — rouvrir
+          « ✦ Demander à l'IA » la ré-affiche (cache inchangé, aucun nouvel appel). */}
+      {d && !ask.isPending && (
+        <button data-askbar-voir-fiche onClick={() => setOpen(false)}
+          className="mt-2 flex w-full items-center justify-center gap-1 rounded-lg border border-[#B497F0]/30 bg-[#1d1630]/60 py-1.5 text-[11px] font-medium text-[#B497F0] hover:border-[#B497F0]/60 hover:bg-[#1d1630]"
+          title="Replier l'IA et afficher toute la fiche — la réponse reste gardée (rouvrir pour la revoir)">
+          Voir l'entièreté de la fiche →
+        </button>
       )}
     </div>
   )
