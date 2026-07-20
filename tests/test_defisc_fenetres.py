@@ -20,8 +20,15 @@ def test_row_vefa_wording_et_bornes():
     assert r["active"] is True                            # [2022,2027] ∩ [2026,2028] ≠ ∅
     assert r["src"] == "DVF VEFA 2016"
     assert r["badge"] == "achat neuf 2016 — DVF · fenêtre de sortie d'engagement 2022-2027 · Estimé"
-    # JAMAIS une date de vente promise
-    assert "vendra" not in r["badge"].lower() and "2026" not in r["badge"]
+    # chip court servi + survol
+    assert r["court"] == "Sortie de défisc. probable · 2022-2027 · Estimé"
+    assert "×2,4" in r["detail"] and "walk-forward" in r["detail"]
+    assert "PAS une prédiction" in r["detail"]
+    # JAMAIS une date de vente promise, JAMAIS le dispositif affirmé
+    for txt in (r["badge"], r["court"], r["detail"]):
+        assert "vendra" not in txt.lower()
+    for dispositif in ("Pinel", "Girardin", "Scellier", "Duflot"):
+        assert dispositif not in r["detail"]
 
 
 def test_row_permis_source_trace_achevement():

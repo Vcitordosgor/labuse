@@ -18,7 +18,6 @@ brancher quand Stripe sera en production côté Flash).
 from __future__ import annotations
 
 import logging
-from datetime import date
 
 from sqlalchemy import text
 
@@ -68,9 +67,12 @@ def tarif() -> dict:
 
 
 def envois_du_jour(db, sujet: str) -> int:
+    # « Le jour » est ancré sur l'HORLOGE DB (current_date), cohérent avec `ts DEFAULT now()`.
+    # NE PAS comparer à un date.today() Python : quand la tz machine ≠ tz DB (ici Réunion +04),
+    # ts::date (DB) et date.today() (local) divergent après minuit → le plafond ne compte plus rien.
     return int(db.execute(text(
-        "SELECT count(*) FROM courrier_envois WHERE sujet = :s AND ts::date = :j"),
-        {"s": sujet, "j": date.today()}).scalar() or 0)
+        "SELECT count(*) FROM courrier_envois WHERE sujet = :s AND ts::date = current_date"),
+        {"s": sujet}).scalar() or 0)
 
 
 def _envoyer_mercifacteur(adresse: str, pdf_contenu: bytes | None) -> tuple[str, str]:

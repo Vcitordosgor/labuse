@@ -11,6 +11,8 @@ DVF_TENURE_OBS5 (8 pts) : « aucune mutation sur la fenêtre observable 2021-202
 """
 from __future__ import annotations
 
+import os
+
 # ── Tier combiné « Brûlante » 🔥 (décisions D2/D3) ─────────────────────────────────────────
 # Brûlante = chaude Q×A ∧ v_score ≥ seuil. Garde-fou : si le nombre de Brûlantes sort de
 # [30-120], NE PAS changer le seuil silencieusement — proposer un seuil ajusté dans le rapport
@@ -36,7 +38,12 @@ BRULANTE_GUARDRAIL = (30, 120)
 # (ANO-1 : q_v2 éradiqué du monde servi) + fix mapping ER (rescue St-Louis 02, veto corridors
 # L.151-23 / PAPA L.151-41). Delta : 11 718 atterrissent en écartée, 58 ANO-1 restaurées,
 # 89 churn recalibration ; 0 mouvement inexpliqué ; golden 32/32 régénéré, cohérence 3/3, canari OK).
-Q_A_RUN_LABEL = "q_v6_m8"
+# q_v6_m8 → q_v7_defisc (BASCULE A-1 clôture, cycle 1 : composante V « fenêtre de sortie de défisc »
+# — voir docs/mandats/A1_ETAPE2_DEFISC.md). Modèle P M3.6/m8 INCHANGÉ (sha256 gelé) ; V module UNIQUEMENT
+# le rang p_raw (+0,01 plafonné) sur 131 parcelles mono non-écartées → 0 bascule de tier (golden 116/116,
+# gate boussole 0/64). q_v6_m8 conservé en HYSTÉRÉSIS (rollback : docs/mandats/A1_BASCULE_ROLLBACK.md).
+# Le label servi est désormais CONFIGURABLE (fin de la dette du hard-code) : override LABUSE_SERVED_RUN.
+Q_A_RUN_LABEL = os.environ.get("LABUSE_SERVED_RUN", "q_v7_defisc")
 
 # ── Bandes (décision D2) ───────────────────────────────────────────────────────────────────
 # (borne basse incluse, code) — évaluées dans l'ordre. V NULL → 'na'.

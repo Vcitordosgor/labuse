@@ -937,15 +937,16 @@ function renderOccupation(o) {
 // une date de vente promise, JAMAIS une personne physique. Hors mono / hors neuf → f.defisc_fenetres = null.
 function renderDefisc(d) {
   if (!d) return "";
-  const etat = d.fenetre_active
-    ? `<span class="prov prov-est">fenêtre active</span>`
-    : `<span class="obs-reg">fenêtre ${esc(d.fenetre_debut)}-${esc(d.fenetre_fin)}</span>`;
+  // CHIP court « Sortie de défisc. probable · AAAA-AAAA · Estimé » + SURVOL (title) = mécanisme,
+  // ×2,4 sourcé walk-forward, « pas une prédiction ». Jamais le dispositif affirmé, jamais une date.
+  const court = esc(d.libelle_court || `Sortie de défisc. probable · ${d.fenetre_debut}-${d.fenetre_fin} · Estimé`);
+  const detail = esc(d.detail || "");
+  const avenir = d.fenetre_active ? "" : ` <span class="obs-reg">(fenêtre à venir)</span>`;
   return `
   <div class="occ">
-    <div class="loy-h">Fenêtre de sortie de défiscalisation ${etat} ${_prov("est")}</div>
+    <div class="loy-h" title="${detail}"><span class="defisc-chip">${court}</span> ${_prov("est")}${avenir}</div>
     <div class="loy-row"><span class="loy-k">Achat neuf</span><span class="loy-v"><b>${esc(d.achat_neuf_annee)}</b> <span class="loy-ic">(DVF)</span></span></div>
-    <div class="loy-row"><span class="loy-k">Fin d'engagement probable</span><span class="loy-v"><b>${esc(d.fenetre_debut)}–${esc(d.fenetre_fin)}</b></span></div>
-    <p class="obs-src">${esc(d.source_libelle)} · Estimé — signal de timing (propension de revente accrue en fin d'engagement), <b>pas</b> une date de vente.</p>
+    <p class="obs-src" title="${detail}">${detail}</p>
   </div>`;
 }
 

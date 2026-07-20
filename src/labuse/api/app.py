@@ -2215,7 +2215,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         if db.execute(text("SELECT to_regclass('defisc_fenetres')")).scalar() is not None:
             _df = db.execute(text(
                 "SELECT achat_neuf_annee, fenetre_debut, fenetre_fin, fenetre_active, statut, "
-                "source_libelle, libelle_badge FROM defisc_fenetres WHERE idu = :i"),
+                "source_libelle, libelle_badge, libelle_court, detail FROM defisc_fenetres WHERE idu = :i"),
                 {"i": p.idu}).mappings().first()
             defisc_block = dict(_df) if _df else None
     except Exception:  # noqa: BLE001 - table additive optionnelle, jamais bloquant

@@ -25,11 +25,14 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_front_source_aligne_sur_le_run_servi():
     """frontend/src/lib/api.ts : SOURCE doit être IDENTIQUE à Q_A_RUN_LABEL."""
     api_ts = (ROOT / "frontend" / "src" / "lib" / "api.ts").read_text(encoding="utf-8")
-    m = re.search(r"export const SOURCE = '([^']+)'", api_ts)
-    assert m, "constante SOURCE introuvable dans frontend/src/lib/api.ts"
+    # SOURCE est désormais configurable (clôture A-1) : `import.meta.env.VITE_RUN_LABEL ?? 'défaut'`.
+    # On vérifie que le DÉFAUT de repli (littéral) reste aligné sur le défaut backend Q_A_RUN_LABEL.
+    # La regex accepte l'ancienne forme (littéral seul) ET la nouvelle (env ?? littéral).
+    m = re.search(r"export const SOURCE = (?:import\.meta\.env\.VITE_RUN_LABEL \?\? )?'([^']+)'", api_ts)
+    assert m, "constante SOURCE (ou son défaut de repli) introuvable dans frontend/src/lib/api.ts"
     assert m.group(1) == Q_A_RUN_LABEL, (
-        f"front SOURCE={m.group(1)!r} ≠ backend Q_A_RUN_LABEL={Q_A_RUN_LABEL!r} — "
-        "bascule de run incomplète (mettre à jour les DEUX constantes + npm run build)")
+        f"front SOURCE défaut={m.group(1)!r} ≠ backend Q_A_RUN_LABEL={Q_A_RUN_LABEL!r} — "
+        "bascule de run incomplète (aligner le défaut api.ts + le défaut LABUSE_SERVED_RUN + npm run build)")
 
 
 def test_bundle_front_construit_sur_le_run_servi():

@@ -38,7 +38,9 @@ CREATE TABLE IF NOT EXISTS defisc_fenetres (
   fenetre_active   boolean NOT NULL,       -- bande [Y+6,Y+11] ∩ [ref_year, ref_year+2] (Estimé, as-of build)
   statut           text    NOT NULL DEFAULT 'Estimé',
   source_libelle   text    NOT NULL,       -- trace : 'DVF VEFA 2016' | 'DVF vente 2017 + achèvement PC 2015'
-  libelle_badge    text    NOT NULL,       -- phrase servie (factuelle, sans date-promesse)
+  libelle_badge    text    NOT NULL,       -- phrase descriptive (CSV/trace, sans date-promesse)
+  libelle_court    text    NOT NULL,       -- CHIP servi : « Sortie de défisc. probable · AAAA-AAAA · Estimé »
+  detail           text    NOT NULL,       -- SURVOL : mécanisme + ×2,4 sourcé + « pas une prédiction »
   updated_at       timestamptz DEFAULT now()
 );
 """
@@ -78,14 +80,15 @@ ORDER BY n.idu, n.dt DESC;
 _INSERT = """
 INSERT INTO defisc_fenetres
   (idu, proxy, achat_neuf_annee, fenetre_debut, fenetre_fin, fenetre_active, statut,
-   source_libelle, libelle_badge, updated_at)
+   source_libelle, libelle_badge, libelle_court, detail, updated_at)
 VALUES
-  (:idu, :proxy, :y, :deb, :fin, :active, 'Estimé', :src, :badge, now())
+  (:idu, :proxy, :y, :deb, :fin, :active, 'Estimé', :src, :badge, :court, :detail, now())
 ON CONFLICT (idu) DO UPDATE SET
   proxy = EXCLUDED.proxy, achat_neuf_annee = EXCLUDED.achat_neuf_annee,
   fenetre_debut = EXCLUDED.fenetre_debut, fenetre_fin = EXCLUDED.fenetre_fin,
   fenetre_active = EXCLUDED.fenetre_active, source_libelle = EXCLUDED.source_libelle,
-  libelle_badge = EXCLUDED.libelle_badge, updated_at = now();
+  libelle_badge = EXCLUDED.libelle_badge, libelle_court = EXCLUDED.libelle_court,
+  detail = EXCLUDED.detail, updated_at = now();
 """
 
 
@@ -96,18 +99,26 @@ def _row(idu: str, y: int, proxy: str, ach_year: int | None, ref_year: int) -> d
         src = f"DVF VEFA {y}"
     else:
         src = f"DVF vente {y}" + (f" + achèvement PC {ach_year}" if ach_year else " + achèvement PC")
-    # wording factuel, sourcé, SANS date de vente promise (roadmap « Rejeté »)
+    # wording factuel, sourcé, SANS date de vente promise (roadmap « Rejeté ») et SANS nommer le
+    # dispositif (on ne l'affirme jamais — VEFA/permis ne disent pas Pinel vs Girardin).
     badge = f"achat neuf {y} — DVF · fenêtre de sortie d'engagement {deb}-{fin} · Estimé"
+    court = f"Sortie de défisc. probable · {deb}-{fin} · Estimé"
+    detail = (
+        f"Bien acheté neuf en {y} (source DVF). À l'expiration de l'engagement d'un dispositif de "
+        f"défiscalisation (6 à 9 ans), la propension de revente augmente — mesuré ×2,4 vs hors fenêtre "
+        f"(walk-forward as-of 2021-2025, sourcé). Fenêtre estimée {deb}-{fin}. "
+        f"Signal de timing, PAS une prédiction : ni une date de vente, ni une personne."
+    )
     return {"idu": idu, "proxy": proxy, "y": y, "deb": deb, "fin": fin,
-            "active": active, "src": src, "badge": badge}
+            "active": active, "src": src, "badge": badge, "court": court, "detail": detail}
 
 
 def build_defisc_fenetres(session: Session, *, ref_year: int = DEFAULT_REF_YEAR,
                           commit: bool = True, log=lambda *_: None) -> dict:
     """Construit/rafraîchit `defisc_fenetres` (rebuild complet idempotent). Lecture seule des sources.
     `commit=False` pour les tests transactionnels (fixture rollback-ée). Renvoie {'total', 'active'}."""
+    session.execute(text("DROP TABLE IF EXISTS defisc_fenetres"))  # rebuild complet (table dérivée : schéma évolutif)
     session.execute(text(DDL))
-    session.execute(text("DELETE FROM defisc_fenetres"))          # rebuild complet (table dérivée)
     raw = session.execute(text(_SELECT_RAW), {"vefa": VEFA}).mappings().all()
     rows = [_row(r["idu"], int(r["y"]), r["proxy"], r["ach_year"], ref_year) for r in raw]
     for r in rows:
