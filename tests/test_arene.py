@@ -162,3 +162,21 @@ def test_boussole_statut_opportunite_est_violation(db_session, tmp_path):
     _seed_challenger(db_session, "chall-o", IDU_FP, "ecartee")   # tier NON promu ; seul le statut déclenche
     res = _golden_boussole(db_session, "chall-o", _golden_anchor(tmp_path, "factuelle"))
     assert res["compteur"] == 1 and "opportunite" in res["violations"][0][1]
+
+
+@pytest.mark.db
+def test_boussole_matrice_statut_chaude_est_violation(db_session, tmp_path):
+    # 3e axe (clôture Phase 0) : une factuelle dont la MATRICE Q×A challenger passe `chaude` est une
+    # violation, même si tier v2 = écartée ET statut cascade ≠ opportunite (juge les challengers matrice).
+    wkt = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20.9))"
+    pid = db_session.execute(text(
+        "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) VALUES "
+        "(:i,'X','ZZ','1', ST_GeomFromText(:w,4326), ST_Transform(ST_GeomFromText(:w,4326),2975), 800, "
+        " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326))) RETURNING id"),
+        {"i": IDU_FP, "w": wkt}).scalar()
+    db_session.execute(text(
+        "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, opportunity_score, "
+        "status, matrice_statut) VALUES ('chall-m', :p, 70, 40, 'a_creuser', 'chaude')"), {"p": pid})
+    _seed_challenger(db_session, "chall-m", IDU_FP, "ecartee")   # tier écartée + statut a_creuser : seule la matrice déclenche
+    res = _golden_boussole(db_session, "chall-m", _golden_anchor(tmp_path, "factuelle"))
+    assert res["compteur"] == 1 and "matrice_statut chaude" in res["violations"][0][1]

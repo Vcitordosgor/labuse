@@ -62,9 +62,12 @@ def _load_labels(session: Session, year: int) -> pd.DataFrame:
 
 
 def _golden_boussole(session: Session, challenger: str, golden_path: str) -> dict:
-    """Gate BOUSSOLE (règle Vic J3) : les seules attendues qui GÈLENT le gate sont les NÉGATIVES
-    validées `factuelle`. Chez un challenger, une telle négative est une VIOLATION si son **tier v2**
-    passe `brulante`/`chaude` OU si son **statut cascade** passe `opportunite` (les deux taxonomies).
+    """Gate BOUSSOLE (règle Vic J3+clôture) : les seules attendues qui GÈLENT le gate sont les
+    NÉGATIVES validées `factuelle`. Le golden gèle un TRIPLET par ancre → le gate surveille ses TROIS
+    composantes. Chez un challenger, une négative factuelle est une VIOLATION si :
+      (1) son **tier v2** passe `brulante`/`chaude` (modèle P), OU
+      (2) son **statut cascade** passe `opportunite`, OU
+      (3) sa **matrice_statut** passe `chaude` (matrice Q×A — juge les challengers matrice, Phase A-3).
     Compteur > 0 = REJET éliminatoire — un faux positif servi est un péché mortel. Les positives
     (`coherence`) sont des ancres de non-régression, elles ne pilotent PAS ce gate."""
     with open(golden_path, encoding="utf-8") as f:
@@ -81,17 +84,21 @@ def _golden_boussole(session: Session, challenger: str, golden_path: str) -> dic
         "SELECT parcelle_id AS idu, tier FROM parcel_p_score_v2 "
         "WHERE run_id = :r AND parcelle_id = ANY(:idus)"),
         {"r": challenger, "idus": attendues}).mappings().all()}
-    statuts = {r["idu"]: r["status"] for r in session.execute(text(
-        "SELECT p.idu, d.status FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id "
-        "WHERE d.run_label = :r AND p.idu = ANY(:idus)"),
+    evals = {r["idu"]: (r["status"], r["matrice_statut"]) for r in session.execute(text(
+        "SELECT p.idu, d.status, d.matrice_statut FROM dryrun_parcel_evaluations d "
+        "JOIN parcels p ON p.id = d.parcel_id WHERE d.run_label = :r AND p.idu = ANY(:idus)"),
         {"r": challenger, "idus": attendues}).mappings().all()}
     violations = []
     for idu in attendues:
-        t, s = tiers.get(idu), statuts.get(idu)
+        t = tiers.get(idu)
+        s, m = evals.get(idu, (None, None))
+        # le TRIPLET gelé a trois composantes → le gate surveille les trois :
         if t in ("brulante", "chaude"):
-            violations.append((idu, f"tier {t}"))
+            violations.append((idu, f"tier {t}"))                 # (1) tier v2 (modèle P)
         elif s == "opportunite":
-            violations.append((idu, "statut cascade opportunite"))
+            violations.append((idu, "statut cascade opportunite"))  # (2) statut cascade
+        elif m == "chaude":
+            violations.append((idu, "matrice_statut chaude"))       # (3) matrice Q×A (challengers matrice)
     return {"n_attendues": len(attendues), "violations": violations, "compteur": len(violations)}
 
 
@@ -266,8 +273,9 @@ def render_report(r: dict[str, Any], stamp: str) -> str:
              f"{u['challenger_hors_champion']} chez le challenger seul · {u['sans_label']} sans label")
 
     L.append("\n## 2. Golden — gate boussole (éliminatoire)")
-    L.append(f"- parcelles golden attendues écartées/exclues : **{b['n_attendues']}**")
-    L.append(f"- **compteur boussole (passées brûlante/chaude chez le challenger) : {b['compteur']}**")
+    L.append(f"- parcelles golden négatives `factuelle` (attendues écartées/exclues) : **{b['n_attendues']}**")
+    L.append(f"- **compteur boussole — 3 axes (tier brûlante/chaude · statut opportunite · matrice_statut "
+             f"chaude) : {b['compteur']}**")
     if b["violations"]:
         L.append("\n⚠ VIOLATIONS (REJET éliminatoire) :\n"
                  + "\n".join(f"- `{idu}` → tier `{t}`" for idu, t in b["violations"]))
