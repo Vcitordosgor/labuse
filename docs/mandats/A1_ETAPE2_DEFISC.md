@@ -85,4 +85,46 @@ uniquement** (copro exclue, non-neuf exclu), idempotence, fragment de filtre SQL
 
 ## Volet 3 — LA COMPOSANTE V (challenger arène)
 
-*(en cours — débloqué par le volet 1)*
+Débloqué par le volet 1 (critère passé). Challenger complet dans son **propre run_id**
+`q_v6_m8_Vdefisc` (`scripts/a1_challenger_v.py`), run servi `q_v6_m8` **intouché**.
+
+**Contrainte dure honorée PAR CONSTRUCTION** — « le signal défisc seul ne peut jamais faire franchir un
+seuil de tier » : le challenger **gèle le triplet** (tier v2 · statut cascade · matrice Q×A) copié
+VERBATIM du champion ; la composante V ne module **que** le score de rang `p_raw`. Donc tier/statut/matrice
+challenger ≡ champion → gate boussole 3 axes = **0/64 par construction**, et V ne réordonne qu'à l'intérieur
+des bandes déjà servies (jamais de nouveau tier).
+
+**V plafonnée, restreinte** : `p_raw' = p_raw + 0,01` (borné ≈ écart p50→p90 du run), appliqué **uniquement**
+aux **131 parcelles** défisc-actives ∩ **mono** ∩ **non-écartées** (nudger une écartée serait absurde et
+polluerait le top-1158 → exclu).
+
+**Verdict = le walk-forward (volet 1, PASSÉ).** L'arène tourne en **garde-fou** :
+`reports/arene/20260720_q_v6_m8_Vdefisc.md` (+ note doctrine `…_DOCTRINE.md`).
+
+| Dimension garde-fou | Résultat | Verdict |
+|---|---|---|
+| Gate boussole — 3 axes | **0 / 64** | ✅ aucun faux positif |
+| ECE | 0,0167 → 0,0167 (Δ −0,0000) | ✅ non dégradée |
+| Churn top-1158 | **0 %** (1 entrant / 1 sortant) | ✅ minimal, commenté |
+| ΔRR@1158 apparié | +0,00 · IC95 [−0,80 ; +0,91] → **REJETÉ** | ⚪ **hors critère** (signal forward) |
+
+L'AVIS arène `REJETÉ` sur le ΔRR est **attendu et documenté explicitement** (doctrine) : l'arène (label 2025)
+ne peut pas récompenser un signal forward 2026-2028. Le churn 0 % confirme le diagnostic — les défisc-actifs
+non-écartés sont surtout « à creuser » (sous le top-1158), donc RR@1158 est quasi insensible à V. La V est
+**validée par le walk-forward** et **innocentée par le garde-fou** (boussole/ECE/churn). Basculer la V en
+production (et son wording) = décision Vic.
+
+---
+
+## Synthèse étape 2
+
+| Volet | Livrable | Verdict |
+|---|---|---|
+| **1 · Juge** | walk-forward as-of (`a1_walkforward.py`) | ✅ **PASSÉ** — OR 2,43 IC95 [1,49 ; 4,34], V validée |
+| **2 · Badge** | table `defisc_fenetres` + fiche + filtre + tests | ✅ livré — 1166 mono, 797 active, 6/6 tests |
+| **3 · Composante V** | challenger `q_v6_m8_Vdefisc` + arène garde-fou | ✅ boussole 0/64, ECE ok, churn 0 % ; ΔRR hors critère |
+| **Doctrine** | règle walk-forward vs arène (`PHASE0_BILAN.md`) | ✅ inscrite |
+
+**Décisions restant à Vic** : (1) basculer la composante V en production (le challenger existe, prouvé,
+garde-fou vert) ; (2) wording client du badge ; (3) prochain challenger A-1 (PC caducs, puis passoires DPE
+F/G). Run servi `q_v6_m8` intouché. **Vic merge — je ne merge pas.**
