@@ -117,7 +117,19 @@ Les 9 échecs sont **pré-existants** (branche neuve, zéro modif de code) et se
   1.0) ne survit plus au `post_traitement` (0 restant au lieu de 1 → `NoResultFound`). Cause non triviale
   dans la chaîne `ortho_piscines.post_traitement` (hors chemin critique SCORING de J1).
 - **Correctif** : `@pytest.mark.skip` DOCUMENTÉ (raison + renvoi ici). **Triage propriétaire ortho requis.**
-- **Statut** : **`skip documenté`** (finding ouvert pour l'équipe ortho).
+- **Statut** : **`reporté`** (revue Vic : skip accepté ; le triage ortho est interne, plus tard — finding gardé ouvert).
+
+---
+
+### F7 — `commit()` enfoui dans `build_copro_flags` / `build_ext_dataset` = défaut de testabilité *(dette, reporté)*
+- **Réel** : ces fonctions (`scoring/p_model/ext_sql.py`) appellent `session.commit()` en interne. En test
+  (transaction rollback), elles **persistent** leurs écritures → cassent l'isolation (cf. l'incident
+  `test_amenites` pollué par un `seed-demo`). J1.b a donc dû tester leurs **prédicats** (fenêtre as-of,
+  union copro) plutôt que les fonctions complètes.
+- **Piste (revue Vic)** : micro-refactor dans un lot ultérieur — **session injectée, `commit()` remonté à
+  la frontière CLI** (les fonctions cœur ne committent plus). Rend `build_*` testables de bout en bout et
+  supprime le risque de pollution. **Rien à faire maintenant.**
+- **Statut** : **`reporté`** (candidat micro-refactor, lot ultérieur).
 
 ---
 

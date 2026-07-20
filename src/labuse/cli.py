@@ -1458,6 +1458,41 @@ def score_v2_cmd(
         typer.echo(f"  snapshot gelé : {res['snapshot']}")
 
 
+@app.command("arene")
+def arene_cmd(
+    challenger: str = typer.Option(..., help="run_id du challenger (dans parcel_p_score_v2)."),
+    champion: str = typer.Option(None, help="run_id du champion (défaut : dernier run servi)."),
+    eval_year: int = typer.Option(None, help="Année d'évaluation (défaut : dernière année labellisée)."),
+    churn_max: float = typer.Option(0.25, help="Budget de rotation du top-1158 (défaut 0,25)."),
+    n_boot: int = typer.Option(1000, help="Tirages bootstrap de l'IC95 (seed 974)."),
+) -> None:
+    """ARÈNE — juge un challenger contre le champion (LECTURE SEULE). Écrit un rapport dans
+    reports/arene/ et affiche l'AVIS. Ne bascule JAMAIS le run servi (décision humaine)."""
+    from datetime import datetime, timezone
+    from pathlib import Path
+
+    from .scoring import arene
+
+    with session_scope() as session:
+        session.execute(text("SET TRANSACTION READ ONLY"))
+        res = arene.run_arene(session, challenger=challenger, champion=champion,
+                              eval_year=eval_year, churn_max=churn_max, n_boot=n_boot)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    out_dir = Path(__file__).resolve().parents[2] / "reports" / "arene"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    if res["is_baseline"]:
+        fname = f"BASELINE_{challenger}.md"
+    else:
+        fname = f"{datetime.now(timezone.utc).strftime('%Y%m%d')}_{challenger}.md"
+    path = out_dir / fname
+    path.write_text(arene.render_report(res, stamp), encoding="utf-8")
+    typer.echo(f"→ {path.relative_to(Path(__file__).resolve().parents[2])}")
+    typer.echo(f"AVIS : {res['avis']}")
+    if res["criteres_rejet"] and not res["is_baseline"]:
+        for c in res["criteres_rejet"]:
+            typer.echo(f"  · {c}")
+
+
 @app.command("monitor-forward")
 def monitor_forward_cmd(
     snapshot_label: str = typer.Option(None, help="Snapshot gelé à suivre (défaut : dernier m5-*)."),

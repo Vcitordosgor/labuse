@@ -110,3 +110,19 @@ python -m pytest tests/test_run_serving_coherence.py -v -rs
 
 Règle : un gate non vert (golden < 32/32, cohérence < 3/3, ou un skip) = **stop et rapport**,
 on ne répare rien à l'aveugle (une divergence = bascule de run incomplète, cf. docstring du test).
+
+## Juger un challenger contre le run servi (arène — Phase 0)
+
+**Une seule commande** produit le verdict (LECTURE SEULE sur les scores ; écrit un rapport dans
+`reports/arene/`, ne bascule jamais le run servi) :
+
+```bash
+labuse arene --challenger <run_id>     # champion = dernier run servi par défaut
+# → reports/arene/<date>_<run_id>.md + AVIS : CHALLENGER RETENU | REJETÉ | (REJETÉ éliminatoire boussole)
+```
+
+Options : `--champion <run_id>`, `--eval-year N`, `--churn-max 0.25`, `--n-boot 1000`. Le rapport
+porte : contrôle d'univers, **gate golden/boussole (éliminatoire)**, RR@1158 (IC95 seed 974), lift,
+ventilations commune/tier, ECE, churn top-1158, contrôle négatif par permutation, puis l'AVIS.
+**L'avis est indicatif — la bascule du run servi reste une décision humaine.** Référence de comparaison :
+`reports/arene/BASELINE_q_v6_m8.md` (champion contre lui-même).
