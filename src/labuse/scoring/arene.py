@@ -62,21 +62,36 @@ def _load_labels(session: Session, year: int) -> pd.DataFrame:
 
 
 def _golden_boussole(session: Session, challenger: str, golden_path: str) -> dict:
-    """Gate BOUSSOLE : toute parcelle golden ATTENDUE écartée/exclue qui apparaît `brulante`
-    ou `chaude` chez le challenger = compteur > 0 = REJET éliminatoire (un faux positif servi
-    est un péché mortel)."""
+    """Gate BOUSSOLE (règle Vic J3) : les seules attendues qui GÈLENT le gate sont les NÉGATIVES
+    validées `factuelle`. Chez un challenger, une telle négative est une VIOLATION si son **tier v2**
+    passe `brulante`/`chaude` OU si son **statut cascade** passe `opportunite` (les deux taxonomies).
+    Compteur > 0 = REJET éliminatoire — un faux positif servi est un péché mortel. Les positives
+    (`coherence`) sont des ancres de non-régression, elles ne pilotent PAS ce gate."""
     with open(golden_path, encoding="utf-8") as f:
         golden = json.load(f)
-    attendues = [
-        idu for idu, e in golden.get("parcelles", {}).items()
-        if ((e.get("db", {}).get("score_v2") or {}).get("tier") == "ecartee"
-            or e.get("db", {}).get("etage0"))
-    ]
+
+    def neg_factuelle(e: dict) -> bool:
+        if e.get("anchor"):                       # ancre J3 : tag explicite
+            return e.get("validation") == "factuelle"
+        db = e.get("db", {})                      # 32 d'origine : négative ⇒ factuelle implicite
+        return (db.get("score_v2") or {}).get("tier") == "ecartee" or bool(db.get("etage0"))
+
+    attendues = [idu for idu, e in golden.get("parcelles", {}).items() if neg_factuelle(e)]
     tiers = {r["idu"]: r["tier"] for r in session.execute(text(
         "SELECT parcelle_id AS idu, tier FROM parcel_p_score_v2 "
         "WHERE run_id = :r AND parcelle_id = ANY(:idus)"),
         {"r": challenger, "idus": attendues}).mappings().all()}
-    violations = [(idu, tiers.get(idu)) for idu in attendues if tiers.get(idu) in ("brulante", "chaude")]
+    statuts = {r["idu"]: r["status"] for r in session.execute(text(
+        "SELECT p.idu, d.status FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id "
+        "WHERE d.run_label = :r AND p.idu = ANY(:idus)"),
+        {"r": challenger, "idus": attendues}).mappings().all()}
+    violations = []
+    for idu in attendues:
+        t, s = tiers.get(idu), statuts.get(idu)
+        if t in ("brulante", "chaude"):
+            violations.append((idu, f"tier {t}"))
+        elif s == "opportunite":
+            violations.append((idu, "statut cascade opportunite"))
     return {"n_attendues": len(attendues), "violations": violations, "compteur": len(violations)}
 
 

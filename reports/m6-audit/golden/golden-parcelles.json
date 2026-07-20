@@ -2,8 +2,14 @@
  "meta": {
   "api_base": "http://127.0.0.1:8010",
   "genere_le": "2026-07-15T11:28:12",
+  "j3_ancres": {
+   "ajoutees": 84,
+   "coherence": 31,
+   "factuelle": 53,
+   "format": "couple (cascade_status, matrice_statut, tier_v2) + validation"
+  },
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
-  "n_parcelles": 32,
+  "n_parcelles": 116,
   "run_cascade": "q_v6_m8",
   "run_v2_servi": "q_v6_m8",
   "tolerances": {
@@ -19,6 +25,186 @@
   }
  },
  "parcelles": {
+  "97401000AB0001": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Les Avirons",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "risques",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97401000AB0002": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Les Avirons",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "foncier_public",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97401000AD0016": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Les Avirons",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97401000AD0095": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Les Avirons",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97401000AD0124": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Les Avirons",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97401000AD0192": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Les Avirons",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97401000AD0971": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Les Avirons",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97401000AD0973": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "Les Avirons",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "surface",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97401000AD1599": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "Les Avirons",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97401000AI0394": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Les Avirons",
+   "etage0": false,
+   "matrice_statut": "a_creuser",
+   "motif": null,
+   "tier_v2": "reserve_fonciere",
+   "validation": "coherence"
+  },
+  "97401000AM0193": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Les Avirons",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97401000AM0213": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Les Avirons",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97401000AM0380": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Les Avirons",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97401000AN0388": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Les Avirons",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97401000AN0797": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Les Avirons",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97402000AB0001": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Bras-Panon",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "pente",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97402000AB0002": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Bras-Panon",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "zonage_plu_gpu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97402000AI0725": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Bras-Panon",
+   "etage0": false,
+   "matrice_statut": "chaude",
+   "motif": null,
+   "tier_v2": "reserve_fonciere",
+   "validation": "coherence"
+  },
   "97402000AK1725": {
    "api": {
     "fiche": {
@@ -137,6 +323,26 @@
     }
    }
   },
+  "97403000AH0341": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Entre-Deux",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "emprise_lineaire",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97403000AK0044": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Entre-Deux",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "emprise_routiere",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
   "97403000AR1423": {
    "api": {
     "fiche": {
@@ -246,6 +452,56 @@
      "zone": "U"
     }
    }
+  },
+  "97403000AR1424": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Entre-Deux",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97404000AC0011": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "L'Étang-Salé",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "surface",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97404000AC1225": {
+   "anchor": true,
+   "cascade_status": "opportunite",
+   "commune": "L'Étang-Salé",
+   "etage0": false,
+   "matrice_statut": "a_creuser",
+   "motif": null,
+   "tier_v2": "reserve_fonciere",
+   "validation": "coherence"
+  },
+  "97404000AD0194": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "L'Étang-Salé",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "osm_faux_positif",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97405000AB0001": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Petite-Île",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "zonage_plu_gpu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
   },
   "97405000AB0168": {
    "api": {
@@ -357,6 +613,86 @@
      "zone": "A"
     }
    }
+  },
+  "97405000AD0728": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Petite-Île",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "eau",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97405000AR1779": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Petite-Île",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "chaude",
+   "validation": "coherence"
+  },
+  "97406000AB0001": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "La Plaine-des-Palmistes",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "pente",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97406000AC0506": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "La Plaine-des-Palmistes",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "prescription_plu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97406000AW1250": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "La Plaine-des-Palmistes",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97407000AB0009": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Le Port",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "foncier_public",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97407000AB0046": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "Le Port",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "osm_faux_positif",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97407000AV0096": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Le Port",
+   "etage0": false,
+   "matrice_statut": "a_creuser",
+   "motif": null,
+   "tier_v2": "reserve_fonciere",
+   "validation": "coherence"
   },
   "97407000BI0350": {
    "api": {
@@ -470,6 +806,26 @@
     }
    }
   },
+  "97408000AB0007": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "La Possession",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "risques",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97408000AB0157": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "La Possession",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "emprise_lineaire",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
   "97408000AC1870": {
    "api": {
     "fiche": {
@@ -580,6 +936,16 @@
      "zone": "U"
     }
    }
+  },
+  "97408000AP1610": {
+   "anchor": true,
+   "cascade_status": "opportunite",
+   "commune": "La Possession",
+   "etage0": false,
+   "matrice_statut": "a_creuser",
+   "motif": null,
+   "tier_v2": "chaude",
+   "validation": "coherence"
   },
   "97408000AP1647": {
    "api": {
@@ -694,6 +1060,36 @@
      "zone": "AUc"
     }
    }
+  },
+  "97409000AB0011": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-André",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "eau",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97409000AB0119": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-André",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "surface",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97409000AR1260": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Saint-André",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "brulante",
+   "validation": "coherence"
   },
   "97409000AX0289": {
    "api": {
@@ -814,6 +1210,26 @@
      "zone": "U"
     }
    }
+  },
+  "97410000AB0010": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Benoît",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "prescription_plu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97410000AB0343": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "Saint-Benoît",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "emprise_routiere",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
   },
   "97410000AS1425": {
    "api": {
@@ -1177,6 +1593,36 @@
     }
    }
   },
+  "97410000CD0926": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Saint-Benoît",
+   "etage0": false,
+   "matrice_statut": "a_creuser",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97411000AB0006": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Denis",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "risques",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97411000AB0007": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Denis",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "foncier_public",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
   "97411000AL0360": {
    "api": {
     "fiche": {
@@ -1411,6 +1857,16 @@
     }
    }
   },
+  "97411000HK0083": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Saint-Denis",
+   "etage0": false,
+   "matrice_statut": "a_creuser",
+   "motif": null,
+   "tier_v2": "reserve_fonciere",
+   "validation": "coherence"
+  },
   "97411000KA0296": {
    "api": {
     "fiche": {
@@ -1524,6 +1980,56 @@
      "zone": "AUc"
     }
    }
+  },
+  "97412000AB0001": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Joseph",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "zonage_plu_gpu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97412000AB0002": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Joseph",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "pente",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97412000CP0462": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Saint-Joseph",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "brulante",
+   "validation": "coherence"
+  },
+  "97413000AC0083": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "Saint-Leu",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "emprise_lineaire",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97413000AC0115": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "Saint-Leu",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "surface",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
   },
   "97413000CD0729": {
    "api": {
@@ -1643,6 +2149,16 @@
      "zone": "AU"
     }
    }
+  },
+  "97413000CR0344": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Saint-Leu",
+   "etage0": false,
+   "matrice_statut": "a_creuser",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
   },
   "97413000CS0160": {
    "api": {
@@ -1886,6 +2402,66 @@
      "zone": "U"
     }
    }
+  },
+  "97414000CH0586": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Louis",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "prescription_plu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97414000CI0800": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Louis",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "emprise_routiere",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97414000CV0772": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Saint-Louis",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "chaude",
+   "validation": "coherence"
+  },
+  "97415000AH0410": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Paul",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "osm_faux_positif",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97415000AI0155": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Paul",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "eau",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97415000BW1132": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Saint-Paul",
+   "etage0": false,
+   "matrice_statut": "a_creuser",
+   "motif": null,
+   "tier_v2": "reserve_fonciere",
+   "validation": "coherence"
   },
   "97415000CW1056": {
    "api": {
@@ -2229,6 +2805,26 @@
     }
    }
   },
+  "97416000CD0006": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "Saint-Pierre",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "zonage_plu_gpu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97416000CD0011": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Pierre",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "risques",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
   "97416000CD0765": {
    "api": {
     "fiche": {
@@ -2451,6 +3047,66 @@
     }
    }
   },
+  "97416000EY1406": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Saint-Pierre",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "brulante",
+   "validation": "coherence"
+  },
+  "97417000AC0003": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Philippe",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "pente",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97417000AC0004": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Saint-Philippe",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "foncier_public",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97417000BC0150": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Saint-Philippe",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
+  },
+  "97418000AC0003": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Sainte-Marie",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "emprise_routiere",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97418000AC0149": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Sainte-Marie",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "surface",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
   "97418000AT2379": {
    "api": {
     "fiche": {
@@ -2568,6 +3224,26 @@
     }
    }
   },
+  "97418000AT2542": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Sainte-Marie",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "chaude",
+   "validation": "coherence"
+  },
+  "97419000AC0076": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "Sainte-Rose",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "emprise_lineaire",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
   "97419000AC0159": {
    "api": {
     "fiche": {
@@ -2677,6 +3353,46 @@
      "zone": "U"
     }
    }
+  },
+  "97419000AD0155": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Sainte-Rose",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "eau",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97419000AH0201": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Sainte-Rose",
+   "etage0": false,
+   "matrice_statut": "a_creuser",
+   "motif": null,
+   "tier_v2": "reserve_fonciere",
+   "validation": "coherence"
+  },
+  "97420000AB0291": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Sainte-Suzanne",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "osm_faux_positif",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97420000AB1549": {
+   "anchor": true,
+   "cascade_status": "faux_positif_probable",
+   "commune": "Sainte-Suzanne",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "prescription_plu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
   },
   "97420000AO0654": {
    "api": {
@@ -2799,6 +3515,36 @@
     }
    }
   },
+  "97420000BD0643": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Sainte-Suzanne",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "chaude",
+   "validation": "coherence"
+  },
+  "97421000AB0001": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Salazie",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "zonage_plu_gpu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97421000AB0003": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Salazie",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "pente",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
   "97421000AC0156": {
    "api": {
     "fiche": {
@@ -2914,6 +3660,36 @@
     }
    }
   },
+  "97421000AV0815": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Salazie",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "brulante",
+   "validation": "coherence"
+  },
+  "97422000AB0001": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Le Tampon",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "foncier_public",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97422000AB0002": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Le Tampon",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "risques",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
   "97422000AD1237": {
    "api": {
     "fiche": {
@@ -3027,6 +3803,16 @@
      "zone": "AUs"
     }
    }
+  },
+  "97422000AS0911": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Le Tampon",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
   },
   "97422000AX1253": {
    "api": {
@@ -3252,6 +4038,26 @@
      "zone": "U"
     }
    }
+  },
+  "97423000AB0019": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Les Trois-Bassins",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "osm_faux_positif",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97423000AB0023": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Les Trois-Bassins",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "emprise_routiere",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
   },
   "97423000AB1341": {
    "api": {
@@ -3500,6 +4306,36 @@
     }
    }
   },
+  "97423000AH0901": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Les Trois-Bassins",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "reserve_fonciere",
+   "validation": "coherence"
+  },
+  "97424000AC0060": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Cilaos",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "surface",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
+  "97424000AC0252": {
+   "anchor": true,
+   "cascade_status": "exclue",
+   "commune": "Cilaos",
+   "etage0": true,
+   "matrice_statut": "ecartee",
+   "motif": "prescription_plu",
+   "tier_v2": "ecartee",
+   "validation": "factuelle"
+  },
   "97424000AD0409": {
    "api": {
     "fiche": {
@@ -3608,6 +4444,16 @@
      "zone": "A"
     }
    }
+  },
+  "97424000AH0971": {
+   "anchor": true,
+   "cascade_status": "a_creuser",
+   "commune": "Cilaos",
+   "etage0": false,
+   "matrice_statut": "ecartee",
+   "motif": null,
+   "tier_v2": "chaude",
+   "validation": "coherence"
   },
   "97424000AI0355": {
    "api": {

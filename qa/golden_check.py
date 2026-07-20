@@ -349,13 +349,19 @@ def compare_entry(expected: dict, actual: dict) -> list[str]:
     return diffs
 
 
-def collect_all(idus: list[str]) -> dict:
+def collect_all(idus: list[str], anchors: set[str] | None = None) -> dict:
+    # Les ANCRES J3 ne gèlent que le couple base (statut cascade, tier v2) : PAS d'appel API pour
+    # elles → on divise par ~3 le nombre de GET (piège rate-limit du golden élargi, cf. mémoire).
+    anchors = anchors or set()
     with psycopg.connect(DB_URL, row_factory=dict_row) as conn, conn.cursor() as cur:
         cur.execute("SET default_transaction_read_only = on")
         v2run = served_v2_run(cur)
         entries = {}
         for idu in idus:
             db = collect_db(cur, idu, v2run)
+            if idu in anchors:
+                entries[idu] = {"db": db, "api": {}, "coherence_db_api": []}
+                continue
             api = collect_api(idu)
             entries[idu] = {"db": db, "api": api,
                             "coherence_db_api": coherence_db_api(db, api)}
@@ -387,7 +393,8 @@ def main() -> int:
             golden = json.load(f)
 
     idus = args.idu or (list(golden["parcelles"]) if golden else GOLDEN_IDUS)
-    current = collect_all(idus)
+    anchors = {i for i, e in (golden or {}).get("parcelles", {}).items() if e.get("anchor")}
+    current = collect_all(idus, anchors)
 
     if args.dump:
         json.dump(current, sys.stdout, ensure_ascii=False, indent=1, sort_keys=True)
@@ -411,6 +418,26 @@ def main() -> int:
         if exp is None:
             print(f"FAIL {idu} — absente de la référence")
             n_fail += 1
+            continue
+        if exp.get("anchor"):
+            # ANCRE J3 : on ne gèle QUE le couple (statut cascade, matrice, tier v2) + validation.
+            # Robuste (aucun champ volatil) ; le tag `validation` pilote le gate boussole de l'arène.
+            dbc = got["db"]
+            cur_couple = {"cascade_status": dbc.get("cascade_status"),
+                          "matrice_statut": dbc.get("matrice_statut"),
+                          "tier_v2": (dbc.get("score_v2") or {}).get("tier")}
+            diffs = [f"{k}: attendu={exp.get(k)!r} obtenu={cur_couple[k]!r}"
+                     for k in cur_couple if exp.get(k) != cur_couple[k]]
+            coh = got["coherence_db_api"]
+            if coh:
+                n_coh += 1
+            if diffs:
+                n_fail += 1
+                print(f"FAIL {idu} [ancre {exp.get('validation')}] — {len(diffs)} écart(s)")
+                for d in diffs:
+                    print(f"     · {d}")
+            else:
+                print(f"PASS {idu} [ancre {exp.get('validation')} · {exp.get('motif') or exp.get('tier_v2')}]")
             continue
         diffs = compare_entry({"db": exp["db"], "api": exp["api"]},
                               {"db": got["db"], "api": got["api"]})

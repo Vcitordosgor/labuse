@@ -155,3 +155,49 @@ fix trivial ou skip documenté ; F2 = seed contrôle `parcelle_personne_morale`)
 2. **F6** — skip ortho documenté, à router vers l'équipe ortho (hors scoring).
 
 **STOP — review et merge Vic (branche `phase0/j1-tests`).**
+
+---
+
+## LOT J3 — findings de la revue golden (revue Vic sur preuves)
+
+### F8 — `EauLayer` : libellé « majoritairement sur l'eau » vs règle réelle centroïde-OU-majorité *(wording, reporté)*
+- **Réel confirmé** (`cascade/layers/phase1.py`, `EauLayer.evaluate`) : HARD_EXCLUDE si
+  **`centroid_in(hydrographie)` OU `recouvrement ≥ 50 %`**. Le `detail_exclude` (« majoritairement sur
+  l'eau ») est émis MÊME dans la branche CENTROÏDE → trompeur quand le recouvrement est faible (deux
+  cartes de la revue : 11 % et 17 % de recouvrement, exclues par le CENTROÏDE, pas par la majorité).
+- **Verdict correct** (centroïde dans l'eau = inconstructible), **libellé client faux** → à reformuler
+  dans la couche (distinguer « centre dans l'hydrographie » de « majoritairement recouvert »).
+- **Statut** : **`reporté`** (wording couche, décision plus tard ; verdict inchangé).
+
+### F9 — contre-vérif ③ du dossier de revue : métriques NON COMPARABLES *(outil de revue, reporté)*
+- **Réel** : dans `scripts/j3_revue_dossier.py`, la re-mesure PostGIS ③ compare parfois des métriques
+  DIFFÉRENTES de la cascade → « faux vert » décoratif : **pente** (degrés moyens re-mesurés vs seuil
+  cascade en %) ; **eau** (aire re-mesurée vs règle réelle = centroïde, cf. F8). Aucune carte ne repose
+  UNIQUEMENT sur ces couches → aucune décision faussée, mais la vérif est décorative.
+- **Piste** : l'outil doit comparer la MÊME métrique (pente en % ; eau = test centroïde) ou afficher
+  explicitement « non comparable » au lieu d'un vert trompeur.
+- **Statut** : **`reporté`** (amélioration de l'outil de revue, hors gel).
+
+### F10 — wording « Propriété publique » pour DGFiP groupe 9 type coopérative *(wording, reporté)*
+- **Réel** : deux cartes des Avirons affichent « Propriété publique (COOPERATIVE AGRICOLE TERRACOOP) —
+  non acquérable » via le groupe DGFiP **9** (établissements publics/organismes associés). Une
+  coopérative agricole PEUT vendre → « publique — non acquérable » est contestable devant un client.
+- **L'exclusion tient** (les deux parcelles sont bâties 76–100 %, la boussole assume le doute→rejet),
+  mais le **libellé** mérite reformulation (distinguer « domaine public strict » d'« organisme
+  associé »). Décision de wording à arbitrer plus tard.
+- **Statut** : **`reporté`** (wording, arbitrage ultérieur).
+
+---
+
+## LOT J3 — gel (étape 2)
+
+- **Confirmation zonage (3 cartes tronquées à 4 lignes)** : `97405000AB0001`, `97412000AB0001`,
+  `97421000AB0001` portent BIEN un `zonage_plu_gpu` HARD_EXCLUDE en base (« Zone N PLU — inconstructible
+  (recouvrement 100 %) ») → motif gelé tel quel, verdict inchangé.
+- **Brûlantes** : le noyau des 32 contient **7 brûlantes** (+ 4 dans les 84 ajouts = 11 ≥ 5) → aucune
+  brûlante additionnelle nécessaire.
+- **Golden élargi** : 32 d'origine INCHANGÉS + **84 ancres** (53 `factuelle` / 31 `coherence`) gelant le
+  couple (statut cascade, matrice, tier v2). **golden_check.py 116/116 PASS**.
+- **Gate arène** (`_golden_boussole`) : ne s'appuie que sur les négatives `factuelle` ; violation si le
+  challenger passe la parcelle en **tier brulante/chaude** OU en **statut cascade opportunite**. Vérifié
+  live (champion q_v6_m8 : 64 attendues factuelle, 0 violation) + 11 tests `test_arene.py`.
