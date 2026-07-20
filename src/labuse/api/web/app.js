@@ -965,6 +965,20 @@ function renderCaduc(c) {
   </div>`;
 }
 
+// Nuit N1 — SCORE É : marge estimée € (f.score_e). Estimé ; JAMAIS un prix ni une promesse. Survol =
+// formule + caveats. Marge négative affichée telle quelle. Parcelle écartée ou hors univers → null.
+function renderScoreE(e) {
+  if (!e) return "";
+  const detail = esc(e.detail || "");
+  return `
+  <div class="occ">
+    <div class="loy-h" title="${detail}"><span class="defisc-chip">${esc(e.libelle_court)}</span> ${_prov("est")}</div>
+    ${e.estimable ? `<div class="loy-row"><span class="loy-k">Charge foncière supportable</span><span class="loy-v"><b>${esc(e.charge_supportable)} €</b></span></div>
+    <div class="loy-row"><span class="loy-k">Prix probable du foncier</span><span class="loy-v"><b>${esc(e.prix_probable)} €</b></span></div>` : ""}
+    <p class="obs-src" title="${detail}">${detail}</p>
+  </div>`;
+}
+
 // ───────────────────────── Fiche : « L'essentiel » + accordéons (LOT 1) ─────────────────────────
 // Accordéon générique : replié par défaut, ouverture FLUIDE au clic (CSS), indépendant.
 // Jamais d'accordéon vide → zéro section fantôme (et zéro donnée perdue : si vide, n'existait pas non plus avant).
@@ -1129,7 +1143,7 @@ function renderFiche(f) {
       `<div class="acc-zone">Zone PLU <b>${esc((f.faisabilite || {}).zone || "—")}</b>${(f.faisabilite || {}).constructible ? " · constructible" : ((f.faisabilite || {}).zone ? " · non constructible" : "")}</div>${renderPlh(f.plh)}${_enrSlot("enr-urba")}`)}
 
     ${accordion("Faisabilité & bilan détaillé", "capacité, calcul ligne à ligne, bilan promoteur",
-      renderFaisabilite(f.faisabilite, { no3d: true }) + renderObsimmo(f.obsimmo) + renderLoyers(f.loyers) + renderOccupation(f.occupation))}
+      renderScoreE(f.score_e) + renderFaisabilite(f.faisabilite, { no3d: true }) + renderObsimmo(f.obsimmo) + renderLoyers(f.loyers) + renderOccupation(f.occupation))}
 
     ${accordion("Assemblage & voisinage", "parcelle seule vs groupée, parcelles contiguës",
       ((status === "opportunite" || status === "a_creuser") ? renderAssembBloc(f) : "") + renderVoisinage(f.voisinage))}
