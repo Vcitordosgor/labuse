@@ -93,16 +93,19 @@ export function ParcoursTinder() {
             {decided} / {total} triées · <span className="text-mint">{c?.retenue ?? 0} retenues</span>
           </span>
         </div>
+        {/* action POSITIVE (chercher plus) : teinte menthe, la plus contrastée */}
         <button data-parcours-plus onClick={() => { setPlusOpen((o) => !o); setPlusMsg('') }}
-          className={`rounded-md border px-2.5 py-1 text-[11px] ${plusOpen ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+          className={`rounded-md border px-3 py-1.5 text-[11.5px] font-medium transition-colors ${plusOpen ? 'border-mint bg-mint/20 text-mint' : 'border-mint/45 bg-mint/10 text-mint hover:bg-mint/20'}`}>
           ＋ Chercher plus
         </button>
+        {/* consultation (retenues/écartées) : lisible, compteurs colorés pour le scan */}
         <button data-parcours-sections onClick={() => setSectionsOpen((o) => !o)}
-          className={`rounded-md border px-2.5 py-1 text-[11px] ${sectionsOpen ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
-          Retenues ({c?.retenue ?? 0}) · Écartées ({c?.ecartee ?? 0})
+          className={`rounded-md border px-3 py-1.5 text-[11.5px] font-medium transition-colors ${sectionsOpen ? 'border-mint bg-surface-3 text-txt-hi' : 'border-line-2 bg-surface-3 text-txt hover:border-mint/50 hover:text-txt-hi'}`}>
+          Retenues (<span className="text-mint">{c?.retenue ?? 0}</span>) · Écartées (<span className="text-st-ecartee">{c?.ecartee ?? 0}</span>)
         </button>
+        {/* sortie : la plus sobre, sans concurrencer les actions */}
         <button data-parcours-quitter onClick={() => setView('projets')}
-          className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-mut hover:border-mint hover:text-txt"
+          className="rounded-md border border-line-2 px-3 py-1.5 text-[11.5px] text-txt-mut hover:border-st-ecartee/50 hover:text-txt"
           title="Revenir aux projets (l'état est gardé)">✕ Quitter</button>
       </div>
 
