@@ -80,17 +80,41 @@ def _golden_boussole(session: Session, challenger: str, golden_path: str) -> dic
     return {"n_attendues": len(attendues), "violations": violations, "compteur": len(violations)}
 
 
-def decide_avis(boussole_compteur: int, rr_chall: float, rr_champ: float, ece_delta: float,
+def paired_bootstrap_diff(y: np.ndarray, score_a: np.ndarray, score_b: np.ndarray, k: int,
+                          n_boot: int = 1000, seed: int = SEED) -> dict:
+    """IC95 de (RR_a − RR_b) par bootstrap APPARIÉ : à CHAQUE tirage on rééchantillonne UNE fois les
+    lignes et on calcule les deux RR sur les MÊMES parcelles (seed 974). La significativité = la borne
+    basse de l'IC de la différence > 0 (le challenger bat le champion de façon fiable, pas par bruit)."""
+    rng = np.random.RandomState(seed)
+    n = len(y)
+    diffs: list[float] = []
+    for _ in range(n_boot):
+        idx = rng.randint(0, n, n)
+        yb = y[idx]
+        base = yb.mean()
+        if base <= 0:
+            continue
+        ta = ev._ranked_top_mask(score_a[idx], k, rng)
+        tb = ev._ranked_top_mask(score_b[idx], k, rng)
+        diffs.append(float(yb[ta].mean() / base - yb[tb].mean() / base))
+    lo, hi = np.percentile(diffs, [2.5, 97.5]) if diffs else (float("nan"), float("nan"))
+    point = ev.rr_at_k(y, score_a, k, seed=seed)["rr"] - ev.rr_at_k(y, score_b, k, seed=seed)["rr"]
+    return {"diff_rr": float(point), "ic95_bas": float(lo), "ic95_haut": float(hi),
+            "significatif": bool(lo > 0), "n_boot": len(diffs)}
+
+
+def decide_avis(boussole_compteur: int, rr_diff_ic_low: float, ece_delta: float,
                 churn_frac: float, churn_max: float, *, is_baseline: bool = False,
                 ece_degrade_max: float = ECE_DEGRADE_MAX, rr_k: int = RR_K) -> tuple[str, list[str]]:
     """Décision d'AVIS (PURE, testable). Le compteur boussole > 0 est ÉLIMINATOIRE (un faux positif
-    servi est un péché mortel). Sinon RETENU ssi RR strictement supérieur ET ECE non dégradée de plus
-    de `ece_degrade_max` ET churn ≤ budget. Renvoie (avis, critères de rejet)."""
+    servi est un péché mortel). Sinon RETENU ssi la DIFFÉRENCE de RR est significativement > 0 (IC95
+    apparié exclut zéro) ET ECE non dégradée de plus de `ece_degrade_max` ET churn ≤ budget."""
     criteres: list[str] = []
     if boussole_compteur > 0:
         criteres.append(f"BOUSSOLE : {boussole_compteur} parcelle(s) golden écartée/exclue passée(s) brûlante/chaude")
-    if not (rr_chall > rr_champ):
-        criteres.append(f"RR@{rr_k} {rr_chall:.2f} ≤ champion {rr_champ:.2f}")
+    if rr_diff_ic_low <= 0:
+        criteres.append(f"RR@{rr_k} non significativement supérieur (IC95 apparié de ΔRR : borne basse "
+                        f"{rr_diff_ic_low:+.2f} ≤ 0)")
     if ece_delta > ece_degrade_max:
         criteres.append(f"ECE dégradée de +{ece_delta:.4f} (> {ece_degrade_max})")
     if churn_frac > churn_max:
@@ -145,6 +169,8 @@ def run_arene(session: Session, challenger: str, champion: str | None = None,
     # 3. PERFORMANCE — RR@1158 + IC95 bootstrap (seed 974), lift, ventilations.
     rr_champ = ev.bootstrap_rr(y, sc_champ, RR_K, n_boot=n_boot, seed=SEED)
     rr_chall = ev.bootstrap_rr(y, sc_chall, RR_K, n_boot=n_boot, seed=SEED)
+    # bootstrap APPARIÉ de la différence (challenger − champion) sur les MÊMES parcelles.
+    rr_diff = paired_bootstrap_diff(y, sc_chall, sc_champ, RR_K, n_boot=n_boot, seed=SEED)
     lift = ev.lift_table(y, sc_chall, seed=SEED)
     vent_commune = ev.ventilation(hc, y, sc_chall, RR_K, col="commune", seed=SEED)
     vent_tier = ev.ventilation(hc, y, sc_chall, RR_K, col="tier_chall", seed=SEED)
@@ -167,13 +193,13 @@ def run_arene(session: Session, challenger: str, champion: str | None = None,
     # 7. AVIS (logique pure, testable) — CHALLENGER RETENU ssi boussole=0 ET RR strictement
     #    supérieur ET ECE non dégradée de plus de 0,01 ET churn ≤ budget. Sinon REJETÉ.
     avis, criteres = decide_avis(
-        boussole["compteur"], rr_chall["rr"], rr_champ["rr"],
+        boussole["compteur"], rr_diff["ic95_bas"],
         ece_chall - ece_champ, churn_frac, churn_max, is_baseline=is_baseline)
 
     return {
         "avis": avis, "is_baseline": is_baseline, "criteres_rejet": criteres,
         "univers": univers, "boussole": boussole,
-        "rr_champion": rr_champ, "rr_challenger": rr_chall,
+        "rr_champion": rr_champ, "rr_challenger": rr_chall, "rr_diff": rr_diff,
         "ece_champion": ece_champ, "ece_challenger": ece_chall,
         "churn": churn, "churn_frac": churn_frac, "churn_max": churn_max,
         "permutation": perm, "lift": lift, "vent_commune": vent_commune, "vent_tier": vent_tier,
@@ -205,6 +231,17 @@ def render_report(r: dict[str, Any], stamp: str) -> str:
     L.append(f"_Généré {stamp} · seed {r['params']['seed']} · RR@{r['params']['rr_k']} · "
              f"bootstrap n={r['params']['n_boot']} · année d'éval {u['eval_year']}._")
 
+    L.append("\n> ⚠ **NATURE DE LA MESURE — RR ABSOLU IN-SAMPLE, NON COMPARABLE AU WALK-FORWARD.**\n"
+             f"> Les scores servis sont calculés **features as-of 01/01/{u['eval_year'] + 1}** (le run\n"
+             f"> servi score l'année suivante), or on les évalue contre le label de **{u['eval_year']}** — la\n"
+             f"> dernière année labellisée complète. Les fenêtres de features as-of {u['eval_year'] + 1}\n"
+             f"> **encodent déjà les mutations {u['eval_year']}** → le RR absolu (ici RR@{r['params']['rr_k']}) est\n"
+             "> **IN-SAMPLE / optimiste**. Il ne doit PAS être comparé au RR out-of-sample du walk-forward\n"
+             "> M3.6 (fold 2025 hors copro = **6,73**, features as-of 01/01/2025). Même univers (hors copro),\n"
+             "> même k (1158), même label (L2-F) ; SEULE la date as-of diffère (2026 vs 2025).\n"
+             "> **La comparaison RELATIVE champion↔challenger reste valide** (les deux runs subissent la même\n"
+             "> fuite) : c'est le rôle de l'IC apparié de ΔRR ci-dessous, PAS le niveau absolu.")
+
     L.append("\n## 1. Contrôle d'univers")
     L.append(f"- champion `{u['champion']}` : {u['n_champion']:,} parcelles · challenger "
              f"`{u['challenger']}` : {u['n_challenger']:,}".replace(",", " "))
@@ -228,6 +265,12 @@ def render_report(r: dict[str, Any], stamp: str) -> str:
     for lbl, rr in (("champion", rc), ("challenger", rl)):
         L.append(f"| {lbl} | **{rr['rr']:.2f}** | [{rr['ic95_bas']:.2f} ; {rr['ic95_haut']:.2f}] "
                  f"| {rr['positifs_topk']} | {rr['taux_global']:.4f} |")
+    dd = r["rr_diff"]
+    L.append(f"\n**Différence APPARIÉE (challenger − champion), bootstrap sur les mêmes parcelles** :\n"
+             f"- ΔRR = **{dd['diff_rr']:+.2f}** · IC95 apparié [{dd['ic95_bas']:+.2f} ; {dd['ic95_haut']:+.2f}] "
+             f"· significatif (borne basse > 0) : **{'OUI' if dd['significatif'] else 'NON'}**\n"
+             f"- _Critère d'AVIS : le challenger n'est retenu que si cet IC EXCLUT zéro par le bas "
+             f"(pas deux IC indépendants qui se chevauchent)._")
     L.append("\n**Lift (challenger)** :\n" + _df(r["lift"], ["percentile", "k", "positifs", "taux", "rr", "rappel"]))
     L.append("\n**Ventilation par commune (top-k challenger)** :\n"
              + _df(r["vent_commune"], ["commune", "n_total", "taux_base", "n_topk", "rr_segment"]))
