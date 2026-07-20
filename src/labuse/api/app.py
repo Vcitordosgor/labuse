@@ -574,7 +574,8 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 v_bands: str | None = None, v_signal: str | None = None,
                 brulantes: bool = False, tiers: str | None = None,
                 hors_copro: bool = False, veille: bool = False,
-                personne_morale: bool = False, zonage: str | None = None) -> tuple[str, dict]:
+                personne_morale: bool = False, zonage: str | None = None,
+                defisc_active: bool = False) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -659,6 +660,10 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
         conds.append("EXISTS (SELECT 1 FROM parcel_zone_plu z0 WHERE z0.idu = p.idu"
                      " AND z0.zone_fam = ANY(:f_zonage))")
         params["f_zonage"] = [z.strip().upper() for z in zonage.split(",") if z.strip()]
+    # ── Phase A-1 : fenêtre de sortie de défiscalisation ACTIVE (badge, maisons/monopropriété).
+    # Simple test de présence dans la table dérivée defisc_fenetres ; aucun lien avec le run servi.
+    if defisc_active:
+        conds.append("EXISTS (SELECT 1 FROM defisc_fenetres df0 WHERE df0.idu = p.idu AND df0.fenetre_active)")
     return (" AND " + " AND ".join(conds)) if conds else "", params
 
 
@@ -675,6 +680,7 @@ def list_parcels(commune: str | None = None,
                  brulantes: bool = False, tiers: str | None = None,
                  hors_copro: bool = False, veille: bool = False,
                  personne_morale: bool = False, zonage: str | None = None,
+                 defisc_active: bool = False,
                  sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
                  db: Session = Depends(get_db)) -> list[dict]:
     """Liste PAGINÉE (commune OU île entière) avec le dernier verdict.
@@ -692,7 +698,7 @@ def list_parcels(commune: str | None = None,
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
                                           v_bands, v_signal, brulantes, tiers, hors_copro, veille,
-                                          personne_morale, zonage)
+                                          personne_morale, zonage, defisc_active)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
                           extra_where=extra, extra_params=extra_params, sort=sort)
     rows = db.execute(text(
@@ -727,6 +733,7 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                        brulantes: bool = False, tiers: str | None = None,
                        hors_copro: bool = False, veille: bool = False,
                        personne_morale: bool = False, zonage: str | None = None,
+                       defisc_active: bool = False,
                        sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
                        limit: int = Query(1000, ge=1, le=5000),
                        db: Session = Depends(get_db)) -> Response:
@@ -743,7 +750,8 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 
     extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                       sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
-                                      v_bands, v_signal, brulantes, tiers, hors_copro, veille)
+                                      v_bands, v_signal, brulantes, tiers, hors_copro, veille,
+                                      personne_morale, zonage, defisc_active)
     items = _q_v2_list(db, commune, limit, 0, run_label=source,
                        extra_where=extra, extra_params=extra_params, sort=sort)
     tops = {r[0]: r[1] for r in db.execute(text(
@@ -2198,6 +2206,21 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     except Exception:  # noqa: BLE001 - indicateur structure optionnel, jamais bloquant
         occupation_block = None
 
+    # Phase A-1 — badge « fenêtre de sortie de défiscalisation » (signal additif, maisons/monopropriété).
+    # Timing par parcelle, JAMAIS une date de vente ni une personne physique. Table dérivée defisc_fenetres.
+    # to_regclass : la table peut ne pas encore être construite (CLI defisc-fenetres) — on vérifie son
+    # existence AVANT de la référencer, pour ne jamais aborter la transaction de la fiche.
+    defisc_block = None
+    try:
+        if db.execute(text("SELECT to_regclass('defisc_fenetres')")).scalar() is not None:
+            _df = db.execute(text(
+                "SELECT achat_neuf_annee, fenetre_debut, fenetre_fin, fenetre_active, statut, "
+                "source_libelle, libelle_badge FROM defisc_fenetres WHERE idu = :i"),
+                {"i": p.idu}).mappings().first()
+            defisc_block = dict(_df) if _df else None
+    except Exception:  # noqa: BLE001 - table additive optionnelle, jamais bloquant
+        defisc_block = None
+
     fiche = {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
@@ -2213,6 +2236,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "obsimmo": obsimmo_block,   # LOT 4-C — marché Obsimmo (vente)
         "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)
         "occupation": occupation_block,   # LOT 4-B — statut d'occupation (INSEE RP 2022)
+        "defisc_fenetres": defisc_block,  # Phase A-1 — fenêtre de sortie de défisc (badge, mono, Estimé)
         "permits": permits,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en

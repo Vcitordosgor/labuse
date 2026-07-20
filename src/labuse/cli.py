@@ -2131,6 +2131,20 @@ def ortho_juge_vlm_cmd(
                        f" : {m.get('point')}")
 
 
+@app.command("defisc-fenetres")
+def defisc_fenetres_cmd(
+    ref_year: int = typer.Option(2026, help="Année de prospection de référence (fenêtres actives ref..ref+2)."),
+) -> None:
+    """Phase A-1 volet 2 — badge « fenêtre de sortie de défiscalisation » : table additive
+    defisc_fenetres (maisons/monopropriété), fenêtre de sortie d'engagement +6/+11 ans dérivée
+    de DVF (VEFA) + permis. Lecture seule des sources ; ne touche jamais le run servi q_v6_m8."""
+    from .ingestion import defisc_fenetres
+
+    with session_scope() as s:
+        r = defisc_fenetres.build_defisc_fenetres(s, ref_year=ref_year, log=typer.echo)
+        typer.echo(f"✓ defisc_fenetres : {r['total']} parcelles mono neuf, {r['active']} fenêtre active")
+
+
 @app.command("anc")
 def anc_cmd(
     etape: str = typer.Option("tout", help="insee | iris | zonages | proba | signal | tout"),

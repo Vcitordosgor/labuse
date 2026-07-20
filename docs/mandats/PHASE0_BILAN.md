@@ -81,3 +81,21 @@ humaine. Le challenger n'est retenu que si : **gate boussole 3 axes = 0 violatio
 
 **Phase 0 close.** Le juge est en place : chemin critique sous filet, arène à verdict apparié, golden 116
 à triplet gelé, gate boussole à 3 axes. La Phase A peut envoyer ses challengers.
+
+---
+
+## Doctrine — quel juge pour quel signal (établie Phase A-1)
+
+> **Par défaut, l'arène juge.** Un signal à **horizon forward** (qui prédit des mutations *futures*, ex.
+> « fenêtre de sortie de défiscalisation 2026-2028 ») **ne peut pas** être jugé au ΔRR de l'arène : celle-ci
+> évalue le classement contre les mutations **déjà réalisées** (label ~2025), temporellement **orthogonal**
+> au signal (même nature que la réconciliation RR in-sample de J2-bis). Un tel signal ajoute au haut du
+> classement des parcelles qui, **à raison**, n'ont pas encore muté — l'arène les lit comme des faux positifs.
+>
+> **Règle.** Un signal forward se juge par un **walk-forward dédié** (folds as-of, lift + IC bootstrap seed
+> 974) ; l'arène reste le **portier obligatoire** — gate boussole 0/64 trois axes, ECE non dégradée, churn
+> commenté — mais **son ΔRR n'est pas le critère de victoire** pour ce challenger. L'exception est
+> **documentée explicitement dans le rapport d'arène du challenger, jamais implicite**.
+>
+> Premier cas d'application : Phase A-1 « fenêtre de sortie de défisc » — juge = `scripts/a1_walkforward.py`
+> (voir `docs/mandats/A1_CADRAGE_DEFISC.md`).

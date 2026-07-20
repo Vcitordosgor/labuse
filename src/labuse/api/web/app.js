@@ -932,6 +932,23 @@ function renderOccupation(o) {
   </div>`;
 }
 
+// Phase A-1 — badge « fenêtre de sortie de défiscalisation » (f.defisc_fenetres, maisons/monopropriété).
+// Signal de TIMING par parcelle (achat neuf + fenêtre de fin d'engagement), Estimé, sourcé DVF. JAMAIS
+// une date de vente promise, JAMAIS une personne physique. Hors mono / hors neuf → f.defisc_fenetres = null.
+function renderDefisc(d) {
+  if (!d) return "";
+  const etat = d.fenetre_active
+    ? `<span class="prov prov-est">fenêtre active</span>`
+    : `<span class="obs-reg">fenêtre ${esc(d.fenetre_debut)}-${esc(d.fenetre_fin)}</span>`;
+  return `
+  <div class="occ">
+    <div class="loy-h">Fenêtre de sortie de défiscalisation ${etat} ${_prov("est")}</div>
+    <div class="loy-row"><span class="loy-k">Achat neuf</span><span class="loy-v"><b>${esc(d.achat_neuf_annee)}</b> <span class="loy-ic">(DVF)</span></span></div>
+    <div class="loy-row"><span class="loy-k">Fin d'engagement probable</span><span class="loy-v"><b>${esc(d.fenetre_debut)}–${esc(d.fenetre_fin)}</b></span></div>
+    <p class="obs-src">${esc(d.source_libelle)} · Estimé — signal de timing (propension de revente accrue en fin d'engagement), <b>pas</b> une date de vente.</p>
+  </div>`;
+}
+
 // ───────────────────────── Fiche : « L'essentiel » + accordéons (LOT 1) ─────────────────────────
 // Accordéon générique : replié par défaut, ouverture FLUIDE au clic (CSS), indépendant.
 // Jamais d'accordéon vide → zéro section fantôme (et zéro donnée perdue : si vide, n'existait pas non plus avant).
@@ -1102,7 +1119,7 @@ function renderFiche(f) {
       ((status === "opportunite" || status === "a_creuser") ? renderAssembBloc(f) : "") + renderVoisinage(f.voisinage))}
 
     ${accordion("Propriétaire & prospection", "statut, contact, réseaux",
-      renderProspection(f) + _enrSlot("enr-prop"))}
+      renderProspection(f) + renderDefisc(f.defisc_fenetres) + _enrSlot("enr-prop"))}
 
     ${accordion("Permis à proximité (SITADEL)", "autorisations d'urbanisme récentes",
       renderPermits(f.permits))}
