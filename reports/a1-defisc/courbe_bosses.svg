@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="720" viewBox="0 0 860 720">
+<rect width="860" height="720" fill="white"/>
+<text x="16" y="22" font-size="12" fill="#666" font-family="sans-serif">Hazard de revente vs ancienneté — signature « sortie de défiscalisation » (DVF 2014-2025). Grâce 2 ans.</text>
+<text x="830" y="22" font-size="12" text-anchor="end" fill="#222" font-family="sans-serif">ancien</text>
+<line x1="772" y1="18" x2="790" y2="18" stroke="#888" stroke-width="2"/>
+<text x="764" y="22" font-size="12" text-anchor="end" fill="#222" font-family="sans-serif">neuf (VEFA + permis)</text>
+<line x1="622" y1="18" x2="640" y2="18" stroke="#1a6" stroke-width="2.5"/>
+<text x="70" y="56" font-size="16" font-weight="bold" font-family="sans-serif">1 · MAISONS / monopropriété — tranche actionnable (parcelle = 1 logement)</text>
+<line x1="70" y1="330.0" x2="830" y2="330.0" stroke="#eee"/>
+<text x="62" y="334.0" font-size="11" text-anchor="end" fill="#666" font-family="sans-serif">0.00</text>
+<line x1="323.3" y1="76" x2="323.3" y2="330" stroke="#d33" stroke-dasharray="4 3" opacity="0.5"/>
+<text x="327.3" y="88" font-size="10" fill="#d33" font-family="sans-serif">+6 (Girardin/Pinel 6 ans)</text>
+<line x1="576.7" y1="76" x2="576.7" y2="330" stroke="#d33" stroke-dasharray="4 3" opacity="0.5"/>
+<text x="580.7" y="88" font-size="10" fill="#d33" font-family="sans-serif">+9 (Scellier/Duflot/Pinel 9 ans)</text>
+<text x="70.0" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+3</text>
+<text x="154.4" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+4</text>
+<text x="238.9" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+5</text>
+<text x="323.3" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+6</text>
+<text x="407.8" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+7</text>
+<text x="492.2" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+8</text>
+<text x="576.7" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+9</text>
+<text x="661.1" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+10</text>
+<text x="745.6" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+11</text>
+<text x="830.0" y="346.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+12</text>
+<text x="450" y="364" font-size="12" text-anchor="middle" fill="#333" font-family="sans-serif">ancienneté depuis l'acquisition (ans)</text>
+<path d="M70.0,143.8 L154.4,291.1 L238.9,310.2 L323.3,221.0 L407.8,270.4 L492.2,246.6 L576.7,274.4 L661.1,238.2 L745.6,241.3 L830.0,292.4" fill="none" stroke="#1a6" stroke-width="2.5"/>
+<circle cx="70.0" cy="143.8" r="3" fill="#1a6"/>
+<circle cx="154.4" cy="291.1" r="3" fill="#1a6"/>
+<circle cx="238.9" cy="310.2" r="3" fill="#1a6"/>
+<circle cx="323.3" cy="221.0" r="3" fill="#1a6"/>
+<circle cx="407.8" cy="270.4" r="3" fill="#1a6"/>
+<circle cx="492.2" cy="246.6" r="3" fill="#1a6"/>
+<circle cx="576.7" cy="274.4" r="3" fill="#1a6"/>
+<circle cx="661.1" cy="238.2" r="3" fill="#1a6"/>
+<circle cx="745.6" cy="241.3" r="3" fill="#1a6"/>
+<circle cx="830.0" cy="292.4" r="3" fill="#1a6"/>
+<path d="M70.0,239.1 L154.4,259.1 L238.9,262.4 L323.3,262.7 L407.8,268.2 L492.2,270.0 L576.7,276.1 L661.1,287.0 L745.6,289.7 L830.0,313.9" fill="none" stroke="#888" stroke-width="2.0"/>
+<circle cx="70.0" cy="239.1" r="3" fill="#888"/>
+<circle cx="154.4" cy="259.1" r="3" fill="#888"/>
+<circle cx="238.9" cy="262.4" r="3" fill="#888"/>
+<circle cx="323.3" cy="262.7" r="3" fill="#888"/>
+<circle cx="407.8" cy="268.2" r="3" fill="#888"/>
+<circle cx="492.2" cy="270.0" r="3" fill="#888"/>
+<circle cx="576.7" cy="276.1" r="3" fill="#888"/>
+<circle cx="661.1" cy="287.0" r="3" fill="#888"/>
+<circle cx="745.6" cy="289.7" r="3" fill="#888"/>
+<circle cx="830.0" cy="313.9" r="3" fill="#888"/>
+<text x="70" y="396" font-size="16" font-weight="bold" font-family="sans-serif">2 · APPARTEMENTS lot-level (surface-matché) — preuve propre du mécanisme</text>
+<line x1="70" y1="670.0" x2="830" y2="670.0" stroke="#eee"/>
+<text x="62" y="674.0" font-size="11" text-anchor="end" fill="#666" font-family="sans-serif">0.00</text>
+<line x1="70" y1="613.6" x2="830" y2="613.6" stroke="#eee"/>
+<text x="62" y="617.6" font-size="11" text-anchor="end" fill="#666" font-family="sans-serif">0.10</text>
+<line x1="70" y1="557.1" x2="830" y2="557.1" stroke="#eee"/>
+<text x="62" y="561.1" font-size="11" text-anchor="end" fill="#666" font-family="sans-serif">0.20</text>
+<line x1="70" y1="500.7" x2="830" y2="500.7" stroke="#eee"/>
+<text x="62" y="504.7" font-size="11" text-anchor="end" fill="#666" font-family="sans-serif">0.30</text>
+<line x1="70" y1="444.2" x2="830" y2="444.2" stroke="#eee"/>
+<text x="62" y="448.2" font-size="11" text-anchor="end" fill="#666" font-family="sans-serif">0.40</text>
+<line x1="323.3" y1="416" x2="323.3" y2="670" stroke="#d33" stroke-dasharray="4 3" opacity="0.5"/>
+<text x="327.3" y="428" font-size="10" fill="#d33" font-family="sans-serif">+6 (Girardin/Pinel 6 ans)</text>
+<line x1="576.7" y1="416" x2="576.7" y2="670" stroke="#d33" stroke-dasharray="4 3" opacity="0.5"/>
+<text x="580.7" y="428" font-size="10" fill="#d33" font-family="sans-serif">+9 (Scellier/Duflot/Pinel 9 ans)</text>
+<text x="70.0" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+3</text>
+<text x="154.4" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+4</text>
+<text x="238.9" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+5</text>
+<text x="323.3" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+6</text>
+<text x="407.8" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+7</text>
+<text x="492.2" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+8</text>
+<text x="576.7" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+9</text>
+<text x="661.1" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+10</text>
+<text x="745.6" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+11</text>
+<text x="830.0" y="686.0" font-size="11" text-anchor="middle" fill="#333" font-family="sans-serif">+12</text>
+<text x="450" y="704" font-size="12" text-anchor="middle" fill="#333" font-family="sans-serif">ancienneté depuis l'acquisition (ans)</text>
+<path d="M70.0,579.0 L154.4,620.1 L238.9,645.6 L323.3,632.8 L407.8,560.0 L492.2,511.3 L576.7,480.1 L661.1,467.6 L745.6,522.3 L830.0,490.4" fill="none" stroke="#1a6" stroke-width="2.5"/>
+<circle cx="70.0" cy="579.0" r="3" fill="#1a6"/>
+<circle cx="154.4" cy="620.1" r="3" fill="#1a6"/>
+<circle cx="238.9" cy="645.6" r="3" fill="#1a6"/>
+<circle cx="323.3" cy="632.8" r="3" fill="#1a6"/>
+<circle cx="407.8" cy="560.0" r="3" fill="#1a6"/>
+<circle cx="492.2" cy="511.3" r="3" fill="#1a6"/>
+<circle cx="576.7" cy="480.1" r="3" fill="#1a6"/>
+<circle cx="661.1" cy="467.6" r="3" fill="#1a6"/>
+<circle cx="745.6" cy="522.3" r="3" fill="#1a6"/>
+<circle cx="830.0" cy="490.4" r="3" fill="#1a6"/>
+<path d="M70.0,435.0 L154.4,557.4 L238.9,586.7 L323.3,561.0 L407.8,571.8 L492.2,581.5 L576.7,592.8 L661.1,594.4 L745.6,594.0 L830.0,636.4" fill="none" stroke="#888" stroke-width="2.0"/>
+<circle cx="70.0" cy="435.0" r="3" fill="#888"/>
+<circle cx="154.4" cy="557.4" r="3" fill="#888"/>
+<circle cx="238.9" cy="586.7" r="3" fill="#888"/>
+<circle cx="323.3" cy="561.0" r="3" fill="#888"/>
+<circle cx="407.8" cy="571.8" r="3" fill="#888"/>
+<circle cx="492.2" cy="581.5" r="3" fill="#888"/>
+<circle cx="576.7" cy="592.8" r="3" fill="#888"/>
+<circle cx="661.1" cy="594.4" r="3" fill="#888"/>
+<circle cx="745.6" cy="594.0" r="3" fill="#888"/>
+<circle cx="830.0" cy="636.4" r="3" fill="#888"/>
+</svg>
