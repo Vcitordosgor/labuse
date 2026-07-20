@@ -23,7 +23,8 @@ from sqlalchemy.orm import Session
 from ..ai import core  # M11 socle 0 : client IA unique (clé, modèles, log, appel, validation, cache)
 from .nl_aggregate import answer_aggregate, is_aggregate  # M11 B2 : questions agrégées (SQL sourcé)
 from .nl_semantics import check_semantics  # M11 B1 : validation SÉMANTIQUE (schéma ≠ sens)
-from .projet_schema import CONTRAINTE_FLAG, FICHE_SCHEMA, TYPE_LABEL, clean_fiche
+from .projet_schema import (
+    CONTRAINTE_FLAG, FICHE_SCHEMA, TYPE_LABEL, clean_fiche, prune_to_schema, relocate_niveaux)
 
 router = APIRouter(prefix="/ia", tags=["ia"])
 
@@ -622,9 +623,16 @@ def ia_entretien(body: EntretienIn, db: Session = Depends(get_db)) -> dict:
     except json.JSONDecodeError:
         return {"stub": False, "fallback": True, "message": "réponse IA illisible — réessayez"}
     if isinstance(data.get("fiche"), dict):
+        data["fiche"] = relocate_niveaux(data["fiche"])  # « R+3 » mal placé à la racine → ampleur.niveaux
         data["fiche"] = clean_fiche(data["fiche"])    # null/"" = « pas encore su » → drop (hors enum)
+    # Robustesse (FIX post-validation) : un champ inattendu du modèle ne DOIT PAS faire tomber tout
+    # le cadrage. On retire proprement ce qui est hors vocabulaire (et on le journalise) plutôt que
+    # de renvoyer « réessayez » ; le garde-fou schéma reste en dernier recours pour les valeurs.
+    data, champs_ignores = prune_to_schema(data, ENTRETIEN_SCHEMA)
+    if champs_ignores:
+        _log(db, "entretien-champs-ignores", MODEL_NL, False)
     try:
-        validate(data, ENTRETIEN_SCHEMA)              # garde-fou : jamais de champ hors vocabulaire
+        validate(data, ENTRETIEN_SCHEMA)              # garde-fou : jamais de VALEUR hors vocabulaire
     except ValidationError as exc:
         return {"stub": False, "fallback": True,
                 "message": f"cadrage non conforme ({exc.message[:70]}) — réessayez"}
