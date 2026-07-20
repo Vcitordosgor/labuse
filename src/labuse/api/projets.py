@@ -320,22 +320,58 @@ def projet_derive(body: ProjetIn) -> dict:
     }
 
 
+def _counts_by_projet(db: Session) -> dict[int, dict]:
+    """Compteurs de tri (proposee/retenue/ecartee/a_analyser) par projet, en UNE requête —
+    alimente les mini-compteurs des fiches projet (Lot 4). Un projet jamais trié → tout à 0."""
+    rows = db.execute(text("SELECT projet_id, statut, count(*) AS n FROM projet_parcelles "
+                           "GROUP BY projet_id, statut")).all()
+    out: dict[int, dict] = {}
+    for r in rows:
+        out.setdefault(r.projet_id, {})[r.statut] = r.n
+    return out
+
+
+def _projet_dict_counts(p: models.Projet, by_projet: dict[int, dict]) -> dict:
+    c = by_projet.get(p.id, {})
+    return {**_projet_dict(p),
+            "counts": {s: c.get(s, 0) for s in ("proposee", "retenue", "ecartee", "a_analyser")}}
+
+
 @router.get("")
 def projets_list(db: Session = Depends(get_db)) -> list[dict]:
+    """Liste des projets AVEC leurs compteurs de tri (fiches Lot 4). Une seule source de vérité :
+    les compteurs viennent de projet_parcelles (l'état réel du tri), jamais d'un recompte de recherche."""
     rows = db.query(models.Projet).order_by(models.Projet.updated_at.desc()).all()
-    return [_projet_dict(p) for p in rows]
+    by_projet = _counts_by_projet(db)
+    return [_projet_dict_counts(p, by_projet) for p in rows]
+
+
+def _find_doublon(db: Session, nom: str, filtres: dict) -> models.Projet | None:
+    """Dédup DOUCE (Lot 4) : un projet ACTIF aux mêmes critères dérivés (`filtres`) OU au même nom
+    (insensible à la casse) est un doublon. On ne supprime rien — on PROPOSE la reprise de l'existant.
+    Compare les filtres en Python (égalité de dict — robuste au JSONB)."""
+    nom_norm = (nom or "").strip().lower()
+    for p in db.query(models.Projet).filter(models.Projet.statut == "actif").all():
+        if (p.filtres or {}) == filtres or (p.nom or "").strip().lower() == nom_norm:
+            return p
+    return None
 
 
 @router.post("")
 def projet_create(body: ProjetIn, db: Session = Depends(get_db)) -> dict:
+    """Crée un projet — DÉDUP DOUCE : si un projet actif identique (mêmes critères ou même nom)
+    existe déjà, on le RENVOIE (`existing: true`) au lieu de créer un doublon silencieux. Les
+    doublons déjà en base ne sont jamais supprimés automatiquement (l'utilisateur archive)."""
     fiche = _valide_fiche(body.fiche or {})
     nom = (body.nom or "").strip()[:160] or derive_nom(fiche)
-    p = models.Projet(nom=nom, fiche=fiche,
-                      filtres=derive_filtres(fiche, body.filtres_extra),
-                      programme=derive_programme(fiche))
+    filtres = derive_filtres(fiche, body.filtres_extra)
+    dup = _find_doublon(db, nom, filtres)
+    if dup is not None:
+        return {"ok": True, "existing": True, "projet": _projet_dict(dup)}
+    p = models.Projet(nom=nom, fiche=fiche, filtres=filtres, programme=derive_programme(fiche))
     db.add(p)
     db.flush()
-    return {"ok": True, "projet": _projet_dict(p)}
+    return {"ok": True, "existing": False, "projet": _projet_dict(p)}
 
 
 @router.get("/{pid}")
@@ -514,6 +550,11 @@ def projet_parcelles(pid: int, db: Session = Depends(get_db)) -> dict:
             "q_score": r["q_score"], "tier": r["tier"],
             "center": [round(r["lng"], 6), round(r["lat"], 6)] if r["lng"] is not None else None,
         })
+    # PRIVACY : les RETENUES portent le contact proprio (elles vont au CRM) — personne morale nommée
+    # (public DGFiP), particulier JAMAIS nommé (« non communiqué »). Réutilise le helper du CRM.
+    from .app import _proprietaire_public
+    for it in groups["retenue"]:
+        it["proprietaire_public"] = _proprietaire_public(db, it["idu"])
     return {"nom": p.nom, "sdp_besoin_m2": derive_sdp_besoin(p.fiche),
             "proposees": groups["proposee"], "retenues": groups["retenue"],
             "ecartees": groups["ecartee"], "a_analyser": groups["a_analyser"], **_counts(db, pid)}

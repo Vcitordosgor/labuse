@@ -24,14 +24,16 @@ import { EMPTY_FILTERS, useApp } from './store/useApp'
 // R2/V3 : la restitution du copilote — compteur animé + top cliquables. En mode PROJET, chaque
 // parcelle porte son « pourquoi » (moteur) et l'utilisateur peut ENREGISTRER + exporter le PDF.
 function IaRestitution() {
-  const { iaRestitution, setIaRestitution, select, setView, setM22Prefill, setModule, togglePanel, selectedIdu, setVerdict } = useApp()
+  const { iaRestitution, setIaRestitution, select, setView, setM22Prefill, setModule, togglePanel, selectedIdu, setVerdict, setOpenProjet } = useApp()
   const apply = useApplySearch()   // ajout C (UX V1) : relance sans le critère le plus serré
   const [count, setCount] = useState(0)
   const [projetId, setProjetId] = useState<number | null>(null)
+  const [reprisExistant, setReprisExistant] = useState(false)   // dédup douce : projet identique déjà là
   useEffect(() => {
     if (!iaRestitution) return
     setCount(0)
     setProjetId(iaRestitution.projet?.id ?? null)
+    setReprisExistant(false)
     const n = iaRestitution.n
     const t0 = performance.now()
     let raf = 0
@@ -47,7 +49,9 @@ function IaRestitution() {
   }, [iaRestitution])
   const enregistrer = useMutation({
     mutationFn: () => createProjet({ fiche: iaRestitution!.projet!.fiche, nom: iaRestitution!.projet!.nom }),
-    onSuccess: (d) => setProjetId(d.projet.id),
+    // dédup douce : si un projet identique existait, le serveur le renvoie (existing) — on le REPREND
+    // au lieu d'empiler un doublon ; le front le signale et propose de l'ouvrir.
+    onSuccess: (d) => { setProjetId(d.projet.id); setReprisExistant(!!d.existing) },
   })
   if (!iaRestitution) return null
   const projet = iaRestitution.projet
@@ -177,12 +181,20 @@ function IaRestitution() {
             </button>
           ) : (
             <>
-              <span data-projet-enregistre className="rounded-lg bg-[#12241a] px-3 py-1.5 text-[11px] font-medium text-mint">✓ Projet enregistré</span>
+              <span data-projet-enregistre className="rounded-lg bg-[#12241a] px-3 py-1.5 text-[11px] font-medium text-mint"
+                title={reprisExistant ? 'Un projet identique existait déjà — repris (pas de doublon)' : undefined}>
+                {reprisExistant ? '✓ Projet identique repris' : '✓ Projet enregistré'}
+              </span>
+              <button data-projet-ouvrir-kanban onClick={() => { setOpenProjet({ id: projetId, nom: projet.nom }); setIaRestitution(null) }}
+                className="rounded-lg border border-mint/40 bg-mint/10 px-3 py-1.5 text-[11px] font-medium text-mint hover:bg-mint/20"
+                title="Ouvrir le projet (kanban : à trier / retenues / écartées)">
+                Ouvrir le projet →
+              </button>
               <a data-projet-pdf href={projetPdfUrl(projetId)} target="_blank" rel="noreferrer"
                 className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt hover:border-mint hover:text-txt-hi">
-                Exporter le PDF
+                PDF
               </a>
-              <button onClick={() => { setView('projets'); setIaRestitution(null) }}
+              <button onClick={() => { setOpenProjet(null); setIaRestitution(null) }}
                 className="ml-auto text-[11px] text-txt-mut hover:text-txt-hi" title="Voir mes projets">
                 Mes projets →
               </button>

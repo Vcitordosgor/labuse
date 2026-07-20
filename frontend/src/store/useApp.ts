@@ -108,7 +108,12 @@ interface AppState {
   setParcours: (p: { id: number; nom: string } | null) => void
   // entrée dans le parcours : bascule sur la carte (fond) ET arme le parcours en un seul geste
   // (setView nettoierait parcours — nav exclusive) ; ferme les panneaux de la vue quittée.
+  // NB : openParcours PRÉSERVE openProjet → « Quitter » le tri revient sur le kanban du projet.
   openParcours: (p: { id: number; nom: string }) => void
+  // Projet UNIFIÉ : le projet OUVERT (kanban 3 colonnes) dans la vue Projets. null = liste « Mes
+  // projets ». setView/nav principale le remet à null (retour à la liste). setOpenProjet(null) aussi.
+  openProjet: { id: number; nom: string } | null
+  setOpenProjet: (p: { id: number; nom: string } | null) => void
   view: View
   setView: (v: View) => void
   outilsOpen: boolean
@@ -186,11 +191,16 @@ export const useApp = create<AppState>((set) => ({
   // fiche/kanban fantôme qui persiste à travers les vues. Les flux « ouvrir une fiche depuis
   // X » appellent setView('cartes') PUIS select(idu) (ordre respecté partout).
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
-    contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null }),
+    contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null }),
   parcours: null,
   setParcours: (parcours) => set({ parcours }),
   openParcours: (parcours) => set({ parcours, view: 'cartes', outilsOpen: false,
     selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null }),
+  // Ouvrir un projet = la vue kanban unifiée (nav exclusive) ; retour du tri via cette même action.
+  openProjet: null,
+  setOpenProjet: (openProjet) => set({ openProjet, view: 'projets', outilsOpen: false,
+    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null,
+    iaRestitution: null, parcours: null }),
   outilsOpen: false,
   // P1 (dernière passe) — NAV EXCLUSIVE : ouvrir Outils bascule sur le fond CARTE (le tiroir
   // outils vit au-dessus de la carte) et FERME la vue précédente (IA/Projets/CRM) + ses panneaux.
@@ -198,7 +208,7 @@ export const useApp = create<AppState>((set) => ({
   toggleOutils: () => set((s) => s.outilsOpen
     ? { outilsOpen: false }
     : { outilsOpen: true, view: 'cartes', selectedIdu: null, module: null,
-        contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null }),
+        contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null }),
   selectedIdu: null,
   select: (idu) => set({ selectedIdu: idu }),
   layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
@@ -214,7 +224,8 @@ export const useApp = create<AppState>((set) => ({
   sourcesFocus: null,
   // B2 : ouvrir Sources est un changement de vue principale → même nettoyage exclusif
   openSources: (focus = null) => set({ view: 'sources', sourcesFocus: focus, outilsOpen: false,
-    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null }),
+    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
+    parcours: null, openProjet: null }),
   sourceLine: null,
   openSourceDrawer: (line) => set({ sourceLine: line }),
   closeSourceDrawer: () => set({ sourceLine: null }),
@@ -229,7 +240,7 @@ export const useApp = create<AppState>((set) => ({
   zone: null,
   setZone: (zone) => set({ zone }),
   module: null,
-  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null }),
+  setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
   moduleFiche: {},
