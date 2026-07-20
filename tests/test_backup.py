@@ -20,8 +20,21 @@ def _admin():
 
 
 def test_backup_puis_restore_sur_base_temporaire(engine, tmp_path):
+    import re
+    import subprocess
+
     from labuse.cli import app as cli_app
     from labuse.config import get_settings
+
+    # F4 (Phase 0 J1) : pg_dump doit être ≥ à la version du SERVEUR, sinon « aborting … server
+    # version mismatch ». Env local ici : pg_dump 16 vs serveur 18 → skip DOCUMENTÉ (jamais un rouge
+    # permanent). Dans un env où les versions concordent, le test s'exécute normalement.
+    with engine.connect() as _c:
+        srv_major = int(str(_c.execute(text("SHOW server_version")).scalar()).split(".")[0])
+    _out = subprocess.run(["pg_dump", "--version"], capture_output=True, text=True).stdout
+    _m = re.search(r"(\d+)", _out)
+    if _m and int(_m.group(1)) < srv_major:
+        pytest.skip(f"pg_dump {_m.group(1)} < serveur PostgreSQL {srv_major} (incompatibilité de version, env local)")
 
     # 1. backup de la base de test → fichier horodaté non vide
     res = runner.invoke(cli_app, ["backup-db", "--dir", str(tmp_path)])

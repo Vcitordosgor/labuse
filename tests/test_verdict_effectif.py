@@ -12,10 +12,16 @@ from sqlalchemy import text
 
 from labuse.api.app import _q_v2_fiche, _q_v2_list, _score_v2_run_id
 
+from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+
 pytestmark = pytest.mark.db
 
-RUN = "q_test_verdict"          # run matrice servi
-V2RUN = "test-verdict-v2"
+RUN = "q_test_verdict"          # run matrice servi (dryrun_parcel_evaluations.run_label)
+# F5 (Phase 0 J1) : `_score_v2_run_id` est ÉPINGLÉ à Q_A_RUN_LABEL (fix pré-lancement — le run v2
+# servi n'est PLUS « le dernier par timestamp », il est pinné au label servi). Le run v2 de test
+# DOIT donc porter ce label, sinon `_score_v2_run_id` renvoie None (repli legacy) et les cas v2 ne
+# s'exercent pas. Alignement sur le RÉEL (code correct, pinning volontaire) ; assertions inchangées.
+V2RUN = Q_A_RUN_LABEL
 
 _WKT = ("POLYGON((55.45 -20.90, 55.451 -20.90, 55.451 -20.901, "
         "55.45 -20.901, 55.45 -20.90))")
