@@ -60,6 +60,40 @@ def engine():
     from labuse.db import ensure_postgis
     ensure_postgis(eng)
     models.create_all(eng)
+    # F3 (Phase 0 J1) : tables « data-gap » interrogées par l'app mais NON déclarées en ORM (créées
+    # hors code en prod par l'ingestion pente). On les matérialise VIDES en base de test → l'app ne
+    # casse plus sur « relation inexistante » (le contrat data-gap = 0 ligne, jamais une erreur SQL).
+    from labuse.ingestion import rnic
+    with eng.begin() as _c:
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS parcel_terrain ("
+            "  idu varchar PRIMARY KEY, pente_moy_deg real, pente_max_deg real,"
+            "  flag_terrassement_lourd boolean, pente_non_batie_deg real,"
+            "  computed_at timestamptz DEFAULT now())"))
+        _c.execute(rnic.DDL)   # rnic_coproprietes (+ index) — DDL existante de l'ingesteur
+        # carreau Filosofi (contexte marché fiche) + parc social RPLS : tables vides suffisent
+        # (les requêtes fiche tolèrent 0 ligne → panneau « data-gap », jamais une erreur).
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS filosofi_carreaux_200m ("
+            "  geom geometry, ind double precision, men double precision,"
+            "  men_pauv double precision, men_prop double precision, ind_snv double precision)"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS rpls_commune ("
+            "  insee varchar, commune varchar, millesime varchar, nb_logements integer,"
+            "  construct_median integer, pct_qpv numeric, surfhab_moy numeric,"
+            "  computed_at timestamptz DEFAULT now())"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS parcel_adresse ("
+            "  idu varchar, ban_voie text, ban_cp varchar, ban_commune varchar)"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS parcel_zone_plu ("
+            "  idu varchar, zone_lib varchar, zone_fam varchar)"))
+        _c.execute(text(
+            "CREATE TABLE IF NOT EXISTS parcel_viabilisation ("
+            "  idu varchar, commune varchar, score integer, band varchar, zone_fam varchar,"
+            "  c100 integer, c200 integer, c100_recent integer, c100_acheve integer,"
+            "  voie10 boolean, voie75 boolean, bati10 boolean, bati30 boolean, bati75 boolean,"
+            "  assainissement_zonage varchar, computed_at timestamptz DEFAULT now())"))
     return eng
 
 
