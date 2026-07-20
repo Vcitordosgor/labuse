@@ -264,10 +264,16 @@ export interface FicheProjet {
   budget_foncier_eur?: number
   criteres_libres?: string
 }
+// contact proprio (PRIVACY : PM publique nommée OU particulier masqué) — partagé CRM ↔ projet
+export type ProprietairePublic =
+  | { type: 'personne_morale'; denomination: string; siren: string | null; groupe: string | null }
+  | { type: 'particulier' }
+export interface ProjetCounts { proposee: number; retenue: number; ecartee: number; a_analyser: number }
 export interface Projet {
   id: number; nom: string; statut: 'actif' | 'archive'
   fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null
   created_at: string | null; updated_at: string | null; derniere_execution_at: string | null
+  counts?: ProjetCounts   // Lot 4 : mini-compteurs de tri (fiche projet) — depuis projet_parcelles
 }
 // L'entretien de cadrage (réel uniquement — fallback si stub)
 export interface EntretienChip { label: string; value?: string }
@@ -285,11 +291,13 @@ export const getReperes = (dimension: 'secteur' | 'commune') =>
   j<{ dimension: string; options: RepereOption[]; note: string }>(`/projets/reperes?dimension=${dimension}`)
 
 export const getProjets = () => j<Projet[]>('/projets')
+export const getProjet = (id: number) => j<Projet>(`/projets/${id}`)
 export interface ProjetDerive { nom: string; fiche: FicheProjet; filtres: Record<string, unknown>; programme: Record<string, unknown> | null; sdp_besoin_m2: number | null }
 export const deriveProjet = (body: { fiche: FicheProjet; nom?: string }) =>
   j<ProjetDerive>('/projets/derive', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export const createProjet = (body: { fiche: FicheProjet; nom?: string; filtres_extra?: Record<string, unknown> }) =>
-  j<{ ok: boolean; projet: Projet }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+  // `existing: true` = dédup douce serveur (projet actif identique) → le front propose la reprise
+  j<{ ok: boolean; existing?: boolean; projet: Projet }>('/projets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 export interface ApercuTop { idu: string; commune: string; statut: string | null; q_score: number | null; pourquoi: string[] }
 export interface Apercu { nom: string; n: number; sdp_besoin_m2: number | null; programme_defini: boolean; source: string; top: ApercuTop[] }
 export const getApercu = (fiche: FicheProjet, limit = 5) =>
@@ -304,7 +312,7 @@ export const deleteProjet = (id: number) => j<{ ok: boolean }>(`/projets/${id}`,
 // ── Parcours de sélection (Tinder) — statuts parcelle×projet ──
 export type StatutParcelle = 'proposee' | 'retenue' | 'ecartee' | 'a_analyser'
 export interface ParcoursCounts { proposee: number; retenue: number; ecartee: number; a_analyser: number }
-export interface ParcoursItem { idu: string; commune: string; statut: StatutParcelle; q_score: number | null; tier: string | null; center: [number, number] | null }
+export interface ParcoursItem { idu: string; commune: string; statut: StatutParcelle; q_score: number | null; tier: string | null; center: [number, number] | null; proprietaire_public?: ProprietairePublic | null }
 export interface ParcoursEtat {
   nom: string; sdp_besoin_m2: number | null; counts: ParcoursCounts
   proposees: ParcoursItem[]; retenues: ParcoursItem[]; ecartees: ParcoursItem[]; a_analyser: ParcoursItem[]

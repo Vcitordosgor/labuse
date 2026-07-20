@@ -13,7 +13,10 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Nu
  *  les proposées, flyTo centre la courante), une carte de décision flotte par-dessus. Écarter est
  *  RÉVERSIBLE (pile écartées récupérable). Lot 3 (tri) + Lot 4 (sections) du parcours projet. */
 export function ParcoursTinder() {
-  const { parcours, setView, setModuleMap, setFlyTo, select, selectedIdu } = useApp()
+  const { parcours, setView, setOpenProjet, setModuleMap, setFlyTo, select, selectedIdu } = useApp()
+  // retour du tri → on revient sur le KANBAN du projet (pas la liste) : une seule source de vérité,
+  // les statuts qu'on vient de poser s'y reflètent immédiatement (query ['parcours', pid] partagée).
+  const retourProjet = () => (parcours ? setOpenProjet({ id: parcours.id, nom: parcours.nom }) : setView('projets'))
   const qc = useQueryClient()
   const pid = parcours?.id ?? 0
   const proposed = useRef(false)
@@ -104,9 +107,9 @@ export function ParcoursTinder() {
           Retenues (<span className="text-mint">{c?.retenue ?? 0}</span>) · Écartées (<span className="text-st-ecartee">{c?.ecartee ?? 0}</span>)
         </button>
         {/* sortie : la plus sobre, sans concurrencer les actions */}
-        <button data-parcours-quitter onClick={() => setView('projets')}
+        <button data-parcours-quitter onClick={retourProjet}
           className="rounded-md border border-line-2 px-3 py-1.5 text-[11.5px] text-txt-mut hover:border-st-ecartee/50 hover:text-txt"
-          title="Revenir aux projets (l'état est gardé)">✕ Quitter</button>
+          title="Revenir au projet (l'état est gardé)">✕ Quitter</button>
       </div>
 
       {plusOpen && (
