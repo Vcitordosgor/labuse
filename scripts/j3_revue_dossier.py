@@ -74,11 +74,24 @@ def geo_recheck(session, pid: int, motif: str) -> tuple[str, bool | None]:
         r = q("SELECT round(ST_Area(geom_2975)) FROM parcels WHERE id=:p")
         return (f"surface PostGIS = {int(r[0])} m²", None) if r else ("—", None)
     if motif == "pente":
+        # F9 : NON COMPARABLE — la cascade seuille en %, la mesure PostGIS est en degrés (grandeurs
+        # différentes). On affiche la mesure comme info, jamais comme un vert (concorde=None).
         r = q("SELECT round(pente_moy_deg::numeric,1) FROM parcel_terrain t "
               "JOIN parcels p ON p.idu=t.idu WHERE p.id=:p")
-        return (f"pente_moy = {r[0]}°" if r and r[0] is not None else "pente non mesurée", None)
-    if motif in ("eau", "zonage_plu_gpu", "osm_faux_positif", "parc_national", "prescription_plu"):
-        kind = {"eau": "('water','ravine')", "zonage_plu_gpu": "('plu_gpu_zone')",
+        val = f"pente_moy = {r[0]}°" if r and r[0] is not None else "pente non mesurée"
+        return (f"{val} — non comparable (métriques différentes : cascade en %, mesure en °)", None)
+    if motif == "eau":
+        # F9 : NON COMPARABLE — la règle eau est « centroïde DANS l'hydrographie OU ≥ 50 % de
+        # recouvrement » ; l'aire d'intersection seule ne teste pas la même grandeur → jamais un
+        # faux vert. On mesure le recouvrement à titre indicatif, concorde=None.
+        r = q("SELECT round(100*ST_Area(ST_Intersection(ST_Union(sl.geom_2975), p.geom_2975))"
+              "/NULLIF(ST_Area(p.geom_2975),0)) FROM parcels p JOIN spatial_layers sl "
+              "ON sl.kind IN ('water','ravine') AND ST_Intersects(sl.geom_2975,p.geom_2975) WHERE p.id=:p "
+              "GROUP BY p.geom_2975")
+        rec = f"recouvrement PostGIS ≈ {int(r[0])} %" if r and r[0] is not None else "aucune intersection eau"
+        return (f"{rec} — non comparable (métriques différentes : règle = centroïde OU ≥ 50 %, pas l'aire seule)", None)
+    if motif in ("zonage_plu_gpu", "osm_faux_positif", "parc_national", "prescription_plu"):
+        kind = {"zonage_plu_gpu": "('plu_gpu_zone')",
                 "osm_faux_positif": "('osm_faux_positif')", "parc_national": "('parc_national')",
                 "prescription_plu": "('plu_gpu_prescription')"}[motif]
         r = q(f"SELECT round(100*ST_Area(ST_Intersection(ST_Union(sl.geom_2975), p.geom_2975))"

@@ -62,8 +62,17 @@ class EauLayer(Layer):
         inter = ctx.intersections(parcel.id, params["spatial_kind"])
         on_centroid = ctx.centroid_in(parcel.id, params["spatial_kind"])
         majority = max((i.coverage for i in inter), default=0.0)
-        if on_centroid or majority >= params.get("majority_threshold", 0.5):
-            return hard_exclude(self.name, params["detail_exclude"], kind="exclue", source=SRC_BDTOPO)
+        # F8 : DEUX libellés selon la branche RÉELLEMENT empruntée (règle = centroïde OU ≥ 50 %),
+        # au lieu du texte statique unique `detail_exclude`. (Le code seul : les runs déjà matérialisés
+        # ne bougent pas, ils se corrigeront au prochain run.)
+        if majority >= params.get("majority_threshold", 0.5):
+            return hard_exclude(
+                self.name, f"Exclue : parcelle majoritairement sur l'eau ({majority * 100:.0f} % de recouvrement).",
+                kind="exclue", source=SRC_BDTOPO)
+        if on_centroid:
+            return hard_exclude(
+                self.name, "Exclue : parcelle située sur l'eau (centroïde dans l'hydrographie).",
+                kind="exclue", source=SRC_BDTOPO)
         if majority > 0:
             return soft_flag(
                 self.name,

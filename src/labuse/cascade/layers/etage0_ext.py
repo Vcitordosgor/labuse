@@ -63,11 +63,17 @@ class FoncierPublicLayer(Layer):
             return passed(self.name, "Propriétaire non public (personne physique ou PM privée).")
         groupe = own.get("groupe")
         if groupe in GROUPES_PUBLICS:
-            return hard_exclude(
-                self.name,
-                f"Propriété publique ({own.get('denomination')}) — non acquérable "
-                f"[classification DGFiP groupe {groupe} : {GROUPES_PUBLICS[groupe]}].",
-                kind="exclue")
+            # F10 : l'exclusion HARD reste identique — seul le LIBELLÉ devient exact. Le groupe 9
+            # (établissements publics, coopératives, assimilés) PEUT vendre : « hors marché courant,
+            # acquisition improbable », pas « non acquérable ». Groupes 1-4 (État/collectivités) : inchangé.
+            if groupe == 9:
+                detail = (f"Propriétaire institutionnel ({own.get('denomination')}) — hors marché courant, "
+                          f"acquisition improbable [classification DGFiP groupe 9 : établissements publics "
+                          f"et assimilés].")
+            else:
+                detail = (f"Propriété publique ({own.get('denomination')}) — non acquérable "
+                          f"[classification DGFiP groupe {groupe} : {GROUPES_PUBLICS[groupe]}].")
+            return hard_exclude(self.name, detail, kind="exclue")
         return passed(self.name,
                       f"Propriétaire PM « {own.get('groupe_label')} » (groupe {groupe}) — acquérable.")
 
