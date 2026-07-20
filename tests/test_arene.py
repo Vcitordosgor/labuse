@@ -109,8 +109,10 @@ def _golden_file(tmp_path) -> str:
 def test_boussole_detecte_le_faux_positif_injecte(db_session, tmp_path):
     _seed_challenger(db_session, "chall-fp", IDU_FP, "brulante")     # golden écartée → brûlante = violation
     res = _golden_boussole(db_session, "chall-fp", _golden_file(tmp_path))
-    assert res["compteur"] == 1 and res["violations"] == [(IDU_FP, "brulante")]
-    avis, _ = decide_avis(res["compteur"], 99.0, 0.0, 0.0, 0.25)
+    # gate J3 : la violation porte le motif (« tier brulante ») ; décision via decide_avis APPARIÉ (j2bis).
+    assert res["compteur"] == 1
+    assert res["violations"][0][0] == IDU_FP and "brulante" in res["violations"][0][1]
+    avis, _ = decide_avis(res["compteur"], 99.0, 0.0, 0.0, 0.25)   # signature appariée (rr_diff_ic_low)
     assert avis == "REJETÉ (éliminatoire boussole)"
 
 
@@ -119,3 +121,44 @@ def test_boussole_zero_si_challenger_respecte_le_verdict(db_session, tmp_path):
     _seed_challenger(db_session, "chall-ok", IDU_FP, "ecartee")
     res = _golden_boussole(db_session, "chall-ok", _golden_file(tmp_path))
     assert res["compteur"] == 0 and res["violations"] == []
+
+
+def _golden_anchor(tmp_path, validation: str) -> str:
+    p = tmp_path / "golden.json"
+    p.write_text(json.dumps({"parcelles": {IDU_FP: {
+        "anchor": True, "validation": validation, "tier_v2": "ecartee", "cascade_status": "exclue"}}}),
+        encoding="utf-8")
+    return str(p)
+
+
+@pytest.mark.db
+def test_boussole_ancre_coherence_hors_gate(db_session, tmp_path):
+    # règle Vic J3 : une ancre `coherence` (positive) n'est PAS une attendue du gate, même brûlante.
+    _seed_challenger(db_session, "chall-c", IDU_FP, "brulante")
+    res = _golden_boussole(db_session, "chall-c", _golden_anchor(tmp_path, "coherence"))
+    assert res["n_attendues"] == 0 and res["compteur"] == 0
+
+
+@pytest.mark.db
+def test_boussole_ancre_factuelle_dans_le_gate(db_session, tmp_path):
+    _seed_challenger(db_session, "chall-f", IDU_FP, "brulante")
+    res = _golden_boussole(db_session, "chall-f", _golden_anchor(tmp_path, "factuelle"))
+    assert res["n_attendues"] == 1 and res["compteur"] == 1
+
+
+@pytest.mark.db
+def test_boussole_statut_opportunite_est_violation(db_session, tmp_path):
+    # 2e taxonomie (Vic J3) : une factuelle dont le STATUT cascade challenger passe `opportunite`
+    # est une violation, même si son tier v2 reste écartée.
+    wkt = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20.9))"
+    pid = db_session.execute(text(
+        "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2, centroid, bbox) VALUES "
+        "(:i,'X','ZZ','1', ST_GeomFromText(:w,4326), ST_Transform(ST_GeomFromText(:w,4326),2975), 800, "
+        " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326))) RETURNING id"),
+        {"i": IDU_FP, "w": wkt}).scalar()
+    db_session.execute(text(
+        "INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score, opportunity_score, status) "
+        "VALUES ('chall-o', :p, 70, 80, 'opportunite')"), {"p": pid})
+    _seed_challenger(db_session, "chall-o", IDU_FP, "ecartee")   # tier NON promu ; seul le statut déclenche
+    res = _golden_boussole(db_session, "chall-o", _golden_anchor(tmp_path, "factuelle"))
+    assert res["compteur"] == 1 and "opportunite" in res["violations"][0][1]
