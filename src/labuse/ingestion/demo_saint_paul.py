@@ -46,15 +46,24 @@ def _idu(insee: str, num: int) -> str:
 
 
 # Définition des parcelles : zonage propre + situation testée.
+# `pm` (F2) : ligne parcelle_personne_morale DÉTERMINISTE — groupe DGFiP public {1,2,3,4,9} → foncier_public
+# HARD_EXCLUDE ; groupe privé → acquérable (PASS). Le seed contrôle ainsi FoncierPublic (plus de fuite).
 PARCELS = [
-    dict(num=1, plu="U",  sar="territoire_urbain", ocs="artificialise", case="opportunité (U, potentiel, marché, permis, morale)"),
+    dict(num=1, plu="U",  sar="territoire_urbain", ocs="artificialise",
+         pm=dict(groupe=6, label="Sociétés (SCI, SARL…)", denom="SCI DÉMO SAINT-PAUL"),
+         case="opportunité (U, potentiel, marché, permis, morale PRIVÉE — acquérable)"),
     dict(num=2, plu="Ab", sar="espace_agricole",   ocs="agricole",      safer=True, case="faux positif (zone Ab agricole — non constructible au PLU + SAFER)"),
-    dict(num=3, plu="Ub", sar="territoire_urbain", ocs="naturel",       ppr_rouge=True, case="exclue (PPR rouge)"),
+    dict(num=3, plu="Ub", sar="territoire_urbain", ocs="naturel",       ppr_rouge=True, case="exclue (PPR zone rouge = degré INTERDICTION)"),
     dict(num=4, plu="N",  sar="espace_naturel",    ocs="naturel",       case="faux positif (SAR espace naturel > PLU)"),
     dict(num=5, plu="U",  sar="territoire_urbain", ocs="artificialise", parc_coeur=True, case="exclue (cœur Parc National)"),
     dict(num=6, plu="U",  sar="territoire_urbain", ocs="artificialise", osm_cemetery=True, case="faux positif (cimetière OSM)"),
     dict(num=7, plu="U",  sar="territoire_urbain", ocs="artificialise", indivision=True, case="à creuser (indivision)"),
     dict(num=8, plu="Ua", sar="territoire_urbain", ocs="artificialise", parc_adhesion=True, alea_moyen=True, case="à creuser (adhésion Parc + aléa)"),
+    # F2 : parcelle volontairement PUBLIQUE (Commune, DGFiP groupe 4) → foncier_public HARD_EXCLUDE.
+    # Démontre l'exclusion « domaine public non acquérable » de façon déterministe.
+    dict(num=9, plu="U",  sar="territoire_urbain", ocs="artificialise",
+         pm=dict(groupe=4, label="Commune", denom="COMMUNE DE SAINT-PAUL"),
+         case="exclue (propriété publique — Commune, DGFiP groupe 4)"),
 ]
 
 
@@ -77,6 +86,8 @@ class _Geo:
 _RESET_TABLES = [
     "cascade_results", "parcel_evaluations", "parcel_source_results", "parcel_signals",
     "parcel_feedback", "parcels", "spatial_layers", "dvf_mutations", "sitadel_permits", "ingestion_runs",
+    # F2 : le seed CONTRÔLE parcelle_personne_morale (sinon FoncierPublic fuit d'un seed à l'autre).
+    "parcelle_personne_morale",
 ]
 
 
@@ -139,9 +150,15 @@ def seed_demo(session: Session, commune_insee: str = "97415", commune_name: str 
         add_layer("sar", p["sar"], f"SAR {p['sar']}", g.rect_wkt(xoff - 2, -2, W + 4, H + 4))
         add_layer("ocs_ge", p["ocs"], f"OCS {p['ocs']}", wkt)
 
+        # propriétaire personne morale DÉTERMINISTE (F2) — pilote foncier_public
+        if p.get("pm"):
+            _add_pm(session, idu, p["pm"])
+
         big = g.rect_wkt(xoff - 5, -5, W + 10, H + 10)  # contrainte englobant la parcelle
         if p.get("ppr_rouge"):
-            add_layer("ppr", "rouge", "PPR zone rouge", big)
+            # F1 : subtype = DEGRÉ réel du PPR ZONÉ DEAL. « zone rouge » = 'INTERDICTION'
+            # (∈ ppr_red_subtypes de config/cascade_rules.yaml) → RisquesLayer HARD_EXCLUDE.
+            add_layer("ppr", "INTERDICTION", "PPR zone rouge (degré INTERDICTION)", big)
         if p.get("parc_coeur"):
             add_layer("parc_national", "coeur", "Cœur Parc National", big)
         if p.get("parc_adhesion"):
@@ -203,6 +220,18 @@ def seed_demo(session: Session, commune_insee: str = "97415", commune_name: str 
 
     session.flush()
     return {"ingestion_run_id": run.id, "parcels": len(PARCELS), "parcel_ids": parcel_ids}
+
+
+def _add_pm(session: Session, idu: str, pm: dict) -> None:
+    """F2 : ligne parcelle_personne_morale déterministe (source `owner_pm` de FoncierPublic).
+    `groupe` DGFiP : ∈ {1,2,3,4,9} = public (→ HARD_EXCLUDE), sinon PM privée (→ acquérable)."""
+    session.execute(
+        text(
+            """INSERT INTO parcelle_personne_morale (idu, groupe, groupe_label, denomination, source, date_import)
+               VALUES (:idu, :g, :gl, :d, 'demo', now())"""
+        ),
+        {"idu": idu, "g": pm["groupe"], "gl": pm.get("label"), "d": pm.get("denom")},
+    )
 
 
 def _add_owner(session: Session, parcel_id: int, source_id: int, payload: dict, summary: str) -> None:
