@@ -2131,6 +2131,20 @@ def ortho_juge_vlm_cmd(
                        f" : {m.get('point')}")
 
 
+@app.command("pc-caducs")
+def pc_caducs_cmd(
+    ref_year: int = typer.Option(2026, help="Année de référence (caduc probable pour Y ≤ ref_year-4)."),
+) -> None:
+    """Phase A cycle 2 — badge « PC caducs » : table additive pc_caducs (PC octroyé jamais achevé,
+    état Sitadel). Signal parcellaire horodaté ; lecture seule des sources ; ne touche jamais les runs
+    servis. Autorisation Sourcé (Sitadel), caducité Estimé (inférée) ; jamais un jugement du propriétaire."""
+    from .ingestion import pc_caducs
+
+    with session_scope() as s:
+        r = pc_caducs.build_pc_caducs(s, ref_year=ref_year, log=typer.echo)
+        typer.echo(f"✓ pc_caducs : {r['total']} parcelles caduc probable")
+
+
 @app.command("defisc-fenetres")
 def defisc_fenetres_cmd(
     ref_year: int = typer.Option(2026, help="Année de prospection de référence (fenêtres actives ref..ref+2)."),

@@ -950,6 +950,21 @@ function renderDefisc(d) {
   </div>`;
 }
 
+// Phase A cycle 2 — badge « PC caduc » (f.pc_caduc), greffé au bloc permis. Faits datés uniquement :
+// autorisation Sourcé (Sitadel), caducité Estimé (inférée). JAMAIS un jugement du propriétaire, jamais
+// une date de vente, jamais le demandeur. Parcelle sans PC caduc → f.pc_caduc = null.
+function renderCaduc(c) {
+  if (!c) return "";
+  const detail = esc(c.detail || "");
+  return `
+  <div class="occ">
+    <div class="loy-h" title="${detail}"><span class="defisc-chip">${esc(c.libelle_court)}</span> ${_prov("est")}</div>
+    <div class="loy-row"><span class="loy-k">PC autorisé</span><span class="loy-v"><b>${esc(c.pc_annee)}</b> <span class="loy-ic">(Sitadel · Sourcé)</span></span></div>
+    <div class="loy-row"><span class="loy-k">Caduc probable depuis</span><span class="loy-v"><b>${esc(c.caduc_depuis)}</b> <span class="loy-ic">(Estimé)</span></span></div>
+    <p class="obs-src" title="${detail}">${detail}</p>
+  </div>`;
+}
+
 // ───────────────────────── Fiche : « L'essentiel » + accordéons (LOT 1) ─────────────────────────
 // Accordéon générique : replié par défaut, ouverture FLUIDE au clic (CSS), indépendant.
 // Jamais d'accordéon vide → zéro section fantôme (et zéro donnée perdue : si vide, n'existait pas non plus avant).
@@ -1123,7 +1138,7 @@ function renderFiche(f) {
       renderProspection(f) + renderDefisc(f.defisc_fenetres) + _enrSlot("enr-prop"))}
 
     ${accordion("Permis à proximité (SITADEL)", "autorisations d'urbanisme récentes",
-      renderPermits(f.permits))}
+      renderCaduc(f.pc_caduc) + renderPermits(f.permits))}
 
     ${accordion("Topographie", "pente, exposition, vue mer, altimétrie, photos",
       `<div class="acc-topo-ctx">${[(f.faisabilite || {}).contexte && f.faisabilite.contexte.pente_pct != null ? "Pente " + f.faisabilite.contexte.pente_pct + " %" : "", (f.faisabilite || {}).contexte && f.faisabilite.contexte.littoral ? "Trait de côte à proximité" : ""].filter(Boolean).join(" · ")}</div>${_enrSlot("enr-topo")}`)}
