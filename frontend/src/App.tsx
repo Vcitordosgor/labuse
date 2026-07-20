@@ -130,17 +130,22 @@ function IaRestitution() {
       )}
 
       {wide ? (
-        <div className="mt-2 space-y-1.5">
+        <div className="mt-2.5 space-y-2">
           {iaRestitution.top.map((t, i) => (
             <button key={t.idu} data-ia-top onClick={() => select(t.idu)}
-              className="block w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left hover:border-mint">
-              <span className="font-mono text-[10px] text-mint">#{i + 1}</span>
-              <span className="ml-1.5 font-mono text-[11px] text-txt-hi">{t.idu.slice(8)}</span>
-              <span className="ml-1.5 text-[11px] text-txt-dim">{t.commune}</span>
-              {t.pourquoi && (
-                <ul data-ia-pourquoi className="mt-1 space-y-0.5">
+              className="block w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-2.5 text-left transition-colors hover:border-mint">
+              {/* en-tête lisible : rang (pastille) · IDU en avant · commune alignée à droite */}
+              <div className="flex items-baseline gap-2">
+                <span className="shrink-0 rounded bg-mint/15 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-mint">#{i + 1}</span>
+                <span className="min-w-0 flex-1 truncate font-mono text-[12px] font-medium text-txt-hi">{t.idu.slice(8)}</span>
+                <span className="shrink-0 text-[11px] text-txt-dim">{t.commune}</span>
+              </div>
+              {t.pourquoi && t.pourquoi.length > 0 && (
+                <ul data-ia-pourquoi className="mt-1.5 space-y-1 border-t border-line-2/60 pt-1.5">
                   {t.pourquoi.map((l, k) => (
-                    <li key={k} className="text-[11px] leading-snug text-txt-mut">· {l}</li>
+                    <li key={k} className="flex gap-1.5 text-[11px] leading-snug text-txt-mut">
+                      <span className="shrink-0 text-mint">·</span><span className="min-w-0 flex-1">{l}</span>
+                    </li>
                   ))}
                 </ul>
               )}
