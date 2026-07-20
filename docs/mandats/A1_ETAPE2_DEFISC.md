@@ -116,6 +116,18 @@ production (et son wording) = décision Vic.
 
 ---
 
+## Réconciliation des volumes : 578 → 797 → 131 (trois périmètres, trois raisons)
+
+- **578** — *couverture backtest (étape 1)* : parcelles mono neuf des cohortes d'acquisition **Y ∈ [2015, 2020]**,
+  les seules dont le backtest rétrospectif pouvait observer la fenêtre.
+- **797** — *couverture servie (badge)* : critère **exact** « bande [Y+6, Y+11] ∩ [2026, 2028] » au lieu d'un
+  proxy d'année → ajoute les **219** acquisitions récentes **Y ∈ [2021, 2022]** (hors périmètre backtest). 578 + 219 = 797.
+- **131** — *périmètre actionnable (composante V)* : parmi les 797, seules les **non-écartées** reçoivent le nudge
+  (797 − **666** en étage 0 = 130 « à creuser » + 1 « chaude »). Nudger une écartée serait absurde (exclue de la
+  prospection) et polluerait le top-1158 → exclu par design.
+
+---
+
 ## Synthèse étape 2
 
 | Volet | Livrable | Verdict |

@@ -10,8 +10,8 @@
   },
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 116,
-  "run_cascade": "q_v6_m8",
-  "run_v2_servi": "q_v6_m8",
+  "run_cascade": "q_v7_defisc",
+  "run_v2_servi": "q_v7_defisc",
   "tolerances": {
    "canopee_pct": 2.0,
    "distance_cote_m": 10.0,
@@ -241,7 +241,7 @@
      "mult_base": 1.31,
      "percentile": 86.86,
      "rang": 56293,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "a_creuser"
     }
    },
@@ -379,7 +379,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 28,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "brulante"
     }
    },
@@ -539,7 +539,7 @@
      "mult_base": 0.7,
      "percentile": 25.32,
      "rang": 319830,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -730,7 +730,7 @@
      "mult_base": 5.85,
      "percentile": 99.84,
      "rang": 706,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "chaude"
     }
    },
@@ -862,7 +862,7 @@
      "mult_base": 0.91,
      "percentile": 46.27,
      "rang": 230108,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "reserve_fonciere"
     }
    },
@@ -983,7 +983,7 @@
      "mult_base": 63.97,
      "percentile": 100.0,
      "rang": 2,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "chaude"
     }
    },
@@ -1127,7 +1127,7 @@
      "mult_base": 0.91,
      "percentile": 46.4,
      "rang": 229536,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "reserve_fonciere"
     }
    },
@@ -1267,7 +1267,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 16,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "brulante"
     }
    },
@@ -1391,7 +1391,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 37,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "chaude"
     }
    },
@@ -1515,7 +1515,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 8,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "brulante"
     }
    },
@@ -1659,7 +1659,7 @@
      "mult_base": 1.82,
      "percentile": null,
      "rang": null,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "a_creuser"
     }
    },
@@ -1776,7 +1776,7 @@
      "mult_base": 0.92,
      "percentile": 48.95,
      "rang": 218635,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -1903,7 +1903,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 7,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "brulante"
     }
    },
@@ -2067,7 +2067,7 @@
      "mult_base": 7.09,
      "percentile": 99.95,
      "rang": 194,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -2196,7 +2196,7 @@
      "mult_base": 2.63,
      "percentile": 98.41,
      "rang": 6820,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "a_creuser"
     }
    },
@@ -2318,7 +2318,7 @@
      "mult_base": 1.31,
      "percentile": 88.69,
      "rang": 48451,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -2499,7 +2499,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 33,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "a_creuser"
     }
    },
@@ -2609,7 +2609,7 @@
      "mult_base": 18.02,
      "percentile": 100.0,
      "rang": 22,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "chaude"
     }
    },
@@ -2723,7 +2723,7 @@
      "mult_base": 0.91,
      "percentile": 46.03,
      "rang": 231134,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "reserve_fonciere"
     }
    },
@@ -2861,7 +2861,7 @@
      "mult_base": 1.16,
      "percentile": 71.87,
      "rang": 120454,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -2967,7 +2967,7 @@
      "mult_base": 0.91,
      "percentile": 46.37,
      "rang": 229671,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -3143,7 +3143,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 9,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "brulante"
     }
    },
@@ -3280,7 +3280,7 @@
      "mult_base": 0.81,
      "percentile": 32.29,
      "rang": 289961,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -3430,7 +3430,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 35,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "chaude"
     }
    },
@@ -3581,7 +3581,7 @@
      "mult_base": 0.51,
      "percentile": 5.05,
      "rang": 406606,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -3726,7 +3726,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 17,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "brulante"
     }
    },
@@ -3850,7 +3850,7 @@
      "mult_base": 13.07,
      "percentile": 99.99,
      "rang": 56,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "chaude"
     }
    },
@@ -3960,7 +3960,7 @@
      "mult_base": 2.11,
      "percentile": 97.7,
      "rang": 9849,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -4095,7 +4095,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 19,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -4223,7 +4223,7 @@
      "mult_base": 63.97,
      "percentile": 100.0,
      "rang": 1,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "brulante"
     }
    },
@@ -4372,7 +4372,7 @@
      "mult_base": 1.16,
      "percentile": 74.39,
      "rang": 109674,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "ecartee"
     }
    },
@@ -4491,7 +4491,7 @@
      "mult_base": 0.99,
      "percentile": 64.79,
      "rang": 150799,
-     "run_id": "q_v6_m8",
+     "run_id": "q_v7_defisc",
      "tier": "a_creuser"
     }
    },

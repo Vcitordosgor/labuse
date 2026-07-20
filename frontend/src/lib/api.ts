@@ -8,10 +8,11 @@ export interface ParcelFeatureCollection {
 import { useApp, type Filters } from '../store/useApp'
 import { vSignalCodes } from './filters'
 
-// SOURCE DE VÉRITÉ : run de référence q_v6_m8 (BASCULE M8 15/07/2026 — étage 0 q_v5_m6b reflété
-// dans le tier P, q_v2 éradiqué + fix mapping ER ; précédents : q_v5_m6b 14/07, q_v4_m6a 13/07,
-// q_v3_datagap 10/07). Doit rester aligné sur Q_A_RUN_LABEL. JAMAIS parcel_evaluations.
-export const SOURCE = 'q_v6_m8'
+// SOURCE DE VÉRITÉ : run servi, CONFIGURABLE (fin du hard-code, clôture A-1). Défaut = q_v7_defisc
+// (BASCULE cycle 1 : composante V « fenêtre de sortie de défisc » ; modèle P m8 inchangé, V module le
+// seul rang). Override au build : VITE_RUN_LABEL (rollback → 'q_v6_m8', cf. A1_BASCULE_ROLLBACK.md).
+// Doit rester aligné sur le backend Q_A_RUN_LABEL (test_run_serving_coherence). JAMAIS parcel_evaluations.
+export const SOURCE = import.meta.env.VITE_RUN_LABEL ?? 'q_v7_defisc'
 /** Commune active — depuis le store (null = « Toute l'île »). L'ancienne constante Saint-Paul
  *  est devenue un état : TOUTE requête commune-scopée passe par ici. */
 export const commune = () => useApp.getState().commune
