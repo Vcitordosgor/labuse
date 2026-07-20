@@ -575,7 +575,7 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 brulantes: bool = False, tiers: str | None = None,
                 hors_copro: bool = False, veille: bool = False,
                 personne_morale: bool = False, zonage: str | None = None,
-                defisc_active: bool = False) -> tuple[str, dict]:
+                defisc_active: bool = False, pc_caduc: bool = False) -> tuple[str, dict]:
     """Fragment WHERE partagé liste/stats — les MÊMES filtres que les chips du front. Mode
     « Toute l'île » : le client ne détient plus les 431k features en mémoire, le serveur
     filtre en SQL (chiffres SQL-exacts, mêmes clés que matchScope côté front).
@@ -664,6 +664,9 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
     # Simple test de présence dans la table dérivée defisc_fenetres ; aucun lien avec le run servi.
     if defisc_active:
         conds.append("EXISTS (SELECT 1 FROM defisc_fenetres df0 WHERE df0.idu = p.idu AND df0.fenetre_active)")
+    # ── Phase A cycle 2 : PC caduc probable (badge). Simple test de présence dans pc_caducs.
+    if pc_caduc:
+        conds.append("EXISTS (SELECT 1 FROM pc_caducs pcz WHERE pcz.idu = p.idu)")
     return (" AND " + " AND ".join(conds)) if conds else "", params
 
 
@@ -680,7 +683,7 @@ def list_parcels(commune: str | None = None,
                  brulantes: bool = False, tiers: str | None = None,
                  hors_copro: bool = False, veille: bool = False,
                  personne_morale: bool = False, zonage: str | None = None,
-                 defisc_active: bool = False,
+                 defisc_active: bool = False, pc_caduc: bool = False,
                  sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
                  db: Session = Depends(get_db)) -> list[dict]:
     """Liste PAGINÉE (commune OU île entière) avec le dernier verdict.
@@ -698,7 +701,7 @@ def list_parcels(commune: str | None = None,
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                           sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
                                           v_bands, v_signal, brulantes, tiers, hors_copro, veille,
-                                          personne_morale, zonage, defisc_active)
+                                          personne_morale, zonage, defisc_active, pc_caduc)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
                           extra_where=extra, extra_params=extra_params, sort=sort)
     rows = db.execute(text(
@@ -733,7 +736,7 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                        brulantes: bool = False, tiers: str | None = None,
                        hors_copro: bool = False, veille: bool = False,
                        personne_morale: bool = False, zonage: str | None = None,
-                       defisc_active: bool = False,
+                       defisc_active: bool = False, pc_caduc: bool = False,
                        sort: str | None = Query(None, pattern="^(v|rang|mult|surface|commune)$"),
                        limit: int = Query(1000, ge=1, le=5000),
                        db: Session = Depends(get_db)) -> Response:
@@ -751,7 +754,7 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
     extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
                                       sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
                                       v_bands, v_signal, brulantes, tiers, hors_copro, veille,
-                                      personne_morale, zonage, defisc_active)
+                                      personne_morale, zonage, defisc_active, pc_caduc)
     items = _q_v2_list(db, commune, limit, 0, run_label=source,
                        extra_where=extra, extra_params=extra_params, sort=sort)
     tops = {r[0]: r[1] for r in db.execute(text(
@@ -2221,6 +2224,18 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     except Exception:  # noqa: BLE001 - table additive optionnelle, jamais bloquant
         defisc_block = None
 
+    # Phase A cycle 2 — badge « PC caduc » (signal parcellaire, greffé au bloc permis M10). Faits datés
+    # uniquement, JAMAIS le demandeur ni un jugement du propriétaire. Table dérivée pc_caducs (to_regclass).
+    pc_caduc_block = None
+    try:
+        if db.execute(text("SELECT to_regclass('pc_caducs')")).scalar() is not None:
+            _pc = db.execute(text(
+                "SELECT pc_annee, caduc_depuis, n_pc_octroyes, statut_autorisation, statut_caducite, "
+                "libelle_court, detail FROM pc_caducs WHERE idu = :i"), {"i": p.idu}).mappings().first()
+            pc_caduc_block = dict(_pc) if _pc else None
+    except Exception:  # noqa: BLE001 - table additive optionnelle, jamais bloquant
+        pc_caduc_block = None
+
     fiche = {
         "parcel": {
             "idu": p.idu, "commune": p.commune, "section": p.section, "numero": p.numero,
@@ -2237,6 +2252,7 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
         "loyers": loyers_block,     # LOT 4-B — marché locatif (carte des loyers DHUP)
         "occupation": occupation_block,   # LOT 4-B — statut d'occupation (INSEE RP 2022)
         "defisc_fenetres": defisc_block,  # Phase A-1 — fenêtre de sortie de défisc (badge, mono, Estimé)
+        "pc_caduc": pc_caduc_block,       # Phase A cycle 2 — PC caduc probable (badge, greffé bloc permis)
         "permits": permits,
         "prospection": prosp_block,
         # Le bloc « promoteur » (altimétrie/façade/PLU détaillé/réseaux) est servi À PART, en
