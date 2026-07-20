@@ -946,6 +946,7 @@ function renderDefisc(d) {
   <div class="occ">
     <div class="loy-h" title="${detail}"><span class="defisc-chip">${court}</span> ${_prov("est")}${avenir}</div>
     <div class="loy-row"><span class="loy-k">Achat neuf</span><span class="loy-v"><b>${esc(d.achat_neuf_annee)}</b> <span class="loy-ic">(DVF)</span></span></div>
+    ${d.decote_libelle ? `<p class="obs-src" title="médiane recalculée sur ${esc(d.decote_n)} reventes en fenêtre de sortie">↘ ${esc(d.decote_libelle)}</p>` : ""}
     <p class="obs-src" title="${detail}">${detail}</p>
   </div>`;
 }
