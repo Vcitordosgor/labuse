@@ -3,7 +3,7 @@
 **AVIS : BASELINE (champion contre lui-même — référence)**
 
 _L'avis est indicatif : la bascule du run servi reste une décision humaine._  
-_Généré 2026-07-20 18:41 UTC · seed 974 · RR@1158 · bootstrap n=1000 · année d'éval 2025._
+_Généré 2026-07-20 19:01 UTC · seed 974 · RR@1158 · bootstrap n=1000 · année d'éval 2025._
 
 > ⚠ **NATURE DE LA MESURE — RR ABSOLU IN-SAMPLE, NON COMPARABLE AU WALK-FORWARD.**
 > Les scores servis sont calculés **features as-of 01/01/2026** (le run
@@ -22,8 +22,8 @@ _Généré 2026-07-20 18:41 UTC · seed 974 · RR@1158 · bootstrap n=1000 · an
 - écart de couverture : 0 chez le champion seul · 0 chez le challenger seul · 0 sans label
 
 ## 2. Golden — gate boussole (éliminatoire)
-- parcelles golden attendues écartées/exclues : **64**
-- **compteur boussole (passées brûlante/chaude chez le challenger) : 0**
+- parcelles golden négatives `factuelle` (attendues écartées/exclues) : **64**
+- **compteur boussole — 3 axes (tier brûlante/chaude · statut opportunite · matrice_statut chaude) : 0**
 - ✅ aucune violation (aucun faux positif servi introduit).
 
 ## 3. Performance — RR@1158

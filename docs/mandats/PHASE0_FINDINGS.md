@@ -201,3 +201,17 @@ fix trivial ou skip documenté ; F2 = seed contrôle `parcelle_personne_morale`)
 - **Gate arène** (`_golden_boussole`) : ne s'appuie que sur les négatives `factuelle` ; violation si le
   challenger passe la parcelle en **tier brulante/chaude** OU en **statut cascade opportunite**. Vérifié
   live (champion q_v6_m8 : 64 attendues factuelle, 0 violation) + 11 tests `test_arene.py`.
+
+### F11 — Golden BI-NIVEAU : couverture end-to-end limitée aux 32 sentinelles *(architecture, à surveiller)*
+- **Réel** : le golden élargi a DEUX niveaux de contrôle :
+  - **32 sentinelles** (d'origine) : comparaison **end-to-end** DB → API → servi (fiche complète +
+    cohérence base↔API), la garde de la **couche de service**.
+  - **84 ancres** (J3) : comparaison **DB-only** du triplet (statut cascade, matrice, tier v2) — l'API
+    est volontairement SAUTÉE pour elles (contournement du **piège rate-limit** du golden élargi : sinon
+    ~232 GET → rejets ⇒ faux FAIL).
+- **Conséquence** : une régression de la **couche de service** (mapping tier côté API, désynchro du
+  run label API↔base, sérialisation fiche) n'est couverte QUE par les 32 sentinelles — les 84 ancres
+  ne la verraient pas (elles ne touchent pas l'API).
+- **Option notée (non implémentée)** : un run API COMPLET occasionnel (les 116, rate-limit levé côté QA
+  — flag/délai) pour un contrôle service end-to-end périodique. Les 32 restent le garde permanent.
+- **Statut** : **`reporté`** (architecture assumée ; à surveiller — décision QA plus tard).
