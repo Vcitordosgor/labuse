@@ -1,0 +1,1211 @@
+{
+  "obs_end": "2025-12-31",
+  "n_parcelles": 72879,
+  "n_acquisitions": 63300,
+  "effectifs": {
+    "mono/neuf_vefa": {
+      "n": 1760,
+      "par_cohorte": {
+        "2014": 97,
+        "2015": 97,
+        "2016": 70,
+        "2017": 142,
+        "2018": 126,
+        "2019": 94,
+        "2020": 119,
+        "2021": 205,
+        "2022": 203,
+        "2023": 247,
+        "2024": 222,
+        "2025": 138
+      }
+    },
+    "mono/neuf_permis": {
+      "n": 402,
+      "par_cohorte": {
+        "2014": 10,
+        "2015": 17,
+        "2016": 27,
+        "2017": 41,
+        "2018": 50,
+        "2019": 37,
+        "2020": 37,
+        "2021": 47,
+        "2022": 45,
+        "2023": 32,
+        "2024": 24,
+        "2025": 35
+      }
+    },
+    "mono/ancien": {
+      "n": 33022,
+      "par_cohorte": {
+        "2014": 2053,
+        "2015": 2202,
+        "2016": 2410,
+        "2017": 2767,
+        "2018": 2699,
+        "2019": 3044,
+        "2020": 2892,
+        "2021": 3383,
+        "2022": 3388,
+        "2023": 2896,
+        "2024": 2491,
+        "2025": 2797
+      }
+    },
+    "copro/neuf_vefa": {
+      "n": 3249,
+      "par_cohorte": {
+        "2014": 222,
+        "2015": 283,
+        "2016": 290,
+        "2017": 280,
+        "2018": 270,
+        "2019": 311,
+        "2020": 304,
+        "2021": 355,
+        "2022": 455,
+        "2023": 319,
+        "2024": 138,
+        "2025": 22
+      }
+    },
+    "copro/neuf_permis": {
+      "n": 322,
+      "par_cohorte": {
+        "2014": 0,
+        "2015": 7,
+        "2016": 30,
+        "2017": 26,
+        "2018": 31,
+        "2019": 24,
+        "2020": 45,
+        "2021": 39,
+        "2022": 30,
+        "2023": 37,
+        "2024": 38,
+        "2025": 15
+      }
+    },
+    "copro/ancien": {
+      "n": 24545,
+      "par_cohorte": {
+        "2014": 1180,
+        "2015": 1340,
+        "2016": 1642,
+        "2017": 1787,
+        "2018": 1823,
+        "2019": 2158,
+        "2020": 2134,
+        "2021": 2836,
+        "2022": 2932,
+        "2023": 2535,
+        "2024": 2073,
+        "2025": 2105
+      }
+    }
+  },
+  "hazard": {
+    "mono": {
+      "neuf": {
+        "n": 2162,
+        "table": [
+          {
+            "k": 1,
+            "at_risk": 2162,
+            "events": 0,
+            "censored": 188,
+            "hazard": 0.0
+          },
+          {
+            "k": 2,
+            "at_risk": 1974,
+            "events": 0,
+            "censored": 231,
+            "hazard": 0.0
+          },
+          {
+            "k": 3,
+            "at_risk": 1743,
+            "events": 115,
+            "censored": 249,
+            "hazard": 0.06597819850831899
+          },
+          {
+            "k": 4,
+            "at_risk": 1379,
+            "events": 19,
+            "censored": 229,
+            "hazard": 0.013778100072516316
+          },
+          {
+            "k": 5,
+            "at_risk": 1138,
+            "events": 8,
+            "censored": 243,
+            "hazard": 0.007029876977152899
+          },
+          {
+            "k": 6,
+            "at_risk": 880,
+            "events": 34,
+            "censored": 136,
+            "hazard": 0.038636363636363635
+          },
+          {
+            "k": 7,
+            "at_risk": 710,
+            "events": 15,
+            "censored": 120,
+            "hazard": 0.02112676056338028
+          },
+          {
+            "k": 8,
+            "at_risk": 575,
+            "events": 17,
+            "censored": 153,
+            "hazard": 0.029565217391304348
+          },
+          {
+            "k": 9,
+            "at_risk": 406,
+            "events": 8,
+            "censored": 151,
+            "hazard": 0.019704433497536946
+          },
+          {
+            "k": 10,
+            "at_risk": 246,
+            "events": 8,
+            "censored": 79,
+            "hazard": 0.032520325203252036
+          },
+          {
+            "k": 11,
+            "at_risk": 159,
+            "events": 5,
+            "censored": 79,
+            "hazard": 0.031446540880503145
+          },
+          {
+            "k": 12,
+            "at_risk": 75,
+            "events": 1,
+            "censored": 74,
+            "hazard": 0.013333333333333334
+          }
+        ]
+      },
+      "neuf_vefa": {
+        "n": 1760,
+        "table": [
+          {
+            "k": 1,
+            "at_risk": 1760,
+            "events": 0,
+            "censored": 153,
+            "hazard": 0.0
+          },
+          {
+            "k": 2,
+            "at_risk": 1607,
+            "events": 0,
+            "censored": 207,
+            "hazard": 0.0
+          },
+          {
+            "k": 3,
+            "at_risk": 1400,
+            "events": 106,
+            "censored": 217,
+            "hazard": 0.07571428571428572
+          },
+          {
+            "k": 4,
+            "at_risk": 1077,
+            "events": 12,
+            "censored": 185,
+            "hazard": 0.011142061281337047
+          },
+          {
+            "k": 5,
+            "at_risk": 887,
+            "events": 4,
+            "censored": 197,
+            "hazard": 0.004509582863585118
+          },
+          {
+            "k": 6,
+            "at_risk": 679,
+            "events": 27,
+            "censored": 102,
+            "hazard": 0.039764359351988215
+          },
+          {
+            "k": 7,
+            "at_risk": 550,
+            "events": 15,
+            "censored": 87,
+            "hazard": 0.02727272727272727
+          },
+          {
+            "k": 8,
+            "at_risk": 448,
+            "events": 15,
+            "censored": 111,
+            "hazard": 0.033482142857142856
+          },
+          {
+            "k": 9,
+            "at_risk": 323,
+            "events": 7,
+            "censored": 115,
+            "hazard": 0.021671826625386997
+          },
+          {
+            "k": 10,
+            "at_risk": 200,
+            "events": 6,
+            "censored": 56,
+            "hazard": 0.03
+          },
+          {
+            "k": 11,
+            "at_risk": 138,
+            "events": 4,
+            "censored": 64,
+            "hazard": 0.028985507246376812
+          },
+          {
+            "k": 12,
+            "at_risk": 70,
+            "events": 1,
+            "censored": 69,
+            "hazard": 0.014285714285714285
+          }
+        ]
+      },
+      "ancien": {
+        "n": 33022,
+        "table": [
+          {
+            "k": 1,
+            "at_risk": 33022,
+            "events": 0,
+            "censored": 2821,
+            "hazard": 0.0
+          },
+          {
+            "k": 2,
+            "at_risk": 30201,
+            "events": 0,
+            "censored": 2467,
+            "hazard": 0.0
+          },
+          {
+            "k": 3,
+            "at_risk": 27734,
+            "events": 893,
+            "censored": 2840,
+            "hazard": 0.03219874522247061
+          },
+          {
+            "k": 4,
+            "at_risk": 24001,
+            "events": 603,
+            "censored": 3289,
+            "hazard": 0.025123953168617975
+          },
+          {
+            "k": 5,
+            "at_risk": 20134,
+            "events": 482,
+            "censored": 3184,
+            "hazard": 0.023939604648852687
+          },
+          {
+            "k": 6,
+            "at_risk": 16443,
+            "events": 392,
+            "censored": 2620,
+            "hazard": 0.023839931885908897
+          },
+          {
+            "k": 7,
+            "at_risk": 13431,
+            "events": 294,
+            "censored": 2748,
+            "hazard": 0.021889658253294617
+          },
+          {
+            "k": 8,
+            "at_risk": 10389,
+            "events": 221,
+            "censored": 2308,
+            "hazard": 0.021272499759360863
+          },
+          {
+            "k": 9,
+            "at_risk": 7860,
+            "events": 150,
+            "censored": 2325,
+            "hazard": 0.019083969465648856
+          },
+          {
+            "k": 10,
+            "at_risk": 5385,
+            "events": 82,
+            "censored": 1938,
+            "hazard": 0.015227483751160632
+          },
+          {
+            "k": 11,
+            "at_risk": 3365,
+            "events": 48,
+            "censored": 1743,
+            "hazard": 0.01426448736998514
+          },
+          {
+            "k": 12,
+            "at_risk": 1574,
+            "events": 9,
+            "censored": 1565,
+            "hazard": 0.005717916137229987
+          }
+        ]
+      }
+    },
+    "copro": {
+      "neuf": {
+        "n": 3571,
+        "table": [
+          {
+            "k": 1,
+            "at_risk": 3571,
+            "events": 0,
+            "censored": 42,
+            "hazard": 0.0
+          },
+          {
+            "k": 2,
+            "at_risk": 3529,
+            "events": 0,
+            "censored": 171,
+            "hazard": 0.0
+          },
+          {
+            "k": 3,
+            "at_risk": 3358,
+            "events": 1055,
+            "censored": 300,
+            "hazard": 0.3141751042287076
+          },
+          {
+            "k": 4,
+            "at_risk": 2003,
+            "events": 319,
+            "censored": 291,
+            "hazard": 0.15926110833749377
+          },
+          {
+            "k": 5,
+            "at_risk": 1400,
+            "events": 130,
+            "censored": 184,
+            "hazard": 0.09285714285714286
+          },
+          {
+            "k": 6,
+            "at_risk": 1079,
+            "events": 136,
+            "censored": 203,
+            "hazard": 0.12604263206672844
+          },
+          {
+            "k": 7,
+            "at_risk": 740,
+            "events": 231,
+            "censored": 61,
+            "hazard": 0.31216216216216214
+          },
+          {
+            "k": 8,
+            "at_risk": 448,
+            "events": 199,
+            "censored": 31,
+            "hazard": 0.44419642857142855
+          },
+          {
+            "k": 9,
+            "at_risk": 218,
+            "events": 97,
+            "censored": 17,
+            "hazard": 0.44495412844036697
+          },
+          {
+            "k": 10,
+            "at_risk": 104,
+            "events": 71,
+            "censored": 6,
+            "hazard": 0.6826923076923077
+          },
+          {
+            "k": 11,
+            "at_risk": 27,
+            "events": 12,
+            "censored": 12,
+            "hazard": 0.4444444444444444
+          },
+          {
+            "k": 12,
+            "at_risk": 3,
+            "events": 0,
+            "censored": 3,
+            "hazard": 0.0
+          }
+        ]
+      },
+      "neuf_vefa": {
+        "n": 3249,
+        "table": [
+          {
+            "k": 1,
+            "at_risk": 3249,
+            "events": 0,
+            "censored": 26,
+            "hazard": 0.0
+          },
+          {
+            "k": 2,
+            "at_risk": 3223,
+            "events": 0,
+            "censored": 134,
+            "hazard": 0.0
+          },
+          {
+            "k": 3,
+            "at_risk": 3089,
+            "events": 977,
+            "censored": 285,
+            "hazard": 0.3162835869213338
+          },
+          {
+            "k": 4,
+            "at_risk": 1827,
+            "events": 296,
+            "censored": 277,
+            "hazard": 0.1620142309797482
+          },
+          {
+            "k": 5,
+            "at_risk": 1261,
+            "events": 121,
+            "censored": 158,
+            "hazard": 0.09595559080095163
+          },
+          {
+            "k": 6,
+            "at_risk": 975,
+            "events": 115,
+            "censored": 167,
+            "hazard": 0.11794871794871795
+          },
+          {
+            "k": 7,
+            "at_risk": 693,
+            "events": 213,
+            "censored": 57,
+            "hazard": 0.30735930735930733
+          },
+          {
+            "k": 8,
+            "at_risk": 423,
+            "events": 187,
+            "censored": 27,
+            "hazard": 0.44208037825059104
+          },
+          {
+            "k": 9,
+            "at_risk": 209,
+            "events": 95,
+            "censored": 16,
+            "hazard": 0.45454545454545453
+          },
+          {
+            "k": 10,
+            "at_risk": 98,
+            "events": 70,
+            "censored": 1,
+            "hazard": 0.7142857142857143
+          },
+          {
+            "k": 11,
+            "at_risk": 27,
+            "events": 12,
+            "censored": 12,
+            "hazard": 0.4444444444444444
+          },
+          {
+            "k": 12,
+            "at_risk": 3,
+            "events": 0,
+            "censored": 3,
+            "hazard": 0.0
+          }
+        ]
+      },
+      "ancien": {
+        "n": 24545,
+        "table": [
+          {
+            "k": 1,
+            "at_risk": 24545,
+            "events": 0,
+            "censored": 2118,
+            "hazard": 0.0
+          },
+          {
+            "k": 2,
+            "at_risk": 22427,
+            "events": 0,
+            "censored": 2060,
+            "hazard": 0.0
+          },
+          {
+            "k": 3,
+            "at_risk": 20367,
+            "events": 15175,
+            "censored": 1151,
+            "hazard": 0.7450778219669073
+          },
+          {
+            "k": 4,
+            "at_risk": 4041,
+            "events": 1588,
+            "censored": 615,
+            "hazard": 0.3929720366245979
+          },
+          {
+            "k": 5,
+            "at_risk": 1846,
+            "events": 504,
+            "censored": 444,
+            "hazard": 0.27302275189599134
+          },
+          {
+            "k": 6,
+            "at_risk": 890,
+            "events": 266,
+            "censored": 120,
+            "hazard": 0.298876404494382
+          },
+          {
+            "k": 7,
+            "at_risk": 504,
+            "events": 139,
+            "censored": 82,
+            "hazard": 0.2757936507936508
+          },
+          {
+            "k": 8,
+            "at_risk": 283,
+            "events": 76,
+            "censored": 43,
+            "hazard": 0.26855123674911663
+          },
+          {
+            "k": 9,
+            "at_risk": 165,
+            "events": 51,
+            "censored": 21,
+            "hazard": 0.3090909090909091
+          },
+          {
+            "k": 10,
+            "at_risk": 92,
+            "events": 21,
+            "censored": 18,
+            "hazard": 0.22826086956521738
+          },
+          {
+            "k": 11,
+            "at_risk": 53,
+            "events": 10,
+            "censored": 29,
+            "hazard": 0.18867924528301888
+          },
+          {
+            "k": 12,
+            "at_risk": 14,
+            "events": 3,
+            "censored": 11,
+            "hazard": 0.21428571428571427
+          }
+        ]
+      }
+    }
+  },
+  "lifts": {
+    "mono": {
+      "w68_c2014_2017": {
+        "n_neuf": 501,
+        "n_anc": 9432,
+        "p_neuf": 0.05189620758483034,
+        "p_anc": 0.0431509754028838,
+        "odds_ratio": 1.213759213759214,
+        "ic95": [
+          0.7567393695882932,
+          1.7390709851597614
+        ]
+      },
+      "w911_c2014_2016": {
+        "n_neuf": 107,
+        "n_anc": 2053,
+        "p_neuf": 0.06542056074766354,
+        "p_anc": 0.029712615684364344,
+        "odds_ratio": 2.285901639344262,
+        "ic95": [
+          0.7629906593406592,
+          4.400316915267981
+        ]
+      },
+      "w611_c2014_2016": {
+        "n_neuf": 107,
+        "n_anc": 2053,
+        "p_neuf": 0.1588785046728972,
+        "p_anc": 0.1037506088650755,
+        "odds_ratio": 1.6317162232655191,
+        "ic95": [
+          0.8821945621468925,
+          2.6354806828790025
+        ]
+      },
+      "rate_neuf_68": {
+        "n": 501,
+        "hits": 26,
+        "rate": 0.05189620758483034
+      },
+      "rate_anc_68": {
+        "n": 9432,
+        "hits": 407,
+        "rate": 0.0431509754028838
+      }
+    },
+    "copro": {
+      "w68_c2014_2017": {
+        "n_neuf": 1138,
+        "n_anc": 5949,
+        "p_neuf": 0.30404217926186294,
+        "p_anc": 0.03109766347285258,
+        "odds_ratio": 13.611411411411412,
+        "ic95": [
+          11.320592927716092,
+          16.69364784959021
+        ]
+      },
+      "w911_c2014_2016": {
+        "n_neuf": 222,
+        "n_anc": 1180,
+        "p_neuf": 0.08108108108108109,
+        "p_anc": 0.012711864406779662,
+        "odds_ratio": 6.852941176470589,
+        "ic95": [
+          3.226970033296337,
+          15.21077425373133
+        ]
+      },
+      "w611_c2014_2016": {
+        "n_neuf": 222,
+        "n_anc": 1180,
+        "p_neuf": 0.4369369369369369,
+        "p_anc": 0.0711864406779661,
+        "odds_ratio": 10.12495238095238,
+        "ic95": [
+          7.110255483466164,
+          14.920557491289195
+        ]
+      },
+      "rate_neuf_68": {
+        "n": 1138,
+        "hits": 346,
+        "rate": 0.30404217926186294
+      },
+      "rate_anc_68": {
+        "n": 5949,
+        "hits": 185,
+        "rate": 0.03109766347285258
+      }
+    }
+  },
+  "appartement_lot": {
+    "n_neuf": 3536,
+    "n_anc": 32280,
+    "hazard_neuf": {
+      "n": 3536,
+      "table": [
+        {
+          "k": 1,
+          "at_risk": 3536,
+          "events": 0,
+          "censored": 5,
+          "hazard": 0.0
+        },
+        {
+          "k": 2,
+          "at_risk": 3531,
+          "events": 0,
+          "censored": 59,
+          "hazard": 0.0
+        },
+        {
+          "k": 3,
+          "at_risk": 3472,
+          "events": 560,
+          "censored": 276,
+          "hazard": 0.16129032258064516
+        },
+        {
+          "k": 4,
+          "at_risk": 2636,
+          "events": 233,
+          "censored": 353,
+          "hazard": 0.08839150227617602
+        },
+        {
+          "k": 5,
+          "at_risk": 2057,
+          "events": 89,
+          "censored": 247,
+          "hazard": 0.04326689353427322
+        },
+        {
+          "k": 6,
+          "at_risk": 1714,
+          "events": 113,
+          "censored": 210,
+          "hazard": 0.06592765460910152
+        },
+        {
+          "k": 7,
+          "at_risk": 1391,
+          "events": 271,
+          "censored": 149,
+          "hazard": 0.19482386772106397
+        },
+        {
+          "k": 8,
+          "at_risk": 971,
+          "events": 273,
+          "censored": 56,
+          "hazard": 0.2811534500514933
+        },
+        {
+          "k": 9,
+          "at_risk": 642,
+          "events": 216,
+          "censored": 69,
+          "hazard": 0.3364485981308411
+        },
+        {
+          "k": 10,
+          "at_risk": 357,
+          "events": 128,
+          "censored": 57,
+          "hazard": 0.3585434173669468
+        },
+        {
+          "k": 11,
+          "at_risk": 172,
+          "events": 45,
+          "censored": 105,
+          "hazard": 0.2616279069767442
+        },
+        {
+          "k": 12,
+          "at_risk": 22,
+          "events": 7,
+          "censored": 15,
+          "hazard": 0.3181818181818182
+        }
+      ]
+    },
+    "hazard_anc": {
+      "n": 32280,
+      "table": [
+        {
+          "k": 1,
+          "at_risk": 32280,
+          "events": 0,
+          "censored": 2276,
+          "hazard": 0.0
+        },
+        {
+          "k": 2,
+          "at_risk": 30004,
+          "events": 0,
+          "censored": 3660,
+          "hazard": 0.0
+        },
+        {
+          "k": 3,
+          "at_risk": 26344,
+          "events": 10969,
+          "censored": 2946,
+          "hazard": 0.41637564530822957
+        },
+        {
+          "k": 4,
+          "at_risk": 12429,
+          "events": 2480,
+          "censored": 2674,
+          "hazard": 0.19953334942473247
+        },
+        {
+          "k": 5,
+          "at_risk": 7285,
+          "events": 1075,
+          "censored": 3045,
+          "hazard": 0.14756348661633492
+        },
+        {
+          "k": 6,
+          "at_risk": 3155,
+          "events": 609,
+          "censored": 465,
+          "hazard": 0.193026941362916
+        },
+        {
+          "k": 7,
+          "at_risk": 2081,
+          "events": 362,
+          "censored": 335,
+          "hazard": 0.173954829408938
+        },
+        {
+          "k": 8,
+          "at_risk": 1384,
+          "events": 217,
+          "censored": 422,
+          "hazard": 0.15679190751445088
+        },
+        {
+          "k": 9,
+          "at_risk": 746,
+          "events": 102,
+          "censored": 225,
+          "hazard": 0.13672922252010725
+        },
+        {
+          "k": 10,
+          "at_risk": 418,
+          "events": 56,
+          "censored": 154,
+          "hazard": 0.1339712918660287
+        },
+        {
+          "k": 11,
+          "at_risk": 208,
+          "events": 28,
+          "censored": 96,
+          "hazard": 0.1346153846153846
+        },
+        {
+          "k": 12,
+          "at_risk": 84,
+          "events": 5,
+          "censored": 79,
+          "hazard": 0.05952380952380952
+        }
+      ]
+    },
+    "w68": {
+      "n_neuf": 1430,
+      "n_anc": 6458,
+      "p_neuf": 0.32797202797202796,
+      "p_anc": 0.07572003716320842,
+      "odds_ratio": 5.957199917434336,
+      "ic95": [
+        5.1528201063463,
+        6.899071016811848
+      ]
+    },
+    "w911": {
+      "n_neuf": 407,
+      "n_anc": 1349,
+      "p_neuf": 0.1597051597051597,
+      "p_anc": 0.029651593773165306,
+      "odds_ratio": 6.2196637426900585,
+      "ic95": [
+        4.237719245373998,
+        9.617460317460315
+      ]
+    }
+  },
+  "couverture": {
+    "total": {
+      "mono": {
+        "parcelles": 1166,
+        "fenetre_active": 578
+      },
+      "copro": {
+        "parcelles": 309,
+        "fenetre_active": 154
+      }
+    },
+    "par_commune": [
+      {
+        "commune": "Saint-Paul",
+        "classe": "mono",
+        "parcelles": 179,
+        "fenetre_active": 102
+      },
+      {
+        "commune": "Saint-Pierre",
+        "classe": "mono",
+        "parcelles": 192,
+        "fenetre_active": 98
+      },
+      {
+        "commune": "Saint-Leu",
+        "classe": "mono",
+        "parcelles": 126,
+        "fenetre_active": 86
+      },
+      {
+        "commune": "Saint-Denis",
+        "classe": "copro",
+        "parcelles": 92,
+        "fenetre_active": 45
+      },
+      {
+        "commune": "La Possession",
+        "classe": "mono",
+        "parcelles": 118,
+        "fenetre_active": 41
+      },
+      {
+        "commune": "Saint-Denis",
+        "classe": "mono",
+        "parcelles": 83,
+        "fenetre_active": 36
+      },
+      {
+        "commune": "Saint-Joseph",
+        "classe": "mono",
+        "parcelles": 42,
+        "fenetre_active": 33
+      },
+      {
+        "commune": "Le Port",
+        "classe": "mono",
+        "parcelles": 39,
+        "fenetre_active": 30
+      },
+      {
+        "commune": "Saint-Paul",
+        "classe": "copro",
+        "parcelles": 66,
+        "fenetre_active": 27
+      },
+      {
+        "commune": "Saint-Beno\u00eet",
+        "classe": "mono",
+        "parcelles": 42,
+        "fenetre_active": 22
+      },
+      {
+        "commune": "Saint-Pierre",
+        "classe": "copro",
+        "parcelles": 41,
+        "fenetre_active": 22
+      },
+      {
+        "commune": "Le Tampon",
+        "classe": "mono",
+        "parcelles": 61,
+        "fenetre_active": 16
+      },
+      {
+        "commune": "Saint-Louis",
+        "classe": "mono",
+        "parcelles": 44,
+        "fenetre_active": 16
+      },
+      {
+        "commune": "Sainte-Suzanne",
+        "classe": "mono",
+        "parcelles": 26,
+        "fenetre_active": 15
+      },
+      {
+        "commune": "Les Trois-Bassins",
+        "classe": "mono",
+        "parcelles": 20,
+        "fenetre_active": 15
+      },
+      {
+        "commune": "Sainte-Marie",
+        "classe": "mono",
+        "parcelles": 46,
+        "fenetre_active": 14
+      },
+      {
+        "commune": "Saint-Leu",
+        "classe": "copro",
+        "parcelles": 33,
+        "fenetre_active": 13
+      },
+      {
+        "commune": "Saint-Andr\u00e9",
+        "classe": "mono",
+        "parcelles": 30,
+        "fenetre_active": 12
+      },
+      {
+        "commune": "La Possession",
+        "classe": "copro",
+        "parcelles": 20,
+        "fenetre_active": 11
+      },
+      {
+        "commune": "Les Avirons",
+        "classe": "mono",
+        "parcelles": 28,
+        "fenetre_active": 11
+      },
+      {
+        "commune": "L'\u00c9tang-Sal\u00e9",
+        "classe": "mono",
+        "parcelles": 37,
+        "fenetre_active": 9
+      },
+      {
+        "commune": "Sainte-Marie",
+        "classe": "copro",
+        "parcelles": 10,
+        "fenetre_active": 9
+      },
+      {
+        "commune": "Entre-Deux",
+        "classe": "mono",
+        "parcelles": 12,
+        "fenetre_active": 8
+      },
+      {
+        "commune": "Le Tampon",
+        "classe": "copro",
+        "parcelles": 17,
+        "fenetre_active": 7
+      },
+      {
+        "commune": "La Plaine-des-Palmistes",
+        "classe": "mono",
+        "parcelles": 8,
+        "fenetre_active": 5
+      },
+      {
+        "commune": "Saint-Joseph",
+        "classe": "copro",
+        "parcelles": 4,
+        "fenetre_active": 3
+      },
+      {
+        "commune": "Saint-Philippe",
+        "classe": "mono",
+        "parcelles": 4,
+        "fenetre_active": 3
+      },
+      {
+        "commune": "Les Avirons",
+        "classe": "copro",
+        "parcelles": 3,
+        "fenetre_active": 3
+      },
+      {
+        "commune": "L'\u00c9tang-Sal\u00e9",
+        "classe": "copro",
+        "parcelles": 8,
+        "fenetre_active": 3
+      },
+      {
+        "commune": "Saint-Andr\u00e9",
+        "classe": "copro",
+        "parcelles": 2,
+        "fenetre_active": 2
+      },
+      {
+        "commune": "Les Trois-Bassins",
+        "classe": "copro",
+        "parcelles": 3,
+        "fenetre_active": 2
+      },
+      {
+        "commune": "Le Port",
+        "classe": "copro",
+        "parcelles": 2,
+        "fenetre_active": 2
+      },
+      {
+        "commune": "Bras-Panon",
+        "classe": "copro",
+        "parcelles": 2,
+        "fenetre_active": 2
+      },
+      {
+        "commune": "Sainte-Suzanne",
+        "classe": "copro",
+        "parcelles": 2,
+        "fenetre_active": 2
+      },
+      {
+        "commune": "Bras-Panon",
+        "classe": "mono",
+        "parcelles": 9,
+        "fenetre_active": 2
+      },
+      {
+        "commune": "Petite-\u00cele",
+        "classe": "mono",
+        "parcelles": 12,
+        "fenetre_active": 2
+      },
+      {
+        "commune": "Cilaos",
+        "classe": "mono",
+        "parcelles": 2,
+        "fenetre_active": 1
+      },
+      {
+        "commune": "Sainte-Rose",
+        "classe": "mono",
+        "parcelles": 1,
+        "fenetre_active": 1
+      },
+      {
+        "commune": "Saint-Philippe",
+        "classe": "copro",
+        "parcelles": 1,
+        "fenetre_active": 1
+      },
+      {
+        "commune": "Sainte-Rose",
+        "classe": "copro",
+        "parcelles": 1,
+        "fenetre_active": 0
+      },
+      {
+        "commune": "Saint-Louis",
+        "classe": "copro",
+        "parcelles": 2,
+        "fenetre_active": 0
+      },
+      {
+        "commune": "Salazie",
+        "classe": "mono",
+        "parcelles": 5,
+        "fenetre_active": 0
+      }
+    ]
+  }
+}
