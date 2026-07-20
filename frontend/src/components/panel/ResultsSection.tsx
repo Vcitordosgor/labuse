@@ -22,7 +22,8 @@ function CompletudeRing({ value }: { value: number }) {
   const r = 7
   const c = 2 * Math.PI * r
   return (
-    <span className="flex items-center gap-1" title={`Complétude ${value}%`}>
+    <span className="flex items-center gap-1"
+      title={`Complétude des données : part des sources disponibles pour cette parcelle (${value} %). N'entre pas dans le score d'opportunité.`}>
       <svg viewBox="0 0 18 18" className="h-[18px] w-[18px] -rotate-90">
         <circle cx="9" cy="9" r={r} fill="none" stroke="#1E2A23" strokeWidth="2" />
         <circle cx="9" cy="9" r={r} fill="none" stroke={completudeColor(value)} strokeWidth="2"
@@ -89,7 +90,7 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
         {/* ×N = l'affichage produit du scoring v2 (probabilité relative de mutation) */}
         <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}
-          title={p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)} vs moyenne du parc (scoring v2)` : 'Scoring v2 non disponible'}>
+          title={p.mult_v2 != null ? `Multiplicateur du score P (scoring v2 servi) : probabilité de mutation ×${p.mult_v2.toFixed(1)} vs la moyenne du parc.` : 'Scoring v2 non disponible'}>
           {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
         </span>
         <CompletudeRing value={p.completeness_score} />
