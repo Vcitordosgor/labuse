@@ -371,3 +371,39 @@ offre = norm[part d'opportunités] ; tension = 100 × demande/(demande+offre)`, 
 
 **Reco d'exposition.** **MASQUÉ** — finding ci-dessus. À ré-évaluer uniquement si un exutoire calibrant apparaît et fait
 passer |Spearman| au-dessus de 0,20.
+
+---
+
+## O9 · Pipeline de rareté ✅
+
+**Combien d'années avant que le foncier constructible d'une commune soit épuisé ?** `GET /pipeline-rarete`
+(`src/labuse/api/rarete.py`). Projection arithmétique **Estimé, caveat large**, sur les **24 communes**.
+
+### Formule (documentée, sourcée)
+```
+rythme  = conso ENAF 2021-2024 / 3 ans          (ha/an, Sourcé Cerema)
+budget  = 50 % de la conso 2011-2021            (enveloppe loi Climat/TRACE, Estimé doctrine)
+reste   = budget − conso déjà réalisée 2021-2024
+horizon = reste / rythme                         (années avant plafond ZAN, rythme constant)
+```
+Stock d'opportunités **détecté** (ha de brûlantes + chaudes) fourni en **contexte** (ne se substitue pas à
+l'enveloppe ZAN). Statut dérivé : budget dépassé / tension forte (≤ 5 ans) / modérée (≤ 15) / détendu.
+
+### Robustesse & honnêteté
+- Rythme nul → **non projetable** (`null`, jamais un horizon inventé) ; reste ≤ 0 → **budget dépassé** (0). Table ZAN
+  absente → liste vide guardée.
+- **Caveat assumé** dans la réponse : rythme supposé constant ; budget = interprétation −50 % (loi TRACE assouplie) ;
+  épuisement de l'enveloppe ENAF ≠ interdiction de bâtir (densification hors ENAF possible). **Outil de hiérarchisation,
+  pas une date couperet.**
+
+### Validation
+24 communes triées par pression : Cilaos « budget dépassé », petites communes (Trois-Bassins, Petite-Île) en tension
+forte (< 1 an), grandes communes plus détendues. Cohérent.
+
+### Livrable technique
+- `src/labuse/api/rarete.py` — `compute_rarete` + endpoint (table ZAN guardée). `app.py` — routeur branché.
+- `tests/test_rarete.py` — **6/6 verts** (horizon normal ; rythme nul → non projetable ; budget dépassé ; reste absent ;
+  caveat large ; table absente → vide).
+
+**Reco d'exposition.** **Visible** avec le caveat large affiché (projection Estimé, hiérarchisation). **Finding O9** :
+mettre à jour le millésime ENAF quand Cerema publie 2025 ; la trajectoire loi TRACE (assouplie) pourra affiner le budget.

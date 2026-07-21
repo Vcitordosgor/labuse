@@ -2997,6 +2997,7 @@ from .servitudes import router as _servitudes_router  # noqa: E402  (O5 — serv
 from .comparateur import router as _comparateur_router  # noqa: E402  (O6 — comparateur de communes)
 from .carnet import router as _carnet_router  # noqa: E402  (O7 — carnet de secteur)
 from .tension import router as _tension_router  # noqa: E402  (O8 — tension foncière, MASQUÉ)
+from .rarete import router as _rarete_router  # noqa: E402  (O9 — pipeline de rareté)
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .segments import router as _segments_router  # noqa: E402
@@ -3020,6 +3021,7 @@ app.include_router(_servitudes_router)
 app.include_router(_comparateur_router)
 app.include_router(_carnet_router)
 app.include_router(_tension_router)
+app.include_router(_rarete_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
 app.include_router(_ia_router)
