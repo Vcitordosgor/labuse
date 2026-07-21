@@ -170,3 +170,37 @@ géométrique/règle). **Dédup par couche** (le motif le plus fort gagne, HARD 
 
 **Reco d'exposition.** **Visible** (transparence pure, tout sourcé/dérivé de la cascade servie). **Finding O3** : brancher
 un panneau « pourquoi pas » sur la fiche (miroir du bloc verdict) et l'utiliser dans le wording des parcelles écartées.
+
+---
+
+## O4 · Traducteur de règlement PLU ✅
+
+**« Cet article, ça donne quoi sur MA parcelle ? »** `POST /traducteur-plu/{idu}` (`src/labuse/api/traducteur.py`).
+Deux couches, du plus sûr au plus souple :
+
+1. **Application déterministe** (toujours dispo) — les règles **chiffrées** de la zone (`resolve_zone`, déjà calibrées
+   + sourcées par champ) appliquées à la surface de CETTE parcelle : emprise au sol max **en m²** (`% × surface`, calcul
+   affiché), hauteurs égout/faîtage, reculs voirie/limites, stationnement, pleine terre en m². Chaque ligne porte sa
+   **source** (« Art. 10.2, p.41 »…). **`A_VERIFIER` signalé** (« à vérifier — règlement ambigu »), jamais comblé ;
+   règle absente (None) **omise**, jamais inventée. Zone non calibrée → avertissement « estimation générique ».
+2. **Traduction IA d'un article collé** (optionnelle) — si l'utilisateur colle un texte d'article, le socle (sonnet,
+   **`strict_numbers`**) l'explique en clair, **ancré sur les faits chiffrés** ci-dessus ; il n'invente aucun nombre ;
+   **refus propre** si l'article ne se rattache à aucun fait connu.
+
+Le texte intégral du règlement **n'est pas ingéré** — on ne prétend pas le lire : on fournit le **lien profond** vers la
+page/article (`resolve_reglement`, ex. `…REGLT_PLU_st_paul…pdf#page=45`) pour vérification. **Jamais un conseil juridique**
+(disclaimer : seul le règlement opposable fait foi).
+
+### Validation
+Testé sur parcelle Saint-Paul zone **U1l** (calibrée) : hauteur faîtage 14 m (Art. 10.2 p.41), recul limites 3 m
+(Art. 7), reculs/stationnement/pleine terre = « à vérifier » honnêtes, deep-link PDF p.45. Zone **N** → refus honnête
+(« aucune règle calibrée »).
+
+### Livrable technique
+- `src/labuse/api/traducteur.py` — endpoint + application déterministe + traduction IA. `app.py` — routeur branché.
+- `tests/test_traducteur.py` — **7/7 verts** (emprise/pleine terre en m² sourcées ; A_VERIFIER signalé ; règle absente
+  omise ; hauteurs/reculs avec unité ; prospect ; disclaimer sans conseil juridique).
+
+**Reco d'exposition.** **Visible** (règles déterministes sourcées + lien opposable ; l'IA n'ajoute que de la prose
+groundée). **Finding O4** : la traduction IA est en repli tant que les crédits Anthropic sont épuisés ; la couche 1
+(règles chiffrées appliquées) fonctionne sans IA et suffit déjà à l'usage.
