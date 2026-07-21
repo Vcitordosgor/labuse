@@ -374,6 +374,51 @@ def projet_create(body: ProjetIn, db: Session = Depends(get_db)) -> dict:
     return {"ok": True, "existing": False, "projet": _projet_dict(p)}
 
 
+# M2 — fusion des doublons : statut le plus AVANCÉ gagne (retenue > écartée > à analyser > proposée).
+_STATUT_PRIORITE = {"retenue": 3, "ecartee": 2, "a_analyser": 1, "proposee": 0}
+
+
+class FusionIn(BaseModel):
+    ids: list[int]
+
+
+@router.post("/fusionner")
+def projets_fusionner(body: FusionIn, db: Session = Depends(get_db)) -> dict:
+    """Fusionne des projets DOUBLONS en un seul (le plus ancien = cible) : UNION des parcelles et
+    des statuts. Conflit de statut entre doublons → le statut le plus AVANCÉ gagne (retenue >
+    écartée > à analyser > proposée), tout conflit est SIGNALÉ dans le résultat, jamais résolu en
+    silence. Les sources sont ARCHIVÉES (statut='archive'), jamais supprimées → réversible."""
+    ids = sorted(set(body.ids))
+    if len(ids) < 2:
+        raise HTTPException(422, "Fusion : au moins deux projets requis.")
+    projets = [db.get(models.Projet, i) for i in ids]
+    if any(pr is None for pr in projets):
+        raise HTTPException(404, "Un des projets à fusionner est inconnu.")
+    cible, sources = projets[0], projets[1:]             # id min = cible (le plus ancien)
+    rows = db.execute(text("SELECT parcel_id, statut FROM projet_parcelles WHERE projet_id = ANY(:ids)"),
+                      {"ids": ids}).all()
+    by_parcel: dict[int, set[str]] = {}
+    for r in rows:
+        by_parcel.setdefault(r.parcel_id, set()).add(r.statut)
+    now = datetime.now(timezone.utc)
+    conflits = []
+    for pc, statuts in by_parcel.items():
+        gagnant = max(statuts, key=lambda s: _STATUT_PRIORITE.get(s, 0))
+        if len(statuts) > 1:
+            conflits.append({"parcel_id": pc, "statuts": sorted(statuts), "retenu": gagnant})
+        db.execute(text(
+            "INSERT INTO projet_parcelles (projet_id, parcel_id, statut, created_at, updated_at) "
+            "VALUES (:pj, :pc, :st, :now, :now) "
+            "ON CONFLICT (projet_id, parcel_id) DO UPDATE SET statut = :st, updated_at = :now"),
+            {"pj": cible.id, "pc": pc, "st": gagnant, "now": now})
+        _sync_crm_retenue(db, cible.id, pc, gagnant, now)
+    for s in sources:
+        s.statut = "archive"                             # réversible : rien n'est supprimé
+    db.flush()
+    return {"ok": True, "cible": cible.id, "sources_archivees": [s.id for s in sources],
+            "n_parcelles": len(by_parcel), "conflits": conflits, **_counts(db, cible.id)}
+
+
 @router.get("/{pid}")
 def projet_get(pid: int, db: Session = Depends(get_db)) -> dict:
     p = db.get(models.Projet, pid)
@@ -520,6 +565,13 @@ def projet_proposer(pid: int, body: ProposerIn, db: Session = Depends(get_db)) -
             "created_at, updated_at) VALUES (:pj, :pc, 'proposee', :rg, :now, :now, :now) "
             "ON CONFLICT (projet_id, parcel_id) DO NOTHING"),
             {"pj": pid, "pc": pc, "rg": rang, "now": now})
+    # M2 — NON-PERTE AU REJEU : une décision (retenue / à analyser) qui ne matche plus les critères
+    # du jour RESTE (jamais évincée), marquée « hors critères actuels » ; celle qui rematche est nettoyée.
+    db.execute(text(
+        "UPDATE projet_parcelles pp SET hors_criteres = NOT (par.idu = ANY(:idus)), updated_at = :now "
+        "FROM parcels par WHERE par.id = pp.parcel_id AND pp.projet_id = :pj "
+        "AND pp.statut IN ('retenue', 'a_analyser')"),
+        {"idus": idus, "pj": pid, "now": now})
     db.flush()
     return {"ok": True, "propose": len(idus), "n_total": len(items),
             "sdp_besoin_m2": derive_sdp_besoin(p.fiche), **_counts(db, pid)}
@@ -533,7 +585,8 @@ def projet_parcelles(pid: int, db: Session = Depends(get_db)) -> dict:
     from .app import _score_v2_run_id
     v2 = _score_v2_run_id(db)
     rows = db.execute(text(
-        """SELECT pp.statut, pp.rang, par.idu, par.commune, d.q_score, s2.tier,
+        """SELECT pp.statut, pp.rang, pp.hors_criteres, par.idu, par.commune, par.surface_m2,
+                  d.q_score, s2.tier,
                   ST_X(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lng,
                   ST_Y(ST_Transform(ST_Centroid(par.geom_2975), 4326)) AS lat
            FROM projet_parcelles pp
@@ -543,11 +596,24 @@ def projet_parcelles(pid: int, db: Session = Depends(get_db)) -> dict:
            WHERE pp.projet_id = :pid
            ORDER BY pp.rang NULLS LAST, pp.id"""),
         {"run": RUN, "v2": v2, "pid": pid}).mappings().all()
+    # M2 — badges parcelle (défisc / PC caduc), gardés to_regclass : absents en base → pas de badge, jamais d'erreur.
+    all_idus = [r["idu"] for r in rows]
+    defisc_set, caduc_set = set(), set()
+    if all_idus:
+        for tbl, col, dest in (("defisc_fenetres", "AND fenetre_active", defisc_set), ("pc_caducs", "", caduc_set)):
+            try:
+                if db.execute(text("SELECT to_regclass(:t)"), {"t": tbl}).scalar() is not None:
+                    dest.update(x[0] for x in db.execute(
+                        text(f"SELECT idu FROM {tbl} WHERE idu = ANY(:ids) {col}"), {"ids": all_idus}))
+            except Exception:  # noqa: BLE001 - badge optionnel, jamais bloquant
+                pass
     groups: dict[str, list] = {s: [] for s in ("proposee", "retenue", "ecartee", "a_analyser")}
     for r in rows:
         groups.setdefault(r["statut"], []).append({
             "idu": r["idu"], "commune": r["commune"], "statut": r["statut"],
-            "q_score": r["q_score"], "tier": r["tier"],
+            "q_score": r["q_score"], "tier": r["tier"], "surface_m2": r["surface_m2"],
+            "hors_criteres": bool(r["hors_criteres"]),
+            "defisc": r["idu"] in defisc_set, "caduc": r["idu"] in caduc_set,
             "center": [round(r["lng"], 6), round(r["lat"], 6)] if r["lng"] is not None else None,
         })
     # PRIVACY : les RETENUES portent le contact proprio (elles vont au CRM) — personne morale nommée

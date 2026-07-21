@@ -88,6 +88,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const [editing, setEditing] = useState(false)
   const [nomInput, setNomInput] = useState(nom)
   const [msg, setMsg] = useState('')
+  const [filtreAnalyse, setFiltreAnalyse] = useState(false)   // M2 : filtre rapide « à analyser » (colonne proposées)
 
   const projetQ = useQuery({ queryKey: ['projet', pid], queryFn: () => getProjet(pid), enabled: pid > 0 })
   const etatQ = useQuery({ queryKey: ['parcours', pid], queryFn: () => getParcoursEtat(pid), enabled: pid > 0 })
@@ -185,48 +186,66 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
       <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto p-6">
         {etatQ.isLoading && <p className="text-xs text-txt-dim">Chargement du projet…</p>}
         {COLS.map((col) => {
-          const list = items(col.key)
-          const apercu = expandCol === col.key ? list : list.slice(0, APERCU)
+          const aAnalyser = etat?.a_analyser ?? []
+          // M2 — HYBRIDE : « proposées » = file de travail (liste dense triée par rang) où « à analyser »
+          // remonte EN TÊTE (badge) ; « retenues/écartées » = cartes visuelles (décisions du client).
+          const isProp = col.key === 'proposee'
+          const base = isProp ? [...aAnalyser, ...(etat?.proposees ?? [])] : items(col.key)
+          const list = isProp && filtreAnalyse ? aAnalyser : base
+          const apercu = isProp || expandCol === col.key ? list : list.slice(0, APERCU)
           const reste = list.length - apercu.length
           return (
             <div key={col.key} data-kanban-col={col.key}
               onDragOver={(e) => { e.preventDefault(); setOverCol(col.key) }}
               onDragLeave={() => setOverCol((o) => (o === col.key ? null : o))}
               onDrop={(e) => { e.preventDefault(); onDrop(col.key) }}
-              className={`flex w-[320px] max-w-[34vw] shrink-0 flex-col rounded-xl border bg-surface-1 ${overCol === col.key && drag && drag.from !== col.key ? 'border-mint ring-1 ring-mint/40' : 'border-line-2'}`}>
+              className={`flex ${isProp ? 'w-[340px]' : 'w-[300px]'} max-w-[34vw] shrink-0 flex-col rounded-xl border bg-surface-1 ${overCol === col.key && drag && drag.from !== col.key ? 'border-mint ring-1 ring-mint/40' : 'border-line-2'}`}>
               {/* tête de colonne : compteur + action de tête */}
               <div className="flex shrink-0 items-center gap-2 border-b border-line-2 px-3 py-2.5">
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: col.accent }} />
                 <span className="text-[12px] font-medium text-txt-hi">{col.label}</span>
                 <span data-kanban-count={col.key} className="font-mono text-[11px] text-txt-dim">{count(col.key)}</span>
-                {col.key === 'proposee' && count('proposee') > 0 && (
+                {isProp && aAnalyser.length > 0 && (
+                  <button data-kanban-filtre-analyse onClick={() => setFiltreAnalyse((v) => !v)}
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${filtreAnalyse ? 'bg-[#E8B44C] text-[#06130C]' : 'border border-[#E8B44C]/60 text-[#E8B44C]'}`}
+                    title="Filtrer sur les parcelles marquées « à analyser »">◑ à analyser {aAnalyser.length}</button>
+                )}
+                {isProp && count('proposee') > 0 && (
                   <button data-kanban-trier onClick={() => openParcours({ id: pid, nom: projet?.nom ?? nom })}
                     className="ml-auto rounded-md bg-mint px-2.5 py-1 text-[11px] font-semibold text-[#06130C] hover:brightness-110"
-                    title="Parcourir les parcelles à trier une par une (carte)">Trier les {count('proposee')}</button>
+                    title="Parcourir les parcelles à trier une par une (carte)">Trier</button>
                 )}
                 {col.key === 'retenue' && <span className="ml-auto text-[10px] text-txt-dim" title="Chaque retenue crée une piste CRM (contact à préparer)">→ CRM</span>}
                 {col.key === 'ecartee' && <span className="ml-auto text-[10px] text-txt-dim">réversible</span>}
               </div>
-              {/* aperçu : 2-3 cartes + « + N autres » */}
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5">
                 {list.length === 0 && (
                   <div className="rounded-lg border border-dashed border-line-2 py-6 text-center text-[11px] text-txt-dim">
-                    {col.key === 'proposee' ? 'Rien à trier — « Chercher plus »' : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
+                    {isProp ? (filtreAnalyse ? 'Rien à analyser' : 'Rien à trier — « Chercher plus »') : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
                   </div>
                 )}
-                {apercu.map((it) => (
-                  <KanbanCard key={it.idu} it={it} col={col.key}
-                    onDragStart={() => setDrag({ idu: it.idu, from: col.key })}
-                    onAction={(statut) => decide.mutate({ idu: it.idu, statut })}
-                    onFiche={() => select(it.idu)} />
-                ))}
-                {reste > 0 && (
+                {isProp
+                  /* variante B : liste dense (encaisse 52+ parcelles, file de travail) */
+                  ? apercu.map((it) => (
+                      <ProposeeRow key={it.idu} it={it}
+                        onDragStart={() => setDrag({ idu: it.idu, from: 'proposee' })}
+                        onAction={(statut) => decide.mutate({ idu: it.idu, statut })}
+                        onFiche={() => select(it.idu)} />
+                    ))
+                  /* variante A : cartes visuelles (décisions peu nombreuses du client) */
+                  : apercu.map((it) => (
+                      <KanbanCard key={it.idu} it={it} col={col.key}
+                        onDragStart={() => setDrag({ idu: it.idu, from: col.key })}
+                        onAction={(statut) => decide.mutate({ idu: it.idu, statut })}
+                        onFiche={() => select(it.idu)} />
+                    ))}
+                {!isProp && reste > 0 && (
                   <button data-kanban-plus={col.key} onClick={() => setExpandCol(col.key)}
                     className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut hover:border-mint hover:text-txt-hi">
                     + {reste} autre{reste > 1 ? 's' : ''}
                   </button>
                 )}
-                {expandCol === col.key && list.length > APERCU && (
+                {!isProp && expandCol === col.key && list.length > APERCU && (
                   <button onClick={() => setExpandCol(null)} className="text-[10.5px] text-txt-dim hover:text-txt-mut">réduire</button>
                 )}
               </div>
@@ -234,6 +253,50 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
           )
         })}
       </div>
+    </div>
+  )
+}
+
+/** M2 — vignette ortho IGN en LAZY LOADING (jamais chargée hors écran). Placeholder si pas de centre. */
+function Vignette({ center }: { center: [number, number] | null | undefined }) {
+  if (!center) return <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-line-2 bg-surface-2 text-[8px] text-txt-dim">IGN</div>
+  const [lng, lat] = center; const d = 0.0009
+  const url = `https://data.geopf.fr/wms-r/wms?LAYERS=HR.ORTHOIMAGERY.ORTHOPHOTOS&FORMAT=image/jpeg&SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap&STYLES=&CRS=EPSG:4326&BBOX=${lat - d},${lng - d},${lat + d},${lng + d}&WIDTH=96&HEIGHT=96`
+  return <img loading="lazy" src={url} alt="" className="h-12 w-12 shrink-0 rounded-md border border-line-2 object-cover" />
+}
+
+/** M2 — badges parcelle (défisc / PC caduc / hors critères). */
+function Badges({ it }: { it: ParcoursItem }) {
+  return (
+    <span className="ml-1 inline-flex flex-wrap gap-1 align-middle">
+      {it.hors_criteres && <span data-badge-hors className="rounded-full border border-[#E8B44C] px-1.5 text-[8.5px] font-semibold text-[#E8B44C]" title="Décidée avant, hors des critères actuels — conservée (jamais évincée)">hors critères actuels</span>}
+      {it.defisc && <span className="rounded-full border border-[#B497F0] px-1.5 text-[8.5px] font-semibold text-[#B497F0]">défisc</span>}
+      {it.caduc && <span className="rounded-full border border-[#E8B44C] px-1.5 text-[8.5px] font-semibold text-[#E8B44C]">PC caduc</span>}
+    </span>
+  )
+}
+
+/** M2 — LIGNE DENSE de la file « proposées » (variante B) : encaisse 52+ parcelles, triée par rang,
+ *  « à analyser » remonté en tête (badge). Draggable ; boutons de décision inline. */
+function ProposeeRow({ it, onDragStart, onAction, onFiche }: {
+  it: ParcoursItem; onDragStart: () => void; onAction: (s: StatutParcelle) => void; onFiche: () => void
+}) {
+  const analyse = it.statut === 'a_analyser'
+  return (
+    <div draggable onDragStart={onDragStart} data-proposee-row={it.idu}
+      onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
+      className={`group flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 hover:border-[#2E5A45] ${analyse ? 'border-[#E8B44C]/50 bg-[#E8B44C]/5' : 'border-line-2 bg-surface-2'}`}
+      title="Ouvrir la fiche · glisser pour décider">
+      {analyse && <span className="text-[10px] text-[#E8B44C]" title="à analyser (remonté en tête)">◑</span>}
+      <span className="w-[86px] shrink-0 truncate font-mono text-[10.5px] text-txt-hi">{it.idu.slice(8, 10)} {it.idu.slice(10)}</span>
+      <span className="min-w-0 flex-1 truncate text-[10.5px] text-txt-mut">{it.commune}<Badges it={it} /></span>
+      <TierBadge tier={it.tier} etage0={null} statut={null} />
+      {it.surface_m2 != null && <span className="hidden shrink-0 font-mono text-[10px] text-txt-dim sm:inline">{fmt(it.surface_m2)} m²</span>}
+      <span className="flex shrink-0 gap-1 opacity-60 group-hover:opacity-100">
+        <button data-row-retenir onClick={() => onAction('retenue')} className="rounded bg-mint/90 px-1.5 py-0.5 text-[10px] font-semibold text-[#06130C]" title="Retenir">✓</button>
+        {!analyse && <button data-row-analyser onClick={() => onAction('a_analyser')} className="rounded border border-[#E8B44C]/50 px-1.5 py-0.5 text-[10px] text-[#E8B44C]" title="À analyser">◑</button>}
+        <button data-row-ecarter onClick={() => onAction('ecartee')} className="rounded border border-[#E8695A]/50 px-1.5 py-0.5 text-[10px] text-[#E8695A]" title="Écarter">✕</button>
+      </span>
     </div>
   )
 }
@@ -250,11 +313,17 @@ function KanbanCard({ it, col, onDragStart, onAction, onFiche }: {
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
       className="group cursor-pointer rounded-[10px] border border-line-2 bg-surface-3 p-3 active:cursor-grabbing hover:border-[#2E5A45]"
       title="Ouvrir la fiche · glisser pour changer de colonne">
-      <div className="flex items-center justify-between gap-2">
-        <span className="truncate font-mono text-[11px] font-medium text-txt-hi">{it.idu.slice(8, 10)} {it.idu.slice(10)}</span>
-        <TierBadge tier={it.tier} etage0={null} statut={null} />
+      <div className="flex gap-2.5">
+        <Vignette center={it.center} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2">
+            <span className="truncate font-mono text-[11px] font-medium text-txt-hi">{it.idu.slice(8, 10)} {it.idu.slice(10)}</span>
+            <TierBadge tier={it.tier} etage0={null} statut={null} />
+          </div>
+          <div className="mt-0.5 text-[10.5px] text-txt-mut" title="Tier = probabilité relative de mutation (facteur P) ; qualité = complétude du dossier (couches renseignées). Deux choses distinctes.">{it.commune}{it.q_score != null ? ` · qualité ${fmt(it.q_score)}/100` : ''}{it.surface_m2 != null ? ` · ${fmt(it.surface_m2)} m²` : ''}</div>
+          <div className="mt-1"><Badges it={it} /></div>
+        </div>
       </div>
-      <div className="mt-0.5 text-[10.5px] text-txt-mut">{it.commune}{it.q_score != null ? ` · qualité ${fmt(it.q_score)}/100` : ''}</div>
       {col === 'retenue' && (
         <div className="mt-1.5 border-t border-line-2/60 pt-1.5">
           <div className="text-[10px] text-mint" title="Piste créée automatiquement dans le CRM">▸ dans le CRM · contact à préparer</div>

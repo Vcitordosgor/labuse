@@ -67,5 +67,56 @@ les anciennes recommandations figées peuplent la colonne **proposées**.
 
 ---
 
-## 2. Implémentation (après validation) — *à venir*
-## 3. STOP final (avant/après, migration comptée, dédup démontrée, tests) — *à venir*
+## 2. Implémentation — ✅ LIVRÉE (selon la maquette validée + décisions déléguées)
+
+**Convergence** : la vue unifiée (`ProjetKanban`) EST déjà la route projet (« Ouvrir » y mène, PJ3) — la
+restitution figée séparée n'existe plus. La refonte porte le **layout hybride**, l'« à analyser », le rejeu
+non-perte, la fusion, les vignettes lazy.
+
+**Layout HYBRIDE** (décision Vic) — `ProjetKanban.tsx` :
+- **Proposées = variante B** (`ProposeeRow`, liste dense triée par rang) — file de travail qui encaisse 52+
+  parcelles ; les items **« à analyser » remontent EN TÊTE** (badge ◑) avec un **filtre rapide dédié**
+  (`data-kanban-filtre-analyse`) — **pas de 4ᵉ colonne**.
+- **Retenues / Écartées = variante A** (`KanbanCard`, cartes visuelles + **vignette IGN**) — décisions peu
+  nombreuses du client. *Aucune incohérence visuelle insoluble → pas de repli sur B-partout.*
+
+**Rejeu non-perte** — `projet_proposer` : au rejeu, une **retenue/à-analyser hors des critères du jour RESTE**
+(jamais évincée), marquée **`hors_criteres`** (badge « hors critères actuels », `data-badge-hors`) ; celle qui
+rematche est nettoyée. Colonne DB additive `hors_criteres`.
+
+**Fusion des doublons** — `POST /projets/fusionner` + `DedupBanner` (liste projets) : détection par nom
+normalisé (≥ 2), **union parcelles + statuts**, règle de conflit **retenue > écartée > à analyser > proposée**,
+**conflits SIGNALÉS** dans le résultat (jamais résolus en silence), sources **ARCHIVÉES** (jamais supprimées →
+réversible). Cas réel : les **4 « Résidence étudiante Ouest »**.
+
+**Vignettes IGN en LAZY LOADING** — `Vignette` : `<img loading="lazy">` ortho Géoplateforme (WMS
+`HR.ORTHOIMAGERY.ORTHOPHOTOS`) centrée sur la parcelle ; placeholder si pas de centre.
+
+**Migration** — `scripts/m2_projet_migration.sql` : `ALTER TABLE projet_parcelles ADD COLUMN IF NOT EXISTS
+hors_criteres` — **ADDITIVE et RÉVERSIBLE** (rollback : `DROP COLUMN`), aucun statut touché. Appliquée base
+réelle **et** `labuse_test`. **Comptes de statuts IDENTIQUES avant/après** (ecartee 13 · proposee 40 ·
+retenue 20) — non-perte prouvée.
+
+**Vocabulaire client** : la vue projet n'affiche **aucun chiffre in-sample en vitrine** (tier + « qualité
+X/100 » avec tooltip distinguant P de la complétude). Les tooltips PJ5 `×N` vivent dans le **panneau de
+résultats (liste île)** — surface du **Mandat 1**, NON touchée ici (décision de périmètre, pas de scope creep).
+
+### Écarts à la maquette (notés, non improvisés)
+- Hybride A/B au lieu d'une variante unique — **conforme à ta décision déléguée**, pas un écart.
+- « Trier » : bouton simplifié (label « Trier » au lieu de « Trier les N ») pour l'homogénéité de la tête de
+  colonne dense. Cosmétique.
+
+## 3. STOP final
+
+- **Avant/après** : « avant » = deux mondes (§0.2) ; « après » = maquette validée
+  `docs/mockups/m2_projet_maquette.html` (design de référence, rendu vérifié). Captures **live** = validation
+  visuelle en local (le front `npm run build` passe : bundle `dist/` régénéré).
+- **Migration comptée** : statuts identiques avant/après (ci-dessus).
+- **Dédup démontrée** sur le cas réel (4 « Ouest ») + cas synthétique **avec conflit** (test).
+- **Tests** : suite complète **985 passed / 0 failed** ; **non-perte** + **fusion conflit** (`test_projet_m2`,
+  4) ; **contrat cadrage** (`test_cadrage_niveaux`, 7) ; **affichage refonte** (`test_front_m2`, 6). Front
+  `tsc -b && vite build` OK.
+- **Garde-fous** : zéro touche scoring / runs servis / golden ; écritures DB **additives** (`hors_criteres`,
+  archivage jamais suppression). Aucun bug hors périmètre découvert.
+
+**Vic valide visuellement en local, puis merge.** Je ne merge pas.

@@ -313,7 +313,10 @@ export const deleteProjet = (id: number) => j<{ ok: boolean }>(`/projets/${id}`,
 // ── Parcours de sélection (Tinder) — statuts parcelle×projet ──
 export type StatutParcelle = 'proposee' | 'retenue' | 'ecartee' | 'a_analyser'
 export interface ParcoursCounts { proposee: number; retenue: number; ecartee: number; a_analyser: number }
-export interface ParcoursItem { idu: string; commune: string; statut: StatutParcelle; q_score: number | null; tier: string | null; center: [number, number] | null; proprietaire_public?: ProprietairePublic | null }
+export interface ParcoursItem { idu: string; commune: string; statut: StatutParcelle; q_score: number | null; tier: string | null; center: [number, number] | null; proprietaire_public?: ProprietairePublic | null; surface_m2?: number | null; hors_criteres?: boolean; defisc?: boolean; caduc?: boolean }
+// M2 — fusion des doublons : union parcelles + statuts (statut le plus avancé gagne), conflits signalés.
+export interface FusionResult { ok: boolean; cible: number; sources_archivees: number[]; n_parcelles: number; conflits: { parcel_id: number; statuts: string[]; retenu: string }[]; counts: ProjetCounts }
+export const fusionnerProjets = (ids: number[]) => j<FusionResult>('/projets/fusionner', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ids }) })
 export interface ParcoursEtat {
   nom: string; sdp_besoin_m2: number | null; counts: ParcoursCounts
   proposees: ParcoursItem[]; retenues: ParcoursItem[]; ecartees: ParcoursItem[]; a_analyser: ParcoursItem[]
