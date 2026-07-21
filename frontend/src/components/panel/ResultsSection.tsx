@@ -10,7 +10,7 @@ const fmt = (n: number) => n.toLocaleString('fr-FR')
 
 // M5.1 : le badge « V nn » a disparu de la liste (le dossier propriétaire reste dans la
 // fiche) ; les badges secondaires conservés : même proprio ×N, événement daté, veille
-// succession, vue mer, propriétaire spécial.
+// succession, propriétaire spécial.
 const OWNER_BADGE: Record<string, { label: string; title: string }> = {
   public: { label: 'PUBLIC', title: 'Foncier public — démarche dédiée' },
   bailleur: { label: 'BAILLEUR', title: 'Bailleur social — démarche dédiée' },
@@ -73,7 +73,6 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
               veille succession
             </span>
           )}
-          {p.vue_mer === 'oui' && <span className="shrink-0 text-[10px] text-[#7DE8E0]" title="Vue mer dégagée">◠</span>}
           {p.owner_type && OWNER_BADGE[p.owner_type] && (
             <span className="shrink-0 rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim"
               title={OWNER_BADGE[p.owner_type].title}>

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   courrierDemande, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
   modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
-  modPromesses, modSolaireParkings, modSolaireTertiaire, modVelocite,
+  modPromesses, modVelocite,
 } from '../../lib/api'
 import { pointInPolygon } from '../../lib/geo'
 import { useApp } from '../../store/useApp'
@@ -656,98 +656,11 @@ function M10() {
   )
 }
 
-/* ─────────────── M23 — PARKINGS APER (mandat Habitat Solaire, Lot 9.3) ─────────────── */
-
-function M23() {
-  const [tranche, setTranche] = useState<string | null>(null)
-  const q = useQuery({ queryKey: ['m23', tranche], queryFn: () => modSolaireParkings(tranche) })
-  const d = q.data as Record<string, any> | undefined
-  const items = ((d?.['items'] ?? []) as Record<string, any>[])
-  useModuleMap([], d?.['geojson'] ?? null, [q.dataUpdatedAt])
-  return (
-    <>
-      <Banner>Loi APER art. 40 — seuil <b>Réunion 1 000 m²</b> (décret 2025-802) : ombrières PV sur
-        ≥ 50 % de la surface. ≥ 10 000 m² : échéance <b>01/07/2026 DÉPASSÉE</b> (jusqu'à 40 k€/an).
-        Détection OSM = plancher, pas un recensement ; exemptions non déduites.</Banner>
-      <div className="flex gap-1.5">
-        {([[null, 'tous'], ['sup_10000', '≥ 10 000 m²'], ['1000_10000', '1 000-10 000 m²']] as const).map(([k, l]) => (
-          <button key={l} onClick={() => setTranche(k)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] ${tranche === k ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
-            {l}
-          </button>
-        ))}
-      </div>
-      <p className="text-[11px] text-txt-dim">
-        {q.isFetching ? <Loading label="Chargement" /> : <>{fmt(d?.['total'])} parkings assujettis · <b className="text-st-ecartee">{fmt(d?.['echeances_depassees'])} échéance(s) dépassée(s)</b>{typeof d?.['affiches'] === 'number' && d['affiches'] < d['total'] ? <span className="text-txt-dim"> · {fmt(d['affiches'])} affichés</span> : null}</>}
-      </p>
-      <a href={`/solaire/parkings?fmt=csv${tranche ? `&tranche=${tranche}` : ''}`}
-        className="self-start rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ Export CSV</a>
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-        {items.map((i) => {
-          const idu = ((i['idus'] ?? []) as string[])[0]
-          const sub = `${i['proprio_pm'] ?? 'propriétaire non identifié'}${i['proprio_siren'] ? ` (${i['proprio_siren']})` : ''}`
-          const right = (
-            <div className="text-right">
-              <div className="font-mono text-[10.5px]" style={{ color: i['echeance_depassee'] ? '#ff7a68' : VIOLET }}>
-                {i['echeance_depassee'] ? 'DÉPASSÉE' : String(i['echeance'] ?? '')}
-              </div>
-              <div className="text-[11px] text-txt-dim">{fmt(i['surface_m2'])} m²</div>
-            </div>
-          )
-          return idu ? (
-            <Row key={i['id']} idu={idu} sub={sub} right={right}
-              fiche={[['Parking APER', `${fmt(i['surface_m2'])} m² (${i['tranche']})`],
-                ['Échéance', `${i['echeance']}${i['echeance_depassee'] ? ' — DÉPASSÉE' : ''}`],
-                ['Propriétaire', sub]]} />
-          ) : (
-            <div key={i['id']} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-[11px] text-txt-mut">
-              {fmt(i['surface_m2'])} m² · {sub} <span className="float-right">{right}</span>
-            </div>
-          )
-        })}
-      </div>
-    </>
-  )
-}
-
-/* ─────────────── M24 — TOITURES TERTIAIRES (mandat Habitat Solaire, Lot 9.4) ─────────────── */
-
-function M24() {
-  const q = useQuery({ queryKey: ['m24'], queryFn: modSolaireTertiaire })
-  const d = q.data as Record<string, any> | undefined
-  const items = ((d?.['items'] ?? []) as Record<string, any>[])
-  useModuleMap(items.map((i) => i['idu'] as string).filter(Boolean), null, [q.dataUpdatedAt])
-  return (
-    <>
-      <Banner>Emprises bâties &gt; 500 m² (hors résidentiel) × propriétaire personne morale ×
-        dernier bilan INPI × gisement PVGIS — triées par potentiel (surface × score).
-        {d?.['note'] ? <> {String(d['note'])}</> : null}</Banner>
-      <p className="text-[11px] text-txt-dim">
-        {q.isFetching ? <Loading label="Chargement" /> : <>{fmt(d?.['total'])} toitures{typeof d?.['affiches'] === 'number' && d['affiches'] < d['total'] ? <span className="text-txt-dim"> · {fmt(d['affiches'])} affichées</span> : null}</>}
-      </p>
-      <a href="/solaire/tertiaire?fmt=csv" className="self-start rounded-lg border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:text-txt-hi">⬇ Export CSV</a>
-      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
-        {items.map((i) => (
-          <Row key={i['bat_id']} idu={i['idu'] as string}
-            sub={`${i['commune']} · ${fmt(i['emprise_m2'])} m² · ${i['proprio_pm'] ?? 'PM non identifiée'}${i['ca'] != null ? ` · CA ${fmt(i['ca'])} €` : ''}`}
-            right={<V>{i['score_solaire'] ?? '—'}</V>}
-            fiche={[['Toiture', `${fmt(i['emprise_m2'])} m² (${i['usage'] ?? 'activité'})`],
-              ['Propriétaire', `${i['proprio_pm'] ?? '—'}${i['proprio_siren'] ? ` (${i['proprio_siren']})` : ''}`],
-              ['Bilan INPI', i['bilan_annee'] ? `${i['bilan_annee']} · CA ${fmt(i['ca'])} € · résultat ${fmt(i['resultat_net'])} €` : 'non disponible'],
-              ['Gisement', i['prod_spec_kwh_kwc'] ? `${fmt(i['prod_spec_kwh_kwc'])} kWh/kWc/an (score ${i['score_solaire']})` : 'en cours']]} />
-        ))}
-      </div>
-    </>
-  )
-}
-
-/* ───────────────────────────── shell ───────────────────────────── */
 
 const COMPONENTS: Record<string, () => JSX.Element> = {
   division: M01, patrimoine: M02, permis: M03, promesses: M04, velocite: M05,
   bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
   simulplu: M15, assemblage: M16, zan: M17, barometre: M18, matching: M19, programme: M22,
-  'parkings-aper': M23, 'toitures-tertiaires': M24,
   'scoring-v2': ScoringV2Module,
 }
 
