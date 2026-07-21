@@ -2131,6 +2131,21 @@ def ortho_juge_vlm_cmd(
                        f" : {m.get('point')}")
 
 
+@app.command("deposants-actifs")
+def deposants_actifs_cmd(
+    mois: int = typer.Option(24, help="Fenêtre de dépôt (mois)."),
+    out: str = typer.Option("exports/deposants_actifs.csv", help="CSV de sortie (exports/ = gitignoré)."),
+) -> None:
+    """EXTRACT-DÉPOSANTS-ACTIFS : CSV de prospection des PM déposant des PC/PA (read-only).
+    Dirigeants RNE actifs+diffusibles uniquement ; données nominatives jamais en git (exports/)."""
+    from .ingestion import deposants_actifs
+
+    with session_scope() as s:
+        rows = deposants_actifs.extract_deposants(s, mois=mois)
+    p = deposants_actifs.write_csv(rows, out)
+    typer.echo(f"✓ {len(rows)} déposants actifs ({mois} mois) → {p} (gitignoré, ne pas committer)")
+
+
 @app.command("division-or")
 def division_or_cmd(
     communes: str = typer.Option(..., help="Communes à scanner (séparées par des virgules)."),
