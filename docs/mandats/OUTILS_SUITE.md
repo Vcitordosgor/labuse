@@ -72,3 +72,45 @@ scoring / runs servis / golden). **Décision finale à Vic.**
 **Findings O0.** (1) Couverture secteur du prix neuf encore fine (86 % de repli commune) → se densifiera avec le flux DVF ;
 à re-builder périodiquement. (2) VEFA sans surface au 974 → proxy achèvement PC, borné, documenté ; **ne pas sur-vendre**
 comme « prix VEFA réel ». (3) `q_v7_defisc` = run servi ; le Score É suit ce run, à re-builder après toute bascule de run.
+
+---
+
+## O1 · Dossier banquier ✅ (candidat démo)
+
+**Le PDF qu'un porteur pose sur le bureau de son financeur.** 6-8 pages print sobres, **tout sourcé**, zéro donnée
+nouvelle — assemble l'existant. Endpoint `GET /dossier-banquier/{idu}.pdf` (`src/labuse/api/banquier.py`), bouton
+« Banquier » ajouté à la fiche (à côté de PDF / Dossier).
+
+### Structure (7 pages sur la parcelle de test)
+1. **Couverture** — identité + **photo aérienne IGN (BD ORTHO, Géoplateforme)** avec contour parcelle + **synthèse
+   exécutive** + bandeau de KPI (terrain, surface vendable, charge foncière, marge Score É).
+2. **Identité** — références cadastrales, adresse BAN, surface, **zonage** + règles calibrées (Estimé).
+3. **Faisabilité** — les **11 steps déterministes** (`parcel_faisabilite`), chaque ligne Sourcé/Estimé + potentiel indicatif.
+4. **Bilan promoteur & charge foncière** — postes du `compute_bilan`, fourchette de charge foncière, + **Score É V2**
+   (marge = charge supportable − prix probable, prix de sortie neuf O0).
+5. **Marché de comparaison** — comparables DVF (Q1/médiane/Q3, ancien vs neuf/VEFA) + **permis SITADEL voisins**.
+6. **Risques, servitudes & ZAN** — couches dormantes + consommation ENAF de la commune (Cerema, Sourcé).
+
+### Synthèse exécutive — narrée par le socle IA, **strict_numbers**
+`core.complete(model=sonnet, validate=True, strict_numbers=True)` sur un contexte de **faits sourcés uniquement**
+(parcelle, capacité, charge foncière, marché, marge, permis, vigilance). L'IA **narre les étapes, n'invente aucun
+chiffre** ; la couche de validation rejette tout nombre absent des faits. **Repli déterministe honnête** si pas de clé
+(crédits épuisés) : concaténation des faits, aucune invention. **Jamais de RR ni de score interne en vitrine.**
+
+### Robustesse
+- Chaque section est guardée (`to_regclass`, try/except) : une donnée absente devient « non estimable », jamais un
+  chiffre fabriqué. Testé sur parcelle **sans** faisabilité/marge → PDF produit proprement.
+- **Bug corrigé en cours de route** : la requête ZAN utilisait `code_insee` (colonne réelle = `insee`) → elle abortait
+  la transaction Postgres et faisait échouer la synthèse IA en aval. Colonne corrigée ; TX propre vérifiée.
+
+### Livrable technique
+- `src/labuse/api/banquier.py` — module + endpoint.
+- `src/labuse/api/app.py` — routeur branché.
+- `frontend/src/components/fiche/Fiche.tsx` — bouton « Banquier ».
+- `tests/test_banquier.py` — **7/7 verts** (puces Sourcé/Estimé, Score É rendu, non estimable sans chiffre, comparables
+  ancien/VEFA, synthèse de repli sans invention, absence de RR/percentile en vitrine).
+
+**Reco d'exposition.** **Visible** (candidat démo). C'est une vitrine, pas un indicateur calibré : aucun risque de
+faux signal, tout est sourcé et labellisé. **Findings O1** : (1) synthèse IA en repli déterministe tant que les crédits
+Anthropic sont épuisés — fonctionnel mais moins fluide ; (2) gating `dossier_parcelle` (Essentiel) — à confirmer si le
+dossier banquier doit être un cran au-dessus (Intégral).

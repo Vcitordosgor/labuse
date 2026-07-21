@@ -1234,6 +1234,13 @@ export function Fiche({ idu }: { idu: string }) {
             title="Dossier parcelle PDF brandé (carte, zonage calibré, risques, DVF, permis) — usage interne">
             Dossier
           </a>
+          {/* O1 : dossier banquier — 6-8 pages print, synthèse exécutive + bilan/charge foncière +
+              Score É + comparables DVF/SITADEL + risques, tout sourcé (photo aérienne IGN). */}
+          <a href={`/dossier-banquier/${idu}.pdf`} target="_blank" rel="noreferrer"
+            className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
+            title="Dossier banquier PDF (synthèse exécutive, bilan & charge foncière, comparables, risques) — présentation financeur">
+            Banquier
+          </a>
           {f?.coords && (
             /* Fix LOT 2 : recentrer sur LA parcelle en ouvrant la vue historique (sinon la carte
                restait où elle était → on voyait l'île, pas le terrain). */
