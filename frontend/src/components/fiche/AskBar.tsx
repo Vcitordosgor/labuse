@@ -139,8 +139,10 @@ export function AskBar({ idu }: { idu: string; zone?: string | null }) {
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B497F0]" /> L'IA lit la fiche…</p>}
       {ask.isError && <p className="mt-3 text-[11px] text-st-ecartee">Erreur — réessayez.</p>}
 
+      {/* R1 (PJ6) — RÈGLE DURE : la réponse est BORNÉE (36vh, scroll interne) → le panneau IA ne
+          pousse JAMAIS l'en-tête ni la nav des onglets hors écran, quelle que soit la longueur. */}
       {d && !ask.isPending && (
-        <div className="mt-3 rounded-lg border border-line-2 bg-surface-1 p-3">
+        <div data-askbar-reponse className="mt-3 max-h-[36vh] overflow-y-auto rounded-lg border border-line-2 bg-surface-1 p-3">
           {d.quota_atteint ? (
             <p className="text-[12px] text-st-creuser">{d.texte}</p>
           ) : d.degraded ? (
