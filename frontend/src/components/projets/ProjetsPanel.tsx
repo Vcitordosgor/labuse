@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { getProjets, patchProjet, type FicheProjet, type Projet } from '../../lib/api'
+import { fusionnerProjets, getProjets, patchProjet, type FicheProjet, type Projet } from '../../lib/api'
 import { useApp } from '../../store/useApp'
 import { ProjetKanban } from './ProjetKanban'
 
@@ -109,6 +109,48 @@ function ProjetCard({ p }: { p: Projet }) {
   )
 }
 
+/** M2 — DÉDUP : bandeau pour un groupe de doublons (même nom) + action de FUSION. La fusion réunit
+ *  parcelles + statuts (statut le plus avancé gagne), signale les conflits, ARCHIVE les sources
+ *  (jamais de suppression silencieuse). Le résultat affiche les conflits. */
+function DedupBanner({ groupe }: { groupe: Projet[] }) {
+  const qc = useQueryClient()
+  const [res, setRes] = useState<string | null>(null)
+  const fusion = useMutation({
+    mutationFn: () => fusionnerProjets(groupe.map((p) => p.id)),
+    onSuccess: (r) => {
+      const c = r.conflits.length
+      setRes(`Fusionnés dans le projet #${r.cible} · ${r.n_parcelles} parcelle(s)`
+        + (c ? ` · ⚠ ${c} conflit(s) de statut signalé(s) (statut le plus avancé retenu)` : ' · aucun conflit'))
+      qc.invalidateQueries({ queryKey: ['projets'] })
+    },
+  })
+  return (
+    <div data-dedup-banner className="rounded-xl border border-[#B497F0]/45 bg-[#B497F0]/[0.07] p-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <b className="text-txt-hi">{groupe.length} doublons</b>
+          <span className="ml-2 text-txt-mut">« {groupe[0].nom} » — même nom / cadrage</span>
+          <div className="mt-1 text-[11px] text-txt-dim">ids {groupe.map((p) => p.id).join(' · ')}</div>
+        </div>
+        {!res && (
+          <button data-dedup-fusionner onClick={() => fusion.mutate()} disabled={fusion.isPending}
+            className="shrink-0 rounded-lg border border-[#B497F0] px-3 py-1.5 text-[11px] font-semibold text-[#B497F0] hover:bg-[#B497F0]/10 disabled:opacity-50"
+            title="Réunir les parcelles et statuts en un seul projet (sources archivées, jamais supprimées)">
+            {fusion.isPending ? 'Fusion…' : `Fusionner les ${groupe.length} →`}</button>
+        )}
+      </div>
+      {res && <p data-dedup-res className="mt-2 text-[11px] text-mint">{res}</p>}
+    </div>
+  )
+}
+
+/** Détecte les groupes de doublons parmi les projets actifs (même nom normalisé, ≥ 2). */
+function groupesDoublons(actifs: Projet[]): Projet[][] {
+  const par: Record<string, Projet[]> = {}
+  for (const p of actifs) (par[p.nom.trim().toLowerCase()] ??= []).push(p)
+  return Object.values(par).filter((g) => g.length > 1)
+}
+
 /** Vue PROJETS (copilote-projet) — liste « Mes projets » OU, si un projet est ouvert, sa vue
  *  kanban unifiée (À trier / Retenues / Écartées). « Ouvrir » = la vue kanban ; le tri vit dedans. */
 export function ProjetsPanel() {
@@ -145,6 +187,12 @@ export function ProjetsPanel() {
               className={`rounded-full px-3 py-1 ${!showArchived ? 'bg-surface-3 text-txt-hi' : 'text-txt-mut'}`}>Actifs ({actifs.length})</button>
             <button onClick={() => setShowArchived(true)}
               className={`rounded-full px-3 py-1 ${showArchived ? 'bg-surface-3 text-txt-hi' : 'text-txt-mut'}`}>Archivés ({archives.length})</button>
+          </div>
+        )}
+
+        {!showArchived && groupesDoublons(actifs).length > 0 && (
+          <div className="mt-6 space-y-2">
+            {groupesDoublons(actifs).map((g) => <DedupBanner key={g[0].id} groupe={g} />)}
           </div>
         )}
 

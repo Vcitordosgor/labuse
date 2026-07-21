@@ -682,6 +682,9 @@ class ProjetParcelle(Base, TimestampMixin):
     statut: Mapped[str] = mapped_column(String(16))   # proposee | retenue | ecartee | a_analyser
     rang: Mapped[int | None] = mapped_column()        # ordre de proposition (best-first)
     proposee_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # M2 — non-perte au rejeu : une décision (retenue…) qui ne matche plus les critères du jour
+    # RESTE, marquée « hors critères actuels » (jamais évincée en silence). ADDITIF, défaut false.
+    hors_criteres: Mapped[bool] = mapped_column(server_default="false", default=False)
 
     parcel: Mapped[Parcel] = relationship()
 
