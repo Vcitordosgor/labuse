@@ -142,3 +142,31 @@ une promesse ». **Adresse hors base → réponse honnête** (`ok:false`, renvoi
 **Reco d'exposition.** **Visible** côté API ; **UI à ajouter** (barre « scorer une adresse » — aucune UI d'audit
 n'existe encore côté front). Aucun risque de faux signal (verdict = tier déjà servi + Score É labellisé). **Finding O2** :
 brancher un champ de saisie sur la fiche/carte pour l'usage terrain (visite, panneau « à vendre »).
+
+---
+
+## O3 · Anti-fiche (« pourquoi PAS ») ✅
+
+**La fiche dit pourquoi c'est intéressant ; l'anti-fiche dit pourquoi ça ne l'est pas.** `GET /anti-fiche/{idu}`
+(`src/labuse/api/anti_fiche.py`). Lit la **cascade déjà calculée** (`cascade_results`) — aucune donnée nouvelle,
+aucun recalcul.
+
+### Deux niveaux hiérarchisés, chacun sourcé
+- **RÉDHIBITOIRE** (`HARD_EXCLUDE`) : motifs bloquants (ex. « Exclue : PPR zone rouge », « pente 74 % — non
+  aménageable », « forêt domaniale — inacquérable »). La parcelle est écartée (étage 0).
+- **VIGILANCE** (`SOFT_FLAG`) : contraintes non bloquantes qui pèsent (ex. avis ABF probable).
+Chaque motif = libellé déjà rédigé + couche + source (réelle, sinon « cascade (dérivé) » pour un motif
+géométrique/règle). **Dédup par couche** (le motif le plus fort gagne, HARD trié en premier).
+
+### Honnêteté
+- Cadre selon le tier servi (écartée / réserves / bien classée). Une parcelle **sans motif** le dit
+  (« Aucun motif d'écartement ni point de vigilance »). Une parcelle **bien classée** liste ses rares points de
+  vigilance plutôt que d'inventer des défauts. Les lignes `PASS`/`POSITIVE` sont exclues.
+
+### Livrable technique
+- `src/labuse/api/anti_fiche.py` — endpoint. `src/labuse/api/app.py` — routeur branché.
+- `tests/test_anti_fiche.py` — **3/3 verts** (écartée : HARD puis SOFT, PASS exclu ; bien classée : aucune invention ;
+  dédup par couche).
+
+**Reco d'exposition.** **Visible** (transparence pure, tout sourcé/dérivé de la cascade servie). **Finding O3** : brancher
+un panneau « pourquoi pas » sur la fiche (miroir du bloc verdict) et l'utiliser dans le wording des parcelles écartées.
