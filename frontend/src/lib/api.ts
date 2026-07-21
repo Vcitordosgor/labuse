@@ -57,7 +57,6 @@ export const filterParams = (f: Filters): Record<string, string | number> => ({
   ...(f.surfaceMax != null ? { surface_max: f.surfaceMax } : {}),
   ...(f.sdpMin != null ? { sdp_min: f.sdpMin } : {}),
   ...(f.evenement ? { evenement: 'true' } : {}),
-  ...(f.vueMer ? { vue_mer: 'true' } : {}),
   ...(f.veille ? { veille: 'true' } : {}),
   ...(f.horsCopro ? { hors_copro: 'true' } : {}),
   ...(f.flags.length ? { flags: f.flags.join(',') } : {}),
@@ -199,11 +198,6 @@ export const modVelocite = (nature?: string | null) =>
   j<{ communes: Record<string, unknown>[]; [k: string]: unknown }>(`/modules/velocite${nature ? `?nature=${nature}` : ''}`)
 export const modBailleur = () => j<Record<string, unknown>>(`/modules/bailleur?${cq()}`)
 export const modFantome = () => j<Record<string, unknown>>(`/modules/fantome?${cq()}`)
-// Habitat Solaire (mandat habitat-solaire)
-export const getSolaireFiche = (idu: string) => j<Record<string, unknown>>(`/solaire/fiche/${idu}`)
-export const modSolaireParkings = (tranche?: string | null) =>
-  j<Record<string, unknown>>(`/solaire/parkings${tranche ? `?tranche=${tranche}` : ''}`)
-export const modSolaireTertiaire = () => j<Record<string, unknown>>('/solaire/tertiaire')
 export const getOrthoEquipements = (idu: string) => j<Record<string, unknown>>(`/ortho/equipements/${idu}`)
 export const modCourriers = (idus: string[], contexte: string) =>
   j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {

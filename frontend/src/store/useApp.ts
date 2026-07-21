@@ -9,7 +9,6 @@ export interface LayerToggles {
   zonage_parcelle: boolean // M6.1 : remplissage des PARCELLES par famille PLU (U/AU/A/N)
   parcelles: boolean
   ppr: boolean
-  vue_mer: boolean
   parc: boolean
   limites: boolean
   anru: boolean
@@ -29,7 +28,6 @@ export interface Filters {
   surfaceMax: number | null
   sdpMin: number | null      // SDP résiduelle minimale (m²)
   evenement: boolean         // seulement les parcelles à événement (BODACC rouge)
-  vueMer: boolean            // seulement vue mer dégagée
   veille: boolean            // veille succession (radar patrimonial)
   horsCopro: boolean         // toggle copro : masquer les copropriétés
   flags: string[]            // flags actifs requis (au moins un)
@@ -42,7 +40,7 @@ export interface Filters {
 
 export const EMPTY_FILTERS: Filters = {
   tiers: [], scoreMin: null, surfaceMin: null, surfaceMax: null, sdpMin: null,
-  evenement: false, vueMer: false, veille: false, horsCopro: false,
+  evenement: false, veille: false, horsCopro: false,
   flags: [], flagsExclus: [], communes: [], vSignals: [],
   personneMorale: false, zonagePlu: [],
 }
@@ -211,7 +209,7 @@ export const useApp = create<AppState>((set) => ({
         contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null }),
   selectedIdu: null,
   select: (idu) => set({ selectedIdu: idu }),
-  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, vue_mer: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
+  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),

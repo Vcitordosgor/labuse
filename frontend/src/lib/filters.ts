@@ -14,7 +14,6 @@ export interface ParcelProps {
   completeness_score: number
   sdp_residuelle_m2: number | null
   sous_densite: number | null
-  vue_mer: string | null
   evenement: string | null
   evenement_date?: string | null   // événement daté v1.3 (badge secondaire)
   flags: string[]
@@ -70,7 +69,6 @@ export function matchScope(p: ParcelProps, f: Filters, zone: LngLat[] | null): b
   if (f.surfaceMax != null && (p.surface_m2 ?? Infinity) > f.surfaceMax) return false
   if (f.sdpMin != null && (p.sdp_residuelle_m2 ?? -1) < f.sdpMin) return false
   if (f.evenement && p.evenement !== 'rouge') return false
-  if (f.vueMer && p.vue_mer !== 'oui') return false
   if (f.veille && !p.veille) return false
   if (f.horsCopro && p.copro_v2) return false
   if (f.flags.length && !f.flags.some((fl) => p.flags?.includes(fl))) return false
@@ -90,7 +88,7 @@ export const matchAll = (p: ParcelProps, f: Filters, zone: LngLat[] | null) => {
 
 export const hasScopeFilters = (f: Filters, zone: LngLat[] | null) =>
   f.scoreMin != null || f.surfaceMin != null || f.surfaceMax != null || f.sdpMin != null ||
-  f.evenement || f.vueMer || f.veille || f.horsCopro || f.flags.length > 0 ||
+  f.evenement || f.veille || f.horsCopro || f.flags.length > 0 ||
   f.flagsExclus.length > 0 || f.communes.length > 0 || f.vSignals.length > 0 || !!zone
 
 // ── Chips actifs (token → suppression ciblée) ──
@@ -104,7 +102,6 @@ export function activeChips(f: Filters): Chip[] {
   if (f.surfaceMax != null) out.push({ token: 'surfaceMax', label: `≤ ${f.surfaceMax.toLocaleString('fr-FR')} m²` })
   if (f.sdpMin != null) out.push({ token: 'sdpMin', label: `SDP ≥ ${f.sdpMin.toLocaleString('fr-FR')} m²` })
   if (f.evenement) out.push({ token: 'evenement', label: '● Événement' })
-  if (f.vueMer) out.push({ token: 'vueMer', label: 'Vue mer' })
   if (f.veille) out.push({ token: 'veille', label: 'Veille succession' })
   if (f.horsCopro) out.push({ token: 'horsCopro', label: 'Hors copro' })
   for (const fl of f.flags) out.push({ token: `flag:${fl}`, label: FLAG_DEFS.find((d) => d.key === fl)?.label ?? fl })
@@ -121,7 +118,6 @@ export function removeToken(f: Filters, token: string): Filters {
   if (token.startsWith('vsig:')) return { ...f, vSignals: f.vSignals.filter((x) => x !== token.slice(5)) }
   if (token === 'communes') return { ...f, communes: [] }
   if (token === 'evenement') return { ...f, evenement: false }
-  if (token === 'vueMer') return { ...f, vueMer: false }
   if (token === 'veille') return { ...f, veille: false }
   if (token === 'horsCopro') return { ...f, horsCopro: false }
   return { ...f, [token]: null }
@@ -138,7 +134,6 @@ export function filtersToHash(f: Filters, zone: LngLat[] | null): string {
   if (f.surfaceMax != null) p.set('smax', String(f.surfaceMax))
   if (f.sdpMin != null) p.set('sdp', String(f.sdpMin))
   if (f.evenement) p.set('ev', '1')
-  if (f.vueMer) p.set('vm', '1')
   if (f.veille) p.set('vs2', '1')
   if (f.horsCopro) p.set('hc', '1')
   if (f.flags.length) p.set('fl', f.flags.join(','))
@@ -166,7 +161,6 @@ export function filtersFromHash(hash: string): { filters: Partial<Filters>; zone
       surfaceMax: num('smax'),
       sdpMin: num('sdp'),
       evenement: p.get('ev') === '1',
-      vueMer: p.get('vm') === '1',
       veille: p.get('vs2') === '1',
       horsCopro: p.get('hc') === '1',
       flags: p.get('fl')?.split(',').filter(Boolean) ?? [],

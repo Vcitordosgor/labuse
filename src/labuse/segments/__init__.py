@@ -5,7 +5,7 @@ changent. Interdiction de coder une vue par métier — un preset = une ligne de
 (`segment_presets`), le moteur évalue ses filtres via le registry déclaratif.
 
 Résilience : le moteur détecte à l'exécution quelles tables/colonnes existent
-(`parcel_solar`, `parcel_equipements`, `parcel_anc`… pas encore ingérées) ; un filtre
+(`parcel_equipements`, `parcel_anc`… pas encore ingérées) ; un filtre
 dont la source manque est GRISÉ côté UI, un preset qui en dépend est badgé « partiel ».
 Ce paquet est donc exécutable quel que soit l'ordre des mandats de la pile.
 """

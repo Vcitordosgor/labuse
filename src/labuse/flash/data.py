@@ -77,7 +77,7 @@ _NEEDED_TABLES = {
     "parcel_residuel_bati", "dryrun_parcel_evaluations", "rpls_commune",
     "filosofi_carreaux_200m", "data_sources",
     # Mandats pas encore mergés — le jour où ils atterrissent, la section apparaît seule.
-    "parcel_solar", "parcel_vegetation", "parcel_anc",
+    "parcel_vegetation", "parcel_anc",
 }
 
 
@@ -359,13 +359,8 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
                             "max_deg": round(float(r["pente_max_deg"]), 1)
                             if r["pente_max_deg"] is not None else None,
                             "terrassement_lourd": bool(r["flag_terrassement_lourd"])}
-    # Mandats futurs (Solaire / ANC & Végétation) : colonnes déclarées par le registre des
+    # Mandats futurs (ANC & Végétation) : colonnes déclarées par le registre des
     # segments — la sous-section apparaît TOUTE SEULE le jour où la table est mergée.
-    if "parcel_solar" in avail and {"score"} <= _existing_columns(db, "parcel_solar"):
-        r = db.execute(text("SELECT score FROM parcel_solar WHERE idu = :idu"),
-                       {"idu": idu}).mappings().first()
-        if r and r["score"] is not None:
-            out["solaire"] = {"score": _i(r["score"])}
     if "parcel_anc" in avail and {"zone_anc"} <= _existing_columns(db, "parcel_anc"):
         r = db.execute(text("SELECT zone_anc FROM parcel_anc WHERE idu = :idu"),
                        {"idu": idu}).mappings().first()

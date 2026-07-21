@@ -12,7 +12,6 @@ const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
   { key: 'zonage_parcelle', label: 'Zonage PLU (par parcelle)', hint: 'chaque parcelle colorée par sa zone rattachée (U/AU/A/N) — zone précise au zoom ≥ 16 et au clic' },
   { key: 'parcelles', label: 'Parcelles', hint: 'colorées par statut' },
   { key: 'ppr', label: 'PPR multirisque' },
-  { key: 'vue_mer', label: 'Vue mer', hint: 'liseré cyan (vue dégagée)' },
   { key: 'parc', label: 'Parc national' },
   { key: 'limites', label: 'Limites parcelles', hint: 'contours de toutes les parcelles' },
   { key: 'communes', label: 'Limites communes', hint: 'contours communaux officiels (ligne verte)' },

@@ -5,14 +5,14 @@ import { useApplySearch } from '../../lib/useApplySearch'
 import { useApp } from '../../store/useApp'
 import { ProjetEntretien } from '../projets/ProjetEntretien'
 
-// VUES item 3 (12/07) — exemples qui VENDENT les signaux différenciants (BODACC, vue mer,
+// VUES item 3 (12/07) — exemples qui VENDENT les signaux différenciants (BODACC,
 // pollution, ICPE, SDP, exclusions), chacun VÉRIFIÉ en réel : traduction non-stub + > 0
 // résultats (mapping exemple → filtres au RAPPORT_VUES_POLISH.md). « dirigeant âgé »,
 // « hors île/détention longue », « Brûlantes », « clôture piscine » ne sont PAS traduisibles
 // par le schéma NL du dashboard (out_of_scope vérifié) — reformulés au plus près.
 const EXAMPLES = [
   'les parcelles en procédure collective',
-  'chaudes avec vue mer de plus de 1 000 m²',
+  'chaudes de plus de 1 000 m²',
   'les chaudes de Saint-Paul en procédure collective',
   'sol pollué de plus de 2 000 m² dans l’Ouest',
   'SDP d’au moins 800 m² hors zone à risque',
@@ -115,7 +115,7 @@ export function IAStub() {
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && text.trim() && run(text)}
-                placeholder="ex. les chaudes avec vue mer de plus de 1 000 m²"
+                placeholder="ex. les chaudes de plus de 1 000 m²"
                 className="min-w-0 flex-1 rounded-xl border border-line-2 bg-surface-3 px-3.5 py-2.5 text-sm text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none"
               />
               <button onClick={() => text.trim() && run(text)} disabled={search.isPending}

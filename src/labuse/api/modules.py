@@ -776,16 +776,12 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     # fiscal / leviers (bilan promoteur — données en base + hypothèses ÉTIQUETÉES)
     qpv = bool(db.execute(text("""SELECT 1 FROM spatial_layers q JOIN parcels p ON p.idu = :i
         WHERE q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975) LIMIT 1"""), {"i": idu}).scalar())
-    vue = db.execute(text("SELECT vue FROM parcel_vue_mer vm JOIN parcels p ON p.id = vm.parcel_id WHERE p.idu = :i"),
-                     {"i": idu}).scalar()
     out["fiscal"] = {
         "qpv": qpv,
         "tva": ("2,1 % (LLS en QPV — LODEOM) au lieu de 8,5 % DOM" if qpv
                 else "8,5 % (taux DOM) — 2,1 % possible en LLS selon montage"),
         "ta_note": "Taxe d'aménagement : taux communal à confirmer en mairie (non ingéré) — "
                    "hypothèse indicative 5 % + part départementale.",
-        "vue_mer": vue,
-        "prime_vue_mer": "prime de prix de sortie (vue dégagée)" if vue == "oui" else None,
     }
     # RTAA DOM (mandat contexte-commune, 5bis) — rappel réglementaire de conception,
     # vérifié sur Légifrance (config/rtaa_dom.yaml), hors scoring

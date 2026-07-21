@@ -142,7 +142,6 @@ function AddFilter() {
             </div>
             <div className="mb-3 flex flex-col gap-1.5">
               <CheckRow label="Avec événement (BODACC)" on={filters.evenement} toggle={() => setFilter('evenement', !filters.evenement)} />
-              <CheckRow label="Vue mer dégagée" on={filters.vueMer} toggle={() => setFilter('vueMer', !filters.vueMer)} />
               <CheckRow label="Veille succession" on={filters.veille} toggle={() => setFilter('veille', !filters.veille)} />
               <CheckRow label="Masquer les copropriétés" on={filters.horsCopro} toggle={() => setFilter('horsCopro', !filters.horsCopro)} />
             </div>

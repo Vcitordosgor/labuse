@@ -425,7 +425,6 @@ const BENEFICE_PAR_SLUG: Record<string, (n: number | null) => string> = {
   'parc-piscines-entretien': (n) => n != null
     ? `${n.toLocaleString('fr-FR')} piscines localisées sur l'île : entretien, rénovation, sécurité.`
     : 'Des piscines localisées sur l\'île : entretien, rénovation, sécurité.',
-  'pv-residentiel': () => 'Toits bien exposés, factures élevées, pas de panneaux : le solaire qui a du sens.',
 }
 const PICTO_PAR_SLUG: Record<string, JSX.Element> = {
   // pergola : toile + deux montants
@@ -450,14 +449,6 @@ const PICTO_PAR_SLUG: Record<string, JSX.Element> = {
   'parc-piscines-entretien': (
     <><path d="M3 8.5 Q5 7 7 8.5 T11 8.5 T15 8.5 T17 8.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
       <path d="M3 13 Q5 11.5 7 13 T11 13 T15 13 T17 13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.65" /></>
-  ),
-  // soleil + panneau
-  'pv-residentiel': (
-    <><circle cx="6.5" cy="6.5" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.4" />
-      <line x1="6.5" y1="2" x2="6.5" y2="3" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <line x1="2" y1="6.5" x2="3" y2="6.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <rect x="9.5" y="10" width="7.5" height="6" rx="0.8" fill="none" stroke="currentColor" strokeWidth="1.4" />
-      <line x1="13.25" y1="10" x2="13.25" y2="16" stroke="currentColor" strokeWidth="1.1" opacity="0.6" /></>
   ),
 }
 //: repli par catégorie pour les presets créés après coup (dupliqués, variantes admin)

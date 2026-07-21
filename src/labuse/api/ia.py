@@ -102,7 +102,6 @@ FILTER_SCHEMA = {
         "surfaceMax": {"type": ["integer", "null"], "minimum": 0},
         "sdpMin": {"type": ["integer", "null"], "minimum": 0},
         "evenement": {"type": "boolean"},
-        "vueMer": {"type": "boolean"},
         # M11 B2 : propriétaire personne morale (DGFiP public — SCI/société/commune/HLM…) + zonage PLU par famille
         "personneMorale": {"type": "boolean"},
         "zonage": {"type": "array", "items": {"enum": ["U", "AU", "A", "N"]}},
@@ -213,10 +212,10 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
     if _VERBES_HORS_PERIMETRE.search(low):
         return None, ("Hors périmètre : je ne peux ni modifier, ni supprimer, ni rédiger, ni "
                       "envoyer quoi que ce soit — je traduis seulement votre demande en critères "
-                      "de recherche foncière (commune, statut, vue mer, surface, SDP, score). "
+                      "de recherche foncière (commune, statut, surface, SDP, score). "
                       "Reformulez avec des critères ?")
     f: dict = {"tiers": [], "scoreMin": None, "surfaceMin": None, "surfaceMax": None,
-               "sdpMin": None, "evenement": False, "vueMer": False, "veille": False,
+               "sdpMin": None, "evenement": False, "veille": False,
                "flags": [], "commune": None, "personneMorale": False, "zonage": []}
     hits = []
     commune = _detect_commune(low)
@@ -240,9 +239,6 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
     if re.search(r"succession|h[ée]ritage|veille", low):
         f["veille"] = True
         hits.append("veille succession")
-    if re.search(r"vue\s*mer|front de mer|voit la mer", low):
-        f["vueMer"] = True
-        hits.append("vue mer")
     if re.search(r"événement|evenement|bodacc|liquidation|procédure", low):
         f["evenement"] = True
         hits.append("événement BODACC")
@@ -285,7 +281,7 @@ def _stub_nl(t: str) -> tuple[dict | None, str]:
         hits.append(f"Q ≥ {f['scoreMin']}")
     if not hits:
         return None, ("Hors périmètre : je sais traduire des critères de recherche foncière "
-                      "(commune, statut, vue mer, surface, SDP, score, événement, flags). Reformulez ?")
+                      "(commune, statut, surface, SDP, score, événement, flags). Reformulez ?")
     return f, "Filtres appliqués : " + ", ".join(hits) + "."
 
 
@@ -293,7 +289,7 @@ _NL_SYSTEM = """Tu traduis une demande de prospection foncière (La Réunion) en
 UN SEUL objet JSON brut — pas de markdown, pas de ```, pas de texte autour. Trois formes possibles :
 1. Recherche filtrable → objet conforme à ce schéma (champs non mentionnés = valeur neutre [], null, false) :
 {schema}
-   Correspondances : « vue mer/bord de mer » → vueMer ; « usine/industriel » → flags icpe ;
+   Correspondances : « usine/industriel » → flags icpe ;
    « pollué » → flags sol_pollue ; « inondation/risque » → flags risques ; « monument » → flags abf ;
    « bodacc/liquidation/événement » → evenement ; « succession/héritage » → veille.
    « détenue/détenues par une personne morale / une société / une SCI / une entreprise » →

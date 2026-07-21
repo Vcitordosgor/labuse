@@ -83,7 +83,6 @@ function toExpr(f: Filters): maplibregl.FilterSpecification {
   if (f.surfaceMax != null) c.push(['<=', ['coalesce', ['get', 'surface_m2'], 0], f.surfaceMax])
   if (f.sdpMin != null) c.push(['>=', ['coalesce', ['get', 'sdp_residuelle_m2'], -1], f.sdpMin])
   if (f.evenement) c.push(['==', ['get', 'evenement'], 'rouge'])
-  if (f.vueMer) c.push(['==', ['get', 'vue_mer'], 'oui'])
   if (f.veille) c.push(['==', ['coalesce', ['get', 'veille'], false], true])
   if (f.horsCopro) c.push(['!=', ['coalesce', ['get', 'copro_v2'], false], true])
   if (f.flags.length) c.push(['any', ...f.flags.map((fl) => ['in', fl, ['get', 'flags']] as maplibregl.ExpressionSpecification)])
@@ -270,15 +269,6 @@ export function MapView() {
       m.addLayer({ id: 'parcels-limites', type: 'line', source: 'parcels', layout: { visibility: 'none' },
         paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       m.addLayer({ id: 'parcels-line', type: 'line', source: 'parcels', filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
-      // Point 10 : la couche « Vue mer » montre TOUTES les parcelles à vue dégagée (plus seulement
-      // les promues) — liseré cyan épaissi + halo, pour un effet nettement visible quand activée.
-      m.addLayer({
-        id: 'parcels-vuemer', type: 'line', source: 'parcels', layout: { visibility: 'none' },
-        filter: ['==', ['get', 'vue_mer'], 'oui'] as never,
-        paint: { 'line-color': '#7DE8E0',
-                 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.6, 14, 2.6],
-                 'line-opacity': 0.95, 'line-blur': 0.4 },
-      })
       m.addLayer({ id: 'parcels-sel', type: 'line', source: 'parcels', filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
       // M5.1 — badge carte : liseré braise sur les BRÛLANTES v2 (hors étage 0), et pastille
       // « #rang » sur les opportunités v2 au zoom rapproché (mode commune). Le badge « V nn »
@@ -327,11 +317,6 @@ export function MapView() {
         paint: { 'line-color': '#8FA69A', 'line-width': 0.3, 'line-opacity': 0.4 } })
       m.addLayer({ id: 'ile-line', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
-      m.addLayer({ id: 'ile-vuemer', type: 'line', ...SL, layout: { visibility: 'none' },
-        filter: ['==', ['get', 'vue_mer'], 'oui'] as never,
-        paint: { 'line-color': '#7DE8E0',
-                 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1.6, 14, 2.6],
-                 'line-opacity': 0.95, 'line-blur': 0.4 } })
       m.addLayer({ id: 'ile-sel', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
       // M6.1 : étiquette zone PLU en mode île — ne rend que si les tuiles portent zone_lib
@@ -527,11 +512,9 @@ export function MapView() {
     m.setLayoutProperty('parcels-fill', 'visibility', vis(layers.parcelles && !ile))
     m.setLayoutProperty('parcels-line', 'visibility', vis(layers.parcelles && !ile))
     m.setLayoutProperty('parcels-limites', 'visibility', vis(layers.limites && !ile))
-    m.setLayoutProperty('parcels-vuemer', 'visibility', vis(layers.vue_mer && layers.parcelles && !ile))
     m.setLayoutProperty('ile-fill', 'visibility', vis(layers.parcelles && ile))
     m.setLayoutProperty('ile-line', 'visibility', vis(layers.parcelles && ile))
     m.setLayoutProperty('ile-limites', 'visibility', vis(layers.limites && ile))
-    m.setLayoutProperty('ile-vuemer', 'visibility', vis(layers.vue_mer && layers.parcelles && ile))
     m.setLayoutProperty('ile-sel', 'visibility', vis(ile))
     m.setLayoutProperty('ile-hl', 'visibility', vis(ile))
     m.setLayoutProperty('ov-zonage', 'visibility', vis(layers.zonage && !ile))

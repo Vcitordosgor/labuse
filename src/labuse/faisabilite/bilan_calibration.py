@@ -18,7 +18,6 @@ CALIBRATION: dict[str, tuple[float, str]] = {
     "prix_m2_neuf": (4900.0, "sourcee"),   # neuf Saint-Paul 2024 ~4 920 €/m² (corroboré marché ~5 200)
     "prix_m2_lls": (2900.0, "estimee"),    # cession VEFA→bailleur ~prix de revient social DOM
     "ratio_vendable": (0.80, "estimee"),   # SDP brute → habitable vendable (standard 0,78-0,85)
-    "bonus_vue_mer_pct": (15.0, "estimee"),  # prime vue mer dégagée (balnéaire Réunion, 10-25 %)
     # Coûts
     "cout_construction_m2_sdp": (2100.0, "estimee"),  # bâti seul, collectif DOM (métropole 1340-1480 + surcoût)
     "cout_vrd_base": (90.0, "estimee"),               # VRD/viabilisation €/m² terrain

@@ -126,7 +126,7 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
                s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
                (d.status IN ('exclue', 'faux_positif_probable'))::int AS etage0,
-               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
+               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite,
                CASE WHEN ev.parcel_id IS NOT NULL THEN 'rouge' END AS evenement,
                COALESCE(fl.flags, '') AS flags,
                zp.zone_lib, zp.zone_fam
@@ -135,7 +135,6 @@ def build_mvt_table(db: Session, run_label: str = RUN) -> int:
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
         LEFT JOIN parcel_zone_plu zp ON zp.idu = p.idu
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
         LEFT JOIN (SELECT parcel_id, string_agg(DISTINCT layer_name, ',') AS flags
@@ -220,7 +219,7 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
              "m.idu, m.commune, m.surface_m2, m.status, m.q_score, m.a_score, "
              f"{v2_props_full}{zone_props_full}"
              "m.a_completude, m.completeness_score, m.sdp_residuelle_m2, "
-             "m.sous_densite, m.vue_mer, m.evenement, m.flags")
+             "m.sous_densite, m.evenement, m.flags")
     data = db.execute(text(f"""
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
         mvt AS (

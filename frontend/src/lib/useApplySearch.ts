@@ -22,7 +22,6 @@ export function filtresToFilters(f: Record<string, unknown>): Filters {
     surfaceMax: (f.surfaceMax as number | null) ?? null,
     sdpMin: (f.sdpMin as number | null) ?? null,
     evenement: !!f.evenement,
-    vueMer: !!f.vueMer,
     veille: !!f.veille,
     horsCopro: !!f.horsCopro,
     flags: (f.flags as string[]) ?? [],

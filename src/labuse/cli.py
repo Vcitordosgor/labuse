@@ -932,58 +932,6 @@ def ingest_abf_cmd() -> None:
                f"{b['abords']} abords, {b['parcelles_intersectees']} parcelles intersectées.")
 
 
-@app.command("warm-vue-mer")
-def warm_vue_mer_cmd(
-    commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),
-    max_dist: int = typer.Option(2000, help="Rayon côtier (m) : parcelles à ≤ max_dist du trait de côte."),
-    batch: int = typer.Option(200, help="Commit + log de progression tous les N parcelles."),
-) -> None:
-    """Pré-chauffe le cache VUE MER (parcel_vue_mer) sur les parcelles littorales de la commune.
-    Réutilise api.enrichment.vue_mer (profil RGE ALTI). Idempotent (saute les parcelles déjà
-    en cache), throttlé à la cadence RGE ALTI (~5 req/s, comme _alti_query)."""
-    import time
-    from collections import Counter
-
-    from .api.enrichment import _live_enabled, vue_mer
-
-    insee = commune if (commune and commune.isdigit()) else get_settings().pilot_commune_insee
-    nom = _commune_nom(insee)
-    if nom is None:
-        typer.echo(f"✗ INSEE {insee} inconnu au référentiel des 24 communes de La Réunion.")
-        raise typer.Exit(1)
-    if not _live_enabled():
-        typer.echo("✗ Mode live RGE ALTI désactivé (LABUSE_ENRICH_LIVE=0) — aucun calcul possible.")
-        raise typer.Exit(1)
-
-    with session_scope() as s:
-        ids = [r[0] for r in s.execute(text(
-            """SELECT p.id FROM parcels p
-               WHERE p.commune = :c
-                 AND EXISTS (SELECT 1 FROM spatial_layers l WHERE l.kind = 'trait_de_cote'
-                             AND ST_DWithin(p.geom_2975, l.geom_2975, :d))
-                 AND NOT EXISTS (SELECT 1 FROM parcel_vue_mer v WHERE v.parcel_id = p.id)
-               ORDER BY p.id"""), {"c": nom, "d": float(max_dist)}).all()]
-        total = len(ids)
-        typer.echo(f"Pré-chauffe vue mer — {nom} : {total} parcelles littorales (≤ {max_dist} m) à calculer.")
-        if not total:
-            typer.echo("✓ Rien à faire (déjà en cache ou aucune parcelle côtière).")
-            return
-        tally: Counter = Counter()
-        for i, pid in enumerate(ids, 1):
-            try:
-                res = vue_mer(s, pid)
-                tally[res.get("vue") if res.get("available") else "indispo"] += 1
-            except Exception:  # noqa: BLE001 - une parcelle ne casse pas le lot
-                tally["erreur"] += 1
-            time.sleep(0.21)   # throttle RGE ALTI ~5 req/s (même cadence que _alti_query)
-            if i % batch == 0 or i == total:
-                s.commit()
-                typer.echo(f"    {i}/{total} · oui={tally['oui']} partielle={tally['partielle']} "
-                           f"non={tally['non']} indispo={tally['indispo']} err={tally['erreur']}")
-    typer.echo(f"✓ Vue mer pré-chauffée : {total} parcelles ({nom}). "
-               f"oui={tally['oui']} · partielle={tally['partielle']} · non={tally['non']}")
-
-
 @app.command("compute-residuel")
 def compute_residuel_cmd(
     commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
@@ -1842,131 +1790,6 @@ def nl_eval_cmd(
         raise typer.Exit(1)
 
 
-# ───────────────────────────── Mandat Habitat Solaire ─────────────────────────────
-
-@app.command("solaire-pvgis")
-def solaire_pvgis_cmd(
-    rebuild: bool = typer.Option(False, "--rebuild", help="Reconstruit la grille (repart de zéro)."),
-    rps: float = typer.Option(None, help="Requêtes/s vers PVGIS (défaut settings, 10)."),
-    limit: int = typer.Option(None, help="Nb max de points à récupérer (tests)."),
-) -> None:
-    """Lot 1 (habitat-solaire) : baseline PVGIS — grille ~400 m, E_y par point (SARAH3,
-    horizon topo intégré), interpolation IDW → parcel_solar + score percentile île.
-    One-shot LONG (~17 000 appels à 10 req/s ≈ 30 min), relançable sans perte."""
-    from .ingestion import solaire_pvgis
-
-    with session_scope() as s:
-        res = solaire_pvgis.run(s, rebuild=rebuild, rps=rps, limit=limit, log=typer.echo)
-        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
-                       "WHERE name = 'PVGIS (Commission européenne)'"))
-    typer.echo(f"✓ PVGIS : {res}")
-    sanity = res.get("sanity")
-    if sanity and not sanity["ouest_sup_est"]:
-        typer.echo("⚠ Sanity Ouest>Est non vérifié — LIMITE DOCUMENTÉE de la source SARAH3 "
-                   "(nuance côtière Ouest/Est non captée ; ingestion vérifiée fidèle, gradient "
-                   "d'altitude OK). Détail : RAPPORT_HABITAT_SOLAIRE.md.")
-
-
-@app.command("solaire-flags")
-def solaire_flags_cmd() -> None:
-    """Lot 5 (habitat-solaire) : flags de qualification — amiante (DPE pré-1997),
-    ABF (cascade), azimut du bâti (BD TOPO), proba propriétaire-occupant
-    (Filosofi 200 m + bonus mutation DVF). Zéro ingestion, pures dérivations."""
-    from .ingestion import solaire_flags
-
-    with session_scope() as s:
-        res = solaire_flags.run(s, log=typer.echo)
-    typer.echo(f"✓ Flags solaire : {res}")
-
-
-@app.command("solaire-conso")
-def solaire_conso_cmd() -> None:
-    """Lot 2 (habitat-solaire) : baseline EDF SEI (conso résidentielle par commune,
-    dernier millésime) puis facture ESTIMÉE par parcelle bâtie résidentielle —
-    estimation statistique, coefficients en config/habitat_solaire.yaml."""
-    from .ingestion import solaire_conso
-
-    with session_scope() as s:
-        res = solaire_conso.run(s, log=typer.echo)
-        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
-                       "WHERE name = 'EDF SEI Réunion — open data'"))
-    typer.echo(f"✓ Conso/facture estimées : {res}")
-    if not res.get("plausible", True):
-        raise typer.Exit(1)
-
-
-@app.command("solaire-tertiaire")
-def solaire_tertiaire_cmd(
-    export: str = typer.Option(None, help="Chemin d'export CSV (optionnel)."),
-) -> None:
-    """Lot 6 (habitat-solaire) : vue matérialisée toitures tertiaires > 500 m²
-    × propriétaire PM × bilan INPI × gisement PVGIS × poste source. Zéro ingestion."""
-    from pathlib import Path
-
-    from .ingestion import solaire_tertiaire
-
-    with session_scope() as s:
-        res = solaire_tertiaire.refresh(s)
-        typer.echo(f"✓ mv_toitures_tertiaires : {res}")
-        if export:
-            Path(export).parent.mkdir(parents=True, exist_ok=True)
-            Path(export).write_text(solaire_tertiaire.export_csv(s), encoding="utf-8-sig")
-            typer.echo(f"✓ export : {export}")
-
-
-@app.command("solaire-parkings")
-def solaire_parkings_cmd() -> None:
-    """Lot 3 (habitat-solaire) : parkings assujettis loi APER (OSM déjà en base,
-    seuil Réunion 1 000 m² — décret 2025-802), rattachement parcelles + PM DGFiP,
-    signal aper_deadline (échéance < 24 mois OU dépassée)."""
-    from .ingestion import parkings_aper
-
-    with session_scope() as s:
-        res = parkings_aper.run(s, log=typer.echo)
-        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
-                       "WHERE name = 'Parkings OSM (loi APER)'"))
-    typer.echo(f"✓ Parkings APER : {res}")
-
-
-@app.command("solaire-pv-registry")
-def solaire_pv_registry_cmd() -> None:
-    """Lot 4 (habitat-solaire) : registre national des installations (extrait 974,
-    EDF SEI/ODRÉ) → pv_registry, communes à forte densité de petites installations,
-    vivier repowering 2006-2013 (contrats d'achat 20 ans en fin de vie)."""
-    from .ingestion import solaire_pv_registry
-
-    with session_scope() as s:
-        res = solaire_pv_registry.run(s, log=typer.echo)
-        s.execute(text("UPDATE data_sources SET last_sync_at = now() "
-                       "WHERE name = 'Registre national des installations (ODRÉ)'"))
-    typer.echo(f"✓ Registre PV : {res}")
-
-
-@app.command("solaire-grid-capacity")
-def solaire_grid_capacity_cmd() -> None:
-    """Lot 7 (habitat-solaire, best effort) : capacités d'accueil réseau EDF SEI
-    par poste source (S3REnR). Géométries des postes NON publiées (sécurité) —
-    capacités seules, geom NULL."""
-    from .ingestion import solaire_grid_capacity
-
-    with session_scope() as s:
-        res = solaire_grid_capacity.ingest(s)
-    typer.echo(f"✓ Capacités réseau : {res}")
-
-
-@app.command("solaire-cache-purge")
-def solaire_cache_purge_cmd() -> None:
-    """Lot 8 (habitat-solaire) : purge STRICTE du cache Google Solar API au-delà du
-    TTL 30 jours (conformité ToS Google — pas de stockage permanent). Le refresh
-    est LAZY : une entrée purgée n'est re-téléchargée que si elle est re-consultée."""
-    ttl = get_settings().solar_api_cache_ttl_jours
-    with session_scope() as s:
-        n = s.execute(text(
-            "DELETE FROM solar_api_cache WHERE fetched_at < now() - make_interval(days => :d)"),
-            {"d": ttl}).rowcount
-    typer.echo(f"✓ Cache Solar API : {n} entrée(s) purgée(s) (TTL {ttl} j)")
-
-
 # ─────────────────────────── Wave Détection Ortho ───────────────────────────
 
 @app.command("ortho-pente")
@@ -2297,12 +2120,12 @@ def vegetation_irc_cmd(
 
 @app.command("vegetation")
 def vegetation_cmd(
-    etape: str = typer.Option("tout", help="tuiles | finalize | flags | signal | tout"),
+    etape: str = typer.Option("tout", help="tuiles | finalize | signal | tout"),
     limit: int = typer.Option(None, help="Nb max de tuiles (tests)."),
 ) -> None:
     """Lot B2-B3 (wave ANC & Végétation) : NDVI (IRC) × MNH LiDAR HD streamé par tuile,
     agrégats canopée par parcelle (parcelle / bande limite 3 m / buffer bâti 8 m),
-    flag_ombrage_vegetal (solaire) + signal vegetation_haute_limite. Relançable."""
+    signal vegetation_haute_limite. Relançable. (flag solaire : parti au spin-off vues+solaire.)"""
     from .ingestion import vegetation
 
     with session_scope() as s:
@@ -2315,8 +2138,6 @@ def vegetation_cmd(
             if not sanity["ok"]:
                 typer.echo("✗ SANITY : NDVI Est ≤ Ouest — inversion de canaux probable, INVESTIGUER.")
                 raise typer.Exit(1)
-        if etape in ("flags", "tout"):
-            typer.echo(f"✓ flag_ombrage_vegetal : {vegetation.flag_solaire(s)}")
         if etape in ("signal", "tout"):
             typer.echo(f"✓ signal vegetation_haute_limite : {vegetation.signal_vegetation(s)}")
 
