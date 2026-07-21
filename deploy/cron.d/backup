@@ -1,0 +1,5 @@
+# LA BUSE — sauvegarde PostgreSQL quotidienne (pré-vol M7 · P4)
+# Dump -Fc + rotation (deploy/scripts/backup_postgres.sh) ; le rapatriement vers le
+# poste local est un cron LOCAL (pull_backups.sh), jamais une tâche du VPS.
+SHELL=/bin/sh
+0 3 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; /opt/labuse/app/deploy/scripts/backup_postgres.sh >> /var/log/labuse/backup.log 2>&1

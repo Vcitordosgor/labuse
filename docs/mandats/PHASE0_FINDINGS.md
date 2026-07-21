@@ -117,7 +117,12 @@ Les 9 échecs sont **pré-existants** (branche neuve, zéro modif de code) et se
   1.0) ne survit plus au `post_traitement` (0 restant au lieu de 1 → `NoResultFound`). Cause non triviale
   dans la chaîne `ortho_piscines.post_traitement` (hors chemin critique SCORING de J1).
 - **Correctif** : `@pytest.mark.skip` DOCUMENTÉ (raison + renvoi ici). **Triage propriétaire ortho requis.**
-- **Statut** : **`reporté`** (revue Vic : skip accepté ; le triage ortho est interne, plus tard — finding gardé ouvert).
+- **RÉSOLU (pré-vol M7 · P6, 21/07/2026)** : le « drift ortho » était un **drift de SCHÉMA du test** —
+  `parcel_residuel_bati` a 11 colonnes (dont `commune` en 2ᵉ position) et l'INSERT POSITIONNEL du test
+  mettait `120` dans `commune`, laissant `emprise_batie_m2` NULL → contexte 0.0 → candidat rejeté
+  (`sans_contexte`) → `NoResultFound`. **Le code ortho est CORRECT** (même famille que F3/F5 : test
+  périmé). Fix : colonnes explicites dans l'INSERT ; skip levé ; `test_ortho_detection` **5/5**.
+- **Statut** : **`traité`** — plus aucun finding Phase 0 ouvert.
 
 ---
 
@@ -129,7 +134,9 @@ Les 9 échecs sont **pré-existants** (branche neuve, zéro modif de code) et se
 - **Piste (revue Vic)** : micro-refactor dans un lot ultérieur — **session injectée, `commit()` remonté à
   la frontière CLI** (les fonctions cœur ne committent plus). Rend `build_*` testables de bout en bout et
   supprime le risque de pollution. **Rien à faire maintenant.**
-- **Statut** : **`reporté`** (candidat micro-refactor, lot ultérieur).
+- **Statut** : **`traité`** (nuit 2026-07-21, lot N4 — vérifié au pré-vol M7 P6 : `ext_sql.py` ne
+  committe plus, « commit délégué à l'appelant (rebuild_features / frontière CLI) » aux 4 sites ; ce doc
+  n'avait simplement pas été mis à jour).
 
 ---
 

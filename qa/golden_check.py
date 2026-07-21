@@ -13,7 +13,9 @@ Usage (à lancer après chaque refresh de données) :
 
 Environnement :
     LABUSE_DATABASE_URL  (défaut postgresql://openclaw@localhost:5432/labuse — la partie +psycopg est acceptée)
+    LABUSE_QA_TARGET     cible QA distante (M7 : le VPS) — prime sur LABUSE_API_BASE
     LABUSE_API_BASE      (défaut http://127.0.0.1:8010)
+    (--base-url prime sur les deux ; la face DB suit LABUSE_DATABASE_URL)
 
 Code retour : 0 si 100 % PASS, 1 si au moins un écart (FAIL), 2 si erreur d'exécution.
 
@@ -49,7 +51,10 @@ from psycopg.rows import dict_row
 
 DB_URL = (os.environ.get("LABUSE_DATABASE_URL")
           or "postgresql://openclaw@localhost:5432/labuse").replace("+psycopg", "")
-API_BASE = os.environ.get("LABUSE_API_BASE", "http://127.0.0.1:8010").rstrip("/")
+# Pré-vol M7 P2 — cible QA paramétrable : --base-url > LABUSE_QA_TARGET > LABUSE_API_BASE > localhost.
+# Défaut inchangé (localhost:8010). C'est le geste que M7 fera contre le VPS.
+API_BASE = os.environ.get("LABUSE_QA_TARGET",
+                          os.environ.get("LABUSE_API_BASE", "http://127.0.0.1:8010")).rstrip("/")
 # M8b — run cascade lu par le golden. Défaut = run SERVI (source unique Q_A_RUN_LABEL), plus
 # « q_v3_datagap » codé en dur (run mort). Override `LABUSE_GOLDEN_RUN_LABEL` pour tester un candidat.
 RUN_LABEL = os.environ.get("LABUSE_GOLDEN_RUN_LABEL")
@@ -382,10 +387,15 @@ def collect_all(idus: list[str], anchors: set[str] | None = None) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--golden", default=DEFAULT_GOLDEN)
+    ap.add_argument("--base-url", default=None,
+                    help="cible QA (ex. https://vps:8010) — prime sur LABUSE_QA_TARGET/LABUSE_API_BASE")
     ap.add_argument("--dump", action="store_true",
                     help="imprime l'état courant (JSON) sur stdout au lieu de comparer")
     ap.add_argument("--idu", nargs="*", help="limiter aux parcelles données")
     args = ap.parse_args()
+    if args.base_url:                       # P2 : override explicite de la cible
+        global API_BASE
+        API_BASE = args.base_url.rstrip("/")
 
     golden = None
     if not args.dump and os.path.exists(args.golden):

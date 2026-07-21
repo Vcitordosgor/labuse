@@ -72,3 +72,22 @@ def test_tuiles_mvt_materialisees_sur_le_run_servi():
     assert mvt_label == Q_A_RUN_LABEL, (
         f"tuiles mvt_parcels matérialisées sur {mvt_label!r} ≠ run servi {Q_A_RUN_LABEL!r} — "
         "relancer `labuse build-mvt` après la bascule")
+
+
+def test_mvt_run_label_cible_distante():
+    """Pré-vol M7 P2 — la MÊME cohérence, vérifiable contre une CIBLE DISTANTE (le geste M7 vs VPS) :
+    si LABUSE_QA_TARGET est défini, on interroge /map/tiles/meta de la cible (l'endpoint expose
+    mvt_meta.run_label) au lieu de la base locale. Sans l'env : skip — comportement par défaut inchangé."""
+    import json
+    import os
+    import urllib.request
+
+    target = os.environ.get("LABUSE_QA_TARGET")
+    if not target:
+        pytest.skip("LABUSE_QA_TARGET non défini — vérification distante réservée au geste M7")
+    with urllib.request.urlopen(f"{target.rstrip('/')}/map/tiles/meta", timeout=15) as resp:
+        meta = json.loads(resp.read().decode("utf-8"))
+    if meta.get("run_label") is None:
+        pytest.skip("cible sans tuiles construites (build-mvt jamais lancé)")
+    assert meta["run_label"] == Q_A_RUN_LABEL, (
+        f"cible distante sur {meta['run_label']!r} ≠ run servi attendu {Q_A_RUN_LABEL!r} — build-mvt à relancer sur la cible")

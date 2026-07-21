@@ -80,10 +80,6 @@ pytestmark_db = pytest.mark.db
 
 
 @pytest.mark.db
-@pytest.mark.skip(reason="F6 (Phase 0 J1) : drift ortho post_traitement — un candidat piscine rattaché "
-                         "à une parcelle bâtie (emprise 120 m² > 20, contexte attendu 1.0) ne survit "
-                         "plus (0 restant au lieu de 1). Hors périmètre du chemin critique SCORING de "
-                         "J1 ; triage propriétaire ortho requis. Cf. docs/mandats/PHASE0_FINDINGS.md (F6).")
 def test_post_traitement_rejets(db_session):
     """Rejets contextuels : hors cadastre supprimé, toit bleu supprimé, contexte scoré."""
     from labuse.ingestion.ortho_piscines import DDL, post_traitement
@@ -102,7 +98,10 @@ def test_post_traitement_rejets(db_session):
                     ST_GeomFromText('{poly}', 4326),
                     ST_Transform(ST_GeomFromText('{poly}', 4326), 2975))"""))
     db_session.execute(text(
-        "INSERT INTO parcel_residuel_bati VALUES ('97416000ZZ0001', 120)"))
+        # F6 (pré-vol M7 P6) : la vraie table a 11 colonnes (commune en 2e position) — l'INSERT
+        # positionnel mettait 120 dans `commune` et laissait emprise_batie_m2 NULL → contexte 0,
+        # candidat rejeté. Code ortho CORRECT ; test périmé. Colonnes désormais explicites.
+        "INSERT INTO parcel_residuel_bati (idu, emprise_batie_m2) VALUES ('97416000ZZ0001', 120)"))
     crit = '{"couleur": 0.8, "forme": 0.8, "taille": 1.0}'
 
     def add(dx: float) -> None:

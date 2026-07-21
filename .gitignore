@@ -89,3 +89,7 @@ reports/**/DOSSIER-*.pdf
 
 # Prospection — extraits nominatifs (RNE/DGFiP) : JAMAIS en git (mandat deposants-actifs)
 exports/
+
+# Harnais de captures Playwright (P5) — les PNG ne vont jamais en git
+qa/captures/out/
+qa/qa/

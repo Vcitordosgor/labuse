@@ -2994,6 +2994,7 @@ from .carnet import router as _carnet_router  # noqa: E402  (O7 — carnet de se
 from .tension import router as _tension_router  # noqa: E402  (O8 — tension foncière, MASQUÉ)
 from .rarete import router as _rarete_router  # noqa: E402  (O9 — pipeline de rareté)
 from .operations import router as _operations_router  # noqa: E402  (O11 — opérations & lots)
+from .ops import router as _ops_router  # noqa: E402  (P4 — /healthz/crons)
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .segments import router as _segments_router  # noqa: E402
@@ -3018,6 +3019,7 @@ app.include_router(_carnet_router)
 app.include_router(_tension_router)
 app.include_router(_rarete_router)
 app.include_router(_operations_router)
+app.include_router(_ops_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
 app.include_router(_ia_router)
