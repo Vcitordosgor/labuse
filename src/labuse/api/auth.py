@@ -29,7 +29,7 @@ FAILURE_DELAY_S = 0.4          # ralentit la force brute sans pénaliser l'utili
 
 # Toujours accessibles sans session (process/monitoring + cycle de connexion).
 # /readyz est public mais son HANDLER réduit les détails sans session (cf. app.readyz).
-_PUBLIC = {"/health", "/healthz", "/readyz", "/login", "/logout", "/favicon.ico"}
+_PUBLIC = {"/health", "/healthz", "/healthz/crons", "/readyz", "/login", "/logout", "/favicon.ico"}
 # Documentation auto (surface de découverte de l'API) : publique en local seulement.
 _DOCS = {"/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"}
 

@@ -38,3 +38,19 @@ permits.py, générique). La voie ODS reste en legacy documenté, appelée par p
 - **Finding rate-limit (piège documenté re-confirmé)** : deux goldens enchaînés contre la même instance
   sans `LABUSE_DEV_MODE=1` → 4 FAIL par throttle 429 (pas une régression). M7 devra lancer le golden
   VPS avec dev_mode actif ou espacer les runs.
+
+## P4 · Kit deploy/ complété (écrit, pas exécuté) ✅
+
+**Inventaire des manques → écrits en idempotent, rien exécuté sur un VPS (aucun ssh) :**
+| Manque | Livré |
+|---|---|
+| **Cron mort-vivant** : `deploy/cron.d/solaire` appelait 7 commandes retirées par M3 (aurait planté chaque mois) | **Retiré** (les données solaire dorment, aucune tâche ne doit tourner) |
+| Aucun cron n'appelait `backup_postgres.sh` | `deploy/cron.d/backup` (3h, quotidien) |
+| Pas de rapatriement des sauvegardes | `deploy/scripts/pull_backups.sh` — **pull depuis le poste local** (le VPS ne détient aucun credential vers chez nous), rsync delta + rotation locale + contrôle `pg_restore --list` |
+| Pas de procédure ufw | `deploy/scripts/ufw_setup.sh` — SSH rate-limité EN PREMIER, garde anti-lock-out (abandon si la règle SSH manque), enable en dernier |
+| Pas d'état des crons observable | **`GET /healthz/crons`** (routeur additif `api/ops.py`, public comme /healthz) : âge du dernier passage lu dans `ingestion_runs`/`data_sources.last_sync_at` — un cron mort se voit en un GET ; « jamais_vu »/« non_trace_db » honnêtes, jamais un faux OK |
+| `.env.example` : ~10 variables sur ~40 | Complété : `LABUSE_SERVED_RUN` (+ warning VITE_RUN_LABEL/build-mvt), quotas/anti-abus, `LABUSE_DEV_MODE`, INPI, Stripe (Flash), Merci Facteur, SMTP, `LABUSE_QA_TARGET` (P2), rotation locale backups — placeholders, zéro secret |
+
+Vérifié en local : `/healthz/crons` sur la base réelle → sitadel ok (11 j), ban ok (10,8 j), catnat
+« jamais_vu » (vrai : jamais tourné ici), abuse/backup « non_trace_db » (documenté).
+`tests/test_ops_healthz.py` 3/3 (dont : le cron solaire mort ne réapparaît pas).
