@@ -16,7 +16,9 @@ export function TierBadge({ tier, etage0, statut }: {
     <span className="text-[11px]" style={{ color: meta.color }}>
       {meta.label}
       {t && statut && (
-        <span className="ml-1 text-[9px] text-txt-dim">
+        /* R3 (PJ5) — désambiguïsation quand les deux classements coexistent côte à côte */
+        <span className="ml-1 text-[9px] text-txt-dim"
+          title="Deux classements distincts : le tier (échelle thermique) vient du scoring P servi ; la matrice Q×A historique parle « dossier » (Priorité dossier…) — ce n'est pas le même calcul.">
           (matrice : {STATUT_META[statut as Statut]?.label ?? statut})
         </span>
       )}

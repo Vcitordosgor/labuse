@@ -961,7 +961,8 @@ export function Fiche({ idu }: { idu: string }) {
       )}
       {f?.evenement === 'rouge' && (
         <div className="shrink-0 border-b border-[#5a2420] bg-[#3a1614] px-5 py-2.5">
-          <div className="flex items-center gap-2 text-xs font-medium text-st-ecartee">● ÉVÉNEMENT — force « chaude »</div>
+          {/* R3 (PJ5) : vocabulaire matrice non thermique — « priorité dossier » (thermique = tier P servi) */}
+          <div className="flex items-center gap-2 text-xs font-medium text-st-ecartee">● ÉVÉNEMENT — force « priorité dossier »</div>
           {f.evenement_detail && <div className="mt-1 text-[11px] leading-snug text-[#e8a99f]">{f.evenement_detail}</div>}
         </div>
       )}
@@ -1108,7 +1109,7 @@ export function Fiche({ idu }: { idu: string }) {
           <>
             {f.evenement === 'rouge' && f.statut === 'chaude' && (
               <div data-histoire-evenement className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
-                Chaude par <b className="text-st-ecartee">ÉVÉNEMENT</b> : le propriétaire
+                Priorité dossier par <b className="text-st-ecartee">ÉVÉNEMENT</b> : le propriétaire
                 {f.proprietaire_moral?.denomination ? <> (<b>{f.proprietaire_moral.denomination}</b>)</> : ''} est en
                 procédure collective{f.evenement_detail ? <> — {f.evenement_detail.replace(/^.*?:\s*/, '')}</> : ''}.
                 Le score qualité ({f.q_score}) n'a pas déclenché ce statut : c'est l'urgence

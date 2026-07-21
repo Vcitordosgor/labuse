@@ -69,3 +69,44 @@ def test_r2_pas_de_raccourcis_inventes():
     # aucun raccourci clavier n'existe sur les décisions — on n'en affiche pas (règle du lot)
     assert "onKeyDown" not in TINDER.split("DecisionCard")[1]
     assert "on n'en invente pas" in TINDER
+
+
+# ───────────── R3 · PJ5 — tooltips ×N + jauge, et wording « deux brûlantes » ─────────────
+
+RESULTS = (ROOT / "frontend/src/components/panel/ResultsSection.tsx").read_text(encoding="utf-8")
+STATUS = (ROOT / "frontend/src/lib/status.ts").read_text(encoding="utf-8")
+LEGEND = (ROOT / "frontend/src/components/map/Legend.tsx").read_text(encoding="utf-8")
+TIERBADGE = (ROOT / "frontend/src/components/outils/TierBadge.tsx").read_text(encoding="utf-8")
+MAPVIEW = (ROOT / "frontend/src/components/map/MapView.tsx").read_text(encoding="utf-8")
+
+
+def test_r3_tooltip_multiplicateur_de_rang():
+    assert "data-mult-tip" in RESULTS
+    assert "Multiplicateur de rang" in RESULTS
+    assert "au-dessus de la moyenne de l'univers analysé" in RESULTS
+    assert "RR" not in RESULTS                      # jamais un chiffre de perf in-sample en surface
+
+
+def test_r3_tooltip_jauge_completude():
+    assert "part des sources disponibles" in RESULTS
+    assert "N'est PAS une note de qualité du terrain" in RESULTS
+
+
+def test_r3_matrice_non_thermique():
+    # échelle thermique RÉSERVÉE au tier P servi ; matrice Q×A = « Priorité dossier »
+    assert "label: 'Priorité dossier'" in STATUS
+    assert "label: 'Chaude'," not in STATUS         # plus de « Chaude » matrice
+    assert "label: 'Brûlante v2'" in STATUS and "label: 'Chaude v2'" in STATUS   # thermique v2 conservé
+
+
+def test_r3_desambiguisation_cote_a_cote():
+    # TierBadge (les deux classements côte à côte) porte le tooltip d'explication
+    assert "Deux classements distincts" in TIERBADGE
+    # légende matrice contextualisée (jamais un « VERDICT » thermique ambigu)
+    assert "VERDICT · MATRICE Q×A" in LEGEND
+
+
+def test_r3_marqueur_commune_non_thermique():
+    # le compteur commune (matrice_statut='chaude' côté backend) s'affiche en vocabulaire dossier
+    assert "en priorité dossier (matrice Q×A)" in MAPVIEW
+    assert "chaude${c.chaudes" not in MAPVIEW       # l'ancien wording thermique a disparu
