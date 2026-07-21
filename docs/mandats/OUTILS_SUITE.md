@@ -114,3 +114,31 @@ chiffre** ; la couche de validation rejette tout nombre absent des faits. **Repl
 faux signal, tout est sourcé et labellisé. **Findings O1** : (1) synthèse IA en repli déterministe tant que les crédits
 Anthropic sont épuisés — fonctionnel mais moins fluide ; (2) gating `dossier_parcelle` (Essentiel) — à confirmer si le
 dossier banquier doit être un cran au-dessus (Intégral).
+
+---
+
+## O2 · Scoreur d'adresse inversé ✅
+
+**« Je visite ce terrain, qu'en dit LA BUSE ? »** Entrée : une adresse (+ prix DEMANDÉ **saisi à la main**, jamais
+scrapé). `POST /scoreur-adresse` (`src/labuse/api/scoreur.py`).
+
+### Chemin
+adresse → **BAN** (géocodage, même client que `audit.audit_by_address`) → point → **parcelle contenant le point**
+(`ST_Contains`, déjà en base et déjà scorée) → **verdict compact** : tier du run servi (`q_v7_defisc`) + rang/percentile,
+Score É (marge €). **Île entière** — pas de restriction commune-pilote : on lit une parcelle déjà scorée, **aucune
+ingestion live**, zéro scraping.
+
+### Confrontation du prix demandé (si fourni)
+Le prix saisi (Estimé du marché) est confronté à la **charge foncière supportable** et au **prix probable du foncier**
+(Score É V2, O0) : `opportunite` (≤ charge supportable, marge résiduelle affichée), `dans_le_marche` (≤ prix probable
++10 %), `cher` (au-dessus des deux), ou `non_estimable` si la charge manque. Toujours labellisé « Estimé — ni un prix ni
+une promesse ». **Adresse hors base → réponse honnête** (`ok:false`, renvoi vers l'audit cadastral), jamais un verdict inventé.
+
+### Livrable technique
+- `src/labuse/api/scoreur.py` — endpoint + logique prix.
+- `src/labuse/api/app.py` — routeur branché.
+- `tests/test_scoreur.py` — **6/6 verts** (opportunité/marché/cher/non estimable ; flux adresse→verdict ; hors base honnête).
+
+**Reco d'exposition.** **Visible** côté API ; **UI à ajouter** (barre « scorer une adresse » — aucune UI d'audit
+n'existe encore côté front). Aucun risque de faux signal (verdict = tier déjà servi + Score É labellisé). **Finding O2** :
+brancher un champ de saisie sur la fiche/carte pour l'usage terrain (visite, panneau « à vendre »).
