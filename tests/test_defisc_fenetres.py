@@ -31,6 +31,16 @@ def test_row_vefa_wording_et_bornes():
         assert dispositif not in r["detail"]
 
 
+def test_decote_libelle_recalcule():
+    # N2 — décote servie construite à partir du % + n recalculés (jamais 0,68 en dur) ; n au survol.
+    lib = dfz._decote_libelle(68, 122)
+    assert "~68 %" in lib and "n=122" in lib and "Estimé" in lib
+    assert "argument de négociation" in lib and "pas une estimation du bien affiché" in lib
+    assert dfz._decote_libelle(None, None) is None                 # pas de chiffre → pas de phrase
+    r = dfz._row("97411000AB0001", 2016, "vefa", None, 2026, decote_pct=68, decote_n=122)
+    assert r["decote_pct"] == 68 and r["decote_libelle"] is not None
+
+
 def test_row_permis_source_trace_achevement():
     r = dfz._row("97411000AB0002", 2017, "permis_achevement", 2015, ref_year=2026)
     assert r["src"] == "DVF vente 2017 + achèvement PC 2015"
@@ -58,8 +68,8 @@ def _ensure_sources(s):
     for tbl in ("dvf_mutations_histo", "dvf_mutations_parcelle"):
         s.execute(text(
             f"CREATE TABLE IF NOT EXISTS {tbl} (id bigserial, id_mutation text, id_parcelle varchar(14), "
-            "date_mutation date, nature_mutation text, type_local text, millesime smallint, "
-            "source_archive text, millesime_source int)"))
+            "date_mutation date, nature_mutation text, type_local text, valeur_fonciere double precision, "
+            "millesime smallint, source_archive text, millesime_source int)"))
     s.execute(text("CREATE TABLE IF NOT EXISTS p_model_permits (idu text, permit_id varchar(64), type varchar(8))"))
     s.execute(text("CREATE TABLE IF NOT EXISTS m10_permit_delais (permit_id varchar(64), date_achevement date)"))
 

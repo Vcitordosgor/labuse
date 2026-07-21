@@ -41,8 +41,37 @@ CREATE TABLE IF NOT EXISTS defisc_fenetres (
   libelle_badge    text    NOT NULL,       -- phrase descriptive (CSV/trace, sans date-promesse)
   libelle_court    text    NOT NULL,       -- CHIP servi : « Sortie de défisc. probable · AAAA-AAAA · Estimé »
   detail           text    NOT NULL,       -- SURVOL : mécanisme + ×2,4 sourcé + « pas une prédiction »
+  decote_pct       int,                    -- N2 : médiane revente/achat neuf (%) — recalculée DVF, NULL si N/A
+  decote_n         int,                    -- N2 : nb de couples achat→revente ayant servi à la médiane
+  decote_libelle   text,                   -- N2 : phrase « décote » servie (argument de négociation)
   updated_at       timestamptz DEFAULT now()
 );
+"""
+
+# N2 — décote de revente défisc, RECALCULÉE depuis DVF (jamais codée en dur). Pour les parcelles MONO
+# acquises en VEFA (neuf) puis revendues > 2 ans après (hors acte de livraison) : médiane du ratio
+# prix_revente / prix_achat_neuf, bornée [0,2 ; 3] (anti-artefact DVF), avec le n.
+_DECOTE_SQL = """
+WITH m AS (
+  SELECT id_parcelle AS idu, date_mutation::date AS dt, nature_mutation AS nat,
+         valeur_fonciere AS val, type_local AS tl
+  FROM dvf_mutations_histo WHERE nature_mutation IN ('Vente', :vefa) AND valeur_fonciere > 0
+  UNION ALL
+  SELECT id_parcelle, date_mutation::date, nature_mutation, valeur_fonciere, type_local
+  FROM dvf_mutations_parcelle WHERE nature_mutation IN ('Vente', :vefa) AND valeur_fonciere > 0),
+mono AS (SELECT idu FROM p_model_ext_copro WHERE NOT (COALESCE(copro_rnic,false) OR COALESCE(copro_dvf,false))),
+vefa AS (SELECT m.idu, m.dt, m.val FROM m JOIN mono ON mono.idu = m.idu WHERE m.nat = :vefa),
+couple AS (   -- revente EN FENÊTRE DE SORTIE [+5,+11] ans (contexte défisc), pas un flip rapide
+  SELECT v.val AS acq, r.val AS res
+  FROM vefa v
+  JOIN LATERAL (
+    SELECT r.val FROM m r
+    WHERE r.idu = v.idu AND r.nat = 'Vente'
+      AND r.dt BETWEEN v.dt + interval '5 years' AND v.dt + interval '11 years'
+      AND r.tl IN ('Maison','Appartement') AND r.val > 0
+    ORDER BY r.dt LIMIT 1) r ON true)
+SELECT round(100 * percentile_cont(0.5) WITHIN GROUP (ORDER BY res/acq))::int AS pct, count(*) AS n
+FROM couple WHERE res/acq BETWEEN 0.2 AND 3.0;
 """
 
 # Dernière acquisition NEUF par parcelle MONO, avec l'année Y, le proxy et l'année d'achèvement (si permis).
@@ -80,19 +109,38 @@ ORDER BY n.idu, n.dt DESC;
 _INSERT = """
 INSERT INTO defisc_fenetres
   (idu, proxy, achat_neuf_annee, fenetre_debut, fenetre_fin, fenetre_active, statut,
-   source_libelle, libelle_badge, libelle_court, detail, updated_at)
+   source_libelle, libelle_badge, libelle_court, detail, decote_pct, decote_n, decote_libelle, updated_at)
 VALUES
-  (:idu, :proxy, :y, :deb, :fin, :active, 'Estimé', :src, :badge, :court, :detail, now())
+  (:idu, :proxy, :y, :deb, :fin, :active, 'Estimé', :src, :badge, :court, :detail,
+   :decote_pct, :decote_n, :decote_libelle, now())
 ON CONFLICT (idu) DO UPDATE SET
   proxy = EXCLUDED.proxy, achat_neuf_annee = EXCLUDED.achat_neuf_annee,
   fenetre_debut = EXCLUDED.fenetre_debut, fenetre_fin = EXCLUDED.fenetre_fin,
   fenetre_active = EXCLUDED.fenetre_active, source_libelle = EXCLUDED.source_libelle,
   libelle_badge = EXCLUDED.libelle_badge, libelle_court = EXCLUDED.libelle_court,
-  detail = EXCLUDED.detail, updated_at = now();
+  detail = EXCLUDED.detail, decote_pct = EXCLUDED.decote_pct, decote_n = EXCLUDED.decote_n,
+  decote_libelle = EXCLUDED.decote_libelle, updated_at = now();
 """
 
 
-def _row(idu: str, y: int, proxy: str, ach_year: int | None, ref_year: int) -> dict:
+def _compute_decote(session) -> tuple[int | None, int | None]:
+    """N2 — médiane RECALCULÉE du ratio revente/achat-neuf (%) + n, sur les VEFA mono revendues."""
+    r = session.execute(text(_DECOTE_SQL), {"vefa": VEFA}).first()
+    if not r or r[1] is None or r[1] < 10:      # n < 10 → pas d'affirmation (pas de chiffre fragile)
+        return None, None
+    return int(r[0]), int(r[1])
+
+
+def _decote_libelle(pct: int | None, n: int | None) -> str | None:
+    if pct is None:
+        return None
+    return (f"Les biens défiscalisés se revendent en médiane à ~{pct} % de leur prix d'achat neuf "
+            f"(reventes DVF Réunion, n={n} · backtest A-1) · Estimé — argument de négociation, "
+            f"pas une estimation du bien affiché.")
+
+
+def _row(idu: str, y: int, proxy: str, ach_year: int | None, ref_year: int,
+         decote_pct: int | None = None, decote_n: int | None = None) -> dict:
     deb, fin = y + 6, y + 11
     active = (deb <= ref_year + 2) and (fin >= ref_year)          # bande ∩ [ref_year, ref_year+2]
     if proxy == "vefa":
@@ -110,7 +158,9 @@ def _row(idu: str, y: int, proxy: str, ach_year: int | None, ref_year: int) -> d
         f"Signal de timing, PAS une prédiction : ni une date de vente, ni une personne."
     )
     return {"idu": idu, "proxy": proxy, "y": y, "deb": deb, "fin": fin,
-            "active": active, "src": src, "badge": badge, "court": court, "detail": detail}
+            "active": active, "src": src, "badge": badge, "court": court, "detail": detail,
+            "decote_pct": decote_pct, "decote_n": decote_n,
+            "decote_libelle": _decote_libelle(decote_pct, decote_n)}
 
 
 def build_defisc_fenetres(session: Session, *, ref_year: int = DEFAULT_REF_YEAR,
@@ -119,8 +169,9 @@ def build_defisc_fenetres(session: Session, *, ref_year: int = DEFAULT_REF_YEAR,
     `commit=False` pour les tests transactionnels (fixture rollback-ée). Renvoie {'total', 'active'}."""
     session.execute(text("DROP TABLE IF EXISTS defisc_fenetres"))  # rebuild complet (table dérivée : schéma évolutif)
     session.execute(text(DDL))
+    decote_pct, decote_n = _compute_decote(session)              # N2 — recalculé une fois pour tout le run
     raw = session.execute(text(_SELECT_RAW), {"vefa": VEFA}).mappings().all()
-    rows = [_row(r["idu"], int(r["y"]), r["proxy"], r["ach_year"], ref_year) for r in raw]
+    rows = [_row(r["idu"], int(r["y"]), r["proxy"], r["ach_year"], ref_year, decote_pct, decote_n) for r in raw]
     for r in rows:
         session.execute(text(_INSERT), r)
     if commit:

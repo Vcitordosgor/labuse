@@ -59,7 +59,7 @@ def build_copro_flags(session: Session, dvf_table: str = "dvf_mutations_parcelle
         FROM p_model_frame f;
         ALTER TABLE p_model_ext_copro ADD PRIMARY KEY (idu);
     """)
-    session.commit()
+    # F7 : le commit est délégué à l'appelant (rebuild_features / frontière CLI) — testabilité.
 
 
 def l2f_mutation_flags(dvf_table: str) -> str:
@@ -106,7 +106,7 @@ def build_ext_union(session: Session) -> None:
         CREATE INDEX ON p_model_ext_dvf (id_parcelle, date_mutation);
         CREATE INDEX ON p_model_ext_dvf (date_mutation);
     """)
-    session.commit()
+    # F7 : commit délégué à l'appelant (rebuild_features).
 
 
 def build_ext_mutations(session: Session) -> None:
@@ -144,7 +144,7 @@ def build_ext_mutations(session: Session) -> None:
         SELECT DISTINCT id_parcelle AS idu, date_mutation FROM p_model_ext_dvf;
         CREATE INDEX ON p_model_ext_mut_all (idu, date_mutation);
     """)
-    session.commit()
+    # F7 : commit délégué à l'appelant (rebuild_features).
 
 
 def build_ext_dataset(session: Session, years: tuple[int, ...] = EXT_YEARS) -> None:
@@ -284,4 +284,4 @@ def build_ext_dataset(session: Session, years: tuple[int, ...] = EXT_YEARS) -> N
         CREATE UNIQUE INDEX ON p_model_ext_dataset (idu, annee);
         CREATE INDEX ON p_model_ext_dataset (annee);
     """)
-    session.commit()
+    # F7 : commit délégué à l'appelant (rebuild_features).

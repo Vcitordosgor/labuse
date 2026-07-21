@@ -81,3 +81,8 @@ reports/m6-audit/reglements/
 reports/health-check-post-m6/
 frontend/reports/
 reports/j3-revue/_tiles/
+
+# Nuit N6 — politique binaires : dossiers de revue lourds hors historique git (générés, régénérables).
+# (N'affecte PAS l'existant déjà tracké — décision d'historique = Vic.)
+reports/revues/
+reports/**/DOSSIER-*.pdf

@@ -2131,6 +2131,19 @@ def ortho_juge_vlm_cmd(
                        f" : {m.get('point')}")
 
 
+@app.command("score-e")
+def score_e_cmd(
+    run: str = typer.Option("q_v7_defisc", help="Run servi dont scorer les parcelles non-écartées."),
+) -> None:
+    """Nuit N1 — SCORE É v1 : marge estimée (€) = charge foncière supportable − prix probable du foncier.
+    Table additive score_e (Estimé partout). Lecture seule des sources ; ne touche jamais les runs servis."""
+    from .ingestion import score_e
+
+    with session_scope() as s:
+        r = score_e.build_score_e(s, run=run, log=typer.echo)
+        typer.echo(f"✓ score_e : {r['total']} non-écartées, {r['estimables']} marge estimable")
+
+
 @app.command("pc-caducs")
 def pc_caducs_cmd(
     ref_year: int = typer.Option(2026, help="Année de référence (caduc probable pour Y ≤ ref_year-4)."),

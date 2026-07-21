@@ -946,6 +946,7 @@ function renderDefisc(d) {
   <div class="occ">
     <div class="loy-h" title="${detail}"><span class="defisc-chip">${court}</span> ${_prov("est")}${avenir}</div>
     <div class="loy-row"><span class="loy-k">Achat neuf</span><span class="loy-v"><b>${esc(d.achat_neuf_annee)}</b> <span class="loy-ic">(DVF)</span></span></div>
+    ${d.decote_libelle ? `<p class="obs-src" title="médiane recalculée sur ${esc(d.decote_n)} reventes en fenêtre de sortie">↘ ${esc(d.decote_libelle)}</p>` : ""}
     <p class="obs-src" title="${detail}">${detail}</p>
   </div>`;
 }
@@ -961,6 +962,20 @@ function renderCaduc(c) {
     <div class="loy-h" title="${detail}"><span class="defisc-chip">${esc(c.libelle_court)}</span> ${_prov("est")}</div>
     <div class="loy-row"><span class="loy-k">PC autorisé</span><span class="loy-v"><b>${esc(c.pc_annee)}</b> <span class="loy-ic">(Sitadel · Sourcé)</span></span></div>
     <div class="loy-row"><span class="loy-k">Caduc probable depuis</span><span class="loy-v"><b>${esc(c.caduc_depuis)}</b> <span class="loy-ic">(Estimé)</span></span></div>
+    <p class="obs-src" title="${detail}">${detail}</p>
+  </div>`;
+}
+
+// Nuit N1 — SCORE É : marge estimée € (f.score_e). Estimé ; JAMAIS un prix ni une promesse. Survol =
+// formule + caveats. Marge négative affichée telle quelle. Parcelle écartée ou hors univers → null.
+function renderScoreE(e) {
+  if (!e) return "";
+  const detail = esc(e.detail || "");
+  return `
+  <div class="occ">
+    <div class="loy-h" title="${detail}"><span class="defisc-chip">${esc(e.libelle_court)}</span> ${_prov("est")}</div>
+    ${e.estimable ? `<div class="loy-row"><span class="loy-k">Charge foncière supportable</span><span class="loy-v"><b>${esc(e.charge_supportable)} €</b></span></div>
+    <div class="loy-row"><span class="loy-k">Prix probable du foncier</span><span class="loy-v"><b>${esc(e.prix_probable)} €</b></span></div>` : ""}
     <p class="obs-src" title="${detail}">${detail}</p>
   </div>`;
 }
@@ -1129,7 +1144,7 @@ function renderFiche(f) {
       `<div class="acc-zone">Zone PLU <b>${esc((f.faisabilite || {}).zone || "—")}</b>${(f.faisabilite || {}).constructible ? " · constructible" : ((f.faisabilite || {}).zone ? " · non constructible" : "")}</div>${renderPlh(f.plh)}${_enrSlot("enr-urba")}`)}
 
     ${accordion("Faisabilité & bilan détaillé", "capacité, calcul ligne à ligne, bilan promoteur",
-      renderFaisabilite(f.faisabilite, { no3d: true }) + renderObsimmo(f.obsimmo) + renderLoyers(f.loyers) + renderOccupation(f.occupation))}
+      renderScoreE(f.score_e) + renderFaisabilite(f.faisabilite, { no3d: true }) + renderObsimmo(f.obsimmo) + renderLoyers(f.loyers) + renderOccupation(f.occupation))}
 
     ${accordion("Assemblage & voisinage", "parcelle seule vs groupée, parcelles contiguës",
       ((status === "opportunite" || status === "a_creuser") ? renderAssembBloc(f) : "") + renderVoisinage(f.voisinage))}

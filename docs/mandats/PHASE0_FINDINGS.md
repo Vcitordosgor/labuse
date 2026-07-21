@@ -160,7 +160,11 @@ fix trivial ou skip documenté ; F2 = seed contrôle `parcelle_personne_morale`)
 
 ## LOT J3 — findings de la revue golden (revue Vic sur preuves)
 
-### F8 — `EauLayer` : libellé « majoritairement sur l'eau » vs règle réelle centroïde-OU-majorité *(wording, reporté)*
+### F8 — `EauLayer` : libellé « majoritairement sur l'eau » vs règle réelle centroïde-OU-majorité *(✅ RÉSOLU, nuit N3)*
+- **✅ RÉSOLU (nuit 2026-07-21, `[N3]`)** : `EauLayer.evaluate` émet désormais DEUX libellés selon la
+  branche réellement empruntée — centroïde : « Exclue : parcelle située sur l'eau (centroïde dans
+  l'hydrographie) » ; recouvrement : « Exclue : parcelle majoritairement sur l'eau (X % de recouvrement) ».
+  Code seul (les runs déjà matérialisés se corrigeront au prochain run). Tests : deux branches.
 - **Réel confirmé** (`cascade/layers/phase1.py`, `EauLayer.evaluate`) : HARD_EXCLUDE si
   **`centroid_in(hydrographie)` OU `recouvrement ≥ 50 %`**. Le `detail_exclude` (« majoritairement sur
   l'eau ») est émis MÊME dans la branche CENTROÏDE → trompeur quand le recouvrement est faible (deux
@@ -169,7 +173,9 @@ fix trivial ou skip documenté ; F2 = seed contrôle `parcelle_personne_morale`)
   dans la couche (distinguer « centre dans l'hydrographie » de « majoritairement recouvert »).
 - **Statut** : **`reporté`** (wording couche, décision plus tard ; verdict inchangé).
 
-### F9 — contre-vérif ③ du dossier de revue : métriques NON COMPARABLES *(outil de revue, reporté)*
+### F9 — contre-vérif ③ du dossier de revue : métriques NON COMPARABLES *(✅ RÉSOLU, nuit N3)*
+- **✅ RÉSOLU (nuit 2026-07-21, `[N3]`)** : `geo_recheck` (pente, eau) renvoie `concorde=None` et affiche
+  explicitement « — non comparable (métriques différentes : … ) » au lieu d'un faux vert. Test pente + eau.
 - **Réel** : dans `scripts/j3_revue_dossier.py`, la re-mesure PostGIS ③ compare parfois des métriques
   DIFFÉRENTES de la cascade → « faux vert » décoratif : **pente** (degrés moyens re-mesurés vs seuil
   cascade en %) ; **eau** (aire re-mesurée vs règle réelle = centroïde, cf. F8). Aucune carte ne repose
@@ -178,7 +184,11 @@ fix trivial ou skip documenté ; F2 = seed contrôle `parcelle_personne_morale`)
   explicitement « non comparable » au lieu d'un vert trompeur.
 - **Statut** : **`reporté`** (amélioration de l'outil de revue, hors gel).
 
-### F10 — wording « Propriété publique » pour DGFiP groupe 9 type coopérative *(wording, reporté)*
+### F10 — wording « Propriété publique » pour DGFiP groupe 9 type coopérative *(✅ RÉSOLU, nuit N3)*
+- **✅ RÉSOLU (nuit 2026-07-21, `[N3]`)** : `FoncierPublicLayer` — le groupe **9** affiche désormais
+  « Propriétaire institutionnel (X) — hors marché courant, acquisition improbable [classification DGFiP
+  groupe 9 : établissements publics et assimilés] » ; les groupes **1-4** gardent « Propriété publique —
+  non acquérable ». **L'exclusion HARD reste identique** (seul le libellé devient exact). Tests groupe 9 + 4.
 - **Réel** : deux cartes des Avirons affichent « Propriété publique (COOPERATIVE AGRICOLE TERRACOOP) —
   non acquérable » via le groupe DGFiP **9** (établissements publics/organismes associés). Une
   coopérative agricole PEUT vendre → « publique — non acquérable » est contestable devant un client.
@@ -214,4 +224,6 @@ fix trivial ou skip documenté ; F2 = seed contrôle `parcelle_personne_morale`)
   ne la verraient pas (elles ne touchent pas l'API).
 - **Option notée (non implémentée)** : un run API COMPLET occasionnel (les 116, rate-limit levé côté QA
   — flag/délai) pour un contrôle service end-to-end périodique. Les 32 restent le garde permanent.
-- **Statut** : **`reporté`** (architecture assumée ; à surveiller — décision QA plus tard).
+- **Statut** : **✅ RÉSOLU en pratique (clôture A-1)** — le golden 116/116 tourne end-to-end via une API
+  en `dev_mode` sur port dédié (rate-limit levé) : les 32 sentinelles passent le contrôle service sans
+  faux FAIL. La couverture end-to-end est donc obtenue à la demande (le piège rate-limit était la cause).

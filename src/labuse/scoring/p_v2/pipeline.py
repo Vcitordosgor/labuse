@@ -99,6 +99,7 @@ def rebuild_features(session: Session) -> None:
     from ..p_model import sql as p_sql  # copro dépend de p_model_frame
     ext_sql.build_copro_flags(session)
     _ = p_sql  # import documentaire : le frame M3 est réutilisé tel quel
+    session.commit()   # F7 : commit à la FRONTIÈRE (les builders ext ne committent plus) — testabilité.
 
 
 def load_events(session: Session) -> pd.DataFrame:
