@@ -131,7 +131,7 @@ def _parse_hash_filters(h: str) -> dict:
     from urllib.parse import parse_qs
     q = parse_qs(h.lstrip("#"))
     g = lambda k: q.get(k, [None])[0]  # noqa: E731
-    return {"st": (g("st") or "").split(",") if g("st") else [], "vm": g("vm") == "1",
+    return {"st": (g("st") or "").split(",") if g("st") else [],
             "ev": g("ev") == "1", "q": int(g("q")) if g("q") else None,
             "smin": int(g("smin")) if g("smin") else None, "smax": int(g("smax")) if g("smax") else None,
             "sdp": int(g("sdp")) if g("sdp") else None, "fl": (g("fl") or "").split(",") if g("fl") else []}
@@ -144,14 +144,12 @@ def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
     # bascules « montantes » de CE diff (déjà en event_log, kind=bascule, run_to)
     rows = db.execute(text("""
         SELECT e.idu, p.surface_m2, d.matrice_statut, d.q_score, r.sdp_residuelle_m2,
-               vm.vue AS vue_mer,
                EXISTS (SELECT 1 FROM dryrun_cascade_results cr WHERE cr.run_label = :to
                        AND cr.parcel_id = p.id AND cr.evenement = 'rouge') AS a_evenement
         FROM event_log e
         JOIN parcels p ON p.idu = e.idu
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :to
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
         WHERE e.kind = 'bascule' AND e.run_to = :to AND e.titre LIKE '▲%'"""),
         {"to": run_to}).mappings().all()
     n = 0
@@ -159,8 +157,6 @@ def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
         f = _parse_hash_filters(v["hash"])
         for r in rows:
             if f["st"] and r["matrice_statut"] not in f["st"]:
-                continue
-            if f["vm"] and r["vue_mer"] != "oui":
                 continue
             if f["ev"] and not r["a_evenement"]:
                 continue

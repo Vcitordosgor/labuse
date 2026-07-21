@@ -351,34 +351,6 @@ def finalize(session: Session, log=print) -> dict[str, Any]:
     return {"parcelles": n, "bati_voisin_calcule": n_vois}
 
 
-def flag_solaire(session: Session) -> dict[str, int]:
-    """Branchement solaire : flag_ombrage_vegetal (canopee_bati_pct > seuil config).
-    parcel_solar.flag_topo_ombrage reste INCHANGÉ (mandat)."""
-    seuil = float(_cfg()["seuils"]["ombrage_vegetal_pct"])
-    session.execute(text(
-        "ALTER TABLE parcel_solar ADD COLUMN IF NOT EXISTS flag_ombrage_vegetal boolean"))
-    n = session.execute(text("""
-        UPDATE parcel_solar ps
-        SET flag_ombrage_vegetal = (v.canopee_bati_pct > :seuil), updated_at = now()
-        FROM parcel_vegetation v
-        WHERE v.idu = ps.idu AND v.canopee_bati_pct IS NOT NULL
-          AND (ps.flag_ombrage_vegetal IS DISTINCT FROM (v.canopee_bati_pct > :seuil))
-    """), {"seuil": seuil}).rowcount
-    flagges = session.execute(text(
-        "SELECT count(*) FROM parcel_solar WHERE flag_ombrage_vegetal")).scalar_one()
-    # les vues de prospection PV ajoutent ce flag en filtre d'exclusion PAR DÉFAUT
-    # (décochable) — mandat. Idempotent, ne touche que les presets seed non édités.
-    n_presets = session.execute(text("""
-        UPDATE segment_presets
-        SET filtres = filtres || CAST(:f AS jsonb), updated_at = now()
-        WHERE slug = 'pv-residentiel' AND created_by = 'seed'
-          AND NOT filtres::text LIKE '%flag_ombrage_vegetal%'
-    """), {"f": json.dumps([{"cle": "flag_ombrage_vegetal", "value": False,
-                             "optionnel": True}])}).rowcount
-    session.commit()
-    return {"mis_a_jour": n, "flagges": flagges, "presets_pv_migres": n_presets}
-
-
 def signal_vegetation(session: Session) -> int:
     """Signal `vegetation_haute_limite` (lead élagueur) — canopée en limite > seuil."""
     seuil = float(_cfg()["seuils"]["vegetation_haute_limite_pct"])

@@ -27,7 +27,7 @@ SOURCES_ATTRIBUTION = (
     "foncières (DVF) · © IGN — BD TOPO, BD ORTHO, RGE ALTI (Licence Ouverte 2.0) · "
     "ADEME, base DPE · SDES, Sitadel · Géorisques (BRGM/MTE) · Insee · INPI — RNE · "
     "Base Adresse Nationale (DINUM/IGN) · © les contributeurs d'OpenStreetMap — ODbL "
-    "(openstreetmap.org/copyright) · Commission européenne, JRC — PVGIS (CC BY 4.0)")
+    "(openstreetmap.org/copyright)")
 
 
 def pied_de_page_pdf(pdf, doc_label: str) -> None:

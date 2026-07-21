@@ -295,11 +295,6 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     prix_lls = _p("prix_m2_lls", hyp.prix_m2_lls)
     if prix_neuf_override > 0:                                # override du prix de sortie neuf
         q1 = med = q3 = prix_neuf_override
-    # 2.B — bonus prix si vue mer dégagée (param PLACEHOLDER, appliqué seulement si vue='oui').
-    bonus_vue = _p("bonus_vue_mer_pct", 0.0)
-    vue_mer_bonus = ((contexte_eco or {}).get("vue_mer") == "oui") and bonus_vue > 0
-    if vue_mer_bonus:
-        q1, med, q3 = q1 * (1 + bonus_vue / 100), med * (1 + bonus_vue / 100), q3 * (1 + bonus_vue / 100)
     lieu = "commune entière" if prix.get("commune_fallback") else f"{prix['radius_m']:.0f} m"
     steps: list[Step] = []
     hypotheses: list[str] = []
@@ -308,9 +303,6 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
     steps.append(Step("Surface habitable vendable",
                       "issue de la faisabilité (post-rendement, plafond, modulation)",
                       f"~{surf:.0f} m²", "faisabilité", prov="derive"))
-    if vue_mer_bonus:
-        steps.append(Step("Bonus vue mer (2.B)", f"prix de sortie × (1 + {bonus_vue:g} %) — vue mer dégagée",
-                          "appliqué", "param bonus_vue_mer_pct", prov="estimee"))
     detail = (f"{prix['type_prix']} · {prix['n']} ventes ({prix['periode'][0]}-{prix['periode'][1]}) "
               f"dans {lieu}"
               + (f" · {prix['n_exclus']} aberrant(s) exclu(s)" if prix["n_exclus"] else "")

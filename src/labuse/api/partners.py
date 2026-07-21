@@ -202,7 +202,7 @@ _FORCE_TITLE = {
     "zonage_plu_gpu": "Terrain constructible", "sitadel": "Dynamique de construction active",
     "dvf": "Marché porteur", "amenites": "Équipements à proximité", "acces": "Accès voirie",
     "viabilisation": "Réseaux au contact", "residuel_socle": "Potentiel de densification",
-    "vue_mer": "Vue mer dégagée", "assemblage": "Regroupement possible",
+    "assemblage": "Regroupement possible",
 }
 _ATTENTION_TITLE = {
     "residuel_socle": "SDP résiduelle limitée", "parc_national": "Zonage protégé (Parc national)",

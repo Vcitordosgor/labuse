@@ -569,7 +569,7 @@ def _ban_adresse(db: Session, idu: str) -> str | None:
 
 def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
                 surface_min: int | None, surface_max: int | None, sdp_min: int | None,
-                evenement: bool, vue_mer: bool, flags: str | None,
+                evenement: bool, flags: str | None,
                 communes: str | None = None, flags_exclus: str | None = None,
                 v_bands: str | None = None, v_signal: str | None = None,
                 brulantes: bool = False, tiers: str | None = None,
@@ -624,9 +624,6 @@ def _q_v2_where(run_label: str, statuts: str | None, score_min: int | None,
     if evenement:
         conds.append("EXISTS (SELECT 1 FROM dryrun_cascade_results c0 WHERE c0.parcel_id = p.id"
                      " AND c0.run_label = :runf AND c0.evenement = 'rouge')")
-    if vue_mer:
-        conds.append("EXISTS (SELECT 1 FROM parcel_vue_mer v0 WHERE v0.parcel_id = p.id"
-                     " AND v0.vue = 'oui')")
     if flags:
         conds.append("EXISTS (SELECT 1 FROM dryrun_cascade_results c1 WHERE c1.parcel_id = p.id"
                      " AND c1.run_label = :runf AND c1.layer_name = ANY(:f_flags)"
@@ -682,7 +679,7 @@ def list_parcels(commune: str | None = None,
                  source: str | None = None,
                  statuts: str | None = None, score_min: int | None = None,
                  surface_min: int | None = None, surface_max: int | None = None,
-                 sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
+                 sdp_min: int | None = None, evenement: bool = False,
                  flags: str | None = None, communes: str | None = None,
                  flags_exclus: str | None = None,
                  v_bands: str | None = None, v_signal: str | None = None,
@@ -706,7 +703,7 @@ def list_parcels(commune: str | None = None,
     bloquait l'endpoint > 45 s)."""
     if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
+                                          sdp_min, evenement, flags, communes, flags_exclus,
                                           v_bands, v_signal, brulantes, tiers, hors_copro, veille,
                                           personne_morale, zonage, defisc_active, pc_caduc, marge_min)
         return _q_v2_list(db, commune, limit, offset, run_label=source,
@@ -736,7 +733,7 @@ def list_parcels(commune: str | None = None,
 def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
                        statuts: str | None = None, score_min: int | None = None,
                        surface_min: int | None = None, surface_max: int | None = None,
-                       sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
+                       sdp_min: int | None = None, evenement: bool = False,
                        flags: str | None = None, communes: str | None = None,
                        flags_exclus: str | None = None,
                        v_bands: str | None = None, v_signal: str | None = None,
@@ -760,7 +757,7 @@ def export_parcels_csv(commune: str | None = None, source: str = Q_A_RUN_LABEL,
     from .export_commun import adresses_ban
 
     extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                      sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
+                                      sdp_min, evenement, flags, communes, flags_exclus,
                                       v_bands, v_signal, brulantes, tiers, hors_copro, veille,
                                       personne_morale, zonage, defisc_active, pc_caduc, marge_min)
     items = _q_v2_list(db, commune, limit, 0, run_label=source,
@@ -965,7 +962,7 @@ def stats_entonnoir(commune: str | None = None, source: str = Q_A_RUN_LABEL,
 def stats(commune: str | None = None, source: str | None = None,
           statuts: str | None = None, score_min: int | None = None,
           surface_min: int | None = None, surface_max: int | None = None,
-          sdp_min: int | None = None, evenement: bool = False, vue_mer: bool = False,
+          sdp_min: int | None = None, evenement: bool = False,
           flags: str | None = None, communes: str | None = None,
           flags_exclus: str | None = None,
           v_bands: str | None = None, v_signal: str | None = None,
@@ -979,11 +976,11 @@ def stats(commune: str | None = None, source: str | None = None,
     Résultat mémorisé par commune+filtres (cache mémoire 30 s, #7) : sortie identique au calcul."""
     if source and source.startswith("q_v"):
         extra, extra_params = _q_v2_where(source, statuts, score_min, surface_min, surface_max,
-                                          sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
+                                          sdp_min, evenement, flags, communes, flags_exclus,
                                           v_bands, v_signal, brulantes, tiers, hors_copro, veille,
                                           personne_morale, zonage)
         key = ("stats_qv2", source, commune, statuts, score_min, surface_min, surface_max,
-               sdp_min, evenement, vue_mer, flags, communes, flags_exclus,
+               sdp_min, evenement, flags, communes, flags_exclus,
                v_bands, v_signal, brulantes, tiers, hors_copro, veille, legacy,
                personne_morale, zonage)
         return _mem_cached(key, 30.0, lambda: _q_v2_stats(
@@ -1150,7 +1147,7 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                (vw.parcelle_id IS NOT NULL) AS veille,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
-               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite, vm.vue AS vue_mer,
+               d.completeness_score, r.sdp_residuelle_m2, r.sous_densite,
                (ev.parcel_id IS NOT NULL) AS evenement_rouge, fl.flags,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
                vs.v_score, vs.v_band, vs.owner_type,
@@ -1177,7 +1174,6 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
                      AND pm2.siren IS NOT NULL
                    GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
         LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
-        LEFT JOIN parcel_vue_mer vm ON vm.parcel_id = p.id
         LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
                    WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
         -- flags actifs par parcelle (filtres métier) : couches en SOFT_FLAG + ABF non instruit.
@@ -1214,7 +1210,6 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
               'q_score', b.q_score, 'a_score', b.a_score, 'a_completude', b.a_completude,
               'completeness_score', b.completeness_score,
               'sdp_residuelle_m2', b.sdp_residuelle_m2, 'sous_densite', b.sous_densite,
-              'vue_mer', b.vue_mer,
               'evenement', CASE WHEN b.evenement_rouge THEN 'rouge' ELSE NULL END,
               'evenement_date', CASE WHEN b.event_date IS NULL THEN NULL ELSE b.event_date::text END,
               'flags', to_jsonb(coalesce(b.flags, '{{}}')),
@@ -1437,7 +1432,7 @@ _ONGLET = {
                "residuel_socle", "safer", "sar", "surface", "parc_national", "foret_publique"},
     "risques": {"risques", "sol_pollue", "cavite", "icpe", "mvt", "pente", "ravine",
                 "trait_de_cote", "abf", "ens", "eau"},
-    "marche": {"dvf", "sitadel", "vue_mer", "amenites", "potentiel_foncier_region", "ocs_ge",
+    "marche": {"dvf", "sitadel", "amenites", "potentiel_foncier_region", "ocs_ge",
                "friche", "acces"},
     "proprio": {"proprietaire", "age_dirigeant", "bodacc", "dpe_passoire", "assemblage"},
 }
@@ -3003,7 +2998,6 @@ from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .segments import router as _segments_router  # noqa: E402
 from .ortho import router as _ortho_router  # noqa: E402
-from .solaire import router as _solaire_router  # noqa: E402
 from .tiles import router as _tiles_router  # noqa: E402
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 from .fiche_ask import router as _fiche_ask_router  # noqa: E402  (M11 surface A — barre de fiche)
@@ -3032,7 +3026,6 @@ app.include_router(_moteurs_router)
 app.include_router(_partners_router)
 app.include_router(_projets_router)
 app.include_router(_segments_router)
-app.include_router(_solaire_router)
 app.include_router(_ortho_router)
 
 

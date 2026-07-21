@@ -121,7 +121,7 @@ def _valide_fiche(fiche: dict) -> dict:
 
 def derive_filtres(fiche: dict, extra: dict | None = None) -> dict:
     """fiche → filtres (forme FILTER_SCHEMA, celle du front). Déterministe et rejouable.
-    `extra` : filtres additionnels de l'entretien (vue mer…), validés FILTER_SCHEMA — les
+    `extra` : filtres additionnels de l'entretien, validés FILTER_SCHEMA — les
     clés dérivées de la fiche PRIMENT (la fiche est la vérité du projet)."""
     filtres: dict = {}
     if extra:
@@ -270,7 +270,7 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
         where, params = _q_v2_where(RUN, ",".join(filtres.get("statuts") or []) or None,
                                     filtres.get("scoreMin"), filtres.get("surfaceMin"),
                                     filtres.get("surfaceMax"), filtres.get("sdpMin"),
-                                    bool(filtres.get("evenement")), bool(filtres.get("vueMer")),
+                                    bool(filtres.get("evenement")),
                                     ",".join(filtres.get("flags") or []) or None,
                                     ",".join(communes) if communes else None,
                                     ",".join(filtres.get("flagsExclus") or []) or None)
@@ -296,7 +296,7 @@ def projet_apercu(body: ApercuIn, db: Session = Depends(get_db)) -> dict:
 class ProjetIn(BaseModel):
     fiche: dict
     nom: str | None = None            # proposé par l'IA ; repli déterministe sinon
-    filtres_extra: dict | None = None  # filtres additionnels de l'entretien (vue mer…)
+    filtres_extra: dict | None = None  # filtres additionnels de l'entretien
 
 
 class ProjetPatchIn(BaseModel):
@@ -532,7 +532,7 @@ def _search_items(db: Session, fiche: dict, limit: int, overrides: dict | None =
         where, params = _q_v2_where(RUN, ",".join(filtres.get("statuts") or []) or None,
                                     filtres.get("scoreMin"), filtres.get("surfaceMin"),
                                     filtres.get("surfaceMax"), filtres.get("sdpMin"),
-                                    bool(filtres.get("evenement")), bool(filtres.get("vueMer")),
+                                    bool(filtres.get("evenement")),
                                     ",".join(filtres.get("flags") or []) or None,
                                     ",".join(communes) if communes else None,
                                     ",".join(filtres.get("flagsExclus") or []) or None)

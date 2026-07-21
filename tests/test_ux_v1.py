@@ -48,7 +48,6 @@ def test_source_pour_run_rattache_les_runs_au_catalogue():
         # n'existe plus → réserve foncière) — plus jamais `statuts` (matrice, deprecated).
         ("les chaudes de Saint-Pierre", {"commune": "Saint-Pierre", "tiers": ["chaude"]}),
         ("les brûlantes de Saint-Paul", {"commune": "Saint-Paul", "tiers": ["brulante"]}),
-        ("vue mer de plus de 1 000 m²", {"vueMer": True, "surfaceMin": 1000}),
         ("à surveiller avec pollution", {"tiers": ["reserve_fonciere"], "flags": ["sol_pollue"]}),
     ],
 )

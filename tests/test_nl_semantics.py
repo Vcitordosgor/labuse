@@ -124,11 +124,12 @@ def test_vue_mer_justifiee_reste():
     assert non_appliques == []
 
 
-def test_vue_mer_non_demandee_est_retiree():
-    """Un booléen catégoriel non justifié par la requête (le modèle l'a inventé) ne s'applique jamais."""
+def test_booleen_non_demande_est_retire():
+    """Un booléen catégoriel non justifié par la requête (le modèle l'a inventé) ne s'applique jamais.
+    (M3 spin-off : l'exemple historique « vueMer » est parti avec la feature — même mécanique, autre booléen.)"""
     q = "les grandes parcelles de Saint-Pierre"
-    filters, _ = check_semantics(q, {"commune": "Saint-Pierre", "surfaceMin": 1000, "vueMer": True})
-    assert "vueMer" not in filters
+    filters, _ = check_semantics(q, {"commune": "Saint-Pierre", "surfaceMin": 1000, "veille": True})
+    assert "veille" not in filters
 
 
 def test_score_min_et_surface_intacts():

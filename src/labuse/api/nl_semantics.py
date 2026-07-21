@@ -7,7 +7,7 @@ de la requête. Deux bugs de crédibilité constatés (audit AUDIT-SURFACE-B) :
 
 Boussole (Vic) : signaler > refuser > appliquer un filtre douteux. Jamais un filtre dont le sens n'est
 pas sûr. Ce module, PUR et déterministe (aucun appel IA), applique deux garde-fous après le schéma :
-  A. FILTRES GATÉS PAR MOT-CLÉ : un filtre catégoriel (flags, vueMer, evenement, veille) n'est gardé que
+  A. FILTRES GATÉS PAR MOT-CLÉ : un filtre catégoriel (flags, evenement, veille) n'est gardé que
      si un mot de la requête le justifie → un filtre non demandé/mistraduit est RETIRÉ (jamais appliqué).
   B. FAMILLES NON SUPPORTÉES : les critères présents dans la requête que les 14 champs ne savent PAS
      traiter (DPE, propriétaire, zonage, viabilisation…) sont LISTÉS (`criteres_non_appliques`) → jamais avalés.
@@ -33,7 +33,6 @@ _UNSUPPORTED: list[tuple[re.Pattern, str]] = [
     (re.compile(r"pente|d[ée]nivel|terrain\s+plat|en\s+pente", re.I), "pente du terrain"),
     (re.compile(r"amiante", re.I), "amiante / bâti ancien"),
     (re.compile(r"canop[ée]e|v[ée]g[ée]tation|arbres?|ombrage", re.I), "végétation / canopée"),
-    (re.compile(r"solaire|photovolta|panneau", re.I), "potentiel solaire"),
 ]
 
 # ── B. Mots-clés justifiant chaque filtre CATÉGORIEL (anti-mistraduction : sans mot → filtre retiré) ──
@@ -46,7 +45,6 @@ _FLAG_KW: dict[str, re.Pattern] = {
 }
 # booléens catégoriels (même logique de garde par mot-clé)
 _BOOL_KW: dict[str, re.Pattern] = {
-    "vueMer": re.compile(r"vue\s*mer|mer|littoral|oc[ée]an|c[ôo]ti[èe]", re.I),
     "evenement": re.compile(r"[ée]v[ée]nement|bodacc|cession|liquidation|redressement|permis|d[ée]p[ôo]t", re.I),
     "veille": re.compile(r"veille|succession|dirigeant|dormante", re.I),
     "horsCopro": re.compile(r"copro|hors\s*copro|copropri[ée]t", re.I),
@@ -65,7 +63,7 @@ _ZONE_KW: dict[str, re.Pattern] = {
 def check_semantics(query: str, filters: dict) -> tuple[dict, list[str]]:
     """Valide le SENS des filtres vs la requête. Retourne (filtres_nettoyés, criteres_non_appliques).
 
-    - Retire tout filtre catégoriel (flags/flagsExclus/zonage/vueMer/evenement/veille/horsCopro/
+    - Retire tout filtre catégoriel (flags/flagsExclus/zonage/evenement/veille/horsCopro/
       personneMorale) NON justifié par un mot de la requête → un filtre mistraduit n'est JAMAIS appliqué.
     - Liste les familles de critères présentes dans la requête mais non couvertes par les 14 champs.
     """
@@ -82,7 +80,7 @@ def check_semantics(query: str, filters: dict) -> tuple[dict, list[str]]:
             else:
                 out.pop(key, None)
 
-    # B. booléens catégoriels — retirés si non justifiés (jamais un filtre « vue mer » non demandé)
+    # B. booléens catégoriels — retirés si non justifiés (jamais un filtre non demandé)
     for key, pat in _BOOL_KW.items():
         if out.get(key) is True and not pat.search(q):
             out.pop(key, None)

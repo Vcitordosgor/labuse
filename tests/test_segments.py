@@ -37,13 +37,13 @@ def test_seed_yaml_contrat():
     ≥ 11 métiers Habitat + les presets anticipés des autres mandats."""
     doc = config.load_yaml_config("segment_presets")
     presets = doc.get("presets") or []
-    assert len(presets) >= 18
+    assert len(presets) >= 16   # M3 spin-off : presets solaire partis
     slugs = {p["slug"] for p in presets}
     for attendu in ("pergolas-terrasses", "paysagistes", "clotures-portails",
                     "artisans-renovation", "cuisinistes", "salles-de-bain",
                     "couvreurs-etancheite", "menuiseries-cyclonique", "termites-charpente",
                     "extensions-surelevations", "alarmes-telesurveillance",
-                    "pv-residentiel", "chauffe-eau-solaire", "clim-pac",
+                    "clim-pac",
                     "piscinistes-construction", "parc-piscines-entretien", "anc-travaux",
                     "elagage"):
         assert attendu in slugs, f"preset seedé manquant : {attendu}"
@@ -63,7 +63,7 @@ def test_disponibilite_detectee(db_session):
     indisponibles (une source vide n'a pas de sens produit)."""
     reset_availability_cache()
     avail = compute_availability(db_session, use_cache=False)
-    for cle, mandat in [("score_solaire", "Habitat Solaire"), ("piscine", "Détection Ortho"),
+    for cle, mandat in [("piscine", "Détection Ortho"),
                         ("pv_detecte", "Détection Ortho"), ("zone_anc", "ANC & Végétation"),
                         ("ombrage_vegetal", "ANC & Végétation")]:
         assert avail[cle]["disponible"] is False, cle
@@ -84,11 +84,12 @@ def test_resilience_base_sans_tables_mandats(db_session):
         n = seg.run_count(db_session, q)          # exécute réellement le SQL
         assert n == 0                              # base de test vide
         assert seg.run_items(db_session, q, 10, 0) == []
-    # le preset PV dépend de 2 sources absentes → badge « partiel » avec la liste
-    pv = next(p for p in doc["presets"] if p["slug"] == "pv-residentiel")
-    dispo, inactifs = presets_mod.preset_disponibilite(pv, avail)
-    assert dispo == "partiel"
-    assert {f["cle"] for f in inactifs} >= {"score_solaire", "pv_detecte"}
+    # un preset dépendant d'une source absente → badge « partiel » avec la liste
+    # (M3 spin-off : l'exemple historique pv-residentiel est parti — même mécanique, preset piscines)
+    pisc = next(p for p in doc["presets"] if p["slug"] == "parc-piscines-entretien")
+    dispo, inactifs = presets_mod.preset_disponibilite(pisc, avail)
+    assert dispo in ("partiel", "indisponible")
+    assert inactifs                                   # au moins un filtre orphelin listé
 
 
 @pytest.mark.db

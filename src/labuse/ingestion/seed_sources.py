@@ -172,7 +172,7 @@ SOURCES: list[dict] = [
          legal_notes="Licence Ouverte — attribution : « Source : Insee, Filosofi 2021 ».",
          technical_notes="Table filosofi_carreaux_200m : 14 773 carreaux 200 m (974, EPSG:2975), millésime 2021 "
                          "(dernier millésime carroyé publié — vérifié M5.1 FRAICHEUR). Alimente le score P v2 "
-                         "(niveau de vie, pauvreté, part propriétaires, densité) et le module solaire "
+                         "(niveau de vie, pauvreté, part propriétaires, densité) "
                          "(proprio-occupant). Ligne ajoutée à l'audit M6 §1.11 R7 (source exploitée mais absente du catalogue)."),
     dict(name="BODACC (procédures collectives)", category="economie", provider="DILA (Opendatasoft)",
          access_type="REST", status=S.CONNECTE, reliability_level=R.VERIFIE, rate_limit="throttle poli",
@@ -272,30 +272,6 @@ SOURCES: list[dict] = [
          endpoint_url="https://geolittoral.din.developpement-durable.gouv.fr/telechargement/couches_sig/N_evolution_trait_cote_S_reunion_epsg2975_062018_shape.zip",
          legal_notes="Licence Ouverte 2.0 (open data Cerema/GéoLittoral) — attribution : « Source : Cerema / GéoLittoral, indicateur national de l'érosion côtière ».",
          technical_notes="✓ intégré : SHP indicateur national d'érosion côtière (Réunion, EPSG:2975→4326). Champ `taux` (m/an) : recul fort ≤ -1 → exclude, recul modéré → flag."),
-    # ── Mandat Habitat Solaire ──
-    dict(name="PVGIS (Commission européenne)", category="energie", provider="CE / JRC",
-         access_type="REST/JSON", status=S.CONNECTE, reliability_level=R.VERIFIE,
-         rate_limit="~25 req/s tolérées ; ingestion à 10 req/s + backoff 429",
-         documentation_url="https://joint-research-centre.ec.europa.eu/photovoltaic-geographical-information-system-pvgis_en",
-         endpoint_url="https://re.jrc.ec.europa.eu/api/v5_3/PVcalc",
-         legal_notes="CC BY 4.0 (politique de réutilisation CE, décision 2011/833/UE) — attribution : « Source : Commission européenne, Joint Research Centre — PVGIS », modifications indiquées (calculs dérivés LABUSE). Gratuit, sans clé.",
-         technical_notes="✓ live 11/07/2026 : v5_3 = base SARAH3 (2005-2023), couvre l'océan Indien, "
-                         "horizon topographique DEM intégré (usehorizon=1). Grille ~400 m → solar_grid, "
-                         "interpolation → parcel_solar.prod_spec_kwh_kwc. aspect=180 (nord, hémisphère sud)."),
-    dict(name="EDF SEI Réunion — open data", category="energie", provider="EDF SEI",
-         access_type="REST/JSON (Opendatasoft)", status=S.CONNECTE, reliability_level=R.VERIFIE,
-         documentation_url="https://opendata-reunion.edf.fr",
-         endpoint_url="https://opendata-reunion.edf.fr/api/explore/v2.1/",
-         legal_notes="Licence Ouverte (jeux ZNI publiés par EDF SEI) — attribution : « Source : EDF SEI Réunion, open data ».",
-         technical_notes="Baseline de consommation résidentielle (Lot 2) + capacités d'accueil "
-                         "réseau si publiées (Lot 7 best effort). Dataset retenu documenté au rapport de fin."),
-    dict(name="Registre national des installations (ODRÉ)", category="energie", provider="ODRÉ / data.gouv.fr",
-         access_type="REST/CSV", status=S.CONNECTE, reliability_level=R.VERIFIE,
-         documentation_url="https://odre.opendatasoft.com",
-         endpoint_url="https://odre.opendatasoft.com/api/explore/v2.1/",
-         legal_notes="Licence Ouverte — attribution : « Source : ODRÉ, registre national des installations de production ». Installations ≥ 36 kVA individualisées, petites agrégées par commune.",
-         technical_notes="Filtré dép. 974, filière solaire → pv_registry. Repowering : mises en service "
-                         "2006-2013 (contrats d'achat 20 ans en fin de vie 2026-2033)."),
     # ── Mandat Wave Détection Ortho ──
     dict(name="BD ORTHO 20 cm (IGN)", category="imagerie", provider="IGN / Géoplateforme",
          access_type="WMS", status=S.CONNECTE, reliability_level=R.VERIFIE,

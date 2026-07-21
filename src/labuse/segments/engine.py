@@ -191,7 +191,7 @@ def build(session, filtres: list[dict], tri: str | None, *,
         # même détection que les filtres : une source de tri vide → repli surface
         probe = {"dvf_mutations_parcelle": "anciennete_mutation_mois",
                  "parcel_residuel_bati": "jardin_m2", "dpe_records": "periode_construction",
-                 "parcel_solar": "score_solaire", "parcel_vegetation": "canopee_limite_pct",
+                 "parcel_vegetation": "canopee_limite_pct",
                  "parcel_anc": "proba_anc"}
         dep = probe.get(sd.requires_rows)
         if dep and not avail.get(dep, {}).get("disponible"):

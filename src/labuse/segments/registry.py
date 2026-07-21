@@ -8,7 +8,7 @@ Le client n'envoie que des clés (validées contre ce registry) et des valeurs
 DISPONIBILITÉ : un filtre déclare ses prérequis (`requires` = tables/colonnes,
 `requires_rows` = table qui doit être NON VIDE pour que le filtre ait un sens).
 Les sources absentes (parcel_solar, parcel_equipements, parcel_anc,
-parcel_vegetation — mandats Habitat Solaire / Détection Ortho / ANC-Végétation)
+parcel_vegetation — mandats Détection Ortho / ANC-Végétation)
 donnent un filtre GRISÉ « disponible prochainement », jamais une erreur.
 """
 from __future__ import annotations
@@ -174,45 +174,6 @@ FILTERS: dict[str, FilterDef] = {f.cle: f for f in [
               requires=("parcel_equipements.pv_detecte",), requires_rows="parcel_equipements",
               description="Panneaux photovoltaïques détectés sur orthophoto (candidats "
                           "scorés V0).", mandat="Détection Ortho"),
-    # ── Solaire (mandat Habitat Solaire) ──
-    FilterDef("score_solaire", "Score solaire", "range", "sol.score_solaire", joins=("sol",),
-              unite="/100", groupe="Énergie",
-              requires=("parcel_solar.score_solaire",), requires_rows="parcel_solar",
-              description="Gisement solaire (percentile île, PVGIS — Commission européenne).",
-              mandat="Habitat Solaire"),
-    FilterDef("facture_elec_estimee_eur", "Facture électrique estimée", "range",
-              "(sol.facture_est_eur_mois * 12)", joins=("sol",), unite="€/an", groupe="Énergie",
-              requires=("parcel_solar.facture_est_eur_mois",), requires_rows="parcel_solar",
-              description="Facture électricité ESTIMÉE (statistique, jamais une donnée réelle).",
-              mandat="Habitat Solaire"),
-    FilterDef("flag_topo_ombrage", "Ombrage topographique (cirque/rempart)", "bool",
-              "coalesce(sol.flag_topo_ombrage, false)", joins=("sol",), groupe="Énergie",
-              requires=("parcel_solar.flag_topo_ombrage",), requires_rows="parcel_solar",
-              description="Production < 80 % de la médiane communale (relief PVGIS) — "
-                          "à exclure d'une prospection solaire.", mandat="Habitat Solaire"),
-    FilterDef("pv_existant", "PV existant (proxy)", "enum", "sol.pv_existant",
-              joins=("sol",), groupe="Énergie",
-              requires=("parcel_solar.pv_existant",), requires_rows="parcel_solar",
-              enum_values=("commune_forte_densite", "detecte"),
-              description="Équipement PV probable : commune du top quartile de densité "
-                          "de petites installations (registre national), ou détecté "
-                          "(mandat Détection Ortho).", mandat="Habitat Solaire"),
-    FilterDef("repowering", "Repowering (contrat d'achat en fin de vie)", "bool",
-              "coalesce(sol.repowering, false)", joins=("sol",), groupe="Énergie",
-              requires=("parcel_solar.repowering",), requires_rows="parcel_solar",
-              description="Installation 2006-2013 rattachée : contrat d'achat 20 ans "
-                          "arrivant à échéance 2026-2033.", mandat="Habitat Solaire"),
-    FilterDef("flag_amiante", "Bâti pré-1997 (amiante à vérifier)", "bool",
-              "coalesce(sol.flag_amiante, false)", joins=("sol",), groupe="Bâti",
-              requires=("parcel_solar.flag_amiante",), requires_rows="parcel_solar",
-              description="Bâti antérieur à 1997 au DPE — signal de PRUDENCE commerciale "
-                          "(risque amiante toiture), jamais un diagnostic.",
-              mandat="Habitat Solaire"),
-    FilterDef("proba_proprio_occupant", "Probabilité propriétaire-occupant", "range",
-              "sol.proba_proprio_occupant", joins=("sol",), unite="/100", groupe="Contexte",
-              requires=("parcel_solar.proba_proprio_occupant",), requires_rows="parcel_solar",
-              description="Score statistique 5-95 : carreau Filosofi 200 m + bonus mutation "
-                          "récente sur maison. Jamais nominatif.", mandat="Habitat Solaire"),
     # ── Végétation / ANC (mandat ANC & Végétation) ──
     FilterDef("ombrage_vegetal", "Canopée sur la parcelle", "range", "veg.canopee_pct",
               joins=("veg",), unite="%", groupe="Végétation",
@@ -243,11 +204,6 @@ FILTERS: dict[str, FilterDef] = {f.cle: f for f in [
               enum_values=("haute", "moyenne"),
               description="haute = hauteur mesurée (LiDAR HD/MNS) ; moyenne = texture "
                           "(végétation arborée probable).", mandat="ANC & Végétation"),
-    FilterDef("flag_ombrage_vegetal", "Ombrage végétal du bâti (canopée à < 8 m)", "bool",
-              "coalesce(sol.flag_ombrage_vegetal, false)", joins=("sol",), groupe="Énergie",
-              requires=("parcel_solar.flag_ombrage_vegetal",), requires_rows="parcel_solar",
-              description="Toit sous canopée (buffer bâti 8 m > seuil config) — mauvais "
-                          "lead PV même bien exposé.", mandat="ANC & Végétation"),
     FilterDef("zone_anc", "Zone officielle d'assainissement non collectif", "bool",
               "(anc.zone_anc = 'anc')", joins=("anc",), groupe="Réseaux",
               requires=("parcel_anc.zone_anc",), requires_rows="parcel_anc",
@@ -321,7 +277,6 @@ FILTERS: dict[str, FilterDef] = {f.cle: f for f in [
 # Jointures vers des tables FUTURES (mandats non mergés) : déclarées pour mémoire, jamais
 # assemblées tant que la table manque (la disponibilité l'empêche).
 JOINS.setdefault("eq", "LEFT JOIN parcel_equipements eq ON eq.idu = p.idu")
-JOINS.setdefault("sol", "LEFT JOIN parcel_solar sol ON sol.idu = p.idu")
 JOINS.setdefault("veg", "LEFT JOIN parcel_vegetation veg ON veg.idu = p.idu")
 JOINS.setdefault("anc", "LEFT JOIN parcel_anc anc ON anc.idu = p.idu")
 
@@ -347,10 +302,6 @@ SORTS: dict[str, SortDef] = {s.cle: s for s in [
     SortDef("residuel_desc", "Emprise résiduelle décroissante",
             "rb.emprise_residuelle_m2 DESC NULLS LAST", ("rb",), "parcel_residuel_bati"),
     SortDef("surface_desc", "Surface de parcelle décroissante", "p.surface_m2 DESC"),
-    SortDef("score_solaire_desc", "Score solaire décroissant",
-            "sol.score_solaire DESC NULLS LAST", ("sol",), "parcel_solar"),
-    SortDef("facture_desc", "Facture estimée décroissante",
-            "sol.facture_est_eur_mois DESC NULLS LAST", ("sol",), "parcel_solar"),
     SortDef("piscine_surface_desc", "Bassin le plus grand d'abord",
             "eq.piscine_surface_m2 DESC NULLS LAST", ("eq",), "parcel_equipements"),
     SortDef("canopee_limite_desc", "Canopée en limite décroissante",
@@ -385,15 +336,6 @@ EXPORT_COLS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "zonage_plu": ("Classe de zone PLU", _ZONE_EXPR, ("zc",)),
     "proprio_occupant_pct": ("Ménages propriétaires du carreau (%)",
                              "round(fil.prop_pct)", ("fil",)),
-    # ── Habitat Solaire ──
-    "score_solaire": ("Score solaire (/100)", "sol.score_solaire", ("sol",)),
-    "prod_spec": ("Production spécifique (kWh/kWc/an)",
-                  "round(sol.prod_spec_kwh_kwc)", ("sol",)),
-    "facture_estimee": ("Facture élec. ESTIMÉE (€/mois)", "sol.facture_est_eur_mois", ("sol",)),
-    "azimut_bati": ("Azimut du bâti (°, nord optimal)",
-                    "round(sol.azimut_bati_deg::numeric)", ("sol",)),
-    "proba_proprio_occupant": ("Proprio-occupant (probabilité /100)",
-                               "sol.proba_proprio_occupant", ("sol",)),
     # ── Détection Ortho ──
     "piscine_surface_m2": ("Bassin détecté (~m², statistique)",
                            "round(eq.piscine_surface_m2)", ("eq",)),
@@ -418,9 +360,6 @@ _EXPORT_REQUIRES: dict[str, str] = {
     "pente_moy_deg": "pente_moy_deg", "emprise_residuelle_m2": "emprise_residuelle_m2",
     "surelevation_possible": "surelevation_possible", "confiance_residuel": "emprise_residuelle_m2",
     "zonage_plu": "zonage_plu", "proprio_occupant_pct": "proprio_occupant_pct",
-    "score_solaire": "score_solaire", "prod_spec": "score_solaire",
-    "facture_estimee": "facture_elec_estimee_eur", "azimut_bati": "score_solaire",
-    "proba_proprio_occupant": "proba_proprio_occupant",
     "piscine_surface_m2": "piscine",
     "proba_anc": "proba_anc", "zone_anc": "zone_anc", "source_anc": "source_anc",
     "canopee_pct": "ombrage_vegetal", "canopee_limite_pct": "canopee_limite_pct",
