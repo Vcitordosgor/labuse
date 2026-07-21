@@ -117,3 +117,36 @@ SOCLE (`ai/core.py`, 11 kinds catalogués, grounding Fact + validation + cache C
 coûts). Partagé : `ia_log`, clé API. Plan de migration en 4 étapes C1→C4 (kind
 « narratif-evaluation » → flag → bascule → retrait legacy + settings morts), 2-3 sessions, zéro
 touche scoring (le narratif est le seul produit des deux couches). **RIEN n'est migré** (post-M7).
+
+---
+
+# STOP FINAL (au retour de Vic)
+
+## Statut des 7 lots
+| Lot | Statut | L'essentiel |
+|---|---|---|
+| P1 câblage permits | ✅ | CLI rebranché SDES vivant (le cron l'était déjà) — 4 tests de preuve |
+| P2 golden distant | ✅ | `--base-url`/`LABUSE_QA_TARGET`, défaut inchangé — **preuve 116/116 sur :8011 par les 2 voies** |
+| P3 migration à blanc | ✅ | purge N7 faite (base 34→21 GB) · **dump 3,8 GB** (5 min 50) · restore 7 min 39 · **comptages tous exacts** · dump conservé |
+| P4 kit deploy | ✅ | cron solaire mort retiré · `/healthz/crons` · backup + rapatriement pull · ufw sûr · env complet |
+| P5 harnais Playwright | ✅ | **8/8 captures réelles** — nav 7 onglets sans Solaire vérifiée par le harnais |
+| P6 F6 ortho | ✅ | RÉSOLU (test périmé, code correct), skip levé — **zéro finding Phase 0 bloquant** |
+| P7 audit IA (bonus) | ✅ | CONVERGENCE_IA.md — plan C1→C4, rien migré |
+
+## Les chiffres que M7 attend
+- **Dump : 3,8 GB compressés** → transfert Gravelines ≈ 2-7 min ; **créneau bascule données ≈ 20 min**
+  (dump 6 + transfert + restore 8).
+- **Golden distant : le geste marche déjà** (116/116 contre une instance alternative, deux voies).
+- ⚠ à retenir pour le VPS : pg_dump/restore **18.x** requis (brew 16 refuse) ; golden en
+  `LABUSE_DEV_MODE=1` ou espacé (throttle 429 sinon) ; ne pas booter l'API pendant un VACUUM FULL.
+
+## Ce que M7 n'a plus à faire
+Câblage permits · purge N7 · première mesure du dump · rendre le golden distant · kit deploy (env,
+backup, rapatriement, ufw, healthz crons) · triage F6 · captures UI de référence.
+
+## Écarts au protocole (assumés, documentés)
+- Le nettoyage d'un artefact commité par erreur (PNG du dossier accidentel `qa/qa/`, entrés via le
+  `git add -A` de P6) a nécessité de refaire les 2 derniers commits LOCAUX (jamais pushés — aucune
+  réécriture d'historique publié) : P6+P3+P5+P7 sont regroupés en un commit détaillé au lieu d'un
+  commit par lot. Contenu intégral inchangé.
+- Suite finale : **1 080 verts / 0 rouge** (17 skips préexistants). Branche pushée, je ne merge pas.
