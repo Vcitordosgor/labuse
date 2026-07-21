@@ -95,6 +95,13 @@ _CAVEAT = ("Estimé (hypothèses de bilan génériques) — prix de sortie neuf 
            "N'est ni un prix ni une promesse.")
 
 
+def niveau_label(niveau_prix: str | None) -> str:
+    """Libellé CLIENT du niveau du prix de sortie neuf (exigence Vic : niveau_prix visible).
+    Tooltip/détail fiche + dossier banquier s'appuient dessus."""
+    return {"secteur": "estimation niveau secteur",
+            "commune": "estimation niveau commune (repli)"}.get(niveau_prix, "estimation niveau non déterminé")
+
+
 def _eur(x: int) -> str:
     ax = abs(x)
     if ax >= 1_000_000:
@@ -116,11 +123,11 @@ def _row(idu, surface_m2, sdp, terrain, prix_vente, niveau_prix) -> dict:
     prix = round(terrain * surface_m2)
     marge = charge - prix
     signe = "+" if marge >= 0 else "−"
-    src = "secteur" if niveau_prix == "secteur" else "commune (repli)"
+    niveau_txt = niveau_label(niveau_prix)   # « estimation niveau secteur » / « … commune (repli) »
     court = f"Marge estimée : {signe}{_eur(abs(marge))} · Estimé"
     detail = (
         f"Marge estimée {_eur(marge)} = charge foncière supportable {_eur(charge)} − prix probable du "
-        f"foncier {_eur(prix)}. Charge = bilan à rebours (prix de sortie neuf {prix_vente:.0f} €/m² [{src}] "
+        f"foncier {_eur(prix)}. Charge = bilan à rebours (prix de sortie neuf {prix_vente:.0f} €/m², {niveau_txt} "
         f"× 0,79 − construction 2 550 €/m²) ; prix probable = médiane terrain sectorielle × {surface_m2:.0f} m². {_CAVEAT}")
     return {"idu": idu, "estimable": True, "marge": marge, "charge": charge, "prix": prix,
             "niveau": niveau_prix, "hv": HYP_VERSION, "court": court, "detail": detail}

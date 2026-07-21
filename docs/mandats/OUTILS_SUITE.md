@@ -240,6 +240,22 @@ ingérer les canalisations de transport (BNPT/PGT) compléterait le tableau ; le
 
 ---
 
+## O0b · Suite review Vic — niveau_prix visible client (flag Score É levé) ✅
+
+Décision Vic : **flag Score É levé**, exigence **niveau_prix visible côté client** (« estimation niveau secteur/commune »),
+idem dossier banquier. Constat : `score_e` n'était **jamais rendu** côté front — c'était ça, le masquage. Le rendu fiche
+lui-même revient au **mandat front** (réorg fiche en un passage — cf. décision 3) ; je garantis ici le **contrat de données**.
+- `src/labuse/ingestion/score_e.py` : helper `niveau_label()` (« estimation niveau secteur » / « … commune (repli) ») ;
+  wording embarqué dans le `detail` stocké (rebuild effectué).
+- `src/labuse/api/app.py` : bloc fiche `score_e` expose `niveau_label` (tooltip/détail prêt pour le front).
+- `src/labuse/api/banquier.py` : Score É du dossier affiche « prix de sortie neuf — estimation niveau secteur/commune (repli) ».
+- Tests : +2 (score_e `niveau_label`, banquier wording) → **14/14** sur ces deux fichiers.
+
+Décisions Vic actées : (2) dossier banquier reste **Essentiel** (Intégral + gating = post-M7 sur feedback) ; (3) **UI O2/O3
+NON faites en partie 2** — affectées au mandat front (fiche réorganisée en un passage).
+
+---
+
 ## STOP MI-COURSE (après O0→O5)
 
 **6 lots livrés, 6 commits, arbre vert.** Score É débloqué (×5,4 marges positives) ; dossier banquier démo ; scoreur
