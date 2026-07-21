@@ -29,6 +29,13 @@ def test_row_marge_negative_affichee():
     assert "repli" in r["detail"]                           # niveau commune tracé comme repli
 
 
+def test_niveau_label_client_visible():
+    # exigence Vic : niveau_prix visible côté client (« estimation niveau secteur/commune »)
+    assert se.niveau_label("secteur") == "estimation niveau secteur"
+    assert se.niveau_label("commune") == "estimation niveau commune (repli)"
+    assert "non déterminé" in se.niveau_label(None)
+
+
 def test_row_non_estimable_sans_donnee():
     for args in ((500, 0, 200, 5000, "secteur"), (500, 1000, None, 5000, "secteur"), (500, 1000, 200, None, None)):
         r = se._row("idu", *args)

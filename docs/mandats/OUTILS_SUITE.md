@@ -240,6 +240,22 @@ ingérer les canalisations de transport (BNPT/PGT) compléterait le tableau ; le
 
 ---
 
+## O0b · Suite review Vic — niveau_prix visible client (flag Score É levé) ✅
+
+Décision Vic : **flag Score É levé**, exigence **niveau_prix visible côté client** (« estimation niveau secteur/commune »),
+idem dossier banquier. Constat : `score_e` n'était **jamais rendu** côté front — c'était ça, le masquage. Le rendu fiche
+lui-même revient au **mandat front** (réorg fiche en un passage — cf. décision 3) ; je garantis ici le **contrat de données**.
+- `src/labuse/ingestion/score_e.py` : helper `niveau_label()` (« estimation niveau secteur » / « … commune (repli) ») ;
+  wording embarqué dans le `detail` stocké (rebuild effectué).
+- `src/labuse/api/app.py` : bloc fiche `score_e` expose `niveau_label` (tooltip/détail prêt pour le front).
+- `src/labuse/api/banquier.py` : Score É du dossier affiche « prix de sortie neuf — estimation niveau secteur/commune (repli) ».
+- Tests : +2 (score_e `niveau_label`, banquier wording) → **14/14** sur ces deux fichiers.
+
+Décisions Vic actées : (2) dossier banquier reste **Essentiel** (Intégral + gating = post-M7 sur feedback) ; (3) **UI O2/O3
+NON faites en partie 2** — affectées au mandat front (fiche réorganisée en un passage).
+
+---
+
 ## STOP MI-COURSE (après O0→O5)
 
 **6 lots livrés, 6 commits, arbre vert.** Score É débloqué (×5,4 marges positives) ; dossier banquier démo ; scoreur
@@ -262,3 +278,287 @@ scoreur 6, anti-fiche 3, traducteur 7, servitudes 8). Zéro touche scoring / run
 3. **UI** : brancher O2/O3 sur la fiche/carte (findings ouverts).
 
 Reste : **O6→O12** en mode autonome (règles du batch de nuit), puis STOP final (dont dossier de revue 20 cartes O12).
+
+---
+
+# PARTIE 2 — O6→O12 (autonome)
+
+## O6 · Comparateur de communes ✅
+
+**« Où investir ? » un tableau, une ligne par commune.** `GET /comparateur-communes` (`src/labuse/api/comparateur.py`).
+Agrège 6 indicateurs **déjà en base** (zéro donnée nouvelle), un par colonne, chacun Sourcé/Estimé, sur les **24 communes** :
+
+| Indicateur | Direction | Source | Nature |
+|---|---|---|---|
+| Stock d'opportunités (brûlantes + chaudes) | haut = mieux | run servi | Sourcé |
+| Vélocité admin (délai médian dépôt→autorisation, mois) | bas = mieux | m10 / SITADEL | Sourcé |
+| Dynamisme permis (SITADEL, 24 mois) | haut = mieux | SITADEL | Sourcé |
+| Déficit SRU (objectif − taux LLS, points) | haut = mieux | DHUP | Sourcé |
+| Pression ZAN (ENAF consommé 2021-2024, ha) | bas = mieux | Cerema | Sourcé |
+| Prix de sortie neuf (DVF, €/m²) | haut = mieux | DVF | Estimé |
+
+### Composite = commodité, PAS un score calibré
+Chaque indicateur **normalisé min-max [0-100]** selon sa direction ; composite = **moyenne pondérée des axes présents**.
+**Pondération réglable** (query params `w_*`, défauts documentés : stock 0,30 · vélocité/permis/SRU/prix 0,15 · ZAN 0,10)
+et **présentée** dans la réponse (`indicateurs`, `methode`, `poids_total`). Un **axe manquant reste `null`** (jamais 0
+trompeur) et son poids est **retiré du composite de cette commune** (renormalisation), pour ne pas la pénaliser.
+
+### Validation
+24 communes classées ; Saint-Paul en tête (stock 259, 580 permis/24 mois). 7 communes ont un axe manquant → renormalisé.
+`src/labuse/api/comparateur.py` (helper testable `_compute`), routeur branché.
+`tests/test_comparateur.py` — **5/5 verts** (+1 skip DB propre) : direction stock/vélocité, axe manquant null +
+renormalisation, classement/rang, borne dégénérée neutre.
+
+**Reco d'exposition.** **Visible** avec la mention « aide à la comparaison, pas un score de rendement » (déjà dans la
+réponse) et la pondération affichée réglable. **Finding O6** : brancher un tableau triable + curseurs de poids côté front
+(mandat front) ; le PLH par EPCI (`plh_epci`) pourrait devenir un 7ᵉ axe (objectifs de production) si utile.
+
+---
+
+## O7 · Carnet de secteur consultable ✅
+
+**Une page de suivi par micro-secteur** (`left(idu,10)` = INSEE + « 000 » + section). `GET /carnet-secteur/{secteur}`
++ `GET /carnet-secteur` (liste des secteurs à suivre, triés par stock d'opportunités). `src/labuse/api/carnet.py`.
+100 % lecture (zéro donnée nouvelle).
+
+### Contenu de la page (chaque bloc sourcé, requêtes optionnelles guardées `to_regclass`)
+- **Stock** par tier (brûlantes / chaudes / à creuser / écartées) + opportunités.
+- **Prix** : médianes DVF sectorielles (terrain / maison / appart) + prix de sortie neuf (si le secteur atteint n ≥ 5).
+- **Signaux de veille** agrégés (végétation haute en limite, piscine sans PC, ANC mutation, APER échéance PV).
+- **Permis SITADEL** rattachés au secteur (via `idu_codes`) sur 24 mois.
+- **Contexte ZAN** de la commune (ENAF consommé, Cerema).
+
+### Décision par défaut documentée (mail hebdo / comptes = POST-M7)
+L'**abonnement** à un secteur (digest hebdomadaire, compte utilisateur) relève du **mandat Auth & Plans** — **pas livré
+ici** ; le carnet est **consultable à la demande**. Les tables `watch_zones` / `watched_parcels` existent déjà et seront
+l'ancrage de l'abonnement le moment venu. Décision inscrite dans la réponse (`note`) et ici.
+
+### Livrable technique
+- `src/labuse/api/carnet.py` — liste + page, requêtes optionnelles guardées. `app.py` — routeur branché.
+- `tests/test_carnet.py` — **5/5 verts** (422 mauvaise longueur ; POST-M7 documenté ; libellés signaux ; stock par tier ;
+  liste triée brûlantes/chaudes).
+
+**Reco d'exposition.** **Visible** (lecture sourcée). **Finding O7** : brancher la page carnet + la liste côté front
+(mandat front) ; l'abonnement hebdo attend le mandat Auth & Plans (ancrage `watch_zones` prêt).
+
+---
+
+## O8 · Indice de tension foncière — **LIVRÉ MASQUÉ (flag) + finding** ✅ (point dur respecté)
+
+**Indice 0-100 demande vs offre par micro-secteur** (`GET /tension-fonciere`, `src/labuse/api/tension.py`). Formule
+documentée, bornée, distribution renvoyée — **mais non exposé** (`expose = false`, `masque = true`).
+
+### Sonde de calibrabilité (le point dur du mandat)
+Conformément à « si non calibrable défendablement → livré MASQUÉ + finding », l'indice est confronté à un **exutoire
+INDÉPENDANT** : le **prix relatif du secteur vs sa commune** (désirabilité révélée par le marché — non utilisé comme
+entrée). Résultat mesuré, **recalculé à la volée** (reproductible) :
+
+> **Spearman(tension, prix relatif) = −0,042 (n = 616)** — corrélation nulle, sous le seuil ±0,20. **NON défendable.**
+
+Signes concordants : la distribution **sature** (médiane = 100) car l'offre `part d'opportunités` vaut 0 sur beaucoup de
+secteurs ; deux entrées sur trois sont **clairsemées** (permis 24 mois, 5 % de secteurs sans permis) ou **constantes à
+l'échelle communale** (déficit SRU) — la granularité « micro-secteur » est en partie **factice**.
+
+### Décision
+**Indice MASQUÉ.** Le moteur est **livré** (formule `demande = moyenne(norm[densité permis/parcelle], norm[déficit SRU]) ;
+offre = norm[part d'opportunités] ; tension = 100 × demande/(demande+offre)`, bornes [0-100], sonde intégrée) pour être
+**prêt** le jour où une source de calibration existera (série de prix datée, taux d'absorption permis/stock daté) —
+**jamais affiché en l'état, pas de faux signal « pour faire joli »**. Zéro exposition en fiche.
+
+### Livrable technique
+- `src/labuse/api/tension.py` — moteur + sonde Spearman + endpoint masqué (tables requises guardées `to_regclass`).
+- `tests/test_tension.py` — **6/6 verts** (EXPOSE False ; Spearman monotone ±1 ; n<3 → 0 ; masqué + finding ; vide reste masqué).
+
+**Reco d'exposition.** **MASQUÉ** — finding ci-dessus. À ré-évaluer uniquement si un exutoire calibrant apparaît et fait
+passer |Spearman| au-dessus de 0,20.
+
+---
+
+## O9 · Pipeline de rareté ✅
+
+**Combien d'années avant que le foncier constructible d'une commune soit épuisé ?** `GET /pipeline-rarete`
+(`src/labuse/api/rarete.py`). Projection arithmétique **Estimé, caveat large**, sur les **24 communes**.
+
+### Formule (documentée, sourcée)
+```
+rythme  = conso ENAF 2021-2024 / 3 ans          (ha/an, Sourcé Cerema)
+budget  = 50 % de la conso 2011-2021            (enveloppe loi Climat/TRACE, Estimé doctrine)
+reste   = budget − conso déjà réalisée 2021-2024
+horizon = reste / rythme                         (années avant plafond ZAN, rythme constant)
+```
+Stock d'opportunités **détecté** (ha de brûlantes + chaudes) fourni en **contexte** (ne se substitue pas à
+l'enveloppe ZAN). Statut dérivé : budget dépassé / tension forte (≤ 5 ans) / modérée (≤ 15) / détendu.
+
+### Robustesse & honnêteté
+- Rythme nul → **non projetable** (`null`, jamais un horizon inventé) ; reste ≤ 0 → **budget dépassé** (0). Table ZAN
+  absente → liste vide guardée.
+- **Caveat assumé** dans la réponse : rythme supposé constant ; budget = interprétation −50 % (loi TRACE assouplie) ;
+  épuisement de l'enveloppe ENAF ≠ interdiction de bâtir (densification hors ENAF possible). **Outil de hiérarchisation,
+  pas une date couperet.**
+
+### Validation
+24 communes triées par pression : Cilaos « budget dépassé », petites communes (Trois-Bassins, Petite-Île) en tension
+forte (< 1 an), grandes communes plus détendues. Cohérent.
+
+### Livrable technique
+- `src/labuse/api/rarete.py` — `compute_rarete` + endpoint (table ZAN guardée). `app.py` — routeur branché.
+- `tests/test_rarete.py` — **6/6 verts** (horizon normal ; rythme nul → non projetable ; budget dépassé ; reste absent ;
+  caveat large ; table absente → vide).
+
+**Reco d'exposition.** **Visible** avec le caveat large affiché (projection Estimé, hiérarchisation). **Finding O9** :
+mettre à jour le millésime ENAF quand Cerema publie 2025 ; la trajectoire loi TRACE (assouplie) pourra affiner le budget.
+
+---
+
+## O10 · Surface D — LE MOTEUR seulement ✅
+
+**Détection de BASCULES par parcelle** (changements d'état datés qui rendent une parcelle intéressante MAINTENANT).
+Livré : **le moteur** (table + builder + CLI de test). `src/labuse/ingestion/surface_d.py`, table additive
+`surface_d_events(idu, type, date_evenement, detail, source)`. **Zéro donnée nouvelle.**
+
+### Sources BRANCHÉES (datées, par parcelle) — dont les 2 badges Phase A demandés
+| Type d'événement | Source | Volume |
+|---|---|---|
+| `entree_fenetre_defisc` | `defisc_fenetres` (badge Phase A-1) | 797 |
+| `pc_caduc` | `pc_caducs` (badge Phase A cycle 2) | 2 164 |
+| `dpe_passoire` | `dpe_records` F/G (réserve M4.0, sourcé) | 30 |
+| `permis_octroye` | `sitadel_permits` rattachés (idu_codes), 36 mois | 8 793 |
+| **Total** | | **11 784 événements datés** |
+
+Types **déclarés mais sans source datée par parcelle** à ce jour (extensibles, **non fabriqués**) : `plu_revise`,
+`bodacc_pm`, `permis_voisin` (à proximité, ≠ sur la parcelle). Le moteur les accepte ; on ne les invente pas.
+
+### Moteur seulement — notification POST-M7
+Dédup `UNIQUE (idu, type, date_evenement)` ; rebuild idempotent ; sources absentes guardées `to_regclass` (→ 0, jamais un
+crash). CLI : `labuse surface-d` (build) + `labuse surface-d-events --type … --limit …` (diagnostic). **La notification
+(alerte / digest) est POST-M7** (mandat Auth & Plans) — non livrée ici, conformément à « LE MOTEUR seulement ».
+
+### Livrable technique
+- `src/labuse/ingestion/surface_d.py` — table + builder + `recent_events`. `src/labuse/cli.py` — `surface-d` + `surface-d-events`.
+- `tests/test_surface_d.py` — **3/3 verts** (types déclarés ; défisc+caducs branchés + sources absentes → 0 ; dédup).
+
+**Reco d'exposition.** **Moteur interne** (pas d'exposition client en partie 2 ; la notification et l'affichage
+viennent post-M7 / mandat front). **Finding O10** : brancher `plu_revise` dès qu'une révision de zonage datée est
+ingérée, et `bodacc_pm` via le flux BODACC personne morale ; câbler la notification sur `watch_zones` au mandat Auth.
+
+---
+
+## O11 · Opérations & lots — **LOT 0 PROUVÉ**, puis outil ✅ (point dur respecté)
+
+### LOT 0 (obligatoire) — le rattachement PA/PC groupés ↔ rafales DVF **tient**
+Problème : **DVF n'a AUCUNE identité vendeur** (que parcelle/valeur/date). Le rattachement est donc **multi-signal** :
+(a) **déclin de propriété** du porteur PERSONNE MORALE entre millésimes fonciers (`pm_proprietaires_millesimes`,
+2019-2024) = lots cédés ; (b) **permis PA/PC** sur le secteur (SITADEL) ; (c) **rafale de ventes DVF** sur le
+secteur/période. **Vérifié sur des opérations réelles nommées** (PM = SIREN public) :
+
+| Porteur (SIREN) | Secteur | Propriété | Permis | Ventes DVF |
+|---|---|---|---|---|
+| **CBO TERRITORIA** (452038805) | 97415000DK | 387 → 229 (−158) | PA×8, PC×200 (2013-…) | 73 (2021-25) |
+| **CONCORDE** (830360418) | 97418000AW | 85 → 12 (−73) | PA×3, PC×152 | 114 (2021-25) |
+| **OPHELIA** | 97420000BD | 74 → 12 (−62) | PA×1, PC×141 | 107 |
+| **GRAND NATTE / ALLIANCE** | 97408/97410 | −50 / −46 | PA + PC | 40 / 98 |
+
+Les trois signaux **s'alignent** → rattachement **circonstanciel mais convergent**. **LOT 0 = GO.** (Caveat assumé :
+l'attribution d'UNE vente précise au porteur n'est pas garantie — DVF sans identité vendeur.)
+
+### Outil livré (Lot 0 tenu)
+`GET /operations` (liste) + `GET /operations/{siren}/{secteur}` (fiche). `src/labuse/api/operations.py`.
+**763 opérations détectées** (283 confiance élevée, 328 moyenne, 152 faible), triées par confiance (alignement des 3
+signaux). Fiche : **porteur (SIREN public, jamais un particulier)**, secteur, permis (PA/PC + années), lots au pic,
+**vendus (Sourcé** = déclin de propriété), **restant (Estimé** + **caveat DVF ~6 mois** : ventes récentes non encore
+publiées). Détection : PM détenant un pic ≥ 5 parcelles, PA ≥ 1 (ou PC ≥ 5), et déclin de propriété.
+
+### Livrable technique
+- `src/labuse/api/operations.py` — `detect_operations` + liste + fiche. `app.py` — routeur branché.
+- `tests/test_operations.py` — **6/6 verts** (confiance 3/2/1 signaux ; vendus Sourcé / restant Estimé ; porteur PM ;
+  caveat DVF ; table absente → vide).
+
+**Reco d'exposition.** **Visible** avec confiance affichée + caveat DVF, **filtré sur la confiance « élevée/moyenne »**.
+**Finding O11** : certains « porteurs » sont des entités publiques (Conservatoire du Littoral, SEM, Aéroport) qui cèdent
+du foncier sans être des promoteurs privés — transparent via le SIREN ; un filtre par forme juridique / NAF affinerait.
+
+---
+
+## O12 · Division en or — détecteur MASQUÉ + **dossier de revue 20 cartes** ✅ (point dur respecté)
+
+**Parcelles où le bâti occupe un coin et laisse un résiduel DÉTACHABLE constructible.** **Faux positif = péché
+mortel** → l'outil est **MASQUÉ** (`EXPOSE = False`, aucune exposition client) ; le livrable qui conditionne
+l'exposition est le **dossier de revue 20 cartes** : **`docs/mandats/O12_DIVISION_OR_REVUE.pdf`** (20 pages,
+fond IGN BD ORTHO + tracés parcelle/bâti/lot proposé + métriques + cases ☐ vrai positif / ☐ faux positif / ☐ douteux),
+**à valider visuellement par Vic**.
+
+### Détecteur (géométrie EPSG:2975, seuils CONSERVATEURS, zéro donnée nouvelle)
+`src/labuse/ingestion/division_or.py`, table masquée `division_or_candidates` :
+- parcelle **1 000–6 000 m²** (place pour DEUX lots viables) ; bâti **8–45 %** de l'emprise ;
+- résiduel = plus grand polygone de (parcelle − bâti bufferisé 3 m), **500 m² ≤ résiduel ≤ surface − 400 m²**
+  (le lot bâti garde ≥ 400 m²) ;
+- **cercle inscrit ≥ 9 m de rayon** (largeur ~18 m constructible — pas une lanière) ;
+- **façade voirie du lot ≥ 12 m** (accès indépendant — le discriminant-clé).
+Gain via **Score É V2** joint en SQL (Estimé, NULL si non estimable) ; `clarte` (rayon + façade) trie le dossier de
+revue. Aucune affirmation de constructibilité réglementaire (reculs, prospect, servitudes) — la revue tranche.
+
+### Résultat (2 communes pilotes)
+**123 candidats** (Bras-Panon 51, Entre-Deux 72) en 130 s. Top : parcelles 3 000-6 000 m², bâti 8-18 %, résiduels
+2 500-5 400 m², rayons 15-29 m. CLI : `labuse division-or --communes …` + `labuse division-or-review` (régénère le PDF).
+
+### Deux findings d'ingénierie (honnêteté)
+1. **Métrique « façade restante du lot bâti » INVALIDÉE** : `façade_parcelle − façade_lot` sort des valeurs négatives
+   (médiane −56 m — artefact de la frontière du lot découpé qui suit la voirie). **Retirée du filtre, champ NULL** —
+   on ne filtre pas sur un chiffre faux ; l'accès restant du lot bâti est jugé **visuellement** carte par carte.
+2. **Verrous Postgres zombies** : des runs interrompus (client tué) laissaient leurs transactions serveur ouvertes
+   (jusqu'à 2h47), bloquant tout `CREATE TABLE` suivant — diagnostiqué via `pg_stat_activity`, purgé
+   (`pg_terminate_backend`). À savoir pour les batchs géométriques longs.
+
+### Livrable technique
+- `src/labuse/ingestion/division_or.py` — détecteur single-pass SQL (masqué). `src/labuse/api/division_review.py` —
+  générateur du dossier (IGN + tracés SVG). `cli.py` — `division-or`, `division-or-review`.
+- `docs/mandats/O12_DIVISION_OR_REVUE.pdf` — **le dossier de revue 20 cartes** (3,9 Mo).
+- `tests/test_division_or.py` — **4/4 verts** (EXPOSE False ; seuils conservateurs présents ; métrique invalidée non
+  filtrante ; commune vide → 0).
+
+**Reco d'exposition.** **MASQUÉ jusqu'à validation visuelle du dossier par Vic.** Si la revue est bonne : étendre aux
+24 communes (batch ~130 s / 2 petites communes — prévoir quelques heures île entière, ou pré-agrégation voirie),
+puis exposer avec le wording conservateur. **Finding O12 (suite)** : remplacer la façade voirie sommée par une façade
+« plus long segment continu » éviterait de sur-compter les parcelles d'angle (465 m sur un candidat).
+
+---
+
+# STOP FINAL
+
+## Bilan de la fenêtre (13 lots + O0b)
+
+**14 commits, arbre vert, zéro touche scoring / runs servis / golden 116.** Partie 1 (O0→O5 + STOP mi-course) mergée
+par Vic ; partie 2 (O0b, O6→O12) sur `fenetre/outils-suite`, prête pour merge `--no-ff` (je ne merge jamais).
+
+### Table des recommandations d'exposition M7 (récapitulatif final)
+| Lot | Outil | Reco | Condition |
+|---|---|---|---|
+| O0 | Score É V2 | **Exposé** (flag levé par Vic) | `niveau_label` visible (fait, O0b) |
+| O1 | Dossier banquier | **Visible** (démo) | gating Essentiel (décision Vic) |
+| O2 | Scoreur d'adresse | Visible (API) | UI au mandat front |
+| O3 | Anti-fiche | **Visible** | panneau fiche au mandat front |
+| O4 | Traducteur PLU | **Visible** | — |
+| O5 | Servitudes invisibles | **Visible** | — |
+| O6 | Comparateur communes | **Visible** | tableau front au mandat front |
+| O7 | Carnet de secteur | **Visible** | abonnement = post-M7 (Auth & Plans) |
+| O8 | Tension foncière | **MASQUÉ** | Spearman −0,04 → attendre un exutoire calibrant (seuil ±0,20) |
+| O9 | Pipeline de rareté | **Visible** | caveat large affiché |
+| O10 | Surface D (moteur) | Interne | notification post-M7 |
+| O11 | Opérations & lots | **Visible** | filtré confiance élevée/moyenne + caveat DVF |
+| O12 | Division en or | **MASQUÉ** | validation visuelle du dossier 20 cartes par Vic |
+
+### Tests de la fenêtre
+score_e 6 · banquier 8 · scoreur 6 · anti-fiche 3 · traducteur 7 · servitudes 8 · comparateur 5(+1 skip) ·
+carnet 5 · tension 6 · rareté 6 · surface_d 3 · division_or 4 = **67 verts** (0 rouge).
+
+### Findings transverses (pour M7 et les mandats suivants)
+1. **IA en repli** : crédits Anthropic épuisés → synthèse banquier (O1) et traduction PLU (O4) en repli déterministe
+   honnête. Fonctionnel ; re-tester au retour des crédits.
+2. **UI** : O2/O3 (et l'affichage O6/O7) affectés au mandat front (fiche réorganisée en un seul passage — décision Vic).
+3. **Batchs à re-lancer après bascule de run servi** : `prix-neuf` + `score-e`, `surface-d`, `division-or`.
+4. **O8** ré-évaluable uniquement si un exutoire calibrant apparaît ; **O12** attend la revue visuelle.
+
+### Décisions attendues de Vic à ce STOP
+1. **O12** : valider (ou non) le dossier `O12_DIVISION_OR_REVUE.pdf` — 20 cartes, cases à cocher.
+2. **O11** : confirmer l'exposition (confiance élevée/moyenne) et l'éventuel filtre forme juridique.
+3. Merge `--no-ff` de `fenetre/outils-suite`.

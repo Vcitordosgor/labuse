@@ -2253,6 +2253,10 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
                 "SELECT estimable, marge_estimee, charge_supportable, prix_probable, niveau_prix, "
                 "hypotheses_version, libelle_court, detail FROM score_e WHERE idu = :i"), {"i": p.idu}).mappings().first()
             score_e_block = dict(_se) if _se else None
+            if score_e_block and score_e_block.get("estimable"):
+                # Exigence Vic (flag levé) : le niveau du prix DOIT être visible côté client (tooltip/détail).
+                from ..ingestion.score_e import niveau_label
+                score_e_block["niveau_label"] = niveau_label(score_e_block.get("niveau_prix"))
     except Exception:  # noqa: BLE001 - table additive optionnelle, jamais bloquant
         score_e_block = None
 
@@ -2990,6 +2994,11 @@ from .scoreur import router as _scoreur_router  # noqa: E402  (O2 — scoreur d'
 from .anti_fiche import router as _anti_fiche_router  # noqa: E402  (O3 — anti-fiche « pourquoi pas »)
 from .traducteur import router as _traducteur_router  # noqa: E402  (O4 — traducteur de règlement PLU)
 from .servitudes import router as _servitudes_router  # noqa: E402  (O5 — servitudes invisibles)
+from .comparateur import router as _comparateur_router  # noqa: E402  (O6 — comparateur de communes)
+from .carnet import router as _carnet_router  # noqa: E402  (O7 — carnet de secteur)
+from .tension import router as _tension_router  # noqa: E402  (O8 — tension foncière, MASQUÉ)
+from .rarete import router as _rarete_router  # noqa: E402  (O9 — pipeline de rareté)
+from .operations import router as _operations_router  # noqa: E402  (O11 — opérations & lots)
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .segments import router as _segments_router  # noqa: E402
@@ -3010,6 +3019,11 @@ app.include_router(_scoreur_router)
 app.include_router(_anti_fiche_router)
 app.include_router(_traducteur_router)
 app.include_router(_servitudes_router)
+app.include_router(_comparateur_router)
+app.include_router(_carnet_router)
+app.include_router(_tension_router)
+app.include_router(_rarete_router)
+app.include_router(_operations_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
 app.include_router(_ia_router)

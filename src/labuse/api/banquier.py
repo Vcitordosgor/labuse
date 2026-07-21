@@ -367,10 +367,11 @@ def _bilan(out: dict) -> str:
                      f"<td class='n'>{_eur(cf.get('haut'))}</td><td class='n'>{_esc(cf.get('par_m2_terrain'))} €/m²</td></tr></table>"
                      f"<p class='note'>Fiabilité du bilan : {_esc(bilan.fiabilite)}. {_esc(bilan.bandeau)}</p>")
     if se and se["estimable"]:
+        from ..ingestion.score_e import niveau_label
         body += (f"<h3>Score É — marge foncière estimée {_s('E')}</h3>"
                  f"<p><b>{_eur(se['marge_estimee'])}</b> = charge supportable {_eur(se['charge_supportable'])} "
                  f"− prix probable du foncier {_eur(se['prix_probable'])} "
-                 f"(prix de sortie neuf, niveau {_esc(se['niveau_prix'])}).</p>"
+                 f"(prix de sortie neuf — {_esc(niveau_label(se['niveau_prix']))}).</p>"
                  f"<p class='note'>{_esc(se['detail'])}</p>")
     elif se:
         body += f"<h3>Score É</h3><p class='note'>Marge {_s('A')} — données de marché insuffisantes.</p>"

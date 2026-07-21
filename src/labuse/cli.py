@@ -2131,6 +2131,63 @@ def ortho_juge_vlm_cmd(
                        f" : {m.get('point')}")
 
 
+@app.command("division-or")
+def division_or_cmd(
+    communes: str = typer.Option(..., help="Communes à scanner (séparées par des virgules)."),
+) -> None:
+    """O12 — Division en or (MASQUÉ) : détecte les parcelles à lot détachable constructible.
+    Table division_or_candidates (flag EXPOSE=False). Exposition = APRÈS validation du dossier 20 cartes par Vic."""
+    from .ingestion import division_or
+
+    with session_scope() as s:
+        r = division_or.build_divisions(s, [c.strip() for c in communes.split(",") if c.strip()], log=typer.echo)
+        typer.echo(f"✓ division_or_candidates : {r['total']} candidats (MASQUÉ)")
+
+
+@app.command("division-or-review")
+def division_or_review_cmd(
+    out: str = typer.Option("division_or_revue.pdf", help="Chemin du PDF de revue."),
+    limit: int = typer.Option(20, help="Nombre de cartes (candidats les plus clairs)."),
+) -> None:
+    """O12 — génère le DOSSIER DE REVUE (20 cartes) pour validation visuelle de Vic."""
+    from .ingestion import division_or
+    from .api import division_review
+
+    with session_scope() as s:
+        cands = division_or.top_candidates(s, limit=limit)
+        if not cands:
+            typer.echo("Aucun candidat — lancer d'abord `division-or --communes …`.")
+            raise typer.Exit(1)
+        pdf = division_review.build_review_dossier(s, cands)
+    with open(out, "wb") as f:
+        f.write(pdf)
+    typer.echo(f"✓ dossier de revue : {out} ({len(cands)} cartes) — à valider par Vic")
+
+
+@app.command("surface-d")
+def surface_d_cmd() -> None:
+    """O10 — Surface D (MOTEUR) : (re)construit surface_d_events (bascules datées par parcelle).
+    Sources branchées : défisc, PC caducs, DPE passoire F/G, permis rattachés. Notification = post-M7."""
+    from .ingestion import surface_d
+
+    with session_scope() as s:
+        r = surface_d.build_events(s, log=typer.echo)
+        typer.echo(f"✓ surface_d_events : {r['total']} événements — {r['par_type']}")
+
+
+@app.command("surface-d-events")
+def surface_d_events_cmd(
+    type_filtre: str = typer.Option(None, "--type", help="Filtrer par type d'événement."),
+    limit: int = typer.Option(20, help="Nombre d'événements récents à afficher."),
+) -> None:
+    """O10 — test/diagnostic du moteur : affiche les bascules datées les plus récentes."""
+    from .ingestion import surface_d
+
+    with session_scope() as s:
+        for e in surface_d.recent_events(s, limit=limit, type_filtre=type_filtre):
+            typer.echo(f"{e['date_evenement']}  {e['type']:<22} {e['idu']}  {e['detail'][:60]}")
+
+
 @app.command("prix-neuf")
 def prix_neuf_cmd() -> None:
     """O0 — Prix de sortie NEUF par secteur (ventes ≤ 3 ans après achèvement PC), repli commune.

@@ -68,6 +68,15 @@ def test_comparables_ancien_vefa_sources():
     assert "Sourcé" in html and "VEFA" in html and "3900" in html and "SITADEL" in html
 
 
+def test_bilan_niveau_prix_visible_wording_vic():
+    # exigence Vic (flag Score É levé) : le niveau du prix visible en clair dans le dossier banquier
+    out = _out_complet()
+    out["score_e"]["niveau_prix"] = "commune"
+    assert "estimation niveau commune (repli)" in b._bilan(out)
+    out["score_e"]["niveau_prix"] = "secteur"
+    assert "estimation niveau secteur" in b._bilan(out)
+
+
 def test_score_e_non_estimable_pas_de_chiffre():
     out = _out_complet()
     out["score_e"] = {"estimable": False, "marge_estimee": None, "charge_supportable": None,
