@@ -312,3 +312,31 @@ renormalisation, classement/rang, borne dégénérée neutre.
 **Reco d'exposition.** **Visible** avec la mention « aide à la comparaison, pas un score de rendement » (déjà dans la
 réponse) et la pondération affichée réglable. **Finding O6** : brancher un tableau triable + curseurs de poids côté front
 (mandat front) ; le PLH par EPCI (`plh_epci`) pourrait devenir un 7ᵉ axe (objectifs de production) si utile.
+
+---
+
+## O7 · Carnet de secteur consultable ✅
+
+**Une page de suivi par micro-secteur** (`left(idu,10)` = INSEE + « 000 » + section). `GET /carnet-secteur/{secteur}`
++ `GET /carnet-secteur` (liste des secteurs à suivre, triés par stock d'opportunités). `src/labuse/api/carnet.py`.
+100 % lecture (zéro donnée nouvelle).
+
+### Contenu de la page (chaque bloc sourcé, requêtes optionnelles guardées `to_regclass`)
+- **Stock** par tier (brûlantes / chaudes / à creuser / écartées) + opportunités.
+- **Prix** : médianes DVF sectorielles (terrain / maison / appart) + prix de sortie neuf (si le secteur atteint n ≥ 5).
+- **Signaux de veille** agrégés (végétation haute en limite, piscine sans PC, ANC mutation, APER échéance PV).
+- **Permis SITADEL** rattachés au secteur (via `idu_codes`) sur 24 mois.
+- **Contexte ZAN** de la commune (ENAF consommé, Cerema).
+
+### Décision par défaut documentée (mail hebdo / comptes = POST-M7)
+L'**abonnement** à un secteur (digest hebdomadaire, compte utilisateur) relève du **mandat Auth & Plans** — **pas livré
+ici** ; le carnet est **consultable à la demande**. Les tables `watch_zones` / `watched_parcels` existent déjà et seront
+l'ancrage de l'abonnement le moment venu. Décision inscrite dans la réponse (`note`) et ici.
+
+### Livrable technique
+- `src/labuse/api/carnet.py` — liste + page, requêtes optionnelles guardées. `app.py` — routeur branché.
+- `tests/test_carnet.py` — **5/5 verts** (422 mauvaise longueur ; POST-M7 documenté ; libellés signaux ; stock par tier ;
+  liste triée brûlantes/chaudes).
+
+**Reco d'exposition.** **Visible** (lecture sourcée). **Finding O7** : brancher la page carnet + la liste côté front
+(mandat front) ; l'abonnement hebdo attend le mandat Auth & Plans (ancrage `watch_zones` prêt).

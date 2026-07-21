@@ -2995,6 +2995,7 @@ from .anti_fiche import router as _anti_fiche_router  # noqa: E402  (O3 — anti
 from .traducteur import router as _traducteur_router  # noqa: E402  (O4 — traducteur de règlement PLU)
 from .servitudes import router as _servitudes_router  # noqa: E402  (O5 — servitudes invisibles)
 from .comparateur import router as _comparateur_router  # noqa: E402  (O6 — comparateur de communes)
+from .carnet import router as _carnet_router  # noqa: E402  (O7 — carnet de secteur)
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .segments import router as _segments_router  # noqa: E402
@@ -3016,6 +3017,7 @@ app.include_router(_anti_fiche_router)
 app.include_router(_traducteur_router)
 app.include_router(_servitudes_router)
 app.include_router(_comparateur_router)
+app.include_router(_carnet_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
 app.include_router(_ia_router)
