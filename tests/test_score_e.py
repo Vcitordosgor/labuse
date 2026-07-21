@@ -15,20 +15,22 @@ from labuse.ingestion import score_e as se
 # ───────────────────────── bornes (pur) ─────────────────────────
 
 def test_row_marge_positive():
-    r = se._row("idu", 500, 1000, 200, 5000)      # prix vente élevé → charge > prix
+    r = se._row("idu", 500, 1000, 200, 5000, "secteur")   # prix de sortie neuf élevé → charge > prix
     assert r["estimable"] is True and r["marge"] > 0
     assert r["court"].startswith("Marge estimée : +")
     assert "Estimé" in r["court"] and "Estimé" in r["detail"]
+    assert r["niveau"] == "secteur"
 
 
 def test_row_marge_negative_affichee():
-    r = se._row("idu", 500, 1000, 200, 3000)      # prix vente modeste → charge < prix → marge négative
+    r = se._row("idu", 500, 1000, 200, 3000, "commune")   # prix modeste → charge < prix → marge négative
     assert r["estimable"] is True and r["marge"] < 0
-    assert "−" in r["court"]                        # signe moins explicite (U+2212)
+    assert "−" in r["court"]                                # signe moins explicite (U+2212)
+    assert "repli" in r["detail"]                           # niveau commune tracé comme repli
 
 
 def test_row_non_estimable_sans_donnee():
-    for args in ((500, 0, 200, 5000), (500, 1000, None, 5000), (500, 1000, 200, None)):
+    for args in ((500, 0, 200, 5000, "secteur"), (500, 1000, None, 5000, "secteur"), (500, 1000, 200, None, None)):
         r = se._row("idu", *args)
         assert r["estimable"] is False and r["marge"] is None
         assert "non estimable" in r["court"].lower()
@@ -42,6 +44,7 @@ _WKT = "POLYGON((55.45 -20.9,55.451 -20.9,55.451 -20.901,55.45 -20.901,55.45 -20
 def _ensure_sources(s):
     s.execute(text("CREATE TABLE IF NOT EXISTS parcel_residuel (parcel_id int, sdp_residuelle_m2 int)"))
     s.execute(text("CREATE TABLE IF NOT EXISTS dvf_secteur_medianes (secteur varchar(10), type_bien varchar(16), n_ventes int, mediane_prix_m2 int)"))
+    s.execute(text("CREATE TABLE IF NOT EXISTS dvf_prix_sortie_neuf (cle varchar(10), niveau text, prix_m2_neuf int, n int)"))
 
 
 def _seed_score(s, idu, tier):
@@ -60,11 +63,12 @@ def _seed_parcelle(s, idu, surface):
         {"i": idu, "w": _WKT, "su": surface}).scalar()
 
 
-def _seed_medianes(s, secteur, terrain=200, appart=5000):
+def _seed_medianes(s, secteur, terrain=200, neuf=5000):
     s.execute(text("INSERT INTO dvf_secteur_medianes (secteur, type_bien, n_ventes, mediane_prix_m2, fenetre) VALUES (:s,'terrain',10,:t,'test')"),
               {"s": secteur, "t": terrain})
-    s.execute(text("INSERT INTO dvf_secteur_medianes (secteur, type_bien, n_ventes, mediane_prix_m2, fenetre) VALUES (:s,'appartement',10,:a,'test')"),
-              {"s": secteur, "a": appart})
+    # V2 : prix de sortie NEUF au niveau secteur (repli commune non seedé ici)
+    s.execute(text("INSERT INTO dvf_prix_sortie_neuf (cle, niveau, prix_m2_neuf, n) VALUES (:s,'secteur',:a,10)"),
+              {"s": secteur, "a": neuf})
 
 
 @pytest.mark.db

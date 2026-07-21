@@ -2250,8 +2250,8 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     try:
         if db.execute(text("SELECT to_regclass('score_e')")).scalar() is not None:
             _se = db.execute(text(
-                "SELECT estimable, marge_estimee, charge_supportable, prix_probable, hypotheses_version, "
-                "libelle_court, detail FROM score_e WHERE idu = :i"), {"i": p.idu}).mappings().first()
+                "SELECT estimable, marge_estimee, charge_supportable, prix_probable, niveau_prix, "
+                "hypotheses_version, libelle_court, detail FROM score_e WHERE idu = :i"), {"i": p.idu}).mappings().first()
             score_e_block = dict(_se) if _se else None
     except Exception:  # noqa: BLE001 - table additive optionnelle, jamais bloquant
         score_e_block = None
@@ -2985,6 +2985,11 @@ from .modules import router as _modules_router  # noqa: E402
 from .moteurs import router as _moteurs_router  # noqa: E402
 from .partners import router as _partners_router  # noqa: E402
 from .pre_dossier import router as _pre_dossier_router  # noqa: E402
+from .banquier import router as _banquier_router  # noqa: E402  (O1 — dossier banquier PDF)
+from .scoreur import router as _scoreur_router  # noqa: E402  (O2 — scoreur d'adresse inversé)
+from .anti_fiche import router as _anti_fiche_router  # noqa: E402  (O3 — anti-fiche « pourquoi pas »)
+from .traducteur import router as _traducteur_router  # noqa: E402  (O4 — traducteur de règlement PLU)
+from .servitudes import router as _servitudes_router  # noqa: E402  (O5 — servitudes invisibles)
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
 from .segments import router as _segments_router  # noqa: E402
@@ -3000,6 +3005,11 @@ app.include_router(_modules_router)
 app.include_router(_courrier_router)
 app.include_router(_dossier_router)
 app.include_router(_pre_dossier_router)
+app.include_router(_banquier_router)
+app.include_router(_scoreur_router)
+app.include_router(_anti_fiche_router)
+app.include_router(_traducteur_router)
+app.include_router(_servitudes_router)
 app.include_router(_protection_router)
 app.include_router(_tiles_router)
 app.include_router(_ia_router)
