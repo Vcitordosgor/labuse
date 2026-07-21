@@ -11,6 +11,13 @@ le signal serait la **parcelle, sa classe DPE datée, et des dates légales**, r
 > **Conséquence compteur d'ablation : 2 / 2 → plateau → déclenchement M7.** Le badge reste une option
 > (fait réglementaire sourcé) mais aveugle sur 99,8 % du parc — voir §3.6.
 
+> ## ⚖️ CYCLE 3 ACTÉ (clôture Phase A, décision Vic)
+> - **Composante V : NO-GO** — deux juges infaisables + couverture anecdotique. Réservée **M4.0**.
+> - **Badge DPE : RÉSERVÉ** (pas servi) — avec **critère de réveil chiffré** : réévaluation **à chaque
+>   refresh DPE** ; **réveil du badge (et réinstruction) dès que `F/G ∩ mono ∩ non-écarté ≥ 200 parcelles`**
+>   (aujourd'hui : **7**). En réserve **M4.0** avec la composante V.
+> - **Compteur d'ablation : 2 / 2 → PLATEAU ACTÉ → M7.** (Compteur canonique : `A1_BILAN.md`.)
+
 ---
 
 ## 1. Calendrier réglementaire (hypothèses du mandat, à re-vérifier avant toute exposition)
