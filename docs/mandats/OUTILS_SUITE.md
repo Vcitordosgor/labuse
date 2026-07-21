@@ -278,3 +278,37 @@ scoreur 6, anti-fiche 3, traducteur 7, servitudes 8). Zéro touche scoring / run
 3. **UI** : brancher O2/O3 sur la fiche/carte (findings ouverts).
 
 Reste : **O6→O12** en mode autonome (règles du batch de nuit), puis STOP final (dont dossier de revue 20 cartes O12).
+
+---
+
+# PARTIE 2 — O6→O12 (autonome)
+
+## O6 · Comparateur de communes ✅
+
+**« Où investir ? » un tableau, une ligne par commune.** `GET /comparateur-communes` (`src/labuse/api/comparateur.py`).
+Agrège 6 indicateurs **déjà en base** (zéro donnée nouvelle), un par colonne, chacun Sourcé/Estimé, sur les **24 communes** :
+
+| Indicateur | Direction | Source | Nature |
+|---|---|---|---|
+| Stock d'opportunités (brûlantes + chaudes) | haut = mieux | run servi | Sourcé |
+| Vélocité admin (délai médian dépôt→autorisation, mois) | bas = mieux | m10 / SITADEL | Sourcé |
+| Dynamisme permis (SITADEL, 24 mois) | haut = mieux | SITADEL | Sourcé |
+| Déficit SRU (objectif − taux LLS, points) | haut = mieux | DHUP | Sourcé |
+| Pression ZAN (ENAF consommé 2021-2024, ha) | bas = mieux | Cerema | Sourcé |
+| Prix de sortie neuf (DVF, €/m²) | haut = mieux | DVF | Estimé |
+
+### Composite = commodité, PAS un score calibré
+Chaque indicateur **normalisé min-max [0-100]** selon sa direction ; composite = **moyenne pondérée des axes présents**.
+**Pondération réglable** (query params `w_*`, défauts documentés : stock 0,30 · vélocité/permis/SRU/prix 0,15 · ZAN 0,10)
+et **présentée** dans la réponse (`indicateurs`, `methode`, `poids_total`). Un **axe manquant reste `null`** (jamais 0
+trompeur) et son poids est **retiré du composite de cette commune** (renormalisation), pour ne pas la pénaliser.
+
+### Validation
+24 communes classées ; Saint-Paul en tête (stock 259, 580 permis/24 mois). 7 communes ont un axe manquant → renormalisé.
+`src/labuse/api/comparateur.py` (helper testable `_compute`), routeur branché.
+`tests/test_comparateur.py` — **5/5 verts** (+1 skip DB propre) : direction stock/vélocité, axe manquant null +
+renormalisation, classement/rang, borne dégénérée neutre.
+
+**Reco d'exposition.** **Visible** avec la mention « aide à la comparaison, pas un score de rendement » (déjà dans la
+réponse) et la pondération affichée réglable. **Finding O6** : brancher un tableau triable + curseurs de poids côté front
+(mandat front) ; le PLH par EPCI (`plh_epci`) pourrait devenir un 7ᵉ axe (objectifs de production) si utile.
