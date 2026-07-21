@@ -4,6 +4,15 @@
 **RÉTROSPECTIF** → **l'arène est juge de plein droit**. Runs servis `q_v7_defisc`/`q_v6_m8` intouchés.
 **Vic merge — je ne merge pas ; aucune bascule sans sa décision explicite.**
 
+> ## ⚖️ CYCLE 2 ACTÉ (clôture, décision Vic)
+> - **Badge `pc_caducs` : CONSERVÉ SEUL** — signal de prospection tracé, factuel, greffé au bloc permis
+>   (livré, utile, non-actionnable au niveau RR@1158).
+> - **Composante V : REJETÉE par l'arène** — juge légitime (signal rétrospectif, pas d'exception forward),
+>   **VRAI REJET** (ΔRR apparié −0,11 IC95 [−0,91 ; +0,73], churn 1 % non nul). Non basculée.
+> - **Compteur d'ablation : 1 / 2.** Cycle 1 (défisc) = victoire (walk-forward) → réinitialisé ; cycle 2
+>   (caducs) = pas de victoire arène → **+1**. **Prochaine défaite = plateau = déclenchement de M7.**
+>   (Compteur canonique tenu dans `A1_BILAN.md`.)
+
 ---
 
 ## Volet 1 — LE BADGE (table additive `pc_caducs`)

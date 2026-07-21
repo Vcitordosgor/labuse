@@ -6,7 +6,22 @@ tuer** avant toute intégration, et si elle survit, la servir **sans jamais fabr
 
 **Résultat : cycle 1 = VICTOIRE.** L'idée a survécu à l'instruction, le juge dédié l'a validée, le badge et la
 composante V sont livrés et basculés en production, le run servi versionné (`q_v7_defisc`) est gelé et gardé en
-hystérésis. Le compteur d'ablation « deux cycles sans victoire = plateau » est **réinitialisé**.
+hystérésis.
+
+---
+
+## 🧮 COMPTEUR D'ABLATION (canonique — Phase A)
+
+**Règle** : deux cycles CONSÉCUTIFS sans victoire de scoring (composante V retenue par son juge) = **plateau**
+→ on arrête d'ajouter des challengers et on déclenche **M7**. Une victoire réinitialise le compteur.
+
+| Cycle | Challenger | Juge | Verdict scoring | Badge | Compteur |
+|---|---|---|---|---|---|
+| 1 | Défisc (fenêtre de sortie) | walk-forward dédié (forward) | ✅ **VICTOIRE** (V basculée, q_v7_defisc) | livré | **réinitialisé → 0 / 2** |
+| 2 | PC caducs | arène (rétrospectif, juge de plein droit) | ❌ **REJET** (ΔRR −0,11, vrai rejet) | conservé seul | **1 / 2** |
+
+**État : 1 / 2.** **Prochaine défaite = plateau = M7.** (Le badge d'un cycle rejeté reste livré/utile ; le
+compteur ne suit QUE la victoire *scoring*, pas le badge.)
 
 ---
 
