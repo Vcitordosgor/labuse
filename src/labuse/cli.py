@@ -2131,6 +2131,30 @@ def ortho_juge_vlm_cmd(
                        f" : {m.get('point')}")
 
 
+@app.command("surface-d")
+def surface_d_cmd() -> None:
+    """O10 — Surface D (MOTEUR) : (re)construit surface_d_events (bascules datées par parcelle).
+    Sources branchées : défisc, PC caducs, DPE passoire F/G, permis rattachés. Notification = post-M7."""
+    from .ingestion import surface_d
+
+    with session_scope() as s:
+        r = surface_d.build_events(s, log=typer.echo)
+        typer.echo(f"✓ surface_d_events : {r['total']} événements — {r['par_type']}")
+
+
+@app.command("surface-d-events")
+def surface_d_events_cmd(
+    type_filtre: str = typer.Option(None, "--type", help="Filtrer par type d'événement."),
+    limit: int = typer.Option(20, help="Nombre d'événements récents à afficher."),
+) -> None:
+    """O10 — test/diagnostic du moteur : affiche les bascules datées les plus récentes."""
+    from .ingestion import surface_d
+
+    with session_scope() as s:
+        for e in surface_d.recent_events(s, limit=limit, type_filtre=type_filtre):
+            typer.echo(f"{e['date_evenement']}  {e['type']:<22} {e['idu']}  {e['detail'][:60]}")
+
+
 @app.command("prix-neuf")
 def prix_neuf_cmd() -> None:
     """O0 — Prix de sortie NEUF par secteur (ventes ≤ 3 ans après achèvement PC), repli commune.

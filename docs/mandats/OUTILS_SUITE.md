@@ -407,3 +407,36 @@ forte (< 1 an), grandes communes plus détendues. Cohérent.
 
 **Reco d'exposition.** **Visible** avec le caveat large affiché (projection Estimé, hiérarchisation). **Finding O9** :
 mettre à jour le millésime ENAF quand Cerema publie 2025 ; la trajectoire loi TRACE (assouplie) pourra affiner le budget.
+
+---
+
+## O10 · Surface D — LE MOTEUR seulement ✅
+
+**Détection de BASCULES par parcelle** (changements d'état datés qui rendent une parcelle intéressante MAINTENANT).
+Livré : **le moteur** (table + builder + CLI de test). `src/labuse/ingestion/surface_d.py`, table additive
+`surface_d_events(idu, type, date_evenement, detail, source)`. **Zéro donnée nouvelle.**
+
+### Sources BRANCHÉES (datées, par parcelle) — dont les 2 badges Phase A demandés
+| Type d'événement | Source | Volume |
+|---|---|---|
+| `entree_fenetre_defisc` | `defisc_fenetres` (badge Phase A-1) | 797 |
+| `pc_caduc` | `pc_caducs` (badge Phase A cycle 2) | 2 164 |
+| `dpe_passoire` | `dpe_records` F/G (réserve M4.0, sourcé) | 30 |
+| `permis_octroye` | `sitadel_permits` rattachés (idu_codes), 36 mois | 8 793 |
+| **Total** | | **11 784 événements datés** |
+
+Types **déclarés mais sans source datée par parcelle** à ce jour (extensibles, **non fabriqués**) : `plu_revise`,
+`bodacc_pm`, `permis_voisin` (à proximité, ≠ sur la parcelle). Le moteur les accepte ; on ne les invente pas.
+
+### Moteur seulement — notification POST-M7
+Dédup `UNIQUE (idu, type, date_evenement)` ; rebuild idempotent ; sources absentes guardées `to_regclass` (→ 0, jamais un
+crash). CLI : `labuse surface-d` (build) + `labuse surface-d-events --type … --limit …` (diagnostic). **La notification
+(alerte / digest) est POST-M7** (mandat Auth & Plans) — non livrée ici, conformément à « LE MOTEUR seulement ».
+
+### Livrable technique
+- `src/labuse/ingestion/surface_d.py` — table + builder + `recent_events`. `src/labuse/cli.py` — `surface-d` + `surface-d-events`.
+- `tests/test_surface_d.py` — **3/3 verts** (types déclarés ; défisc+caducs branchés + sources absentes → 0 ; dédup).
+
+**Reco d'exposition.** **Moteur interne** (pas d'exposition client en partie 2 ; la notification et l'affichage
+viennent post-M7 / mandat front). **Finding O10** : brancher `plu_revise` dès qu'une révision de zonage datée est
+ingérée, et `bodacc_pm` via le flux BODACC personne morale ; câbler la notification sur `watch_zones` au mandat Auth.
