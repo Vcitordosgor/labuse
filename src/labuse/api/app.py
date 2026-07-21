@@ -2250,8 +2250,8 @@ def _build_fiche(db: Session, idu: str, *, with_assistant: bool = True) -> dict:
     try:
         if db.execute(text("SELECT to_regclass('score_e')")).scalar() is not None:
             _se = db.execute(text(
-                "SELECT estimable, marge_estimee, charge_supportable, prix_probable, hypotheses_version, "
-                "libelle_court, detail FROM score_e WHERE idu = :i"), {"i": p.idu}).mappings().first()
+                "SELECT estimable, marge_estimee, charge_supportable, prix_probable, niveau_prix, "
+                "hypotheses_version, libelle_court, detail FROM score_e WHERE idu = :i"), {"i": p.idu}).mappings().first()
             score_e_block = dict(_se) if _se else None
     except Exception:  # noqa: BLE001 - table additive optionnelle, jamais bloquant
         score_e_block = None

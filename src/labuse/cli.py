@@ -2131,15 +2131,29 @@ def ortho_juge_vlm_cmd(
                        f" : {m.get('point')}")
 
 
+@app.command("prix-neuf")
+def prix_neuf_cmd() -> None:
+    """O0 — Prix de sortie NEUF par secteur (ventes ≤ 3 ans après achèvement PC), repli commune.
+    Table additive dvf_prix_sortie_neuf. Lecture seule des sources ; prérequis du Score É V2."""
+    from .ingestion import dvf_prix_neuf
+
+    with session_scope() as s:
+        r = dvf_prix_neuf.build_prix_neuf(s, log=typer.echo)
+        typer.echo(f"✓ dvf_prix_sortie_neuf : {r['secteurs']} secteurs + {r['communes']} communes")
+
+
 @app.command("score-e")
 def score_e_cmd(
     run: str = typer.Option("q_v7_defisc", help="Run servi dont scorer les parcelles non-écartées."),
+    prix_neuf: bool = typer.Option(True, help="Reconstruire d'abord dvf_prix_sortie_neuf (O0)."),
 ) -> None:
-    """Nuit N1 — SCORE É v1 : marge estimée (€) = charge foncière supportable − prix probable du foncier.
+    """SCORE É V2 (O0) : marge estimée (€) = charge foncière supportable (prix de sortie NEUF) − prix probable.
     Table additive score_e (Estimé partout). Lecture seule des sources ; ne touche jamais les runs servis."""
-    from .ingestion import score_e
+    from .ingestion import score_e, dvf_prix_neuf
 
     with session_scope() as s:
+        if prix_neuf:
+            dvf_prix_neuf.build_prix_neuf(s, log=typer.echo)
         r = score_e.build_score_e(s, run=run, log=typer.echo)
         typer.echo(f"✓ score_e : {r['total']} non-écartées, {r['estimables']} marge estimable")
 
