@@ -476,3 +476,89 @@ publiées). Détection : PM détenant un pic ≥ 5 parcelles, PA ≥ 1 (ou PC �
 **Reco d'exposition.** **Visible** avec confiance affichée + caveat DVF, **filtré sur la confiance « élevée/moyenne »**.
 **Finding O11** : certains « porteurs » sont des entités publiques (Conservatoire du Littoral, SEM, Aéroport) qui cèdent
 du foncier sans être des promoteurs privés — transparent via le SIREN ; un filtre par forme juridique / NAF affinerait.
+
+---
+
+## O12 · Division en or — détecteur MASQUÉ + **dossier de revue 20 cartes** ✅ (point dur respecté)
+
+**Parcelles où le bâti occupe un coin et laisse un résiduel DÉTACHABLE constructible.** **Faux positif = péché
+mortel** → l'outil est **MASQUÉ** (`EXPOSE = False`, aucune exposition client) ; le livrable qui conditionne
+l'exposition est le **dossier de revue 20 cartes** : **`docs/mandats/O12_DIVISION_OR_REVUE.pdf`** (20 pages,
+fond IGN BD ORTHO + tracés parcelle/bâti/lot proposé + métriques + cases ☐ vrai positif / ☐ faux positif / ☐ douteux),
+**à valider visuellement par Vic**.
+
+### Détecteur (géométrie EPSG:2975, seuils CONSERVATEURS, zéro donnée nouvelle)
+`src/labuse/ingestion/division_or.py`, table masquée `division_or_candidates` :
+- parcelle **1 000–6 000 m²** (place pour DEUX lots viables) ; bâti **8–45 %** de l'emprise ;
+- résiduel = plus grand polygone de (parcelle − bâti bufferisé 3 m), **500 m² ≤ résiduel ≤ surface − 400 m²**
+  (le lot bâti garde ≥ 400 m²) ;
+- **cercle inscrit ≥ 9 m de rayon** (largeur ~18 m constructible — pas une lanière) ;
+- **façade voirie du lot ≥ 12 m** (accès indépendant — le discriminant-clé).
+Gain via **Score É V2** joint en SQL (Estimé, NULL si non estimable) ; `clarte` (rayon + façade) trie le dossier de
+revue. Aucune affirmation de constructibilité réglementaire (reculs, prospect, servitudes) — la revue tranche.
+
+### Résultat (2 communes pilotes)
+**123 candidats** (Bras-Panon 51, Entre-Deux 72) en 130 s. Top : parcelles 3 000-6 000 m², bâti 8-18 %, résiduels
+2 500-5 400 m², rayons 15-29 m. CLI : `labuse division-or --communes …` + `labuse division-or-review` (régénère le PDF).
+
+### Deux findings d'ingénierie (honnêteté)
+1. **Métrique « façade restante du lot bâti » INVALIDÉE** : `façade_parcelle − façade_lot` sort des valeurs négatives
+   (médiane −56 m — artefact de la frontière du lot découpé qui suit la voirie). **Retirée du filtre, champ NULL** —
+   on ne filtre pas sur un chiffre faux ; l'accès restant du lot bâti est jugé **visuellement** carte par carte.
+2. **Verrous Postgres zombies** : des runs interrompus (client tué) laissaient leurs transactions serveur ouvertes
+   (jusqu'à 2h47), bloquant tout `CREATE TABLE` suivant — diagnostiqué via `pg_stat_activity`, purgé
+   (`pg_terminate_backend`). À savoir pour les batchs géométriques longs.
+
+### Livrable technique
+- `src/labuse/ingestion/division_or.py` — détecteur single-pass SQL (masqué). `src/labuse/api/division_review.py` —
+  générateur du dossier (IGN + tracés SVG). `cli.py` — `division-or`, `division-or-review`.
+- `docs/mandats/O12_DIVISION_OR_REVUE.pdf` — **le dossier de revue 20 cartes** (3,9 Mo).
+- `tests/test_division_or.py` — **4/4 verts** (EXPOSE False ; seuils conservateurs présents ; métrique invalidée non
+  filtrante ; commune vide → 0).
+
+**Reco d'exposition.** **MASQUÉ jusqu'à validation visuelle du dossier par Vic.** Si la revue est bonne : étendre aux
+24 communes (batch ~130 s / 2 petites communes — prévoir quelques heures île entière, ou pré-agrégation voirie),
+puis exposer avec le wording conservateur. **Finding O12 (suite)** : remplacer la façade voirie sommée par une façade
+« plus long segment continu » éviterait de sur-compter les parcelles d'angle (465 m sur un candidat).
+
+---
+
+# STOP FINAL
+
+## Bilan de la fenêtre (13 lots + O0b)
+
+**14 commits, arbre vert, zéro touche scoring / runs servis / golden 116.** Partie 1 (O0→O5 + STOP mi-course) mergée
+par Vic ; partie 2 (O0b, O6→O12) sur `fenetre/outils-suite`, prête pour merge `--no-ff` (je ne merge jamais).
+
+### Table des recommandations d'exposition M7 (récapitulatif final)
+| Lot | Outil | Reco | Condition |
+|---|---|---|---|
+| O0 | Score É V2 | **Exposé** (flag levé par Vic) | `niveau_label` visible (fait, O0b) |
+| O1 | Dossier banquier | **Visible** (démo) | gating Essentiel (décision Vic) |
+| O2 | Scoreur d'adresse | Visible (API) | UI au mandat front |
+| O3 | Anti-fiche | **Visible** | panneau fiche au mandat front |
+| O4 | Traducteur PLU | **Visible** | — |
+| O5 | Servitudes invisibles | **Visible** | — |
+| O6 | Comparateur communes | **Visible** | tableau front au mandat front |
+| O7 | Carnet de secteur | **Visible** | abonnement = post-M7 (Auth & Plans) |
+| O8 | Tension foncière | **MASQUÉ** | Spearman −0,04 → attendre un exutoire calibrant (seuil ±0,20) |
+| O9 | Pipeline de rareté | **Visible** | caveat large affiché |
+| O10 | Surface D (moteur) | Interne | notification post-M7 |
+| O11 | Opérations & lots | **Visible** | filtré confiance élevée/moyenne + caveat DVF |
+| O12 | Division en or | **MASQUÉ** | validation visuelle du dossier 20 cartes par Vic |
+
+### Tests de la fenêtre
+score_e 6 · banquier 8 · scoreur 6 · anti-fiche 3 · traducteur 7 · servitudes 8 · comparateur 5(+1 skip) ·
+carnet 5 · tension 6 · rareté 6 · surface_d 3 · division_or 4 = **67 verts** (0 rouge).
+
+### Findings transverses (pour M7 et les mandats suivants)
+1. **IA en repli** : crédits Anthropic épuisés → synthèse banquier (O1) et traduction PLU (O4) en repli déterministe
+   honnête. Fonctionnel ; re-tester au retour des crédits.
+2. **UI** : O2/O3 (et l'affichage O6/O7) affectés au mandat front (fiche réorganisée en un seul passage — décision Vic).
+3. **Batchs à re-lancer après bascule de run servi** : `prix-neuf` + `score-e`, `surface-d`, `division-or`.
+4. **O8** ré-évaluable uniquement si un exutoire calibrant apparaît ; **O12** attend la revue visuelle.
+
+### Décisions attendues de Vic à ce STOP
+1. **O12** : valider (ou non) le dossier `O12_DIVISION_OR_REVUE.pdf` — 20 cartes, cases à cocher.
+2. **O11** : confirmer l'exposition (confiance élevée/moyenne) et l'éventuel filtre forme juridique.
+3. Merge `--no-ff` de `fenetre/outils-suite`.

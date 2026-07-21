@@ -2131,6 +2131,39 @@ def ortho_juge_vlm_cmd(
                        f" : {m.get('point')}")
 
 
+@app.command("division-or")
+def division_or_cmd(
+    communes: str = typer.Option(..., help="Communes à scanner (séparées par des virgules)."),
+) -> None:
+    """O12 — Division en or (MASQUÉ) : détecte les parcelles à lot détachable constructible.
+    Table division_or_candidates (flag EXPOSE=False). Exposition = APRÈS validation du dossier 20 cartes par Vic."""
+    from .ingestion import division_or
+
+    with session_scope() as s:
+        r = division_or.build_divisions(s, [c.strip() for c in communes.split(",") if c.strip()], log=typer.echo)
+        typer.echo(f"✓ division_or_candidates : {r['total']} candidats (MASQUÉ)")
+
+
+@app.command("division-or-review")
+def division_or_review_cmd(
+    out: str = typer.Option("division_or_revue.pdf", help="Chemin du PDF de revue."),
+    limit: int = typer.Option(20, help="Nombre de cartes (candidats les plus clairs)."),
+) -> None:
+    """O12 — génère le DOSSIER DE REVUE (20 cartes) pour validation visuelle de Vic."""
+    from .ingestion import division_or
+    from .api import division_review
+
+    with session_scope() as s:
+        cands = division_or.top_candidates(s, limit=limit)
+        if not cands:
+            typer.echo("Aucun candidat — lancer d'abord `division-or --communes …`.")
+            raise typer.Exit(1)
+        pdf = division_review.build_review_dossier(s, cands)
+    with open(out, "wb") as f:
+        f.write(pdf)
+    typer.echo(f"✓ dossier de revue : {out} ({len(cands)} cartes) — à valider par Vic")
+
+
 @app.command("surface-d")
 def surface_d_cmd() -> None:
     """O10 — Surface D (MOTEUR) : (re)construit surface_d_events (bascules datées par parcelle).
