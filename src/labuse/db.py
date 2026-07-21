@@ -18,7 +18,11 @@ from .config import get_settings
 
 def make_engine(url: str | None = None, echo: bool = False) -> Engine:
     settings = get_settings()
-    return create_engine(url or settings.database_url, echo=echo, future=True, pool_pre_ping=True)
+    # idle_in_transaction_session_timeout (10 min) : un client tué en plein batch laissait sa transaction
+    # serveur ouverte, verrous tenus des heures (incident O12, 21/07/2026 — CREATE TABLE bloqué 2h47).
+    # Une transaction IDLE aussi longtemps est toujours un bug ; les requêtes ACTIVES ne sont pas concernées.
+    return create_engine(url or settings.database_url, echo=echo, future=True, pool_pre_ping=True,
+                         connect_args={"options": "-c idle_in_transaction_session_timeout=600000"})
 
 
 _engine: Engine | None = None

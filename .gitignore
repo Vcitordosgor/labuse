@@ -86,3 +86,6 @@ reports/j3-revue/_tiles/
 # (N'affecte PAS l'existant déjà tracké — décision d'historique = Vic.)
 reports/revues/
 reports/**/DOSSIER-*.pdf
+
+# Prospection — extraits nominatifs (RNE/DGFiP) : JAMAIS en git (mandat deposants-actifs)
+exports/
