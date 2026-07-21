@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette M2 — Refonte « Projet » · LABUSE</title>
+<style>
+  /* ── DA existante (tailwind.config.js) — pas de nouvelle direction artistique ── */
+  :root{
+    --bg:#060A08; --s1:#0B100D; --s2:#0D120F; --s3:#111814; --line:#1B2620; --line2:#1E2A23;
+    --mint:#5CE6A1; --mint-ink:#06130C; --violet:#B497F0;
+    --hi:#ECF5EF; --txt:#C9DCD1; --mut:#8FA69A; --dim:#5C7268;
+    --t-brulante:#E8695A; --t-chaude:#E8B44C; --t-creuser:#8FA69A; --t-reserve:#6FA8DC; --t-ecartee:#4A5A52;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:Inter,system-ui,sans-serif;font-size:13px;line-height:1.45}
+  h1,h2,h3{color:var(--hi);margin:0;font-weight:650}
+  .wrap{max-width:1180px;margin:0 auto;padding:18px}
+  .muted{color:var(--mut)} .dim{color:var(--dim)} .hi{color:var(--hi)}
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid var(--line2)}
+  .dot{width:7px;height:7px;border-radius:50%}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid var(--line2);background:var(--s2);color:var(--txt);font:inherit;font-weight:600;cursor:pointer}
+  .btn:hover{border-color:var(--mut)}
+  .btn.primary{background:var(--mint);color:var(--mint-ink);border-color:var(--mint)}
+  .btn.premium{background:transparent;color:var(--violet);border-color:var(--violet)}
+  .btn.sm{padding:4px 9px;font-size:11px}
+  /* top nav de la maquette (hors app — pour naviguer les écrans) */
+  .mocknav{position:sticky;top:0;z-index:10;background:rgba(6,10,8,.92);backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mocknav .lbl{color:var(--violet);font-weight:700;margin-right:6px}
+  .mocknav button{padding:5px 11px;border-radius:7px;border:1px solid var(--line2);background:var(--s1);color:var(--mut);font:inherit;font-weight:600;cursor:pointer}
+  .mocknav button.active{background:var(--s3);color:var(--hi);border-color:var(--mut)}
+  .screen{display:none} .screen.show{display:block}
+  .note{border-left:2px solid var(--violet);background:rgba(180,151,240,.06);padding:8px 12px;border-radius:0 8px 8px 0;color:var(--mut);font-size:12px;margin:12px 0}
+  /* header projet */
+  .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .cadrage{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  /* kanban */
+  .kanban{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+  .col{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:10px;min-height:340px}
+  .col-h{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 10px;border-bottom:1px solid var(--line);margin-bottom:10px}
+  .col-h .n{font-weight:700;color:var(--hi)} .col-h .c{color:var(--dim);font-size:12px}
+  /* carte parcelle compacte */
+  .pcard{display:flex;gap:10px;background:var(--s2);border:1px solid var(--line2);border-radius:10px;padding:8px;margin-bottom:8px}
+  .pcard:hover{border-color:var(--mut)}
+  .vign{width:52px;height:52px;border-radius:8px;flex:none;background:
+      linear-gradient(135deg,#16281d,#0e1a13);border:1px solid var(--line2);
+      display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:9px;text-align:center}
+  .pmeta{flex:1;min-width:0}
+  .prow{display:flex;align-items:center;gap:6px;justify-content:space-between}
+  .idu{font-family:ui-monospace,monospace;font-size:11px;color:var(--mut)}
+  .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+  .b{font-size:9.5px;padding:1px 6px;border-radius:999px;font-weight:600}
+  .b.defisc{color:var(--violet);border:1px solid var(--violet)}
+  .b.caduc{color:var(--t-chaude);border:1px solid var(--t-chaude)}
+  .b.surf{color:var(--dim);border:1px solid var(--line2)}
+  .tier{font-size:10px;font-weight:700}
+  .pcard .act{display:flex;gap:4px;margin-top:6px}
+  .mini{font-size:10px;padding:2px 7px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--mut);cursor:pointer}
+  /* liste projets */
+  .plist{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}
+  .projcard{background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .projcard.dup{border-color:rgba(180,151,240,.5)}
+  .statline{display:flex;gap:12px;margin-top:8px}
+  .stat{display:flex;align-items:center;gap:5px;font-size:12px}
+  .dedup{margin-top:10px;background:rgba(180,151,240,.08);border:1px solid rgba(180,151,240,.35);border-radius:9px;padding:9px 11px}
+  /* swipe overlay */
+  .swipe-back{background:var(--s3);border:1px solid var(--line);border-radius:14px;padding:18px;max-width:420px;margin:14px auto;position:relative}
+  .swipe-card{background:var(--s1);border:1px solid var(--line2);border-radius:12px;padding:14px}
+  .swipe-actions{display:flex;gap:10px;justify-content:center;margin-top:14px}
+  .swipe-actions .btn{min-width:96px;justify-content:center}
+  .forces{margin-top:10px} .forces li{margin:3px 0;color:var(--txt)} .forces .att{color:var(--t-chaude)}
+  .variant-tag{display:inline-block;font-size:10px;color:var(--violet);border:1px solid var(--violet);border-radius:6px;padding:1px 7px;margin-left:8px;vertical-align:middle}
+  /* variante B : compact + liste */
+  .colB{background:var(--s1);border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px}
+  .rowitem{display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid var(--line)}
+  .rowitem:last-child{border-bottom:0}
+</style>
+</head>
+<body>
+
+<div class="mocknav">
+  <span class="lbl">MAQUETTE M2</span>
+  <button class="active" data-s="liste">1 · Liste des projets (+ dédup)</button>
+  <button data-s="projA">2 · Vue projet — Kanban plein <span style="color:var(--violet)">A</span></button>
+  <button data-s="projB">2′ · Vue projet — compact + liste <span style="color:var(--violet)">B</span></button>
+  <button data-s="swipe">3 · « Trier » (swipe, action de la vue)</button>
+  <span class="dim" style="margin-left:auto;font-size:11px">DA existante · données réelles (projets 13/15-18) · dark + mint + violet premium</span>
+</div>
+
+<div class="wrap">
+
+<!-- ══════════ ÉCRAN 1 — LISTE DES PROJETS + DÉDUP ══════════ -->
+<section class="screen show" id="liste">
+  <div style="display:flex;justify-content:space-between;align-items:center">
+    <h1>Mes projets</h1>
+    <button class="btn primary">+ Nouveau projet</button>
+  </div>
+  <div class="note">Un seul monde : « Ouvrir » un projet = arriver sur sa <b>vue unifiée</b> (écran 2). Plus de
+    restitution figée séparée — les anciennes recommandations peuplent la colonne « proposées ».</div>
+
+  <div class="plist">
+    <!-- projet riche -->
+    <div class="projcard">
+      <div class="prow"><h3>Résidence étudiante Saint-Paul</h3><span class="chip"><span class="dot" style="background:var(--mint)"></span>actif</span></div>
+      <div class="cadrage">
+        <span class="chip">étudiant</span><span class="chip">Ouest</span><span class="chip">49 parcelles</span>
+      </div>
+      <div class="statline">
+        <span class="stat"><span class="dot" style="background:var(--mut)"></span>40 proposées</span>
+        <span class="stat"><span class="dot" style="background:var(--mint)"></span>8 retenues</span>
+        <span class="stat"><span class="dot" style="background:var(--t-ecartee)"></span>1 écartée</span>
+      </div>
+      <div class="prow" style="margin-top:12px">
+        <span class="dim">dernière activité : 08/07 · 19:49</span>
+        <button class="btn sm primary" onclick="go('projA')">Ouvrir →</button>
+      </div>
+    </div>
+
+    <!-- doublons : le cas réel « Résidence étudiante Ouest » ×4 -->
+    <div class="projcard dup">
+      <div class="prow"><h3>Résidence étudiante Ouest</h3><span class="chip" style="color:var(--violet);border-color:var(--violet)">4 doublons</span></div>
+      <div class="cadrage"><span class="chip">étudiant</span><span class="chip">Ouest</span><span class="chip">0 parcelle</span></div>
+      <div class="statline"><span class="dim">créés le 08/07 entre 19:49 et 19:56 · cadrage identique (même hash de filtres)</span></div>
+      <div class="dedup">
+        <div class="prow"><b class="hi">Doublons détectés</b><span class="dim">ids 15 · 16 · 17 · 18</span></div>
+        <div class="muted" style="margin:6px 0">Même nom, même cadrage, aucun tri effectué. La fusion réunit les parcelles
+          et les statuts des 4 projets en un seul — <b>rien n'est supprimé sans confirmation</b>.</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn sm premium">Fusionner les 4 →</button>
+          <button class="btn sm">Voir le détail</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="note">Dédup <b>à la création</b> (similarité nom/cadrage → proposition, jamais un blocage silencieux)
+    <b>et</b> sur les doublons existants (outil de fusion = union parcelles + statuts, confirmation explicite).</div>
+</section>
+
+<!-- ══════════ ÉCRAN 2 — VUE PROJET UNIFIÉE · VARIANTE A (kanban plein) ══════════ -->
+<section class="screen" id="projA">
+  <div class="phead">
+    <div>
+      <div class="prow"><button class="mini" onclick="go('liste')">← projets</button></div>
+      <h1 style="margin-top:6px">Résidence étudiante Ouest <span class="variant-tag">variante A · Kanban plein</span></h1>
+      <div class="cadrage">
+        <span class="chip">étudiant</span><span class="chip">Ouest (Saint-Paul, Saint-Leu)</span>
+        <span class="chip">R+3 · ~40 logements</span><span class="chip">budget non fixé</span>
+      </div>
+      <div class="muted" style="margin-top:8px">Cadrage résumé — <span class="dim">issu de l'entretien copilote</span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      <button class="btn primary" onclick="go('swipe')">⇆ Trier les parcelles</button>
+      <button class="btn">Éditer le cadrage</button>
+      <button class="btn">Rejouer les critères ↻</button>
+      <button class="btn premium">Exporter / CRM</button>
+    </div>
+  </div>
+
+  <div class="kanban">
+    <div class="col">
+      <div class="col-h"><span class="n">Proposées</span><span class="c">40 · à trier</span></div>
+      <div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97415000AT0737</span><span class="tier" style="color:#8FA69A">À creuser</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Paul</div><div class="badges"><span class="b surf">7 063 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div><div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97415000ET0013</span><span class="tier" style="color:#8FA69A">À creuser</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Paul</div><div class="badges"><span class="b caduc">PC caduc</span><span class="b surf">7 106 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div><div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97415000BK0023</span><span class="tier" style="color:#8FA69A">À creuser</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Paul</div><div class="badges"><span class="b surf">9 723 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div><div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97415000CT2988</span><span class="tier" style="color:#8FA69A">À creuser</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Paul</div><div class="badges"><span class="b surf">12 797 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div><div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97415000EO0998</span><span class="tier" style="color:#8FA69A">À creuser</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Paul</div><div class="badges"><span class="b surf">6 410 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div><div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97415000DE0805</span><span class="tier" style="color:#8FA69A">À creuser</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Paul</div><div class="badges"><span class="b surf">8 921 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div><div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97415000ET0162</span><span class="tier" style="color:#8FA69A">À creuser</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Paul</div><div class="badges"><span class="b surf">10 502 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div>
+    </div>
+    <div class="col">
+      <div class="col-h"><span class="n">Retenues</span><span class="c">8 · lien CRM auto</span></div>
+      <div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97415000CT2968</span><span class="tier" style="color:#E8B44C">Chaude v2</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Paul</div><div class="badges"><span class="b defisc">défisc</span><span class="b surf">6 230 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div><div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97415000AY0144</span><span class="tier" style="color:#E8B44C">Chaude v2</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Paul</div><div class="badges"><span class="b defisc">défisc</span><span class="b surf">12 447 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div>
+    </div>
+    <div class="col">
+      <div class="col-h"><span class="n">Écartées</span><span class="c">1</span></div>
+      <div class="pcard"><div class="vign">IGN<br>vignette</div><div class="pmeta"><div class="prow"><span class="idu">97413000AV1502</span><span class="tier" style="color:#4A5A52">Écartée</span></div><div class="hi" style="font-weight:650;margin-top:1px">Saint-Leu</div><div class="badges"><span class="b surf">158 m²</span></div><div class="act"><button class="mini">Fiche</button><button class="mini">Retenir</button><button class="mini">Écarter</button></div></div></div>
+    </div>
+  </div>
+  <div class="note">Les anciennes « 52 recommandations » figées atterrissent en <b>Proposées</b>. Une carte swipée
+    (bouton « Trier ») rejoint sa colonne. Une <b>Retenue</b> crée automatiquement une entrée CRM (contact à préparer).</div>
+</section>
+
+<!-- ══════════ ÉCRAN 2′ — VARIANTE B (compact + liste) ══════════ -->
+<section class="screen" id="projB">
+  <div class="phead">
+    <div>
+      <div class="prow"><button class="mini" onclick="go('liste')">← projets</button></div>
+      <h1 style="margin-top:6px">Résidence étudiante Ouest <span class="variant-tag">variante B · compact + liste</span></h1>
+      <div class="cadrage"><span class="chip">étudiant</span><span class="chip">Ouest</span><span class="chip">R+3 · ~40 lgts</span></div>
+    </div>
+    <div style="display:flex;gap:8px"><button class="btn primary" onclick="go('swipe')">⇆ Trier</button><button class="btn premium">CRM</button></div>
+  </div>
+  <div style="display:grid;grid-template-columns:180px 1fr;gap:12px;margin-top:14px">
+    <div>
+      <div class="colB"><div class="prow"><b class="hi">Proposées</b><span class="chip">40</span></div></div>
+      <div class="colB"><div class="prow"><b style="color:var(--mint)">Retenues</b><span class="chip">8</span></div></div>
+      <div class="colB"><div class="prow"><b style="color:var(--t-ecartee)">Écartées</b><span class="chip">1</span></div></div>
+    </div>
+    <div class="col"><div class="col-h"><span class="n">Proposées — liste dense</span><span class="c">tri par rang</span></div>
+      <div class="rowitem"><span class="idu">97415000AT0737</span><span class="hi">Saint-Paul</span><span class="tier" style="color:#8FA69A;margin-left:auto">À creuser</span><span class="dim">7 063 m²</span></div><div class="rowitem"><span class="idu">97415000ET0013</span><span class="hi">Saint-Paul</span><span class="tier" style="color:#8FA69A;margin-left:auto">À creuser</span><span class="dim">7 106 m²</span></div><div class="rowitem"><span class="idu">97415000BK0023</span><span class="hi">Saint-Paul</span><span class="tier" style="color:#8FA69A;margin-left:auto">À creuser</span><span class="dim">9 723 m²</span></div><div class="rowitem"><span class="idu">97415000CT2988</span><span class="hi">Saint-Paul</span><span class="tier" style="color:#8FA69A;margin-left:auto">À creuser</span><span class="dim">12 797 m²</span></div><div class="rowitem"><span class="idu">97415000EO0998</span><span class="hi">Saint-Paul</span><span class="tier" style="color:#8FA69A;margin-left:auto">À creuser</span><span class="dim">6 410 m²</span></div><div class="rowitem"><span class="idu">97415000DE0805</span><span class="hi">Saint-Paul</span><span class="tier" style="color:#8FA69A;margin-left:auto">À creuser</span><span class="dim">8 921 m²</span></div><div class="rowitem"><span class="idu">97415000ET0162</span><span class="hi">Saint-Paul</span><span class="tier" style="color:#8FA69A;margin-left:auto">À creuser</span><span class="dim">10 502 m²</span></div><div class="rowitem"><span class="idu">97415000CT2968</span><span class="hi">Saint-Paul</span><span class="tier" style="color:#E8B44C;margin-left:auto">Chaude v2</span><span class="dim">6 230 m²</span></div><div class="rowitem"><span class="idu">97415000AY0144</span><span class="hi">Saint-Paul</span><span class="tier" style="color:#E8B44C;margin-left:auto">Chaude v2</span><span class="dim">12 447 m²</span></div></div>
+  </div>
+  <div class="note">Variante B : colonnes <b>compactes</b> (compteurs) + une <b>liste dense</b> triée par rang — plus de
+    parcelles à l'écran, moins de vignettes. Choix à trancher : A (visuel, cartes) vs B (densité, liste).</div>
+</section>
+
+<!-- ══════════ ÉCRAN 3 — SWIPE (action « Trier ») ══════════ -->
+<section class="screen" id="swipe">
+  <div class="prow"><button class="mini" onclick="go('projA')">← retour au projet</button>
+    <span class="muted">« Trier » repositionne le swipe EXISTANT — on ne le réécrit pas.</span></div>
+  <div class="swipe-back">
+    <div class="dim" style="text-align:center;margin-bottom:8px">Carte 3 / 40 · Résidence étudiante Ouest</div>
+    <div class="swipe-card">
+      <div class="prow">
+        <div><div class="idu">97415000AY0144</div><div class="hi" style="font-weight:700;margin-top:2px">Saint-Paul</div></div>
+        <span class="tier" style="color:var(--t-chaude)">Chaude v2</span>
+      </div>
+      <div class="badges"><span class="b defisc">défisc 2025-2030</span><span class="b surf">12 447 m²</span></div>
+      <ul class="forces">
+        <li>+ grande emprise, zone U constructible</li>
+        <li>+ marché actif (DVF 379 €/m² terrain)</li>
+        <li class="att">⚠ pente à vérifier · accès à confirmer</li>
+      </ul>
+    </div>
+    <div class="swipe-actions">
+      <button class="btn" style="color:var(--t-ecartee);border-color:var(--t-ecartee)">✕ Écarter</button>
+      <button class="btn">◑ À analyser</button>
+      <button class="btn primary">✓ Retenir</button>
+    </div>
+    <div class="dim" style="text-align:center;margin-top:10px">« Chercher plus » — élargir la recherche</div>
+  </div>
+  <div class="note">Le swipe est une <b>action de la vue projet</b>, pas un monde séparé. Retour au Kanban à la fermeture
+    (même source de données : <code>projet_parcelles</code>).</div>
+</section>
+
+</div>
+
+<script>
+  // navigation maquette
+  function go(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('show',s.id===id));
+    document.querySelectorAll('.mocknav button').forEach(b=>b.classList.toggle('active',b.dataset.s===id));
+    window.scrollTo(0,0);
+  }
+  document.querySelectorAll('.mocknav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.s)));
+
+</script>
+</body>
+</html>
