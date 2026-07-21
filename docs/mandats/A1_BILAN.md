@@ -19,9 +19,17 @@ hystérésis.
 |---|---|---|---|---|---|
 | 1 | Défisc (fenêtre de sortie) | walk-forward dédié (forward) | ✅ **VICTOIRE** (V basculée, q_v7_defisc) | livré | **réinitialisé → 0 / 2** |
 | 2 | PC caducs | arène (rétrospectif, juge de plein droit) | ❌ **REJET** (ΔRR −0,11, vrai rejet) | conservé seul | **1 / 2** |
+| 3 | Passoires DPE F/G | infaisable (couverture anecdotique) | ❌ **NO-GO** (V en réserve M4.0) | réservé (critère de réveil) | **2 / 2** |
 
-**État : 1 / 2.** **Prochaine défaite = plateau = M7.** (Le badge d'un cycle rejeté reste livré/utile ; le
-compteur ne suit QUE la victoire *scoring*, pas le badge.)
+**État : 2 / 2 → 🛑 PLATEAU ACTÉ (décision Vic, clôture Phase A).** On arrête d'ajouter des challengers
+d'ablation et on déclenche **M7 (mise en ligne)**. Le badge d'un cycle rejeté/réservé reste utile ; le
+compteur ne suit QUE la victoire *scoring*.
+
+**Reportés post-M7 (PAS abandonnés — ils reprendront avec le feedback client)** :
+- **A-2 · Score V v2** (recalibration de la vendabilité) — reporté post-M7.
+- **A-3 · matrice Q×A** (challengers matrice — le 3ᵉ axe boussole les attend déjà) — reporté post-M7.
+- **Réserve M4.0** : composante V « PC caducs » (rejetée à l'arène mais signal réel), badge + V « DPE F/G »
+  (réveil si `F/G ∩ mono ∩ non-écarté ≥ 200`).
 
 ---
 
