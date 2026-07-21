@@ -340,3 +340,34 @@ l'ancrage de l'abonnement le moment venu. Décision inscrite dans la réponse (`
 
 **Reco d'exposition.** **Visible** (lecture sourcée). **Finding O7** : brancher la page carnet + la liste côté front
 (mandat front) ; l'abonnement hebdo attend le mandat Auth & Plans (ancrage `watch_zones` prêt).
+
+---
+
+## O8 · Indice de tension foncière — **LIVRÉ MASQUÉ (flag) + finding** ✅ (point dur respecté)
+
+**Indice 0-100 demande vs offre par micro-secteur** (`GET /tension-fonciere`, `src/labuse/api/tension.py`). Formule
+documentée, bornée, distribution renvoyée — **mais non exposé** (`expose = false`, `masque = true`).
+
+### Sonde de calibrabilité (le point dur du mandat)
+Conformément à « si non calibrable défendablement → livré MASQUÉ + finding », l'indice est confronté à un **exutoire
+INDÉPENDANT** : le **prix relatif du secteur vs sa commune** (désirabilité révélée par le marché — non utilisé comme
+entrée). Résultat mesuré, **recalculé à la volée** (reproductible) :
+
+> **Spearman(tension, prix relatif) = −0,042 (n = 616)** — corrélation nulle, sous le seuil ±0,20. **NON défendable.**
+
+Signes concordants : la distribution **sature** (médiane = 100) car l'offre `part d'opportunités` vaut 0 sur beaucoup de
+secteurs ; deux entrées sur trois sont **clairsemées** (permis 24 mois, 5 % de secteurs sans permis) ou **constantes à
+l'échelle communale** (déficit SRU) — la granularité « micro-secteur » est en partie **factice**.
+
+### Décision
+**Indice MASQUÉ.** Le moteur est **livré** (formule `demande = moyenne(norm[densité permis/parcelle], norm[déficit SRU]) ;
+offre = norm[part d'opportunités] ; tension = 100 × demande/(demande+offre)`, bornes [0-100], sonde intégrée) pour être
+**prêt** le jour où une source de calibration existera (série de prix datée, taux d'absorption permis/stock daté) —
+**jamais affiché en l'état, pas de faux signal « pour faire joli »**. Zéro exposition en fiche.
+
+### Livrable technique
+- `src/labuse/api/tension.py` — moteur + sonde Spearman + endpoint masqué (tables requises guardées `to_regclass`).
+- `tests/test_tension.py` — **6/6 verts** (EXPOSE False ; Spearman monotone ±1 ; n<3 → 0 ; masqué + finding ; vide reste masqué).
+
+**Reco d'exposition.** **MASQUÉ** — finding ci-dessus. À ré-évaluer uniquement si un exutoire calibrant apparaît et fait
+passer |Spearman| au-dessus de 0,20.
