@@ -5,6 +5,7 @@ import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
 import { TIER_V2_META, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
+import { ScoreurAdresse } from '../outils/ScoreurAdresse'
 
 function Omnibox() {
   const { query, setQuery, select, setView, setCommune, commune, setToast } = useApp()
@@ -352,6 +353,8 @@ function NotifBell() {
 }
 
 export function Header() {
+  // R5 (O2) : scoreur d'adresse — l'outil de démo « seconde opinion », visible d'un coup d'œil
+  const [scoreurOpen, setScoreurOpen] = useState(false)
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-bg px-4">
       {/* identité — la buse + wordmark */}
@@ -362,6 +365,14 @@ export function Header() {
         <span className="hidden font-display text-sm font-bold tracking-wide text-txt-hi min-[1350px]:inline">LABUSE</span>
       </div>
       <Omnibox />
+      {/* R5 (O2) : entrée du scoreur d'adresse — à côté de la recherche, trouvable en < 5 s */}
+      <button data-scoreur-open onClick={() => setScoreurOpen((o) => !o)}
+        title="Scorer une adresse — collez l'adresse d'un bien à vendre (+ prix demandé) : seconde opinion avant d'offrir"
+        className={`h-8 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
+          scoreurOpen ? 'border-mint bg-mint/15 text-mint' : 'border-line-2 text-txt-mut hover:border-mint/60 hover:text-txt'}`}>
+        ⌖ Scorer une adresse
+      </button>
+      {scoreurOpen && <ScoreurAdresse onClose={() => setScoreurOpen(false)} />}
       <FilterChips />
       <div className="ml-auto flex items-center gap-3">
         <NotifBell />

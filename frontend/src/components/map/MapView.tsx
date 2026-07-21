@@ -620,8 +620,9 @@ export function MapView() {
       el.setAttribute('data-commune-marker', c.commune)
       // P8 (dernière passe) : le marqueur mène à la FICHE COMMUNE (contexte), plus « N chaudes »
       // en évidence ; le nombre de chaudes reste en INFO secondaire (survol).
+      // R3 (PJ5) : `c.chaudes` = compteur MATRICE (matrice_statut='chaude') → wording non thermique
       el.title = verdict && c.chaudes > 0
-        ? `${c.commune} — ${c.chaudes} chaude${c.chaudes > 1 ? 's' : ''} · ouvrir la fiche commune`
+        ? `${c.commune} — ${c.chaudes} en priorité dossier (matrice Q×A) · ouvrir la fiche commune`
         : `${c.commune} · ouvrir la fiche commune`
       const name = c.commune.replace(/^(Les|Le|La|L')\s?/, '')
       // A2 (post-revue) : le libellé renvoie à la FICHE COMMUNE (plus de compteur de chaudes visible)

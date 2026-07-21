@@ -23,7 +23,7 @@ function CompletudeRing({ value }: { value: number }) {
   const c = 2 * Math.PI * r
   return (
     <span className="flex items-center gap-1"
-      title={`Complétude des données : part des sources disponibles pour cette parcelle (${value} %). N'entre pas dans le score d'opportunité.`}>
+      title={`Complétude des données : ${value}/100 — part des sources disponibles pour cette parcelle. N'est PAS une note de qualité du terrain.`}>
       <svg viewBox="0 0 18 18" className="h-[18px] w-[18px] -rotate-90">
         <circle cx="9" cy="9" r={r} fill="none" stroke="#1E2A23" strokeWidth="2" />
         <circle cx="9" cy="9" r={r} fill="none" stroke={completudeColor(value)} strokeWidth="2"
@@ -89,8 +89,8 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
         {/* ×N = l'affichage produit du scoring v2 (probabilité relative de mutation) */}
-        <span className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}
-          title={p.mult_v2 != null ? `Multiplicateur du score P (scoring v2 servi) : probabilité de mutation ×${p.mult_v2.toFixed(1)} vs la moyenne du parc.` : 'Scoring v2 non disponible'}>
+        <span data-mult-tip className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}
+          title={p.mult_v2 != null ? `Multiplicateur de rang — cette parcelle est classée ${p.mult_v2.toFixed(1)} fois au-dessus de la moyenne de l'univers analysé.` : 'Scoring v2 non disponible'}>
           {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
         </span>
         <CompletudeRing value={p.completeness_score} />
@@ -106,7 +106,7 @@ function TierChips({ counts, partial }: { counts: Record<TierV2 | 'all', number>
   const items: { v: TierV2 | 'all'; label: string; color?: string }[] = [
     { v: 'all', label: 'Tout' },
     { v: 'brulante', label: 'Brûlantes v2', color: TIER_V2_META.brulante.color },
-    { v: 'chaude', label: 'Chaudes', color: TIER_V2_META.chaude.color },
+    { v: 'chaude', label: 'Chaudes v2', color: TIER_V2_META.chaude.color },
     { v: 'reserve_fonciere', label: 'Réserve foncière', color: TIER_V2_META.reserve_fonciere.color },
     { v: 'a_creuser', label: 'À creuser', color: TIER_V2_META.a_creuser.color },
     // opt-in : les exclusions dures de l'étage 0 (run servi) — motifs dans l'entonnoir

@@ -1,10 +1,14 @@
 import type { Statut } from './types'
 
 // Statuts de la matrice premium v2 (SCHEMA_SCORING_LABUSE). Couleurs : cf. DERIVATIONS.md.
-// Échelle descendante : chaude (menthe la plus vive) → à surveiller (vert) → à creuser (ambre)
-// → écartée (rouge). « exclue » = exclusion étage 0, repliée dans écartée au niveau matrice.
+// R3 (PJ5) — RÈGLE DE WORDING : l'échelle THERMIQUE (brûlante/chaude) est RÉSERVÉE au tier P
+// servi (TIER_V2_META). La matrice Q×A parle « dossier » : son 1er rang s'affiche « Priorité
+// dossier » (clé interne `chaude` inchangée — zéro régression API). Plus jamais deux échelles
+// thermiques concurrentes à l'écran.
+// Échelle descendante : priorité dossier (menthe la plus vive) → à surveiller (vert)
+// → à creuser (ambre) → écartée (rouge). « exclue » = étage 0, repliée dans écartée.
 export const STATUT_META: Record<Statut, { label: string; color: string }> = {
-  chaude: { label: 'Chaude', color: '#5CE6A1' },
+  chaude: { label: 'Priorité dossier', color: '#5CE6A1' },
   a_surveiller: { label: 'À surveiller', color: '#4ADE96' },
   a_creuser: { label: 'À creuser', color: '#E8B44C' },
   ecartee: { label: 'Écartée', color: '#E8695A' },

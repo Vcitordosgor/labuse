@@ -230,13 +230,24 @@ function DecisionCard({ pid, item, onDecide, onFiche }: {
         Voir la fiche complète →
       </button>
 
+      {/* R2 (PJ2) — LES TROIS décisions en boutons francs, chacune à la couleur de sa colonne
+          d'arrivée du Kanban M2 (écartée #E8695A · à analyser #E8B44C · retenue mint). Retenir
+          reste le plus fort (plein) ; la sortie (✕ Quitter, barre haute) ne leur ressemble pas.
+          Pas de raccourcis clavier : il n'en existe pas — on n'en invente pas dans ce lot. */}
       <div className="mt-4 flex gap-2">
         <button data-decision-ecarter onClick={() => onDecide('ecartee')}
-          className="flex-1 rounded-xl border border-[#E8695A]/50 py-2.5 text-sm font-medium text-[#E8695A] hover:bg-[#E8695A]/10">
+          className="flex-1 rounded-xl border border-[#E8695A]/50 py-2.5 text-sm font-medium text-[#E8695A] hover:bg-[#E8695A]/10"
+          title="Écarter — réversible (pile Écartées)">
           ✕ Écarter
         </button>
+        <button data-decision-analyser onClick={() => onDecide('a_analyser')}
+          className="flex-1 rounded-xl border border-[#E8B44C]/50 py-2.5 text-sm font-medium text-[#E8B44C] hover:bg-[#E8B44C]/10"
+          title="Mettre de côté pour analyse — remonte en tête du Kanban avec le badge « à analyser »">
+          ? À analyser
+        </button>
         <button data-decision-retenir onClick={() => onDecide('retenue')}
-          className="flex-1 rounded-xl bg-mint py-2.5 text-sm font-bold text-[#06130C] hover:brightness-110">
+          className="flex-1 rounded-xl bg-mint py-2.5 text-sm font-bold text-[#06130C] hover:brightness-110"
+          title="Retenir — passe en colonne Retenues (et au CRM)">
           ✓ Retenir
         </button>
       </div>

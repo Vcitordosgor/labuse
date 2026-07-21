@@ -4,6 +4,7 @@ import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilit
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { Loading } from '../Loading'
 import { AskBar, renderRich } from './AskBar'
+import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
@@ -895,13 +896,16 @@ function PatrimoineLink({ siren }: { siren: string }) {
   )
 }
 
-const TABS: { k: 'synthese' | Onglet | 'bilan' | 'solaire' | 'faisabilite'; label: string }[] = [
+const TABS: { k: 'synthese' | Onglet | 'bilan' | 'solaire' | 'faisabilite' | 'pourquoi'; label: string }[] = [
   { k: 'synthese', label: 'Synthèse' }, { k: 'regles', label: 'Règles' }, { k: 'risques', label: 'Risques' },
   { k: 'marche', label: 'Marché' }, { k: 'proprio', label: 'Proprio' },
   // M11 Surface C : onglet Faisabilité (prendra la place de « Solaire » lors du spin-off aménités).
   { k: 'faisabilite', label: 'Faisabilité' }, { k: 'solaire', label: 'Solaire' },
   { k: 'bilan', label: 'Bilan' },
 ]
+// R5 (O3) : onglet « Pourquoi pas ? » — ajouté SEULEMENT pour les parcelles écartées/flaggées
+// (anti-fiche : motifs RÉDHIBITOIRE/VIGILANCE sourcés). La nav reste toujours visible (règle PJ6).
+const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -921,7 +925,7 @@ export function Fiche({ idu }: { idu: string }) {
     return () => window.removeEventListener('keydown', h)
   }, [select])
   void sourceLine
-  const [tab, setTab] = useState<'synthese' | Onglet | 'bilan' | 'solaire' | 'faisabilite'>('synthese')
+  const [tab, setTab] = useState<'synthese' | Onglet | 'bilan' | 'solaire' | 'faisabilite' | 'pourquoi'>('synthese')
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
@@ -961,7 +965,8 @@ export function Fiche({ idu }: { idu: string }) {
       )}
       {f?.evenement === 'rouge' && (
         <div className="shrink-0 border-b border-[#5a2420] bg-[#3a1614] px-5 py-2.5">
-          <div className="flex items-center gap-2 text-xs font-medium text-st-ecartee">● ÉVÉNEMENT — force « chaude »</div>
+          {/* R3 (PJ5) : vocabulaire matrice non thermique — « priorité dossier » (thermique = tier P servi) */}
+          <div className="flex items-center gap-2 text-xs font-medium text-st-ecartee">● ÉVÉNEMENT — force « priorité dossier »</div>
           {f.evenement_detail && <div className="mt-1 text-[11px] leading-snug text-[#e8a99f]">{f.evenement_detail}</div>}
         </div>
       )}
@@ -1066,7 +1071,8 @@ export function Fiche({ idu }: { idu: string }) {
 
       {!fq && (
       <div className="flex shrink-0 gap-4 overflow-x-auto border-b border-line px-5 py-2 text-xs">
-        {TABS.map((t) => (
+        {/* R5 (O3) : « Pourquoi pas ? » n'apparaît que si la parcelle est écartée ou porte des flags */}
+        {[...TABS, ...(f && (verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) ? [TAB_POURQUOI] : [])].map((t) => (
           <button key={t.k} onClick={() => setTab(t.k)} className={`shrink-0 ${tab === t.k ? 'font-medium text-txt-hi' : 'text-txt-dim hover:text-txt-mut'}`}>
             {t.label}
           </button>
@@ -1108,7 +1114,7 @@ export function Fiche({ idu }: { idu: string }) {
           <>
             {f.evenement === 'rouge' && f.statut === 'chaude' && (
               <div data-histoire-evenement className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
-                Chaude par <b className="text-st-ecartee">ÉVÉNEMENT</b> : le propriétaire
+                Priorité dossier par <b className="text-st-ecartee">ÉVÉNEMENT</b> : le propriétaire
                 {f.proprietaire_moral?.denomination ? <> (<b>{f.proprietaire_moral.denomination}</b>)</> : ''} est en
                 procédure collective{f.evenement_detail ? <> — {f.evenement_detail.replace(/^.*?:\s*/, '')}</> : ''}.
                 Le score qualité ({f.q_score}) n'a pas déclenché ce statut : c'est l'urgence
@@ -1207,6 +1213,7 @@ export function Fiche({ idu }: { idu: string }) {
         {!fq && f && tab === 'faisabilite' && <FaisabiliteTab idu={idu} />}
         {!fq && f && tab === 'solaire' && <SolaireTab idu={idu} />}
         {!fq && f && tab === 'bilan' && <BilanTab idu={idu} />}
+        {!fq && f && tab === 'pourquoi' && <PourquoiPasTab idu={idu} />}
       </div>
 
       <div className="shrink-0 border-t border-line px-5 py-3">

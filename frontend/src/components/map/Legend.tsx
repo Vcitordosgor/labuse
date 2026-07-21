@@ -21,8 +21,11 @@ export function Legend({ inline = false }: { inline?: boolean }) {
   return (
     <div className={`rounded-[10px] border border-line-2 bg-surface-2 px-4 py-3 ${
       inline ? '' : 'absolute bottom-4 right-4 hidden sm:block'}`}>
-      <p className="mb-2 font-mono text-[11px] tracking-widest text-txt-dim">
-        {v2 ? 'VERDICT · SCORING V2' : 'VERDICT'}
+      {/* R3 (PJ5) : sans run v2 la légende est celle de la MATRICE Q×A (vocabulaire « dossier »,
+          non thermique) — le thermique est réservé au scoring P servi. */}
+      <p className="mb-2 font-mono text-[11px] tracking-widest text-txt-dim"
+        title={v2 ? undefined : 'Classement matrice Q×A (historique) — vocabulaire « dossier », distinct de l\'échelle thermique du scoring P servi.'}>
+        {v2 ? 'VERDICT · SCORING V2' : 'VERDICT · MATRICE Q×A'}
       </p>
       <div className="flex flex-col gap-1.5">
         {v2

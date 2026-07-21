@@ -110,6 +110,38 @@ export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') =>
 export const getParcelsGeojson = () =>
   j<ParcelFeatureCollection>(`/map/parcels.geojson?${q({ limit: 60000 })}`)
 export const getFiche = (idu: string) => j<Fiche>(`/parcels/${idu}?source=${SOURCE}`)
+
+// ── R5 (reliquats front) — UI des outils O2/O3 ────────────────────────────────────────────
+// O2 · scoreur d'adresse inversé : adresse → parcelle déjà scorée → verdict compact ;
+// prix demandé SAISI À LA MAIN (jamais scrapé), confronté à la charge foncière (Score É V2).
+export interface ScoreurResult {
+  ok: boolean
+  adresse: string
+  message?: string
+  idu?: string
+  commune?: string
+  surface_m2?: number
+  verdict?: { tier: string | null; libelle: string; rang: number | null; percentile: number | null }
+  score_e?: { estimable: boolean; marge_estimee: number | null; charge_supportable: number | null
+              prix_probable: number | null; niveau_prix: string | null; libelle_court: string } | null
+  prix?: { prix_demande_eur: number; prix_demande_m2_terrain?: number; marge_a_ce_prix_eur?: number
+           verdict: string; message: string; avertissement: string }
+}
+export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null) =>
+  j<ScoreurResult>('/scoreur-adresse', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ q: adresse, prix_demande_eur: prixDemandeEur }),
+  })
+
+// O3 · anti-fiche « pourquoi pas » : motifs d'écartement hiérarchisés, sourcés (cascade servie).
+export interface AntiFicheMotif { couche: string; motif: string; source: string }
+export interface AntiFiche {
+  idu: string; tier: string | null; cadre: string; synthese: string
+  redhibitoire: AntiFicheMotif[]; vigilance: AntiFicheMotif[]
+  n_redhibitoire: number; n_vigilance: number; avertissement: string
+}
+export const getAntiFiche = (idu: string) => j<AntiFiche>(`/anti-fiche/${idu}`)
+
 export const getMapLayer = (kind: string) => {
   const c = commune()
   return j<ParcelFeatureCollection>(`/map/layers.geojson?kind=${kind}${c ? `&commune=${encodeURIComponent(c)}` : ''}`)
