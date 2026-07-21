@@ -204,3 +204,61 @@ Testé sur parcelle Saint-Paul zone **U1l** (calibrée) : hauteur faîtage 14 m 
 **Reco d'exposition.** **Visible** (règles déterministes sourcées + lien opposable ; l'IA n'ajoute que de la prose
 groundée). **Finding O4** : la traduction IA est en repli tant que les crédits Anthropic sont épuisés ; la couche 1
 (règles chiffrées appliquées) fonctionne sans IA et suffit déjà à l'usage.
+
+---
+
+## O5 · Servitudes invisibles ✅
+
+**Ce qui ne « crie » pas sur la fiche mais peut tout bloquer.** `GET /servitudes-invisibles/{idu}`
+(`src/labuse/api/servitudes.py`). 100 % lecture de `spatial_layers` (déjà ingérée) — **zéro donnée nouvelle**.
+
+### Couches dormantes lues, chacune sourcée + datée
+**SUP** (servitudes d'utilité publique, 417 en base) décodées en effet concret (PM1 → « Risques naturels (PPR) —
+prescriptions constructives », AC1 → « Abords MH — avis ABF », I3 → « Canalisation de gaz — bande de servitude »,
+AS1 → « Captage d'eau potable »…), **50 pas géométriques**, **classement sonore routier** (catégorie d'isolement),
+**SIS/CASIAS** (sols pollués), **recul du trait de côte**, **PEB**, **zonage d'assainissement**. Chaque ligne porte sa
+**source** (`data_sources.name`) et sa **date** (dernier sync). **Dédup** (une SUP répétée en enveloppes gen1/gen2 = une
+ligne).
+
+### Honnêteté
+- Couches attendues mais **non ingérées** (canalisations de transport, RNIC copro) listées comme **non couvertes** —
+  jamais un faux « RAS ». Parcelle sans servitude → dit clairement, avec l'avertissement que « l'absence ici ne vaut pas
+  absence réelle ; vérifiez le certificat d'urbanisme ». Un code SUP inconnu est affiché tel quel, jamais inventé.
+
+### Validation
+Parcelle Saint-Louis intersectant une SUP PM1 → « Risques naturels (PPR) — prescriptions constructives », source
+« SUP — assiettes GPU (API Carto) », datée 2026-07-10. Parcelle sans servitude → n=0, RAS honnête.
+
+### Livrable technique
+- `src/labuse/api/servitudes.py` — endpoint + décodage SUP. `app.py` — routeur branché.
+- `tests/test_servitudes.py` — **8/8 verts** (décodage SUP/SIS/bruit ; code inconnu non menti ; dédup ; source+date ;
+  RAS honnête ; non-couvert listé).
+
+**Reco d'exposition.** **Visible** (lecture sourcée + datée, avec caveat de non-exhaustivité explicite). **Finding O5** :
+ingérer les canalisations de transport (BNPT/PGT) compléterait le tableau ; le lien SUP `urlreg` est souvent vide dans
+`attrs` (Géoportail) — à enrichir si une URL réglementaire par SUP devient disponible.
+
+---
+
+## STOP MI-COURSE (après O0→O5)
+
+**6 lots livrés, 6 commits, arbre vert.** Score É débloqué (×5,4 marges positives) ; dossier banquier démo ; scoreur
+d'adresse ; anti-fiche ; traducteur PLU ; servitudes invisibles. **36 tests verts** (score_e V2 5 + 31 neufs : banquier 7,
+scoreur 6, anti-fiche 3, traducteur 7, servitudes 8). Zéro touche scoring / runs servis / golden.
+
+### Table des recommandations d'exposition (à trancher par Vic)
+| Lot | Reco | Motif |
+|---|---|---|
+| **O0 Score É V2** | **Lever le flag de masquage** (garde-fous) | Économiquement juste (prix de sortie neuf) ; badge Estimé + niveau prix + non estimable explicite |
+| **O1 Dossier banquier** | **Visible** (candidat démo) | Vitrine sourcée, aucun risque de faux signal |
+| **O2 Scoreur d'adresse** | **Visible** (API) + **UI à ajouter** | Verdict = tier servi + Score É labellisé |
+| **O3 Anti-fiche** | **Visible** | Transparence pure, dérivé de la cascade servie |
+| **O4 Traducteur PLU** | **Visible** | Règles déterministes sourcées + lien opposable |
+| **O5 Servitudes invisibles** | **Visible** | Lecture sourcée + datée, caveat de non-exhaustivité |
+
+### Décisions attendues au STOP
+1. **Score É** : lever le flag de masquage ? (reco : oui, avec garde-fous).
+2. **Gating** dossier banquier : Essentiel (actuel) ou Intégral ?
+3. **UI** : brancher O2/O3 sur la fiche/carte (findings ouverts).
+
+Reste : **O6→O12** en mode autonome (règles du batch de nuit), puis STOP final (dont dossier de revue 20 cartes O12).
