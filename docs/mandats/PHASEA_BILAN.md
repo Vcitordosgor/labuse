@@ -64,7 +64,9 @@ Chaque cycle a produit une **preuve d'instruction** (`A1_CADRAGE_DEFISC.md`, `A1
 
 - Phase 0 F0–F5 traités ; **F7/F8/F9/F10/F11 résolus** (nuit 2026-07-21 + clôture) ; findings A1-F1..F5
   documentés (`A1_BILAN.md`). Aucun S1 ouvert. Boussole intacte.
-- `docs/ROADMAP_ALGO.md` (cité par les mandats) reste absent du dépôt — à créer/retrouver côté Vic.
+- **✅ `docs/ROADMAP_ALGO.md` matérialisé** (fourni par Vic, clôture Phase A) — les références des mandats
+  résolvent désormais ; c'est la référence des **règles** (sortie, doctrine, « Rejeté »). État d'exécution
+  courant : ce présent bilan.
 
 ---
 
