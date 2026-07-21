@@ -245,8 +245,18 @@ def _http_opener():
     if _opener is None:
         import base64
         import http.cookiejar
+        import ssl
         jar = http.cookiejar.CookieJar()
-        _opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+        # TLS : CA racines via certifi si dispo (les venv macOS n'ont pas toujours les CA
+        # système côté urllib) — la VÉRIFICATION n'est JAMAIS désactivée.
+        try:
+            import certifi
+            ctx = ssl.create_default_context(cafile=certifi.where())
+        except ImportError:
+            ctx = ssl.create_default_context()
+        _opener = urllib.request.build_opener(
+            urllib.request.HTTPSHandler(context=ctx),
+            urllib.request.HTTPCookieProcessor(jar))
         basic = os.environ.get("LABUSE_QA_BASIC")
         if basic:
             _opener.addheaders = [("Authorization", "Basic " + base64.b64encode(basic.encode()).decode())]
