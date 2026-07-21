@@ -523,22 +523,16 @@ def dryrun_matrice_cmd(
 
 @app.command("ingest-permits")
 def ingest_permits_cmd(
-    commune: str = typer.Option(None, help="INSEE de la commune (défaut = pilote)."),
-    cap: int = typer.Option(10000, help="Plafond de permis récupérés (pagination ODS)."),
+    refresh: bool = typer.Option(False, help="Delta mensuel (recouvrement 3 mois) au lieu du chargement complet."),
+    geocode: bool = typer.Option(True, help="Géocoder les permis sans IDU après l'ingestion."),
 ) -> None:
-    """Ingère les autorisations d'urbanisme (SITADEL — API Région Réunion ODS) pour la commune,
-    géolocalisées par IDU cadastral. Lancer ensuite `geocode-permits` pour les non géolocalisés."""
-    from .ingestion.permits import ingest_permits
+    """Ingère les autorisations d'urbanisme SITADEL via la voie VIVANTE (flux national SDES/Dido,
+    Sitadel3, dép. 974 entier, MAJ mensuelle). [Pré-vol M7 P1 : l'ancienne voie ODS Région est
+    MORTE depuis 2023-09 (permits.py, legacy documenté) — cette commande appelait encore la morte.]"""
+    from .ingestion import permits_sdes
 
-    insee = commune if (commune and commune.isdigit()) else get_settings().pilot_commune_insee
-    nom = _commune_nom(insee)
-    if nom is None:
-        typer.echo(f"✗ INSEE {insee} inconnu au référentiel des 24 communes de La Réunion.")
-        raise typer.Exit(1)
-    with session_scope() as s:
-        n = ingest_permits(s, insee, nom, cap=cap)
-    typer.echo(f"✓ {n} permis (SITADEL) chargés pour {nom} (INSEE {insee}). "
-               f"Géolocalisez les manquants : geocode-permits --commune {insee}")
+    res = permits_sdes.run(refresh=refresh, geocode=geocode, log=typer.echo)
+    typer.echo(f"✓ SITADEL (SDES/Dido) : {res}")
 
 
 @app.command("geocode-permits")
