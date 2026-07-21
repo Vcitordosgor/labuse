@@ -140,7 +140,12 @@
   {# M6.1 item 6 (sprint personas) : libellé client — la « SDP résiduelle » est du jargon ;
      on dit ce que c'est : ce qu'il reste à construire au regard du PLU. #}
   <div class="cartouche"><div class="titre">Surface constructible restante (estimation)</div>
-    <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² de plancher (indicatif)</small></div></div>
+    <div class="valeur">{{ c.residuel.sdp_residuelle_m2 }} <small>m² de plancher (indicatif)</small></div>
+    {# Clôture cycle 2 (fix N8) : la SDP n'est PAS l'habitable — surface de plancher au sens PLU
+       (hors murs/circulations) ; l'habitable/vendable est ~15 % inférieure. Le client ne doit pas
+       lire « constructible » comme « exploitable ». #}
+    <div class="note-sdp">surface de plancher au sens PLU (hors murs et circulations) — la surface
+      habitable / vendable est ~15&nbsp;% inférieure (soit ~{{ (c.residuel.sdp_residuelle_m2 / 1.15) | round | int }} m²).</div></div>
   {% endif %}
 
   {% if c.verdict_v2 %}

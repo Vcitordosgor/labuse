@@ -94,16 +94,16 @@ function initMap() {
     // = OFF). On ne charge jamais ce calque tant qu'il n'est pas demandé → carte par défaut intacte.
     map.on("overlayadd", (e) => { if (e.layer === RADAR_LAYER) { showRadarLegend(true); loadRadarLayer(); } });
     map.on("overlayremove", (e) => { if (e.layer === RADAR_LAYER) showRadarLegend(false); });
-    // LOT 2 — bascule de mode carte : Verdict ⇄ Mutabilité (bâti/non-bâti).
+    // LOT 2 — bascule de mode carte : Verdict ⇄ Bâti/libre (taux d'emprise ; ni SDP ni P).
     const ModeCtl = L.Control.extend({
       options: { position: "topright" },
       onAdd() {
         const d = L.DomUtil.create("div", "map-mode");
         // Libellé de tête : explicite que ces boutons changent CE QUE LA COULEUR DES PARCELLES VEUT DIRE
-        // (découvrabilité du mode Mutabilité, qui sinon passe inaperçu).
+        // (découvrabilité du mode Bâti/libre, qui sinon passe inaperçu).
         d.innerHTML = `<span class="mm-lbl" title="Choisit ce que représente la couleur des parcelles sur la carte">Couleur</span>`
           + `<button class="mm-btn active" data-mode="verdict" type="button" title="Couleur = verdict LA BUSE (opportunité, à creuser, écartée, faux positif)">Verdict</button>`
-          + `<button class="mm-btn" data-mode="mutabilite" type="button" title="Couleur = bâti / non-bâti — repérer le foncier mutable (libre)">Mutabilité</button>`;
+          + `<button class="mm-btn" data-mode="mutabilite" type="button" title="Couleur = bâti / non-bâti (taux d'emprise au sol) — repérer le foncier libre. Ce n'est ni la capacité constructible (SDP), ni la probabilité de mutation (P).">Bâti / libre</button>`;
         L.DomEvent.disableClickPropagation(d);
         d.querySelectorAll(".mm-btn").forEach((b) => b.addEventListener("click", () => setMapMode(b.dataset.mode)));
         return d;
@@ -154,14 +154,14 @@ async function setMapMode(mode) {
     try {
       const d = await (await fetch(`/map/bati?commune=${encodeURIComponent(COMMUNE)}`)).json();
       if (!d.disponible) {
-        if (b) { b.classList.remove("loading"); b.textContent = "Mutabilité"; }
-        auditMsg("Couche bâtiments non ingérée — mutabilité indisponible.");
+        if (b) { b.classList.remove("loading"); b.textContent = "Bâti / libre"; }
+        auditMsg("Couche bâtiments non ingérée — carte bâti indisponible.");
         return;
       }
       BATI_RATIOS = d.ratios || {};
       FEATURES.forEach((ft) => { ft.properties.bati_ratio = BATI_RATIOS[ft.properties.idu] ?? null; });
     } catch { BATI_RATIOS = {}; }
-    if (b) { b.classList.remove("loading"); b.textContent = "Mutabilité"; }
+    if (b) { b.classList.remove("loading"); b.textContent = "Bâti / libre"; }
   }
   MAP_MODE = mode;
   btns.forEach((b) => b.classList.toggle("active", b.dataset.mode === mode));
@@ -302,7 +302,7 @@ function updateLegend() {
   const lg = $("#legend"); if (!lg) return;
   if (LEGEND_VERDICT_HTML == null) LEGEND_VERDICT_HTML = lg.innerHTML;   // mémorise la légende verdict
   if (MAP_MODE === "mutabilite") {
-    lg.innerHTML = `<div class="legend-h">Mutabilité (bâti)</div>
+    lg.innerHTML = `<div class="legend-h">Bâti / libre (taux d'emprise)</div>
       <span><i class="dot" style="background:#2DBE87"></i> Mutable · non/peu bâti (&lt; 15 %)</span>
       <span><i class="dot" style="background:#7C8694"></i> Bâti (&ge; 15 %)</span>
       <span class="lg-src">BD TOPO · indicatif</span>`;
