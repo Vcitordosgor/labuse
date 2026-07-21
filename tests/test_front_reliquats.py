@@ -37,7 +37,7 @@ def test_r1_redeploiement_sans_perte():
 
 def test_r1_nav_onglets_hors_du_panneau_ia():
     # la nav des onglets vit dans Fiche.tsx (hors AskBar), en bloc shrink-0 propre
-    assert "TABS.map" in FICHE
+    assert "...TABS" in FICHE and ".map((t) => (" in FICHE
     assert "AskBar" in FICHE                        # panneau injecté séparément, au-dessus
 
 
@@ -110,3 +110,54 @@ def test_r3_marqueur_commune_non_thermique():
     # le compteur commune (matrice_statut='chaude' côté backend) s'affiche en vocabulaire dossier
     assert "en priorité dossier (matrice Q×A)" in MAPVIEW
     assert "chaude${c.chaudes" not in MAPVIEW       # l'ancien wording thermique a disparu
+
+
+# ───────────── R5 — UI des outils O2 (scoreur d'adresse) et O3 (anti-fiche) ─────────────
+
+HEADER = (ROOT / "frontend/src/components/header/Header.tsx").read_text(encoding="utf-8")
+SCOREUR = (ROOT / "frontend/src/components/outils/ScoreurAdresse.tsx").read_text(encoding="utf-8")
+POURQUOI = (ROOT / "frontend/src/components/fiche/PourquoiPas.tsx").read_text(encoding="utf-8")
+API = (ROOT / "frontend/src/lib/api.ts").read_text(encoding="utf-8")
+
+
+def test_r5_scoreur_trouvable_depuis_le_header():
+    # entrée visible à côté de la recherche (< 5 s) — l'outil de démo « seconde opinion »
+    assert "data-scoreur-open" in HEADER and "Scorer une adresse" in HEADER
+    assert "ScoreurAdresse" in HEADER
+
+
+def test_r5_scoreur_champs_et_prix_manuel():
+    assert "data-scoreur-adresse" in SCOREUR and "Collez une adresse" in SCOREUR
+    assert "data-scoreur-prix" in SCOREUR and "jamais scrapé" in SCOREUR   # prix saisi à la main
+    assert "data-scoreur-resultat" in SCOREUR and "data-scoreur-fiche" in SCOREUR
+
+
+def test_r5_scoreur_verdicts_prix():
+    # confrontation prix demandé vs charge foncière : les 4 verdicts servis par l'API
+    for v in ("opportunite", "dans_le_marche", "cher", "non_estimable"):
+        assert v in SCOREUR
+    assert "data-scoreur-prix-verdict" in SCOREUR
+
+
+def test_r5_scoreur_hors_base_honnete():
+    # ok:false → le message honnête de l'API est affiché, jamais un verdict inventé
+    assert "!d.ok" in SCOREUR and "d.message" in SCOREUR
+
+
+def test_r5_pourquoi_pas_onglet_conditionnel():
+    # onglet ajouté SEULEMENT pour écartées/flaggées ; la nav reste la même barre (règle PJ6)
+    assert "TAB_POURQUOI" in FICHE and "Pourquoi pas ?" in FICHE
+    assert "verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')" in FICHE
+    assert "tab === 'pourquoi'" in FICHE and "PourquoiPasTab" in FICHE
+
+
+def test_r5_pourquoi_pas_hierarchise_et_source():
+    assert "RÉDHIBITOIRE" in POURQUOI and "VIGILANCE" in POURQUOI
+    assert "data-pourquoi-pas" in POURQUOI
+    assert "m.source" in POURQUOI                   # chaque motif porte sa source
+    assert "Aucun motif" in POURQUOI                # sans motif : on le dit, rien d'inventé
+
+
+def test_r5_api_helpers():
+    assert "scoreurAdresse" in API and "/scoreur-adresse" in API and "prix_demande_eur" in API
+    assert "getAntiFiche" in API and "/anti-fiche/" in API
