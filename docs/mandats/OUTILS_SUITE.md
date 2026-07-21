@@ -440,3 +440,39 @@ crash). CLI : `labuse surface-d` (build) + `labuse surface-d-events --type … -
 **Reco d'exposition.** **Moteur interne** (pas d'exposition client en partie 2 ; la notification et l'affichage
 viennent post-M7 / mandat front). **Finding O10** : brancher `plu_revise` dès qu'une révision de zonage datée est
 ingérée, et `bodacc_pm` via le flux BODACC personne morale ; câbler la notification sur `watch_zones` au mandat Auth.
+
+---
+
+## O11 · Opérations & lots — **LOT 0 PROUVÉ**, puis outil ✅ (point dur respecté)
+
+### LOT 0 (obligatoire) — le rattachement PA/PC groupés ↔ rafales DVF **tient**
+Problème : **DVF n'a AUCUNE identité vendeur** (que parcelle/valeur/date). Le rattachement est donc **multi-signal** :
+(a) **déclin de propriété** du porteur PERSONNE MORALE entre millésimes fonciers (`pm_proprietaires_millesimes`,
+2019-2024) = lots cédés ; (b) **permis PA/PC** sur le secteur (SITADEL) ; (c) **rafale de ventes DVF** sur le
+secteur/période. **Vérifié sur des opérations réelles nommées** (PM = SIREN public) :
+
+| Porteur (SIREN) | Secteur | Propriété | Permis | Ventes DVF |
+|---|---|---|---|---|
+| **CBO TERRITORIA** (452038805) | 97415000DK | 387 → 229 (−158) | PA×8, PC×200 (2013-…) | 73 (2021-25) |
+| **CONCORDE** (830360418) | 97418000AW | 85 → 12 (−73) | PA×3, PC×152 | 114 (2021-25) |
+| **OPHELIA** | 97420000BD | 74 → 12 (−62) | PA×1, PC×141 | 107 |
+| **GRAND NATTE / ALLIANCE** | 97408/97410 | −50 / −46 | PA + PC | 40 / 98 |
+
+Les trois signaux **s'alignent** → rattachement **circonstanciel mais convergent**. **LOT 0 = GO.** (Caveat assumé :
+l'attribution d'UNE vente précise au porteur n'est pas garantie — DVF sans identité vendeur.)
+
+### Outil livré (Lot 0 tenu)
+`GET /operations` (liste) + `GET /operations/{siren}/{secteur}` (fiche). `src/labuse/api/operations.py`.
+**763 opérations détectées** (283 confiance élevée, 328 moyenne, 152 faible), triées par confiance (alignement des 3
+signaux). Fiche : **porteur (SIREN public, jamais un particulier)**, secteur, permis (PA/PC + années), lots au pic,
+**vendus (Sourcé** = déclin de propriété), **restant (Estimé** + **caveat DVF ~6 mois** : ventes récentes non encore
+publiées). Détection : PM détenant un pic ≥ 5 parcelles, PA ≥ 1 (ou PC ≥ 5), et déclin de propriété.
+
+### Livrable technique
+- `src/labuse/api/operations.py` — `detect_operations` + liste + fiche. `app.py` — routeur branché.
+- `tests/test_operations.py` — **6/6 verts** (confiance 3/2/1 signaux ; vendus Sourcé / restant Estimé ; porteur PM ;
+  caveat DVF ; table absente → vide).
+
+**Reco d'exposition.** **Visible** avec confiance affichée + caveat DVF, **filtré sur la confiance « élevée/moyenne »**.
+**Finding O11** : certains « porteurs » sont des entités publiques (Conservatoire du Littoral, SEM, Aéroport) qui cèdent
+du foncier sans être des promoteurs privés — transparent via le SIREN ; un filtre par forme juridique / NAF affinerait.
