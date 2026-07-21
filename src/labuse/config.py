@@ -77,6 +77,9 @@ class Settings(BaseSettings):
     # (en partant de la droite : la partie gauche de l'en-tête est forgeable par le client).
     trusted_proxies: str = ""
     rate_burst_gel: int = 3               # bursts le même jour avant gel + alerte admin
+    # M7 — voie QA du golden en PROD : IPs (CSV) exemptées de rate-limit/quotas, à la manière
+    # de dev_mode mais CIBLÉE (jamais globale). Ex. l'IP publique du Mac. Vide = personne.
+    qa_allowlist: str = ""                # LABUSE_QA_ALLOWLIST=ip1,ip2
     abuse_alert_seuil: int = 60           # score abuse_scores déclenchant l'alerte
     nl_quota_jour: int = 30               # requêtes de recherche NL / jour / sujet (Lot 6)
     dossier_quota_mois: int = 20          # Dossiers parcelle / mois (plan Essentiel, Lot 4)

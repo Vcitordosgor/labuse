@@ -234,9 +234,37 @@ def collect_db(cur, idu: str, v2run: str | None) -> dict:
     }
 
 
+# ── M7 — golden CONTRE LA PROD : basic auth Caddy (LABUSE_QA_BASIC=user:pass) + login app
+# (LABUSE_QA_PASSWORD → POST /login, cookie de session gardé). Sans ces envs : comportement
+# local inchangé (aucune auth). L'opener partage le cookiejar entre tous les GET.
+_opener = None
+
+
+def _http_opener():
+    global _opener
+    if _opener is None:
+        import base64
+        import http.cookiejar
+        jar = http.cookiejar.CookieJar()
+        _opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+        basic = os.environ.get("LABUSE_QA_BASIC")
+        if basic:
+            _opener.addheaders = [("Authorization", "Basic " + base64.b64encode(basic.encode()).decode())]
+        pw = os.environ.get("LABUSE_QA_PASSWORD")
+        if pw:
+            req = urllib.request.Request(f"{API_BASE}/login", method="POST",
+                                         data=json.dumps({"password": pw}).encode(),
+                                         headers={"Content-Type": "application/json"})
+            try:
+                _opener.open(req, timeout=30)
+            except Exception as e:  # noqa: BLE001 — le login raté se verra en 401 sur les GET
+                print(f"⚠ login QA échoué : {e}", file=sys.stderr)
+    return _opener
+
+
 def _get_json(url: str) -> tuple[dict | None, str | None]:
     try:
-        with urllib.request.urlopen(url, timeout=30) as resp:
+        with _http_opener().open(url, timeout=30) as resp:
             return json.loads(resp.read().decode("utf-8")), None
     except urllib.error.HTTPError as e:
         return None, f"HTTP {e.code}"

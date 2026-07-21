@@ -1,0 +1,32 @@
+# =============================================================================
+# LA BUSE — Caddyfile de PRODUCTION (M7 · app.labuse.immo) — AUCUN secret ici.
+# -----------------------------------------------------------------------------
+# Pose sur le VPS : /etc/caddy/Caddyfile + /etc/caddy/labuse.env (600) portant :
+#   LABUSE_DOMAIN=app.labuse.immo
+#   CADDY_BASIC_HASH=<bcrypt de `caddy hash-password` — secret, jamais en git>
+# TLS : automatique (Let's Encrypt) — 2 tentatives max le jour J (quotas LE).
+#
+# RIDEAU TEMPORAIRE (décision Vic 22/07) : basic auth devant TOUTE l'app, API
+# comprise (user `labuse`). Il tombera à l'arrivée de l'auth réelle (comptes,
+# post-M7). La voie QA du golden passe À TRAVERS : golden_check envoie
+# `Authorization: Basic` (env LABUSE_QA_BASIC=labuse:<mdp>) PUIS le login
+# applicatif (LABUSE_QA_PASSWORD) — deux rideaux, deux clés, documenté runbook.
+# =============================================================================
+
+{$LABUSE_DOMAIN} {
+	encode gzip
+
+	# ── rideau basic auth (TOUT le trafic, healthz compris) ──
+	basic_auth {
+		labuse {$CADDY_BASIC_HASH}
+	}
+
+	reverse_proxy 127.0.0.1:8000
+
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+}
