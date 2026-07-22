@@ -4,7 +4,12 @@
 jamais de correction autonome.** Atlas de référence (« avant ») :
 `~/labuse-atlas/2026-07-22-11-10__local/index.html`.
 
-## ⟪ CURSEUR ⟫ dernière surface traitée : — (LOIs en cours) · vague 1
+## ⟪ CURSEUR ⟫ dernière surface traitée : **S01 + S18** · vague 1 (session 1)
+
+**Reprise session suivante : S02 `fiche__synthese`** (enchaîner S02→S11 = tout le bloc fiche
+d'un tenant, puis S12-S15 projets/CRM, S17, S19-S20 ; S16 login = EN ATTENTE verdict porte).
+Filet e2e : les échecs e2e_m9_fiche (9-10) et e2e_429 (1) sont PRÉ-EXISTANTS sur main
+(prouvé au dist près, session 1) ; `qa/e2e.mjs` vise l'ancienne UI (invalide). tsc+build verts.
 
 ---
 
@@ -43,15 +48,39 @@ S71 `etat__rideau-basic-auth`
 - **[LOI-0] Tokens** — FAIT : `shadow-elev-1/2/3` + `.card-elev`/`.floating` (profondeur sans
   bordures dures), `.label-caps`, `.num-key` (tabular), `.tnum`, `duration-quick/soft` +
   `ease-cockpit`, échelle 4/8 documentée (DERIVATIONS.md §LOI-0).
+- **[LOI-1] Tip tactile** — FAIT (composant + sites clés) : survol/focus + TAP mobile, dessin
+  `.floating` unique, stopPropagation. Migrés : tier-chip, ×N, complétude (liste+CRM),
+  événement, même-proprio, veille, badge proprio, (matrice:X), labels Q/A/V fiche.
+  **Règle posée : Tip sur l'info, jamais imbriqué dans un bouton d'action.** Reste : title
+  résiduels migrés au fil des surfaces.
+- **[LOI-2] États standard** — FAIT (States.tsx) : EmptyState (oiseau filigrane + sortie),
+  ErrorState (sobre + Réessayer systématique). Migrés : liste vide, erreur pipeline CRM.
+- **[LOI-3] Formats** — FAIT (lib/format.ts) : fmtInt/Dec/Eur/M2/Pct/Date/DateNum fr-FR.
+  Adopté : liste résultats. Le reste au fil des surfaces.
+- **[LOI-4] Métadonnées** — FAIT : title « LABUSE — Radar foncier · La Réunion », meta
+  description, theme-color #060A08, robots noindex (rideau pilote).
 
 ## Surfaces traitées (3 lignes max chacune)
 
-_(à remplir au fil des commits)_
+- **S01 `nav__dashboard`** — Labels → .label-caps ; rangées couches min-h 28 px (tactile) ;
+  bandeau « analyse affichée » : bordure dure → élévation ; ombres → tokens ; pastille commune
+  mint décorative → neutre (vert = signal). Lois : 2, 3, 4, 7 + cockpit vert-signal/élévation.
+- **S18 `liste__resultats`** — fmtInt central (LOI-3), veille + badge proprio en Tip, surfaces
+  m² tabulaires ; état vide déjà EmptyState (LOI-2). Lois : 4, 5, 8.
 
 ## Refontes proposées (le cœur du futur BLOC B)
 
-_(à remplir)_
+_(aucune à ce stade — S01/S18 tenaient en retouches)_
+
+## En attente d'un verdict externe
+
+- **S16 `entree__login`** — NE PAS retoucher l'existant : la porte définitive attend le choix
+  Coffre/Territoire (maquettes Bloc A, docs/mockups/). Brancher le design retenu = ce mandat
+  ou consolidation, selon le verdict.
 
 ## OK — pas touché
 
-_(à remplir)_
+- VerdictHero (état off) : pitch + CTA mint glow = LE point focal légitime, wording validé
+  revue Vic P2 — n'y touche pas.
+- Hints des couches en title : boutons d'action (règle LOI-1) + hint ancré existant pour le
+  cas bloqué — suffisant.
