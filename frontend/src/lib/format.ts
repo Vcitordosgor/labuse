@@ -18,6 +18,14 @@ export const fmtEur = (n: number | null | undefined): string =>
 export const fmtM2 = (m2: number | null | undefined): string =>
   m2 == null ? '—' : m2 >= 10_000 ? `${fmtDec(m2 / 10_000, 2)} ha` : `${fmtInt(m2)} m²`
 
+/** montant compact (cartes, badges) : 450 k€ / 2 M€ / 2,4 M€ */
+export const fmtEurCompact = (n: number | null | undefined): string => {
+  if (n == null) return '—'
+  if (n >= 1_000_000) return `${fmtDec(n / 1_000_000, n % 1_000_000 === 0 ? 0 : 1)} M€`
+  if (n >= 10_000) return `${fmtInt(n / 1000)} k€`
+  return fmtEur(n)
+}
+
 /** pourcentage entier : 74 % */
 export const fmtPct = (n: number | null | undefined): string =>
   n == null ? '—' : `${Math.round(n)} %`

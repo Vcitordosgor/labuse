@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { fusionnerProjets, getProjets, patchProjet, type FicheProjet, type Projet } from '../../lib/api'
+import { fmtDate, fmtEurCompact } from '../../lib/format'
 import { useApp } from '../../store/useApp'
+import { Skeleton } from '../Loading'
+import { EmptyState } from '../States'
 import { ProjetKanban } from './ProjetKanban'
 
 const TYPE_LABEL: Record<string, string> = {
@@ -20,22 +23,19 @@ function perimetreLabel(f: FicheProjet): string {
   return cs.length === 1 ? cs[0] : `${cs.length} communes`
 }
 
-function ficheLignes(f: FicheProjet): string[] {
-  const out: string[] = []
+/** L'en-tête de cadrage (programme + ampleur) — la ligne qui pèse — puis le reste
+ *  (périmètre · contraintes · budget) réuni en une ligne calme. */
+function ficheLignes(f: FicheProjet): { titre: string | null; reste: string } {
+  let titre: string | null = null
   if (f.type_programme) {
     const amp = f.ampleur ?? {}
     const n = amp.logements ? ` · ${amp.logements} logements` : amp.sdp_m2 ? ` · ${amp.sdp_m2} m² SDP` : ''
-    out.push(`${TYPE_LABEL[f.type_programme] ?? 'Projet'}${n}`)
+    titre = `${TYPE_LABEL[f.type_programme] ?? 'Projet'}${n}`
   }
-  out.push(perimetreLabel(f))
-  if (f.contraintes?.length) out.push(f.contraintes.map((c) => CONTRAINTE_LABEL[c] ?? c).join(' · '))
-  if (f.budget_foncier_eur) out.push(`budget ${(f.budget_foncier_eur / 1000).toLocaleString('fr-FR')} k€`)
-  return out
-}
-
-function frDate(iso: string | null): string {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' })
+  const reste: string[] = [perimetreLabel(f)]
+  if (f.contraintes?.length) reste.push(f.contraintes.map((c) => CONTRAINTE_LABEL[c] ?? c).join(' · '))
+  if (f.budget_foncier_eur) reste.push(`budget ${fmtEurCompact(f.budget_foncier_eur)}`)
+  return { titre, reste: reste.join(' · ') }
 }
 
 /** Fiche projet (PJ8) — l'objet persistant : nom, critères, mini-compteurs de tri (depuis
@@ -53,8 +53,9 @@ function ProjetCard({ p }: { p: Projet }) {
 
   const archived = p.statut === 'archive'
   const c = p.counts ?? { proposee: 0, retenue: 0, ecartee: 0, a_analyser: 0 }
+  const fiche = ficheLignes(p.fiche)
   return (
-    <div data-projet-card className={`rounded-xl border border-line-2 bg-surface-2 p-4 ${archived ? 'opacity-60' : ''}`}>
+    <div data-projet-card className={`card-elev p-4 ${archived ? 'opacity-60' : ''}`}>
       <div className="flex items-start justify-between gap-3">
         {editing ? (
           <input
@@ -76,32 +77,35 @@ function ProjetCard({ p }: { p: Projet }) {
         {archived && <span className="shrink-0 rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-dim">archivé</span>}
       </div>
 
-      <ul className="mt-2 space-y-0.5 text-[11px] text-txt-mut">
-        {ficheLignes(p.fiche).map((l, i) => <li key={i}>{l}</li>)}
-      </ul>
+      <div className="mt-2 space-y-1 text-[11px]">
+        {fiche.titre && <p className="text-txt">{fiche.titre}</p>}
+        <p className="text-txt-mut">{fiche.reste}</p>
+      </div>
       {p.fiche.criteres_libres && (
-        <p className="mt-1.5 border-l-2 border-line-2 pl-2 text-[11px] italic text-txt-dim">« {p.fiche.criteres_libres} »</p>
+        <p className="mt-2 border-l-2 border-line-2 pl-2 text-[11px] italic text-txt-dim">« {p.fiche.criteres_libres} »</p>
       )}
 
-      {/* mini-compteurs de tri (source unique : projet_parcelles) */}
-      <div data-projet-compteurs className="mt-2.5 flex items-center gap-3 text-[11px]">
-        <span className="text-txt-mut"><b className="text-txt-hi">{c.proposee}</b> à trier</span>
-        <span className="text-mint"><b>{c.retenue}</b> retenue{c.retenue > 1 ? 's' : ''}</span>
-        <span className="text-st-ecartee"><b>{c.ecartee}</b> écartée{c.ecartee > 1 ? 's' : ''}</span>
+      {/* mini-compteurs de tri (source unique : projet_parcelles) — la couleur est un
+          signal : elle ne s'allume que si le compte existe. */}
+      <div data-projet-compteurs className="tnum mt-3 flex items-center gap-3 text-[11px]">
+        <span className="text-txt-mut"><b className={c.proposee ? 'text-txt-hi' : 'text-txt-dim'}>{c.proposee}</b> à trier</span>
+        <span className={c.retenue ? 'text-mint' : 'text-txt-dim'}><b>{c.retenue}</b> retenue{c.retenue > 1 ? 's' : ''}</span>
+        <span className={c.ecartee ? 'text-st-ecartee' : 'text-txt-dim'}><b>{c.ecartee}</b> écartée{c.ecartee > 1 ? 's' : ''}</span>
       </div>
 
-      <div className="mt-3 flex items-center justify-between">
-        <span className="font-mono text-[11px] text-txt-dim">
-          {p.derniere_execution_at ? `rejoué ${frDate(p.derniere_execution_at)}` : `créé ${frDate(p.created_at)}`}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+        <span className="whitespace-nowrap font-mono text-[11px] text-txt-dim">
+          {p.derniere_execution_at ? `rejoué ${fmtDate(p.derniere_execution_at)}` : `créé ${fmtDate(p.created_at)}`}
         </span>
         <div className="flex items-center gap-1.5">
           <button data-projet-editer onClick={() => setEditing(true)}
-            className="rounded-md px-2 py-1 text-[11px] text-txt-mut hover:text-txt-hi" title="Renommer">Renommer</button>
+            className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi"
+            title="Renommer">Renommer</button>
           <button data-projet-archiver onClick={() => patch.mutate({ statut: archived ? 'actif' : 'archive' })}
-            className="rounded-md px-2 py-1 text-[11px] text-txt-mut hover:text-txt-hi"
+            className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi"
             title={archived ? 'Réactiver le projet' : 'Archiver le projet'}>{archived ? 'Réactiver' : 'Archiver'}</button>
           <button data-projet-ouvrir onClick={() => setOpenProjet({ id: p.id, nom: p.nom })}
-            className="rounded-md bg-mint px-3.5 py-1 text-[11px] font-semibold text-[#06130C] hover:brightness-110"
+            className="min-h-7 rounded-md border border-mint/50 px-3 py-1 text-[11px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/10"
             title="Ouvrir le projet (kanban : à trier / retenues / écartées)">Ouvrir</button>
         </div>
       </div>
@@ -119,22 +123,22 @@ function DedupBanner({ groupe }: { groupe: Projet[] }) {
     mutationFn: () => fusionnerProjets(groupe.map((p) => p.id)),
     onSuccess: (r) => {
       const c = r.conflits.length
-      setRes(`Fusionnés dans le projet #${r.cible} · ${r.n_parcelles} parcelle(s)`
-        + (c ? ` · ⚠ ${c} conflit(s) de statut signalé(s) (statut le plus avancé retenu)` : ' · aucun conflit'))
+      setRes(`Fusionnés dans le projet nº${r.cible} · ${r.n_parcelles} parcelle(s)`
+        + (c ? ` · ${c} conflit(s) de statut signalé(s) (statut le plus avancé retenu)` : ' · aucun conflit'))
       qc.invalidateQueries({ queryKey: ['projets'] })
     },
   })
   return (
-    <div data-dedup-banner className="rounded-xl border border-[#B497F0]/45 bg-[#B497F0]/[0.07] p-3.5">
-      <div className="flex items-center justify-between gap-3">
+    <div data-dedup-banner className="rounded-xl bg-violet/[0.07] p-4 shadow-elev-1 ring-1 ring-violet/25">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <b className="text-txt-hi">{groupe.length} doublons</b>
           <span className="ml-2 text-txt-mut">« {groupe[0].nom} » — même nom / cadrage</span>
-          <div className="mt-1 text-[11px] text-txt-dim">ids {groupe.map((p) => p.id).join(' · ')}</div>
+          <div className="mt-1 text-[11px] text-txt-dim">projets {groupe.map((p) => `nº${p.id}`).join(' · ')}</div>
         </div>
         {!res && (
           <button data-dedup-fusionner onClick={() => fusion.mutate()} disabled={fusion.isPending}
-            className="shrink-0 rounded-lg border border-[#B497F0] px-3 py-1.5 text-[11px] font-semibold text-[#B497F0] hover:bg-[#B497F0]/10 disabled:opacity-50"
+            className="min-h-7 shrink-0 rounded-lg border border-violet px-3 py-1.5 text-[11px] font-semibold text-violet transition-colors duration-quick hover:bg-violet/10 disabled:opacity-50"
             title="Réunir les parcelles et statuts en un seul projet (sources archivées, jamais supprimées)">
             {fusion.isPending ? 'Fusion…' : `Fusionner les ${groupe.length} →`}</button>
         )}
@@ -168,25 +172,25 @@ export function ProjetsPanel() {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-bg">
-      <div className="mx-auto w-full max-w-3xl px-8 py-10">
-        <div className="flex items-end justify-between gap-4">
-          <div>
+      <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-8 sm:py-10">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="min-w-0">
             <h1 className="font-display text-xl font-bold text-txt-hi">Mes projets</h1>
             <p className="mt-1 text-xs text-txt-mut">
               Chaque projet garde votre cadrage — ouvrez-le pour trier, retenir, écarter (rejouable, exportable).
             </p>
           </div>
           <button data-projet-nouveau onClick={() => setView('ia')}
-            className="shrink-0 rounded-lg bg-mint px-4 py-2 text-xs font-medium text-[#06130C] hover:brightness-110"
+            className="shrink-0 rounded-lg bg-mint px-4 py-2 text-xs font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110"
             title="Décrire un nouveau projet au copilote">+ Décrire un projet</button>
         </div>
 
         {archives.length > 0 && (
           <div className="mt-6 flex gap-1.5 text-[11px]">
             <button onClick={() => setShowArchived(false)}
-              className={`rounded-full px-3 py-1 ${!showArchived ? 'bg-surface-3 text-txt-hi' : 'text-txt-mut'}`}>Actifs ({actifs.length})</button>
+              className={`min-h-7 rounded-full px-3 py-1 transition-colors duration-quick ${!showArchived ? 'bg-surface-3 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>Actifs ({actifs.length})</button>
             <button onClick={() => setShowArchived(true)}
-              className={`rounded-full px-3 py-1 ${showArchived ? 'bg-surface-3 text-txt-hi' : 'text-txt-mut'}`}>Archivés ({archives.length})</button>
+              className={`min-h-7 rounded-full px-3 py-1 transition-colors duration-quick ${showArchived ? 'bg-surface-3 text-txt-hi' : 'text-txt-mut hover:text-txt'}`}>Archivés ({archives.length})</button>
           </div>
         )}
 
@@ -197,15 +201,23 @@ export function ProjetsPanel() {
         )}
 
         <div data-projets-liste className="mt-6 space-y-3">
-          {projetsQ.isLoading && <p className="text-xs text-txt-dim">Chargement…</p>}
+          {projetsQ.isLoading && (
+            <>
+              <Skeleton className="h-36 rounded-xl" />
+              <Skeleton className="h-36 rounded-xl" />
+            </>
+          )}
           {!projetsQ.isLoading && visibles.length === 0 && (
-            <div data-projets-vide className="rounded-xl border border-dashed border-line-2 px-6 py-12 text-center">
-              <p className="text-sm text-txt-mut">{showArchived ? 'Aucun projet archivé.' : 'Aucun projet encore.'}</p>
-              {!showArchived && (
-                <button onClick={() => setView('ia')} className="mt-3 text-xs font-medium text-mint hover:underline">
-                  Décrivez votre opération au copilote →
-                </button>
-              )}
+            <div data-projets-vide className="card-elev">
+              <EmptyState
+                title={showArchived ? 'Aucun projet archivé.' : 'Aucun projet encore.'}
+                hint={showArchived ? undefined : 'Un projet garde votre cadrage (programme, périmètre, contraintes, budget) et vos décisions de tri.'}
+                action={!showArchived && (
+                  <button onClick={() => setView('ia')} className="text-xs font-medium text-mint hover:underline">
+                    Décrivez votre opération au copilote →
+                  </button>
+                )}
+              />
             </div>
           )}
           {visibles.map((p) => <ProjetCard key={p.id} p={p} />)}
