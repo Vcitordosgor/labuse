@@ -12,6 +12,9 @@ export default {
         'line-2': '#1E2A23',
         mint: '#5CE6A1',
         'mint-ink': '#06130C',
+        // LOI-0 · violet = l'exclusivité premium/IA/outils (remplace les #B497F0 en dur,
+        // migrés au fil des surfaces — jamais de nouvel hex local).
+        violet: '#B497F0',
         'txt-hi': '#ECF5EF',
         txt: '#C9DCD1',
         'txt-mut': '#8FA69A',
