@@ -5,6 +5,7 @@ import {
   modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modVelocite,
 } from '../../lib/api'
+import { fmtInt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -18,7 +19,7 @@ import { TierBadge } from './TierBadge'
 
 function Banner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-[#4a3d6b] bg-[#1a1526] px-3 py-2 text-[10.5px] leading-relaxed text-[#b8a8de]">
+    <div className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
       {children}
     </div>
   )
@@ -32,7 +33,7 @@ function Row({ idu, right, sub, fiche }: { idu: string; right: React.ReactNode; 
         if (fiche && module) setModuleFiche({ ...moduleFiche, [idu]: { module, lines: fiche } })
         select(idu)
       }}
-      className="flex w-full shrink-0 items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left hover:border-[#6b5a96]"
+      className="flex w-full shrink-0 items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left transition-colors duration-quick hover:border-violet/50"
     >
       <div className="min-w-0 flex-1">
         <div className="font-mono text-xs text-txt-hi">{idu.slice(8, 10)} {idu.slice(10)}</div>
@@ -44,10 +45,10 @@ function Row({ idu, right, sub, fiche }: { idu: string; right: React.ReactNode; 
 }
 
 const V = ({ children }: { children: React.ReactNode }) => (
-  <span className="font-display text-sm font-bold" style={{ color: VIOLET }}>{children}</span>
+  <span className="num-key text-sm text-violet">{children}</span>
 )
 
-const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
+const fmt = fmtInt
 
 /** Pousse résultats sur la carte (surlignage violet + géométries propres) — et nettoie en sortie. */
 function useModuleMap(idus: string[], extra: unknown | null, deps: unknown[]) {
@@ -79,7 +80,7 @@ function M01() {
         pointillés, <b>indicatif</b>. Règles de division (PLU, accès, réseaux) à instruire.</Banner>
       <label className="mt-1 flex items-center gap-2 text-[11px] text-txt-mut">
         Score division ≥ <input type="range" min={0} max={95} step={5} value={minScore}
-          onChange={(e) => setMinScore(Number(e.target.value))} className="flex-1 accent-[#B497F0]" />
+          onChange={(e) => setMinScore(Number(e.target.value))} className="flex-1 accent-violet" />
         <span className="font-mono text-txt">{minScore}</span>
       </label>
       <p className="text-[11px] text-txt-dim">
@@ -117,10 +118,10 @@ function M02() {
     <>
       <input value={q} onChange={(e) => { setQ(e.target.value); setSiren(null) }}
         placeholder="SIREN ou nom (ex. CBO, SCI…)"
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-xs text-txt focus:border-[#B497F0] focus:outline-none" />
+        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-xs text-txt focus:border-violet focus:outline-none" />
       {!siren && (sug.data ?? []).map((s) => (
         <button key={s.siren} onClick={() => setSiren(s.siren)}
-          className="flex items-center justify-between rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt hover:border-[#6b5a96]">
+          className="flex items-center justify-between rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt transition-colors duration-quick hover:border-violet/50">
           <span className="truncate">{s.nom}</span><span className="font-mono text-[11px] text-txt-dim">{s.n} parc.</span>
         </button>
       ))}
@@ -136,7 +137,7 @@ function M02() {
       {d && (
         <>
           {d['bodacc'] != null && (
-            <div className="rounded-lg border border-[#5a2420] bg-[#3a1614] px-3 py-2 text-[11px] text-st-ecartee">
+            <div className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
               ● BODACC — {(d['bodacc'] as Record<string, string>)['type_procedure']}
             </div>
           )}
@@ -183,14 +184,14 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
   }
   const F = ({ label, value }: { label: string; value: React.ReactNode }) =>
     value == null || value === '' ? null : (
-      <div className="flex justify-between gap-3 border-b border-[#141d17] py-1.5 text-[11px]">
+      <div className="flex justify-between gap-3 border-b border-line py-1.5 text-[11px]">
         <span className="text-txt-dim">{label}</span>
         <span className="text-right text-txt">{value}</span>
       </div>
     )
   return (
     <div data-permis-drawer className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={onClose}>
-      <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-[#4a3d6b] bg-surface-1 p-4 sm:rounded-2xl"
+      <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-t-2xl border border-violet/40 bg-surface-1 p-4 shadow-elev-3 sm:rounded-2xl"
         onClick={(e) => e.stopPropagation()}>
         {q.isLoading && <Loading />}
         {d && (
@@ -200,7 +201,7 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
                 <div className="font-display text-sm font-bold text-txt-hi">{d['nature_libelle']}</div>
                 <div className="font-mono text-[11px] text-txt-mut">{d['permit_id']} · {d['commune']}</div>
               </div>
-              <button onClick={onClose} className="rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-mut">✕</button>
+              <button onClick={onClose} aria-label="Fermer" className="flex h-7 w-7 items-center justify-center rounded-full border border-line-2 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">✕</button>
             </div>
             <F label="Statut" value={d['statut']} />
             <F label="Porteur" value={d['porteur'] ?? <span className="text-txt-dim">{d['porteur_note']}</span>} />
@@ -211,18 +212,18 @@ export function PermitDrawer({ permitId, onClose }: { permitId: string; onClose:
             <F label="Date d'autorisation" value={d['date_autorisation']} />
             <F label="Achèvement (DAACT)" value={d['date_achevement']} />
             {d['delai_instruction'] && (
-              <F label="Délai d'instruction" value={<span style={{ color: VIOLET }} className="font-semibold">{d['delai_instruction']['libelle']}</span>} />
+              <F label="Délai d'instruction" value={<span className="font-semibold text-violet">{d['delai_instruction']['libelle']}</span>} />
             )}
             <F label="Parcelle(s)" value={<span className="font-mono text-[10px]">{(d['parcelles'] as string[]).join(', ')}</span>} />
             {/* Fix LOT 2 : localiser la parcelle sur la carte (géocodé) ou message clair (non géocodé) —
                 jamais un clic mort. La géom d'un permis = centroïde de la parcelle rattachée. */}
             {geom?.coordinates ? (
               <button data-permis-localiser onClick={localiser}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#4a3d6b] bg-[#171221] py-2 text-[12px] font-medium text-[#B497F0] hover:bg-[#1d1630]">
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-violet/40 bg-violet/[0.08] py-2 text-[12px] font-medium text-violet transition-colors duration-quick hover:bg-violet/15">
                 ◎ Voir la parcelle sur la carte
               </button>
             ) : (
-              <div data-permis-nongeocode className="mt-3 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] leading-snug text-st-creuser">
+              <div data-permis-nongeocode className="mt-3 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-snug text-st-creuser">
                 <b>Permis non géocodé</b> — son adresse n'a pas pu être rattachée à une parcelle du
                 cadastre, il ne peut pas être localisé sur la carte.
               </div>
@@ -261,31 +262,31 @@ function M03() {
       <div className="flex flex-wrap gap-1.5">
         {[12, 24, 48, 72].map((m) => (
           <button key={m} onClick={() => setMonths(m)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] ${months === m ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
+            className={`rounded-full border px-2.5 py-1 text-[11px] ${months === m ? 'border-violet text-violet' : 'border-line-2 text-txt-mut'}`}>
             {m} mois
           </button>
         ))}
         <span className="mx-1 self-center text-line-2">|</span>
         {NATURES.map(([v, l]) => (
           <button key={v} onClick={() => setNature(v)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
+            className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-violet text-violet' : 'border-line-2 text-txt-mut'}`}>
             {l}
           </button>
         ))}
       </div>
       <p className="text-[11px] text-txt-dim">
         {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(d?.['total'] as never)} permis${(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichés` : ''}`} · {geo.length} sur la carte
-        {zone && <span className="text-[#8b76c0]"> · outil Zone actif</span>}
+        {zone && <span className="text-violet/70"> · outil Zone actif</span>}
       </p>
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {items.slice(0, 150).map((i, k) => (
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} onClick={() => setOpen(i['permit_id'] as string)}
-            className={`flex items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] hover:border-[#6b5a96] ${i['geom'] ? 'bg-surface-3' : 'bg-[#141019]'}`}>
+            className={`flex items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-violet/50 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
             <span className="font-mono text-txt">{i['type'] as string}</span>
             <span className="text-txt-mut">{i['date'] as string}</span>
             {i['delai_mois'] != null && <span style={{ color: VIOLET }}>{String(i['delai_mois'])} m</span>}
             {i['nb_lgt'] != null && <span className="text-txt-dim">{String(i['nb_lgt'])} lgt</span>}
-            {!i['geom'] && <span className="ml-auto text-[11px] text-[#8b76c0]"
+            {!i['geom'] && <span className="ml-auto text-[11px] text-violet/70"
               title="Permis dont l'adresse n'a pas pu être rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
           </button>
         ))}
@@ -345,13 +346,13 @@ function M05() {
     <>
       <Banner><b>{d?.['indicateur'] ?? 'Délai médian d\'instruction dépôt → autorisation'}</b> ({natLabel},
         cohortes {String(d?.['cohortes'] ?? '…')}). {d?.['note']}
-        <div className="mt-1 text-[#8b76c0]">⚠ {d?.['censure']}</div>
+        <div className="mt-1 text-violet/70">▲ {d?.['censure']}</div>
         <div className="mt-1 italic">{d?.['disclaimer']}</div>
       </Banner>
       <div className="flex flex-wrap gap-1.5">
         {NATURES.filter(([v]) => v).map(([v, l]) => (
           <button key={v} onClick={() => setNature(v)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-[#B497F0] text-[#B497F0]' : 'border-line-2 text-txt-mut'}`}>
+            className={`rounded-full border px-2.5 py-1 text-[11px] ${nature === v ? 'border-violet text-violet' : 'border-line-2 text-txt-mut'}`}>
             {l}
           </button>
         ))}
@@ -362,7 +363,7 @@ function M05() {
         <div className="sticky top-0 grid grid-cols-[1fr_64px_60px] gap-1 bg-surface-1 py-1 text-[11px] tracking-wide text-txt-dim">
           <span>COMMUNE (ÎLE)</span>
           {([['delai_median_mois', 'MÉDIANE'], ['n_valide', 'N']] as const).map(([k, l]) => (
-            <button key={k} onClick={() => setSort(k)} className={`text-right ${sort === k ? 'text-[#B497F0]' : ''}`}>{l} ↓</button>
+            <button key={k} onClick={() => setSort(k)} className={`text-right transition-colors duration-quick ${sort === k ? 'text-violet' : ''}`}>{l} ↓</button>
           ))}
         </div>
         {rows.map((c) => {
@@ -373,7 +374,7 @@ function M05() {
           const tIcon = tend === 'accelere' ? '↓' : tend === 'ralentit' ? '↑' : tend === 'stable' ? '→' : ''
           const tColor = tend === 'accelere' ? '#5CE6A1' : tend === 'ralentit' ? '#E8695A' : '#5C7268'
           return (
-            <div key={c['commune'] as string} className="grid grid-cols-[1fr_64px_60px] gap-1 border-b border-[#141d17] py-1.5 text-[11px]"
+            <div key={c['commune'] as string} className="grid grid-cols-[1fr_64px_60px] gap-1 border-b border-line py-1.5 text-[11px]"
               title={`${c['commune']} : rang ${rang ?? '—'}/24 par vélocité · délai médian ${natLabel} = ${c['delai_median_mois']} mois (IQR ${c['delai_p25_mois']}–${c['delai_p75_mois']}), sur ${c['n_mur']} dossiers mûrs. Tendance : ${tend ?? 'indéterminée (cohortes insuffisantes)'}.`}>
               <span className="flex min-w-0 items-center gap-1.5 truncate text-txt">
                 {rang != null && <span className="shrink-0 font-mono text-[9px]" style={{ color: rgColor }}>#{rang}</span>}
@@ -407,15 +408,15 @@ function M06() {
       {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Analyse en cours…" big /></div>}
       {/* Point 33 : contexte SRU (déficit logement social) — commune carencée = forte demande LLS */}
       {(d?.['sru'] as Record<string, any> | undefined) && (
-        <div data-bailleur-sru className={`rounded-lg border px-3 py-2 text-[11px] ${d!['sru']['statut'] === 'carencee' ? 'border-[#C4704B] bg-[#2a1a10]' : 'border-line-2 bg-surface-2'}`}>
+        <div data-bailleur-sru className={`rounded-lg border px-3 py-2 text-[11px] ${d!['sru']['statut'] === 'carencee' ? 'border-st-creuser/50 bg-st-creuser/10' : 'border-line-2 bg-surface-2'}`}>
           <div className="flex items-center gap-2">
-            <span className={`font-medium ${d!['sru']['statut'] === 'carencee' ? 'text-[#E8A368]' : 'text-txt'}`}>
+            <span className={`font-medium ${d!['sru']['statut'] === 'carencee' ? 'text-st-creuser' : 'text-txt'}`}>
               SRU {String(d!['sru']['statut'])}
             </span>
             <span className="text-txt-dim">· LLS {d!['sru']['taux_lls']}% / objectif {d!['sru']['objectif_pct']}%</span>
           </div>
           {d!['sru']['deficit_logements'] != null && (
-            <div className="mt-1 text-txt-mut">Besoin estimé : <b style={{ color: '#E8A368' }}>{fmt(d!['sru']['deficit_logements'] as number)}</b> logements sociaux pour atteindre l'objectif</div>
+            <div className="mt-1 text-txt-mut">Besoin estimé : <b className="tnum text-st-creuser">{fmt(d!['sru']['deficit_logements'] as number)}</b> logements sociaux pour atteindre l'objectif</div>
           )}
         </div>
       )}
@@ -451,7 +452,7 @@ function M07() {
           <Row key={i['idu'] as string} idu={i['idu'] as string}
             sub={`${(i['denomination'] as string) ?? ''} · ${i['verrou']}`}
             right={<V>{i['q_score'] as number}</V>}
-            fiche={[['⚠ Gelé', String(i['verrou'])], ['Levier', String(i['levier'])],
+            fiche={[['▲ Gelé', String(i['verrou'])], ['Levier', String(i['levier'])],
               ['Propriétaire', `${i['denomination']} (${i['siren']})`]]} />
         ))}
       </div>
@@ -502,8 +503,8 @@ function M09() {
   const Stepper = () => (
     <div className="flex items-center gap-1 text-[10px]">
       {['Parcelle', 'Motif', 'Rédaction', 'Demande'].map((l, i) => (
-        <div key={l} className={`flex items-center gap-1 ${step === i + 1 ? 'text-[#B497F0]' : step > i + 1 ? 'text-mint' : 'text-txt-dim'}`}>
-          <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[9px] ${step === i + 1 ? 'border-[#B497F0]' : step > i + 1 ? 'border-mint' : 'border-line-2'}`}>{step > i + 1 ? '✓' : i + 1}</span>
+        <div key={l} className={`flex items-center gap-1 ${step === i + 1 ? 'text-violet' : step > i + 1 ? 'text-mint' : 'text-txt-dim'}`}>
+          <span className={`flex h-4 w-4 items-center justify-center rounded-full border text-[9px] ${step === i + 1 ? 'border-violet' : step > i + 1 ? 'border-mint' : 'border-line-2'}`}>{step > i + 1 ? '✓' : i + 1}</span>
           {l}{i < 3 && <span className="text-txt-dim">›</span>}
         </div>
       ))}
@@ -512,7 +513,7 @@ function M09() {
   if (done) return (
     <>
       <Banner>Demande enregistrée.</Banner>
-      <div data-courrier-done className="rounded-xl border border-mint/40 bg-[#0F1A14] p-4 text-center">
+      <div data-courrier-done className="rounded-xl border border-mint/40 bg-mint/[0.06] p-4 text-center">
         <p className="font-display text-sm font-bold text-mint">✓ {done}</p>
         <button onClick={() => { setDone(null); setStep(1); setIdu(''); setTexte('') }}
           className="mt-3 text-[11px] text-txt-mut hover:text-txt">Nouvelle demande</button>
@@ -531,12 +532,12 @@ function M09() {
           <p className="text-[11px] text-txt-mut">Parcelle concernée (IDU) — ou sélectionnez-en une sur la carte.</p>
           <input data-courrier-idu value={idu} onChange={(e) => setIdu(e.target.value.trim())}
             placeholder="97415000CW0658"
-            className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-[#B497F0] focus:outline-none" />
+            className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-violet focus:outline-none" />
           {selectedIdu && selectedIdu !== idu && (
-            <button onClick={() => setIdu(selectedIdu)} className="self-start text-[10.5px] text-[#B497F0] hover:underline">utiliser la parcelle sélectionnée ({selectedIdu.slice(8)})</button>
+            <button onClick={() => setIdu(selectedIdu)} className="self-start text-[10.5px] text-violet hover:underline">utiliser la parcelle sélectionnée ({selectedIdu.slice(8)})</button>
           )}
           <button data-courrier-next onClick={() => idu.trim().length >= 10 && setStep(2)} disabled={idu.trim().length < 10}
-            className="rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>Suivant ›</button>
+            className="rounded-lg bg-violet py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Suivant ›</button>
         </div>
       )}
 
@@ -545,7 +546,7 @@ function M09() {
           <p className="text-[11px] text-txt-mut">Motif de l'approche :</p>
           {MOTIFS.map((m) => (
             <button key={m.key} data-courrier-motif={m.key} onClick={() => setMotif(m.key)}
-              className={`rounded-lg border px-3 py-2 text-left ${motif === m.key ? 'border-[#B497F0] bg-[#171221]' : 'border-line-2 bg-surface-3'}`}>
+              className={`rounded-lg border px-3 py-2 text-left ${motif === m.key ? 'border-violet bg-violet/[0.08]' : 'border-line-2 bg-surface-3'}`}>
               <div className="text-[11px] font-medium text-txt">{m.label}</div>
               <div className="text-[10.5px] text-txt-dim">{m.desc}</div>
             </button>
@@ -553,7 +554,7 @@ function M09() {
           <div className="flex gap-2">
             <button onClick={() => setStep(1)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
             <button data-courrier-next onClick={() => gen.mutate()} disabled={gen.isPending}
-              className="flex-1 rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>
+              className="flex-1 rounded-lg bg-violet py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
               {gen.isPending ? 'Rédaction…' : 'Rédiger le brouillon ›'}</button>
           </div>
         </div>
@@ -563,11 +564,11 @@ function M09() {
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <p className="text-[11px] text-txt-mut">Brouillon (faits réels de la parcelle) — <b>éditable</b> :</p>
           <textarea data-courrier-texte value={texte} onChange={(e) => setTexte(e.target.value)}
-            className="min-h-[180px] flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] leading-snug text-txt focus:border-[#B497F0] focus:outline-none" />
+            className="min-h-[180px] flex-1 rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] leading-snug text-txt focus:border-violet focus:outline-none" />
           <div className="flex gap-2">
             <button onClick={() => setStep(2)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Retour</button>
             <button data-courrier-next onClick={() => setStep(4)} disabled={texte.trim().length < 10}
-              className="flex-1 rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>Prévisualiser ›</button>
+              className="flex-1 rounded-lg bg-violet py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Prévisualiser ›</button>
           </div>
         </div>
       )}
@@ -575,11 +576,11 @@ function M09() {
       {step === 4 && (
         <div className="flex min-h-0 flex-1 flex-col gap-2">
           <p className="text-[11px] text-txt-mut">Aperçu — {MOTIFS.find((m) => m.key === motif)?.label} · {idu}</p>
-          <div data-courrier-apercu className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap rounded-lg border border-line-2 bg-[#0d1310] p-3 text-[11px] leading-snug text-txt">{texte}</div>
+          <div data-courrier-apercu className="min-h-0 flex-1 overflow-y-auto whitespace-pre-wrap rounded-lg border border-line-2 bg-surface-1 p-3 text-[11px] leading-snug text-txt">{texte}</div>
           <div className="flex gap-2">
             <button onClick={() => setStep(3)} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut">‹ Modifier</button>
             <button data-courrier-envoyer onClick={() => envoi.mutate()} disabled={envoi.isPending}
-              className="flex-1 rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>
+              className="flex-1 rounded-lg bg-violet py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
               {envoi.isPending ? 'Envoi…' : 'Demander l\'envoi'}</button>
           </div>
         </div>
@@ -600,9 +601,9 @@ function M10() {
         rapport par parcelle, PDF individuel réutilisant l'export fiche.</Banner>
       <textarea value={refs} onChange={(e) => setRefs(e.target.value)} rows={4}
         placeholder={'97415000AC0253\nAC0254\nBK 63…'}
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:border-[#B497F0] focus:outline-none" />
+        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:border-violet focus:outline-none" />
       <button onClick={() => refs.trim() && run.mutate()} disabled={!refs.trim() || run.isPending}
-        className="rounded-lg py-1.5 text-xs font-medium text-[#120d1d] disabled:opacity-40" style={{ background: VIOLET }}>
+        className="rounded-lg bg-violet py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
         {run.isPending ? 'Analyse…' : 'Analyser le lot'}
       </button>
       {run.data && (
@@ -642,10 +643,10 @@ function M10() {
                   </div>
                 )}
                 {checklist.length === 0 && <p className="mt-1.5 text-[10.5px] text-mint">✓ aucun point de vigilance cascade</p>}
-                <a href={i['pdf'] as string} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[10.5px] text-[#8b76c0] hover:text-[#B497F0] hover:underline">⬇ PDF</a>
+                <a href={i['pdf'] as string} target="_blank" rel="noreferrer" className="mt-1 inline-block text-[10.5px] text-violet/70 transition-colors duration-quick hover:text-violet hover:underline">⬇ PDF</a>
               </div>
               )})() : (
-              <div key={k} className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2 text-[11px] text-st-ecartee">
+              <div key={k} className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
                 {i['ref'] as string} — {i['erreur'] as string}
               </div>
             ))}
@@ -686,7 +687,7 @@ export function ModulePanel() {
   const Body = COMPONENTS[def.key]
   return (
     <aside className="flex h-full w-[320px] shrink-0 flex-col border-r border-line bg-surface-1">
-      <div className="flex shrink-0 flex-col border-b border-[#2a2138] bg-[#171221] px-4 py-3">
+      <div className="flex shrink-0 flex-col border-b border-violet/20 bg-violet/[0.07] px-4 py-3">
         {/* M6.1 item 3 : retour direct au menu Outils (fil d'Ariane) — plus besoin de
             repasser par le rail pour changer d'outil. */}
         <div className="flex items-center justify-between gap-2">
@@ -694,14 +695,15 @@ export function ModulePanel() {
             {/* Fix cosmétique (point 27) : flèche retour PLUS VISIBLE — pastille bordée mauve, plus
                 grosse, zone de clic élargie + libellé « ← Outils » clair (avant : 10 px inline, on la cherchait). */}
             <button data-module-retour onClick={toggleOutils}
-              className="shrink-0 flex items-center gap-1 rounded-md border border-[#4a3d6b] bg-[#1d1630] px-2.5 py-1 text-[11px] font-semibold tracking-wide hover:border-[#B497F0] hover:bg-[#241c33]"
-              style={{ color: VIOLET }} title="Revenir au menu Outils">
+              className="flex shrink-0 items-center gap-1 rounded-md border border-violet/40 bg-violet/10 px-2.5 py-1 text-[11px] font-semibold tracking-wide text-violet transition-colors duration-quick hover:border-violet hover:bg-violet/15"
+              title="Revenir au menu Outils">
               ← Outils
             </button>
             <span className="text-txt-dim">›</span>
             <span className="truncate text-txt-mut">{def.label.toUpperCase()}</span>
           </nav>
-          <button onClick={() => setModule(null)} className="shrink-0 text-txt-mut hover:text-txt-hi"
+          <button onClick={() => setModule(null)} aria-label="Fermer le module"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-txt-mut transition-colors duration-quick hover:bg-violet/10 hover:text-txt-hi"
             title="Fermer le module (Échap)">✕</button>
         </div>
         <div className="mt-1">
