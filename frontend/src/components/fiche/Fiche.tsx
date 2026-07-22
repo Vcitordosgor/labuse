@@ -1138,8 +1138,8 @@ export function Fiche({ idu }: { idu: string }) {
           </>
         )}
         {!fq && f && tab === 'proprio' && f.proprietaire_moral && (
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-            <p className="font-mono text-[10px] tracking-widest text-txt-dim">PROPRIÉTAIRE (DGFiP)</p>
+          <div className="card-elev px-3 py-2.5">
+            <p className="label-caps">Propriétaire (DGFiP)</p>
             <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
             <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
               {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
@@ -1149,7 +1149,7 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         )}
         {!fq && f && tab === 'proprio' && !f.proprietaire_moral && (
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+          <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
             Propriétaire : personne physique ou non recensé au fichier des personnes morales
             (identité nominative : workflow SPF/CERFA, jamais automatisée).
           </div>
