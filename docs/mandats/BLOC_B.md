@@ -4,7 +4,28 @@
 Partie 2 sur verdict → STOP final · Vic merge.** DA verrouillée (tokens de la revue),
 wording boussole partout.
 
-## ⟪ CURSEUR ⟫ **STOP MI-COURSE** — Partie 1 livrée (B1-B4) + les 6 maquettes. À Vic.
+## ⟪ CURSEUR ⟫ **STOP FINAL — le sprint tech est EN LIGNE.** À Vic pour review + merge.
+
+## Partie 2 (verdict Vic : 6 maquettes validées, traducteur en variante B)
+
+- **Outils implémentés** (un commit par outil, DA tokens, wording boussole) :
+  S45 traducteur = bloc dépliable violet de l'onglet Règles ; S46 servitudes (Analyser) ;
+  S47 comparateur (Analyser, phare — pondérations réglables, tableau triable) ;
+  S48 carnet de secteur (Passer à l'action — liste ↔ page secteur en instruments) ;
+  S49 rareté (Détecter — jauges ZAN) ; S50 bascules datées (Détecter — flux cloche filtrable,
+  lecture seule). NB : le code O10 est entré avec le commit S49 (même fichier), S50 = harnais.
+- **Démo** : `docs/DEMO.md` (10 min minutées, phrases-clés boussole, garde-fous) +
+  `deploy/scripts/demo_setup.sh` — projet « Démo — 40 logements · Saint-Paul » #24 créé
+  EN LOCAL ET EN PROD (3 retenues → CRM, 1 à analyser, 1 écartée récupérable).
+- **Déploiement prod (voie M7)** : backup vérifié absent (motif pgrep auto-exclu), rsync +
+  pip -e + dist rebuild VPS (--base=/, marqueur M2 `index-DNGJ8rdy.js`), Caddyfile identique
+  (B1.1 déjà en ligne), restart propre (~10 s), cron radar installé (`/etc/cron.d/labuse-radar`),
+  première passe radar prod OK. **Smoke VERT · golden 116/116 CONTRE LA PROD.**
+  Liste île mesurée de l'extérieur : **2,5 s → 0,60 s** (le reste est le réseau ; calcul ~36 ms).
+- **Mini-atlas** : `~/labuse-atlas/2026-07-22-18-02__blocb2/index_avant_apres.html` —
+  les 6 paires avant (JSON du constat Bloc A) / après (UI), lié depuis le grand index de la revue.
+
+_(section mi-course conservée ci-dessous pour l'historique)_
 
 **Les 6 maquettes** (`docs/mockups/outil_*.html` — autonomes, tokens DA, données réelles du
 22/07, desktop + mobile, chrome de maquette à retirer au branchement) :
