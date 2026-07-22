@@ -1,0 +1,124 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Maquette — Invitation · création de mot de passe</title><style>
+:root{
+  --bg:#050706; --s1:#0B100D; --s2:#0D120F; --s3:#111814; --line:#1B2620; --line2:#1E2A23;
+  --mint:#5CE6A1; --mint-ink:#06130C; --violet:#B497F0; --or:#C9A961;
+  --hi:#ECF5EF; --txt:#C9DCD1; --mut:#8FA69A; --dim:#5C7268;
+  --err:#E8695A; --warn:#E8B44C;
+  --r:10px; --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:radial-gradient(120% 120% at 50% -10%, #0A100C 0%, var(--bg) 60%);
+  color:var(--txt);font:15px/1.6 -apple-system,'Inter',system-ui,sans-serif;
+  display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.bloc{width:100%;max-width:var(--w,400px)}
+.oiseau{display:block;margin:0 auto 14px;height:28px;width:auto;filter:drop-shadow(0 0 14px rgba(201,169,97,.25))}
+h1{font:600 15px/1.3 'Space Grotesk',inherit;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--hi);text-align:center;margin:0 0 4px}
+.sub{text-align:center;font-size:11.5px;color:var(--dim);letter-spacing:.1em;margin:0 0 28px}
+label{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin:18px 0 7px}
+.field{position:relative}
+input[type=email],input[type=password],input[type=text]{
+  width:100%;background:var(--s2);border:1px solid var(--line2);border-radius:var(--r);
+  color:var(--hi);font:15px inherit;padding:11px 12px;outline:none;transition:border-color .15s var(--ease),box-shadow .15s var(--ease)}
+input::placeholder{color:var(--dim)}
+input:focus-visible{border-color:var(--mint);box-shadow:0 0 0 3px rgba(92,230,161,.16)}
+button,.btn{display:flex;width:100%;align-items:center;justify-content:center;gap:8px;
+  margin-top:26px;background:var(--mint);color:var(--mint-ink);border:0;border-radius:var(--r);
+  font:600 14px inherit;padding:12px;cursor:pointer;transition:filter .15s var(--ease)}
+button:hover,.btn:hover{filter:brightness(1.08)}
+button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.ghost{background:none;border:1px solid var(--line2);color:var(--txt)}
+.linkrow{margin-top:18px;text-align:center;font-size:12.5px}
+a{color:var(--mint);text-decoration:none} a:hover{text-decoration:underline}
+a:focus-visible{outline:2px solid var(--mint);outline-offset:2px;border-radius:3px}
+.note{font-size:11px;color:var(--dim);text-align:center;margin-top:22px;line-height:1.6}
+.err{color:var(--err);font-size:12.5px;margin-top:10px;min-height:18px;display:flex;gap:6px;align-items:flex-start}
+.spin{width:15px;height:15px;border:2px solid rgba(6,19,12,.35);border-top-color:var(--mint-ink);
+  border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* barre de robustesse */
+.meter{display:flex;gap:4px;margin-top:9px}
+.meter i{height:4px;flex:1;border-radius:2px;background:var(--line2);transition:background .2s}
+.meter.faible i:nth-child(1){background:var(--err)}
+.meter.moyen i:nth-child(-n+2){background:var(--warn)}
+.meter.fort i{background:var(--mint)}
+.meterlbl{font-size:11px;color:var(--mut);margin-top:6px}
+/* case CGV */
+.consent{display:flex;gap:11px;align-items:flex-start;margin-top:22px;
+  background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:13px}
+.consent input{margin-top:2px;width:17px;height:17px;accent-color:var(--mint);flex-shrink:0}
+.consent label{all:unset;font-size:12.5px;color:var(--txt);line-height:1.5;cursor:pointer}
+/* rappel achat / confiance */
+.recap{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-bottom:6px}
+.recap .prix{font:700 26px 'Space Grotesk',inherit;color:var(--hi);font-variant-numeric:tabular-nums}
+.recap .quoi{font-size:12.5px;color:var(--mut);margin-top:2px}
+.trust{display:flex;flex-direction:column;gap:9px;margin:18px 0 4px}
+.trust div{display:flex;gap:9px;align-items:center;font-size:12px;color:var(--mut)}
+.trust svg{flex-shrink:0}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(92,230,161,.4);
+  border-radius:999px;padding:4px 12px;font-size:12px;color:var(--mint)}
+.big{text-align:center;margin:6px 0}
+.big .mark{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px;font-size:24px}
+.mark.ok{background:rgba(92,230,161,.12);color:var(--mint);border:1px solid rgba(92,230,161,.4)}
+.mark.soft{background:rgba(232,180,76,.1);color:var(--warn);border:1px solid rgba(232,180,76,.35)}
+/* bandeau paiement requis (contexte app) */
+.appframe{max-width:900px;--w:900px}
+.topbar{display:flex;align-items:center;gap:12px;background:var(--s1);border-bottom:1px solid var(--line);
+  padding:10px 16px;border-radius:var(--r) var(--r) 0 0}
+.banner{display:flex;align-items:center;gap:10px;background:rgba(232,180,76,.1);
+  border-bottom:1px solid rgba(232,180,76,.35);color:var(--warn);padding:10px 16px;font-size:12.5px}
+.banner a{color:var(--warn);font-weight:600}
+.canvas{height:180px;background:repeating-linear-gradient(135deg,var(--s1),var(--s1) 10px,var(--s2) 10px,var(--s2) 20px);
+  border-radius:0 0 var(--r) var(--r);opacity:.5}
+/* légal */
+.legal{--w:720px}
+.legal h2{color:var(--hi);font-size:14px;margin:24px 0 6px}
+.legal p{font-size:13px;color:var(--txt)}
+.card{background:var(--s2);border:1px solid var(--line);border-radius:var(--r);padding:22px}
+/* chrome de maquette (à retirer au branchement) */
+.mk{position:fixed;right:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;max-width:260px;
+  background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:7px;z-index:99}
+.mk b{width:100%;font:10px ui-monospace,monospace;color:var(--dim);letter-spacing:.1em}
+.mk button{all:unset;font:11px ui-monospace,monospace;color:var(--mut);background:var(--s3);
+  border:1px solid var(--line2);border-radius:5px;padding:3px 8px;cursor:pointer;margin:0}
+.mk button[aria-pressed=true]{color:var(--mint);border-color:var(--mint)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:480px){body{padding:16px;align-items:flex-start}.recap .prix{font-size:22px}}
+</style></head>
+<body class="" >
+<main class="bloc" role="main">
+<svg class="oiseau" viewBox="0 0 240 82" fill="var(--or)" aria-hidden="true"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg>
+<h1>Créer votre accès</h1><p class="sub">Licence Intégral · 349 €/mois · 1 accès</p>
+<form novalidate onsubmit="return false">
+  <label for="iemail">Identifiant</label>
+  <div class="field"><input id="iemail" type="email" value="notaire@etude-paul.re" disabled
+     aria-label="Votre email (fixé par l'invitation)"></div>
+  <label for="ipw">Choisissez un mot de passe</label>
+  <div class="field"><input id="ipw" type="password" autocomplete="new-password" autofocus
+     aria-describedby="rules meter" oninput="strength(this.value)"></div>
+  <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
+  <div class="consent"><input id="cgv" type="checkbox" aria-required="true">
+    <label for="cgv">J'ai lu et j'accepte les <a href="cgv.html" target="_blank">conditions générales</a> —
+      les analyses LABUSE sont une pré-analyse sur données publiques, jamais un conseil.</label></div>
+  <button type="submit"><span data-showon="chargement" class="spin" hidden></span>
+    <span data-hideon="chargement">Continuer vers le paiement →</span></button>
+</form>
+<p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>
+<style>body[data-state=chargement] .spin{display:inline-block!important} body[data-state=chargement] [data-hideon=chargement]{display:none}</style>
+<script>
+function strength(v){const m=document.getElementById('meter');const l=document.getElementById('rules');
+ let s=0; if(v.length>=10)s++; if(/[0-9]/.test(v)&&/[a-z]/i.test(v))s++; if(/[^a-z0-9]/i.test(v)&&v.length>=12)s++;
+ m.className='meter '+(s>=3?'fort':s==2?'moyen':s==1?'faible':'');
+ l.textContent = !v ? '10 caractères minimum — mélangez lettres, chiffres et symboles.'
+   : s>=3?'Robuste — parfait.' : s==2?'Correct — un symbole le rendrait robuste.' : 'Trop simple — allongez-le.';}
+// états maquette : robustesse préremplie
+document.addEventListener('DOMContentLoaded',()=>{const st=document.body.dataset.state;
+ if(st==='fort'){document.getElementById('ipw').value='Ceramique!974x';strength('Ceramique!974x');}
+ if(st==='faible'){document.getElementById('ipw').value='abc';strength('abc');}});
+</script>
+</main><div class="mk" role="group" aria-label="états de maquette (chrome à retirer)"><b>état · maquette</b><button data-state="defaut" onclick="setState('defaut')" aria-pressed="true">defaut</button><button data-state="faible" onclick="setState('faible')" aria-pressed="false">faible</button><button data-state="fort" onclick="setState('fort')" aria-pressed="false">fort</button><button data-state="chargement" onclick="setState('chargement')" aria-pressed="false">chargement</button></div><script>function setState(s){document.body.dataset.state=s;document.querySelectorAll(".mk button").forEach(b=>b.setAttribute("aria-pressed", b.dataset.state===s));}document.body.dataset.state="defaut";</script></body></html>
