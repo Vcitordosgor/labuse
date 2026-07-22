@@ -13,10 +13,18 @@ wording boussole partout.
 | # | Fix | Avant (mesuré Bloc A) | Après (mesuré) | Statut |
 |---|---|---|---|---|
 | 1 | Cache-Control assets hashés | aucun `Cache-Control` sur /assets/* (etag seul) | `public, max-age=31536000, immutable` sur /assets/*, `no-cache` sur le shell — **vérifié en prod** (déployé immédiatement : config seule, réversible, .bak conservé) | ✅ |
-| 2 | Liste île top-N (index rang) | 2,5 s | — | à faire |
+| 2 | Liste île top-N (index rang) | 2,5 s prod · **1,10 s local** (mesure de travail) | **0,036 s local** (×30) — page servie par `ix_p_v2_run_rang` (top-N sans scan) + cluster même-proprio matérialisé (le planner le ré-exécutait par ligne) | ✅ |
 | 3 | Tuiles 1er écran (LCP mobile) | 2,9 Mo · LCP 4,0 s | — | à faire |
 | 4 | O6 / O7 cache TTL | 1,9 s / 1,1 s | — | à faire |
 | 5 | PDF banquier async + cache | 9,3 s bloquants | — | à faire |
+
+**Garde-fou B1.2** : 8 jeux de filtres capturés sur l'ANCIEN code puis rejoués — 7 byte-identiques
+(île défaut, offset 500×1000, tiers, commune+surface, hors_copro+sdp, tiers=ecartee, sort=mult) ;
+le 8ᵉ (page chevauchant la frontière rang→NULL) : l'ancien code était LUI-MÊME non-déterministe
+sur les égalités de queue (prouvé par double exécution) — vérifié : même ensemble d'IDU, préfixe
+rangé identique, contenu par-ligne identique ; le nouveau chemin ajoute un tiebreaker `idu` qui
+rend l'ordre TOTAL (amélioration). Golden 116/116 · suite 1088/0. Chemin rapide UNIQUEMENT si un
+run v2 existe (sinon repli legacy inchangé) ; tris mult/surface/commune/v inchangés.
 
 ## B2 · Le coup de propre
 
