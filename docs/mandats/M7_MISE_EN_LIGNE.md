@@ -119,3 +119,36 @@ réel au prochain run).
    (ExecStartPost curl) — le boot ~25 s expose une fenêtre 502 au restart.
 6. Revue O12 (20 cartes) → décision d'exposition. 7. Clé ANTHROPIC (IA en repli déterministe pour l'instant).
 8. Basic auth : tombera avec l'auth comptes (post-M7) — le mdp du rideau est chez Vic (M7_SECRETS).
+
+---
+
+## POST-REVIEW VIC — incident « vieille UI » : diagnostic, fix, leçon outillée
+
+**Constat Vic (navigateur)** : la racine servait l'UI Vue HISTORIQUE (« Radar foncier », shortlist
+mono-commune 51 129, spinner infini) — pas le front M2.
+
+**Diagnostic (la cause exacte)** : dans le backend, `/` fait `RedirectResponse("/app/")` et le POST
+`/login` renvoie **303 → `/app/`** ; `/app` = `StaticFiles(WEB_DIR)` = le prototype Vue « de transition ».
+Le front M2 était bien servi… sous **`/socle/`** (base vite `/socle/`), que mon smoke validait en 200.
+L'incident est né là : **« une page répond » ≠ « la bonne app répond »**.
+
+**Fix (Caddy = source de vérité du front en prod, zéro code produit touché)** :
+- dist **rebuildé `--base=/`** sur le VPS (`VITE_RUN_LABEL=q_v7_defisc`) et servi **statiquement à la
+  racine** par Caddy (shell + assets) ; API/tuiles/login/PDF en proxy.
+- **`/app` et `/app/*` ne sont JAMAIS exposés** (301 → `/`) — choix : la vieille UI reste montée dans le
+  backend pour le dev local (aucun refactor du monolithe la veille), la prod ne la voit pas ; le 301
+  neutralise aussi le 303 post-login du backend.
+- Navigation `/` **sans cookie de session → 302 `/login`** (matcher Caddy sur l'absence du cookie) : le
+  front React n'a pas d'écran de login — flux rideau → login → app, temporaire jusqu'à l'auth comptes.
+- Vérifié bout en bout : `/` sans session → login ; login → cookie → `/` sert le shell React ; bundle
+  `/assets/index-BuYFaYH5.js` contient les **marqueurs M2** (« Scorer une adresse », « Pourquoi pas ? »,
+  « Afficher l'analyse LABUSE »). ⚠ le `<title>` est identique entre vieille et nouvelle UI — le titre ne
+  discrimine PAS, d'où le marqueur bundle.
+
+**Leçon OUTILLÉE** : **`qa/smoke_prod.sh`** (versionné) — exige le rideau fermé (401 nu), le flux
+login, et **le MARQUEUR M2 dans le bundle servi à la racine** ; un 200 ne suffit plus jamais. Run : VERT.
+
+**Re-vérification complète post-fix** : **GOLDEN 116/116 PASS** (exit 0) · smoke endpoints 8/8 (dont PDF
+banquier, tuile MVT, assets) · marqueur M2 ✓. **Hygiène** : le mot de passe du rideau a transité dans un
+log de session (redirect_url de curl) → **roté immédiatement** (nouveau mdp actif, uniquement dans
+`~/labuse-backups/M7_SECRETS.txt` ; l'ancien est refusé).

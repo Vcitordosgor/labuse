@@ -27,11 +27,11 @@ ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "
   ./venv/bin/python -c \"import labuse; print(\\\"labuse importable ✓\\\")\"
 "'
 
-echo "── 3. Front (dist se CONSTRUIT sur le VPS, ne se copie pas) ──"
+echo "── 3. Front (dist se CONSTRUIT sur le VPS, ne se copie pas ; --base=/ : Caddy le sert à la RACINE) ──"
 ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "
   cd /opt/labuse/app/frontend
   npm ci --silent
-  VITE_RUN_LABEL=\${VITE_RUN_LABEL:-q_v7_defisc} npx vite build 2>&1 | tail -1
+  VITE_RUN_LABEL=\${VITE_RUN_LABEL:-q_v7_defisc} npx vite build --base=/ 2>&1 | tail -1
 "'
 
 echo "── 4. systemd (unit versionnée) ──"
