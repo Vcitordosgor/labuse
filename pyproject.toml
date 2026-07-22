@@ -12,6 +12,7 @@ license = { text = "Proprietary" }
 
 # Les dépendances exactes sont épinglées dans requirements.txt (installées en venv).
 dependencies = [
+    "opencv-python-headless>=4.10",   # détection ortho (module Ortho) — dépendance implicite déclarée (M7 J+2)
   "SQLAlchemy>=2.0",
   "GeoAlchemy2>=0.14",
   "psycopg[binary]>=3.1",
