@@ -88,6 +88,13 @@ async def _lifespan(app: FastAPI):
         for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens,
                      _segments_ens, _protection_ens, _courrier_ens):
             _ens(_engine())
+        # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les
+        # tables à données client). Après les ensures des modules (les tables existent).
+        from ..comptes import ensure_tables as _comptes_ens
+        from .tenant import ensure_scoping as _scoping_ens
+        with session_scope() as _s:
+            _comptes_ens(_s)
+            _scoping_ens(_s)
         app.state.schema_heal = "ok"
     except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
         app.state.schema_heal = f"échec : {type(exc).__name__}: {exc}"
@@ -162,9 +169,14 @@ async def _auth_guard(request, call_next):
     from . import auth
 
     path = request.url.path
+    # AUDIT PAIEMENT · SEC-IDOR — résout le compte de la session et le pose sur request.state
+    # (scope Starlette partagé jusqu'à l'endpoint) : la cloison multi-tenant s'applique partout.
+    cookie = request.cookies.get(auth.COOKIE)
+    info = auth.session_info(cookie)
+    request.state.compte_id = info["compte_id"] if info else None
     if not auth.enabled() or auth.is_public(path):
         return await call_next(request)
-    if auth.token_ok(request.cookies.get(auth.COOKIE)):
+    if info is not None or auth.token_ok(cookie):
         return await call_next(request)
     if not auth.configured():
         return JSONResponse(status_code=503, content={
@@ -3012,34 +3024,43 @@ def pipeline_meta() -> dict:
 
 
 @app.get("/pipeline")
-def pipeline_list(db: Session = Depends(get_db)) -> list[dict]:
-    entries = db.execute(
-        select(models.PipelineEntry).order_by(models.PipelineEntry.created_at.desc())
-    ).scalars().all()
+def pipeline_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
+    from .tenant import current_compte
+    cid = current_compte(request)
+    q = select(models.PipelineEntry).order_by(models.PipelineEntry.created_at.desc())
+    q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
+                else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    entries = db.execute(q).scalars().all()
     return [_entry_dict(db, e) for e in entries]
 
 
 @app.get("/pipeline/parcel/{idu}")
-def pipeline_for_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
+def pipeline_for_parcel(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     _check_idu(idu)
+    cid = current_compte(request)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
-    e = db.execute(
-        select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
-    ).scalar_one_or_none()
+    q = select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
+    q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
+                else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    e = db.execute(q).scalar_one_or_none()
     return {"in_pipeline": bool(e), "entry": _entry_dict(db, e) if e else None}
 
 
 @app.post("/pipeline")
-def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
+def pipeline_add(body: PipelineAddIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     _check_idu(body.idu)
+    cid = current_compte(request)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == body.idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
-    existing = db.execute(
-        select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
-    ).scalar_one_or_none()
+    _ex = select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
+    _ex = _ex.where(models.PipelineEntry.compte_id.is_(None) if cid is None
+                    else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    existing = db.execute(_ex).scalar_one_or_none()
     if existing:                                            # déjà suivie → on renvoie son état courant
         return {"ok": True, "already": True, "entry": _entry_dict(db, existing)}
 
@@ -3056,10 +3077,12 @@ def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(422, f"Prospection invalide : {exc}") from None
     projet_id = None
     if body.projet_id is not None:
-        if not db.get(models.Projet, body.projet_id):
+        # SEC-IDOR : on ne rattache qu'à un projet DU compte (sinon 404)
+        _pr = db.get(models.Projet, body.projet_id)
+        if not _pr or (_pr.compte_id or None) != (cid or None):
             raise HTTPException(404, "Projet inconnu")
         projet_id = body.projet_id
-    e = models.PipelineEntry(parcel_id=p.id, status=status, priority=priority,
+    e = models.PipelineEntry(parcel_id=p.id, status=status, priority=priority, compte_id=cid,
                              notes=(body.notes or ""), prospection=prosp, projet_id=projet_id)
     db.add(e)
     db.flush()
@@ -3067,9 +3090,10 @@ def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
 
 
 @app.patch("/pipeline/{entry_id}")
-def pipeline_patch(entry_id: int, body: PipelinePatchIn, db: Session = Depends(get_db)) -> dict:
+def pipeline_patch(entry_id: int, body: PipelinePatchIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     e = db.get(models.PipelineEntry, entry_id)
-    if not e:
+    if not e or (e.compte_id or None) != (current_compte(request) or None):   # SEC-IDOR
         raise HTTPException(404, "Entrée de pipeline inconnue")
     if body.status is not None:
         if body.status not in _col_keys():
@@ -3100,9 +3124,10 @@ def pipeline_patch(entry_id: int, body: PipelinePatchIn, db: Session = Depends(g
 
 
 @app.delete("/pipeline/{entry_id}")
-def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
+def pipeline_delete(entry_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     e = db.get(models.PipelineEntry, entry_id)
-    if not e:
+    if not e or (e.compte_id or None) != (current_compte(request) or None):   # SEC-IDOR
         raise HTTPException(404, "Entrée de pipeline inconnue")
     db.delete(e)
     db.flush()

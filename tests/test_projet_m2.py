@@ -44,7 +44,7 @@ def test_fusion_conflit_statut_le_plus_avance_gagne(db_session):
     _pp(s, A.id, pa, "retenue"); _pp(s, A.id, pb, "proposee")
     _pp(s, B.id, pa, "ecartee")
 
-    res = projets.projets_fusionner(projets.FusionIn(ids=[A.id, B.id]), s)
+    res = projets.projets_fusionner(projets.FusionIn(ids=[A.id, B.id]), None, s)
 
     assert res["cible"] == A.id and res["sources_archivees"] == [B.id]
     assert res["n_parcelles"] == 2
@@ -64,7 +64,7 @@ def test_fusion_conflit_statut_le_plus_avance_gagne(db_session):
 def test_fusion_cas_facile_quatre_vides(db_session):
     s = db_session
     ps = [_projet(s, "Résidence étudiante Ouest") for _ in range(4)]
-    res = projets.projets_fusionner(projets.FusionIn(ids=[p.id for p in ps]), s)
+    res = projets.projets_fusionner(projets.FusionIn(ids=[p.id for p in ps]), None, s)
     assert res["cible"] == ps[0].id and res["conflits"] == [] and res["n_parcelles"] == 0
     assert all(s.get(models.Projet, p.id).statut == "archive" for p in ps[1:])
 
@@ -74,7 +74,7 @@ def test_fusion_refuse_moins_de_deux(db_session):
     s = db_session
     p = _projet(s, "Solo")
     with pytest.raises(Exception):
-        projets.projets_fusionner(projets.FusionIn(ids=[p.id]), s)
+        projets.projets_fusionner(projets.FusionIn(ids=[p.id]), None, s)
 
 
 @pytest.mark.db
@@ -87,7 +87,7 @@ def test_rejeu_non_perte_retenue_hors_criteres(db_session, monkeypatch):
 
     # le rejeu ne propose QUE pin (pout n'est plus dans les critères du jour)
     monkeypatch.setattr(projets, "_search_items", lambda *a, **k: [{"idu": "97499000ZC0003"}])
-    projets.projet_proposer(P.id, projets.ProposerIn(limit=24), s)
+    projets.projet_proposer(P.id, projets.ProposerIn(limit=24), None, s)
 
     rows = {r.parcel_id: (r.statut, r.hors_criteres) for r in s.execute(text(
         "SELECT parcel_id, statut, hors_criteres FROM projet_parcelles WHERE projet_id=:p"), {"p": P.id})}

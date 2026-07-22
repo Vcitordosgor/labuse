@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from jsonschema import ValidationError, validate
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -23,6 +23,14 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence
 from .ia import FILTER_SCHEMA, SECTEURS
+from .tenant import current_compte
+
+
+def _scope(q, cid: int | None):
+    """AUDIT PAIEMENT · SEC-IDOR — restreint une query ORM Projet au compte de la session
+    (NULL = bucket pilote/démo). Explicite plutôt que magique : la cloison se lit."""
+    return q.filter(models.Projet.compte_id.is_(None) if cid is None
+                    else models.Projet.compte_id == cid)
 from .projet_schema import (CONTRAINTE_FLAG, FICHE_SCHEMA, M22_SURFACE_UNITE_M2,
                             TYPE_LABEL, clean_fiche, derive_sdp_besoin)
 
@@ -338,37 +346,41 @@ def _projet_dict_counts(p: models.Projet, by_projet: dict[int, dict]) -> dict:
 
 
 @router.get("")
-def projets_list(db: Session = Depends(get_db)) -> list[dict]:
+def projets_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
     """Liste des projets AVEC leurs compteurs de tri (fiches Lot 4). Une seule source de vérité :
-    les compteurs viennent de projet_parcelles (l'état réel du tri), jamais d'un recompte de recherche."""
-    rows = db.query(models.Projet).order_by(models.Projet.updated_at.desc()).all()
+    les compteurs viennent de projet_parcelles (l'état réel du tri), jamais d'un recompte de recherche.
+    SEC-IDOR : bornée au compte de la session."""
+    cid = current_compte(request)
+    rows = _scope(db.query(models.Projet), cid).order_by(models.Projet.updated_at.desc()).all()
     by_projet = _counts_by_projet(db)
     return [_projet_dict_counts(p, by_projet) for p in rows]
 
 
-def _find_doublon(db: Session, nom: str, filtres: dict) -> models.Projet | None:
+def _find_doublon(db: Session, nom: str, filtres: dict, cid: int | None) -> models.Projet | None:
     """Dédup DOUCE (Lot 4) : un projet ACTIF aux mêmes critères dérivés (`filtres`) OU au même nom
     (insensible à la casse) est un doublon. On ne supprime rien — on PROPOSE la reprise de l'existant.
-    Compare les filtres en Python (égalité de dict — robuste au JSONB)."""
+    Compare les filtres en Python (égalité de dict — robuste au JSONB). SEC-IDOR : dans le compte."""
     nom_norm = (nom or "").strip().lower()
-    for p in db.query(models.Projet).filter(models.Projet.statut == "actif").all():
+    for p in _scope(db.query(models.Projet).filter(models.Projet.statut == "actif"), cid).all():
         if (p.filtres or {}) == filtres or (p.nom or "").strip().lower() == nom_norm:
             return p
     return None
 
 
 @router.post("")
-def projet_create(body: ProjetIn, db: Session = Depends(get_db)) -> dict:
+def projet_create(body: ProjetIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Crée un projet — DÉDUP DOUCE : si un projet actif identique (mêmes critères ou même nom)
     existe déjà, on le RENVOIE (`existing: true`) au lieu de créer un doublon silencieux. Les
     doublons déjà en base ne sont jamais supprimés automatiquement (l'utilisateur archive)."""
     fiche = _valide_fiche(body.fiche or {})
     nom = (body.nom or "").strip()[:160] or derive_nom(fiche)
     filtres = derive_filtres(fiche, body.filtres_extra)
-    dup = _find_doublon(db, nom, filtres)
+    cid = current_compte(request)
+    dup = _find_doublon(db, nom, filtres, cid)
     if dup is not None:
         return {"ok": True, "existing": True, "projet": _projet_dict(dup)}
-    p = models.Projet(nom=nom, fiche=fiche, filtres=filtres, programme=derive_programme(fiche))
+    p = models.Projet(nom=nom, fiche=fiche, filtres=filtres, programme=derive_programme(fiche),
+                      compte_id=cid)
     db.add(p)
     db.flush()
     return {"ok": True, "existing": False, "projet": _projet_dict(p)}
@@ -383,15 +395,18 @@ class FusionIn(BaseModel):
 
 
 @router.post("/fusionner")
-def projets_fusionner(body: FusionIn, db: Session = Depends(get_db)) -> dict:
+def projets_fusionner(body: FusionIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Fusionne des projets DOUBLONS en un seul (le plus ancien = cible) : UNION des parcelles et
     des statuts. Conflit de statut entre doublons → le statut le plus AVANCÉ gagne (retenue >
     écartée > à analyser > proposée), tout conflit est SIGNALÉ dans le résultat, jamais résolu en
     silence. Les sources sont ARCHIVÉES (statut='archive'), jamais supprimées → réversible."""
+    cid = current_compte(request)
     ids = sorted(set(body.ids))
     if len(ids) < 2:
         raise HTTPException(422, "Fusion : au moins deux projets requis.")
-    projets = [db.get(models.Projet, i) for i in ids]
+    # SEC-IDOR : chaque projet fusionné doit appartenir au compte (sinon 404, jamais fusion croisée).
+    projets = [_scope(db.query(models.Projet).filter(models.Projet.id == i), cid).one_or_none()
+               for i in ids]
     if any(pr is None for pr in projets):
         raise HTTPException(404, "Un des projets à fusionner est inconnu.")
     cible, sources = projets[0], projets[1:]             # id min = cible (le plus ancien)
@@ -411,7 +426,7 @@ def projets_fusionner(body: FusionIn, db: Session = Depends(get_db)) -> dict:
             "VALUES (:pj, :pc, :st, :now, :now) "
             "ON CONFLICT (projet_id, parcel_id) DO UPDATE SET statut = :st, updated_at = :now"),
             {"pj": cible.id, "pc": pc, "st": gagnant, "now": now})
-        _sync_crm_retenue(db, cible.id, pc, gagnant, now)
+        _sync_crm_retenue(db, cible.id, pc, gagnant, now, cid)
     for s in sources:
         s.statut = "archive"                             # réversible : rien n'est supprimé
     db.flush()
@@ -420,18 +435,14 @@ def projets_fusionner(body: FusionIn, db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/{pid}")
-def projet_get(pid: int, db: Session = Depends(get_db)) -> dict:
-    p = db.get(models.Projet, pid)
-    if not p:
-        raise HTTPException(404, "Projet inconnu")
+def projet_get(pid: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    p = _projet_or_404(db, pid, current_compte(request))
     return _projet_dict(p)
 
 
 @router.patch("/{pid}")
-def projet_patch(pid: int, body: ProjetPatchIn, db: Session = Depends(get_db)) -> dict:
-    p = db.get(models.Projet, pid)
-    if not p:
-        raise HTTPException(404, "Projet inconnu")
+def projet_patch(pid: int, body: ProjetPatchIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    p = _projet_or_404(db, pid, current_compte(request))
     if body.nom is not None:
         nom = body.nom.strip()[:160]
         if not nom:
@@ -450,25 +461,21 @@ def projet_patch(pid: int, body: ProjetPatchIn, db: Session = Depends(get_db)) -
 
 
 @router.delete("/{pid}")
-def projet_delete(pid: int, db: Session = Depends(get_db)) -> dict:
+def projet_delete(pid: int, request: Request, db: Session = Depends(get_db)) -> dict:
     """Supprime un projet (les pistes CRM rattachées gardent leur parcelle : projet_id → NULL
     par la FK ON DELETE SET NULL)."""
-    p = db.get(models.Projet, pid)
-    if not p:
-        raise HTTPException(404, "Projet inconnu")
+    p = _projet_or_404(db, pid, current_compte(request))
     db.delete(p)
     db.flush()
     return {"ok": True}
 
 
 @router.post("/{pid}/rejouer")
-def projet_rejouer(pid: int, db: Session = Depends(get_db)) -> dict:
+def projet_rejouer(pid: int, request: Request, db: Session = Depends(get_db)) -> dict:
     """Ouvrir = REJOUER : horodate l'exécution et rend la recette (filtres + programme)
     que le front réapplique sur les données ACTUELLES. Les chiffres peuvent avoir bougé
     depuis le dernier rejeu — c'est le principe (et la matière du futur radar cron)."""
-    p = db.get(models.Projet, pid)
-    if not p:
-        raise HTTPException(404, "Projet inconnu")
+    p = _projet_or_404(db, pid, current_compte(request))
     p.derniere_execution_at = datetime.now(timezone.utc)
     db.flush()
     return {"ok": True, "projet": _projet_dict(p)}
@@ -482,23 +489,26 @@ _STATUTS = {"proposee", "retenue", "ecartee", "a_analyser"}
 _RETENUE_CRM_STATUS = "contact_a_preparer"    # colonne « Contact à préparer » (cf config/pipeline.yaml)
 
 
-def _sync_crm_retenue(db: Session, pid: int, parcel_id: int, statut: str, now: datetime) -> None:
+def _sync_crm_retenue(db: Session, pid: int, parcel_id: int, statut: str, now: datetime,
+                      cid: int | None) -> None:
     """Auto-CRM + cohérence (Phase 2). `retenue` ⇒ crée l'entrée pipeline liée au projet (à
     contacter) ; quitter `retenue` ⇒ retire l'entrée AUTO-liée à CE projet (une entrée manuelle
-    d'un autre projet est préservée : ON CONFLICT DO NOTHING / DELETE ciblé sur projet_id)."""
+    d'un autre projet est préservée : ON CONFLICT DO NOTHING / DELETE ciblé sur projet_id).
+    SEC-IDOR : l'entrée pipeline créée porte le compte du projet."""
     if statut == "retenue":
         db.execute(text(
             "INSERT INTO pipeline_entries (parcel_id, status, priority, notes, prospection, "
-            "projet_id, created_at, updated_at) VALUES (:pc, :st, 'moyenne', '', '{}'::jsonb, "
-            ":pid, :now, :now) ON CONFLICT (parcel_id) DO NOTHING"),
-            {"pc": parcel_id, "st": _RETENUE_CRM_STATUS, "pid": pid, "now": now})
+            "projet_id, compte_id, created_at, updated_at) VALUES (:pc, :st, 'moyenne', '', "
+            "'{}'::jsonb, :pid, :cid, :now, :now) ON CONFLICT (compte_id, parcel_id) DO NOTHING"),
+            {"pc": parcel_id, "st": _RETENUE_CRM_STATUS, "pid": pid, "cid": cid, "now": now})
     else:
         db.execute(text("DELETE FROM pipeline_entries WHERE parcel_id = :pc AND projet_id = :pid"),
                    {"pc": parcel_id, "pid": pid})
 
 
-def _projet_or_404(db: Session, pid: int) -> models.Projet:
-    p = db.get(models.Projet, pid)
+def _projet_or_404(db: Session, pid: int, cid: int | None) -> models.Projet:
+    # SEC-IDOR : un projet d'un AUTRE compte → 404 (jamais un 403 qui confirmerait l'existence).
+    p = _scope(db.query(models.Projet).filter(models.Projet.id == pid), cid).one_or_none()
     if not p:
         raise HTTPException(404, "Projet inconnu")
     return p
@@ -545,11 +555,11 @@ class ProposerIn(BaseModel):
 
 
 @router.post("/{pid}/proposer")
-def projet_proposer(pid: int, body: ProposerIn, db: Session = Depends(get_db)) -> dict:
+def projet_proposer(pid: int, body: ProposerIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Propose au projet les parcelles de la recherche (statut `proposee`, best-first). UPSERT
     NON destructif : une parcelle déjà décidée (retenue/ecartee) n'est JAMAIS re-proposée
     (ON CONFLICT DO NOTHING) — une écartée ne ressuscite pas. Rejoue les critères du jour."""
-    p = _projet_or_404(db, pid)
+    p = _projet_or_404(db, pid, current_compte(request))
     lim = max(1, min(body.limit, 60))
     items = _search_items(db, p.fiche, lim)
     idus = [it["idu"] for it in items]
@@ -578,10 +588,10 @@ def projet_proposer(pid: int, body: ProposerIn, db: Session = Depends(get_db)) -
 
 
 @router.get("/{pid}/parcelles")
-def projet_parcelles(pid: int, db: Session = Depends(get_db)) -> dict:
+def projet_parcelles(pid: int, request: Request, db: Session = Depends(get_db)) -> dict:
     """L'ÉTAT du parcours : les parcelles du projet groupées par statut (proposées best-first),
     avec centroïde pour la carte. Base de la reprise (fermer/rouvrir = relire cet état)."""
-    p = _projet_or_404(db, pid)
+    p = _projet_or_404(db, pid, current_compte(request))
     from .app import _score_v2_run_id
     v2 = _score_v2_run_id(db)
     rows = db.execute(text(
@@ -627,11 +637,11 @@ def projet_parcelles(pid: int, db: Session = Depends(get_db)) -> dict:
 
 
 @router.get("/{pid}/carte/{idu}")
-def projet_carte_decision(pid: int, idu: str, db: Session = Depends(get_db)) -> dict:
+def projet_carte_decision(pid: int, idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
     """Carte de DÉCISION d'une parcelle : adresse, tier, scores + POINTS CLÉS (forces/attentions
     dérivés des facteurs — même logique déterministe que le pack apporteur). Aucune valeur
     inventée : tout vient de `_q_v2_fiche` (run servi). Le front ajoute « voir la fiche complète »."""
-    _projet_or_404(db, pid)
+    _projet_or_404(db, pid, current_compte(request))
     from .app import _q_v2_fiche
     from .partners import _points_cles
     f = _q_v2_fiche(db, idu)
@@ -652,10 +662,10 @@ class StatutIn(BaseModel):
 
 
 @router.patch("/{pid}/parcelle/{idu}")
-def projet_parcelle_statut(pid: int, idu: str, body: StatutIn, db: Session = Depends(get_db)) -> dict:
+def projet_parcelle_statut(pid: int, idu: str, body: StatutIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Fixe le statut d'une parcelle dans le projet (le geste Tinder ET la récupération d'une
     écartée). RÉVERSIBLE : repasser en `proposee`/`retenue` depuis `ecartee` ne perd rien."""
-    _projet_or_404(db, pid)
+    _projet_or_404(db, pid, current_compte(request))
     if body.statut not in _STATUTS:
         raise HTTPException(422, f"Statut invalide : {body.statut}")
     pc = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
@@ -667,7 +677,7 @@ def projet_parcelle_statut(pid: int, idu: str, body: StatutIn, db: Session = Dep
         "VALUES (:pj, :pc, :st, :now, :now) "
         "ON CONFLICT (projet_id, parcel_id) DO UPDATE SET statut = :st, updated_at = :now"),
         {"pj": pid, "pc": pc, "st": body.statut, "now": now})
-    _sync_crm_retenue(db, pid, pc, body.statut, now)   # auto-CRM + cohérence (Phase 2)
+    _sync_crm_retenue(db, pid, pc, body.statut, now, current_compte(request))   # auto-CRM (Phase 2)
     db.flush()
     return {"ok": True, "idu": idu, "statut": body.statut, **_counts(db, pid)}
 
@@ -692,10 +702,10 @@ class ChercherPlusIn(BaseModel):
 
 
 @router.post("/{pid}/chercher-plus")
-def projet_chercher_plus(pid: int, body: ChercherPlusIn, db: Session = Depends(get_db)) -> dict:
+def projet_chercher_plus(pid: int, body: ChercherPlusIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Élargit la recherche (critères assouplis) et ajoute les NOUVELLES parcelles en `proposee`
     (dédupliquées). Zéro re-scoring : même moteur que la proposition, filtres relâchés."""
-    p = _projet_or_404(db, pid)
+    p = _projet_or_404(db, pid, current_compte(request))
     overrides: dict = {}
     if body.ile:
         overrides["communes"] = None
@@ -724,10 +734,10 @@ class AjouterIn(BaseModel):
 
 
 @router.post("/{pid}/ajouter")
-def projet_ajouter(pid: int, body: AjouterIn, db: Session = Depends(get_db)) -> dict:
+def projet_ajouter(pid: int, body: AjouterIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Ajoute UNE parcelle précise (par IDU, ou clic-carte côté front) en `proposee`. Dédupliqué :
     `already=true` si elle est déjà dans le projet (quel que soit son statut)."""
-    _projet_or_404(db, pid)
+    _projet_or_404(db, pid, current_compte(request))
     pc = db.execute(text("SELECT id FROM parcels WHERE idu = :i"), {"i": body.idu}).scalar()
     if not pc:
         raise HTTPException(404, f"Parcelle {body.idu} inconnue")
@@ -739,16 +749,14 @@ def projet_ajouter(pid: int, body: AjouterIn, db: Session = Depends(get_db)) -> 
 
 
 @router.get("/{pid}/export.pdf")
-def projet_export_pdf(pid: int, db: Session = Depends(get_db)):
+def projet_export_pdf(pid: int, request: Request, db: Session = Depends(get_db)):
     """Dossier PROJET en PDF : la fiche de cadrage + les meilleures parcelles avec leur
     « pourquoi » (aperçu recalculé sur les données ACTUELLES). Mécanique fpdf2 existante."""
     from fastapi.responses import Response
 
     from .export_commun import adresses_ban, format_adresse
     from .pdf_projet import render_projet_pdf
-    p = db.get(models.Projet, pid)
-    if not p:
-        raise HTTPException(404, "Projet inconnu")
+    p = _projet_or_404(db, pid, current_compte(request))   # SEC-IDOR : export borné au compte
     apercu = projet_apercu(ApercuIn(fiche=p.fiche or {}, limit=5), db)
     # M6 2a : adresse postale BAN de chaque parcelle du top (1 requête, page 1 du PDF)
     adrs = adresses_ban(db, [it["idu"] for it in apercu.get("top", [])])

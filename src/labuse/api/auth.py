@@ -88,14 +88,22 @@ def make_token() -> str:
 # PREMIER EURO · E1 (durci au test Vic) — la session utilisateur se vérifie EN BASE À
 # CHAQUE REQUÊTE : une suspension (webhook Stripe, CLI) coupe l'accès au rechargement
 # suivant, pas « dans la minute ». Coût : un lookup PK par requête (~0,2 ms) — assumé.
-def _user_token_ok(token: str) -> bool:
+def session_info(token: str | None) -> dict | None:
+    """Session utilisateur valide → {utilisateur_id, compte_id, role, statut_compte} ; None
+    sinon. UN lookup par requête (partagé entre la garde et la résolution du tenant)."""
+    if not token or not token.startswith("u."):
+        return None
     try:
         from ..comptes import session_utilisateur
         from ..db import session_scope
         with session_scope() as db:
-            return session_utilisateur(db, token[2:]) is not None
+            return session_utilisateur(db, token[2:])
     except Exception:  # noqa: BLE001 — table absente (première install) → pas de session
-        return False
+        return None
+
+
+def _user_token_ok(token: str) -> bool:
+    return session_info(token) is not None
 
 
 def token_ok(token: str | None) -> bool:
