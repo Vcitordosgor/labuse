@@ -14,7 +14,8 @@ export function TierBadge({ tier, etage0, statut }: {
   const meta = t ? TIER_V2_META[t] : statut ? STATUT_META[statut as Statut] : null
   if (!meta) return <span className="text-[11px] text-txt-dim">hors run</span>
   return (
-    <span className="text-[11px]" style={{ color: meta.color }}>
+    <span className="inline-flex items-center gap-1 whitespace-nowrap text-[11px]" style={{ color: meta.color }}>
+      <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: meta.color }} />
       {meta.label}
       {t && statut && (
         /* R3 (PJ5) — désambiguïsation quand les deux classements coexistent côte à côte */
