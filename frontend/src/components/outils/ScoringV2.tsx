@@ -6,6 +6,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useApp } from '../../store/useApp'
+import { Loading } from '../Loading'
+import { ErrorState } from '../States'
 
 type Item = {
   parcelle_id: string; mult_base: number; percentile: number | null; rang: number | null
@@ -46,17 +48,17 @@ export function ScoringV2Module() {
       <div className="flex items-center gap-1">
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
-            className={`rounded px-2 py-1 text-[11px] ${tab === t.key
-              ? 'bg-[#0F1A14] text-mint border border-[#2E6B4F]'
-              : 'text-txt-mut hover:text-txt border border-transparent'}`}>
+            className={`min-h-7 rounded px-2 py-1 text-[11px] transition-colors duration-quick ${tab === t.key
+              ? 'border border-mint/40 bg-mint/10 text-mint'
+              : 'border border-transparent text-txt-mut hover:text-txt'}`}>
             {t.label}
           </button>
         ))}
       </div>
 
       {tab === 'reserve' && (
-        <p className="rounded border border-[#3a5a7a55] bg-[#101a24] px-2 py-1.5 text-[10.5px] leading-snug text-[#8fb8dc]">
-          Vitrine <b>capacité</b> (C fort, P faible) — ce n'est <b>pas</b> un pipeline :
+        <p className="rounded-lg bg-surface-3 px-2 py-1.5 text-[10.5px] leading-snug text-txt-mut">
+          Vitrine <b className="text-txt">capacité</b> (C fort, P faible) — ce n'est <b className="text-txt">pas</b> un pipeline :
           ces parcelles ont peu de chances de muter à 12 mois.
         </p>
       )}
@@ -67,17 +69,20 @@ export function ScoringV2Module() {
         </label>
       )}
 
-      {isLoading && <p className="text-[11px] text-txt-dim">chargement…</p>}
-      {!!error && <p className="text-[11px] text-txt-dim">scoring v2 indisponible — lancer `labuse score-v2`.</p>}
+      {isLoading && <Loading label="Chargement du scoring" className="text-[11px]" />}
+      {!!error && (
+        <ErrorState className="py-6" message="Scoring v2 indisponible."
+          hint="Aucun run v2 n'est servi pour l'instant — les listes apparaîtront dès le prochain run de scoring." />
+      )}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {data?.items.map((it) => (
           <button key={it.parcelle_id} onClick={() => select(it.parcelle_id)}
-            className="mb-1 flex w-full items-center gap-2 rounded border border-line-2 bg-surface-2 px-2 py-1.5 text-left hover:border-[#2E6B4F]">
-            <span className="font-mono text-[11px] text-txt-hi">×{it.mult_base.toFixed(1)}</span>
+            className="mb-1 flex min-h-7 w-full items-center gap-2 rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left transition-colors duration-quick hover:border-mint/40">
+            <span className="tnum font-mono text-[11px] text-txt-hi" title="Probabilité de mutation vs moyenne du parc (P v2)">×{it.mult_base.toFixed(1)}</span>
             <span className="flex-1 truncate font-mono text-[10.5px] text-txt">{it.parcelle_id}</span>
-            {it.badges.copro && <span className="text-[9.5px] text-[#B7A8E0]">copro</span>}
-            {it.badges.evenement_date && <span className="text-[9.5px] text-st-chaude">évén.</span>}
+            {it.badges.copro && <span className="text-[9.5px] text-violet">copro</span>}
+            {it.badges.evenement_date && <span className="text-[9.5px] text-st-chaude" title={`Événement BODACC — ${it.badges.evenement_date}`}>évén.</span>}
             {it.rang != null && <span className="font-mono text-[10px] text-txt-dim">#{it.rang}</span>}
           </button>
         ))}
