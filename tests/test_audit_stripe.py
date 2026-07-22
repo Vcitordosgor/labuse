@@ -152,3 +152,60 @@ def test_flash_lien_expire_apres_30j(db, parcelle):
     assert flash_pdf_par_token(db, tok) is None            # téléchargement refusé
     assert flash_statut(db, sid).get("expire") is True     # le statut le dit
     db.execute(text("DELETE FROM flash_commandes WHERE stripe_session_id=:s"), {"s": sid}); db.commit()
+
+
+# ─────────────── Partie C — concurrence & reprise ───────────────
+
+def test_concurrence_double_checkout_une_seule_souscription(db):
+    """Double-clic / deux onglets → deux Checkout → deux checkout.completed. Le compte garde
+    UNE souscription (la première) ; le doublon ne l'écrase pas (DB), et serait annulé chez
+    Stripe (path testé séparément avec un stripe mocké)."""
+    email = f"conc-{uuid.uuid4().hex[:8]}@x.test"
+    inv = comptes.creer_invitation(db, email)
+    cid, cus = inv["compte_id"], f"cus_{uuid.uuid4().hex[:8]}"
+    b1, s1 = _signe(_evt("checkout.session.completed",
+                         {"client_reference_id": str(cid), "customer": cus, "subscription": "sub_PREMIERE"}))
+    assert traiter_webhook(db, b1, s1)["action"] == "activation"
+    # 2e checkout (autre souscription) — sans clé Stripe l'annulation échoue proprement, mais
+    # la souscription enregistrée reste la PREMIÈRE (COALESCE ne l'écrase pas)
+    b2, s2 = _signe(_evt("checkout.session.completed",
+                         {"client_reference_id": str(cid), "customer": cus, "subscription": "sub_DOUBLON"}))
+    traiter_webhook(db, b2, s2)
+    sub = db.execute(text("SELECT stripe_subscription_id FROM comptes WHERE id=:c"), {"c": cid}).scalar()
+    assert sub == "sub_PREMIERE", f"le doublon a écrasé la souscription : {sub}"
+    db.execute(text("DELETE FROM utilisateurs WHERE email=:e"), {"e": email}); db.commit()
+
+
+def test_concurrence_doublon_annule_chez_stripe(db, monkeypatch):
+    """Avec Stripe joignable, le doublon entrant est ANNULÉ (une seule souscription active)."""
+    annulees = []
+    class _FakeSub:
+        @staticmethod
+        def cancel(sid): annulees.append(sid)
+    monkeypatch.setattr(get_settings(), "stripe_secret_key", "sk_test_fake")
+    import labuse.facturation as F
+    monkeypatch.setattr(F, "_stripe", lambda: type("S", (), {"Subscription": _FakeSub}))
+    email = f"conc2-{uuid.uuid4().hex[:8]}@x.test"
+    inv = comptes.creer_invitation(db, email)
+    cid, cus = inv["compte_id"], f"cus_{uuid.uuid4().hex[:8]}"
+    b1, s1 = _signe(_evt("checkout.session.completed",
+                         {"client_reference_id": str(cid), "customer": cus, "subscription": "sub_A"}))
+    traiter_webhook(db, b1, s1)
+    b2, s2 = _signe(_evt("checkout.session.completed",
+                         {"client_reference_id": str(cid), "customer": cus, "subscription": "sub_B"}))
+    assert traiter_webhook(db, b2, s2)["action"] == "doublon_annule"
+    assert annulees == ["sub_B"]          # le doublon entrant annulé, sub_A gardée
+    db.execute(text("DELETE FROM utilisateurs WHERE email=:e"), {"e": email}); db.commit()
+
+
+def test_reprise_flash_apres_interruption(db, parcelle):
+    """Serveur redémarré en pleine génération : la commande reste 'payee'. Le prochain
+    flash_statut la RATTRAPE (reprise idempotente) et livre le lien."""
+    ensure_flash_table(db)
+    sid = f"cs_test_{uuid.uuid4().hex[:12]}"
+    db.execute(text("INSERT INTO flash_commandes (stripe_session_id, idu, statut)"
+                    " VALUES (:s, :i, 'payee')"), {"s": sid, "i": parcelle})   # bloquée à 'payee'
+    db.commit()
+    st = flash_statut(db, sid)            # rattrape et génère
+    assert st["statut"] == "generee" and st.get("lien")
+    db.execute(text("DELETE FROM flash_commandes WHERE stripe_session_id=:s"), {"s": sid}); db.commit()

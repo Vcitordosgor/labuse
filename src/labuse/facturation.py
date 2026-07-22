@@ -283,9 +283,25 @@ def traiter_webhook(db: Session, payload: bytes, signature: str | None) -> dict:
     cid = _compte_id()
     action = "ignore"
     if t == "checkout.session.completed" and cid:
+        # ROB-C · concurrence : double-clic / deux onglets → deux Checkout → deux souscriptions.
+        # Si le compte a DÉJÀ une souscription différente, on annule le DOUBLON entrant chez
+        # Stripe (une seule souscription active, pas de double facturation).
+        ancien = db.execute(text("SELECT stripe_subscription_id FROM comptes WHERE id = :c"),
+                            {"c": cid}).scalar()
+        nouveau = obj.get("subscription")
+        if ancien and nouveau and ancien != nouveau:
+            try:
+                _stripe().Subscription.cancel(nouveau)
+                audit(db, "stripe_doublon_annule", cid, None, f"sub doublon {nouveau} annulée")
+                log.warning("compte %s : souscription doublon %s annulée (garde %s)", cid, nouveau, ancien)
+                db.commit()
+                return {"type": t, "action": "doublon_annule", "compte_id": cid}
+            except Exception as e:  # noqa: BLE001 — Stripe indispo : on garde l'ancienne, on n'écrase pas
+                log.error("compte %s : annulation doublon %s impossible : %s", cid, nouveau, e)
         db.execute(text("UPDATE comptes SET statut = 'actif', stripe_customer_id = :cu,"
-                        " stripe_subscription_id = :su, updated_at = now() WHERE id = :c"),
-                   {"cu": obj.get("customer"), "su": obj.get("subscription"), "c": cid})
+                        " stripe_subscription_id = COALESCE(stripe_subscription_id, :su),"
+                        " updated_at = now() WHERE id = :c"),
+                   {"cu": obj.get("customer"), "su": nouveau, "c": cid})
         audit(db, "stripe_activation", cid, None, "checkout.session.completed")
         db.commit()
         action = "activation"

@@ -258,3 +258,49 @@ def test_brute_force_verrou_non_contournable_par_casse(app_client):
                       follow_redirects=False).status_code == 401
     finally:
         _purge(email)
+
+
+# ─────────────────────── Partie C — entrées hostiles (jamais un 500 nu) ───────────────────────
+
+def test_entrees_login_jamais_500(app_client):
+    """Login avec email malformé / unicode / casse / mot de passe limite → 401 propre, jamais 500."""
+    c = TestClient(app_client.app, base_url="https://testserver")
+    hostiles = [
+        {"identifiant": "pas-un-email", "password": "x"},
+        {"identifiant": "é@üñïçödé.tëst", "password": "motdepasse"},
+        {"identifiant": "A@B.TEST", "password": ""},
+        {"identifiant": "x" * 5000 + "@x.test", "password": "y" * 5000},
+        {"identifiant": "", "password": ""},
+        {"identifiant": "robert'); DROP TABLE comptes;--@x.test", "password": "z"},
+    ]
+    for data in hostiles:
+        r = c.post("/login", data=data, follow_redirects=False)
+        assert r.status_code in (401, 303), f"{data} → {r.status_code}"   # jamais 500
+    # les comptes existent toujours (l'injection n'a rien cassé)
+    with session_scope() as s:
+        assert s.execute(text("SELECT to_regclass('comptes')")).scalar() is not None
+
+
+def test_entrees_flash_idu_jamais_500(app_client):
+    """/flash avec IDU inexistant / malformé / trop court → 4xx/redirect propre, jamais 500."""
+    c = TestClient(app_client.app, base_url="https://testserver")
+    for idu in ["", "court", "PASUNIDUVALIDE!!", "00000000000000", "'; DROP--xxxxx"]:
+        r = c.get(f"/flash?idu={idu}", follow_redirects=False)
+        assert r.status_code < 500, f"GET /flash?idu={idu} → {r.status_code}"
+    # POST /flash (achat) sur un IDU inconnu → redirection vers la saisie, jamais 500
+    r = c.post("/flash", data={"idu": "00000000000000"}, follow_redirects=False)
+    assert r.status_code < 500
+
+
+def test_entrees_pipeline_idu_jamais_500(app_client):
+    """API pipeline/parcelle avec IDU hostile → 4xx propre (auth d'abord), jamais 500."""
+    email = f"in-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver")
+        c.cookies.set("labuse_session", _session_cookie(cid, email))
+        for idu in ["court", "PASBON!!", "'; DROP TABLE parcels;--"]:
+            assert c.get(f"/pipeline/parcel/{idu}").status_code < 500
+            assert c.post("/pipeline", json={"idu": idu}).status_code < 500
+    finally:
+        _purge(email)
