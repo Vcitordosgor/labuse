@@ -373,6 +373,10 @@ const REGISTRE = [
   ['simulplu', 'M15 Simulateur PLU'], ['zan', 'M17 Simulateur ZAN'],
   ['temps', 'M08 Remonter le temps'], ['duediligence', 'M10 Due diligence'],
   ['courriers', 'M09 Courrier propriétaire'],
+  // BLOC B partie 2 : les outils O ont désormais une UI (verdict Vic sur maquettes)
+  ['o5-servitudes', 'O5 Servitudes invisibles'], ['o6-comparateur', 'O6 Comparateur de communes'],
+  ['o7-carnet', 'O7 Carnet de secteur'], ['o9-rarete', 'O9 Pipeline rareté'],
+  ['o10-bascules', 'O10 Bascules datées'],
 ];
 for (const [key, label] of REGISTRE) {
   S({
@@ -437,12 +441,10 @@ S({
   },
 });
 // Outils O sans surface front : la vérité = JSON brut dans le navigateur.
+// BLOC B partie 2 : o5/o6/o7/o9 sont devenus des MODULES (boucle REGISTRE ci-dessous) ;
+// o4 est un bloc de l'onglet Règles (capturé par fiche__regles) ; o10 = outil__o10-bascules.
 const O_JSON = [
   ['o4-traducteur', 'O4 Traducteur PLU', (ids) => `/traducteur-plu/${ids.brulante}`, 'POST'],
-  ['o5-servitudes', 'O5 Servitudes invisibles', (ids) => `/servitudes-invisibles/${ids.brulante}`, 'GET'],
-  ['o6-comparateur', 'O6 Comparateur de communes', () => `/comparateur-communes`, 'GET'],
-  ['o7-carnet', 'O7 Carnet de secteur', () => `/carnet-secteur`, 'GET'],
-  ['o9-rarete', 'O9 Pipeline rareté', () => `/pipeline-rarete`, 'GET'],
 ];
 for (const [key, label, path, method] of O_JSON) {
   S({
@@ -460,13 +462,7 @@ for (const [key, label, path, method] of O_JSON) {
     },
   });
 }
-S({
-  slug: 'outil__o10-surface-d', section: 'Outils O', desc: 'O10 Surface D (bascules datées) — exposition via /events', devices: ['desktop'],
-  async run(c) {
-    await c.page.goto(API + '/events?limit=20', { waitUntil: 'domcontentloaded' });
-    await c.shot('json', 'les événements servis (JSON)');
-  },
-});
+// BLOC B : o10 (surface D) = module outil__o10-bascules (boucle REGISTRE).
 
 // ── PROJET ──────────────────────────────────────────────────────────────────
 S({
