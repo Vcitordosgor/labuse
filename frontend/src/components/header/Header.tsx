@@ -196,7 +196,7 @@ function CommuneSelect() {
       <button onClick={() => setOpen((o) => !o)} data-commune-select
         title="Changer de commune (périmètre de la carte, des compteurs et des modules)"
         className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt hover:border-[#2E6B4F]">
-        <span className="h-1.5 w-1.5 rounded-full bg-mint" />
+        <span className="h-1.5 w-1.5 rounded-full bg-txt-dim" />
         {commune ?? 'Toute l’île'}
         <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-txt-dim"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
       </button>
