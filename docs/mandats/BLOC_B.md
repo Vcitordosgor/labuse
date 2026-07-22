@@ -28,8 +28,15 @@ run v2 existe (sinon repli legacy inchangé) ; tris mult/surface/commune/v incha
 
 ## B2 · Le coup de propre
 
-_(à venir : vieille UI archivée puis retirée, branches mergées purgées, deps mortes,
-caveat weasyprint unifié/documenté)_
+- **Proto Vue retiré** : tag `archive/proto-vue` pushé AVANT suppression ; mount /app + 800 Ko
+  de fichiers supprimés ; redirections login → `/` ; 301 prod intact ; 4 tests hérités re-ciblés,
+  1 test de toggle proto retiré (jamais porté en React, doctrine fondue à M9).
+- **Branches mergées supprimées** (liste consignée AVANT suppression) —
+  locales (25) : fenetre/m2-projet, fenetre/m3-retrait, fenetre/outils-suite, fenetre/reliquats-front, m7/mise-en-ligne, nuit/2026-07-21, phase0/cloture, phase0/j1-tests, phase0/j2-arene, phase0/j2bis-arene, phase0/j3-golden, phaseA/a1-cloture, phaseA/a1-defisc, phaseA/a1-defisc-e2, phaseA/cloture-phase-a, phaseA/cycle2-cloture, phaseA/dpe-passoires, phaseA/pc-caducs, phaseA/pc-caducs-e2, phaseA/roadmap-algo, postm7/j2-fraicheur, prevol/m7, prospection/deposants-actifs, tech/bloc-a-atlas, tech/revue-uiux-fix.
+  Distantes (25) : claude/brave-davinci-NaRd4, docs/saint-denis-uavap-clarification, feat/calibrage-plu-saint-denis, feat/calibrage-plu-saint-denis-lot2, feat/cli-ingest-permits, feat/cli-warm-vue-mer, feat/prospect-a1-largeur-voirie, feat/prospect-a2-detection-facade, feat/prospect-a3-hook-moteur, feat/risques-deal-c1-source, feat/risques-deal-c2-fonctions, feat/risques-deal-c3-activation, fenetre/m3-retrait, fenetre/outils-suite, fenetre/reliquats-front, fix/cascade-subdivide-megapolygones, fix/risques-deal-c2bis-connecteur, m7/mise-en-ligne, nuit/2026-07-21, phase0/j3-golden, postm7/j2-fraicheur, prevol/m7, prospection/deposants-actifs, tech/bloc-a-atlas, tech/revue-uiux-fix.
+  CONSERVÉES : `origin/claude/eager-pascal-cmObd` (branche par défaut GitHub), `spinoff/vues-solaire`
+  (archive éternelle) + `docs/cartographie` (non mergée), tous les tags (archive/*, avant-spinoff…).
+
 
 ## B3 · Le radar des sources
 
