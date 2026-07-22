@@ -3,7 +3,7 @@ import { Tip } from '../Tip'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
-import { fmtDate, fmtDateNum, fmtInt } from '../../lib/format'
+import { fmtDate, fmtDateNum, fmtInt, fmtM2 } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
@@ -422,8 +422,8 @@ function ShareButton({ idu }: { idu: string }) {
         ↗
       </button>
       {share.data && (
-        <div className="absolute bottom-10 right-0 z-20 w-64 rounded-lg border border-line-2 bg-surface-2 p-3 text-[11px] shadow-xl">
-          <p className="font-mono text-[10px] tracking-widest text-txt-dim">LIEN APPORTEUR</p>
+        <div className="floating absolute bottom-10 right-0 z-20 w-64 p-3 text-[11px]">
+          <p className="label-caps">Lien apporteur</p>
           <a href={share.data.url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-mint hover:underline">
             {window.location.origin}{share.data.url}
           </a>
@@ -909,7 +909,7 @@ export function Fiche({ idu }: { idu: string }) {
       {/* bloc MODULE (doctrine : en tête de fiche, violet) */}
       {modBlock && (
         <div className="shrink-0 border-b border-[#2a2138] bg-[#171221] px-5 py-3">
-          <p className="font-mono text-[10px] tracking-widest text-[#B497F0]">MODULE · {modBlock.module.toUpperCase()}</p>
+          <p className="label-caps text-[#B497F0]">Module · {modBlock.module}</p>
           <div className="mt-1.5 flex flex-col gap-1">
             {modBlock.lines.map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3 text-[11px]">
@@ -934,35 +934,41 @@ export function Fiche({ idu }: { idu: string }) {
             </div>
           )}
           <div className="mt-0.5 text-[11px] text-txt-mut">
-            {f?.surface_m2 ? `${f.surface_m2.toLocaleString('fr-FR')} m² · ` : ''}{f?.commune ?? ''}
+            {f?.surface_m2 ? <span className="tnum">{fmtM2(f.surface_m2)} · </span> : ''}{f?.commune ?? ''}
           </div>
-          {verdict && (
-            <span data-badge-verdict className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${verdict.color}22`, color: verdict.color }}
-              title={verdict.v2 ? 'Verdict scoring v2 (P×C) — le statut matrice historique est dans la section Qualité' : undefined}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: verdict.color }} />{verdict.label}
-              {v2Pilote && f?.score_v2 && (
-                <span className="font-mono text-[10px] opacity-90"
-                  title="Rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc — détail dans « Probabilité de mutation (P v2) »">
-                  {(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? `rang ${f.score_v2.rang}` : ''}
-                  {f.score_v2.mult_base != null ? `${(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? ' · ' : ''}×${f.score_v2.mult_base.toFixed(1)}` : ''}
-                </span>
-              )}
-              {!v2Pilote && f?.evenement === 'rouge' && f.statut === 'chaude' && (
-                <span className="rounded-full bg-[#3a1614] px-1.5 text-[9px] font-semibold text-st-ecartee" title="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">· ÉVÉNEMENT</span>
-              )}
-            </span>
-          )}
+          {verdict && (() => {
+            const badge = (
+              <span data-badge-verdict className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${verdict.color}22`, color: verdict.color }}>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: verdict.color }} />{verdict.label}
+                {v2Pilote && f?.score_v2 && (
+                  <span className="font-mono text-[10px] opacity-90">
+                    {(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? `rang ${f.score_v2.rang}` : ''}
+                    {f.score_v2.mult_base != null ? `${(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? ' · ' : ''}×${f.score_v2.mult_base.toFixed(1)}` : ''}
+                  </span>
+                )}
+                {!v2Pilote && f?.evenement === 'rouge' && f.statut === 'chaude' && (
+                  <Tip tip="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">
+                    <span className="rounded-full bg-[#3a1614] px-1.5 text-[9px] font-semibold text-st-ecartee">· ÉVÉNEMENT</span>
+                  </Tip>
+                )}
+              </span>
+            )
+            return verdict.v2
+              ? <Tip className="mt-1.5" tip="Verdict scoring v2 (P×C) — rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc ; détail dans « Probabilité de mutation (P v2) », statut matrice historique dans la Synthèse.">{badge}</Tip>
+              : <span className="mt-1.5 inline-flex">{badge}</span>
+          })()}
           {/* M5.1 : le badge « V nn » disparaît — le dossier propriétaire (signaux vendeur)
               reste dans la fiche, libellé en clair, sans le sigle nu */}
           {f?.score_v?.v_score != null && (
-            <span data-badge-signaux className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{
-                background: `${vBandColor(f.score_v.v_band)}22`,
-                color: vBandColor(f.score_v.v_band),
-              }}
-              title={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans la Synthèse`}>
-              signaux vendeur {f.score_v.v_score}/100
-            </span>
+            <Tip className="ml-1.5 mt-1.5" tip={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans la Synthèse`}>
+              <span data-badge-signaux className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
+                style={{
+                  background: `${vBandColor(f.score_v.v_band)}22`,
+                  color: vBandColor(f.score_v.v_band),
+                }}>
+                signaux vendeur {f.score_v.v_score}/100
+              </span>
+            </Tip>
           )}
           {f?.score_v?.badge && (
             <span className="ml-1.5 mt-1.5 inline-flex rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-mut">
@@ -972,11 +978,12 @@ export function Fiche({ idu }: { idu: string }) {
           {/* M9 lot 1 : chip Indice de confiance données (ICD) — affiché seulement si < 85
               (cas nominal = pas de badge). Méta d'affichage, indépendante du score P. */}
           {f?.icd && f.icd.score < 85 && (
-            <span data-badge-icd className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{ background: `${icdColor(f.icd.bande)}22`, color: icdColor(f.icd.bande) }}
-              title={`Confiance des données : ${f.icd.score}/100 — ${f.icd.libelle}. ${f.icd.cloisonnement}`}>
-              {f.icd.libelle} {f.icd.score}/100
-            </span>
+            <Tip className="ml-1.5 mt-1.5" tip={`Confiance des données : ${f.icd.score}/100 — ${f.icd.libelle}. ${f.icd.cloisonnement}`}>
+              <span data-badge-icd className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
+                style={{ background: `${icdColor(f.icd.bande)}22`, color: icdColor(f.icd.bande) }}>
+                {f.icd.libelle} {f.icd.score}/100
+              </span>
+            </Tip>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -990,7 +997,9 @@ export function Fiche({ idu }: { idu: string }) {
               <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
             </svg>
           </button>
-          <button onClick={() => select(null)} className="text-txt-mut hover:text-txt-hi" title="Fermer la fiche">✕</button>
+          <button onClick={() => select(null)}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-txt-mut transition-colors duration-quick hover:text-txt-hi"
+            title="Fermer la fiche">✕</button>
         </div>
       </div>
 
@@ -1019,7 +1028,7 @@ export function Fiche({ idu }: { idu: string }) {
         {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
         {fq && f && (
           <div data-fiche-search-results>
-            <p className="mb-2 font-mono text-[10px] tracking-widest text-txt-dim">DANS CETTE FICHE · « {ficheQuery.trim()} »</p>
+            <p className="label-caps mb-2">Dans cette fiche · « {ficheQuery.trim()} »</p>
             {ficheMatches.length === 0
               ? <p className="text-xs text-txt-dim">Aucune donnée de la fiche ne correspond.</p>
               : <div className="flex flex-col gap-1">{ficheMatches.map((l, i) => <Line key={i} line={l} />)}</div>}
