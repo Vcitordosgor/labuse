@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { fmtDate, fmtDateNum, fmtInt } from '../../lib/format'
+import { layerLabel } from '../../lib/layers'
 import { Loading } from '../Loading'
 import { AskBar, renderRich } from './AskBar'
 import { PourquoiPasTab } from './PourquoiPas'
@@ -55,18 +56,21 @@ function SourceRef({ line }: { line: FicheLine }) {
         </button>
       )}
       {trace && <span className="shrink-0 font-mono text-[#4a5a52]">{trace}</span>}
-      {line.date && <span className="ml-auto shrink-0 font-mono">{line.date}</span>}
+      {line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
     </div>
   )
 }
 
 function Line({ line }: { line: FicheLine }) {
   return (
-    <div className="flex gap-3 border-b border-[#141d17] py-2 last:border-0">
+    <div className="flex gap-3 border-b border-line/60 py-2 last:border-0">
       <Weight w={line.weight} result={line.result} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-txt">{line.layer}</span>
+          {/* S03-S05 : libellé français à l'écran, clé technique de la couche au survol/tap (audit) */}
+          <Tip tip={<span className="font-mono">couche {line.layer}</span>}>
+            <span className="text-xs font-medium text-txt">{layerLabel(line.layer)}</span>
+          </Tip>
           {line.severity && line.weight == null && (
             <span className="rounded-full px-1.5 text-[9px]" style={{ background: `${SEV_COLOR[line.severity]}22`, color: SEV_COLOR[line.severity] }}>
               {line.severity}
@@ -872,7 +876,7 @@ export function Fiche({ idu }: { idu: string }) {
   const { data: f, isLoading, isError, error, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
   const fq = ficheQuery.trim().toLowerCase()
   const ficheMatches = fq && f
-    ? f.lines.filter((l) => `${l.layer} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
+    ? f.lines.filter((l) => `${l.layer} ${layerLabel(l.layer)} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
     : []
 
   // Correctif M5 (verdict d'en-tête) : étage 0 prime (bannière écartée + motifs, inchangé) ;
@@ -893,7 +897,7 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="text-xs font-medium text-st-ecartee">LABUSE l'a écartée — voici pourquoi</div>
           <div className="mt-1 flex flex-col gap-0.5">
             {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').slice(0, 4).map((l) => (
-              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{l.layer}</b> — {l.detail}</div>
+              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{layerLabel(l.layer)}</b> — {l.detail}</div>
             ))}
             {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').length === 0 && (
               <div className="text-[10.5px] text-txt-mut">Aucune exclusion dure : qualité insuffisante (Q {f.q_score} &lt; 50) — détail dans les onglets.</div>
