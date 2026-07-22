@@ -428,7 +428,7 @@ Le lien de téléchargement (30 jours) s'affiche dès la génération.</p>""", p
 <form method="get" action="/flash">
 <label for="idu">Identifiant de parcelle (IDU)</label>
 <div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14" required
-  autofocus inputmode="latin" placeholder="97415000CW0658" aria-describedby="iduhint"
+  autofocus inputmode="text" placeholder="97415000CW0658" aria-describedby="iduhint"
   style="font-family:ui-monospace,monospace"></div>
 <button type="submit">Vérifier la parcelle →</button></form>
 <p class="meterlbl" id="iduhint">14 caractères — figure sur cadastre.gouv.fr, ou demandez-le à votre contact LABUSE. Le rapport est généré sur la parcelle EXACTE.</p>"""))
