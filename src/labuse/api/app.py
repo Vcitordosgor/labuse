@@ -498,6 +498,10 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
                     donnees[src.name] = e["derniere_donnee"]
     except Exception:  # noqa: BLE001 — l'affichage de fraîcheur ne casse jamais la page Sources
         pass
+    # B3 (BLOC B) : l'état du RADAR par source (dernière publication détectée amont) —
+    # lecture seule, [] tant que `labuse radar-sources` n'a jamais tourné.
+    from ..radar import etat_radar
+    radar = {r["source_name"]: r for r in etat_radar(db)}
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
@@ -512,6 +516,7 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "derniere_donnee": donnees.get(s.name),
             "ingestion_runs": ingestions.get(s.name, {}).get("runs", 0),
             "verified_at": checks.get(s.id),
+            "radar": radar.get(s.name),
         }
         for s in rows
     ]

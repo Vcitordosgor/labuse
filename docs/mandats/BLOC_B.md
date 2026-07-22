@@ -4,7 +4,7 @@
 Partie 2 sur verdict → STOP final · Vic merge.** DA verrouillée (tokens de la revue),
 wording boussole partout.
 
-## ⟪ CURSEUR ⟫ Partie 1 en cours — B1 TERMINÉ (5/5 mesurés) · suite : B2
+## ⟪ CURSEUR ⟫ Partie 1 en cours — B1 ✅ · B2 ✅ · B3 ✅ · reste B4 puis STOP mi-course
 
 ---
 
@@ -38,9 +38,19 @@ run v2 existe (sinon repli legacy inchangé) ; tris mult/surface/commune/v incha
   (archive éternelle) + `docs/cartographie` (non mergée), tous les tags (archive/*, avant-spinoff…).
 
 
-## B3 · Le radar des sources
+## B3 · Le radar des sources — VIVANT
 
-_(à venir)_
+- `src/labuse/radar.py` + table `source_radar` + CLI `labuse radar-sources` + cron hebdo
+  (`deploy/cron.d/radar`, lun. 02:40) — **zéro téléchargement** (HEAD Last-Modified/ETag,
+  ou métadonnée JSON de qq Ko).
+- **52 sources suivies** : 6 sondes curées (Cadastre Etalab, DVF, BAN, BODACC, DPE, SITADEL —
+  URLs des connecteurs vivants), repli HEAD sur endpoint_url, et « non sondable » HONNÊTE
+  pour le reste (jamais une date inventée). Piège corrigé en live : ETag faible d'API
+  dynamique = fausse publication en boucle → repli sur Last-Modified seul.
+- **Page Sources étendue** : par source — mode (— auto — mint / — manuel, grande passe —),
+  cadence, « sondée le … — rien de neuf » ou badge ambre « ▲ a publié » (+ non sondable en
+  italique discret). **/healthz/crons** expose `radar.publications_detectees` (la sentinelle
+  VPS lit ce champ). **JAMAIS d'auto-ingestion** — le radar signale, l'humain décide.
 
 ## B4 · Les minis
 

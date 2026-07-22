@@ -1,0 +1,4 @@
+SHELL=/bin/sh
+# BLOC B (B3) — radar des sources : sondes HEAD/métadonnées (zéro téléchargement), hebdo.
+# Le radar SIGNALE (healthz/crons + page Sources) ; l'ingestion reste une décision humaine.
+40 2 * * 1 labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse radar-sources >> /var/log/labuse/radar.log 2>&1
