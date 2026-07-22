@@ -4,7 +4,22 @@
 Partie 2 sur verdict → STOP final · Vic merge.** DA verrouillée (tokens de la revue),
 wording boussole partout.
 
-## ⟪ CURSEUR ⟫ **PARTIE 1 TERMINÉE (B1-B4)** — STOP MI-COURSE : maquettes S45-S50 en cours
+## ⟪ CURSEUR ⟫ **STOP MI-COURSE** — Partie 1 livrée (B1-B4) + les 6 maquettes. À Vic.
+
+**Les 6 maquettes** (`docs/mockups/outil_*.html` — autonomes, tokens DA, données réelles du
+22/07, desktop + mobile, chrome de maquette à retirer au branchement) :
+
+| Outil | Fichier | Geste principal | Emplacement proposé |
+|---|---|---|---|
+| Traducteur PLU (O4) | `outil_o4_traducteur.html` **+ variante B** `outil_o4_traducteur_B.html` (VRAI dilemme : module registre vs bloc dans l'onglet Règles) | lire les règles de sa zone sans jargon | Analyser & simuler + raccourci fiche |
+| Servitudes invisibles (O5) | `outil_o5_servitudes.html` | qu'est-ce qui dort sur cette parcelle ? (+ « non couvert » honnête) | Analyser & simuler + bloc fiche Règles |
+| Comparateur de communes (O6) | `outil_o6_comparateur.html` | trier les 24 communes selon SES poids, lire les valeurs brutes | Analyser & simuler (phare) |
+| Carnet de secteur (O7) | `outil_o7_carnet.html` | ouvrir SON secteur, voir ce qui a bougé | Passer à l'action |
+| Pipeline rareté (O9) | `outil_o9_rarete.html` | où le foncier s'épuise (horizon ZAN en jauges) | Détecter le foncier |
+| Bascules datées (O10) | `outil_o10_bascules.html` | le « quoi de neuf » daté du lundi matin (flux cloche filtrable) | Détecter le foncier |
+
+Une seule paire de variantes (O4) — les cinq autres n'avaient pas de vrai dilemme.
+**Partie 2 (implémentation, démo scriptée, déploiement, mini-atlas) : sur verdict Vic uniquement.**
 
 ---
 

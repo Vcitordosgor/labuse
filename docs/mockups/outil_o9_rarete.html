@@ -1,0 +1,82 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>MAQUETTE — Pipeline rareté</title>
+<style>
+:root{--bg:#060A08;--s1:#0B100D;--s2:#0D120F;--s3:#111814;--line:#1B2620;--line2:#1E2A23;
+--mint:#5CE6A1;--mintink:#06130C;--hi:#ECF5EF;--txt:#C9DCD1;--mut:#8FA69A;--dim:#5C7268;
+--violet:#B497F0;--creuser:#E8B44C;--ecartee:#E8695A;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);
+font:13px/1.5 -apple-system,'Inter',sans-serif;padding:24px}
+.shell{max-width:760px;margin:0 auto}
+h1{font:700 17px 'Space Grotesk',sans-serif;color:var(--hi);margin:0}
+.sub{font-size:11.5px;color:var(--dim);margin:2px 0 0}
+.crumb{font:10px ui-monospace,monospace;letter-spacing:.14em;color:var(--violet);text-transform:uppercase;margin-bottom:10px}
+.crumb .back{display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(180,151,240,.4);
+background:rgba(180,151,240,.1);border-radius:6px;padding:3px 8px;color:var(--violet)}
+.card{background:var(--s2);border-radius:12px;padding:14px;margin-top:12px;
+box-shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px -8px rgba(0,0,0,.45)}
+.banner{border:1px solid rgba(180,151,240,.4);background:rgba(180,151,240,.07);border-radius:8px;
+padding:8px 12px;font-size:10.5px;line-height:1.55;color:var(--mut);margin-top:12px}
+.label{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.num{font:700 18px 'Space Grotesk',sans-serif;color:var(--hi);font-variant-numeric:tabular-nums}
+.tnum{font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600}
+.chip.src{border:1px solid rgba(92,230,161,.4);background:rgba(92,230,161,.1);color:var(--mint)}
+.chip.est{border:1px solid rgba(232,180,76,.4);background:rgba(232,180,76,.1);color:var(--creuser)}
+.chip.viol{border:1px solid rgba(180,151,240,.5);background:rgba(180,151,240,.1);color:var(--violet)}
+.chip.warn{background:rgba(232,180,76,.1);color:var(--creuser)}
+.chip.bad{background:rgba(232,105,90,.1);color:var(--ecartee)}
+.row{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:7px 0;font-size:12px}
+.row:last-child{border-bottom:0}
+.bar{position:relative;height:8px;border-radius:999px;background:var(--s3);overflow:hidden;flex:1;min-width:60px}
+.bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:999px}
+.cta{display:inline-block;background:var(--violet);color:var(--bg);border:0;border-radius:8px;
+padding:7px 14px;font:600 12px inherit;cursor:pointer}
+.ghost{border:1px solid var(--line2);background:none;color:var(--mut);border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer}
+.note{font-size:10px;color:var(--dim);margin-top:8px;line-height:1.5}
+a{color:var(--mint)}
+.mono{font-family:ui-monospace,monospace}
+.mkbadge{position:fixed;right:12px;bottom:12px;font:10px ui-monospace,monospace;color:var(--dim);
+background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+input[type=range]{accent-color:var(--violet);width:100%}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:right;padding:4px 6px;cursor:pointer}
+th:first-child,td:first-child{text-align:left}
+td{padding:5px 6px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:640px){body{padding:12px}.hidemob{display:none}}
+</style></head><body><div class="shell">
+<div class="crumb"><span class="back">← Outils</span> › Pipeline rareté</div>
+<h1>Pipeline rareté</h1><p class="sub">Où le foncier s’épuise — l’horizon ZAN par commune, en instrument.</p>
+
+<div class="banner">La RARETÉ comme argument : au rythme de consommation observé (Cerema, Sourcé),
+combien d'années de budget ZAN reste-t-il par commune ? Un horizon court = un foncier qui
+s'apprécie — et un permis à ne pas remettre à demain. <b>Estimé</b> : budget −50 % loi Climat,
+enveloppes SAR-SCOT non publiées (caveat loi TRACE).</div>
+<div class="card"><div class="label">Horizon d'épuisement du budget ZAN (estimé)</div>
+<div style="margin-top:6px"><div class="row"><span style="min-width:130px;color:var(--txt)">Cilaos</span>
+    <div class="bar"><i style="width:100%;background:var(--ecartee)"></i></div>
+    <span class="tnum" style="min-width:70px;color:var(--ecartee)">dépassé</span>
+    <span class="tnum hidemob" style="color:var(--dim)">0.5 ha d'opp.</span></div><div class="row"><span style="min-width:130px;color:var(--txt)">Les Trois-Bassins</span>
+    <div class="bar"><i style="width:2.843601895734597%;background:var(--creuser)"></i></div>
+    <span class="tnum" style="min-width:70px;color:var(--creuser)">0 ans</span>
+    <span class="tnum hidemob" style="color:var(--dim)">2.6 ha d'opp.</span></div><div class="row"><span style="min-width:130px;color:var(--txt)">Petite-Île</span>
+    <div class="bar"><i style="width:7.653061224489795%;background:var(--creuser)"></i></div>
+    <span class="tnum" style="min-width:70px;color:var(--creuser)">0 ans</span>
+    <span class="tnum hidemob" style="color:var(--dim)">1.1 ha d'opp.</span></div><div class="row"><span style="min-width:130px;color:var(--txt)">Les Avirons</span>
+    <div class="bar"><i style="width:20.855614973262032%;background:var(--creuser)"></i></div>
+    <span class="tnum" style="min-width:70px;color:var(--creuser)">1 ans</span>
+    <span class="tnum hidemob" style="color:var(--dim)">1.1 ha d'opp.</span></div><div class="row"><span style="min-width:130px;color:var(--txt)">Bras-Panon</span>
+    <div class="bar"><i style="width:21.73913043478261%;background:var(--creuser)"></i></div>
+    <span class="tnum" style="min-width:70px;color:var(--creuser)">1 ans</span>
+    <span class="tnum hidemob" style="color:var(--dim)">1.7 ha d'opp.</span></div><div class="row"><span style="min-width:130px;color:var(--txt)">Saint-Philippe</span>
+    <div class="bar"><i style="width:20.64516129032258%;background:var(--creuser)"></i></div>
+    <span class="tnum" style="min-width:70px;color:var(--creuser)">1 ans</span>
+    <span class="tnum hidemob" style="color:var(--dim)">0.0 ha d'opp.</span></div><div class="row"><span style="min-width:130px;color:var(--txt)">Saint-Denis</span>
+    <div class="bar"><i style="width:27.144120247568527%;background:var(--creuser)"></i></div>
+    <span class="tnum" style="min-width:70px;color:var(--creuser)">1 ans</span>
+    <span class="tnum hidemob" style="color:var(--dim)">5.4 ha d'opp.</span></div><div class="row"><span style="min-width:130px;color:var(--txt)">Saint-Joseph</span>
+    <div class="bar"><i style="width:31.68880455407969%;background:var(--creuser)"></i></div>
+    <span class="tnum" style="min-width:70px;color:var(--creuser)">1 ans</span>
+    <span class="tnum hidemob" style="color:var(--dim)">3.6 ha d'opp.</span></div></div>
+<p class="note">Source : Portail national de l'artificialisation / Cerema — Fichiers fonciers (CONSOENAF, indicateurs communaux).</p></div>
+<div class="note"><b>Geste principal :</b> lire en 5 secondes où le foncier devient rare (et le dire à un vendeur hésitant)<br><b>Emplacement proposé :</b> registre Outils › Détecter le foncier</div>
+</div><div class="mkbadge">maquette statique · données réelles 22/07/2026 · chrome à retirer au branchement</div></body></html>

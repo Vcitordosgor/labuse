@@ -1,0 +1,101 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>MAQUETTE — Comparateur de communes</title>
+<style>
+:root{--bg:#060A08;--s1:#0B100D;--s2:#0D120F;--s3:#111814;--line:#1B2620;--line2:#1E2A23;
+--mint:#5CE6A1;--mintink:#06130C;--hi:#ECF5EF;--txt:#C9DCD1;--mut:#8FA69A;--dim:#5C7268;
+--violet:#B497F0;--creuser:#E8B44C;--ecartee:#E8695A;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);
+font:13px/1.5 -apple-system,'Inter',sans-serif;padding:24px}
+.shell{max-width:760px;margin:0 auto}
+h1{font:700 17px 'Space Grotesk',sans-serif;color:var(--hi);margin:0}
+.sub{font-size:11.5px;color:var(--dim);margin:2px 0 0}
+.crumb{font:10px ui-monospace,monospace;letter-spacing:.14em;color:var(--violet);text-transform:uppercase;margin-bottom:10px}
+.crumb .back{display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(180,151,240,.4);
+background:rgba(180,151,240,.1);border-radius:6px;padding:3px 8px;color:var(--violet)}
+.card{background:var(--s2);border-radius:12px;padding:14px;margin-top:12px;
+box-shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px -8px rgba(0,0,0,.45)}
+.banner{border:1px solid rgba(180,151,240,.4);background:rgba(180,151,240,.07);border-radius:8px;
+padding:8px 12px;font-size:10.5px;line-height:1.55;color:var(--mut);margin-top:12px}
+.label{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.num{font:700 18px 'Space Grotesk',sans-serif;color:var(--hi);font-variant-numeric:tabular-nums}
+.tnum{font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600}
+.chip.src{border:1px solid rgba(92,230,161,.4);background:rgba(92,230,161,.1);color:var(--mint)}
+.chip.est{border:1px solid rgba(232,180,76,.4);background:rgba(232,180,76,.1);color:var(--creuser)}
+.chip.viol{border:1px solid rgba(180,151,240,.5);background:rgba(180,151,240,.1);color:var(--violet)}
+.chip.warn{background:rgba(232,180,76,.1);color:var(--creuser)}
+.chip.bad{background:rgba(232,105,90,.1);color:var(--ecartee)}
+.row{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:7px 0;font-size:12px}
+.row:last-child{border-bottom:0}
+.bar{position:relative;height:8px;border-radius:999px;background:var(--s3);overflow:hidden;flex:1;min-width:60px}
+.bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:999px}
+.cta{display:inline-block;background:var(--violet);color:var(--bg);border:0;border-radius:8px;
+padding:7px 14px;font:600 12px inherit;cursor:pointer}
+.ghost{border:1px solid var(--line2);background:none;color:var(--mut);border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer}
+.note{font-size:10px;color:var(--dim);margin-top:8px;line-height:1.5}
+a{color:var(--mint)}
+.mono{font-family:ui-monospace,monospace}
+.mkbadge{position:fixed;right:12px;bottom:12px;font:10px ui-monospace,monospace;color:var(--dim);
+background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+input[type=range]{accent-color:var(--violet);width:100%}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:right;padding:4px 6px;cursor:pointer}
+th:first-child,td:first-child{text-align:left}
+td{padding:5px 6px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:640px){body{padding:12px}.hidemob{display:none}}
+</style></head><body><div class="shell">
+<div class="crumb"><span class="back">← Outils</span> › Comparateur de communes</div>
+<h1>Comparateur de communes</h1><p class="sub">Où investir : 24 communes, indicateurs sourcés, composite réglable.</p>
+
+<div class="banner">Composite de COMMODITÉ (non calibré) : chaque indicateur normalisé min-max [0-100] selon sa direction, moyenne pondérée des axes présents (poids renormalisés si une donnée manque). La pondération est …<br><b>Aide à la comparaison, pas un score de rendement ; un axe manquant reste null (jamais 0).</b></div>
+<div class="card"><div class="label">Pondérations — réglables, renormalisées</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:8px">
+<label style="font-size:10px;color:var(--mut)">stock · 0.3<input type="range" value="30"></label><label style="font-size:10px;color:var(--mut)">velocite · 0.15<input type="range" value="15"></label><label style="font-size:10px;color:var(--mut)">permis · 0.15<input type="range" value="15"></label><label style="font-size:10px;color:var(--mut)">deficit_sru · 0.15<input type="range" value="15"></label><label style="font-size:10px;color:var(--mut)">pression_zan · 0.1<input type="range" value="10"></label><label style="font-size:10px;color:var(--mut)">prix_neuf · 0.15<input type="range" value="15"></label>
+</div></div>
+<div class="card"><table>
+<tr><th>Commune</th><th>Composite ↓</th><th>Stock opp.</th><th>Vélocité</th><th>Permis 5 ans</th>
+<th class="hidemob">Déficit SRU %</th><th class="hidemob">€/m² neuf</th></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#1</span> Saint-Paul</td>
+    <td><b style="color:var(--violet)">68.8</b></td>
+    <td>259</td><td>9.0 m</td><td>580</td>
+    <td class="hidemob">6.7</td>
+    <td class="hidemob">4462</td></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#2</span> Saint-Pierre</td>
+    <td><b style="color:var(--violet)">52.1</b></td>
+    <td>99</td><td>8.0 m</td><td>608</td>
+    <td class="hidemob">2.1</td>
+    <td class="hidemob">3765</td></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#3</span> Entre-Deux</td>
+    <td><b style="color:var(--violet)">46.9</b></td>
+    <td>23</td><td>8.0 m</td><td>88</td>
+    <td class="hidemob">14.7</td>
+    <td class="hidemob">4186</td></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#4</span> Le Tampon</td>
+    <td><b style="color:var(--txt)">44.4</b></td>
+    <td>86</td><td>9.0 m</td><td>459</td>
+    <td class="hidemob">8.2</td>
+    <td class="hidemob">3652</td></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#5</span> Saint-Leu</td>
+    <td><b style="color:var(--txt)">41.2</b></td>
+    <td>81</td><td>10.0 m</td><td>223</td>
+    <td class="hidemob">12.7</td>
+    <td class="hidemob">3994</td></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#6</span> Saint-Louis</td>
+    <td><b style="color:var(--txt)">37.4</b></td>
+    <td>56</td><td>9.0 m</td><td>408</td>
+    <td class="hidemob">5.3</td>
+    <td class="hidemob">3073</td></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#7</span> Les Trois-Bassins</td>
+    <td><b style="color:var(--txt)">36.6</b></td>
+    <td>31</td><td>9.0 m</td><td>67</td>
+    <td class="hidemob">14.1</td>
+    <td class="hidemob">3605</td></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#8</span> L'Étang-Salé</td>
+    <td><b style="color:var(--txt)">36.5</b></td>
+    <td>24</td><td>8.0 m</td><td>183</td>
+    <td class="hidemob">7.5</td>
+    <td class="hidemob">3118</td></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#9</span> Saint-Denis</td>
+    <td><b style="color:var(--txt)">36.2</b></td>
+    <td>75</td><td>9.0 m</td><td>397</td>
+    <td class="hidemob">0.0</td>
+    <td class="hidemob">4005</td></tr><tr><td style="color:var(--txt)"><span class="mono" style="color:var(--dim);font-size:9px">#10</span> Petite-Île</td>
+    <td><b style="color:var(--txt)">35.9</b></td>
+    <td>19</td><td>8.0 m</td><td>132</td>
+    <td class="hidemob">19.3</td>
+    <td class="hidemob">1980</td></tr></table>
+<p class="note">Tri par n’importe quelle colonne — les valeurs BRUTES restent la référence, le
+composite n’est qu’une aide de lecture (jamais un score de rendement).</p></div>
+<div class="note"><b>Geste principal :</b> trier les 24 communes selon MES priorités (poids réglables) et lire les valeurs brutes<br><b>Emplacement proposé :</b> registre Outils › Analyser & simuler (phare)</div>
+</div><div class="mkbadge">maquette statique · données réelles 22/07/2026 · chrome à retirer au branchement</div></body></html>

@@ -1,0 +1,95 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>MAQUETTE — Carnet de secteur</title>
+<style>
+:root{--bg:#060A08;--s1:#0B100D;--s2:#0D120F;--s3:#111814;--line:#1B2620;--line2:#1E2A23;
+--mint:#5CE6A1;--mintink:#06130C;--hi:#ECF5EF;--txt:#C9DCD1;--mut:#8FA69A;--dim:#5C7268;
+--violet:#B497F0;--creuser:#E8B44C;--ecartee:#E8695A;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);
+font:13px/1.5 -apple-system,'Inter',sans-serif;padding:24px}
+.shell{max-width:760px;margin:0 auto}
+h1{font:700 17px 'Space Grotesk',sans-serif;color:var(--hi);margin:0}
+.sub{font-size:11.5px;color:var(--dim);margin:2px 0 0}
+.crumb{font:10px ui-monospace,monospace;letter-spacing:.14em;color:var(--violet);text-transform:uppercase;margin-bottom:10px}
+.crumb .back{display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(180,151,240,.4);
+background:rgba(180,151,240,.1);border-radius:6px;padding:3px 8px;color:var(--violet)}
+.card{background:var(--s2);border-radius:12px;padding:14px;margin-top:12px;
+box-shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px -8px rgba(0,0,0,.45)}
+.banner{border:1px solid rgba(180,151,240,.4);background:rgba(180,151,240,.07);border-radius:8px;
+padding:8px 12px;font-size:10.5px;line-height:1.55;color:var(--mut);margin-top:12px}
+.label{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.num{font:700 18px 'Space Grotesk',sans-serif;color:var(--hi);font-variant-numeric:tabular-nums}
+.tnum{font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600}
+.chip.src{border:1px solid rgba(92,230,161,.4);background:rgba(92,230,161,.1);color:var(--mint)}
+.chip.est{border:1px solid rgba(232,180,76,.4);background:rgba(232,180,76,.1);color:var(--creuser)}
+.chip.viol{border:1px solid rgba(180,151,240,.5);background:rgba(180,151,240,.1);color:var(--violet)}
+.chip.warn{background:rgba(232,180,76,.1);color:var(--creuser)}
+.chip.bad{background:rgba(232,105,90,.1);color:var(--ecartee)}
+.row{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:7px 0;font-size:12px}
+.row:last-child{border-bottom:0}
+.bar{position:relative;height:8px;border-radius:999px;background:var(--s3);overflow:hidden;flex:1;min-width:60px}
+.bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:999px}
+.cta{display:inline-block;background:var(--violet);color:var(--bg);border:0;border-radius:8px;
+padding:7px 14px;font:600 12px inherit;cursor:pointer}
+.ghost{border:1px solid var(--line2);background:none;color:var(--mut);border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer}
+.note{font-size:10px;color:var(--dim);margin-top:8px;line-height:1.5}
+a{color:var(--mint)}
+.mono{font-family:ui-monospace,monospace}
+.mkbadge{position:fixed;right:12px;bottom:12px;font:10px ui-monospace,monospace;color:var(--dim);
+background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+input[type=range]{accent-color:var(--violet);width:100%}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:right;padding:4px 6px;cursor:pointer}
+th:first-child,td:first-child{text-align:left}
+td{padding:5px 6px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:640px){body{padding:12px}.hidemob{display:none}}
+</style></head><body><div class="shell">
+<div class="crumb"><span class="back">← Outils</span> › Carnet de secteur</div>
+<h1>Carnet de secteur</h1><p class="sub">Un secteur suivi comme un portefeuille — stock, prix, permis, signaux.</p>
+
+<div class="banner">Votre SECTEUR (section cadastrale) suivi comme un portefeuille : stock
+d’opportunités, prix, permis, signaux — tout sourcé. Saint-Paul DK en tête
+aujourd’hui (53 opportunités).</div>
+<div class="card"><div class="label">Secteurs les plus actifs (run servi)</div>
+<div style="margin-top:6px"><div class="row"><span class="mono" style="color:var(--hi)">DK</span>
+    <span style="min-width:110px;color:var(--mut)">Saint-Paul</span>
+    <div class="bar"><i style="width:100%;background:var(--mint)"></i></div>
+    <span class="tnum" style="color:var(--mint)">53 opp.</span>
+    <span class="tnum" style="color:var(--ecartee)">6 <span style="font-size:9px">brûl.</span></span>
+    <button class="ghost">ouvrir →</button></div><div class="row"><span class="mono" style="color:var(--hi)">AP</span>
+    <span style="min-width:110px;color:var(--mut)">La Possession</span>
+    <div class="bar"><i style="width:86%;background:var(--mint)"></i></div>
+    <span class="tnum" style="color:var(--mint)">43 opp.</span>
+    <span class="tnum" style="color:var(--ecartee)">1 <span style="font-size:9px">brûl.</span></span>
+    <button class="ghost">ouvrir →</button></div><div class="row"><span class="mono" style="color:var(--hi)">CX</span>
+    <span style="min-width:110px;color:var(--mut)">Saint-Leu</span>
+    <div class="bar"><i style="width:54%;background:var(--mint)"></i></div>
+    <span class="tnum" style="color:var(--mint)">27 opp.</span>
+    <span class="tnum" style="color:var(--ecartee)">2 <span style="font-size:9px">brûl.</span></span>
+    <button class="ghost">ouvrir →</button></div><div class="row"><span class="mono" style="color:var(--hi)">CD</span>
+    <span style="min-width:110px;color:var(--mut)">Saint-Benoît</span>
+    <div class="bar"><i style="width:50%;background:var(--mint)"></i></div>
+    <span class="tnum" style="color:var(--mint)">25 opp.</span>
+    <span class="tnum" style="color:var(--ecartee)">7 <span style="font-size:9px">brûl.</span></span>
+    <button class="ghost">ouvrir →</button></div><div class="row"><span class="mono" style="color:var(--hi)">AB</span>
+    <span style="min-width:110px;color:var(--mut)">Les Trois-Bassins</span>
+    <div class="bar"><i style="width:46%;background:var(--mint)"></i></div>
+    <span class="tnum" style="color:var(--mint)">23 opp.</span>
+    <span class="tnum" style="color:var(--ecartee)">8 <span style="font-size:9px">brûl.</span></span>
+    <button class="ghost">ouvrir →</button></div><div class="row"><span class="mono" style="color:var(--hi)">AO</span>
+    <span style="min-width:110px;color:var(--mut)">La Possession</span>
+    <div class="bar"><i style="width:32%;background:var(--mint)"></i></div>
+    <span class="tnum" style="color:var(--mint)">16 opp.</span>
+    <span class="tnum" style="color:var(--ecartee)">0 <span style="font-size:9px">brûl.</span></span>
+    <button class="ghost">ouvrir →</button></div></div></div>
+<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline">
+<div><span class="label">Page secteur —</span> <span class="mono" style="color:var(--hi)">97415000DK · Saint-Paul</span></div>
+<span class="chip viol">suivi hebdo (post-M7 : digest)</span></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:10px">
+<div><div class="label">Opportunités</div><div class="num">53</div></div>
+<div><div class="label">Brûlantes</div><div class="num" style="color:var(--ecartee)">6</div></div>
+<div><div class="label">€/m² médian <span class="chip src">Sourcé</span></div><div class="num">3 120</div></div>
+<div><div class="label">Permis 24 mois</div><div class="num">17</div></div></div>
+<p class="note">Abonnement (digest hebdomadaire, compte utilisateur) = post-M7 (mandat Auth & Plans) ; carnet consultable à la demande. Ancrage futur : watch_zones / …</p></div>
+<div class="note"><b>Geste principal :</b> ouvrir MON secteur et voir d’un coup d’œil ce qui a bougé<br><b>Emplacement proposé :</b> registre Outils › Passer à l’action ; la cloche pointera ici quand l’abonnement digest arrivera (post-M7)</div>
+</div><div class="mkbadge">maquette statique · données réelles 22/07/2026 · chrome à retirer au branchement</div></body></html>
