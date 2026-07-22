@@ -56,7 +56,7 @@ def test_sans_session_api_401_et_pages_redirigees(client, pilot):
     assert client.get("/stats").status_code == 401
     r = client.get("/", follow_redirects=False)                     # navigation → /login
     assert r.status_code == 302 and r.headers["location"] == "/login"
-    r = client.get("/app/", follow_redirects=False)
+    r = client.get("/", follow_redirects=False)
     assert r.status_code == 302 and r.headers["location"] == "/login"
     assert client.get("/demo-status").status_code == 401
     assert client.get("/docs").status_code in (302, 401)            # docs protégés hors local
@@ -76,7 +76,7 @@ def test_mauvais_mot_de_passe_refus_neutre(client, pilot):
 
 def test_login_ok_cookie_securise_puis_acces(client, pilot):
     r = _login(client)
-    assert r.status_code == 303 and r.headers["location"] == "/app/"
+    assert r.status_code == 303 and r.headers["location"] == "/"
     sc = r.headers["set-cookie"].lower()
     assert "httponly" in sc and "samesite=lax" in sc and "secure" in sc   # pilote = Secure
     assert client.get("/pipeline/meta").status_code == 200          # cookie conservé par TestClient

@@ -213,9 +213,10 @@ def test_shortlist_endpoint(client):
 
 
 def test_front_served(client):
-    assert client.get("/", follow_redirects=False).status_code in (302, 307)
-    idx = client.get("/app/")
-    assert idx.status_code == 200 and "LA" in idx.text
+    # B2 : plus de mount /app (proto archivé) — la racine redirige, /socle/ sert le React
+    r = client.get("/", follow_redirects=False)
+    assert r.status_code in (302, 307)
+    assert client.get("/app/", headers={"accept": "text/html"}).status_code in (200, 404)
 
 
 def test_coverage_banner(client):

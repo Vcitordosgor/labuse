@@ -35,8 +35,6 @@ from ..db import session_scope
 from ..enums import FeedbackVerdict
 from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS, V_BRULANTE_THRESHOLD
 
-WEB_DIR = Path(__file__).resolve().parent / "web"
-
 # Couches EXCLUANTES / FLAGGANTES dont l'absence rend les verdicts partiels (§3).
 # Tant qu'une de ces couches n'est pas ingérée, une "opportunité" peut masquer une
 # contrainte → bandeau d'avertissement + distinction "opportunité vérifiée".
@@ -230,10 +228,12 @@ def login_page(request: Request):
 
     from . import auth
 
+    # B2 (BLOC B) : le proto Vue « /app » est RETIRÉ (tag archive/proto-vue) — la cible
+    # post-login est LA RACINE : en prod Caddy y sert le front, en local `/` → /socle/.
     if not auth.enabled():                       # auth désactivée (local) → rien à demander
-        return RedirectResponse("/app/", status_code=302)
+        return RedirectResponse("/", status_code=302)
     if auth.token_ok(request.cookies.get(auth.COOKIE)):
-        return RedirectResponse("/app/", status_code=302)
+        return RedirectResponse("/", status_code=302)
     return HTMLResponse(auth.login_page())
 
 
@@ -263,7 +263,7 @@ async def login_submit(request: Request):
         auth.slow_failure()
         return HTMLResponse(auth.login_page(error=True), status_code=401)
     auth.log_event("login_ok", request)
-    resp = RedirectResponse("/app/", status_code=303)
+    resp = RedirectResponse("/", status_code=303)   # B2 : la racine (Caddy en prod, /socle/ en local)
     resp.set_cookie(value=auth.make_token(), **auth.cookie_kwargs())
     return resp
 
@@ -3143,15 +3143,15 @@ async def _no_cache_html(request: Request, call_next):
         resp.headers["Cache-Control"] = "no-store"
     return resp
 
-if WEB_DIR.exists():
-    app.mount("/app", StaticFiles(directory=str(WEB_DIR), html=True), name="app")  # UI Vue historique (transition)
+# B2 (BLOC B) : le mount statique du proto Vue « /app » est retiré — code archivé sous le
+# tag `archive/proto-vue`, le 301 /app → / de la prod reste dans Caddy.
 
 
 @app.get("/", include_in_schema=False)
 def _root() -> RedirectResponse:
     if FRONTEND_DIST.exists():
         return RedirectResponse("/socle/")
-    return RedirectResponse("/app/" if WEB_DIR.exists() else "/docs")
+    return RedirectResponse("/docs")
 
 
 if FRONTEND_DIST.exists():
