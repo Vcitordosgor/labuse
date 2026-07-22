@@ -6,6 +6,7 @@ import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdict
 import { fmtDate, fmtDateNum, fmtInt } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { Loading } from '../Loading'
+import { ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
@@ -631,12 +632,8 @@ function FaisabiliteTab({ idu }: { idu: string }) {
   const [showSteps, setShowSteps] = useState(true)
   const explain = useMutation({ mutationFn: () => faisabiliteExplain(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
-  if (isError || !b) return (
-    <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
-      <p className="text-st-ecartee">Faisabilité indisponible.</p>
-      <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt">Réessayer</button>
-    </div>
-  )
+  if (isError || !b) return <ErrorState message="Faisabilité indisponible." retry={() => refetch()} />
+
   const cap = b.capacite
   const fo = cap?.fourchette ?? {}
   const steps: { label: string; valeur: string; source: string; prov: string }[] = cap?.steps ?? []
@@ -646,7 +643,7 @@ function FaisabiliteTab({ idu }: { idu: string }) {
       {/* ── LE RÉSULTAT ── */}
       {cap ? (
         <div className="rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-2.5">
-          <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">CAPACITÉ CONSTRUCTIBLE</p>
+          <p className="label-caps mb-1">Capacité constructible</p>
           <div className="text-sm font-medium text-txt-hi">{cap.verdict}</div>
           <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-txt-mut">
             <div>Gabarit : <b className="text-txt">{fo.niveaux}</b> ({fo.hauteur_m} m)</div>
@@ -658,7 +655,7 @@ function FaisabiliteTab({ idu }: { idu: string }) {
           <div className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{cap.bandeau}</div>
         </div>
       ) : (
-        <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+        <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
           Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).
         </div>
       )}
@@ -666,12 +663,12 @@ function FaisabiliteTab({ idu }: { idu: string }) {
       {/* ── LE CALCUL, ÉTAPE PAR ÉTAPE (déterministe) ── */}
       {steps.length > 0 && (
         <div>
-          <button onClick={() => setShowSteps((s) => !s)} className="mb-1 flex w-full items-center justify-between font-mono text-[10px] tracking-widest text-txt-dim hover:text-txt-mut">
-            <span>LE CALCUL, ÉTAPE PAR ÉTAPE ({steps.length})</span>
+          <button onClick={() => setShowSteps((s) => !s)} className="label-caps mb-1 flex w-full items-center justify-between transition-colors duration-quick hover:text-txt">
+            <span>Le calcul, étape par étape ({steps.length})</span>
             <span>{showSteps ? '−' : '+'}</span>
           </button>
           {showSteps && (
-            <ol data-faisa-steps className="overflow-hidden rounded-lg border border-line-2">
+            <ol data-faisa-steps className="card-elev overflow-hidden">
               {steps.map((s, i) => (
                 <li key={i} className={`flex items-start gap-2 px-3 py-1.5 text-[11px] ${i % 2 ? 'bg-surface-2' : 'bg-surface-1'}`}>
                   <span className="shrink-0 font-mono text-[9px] text-txt-dim">{i + 1}</span>
