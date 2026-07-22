@@ -520,17 +520,17 @@ function Calculette({ idu }: { idu: string }) {
   const achat = d?.achat
   return (
     <div data-calculette>
-      <p className="mb-1 flex items-center gap-2 font-mono text-[10px] tracking-widest text-txt-dim">
-        CALCULETTE DE CHARGE FONCIÈRE
-        {q.isFetching && <span data-calc-recalc className="animate-pulse text-[9px] text-mint">recalcul…</span>}
+      <p className="label-caps mb-1 flex items-center gap-2">
+        Calculette de charge foncière
+        {q.isFetching && <span data-calc-recalc className="animate-pulse text-[9px] normal-case tracking-normal text-mint">recalcul…</span>}
       </p>
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] leading-relaxed text-txt">
+      <div className="card-elev px-3 py-2.5 text-[11px] leading-relaxed text-txt">
         {q.isLoading && <Loading label="Calcul en cours" />}
         {d && d.calculable === false && (
           <div data-calc-indispo>
             <p className="text-st-creuser">{d.message ?? 'Charge foncière non calculable.'}</p>
             {d.marche?.median != null && (
-              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie bâti secteur : <b className="text-mint">{Number(d.marche.median).toLocaleString('fr-FR')} €/m²</b> ({d.marche.fiabilite}).</p>
+              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie bâti secteur : <b className="tnum text-mint">{fmtInt(Number(d.marche.median))} €/m²</b> ({d.marche.fiabilite}).</p>
             )}
           </div>
         )}
@@ -538,9 +538,9 @@ function Calculette({ idu }: { idu: string }) {
           <>
             {/* le SOURCÉ (lecture seule) — ce que LABUSE sait */}
             <p className="text-[11px] text-txt-dim">
-              LABUSE (sourcé) : SDP vendable <b className="text-txt">{Number(d.shab_vendable_m2).toLocaleString('fr-FR')} m²</b> ·
-              prix de sortie bâti <b className="text-txt">{Number(d.prix_sortie_median).toLocaleString('fr-FR')} €/m²</b> ·
-              terrain <b className="text-txt">{Number(d.terrain_m2).toLocaleString('fr-FR')} m²</b>
+              LABUSE (sourcé) : SDP vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> ·
+              prix de sortie bâti <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
+              terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
             </p>
             {/* les HYPOTHÈSES — saisies par le promoteur */}
             <div className="mt-2 flex gap-2">
@@ -551,8 +551,8 @@ function Calculette({ idu }: { idu: string }) {
             <div data-calc-resultat className="mt-2.5 rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-2">
               <p className="text-[11px] text-txt-dim">Charge foncière supportable <span className="text-txt-mut">— selon vos hypothèses</span></p>
               <p className="mt-0.5">
-                <b data-calc-cf className="font-display text-lg font-bold text-mint">{euros(cf.central)}</b>
-                <span className="ml-1.5 text-[11px] text-txt-mut">≈ {Number(cf.par_m2_terrain).toLocaleString('fr-FR')} €/m² de terrain</span>
+                <b data-calc-cf className="num-key text-lg text-mint">{euros(cf.central)}</b>
+                <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
               </p>
               <p className="text-[11px] text-txt-dim">fourchette {euros(cf.bas)} – {euros(cf.haut)}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
             </div>
