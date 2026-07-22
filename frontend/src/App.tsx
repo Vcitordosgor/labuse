@@ -176,7 +176,7 @@ function IaRestitution() {
         <div className="mt-3 flex items-center gap-2 border-t border-line-2 pt-2.5">
           {projetId == null ? (
             <button data-projet-enregistrer onClick={() => enregistrer.mutate()} disabled={enregistrer.isPending}
-              className="rounded-lg bg-mint px-3 py-1.5 text-[11px] font-semibold text-[#06130C] hover:brightness-110 disabled:opacity-50">
+              className="rounded-lg bg-mint px-3 py-1.5 text-[11px] font-semibold text-mint-ink hover:brightness-110 disabled:opacity-50">
               {enregistrer.isPending ? 'Enregistrement…' : `Enregistrer « ${projet.nom} »`}
             </button>
           ) : (
@@ -205,7 +205,7 @@ function IaRestitution() {
       {projet?.programme && (
         <button data-projet-m22
           onClick={() => { setView('cartes'); setM22Prefill(projet.programme as Record<string, unknown>); setModule('programme') }}
-          className="mt-2 w-full rounded-lg border border-[#B497F0]/40 py-1.5 text-[11px] text-[#B497F0] hover:border-[#B497F0]"
+          className="mt-2 w-full rounded-lg border border-violet/40 py-1.5 text-[11px] text-violet hover:border-violet"
           title="Ouvrir le formulaire M22 pré-rempli — la vérité reste le formulaire (éditable)">
           Affiner la capacité dans M22 (formulaire pré-rempli)
         </button>
