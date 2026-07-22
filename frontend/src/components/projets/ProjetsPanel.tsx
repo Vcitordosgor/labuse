@@ -173,7 +173,7 @@ export function ProjetsPanel() {
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-y-auto bg-bg">
       <div className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-8 sm:py-10">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-wrap items-end justify-between gap-4 sm:flex-nowrap">
           <div className="min-w-0">
             <h1 className="font-display text-xl font-bold text-txt-hi">Mes projets</h1>
             <p className="mt-1 text-xs text-txt-mut">

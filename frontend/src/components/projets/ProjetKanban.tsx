@@ -143,7 +143,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
         <button onClick={() => setOpenProjet(null)}
           className="min-h-7 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi"
           title="Revenir à la liste des projets">← Mes projets</button>
-        <div className="mt-1.5 flex items-start justify-between gap-3">
+        <div className="mt-1.5 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             {editing ? (
               <input data-kanban-nom-input autoFocus value={nomInput}
@@ -166,7 +166,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               )}
             </div>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
             <button data-kanban-chercher onClick={() => { setMsg(''); elargir.mutate() }} disabled={elargir.isPending}
               className="min-h-7 rounded-md border border-mint/45 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-50">
               {elargir.isPending ? '…' : '+ Chercher plus'}
