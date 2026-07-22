@@ -7,14 +7,14 @@ import { Loading } from '../Loading'
 const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
 
 //: statut SRU → couleur + lecture métier (une phrase sobre — le ciblage de la promotrice)
-const SRU_META: Record<string, { color: string; bg: string; label: string; lecture: string }> = {
-  carencee: { color: '#E8695A', bg: '#2a1210', label: 'CARENCÉE',
+const SRU_META: Record<string, { color: string; label: string; lecture: string }> = {
+  carencee: { color: '#E8695A', label: 'CARENCÉE',
     lecture: 'Commune en carence SRU : forte pression de production de logement social — les programmes avec part LLS y sont attendus (et souvent facilités).' },
-  deficitaire: { color: '#E8B44C', bg: '#211a10', label: 'DÉFICITAIRE',
+  deficitaire: { color: '#E8B44C', label: 'DÉFICITAIRE',
     lecture: 'Sous l’objectif légal : la commune doit produire du logement social — un programme mixte y répond à une obligation réelle.' },
-  exemptee: { color: '#8FA69A', bg: '#141a17', label: 'EXEMPTÉE 2023-2025',
+  exemptee: { color: '#8FA69A', label: 'EXEMPTÉE 2023-2025',
     lecture: 'Soumise SRU mais exemptée d’obligations sur la période (décret) — pression de production sociale suspendue.' },
-  conforme: { color: '#5CE6A1', bg: '#0F1A14', label: 'CONFORME',
+  conforme: { color: '#5CE6A1', label: 'CONFORME',
     lecture: 'Objectif SRU atteint — pas de pression réglementaire de rattrapage social.' },
 }
 
@@ -23,7 +23,7 @@ function Source({ nom, url }: { nom?: string | null; url?: string | null }) {
   return (
     <p className="mt-1.5 text-[11px] leading-snug text-txt-dim">
       Source :{' '}
-      {url ? <a href={url} target="_blank" rel="noreferrer" className="text-[#7DE8E0] hover:underline">{nom} ↗</a> : nom}
+      {url ? <a href={url} target="_blank" rel="noreferrer" className="text-mint hover:underline">{nom} ↗</a> : nom}
     </p>
   )
 }
@@ -48,7 +48,7 @@ function Bar({ parts }: { parts: { label: string; pct: number; color: string }[]
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="border-b border-line px-5 py-4">
-      <p className="mb-2 font-mono text-[10px] tracking-widest text-txt-dim">{title}</p>
+      <p className="label-caps mb-2">{title}</p>
       {children}
     </section>
   )
@@ -72,10 +72,10 @@ export function ContextePanel() {
   const d = q.data
 
   return (
-    <aside data-contexte-panel className="absolute right-0 top-0 z-30 flex h-full w-[420px] flex-col border-l border-line bg-surface-1 shadow-2xl">
+    <aside data-contexte-panel className="absolute right-0 top-0 z-30 flex h-full w-[420px] flex-col border-l border-line bg-surface-1 shadow-elev-3">
       <div className="flex shrink-0 items-center justify-between border-b border-line px-5 py-3">
         <div>
-          <p className="font-mono text-[10px] tracking-widest text-[#B497F0]">CONTEXTE COMMUNE</p>
+          <p className="label-caps text-violet">Contexte commune</p>
           <h2 className="font-display text-lg font-bold text-txt-hi">{contexteCommune}</h2>
           {d?.epci && <p className="text-[10.5px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
         </div>
@@ -92,7 +92,7 @@ export function ContextePanel() {
                 const m = SRU_META[d.sru.statut] ?? SRU_META.conforme
                 return (
                   <>
-                    <div className="rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: m.bg }}>
+                    <div className="rounded-lg border px-3 py-2" style={{ borderColor: `${m.color}55`, background: `${m.color}14` }}>
                       <span className="font-display text-[15px] font-bold" style={{ color: m.color }}>
                         SRU {Number(d.sru.taux_lls).toLocaleString('fr-FR')} %
                       </span>
@@ -116,7 +116,7 @@ export function ContextePanel() {
                   {d.anru.map((a) => (
                     <div key={a.nom} className="mb-1.5 rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
                       <span className="text-xs font-medium text-txt-hi">{a.nom}</span>
-                      <span className="ml-2 rounded-full bg-[#1a2340] px-2 py-0.5 text-[11px] font-medium text-[#8FB4F0]">intérêt {a.interet}</span>
+                      <span className="ml-2 rounded-full bg-violet/15 px-2 py-0.5 text-[11px] font-medium text-violet">intérêt {a.interet}</span>
                       <p className="mt-0.5 text-[11px] text-txt-dim">{a.code_qpv} · activer la couche « ANRU » sur la carte</p>
                     </div>
                   ))}
@@ -142,7 +142,7 @@ export function ContextePanel() {
                   <p className="mt-1 text-[10.5px] text-txt-mut">{d.plh.periode} · {d.plh.statut}</p>
                   {(d.plh.refs ?? []).map((r: { doc: string; url?: string; page?: string | number }, i: number) => (
                     <p key={i} className="mt-0.5 text-[11px] text-txt-dim">
-                      Réf. : {r.url ? <a className="text-[#7DE8E0] hover:underline" href={r.url} target="_blank" rel="noreferrer">{r.doc} ↗</a> : r.doc}{r.page ? ` — p. ${r.page}` : ''}
+                      Réf. : {r.url ? <a className="text-mint hover:underline" href={r.url} target="_blank" rel="noreferrer">{r.doc} ↗</a> : r.doc}{r.page ? ` — p. ${r.page}` : ''}
                     </p>
                   ))}
                 </>
