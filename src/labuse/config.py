@@ -122,6 +122,25 @@ class Settings(BaseSettings):
     # Alertes exploitation (génération en échec après paiement, etc.).
     admin_email: str | None = None
 
+    # ── PREMIER EURO (commerce/premier-euro) — auth réelle + abonnements ──
+    # Base publique des liens signés (invitation, reset, retour Checkout).
+    public_base_url: str = "https://app.labuse.immo"
+    # Refonte 22/07 : AUCUN email automatique (Resend supprimé) — les liens d'invitation
+    # et de reset s'affichent en CLI/admin, Vic les envoie à la main.
+    # Produits créés par `labuse stripe-provisionne` — les IDs reviennent en .env.
+    stripe_price_integral: str | None = None   # Intégral 349 €/mois · 1 licence = 1 accès
+    stripe_price_flash: str | None = None      # Flash 79 € · paiement unique, un rapport
+    # Version des CGV en vigueur — l'acceptation est horodatée AVEC cette version.
+    cgv_version: str = "2026-07-22"
+    # LEX-D — mention fiscale du pied de facture Stripe. DÉFAUT = franchise en base (art. 293 B
+    # du CGI) ; à BASCULER par Vic dès l'assujettissement TVA (décision comptable). Signalé au
+    # rapport : le MRR visé dépasse le seuil de franchise dans l'année.
+    facture_mention: str = ("TVA non applicable, art. 293 B du CGI. "
+                            "LABUSE — pré-analyse foncière sur données publiques.")
+    # Verrouillage login : N échecs → verrou temporaire (minutes).
+    login_echecs_max: int = 5
+    login_verrou_minutes: int = 15
+
     @property
     def config_path(self) -> Path:
         p = Path(self.config_dir)

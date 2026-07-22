@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { createProjet, projetPdfUrl } from './lib/api'
 import { Fiche } from './components/fiche/Fiche'
@@ -274,6 +274,7 @@ export default function App() {
     <div className="flex h-screen w-screen overflow-hidden bg-bg font-sans text-txt">
       <Rail />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <CompteBandeau />
         <Header />
         <div className="relative flex min-h-0 flex-1 overflow-hidden">
           {view === 'cartes' && (
@@ -297,6 +298,26 @@ export default function App() {
           <IaRestitution />
         </div>
       </div>
+    </div>
+  )
+}
+
+
+/** PREMIER EURO · E2 — l'état d'abonnement AFFICHÉ, jamais un 500 : « paiement requis »
+ *  en bandeau st-creuser (l'accès continue pendant les relances Stripe) ; suspension =
+ *  la session meurt côté serveur, ce bandeau n'a donc jamais à la dire. Mode pilote : rien. */
+function CompteBandeau() {
+  const moi = useQuery({
+    queryKey: ['moi'],
+    queryFn: async () => { const r = await fetch('/moi'); return r.ok ? r.json() : null },
+    staleTime: 300_000, retry: false,
+  })
+  if (moi.data?.mode !== 'compte' || moi.data?.statut_compte !== 'paiement_requis') return null
+  return (
+    <div data-compte-bandeau className="flex shrink-0 items-center gap-2 border-b border-st-creuser/40 bg-st-creuser/10 px-4 py-1.5 text-[11.5px] text-st-creuser">
+      <span aria-hidden>▲</span>
+      Paiement requis — le dernier prélèvement n'a pas abouti. Mettez à jour votre moyen de
+      paiement depuis la facture Stripe reçue par email ; l'accès sera suspendu sans régularisation.
     </div>
   )
 }

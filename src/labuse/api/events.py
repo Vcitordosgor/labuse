@@ -8,7 +8,7 @@ Cronable via `labuse detect-events`. Sans second run réel, un run de DÉMONSTRA
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -289,21 +289,27 @@ class SearchSaveIn(BaseModel):
 
 
 @router.get("/searches")
-def searches_list(db: Session = Depends(get_db)) -> list[dict]:
+def searches_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
+    from .tenant import current_compte
     return [dict(r) for r in db.execute(text(
-        "SELECT id, nom, hash, created_at::date::text AS date FROM saved_searches ORDER BY id DESC")).mappings()]
+        "SELECT id, nom, hash, created_at::date::text AS date FROM saved_searches"
+        " WHERE compte_id IS NOT DISTINCT FROM :cid ORDER BY id DESC"),
+        {"cid": current_compte(request)}).mappings()]
 
 
 @router.post("/searches")
-def searches_add(body: SearchSaveIn, db: Session = Depends(get_db)) -> dict:
-    db.execute(text("INSERT INTO saved_searches (nom, hash) VALUES (:n, :h)"),
-               {"n": body.nom[:80], "h": body.hash})
+def searches_add(body: SearchSaveIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
+    db.execute(text("INSERT INTO saved_searches (nom, hash, compte_id) VALUES (:n, :h, :cid)"),
+               {"n": body.nom[:80], "h": body.hash, "cid": current_compte(request)})
     return {"ok": True}
 
 
 @router.delete("/searches/{sid}")
-def searches_del(sid: int, db: Session = Depends(get_db)) -> dict:
-    db.execute(text("DELETE FROM saved_searches WHERE id = :i"), {"i": sid})
+def searches_del(sid: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
+    db.execute(text("DELETE FROM saved_searches WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+               {"i": sid, "cid": current_compte(request)})   # SEC-IDOR
     return {"ok": True}
 
 

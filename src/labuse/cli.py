@@ -1981,6 +1981,114 @@ def refresh_dvf_cmd() -> None:
         typer.echo("✓ DVF : no-op (aucune livraison)" if r["no_op"] else f"✓ DVF rechargé : {r['recharges']}")
 
 
+@app.command("stripe-provisionne")
+def stripe_provisionne_cmd() -> None:
+    """PREMIER EURO · E2 — crée produits (Indé 290 €/Pro 490 €) + coupon founding −50 % forever
+    chez Stripe (idempotent par lookup_key) et affiche les IDs à poser en .env. Mode = celui de
+    la clé (sk_test_ = test)."""
+    from .facturation import provisionner
+
+    ids = provisionner()
+    typer.echo("IDs Stripe (à poser en .env — la source de vérité de l'environnement) :")
+    for k, v in ids.items():
+        typer.echo(f"  {k.upper()}={v}")
+
+
+@app.command("compte-invite")
+def compte_invite_cmd(
+    email: str,
+    nom: str = typer.Option(None, help="Nom du compte (défaut : l'email)"),
+) -> None:
+    """PREMIER EURO — crée l'invitation INTÉGRAL (349 €/mois, 1 licence) et AFFICHE le lien
+    (refonte 22/07 : aucun email automatique — Vic l'envoie à la main)."""
+    from .comptes import creer_invitation
+
+    with session_scope() as s:
+        inv = creer_invitation(s, email, nom=nom)
+    typer.echo(f"invitation créée — compte #{inv['compte_id']} · {inv['email']} · expire {inv['expire_at'][:10]}")
+    typer.echo("LIEN À ENVOYER À LA MAIN (seul exemplaire, en base : le hash) :")
+    typer.echo(f"  {inv['lien']}")
+
+
+@app.command("compte-reset-lien")
+def compte_reset_lien_cmd(email: str) -> None:
+    """Génère et AFFICHE le lien de réinitialisation (1 h) — à transmettre à la main."""
+    from .comptes import demander_reset
+
+    with session_scope() as s:
+        r = demander_reset(s, email)
+    if not r:
+        typer.echo("email inconnu ou compte non actif", err=True); raise typer.Exit(1)
+    typer.echo("LIEN DE RESET (1 h, à envoyer à la main) :")
+    typer.echo(f"  {r['lien']}")
+
+
+@app.command("compte-admin")
+def compte_admin_cmd(email: str) -> None:
+    """Crée LE compte admin (Vic) — mot de passe demandé au clavier, jamais en argv/historique."""
+    import getpass
+
+    from .comptes import creer_admin
+
+    pw = getpass.getpass("Mot de passe admin (≥ 10 caractères) : ")
+    if len(pw) < 10:
+        typer.echo("trop court", err=True); raise typer.Exit(1)
+    if getpass.getpass("Confirmez : ") != pw:
+        typer.echo("les deux saisies diffèrent", err=True); raise typer.Exit(1)
+    with session_scope() as s:
+        uid = creer_admin(s, email, pw)
+    typer.echo(f"admin créé (utilisateur #{uid}) — testez le login sur /login AVANT toute bascule")
+
+
+@app.command("compte-suspend")
+def compte_suspend_cmd(compte_id: int, motif: str = typer.Option("manuel")) -> None:
+    """Suspend un compte (sessions révoquées ≤ 60 s) — l'app affiche « paiement requis »/« suspendu »."""
+    from .comptes import suspendre_compte
+
+    with session_scope() as s:
+        suspendre_compte(s, compte_id, motif)
+    typer.echo(f"compte #{compte_id} suspendu ({motif})")
+
+
+@app.command("compte-reactive")
+def compte_reactive_cmd(compte_id: int, motif: str = typer.Option("manuel")) -> None:
+    """Réactive un compte suspendu."""
+    from .comptes import reactiver_compte
+
+    with session_scope() as s:
+        reactiver_compte(s, compte_id, motif)
+    typer.echo(f"compte #{compte_id} réactivé")
+
+
+@app.command("compte-supprime")
+def compte_supprime_cmd(email: str, oui: bool = typer.Option(False, "--oui", help="confirmation")) -> None:
+    """EFFACEMENT RGPD : purge l'utilisateur (sessions comprises), anonymise l'audit."""
+    if not oui:
+        typer.echo("ajoutez --oui pour confirmer l'effacement définitif", err=True); raise typer.Exit(1)
+    from .comptes import effacer_compte_rgpd
+
+    with session_scope() as s:
+        ok = effacer_compte_rgpd(s, email)
+    typer.echo("effacé (RGPD : compte + projets + CRM + veilles)" if ok else "email inconnu")
+
+
+@app.command("cgv-preuve")
+def cgv_preuve_cmd(email: str = typer.Option(None, help="un email, ou tous si omis")) -> None:
+    """LEX-D — preuve de consentement CGV EXPORTABLE : qui a accepté quelle version, quand."""
+    from sqlalchemy import text as _t
+
+    with session_scope() as s:
+        rows = s.execute(_t(
+            "SELECT email, cgv_version, cgv_acceptees_at FROM utilisateurs"
+            " WHERE cgv_acceptees_at IS NOT NULL"
+            + (" AND email = :e" if email else "") + " ORDER BY cgv_acceptees_at"),
+            ({"e": email.strip().lower()} if email else {})).mappings().all()
+    if not rows:
+        typer.echo("aucun consentement enregistré"); return
+    for r in rows:
+        typer.echo(f"{r['cgv_acceptees_at'].isoformat()} · {r['email']} · CGV {r['cgv_version']}")
+
+
 @app.command("radar-sources")
 def radar_sources_cmd() -> None:
     """BLOC B (B3) — le radar des sources : sonde HEAD/métadonnées sur chaque source

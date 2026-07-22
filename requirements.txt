@@ -28,12 +28,14 @@ numpy>=1.26
 # Ingestion INSEE RP — lecture XLSX (scripts/ingest_insee_logement.py).
 openpyxl>=3.1
 
+# PREMIER EURO — auth réelle + abonnements (mandat commerce/premier-euro)
+argon2-cffi>=23.1        # hachage argon2id (jamais un hash faible)
+stripe>=8                # Checkout hébergé + webhooks signés (réintroduit : il y a du code)
+
 # Dev / tests
 pytest>=8.0
 
 # Module Flash (rapport parcelle à l'unité) : PDF HTML/CSS
-# (stripe retiré au BLOC B : zéro import — Lots Flash 2-4 jamais lancés ; à réintroduire
-# avec le mandat paiement, les clés stripe_* de config.py restent inertes)
 weasyprint>=61
 jinja2>=3.1
 pypdf>=5

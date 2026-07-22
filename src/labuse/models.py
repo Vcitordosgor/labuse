@@ -613,9 +613,13 @@ class PipelineEntry(Base, TimestampMixin):
     """
 
     __tablename__ = "pipeline_entries"
-    __table_args__ = (UniqueConstraint("parcel_id", name="uq_pipeline_parcel"),)
+    # AUDIT PAIEMENT · SEC-IDOR — la cloison change la clé d'unicité : une parcelle est
+    # unique PAR COMPTE (compte_id, parcel_id), plus globalement (api/tenant.ensure_scoping
+    # rekeye en base). L'ancien uq_pipeline_parcel est retiré là-bas.
+    __table_args__ = (UniqueConstraint("compte_id", "parcel_id", name="uq_pipeline_compte_parcel"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    compte_id: Mapped[int | None] = mapped_column(Integer, index=True)  # FK+cascade posée hors ORM
     parcel_id: Mapped[int] = mapped_column(ForeignKey("parcels.id", ondelete="CASCADE"))
     status: Mapped[str] = mapped_column(String(48))          # clé de colonne (config)
     priority: Mapped[str] = mapped_column(String(16))        # clé de priorité (config)
@@ -654,6 +658,10 @@ class Projet(Base, TimestampMixin):
     __tablename__ = "projets"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    # AUDIT PAIEMENT · SEC-IDOR — cloison multi-tenant : le projet appartient à UN compte
+    # (NULL = bucket pilote/démo hérité). Toute lecture/écriture est filtrée par le compte de
+    # la session (api/tenant.py). Colonne aussi posée hors ORM (ADD COLUMN IF NOT EXISTS).
+    compte_id: Mapped[int | None] = mapped_column(Integer, index=True)  # FK+cascade posée hors ORM
     nom: Mapped[str] = mapped_column(String(160))             # proposé par l'IA, éditable
     fiche: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")
     filtres: Mapped[dict] = mapped_column(JSONB, default=dict, server_default="{}")

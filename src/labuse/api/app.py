@@ -88,6 +88,13 @@ async def _lifespan(app: FastAPI):
         for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens,
                      _segments_ens, _protection_ens, _courrier_ens):
             _ens(_engine())
+        # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les
+        # tables à données client). Après les ensures des modules (les tables existent).
+        from ..comptes import ensure_tables as _comptes_ens
+        from .tenant import ensure_scoping as _scoping_ens
+        with session_scope() as _s:
+            _comptes_ens(_s)
+            _scoping_ens(_s)
         app.state.schema_heal = "ok"
     except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
         app.state.schema_heal = f"échec : {type(exc).__name__}: {exc}"
@@ -127,6 +134,17 @@ app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 @app.middleware("http")
+async def _security_headers(request, call_next):
+    """AUDIT PAIEMENT · LEX-D — en-têtes de sécurité de base sur CHAQUE réponse (défense en
+    profondeur : le Caddy prod en pose déjà, l'app les garantit aussi en local/QA)."""
+    resp = await call_next(request)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "same-origin")
+    return resp
+
+
+@app.middleware("http")
 async def _fix_double_encoded_query(request, call_next):
     """Répare les query-strings DOUBLE-ENCODÉES par certains tunnels/proxys d'aperçu.
 
@@ -162,9 +180,14 @@ async def _auth_guard(request, call_next):
     from . import auth
 
     path = request.url.path
+    # AUDIT PAIEMENT · SEC-IDOR — résout le compte de la session et le pose sur request.state
+    # (scope Starlette partagé jusqu'à l'endpoint) : la cloison multi-tenant s'applique partout.
+    cookie = request.cookies.get(auth.COOKIE)
+    info = auth.session_info(cookie)
+    request.state.compte_id = info["compte_id"] if info else None
     if not auth.enabled() or auth.is_public(path):
         return await call_next(request)
-    if auth.token_ok(request.cookies.get(auth.COOKIE)):
+    if info is not None or auth.token_ok(cookie):
         return await call_next(request)
     if not auth.configured():
         return JSONResponse(status_code=503, content={
@@ -248,15 +271,55 @@ async def login_submit(request: Request):
     from . import auth
 
     body = await request.body()
-    password = ""
+    password, identifiant = "", ""
     ctype = request.headers.get("content-type", "")
     if "json" in ctype:
         try:
-            password = str(json.loads(body or b"{}").get("password") or "")
+            data = json.loads(body or b"{}")
+            password = str(data.get("password") or "")
+            identifiant = str(data.get("identifiant") or "")
         except ValueError:
             password = ""
     else:
-        password = (parse_qs(body.decode("utf-8", "replace")).get("password") or [""])[0]
+        q = parse_qs(body.decode("utf-8", "replace"))
+        password = (q.get("password") or [""])[0]
+        identifiant = (q.get("identifiant") or [""])[0].strip()
+
+    # PREMIER EURO · E1 — identifiant fourni = LOGIN UTILISATEUR (email + argon2id, verrou
+    # après N échecs) ; identifiant vide = mot de passe PILOTE (compat — meurt à la bascule).
+    if identifiant:
+        from ..comptes import creer_session, verifier_login
+        from ..db import session_scope
+        with session_scope() as db:
+            u = verifier_login(db, identifiant, password)
+            if not u:
+                auth.log_event("login_failed", request)
+                auth.slow_failure()
+                return HTMLResponse(auth.login_page(error=True), status_code=401)
+            # REPRISE DE PAIEMENT (né du test Vic) : identifiants corrects mais compte
+            # jamais payé (Checkout refusé/abandonné) → on relance un Checkout NEUF au
+            # lieu d'ouvrir l'app. Le token d'invitation consommé n'est plus un cul-de-sac.
+            if u["statut_compte"] == "invite":
+                auth.log_event("login_ok_paiement_du", request)
+                # ROB-B — filet du pire cas : si le paiement a réussi mais le webhook a été
+                # perdu, on RÉCONCILIE avec Stripe (souscription active) plutôt que de relancer
+                # un Checkout (double paiement). « A payé ⇒ a accès ».
+                from ..facturation import reconcile_abonnement
+                if reconcile_abonnement(db, u["compte_id"], identifiant):
+                    tok = creer_session(db, u["utilisateur_id"])
+                    resp = RedirectResponse("/", status_code=303)
+                    resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
+                    return resp
+                # → écran de bascule Checkout (design validé partie E), la même page de
+                # confiance que l'onboarding ; la mécanique de paiement reste inchangée.
+                from .coffre_ui import pay_token
+                return RedirectResponse(f"/onboarding/paiement?t={pay_token(u['compte_id'])}",
+                                        status_code=303)
+            tok = creer_session(db, u["utilisateur_id"])
+        auth.log_event("login_ok", request)
+        resp = RedirectResponse("/", status_code=303)
+        resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
+        return resp
 
     if not auth.configured() or not auth.password_ok(password):
         auth.log_event("login_failed", request)
@@ -2976,34 +3039,43 @@ def pipeline_meta() -> dict:
 
 
 @app.get("/pipeline")
-def pipeline_list(db: Session = Depends(get_db)) -> list[dict]:
-    entries = db.execute(
-        select(models.PipelineEntry).order_by(models.PipelineEntry.created_at.desc())
-    ).scalars().all()
+def pipeline_list(request: Request, db: Session = Depends(get_db)) -> list[dict]:
+    from .tenant import current_compte
+    cid = current_compte(request)
+    q = select(models.PipelineEntry).order_by(models.PipelineEntry.created_at.desc())
+    q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
+                else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    entries = db.execute(q).scalars().all()
     return [_entry_dict(db, e) for e in entries]
 
 
 @app.get("/pipeline/parcel/{idu}")
-def pipeline_for_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
+def pipeline_for_parcel(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     _check_idu(idu)
+    cid = current_compte(request)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
-    e = db.execute(
-        select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
-    ).scalar_one_or_none()
+    q = select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
+    q = q.where(models.PipelineEntry.compte_id.is_(None) if cid is None
+                else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    e = db.execute(q).scalar_one_or_none()
     return {"in_pipeline": bool(e), "entry": _entry_dict(db, e) if e else None}
 
 
 @app.post("/pipeline")
-def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
+def pipeline_add(body: PipelineAddIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     _check_idu(body.idu)
+    cid = current_compte(request)
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == body.idu)).scalar_one_or_none()
     if not p:
         raise HTTPException(404, "Parcelle inconnue")
-    existing = db.execute(
-        select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
-    ).scalar_one_or_none()
+    _ex = select(models.PipelineEntry).where(models.PipelineEntry.parcel_id == p.id)
+    _ex = _ex.where(models.PipelineEntry.compte_id.is_(None) if cid is None
+                    else models.PipelineEntry.compte_id == cid)   # SEC-IDOR
+    existing = db.execute(_ex).scalar_one_or_none()
     if existing:                                            # déjà suivie → on renvoie son état courant
         return {"ok": True, "already": True, "entry": _entry_dict(db, existing)}
 
@@ -3020,10 +3092,12 @@ def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
         raise HTTPException(422, f"Prospection invalide : {exc}") from None
     projet_id = None
     if body.projet_id is not None:
-        if not db.get(models.Projet, body.projet_id):
+        # SEC-IDOR : on ne rattache qu'à un projet DU compte (sinon 404)
+        _pr = db.get(models.Projet, body.projet_id)
+        if not _pr or (_pr.compte_id or None) != (cid or None):
             raise HTTPException(404, "Projet inconnu")
         projet_id = body.projet_id
-    e = models.PipelineEntry(parcel_id=p.id, status=status, priority=priority,
+    e = models.PipelineEntry(parcel_id=p.id, status=status, priority=priority, compte_id=cid,
                              notes=(body.notes or ""), prospection=prosp, projet_id=projet_id)
     db.add(e)
     db.flush()
@@ -3031,9 +3105,10 @@ def pipeline_add(body: PipelineAddIn, db: Session = Depends(get_db)) -> dict:
 
 
 @app.patch("/pipeline/{entry_id}")
-def pipeline_patch(entry_id: int, body: PipelinePatchIn, db: Session = Depends(get_db)) -> dict:
+def pipeline_patch(entry_id: int, body: PipelinePatchIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     e = db.get(models.PipelineEntry, entry_id)
-    if not e:
+    if not e or (e.compte_id or None) != (current_compte(request) or None):   # SEC-IDOR
         raise HTTPException(404, "Entrée de pipeline inconnue")
     if body.status is not None:
         if body.status not in _col_keys():
@@ -3064,9 +3139,10 @@ def pipeline_patch(entry_id: int, body: PipelinePatchIn, db: Session = Depends(g
 
 
 @app.delete("/pipeline/{entry_id}")
-def pipeline_delete(entry_id: int, db: Session = Depends(get_db)) -> dict:
+def pipeline_delete(entry_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     e = db.get(models.PipelineEntry, entry_id)
-    if not e:
+    if not e or (e.compte_id or None) != (current_compte(request) or None):   # SEC-IDOR
         raise HTTPException(404, "Entrée de pipeline inconnue")
     db.delete(e)
     db.flush()
@@ -3091,6 +3167,7 @@ from .traducteur import router as _traducteur_router  # noqa: E402  (O4 — trad
 from .servitudes import router as _servitudes_router  # noqa: E402  (O5 — servitudes invisibles)
 from .comparateur import router as _comparateur_router  # noqa: E402  (O6 — comparateur de communes)
 from .carnet import router as _carnet_router  # noqa: E402  (O7 — carnet de secteur)
+from .onboarding import router as _onboarding_router  # noqa: E402  (PREMIER EURO — onboarding + légal + webhook)
 from .tension import router as _tension_router  # noqa: E402  (O8 — tension foncière, MASQUÉ)
 from .rarete import router as _rarete_router  # noqa: E402  (O9 — pipeline de rareté)
 from .operations import router as _operations_router  # noqa: E402  (O11 — opérations & lots)
@@ -3116,6 +3193,7 @@ app.include_router(_traducteur_router)
 app.include_router(_servitudes_router)
 app.include_router(_comparateur_router)
 app.include_router(_carnet_router)
+app.include_router(_onboarding_router)
 app.include_router(_tension_router)
 app.include_router(_rarete_router)
 app.include_router(_operations_router)
