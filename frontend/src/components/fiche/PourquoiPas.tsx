@@ -9,7 +9,7 @@ import { ErrorState } from '../States'
 function Motif({ m, hard = false }: { m: AntiFicheMotif; hard?: boolean }) {
   return (
     <div className="flex gap-2 rounded-lg bg-surface-3 px-3 py-2 text-[11.5px] leading-snug">
-      <span className={hard ? 'text-st-ecartee' : 'text-st-creuser'}>{hard ? '✕' : '⚠'}</span>
+      <span className={hard ? 'text-st-ecartee' : 'text-st-creuser'}>{hard ? '✕' : '▲'}</span>
       <div className="min-w-0">
         <span className="text-txt">{m.motif}</span>
         <span className="ml-1.5 text-[9.5px] text-txt-dim">· {m.source}</span>

@@ -162,7 +162,7 @@ function VSignalRow({ s }: { s: VSignal }) {
             : <span className="truncate">{s.source}</span>}
           {s.match && s.match.confiance < 1 && (
             <Tip tip="Propriétaire rapproché par dénomination (pas de SIREN au fichier DGFiP) — points réduits ×0.7" className="shrink-0">
-              <span className="rounded bg-[#211a10] px-1 text-[8.5px] text-st-creuser">
+              <span className="rounded bg-st-creuser/10 px-1 text-[8.5px] text-st-creuser">
                 match {Math.round(s.match.confiance * 100)} %
               </span>
             </Tip>
@@ -479,7 +479,7 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
     <div className="min-w-0 flex-1">
       <label className="flex items-center gap-1 text-[11px] text-txt-dim">
         {label}
-        {hint && <span className="rounded bg-[#211a10] px-1 text-[8.5px] text-st-creuser" title="Hypothèse — à ajuster selon votre opération">hyp. — ajustez</span>}
+        {hint && <span className="rounded bg-st-creuser/10 px-1 text-[8.5px] text-st-creuser" title="Hypothèse — à ajuster selon votre opération">hyp. — ajustez</span>}
       </label>
       <div className="mt-1 flex items-center rounded-lg border border-line-2 bg-surface-3 focus-within:border-mint">
         <input type="number" min={0} value={value ?? ''} placeholder={placeholder}
@@ -548,7 +548,7 @@ function Calculette({ idu }: { idu: string }) {
               <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint />
             </div>
             {/* le RÉSULTAT — calcul de VOS hypothèses */}
-            <div data-calc-resultat className="mt-2.5 rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-2">
+            <div data-calc-resultat className="mt-2.5 rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2">
               <p className="text-[11px] text-txt-dim">Charge foncière supportable <span className="text-txt-mut">— selon vos hypothèses</span></p>
               <p className="mt-0.5">
                 <b data-calc-cf className="num-key text-lg text-mint">{euros(cf.central)}</b>
@@ -616,8 +616,8 @@ function EquipementsBadges({ idu }: { idu: string }) {
 
 function StepProv({ prov }: { prov?: string }) {
   const map: Record<string, [string, string]> = {
-    sourcee: ['Sourcé', 'border-mint/40 bg-[#0f1a15] text-mint'],
-    estimee: ['Estimé', 'border-st-creuser/40 bg-[#211a10] text-st-creuser'],
+    sourcee: ['Sourcé', 'border-mint/40 bg-mint/10 text-mint'],
+    estimee: ['Estimé', 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser'],
     derive: ['Dérivé', 'border-line-2 bg-surface-2 text-txt-dim'],
   }
   const [label, cls] = map[prov ?? ''] ?? ['—', 'border-line-2 bg-surface-2 text-txt-dim']
@@ -642,7 +642,7 @@ function FaisabiliteTab({ idu }: { idu: string }) {
     <div className="flex flex-col gap-3">
       {/* ── LE RÉSULTAT ── */}
       {cap ? (
-        <div className="rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-2.5">
+        <div className="rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2.5">
           <p className="label-caps mb-1">Capacité constructible</p>
           <div className="text-sm font-medium text-txt-hi">{cap.verdict}</div>
           <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-txt-mut">
@@ -651,7 +651,7 @@ function FaisabiliteTab({ idu }: { idu: string }) {
             <div>Logements : <b className="text-txt">{Array.isArray(fo.logements_au_sol) ? `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]}` : '—'}</b></div>
             <div>SHAB vendable : <b className="text-txt">~{fo.shab_vendable_m2} m²</b></div>
           </div>
-          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">⚠ estimation générique (zone non calibrée)</div>}
+          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
           <div className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{cap.bandeau}</div>
         </div>
       ) : (
@@ -702,7 +702,7 @@ function FaisabiliteTab({ idu }: { idu: string }) {
           {explain.isPending && <p className="flex items-center gap-2 py-2 text-[11px] text-[#B497F0]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B497F0]" /> L'IA lit les étapes du calcul…</p>}
           {explain.isError && <p className="py-1 text-[11px] text-st-ecartee">Explication indisponible — réessayez.</p>}
           {ex && ex.disponible === false && <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">{ex.message}</p>}
-          {ex && ex.disponible && ex.rejected && <p className="rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] text-st-creuser">{ex.texte}</p>}
+          {ex && ex.disponible && ex.rejected && <p className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] text-st-creuser">{ex.texte}</p>}
           {ex && ex.disponible && !ex.rejected && (
             <div className="rounded-lg border border-[#B497F0]/40 bg-[#171221] px-3 py-2.5">
               <p className="mb-1 font-mono text-[10px] tracking-widest text-[#B497F0]">✦ EXPLICATION IA — À PARTIR DES ÉTAPES</p>
@@ -740,7 +740,7 @@ function BilanTab({ idu }: { idu: string }) {
             {fo.niveaux} · emprise bâtie max {fo.emprise_batie_max_m2} m² · SDP {fo.surface_plancher_m2} m² ·
             SHAB vendable ~{fo.shab_vendable_m2} m² · stationnement : {String(fo.stationnement_regime ?? '—').replace(/_/g, ' ')}
           </div>
-          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">⚠ estimation générique (zone non calibrée)</div>}
+          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
           <div className="mt-1.5 text-[11px] leading-snug text-txt-dim">{cap.bandeau}</div>
         </Sec>
       ) : (
@@ -1073,8 +1073,8 @@ export function Fiche({ idu }: { idu: string }) {
                 passage n'y figurent pas — 293 078 parcelles concernées, trop de faux positifs
                 pour un malus en l'état). */}
             {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
-              <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2">
-                <span aria-hidden className="text-st-creuser">⚠</span>
+              <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
+                <span aria-hidden className="text-st-creuser">▲</span>
                 <p className="text-[11px] leading-snug text-st-creuser">
                   <b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact de la parcelle.
                   <span className="text-txt-mut"> Signal informatif, non pondéré dans les scores : la BD TOPO

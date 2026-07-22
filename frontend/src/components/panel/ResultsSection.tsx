@@ -137,7 +137,7 @@ function TierChips({ counts, partial }: { counts: Record<TierV2 | 'all', number>
               }
             }}
             className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${
-              on ? 'border-mint bg-[#0F1A14] text-txt-hi' : 'border-line-2 text-txt-mut hover:text-txt'}`}
+              on ? 'border-mint bg-mint/10 text-txt-hi' : 'border-line-2 text-txt-mut hover:text-txt'}`}
           >
             {it.color && <span className="h-1.5 w-1.5 rounded-full" style={{ background: it.color }} />}
             {it.label}
@@ -337,8 +337,8 @@ export function ResultsSection() {
       </div>
 
       {communeNote && (
-        <div className="mt-2 shrink-0 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[10.5px] leading-snug text-st-creuser">
-          ⚠ {communeNote}
+        <div className="mt-2 shrink-0 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[10.5px] leading-snug text-st-creuser">
+          ▲ {communeNote}
         </div>
       )}
       <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
