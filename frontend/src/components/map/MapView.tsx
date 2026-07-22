@@ -816,7 +816,7 @@ export function MapView() {
       <div className="absolute left-4 top-4 flex flex-col gap-2">
         {(['+', '−'] as const).map((s) => (
           <button key={s} onClick={() => map.current?.[s === '+' ? 'zoomIn' : 'zoomOut']()}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-line-2 bg-surface-2 text-txt hover:text-txt-hi"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-line-2 bg-surface-2 text-txt shadow-elev-1 transition-colors duration-quick hover:text-txt-hi"
             title={s === '+' ? 'Zoomer' : 'Dézoomer'}>
             {s}
           </button>
@@ -826,8 +826,8 @@ export function MapView() {
       <Legend />
       {/* Point 13 : légende des équipements — chaque symbole = un type (visible quand la couche l'est) */}
       {layers.equipements && (
-        <div className="pointer-events-none absolute bottom-16 right-4 rounded-lg border border-line-2 bg-surface-2/95 px-3 py-2 shadow-lg">
-          <p className="mb-1 font-mono text-[9px] tracking-widest text-txt-dim">ÉQUIPEMENTS</p>
+        <div className="pointer-events-none absolute bottom-16 right-4 rounded-lg border border-line bg-surface-2/95 px-3 py-2 shadow-elev-2">
+          <p className="label-caps mb-1 text-[9px]">Équipements</p>
           <div className="flex flex-col gap-0.5 text-[11px]">
             {EQUIP_META.map((e) => (
               <span key={e.key} className="flex items-center gap-1.5 text-txt-mut">
@@ -839,30 +839,30 @@ export function MapView() {
       )}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
       {(geo.isFetching || tilesLoading) && (
-        <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-lg">
+        <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-elev-2">
           <Loading big label={geo.isFetching ? 'Chargement des parcelles' : 'Chargement de la carte'} />
         </div>
       )}
       {/* P3 : rappel de ce que signifie le violet pendant une recherche active */}
       {iaRestitution && (
-        <div className="pointer-events-none absolute right-4 top-4 flex items-center gap-1.5 rounded-full border border-[#4a3d6b] bg-[#161022]/90 px-3 py-1 text-[11px] text-[#B497F0] shadow-lg">
-          <span className="h-2 w-2 rounded-full ring-2 ring-[#B497F0]" style={{ background: 'transparent' }} />
+        <div className="pointer-events-none absolute right-4 top-4 flex items-center gap-1.5 rounded-full border border-violet/40 bg-surface-2/95 px-3 py-1 text-[11px] text-violet shadow-elev-2">
+          <span className="h-2 w-2 rounded-full ring-2 ring-violet" style={{ background: 'transparent' }} />
           contour violet = résultats de votre recherche
         </div>
       )}
       {tool && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-[#0F1A14] px-4 py-1.5 text-xs text-mint">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-mint bg-surface-2 px-4 py-1.5 text-xs text-mint shadow-elev-2">
           {readout ?? (tool === 'alti' ? 'Cliquez un point pour lire l’altitude'
             : tool === 'zone' ? 'Dessinez la zone — double-clic pour fermer et filtrer'
             : 'Cliquez pour mesurer — Échap pour quitter')}
         </div>
       )}
       {!tool && (
-        <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-line-2 bg-surface-2 px-4 py-1.5 text-xs text-txt-mut">
+        <div className="pointer-events-none absolute bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-line-2 bg-surface-2 px-4 py-1.5 text-xs text-txt-mut shadow-elev-1">
           {ile && lowZoom ? 'Zoomez ou cliquez une commune pour voir ses parcelles' : 'Cliquez une parcelle pour ouvrir sa fiche'}
         </div>
       )}
-      <div className="absolute bottom-2 right-3 font-sans text-[11px] text-[#3E4C45]">
+      <div className="absolute bottom-2 right-3 font-sans text-[11px] text-st-none">
         {basemap === 'dark' ? '© OSM · CARTO' : '© IGN Géoplateforme'}
       </div>
     </div>
