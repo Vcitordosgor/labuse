@@ -5,6 +5,7 @@ import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../l
 import { roughCentroid } from '../../lib/geo'
 import { completudeColor, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
 import { Tip } from '../Tip'
+import { EmptyState } from '../States'
 import { useApp } from '../../store/useApp'
 
 const fmt = (n: number) => n.toLocaleString('fr-FR')
@@ -393,9 +394,10 @@ export function ResultsSection() {
         {!loading && !error && shown.length === 0 && (
           /* Item 4 (UX V1) : état vide EXPLICITE — dit où on est et comment en sortir
              (élargir à l'île / réinitialiser), aligné sur le #map-empty historique. */
-          <div data-liste-vide className="rounded-lg border border-dashed border-line-2 p-4 text-center">
-            <p className="text-xs leading-relaxed text-txt-mut">
-              {commune ? (
+          <div data-liste-vide>
+            <EmptyState className="py-6"
+              title="Aucune parcelle ici"
+              hint={commune ? (
                 <>Aucune parcelle {filters.tiers.length === 1
                   ? TIER_V2_META[filters.tiers[0]].label.toLowerCase()
                   : scoped || filters.tiers.length ? 'correspondante' : ''} à {commune} —
@@ -403,15 +405,16 @@ export function ResultsSection() {
               ) : (
                 <>Aucune parcelle ne correspond à ces filtres sur l'île — retirez un critère.</>
               )}
-            </p>
-            <div className="mt-2 flex items-center justify-center gap-4">
-              {commune && (
-                <button data-vide-ile onClick={() => setCommune(null)} className="text-xs text-mint hover:underline">
-                  Élargir à toute l'île
-                </button>
-              )}
-              <button onClick={resetFilters} className="text-xs text-mint hover:underline">Réinitialiser les filtres</button>
-            </div>
+              action={
+                <span className="flex items-center justify-center gap-4">
+                  {commune && (
+                    <button data-vide-ile onClick={() => setCommune(null)} className="text-xs text-mint hover:underline">
+                      Élargir à toute l'île
+                    </button>
+                  )}
+                  <button onClick={resetFilters} className="text-xs text-mint hover:underline">Réinitialiser les filtres</button>
+                </span>
+              } />
           </div>
         )}
         {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}

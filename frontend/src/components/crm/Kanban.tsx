@@ -4,6 +4,7 @@ import { deletePipeline, getEventsCount, getPipeline, getPipelineMeta, patchPipe
 import { completudeColor, SCORE_TIP, verdictMeta } from '../../lib/status'
 import type { PipelineEntry } from '../../lib/types'
 import { Tip } from '../Tip'
+import { ErrorState } from '../States'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 
@@ -118,7 +119,13 @@ export function Kanban() {
   })
 
   if (meta.isError || entries.isError) {
-    return <div className="flex flex-1 items-center justify-center text-xs text-st-ecartee">Pipeline inaccessible — serveur à relancer ?</div>
+    return (
+      <div className="flex flex-1 items-center justify-center">
+        <ErrorState message="Pipeline inaccessible"
+          hint="Le serveur ne répond pas — vos données sont intactes, seule la connexion est en cause."
+          retry={() => { meta.refetch(); entries.refetch() }} />
+      </div>
+    )
   }
 
   const cols = meta.data?.columns ?? []
