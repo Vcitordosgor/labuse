@@ -1997,25 +1997,30 @@ def stripe_provisionne_cmd() -> None:
 @app.command("compte-invite")
 def compte_invite_cmd(
     email: str,
-    plan: str = typer.Option("inde", help="inde (290 €/mois, 1 siège) | pro (490 €/mois, 2 sièges)"),
     nom: str = typer.Option(None, help="Nom du compte (défaut : l'email)"),
-    founding: bool = typer.Option(False, "--founding", help="Coupon −50 % à vie (premiers clients)"),
-    compte_id: int = typer.Option(None, help="2e siège : ID du compte Pro existant"),
-    envoyer: bool = typer.Option(True, help="Envoyer l'email d'invitation (sinon : lien affiché seul)"),
 ) -> None:
-    """PREMIER EURO — crée une INVITATION (lien signé 7 jours) après la vente. Le compte ne
-    s'active qu'au paiement Stripe ; l'email part via Resend (ou transport dev sans clé)."""
+    """PREMIER EURO — crée l'invitation INTÉGRAL (349 €/mois, 1 licence) et AFFICHE le lien
+    (refonte 22/07 : aucun email automatique — Vic l'envoie à la main)."""
     from .comptes import creer_invitation
 
     with session_scope() as s:
-        inv = creer_invitation(s, email, plan, nom=nom, founding=founding,
-                               role="membre" if compte_id else "titulaire", compte_id=compte_id)
+        inv = creer_invitation(s, email, nom=nom)
     typer.echo(f"invitation créée — compte #{inv['compte_id']} · {inv['email']} · expire {inv['expire_at'][:10]}")
-    typer.echo(f"LIEN (seul exemplaire, en base : le hash) : {inv['lien']}")
-    if envoyer:
-        from .mailer import envoyer_invitation
-        r = envoyer_invitation(inv["email"], inv["lien"], founding=founding, plan=plan)
-        typer.echo(f"email : {r}")
+    typer.echo("LIEN À ENVOYER À LA MAIN (seul exemplaire, en base : le hash) :")
+    typer.echo(f"  {inv['lien']}")
+
+
+@app.command("compte-reset-lien")
+def compte_reset_lien_cmd(email: str) -> None:
+    """Génère et AFFICHE le lien de réinitialisation (1 h) — à transmettre à la main."""
+    from .comptes import demander_reset
+
+    with session_scope() as s:
+        r = demander_reset(s, email)
+    if not r:
+        typer.echo("email inconnu ou compte non actif", err=True); raise typer.Exit(1)
+    typer.echo("LIEN DE RESET (1 h, à envoyer à la main) :")
+    typer.echo(f"  {r['lien']}")
 
 
 @app.command("compte-admin")

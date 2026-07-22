@@ -3,22 +3,36 @@
 **Branche `commerce/premier-euro` (8c598cc, pushée) · Vic merge.** Doctrine tenue : rien de
 simulé (transport dev = contenu réel en .eml), rien en live.
 
-## ⟪ CURSEUR ⟫ **PRÊT POUR LE STOP MI-COURSE — il manque les 2 clés Vic pour la preuve finale**
+## ⟪ CURSEUR ⟫ **STOP MI-COURSE — refonte pricing appliquée, tout prouvé en MODE TEST**
 
-Tout ce qui se prouve SANS clé est prouvé. Le parcours complet avec carte de test 4242
-attend la clé Stripe TEST ; les emails réels attendent la clé Resend.
+**Refonte commerciale (Vic 22/07) appliquée** : INTÉGRAL 349 €/mois (1 licence = 1 accès,
+abonnement) · FLASH 79 €/rapport (paiement unique) · founding/sièges/Resend SUPPRIMÉS ·
+aucun email automatique (liens affichés en CLI, envoyés à la main par Vic).
 
-## Prérequis Vic — la liste exacte
+**Clé TEST posée** : `~/Desktop/labuse/.env`, variable `LABUSE_STRIPE_SECRET_KEY`
+(préfixe LABUSE_ obligatoire — pydantic env_prefix). En prod : `/etc/labuse/labuse.env`.
+Produits provisionnés en vrai (mode test) : `LABUSE_STRIPE_PRICE_INTEGRAL` /
+`LABUSE_STRIPE_PRICE_FLASH` posés en .env.
 
-1. **Clé Stripe mode TEST** (`sk_test_…`) → à poser en local `.env` : `STRIPE_SECRET_KEY=…`.
-   Ensuite : `labuse stripe-provisionne` (crée Indé 290 €/Pro 490 €/coupon founding −50 %
-   forever, affiche les `STRIPE_PRICE_*`/`STRIPE_COUPON_FOUNDING` à poser en .env), puis
-   `stripe listen --forward-to 127.0.0.1:8023/stripe/webhook` (le secret `whsec_` en .env)
-   — et le parcours carte 4242/échec/3DS se déroule.
-2. **Clé Resend** → `RESEND_API_KEY=…` ; je sors alors la liste exacte des 3 DNS
-   (SPF/DKIM/retour) du sous-domaine `notif.labuse.immo` à poser chez Cloudflare (les MX
-   existants intouchés). En attendant : chaque email part en `.eml` réel sous outputs/mails/.
-3. Décisions 1-6 : appliquées telles quelles (ajustables à la review).
+**Preuves réelles (mode test)** :
+- Checkout INTÉGRAL créé (session `cs_test_…` réelle, 349 €/mois) ;
+- **parcours FLASH complet en HTTP** : /flash (IDU validé honnêtement) → confirmation
+  (commune, m², contenu du rapport, clause boussole) → 303 Stripe (session réelle 79 €) →
+  webhook signé → génération RÉELLE du PDF (weasyprint) → poll /flash/statut → lien
+  token 30 j → téléchargement 200 application/pdf (157 Ko).
+
+## Le parcours de test que VIC déroule (mi-course)
+
+1. `stripe listen --forward-to 127.0.0.1:8023/stripe/webhook` (Stripe CLI) → remplacer
+   `LABUSE_STRIPE_WEBHOOK_SECRET` dans `.env` par le `whsec_…` affiché, relancer le serveur.
+2. **INTÉGRAL** : `labuse compte-invite <ton-email-de-test>` → copier le lien affiché
+   (l'invitation ne part jamais seule) → mot de passe → CGV → Checkout **349 €** carte
+   `4242 4242 4242 4242` → retour → login à la porte Coffre → l'app. Impayé : rejouer avec
+   la carte `4000 0000 0000 0341`, constater le bandeau « paiement requis » ; suspension :
+   annuler l'abonnement dans le dashboard Stripe test → session coupée ≤ 60 s.
+3. **FLASH** : `/flash` → IDU (ex. 97423000AB1908) → confirmation → payer 79 € en 4242 →
+   la page de retour affiche le lien → PDF téléchargé. 3DS : carte `4000 0027 6000 3184`.
+Verdict écran par écran — RIEN ne part en live avant.
 
 ## E1 · Identité — PROUVÉ
 Tables additives comptes/utilisateurs/sessions_auth/evenements_compte · argon2id ·

@@ -27,8 +27,10 @@ from .config import get_settings
 log = logging.getLogger("labuse.comptes")
 _ph = PasswordHasher()  # argon2id par défaut (time_cost=3, memory=64 MiB, parallelism=4)
 
-PLANS = {"inde": {"label": "Indé", "sieges": 1, "eur_mois": 290},
-         "pro": {"label": "Pro", "sieges": 2, "eur_mois": 490}}
+# Refonte commerciale (Vic 22/07) : UN modèle d'abonnement — INTÉGRAL, 349 €/mois par
+# licence, 1 licence = 1 accès (plus d'Indé/Pro, plus de sièges multiples, plus de founding).
+# Le one-shot FLASH (79 €/rapport) vit dans facturation.py — pas un compte.
+PLANS = {"integral": {"label": "Intégral", "sieges": 1, "eur_mois": 349}}
 
 
 def ensure_tables(db: Session) -> None:
@@ -36,8 +38,8 @@ def ensure_tables(db: Session) -> None:
         CREATE TABLE IF NOT EXISTS comptes (
             id serial PRIMARY KEY,
             nom text NOT NULL,
-            plan text NOT NULL CHECK (plan IN ('inde', 'pro')),
-            founding boolean NOT NULL DEFAULT false,
+            plan text NOT NULL,
+            founding boolean NOT NULL DEFAULT false,  -- hérité, plus jamais posé (refonte 22/07)
             statut text NOT NULL DEFAULT 'invite'
                 CHECK (statut IN ('invite', 'actif', 'paiement_requis', 'suspendu', 'resilie')),
             sieges int NOT NULL DEFAULT 1,
@@ -46,6 +48,8 @@ def ensure_tables(db: Session) -> None:
             created_at timestamptz NOT NULL DEFAULT now(),
             updated_at timestamptz NOT NULL DEFAULT now()
         )"""))
+    # refonte 22/07 : le CHECK historique (inde/pro) tombe — plan libre ('integral')
+    db.execute(text("ALTER TABLE comptes DROP CONSTRAINT IF EXISTS comptes_plan_check"))
     db.execute(text("""
         CREATE TABLE IF NOT EXISTS utilisateurs (
             id serial PRIMARY KEY,
@@ -104,30 +108,25 @@ def audit(db: Session, type_: str, compte_id: int | None = None,
 
 # ───────────────────────── cycle de vie ─────────────────────────
 
-def creer_invitation(db: Session, email: str, plan: str, nom: str | None = None,
-                     founding: bool = False, role: str = "titulaire",
-                     compte_id: int | None = None, jours: int = 7) -> dict:
-    """Crée (compte +) utilisateur en statut `invite` et renvoie le TOKEN CLAIR (seul
-    exemplaire — en base : le hash). `compte_id` fourni = 2e siège d'un compte Pro."""
+def creer_invitation(db: Session, email: str, nom: str | None = None,
+                     jours: int = 7) -> dict:
+    """Crée compte INTÉGRAL + utilisateur en statut `invite` et renvoie le TOKEN CLAIR
+    (seul exemplaire — en base : le hash). Le lien s'envoie À LA MAIN (décision Vic :
+    aucun email automatique)."""
     ensure_tables(db)
     email = _norm_email(email)
-    assert plan in PLANS, f"plan inconnu : {plan}"
+    plan, role = "integral", "titulaire"
     exist = db.execute(text("SELECT id, statut FROM utilisateurs WHERE email = :e"),
                        {"e": email}).mappings().first()
     if exist and exist["statut"] != "invite":
         raise ValueError(f"{email} existe déjà (statut {exist['statut']})")
-    if compte_id is None:
-        compte_id = db.execute(text(
-            "INSERT INTO comptes (nom, plan, founding, sieges) VALUES (:n, :p, :f, :s) RETURNING id"),
-            {"n": nom or email, "p": plan, "f": founding, "s": PLANS[plan]["sieges"]}).scalar()
+    if exist:
+        compte_id = db.execute(text("SELECT compte_id FROM utilisateurs WHERE id = :i"),
+                               {"i": exist["id"]}).scalar()
     else:
-        row = db.execute(text("SELECT plan, sieges, (SELECT count(*) FROM utilisateurs u"
-                              " WHERE u.compte_id = comptes.id AND u.statut != 'supprime') AS n"
-                              " FROM comptes WHERE id = :c"), {"c": compte_id}).mappings().first()
-        if not row:
-            raise ValueError(f"compte {compte_id} inconnu")
-        if int(row["n"]) >= int(row["sieges"]):
-            raise ValueError(f"compte {compte_id} : tous les sièges sont occupés ({row['sieges']})")
+        compte_id = db.execute(text(
+            "INSERT INTO comptes (nom, plan, sieges) VALUES (:n, :p, 1) RETURNING id"),
+            {"n": nom or email, "p": plan}).scalar()
     tok = _token()
     exp = datetime.now(timezone.utc) + timedelta(days=jours)
     if exist:
@@ -140,7 +139,7 @@ def creer_invitation(db: Session, email: str, plan: str, nom: str | None = None,
             "INSERT INTO utilisateurs (compte_id, email, role, statut, invite_token_hash, invite_expire_at)"
             " VALUES (:c, :e, :r, 'invite', :h, :x) RETURNING id"),
             {"c": compte_id, "e": email, "r": role, "h": _sha(tok), "x": exp}).scalar()
-    audit(db, "invitation_creee", compte_id, uid, f"plan={plan} founding={founding} role={role}")
+    audit(db, "invitation_creee", compte_id, uid, f"plan={plan} role={role}")
     db.commit()
     lien = f"{get_settings().public_base_url}/invitation?token={tok}"
     return {"utilisateur_id": int(uid), "compte_id": int(compte_id), "email": email, "lien": lien,
@@ -150,7 +149,7 @@ def creer_invitation(db: Session, email: str, plan: str, nom: str | None = None,
 def valider_invitation(db: Session, token: str) -> dict | None:
     """Token d'invitation → utilisateur (ou None : inconnu/expiré/déjà consommé)."""
     r = db.execute(text(
-        "SELECT u.id, u.email, u.compte_id, c.plan, c.founding FROM utilisateurs u"
+        "SELECT u.id, u.email, u.compte_id, c.plan FROM utilisateurs u"
         " JOIN comptes c ON c.id = u.compte_id"
         " WHERE u.invite_token_hash = :h AND u.statut = 'invite' AND u.invite_expire_at > now()"),
         {"h": _sha(token)}).mappings().first()

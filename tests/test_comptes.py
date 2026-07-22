@@ -29,7 +29,7 @@ def _purge(db, email):
 def test_cycle_complet(db):
     email = _mail()
     # 1. invitation — le token clair n'est PAS en base (hash seulement)
-    inv = comptes.creer_invitation(db, email, "inde", founding=True)
+    inv = comptes.creer_invitation(db, email)
     tok = inv["lien"].split("token=")[1]
     row = db.execute(text("SELECT invite_token_hash, statut FROM utilisateurs WHERE email = :e"),
                      {"e": email}).mappings().first()
@@ -87,20 +87,21 @@ def test_cycle_complet(db):
                       {"c": u["compte_id"]}).scalar() == "resilie"
 
 
-def test_sieges_pro(db):
-    email1, email2, email3 = _mail(), _mail(), _mail()
-    inv = comptes.creer_invitation(db, email1, "pro")
-    comptes.creer_invitation(db, email2, "pro", compte_id=inv["compte_id"])   # 2e siège OK
-    with pytest.raises(ValueError):                                            # 3e : refusé
-        comptes.creer_invitation(db, email3, "pro", compte_id=inv["compte_id"])
-    for e in (email1, email2):
-        _purge(db, e)
+def test_licence_unique(db):
+    # refonte 22/07 : 1 licence = 1 accès — un email actif ne peut pas être ré-invité
+    email = _mail()
+    inv = comptes.creer_invitation(db, email)
+    tok = inv["lien"].split("token=")[1]
+    comptes.activer_par_invitation(db, tok, "licence-unique-974", "2026-07-22")
+    with pytest.raises(ValueError):
+        comptes.creer_invitation(db, email)
+    _purge(db, email)
 
 
 def test_double_invitation_meme_email(db):
     email = _mail()
-    comptes.creer_invitation(db, email, "inde")
-    comptes.creer_invitation(db, email, "inde")     # re-invitation : nouveau token, pas un doublon
+    comptes.creer_invitation(db, email)
+    comptes.creer_invitation(db, email)     # re-invitation : nouveau token, pas un doublon
     assert db.execute(text("SELECT count(*) FROM utilisateurs WHERE email = :e"),
                       {"e": email}).scalar() == 1
     _purge(db, email)

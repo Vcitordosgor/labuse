@@ -75,12 +75,10 @@ def invitation_page(token: str = "", db: Session = Depends(get_db)):
 <h1>Invitation introuvable</h1><p class="sous">lien expiré ou déjà utilisé</p>
 <p style="text-align:center;font-size:12.5px">Demandez un nouveau lien à votre contact LABUSE —
 les invitations expirent après 7 jours.</p>"""), status_code=404)
-    p = PLANS[inv["plan"]]
-    prix = p["eur_mois"] // 2 if inv["founding"] else p["eur_mois"]
-    founding = ('<span class="pill">founding −50 % à vie*</span>' if inv["founding"] else "")
+    p = PLANS.get(inv["plan"], PLANS["integral"])
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
-<p class="sous">plan {p['label']} · {prix} €/mois {founding}</p>
+<p class="sous">licence {p['label']} · {p['eur_mois']} €/mois · 1 licence = 1 accès</p>
 <form method="post" action="/invitation">
 <input type="hidden" name="token" value="{html.escape(token)}">
 <label for="email">Identifiant</label>
@@ -93,8 +91,7 @@ J'ai lu et j'accepte les <a href="/cgv" target="_blank">conditions générales</
 les analyses LABUSE sont une pré-analyse sur données publiques, jamais un conseil.</label></div>
 <button type="submit">Continuer vers le paiement →</button>
 <div class="err"></div></form>
-<p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.<br>
-{'* tarif founding maintenu tant que l’abonnement reste actif.' if inv['founding'] else ''}</p>"""))
+<p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>"""))
 
 
 @router.post("/invitation", include_in_schema=False)
@@ -155,11 +152,9 @@ de votre invitation, ou contacter votre contact LABUSE si le lien a expiré.</p>
 def reset_page(token: str = ""):
     if not token:
         return HTMLResponse(_page("mot de passe oublié", """
-<h1>Mot de passe oublié</h1><p class="sous">un lien de réinitialisation vous sera envoyé</p>
-<form method="post" action="/reset-demande">
-<label for="email">Identifiant (email)</label>
-<input id="email" name="email" type="email" required autofocus>
-<button type="submit">Recevoir le lien</button></form>"""))
+<h1>Réinitialisation</h1><p class="sous">le lien s'obtient auprès de votre contact LABUSE</p>
+<p style="text-align:center;font-size:12.5px">Écrivez à votre contact LABUSE : un lien de
+réinitialisation valable une heure vous sera transmis directement.</p>"""))
     return HTMLResponse(_page("nouveau mot de passe", f"""
 <h1>Nouveau mot de passe</h1><p class="sous">choisissez-le soigneusement</p>
 <form method="post" action="/reset">
@@ -170,20 +165,15 @@ def reset_page(token: str = ""):
 
 
 @router.post("/reset-demande", include_in_schema=False)
-async def reset_demande(request: Request, db: Session = Depends(get_db)):
-    from urllib.parse import parse_qs
-
-    from ..comptes import demander_reset
-    email = (parse_qs((await request.body()).decode("utf-8", "replace")).get("email") or [""])[0]
-    r = demander_reset(db, email)
-    if r:
-        from ..mailer import envoyer_reset
-        envoyer_reset(r["email"], r["lien"])
-    # réponse IDENTIQUE que l'email existe ou non (anti-énumération)
-    return HTMLResponse(_page("email envoyé", """
-<h1>Vérifiez votre boîte</h1><p class="sous">si ce compte existe, un lien vient de partir</p>
-<p style="text-align:center;font-size:12.5px">Le lien est valable une heure. Pensez aux
-indésirables — l'expéditeur est acces@notif.labuse.immo.</p>"""))
+async def reset_demande():
+    # Refonte 22/07 : AUCUN email automatique — le lien de reset se génère côté admin
+    # (`labuse compte-reset-lien email`) et s'envoie à la main. Réponse identique quoi
+    # qu'il arrive (anti-énumération conservée).
+    return HTMLResponse(_page("mot de passe oublié", """
+<h1>Réinitialisation</h1><p class="sous">le lien s'obtient auprès de votre contact LABUSE</p>
+<p style="text-align:center;font-size:12.5px">Écrivez à votre contact LABUSE (l'adresse de
+votre échange initial) : un lien de réinitialisation valable une heure vous sera transmis
+directement.</p>"""))
 
 
 @router.post("/reset", include_in_schema=False)
@@ -258,19 +248,27 @@ l'intervention d'un notaire</b> ou de tout professionnel réglementé. Le Client
 responsable de ses décisions et de leurs vérifications préalables.</p>
 
 <h2>3. Comptes et accès</h2>
-<p>La création de compte se fait sur invitation. Le plan Indé ouvre 1 siège nominatif ; le
-plan Pro, 2 sièges (le titulaire invite le second utilisateur). Les identifiants sont
-personnels ; le Client répond de l'usage fait de ses sièges. LABUSE peut suspendre un compte
-en cas d'impayé (après les relances du prestataire de paiement) ou d'usage abusif
-(extraction massive, revente de données, contournement technique).</p>
+<p>La création de compte se fait sur invitation. Une licence Intégral ouvre <b>un accès
+nominatif unique</b> (1 licence = 1 utilisateur) ; les identifiants sont personnels et
+incessibles. LABUSE peut suspendre un compte en cas d'impayé (après les relances du
+prestataire de paiement) ou d'usage abusif (extraction massive, revente de données,
+partage d'accès, contournement technique).</p>
 
-<h2>4. Prix, paiement, founding</h2>
-<p>Abonnement mensuel : Indé 290 € / mois · Pro 490 € / mois. Prix hors taxes le cas
+<h2>4. Prix et paiement</h2>
+<p><b>Intégral</b> : abonnement mensuel de 349 € par licence, accès complet au service.
+<b>Flash</b> : 79 € par rapport — paiement unique donnant droit à UN rapport PDF portant
+sur UNE parcelle, téléchargeable pendant 30 jours (article 4 bis). Prix hors taxes le cas
 échéant — le régime de TVA applicable figure sur les factures. Paiement par carte via
 <b>Stripe</b> (paiement hébergé : aucune donnée de carte ne transite par LABUSE), factures
-émises par Stripe. L'offre « founding » (−50 % à vie) est nominative, réservée aux premiers
-clients, et maintenue <b>tant que l'abonnement demeure actif sans interruption</b> ; toute
-résiliation y met fin définitivement.</p>
+et reçus émis par Stripe.</p>
+
+<h2>4 bis. Le rapport Flash</h2>
+<p>Le rapport Flash est un document numérique généré et livré immédiatement après paiement.
+<b>L'exécution commence dès le paiement, à la demande expresse de l'acheteur, qui renonce
+le cas échéant à son droit de rétractation</b> (contenu numérique fourni immédiatement).
+Le rapport porte exclusivement sur la parcelle confirmée par l'acheteur avant paiement ;
+l'article 2 (nature des analyses) s'y applique intégralement. En cas d'échec technique de
+génération, LABUSE fournit le rapport par tout moyen ou rembourse le paiement.</p>
 
 <h2>5. Durée et résiliation</h2>
 <p>Abonnement mensuel, tacitement reconduit, résiliable à tout moment avec effet à la fin de
@@ -366,3 +364,126 @@ datées — le registre Outils, groupé par intention.</p>
 lit en trois minutes.</p>
 <p style="margin-top:20px"><a href="/" class="pill">Revenir à l'app</a></p></div>"""
     return HTMLResponse(_page("prise en main", corps, large=True))
+
+
+# ═══════════ FLASH — 79 € one-shot : UNE parcelle, UN rapport PDF (refonte 22/07) ═══════════
+# Parcours : /flash (adresse ou IDU → validation honnête de la parcelle) → confirmation
+# (commune, surface, ce que contient le rapport, le prix) → Stripe Checkout (paiement
+# unique, email collecté par Stripe) → /flash/retour (poll de génération, spinner sobre)
+# → lien de téléchargement signé (30 jours). Sans compte, sans abonnement, sans email maison.
+
+@router.get("/flash", include_in_schema=False)
+def flash_page(idu: str = "", annule: int = 0, db: Session = Depends(get_db)):
+    note_annule = ('<p class="err">Paiement interrompu — rien n\'a été débité.</p>' if annule else "")
+    parcelle = None
+    if idu and len(idu) == 14:
+        from sqlalchemy import text
+        parcelle = db.execute(text(
+            "SELECT idu, commune, round(surface_m2) AS m2 FROM parcels WHERE idu = :i"),
+            {"i": idu.upper()}).mappings().first()
+    if parcelle:
+        return HTMLResponse(_page("rapport Flash", f"""
+<h1>Rapport Flash</h1><p class="sous">une parcelle · un PDF sourcé · 79 € — paiement unique</p>
+<div style="border:1px solid #1E2A23;border-radius:10px;padding:14px;margin-top:6px">
+<p style="margin:0;font-size:13px;color:#ECF5EF"><span style="font-family:ui-monospace,monospace">
+{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])}</span>
+ · {html.escape(parcelle['commune'])} · {int(parcelle['m2'] or 0):,} m²</p>
+<p style="margin:8px 0 0;font-size:12px;color:#8FA69A">Le rapport : identité et plan de la
+parcelle, zonage et règles, risques connus, marché (DVF), permis voisins — chaque donnée
+avec sa source et sa date (Sourcé / Estimé). Pré-analyse sur données publiques : ne
+remplace ni certificat d'urbanisme ni conseil notarial.</p></div>
+<form method="post" action="/flash">
+<input type="hidden" name="idu" value="{html.escape(parcelle['idu'])}">
+<button type="submit">Payer 79 € et générer le rapport →</button></form>
+<p class="note">Paiement unique par Stripe. Le lien de téléchargement (valable 30 jours)
+s'affiche dès la génération — quelques secondes. <a href="/flash">changer de parcelle</a></p>"""))
+    introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
+                   if idu and not parcelle else "")
+    return HTMLResponse(_page("rapport Flash", f"""
+<h1>Rapport Flash</h1><p class="sous">une parcelle · un PDF sourcé · 79 € — paiement unique</p>
+{note_annule}{introuvable}
+<form method="get" action="/flash">
+<label for="idu">Identifiant de parcelle (IDU, 14 caractères)</label>
+<input id="idu" name="idu" type="text" minlength="14" maxlength="14" required autofocus
+  style="width:100%;background:none;border:0;border-bottom:1px solid #1E2A23;color:#ECF5EF;
+  font:14px ui-monospace,monospace;padding:8px 2px;outline:none" placeholder="97415000CW0658">
+<button type="submit">Vérifier la parcelle →</button></form>
+<p class="note">L'IDU figure sur cadastre.gouv.fr (commune + section + numéro) — ou
+demandez-le à votre contact LABUSE. Le rapport est généré sur la parcelle EXACTE.</p>"""))
+
+
+@router.post("/flash", include_in_schema=False)
+async def flash_submit(request: Request, db: Session = Depends(get_db)):
+    from urllib.parse import parse_qs
+
+    from sqlalchemy import text as _text
+    q = parse_qs((await request.body()).decode("utf-8", "replace"))
+    idu = (q.get("idu") or [""])[0].strip().upper()
+    ok = db.execute(_text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar()
+    if not ok:
+        return RedirectResponse("/flash", status_code=303)
+    try:
+        from ..facturation import creer_checkout_flash
+        url = creer_checkout_flash(db, idu)
+        return RedirectResponse(url, status_code=303)
+    except Exception as e:  # noqa: BLE001 — pas de clé/prix : page honnête, jamais un bouton mort
+        log.warning("flash checkout indisponible (%s)", e)
+        return HTMLResponse(_page("paiement indisponible", """
+<h1>Paiement indisponible</h1><p class="sous">réessayez dans quelques minutes</p>
+<p style="text-align:center;font-size:12.5px">Le paiement en ligne ne répond pas. Rien n'a été
+débité — réessayez, ou écrivez à votre contact LABUSE.</p>"""), status_code=503)
+
+
+@router.get("/flash/retour", include_in_schema=False)
+def flash_retour(session_id: str = ""):
+    return HTMLResponse(_page("génération du rapport", f"""
+<h1>Rapport en préparation</h1><p class="sous">paiement reçu — génération en cours</p>
+<div id="etat" style="text-align:center;font-size:12.5px;color:#8FA69A;margin-top:10px">
+<span class="pill">génération…</span></div>
+<script>
+const sid = {session_id!r};
+async function poll() {{
+  try {{
+    const r = await fetch('/flash/statut?session_id=' + encodeURIComponent(sid));
+    const d = await r.json();
+    const el = document.getElementById('etat');
+    if (d.statut === 'generee' && d.lien) {{
+      el.innerHTML = '<a class="pill" href="' + d.lien + '">Télécharger votre rapport (PDF) →</a>' +
+        '<p style="font-size:11px;color:#5C7268;margin-top:12px">Lien valable 30 jours — ' +
+        'conservez le PDF. Reçu et facture : dans l\\'email Stripe.</p>';
+      return;
+    }}
+    if (d.statut === 'erreur') {{
+      el.innerHTML = '<p style="color:#E8695A">La génération a rencontré un problème — ' +
+        'elle va être retentée automatiquement. Si rien ne vient, écrivez à votre contact ' +
+        'LABUSE avec votre reçu Stripe : le rapport vous sera fourni.</p>';
+    }}
+  }} catch (e) {{}}
+  setTimeout(poll, 2000);
+}}
+poll();
+</script>"""))
+
+
+@router.get("/flash/statut", include_in_schema=False)
+def flash_statut_api(session_id: str = "", db: Session = Depends(get_db)):
+    from ..facturation import flash_statut
+    return flash_statut(db, session_id)
+
+
+@router.get("/flash/telecharger", include_in_schema=False)
+def flash_telecharger(token: str = "", db: Session = Depends(get_db)):
+    from pathlib import Path
+
+    from fastapi.responses import FileResponse
+
+    from ..facturation import flash_pdf_par_token
+    p = flash_pdf_par_token(db, token)
+    if not p or not Path(p).exists():
+        return HTMLResponse(_page("lien expiré", """
+<h1>Lien expiré</h1><p class="sous">le téléchargement n'est plus disponible</p>
+<p style="text-align:center;font-size:12.5px">Les liens Flash sont valables 30 jours.
+Écrivez à votre contact LABUSE avec votre reçu Stripe — le rapport vous sera renvoyé.</p>"""),
+                            status_code=404)
+    return FileResponse(p, media_type="application/pdf",
+                        filename=f"labuse_flash_{Path(p).stem}.pdf")

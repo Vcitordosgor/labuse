@@ -54,7 +54,7 @@ def test_webhook_sans_secret_refuse(db, monkeypatch):
 def test_cycle_stripe_complet(db):
     email = f"stripe-{uuid.uuid4().hex[:8]}@exemple.test"
     cus = f"cus_{uuid.uuid4().hex[:10]}"   # unique : les comptes des runs précédents restent en base
-    inv = comptes.creer_invitation(db, email, "inde", founding=True)
+    inv = comptes.creer_invitation(db, email)
     cid = inv["compte_id"]
 
     # activation (checkout.session.completed) : invite → actif + IDs stripe posés
@@ -85,3 +85,31 @@ def test_cycle_stripe_complet(db):
 
     db.execute(text("DELETE FROM utilisateurs WHERE email = :e"), {"e": email})
     db.commit()
+
+
+def test_flash_fulfillment_reel(db):
+    """FLASH : webhook signé mode=payment → génération RÉELLE du PDF (weasyprint, .venv)
+    → statut generee → token de téléchargement valide. Le test le plus cher de la suite
+    (~8 s) — c'est le produit à 79 €, il se prouve en vrai."""
+    from labuse.facturation import ensure_flash_table, flash_pdf_par_token, flash_statut
+    ensure_flash_table(db)
+    sid = f"cs_test_{uuid.uuid4().hex[:12]}"
+    # une parcelle de LA BASE DE TEST (labuse_test) — jamais un IDU en dur d'une autre base
+    idu = db.execute(text("SELECT idu FROM parcels ORDER BY idu LIMIT 1")).scalar()
+    if not idu:
+        pytest.skip("base de test sans parcelles — génération Flash non testable ici")
+    db.execute(text("INSERT INTO flash_commandes (stripe_session_id, idu) VALUES (:s, :i)"),
+               {"s": sid, "i": idu})
+    db.commit()
+    body, sig = _signe(_evt("checkout.session.completed",
+                            {"id": sid, "mode": "payment",
+                             "customer_details": {"email": "flash@exemple.test"}}))
+    assert traiter_webhook(db, body, sig)["action"] == "flash_genere"
+    st = flash_statut(db, sid)
+    assert st["statut"] == "generee" and st.get("lien"), st
+    token = st["lien"].split("token=")[1]
+    pdf = flash_pdf_par_token(db, token)
+    assert pdf and pdf.endswith(".pdf")
+    import pathlib as _pl
+    assert _pl.Path(pdf).stat().st_size > 20_000       # un vrai PDF, pas un fichier vide
+    assert flash_pdf_par_token(db, "mauvais-token") is None

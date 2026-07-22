@@ -33,7 +33,8 @@ FAILURE_DELAY_S = 0.4          # ralentit la force brute sans pénaliser l'utili
 # (signé — sa sécurité est la signature, pas la session) sont publics par nature.
 _PUBLIC = {"/health", "/healthz", "/healthz/crons", "/readyz", "/login", "/logout", "/favicon.ico",
            "/invitation", "/reset", "/reset-demande", "/cgv", "/mentions-legales", "/confidentialite",
-           "/onboarding/retour", "/stripe/webhook", "/guide"}
+           "/onboarding/retour", "/stripe/webhook", "/guide",
+           "/flash", "/flash/retour", "/flash/statut", "/flash/telecharger"}
 # Documentation auto (surface de découverte de l'API) : publique en local seulement.
 _DOCS = {"/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"}
 
