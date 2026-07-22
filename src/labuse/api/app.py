@@ -273,6 +273,21 @@ async def login_submit(request: Request):
                 auth.log_event("login_failed", request)
                 auth.slow_failure()
                 return HTMLResponse(auth.login_page(error=True), status_code=401)
+            # REPRISE DE PAIEMENT (né du test Vic) : identifiants corrects mais compte
+            # jamais payé (Checkout refusé/abandonné) → on relance un Checkout NEUF au
+            # lieu d'ouvrir l'app. Le token d'invitation consommé n'est plus un cul-de-sac.
+            if u["statut_compte"] == "invite":
+                auth.log_event("login_ok_paiement_du", request)
+                try:
+                    from ..facturation import creer_checkout
+                    url = creer_checkout(db, u["compte_id"], identifiant)
+                    return RedirectResponse(url, status_code=303)
+                except Exception:  # noqa: BLE001 — Stripe indisponible : page honnête
+                    from .onboarding import _page
+                    return HTMLResponse(_page("paiement requis", """
+<h1>Paiement requis</h1><p class="sous">votre compte attend son premier paiement</p>
+<p style="text-align:center;font-size:12.5px">Le paiement en ligne ne répond pas — réessayez
+dans quelques minutes ou écrivez à votre contact LABUSE.</p>"""), status_code=503)
             tok = creer_session(db, u["utilisateur_id"])
         auth.log_event("login_ok", request)
         resp = RedirectResponse("/", status_code=303)

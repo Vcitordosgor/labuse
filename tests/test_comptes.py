@@ -54,8 +54,12 @@ def test_cycle_complet(db):
     db.execute(text("UPDATE utilisateurs SET verrouille_jusqu_a = NULL, echecs_login = 0"
                     " WHERE email = :e"), {"e": email}); db.commit()
 
-    # 4. session : créée → valide → détruite
+    # 4. session : un compte NON PAYÉ (invite) ne donne AUCUN accès (durci test Vic) ;
+    #    on active le compte (comme le ferait le webhook Stripe) puis la session vaut.
     tok_s = comptes.creer_session(db, u["utilisateur_id"])
+    assert comptes.session_utilisateur(db, tok_s) is None        # invite = porte fermée
+    db.execute(text("UPDATE comptes SET statut = 'actif' WHERE id = :c"),
+               {"c": u["compte_id"]}); db.commit()
     assert comptes.session_utilisateur(db, tok_s)
     comptes.detruire_session(db, tok_s)
     assert comptes.session_utilisateur(db, tok_s) is None

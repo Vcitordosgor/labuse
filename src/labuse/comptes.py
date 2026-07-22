@@ -232,10 +232,10 @@ def session_utilisateur(db: Session, token: str) -> dict | None:
         " WHERE s.token_hash = :h AND s.expire_at > now()"), {"h": _sha(token)}).mappings().first()
     if not r or r["statut"] in ("supprime", "suspendu"):
         return None
-    # défense en profondeur (durci au test Vic) : un COMPTE suspendu/résilié refuse la
-    # session même si une ligne session_auth avait survécu à la purge — l'abonnement se
-    # vérifie à chaque requête, pas seulement au login.
-    if r["statut_compte"] in ("suspendu", "resilie"):
+    # défense en profondeur (durcie aux tests Vic) : le statut du COMPTE se vérifie à
+    # chaque requête — suspendu/résilié = coupé ; `invite` (jamais payé) = pas d'accès
+    # non plus : l'app ne s'ouvre qu'à un abonnement réellement activé par Stripe.
+    if r["statut_compte"] in ("suspendu", "resilie", "invite"):
         return None
     return dict(r)
 

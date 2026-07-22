@@ -142,8 +142,9 @@ avec votre email et votre mot de passe. Un guide de prise en main vous attend da
 <p style="text-align:center;margin-top:18px"><a href="/login" class="pill">Entrer dans LABUSE →</a></p>"""))
     return HTMLResponse(_page("paiement interrompu", """
 <h1>Paiement interrompu</h1><p class="sous">rien n'a été débité</p>
-<p style="text-align:center;font-size:12.5px">Vous pouvez reprendre le paiement depuis le lien
-de votre invitation, ou contacter votre contact LABUSE si le lien a expiré.</p>"""))
+<p style="text-align:center;font-size:12.5px">Pour reprendre : connectez-vous simplement sur
+<a href="/login">la porte</a> avec votre email et votre mot de passe — le paiement se
+relancera automatiquement. Rien n'a été débité.</p>"""))
 
 
 # ── E1 · reset mot de passe ──
