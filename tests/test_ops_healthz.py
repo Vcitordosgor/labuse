@@ -16,8 +16,8 @@ def test_crons_alignes_sur_cron_d():
     root = Path(__file__).resolve().parents[1]
     fichiers = {p.name for p in (root / "deploy/cron.d").iterdir()}
     assert "solaire" not in fichiers                      # cron mort M3 retiré (P4)
-    assert {"sitadel", "ban", "catnat", "abuse", "backup"} <= fichiers
-    assert set(ops.CRONS) == {"sitadel", "ban", "catnat", "abuse-scan", "backup"}
+    assert {"sitadel", "ban", "catnat", "abuse", "backup", "bodacc", "dvf", "dpe"} <= fichiers   # J+2
+    assert set(ops.CRONS) == {"sitadel", "ban", "catnat", "abuse-scan", "backup", "bodacc", "dvf", "dpe"}
 
 
 def test_healthz_public():

@@ -453,6 +453,21 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
         cur["runs"] += int(r["n"])
         if cur["derniere"] is None or (r["fin"] and r["fin"] > cur["derniere"]):
             cur["derniere"] = r["fin"]
+    # J+2 (fraîcheur) : la date de la DERNIÈRE DONNÉE en base par source (≠ date d'ingestion) —
+    # les dates parlent seules, wording sobre. Mapping via fraicheur.SOURCES (ds_name ILIKE).
+    donnees: dict[str, str] = {}
+    try:
+        from fnmatch import fnmatch
+
+        from ..ingestion import fraicheur
+        etats = fraicheur.etat_sources(db)
+        for e in etats:
+            motif = fraicheur.SOURCES[e["source"]]["ds_name"].lower().replace("%", "*")
+            for src in rows:
+                if fnmatch(src.name.lower(), motif) and e["derniere_donnee"]:
+                    donnees[src.name] = e["derniere_donnee"]
+    except Exception:  # noqa: BLE001 — l'affichage de fraîcheur ne casse jamais la page Sources
+        pass
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
@@ -464,6 +479,7 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "legal_notes": s.legal_notes, "technical_notes": s.technical_notes,
             "testable": s.name in _connector_names(),
             "derniere_ingestion": ingestions.get(s.name, {}).get("derniere"),
+            "derniere_donnee": donnees.get(s.name),
             "ingestion_runs": ingestions.get(s.name, {}).get("runs", 0),
             "verified_at": checks.get(s.id),
         }

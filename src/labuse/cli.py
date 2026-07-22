@@ -1948,6 +1948,52 @@ def ortho_juge_vlm_cmd(
                        f" : {m.get('point')}")
 
 
+@app.command("fraicheur-etat")
+def fraicheur_etat_cmd() -> None:
+    """J+2 — la matrice des sources : cadence réelle × dernière donnée × dernière ingestion × delta."""
+    from .ingestion import fraicheur
+
+    with session_scope() as s:
+        for r in fraicheur.etat_sources(s):
+            typer.echo(f"{r['source']:<12} {r['cadence']:<34} donnée {r['derniere_donnee'] or '—':<11} "
+                       f"ingestion {r['derniere_ingestion'] or '—':<11} Δ{r['delta_donnee_jours']} j"
+                       f"{'' if r['auto'] else '  [détection seule — grande passe requise]'}")
+
+
+@app.command("ingest-bodacc")
+def ingest_bodacc_cmd() -> None:
+    """J+2 — BODACC quotidien : ré-interroge (batché) les SIREN propriétaires, upsert idempotent."""
+    from .ingestion import fraicheur
+
+    with session_scope() as s:
+        r = fraicheur.ingest_bodacc_quotidien(s, log_fn=typer.echo)
+        typer.echo(f"✓ BODACC : {r['sirens']} SIREN, dernière annonce {r['derniere_annonce']}")
+
+
+@app.command("refresh-dvf")
+def refresh_dvf_cmd() -> None:
+    """J+2 — DVF : détecte une nouvelle livraison Etalab (Last-Modified) et recharge SEULEMENT
+    les millésimes modifiés (idempotent). No-op si rien de neuf — on ne retélécharge pas ce qu'on a."""
+    from .ingestion import fraicheur
+
+    with session_scope() as s:
+        r = fraicheur.refresh_dvf(s, log_fn=typer.echo)
+        typer.echo("✓ DVF : no-op (aucune livraison)" if r["no_op"] else f"✓ DVF rechargé : {r['recharges']}")
+
+
+@app.command("fraicheur-derives")
+def fraicheur_derives_cmd(
+    hebdo: bool = typer.Option(False, help="Inclure les dérivés lourds (m10 délais/vélocité, re-fetch réseau)."),
+) -> None:
+    """J+2 — chaîne post-ingestion : rebuild des dérivés LÉGERS (caducs, defisc, surface_d, compteur
+    réveil DPE). NE TOUCHE JAMAIS les tables de run — le rang servi reste gelé (grande passe Mac)."""
+    from .ingestion import fraicheur
+
+    with session_scope() as s:
+        r = fraicheur.run_derives(s, hebdo=hebdo, log_fn=typer.echo)
+        typer.echo(f"✓ dérivés : {list(r)} · réveil DPE {r['dpe_reveil']['n']}/{r['dpe_reveil']['seuil']}")
+
+
 @app.command("deposants-actifs")
 def deposants_actifs_cmd(
     mois: int = typer.Option(24, help="Fenêtre de dépôt (mois)."),

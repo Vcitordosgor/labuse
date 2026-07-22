@@ -1,12 +1,6 @@
-# Wave Sitadel3 — refresh MENSUEL des autorisations d'urbanisme (SDES/Dido, dep 974).
-# Le SDES publie chaque fin de mois (frequency_date Dido) → on passe le 5 à 04h15, quelques
-# jours après la publication. Idempotent : delta depuis max(date) − 3 mois de recouvrement
-# (états et DAACT tardifs), upsert sur permit_id, run tracé dans ingestion_runs.
-#
-# Chemins alignés sur deploy/systemd/labuse.service (/opt/labuse/app, venv /opt/labuse/venv,
-# user labuse, env /etc/labuse/labuse.env). `set -a` : EnvironmentFile est du KEY=VALUE non
-# exporté — sans ça, python ne verrait pas LABUSE_DATABASE_URL.
-#
-# Installation VPS :  install -o root -g root -m 644 deploy/cron.d/sitadel /etc/cron.d/sitadel
+# LA BUSE — SITADEL quotidien-en-attente-du-mensuel (J+2) : le refresh delta (recouvrement
+# 3 mois) est un no-op léger tant que le SDES n'a pas publié ; le jour de la livraison
+# mensuelle, l'ingestion part le jour même. Puis dérivés (hebdo le lundi : + m10 vélocité).
 SHELL=/bin/sh
-15 4 5 * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/python -m labuse.ingestion.permits_sdes --refresh >> /var/log/labuse/sitadel_refresh.log 2>&1
+15 4 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/python -m labuse.ingestion.permits_sdes --refresh >> /var/log/labuse/sitadel_refresh.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/sitadel_refresh.log 2>&1
+45 5 * * 1 labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse fraicheur-derives --hebdo >> /var/log/labuse/sitadel_refresh.log 2>&1

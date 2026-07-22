@@ -131,6 +131,7 @@ export interface SourceInfo {
   testable: boolean
   // UX V1 ajout A : fraîcheur RÉELLE lue dans ingestion_runs (jamais codée en dur)
   derniere_ingestion: string | null
+  derniere_donnee?: string | null   // J+2 : date de la dernière DONNÉE en base (≠ ingestion)
   ingestion_runs: number
   // VUES item 4 : vérification « dernière version publiée » (source_checks) — NULL tant que
   // le mandat d'audit data n'a pas tourné ; la mention ne s'affiche qu'avec cette date

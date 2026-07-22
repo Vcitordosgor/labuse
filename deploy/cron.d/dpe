@@ -1,0 +1,4 @@
+# LA BUSE — DPE ADEME hebdo (J+2) : flux continu, upsert numero_dpe idempotent ; le compteur de
+# réveil du badge en réserve (F/G ∩ mono ∩ non-écarté ≥ 200) est réévalué par les dérivés.
+SHELL=/bin/sh
+20 5 * * 2 labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-dpe >> /var/log/labuse/dpe.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/dpe.log 2>&1

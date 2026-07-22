@@ -148,6 +148,9 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   // M6.1 item 4 : badge calculé sur la date de donnée RÉELLE × cadence du producteur
   const f = fraicheur(s, maj.iso)
   const badge = BADGE_META[f.badge]
+  // J+2 : la date de la dernière DONNÉE (pas seulement l'ingestion) — les dates parlent seules
+  const donneeJusquau = s.derniere_donnee
+    ? new Date(s.derniere_donnee).toLocaleDateString('fr-FR') : null
   return (
     <div ref={ref} data-source-row
       className={`flex items-center gap-4 rounded-[10px] border px-4 py-3 ${
@@ -195,10 +198,13 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
       <div className="shrink-0 text-right">
         {/* VUES item 4 : « donnée du X » (réelle : jobs/ingestion_runs, sinon millésime) ;
             la 2e ligne n'existe QUE vérifiée (source_checks) — jamais de date inventée. */}
+        {/* J+2 : distinguer la date des DONNÉES de la date d'INGESTION — les dates parlent seules */}
         <div data-source-donnee className="font-mono text-[11px] text-txt"
           title={maj.viaRuns ? `Dernière ingestion tracée (ingestion_runs, ${s.ingestion_runs} runs)` : undefined}>
-          {maj.iso ? `donnée du ${new Date(maj.iso).toLocaleDateString('fr-FR')}`
-            : mil ? `donnée du ${mil}` : '—'}
+          {donneeJusquau
+            ? <>données jusqu'au {donneeJusquau}{maj.iso ? <span className="text-txt-dim"> · ingéré le {new Date(maj.iso).toLocaleDateString('fr-FR')}</span> : null}</>
+            : maj.iso ? `donnée du ${new Date(maj.iso).toLocaleDateString('fr-FR')}`
+              : mil ? `donnée du ${mil}` : '—'}
         </div>
         {/* M6.1 item 4 : prochaine MAJ calculée depuis la cadence du producteur — « — »
             quand la cadence n'est pas documentée, jamais une date inventée. */}
