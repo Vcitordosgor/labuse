@@ -2024,6 +2024,26 @@ def deposants_actifs_cmd(
     typer.echo(f"✓ {len(rows)} déposants actifs ({mois} mois) → {p} (gitignoré, ne pas committer)")
 
 
+@app.command("prospection-notion")
+def prospection_notion_cmd(
+    mois: int = typer.Option(24, help="Fenêtre de dépôt (mois)."),
+    out: str = typer.Option("exports/prospection_notion.csv", help="CSV d'import Notion (exports/ = gitignoré)."),
+    enrich: bool = typer.Option(True, help="Enrichir adresse/ville du siège via l'API publique recherche-entreprises."),
+) -> None:
+    """PROSPECTION-NOTION : LE CSV d'import Notion « Prospection LABUSE », prêt sans retouche (read-only).
+    En-têtes exacts de la base + tag « Entité publique » + « Segment » heuristique + adresse siège
+    (open data INSEE/INPI). Séparateur virgule, UTF-8 avec BOM. Données nominatives jamais en git (exports/)."""
+    from .ingestion import prospection_notion
+
+    with session_scope() as s:
+        stats = prospection_notion.generate(s, out=out, mois=mois, enrich=enrich, log_fn=typer.echo)
+    typer.echo(
+        f"✓ {stats['n_lignes']} lignes → {stats['path']} (gitignoré, ne pas committer) · "
+        f"{stats['n_publiques']} entités publiques taguées · "
+        f"adresse siège : {stats['n_adresse']}/{stats['n_lignes']} ({stats['taux_adresse']} %)"
+    )
+
+
 @app.command("division-or")
 def division_or_cmd(
     communes: str = typer.Option(..., help="Communes à scanner (séparées par des virgules)."),
