@@ -3,12 +3,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
+import { fmtInt as fmt } from '../../lib/format'
 import { completudeColor, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
 import { useApp } from '../../store/useApp'
 
-const fmt = (n: number) => n.toLocaleString('fr-FR')
 
 // M5.1 : le badge « V nn » a disparu de la liste (le dossier propriétaire reste dans la
 // fiche) ; les badges secondaires conservés : même proprio ×N, événement daté, veille
@@ -76,23 +76,25 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
             </Tip>
           )}
           {p.veille && (
-            <span className="shrink-0 rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[9px] font-medium text-[#B497F0]"
-              title="Veille succession — radar patrimonial (signal d'état, pas un événement daté)">
-              veille succession
-            </span>
+            <Tip tip="Veille succession — radar patrimonial (signal d'état, pas un événement daté)" className="shrink-0">
+              <span className="rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[9px] font-medium text-[#B497F0]">
+                veille succession
+              </span>
+            </Tip>
           )}
           {p.owner_type && OWNER_BADGE[p.owner_type] && (
-            <span className="shrink-0 rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim"
-              title={OWNER_BADGE[p.owner_type].title}>
-              {OWNER_BADGE[p.owner_type].label}
-            </span>
+            <Tip tip={OWNER_BADGE[p.owner_type].title} className="shrink-0">
+              <span className="rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim">
+                {OWNER_BADGE[p.owner_type].label}
+              </span>
+            </Tip>
           )}
         </div>
         {/* M6 2a (§1.8) : adresse postale BAN sur la carte de résultat — jamais un vide */}
         <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
           {p.adresse ?? 'Adresse non disponible'}
         </div>
-        <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
+        <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
         {/* ×N = l'affichage produit du scoring v2 (probabilité relative de mutation) */}
