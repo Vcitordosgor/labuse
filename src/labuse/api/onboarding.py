@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
+from . import coffre_ui
 from ..config import get_settings
 
 log = logging.getLogger("labuse.onboarding")
@@ -25,43 +26,14 @@ def get_db():
     yield from _g()
 
 
-# ── le gabarit Coffre serveur (même nuit que auth.login_page, contenu plus long) ──
+# ── le gabarit Coffre serveur — délègue au design system validé (coffre_ui, partie E) ──
 
-def _page(titre: str, corps: str, large: bool = False) -> str:
-    return f"""<!doctype html><html lang="fr"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
-<title>LABUSE — {html.escape(titre)}</title><style>
-:root{{color-scheme:dark}}*{{box-sizing:border-box}}
-body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-background:#060A08;color:#C9DCD1;font:14px/1.65 -apple-system,'Inter',sans-serif;padding:24px}}
-.bloc{{width:100%;max-width:{'760px' if large else '420px'}}}
-.oiseau{{display:block;margin:0 auto 10px;height:26px;width:auto}}
-h1{{font:600 15px inherit;letter-spacing:.18em;text-transform:uppercase;color:#ECF5EF;
-text-align:center;margin:0 0 4px}}
-.sous{{text-align:center;font-size:11px;color:#5C7268;letter-spacing:.08em;margin:0 0 26px}}
-label{{display:block;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8FA69A;margin:16px 0 6px}}
-input[type=email],input[type=password]{{width:100%;background:none;border:0;border-bottom:1px solid #1E2A23;
-color:#ECF5EF;font:14px inherit;padding:8px 2px;outline:none;transition:border-color .15s}}
-input:focus{{border-bottom-color:#5CE6A1}}
-.cgvbox{{display:flex;gap:10px;align-items:flex-start;margin:20px 0 0;font-size:12px;color:#8FA69A}}
-.cgvbox input{{accent-color:#5CE6A1;margin-top:3px}}
-button{{margin-top:24px;width:100%;background:none;border:1px solid #5CE6A1;border-radius:8px;
-color:#5CE6A1;font:600 13px inherit;padding:10px;cursor:pointer;transition:background .15s}}
-button:hover{{background:rgba(92,230,161,.08)}}
-.err{{min-height:18px;font-size:12px;color:#E8695A;text-align:center;margin-top:14px}}
-.note{{font-size:10.5px;color:#5C7268;text-align:center;margin-top:22px;line-height:1.6}}
-.legal h2{{font-size:13px;color:#ECF5EF;margin:26px 0 6px}}
-.legal p,.legal li{{font-size:12.5px;color:#C9DCD1}}
-.legal .maj{{color:#5C7268;font-size:11px}}
-a{{color:#5CE6A1;text-decoration:none}}a:hover{{text-decoration:underline}}
-.pill{{display:inline-block;border:1px solid rgba(92,230,161,.4);border-radius:999px;
-padding:2px 10px;font-size:11px;color:#5CE6A1}}
-</style></head><body><div class="bloc">
-<svg class="oiseau" viewBox="0 0 240 82" fill="#C9A961" aria-hidden="true">
-<path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg>
-{corps}
-<p class="note">Radar foncier · La Réunion — <a href="/cgv">CGV</a> · <a href="/mentions-legales">mentions légales</a> · <a href="/confidentialite">confidentialité</a></p>
-</div></body></html>"""
+def _page(titre: str, corps: str, large: bool = False, head: str = "", pied: bool = True) -> str:
+    footer = ('<p class="note">Radar foncier · La Réunion — <a href="/cgv">CGV</a> · '
+              '<a href="/mentions-legales">mentions légales</a> · '
+              '<a href="/confidentialite">confidentialité</a></p>') if pied else ""
+    return coffre_ui.page(titre, coffre_ui.OISEAU + corps + footer,
+                          w=760 if large else None, legal=large, head=head)
 
 
 # ── E4 · invitation → mot de passe + CGV → Checkout ──
@@ -78,20 +50,23 @@ les invitations expirent après 7 jours.</p>"""), status_code=404)
     p = PLANS.get(inv["plan"], PLANS["integral"])
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
-<p class="sous">licence {p['label']} · {p['eur_mois']} €/mois · 1 licence = 1 accès</p>
-<form method="post" action="/invitation">
+<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · 1 accès</p>
+<form method="post" action="/invitation" novalidate>
 <input type="hidden" name="token" value="{html.escape(token)}">
 <label for="email">Identifiant</label>
-<input id="email" type="email" value="{html.escape(inv['email'])}" disabled>
-<label for="password">Mot de passe (10 caractères minimum)</label>
-<input id="password" name="password" type="password" minlength="10" required autocomplete="new-password" autofocus>
-<div class="cgvbox"><input type="checkbox" id="cgv" name="cgv" value="oui" required>
-<label for="cgv" style="all:unset;font-size:12px;color:#8FA69A;cursor:pointer">
-J'ai lu et j'accepte les <a href="/cgv" target="_blank">conditions générales</a> —
+<div class="field"><input id="email" type="email" value="{html.escape(inv['email'])}" disabled
+  aria-label="Votre email (fixé par l'invitation)"></div>
+<label for="password">Choisissez un mot de passe</label>
+<div class="field"><input id="password" name="password" type="password" minlength="10" required
+  autocomplete="new-password" autofocus aria-describedby="rules" oninput="labStrength(this.value)"></div>
+<div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
+<div class="consent"><input type="checkbox" id="cgv" name="cgv" value="oui" required aria-required="true">
+<label for="cgv">J'ai lu et j'accepte les <a href="/cgv" target="_blank">conditions générales</a> —
 les analyses LABUSE sont une pré-analyse sur données publiques, jamais un conseil.</label></div>
-<button type="submit">Continuer vers le paiement →</button>
-<div class="err"></div></form>
-<p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>"""))
+<button type="submit">Continuer vers le paiement →</button></form>
+<p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>""",
+                        head=coffre_ui.STRENGTH_JS))
 
 
 @router.post("/invitation", include_in_schema=False)
@@ -117,15 +92,58 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/invitation", status_code=303)
     audit(db, "cgv_acceptees", inv["compte_id"], inv["id"], f"version={s.cgv_version}")
     db.commit()
-    # → Stripe Checkout (founding appliqué) ; sans clé Stripe : page d'attente HONNÊTE
+    # → ÉCRAN DE BASCULE Checkout (partie E) : le moment d'anxiété est adressé par une page
+    # de confiance AVANT Stripe. La mécanique de paiement (creer_checkout/webhook) est
+    # inchangée — seul un écran présentational + un jeton signé s'ajoutent.
+    return RedirectResponse(f"/onboarding/paiement?t={coffre_ui.pay_token(inv['compte_id'])}",
+                            status_code=303)
+
+
+# ── PARTIE E · surface 4 — LA BASCULE VERS CHECKOUT (le point d'anxiété : rassurer) ──
+
+@router.get("/onboarding/paiement", include_in_schema=False)
+def paiement_bascule(t: str = "", db: Session = Depends(get_db)):
+    from ..comptes import PLANS
+    cid = coffre_ui.pay_cid(t)
+    if cid is None:
+        return HTMLResponse(_page("paiement", "<h1>Lien expiré</h1><p class='sub'>reprenez "
+                                  "depuis la porte</p><p style='text-align:center'>"
+                                  "<a href='/login'>se connecter</a></p>"), status_code=400)
+    p = PLANS["integral"]
+    return HTMLResponse(_page("votre abonnement", f"""
+<h1>Votre abonnement</h1><p class="sub">dernière étape avant votre espace</p>
+<div class="recap"><div class="prix">{p['eur_mois']} € <span style="font-size:14px;color:var(--mut);font-weight:400">/ mois</span></div>
+<div class="quoi">Licence {p['label']} — accès complet, résiliable à tout moment.</div></div>
+<div class="trust" role="list">
+  <div role="listitem">{coffre_ui.LOCK_SVG} Paiement <b style="color:var(--txt)">sécurisé par Stripe</b> — page hébergée, chiffrée.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M10 2l6 3v5c0 4-3 6.5-6 8-3-1.5-6-4-6-8V5z"/><path d="M7.5 10l1.8 1.8L13 8"/></svg> <b style="color:var(--txt)">Aucune donnée bancaire</b> ne transite par LABUSE.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> Facture émise automatiquement. Résiliation en un clic.</div>
+</div>
+<form method="post" action="/onboarding/paiement"><input type="hidden" name="t" value="{html.escape(t)}">
+<button type="submit">{coffre_ui.LOCK_SVG.replace('var(--mint)','currentColor')} Payer {p['eur_mois']} € en toute sécurité</button></form>
+<p class="note">Vous serez redirigé vers Stripe. Rien n'est débité tant que vous n'avez pas confirmé.</p>""",
+                        pied=False))
+
+
+@router.post("/onboarding/paiement", include_in_schema=False)
+async def paiement_lancer(request: Request, db: Session = Depends(get_db)):
+    from urllib.parse import parse_qs
+
+    from sqlalchemy import text as _t
+    t = (parse_qs((await request.body()).decode("utf-8", "replace")).get("t") or [""])[0]
+    cid = coffre_ui.pay_cid(t)
+    if cid is None:
+        return RedirectResponse("/login", status_code=303)
+    email = db.execute(_t("SELECT email FROM utilisateurs WHERE compte_id = :c LIMIT 1"),
+                       {"c": cid}).scalar()
+    # mécanique de paiement INCHANGÉE (auditée) : creer_checkout → Stripe ; repli honnête sans clé
     try:
         from ..facturation import creer_checkout
-        url = creer_checkout(db, inv["compte_id"], inv["email"])
-        return RedirectResponse(url, status_code=303)
+        return RedirectResponse(creer_checkout(db, cid, email or ""), status_code=303)
     except Exception as e:  # noqa: BLE001 — ConfigError (pas de clé) ou indispo Stripe
-        log.warning("checkout indisponible compte %s : %s", inv["compte_id"], e)
+        log.warning("checkout indisponible compte %s : %s", cid, e)
         return HTMLResponse(_page("paiement", """
-<h1>Compte créé — paiement à venir</h1><p class="sous">le paiement en ligne n'est pas encore ouvert</p>
+<h1>Compte créé — paiement à venir</h1><p class="sub">le paiement en ligne n'est pas encore ouvert</p>
 <p style="text-align:center;font-size:12.5px">Votre mot de passe est enregistré et vos conditions
 acceptées. Votre contact LABUSE vous enverra le lien de paiement sécurisé — l'accès s'ouvrira
 au règlement.</p><p style="text-align:center"><a href="/login">retour à la porte</a></p>"""))
@@ -135,16 +153,17 @@ au règlement.</p><p style="text-align:center"><a href="/login">retour à la por
 def onboarding_retour(ok: int = 1):
     if ok:
         return HTMLResponse(_page("bienvenue", """
-<h1>Paiement reçu</h1><p class="sous">votre espace est prêt</p>
-<p style="text-align:center;font-size:12.5px">Merci. Votre abonnement est actif — connectez-vous
-avec votre email et votre mot de passe. Un guide de prise en main vous attend dans l'app
-(lien discret, en bas du premier écran).</p>
-<p style="text-align:center;margin-top:18px"><a href="/login" class="pill">Entrer dans LABUSE →</a></p>"""))
+<div class="big"><div class="mark ok" aria-hidden="true">✓</div>
+<h1>Bienvenue</h1><p class="sub">votre abonnement est actif</p>
+<p style="font-size:13px">Merci. Connectez-vous avec votre email et votre mot de passe —
+un guide de prise en main vous attend dans l'app.</p>
+<p style="margin-top:20px"><a href="/login" class="pill">Entrer dans LABUSE →</a></p></div>""", pied=False))
     return HTMLResponse(_page("paiement interrompu", """
-<h1>Paiement interrompu</h1><p class="sous">rien n'a été débité</p>
-<p style="text-align:center;font-size:12.5px">Pour reprendre : connectez-vous simplement sur
-<a href="/login">la porte</a> avec votre email et votre mot de passe — le paiement se
-relancera automatiquement. Rien n'a été débité.</p>"""))
+<div class="big"><div class="mark soft" aria-hidden="true">↺</div>
+<h1>Paiement interrompu</h1><p class="sub">rien n'a été débité</p>
+<p style="font-size:13px">Aucun souci. Reprenez quand vous voulez : connectez-vous sur
+<a href="/login">la porte</a> avec votre email et votre mot de passe, le paiement se relancera.</p></div>""",
+                        pied=False))
 
 
 # ── E1 · reset mot de passe ──
@@ -157,12 +176,17 @@ def reset_page(token: str = ""):
 <p style="text-align:center;font-size:12.5px">Écrivez à votre contact LABUSE : un lien de
 réinitialisation valable une heure vous sera transmis directement.</p>"""))
     return HTMLResponse(_page("nouveau mot de passe", f"""
-<h1>Nouveau mot de passe</h1><p class="sous">choisissez-le soigneusement</p>
-<form method="post" action="/reset">
+<h1>Nouveau mot de passe</h1><p class="sub">choisissez-le soigneusement</p>
+<form method="post" action="/reset" novalidate>
 <input type="hidden" name="token" value="{html.escape(token)}">
-<label for="password">Nouveau mot de passe (10 caractères minimum)</label>
-<input id="password" name="password" type="password" minlength="10" required autocomplete="new-password" autofocus>
-<button type="submit">Enregistrer</button></form>"""))
+<label for="password">Nouveau mot de passe</label>
+<div class="field"><input id="password" name="password" type="password" minlength="10" required
+  autocomplete="new-password" autofocus aria-describedby="rules" oninput="labStrength(this.value)"></div>
+<div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum.</div>
+<button type="submit">Enregistrer</button></form>
+<p class="note">Par sécurité, toutes vos sessions ouvertes seront fermées.</p>""",
+                        head=coffre_ui.STRENGTH_JS))
 
 
 @router.post("/reset-demande", include_in_schema=False)
@@ -314,7 +338,8 @@ def mentions_page():
 <div class="legal"><h1>Mentions légales</h1>
 <h2>Éditeur</h2><p>{_EDITEUR}</p>
 <h2>Hébergement</h2><p>Serveur dédié dans l'Union européenne (OVHcloud). Paiements :
-Stripe Payments Europe Ltd. Emails transactionnels : Resend.</p>
+Stripe Payments Europe Ltd. Aucun envoi d'email automatique (les liens sont transmis
+directement par votre contact LABUSE).</p>
 <h2>Propriété</h2><p>Marque, interface et traitements LABUSE — tous droits réservés. Les
 données publiques agrégées restent soumises à leurs licences d'origine.</p></div>"""))
 
@@ -384,33 +409,29 @@ def flash_page(idu: str = "", annule: int = 0, db: Session = Depends(get_db)):
             {"i": idu.upper()}).mappings().first()
     if parcelle:
         return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sous">une parcelle · un PDF sourcé · 79 € — paiement unique</p>
-<div style="border:1px solid #1E2A23;border-radius:10px;padding:14px;margin-top:6px">
-<p style="margin:0;font-size:13px;color:#ECF5EF"><span style="font-family:ui-monospace,monospace">
-{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])}</span>
- · {html.escape(parcelle['commune'])} · {int(parcelle['m2'] or 0):,} m²</p>
-<p style="margin:8px 0 0;font-size:12px;color:#8FA69A">Le rapport : identité et plan de la
-parcelle, zonage et règles, risques connus, marché (DVF), permis voisins — chaque donnée
-avec sa source et sa date (Sourcé / Estimé). Pré-analyse sur données publiques : ne
-remplace ni certificat d'urbanisme ni conseil notarial.</p></div>
-<form method="post" action="/flash">
-<input type="hidden" name="idu" value="{html.escape(parcelle['idu'])}">
+<h1>Rapport Flash</h1><p class="sub">une parcelle · un PDF sourcé · 79 €</p>
+<div class="recap"><div style="font:600 13px ui-monospace,monospace;color:var(--hi)">{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])} · {html.escape(parcelle['commune'])} · {('%d' % (parcelle['m2'] or 0))} m²</div>
+<div class="quoi" style="margin-top:8px">Le rapport : identité et plan, zonage et règles, risques,
+marché (DVF), permis voisins — chaque donnée avec sa source (Sourcé / Estimé). Pré-analyse sur
+données publiques ; ne remplace ni certificat d'urbanisme ni conseil notarial.</div></div>
+<div class="recap" style="margin-top:10px"><div class="prix">79 € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique</span></div></div>
+<form method="post" action="/flash"><input type="hidden" name="idu" value="{html.escape(parcelle['idu'])}">
 <button type="submit">Payer 79 € et générer le rapport →</button></form>
-<p class="note">Paiement unique par Stripe. Le lien de téléchargement (valable 30 jours)
-s'affiche dès la génération — quelques secondes. <a href="/flash">changer de parcelle</a></p>"""))
+<p class="linkrow"><a href="/flash">← changer de parcelle</a></p>
+<p class="note">Paiement unique par Stripe — aucune donnée de carte ne transite par LABUSE.
+Le lien de téléchargement (30 jours) s'affiche dès la génération.</p>""", pied=False))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sous">une parcelle · un PDF sourcé · 79 € — paiement unique</p>
+<h1>Rapport Flash</h1><p class="sub">une parcelle · un PDF sourcé · 79 €</p>
 {note_annule}{introuvable}
 <form method="get" action="/flash">
-<label for="idu">Identifiant de parcelle (IDU, 14 caractères)</label>
-<input id="idu" name="idu" type="text" minlength="14" maxlength="14" required autofocus
-  style="width:100%;background:none;border:0;border-bottom:1px solid #1E2A23;color:#ECF5EF;
-  font:14px ui-monospace,monospace;padding:8px 2px;outline:none" placeholder="97415000CW0658">
+<label for="idu">Identifiant de parcelle (IDU)</label>
+<div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14" required
+  autofocus inputmode="latin" placeholder="97415000CW0658" aria-describedby="iduhint"
+  style="font-family:ui-monospace,monospace"></div>
 <button type="submit">Vérifier la parcelle →</button></form>
-<p class="note">L'IDU figure sur cadastre.gouv.fr (commune + section + numéro) — ou
-demandez-le à votre contact LABUSE. Le rapport est généré sur la parcelle EXACTE.</p>"""))
+<p class="meterlbl" id="iduhint">14 caractères — figure sur cadastre.gouv.fr, ou demandez-le à votre contact LABUSE. Le rapport est généré sur la parcelle EXACTE.</p>"""))
 
 
 @router.post("/flash", include_in_schema=False)
@@ -438,9 +459,10 @@ débité — réessayez, ou écrivez à votre contact LABUSE.</p>"""), status_co
 @router.get("/flash/retour", include_in_schema=False)
 def flash_retour(session_id: str = ""):
     return HTMLResponse(_page("génération du rapport", f"""
-<h1>Rapport en préparation</h1><p class="sous">paiement reçu — génération en cours</p>
-<div id="etat" style="text-align:center;font-size:12.5px;color:#8FA69A;margin-top:10px">
-<span class="pill">génération…</span></div>
+<div class="big"><div class="mark ok" aria-hidden="true"><span class="spin" style="border-color:rgba(92,230,161,.3);border-top-color:var(--mint)"></span></div>
+<h1>Paiement reçu</h1><p class="sub">génération en cours…</p></div>
+<div id="etat" role="status" aria-live="polite" style="text-align:center;font-size:13px;color:var(--mut);margin-top:6px">
+Quelques secondes — le lien de téléchargement s'affiche ici.</div>
 <script>
 const sid = {session_id!r};
 async function poll() {{
@@ -449,13 +471,13 @@ async function poll() {{
     const d = await r.json();
     const el = document.getElementById('etat');
     if (d.statut === 'generee' && d.lien) {{
-      el.innerHTML = '<a class="pill" href="' + d.lien + '">Télécharger votre rapport (PDF) →</a>' +
-        '<p style="font-size:11px;color:#5C7268;margin-top:12px">Lien valable 30 jours — ' +
+      el.innerHTML = '<a class="pill" href="' + d.lien + '">↓ Télécharger le PDF</a>' +
+        '<p style="font-size:11px;color:var(--dim);margin-top:12px">Lien valable 30 jours — ' +
         'conservez le PDF. Reçu et facture : dans l\\'email Stripe.</p>';
       return;
     }}
     if (d.statut === 'erreur') {{
-      el.innerHTML = '<p style="color:#E8695A">La génération a rencontré un problème — ' +
+      el.innerHTML = '<p style="color:var(--err)">La génération a rencontré un problème — ' +
         'elle va être retentée automatiquement. Si rien ne vient, écrivez à votre contact ' +
         'LABUSE avec votre reçu Stripe : le rapport vous sera fourni.</p>';
     }}

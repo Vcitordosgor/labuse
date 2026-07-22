@@ -3,10 +3,12 @@
 **Branche `commerce/audit-paiement` · tout en MODE TEST · Vic merge.** Deux postures :
 l'auditeur adversarial (A-D, faites) puis le designer senior (E, maquettes → verdict Vic).
 
-## ⟪ CURSEUR ⟫ **STOP MI-PARCOURS — A-D livrées, maquettes d'auth à trancher par Vic**
+## ⟪ CURSEUR ⟫ **STOP FINAL — A-D auditées + E (design d'entrée) implémentée et vérifiée**
 
 Chaque faille : un test qui échouait → corrigé → le test RESTE (régression permanente).
-Suite **1118/0**, golden **116/116 avec auth active**, headers de sécurité live.
+Suite **1119/0** (18 skips environnementaux), golden **116/116 avec auth active**, headers
+de sécurité live. Partie E livrée : design system `coffre_ui`, 9 surfaces refondues, écran de
+bascule Checkout protégé par jeton HMAC signé (+ son test de régression). **Verdict : GO** (§6).
 
 ---
 
@@ -62,13 +64,56 @@ Suite **1118/0**, golden **116/116 avec auth active**, headers de sécurité liv
    les réglages de compte Stripe (pour la facture).
 3. **Relecture CGV** : passage avocat recommandé avant les premières signatures.
 
-## 4. Design d'entrée (partie E)
-_Les maquettes sont dans `docs/mockups/auth/` (STOP mi-parcours). Après verdict Vic :
-implémentation + atlas avant/après._
+## 4. Design d'entrée (partie E) — IMPLÉMENTÉ
+
+Maquettes validées (`docs/mockups/auth/`) portées en production sur un **design system unique** :
+`src/labuse/api/coffre_ui.py`. Principe : **design ≠ mécanique** — la nuit « Coffre » est refaite,
+la mécanique de paiement auditée (A–D) n'est **jamais** touchée.
+
+- **Source unique du dessin** : tokens en variables CSS (`coffre_ui.CSS`), **zéro hex épars** dans
+  les pages ; `auth.login_page` et tout `onboarding.py` rendent à travers `coffre_ui.page(...)`.
+  auth.py passe de ~130 lignes de CSS inline à un appel au module (diff : −165/+50 environ).
+- **Accessibilité AA** : contraste, focus visibles, labels liés, erreurs annoncées (`role=alert`,
+  `aria-live`), `prefers-reduced-motion`, jauge de robustesse mot de passe annoncée (`labStrength`).
+- **Écran de bascule Checkout** (net-neuf) : entre l'acceptation CGV et Stripe, une page de confiance
+  (récap 349 €/mois, 3 signaux : sécurisé Stripe / aucune donnée bancaire / facture auto + résiliation).
+  Sécurité = **jeton HMAC signé** (`coffre_ui.pay_token`/`pay_cid`, TTL 30 min), pas la session : la
+  page est publique par nature (atteinte juste après l'invitation, avant toute session). Route
+  `/onboarding/paiement` ajoutée à `_PUBLIC`. Au POST, `creer_checkout` est appelé **inchangé**.
+- **Atlas avant/après** : `docs/mockups/auth/ATLAS_PARTIE_E.md` (rendus PNG dans `rendus/`, gitignorés
+  — convention atlas du dépôt : versionnés en local + `~/labuse-backups/audit-paiement-rendus/`).
 
 ## 5. Écrans/parcours que VIC valide à l'œil
-_(liens + commandes — complété au STOP final)._
 
-## 6. Verdict go/no-go bascule
-_(complété au STOP final ; à ce stade : A-D VERTES, aucune faille non corrigée ; réserves =
-les 3 points Vic de la section 3, non bloquants pour le code)._
+Atlas complet : **`docs/mockups/auth/ATLAS_PARTIE_E.md`** (9 surfaces, avant/après, rendus réels
+440×900 ×2). Les 3 écrans à fort enjeu d'abord :
+
+| Écran | Rendu | Enjeu |
+|---|---|---|
+| **Bascule Checkout** (net-neuf) | `rendus/shot_bascule_checkout.png` | le point d'anxiété : rassurer avant Stripe |
+| **Retour échec / succès** (net-neuf) | `rendus/shot_retour_echec.png` · `_succes.png` | « rien n'a été débité » vs « bienvenue » |
+| **Flash** (confirm / génération / saisie) | `rendus/shot_flash_confirm.png` · `_gen.png` · `_APRES_flash_saisie.png` | one-shot 79 € : lisibilité + PDF |
+| Porte (login) | `rendus/shot_login_defaut.png` · `_erreur.png` | la porte, erreur de couple sobre |
+| Invitation | `rendus/shot_invitation.png` | jauge robustesse + consentement CGV encadré |
+| Reset | `rendus/shot_APRES_reset.png` | « toutes les sessions seront fermées » |
+| CGV / mentions | `rendus/shot_legal_cgv.png` | design system 760 px ; mentions corrigées (retrait « Resend ») |
+
+Parcours à dérouler en local (mode test) : `labuse api` puis `/login`, `/invitation?token=…`,
+et le tunnel invitation → CGV → **bascule** → Stripe test 4242 → `/onboarding/retour`.
+
+## 6. Verdict go/no-go bascule — **GO (sous réserves non bloquantes de la §3)**
+
+**GO pour la bascule live du point de vue CODE.** État à ce STOP final :
+
+- **A–D vertes** : aucune faille d'accès/Stripe/robustesse/conformité non corrigée ; chaque
+  correction gardée par un test de régression permanent.
+- **E livrée et vérifiée** : suite **1119/0**, golden **116/116 avec auth active** (Partie E ne
+  touche ni scoring ni données — confirmé), écran de bascule protégé par jeton signé + test
+  `test_bascule_paiement_atteignable_sans_session_mais_jeton_signe` (durci contre la flakiness :
+  jeton altéré déterministe, jamais 401/500, 400 gracieux sur absent/forgé/altéré).
+- **Réserves = les 3 points §3, hors code, à la main de Vic** : (1) TVA — trancher art. 293 B avec
+  le comptable avant le 1ᵉʳ encaissement ; (2) identité EI + SIREN dans Stripe et `/mentions-legales` ;
+  (3) relecture CGV par un avocat. Aucun n'est un défaut de code ; ce sont des gestes juridico-fiscaux.
+
+**La bascule effective (clés Stripe live, DNS, rideau) reste un mandat séparé** — ici tout est en
+MODE TEST. Rien n'est mergé : Vic relit la branche, tranche les 3 réserves, puis bascule.

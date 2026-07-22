@@ -239,6 +239,36 @@ def test_tokens_rejoues_expires_forges(app_client):
         _purge(email, f"exp-{email}")
 
 
+# ────────────────── PARTIE E · bascule Checkout : reachabilité + jeton signé ──────────────────
+
+def test_bascule_paiement_atteignable_sans_session_mais_jeton_signe(app_client):
+    """L'écran de bascule Checkout (partie E) est PUBLIC (atteint juste après l'invitation,
+    avant toute session) mais sa sécurité est le jeton HMAC signé, PAS la session : jeton
+    valide → 200 ; absent/altéré/forgé → 400 gracieux (jamais un 401 qui casserait le
+    parcours d'onboarding, jamais un 500, jamais une fuite). La MÉCANIQUE de paiement
+    (creer_checkout) n'est pas touchée : ce test verrouille seulement la porte présentational."""
+    from labuse.api import coffre_ui
+    cid = _compte_actif(email := f"basc-{uuid.uuid4().hex[:8]}@x.test")
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver")   # AUCUNE session
+        # jeton signé valide → l'écran s'affiche (pas de 401 : la page est publique par nature)
+        bon = coffre_ui.pay_token(cid)
+        r = c.get(f"/onboarding/paiement?t={bon}")
+        assert r.status_code == 200 and "349" in r.text, r.text[:200]
+        # jeton altéré : on retourne le DERNIER caractère de la signature vers une valeur
+        # garantie différente (sinon 1/16 des signatures finissant par « 0 » rendraient la
+        # mutation neutre → test flaky). Signature 1 bit à côté ⇒ compare_digest doit rejeter.
+        altere = bon[:-1] + ("1" if bon[-1] == "0" else "0")
+        # absent / non-parsable / forgé (bonne forme, mauvaise signature) / altéré → 400 gracieux,
+        # jamais 401/500, jamais de Checkout lancé.
+        for bad in ("", "bogus", f"{cid}.9999999999.0", altere):
+            rb = c.get(f"/onboarding/paiement?t={bad}")
+            assert rb.status_code == 400, (bad, rb.status_code)
+            assert "expiré" in rb.text.lower()
+    finally:
+        _purge(email)
+
+
 # ─────────────────────────── Brute force / verrou ───────────────────────────
 
 def test_brute_force_verrou_non_contournable_par_casse(app_client):

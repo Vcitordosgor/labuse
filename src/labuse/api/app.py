@@ -310,16 +310,11 @@ async def login_submit(request: Request):
                     resp = RedirectResponse("/", status_code=303)
                     resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
                     return resp
-                try:
-                    from ..facturation import creer_checkout
-                    url = creer_checkout(db, u["compte_id"], identifiant)
-                    return RedirectResponse(url, status_code=303)
-                except Exception:  # noqa: BLE001 — Stripe indisponible : page honnête
-                    from .onboarding import _page
-                    return HTMLResponse(_page("paiement requis", """
-<h1>Paiement requis</h1><p class="sous">votre compte attend son premier paiement</p>
-<p style="text-align:center;font-size:12.5px">Le paiement en ligne ne répond pas — réessayez
-dans quelques minutes ou écrivez à votre contact LABUSE.</p>"""), status_code=503)
+                # → écran de bascule Checkout (design validé partie E), la même page de
+                # confiance que l'onboarding ; la mécanique de paiement reste inchangée.
+                from .coffre_ui import pay_token
+                return RedirectResponse(f"/onboarding/paiement?t={pay_token(u['compte_id'])}",
+                                        status_code=303)
             tok = creer_session(db, u["utilisateur_id"])
         auth.log_event("login_ok", request)
         resp = RedirectResponse("/", status_code=303)
