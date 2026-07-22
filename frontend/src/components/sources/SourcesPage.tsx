@@ -154,7 +154,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   return (
     <div ref={ref} data-source-row
       className={`flex items-center gap-4 rounded-[10px] border px-4 py-3 ${
-        focused ? 'border-mint bg-[#0F1A14]' : 'border-line-2 bg-surface-3'}`}>
+        focused ? 'border-mint bg-mint/[0.06]' : 'border-line-2 bg-surface-3'}`}>
       <span className="h-2 w-2 shrink-0 rounded-full print:hidden" style={{ background: STATUS_DOT[s.status ?? ''] ?? '#5C7268' }}
         title={`Statut : ${s.status ?? 'inconnu'}`} />
       <div className="min-w-0 flex-1">
@@ -192,7 +192,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
             {attribution(s, maj.iso)}
           </div>
         )}
-        {mil && <div className="mt-0.5 text-[11px] text-[#7DE8E0]">↻ {mil}</div>}
+        {mil && <div className="mt-0.5 text-[11px] text-txt-mut">↻ {mil}</div>}
         {prec && <div data-source-precision className="mt-0.5 text-[11px] text-mint">✓ précision mesurée : {prec}</div>}
       </div>
       <div className="shrink-0 text-right">
@@ -211,7 +211,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         <div data-source-prochaine className="mt-0.5 text-[11px] text-txt-dim"
           title={f.cadence ? `Cadence du producteur : ${f.cadence}` : 'Cadence du producteur non documentée'}>
           prochaine MAJ attendue : {f.prochaine
-            ? <span className={f.badge === 'maj_attendue' ? 'font-medium text-[#E8B44C]' : undefined}>
+            ? <span className={f.badge === 'maj_attendue' ? 'font-medium text-st-creuser' : undefined}>
                 {f.prochaine.toLocaleDateString('fr-FR')}</span>
             : '—'}
         </div>
@@ -284,7 +284,7 @@ export function SourcesPage() {
               </span>
             </p>
             <p className="mt-1 text-[11px] leading-snug text-st-creuser">
-              ⚠ {modele.avertissement_censure}.
+              ▲ {modele.avertissement_censure}.
             </p>
             <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{modele.politique_recalibration}.</p>
           </div>
