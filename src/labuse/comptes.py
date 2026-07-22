@@ -331,3 +331,26 @@ def supprimer_utilisateur(db: Session, email: str) -> bool:
     audit(db, "utilisateur_efface_rgpd", u["compte_id"], None)
     db.commit()
     return True
+
+
+def effacer_compte_rgpd(db: Session, email: str) -> bool:
+    """AUDIT PAIEMENT · LEX-D — droit à l'effacement TOTAL : l'utilisateur, SON compte, et
+    TOUTES ses données client (projets, pipeline CRM, veilles, filtres, signalements) partent
+    réellement — par la cascade FK ON DELETE CASCADE de compte_id. L'audit est ANONYMISÉ
+    (l'événement légal reste, l'identité disparaît). Renvoie True si un compte a été effacé."""
+    email = _norm_email(email)
+    u = db.execute(text("SELECT id, compte_id FROM utilisateurs WHERE email = :e"),
+                   {"e": email}).mappings().first()
+    if not u:
+        return False
+    cid = u["compte_id"]
+    # anonymiser l'audit AVANT de perdre les id (on garde la trace de l'événement, pas l'identité)
+    db.execute(text("UPDATE evenements_compte SET utilisateur_id = NULL, compte_id = NULL,"
+                    " detail = '[efface RGPD]' WHERE compte_id = :c"), {"c": cid})
+    # DELETE du compte → cascade : utilisateurs, sessions_auth, projets, pipeline_entries,
+    # saved_searches, saved_filters, signalements (toutes portent compte_id ON DELETE CASCADE).
+    db.execute(text("DELETE FROM comptes WHERE id = :c"), {"c": cid})
+    audit(db, "compte_efface_rgpd", None, None, "effacement total (compte + données client)")
+    db.commit()
+    log.info("RGPD : compte %s et toutes ses données client effacés", cid)
+    return True

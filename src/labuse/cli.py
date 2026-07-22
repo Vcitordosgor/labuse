@@ -2065,11 +2065,28 @@ def compte_supprime_cmd(email: str, oui: bool = typer.Option(False, "--oui", hel
     """EFFACEMENT RGPD : purge l'utilisateur (sessions comprises), anonymise l'audit."""
     if not oui:
         typer.echo("ajoutez --oui pour confirmer l'effacement définitif", err=True); raise typer.Exit(1)
-    from .comptes import supprimer_utilisateur
+    from .comptes import effacer_compte_rgpd
 
     with session_scope() as s:
-        ok = supprimer_utilisateur(s, email)
-    typer.echo("effacé (RGPD)" if ok else "email inconnu")
+        ok = effacer_compte_rgpd(s, email)
+    typer.echo("effacé (RGPD : compte + projets + CRM + veilles)" if ok else "email inconnu")
+
+
+@app.command("cgv-preuve")
+def cgv_preuve_cmd(email: str = typer.Option(None, help="un email, ou tous si omis")) -> None:
+    """LEX-D — preuve de consentement CGV EXPORTABLE : qui a accepté quelle version, quand."""
+    from sqlalchemy import text as _t
+
+    with session_scope() as s:
+        rows = s.execute(_t(
+            "SELECT email, cgv_version, cgv_acceptees_at FROM utilisateurs"
+            " WHERE cgv_acceptees_at IS NOT NULL"
+            + (" AND email = :e" if email else "") + " ORDER BY cgv_acceptees_at"),
+            ({"e": email.strip().lower()} if email else {})).mappings().all()
+    if not rows:
+        typer.echo("aucun consentement enregistré"); return
+    for r in rows:
+        typer.echo(f"{r['cgv_acceptees_at'].isoformat()} · {r['email']} · CGV {r['cgv_version']}")
 
 
 @app.command("radar-sources")

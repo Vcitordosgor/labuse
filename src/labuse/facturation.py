@@ -125,6 +125,10 @@ def creer_checkout_flash(db: Session, idu: str) -> str:
         success_url=f"{s.public_base_url}/flash/retour?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{s.public_base_url}/flash?annule=1&idu={idu}",
         metadata={"idu": idu, "produit": "flash"},
+        # LEX-D — facture française émise par Stripe (le one-shot ne la crée pas par défaut) :
+        # identité EI + SIREN + n° séquentiel + date viennent des réglages de compte Stripe
+        # (à compléter par Vic) ; le pied porte la mention fiscale (art. 293 B ou TVA).
+        invoice_creation={"enabled": True, "invoice_data": {"footer": s.facture_mention}},
         locale="fr")
     db.execute(text("INSERT INTO flash_commandes (stripe_session_id, idu) VALUES (:s, :i)"
                     " ON CONFLICT (stripe_session_id) DO NOTHING"), {"s": session.id, "i": idu})
@@ -137,9 +141,6 @@ def _flash_fulfill(db: Session, session_id: str, email: str | None) -> None:
     """Fulfillment FLASH : marque payée, génère le PDF (module flash, idempotent), pose le
     token de téléchargement (30 j). En cas d'échec de génération : statut `erreur` — le
     retour affiche un message honnête + reprise possible (regénération au prochain poll)."""
-    import hashlib
-    import secrets as _secrets
-
     row = db.execute(text("SELECT id, idu, statut FROM flash_commandes WHERE stripe_session_id = :s"),
                      {"s": session_id}).mappings().first()
     if not row:

@@ -134,6 +134,17 @@ app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 @app.middleware("http")
+async def _security_headers(request, call_next):
+    """AUDIT PAIEMENT · LEX-D — en-têtes de sécurité de base sur CHAQUE réponse (défense en
+    profondeur : le Caddy prod en pose déjà, l'app les garantit aussi en local/QA)."""
+    resp = await call_next(request)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "same-origin")
+    return resp
+
+
+@app.middleware("http")
 async def _fix_double_encoded_query(request, call_next):
     """Répare les query-strings DOUBLE-ENCODÉES par certains tunnels/proxys d'aperçu.
 
