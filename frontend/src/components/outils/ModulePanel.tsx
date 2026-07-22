@@ -10,6 +10,7 @@ import { pointInPolygon } from '../../lib/geo'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { M22 } from './M22Programme'
+import { O10Bascules, O5Servitudes, O6Comparateur, O7Carnet, O9Rarete } from './blocB'
 import { M15, M16, M17, M18, M19 } from './moteurs'
 import { MODULES, VIOLET } from './registry'
 import { ScoringV2Module } from './ScoringV2'
@@ -663,6 +664,11 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
   simulplu: M15, assemblage: M16, zan: M17, barometre: M18, matching: M19, programme: M22,
   'scoring-v2': ScoringV2Module,
+  'o5-servitudes': O5Servitudes,
+  'o6-comparateur': O6Comparateur,
+  'o7-carnet': O7Carnet,
+  'o9-rarete': O9Rarete,
+  'o10-bascules': O10Bascules,
 }
 
 export function ModulePanel() {

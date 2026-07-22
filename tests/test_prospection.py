@@ -70,7 +70,7 @@ _FORBIDDEN = ["propriétaire officiel", "propriétaire garanti", "contact vérif
               "donnée fiscale", "donnée majic", "donnée fichiers fonciers"]
 
 
-@pytest.mark.parametrize("rel", ["src/labuse/api/web/app.js", "src/labuse/api/export.py", "src/labuse/prospection.py"])
+@pytest.mark.parametrize("rel", ["frontend/src/components/fiche/Fiche.tsx", "src/labuse/api/export.py", "src/labuse/prospection.py"])
 def test_vocabulaire_interdit_absent(rel):
     txt = (ROOT / rel).read_text(encoding="utf-8").lower()
     for bad in _FORBIDDEN:

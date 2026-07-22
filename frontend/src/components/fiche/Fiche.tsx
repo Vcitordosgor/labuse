@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
-import { fmtDate, fmtDateNum, fmtInt, fmtM2 } from '../../lib/format'
+import { fmtDate, fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
@@ -79,7 +79,7 @@ function Line({ line }: { line: FicheLine }) {
           )}
           {line.result === 'UNKNOWN' && <span className="text-[9px] text-txt-dim">inconnu</span>}
         </div>
-        <div className="text-[11px] leading-snug text-txt-mut">{line.detail}</div>
+        <div className="text-[11px] leading-snug text-txt-mut">{fmtLibelleBrut(line.detail)}</div>
         <SourceRef line={line} />
       </div>
     </div>
@@ -889,7 +889,7 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="text-xs font-medium text-st-ecartee">LABUSE l'a écartée — voici pourquoi</div>
           <div className="mt-1 flex flex-col gap-0.5">
             {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').slice(0, 4).map((l) => (
-              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{layerLabel(l.layer)}</b> — {l.detail}</div>
+              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{layerLabel(l.layer)}</b> — {fmtLibelleBrut(l.detail)}</div>
             ))}
             {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').length === 0 && (
               <div className="text-[10.5px] text-txt-mut">Aucune exclusion dure : qualité insuffisante (Q {f.q_score} &lt; 50) — détail dans les onglets.</div>
@@ -929,8 +929,18 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="truncate font-mono text-sm font-medium text-txt-hi">{idu}</div>
           {/* M6 2a (§1.8) : adresse postale BAN en tête de fiche — jamais un champ vide */}
           {f && (
-            <div data-fiche-adresse className={`mt-0.5 truncate text-[11px] ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
-              {f.adresse ?? 'Adresse non disponible'}
+            <div data-fiche-adresse className={`mt-0.5 flex min-w-0 items-baseline gap-2 text-[11px] ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
+              <span className="min-w-0 truncate">{f.adresse ?? 'Adresse non disponible'}</span>
+              {/* B4 (BLOC B) : recherche d'ADRESSE sortante, wording neutre — rien n'est
+                  stocké, rien n'est promis (jamais un mot sur le propriétaire). */}
+              {f.adresse && (
+                <a data-fiche-pj href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
+                  target="_blank" rel="noreferrer noopener"
+                  className="shrink-0 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
+                  title="Recherche externe à cette adresse (Pages Jaunes) — s'ouvre dans un nouvel onglet, rien n'est stocké">
+                  Rechercher à cette adresse ↗
+                </a>
+              )}
             </div>
           )}
           <div className="mt-0.5 text-[11px] text-txt-mut">
@@ -1155,6 +1165,10 @@ export function Fiche({ idu }: { idu: string }) {
             (identité nominative : workflow SPF/CERFA, jamais automatisée).
           </div>
         )}
+        {/* BLOC B · S45 (verdict Vic : variante B) — le TRADUCTEUR PLU vit DANS l'onglet
+            Règles : bloc dépliable violet (IA/premium = violet), règles en français courant,
+            chaque valeur avec sa provenance ; le règlement écrit reste la référence. */}
+        {!fq && f && tab === 'regles' && <TraducteurBloc idu={idu} />}
         {!fq && f && (tab === 'regles' || tab === 'risques' || tab === 'marche' || tab === 'proprio') && (
           <div>
             {ongletLines(tab).length ? ongletLines(tab).map((l, i) => <Line key={i} line={l} />)
@@ -1192,12 +1206,10 @@ export function Fiche({ idu }: { idu: string }) {
             Dossier
           </a>
           {/* O1 : dossier banquier — 6-8 pages print, synthèse exécutive + bilan/charge foncière +
-              Score É + comparables DVF/SITADEL + risques, tout sourcé (photo aérienne IGN). */}
-          <a href={`/dossier-banquier/${idu}.pdf`} target="_blank" rel="noreferrer"
-            className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-            title="Dossier banquier PDF (synthèse exécutive, bilan & charge foncière, comparables, risques) — présentation financeur">
-            Banquier
-          </a>
+              Score É + comparables DVF/SITADEL + risques, tout sourcé (photo aérienne IGN).
+              B1.5 : génération ASYNC (9,3 s ne bloquent plus le clic) — préparer → sonder →
+              « prêt » cliquable ; le PDF sort alors du cache serveur en ~ms. */}
+          <BanquierButton idu={idu} />
           {f?.coords && (
             /* Fix LOT 2 : recentrer sur LA parcelle en ouvrant la vue historique (sinon la carte
                restait où elle était → on voyait l'île, pas le terrain). */
@@ -1237,5 +1249,120 @@ export function Fiche({ idu }: { idu: string }) {
         </p>
       </div>
     </aside>
+  )
+}
+
+
+/** B1.5 — bouton Dossier banquier à ÉTATS : clic → préparation asynchrone côté serveur
+ *  (le PDF pesait 9,3 s bloquants), sonde /statut toutes les 1,5 s, puis « prêt — ouvrir »
+ *  (cache serveur : ouverture ~ms). Erreur : message court + réessai. Si le cache est déjà
+ *  chaud, le premier clic ouvre directement (même geste utilisateur → pas de popup bloquée). */
+function BanquierButton({ idu }: { idu: string }) {
+  const [etat, setEtat] = useState<'idle' | 'encours' | 'pret' | 'erreur'>('idle')
+  const timer = useRef<number | null>(null)
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
+  useEffect(() => { setEtat('idle'); if (timer.current) window.clearTimeout(timer.current) }, [idu])
+  const url = `/dossier-banquier/${idu}.pdf`
+  const poll = async () => {
+    try {
+      const r = await fetch(`/dossier-banquier/${idu}/statut`)
+      const d = await r.json()
+      if (d.etat === 'pret') { setEtat('pret'); return }
+      if (d.etat === 'erreur') { setEtat('erreur'); return }
+    } catch { setEtat('erreur'); return }
+    timer.current = window.setTimeout(poll, 1500)
+  }
+  const lancer = async () => {
+    try {
+      const r = await fetch(`/dossier-banquier/${idu}/prepare`, { method: 'POST' })
+      const d = await r.json()
+      if (d.etat === 'pret') { window.open(url, '_blank', 'noreferrer'); setEtat('pret'); return }
+      setEtat('encours'); timer.current = window.setTimeout(poll, 1500)
+    } catch { setEtat('erreur') }
+  }
+  if (etat === 'pret') return (
+    <a href={url} target="_blank" rel="noreferrer"
+      className="flex h-8 flex-1 items-center justify-center gap-1 rounded-lg border border-mint/50 px-3 text-xs font-medium text-mint transition-colors duration-quick hover:bg-mint/10"
+      title="Dossier banquier prêt — ouvrir le PDF">
+      Banquier — prêt
+    </a>
+  )
+  if (etat === 'encours') return (
+    <span className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3">
+      <Loading label="Banquier…" className="text-xs" />
+    </span>
+  )
+  return (
+    <button onClick={lancer} data-banquier-btn
+      className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt transition-colors duration-quick hover:text-txt-hi"
+      title={etat === 'erreur' ? 'Génération impossible — réessayer'
+        : 'Dossier banquier PDF (synthèse exécutive, bilan & charge foncière, comparables, risques) — présentation financeur'}>
+      {etat === 'erreur' ? 'Banquier — réessayer' : 'Banquier'}
+    </button>
+  )
+}
+
+
+/** BLOC B · S45 — Traducteur PLU (variante B, verdict Vic) : bloc dépliable de l'onglet
+ *  Règles. Charge à l'ouverture seulement ; Sourcé = article calibré, Estimé = générique. */
+function TraducteurBloc({ idu }: { idu: string }) {
+  const [open, setOpen] = useState(false)
+  const q = useQuery({
+    queryKey: ['traducteur', idu],
+    queryFn: async () => {
+      const r = await fetch(`/traducteur-plu/${idu}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      if (!r.ok) throw new Error(`traducteur ${r.status}`)
+      return r.json() as Promise<{
+        ok: boolean; zone: string | null; zone_calibree: boolean
+        regles_appliquees: { regle: string; valeur: string; source: string }[]
+        reglement: { url: string | null; note: string | null }
+      }>
+    },
+    enabled: open, staleTime: 300_000,
+  })
+  const d = q.data
+  return (
+    <div data-traducteur className="mb-3 rounded-lg border border-violet/30 bg-violet/[0.06] px-3 py-2">
+      <button data-traducteur-toggle onClick={() => setOpen((o) => !o)}
+        className="flex min-h-7 w-full items-center justify-between gap-2 text-left">
+        <span className="label-caps text-[10px] text-violet">✦ Traduire ma zone en français courant</span>
+        <span className="text-[11px] text-txt-dim">{open ? 'replier ▴' : 'déplier ▾'}</span>
+      </button>
+      {open && (
+        <div className="mt-2">
+          {q.isLoading && <Loading accent="violet" label="Traduction des règles…" className="text-[11px]" />}
+          {q.isError && (
+            <p className="text-[11px] text-st-ecartee">
+              Traduction indisponible — <button onClick={() => q.refetch()} className="underline">réessayer</button>
+            </p>
+          )}
+          {d && (
+            <>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {d.zone && <span className="rounded-full border border-violet/50 px-2 py-0.5 text-[10px] font-semibold text-violet">zone {d.zone}</span>}
+                {!d.zone_calibree && (
+                  <span className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-2 py-0.5 text-[10px] text-st-creuser">
+                    zone non calibrée — valeurs génériques (Estimé)</span>
+                )}
+              </div>
+              <div className="mt-1.5 space-y-1">
+                {d.regles_appliquees.map((r, i) => (
+                  <div key={i} className="flex items-baseline gap-2 text-[11.5px]">
+                    <span className="min-w-0 flex-1 text-txt">{r.regle}</span>
+                    <b className="tnum text-txt-hi">{r.valeur}</b>
+                    <span className="shrink-0 rounded-full border border-st-creuser/40 bg-st-creuser/10 px-1.5 text-[8.5px] font-medium text-st-creuser"
+                      title={r.source}>{d.zone_calibree ? 'Sourcé' : 'Estimé'}</span>
+                  </div>
+                ))}
+                {d.regles_appliquees.length === 0 && <p className="text-[11px] text-txt-dim">Aucune règle traduite pour cette zone.</p>}
+              </div>
+              <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">
+                La référence opposable reste le règlement écrit{d.reglement?.url ? <> — <a className="text-mint hover:underline" href={d.reglement.url} target="_blank" rel="noreferrer">l'ouvrir ↗</a></> : ''}.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )
 }

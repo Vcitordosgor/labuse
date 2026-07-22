@@ -26,11 +26,6 @@ def test_flash_sdp_note_habitable():
     assert out == "1000"                                    # 1150 / 1,15 = 1000 m² habitables
 
 
-def test_app_js_toggle_bati_libre():
-    js = (ROOT / "src" / "labuse" / "api" / "web" / "app.js").read_text(encoding="utf-8")
-    assert ">Bâti / libre</button>" in js                  # libellé exact du toggle
-    assert ">Mutabilité</button>" not in js                # ancien label retiré
-    assert 'b.textContent = "Bâti / libre";' in js         # restauration après chargement
-    assert 'legend-h">Bâti / libre' in js                  # légende alignée
-    # le titre du bouton explicite la doctrine (ni SDP ni P)
-    assert "ni la capacité constructible (SDP), ni la probabilité de mutation (P)" in js
+# B2 (BLOC B) : test du toggle « Bâti / libre » RETIRÉ avec le proto Vue (tag
+# archive/proto-vue) — le toggle n'a jamais été porté en React : la mutabilité carte a été
+# retirée à M9 (fondue en « Potentiel de transformation » dans la fiche, doctrine conservée).

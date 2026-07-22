@@ -1,0 +1,70 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>MAQUETTE — Traducteur PLU</title>
+<style>
+:root{--bg:#060A08;--s1:#0B100D;--s2:#0D120F;--s3:#111814;--line:#1B2620;--line2:#1E2A23;
+--mint:#5CE6A1;--mintink:#06130C;--hi:#ECF5EF;--txt:#C9DCD1;--mut:#8FA69A;--dim:#5C7268;
+--violet:#B497F0;--creuser:#E8B44C;--ecartee:#E8695A;}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);
+font:13px/1.5 -apple-system,'Inter',sans-serif;padding:24px}
+.shell{max-width:760px;margin:0 auto}
+h1{font:700 17px 'Space Grotesk',sans-serif;color:var(--hi);margin:0}
+.sub{font-size:11.5px;color:var(--dim);margin:2px 0 0}
+.crumb{font:10px ui-monospace,monospace;letter-spacing:.14em;color:var(--violet);text-transform:uppercase;margin-bottom:10px}
+.crumb .back{display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(180,151,240,.4);
+background:rgba(180,151,240,.1);border-radius:6px;padding:3px 8px;color:var(--violet)}
+.card{background:var(--s2);border-radius:12px;padding:14px;margin-top:12px;
+box-shadow:0 1px 2px rgba(0,0,0,.35),0 4px 14px -8px rgba(0,0,0,.45)}
+.banner{border:1px solid rgba(180,151,240,.4);background:rgba(180,151,240,.07);border-radius:8px;
+padding:8px 12px;font-size:10.5px;line-height:1.55;color:var(--mut);margin-top:12px}
+.label{font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.num{font:700 18px 'Space Grotesk',sans-serif;color:var(--hi);font-variant-numeric:tabular-nums}
+.tnum{font-variant-numeric:tabular-nums}
+.chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 8px;font-size:10px;font-weight:600}
+.chip.src{border:1px solid rgba(92,230,161,.4);background:rgba(92,230,161,.1);color:var(--mint)}
+.chip.est{border:1px solid rgba(232,180,76,.4);background:rgba(232,180,76,.1);color:var(--creuser)}
+.chip.viol{border:1px solid rgba(180,151,240,.5);background:rgba(180,151,240,.1);color:var(--violet)}
+.chip.warn{background:rgba(232,180,76,.1);color:var(--creuser)}
+.chip.bad{background:rgba(232,105,90,.1);color:var(--ecartee)}
+.row{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:7px 0;font-size:12px}
+.row:last-child{border-bottom:0}
+.bar{position:relative;height:8px;border-radius:999px;background:var(--s3);overflow:hidden;flex:1;min-width:60px}
+.bar>i{position:absolute;left:0;top:0;bottom:0;border-radius:999px}
+.cta{display:inline-block;background:var(--violet);color:var(--bg);border:0;border-radius:8px;
+padding:7px 14px;font:600 12px inherit;cursor:pointer}
+.ghost{border:1px solid var(--line2);background:none;color:var(--mut);border-radius:8px;padding:6px 12px;font-size:11px;cursor:pointer}
+.note{font-size:10px;color:var(--dim);margin-top:8px;line-height:1.5}
+a{color:var(--mint)}
+.mono{font-family:ui-monospace,monospace}
+.mkbadge{position:fixed;right:12px;bottom:12px;font:10px ui-monospace,monospace;color:var(--dim);
+background:var(--s1);border:1px solid var(--line);border-radius:8px;padding:4px 8px}
+input[type=range]{accent-color:var(--violet);width:100%}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);text-align:right;padding:4px 6px;cursor:pointer}
+th:first-child,td:first-child{text-align:left}
+td{padding:5px 6px;border-top:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:640px){body{padding:12px}.hidemob{display:none}}
+</style></head><body><div class="shell">
+<div class="crumb"><span class="back">← Outils</span> › Traducteur PLU</div>
+<h1>Traducteur PLU</h1><p class="sub">La zone de votre parcelle, en français courant — tout sourcé.</p>
+
+<div class="banner">Le règlement de zone, traduit en français courant — chaque règle porte sa source
+(<b>Sourcé</b> = article du règlement calibré · <b>Estimé</b> = valeur générique, PLU non outillé).
+Jamais une promesse : la référence reste le règlement écrit.</div>
+<div class="card"><div style="display:flex;gap:8px">
+<input class="mono" style="flex:1;min-width:0;background:var(--s3);border:1px solid var(--line2);border-radius:8px;padding:7px 10px;color:var(--txt);font-size:12px" value="97423000AB1908">
+<button class="cta">Traduire</button></div>
+<p class="note">…ou depuis toute fiche : bouton « Traduire ma zone » de l'onglet Règles.</p></div>
+<div class="card">
+<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">
+<span class="mono" style="color:var(--hi)">AB 1908</span>
+<span style="color:var(--mut)">Les Trois-Bassins</span>
+<span class="chip viol">zone 1AUb</span>
+<span class="chip est">zone non calibrée — valeurs génériques</span></div>
+<div style="margin-top:10px"><div class="row"><span style="min-width:180px;color:var(--txt)">Hauteur à l'égout / acrotère</span>
+    <span class="num" style="font-size:14px">9.0 m</span>
+    <span class="chip est" title="estimation générique (PLU non outillé)">Estimé</span>
+    <span class="hidemob" style="font-size:10px;color:var(--dim)">estimation générique (PLU non outillé)</span></div></div>
+<p class="note">Règlement PLU non outillé pour cette commune — consultez le Géoportail de l'Urbanisme (recherche par commune).… · <a href="https://www.geoportail-urbanisme.gouv.fr/">règlement écrit ↗</a></p>
+</div>
+<div class="note"><b>Geste principal :</b> coller un IDU (ou arriver d’une fiche) → lire ses règles sans jargon<br><b>Emplacement proposé :</b> registre Outils › Analyser & simuler + bouton « Traduire ma zone » dans l’onglet Règles de la fiche</div>
+</div><div class="mkbadge">maquette statique · données réelles 22/07/2026 · chrome à retirer au branchement</div></body></html>

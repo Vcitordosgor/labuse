@@ -93,4 +93,21 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
         dpe_reveil = _json.loads(raw) if raw else None
     except Exception:  # noqa: BLE001 — l'observabilité ne casse jamais
         pass
-    return {"ok": not degrade, "crons": out, "sources": sources, "dpe_reveil": dpe_reveil}
+    # B3 (BLOC B) : le RADAR — sources amont ayant PUBLIÉ depuis la dernière sonde. Une
+    # source réglementaire qui bouge est VISIBLE ici (et la sentinelle du VPS lit ce champ).
+    # Le radar signale, l'humain décide : jamais d'auto-ingestion des couches cascade.
+    radar = None
+    try:
+        from ..radar import etat_radar
+        etats = etat_radar(db)
+        if etats:
+            bouge = [{"source": e["source_name"], "mode": e["mode"],
+                      "publication": e["valeur"], "detecte_le": str(e["dernier_changement"])}
+                     for e in etats if e["statut"] == "nouvelle_publication"]
+            radar = {"sondees": len(etats), "publications_detectees": bouge,
+                     "derniere_passe": max((str(e["derniere_verif"]) for e in etats
+                                            if e["derniere_verif"]), default=None)}
+    except Exception:  # noqa: BLE001 — l'observabilité ne casse jamais
+        pass
+    return {"ok": not degrade, "crons": out, "sources": sources, "dpe_reveil": dpe_reveil,
+            "radar": radar}

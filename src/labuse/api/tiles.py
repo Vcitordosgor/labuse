@@ -158,7 +158,9 @@ _CACHE_MAX = 4096
 # M6.2 perf : cache navigateur des tuiles (le contenu ne change qu'au build-mvt). Appliqué
 # AUSSI au chemin servi depuis le cache LRU serveur — il l'omettait, donc le navigateur
 # re-téléchargeait les tuiles CHAUDES à chaque navigation.
-_TILE_HEADERS = {"Cache-Control": "public, max-age=3600"}
+# B1.3 : 1 h de fraîcheur + 24 h de grâce (stale-while-revalidate) — les tuiles ne changent
+# qu'au build-mvt (post-run) ; le navigateur repeint instantanément et revalide en fond.
+_TILE_HEADERS = {"Cache-Control": "public, max-age=3600, stale-while-revalidate=86400"}
 
 
 def _mvt_has_zone(db: Session) -> bool:
@@ -200,9 +202,14 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     # le zonage au prochain `labuse build-mvt` (bascule q_v5), RIEN ne casse d'ici là.
     has_zone = _mvt_has_zone(db)
     # R1 (revue Vic n°2 : le cadastre d'abord) — TOUTES les parcelles dès z9, simplification
-    # par palier pour tenir les poids (mesurés : z9 « tout » 10 m ≈ 3,4 Mo, z10 5 m ≈ 3,5 Mo,
-    # z12+ brut ≈ 850 Ko max). L'ouverture cadre l'île entière : la trame est là d'emblée.
-    simplify = {9: 10, 10: 5, 11: 2}.get(z, 0)
+    # par palier pour tenir les poids. BLOC B (B1.3) : paliers recalibrés sur mesure réelle
+    # (tuile centrale z9 = 5,6 Mo avec 10 m/4096) — à z9 1 px ≈ 285 m, la tolérance suit le
+    # pixel et l'extent descend à 1024 (4 unités/px : les parcelles sub-pixel se quantifient,
+    # l'aspect de la trame est inchangé — vérifié capture avant/après). Mesures : z9 5,57 Mo
+    # → 0,61 Mo · z10 5,68 → 1,33 · z11 2,73 → 1,59. z12+ inchangé (brut, extent 4096).
+    simplify = {9: 60, 10: 30, 11: 15}.get(z, 0)
+    extent = 1024 if z <= 11 else 4096
+    buffer = max(extent // 64, 8)
     geom_expr = (f"ST_SimplifyPreserveTopology(m.geom_3857, {simplify})" if simplify
                  else "m.geom_3857")
     # z ≤ 11 : tuiles MAIGRES (status + commune seulement — 24 et 4 valeurs distinctes,
@@ -223,12 +230,12 @@ def mvt_tile(z: int, x: int, y: int, db: Session = Depends(get_db)) -> Response:
     data = db.execute(text(f"""
         WITH b AS (SELECT ST_TileEnvelope(:z, :x, :y) AS env),
         mvt AS (
-          SELECT ST_AsMVTGeom({geom_expr}, b.env, 4096, 64, true) AS geom,
+SELECT ST_AsMVTGeom({geom_expr}, b.env, {extent}, {buffer}, true) AS geom,
                  {props}
           FROM mvt_parcels m, b
           WHERE m.geom_3857 && b.env
         )
-        SELECT ST_AsMVT(mvt.*, 'parcels', 4096, 'geom') FROM mvt
+        SELECT ST_AsMVT(mvt.*, 'parcels', {extent}, 'geom') FROM mvt
     """), {"z": z, "x": x, "y": y}).scalar()
     body = bytes(data) if data else b""
     _CACHE[key] = body

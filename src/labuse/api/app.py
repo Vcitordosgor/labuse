@@ -35,8 +35,6 @@ from ..db import session_scope
 from ..enums import FeedbackVerdict
 from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS, V_BRULANTE_THRESHOLD
 
-WEB_DIR = Path(__file__).resolve().parent / "web"
-
 # Couches EXCLUANTES / FLAGGANTES dont l'absence rend les verdicts partiels (§3).
 # Tant qu'une de ces couches n'est pas ingérée, une "opportunité" peut masquer une
 # contrainte → bandeau d'avertissement + distinction "opportunité vérifiée".
@@ -230,10 +228,12 @@ def login_page(request: Request):
 
     from . import auth
 
+    # B2 (BLOC B) : le proto Vue « /app » est RETIRÉ (tag archive/proto-vue) — la cible
+    # post-login est LA RACINE : en prod Caddy y sert le front, en local `/` → /socle/.
     if not auth.enabled():                       # auth désactivée (local) → rien à demander
-        return RedirectResponse("/app/", status_code=302)
+        return RedirectResponse("/", status_code=302)
     if auth.token_ok(request.cookies.get(auth.COOKIE)):
-        return RedirectResponse("/app/", status_code=302)
+        return RedirectResponse("/", status_code=302)
     return HTMLResponse(auth.login_page())
 
 
@@ -263,7 +263,7 @@ async def login_submit(request: Request):
         auth.slow_failure()
         return HTMLResponse(auth.login_page(error=True), status_code=401)
     auth.log_event("login_ok", request)
-    resp = RedirectResponse("/app/", status_code=303)
+    resp = RedirectResponse("/", status_code=303)   # B2 : la racine (Caddy en prod, /socle/ en local)
     resp.set_cookie(value=auth.make_token(), **auth.cookie_kwargs())
     return resp
 
@@ -498,6 +498,10 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
                     donnees[src.name] = e["derniere_donnee"]
     except Exception:  # noqa: BLE001 — l'affichage de fraîcheur ne casse jamais la page Sources
         pass
+    # B3 (BLOC B) : l'état du RADAR par source (dernière publication détectée amont) —
+    # lecture seule, [] tant que `labuse radar-sources` n'a jamais tourné.
+    from ..radar import etat_radar
+    radar = {r["source_name"]: r for r in etat_radar(db)}
     return [
         {
             "id": s.id, "name": s.name, "category": s.category, "provider": s.provider,
@@ -512,6 +516,7 @@ def list_sources(db: Session = Depends(get_db)) -> list[dict]:
             "derniere_donnee": donnees.get(s.name),
             "ingestion_runs": ingestions.get(s.name, {}).get("runs", 0),
             "verified_at": checks.get(s.id),
+            "radar": radar.get(s.name),
         }
         for s in rows
     ]
@@ -1328,16 +1333,55 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
     # perf (M5.1) : tri + filtres d'abord (page de :lim lignes), PUIS les jointures
     # d'affichage (propriétaire, cluster, veille, signaux) sur cette page seulement —
     # 3,6 s → <1 s sur l'île entière (baseline legacy : 4,1 s).
-    rows = db.execute(text(
-        f"""
-        WITH page AS (
-            SELECT p.id, p.idu, p.commune, p.surface_m2, p.section,
+    #
+    # perf (BLOC B · B1.2) : pour le TRI PAR DÉFAUT (rang), la page se construit en
+    # PARCOURANT L'INDEX `ix_p_v2_run_rang` (top-N sans scan ni tri : ~2 ms au lieu de
+    # ~1 s sur l'île). Préconditions VÉRIFIÉES en base : s2 couvre 100 % des parcelles du
+    # run (le LEFT JOIN historique ≡ INNER) et `rang` est UNIQUE quand non nul (les
+    # tiebreakers historiques n'ordonnaient réellement que la queue rang IS NULL = les
+    # copros). La queue est petite et se lit par le même index (rang IS NULL) ; l'union
+    # rejoue l'ordre historique + un tiebreaker p.idu explicite qui rend TOTAL un ordre
+    # que l'ancien plan laissait flotter sur les égalités de queue (constaté au garde-fou
+    # avant/après). Les autres tris (mult/surface/commune/v) gardent la requête historique.
+    _page_cols = """p.id, p.idu, p.commune, p.surface_m2, p.section,
                    d.matrice_statut AS status, d.q_score, d.a_score, d.a_completude,
                    d.completeness_score,
                    s2.tier AS tier_v2, s2.rang AS rang_v2, s2.mult_base AS mult_v2,
                    s2.copro AS copro_v2, s2.event_date,
                    (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-                   (ev.parcel_id IS NOT NULL) AS evenement_rouge
+                   (ev.parcel_id IS NOT NULL) AS evenement_rouge"""
+    v2run = _score_v2_run_id(db)
+    # chemin rapide seulement si un run v2 existe : sans lui, le LEFT JOIN historique
+    # sert le repli legacy (colonnes v2 NULL) — le chemin s2-driven renverrait vide.
+    if sort_key == "rang" and v2run is not None:
+        _fast_from = f"""
+            FROM parcel_p_score_v2 s2
+            JOIN parcels p ON p.idu = s2.parcelle_id
+            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            LEFT JOIN (SELECT DISTINCT parcel_id FROM dryrun_cascade_results
+                       WHERE run_label = :run AND evenement = 'rouge') ev ON ev.parcel_id = p.id
+            WHERE s2.run_id = :v2run
+              AND (CAST(:c AS text) IS NULL OR p.commune = :c)
+              {base}
+              {extra_where}"""
+        page_sql = f"""
+        page AS (
+            SELECT * FROM (
+                (SELECT {_page_cols} {_fast_from} AND s2.rang IS NOT NULL
+                 ORDER BY s2.rang ASC LIMIT :need)
+                UNION ALL
+                (SELECT {_page_cols} {_fast_from} AND s2.rang IS NULL
+                 ORDER BY s2.mult_base DESC NULLS LAST, (ev.parcel_id IS NOT NULL) DESC,
+                          (d.q_score + d.a_score) DESC, p.idu ASC LIMIT :need)
+            ) page_u
+            ORDER BY rang_v2 ASC NULLS LAST, mult_v2 DESC NULLS LAST,
+                     evenement_rouge DESC, (q_score + a_score) DESC, idu ASC
+            LIMIT :lim OFFSET :off
+        )"""
+    else:
+        page_sql = f"""
+        page AS (
+            SELECT {_page_cols}
             FROM parcels p
             JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
             LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
@@ -1349,6 +1393,23 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
               {extra_where}
             ORDER BY {order}
             LIMIT :lim OFFSET :off
+        )"""
+    rows = db.execute(text(
+        f"""
+        WITH {page_sql},
+        /* B1.2 : le cluster même-proprio est MATÉRIALISÉ (une exécution, ~11 ms) — en
+           sous-requête jointe, le planner le ré-exécutait PAR LIGNE dès que la page
+           devenait bon marché (4,8 ms × lignes servies, constaté au plan). */
+        cl AS MATERIALIZED (
+            SELECT pm2.siren, count(*) AS n, max(pm2.denomination) AS denom
+            FROM dryrun_parcel_evaluations d2
+            JOIN parcels p2 ON p2.id = d2.parcel_id
+            JOIN parcel_p_score_v2 s22 ON s22.parcelle_id = p2.idu AND s22.run_id = :v2run
+            JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
+            WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude')
+              AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
+              AND pm2.siren IS NOT NULL
+            GROUP BY pm2.siren HAVING count(*) > 1
         )
         SELECT pg.*, (vw.parcelle_id IS NOT NULL) AS veille,
                cl.n AS cluster, COALESCE(cl.denom, own.denomination) AS proprio,
@@ -1362,18 +1423,11 @@ def _q_v2_list(db: Session, commune: str | None, limit: int, offset: int, run_la
         LEFT JOIN parcel_veille_succession vw ON vw.parcelle_id = pg.idu
         LEFT JOIN parcelle_personne_morale own ON own.idu = pg.idu
         LEFT JOIN parcel_v_score vs ON vs.parcelle_id = pg.idu
-        LEFT JOIN (SELECT pm2.siren, count(*) AS n, max(pm2.denomination) AS denom
-                   FROM dryrun_parcel_evaluations d2
-                   JOIN parcels p2 ON p2.id = d2.parcel_id
-                   JOIN parcel_p_score_v2 s22 ON s22.parcelle_id = p2.idu AND s22.run_id = :v2run
-                   JOIN parcelle_personne_morale pm2 ON pm2.idu = p2.idu
-                   WHERE d2.run_label = :run AND s22.tier IN ('brulante', 'chaude')
-                     AND NOT (d2.status IN ('exclue', 'faux_positif_probable'))
-                     AND pm2.siren IS NOT NULL
-                   GROUP BY pm2.siren HAVING count(*) > 1) cl ON cl.siren = own.siren
+        LEFT JOIN cl ON cl.siren = own.siren
         ORDER BY {_Q_V2_ORDERS_PAGE[sort_key or "rang"]}
         """), {"c": commune, "run": run_label, "lim": limit, "off": offset,
-               "v2run": _score_v2_run_id(db), **xp}
+               "need": limit + offset,
+               "v2run": v2run, **xp}
     ).mappings().all()
     return [{
         "idu": r["idu"], "commune": r["commune"], "surface_m2": round(r["surface_m2"]) if r["surface_m2"] else None,
@@ -3094,15 +3148,15 @@ async def _no_cache_html(request: Request, call_next):
         resp.headers["Cache-Control"] = "no-store"
     return resp
 
-if WEB_DIR.exists():
-    app.mount("/app", StaticFiles(directory=str(WEB_DIR), html=True), name="app")  # UI Vue historique (transition)
+# B2 (BLOC B) : le mount statique du proto Vue « /app » est retiré — code archivé sous le
+# tag `archive/proto-vue`, le 301 /app → / de la prod reste dans Caddy.
 
 
 @app.get("/", include_in_schema=False)
 def _root() -> RedirectResponse:
     if FRONTEND_DIST.exists():
         return RedirectResponse("/socle/")
-    return RedirectResponse("/app/" if WEB_DIR.exists() else "/docs")
+    return RedirectResponse("/docs")
 
 
 if FRONTEND_DIST.exists():

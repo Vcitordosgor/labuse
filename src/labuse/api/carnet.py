@@ -46,10 +46,23 @@ def _has(db: Session, table: str) -> bool:
     return db.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is not None
 
 
+# BLOC B (B1.4) : cache TTL applicatif — les données sous-jacentes (run servi, permis,
+# DVF) ne bougent qu'aux crons quotidiens et au build post-run : 1 h de TTL rend le
+# 2e affichage instantané sans jamais servir plus d'une heure de retard. Single-flight
+# (_mem_cached) : pas de stampede au premier hit après expiration.
+_O7_TTL = 3600.0
+
+
 @router.get("")
 def liste_secteurs(db: Session = Depends(get_db),
                    commune: str | None = None, limit: int = Query(30, ge=1, le=200)) -> dict:
     """Secteurs à suivre, triés par stock d'opportunités (brûlantes + chaudes) du run servi."""
+    from .app import _mem_cached
+    return _mem_cached(("o7-liste", commune, limit), _O7_TTL,
+                       lambda: _liste_secteurs(db, commune, limit))
+
+
+def _liste_secteurs(db: Session, commune: str | None, limit: int) -> dict:
     rows = db.execute(text(
         """SELECT left(s.parcelle_id, 10) AS secteur, p.commune,
                   count(*) FILTER (WHERE s.tier IN ('brulante', 'chaude')) AS opportunites,
@@ -65,6 +78,11 @@ def liste_secteurs(db: Session = Depends(get_db),
 @router.get("/{secteur}")
 def carnet(secteur: str, db: Session = Depends(get_db)) -> dict:
     """Page de suivi d'UN secteur (préfixe IDU 10) : prix, stock, permis, signaux, ZAN — tout sourcé."""
+    from .app import _mem_cached
+    return _mem_cached(("o7-secteur", secteur), _O7_TTL, lambda: _carnet(secteur, db))
+
+
+def _carnet(secteur: str, db: Session) -> dict:
     if len(secteur) != 10:
         raise HTTPException(422, "Le secteur doit faire 10 caractères (INSEE + 000 + section).")
     insee = secteur[:5]

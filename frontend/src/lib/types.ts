@@ -136,6 +136,18 @@ export interface SourceInfo {
   // VUES item 4 : vérification « dernière version publiée » (source_checks) — NULL tant que
   // le mandat d'audit data n'a pas tourné ; la mention ne s'affiche qu'avec cette date
   verified_at: string | null
+  // B3 (BLOC B) : l'état du RADAR de publication amont — null tant que `labuse
+  // radar-sources` n'a jamais tourné. Le radar signale, l'humain décide.
+  radar: {
+    mode: 'auto' | 'manuel'
+    cadence: string | null
+    sonde: string
+    valeur: string | null
+    derniere_verif: string | null
+    dernier_changement: string | null
+    statut: 'a_jour' | 'nouvelle_publication' | 'non_sondable' | 'erreur'
+    detail: string | null
+  } | null
 }
 
 export interface Fiche {

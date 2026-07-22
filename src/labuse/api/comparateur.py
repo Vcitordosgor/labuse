@@ -139,4 +139,7 @@ def comparateur_communes(
     """Tableau « où investir » : une ligne par commune, indicateurs sourcés + composite à pondération réglable."""
     poids = {"stock": w_stock, "velocite": w_velocite, "permis": w_permis,
              "deficit_sru": w_deficit_sru, "pression_zan": w_pression_zan, "prix_neuf": w_prix_neuf}
-    return _compute(db, poids)
+    # BLOC B (B1.4) : cache TTL 1 h par jeu de pondérations (mêmes raisons/rythme que le
+    # carnet O7 : les indicateurs suivent les crons quotidiens ; single-flight anti-stampede).
+    from .app import _mem_cached
+    return _mem_cached(("o6", tuple(sorted(poids.items()))), 3600.0, lambda: _compute(db, poids))

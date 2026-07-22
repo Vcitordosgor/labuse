@@ -217,6 +217,34 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         </div>
         {/* M6.1 item 4 : « vérifié le » = source_checks uniquement ; sinon mention discrète
             « jamais vérifiée » — la table est vide tant que l'audit data n'a pas tourné. */}
+        {/* B3 (BLOC B) : LE RADAR — cadence, mode (— auto — / — manuel, grande passe —),
+            dernière publication détectée en amont ; « a publié » en ambre quand ça bouge
+            (le radar signale, l'ingestion reste une décision humaine). */}
+        {s.radar && s.radar.statut !== 'non_sondable' && (
+          <div data-source-radar className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px]">
+            <span className={s.radar.mode === 'auto' ? 'text-mint' : 'text-txt-mut'}>
+              — {s.radar.mode === 'auto' ? 'auto' : 'manuel / grande passe'} —
+            </span>
+            {s.radar.cadence && <span className="text-txt-dim">{s.radar.cadence}</span>}
+            {s.radar.statut === 'nouvelle_publication' && (
+              <span className="rounded-full bg-st-creuser/10 px-2 py-0.5 font-medium text-st-creuser"
+                title={`Publication amont détectée (sonde ${s.radar.sonde}) — à instruire, jamais ingérée automatiquement`}>
+                ▲ a publié{s.radar.dernier_changement ? ` — ${new Date(s.radar.dernier_changement).toLocaleDateString('fr-FR')}` : ''}
+              </span>
+            )}
+            {s.radar.statut === 'a_jour' && s.radar.derniere_verif && (
+              <span className="text-txt-dim" title={s.radar.valeur ? `signal amont : ${s.radar.valeur}` : undefined}>
+                sondée le {new Date(s.radar.derniere_verif).toLocaleDateString('fr-FR')} — rien de neuf
+              </span>
+            )}
+            {s.radar.statut === 'erreur' && <span className="text-st-ecartee">sonde en erreur</span>}
+          </div>
+        )}
+        {s.radar?.statut === 'non_sondable' && (
+          <div data-source-radar="non-sondable" className="mt-0.5 text-[10.5px] italic text-txt-dim opacity-70">
+            — manuel / grande passe — non sondable automatiquement ({s.radar.detail ?? 'pas de signal stable'})
+          </div>
+        )}
         {s.verified_at ? (
           <div data-source-verifiee className="mt-0.5 text-[11px] text-mint">
             dernière version publiée — vérifié le {new Date(s.verified_at).toLocaleDateString('fr-FR')}

@@ -57,8 +57,10 @@ def is_public(path: str) -> bool:
 
 
 def wants_html(path: str) -> bool:
-    """Navigation (page) → redirection /login ; appel API → 401 JSON."""
-    return path == "/" or path.startswith("/app")
+    """Navigation (page) → redirection /login ; appel API → 401 JSON.
+    B2 : /app (proto Vue) est retiré du code — le préfixe reste traité comme une navigation
+    (vieux favoris → /login puis 301 Caddy), /socle/ = le front local."""
+    return path == "/" or path.startswith("/app") or path.startswith("/socle")
 
 
 def _key() -> bytes:

@@ -1981,6 +1981,21 @@ def refresh_dvf_cmd() -> None:
         typer.echo("✓ DVF : no-op (aucune livraison)" if r["no_op"] else f"✓ DVF rechargé : {r['recharges']}")
 
 
+@app.command("radar-sources")
+def radar_sources_cmd() -> None:
+    """BLOC B (B3) — le radar des sources : sonde HEAD/métadonnées sur chaque source
+    (zéro téléchargement), écrit `source_radar`, affiche les publications détectées.
+    Le radar SIGNALE, l'humain DÉCIDE — jamais d'auto-ingestion (cascade gelée)."""
+    from .radar import run_radar
+
+    with session_scope() as s:
+        r = run_radar(s)
+    typer.echo(f"radar : {r['sondees']} sondées · {len(r['changements'])} publication(s) détectée(s)"
+               f" · {r['non_sondables']} non sondables · {r['erreurs']} erreurs")
+    for c in r["changements"]:
+        typer.echo(f"  ↗ {c['source']} : {c['avant']} → {c['apres']}")
+
+
 @app.command("fraicheur-derives")
 def fraicheur_derives_cmd(
     hebdo: bool = typer.Option(False, help="Inclure les dérivés lourds (m10 délais/vélocité, re-fetch réseau)."),
