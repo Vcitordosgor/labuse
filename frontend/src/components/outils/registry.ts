@@ -44,6 +44,8 @@ export const MODULES: ModuleDef[] = [
   { key: 'matching', num: 'M19', group: 'detecter',
     label: 'Matching promoteurs', desc: 'Enregistrez vos critères, soyez alerté quand ça matche' },
   // ── Analyser & simuler ──
+  { key: 'o5-servitudes', num: 'O5', group: 'analyser',
+    label: 'Servitudes invisibles', desc: 'Les contraintes dormantes d’une parcelle — et ce que la base ne couvre pas' },
   { key: 'assemblage', num: 'M16', group: 'analyser', phare: true,
     label: 'Assemblage', desc: 'Fusionnez des parcelles contiguës en une assiette de projet' },
   { key: 'barometre', num: 'M18', group: 'analyser',
