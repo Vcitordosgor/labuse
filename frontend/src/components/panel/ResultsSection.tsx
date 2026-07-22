@@ -5,6 +5,7 @@ import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../l
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
 import { completudeColor, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
+import { Loading } from '../Loading'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
 import { useApp } from '../../store/useApp'
@@ -177,7 +178,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
           entièrement lisible ET la liste des parcelles reste scrollable en dessous (la section défile
           naturellement). Plus de fond modal qui bloquait le scroll vers les parcelles. */}
       {open && (
-        <div data-entonnoir-panel className="mt-1.5 rounded-xl border border-line-2 bg-surface-2 p-3">
+        <div data-entonnoir-panel className="card-elev mt-1.5 p-3">
           <p className="text-[11px] leading-snug text-txt">
             LABUSE a analysé <b>{fmt(q.data?.analysees ?? total)}</b> parcelles ; son avis retient
             <b className="text-mint"> {fmt(q.data?.opportunites ?? opportunites)}</b> opportunités
@@ -193,8 +194,8 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
               ))}
             </div>
           )}
-          <p className="mt-1.5 font-mono text-[9.5px] tracking-widest text-txt-dim">LE RESTE, PAR MOTIF</p>
-          {q.isLoading && <p className="mt-1 text-[11px] text-txt-dim">Chargement…</p>}
+          <p className="label-caps mt-1.5 text-[9.5px]">Le reste, par motif</p>
+          {q.isLoading && <Loading className="mt-1 text-[11px]" label="Décompte par motif" />}
           {q.data && (q.data.motifs ?? []).length === 0 && (
             <p className="mt-1 text-[10.5px] text-txt-dim">Détail par motif non disponible sur ce périmètre.</p>
           )}
@@ -202,7 +203,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
             {(q.data?.motifs ?? []).map((m) => (
               <div key={m.motif} className={`flex justify-between gap-2 text-[10.5px] ${m.motif.startsWith('écartées') ? 'font-medium text-txt border-b border-line pb-0.5 mb-0.5' : 'text-txt-mut'}`}>
                 <span className="min-w-0">{m.motif}</span>
-                <span className="shrink-0 font-mono">{fmt(m.n)}</span>
+                <span className="tnum shrink-0 font-mono">{fmt(m.n)}</span>
               </div>
             ))}
           </div>

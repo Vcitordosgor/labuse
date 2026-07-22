@@ -162,7 +162,8 @@ export function LeftPanel() {
           <aside className="relative flex h-full w-[300px] max-w-[86%] flex-col border-r border-line bg-surface-1 shadow-elev-3">
             <div className="flex shrink-0 items-center justify-between px-5 pt-4">
               <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
-              <button data-couches-fermer onClick={() => setMobileOpen(false)} className="text-txt-dim hover:text-txt" title="Revenir à la carte">✕</button>
+              <button data-couches-fermer onClick={() => setMobileOpen(false)} aria-label="Fermer"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-txt" title="Revenir à la carte">✕</button>
             </div>
             <LayersSection />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />
