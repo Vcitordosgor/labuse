@@ -48,9 +48,13 @@ dvf AS (
 SELECT piv.siren, piv.denomination, piv.secteur, left(piv.secteur,5) AS insee,
        piv.n_peak, piv.n_fin, (piv.n_peak - piv.n_fin) AS lots_cedes,
        perm.n_pa, perm.n_pc, perm.annee_min, perm.annee_max,
-       coalesce(dvf.n_ventes,0) AS dvf_ventes, dvf.v_min, dvf.v_max
+       coalesce(dvf.n_ventes,0) AS dvf_ventes, dvf.v_min, dvf.v_max,
+       fj.forme_juridique
 FROM piv JOIN perm ON perm.secteur = piv.secteur
          LEFT JOIN dvf ON dvf.secteur = piv.secteur
+         LEFT JOIN LATERAL (SELECT forme_juridique FROM parcelle_personne_morale
+                            WHERE siren = piv.siren AND forme_juridique IS NOT NULL
+                            LIMIT 1) fj ON true
 WHERE piv.n_peak >= 5 AND piv.n_fin < piv.n_peak AND (perm.n_pa >= 1 OR perm.n_pc >= 5)
 """
 
@@ -60,6 +64,12 @@ def get_db():
     yield from _g()
 
 
+# J6 (post-M7) — formes juridiques DGFiP publiques/parapubliques : TAGUÉES, jamais exclues
+# (décision Vic 21/07 : badge visible, le client filtre). SEM/SAM = économie mixte incluse.
+FORMES_PUBLIQUES = {"ETAT", "DEPT", "COM", "COLL", "EPA", "EPIC", "SDIS", "SIVU", "SYMI",
+                    "SYCO", "CCAS", "CCAM", "HOSP", "GIP", "SEM", "SAM"}
+
+
 def _confiance(r: dict) -> str:
     """Force du rattachement multi-signal (PA + rafale DVF + déclin marqué → élevée)."""
     signaux = (r["n_pa"] >= 1) + (r["dvf_ventes"] >= 5) + (r["lots_cedes"] >= 3)
@@ -67,8 +77,11 @@ def _confiance(r: dict) -> str:
 
 
 def _op(r: dict) -> dict:
+    fj = (r.get("forme_juridique") or "").strip().upper() or None
     return {
-        "porteur": {"siren": r["siren"], "denomination": r["denomination"]},   # PM publique, jamais un particulier
+        "porteur": {"siren": r["siren"], "denomination": r["denomination"],   # PM publique, jamais un particulier
+                    "forme_juridique": fj,
+                    "entite_publique": fj in FORMES_PUBLIQUES if fj else None},
         "secteur": r["secteur"], "insee": r["insee"],
         "permis": {"pa": r["n_pa"], "pc": r["n_pc"], "annees": f"{r['annee_min']}–{r['annee_max']}"},
         "lots_au_pic": r["n_peak"],

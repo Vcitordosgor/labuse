@@ -45,7 +45,8 @@ sudo systemctl enable --now postgresql
 
 echo "── 5. Python 3.12 (natif 24.04) + venv ──"
 sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -q \
-  python3.12 python3.12-venv python3-pip libpq-dev build-essential proj-data
+  python3.12 python3.12-venv python3-pip libpq-dev build-essential proj-data \
+  libpango-1.0-0 libpangoft2-1.0-0 libgdk-pixbuf-2.0-0 fonts-dejavu-core   # WeasyPrint (PDF) — leçon M7
 
 echo "── 6. Node 22 (NodeSource — aligné sur le poste local) ──"
 if ! command -v node >/dev/null || [ "$(node -v | cut -d. -f1)" != "v22" ]; then

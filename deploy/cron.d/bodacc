@@ -1,0 +1,4 @@
+# LA BUSE — BODACC quotidien (J+2) : procédures collectives des SIREN propriétaires (upsert
+# idempotent), puis chaîne des dérivés légers. Jamais les tables de run.
+SHELL=/bin/sh
+30 4 * * * labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse ingest-bodacc >> /var/log/labuse/bodacc.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/bodacc.log 2>&1

@@ -30,6 +30,13 @@ CRONS = {
                    "note": "quotidien — pas de trace DB dédiée (log fichier) ; vérifier /var/log/labuse"},
     "backup": {"trace": "aucune", "motif": None, "attendu_jours": 2,
                "note": "quotidien — vérifier LABUSE_BACKUP_DIR (backup_postgres.sh) côté système"},
+    # J+2 (post-M7) — la chaîne de fraîcheur
+    "bodacc": {"trace": "data_sources", "motif": "BODACC%", "attendu_jours": 2,
+               "note": "quotidien — procédures collectives (SIREN propriétaires)"},
+    "dvf": {"trace": "data_sources", "motif": "DVF / valeurs foncières", "attendu_jours": 10,
+            "note": "hebdo (détection Last-Modified ; livraison Etalab semestrielle)"},
+    "dpe": {"trace": "data_sources", "motif": "DPE ADEME%", "attendu_jours": 10,
+            "note": "hebdo — flux ADEME continu (upsert numero_dpe)"},
 }
 
 
@@ -72,4 +79,18 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
         except Exception as exc:  # noqa: BLE001 — l'observabilité ne casse jamais
             out[nom] = {"statut": "erreur_lecture", "detail": type(exc).__name__}
             degrade = True
-    return {"ok": not degrade, "crons": out}
+    # J+2 : la matrice de fraîcheur des SOURCES (dates de données, pas seulement les crons)
+    #        + le compteur de réveil du badge DPE en réserve (visible dès qu'il bouge).
+    sources = None
+    dpe_reveil = None
+    try:
+        from ..ingestion import fraicheur
+        sources = fraicheur.etat_sources(db)
+        import json as _json
+        with db.begin_nested():   # table absente → savepoint, jamais une TX avortée
+            raw = db.execute(text(
+                "SELECT valeur FROM fraicheur_etat WHERE cle = 'dpe:compteur_reveil'")).scalar()
+        dpe_reveil = _json.loads(raw) if raw else None
+    except Exception:  # noqa: BLE001 — l'observabilité ne casse jamais
+        pass
+    return {"ok": not degrade, "crons": out, "sources": sources, "dpe_reveil": dpe_reveil}

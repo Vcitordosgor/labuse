@@ -43,3 +43,14 @@ def test_caveat_dvf_et_confidentialite():
 def test_detect_table_absente_vide(db_session):
     # base de test sans pm_proprietaires_millesimes → liste vide, jamais un crash
     assert o.detect_operations(db_session, commune_insee=None, limit=10) == []
+
+
+def test_forme_juridique_taguee_pas_exclue():
+    # J6 : entités publiques/parapubliques TAGUÉES (badge), jamais exclues (décision Vic)
+    op_pub = o._op(_r(forme_juridique="SEM"))
+    op_priv = o._op(_r(forme_juridique="SA"))
+    op_inconnu = o._op(_r(forme_juridique=None))
+    assert op_pub["porteur"]["entite_publique"] is True and op_pub["porteur"]["forme_juridique"] == "SEM"
+    assert op_priv["porteur"]["entite_publique"] is False
+    assert op_inconnu["porteur"]["entite_publique"] is None      # inconnu ≠ privé (pas d'invention)
+    assert "SEM" in o.FORMES_PUBLIQUES and "COM" in o.FORMES_PUBLIQUES and "ETAT" in o.FORMES_PUBLIQUES

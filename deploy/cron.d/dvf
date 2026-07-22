@@ -1,0 +1,4 @@
+# LA BUSE — DVF hebdo-en-attente-du-semestriel (J+2) : détection Last-Modified des CSV Etalab ;
+# no-op tant que la livraison (avril/octobre) n'a pas changé ; sinon reload du millésime modifié.
+SHELL=/bin/sh
+0 5 * * 3 labuse set -a; . /etc/labuse/labuse.env; set +a; cd /opt/labuse/app && /opt/labuse/venv/bin/labuse refresh-dvf >> /var/log/labuse/dvf.log 2>&1 && /opt/labuse/venv/bin/labuse fraicheur-derives >> /var/log/labuse/dvf.log 2>&1
