@@ -85,3 +85,71 @@ export function O5Servitudes() {
     </>
   )
 }
+
+/* ───────────── O6 — COMPARATEUR DE COMMUNES (S47) ───────────── */
+
+type Comparateur = {
+  communes: Record<string, string | number | null>[]
+  indicateurs: Record<string, { libelle: string; direction: string; poids: number; source: string; nature: string }>
+  methode: string; avertissement: string
+}
+const O6_COLS: { k: string; label: string; unite?: string }[] = [
+  { k: 'score_composite', label: 'Composite' }, { k: 'stock', label: 'Stock opp.' },
+  { k: 'velocite', label: 'Vélocité', unite: ' m' }, { k: 'permis', label: 'Permis 5 ans' },
+  { k: 'deficit_sru', label: 'Déficit SRU', unite: ' %' }, { k: 'prix_neuf', label: '€/m² neuf' },
+]
+
+export function O6Comparateur() {
+  const [poids, setPoids] = useState<Record<string, number>>({
+    stock: 30, velocite: 15, permis: 15, deficit_sru: 15, pression_zan: 10, prix_neuf: 15,
+  })
+  const [tri, setTri] = useState('score_composite')
+  const qs = Object.entries(poids).map(([k, v]) => `w_${k}=${(v / 100).toFixed(2)}`).join('&')
+  const q = useQuery({ queryKey: ['o6', qs], queryFn: () => jfetch<Comparateur>(`/comparateur-communes?${qs}`) })
+  const d = q.data
+  const rows = [...(d?.communes ?? [])].sort((a, b) => Number(b[tri] ?? -1) - Number(a[tri] ?? -1))
+  return (
+    <>
+      <Banner>Où investir : une ligne par commune, indicateurs <b>sourcés</b>, composite de
+        commodité à pondération réglable. {d?.avertissement ?? 'Les valeurs brutes restent la référence.'}</Banner>
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+        <p className="label-caps text-[9.5px]">Pondérations — renormalisées si une donnée manque</p>
+        <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-1">
+          {Object.entries(poids).map(([k, v]) => (
+            <label key={k} className="text-[10px] text-txt-mut">
+              {d?.indicateurs?.[k]?.libelle ?? k} · <b className="tnum text-txt">{v} %</b>
+              <input type="range" min={0} max={100} step={5} value={v} data-o6-poids={k}
+                onChange={(e) => setPoids({ ...poids, [k]: Number(e.target.value) })}
+                className="w-full accent-violet" />
+            </label>
+          ))}
+        </div>
+      </div>
+      {q.isLoading && <Loading accent="violet" label="Calcul du comparatif…" />}
+      {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="sticky top-0 grid grid-cols-[1fr_repeat(3,56px)] gap-1 bg-surface-1 py-1 sm:grid-cols-[1fr_repeat(6,56px)]">
+          <span className="label-caps text-[9px]">Commune</span>
+          {O6_COLS.map((c, i) => (
+            <button key={c.k} data-o6-tri={c.k} onClick={() => setTri(c.k)}
+              className={`text-right text-[9px] uppercase tracking-wide transition-colors duration-quick ${tri === c.k ? 'text-violet' : 'text-txt-dim hover:text-txt-mut'} ${i >= 3 ? 'hidden sm:block' : ''}`}>
+              {c.label} {tri === c.k ? '↓' : ''}</button>
+          ))}
+        </div>
+        {rows.map((c, i) => (
+          <div key={String(c['insee'])} className="grid grid-cols-[1fr_repeat(3,56px)] items-baseline gap-1 border-b border-line py-1.5 text-[11px] sm:grid-cols-[1fr_repeat(6,56px)]">
+            <span className="min-w-0 truncate text-txt">
+              <span className="mr-1 font-mono text-[9px] text-txt-dim">#{i + 1}</span>{String(c['commune'])}</span>
+            {O6_COLS.map((col, j) => (
+              <span key={col.k} className={`tnum text-right font-mono ${col.k === 'score_composite' ? (i < 3 ? 'font-semibold text-violet' : 'text-txt') : 'text-txt-mut'} ${j >= 3 ? 'hidden sm:block' : ''}`}>
+                {c[col.k] == null ? '—' : `${Number(c[col.k]).toLocaleString('fr-FR')}${col.unite ?? ''}`}</span>
+            ))}
+          </div>
+        ))}
+      </div>
+      <p className="shrink-0 text-[9.5px] leading-snug text-txt-dim">
+        Composite = aide de lecture (jamais un score de rendement) ; un axe manquant reste « — »,
+        jamais un zéro inventé. Tri par colonne au clic.</p>
+    </>
+  )
+}
