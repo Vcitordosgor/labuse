@@ -5,6 +5,7 @@ import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
 import { TIER_V2_META, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
+import { Loading } from '../Loading'
 import { ScoreurAdresse } from '../outils/ScoreurAdresse'
 
 function Omnibox() {
@@ -74,7 +75,7 @@ function NumField({ label, value, onChange, placeholder }: {
 }) {
   return (
     <div className="min-w-0 flex-1">
-      <label className="font-mono text-[10px] tracking-widest text-txt-dim">{label}</label>
+      <label className="label-caps block">{label}</label>
       <input type="number" min={0} value={value ?? ''} placeholder={placeholder}
         onChange={(e) => onChange(e.target.value === '' ? null : Number(e.target.value))}
         className="mt-1 w-full rounded-lg border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none" />
@@ -119,8 +120,8 @@ function AddFilter() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-9 z-20 w-[300px] rounded-xl border border-line-2 bg-surface-2 p-4 shadow-2xl">
-            <label className="font-mono text-[10px] tracking-widest text-txt-dim">VERDICT · SCORING V2 (multi)</label>
+          <div className="floating absolute left-0 top-9 z-20 w-[300px] p-4">
+            <label className="label-caps block">Verdict · Scoring v2 (multi)</label>
             <div className="mb-3 mt-1.5 flex flex-wrap gap-1.5">
               {TIERS.map((t) => (
                 <button key={t} onClick={() => toggleTier(t)}
@@ -145,7 +146,7 @@ function AddFilter() {
               <CheckRow label="Veille succession" on={filters.veille} toggle={() => setFilter('veille', !filters.veille)} />
               <CheckRow label="Masquer les copropriétés" on={filters.horsCopro} toggle={() => setFilter('horsCopro', !filters.horsCopro)} />
             </div>
-            <label className="font-mono text-[10px] tracking-widest text-txt-dim">FLAGS ACTIFS (au moins un)</label>
+            <label className="label-caps block">Flags actifs (au moins un)</label>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {FLAG_DEFS.map((d) => (
                 <button key={d.key} onClick={() => toggleFlag(d.key)}
@@ -156,19 +157,19 @@ function AddFilter() {
               ))}
             </div>
             {/* Signaux propriétaire (dossier de la fiche) — libellés métier, au moins un présent */}
-            <label className="mt-3 block font-mono text-[10px] tracking-widest text-txt-dim">SIGNAUX PROPRIÉTAIRE</label>
+            <label className="label-caps mt-3 block">Signaux propriétaire</label>
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {V_SIGNAL_DEFS.map((d) => (
                 <button key={d.key} onClick={() => toggleVSignal(d.key)}
                   className={`rounded-full border px-2 py-0.5 text-[11px] ${
-                    filters.vSignals.includes(d.key) ? 'border-[#FF8A50] text-[#FF8A50]' : 'border-line-2 text-txt-mut'}`}
+                    filters.vSignals.includes(d.key) ? 'border-st-creuser text-st-creuser' : 'border-line-2 text-txt-mut'}`}
                   title={`Au moins un signal « ${d.label} » au dossier propriétaire`}>
                   {d.label}
                 </button>
               ))}
             </div>
             <button onClick={() => { setFilters(EMPTY_FILTERS); setOpen(false) }}
-              className="mt-3 w-full rounded-lg border border-line-2 py-1 text-[11px] text-txt-dim hover:text-txt">
+              className="mt-3 min-h-7 w-full rounded-lg border border-line-2 py-1 text-[11px] text-txt-dim transition-colors duration-quick hover:text-txt">
               Réinitialiser tous les filtres
             </button>
           </div>
@@ -195,7 +196,7 @@ function CommuneSelect() {
     <div className="relative shrink-0">
       <button onClick={() => setOpen((o) => !o)} data-commune-select
         title="Changer de commune (périmètre de la carte, des compteurs et des modules)"
-        className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt hover:border-[#2E6B4F]">
+        className="flex h-[26px] shrink-0 items-center gap-1.5 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt transition-colors duration-quick hover:border-mint/40">
         <span className="h-1.5 w-1.5 rounded-full bg-txt-dim" />
         {commune ?? 'Toute l’île'}
         <svg viewBox="0 0 10 10" className="h-2.5 w-2.5 text-txt-dim"><polyline points="2,4 5,7 8,4" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
@@ -203,7 +204,7 @@ function CommuneSelect() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto rounded-lg border border-line-2 bg-surface-2 p-1.5 shadow-xl">
+          <div className="floating absolute left-0 top-9 z-20 flex max-h-[70vh] w-[320px] flex-col overflow-y-auto p-1.5">
             <button onClick={() => pick(null)}
               className={`flex items-center justify-between rounded-md px-3 py-2 text-left text-xs hover:bg-surface-3 ${commune == null ? 'bg-surface-3 text-mint' : 'text-txt'}`}>
               <span className="font-medium">Toute l’île</span>
@@ -226,7 +227,7 @@ function CommuneSelect() {
                 </button>
               </div>
             ))}
-            {communes.isLoading && <p className="p-3 text-xs text-txt-dim">Chargement…</p>}
+            {communes.isLoading && <div className="p-3"><Loading label="Chargement des communes" className="text-xs" /></div>}
           </div>
         </>
       )}
@@ -240,7 +241,7 @@ function ContexteButton() {
   if (!commune) return null
   return (
     <button onClick={() => setContexteCommune(commune)} data-contexte-btn
-      className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-[#4a3d6b] bg-[#1a1526] px-2.5 text-[11px] text-[#B497F0] hover:border-[#B497F0]"
+      className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-violet/40 bg-violet/[0.08] px-2.5 text-[11px] text-violet transition-colors duration-quick hover:border-violet"
       title="Contexte commune — SRU, ANRU, PLH, marché logement (sources officielles)">
       ⓘ Contexte
     </button>
@@ -294,7 +295,7 @@ function NotifBell() {
   return (
     <div className="relative">
       <button onClick={() => setOpen((o) => !o)} title="Notifications"
-        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-line-2 bg-surface-3 text-txt-mut hover:text-txt">
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-line-2 bg-surface-3 text-txt-mut transition-colors duration-quick hover:text-txt">
         <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">
           <path d="M10 3 a4 4 0 0 1 4 4 v3 l1.5 2.5 h-11 L6 10 V7 a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" strokeWidth="1.4" />
           <path d="M8.5 15 a1.5 1.5 0 0 0 3 0" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -308,9 +309,9 @@ function NotifBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-11 z-20 flex max-h-[70vh] w-[380px] flex-col rounded-lg border border-line-2 bg-surface-2 shadow-xl">
+          <div className="floating absolute right-0 top-11 z-20 flex max-h-[70vh] w-[380px] flex-col overflow-hidden">
             <div className="flex shrink-0 items-center justify-between border-b border-line px-4 py-2.5">
-              <p className="font-mono text-[11px] tracking-widest text-txt-dim">NOTIFICATIONS · {unread} non lue{unread > 1 ? 's' : ''}</p>
+              <p className="label-caps">Notifications · {unread} non lue{unread > 1 ? 's' : ''}</p>
               <div className="flex gap-3">
                 <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Digest hebdo (HTML email-ready)">Digest →</a>
                 {unread > 0 && <button onClick={() => readAll.mutate()} className="text-[11px] text-txt-mut hover:text-txt">tout lire</button>}
@@ -319,9 +320,9 @@ function NotifBell() {
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
               {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs text-txt-dim">Aucun événement — le prochain run de scoring alimentera cette liste.</p>}
               {(ev.data?.items ?? []).map((e) => (
-                <div key={e.id} className={`rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-[#3a3050] bg-[#171221]'}`}>
+                <div key={e.id} className={`rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-violet/30 bg-violet/[0.07]'}`}>
                   <div className="flex items-center gap-2">
-                    {e.demo && <span className="rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[8.5px] font-medium text-[#B497F0]" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
+                    {e.demo && <span className="rounded-full bg-violet/15 px-1.5 py-0.5 text-[8.5px] font-medium text-violet" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
                     <button onClick={() => { if (e.idu) { setView('cartes'); select(e.idu) } setOpen(false) }}
                       className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>
                     {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" title="Marquer lu">✓</button>}
@@ -332,18 +333,19 @@ function NotifBell() {
               ))}
             </div>
             <div className="shrink-0 border-t border-line p-3">
-              <p className="font-mono text-[10px] tracking-widest text-txt-dim">VEILLES (recherches sauvegardées)</p>
+              <p className="label-caps">Veilles (recherches sauvegardées)</p>
               {(veilles.data ?? []).map((v) => (
                 <div key={v.id} className="mt-1.5 flex items-center gap-2 text-[11px]">
                   <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt hover:text-mint" title={v.hash}>{v.nom}</a>
-                  <button onClick={() => delVeille.mutate(v.id)} className="text-txt-dim hover:text-st-ecartee">×</button>
+                  <button onClick={() => delVeille.mutate(v.id)} aria-label="Supprimer la veille"
+                  className="flex h-5 w-5 items-center justify-center rounded-full text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">×</button>
                 </div>
               ))}
               <div className="mt-2 flex gap-1.5">
                 <input value={veilleNom} onChange={(e) => setVeilleNom(e.target.value)} placeholder="Nommer la recherche courante…"
                   className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
                 <button onClick={() => veilleNom.trim() && addVeille.mutate()} disabled={!veilleNom.trim()}
-                  className="rounded bg-mint px-2 text-[11px] font-medium text-mint-ink disabled:opacity-40">+ Veille</button>
+                  className="rounded bg-mint px-2 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+ Veille</button>
               </div>
             </div>
           </div>
