@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Tip } from '../Tip'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
@@ -89,8 +90,14 @@ function ScoreBar({ label, value, color, lines, defaultOpen, tip }: {
   return (
     <div className="rounded-lg border border-line-2 bg-surface-2">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title={tip ? `${tip} — déplier les signaux` : `${label} : déplier les signaux`}>
-        <span className="w-24 shrink-0 text-left text-xs text-txt">{label}</span>
+        title={`${label} : déplier les signaux`}>
+        {tip ? (
+          <Tip tip={tip} className="w-24 shrink-0">
+            <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">{label}</span>
+          </Tip>
+        ) : (
+          <span className="w-24 shrink-0 text-left text-xs text-txt">{label}</span>
+        )}
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${value}%`, background: color }} />
         </span>

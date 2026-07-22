@@ -4,6 +4,7 @@ import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults,
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { completudeColor, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
+import { Tip } from '../Tip'
 import { useApp } from '../../store/useApp'
 
 const fmt = (n: number) => n.toLocaleString('fr-FR')
@@ -22,15 +23,15 @@ function CompletudeRing({ value }: { value: number }) {
   const r = 7
   const c = 2 * Math.PI * r
   return (
-    <span className="flex items-center gap-1"
-      title={`Complétude des données : ${value}/100 — part des sources disponibles pour cette parcelle. N'est PAS une note de qualité du terrain.`}>
+    <Tip tip={`Complétude des données : ${value}/100 — part des sources disponibles pour cette parcelle. N'est PAS une note de qualité du terrain.`}
+      className="items-center gap-1">
       <svg viewBox="0 0 18 18" className="h-[18px] w-[18px] -rotate-90">
         <circle cx="9" cy="9" r={r} fill="none" stroke="#1E2A23" strokeWidth="2" />
         <circle cx="9" cy="9" r={r} fill="none" stroke={completudeColor(value)} strokeWidth="2"
           strokeDasharray={c} strokeDashoffset={c * (1 - value / 100)} strokeLinecap="round" />
       </svg>
-      <span className="font-mono text-[11px] text-txt-dim">{value}</span>
-    </span>
+      <span className="font-mono text-[11px] text-txt-dim tnum">{value}</span>
+    </Tip>
   )
 }
 
@@ -50,22 +51,28 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="shrink-0 whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
-          <span data-tier-chip className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
-            style={{ background: `${meta.color}1f`, color: meta.color }}
-            title={`Verdict scoring v2 (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}>
-            {meta.label}{p.rang_v2 != null && !p.etage0 ? ` · ${p.rang_v2}` : ''}
-          </span>
-          {p.evenement === 'rouge' && (
-            <span className="shrink-0 rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
-              title={`Événement — procédure BODACC ouverte${p.evenement_date ? ` (${new Date(p.evenement_date).toLocaleDateString('fr-FR')})` : ''}`}>
-              ● ÉVÉNEMENT{p.evenement_date ? ` · ${new Date(p.evenement_date).toLocaleDateString('fr-FR')}` : ''}
+          <Tip tip={`Verdict scoring v2 (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
+            className="shrink-0">
+            <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+              style={{ background: `${meta.color}1f`, color: meta.color }}>
+              {meta.label}{p.rang_v2 != null && !p.etage0 ? ` · ${p.rang_v2}` : ''}
             </span>
+          </Tip>
+          {p.evenement === 'rouge' && (
+            <Tip tip={`Événement — procédure BODACC ouverte${p.evenement_date ? ` (${new Date(p.evenement_date).toLocaleDateString('fr-FR')})` : ''}`}
+              className="shrink-0">
+              <span className="rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">
+                ● ÉVÉNEMENT{p.evenement_date ? ` · ${new Date(p.evenement_date).toLocaleDateString('fr-FR')}` : ''}
+              </span>
+            </Tip>
           )}
           {(p.cluster ?? 0) > 1 && (
-            <span className="shrink-0 rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]"
-              title={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) opportunité(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}>
-              même proprio ×{p.cluster}
-            </span>
+            <Tip tip={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) opportunité(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}
+              className="shrink-0">
+              <span className="rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]">
+                même proprio ×{p.cluster}
+              </span>
+            </Tip>
           )}
           {p.veille && (
             <span className="shrink-0 rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[9px] font-medium text-[#B497F0]"
@@ -88,10 +95,11 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
         {/* ×N = l'affichage produit du scoring v2 (probabilité relative de mutation) */}
-        <span data-mult-tip className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}
-          title={p.mult_v2 != null ? `Multiplicateur de rang — cette parcelle est classée ${p.mult_v2.toFixed(1)} fois au-dessus de la moyenne de l'univers analysé.` : 'Scoring v2 non disponible'}>
-          {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
-        </span>
+        <Tip tip={p.mult_v2 != null ? `Multiplicateur de rang — cette parcelle est classée ${p.mult_v2.toFixed(1)} fois au-dessus de la moyenne de l'univers analysé.` : 'Scoring v2 non disponible'}>
+          <span data-mult-tip className="font-display text-[15px] font-bold leading-none tnum" style={{ color: meta.color }}>
+            {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
+          </span>
+        </Tip>
         <CompletudeRing value={p.completeness_score} />
       </div>
     </button>

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { deletePipeline, getEventsCount, getPipeline, getPipelineMeta, patchPipeline } from '../../lib/api'
 import { completudeColor, SCORE_TIP, verdictMeta } from '../../lib/status'
 import type { PipelineEntry } from '../../lib/types'
+import { Tip } from '../Tip'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 
@@ -87,11 +88,14 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
         )}
         {prem && (
           <>
-            <span className="font-display text-xs font-bold" style={{ color: meta?.color }} title={SCORE_TIP.q}>{prem.q_score}</span>
-            <span className="flex items-center gap-1 text-[11px] text-txt-dim" title={`Complétude ${prem.completeness_score}%`}>
+            <Tip tip={SCORE_TIP.q}>
+              <span className="font-display text-xs font-bold tnum" style={{ color: meta?.color }}>{prem.q_score}</span>
+            </Tip>
+            <Tip tip={`Complétude des données : ${prem.completeness_score}/100 — part des sources disponibles, pas une note de qualité.`}
+              className="items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full" style={{ background: completudeColor(prem.completeness_score) }} />
-              {prem.completeness_score}%
-            </span>
+              <span className="text-[11px] text-txt-dim tnum">{prem.completeness_score}%</span>
+            </Tip>
           </>
         )}
         {!prem && <span className="text-[11px] text-txt-dim">hors run de référence</span>}
