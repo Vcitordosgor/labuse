@@ -51,7 +51,7 @@ function Omnibox() {
   }
 
   return (
-    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 pl-3 pr-[3px] focus-within:border-mint">
+    <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 pl-3 pr-0.5 transition-colors duration-quick focus-within:border-mint">
       <input ref={ref} data-omnibox value={query} onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && onEnter()}
         placeholder="Rechercher : commune, IDU (AB 0234)…"
@@ -59,7 +59,7 @@ function Omnibox() {
         className="min-w-0 flex-1 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none" />
       {/* A5 (post-revue) : la LOUPE remplace le « / » et passe à DROITE — cliquable pour lancer */}
       <button onClick={onEnter} title="Lancer la recherche"
-        className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md bg-mint text-mint-ink hover:brightness-110">
+        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mint text-mint-ink transition-[filter] duration-quick hover:brightness-110">
         <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
           <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
           <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -259,9 +259,11 @@ function FilterChips() {
       <ContexteButton />
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto" data-chips>
         {chips.map((c) => (
-          <span key={c.token} className="flex h-[26px] shrink-0 items-center gap-2 rounded-full border border-line-2 bg-surface-3 px-3 text-xs text-txt">
+          <span key={c.token} className="flex h-[26px] shrink-0 items-center gap-1 rounded-full border border-line-2 bg-surface-3 pl-3 pr-1 text-xs text-txt">
             {c.label}
-            <button onClick={() => setFilters(removeToken(filters, c.token))} className="text-txt-dim hover:text-txt-hi" title="Retirer ce filtre">×</button>
+            <button onClick={() => setFilters(removeToken(filters, c.token))}
+              className="flex h-5 w-5 items-center justify-center rounded-full text-txt-dim transition-colors duration-quick hover:bg-surface-2 hover:text-txt-hi"
+              title="Retirer ce filtre" aria-label={`Retirer le filtre ${c.label}`}>×</button>
           </span>
         ))}
       </div>
@@ -367,7 +369,7 @@ export function Header() {
       {/* R5 (O2) : entrée du scoreur d'adresse — à côté de la recherche, trouvable en < 5 s */}
       <button data-scoreur-open onClick={() => setScoreurOpen((o) => !o)}
         title="Scorer une adresse — collez l'adresse d'un bien à vendre (+ prix demandé) : seconde opinion avant d'offrir"
-        className={`h-8 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors ${
+        className={`h-8 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors duration-quick ${
           scoreurOpen ? 'border-mint bg-mint/15 text-mint' : 'border-line-2 text-txt-mut hover:border-mint/60 hover:text-txt'}`}>
         ⌖ Scorer une adresse
       </button>
