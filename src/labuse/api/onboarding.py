@@ -317,8 +317,8 @@ rediffusion systématique des contenus du service.</p>
 facturation (chez Stripe). Aucune donnée de carte chez LABUSE. Finalités : fourniture du
 service, facturation, sécurité. Durée : la vie du compte, puis effacement sous 30 jours de
 la demande (droit d'accès, de rectification et d'effacement : kampusreunion@gmail.com).
-Sous-traitants : Stripe (paiement), Resend (emails transactionnels), hébergeur du serveur
-(UE). Pas de prospection automatisée, pas de revente de données.</p>
+Sous-traitants : Stripe (paiement), hébergeur du serveur (UE). Aucun email automatique.
+Pas de prospection automatisée, pas de revente de données.</p>
 
 <h2>9. Responsabilité</h2>
 <p>Dans les limites permises par la loi entre professionnels, la responsabilité totale de
