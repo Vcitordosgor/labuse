@@ -440,14 +440,27 @@ def _risques(out: dict) -> str:
     return body
 
 
-# ───────────────────────── endpoint ─────────────────────────
+# ───────────────────────── endpoints ─────────────────────────
 
-@router.get("/{idu}.pdf")
-def dossier_banquier_pdf(idu: str, request: Request, ign: bool = True,
-                         db: Session = Depends(get_db)) -> Response:
-    """Génère le Dossier banquier (PDF 6-8 pages) pour une parcelle. Réutilise l'existant ; tout sourcé."""
-    if not plans.acces("dossier_parcelle"):
-        raise HTTPException(403, detail=plans.refus("dossier_parcelle"))
+# BLOC B (B1.5) — génération ASYNCHRONE + cache par (idu, run servi). La génération
+# (collecte + weasyprint) prenait 9,3 s BLOQUANTS au clic : désormais le front lance
+# `POST /{idu}/prepare` (202, thread avec SA PROPRE session DB), sonde `GET /{idu}/statut`,
+# puis ouvre le PDF — servi du cache en ~ms. Le GET direct .pdf reste synchrone (compat
+# liens/QA) mais profite du même cache. Cache mémoire LRU (32 dossiers ≈ qq Mo), vidé au
+# redémarrage — le run servi ne change qu'avec un restart (bascule) : la clé (idu, run)
+# est une ceinture-bretelles documentée.
+from collections import OrderedDict as _OD
+from threading import Lock as _Lock, Thread as _Thread
+
+from ..scoring.score_v_constants import Q_A_RUN_LABEL as _RUN
+
+_PDF_CACHE: _OD[tuple[str, str], bytes] = _OD()
+_PDF_CACHE_MAX = 32
+_PDF_JOBS: dict[tuple[str, str], dict] = {}
+_PDF_LOCK = _Lock()
+
+
+def _build_pdf(db: Session, idu: str) -> bytes:
     out = _collect(db, idu)
     out["_synthese"] = _synthese_html(db, out)   # synthèse d'abord (utilisée en couverture)
     sections = [_cover(out), _identite(out), _faisabilite(out), _bilan(out), _comparables(out), _risques(out)]
@@ -457,5 +470,73 @@ def dossier_banquier_pdf(idu: str, request: Request, ign: bool = True,
            f"<body>{''.join(s for s in sections if s)}</body></html>")
     pdf = HTML(string=doc).write_pdf()
     log.info("dossier banquier %s généré (%d ko)", idu, len(pdf) // 1024)
+    return pdf
+
+
+def _cache_put(key: tuple[str, str], pdf: bytes) -> None:
+    with _PDF_LOCK:
+        _PDF_CACHE[key] = pdf
+        _PDF_CACHE.move_to_end(key)
+        while len(_PDF_CACHE) > _PDF_CACHE_MAX:
+            _PDF_CACHE.popitem(last=False)
+
+
+def _job_worker(idu: str) -> None:
+    """Thread de génération — session DB PROPRE (jamais celle de la requête, fermée à la réponse)."""
+    from ..db import session_scope
+    key = (idu, _RUN)
+    try:
+        with session_scope() as s:
+            pdf = _build_pdf(s, idu)
+        _cache_put(key, pdf)
+        with _PDF_LOCK:
+            _PDF_JOBS[key] = {"etat": "pret"}
+    except Exception as e:                                    # noqa: BLE001 — l'état porte l'erreur
+        log.warning("dossier banquier %s : échec génération (%s)", idu, e)
+        with _PDF_LOCK:
+            _PDF_JOBS[key] = {"etat": "erreur", "detail": "Génération impossible — réessayez."}
+
+
+@router.post("/{idu}/prepare", status_code=202)
+def dossier_banquier_prepare(idu: str) -> dict:
+    """Lance (ou constate) la génération asynchrone. Réponses : pret | en_cours."""
+    if not plans.acces("dossier_parcelle"):
+        raise HTTPException(403, detail=plans.refus("dossier_parcelle"))
+    key = (idu, _RUN)
+    with _PDF_LOCK:
+        if key in _PDF_CACHE:
+            _PDF_JOBS[key] = {"etat": "pret"}
+            return {"etat": "pret"}
+        if _PDF_JOBS.get(key, {}).get("etat") == "en_cours":
+            return {"etat": "en_cours"}
+        _PDF_JOBS[key] = {"etat": "en_cours"}
+    _Thread(target=_job_worker, args=(idu,), daemon=True).start()
+    return {"etat": "en_cours"}
+
+
+@router.get("/{idu}/statut")
+def dossier_banquier_statut(idu: str) -> dict:
+    """État de la génération asynchrone : pret | en_cours | erreur | inconnu."""
+    key = (idu, _RUN)
+    with _PDF_LOCK:
+        if key in _PDF_CACHE:
+            return {"etat": "pret"}
+        return dict(_PDF_JOBS.get(key, {"etat": "inconnu"}))
+
+
+@router.get("/{idu}.pdf")
+def dossier_banquier_pdf(idu: str, request: Request, ign: bool = True,
+                         db: Session = Depends(get_db)) -> Response:
+    """Sert le Dossier banquier — du cache si prêt, sinon génération synchrone (compat liens)."""
+    if not plans.acces("dossier_parcelle"):
+        raise HTTPException(403, detail=plans.refus("dossier_parcelle"))
+    key = (idu, _RUN)
+    with _PDF_LOCK:
+        pdf = _PDF_CACHE.get(key)
+        if pdf is not None:
+            _PDF_CACHE.move_to_end(key)
+    if pdf is None:
+        pdf = _build_pdf(db, idu)
+        _cache_put(key, pdf)
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="dossier_banquier_{idu}.pdf"'})

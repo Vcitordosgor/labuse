@@ -4,7 +4,7 @@
 Partie 2 sur verdict → STOP final · Vic merge.** DA verrouillée (tokens de la revue),
 wording boussole partout.
 
-## ⟪ CURSEUR ⟫ Partie 1 en cours — B1 (perf)
+## ⟪ CURSEUR ⟫ Partie 1 en cours — B1 TERMINÉ (5/5 mesurés) · suite : B2
 
 ---
 
@@ -16,7 +16,7 @@ wording boussole partout.
 | 2 | Liste île top-N (index rang) | 2,5 s prod · **1,10 s local** (mesure de travail) | **0,036 s local** (×30) — page servie par `ix_p_v2_run_rang` (top-N sans scan) + cluster même-proprio matérialisé (le planner le ré-exécutait par ligne) | ✅ |
 | 3 | Tuiles 1er écran | 9,00 Mo / 4 tuiles (île desktop, re-mesuré : la tuile centrale z9 seule = 5,6 Mo) | **1,09 Mo** (×8) — paliers recalibrés au pixel (z9 60 m/ext.1024 · z10 30/1024 · z11 15/1024, z12+ intact) + `stale-while-revalidate=86400` ; trame visuellement identique (capture avant/après) | ✅ |
 | 4 | O6 / O7 cache TTL | O6 2,5-3,6 s · O7 liste 2,5 s (re-mesurés) | **4,7 ms / 3,8 ms au 2ᵉ hit** — `_mem_cached` single-flight, TTL 1 h documenté (les données suivent les crons quotidiens + build post-run ; jamais plus d'1 h de retard) | ✅ |
-| 5 | PDF banquier async + cache | 9,3 s bloquants | — | à faire |
+| 5 | PDF banquier async + cache | 9,3 s bloquants (8,4 s re-mesuré local) | **clic → 202 en 4 ms** (génération en fond, thread + session DB propre), sonde 1,5 s, puis PDF servi du cache **~6 ms** ; cache LRU 32 × (idu, run), GET direct inchangé (compat liens/QA) ; bouton fiche à états (Loading DA → « prêt » mint → réessai) | ✅ |
 
 **Garde-fou B1.2** : 8 jeux de filtres capturés sur l'ANCIEN code puis rejoués — 7 byte-identiques
 (île défaut, offset 500×1000, tiers, commune+surface, hors_copro+sdp, tiers=ecartee, sort=mult) ;

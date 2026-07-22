@@ -356,7 +356,7 @@ S({
   slug: 'fiche__exports', section: 'Fiche', desc: 'Boutons d’export (PDF · Dossier · Banquier)',
   async run(c) {
     await c.goFiche(c.ids.brulante);
-    const b = c.page.locator('a:has-text("Banquier")').first();
+    const b = c.page.locator('[data-banquier-btn], a:has-text("Banquier")').first();  // B1.5 : bouton à états
     if (await b.count()) await b.scrollIntoViewIfNeeded();
     await c.shot('defaut', 'la rangée d’exports en bas de fiche');
   },

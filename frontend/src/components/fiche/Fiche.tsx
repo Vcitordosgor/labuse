@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { fmtDate, fmtDateNum, fmtInt, fmtM2 } from '../../lib/format'
@@ -1192,12 +1192,10 @@ export function Fiche({ idu }: { idu: string }) {
             Dossier
           </a>
           {/* O1 : dossier banquier — 6-8 pages print, synthèse exécutive + bilan/charge foncière +
-              Score É + comparables DVF/SITADEL + risques, tout sourcé (photo aérienne IGN). */}
-          <a href={`/dossier-banquier/${idu}.pdf`} target="_blank" rel="noreferrer"
-            className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-            title="Dossier banquier PDF (synthèse exécutive, bilan & charge foncière, comparables, risques) — présentation financeur">
-            Banquier
-          </a>
+              Score É + comparables DVF/SITADEL + risques, tout sourcé (photo aérienne IGN).
+              B1.5 : génération ASYNC (9,3 s ne bloquent plus le clic) — préparer → sonder →
+              « prêt » cliquable ; le PDF sort alors du cache serveur en ~ms. */}
+          <BanquierButton idu={idu} />
           {f?.coords && (
             /* Fix LOT 2 : recentrer sur LA parcelle en ouvrant la vue historique (sinon la carte
                restait où elle était → on voyait l'île, pas le terrain). */
@@ -1237,5 +1235,55 @@ export function Fiche({ idu }: { idu: string }) {
         </p>
       </div>
     </aside>
+  )
+}
+
+
+/** B1.5 — bouton Dossier banquier à ÉTATS : clic → préparation asynchrone côté serveur
+ *  (le PDF pesait 9,3 s bloquants), sonde /statut toutes les 1,5 s, puis « prêt — ouvrir »
+ *  (cache serveur : ouverture ~ms). Erreur : message court + réessai. Si le cache est déjà
+ *  chaud, le premier clic ouvre directement (même geste utilisateur → pas de popup bloquée). */
+function BanquierButton({ idu }: { idu: string }) {
+  const [etat, setEtat] = useState<'idle' | 'encours' | 'pret' | 'erreur'>('idle')
+  const timer = useRef<number | null>(null)
+  useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
+  useEffect(() => { setEtat('idle'); if (timer.current) window.clearTimeout(timer.current) }, [idu])
+  const url = `/dossier-banquier/${idu}.pdf`
+  const poll = async () => {
+    try {
+      const r = await fetch(`/dossier-banquier/${idu}/statut`)
+      const d = await r.json()
+      if (d.etat === 'pret') { setEtat('pret'); return }
+      if (d.etat === 'erreur') { setEtat('erreur'); return }
+    } catch { setEtat('erreur'); return }
+    timer.current = window.setTimeout(poll, 1500)
+  }
+  const lancer = async () => {
+    try {
+      const r = await fetch(`/dossier-banquier/${idu}/prepare`, { method: 'POST' })
+      const d = await r.json()
+      if (d.etat === 'pret') { window.open(url, '_blank', 'noreferrer'); setEtat('pret'); return }
+      setEtat('encours'); timer.current = window.setTimeout(poll, 1500)
+    } catch { setEtat('erreur') }
+  }
+  if (etat === 'pret') return (
+    <a href={url} target="_blank" rel="noreferrer"
+      className="flex h-8 flex-1 items-center justify-center gap-1 rounded-lg border border-mint/50 px-3 text-xs font-medium text-mint transition-colors duration-quick hover:bg-mint/10"
+      title="Dossier banquier prêt — ouvrir le PDF">
+      Banquier — prêt
+    </a>
+  )
+  if (etat === 'encours') return (
+    <span className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3">
+      <Loading label="Banquier…" className="text-xs" />
+    </span>
+  )
+  return (
+    <button onClick={lancer} data-banquier-btn
+      className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt transition-colors duration-quick hover:text-txt-hi"
+      title={etat === 'erreur' ? 'Génération impossible — réessayer'
+        : 'Dossier banquier PDF (synthèse exécutive, bilan & charge foncière, comparables, risques) — présentation financeur'}>
+      {etat === 'erreur' ? 'Banquier — réessayer' : 'Banquier'}
+    </button>
   )
 }
