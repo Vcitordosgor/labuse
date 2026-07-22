@@ -51,12 +51,12 @@ function SourceRef({ line }: { line: FicheLine }) {
   return (
     <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
       {line.source && (
-        <button onClick={() => openSourceDrawer(line)} className="truncate text-[#5a7d6c] hover:text-mint hover:underline"
+        <button onClick={() => openSourceDrawer(line)} className="truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
           title="Voir la source (drawer)">
           {line.source}
         </button>
       )}
-      {trace && <span className="shrink-0 font-mono text-[#4a5a52]">{trace}</span>}
+      {trace && <span className="shrink-0 font-mono text-txt-dim/70">{trace}</span>}
       {line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
     </div>
   )
@@ -130,8 +130,8 @@ const FAMILLE_LABEL: Record<string, string> = {
 function VSignalRow({ s }: { s: VSignal }) {
   const neg = s.points < 0
   return (
-    <div className="flex gap-3 border-b border-[#141d17] py-2 last:border-0">
-      <span className={`w-10 shrink-0 text-right font-mono text-xs font-semibold ${neg ? 'text-st-ecartee' : 'text-[#FF8A50]'}`}>
+    <div className="flex gap-3 border-b border-line py-2 last:border-0">
+      <span className={`w-10 shrink-0 text-right font-mono text-xs font-semibold ${neg ? 'text-st-ecartee' : 'text-st-creuser'}`}>
         {neg ? s.points : `+${s.points}`}
       </span>
       <div className="min-w-0 flex-1">
@@ -145,7 +145,7 @@ function VSignalRow({ s }: { s: VSignal }) {
           {/* CRED-4 : le statut des procédures saute aux yeux (en cours / clôturée) */}
           {/en cours/i.test(s.label) && (
             <Tip tip="Procédure toujours ouverte au dernier avis BODACC ingéré" className="shrink-0">
-              <span data-v-statut="en-cours" className="rounded-full bg-[#3a1614] px-1.5 text-[8.5px] font-semibold text-st-ecartee">EN COURS</span>
+              <span data-v-statut="en-cours" className="rounded-full bg-st-ecartee/15 px-1.5 text-[8.5px] font-semibold text-st-ecartee">EN COURS</span>
             </Tip>
           )}
           {/clôtur/i.test(s.label) && (
@@ -157,7 +157,7 @@ function VSignalRow({ s }: { s: VSignal }) {
         {s.ref && <div className="text-[11px] leading-snug text-txt-mut">{s.ref}</div>}
         <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
           {s.url
-            ? <a href={s.url} target="_blank" rel="noreferrer" className="truncate text-[#5a7d6c] hover:text-mint hover:underline"
+            ? <a href={s.url} target="_blank" rel="noreferrer" className="truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
                 title="Vérifier à la source (avis officiel)">{s.source} ↗</a>
             : <span className="truncate">{s.source}</span>}
           {s.match && s.match.confiance < 1 && (
@@ -561,7 +561,7 @@ function Calculette({ idu }: { idu: string }) {
               <HypInput label="Prix demandé du terrain" value={prixDemande} onChange={setPrixDemande} suffix="€" placeholder="si connu" />
             </div>
             {achat && (
-              <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-[#12241a] text-mint' : 'bg-[#2a1210] text-st-ecartee'}`}>
+              <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {achat.supportable
                   ? <>✓ Supportable — le terrain peut valoir {euros(achat.prix_demande_eur)} ; marge de {euros(achat.ecart_eur)} ({achat.ecart_pct > 0 ? '+' : ''}{achat.ecart_pct} %) sous votre charge foncière.</>
                   : <>✗ Trop cher — à {euros(achat.prix_demande_eur)}, l'opération dépasse de {euros(Math.abs(achat.ecart_eur))} ({achat.ecart_pct} %) ce que vos hypothèses supportent.</>}
@@ -694,18 +694,18 @@ function FaisabiliteTab({ idu }: { idu: string }) {
         <div data-faisa-explain>
           {!ex && !explain.isPending && (
             <button onClick={() => explain.mutate()} data-faisa-explain-btn
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#B497F0]/50 bg-[#171221] py-2 text-[12px] font-medium text-[#B497F0] hover:bg-[#1d1630]">
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-violet/50 bg-violet/[0.07] py-2 text-[12px] font-medium text-violet hover:bg-violet/10">
               <svg viewBox="0 0 20 20" className="h-3.5 w-3.5"><path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z" fill="currentColor" /></svg>
               Expliquer ce calcul en clair
             </button>
           )}
-          {explain.isPending && <p className="flex items-center gap-2 py-2 text-[11px] text-[#B497F0]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B497F0]" /> L'IA lit les étapes du calcul…</p>}
+          {explain.isPending && <p className="flex items-center gap-2 py-2 text-[11px] text-violet"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet" /> L'IA lit les étapes du calcul…</p>}
           {explain.isError && <p className="py-1 text-[11px] text-st-ecartee">Explication indisponible — réessayez.</p>}
           {ex && ex.disponible === false && <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">{ex.message}</p>}
           {ex && ex.disponible && ex.rejected && <p className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] text-st-creuser">{ex.texte}</p>}
           {ex && ex.disponible && !ex.rejected && (
-            <div className="rounded-lg border border-[#B497F0]/40 bg-[#171221] px-3 py-2.5">
-              <p className="mb-1 font-mono text-[10px] tracking-widest text-[#B497F0]">✦ EXPLICATION IA — À PARTIR DES ÉTAPES</p>
+            <div className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2.5">
+              <p className="mb-1 font-mono text-[10px] tracking-widest text-violet">✦ EXPLICATION IA — À PARTIR DES ÉTAPES</p>
               <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-txt">{renderRich(ex.texte ?? '')}</p>
               <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">L'IA narre les étapes ci-dessus (elle ne recalcule rien) ; chaque chiffre est ancré sur une étape. Estimation indicative, ne vaut pas conseil.</p>
             </div>
@@ -765,7 +765,7 @@ function BilanTab({ idu }: { idu: string }) {
           (le financier au même endroit que la capacité et son explication). */}
       <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
         La <b className="text-txt">charge foncière</b> (« combien puis-je payer ce terrain ? ») est
-        désormais dans l'onglet <b className="text-[#B497F0]">Faisabilité</b>, avec le calcul détaillé.
+        désormais dans l'onglet <b className="text-violet">Faisabilité</b>, avec le calcul détaillé.
       </div>
       <Sec t="Fiscal & leviers">
         <div>QPV : <b className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</b> · TVA : {b.fiscal.tva}</div>
@@ -802,7 +802,7 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
               </span>
               <p className="mt-1 text-[10.5px] leading-snug text-txt">{e.exigence}</p>
               {e.condition_altitude && <p className="mt-0.5 text-[11px] text-st-creuser">altitude : {e.condition_altitude}</p>}
-              <a href={e.url} target="_blank" rel="noreferrer" className="mt-0.5 block text-[11px] text-[#7DE8E0] hover:underline">
+              <a href={e.url} target="_blank" rel="noreferrer" className="mt-0.5 block text-[11px] text-mint hover:underline">
                 {e.reference} ↗
               </a>
             </div>
@@ -823,7 +823,7 @@ function PatrimoineLink({ siren }: { siren: string }) {
   return (
     <button
       onClick={() => { setM02Prefill(siren); setModule('patrimoine') }}
-      className="mt-1.5 text-[11px] text-[#B497F0] hover:underline"
+      className="mt-1.5 text-[11px] text-violet hover:underline"
       title="Scan patrimoine (M02) : tout le foncier de ce propriétaire sur l'île"
     >
       → tout son patrimoine (M02)
@@ -899,17 +899,17 @@ export function Fiche({ idu }: { idu: string }) {
         </div>
       )}
       {f?.evenement === 'rouge' && (
-        <div className="shrink-0 border-b border-[#5a2420] bg-[#3a1614] px-5 py-2.5">
+        <div className="shrink-0 border-b border-st-ecartee/40 bg-st-ecartee/15 px-5 py-2.5">
           {/* R3 (PJ5) : vocabulaire matrice non thermique — « priorité dossier » (thermique = tier P servi) */}
           <div className="flex items-center gap-2 text-xs font-medium text-st-ecartee">● ÉVÉNEMENT — force « priorité dossier »</div>
-          {f.evenement_detail && <div className="mt-1 text-[11px] leading-snug text-[#e8a99f]">{f.evenement_detail}</div>}
+          {f.evenement_detail && <div className="mt-1 text-[11px] leading-snug text-st-ecartee/90">{f.evenement_detail}</div>}
         </div>
       )}
 
       {/* bloc MODULE (doctrine : en tête de fiche, violet) */}
       {modBlock && (
-        <div className="shrink-0 border-b border-[#2a2138] bg-[#171221] px-5 py-3">
-          <p className="label-caps text-[#B497F0]">Module · {modBlock.module}</p>
+        <div className="shrink-0 border-b border-violet/20 bg-violet/[0.07] px-5 py-3">
+          <p className="label-caps text-violet">Module · {modBlock.module}</p>
           <div className="mt-1.5 flex flex-col gap-1">
             {modBlock.lines.map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3 text-[11px]">
@@ -948,7 +948,7 @@ export function Fiche({ idu }: { idu: string }) {
                 )}
                 {!v2Pilote && f?.evenement === 'rouge' && f.statut === 'chaude' && (
                   <Tip tip="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">
-                    <span className="rounded-full bg-[#3a1614] px-1.5 text-[9px] font-semibold text-st-ecartee">· ÉVÉNEMENT</span>
+                    <span className="rounded-full bg-st-ecartee/15 px-1.5 text-[9px] font-semibold text-st-ecartee">· ÉVÉNEMENT</span>
                   </Tip>
                 )}
               </span>
