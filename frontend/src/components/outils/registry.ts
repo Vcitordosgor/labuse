@@ -41,6 +41,10 @@ export const MODULES: ModuleDef[] = [
     label: 'Scan patrimoine', desc: 'Tout le foncier d’un propriétaire en une recherche' },
   { key: 'bailleur', num: 'M06', group: 'detecter',
     label: 'Mode bailleur', desc: 'Le gisement LLS : QPV, TVA réduite, leviers du logement social' },
+  { key: 'o9-rarete', num: 'O9', group: 'detecter',
+    label: 'Pipeline rareté', desc: 'Où le foncier s’épuise — l’horizon ZAN par commune, en instrument' },
+  { key: 'o10-bascules', num: 'O10', group: 'detecter',
+    label: 'Bascules datées', desc: 'Le quoi-de-neuf daté du run — bascules, matches, événements' },
   { key: 'matching', num: 'M19', group: 'detecter',
     label: 'Matching promoteurs', desc: 'Enregistrez vos critères, soyez alerté quand ça matche' },
   // ── Analyser & simuler ──

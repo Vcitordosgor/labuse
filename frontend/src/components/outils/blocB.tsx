@@ -243,3 +243,97 @@ export function O7Carnet() {
     </>
   )
 }
+
+/* ───────────── O9 — PIPELINE RARETÉ (S49) ───────────── */
+
+type Rarete = { communes: { insee: string; commune: string; rythme_conso_ha_an: number | null
+  budget_zan_ha: number | null; reste_zan_ha: number | null; horizon_epuisement_ans: number | null
+  statut: string; stock_opportunites_ha: number | null; source: string }[] }
+
+export function O9Rarete() {
+  const q = useQuery({ queryKey: ['o9'], queryFn: () => jfetch<Rarete>('/pipeline-rarete') })
+  const rows = q.data?.communes ?? []
+  return (
+    <>
+      <Banner>La <b>rareté</b> comme argument : au rythme de consommation observé
+        (<b>Sourcé</b> Cerema), combien d'années de budget ZAN reste-t-il ? Horizon court =
+        foncier qui s'apprécie. <b>Estimé</b> : budget −50 % loi Climat, enveloppes SAR-SCOT
+        non publiées (caveat loi TRACE).</Banner>
+      {q.isLoading && <Loading accent="violet" label="Calcul des horizons…" />}
+      {q.isError && <ErrorState className="py-6" message="Pipeline rareté indisponible." retry={() => q.refetch()} />}
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+        <p className="label-caps sticky top-0 bg-surface-1 py-1 text-[9.5px]">Horizon d'épuisement du budget ZAN (estimé)</p>
+        {rows.map((c) => {
+          const depasse = c.statut === 'budget dépassé'
+          const pct = depasse ? 100 : c.budget_zan_ha && c.reste_zan_ha != null
+            ? Math.max(4, Math.min(100, (c.reste_zan_ha / c.budget_zan_ha) * 100)) : 0
+          // classes LITTÉRALES (le JIT Tailwind ne voit pas les interpolations)
+          const TONES = {
+            ecartee: { bar: 'bg-st-ecartee', txt: 'text-st-ecartee' },
+            creuser: { bar: 'bg-st-creuser', txt: 'text-st-creuser' },
+            mint: { bar: 'bg-mint', txt: 'text-mint' },
+          } as const
+          const tone = TONES[depasse ? 'ecartee' : (c.horizon_epuisement_ans ?? 99) < 5 ? 'creuser' : 'mint']
+          return (
+            <div key={c.insee} data-o9-commune={c.insee} className="flex items-center gap-2 border-b border-line py-1.5 text-[11px]">
+              <span className="min-w-[110px] truncate text-txt">{c.commune}</span>
+              <span className="relative h-2 min-w-[50px] flex-1 overflow-hidden rounded-full bg-surface-3">
+                <span className={`absolute inset-y-0 left-0 rounded-full ${tone.bar}`} style={{ width: `${pct}%` }} />
+              </span>
+              <span className={`tnum min-w-[64px] text-right font-mono ${tone.txt}`}>
+                {depasse ? 'dépassé' : c.horizon_epuisement_ans != null ? `${Math.round(c.horizon_epuisement_ans)} ans` : '—'}</span>
+              <span className="tnum hidden min-w-[70px] text-right font-mono text-txt-dim sm:block">
+                {c.stock_opportunites_ha != null ? `${c.stock_opportunites_ha} ha opp.` : '—'}</span>
+            </div>
+          )
+        })}
+      </div>
+      {rows[0] && <p className="shrink-0 text-[9px] leading-snug text-txt-dim">Source : {rows[0].source}.</p>}
+    </>
+  )
+}
+
+/* ───────────── O10 — BASCULES DATÉES (S50) ───────────── */
+
+type Bascules = { unread: number; items: { id: number; date: string; kind: string; idu: string | null
+  titre: string; detail: string | null; demo?: boolean }[] }
+const O10_FILTRES = [['', 'tout'], ['bascule', 'bascules'], ['match', 'matches'], ['bodacc', 'BODACC']] as const
+
+export function O10Bascules() {
+  const { select, setView } = useApp()
+  const [kind, setKind] = useState('')
+  const q = useQuery({ queryKey: ['o10'], queryFn: () => jfetch<Bascules>('/events?limit=100') })
+  const items = (q.data?.items ?? []).filter((e) => !kind || e.kind.includes(kind))
+  return (
+    <>
+      <Banner>Les <b>bascules datées</b> du run — une parcelle qui passe chaude, un match de
+        profil, un événement BODACC : chaque changement d'état avec sa date. Le « quoi de
+        neuf » du lundi matin, en lecture (marquer lu reste dans la cloche).</Banner>
+      <div className="flex flex-wrap gap-1.5">
+        {O10_FILTRES.map(([v, l]) => (
+          <button key={v} data-o10-filtre={v} onClick={() => setKind(v)}
+            className={`min-h-7 rounded-full border px-2.5 py-1 text-[11px] transition-colors duration-quick ${
+              kind === v ? 'border-violet text-violet' : 'border-line-2 text-txt-mut hover:text-txt'}`}>{l}</button>
+        ))}
+      </div>
+      {q.isLoading && <Loading accent="violet" label="Lecture des événements…" />}
+      {q.isError && <ErrorState className="py-6" message="Événements indisponibles." retry={() => q.refetch()} />}
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+        {items.map((e) => (
+          <button key={e.id} data-o10-item onClick={() => { if (e.idu) { setView('cartes'); select(e.idu) } }}
+            className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-2.5 py-1.5 text-left transition-colors duration-quick hover:border-violet/50">
+            <span className="shrink-0 font-mono text-[10px] text-txt-dim">{e.date}</span>
+            <span className={`shrink-0 rounded-full px-1.5 text-[8.5px] font-medium ${
+              e.kind === 'match' ? 'bg-violet/15 text-violet' : 'bg-st-creuser/10 text-st-creuser'}`}>{e.kind}</span>
+            {e.idu && <span className="shrink-0 font-mono text-[10.5px] text-txt-hi">{e.idu.slice(8)}</span>}
+            <span className="min-w-0 flex-1 truncate text-[11px] text-txt">{e.titre.replace(/^🎯 /, '')}</span>
+            {e.demo && <span className="shrink-0 rounded-full bg-violet/15 px-1.5 text-[8px] text-violet">DÉMO</span>}
+          </button>
+        ))}
+        {!q.isLoading && items.length === 0 && (
+          <p className="rounded-lg bg-surface-2/60 px-3 py-2 text-[11px] text-txt-mut">Rien sur ce filtre — le prochain run alimentera le flux.</p>
+        )}
+      </div>
+    </>
+  )
+}
