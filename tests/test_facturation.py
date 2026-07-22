@@ -33,7 +33,7 @@ def _signe(payload: dict) -> tuple[bytes, str]:
 
 
 def _evt(type_, obj):
-    return {"id": "evt_test", "object": "event", "api_version": "2024-06-20",
+    return {"id": f"evt_{uuid.uuid4().hex[:16]}", "object": "event", "api_version": "2024-06-20",
             "type": type_, "data": {"object": obj}}
 
 

@@ -290,6 +290,15 @@ async def login_submit(request: Request):
             # lieu d'ouvrir l'app. Le token d'invitation consommé n'est plus un cul-de-sac.
             if u["statut_compte"] == "invite":
                 auth.log_event("login_ok_paiement_du", request)
+                # ROB-B — filet du pire cas : si le paiement a réussi mais le webhook a été
+                # perdu, on RÉCONCILIE avec Stripe (souscription active) plutôt que de relancer
+                # un Checkout (double paiement). « A payé ⇒ a accès ».
+                from ..facturation import reconcile_abonnement
+                if reconcile_abonnement(db, u["compte_id"], identifiant):
+                    tok = creer_session(db, u["utilisateur_id"])
+                    resp = RedirectResponse("/", status_code=303)
+                    resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
+                    return resp
                 try:
                     from ..facturation import creer_checkout
                     url = creer_checkout(db, u["compte_id"], identifiant)
