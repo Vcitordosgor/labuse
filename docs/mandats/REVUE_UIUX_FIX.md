@@ -4,14 +4,18 @@
 jamais de correction autonome.** Atlas de référence (« avant ») :
 `~/labuse-atlas/2026-07-22-11-10__local/index.html`.
 
-## ⟪ CURSEUR ⟫ dernière surface traitée : **S02→S11 (bloc fiche entier) + S16** · vague 1 (session 2)
+## ⟪ CURSEUR ⟫ dernière surface traitée : **S15** (bloc projets/CRM/tri S12→S15) · vague 1 (session 3)
 
-**Reprise session suivante : S12 `projet__liste`** (enchaîner S12-S15 projets/CRM, puis S17,
-S19-S20 ; ensuite vague 2). Filet e2e session 2 : e2e_m9_fiche = 9 échecs (le compte
-pré-existant exact, les 6 tests UI passent sur le dist retouché, zéro erreur console) ;
-e2e_429 = 1 échec (le pré-existant). `qa/e2e.mjs` (ancienne UI `/app/`) RETIRÉ — finding
-documenté dans `qa/README.md`, la suite revient à zéro rouge structurel. tsc+build verts,
-tests auth 10/10 (S16).
+**ARRÊT CHECKPOINT (demandé par le mandat de session 3)** : les captures avant/après des
+surfaces vague 1 traitées sont régénérées — **review visuelle Vic sur
+`~/labuse-atlas/2026-07-22-14-34__checkpoint-vague1/index.html`** (46 paires côte à côte
++ 2 captures sans avant, navigables S01→S18). Le go de Vic déclenche la suite.
+**Reprise session suivante (après verdict Vic) : S17 `nav__omnibox`**, puis S19-S20 cartes
+(reliquat vague 1), puis vague 2. Filet session 3 : e2e_m9_fiche = 9 échecs (le compte
+pré-existant exact, tests UI verts, zéro erreur console) ; e2e_429 = 1 échec (le
+pré-existant). tsc+build verts. Serveurs de capture : `labuse api` (env labusedb,
+`LABUSE_DATABASE_URL=postgresql+psycopg://…` — le schéma `postgresql://` nu casse sur
+psycopg2 absent) + instance 8021 avec `LABUSE_AUTH_PASSWORD` pour la porte Coffre.
 
 ---
 
@@ -57,10 +61,13 @@ S71 `etat__rideau-basic-auth`
   résiduels migrés au fil des surfaces.
 - **[LOI-2] États standard** — FAIT (States.tsx) : EmptyState (oiseau filigrane + sortie),
   ErrorState (sobre + Réessayer systématique). Migrés : liste vide, erreur pipeline CRM.
-- **[LOI-3] Formats** — FAIT (lib/format.ts) : fmtInt/Dec/Eur/M2/Pct/Date/DateNum fr-FR.
-  Adopté : liste résultats. Le reste au fil des surfaces.
+- **[LOI-3] Formats** — FAIT (lib/format.ts) : fmtInt/Dec/Eur/M2/Pct/Date/DateNum fr-FR
+  + `fmtEurCompact` (450 k€ / 2,4 M€ — session 3). Adopté : liste résultats, bloc
+  projets/CRM. Le reste au fil des surfaces.
 - **[LOI-4] Métadonnées** — FAIT : title « LABUSE — Radar foncier · La Réunion », meta
   description, theme-color #060A08, robots noindex (rideau pilote).
+- **[LOI-0 bis] Token `violet`** — FAIT (session 3) : #B497F0 (accent premium/IA/outils)
+  entre dans tailwind.config ; 73 usages en dur migrés au fil des surfaces (S12-S15 faits).
 
 ## Surfaces traitées (3 lignes max chacune)
 
@@ -94,6 +101,22 @@ S71 `etat__rideau-basic-auth`
   premier-euro** : le POST /login actuel ignore `identifiant` (mot de passe pilote inchangé,
   tests auth 10/10) ; le futur backend d'identité lit les deux champs du même formulaire
   sans retoucher le design.
+
+- **S12 `projet__liste`** — cartes en `card-elev` ; UN CTA mint solide par écran (« Ouvrir »
+  → fantôme mint) ; compteurs tabulaires, zéros éteints (couleur = signal) ; budget
+  fmtEurCompact + fmtDate ; EmptyState/Skeleton ; dédup en token violet, sans ⚠ ni « ids ».
+  Lois : 1, 2, 3, 6, 7, 8 + vert-signal/élévation.
+- **S13 `projet__kanban`** — colonnes en élévation (bordure = feedback de drop uniquement) ;
+  accent « À trier » bleu hors palette → st-none ; 6 hex locaux → tokens ; Retenir en fantôme
+  (« Trier » = LE focal) ; mobile 85vw (colonnes 34vw illisibles avant) ; fmtM2/fmtDate ;
+  Tips chips. Lois : 2, 3, 4, 5, 7 + cohérence DA.
+- **S14 `projet__tinder`** — carte de décision `.floating` élévation-3, stats en num-key
+  neutre + label-caps (mint réservé à ✓ Retenir) ; « Tri terminé 🎉 » → oiseau mint signature ;
+  ⚠→▲ st-creuser ; popover `.floating` ; Loading dignes ; tiroir sans bordures dures,
+  fermer 28 px. Lois : 1, 3, 4, 6, 7 + typo-instrument/détails signature.
+- **S15 `crm__kanban`** — cartes/colonnes en élévation ; titre de page en display ; ✕ retirer
+  visible au doigt (opacity-40, cible 28 px — était invisible hors survol) ; badge « nouveaux »
+  violet token + Tip ; fmtM2 ; wording privacy aligné (« jamais nommé »). Lois : 2, 3, 4, 5, 7.
 
 ## Refontes proposées (le cœur du futur BLOC B)
 
