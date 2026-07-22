@@ -29,6 +29,16 @@ export default {
         sans: ['Inter', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace'],
       },
+      // LOI-0 · élévation : la profondeur vient du FOND + d'une ombre discrète, pas des
+      // bordures dures. 3 niveaux seulement : panneau posé < flottant < sommet (toast/modal).
+      boxShadow: {
+        'elev-1': '0 1px 2px rgba(0,0,0,.35), 0 4px 14px -8px rgba(0,0,0,.45)',
+        'elev-2': '0 2px 6px rgba(0,0,0,.4), 0 12px 32px -12px rgba(0,0,0,.6)',
+        'elev-3': '0 4px 12px rgba(0,0,0,.45), 0 24px 56px -16px rgba(0,0,0,.7)',
+      },
+      // LOI-0 · motion : deux durées, une courbe — 150 ms (feedback), 200 ms (entrées).
+      transitionDuration: { quick: '150ms', soft: '200ms' },
+      transitionTimingFunction: { cockpit: 'cubic-bezier(.2,.7,.2,1)' },
     },
   },
   plugins: [],
