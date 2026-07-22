@@ -149,3 +149,112 @@ def test_idor_veilles_cloison(app_client):
         assert len(ca.get("/events/searches").json()) == 1   # intacte
     finally:
         _purge(ea, eb)
+
+
+# ─────────────────────── Statuts × routes (la matrice d'accès) ───────────────────────
+
+def _session_cookie(compte_id: int, email: str) -> str:
+    with session_scope() as s:
+        uid = s.execute(text("SELECT id FROM utilisateurs WHERE email=:e"), {"e": email}).scalar()
+        return "u." + comptes.creer_session(s, uid)
+
+
+def test_statut_matrice_acces(app_client):
+    """invite → dehors · paiement_requis → dedans · suspendu/resilie → dehors · actif → dedans.
+    Le statut du COMPTE décide à CHAQUE requête (route API protégée représentative)."""
+    email = f"m-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver")
+        c.cookies.set("labuse_session", _session_cookie(cid, email))
+        attendu = {"actif": 401, "paiement_requis": 401, "invite": 401, "suspendu": 401, "resilie": 401}
+        # 401 attendu SEULEMENT hors accès ; dedans = 200 (ou 404 si parcelle absente, jamais 401)
+        for statut, dedans in [("actif", True), ("paiement_requis", True),
+                               ("invite", False), ("suspendu", False), ("resilie", False)]:
+            with session_scope() as s:
+                s.execute(text("UPDATE comptes SET statut=:st WHERE id=:c"), {"st": statut, "c": cid})
+                s.commit()
+            code = c.get("/parcels?limit=1").status_code
+            if dedans:
+                assert code != 401, f"{statut} devrait AVOIR accès (reçu {code})"
+            else:
+                assert code == 401, f"{statut} ne devrait PAS avoir accès (reçu {code})"
+    finally:
+        _purge(email)
+
+
+def test_revocation_session_immediate(app_client):
+    """Résiliation → la requête SUIVANTE tombe (pas au prochain login). Re-preuve HTTP."""
+    email = f"rev-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver")
+        c.cookies.set("labuse_session", _session_cookie(cid, email))
+        assert c.get("/parcels?limit=1").status_code != 401
+        with session_scope() as s:
+            comptes.suspendre_compte(s, cid, "audit")
+        assert c.get("/parcels?limit=1").status_code == 401
+    finally:
+        _purge(email)
+
+
+# ─────────────────────────────── Tokens ───────────────────────────────
+
+def test_tokens_rejoues_expires_forges(app_client):
+    """Invitation consommée/rejouée, reset rejoué, token expiré, token forgé → tous refusés."""
+    email = f"tok-{uuid.uuid4().hex[:8]}@x.test"
+    try:
+        with session_scope() as s:
+            inv = comptes.creer_invitation(s, email)
+        tok = inv["lien"].split("token=")[1]
+        c = TestClient(app_client.app, base_url="https://testserver")
+        # invitation valide une fois
+        assert c.get(f"/invitation?token={tok}").status_code == 200
+        # consommée → rejeu refusé (page 404)
+        with session_scope() as s:
+            comptes.activer_par_invitation(s, tok, "motdepasse-token-1", "2026-07-22")
+        assert c.get(f"/invitation?token={tok}").status_code == 404
+        # token forgé / inexistant → 404, jamais une fuite
+        assert c.get(f"/invitation?token={'z'*43}").status_code == 404
+        assert c.get("/invitation?token=").status_code == 404
+        # reset : rejeu refusé
+        with session_scope() as s:
+            s.execute(text("UPDATE comptes SET statut='actif' WHERE id=:c"), {"c": inv["compte_id"]})
+            s.commit()
+            r = comptes.demander_reset(s, email)
+        rtok = r["lien"].split("token=")[1]
+        with session_scope() as s:
+            assert comptes.appliquer_reset(s, rtok, "nouveau-mdp-reset-1") is True
+        with session_scope() as s:
+            assert comptes.appliquer_reset(s, rtok, "encore-un-mdp-1") is False   # rejeu
+        # invitation expirée → refusée
+        with session_scope() as s:
+            inv2 = comptes.creer_invitation(s, f"exp-{email}")
+            tok2 = inv2["lien"].split("token=")[1]
+            s.execute(text("UPDATE utilisateurs SET invite_expire_at = now() - interval '1 day'"
+                           " WHERE email=:e"), {"e": f"exp-{email}"})
+            s.commit()
+            assert comptes.valider_invitation(s, tok2) is None
+    finally:
+        _purge(email, f"exp-{email}")
+
+
+# ─────────────────────────── Brute force / verrou ───────────────────────────
+
+def test_brute_force_verrou_non_contournable_par_casse(app_client):
+    """Le verrou (5 échecs) suit l'email NORMALISÉ : changer la casse ne remet pas le compteur
+    et n'ouvre pas une seconde fenêtre d'essais."""
+    email = f"bf-{uuid.uuid4().hex[:8]}@x.test"
+    cid = _compte_actif(email)
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver")
+        # 4 échecs en minuscules puis 1 en MAJUSCULES → 5 au total sur le MÊME compte → verrou
+        for i in range(5):
+            ident = email if i < 4 else email.upper()
+            assert c.post("/login", data={"identifiant": ident, "password": "faux"},
+                          follow_redirects=False).status_code == 401
+        # le bon mot de passe est maintenant refusé (compte verrouillé) — la casse n'a pas aidé
+        assert c.post("/login", data={"identifiant": email, "password": "motdepasse-audit-1"},
+                      follow_redirects=False).status_code == 401
+    finally:
+        _purge(email)
