@@ -4,16 +4,15 @@
 jamais de correction autonome.** Atlas de référence (« avant ») :
 `~/labuse-atlas/2026-07-22-11-10__local/index.html`.
 
-## ⟪ CURSEUR ⟫ dernière surface traitée : **S15** (bloc projets/CRM/tri S12→S15) · vague 1 (session 3)
+## ⟪ CURSEUR ⟫ dernière surface traitée : **S15** · **VERDICT VIC (22/07) : vague 1 VALIDÉE
+INTÉGRALEMENT, zéro rejet — le style est verrouillé.**
 
-**ARRÊT CHECKPOINT (demandé par le mandat de session 3)** : les captures avant/après des
-surfaces vague 1 traitées sont régénérées — **review visuelle Vic sur
-`~/labuse-atlas/2026-07-22-14-34__checkpoint-vague1/index.html`** (46 paires côte à côte
-+ 2 captures sans avant, navigables S01→S18). Le go de Vic déclenche la suite.
-**Reprise session suivante (après verdict Vic) : S17 `nav__omnibox`**, puis S19-S20 cartes
-(reliquat vague 1), puis vague 2. Filet session 3 : e2e_m9_fiche = 9 échecs (le compte
-pré-existant exact, tests UI verts, zéro erreur console) ; e2e_429 = 1 échec (le
-pré-existant). tsc+build verts. Serveurs de capture : `labuse api` (env labusedb,
+Session 4 en cours : S17, S19-S20 (fin vague 1) → vague 2 (S21-S57) → vague 3 (S58-S71).
+**Plus de checkpoint intermédiaire : prochain arrêt = livrable final §8** (atlas après
+complet + `index_avant_apres.html` des 167 paires AVEC LÉGENDES, modèle = la v2 du
+checkpoint, générateur dans le transcript session 3) puis STOP final.
+Filet sessions 3-4 : e2e_m9_fiche = 9 échecs pré-existants exacts, e2e_429 = 1, tsc+build
+verts. Serveurs de capture : `labuse api` (env labusedb,
 `LABUSE_DATABASE_URL=postgresql+psycopg://…` — le schéma `postgresql://` nu casse sur
 psycopg2 absent) + instance 8021 avec `LABUSE_AUTH_PASSWORD` pour la porte Coffre.
 
