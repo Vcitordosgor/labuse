@@ -44,3 +44,23 @@ export const fmtDateNum = (d: string | Date | null | undefined): string => {
   const dt = typeof d === 'string' ? new Date(d) : d
   return Number.isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('fr-FR')
 }
+
+/** B4 (BLOC B) — libellés BRUTS de source (PPR/Géorisques) : « INONDATION_MOUVEMENT_DE_TERRAIN »
+ *  → « Inondation mouvement de terrain ». AFFICHAGE SEULEMENT, données intactes. Ne touche que
+ *  les chaînes qui crient (tout-majuscules avec au moins un mot ≥ 4 lettres) ; les acronymes
+ *  courts (PPR, ZAC…) et les mots-outils restent dignes. */
+const STOP_FR = new Set(['DE', 'DU', 'LA', 'LE', 'LES', 'DES', 'ET', 'EN', 'AUX', 'AU', 'SUR', 'D', 'L'])
+export const fmtLibelleBrut = (v: string | null | undefined): string => {
+  if (!v) return v ?? ''
+  const brut = v.replace(/_/g, ' ').trim()
+  const mots = brut.split(/\s+/)
+  const crie = /^[A-ZÀ-Ý0-9 '\-()/.]+$/.test(brut) && mots.some((m) => m.length >= 4)
+  if (!crie) return v
+  // la longueur se juge sur le cœur alphanumérique — « (R2) » reste « (R2) »
+  const bas = mots.map((m) => {
+    const coeur = m.replace(/[^A-ZÀ-Ý0-9]/g, '')
+    return coeur.length <= 3 && !STOP_FR.has(coeur) ? m : m.toLowerCase()
+  })
+  const out = bas.join(' ')
+  return out.charAt(0).toUpperCase() + out.slice(1)
+}

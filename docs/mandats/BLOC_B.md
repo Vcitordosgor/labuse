@@ -4,7 +4,7 @@
 Partie 2 sur verdict → STOP final · Vic merge.** DA verrouillée (tokens de la revue),
 wording boussole partout.
 
-## ⟪ CURSEUR ⟫ Partie 1 en cours — B1 ✅ · B2 ✅ · B3 ✅ · reste B4 puis STOP mi-course
+## ⟪ CURSEUR ⟫ **PARTIE 1 TERMINÉE (B1-B4)** — STOP MI-COURSE : maquettes S45-S50 en cours
 
 ---
 
@@ -52,9 +52,14 @@ run v2 existe (sinon repli legacy inchangé) ; tris mult/surface/commune/v incha
   italique discret). **/healthz/crons** expose `radar.publications_detectees` (la sentinelle
   VPS lit ce champ). **JAMAIS d'auto-ingestion** — le radar signale, l'humain décide.
 
-## B4 · Les minis
+## B4 · Les minis — FAITS
 
-_(à venir : lien Pages Jaunes neutre, majuscules PPR à l'affichage)_
+- **Pages Jaunes** : « Rechercher à cette adresse ↗ » sous l'adresse de la fiche — recherche
+  d'ADRESSE sortante (annuaire pros), wording neutre, jamais un mot sur le propriétaire,
+  rien de stocké (nouvel onglet, noreferrer).
+- **Majuscules PPR** : `fmtLibelleBrut` (lib/format, LOI-3) — « INONDATION_MOUVEMENT_DE_TERRAIN »
+  → « Inondation mouvement de terrain » à l'AFFICHAGE seulement ; acronymes ≤ 3 lettres et
+  codes « (R2) » préservés, chaînes déjà propres intouchées, données intactes.
 
 ## Garde-fous — état
 

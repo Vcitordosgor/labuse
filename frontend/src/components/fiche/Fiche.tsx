@@ -3,7 +3,7 @@ import { Tip } from '../Tip'
 import { useEffect, useState, useRef } from 'react'
 import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
-import { fmtDate, fmtDateNum, fmtInt, fmtM2 } from '../../lib/format'
+import { fmtDate, fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
@@ -79,7 +79,7 @@ function Line({ line }: { line: FicheLine }) {
           )}
           {line.result === 'UNKNOWN' && <span className="text-[9px] text-txt-dim">inconnu</span>}
         </div>
-        <div className="text-[11px] leading-snug text-txt-mut">{line.detail}</div>
+        <div className="text-[11px] leading-snug text-txt-mut">{fmtLibelleBrut(line.detail)}</div>
         <SourceRef line={line} />
       </div>
     </div>
@@ -889,7 +889,7 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="text-xs font-medium text-st-ecartee">LABUSE l'a écartée — voici pourquoi</div>
           <div className="mt-1 flex flex-col gap-0.5">
             {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').slice(0, 4).map((l) => (
-              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{layerLabel(l.layer)}</b> — {l.detail}</div>
+              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{layerLabel(l.layer)}</b> — {fmtLibelleBrut(l.detail)}</div>
             ))}
             {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').length === 0 && (
               <div className="text-[10.5px] text-txt-mut">Aucune exclusion dure : qualité insuffisante (Q {f.q_score} &lt; 50) — détail dans les onglets.</div>
@@ -929,8 +929,18 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="truncate font-mono text-sm font-medium text-txt-hi">{idu}</div>
           {/* M6 2a (§1.8) : adresse postale BAN en tête de fiche — jamais un champ vide */}
           {f && (
-            <div data-fiche-adresse className={`mt-0.5 truncate text-[11px] ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
-              {f.adresse ?? 'Adresse non disponible'}
+            <div data-fiche-adresse className={`mt-0.5 flex min-w-0 items-baseline gap-2 text-[11px] ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
+              <span className="min-w-0 truncate">{f.adresse ?? 'Adresse non disponible'}</span>
+              {/* B4 (BLOC B) : recherche d'ADRESSE sortante, wording neutre — rien n'est
+                  stocké, rien n'est promis (jamais un mot sur le propriétaire). */}
+              {f.adresse && (
+                <a data-fiche-pj href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
+                  target="_blank" rel="noreferrer noopener"
+                  className="shrink-0 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
+                  title="Recherche externe à cette adresse (Pages Jaunes) — s'ouvre dans un nouvel onglet, rien n'est stocké">
+                  Rechercher à cette adresse ↗
+                </a>
+              )}
             </div>
           )}
           <div className="mt-0.5 text-[11px] text-txt-mut">
