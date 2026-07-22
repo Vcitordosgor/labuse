@@ -91,3 +91,20 @@ Tables de run : jamais touchées (test statique + preuve d'empreinte) · format 
 détection Last-Modified/upsert par clé fait qu'un format cassé échoue BRUYAMMENT (exception cron →
 visible healthz), jamais de données mal parsées servies en silence · échec cron : `/healthz/crons` +
 sentinelle 10 min · restart : uniquement si nécessaire, jamais pendant un backup (prouvé en live).
+
+## ADDENDUM (fin de mandat) — deux incidents attrapés, IA opérationnelle
+
+1. **Backup 0 octet (incident réel, détecté par ce mandat)** : le cron backup de la nuit du 22/07 a
+   produit un dump VIDE — échec d'auth silencieux (pas de `.pgpass` pour l'utilisateur `labuse` ; mon
+   test M7 passait le mot de passe autrement). Réparé : `.pgpass` posé (600), **script durci** (un dump
+   vide/illisible est SUPPRIMÉ et le script échoue bruyamment — plus jamais un 0-octet qui pollue la
+   rotation), et **backup de preuve VERT par la voie exacte du cron : 3,8 GB, contrôles taille +
+   `pg_restore --list` passés**. Le filet aval existait déjà (le pull Mac de 7h30 alerte sur dump
+   illisible) — l'amont est maintenant bruyant aussi.
+2. **3ᵉ dépendance implicite** : le SDK `anthropic` manquait au venv VPS (révélé au premier appel IA
+   réel). Déclaré au `pyproject` (avec `opencv-python-headless`) + installé.
+3. **IA de prod OPÉRATIONNELLE** : clé posée (depuis le `.env` local, jamais en git), restarts
+   systématiquement **reportés pendant les backups** (garde-fou appliqué deux fois en live),
+   `/ia/status` → `provider: anthropic`, et un appel réel `/ia/search` répond `stub: false` avec une
+   traduction NL correcte validée par schéma — **les crédits répondent** (rechargés par Vic).
+4. Bug de boucle d'attente (`pgrep -f` se matchait lui-même) : leçon consignée, `pgrep -x` partout.
