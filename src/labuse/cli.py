@@ -1981,6 +1981,19 @@ def refresh_dvf_cmd() -> None:
         typer.echo("✓ DVF : no-op (aucune livraison)" if r["no_op"] else f"✓ DVF rechargé : {r['recharges']}")
 
 
+@app.command("stripe-provisionne")
+def stripe_provisionne_cmd() -> None:
+    """PREMIER EURO · E2 — crée produits (Indé 290 €/Pro 490 €) + coupon founding −50 % forever
+    chez Stripe (idempotent par lookup_key) et affiche les IDs à poser en .env. Mode = celui de
+    la clé (sk_test_ = test)."""
+    from .facturation import provisionner
+
+    ids = provisionner()
+    typer.echo("IDs Stripe (à poser en .env — la source de vérité de l'environnement) :")
+    for k, v in ids.items():
+        typer.echo(f"  {k.upper()}={v}")
+
+
 @app.command("compte-invite")
 def compte_invite_cmd(
     email: str,

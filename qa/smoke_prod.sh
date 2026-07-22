@@ -26,7 +26,7 @@ r=$(curl -s -u "$LABUSE_QA_BASIC" -o /dev/null -w '%{http_code}' "$BASE/app/")
 
 # 2. login applicatif → session
 curl -s -u "$LABUSE_QA_BASIC" -c "$J" -X POST "$BASE/login" -H "Content-Type: application/json" \
-  -d "{\"password\":\"$LABUSE_QA_PASSWORD\"}" -o /dev/null
+  -d "{\"identifiant\":\"${LABUSE_QA_EMAIL:-}\",\"password\":\"$LABUSE_QA_PASSWORD\"}" -o /dev/null
 
 # 3. LE MARQUEUR : la racine sert le shell M2 et son bundle contient l'UI M2
 html=$(curl -s -u "$LABUSE_QA_BASIC" -b "$J" "$BASE/")

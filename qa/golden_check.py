@@ -263,7 +263,8 @@ def _http_opener():
         pw = os.environ.get("LABUSE_QA_PASSWORD")
         if pw:
             req = urllib.request.Request(f"{API_BASE}/login", method="POST",
-                                         data=json.dumps({"password": pw}).encode(),
+                                         data=json.dumps(({"identifiant": os.environ.get("LABUSE_QA_EMAIL"), "password": pw}
+                if os.environ.get("LABUSE_QA_EMAIL") else {"password": pw})).encode(),
                                          headers={"Content-Type": "application/json"})
             try:
                 _opener.open(req, timeout=30)

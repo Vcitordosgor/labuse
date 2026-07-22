@@ -29,7 +29,11 @@ FAILURE_DELAY_S = 0.4          # ralentit la force brute sans pénaliser l'utili
 
 # Toujours accessibles sans session (process/monitoring + cycle de connexion).
 # /readyz est public mais son HANDLER réduit les détails sans session (cf. app.readyz).
-_PUBLIC = {"/health", "/healthz", "/healthz/crons", "/readyz", "/login", "/logout", "/favicon.ico"}
+# PREMIER EURO : l'onboarding (invitation/reset), les pages légales et le WEBHOOK Stripe
+# (signé — sa sécurité est la signature, pas la session) sont publics par nature.
+_PUBLIC = {"/health", "/healthz", "/healthz/crons", "/readyz", "/login", "/logout", "/favicon.ico",
+           "/invitation", "/reset", "/reset-demande", "/cgv", "/mentions-legales", "/confidentialite",
+           "/onboarding/retour", "/stripe/webhook", "/guide"}
 # Documentation auto (surface de découverte de l'API) : publique en local seulement.
 _DOCS = {"/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"}
 

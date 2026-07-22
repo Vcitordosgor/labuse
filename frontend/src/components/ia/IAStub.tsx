@@ -217,6 +217,7 @@ export function IAStub() {
         )}
 
         <p className="mt-8 text-[10.5px] leading-relaxed text-txt-dim">
+          <a href="/guide" className="text-txt-dim underline decoration-line-2 transition-colors duration-quick hover:text-mint">Guide de prise en main</a> ·{' '}
           L'IA ne calcule ni ne modifie aucun score, et n'accède jamais à la base — elle traduit
           votre demande en filtres, le moteur déterministe fait le reste. Chaque appel est journalisé.
         </p>

@@ -109,5 +109,17 @@ def healthz_crons(db: Session = Depends(get_db)) -> dict:
                                             if e["derniere_verif"]), default=None)}
     except Exception:  # noqa: BLE001 — l'observabilité ne casse jamais
         pass
+    # PREMIER EURO · E5 — sentinelle webhook Stripe : l'âge du dernier événement reçu.
+    # « jamais_vu » avant la mise en live (normal) ; en live, un silence prolongé = panne
+    # de webhook → la sentinelle VPS lit ce champ.
+    stripe_webhook = None
+    try:
+        with db.begin_nested():
+            dernier = db.execute(text(
+                "SELECT max(at) FROM evenements_compte WHERE type LIKE 'stripe_%'")).scalar()
+        stripe_webhook = {"dernier": str(dernier) if dernier else None,
+                          "statut": "ok" if dernier else "jamais_vu"}
+    except Exception:  # noqa: BLE001
+        pass
     return {"ok": not degrade, "crons": out, "sources": sources, "dpe_reveil": dpe_reveil,
-            "radar": radar}
+            "radar": radar, "stripe_webhook": stripe_webhook}
