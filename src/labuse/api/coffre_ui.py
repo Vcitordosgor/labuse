@@ -138,6 +138,8 @@ def page(titre: str, corps: str, *, w: int | None = None, legal: bool = False, h
     return (f"<!doctype html><html lang=\"fr\"><head><meta charset=\"utf-8\">"
             f"<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
             f"<meta name=\"robots\" content=\"noindex\">"
+            f"<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/socle/favicon-32.png\">"
+            f"<link rel=\"icon\" type=\"image/png\" sizes=\"16x16\" href=\"/socle/favicon-16.png\">"
             f"<title>LABUSE — {html.escape(titre)}</title>"
             f"<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">"
             f"<link href=\"https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700&"
