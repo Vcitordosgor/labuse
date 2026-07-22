@@ -15,7 +15,7 @@ wording boussole partout.
 | 1 | Cache-Control assets hashés | aucun `Cache-Control` sur /assets/* (etag seul) | `public, max-age=31536000, immutable` sur /assets/*, `no-cache` sur le shell — **vérifié en prod** (déployé immédiatement : config seule, réversible, .bak conservé) | ✅ |
 | 2 | Liste île top-N (index rang) | 2,5 s prod · **1,10 s local** (mesure de travail) | **0,036 s local** (×30) — page servie par `ix_p_v2_run_rang` (top-N sans scan) + cluster même-proprio matérialisé (le planner le ré-exécutait par ligne) | ✅ |
 | 3 | Tuiles 1er écran | 9,00 Mo / 4 tuiles (île desktop, re-mesuré : la tuile centrale z9 seule = 5,6 Mo) | **1,09 Mo** (×8) — paliers recalibrés au pixel (z9 60 m/ext.1024 · z10 30/1024 · z11 15/1024, z12+ intact) + `stale-while-revalidate=86400` ; trame visuellement identique (capture avant/après) | ✅ |
-| 4 | O6 / O7 cache TTL | 1,9 s / 1,1 s | — | à faire |
+| 4 | O6 / O7 cache TTL | O6 2,5-3,6 s · O7 liste 2,5 s (re-mesurés) | **4,7 ms / 3,8 ms au 2ᵉ hit** — `_mem_cached` single-flight, TTL 1 h documenté (les données suivent les crons quotidiens + build post-run ; jamais plus d'1 h de retard) | ✅ |
 | 5 | PDF banquier async + cache | 9,3 s bloquants | — | à faire |
 
 **Garde-fou B1.2** : 8 jeux de filtres capturés sur l'ANCIEN code puis rejoués — 7 byte-identiques
