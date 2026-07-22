@@ -65,6 +65,8 @@ export const MODULES: ModuleDef[] = [
   { key: 'temps', num: 'M08', group: 'analyser',
     label: 'Remonter le temps', desc: 'Comparez 1950 et aujourd’hui pour lire la mutation' },
   // ── Passer à l'action ──
+  { key: 'o7-carnet', num: 'O7', group: 'agir',
+    label: 'Carnet de secteur', desc: 'Un secteur suivi comme un portefeuille — stock, prix, permis, signaux' },
   { key: 'duediligence', num: 'M10', group: 'agir', phare: true,
     label: 'Due diligence', desc: 'Passez une liste de parcelles au crible avant d’acheter' },
   { key: 'courriers', num: 'M09', group: 'agir',

@@ -153,3 +153,93 @@ export function O6Comparateur() {
     </>
   )
 }
+
+/* ───────────── O7 — CARNET DE SECTEUR (S48) ───────────── */
+
+type CarnetListe = { secteurs: { secteur: string; commune: string; opportunites: number; brulantes: number }[]; note: string }
+type CarnetSecteur = {
+  secteur: string; commune: string; section: string
+  stock: { total: number; opportunites: number; par_tier: Record<string, number> }
+  prix: { dvf: Record<string, { mediane_prix_m2: number | null; n: number }> } | null
+  signaux: { type: string; n: number }[] | null
+  permis_24_mois: number | null
+  note: string; avertissement: string | null
+}
+
+export function O7Carnet() {
+  const [secteur, setSecteur] = useState<string | null>(null)
+  const liste = useQuery({ queryKey: ['o7-liste'], queryFn: () => jfetch<CarnetListe>('/carnet-secteur') })
+  const page = useQuery({
+    queryKey: ['o7', secteur], queryFn: () => jfetch<CarnetSecteur>(`/carnet-secteur/${secteur}`),
+    enabled: !!secteur,
+  })
+  const d = page.data
+  if (secteur && d) {
+    const dvf = Object.entries(d.prix?.dvf ?? {}).filter(([, v]) => v.mediane_prix_m2 != null)
+    return (
+      <>
+        <button onClick={() => setSecteur(null)}
+          className="min-h-7 self-start text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">← Secteurs</button>
+        <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2">
+          <span className="font-mono text-txt-hi">{d.secteur.slice(8)}</span>
+          <span className="ml-2 text-[11px] text-txt-mut">{d.commune} · section {d.section}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
+            <p className="label-caps text-[9px]">Opportunités</p>
+            <p className="num-key text-lg text-violet">{d.stock.opportunites}</p>
+            <p className="text-[9.5px] text-txt-dim">{d.stock.par_tier['brulante'] ?? 0} brûlantes · {d.stock.total} parcelles</p>
+          </div>
+          <div className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
+            <p className="label-caps text-[9px]">Permis 24 mois</p>
+            <p className="num-key text-lg">{d.permis_24_mois ?? '—'}</p>
+          </div>
+        </div>
+        {dvf.length > 0 && (
+          <div className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
+            <p className="label-caps text-[9px]">Prix médians DVF <span className="normal-case text-mint">Sourcé</span></p>
+            {dvf.map(([k, v]) => (
+              <div key={k} className="flex items-baseline justify-between text-[11px]">
+                <span className="text-txt-mut">{k}</span>
+                <span className="tnum font-mono text-txt">{Number(v.mediane_prix_m2).toLocaleString('fr-FR')} €/m² <span className="text-txt-dim">({v.n})</span></span>
+              </div>
+            ))}
+          </div>
+        )}
+        {(d.signaux?.length ?? 0) > 0 && (
+          <div className="rounded-lg bg-surface-3 px-3 py-2 shadow-elev-1">
+            <p className="label-caps text-[9px]">Signaux du secteur</p>
+            {d.signaux!.map((sg) => (
+              <div key={sg.type} className="flex items-baseline justify-between text-[11px]">
+                <span className="min-w-0 truncate text-txt-mut">{sg.type}</span>
+                <span className="tnum font-mono text-txt">{sg.n}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="shrink-0 text-[9.5px] leading-snug text-txt-dim">{d.note}</p>
+      </>
+    )
+  }
+  return (
+    <>
+      <Banner>Votre <b>secteur</b> (section cadastrale) suivi comme un portefeuille — stock
+        d'opportunités, prix, permis, signaux, tout sourcé. L'abonnement digest arrivera avec
+        les comptes (post-M7) ; le carnet se consulte à la demande.</Banner>
+      {liste.isLoading && <Loading accent="violet" label="Secteurs les plus actifs…" />}
+      {liste.isError && <ErrorState className="py-6" message="Carnet indisponible." retry={() => liste.refetch()} />}
+      {secteur && page.isLoading && <Loading accent="violet" label="Ouverture du secteur…" />}
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
+        {(liste.data?.secteurs ?? []).map((s) => (
+          <button key={s.secteur} data-o7-secteur={s.secteur} onClick={() => setSecteur(s.secteur)}
+            className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-left transition-colors duration-quick hover:border-violet/50">
+            <span className="font-mono text-[11px] text-txt-hi">{s.secteur.slice(8)}</span>
+            <span className="min-w-0 flex-1 truncate text-[10.5px] text-txt-mut">{s.commune}</span>
+            <span className="tnum text-[11px] text-mint">{s.opportunites} opp.</span>
+            {s.brulantes > 0 && <span className="tnum text-[10px] text-st-ecartee">{s.brulantes} brûl.</span>}
+          </button>
+        ))}
+      </div>
+    </>
+  )
+}
