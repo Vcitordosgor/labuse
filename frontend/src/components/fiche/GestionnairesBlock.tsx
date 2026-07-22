@@ -8,6 +8,7 @@
  * Additif : rendu depuis la charge utile de la fiche (aucun fetch).
  */
 import type { Gestionnaires, GestOperateur } from '../../lib/types'
+import { Tip } from '../Tip'
 
 function Conf({ c }: { c?: GestOperateur['confidence'] }) {
   if (!c) return null
@@ -33,14 +34,15 @@ function Row({ icon, label, op, extra }: { icon: string; label: string; op: Gest
 
 export function GestionnairesBlock({ g }: { g: Gestionnaires }) {
   return (
-    <div data-gestionnaires className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+    <div data-gestionnaires className="card-elev px-3 py-2.5">
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-txt-hi">Gestionnaires (raccordement)</span>
         {g.a_jour_au && (
-          <span className="ml-auto rounded-full bg-[#1E2A23] px-2 py-0.5 text-[10px] text-txt-dim"
-            title="Les délégations changent aux renouvellements de contrat — à revérifier annuellement">
-            à jour {g.a_jour_au}
-          </span>
+          <Tip tip="Les délégations changent aux renouvellements de contrat — à revérifier annuellement" className="ml-auto">
+            <span className="rounded-full bg-line-2 px-2 py-0.5 text-[10px] text-txt-dim">
+              à jour {g.a_jour_au}
+            </span>
+          </Tip>
         )}
       </div>
 
@@ -48,11 +50,11 @@ export function GestionnairesBlock({ g }: { g: Gestionnaires }) {
         {g.epci.nom && (
           <Row icon="◆" label="Compétence" op={{ operateur: `${g.epci.code} — ${g.epci.nom}`, type: g.epci.contact ?? undefined }} />
         )}
-        <Row icon="💧" label="Eau potable" op={g.eau} />
-        <Row icon="🚰" label="Assainissement" op={g.assainissement} />
+        <Row icon="≈" label="Eau potable" op={g.eau} />
+        <Row icon="∿" label="Assainissement" op={g.assainissement} />
         {g.spanc && <Row icon="◇" label="SPANC (ANC)" op={{ operateur: g.spanc }} />}
         {g.electricite && (
-          <Row icon="⚡" label="Électricité" op={{ operateur: g.electricite.gestionnaire, type: g.electricite.raccordement }} />
+          <Row icon="↯" label="Électricité" op={{ operateur: g.electricite.gestionnaire, type: g.electricite.raccordement }} />
         )}
       </div>
 

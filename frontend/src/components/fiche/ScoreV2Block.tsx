@@ -13,6 +13,7 @@
  */
 import { useQuery } from '@tanstack/react-query'
 import { TIER_V2_META } from '../../lib/status'
+import { Tip } from '../Tip'
 
 type Contribution = { feature: string; bin: string; signe: '+' | '-'; libelle: string; log_hazard: number; phrase?: string }
 type ScoreV2 = {
@@ -47,7 +48,7 @@ export function ScoreV2Block({ idu }: { idu: string }) {
     // état honnête, pas de bouton réessayer (re-demander ne changera rien).
     if (error?.status === 404) {
       return (
-        <div data-score-v2="non-scoree" className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+        <div data-score-v2="non-scoree" className="card-elev px-3 py-2.5">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P v2)</span>
             <span className="rounded-full bg-[#2A2438] px-2 py-0.5 text-[10.5px] text-[#B7A8E0]">non scorée</span>
@@ -60,7 +61,7 @@ export function ScoreV2Block({ idu }: { idu: string }) {
     }
     // Toute autre erreur (réseau, 5xx, run absent) : état visible + réessayer, même gabarit.
     return (
-      <div data-score-v2="erreur" className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+      <div data-score-v2="erreur" className="card-elev px-3 py-2.5">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P v2)</span>
           <span className="rounded-full bg-[#33201A] px-2 py-0.5 text-[10.5px] text-st-chaude">indisponible</span>
@@ -78,22 +79,25 @@ export function ScoreV2Block({ idu }: { idu: string }) {
   if (!data) return null
   const tier = TIER_META[data.tier] ?? { label: data.tier, color: '#8FA69A' }
   return (
-    <div data-score-v2 className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+    <div data-score-v2 className="card-elev px-3 py-2.5">
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P v2)</span>
         <span className="rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
           style={{ backgroundColor: `${tier.color}22`, color: tier.color }}>{tier.label}</span>
         {data.badges.copro && (
-          <span className="rounded-full bg-[#2A2438] px-2 py-0.5 text-[10.5px] text-[#B7A8E0]"
-            title="Copropriété — hors du classement foncier par défaut">copro</span>
+          <Tip tip="Copropriété — hors du classement foncier par défaut">
+            <span className="rounded-full bg-[#2A2438] px-2 py-0.5 text-[10.5px] text-[#B7A8E0]">copro</span>
+          </Tip>
         )}
         {data.badges.veille_succession && (
-          <span className="rounded-full bg-[#14251E] px-2 py-0.5 text-[10.5px] text-mint"
-            title="Radar patrimonial 3-7 ans — jamais brûlante">veille succession</span>
+          <Tip tip="Radar patrimonial 3-7 ans — jamais brûlante">
+            <span className="rounded-full bg-[#14251E] px-2 py-0.5 text-[10.5px] text-mint">veille succession</span>
+          </Tip>
         )}
         {data.badges.evenement_date && (
-          <span className="rounded-full bg-[#33201A] px-2 py-0.5 text-[10.5px] text-st-chaude"
-            title="Événement tracé v1.3 (BODACC)">événement {data.badges.evenement_date}</span>
+          <Tip tip="Événement tracé v1.3 (BODACC)">
+            <span className="rounded-full bg-[#33201A] px-2 py-0.5 text-[10.5px] text-st-chaude">événement {data.badges.evenement_date}</span>
+          </Tip>
         )}
       </div>
 
@@ -107,7 +111,7 @@ export function ScoreV2Block({ idu }: { idu: string }) {
         {data.rang != null && <span className="font-mono text-xs text-txt-dim">rang {data.rang}</span>}
       </div>
 
-      <p className="mt-2 font-mono text-[10.5px] uppercase tracking-widest text-txt-mut">Pourquoi ce score</p>
+      <p className="label-caps mt-2">Pourquoi ce score</p>
       <ul className="mt-1 flex flex-col gap-0.5">
         {data.pourquoi.map((c, i) => (
           <li key={i} className="flex items-baseline gap-2 text-[11.5px]">
@@ -116,15 +120,15 @@ export function ScoreV2Block({ idu }: { idu: string }) {
               {c.signe}{Math.abs(c.log_hazard).toFixed(2)}
             </span>
             {/* M5.1 lot 3.3 : la phrase client (table versionnée serveur) remplace le
-                « libellé [bin] » technique ; le bin exact reste au survol (audit) */}
-            <span className="text-txt" title={c.bin ? `${c.libelle} — tranche ${c.bin}` : c.libelle}>
-              {c.phrase ?? c.libelle}
-            </span>
+                « libellé [bin] » technique ; le bin exact reste au survol/tap (audit) */}
+            <Tip tip={c.bin ? `${c.libelle} — tranche ${c.bin}` : c.libelle}>
+              <span className="text-txt">{c.phrase ?? c.libelle}</span>
+            </Tip>
           </li>
         ))}
       </ul>
 
-      <p className="mt-2 text-[10.5px] leading-snug text-txt-dim" title={data.avertissement}>
+      <p className="mt-2 text-[10.5px] leading-snug text-txt-dim">
         modèle {data.model_version} — {data.avertissement}
       </p>
     </div>

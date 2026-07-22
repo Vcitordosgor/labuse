@@ -8,6 +8,7 @@
  * Additif : rendu depuis la charge utile de la fiche (aucun fetch).
  */
 import type { Viabilisation } from '../../lib/types'
+import { Tip } from '../Tip'
 
 const BAND_META: Record<Viabilisation['band'], { color: string; bg: string }> = {
   confirmee:  { color: '#5CE6A1', bg: '#14251E' },
@@ -19,7 +20,7 @@ const BAND_META: Record<Viabilisation['band'], { color: string; bg: string }> = 
 export function ViabilisationBlock({ via }: { via: Viabilisation }) {
   const m = BAND_META[via.band] ?? BAND_META.incertaine
   return (
-    <div data-viabilisation className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+    <div data-viabilisation className="card-elev px-3 py-2.5">
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-txt-hi">Viabilisation (eau · assainissement · élec)</span>
         <span className="ml-auto rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
@@ -32,11 +33,11 @@ export function ViabilisationBlock({ via }: { via: Viabilisation }) {
       </div>
 
       {/* Barre du score */}
-      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#1E2A23]">
+      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-line-2">
         <div className="h-full rounded-full" style={{ width: `${via.score}%`, background: m.color }} />
       </div>
 
-      <p className="mt-2 font-mono text-[10.5px] uppercase tracking-widest text-txt-mut">Pourquoi cet indicateur</p>
+      <p className="label-caps mt-2">Pourquoi cet indicateur</p>
       <ul className="mt-1 flex flex-col gap-0.5">
         {via.contributions.map((c, i) => (
           <li key={i} className="flex items-baseline gap-2 text-[11.5px]">
@@ -44,7 +45,7 @@ export function ViabilisationBlock({ via }: { via: Viabilisation }) {
               c.signe === '+' ? 'text-st-chaude' : c.signe === '−' ? 'text-st-ecartee' : 'text-txt-mut'}`}>
               {c.points > 0 ? `+${c.points}` : c.signe}
             </span>
-            <span className="text-txt" title={c.detail}>
+            <span className="text-txt">
               <b className="font-medium text-txt-hi">{c.libelle}</b>
               <span className="text-txt-dim"> — {c.detail}</span>
             </span>
@@ -53,8 +54,8 @@ export function ViabilisationBlock({ via }: { via: Viabilisation }) {
       </ul>
 
       {/* Lot 3 — coût de raccordement qualitatif */}
-      <div className="mt-2.5 rounded-lg border border-line-2 bg-[#161d19] px-2.5 py-2">
-        <p className="font-mono text-[10.5px] uppercase tracking-widest text-txt-mut">Raccordement (qualitatif)</p>
+      <div className="mt-2.5 rounded-lg bg-surface-3 px-2.5 py-2">
+        <p className="label-caps">Raccordement (qualitatif)</p>
         <p className="mt-1 text-[11.5px] leading-snug text-txt">{via.cout_raccordement.niveau}</p>
         <p className="mt-1 text-[11px] leading-snug text-txt-dim">{via.cout_raccordement.assainissement}</p>
       </div>
@@ -62,8 +63,10 @@ export function ViabilisationBlock({ via }: { via: Viabilisation }) {
       {/* Lot 2.5 — note PV S3REnR (niveau île, volet photovoltaïque) */}
       {via.elec_pv && (
         <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-txt-dim">
-          <span aria-hidden className="text-st-creuser">⚡</span>
-          <span title={via.elec_pv.source ?? undefined}>{via.elec_pv.note}</span>
+          <span aria-hidden className="text-st-creuser">↯</span>
+          {via.elec_pv.source
+            ? <Tip tip={via.elec_pv.source}><span>{via.elec_pv.note}</span></Tip>
+            : <span>{via.elec_pv.note}</span>}
         </p>
       )}
 

@@ -3,6 +3,7 @@ import { Tip } from '../Tip'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
+import { fmtDate, fmtDateNum, fmtInt } from '../../lib/format'
 import { Loading } from '../Loading'
 import { AskBar, renderRich } from './AskBar'
 import { PourquoiPasTab } from './PourquoiPas'
@@ -88,7 +89,7 @@ function ScoreBar({ label, value, color, lines, defaultOpen, tip }: {
   const [open, setOpen] = useState(!!defaultOpen)
   const weighted = lines.filter((l) => l.weight != null && l.weight !== 0).sort((a, b) => Math.abs(b.weight!) - Math.abs(a.weight!))
   return (
-    <div className="rounded-lg border border-line-2 bg-surface-2">
+    <div className="card-elev">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
         title={`${label} : déplier les signaux`}>
         {tip ? (
@@ -101,7 +102,7 @@ function ScoreBar({ label, value, color, lines, defaultOpen, tip }: {
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${value}%`, background: color }} />
         </span>
-        <span className="w-8 shrink-0 text-right font-display text-sm font-bold" style={{ color }}>{value}</span>
+        <span className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{value}</span>
         <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
@@ -131,17 +132,21 @@ function VSignalRow({ s }: { s: VSignal }) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-txt">{s.label}</span>
-          <span className="shrink-0 rounded-full bg-surface-3 px-1.5 text-[8.5px] text-txt-dim" title={`Famille ${s.famille}`}>
-            {FAMILLE_LABEL[s.famille] ?? s.famille}
-          </span>
+          <Tip tip={`Famille ${s.famille}`} className="shrink-0">
+            <span className="rounded-full bg-surface-3 px-1.5 text-[8.5px] text-txt-dim">
+              {FAMILLE_LABEL[s.famille] ?? s.famille}
+            </span>
+          </Tip>
           {/* CRED-4 : le statut des procédures saute aux yeux (en cours / clôturée) */}
           {/en cours/i.test(s.label) && (
-            <span data-v-statut="en-cours" className="shrink-0 rounded-full bg-[#3a1614] px-1.5 text-[8.5px] font-semibold text-st-ecartee"
-              title="Procédure toujours ouverte au dernier avis BODACC ingéré">EN COURS</span>
+            <Tip tip="Procédure toujours ouverte au dernier avis BODACC ingéré" className="shrink-0">
+              <span data-v-statut="en-cours" className="rounded-full bg-[#3a1614] px-1.5 text-[8.5px] font-semibold text-st-ecartee">EN COURS</span>
+            </Tip>
           )}
           {/clôtur/i.test(s.label) && (
-            <span data-v-statut="cloturee" className="shrink-0 rounded-full border border-line-2 px-1.5 text-[8.5px] font-medium text-txt-dim"
-              title="Procédure clôturée — le signal reste pertinent tant que la parcelle est au nom de la société">CLÔTURÉE</span>
+            <Tip tip="Procédure clôturée — le signal reste pertinent tant que la parcelle est au nom de la société" className="shrink-0">
+              <span data-v-statut="cloturee" className="rounded-full border border-line-2 px-1.5 text-[8.5px] font-medium text-txt-dim">CLÔTURÉE</span>
+            </Tip>
           )}
         </div>
         {s.ref && <div className="text-[11px] leading-snug text-txt-mut">{s.ref}</div>}
@@ -151,20 +156,22 @@ function VSignalRow({ s }: { s: VSignal }) {
                 title="Vérifier à la source (avis officiel)">{s.source} ↗</a>
             : <span className="truncate">{s.source}</span>}
           {s.match && s.match.confiance < 1 && (
-            <span className="shrink-0 rounded bg-[#211a10] px-1 text-[8.5px] text-st-creuser"
-              title="Propriétaire rapproché par dénomination (pas de SIREN au fichier DGFiP) — points réduits ×0.7">
-              match {Math.round(s.match.confiance * 100)} %
-            </span>
+            <Tip tip="Propriétaire rapproché par dénomination (pas de SIREN au fichier DGFiP) — points réduits ×0.7" className="shrink-0">
+              <span className="rounded bg-[#211a10] px-1 text-[8.5px] text-st-creuser">
+                match {Math.round(s.match.confiance * 100)} %
+              </span>
+            </Tip>
           )}
           {/* CRED-4 : l'ÂGE du signal d'un coup d'œil — pastille < 6 mois / 6-18 / > 18 */}
           {s.date_evenement && (() => {
             const a = ageSignal(s.date_evenement)!
             return (
-              <span className="ml-auto flex shrink-0 items-center gap-1.5 font-mono"
-                title={`Signal daté du ${new Date(s.date_evenement).toLocaleDateString('fr-FR')} — ${a.label}`}>
-                <span data-v-age className="h-2 w-2 rounded-full" style={{ background: a.color }} />
-                {a.label} · {s.date_evenement}
-              </span>
+              <Tip tip={`Signal daté du ${fmtDate(s.date_evenement)} — ${a.label}`} className="ml-auto shrink-0">
+                <span className="flex items-center gap-1.5 font-mono tnum">
+                  <span data-v-age className="h-2 w-2 rounded-full" style={{ background: a.color }} />
+                  {a.label} · {fmtDateNum(s.date_evenement)}
+                </span>
+              </Tip>
             )
           })()}
         </div>
@@ -181,14 +188,16 @@ function IcdBlockView({ icd }: { icd: IcdBlock }) {
   const [open, setOpen] = useState(false)
   const color = icdColor(icd.bande)
   return (
-    <div data-icd className="rounded-lg border border-line-2 bg-surface-2">
+    <div data-icd className="card-elev">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title="Indice de confiance des données — complétude des couches pour cette parcelle. N'entre PAS dans le score d'opportunité (score P calculé indépendamment).">
-        <span className="w-24 shrink-0 text-left text-xs text-txt">Confiance données</span>
+        title="Confiance données : déplier le détail">
+        <Tip tip="Complétude des couches de données pour cette parcelle — n'entre pas dans le score d'opportunité (P, calculé indépendamment)." className="w-24 shrink-0">
+          <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">Confiance données</span>
+        </Tip>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${icd.score}%`, background: color }} />
         </span>
-        <span data-icd-score className="w-8 shrink-0 text-right font-display text-sm font-bold" style={{ color }}>{icd.score}</span>
+        <span data-icd-score className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{icd.score}</span>
         <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
@@ -196,7 +205,7 @@ function IcdBlockView({ icd }: { icd: IcdBlock }) {
           <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: `${color}1f`, color }}>{icd.libelle}</span>
           {icd.manquants.length > 0 ? (
             <>
-              <p className="mt-2 pb-1 font-mono text-[9.5px] tracking-widest text-txt-dim">CE QUI MANQUE</p>
+              <p className="label-caps mt-2 pb-1">Ce qui manque</p>
               <ul data-icd-manquants className="flex flex-col gap-0.5">
                 {icd.manquants.map((m, i) => (
                   <li key={i} className="flex items-start gap-1.5 text-[11px] text-txt-mut"><span className="text-st-ecartee">•</span>{m}</li>
@@ -219,7 +228,7 @@ function PtRow({ k, v }: { k: string; v: string }) {
 function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
   return (
-    <div data-transformation className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+    <div data-transformation className="card-elev px-3 py-2.5">
       <div className="flex items-center gap-2">
         <span className="text-xs text-txt">Potentiel de transformation</span>
         <span className="ml-auto rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{pt.niveau}</span>
@@ -227,7 +236,7 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
       <div className="mt-1.5 flex flex-col gap-0.5 text-[11px]">
         {pt.pct_consomme != null && <PtRow k="SDP consommée / autorisée" v={`${pt.pct_consomme} %`} />}
-        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k="SDP résiduelle estimée" v={`~${pt.sdp_residuelle_m2.toLocaleString('fr-FR')} m²`} />}
+        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k="SDP résiduelle estimée" v={`~${fmtInt(pt.sdp_residuelle_m2)} m²`} />}
         {pt.surelevation_possible != null && <PtRow k="Surélévation" v={pt.surelevation_possible ? `possible${pt.hauteur_marge_m != null ? ` (marge ~${pt.hauteur_marge_m} m)` : ''}` : 'non'} />}
       </div>
       <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{pt.source}</p>
@@ -238,8 +247,8 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
 // ── M9 lot 2 — Lien règlement PLU par zone ──────────────────────────────────
 function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
   return (
-    <div data-reglement-plu className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-      <p className="font-mono text-[10px] tracking-widest text-txt-dim">RÈGLEMENT PLU</p>
+    <div data-reglement-plu className="card-elev px-3 py-2.5">
+      <p className="label-caps">Règlement PLU</p>
       <div className="mt-1.5 flex flex-col gap-2">
         {rp.zones.map((z, i) => (
           <div key={i}>
@@ -281,7 +290,7 @@ function SignalerErreur({ idu }: { idu: string }) {
   const m = useMutation({ mutationFn: () => postSignalement({ idu, type_erreur: type, champ: champ || undefined, commentaire: commentaire || undefined }) })
   if (m.isSuccess) {
     return (
-      <div data-signalement-ok className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] text-txt-mut">
+      <div data-signalement-ok className="card-elev px-3 py-2.5 text-[11px] text-txt-mut">
         ✓ Signalement enregistré (n°{m.data.id}) — merci. Il sera revu manuellement.
       </div>
     )
@@ -295,8 +304,8 @@ function SignalerErreur({ idu }: { idu: string }) {
     )
   }
   return (
-    <div data-signalement-form className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-      <p className="font-mono text-[10px] tracking-widest text-txt-dim">SIGNALER UNE ERREUR</p>
+    <div data-signalement-form className="card-elev px-3 py-2.5">
+      <p className="label-caps">Signaler une erreur</p>
       <label className="mt-2 block text-[11px] text-txt-mut">Type d’erreur
         <select data-signalement-type value={type} onChange={(e) => setType(e.target.value)} className="mt-0.5 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt">
           {SIGNALEMENT_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -330,7 +339,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
   if (sv.v_score == null) {
     // V non applicable (D4) : badge spécial à la place du score — jamais un « 0 » menteur.
     return (
-      <div data-score-v className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+      <div data-score-v className="card-elev px-3 py-2.5">
         <div className="flex items-center gap-3">
           <span className="w-24 shrink-0 text-xs text-txt">Signaux vendeur</span>
           <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{sv.badge ?? 'N.A.'}</span>
@@ -342,14 +351,16 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
     )
   }
   return (
-    <div data-score-v className="rounded-lg border border-line-2 bg-surface-2">
+    <div data-score-v className="card-elev">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title={`${SCORE_TIP.v} — déplier « Pourquoi ce score »`}>
-        <span className="w-24 shrink-0 text-left text-xs text-txt">Signaux vendeur</span>
+        title="Signaux vendeur : déplier « Pourquoi ce score »">
+        <Tip tip={SCORE_TIP.v} className="w-24 shrink-0">
+          <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">Signaux vendeur</span>
+        </Tip>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${sv.v_score}%`, background: color }} />
         </span>
-        <span className="w-8 shrink-0 text-right font-display text-sm font-bold" style={{ color }}>{sv.v_score}</span>
+        <span className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{sv.v_score}</span>
         <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
@@ -366,7 +377,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
               </span>
             )}
           </div>
-          <p className="pb-1 font-mono text-[9.5px] tracking-widest text-txt-dim">POURQUOI CE SCORE</p>
+          <p className="label-caps pb-1">Pourquoi ce score</p>
           {sv.signals.length
             ? sv.signals.map((s, i) => <VSignalRow key={i} s={s} />)
             : <p className="py-2 text-[11px] text-txt-dim">Aucun signal public de vente détecté — le propriétaire ne montre aucune raison objective de vendre.</p>}
@@ -586,9 +597,11 @@ function EquipementsBadges({ idu }: { idu: string }) {
   return (
     <div>
       <div className="flex flex-wrap gap-1.5">
-        {b.map(([label, color, title]) => (
-          <span key={label} title={title} className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-            style={{ background: `${color}22`, color }}>{label}</span>
+        {b.map(([label, color, tip]) => (
+          <Tip key={label} tip={tip}>
+            <span className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style={{ background: `${color}22`, color }}>{label}</span>
+          </Tip>
         ))}
       </div>
       <p className="mt-1 text-[9px] text-txt-dim">{String(e['source'] ?? '')}</p>
@@ -1069,9 +1082,10 @@ export function Fiche({ idu }: { idu: string }) {
             {/* correctif M5 : le statut matrice legacy n'est PLUS le verdict d'en-tête quand un
                 run v2 existe — il reste visible ici, en historique, jamais en verdict principal */}
             {v2Pilote && meta && (
-              <div data-statut-matrice-historique className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]"
-                title="Classement de la matrice Q×A historique — remplacé par le scoring v2 (P×C) comme verdict d'en-tête">
-                <span className="text-txt-dim">Statut matrice (historique)</span>
+              <div data-statut-matrice-historique className="card-elev flex items-center gap-2 px-3 py-2 text-[11px]">
+                <Tip tip="Classement de la matrice Q×A historique — remplacé par le scoring v2 (P×C) comme verdict d'en-tête">
+                  <span className="text-txt-dim underline decoration-dotted decoration-line-2 underline-offset-4">Statut matrice (historique)</span>
+                </Tip>
                 <span className="ml-auto inline-flex items-center gap-1.5" style={{ color: meta.color }}>
                   <span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}
                 </span>
@@ -1094,20 +1108,26 @@ export function Fiche({ idu }: { idu: string }) {
             {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
             {/* M9 lot 3 : signaler une erreur (file de QA humaine) */}
             <SignalerErreur idu={idu} />
-            <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-              <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0 -rotate-90">
-                <circle cx="16" cy="16" r="13" fill="none" stroke="#1E2A23" strokeWidth="3" />
-                <circle cx="16" cy="16" r="13" fill="none" stroke={completudeColor(f.completeness_score)} strokeWidth="3"
-                  strokeDasharray={2 * Math.PI * 13} strokeDashoffset={2 * Math.PI * 13 * (1 - f.completeness_score / 100)} strokeLinecap="round" />
+            {/* S02 : la jauge de complétude en vrai instrument — anneau + valeur au centre,
+                label-instrument, le pourcentage n'est plus noyé dans la phrase */}
+            <div className="card-elev flex items-center gap-3 px-3 py-2.5">
+              <svg viewBox="0 0 36 36" className="h-11 w-11 shrink-0 -rotate-90">
+                <circle cx="18" cy="18" r="15" fill="none" stroke="#1E2A23" strokeWidth="3.5" />
+                <circle cx="18" cy="18" r="15" fill="none" stroke={completudeColor(f.completeness_score)} strokeWidth="3.5"
+                  strokeDasharray={2 * Math.PI * 15} strokeDashoffset={2 * Math.PI * 15 * (1 - f.completeness_score / 100)} strokeLinecap="round" />
+                <text x="18" y="18" transform="rotate(90 18 18)" textAnchor="middle" dominantBaseline="central"
+                  className="fill-txt-hi font-display text-[11px] font-bold" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {f.completeness_score}
+                </text>
               </svg>
               <div>
-                <div className="text-xs text-txt">Complétude {f.completeness_score}%</div>
-                <div className="text-[11px] text-txt-dim">{f.completeness_score >= 50 ? 'Dossier suffisant pour trancher' : 'Dossier incomplet — à creuser'}</div>
+                <div className="label-caps">Complétude · {f.completeness_score} %</div>
+                <div className="mt-0.5 text-[11px] text-txt-dim">{f.completeness_score >= 50 ? 'Dossier suffisant pour trancher' : 'Dossier incomplet — à creuser'}</div>
               </div>
             </div>
             {f.flags.length > 0 && (
               <div>
-                <p className="mb-1.5 font-mono text-[11px] tracking-widest text-txt-dim">FLAGS</p>
+                <p className="label-caps mb-1.5">Flags</p>
                 <div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div>
               </div>
             )}
