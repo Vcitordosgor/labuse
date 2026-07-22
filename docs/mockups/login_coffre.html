@@ -1,0 +1,148 @@
+<!doctype html>
+<!-- ============================================================================
+  LA BUSE — LA PORTE · Direction « COFFRE » (Bloc A · A3)
+  Parti pris : le luxe par la retenue. Noir profond, l'oiseau doré seul,
+  un champ, une signature. Aucune démonstration — l'app n'a rien à prouver
+  avant d'ouvrir. Micro-interactions au cordeau : focus mint, entrée discrète,
+  erreur sobre qui ne fait pas trembler la page.
+  Page 100 % statique (zéro framework) — la porte charge instantanément.
+  Les 4 états : défaut · focus · erreur · chargement (interactions réelles +
+  sélecteur de revue en bas à droite, chrome de maquette à retirer au branchement).
+============================================================================= -->
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LABUSE — Connexion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050706; --mint: #5CE6A1; --err: #E8695A;
+    --or-hi: #EFD9A0; --or: #C7A055; --or-lo: #96733A;
+    --txt-hi: #ECF5EF; --txt: #C9DCD1; --txt-mut: #8FA69A; --line: #1B2620;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: radial-gradient(120vh 80vh at 50% 38%, #070A08 0%, var(--bg) 55%, #030404 100%);
+    color: var(--txt); font: 15px/1.5 Inter, sans-serif;
+    display: grid; place-items: center; padding: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { width: min(360px, 100%); text-align: center; animation: entree .5s cubic-bezier(.2,.7,.2,1) both; }
+  @keyframes entree { from { opacity: 0; transform: translateY(10px); } }
+  @media (prefers-reduced-motion: reduce) { main { animation: none; } }
+
+  /* ── l'oiseau doré, seul ── */
+  .oiseau { width: 108px; margin: 0 auto 22px; display: block;
+            filter: drop-shadow(0 0 18px rgba(199,160,85,.22)); }
+  .wordmark { font: 700 15px "Space Grotesk", sans-serif; letter-spacing: .42em;
+              color: var(--txt-hi); text-indent: .42em; margin-bottom: 46px; }
+
+  /* ── le champ unique ── */
+  form { text-align: left; }
+  label { display: block; font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+          color: var(--txt-mut); margin-bottom: 10px; }
+  .champ { position: relative; }
+  input {
+    width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--line);
+    color: var(--txt-hi); font: 16px/1 Inter, sans-serif; letter-spacing: .06em;
+    padding: 10px 44px 12px 2px; outline: none; border-radius: 0;
+    transition: border-color .25s, box-shadow .25s; caret-color: var(--mint);
+  }
+  input:focus { border-bottom-color: var(--mint); box-shadow: 0 1px 0 0 var(--mint), 0 10px 24px -18px rgba(92,230,161,.45); }
+  input::placeholder { color: #3d4a43; }
+  .entrer {
+    position: absolute; right: 0; top: 50%; translate: 0 -50%;
+    width: 34px; height: 34px; border: 0; border-radius: 50%;
+    background: transparent; color: var(--txt-mut); font-size: 17px; cursor: pointer;
+    display: grid; place-items: center; transition: color .2s, background .2s;
+  }
+  .entrer:hover, input:focus ~ .entrer { color: var(--mint); }
+  .entrer:focus-visible { outline: 1px solid var(--mint); outline-offset: 2px; }
+
+  /* ── erreur : sobre, la page ne tremble pas (l'espace est réservé) ── */
+  .erreur { min-height: 34px; padding-top: 12px; font-size: 13px; color: var(--err);
+            opacity: 0; transition: opacity .3s; }
+  body[data-etat="erreur"] .erreur { opacity: 1; }
+  body[data-etat="erreur"] input { border-bottom-color: rgba(232,105,90,.65); }
+
+  /* ── chargement : l'anneau remplace la flèche, rien d'autre ne bouge ── */
+  .anneau { width: 15px; height: 15px; border-radius: 50%; display: none;
+            border: 1.5px solid rgba(92,230,161,.25); border-top-color: var(--mint);
+            animation: rot .7s linear infinite; }
+  @keyframes rot { to { rotate: 1turn; } }
+  body[data-etat="chargement"] .anneau { display: block; }
+  body[data-etat="chargement"] .fleche { display: none; }
+  body[data-etat="chargement"] input { opacity: .55; pointer-events: none; }
+
+  /* ── la signature ── */
+  .signature { margin-top: 64px; font-size: 11.5px; letter-spacing: .18em;
+               color: var(--txt-mut); text-transform: uppercase; }
+  .signature span { color: #46584f; padding: 0 .5em; }
+
+  @media (max-width: 480px) {
+    .oiseau { width: 92px; } .wordmark { margin-bottom: 38px; }
+    .signature { margin-top: 48px; }
+  }
+
+  /* ═══ chrome de MAQUETTE (revue des 4 états) — à retirer au branchement ═══ */
+  .revue { position: fixed; right: 14px; bottom: 12px; font: 10px "JetBrains Mono", monospace;
+           color: #46584f; display: flex; gap: 4px; align-items: center; }
+  .revue button { background: none; border: 1px solid #14201a; border-radius: 4px;
+                  color: #5C7268; font: inherit; padding: 3px 7px; cursor: pointer; }
+  .revue button[aria-pressed="true"] { color: var(--mint); border-color: #24443597; }
+</style>
+</head>
+<body data-etat="defaut">
+<main>
+  <svg class="oiseau" viewBox="0 0 240 82" role="img" aria-label="LA BUSE">
+    <defs>
+      <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#EFD9A0"/><stop offset=".55" stop-color="#C7A055"/><stop offset="1" stop-color="#96733A"/>
+      </linearGradient>
+    </defs>
+    <path fill="url(#or)" d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/>
+  </svg>
+  <div class="wordmark">LABUSE</div>
+
+  <form autocomplete="off" onsubmit="return demo(event)">
+    <label for="cle">Clé d’accès</label>
+    <div class="champ">
+      <input id="cle" type="password" placeholder="••••••••••••" autocomplete="current-password">
+      <button class="entrer" type="submit" aria-label="Entrer">
+        <span class="fleche">→</span><span class="anneau" aria-hidden="true"></span>
+      </button>
+    </div>
+    <p class="erreur" role="alert" aria-live="polite">Clé non reconnue.</p>
+  </form>
+
+  <p class="signature">Radar foncier<span>·</span>La Réunion</p>
+</main>
+
+<!-- sélecteur de revue — chrome de maquette, jamais en production -->
+<div class="revue" aria-hidden="true">
+  <button onclick="etat('defaut')" aria-pressed="true">défaut</button>
+  <button onclick="etat('focus')">focus</button>
+  <button onclick="etat('erreur')">erreur</button>
+  <button onclick="etat('chargement')">chargement</button>
+</div>
+
+<script>
+  // maquette : la soumission joue chargement → erreur (le vrai POST /login prendra la place)
+  function demo(e) {
+    e.preventDefault(); etat('chargement');
+    setTimeout(() => etat('erreur'), 1200);
+    return false;
+  }
+  function etat(s) {
+    document.body.dataset.etat = s;
+    document.querySelectorAll('.revue button').forEach(b => b.setAttribute('aria-pressed', b.textContent === s));
+    if (s === 'focus') document.getElementById('cle').focus();
+    else if (document.activeElement?.id === 'cle' && s === 'defaut') document.activeElement.blur();
+  }
+</script>
+</body>
+</html>
