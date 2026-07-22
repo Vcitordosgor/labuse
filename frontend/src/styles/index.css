@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══ LOI-0 — les tokens d'écriture (revue UI/UX). Aucune valeur magique locale :
+   chaque surface se réfère à CES classes. Espacement = échelle 4/8 de Tailwind
+   (p-1/2/3/4/6/8 uniquement — jamais de p-[13px]). ═══ */
+@layer components {
+  /* typographie comme instrument : label en petites capitales espacées */
+  .label-caps {
+    @apply text-[11px] font-medium uppercase tracking-[0.12em] text-txt-mut;
+  }
+  /* chiffre-clé : grand, tabulaire, display — le même dessin partout */
+  .num-key {
+    @apply font-display font-bold text-txt-hi;
+    font-variant-numeric: tabular-nums;
+  }
+  /* chiffres alignés dans les tables/listes sans changer la taille */
+  .tnum { font-variant-numeric: tabular-nums; }
+  /* élévation : carte posée (remplace border + bg à la main) */
+  .card-elev { @apply rounded-xl bg-surface-2 shadow-elev-1; }
+  /* élévation : élément FLOTTANT (popover, menu) — un seul dessin pour tous */
+  .floating { @apply rounded-xl border border-line bg-surface-2 shadow-elev-2; }
+}
+
 html, body, #root { height: 100%; margin: 0; }
 body { background: #060A08; color: #C9DCD1; -webkit-font-smoothing: antialiased; }
 * { box-sizing: border-box; }

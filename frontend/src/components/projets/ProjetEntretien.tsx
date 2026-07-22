@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { deriveProjet, getApercu, getReperes, iaEntretien, type EntretienQuestion, type EntretienRep, type FicheProjet, type RepereOption } from '../../lib/api'
 import { useApplySearch } from '../../lib/useApplySearch'
+import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 
@@ -46,8 +47,8 @@ function RepereBadge({ opt }: { opt: RepereOption | undefined }) {
   if (!opt) return null
   return (
     <span data-repere className="mt-0.5 block text-[11px] leading-tight text-txt-dim">
-      {opt.nb_opportunites.toLocaleString('fr-FR')} opp.
-      {opt.dvf_median_eur_m2 ? ` · ~${opt.dvf_median_eur_m2.toLocaleString('fr-FR')} €/m²` : ''}
+      {fmtInt(opt.nb_opportunites)} opp.
+      {opt.dvf_median_eur_m2 ? ` · ~${fmtInt(opt.dvf_median_eur_m2)} €/m²` : ''}
       {opt.communes_carencees.length ? <span className="text-st-surveiller"> · SRU carencée</span> : null}
     </span>
   )
@@ -144,7 +145,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
       <div className="w-full max-w-xl px-8 py-10">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-lg font-bold text-txt-hi">Votre projet</h2>
-          <button onClick={onClose} className="text-xs text-txt-dim hover:text-txt-mut" title="Quitter l'entretien">
+          <button onClick={onClose} className="min-h-7 text-xs text-txt-dim transition-colors duration-quick hover:text-txt-mut" title="Quitter l'entretien">
             Fermer
           </button>
         </div>
@@ -152,7 +153,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
         {/* jauge : la fiche prend forme */}
         <div className="mt-3 flex gap-1" data-entretien-jauge data-remplis={remplis}>
           {SLOTS.map((s) => (
-            <div key={s.key} className={`h-1 flex-1 rounded-full ${s.rempli(fiche) ? 'bg-mint' : 'bg-line-2'}`} />
+            <div key={s.key} className={`h-1 flex-1 rounded-full transition-colors duration-soft ${s.rempli(fiche) ? 'bg-mint' : 'bg-line-2'}`} />
           ))}
         </div>
 
@@ -169,8 +170,8 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
         )}
 
         {/* la FICHE qui se construit à l'écran */}
-        <div data-entretien-fiche className="mt-4 rounded-xl border border-line-2 bg-surface-2 p-4">
-          <p className="mb-2 font-mono text-[10px] tracking-widest text-txt-dim">FICHE PROJET</p>
+        <div data-entretien-fiche className="card-elev mt-4 p-4">
+          <p className="label-caps mb-2">Fiche projet</p>
           <dl className="space-y-1.5">
             {SLOTS.map((s) => {
               const v = s.rempli(fiche)
@@ -184,7 +185,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
             {fiche.budget_foncier_eur ? (
               <div className="flex items-baseline gap-3 text-xs">
                 <dt className="w-24 shrink-0 text-txt-dim">Budget</dt>
-                <dd className="text-txt-hi">{(fiche.budget_foncier_eur / 1000).toLocaleString('fr-FR')} k€</dd>
+                <dd className="tnum text-txt-hi">{fmtEurCompact(fiche.budget_foncier_eur)}</dd>
               </div>
             ) : null}
           </dl>
@@ -201,7 +202,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
                   key={i}
                   data-entretien-chip
                   onClick={() => send.mutate(c.label)}
-                  className="rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt hover:border-mint/50 hover:text-txt-hi"
+                  className="min-h-7 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-left text-xs text-txt transition-colors duration-quick hover:border-mint/50 hover:text-txt-hi"
                 >
                   {c.label}
                   {active.dimension && <RepereBadge opt={repere(c.label)} />}
@@ -211,7 +212,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
               <button
                 data-entretien-skip
                 onClick={() => send.mutate('je ne sais pas encore, passe cette question')}
-                className="rounded-lg border border-dashed border-line-2 px-3 py-1.5 text-xs text-txt-mut hover:text-txt"
+                className="min-h-7 rounded-lg border border-dashed border-line-2 px-3 py-1.5 text-xs text-txt-mut transition-colors duration-quick hover:text-txt"
                 title={active.defaut ?? 'Passer'}
               >
                 Je ne sais pas encore
@@ -227,7 +228,7 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
             data-entretien-lancer
             onClick={() => lancer.mutate()}
             disabled={lancer.isPending}
-            className="mt-6 w-full rounded-xl bg-mint py-3 text-sm font-semibold text-[#06130C] hover:brightness-110 disabled:opacity-50"
+            className="mt-6 w-full rounded-xl bg-mint py-3 text-sm font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-50"
           >
             {lancer.isPending ? 'Recherche…' : `Lancer la recherche${questions.length ? ' maintenant' : ''}`}
           </button>

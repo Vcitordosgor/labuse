@@ -1,8 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { Tip } from '../Tip'
 import { useEffect, useState } from 'react'
 import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
+import { fmtDate, fmtDateNum, fmtInt, fmtM2 } from '../../lib/format'
+import { layerLabel } from '../../lib/layers'
 import { Loading } from '../Loading'
+import { ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
 import { PourquoiPasTab } from './PourquoiPas'
 import { ScoreV2Block } from './ScoreV2Block'
@@ -27,7 +31,7 @@ function RateLimit429({ error, refetch }: { error: unknown; refetch: () => void 
       <p className="text-txt-hi">Trop de requêtes — réessayez dans une minute.</p>
       {detail && <p className="mt-1 text-txt-dim">{detail}</p>}
       <p className="mt-1 text-txt-dim">Nouvel essai automatique dans ~1 min.</p>
-      <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer maintenant</button>
+      <button onClick={() => refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer maintenant</button>
     </div>
   )
 }
@@ -47,24 +51,27 @@ function SourceRef({ line }: { line: FicheLine }) {
   return (
     <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
       {line.source && (
-        <button onClick={() => openSourceDrawer(line)} className="truncate text-[#5a7d6c] hover:text-mint hover:underline"
+        <button onClick={() => openSourceDrawer(line)} className="truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
           title="Voir la source (drawer)">
           {line.source}
         </button>
       )}
-      {trace && <span className="shrink-0 font-mono text-[#4a5a52]">{trace}</span>}
-      {line.date && <span className="ml-auto shrink-0 font-mono">{line.date}</span>}
+      {trace && <span className="shrink-0 font-mono text-txt-dim/70">{trace}</span>}
+      {line.date && <span className="ml-auto shrink-0 font-mono tnum">{fmtDateNum(line.date)}</span>}
     </div>
   )
 }
 
 function Line({ line }: { line: FicheLine }) {
   return (
-    <div className="flex gap-3 border-b border-[#141d17] py-2 last:border-0">
+    <div className="flex gap-3 border-b border-line/60 py-2 last:border-0">
       <Weight w={line.weight} result={line.result} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-txt">{line.layer}</span>
+          {/* S03-S05 : libellé français à l'écran, clé technique de la couche au survol/tap (audit) */}
+          <Tip tip={<span className="font-mono">couche {line.layer}</span>}>
+            <span className="text-xs font-medium text-txt">{layerLabel(line.layer)}</span>
+          </Tip>
           {line.severity && line.weight == null && (
             <span className="rounded-full px-1.5 text-[9px]" style={{ background: `${SEV_COLOR[line.severity]}22`, color: SEV_COLOR[line.severity] }}>
               {line.severity}
@@ -87,14 +94,20 @@ function ScoreBar({ label, value, color, lines, defaultOpen, tip }: {
   const [open, setOpen] = useState(!!defaultOpen)
   const weighted = lines.filter((l) => l.weight != null && l.weight !== 0).sort((a, b) => Math.abs(b.weight!) - Math.abs(a.weight!))
   return (
-    <div className="rounded-lg border border-line-2 bg-surface-2">
+    <div className="card-elev">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title={tip ? `${tip} — déplier les signaux` : `${label} : déplier les signaux`}>
-        <span className="w-24 shrink-0 text-left text-xs text-txt">{label}</span>
+        title={`${label} : déplier les signaux`}>
+        {tip ? (
+          <Tip tip={tip} className="w-24 shrink-0">
+            <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">{label}</span>
+          </Tip>
+        ) : (
+          <span className="w-24 shrink-0 text-left text-xs text-txt">{label}</span>
+        )}
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${value}%`, background: color }} />
         </span>
-        <span className="w-8 shrink-0 text-right font-display text-sm font-bold" style={{ color }}>{value}</span>
+        <span className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{value}</span>
         <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
@@ -117,47 +130,53 @@ const FAMILLE_LABEL: Record<string, string> = {
 function VSignalRow({ s }: { s: VSignal }) {
   const neg = s.points < 0
   return (
-    <div className="flex gap-3 border-b border-[#141d17] py-2 last:border-0">
-      <span className={`w-10 shrink-0 text-right font-mono text-xs font-semibold ${neg ? 'text-st-ecartee' : 'text-[#FF8A50]'}`}>
+    <div className="flex gap-3 border-b border-line py-2 last:border-0">
+      <span className={`w-10 shrink-0 text-right font-mono text-xs font-semibold ${neg ? 'text-st-ecartee' : 'text-st-creuser'}`}>
         {neg ? s.points : `+${s.points}`}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-txt">{s.label}</span>
-          <span className="shrink-0 rounded-full bg-surface-3 px-1.5 text-[8.5px] text-txt-dim" title={`Famille ${s.famille}`}>
-            {FAMILLE_LABEL[s.famille] ?? s.famille}
-          </span>
+          <Tip tip={`Famille ${s.famille}`} className="shrink-0">
+            <span className="rounded-full bg-surface-3 px-1.5 text-[8.5px] text-txt-dim">
+              {FAMILLE_LABEL[s.famille] ?? s.famille}
+            </span>
+          </Tip>
           {/* CRED-4 : le statut des procédures saute aux yeux (en cours / clôturée) */}
           {/en cours/i.test(s.label) && (
-            <span data-v-statut="en-cours" className="shrink-0 rounded-full bg-[#3a1614] px-1.5 text-[8.5px] font-semibold text-st-ecartee"
-              title="Procédure toujours ouverte au dernier avis BODACC ingéré">EN COURS</span>
+            <Tip tip="Procédure toujours ouverte au dernier avis BODACC ingéré" className="shrink-0">
+              <span data-v-statut="en-cours" className="rounded-full bg-st-ecartee/15 px-1.5 text-[8.5px] font-semibold text-st-ecartee">EN COURS</span>
+            </Tip>
           )}
           {/clôtur/i.test(s.label) && (
-            <span data-v-statut="cloturee" className="shrink-0 rounded-full border border-line-2 px-1.5 text-[8.5px] font-medium text-txt-dim"
-              title="Procédure clôturée — le signal reste pertinent tant que la parcelle est au nom de la société">CLÔTURÉE</span>
+            <Tip tip="Procédure clôturée — le signal reste pertinent tant que la parcelle est au nom de la société" className="shrink-0">
+              <span data-v-statut="cloturee" className="rounded-full border border-line-2 px-1.5 text-[8.5px] font-medium text-txt-dim">CLÔTURÉE</span>
+            </Tip>
           )}
         </div>
         {s.ref && <div className="text-[11px] leading-snug text-txt-mut">{s.ref}</div>}
         <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
           {s.url
-            ? <a href={s.url} target="_blank" rel="noreferrer" className="truncate text-[#5a7d6c] hover:text-mint hover:underline"
+            ? <a href={s.url} target="_blank" rel="noreferrer" className="truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
                 title="Vérifier à la source (avis officiel)">{s.source} ↗</a>
             : <span className="truncate">{s.source}</span>}
           {s.match && s.match.confiance < 1 && (
-            <span className="shrink-0 rounded bg-[#211a10] px-1 text-[8.5px] text-st-creuser"
-              title="Propriétaire rapproché par dénomination (pas de SIREN au fichier DGFiP) — points réduits ×0.7">
-              match {Math.round(s.match.confiance * 100)} %
-            </span>
+            <Tip tip="Propriétaire rapproché par dénomination (pas de SIREN au fichier DGFiP) — points réduits ×0.7" className="shrink-0">
+              <span className="rounded bg-st-creuser/10 px-1 text-[8.5px] text-st-creuser">
+                match {Math.round(s.match.confiance * 100)} %
+              </span>
+            </Tip>
           )}
           {/* CRED-4 : l'ÂGE du signal d'un coup d'œil — pastille < 6 mois / 6-18 / > 18 */}
           {s.date_evenement && (() => {
             const a = ageSignal(s.date_evenement)!
             return (
-              <span className="ml-auto flex shrink-0 items-center gap-1.5 font-mono"
-                title={`Signal daté du ${new Date(s.date_evenement).toLocaleDateString('fr-FR')} — ${a.label}`}>
-                <span data-v-age className="h-2 w-2 rounded-full" style={{ background: a.color }} />
-                {a.label} · {s.date_evenement}
-              </span>
+              <Tip tip={`Signal daté du ${fmtDate(s.date_evenement)} — ${a.label}`} className="ml-auto shrink-0">
+                <span className="flex items-center gap-1.5 font-mono tnum">
+                  <span data-v-age className="h-2 w-2 rounded-full" style={{ background: a.color }} />
+                  {a.label} · {fmtDateNum(s.date_evenement)}
+                </span>
+              </Tip>
             )
           })()}
         </div>
@@ -174,14 +193,16 @@ function IcdBlockView({ icd }: { icd: IcdBlock }) {
   const [open, setOpen] = useState(false)
   const color = icdColor(icd.bande)
   return (
-    <div data-icd className="rounded-lg border border-line-2 bg-surface-2">
+    <div data-icd className="card-elev">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title="Indice de confiance des données — complétude des couches pour cette parcelle. N'entre PAS dans le score d'opportunité (score P calculé indépendamment).">
-        <span className="w-24 shrink-0 text-left text-xs text-txt">Confiance données</span>
+        title="Confiance données : déplier le détail">
+        <Tip tip="Complétude des couches de données pour cette parcelle — n'entre pas dans le score d'opportunité (P, calculé indépendamment)." className="w-24 shrink-0">
+          <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">Confiance données</span>
+        </Tip>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${icd.score}%`, background: color }} />
         </span>
-        <span data-icd-score className="w-8 shrink-0 text-right font-display text-sm font-bold" style={{ color }}>{icd.score}</span>
+        <span data-icd-score className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{icd.score}</span>
         <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
@@ -189,7 +210,7 @@ function IcdBlockView({ icd }: { icd: IcdBlock }) {
           <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: `${color}1f`, color }}>{icd.libelle}</span>
           {icd.manquants.length > 0 ? (
             <>
-              <p className="mt-2 pb-1 font-mono text-[9.5px] tracking-widest text-txt-dim">CE QUI MANQUE</p>
+              <p className="label-caps mt-2 pb-1">Ce qui manque</p>
               <ul data-icd-manquants className="flex flex-col gap-0.5">
                 {icd.manquants.map((m, i) => (
                   <li key={i} className="flex items-start gap-1.5 text-[11px] text-txt-mut"><span className="text-st-ecartee">•</span>{m}</li>
@@ -212,7 +233,7 @@ function PtRow({ k, v }: { k: string; v: string }) {
 function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
   const color = PT_COLORS[pt.niveau] ?? '#9AA6A0'
   return (
-    <div data-transformation className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+    <div data-transformation className="card-elev px-3 py-2.5">
       <div className="flex items-center gap-2">
         <span className="text-xs text-txt">Potentiel de transformation</span>
         <span className="ml-auto rounded-full px-2 py-0.5 text-[10.5px] font-medium capitalize" style={{ background: `${color}22`, color }}>{pt.niveau}</span>
@@ -220,7 +241,7 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
       <p className="mt-1 text-[11px] leading-snug text-txt-mut">{pt.libelle}</p>
       <div className="mt-1.5 flex flex-col gap-0.5 text-[11px]">
         {pt.pct_consomme != null && <PtRow k="SDP consommée / autorisée" v={`${pt.pct_consomme} %`} />}
-        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k="SDP résiduelle estimée" v={`~${pt.sdp_residuelle_m2.toLocaleString('fr-FR')} m²`} />}
+        {pt.sdp_residuelle_m2 != null && pt.sdp_residuelle_m2 > 0 && <PtRow k="SDP résiduelle estimée" v={`~${fmtInt(pt.sdp_residuelle_m2)} m²`} />}
         {pt.surelevation_possible != null && <PtRow k="Surélévation" v={pt.surelevation_possible ? `possible${pt.hauteur_marge_m != null ? ` (marge ~${pt.hauteur_marge_m} m)` : ''}` : 'non'} />}
       </div>
       <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">{pt.source}</p>
@@ -231,8 +252,8 @@ function TransformationBlock({ pt }: { pt: PotentielTransformation }) {
 // ── M9 lot 2 — Lien règlement PLU par zone ──────────────────────────────────
 function ReglementPluBlock({ rp }: { rp: ReglementPlu }) {
   return (
-    <div data-reglement-plu className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-      <p className="font-mono text-[10px] tracking-widest text-txt-dim">RÈGLEMENT PLU</p>
+    <div data-reglement-plu className="card-elev px-3 py-2.5">
+      <p className="label-caps">Règlement PLU</p>
       <div className="mt-1.5 flex flex-col gap-2">
         {rp.zones.map((z, i) => (
           <div key={i}>
@@ -274,7 +295,7 @@ function SignalerErreur({ idu }: { idu: string }) {
   const m = useMutation({ mutationFn: () => postSignalement({ idu, type_erreur: type, champ: champ || undefined, commentaire: commentaire || undefined }) })
   if (m.isSuccess) {
     return (
-      <div data-signalement-ok className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] text-txt-mut">
+      <div data-signalement-ok className="card-elev px-3 py-2.5 text-[11px] text-txt-mut">
         ✓ Signalement enregistré (n°{m.data.id}) — merci. Il sera revu manuellement.
       </div>
     )
@@ -288,8 +309,8 @@ function SignalerErreur({ idu }: { idu: string }) {
     )
   }
   return (
-    <div data-signalement-form className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-      <p className="font-mono text-[10px] tracking-widest text-txt-dim">SIGNALER UNE ERREUR</p>
+    <div data-signalement-form className="card-elev px-3 py-2.5">
+      <p className="label-caps">Signaler une erreur</p>
       <label className="mt-2 block text-[11px] text-txt-mut">Type d’erreur
         <select data-signalement-type value={type} onChange={(e) => setType(e.target.value)} className="mt-0.5 w-full rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt">
           {SIGNALEMENT_TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -323,7 +344,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
   if (sv.v_score == null) {
     // V non applicable (D4) : badge spécial à la place du score — jamais un « 0 » menteur.
     return (
-      <div data-score-v className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+      <div data-score-v className="card-elev px-3 py-2.5">
         <div className="flex items-center gap-3">
           <span className="w-24 shrink-0 text-xs text-txt">Signaux vendeur</span>
           <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{sv.badge ?? 'N.A.'}</span>
@@ -335,14 +356,16 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
     )
   }
   return (
-    <div data-score-v className="rounded-lg border border-line-2 bg-surface-2">
+    <div data-score-v className="card-elev">
       <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title={`${SCORE_TIP.v} — déplier « Pourquoi ce score »`}>
-        <span className="w-24 shrink-0 text-left text-xs text-txt">Signaux vendeur</span>
+        title="Signaux vendeur : déplier « Pourquoi ce score »">
+        <Tip tip={SCORE_TIP.v} className="w-24 shrink-0">
+          <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">Signaux vendeur</span>
+        </Tip>
         <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
           <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${sv.v_score}%`, background: color }} />
         </span>
-        <span className="w-8 shrink-0 text-right font-display text-sm font-bold" style={{ color }}>{sv.v_score}</span>
+        <span className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{sv.v_score}</span>
         <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
       </button>
       {open && (
@@ -359,7 +382,7 @@ function VendabiliteBlock({ sv }: { sv: ScoreV }) {
               </span>
             )}
           </div>
-          <p className="pb-1 font-mono text-[9.5px] tracking-widest text-txt-dim">POURQUOI CE SCORE</p>
+          <p className="label-caps pb-1">Pourquoi ce score</p>
           {sv.signals.length
             ? sv.signals.map((s, i) => <VSignalRow key={i} s={s} />)
             : <p className="py-2 text-[11px] text-txt-dim">Aucun signal public de vente détecté — le propriétaire ne montre aucune raison objective de vendre.</p>}
@@ -399,8 +422,8 @@ function ShareButton({ idu }: { idu: string }) {
         ↗
       </button>
       {share.data && (
-        <div className="absolute bottom-10 right-0 z-20 w-64 rounded-lg border border-line-2 bg-surface-2 p-3 text-[11px] shadow-xl">
-          <p className="font-mono text-[10px] tracking-widest text-txt-dim">LIEN APPORTEUR</p>
+        <div className="floating absolute bottom-10 right-0 z-20 w-64 p-3 text-[11px]">
+          <p className="label-caps">Lien apporteur</p>
           <a href={share.data.url} target="_blank" rel="noreferrer" className="mt-1 block truncate text-mint hover:underline">
             {window.location.origin}{share.data.url}
           </a>
@@ -456,7 +479,7 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
     <div className="min-w-0 flex-1">
       <label className="flex items-center gap-1 text-[11px] text-txt-dim">
         {label}
-        {hint && <span className="rounded bg-[#211a10] px-1 text-[8.5px] text-st-creuser" title="Hypothèse — à ajuster selon votre opération">hyp. — ajustez</span>}
+        {hint && <span className="rounded bg-st-creuser/10 px-1 text-[8.5px] text-st-creuser" title="Hypothèse — à ajuster selon votre opération">hyp. — ajustez</span>}
       </label>
       <div className="mt-1 flex items-center rounded-lg border border-line-2 bg-surface-3 focus-within:border-mint">
         <input type="number" min={0} value={value ?? ''} placeholder={placeholder}
@@ -497,17 +520,17 @@ function Calculette({ idu }: { idu: string }) {
   const achat = d?.achat
   return (
     <div data-calculette>
-      <p className="mb-1 flex items-center gap-2 font-mono text-[10px] tracking-widest text-txt-dim">
-        CALCULETTE DE CHARGE FONCIÈRE
-        {q.isFetching && <span data-calc-recalc className="animate-pulse text-[9px] text-mint">recalcul…</span>}
+      <p className="label-caps mb-1 flex items-center gap-2">
+        Calculette de charge foncière
+        {q.isFetching && <span data-calc-recalc className="animate-pulse text-[9px] normal-case tracking-normal text-mint">recalcul…</span>}
       </p>
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5 text-[11px] leading-relaxed text-txt">
+      <div className="card-elev px-3 py-2.5 text-[11px] leading-relaxed text-txt">
         {q.isLoading && <Loading label="Calcul en cours" />}
         {d && d.calculable === false && (
           <div data-calc-indispo>
             <p className="text-st-creuser">{d.message ?? 'Charge foncière non calculable.'}</p>
             {d.marche?.median != null && (
-              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie bâti secteur : <b className="text-mint">{Number(d.marche.median).toLocaleString('fr-FR')} €/m²</b> ({d.marche.fiabilite}).</p>
+              <p className="mt-1 text-txt-mut">Au mieux — prix de sortie bâti secteur : <b className="tnum text-mint">{fmtInt(Number(d.marche.median))} €/m²</b> ({d.marche.fiabilite}).</p>
             )}
           </div>
         )}
@@ -515,9 +538,9 @@ function Calculette({ idu }: { idu: string }) {
           <>
             {/* le SOURCÉ (lecture seule) — ce que LABUSE sait */}
             <p className="text-[11px] text-txt-dim">
-              LABUSE (sourcé) : SDP vendable <b className="text-txt">{Number(d.shab_vendable_m2).toLocaleString('fr-FR')} m²</b> ·
-              prix de sortie bâti <b className="text-txt">{Number(d.prix_sortie_median).toLocaleString('fr-FR')} €/m²</b> ·
-              terrain <b className="text-txt">{Number(d.terrain_m2).toLocaleString('fr-FR')} m²</b>
+              LABUSE (sourcé) : SDP vendable <b className="tnum text-txt">{fmtInt(Number(d.shab_vendable_m2))} m²</b> ·
+              prix de sortie bâti <b className="tnum text-txt">{fmtInt(Number(d.prix_sortie_median))} €/m²</b> ·
+              terrain <b className="tnum text-txt">{fmtInt(Number(d.terrain_m2))} m²</b>
             </p>
             {/* les HYPOTHÈSES — saisies par le promoteur */}
             <div className="mt-2 flex gap-2">
@@ -525,11 +548,11 @@ function Calculette({ idu }: { idu: string }) {
               <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint />
             </div>
             {/* le RÉSULTAT — calcul de VOS hypothèses */}
-            <div data-calc-resultat className="mt-2.5 rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-2">
+            <div data-calc-resultat className="mt-2.5 rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2">
               <p className="text-[11px] text-txt-dim">Charge foncière supportable <span className="text-txt-mut">— selon vos hypothèses</span></p>
               <p className="mt-0.5">
-                <b data-calc-cf className="font-display text-lg font-bold text-mint">{euros(cf.central)}</b>
-                <span className="ml-1.5 text-[11px] text-txt-mut">≈ {Number(cf.par_m2_terrain).toLocaleString('fr-FR')} €/m² de terrain</span>
+                <b data-calc-cf className="num-key text-lg text-mint">{euros(cf.central)}</b>
+                <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
               </p>
               <p className="text-[11px] text-txt-dim">fourchette {euros(cf.bas)} – {euros(cf.haut)}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
             </div>
@@ -538,7 +561,7 @@ function Calculette({ idu }: { idu: string }) {
               <HypInput label="Prix demandé du terrain" value={prixDemande} onChange={setPrixDemande} suffix="€" placeholder="si connu" />
             </div>
             {achat && (
-              <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-[#12241a] text-mint' : 'bg-[#2a1210] text-st-ecartee'}`}>
+              <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {achat.supportable
                   ? <>✓ Supportable — le terrain peut valoir {euros(achat.prix_demande_eur)} ; marge de {euros(achat.ecart_eur)} ({achat.ecart_pct > 0 ? '+' : ''}{achat.ecart_pct} %) sous votre charge foncière.</>
                   : <>✗ Trop cher — à {euros(achat.prix_demande_eur)}, l'opération dépasse de {euros(Math.abs(achat.ecart_eur))} ({achat.ecart_pct} %) ce que vos hypothèses supportent.</>}
@@ -579,9 +602,11 @@ function EquipementsBadges({ idu }: { idu: string }) {
   return (
     <div>
       <div className="flex flex-wrap gap-1.5">
-        {b.map(([label, color, title]) => (
-          <span key={label} title={title} className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-            style={{ background: `${color}22`, color }}>{label}</span>
+        {b.map(([label, color, tip]) => (
+          <Tip key={label} tip={tip}>
+            <span className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+              style={{ background: `${color}22`, color }}>{label}</span>
+          </Tip>
         ))}
       </div>
       <p className="mt-1 text-[9px] text-txt-dim">{String(e['source'] ?? '')}</p>
@@ -591,8 +616,8 @@ function EquipementsBadges({ idu }: { idu: string }) {
 
 function StepProv({ prov }: { prov?: string }) {
   const map: Record<string, [string, string]> = {
-    sourcee: ['Sourcé', 'border-mint/40 bg-[#0f1a15] text-mint'],
-    estimee: ['Estimé', 'border-st-creuser/40 bg-[#211a10] text-st-creuser'],
+    sourcee: ['Sourcé', 'border-mint/40 bg-mint/10 text-mint'],
+    estimee: ['Estimé', 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser'],
     derive: ['Dérivé', 'border-line-2 bg-surface-2 text-txt-dim'],
   }
   const [label, cls] = map[prov ?? ''] ?? ['—', 'border-line-2 bg-surface-2 text-txt-dim']
@@ -607,12 +632,8 @@ function FaisabiliteTab({ idu }: { idu: string }) {
   const [showSteps, setShowSteps] = useState(true)
   const explain = useMutation({ mutationFn: () => faisabiliteExplain(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
-  if (isError || !b) return (
-    <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
-      <p className="text-st-ecartee">Faisabilité indisponible.</p>
-      <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt">Réessayer</button>
-    </div>
-  )
+  if (isError || !b) return <ErrorState message="Faisabilité indisponible." retry={() => refetch()} />
+
   const cap = b.capacite
   const fo = cap?.fourchette ?? {}
   const steps: { label: string; valeur: string; source: string; prov: string }[] = cap?.steps ?? []
@@ -621,8 +642,8 @@ function FaisabiliteTab({ idu }: { idu: string }) {
     <div className="flex flex-col gap-3">
       {/* ── LE RÉSULTAT ── */}
       {cap ? (
-        <div className="rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-2.5">
-          <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">CAPACITÉ CONSTRUCTIBLE</p>
+        <div className="rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2.5">
+          <p className="label-caps mb-1">Capacité constructible</p>
           <div className="text-sm font-medium text-txt-hi">{cap.verdict}</div>
           <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-txt-mut">
             <div>Gabarit : <b className="text-txt">{fo.niveaux}</b> ({fo.hauteur_m} m)</div>
@@ -630,11 +651,11 @@ function FaisabiliteTab({ idu }: { idu: string }) {
             <div>Logements : <b className="text-txt">{Array.isArray(fo.logements_au_sol) ? `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]}` : '—'}</b></div>
             <div>SHAB vendable : <b className="text-txt">~{fo.shab_vendable_m2} m²</b></div>
           </div>
-          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">⚠ estimation générique (zone non calibrée)</div>}
+          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
           <div className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{cap.bandeau}</div>
         </div>
       ) : (
-        <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+        <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
           Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).
         </div>
       )}
@@ -642,12 +663,12 @@ function FaisabiliteTab({ idu }: { idu: string }) {
       {/* ── LE CALCUL, ÉTAPE PAR ÉTAPE (déterministe) ── */}
       {steps.length > 0 && (
         <div>
-          <button onClick={() => setShowSteps((s) => !s)} className="mb-1 flex w-full items-center justify-between font-mono text-[10px] tracking-widest text-txt-dim hover:text-txt-mut">
-            <span>LE CALCUL, ÉTAPE PAR ÉTAPE ({steps.length})</span>
+          <button onClick={() => setShowSteps((s) => !s)} className="label-caps mb-1 flex w-full items-center justify-between transition-colors duration-quick hover:text-txt">
+            <span>Le calcul, étape par étape ({steps.length})</span>
             <span>{showSteps ? '−' : '+'}</span>
           </button>
           {showSteps && (
-            <ol data-faisa-steps className="overflow-hidden rounded-lg border border-line-2">
+            <ol data-faisa-steps className="card-elev overflow-hidden">
               {steps.map((s, i) => (
                 <li key={i} className={`flex items-start gap-2 px-3 py-1.5 text-[11px] ${i % 2 ? 'bg-surface-2' : 'bg-surface-1'}`}>
                   <span className="shrink-0 font-mono text-[9px] text-txt-dim">{i + 1}</span>
@@ -673,18 +694,18 @@ function FaisabiliteTab({ idu }: { idu: string }) {
         <div data-faisa-explain>
           {!ex && !explain.isPending && (
             <button onClick={() => explain.mutate()} data-faisa-explain-btn
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#B497F0]/50 bg-[#171221] py-2 text-[12px] font-medium text-[#B497F0] hover:bg-[#1d1630]">
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-violet/50 bg-violet/[0.07] py-2 text-[12px] font-medium text-violet hover:bg-violet/10">
               <svg viewBox="0 0 20 20" className="h-3.5 w-3.5"><path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z" fill="currentColor" /></svg>
               Expliquer ce calcul en clair
             </button>
           )}
-          {explain.isPending && <p className="flex items-center gap-2 py-2 text-[11px] text-[#B497F0]"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#B497F0]" /> L'IA lit les étapes du calcul…</p>}
+          {explain.isPending && <p className="flex items-center gap-2 py-2 text-[11px] text-violet"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet" /> L'IA lit les étapes du calcul…</p>}
           {explain.isError && <p className="py-1 text-[11px] text-st-ecartee">Explication indisponible — réessayez.</p>}
           {ex && ex.disponible === false && <p className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">{ex.message}</p>}
-          {ex && ex.disponible && ex.rejected && <p className="rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] text-st-creuser">{ex.texte}</p>}
+          {ex && ex.disponible && ex.rejected && <p className="rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] text-st-creuser">{ex.texte}</p>}
           {ex && ex.disponible && !ex.rejected && (
-            <div className="rounded-lg border border-[#B497F0]/40 bg-[#171221] px-3 py-2.5">
-              <p className="mb-1 font-mono text-[10px] tracking-widest text-[#B497F0]">✦ EXPLICATION IA — À PARTIR DES ÉTAPES</p>
+            <div className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2.5">
+              <p className="mb-1 font-mono text-[10px] tracking-widest text-violet">✦ EXPLICATION IA — À PARTIR DES ÉTAPES</p>
               <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-txt">{renderRich(ex.texte ?? '')}</p>
               <p className="mt-1.5 text-[9px] leading-snug text-txt-dim">L'IA narre les étapes ci-dessus (elle ne recalcule rien) ; chaque chiffre est ancré sur une étape. Estimation indicative, ne vaut pas conseil.</p>
             </div>
@@ -701,40 +722,35 @@ function FaisabiliteTab({ idu }: { idu: string }) {
 function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
-  if (isError || !b) return (
-    <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
-      <p className="text-st-ecartee">Bilan indisponible.</p>
-      <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt">Réessayer</button>
-    </div>
-  )
+  if (isError || !b) return <ErrorState message="Bilan indisponible." retry={() => refetch()} />
   const cap = b.capacite
   const fo = cap?.fourchette ?? {}
   const Sec = ({ t, children }: { t: string; children: React.ReactNode }) => (
     <div>
-      <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">{t}</p>
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-relaxed text-txt">{children}</div>
+      <p className="label-caps mb-1">{t}</p>
+      <div className="card-elev px-3 py-2 text-[11px] leading-relaxed text-txt">{children}</div>
     </div>
   )
   return (
     <div className="flex flex-col gap-3">
       {cap ? (
-        <Sec t="CAPACITÉ (que peut accueillir ce terrain ?)">
+        <Sec t="Capacité (que peut accueillir ce terrain ?)">
           <div className="font-medium text-txt-hi">{cap.verdict}</div>
           <div className="mt-1 text-txt-mut">
             {fo.niveaux} · emprise bâtie max {fo.emprise_batie_max_m2} m² · SDP {fo.surface_plancher_m2} m² ·
-            SHAB vendable ~{fo.shab_vendable_m2} m² · stationnement : {fo.stationnement_regime}
+            SHAB vendable ~{fo.shab_vendable_m2} m² · stationnement : {String(fo.stationnement_regime ?? '—').replace(/_/g, ' ')}
           </div>
-          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">⚠ estimation générique (zone non calibrée)</div>}
+          {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
           <div className="mt-1.5 text-[11px] leading-snug text-txt-dim">{cap.bandeau}</div>
         </Sec>
       ) : (
-        <Sec t="CAPACITÉ">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</Sec>
+        <Sec t="Capacité">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</Sec>
       )}
       {b.marche?.median != null && (
         /* CRED-2 : cette médiane est un prix BÂTI (par type de bien) — la nommer, pour qu'elle
            coexiste lisiblement avec la « médiane terrain » de l'onglet Marché. */
-        <Sec t="MARCHÉ — PRIX DE SORTIE BÂTI (SECTEUR)">
-          médiane bâti <b className="text-mint">{Number(b.marche.median).toLocaleString('fr-FR')} €/m²</b> ({b.marche.type_prix},
+        <Sec t="Marché — prix de sortie bâti (secteur)">
+          médiane bâti <b className="tnum text-mint">{fmtInt(Number(b.marche.median))} €/m²</b> ({b.marche.type_prix},
           {' '}{b.marche.n} ventes ≤ {Math.round(b.marche.radius_m)} m) · fiabilité <b>{b.marche.fiabilite}</b>
           {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
           {/* P14 : fraîcheur DVF — de QUAND datent les prix (période réelle en base) */}
@@ -747,11 +763,11 @@ function BilanTab({ idu }: { idu: string }) {
       )}
       {/* M11 Surface C : la calculette de charge foncière est RAPATRIÉE dans l'onglet Faisabilité
           (le financier au même endroit que la capacité et son explication). */}
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+      <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
         La <b className="text-txt">charge foncière</b> (« combien puis-je payer ce terrain ? ») est
-        désormais dans l'onglet <b className="text-[#B497F0]">Faisabilité</b>, avec le calcul détaillé.
+        désormais dans l'onglet <b className="text-violet">Faisabilité</b>, avec le calcul détaillé.
       </div>
-      <Sec t="FISCAL & LEVIERS">
+      <Sec t="Fiscal & leviers">
         <div>QPV : <b className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</b> · TVA : {b.fiscal.tva}</div>
         <div className="mt-1 text-[11px] text-txt-dim">{b.fiscal.ta_note}</div>
       </Sec>
@@ -768,8 +784,8 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
   const VOLET_COLOR: Record<string, string> = { cadre: '#8FA69A', thermique: '#E8B44C', acoustique: '#B497F0', aeration: '#7DE8E0', ecs: '#5CE6A1' }
   return (
     <div data-rtaa-block>
-      <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">RTAA DOM — RAPPEL RÉGLEMENTAIRE</p>
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
+      <p className="label-caps mb-1">RTAA DOM — rappel réglementaire</p>
+      <div className="card-elev px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
         Construction neuve de logements : protection solaire, ventilation traversante,
         acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).
         <button onClick={() => setOpen((o) => !o)} className="ml-1.5 text-mint hover:underline">
@@ -779,14 +795,14 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
       {open && (
         <div className="mt-1.5 flex flex-col gap-1.5">
           {rtaa.exigences.map((e, i) => (
-            <div key={i} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
+            <div key={i} className="rounded-lg bg-surface-3 px-3 py-2">
               <span className="rounded-full px-1.5 py-0.5 font-mono text-[8.5px] font-semibold uppercase"
                 style={{ color: VOLET_COLOR[e.volet] ?? '#8FA69A', background: `${VOLET_COLOR[e.volet] ?? '#8FA69A'}18` }}>
                 {e.volet}
               </span>
               <p className="mt-1 text-[10.5px] leading-snug text-txt">{e.exigence}</p>
               {e.condition_altitude && <p className="mt-0.5 text-[11px] text-st-creuser">altitude : {e.condition_altitude}</p>}
-              <a href={e.url} target="_blank" rel="noreferrer" className="mt-0.5 block text-[11px] text-[#7DE8E0] hover:underline">
+              <a href={e.url} target="_blank" rel="noreferrer" className="mt-0.5 block text-[11px] text-mint hover:underline">
                 {e.reference} ↗
               </a>
             </div>
@@ -807,7 +823,7 @@ function PatrimoineLink({ siren }: { siren: string }) {
   return (
     <button
       onClick={() => { setM02Prefill(siren); setModule('patrimoine') }}
-      className="mt-1.5 text-[11px] text-[#B497F0] hover:underline"
+      className="mt-1.5 text-[11px] text-violet hover:underline"
       title="Scan patrimoine (M02) : tout le foncier de ce propriétaire sur l'île"
     >
       → tout son patrimoine (M02)
@@ -852,7 +868,7 @@ export function Fiche({ idu }: { idu: string }) {
   const { data: f, isLoading, isError, error, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
   const fq = ficheQuery.trim().toLowerCase()
   const ficheMatches = fq && f
-    ? f.lines.filter((l) => `${l.layer} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
+    ? f.lines.filter((l) => `${l.layer} ${layerLabel(l.layer)} ${l.detail ?? ''} ${l.source ?? ''} ${l.result ?? ''}`.toLowerCase().includes(fq))
     : []
 
   // Correctif M5 (verdict d'en-tête) : étage 0 prime (bannière écartée + motifs, inchangé) ;
@@ -873,7 +889,7 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="text-xs font-medium text-st-ecartee">LABUSE l'a écartée — voici pourquoi</div>
           <div className="mt-1 flex flex-col gap-0.5">
             {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').slice(0, 4).map((l) => (
-              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{l.layer}</b> — {l.detail}</div>
+              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{layerLabel(l.layer)}</b> — {l.detail}</div>
             ))}
             {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').length === 0 && (
               <div className="text-[10.5px] text-txt-mut">Aucune exclusion dure : qualité insuffisante (Q {f.q_score} &lt; 50) — détail dans les onglets.</div>
@@ -883,17 +899,17 @@ export function Fiche({ idu }: { idu: string }) {
         </div>
       )}
       {f?.evenement === 'rouge' && (
-        <div className="shrink-0 border-b border-[#5a2420] bg-[#3a1614] px-5 py-2.5">
+        <div className="shrink-0 border-b border-st-ecartee/40 bg-st-ecartee/15 px-5 py-2.5">
           {/* R3 (PJ5) : vocabulaire matrice non thermique — « priorité dossier » (thermique = tier P servi) */}
           <div className="flex items-center gap-2 text-xs font-medium text-st-ecartee">● ÉVÉNEMENT — force « priorité dossier »</div>
-          {f.evenement_detail && <div className="mt-1 text-[11px] leading-snug text-[#e8a99f]">{f.evenement_detail}</div>}
+          {f.evenement_detail && <div className="mt-1 text-[11px] leading-snug text-st-ecartee/90">{f.evenement_detail}</div>}
         </div>
       )}
 
       {/* bloc MODULE (doctrine : en tête de fiche, violet) */}
       {modBlock && (
-        <div className="shrink-0 border-b border-[#2a2138] bg-[#171221] px-5 py-3">
-          <p className="font-mono text-[10px] tracking-widest text-[#B497F0]">MODULE · {modBlock.module.toUpperCase()}</p>
+        <div className="shrink-0 border-b border-violet/20 bg-violet/[0.07] px-5 py-3">
+          <p className="label-caps text-violet">Module · {modBlock.module}</p>
           <div className="mt-1.5 flex flex-col gap-1">
             {modBlock.lines.map(([k, v]) => (
               <div key={k} className="flex justify-between gap-3 text-[11px]">
@@ -918,35 +934,41 @@ export function Fiche({ idu }: { idu: string }) {
             </div>
           )}
           <div className="mt-0.5 text-[11px] text-txt-mut">
-            {f?.surface_m2 ? `${f.surface_m2.toLocaleString('fr-FR')} m² · ` : ''}{f?.commune ?? ''}
+            {f?.surface_m2 ? <span className="tnum">{fmtM2(f.surface_m2)} · </span> : ''}{f?.commune ?? ''}
           </div>
-          {verdict && (
-            <span data-badge-verdict className="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${verdict.color}22`, color: verdict.color }}
-              title={verdict.v2 ? 'Verdict scoring v2 (P×C) — le statut matrice historique est dans la section Qualité' : undefined}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ background: verdict.color }} />{verdict.label}
-              {v2Pilote && f?.score_v2 && (
-                <span className="font-mono text-[10px] opacity-90"
-                  title="Rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc — détail dans « Probabilité de mutation (P v2) »">
-                  {(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? `rang ${f.score_v2.rang}` : ''}
-                  {f.score_v2.mult_base != null ? `${(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? ' · ' : ''}×${f.score_v2.mult_base.toFixed(1)}` : ''}
-                </span>
-              )}
-              {!v2Pilote && f?.evenement === 'rouge' && f.statut === 'chaude' && (
-                <span className="rounded-full bg-[#3a1614] px-1.5 text-[9px] font-semibold text-st-ecartee" title="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">· ÉVÉNEMENT</span>
-              )}
-            </span>
-          )}
+          {verdict && (() => {
+            const badge = (
+              <span data-badge-verdict className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${verdict.color}22`, color: verdict.color }}>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ background: verdict.color }} />{verdict.label}
+                {v2Pilote && f?.score_v2 && (
+                  <span className="font-mono text-[10px] opacity-90">
+                    {(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? `rang ${f.score_v2.rang}` : ''}
+                    {f.score_v2.mult_base != null ? `${(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? ' · ' : ''}×${f.score_v2.mult_base.toFixed(1)}` : ''}
+                  </span>
+                )}
+                {!v2Pilote && f?.evenement === 'rouge' && f.statut === 'chaude' && (
+                  <Tip tip="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">
+                    <span className="rounded-full bg-st-ecartee/15 px-1.5 text-[9px] font-semibold text-st-ecartee">· ÉVÉNEMENT</span>
+                  </Tip>
+                )}
+              </span>
+            )
+            return verdict.v2
+              ? <Tip className="mt-1.5" tip="Verdict scoring v2 (P×C) — rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc ; détail dans « Probabilité de mutation (P v2) », statut matrice historique dans la Synthèse.">{badge}</Tip>
+              : <span className="mt-1.5 inline-flex">{badge}</span>
+          })()}
           {/* M5.1 : le badge « V nn » disparaît — le dossier propriétaire (signaux vendeur)
               reste dans la fiche, libellé en clair, sans le sigle nu */}
           {f?.score_v?.v_score != null && (
-            <span data-badge-signaux className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{
-                background: `${vBandColor(f.score_v.v_band)}22`,
-                color: vBandColor(f.score_v.v_band),
-              }}
-              title={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans la Synthèse`}>
-              signaux vendeur {f.score_v.v_score}/100
-            </span>
+            <Tip className="ml-1.5 mt-1.5" tip={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans la Synthèse`}>
+              <span data-badge-signaux className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
+                style={{
+                  background: `${vBandColor(f.score_v.v_band)}22`,
+                  color: vBandColor(f.score_v.v_band),
+                }}>
+                signaux vendeur {f.score_v.v_score}/100
+              </span>
+            </Tip>
           )}
           {f?.score_v?.badge && (
             <span className="ml-1.5 mt-1.5 inline-flex rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-mut">
@@ -956,11 +978,12 @@ export function Fiche({ idu }: { idu: string }) {
           {/* M9 lot 1 : chip Indice de confiance données (ICD) — affiché seulement si < 85
               (cas nominal = pas de badge). Méta d'affichage, indépendante du score P. */}
           {f?.icd && f.icd.score < 85 && (
-            <span data-badge-icd className="ml-1.5 mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{ background: `${icdColor(f.icd.bande)}22`, color: icdColor(f.icd.bande) }}
-              title={`Confiance des données : ${f.icd.score}/100 — ${f.icd.libelle}. ${f.icd.cloisonnement}`}>
-              {f.icd.libelle} {f.icd.score}/100
-            </span>
+            <Tip className="ml-1.5 mt-1.5" tip={`Confiance des données : ${f.icd.score}/100 — ${f.icd.libelle}. ${f.icd.cloisonnement}`}>
+              <span data-badge-icd className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
+                style={{ background: `${icdColor(f.icd.bande)}22`, color: icdColor(f.icd.bande) }}>
+                {f.icd.libelle} {f.icd.score}/100
+              </span>
+            </Tip>
           )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -974,7 +997,9 @@ export function Fiche({ idu }: { idu: string }) {
               <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
             </svg>
           </button>
-          <button onClick={() => select(null)} className="text-txt-mut hover:text-txt-hi" title="Fermer la fiche">✕</button>
+          <button onClick={() => select(null)}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-txt-mut transition-colors duration-quick hover:text-txt-hi"
+            title="Fermer la fiche">✕</button>
         </div>
       </div>
 
@@ -1003,7 +1028,7 @@ export function Fiche({ idu }: { idu: string }) {
         {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
         {fq && f && (
           <div data-fiche-search-results>
-            <p className="mb-2 font-mono text-[10px] tracking-widest text-txt-dim">DANS CETTE FICHE · « {ficheQuery.trim()} »</p>
+            <p className="label-caps mb-2">Dans cette fiche · « {ficheQuery.trim()} »</p>
             {ficheMatches.length === 0
               ? <p className="text-xs text-txt-dim">Aucune donnée de la fiche ne correspond.</p>
               : <div className="flex flex-col gap-1">{ficheMatches.map((l, i) => <Line key={i} line={l} />)}</div>}
@@ -1019,20 +1044,20 @@ export function Fiche({ idu }: { idu: string }) {
         {isError && (is429(error) ? (
           <RateLimit429 error={error} refetch={refetch} />
         ) : (
-          <div data-fiche-erreur className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-4 text-xs">
+          <div data-fiche-erreur className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 p-4 text-xs">
             {/* Item 3 (UX V1) : wording client — plus jamais « relancer labuse api » face à un
                 utilisateur. Le détail technique reste lisible, en ligne discrète. */}
             <p className="text-st-ecartee">Connexion au serveur impossible — vérifiez votre réseau ou réessayez.</p>
             {error instanceof Error && error.message && (
               <p className="mt-1 break-all font-mono text-[10px] text-txt-dim">détail : {error.message}</p>
             )}
-            <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
+            <button onClick={() => refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer</button>
           </div>
         ))}
         {!fq && f && tab === 'synthese' && (
           <>
             {f.evenement === 'rouge' && f.statut === 'chaude' && (
-              <div data-histoire-evenement className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
+              <div data-histoire-evenement className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
                 Priorité dossier par <b className="text-st-ecartee">ÉVÉNEMENT</b> : le propriétaire
                 {f.proprietaire_moral?.denomination ? <> (<b>{f.proprietaire_moral.denomination}</b>)</> : ''} est en
                 procédure collective{f.evenement_detail ? <> — {f.evenement_detail.replace(/^.*?:\s*/, '')}</> : ''}.
@@ -1048,8 +1073,8 @@ export function Fiche({ idu }: { idu: string }) {
                 passage n'y figurent pas — 293 078 parcelles concernées, trop de faux positifs
                 pour un malus en l'état). */}
             {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
-              <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2">
-                <span aria-hidden className="text-st-creuser">⚠</span>
+              <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
+                <span aria-hidden className="text-st-creuser">▲</span>
                 <p className="text-[11px] leading-snug text-st-creuser">
                   <b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact de la parcelle.
                   <span className="text-txt-mut"> Signal informatif, non pondéré dans les scores : la BD TOPO
@@ -1062,9 +1087,10 @@ export function Fiche({ idu }: { idu: string }) {
             {/* correctif M5 : le statut matrice legacy n'est PLUS le verdict d'en-tête quand un
                 run v2 existe — il reste visible ici, en historique, jamais en verdict principal */}
             {v2Pilote && meta && (
-              <div data-statut-matrice-historique className="flex items-center gap-2 rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px]"
-                title="Classement de la matrice Q×A historique — remplacé par le scoring v2 (P×C) comme verdict d'en-tête">
-                <span className="text-txt-dim">Statut matrice (historique)</span>
+              <div data-statut-matrice-historique className="card-elev flex items-center gap-2 px-3 py-2 text-[11px]">
+                <Tip tip="Classement de la matrice Q×A historique — remplacé par le scoring v2 (P×C) comme verdict d'en-tête">
+                  <span className="text-txt-dim underline decoration-dotted decoration-line-2 underline-offset-4">Statut matrice (historique)</span>
+                </Tip>
                 <span className="ml-auto inline-flex items-center gap-1.5" style={{ color: meta.color }}>
                   <span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}
                 </span>
@@ -1087,28 +1113,34 @@ export function Fiche({ idu }: { idu: string }) {
             {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
             {/* M9 lot 3 : signaler une erreur (file de QA humaine) */}
             <SignalerErreur idu={idu} />
-            <div className="flex items-center gap-3 rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-              <svg viewBox="0 0 32 32" className="h-8 w-8 shrink-0 -rotate-90">
-                <circle cx="16" cy="16" r="13" fill="none" stroke="#1E2A23" strokeWidth="3" />
-                <circle cx="16" cy="16" r="13" fill="none" stroke={completudeColor(f.completeness_score)} strokeWidth="3"
-                  strokeDasharray={2 * Math.PI * 13} strokeDashoffset={2 * Math.PI * 13 * (1 - f.completeness_score / 100)} strokeLinecap="round" />
+            {/* S02 : la jauge de complétude en vrai instrument — anneau + valeur au centre,
+                label-instrument, le pourcentage n'est plus noyé dans la phrase */}
+            <div className="card-elev flex items-center gap-3 px-3 py-2.5">
+              <svg viewBox="0 0 36 36" className="h-11 w-11 shrink-0 -rotate-90">
+                <circle cx="18" cy="18" r="15" fill="none" stroke="#1E2A23" strokeWidth="3.5" />
+                <circle cx="18" cy="18" r="15" fill="none" stroke={completudeColor(f.completeness_score)} strokeWidth="3.5"
+                  strokeDasharray={2 * Math.PI * 15} strokeDashoffset={2 * Math.PI * 15 * (1 - f.completeness_score / 100)} strokeLinecap="round" />
+                <text x="18" y="18" transform="rotate(90 18 18)" textAnchor="middle" dominantBaseline="central"
+                  className="fill-txt-hi font-display text-[11px] font-bold" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                  {f.completeness_score}
+                </text>
               </svg>
               <div>
-                <div className="text-xs text-txt">Complétude {f.completeness_score}%</div>
-                <div className="text-[11px] text-txt-dim">{f.completeness_score >= 50 ? 'Dossier suffisant pour trancher' : 'Dossier incomplet — à creuser'}</div>
+                <div className="label-caps">Complétude · {f.completeness_score} %</div>
+                <div className="mt-0.5 text-[11px] text-txt-dim">{f.completeness_score >= 50 ? 'Dossier suffisant pour trancher' : 'Dossier incomplet — à creuser'}</div>
               </div>
             </div>
             {f.flags.length > 0 && (
               <div>
-                <p className="mb-1.5 font-mono text-[11px] tracking-widest text-txt-dim">FLAGS</p>
+                <p className="label-caps mb-1.5">Flags</p>
                 <div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div>
               </div>
             )}
           </>
         )}
         {!fq && f && tab === 'proprio' && f.proprietaire_moral && (
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-            <p className="font-mono text-[10px] tracking-widest text-txt-dim">PROPRIÉTAIRE (DGFiP)</p>
+          <div className="card-elev px-3 py-2.5">
+            <p className="label-caps">Propriétaire (DGFiP)</p>
             <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
             <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
               {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
@@ -1118,7 +1150,7 @@ export function Fiche({ idu }: { idu: string }) {
           </div>
         )}
         {!fq && f && tab === 'proprio' && !f.proprietaire_moral && (
-          <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+          <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
             Propriétaire : personne physique ou non recensé au fichier des personnes morales
             (identité nominative : workflow SPF/CERFA, jamais automatisée).
           </div>

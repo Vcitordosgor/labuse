@@ -127,8 +127,8 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
       <div ref={leftRef} className="absolute inset-0" />
       <div ref={rightRef} className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${split}%)` }} />
       {/* barre de contrôle : choix des DEUX fonds + sortie vers la carte à fond unique */}
-      <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-line-2 bg-surface-2/95 px-3 py-2 shadow-2xl backdrop-blur">
-        <span className="font-mono text-[10px] tracking-widest text-txt-dim">COMPARER</span>
+      <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-line bg-surface-2/95 px-3 py-2 shadow-elev-2 backdrop-blur">
+        <span className="label-caps text-[10px]">Comparer</span>
         <select data-cmp-left value={leftKey} onChange={(e) => setLeftKey(e.target.value)}
           className="rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none">
           {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
@@ -139,7 +139,7 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
           {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
         </select>
         <button onClick={() => setModule(null)}
-          className="ml-1 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut hover:border-mint hover:text-txt"
+          className="ml-1 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt"
           title="Revenir à la carte (fond unique)">✕ Quitter</button>
       </div>
       {/* poignée */}

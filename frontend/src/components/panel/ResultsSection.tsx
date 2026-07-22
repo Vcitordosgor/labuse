@@ -3,10 +3,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
+import { fmtInt as fmt } from '../../lib/format'
 import { completudeColor, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
+import { Loading } from '../Loading'
+import { Tip } from '../Tip'
+import { EmptyState } from '../States'
 import { useApp } from '../../store/useApp'
 
-const fmt = (n: number) => n.toLocaleString('fr-FR')
 
 // M5.1 : le badge « V nn » a disparu de la liste (le dossier propriétaire reste dans la
 // fiche) ; les badges secondaires conservés : même proprio ×N, événement daté, veille
@@ -22,15 +25,15 @@ function CompletudeRing({ value }: { value: number }) {
   const r = 7
   const c = 2 * Math.PI * r
   return (
-    <span className="flex items-center gap-1"
-      title={`Complétude des données : ${value}/100 — part des sources disponibles pour cette parcelle. N'est PAS une note de qualité du terrain.`}>
+    <Tip tip={`Complétude des données : ${value}/100 — part des sources disponibles pour cette parcelle. N'est PAS une note de qualité du terrain.`}
+      className="items-center gap-1">
       <svg viewBox="0 0 18 18" className="h-[18px] w-[18px] -rotate-90">
         <circle cx="9" cy="9" r={r} fill="none" stroke="#1E2A23" strokeWidth="2" />
         <circle cx="9" cy="9" r={r} fill="none" stroke={completudeColor(value)} strokeWidth="2"
           strokeDasharray={c} strokeDashoffset={c * (1 - value / 100)} strokeLinecap="round" />
       </svg>
-      <span className="font-mono text-[11px] text-txt-dim">{value}</span>
-    </span>
+      <span className="font-mono text-[11px] text-txt-dim tnum">{value}</span>
+    </Tip>
   )
 }
 
@@ -50,48 +53,57 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="shrink-0 whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
-          <span data-tier-chip className="shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
-            style={{ background: `${meta.color}1f`, color: meta.color }}
-            title={`Verdict scoring v2 (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}>
-            {meta.label}{p.rang_v2 != null && !p.etage0 ? ` · ${p.rang_v2}` : ''}
-          </span>
-          {p.evenement === 'rouge' && (
-            <span className="shrink-0 rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee"
-              title={`Événement — procédure BODACC ouverte${p.evenement_date ? ` (${new Date(p.evenement_date).toLocaleDateString('fr-FR')})` : ''}`}>
-              ● ÉVÉNEMENT{p.evenement_date ? ` · ${new Date(p.evenement_date).toLocaleDateString('fr-FR')}` : ''}
+          <Tip tip={`Verdict scoring v2 (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
+            className="shrink-0">
+            <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+              style={{ background: `${meta.color}1f`, color: meta.color }}>
+              {meta.label}{p.rang_v2 != null && !p.etage0 ? ` · ${p.rang_v2}` : ''}
             </span>
+          </Tip>
+          {p.evenement === 'rouge' && (
+            <Tip tip={`Événement — procédure BODACC ouverte${p.evenement_date ? ` (${new Date(p.evenement_date).toLocaleDateString('fr-FR')})` : ''}`}
+              className="shrink-0">
+              <span className="rounded-full bg-[#3a1614] px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">
+                ● ÉVÉNEMENT{p.evenement_date ? ` · ${new Date(p.evenement_date).toLocaleDateString('fr-FR')}` : ''}
+              </span>
+            </Tip>
           )}
           {(p.cluster ?? 0) > 1 && (
-            <span className="shrink-0 rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]"
-              title={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) opportunité(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}>
-              même proprio ×{p.cluster}
-            </span>
+            <Tip tip={`Même propriétaire que ${(p.cluster ?? 0) - 1} autre(s) opportunité(s)${p.proprio ? ` — ${p.proprio}` : ''} : 1 dossier, pas ${p.cluster} lignes`}
+              className="shrink-0">
+              <span className="rounded-full bg-[#1a2340] px-1.5 py-0.5 text-[9px] font-medium text-[#8FB4F0]">
+                même proprio ×{p.cluster}
+              </span>
+            </Tip>
           )}
           {p.veille && (
-            <span className="shrink-0 rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[9px] font-medium text-[#B497F0]"
-              title="Veille succession — radar patrimonial (signal d'état, pas un événement daté)">
-              veille succession
-            </span>
+            <Tip tip="Veille succession — radar patrimonial (signal d'état, pas un événement daté)" className="shrink-0">
+              <span className="rounded-full bg-[#2a2138] px-1.5 py-0.5 text-[9px] font-medium text-[#B497F0]">
+                veille succession
+              </span>
+            </Tip>
           )}
           {p.owner_type && OWNER_BADGE[p.owner_type] && (
-            <span className="shrink-0 rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim"
-              title={OWNER_BADGE[p.owner_type].title}>
-              {OWNER_BADGE[p.owner_type].label}
-            </span>
+            <Tip tip={OWNER_BADGE[p.owner_type].title} className="shrink-0">
+              <span className="rounded-full border border-line-2 px-1.5 py-0.5 text-[8.5px] font-medium text-txt-dim">
+                {OWNER_BADGE[p.owner_type].label}
+              </span>
+            </Tip>
           )}
         </div>
         {/* M6 2a (§1.8) : adresse postale BAN sur la carte de résultat — jamais un vide */}
         <div data-card-adresse className={`truncate text-[10.5px] text-txt-dim ${p.adresse ? '' : 'opacity-60'}`}>
           {p.adresse ?? 'Adresse non disponible'}
         </div>
-        <div className="truncate text-[11px] text-txt-mut">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
+        <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
       <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
         {/* ×N = l'affichage produit du scoring v2 (probabilité relative de mutation) */}
-        <span data-mult-tip className="font-display text-[15px] font-bold leading-none" style={{ color: meta.color }}
-          title={p.mult_v2 != null ? `Multiplicateur de rang — cette parcelle est classée ${p.mult_v2.toFixed(1)} fois au-dessus de la moyenne de l'univers analysé.` : 'Scoring v2 non disponible'}>
-          {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
-        </span>
+        <Tip tip={p.mult_v2 != null ? `Multiplicateur de rang — cette parcelle est classée ${p.mult_v2.toFixed(1)} fois au-dessus de la moyenne de l'univers analysé.` : 'Scoring v2 non disponible'}>
+          <span data-mult-tip className="font-display text-[15px] font-bold leading-none tnum" style={{ color: meta.color }}>
+            {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
+          </span>
+        </Tip>
         <CompletudeRing value={p.completeness_score} />
       </div>
     </button>
@@ -126,7 +138,7 @@ function TierChips({ counts, partial }: { counts: Record<TierV2 | 'all', number>
               }
             }}
             className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${
-              on ? 'border-mint bg-[#0F1A14] text-txt-hi' : 'border-line-2 text-txt-mut hover:text-txt'}`}
+              on ? 'border-mint bg-mint/10 text-txt-hi' : 'border-line-2 text-txt-mut hover:text-txt'}`}
           >
             {it.color && <span className="h-1.5 w-1.5 rounded-full" style={{ background: it.color }} />}
             {it.label}
@@ -166,7 +178,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
           entièrement lisible ET la liste des parcelles reste scrollable en dessous (la section défile
           naturellement). Plus de fond modal qui bloquait le scroll vers les parcelles. */}
       {open && (
-        <div data-entonnoir-panel className="mt-1.5 rounded-xl border border-line-2 bg-surface-2 p-3">
+        <div data-entonnoir-panel className="card-elev mt-1.5 p-3">
           <p className="text-[11px] leading-snug text-txt">
             LABUSE a analysé <b>{fmt(q.data?.analysees ?? total)}</b> parcelles ; son avis retient
             <b className="text-mint"> {fmt(q.data?.opportunites ?? opportunites)}</b> opportunités
@@ -182,8 +194,8 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
               ))}
             </div>
           )}
-          <p className="mt-1.5 font-mono text-[9.5px] tracking-widest text-txt-dim">LE RESTE, PAR MOTIF</p>
-          {q.isLoading && <p className="mt-1 text-[11px] text-txt-dim">Chargement…</p>}
+          <p className="label-caps mt-1.5 text-[9.5px]">Le reste, par motif</p>
+          {q.isLoading && <Loading className="mt-1 text-[11px]" label="Décompte par motif" />}
           {q.data && (q.data.motifs ?? []).length === 0 && (
             <p className="mt-1 text-[10.5px] text-txt-dim">Détail par motif non disponible sur ce périmètre.</p>
           )}
@@ -191,7 +203,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
             {(q.data?.motifs ?? []).map((m) => (
               <div key={m.motif} className={`flex justify-between gap-2 text-[10.5px] ${m.motif.startsWith('écartées') ? 'font-medium text-txt border-b border-line pb-0.5 mb-0.5' : 'text-txt-mut'}`}>
                 <span className="min-w-0">{m.motif}</span>
-                <span className="shrink-0 font-mono">{fmt(m.n)}</span>
+                <span className="tnum shrink-0 font-mono">{fmt(m.n)}</span>
               </div>
             ))}
           </div>
@@ -326,8 +338,8 @@ export function ResultsSection() {
       </div>
 
       {communeNote && (
-        <div className="mt-2 shrink-0 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[10.5px] leading-snug text-st-creuser">
-          ⚠ {communeNote}
+        <div className="mt-2 shrink-0 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[10.5px] leading-snug text-st-creuser">
+          ▲ {communeNote}
         </div>
       )}
       <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
@@ -385,9 +397,10 @@ export function ResultsSection() {
         {!loading && !error && shown.length === 0 && (
           /* Item 4 (UX V1) : état vide EXPLICITE — dit où on est et comment en sortir
              (élargir à l'île / réinitialiser), aligné sur le #map-empty historique. */
-          <div data-liste-vide className="rounded-lg border border-dashed border-line-2 p-4 text-center">
-            <p className="text-xs leading-relaxed text-txt-mut">
-              {commune ? (
+          <div data-liste-vide>
+            <EmptyState className="py-6"
+              title="Aucune parcelle ici"
+              hint={commune ? (
                 <>Aucune parcelle {filters.tiers.length === 1
                   ? TIER_V2_META[filters.tiers[0]].label.toLowerCase()
                   : scoped || filters.tiers.length ? 'correspondante' : ''} à {commune} —
@@ -395,15 +408,16 @@ export function ResultsSection() {
               ) : (
                 <>Aucune parcelle ne correspond à ces filtres sur l'île — retirez un critère.</>
               )}
-            </p>
-            <div className="mt-2 flex items-center justify-center gap-4">
-              {commune && (
-                <button data-vide-ile onClick={() => setCommune(null)} className="text-xs text-mint hover:underline">
-                  Élargir à toute l'île
-                </button>
-              )}
-              <button onClick={resetFilters} className="text-xs text-mint hover:underline">Réinitialiser les filtres</button>
-            </div>
+              action={
+                <span className="flex items-center justify-center gap-4">
+                  {commune && (
+                    <button data-vide-ile onClick={() => setCommune(null)} className="text-xs text-mint hover:underline">
+                      Élargir à toute l'île
+                    </button>
+                  )}
+                  <button onClick={resetFilters} className="text-xs text-mint hover:underline">Réinitialiser les filtres</button>
+                </span>
+              } />
           </div>
         )}
         {shown.map((p) => <ResultCard key={p.idu} p={p} communeLabel={commune ?? ''} />)}

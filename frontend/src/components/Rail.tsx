@@ -1,5 +1,5 @@
 import { useApp, type View } from '../store/useApp'
-import { GROUPS, MODULES, VIOLET } from './outils/registry'
+import { GROUPS, MODULES } from './outils/registry'
 
 // Icônes 20×20, trait 1.6, arrondi — redessinées pour être nettes à 20 px (les précédentes
 // rendaient mal). Cohérence : contour simple, pas de remplissage sauf CRM (barres).
@@ -81,17 +81,17 @@ function OutilCard({ m, phare, open }: { m: (typeof MODULES)[number]; phare: boo
       data-outil={m.key}
       data-outil-phare={phare ? '1' : undefined}
       onClick={() => open(m.key)}
-      className={`w-full rounded-lg border px-3 text-left transition-colors ${
+      className={`w-full rounded-lg border px-3 text-left transition-colors duration-quick ${
         phare
-          ? 'border-[#4a3d6b] bg-[#171221] py-2.5 hover:border-[#B497F0]'
-          : 'border-line-2 bg-surface-3 py-2 hover:border-[#6b5a96]'
+          ? 'border-violet/40 bg-violet/[0.07] py-2.5 hover:border-violet'
+          : 'border-line-2 bg-surface-3 py-2 hover:border-violet/50'
       }`}
     >
       <div className="flex items-center gap-2">
-        {phare && <span className="text-[10px]" style={{ color: VIOLET }} title="Outil phare">★</span>}
+        {phare && <span className="text-[10px] text-violet" title="Outil phare">★</span>}
         <span className={`text-xs font-medium ${phare ? 'text-txt-hi' : 'text-txt'}`}>{m.label}</span>
       </div>
-      <div className={`mt-0.5 leading-snug ${phare ? 'text-[11px] text-[#b8a8de]' : 'text-[10.5px] text-txt-dim'}`}>
+      <div className={`mt-0.5 leading-snug ${phare ? 'text-[11px] text-txt-mut' : 'text-[10.5px] text-txt-dim'}`}>
         {m.desc}
       </div>
     </button>
@@ -118,8 +118,8 @@ export function Rail() {
               aria-current={on ? 'page' : undefined}
             >
               <span
-                className={`flex h-10 w-10 items-center justify-center rounded-[10px] border transition-colors ${
-                  on ? 'border-[#2E6B4F] bg-[#0F1A14] text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
+                className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-quick ${
+                  on ? 'border-mint/40 bg-mint/10 text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
                 }`}
               >
                 <svg viewBox="0 0 20 20" className="h-5 w-5">{ICONS[key]}</svg>
@@ -138,8 +138,8 @@ export function Rail() {
             title="Fraîcheur des données — sources et mises à jour"
           >
             <span
-              className={`flex h-10 w-10 items-center justify-center rounded-[10px] border transition-colors ${
-                view === 'sources' ? 'border-[#2E6B4F] bg-[#0F1A14] text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
+              className={`flex h-10 w-10 items-center justify-center rounded-lg border transition-colors duration-quick ${
+                view === 'sources' ? 'border-mint/40 bg-mint/10 text-mint' : 'border-transparent text-txt-mut group-hover:text-txt'
               }`}
             >
               <svg viewBox="0 0 20 20" className="h-5 w-5">{SOURCES_ICON}</svg>
@@ -159,7 +159,7 @@ export function Rail() {
           <div className="shrink-0 px-5 pb-2 pt-5">
             <h2 className="text-sm font-medium text-txt-hi">Outils</h2>
             <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">
-              Les moteurs métier de LABUSE — <span style={{ color: VIOLET }}>★</span> = les plus utilisés.
+              Les moteurs métier de LABUSE — <span className="text-violet">★</span> = les plus utilisés.
             </p>
           </div>
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-5">
@@ -169,7 +169,7 @@ export function Rail() {
               return (
                 <section key={g.key} data-outil-group={g.key}>
                   <div className="mb-2 flex items-baseline justify-between">
-                    <p className="font-mono text-[10.5px] font-medium uppercase tracking-widest text-txt-mut">{g.label}</p>
+                    <p className="label-caps">{g.label}</p>
                     <p className="text-[11px] text-txt-dim">{g.hint}</p>
                   </div>
                   <div className="flex flex-col gap-1.5">

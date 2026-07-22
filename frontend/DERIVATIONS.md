@@ -650,3 +650,20 @@ scoring/cascade/matrice/filtre touché. Suites vertes.
   sans zoom — l'île reste, la fiche (SRU/ANRU/PLH/marché/équipements/RTAA) glisse à droite. Pour
   ENTRER dans une commune, le sélecteur du header reste la voie. `qa_vague0` mis à jour (marqueur
   → fiche contexte ; l'entrée commune passe par le sélecteur).
+
+## LOI-0 — tokens de la revue UI/UX (mandat perfection, 07/2026)
+
+Le socle qui rend 71 surfaces cohérentes au lieu de 71 interprétations :
+
+- **Espacement** : échelle 4/8 stricte (`p-1/2/3/4/6/8`, `gap-1/2/3/4/6`) — jamais de valeur
+  arbitraire `p-[13px]`. Une marge hors échelle = une décision à défendre en commentaire.
+- **Élévation** (la profondeur SANS bordures dures) : `shadow-elev-1` (panneau posé),
+  `shadow-elev-2` (flottant : popover/menu → classe `.floating`), `shadow-elev-3` (sommet :
+  modal/toast). Fonds : bg < surface-1 < surface-2 < surface-3, dans cet ordre de hauteur.
+- **Typographie** : max 3 tailles par écran. Labels = `.label-caps` (11 px, petites capitales
+  espacées). Chiffres-clés = `.num-key` (display, gras, `tabular-nums`). Chiffres en liste =
+  `.tnum`. Corps = text-xs/sm.
+- **Motion** : `duration-quick` (150 ms, feedback) / `duration-soft` (200 ms, entrées),
+  courbe unique `ease-cockpit`. Zéro animation gratuite.
+- **Le vert est un signal** : UN point focal mint par écran (l'opportunité ou l'action
+  principale). Le violet `#B497F0` reste l'exclusivité outils/IA/premium.

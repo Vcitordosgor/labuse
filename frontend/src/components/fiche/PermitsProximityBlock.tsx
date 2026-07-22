@@ -18,7 +18,7 @@ export function PermitsProximityBlock({ idu }: { idu: string }) {
   const items = (d?.['items'] ?? []) as Record<string, any>[]
   if (!d || items.length === 0) return null
   return (
-    <div data-permis-proximite className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+    <div data-permis-proximite className="card-elev px-3 py-2.5">
       <div className="mb-1 flex items-baseline justify-between">
         <span className="text-xs font-semibold text-txt">Permis à proximité</span>
         <span className="text-[11px] text-txt-dim">

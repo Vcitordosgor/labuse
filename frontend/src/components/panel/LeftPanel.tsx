@@ -40,8 +40,8 @@ function LayersSection() {
     // FIX (rendu liste) : sur un volet court (laptop), COUCHES est PLAFONNÉ + scrollable pour
     // qu'il n'écrase plus la liste des résultats — il cède la place, la liste garde sa hauteur.
     <div className="shrink px-5 pt-4 max-h-[34vh] overflow-y-auto">
-      <p className="mb-3 font-mono text-[11px] tracking-widest text-txt-dim">COUCHES</p>
-      <div className="flex flex-col gap-1.5">
+      <p className="label-caps mb-3">Couches</p>
+      <div className="flex flex-col gap-0.5">
         {LAYERS.map(({ key, label, hint }) => {
           const off = ile && COMMUNE_ONLY.includes(key)
           const on = layers[key] && !off
@@ -49,7 +49,7 @@ function LayersSection() {
             <div key={key}>
               <button
                 onClick={() => (off ? setHintKey(key) : (setHintKey(null), toggleLayer(key)))}
-                className={`flex items-center gap-3 text-left ${off ? 'opacity-45' : ''}`}
+                className={`flex min-h-[28px] items-center gap-3 rounded-md py-1 text-left transition-colors duration-quick ${off ? 'opacity-45' : ''}`}
                 title={off ? undefined : hint}>
                 <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
                   {on && (
@@ -80,7 +80,7 @@ function VerdictHero() {
   const { verdict, setVerdict } = useApp()
   if (verdict) {
     return (
-      <div className="mx-5 mb-1 flex shrink-0 items-center justify-between rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-3 py-1.5">
+      <div className="mx-5 mb-1 flex shrink-0 items-center justify-between rounded-lg bg-mint/[0.08] px-3 py-2 shadow-elev-1">
         <span className="text-[11px] font-medium text-mint">✓ Analyse LABUSE affichée</span>
         <button data-verdict-off onClick={() => setVerdict(false)}
           className="text-[11px] text-txt-dim hover:text-txt" title="Masquer l'analyse — revenir au cadastre brut">
@@ -99,7 +99,7 @@ function VerdictHero() {
         <br />LABUSE les a analysées et vous propose son avis.
       </p>
       <button data-verdict-on onClick={() => setVerdict(true)}
-        className="mt-5 w-full rounded-xl bg-mint px-4 py-3.5 font-display text-sm font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition hover:shadow-[0_0_36px_rgba(92,230,161,0.55)]">
+        className="mt-5 w-full rounded-xl bg-mint px-4 py-3.5 font-display text-sm font-bold text-mint-ink shadow-[0_0_24px_rgba(92,230,161,0.35)] transition-shadow duration-soft ease-cockpit hover:shadow-[0_0_36px_rgba(92,230,161,0.55)]">
         Afficher l'analyse LABUSE →
       </button>
       <p className="mt-3 text-[11px] leading-snug text-txt-dim">
@@ -145,7 +145,7 @@ export function LeftPanel() {
         <button
           data-couches-mobile
           onClick={() => setMobileOpen(true)}
-          className="absolute bottom-16 left-4 z-30 flex items-center gap-2 rounded-full border border-line-2 bg-surface-2 px-4 py-2 text-xs font-medium text-txt shadow-lg sm:hidden"
+          className="absolute bottom-16 left-4 z-30 flex items-center gap-2 rounded-full border border-line-2 bg-surface-2 px-4 py-2 text-xs font-medium text-txt shadow-elev-2 sm:hidden"
           title="Couches, analyse et résultats"
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint">
@@ -159,10 +159,11 @@ export function LeftPanel() {
       {mobileOpen && (
         <div data-couches-drawer className="absolute inset-0 z-40 flex sm:hidden">
           <div className="absolute inset-0 bg-black/55" onClick={() => setMobileOpen(false)} />
-          <aside className="relative flex h-full w-[300px] max-w-[86%] flex-col border-r border-line bg-surface-1 shadow-2xl">
+          <aside className="relative flex h-full w-[300px] max-w-[86%] flex-col border-r border-line bg-surface-1 shadow-elev-3">
             <div className="flex shrink-0 items-center justify-between px-5 pt-4">
               <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
-              <button data-couches-fermer onClick={() => setMobileOpen(false)} className="text-txt-dim hover:text-txt" title="Revenir à la carte">✕</button>
+              <button data-couches-fermer onClick={() => setMobileOpen(false)} aria-label="Fermer"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-txt" title="Revenir à la carte">✕</button>
             </div>
             <LayersSection />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />

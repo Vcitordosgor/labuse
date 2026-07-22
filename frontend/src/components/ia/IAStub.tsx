@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { iaSearch, iaStatus } from '../../lib/api'
+import { fmtInt } from '../../lib/format'
 import { useApplySearch } from '../../lib/useApplySearch'
 import { useApp } from '../../store/useApp'
 import { ProjetEntretien } from '../projets/ProjetEntretien'
@@ -18,8 +19,6 @@ const EXAMPLES = [
   'SDP d’au moins 800 m² hors zone à risque',
   'à creuser près d’une usine ICPE',
 ]
-
-const VIOLET = '#B497F0'
 
 /** Copilote — DEUX PORTES à égalité (P1, revue Vic n°3) : la recherche simple (chemin rapide,
  *  menthe) et le montage de projet (chemin accompagné, violet). L'IA est LE produit — elle est
@@ -81,7 +80,7 @@ export function IAStub() {
         </div>
 
         {degrade && (
-          <div className="mt-4 rounded-lg border border-st-creuser/40 bg-[#211a10] px-3 py-2 text-[11px] leading-relaxed text-st-creuser">
+          <div className="mt-4 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2 text-[11px] leading-relaxed text-st-creuser">
             <b>Mode dégradé : stub local.</b>{' '}
             {/* C1 : un DIAGNOSTIC, pas une devinette — la cause exacte vient du serveur */}
             Cause : {status.data?.raison ?? 'indéterminée'}.
@@ -97,7 +96,7 @@ export function IAStub() {
         {/* LES DEUX PORTES — à égalité, désirables (cartes, pas un champ + un bouton) */}
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* PORTE 1 — Recherche simple (menthe · chemin rapide) */}
-          <section data-porte-recherche className="flex flex-col rounded-2xl border border-[#2E6B4F]/60 bg-[#0F1A14] p-5">
+          <section data-porte-recherche className="flex flex-col rounded-2xl border border-mint/30 bg-mint/[0.06] p-5">
             <div className="flex items-center gap-2">
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-mint/15 text-mint">
                 <svg viewBox="0 0 20 20" className="h-4 w-4">
@@ -119,14 +118,14 @@ export function IAStub() {
                 className="min-w-0 flex-1 rounded-xl border border-line-2 bg-surface-3 px-3.5 py-2.5 text-sm text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none"
               />
               <button onClick={() => text.trim() && run(text)} disabled={search.isPending}
-                className="shrink-0 rounded-xl bg-mint px-4 text-sm font-semibold text-mint-ink hover:brightness-110 disabled:opacity-50">
+                className="shrink-0 rounded-xl bg-mint px-4 text-sm font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-50">
                 {search.isPending ? '…' : 'Chercher'}
               </button>
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {EXAMPLES.map((e) => (
                 <button key={e} onClick={() => run(e)}
-                  className="rounded-full border border-line-2 px-2.5 py-1 text-[11px] text-txt-mut hover:border-[#2E6B4F] hover:text-txt">
+                  className="rounded-full border border-line-2 px-2.5 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint/40 hover:text-txt">
                   {e}
                 </button>
               ))}
@@ -134,10 +133,9 @@ export function IAStub() {
           </section>
 
           {/* PORTE 2 — Montage de projet (violet · chemin accompagné) */}
-          <section data-porte-projet className="flex flex-col rounded-2xl border p-5"
-            style={{ borderColor: '#4a3d6b', background: '#161022' }}>
+          <section data-porte-projet className="flex flex-col rounded-2xl border border-violet/40 bg-violet/[0.07] p-5">
             <div className="flex items-center gap-2">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg" style={{ background: 'rgba(180,151,240,0.15)', color: VIOLET }}>
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-violet/15 text-violet">
                 <svg viewBox="0 0 20 20" className="h-4 w-4">
                   <path d="M4 16 V7 L10 3.5 L16 7 V16 Z" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
                   <path d="M8 16 V11 H12 V16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
@@ -146,7 +144,7 @@ export function IAStub() {
               <h3 className="font-display text-sm font-bold text-txt-hi">Montage de projet</h3>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-txt-mut">
-              Le copilote vous aide à <b style={{ color: VIOLET }}>cadrer votre opération</b> : programme, ampleur, gabarit, périmètre, contraintes. Le chemin accompagné.
+              Le copilote vous aide à <b className="text-violet">cadrer votre opération</b> : programme, ampleur, gabarit, périmètre, contraintes. Le chemin accompagné.
             </p>
             <ol className="mt-4 space-y-2">
               {[
@@ -155,8 +153,7 @@ export function IAStub() {
                 'Il vous montre les parcelles qui portent votre projet',
               ].map((t, i) => (
                 <li key={i} className="flex items-start gap-2.5 text-xs text-txt-mut">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full font-mono text-[10px] font-bold"
-                    style={{ background: 'rgba(180,151,240,0.15)', color: VIOLET }}>{i + 1}</span>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-violet/15 font-mono text-[10px] font-bold text-violet">{i + 1}</span>
                   <span className="leading-snug">{t}</span>
                 </li>
               ))}
@@ -165,8 +162,7 @@ export function IAStub() {
               <button
                 data-decrire-projet
                 onClick={() => setEntretien(text.trim() || 'je veux monter une opération immobilière')}
-                className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold text-[#120d1d] hover:brightness-110"
-                style={{ background: VIOLET }}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet py-2.5 text-sm font-semibold text-bg transition-[filter] duration-quick hover:brightness-110"
               >
                 <svg viewBox="0 0 20 20" className="h-4 w-4"><path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z" fill="currentColor" /></svg>
                 Démarrer le montage
@@ -179,27 +175,27 @@ export function IAStub() {
         {/* M11 B2 : réponse AGRÉGÉE chiffrée — le chiffre vient d'un COUNT/GROUP BY réel (SQL),
             validé par le socle (couche 2). Étiquette « Sourcé » : jamais un compte inventé. */}
         {search.data?.aggregate && !search.data.rejected && (
-          <div data-ia-aggregate className="mt-4 rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-4 py-3">
+          <div data-ia-aggregate className="mt-4 rounded-lg border border-mint/40 bg-mint/[0.06] px-4 py-3">
             <p className="text-sm leading-relaxed text-txt">{search.data.texte}</p>
             {!!search.data.data?.classement?.length && (
               <ol data-ia-classement className="mt-2.5 space-y-1 border-t border-line pt-2">
                 {search.data.data.classement.slice(0, 6).map((c, i) => (
                   <li key={c.commune} className="flex items-center justify-between text-xs">
                     <span className="text-txt-mut"><span className="font-mono text-mint">#{i + 1}</span> {c.commune}</span>
-                    <span className="font-display font-bold text-txt-hi">{c.nombre.toLocaleString('fr-FR')}</span>
+                    <span className="num-key text-xs">{fmtInt(c.nombre)}</span>
                   </li>
                 ))}
               </ol>
             )}
             <div className="mt-2.5 border-t border-line pt-2">
-              <span className="inline-flex items-center gap-1 rounded-full border border-mint/40 bg-[#0f1a15] px-2 py-0.5 text-[10px] text-mint">
+              <span className="inline-flex items-center gap-1 rounded-full border border-mint/40 bg-mint/10 px-2 py-0.5 text-[10px] text-mint">
                 <b className="font-semibold">Sourcé</b> · comptage SQL du run servi (chiffres vérifiés, non calculés par l'IA)
               </span>
             </div>
           </div>
         )}
         {search.data?.aggregate && search.data.rejected && (
-          <div className="mt-4 rounded-lg border border-st-creuser/40 bg-[#211a10] px-4 py-3 text-xs text-st-creuser">
+          <div className="mt-4 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-4 py-3 text-xs text-st-creuser">
             {search.data.texte}
           </div>
         )}
@@ -209,14 +205,14 @@ export function IAStub() {
           </div>
         )}
         {search.data?.explanation && (
-          <div className="mt-4 rounded-lg border border-[#2E6B4F] bg-[#0F1A14] px-4 py-3 text-xs text-txt">
+          <div className="mt-4 rounded-lg border border-mint/40 bg-mint/[0.06] px-4 py-3 text-xs text-txt">
             ✓ {search.data.explanation}{' '}
             <span className="text-txt-dim">— appliqué sur la carte{search.data.stub ? ' (stub)' : ''}.</span>
           </div>
         )}
         {search.isError && (
-          <div className="mt-4 rounded-lg border border-[#5a2420] bg-[#2a1210] px-4 py-3 text-xs text-st-ecartee">
-            Erreur réseau — réessayez (serveur à relancer ?).
+          <div className="mt-4 rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-4 py-3 text-xs text-st-ecartee">
+            Erreur réseau — <button onClick={() => text.trim() && run(text)} className="underline transition-colors duration-quick hover:text-txt">réessayer</button>
           </div>
         )}
 

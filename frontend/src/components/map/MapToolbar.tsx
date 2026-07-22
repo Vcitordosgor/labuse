@@ -54,8 +54,8 @@ export function MapToolbar() {
       <div className="relative">
         <button
           onClick={() => setBmOpen((o) => !o)}
-          className={`flex h-9 items-center gap-2 rounded-[10px] border px-3 text-xs ${
-            bmOpen ? 'border-mint text-txt-hi' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
+          className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
+            bmOpen ? 'border-mint bg-surface-2 text-txt-hi' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
           title="Fond de plan"
         >
           <svg viewBox="0 0 20 20" className="h-4 w-4">
@@ -68,21 +68,21 @@ export function MapToolbar() {
         {bmOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setBmOpen(false)} />
-            <div className="absolute right-0 top-11 z-20 w-56 rounded-xl border border-line-2 bg-surface-2 p-3 shadow-2xl">
-              <p className="font-mono text-[10px] tracking-widest text-txt-dim">FOND DE PLAN</p>
+            <div className="floating absolute right-0 top-11 z-20 w-56 p-3">
+              <p className="label-caps">Fond de plan</p>
               <div className="mt-2 flex flex-col gap-1">
                 {BASEMAPS.map((b) => (
                   <button key={b.key} onClick={() => setBasemap(b.key)}
-                    className={`rounded-md px-2 py-1.5 text-left text-xs ${basemap === b.key ? 'bg-[#0F1A14] text-mint' : 'text-txt hover:bg-surface-3'}`}>
+                    className={`rounded-md px-2 py-1.5 text-left text-xs transition-colors duration-quick ${basemap === b.key ? 'bg-mint/10 text-mint' : 'text-txt hover:bg-surface-3'}`}>
                     {b.label}
                   </button>
                 ))}
               </div>
-              <p className="mt-3 font-mono text-[10px] tracking-widest text-txt-dim" title="Orthophotos historiques IGN — données libres">REMONTER LE TEMPS</p>
+              <p className="label-caps mt-3" title="Orthophotos historiques IGN — données libres">Remonter le temps</p>
               <div className="mt-2 flex gap-1">
                 {YEARS.map((y) => (
                   <button key={y.key} onClick={() => setOrthoYear(y.key)}
-                    className={`flex-1 rounded-md border px-1 py-1 text-[11px] ${
+                    className={`flex-1 rounded-md border px-1 py-1 text-[11px] transition-colors duration-quick ${
                       basemap === 'ortho' && orthoYear === y.key ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
                     {y.label}
                   </button>
@@ -96,8 +96,8 @@ export function MapToolbar() {
       {/* relief 3D */}
       <button
         onClick={toggleTerrain}
-        className={`flex h-9 items-center gap-2 rounded-[10px] border px-3 text-xs ${
-          terrain3d ? 'border-mint bg-[#0F1A14] text-mint' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
+        className={`flex h-9 items-center gap-2 rounded-lg border px-3 text-xs shadow-elev-1 transition-colors duration-quick ${
+          terrain3d ? 'border-mint bg-surface-2 text-mint' : 'border-line-2 bg-surface-2 text-txt hover:text-txt-hi'}`}
         title="Relief 3D (MNT) — maintenir Ctrl + glisser pour incliner la vue"
       >
         <svg viewBox="0 0 20 20" className="h-4 w-4">
@@ -107,7 +107,7 @@ export function MapToolbar() {
       </button>
 
       {/* outils de mesure */}
-      <div className="flex flex-col overflow-hidden rounded-[10px] border border-line-2 bg-surface-2">
+      <div className="flex flex-col overflow-hidden rounded-lg border border-line-2 bg-surface-2 shadow-elev-1">
         {TOOLS.map((t) => {
           // le filtre de zone compte côté client sur les features de la commune chargée —
           // en mode « Toute l'île » il serait menteur : désactivé avec la marche à suivre
@@ -116,15 +116,15 @@ export function MapToolbar() {
             <div key={t.key} className="relative">
               <button
                 onClick={() => (off ? setZoneHint(true) : setTool(tool === t.key ? null : t.key))}
-                className={`flex h-9 w-9 items-center justify-center border-b border-line-2 last:border-0 ${
-                  off ? 'text-[#2E3A33]'
-                    : tool === t.key ? 'bg-[#0F1A14] text-mint' : 'text-txt-mut hover:text-txt'}`}
+                className={`flex h-9 w-9 items-center justify-center border-b border-line-2 transition-colors duration-quick last:border-0 ${
+                  off ? 'text-st-none'
+                    : tool === t.key ? 'bg-mint/10 text-mint' : 'text-txt-mut hover:text-txt'}`}
                 title={off ? undefined : `${t.label} — ${t.hint}`}
               >
                 <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">{t.icon}</svg>
               </button>
               {off && zoneHint && (
-                <span data-hint-zone className="absolute right-11 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-st-creuser/40 bg-[#211a10] px-2 py-1 text-[11px] text-st-creuser">
+                <span data-hint-zone className="absolute right-11 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-st-creuser/40 bg-surface-2 px-2 py-1 text-[11px] text-st-creuser shadow-elev-2">
                   Par commune — choisissez une commune
                 </span>
               )}
@@ -136,7 +136,7 @@ export function MapToolbar() {
       {zone && (
         <button
           onClick={() => setZone(null)}
-          className="flex h-8 items-center gap-2 rounded-full border border-mint bg-[#0F1A14] px-3 text-[11px] text-mint"
+          className="flex h-8 items-center gap-2 rounded-full border border-mint bg-surface-2 px-3 text-[11px] text-mint shadow-elev-1 transition-colors duration-quick hover:bg-mint/10"
           title="Retirer le filtre de zone"
         >
           Zone active <span className="text-txt-dim">×</span>

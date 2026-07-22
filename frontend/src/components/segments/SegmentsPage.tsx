@@ -147,15 +147,15 @@ function FiltreRow({ f, defs, onChange, onRemove }: {
             <input type="number" min={0} placeholder="min" value={f.min ?? ''}
               onChange={(e) => onChange({ ...f, min: num(e.target.value) })}
               className={`w-24 rounded-md border bg-bg px-2 py-1 text-[11px] text-txt outline-none ${
-                rangeHorsDomaine(f) ? 'border-[#E8B44C] focus:border-[#E8B44C]' : 'border-line-2 focus:border-mint'}`} />
+                rangeHorsDomaine(f) ? 'border-st-creuser focus:border-st-creuser' : 'border-line-2 focus:border-mint'}`} />
             <span className="text-[11px] text-txt-dim">à</span>
             <input type="number" min={0} placeholder="max" value={f.max ?? ''}
               onChange={(e) => onChange({ ...f, max: num(e.target.value) })}
               className={`w-24 rounded-md border bg-bg px-2 py-1 text-[11px] text-txt outline-none ${
-                rangeHorsDomaine(f) ? 'border-[#E8B44C] focus:border-[#E8B44C]' : 'border-line-2 focus:border-mint'}`} />
+                rangeHorsDomaine(f) ? 'border-st-creuser focus:border-st-creuser' : 'border-line-2 focus:border-mint'}`} />
           </div>
           {rangeHorsDomaine(f) && (
-            <p data-seg-garde className="mt-1 text-[11px] leading-snug text-[#E8B44C]">
+            <p data-seg-garde className="mt-1 text-[11px] leading-snug text-st-creuser">
               Valeurs hors domaine (≥ 0, min ≤ max) — critère ignoré tant qu'il n'est pas corrigé.
             </p>
           )}
@@ -294,7 +294,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
             </div>
           )}
           {(dejaLa.has('emprise_residuelle_m2') || dejaLa.has('surelevation_possible')) && (
-            <p className="mt-1.5 rounded-md border border-[#E8B44C]/30 bg-[#E8B44C]/5 px-2 py-1 text-[11px] leading-snug text-[#E8B44C]">
+            <p className="mt-1.5 rounded-md border border-st-creuser/30 bg-st-creuser/5 px-2 py-1 text-[11px] leading-snug text-st-creuser">
               {home.libelle_residuel}
             </p>
           )}
@@ -332,7 +332,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
           </div>
           <div className="flex gap-2">
             <button data-seg-export onClick={() => exp.mutate()} disabled={exp.isPending || !rep?.count}
-              className="flex-1 rounded-lg bg-mint px-3 py-1.5 text-[11px] font-semibold text-[#06130C] hover:brightness-110 disabled:opacity-40">
+              className="flex-1 rounded-lg bg-mint px-3 py-1.5 text-[11px] font-semibold text-mint-ink hover:brightness-110 disabled:opacity-40">
               {exp.isPending ? 'Export…' : 'Exporter CSV (occupant)'}
             </button>
             <button data-seg-dupliquer onClick={() => dup.mutate()} title="Admin : enregistrer ces filtres comme nouveau preset"
@@ -354,7 +354,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
       {/* résultats : compteur + carte + table */}
       <div className={`${ongletMobile === 'resultats' ? 'flex' : 'hidden'} min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-4 sm:flex`}>
         {catnatOn && (
-          <div data-seg-catnat className="mb-3 rounded-lg border border-[#E8695A]/40 bg-[#E8695A]/10 px-3 py-2 text-[11px] text-[#f0a29a]">
+          <div data-seg-catnat className="mb-3 rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
             Communes récemment en état de catastrophe naturelle ({home.catnat.fenetre_mois} mois) :{' '}
             <span className="font-medium text-txt-hi">{home.catnat.communes.map((c) => c.commune).join(', ')}</span>
             {' '}— filtre CATNAT proposé pré-coché.
@@ -364,7 +364,7 @@ function Builder({ home, preset, onBack }: { home: SegmentsHome; preset: Segment
           <span data-seg-count className="font-display text-2xl font-bold text-mint">{fmtN(rep?.count)}</span>
           <span className="text-xs text-txt-dim">parcelles matchées{rq.isFetching ? ' · calcul…' : ''}</span>
           {!!rep?.filtres_inactifs?.length && (
-            <span className="rounded-md border border-[#E8B44C]/40 bg-[#E8B44C]/10 px-2 py-0.5 text-[11px] text-[#E8B44C]"
+            <span className="rounded-md border border-st-creuser/40 bg-st-creuser/10 px-2 py-0.5 text-[11px] text-st-creuser"
               title={rep.filtres_inactifs.map((f) => `${f.libelle} — ${f.mandat ? `mandat ${f.mandat}` : f.raison ?? ''}`).join('\n')}>
               partiel : {rep.filtres_inactifs.length} filtre(s) en attente de données
             </span>
@@ -522,7 +522,7 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
             <span className="truncate text-[12.5px] font-medium text-txt-hi">{p.nom}</span>
           </span>
           <span data-seg-badge className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wider ${
-            partiel ? 'border-[#E8B44C]/40 bg-[#E8B44C]/10 text-[#E8B44C]' : 'border-mint/40 bg-mint/10 text-mint'}`}
+            partiel ? 'border-st-creuser/40 bg-st-creuser/10 text-st-creuser' : 'border-mint/40 bg-mint/10 text-mint'}`}
             title={partiel ? p.filtres_inactifs.map((f) => `${f.libelle} — ${f.mandat ? `mandat ${f.mandat}` : f.raison ?? ''}`).join('\n') : 'toutes les sources de données sont disponibles'}>
             {partiel ? `partiel · ${p.filtres_inactifs.length}` : 'complet'}
           </span>
@@ -545,7 +545,7 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
               {new Date(p.count_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
-          {catnatOn && <span className="ml-auto rounded-md bg-[#E8695A]/15 px-1.5 py-0.5 text-[9px] font-medium text-[#f0a29a]">CATNAT actif</span>}
+          {catnatOn && <span className="ml-auto rounded-md bg-st-ecartee/15 px-1.5 py-0.5 text-[9px] font-medium text-st-ecartee">CATNAT actif</span>}
         </div>
         {/* la description filtre (argumentaire) passe en SOUS-TEXTE quand un bénéfice existe */}
         {p.argumentaire && (
@@ -566,7 +566,7 @@ function PresetCard({ p, home, onOpen }: { p: SegmentPreset; home: SegmentsHome;
         <button data-seg-admin-dupliquer onClick={() => dup.mutate()} className="hover:text-txt">dupliquer</button>
         <button data-seg-admin-argumentaire onClick={() => editArg.mutate()} className="hover:text-txt">argumentaire</button>
         <button data-seg-admin-toggle onClick={() => toggle.mutate()} className="hover:text-txt">{p.actif ? 'désactiver' : 'activer'}</button>
-        {p.created_by !== 'seed' && <button onClick={() => suppr.mutate()} className="hover:text-[#E8695A]">supprimer</button>}
+        {p.created_by !== 'seed' && <button onClick={() => suppr.mutate()} className="hover:text-st-ecartee">supprimer</button>}
       </div>
     </div>
   )
@@ -598,7 +598,7 @@ function BarreNL({ onFiltres }: { onFiltres: (filtres: SegmentFiltre[], explicat
         </button>
       </form>
       {rep?.out_of_scope && (
-        <p data-seg-nl-oos className="mt-1.5 text-[11px] leading-snug text-[#E8B44C]">
+        <p data-seg-nl-oos className="mt-1.5 text-[11px] leading-snug text-st-creuser">
           {rep.out_of_scope}{rep.message ? ` — ${rep.message}` : ''}
         </p>
       )}
@@ -609,7 +609,7 @@ function BarreNL({ onFiltres }: { onFiltres: (filtres: SegmentFiltre[], explicat
       )}
       {!!rep?.filtres_gates?.length && (
         /* même mécanique que les presets : filtre réservé à un plan supérieur → grisé + CTA */
-        <p data-seg-nl-upgrade className="mt-1.5 text-[10.5px] text-[#E8B44C]">
+        <p data-seg-nl-upgrade className="mt-1.5 text-[10.5px] text-st-creuser">
           {rep.filtres_gates.length} filtre(s) réservé(s) au plan Intégral —{' '}
           <span className="underline">passer au plan Intégral</span> pour les activer.
         </p>
@@ -654,7 +654,7 @@ export function SegmentsPage() {
 
       {/* ── HÉROS (décision produit 12/07) : le BUILDER d'abord — c'est l'écran qui faisait
           dire « outil pour piscinistes » : le ciblage libre passe devant les métiers. ── */}
-      <section data-vues-hero className="mb-4 rounded-2xl border border-[#2E6B4F]/60 bg-[#0F1A14] p-5">
+      <section data-vues-hero className="mb-4 rounded-2xl border border-mint/30 bg-mint/[0.06] p-5">
         <h2 className="font-display text-[15px] font-bold text-txt-hi">
           Composez votre ciblage sur {home.filtres.filter((f) => f.disponible).length} critères,
           ou décrivez-le en français
@@ -695,8 +695,8 @@ export function SegmentsPage() {
           <h2 className="font-display text-[15px] font-bold text-txt-hi">Foncier — Brûlantes & chaudes</h2>
           {statsIle.data && (
             <span className="font-mono text-[11px] text-txt-mut">
-              <b style={{ color: '#E8695A' }}>{fmtN(statsIle.data.tiers.brulante)}</b> brûlantes ·{' '}
-              <b style={{ color: '#E8B44C' }}>{fmtN(statsIle.data.tiers.chaude)}</b> chaudes
+              <b className="tnum text-st-ecartee">{fmtN(statsIle.data.tiers.brulante)}</b> brûlantes ·{' '}
+              <b className="tnum text-st-creuser">{fmtN(statsIle.data.tiers.chaude)}</b> chaudes
             </span>
           )}
         </div>
@@ -710,7 +710,7 @@ export function SegmentsPage() {
       </button>
 
       {home.catnat.communes.length > 0 && (
-        <div data-seg-catnat-bandeau className="mb-4 rounded-lg border border-[#E8695A]/40 bg-[#E8695A]/10 px-3 py-2 text-[11px] text-[#f0a29a]">
+        <div data-seg-catnat-bandeau className="mb-4 rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2 text-[11px] text-st-ecartee">
           Catastrophe naturelle ({home.catnat.fenetre_mois} derniers mois) :{' '}
           <span className="font-medium text-txt-hi">{home.catnat.communes.map((c) => c.commune).join(', ')}</span>
           {' '}— les vues couvreurs/menuiseries proposent le filtre pré-coché.

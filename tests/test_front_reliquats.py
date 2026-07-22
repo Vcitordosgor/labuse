@@ -53,10 +53,11 @@ def test_r2_trois_decisions_presentes():
 
 
 def test_r2_couleurs_colonnes_kanban():
-    # une décision = la couleur de sa colonne d'arrivée (M2)
-    assert "#E8695A" in TINDER and "#E8695A" in KANBAN     # écartée
-    assert "#E8B44C" in TINDER and "#E8B44C" in KANBAN     # à analyser
-    assert "bg-mint" in TINDER                              # retenue (mint plein = la plus forte)
+    # une décision = la couleur de sa colonne d'arrivée (M2) — revue UI/UX S13/S14 :
+    # les hex locaux sont devenus les tokens de palette (mêmes couleurs, source unique)
+    assert "st-ecartee" in TINDER and "st-ecartee" in KANBAN   # écartée (#E8695A token)
+    assert "st-creuser" in TINDER and "st-creuser" in KANBAN   # à analyser (#E8B44C token)
+    assert "bg-mint" in TINDER                                  # retenue (mint plein = la plus forte)
 
 
 def test_r2_sortie_distincte_des_decisions():
@@ -102,8 +103,9 @@ def test_r3_matrice_non_thermique():
 def test_r3_desambiguisation_cote_a_cote():
     # TierBadge (les deux classements côte à côte) porte le tooltip d'explication
     assert "Deux classements distincts" in TIERBADGE
-    # légende matrice contextualisée (jamais un « VERDICT » thermique ambigu)
-    assert "VERDICT · MATRICE Q×A" in LEGEND
+    # légende matrice contextualisée (jamais un « VERDICT » thermique ambigu) —
+    # revue UI/UX S20 : libellé en casse mixte, les capitales viennent du token .label-caps
+    assert "Verdict · Matrice Q×A" in LEGEND
 
 
 def test_r3_marqueur_commune_non_thermique():
