@@ -4,10 +4,11 @@ import {
   chercherPlus, getParcoursEtat, getProjet, patchProjet, projetPdfUrl, proposerProjet, setStatutParcelle,
   type FicheProjet, type ParcoursEtat, type ParcoursItem, type ProprietairePublic, type StatutParcelle,
 } from '../../lib/api'
+import { fmtDate, fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
+import { Loading } from '../Loading'
 import { TierBadge } from '../outils/TierBadge'
-
-const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Number(n)).toLocaleString('fr-FR'))
+import { Tip } from '../Tip'
 
 const TYPE_LABEL: Record<string, string> = {
   logements: 'Logements', etudiant: 'Logement étudiant', bureaux: 'Bureaux', autre: 'Projet',
@@ -29,17 +30,14 @@ function criteres(f: FicheProjet): string[] {
   out.push(!p || p.mode === 'ile' ? "toute l'île" : p.mode === 'secteur' ? `secteur ${p.secteur}`
     : (p.communes ?? []).length === 1 ? p.communes![0] : `${(p.communes ?? []).length} communes`)
   if (f.contraintes?.length) out.push(f.contraintes.map((c) => CONTRAINTE_LABEL[c] ?? c).join(' · '))
-  if (f.budget_foncier_eur) out.push(`${(f.budget_foncier_eur / 1000).toLocaleString('fr-FR')} k€`)
+  if (f.budget_foncier_eur) out.push(fmtEurCompact(f.budget_foncier_eur))
   return out
 }
 
-function frDate(iso: string | null): string {
-  return iso ? new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'
-}
-
-/** Les 3 colonnes du projet unifié — UNE seule source de vérité : les statuts `projet_parcelles`. */
+/** Les 3 colonnes du projet unifié — UNE seule source de vérité : les statuts `projet_parcelles`.
+ *  Accents = tokens de statut (à trier reste NEUTRE : la couleur est pour les décisions). */
 const COLS: { key: StatutParcelle; label: string; accent: string }[] = [
-  { key: 'proposee', label: 'À trier', accent: '#8FB4F0' },
+  { key: 'proposee', label: 'À trier', accent: '#39463F' },
   { key: 'retenue', label: 'Retenues', accent: '#5CE6A1' },
   { key: 'ecartee', label: 'Écartées', accent: '#E8695A' },
 ]
@@ -68,11 +66,11 @@ function moveItem(etat: ParcoursEtat, idu: string, statut: StatutParcelle): Parc
 function ProprioLine({ p }: { p?: ProprietairePublic | null }) {
   if (!p) return null
   if (p.type === 'personne_morale') return (
-    <div className="truncate text-[10px] text-txt-mut" title={`Personne morale · SIREN ${p.siren ?? '—'}`}>
+    <div className="truncate text-[10px] text-txt-mut" title={`Personne morale (registre public DGFiP) · SIREN ${p.siren ?? '—'}`}>
       <span className="text-txt">{p.denomination}</span>{p.siren ? <span className="text-txt-dim"> · SIREN {p.siren}</span> : null}
     </div>
   )
-  return <div className="truncate text-[10px] italic text-txt-dim" title="Propriétaire personne physique — non communiqué (privacy)">Propriétaire particulier — non communiqué</div>
+  return <div className="truncate text-[10px] italic text-txt-dim" title="Propriétaire personne physique — jamais nommé (privacy)">Propriétaire particulier — non communiqué</div>
 }
 
 /** VUE PROJET UNIFIÉE (PJ3) — kanban 3 colonnes (À trier / Retenues / Écartées) branché sur les
@@ -141,8 +139,10 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   return (
     <div data-projet-kanban className="flex min-w-0 flex-1 flex-col overflow-hidden bg-bg">
       {/* HEADER : nom + critères + rejoué + actions */}
-      <div className="shrink-0 border-b border-line-2 px-6 pt-5 pb-3">
-        <button onClick={() => setOpenProjet(null)} className="text-[11px] text-txt-mut hover:text-txt-hi" title="Revenir à la liste des projets">← Mes projets</button>
+      <div className="shrink-0 border-b border-line-2 px-4 pt-5 pb-3 sm:px-6">
+        <button onClick={() => setOpenProjet(null)}
+          className="min-h-7 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi"
+          title="Revenir à la liste des projets">← Mes projets</button>
         <div className="mt-1.5 flex items-start justify-between gap-3">
           <div className="min-w-0">
             {editing ? (
@@ -159,32 +159,32 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
             )}
             <div className="mt-1 flex flex-wrap items-center gap-1.5">
               {projet && criteres(projet.fiche).map((c, i) => (
-                <span key={i} className="rounded-full border border-line-2 bg-surface-2 px-2 py-0.5 text-[10.5px] text-txt-mut">{c}</span>
+                <span key={i} className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{c}</span>
               ))}
               {projet?.derniere_execution_at && (
-                <span className="text-[10.5px] text-txt-dim">· rejoué {frDate(projet.derniere_execution_at)}</span>
+                <span className="whitespace-nowrap text-[10.5px] text-txt-dim">· rejoué {fmtDate(projet.derniere_execution_at)}</span>
               )}
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
             <button data-kanban-chercher onClick={() => { setMsg(''); elargir.mutate() }} disabled={elargir.isPending}
-              className="rounded-md border border-mint/45 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint hover:bg-mint/20 disabled:opacity-50">
-              {elargir.isPending ? '…' : '＋ Chercher plus'}
+              className="min-h-7 rounded-md border border-mint/45 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-50">
+              {elargir.isPending ? '…' : '+ Chercher plus'}
             </button>
             <a data-kanban-pdf href={projetPdfUrl(pid)} target="_blank" rel="noreferrer"
-              className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-txt-hi">Exporter</a>
+              className="min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi">Exporter</a>
             <button data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }}
-              className="rounded-md px-2 py-1 text-[11px] text-txt-mut hover:text-txt-hi">Renommer</button>
+              className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Renommer</button>
             <button data-kanban-archiver onClick={() => { patch.mutate({ statut: 'archive' }); setOpenProjet(null) }}
-              className="rounded-md px-2 py-1 text-[11px] text-txt-mut hover:text-txt-hi">Archiver</button>
+              className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Archiver</button>
           </div>
         </div>
         {msg && <p data-kanban-msg className="mt-1.5 text-[10.5px] text-mint">{msg}</p>}
       </div>
 
       {/* 3 COLONNES */}
-      <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto p-6">
-        {etatQ.isLoading && <p className="text-xs text-txt-dim">Chargement du projet…</p>}
+      <div className="flex min-h-0 flex-1 gap-4 overflow-x-auto p-4 sm:p-6">
+        {etatQ.isLoading && <Loading label="Chargement du projet…" className="mx-auto self-center" />}
         {COLS.map((col) => {
           const aAnalyser = etat?.a_analyser ?? []
           // M2 — HYBRIDE : « proposées » = file de travail (liste dense triée par rang) où « à analyser »
@@ -199,7 +199,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               onDragOver={(e) => { e.preventDefault(); setOverCol(col.key) }}
               onDragLeave={() => setOverCol((o) => (o === col.key ? null : o))}
               onDrop={(e) => { e.preventDefault(); onDrop(col.key) }}
-              className={`flex ${isProp ? 'w-[340px]' : 'w-[300px]'} max-w-[34vw] shrink-0 flex-col rounded-xl border bg-surface-1 ${overCol === col.key && drag && drag.from !== col.key ? 'border-mint ring-1 ring-mint/40' : 'border-line-2'}`}>
+              className={`flex ${isProp ? 'w-[340px]' : 'w-[300px]'} max-w-[85vw] shrink-0 flex-col rounded-xl border bg-surface-1 shadow-elev-1 transition-colors duration-quick sm:max-w-[34vw] ${overCol === col.key && drag && drag.from !== col.key ? 'border-mint ring-1 ring-mint/40' : 'border-transparent'}`}>
               {/* tête de colonne : compteur + action de tête */}
               <div className="flex shrink-0 items-center gap-2 border-b border-line-2 px-3 py-2.5">
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: col.accent }} />
@@ -207,20 +207,28 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                 <span data-kanban-count={col.key} className="font-mono text-[11px] text-txt-dim">{count(col.key)}</span>
                 {isProp && aAnalyser.length > 0 && (
                   <button data-kanban-filtre-analyse onClick={() => setFiltreAnalyse((v) => !v)}
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${filtreAnalyse ? 'bg-[#E8B44C] text-[#06130C]' : 'border border-[#E8B44C]/60 text-[#E8B44C]'}`}
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold transition-colors duration-quick ${filtreAnalyse ? 'bg-st-creuser text-mint-ink' : 'border border-st-creuser/60 text-st-creuser'}`}
                     title="Filtrer sur les parcelles marquées « à analyser »">◑ à analyser {aAnalyser.length}</button>
                 )}
                 {isProp && count('proposee') > 0 && (
                   <button data-kanban-trier onClick={() => openParcours({ id: pid, nom: projet?.nom ?? nom })}
-                    className="ml-auto rounded-md bg-mint px-2.5 py-1 text-[11px] font-semibold text-[#06130C] hover:brightness-110"
+                    className="ml-auto rounded-md bg-mint px-2.5 py-1 text-[11px] font-semibold text-mint-ink transition-[filter] duration-quick hover:brightness-110"
                     title="Parcourir les parcelles à trier une par une (carte)">Trier</button>
                 )}
-                {col.key === 'retenue' && <span className="ml-auto text-[10px] text-txt-dim" title="Chaque retenue crée une piste CRM (contact à préparer)">→ CRM</span>}
-                {col.key === 'ecartee' && <span className="ml-auto text-[10px] text-txt-dim">réversible</span>}
+                {col.key === 'retenue' && (
+                  <Tip tip="Chaque retenue crée une piste CRM (contact à préparer)" className="ml-auto">
+                    <span className="text-[10px] text-txt-dim">→ CRM</span>
+                  </Tip>
+                )}
+                {col.key === 'ecartee' && (
+                  <Tip tip="Écarter n'est jamais définitif : « Récupérer » repasse la parcelle à trier." className="ml-auto">
+                    <span className="text-[10px] text-txt-dim">réversible</span>
+                  </Tip>
+                )}
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5">
                 {list.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-line-2 py-6 text-center text-[11px] text-txt-dim">
+                  <div className="rounded-lg bg-surface-2/60 py-6 text-center text-[11px] text-txt-dim">
                     {isProp ? (filtreAnalyse ? 'Rien à analyser' : 'Rien à trier — « Chercher plus »') : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
                   </div>
                 )}
@@ -241,12 +249,13 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
                     ))}
                 {!isProp && reste > 0 && (
                   <button data-kanban-plus={col.key} onClick={() => setExpandCol(col.key)}
-                    className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut hover:border-mint hover:text-txt-hi">
+                    className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt-hi">
                     + {reste} autre{reste > 1 ? 's' : ''}
                   </button>
                 )}
                 {!isProp && expandCol === col.key && list.length > APERCU && (
-                  <button onClick={() => setExpandCol(null)} className="text-[10.5px] text-txt-dim hover:text-txt-mut">réduire</button>
+                  <button onClick={() => setExpandCol(null)}
+                    className="min-h-7 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-txt-mut">réduire</button>
                 )}
               </div>
             </div>
@@ -269,9 +278,13 @@ function Vignette({ center }: { center: [number, number] | null | undefined }) {
 function Badges({ it }: { it: ParcoursItem }) {
   return (
     <span className="ml-1 inline-flex flex-wrap gap-1 align-middle">
-      {it.hors_criteres && <span data-badge-hors className="rounded-full border border-[#E8B44C] px-1.5 text-[8.5px] font-semibold text-[#E8B44C]" title="Décidée avant, hors des critères actuels — conservée (jamais évincée)">hors critères actuels</span>}
-      {it.defisc && <span className="rounded-full border border-[#B497F0] px-1.5 text-[8.5px] font-semibold text-[#B497F0]">défisc</span>}
-      {it.caduc && <span className="rounded-full border border-[#E8B44C] px-1.5 text-[8.5px] font-semibold text-[#E8B44C]">PC caduc</span>}
+      {it.hors_criteres && (
+        <Tip tip="Décidée avant, hors des critères actuels — conservée (jamais évincée)">
+          <span data-badge-hors className="rounded-full border border-st-creuser px-1.5 text-[8.5px] font-semibold text-st-creuser">hors critères actuels</span>
+        </Tip>
+      )}
+      {it.defisc && <span className="rounded-full border border-violet px-1.5 text-[8.5px] font-semibold text-violet">défisc</span>}
+      {it.caduc && <span className="rounded-full border border-st-creuser px-1.5 text-[8.5px] font-semibold text-st-creuser">PC caduc</span>}
     </span>
   )
 }
@@ -285,17 +298,17 @@ function ProposeeRow({ it, onDragStart, onAction, onFiche }: {
   return (
     <div draggable onDragStart={onDragStart} data-proposee-row={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className={`group flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 hover:border-[#2E5A45] ${analyse ? 'border-[#E8B44C]/50 bg-[#E8B44C]/5' : 'border-line-2 bg-surface-2'}`}
+      className={`group flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 transition-colors duration-quick hover:border-mint/30 ${analyse ? 'border-st-creuser/50 bg-st-creuser/5' : 'border-line-2 bg-surface-2'}`}
       title="Ouvrir la fiche · glisser pour décider">
-      {analyse && <span className="text-[10px] text-[#E8B44C]" title="à analyser (remonté en tête)">◑</span>}
+      {analyse && <span className="text-[10px] text-st-creuser" title="à analyser (remonté en tête)">◑</span>}
       <span className="w-[86px] shrink-0 truncate font-mono text-[10.5px] text-txt-hi">{it.idu.slice(8, 10)} {it.idu.slice(10)}</span>
       <span className="min-w-0 flex-1 truncate text-[10.5px] text-txt-mut">{it.commune}<Badges it={it} /></span>
       <TierBadge tier={it.tier} etage0={null} statut={null} />
-      {it.surface_m2 != null && <span className="hidden shrink-0 font-mono text-[10px] text-txt-dim sm:inline">{fmt(it.surface_m2)} m²</span>}
-      <span className="flex shrink-0 gap-1 opacity-60 group-hover:opacity-100">
-        <button data-row-retenir onClick={() => onAction('retenue')} className="rounded bg-mint/90 px-1.5 py-0.5 text-[10px] font-semibold text-[#06130C]" title="Retenir">✓</button>
-        {!analyse && <button data-row-analyser onClick={() => onAction('a_analyser')} className="rounded border border-[#E8B44C]/50 px-1.5 py-0.5 text-[10px] text-[#E8B44C]" title="À analyser">◑</button>}
-        <button data-row-ecarter onClick={() => onAction('ecartee')} className="rounded border border-[#E8695A]/50 px-1.5 py-0.5 text-[10px] text-[#E8695A]" title="Écarter">✕</button>
+      {it.surface_m2 != null && <span className="tnum hidden shrink-0 font-mono text-[10px] text-txt-dim sm:inline">{fmtM2(it.surface_m2)}</span>}
+      <span className="flex shrink-0 gap-1 opacity-60 transition-opacity duration-quick group-hover:opacity-100">
+        <button data-row-retenir onClick={() => onAction('retenue')} className="rounded border border-mint/60 px-1.5 py-1 text-[10px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15" title="Retenir">✓</button>
+        {!analyse && <button data-row-analyser onClick={() => onAction('a_analyser')} className="rounded border border-st-creuser/50 px-1.5 py-1 text-[10px] text-st-creuser transition-colors duration-quick hover:bg-st-creuser/10" title="À analyser">◑</button>}
+        <button data-row-ecarter onClick={() => onAction('ecartee')} className="rounded border border-st-ecartee/50 px-1.5 py-1 text-[10px] text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10" title="Écarter">✕</button>
       </span>
     </div>
   )
@@ -311,7 +324,7 @@ function KanbanCard({ it, col, onDragStart, onAction, onFiche }: {
     <div draggable onDragStart={onDragStart}
       data-kanban-card={it.idu}
       onClick={(e) => { if (!(e.target as HTMLElement).closest('button')) onFiche() }}
-      className="group cursor-pointer rounded-[10px] border border-line-2 bg-surface-3 p-3 active:cursor-grabbing hover:border-[#2E5A45]"
+      className="group cursor-pointer rounded-lg bg-surface-3 p-3 shadow-elev-1 ring-1 ring-transparent transition-shadow duration-quick active:cursor-grabbing hover:ring-mint/30"
       title="Ouvrir la fiche · glisser pour changer de colonne">
       <div className="flex gap-2.5">
         <Vignette center={it.center} />
@@ -320,13 +333,15 @@ function KanbanCard({ it, col, onDragStart, onAction, onFiche }: {
             <span className="truncate font-mono text-[11px] font-medium text-txt-hi">{it.idu.slice(8, 10)} {it.idu.slice(10)}</span>
             <TierBadge tier={it.tier} etage0={null} statut={null} />
           </div>
-          <div className="mt-0.5 text-[10.5px] text-txt-mut" title="Tier = probabilité relative de mutation (facteur P) ; qualité = complétude du dossier (couches renseignées). Deux choses distinctes.">{it.commune}{it.q_score != null ? ` · qualité ${fmt(it.q_score)}/100` : ''}{it.surface_m2 != null ? ` · ${fmt(it.surface_m2)} m²` : ''}</div>
+          <div className="tnum mt-0.5 truncate text-[10.5px] text-txt-mut"
+            title="Tier = probabilité relative de mutation (facteur P) ; qualité = complétude du dossier (couches renseignées). Deux choses distinctes.">
+            {it.commune}{it.q_score != null ? ` · qualité ${fmtInt(it.q_score)}/100` : ''}{it.surface_m2 != null ? ` · ${fmtM2(it.surface_m2)}` : ''}</div>
           <div className="mt-1"><Badges it={it} /></div>
         </div>
       </div>
       {col === 'retenue' && (
         <div className="mt-1.5 border-t border-line-2/60 pt-1.5">
-          <div className="text-[10px] text-mint" title="Piste créée automatiquement dans le CRM">▸ dans le CRM · contact à préparer</div>
+          <div className="text-[10px] text-mint" title="Piste créée automatiquement dans le CRM — remettre à trier l'en retire">▸ dans le CRM · contact à préparer</div>
           <ProprioLine p={it.proprietaire_public} />
         </div>
       )}
@@ -334,15 +349,15 @@ function KanbanCard({ it, col, onDragStart, onAction, onFiche }: {
       <div className="mt-2 flex gap-1.5">
         {col !== 'retenue' && (
           <button data-card-retenir onClick={() => onAction('retenue')}
-            className="flex-1 rounded-md bg-mint/90 py-1 text-[10.5px] font-semibold text-[#06130C] hover:bg-mint">✓ Retenir</button>
+            className="min-h-7 flex-1 rounded-md border border-mint/60 py-1 text-[10.5px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15">✓ Retenir</button>
         )}
         {col !== 'ecartee' && (
           <button data-card-ecarter onClick={() => onAction('ecartee')}
-            className="flex-1 rounded-md border border-[#E8695A]/50 py-1 text-[10.5px] font-medium text-[#E8695A] hover:bg-[#E8695A]/10">✕ Écarter</button>
+            className="min-h-7 flex-1 rounded-md border border-st-ecartee/50 py-1 text-[10.5px] font-medium text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10">✕ Écarter</button>
         )}
         {col !== 'proposee' && (
           <button data-card-retrier onClick={() => onAction('proposee')}
-            className="flex-1 rounded-md border border-line-2 py-1 text-[10.5px] text-txt-mut hover:border-mint hover:text-txt"
+            className="min-h-7 flex-1 rounded-md border border-line-2 py-1 text-[10.5px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt"
             title={col === 'ecartee' ? 'Récupérer (repasse à trier)' : 'Remettre à trier (retire du CRM)'}>↩ {col === 'ecartee' ? 'Récupérer' : 'À trier'}</button>
         )}
       </div>
