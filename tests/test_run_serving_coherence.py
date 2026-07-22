@@ -85,7 +85,31 @@ def test_mvt_run_label_cible_distante():
     target = os.environ.get("LABUSE_QA_TARGET")
     if not target:
         pytest.skip("LABUSE_QA_TARGET non défini — vérification distante réservée au geste M7")
-    with urllib.request.urlopen(f"{target.rstrip('/')}/map/tiles/meta", timeout=15) as resp:
+    # M7 : cible en LABUSE_ENV=production → login applicatif (cookie) via LABUSE_QA_PASSWORD,
+    # et rideau Caddy éventuel via LABUSE_QA_BASIC (même contrat que qa/golden_check.py).
+    import base64
+    import http.cookiejar
+    import ssl
+    try:
+        import certifi
+        ctx = ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        ctx = ssl.create_default_context()
+    opener = urllib.request.build_opener(
+        urllib.request.HTTPSHandler(context=ctx),
+        urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    basic = os.environ.get("LABUSE_QA_BASIC")
+    if basic:
+        opener.addheaders = [("Authorization", "Basic " + base64.b64encode(basic.encode()).decode())]
+    pw = os.environ.get("LABUSE_QA_PASSWORD")
+    if pw:
+        try:
+            opener.open(urllib.request.Request(f"{target.rstrip('/')}/login", method="POST",
+                        data=json.dumps({"password": pw}).encode(),
+                        headers={"Content-Type": "application/json"}), timeout=15)
+        except urllib.error.HTTPError:
+            pass    # le login répond 303 → urllib suit vers une page protégée ; le cookie est déjà posé
+    with opener.open(f"{target.rstrip('/')}/map/tiles/meta", timeout=15) as resp:
         meta = json.loads(resp.read().decode("utf-8"))
     if meta.get("run_label") is None:
         pytest.skip("cible sans tuiles construites (build-mvt jamais lancé)")

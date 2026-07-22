@@ -235,6 +235,10 @@ async def garde_protection(request: Request, call_next):
         # Exemption DEV EXPLICITE (flag d'env, jamais une détection localhost — derrière
         # nginx tout arrive en 127.0.0.1). Quotas + rate-limit court-circuités.
         return await call_next(request)
+    # M7 — voie QA prod : IP explicitement allowlistée (golden/monitoring) → exemptée,
+    # SANS toucher au régime des autres clients (jamais dev_mode sur une machine publique).
+    if s.qa_allowlist and ip_reelle(request) in {x.strip() for x in s.qa_allowlist.split(",") if x.strip()}:
+        return await call_next(request)
     sujet = sujet_de(request)
     jour = _aujourdhui()
     now = time.time()

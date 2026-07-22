@@ -20,15 +20,18 @@ KEEP_LOCAL="${LABUSE_BACKUP_KEEP_LOCAL:-14}"
 mkdir -p "$DEST"
 
 # 1) Rapatrier (rsync : delta seulement, préserve les horodatages)
-rsync -avz --include="labuse_*.dump" --exclude="*" "${REMOTE}:${REMOTE_DIR}/" "$DEST/"
+rsync -avz --include="labuse*.dump" --exclude="*" "${REMOTE}:${REMOTE_DIR}/" "$DEST/"
 
 # 2) Rotation locale (ne touche QUE les dumps datés de ce pipeline)
-ls -1t "$DEST"/labuse_*.dump 2>/dev/null | tail -n +$((KEEP_LOCAL + 1)) | xargs -I{} rm -f {}
+ls -1t "$DEST"/labuse*.dump 2>/dev/null | tail -n +$((KEEP_LOCAL + 1)) | xargs -I{} rm -f {}
 
 # 3) Contrôle d'intégrité du plus récent (pg_restore --list ne restaure rien)
-LATEST=$(ls -1t "$DEST"/labuse_*.dump 2>/dev/null | head -1)
+# ⚠ pg_restore doit être >= la majeure du serveur qui a produit le dump (piège pré-vol :
+#   un pg_restore 16 refuse un dump 18). Surcharger via PG_RESTORE_BIN si le PATH est vieux.
+PG_RESTORE="${PG_RESTORE_BIN:-pg_restore}"
+LATEST=$(ls -1t "$DEST"/labuse*.dump 2>/dev/null | head -1)
 if [ -n "$LATEST" ]; then
-  if pg_restore --list "$LATEST" >/dev/null 2>&1; then
+  if "$PG_RESTORE" --list "$LATEST" >/dev/null 2>&1; then
     echo "✓ rapatrié + intègre : $LATEST ($(du -h "$LATEST" | cut -f1))"
   else
     echo "✗ ALERTE : $LATEST illisible par pg_restore — sauvegarde suspecte." >&2

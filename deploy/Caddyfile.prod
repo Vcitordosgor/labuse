@@ -1,0 +1,62 @@
+# =============================================================================
+# LA BUSE — Caddyfile de PRODUCTION (M7 · app.labuse.immo) — AUCUN secret ici.
+# -----------------------------------------------------------------------------
+# Pose sur le VPS : /etc/caddy/Caddyfile + /etc/caddy/labuse.env (600) portant :
+#   LABUSE_DOMAIN=app.labuse.immo
+#   CADDY_BASIC_HASH=<bcrypt de `caddy hash-password` — secret, jamais en git>
+#
+# RIDEAU TEMPORAIRE (décision Vic 22/07) : basic auth devant TOUTE l'app, API
+# comprise (user `labuse`). Tombera à l'arrivée de l'auth comptes (post-M7).
+#
+# FIX post-review Vic (22/07) : la racine `/` du BACKEND redirige vers /app/
+# (UI Vue historique de transition — spinner mono-commune) et le POST /login
+# renvoie 303 → /app/. En prod, CADDY est donc la source de vérité du front :
+#   · le dist React M2 (build --base=/) est servi STATIQUEMENT à la racine ;
+#   · /app et /app/* ne sont JAMAIS exposés (301 → /) — la vieille UI reste
+#     montée dans le backend pour le dev local uniquement (zéro refactor) ;
+#   · une navigation `/` SANS cookie de session applicative → 302 /login
+#     (le front React n'a pas d'écran de login : flux rideau → login → app) ;
+#   · tout le reste (API, tuiles, /login, PDF, …) → proxy 127.0.0.1:8000.
+# =============================================================================
+
+{$LABUSE_DOMAIN} {
+	encode gzip
+
+	# ── rideau basic auth (TOUT le trafic, healthz compris) ──
+	basic_auth {
+		labuse {$CADDY_BASIC_HASH}
+	}
+
+	root * /opt/labuse/app/frontend/dist
+
+	route {
+		# 1. la vieille UI n'est jamais exposée (couvre aussi le 303 post-login → /app/)
+		redir /app / 301
+		redir /app/* / 301
+
+		# 2. navigation racine sans session applicative → page de login (backend)
+		@nosession {
+			path /
+			not header Cookie *labuse_session=*
+		}
+		redir @nosession /login 302
+
+		# 3. le front M2 : shell + assets du build servis statiquement
+		@front {
+			file {
+				try_files {path} {path}/index.html
+			}
+		}
+		file_server @front
+
+		# 4. API / tuiles / login / PDF → backend
+		reverse_proxy 127.0.0.1:8000
+	}
+
+	header {
+		X-Robots-Tag "noindex, nofollow"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+}
