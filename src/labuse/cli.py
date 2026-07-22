@@ -1981,6 +1981,79 @@ def refresh_dvf_cmd() -> None:
         typer.echo("✓ DVF : no-op (aucune livraison)" if r["no_op"] else f"✓ DVF rechargé : {r['recharges']}")
 
 
+@app.command("compte-invite")
+def compte_invite_cmd(
+    email: str,
+    plan: str = typer.Option("inde", help="inde (290 €/mois, 1 siège) | pro (490 €/mois, 2 sièges)"),
+    nom: str = typer.Option(None, help="Nom du compte (défaut : l'email)"),
+    founding: bool = typer.Option(False, "--founding", help="Coupon −50 % à vie (premiers clients)"),
+    compte_id: int = typer.Option(None, help="2e siège : ID du compte Pro existant"),
+    envoyer: bool = typer.Option(True, help="Envoyer l'email d'invitation (sinon : lien affiché seul)"),
+) -> None:
+    """PREMIER EURO — crée une INVITATION (lien signé 7 jours) après la vente. Le compte ne
+    s'active qu'au paiement Stripe ; l'email part via Resend (ou transport dev sans clé)."""
+    from .comptes import creer_invitation
+
+    with session_scope() as s:
+        inv = creer_invitation(s, email, plan, nom=nom, founding=founding,
+                               role="membre" if compte_id else "titulaire", compte_id=compte_id)
+    typer.echo(f"invitation créée — compte #{inv['compte_id']} · {inv['email']} · expire {inv['expire_at'][:10]}")
+    typer.echo(f"LIEN (seul exemplaire, en base : le hash) : {inv['lien']}")
+    if envoyer:
+        from .mailer import envoyer_invitation
+        r = envoyer_invitation(inv["email"], inv["lien"], founding=founding, plan=plan)
+        typer.echo(f"email : {r}")
+
+
+@app.command("compte-admin")
+def compte_admin_cmd(email: str) -> None:
+    """Crée LE compte admin (Vic) — mot de passe demandé au clavier, jamais en argv/historique."""
+    import getpass
+
+    from .comptes import creer_admin
+
+    pw = getpass.getpass("Mot de passe admin (≥ 10 caractères) : ")
+    if len(pw) < 10:
+        typer.echo("trop court", err=True); raise typer.Exit(1)
+    if getpass.getpass("Confirmez : ") != pw:
+        typer.echo("les deux saisies diffèrent", err=True); raise typer.Exit(1)
+    with session_scope() as s:
+        uid = creer_admin(s, email, pw)
+    typer.echo(f"admin créé (utilisateur #{uid}) — testez le login sur /login AVANT toute bascule")
+
+
+@app.command("compte-suspend")
+def compte_suspend_cmd(compte_id: int, motif: str = typer.Option("manuel")) -> None:
+    """Suspend un compte (sessions révoquées ≤ 60 s) — l'app affiche « paiement requis »/« suspendu »."""
+    from .comptes import suspendre_compte
+
+    with session_scope() as s:
+        suspendre_compte(s, compte_id, motif)
+    typer.echo(f"compte #{compte_id} suspendu ({motif})")
+
+
+@app.command("compte-reactive")
+def compte_reactive_cmd(compte_id: int, motif: str = typer.Option("manuel")) -> None:
+    """Réactive un compte suspendu."""
+    from .comptes import reactiver_compte
+
+    with session_scope() as s:
+        reactiver_compte(s, compte_id, motif)
+    typer.echo(f"compte #{compte_id} réactivé")
+
+
+@app.command("compte-supprime")
+def compte_supprime_cmd(email: str, oui: bool = typer.Option(False, "--oui", help="confirmation")) -> None:
+    """EFFACEMENT RGPD : purge l'utilisateur (sessions comprises), anonymise l'audit."""
+    if not oui:
+        typer.echo("ajoutez --oui pour confirmer l'effacement définitif", err=True); raise typer.Exit(1)
+    from .comptes import supprimer_utilisateur
+
+    with session_scope() as s:
+        ok = supprimer_utilisateur(s, email)
+    typer.echo("effacé (RGPD)" if ok else "email inconnu")
+
+
 @app.command("radar-sources")
 def radar_sources_cmd() -> None:
     """BLOC B (B3) — le radar des sources : sonde HEAD/métadonnées sur chaque source

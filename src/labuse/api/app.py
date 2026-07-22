@@ -248,15 +248,36 @@ async def login_submit(request: Request):
     from . import auth
 
     body = await request.body()
-    password = ""
+    password, identifiant = "", ""
     ctype = request.headers.get("content-type", "")
     if "json" in ctype:
         try:
-            password = str(json.loads(body or b"{}").get("password") or "")
+            data = json.loads(body or b"{}")
+            password = str(data.get("password") or "")
+            identifiant = str(data.get("identifiant") or "")
         except ValueError:
             password = ""
     else:
-        password = (parse_qs(body.decode("utf-8", "replace")).get("password") or [""])[0]
+        q = parse_qs(body.decode("utf-8", "replace"))
+        password = (q.get("password") or [""])[0]
+        identifiant = (q.get("identifiant") or [""])[0].strip()
+
+    # PREMIER EURO · E1 — identifiant fourni = LOGIN UTILISATEUR (email + argon2id, verrou
+    # après N échecs) ; identifiant vide = mot de passe PILOTE (compat — meurt à la bascule).
+    if identifiant:
+        from ..comptes import creer_session, verifier_login
+        from ..db import session_scope
+        with session_scope() as db:
+            u = verifier_login(db, identifiant, password)
+            if not u:
+                auth.log_event("login_failed", request)
+                auth.slow_failure()
+                return HTMLResponse(auth.login_page(error=True), status_code=401)
+            tok = creer_session(db, u["utilisateur_id"])
+        auth.log_event("login_ok", request)
+        resp = RedirectResponse("/", status_code=303)
+        resp.set_cookie(value=f"u.{tok}", **auth.cookie_kwargs())
+        return resp
 
     if not auth.configured() or not auth.password_ok(password):
         auth.log_event("login_failed", request)
