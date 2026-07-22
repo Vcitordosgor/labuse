@@ -1165,6 +1165,10 @@ export function Fiche({ idu }: { idu: string }) {
             (identité nominative : workflow SPF/CERFA, jamais automatisée).
           </div>
         )}
+        {/* BLOC B · S45 (verdict Vic : variante B) — le TRADUCTEUR PLU vit DANS l'onglet
+            Règles : bloc dépliable violet (IA/premium = violet), règles en français courant,
+            chaque valeur avec sa provenance ; le règlement écrit reste la référence. */}
+        {!fq && f && tab === 'regles' && <TraducteurBloc idu={idu} />}
         {!fq && f && (tab === 'regles' || tab === 'risques' || tab === 'marche' || tab === 'proprio') && (
           <div>
             {ongletLines(tab).length ? ongletLines(tab).map((l, i) => <Line key={i} line={l} />)
@@ -1295,5 +1299,70 @@ function BanquierButton({ idu }: { idu: string }) {
         : 'Dossier banquier PDF (synthèse exécutive, bilan & charge foncière, comparables, risques) — présentation financeur'}>
       {etat === 'erreur' ? 'Banquier — réessayer' : 'Banquier'}
     </button>
+  )
+}
+
+
+/** BLOC B · S45 — Traducteur PLU (variante B, verdict Vic) : bloc dépliable de l'onglet
+ *  Règles. Charge à l'ouverture seulement ; Sourcé = article calibré, Estimé = générique. */
+function TraducteurBloc({ idu }: { idu: string }) {
+  const [open, setOpen] = useState(false)
+  const q = useQuery({
+    queryKey: ['traducteur', idu],
+    queryFn: async () => {
+      const r = await fetch(`/traducteur-plu/${idu}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      if (!r.ok) throw new Error(`traducteur ${r.status}`)
+      return r.json() as Promise<{
+        ok: boolean; zone: string | null; zone_calibree: boolean
+        regles_appliquees: { regle: string; valeur: string; source: string }[]
+        reglement: { url: string | null; note: string | null }
+      }>
+    },
+    enabled: open, staleTime: 300_000,
+  })
+  const d = q.data
+  return (
+    <div data-traducteur className="mb-3 rounded-lg border border-violet/30 bg-violet/[0.06] px-3 py-2">
+      <button data-traducteur-toggle onClick={() => setOpen((o) => !o)}
+        className="flex min-h-7 w-full items-center justify-between gap-2 text-left">
+        <span className="label-caps text-[10px] text-violet">✦ Traduire ma zone en français courant</span>
+        <span className="text-[11px] text-txt-dim">{open ? 'replier ▴' : 'déplier ▾'}</span>
+      </button>
+      {open && (
+        <div className="mt-2">
+          {q.isLoading && <Loading accent="violet" label="Traduction des règles…" className="text-[11px]" />}
+          {q.isError && (
+            <p className="text-[11px] text-st-ecartee">
+              Traduction indisponible — <button onClick={() => q.refetch()} className="underline">réessayer</button>
+            </p>
+          )}
+          {d && (
+            <>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {d.zone && <span className="rounded-full border border-violet/50 px-2 py-0.5 text-[10px] font-semibold text-violet">zone {d.zone}</span>}
+                {!d.zone_calibree && (
+                  <span className="rounded-full border border-st-creuser/40 bg-st-creuser/10 px-2 py-0.5 text-[10px] text-st-creuser">
+                    zone non calibrée — valeurs génériques (Estimé)</span>
+                )}
+              </div>
+              <div className="mt-1.5 space-y-1">
+                {d.regles_appliquees.map((r, i) => (
+                  <div key={i} className="flex items-baseline gap-2 text-[11.5px]">
+                    <span className="min-w-0 flex-1 text-txt">{r.regle}</span>
+                    <b className="tnum text-txt-hi">{r.valeur}</b>
+                    <span className="shrink-0 rounded-full border border-st-creuser/40 bg-st-creuser/10 px-1.5 text-[8.5px] font-medium text-st-creuser"
+                      title={r.source}>{d.zone_calibree ? 'Sourcé' : 'Estimé'}</span>
+                  </div>
+                ))}
+                {d.regles_appliquees.length === 0 && <p className="text-[11px] text-txt-dim">Aucune règle traduite pour cette zone.</p>}
+              </div>
+              <p className="mt-1.5 text-[10px] leading-snug text-txt-dim">
+                La référence opposable reste le règlement écrit{d.reglement?.url ? <> — <a className="text-mint hover:underline" href={d.reglement.url} target="_blank" rel="noreferrer">l'ouvrir ↗</a></> : ''}.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
