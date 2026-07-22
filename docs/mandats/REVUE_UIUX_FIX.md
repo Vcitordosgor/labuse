@@ -4,12 +4,14 @@
 jamais de correction autonome.** Atlas de référence (« avant ») :
 `~/labuse-atlas/2026-07-22-11-10__local/index.html`.
 
-## ⟪ CURSEUR ⟫ dernière surface traitée : **S01 + S18** · vague 1 (session 1)
+## ⟪ CURSEUR ⟫ dernière surface traitée : **S02→S11 (bloc fiche entier) + S16** · vague 1 (session 2)
 
-**Reprise session suivante : S02 `fiche__synthese`** (enchaîner S02→S11 = tout le bloc fiche
-d'un tenant, puis S12-S15 projets/CRM, S17, S19-S20 ; S16 login = EN ATTENTE verdict porte).
-Filet e2e : les échecs e2e_m9_fiche (9-10) et e2e_429 (1) sont PRÉ-EXISTANTS sur main
-(prouvé au dist près, session 1) ; `qa/e2e.mjs` vise l'ancienne UI (invalide). tsc+build verts.
+**Reprise session suivante : S12 `projet__liste`** (enchaîner S12-S15 projets/CRM, puis S17,
+S19-S20 ; ensuite vague 2). Filet e2e session 2 : e2e_m9_fiche = 9 échecs (le compte
+pré-existant exact, les 6 tests UI passent sur le dist retouché, zéro erreur console) ;
+e2e_429 = 1 échec (le pré-existant). `qa/e2e.mjs` (ancienne UI `/app/`) RETIRÉ — finding
+documenté dans `qa/README.md`, la suite revient à zéro rouge structurel. tsc+build verts,
+tests auth 10/10 (S16).
 
 ---
 
@@ -67,6 +69,31 @@ S71 `etat__rideau-basic-auth`
   mint décorative → neutre (vert = signal). Lois : 2, 3, 4, 7 + cockpit vert-signal/élévation.
 - **S18 `liste__resultats`** — fmtInt central (LOI-3), veille + badge proprio en Tip, surfaces
   m² tabulaires ; état vide déjà EmptyState (LOI-2). Lois : 4, 5, 8.
+- **S02 `fiche__synthese`** — tous les blocs en élévation `card-elev` (fin des bordures dures) ;
+  Tips tactiles sur les badges info (V, P v2, équipements, ICD, matrice historique) ; labels →
+  `.label-caps` ; jauge complétude en instrument (valeur au centre de l'anneau) ; ISO → fr ;
+  emojis 💧🚰⚡ → glyphes. Lois : 2, 3, 4, 6, 7 + élévation/typo-instrument.
+- **S03-S05 `fiche__regles/risques/marche`** — libellés FRANÇAIS des couches (`lib/layers.ts`,
+  44 clés ; la clé technique reste en Tip audit + trace `table#id`) ; dates fr ; séparateurs en
+  token ; la recherche fiche matche aussi les libellés. Loi 5/8 (zéro texte technique qui fuit).
+- **S06 `fiche__proprio`** — cartes en élévation, label-instrument DGFiP ; le reste hérité S03.
+- **S07 `fiche__faisabilite`** — ErrorState standard (LOI-2), labels-instrument, étapes en
+  élévation ; le résultat garde sa bordure mint (signal légitime).
+- **S08 `fiche__bilan`** — ErrorState, sections `card-elev` + label-caps, médiane fmtInt,
+  `non_applique` → « non appliqué », RTAA aligné (sous-cartes sans bordure).
+- **S09 `fiche__calculette`** — label-instrument + recalc pulse, carte en élévation, chiffre-clé
+  `.num-key`, fmtInt partout (SDP/prix/terrain/€ au m²).
+- **S10 `fiche__pourquoi-pas`** — ErrorState avec sortie, labels teintés en `.label-caps`,
+  motifs sans bordure dure, `#E8B44C` → token `st-creuser`.
+- **S11 header + exports** — Tips sur les 3 badges d'en-tête (verdict rang/×N, signaux vendeur,
+  ICD), surface en fmtM2, bouton fermer en cible 28 px, popover apporteur en `.floating`.
+  Barre d'actions h-8 CONSERVÉE (dessin P6 revu par Vic) — noté, pas retouché.
+- **S16 `entree__login`** — **verdict Vic appliqué : porte Coffre définitive, DEUX champs**
+  (identifiant + mot de passe), 4 états (défaut/focus/erreur de couple neutre/chargement),
+  mobile au niveau maquette, chrome de revue retiré. **Façade prête, moteur d'auth =
+  premier-euro** : le POST /login actuel ignore `identifiant` (mot de passe pilote inchangé,
+  tests auth 10/10) ; le futur backend d'identité lit les deux champs du même formulaire
+  sans retoucher le design.
 
 ## Refontes proposées (le cœur du futur BLOC B)
 
@@ -74,9 +101,13 @@ _(aucune à ce stade — S01/S18 tenaient en retouches)_
 
 ## En attente d'un verdict externe
 
-- **S16 `entree__login`** — NE PAS retoucher l'existant : la porte définitive attend le choix
-  Coffre/Territoire (maquettes Bloc A, docs/mockups/). Brancher le design retenu = ce mandat
-  ou consolidation, selon le verdict.
+- _(S16 soldé session 2 — verdict Coffre appliqué, cf. surfaces traitées.)_
+
+## Findings hors périmètre front (à traiter ailleurs)
+
+- Détails de lignes servis par le BACKEND avec du technique (« INONDATION_MOUVEMENT_DE_TERRAIN »,
+  libellés de PPR en majuscules brutes) — le re-libellé à la source est un mini-mandat data,
+  pas une retouche front.
 
 ## OK — pas touché
 
