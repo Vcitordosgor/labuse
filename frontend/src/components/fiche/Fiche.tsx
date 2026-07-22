@@ -722,40 +722,35 @@ function FaisabiliteTab({ idu }: { idu: string }) {
 function BilanTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   if (isLoading) return <Loading label="Calcul de la pré-faisabilité" className="text-xs" />
-  if (isError || !b) return (
-    <div className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-3 text-xs">
-      <p className="text-st-ecartee">Bilan indisponible.</p>
-      <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt">Réessayer</button>
-    </div>
-  )
+  if (isError || !b) return <ErrorState message="Bilan indisponible." retry={() => refetch()} />
   const cap = b.capacite
   const fo = cap?.fourchette ?? {}
   const Sec = ({ t, children }: { t: string; children: React.ReactNode }) => (
     <div>
-      <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">{t}</p>
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] leading-relaxed text-txt">{children}</div>
+      <p className="label-caps mb-1">{t}</p>
+      <div className="card-elev px-3 py-2 text-[11px] leading-relaxed text-txt">{children}</div>
     </div>
   )
   return (
     <div className="flex flex-col gap-3">
       {cap ? (
-        <Sec t="CAPACITÉ (que peut accueillir ce terrain ?)">
+        <Sec t="Capacité (que peut accueillir ce terrain ?)">
           <div className="font-medium text-txt-hi">{cap.verdict}</div>
           <div className="mt-1 text-txt-mut">
             {fo.niveaux} · emprise bâtie max {fo.emprise_batie_max_m2} m² · SDP {fo.surface_plancher_m2} m² ·
-            SHAB vendable ~{fo.shab_vendable_m2} m² · stationnement : {fo.stationnement_regime}
+            SHAB vendable ~{fo.shab_vendable_m2} m² · stationnement : {String(fo.stationnement_regime ?? '—').replace(/_/g, ' ')}
           </div>
           {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">⚠ estimation générique (zone non calibrée)</div>}
           <div className="mt-1.5 text-[11px] leading-snug text-txt-dim">{cap.bandeau}</div>
         </Sec>
       ) : (
-        <Sec t="CAPACITÉ">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</Sec>
+        <Sec t="Capacité">Zone PLU non résolue pour cette parcelle — capacité non calculable (honnête).</Sec>
       )}
       {b.marche?.median != null && (
         /* CRED-2 : cette médiane est un prix BÂTI (par type de bien) — la nommer, pour qu'elle
            coexiste lisiblement avec la « médiane terrain » de l'onglet Marché. */
-        <Sec t="MARCHÉ — PRIX DE SORTIE BÂTI (SECTEUR)">
-          médiane bâti <b className="text-mint">{Number(b.marche.median).toLocaleString('fr-FR')} €/m²</b> ({b.marche.type_prix},
+        <Sec t="Marché — prix de sortie bâti (secteur)">
+          médiane bâti <b className="tnum text-mint">{fmtInt(Number(b.marche.median))} €/m²</b> ({b.marche.type_prix},
           {' '}{b.marche.n} ventes ≤ {Math.round(b.marche.radius_m)} m) · fiabilité <b>{b.marche.fiabilite}</b>
           {b.marche.tendance ? <span className="text-txt-mut"> · tendance {b.marche.tendance}</span> : null}
           {/* P14 : fraîcheur DVF — de QUAND datent les prix (période réelle en base) */}
@@ -768,11 +763,11 @@ function BilanTab({ idu }: { idu: string }) {
       )}
       {/* M11 Surface C : la calculette de charge foncière est RAPATRIÉE dans l'onglet Faisabilité
           (le financier au même endroit que la capacité et son explication). */}
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[11px] text-txt-mut">
+      <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
         La <b className="text-txt">charge foncière</b> (« combien puis-je payer ce terrain ? ») est
         désormais dans l'onglet <b className="text-[#B497F0]">Faisabilité</b>, avec le calcul détaillé.
       </div>
-      <Sec t="FISCAL & LEVIERS">
+      <Sec t="Fiscal & leviers">
         <div>QPV : <b className={b.fiscal.qpv ? 'text-mint' : 'text-txt-mut'}>{b.fiscal.qpv ? 'OUI' : 'non'}</b> · TVA : {b.fiscal.tva}</div>
         <div className="mt-1 text-[11px] text-txt-dim">{b.fiscal.ta_note}</div>
       </Sec>
@@ -789,8 +784,8 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
   const VOLET_COLOR: Record<string, string> = { cadre: '#8FA69A', thermique: '#E8B44C', acoustique: '#B497F0', aeration: '#7DE8E0', ecs: '#5CE6A1' }
   return (
     <div data-rtaa-block>
-      <p className="mb-1 font-mono text-[10px] tracking-widest text-txt-dim">RTAA DOM — RAPPEL RÉGLEMENTAIRE</p>
-      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
+      <p className="label-caps mb-1">RTAA DOM — rappel réglementaire</p>
+      <div className="card-elev px-3 py-2 text-[10.5px] leading-snug text-txt-mut">
         Construction neuve de logements : protection solaire, ventilation traversante,
         acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).
         <button onClick={() => setOpen((o) => !o)} className="ml-1.5 text-mint hover:underline">
@@ -800,7 +795,7 @@ function RtaaBlock({ rtaa }: { rtaa: { meta: Record<string, string>; exigences: 
       {open && (
         <div className="mt-1.5 flex flex-col gap-1.5">
           {rtaa.exigences.map((e, i) => (
-            <div key={i} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2">
+            <div key={i} className="rounded-lg bg-surface-3 px-3 py-2">
               <span className="rounded-full px-1.5 py-0.5 font-mono text-[8.5px] font-semibold uppercase"
                 style={{ color: VOLET_COLOR[e.volet] ?? '#8FA69A', background: `${VOLET_COLOR[e.volet] ?? '#8FA69A'}18` }}>
                 {e.volet}
