@@ -31,7 +31,7 @@ function RateLimit429({ error, refetch }: { error: unknown; refetch: () => void 
       <p className="text-txt-hi">Trop de requêtes — réessayez dans une minute.</p>
       {detail && <p className="mt-1 text-txt-dim">{detail}</p>}
       <p className="mt-1 text-txt-dim">Nouvel essai automatique dans ~1 min.</p>
-      <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer maintenant</button>
+      <button onClick={() => refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer maintenant</button>
     </div>
   )
 }
@@ -1044,20 +1044,20 @@ export function Fiche({ idu }: { idu: string }) {
         {isError && (is429(error) ? (
           <RateLimit429 error={error} refetch={refetch} />
         ) : (
-          <div data-fiche-erreur className="rounded-lg border border-[#5a2420] bg-[#2a1210] p-4 text-xs">
+          <div data-fiche-erreur className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 p-4 text-xs">
             {/* Item 3 (UX V1) : wording client — plus jamais « relancer labuse api » face à un
                 utilisateur. Le détail technique reste lisible, en ligne discrète. */}
             <p className="text-st-ecartee">Connexion au serveur impossible — vérifiez votre réseau ou réessayez.</p>
             {error instanceof Error && error.message && (
               <p className="mt-1 break-all font-mono text-[10px] text-txt-dim">détail : {error.message}</p>
             )}
-            <button onClick={() => refetch()} className="mt-2 rounded border border-line-2 px-2 py-1 text-txt hover:text-txt-hi">Réessayer</button>
+            <button onClick={() => refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer</button>
           </div>
         ))}
         {!fq && f && tab === 'synthese' && (
           <>
             {f.evenement === 'rouge' && f.statut === 'chaude' && (
-              <div data-histoire-evenement className="rounded-lg border border-[#5a2420] bg-[#2a1210] px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
+              <div data-histoire-evenement className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
                 Priorité dossier par <b className="text-st-ecartee">ÉVÉNEMENT</b> : le propriétaire
                 {f.proprietaire_moral?.denomination ? <> (<b>{f.proprietaire_moral.denomination}</b>)</> : ''} est en
                 procédure collective{f.evenement_detail ? <> — {f.evenement_detail.replace(/^.*?:\s*/, '')}</> : ''}.
