@@ -113,3 +113,37 @@ def test_flash_fulfillment_reel(db):
     import pathlib as _pl
     assert _pl.Path(pdf).stat().st_size > 20_000       # un vrai PDF, pas un fichier vide
     assert flash_pdf_par_token(db, "mauvais-token") is None
+
+
+def test_suspension_coupe_les_sessions_actives(db):
+    """Bug du test Vic (mi-course) : la suspension doit couper une session DÉJÀ ouverte,
+    immédiatement — pas au prochain login, pas « dans la minute »."""
+    email = f"susp-{uuid.uuid4().hex[:8]}@exemple.test"
+    cus = f"cus_{uuid.uuid4().hex[:10]}"
+    inv = comptes.creer_invitation(db, email)
+    tok_i = inv["lien"].split("token=")[1]
+    comptes.activer_par_invitation(db, tok_i, "session-active-974", "2026-07-22")
+    body, sig = _signe(_evt("checkout.session.completed",
+                            {"client_reference_id": str(inv["compte_id"]), "customer": cus,
+                             "subscription": "sub_x"}))
+    traiter_webhook(db, body, sig)
+    u = comptes.verifier_login(db, email, "session-active-974")
+    session = comptes.creer_session(db, u["utilisateur_id"])
+    assert comptes.session_utilisateur(db, session)                 # session ouverte
+
+    # 1. la voie normale : webhook subscription.deleted → purge + statut → refus immédiat
+    body, sig = _signe(_evt("customer.subscription.deleted", {"customer": cus}))
+    traiter_webhook(db, body, sig)
+    assert comptes.session_utilisateur(db, session) is None
+
+    # 2. défense en profondeur : une session qui aurait SURVÉCU à la purge est refusée
+    #    par le statut du compte seul
+    comptes.reactiver_compte(db, inv["compte_id"])
+    session2 = comptes.creer_session(db, u["utilisateur_id"])
+    assert comptes.session_utilisateur(db, session2)
+    db.execute(text("UPDATE comptes SET statut = 'suspendu' WHERE id = :c"),
+               {"c": inv["compte_id"]})   # suspension SANS purge (le cas pathologique)
+    db.commit()
+    assert comptes.session_utilisateur(db, session2) is None
+    db.execute(text("DELETE FROM utilisateurs WHERE email = :e"), {"e": email})
+    db.commit()

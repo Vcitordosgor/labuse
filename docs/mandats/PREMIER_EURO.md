@@ -39,8 +39,10 @@ Tables additives comptes/utilisateurs/sessions_auth/evenements_compte · argon2i
 tokens hachés SHA-256 (le lien détient le seul exemplaire) · verrou 5 échecs/15 min ·
 reset qui révoque les sessions · effacement RGPD réel (audit anonymisé) · sièges Pro
 bornés · façade Coffre inchangée, les DEUX champs lus (pilote en compat jusqu'à la
-bascule) · sessions `u.*` httpOnly+Secure+SameSite, cache 60 s (révocation ≤ 60 s,
-documenté) · CLI compte-invite/admin/suspend/reactive/supprime (mdp au clavier).
+bascule) · sessions `u.*` httpOnly+Secure+SameSite — **vérifiées EN BASE à chaque requête**
+(durci au test Vic : plus de cache — une suspension coupe la requête suivante, zéro délai ;
+défense en profondeur : le statut du COMPTE suspendu/résilié refuse la session même si une
+ligne avait survécu à la purge) · CLI compte-invite/admin/suspend/reactive/supprime (mdp au clavier).
 Preuves : tests cycle de vie 3/3 + HTTP (303/cookie/401/compat).
 
 ## E2 · Stripe — CODE COMPLET, preuve carte en attente de clé

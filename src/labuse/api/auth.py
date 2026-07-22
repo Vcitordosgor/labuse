@@ -85,30 +85,17 @@ def make_token() -> str:
     return f"{payload}.{_sign(payload)}"
 
 
-# PREMIER EURO · E1 — cache court des sessions UTILISATEUR (60 s) : 1 lookup DB max par
-# minute et par session ; une révocation (logout/suspension) propage donc en ≤ 60 s (documenté).
-_USER_CACHE: dict[str, tuple[float, bool]] = {}
-_USER_CACHE_TTL = 60.0
-
-
+# PREMIER EURO · E1 (durci au test Vic) — la session utilisateur se vérifie EN BASE À
+# CHAQUE REQUÊTE : une suspension (webhook Stripe, CLI) coupe l'accès au rechargement
+# suivant, pas « dans la minute ». Coût : un lookup PK par requête (~0,2 ms) — assumé.
 def _user_token_ok(token: str) -> bool:
-    now = time.time()
-    hit = _USER_CACHE.get(token)
-    if hit and now - hit[0] < _USER_CACHE_TTL:
-        return hit[1]
-    ok = False
     try:
         from ..comptes import session_utilisateur
         from ..db import session_scope
         with session_scope() as db:
-            ok = session_utilisateur(db, token[2:]) is not None
-    except Exception:  # noqa: BLE001 — table absente (première install) → simplement pas de session
-        ok = False
-    _USER_CACHE[token] = (now, ok)
-    if len(_USER_CACHE) > 4096:
-        for k in sorted(_USER_CACHE, key=lambda k: _USER_CACHE[k][0])[:1024]:
-            _USER_CACHE.pop(k, None)
-    return ok
+            return session_utilisateur(db, token[2:]) is not None
+    except Exception:  # noqa: BLE001 — table absente (première install) → pas de session
+        return False
 
 
 def token_ok(token: str | None) -> bool:
