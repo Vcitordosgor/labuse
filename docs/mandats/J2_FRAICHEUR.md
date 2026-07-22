@@ -108,3 +108,9 @@ sentinelle 10 min · restart : uniquement si nécessaire, jamais pendant un back
    `/ia/status` → `provider: anthropic`, et un appel réel `/ia/search` répond `stub: false` avec une
    traduction NL correcte validée par schéma — **les crédits répondent** (rechargés par Vic).
 4. Bug de boucle d'attente (`pgrep -f` se matchait lui-même) : leçon consignée, `pgrep -x` partout.
+5. **Chaîne DÉPLOYÉE et vivante sur le VPS** : code de la branche déployé (deploy_app.sh), **8 cron.d
+   actifs** (bodacc/dvf/dpe nouveaux + sitadel quotidien + ban/catnat/abuse/backup), `fraicheur-etat`
+   répond depuis la prod, healthz 200, smoke prod VERT. Premiers passages : sitadel 4h15, bodacc 4h30
+   (heure serveur). Incident au passage : le rate-limit ufw SSH (6/30 s, posé à M7) a mordu mes propres
+   rafales de déploiement → **ControlMaster ajouté à la config SSH** (une connexion multiplexée, fix
+   durable pour tous les scripts).
