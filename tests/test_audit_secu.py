@@ -151,6 +151,114 @@ def test_idor_veilles_cloison(app_client):
         _purge(ea, eb)
 
 
+def test_idor_signalements_cloison(app_client):
+    """Signalements (file de QA) : B ne voit NI ne liste NI n'exporte ceux de A."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        idu = f"974SIG{uuid.uuid4().hex[:8].upper()}"
+        r = ca.post("/signalements", json={"idu": idu, "type_erreur": "zonage", "commentaire": "erreur de A"})
+        assert r.status_code == 200, r.text
+        sid = r.json()["id"]
+        # A le voit dans SA file ; B ne voit rien (ni liste, ni export CSV)
+        assert any(s["id"] == sid for s in ca.get("/signalements").json())
+        assert all(s["id"] != sid for s in cb.get("/signalements").json())
+        assert str(sid) not in cb.get("/signalements/export.csv").text.split("\n", 1)[1]
+        # A reste intact
+        assert any(s["id"] == sid for s in ca.get("/signalements").json())
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM signalements WHERE parcelle_id LIKE '974SIG%'")); s.commit()
+
+
+def test_idor_saved_filters_cloison(app_client):
+    """Filtres sauvegardés : B ne voit pas ceux de A, et un DELETE ciblé sur l'id de A
+    renvoie 404 (jamais 403) sans rien détruire chez A — corrige l'IDOR d'écriture."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        r = ca.post("/filters", json={"name": "filtre A", "params": {"q": 65}})
+        assert r.status_code == 200, r.text
+        fid = r.json()["id"]
+        # A le voit ; B ne voit rien
+        assert any(f["id"] == fid for f in ca.get("/filters").json())
+        assert cb.get("/filters").json() == []
+        # B tente de supprimer le filtre de A par id → 404, et le filtre survit chez A
+        assert cb.delete(f"/filters/{fid}").status_code == 404
+        assert any(f["id"] == fid for f in ca.get("/filters").json())
+        # A peut supprimer le sien
+        assert ca.delete(f"/filters/{fid}").status_code == 200
+    finally:
+        _purge(ea, eb)
+
+
+def test_idor_event_log_cloison(app_client):
+    """Cloche de notifications : B ne voit pas les événements de A, et ni son « lire »
+    ciblé ni son « tout lire » ne touchent l'événement de A."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    cid_a = _compte_actif(ea); _compte_actif(eb)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        # un événement (ex. veille) appartenant à A
+        with session_scope() as s:
+            eid = s.execute(text(
+                "INSERT INTO event_log (kind, idu, titre, compte_id) "
+                "VALUES ('veille', '974EVT00000001', 'évt privé de A', :cid) RETURNING id"),
+                {"cid": cid_a}).scalar()
+            s.commit()
+        # A le voit (non lu) ; B ne le voit pas et son compteur l'ignore
+        assert any(e["id"] == eid for e in ca.get("/events").json()["items"])
+        assert ca.get("/events/count").json()["unread"] >= 1
+        assert all(e["id"] != eid for e in cb.get("/events").json()["items"])
+        # B « lit » l'événement de A par id, puis « tout lire » : sans effet sur A
+        cb.post(f"/events/{eid}/read"); cb.post("/events/read-all")
+        with session_scope() as s:
+            assert s.execute(text("SELECT lu FROM event_log WHERE id = :i"), {"i": eid}).scalar() is False
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM event_log WHERE idu = '974EVT00000001'")); s.commit()
+
+
+def test_idor_watched_parcels_cloison(app_client):
+    """Suivi de cible : A et B peuvent suivre la MÊME parcelle sans se voir ; B « unwatch »
+    ne défait pas le suivi de A."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    idu = f"974990WA{uuid.uuid4().hex[:6].upper()}"
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        _wkt = "POLYGON((55.46 -20.9,55.461 -20.9,55.461 -20.901,55.46 -20.901,55.46 -20.9))"
+        with session_scope() as s:
+            s.execute(text(
+                "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2,"
+                " centroid, bbox) VALUES (:i,'X','ZZ','1', ST_GeomFromText(:w,4326),"
+                " ST_Transform(ST_GeomFromText(:w,4326),2975), 800,"
+                " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"),
+                {"i": idu, "w": _wkt}); s.commit()
+        # A suit la parcelle
+        assert ca.post(f"/events/watch/{idu}").json()["watched"] is True
+        assert ca.get(f"/events/watch/{idu}").json()["watched"] is True
+        # B ne la suit pas encore (isolation de lecture)
+        assert cb.get(f"/events/watch/{idu}").json()["watched"] is False
+        # B peut suivre LA MÊME parcelle (clé (compte, idu)), puis se dé-suit : A reste suivi
+        assert cb.post(f"/events/watch/{idu}").json()["watched"] is True
+        assert cb.post(f"/events/watch/{idu}").json()["watched"] is False   # B unwatch
+        assert ca.get(f"/events/watch/{idu}").json()["watched"] is True     # A intact
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM watched_parcels WHERE idu = :i"), {"i": idu})
+            s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu}); s.commit()
+
+
 # ─────────────────────── Statuts × routes (la matrice d'accès) ───────────────────────
 
 def _session_cookie(compte_id: int, email: str) -> str:

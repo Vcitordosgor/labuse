@@ -2585,26 +2585,34 @@ class SavedFilterIn(BaseModel):
 
 
 @app.get("/filters")
-def list_filters(db: Session = Depends(get_db)) -> list[dict]:
-    """Filtres de recherche sauvegardés (Lot D3)."""
-    rows = db.execute(text("SELECT id, name, params, created_at FROM saved_filters ORDER BY created_at DESC")).mappings().all()
+def list_filters(request: Request, db: Session = Depends(get_db)) -> list[dict]:
+    """Filtres de recherche sauvegardés (Lot D3). CLOISON : chaque compte ne voit que les siens."""
+    from .tenant import current_compte
+    rows = db.execute(text("SELECT id, name, params, created_at FROM saved_filters"
+                           " WHERE compte_id IS NOT DISTINCT FROM :cid ORDER BY created_at DESC"),
+                      {"cid": current_compte(request)}).mappings().all()
     return [{"id": r["id"], "name": r["name"], "params": r["params"],
              "created_at": r["created_at"].isoformat() if r["created_at"] else None} for r in rows]
 
 
 @app.post("/filters")
-def save_filter(body: SavedFilterIn, db: Session = Depends(get_db)) -> dict:
+def save_filter(body: SavedFilterIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     name = (body.name or "").strip()[:80]
     if not name:
         raise HTTPException(422, "Nom de filtre requis.")
-    fid = db.execute(text("INSERT INTO saved_filters (name, params) VALUES (:n, CAST(:p AS jsonb)) RETURNING id"),
-                     {"n": name, "p": json.dumps(body.params or {})}).scalar()
+    fid = db.execute(text("INSERT INTO saved_filters (name, params, compte_id) VALUES (:n, CAST(:p AS jsonb), :cid) RETURNING id"),
+                     {"n": name, "p": json.dumps(body.params or {}), "cid": current_compte(request)}).scalar()
     return {"id": fid, "name": name, "params": body.params}
 
 
 @app.delete("/filters/{filter_id}")
-def delete_filter(filter_id: int, db: Session = Depends(get_db)) -> dict:
-    db.execute(text("DELETE FROM saved_filters WHERE id = :i"), {"i": filter_id})
+def delete_filter(filter_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte   # SEC-IDOR : on ne supprime QUE ses propres filtres → 404 sinon
+    n = db.execute(text("DELETE FROM saved_filters WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"i": filter_id, "cid": current_compte(request)}).rowcount
+    if not n:
+        raise HTTPException(404, "Filtre inconnu")
     return {"ok": True}
 
 
@@ -2623,10 +2631,12 @@ class SignalementIn(BaseModel):
 
 
 @app.post("/signalements")
-def creer_signalement(body: SignalementIn, db: Session = Depends(get_db)) -> dict:
+def creer_signalement(body: SignalementIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Enregistre un signalement d'erreur horodaté. AUCUNE modification des données :
     c'est un ticket dans une file de QA humaine (utile notamment aux faux positifs —
-    piscines 90,7 %, futurs verrous). Le champ `statut` démarre à « nouveau »."""
+    piscines 90,7 %, futurs verrous). Le champ `statut` démarre à « nouveau ».
+    CLOISON : le signalement appartient au compte qui l'a émis (revue QA transverse = CLI)."""
+    from .tenant import current_compte
     idu = (body.idu or "").strip()
     if not idu:
         raise HTTPException(422, "IDU de la parcelle requis.")
@@ -2634,42 +2644,46 @@ def creer_signalement(body: SignalementIn, db: Session = Depends(get_db)) -> dic
     if type_err not in SIGNALEMENT_TYPES:
         type_err = "autre"
     sid = db.execute(text(
-        """INSERT INTO signalements (parcelle_id, type_erreur, champ, commentaire, utilisateur)
-           VALUES (:idu, :t, :c, :com, :u) RETURNING id"""),
+        """INSERT INTO signalements (parcelle_id, type_erreur, champ, commentaire, utilisateur, compte_id)
+           VALUES (:idu, :t, :c, :com, :u, :cid) RETURNING id"""),
         {"idu": idu[:14], "t": type_err,
          "c": (body.champ or None), "com": (body.commentaire or None),
-         "u": (body.utilisateur or None)}).scalar()
+         "u": (body.utilisateur or None), "cid": current_compte(request)}).scalar()
     return {"ok": True, "id": sid, "statut": "nouveau"}
 
 
 @app.get("/signalements")
-def liste_signalements(statut: str | None = None,
+def liste_signalements(request: Request, statut: str | None = None,
                        limit: int = Query(500, ge=1, le=5000),
                        db: Session = Depends(get_db)) -> list[dict]:
-    """File des signalements (revue QA). Filtrable par statut."""
-    where = " WHERE statut = :s" if statut else ""
+    """File des signalements (revue QA). Filtrable par statut. CLOISON : ses propres signalements."""
+    from .tenant import current_compte
+    where = " AND statut = :s" if statut else ""
     rows = db.execute(text(
         f"""SELECT id, parcelle_id, type_erreur, champ, commentaire, utilisateur,
                    statut, created_at
-              FROM signalements{where} ORDER BY created_at DESC LIMIT :lim"""),
-        {"s": statut, "lim": limit}).mappings().all()
+              FROM signalements WHERE compte_id IS NOT DISTINCT FROM :cid{where}
+              ORDER BY created_at DESC LIMIT :lim"""),
+        {"s": statut, "lim": limit, "cid": current_compte(request)}).mappings().all()
     return [{**dict(r), "created_at": r["created_at"].isoformat() if r["created_at"] else None}
             for r in rows]
 
 
 @app.get("/signalements/export.csv")
-def export_signalements_csv(statut: str | None = None,
+def export_signalements_csv(request: Request, statut: str | None = None,
                             db: Session = Depends(get_db)) -> Response:
-    """Export CSV des signalements pour revue (utf-8-sig BOM + séparateur « ; »)."""
+    """Export CSV des signalements pour revue (utf-8-sig BOM + séparateur « ; »). CLOISON par compte."""
     import csv as _csv
     import io as _io
 
-    where = " WHERE statut = :s" if statut else ""
+    from .tenant import current_compte
+    where = " AND statut = :s" if statut else ""
     rows = db.execute(text(
         f"""SELECT id, parcelle_id, type_erreur, champ, commentaire, utilisateur,
                    statut, created_at
-              FROM signalements{where} ORDER BY created_at DESC"""),
-        {"s": statut}).mappings().all()
+              FROM signalements WHERE compte_id IS NOT DISTINCT FROM :cid{where}
+              ORDER BY created_at DESC"""),
+        {"s": statut, "cid": current_compte(request)}).mappings().all()
     buf = _io.StringIO()
     w = _csv.writer(buf, delimiter=";")
     w.writerow(["id", "idu", "type_erreur", "champ", "commentaire",

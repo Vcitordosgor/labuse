@@ -23,19 +23,24 @@ def get_db():
     yield from _g()
 
 
+# compte_id : cloison multi-tenant (NULL = bucket pilote/démo hérité). La colonne est posée
+# ici pour les installs neufs ; sur une base existante, api/tenant.ensure_scoping l'ajoute
+# (idempotent) + la FK ON DELETE CASCADE + l'unique (compte_id, idu) de watched_parcels.
 DDL = """
 CREATE TABLE IF NOT EXISTS event_log (
   id serial PRIMARY KEY, ts timestamptz DEFAULT now(),
-  kind varchar(24) NOT NULL,            -- bascule | bodacc | permis
+  kind varchar(24) NOT NULL,            -- bascule | bodacc | permis | veille
   idu varchar(14),
   titre varchar(200) NOT NULL,
   detail text,
   run_from varchar(40), run_to varchar(40),
   demo boolean DEFAULT false,           -- événement de DÉMONSTRATION (étiqueté à l'écran)
-  lu boolean DEFAULT false
+  lu boolean DEFAULT false,
+  compte_id integer                     -- cloison : NULL = feed pilote/démo (marché, données publiques)
 );
 CREATE TABLE IF NOT EXISTS watched_parcels (
-  idu varchar(14) PRIMARY KEY, created_at timestamptz DEFAULT now()
+  idu varchar(14) NOT NULL, created_at timestamptz DEFAULT now(),
+  compte_id integer                     -- cloison : le suivi de cible est privé au compte
 );
 CREATE TABLE IF NOT EXISTS saved_searches (
   id serial PRIMARY KEY, nom varchar(80) NOT NULL, hash text NOT NULL,
@@ -101,13 +106,17 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
 
     # 3. nouveau permis proche (≤ 300 m) d'une parcelle SUIVIE (pipeline + watched) — permis
     # récents relativement à la fin des données Sitadel (12 derniers mois de données).
+    # CLOISON : l'événement appartient au COMPTE qui suit la parcelle (une même parcelle suivie
+    # par A et B produit un événement pour chacun, jamais partagé).
     rows = db.execute(text("""
         WITH suivies AS (
-          SELECT p.id, p.idu, p.geom_2975 FROM parcels p
-          WHERE p.id IN (SELECT parcel_id FROM pipeline_entries)
-             OR p.idu IN (SELECT idu FROM watched_parcels)
+          SELECT p.id, p.idu, p.geom_2975, pe.compte_id
+          FROM parcels p JOIN pipeline_entries pe ON pe.parcel_id = p.id
+          UNION
+          SELECT p.id, p.idu, p.geom_2975, w.compte_id
+          FROM parcels p JOIN watched_parcels w ON w.idu = p.idu
         )
-        SELECT s.idu, sp.permit_id, sp.type, sp.date::date::text AS date
+        SELECT s.idu, s.compte_id, sp.permit_id, sp.type, sp.date::date::text AS date
         FROM suivies s
         JOIN sitadel_permits sp ON sp.geom IS NOT NULL
           AND ST_DWithin(s.geom_2975, ST_Transform(sp.geom, 2975), 300)
@@ -115,12 +124,13 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
     ).mappings().all()
     for r in rows:
         n = db.execute(text("""
-            INSERT INTO event_log (kind, idu, titre, detail, run_from, run_to, demo)
-            SELECT 'permis', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text), CAST(:from AS varchar), CAST(:to AS varchar), CAST(:demo AS boolean)
-            WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='permis' AND idu=:idu AND detail=:detail)"""),
+            INSERT INTO event_log (kind, idu, titre, detail, run_from, run_to, demo, compte_id)
+            SELECT 'permis', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text), CAST(:from AS varchar), CAST(:to AS varchar), CAST(:demo AS boolean), :cid
+            WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='permis' AND idu=:idu AND detail=:detail
+                              AND compte_id IS NOT DISTINCT FROM :cid)"""),
             {"idu": r["idu"], "titre": f"Permis {r['type']} à ≤ 300 m de {r['idu'][8:]}",
              "detail": f"{r['permit_id']} du {r['date']} — le secteur bouge autour d'une parcelle suivie.",
-             "from": run_from, "to": run_to, "demo": demo}).rowcount
+             "from": run_from, "to": run_to, "demo": demo, "cid": r["compte_id"]}).rowcount
         inserted["permis"] += n
     db.flush()
     return inserted
@@ -138,7 +148,9 @@ def _parse_hash_filters(h: str) -> dict:
 
 
 def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
-    veilles = db.execute(text("SELECT id, nom, hash FROM saved_searches")).mappings().all()
+    # Batch : on parcourt TOUTES les veilles (tous comptes), et chaque événement produit est
+    # attribué au COMPTE propriétaire de la veille (v["compte_id"]) — jamais partagé.
+    veilles = db.execute(text("SELECT id, nom, hash, compte_id FROM saved_searches")).mappings().all()
     if not veilles:
         return 0
     # bascules « montantes » de CE diff (déjà en event_log, kind=bascule, run_to)
@@ -169,13 +181,14 @@ def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
             if f["sdp"] is not None and (r["sdp_residuelle_m2"] or 0) < f["sdp"]:
                 continue
             n += db.execute(text("""
-                INSERT INTO event_log (kind, idu, titre, detail, run_to, demo)
+                INSERT INTO event_log (kind, idu, titre, detail, run_to, demo, compte_id)
                 SELECT 'veille', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text),
-                       CAST(:to AS varchar), CAST(:demo AS boolean)
-                WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='veille' AND idu=:idu AND titre=:titre)"""),
+                       CAST(:to AS varchar), CAST(:demo AS boolean), :cid
+                WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='veille' AND idu=:idu AND titre=:titre
+                                  AND compte_id IS NOT DISTINCT FROM :cid)"""),
                 {"idu": r["idu"], "titre": f"🔭 Veille « {v['nom']} » : {r['idu'][8:]} correspond",
                  "detail": f"Bascule vers {r['matrice_statut']} qui matche votre veille (run {run_to}).",
-                 "to": run_to, "demo": demo}).rowcount
+                 "to": run_to, "demo": demo, "cid": v["compte_id"]}).rowcount
     return n
 
 
@@ -219,36 +232,47 @@ def seed_demo(db: Session) -> dict:
 # ───────────────────────── API ─────────────────────────
 
 @router.get("")
-def list_events(unread_only: bool = False, limit: int = 100, db: Session = Depends(get_db)) -> dict:
+def list_events(request: Request, unread_only: bool = False, limit: int = 100, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
+    cid = current_compte(request)
     rows = db.execute(text(f"""
         SELECT e.id, e.ts::date::text AS date, e.kind, e.idu, e.titre, e.detail, e.demo, e.lu,
                d.matrice_statut AS statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        {"WHERE NOT e.lu" if unread_only else ""}
+        WHERE e.compte_id IS NOT DISTINCT FROM :cid {"AND NOT e.lu" if unread_only else ""}
         ORDER BY e.ts DESC, e.id DESC LIMIT :lim"""),
-        {"lim": limit, "run": RUN}).mappings().all()
-    unread = db.execute(text("SELECT count(*) FROM event_log WHERE NOT lu")).scalar()
+        {"lim": limit, "run": RUN, "cid": cid}).mappings().all()
+    unread = db.execute(text("SELECT count(*) FROM event_log WHERE NOT lu AND compte_id IS NOT DISTINCT FROM :cid"),
+                        {"cid": cid}).scalar()
     return {"unread": int(unread or 0), "items": [dict(r) for r in rows]}
 
 
 @router.get("/count")
-def events_count(db: Session = Depends(get_db)) -> dict:
-    n = db.execute(text("SELECT count(*) FROM event_log WHERE NOT lu")).scalar()
-    per = db.execute(text("SELECT idu, count(*) FROM event_log WHERE NOT lu AND idu IS NOT NULL GROUP BY idu")).all()
+def events_count(request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
+    cid = current_compte(request)
+    n = db.execute(text("SELECT count(*) FROM event_log WHERE NOT lu AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"cid": cid}).scalar()
+    per = db.execute(text("SELECT idu, count(*) FROM event_log WHERE NOT lu AND idu IS NOT NULL"
+                          " AND compte_id IS NOT DISTINCT FROM :cid GROUP BY idu"), {"cid": cid}).all()
     return {"unread": int(n or 0), "par_parcelle": {r[0]: r[1] for r in per}}
 
 
 @router.post("/{event_id}/read")
-def mark_read(event_id: int, db: Session = Depends(get_db)) -> dict:
-    db.execute(text("UPDATE event_log SET lu = true WHERE id = :i"), {"i": event_id})
+def mark_read(event_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte   # SEC-IDOR : on ne marque QUE ses propres événements
+    db.execute(text("UPDATE event_log SET lu = true WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+               {"i": event_id, "cid": current_compte(request)})
     return {"ok": True}
 
 
 @router.post("/read-all")
-def mark_all_read(db: Session = Depends(get_db)) -> dict:
-    n = db.execute(text("UPDATE event_log SET lu = true WHERE NOT lu")).rowcount
+def mark_all_read(request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
+    n = db.execute(text("UPDATE event_log SET lu = true WHERE NOT lu AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"cid": current_compte(request)}).rowcount
     return {"ok": True, "marques": n}
 
 
@@ -265,19 +289,25 @@ def api_demo(db: Session = Depends(get_db)) -> dict:
 # ── M14 — suivi de cible ──
 
 @router.get("/watch/{idu}")
-def watch_status(idu: str, db: Session = Depends(get_db)) -> dict:
-    w = db.execute(text("SELECT 1 FROM watched_parcels WHERE idu = :i"), {"i": idu}).scalar()
+def watch_status(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
+    w = db.execute(text("SELECT 1 FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"i": idu, "cid": current_compte(request)}).scalar()
     return {"watched": bool(w)}
 
 
 @router.post("/watch/{idu}")
-def watch_toggle(idu: str, db: Session = Depends(get_db)) -> dict:
+def watch_toggle(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
+    cid = current_compte(request)   # CLOISON : le suivi est privé au compte (A et B peuvent suivre la même parcelle)
     if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
         raise HTTPException(404, "Parcelle inconnue")
-    if db.execute(text("SELECT 1 FROM watched_parcels WHERE idu = :i"), {"i": idu}).scalar():
-        db.execute(text("DELETE FROM watched_parcels WHERE idu = :i"), {"i": idu})
+    if db.execute(text("SELECT 1 FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+                  {"i": idu, "cid": cid}).scalar():
+        db.execute(text("DELETE FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"i": idu, "cid": cid})
         return {"watched": False}
-    db.execute(text("INSERT INTO watched_parcels (idu) VALUES (:i)"), {"i": idu})
+    db.execute(text("INSERT INTO watched_parcels (idu, compte_id) VALUES (:i, :cid)"), {"i": idu, "cid": cid})
     return {"watched": True}
 
 
@@ -315,15 +345,15 @@ def searches_del(sid: int, request: Request, db: Session = Depends(get_db)) -> d
 
 # ── M13 — digest hebdo ──
 
-def _digest_data(db: Session) -> dict:
+def _digest_data(db: Session, cid: int | None = None) -> dict:
     events = db.execute(text("""
         SELECT e.kind, e.idu, e.titre, e.detail, e.demo, d.q_score, d.a_score, d.matrice_statut
         FROM event_log e
         LEFT JOIN parcels p ON p.idu = e.idu
         LEFT JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE e.ts >= now() - interval '7 days'
+        WHERE e.ts >= now() - interval '7 days' AND e.compte_id IS NOT DISTINCT FROM :cid
         ORDER BY (e.kind = 'bascule') DESC, d.q_score DESC NULLS LAST LIMIT 10"""),
-        {"run": RUN}).mappings().all()
+        {"run": RUN, "cid": cid}).mappings().all()
     top = db.execute(text("""
         SELECT p.idu, p.commune, d.q_score, d.a_score, round(p.surface_m2) AS surface_m2, r.sdp_residuelle_m2
         FROM dryrun_parcel_evaluations d JOIN parcels p ON p.id = d.parcel_id
@@ -334,15 +364,17 @@ def _digest_data(db: Session) -> dict:
 
 
 @router.get("/digest")
-def digest(db: Session = Depends(get_db)) -> dict:
-    return _digest_data(db)
+def digest(request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
+    return _digest_data(db, current_compte(request))
 
 
 @router.get("/digest.html", response_class=HTMLResponse)
-def digest_html(db: Session = Depends(get_db)) -> str:
+def digest_html(request: Request, db: Session = Depends(get_db)) -> str:
     """Digest « les pépites de la semaine » — HTML email-ready (styles inline, table layout).
     L'envoi SMTP = config à brancher (cf. NOTES) ; le contenu est généré ici."""
-    d = _digest_data(db)
+    from .tenant import current_compte
+    d = _digest_data(db, current_compte(request))
     ev_rows = "".join(
         f"<tr><td style='padding:8px 12px;border-bottom:1px solid #e5e9e7;font:13px sans-serif'>"
         f"{'🟣 DÉMO · ' if e['demo'] else ''}{e['titre']}"
