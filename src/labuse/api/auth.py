@@ -164,7 +164,7 @@ def login_page(error: bool = False) -> str:
             ".foot{font-size:11px;color:var(--dim);text-align:center;margin-top:22px;line-height:1.6}"
             "</style>")
     corps = coffre_ui.OISEAU + f"""
-<h1>LA BUSE</h1><p class="sub">Radar foncier · La Réunion</p>
+<h1>LABUSE</h1><p class="sub">Radar foncier · La Réunion</p>
 <form method="post" action="/login" id="porte" novalidate aria-describedby="loginerr">
   <label for="identifiant">E-mail</label>
   <div class="field"><input id="identifiant" name="identifiant" type="email"

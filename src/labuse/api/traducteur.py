@@ -24,7 +24,7 @@ from sqlalchemy.orm import Session
 log = logging.getLogger("labuse.traducteur")
 router = APIRouter(prefix="/traducteur-plu", tags=["traducteur-plu"])
 
-DISCLAIMER = ("Lecture indicative des règles calibrées LA BUSE — ne constitue pas un conseil juridique. "
+DISCLAIMER = ("Lecture indicative des règles calibrées LABUSE — ne constitue pas un conseil juridique. "
               "Seul le règlement opposable (lien fourni) fait foi ; vérifiez auprès du service instructeur.")
 
 

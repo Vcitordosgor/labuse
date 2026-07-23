@@ -114,9 +114,9 @@ async def _lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title="LA BUSE — radar foncier",
+    title="LABUSE — radar foncier",
     version="0.1.0",
-    description="La donnée publique ne suffit pas. LA BUSE l'interprète. "
+    description="La donnée publique ne suffit pas. LABUSE l'interprète. "
                 "Pré-analyse — constructibilité/propriété/rentabilité jamais garanties.",
     lifespan=_lifespan,
 )
@@ -204,7 +204,7 @@ def get_db() -> Iterator[Session]:
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "produit": "LA BUSE"}
+    return {"status": "ok", "produit": "LABUSE"}
 
 
 @app.get("/healthz")

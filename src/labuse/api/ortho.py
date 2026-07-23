@@ -219,7 +219,7 @@ def valider(det_id: int, body: VerdictIn, db: Session = Depends(get_db)) -> dict
 
 
 _PAGE = """<!doctype html><html lang="fr"><head><meta charset="utf-8">
-<title>Validation détections — LA BUSE</title>
+<title>Validation détections — LABUSE</title>
 <style>
  body{background:#0a0f0c;color:#cfe3d6;font:14px system-ui;margin:0;display:flex;
       flex-direction:column;align-items:center;gap:14px;padding:24px}

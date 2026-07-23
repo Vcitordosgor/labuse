@@ -294,7 +294,7 @@ _PACK_PRINT_CSS = """<style>
   [style*="#B497F0"] { color: #5b3fa6 !important; }
   [style*="#E8695A"] { color: #c0392b !important; }
   [style*="#E8B44C"] { color: #9a6510 !important; }
-  svg[fill] { fill: #0c8a4f !important; }   /* logo LA BUSE (fill en attribut) */
+  svg[fill] { fill: #0c8a4f !important; }   /* logo LABUSE (fill en attribut) */
 }
 </style>"""
 
@@ -343,7 +343,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
 <body style="margin:0;background:#060A08;font-family:sans-serif">
 <div style="max-width:640px;margin:0 auto;padding:28px 20px">
   <div style="display:flex;justify-content:space-between;align-items:baseline">
-    <span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(47,224,160,.35))" fill="#2FE0A0"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 15px sans-serif;color:#5CE6A1">LA BUSE</span></span>
+    <span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(47,224,160,.35))" fill="#2FE0A0"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 15px sans-serif;color:#5CE6A1">LABUSE</span></span>
     <span style="font:10px monospace;color:#5C7268">PACK APPORTEUR · LECTURE SEULE</span>
   </div>
   <div style="margin-top:6px;background:#171221;border:1px solid #2a2138;border-radius:8px;padding:8px 12px;
@@ -419,7 +419,7 @@ def api_v1_docs() -> str:
     return """<!doctype html><html lang=fr><head><meta charset=utf-8><title>LABUSE — API partenaire v1</title></head>
 <body style="margin:0;background:#060A08;color:#C9DCD1;font-family:sans-serif">
 <div style="max-width:680px;margin:0 auto;padding:32px 20px">
-<span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(47,224,160,.35))" fill="#2FE0A0"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 16px sans-serif;color:#5CE6A1">LA BUSE</span></span>
+<span style="display:inline-flex;align-items:center;gap:8px"><svg viewBox="0 0 240 82" style="height:16px;filter:drop-shadow(0 0 6px rgba(47,224,160,.35))" fill="#2FE0A0"><path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg><span style="font:700 16px sans-serif;color:#5CE6A1">LABUSE</span></span>
 <span style="color:#5C7268;font-size:12px"> · API partenaire v1</span>
 <h1 style="font-size:20px;color:#ECF5EF">GET /api/v1/parcels</h1>
 <p style="font-size:13px;color:#8FA69A">Parcelles scorées (run premium q_v2). Authentification par

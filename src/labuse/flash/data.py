@@ -381,7 +381,7 @@ _SECTION_SOURCES: list[tuple[str, str, int | None, str | None]] = [
     # (clé section, libellé source si data_sources indisponible, ds_id, millésime statique)
     ("identite", "Cadastre Etalab (DGFiP)", 2, None),
     ("identite", "PLU / GPU (API Carto, IGN)", 3, None),
-    ("identite", "Droits résiduels — calibrage LA BUSE sur règlements PLU", None,
+    ("identite", "Droits résiduels — calibrage LABUSE sur règlements PLU", None,
      "calibrage continu 2026"),
     ("risques", "Géorisques (BRGM / MTE)", 4, None),
     ("risques", "Géorisques — sites et sols pollués", 32, None),

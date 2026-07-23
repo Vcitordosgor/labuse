@@ -120,7 +120,7 @@ def evaluate_parcels(
                 status = final_status
                 outcome.status = status.value
                 verdicts.append(soft_flag("declassement", motif, Severity.FORT,
-                                          source="LA BUSE — garde-fou faux positifs"))
+                                          source="LABUSE — garde-fou faux positifs"))
                 opportunity.weights.append(0.0)
 
         if persist:

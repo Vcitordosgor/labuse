@@ -18,7 +18,7 @@ from . import models
 from .config import get_settings
 from .db import engine, ensure_postgis, session_scope
 
-app = typer.Typer(add_completion=False, help="LA BUSE — radar foncier intelligent de La Réunion.")
+app = typer.Typer(add_completion=False, help="LABUSE — radar foncier intelligent de La Réunion.")
 
 
 def _resolve_commune(commune: str | None) -> str | None:

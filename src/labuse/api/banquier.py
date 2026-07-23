@@ -314,7 +314,7 @@ def _identite(out: dict) -> str:
         f"<table><tr><th>Zone</th><th class='n'>Part</th><th>Document</th></tr>{zonage}</table>")
     if regles:
         body += (f"<h3>Règles calibrées</h3><table><tr><th>Règle</th><th class='n'>Valeur</th><th>Nature</th></tr>"
-                 f"{regles}</table><p class='note'>Règles calibrées LA BUSE (Estimé) — le règlement complet "
+                 f"{regles}</table><p class='note'>Règles calibrées LABUSE (Estimé) — le règlement complet "
                  f"(retraits, prospects, servitudes) peut modifier ces valeurs.</p>")
     return f"<div class='pb'></div><h2>Identité de la parcelle</h2>{body}"
 

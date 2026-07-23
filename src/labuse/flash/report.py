@@ -26,7 +26,9 @@ from .data import collect_report_data
 log = logging.getLogger("labuse.flash")
 
 #: Version de la maquette du rapport (page de garde + nom de fichier).
-TEMPLATE_VERSION = "1.0"
+#: 1.1 (O2) — wordmark de la page de garde « LA BUSE » → « LABUSE » (le contenu du
+#: template a changé ; la version suit pour rester traçable).
+TEMPLATE_VERSION = "1.1"
 
 _TEMPLATES = Path(__file__).resolve().parent / "templates"
 #: Fonts du design system (OFL) — déjà embarquées pour les exports PDF existants.
