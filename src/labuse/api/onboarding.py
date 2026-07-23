@@ -241,9 +241,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 # ── E3 · pages légales (drafts SOLIDES — relecture Vic obligatoire, avocat recommandé
 #     avant premières signatures : noté au rapport ; non bloquant pour construire) ──
 
-_EDITEUR = ("Victor L. — entrepreneur individuel (EI) · La Réunion, France.<br>"
-            "SIREN 987 641 917 (SIRET 987 641 917 00016) · Adresse : "
-            "<b>[À COMPLÉTER par Vic — adresse officielle de l'EI]</b> · "
+_EDITEUR = ("Victor L. — entrepreneur individuel (EI) · 97417 Saint-Denis, Île de La Réunion, France.<br>"
+            "SIREN : <b>[à confirmer par Vic]</b> · "
             "contact : kampusreunion@gmail.com")
 
 

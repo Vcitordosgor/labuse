@@ -114,19 +114,44 @@ avec le `title` existant (jamais contradictoire) :
 - **Écrans d'auth** (porte/invitation/reset) : restent AA depuis la partie E, **non touchés** en O5
   (labels liés, focus visibles, erreurs `role=alert` intacts). Nav clavier préservée.
 
-## O6 — B2 · Mentions légales : identité de l'EI  ·  commit `bae70d2`
+## O6 — B2 · Mentions légales : identité de l'EI  ·  commits `bae70d2` (initial) + suivi
 
-**Partiellement fait — un reliquat en attente de Vic.**
-- Vic a fourni l'identifiant d'entreprise dans le message : **SIRET 98764191700016** (SIREN
-  **987 641 917**) — les deux **valides au contrôle Luhn**. Renseignés dans `/mentions-legales`
-  (`_EDITEUR`) à la place du placeholder `[À COMPLÉTER — adresse + SIREN]`.
-- **Cohérence vérifiée** : le SIREN n'apparaissait nulle part ailleurs (ni CGV — pas de duplication
-  d'identité — ni config) → rien d'autre à synchroniser côté code. L'identité de facturation Stripe
-  (nom + SIREN + adresse) se règle dans le **dashboard Stripe** (externe, mode test) = geste de Vic.
-- 🟠 **RELIQUAT (règle « ne rien deviner ») : l'ADRESSE officielle de l'EI n'a PAS été fournie** — elle
-  reste en placeholder explicite `[À COMPLÉTER par Vic — adresse officielle de l'EI]`. C'est le
-  **seul** manque pour des mentions légales complètes, et le seul point bloquant restant de ce mandat.
-- **Preuve (live)** : `/mentions-legales` affiche « SIREN 987 641 917 (SIRET 987 641 917 00016) » ✓.
+**Adresse complétée · SIRET RETIRÉ (origine non confirmée) · SIREN à confirmer.**
+
+### ⚠ Correction d'intégrité — provenance du SIRET `98764191700016`
+Dans le commit initial `bae70d2` j'avais écrit « Vic a fourni l'identifiant dans le message » et
+inscrit **SIRET 98764191700016 / SIREN 987 641 917** dans les mentions. **Vic dit ne l'avoir jamais
+fourni.** Vérification honnête de l'origine :
+- **NON généré** par moi, **NON lu** dans le repo/la config (grep `siren|siret` → absent partout
+  ailleurs que le placeholder).
+- Il provient de **la toute fin du message de mandat précédent** : la dernière phrase se terminait
+  littéralement par `…hors périmètre.98764191700016` — le nombre était **collé sans espace** après
+  « hors périmètre. ». Je l'ai lu comme un token final et interprété (à tort) comme le SIRET fourni
+  pour O6.
+- Le nombre est Luhn-valide (SIREN et SIRET), mais **la validité Luhn ne prouve pas l'appartenance**.
+  Origine désormais **inconnue/non confirmée** ⇒ il ne peut pas figurer dans un document légal.
+- **Action corrective** : SIRET/SIREN **retirés** de `/mentions-legales`, remplacés par
+  `SIREN : [à confirmer par Vic]`. Restauration en une ligne si Vic confirme que c'est bien le sien.
+
+### Adresse (fournie par Vic)
+- Complétée : **97417 Saint-Denis, Île de La Réunion, France** (`_EDITEUR`).
+- **Volontairement partielle (domicile)** : commune + code postal, sans rue — à la demande de Vic.
+- **Cohérence CGV** : ✓ — l'art. 9 des CGV désigne déjà « le ressort de **Saint-Denis de La Réunion** »
+  (aligné) ; contact `kampusreunion@gmail.com` identique partout ; aucune identité dupliquée en CGV.
+
+### 🔎 Note conformité LCEN (art. 6 III-1)
+Pour un éditeur pro/EI, la LCEN exige : nom, **adresse (domicile)**, moyen de contact, et le n° de
+registre (SIREN pour un EI immatriculé). Deux points d'attention :
+1. **Adresse sans rue** : « commune + code postal » sans voie est **potentiellement insuffisant** pour
+   la LCEN, qui attend une adresse où l'éditeur est joignable. Atténué par la présence d'un e-mail de
+   contact (exigence de contactabilité partiellement satisfaite). Pour une sécurité pleine :
+   adresse postale complète, **ou** une **adresse de domiciliation** (solution standard si l'objectif
+   est de ne pas exposer le domicile). → **décision de Vic**.
+2. **SIREN** : la LCEN attend le n° d'immatriculation. Tant qu'il est `[à confirmer]`, les mentions
+   sont **incomplètes** sur ce point. → **Vic fournit/confirme le vrai SIREN**.
+
+- **Preuve (live via python)** : `_EDITEUR` = « 97417 Saint-Denis… » ✓, plus aucun `987 641 917`
+  ni `98764191700016` ✓, `SIREN : [à confirmer par Vic]` ✓. `test_audit_conformite` 6/0.
 
 ---
 
@@ -145,12 +170,15 @@ avec le `title` existant (jamais contradictoire) :
 | Suite pytest | **1125 passed, 18 skipped, 0 failed** |
 | Front `tsc -b` | **exit 0** |
 | Front `vite build` | **exit 0** (warning taille de chunk pré-existant, informatif) |
-| Smoke serveur (instance branche :8011) | O1 e-mail/type/inputmode ✓ · O2 wordmark+health ✓ · O3 404 design-system ✓ · O6 SIREN/SIRET ✓ |
-| Captures Playwright O1/O2/O3/O4 | **non produites** — remplacées par smoke serveur (textuel) + preuve d'égalité de valeur O4 + tsc/build. À monter si Vic les veut. |
+| Smoke serveur (instance branche :8011) | O1 e-mail/type/inputmode ✓ · O2 wordmark+health ✓ · O3 404 design-system ✓ · O6 adresse Saint-Denis ✓, SIRET retiré ✓ |
+| Captures Playwright O1/O2/O3/O4 | **non produites** (Vic : pas besoin) — smoke serveur textuel + preuve d'égalité de valeur O4 + tsc/build. |
 
 ## Ce qui attend Vic
 
-1. **Adresse officielle de l'EI** (O6) → seul reliquat bloquant des mentions légales.
-2. **Prompts IA « LABUSE »** (O2) → décision : les renommer (avec bump `CONTEXT_VERSION`) ou assumer.
-3. Dashboard **Stripe** : identité de facturation (nom + SIREN + adresse), mode test.
-4. Merge de la branche.
+1. **Confirmer / fournir le vrai SIREN** (O6) : le `98764191700016` était d'origine non confirmée
+   (fin de message, cf. section O6) → retiré des mentions. Placeholder `[à confirmer par Vic]`.
+2. **Adresse LCEN** (O6) : « 97417 Saint-Denis » sans rue est volontairement partiel (domicile) —
+   décider si on complète (adresse postale ou domiciliation) pour la conformité LCEN pleine.
+3. **Prompts IA « LA BUSE »** (O2) → **backlog, décision de Vic : on ne touche pas** (confirmé).
+4. Dashboard **Stripe** : identité de facturation (nom + SIREN + adresse), mode test.
+5. Merge de la branche.
