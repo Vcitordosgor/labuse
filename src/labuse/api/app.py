@@ -144,6 +144,11 @@ async def _security_headers(request, call_next):
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("X-Frame-Options", "DENY")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
+    # P1 : HSTS quand la requête est en HTTPS (derrière Caddy, uvicorn --proxy-headers lit
+    # X-Forwarded-Proto). JAMAIS en clair : un HSTS posé sur du http local bloquerait l'accès
+    # http à localhost. Absent du Caddy prod / commenté dans nginx → l'app le garantit.
+    if request.url.scheme == "https":
+        resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     return resp
 
 
@@ -336,6 +341,18 @@ def logout(request: Request):
     from . import auth
 
     auth.log_event("logout", request)
+    # P1 : RÉVOQUER la session côté serveur, pas seulement supprimer le cookie — sinon le
+    # jeton restait valide en base jusqu'à son expiration (12 h) et un cookie rejoué gardait
+    # l'accès. Sessions utilisateur uniquement (« u.<token> ») ; le jeton pilote est sans état.
+    cookie = request.cookies.get(auth.COOKIE)
+    if cookie and cookie.startswith("u."):
+        try:
+            from ..comptes import detruire_session
+            from ..db import session_scope
+            with session_scope() as db:
+                detruire_session(db, cookie[2:])
+        except Exception:  # noqa: BLE001 — déconnexion best-effort : le cookie est supprimé quoi qu'il arrive
+            pass
     resp = RedirectResponse("/login", status_code=302)
     resp.delete_cookie(auth.COOKIE, path="/")
     return resp

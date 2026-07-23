@@ -432,6 +432,38 @@ def test_entrees_flash_idu_jamais_500(app_client):
     assert r.status_code < 500
 
 
+# ─────────────────────── P1 — durcissements rapides (audit 360) ───────────────────────
+
+def test_logout_revoque_la_session_en_base(app_client):
+    """La déconnexion RÉVOQUE le jeton côté serveur (pas seulement le cookie) : un cookie
+    rejoué après /logout ne rouvre pas l'accès."""
+    email = f"lo-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(email)
+
+    def _n_sessions() -> int:
+        with session_scope() as s:
+            return s.execute(text(
+                "SELECT count(*) FROM sessions_auth sa JOIN utilisateurs u ON u.id = sa.utilisateur_id"
+                " WHERE u.email = :e"), {"e": email}).scalar()
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver")
+        _login(c, email)
+        assert _n_sessions() >= 1                    # session ouverte en base
+        c.get("/logout", follow_redirects=False)
+        assert _n_sessions() == 0                     # révoquée côté serveur
+    finally:
+        _purge(email)
+
+
+def test_hsts_en_https_jamais_en_clair(app_client):
+    """HSTS posé en HTTPS (derrière Caddy) mais JAMAIS en http (un HSTS en clair bloquerait
+    l'accès http à localhost en dev)."""
+    r_https = TestClient(app_client.app, base_url="https://testserver").get("/healthz")
+    assert r_https.headers.get("Strict-Transport-Security", "").startswith("max-age=")
+    r_http = TestClient(app_client.app, base_url="http://testserver").get("/healthz")
+    assert "Strict-Transport-Security" not in r_http.headers
+
+
 # ─────────────────────── LABUSE_SECRET_KEY : fail-closed en prod (P0-3) ───────────────────────
 
 def test_secret_key_exigee_hors_local(monkeypatch):
