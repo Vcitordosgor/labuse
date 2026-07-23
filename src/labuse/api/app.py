@@ -214,21 +214,18 @@ def healthz() -> dict:
     return {"status": "ok"}
 
 
-# ── 404 de NAVIGATION habillé (revue UI/UX S68) : une faute d'URL au navigateur ne montre
-# plus du JSON brut sur fond blanc. Les appels API (Accept: */* ou application/json) gardent
-# le JSON FastAPI exact — golden et clients inchangés.
-_NOT_FOUND_HTML = """<!doctype html><html lang="fr"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
-<title>LABUSE — page introuvable</title></head>
-<body style="margin:0;display:flex;min-height:100vh;align-items:center;justify-content:center;
-background:#060A08;color:#C9DCD1;font:14px/1.6 -apple-system,'Inter',sans-serif;text-align:center">
-<div style="padding:32px">
-<svg viewBox="0 0 240 82" style="height:22px;width:auto" fill="#1E2A23" aria-hidden="true">
-<path d="M2 15 C58 10 100 18 120 27 C140 18 182 10 238 15 C202 29 162 40 135 46 C127 49 122 53 120 60 C118 53 113 49 105 46 C78 40 38 29 2 15 Z"/></svg>
-<p style="margin:16px 0 4px;font-weight:600;color:#ECF5EF">Page introuvable</p>
-<p style="margin:0;font-size:12px;color:#8FA69A">L'adresse demandée n'existe pas — vérifiez l'URL.</p>
-<p style="margin-top:20px"><a href="/" style="color:#5CE6A1;font-size:13px;text-decoration:none">← Revenir à LABUSE</a></p>
-</div></body></html>"""
+# ── 404 de NAVIGATION habillé (revue UI/UX S68 · O3 : porté au design system coffre_ui) :
+# une faute d'URL au navigateur ne montre plus du JSON brut sur fond blanc, et naît des mêmes
+# tokens que la porte/les pages légales (zéro hex local), ton sobre, toujours une sortie (LOI-2).
+# Les appels API (Accept: */* ou application/json) gardent le JSON FastAPI exact — golden et
+# clients inchangés.
+from . import coffre_ui as _coffre_ui  # noqa: E402
+
+_NOT_FOUND_HTML = _coffre_ui.page("page introuvable", _coffre_ui.OISEAU + """
+<div class="big"><h1>Page introuvable</h1>
+<p class="sub">cette adresse n'existe pas</p>
+<p style="font-size:13px">Vérifiez l'URL — ou revenez à votre espace.</p>
+<p style="margin-top:20px"><a href="/" class="pill">← Revenir à LABUSE</a></p></div>""")
 
 
 @app.exception_handler(StarletteHTTPException)
