@@ -1,47 +1,5 @@
-# LA BUSE — dépendances cœur (MVP backend)
-# Socle géo : PostGIS imposé côté base ; ici la couche connecteurs/géo en Python.
-
-SQLAlchemy>=2.0
-GeoAlchemy2>=0.14
-psycopg[binary]>=3.1
-
-pydantic>=2.5
-pydantic-settings>=2.1
-PyYAML>=6.0
-
-fastapi>=0.110
-uvicorn[standard]>=0.27
-httpx>=0.26
-
-shapely>=2.0
-pyproj>=3.6
-pyshp>=2.3
-
-typer>=0.9
-jsonschema>=4.21
-
-# Imagerie ortho/IRC : vignettes de validation (api/ortho.py) + détection & NDVI
-# (ingestion/ortho_*.py, ingestion/vegetation.py). Requis par `labuse api`.
-opencv-python-headless>=4.9
-numpy>=1.26
-
-# Ingestion INSEE RP — lecture XLSX (scripts/ingest_insee_logement.py).
-openpyxl>=3.1
-
-# PREMIER EURO — auth réelle + abonnements (mandat commerce/premier-euro)
-argon2-cffi>=23.1        # hachage argon2id (jamais un hash faible)
-stripe>=8                # Checkout hébergé + webhooks signés (réintroduit : il y a du code)
-
-# Dev / tests
-pytest>=8.0
-
-# Module Flash (rapport parcelle à l'unité) : PDF HTML/CSS
-weasyprint>=61
-jinja2>=3.1
-pypdf>=5
-
-# Cascade de juges ortho (dev/entraînement, mandat Détection Ortho) : probe DINOv2
-# gelé + régression logistique. Lourd (~2 Go) et PAS requis par `labuse api` — n'est
-# tiré que par `labuse ortho-juge-*`. Installer via requirements-ml.txt si besoin.
-# torch>=2.2
-# scikit-learn>=1.4
+# LA BUSE — dépendances CŒUR.
+# SOURCE DE VÉRITÉ = pyproject.toml [project.dependencies]. Ce fichier installe le paquet en
+# éditable → toutes les dépendances cœur suivent automatiquement (plus de liste à maintenir en
+# double, plus de dérive « dépendance implicite »). `tests/test_deps_declared.py` garde l'invariant.
+-e .

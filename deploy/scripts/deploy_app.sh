@@ -19,12 +19,16 @@ rsync -a --delete \
 ssh -o BatchMode=yes "$HOST" 'sudo rsync -a --delete /tmp/labuse-app-sync/ /opt/labuse/app/ && sudo chown -R labuse:labuse /opt/labuse/app'
 
 echo "── 2. venv + dépendances (sur le VPS, en labuse) ──"
+# Import-smoke de la CHAÎNE DE DÉMARRAGE (pas juste `import labuse`) : app servie + comptes +
+# tenant + events. Une dépendance cœur manquante (ex. argon2-cffi absent → comptes KO → cloison
+# non matérialisée EN SILENCE) fait ÉCHOUER LE DÉPLOIEMENT ICI, avant tout restart. set -e propage.
 ssh -o BatchMode=yes "$HOST" 'sudo -u labuse bash -c "
+  set -e
   cd /opt/labuse
   [ -d venv ] || python3.12 -m venv venv
   ./venv/bin/pip install -q --upgrade pip
   ./venv/bin/pip install -q -e ./app
-  ./venv/bin/python -c \"import labuse; print(\\\"labuse importable ✓\\\")\"
+  ./venv/bin/python -c \"import labuse.api.app, labuse.comptes, labuse.api.tenant, labuse.api.events; print(\\\"chaîne de démarrage importable ✓\\\")\"
 "'
 
 echo "── 3. Front (dist se CONSTRUIT sur le VPS, ne se copie pas ; --base=/ : Caddy le sert à la RACINE) ──"
