@@ -162,3 +162,36 @@ Configurer `LABUSE_BACKUP_EXTERN` (montage/rclone) pour automatiser la copie ext
 | Changer le mot de passe pilote | éditer `.env` puis `docker compose … up -d app` (déconnecte tout le monde) |
 
 Avant chaque rendez-vous client : `CLIENT_DEMO_CHECKLIST.md`.
+
+---
+
+## QA — golden 116/116 contre la PROD (voie M7, systemd/Caddy)
+
+Le golden compare la face **API** (via le rideau Caddy + login pilote) à la face **DB** (via
+tunnel SSH). Il exige que l'**IP publique du Mac qui lance le golden** soit dans
+`LABUSE_QA_ALLOWLIST` (env VPS) — sinon les ~116 requêtes tombent sous le rate-limit. Cette
+allowlist exempte l'IP **sans toucher au régime des clients** (nécessite `LABUSE_TRUSTED_PROXIES=127.0.0.1`,
+posé, pour que l'app voie l'IP réelle derrière Caddy). **Jamais `dev_mode` sur une machine publique.**
+
+### ⚠ Mettre à jour l'allowlist quand l'IP du Mac change (elle change !)
+```bash
+MYIP=$(curl -s https://api.ipify.org)                 # IP publique actuelle du Mac
+ssh labuse-vps "sudo sed -ri 's/^LABUSE_QA_ALLOWLIST=.*/LABUSE_QA_ALLOWLIST=$MYIP/' /etc/labuse/labuse.env \
+  && sudo grep '^LABUSE_QA_ALLOWLIST=' /etc/labuse/labuse.env"
+ssh labuse-vps 'sudo systemctl restart labuse'        # l'allowlist est lue au démarrage
+# (plusieurs postes QA : LABUSE_QA_ALLOWLIST=ip1,ip2 — séparées par des virgules)
+```
+Historique des IP QA (traçabilité — elles tournent) : `83.204.133.163` (2026-07-23).
+
+### Lancer le golden
+```bash
+# secrets depuis ~/labuse-backups/M7_SECRETS.txt (jamais en git) :
+export LABUSE_QA_TARGET=https://app.labuse.immo
+export LABUSE_QA_BASIC=<CADDY_BASIC_AUTH_USER>:<CADDY_BASIC_AUTH_PASSWORD>
+export LABUSE_QA_PASSWORD=<LABUSE_AUTH_PASSWORD>       # login app → cookie session
+export LABUSE_DATABASE_URL=postgresql://labuse:<PG_LABUSE_PASSWORD>@127.0.0.1:15432/labuse
+ssh -N -L 15432:127.0.0.1:5432 labuse-vps &           # tunnel DB (face base du golden)
+~/miniforge3/envs/labusedb/bin/python qa/golden_check.py     # attendu : 116/116 PASS
+kill %1                                                # fermer le tunnel
+```
+Smoke complémentaire (curl, lecture seule) : `LABUSE_QA_BASIC=… LABUSE_QA_PASSWORD=… qa/smoke_prod.sh`.

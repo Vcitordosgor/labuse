@@ -10,18 +10,26 @@ readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "Proprietary" }
 
-# Les dépendances exactes sont épinglées dans requirements.txt (installées en venv).
+# SOURCE DE VÉRITÉ des dépendances (requirements.txt = `-e .`, requirements-ml.txt = `-e .[ml]`).
+# TOUT import tiers direct du code DOIT figurer ici (cœur) ou dans un groupe optionnel ci-dessous —
+# `tests/test_deps_declared.py` échoue sinon (garde anti « dépendance implicite » : argon2/certifi/anyio
+# ont mordu faute d'être déclarées → le serveur importait grâce à une présence transitive fragile).
 dependencies = [
-    "opencv-python-headless>=4.10",   # détection ortho (module Ortho) — dépendance implicite déclarée (M7 J+2)
+  "opencv-python-headless>=4.10",   # détection ortho (module Ortho) — dépendance implicite déclarée (M7 J+2)
   "SQLAlchemy>=2.0",
   "GeoAlchemy2>=0.14",
   "psycopg[binary]>=3.1",
   "pydantic>=2.5",
   "pydantic-settings>=2.1",
+  "python-dotenv>=1.0",             # config.py — chargé au démarrage
   "PyYAML>=6.0",
   "fastapi>=0.110",
+  "starlette>=0.36",                # importé directement par api/app.py (pas seulement via fastapi)
   "uvicorn[standard]>=0.27",
+  "anyio>=4.0",                     # api/protection.py — run_sync direct
   "httpx>=0.26",
+  "certifi>=2024.2",                # bundle CA des connecteurs (appels sortants) — importé en dur
+  "numpy>=1.26",                    # scoring + api/ortho (chaîne d'import du serveur)
   "shapely>=2.0",
   "pyproj>=3.6",
   "pyshp>=2.3",
@@ -30,6 +38,8 @@ dependencies = [
   "fpdf2>=2.8",
   "weasyprint>=61",
   "jinja2>=3.1",
+  "MarkupSafe>=2.1",                # flash/report.py — échappement direct
+  "argon2-cffi>=23.1",              # comptes.py — hachage argon2id (auth/cloison) : JAMAIS optionnel
   "stripe>=8",
   "pypdf>=5",
 ]
@@ -37,6 +47,16 @@ dependencies = [
 [project.optional-dependencies]
 # Provider IA réel (sinon provider "stub" hors-ligne par défaut).
 ai = ["anthropic>=0.40"]
+# ML / hors-ligne (entraînement P-model, détection ortho, backtests d'arène) — JAMAIS sur le serveur
+# de prod (il sert des scores pré-calculés). Sur le Mac/GPU : `pip install -e .[ml]`.
+ml = [
+  "torch>=2.2",
+  "scikit-learn>=1.4",
+  "joblib>=1.3",
+  "segmentation-models-pytorch>=0.3",
+  "pandas>=2.0",
+  "openpyxl>=3.1",
+]
 # Outils de dev / CI (tests + lint).
 dev = ["pytest>=8.0", "ruff>=0.5"]
 
