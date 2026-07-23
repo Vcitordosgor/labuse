@@ -459,8 +459,8 @@ débité — réessayez, ou écrivez à votre contact LABUSE.</p>"""), status_co
 @router.get("/flash/retour", include_in_schema=False)
 def flash_retour(session_id: str = ""):
     return HTMLResponse(_page("génération du rapport", f"""
-<div class="big"><div class="mark ok" aria-hidden="true"><span class="spin" style="border-color:rgba(92,230,161,.3);border-top-color:var(--mint)"></span></div>
-<h1>Paiement reçu</h1><p class="sub">génération en cours…</p></div>
+<div class="big"><div class="mark ok" id="mark" aria-hidden="true"><span class="spin" style="border-color:rgba(92,230,161,.3);border-top-color:var(--mint)"></span></div>
+<h1>Paiement reçu</h1><p class="sub" id="sub">génération en cours…</p></div>
 <div id="etat" role="status" aria-live="polite" style="text-align:center;font-size:13px;color:var(--mut);margin-top:6px">
 Quelques secondes — le lien de téléchargement s'affiche ici.</div>
 <script>
@@ -471,6 +471,8 @@ async function poll() {{
     const d = await r.json();
     const el = document.getElementById('etat');
     if (d.statut === 'generee' && d.lien) {{
+      document.getElementById('mark').innerHTML = '✓';   // spinner → coche (état PRÊT, arrête l'animation)
+      document.getElementById('sub').textContent = 'Votre rapport est prêt';
       el.innerHTML = '<a class="pill" href="' + d.lien + '">↓ Télécharger le PDF</a>' +
         '<p style="font-size:11px;color:var(--dim);margin-top:12px">Lien valable 30 jours — ' +
         'conservez le PDF. Reçu et facture : dans l\\'email Stripe.</p>';
