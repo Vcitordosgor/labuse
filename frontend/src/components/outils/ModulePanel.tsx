@@ -7,6 +7,7 @@ import {
 } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
+import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { M22 } from './M22Programme'
@@ -370,10 +371,10 @@ function M05() {
         {rows.map((c) => {
           const rang = c['rang_delai'] as number | null
           // rapides (rang bas) en mint, lentes (rang haut) en rouge — repère visuel
-          const rgColor = rang == null ? '#5C7268' : rang <= 5 ? '#5CE6A1' : rang >= 20 ? '#E8695A' : VIOLET
+          const rgColor = rang == null ? TOKENS.txtDim : rang <= 5 ? TOKENS.mint : rang >= 20 ? TOKENS.stEcartee : VIOLET
           const tend = c['tendance'] as string | null
           const tIcon = tend === 'accelere' ? '↓' : tend === 'ralentit' ? '↑' : tend === 'stable' ? '→' : ''
-          const tColor = tend === 'accelere' ? '#5CE6A1' : tend === 'ralentit' ? '#E8695A' : '#5C7268'
+          const tColor = tend === 'accelere' ? TOKENS.mint : tend === 'ralentit' ? TOKENS.stEcartee : TOKENS.txtDim
           return (
             <div key={c['commune'] as string} className="grid grid-cols-[1fr_64px_60px] gap-1 border-b border-line py-1.5 text-[11px]"
               title={`${c['commune']} : rang ${rang ?? '—'}/24 par vélocité · délai médian ${natLabel} = ${c['delai_median_mois']} mois (IQR ${c['delai_p25_mois']}–${c['delai_p75_mois']}), sur ${c['n_mur']} dossiers mûrs. Tendance : ${tend ?? 'indéterminée (cohortes insuffisantes)'}.`}>
@@ -613,7 +614,7 @@ function M10() {
           <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
             {items.map((i, k) => 'idu' in i ? (() => {
               const risque = i['risque'] as number
-              const rColor = risque >= 100 ? '#E8695A' : risque >= 60 ? '#E8695A' : risque >= 30 ? '#E8B44C' : '#5CE6A1'
+              const rColor = risque >= 100 ? TOKENS.stEcartee : risque >= 60 ? TOKENS.stEcartee : risque >= 30 ? TOKENS.stCreuser : TOKENS.mint
               const rLabel = risque >= 100 ? 'bloquant' : risque >= 60 ? 'élevé' : risque >= 30 ? 'modéré' : 'faible'
               const proprio = i['proprio'] as Record<string, any>
               const checklist = (i['checklist'] ?? []) as Record<string, any>[]
@@ -635,7 +636,7 @@ function M10() {
                   <div className="mt-1.5 flex flex-col gap-0.5">
                     {checklist.slice(0, 5).map((c, ci) => (
                       <div key={ci} className="flex gap-1.5 text-[10.5px] leading-snug">
-                        <span style={{ color: c['result'] === 'HARD_EXCLUDE' ? '#E8695A' : c['severity'] === 'fort' ? '#E8B44C' : '#8FA69A' }}>
+                        <span style={{ color: c['result'] === 'HARD_EXCLUDE' ? TOKENS.stEcartee : c['severity'] === 'fort' ? TOKENS.stCreuser : TOKENS.txtMut }}>
                           {c['result'] === 'HARD_EXCLUDE' ? '✕' : '☐'}</span>
                         <span className="text-txt-mut"><b className="text-txt">{c['layer']}</b> — {c['detail']}</span>
                       </div>

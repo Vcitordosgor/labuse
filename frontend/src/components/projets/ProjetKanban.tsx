@@ -5,6 +5,7 @@ import {
   type FicheProjet, type ParcoursEtat, type ParcoursItem, type ProprietairePublic, type StatutParcelle,
 } from '../../lib/api'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
+import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { TierBadge } from '../outils/TierBadge'
@@ -37,9 +38,9 @@ function criteres(f: FicheProjet): string[] {
 /** Les 3 colonnes du projet unifié — UNE seule source de vérité : les statuts `projet_parcelles`.
  *  Accents = tokens de statut (à trier reste NEUTRE : la couleur est pour les décisions). */
 const COLS: { key: StatutParcelle; label: string; accent: string }[] = [
-  { key: 'proposee', label: 'À trier', accent: '#39463F' },
-  { key: 'retenue', label: 'Retenues', accent: '#5CE6A1' },
-  { key: 'ecartee', label: 'Écartées', accent: '#E8695A' },
+  { key: 'proposee', label: 'À trier', accent: TOKENS.stNone },
+  { key: 'retenue', label: 'Retenues', accent: TOKENS.stChaude },
+  { key: 'ecartee', label: 'Écartées', accent: TOKENS.stEcartee },
 ]
 const APERCU = 3   // cartes visibles par colonne avant « + N autres »
 

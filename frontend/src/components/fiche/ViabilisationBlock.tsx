@@ -7,14 +7,15 @@
  * Coût de raccordement QUALITATIF (Lot 3). Note PV S3REnR au niveau île (Lot 2.5).
  * Additif : rendu depuis la charge utile de la fiche (aucun fetch).
  */
+import { TOKENS } from '../../lib/tokens'
 import type { Viabilisation } from '../../lib/types'
 import { Tip } from '../Tip'
 
 const BAND_META: Record<Viabilisation['band'], { color: string; bg: string }> = {
-  confirmee:  { color: '#5CE6A1', bg: '#14251E' },
-  probable:   { color: '#8FD9B6', bg: '#16231D' },
-  incertaine: { color: '#E6B15C', bg: '#2A2213' },
-  lourde:     { color: '#E68A6B', bg: '#2A1A13' },
+  confirmee:  { color: TOKENS.viabConfirmee, bg: TOKENS.viabConfirmeeBg },
+  probable:   { color: TOKENS.viabProbable, bg: TOKENS.viabProbableBg },
+  incertaine: { color: TOKENS.viabIncertaine, bg: TOKENS.viabIncertaineBg },
+  lourde:     { color: TOKENS.viabLourde, bg: TOKENS.viabLourdeBg },
 }
 
 export function ViabilisationBlock({ via }: { via: Viabilisation }) {

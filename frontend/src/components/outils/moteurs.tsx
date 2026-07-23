@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { addProfile, getProfiles, matchCompatibilite, motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, runMatch, zanParcelle } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
+import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { TierBadge } from './TierBadge'
@@ -207,7 +208,7 @@ export function M17() {
     return () => setModuleMap({ idus: [], extra: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q.dataUpdatedAt])
-  const sigColor = s?.signal === 'aligne' ? '#5CE6A1' : s?.signal === 'contrainte' ? '#E8695A' : '#8FA69A'
+  const sigColor = s?.signal === 'aligne' ? TOKENS.mint : s?.signal === 'contrainte' ? TOKENS.stEcartee : TOKENS.txtMut
   const sigLabel = s?.signal === 'aligne' ? 'Aligné ZAN' : s?.signal === 'contrainte' ? 'Sous contrainte ZAN' : 'À instruire'
   return (
     <>

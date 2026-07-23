@@ -1,6 +1,8 @@
 // Registre des modules outils — « filtres savants ». Couleur module : VIOLET (doctrine).
-export const VIOLET = '#B497F0'
-export const VIOLET_DIM = '#8b76c0'
+import { TOKENS } from '../../lib/tokens'
+
+export const VIOLET = TOKENS.violet
+export const VIOLET_DIM = TOKENS.violetDim
 
 // P3 (revue Vic n°3) — CURATION. Les codes M01…M22 sont un langage d'ingénieur : ils restent
 // EN INTERNE (`num`, utile aux logs/URL/QA) mais ne s'affichent plus. Chaque outil porte un

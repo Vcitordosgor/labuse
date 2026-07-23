@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { getContexteCommune } from '../../lib/api'
+import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 
@@ -8,13 +9,13 @@ const fmt = (n: number | null | undefined) => (n == null ? '—' : Math.round(Nu
 
 //: statut SRU → couleur + lecture métier (une phrase sobre — le ciblage de la promotrice)
 const SRU_META: Record<string, { color: string; label: string; lecture: string }> = {
-  carencee: { color: '#E8695A', label: 'CARENCÉE',
+  carencee: { color: TOKENS.stEcartee, label: 'CARENCÉE',
     lecture: 'Commune en carence SRU : forte pression de production de logement social — les programmes avec part LLS y sont attendus (et souvent facilités).' },
-  deficitaire: { color: '#E8B44C', label: 'DÉFICITAIRE',
+  deficitaire: { color: TOKENS.stCreuser, label: 'DÉFICITAIRE',
     lecture: 'Sous l’objectif légal : la commune doit produire du logement social — un programme mixte y répond à une obligation réelle.' },
-  exemptee: { color: '#8FA69A', label: 'EXEMPTÉE 2023-2025',
+  exemptee: { color: TOKENS.txtMut, label: 'EXEMPTÉE 2023-2025',
     lecture: 'Soumise SRU mais exemptée d’obligations sur la période (décret) — pression de production sociale suspendue.' },
-  conforme: { color: '#5CE6A1', label: 'CONFORME',
+  conforme: { color: TOKENS.stChaude, label: 'CONFORME',
     lecture: 'Objectif SRU atteint — pas de pression réglementaire de rattrapage social.' },
 }
 
@@ -163,12 +164,12 @@ export function ContextePanel() {
                   </div>
                   <div className="flex flex-col gap-2.5">
                     <Bar parts={[
-                      { label: 'locataires', pct: Number(d.marche.locataires_pct), color: '#B497F0' },
-                      { label: 'propriétaires', pct: Number(d.marche.proprietaires_pct), color: '#5CE6A1' },
+                      { label: 'locataires', pct: Number(d.marche.locataires_pct), color: TOKENS.violet },
+                      { label: 'propriétaires', pct: Number(d.marche.proprietaires_pct), color: TOKENS.mint },
                     ]} />
                     <Bar parts={[
-                      { label: 'maisons', pct: Number(d.marche.maisons_pct), color: '#4ADE96' },
-                      { label: 'appartements', pct: Number(d.marche.apparts_pct), color: '#7DE8E0' },
+                      { label: 'maisons', pct: Number(d.marche.maisons_pct), color: TOKENS.stSurveiller },
+                      { label: 'appartements', pct: Number(d.marche.apparts_pct), color: TOKENS.vizCyan },
                     ]} />
                   </div>
                   {d.marche.typologie && (
@@ -180,7 +181,7 @@ export function ContextePanel() {
                         const total = ['p1', 'p2', 'p3', 'p4', 'p5p'].reduce((s, kk) => s + (d.marche!.typologie[kk] ?? 0), 0) || 1
                         return { label: k === 'p5p' ? '5p+' : k.replace('p', '') + 'p',
                                  pct: Math.round(1000 * (d.marche!.typologie[k] ?? 0) / total) / 10,
-                                 color: ['#2E6B4F', '#4ADE96', '#5CE6A1', '#7DE8E0', '#B497F0'][i] }
+                                 color: [TOKENS.vizGreenDeep, TOKENS.stSurveiller, TOKENS.mint, TOKENS.vizCyan, TOKENS.violet][i] }
                       })} />
                     </div>
                   )}
