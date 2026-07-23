@@ -53,9 +53,9 @@ les invitations expirent après 7 jours.</p>"""), status_code=404)
 <p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · 1 accès</p>
 <form method="post" action="/invitation" novalidate>
 <input type="hidden" name="token" value="{html.escape(token)}">
-<label for="email">Identifiant</label>
-<div class="field"><input id="email" type="email" value="{html.escape(inv['email'])}" disabled
-  aria-label="Votre email (fixé par l'invitation)"></div>
+<label for="email">E-mail</label>
+<div class="field"><input id="email" type="email" autocomplete="email" value="{html.escape(inv['email'])}" disabled
+  aria-label="Votre e-mail (fixé par l'invitation)"></div>
 <label for="password">Choisissez un mot de passe</label>
 <div class="field"><input id="password" name="password" type="password" minlength="10" required
   autocomplete="new-password" autofocus aria-describedby="rules" oninput="labStrength(this.value)"></div>
@@ -242,7 +242,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 #     avant premières signatures : noté au rapport ; non bloquant pour construire) ──
 
 _EDITEUR = ("Victor L. — entrepreneur individuel (EI) · La Réunion, France.<br>"
-            "Adresse et SIREN : <b>[À COMPLÉTER par Vic — adresse officielle EI + SIREN]</b> · "
+            "SIREN 987 641 917 (SIRET 987 641 917 00016) · Adresse : "
+            "<b>[À COMPLÉTER par Vic — adresse officielle de l'EI]</b> · "
             "contact : kampusreunion@gmail.com")
 
 

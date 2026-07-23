@@ -196,7 +196,7 @@ def _regles_et_pieces(db: Session, idu: str) -> bytes:
                      for c, lib, etat in PIECES_PCMI)
     body = (f"<h2>Zonage du document d'urbanisme</h2>"
             f"<table><tr><th>Zone</th><th>Part</th><th>Document</th></tr>{zones}</table>"
-            + (f"<h2>Règles calibrées LA BUSE</h2><table>{regles}</table>"
+            + (f"<h2>Règles calibrées LABUSE</h2><table>{regles}</table>"
                f"<p class='note'>Les règles complètes du règlement (retraits, prospects, "
                f"servitudes) peuvent modifier ces valeurs.</p>" if regles else "")
             + (f"<h2>Prescriptions graphiques</h2><ul>{presc}</ul>" if presc else "")

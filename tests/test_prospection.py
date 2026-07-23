@@ -60,7 +60,7 @@ def test_export_bloc_prospection_avec_contact():
 
 def test_export_sans_contact_dit_a_identifier():
     md = fiche_markdown(_fiche({"statut_label": "Propriétaire inconnu", "data": {}}))
-    assert "Propriétaire à identifier — aucune donnée nominative disponible dans LA BUSE" in md
+    assert "Propriétaire à identifier — aucune donnée nominative disponible dans LABUSE" in md
     h = fiche_html(_fiche({"statut_label": "Propriétaire inconnu", "data": {}}))
     assert "Prospection propriétaire" in h and "aucune donnée nominative" in h
 

@@ -42,7 +42,7 @@ def pied_de_page_pdf(pdf, doc_label: str) -> None:
     pdf.set_font("inter", size=5.4)
     pdf.multi_cell(0, 2.6, SOURCES_ATTRIBUTION, align="C", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("inter", size=6)
-    pdf.cell(0, 3.2, f"LA BUSE · radar foncier La Réunion · {doc_label} · "
+    pdf.cell(0, 3.2, f"LABUSE · radar foncier La Réunion · {doc_label} · "
                      f"généré le {date.today().isoformat()} · page {pdf.page_no()}/{{nb}}",
              align="C")
 

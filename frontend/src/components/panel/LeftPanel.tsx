@@ -131,7 +131,7 @@ export function LeftPanel() {
         <aside className="hidden h-full w-[300px] shrink-0 flex-col border-r border-line bg-surface-1 sm:flex">
           <div className="flex shrink-0 items-center justify-between px-5 pt-4">
             <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
-            <button onClick={togglePanel} className="text-txt-dim hover:text-txt" title="Replier le panneau">‹</button>
+            <button onClick={togglePanel} className="text-txt-dim hover:text-txt" title="Replier le panneau" aria-label="Replier le panneau">‹</button>
           </div>
           <LayersSection />
           <div className="mx-5 my-3 shrink-0 border-t border-line" />

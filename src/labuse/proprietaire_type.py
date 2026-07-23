@@ -153,6 +153,6 @@ Je vous prie d'agréer, Madame, Monsieur, l'expression de mes salutations distin
 [Signature]
 
 —
-Pré-rempli par LA BUSE à partir de la référence cadastrale publique. Le SPF est la voie
-légale d'identification d'un propriétaire ; LA BUSE ne collecte aucune donnée nominative.
+Pré-rempli par LABUSE à partir de la référence cadastrale publique. Le SPF est la voie
+légale d'identification d'un propriétaire ; LABUSE ne collecte aucune donnée nominative.
 """

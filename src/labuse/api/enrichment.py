@@ -398,7 +398,7 @@ def owner(db: Session, parcel_id: int) -> dict[str, Any]:
 
     note_absent = (
         "Propriétaire personne physique probable (absent du fichier DGFiP des personnes morales) "
-        "— aucune donnée nominative dans LA BUSE. Identité à obtenir via le SPF (bouton ci-dessous)."
+        "— aucune donnée nominative dans LABUSE. Identité à obtenir via le SPF (bouton ci-dessous)."
     )
     src = "Fichiers fonciers (Cerema)"
     row = db.execute(

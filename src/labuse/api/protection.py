@@ -246,7 +246,7 @@ async def garde_protection(request: Request, call_next):
     motif = await anyio.to_thread.run_sync(_gele, sujet)
     if motif:
         return JSONResponse(status_code=429, content={
-            "detail": f"Accès suspendu ({motif}). Contactez LA BUSE pour le rétablir.",
+            "detail": f"Accès suspendu ({motif}). Contactez LABUSE pour le rétablir.",
             "gel": True})
 
     defi, episode_nouveau, nb_bursts = None, False, 0
@@ -280,7 +280,7 @@ async def garde_protection(request: Request, call_next):
             await anyio.to_thread.run_sync(_gel_recidive)
             return JSONResponse(status_code=429, content={
                 "detail": "Trop de rafales de requêtes aujourd'hui — accès suspendu, "
-                          "l'équipe LA BUSE a été alertée.", "gel": True})
+                          "l'équipe LABUSE a été alertée.", "gel": True})
         return JSONResponse(status_code=429, content={
             "detail": f"Trop de requêtes (max {s.rate_limit_rpm}/min). "
                       "Résolvez le défi pour continuer.",

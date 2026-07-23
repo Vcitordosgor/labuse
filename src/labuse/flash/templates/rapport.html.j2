@@ -1,4 +1,4 @@
-{# Rapport Flash LA BUSE — template VERSIONNÉ (voir report.TEMPLATE_VERSION).
+{# Rapport Flash LABUSE — template VERSIONNÉ (voir report.TEMPLATE_VERSION).
    Toute section sans donnée est omise en AMONT (data.py) ou ici par un simple `if` :
    jamais de section vide. Le score figure en valeur absolue avec sa grille de lecture —
    jamais de classement ni de comparaison multi-parcelles (mandat §2). #}
@@ -16,7 +16,7 @@
 <section class="garde">
   <div class="marque">
     <svg width="46" height="13" viewBox="0 0 240 62"><path d="{{ logo_path }}" fill="#0B8A5F"/></svg>
-    <span class="wordmark">LA BUSE</span>
+    <span class="wordmark">LABUSE</span>
     <span class="produit">{{ produit_sous_titre }}</span>
   </div>
   <h1>Rapport de faisabilité indicative</h1>
@@ -77,7 +77,7 @@
   {% endif %}
 
   {% if ident.regles %}
-  <h3>Règles calibrées LA BUSE (zone {{ ident.regles.zone or "—" }})</h3>
+  <h3>Règles calibrées LABUSE (zone {{ ident.regles.zone or "—" }})</h3>
   <table class="donnees">
     <tr><th>Règle</th><th>Valeur</th></tr>
     {% if ident.regles.emprise_max_m2 %}
@@ -92,7 +92,7 @@
     <tr><td>Confiance du calibrage</td><td>{{ ident.regles.confiance }}</td></tr>
     {% endif %}
   </table>
-  <p class="note">Règles issues du calibrage fin des règlements PLU par LA BUSE.
+  <p class="note">Règles issues du calibrage fin des règlements PLU par LABUSE.
      Les règles complètes du règlement (retraits, prospects, servitudes) peuvent
      modifier ces valeurs.</p>
   {% endif %}
@@ -149,7 +149,7 @@
   {% endif %}
 
   {% if c.verdict_v2 %}
-  <h3>Verdict LA BUSE (scoring v2)</h3>
+  <h3>Verdict LABUSE (scoring v2)</h3>
   <div class="cartouches">
     <div class="cartouche"><div class="titre">Verdict</div>
       <div class="valeur">{{ c.verdict_v2.libelle }}{% if c.verdict_v2.tier in ('brulante', 'chaude') %} <small>v2</small>{% endif %}</div></div>
@@ -169,7 +169,7 @@
   {% endif %}
 
   {% if c.score %}
-  <h3>Score LA BUSE de la parcelle ({% if c.verdict_v2 %}grille historique Q/A — complément
+  <h3>Score LABUSE de la parcelle ({% if c.verdict_v2 %}grille historique Q/A — complément
       du verdict v2 ci-dessus{% else %}valeur absolue{% endif %})</h3>
   <div class="cartouches">
     <div class="cartouche"><div class="titre">Q — Qualité foncière</div>
@@ -194,7 +194,7 @@
         <td>Aucun signal particulier — valeur de base, ni positif ni négatif.</td></tr>
   </table>
   <p class="note">Score propre à cette parcelle, exprimé en valeur absolue sur la grille
-     LA BUSE — ce rapport ne compare pas la parcelle à d'autres.</p>
+     LABUSE — ce rapport ne compare pas la parcelle à d'autres.</p>
   {% endif %}
 </section>
 {% endif %}
@@ -379,7 +379,7 @@
 <section class="saut">
   <h2><span class="num">08</span>Sources &amp; millésimes</h2>
   <p>Chaque donnée de ce rapport provient d'une source publique identifiée. Le tableau
-     ci-dessous les cite avec leur état de synchronisation dans la base LA BUSE.</p>
+     ci-dessous les cite avec leur état de synchronisation dans la base LABUSE.</p>
   <table class="donnees">
     <tr><th>Section</th><th>Source</th><th>Millésime / synchronisation</th></tr>
     {% for s in data.sources %}
@@ -396,7 +396,7 @@
        potentiels indiqués.</p>
     <p>{{ sources_attribution }}</p>
     <p>Rapport {{ order_ref }} généré le {{ data.date_generation }} ·
-       modèle v{{ template_version }} · LA BUSE — radar foncier de La Réunion ·
+       modèle v{{ template_version }} · LABUSE — radar foncier de La Réunion ·
        labuse.immo</p>
   </div>
 </section>

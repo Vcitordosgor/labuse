@@ -39,7 +39,7 @@ def _hors_commune(insee: str | None, ville: str | None = None) -> AuditResult:
     lieu = ville or (f"commune {insee}" if insee else "cette commune")
     return AuditResult(
         ok=False, error="commune_non_couverte", insee=insee,
-        message=f"{lieu} non couverte — LA BUSE est en phase pilote sur {name} uniquement.",
+        message=f"{lieu} non couverte — LABUSE est en phase pilote sur {name} uniquement.",
     )
 
 

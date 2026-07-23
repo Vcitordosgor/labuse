@@ -5,6 +5,7 @@ import {
   type FicheProjet, type ParcoursEtat, type ParcoursItem, type ProprietairePublic, type StatutParcelle,
 } from '../../lib/api'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
+import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { TierBadge } from '../outils/TierBadge'
@@ -37,9 +38,9 @@ function criteres(f: FicheProjet): string[] {
 /** Les 3 colonnes du projet unifié — UNE seule source de vérité : les statuts `projet_parcelles`.
  *  Accents = tokens de statut (à trier reste NEUTRE : la couleur est pour les décisions). */
 const COLS: { key: StatutParcelle; label: string; accent: string }[] = [
-  { key: 'proposee', label: 'À trier', accent: '#39463F' },
-  { key: 'retenue', label: 'Retenues', accent: '#5CE6A1' },
-  { key: 'ecartee', label: 'Écartées', accent: '#E8695A' },
+  { key: 'proposee', label: 'À trier', accent: TOKENS.stNone },
+  { key: 'retenue', label: 'Retenues', accent: TOKENS.stChaude },
+  { key: 'ecartee', label: 'Écartées', accent: TOKENS.stEcartee },
 ]
 const APERCU = 3   // cartes visibles par colonne avant « + N autres »
 
@@ -306,9 +307,9 @@ function ProposeeRow({ it, onDragStart, onAction, onFiche }: {
       <TierBadge tier={it.tier} etage0={null} statut={null} />
       {it.surface_m2 != null && <span className="tnum hidden shrink-0 font-mono text-[10px] text-txt-dim sm:inline">{fmtM2(it.surface_m2)}</span>}
       <span className="flex shrink-0 gap-1 opacity-60 transition-opacity duration-quick group-hover:opacity-100">
-        <button data-row-retenir onClick={() => onAction('retenue')} className="rounded border border-mint/60 px-1.5 py-1 text-[10px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15" title="Retenir">✓</button>
-        {!analyse && <button data-row-analyser onClick={() => onAction('a_analyser')} className="rounded border border-st-creuser/50 px-1.5 py-1 text-[10px] text-st-creuser transition-colors duration-quick hover:bg-st-creuser/10" title="À analyser">◑</button>}
-        <button data-row-ecarter onClick={() => onAction('ecartee')} className="rounded border border-st-ecartee/50 px-1.5 py-1 text-[10px] text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10" title="Écarter">✕</button>
+        <button data-row-retenir onClick={() => onAction('retenue')} className="rounded border border-mint/60 px-1.5 py-1 text-[10px] font-semibold text-mint transition-colors duration-quick hover:bg-mint/15" title="Retenir" aria-label="Retenir">✓</button>
+        {!analyse && <button data-row-analyser onClick={() => onAction('a_analyser')} className="rounded border border-st-creuser/50 px-1.5 py-1 text-[10px] text-st-creuser transition-colors duration-quick hover:bg-st-creuser/10" title="À analyser" aria-label="À analyser">◑</button>}
+        <button data-row-ecarter onClick={() => onAction('ecartee')} className="rounded border border-st-ecartee/50 px-1.5 py-1 text-[10px] text-st-ecartee transition-colors duration-quick hover:bg-st-ecartee/10" title="Écarter" aria-label="Écarter">✕</button>
       </span>
     </div>
   )

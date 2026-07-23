@@ -21,7 +21,7 @@ def fiche_markdown(fiche: dict) -> str:
     p = fiche["parcel"]
     v = fiche["verdict"]
     lines = [
-        f"# LA BUSE — Fiche parcelle {p['idu']}",
+        f"# LABUSE — Fiche parcelle {p['idu']}",
         "",
         f"> {fiche['disclaimer']}",
         "",
@@ -100,7 +100,7 @@ def fiche_markdown(fiche: dict) -> str:
         lines += ["## Parcelles voisines (contiguïté)", ""]
         if (vz.get("assemblage") or {}).get("note"):
             lines += [f"_{vz['assemblage']['note']}_", ""]
-        lines += ["| Parcelle | Statut LA BUSE | Opp. | Zone PLU | Surface |", "|---|---|---|---|---|"]
+        lines += ["| Parcelle | Statut LABUSE | Opp. | Zone PLU | Surface |", "|---|---|---|---|---|"]
         for v in vz["voisines"]:
             lines.append(f"| {v['idu']} | {_STATUS_LABEL.get(v.get('status'), v.get('status') or '—')} | "
                          f"{v.get('opportunity_score') if v.get('opportunity_score') is not None else '—'} | "
@@ -113,7 +113,7 @@ def fiche_markdown(fiche: dict) -> str:
               f"- **Statut propriétaire :** {pv['statut']}",
               f"- **Source :** {pv['source']}  ·  **Niveau de confiance :** {pv['confiance']}"]
     lines.append(f"- **Contact (saisi manuellement) :** {pv['contact']}" if pv["contact"]
-                 else "- **Contact :** Propriétaire à identifier — aucune donnée nominative disponible dans LA BUSE.")
+                 else "- **Contact :** Propriétaire à identifier — aucune donnée nominative disponible dans LABUSE.")
     if pv["action"]:
         lines.append(f"- **Prochaine action :** {pv['action']}")
     if pv["responsable"]:
@@ -124,7 +124,7 @@ def fiche_markdown(fiche: dict) -> str:
 
     ai = fiche.get("ai")
     if ai:
-        lines += ["## Analyse LA BUSE (IA)", "",
+        lines += ["## Analyse LABUSE (IA)", "",
                   f"_{ai.get('executive_summary', '')}_", "",
                   f"- **Statut recommandé :** {ai.get('recommended_status')}  ·  "
                   f"**Confiance :** {ai.get('confidence_level')}", ""]
@@ -196,7 +196,7 @@ def fiche_html(fiche: dict) -> str:
             for v in vz["voisines"])
         vz_html = ("<h2>Parcelles voisines (contiguïté)</h2>"
                    + (f"<p class='disc'>{html.escape(note)}</p>" if note else "")
-                   + "<table><tr><th>Parcelle</th><th>Statut LA BUSE</th><th>Opp.</th><th>Zone PLU</th><th>Surface</th></tr>"
+                   + "<table><tr><th>Parcelle</th><th>Statut LABUSE</th><th>Opp.</th><th>Zone PLU</th><th>Surface</th></tr>"
                    + rows_vz + "</table>"
                    "<p class='disc'>Adjacence géométrique uniquement — propriétaires, accords et "
                    "faisabilité d'un assemblage restent à vérifier.</p>")
@@ -204,7 +204,7 @@ def fiche_html(fiche: dict) -> str:
     contact_li = (f"<li><strong>Contact (saisi manuellement) :</strong> {html.escape(pv['contact'])}</li>"
                   if pv["contact"] else
                   "<li><strong>Contact :</strong> Propriétaire à identifier — aucune donnée nominative "
-                  "disponible dans LA BUSE.</li>")
+                  "disponible dans LABUSE.</li>")
     prosp_html = (
         "<h2>Prospection propriétaire</h2><ul>"
         f"<li><strong>Statut propriétaire :</strong> {html.escape(pv['statut'])}</li>"
@@ -216,7 +216,7 @@ def fiche_html(fiche: dict) -> str:
         + (f"<li><strong>Notes :</strong> {html.escape(pv['notes'])}</li>" if pv["notes"] else "")
         + f"</ul><p class='disc'>{html.escape(pv['disclaimer'])}</p>")
     return f"""<!doctype html><html lang="fr"><meta charset="utf-8">
-<title>LA BUSE — {html.escape(p['idu'])}</title>
+<title>LABUSE — {html.escape(p['idu'])}</title>
 <style>
  body{{font:15px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;color:#1a1a1a;max-width:880px;margin:2rem auto;padding:0 1rem}}
  h1{{font-size:1.5rem;letter-spacing:.02em}} h2{{font-size:1.05rem;margin-top:1.8rem;border-bottom:1px solid #eee;padding-bottom:.3rem}}
@@ -226,7 +226,7 @@ def fiche_html(fiche: dict) -> str:
  .badge-micro{{display:inline-block;margin-left:.4rem;padding:.15rem .6rem;border-radius:.4rem;background:#efe6cd;color:#6a5a1f;font-size:.85rem}}
  .micro-note{{color:#6a5a1f;font-size:.9rem;margin:.3rem 0 0}}
 </style>
-<h1>LA BUSE — Fiche parcelle {html.escape(p['idu'])}</h1>
+<h1>LABUSE — Fiche parcelle {html.escape(p['idu'])}</h1>
 <p class="disc">{html.escape(fiche['disclaimer'])}</p>
 <p><strong>Commune :</strong> {html.escape(p.get('commune') or '—')} ·
    <strong>Surface :</strong> {_m2(p.get('surface_m2'))} ·
@@ -246,7 +246,7 @@ def fiche_html(fiche: dict) -> str:
 {comp_html}
 {vz_html}
 {prosp_html}
-{"<h2>Analyse LA BUSE (IA)</h2><p>" + html.escape(ai.get('executive_summary','')) + "</p>" if ai else ""}
+{"<h2>Analyse LABUSE (IA)</h2><p>" + html.escape(ai.get('executive_summary','')) + "</p>" if ai else ""}
 </html>"""
 
 
@@ -299,7 +299,7 @@ def _prospection_view(fiche: dict) -> dict:
         "notes": d.get("notes_contact") or "",
         "disclaimer": pr.get("disclaimer") or
         ("Informations de contact renseignées manuellement par l'utilisateur ou issues d'une "
-         "source autorisée. LA BUSE ne garantit pas l'identité du propriétaire."),
+         "source autorisée. LABUSE ne garantit pas l'identité du propriétaire."),
     }
 
 
@@ -426,7 +426,7 @@ def fiche_onepager(fiche: dict, geojson: dict | None = None) -> str:
     cen = p.get("centroid") or {}
     today = _today()
     return f"""<!doctype html><html lang="fr"><meta charset="utf-8">
-<title>LA BUSE — {html.escape(p['idu'])}</title>
+<title>LABUSE — {html.escape(p['idu'])}</title>
 <style>
  @page {{ size: A4 portrait; margin: 10mm; }}
  * {{ box-sizing: border-box; }}

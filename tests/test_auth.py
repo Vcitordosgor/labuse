@@ -70,7 +70,7 @@ def test_healthz_reste_public(client, pilot):
 def test_mauvais_mot_de_passe_refus_neutre(client, pilot):
     r = _login(client, password="totalement-faux")
     assert r.status_code == 401
-    assert "Identifiants invalides" in r.text                       # message NEUTRE
+    assert "E-mail ou mot de passe incorrect" in r.text             # message NEUTRE (O1)
     assert "labuse_session" not in r.headers.get("set-cookie", "")
 
 

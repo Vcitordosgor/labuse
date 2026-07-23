@@ -26,11 +26,11 @@ DEMO_PARCELS = [
                "Bien-Aimé » (prescription PLU), « pas d'accès direct évident à la voirie » et « surface 397 m² "
                "sous le seuil de valorisation (400 m²) » → rétrogradée honnêtement en « à creuser », pas vendue "
                "comme opportunité",
-     "vigilance": "ER réservé + accès à confirmer + surface limite ; LA BUSE signale les contraintes, ne survend pas"},
+     "vigilance": "ER réservé + accès à confirmer + surface limite ; LABUSE signale les contraintes, ne survend pas"},
     {"idu": "97415000BP0571", "attendu": "faux_positif_probable",
      "role": "RÉSIDENCE EXISTANTE détectée — correctif « déjà bâti » (ex-fausse vitrine)",
      "montre": "score brut 77 MAIS « ensemble bâti : 4 bâtiments couvrant 18 % (BD TOPO) » → faux positif. "
-               "Avant le correctif, LA BUSE la vendait comme opportunité à 23,5 M€ — plus maintenant.",
+               "Avant le correctif, LABUSE la vendait comme opportunité à 23,5 M€ — plus maintenant.",
      "vigilance": "l'histoire à raconter : le produit se corrige et le montre"},
     {"idu": "97415000BN1351", "attendu": "a_creuser", "role": "À creuser — PÉRIMÈTRE PPR (inondation + mvt)",
      "montre": "le PPR rétrograde l'opportunité en « à creuser » + bilan affiché",

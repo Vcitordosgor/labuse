@@ -57,7 +57,7 @@ def render_projet_pdf(projet: dict, apercu: dict) -> bytes:
     pdf.set_x(30)
     pdf.set_font("grotesk", size=13)
     pdf.set_text_color(*MINT)
-    pdf.cell(0, 6, "LA BUSE", new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 6, "LABUSE", new_x="LMARGIN", new_y="NEXT")
     pdf.set_font("inter", size=7.5)
     pdf.set_text_color(*TXT_DIM)
     pdf.cell(0, 4, "Radar foncier premium — La Réunion · dossier PROJET", new_x="LMARGIN", new_y="NEXT")

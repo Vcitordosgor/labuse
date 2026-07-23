@@ -1,14 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { getSources } from '../../lib/api'
+import { TOKENS } from '../../lib/tokens'
 import type { SourceInfo } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 
 const STATUS_DOT: Record<string, string> = {
-  active: '#5CE6A1', ok: '#5CE6A1', connecte: '#5CE6A1', partial: '#E8B44C', partiel: '#E8B44C',
-  degraded: '#E8B44C', manuel: '#E8B44C', planned: '#5C7268', todo: '#5C7268', a_faire: '#5C7268',
-  error: '#E8695A', down: '#E8695A',
+  active: TOKENS.mint, ok: TOKENS.mint, connecte: TOKENS.mint, partial: TOKENS.stCreuser, partiel: TOKENS.stCreuser,
+  degraded: TOKENS.stCreuser, manuel: TOKENS.stCreuser, planned: TOKENS.txtDim, todo: TOKENS.txtDim, a_faire: TOKENS.txtDim,
+  error: TOKENS.stEcartee, down: TOKENS.stEcartee,
 }
 
 // P4.2 (dernière passe) — « version la plus récente publiée » : rassure que LABUSE n'est pas
@@ -111,11 +112,11 @@ const CADENCE_PAR_SOURCE: Record<string, { label: string; jours: number }> = {
 
 type Badge = 'a_jour' | 'maj_attendue' | 'a_verifier'
 const BADGE_META: Record<Badge, { label: string; color: string; title: string }> = {
-  a_jour: { label: 'À JOUR', color: '#5CE6A1',
+  a_jour: { label: 'À JOUR', color: TOKENS.mint,
     title: 'Donnée plus récente que la cadence de publication du producteur' },
-  maj_attendue: { label: 'MAJ ATTENDUE', color: '#E8B44C',
+  maj_attendue: { label: 'MAJ ATTENDUE', color: TOKENS.stCreuser,
     title: 'La date de prochaine publication du producteur est dépassée — rafraîchissement à lancer' },
-  a_verifier: { label: 'À VÉRIFIER', color: '#5C7268',
+  a_verifier: { label: 'À VÉRIFIER', color: TOKENS.txtDim,
     title: 'Cadence du producteur non documentée ici (ou aucune date de donnée tracée) — pas de verdict inventé' },
 }
 
@@ -155,7 +156,7 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
     <div ref={ref} data-source-row
       className={`flex items-center gap-4 rounded-[10px] border px-4 py-3 ${
         focused ? 'border-mint bg-mint/[0.06]' : 'border-line-2 bg-surface-3'}`}>
-      <span className="h-2 w-2 shrink-0 rounded-full print:hidden" style={{ background: STATUS_DOT[s.status ?? ''] ?? '#5C7268' }}
+      <span className="h-2 w-2 shrink-0 rounded-full print:hidden" style={{ background: STATUS_DOT[s.status ?? ''] ?? TOKENS.txtDim }}
         title={`Statut : ${s.status ?? 'inconnu'}`} />
       <div className="min-w-0 flex-1">
         <div className="flex items-baseline gap-2">

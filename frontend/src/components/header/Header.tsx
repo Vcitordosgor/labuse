@@ -59,7 +59,7 @@ function Omnibox() {
         title="Recherche du dashboard : une commune (bascule le périmètre) ou un IDU (ouvre la fiche)"
         className="min-w-0 flex-1 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none" />
       {/* A5 (post-revue) : la LOUPE remplace le « / » et passe à DROITE — cliquable pour lancer */}
-      <button onClick={onEnter} title="Lancer la recherche"
+      <button onClick={onEnter} title="Lancer la recherche" aria-label="Lancer la recherche"
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mint text-mint-ink transition-[filter] duration-quick hover:brightness-110">
         <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
           <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -294,7 +294,7 @@ function NotifBell() {
   const unread = ev.data?.unread ?? 0
   return (
     <div className="relative">
-      <button onClick={() => setOpen((o) => !o)} title="Notifications"
+      <button onClick={() => setOpen((o) => !o)} title="Notifications" aria-label="Notifications"
         className="relative flex h-9 w-9 items-center justify-center rounded-full border border-line-2 bg-surface-3 text-txt-mut transition-colors duration-quick hover:text-txt">
         <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">
           <path d="M10 3 a4 4 0 0 1 4 4 v3 l1.5 2.5 h-11 L6 10 V7 a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" strokeWidth="1.4" />
@@ -325,7 +325,7 @@ function NotifBell() {
                     {e.demo && <span className="rounded-full bg-violet/15 px-1.5 py-0.5 text-[8.5px] font-medium text-violet" title="Événement de démonstration (run q_v2_demo)">DÉMO</span>}
                     <button onClick={() => { if (e.idu) { setView('cartes'); select(e.idu) } setOpen(false) }}
                       className="min-w-0 flex-1 truncate text-left text-xs text-txt hover:text-txt-hi">{e.titre}</button>
-                    {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" title="Marquer lu">✓</button>}
+                    {!e.lu && <button onClick={() => readOne.mutate(e.id)} className="shrink-0 text-[11px] text-txt-dim hover:text-mint" title="Marquer lu" aria-label="Marquer comme lu">✓</button>}
                   </div>
                   {e.detail && <p className="mt-0.5 text-[11px] leading-snug text-txt-dim">{e.detail}</p>}
                   <p className="mt-0.5 font-mono text-[9px] text-txt-dim">{e.date}</p>

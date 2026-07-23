@@ -7,13 +7,14 @@
  * délégations changent aux renouvellements de contrat → confidence affichée.
  * Additif : rendu depuis la charge utile de la fiche (aucun fetch).
  */
+import { TOKENS } from '../../lib/tokens'
 import type { Gestionnaires, GestOperateur } from '../../lib/types'
 import { Tip } from '../Tip'
 
 function Conf({ c }: { c?: GestOperateur['confidence'] }) {
   if (!c) return null
-  const meta = { high: { t: 'confirmé', color: '#5CE6A1' }, med: { t: 'à confirmer', color: '#E6B15C' },
-                 low: { t: 'incertain', color: '#E68A6B' } }[c]
+  const meta = { high: { t: 'confirmé', color: TOKENS.viabConfirmee }, med: { t: 'à confirmer', color: TOKENS.viabIncertaine },
+                 low: { t: 'incertain', color: TOKENS.viabLourde } }[c]
   return <span className="ml-1.5 rounded-full px-1.5 py-0.5 text-[9.5px]"
     style={{ backgroundColor: `${meta.color}1A`, color: meta.color }}>{meta.t}</span>
 }

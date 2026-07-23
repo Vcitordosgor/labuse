@@ -72,7 +72,7 @@ def etiquettes_pdf(lignes: list[list], fmt: str = "63.5x38.1", ref: str = "") ->
                 pdf.set_font("inter", size=5)
                 pdf.set_text_color(150, 150, 150)
                 pdf.set_xy(4, 292)
-                pdf.cell(0, 3, f"LA BUSE · {ref}")
+                pdf.cell(0, 3, f"LABUSE · {ref}")
         col, row = pos % cols, pos // cols
         x = ml + col * (lw + gx)
         y = mt + row * lh

@@ -84,7 +84,7 @@ class Settings(BaseSettings):
     nl_quota_jour: int = 30               # requêtes de recherche NL / jour / sujet (Lot 6)
     dossier_quota_mois: int = 20          # Dossiers parcelle / mois (plan Essentiel, Lot 4)
     plan_defaut: str = "integral"         # stub : essentiel | integral (pilote = intégral)
-    raison_sociale: str = "Pilote LA BUSE"  # mention « Généré via LABUSE pour … » (Lot 4)
+    raison_sociale: str = "Pilote LABUSE"  # mention « Généré via LABUSE pour … » (Lot 4)
     etiquettes_format: str = "63.5x38.1"  # planche d'étiquettes du publipostage (Lot 2A)
 
     # ── Courrier postal par API (Lot 2B) — prestataire retenu : Merci Facteur
@@ -117,7 +117,7 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_user: str | None = None
     smtp_password: str | None = None
-    smtp_from: str = "LA BUSE <no-reply@labuse.immo>"
+    smtp_from: str = "LABUSE <no-reply@labuse.immo>"
     smtp_starttls: bool = True
     # Alertes exploitation (génération en échec après paiement, etc.).
     admin_email: str | None = None
