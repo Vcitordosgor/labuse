@@ -1186,7 +1186,8 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 "taux_emprise_pct": r["taux_emprise_pct"],
                 "sous_densite": r["sous_densite"],
                 "sdp_residuelle_m2": r["sdp_residuelle_m2"],
-                "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"]),
+                # CLOISON exfiltration : famille de propriétaire masquée dans le dump île entière.
+                "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"]) if commune else None,
             },
         }
         for r in rows if r["g"]
@@ -1248,6 +1249,12 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
     # Le json_build de 51k features reste ~11 s côté Postgres (plancher mesuré) → résultat CACHÉ
     # par (commune, run) via _geojson_cached : payé une fois, instantané ensuite.
     v2run = _score_v2_run_id(db)
+    # CLOISON exfiltration (P0) : le nom du propriétaire (PM) ne sort JAMAIS par le dump ÎLE
+    # ENTIÈRE (commune absente) — ce canal de masse ne doit pas déverser l'identité des
+    # propriétaires. En mode COMMUNE (borné, usage normal de la carte), proprio/owner_type
+    # restent exposés. Le front sert l'île en TUILES (les tuiles ne portent aucun propriétaire).
+    _own_proprio = "b.proprio" if commune else "NULL"
+    _own_type = "b.owner_type" if commune else "NULL"
     _geo_sql = text(
         f"""
         WITH base AS (
@@ -1325,8 +1332,8 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
               'evenement_date', CASE WHEN b.event_date IS NULL THEN NULL ELSE b.event_date::text END,
               'flags', to_jsonb(coalesce(b.flags, '{{}}')),
               'cluster', CASE WHEN b.cluster IS NULL OR b.cluster = 0 THEN NULL ELSE b.cluster::int END,
-              'proprio', b.proprio, 'v_score', b.v_score, 'v_dernier_signal', b.v_dernier_signal,
-              'v_band', b.v_band, 'owner_type', b.owner_type,
+              'proprio', {_own_proprio}, 'v_score', b.v_score, 'v_dernier_signal', b.v_dernier_signal,
+              'v_band', b.v_band, 'owner_type', {_own_type},
               'copro_v2', coalesce(b.copro_v2, false), 'veille', b.veille,
               'v_sig', to_jsonb(coalesce(b.v_sig, '{{}}')),
               'zone_lib', b.zone_lib, 'zone_fam', b.zone_fam
@@ -2608,7 +2615,8 @@ def save_filter(body: SavedFilterIn, request: Request, db: Session = Depends(get
 
 @app.delete("/filters/{filter_id}")
 def delete_filter(filter_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
-    from .tenant import current_compte   # SEC-IDOR : on ne supprime QUE ses propres filtres → 404 sinon
+    # SEC-IDOR : on ne supprime QUE ses propres filtres → 404 sinon
+    from .tenant import current_compte
     n = db.execute(text("DELETE FROM saved_filters WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
                    {"i": filter_id, "cid": current_compte(request)}).rowcount
     if not n:

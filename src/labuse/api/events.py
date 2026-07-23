@@ -262,7 +262,8 @@ def events_count(request: Request, db: Session = Depends(get_db)) -> dict:
 
 @router.post("/{event_id}/read")
 def mark_read(event_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
-    from .tenant import current_compte   # SEC-IDOR : on ne marque QUE ses propres événements
+    # SEC-IDOR : on ne marque QUE ses propres événements
+    from .tenant import current_compte
     db.execute(text("UPDATE event_log SET lu = true WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
                {"i": event_id, "cid": current_compte(request)})
     return {"ok": True}

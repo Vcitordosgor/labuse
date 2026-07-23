@@ -118,6 +118,87 @@ def test_abuse_scan_sequences_regulieres(db_session, engine):
     assert res["alertes"] >= 1
 
 
+# ── P0 exfiltration (audit 360) : quotas carto (tuiles + geojson île) + masquage proprio ──
+
+def test_quota_tuiles_gel_jusqua_minuit(client, monkeypatch):
+    """Tuiles vectorielles : au-delà du quota JOURNALIER → 429 « reprend à minuit » (ici 3)."""
+    monkeypatch.setenv("LABUSE_QUOTA_TUILES_JOUR", "3")
+    from labuse import config
+    config.get_settings.cache_clear()
+    for i in range(3):
+        assert client.get(f"/map/tiles/12/{2000 + i}/{2000 + i}.pbf").status_code != 429
+    r = client.get("/map/tiles/12/9/9.pbf")
+    assert r.status_code == 429 and "minuit" in r.json()["detail"]
+
+
+def test_tuiles_hors_rate_limit_60min(client, monkeypatch):
+    """Une carte qui panne charge des dizaines de tuiles/s : les tuiles ne sont JAMAIS soumises
+    au rate-limit 60/min (sinon la navigation normale tripperait le défi). Quota tuiles large."""
+    monkeypatch.setenv("LABUSE_RATE_LIMIT_RPM", "5")
+    monkeypatch.setenv("LABUSE_QUOTA_TUILES_JOUR", "100000")
+    from labuse import config
+    config.get_settings.cache_clear()
+    for i in range(12):                                  # 12 tuiles > 5 rpm : aucun 429
+        assert client.get(f"/map/tiles/13/{100 + i}/{100 + i}.pbf").status_code != 429
+
+
+def test_quota_carto_geojson_ile(client, monkeypatch):
+    """Dump geojson île : quota d'appels JOURNALIER (ici 2) → 3e appel 429 (borne la moisson)."""
+    monkeypatch.setenv("LABUSE_QUOTA_CARTO_JOUR", "2")
+    from labuse import config
+    config.get_settings.cache_clear()
+    assert client.get("/map/parcels.geojson?limit=1").status_code != 429
+    assert client.get("/map/parcels.geojson?limit=1").status_code != 429
+    r = client.get("/map/parcels.geojson?limit=1")
+    assert r.status_code == 429 and "minuit" in r.json()["detail"]
+
+
+def test_abuse_scan_voit_le_volume_carto(db_session, engine):
+    """Un moissonneur 100 % tuiles ne laisse AUCUNE ligne dans consultation_log : le scan doit
+    quand même le voir via son compteur de tuiles (sinon il reste invisible — le trou de l'audit)."""
+    from labuse.api import protection
+
+    protection.ensure_tables(engine)
+    hier = date.today() - timedelta(days=1)
+    db_session.execute(text(
+        "INSERT INTO usage_compteurs (jour, sujet, kind, n) VALUES (:j, 's:tilebot', 'tuile', 35000)"),
+        {"j": hier})
+    res = protection.scan_abus(db_session, hier)
+    sc = res["scores"]["s:tilebot"]                       # présent MALGRÉ zéro fiche loggée
+    assert sc["carto"]["tuiles"] == 35000 and sc["score"] >= 40
+
+
+def test_geojson_ile_masque_le_proprietaire(client, engine):
+    """Le nom du propriétaire (PM) sort en mode COMMUNE (borné) mais JAMAIS dans le dump île
+    entière (le canal de masse ne déverse pas l'identité des propriétaires)."""
+    idu, commune, run = "974990PR000001", "ProprioVille", "q_v_prtest"
+    wkt = "POLYGON((55.47 -20.9,55.471 -20.9,55.471 -20.901,55.47 -20.901,55.47 -20.9))"
+    with engine.begin() as c:
+        pid = c.execute(text(
+            "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2,"
+            " centroid, bbox) VALUES (:i,:cm,'ZZ','1', ST_GeomFromText(:w,4326),"
+            " ST_Transform(ST_GeomFromText(:w,4326),2975), 2000,"
+            " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326))) RETURNING id"),
+            {"i": idu, "cm": commune, "w": wkt}).scalar()
+        c.execute(text("INSERT INTO parcelle_personne_morale (idu, denomination, date_import)"
+                       " VALUES (:i, 'SCI SECRETE', now())"), {"i": idu})
+        c.execute(text("INSERT INTO dryrun_parcel_evaluations (run_label, parcel_id, completeness_score,"
+                       " opportunity_score, matrice_statut, q_score, a_score) "
+                       "VALUES (:r,:p,50,50,'chaude',70,70)"), {"r": run, "p": pid})
+    try:
+        fc = client.get(f"/map/parcels.geojson?source={run}&commune={commune}").json()
+        mine = [f["properties"] for f in fc["features"] if f["properties"]["idu"] == idu]
+        assert mine and mine[0]["proprio"] == "SCI SECRETE"       # commune : exposé
+        fc2 = client.get(f"/map/parcels.geojson?source={run}").json()
+        mine2 = [f["properties"] for f in fc2["features"] if f["properties"]["idu"] == idu]
+        assert mine2 and mine2[0]["proprio"] is None and mine2[0]["owner_type"] is None  # île : masqué
+    finally:
+        with engine.begin() as c:
+            c.execute(text("DELETE FROM dryrun_parcel_evaluations WHERE run_label = :r"), {"r": run})
+            c.execute(text("DELETE FROM parcelle_personne_morale WHERE idu = :i"), {"i": idu})
+            c.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu})
+
+
 # ── Phase A audit UI (11/07) : exemption dev + IP réelle derrière proxy ──────────────────
 
 def test_dev_mode_exempte_rate_limit_et_quota(client, monkeypatch):

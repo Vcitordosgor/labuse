@@ -119,9 +119,11 @@ def _cle_hmac() -> bytes:
 _lock = threading.Lock()
 _fenetres: dict[str, deque] = defaultdict(deque)        # sujet → timestamps (60 s)
 _fiches_jour: dict[tuple[str, str], set] = {}           # (jour, sujet) → idus vus (dédup)
+_tuiles_jour: dict[tuple[str, str], list] = {}          # (jour, sujet) → [total, en_attente_flush]
 _bursts_jour: dict[tuple[str, str], int] = defaultdict(int)   # épisodes de burst du jour
 _gels_cache: dict = {"at": 0.0, "sujets": {}}           # TTL 30 s
 _defis: dict[str, tuple[int, int, float]] = {}          # sujet → (a, b, expiry) — réponse a+b
+_TUILE_FLUSH = 25          # écritures DB par lots (les tuiles sont volumineuses en navigation)
 
 #: préfixes des endpoints métier soumis au rate limiting (jamais les statiques/tuiles —
 #: une carte qui panne charge des dizaines de tuiles/s, ce n'est pas du scraping).
@@ -141,6 +143,7 @@ def reset_etat_memoire() -> None:
     with _lock:
         _fenetres.clear()
         _fiches_jour.clear()
+        _tuiles_jour.clear()
         _bursts_jour.clear()
         _gels_cache.update(at=0.0, sujets={})
         _defis.clear()
@@ -157,6 +160,18 @@ def _incr_compteur(jour: str, sujet: str, kind: str, n: int = 1) -> None:
         "INSERT INTO usage_compteurs (jour, sujet, kind, n) VALUES (:j, :s, :k, :n) "
         "ON CONFLICT (jour, sujet, kind) DO UPDATE SET n = usage_compteurs.n + :n",
         {"j": jour, "s": sujet, "k": kind, "n": n})
+
+
+def compteur_incr_et_lire(jour: str, sujet: str, kind: str, n: int = 1) -> int:
+    """Incrémente le compteur du jour et renvoie sa NOUVELLE valeur (atomique, une seule
+    requête). Sert aux quotas à faible volume (carto bulk) — inutile de mémoire/lots."""
+    from ..db import engine
+    with engine().begin() as c:
+        return int(c.execute(text(
+            "INSERT INTO usage_compteurs (jour, sujet, kind, n) VALUES (:j, :s, :k, :n) "
+            "ON CONFLICT (jour, sujet, kind) DO UPDATE SET n = usage_compteurs.n + :n "
+            "RETURNING n"),
+            {"j": jour, "s": sujet, "k": kind, "n": n}).scalar() or n)
 
 
 def compteur(db, sujet: str, kind: str, jour: str | None = None) -> int:
@@ -179,6 +194,38 @@ def _fiches_vues(jour: str, sujet: str) -> set:
             n = 0
         _fiches_jour[key] = set(range(n))     # placeholder : seul le CARDINAL compte
     return _fiches_jour[key]
+
+
+def _note_tuile(jour: str, sujet: str, quota: int) -> bool:
+    """Compte une tuile servie. Renvoie True si le quota JOURNALIER est dépassé (throttle).
+    Compteur mémoire (rapide, les tuiles sont très nombreuses en navigation) ensemencé du total
+    DB au 1er accès du jour, puis persisté par lots (`_TUILE_FLUSH`) pour rester visible du job
+    abuse-scan (signal de volume) sans marteler la base à chaque tuile."""
+    key = (jour, sujet)
+    flush_n = 0
+    with _lock:
+        st = _tuiles_jour.get(key)
+        if st is None:
+            try:
+                from ..db import engine
+                with engine().connect() as c:
+                    base = int(c.execute(text(
+                        "SELECT n FROM usage_compteurs WHERE jour = :j AND sujet = :s AND kind = 'tuile'"),
+                        {"j": jour, "s": sujet}).scalar() or 0)
+            except Exception:  # noqa: BLE001 — DB indisponible : ne bloque pas le trafic carto
+                base = 0
+            st = _tuiles_jour[key] = [base, 0]
+        st[0] += 1
+        st[1] += 1
+        over = st[0] > max(1, quota)
+        if st[1] >= _TUILE_FLUSH:
+            flush_n, st[1] = st[1], 0
+    if flush_n:
+        try:
+            _incr_compteur(jour, sujet, "tuile", flush_n)
+        except Exception:  # noqa: BLE001 — persistance best-effort (le compteur mémoire fait foi pour le throttle)
+            pass
+    return over
 
 
 def _gele(sujet: str) -> str | None:
@@ -221,13 +268,16 @@ def _actif_sous_pytest() -> bool:
     if not os.environ.get("PYTEST_CURRENT_TEST"):
         return True
     return bool(os.environ.get("LABUSE_RATE_LIMIT_RPM")
-                or os.environ.get("LABUSE_QUOTA_FICHES_JOUR"))
+                or os.environ.get("LABUSE_QUOTA_FICHES_JOUR")
+                or os.environ.get("LABUSE_QUOTA_TUILES_JOUR")
+                or os.environ.get("LABUSE_QUOTA_CARTO_JOUR"))
 
 
 async def garde_protection(request: Request, call_next):
     """Rate limiting + quota fiches — s'exécute APRÈS l'auth (trafic authentifié)."""
     path = request.url.path
-    if request.method == "OPTIONS" or not path.startswith(PREFIXES_PROTEGES) \
+    is_tuile = path.startswith("/map/tiles")   # tuiles : régime carto dédié (jamais le 60/min)
+    if request.method == "OPTIONS" or not (path.startswith(PREFIXES_PROTEGES) or is_tuile) \
             or not _actif_sous_pytest():
         return await call_next(request)
     s = config.get_settings()
@@ -248,6 +298,18 @@ async def garde_protection(request: Request, call_next):
         return JSONResponse(status_code=429, content={
             "detail": f"Accès suspendu ({motif}). Contactez LABUSE pour le rétablir.",
             "gel": True})
+
+    # ── Tuiles vectorielles : quota JOURNALIER dédié, PAS le rate-limit 60/min (une carte qui
+    # panne charge des dizaines de tuiles/s → le 60/min tripperait la navigation normale). Le
+    # compteur du jour est aussi le signal de volume vu par abuse-scan. ──
+    if is_tuile:
+        over = await anyio.to_thread.run_sync(_note_tuile, jour, sujet, s.quota_tuiles_jour)
+        if over:
+            return JSONResponse(status_code=429, content={
+                "detail": f"Quota de tuiles carto atteint ({s.quota_tuiles_jour}/jour). "
+                          "La navigation reprend à minuit.",
+                "quota": s.quota_tuiles_jour, "gel_jusqua": "minuit"})
+        return await call_next(request)
 
     defi, episode_nouveau, nb_bursts = None, False, 0
     with _lock:
@@ -303,7 +365,17 @@ async def garde_protection(request: Request, call_next):
                          "VALUES (:s, :c, :i)", {"s": sujet, "c": "fiche", "i": idu})
             await anyio.to_thread.run_sync(_persiste)
     elif path.startswith(("/map/parcels", "/parcels/export")):
-        # dump massif potentiel : journalisé (signal volume du job abuse-scan)
+        # dump massif potentiel : journalisé (signal volume du job abuse-scan) + quota carto
+        # JOURNALIER sur le geojson île (un humain en charge une poignée par session ; une boucle
+        # de moisson par commune/bbox trippe). L'export CSV a déjà son propre filigrane/quota.
+        if path.startswith("/map/parcels"):
+            n_carto = await anyio.to_thread.run_sync(
+                lambda: compteur_incr_et_lire(jour, sujet, "carto"))
+            if n_carto > max(1, s.quota_carto_jour):
+                return JSONResponse(status_code=429, content={
+                    "detail": f"Quota de dumps cartographiques atteint ({s.quota_carto_jour}/jour). "
+                              "Reprend à minuit.",
+                    "quota": s.quota_carto_jour, "gel_jusqua": "minuit"})
         await anyio.to_thread.run_sync(
             lambda: _db_exec("INSERT INTO consultation_log (sujet, chemin) VALUES (:s, :c)",
                              {"s": sujet, "c": path[:64]}))
@@ -442,6 +514,17 @@ def scan_abus(db, jour: date | None = None) -> dict:
     for sujet, ts, idu in rows:
         par_sujet[sujet].append((ts, idu))
 
+    # Volume carto de masse (tuiles + dumps geojson) du jour : un moissonnage systématique du
+    # référentiel scoré passe par les tuiles/geojson, PAS par la fiche unitaire → il ne laisse
+    # aucune ligne dans consultation_log. On lit ses compteurs pour le rendre VISIBLE du scan
+    # (et on s'assure que ces sujets « carto-only » sont bien évalués même sans fiche).
+    carto_par_sujet: dict[str, dict] = defaultdict(lambda: {"tuile": 0, "carto": 0})
+    for sujet, kind, n in db.execute(text(
+            "SELECT sujet, kind, n FROM usage_compteurs WHERE jour = :j AND kind IN ('tuile','carto')"),
+            {"j": jour.isoformat()}).all():
+        carto_par_sujet[sujet][kind] = int(n or 0)
+        par_sujet.setdefault(sujet, [])   # sujet vu UNIQUEMENT en carto → doit quand même être scoré
+
     resultats: dict[str, dict] = {}
     for sujet, evts in par_sujet.items():
         idus = [i for _, i in evts if i]
@@ -480,6 +563,16 @@ def scan_abus(db, jour: date | None = None) -> dict:
         if len(idus) >= 150 and exports == 0:
             signaux["ratio_sans_export"] = len(idus)
             score += 15
+        # e) volume carto de masse (le canal d'exfiltration du scoring : tuiles z≥12 + geojson île).
+        # Seuils placés SOUS les quotas durs (40k tuiles / 400 dumps) : Vic est alerté avant le
+        # plafond, pour investiguer et geler manuellement si le motif se confirme.
+        cv = carto_par_sujet.get(sujet)
+        if cv and (cv["tuile"] or cv["carto"]):
+            signaux["carto"] = {"tuiles": cv["tuile"], "dumps": cv["carto"]}
+            if cv["tuile"] >= 30000 or cv["carto"] >= 200:
+                score += 40
+            elif cv["tuile"] >= 15000 or cv["carto"] >= 80:
+                score += 20
         score = min(100, score)
         db.execute(text(
             "INSERT INTO abuse_scores (jour, sujet, score, signaux) "

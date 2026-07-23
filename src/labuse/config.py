@@ -67,6 +67,18 @@ class Settings(BaseSettings):
     # Auth & Plans » remplacera plan_defaut par le plan du compte connecté) ──
     quota_fiches_jour: int = 300          # consultations de fiches parcelle / jour / sujet
     rate_limit_rpm: int = 60              # requêtes / minute / sujet (endpoints métier)
+    # Carto de masse (P0 « avant multi-comptes ») — les tuiles vectorielles z≥12 portent le
+    # référentiel scoré (idu + q/a + flags) et le geojson île peut renvoyer 200k parcelles :
+    # deux canaux d'exfiltration. On NE met PAS les tuiles sous le rate-limit 60/min (une carte
+    # qui panne charge des dizaines de tuiles/s — ce n'est pas du scraping) : quota JOURNALIER
+    # généreux à la place. Calibrage : usage humain intense (heures de navigation z9-16, cache
+    # navigateur 1 h) reste < ~15-20k tuiles/j ; l'île scorée entière ne fait que quelques
+    # milliers de tuiles → 40k laisse re-parcourir l'île plusieurs fois avant de gêner, mais
+    # une boucle de moisson multi-zoom trippe. Dépassement → 429 « reprend à minuit » (throttle,
+    # jamais un gel auto). Le geojson île (dump massif) : quota d'appels/jour (un humain en charge
+    # une poignée par session ; 400 est large, une boucle de moisson par commune/bbox trippe).
+    quota_tuiles_jour: int = 40000        # tuiles vectorielles /map/tiles / jour / sujet
+    quota_carto_jour: int = 400           # dumps geojson carto (/map/parcels.geojson) / jour / sujet
     # Exemption DEV de la protection (audit local, crawl QA). ⚠ JAMAIS d'exemption
     # « localhost » : derrière nginx sur un VPS, TOUT le trafic arrive en 127.0.0.1 et une
     # telle exemption tuerait la protection en prod. En prod derrière proxy de confiance,
