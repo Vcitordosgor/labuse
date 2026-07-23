@@ -71,8 +71,19 @@ async def _lifespan(app: FastAPI):
     # de LA BUSE (démarrage, connexions réussies) seraient invisibles. No-op si déjà configuré.
     logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s — %(message)s")
     log = logging.getLogger("labuse")
+    from ..db import engine as _engine
+    # M6-A5 : la remédiation de schéma est sérialisée entre les workers uvicorn par un VERROU
+    # CONSULTATIF Postgres. Au 1er boot après une migration, les 2 workers lançaient `CREATE TYPE`
+    # en même temps → l'un tombait sur une violation d'unicité pg_type (schéma=échec bénin mais
+    # bruyant, faux positif d'alerte à chaque migration). Le lock fait ATTENDRE le 2e worker ;
+    # il ne voit ensuite que des objets existants (checkfirst les saute) → les deux finissent
+    # `schéma=ok`. Clé arbitraire stable propre à LA BUSE.
+    _SCHEMA_LOCK = 0x1ABE5C
+    _lock_conn = None
     try:
-        from ..db import engine as _engine
+        _lock_conn = _engine().connect()
+        _lock_conn.execute(text("SELECT pg_advisory_lock(:k)"), {"k": _SCHEMA_LOCK})
+        _lock_conn.commit()
         models.ensure_schema(_engine())
         # tables des routeurs (modules/ia/events/partners/projets) : l'ancien
         # @app.on_event("startup") était MORT depuis le passage au lifespan (FastAPI
@@ -98,6 +109,14 @@ async def _lifespan(app: FastAPI):
         app.state.schema_heal = "ok"
     except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
         app.state.schema_heal = f"échec : {type(exc).__name__}: {exc}"
+    finally:
+        if _lock_conn is not None:
+            try:
+                _lock_conn.execute(text("SELECT pg_advisory_unlock(:k)"), {"k": _SCHEMA_LOCK})
+                _lock_conn.commit()
+            except Exception:  # noqa: BLE001 — le verrou tombe de toute façon à la fermeture de session
+                pass
+            _lock_conn.close()
     from . import auth
     s = config.get_settings()
     log.info("LA BUSE démarrée · env=%s · auth=%s · schéma=%s",
