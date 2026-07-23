@@ -120,8 +120,9 @@ export function MapToolbar() {
                   off ? 'text-st-none'
                     : tool === t.key ? 'bg-mint/10 text-mint' : 'text-txt-mut hover:text-txt'}`}
                 title={off ? undefined : `${t.label} — ${t.hint}`}
+                aria-label={off ? `${t.label} (indisponible sur toute l'île)` : t.label}
               >
-                <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]">{t.icon}</svg>
+                <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">{t.icon}</svg>
               </button>
               {off && zoneHint && (
                 <span data-hint-zone className="absolute right-11 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-st-creuser/40 bg-surface-2 px-2 py-1 text-[11px] text-st-creuser shadow-elev-2">

@@ -389,6 +389,7 @@ export function M19() {
         <input value={smin} onChange={(e) => setSmin(e.target.value)} placeholder="surf. min" type="number"
           className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-violet focus:outline-none" />
         <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()}
+          title="Ajouter le profil" aria-label="Ajouter le profil"
           className="rounded bg-violet px-2 text-[11px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+</button>
       </div>
       <button onClick={() => match.mutate()} disabled={match.isPending}

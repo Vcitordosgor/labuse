@@ -147,9 +147,9 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
         <button
           onMouseDown={() => { dragging.current = true }}
           className="absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-full border border-mint bg-[#0F1A14] text-mint"
-          title="Glisser pour comparer"
+          title="Glisser pour comparer" aria-label="Glisser pour comparer"
         >
-          ⇔
+          <span aria-hidden="true">⇔</span>
         </button>
       </div>
       <span className="absolute bottom-3 left-3 rounded-full border border-line-2 bg-surface-2 px-3 py-1 font-mono text-[11px] text-txt">{basemapLabel(leftKey)}</span>

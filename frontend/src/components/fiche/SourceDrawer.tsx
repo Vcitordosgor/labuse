@@ -32,7 +32,7 @@ export function SourceDrawer() {
             <p className="font-mono text-[10px] tracking-widest text-txt-dim">SOURCE</p>
             <h3 className="mt-1 text-sm font-medium leading-snug text-txt-hi">{sourceLine.source ?? 'Source interne LABUSE'}</h3>
           </div>
-          <button onClick={closeSourceDrawer} className="shrink-0 text-txt-mut hover:text-txt-hi" title="Fermer (Échap)">✕</button>
+          <button onClick={closeSourceDrawer} className="shrink-0 text-txt-mut hover:text-txt-hi" title="Fermer (Échap)" aria-label="Fermer">✕</button>
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-5">

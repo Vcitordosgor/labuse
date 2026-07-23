@@ -80,7 +80,7 @@ export function ContextePanel() {
           <h2 className="font-display text-lg font-bold text-txt-hi">{contexteCommune}</h2>
           {d?.epci && <p className="text-[10.5px] text-txt-mut">{d.epci} — {d.epci_nom}</p>}
         </div>
-        <button onClick={() => setContexteCommune(null)} className="text-txt-dim hover:text-txt-hi" title="Fermer (Échap)">✕</button>
+        <button onClick={() => setContexteCommune(null)} className="text-txt-dim hover:text-txt-hi" title="Fermer (Échap)" aria-label="Fermer">✕</button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
