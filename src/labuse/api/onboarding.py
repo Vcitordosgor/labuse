@@ -317,8 +317,8 @@ rediffusion systématique des contenus du service.</p>
 facturation (chez Stripe). Aucune donnée de carte chez LABUSE. Finalités : fourniture du
 service, facturation, sécurité. Durée : la vie du compte, puis effacement sous 30 jours de
 la demande (droit d'accès, de rectification et d'effacement : kampusreunion@gmail.com).
-Sous-traitants : Stripe (paiement), Resend (emails transactionnels), hébergeur du serveur
-(UE). Pas de prospection automatisée, pas de revente de données.</p>
+Sous-traitants : Stripe (paiement), hébergeur du serveur (UE). Aucun email automatique.
+Pas de prospection automatisée, pas de revente de données.</p>
 
 <h2>9. Responsabilité</h2>
 <p>Dans les limites permises par la loi entre professionnels, la responsabilité totale de
@@ -428,7 +428,7 @@ Le lien de téléchargement (30 jours) s'affiche dès la génération.</p>""", p
 <form method="get" action="/flash">
 <label for="idu">Identifiant de parcelle (IDU)</label>
 <div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14" required
-  autofocus inputmode="latin" placeholder="97415000CW0658" aria-describedby="iduhint"
+  autofocus inputmode="text" placeholder="97415000CW0658" aria-describedby="iduhint"
   style="font-family:ui-monospace,monospace"></div>
 <button type="submit">Vérifier la parcelle →</button></form>
 <p class="meterlbl" id="iduhint">14 caractères — figure sur cadastre.gouv.fr, ou demandez-le à votre contact LABUSE. Le rapport est généré sur la parcelle EXACTE.</p>"""))

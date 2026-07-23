@@ -6,7 +6,7 @@ export function Loading({ label, className = '', big = false, accent = 'mint' }:
   const dot = big ? 'h-3.5 w-3.5' : 'h-2.5 w-2.5'
   // accent 'violet' (#B497F0) = charte de la partie OUTILS ; 'mint' partout ailleurs (défaut).
   const tone = accent === 'violet'
-    ? 'bg-[#B497F0] shadow-[0_0_8px_rgba(180,151,240,0.6)]'
+    ? 'bg-violet shadow-[0_0_8px_rgba(180,151,240,0.6)]'
     : 'bg-mint shadow-[0_0_8px_rgba(92,230,161,0.6)]'
   return (
     <span className={`inline-flex items-center gap-2.5 text-txt-mut ${className}`} role="status" aria-live="polite" aria-busy="true">

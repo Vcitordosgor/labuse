@@ -647,9 +647,9 @@ function FaisabiliteTab({ idu }: { idu: string }) {
           <div className="text-sm font-medium text-txt-hi">{cap.verdict}</div>
           <div className="mt-1.5 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px] text-txt-mut">
             <div>Gabarit : <b className="text-txt">{fo.niveaux}</b> ({fo.hauteur_m} m)</div>
-            <div>SDP : <b className="text-txt">{fo.surface_plancher_m2} m²</b></div>
+            <div>SDP : <b className="text-txt">{fmtM2(fo.surface_plancher_m2)}</b></div>
             <div>Logements : <b className="text-txt">{Array.isArray(fo.logements_au_sol) ? `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]}` : '—'}</b></div>
-            <div>SHAB vendable : <b className="text-txt">~{fo.shab_vendable_m2} m²</b></div>
+            <div>SHAB vendable : <b className="text-txt">~{fmtM2(fo.shab_vendable_m2)}</b></div>
           </div>
           {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
           <div className="mt-1.5 text-[10.5px] leading-snug text-txt-dim">{cap.bandeau}</div>
@@ -737,8 +737,8 @@ function BilanTab({ idu }: { idu: string }) {
         <Sec t="Capacité (que peut accueillir ce terrain ?)">
           <div className="font-medium text-txt-hi">{cap.verdict}</div>
           <div className="mt-1 text-txt-mut">
-            {fo.niveaux} · emprise bâtie max {fo.emprise_batie_max_m2} m² · SDP {fo.surface_plancher_m2} m² ·
-            SHAB vendable ~{fo.shab_vendable_m2} m² · stationnement : {String(fo.stationnement_regime ?? '—').replace(/_/g, ' ')}
+            {fo.niveaux} · emprise bâtie max {fmtM2(fo.emprise_batie_max_m2)} · SDP {fmtM2(fo.surface_plancher_m2)} ·
+            SHAB vendable ~{fmtM2(fo.shab_vendable_m2)} · stationnement : {String(fo.stationnement_regime ?? '—').replace(/_/g, ' ')}
           </div>
           {!cap.calibree && <div className="mt-1 text-[11px] text-st-creuser">▲ estimation générique (zone non calibrée)</div>}
           <div className="mt-1.5 text-[11px] leading-snug text-txt-dim">{cap.bandeau}</div>
