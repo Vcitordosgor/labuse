@@ -166,15 +166,15 @@ def login_page(error: bool = False) -> str:
     corps = coffre_ui.OISEAU + f"""
 <h1>LA BUSE</h1><p class="sub">Radar foncier · La Réunion</p>
 <form method="post" action="/login" id="porte" novalidate aria-describedby="loginerr">
-  <label for="identifiant">Identifiant</label>
-  <div class="field"><input id="identifiant" name="identifiant" type="text"
-     autocomplete="username" autocapitalize="none" spellcheck="false" autofocus
+  <label for="identifiant">E-mail</label>
+  <div class="field"><input id="identifiant" name="identifiant" type="email"
+     autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" autofocus
      placeholder="vous@cabinet.re" aria-required="true"></div>
   <label for="password">Mot de passe</label>
   <div class="field"><input id="password" name="password" type="password"
      autocomplete="current-password" aria-required="true"></div>
   <p class="err" id="loginerr" role="alert" aria-live="polite"{"" if error else " hidden"}>
-    <span aria-hidden="true">▲</span> Identifiants invalides — vérifiez votre email et votre mot de passe.</p>
+    <span aria-hidden="true">▲</span> E-mail ou mot de passe incorrect.</p>
   <button type="submit"><span class="spin" hidden aria-hidden="true"></span>
     <span data-hideon="chargement">Entrer</span></button>
 </form>
