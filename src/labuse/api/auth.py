@@ -76,6 +76,26 @@ def _key() -> bytes:
     return _EPHEMERAL_KEY
 
 
+def cle_signature() -> bytes:
+    """Clé HMAC de l'application (session, jeton de bascule paiement, filigrane des exports).
+    = LABUSE_SECRET_KEY, sinon clé éphémère process-locale — mais UNIQUEMENT en 'local' :
+    hors local, `exiger_secret_prod()` (appelée au démarrage) impose la vraie clé. Aucune
+    constante en dur n'est plus utilisée nulle part (un jeton de paiement était forgeable)."""
+    return _key()
+
+
+def exiger_secret_prod() -> None:
+    """Fail-closed : hors `local`, LABUSE_SECRET_KEY est OBLIGATOIRE. Sans elle, les jetons
+    signés (session, bascule paiement, filigrane) reposeraient sur une clé éphémère et le
+    jeton de paiement redeviendrait forgeable → on REFUSE de démarrer, avec un message clair."""
+    s = get_settings()
+    if s.env != "local" and not s.secret_key:
+        raise RuntimeError(
+            f"LABUSE_SECRET_KEY absente en environnement '{s.env}' : clé de signature "
+            "OBLIGATOIRE hors 'local' (jetons de session/paiement/filigrane). "
+            "Posez-la dans /etc/labuse/labuse.env (openssl rand -hex 32) puis redémarrez.")
+
+
 def _sign(payload: str) -> str:
     return hmac.new(_key(), payload.encode("utf-8"), hashlib.sha256).hexdigest()
 

@@ -107,8 +107,11 @@ async def _lifespan(app: FastAPI):
     if auth.enabled() and not auth.configured():
         log.error("env=%s sans LABUSE_AUTH_PASSWORD : routes métier en 503 (fail-closed) "
                   "jusqu'à configuration.", s.env)
-    if auth.enabled() and not s.secret_key:
-        log.warning("LABUSE_SECRET_KEY absente : clé de session éphémère "
+    # Fail-closed (P0-3) : hors 'local', LABUSE_SECRET_KEY est OBLIGATOIRE (sinon jeton de
+    # paiement forgeable). Absente en prod/pilote → on refuse de démarrer, message clair.
+    auth.exiger_secret_prod()
+    if not s.secret_key:  # ici forcément 'local' : clé éphémère (sessions perdues au reboot)
+        log.warning("LABUSE_SECRET_KEY absente (env=local) : clé de session éphémère "
                     "(les sessions ne survivront pas à un redémarrage).")
     yield
 

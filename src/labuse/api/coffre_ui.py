@@ -12,16 +12,18 @@ import hmac
 import html
 import time
 
-from ..config import get_settings
-
 
 # ── jeton SIGNÉ de « en instance de paiement » (porte l'écran de bascule Checkout) ──
 # Purement un porteur d'identité entre l'acceptation CGV et le POST de paiement : il ne
 # touche PAS la mécanique auditée (creer_checkout/webhook/réconciliation inchangés).
 
 def _secret() -> bytes:
-    s = get_settings().secret_key or "labuse-dev-secret"
-    return s.encode()
+    # Même clé que la signature de session (auth.cle_signature) : LABUSE_SECRET_KEY, sinon clé
+    # éphémère en 'local' UNIQUEMENT. Plus AUCUNE constante en dur : l'ancien repli
+    # « labuse-dev-secret » rendait ce jeton de paiement forgeable (audit 360, P0-3). Hors
+    # 'local', la clé est exigée au démarrage (auth.exiger_secret_prod).
+    from . import auth
+    return auth.cle_signature()
 
 
 def pay_token(compte_id: int, ttl_s: int = 1800) -> str:

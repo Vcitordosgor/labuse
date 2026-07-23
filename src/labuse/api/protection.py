@@ -110,8 +110,11 @@ def sujet_de(request: Request) -> str:
 
 
 def _cle_hmac() -> bytes:
-    s = config.get_settings()
-    return (s.secret_key or "labuse-protection").encode()
+    # Clé du filigrane des exports = clé de signature de l'app (plus de constante en dur
+    # « labuse-protection » : elle rendait la ref/les canaris rejouables par un tiers). Hors
+    # 'local', LABUSE_SECRET_KEY est exigée au démarrage (auth.exiger_secret_prod).
+    from . import auth
+    return auth.cle_signature()
 
 
 # ── État mémoire (rapide) + écriture DB (persistance gel/minuit) ────────────────────────

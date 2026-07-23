@@ -5,6 +5,8 @@ suite (régression). DB réelle (labuse_test), auth active, deux comptes réels.
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import uuid
 
 import pytest
@@ -428,6 +430,47 @@ def test_entrees_flash_idu_jamais_500(app_client):
     # POST /flash (achat) sur un IDU inconnu → redirection vers la saisie, jamais 500
     r = c.post("/flash", data={"idu": "00000000000000"}, follow_redirects=False)
     assert r.status_code < 500
+
+
+# ─────────────────────── LABUSE_SECRET_KEY : fail-closed en prod (P0-3) ───────────────────────
+
+def test_secret_key_exigee_hors_local(monkeypatch):
+    """Hors 'local', l'absence de LABUSE_SECRET_KEY DOIT empêcher le démarrage (fail-closed) :
+    sans clé stable, le jeton de paiement serait forgeable. En 'local', clé éphémère tolérée."""
+    from labuse import config
+    from labuse.api import auth
+    # local sans secret → toléré (clé éphémère)
+    monkeypatch.setenv("LABUSE_ENV", "local")
+    monkeypatch.delenv("LABUSE_SECRET_KEY", raising=False)
+    config.get_settings.cache_clear()
+    auth.exiger_secret_prod()                    # ne lève pas
+    # production sans secret → refus de démarrer, message clair
+    monkeypatch.setenv("LABUSE_ENV", "production")
+    config.get_settings.cache_clear()
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        auth.exiger_secret_prod()
+    # production AVEC secret → OK
+    monkeypatch.setenv("LABUSE_SECRET_KEY", "x" * 32)
+    config.get_settings.cache_clear()
+    auth.exiger_secret_prod()                    # ne lève pas
+    config.get_settings.cache_clear()
+
+
+def test_pay_token_sans_secret_en_dur(monkeypatch):
+    """Le jeton de bascule paiement ne repose plus sur une constante en dur : un jeton forgé
+    avec l'ancien secret « labuse-dev-secret » est REFUSÉ ; un vrai jeton est accepté."""
+    import time
+
+    from labuse import config
+    from labuse.api import coffre_ui
+    monkeypatch.setenv("LABUSE_ENV", "local")
+    monkeypatch.setenv("LABUSE_SECRET_KEY", "vraie-cle-secrete-0000000000000000")
+    config.get_settings.cache_clear()
+    payload = f"42.{int(time.time()) + 1800}"
+    forge = hmac.new(b"labuse-dev-secret", payload.encode(), hashlib.sha256).hexdigest()[:32]
+    assert coffre_ui.pay_cid(f"{payload}.{forge}") is None       # ancien secret en dur → refusé
+    assert coffre_ui.pay_cid(coffre_ui.pay_token(42)) == 42       # vrai jeton → accepté
+    config.get_settings.cache_clear()
 
 
 def test_entrees_pipeline_idu_jamais_500(app_client):
