@@ -22,8 +22,12 @@
 {$LABUSE_DOMAIN} {
 	encode gzip
 
-	# ── rideau basic auth (TOUT le trafic, healthz compris) ──
-	basic_auth {
+	# ── rideau basic auth (TOUT le trafic, healthz compris) SAUF le webhook Stripe : il
+	# arrive des serveurs Stripe SANS identifiants → le rideau le bloquerait en 401. Il est
+	# protégé par la SIGNATURE (LABUSE_STRIPE_WEBHOOK_SECRET) : une requête non signée/forgée
+	# est rejetée en 400 par l'app (facturation.traiter_webhook). Exempter ce seul chemin. ──
+	@rideau_protege not path /stripe/webhook
+	basic_auth @rideau_protege {
 		labuse {$CADDY_BASIC_HASH}
 	}
 
