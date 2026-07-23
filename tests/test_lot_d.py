@@ -60,13 +60,14 @@ def test_saved_filters_roundtrip(db_session):
     from labuse.api.app import SavedFilterIn, delete_filter, list_filters, save_filter
     db_session.execute(text("CREATE TABLE IF NOT EXISTS saved_filters ("
                             " id serial PRIMARY KEY, name varchar(80) NOT NULL, params jsonb NOT NULL,"
-                            " created_at timestamptz NOT NULL DEFAULT now())"))
-    r = save_filter(SavedFilterIn(name="Mon filtre", params={"statuses": ["opportunite"], "taux": 40}), db=db_session)
+                            " created_at timestamptz NOT NULL DEFAULT now(), compte_id integer)"))
+    # request=None → compte pilote (NULL) : current_compte() tolère l'appel direct hors HTTP.
+    r = save_filter(SavedFilterIn(name="Mon filtre", params={"statuses": ["opportunite"], "taux": 40}), None, db=db_session)
     assert r["id"] and r["name"] == "Mon filtre"
-    lst = list_filters(db=db_session)
+    lst = list_filters(None, db=db_session)
     assert any(f["name"] == "Mon filtre" and f["params"]["taux"] == 40 for f in lst)
-    delete_filter(r["id"], db=db_session)
-    assert all(f["id"] != r["id"] for f in list_filters(db=db_session))
+    delete_filter(r["id"], None, db=db_session)
+    assert all(f["id"] != r["id"] for f in list_filters(None, db=db_session))
 
 
 # ── 1.C — paramètres de bilan par secteur ──

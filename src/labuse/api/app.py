@@ -107,8 +107,11 @@ async def _lifespan(app: FastAPI):
     if auth.enabled() and not auth.configured():
         log.error("env=%s sans LABUSE_AUTH_PASSWORD : routes métier en 503 (fail-closed) "
                   "jusqu'à configuration.", s.env)
-    if auth.enabled() and not s.secret_key:
-        log.warning("LABUSE_SECRET_KEY absente : clé de session éphémère "
+    # Fail-closed (P0-3) : hors 'local', LABUSE_SECRET_KEY est OBLIGATOIRE (sinon jeton de
+    # paiement forgeable). Absente en prod/pilote → on refuse de démarrer, message clair.
+    auth.exiger_secret_prod()
+    if not s.secret_key:  # ici forcément 'local' : clé éphémère (sessions perdues au reboot)
+        log.warning("LABUSE_SECRET_KEY absente (env=local) : clé de session éphémère "
                     "(les sessions ne survivront pas à un redémarrage).")
     yield
 
@@ -141,6 +144,11 @@ async def _security_headers(request, call_next):
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("X-Frame-Options", "DENY")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
+    # P1 : HSTS quand la requête est en HTTPS (derrière Caddy, uvicorn --proxy-headers lit
+    # X-Forwarded-Proto). JAMAIS en clair : un HSTS posé sur du http local bloquerait l'accès
+    # http à localhost. Absent du Caddy prod / commenté dans nginx → l'app le garantit.
+    if request.url.scheme == "https":
+        resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     return resp
 
 
@@ -333,6 +341,18 @@ def logout(request: Request):
     from . import auth
 
     auth.log_event("logout", request)
+    # P1 : RÉVOQUER la session côté serveur, pas seulement supprimer le cookie — sinon le
+    # jeton restait valide en base jusqu'à son expiration (12 h) et un cookie rejoué gardait
+    # l'accès. Sessions utilisateur uniquement (« u.<token> ») ; le jeton pilote est sans état.
+    cookie = request.cookies.get(auth.COOKIE)
+    if cookie and cookie.startswith("u."):
+        try:
+            from ..comptes import detruire_session
+            from ..db import session_scope
+            with session_scope() as db:
+                detruire_session(db, cookie[2:])
+        except Exception:  # noqa: BLE001 — déconnexion best-effort : le cookie est supprimé quoi qu'il arrive
+            pass
     resp = RedirectResponse("/login", status_code=302)
     resp.delete_cookie(auth.COOKIE, path="/")
     return resp
@@ -1186,7 +1206,8 @@ def parcels_geojson(commune: str | None = None, limit: int = Query(60000, ge=0, 
                 "taux_emprise_pct": r["taux_emprise_pct"],
                 "sous_densite": r["sous_densite"],
                 "sdp_residuelle_m2": r["sdp_residuelle_m2"],
-                "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"]),
+                # CLOISON exfiltration : famille de propriétaire masquée dans le dump île entière.
+                "owner_famille": _owner_famille(r["own_groupe"], r["own_forme"], r["own_denom"]) if commune else None,
             },
         }
         for r in rows if r["g"]
@@ -1248,6 +1269,12 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
     # Le json_build de 51k features reste ~11 s côté Postgres (plancher mesuré) → résultat CACHÉ
     # par (commune, run) via _geojson_cached : payé une fois, instantané ensuite.
     v2run = _score_v2_run_id(db)
+    # CLOISON exfiltration (P0) : le nom du propriétaire (PM) ne sort JAMAIS par le dump ÎLE
+    # ENTIÈRE (commune absente) — ce canal de masse ne doit pas déverser l'identité des
+    # propriétaires. En mode COMMUNE (borné, usage normal de la carte), proprio/owner_type
+    # restent exposés. Le front sert l'île en TUILES (les tuiles ne portent aucun propriétaire).
+    _own_proprio = "b.proprio" if commune else "NULL"
+    _own_type = "b.owner_type" if commune else "NULL"
     _geo_sql = text(
         f"""
         WITH base AS (
@@ -1325,8 +1352,8 @@ def _q_v2_geojson(db: Session, commune: str | None, limit: int, run_label: str =
               'evenement_date', CASE WHEN b.event_date IS NULL THEN NULL ELSE b.event_date::text END,
               'flags', to_jsonb(coalesce(b.flags, '{{}}')),
               'cluster', CASE WHEN b.cluster IS NULL OR b.cluster = 0 THEN NULL ELSE b.cluster::int END,
-              'proprio', b.proprio, 'v_score', b.v_score, 'v_dernier_signal', b.v_dernier_signal,
-              'v_band', b.v_band, 'owner_type', b.owner_type,
+              'proprio', {_own_proprio}, 'v_score', b.v_score, 'v_dernier_signal', b.v_dernier_signal,
+              'v_band', b.v_band, 'owner_type', {_own_type},
               'copro_v2', coalesce(b.copro_v2, false), 'veille', b.veille,
               'v_sig', to_jsonb(coalesce(b.v_sig, '{{}}')),
               'zone_lib', b.zone_lib, 'zone_fam', b.zone_fam
@@ -2585,26 +2612,35 @@ class SavedFilterIn(BaseModel):
 
 
 @app.get("/filters")
-def list_filters(db: Session = Depends(get_db)) -> list[dict]:
-    """Filtres de recherche sauvegardés (Lot D3)."""
-    rows = db.execute(text("SELECT id, name, params, created_at FROM saved_filters ORDER BY created_at DESC")).mappings().all()
+def list_filters(request: Request, db: Session = Depends(get_db)) -> list[dict]:
+    """Filtres de recherche sauvegardés (Lot D3). CLOISON : chaque compte ne voit que les siens."""
+    from .tenant import current_compte
+    rows = db.execute(text("SELECT id, name, params, created_at FROM saved_filters"
+                           " WHERE compte_id IS NOT DISTINCT FROM :cid ORDER BY created_at DESC"),
+                      {"cid": current_compte(request)}).mappings().all()
     return [{"id": r["id"], "name": r["name"], "params": r["params"],
              "created_at": r["created_at"].isoformat() if r["created_at"] else None} for r in rows]
 
 
 @app.post("/filters")
-def save_filter(body: SavedFilterIn, db: Session = Depends(get_db)) -> dict:
+def save_filter(body: SavedFilterIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    from .tenant import current_compte
     name = (body.name or "").strip()[:80]
     if not name:
         raise HTTPException(422, "Nom de filtre requis.")
-    fid = db.execute(text("INSERT INTO saved_filters (name, params) VALUES (:n, CAST(:p AS jsonb)) RETURNING id"),
-                     {"n": name, "p": json.dumps(body.params or {})}).scalar()
+    fid = db.execute(text("INSERT INTO saved_filters (name, params, compte_id) VALUES (:n, CAST(:p AS jsonb), :cid) RETURNING id"),
+                     {"n": name, "p": json.dumps(body.params or {}), "cid": current_compte(request)}).scalar()
     return {"id": fid, "name": name, "params": body.params}
 
 
 @app.delete("/filters/{filter_id}")
-def delete_filter(filter_id: int, db: Session = Depends(get_db)) -> dict:
-    db.execute(text("DELETE FROM saved_filters WHERE id = :i"), {"i": filter_id})
+def delete_filter(filter_id: int, request: Request, db: Session = Depends(get_db)) -> dict:
+    # SEC-IDOR : on ne supprime QUE ses propres filtres → 404 sinon
+    from .tenant import current_compte
+    n = db.execute(text("DELETE FROM saved_filters WHERE id = :i AND compte_id IS NOT DISTINCT FROM :cid"),
+                   {"i": filter_id, "cid": current_compte(request)}).rowcount
+    if not n:
+        raise HTTPException(404, "Filtre inconnu")
     return {"ok": True}
 
 
@@ -2623,10 +2659,12 @@ class SignalementIn(BaseModel):
 
 
 @app.post("/signalements")
-def creer_signalement(body: SignalementIn, db: Session = Depends(get_db)) -> dict:
+def creer_signalement(body: SignalementIn, request: Request, db: Session = Depends(get_db)) -> dict:
     """Enregistre un signalement d'erreur horodaté. AUCUNE modification des données :
     c'est un ticket dans une file de QA humaine (utile notamment aux faux positifs —
-    piscines 90,7 %, futurs verrous). Le champ `statut` démarre à « nouveau »."""
+    piscines 90,7 %, futurs verrous). Le champ `statut` démarre à « nouveau ».
+    CLOISON : le signalement appartient au compte qui l'a émis (revue QA transverse = CLI)."""
+    from .tenant import current_compte
     idu = (body.idu or "").strip()
     if not idu:
         raise HTTPException(422, "IDU de la parcelle requis.")
@@ -2634,42 +2672,46 @@ def creer_signalement(body: SignalementIn, db: Session = Depends(get_db)) -> dic
     if type_err not in SIGNALEMENT_TYPES:
         type_err = "autre"
     sid = db.execute(text(
-        """INSERT INTO signalements (parcelle_id, type_erreur, champ, commentaire, utilisateur)
-           VALUES (:idu, :t, :c, :com, :u) RETURNING id"""),
+        """INSERT INTO signalements (parcelle_id, type_erreur, champ, commentaire, utilisateur, compte_id)
+           VALUES (:idu, :t, :c, :com, :u, :cid) RETURNING id"""),
         {"idu": idu[:14], "t": type_err,
          "c": (body.champ or None), "com": (body.commentaire or None),
-         "u": (body.utilisateur or None)}).scalar()
+         "u": (body.utilisateur or None), "cid": current_compte(request)}).scalar()
     return {"ok": True, "id": sid, "statut": "nouveau"}
 
 
 @app.get("/signalements")
-def liste_signalements(statut: str | None = None,
+def liste_signalements(request: Request, statut: str | None = None,
                        limit: int = Query(500, ge=1, le=5000),
                        db: Session = Depends(get_db)) -> list[dict]:
-    """File des signalements (revue QA). Filtrable par statut."""
-    where = " WHERE statut = :s" if statut else ""
+    """File des signalements (revue QA). Filtrable par statut. CLOISON : ses propres signalements."""
+    from .tenant import current_compte
+    where = " AND statut = :s" if statut else ""
     rows = db.execute(text(
         f"""SELECT id, parcelle_id, type_erreur, champ, commentaire, utilisateur,
                    statut, created_at
-              FROM signalements{where} ORDER BY created_at DESC LIMIT :lim"""),
-        {"s": statut, "lim": limit}).mappings().all()
+              FROM signalements WHERE compte_id IS NOT DISTINCT FROM :cid{where}
+              ORDER BY created_at DESC LIMIT :lim"""),
+        {"s": statut, "lim": limit, "cid": current_compte(request)}).mappings().all()
     return [{**dict(r), "created_at": r["created_at"].isoformat() if r["created_at"] else None}
             for r in rows]
 
 
 @app.get("/signalements/export.csv")
-def export_signalements_csv(statut: str | None = None,
+def export_signalements_csv(request: Request, statut: str | None = None,
                             db: Session = Depends(get_db)) -> Response:
-    """Export CSV des signalements pour revue (utf-8-sig BOM + séparateur « ; »)."""
+    """Export CSV des signalements pour revue (utf-8-sig BOM + séparateur « ; »). CLOISON par compte."""
     import csv as _csv
     import io as _io
 
-    where = " WHERE statut = :s" if statut else ""
+    from .tenant import current_compte
+    where = " AND statut = :s" if statut else ""
     rows = db.execute(text(
         f"""SELECT id, parcelle_id, type_erreur, champ, commentaire, utilisateur,
                    statut, created_at
-              FROM signalements{where} ORDER BY created_at DESC"""),
-        {"s": statut}).mappings().all()
+              FROM signalements WHERE compte_id IS NOT DISTINCT FROM :cid{where}
+              ORDER BY created_at DESC"""),
+        {"s": statut, "cid": current_compte(request)}).mappings().all()
     buf = _io.StringIO()
     w = _csv.writer(buf, delimiter=";")
     w.writerow(["id", "idu", "type_erreur", "champ", "commentaire",

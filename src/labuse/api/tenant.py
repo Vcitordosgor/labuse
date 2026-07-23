@@ -23,7 +23,11 @@ from sqlalchemy.orm import Session
 
 # tables à données PRIVÉES du client (les données publiques — parcelles, scoring, fiches —
 # ne sont jamais scopées : c'est l'analyse partagée).
-SCOPED_TABLES = ("projets", "pipeline_entries", "saved_searches", "saved_filters", "signalements")
+# event_log / watched_parcels ajoutées au P0 « avant multi-comptes » : la cloche de
+# notifications et le suivi de cible sont l'intention commerciale d'un compte — ils ne
+# doivent jamais fuiter à un autre. Elles reçoivent compte_id + FK cascade comme les autres.
+SCOPED_TABLES = ("projets", "pipeline_entries", "saved_searches", "saved_filters",
+                 "signalements", "event_log", "watched_parcels")
 
 
 def ensure_scoping(db: Session) -> None:
@@ -57,6 +61,21 @@ def ensure_scoping(db: Session) -> None:
                 db.rollback()
                 db.execute(text("ALTER TABLE pipeline_entries ADD CONSTRAINT uq_pipeline_compte_parcel"
                                 " UNIQUE (compte_id, parcel_id)"))
+
+    # watched_parcels avait `idu PRIMARY KEY` → une parcelle ne pouvait être suivie que par UN
+    # compte de toute la base (même trou que l'ancien CRM). Multi-tenant : la clé devient
+    # (compte_id, idu). On retire l'ancienne PK et on pose l'unique par compte.
+    if db.execute(text("SELECT to_regclass('watched_parcels')")).scalar():
+        has_new = db.execute(text("SELECT 1 FROM pg_constraint WHERE conname = 'uq_watched_compte_idu'")).scalar()
+        if not has_new:
+            db.execute(text("ALTER TABLE watched_parcels DROP CONSTRAINT IF EXISTS watched_parcels_pkey"))
+            try:
+                db.execute(text("ALTER TABLE watched_parcels ADD CONSTRAINT uq_watched_compte_idu"
+                                " UNIQUE NULLS NOT DISTINCT (compte_id, idu)"))
+            except Exception:  # noqa: BLE001 — PG < 15
+                db.rollback()
+                db.execute(text("ALTER TABLE watched_parcels ADD CONSTRAINT uq_watched_compte_idu"
+                                " UNIQUE (compte_id, idu)"))
     db.commit()
 
 

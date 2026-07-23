@@ -62,12 +62,14 @@ def engine():
     models.create_all(eng)
     # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id + FK cascade sur
     # les tables à données client). Reproductible en base de test fraîche (comme au boot).
+    from labuse.api.events import ensure_tables as _events_ens
     from labuse.api.tenant import ensure_scoping
     from labuse.comptes import ensure_tables as _comptes_ens
     from labuse.db import session_scope as _ss
+    _events_ens(eng)   # event_log / watched_parcels / saved_searches (créées avec compte_id)
     with _ss() as _s:
         _comptes_ens(_s)
-        ensure_scoping(_s)
+        ensure_scoping(_s)   # migre compte_id + FK cascade + unique (compte_id, idu) — comme au boot
     # F3 (Phase 0 J1) : tables « data-gap » interrogées par l'app mais NON déclarées en ORM (créées
     # hors code en prod par l'ingestion pente). On les matérialise VIDES en base de test → l'app ne
     # casse plus sur « relation inexistante » (le contrat data-gap = 0 ligne, jamais une erreur SQL).

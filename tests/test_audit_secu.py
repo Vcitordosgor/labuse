@@ -5,6 +5,8 @@ suite (régression). DB réelle (labuse_test), auth active, deux comptes réels.
 """
 from __future__ import annotations
 
+import hashlib
+import hmac
 import uuid
 
 import pytest
@@ -149,6 +151,114 @@ def test_idor_veilles_cloison(app_client):
         assert len(ca.get("/events/searches").json()) == 1   # intacte
     finally:
         _purge(ea, eb)
+
+
+def test_idor_signalements_cloison(app_client):
+    """Signalements (file de QA) : B ne voit NI ne liste NI n'exporte ceux de A."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        idu = f"974SIG{uuid.uuid4().hex[:8].upper()}"
+        r = ca.post("/signalements", json={"idu": idu, "type_erreur": "zonage", "commentaire": "erreur de A"})
+        assert r.status_code == 200, r.text
+        sid = r.json()["id"]
+        # A le voit dans SA file ; B ne voit rien (ni liste, ni export CSV)
+        assert any(s["id"] == sid for s in ca.get("/signalements").json())
+        assert all(s["id"] != sid for s in cb.get("/signalements").json())
+        assert str(sid) not in cb.get("/signalements/export.csv").text.split("\n", 1)[1]
+        # A reste intact
+        assert any(s["id"] == sid for s in ca.get("/signalements").json())
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM signalements WHERE parcelle_id LIKE '974SIG%'")); s.commit()
+
+
+def test_idor_saved_filters_cloison(app_client):
+    """Filtres sauvegardés : B ne voit pas ceux de A, et un DELETE ciblé sur l'id de A
+    renvoie 404 (jamais 403) sans rien détruire chez A — corrige l'IDOR d'écriture."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        r = ca.post("/filters", json={"name": "filtre A", "params": {"q": 65}})
+        assert r.status_code == 200, r.text
+        fid = r.json()["id"]
+        # A le voit ; B ne voit rien
+        assert any(f["id"] == fid for f in ca.get("/filters").json())
+        assert cb.get("/filters").json() == []
+        # B tente de supprimer le filtre de A par id → 404, et le filtre survit chez A
+        assert cb.delete(f"/filters/{fid}").status_code == 404
+        assert any(f["id"] == fid for f in ca.get("/filters").json())
+        # A peut supprimer le sien
+        assert ca.delete(f"/filters/{fid}").status_code == 200
+    finally:
+        _purge(ea, eb)
+
+
+def test_idor_event_log_cloison(app_client):
+    """Cloche de notifications : B ne voit pas les événements de A, et ni son « lire »
+    ciblé ni son « tout lire » ne touchent l'événement de A."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    cid_a = _compte_actif(ea); _compte_actif(eb)
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        # un événement (ex. veille) appartenant à A
+        with session_scope() as s:
+            eid = s.execute(text(
+                "INSERT INTO event_log (kind, idu, titre, compte_id) "
+                "VALUES ('veille', '974EVT00000001', 'évt privé de A', :cid) RETURNING id"),
+                {"cid": cid_a}).scalar()
+            s.commit()
+        # A le voit (non lu) ; B ne le voit pas et son compteur l'ignore
+        assert any(e["id"] == eid for e in ca.get("/events").json()["items"])
+        assert ca.get("/events/count").json()["unread"] >= 1
+        assert all(e["id"] != eid for e in cb.get("/events").json()["items"])
+        # B « lit » l'événement de A par id, puis « tout lire » : sans effet sur A
+        cb.post(f"/events/{eid}/read"); cb.post("/events/read-all")
+        with session_scope() as s:
+            assert s.execute(text("SELECT lu FROM event_log WHERE id = :i"), {"i": eid}).scalar() is False
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM event_log WHERE idu = '974EVT00000001'")); s.commit()
+
+
+def test_idor_watched_parcels_cloison(app_client):
+    """Suivi de cible : A et B peuvent suivre la MÊME parcelle sans se voir ; B « unwatch »
+    ne défait pas le suivi de A."""
+    ea, eb = f"a-{uuid.uuid4().hex[:8]}@x.test", f"b-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(ea); _compte_actif(eb)
+    idu = f"974990WA{uuid.uuid4().hex[:6].upper()}"
+    try:
+        ca = TestClient(app_client.app, base_url="https://testserver"); _login(ca, ea)
+        cb = TestClient(app_client.app, base_url="https://testserver"); _login(cb, eb)
+        _wkt = "POLYGON((55.46 -20.9,55.461 -20.9,55.461 -20.901,55.46 -20.901,55.46 -20.9))"
+        with session_scope() as s:
+            s.execute(text(
+                "INSERT INTO parcels (idu, commune, section, numero, geom, geom_2975, surface_m2,"
+                " centroid, bbox) VALUES (:i,'X','ZZ','1', ST_GeomFromText(:w,4326),"
+                " ST_Transform(ST_GeomFromText(:w,4326),2975), 800,"
+                " ST_Centroid(ST_GeomFromText(:w,4326)), ST_Envelope(ST_GeomFromText(:w,4326)))"),
+                {"i": idu, "w": _wkt}); s.commit()
+        # A suit la parcelle
+        assert ca.post(f"/events/watch/{idu}").json()["watched"] is True
+        assert ca.get(f"/events/watch/{idu}").json()["watched"] is True
+        # B ne la suit pas encore (isolation de lecture)
+        assert cb.get(f"/events/watch/{idu}").json()["watched"] is False
+        # B peut suivre LA MÊME parcelle (clé (compte, idu)), puis se dé-suit : A reste suivi
+        assert cb.post(f"/events/watch/{idu}").json()["watched"] is True
+        assert cb.post(f"/events/watch/{idu}").json()["watched"] is False   # B unwatch
+        assert ca.get(f"/events/watch/{idu}").json()["watched"] is True     # A intact
+    finally:
+        _purge(ea, eb)
+        with session_scope() as s:
+            s.execute(text("DELETE FROM watched_parcels WHERE idu = :i"), {"i": idu})
+            s.execute(text("DELETE FROM parcels WHERE idu = :i"), {"i": idu}); s.commit()
 
 
 # ─────────────────────── Statuts × routes (la matrice d'accès) ───────────────────────
@@ -320,6 +430,79 @@ def test_entrees_flash_idu_jamais_500(app_client):
     # POST /flash (achat) sur un IDU inconnu → redirection vers la saisie, jamais 500
     r = c.post("/flash", data={"idu": "00000000000000"}, follow_redirects=False)
     assert r.status_code < 500
+
+
+# ─────────────────────── P1 — durcissements rapides (audit 360) ───────────────────────
+
+def test_logout_revoque_la_session_en_base(app_client):
+    """La déconnexion RÉVOQUE le jeton côté serveur (pas seulement le cookie) : un cookie
+    rejoué après /logout ne rouvre pas l'accès."""
+    email = f"lo-{uuid.uuid4().hex[:8]}@x.test"
+    _compte_actif(email)
+
+    def _n_sessions() -> int:
+        with session_scope() as s:
+            return s.execute(text(
+                "SELECT count(*) FROM sessions_auth sa JOIN utilisateurs u ON u.id = sa.utilisateur_id"
+                " WHERE u.email = :e"), {"e": email}).scalar()
+    try:
+        c = TestClient(app_client.app, base_url="https://testserver")
+        _login(c, email)
+        assert _n_sessions() >= 1                    # session ouverte en base
+        c.get("/logout", follow_redirects=False)
+        assert _n_sessions() == 0                     # révoquée côté serveur
+    finally:
+        _purge(email)
+
+
+def test_hsts_en_https_jamais_en_clair(app_client):
+    """HSTS posé en HTTPS (derrière Caddy) mais JAMAIS en http (un HSTS en clair bloquerait
+    l'accès http à localhost en dev)."""
+    r_https = TestClient(app_client.app, base_url="https://testserver").get("/healthz")
+    assert r_https.headers.get("Strict-Transport-Security", "").startswith("max-age=")
+    r_http = TestClient(app_client.app, base_url="http://testserver").get("/healthz")
+    assert "Strict-Transport-Security" not in r_http.headers
+
+
+# ─────────────────────── LABUSE_SECRET_KEY : fail-closed en prod (P0-3) ───────────────────────
+
+def test_secret_key_exigee_hors_local(monkeypatch):
+    """Hors 'local', l'absence de LABUSE_SECRET_KEY DOIT empêcher le démarrage (fail-closed) :
+    sans clé stable, le jeton de paiement serait forgeable. En 'local', clé éphémère tolérée."""
+    from labuse import config
+    from labuse.api import auth
+    # local sans secret → toléré (clé éphémère)
+    monkeypatch.setenv("LABUSE_ENV", "local")
+    monkeypatch.delenv("LABUSE_SECRET_KEY", raising=False)
+    config.get_settings.cache_clear()
+    auth.exiger_secret_prod()                    # ne lève pas
+    # production sans secret → refus de démarrer, message clair
+    monkeypatch.setenv("LABUSE_ENV", "production")
+    config.get_settings.cache_clear()
+    with pytest.raises(RuntimeError, match="SECRET_KEY"):
+        auth.exiger_secret_prod()
+    # production AVEC secret → OK
+    monkeypatch.setenv("LABUSE_SECRET_KEY", "x" * 32)
+    config.get_settings.cache_clear()
+    auth.exiger_secret_prod()                    # ne lève pas
+    config.get_settings.cache_clear()
+
+
+def test_pay_token_sans_secret_en_dur(monkeypatch):
+    """Le jeton de bascule paiement ne repose plus sur une constante en dur : un jeton forgé
+    avec l'ancien secret « labuse-dev-secret » est REFUSÉ ; un vrai jeton est accepté."""
+    import time
+
+    from labuse import config
+    from labuse.api import coffre_ui
+    monkeypatch.setenv("LABUSE_ENV", "local")
+    monkeypatch.setenv("LABUSE_SECRET_KEY", "vraie-cle-secrete-0000000000000000")
+    config.get_settings.cache_clear()
+    payload = f"42.{int(time.time()) + 1800}"
+    forge = hmac.new(b"labuse-dev-secret", payload.encode(), hashlib.sha256).hexdigest()[:32]
+    assert coffre_ui.pay_cid(f"{payload}.{forge}") is None       # ancien secret en dur → refusé
+    assert coffre_ui.pay_cid(coffre_ui.pay_token(42)) == 42       # vrai jeton → accepté
+    config.get_settings.cache_clear()
 
 
 def test_entrees_pipeline_idu_jamais_500(app_client):
