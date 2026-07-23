@@ -13,6 +13,7 @@ from typing import Any
 
 import yaml
 from dotenv import load_dotenv
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -136,7 +137,11 @@ class Settings(BaseSettings):
 
     # ── PREMIER EURO (commerce/premier-euro) — auth réelle + abonnements ──
     # Base publique des liens signés (invitation, reset, retour Checkout).
-    public_base_url: str = "https://app.labuse.immo"
+    # ENV-AWARE : en local, ces URLs doivent pointer sur le serveur LOCAL — sinon après un
+    # paiement de test on est renvoyé sur la PROD (app.labuse.immo) et la page /flash/retour
+    # tourne dans le vide. Résolu par le validateur ci-dessous : None → localhost en 'local',
+    # prod sinon. Un LABUSE_PUBLIC_BASE_URL explicite prime toujours.
+    public_base_url: str | None = None
     # Refonte 22/07 : AUCUN email automatique (Resend supprimé) — les liens d'invitation
     # et de reset s'affichent en CLI/admin, Vic les envoie à la main.
     # Produits créés par `labuse stripe-provisionne` — les IDs reviennent en .env.
@@ -154,6 +159,15 @@ class Settings(BaseSettings):
     # Verrouillage login : N échecs → verrou temporaire (minutes).
     login_echecs_max: int = 5
     login_verrou_minutes: int = 15
+
+    @model_validator(mode="after")
+    def _base_url_selon_env(self) -> "Settings":
+        # public_base_url non posée → localhost en 'local' (retours Checkout/liens pointent sur
+        # le serveur LOCAL), prod sinon. Un LABUSE_PUBLIC_BASE_URL explicite prime (déjà non-None).
+        if not self.public_base_url:
+            self.public_base_url = ("http://127.0.0.1:8000" if self.env == "local"
+                                    else "https://app.labuse.immo")
+        return self
 
     @property
     def config_path(self) -> Path:
