@@ -363,14 +363,43 @@ mot de passe, ni token, ni donnée de carte ; ils servent la sécurité du servi
 @router.get("/moi", include_in_schema=False)
 def moi(request: Request, db: Session = Depends(get_db)):
     from .auth import COOKIE
+    from ..plans import plan_courant
+    # M16-C : le plan RÉEL courant (stub env-driven aujourd'hui — plan_par_compte=False tant que le
+    # mandat Auth & Plans n'a pas branché le palier par compte en base ; on ne fabrique aucun « Pro »).
+    plan = plan_courant()
+    plan_bloc = {"plan": plan,
+                 "plan_label": {"essentiel": "Essentiel", "integral": "Intégral"}.get(plan, plan.capitalize()),
+                 "plan_par_compte": False}
     tok = request.cookies.get(COOKIE) or ""
     if not tok.startswith("u."):
-        return {"mode": "pilote"}      # session pilote (pré-bascule) — pas de compte
+        return {"mode": "pilote", **plan_bloc}   # session pilote (pré-bascule) — pas de compte
     from ..comptes import session_utilisateur
     u = session_utilisateur(db, tok[2:])
     if not u:
         return JSONResponse({"detail": "session expirée"}, status_code=401)
-    return {"mode": "compte", "role": u["role"], "statut_compte": u["statut_compte"]}
+    return {"mode": "compte", "role": u["role"], "statut_compte": u["statut_compte"], **plan_bloc}
+
+
+# ── M16-C : « Proposer une amélioration » (menu compte) → table `suggestions` consultable ──
+# Destination = base (pas d'e-mail : aucune infra e-mail dans l'app, cf. audit M16-A3). Vic lit via
+# `labuse suggestions`. On ne promet rien qu'on ne tient pas : le retour est bien stocké, durable.
+@router.post("/suggestions", include_in_schema=False)
+def suggestion_create(body: dict, request: Request, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    from .auth import COOKIE
+    texte = (body.get("texte") or "").strip()
+    if len(texte) < 3:
+        return JSONResponse({"detail": "Message trop court."}, status_code=400)
+    cat = body.get("categorie") or "idee"
+    if cat not in ("bug", "idee", "autre"):
+        cat = "autre"
+    contexte = (body.get("contexte") or "")[:160]
+    mode = "compte" if (request.cookies.get(COOKIE) or "").startswith("u.") else "pilote"
+    db.execute(text("INSERT INTO suggestions (categorie, texte, contexte, compte_mode)"
+                    " VALUES (:c, :t, :x, :m)"),
+               {"c": cat, "t": texte[:4000], "x": contexte, "m": mode})
+    db.commit()
+    return {"ok": True}
 
 
 @router.get("/guide", include_in_schema=False)

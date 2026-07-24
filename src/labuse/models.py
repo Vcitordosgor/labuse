@@ -895,6 +895,7 @@ def create_all(engine) -> None:
     ensure_dvf_marche(engine)
     ensure_icd_columns(engine)
     ensure_signalements(engine)
+    ensure_suggestions(engine)
 
 
 def ensure_icd_columns(engine) -> None:
@@ -931,6 +932,27 @@ def ensure_signalements(engine) -> None:
                      "ON signalements (parcelle_id)"))
         c.execute(_t("CREATE INDEX IF NOT EXISTS ix_signalements_statut "
                      "ON signalements (statut, created_at)"))
+
+
+def ensure_suggestions(engine) -> None:
+    """Table `suggestions` (M16-C) — retours utilisateur (« proposer une amélioration ») envoyés
+    depuis le menu compte. Destination CONSULTABLE et durable (pas d'e-mail : aucune infra e-mail
+    dans l'app). Vic lit via `labuse suggestions` ou SELECT. Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("""
+            CREATE TABLE IF NOT EXISTS suggestions (
+                id           bigserial PRIMARY KEY,
+                categorie    varchar(24) NOT NULL DEFAULT 'idee',   -- bug | idee | autre
+                texte        text NOT NULL,
+                contexte     varchar(160),                          -- vue/URL d'où vient le retour
+                compte_mode  varchar(16),                           -- pilote | compte
+                statut       varchar(24) NOT NULL DEFAULT 'nouveau',
+                created_at   timestamptz NOT NULL DEFAULT now()
+            )"""))
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_suggestions_statut "
+                     "ON suggestions (statut, created_at)"))
 
 
 def ensure_promesses_index(engine) -> None:
@@ -1299,6 +1321,7 @@ def ensure_schema(engine) -> None:
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine, backfill=False)
     ensure_promesses_index(engine)
+    ensure_suggestions(engine)   # M16-C : table des retours « proposer une amélioration »
     ensure_pipeline_prospection(engine)
     ensure_pipeline_projet(engine)
     ensure_enrichment_cache(engine)

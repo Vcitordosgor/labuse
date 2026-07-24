@@ -89,6 +89,22 @@ def init_db() -> None:
     typer.echo("✓ Schéma PostGIS prêt.")
 
 
+@app.command("suggestions")
+def suggestions_cmd(nouvelles: bool = typer.Option(False, "--nouvelles", help="Seulement les non traitées")) -> None:
+    """M16-C : lit les retours « Proposer une amélioration » envoyés depuis le menu compte."""
+    with session_scope() as s:
+        where = " WHERE statut = 'nouveau'" if nouvelles else ""
+        rows = s.execute(text(
+            "SELECT id, created_at::date AS d, categorie, compte_mode, statut, texte"
+            f" FROM suggestions{where} ORDER BY id DESC")).mappings().all()
+    if not rows:
+        typer.echo("Aucune suggestion.")
+        return
+    for r in rows:
+        typer.echo(f"#{r['id']} [{r['d']}] {r['categorie']}/{r['compte_mode']} ({r['statut']}) — {r['texte']}")
+    typer.echo(f"\n{len(rows)} suggestion(s).")
+
+
 @app.command("seed-sources")
 def seed_sources_cmd() -> None:
     from .ingestion import seed_sources
