@@ -133,9 +133,12 @@ function AddFilter() {
                 </button>
               ))}
             </div>
+            {/* E1 (M12) : « Score Q » et « SDP » renommés en langage client (cohérent B1).
+                SDP exclut silencieusement les parcelles sans surface résiduelle mesurée (A5) —
+                dit dans le title. */}
             <div className="mb-3 flex gap-2">
-              <NumField label="SCORE Q ≥" value={filters.scoreMin} onChange={(v) => setFilter('scoreMin', v)} placeholder="70" />
-              <NumField label="SDP ≥ m²" value={filters.sdpMin} onChange={(v) => setFilter('sdpMin', v)} placeholder="800" />
+              <NumField label="POTENTIEL ≥ /100" value={filters.scoreMin} onChange={(v) => setFilter('scoreMin', v)} placeholder="70" />
+              <NumField label="SURF. CONSTR. ≥ m²" value={filters.sdpMin} onChange={(v) => setFilter('sdpMin', v)} placeholder="800" />
             </div>
             <div className="mb-3 flex gap-2">
               <NumField label="SURFACE ≥" value={filters.surfaceMin} onChange={(v) => setFilter('surfaceMin', v)} placeholder="1 000" />
@@ -158,8 +161,11 @@ function AddFilter() {
             </div>
             {/* Signaux propriétaire (dossier de la fiche) — libellés métier, au moins un présent */}
             <label className="label-caps mt-3 block">Signaux propriétaire</label>
+            {/* E1 (M12) : « Dirigeant 65+ » MASQUÉ — audit A5, les codes RNE_DIRIGEANT_* sont
+                absents des données (0 résultat sur le run servi). Le code du filtre reste
+                (V_SIGNAL_DEFS, R1 : masquer ≠ supprimer) ; il réapparaîtra dès le backfill du signal. */}
             <div className="mt-1.5 flex flex-wrap gap-1.5">
-              {V_SIGNAL_DEFS.map((d) => (
+              {V_SIGNAL_DEFS.filter((d) => d.key !== 'dirigeant').map((d) => (
                 <button key={d.key} onClick={() => toggleVSignal(d.key)}
                   className={`rounded-full border px-2 py-0.5 text-[11px] ${
                     filters.vSignals.includes(d.key) ? 'border-st-creuser text-st-creuser' : 'border-line-2 text-txt-mut'}`}

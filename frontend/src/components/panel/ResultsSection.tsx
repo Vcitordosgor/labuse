@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults, getStats, type SortKey } from '../../lib/api'
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
@@ -110,45 +110,8 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
   )
 }
 
-// Chips de tier v2 — MULTI (cliquer = basculer l'appartenance) ; « Tout » vide la sélection
-// (périmètre par défaut = univers v2 hors étage 0 servi). « Écartées » (opt-in) = étage 0 dur.
-function TierChips({ counts, partial }: { counts: Record<TierV2 | 'all', number>; partial: boolean }) {
-  const { filters, setFilter } = useApp()
-  const items: { v: TierV2 | 'all'; label: string; color?: string }[] = [
-    { v: 'all', label: 'Tout' },
-    { v: 'brulante', label: 'Brûlantes v2', color: TIER_V2_META.brulante.color },
-    { v: 'chaude', label: 'Chaudes v2', color: TIER_V2_META.chaude.color },
-    { v: 'reserve_fonciere', label: 'Réserve foncière', color: TIER_V2_META.reserve_fonciere.color },
-    { v: 'a_creuser', label: 'À creuser', color: TIER_V2_META.a_creuser.color },
-    // opt-in : les exclusions dures de l'étage 0 (run servi) — motifs dans l'entonnoir
-    { v: 'ecartee', label: 'Écartées', color: TIER_V2_META.ecartee.color },
-  ]
-  return (
-    <div className="mt-2 flex shrink-0 flex-wrap gap-1.5" title={partial ? 'Comptes recalculés avec les filtres actifs' : 'Comptes exacts (SQL, base entière)'}>
-      {items.map((it) => {
-        const on = it.v === 'all' ? filters.tiers.length === 0 : filters.tiers.includes(it.v as TierV2)
-        return (
-          <button
-            key={it.v}
-            onClick={() => {
-              if (it.v === 'all') setFilter('tiers', [])
-              else {
-                const t = it.v as TierV2
-                setFilter('tiers', filters.tiers.includes(t) ? filters.tiers.filter((x) => x !== t) : [...filters.tiers, t])
-              }
-            }}
-            className={`flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] ${
-              on ? 'border-mint bg-mint/10 text-txt-hi' : 'border-line-2 text-txt-mut hover:text-txt'}`}
-          >
-            {it.color && <span className="h-1.5 w-1.5 rounded-full" style={{ background: it.color }} />}
-            {it.label}
-            <span className="font-mono text-[11px] text-txt-dim">{fmt(counts[it.v] ?? 0)}{partial ? '*' : ''}</span>
-          </button>
-        )
-      })}
-    </div>
-  )
-}
+// E2 (M12) : le composant TierChips (chips de verdict du bandeau) a été RETIRÉ — doublon avec
+// le bloc « Verdict · Scoring v2 (multi) » du panneau « + Filtre » (point d'entrée unique).
 
 // C4 + P2 (revue Vic n°3) : LABUSE MONTRE son analyse (avis argumenté), il ne décide pas à
 // votre place. Le popover expose l'entonnoir PAR MOTIF (SQL-exact) : le reste reste visible et
@@ -214,7 +177,8 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
   )
 }
 
-const CAP = 200
+const CAP = 200          // slice client — mode commune uniquement (le GeoJSON est déjà complet)
+const RESULTS_PAGE = 200  // E3 : taille de page de la pagination île (offset serveur)
 
 //: tris (M5.1 lot 1.3) — rang P par défaut ; le tri par V a disparu du sélecteur.
 const SORTS: { key: SortKey; label: string }[] = [
@@ -229,7 +193,7 @@ const TIER_ZERO: Record<TierV2 | 'all', number> = {
 }
 
 export function ResultsSection() {
-  const { filters, query, zone, resetFilters, commune, setCommune, setFilter } = useApp()
+  const { filters, query, zone, resetFilters, commune, setCommune } = useApp()
   const ile = commune == null   // mode « Toute l'île » : liste + compteurs servis en SQL
   const [showAll, setShowAll] = useState(false)
   // Tri par défaut (M5.1) : RANG P croissant — ×N / surface / commune en options.
@@ -241,11 +205,20 @@ export function ResultsSection() {
     queryFn: () => getStats(ile ? scopeOnly : undefined),
   })
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
-  const serverList = useQuery({
+  // E3 (M12) : la liste île n'est plus plafonnée à 500. Pagination par offset (le back la
+  // supporte nativement, A2) — pages de 200, « Charger plus » accumule. Tri `rang` = index top-N
+  // (quasi-gratuit) ; les autres tris paginent aussi (coût croissant en profondeur, assumé).
+  const serverList = useInfiniteQuery({
     queryKey: ['results', commune, filters, sort],
-    queryFn: () => getResults(filters, 500, sort),
+    queryFn: ({ pageParam }) => getResults(filters, RESULTS_PAGE, sort, pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (last: unknown[], pages) => (last.length === RESULTS_PAGE ? pages.length * RESULTS_PAGE : undefined),
     enabled: ile,
   })
+  const serverRows = useMemo(
+    () => (serverList.data?.pages ?? []).flat() as unknown as (ParcelProps & { commune?: string })[],
+    [serverList.data],
+  )
 
   // props + centroïde (calculé UNE fois — sert au filtre de zone) — mode commune uniquement
   const props = useMemo(
@@ -282,8 +255,8 @@ export function ResultsSection() {
 
   const list = useMemo(() => {
     if (ile) {
-      // serveur : déjà filtré (chips) et trié (rang P par défaut)
-      return ((serverList.data ?? []) as unknown as (ParcelProps & { commune?: string })[])
+      // serveur : déjà filtré (chips) et trié (rang P par défaut), accumulé par pages (E3)
+      return serverRows
         .filter((p) => !qNorm || p.idu.toUpperCase().includes(qNorm) || p.idu.slice(8).toUpperCase().includes(qNorm))
     }
     return props
@@ -299,8 +272,10 @@ export function ResultsSection() {
         if (ra !== rb) return ra - rb
         return (b.mult_v2 ?? -1) - (a.mult_v2 ?? -1)
       })
-  }, [ile, serverList.data, props, filters, zone, qNorm, sort])
-  const shown = showAll ? list : list.slice(0, CAP)
+  }, [ile, serverRows, props, filters, zone, qNorm, sort])
+  // E3 : en mode île, la liste paginée est déjà bornée par ce qui a été chargé → tout afficher.
+  // En mode commune, le GeoJSON est complet → on garde le slice client + « Tout voir ».
+  const shown = ile || showAll ? list : list.slice(0, CAP)
 
   const loading = ile ? serverList.isLoading : geo.isLoading
   const error = ile ? serverList.isError : geo.isError
@@ -370,15 +345,11 @@ export function ResultsSection() {
       </div>
       <EntonnoirLine total={total} opportunites={opportunites} nFilters={nFilters} />
 
-      <TierChips counts={counts} partial={scoped} />
-
-      {/* toggle copro (M5.1 lot 1.5) — les copropriétés restent visibles par défaut (badge COPRO) */}
-      <label className="mt-1.5 flex w-fit shrink-0 cursor-pointer items-center gap-1.5 text-[11px] text-txt-mut hover:text-txt"
-        title="Les copropriétés sont hors classement foncier (rang) mais restent dans l'univers — cocher pour les masquer">
-        <input data-toggle-copro type="checkbox" checked={filters.horsCopro}
-          onChange={(e) => setFilter('horsCopro', e.target.checked)} className="h-3 w-3" />
-        masquer les copropriétés
-      </label>
+      {/* E2 (M12) : les chips de verdict (Tout / Brûlantes / Chaudes / Réserve / À creuser /
+          Écartées) ET le toggle « masquer les copropriétés » ont été RETIRÉS d'ici — ils
+          faisaient doublon avec le bloc « Verdict · Scoring v2 (multi) » du panneau « + Filtre »
+          (point d'entrée unique). Les CHIFFRES restent affichés juste au-dessus, en info non
+          cliquable (barre + ligne brûlantes/chaudes/réserve). A4 : ces compteurs sont cohérents. */}
 
       <div data-results-scroll className="mt-3 flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto pb-2">
         {loading && (
@@ -425,8 +396,10 @@ export function ResultsSection() {
 
       <div className="flex shrink-0 items-center justify-between gap-2 border-t border-line py-3">
         <span className="min-w-0 text-[11px] text-txt-dim">
-          {fmt(shown.length)} visibles ici{list.length > shown.length ? ` / ${fmt(list.length)}` : ''}
-          {ile && (serverList.data?.length ?? 0) >= 500 && ' · 500 premiers (île) — affinez les filtres'}
+          {/* E3 : plus de « 500 premiers » — on affiche le nombre réellement chargé, sur le total. */}
+          {fmt(shown.length)} affichée{shown.length > 1 ? 's' : ''}
+          {!ile && list.length > shown.length ? ` / ${fmt(list.length)}` : ''}
+          {ile && total > 0 && <span className="text-txt-dim"> / {fmt(total)} au total</span>}
         </span>
         <span className="flex shrink-0 items-center gap-2">
           <a href={csvExportUrl(filters, sort)} download
@@ -434,10 +407,20 @@ export function ResultsSection() {
             title="Exporter la liste filtrée en CSV (tier v2, rang, ×N — mêmes filtres, même tri)">
             ⬇ CSV
           </a>
-          {list.length > CAP && (
-            <button onClick={() => setShowAll((v) => !v)} className="text-xs text-mint hover:underline">
-              {showAll ? 'Réduire' : 'Tout voir →'}
-            </button>
+          {/* E3 : île → pagination serveur (Charger plus) ; commune → slice client (Tout voir). */}
+          {ile ? (
+            serverList.hasNextPage && (
+              <button onClick={() => serverList.fetchNextPage()} disabled={serverList.isFetchingNextPage}
+                className="text-xs text-mint hover:underline disabled:opacity-50">
+                {serverList.isFetchingNextPage ? 'Chargement…' : 'Charger plus →'}
+              </button>
+            )
+          ) : (
+            list.length > CAP && (
+              <button onClick={() => setShowAll((v) => !v)} className="text-xs text-mint hover:underline">
+                {showAll ? 'Réduire' : 'Tout voir →'}
+              </button>
+            )
           )}
         </span>
       </div>
