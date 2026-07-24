@@ -158,7 +158,7 @@ function groupesDoublons(actifs: Projet[]): Projet[][] {
 /** Vue PROJETS (copilote-projet) — liste « Mes projets » OU, si un projet est ouvert, sa vue
  *  kanban unifiée (À trier / Retenues / Écartées). « Ouvrir » = la vue kanban ; le tri vit dedans. */
 export function ProjetsPanel() {
-  const { setView, openProjet } = useApp()
+  const { ouvrirEntretien, openProjet } = useApp()
   const [showArchived, setShowArchived] = useState(false)
   const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets })
 
@@ -180,9 +180,9 @@ export function ProjetsPanel() {
               Chaque projet garde votre cadrage — ouvrez-le pour trier, retenir, écarter (rejouable, exportable).
             </p>
           </div>
-          <button data-projet-nouveau onClick={() => setView('ia')}
+          <button data-projet-nouveau onClick={() => ouvrirEntretien()}
             className="shrink-0 rounded-lg bg-mint px-4 py-2 text-xs font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110"
-            title="Décrire un nouveau projet au copilote">+ Décrire un projet</button>
+            title="Décrire un nouveau projet — ouvre directement « Votre projet »">+ Décrire un projet</button>
         </div>
 
         {archives.length > 0 && (
@@ -210,10 +210,11 @@ export function ProjetsPanel() {
           {!projetsQ.isLoading && visibles.length === 0 && (
             <div data-projets-vide className="card-elev">
               <EmptyState
+                mint={!showArchived}
                 title={showArchived ? 'Aucun projet archivé.' : 'Aucun projet encore.'}
                 hint={showArchived ? undefined : 'Un projet garde votre cadrage (programme, périmètre, contraintes, budget) et vos décisions de tri.'}
                 action={!showArchived && (
-                  <button onClick={() => setView('ia')} className="text-xs font-medium text-mint hover:underline">
+                  <button onClick={() => ouvrirEntretien()} className="text-xs font-medium text-mint hover:underline">
                     Décrivez votre opération au copilote →
                   </button>
                 )}

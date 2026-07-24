@@ -32,6 +32,7 @@ export function ParcoursTinder() {
     // limit plus profond que la proposition initiale (24) → atteint de NOUVELLES parcelles au-delà du top
     mutationFn: () => chercherPlus(pid, { limit: 48, ile: true }),
     onSuccess: (r) => { setPlusMsg(r.n_added > 0 ? `+${r.n_added} parcelle(s) ajoutée(s) (élargi à l'île)` : 'aucune nouvelle parcelle (déjà toutes proposées)'); refreshDeck() },
+    onError: () => setPlusMsg('recherche indisponible — réessayez'),   // F6 : jamais silencieux
   })
   const ajouter = useMutation({
     mutationFn: (idu: string) => ajouterParcelle(pid, idu),

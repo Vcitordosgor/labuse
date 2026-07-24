@@ -405,6 +405,10 @@ export const chercherPlus = (id: number, body: { limit?: number; surface_min?: n
 export const ajouterParcelle = (id: number, idu: string) =>
   j<{ ok: boolean; added: boolean; already: boolean; idu: string; counts: ParcoursCounts }>(
     `/projets/${id}/ajouter`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idu }) })
+// F7 (M12) — projets ACTIFS du compte auxquels une parcelle est déjà rattachée (bouton « Projet » de la fiche).
+export interface ProjetPourParcelle { id: number; nom: string; statut: StatutParcelle }
+export const projetsPourParcelle = (idu: string) =>
+  j<{ idu: string; projets: ProjetPourParcelle[] }>(`/projets/pour-parcelle/${idu}`)
 
 // ── Moteur de segments Habitat (mandat segments) ──
 export interface SegmentFiltreDef {

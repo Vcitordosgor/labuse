@@ -115,6 +115,12 @@ interface AppState {
   setOpenProjet: (p: { id: number; nom: string } | null) => void
   view: View
   setView: (v: View) => void
+  // F2 (M12) : « + Décrire un projet » ouvre l'entretien « Votre projet » DIRECTEMENT (pas l'écran
+  // à deux portes). La valeur = amorce de l'entretien ; consommée (remise à null) par le copilote
+  // à l'ouverture de l'entretien. null = accès normal au copilote (deux portes).
+  entretienDirect: string | null
+  ouvrirEntretien: (amorce?: string) => void
+  clearEntretienDirect: () => void
   outilsOpen: boolean
   toggleOutils: () => void
   selectedIdu: string | null
@@ -190,7 +196,14 @@ export const useApp = create<AppState>((set) => ({
   // fiche/kanban fantôme qui persiste à travers les vues. Les flux « ouvrir une fiche depuis
   // X » appellent setView('cartes') PUIS select(idu) (ordre respecté partout).
   setView: (view) => set({ view, outilsOpen: false, selectedIdu: null, module: null,
-    contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null }),
+    contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null,
+    entretienDirect: null }),
+  // F2 (M12) : bascule sur la vue copilote ET arme l'entretien direct (même nettoyage exclusif que setView).
+  entretienDirect: null,
+  ouvrirEntretien: (amorce = '') => set({ entretienDirect: amorce, view: 'ia', outilsOpen: false,
+    selectedIdu: null, module: null, contexteCommune: null, sourceLine: null, iaRestitution: null,
+    parcours: null, openProjet: null }),
+  clearEntretienDirect: () => set({ entretienDirect: null }),
   parcours: null,
   setParcours: (parcours) => set({ parcours }),
   openParcours: (parcours) => set({ parcours, view: 'cartes', outilsOpen: false,

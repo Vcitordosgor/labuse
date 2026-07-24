@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { iaSearch, iaStatus } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { useApplySearch } from '../../lib/useApplySearch'
@@ -28,7 +28,15 @@ export function IAStub() {
   const [text, setText] = useState('')
   // copilote-projet : l'entretien s'ouvre sur intention projet (auto) ou porte « Montage de projet »
   const [entretien, setEntretien] = useState<string | null>(null)
-  const { setModule, setM22Prefill } = useApp()
+  const { setModule, setM22Prefill, entretienDirect, clearEntretienDirect } = useApp()
+
+  // F2 (M12) : « + Décrire un projet » (liste projets, état vide) arme `entretienDirect` puis navigue
+  // ici → on ouvre l'entretien « Votre projet » DIRECTEMENT, sans passer par l'écran à deux portes.
+  useEffect(() => {
+    if (entretienDirect === null) return
+    setEntretien(entretienDirect || 'je veux monter une opération immobilière')
+    clearEntretienDirect()
+  }, [entretienDirect, clearEntretienDirect])
   const status = useQuery({ queryKey: ['ia-status'], queryFn: iaStatus })
   const search = useMutation({ mutationFn: iaSearch })
   const apply = useApplySearch()   // chorégraphie partagée (périmètre → filtres → verdict → vol → restitution)

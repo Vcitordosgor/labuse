@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef } from 'react'
-import { addToPipeline, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, toggleWatch } from '../../lib/api'
+import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { fmtDate, fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
@@ -456,6 +456,80 @@ function PipelineButton({ idu }: { idu: string }) {
     >
       {add.isPending ? 'Ajout…' : inPipe ? '✓ Dans le pipeline' : '+ Pipeline'}
     </button>
+  )
+}
+
+/** F7 (M12) — rattacher la parcelle à un PROJET depuis la fiche. Voisin du « + Pipeline » mais
+ *  distinct AU PREMIER COUP D'ŒIL : accent VIOLET (la couleur du copilote/projet dans toute l'app),
+ *  quand Pipeline est en MENTHE (CRM prospection). La parcelle atterrit dans « À trier » (proposee).
+ *  MULTI-PROJET AUTORISÉ : une parcelle peut nourrir plusieurs projets (dédup par projet côté
+ *  serveur). Déjà rattachée → bouton actif (violet plein) + nom du/des projet(s) ; clic = ouvrir. */
+function ProjetButton({ idu }: { idu: string }) {
+  const qc = useQueryClient()
+  const setOpenProjet = useApp((s) => s.setOpenProjet)
+  const [open, setOpen] = useState(false)
+  const attache = useQuery({ queryKey: ['projets-parcelle', idu], queryFn: () => projetsPourParcelle(idu) })
+  const projetsQ = useQuery({ queryKey: ['projets'], queryFn: getProjets, enabled: open })
+  const add = useMutation({
+    mutationFn: (pid: number) => ajouterParcelle(pid, idu),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['projets-parcelle', idu] })
+      qc.invalidateQueries({ queryKey: ['projets'] })
+      setOpen(false)
+    },
+  })
+  const attaches = attache.data?.projets ?? []
+  const dejaIds = new Set(attaches.map((p) => p.id))
+  const inProjet = attaches.length > 0
+  // liste des projets ACTIFS non archivés (candidats à l'ajout)
+  const candidats = (projetsQ.data ?? []).filter((p) => p.statut === 'actif')
+
+  return (
+    <div className="relative flex-1">
+      <button
+        data-projet-fiche
+        onClick={() => {
+          // un seul projet rattaché → ouvrir directement ; sinon (0 ou plusieurs) → menu
+          if (attaches.length === 1) setOpenProjet({ id: attaches[0].id, nom: attaches[0].nom })
+          else setOpen((o) => !o)
+        }}
+        aria-expanded={open}
+        className={`flex h-8 w-full items-center justify-center gap-1 whitespace-nowrap rounded-lg px-3 text-xs font-medium ${
+          inProjet ? 'bg-violet text-bg hover:brightness-110' : 'border border-violet/50 text-violet hover:bg-violet/10'}`}
+        title={inProjet
+          ? `Dans ${attaches.length > 1 ? `${attaches.length} projets` : `le projet « ${attaches[0].nom} »`} — ouvrir / rattacher à un autre`
+          : 'Rattacher cette parcelle à un projet (elle arrive dans « À trier »)'}
+      >
+        {inProjet
+          ? (attaches.length > 1 ? `✓ ${attaches.length} projets` : `✓ ${attaches[0].nom}`)
+          : '+ Projet'}
+      </button>
+
+      {open && (
+        <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-64 p-2 text-[11px]">
+          <p className="label-caps px-1 pb-1">Rattacher à un projet</p>
+          {projetsQ.isLoading && <div className="px-1 py-2 text-txt-dim">Chargement…</div>}
+          {!projetsQ.isLoading && candidats.length === 0 && (
+            <p className="px-1 py-2 leading-snug text-txt-dim">Aucun projet actif. Créez-en un depuis « Mes projets ».</p>
+          )}
+          <div className="max-h-56 space-y-0.5 overflow-y-auto">
+            {candidats.map((p) => {
+              const deja = dejaIds.has(p.id)
+              return (
+                <button key={p.id} data-projet-fiche-cible disabled={deja || add.isPending}
+                  onClick={() => !deja && add.mutate(p.id)}
+                  className={`flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left transition-colors duration-quick ${
+                    deja ? 'cursor-default text-txt-dim' : 'text-txt hover:bg-violet/10 hover:text-txt-hi'}`}
+                  title={deja ? 'Déjà dans ce projet' : `Ajouter à « ${p.nom} » (→ À trier)`}>
+                  <span className="min-w-0 flex-1 truncate">{p.nom}</span>
+                  {deja ? <span className="shrink-0 text-violet">✓ dedans</span> : <span className="shrink-0 text-violet">+</span>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -1195,6 +1269,7 @@ export function Fiche({ idu }: { idu: string }) {
             exports & liens externes, tous à largeur égale. Fini le « bien vilain ». */}
         <div className="flex items-center gap-2">
           <PipelineButton idu={idu} />
+          <ProjetButton idu={idu} />
           <WatchButton idu={idu} />
           <ShareButton idu={idu} />
           {/* Fix point 18 : le vieux bouton « IA » (panneau Synthèse/Pourquoi) est retiré —
