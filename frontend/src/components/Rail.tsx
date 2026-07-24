@@ -42,23 +42,12 @@ const ICONS: Record<Zone, JSX.Element> = {
         fill="currentColor" stroke="none" />
     </>
   ),
-  // cible à 3 anneaux : des SEGMENTS de prospects (moteur de segments Habitat)
-  segments: (
-    <>
-      <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      <circle cx="10" cy="10" r="3.6" fill="none" stroke="currentColor" strokeWidth="1.4" opacity="0.7" />
-      <circle cx="10" cy="10" r="1.1" fill="currentColor" stroke="none" />
-    </>
-  ),
 }
 
 const ZONES: { key: Zone; label: string }[] = [
   { key: 'ia', label: 'IA' },
   { key: 'cartes', label: 'Cartes' },
   { key: 'outils', label: 'Outils' },
-  // Décision produit 12/07 : LABUSE = plateforme d'intelligence foncière — « Vues », plus
-  // « Segments » (la clé interne reste `segments` : zéro refactor d'état, wording seul).
-  { key: 'segments', label: 'Vues' },
   { key: 'projets', label: 'Projets' },
   { key: 'crm', label: 'CRM' },
 ]

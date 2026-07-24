@@ -24,8 +24,8 @@ CRONS = {
                 "note": "mensuel (le 5) — permis SDES/Dido"},
     "ban": {"trace": "data_sources", "motif": "Base Adresse Nationale", "attendu_jours": 35,
             "note": "mensuel (le 5) — adresses BAN (trace : data_sources.last_sync_at)"},
-    "catnat": {"trace": "data_sources", "motif": "%CatNat%", "attendu_jours": 35,
-               "note": "mensuel (le 5) — arrêtés CatNat (trace : data_sources.last_sync_at)"},
+    # (cron « catnat » retiré avec le spin-off « Vues » — M12 Lot C-bis : c'était le signal
+    #  CATNAT du moteur de segments.)
     "abuse-scan": {"trace": "aucune", "motif": None, "attendu_jours": 2,
                    "note": "quotidien — pas de trace DB dédiée (log fichier) ; vérifier /var/log/labuse"},
     "backup": {"trace": "aucune", "motif": None, "attendu_jours": 2,

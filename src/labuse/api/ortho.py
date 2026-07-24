@@ -1,162 +1,27 @@
-"""Outil de validation des détections ortho (mandat wave-ortho, Lot 3 — OBLIGATOIRE).
+"""Badges ortho de la fiche parcelle (mandat wave-ortho, Lot 6).
 
-Page locale minimaliste (aucun build front requis) : vignette ortho aléatoire avec
-la détection surlignée + 50 m de contexte, boutons OK / Faux positif (raccourcis
-O / F), compteur de progression et précision live. Écrit
-`ortho_detections.validation` — ces annotations sont AUSSI le futur dataset
-d'entraînement du Lot 8 ML (c'est le plan depuis le début).
+`/ortho/equipements/{idu}` sert les badges de la fiche (piscine, PV, CES, pente),
+sourcés sur détection automatique orthophoto IGN. Lu par Fiche.tsx.
 
-Usage Vic : `labuse api` puis http://127.0.0.1:8000/ortho/validation (200 piscines ;
-l'outil resservira tel quel pour les 150 PV du Lot 4).
+L'outil de validation des détections (`/ortho/validation`, Lot 3) est parti avec le
+spin-off « Vues » (M12 Lot C-bis) : c'était l'atelier de qualification commerciale des
+segments, futur « Plein Sud ». La TABLE `ortho_detections` reste intacte en base — elle
+alimente aussi le scoring expérimental p_model (SQL direct, indépendant de ce routeur).
 """
 from __future__ import annotations
 
-import cv2
-import numpy as np
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse, Response
-from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..config import load_yaml_config
-from ..ingestion.ortho_tiles import MILLESIME, tile_path
+from ..ingestion.ortho_tiles import MILLESIME
 
 router = APIRouter(prefix="/ortho", tags=["ortho"])
-
-CONTEXTE_M = 50.0
-M_PER_PX = 0.2
-
-#: prédicat SQL du profil « strict » retenu sur les 966 verdicts (79,3 % mesuré) —
-#: la session de confirmation (quota) ne tire QUE dans ce profil.
-SQL_PROFIL_STRICT = (
-    " (d.criteres->'hsv_moyen'->>0)::float BETWEEN :ph0 AND :ph1"
-    " AND (d.criteres->'hsv_moyen'->>1)::float >= :ps"
-    " AND (d.criteres->'hsv_moyen'->>2)::float >= :pv"
-    " AND d.surface_m2 BETWEEN :ps0 AND :ps1"
-)
-
-
-def _profil_params() -> dict:
-    m = load_yaml_config("detection_ortho")["materialisation"]["piscine_profil_strict"]
-    return {"ph0": m["hsv_h"][0], "ph1": m["hsv_h"][1], "ps": m["hsv_s_min"],
-            "pv": m["hsv_v_min"], "ps0": m["surface_m2"][0], "ps1": m["surface_m2"][1]}
 
 
 def get_db():
     from .app import get_db as _g
     yield from _g()
-
-
-@router.get("/validation/api/suivante")
-def suivante(type: str = "piscine", profil: str | None = None,
-             quota: int | None = None, db: Session = Depends(get_db)) -> dict:
-    """Tire une vignette aléatoire non validée ; avec `profil`, la file est filtrée
-    ET l'arrêt au quota est CÔTÉ SERVEUR (compteur persistant `valide_profil` —
-    survit aux rechargements de page, demande Vic 11/07)."""
-    db.execute(text(
-        "ALTER TABLE ortho_detections ADD COLUMN IF NOT EXISTS valide_profil varchar(16)"))
-    quota_cfg = int(load_yaml_config("detection_ortho")
-                    .get("validation", {}).get("quota_session", 100))
-    quota = quota if quota is not None else quota_cfg
-    if profil:
-        faites = db.execute(text(
-            "SELECT count(*) FROM ortho_detections WHERE valide_profil = :pr"
-            " AND type = :t"), {"pr": profil, "t": type}).scalar_one()
-        if faites >= quota:
-            stats = _stats(db, type, profil=profil)
-            return {"fini": True, "quota_atteint": True, "quota": quota,
-                    "faites_profil": faites, **stats}
-    where, params = "", {"t": type}
-    if profil == "strict" and type == "piscine":
-        where = " AND " + SQL_PROFIL_STRICT
-        params.update(_profil_params())
-    elif profil == "bande" and type == "piscine":
-        j = load_yaml_config("detection_ortho")["materialisation"]["juge"]
-        where = (" AND ((d.juge_flair BETWEEN :bf0 AND :bf1 AND d.probe_score >= :pmin)"
-                 " OR (d.juge_flair >= :fmin AND d.probe_score BETWEEN :bp0 AND :bp1))")
-        params.update(bf0=j["bande_flair"][0], bf1=j["bande_flair"][1],
-                      bp0=j["bande_probe"][0], bp1=j["bande_probe"][1],
-                      fmin=j["flair_min"], pmin=j["probe_min"])
-    elif profil == "juge" and type == "piscine":
-        j = load_yaml_config("detection_ortho")["materialisation"]["juge"]
-        where = " AND d.juge_flair >= :fmin AND d.probe_score >= :pmin"
-        params.update(fmin=j["flair_min"], pmin=j["probe_min"])
-    row = db.execute(text(f"""
-        SELECT d.id, d.surface_m2, d.confiance, d.criteres, p.commune
-        FROM ortho_detections d LEFT JOIN parcels p ON p.idu = d.idu
-        WHERE d.type = :t AND d.validation IS NULL{where}
-        ORDER BY random() LIMIT 1
-    """), params).mappings().first()
-    stats = _stats(db, type, profil=profil)
-    stats["quota_session"] = quota
-    if row is None:
-        return {"fini": True, "quota_atteint": False, **stats}
-    return {"fini": False, "id": row["id"], "surface_m2": row["surface_m2"],
-            "confiance": row["confiance"], "commune": row["commune"],
-            "criteres": row["criteres"], **stats}
-
-
-def _stats(db: Session, type_: str, profil: str | None = None) -> dict:
-    ok, fp, fp_prof, ok_prof = db.execute(text(
-        "SELECT count(*) FILTER (WHERE validation = 'ok'),"
-        " count(*) FILTER (WHERE validation = 'faux_positif'),"
-        " count(*) FILTER (WHERE validation = 'faux_positif' AND valide_profil = :pr),"
-        " count(*) FILTER (WHERE validation = 'ok' AND valide_profil = :pr)"
-        " FROM ortho_detections WHERE type = :t"), {"t": type_, "pr": profil}).one()
-    total = ok + fp
-    out = {"valides": total, "ok": ok, "faux_positifs": fp,
-           "precision": round(ok / total, 3) if total else None}
-    if profil:
-        tp = ok_prof + fp_prof
-        out.update(faites_profil=tp, ok_profil=ok_prof,
-                   precision_profil=round(ok_prof / tp, 3) if tp else None)
-    return out
-
-
-@router.get("/validation/api/vignette/{det_id}.jpg")
-def vignette(det_id: int, db: Session = Depends(get_db)) -> Response:
-    row = db.execute(text("""
-        SELECT d.tile_id, ST_XMin(d.geom_2975) x0, ST_YMin(d.geom_2975) y0,
-               ST_XMax(d.geom_2975) x1, ST_YMax(d.geom_2975) y1,
-               ST_AsText(d.geom_2975) wkt
-        FROM ortho_detections d WHERE d.id = :i
-    """), {"i": det_id}).first()
-    if row is None:
-        raise HTTPException(404)
-    p = tile_path(row.tile_id)
-    if not p.exists():
-        raise HTTPException(410, "Tuile purgée du cache — relancer labuse ortho-tiles")
-    img = cv2.imread(str(p))
-    txmin, tymin = (int(v) for v in row.tile_id.split("_"))
-    tile_m = img.shape[0] * M_PER_PX
-    tymax = tymin + tile_m
-
-    def to_px(x: float, y: float) -> tuple[int, int]:
-        return int((x - txmin) / M_PER_PX), int((tymax - y) / M_PER_PX)
-
-    cx0, cy1 = to_px(row.x0 - CONTEXTE_M, row.y0 - CONTEXTE_M)
-    cx1, cy0 = to_px(row.x1 + CONTEXTE_M, row.y1 + CONTEXTE_M)
-    h, w = img.shape[:2]
-    cx0, cy0 = max(0, cx0), max(0, cy0)
-    cx1, cy1 = min(w, cx1), min(h, cy1)
-    crop = img[cy0:cy1, cx0:cx1].copy()
-    # contour de la détection (coordonnées relatives au crop)
-    coords = row.wkt[len("POLYGON(("):-2].split(",")
-    pts = []
-    for c in coords:
-        x, y = (float(v) for v in c.strip().split(" ")[:2])
-        px, py = to_px(x, y)
-        pts.append([px - cx0, py - cy0])
-    cv2.polylines(crop, [np.array(pts, np.int32)], True, (0, 0, 255), 2)
-    # petits objets (CES 4-8 m²) : zoom systématique vers ~600 px, pixels nets
-    cible = 600
-    if max(crop.shape[:2]) < cible:
-        f = cible / max(crop.shape[:2])
-        crop = cv2.resize(crop, None, fx=f, fy=f, interpolation=cv2.INTER_NEAREST)
-    ok, buf = cv2.imencode(".jpg", crop, [cv2.IMWRITE_JPEG_QUALITY, 90])
-    return Response(buf.tobytes(), media_type="image/jpeg",
-                    headers={"Cache-Control": "no-store"})
 
 
 @router.get("/equipements/{idu}")
@@ -178,128 +43,3 @@ def equipements(idu: str, db: Session = Depends(get_db)) -> dict:
             "source": f"Détection automatique sur orthophotographie IGN {MILLESIME} — "
                       "précision 90,7 % mesurée sur échantillon indépendant interne ; "
                       "fiabilité statistique, non contractuelle. © IGN (Licence Ouverte)."}
-
-
-class VerdictIn(BaseModel):
-    verdict: str  # 'ok' | 'faux_positif'
-    profil: str | None = None  # tag de session (quota serveur)
-    quota: int | None = None
-
-
-@router.post("/validation/api/{det_id}")
-def valider(det_id: int, body: VerdictIn, db: Session = Depends(get_db)) -> dict:
-    """Le quota est appliqué ICI (pas seulement au tirage) : leçon des sessions du
-    11/07 — le clavier auto-répété postait plus vite que la page ne tirait, 272
-    verdicts au lieu de 150 et des verdicts décalés d'une vignette. 409 = stop dur."""
-    if body.verdict not in ("ok", "faux_positif"):
-        raise HTTPException(422, "verdict : ok | faux_positif")
-    if body.profil:
-        quota = body.quota if body.quota is not None else int(
-            load_yaml_config("detection_ortho").get("validation", {}).get("quota_session", 100))
-        faites = db.execute(text(
-            "SELECT count(*) FROM ortho_detections WHERE valide_profil = :pr"),
-            {"pr": body.profil}).scalar_one()
-        if faites >= quota:
-            raise HTTPException(409, f"Quota de session atteint ({faites}/{quota}) — verdict refusé.")
-    # une détection déjà validée ne se revalide JAMAIS silencieusement (double-tir, double
-    # clic, replay) — AVEC ou SANS profil : les verdicts sont le dataset d'amorce ML, un
-    # POST nu écrasait un verdict existant (audit UI 12/07). Annulation → SQL explicite.
-    deja = db.execute(text(
-        "SELECT validation IS NOT NULL FROM ortho_detections WHERE id = :i"),
-        {"i": det_id}).scalar()
-    if deja:
-        raise HTTPException(409, "Détection déjà validée — verdict ignoré (double envoi).")
-    n = db.execute(text(
-        "UPDATE ortho_detections SET validation = :v, valide_profil = :pr WHERE id = :i"),
-        {"v": body.verdict, "pr": body.profil, "i": det_id}).rowcount
-    if not n:
-        raise HTTPException(404)
-    db.commit()
-    return {"ok": True}
-
-
-_PAGE = """<!doctype html><html lang="fr"><head><meta charset="utf-8">
-<title>Validation détections — LABUSE</title>
-<style>
- body{background:#0a0f0c;color:#cfe3d6;font:14px system-ui;margin:0;display:flex;
-      flex-direction:column;align-items:center;gap:14px;padding:24px}
- img{max-width:min(92vw,760px);border:1px solid #24352b;border-radius:10px;image-rendering:pixelated}
- .meta{color:#7d9488;font-size:12px} b{color:#eaf6ee}
- .btns{display:flex;gap:12px}
- button{font:600 15px system-ui;padding:12px 26px;border-radius:10px;border:0;cursor:pointer}
- .ok{background:#1f8a5b;color:#fff}.fp{background:#a33529;color:#fff}.skip{background:#2a3a31;color:#cfe3d6}
- .bar{height:6px;width:min(92vw,760px);background:#16211b;border-radius:3px;overflow:hidden}
- .bar>div{height:100%;background:#5ce6a1}
- kbd{background:#16211b;border-radius:4px;padding:1px 6px;font-size:11px}
-</style></head><body>
-<h3 style="margin:0">Validation <span id="mode">…</span> — ortho IGN __MILLESIME__ <span class="meta">(qualification commerciale)</span></h3>
-<div class="bar"><div id="prog" style="width:0%"></div></div>
-<div class="meta" id="stats">…</div>
-<img id="vig" alt="vignette" src="">
-<div class="meta" id="meta"></div>
-<div class="btns">
-  <button class="ok" onclick="verdict('ok')">✓ Vrai <kbd>O</kbd></button>
-  <button class="fp" onclick="verdict('faux_positif')">✗ Faux positif <kbd>F</kbd></button>
-  <button class="skip" onclick="suivante()">Passer <kbd>espace</kbd></button>
-</div>
-<script>
-let cur=null;
-const params=new URLSearchParams(location.search);
-const type=params.get('type')||'piscine';
-const profil=params.get('profil')||('session-'+type);   // session TOUJOURS taguée (quota POST)
-const quotaUrl=params.get('quota');
-let pret=false, dernierVerdict=0;
-document.getElementById('vig').addEventListener('load',()=>{pret=true});
-const libelles={bande:"bande d'incertitude du juge",juge:'CERTIFICATION (100 fraîches au-dessus du juge)',strict:'profil strict V0',vegetation:'canopée haute (> 3 m) en limite — la PARCELLE est entourée en rouge'};
-const typeLabels={pv:'PV',piscine:'piscines',vegetation:'végétation'};
-document.getElementById('mode').textContent=(typeLabels[type]??type)+(profil?` · ${libelles[profil]??profil}`:' · file brute');
-async function suivante(){
-  let url=`/ortho/validation/api/suivante?type=${type}`;
-  if(profil)url+=`&profil=${profil}`;
-  if(quotaUrl)url+=`&quota=${quotaUrl}`;
-  const d=await (await fetch(url)).json();
-  const quota=d.quota_session??+(quotaUrl||100);
-  const faites=d.faites_profil??0;
-  const prec=d.precision==null?'—':(100*d.precision).toFixed(1)+' %';
-  const precP=d.precision_profil==null?'—':(100*d.precision_profil).toFixed(1)+' %';
-  document.getElementById('stats').innerHTML= profil
-    ? `session <b>${faites}</b>/${quota} · précision session <b>${precP}</b> · (historique total ${d.valides}, ${prec})`
-    : `total ${d.valides} · OK ${d.ok} · FP ${d.faux_positifs} · précision <b>${prec}</b>`;
-  document.getElementById('prog').style.width=Math.min(100,100*faites/Math.max(1,quota))+'%';
-  if(d.quota_atteint){cur=null;
-    document.getElementById('meta').innerHTML=`<b>Quota de ${quota} atteint — merci !</b> Précision de la session : <b>${precP}</b>. Tu peux fermer.`;
-    document.getElementById('vig').src='';return}
-  if(d.fini){cur=null;document.getElementById('vig').src='';
-    document.getElementById('meta').textContent='Plus rien à valider dans cette file.';return}
-  cur=d.id;
-  document.getElementById('vig').src=`/ortho/validation/api/vignette/${d.id}.jpg`;
-  document.getElementById('meta').innerHTML=
-    `#${d.id} · ${d.commune??'?'} · ~<b>${Math.round(d.surface_m2)} m²</b> · confiance ${d.confiance}`;
-}
-async function verdict(v){
-  const now=Date.now();
-  if(cur==null||!pret||now-dernierVerdict<300)return;  // image affichée + 300 ms mini
-  dernierVerdict=now; pret=false;
-  const id=cur; cur=null;                               // un verdict par vignette, point
-  const r=await fetch(`/ortho/validation/api/${id}`,{method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({verdict:v, profil, quota:+(quotaUrl||0)||null})});
-  if(r.status===409){const d=await r.json();
-    document.getElementById('meta').innerHTML='<b>'+(d.detail??'Quota atteint')+'</b>';
-    document.getElementById('vig').src='';return}
-  suivante();
-}
-document.addEventListener('keydown',e=>{
-  if(e.repeat)return;                                   // touche MAINTENUE = ignorée
-  if(e.key==='o'||e.key==='O')verdict('ok');
-  if(e.key==='f'||e.key==='F')verdict('faux_positif');
-  if(e.key===' '){e.preventDefault();if(pret)suivante()}
-});
-suivante();
-</script></body></html>"""
-
-
-@router.get("/validation", response_class=HTMLResponse)
-def page_validation() -> str:
-    load_yaml_config("detection_ortho")  # échec franc si la config manque
-    return _PAGE.replace("__MILLESIME__", MILLESIME)

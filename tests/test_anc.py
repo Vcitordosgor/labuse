@@ -220,21 +220,7 @@ def test_ingest_egoul_fixture(db_session, tmp_path):
     assert taux[("commune", "97415")] == 60.0        # (2 + 1) / 5 pondéré
 
 
-# ───────────────────────── contrat des presets / mentions ─────────────────────────
-
-def test_presets_anc_valides():
-    from labuse.segments.presets import validate_preset
-
-    doc = load_yaml_config("segment_presets")
-    presets = {p["slug"]: p for p in doc["presets"]}
-    assert "anc-prospection" in presets
-    assert validate_preset(presets["anc-prospection"]) == []
-
-
-def test_mention_legale_delai_un_an_au_cch():
-    from labuse.api.segments import MENTIONS_LEGALES
-
-    m = MENTIONS_LEGALES["anc-prospection"]
-    assert "L.1331-11-1" in m["texte"] and "L.271-4" in m["texte"]
-    assert any("legifrance" in lien["url"] for lien in m["liens"])
-    assert "INSEE" in m["sources_donnees"] and "IGN" in m["sources_donnees"]
+# (test_presets_anc_valides + test_mention_legale_delai_un_an_au_cch retirés avec le
+#  spin-off « Vues » — M12 Lot C-bis : ils validaient le preset ANC et sa mention légale
+#  du moteur de segments, parti avec « Vues ». Le calcul ANC lui-même reste couvert
+#  ci-dessus. Archivés dans docs/mandats/M12_LOT_C_BIS.md.)

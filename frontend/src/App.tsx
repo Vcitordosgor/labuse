@@ -10,7 +10,6 @@ import { LeftPanel } from './components/panel/LeftPanel'
 import { MapView } from './components/map/MapView'
 import { Rail } from './components/Rail'
 import { SourcesPage } from './components/sources/SourcesPage'
-import { SegmentsPage } from './components/segments/SegmentsPage'
 import { ProjetsPanel } from './components/projets/ProjetsPanel'
 import { ParcoursTinder } from './components/projets/ParcoursTinder'
 import { ContextePanel } from './components/contexte/ContextePanel'
@@ -253,10 +252,7 @@ export default function App() {
     if (p.get('v') === '1') setVerdict(true)   // les liens de démo ouvrent verdict allumé
     const m = p.get('m')
     if (m) setModule(m)
-    // Vues (décision produit 12/07) : la page est adressable (#…&pg=vues) ; l'ancien nom
-    // « segments » reste accepté en alias — les liens partagés avant le renommage tiennent.
-    const pg = p.get('pg')
-    if (pg === 'vues' || pg === 'segments') setView('segments')
+    // (Alias d'URL #pg=vues / pg=segments retiré avec le spin-off « Vues » — M12 Lot C-bis.)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   useEffect(() => {
@@ -265,7 +261,6 @@ export default function App() {
     if (commune) add(`c=${encodeURIComponent(commune)}`)
     if (verdict) add('v=1')
     if (module) add(`m=${module}`)
-    if (view === 'segments') add('pg=vues')   // la page Vues est partageable (alias legacy : segments)
     window.history.replaceState(null, '', h || window.location.pathname + window.location.search)
   }, [filters, zone, module, commune, verdict, view])
 
@@ -288,7 +283,6 @@ export default function App() {
           )}
           {view === 'crm' && <Kanban />}
           {view === 'sources' && <SourcesPage />}
-          {view === 'segments' && <SegmentsPage />}
           {view === 'projets' && <ProjetsPanel />}
           {view === 'ia' && <IAStub />}
           {selectedIdu && view !== 'sources' && <Fiche idu={selectedIdu} />}
