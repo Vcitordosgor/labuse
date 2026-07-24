@@ -1,9 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import { deletePipeline, getEventsCount, getPipeline, getPipelineMeta, patchPipeline } from '../../lib/api'
+import {
+  createCrmColumn, deleteCrmColumn, deletePipeline, getEventsCount, getPipeline, getPipelineMeta,
+  patchPipeline, renameCrmColumn, reorderCrmColumns, resetCrmColumns,
+} from '../../lib/api'
 import { fmtM2 } from '../../lib/format'
 import { completudeColor, SCORE_TIP, verdictMeta } from '../../lib/status'
-import type { PipelineEntry } from '../../lib/types'
+import type { PipelineColumn, PipelineEntry } from '../../lib/types'
 import { Tip } from '../Tip'
 import { ErrorState } from '../States'
 import { useApp } from '../../store/useApp'
@@ -111,6 +114,51 @@ function Card({ e, onDragStart, newEvents }: { e: PipelineEntry; onDragStart: (e
   )
 }
 
+/* ── M12 LOT H — dialogue « où déplacer les cartes ? » avant suppression d'une colonne peuplée.
+   La boussole produit : une carte ne disparaît JAMAIS en silence — le déplacement est obligatoire. */
+function DeleteColumnDialog({ col, others, onCancel, onConfirm }: {
+  col: PipelineColumn; others: PipelineColumn[]; onCancel: () => void
+  onConfirm: (moveTo: number | null) => void
+}) {
+  const [target, setTarget] = useState<number | ''>(others[0]?.id ?? '')
+  const populated = (col as { cards?: number }).cards ?? 0
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onCancel}>
+      <div className="w-full max-w-sm rounded-xl border border-line-2 bg-surface-1 p-5 shadow-elev-2"
+        onClick={(ev) => ev.stopPropagation()}>
+        <h3 className="font-display text-sm font-bold text-txt-hi">Supprimer « {col.label} »</h3>
+        {populated > 0 ? (
+          <>
+            <p className="mt-2 text-[12px] text-txt-mut">
+              Cette colonne contient <span className="text-txt">{populated} carte{populated > 1 ? 's' : ''}</span>.
+              Choisissez où les déplacer — aucune carte n'est perdue.
+            </p>
+            <label className="mt-3 block text-[11px] text-txt-dim">Déplacer les cartes vers</label>
+            <select
+              value={target}
+              onChange={(ev) => setTarget(ev.target.value ? Number(ev.target.value) : '')}
+              className="mt-1 w-full rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-[12px] text-txt"
+            >
+              {others.map((o) => <option key={o.id} value={o.id}>{o.label}</option>)}
+            </select>
+          </>
+        ) : (
+          <p className="mt-2 text-[12px] text-txt-mut">Cette colonne est vide — suppression immédiate.</p>
+        )}
+        <div className="mt-4 flex justify-end gap-2">
+          <button onClick={onCancel}
+            className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
+          <button
+            onClick={() => onConfirm(populated > 0 ? (target === '' ? null : target) : null)}
+            disabled={populated > 0 && target === ''}
+            className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee disabled:opacity-40"
+          >Supprimer</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function Kanban() {
   const qc = useQueryClient()
   const meta = useQuery({ queryKey: ['pipeline-meta'], queryFn: getPipelineMeta })
@@ -118,10 +166,30 @@ export function Kanban() {
   const evCount = useQuery({ queryKey: ['events-count'], queryFn: getEventsCount, refetchInterval: 60_000 })
   const [dragId, setDragId] = useState<number | null>(null)
   const [overCol, setOverCol] = useState<string | null>(null)
+  const [editMode, setEditMode] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editLabel, setEditLabel] = useState('')
+  const [pendingDelete, setPendingDelete] = useState<PipelineColumn | null>(null)
   const move = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) => patchPipeline(id, { status }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pipeline'] }),
   })
+  // M12 LOT H — mutations colonnes (invalident meta + pipeline : le remap de cartes est visible)
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ['pipeline-meta'] })
+    qc.invalidateQueries({ queryKey: ['pipeline'] })
+  }
+  const addCol = useMutation({ mutationFn: (label: string) => createCrmColumn(label), onSuccess: invalidateAll })
+  const renameCol = useMutation({
+    mutationFn: ({ id, label }: { id: number; label: string }) => renameCrmColumn(id, label),
+    onSuccess: () => { setEditingId(null); invalidateAll() },
+  })
+  const reorderCol = useMutation({ mutationFn: (order: number[]) => reorderCrmColumns(order), onSuccess: invalidateAll })
+  const delCol = useMutation({
+    mutationFn: ({ id, moveTo }: { id: number; moveTo: number | null }) => deleteCrmColumn(id, moveTo),
+    onSuccess: () => { setPendingDelete(null); invalidateAll() },
+  })
+  const resetCols = useMutation({ mutationFn: () => resetCrmColumns(), onSuccess: invalidateAll })
 
   if (meta.isError || entries.isError) {
     return (
@@ -135,6 +203,26 @@ export function Kanban() {
 
   const cols = meta.data?.columns ?? []
   const byCol = (key: string) => (entries.data ?? []).filter((e) => e.status === key)
+  const cardCount = (key: string) => byCol(key).length
+
+  const startEdit = (c: PipelineColumn) => { setEditingId(c.id ?? null); setEditLabel(c.label) }
+  const commitEdit = () => {
+    if (editingId != null && editLabel.trim()) renameCol.mutate({ id: editingId, label: editLabel.trim() })
+    else setEditingId(null)
+  }
+  const doAdd = () => {
+    const label = window.prompt('Nom de la nouvelle colonne')?.trim()
+    if (label) addCol.mutate(label)
+  }
+  const moveCol = (idx: number, dir: -1 | 1) => {
+    const ids = cols.map((c) => c.id!).filter((i) => i != null)
+    const j = idx + dir
+    if (j < 0 || j >= ids.length) return
+    ;[ids[idx], ids[j]] = [ids[j], ids[idx]]
+    reorderCol.mutate(ids)
+  }
+  // colonne enrichie du nombre de cartes (le dialogue de suppression en a besoin)
+  const withCounts = cols.map((c) => ({ ...c, cards: cardCount(c.key) })) as (PipelineColumn & { cards: number })[]
 
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -146,14 +234,34 @@ export function Kanban() {
             glisser une carte pour changer d'étape · ajout depuis la fiche (+ Pipeline)
           </p>
         </div>
-        {/* P7 (dernière passe) : dire clairement qu'on peut défiler horizontalement.
-            G5 (M12) : whitespace-nowrap — le compteur « 8 étapes · défiler → » ne se tronque plus
-            (« 8 ét… ») quand le header est serré. */}
-        {cols.length > 4 && (
-          <span className="shrink-0 whitespace-nowrap rounded-full border border-line-2 px-2.5 py-1 text-[10.5px] text-txt-mut">
-            {cols.length} étapes · défiler →
-          </span>
-        )}
+        {/* H (M12) : barre d'édition des colonnes (personnaliser/ajouter/réinitialiser).
+            G5 (M12) : le compteur garde whitespace-nowrap + shrink-0 — « 8 étapes · défiler → »
+            ne se tronque plus (« 8 ét… ») quand le header est serré. */}
+        <div className="flex shrink-0 items-center gap-2">
+          {/* P7 (dernière passe) : dire clairement qu'on peut défiler horizontalement */}
+          {cols.length > 4 && !editMode && (
+            <span className="shrink-0 whitespace-nowrap rounded-full border border-line-2 px-2.5 py-1 text-[10.5px] text-txt-mut">
+              {cols.length} étapes · défiler →
+            </span>
+          )}
+          {editMode && (
+            <>
+              <button onClick={doAdd}
+                className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-mint"
+                title="Ajouter une colonne">+ Colonne</button>
+              <button
+                onClick={() => { if (window.confirm('Réinitialiser le kanban au modèle LABUSE par défaut ? Toutes les cartes seront replacées dans la première colonne.')) resetCols.mutate() }}
+                className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-dim hover:border-st-ecartee hover:text-st-ecartee"
+                title="Restaurer le kanban LABUSE par défaut">Réinitialiser</button>
+            </>
+          )}
+          <button
+            onClick={() => { setEditMode((v) => !v); setEditingId(null) }}
+            className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition-colors duration-quick ${
+              editMode ? 'bg-mint/15 text-mint' : 'border border-line-2 text-txt-dim hover:text-txt'}`}
+            title="Personnaliser les colonnes du kanban"
+          >{editMode ? 'Terminé' : 'Personnaliser'}</button>
+        </div>
       </div>
       {/* P7 : dégradé de bord droit = affordance « il y a d'autres colonnes » */}
       <div className="relative mt-4 min-h-0 flex-1">
@@ -162,7 +270,7 @@ export function Kanban() {
             colonne (plus bas) préserve le défilement interne d'une colonne pleine. */}
         <div className="flex h-full items-start gap-3 overflow-x-auto px-4 pb-5 sm:px-6">
         {meta.isLoading && <div className="p-2"><Loading label="Chargement du pipeline" className="text-xs" /></div>}
-        {cols.map((c) => {
+        {cols.map((c, idx) => {
           const items = byCol(c.key)
           const accent = TONE_ACCENT[c.tone ?? ''] ?? '#5C7268'
           return (
@@ -181,8 +289,41 @@ export function Kanban() {
             >
               <div className="flex shrink-0 items-center gap-2 px-3 py-2.5">
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: accent }} />
-                <span className="truncate text-[11px] font-medium text-txt">{c.label}</span>
-                <span className="ml-auto font-mono text-[11px] text-txt-dim">{items.length}</span>
+                {editMode && editingId === c.id ? (
+                  <input
+                    autoFocus
+                    value={editLabel}
+                    onChange={(ev) => setEditLabel(ev.target.value)}
+                    onBlur={commitEdit}
+                    onKeyDown={(ev) => { if (ev.key === 'Enter') commitEdit(); if (ev.key === 'Escape') setEditingId(null) }}
+                    className="min-w-0 flex-1 rounded border border-mint/40 bg-surface-2 px-1 py-0.5 text-[11px] text-txt"
+                    aria-label="Renommer la colonne"
+                  />
+                ) : (
+                  <button
+                    disabled={!editMode}
+                    onClick={() => editMode && startEdit(c)}
+                    className={`min-w-0 flex-1 truncate text-left text-[11px] font-medium text-txt ${editMode ? 'cursor-text hover:text-mint' : 'cursor-default'}`}
+                    title={editMode ? 'Cliquer pour renommer' : c.label}
+                  >{c.label}</button>
+                )}
+                {!editMode && <span className="ml-auto font-mono text-[11px] text-txt-dim">{items.length}</span>}
+                {editMode && (
+                  <span className="ml-auto flex shrink-0 items-center gap-0.5">
+                    <button onClick={() => moveCol(idx, -1)} disabled={idx === 0}
+                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt disabled:opacity-25"
+                      title="Déplacer à gauche" aria-label="Déplacer la colonne à gauche">←</button>
+                    <button onClick={() => moveCol(idx, 1)} disabled={idx === cols.length - 1}
+                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-txt disabled:opacity-25"
+                      title="Déplacer à droite" aria-label="Déplacer la colonne à droite">→</button>
+                    <button
+                      onClick={() => setPendingDelete(withCounts[idx])}
+                      disabled={cols.length <= 1}
+                      className="flex h-5 w-5 items-center justify-center rounded text-txt-dim hover:text-st-ecartee disabled:opacity-25"
+                      title={cols.length <= 1 ? 'La dernière colonne ne peut pas être supprimée' : 'Supprimer la colonne'}
+                      aria-label="Supprimer la colonne">✕</button>
+                  </span>
+                )}
               </div>
               {/* G6 (M12) : min-h modeste = zone de dépôt confortable pour une colonne vide, sans
                   la colonne géante de ~800 px. Une colonne pleine défile en interne (max-h-full). */}
@@ -208,6 +349,14 @@ export function Kanban() {
           <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-bg to-transparent" />
         )}
       </div>
+      {pendingDelete && (
+        <DeleteColumnDialog
+          col={pendingDelete}
+          others={withCounts.filter((c) => c.id !== pendingDelete.id)}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={(moveTo) => delCol.mutate({ id: pendingDelete.id!, moveTo })}
+        />
+      )}
     </div>
   )
 }

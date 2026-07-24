@@ -96,8 +96,9 @@ async def _lifespan(app: FastAPI):
         from .projets import ensure_tables as _projets_ens
         from .protection import ensure_tables as _protection_ens
         from .segments import ensure_tables as _segments_ens
+        from .crm_columns import ensure_tables as _crm_columns_ens
         for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens,
-                     _segments_ens, _protection_ens, _courrier_ens):
+                     _segments_ens, _protection_ens, _courrier_ens, _crm_columns_ens):
             _ens(_engine())
         # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les
         # tables à données client). Après les ensures des modules (les tables existent).
@@ -2998,10 +2999,6 @@ def _pipeline_cfg() -> dict:
     return config.pipeline()
 
 
-def _col_keys() -> list[str]:
-    return [c["key"] for c in _pipeline_cfg().get("columns", [])]
-
-
 def _prio_keys() -> list[str]:
     return [p["key"] for p in _pipeline_cfg().get("priorities", [])]
 
@@ -3089,11 +3086,19 @@ class PipelinePatchIn(BaseModel):
 
 
 @app.get("/pipeline/meta")
-def pipeline_meta() -> dict:
-    """Colonnes & priorités (config) pour piloter le Kanban côté front."""
+def pipeline_meta(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Colonnes (PAR TENANT en base, M12 LOT H) + priorités (config) pour piloter le Kanban.
+    Les colonnes sont semées au kanban LABUSE par défaut au premier accès d'un compte."""
+    from . import crm_columns
+    from .tenant import current_compte
     cfg = _pipeline_cfg()
-    return {"columns": cfg.get("columns", []), "priorities": cfg.get("priorities", []),
-            "defaults": cfg.get("defaults", {})}
+    cid = current_compte(request)
+    cols = crm_columns.columns_for(db, cid)
+    dfl = dict(cfg.get("defaults", {}))
+    dfl["status"] = crm_columns.default_status(db, cid)
+    return {"columns": [{"key": c["key"], "label": c["label"], "tone": c["tone"], "id": c["id"]}
+                        for c in cols],
+            "priorities": cfg.get("priorities", []), "defaults": dfl}
 
 
 @app.get("/pipeline")
@@ -3137,10 +3142,11 @@ def pipeline_add(body: PipelineAddIn, request: Request, db: Session = Depends(ge
     if existing:                                            # déjà suivie → on renvoie son état courant
         return {"ok": True, "already": True, "entry": _entry_dict(db, existing)}
 
+    from . import crm_columns
     dfl = _pipeline_cfg().get("defaults", {})
-    status = body.status or dfl.get("status", "reperee")
+    status = body.status or crm_columns.default_status(db, cid)
     priority = body.priority or dfl.get("priority", "moyenne")
-    if status not in _col_keys():
+    if status not in crm_columns.col_keys(db, cid):     # colonnes PAR TENANT (M12 LOT H)
         raise HTTPException(422, f"Statut invalide : {status}")
     if priority not in _prio_keys():
         raise HTTPException(422, f"Priorité invalide : {priority}")
@@ -3164,12 +3170,14 @@ def pipeline_add(body: PipelineAddIn, request: Request, db: Session = Depends(ge
 
 @app.patch("/pipeline/{entry_id}")
 def pipeline_patch(entry_id: int, body: PipelinePatchIn, request: Request, db: Session = Depends(get_db)) -> dict:
+    from . import crm_columns
     from .tenant import current_compte
+    cid = current_compte(request)
     e = db.get(models.PipelineEntry, entry_id)
-    if not e or (e.compte_id or None) != (current_compte(request) or None):   # SEC-IDOR
+    if not e or (e.compte_id or None) != (cid or None):   # SEC-IDOR
         raise HTTPException(404, "Entrée de pipeline inconnue")
     if body.status is not None:
-        if body.status not in _col_keys():
+        if body.status not in crm_columns.col_keys(db, cid):   # colonnes PAR TENANT (M12 LOT H)
             raise HTTPException(422, f"Statut invalide : {body.status}")
         e.status = body.status
     if body.priority is not None:
@@ -3237,7 +3245,9 @@ from .ortho import router as _ortho_router  # noqa: E402
 from .tiles import router as _tiles_router  # noqa: E402
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 from .fiche_ask import router as _fiche_ask_router  # noqa: E402  (M11 surface A — barre de fiche)
+from .crm_columns import router as _crm_columns_router  # noqa: E402  (M12 LOT H — CRM personnalisable)
 
+app.include_router(_crm_columns_router)
 app.include_router(_fiche_ask_router)
 app.include_router(_score_v2_router)
 app.include_router(_modules_router)

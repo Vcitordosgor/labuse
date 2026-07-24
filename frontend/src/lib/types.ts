@@ -92,13 +92,25 @@ export interface FicheLine {
 export interface PipelineColumn {
   key: string
   label: string
-  tone?: 'cold' | 'warm' | 'hot' | 'reject'
+  tone?: 'cold' | 'warm' | 'hot' | 'reject' | null
+  id?: number
 }
 
 export interface PipelineMeta {
   columns: PipelineColumn[]
   priorities: { key: string; label: string }[]
   defaults: { status?: string; priority?: string }
+}
+
+// M12 LOT H — colonnes CRM personnalisables (par tenant)
+export interface CrmColumn {
+  id: number
+  key: string
+  label: string
+  tone: 'cold' | 'warm' | 'hot' | 'reject' | null
+  position: number
+  is_default: boolean
+  cards: number
 }
 
 export interface PipelineEntry {

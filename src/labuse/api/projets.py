@@ -521,11 +521,17 @@ def _sync_crm_retenue(db: Session, pid: int, parcel_id: int, statut: str, now: d
     d'un autre projet est préservée : ON CONFLICT DO NOTHING / DELETE ciblé sur projet_id).
     SEC-IDOR : l'entrée pipeline créée porte le compte du projet."""
     if statut == "retenue":
+        # M12 LOT H : les colonnes sont PAR TENANT — la carte doit atterrir dans une colonne que
+        # CE compte possède réellement (sinon elle serait invisible = carte perdue en silence).
+        # « Contact à préparer » si présente, sinon la 1re colonne du kanban du compte.
+        from . import crm_columns
+        keys = crm_columns.col_keys(db, cid)
+        st = _RETENUE_CRM_STATUS if _RETENUE_CRM_STATUS in keys else crm_columns.default_status(db, cid)
         db.execute(text(
             "INSERT INTO pipeline_entries (parcel_id, status, priority, notes, prospection, "
             "projet_id, compte_id, created_at, updated_at) VALUES (:pc, :st, 'moyenne', '', "
             "'{}'::jsonb, :pid, :cid, :now, :now) ON CONFLICT (compte_id, parcel_id) DO NOTHING"),
-            {"pc": parcel_id, "st": _RETENUE_CRM_STATUS, "pid": pid, "cid": cid, "now": now})
+            {"pc": parcel_id, "st": st, "pid": pid, "cid": cid, "now": now})
     else:
         db.execute(text("DELETE FROM pipeline_entries WHERE parcel_id = :pc AND projet_id = :pid"),
                    {"pc": parcel_id, "pid": pid})
