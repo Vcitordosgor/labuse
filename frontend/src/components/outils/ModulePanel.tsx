@@ -1,10 +1,11 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
-  courrierDemande, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
+  courrierDemande, getCommunes, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
   modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
   modPromesses, modPromessesCount, modVelocite,
 } from '../../lib/api'
+import { AddressAutocomplete } from '../AddressAutocomplete'
 import { fmtInt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
@@ -73,6 +74,22 @@ function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchin
       className="mt-1 min-h-8 shrink-0 rounded-lg border border-violet/40 py-1.5 text-[11px] text-violet transition-colors duration-quick hover:bg-violet/10 disabled:opacity-40">
       {q.isFetchingNextPage ? 'Chargement…' : total != null ? `Voir plus — ${fmt(loaded)} / ${fmt(total)} chargés` : `Voir plus — ${fmt(loaded)} chargés`}
     </button>
+  )
+}
+
+/** M15-G — sélecteur de périmètre EXPLICITE : l'outil n'hérite plus du filtre commune global. */
+function CommuneScope({ commune, onChange }: { commune: string | null; onChange: (c: string | null) => void }) {
+  const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
+  return (
+    <label className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-txt-mut">
+      Périmètre
+      <select data-commune-scope value={commune ?? ''} onChange={(e) => onChange(e.target.value || null)}
+        className="rounded border border-line-2 bg-surface-3 px-1.5 py-0.5 text-txt focus:border-violet focus:outline-none">
+        <option value="">Toute l'île</option>
+        {(communes.data ?? []).map((c) => <option key={c.commune} value={c.commune}>{c.commune}</option>)}
+      </select>
+      <span className="text-[10px] text-txt-dim">choisi ici — pas hérité du filtre global</span>
+    </label>
   )
 }
 
@@ -438,14 +455,16 @@ function M05() {
 /* ───────────────────────────── M06 — MODE BAILLEUR ───────────────────────────── */
 
 function M06() {
-  const commune = useApp((s) => s.commune)
-  const q = useQuery({ queryKey: ['m06', commune], queryFn: modBailleur })
+  // M15-G : périmètre choisi DANS l'outil (état local), plus d'héritage du filtre commune global.
+  const [commune, setCommune] = useState<string | null>(null)
+  const q = useQuery({ queryKey: ['m06', commune], queryFn: () => modBailleur(commune) })
   const d = q.data as Record<string, any> | undefined
   const items = ((d?.['items'] ?? []) as Record<string, any>[])
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
   return (
     <>
       <Banner>{String(d?.['lecture_lls'] ?? '…')}</Banner>
+      <CommuneScope commune={commune} onChange={setCommune} />
       {q.isLoading && <div className="flex flex-1 items-center justify-center py-8"><Loading accent="violet" label="Analyse en cours…" big /></div>}
       {/* Point 33 : contexte SRU (déficit logement social) — commune carencée = forte demande LLS */}
       {(d?.['sru'] as Record<string, any> | undefined) && (
@@ -478,10 +497,11 @@ function M06() {
 /* ───────────────────────────── M07 — FONCIER FANTÔME ───────────────────────────── */
 
 function M07() {
-  const commune = useApp((s) => s.commune)
+  // M15-G : périmètre choisi DANS l'outil (état local), plus d'héritage du filtre commune global.
+  const [commune, setCommune] = useState<string | null>(null)
   const q = useInfiniteQuery({
     queryKey: ['m07', commune],
-    queryFn: ({ pageParam }) => modFantome(300, pageParam as number),
+    queryFn: ({ pageParam }) => modFantome(300, pageParam as number, commune),
     initialPageParam: 0,
     getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * 300 : undefined,
   })
@@ -493,6 +513,7 @@ function M07() {
     <>
       <Banner>Constructible (Q ≥ 50) mais <b>verrouillé</b> : personne morale introuvable au RNE ou
         dirigeant inactif. Levier indiqué par cas — vérification notariale indispensable.</Banner>
+      <CommuneScope commune={commune} onChange={setCommune} />
       <p className="text-[11px] text-txt-dim">{fmt(total)} parcelles gelées{items.length < total ? ` · ${fmt(items.length)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (
@@ -540,6 +561,7 @@ function M09() {
   const [motif, setMotif] = useState('standard')
   const [texte, setTexte] = useState('')
   const [done, setDone] = useState<string | null>(null)
+  const [addrMsg, setAddrMsg] = useState<string | null>(null)  // M15-G : retour entrée « adresse »
   const gen = useMutation({
     mutationFn: () => modCourriers([idu.trim()], motif),
     onSuccess: (d) => { setTexte(d.courriers[0]?.texte ?? d.courriers[0]?.erreur ?? ''); setStep(3) },
@@ -577,12 +599,17 @@ function M09() {
 
       {step === 1 && (
         <div className="flex flex-col gap-2">
-          <p className="text-[11px] text-txt-mut">Parcelle concernée (IDU) — ou sélectionnez-en une sur la carte.</p>
-          <input data-courrier-idu value={idu} onChange={(e) => setIdu(e.target.value.trim())}
-            placeholder="97415000CW0658"
+          <p className="text-[11px] text-txt-mut">Parcelle concernée — <b>3 entrées</b> : saisissez l'IDU,
+            une adresse, ou cliquez une parcelle sur la carte.</p>
+          <input data-courrier-idu value={idu} onChange={(e) => { setIdu(e.target.value.trim()); setAddrMsg(null) }}
+            placeholder="IDU — 97415000CW0658"
             className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-violet focus:outline-none" />
+          {/* M15-G — entrée « adresse » : autocomplétion → parcelle rattachée (source interne) */}
+          <AddressAutocomplete placeholder="… ou une adresse"
+            onSelect={(sel) => { if (sel.idu) { setIdu(sel.idu); setAddrMsg(null) } else setAddrMsg("Adresse trouvée, mais aucune parcelle cadastrale rattachée — saisissez l'IDU.") }} />
+          {addrMsg && <p data-courrier-addrmsg className="text-[10.5px] text-st-creuser">{addrMsg}</p>}
           {selectedIdu && selectedIdu !== idu && (
-            <button onClick={() => setIdu(selectedIdu)} className="self-start text-[10.5px] text-violet hover:underline">utiliser la parcelle sélectionnée ({selectedIdu.slice(8)})</button>
+            <button onClick={() => { setIdu(selectedIdu); setAddrMsg(null) }} className="self-start text-[10.5px] text-violet hover:underline">utiliser la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})</button>
           )}
           <button data-courrier-next onClick={() => idu.trim().length >= 10 && setStep(2)} disabled={idu.trim().length < 10}
             className="rounded-lg bg-violet py-1.5 text-xs font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">Suivant ›</button>
@@ -641,12 +668,39 @@ function M09() {
 
 function M10() {
   const [refs, setRefs] = useState('')
+  const [quick, setQuick] = useState('')
+  const selectedIdu = useApp((s) => s.selectedIdu)
+  // M15-G — les 3 entrées ALIMENTENT le lot (append dédupliqué), le collage en masse reste possible.
+  const addRef = (v: string) => {
+    const t = v.trim(); if (!t) return
+    setRefs((r) => {
+      const lines = r.split('\n').map((x) => x.trim()).filter(Boolean)
+      return lines.includes(t) ? r : [...lines, t].join('\n') + '\n'
+    })
+  }
   const run = useMutation({ mutationFn: () => modDueDiligence(refs) })
   const items = (run.data?.items ?? []) as Record<string, any>[]
   return (
     <>
-      <Banner>Collez une liste de références (IDU complet ou SECTION+NUMÉRO, ex. AC0253) — un
-        rapport par parcelle, PDF individuel réutilisant l'export fiche.</Banner>
+      <Banner>Un rapport par parcelle (PDF individuel réutilisant l'export fiche). Alimentez le lot par
+        les <b>3 entrées</b> ci-dessous, ou collez directement une liste (IDU complet ou SECTION+NUMÉRO).</Banner>
+      {/* M15-G — 3 entrées : IDU, adresse, clic carte → append au lot */}
+      <div className="flex flex-col gap-1.5 rounded-lg border border-line-2 bg-surface-2 px-2.5 py-2">
+        <div className="flex gap-1.5">
+          <input data-diligence-quick value={quick} onChange={(e) => setQuick(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { addRef(quick); setQuick('') } }}
+            placeholder="IDU ou SECTION+NUMÉRO"
+            className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 font-mono text-[10.5px] text-txt focus:border-violet focus:outline-none" />
+          <button data-diligence-add onClick={() => { addRef(quick); setQuick('') }} disabled={!quick.trim()}
+            className="shrink-0 rounded border border-violet/40 px-2 text-[11px] text-violet transition-colors duration-quick hover:bg-violet/10 disabled:opacity-40">+ ajouter</button>
+        </div>
+        <AddressAutocomplete placeholder="… ou une adresse"
+          onSelect={(sel) => { if (sel.idu) addRef(sel.idu) }} />
+        {selectedIdu && (
+          <button data-diligence-addsel onClick={() => addRef(selectedIdu)}
+            className="self-start text-[10.5px] text-violet hover:underline">+ ajouter la parcelle sélectionnée sur la carte ({selectedIdu.slice(8)})</button>
+        )}
+      </div>
       <textarea value={refs} onChange={(e) => setRefs(e.target.value)} rows={4}
         placeholder={'97415000AC0253\nAC0254\nBK 63…'}
         className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[10.5px] text-txt focus:border-violet focus:outline-none" />

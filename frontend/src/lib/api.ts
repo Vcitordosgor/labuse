@@ -239,9 +239,11 @@ export const modPromessesCount = (months: number) =>
   j<{ total: number }>(`/modules/promesses?${cq()}&months=${months}&count_only=true`)
 export const modVelocite = (nature?: string | null) =>
   j<{ communes: Record<string, unknown>[]; [k: string]: unknown }>(`/modules/velocite${nature ? `?nature=${nature}` : ''}`)
-export const modBailleur = () => j<Record<string, unknown>>(`/modules/bailleur?${cq()}`)
-export const modFantome = (limit = 300, offset = 0) =>
-  j<Record<string, unknown>>(`/modules/fantome?${cq()}&limit=${limit}&offset=${offset}`)
+// M15-G — plus d'héritage du filtre commune global (cq) : le périmètre est choisi DANS l'outil.
+export const modBailleur = (commune?: string | null) =>
+  j<Record<string, unknown>>(`/modules/bailleur${commune ? `?commune=${encodeURIComponent(commune)}` : ''}`)
+export const modFantome = (limit = 300, offset = 0, commune?: string | null) =>
+  j<Record<string, unknown>>(`/modules/fantome?${commune ? `commune=${encodeURIComponent(commune)}&` : ''}limit=${limit}&offset=${offset}`)
 export const getOrthoEquipements = (idu: string) => j<Record<string, unknown>>(`/ortho/equipements/${idu}`)
 export const modCourriers = (idus: string[], contexte: string) =>
   j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {
