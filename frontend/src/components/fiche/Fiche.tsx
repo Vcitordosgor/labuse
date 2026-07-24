@@ -588,7 +588,7 @@ function HypInput({ label, value, onChange, suffix, hint, placeholder }: {
  *  prix DVF) ; le promoteur saisit SES hypothèses (coût, marge) ; le résultat « selon vos
  *  hypothèses » se recalcule côté moteur (endpoint déterministe, aucune arithmétique dupliquée
  *  en JS). Cas limites honnêtes : capacité non résolue / prix insuffisant → pas de faux chiffre. */
-function Calculette({ idu }: { idu: string }) {
+export function Calculette({ idu }: { idu: string }) {
   const [cout, setCout] = useState<number | null>(CALC_COUT_DEFAUT)
   const [marge, setMarge] = useState<number | null>(CALC_MARGE_DEFAUT)
   const [prixDemande, setPrixDemande] = useState<number | null>(null)
@@ -720,7 +720,7 @@ function StepProv({ prov }: { prov?: string }) {
 /** M11 · SURFACE C — onglet FAISABILITÉ : le résultat, le calcul TRACÉ étape par étape (déterministe,
  *  exact, sourcé), l'explication IA À LA DEMANDE (violet premium, ancrée sur les steps), et la
  *  calculette de charge foncière rapatriée (financier au même endroit). L'IA explique, ne recalcule pas. */
-function FaisabiliteTab({ idu }: { idu: string }) {
+export function FaisabiliteTab({ idu }: { idu: string }) {
   const { data: b, isLoading, isError, refetch } = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu) })
   const [showSteps, setShowSteps] = useState(true)
   const explain = useMutation({ mutationFn: () => faisabiliteExplain(idu) })

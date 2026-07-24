@@ -34,7 +34,7 @@ export const MODULES: ModuleDef[] = [
   { key: 'scoring-v2', num: 'M25', group: 'detecter', phare: true,
     label: 'Radar des mutations', desc: 'Probabilité de mutation à 12 mois — brûlantes, réserve foncière, top P' },
   { key: 'programme', num: 'M22', group: 'detecter', phare: true,
-    label: 'Faisabilité programme', desc: 'Décrivez votre programme, LABUSE trouve où le poser' },
+    label: 'Faisabilité', desc: 'Par critères (où poser un programme) ou par parcelle (ce qu’elle peut accueillir)' },
   { key: 'division', num: 'M01', group: 'detecter', phare: true,
     label: 'Division parcellaire', desc: 'Repérez les grands terrains où détacher un lot à bâtir' },
   { key: 'fantome', num: 'M07', group: 'detecter', phare: true,
@@ -53,6 +53,9 @@ export const MODULES: ModuleDef[] = [
   // M12-D4 : « Scorer une adresse » quitte la barre d'en-tête et rejoint les Outils.
   { key: 'scoreur-adresse', num: 'O2', group: 'analyser', phare: true,
     label: 'Scorer une adresse', desc: 'Collez l’adresse d’un bien à vendre — seconde opinion avant d’offrir' },
+  // M15-C2 : la calculette de charge foncière des fiches, portée en outil autonome.
+  { key: 'calculette-fonciere', num: 'M23', group: 'analyser',
+    label: 'Calculette foncière', desc: 'Ce qu’un terrain peut supporter selon vos hypothèses de coût et de marge' },
   { key: 'o6-comparateur', num: 'O6', group: 'analyser', phare: true,
     label: 'Comparateur de communes', desc: 'Où investir : 24 communes, indicateurs sourcés, composite réglable' },
   { key: 'o5-servitudes', num: 'O5', group: 'analyser',
