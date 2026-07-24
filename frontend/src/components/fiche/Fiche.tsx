@@ -483,6 +483,10 @@ function ProjetButton({ idu }: { idu: string }) {
   const inProjet = attaches.length > 0
   // liste des projets ACTIFS non archivés (candidats à l'ajout)
   const candidats = (projetsQ.data ?? []).filter((p) => p.statut === 'actif')
+  // M15 C3 : le HAUT du menu ne montre QUE les projets où la parcelle PEUT être ajoutée
+  // (elle n'y est pas encore) — tous cliquables, aucun grisé. Les projets où elle est déjà
+  // rangée vivent UNIQUEMENT dans la section « Déjà dans » du bas (fin du doublon M14).
+  const ajoutables = candidats.filter((p) => !dejaIds.has(p.id))
 
   return (
     <div className="relative flex-1">
@@ -505,28 +509,26 @@ function ProjetButton({ idu }: { idu: string }) {
         <div data-projet-fiche-menu className="floating absolute bottom-10 left-0 z-30 w-64 p-2 text-[11px]">
           <p className="label-caps px-1 pb-1">Rattacher à un projet</p>
           {projetsQ.isLoading && <div className="px-1 py-2 text-txt-dim">Chargement…</div>}
-          {!projetsQ.isLoading && candidats.length === 0 && (
-            <p className="px-1 py-2 leading-snug text-txt-dim">Aucun projet actif. Créez-en un depuis « Mes projets ».</p>
+          {!projetsQ.isLoading && ajoutables.length === 0 && (
+            <p className="px-1 py-2 leading-snug text-txt-dim">
+              {candidats.length === 0
+                ? 'Aucun projet actif. Créez-en un depuis « Mes projets ».'
+                : 'Cette parcelle est déjà dans tous vos projets actifs.'}
+            </p>
           )}
+          {/* M15 C3 : uniquement les projets où l'ajout est POSSIBLE — tous cliquables, aucun grisé
+              (les projets déjà rattachés ne sont plus répétés ici, ils sont en bas). Le doublon
+              interdit dans un même projet reste garanti côté backend (ON CONFLICT). */}
           <div className="max-h-56 space-y-0.5 overflow-y-auto">
-            {/* QA-59 : les projets qui contiennent DÉJÀ la parcelle sont GRISÉS et non ajoutables
-                (anti-doublon dans un même projet + « voici où elle est déjà rangée »). Les AUTRES
-                projets restent actifs → ajout à un second projet possible (multi-projet). Jamais
-                de blocage global. */}
-            {candidats.map((p) => {
-              const deja = dejaIds.has(p.id)
-              return (
-                <button key={p.id} data-projet-fiche-cible disabled={deja || add.isPending}
-                  aria-disabled={deja}
-                  onClick={() => !deja && add.mutate(p.id)}
-                  className={`flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left transition-colors duration-quick ${
-                    deja ? 'cursor-not-allowed text-txt-dim opacity-50' : 'text-txt hover:bg-violet/10 hover:text-txt-hi'}`}
-                  title={deja ? `Déjà dans « ${p.nom} » (pas de doublon dans un même projet)` : `Ajouter à « ${p.nom} » (→ À trier)`}>
-                  <span className="min-w-0 flex-1 truncate">{p.nom}</span>
-                  {deja ? <span className="shrink-0 text-violet">✓ dedans</span> : <span className="shrink-0 text-violet">+</span>}
-                </button>
-              )
-            })}
+            {ajoutables.map((p) => (
+              <button key={p.id} data-projet-fiche-cible disabled={add.isPending}
+                onClick={() => add.mutate(p.id)}
+                className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-txt transition-colors duration-quick hover:bg-violet/10 hover:text-txt-hi"
+                title={`Ajouter à « ${p.nom} » (→ À trier)`}>
+                <span className="min-w-0 flex-1 truncate">{p.nom}</span>
+                <span className="shrink-0 text-violet">+</span>
+              </button>
+            ))}
           </div>
           {/* Ouvrir un projet où la parcelle est déjà rangée (l'action « ouvrir » n'est plus sur le
               bouton principal, qui ouvre désormais toujours ce menu). */}
