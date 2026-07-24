@@ -28,17 +28,6 @@ function millesimeNote(s: SourceInfo): string | null {
   return y ? `millésime ${y[0]}` : null
 }
 
-// M14 E1 : « Vérifié il y a X » — durée relative depuis le dernier passage du RADAR
-// (source_radar.derniere_verif). Affiché UNIQUEMENT pour les sources sondables. Date réelle.
-function ilYA(iso: string): string {
-  const j = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000))
-  if (j === 0) return 'aujourd’hui'
-  if (j === 1) return 'hier'
-  if (j < 30) return `il y a ${j} jour${j > 1 ? 's' : ''}`
-  const m = Math.floor(j / 30.44)
-  return `il y a ${m} mois`
-}
-
 // ── M6 Phase 2a (audit §1.11) : licence RÉELLE par source — plus jamais le repli
 // « Données publiques » (R6). Le libellé est lu dans legal_notes (rempli ligne à ligne
 // au 2a-p1, seed_sources.py = source de vérité) ; le référentiel par nom ne garde que
@@ -108,13 +97,16 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
         ? `donnée du ${new Date(ingIso).toLocaleDateString('fr-FR')}`
         : 'millésime non tracé en base'
 
-  // 2) M14 E1 — DERNIER CONTRÔLE À DEUX RÉGIMES, selon la sondabilité (radar, cf. LOT A) :
-  //  • SONDABLE (le radar peut interroger une date amont) → « Vérifié il y a X » = date RÉELLE
-  //    du dernier passage du radar (source_radar.derniere_verif). C'est le contrôle automatique.
-  //  • NON SONDABLE (INSEE, SAFER… pas d'URL datée) → PAS de date de contrôle (techniquement
-  //    impossible) ; on montre la cadence connue du producteur. JAMAIS de « — » nu.
-  const sondable = !!s.radar && s.radar.statut !== 'non_sondable'
-  const verifieIso = sondable ? s.radar?.derniere_verif ?? null : null
+  // 2) M15 H1 — STATUT DE FRAÎCHEUR centré sur la VERSION (ce qui compte : « c'est bien la
+  //    dernière version qui existe », pas « vérifié tel jour »). Trois états, selon le radar (LOT A) :
+  //  • sondable + À JOUR ('a_jour')            → « ✓ Dernière version disponible » — le ✓ est
+  //    VÉRIFIÉ par le radar (aucune version plus récente côté producteur), jamais déclaratif.
+  //  • sondable + EN RETARD ('nouvelle_publication') → « Nouvelle version publiée » — ré-ingestion à faire.
+  //  • NON SONDABLE ('non_sondable' / pas de radar) → factuel : « le producteur publie [cadence] ».
+  //    Aucune promesse de vérification (pas d'URL datée) — mais PAS une source douteuse (cf. H2).
+  const statut = s.radar?.statut ?? 'non_sondable'
+  const sondable = statut === 'a_jour' || statut === 'nouvelle_publication'
+  const verifieIso = s.radar?.derniere_verif ?? null
   const cadence = s.radar?.cadence ?? null
 
   const lic = licence(s)
@@ -125,9 +117,23 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
       <span className="h-2 w-2 shrink-0 rounded-full print:hidden" style={{ background: STATUS_DOT[s.status ?? ''] ?? TOKENS.txtDim }}
         title={`Statut : ${s.status ?? 'inconnu'}`} />
       <div className="min-w-0 flex-1">
-        {/* Ligne 1 : le nom de la source + producteur + licence + lien officiel. */}
+        {/* Ligne 1 : le nom de la source + marqueur sondable/déclaratif + producteur + licence + lien. */}
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
           <span className="text-xs font-medium text-txt">{s.name}</span>
+          {/* M15 H2 : marqueur DISCRET — vérifiée automatiquement (radar) vs déclarative. Non
+              anxiogène : une source déclarative N'EST PAS douteuse, son producteur n'expose
+              simplement pas de date interrogeable. */}
+          {sondable ? (
+            <span data-source-marqueur="auto" className="shrink-0 rounded-full bg-mint/10 px-1.5 py-px text-[8.5px] font-medium text-mint"
+              title="Fraîcheur vérifiée automatiquement par notre radar (cette source expose une date interrogeable).">
+              ✓ vérifiée auto
+            </span>
+          ) : (
+            <span data-source-marqueur="declaratif" className="shrink-0 rounded-full bg-surface-2 px-1.5 py-px text-[8.5px] text-txt-dim"
+              title="Fraîcheur déclarative : le producteur n'expose pas de date interrogeable, on s'appuie sur sa cadence de publication. Ce n'est PAS une source douteuse.">
+              cadence producteur
+            </span>
+          )}
           {s.provider && <span className="text-[11px] text-txt-dim">{s.provider}</span>}
           {LICENCE_URL[lic] ? (
             <a data-source-licence href={LICENCE_URL[lic]} target="_blank" rel="noreferrer"
@@ -142,24 +148,26 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
             </a>
           )}
         </div>
-        {/* Ligne 2 (M14 E1) : version en service + régime de contrôle (auto si sondable,
-            cadence producteur sinon). Jamais de « — » nu. */}
+        {/* Ligne 2 (M15 H1) : version en service + STATUT de fraîcheur à trois états. Jamais de « — » nu. */}
         <div className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-[11px]">
           <span data-source-version className="text-txt">
             <span className="text-txt-dim">Version en service :</span>{' '}
             <span className="font-medium">{version}</span>
           </span>
-          {verifieIso ? (
-            <span data-source-controle="auto" className="text-mint"
-              title={`Contrôle automatique (radar) du ${new Date(verifieIso).toLocaleDateString('fr-FR')} — dernière vérification que c'est bien la version la plus récente publiée`}>
-              <span className="text-txt-dim">Dernier contrôle :</span>{' '}
-              <span className="font-medium">vérifié {ilYA(verifieIso)}</span>
+          {statut === 'a_jour' ? (
+            <span data-source-statut="a_jour" className="font-medium text-mint"
+              title={`Vérifié par notre radar${verifieIso ? ` (dernier passage le ${new Date(verifieIso).toLocaleDateString('fr-FR')})` : ''} : aucune version plus récente n'existe côté producteur.`}>
+              ✓ Dernière version disponible
+            </span>
+          ) : statut === 'nouvelle_publication' ? (
+            <span data-source-statut="nouvelle" className="font-medium text-st-creuser"
+              title="Le radar a détecté une publication plus récente côté producteur — ré-ingestion à lancer.">
+              ▲ Nouvelle version publiée
             </span>
           ) : cadence ? (
-            <span data-source-controle="cadence" className="text-txt-dim"
-              title="Source non sondable automatiquement (pas d'URL datée interrogeable) — cadence de publication du producteur">
-              <span className="text-txt-dim">Cadence producteur :</span>{' '}
-              <span className="text-txt-mut">{cadence}</span>
+            <span data-source-statut="cadence" className="text-txt-dim"
+              title="Source non sondable automatiquement — fraîcheur fondée sur la cadence connue du producteur, pas sur une vérification.">
+              le producteur publie <span className="text-txt-mut">{cadence}</span>
             </span>
           ) : null}
         </div>
@@ -201,15 +209,19 @@ export function SourcesPage() {
             </p>
           </div>
         </div>
-        {/* M14 E1 (QA) : deux régimes honnêtes selon que la source est sondable ou non. */}
+        {/* M15 H1 : ce qui compte = « c'est bien la dernière version qui existe », pas « vérifié
+            tel jour ». Statut de fraîcheur à trois états + marqueur sondable/déclaratif. */}
         <p className="mt-1.5 text-[11px] leading-relaxed text-txt-dim">
-          Pour chaque source, la <b className="text-txt-mut">version en service</b> (le millésime
-          ou la date de la donnée utilisée). Quand la source expose un moyen automatique de le
-          vérifier, on ajoute <b className="text-txt-mut">« Vérifié il y a X »</b> — la date réelle
-          du dernier contrôle par notre radar (il confirme que c'est bien la version la plus
-          récente publiée). Les sources qui n'exposent pas de date interrogeable (INSEE, SAFER…)
-          ne peuvent pas être contrôlées automatiquement : on affiche alors la cadence de
-          publication de leur producteur, sans date de contrôle inventée.
+          Ce qui compte n'est pas de tout re-vérifier chaque jour, mais que <b className="text-txt-mut">la
+          version consultée soit la dernière qui existe</b>. Un fichier INSEE de 2021 est à jour si
+          l'INSEE n'a rien publié depuis. Pour les sources qui exposent une date interrogeable
+          (<span className="text-mint">✓ vérifiée auto</span>), notre radar confirme
+          <b className="text-txt-mut"> « ✓ Dernière version disponible »</b> — ou signale
+          <b className="text-txt-mut"> « Nouvelle version publiée »</b> quand il faut ré-ingérer.
+          Pour les autres (INSEE, SAFER… <span className="text-txt-dim">cadence producteur</span>),
+          pas de vérification possible : on affiche la version et le rythme de publication du
+          producteur. Une source non vérifiable n'est <b className="text-txt-mut">pas</b> une source
+          douteuse.
         </p>
 
         {/* M13-F2 (QA-56) : le bloc « Ce que LABUSE mesure » (BAN 99,99 %, jamais de SQL généré,
