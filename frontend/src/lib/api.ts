@@ -101,8 +101,10 @@ export const searchParcels = (needle: string, opts?: { ileEntiere?: boolean }) =
     `/parcels/search?q=${encodeURIComponent(needle)}${!opts?.ileEntiere && commune() ? `&commune=${encodeURIComponent(commune()!)}` : ''}`)
 
 export const getStats = (f?: Filters) => j<Stats>(`/stats?${q(f ? filterParams(f) : {})}`)
-export const getResults = (f?: Filters, limit = 500, sort: SortKey = 'rang') =>
-  j<ParcelResult[]>(`/parcels?${q({ limit, sort, ...(f ? filterParams(f) : {}) })}`)
+// E3 (M12) : `offset` exposé — le back le supporte déjà (LIMIT/OFFSET en SQL, top-N sur index).
+// Permet la pagination « Charger plus » au lieu du plafond dur de 500.
+export const getResults = (f?: Filters, limit = 200, sort: SortKey = 'rang', offset = 0) =>
+  j<ParcelResult[]>(`/parcels?${q({ limit, offset, sort, ...(f ? filterParams(f) : {}) })}`)
 /** Export CSV de la liste courante (mêmes filtres, même tri) — tier v2 en premier. */
 export const csvExportUrl = (f?: Filters, sort: SortKey = 'rang') =>
   `/parcels/export.csv?${q({ limit: 5000, sort, ...(f ? filterParams(f) : {}) })}`
