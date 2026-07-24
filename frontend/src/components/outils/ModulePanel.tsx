@@ -11,6 +11,7 @@ import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
+import { CalculetteFonciere } from './CalculetteFonciere'
 import { M22 } from './M22Programme'
 import { O10Bascules, O5Servitudes, O6Comparateur, O7Carnet, O9Rarete } from './blocB'
 import { M15, M16, M17, M18, M19 } from './moteurs'
@@ -78,7 +79,7 @@ function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchin
 }
 
 /** M15-G — sélecteur de périmètre EXPLICITE : l'outil n'hérite plus du filtre commune global. */
-function CommuneScope({ commune, onChange }: { commune: string | null; onChange: (c: string | null) => void }) {
+export function CommuneScope({ commune, onChange }: { commune: string | null; onChange: (c: string | null) => void }) {
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   return (
     <label className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-txt-mut">
@@ -771,6 +772,7 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   'o7-carnet': O7Carnet,
   'o9-rarete': O9Rarete,
   'o10-bascules': O10Bascules,
+  'calculette-fonciere': CalculetteFonciere,
 }
 
 export function ModulePanel() {
