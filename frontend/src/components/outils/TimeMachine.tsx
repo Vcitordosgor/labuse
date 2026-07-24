@@ -3,13 +3,11 @@ import maplibregl from 'maplibre-gl'
 import { useEffect, useRef, useState } from 'react'
 import { getParcelsGeojson } from '../../lib/api'
 import { useApp } from '../../store/useApp'
-import { BASEMAP_CHOICES, BASEMAP_SOURCES, basemapLabel, type BasemapDef } from '../map/basemaps'
+import { BASEMAP_SOURCES, basemapLabel, type BasemapDef } from '../map/basemaps'
 
 const SP_BOUNDS: [number, number, number, number] = [55.21, -21.14, 55.35, -20.97]
 
 // Comparateur générique : les deux fonds sont choisis (défaut 1950 ↔ aujourd'hui, l'usage « 1950 »).
-const DEFAULT_LEFT = 'bm-ortho-1950'
-const DEFAULT_RIGHT = 'bm-ortho-now'
 
 /** Carte nue (fond sombre) — le fond de plan est posé/échangé ensuite par applyBasemap. */
 function mkMap(el: HTMLDivElement) {
@@ -53,11 +51,12 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
   const rightRef = useRef<HTMLDivElement>(null)
   const maps = useRef<[maplibregl.Map, maplibregl.Map] | null>(null)
   const [split, setSplit] = useState(50)
-  const [leftKey, setLeftKey] = useState<string>(DEFAULT_LEFT)
-  const [rightKey, setRightKey] = useState<string>(DEFAULT_RIGHT)
+  // M15 D1 : les DEUX fonds sont pilotés depuis le BANDEAU GAUCHE (M08) via le store — plus de
+  // barre de contrôle en surimpression sur la carte. Seule la poignée de glissement reste sur la carte.
+  const leftKey = useApp((s) => s.cmpLeft)
+  const rightKey = useApp((s) => s.cmpRight)
   const dragging = useRef(false)
   const commune = useApp((s) => s.commune)
-  const setModule = useApp((s) => s.setModule)   // sortie propre → carte à fond unique
   // mode île : pas de GeoJSON (431k features) — le comparateur reste utilisable sans la
   // surcouche parcelles (l'ortho historique est l'objet de l'outil)
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
@@ -126,22 +125,8 @@ export function TimeMachine({ center }: { center?: [number, number] | null }) {
     >
       <div ref={leftRef} className="absolute inset-0" />
       <div ref={rightRef} className="absolute inset-0" style={{ clipPath: `inset(0 0 0 ${split}%)` }} />
-      {/* barre de contrôle : choix des DEUX fonds + sortie vers la carte à fond unique */}
-      <div className="absolute left-1/2 top-4 z-20 flex -translate-x-1/2 items-center gap-2 rounded-xl border border-line bg-surface-2/95 px-3 py-2 shadow-elev-2 backdrop-blur">
-        <span className="label-caps text-[10px]">Comparer</span>
-        <select data-cmp-left value={leftKey} onChange={(e) => setLeftKey(e.target.value)}
-          className="rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none">
-          {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-        </select>
-        <span className="text-mint" title="glisser la poignée pour révéler">⇔</span>
-        <select data-cmp-right value={rightKey} onChange={(e) => setRightKey(e.target.value)}
-          className="rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-mint focus:outline-none">
-          {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
-        </select>
-        <button onClick={() => setModule(null)}
-          className="ml-1 rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-txt"
-          title="Revenir à la carte (fond unique)">✕ Quitter</button>
-      </div>
+      {/* M15 D1 : la barre de contrôle « Comparer » (choix des deux fonds + Quitter) a été
+          DÉPLACÉE dans le bandeau gauche (M08, ModulePanel). Seule la poignée reste sur la carte. */}
       {/* poignée */}
       <div className="absolute inset-y-0 z-10 w-[2px] bg-mint" style={{ left: `${split}%` }}>
         <button

@@ -9,6 +9,7 @@ import { fmtInt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
+import { BASEMAP_CHOICES } from '../map/basemaps'
 import { Loading } from '../Loading'
 import { M22 } from './M22Programme'
 import { O10Bascules, O5Servitudes, O6Comparateur, O7Carnet, O9Rarete } from './blocB'
@@ -466,12 +467,39 @@ function M07() {
 /* ───────────────────────────── M08 — REMONTER LE TEMPS ───────────────────────────── */
 
 function M08() {
+  // M15 D1 : les contrôles « avant → après » vivent ICI (bandeau gauche), plus en surimpression
+  // sur la carte. On pilote les deux fonds via le store ; la poignée de glissement reste sur la carte.
+  const { cmpLeft, cmpRight, setCmpLeft, setCmpRight, setModule } = useApp()
   return (
     <>
-      <Banner>Comparateur <b>1950-1965 ↔ aujourd'hui</b> (orthos IGN libres). Glissez la poignée
-        au centre de la carte. Les parcelles promues restent affichées des deux côtés.</Banner>
+      <Banner>Comparateur <b>1950-1965 ↔ aujourd'hui</b> (orthos IGN libres). Choisissez les deux
+        fonds ci-dessous, puis <b>glissez la poignée</b> au centre de la carte pour révéler l'un ou
+        l'autre. Les parcelles promues restent affichées des deux côtés.</Banner>
+      <div className="rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+        <p className="label-caps text-[9.5px]">Comparer — avant → après</p>
+        <div className="mt-1.5 flex flex-col gap-1.5">
+          <label className="flex items-center gap-2 text-[11px] text-txt-mut">
+            <span className="w-12 shrink-0 text-txt-dim">Avant</span>
+            <select data-cmp-left value={cmpLeft} onChange={(e) => setCmpLeft(e.target.value)}
+              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-violet focus:outline-none">
+              {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+            </select>
+          </label>
+          <div className="pl-14 text-mint" title="glisser la poignée pour révéler">⇕</div>
+          <label className="flex items-center gap-2 text-[11px] text-txt-mut">
+            <span className="w-12 shrink-0 text-txt-dim">Après</span>
+            <select data-cmp-right value={cmpRight} onChange={(e) => setCmpRight(e.target.value)}
+              className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1 text-xs text-txt focus:border-violet focus:outline-none">
+              {BASEMAP_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+            </select>
+          </label>
+        </div>
+        <button onClick={() => setModule(null)}
+          className="mt-2 w-full rounded-md border border-line-2 px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:border-violet hover:text-txt"
+          title="Revenir à la carte (fond unique)">✕ Quitter le comparateur</button>
+      </div>
       <p className="text-[11px] leading-relaxed text-txt-mut">
-        Le split est actif sur la carte. Accès direct depuis toute fiche : bouton « 1950 ».
+        Accès direct depuis toute fiche : bouton « 1950 ».
       </p>
     </>
   )
