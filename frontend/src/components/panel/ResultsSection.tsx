@@ -4,7 +4,8 @@ import { csvExportUrl, getCommunes, getEntonnoir, getParcelsGeojson, getResults,
 import { hasScopeFilters, matchAll, matchScope, type ParcelProps } from '../../lib/filters'
 import { roughCentroid } from '../../lib/geo'
 import { fmtInt as fmt } from '../../lib/format'
-import { completudeColor, effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
+import { effectiveTier, TIER_V2_META, verdictMeta, type TierV2 } from '../../lib/status'
+import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { Tip } from '../Tip'
 import { EmptyState } from '../States'
@@ -20,22 +21,9 @@ const OWNER_BADGE: Record<string, { label: string; title: string }> = {
   copro: { label: 'COPRO', title: 'Copropriété — acquisition complexe (hors classement foncier)' },
 }
 
-// Mini-anneau de complétude — exigence #1 : le score ne s'affiche JAMAIS seul.
-function CompletudeRing({ value }: { value: number }) {
-  const r = 7
-  const c = 2 * Math.PI * r
-  return (
-    <Tip tip={`Complétude des données : ${value}/100 — part des sources disponibles pour cette parcelle. N'est PAS une note de qualité du terrain.`}
-      className="items-center gap-1">
-      <svg viewBox="0 0 18 18" className="h-[18px] w-[18px] -rotate-90">
-        <circle cx="9" cy="9" r={r} fill="none" stroke="#1E2A23" strokeWidth="2" />
-        <circle cx="9" cy="9" r={r} fill="none" stroke={completudeColor(value)} strokeWidth="2"
-          strokeDasharray={c} strokeDashoffset={c * (1 - value / 100)} strokeLinecap="round" />
-      </svg>
-      <span className="font-mono text-[11px] text-txt-dim tnum">{value}</span>
-    </Tip>
-  )
-}
+// B2 (M12) : le mini-anneau de complétude (le « 92 » des cartes) a QUITTÉ la liste — il était
+// présent sur toutes les cartes, sans valeur discriminante. Il ne vit plus que sur la fiche
+// parcelle ouverte (Fiche.tsx). La liste garde le seul chiffre qui trie : le ×N.
 
 function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }; communeLabel: string }) {
   const { selectedIdu, select } = useApp()
@@ -97,14 +85,17 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
         </div>
         <div className="truncate text-[11px] text-txt-mut tnum">{p.surface_m2 ? `${fmt(p.surface_m2)} m²` : '—'} · {p.commune ?? communeLabel}</div>
       </div>
-      <div className="ml-2 flex shrink-0 flex-col items-end gap-1">
-        {/* ×N = l'affichage produit du scoring v2 (probabilité relative de mutation) */}
-        <Tip tip={p.mult_v2 != null ? `Multiplicateur de rang — cette parcelle est classée ${p.mult_v2.toFixed(1)} fois au-dessus de la moyenne de l'univers analysé.` : 'Scoring v2 non disponible'}>
+      <div className="ml-2 flex shrink-0 flex-col items-end">
+        {/* B2 : ×N (affichage produit du scoring v2). JAMAIS le nombre nu — l'unité de sens
+            « plus probable » vit juste dessous, et l'infobulle porte le détail. Calcul inchangé (A3). */}
+        <Tip tip={p.mult_v2 != null ? CLIENT.mult.tip(p.mult_v2.toFixed(1)) : CLIENT.mult.absent}>
           <span data-mult-tip className="font-display text-[15px] font-bold leading-none tnum" style={{ color: meta.color }}>
             {p.mult_v2 != null ? `×${p.mult_v2.toFixed(1)}` : '—'}
           </span>
         </Tip>
-        <CompletudeRing value={p.completeness_score} />
+        {p.mult_v2 != null && (
+          <span className="mt-0.5 text-[8.5px] leading-none text-txt-dim">{CLIENT.mult.unite}</span>
+        )}
       </div>
     </button>
   )
@@ -217,11 +208,12 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
 const CAP = 200
 
 //: tris (M5.1 lot 1.3) — rang P par défaut ; le tri par V a disparu du sélecteur.
+// B3 (M12) : libellés client centralisés (CLIENT.tri) ; « rang P » → « classement ».
 const SORTS: { key: SortKey; label: string }[] = [
-  { key: 'rang', label: 'rang P' },
-  { key: 'mult', label: '×N' },
-  { key: 'surface', label: 'surface' },
-  { key: 'commune', label: 'commune' },
+  { key: 'rang', label: CLIENT.tri.rang },
+  { key: 'mult', label: CLIENT.tri.mult },
+  { key: 'surface', label: CLIENT.tri.surface },
+  { key: 'commune', label: CLIENT.tri.commune },
 ]
 
 const TIER_ZERO: Record<TierV2 | 'all', number> = {
@@ -325,11 +317,12 @@ export function ResultsSection() {
         <p className="font-mono text-[11px] tracking-widest text-txt-dim">RÉSULTATS</p>
         <div className="mt-1.5 flex items-center gap-2">
           <span className="shrink-0 text-[10px] uppercase tracking-wide text-txt-dim">Trier</span>
-          <div className="flex items-center gap-0.5 rounded-full border border-line-2 bg-surface-2 p-0.5">
+          {/* B3 : espacement régulier entre les 4 options (gap-1 + px-2.5 uniformes) */}
+          <div className="flex items-center gap-1 rounded-full border border-line-2 bg-surface-2 p-1">
             {SORTS.map((s) => (
               <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
-                className={`rounded-full px-2 py-0.5 text-[11px] transition-colors ${sort === s.key ? 'bg-mint/15 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}
-                title={s.key === 'rang' ? 'Rang P (scoring v2) — copropriétés en queue' : `Trier par ${s.label}`}>
+                className={`rounded-full px-2.5 py-0.5 text-[11px] transition-colors ${sort === s.key ? 'bg-mint/15 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}
+                title={s.key === 'rang' ? CLIENT.tri.rangTip : `Trier par ${s.label}`}>
                 {s.label}
               </button>
             ))}
