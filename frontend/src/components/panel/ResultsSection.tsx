@@ -173,11 +173,12 @@ const RESULTS_PAGE = 200  // E3 : taille de page de la pagination île (offset s
 
 //: tris (M5.1 lot 1.3) — rang P par défaut ; le tri par V a disparu du sélecteur.
 // B3 (M12) : libellés client centralisés (CLIENT.tri) ; « rang P » → « classement ».
-const SORTS: { key: SortKey; label: string }[] = [
-  { key: 'rang', label: CLIENT.tri.rang },
-  { key: 'mult', label: CLIENT.tri.mult },
-  { key: 'surface', label: CLIENT.tri.surface },
-  { key: 'commune', label: CLIENT.tri.commune },
+// M13-F3 (QA-57) : « commune » RETIRÉ (demande Vic) ; ×N → « mutation ×N » ; chaque
+// bouton porte son propre title explicatif.
+const SORTS: { key: SortKey; label: string; tip: string }[] = [
+  { key: 'rang', label: CLIENT.tri.rang, tip: CLIENT.tri.rangTip },
+  { key: 'mult', label: CLIENT.tri.mult, tip: CLIENT.tri.multTip },
+  { key: 'surface', label: CLIENT.tri.surface, tip: CLIENT.tri.surfaceTip },
 ]
 
 const TIER_ZERO: Record<TierV2 | 'all', number> = {
@@ -311,7 +312,7 @@ export function ResultsSection() {
             {SORTS.map((s) => (
               <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
                 className={`rounded-full px-2.5 py-0.5 text-[11px] transition-colors ${sort === s.key ? 'bg-mint/15 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}
-                title={s.key === 'rang' ? CLIENT.tri.rangTip : `Trier par ${s.label}`}>
+                title={s.tip}>
                 {s.label}
               </button>
             ))}
