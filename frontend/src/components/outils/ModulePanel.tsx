@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useMemo, useState } from 'react'
 import {
   courrierDemande, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
@@ -64,6 +64,17 @@ function useModuleMap(idus: string[], extra: unknown | null, deps: unknown[]) {
 }
 
 const featureCollection = (features: unknown[]) => ({ type: 'FeatureCollection', features })
+
+/** Bouton « voir plus » — plafond levé, chargement paginé (offset) sans dump complet. */
+function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchingNextPage: boolean; fetchNextPage: () => void }; loaded: number; total: number }) {
+  if (!q.hasNextPage) return null
+  return (
+    <button data-more onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}
+      className="mt-1 min-h-8 shrink-0 rounded-lg border border-violet/40 py-1.5 text-[11px] text-violet transition-colors duration-quick hover:bg-violet/10 disabled:opacity-40">
+      {q.isFetchingNextPage ? 'Chargement…' : `Voir plus — ${fmt(loaded)} / ${fmt(total)} chargés`}
+    </button>
+  )
+}
 
 /* ───────────────────────────── M01 — DIVISION ───────────────────────────── */
 
@@ -245,22 +256,35 @@ function M03() {
   const [open, setOpen] = useState<string | null>(null)
   const zone = useApp((s) => s.zone)
   const commune = useApp((s) => s.commune)
-  const q = useQuery({ queryKey: ['m03', months, nature, commune], queryFn: () => modPermis(months, nature || null) })
-  const d = q.data as Record<string, any> | undefined
-  // la ZONE DESSINÉE (outil carte) filtre aussi les permis géocodés — les non-géocodés restent listés
-  const items = ((d?.['items'] ?? []) as Record<string, any>[]).filter((i) => {
+  const q = useInfiniteQuery({
+    queryKey: ['m03', months, nature, commune],
+    queryFn: ({ pageParam }) => modPermis(months, nature || null, 300, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * 300 : undefined,
+  })
+  const pages = (q.data?.pages ?? []) as Record<string, any>[]
+  const head = pages[0]  // carte (tous les géocodés) + compteurs viennent de la page 0
+  // liste = items paginés accumulés (« voir plus ») ; la ZONE dessinée filtre aussi côté client
+  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[]).filter((i) => {
     if (!zone || !i['geom']) return true
     const c = (i['geom'] as { coordinates: [number, number] }).coordinates
     return pointInPolygon(c, zone)
   })
-  const geo = items.filter((i) => i['geom'])
+  // CARTE = TOUS les géocodés (décision Vic), filtrée par la zone si active
+  const carte = ((head?.['carte'] ?? []) as Record<string, any>[]).filter((i) => {
+    if (!zone) return true
+    const c = (i['geom'] as { coordinates: [number, number] }).coordinates
+    return pointInPolygon(c, zone)
+  })
   useModuleMap([],
-    featureCollection(geo.map((i) => ({ type: 'Feature', geometry: i['geom'], properties: { kind: 'permis', label: `${i['type']} ${i['date']}` } }))),
-    [q.dataUpdatedAt])
+    featureCollection(carte.map((i) => ({ type: 'Feature', geometry: i['geom'], properties: { kind: 'permis', label: `${i['type']} ${i['date']}` } }))),
+    [q.dataUpdatedAt, zone])
+  const total = (head?.['total'] as number) ?? 0
+  const sansLoc = (head?.['sans_localisation'] as number) ?? 0
   return (
     <>
-      <Banner>Géocodage {String(d?.['pct_geocode'] ?? '…')} % — les non-géocodés restent listés.
-        Données jusqu'au <b>{String(d?.['donnees_jusqu_au'] ?? '…')}</b> (flux Sitadel régional).
+      <Banner>Géocodage {String(head?.['pct_geocode'] ?? '…')} % — les non-géocodés restent listés.
+        Données jusqu'au <b>{String(head?.['donnees_jusqu_au'] ?? '…')}</b> (flux Sitadel régional).
         Cliquez un permis pour sa fiche (porteur, lots, surfaces, délai d'instruction).</Banner>
       <div className="flex flex-wrap gap-1.5">
         {[12, 24, 48, 72].map((m) => (
@@ -278,11 +302,13 @@ function M03() {
         ))}
       </div>
       <p className="text-[11px] text-txt-dim">
-        {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(d?.['total'] as never)} permis${(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichés` : ''}`} · {geo.length} sur la carte
+        {zone ? `${items.length} permis dans la zone dessinée` : `${fmt(total)} permis`} · {fmt(carte.length)} sur la carte
+        {!zone && sansLoc > 0 && <span data-permis-sansloc className="text-violet/70"
+          title="Permis dont l'adresse n'a pas pu être rattachée à une parcelle du cadastre — non localisables sur la carte."> · {fmt(sansLoc)} sans localisation précise</span>}
         {zone && <span className="text-violet/70"> · outil Zone actif</span>}
       </p>
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
-        {items.slice(0, 150).map((i, k) => (
+        {items.map((i, k) => (
           <button key={k} data-permis-row data-geocode={i['geom'] ? '1' : '0'} onClick={() => setOpen(i['permit_id'] as string)}
             className={`flex items-center gap-2 rounded-lg border border-line-2 px-3 py-1.5 text-left text-[11px] transition-colors duration-quick hover:border-violet/50 ${i['geom'] ? 'bg-surface-3' : 'bg-surface-1'}`}>
             <span className="font-mono text-txt">{i['type'] as string}</span>
@@ -293,6 +319,7 @@ function M03() {
               title="Permis dont l'adresse n'a pas pu être rattachée à une parcelle du cadastre — non localisable sur la carte.">non géocodé</span>}
           </button>
         ))}
+        <MoreButton q={q} loaded={pages.flatMap((p) => (p['items'] ?? []) as unknown[]).length} total={total} />
       </div>
       {open && <PermitDrawer permitId={open} onClose={() => setOpen(null)} />}
     </>
@@ -304,9 +331,16 @@ function M03() {
 function M04() {
   const [months, setMonths] = useState(24)
   const commune = useApp((s) => s.commune)
-  const q = useQuery({ queryKey: ['m04', months, commune], queryFn: () => modPromesses(months) })
-  const d = q.data as Record<string, any> | undefined
-  const items = ((d?.['items'] ?? []) as Record<string, any>[])
+  const q = useInfiniteQuery({
+    queryKey: ['m04', months, commune],
+    queryFn: ({ pageParam }) => modPromesses(months, 2000, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * 2000 : undefined,
+  })
+  const pages = (q.data?.pages ?? []) as Record<string, any>[]
+  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[])
+  const total = (pages[0]?.['total'] as number) ?? 0
+  // tous géocodés → mappables au fil du chargement (la carte grandit à chaque « voir plus »)
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
   return (
     <>
@@ -321,7 +355,7 @@ function M04() {
           {[24, 36, 48, 60].map((m) => <option key={m} value={m}>{m} mois</option>)}
         </select>
       </label>
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} promesses mortes{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
+      <p className="text-[11px] text-txt-dim">{fmt(total)} promesses mortes{items.length < total ? ` · ${fmt(items.length)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i, k) => (
           <Row key={k} idu={i['idu'] as string}
@@ -330,6 +364,7 @@ function M04() {
             fiche={[['Permis', `${i['permit_id']} (${i['date']})`], ['État source', `code ${i['etat']} — sans achèvement déclaré`],
               ['Lecture', 'PC ancien jamais réalisé — réalisation à vérifier']]} />
         ))}
+        <MoreButton q={q} loaded={items.length} total={total} />
       </div>
     </>
   )
@@ -441,15 +476,21 @@ function M06() {
 
 function M07() {
   const commune = useApp((s) => s.commune)
-  const q = useQuery({ queryKey: ['m07', commune], queryFn: modFantome })
-  const d = q.data as Record<string, any> | undefined
-  const items = ((d?.['items'] ?? []) as Record<string, any>[])
+  const q = useInfiniteQuery({
+    queryKey: ['m07', commune],
+    queryFn: ({ pageParam }) => modFantome(300, pageParam as number),
+    initialPageParam: 0,
+    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * 300 : undefined,
+  })
+  const pages = (q.data?.pages ?? []) as Record<string, any>[]
+  const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[])
+  const total = (pages[0]?.['total'] as number) ?? 0
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
   return (
     <>
       <Banner>Constructible (Q ≥ 50) mais <b>verrouillé</b> : personne morale introuvable au RNE ou
         dirigeant inactif. Levier indiqué par cas — vérification notariale indispensable.</Banner>
-      <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles gelées{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
+      <p className="text-[11px] text-txt-dim">{fmt(total)} parcelles gelées{items.length < total ? ` · ${fmt(items.length)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (
           <Row key={i['idu'] as string} idu={i['idu'] as string}
@@ -458,6 +499,7 @@ function M07() {
             fiche={[['▲ Gelé', String(i['verrou'])], ['Levier', String(i['levier'])],
               ['Propriétaire', `${i['denomination']} (${i['siren']})`]]} />
         ))}
+        <MoreButton q={q} loaded={items.length} total={total} />
       </div>
     </>
   )
