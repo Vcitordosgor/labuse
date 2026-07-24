@@ -68,7 +68,7 @@ export function MapToolbar() {
         {bmOpen && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setBmOpen(false)} />
-            <div className="floating absolute right-0 top-11 z-20 w-56 p-3">
+            <div className="floating absolute right-0 top-11 z-20 w-64 p-3">
               <p className="label-caps">Fond de plan</p>
               <div className="mt-2 flex flex-col gap-1">
                 {BASEMAPS.map((b) => (
@@ -82,7 +82,7 @@ export function MapToolbar() {
               <div className="mt-2 flex gap-1">
                 {YEARS.map((y) => (
                   <button key={y.key} onClick={() => setOrthoYear(y.key)}
-                    className={`flex-1 rounded-md border px-1 py-1 text-[11px] transition-colors duration-quick ${
+                    className={`flex-1 whitespace-nowrap rounded-md border px-1.5 py-1 text-[11px] transition-colors duration-quick ${
                       basemap === 'ortho' && orthoYear === y.key ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
                     {y.label}
                   </button>
@@ -116,17 +116,23 @@ export function MapToolbar() {
             <div key={t.key} className="relative">
               <button
                 onClick={() => (off ? setZoneHint(true) : setTool(tool === t.key ? null : t.key))}
-                className={`flex h-9 w-9 items-center justify-center border-b border-line-2 transition-colors duration-quick last:border-0 ${
-                  off ? 'text-st-none'
+                className={`relative flex h-9 w-9 items-center justify-center border-b border-line-2 transition-colors duration-quick last:border-0 ${
+                  off ? 'cursor-help text-st-none/60 hover:text-st-creuser'
                     : tool === t.key ? 'bg-mint/10 text-mint' : 'text-txt-mut hover:text-txt'}`}
-                title={off ? undefined : `${t.label} — ${t.hint}`}
-                aria-label={off ? `${t.label} (indisponible sur toute l'île)` : t.label}
+                // G2 (M12) : l'outil Zone RESTE (intentionnellement désactivé en vue « Toute l'île »).
+                // On rend l'état inactif plus lisible : tooltip explicite au survol (plus de title vide),
+                // curseur d'aide, et une petite pastille « verrou » qui guide vers le sélecteur de commune.
+                title={off ? 'Zone — disponible après avoir choisi une commune (sélecteur en haut)' : `${t.label} — ${t.hint}`}
+                aria-label={off ? `${t.label} (disponible après avoir choisi une commune)` : t.label}
               >
                 <svg viewBox="0 0 20 20" className="h-[18px] w-[18px]" aria-hidden="true">{t.icon}</svg>
+                {off && (
+                  <span aria-hidden="true" className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center rounded-full bg-surface-1 text-[7px] leading-none text-st-creuser ring-1 ring-line-2">🔒</span>
+                )}
               </button>
               {off && zoneHint && (
                 <span data-hint-zone className="absolute right-11 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md border border-st-creuser/40 bg-surface-2 px-2 py-1 text-[11px] text-st-creuser shadow-elev-2">
-                  Par commune — choisissez une commune
+                  Choisissez d'abord une commune (sélecteur en haut) pour dessiner une zone
                 </span>
               )}
             </div>

@@ -381,7 +381,13 @@ export function MapView() {
           if (toolRef.current) return // un outil actif consomme le clic
           const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
           if (!f) return
-          const idu = String(f.properties?.idu)
+          // G1 (M12) : une feature sans `idu` (clic hors-parcelle, tuile en cours de chargement,
+          // trame promues-only) ne doit JAMAIS ouvrir une fiche « undefined » qui échoue en faux
+          // « serveur injoignable ». On abandonne silencieusement — le clic universel plus bas
+          // (parcelAt) prendra le relais si un point→parcelle est résoluble.
+          const rawIdu = f.properties?.idu
+          if (rawIdu == null || rawIdu === '' || rawIdu === 'undefined') return
+          const idu = String(rawIdu)
           const st = useApp.getState()
           if (st.module === 'assemblage') {              // M16 : le clic compose l'assiette
             st.setMsel(st.msel.includes(idu) ? st.msel.filter((x) => x !== idu) : [...st.msel, idu])
