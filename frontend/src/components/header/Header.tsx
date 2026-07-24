@@ -308,7 +308,7 @@ function NotifBell() {
   const [open, setOpen] = useState(false)
   const [veilleNom, setVeilleNom] = useState('')
   const qc = useQueryClient()
-  const { filters, zone, select, setView } = useApp()
+  const { filters, zone, select, setView, setFilters } = useApp()
   const ev = useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 })
   const veilles = useQuery({ queryKey: ['searches'], queryFn: getSavedSearches, enabled: open })
   const invalidate = () => { qc.invalidateQueries({ queryKey: ['events'] }); qc.invalidateQueries({ queryKey: ['events-count'] }) }
@@ -337,14 +337,22 @@ function NotifBell() {
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="floating absolute right-0 top-11 z-20 flex max-h-[70vh] w-[380px] flex-col overflow-hidden">
             <div className="flex shrink-0 items-center justify-between border-b border-line px-4 py-2.5">
-              <p className="label-caps">Notifications · {unread} non lue{unread > 1 ? 's' : ''}</p>
+              {/* M16-B5 : plus d'incohérence « 0 non lue » sur liste pleine — « à jour » quand tout est lu */}
+              <p className="label-caps">Notifications{unread > 0 ? ` · ${unread} non lue${unread > 1 ? 's' : ''}` : (ev.data?.items ?? []).length ? ' · à jour' : ''}</p>
               <div className="flex gap-3">
-                <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Digest hebdo (HTML email-ready)">Digest →</a>
+                {/* M16-B2 : « Digest » (jargon) → « Le point de la semaine » */}
+                <a href="/events/digest.html" target="_blank" rel="noreferrer" className="text-[11px] text-mint hover:underline" title="Récapitulatif hebdomadaire (ce qui a bougé + top chaudes)">Le point de la semaine →</a>
                 {unread > 0 && <button onClick={() => readAll.mutate()} className="text-[11px] text-txt-mut hover:text-txt">tout lire</button>}
               </div>
             </div>
+            {/* M16-B1 : intro — ne décrit QUE les déclencheurs RÉELS (audit A1/A5) */}
+            <div className="shrink-0 border-b border-line bg-surface-2 px-4 py-2 text-[10.5px] leading-snug text-txt-mut">
+              Les <b className="text-txt">changements sur les parcelles que vous suivez</b> — bascule de
+              statut, procédure BODACC, permis neuf à proximité — et les <b className="text-txt">alertes de
+              vos veilles</b>. On ne vous prévient que sur ce qu'on sait réellement détecter.
+            </div>
             <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-2">
-              {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs text-txt-dim">Aucun événement — le prochain run de scoring alimentera cette liste.</p>}
+              {(ev.data?.items ?? []).length === 0 && <p className="p-3 text-xs leading-snug text-txt-dim">Aucune notification pour l'instant — nous vous préviendrons dès qu'une parcelle suivie change ou qu'une de vos veilles se déclenche.</p>}
               {(ev.data?.items ?? []).map((e) => (
                 <div key={e.id} className={`rounded-lg border px-3 py-2 ${e.lu ? 'border-line-2 opacity-55' : 'border-violet/30 bg-violet/[0.07]'}`}>
                   <div className="flex items-center gap-2">
@@ -359,7 +367,9 @@ function NotifBell() {
               ))}
             </div>
             <div className="shrink-0 border-t border-line p-3">
-              <p className="label-caps">Veilles (recherches sauvegardées)</p>
+              {/* M16-B3 : « veilles » = alerte par filtres (fonctionnel) — renommé + expliqué */}
+              <p className="label-caps">Vos veilles — alertes sur mesure</p>
+              <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Enregistrez une recherche : on vous alerte dès qu'une parcelle <b>bascule</b> et correspond à vos critères.</p>
               {(veilles.data ?? []).map((v) => (
                 <div key={v.id} className="mt-1.5 flex items-center gap-2 text-[11px]">
                   <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt hover:text-mint" title={v.hash}>{v.nom}</a>
@@ -367,8 +377,18 @@ function NotifBell() {
                   className="flex h-5 w-5 items-center justify-center rounded-full text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">×</button>
                 </div>
               ))}
-              <div className="mt-2 flex gap-1.5">
-                <input value={veilleNom} onChange={(e) => setVeilleNom(e.target.value)} placeholder="Nommer la recherche courante…"
+              {/* M16-B4 : exemples de veilles UTILES = déclencheurs RÉELS (audit A5). Un clic pré-remplit
+                  filtres + nom ; l'utilisateur nomme et « + Veille » enregistre. Aucune fausse saisie qui
+                  ne déclencherait rien (pas de « changement de PLU » / « permis abandonné » : non détectables). */}
+              <div className="mt-2 flex flex-wrap items-center gap-1">
+                <span className="text-[10px] text-txt-dim">Suivre, par exemple :</span>
+                <button data-veille-ex onClick={() => { setFilters({ ...EMPTY_FILTERS, tiers: ['chaude'] }); setVeilleNom('Parcelles qui basculent en chaude') }}
+                  className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-mint">parcelles qui deviennent chaudes</button>
+                <button data-veille-ex onClick={() => { setFilters({ ...EMPTY_FILTERS, evenement: true }); setVeilleNom('Nouvelles procédures BODACC') }}
+                  className="rounded-full border border-line-2 px-2 py-0.5 text-[10px] text-txt-mut transition-colors duration-quick hover:border-mint hover:text-mint">nouvelle procédure BODACC</button>
+              </div>
+              <div className="mt-1.5 flex gap-1.5">
+                <input value={veilleNom} onChange={(e) => setVeilleNom(e.target.value)} placeholder="Nommez cette veille…"
                   className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
                 <button onClick={() => veilleNom.trim() && addVeille.mutate()} disabled={!veilleNom.trim()}
                   className="rounded bg-mint px-2 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+ Veille</button>
