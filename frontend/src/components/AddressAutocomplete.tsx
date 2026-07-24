@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { banAutocomplete, type BanFeature } from '../lib/api'
 
 // M12-D1 — COMPOSANT D'AUTOCOMPLÉTION D'ADRESSE RÉUTILISABLE (mutualisé D2 + D3).
@@ -11,6 +12,7 @@ export interface AddressSelection {
   label: string  // adresse normalisée BAN
   lon: number
   lat: number
+  idu: string | null  // M13-B1 : parcelle rattachée (source interne) — landing direct
 }
 
 interface Props {
@@ -35,7 +37,26 @@ export function AddressAutocomplete({
   const [active, setActive] = useState(-1)
   const [loading, setLoading] = useState(false)
   const boxRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLUListElement>(null)
   const listId = useId()
+  // M13-B1 : la liste est rendue en PORTAL (position: fixed) pour échapper aux ancêtres
+  // `overflow-hidden` (le conteneur de contenu sous l'en-tête clippait le menu déroulant).
+  const [pos, setPos] = useState<{ left: number; top: number; width: number } | null>(null)
+  const measure = () => {
+    const el = inputRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    setPos({ left: r.left, top: r.bottom + 4, width: r.width })
+  }
+  useEffect(() => {
+    if (!open) return
+    measure()
+    const h = () => measure()
+    window.addEventListener('resize', h)
+    window.addEventListener('scroll', h, true)
+    return () => { window.removeEventListener('resize', h); window.removeEventListener('scroll', h, true) }
+  }, [open, items])
 
   // Debounce + annulation : on ne garde que le dernier appel en vol.
   useEffect(() => {
@@ -52,10 +73,13 @@ export function AddressAutocomplete({
     return () => { clearTimeout(t); ctrl.abort() }
   }, [text])
 
-  // clic à l'extérieur → ferme la liste
+  // clic à l'extérieur (hors champ ET hors liste portée) → ferme la liste
   useEffect(() => {
     if (!open) return
-    const h = (e: MouseEvent) => { if (!boxRef.current?.contains(e.target as Node)) setOpen(false) }
+    const h = (e: MouseEvent) => {
+      const t = e.target as Node
+      if (!boxRef.current?.contains(t) && !listRef.current?.contains(t)) setOpen(false)
+    }
     window.addEventListener('mousedown', h)
     return () => window.removeEventListener('mousedown', h)
   }, [open])
@@ -65,7 +89,7 @@ export function AddressAutocomplete({
     setItems([])
     setOpen(false)
     setActive(-1)
-    onSelect({ label: f.label, lon: f.lon, lat: f.lat })
+    onSelect({ label: f.label, lon: f.lon, lat: f.lat, idu: f.idu })
   }
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -90,6 +114,7 @@ export function AddressAutocomplete({
     <div ref={boxRef} className="relative min-w-0 flex-1">
       <input
         {...rest}
+        ref={inputRef}
         autoFocus={autoFocus}
         value={text}
         onChange={(e) => {
@@ -111,11 +136,13 @@ export function AddressAutocomplete({
       {loading && (
         <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-txt-dim" aria-hidden>…</span>
       )}
-      {open && items.length > 0 && (
+      {open && items.length > 0 && pos && createPortal(
         <ul
+          ref={listRef}
           id={listId}
           role="listbox"
-          className="floating absolute left-0 right-0 top-[calc(100%+4px)] z-50 max-h-64 overflow-y-auto p-1"
+          style={{ position: 'fixed', left: pos.left, top: pos.top, minWidth: pos.width, maxWidth: Math.max(pos.width, 320) }}
+          className="floating z-[1000] max-h-64 w-max overflow-y-auto p-1"
         >
           {items.map((f, i) => (
             <li
@@ -125,11 +152,11 @@ export function AddressAutocomplete({
               aria-selected={i === active}
               onMouseDown={(e) => { e.preventDefault(); pick(f) }}
               onMouseEnter={() => setActive(i)}
-              className={`cursor-pointer rounded-md px-2.5 py-1.5 text-[11.5px] ${
+              className={`cursor-pointer whitespace-nowrap rounded-md px-2.5 py-1.5 text-[11.5px] ${
                 i === active ? 'bg-mint/15 text-txt-hi' : 'text-txt hover:bg-surface-3'
               }`}
             >
-              <span className="truncate">{f.label}</span>
+              <span>{f.label}</span>
               {f.type && f.type !== 'housenumber' && (
                 <span className="ml-1.5 text-[9.5px] text-txt-dim">
                   {f.type === 'street' ? 'voie' : f.type === 'municipality' ? 'commune' : f.type === 'locality' ? 'lieu-dit' : f.type}
@@ -137,7 +164,8 @@ export function AddressAutocomplete({
               )}
             </li>
           ))}
-        </ul>
+        </ul>,
+        document.body,
       )}
     </div>
   )

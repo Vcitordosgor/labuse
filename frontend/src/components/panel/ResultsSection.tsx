@@ -196,6 +196,18 @@ export function ResultsSection() {
     queryKey: ['stats', commune, ile ? scopeOnly : null],
     queryFn: () => getStats(ile ? scopeOnly : undefined),
   })
+  // M13-B2 : « … au total » de la LISTE doit refléter les MÊMES filtres que la liste (tiers
+  // compris). Les cartouches par tier utilisent `scopeOnly` (tiers retirés) : leur `total` est
+  // le total de périmètre, PAS celui de la liste filtrée. Bug constaté : « 259 affichées /
+  // 51 129 au total » (le total ignorait le filtre Brûlante/Chaude). On requête donc un total
+  // AVEC les filtres complets — uniquement en île et quand un filtre tier est actif (sinon le
+  // total de périmètre suffit et on évite une requête).
+  const tierFiltered = ile && filters.tiers.length > 0
+  const filteredStats = useQuery({
+    queryKey: ['stats-filtered', commune, filters],
+    queryFn: () => getStats(filters),
+    enabled: tierFiltered,
+  })
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: !ile })
   // E3 (M12) : la liste île n'est plus plafonnée à 500. Pagination par offset (le back la
   // supporte nativement, A2) — pages de 200, « Charger plus » accumule. Tri `rang` = index top-N
@@ -272,7 +284,9 @@ export function ResultsSection() {
   const loading = ile ? serverList.isLoading : geo.isLoading
   const error = ile ? serverList.isError : geo.isError
   const refetch = () => (ile ? serverList.refetch() : geo.refetch())
-  const total = stats.data?.total ?? props.length
+  // M13-B2 : total de la liste — si un filtre tier est actif, on prend le total FILTRÉ (mêmes
+  // filtres que la liste) ; sinon le total de périmètre (scopeOnly) fait foi.
+  const total = (tierFiltered ? filteredStats.data?.total : stats.data?.total) ?? props.length
 
   // bandeau honnête par commune (ex. Saint-Philippe = RNU) — porté par /communes
   const communesQ = useQuery({ queryKey: ['communes'], queryFn: getCommunes })

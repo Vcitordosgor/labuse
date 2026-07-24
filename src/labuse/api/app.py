@@ -1042,6 +1042,57 @@ def parcel_at(lon: float, lat: float, db: Session = Depends(get_db)) -> dict:
     return {"idu": row[0] if row else None}
 
 
+# M13-B1 — normalisation accents pour la recherche (unaccent n'est pas installé sur ce serveur).
+_ADR_ACCENTS = ("àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇ", "aaaeeeeiioouuucAAAEEEEIIOOUUUC")
+
+
+@app.get("/adresses/autocomplete")
+def adresses_autocomplete(q: str = Query(..., min_length=3),
+                          limit: int = Query(6, ge=1, le=12),
+                          db: Session = Depends(get_db)) -> dict:
+    """M13-B1 — autocomplétion d'adresse INTERNE, adossée à la table `adresses` (BAN rattachée
+    aux parcelles, ~99,99 %). Plus fiable que l'API BAN externe (pas d'appel navigateur sortant)
+    et alignée sur notre trame : chaque suggestion porte déjà son `idu` + ses coordonnées, donc
+    la sélection atterrit directement sur la fiche sans second aller-retour de géocodage.
+
+    Recherche insensible aux accents/casse sur « numéro voie », priorité au préfixe puis à la
+    voie la plus courte. On ne renvoie que des adresses géolocalisées ET rattachées à une
+    parcelle (jamais une chaîne libre)."""
+    needle = q.strip()
+    if len(needle) < 3:
+        return {"features": []}
+    a, b = _ADR_ACCENTS
+    rows = db.execute(text(
+        """
+        SELECT id_ban,
+               trim(coalesce(numero, '') || ' ' || voie) AS label_court,
+               commune, code_postal, idu,
+               ST_X(geom) AS lon, ST_Y(geom) AS lat
+        FROM adresses
+        WHERE idu IS NOT NULL AND geom IS NOT NULL
+          AND lower(translate(coalesce(numero,'') || ' ' || voie, :a, :b))
+              LIKE lower(translate('%' || :q || '%', :a, :b))
+        ORDER BY (lower(translate(coalesce(numero,'') || ' ' || voie, :a, :b))
+                  LIKE lower(translate(:q || '%', :a, :b))) DESC,
+                 length(voie), voie, numero
+        LIMIT :lim
+        """),
+        {"a": a, "b": b, "q": needle, "lim": limit}).mappings().all()
+    feats = []
+    for r in rows:
+        label = r["label_court"]
+        if r["commune"]:
+            label = f"{label}, {r['commune']}"
+            if r["code_postal"]:
+                label = f"{label} ({r['code_postal']})"
+        feats.append({
+            "label": label, "lon": float(r["lon"]), "lat": float(r["lat"]),
+            "idu": r["idu"], "commune": r["commune"], "postcode": r["code_postal"],
+            "type": "housenumber",
+        })
+    return {"features": feats}
+
+
 @app.get("/parcels/search")
 def search_parcels(q: str = Query(..., min_length=2), commune: str | None = None,
                    source: str = Q_A_RUN_LABEL, limit: int = Query(10, ge=1, le=50),

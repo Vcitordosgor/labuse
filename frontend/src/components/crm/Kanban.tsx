@@ -170,6 +170,10 @@ export function Kanban() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editLabel, setEditLabel] = useState('')
   const [pendingDelete, setPendingDelete] = useState<PipelineColumn | null>(null)
+  // M13-B3 : plus AUCUN window.prompt/confirm — ajout inline + dialogue de réinitialisation en DA.
+  const [adding, setAdding] = useState(false)
+  const [newColLabel, setNewColLabel] = useState('')
+  const [confirmReset, setConfirmReset] = useState(false)
   const move = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) => patchPipeline(id, { status }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pipeline'] }),
@@ -179,7 +183,10 @@ export function Kanban() {
     qc.invalidateQueries({ queryKey: ['pipeline-meta'] })
     qc.invalidateQueries({ queryKey: ['pipeline'] })
   }
-  const addCol = useMutation({ mutationFn: (label: string) => createCrmColumn(label), onSuccess: invalidateAll })
+  const addCol = useMutation({
+    mutationFn: (label: string) => createCrmColumn(label),
+    onSuccess: () => { setAdding(false); setNewColLabel(''); invalidateAll() },
+  })
   const renameCol = useMutation({
     mutationFn: ({ id, label }: { id: number; label: string }) => renameCrmColumn(id, label),
     onSuccess: () => { setEditingId(null); invalidateAll() },
@@ -189,7 +196,7 @@ export function Kanban() {
     mutationFn: ({ id, moveTo }: { id: number; moveTo: number | null }) => deleteCrmColumn(id, moveTo),
     onSuccess: () => { setPendingDelete(null); invalidateAll() },
   })
-  const resetCols = useMutation({ mutationFn: () => resetCrmColumns(), onSuccess: invalidateAll })
+  const resetCols = useMutation({ mutationFn: () => resetCrmColumns(), onSuccess: () => { setConfirmReset(false); invalidateAll() } })
 
   if (meta.isError || entries.isError) {
     return (
@@ -210,9 +217,11 @@ export function Kanban() {
     if (editingId != null && editLabel.trim()) renameCol.mutate({ id: editingId, label: editLabel.trim() })
     else setEditingId(null)
   }
-  const doAdd = () => {
-    const label = window.prompt('Nom de la nouvelle colonne')?.trim()
+  const doAdd = () => { setAdding(true); setNewColLabel('') }
+  const commitAdd = () => {
+    const label = newColLabel.trim()
     if (label) addCol.mutate(label)
+    else setAdding(false)
   }
   const moveCol = (idx: number, dir: -1 | 1) => {
     const ids = cols.map((c) => c.id!).filter((i) => i != null)
@@ -246,11 +255,33 @@ export function Kanban() {
           )}
           {editMode && (
             <>
-              <button onClick={doAdd}
-                className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-mint"
-                title="Ajouter une colonne">+ Colonne</button>
+              {/* M13-B3 : ajout INLINE (plus de window.prompt) — le champ apparaît ici,
+                  Entrée valide, Échap annule, la colonne apparaît immédiatement (invalidateAll). */}
+              {adding ? (
+                <span className="flex items-center gap-1">
+                  <input
+                    autoFocus
+                    value={newColLabel}
+                    onChange={(ev) => setNewColLabel(ev.target.value)}
+                    onKeyDown={(ev) => { if (ev.key === 'Enter') commitAdd(); if (ev.key === 'Escape') { setAdding(false); setNewColLabel('') } }}
+                    placeholder="Nom de la colonne…"
+                    maxLength={80}
+                    className="w-40 rounded-md border border-mint/50 bg-surface-2 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none"
+                    aria-label="Nom de la nouvelle colonne"
+                  />
+                  <button onClick={commitAdd} disabled={!newColLabel.trim() || addCol.isPending}
+                    className="rounded-md bg-mint px-2 py-1 text-[11px] font-medium text-mint-ink hover:brightness-110 disabled:opacity-40"
+                    title="Ajouter">{addCol.isPending ? '…' : 'Ajouter'}</button>
+                  <button onClick={() => { setAdding(false); setNewColLabel('') }}
+                    className="rounded-md px-2 py-1 text-[11px] text-txt-dim hover:text-txt" title="Annuler">Annuler</button>
+                </span>
+              ) : (
+                <button onClick={doAdd}
+                  className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt hover:border-mint hover:text-mint"
+                  title="Ajouter une colonne">+ Colonne</button>
+              )}
               <button
-                onClick={() => { if (window.confirm('Réinitialiser le kanban au modèle LABUSE par défaut ? Toutes les cartes seront replacées dans la première colonne.')) resetCols.mutate() }}
+                onClick={() => setConfirmReset(true)}
                 className="rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt-dim hover:border-st-ecartee hover:text-st-ecartee"
                 title="Restaurer le kanban LABUSE par défaut">Réinitialiser</button>
             </>
@@ -356,6 +387,26 @@ export function Kanban() {
           onCancel={() => setPendingDelete(null)}
           onConfirm={(moveTo) => delCol.mutate({ id: pendingDelete.id!, moveTo })}
         />
+      )}
+      {/* M13-B3 : réinitialisation confirmée par un dialogue en DA LABUSE (plus de window.confirm). */}
+      {confirmReset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setConfirmReset(false)}>
+          <div className="w-full max-w-sm rounded-xl border border-line-2 bg-surface-1 p-5 shadow-elev-2"
+            onClick={(ev) => ev.stopPropagation()}>
+            <h3 className="font-display text-sm font-bold text-txt-hi">Réinitialiser le kanban</h3>
+            <p className="mt-2 text-[12px] text-txt-mut">
+              Restaurer le kanban LABUSE par défaut ? Toutes les cartes seront replacées dans la
+              première colonne — aucune n'est perdue.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setConfirmReset(false)}
+                className="rounded-md px-3 py-1.5 text-[12px] text-txt-dim hover:text-txt">Annuler</button>
+              <button onClick={() => resetCols.mutate()} disabled={resetCols.isPending}
+                className="rounded-md bg-st-ecartee/90 px-3 py-1.5 text-[12px] font-medium text-bg hover:bg-st-ecartee disabled:opacity-40">
+                {resetCols.isPending ? '…' : 'Réinitialiser'}</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
