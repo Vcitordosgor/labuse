@@ -7,6 +7,7 @@ export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets' | 'segments'
 export interface LayerToggles {
   zonage: boolean
   zonage_parcelle: boolean // M6.1 : remplissage des PARCELLES par famille PLU (U/AU/A/N)
+  zonage_colorise: boolean // M12 C5 : colorise TOUTES les parcelles par type de zone (famille U/AU/A/N), sans clic
   parcelles: boolean
   ppr: boolean
   parc: boolean
@@ -209,7 +210,7 @@ export const useApp = create<AppState>((set) => ({
         contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null }),
   selectedIdu: null,
   select: (idu) => set({ selectedIdu: idu }),
-  layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
+  layers: { zonage: false, zonage_parcelle: false, zonage_colorise: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),

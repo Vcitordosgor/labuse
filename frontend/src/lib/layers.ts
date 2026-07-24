@@ -51,3 +51,35 @@ export const LAYER_LABEL: Record<string, string> = {
 }
 
 export const layerLabel = (key: string): string => LAYER_LABEL[key] ?? key
+
+// ─────────────────────────────────────────────────────────────────────────────
+// M12 · LOT C2 — TEXTES « i » DES COUCHES (écrits pour un CLIENT, pas un
+// géomaticien). Centralisés ICI (règle R3) : Vic réécrit sa voix sans toucher au
+// JSX. La clé = la clé de `LayerToggles` (store useApp). Une phrase, sans jargon.
+// ─────────────────────────────────────────────────────────────────────────────
+export const LAYER_INFO: Record<string, string> = {
+  zonage:
+    'La carte officielle des zones du PLU (urbaine, à urbaniser, agricole, naturelle) telle que publiée par la commune — les grands aplats de couleur, sans découpage à la parcelle.',
+  zonage_parcelle:
+    'Chaque parcelle prend la couleur de sa zone du PLU. En zoomant, ou en cliquant une parcelle, le code exact de la zone (par ex. U1a, 1AUc) s’affiche.',
+  zonage_colorise:
+    'Colorie d’un coup TOUTES les parcelles selon leur type de zone (urbaine, à urbaniser, agricole, naturelle) — sans avoir à cliquer parcelle par parcelle. Une lecture d’ensemble du potentiel de constructibilité.',
+  parcelles:
+    'Les parcelles cadastrales, colorées selon l’avis de LABUSE (les plus prometteuses ressortent). C’est la couche de travail principale.',
+  ppr:
+    'Les zones exposées à un risque naturel connu (inondation, mouvement de terrain, littoral…) inscrites dans un Plan de Prévention des Risques — utile pour écarter tôt un terrain contraint.',
+  parc:
+    'Le périmètre du Parc national de La Réunion : à l’intérieur, l’urbanisation est très restreinte voire interdite.',
+  limites:
+    'Le simple tracé du contour de toutes les parcelles, sans couleur — pour lire le découpage cadastral sur le fond de carte.',
+  communes:
+    'Les frontières officielles entre les communes (le trait vert) — pour se repérer et savoir de quelle mairie dépend un terrain.',
+  anru:
+    'Les quartiers inscrits dans un programme de renouvellement urbain (ANRU) : secteurs prioritaires où des opérations d’aménagement sont soutenues par l’État.',
+  cinquante_pas:
+    'La bande littorale des « 50 pas géométriques » (81,20 m depuis le rivage), un régime foncier propre à l’outre-mer où la constructibilité est très encadrée.',
+  equipements:
+    'Les équipements du quotidien à proximité (mairie, écoles, santé, commerces, transport, sport). Sur la fiche d’une parcelle, LABUSE indique la distance en mètres jusqu’à chaque équipement le plus proche.',
+}
+
+export const layerInfo = (key: string): string | undefined => LAYER_INFO[key]
