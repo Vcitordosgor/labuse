@@ -208,7 +208,10 @@ export const useApp = create<AppState>((set) => ({
     : { outilsOpen: true, view: 'cartes', selectedIdu: null, module: null,
         contexteCommune: null, sourceLine: null, iaRestitution: null, parcours: null, openProjet: null }),
   selectedIdu: null,
-  select: (idu) => set({ selectedIdu: idu }),
+  // G1 (M12) : filet de sécurité global — un idu vide ou la chaîne « undefined » (issue d'un
+  // `String(undefined)` sur une feature sans propriété idu) n'ouvre JAMAIS la fiche. Elle
+  // afficherait un titre « undefined » et un faux « serveur injoignable ». `null` ferme la fiche.
+  select: (idu) => set({ selectedIdu: idu === '' || idu === 'undefined' ? null : idu }),
   layers: { zonage: false, zonage_parcelle: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,

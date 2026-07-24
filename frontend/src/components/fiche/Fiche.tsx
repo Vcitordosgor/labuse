@@ -1053,6 +1053,15 @@ export function Fiche({ idu }: { idu: string }) {
         )}
         {isError && (is429(error) ? (
           <RateLimit429 error={error} refetch={refetch} />
+        ) : error instanceof ApiError && error.status === 404 ? (
+          /* G1 (M12) : une parcelle absente du run (copro non classée, hors périmètre, ou clic
+             sur une trame sans idu) N'EST PAS une panne. Message NEUTRE, sans tonalité d'erreur —
+             on invite simplement à re-sélectionner une parcelle. Aucun « serveur injoignable ». */
+          <div data-fiche-hors-run className="rounded-lg border border-line-2 bg-surface-2 p-4 text-xs">
+            <p className="text-txt">Cette parcelle n'est pas dans le périmètre analysé.</p>
+            <p className="mt-1 text-txt-dim">Sélectionnez une parcelle sur la carte pour afficher sa fiche.</p>
+            <button onClick={() => select(null)} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Fermer</button>
+          </div>
         ) : (
           <div data-fiche-erreur className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 p-4 text-xs">
             {/* Item 3 (UX V1) : wording client — plus jamais « relancer labuse api » face à un

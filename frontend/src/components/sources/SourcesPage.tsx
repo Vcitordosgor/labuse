@@ -292,11 +292,9 @@ export function SourcesPage() {
               Chaque réponse LABUSE est traçable jusqu'à sa source publique.
             </p>
           </div>
-          <button onClick={() => window.print()}
-            className="shrink-0 rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut hover:border-mint hover:text-txt print:hidden"
-            title="Imprimer ce tableau (fond clair)">
-            Imprimer
-          </button>
+          {/* G4 (M12) : bouton « Imprimer » retiré — la traçabilité est mieux servie par les PDF
+              Flash / Dossier / Banquier (mise en page maîtrisée). L'impression navigateur brute
+              d'un long tableau n'apportait rien de fiable. */}
         </div>
         <p className="mt-1.5 text-[11px] leading-relaxed text-txt-dim">
           Ci-dessous, couche par couche : la source publique, sa <b className="text-txt-mut">date de

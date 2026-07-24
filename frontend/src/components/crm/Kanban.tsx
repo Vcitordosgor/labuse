@@ -146,16 +146,21 @@ export function Kanban() {
             glisser une carte pour changer d'étape · ajout depuis la fiche (+ Pipeline)
           </p>
         </div>
-        {/* P7 (dernière passe) : dire clairement qu'on peut défiler horizontalement */}
+        {/* P7 (dernière passe) : dire clairement qu'on peut défiler horizontalement.
+            G5 (M12) : whitespace-nowrap — le compteur « 8 étapes · défiler → » ne se tronque plus
+            (« 8 ét… ») quand le header est serré. */}
         {cols.length > 4 && (
-          <span className="shrink-0 rounded-full border border-line-2 px-2.5 py-1 text-[10.5px] text-txt-mut">
+          <span className="shrink-0 whitespace-nowrap rounded-full border border-line-2 px-2.5 py-1 text-[10.5px] text-txt-mut">
             {cols.length} étapes · défiler →
           </span>
         )}
       </div>
       {/* P7 : dégradé de bord droit = affordance « il y a d'autres colonnes » */}
       <div className="relative mt-4 min-h-0 flex-1">
-        <div className="flex h-full gap-3 overflow-x-auto px-4 pb-5 sm:px-6">
+        {/* G6 (M12) : items-start — les colonnes s'ajustent à leur contenu au lieu de s'étirer
+            sur toute la hauteur (une colonne vide ne fait plus ~800 px). max-h-full sur chaque
+            colonne (plus bas) préserve le défilement interne d'une colonne pleine. */}
+        <div className="flex h-full items-start gap-3 overflow-x-auto px-4 pb-5 sm:px-6">
         {meta.isLoading && <div className="p-2"><Loading label="Chargement du pipeline" className="text-xs" /></div>}
         {cols.map((c) => {
           const items = byCol(c.key)
@@ -171,7 +176,7 @@ export function Kanban() {
                 if (dragId != null) move.mutate({ id: dragId, status: c.key })
                 setDragId(null)
               }}
-              className={`flex w-[230px] shrink-0 flex-col rounded-xl border bg-surface-1 shadow-elev-1 transition-colors duration-quick ${
+              className={`flex max-h-full w-[230px] shrink-0 flex-col rounded-xl border bg-surface-1 shadow-elev-1 transition-colors duration-quick ${
                 overCol === c.key ? 'border-mint ring-1 ring-mint/40' : 'border-transparent'}`}
             >
               <div className="flex shrink-0 items-center gap-2 px-3 py-2.5">
@@ -179,7 +184,9 @@ export function Kanban() {
                 <span className="truncate text-[11px] font-medium text-txt">{c.label}</span>
                 <span className="ml-auto font-mono text-[11px] text-txt-dim">{items.length}</span>
               </div>
-              <div className="flex min-h-0 flex-1 flex-col gap-2.5 overflow-y-auto px-2.5 pb-2.5">
+              {/* G6 (M12) : min-h modeste = zone de dépôt confortable pour une colonne vide, sans
+                  la colonne géante de ~800 px. Une colonne pleine défile en interne (max-h-full). */}
+              <div className="flex min-h-[72px] flex-1 flex-col gap-2.5 overflow-y-auto px-2.5 pb-2.5">
                 {items.map((e) => (
                   <Card key={e.id} e={e} onDragStart={() => setDragId(e.id)}
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0} />
@@ -191,10 +198,14 @@ export function Kanban() {
             </div>
           )
         })}
+        {/* G5 (M12) : cale de fin — dans un conteneur flex à défilement horizontal, le padding
+            droit n'est pas honoré par tous les navigateurs et la DERNIÈRE colonne se retrouve
+            rognée. Cet espaceur garantit que la 8e colonne est entièrement défilable. */}
+        <div aria-hidden="true" className="w-2 shrink-0 sm:w-4" />
         </div>
         {/* fondu de bord droit — pointer-events-none pour ne pas gêner le drag/scroll */}
         {cols.length > 4 && (
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-12 bg-gradient-to-l from-bg to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-bg to-transparent" />
         )}
       </div>
     </div>
