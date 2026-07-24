@@ -127,29 +127,47 @@ export function O6Comparateur() {
       </div>
       {q.isLoading && <Loading accent="violet" label="Calcul du comparatif…" />}
       {q.isError && <ErrorState className="py-6" message="Comparateur indisponible." retry={() => q.refetch()} />}
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="sticky top-0 grid grid-cols-[1fr_repeat(3,56px)] gap-1 bg-surface-1 py-1 sm:grid-cols-[1fr_repeat(6,56px)]">
-          <span className="label-caps text-[9px]">Commune</span>
-          {O6_COLS.map((c, i) => (
-            <button key={c.k} data-o6-tri={c.k} onClick={() => setTri(c.k)}
-              className={`text-right text-[9px] uppercase tracking-wide transition-colors duration-quick ${tri === c.k ? 'text-violet' : 'text-txt-dim hover:text-txt-mut'} ${i >= 3 ? 'hidden sm:block' : ''}`}>
-              {c.label} {tri === c.k ? '↓' : ''}</button>
-          ))}
-        </div>
-        {rows.map((c, i) => (
-          <div key={String(c['insee'])} className="grid grid-cols-[1fr_repeat(3,56px)] items-baseline gap-1 border-b border-line py-1.5 text-[11px] sm:grid-cols-[1fr_repeat(6,56px)]">
-            <span className="min-w-0 truncate text-txt">
-              <span className="mr-1 font-mono text-[9px] text-txt-dim">#{i + 1}</span>{String(c['commune'])}</span>
-            {O6_COLS.map((col, j) => (
-              <span key={col.k} className={`tnum text-right font-mono ${col.k === 'score_composite' ? (i < 3 ? 'font-semibold text-violet' : 'text-txt') : 'text-txt-mut'} ${j >= 3 ? 'hidden sm:block' : ''}`}>
-                {c[col.k] == null ? '—' : `${Number(c[col.k]).toLocaleString('fr-FR')}${col.unite ?? ''}`}</span>
-            ))}
-          </div>
+      {/* M15 E4 : plus de SCROLL HORIZONTAL (RG4) — les 6 métriques ne tenaient pas dans le volet,
+          poussant « €/m² neuf » hors champ (cause du « vide » vu par Vic ; la donnée existe bien).
+          On choisit la métrique à comparer via des chips (dont « €/m² neuf »), et le tableau montre
+          Commune · Composite · la métrique choisie. Le tri suit la métrique. */}
+      <div className="flex flex-wrap gap-1">
+        {O6_COLS.filter((c) => c.k !== 'score_composite').map((c) => (
+          <button key={c.k} data-o6-tri={c.k} onClick={() => setTri(c.k)}
+            className={`rounded-full border px-2 py-0.5 text-[10px] transition-colors duration-quick ${
+              tri === c.k ? 'border-violet text-violet' : 'border-line-2 text-txt-mut hover:text-txt'}`}>
+            {c.label}</button>
         ))}
       </div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {(() => {
+          const sel = O6_COLS.find((col) => col.k === tri && col.k !== 'score_composite') ?? O6_COLS[1]
+          return (
+            <>
+              <div className="sticky top-0 grid grid-cols-[1fr_58px_74px] gap-1 bg-surface-1 py-1">
+                <span className="label-caps text-[9px]">Commune</span>
+                <button data-o6-tri="score_composite" onClick={() => setTri('score_composite')}
+                  className={`text-right text-[9px] uppercase tracking-wide ${tri === 'score_composite' ? 'text-violet' : 'text-txt-dim hover:text-txt-mut'}`}>
+                  Composite {tri === 'score_composite' ? '↓' : ''}</button>
+                <span className="text-right text-[9px] uppercase tracking-wide text-violet">{sel.label} ↓</span>
+              </div>
+              {rows.map((c, i) => (
+                <div key={String(c['insee'])} data-o6-row className="grid grid-cols-[1fr_58px_74px] items-baseline gap-1 border-b border-line py-1.5 text-[11px]">
+                  <span className="min-w-0 truncate text-txt">
+                    <span className="mr-1 font-mono text-[9px] text-txt-dim">#{i + 1}</span>{String(c['commune'])}</span>
+                  <span className={`tnum text-right font-mono ${i < 3 ? 'font-semibold text-violet' : 'text-txt'}`}>
+                    {c['score_composite'] == null ? '—' : Number(c['score_composite']).toLocaleString('fr-FR')}</span>
+                  <span data-o6-metric className="tnum text-right font-mono text-txt-mut">
+                    {c[sel.k] == null ? '—' : `${Number(c[sel.k]).toLocaleString('fr-FR')}${sel.unite ?? ''}`}</span>
+                </div>
+              ))}
+            </>
+          )
+        })()}
+      </div>
       <p className="shrink-0 text-[9.5px] leading-snug text-txt-dim">
-        Composite = aide de lecture (jamais un score de rendement) ; un axe manquant reste « — »,
-        jamais un zéro inventé. Tri par colonne au clic.</p>
+        Composite = aide de lecture (jamais un score de rendement) ; une donnée manquante reste « — »,
+        jamais un zéro inventé. Choisissez la métrique à comparer par les puces ci-dessus.</p>
     </>
   )
 }
