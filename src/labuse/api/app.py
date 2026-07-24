@@ -95,10 +95,10 @@ async def _lifespan(app: FastAPI):
         from .partners import ensure_tables as _partners_ens
         from .projets import ensure_tables as _projets_ens
         from .protection import ensure_tables as _protection_ens
-        from .segments import ensure_tables as _segments_ens
+        # C-bis : segments (Vues) retiré. H : crm_columns conservé.
         from .crm_columns import ensure_tables as _crm_columns_ens
         for _ens in (_modules_ens, _ia_ens, _events_ens, _partners_ens, _projets_ens,
-                     _segments_ens, _protection_ens, _courrier_ens, _crm_columns_ens):
+                     _protection_ens, _courrier_ens, _crm_columns_ens):
             _ens(_engine())
         # AUDIT PAIEMENT · SEC-IDOR — comptes + cloison multi-tenant (compte_id sur les
         # tables à données client). Après les ensures des modules (les tables existent).
@@ -3240,7 +3240,6 @@ from .operations import router as _operations_router  # noqa: E402  (O11 — op�
 from .ops import router as _ops_router  # noqa: E402  (P4 — /healthz/crons)
 from .projets import router as _projets_router  # noqa: E402
 from .protection import router as _protection_router  # noqa: E402
-from .segments import router as _segments_router  # noqa: E402
 from .ortho import router as _ortho_router  # noqa: E402
 from .tiles import router as _tiles_router  # noqa: E402
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
@@ -3273,7 +3272,6 @@ app.include_router(_events_router)
 app.include_router(_moteurs_router)
 app.include_router(_partners_router)
 app.include_router(_projets_router)
-app.include_router(_segments_router)
 app.include_router(_ortho_router)
 
 

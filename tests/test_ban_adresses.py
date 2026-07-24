@@ -65,27 +65,10 @@ def test_ingest_ban_rattachement(db_session, parcelle, tmp_path):
     assert {i for i, _ in inv} == {"97416_test_1", "97416_test_2", "97416_test_4"}
 
 
-def test_export_colonnes_ban(db_session, parcelle, tmp_path):
-    """L'adresse BAN normalisée est prépendue à tout export ; sans la table → omise."""
-    from labuse.ingestion.ban_adresses import ingest_ban
-    from labuse.segments import engine as seg_engine
-    from labuse.segments.registry import reset_availability_cache
-
-    ingest_ban(db_session, _csv(tmp_path, [
-        "97416_test_1;;12;;Rue des Tests;97410;97416;Saint-Pierre;;;0;0;55.4500;-21.3000;"
-        "entrée;;;SAINT PIERRE;RUE DES TESTS;commune;commune;1;"]))
-    reset_availability_cache()
-    q = seg_engine.build(db_session, [], "surface_desc", colonnes_export=["surface_m2"])
-    assert [c for c, _ in q.export_cols][:4] == [
-        "adresse_numero", "adresse_voie", "adresse_cp", "adresse_ville"]
-    row = next(iter(seg_engine.run_export_rows(db_session, q, limit=1)))
-    assert row["adresse_voie"] == "Rue des Tests" and row["adresse_numero"] == "12"
-
-    # résilience : table simulée absente → colonnes BAN omises, jamais d'erreur
-    q2 = seg_engine.build(db_session, [], "surface_desc", colonnes_export=["surface_m2"],
-                          simulate_missing=frozenset({"adresses"}))
-    assert "adresse_voie" not in [c for c, _ in q2.export_cols]
-    reset_availability_cache()
+# (test_export_colonnes_ban retiré avec le spin-off « Vues » — M12 Lot C-bis : il vérifiait
+#  que l'adresse BAN est prépendue aux exports du MOTEUR DE SEGMENTS (seg_engine), parti avec
+#  « Vues ». L'ingestion/rattachement BAN reste couvert par test_ingest_ban_rattachement et
+#  test_rattacher_copros_par_adresse. Archivé dans docs/mandats/M12_LOT_C_BIS.md.)
 
 
 def test_norm_voie_abreviations():

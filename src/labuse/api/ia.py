@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import re
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from jsonschema import ValidationError, validate
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -399,74 +399,8 @@ def ia_search(body: SearchIn, db: Session = Depends(get_db)) -> dict:
             "criteres_non_appliques": non_appliques}
 
 
-# ─────────────── 1ter. RECHERCHE NL → MOTEUR DE SEGMENTS (mandat wave-adresses, Lot 6) ───────────
-
-class SegmentsSearchIn(BaseModel):
-    text: str
-
-
-def _nl_log(db: Session, question: str, statut: str, reponse: dict) -> None:
-    """Log ANONYMISÉ (RGPD : aucun identifiant utilisateur) — la roadmap des filtres
-    manquants se lit dans les out_of_scope."""
-    db.execute(text("INSERT INTO nl_query_log (question, statut, reponse) "
-                    "VALUES (:q, :s, :r)"),
-               {"q": question[:500], "s": statut,
-                "r": json.dumps(reponse, ensure_ascii=False, default=str)})
-
-
-@router.post("/segments-search")
-def ia_segments_search(body: SegmentsSearchIn, request: Request,
-                       db: Session = Depends(get_db)) -> dict:
-    """Question libre → JSON de filtres du REGISTRY des segments, validé — jamais de SQL.
-
-    Le front ouvre le query builder avec les filtres visibles/modifiables (pédagogie).
-    Quota : LABUSE_NL_QUOTA_JOUR (30/jour/sujet). Hors périmètre → réponse honnête.
-    """
-    from .. import plans
-    from ..ai.nl_segments import traduire
-    from ..config import get_settings
-    from .protection import _aujourdhui, compteur, sujet_de
-    s_cfg = get_settings()
-    sujet = sujet_de(request)
-    if compteur(db, sujet, "nl") >= max(1, s_cfg.nl_quota_jour):
-        return {"out_of_scope": f"Quota de recherches en langage naturel atteint "
-                                f"({s_cfg.nl_quota_jour}/jour) — réessayez demain, ou "
-                                "utilisez directement le query builder.",
-                "quota": True}
-    # jour = _aujourdhui() (heure LOCALE python) partout — jamais CURRENT_DATE : autour
-    # de minuit, le fuseau du serveur Postgres décale d'un jour et fausse les quotas.
-    db.execute(text(
-        "INSERT INTO usage_compteurs (jour, sujet, kind, n) "
-        "VALUES (:j, :s, 'nl', 1) "
-        "ON CONFLICT (jour, sujet, kind) DO UPDATE SET n = usage_compteurs.n + 1"),
-        {"j": _aujourdhui(), "s": sujet})
-
-    res = traduire(db, body.text, model=MODEL_NL)
-    usage = res.pop("_usage", None) or (0, 0)
-    _log(db, "segments-search", MODEL_NL if not res["stub"] else "stub-local",
-         res["stub"], usage[0], usage[1])
-    if not res["stub"]:
-        _note_succes()
-
-    if "out_of_scope" in res:
-        rep = {"stub": res["stub"], "out_of_scope": res["out_of_scope"],
-               "groupes_disponibles": res["groupes"],
-               "message": "Je ne peux filtrer que sur : " + ", ".join(res["groupes"]) + "."}
-        _nl_log(db, body.text, "out_of_scope", rep)
-        return rep
-
-    # Gating par plan (stub Phase 0 — même mécanique que les presets : grisé + upgrade)
-    filtres, gates = res["filtres"], []
-    if plans.plan_courant() != plans.INTEGRAL:
-        gates = [f for f in filtres if f["cle"] in plans.FILTRES_INTEGRAL]
-        filtres = [f for f in filtres if f["cle"] not in plans.FILTRES_INTEGRAL]
-    rep = {"stub": res["stub"], "filtres": filtres,
-           "filtres_rejetes": res["rejetes"],
-           "filtres_gates": [{**f, **plans.refus("recherche_nl")} for f in gates],
-           "explication": res["explication"]
-           or "Filtres proposés — vérifiez et ajustez dans le query builder."}
-    _nl_log(db, body.text, "traduit", rep)
-    return rep
+# (Route /ia/segments-search retirée avec le spin-off « Vues » — M12 Lot C-bis. La table
+#  nl_query_log et son ensure_tables restent en place, données intactes.)
 
 
 # ───────────────────── 1bis. ENTRETIEN DE CADRAGE PROJET (copilote-projet) ─────────────────────

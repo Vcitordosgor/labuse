@@ -135,11 +135,6 @@ def test_signal_vegetation_haute_limite(db_session, tmp_path, monkeypatch):
     assert "IGN" in payload["source"]
 
 
-def test_preset_elagage_valide():
-    from labuse.config import load_yaml_config
-    from labuse.segments.presets import validate_preset
-
-    doc = load_yaml_config("segment_presets")
-    presets = {p["slug"]: p for p in doc["presets"]}
-    assert "elagage-limite" in presets
-    assert validate_preset(presets["elagage-limite"]) == []
+# (test_preset_elagage_valide retiré avec le spin-off « Vues » — M12 Lot C-bis : il validait
+#  le preset « elagage-limite » du moteur de segments. Le calcul végétation reste couvert
+#  ci-dessus. Archivé dans docs/mandats/M12_LOT_C_BIS.md.)

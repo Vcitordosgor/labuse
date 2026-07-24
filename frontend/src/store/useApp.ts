@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import type { FicheLine } from '../lib/types'
 import type { TierV2 } from '../lib/status'
 
-export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets' | 'segments'
+export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets'
 
 export interface LayerToggles {
   zonage: boolean
