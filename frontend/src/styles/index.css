@@ -30,6 +30,22 @@ body { background: #060A08; color: #C9DCD1; -webkit-font-smoothing: antialiased;
 /* MapLibre : fond sombre, pas de halo blanc */
 .maplibregl-map { background: #060A08; }
 .maplibregl-ctrl-attrib { display: none; }
+
+/* M12 C8 — infobulle de zonage/équipement : le conteneur par défaut de MapLibre est un carré
+   BLANC à angles droits qui encadrait notre bloc sombre arrondi (double épaisseur disgracieuse).
+   On rend le conteneur TRANSPARENT et arrondi, et on aligne la pointe sur notre fond sombre :
+   un seul bloc net, arrondi, sans liseré blanc. */
+.labuse-popup .maplibregl-popup-content {
+  background: transparent;
+  padding: 0;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.labuse-popup .maplibregl-popup-tip {
+  border-top-color: #0F1A14;
+  border-bottom-color: #0F1A14;
+}
+.labuse-popup .maplibregl-popup-close-button { display: none; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: #1E2A23; border-radius: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

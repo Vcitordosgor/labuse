@@ -1,74 +1,114 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useApp, type LayerToggles } from '../../store/useApp'
 import { Legend } from '../map/Legend'
+import { LAYER_INFO } from '../../lib/layers'
+import { Tip } from '../Tip'
 import { ResultsSection } from './ResultsSection'
 
-const LAYERS: { key: keyof LayerToggles; label: string; hint?: string }[] = [
-  // Point 12 : deux couches distinctes clarifiées — zones OFFICIELLES du GPU (polygones bruts)
-  // vs zone rattachée PAR PARCELLE (parcel_zone_plu). Libellés + hints qui lèvent la confusion.
-  { key: 'zonage', label: 'Zonage PLU (zones officielles)', hint: 'carte officielle des zones du GPU — polygones bruts (U/AU en menthe, A/N en brun)' },
-  // M6.1 item 1 : recoloration des PARCELLES par famille de zone (palette dédiée) +
-  // étiquette de la zone précise (U1e, 1AUc…) au zoom rapproché et au clic
-  { key: 'zonage_parcelle', label: 'Zonage PLU (par parcelle)', hint: 'chaque parcelle colorée par sa zone rattachée (U/AU/A/N) — zone précise au zoom ≥ 16 et au clic' },
-  { key: 'parcelles', label: 'Parcelles', hint: 'colorées par statut' },
+// M12 C4 — ORDRE des couches, du PLUS UTILISÉ au moins utilisé (justif. au rapport) :
+//  1. parcelles       — la couche de travail (verdict coloré) — vue à chaque session
+//  2. limites         — contour cadastral, référence constante posée sur le fond
+//  3. zonage_colorise — lecture d'ensemble de la constructibilité (nouveau, C5) — geste rapide
+//  4. zonage_parcelle — zone précise à la parcelle (étiquette + clic) — le détail
+//  5. zonage          — zones officielles brutes du GPU — moins fréquent (déjà couvert par 3/4)
+//  6. ppr             — écran risques, filtre d'exclusion précoce fréquent
+//  7. equipements     — contexte de proximité, courant en due diligence
+//  8. communes        — repère communal (défaut ON, rarement basculé)
+//  9. parc            — Parc national, situationnel (relief/mi-pentes)
+// 10. anru            — périmètres de renouvellement, de niche
+// 11. cinquante_pas   — bande littorale, la plus rare (communes côtières uniquement)
+const LAYERS: { key: keyof LayerToggles; label: string }[] = [
+  { key: 'parcelles', label: 'Parcelles' },
+  { key: 'limites', label: 'Limites parcelles' },
+  // M12 C5 : colorise TOUTES les parcelles par type de zone, sans clic — à côté (pas à la place)
+  { key: 'zonage_colorise', label: 'Colorisation par type de zonage' },
+  // M6.1 item 1 : recoloration + étiquette de la zone précise au zoom et au clic
+  { key: 'zonage_parcelle', label: 'Zonage PLU (par parcelle)' },
+  // Point 12 : zones OFFICIELLES du GPU (polygones bruts), distinctes du rattachement à la parcelle
+  { key: 'zonage', label: 'Zonage PLU (zones officielles)' },
   { key: 'ppr', label: 'PPR multirisque' },
+  { key: 'equipements', label: 'Équipements' },
+  { key: 'communes', label: 'Limites communes' },
   { key: 'parc', label: 'Parc national' },
-  { key: 'limites', label: 'Limites parcelles', hint: 'contours de toutes les parcelles' },
-  { key: 'communes', label: 'Limites communes', hint: 'contours communaux officiels (ligne verte)' },
-  { key: 'anru', label: 'ANRU (NPNRU)', hint: 'périmètres de renouvellement urbain (8 quartiers d’intérêt national)' },
+  { key: 'anru', label: 'ANRU (NPNRU)' },
   // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
-  { key: 'cinquante_pas', label: '50 pas géométriques', hint: 'Réserve des 50 pas géométriques — bande de 81,20 m depuis le rivage (spécifique outre-mer)' },
-  { key: 'equipements', label: 'Équipements', hint: 'mairie · écoles · santé · police/gendarmerie · sport (OSM, affichage seul)' },
+  { key: 'cinquante_pas', label: '50 pas géométriques' },
 ]
 
-//: couches servies par commune (GeoJSON) — indisponibles en mode « Toute l'île » (payload)
-// R6 (revue Vic n°2) : TOUTES les couches sont servies île (zonage/PPR en MVT, parc en
-// GeoJSON simplifié 8 Mo opt-in, ANRU/équipements en direct) — plus rien de commune-scopé.
-const COMMUNE_ONLY: (keyof LayerToggles)[] = []
-
-function LayersSection() {
-  const { layers, toggleLayer, commune } = useApp()
-  const ile = commune == null
-  // R5 (revue Vic n°2) : le hint est ANCRÉ au contrôle cliqué — bref, contigu, auto-éteint
-  const [hintKey, setHintKey] = useState<string | null>(null)
-  useEffect(() => {
-    if (!hintKey) return
-    const t = setTimeout(() => setHintKey(null), 2500)
-    return () => clearTimeout(t)
-  }, [hintKey])
+// M12 C2 — pastille « i » d'une couche : au survol OU au clic, l'explication CLIENT (LAYER_INFO,
+// centralisée) apparaît. Le clic sur la pastille NE bascule PAS la couche (stopPropagation dans Tip).
+function LayerInfoPill({ info }: { info: string }) {
+  if (!info) return null
   return (
-    // FIX (rendu liste) : sur un volet court (laptop), COUCHES est PLAFONNÉ + scrollable pour
-    // qu'il n'écrase plus la liste des résultats — il cède la place, la liste garde sa hauteur.
-    <div className="shrink px-5 pt-4 max-h-[34vh] overflow-y-auto">
-      <p className="label-caps mb-3">Couches</p>
-      <div className="flex flex-col gap-0.5">
-        {LAYERS.map(({ key, label, hint }) => {
-          const off = ile && COMMUNE_ONLY.includes(key)
-          const on = layers[key] && !off
-          return (
-            <div key={key}>
-              <button
-                onClick={() => (off ? setHintKey(key) : (setHintKey(null), toggleLayer(key)))}
-                className={`flex min-h-[28px] items-center gap-3 rounded-md py-1 text-left transition-colors duration-quick ${off ? 'opacity-45' : ''}`}
-                title={off ? undefined : hint}>
-                <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
-                  {on && (
-                    <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
-                      <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06130C" strokeWidth="1.8" />
-                    </svg>
-                  )}
-                </span>
-                <span className={`text-xs ${on ? 'text-txt' : 'text-txt-mut'}`}>{label}</span>
-              </button>
-              {hintKey === key && (
-                <p data-hint-couche={key} className="ml-6 mt-0.5 text-[11px] text-st-creuser">
-                  Par commune — choisissez une commune ↑
-                </p>
-              )}
-            </div>
-          )
-        })}
-      </div>
+    <Tip side="top" tip={info} className="shrink-0">
+      <span
+        role="button"
+        tabIndex={0}
+        aria-label="En savoir plus sur cette couche"
+        className="flex h-[15px] w-[15px] items-center justify-center rounded-full border border-line-2 text-[9px] font-bold leading-none text-txt-dim transition-colors duration-quick hover:border-mint hover:text-mint"
+      >
+        i
+      </span>
+    </Tip>
+  )
+}
+
+// M12 C1 — « Couches » est un TIROIR REPLIABLE, REPLIÉ PAR DÉFAUT (libère la vue parcelle).
+// Ouvert, il POUSSE le contenu du dessous (flux flex : jamais de recouvrement, la liste des
+// résultats reste entière). Auto-fermeture ~10 s après une sélection de couche (`onSelected`).
+function LayersSection({ open, onToggle, onSelected }: {
+  open: boolean
+  onToggle: () => void
+  onSelected: () => void
+}) {
+  const { layers, toggleLayer } = useApp()
+  const activeCount = LAYERS.reduce((n, { key }) => n + (layers[key] ? 1 : 0), 0)
+  return (
+    <div className="shrink-0 px-5 pt-4">
+      <button
+        data-couches-toggle
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-2 text-left"
+        title={open ? 'Replier les couches' : 'Déplier les couches'}
+      >
+        <span className="label-caps">Couches</span>
+        <span className="flex items-center gap-2">
+          {activeCount > 0 && (
+            <span className="rounded-full bg-mint/15 px-1.5 py-0.5 text-[9.5px] font-medium text-mint">{activeCount} active{activeCount > 1 ? 's' : ''}</span>
+          )}
+          <span className={`text-txt-dim transition-transform duration-quick ${open ? 'rotate-180' : ''}`} aria-hidden="true">⌄</span>
+        </span>
+      </button>
+      {open && (
+        // plafonné + scrollable : sur un volet court, la liste des résultats garde sa hauteur
+        <div className="mt-3 max-h-[38vh] overflow-y-auto">
+          <div className="flex flex-col gap-0.5">
+            {LAYERS.map(({ key, label }) => {
+              const on = layers[key]
+              const info = LAYER_INFO[key] ?? ''
+              return (
+                <div key={key} className="flex items-center gap-2">
+                  <button
+                    onClick={() => { toggleLayer(key); onSelected() }}
+                    className="flex min-h-[28px] flex-1 items-center gap-3 rounded-md py-1 text-left transition-colors duration-quick"
+                  >
+                    <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
+                      {on && (
+                        <svg viewBox="0 0 10 10" className="h-2.5 w-2.5">
+                          <polyline points="2,5.5 4,7.5 8,3" fill="none" stroke="#06130C" strokeWidth="1.8" />
+                        </svg>
+                      )}
+                    </span>
+                    <span className={`text-xs ${on ? 'text-txt' : 'text-txt-mut'}`}>{label}</span>
+                  </button>
+                  <LayerInfoPill info={info} />
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -116,6 +156,19 @@ export function LeftPanel() {
   // n'existait pas. Désormais la CARTE est l'écran d'accueil mobile ; COUCHES + légende
   // VERDICT vivent dans un tiroir escamotable (bouton « Couches » flottant).
   const [mobileOpen, setMobileOpen] = useState(false)
+  // M12 C1 : « Couches » REPLIÉ PAR DÉFAUT (libère la vue parcelle). État partagé desktop/mobile.
+  const [couchesOpen, setCouchesOpen] = useState(false)
+  const autoClose = useRef<number | undefined>(undefined)
+  useEffect(() => () => window.clearTimeout(autoClose.current), [])
+  // Auto-fermeture ~10 s après une sélection de couche (on relance le minuteur à chaque toggle).
+  const onLayerSelected = () => {
+    window.clearTimeout(autoClose.current)
+    autoClose.current = window.setTimeout(() => setCouchesOpen(false), 10_000)
+  }
+  const toggleCouches = () => {
+    window.clearTimeout(autoClose.current)
+    setCouchesOpen((o) => !o)
+  }
   return (
     <>
       {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}
@@ -133,7 +186,7 @@ export function LeftPanel() {
             <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
             <button onClick={togglePanel} className="text-txt-dim hover:text-txt" title="Replier le panneau" aria-label="Replier le panneau">‹</button>
           </div>
-          <LayersSection />
+          <LayersSection open={couchesOpen} onToggle={toggleCouches} onSelected={onLayerSelected} />
           <div className="mx-5 my-3 shrink-0 border-t border-line" />
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -165,7 +218,7 @@ export function LeftPanel() {
               <button data-couches-fermer onClick={() => setMobileOpen(false)} aria-label="Fermer"
                 className="flex h-7 w-7 items-center justify-center rounded-md text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-txt" title="Revenir à la carte">✕</button>
             </div>
-            <LayersSection />
+            <LayersSection open={couchesOpen} onToggle={toggleCouches} onSelected={onLayerSelected} />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />

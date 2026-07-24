@@ -3,7 +3,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
 import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, getTilesMeta, parcelAt } from '../../lib/api'
-import { CINQUANTE_PAS_COLOR, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { CINQUANTE_PAS_COLOR, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
 import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES } from './basemaps'
@@ -116,19 +116,10 @@ const OVERLAYS = {
 } as const
 const PARC_LINE = '#7A4A1E'   // liseré marron foncé — borne nette du Parc
 
-//: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 5 catégories, couleurs différenciées
-// Point 13 : un SYMBOLE parlant par type d'équipement (pastille couleur + pictogramme), au lieu
-// de simples pastilles indistinctes. Émoji rendu via canvas → addImage (aucune lib ; repli =
-// la pastille colorée + la légende si l'OS n'a pas la police émoji).
-const EQUIP_META: { key: string; emoji: string; color: string; label: string }[] = [
-  { key: 'mairie', emoji: '🏛️', color: '#B497F0', label: 'Mairie' },
-  { key: 'ecole', emoji: '🏫', color: '#5CE6A1', label: 'École' },
-  { key: 'sante', emoji: '🏥', color: '#E8695A', label: 'Santé' },
-  { key: 'commerce', emoji: '🛒', color: '#F0A868', label: 'Commerce' },
-  { key: 'tcsp', emoji: '🚌', color: '#6FD3C6', label: 'Transport' },
-  { key: 'police', emoji: '🚓', color: '#8FB4F0', label: 'Police / gendarmerie' },
-  { key: 'sport', emoji: '⚽', color: '#E8B44C', label: 'Sport' },
-]
+//: ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories, pictogramme + pastille.
+// Point 13 : un SYMBOLE parlant par type d'équipement. La META est partagée (lib/status.ts) :
+// même source pour la légende (Legend.tsx) et le rendu carte. Émoji rendu via canvas → addImage
+// (aucune lib ; repli = la pastille colorée + la légende si l'OS n'a pas la police émoji).
 const EQUIP_CATS = EQUIP_META.map((e) => e.key)
 
 function makeEquipIcons(m: maplibregl.Map) {
@@ -209,7 +200,11 @@ export function MapView() {
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
   // le remplissage zonage n'est appliqué que si la source ACTIVE porte zone_fam :
   // geojson commune = toujours (jointure live) ; tuiles île = au prochain build-mvt
-  const zonageFill = layers.zonage_parcelle && (!ile || tilesMeta.data?.zonage_parcelle === true)
+  // M12 C5 : DEUX portes vers cette recoloration — « Zonage PLU (par parcelle) » (avec étiquette
+  // au zoom + popup au clic) ET la nouvelle « Colorisation par type de zonage » (lecture
+  // d'ensemble, sans clic). L'une OU l'autre allume le remplissage par famille.
+  const zonageColor = layers.zonage_parcelle || layers.zonage_colorise
+  const zonageFill = zonageColor && (!ile || tilesMeta.data?.zonage_parcelle === true)
 
   // ───────────────────────── init ─────────────────────────
   useEffect(() => {
@@ -353,10 +348,16 @@ export function MapView() {
       // d'icônes par milliers à l'écran), clic = nom de l'équipement
       makeEquipIcons(m)
       m.addSource('ov-equip', { type: 'geojson', data: EMPTY_FC as never })
+      // M12 C3 — les pastilles d'équipement GROSSISSENT quand on zoome (elles rétrécissaient) :
+      // l'ancienne rampe 12→0,32 / 17→0,60 s'aplatissait vite et PLAFONNAIT à z17 ; au zoom
+      // rapproché (z18-20, l'échelle de travail sur une parcelle) elles restaient figées à 0,60
+      // pendant que tout le reste de la carte grossissait → effet de rétrécissement relatif.
+      // Rampe croissante et CONTINUE jusqu'à z20 : plus on approche, plus la pastille est lisible.
       m.addLayer({ id: 'ov-equip', type: 'symbol', source: 'ov-equip', minzoom: 12,
         layout: { visibility: 'none',
                   'icon-image': ['concat', 'equip-', ['get', 'subtype']] as never,
-                  'icon-size': ['interpolate', ['linear'], ['zoom'], 12, 0.32, 17, 0.6],
+                  'icon-size': ['interpolate', ['linear'], ['zoom'],
+                    12, 0.30, 15, 0.55, 17, 0.85, 20, 1.3] as never,
                   'icon-allow-overlap': true } })
       m.on('click', 'ov-equip', (e) => {
         const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]
@@ -473,11 +474,11 @@ export function MapView() {
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
   useEffect(() => {
-    if (ile && layers.zonage_parcelle && tilesMeta.data && !tilesMeta.data.zonage_parcelle) {
+    if (ile && (layers.zonage_parcelle || layers.zonage_colorise) && tilesMeta.data && !tilesMeta.data.zonage_parcelle) {
       useApp.getState().setToast(
-        'Zonage PLU (parcelles) en mode île : disponible au prochain build de tuiles — choisissez une commune pour l’utiliser dès maintenant.')
+        'Colorisation par zonage en mode île : disponible au prochain build de tuiles — choisissez une commune pour l’utiliser dès maintenant.')
     }
-  }, [ile, layers.zonage_parcelle, tilesMeta.data])
+  }, [ile, layers.zonage_parcelle, layers.zonage_colorise, tilesMeta.data])
 
   // ───────────────────────── fond de plan + relief ─────────────────────────
   useEffect(() => {
@@ -829,20 +830,10 @@ export function MapView() {
         ))}
       </div>
       <MapToolbar />
+      {/* M12 C6/C7 : UN SEUL panneau de légendes (verdict replié + zonage + 50 pas +
+          équipements), cohabitant sans se recouvrir. La légende « Équipements » a quitté son
+          bloc flottant (qui masquait le verdict) pour rejoindre ce panneau. */}
       <Legend />
-      {/* Point 13 : légende des équipements — chaque symbole = un type (visible quand la couche l'est) */}
-      {layers.equipements && (
-        <div className="pointer-events-none absolute bottom-16 right-4 rounded-lg border border-line bg-surface-2/95 px-3 py-2 shadow-elev-2">
-          <p className="label-caps mb-1 text-[9px]">Équipements</p>
-          <div className="flex flex-col gap-0.5 text-[11px]">
-            {EQUIP_META.map((e) => (
-              <span key={e.key} className="flex items-center gap-1.5 text-txt-mut">
-                <span className="text-[13px] leading-none">{e.emoji}</span>{e.label}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
       {/* B1/P5 : chargement carte DISCRET (données GeoJSON + tuiles MVT) — jamais figé */}
       {(geo.isFetching || tilesLoading) && (
         <div className="pointer-events-none absolute left-1/2 top-4 -translate-x-1/2 rounded-full border border-mint/30 bg-surface-2 px-4 py-2 shadow-elev-2">

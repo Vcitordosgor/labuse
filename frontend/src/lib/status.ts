@@ -82,21 +82,39 @@ export const V_BAND_META: Record<VBand, { label: string; color: string }> = {
 }
 export const vBandColor = (b: VBand | null | undefined) => (b && V_BAND_META[b]?.color) || NONE_COLOR
 
-// ── M6.1 : couche « Zonage PLU (parcelles) » — familles U/AU/A/N ────────────────────────
+// ── M6.1 / M12 C5 : couche « Zonage PLU (parcelles) » — familles U/AU/A/N ────────────────
 // Palette DISTINCTE du verdict v2 (braise #E8695A, ambre #E8B44C, gris-vert #8FA69A, bleu
-// #6FA8DC, menthe #5CE6A1) pour éviter toute confusion : rose (U), violet (AU), jaune-vert
-// (A), vert forêt (N). `autre` = typezone hors U/AU/A/N (rare) ; hors zonage GPU = null.
+// #6FA8DC, menthe #5CE6A1) pour éviter toute confusion.
+// M12 C5 — écart de teinte MAXIMISÉ entre familles voisines (le grief « U1a/U1c trop proches »
+// est un grief d'écart de teinte : on écarte les 4 familles autour du cercle chromatique).
+// U = magenta franc (rose→magenta), AU = bleu roi (nettement décollé du magenta), A = or/ambre
+// chaud, N = vert franc. Voisins : magenta↔bleu, bleu↔or, or↔vert — chacun à ≥90° de teinte.
+// `autre` = typezone hors U/AU/A/N (rare, gris neutre) ; hors zonage GPU = null.
 export type ZoneFam = 'U' | 'AU' | 'A' | 'N' | 'autre'
 export const ZONE_FAM_META: Record<ZoneFam, { label: string; color: string }> = {
-  U: { label: 'U — urbaine', color: '#E8579B' },
-  AU: { label: 'AU — à urbaniser', color: '#9F6BF0' },
-  A: { label: 'A — agricole', color: '#C9D44B' },
-  N: { label: 'N — naturelle', color: '#3E8E6E' },
+  U: { label: 'U — urbaine', color: '#E5417F' },      // magenta franc
+  AU: { label: 'AU — à urbaniser', color: '#4C7DF0' }, // bleu roi (décollé du magenta)
+  A: { label: 'A — agricole', color: '#E8B23A' },      // or / ambre chaud
+  N: { label: 'N — naturelle', color: '#3FB56A' },     // vert franc
   autre: { label: 'Autre zonage', color: '#8A94A6' },
 }
 export const ZONE_FAM_ORDER: ZoneFam[] = ['U', 'AU', 'A', 'N', 'autre']
 //: couleur « 50 pas géométriques » (M6.1 item 2) — bande littorale, cyan-bleu côtier
 export const CINQUANTE_PAS_COLOR = '#4CC3E8'
+
+// ── ÉQUIPEMENTS (contexte promotrice, affichage seul) — 7 catégories différenciées.
+// M12 C6 : la META est REMONTÉE ici (lib partagée) pour que la légende (Legend.tsx) et le rendu
+// carte (MapView) tirent la même source — la légende « Équipements » cohabite dans le panneau
+// unique au lieu d'un bloc flottant qui recouvrait le verdict.
+export const EQUIP_META: { key: string; emoji: string; color: string; label: string }[] = [
+  { key: 'mairie', emoji: '🏛️', color: '#B497F0', label: 'Mairie' },
+  { key: 'ecole', emoji: '🏫', color: '#5CE6A1', label: 'École' },
+  { key: 'sante', emoji: '🏥', color: '#E8695A', label: 'Santé' },
+  { key: 'commerce', emoji: '🛒', color: '#F0A868', label: 'Commerce' },
+  { key: 'tcsp', emoji: '🚌', color: '#6FD3C6', label: 'Transport' },
+  { key: 'police', emoji: '🚓', color: '#8FB4F0', label: 'Police / gendarmerie' },
+  { key: 'sport', emoji: '⚽', color: '#E8B44C', label: 'Sport' },
+]
 
 // Item 7 (UX V1) : définitions Q/A/V — UNE phrase chacune, identique partout où la lettre
 // apparaît (fiche, liste, restitution, CRM). Jamais un sigle nu pour un nouvel utilisateur.
