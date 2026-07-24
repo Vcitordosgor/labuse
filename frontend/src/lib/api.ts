@@ -1,4 +1,4 @@
-import type { Fiche, ParcelResult, PipelineEntry, PipelineMeta, SourceInfo, Stats } from './types'
+import type { CrmColumn, Fiche, ParcelResult, PipelineEntry, PipelineMeta, SourceInfo, Stats } from './types'
 
 export interface ParcelFeatureCollection {
   type: 'FeatureCollection'
@@ -178,6 +178,22 @@ export const patchPipeline = (id: number, body: Record<string, unknown>) =>
     method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   })
 export const deletePipeline = (id: number) => j<{ ok: boolean }>(`/pipeline/${id}`, { method: 'DELETE' })
+
+// ── M12 LOT H — colonnes CRM personnalisables (par tenant) ──
+const _jsonInit = (method: string, body?: unknown): RequestInit => ({
+  method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body),
+})
+export const getCrmColumns = () => j<{ columns: CrmColumn[] }>('/pipeline/columns')
+export const createCrmColumn = (label: string, tone?: string | null) =>
+  j<{ ok: boolean; columns: CrmColumn[] }>('/pipeline/columns', _jsonInit('POST', { label, tone: tone ?? null }))
+export const renameCrmColumn = (id: number, label: string, tone?: string | null) =>
+  j<{ ok: boolean; columns: CrmColumn[] }>(`/pipeline/columns/${id}`, _jsonInit('PATCH', { label, tone: tone ?? null }))
+export const reorderCrmColumns = (order: number[]) =>
+  j<{ ok: boolean; columns: CrmColumn[] }>('/pipeline/columns/reorder', _jsonInit('POST', { order }))
+export const deleteCrmColumn = (id: number, moveTo?: number | null) =>
+  j<{ ok: boolean; moved: number; columns: CrmColumn[] }>(`/pipeline/columns/${id}`, _jsonInit('DELETE', { move_to: moveTo ?? null }))
+export const resetCrmColumns = () =>
+  j<{ ok: boolean; columns: CrmColumn[]; note: string }>('/pipeline/columns/reset', _jsonInit('POST'))
 
 // ── Sources ──
 export const getSources = () => j<SourceInfo[]>('/sources')
