@@ -155,6 +155,12 @@ interface AppState {
   // ── Modules outils (filtres savants, accent violet) ──
   module: string | null
   setModule: (m: string | null) => void
+  // M15 D1 : comparateur « Remonter le temps » — les DEUX fonds choisis vivent dans le store
+  // pour que les sélecteurs soient rendus dans le BANDEAU GAUCHE (M08), pas en surimpression carte.
+  cmpLeft: string
+  cmpRight: string
+  setCmpLeft: (k: string) => void
+  setCmpRight: (k: string) => void
   // ce que le module affiche sur la carte : parcelles surlignées (idus) + géométries propres (lots, permis)
   moduleMap: { idus: string[]; extra: unknown | null }
   setModuleMap: (m: { idus: string[]; extra: unknown | null }) => void
@@ -259,6 +265,10 @@ export const useApp = create<AppState>((set) => ({
   setModule: (module) => set({ module, view: 'cartes', outilsOpen: false, moduleMap: { idus: [], extra: null }, moduleFiche: {}, parcours: null, openProjet: null }),
   moduleMap: { idus: [], extra: null },
   setModuleMap: (moduleMap) => set({ moduleMap }),
+  cmpLeft: 'bm-ortho-1950',
+  cmpRight: 'bm-ortho-now',
+  setCmpLeft: (cmpLeft) => set({ cmpLeft }),
+  setCmpRight: (cmpRight) => set({ cmpRight }),
   moduleFiche: {},
   setModuleFiche: (moduleFiche) => set({ moduleFiche }),
   flyTo: null,
