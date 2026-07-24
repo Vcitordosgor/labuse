@@ -488,11 +488,7 @@ function ProjetButton({ idu }: { idu: string }) {
     <div className="relative flex-1">
       <button
         data-projet-fiche
-        onClick={() => {
-          // un seul projet rattaché → ouvrir directement ; sinon (0 ou plusieurs) → menu
-          if (attaches.length === 1) setOpenProjet({ id: attaches[0].id, nom: attaches[0].nom })
-          else setOpen((o) => !o)
-        }}
+        onClick={() => setOpen((o) => !o)}   // QA-59 : TOUJOURS le menu (multi-projet) — jamais de saut direct
         aria-expanded={open}
         className={`flex h-8 w-full items-center justify-center gap-1 whitespace-nowrap rounded-lg px-3 text-xs font-medium ${
           inProjet ? 'bg-violet text-bg hover:brightness-110' : 'border border-violet/50 text-violet hover:bg-violet/10'}`}
@@ -513,20 +509,41 @@ function ProjetButton({ idu }: { idu: string }) {
             <p className="px-1 py-2 leading-snug text-txt-dim">Aucun projet actif. Créez-en un depuis « Mes projets ».</p>
           )}
           <div className="max-h-56 space-y-0.5 overflow-y-auto">
+            {/* QA-59 : les projets qui contiennent DÉJÀ la parcelle sont GRISÉS et non ajoutables
+                (anti-doublon dans un même projet + « voici où elle est déjà rangée »). Les AUTRES
+                projets restent actifs → ajout à un second projet possible (multi-projet). Jamais
+                de blocage global. */}
             {candidats.map((p) => {
               const deja = dejaIds.has(p.id)
               return (
                 <button key={p.id} data-projet-fiche-cible disabled={deja || add.isPending}
+                  aria-disabled={deja}
                   onClick={() => !deja && add.mutate(p.id)}
                   className={`flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left transition-colors duration-quick ${
-                    deja ? 'cursor-default text-txt-dim' : 'text-txt hover:bg-violet/10 hover:text-txt-hi'}`}
-                  title={deja ? 'Déjà dans ce projet' : `Ajouter à « ${p.nom} » (→ À trier)`}>
+                    deja ? 'cursor-not-allowed text-txt-dim opacity-50' : 'text-txt hover:bg-violet/10 hover:text-txt-hi'}`}
+                  title={deja ? `Déjà dans « ${p.nom} » (pas de doublon dans un même projet)` : `Ajouter à « ${p.nom} » (→ À trier)`}>
                   <span className="min-w-0 flex-1 truncate">{p.nom}</span>
                   {deja ? <span className="shrink-0 text-violet">✓ dedans</span> : <span className="shrink-0 text-violet">+</span>}
                 </button>
               )
             })}
           </div>
+          {/* Ouvrir un projet où la parcelle est déjà rangée (l'action « ouvrir » n'est plus sur le
+              bouton principal, qui ouvre désormais toujours ce menu). */}
+          {attaches.length > 0 && (
+            <div className="mt-1 border-t border-line/40 pt-1">
+              <p className="label-caps px-1 pb-0.5 text-txt-dim">Déjà dans — ouvrir</p>
+              {attaches.map((p) => (
+                <button key={`open-${p.id}`} data-projet-fiche-ouvrir
+                  onClick={() => { setOpenProjet({ id: p.id, nom: p.nom }); setOpen(false) }}
+                  className="flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-violet transition-colors duration-quick hover:bg-violet/10"
+                  title={`Ouvrir « ${p.nom} »`}>
+                  <span className="min-w-0 flex-1 truncate">{p.nom}</span>
+                  <span className="shrink-0">→</span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
