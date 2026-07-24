@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import {
-  chercherPlus, getParcoursEtat, getProjet, patchProjet, projetPdfUrl, proposerProjet, setStatutParcelle,
+  getParcoursEtat, getProjet, patchProjet, projetPdfUrl, proposerProjet, setStatutParcelle,
   type FicheProjet, type ParcoursEtat, type ParcoursItem, type ProprietairePublic, type StatutParcelle,
 } from '../../lib/api'
 import { fmtDate, fmtEurCompact, fmtInt, fmtM2 } from '../../lib/format'
+import { CLIENT } from '../../lib/strings'
 import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -86,7 +87,6 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const [expandCol, setExpandCol] = useState<StatutParcelle | null>(null)
   const [editing, setEditing] = useState(false)
   const [nomInput, setNomInput] = useState(nom)
-  const [msg, setMsg] = useState('')
   const [filtreAnalyse, setFiltreAnalyse] = useState(false)   // M2 : filtre rapide « à analyser » (colonne proposées)
 
   const projetQ = useQuery({ queryKey: ['projet', pid], queryFn: () => getProjet(pid), enabled: pid > 0 })
@@ -116,12 +116,6 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
       qc.invalidateQueries({ queryKey: ['pipeline'] })   // auto-CRM (Phase 2)
       qc.invalidateQueries({ queryKey: ['projets'] })     // mini-compteurs des fiches
     },
-  })
-  const elargir = useMutation({
-    mutationFn: () => chercherPlus(pid, { limit: 48, ile: true }),
-    onSuccess: (r) => { setMsg(r.n_added > 0 ? `+${r.n_added} parcelle(s) ajoutée(s) (élargi à l'île)` : 'aucune nouvelle parcelle (déjà toutes proposées)'); qc.invalidateQueries({ queryKey: ['parcours', pid] }) },
-    // F6 (M12) : un échec ne DOIT jamais être silencieux (« rien ne se passe ») — on l'énonce.
-    onError: () => setMsg('recherche indisponible — réessayez'),
   })
   const patch = useMutation({
     mutationFn: (body: { nom?: string; statut?: string }) => patchProjet(pid, body),
@@ -170,10 +164,6 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5">
-            <button data-kanban-chercher onClick={() => { setMsg(''); elargir.mutate() }} disabled={elargir.isPending}
-              className="min-h-7 rounded-md border border-mint/45 bg-mint/10 px-2.5 py-1 text-[11px] font-medium text-mint transition-colors duration-quick hover:bg-mint/20 disabled:opacity-50">
-              {elargir.isPending ? '…' : '+ Chercher plus'}
-            </button>
             <a data-kanban-pdf href={projetPdfUrl(pid)} target="_blank" rel="noreferrer"
               className="min-h-7 rounded-md border border-line-2 px-2.5 py-1 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi">Exporter</a>
             <button data-kanban-renommer onClick={() => { setNomInput(projet?.nom ?? nom); setEditing(true) }}
@@ -182,7 +172,9 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               className="min-h-7 rounded-md px-2 py-1 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt-hi">Archiver</button>
           </div>
         </div>
-        {msg && <p data-kanban-msg className="mt-1.5 text-[10.5px] text-mint">{msg}</p>}
+        {/* M13-E2 (QA-52) : « + Chercher plus » retiré (E1 peuple déjà « À trier »). Phrase
+            orientée client : on enrichit un projet à tout moment depuis la fiche parcelle. */}
+        <p data-kanban-enrichir className="mt-1.5 text-[10.5px] text-txt-dim">{CLIENT.projet.enrichir}</p>
       </div>
 
       {/* 3 COLONNES */}
@@ -232,7 +224,7 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
               <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2.5">
                 {list.length === 0 && (
                   <div className="rounded-lg bg-surface-2/60 py-6 text-center text-[11px] text-txt-dim">
-                    {isProp ? (filtreAnalyse ? 'Rien à analyser' : 'Rien à trier — « Chercher plus »') : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
+                    {isProp ? (filtreAnalyse ? 'Rien à analyser' : 'Rien à trier') : col.key === 'retenue' ? 'Aucune retenue' : 'Aucune écartée'}
                   </div>
                 )}
                 {isProp

@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { createProjet, getReperes, iaEntretien, type EntretienQuestion, type EntretienRep, type FicheProjet, type RepereOption } from '../../lib/api'
+import { createProjet, getReperes, iaEntretien, proposerProjet, type EntretienQuestion, type EntretienRep, type FicheProjet, type RepereOption } from '../../lib/api'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -103,12 +103,19 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
     (reperesQ.data?.options ?? []).find((o) => o.key === label || o.label === label)
 
   // F5 (M12) — « Lancer la recherche » PERSISTE le projet et ouvre DIRECTEMENT sa vue 3 colonnes
-  // (À trier / Retenues / Écartées), pas la carte globale. Le kanban (re)propose les parcelles du
-  // jour à l'ouverture (proposerProjet idempotent) → elles atterrissent dans « À trier ». Dédup
-  // douce serveur : un projet identique est repris (jamais de doublon).
+  // (À trier / Retenues / Écartées), pas la carte globale. M13-E1 (QA-51) : la recherche est
+  // DÉCLENCHÉE ICI, au lancement — on propose les parcelles du jour AVANT d'ouvrir le kanban, pour
+  // qu'« À trier » soit PEUPLÉE à l'arrivée (fini l'écran vide qui n'attend « + Chercher plus »).
+  // proposerProjet est idempotent (ON CONFLICT DO NOTHING) : sûr même si le projet existait déjà
+  // (dédup douce serveur). Un échec de proposition n'empêche jamais l'ouverture (le kanban a son
+  // propre filet) — on ouvre malgré tout.
   const lancer = useMutation({
-    mutationFn: () => createProjet({ fiche, nom: nom || undefined }),
-    onSuccess: ({ projet }) => {
+    mutationFn: async () => {
+      const { projet } = await createProjet({ fiche, nom: nom || undefined })
+      try { await proposerProjet(projet.id) } catch { /* filet kanban : non bloquant */ }
+      return projet
+    },
+    onSuccess: (projet) => {
       setOpenProjet({ id: projet.id, nom: projet.nom })   // → vue kanban 3 colonnes (nav exclusive)
       onClose()   // l'entretien est terminé : ré-ouvrir le copilote = une recherche fraîche
     },

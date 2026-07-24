@@ -114,6 +114,16 @@ export const CLIENT = {
     },
   },
 
+  // ── M13-E2 · projet (kanban) ──────────────────────────────────────────────
+  // Remplace l'ancien bouton « + Chercher plus » (rendu inutile par E1 : les parcelles
+  // arrivent déjà peuplées). Phrase orientée client : on enrichit un projet à tout moment
+  // depuis la carte, via le bouton « Projet » de la fiche parcelle.
+  projet: {
+    enrichir:
+      'Une parcelle en tête ailleurs ? Ajoutez-la à ce projet à tout moment ' +
+      'depuis sa fiche, avec le bouton « Projet ».',
+  },
+
   // ── B8 · « Comprendre l'algorithme » ──────────────────────────────────────
   algo: {
     // libellé RETENU (les 2 alternatives sont consignées au rapport final)
