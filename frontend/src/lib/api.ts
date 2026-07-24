@@ -134,41 +134,25 @@ export const scoreurAdresse = (adresse: string, prixDemandeEur: number | null) =
     body: JSON.stringify({ q: adresse, prix_demande_eur: prixDemandeEur }),
   })
 
-// M12-D · autocomplétion d'adresse (BAN). AUCUN endpoint interne d'autocomplétion n'existe :
-// le back ne fait qu'un géocodage limit=1 (scoreur.py). On appelle donc l'API BAN publique
-// (api-adresse.data.gouv.fr — Étalab, gratuite, sans clé), comme le back lui-même pour /scoreur.
+// M13-B1 · autocomplétion d'adresse INTERNE : on interroge NOTRE table `adresses` (BAN
+// rattachée aux parcelles à ~99,99 %) via l'endpoint /adresses/autocomplete — plus fiable que
+// l'appel navigateur vers l'API BAN externe (qui pouvait échouer/être bloqué) et aligné sur
+// notre trame. Chaque suggestion porte DÉJÀ son `idu` : atterrissage direct sur la fiche.
 // Une sélection retourne TOUJOURS une adresse normalisée + coordonnées (jamais une chaîne libre).
 export interface BanFeature {
   label: string          // adresse normalisée (jamais la saisie brute)
   lon: number
   lat: number
-  score: number
+  idu: string | null     // parcelle rattachée (source interne) — landing direct
   type: string | null    // housenumber / street / municipality …
-  city: string | null
   postcode: string | null
 }
-const BAN_URL = 'https://api-adresse.data.gouv.fr/search/'
 export async function banAutocomplete(q: string, signal?: AbortSignal): Promise<BanFeature[]> {
   const needle = q.trim()
   if (needle.length < 3) return []
-  const url = `${BAN_URL}?q=${encodeURIComponent(needle)}&limit=6&autocomplete=1`
-  const r = await fetch(url, { signal })
-  if (!r.ok) throw new ApiError(url, r.status)
-  const data = (await r.json()) as { features?: Array<{ geometry?: { coordinates?: [number, number] }; properties?: Record<string, unknown> }> }
-  return (data.features ?? [])
-    .filter((f) => Array.isArray(f.geometry?.coordinates))
-    .map((f) => {
-      const [lon, lat] = f.geometry!.coordinates as [number, number]
-      const p = f.properties ?? {}
-      return {
-        label: String(p.label ?? needle),
-        lon, lat,
-        score: typeof p.score === 'number' ? p.score : 0,
-        type: (p.type as string) ?? null,
-        city: (p.city as string) ?? null,
-        postcode: (p.postcode as string) ?? null,
-      }
-    })
+  const r = await j<{ features?: BanFeature[] }>(
+    `/adresses/autocomplete?q=${encodeURIComponent(needle)}&limit=6`, { signal })
+  return r.features ?? []
 }
 
 // O3 · anti-fiche « pourquoi pas » : motifs d'écartement hiérarchisés, sourcés (cascade servie).

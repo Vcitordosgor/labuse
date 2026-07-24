@@ -1,35 +1,46 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { banAutocomplete, deleteSearch, getCommunes, getEvents, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, saveSearch, searchParcels } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
 import { TIER_V2_META, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
+import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 import { Loading } from '../Loading'
 
 function Omnibox() {
-  const { query, setQuery, select, setView, setCommune, commune, setToast } = useApp()
-  const ref = useRef<HTMLInputElement>(null)
+  const { select, setView, setCommune, commune, setToast } = useApp()
   const geo = useQuery({ queryKey: ['geojson', commune], queryFn: getParcelsGeojson, enabled: commune != null })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
 
-  // raccourci « / » → focus (le kbd a disparu mais le raccourci reste, pratique)
+  // raccourci « / » → focus de l'omnibox (le kbd a disparu mais le raccourci reste, pratique)
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
       if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
         e.preventDefault()
-        ref.current?.focus()
+        document.querySelector<HTMLInputElement>('[data-omnibox]')?.focus()
       }
     }
     window.addEventListener('keydown', h)
     return () => window.removeEventListener('keydown', h)
   }, [])
 
-  // A6 (post-revue) + M12-D3 : la barre du HAUT cherche dans TOUT le dashboard :
-  //  1) COMMUNE (nom, sans chiffre) → bascule le périmètre ;  2) IDU → ouvre la fiche ;
-  //  3) ADRESSE (M12-D3) → géocodage BAN → parcelle contenant le point → ouvre la fiche.
-  const onEnter = async () => {
-    const raw = query.trim()
+  // M13-B1 : la barre du HAUT est désormais une VRAIE autocomplétion d'adresse (source interne
+  // /adresses/autocomplete). Choisir une suggestion → atterrissage DIRECT sur la parcelle
+  // (l'idu accompagne la suggestion ; repli parcelAt si absent). Le champ reste polyvalent :
+  // Entrée SANS suggestion sélectionnée retombe sur la recherche COMMUNE puis IDU (onEnterRaw).
+
+  // atterrissage à partir d'une suggestion d'adresse choisie
+  const onPickAddress = async (sel: AddressSelection) => {
+    if (sel.idu) { setView('cartes'); select(sel.idu); return }
+    const at = await parcelAt(sel.lon, sel.lat).catch(() => null)
+    if (at?.idu) { setView('cartes'); select(at.idu); return }
+    setToast(`« ${sel.label} » localisée, mais aucune parcelle en base à ce point.`)
+  }
+
+  // Entrée sans suggestion : COMMUNE (nom sans chiffre) → périmètre ; sinon IDU → fiche ;
+  // en dernier ressort, une adresse libre est géocodée via la 1re suggestion interne.
+  const onEnterRaw = async (raw: string) => {
     if (!raw) return
     if (!/\d/.test(raw)) {
       const low = raw.toLowerCase()
@@ -43,34 +54,32 @@ function Omnibox() {
       return idu.includes(qn) || idu.slice(8).includes(qn)
     })
     if (hit) { setView('cartes'); select(String(hit.properties?.idu)); return }
-    // un IDU est unique à l'échelle de l'île : la recherche parcelle IGNORE le périmètre
-    // commune actif (sinon : no-op silencieux dès que la parcelle est ailleurs).
     const remote = await searchParcels(qn, { ileEntiere: true }).catch(() => [])
     if (remote[0]) { setView('cartes'); select(remote[0].idu); return }
-    // M12-D3 — 3e entrée : une ADRESSE (contient un chiffre + du texte). On géocode via la BAN
-    // puis on cherche la parcelle CONTENANT le point (parcels/at). Landing sur la fiche.
+    // adresse libre → 1re suggestion interne
     if (/[a-zA-Zà-ÿ]/.test(raw)) {
       const feats = await banAutocomplete(raw).catch(() => [])
-      if (feats[0]) {
-        const at = await parcelAt(feats[0].lon, feats[0].lat).catch(() => null)
-        if (at?.idu) { setView('cartes'); select(at.idu); return }
-        setToast(`« ${feats[0].label} » géocodée, mais aucune parcelle en base à ce point.`)
-        return
-      }
+      if (feats[0]) { await onPickAddress({ label: feats[0].label, lon: feats[0].lon, lat: feats[0].lat, idu: feats[0].idu }); return }
     }
-    // jamais de no-op muet : dire à l'utilisateur que la recherche n'a rien donné
     setToast(`Aucune commune, parcelle ni adresse trouvée pour « ${raw} »`)
   }
 
   return (
     <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 pl-3 pr-0.5 transition-colors duration-quick focus-within:border-mint">
-      <input ref={ref} data-omnibox value={query} onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={(e) => e.key === 'Enter' && onEnter()}
+      <AddressAutocomplete
+        data-omnibox
+        onSelect={onPickAddress}
+        onEnterRaw={onEnterRaw}
         placeholder="Rechercher : commune · IDU (AB 0234) · adresse…"
-        title="Recherche du dashboard : une commune (bascule le périmètre), un IDU (ouvre la fiche) ou une adresse (géocodage → parcelle)"
-        className="min-w-0 flex-1 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none" />
-      {/* A5 (post-revue) : la LOUPE remplace le « / » et passe à DROITE — cliquable pour lancer */}
-      <button onClick={onEnter} title="Lancer la recherche" aria-label="Lancer la recherche"
+        className="min-w-0 flex-1 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none"
+      />
+      {/* A5 (post-revue) : la LOUPE cliquable — lance la recherche sur le texte courant */}
+      <button
+        onClick={() => {
+          const el = document.querySelector<HTMLInputElement>('[data-omnibox]')
+          if (el) onEnterRaw(el.value.trim())
+        }}
+        title="Lancer la recherche" aria-label="Lancer la recherche"
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-mint text-mint-ink transition-[filter] duration-quick hover:brightness-110">
         <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
           <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="2" />

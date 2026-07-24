@@ -21,12 +21,20 @@ export const CLIENT = {
   },
 
   // ── B1/B3 · barre de tri ──────────────────────────────────────────────────
+  // M13-F3 (QA-57) : libellés de tri parlants. « commune » retiré (demande Vic).
+  //  · rang → « classement » (le title dit CE QUI est classé : les parcelles).
+  //  · ×N → libellé explicite. 3 options étudiées, la 1re retenue :
+  //      1. « mutation ×N »  (RETENU — compact, dit ce que ×N multiplie)
+  //      2. « probabilité de mutation »
+  //      3. « ×N susceptibilité »
+  //    Le title détaille la sémantique complète.
   tri: {
     rang: 'classement',
-    mult: '×N',
+    mult: 'mutation ×N',
     surface: 'surface',
-    commune: 'commune',
-    rangTip: 'Classement de la parcelle (n°1 = la plus prometteuse) — copropriétés en queue',
+    rangTip: 'Classe les parcelles par ordre de priorité (n°1 = la plus prometteuse) — copropriétés en queue',
+    multTip: 'Trie par le ×N : combien de fois la parcelle est plus susceptible de muter que la moyenne de l’île',
+    surfaceTip: 'Trie par surface de parcelle, de la plus grande à la plus petite',
   },
 
   // ── B1 · scores ───────────────────────────────────────────────────────────

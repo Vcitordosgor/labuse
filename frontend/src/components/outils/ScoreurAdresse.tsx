@@ -32,28 +32,31 @@ export function ScoreurAdresse() {
 
   return (
     <div data-scoreur-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
-      <p className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
-        Seconde opinion avant d’offrir : saisissez l’adresse d’un bien à vendre (autocomplétion),
-        éventuellement le prix demandé, et LABUSE renvoie le verdict de la parcelle déjà scorée.
-      </p>
+      {/* M13-F4 (QA-54) : les deux champs + le bouton GROUPÉS dans l'ordre de lecture, dans
+          une seule carte encadrée — l'action est évidente au premier coup d'œil. Texte d'aide
+          COURT au-dessus du champ (plus de pavé). Autocomplétion BAN (B1) branchée. */}
+      <div data-scoreur-form className="flex flex-col gap-2 rounded-lg border border-line-2 bg-surface-2 p-3">
+        <p className="text-[10.5px] leading-snug text-txt-mut">
+          Seconde opinion avant d’offrir : une adresse, un prix éventuel, le verdict de la parcelle.
+        </p>
 
-      <AddressAutocomplete
-        data-scoreur-adresse
-        autoFocus
-        placeholder="Adresse (ex. 12 rue du Général de Gaulle, Saint-Paul)"
-        onSelect={onPick}
-        onClear={() => { setAdresse(''); m.reset() }}
-      />
+        <AddressAutocomplete
+          data-scoreur-adresse
+          autoFocus
+          placeholder="Adresse (ex. 12 rue du Général de Gaulle, Saint-Paul)"
+          onSelect={onPick}
+          onClear={() => { setAdresse(''); m.reset() }}
+        />
 
-      <div className="flex items-center gap-1.5">
         <input data-scoreur-prix type="number" min={0} value={prix ?? ''} placeholder="Prix demandé € (optionnel)"
           onChange={(e) => setPrix(e.target.value === '' ? null : Number(e.target.value))}
           onKeyDown={(e) => e.key === 'Enter' && run()}
           title="Le prix affiché/demandé, saisi à la main — jamais scrapé. Confronté à la charge foncière supportable (Estimé)."
-          className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+          className="w-full rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
+
         <button onClick={run} disabled={m.isPending || adresse.trim().length < 3}
-          className="shrink-0 rounded-lg bg-mint px-3 py-1.5 text-xs font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
-          {m.isPending ? '…' : 'Scorer'}
+          className="w-full rounded-lg bg-mint px-3 py-2 text-xs font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          {m.isPending ? 'Analyse…' : 'Scorer cette adresse'}
         </button>
       </div>
 
