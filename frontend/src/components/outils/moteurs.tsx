@@ -81,11 +81,17 @@ export function M16() {
     return () => setModuleMap({ idus: [], extra: null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [msel])
+  // M15 A1 : la visibilité des parcelles (couche de picking violette `ile-pick`) est gérée par
+  // MapView quand `module === 'assemblage'` — les contours de toutes les parcelles apparaissent,
+  // bien lisibles, dès qu'on zoome (les tuiles se chargent). Voir MapView `ile-pick`.
   const d = run.data
   return (
     <>
-      <Banner><b>Cliquez les parcelles sur la carte</b> pour composer l'assiette (re-cliquer retire).
-        SDP cumulée = somme des résiduels — le <b>règlement d'ensemble reste à instruire</b>.</Banner>
+      {/* M15 A1 : la cause du « ne fonctionne pas » = à l'échelle de l'île aucune parcelle n'est
+          chargée ni cliquable. On guide explicitement : ZOOMER d'abord fait apparaître les contours. */}
+      <Banner><b>Zoomez sur le secteur</b> pour faire apparaître les contours des parcelles, puis
+        <b> cliquez-les</b> pour composer l'assiette (re-cliquer retire). SDP cumulée = somme des
+        résiduels — le <b>règlement d'ensemble reste à instruire</b>.</Banner>
       <div className="flex flex-wrap gap-1">
         {msel.map((i) => (
           <button key={i} onClick={() => setMsel(msel.filter((x) => x !== i))}
