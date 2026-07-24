@@ -80,10 +80,15 @@ function M01() {
   )
   return (
     <>
-      <Banner>Lot candidat = approximation (plus grand cercle inscrit, recul bâti 3 m) — dessiné en
-        pointillés, <b>indicatif</b>. Règles de division (PLU, accès, réseaux) à instruire.</Banner>
-      <label className="mt-1 flex items-center gap-2 text-[11px] text-txt-mut">
-        Score division ≥ <input type="range" min={0} max={95} step={5} value={minScore}
+      {/* M15 E2 (RG2) : explication CLIENT — ce que fait l'outil, ce que vaut le score, et le fait
+          que le lot proposé est une estimation. */}
+      <Banner>Repère les <b className="text-txt">grands terrains où détacher un lot à bâtir</b>. Le
+        <b className="text-violet"> score (0-100)</b> — le nombre violet à droite — mesure la
+        <b> facilité à détacher un lot</b> (place libre, accès, forme). Le lot proposé est une
+        <b> estimation</b> : le plus grand espace constructible restant, à 3 m des bâtiments existants,
+        dessiné en pointillés. Les règles de division (PLU, accès, réseaux) restent à instruire.</Banner>
+      <label className="mt-1 flex items-center gap-2 text-[11px] text-txt-mut" title="Ne montrer que les parcelles dont le score de divisibilité dépasse ce seuil.">
+        Score de divisibilité ≥ <input type="range" min={0} max={95} step={5} value={minScore}
           onChange={(e) => setMinScore(Number(e.target.value))} className="flex-1 accent-violet" />
         <span className="font-mono text-txt">{minScore}</span>
       </label>
@@ -448,8 +453,13 @@ function M07() {
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
   return (
     <>
-      <Banner>Constructible (Q ≥ 50) mais <b>verrouillé</b> : personne morale introuvable au RNE ou
-        dirigeant inactif. Levier indiqué par cas — vérification notariale indispensable.</Banner>
+      {/* M15 E3 (RG2) : expliquer « fantôme » + le score, sans jargon (Q, RNE). */}
+      <Banner>Du foncier <b className="text-txt">constructible mais « fantôme »</b> : le terrain a du
+        potentiel, mais son propriétaire est <b>difficile à joindre</b> — société introuvable au
+        registre des entreprises, ou dirigeant inactif. C'est le constructible que les autres ne
+        voient pas. Le <b className="text-violet">nombre violet</b> = le <b>potentiel constructible
+        de la parcelle</b> (0-100). Un levier d'approche est indiqué par cas — vérification notariale
+        indispensable.</Banner>
       <p className="text-[11px] text-txt-dim">{fmt(d?.['total'] as never)} parcelles gelées{(d?.['affiches'] as number) < (d?.['total'] as number) ? ` · ${fmt(d?.['affiches'] as never)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i) => (

@@ -19,7 +19,7 @@ type Liste = { run_id: string; n: number; items: Item[]; note?: string; avertiss
 const TABS = [
   { key: 'brulantes', label: 'Brûlantes' },
   { key: 'reserve', label: 'Réserve foncière' },
-  { key: 'top', label: 'Top P' },
+  { key: 'top', label: 'Classement' },   // M15 E1 : « Top P » (jargon) → « Classement »
 ] as const
 
 function useListe(tab: string, copro: boolean) {
@@ -45,6 +45,14 @@ export function ScoringV2Module() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-2">
+      {/* M15 E1 (RG2) : bandeau client — dire ce que mesure le classement et ce qu'est le ×N. */}
+      <div className="rounded-lg border border-mint/30 bg-mint/[0.06] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+        Le <b className="text-txt">classement</b> des parcelles par <b className="text-txt">probabilité
+        de mutation</b> à 12 mois (changer de main ou d'usage). Le <b className="text-mint">×N</b> dit
+        combien la parcelle est <b>plus probable de muter que la moyenne</b> de l'île (×13 = 13 fois
+        plus probable). <b>Brûlantes</b> = les plus chaudes ; <b>Réserve foncière</b> = fort potentiel
+        mais mutation peu probable à court terme ; <b>Classement</b> = toutes, par ordre de priorité.
+      </div>
       <div className="flex items-center gap-1">
         {TABS.map((t) => (
           <button key={t.key} onClick={() => setTab(t.key)}
