@@ -285,15 +285,18 @@ export function ResultsSection() {
     // FIX (rendu liste) : la section elle-même défile si le volet est court (laptop) — sinon
     // l'en-tête fixe (compteurs/chips) écrasait la liste (flex-1) à ~0 px. La liste garde une
     // hauteur minimale utilisable ET son scroll interne (cf. le conteneur data-results-scroll).
-    <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-5">
+    <div data-results-panel className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-clip px-5">
       {/* Fix cosmétique (point 3) : ligne de tri LISIBLE et alignée (contrôle segmenté), au lieu
           des options qui flottaient collées à droite sans hiérarchie. Fonction inchangée. */}
       <div className="shrink-0">
         <p className="font-mono text-[11px] tracking-widest text-txt-dim">RÉSULTATS</p>
-        <div className="mt-1.5 flex items-center gap-2">
+        {/* QA-46 (M13-C) : la barre de tri S'EMPILE (flex-wrap) au lieu de déborder — les 4 options
+            de tri ne tiennent pas sur la largeur du volet (~300 px) et étaient rognées. Le libellé
+            « Trier » et le contrôle segmenté passent à la ligne, le pilule wrappe ses boutons. */}
+        <div data-tri-bar className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className="shrink-0 text-[10px] uppercase tracking-wide text-txt-dim">Trier</span>
           {/* B3 : espacement régulier entre les 4 options (gap-1 + px-2.5 uniformes) */}
-          <div className="flex items-center gap-1 rounded-full border border-line-2 bg-surface-2 p-1">
+          <div className="flex flex-wrap items-center gap-1 rounded-full border border-line-2 bg-surface-2 p-1">
             {SORTS.map((s) => (
               <button key={s.key} data-sort={s.key} onClick={() => setSort(s.key)}
                 className={`rounded-full px-2.5 py-0.5 text-[11px] transition-colors ${sort === s.key ? 'bg-mint/15 font-medium text-mint' : 'text-txt-mut hover:text-txt'}`}
@@ -344,7 +347,7 @@ export function ResultsSection() {
           (point d'entrée unique). Les CHIFFRES restent affichés juste au-dessus, en info non
           cliquable (barre + ligne brûlantes/chaudes/réserve). A4 : ces compteurs sont cohérents. */}
 
-      <div data-results-scroll className="mt-3 flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto pb-2">
+      <div data-results-scroll className="mt-3 flex min-h-[200px] flex-1 flex-col gap-2 overflow-y-auto overflow-x-clip pb-2">
         {loading && (
           <>
             {[...Array(5)].map((_, i) => (

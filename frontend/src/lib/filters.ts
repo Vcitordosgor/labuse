@@ -45,8 +45,14 @@ export const FLAG_DEFS: { key: string; label: string }[] = [
 
 //: filtres « par signal » du dossier propriétaire — un libellé métier = un groupe de codes §5.3.
 export const V_SIGNAL_DEFS: { key: string; label: string; codes: string[] }[] = [
+  // M13 A1/A2 : BODACC_RADIATION RETIRÉ du groupe « Procédure collective ». Une radiation
+  // (dissolution/fin d'activité) N'EST PAS une procédure collective — c'est une famille
+  // distincte (`radiation`), pondérée 0 (anti-signal Phase 0, score_v_constants.py:82). Une
+  // parcelle « radiation seule » n'affiche AUCUNE procédure sur sa fiche (v_score 0) → elle
+  // était servie comme faux positif (92 des 314 retournés). Codes conservés = vraies procédures
+  // collectives (LJ/LJ clôturée/RJ/sauvegarde), toutes pondérées > 0 et affichées sur la fiche.
   { key: 'pcl', label: 'Procédure collective',
-    codes: ['BODACC_LJ', 'BODACC_LJ_CLOT', 'BODACC_RJ', 'BODACC_SAUVEGARDE', 'BODACC_RADIATION'] },
+    codes: ['BODACC_LJ', 'BODACC_LJ_CLOT', 'BODACC_RJ', 'BODACC_SAUVEGARDE'] },
   { key: 'friche', label: 'Friche', codes: ['FRICHE'] },
   { key: 'hors_ile', label: 'Propriétaire hors île', codes: ['GEO_HORS_ILE'] },
   { key: 'dpe_fg', label: 'DPE F-G', codes: ['DPE_G_MULTI', 'DPE_G', 'DPE_F'] },

@@ -113,8 +113,12 @@ function LayersSection({ open, onToggle, onSelected }: {
         </span>
       </button>
       {open && (
-        // plafonné + scrollable : sur un volet court, la liste des résultats garde sa hauteur
-        <div className="mt-3 max-h-[38vh] overflow-y-auto">
+        // plafonné + scrollable : sur un volet court, la liste des résultats garde sa hauteur.
+        // QA-46 (M13-C) : overflow-x-clip — un `overflow-y-auto` calcule overflow-x=auto, si bien
+        // que les tooltips absolus (Tip, `w-max`) débordant du volet étroit y déclenchaient une
+        // BARRE HORIZONTALE fantôme. `clip` sur x supprime la barre sans créer de conteneur de
+        // défilement, le tooltip reste peint. Défaut identique corrigé partout (fiche/CRM/tri).
+        <div data-couches-drawer className="mt-3 max-h-[38vh] overflow-y-auto overflow-x-clip">
           <div className="flex flex-col gap-0.5">
             {LAYERS.map(({ key, label }) => {
               const on = layers[key]

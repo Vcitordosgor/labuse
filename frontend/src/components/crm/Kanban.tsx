@@ -170,6 +170,13 @@ export function Kanban() {
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editLabel, setEditLabel] = useState('')
   const [pendingDelete, setPendingDelete] = useState<PipelineColumn | null>(null)
+  // QA-46 (M13-C) : le kanban NE DÉFILE PLUS horizontalement (barre de scroll proscrite). Les
+  // colonnes qui ne tiennent pas côte à côte sont paginées : on affiche une FENÊTRE de COLS_PAR_VUE
+  // colonnes qui remplissent la largeur (flex-1), et deux flèches ‹ › font glisser la fenêtre.
+  // Le drag-drop reste possible vers toute colonne visible ; pour une colonne hors fenêtre, on
+  // pagine d'abord. Choix consigné au rapport (mandat : « pas une barre horizontale »).
+  const COLS_PAR_VUE = 5
+  const [winStart, setWinStart] = useState(0)
   const move = useMutation({
     mutationFn: ({ id, status }: { id: number; status: string }) => patchPipeline(id, { status }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['pipeline'] }),
@@ -202,6 +209,12 @@ export function Kanban() {
   }
 
   const cols = meta.data?.columns ?? []
+  // Fenêtre paginée (QA-46) : quand il y a plus de COLS_PAR_VUE colonnes, on n'en montre qu'une
+  // tranche. maxStart = dernier décalage laissant une fenêtre pleine ; start est borné.
+  const paginated = cols.length > COLS_PAR_VUE
+  const maxStart = Math.max(0, cols.length - COLS_PAR_VUE)
+  const start = Math.min(winStart, maxStart)
+  const visibleCols = paginated ? cols.slice(start, start + COLS_PAR_VUE) : cols
   const byCol = (key: string) => (entries.data ?? []).filter((e) => e.status === key)
   const cardCount = (key: string) => byCol(key).length
 
@@ -234,14 +247,25 @@ export function Kanban() {
             glisser une carte pour changer d'étape · ajout depuis la fiche (+ Pipeline)
           </p>
         </div>
-        {/* H (M12) : barre d'édition des colonnes (personnaliser/ajouter/réinitialiser).
-            G5 (M12) : le compteur garde whitespace-nowrap + shrink-0 — « 8 étapes · défiler → »
-            ne se tronque plus (« 8 ét… ») quand le header est serré. */}
+        {/* H (M12) : barre d'édition des colonnes (personnaliser/ajouter/réinitialiser). */}
         <div className="flex shrink-0 items-center gap-2">
-          {/* P7 (dernière passe) : dire clairement qu'on peut défiler horizontalement */}
-          {cols.length > 4 && !editMode && (
-            <span className="shrink-0 whitespace-nowrap rounded-full border border-line-2 px-2.5 py-1 text-[10.5px] text-txt-mut">
-              {cols.length} étapes · défiler →
+          {/* QA-46 (M13-C) : pagination par FLÈCHES (plus de défilement horizontal). Les flèches
+              n'apparaissent que si toutes les colonnes ne tiennent pas dans la fenêtre. */}
+          {paginated && !editMode && (
+            <span className="flex shrink-0 items-center gap-1.5">
+              <button
+                onClick={() => setWinStart((s) => Math.max(0, Math.min(s, maxStart) - 1))}
+                disabled={start === 0}
+                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint disabled:opacity-25"
+                title="Colonnes précédentes" aria-label="Colonnes précédentes">‹</button>
+              <span className="whitespace-nowrap font-mono text-[10.5px] text-txt-mut">
+                {start + 1}–{Math.min(start + COLS_PAR_VUE, cols.length)} / {cols.length}
+              </span>
+              <button
+                onClick={() => setWinStart((s) => Math.min(maxStart, Math.min(s, maxStart) + 1))}
+                disabled={start >= maxStart}
+                className="flex h-6 w-6 items-center justify-center rounded-md border border-line-2 text-txt-dim hover:border-mint hover:text-mint disabled:opacity-25"
+                title="Colonnes suivantes" aria-label="Colonnes suivantes">›</button>
             </span>
           )}
           {editMode && (
@@ -263,14 +287,14 @@ export function Kanban() {
           >{editMode ? 'Terminé' : 'Personnaliser'}</button>
         </div>
       </div>
-      {/* P7 : dégradé de bord droit = affordance « il y a d'autres colonnes » */}
       <div className="relative mt-4 min-h-0 flex-1">
-        {/* G6 (M12) : items-start — les colonnes s'ajustent à leur contenu au lieu de s'étirer
-            sur toute la hauteur (une colonne vide ne fait plus ~800 px). max-h-full sur chaque
-            colonne (plus bas) préserve le défilement interne d'une colonne pleine. */}
-        <div className="flex h-full items-start gap-3 overflow-x-auto px-4 pb-5 sm:px-6">
+        {/* QA-46 (M13-C) : plus de `overflow-x-auto`. Les colonnes de la fenêtre visible sont
+            `flex-1 basis-0 min-w-0` — elles se PARTAGENT la largeur, aucune barre horizontale.
+            G6 (M12) : items-start préservé (une colonne vide ne s'étire pas sur toute la hauteur). */}
+        <div data-crm-cols className="flex h-full items-start gap-3 overflow-x-clip px-4 pb-5 sm:px-6">
         {meta.isLoading && <div className="p-2"><Loading label="Chargement du pipeline" className="text-xs" /></div>}
-        {cols.map((c, idx) => {
+        {visibleCols.map((c) => {
+          const idx = cols.indexOf(c)
           const items = byCol(c.key)
           const accent = TONE_ACCENT[c.tone ?? ''] ?? '#5C7268'
           return (
@@ -284,7 +308,7 @@ export function Kanban() {
                 if (dragId != null) move.mutate({ id: dragId, status: c.key })
                 setDragId(null)
               }}
-              className={`flex max-h-full w-[230px] shrink-0 flex-col rounded-xl border bg-surface-1 shadow-elev-1 transition-colors duration-quick ${
+              className={`flex max-h-full min-w-0 flex-1 basis-0 flex-col rounded-xl border bg-surface-1 shadow-elev-1 transition-colors duration-quick ${
                 overCol === c.key ? 'border-mint ring-1 ring-mint/40' : 'border-transparent'}`}
             >
               <div className="flex shrink-0 items-center gap-2 px-3 py-2.5">
@@ -327,7 +351,7 @@ export function Kanban() {
               </div>
               {/* G6 (M12) : min-h modeste = zone de dépôt confortable pour une colonne vide, sans
                   la colonne géante de ~800 px. Une colonne pleine défile en interne (max-h-full). */}
-              <div className="flex min-h-[72px] flex-1 flex-col gap-2.5 overflow-y-auto px-2.5 pb-2.5">
+              <div className="flex min-h-[72px] flex-1 flex-col gap-2.5 overflow-y-auto overflow-x-clip px-2.5 pb-2.5">
                 {items.map((e) => (
                   <Card key={e.id} e={e} onDragStart={() => setDragId(e.id)}
                     newEvents={evCount.data?.par_parcelle[e.idu] ?? 0} />
@@ -339,15 +363,7 @@ export function Kanban() {
             </div>
           )
         })}
-        {/* G5 (M12) : cale de fin — dans un conteneur flex à défilement horizontal, le padding
-            droit n'est pas honoré par tous les navigateurs et la DERNIÈRE colonne se retrouve
-            rognée. Cet espaceur garantit que la 8e colonne est entièrement défilable. */}
-        <div aria-hidden="true" className="w-2 shrink-0 sm:w-4" />
         </div>
-        {/* fondu de bord droit — pointer-events-none pour ne pas gêner le drag/scroll */}
-        {cols.length > 4 && (
-          <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-bg to-transparent" />
-        )}
       </div>
       {pendingDelete && (
         <DeleteColumnDialog
