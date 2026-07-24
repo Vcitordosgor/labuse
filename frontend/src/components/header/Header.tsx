@@ -1,12 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { deleteSearch, getCommunes, getEvents, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, saveSearch, searchParcels } from '../../lib/api'
+import { banAutocomplete, deleteSearch, getCommunes, getEvents, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, saveSearch, searchParcels } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
 import { TIER_V2_META, type TierV2 } from '../../lib/status'
 import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
-import { ScoreurAdresse } from '../outils/ScoreurAdresse'
 
 function Omnibox() {
   const { query, setQuery, select, setView, setCommune, commune, setToast } = useApp()
@@ -26,8 +25,9 @@ function Omnibox() {
     return () => window.removeEventListener('keydown', h)
   }, [])
 
-  // A6 (post-revue) : la barre du HAUT cherche dans TOUT le dashboard (hors contenu des fiches) :
-  //  1) COMMUNE (nom, sans chiffre) → bascule le périmètre ;  2) IDU → ouvre la fiche.
+  // A6 (post-revue) + M12-D3 : la barre du HAUT cherche dans TOUT le dashboard :
+  //  1) COMMUNE (nom, sans chiffre) → bascule le périmètre ;  2) IDU → ouvre la fiche ;
+  //  3) ADRESSE (M12-D3) → géocodage BAN → parcelle contenant le point → ouvre la fiche.
   const onEnter = async () => {
     const raw = query.trim()
     if (!raw) return
@@ -47,16 +47,27 @@ function Omnibox() {
     // commune actif (sinon : no-op silencieux dès que la parcelle est ailleurs).
     const remote = await searchParcels(qn, { ileEntiere: true }).catch(() => [])
     if (remote[0]) { setView('cartes'); select(remote[0].idu); return }
+    // M12-D3 — 3e entrée : une ADRESSE (contient un chiffre + du texte). On géocode via la BAN
+    // puis on cherche la parcelle CONTENANT le point (parcels/at). Landing sur la fiche.
+    if (/[a-zA-Zà-ÿ]/.test(raw)) {
+      const feats = await banAutocomplete(raw).catch(() => [])
+      if (feats[0]) {
+        const at = await parcelAt(feats[0].lon, feats[0].lat).catch(() => null)
+        if (at?.idu) { setView('cartes'); select(at.idu); return }
+        setToast(`« ${feats[0].label} » géocodée, mais aucune parcelle en base à ce point.`)
+        return
+      }
+    }
     // jamais de no-op muet : dire à l'utilisateur que la recherche n'a rien donné
-    setToast(`Aucune commune ni parcelle trouvée pour « ${raw} »`)
+    setToast(`Aucune commune, parcelle ni adresse trouvée pour « ${raw} »`)
   }
 
   return (
     <div className="flex h-8 w-[360px] items-center gap-2 rounded-lg border border-line-2 bg-surface-3 pl-3 pr-0.5 transition-colors duration-quick focus-within:border-mint">
       <input ref={ref} data-omnibox value={query} onChange={(e) => setQuery(e.target.value)}
         onKeyDown={(e) => e.key === 'Enter' && onEnter()}
-        placeholder="Rechercher : commune, IDU (AB 0234)…"
-        title="Recherche du dashboard : une commune (bascule le périmètre) ou un IDU (ouvre la fiche)"
+        placeholder="Rechercher : commune · IDU (AB 0234) · adresse…"
+        title="Recherche du dashboard : une commune (bascule le périmètre), un IDU (ouvre la fiche) ou une adresse (géocodage → parcelle)"
         className="min-w-0 flex-1 bg-transparent text-xs text-txt placeholder:text-txt-mut focus:outline-none" />
       {/* A5 (post-revue) : la LOUPE remplace le « / » et passe à DROITE — cliquable pour lancer */}
       <button onClick={onEnter} title="Lancer la recherche" aria-label="Lancer la recherche"
@@ -356,8 +367,7 @@ function NotifBell() {
 }
 
 export function Header() {
-  // R5 (O2) : scoreur d'adresse — l'outil de démo « seconde opinion », visible d'un coup d'œil
-  const [scoreurOpen, setScoreurOpen] = useState(false)
+  // M12-D4 : « Scorer une adresse » a quitté l'en-tête pour le tiroir Outils (registry).
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-line bg-bg px-4">
       {/* identité — la buse + wordmark */}
@@ -368,14 +378,6 @@ export function Header() {
         <span className="hidden font-display text-sm font-bold tracking-wide text-txt-hi min-[1350px]:inline">LABUSE</span>
       </div>
       <Omnibox />
-      {/* R5 (O2) : entrée du scoreur d'adresse — à côté de la recherche, trouvable en < 5 s */}
-      <button data-scoreur-open onClick={() => setScoreurOpen((o) => !o)}
-        title="Scorer une adresse — collez l'adresse d'un bien à vendre (+ prix demandé) : seconde opinion avant d'offrir"
-        className={`h-8 shrink-0 rounded-lg border px-3 text-xs font-medium transition-colors duration-quick ${
-          scoreurOpen ? 'border-mint bg-mint/15 text-mint' : 'border-line-2 text-txt-mut hover:border-mint/60 hover:text-txt'}`}>
-        ⌖ Scorer une adresse
-      </button>
-      {scoreurOpen && <ScoreurAdresse onClose={() => setScoreurOpen(false)} />}
       <FilterChips />
       <div className="ml-auto flex items-center gap-3">
         <NotifBell />

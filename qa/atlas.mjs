@@ -411,15 +411,19 @@ S({
   slug: 'outil__o2-scoreur', section: 'Outils O', desc: 'O2 Scoreur d’adresse — vide, résultat, hors-base',
   async run(c) {
     await c.app();
-    await c.page.click('[data-scoreur-open]');
+    // M12-D4 : le scoreur vit désormais dans le tiroir Outils (rail → carte).
+    await c.page.click('button[title="Outils"]');
+    await c.page.click('[data-outil="scoreur-adresse"]');
     await c.page.waitForSelector('[data-scoreur-adresse]');
     await c.shot('vide', 'panneau ouvert, champ adresse + prix');
     await c.page.fill('[data-scoreur-adresse]', '12 rue du Général de Gaulle, Saint-Paul');
+    await c.page.waitForTimeout(600);   // autocomplétion BAN (M12-D)
     await c.page.keyboard.press('Enter');
     await c.page.waitForSelector('[data-scoreur-resultat]', { timeout: 25000 }).catch(() => {});
     await c.page.waitForTimeout(800);
     await c.shot('resultat', 'seconde opinion sur une adresse en base');
     await c.page.fill('[data-scoreur-adresse]', '1 rue de la Paix, 75002 Paris');
+    await c.page.waitForTimeout(600);
     await c.page.keyboard.press('Enter');
     await c.page.waitForTimeout(6000);
     await c.shot('hors-base', 'adresse hors périmètre — le refus propre');

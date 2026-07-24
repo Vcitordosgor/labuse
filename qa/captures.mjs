@@ -72,13 +72,14 @@ try {
   await shot(page, '06-fiche-exports', 'boutons PDF · Dossier · Banquier visibles en bas de fiche');
 } catch (e) { miss('02-fiche', 'fiche via IDU brûlante', e); }
 
-// ── 04 · scoreur d'adresse (O2) ─────────────────────────────────────────────
+// ── 04 · scoreur d'adresse (O2) — M12-D4 : déplacé dans le tiroir Outils ─────
 try {
-  await page.click('[data-scoreur-open]');
+  await page.click('button[title="Outils"]');
+  await page.click('[data-outil="scoreur-adresse"]');
   await page.waitForSelector('[data-scoreur-adresse]');
-  await shot(page, '04-scoreur-adresse', 'panneau « Scorer une adresse » (champ + prix manuel)');
-  await page.click('[data-scoreur-close]');
-} catch (e) { miss('04-scoreur-adresse', 'panneau scoreur', e); }
+  await shot(page, '04-scoreur-adresse', 'module « Scorer une adresse » (autocomplétion + prix manuel)');
+  await page.click('[data-module-retour]');
+} catch (e) { miss('04-scoreur-adresse', 'module scoreur', e); }
 
 // ── 05 · fiche écartée : onglet « Pourquoi pas ? » (O3) ─────────────────────
 // fiche par IDU d'une écartée (même voie robuste que 02)

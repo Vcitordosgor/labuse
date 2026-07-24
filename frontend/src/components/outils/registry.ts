@@ -50,6 +50,9 @@ export const MODULES: ModuleDef[] = [
   { key: 'matching', num: 'M19', group: 'detecter',
     label: 'Matching promoteurs', desc: 'Enregistrez vos critères, soyez alerté quand ça matche' },
   // ── Analyser & simuler ──
+  // M12-D4 : « Scorer une adresse » quitte la barre d'en-tête et rejoint les Outils.
+  { key: 'scoreur-adresse', num: 'O2', group: 'analyser', phare: true,
+    label: 'Scorer une adresse', desc: 'Collez l’adresse d’un bien à vendre — seconde opinion avant d’offrir' },
   { key: 'o6-comparateur', num: 'O6', group: 'analyser', phare: true,
     label: 'Comparateur de communes', desc: 'Où investir : 24 communes, indicateurs sourcés, composite réglable' },
   { key: 'o5-servitudes', num: 'O5', group: 'analyser',

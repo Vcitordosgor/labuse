@@ -3,12 +3,14 @@ import { useState } from 'react'
 import { scoreurAdresse, type ScoreurResult } from '../../lib/api'
 import { fmtEur, fmtM2 } from '../../lib/format'
 import { useApp } from '../../store/useApp'
+import { AddressAutocomplete, type AddressSelection } from '../AddressAutocomplete'
 import { TierBadge } from './TierBadge'
 
 // R5 (O2) — SCOREUR D'ADRESSE INVERSÉ : « je visite ce terrain, qu'en dit LABUSE ? »
-// L'outil de démo « seconde opinion avant d'offrir » : collez une adresse (+ prix demandé,
-// SAISI À LA MAIN — jamais scrapé) → verdict de la parcelle déjà scorée + confrontation du
-// prix à la charge foncière supportable (Score É V2). Hors base → réponse honnête.
+// L'outil « seconde opinion avant d'offrir » : saisissez une adresse (autocomplétion BAN,
+// M12-D) + prix demandé (SAISI À LA MAIN — jamais scrapé) → verdict de la parcelle déjà
+// scorée + confrontation du prix à la charge foncière supportable (Score É V2). Hors base →
+// réponse honnête. M12-D4 : cet outil vit désormais dans le tiroir Outils (module panel).
 const PRIX_META: Record<string, { label: string; cls: string }> = {
   opportunite: { label: 'Opportunité', cls: 'text-mint border-mint/50 bg-mint/10' },
   dans_le_marche: { label: 'Dans le marché', cls: 'text-st-creuser border-st-creuser/50 bg-st-creuser/10' },
@@ -16,29 +18,34 @@ const PRIX_META: Record<string, { label: string; cls: string }> = {
   non_estimable: { label: 'Non estimable', cls: 'text-txt-dim border-line-2 bg-surface-3' },
 }
 
-export function ScoreurAdresse({ onClose }: { onClose: () => void }) {
+// Module Outils : rendu comme un `() => JSX.Element` dans ModulePanel (en-tête/fermeture
+// fournis par le panneau). D1 (AddressAutocomplete) garantit une adresse normalisée BAN.
+export function ScoreurAdresse() {
   const select = useApp((s) => s.select)
-  const [adresse, setAdresse] = useState('')
+  const setModule = useApp((s) => s.setModule)
+  const [adresse, setAdresse] = useState('')       // adresse normalisée BAN (jamais libre)
   const [prix, setPrix] = useState<number | null>(null)
   const m = useMutation({ mutationFn: () => scoreurAdresse(adresse.trim(), prix) })
   const d: ScoreurResult | undefined = m.data
   const run = () => { if (adresse.trim().length >= 3) m.mutate() }
+  const onPick = (sel: AddressSelection) => { setAdresse(sel.label); m.reset() }
 
   return (
-    <div data-scoreur-panel className="floating pointer-events-auto absolute left-1/2 top-16 z-50 w-[420px] max-w-[94vw] -translate-x-1/2 p-4 shadow-elev-3">
-      <div className="flex items-center justify-between">
-        <span className="label-caps">Scorer une adresse — seconde opinion</span>
-        <button data-scoreur-close onClick={onClose} aria-label="Fermer"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-txt-mut transition-colors duration-quick hover:bg-surface-3 hover:text-txt">✕</button>
-      </div>
+    <div data-scoreur-panel className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      <p className="rounded-lg border border-violet/40 bg-violet/[0.07] px-3 py-2 text-[10.5px] leading-relaxed text-txt-mut">
+        Seconde opinion avant d’offrir : saisissez l’adresse d’un bien à vendre (autocomplétion),
+        éventuellement le prix demandé, et LABUSE renvoie le verdict de la parcelle déjà scorée.
+      </p>
 
-      <div className="mt-2 flex gap-1.5">
-        <input data-scoreur-adresse autoFocus value={adresse} onChange={(e) => setAdresse(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && run()}
-          placeholder="Collez une adresse (ex. 12 rue du Général de Gaulle, Saint-Paul)"
-          className="min-w-0 flex-1 rounded-lg border border-line-2 bg-surface-3 px-3 py-1.5 text-xs text-txt placeholder:text-txt-dim focus:border-mint focus:outline-none" />
-      </div>
-      <div className="mt-1.5 flex items-center gap-1.5">
+      <AddressAutocomplete
+        data-scoreur-adresse
+        autoFocus
+        placeholder="Adresse (ex. 12 rue du Général de Gaulle, Saint-Paul)"
+        onSelect={onPick}
+        onClear={() => { setAdresse(''); m.reset() }}
+      />
+
+      <div className="flex items-center gap-1.5">
         <input data-scoreur-prix type="number" min={0} value={prix ?? ''} placeholder="Prix demandé € (optionnel)"
           onChange={(e) => setPrix(e.target.value === '' ? null : Number(e.target.value))}
           onKeyDown={(e) => e.key === 'Enter' && run()}
@@ -50,10 +57,10 @@ export function ScoreurAdresse({ onClose }: { onClose: () => void }) {
         </button>
       </div>
 
-      {m.isError && <p className="mt-2 text-[11px] text-st-ecartee">Erreur — vérifiez l'adresse et réessayez.</p>}
+      {m.isError && <p className="text-[11px] text-st-ecartee">Erreur — vérifiez l'adresse et réessayez.</p>}
 
       {d && !m.isPending && (
-        <div data-scoreur-resultat className="mt-3 rounded-lg border border-line-2 bg-surface-1 p-3">
+        <div data-scoreur-resultat className="rounded-lg border border-line-2 bg-surface-1 p-3">
           {!d.ok ? (
             /* hors base : réponse honnête, jamais un verdict inventé */
             <p className="text-[11.5px] leading-relaxed text-txt-mut">
@@ -86,7 +93,7 @@ export function ScoreurAdresse({ onClose }: { onClose: () => void }) {
                 </div>
               )}
               {d.idu && (
-                <button data-scoreur-fiche onClick={() => { select(d.idu!); onClose() }}
+                <button data-scoreur-fiche onClick={() => { select(d.idu!); setModule(null) }}
                   className="mt-2 min-h-7 text-[11px] font-medium text-mint hover:underline">
                   Ouvrir la fiche complète →
                 </button>
