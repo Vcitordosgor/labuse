@@ -157,6 +157,15 @@ export const CLIENT = {
       },
     ] as { h: string; p: string }[],
   },
+
+  // ── M14-F2 (QA-52) · projet — le bouton « + Chercher plus » est retiré ────────
+  // Remplacé par cette invitation : on ajoute une parcelle à un projet depuis SA
+  // fiche (bouton « Projet »), au fil de l'exploration — plus de recherche en lot.
+  projet: {
+    ajouterDepuisFiche:
+      'Une parcelle en tête ailleurs ? Ajoutez-la à ce projet à tout moment depuis ' +
+      'sa fiche, avec le bouton « Projet ».',
+  },
 } as const
 
 export type ClientStrings = typeof CLIENT

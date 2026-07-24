@@ -1055,7 +1055,7 @@ export function Fiche({ idu }: { idu: string }) {
               </span>
             )
             return verdict.v2
-              ? <Tip className="mt-1.5" tip="Verdict scoring v2 (P×C) — rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc ; détail dans « Probabilité de mutation (P v2) », statut matrice historique dans la Synthèse.">{badge}</Tip>
+              ? <Tip className="mt-1.5" tip="Verdict scoring (P×C) — rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc ; détail dans « Probabilité de mutation », statut matrice historique dans la Synthèse.">{badge}</Tip>
               : <span className="mt-1.5 inline-flex">{badge}</span>
           })()}
           {/* M5.1 : le badge « V nn » disparaît — le dossier propriétaire (signaux vendeur)
@@ -1201,7 +1201,7 @@ export function Fiche({ idu }: { idu: string }) {
                 run v2 existe — il reste visible ici, en historique, jamais en verdict principal */}
             {v2Pilote && meta && (
               <div data-statut-matrice-historique className="card-elev flex items-center gap-2 px-3 py-2 text-[11px]">
-                <Tip tip="Classement de la matrice Q×A historique — remplacé par le scoring v2 (P×C) comme verdict d'en-tête">
+                <Tip tip="Classement de la matrice Q×A historique — remplacé par le scoring (P×C) comme verdict d'en-tête">
                   <span className="text-txt-dim underline decoration-dotted decoration-line-2 underline-offset-4">Statut matrice (historique)</span>
                 </Tip>
                 <span className="ml-auto inline-flex items-center gap-1.5" style={{ color: meta.color }}>

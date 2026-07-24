@@ -41,7 +41,7 @@ function ResultCard({ p, communeLabel }: { p: ParcelProps & { commune?: string }
       <div className="min-w-0 flex-1">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <span className="shrink-0 whitespace-nowrap font-mono text-xs font-medium text-txt-hi">{p.idu.slice(8, 10)} {p.idu.slice(10)}</span>
-          <Tip tip={`Verdict scoring v2 (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
+          <Tip tip={`Verdict scoring (P×C)${p.rang_v2 != null ? ` — rang ${p.rang_v2} hors copro` : ''}${p.mult_v2 != null ? ` · ×${p.mult_v2.toFixed(1)} vs moyenne du parc` : ''}${p.etage0 ? ' — exclusion dure (étage 0 du run servi)' : ''}`}
             className="shrink-0">
             <span data-tier-chip className="rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
               style={{ background: `${meta.color}1f`, color: meta.color }}>
@@ -121,7 +121,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
   return (
     <div className="mt-2 shrink-0">
       <p className="text-[11px] text-txt-dim"
-        title="Opportunités détectées = brûlantes v2 + chaudes v2 (scoring P×C, hors étage 0 du run servi)">
+        title="Opportunités détectées = brûlantes + chaudes (scoring P×C, hors étage 0 du run servi)">
         <span className="text-txt">{fmt(total)}</span> parcelles analysées → <span className="font-medium text-mint">{fmt(opportunites)}</span> opportunités détectées{nFilters > 0 && ' · filtres appliqués'}
         <button data-entonnoir-btn onClick={() => setOpen((o) => !o)}
           className="ml-1.5 text-mint hover:underline" title="L'entonnoir par motif — pourquoi le reste est écarté (SQL-exact)">
@@ -136,7 +136,7 @@ function EntonnoirLine({ total, opportunites, nFilters }: { total: number; oppor
           <p className="text-[11px] leading-snug text-txt">
             LABUSE a analysé <b>{fmt(q.data?.analysees ?? total)}</b> parcelles ; son avis retient
             <b className="text-mint"> {fmt(q.data?.opportunites ?? opportunites)}</b> opportunités
-            (brûlantes v2 + chaudes v2). Le reste reste visible et cliquable — voici pourquoi il est écarté.
+            (brûlantes + chaudes). Le reste reste visible et cliquable — voici pourquoi il est écarté.
           </p>
           {q.data?.tiers && (
             <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
@@ -329,8 +329,8 @@ export function ResultsSection() {
         </div>
       )}
       <p className="mt-3 shrink-0 border-t border-line pt-2.5 text-xs text-txt-mut"
-        title={ile && stats.data ? `${fmt(stats.data.opportunites)} opportunités (brûlantes v2 + chaudes v2) dont ${fmt(stats.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
-        <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes v2 ·{' '}
+        title={ile && stats.data ? `${fmt(stats.data.opportunites)} opportunités (brûlantes + chaudes) dont ${fmt(stats.data.opportunites_evenement)} avec événement BODACC ouvert` : undefined}>
+        <span className="font-medium" style={{ color: TIER_V2_META.brulante.color }}>{fmt(counts.brulante)}</span> brûlantes ·{' '}
         <span className="font-medium" style={{ color: TIER_V2_META.chaude.color }}>{fmt(counts.chaude)}</span> chaudes ·{' '}
         <span className="font-medium" style={{ color: TIER_V2_META.reserve_fonciere.color }}>{fmt(counts.reserve_fonciere)}</span> réserve foncière
         {scoped && <span className="text-txt-dim"> {zone ? '(dans la zone)' : '(filtres actifs)'}</span>}
@@ -415,7 +415,7 @@ export function ResultsSection() {
         <span className="flex shrink-0 items-center gap-2">
           <a href={csvExportUrl(filters, sort)} download
             className="text-[11px] text-txt-mut hover:text-mint"
-            title="Exporter la liste filtrée en CSV (tier v2, rang, ×N — mêmes filtres, même tri)">
+            title="Exporter la liste filtrée en CSV (verdict, rang, ×N — mêmes filtres, même tri)">
             ⬇ CSV
           </a>
           {/* E3 : île → pagination serveur (Charger plus) ; commune → slice client (Tout voir). */}

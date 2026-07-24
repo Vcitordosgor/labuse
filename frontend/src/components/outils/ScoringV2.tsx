@@ -17,7 +17,7 @@ type Item = {
 type Liste = { run_id: string; n: number; items: Item[]; note?: string; avertissement: string }
 
 const TABS = [
-  { key: 'brulantes', label: 'Brûlantes v2' },
+  { key: 'brulantes', label: 'Brûlantes' },
   { key: 'reserve', label: 'Réserve foncière' },
   { key: 'top', label: 'Top P' },
 ] as const
@@ -71,15 +71,15 @@ export function ScoringV2Module() {
 
       {isLoading && <Loading label="Chargement du scoring" className="text-[11px]" />}
       {!!error && (
-        <ErrorState className="py-6" message="Scoring v2 indisponible."
-          hint="Aucun run v2 n'est servi pour l'instant — les listes apparaîtront dès le prochain run de scoring." />
+        <ErrorState className="py-6" message="Scoring indisponible."
+          hint="Aucun run n'est servi pour l'instant — les listes apparaîtront dès le prochain run de scoring." />
       )}
 
       <div className="min-h-0 flex-1 overflow-y-auto">
         {data?.items.map((it) => (
           <button key={it.parcelle_id} onClick={() => select(it.parcelle_id)}
             className="mb-1 flex min-h-7 w-full items-center gap-2 rounded-md border border-line-2 bg-surface-2 px-2 py-1.5 text-left transition-colors duration-quick hover:border-mint/40">
-            <span className="tnum font-mono text-[11px] text-txt-hi" title="Probabilité de mutation vs moyenne du parc (P v2)">×{it.mult_base.toFixed(1)}</span>
+            <span className="tnum font-mono text-[11px] text-txt-hi" title="Probabilité de mutation vs moyenne du parc (P)">×{it.mult_base.toFixed(1)}</span>
             <span className="flex-1 truncate font-mono text-[10.5px] text-txt">{it.parcelle_id}</span>
             {it.badges.copro && <span className="text-[9.5px] text-violet">copro</span>}
             {it.badges.evenement_date && <span className="text-[9.5px] text-st-chaude" title={`Événement BODACC — ${it.badges.evenement_date}`}>évén.</span>}

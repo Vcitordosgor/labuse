@@ -50,11 +50,11 @@ export function ScoreV2Block({ idu }: { idu: string }) {
       return (
         <div data-score-v2="non-scoree" className="card-elev px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P v2)</span>
+            <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P)</span>
             <span className="rounded-full bg-[#2A2438] px-2 py-0.5 text-[10.5px] text-[#B7A8E0]">non scorée</span>
           </div>
           <p className="mt-1.5 text-[11px] leading-snug text-txt-dim">
-            Parcelle absente du dernier run du modèle v2 — copropriété ou hors périmètre du scoring.
+            Parcelle absente du dernier run du modèle — copropriété ou hors périmètre du scoring.
           </p>
         </div>
       )
@@ -63,7 +63,7 @@ export function ScoreV2Block({ idu }: { idu: string }) {
     return (
       <div data-score-v2="erreur" className="card-elev px-3 py-2.5">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P v2)</span>
+          <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P)</span>
           <span className="rounded-full bg-[#33201A] px-2 py-0.5 text-[10.5px] text-st-chaude">indisponible</span>
         </div>
         <p className="mt-1.5 text-[11px] leading-snug text-txt-dim">
@@ -81,7 +81,7 @@ export function ScoreV2Block({ idu }: { idu: string }) {
   return (
     <div data-score-v2 className="card-elev px-3 py-2.5">
       <div className="flex items-center gap-2">
-        <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P v2)</span>
+        <span className="text-xs font-medium text-txt-hi">Probabilité de mutation (P)</span>
         <span className="rounded-full px-2 py-0.5 text-[10.5px] font-semibold"
           style={{ backgroundColor: `${tier.color}22`, color: tier.color }}>{tier.label}</span>
         {data.badges.copro && (

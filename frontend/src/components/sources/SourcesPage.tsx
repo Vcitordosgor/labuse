@@ -227,7 +227,7 @@ export function SourcesPage() {
                 ▸ {CLIENT.modele.detailToggle}
               </summary>
               <p className="mt-1 text-[10.5px] font-medium text-txt">
-                Modèle de scoring v2 : <span className="font-mono">{modele.model_version}</span>
+                Modèle de scoring : <span className="font-mono">{modele.model_version}</span>
                 <span className="ml-1.5 font-mono text-[10px] text-txt-dim">
                   sha {modele.sha256_court} — gelé le {modele.gel.slice(0, 10)}
                 </span>
