@@ -219,6 +219,10 @@ class DryrunCascadeResult(Base):
         # de lignes (2,8 s) pour en retenir ~40 — index PARTIEL minuscule, requête en ms.
         Index("ix_dryrun_cascade_evenement", "run_label", "parcel_id",
               postgresql_where=text("evenement = 'rouge'")),
+        # M15-B perf : le NOT EXISTS « déjà bâti » de /promesses (Promesses mortes) coûtait ~3,6 s
+        # (filtre layer/result sur le tas via ix_dryrun_cascade). Index PARTIEL → probe pur, ~0,6 s.
+        Index("ix_dryrun_cascade_bati_exclude", "run_label", "parcel_id",
+              postgresql_where=text("layer_name = 'bati' AND result = 'HARD_EXCLUDE'")),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -929,6 +933,18 @@ def ensure_signalements(engine) -> None:
                      "ON signalements (statut, created_at)"))
 
 
+def ensure_promesses_index(engine) -> None:
+    """Index PARTIEL pour le NOT EXISTS « déjà bâti » de /promesses (Promesses mortes).
+    `create_all` ne l'ajoute PAS (il saute les index d'une table déjà existante) → ensure explicite.
+    Sans lui, le filtre layer/result se fait sur le tas (~3,6 s) ; avec, probe pur (~0,6 s). Idempotent."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t("CREATE INDEX IF NOT EXISTS ix_dryrun_cascade_bati_exclude "
+                     "ON dryrun_cascade_results (run_label, parcel_id) "
+                     "WHERE layer_name = 'bati' AND result = 'HARD_EXCLUDE'"))
+
+
 def ensure_pipeline_projet(engine) -> None:
     """Colonne `projet_id` sur pipeline_entries (copilote-projet) — la piste porte la
     référence du projet d'où elle vient. Idempotent, durable au rebuild sur base existante."""
@@ -1282,6 +1298,7 @@ def ensure_schema(engine) -> None:
     disent, et `rebuild-demo` qui reconstruit."""
     Base.metadata.create_all(engine)
     ensure_geom_2975(engine, backfill=False)
+    ensure_promesses_index(engine)
     ensure_pipeline_prospection(engine)
     ensure_pipeline_projet(engine)
     ensure_enrichment_cache(engine)

@@ -226,17 +226,22 @@ export const modDivision = (minScore = 0) => j<{ total: number; items: Record<st
 export const modPatrimoineSearch = (q: string) => j<{ siren: string; nom: string; n: number }[]>(`/modules/patrimoine/search?q=${encodeURIComponent(q)}`)
 export const modPatrimoine = (siren: string) => j<Record<string, unknown>>(`/modules/patrimoine?siren=${siren}`)
 const cq = () => (commune() ? `commune=${encodeURIComponent(commune()!)}` : '')
-export const modPermis = (months: number, nature?: string | null) =>
-  j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}`)
+export const modPermis = (months: number, nature?: string | null, limit = 300, offset = 0) =>
+  j<Record<string, unknown>>(`/modules/permis?${cq()}&months=${months}${nature ? `&nature=${nature}` : ''}&limit=${limit}&offset=${offset}`)
 export const modPermisFiche = (permitId: string) =>
   j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)
 export const modParcellePermis = (idu: string) =>
   j<Record<string, unknown>>(`/modules/parcelle-permis?idu=${encodeURIComponent(idu)}`)
-export const modPromesses = (months: number) => j<Record<string, unknown>>(`/modules/promesses?${cq()}&months=${months}`)
+// 1re page légère (1000), le reste en « voir plus » ; le total (COUNT ~4 s) arrive en PARALLÈLE.
+export const modPromesses = (months: number, limit = 1000, offset = 0) =>
+  j<Record<string, unknown>>(`/modules/promesses?${cq()}&months=${months}&limit=${limit}&offset=${offset}`)
+export const modPromessesCount = (months: number) =>
+  j<{ total: number }>(`/modules/promesses?${cq()}&months=${months}&count_only=true`)
 export const modVelocite = (nature?: string | null) =>
   j<{ communes: Record<string, unknown>[]; [k: string]: unknown }>(`/modules/velocite${nature ? `?nature=${nature}` : ''}`)
 export const modBailleur = () => j<Record<string, unknown>>(`/modules/bailleur?${cq()}`)
-export const modFantome = () => j<Record<string, unknown>>(`/modules/fantome?${cq()}`)
+export const modFantome = (limit = 300, offset = 0) =>
+  j<Record<string, unknown>>(`/modules/fantome?${cq()}&limit=${limit}&offset=${offset}`)
 export const getOrthoEquipements = (idu: string) => j<Record<string, unknown>>(`/ortho/equipements/${idu}`)
 export const modCourriers = (idus: string[], contexte: string) =>
   j<{ n: number; courriers: { idu: string; texte?: string; erreur?: string }[]; rappel_identite: string }>('/modules/courriers', {

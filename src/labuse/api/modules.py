@@ -223,10 +223,13 @@ def patrimoine(siren: str, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/permis")
 def permis(commune: str | None = None, months: int = 24, nature: str | None = None,
+           limit: int = 300, offset: int = 0,
            db: Session = Depends(get_db)) -> dict:
     # fenêtre ancrée sur la FIN DES DONNÉES (le flux Sitadel s'arrête avant aujourd'hui) — honnêteté
     dmax = db.execute(text("SELECT max(date) FROM sitadel_permits")).scalar()
+    limit = max(1, min(limit, 2000))  # garde-fou payload ; « voir plus » pagine par offset
     # M10 : jointure sur la date de dépôt + délai d'instruction rapatriés (m10_permit_delais)
+    # LISTE paginée (plafond levé côté client par « voir plus » — offset).
     rows = db.execute(text("""
         SELECT s.permit_id, s.type, s.date::date::text AS date, s.commune,
                s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt, s.raw->>'surf_hab' AS surf_hab,
@@ -237,20 +240,37 @@ def permis(commune: str | None = None, months: int = 24, nature: str | None = No
         WHERE (CAST(:c AS text) IS NULL OR s.commune = :c)
           AND (CAST(:nat AS text) IS NULL OR s.type = :nat)
           AND s.date >= :dmax - (:m || ' months')::interval
-        ORDER BY s.date DESC LIMIT 2000"""),
-        {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().all()
-    true_total = int(db.execute(text(
-        """SELECT count(*) FROM sitadel_permits
+        ORDER BY s.date DESC LIMIT :lim OFFSET :off"""),
+        {"c": commune, "m": months, "nat": nature, "dmax": dmax, "lim": limit, "off": offset}).mappings().all()
+    counts = db.execute(text(
+        """SELECT count(*) AS n, count(*) FILTER (WHERE geom IS NOT NULL) AS geo
+           FROM sitadel_permits
            WHERE (CAST(:c AS text) IS NULL OR commune = :c)
              AND (CAST(:nat AS text) IS NULL OR type = :nat)
              AND date >= :dmax - (:m || ' months')::interval"""),
-        {"c": commune, "m": months, "nat": nature, "dmax": dmax}).scalar() or 0)
-    geo = [r for r in rows if r["g"]]
+        {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().first()
+    true_total = int(counts["n"] or 0)
+    geocodes_total = int(counts["geo"] or 0)
+    # CARTE = TOUS les géocodés (décision Vic), chargée une seule fois (page 0), payload léger (geom seul).
+    carte = []
+    if offset == 0:
+        crows = db.execute(text("""
+            SELECT permit_id, type, date::date::text AS date, ST_AsGeoJSON(geom) AS g
+            FROM sitadel_permits
+            WHERE (CAST(:c AS text) IS NULL OR commune = :c)
+              AND (CAST(:nat AS text) IS NULL OR type = :nat)
+              AND date >= :dmax - (:m || ' months')::interval AND geom IS NOT NULL
+            ORDER BY date DESC LIMIT 8000"""),
+            {"c": commune, "m": months, "nat": nature, "dmax": dmax}).mappings().all()
+        carte = [{"permit_id": r["permit_id"], "type": r["type"], "date": r["date"],
+                  "geom": json.loads(r["g"])} for r in crows]
     return {
         "commune": commune or "Toute l'île", "months": months, "nature": nature,
-        "total": true_total, "affiches": len(rows),
+        "total": true_total, "affiches": offset + len(rows), "has_more": offset + len(rows) < true_total,
         "donnees_jusqu_au": dmax.date().isoformat() if dmax else None,
-        "geocodes": len(geo), "pct_geocode": round(100 * len(geo) / len(rows)) if rows else 0,
+        "geocodes": geocodes_total, "sans_localisation": max(0, true_total - geocodes_total),
+        "pct_geocode": round(100 * geocodes_total / true_total) if true_total else 0,
+        "carte": carte,
         "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "depot", "delai_mois",
                                         "etat", "nb_lgt", "surf_hab")},
                    "geom": json.loads(r["g"]) if r["g"] else None} for r in rows],
@@ -345,45 +365,58 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
 # « Promesse morte » = PC daté > N mois, SANS daact, ET parcelle toujours sans bâti significatif.
 
 @router.get("/promesses")
-def promesses(commune: str | None = None, months: int = 24, db: Session = Depends(get_db)) -> dict:
+def promesses(commune: str | None = None, months: int = 24,
+              limit: int = 1000, offset: int = 0, count_only: bool = False,
+              db: Session = Depends(get_db)) -> dict:
+    limit = max(1, min(limit, 2000))  # 1re page légère (défaut 1000), le reste en « voir plus »
+    # Le COUNT(DISTINCT) est coûteux (~4 s) : DÉCOUPLÉ du chemin des lignes (appel parallèle count_only)
+    # pour que la liste s'affiche vite et s'étoffe — décision Vic « rapide qui s'étoffe > 10 s ».
+    if count_only:
+        return {"total": int(db.execute(text("""
+            SELECT count(DISTINCT s.id) FROM sitadel_permits s
+            JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
+            JOIN parcels p ON p.idu = c.idu
+            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
+              AND s.date < now() - (:m || ' months')::interval AND s.raw->>'daact' IS NULL
+              AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
+                              WHERE cr.run_label = :run AND cr.parcel_id = p.id
+                                AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
+            {"c": commune, "m": months, "run": RUN}).scalar() or 0)}
+    # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0 (28 s → 5 s) : la jointure
+    # latérale lourde est calculée en bloc (hash joins) AVANT le tri+plafond. carte pilotée par IDU
+    # (module-hl), pas par géométrie : ST_AsGeoJSON retiré (payload/latence).
     rows = db.execute(text("""
-        SELECT s.permit_id, s.type, s.date::date::text AS date, s.raw->>'etat' AS etat,
-               s.raw->>'nb_lgt' AS nb_lgt, p.idu, round(p.surface_m2) AS surface_m2,
-               d.matrice_statut AS statut, d.q_score,
-               s2.tier AS tier_v2, s2.rang AS rang_v2,
-               (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
-               ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
-        FROM sitadel_permits s
-        JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
-        JOIN parcels p ON p.idu = c.idu
-        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
-        WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
-          AND s.date < now() - (:m || ' months')::interval
-          AND s.raw->>'daact' IS NULL
-          -- parcelle toujours non bâtie : pas d'exclusion « déjà bâti » au run q_v2
-          AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
-                          WHERE cr.run_label = :run AND cr.parcel_id = p.id
-                            AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')
-        ORDER BY s.date ASC LIMIT 500"""),
-        {"c": commune, "m": months, "run": RUN, "v2run": _v2run(db)}).mappings().all()
-    # affichage borné à 500 (tri anciens d'abord = les plus « morts ») ; le compte reste honnête
-    true_total = len(rows) if len(rows) < 500 else int(db.execute(text("""
-        SELECT count(DISTINCT s.id) FROM sitadel_permits s
-        JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
-        JOIN parcels p ON p.idu = c.idu
-        JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-        WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
-          AND s.date < now() - (:m || ' months')::interval AND s.raw->>'daact' IS NULL
-          AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
-                          WHERE cr.run_label = :run AND cr.parcel_id = p.id
-                            AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
-        {"c": commune, "m": months, "run": RUN}).scalar() or 0)
-    return {"commune": commune or "Toute l'île", "months": months, "total": true_total, "affiches": len(rows),
+        WITH cand AS MATERIALIZED (
+            SELECT s.permit_id, s.type, s.date, s.raw->>'etat' AS etat, s.raw->>'nb_lgt' AS nb_lgt,
+                   p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut, d.q_score,
+                   (d.status IN ('exclue', 'faux_positif_probable')) AS etage0
+            FROM sitadel_permits s
+            JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
+            JOIN parcels p ON p.idu = c.idu
+            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
+              AND s.date < now() - (:m || ' months')::interval
+              AND s.raw->>'daact' IS NULL
+              -- parcelle toujours non bâtie : pas d'exclusion « déjà bâti » au run q_v2
+              AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
+                              WHERE cr.run_label = :run AND cr.parcel_id = p.id
+                                AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')
+        )
+        SELECT cand.permit_id, cand.type, cand.date::date::text AS date, cand.etat, cand.nb_lgt,
+               cand.idu, cand.surface_m2, cand.statut, cand.q_score, cand.etage0,
+               s2.tier AS tier_v2, s2.rang AS rang_v2
+        FROM cand LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = cand.idu AND s2.run_id = :v2run
+        ORDER BY cand.date ASC LIMIT :lim OFFSET :off"""),
+        {"c": commune, "m": months, "run": RUN, "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
+    # tri anciens d'abord (= les plus « morts »). total via l'appel count_only parallèle ; ici on déduit
+    # has_more du remplissage de la page (une page pleine ⇒ il reste potentiellement des lignes).
+    return {"commune": commune or "Toute l'île", "months": months, "total": None,
+            "affiches": offset + len(rows), "has_more": len(rows) == limit,
             "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "idu",
                                             "surface_m2", "statut", "q_score")},
-                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
-                       "geom": json.loads(r["g"])} for r in rows]}
+                       "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"])}
+                      for r in rows]}
 
 
 # ───────────────────────── M05 — VÉLOCITÉ ADMIN ─────────────────────────
@@ -483,15 +516,17 @@ def velocite(fmt: str = "json", nature: str | None = None, db: Session = Depends
 # ───────────────────────── M07 — FONCIER FANTÔME ─────────────────────────
 
 @router.get("/fantome")
-def fantome(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
+def fantome(commune: str | None = None, limit: int = 300, offset: int = 0,
+            db: Session = Depends(get_db)) -> dict:
+    limit = max(1, min(limit, 600))  # « voir plus » pagine par offset
     rows = db.execute(text("""
         SELECT p.idu, round(p.surface_m2) AS surface_m2, d.matrice_statut AS statut, d.q_score,
                pm.siren, pm.denomination,
                s2.tier AS tier_v2, s2.rang AS rang_v2,
                (d.status IN ('exclue', 'faux_positif_probable')) AS etage0,
                NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren) AS inpi_introuvable,
-               EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false) AS dirigeant_inactif,
-               ST_AsGeoJSON(ST_Transform(p.geom_2975, 4326)) AS g
+               EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false) AS dirigeant_inactif
+        -- carte pilotée par IDU (module-hl), pas par géométrie : ST_AsGeoJSON retiré (payload/latence)
         FROM parcels p
         JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
         LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = p.idu AND s2.run_id = :v2run
@@ -500,20 +535,23 @@ def fantome(commune: str | None = None, db: Session = Depends(get_db)) -> dict:
           AND pm.siren IS NOT NULL
           AND (NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren)
                OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))
-        ORDER BY d.q_score DESC LIMIT 600"""),
-        {"c": commune, "run": RUN, "v2run": _v2run(db)}).mappings().all()
-    true_total = len(rows) if len(rows) < 600 else int(db.execute(text(
+        ORDER BY d.q_score DESC LIMIT :lim OFFSET :off"""),
+        {"c": commune, "run": RUN, "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
+    true_total = int(db.execute(text(
         """SELECT count(*) FROM parcels p
            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
            JOIN parcelle_personne_morale pm ON pm.idu = p.idu
            WHERE (CAST(:c AS text) IS NULL OR p.commune = :c) AND d.q_score >= 50
-             AND pm.groupe NOT IN (1, 2, 3, 4, 9)"""), {"c": commune, "run": RUN}).scalar() or 0)
-    return {"total": true_total, "affiches": len(rows), "items": [{
+             AND pm.groupe NOT IN (1, 2, 3, 4, 9) AND pm.siren IS NOT NULL
+             AND (NOT EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren)
+                  OR EXISTS (SELECT 1 FROM pm_dirigeants dg WHERE dg.siren = pm.siren AND dg.actif = false))"""),
+        {"c": commune, "run": RUN}).scalar() or 0)
+    return {"total": true_total, "affiches": offset + len(rows),
+            "has_more": offset + len(rows) < true_total, "items": [{
         **{k: r[k] for k in ("idu", "surface_m2", "statut", "q_score", "siren", "denomination")},
         "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"]),
         "verrou": "PM introuvable au RNE" if r["inpi_introuvable"] else "dirigeant inactif (RNE)",
         "levier": "notaire / recherche du représentant" if r["inpi_introuvable"] else "rachat de parts / contact liquidateur",
-        "geom": json.loads(r["g"]),
     } for r in rows]}
 
 
