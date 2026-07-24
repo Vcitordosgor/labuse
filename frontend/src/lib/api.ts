@@ -232,8 +232,11 @@ export const modPermisFiche = (permitId: string) =>
   j<Record<string, unknown>>(`/modules/permis/${encodeURIComponent(permitId)}`)
 export const modParcellePermis = (idu: string) =>
   j<Record<string, unknown>>(`/modules/parcelle-permis?idu=${encodeURIComponent(idu)}`)
-export const modPromesses = (months: number, limit = 2000, offset = 0) =>
+// 1re page légère (1000), le reste en « voir plus » ; le total (COUNT ~4 s) arrive en PARALLÈLE.
+export const modPromesses = (months: number, limit = 1000, offset = 0) =>
   j<Record<string, unknown>>(`/modules/promesses?${cq()}&months=${months}&limit=${limit}&offset=${offset}`)
+export const modPromessesCount = (months: number) =>
+  j<{ total: number }>(`/modules/promesses?${cq()}&months=${months}&count_only=true`)
 export const modVelocite = (nature?: string | null) =>
   j<{ communes: Record<string, unknown>[]; [k: string]: unknown }>(`/modules/velocite${nature ? `?nature=${nature}` : ''}`)
 export const modBailleur = () => j<Record<string, unknown>>(`/modules/bailleur?${cq()}`)

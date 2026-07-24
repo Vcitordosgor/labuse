@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   courrierDemande, modBailleur, modCourriers, modDivision, modDueDiligence, modFantome,
   modPatrimoine, modPatrimoineSearch, modPermis, modPermisFiche,
-  modPromesses, modVelocite,
+  modPromesses, modPromessesCount, modVelocite,
 } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { pointInPolygon } from '../../lib/geo'
@@ -66,12 +66,12 @@ function useModuleMap(idus: string[], extra: unknown | null, deps: unknown[]) {
 const featureCollection = (features: unknown[]) => ({ type: 'FeatureCollection', features })
 
 /** Bouton « voir plus » — plafond levé, chargement paginé (offset) sans dump complet. */
-function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchingNextPage: boolean; fetchNextPage: () => void }; loaded: number; total: number }) {
+function MoreButton({ q, loaded, total }: { q: { hasNextPage: boolean; isFetchingNextPage: boolean; fetchNextPage: () => void }; loaded: number; total?: number }) {
   if (!q.hasNextPage) return null
   return (
     <button data-more onClick={() => q.fetchNextPage()} disabled={q.isFetchingNextPage}
       className="mt-1 min-h-8 shrink-0 rounded-lg border border-violet/40 py-1.5 text-[11px] text-violet transition-colors duration-quick hover:bg-violet/10 disabled:opacity-40">
-      {q.isFetchingNextPage ? 'Chargement…' : `Voir plus — ${fmt(loaded)} / ${fmt(total)} chargés`}
+      {q.isFetchingNextPage ? 'Chargement…' : total != null ? `Voir plus — ${fmt(loaded)} / ${fmt(total)} chargés` : `Voir plus — ${fmt(loaded)} chargés`}
     </button>
   )
 }
@@ -331,15 +331,18 @@ function M03() {
 function M04() {
   const [months, setMonths] = useState(24)
   const commune = useApp((s) => s.commune)
+  const PAGE = 1000  // 1re page légère → affichage rapide ; le reste en « voir plus »
   const q = useInfiniteQuery({
     queryKey: ['m04', months, commune],
-    queryFn: ({ pageParam }) => modPromesses(months, 2000, pageParam as number),
+    queryFn: ({ pageParam }) => modPromesses(months, PAGE, pageParam as number),
     initialPageParam: 0,
-    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * 2000 : undefined,
+    getNextPageParam: (last, pages) => (last as Record<string, any>)['has_more'] ? pages.length * PAGE : undefined,
   })
+  // total (COUNT ~4 s) DÉCOUPLÉ : arrive en parallèle, ne bloque pas la 1re page
+  const countQ = useQuery({ queryKey: ['m04-count', months, commune], queryFn: () => modPromessesCount(months), staleTime: 60_000 })
   const pages = (q.data?.pages ?? []) as Record<string, any>[]
   const items = pages.flatMap((p) => (p['items'] ?? []) as Record<string, any>[])
-  const total = (pages[0]?.['total'] as number) ?? 0
+  const total = countQ.data?.total
   // tous géocodés → mappables au fil du chargement (la carte grandit à chaque « voir plus »)
   useModuleMap(items.map((i) => i['idu'] as string), null, [q.dataUpdatedAt])
   return (
@@ -355,7 +358,7 @@ function M04() {
           {[24, 36, 48, 60].map((m) => <option key={m} value={m}>{m} mois</option>)}
         </select>
       </label>
-      <p className="text-[11px] text-txt-dim">{fmt(total)} promesses mortes{items.length < total ? ` · ${fmt(items.length)} affichées` : ''}</p>
+      <p className="text-[11px] text-txt-dim">{total != null ? fmt(total) : '…'} promesses mortes{total != null && items.length < total ? ` · ${fmt(items.length)} affichées` : ''}</p>
       <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto">
         {items.map((i, k) => (
           <Row key={k} idu={i['idu'] as string}

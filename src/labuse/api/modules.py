@@ -366,8 +366,23 @@ def parcelle_permis(idu: str, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/promesses")
 def promesses(commune: str | None = None, months: int = 24,
-              limit: int = 2000, offset: int = 0, db: Session = Depends(get_db)) -> dict:
-    limit = max(1, min(limit, 2000))  # « voir plus » par paquets de 2000 (décision Vic — pas de dump complet)
+              limit: int = 1000, offset: int = 0, count_only: bool = False,
+              db: Session = Depends(get_db)) -> dict:
+    limit = max(1, min(limit, 2000))  # 1re page légère (défaut 1000), le reste en « voir plus »
+    # Le COUNT(DISTINCT) est coûteux (~4 s) : DÉCOUPLÉ du chemin des lignes (appel parallèle count_only)
+    # pour que la liste s'affiche vite et s'étoffe — décision Vic « rapide qui s'étoffe > 10 s ».
+    if count_only:
+        return {"total": int(db.execute(text("""
+            SELECT count(DISTINCT s.id) FROM sitadel_permits s
+            JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
+            JOIN parcels p ON p.idu = c.idu
+            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
+            WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
+              AND s.date < now() - (:m || ' months')::interval AND s.raw->>'daact' IS NULL
+              AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
+                              WHERE cr.run_label = :run AND cr.parcel_id = p.id
+                                AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
+            {"c": commune, "m": months, "run": RUN}).scalar() or 0)}
     # CTE MATERIALIZED = parade au plan « fast-start » de LIMIT/OFFSET-0 (28 s → 5 s) : la jointure
     # latérale lourde est calculée en bloc (hash joins) AVANT le tri+plafond. carte pilotée par IDU
     # (module-hl), pas par géométrie : ST_AsGeoJSON retiré (payload/latence).
@@ -394,26 +409,10 @@ def promesses(commune: str | None = None, months: int = 24,
         FROM cand LEFT JOIN parcel_p_score_v2 s2 ON s2.parcelle_id = cand.idu AND s2.run_id = :v2run
         ORDER BY cand.date ASC LIMIT :lim OFFSET :off"""),
         {"c": commune, "m": months, "run": RUN, "v2run": _v2run(db), "lim": limit, "off": offset}).mappings().all()
-    # tri anciens d'abord (= les plus « morts »). Le COUNT(DISTINCT) est coûteux (~4 s) : on ne le
-    # calcule QU'À la page 0 ; « voir plus » (offset>0) déduit has_more du remplissage de la page.
-    if offset == 0:
-        true_total = int(db.execute(text("""
-            SELECT count(DISTINCT s.id) FROM sitadel_permits s
-            JOIN LATERAL jsonb_array_elements_text(s.idu_codes) AS c(idu) ON true
-            JOIN parcels p ON p.idu = c.idu
-            JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = :run
-            WHERE s.type = 'PC' AND (CAST(:c AS text) IS NULL OR s.commune = :c)
-              AND s.date < now() - (:m || ' months')::interval AND s.raw->>'daact' IS NULL
-              AND NOT EXISTS (SELECT 1 FROM dryrun_cascade_results cr
-                              WHERE cr.run_label = :run AND cr.parcel_id = p.id
-                                AND cr.layer_name = 'bati' AND cr.result = 'HARD_EXCLUDE')"""),
-            {"c": commune, "m": months, "run": RUN}).scalar() or 0)
-        has_more = offset + len(rows) < true_total
-    else:
-        true_total = None  # déjà connu du client (page 0)
-        has_more = len(rows) == limit
-    return {"commune": commune or "Toute l'île", "months": months, "total": true_total,
-            "affiches": offset + len(rows), "has_more": has_more,
+    # tri anciens d'abord (= les plus « morts »). total via l'appel count_only parallèle ; ici on déduit
+    # has_more du remplissage de la page (une page pleine ⇒ il reste potentiellement des lignes).
+    return {"commune": commune or "Toute l'île", "months": months, "total": None,
+            "affiches": offset + len(rows), "has_more": len(rows) == limit,
             "items": [{**{k: r[k] for k in ("permit_id", "type", "date", "etat", "nb_lgt", "idu",
                                             "surface_m2", "statut", "q_score")},
                        "tier_v2": r["tier_v2"], "rang_v2": r["rang_v2"], "etage0": bool(r["etage0"])}

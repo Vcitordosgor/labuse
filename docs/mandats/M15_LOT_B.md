@@ -56,9 +56,22 @@ violette dense sur toute l'île), pas seulement la page chargée.
 **116/116 PASS** (`LABUSE_DEV_MODE=1`, `LABUSE_API_BASE=http://127.0.0.1:8060`). Aucune touche scoring.
 ⚠ le défaut `:8010` du harnais pointe un serveur STALE → 84/116 trompeur ; toujours cibler l'instance testée.
 
+## Addendum perf Promesses (décision Vic « rapide qui s'étoffe > 10 s »)
+Trois leviers, cumulés → **1re page 10 s → ~2 s** :
+1. **1re page réduite** 2000 → **1000** (le reste en « voir plus » ; le total connu dès l'abord).
+2. **Comptage découplé** : le `COUNT(DISTINCT)` (~4 s) sort du chemin des lignes — appel
+   `?count_only=true` **en parallèle**. La liste s'affiche sans l'attendre ; le total « 9 141
+   promesses mortes » se remplit seul (« … » en attendant).
+3. **Index partiel** `ix_dryrun_cascade_bati_exclude` (mirroir de `…_evenement`) : le `NOT EXISTS`
+   « déjà bâti » coûtait **~3,6 s** (filtre layer/result sur le tas) → **~0,6 s** (probe pur). C'était
+   le vrai plancher (pas la taille de page ni le comptage). `create_all` **n'ajoute pas** un index sur
+   une table déjà existante → helper explicite **`ensure_promesses_index`** (CREATE INDEX IF NOT
+   EXISTS, idempotent, ~3,7 s au 1er boot puis instantané) branché dans `ensure_schema`. ⚠ **déploiement :
+   le 1er boot construit l'index (lock table cascade quelques secondes, une seule fois).**
+
+Résultat mesuré (`:8060`, index en place) : lignes page 0 (1000) **2,07 s** · `count_only` **1,3 s** (‖) ·
+« voir plus » ~2 s. Preuve `qa/m15/B/15a/15b` : « 9 141 promesses mortes · 1 000 affichées » → 2 000.
+
 ## Note / réserve
-- Premier chargement promesses ~10 s (2000 enregistrements scorés réels + comptage honnête), derrière
-  le spinner existant. Conforme à la décision « paquets de 2000 ». Si trop lent en prod, levier =
-  première page plus petite (mais Vic a tranché 2000).
-- ⚠ **conflit attendu avec LOT G** sur M07 (Foncier fantôme) : G coupe l'héritage commune. Garder les
-  deux intentions au merge (pagination B + entrées G).
+- ⚠ **conflit attendu avec LOT G** sur M07 (Foncier fantôme) : G coupe l'héritage commune. G est
+  **empilée sur B** (merger B puis G) → composition propre, pas de conflit à la main.
