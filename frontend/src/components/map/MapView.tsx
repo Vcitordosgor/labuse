@@ -164,7 +164,7 @@ export function MapView() {
   const map = useRef<maplibregl.Map | null>(null)
   const ready = useRef(false)
   const [mapReady, setMapReady] = useState(false) // state : re-déclenche les effets APRÈS le load (remontage CRM→cartes)
-  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution } = useApp()
+  const { selectedIdu, select, filters, layers, basemap, orthoYear, terrain3d, tool, setTool, zone, setZone, moduleMap, flyTo, setFlyTo, commune, verdict, iaRestitution, module } = useApp()
   const ile = commune == null
   const toolRef = useRef<MapTool | null>(null)
   toolRef.current = tool
@@ -314,6 +314,11 @@ export function MapView() {
         filter: PROMUES_FILTER, paint: { 'line-color': STATUS_COLOR, 'line-width': 0.6, 'line-opacity': 0.9 } })
       m.addLayer({ id: 'ile-sel', type: 'line', ...SL, layout: { visibility: 'none' },
         filter: ['==', ['get', 'idu'], ''], paint: { 'line-color': '#ECF5EF', 'line-width': 2 } })
+      // M15 A1 : couche de PICKING de l'outil Assemblage — contours de TOUTES les parcelles,
+      // violet et bien visibles, uniquement quand l'outil est actif (sinon la carte outils est
+      // quasi vide et on ne voit pas quoi cliquer). Aucun impact hors assemblage.
+      m.addLayer({ id: 'ile-pick', type: 'line', ...SL, layout: { visibility: 'none' },
+        paint: { 'line-color': '#B497F0', 'line-width': 0.8, 'line-opacity': 0.85 } })
       // M6.1 : étiquette zone PLU en mode île — ne rend que si les tuiles portent zone_lib
       // (prochain build-mvt) ; d'ici là text-field vide = aucun rendu, rien ne casse
       m.addLayer({
@@ -527,6 +532,8 @@ export function MapView() {
     m.setLayoutProperty('ile-limites', 'visibility', vis(layers.limites && ile))
     m.setLayoutProperty('ile-sel', 'visibility', vis(ile))
     m.setLayoutProperty('ile-hl', 'visibility', vis(ile))
+    // M15 A1 : couche de picking Assemblage — contours violets visibles seulement quand l'outil est actif
+    m.setLayoutProperty('ile-pick', 'visibility', vis(module === 'assemblage' && ile))
     m.setLayoutProperty('ov-zonage', 'visibility', vis(layers.zonage && !ile))
     m.setLayoutProperty('ov-ppr', 'visibility', vis(layers.ppr && !ile))
     m.setLayoutProperty('ovmvt-zonage', 'visibility', vis(layers.zonage && ile))
@@ -569,7 +576,7 @@ export function MapView() {
     for (const id of ['parcels-brulantes', 'parcels-v-badge']) {
       if (m.getLayer(id)) m.setLayoutProperty(id, 'visibility', vis(!ile && verdict))
     }
-  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, zonageFill])
+  }, [filters, layers, geo.dataUpdatedAt, mapReady, ile, verdict, zonageFill, module])
 
   // P3 (dernière passe) — RÉSULTATS DE RECHERCHE EN VIOLET : quand une recherche/projet est
   // active (restitution posée), les parcelles-résultats (promues filtrées) reçoivent un CONTOUR

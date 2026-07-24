@@ -331,7 +331,15 @@ export function O10Bascules() {
           </button>
         ))}
         {!q.isLoading && items.length === 0 && (
-          <p className="rounded-lg bg-surface-2/60 px-3 py-2 text-[11px] text-txt-mut">Rien sur ce filtre — le prochain run alimentera le flux.</p>
+          // M15 A2 : honnêteté — une bascule est un CHANGEMENT entre deux runs de scoring. Avec un
+          // seul run servi, le flux est vide tant qu'un nouveau run n'a pas été comparé au précédent
+          // (ou que la démo n'a pas été semée). Ce n'est pas un bug : l'outil lit le même journal
+          // d'événements que la cloche de notifications.
+          <p className="rounded-lg bg-surface-2/60 px-3 py-2 text-[11px] leading-relaxed text-txt-mut">
+            Aucune bascule sur ce filtre. Une bascule apparaît quand un <b>nouveau run</b> de scoring
+            change l'état d'une parcelle par rapport au précédent (ou via un événement BODACC daté).
+            Le flux se remplira au prochain run — c'est le même journal que la cloche.
+          </p>
         )}
       </div>
     </>
