@@ -45,7 +45,7 @@ export function Legend({ inline = false }: { inline?: boolean }) {
         {/* R3 (PJ5) : sans run v2 la légende est celle de la MATRICE Q×A (vocabulaire « dossier »,
             non thermique) — le thermique est réservé au scoring P servi. */}
         {v2 ? (
-          <span className="label-caps">Verdict · Scoring v2</span>
+          <span className="label-caps">Verdict · Scoring</span>
         ) : (
           <Tip block side="top" tip="Classement matrice Q×A (historique) — vocabulaire « dossier », distinct de l'échelle thermique du scoring P servi.">
             <span className="label-caps">Verdict · Matrice Q×A</span>

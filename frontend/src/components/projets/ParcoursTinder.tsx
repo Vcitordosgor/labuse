@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import {
-  ajouterParcelle, chercherPlus, getCarteDecision, getParcoursEtat, proposerProjet, setStatutParcelle,
+  getCarteDecision, getParcoursEtat, proposerProjet, setStatutParcelle,
   type ParcoursEtat, type ParcoursItem, type StatutParcelle,
 } from '../../lib/api'
 import { fmtInt, fmtM2 } from '../../lib/format'
+import { CLIENT } from '../../lib/strings'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { Oiseau } from '../States'
@@ -14,7 +15,7 @@ import { TierBadge } from '../outils/TierBadge'
  *  les proposées, flyTo centre la courante), une carte de décision flotte par-dessus. Écarter est
  *  RÉVERSIBLE (pile écartées récupérable). Lot 3 (tri) + Lot 4 (sections) du parcours projet. */
 export function ParcoursTinder() {
-  const { parcours, setView, setOpenProjet, setModuleMap, setFlyTo, select, selectedIdu } = useApp()
+  const { parcours, setView, setOpenProjet, setModuleMap, setFlyTo, select } = useApp()
   // retour du tri → on revient sur le KANBAN du projet (pas la liste) : une seule source de vérité,
   // les statuts qu'on vient de poser s'y reflètent immédiatement (query ['parcours', pid] partagée).
   const retourProjet = () => (parcours ? setOpenProjet({ id: parcours.id, nom: parcours.nom }) : setView('projets'))
@@ -22,23 +23,6 @@ export function ParcoursTinder() {
   const pid = parcours?.id ?? 0
   const proposed = useRef(false)
   const [sectionsOpen, setSectionsOpen] = useState(false)
-  const [plusOpen, setPlusOpen] = useState(false)
-  const [iduInput, setIduInput] = useState('')
-  const [plusMsg, setPlusMsg] = useState('')
-  // clic-carte : une parcelle cliquée sur la carte pré-remplit le champ IDU d'ajout manuel
-  useEffect(() => { if (plusOpen && selectedIdu) setIduInput(selectedIdu) }, [plusOpen, selectedIdu])
-  const refreshDeck = () => qc.invalidateQueries({ queryKey: ['parcours', pid] })
-  const elargir = useMutation({
-    // limit plus profond que la proposition initiale (24) → atteint de NOUVELLES parcelles au-delà du top
-    mutationFn: () => chercherPlus(pid, { limit: 48, ile: true }),
-    onSuccess: (r) => { setPlusMsg(r.n_added > 0 ? `+${r.n_added} parcelle(s) ajoutée(s) (élargi à l'île)` : 'aucune nouvelle parcelle (déjà toutes proposées)'); refreshDeck() },
-    onError: () => setPlusMsg('recherche indisponible — réessayez'),   // F6 : jamais silencieux
-  })
-  const ajouter = useMutation({
-    mutationFn: (idu: string) => ajouterParcelle(pid, idu),
-    onSuccess: (r) => { setPlusMsg(r.already ? `${r.idu} est déjà dans le projet` : `${r.idu} ajoutée au tri`); setIduInput(''); refreshDeck() },
-    onError: () => setPlusMsg('IDU inconnu — vérifiez la saisie'),
-  })
 
   // À l'entrée : (re)proposer les parcelles du jour (idempotent, préserve les décisions) puis lire l'état.
   const etatQ = useQuery({ queryKey: ['parcours', pid], queryFn: () => getParcoursEtat(pid), enabled: pid > 0 })
@@ -98,11 +82,10 @@ export function ParcoursTinder() {
             {decided} / {total} triées · <span className="text-mint">{c?.retenue ?? 0} retenues</span>
           </span>
         </div>
-        {/* action POSITIVE (chercher plus) : teinte menthe, la plus contrastée */}
-        <button data-parcours-plus onClick={() => { setPlusOpen((o) => !o); setPlusMsg('') }}
-          className={`min-h-7 rounded-md border px-3 py-1.5 text-[11.5px] font-medium transition-colors duration-quick ${plusOpen ? 'border-mint bg-mint/20 text-mint' : 'border-mint/45 bg-mint/10 text-mint hover:bg-mint/20'}`}>
-          + Chercher plus
-        </button>
+        {/* M14-F2 (QA-52) : « + Chercher plus » retiré — on ajoute une parcelle depuis SA fiche. */}
+        <span data-parcours-ajouter className="min-w-0 flex-1 text-[10.5px] leading-snug text-txt-dim">
+          {CLIENT.projet.ajouterDepuisFiche}
+        </span>
         {/* consultation (retenues/écartées) : lisible, compteurs colorés pour le scan */}
         <button data-parcours-sections onClick={() => setSectionsOpen((o) => !o)}
           className={`min-h-7 rounded-md border px-3 py-1.5 text-[11.5px] font-medium transition-colors duration-quick ${sectionsOpen ? 'border-mint bg-surface-3 text-txt-hi' : 'border-line-2 bg-surface-3 text-txt hover:border-mint/50 hover:text-txt-hi'}`}>
@@ -113,29 +96,6 @@ export function ParcoursTinder() {
           className="min-h-7 rounded-md border border-line-2 px-3 py-1.5 text-[11.5px] text-txt-mut transition-colors duration-quick hover:border-st-ecartee/50 hover:text-txt"
           title="Revenir au projet (l'état est gardé)">✕ Quitter</button>
       </div>
-
-      {plusOpen && (
-        <div data-parcours-plus-panel className="floating pointer-events-auto absolute right-3 top-14 z-40 w-[300px] p-3">
-          <p className="label-caps">Chercher plus de parcelles</p>
-          <button data-plus-elargir onClick={() => elargir.mutate()} disabled={elargir.isPending}
-            className="mt-2 min-h-7 w-full rounded-md border border-line-2 py-1.5 text-[11px] text-txt transition-colors duration-quick hover:border-mint hover:text-txt-hi disabled:opacity-50">
-            {elargir.isPending ? '…' : 'Élargir la recherche à toute l’île'}
-          </button>
-          <div className="mt-3 border-t border-line-2 pt-3">
-            <p className="text-[10.5px] text-txt-dim">Ajouter une parcelle précise (IDU, ou cliquez-la sur la carte) :</p>
-            <div className="mt-1.5 flex gap-1.5">
-              <input data-plus-idu value={iduInput} onChange={(e) => setIduInput(e.target.value.trim())}
-                placeholder="97415000CW0658"
-                className="min-w-0 flex-1 rounded-md border border-line-2 bg-surface-3 px-2 py-1 font-mono text-[11px] text-txt focus:border-mint focus:outline-none" />
-              <button data-plus-ajouter onClick={() => iduInput && ajouter.mutate(iduInput)} disabled={!iduInput || ajouter.isPending}
-                className="min-h-7 shrink-0 rounded-md bg-mint px-2.5 py-1 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
-                Ajouter
-              </button>
-            </div>
-          </div>
-          {plusMsg && <p data-plus-msg className="mt-2 text-[10.5px] text-mint">{plusMsg}</p>}
-        </div>
-      )}
 
       <div className="flex min-h-0 flex-1">
         <div className="min-w-0 flex-1" /> {/* la carte reste visible/agissable ici */}

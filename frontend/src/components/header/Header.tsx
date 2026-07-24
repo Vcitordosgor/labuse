@@ -141,7 +141,7 @@ function AddFilter() {
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
           <div className="floating absolute left-0 top-9 z-20 w-[300px] p-4">
-            <label className="label-caps block">Verdict · Scoring v2 (multi)</label>
+            <label className="label-caps block">Verdict · Scoring (multi)</label>
             <div className="mb-3 mt-1.5 flex flex-wrap gap-1.5">
               {TIERS.map((t) => (
                 <button key={t} onClick={() => toggleTier(t)}

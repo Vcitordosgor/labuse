@@ -32,7 +32,7 @@ export const GROUPS: { key: OutilGroup; label: string; hint: string }[] = [
 export const MODULES: ModuleDef[] = [
   // ── Détecter le foncier ──
   { key: 'scoring-v2', num: 'M25', group: 'detecter', phare: true,
-    label: 'Scoring v2 (P)', desc: 'Probabilité de mutation à 12 mois — brûlantes v2, réserve foncière, top P' },
+    label: 'Scoring (P)', desc: 'Probabilité de mutation à 12 mois — brûlantes, réserve foncière, top P' },
   { key: 'programme', num: 'M22', group: 'detecter', phare: true,
     label: 'Faisabilité programme', desc: 'Décrivez votre programme, LABUSE trouve où le poser' },
   { key: 'division', num: 'M01', group: 'detecter', phare: true,
