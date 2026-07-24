@@ -17,11 +17,26 @@ const STATUS_DOT: Record<string, string> = {
 // en retard, c'est la SOURCE qui publie par millésime. Notes VÉRIFIÉES + repli sur l'année du nom.
 const MILLESIME_VERIFIE: Record<string, string> = {
   'DVF / valeurs foncières': 'ventes jusqu’à déc. 2025',
+  // M14 E2 (QA) : millésime réel de la donnée ingérée, renseigné là où il n'est ni dans le
+  // nom ni dans un job daté. Filosofi carroyé 200 m = millésime 2021 (directive M14). BPE et
+  // SAFER : millésime NON tracé en base localement → consigné, jamais inventé (voir Row).
+  'Filosofi INSEE (carreaux 200 m)': 'millésime 2021',
 }
 function millesimeNote(s: SourceInfo): string | null {
   if (MILLESIME_VERIFIE[s.name]) return MILLESIME_VERIFIE[s.name]
   const y = s.name.match(/\b(19|20)\d{2}\b/)
   return y ? `millésime ${y[0]}` : null
+}
+
+// M14 E1 : « Vérifié il y a X » — durée relative depuis le dernier passage du RADAR
+// (source_radar.derniere_verif). Affiché UNIQUEMENT pour les sources sondables. Date réelle.
+function ilYA(iso: string): string {
+  const j = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000))
+  if (j === 0) return 'aujourd’hui'
+  if (j === 1) return 'hier'
+  if (j < 30) return `il y a ${j} jour${j > 1 ? 's' : ''}`
+  const m = Math.floor(j / 30.44)
+  return `il y a ${m} mois`
 }
 
 // ── M6 Phase 2a (audit §1.11) : licence RÉELLE par source — plus jamais le repli
@@ -80,7 +95,8 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
   }, [focused])
 
   // 1) VERSION EN SERVICE : la date de la DONNÉE en base d'abord (derniere_donnee), sinon le
-  //    millésime que la source publie, sinon la date d'ingestion tracée. Jamais rien d'inventé.
+  //    millésime que la source publie, sinon la date d'ingestion tracée. Jamais rien d'inventé ;
+  //    si aucune de ces informations n'existe → repli HONNÊTE (jamais un « — » nu).
   const mil = millesimeNote(s)
   const donneeJusquau = s.derniere_donnee ? new Date(s.derniere_donnee).toLocaleDateString('fr-FR') : null
   const ingIso = majReelle(s)
@@ -90,10 +106,16 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
       ? mil
       : ingIso
         ? `donnée du ${new Date(ingIso).toLocaleDateString('fr-FR')}`
-        : null
+        : 'millésime non tracé en base'
 
-  // 2) DERNIER CONTRÔLE : source_checks.verified_at UNIQUEMENT — absente ⇒ on n'affiche rien.
-  const controle = s.verified_at ? new Date(s.verified_at).toLocaleDateString('fr-FR') : null
+  // 2) M14 E1 — DERNIER CONTRÔLE À DEUX RÉGIMES, selon la sondabilité (radar, cf. LOT A) :
+  //  • SONDABLE (le radar peut interroger une date amont) → « Vérifié il y a X » = date RÉELLE
+  //    du dernier passage du radar (source_radar.derniere_verif). C'est le contrôle automatique.
+  //  • NON SONDABLE (INSEE, SAFER… pas d'URL datée) → PAS de date de contrôle (techniquement
+  //    impossible) ; on montre la cadence connue du producteur. JAMAIS de « — » nu.
+  const sondable = !!s.radar && s.radar.statut !== 'non_sondable'
+  const verifieIso = sondable ? s.radar?.derniere_verif ?? null : null
+  const cadence = s.radar?.cadence ?? null
 
   const lic = licence(s)
   return (
@@ -120,22 +142,26 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
             </a>
           )}
         </div>
-        {/* Ligne 2 : LES DEUX SEULES INFORMATIONS — version en service · dernier contrôle. */}
+        {/* Ligne 2 (M14 E1) : version en service + régime de contrôle (auto si sondable,
+            cadence producteur sinon). Jamais de « — » nu. */}
         <div className="mt-1 flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-[11px]">
           <span data-source-version className="text-txt">
             <span className="text-txt-dim">Version en service :</span>{' '}
-            <span className="font-medium">{version ?? '—'}</span>
+            <span className="font-medium">{version}</span>
           </span>
-          {controle ? (
-            <span data-source-controle className="text-mint">
+          {verifieIso ? (
+            <span data-source-controle="auto" className="text-mint"
+              title={`Contrôle automatique (radar) du ${new Date(verifieIso).toLocaleDateString('fr-FR')} — dernière vérification que c'est bien la version la plus récente publiée`}>
               <span className="text-txt-dim">Dernier contrôle :</span>{' '}
-              <span className="font-medium">{controle}</span>
+              <span className="font-medium">vérifié {ilYA(verifieIso)}</span>
             </span>
-          ) : (
-            <span data-source-controle="absent" className="text-txt-dim">
-              Dernier contrôle : —
+          ) : cadence ? (
+            <span data-source-controle="cadence" className="text-txt-dim"
+              title="Source non sondable automatiquement (pas d'URL datée interrogeable) — cadence de publication du producteur">
+              <span className="text-txt-dim">Cadence producteur :</span>{' '}
+              <span className="text-txt-mut">{cadence}</span>
             </span>
-          )}
+          ) : null}
         </div>
       </div>
     </div>
@@ -175,14 +201,15 @@ export function SourcesPage() {
             </p>
           </div>
         </div>
-        {/* M13-F1 (QA-55) : deux informations par source, pas plus — la version en service et
-            la date du dernier contrôle. La fraîcheur du CONTRÔLE rassure : un document officiel
-            refait tous les 3 ans est fiable tant que LABUSE l'a vérifié récemment. */}
+        {/* M14 E1 (QA) : deux régimes honnêtes selon que la source est sondable ou non. */}
         <p className="mt-1.5 text-[11px] leading-relaxed text-txt-dim">
-          Pour chaque source publique, deux repères : la <b className="text-txt-mut">version en
-          service</b> (le millésime ou la date de la donnée que LABUSE utilise) et la
-          <b className="text-txt-mut"> date du dernier contrôle</b> (quand nous avons vérifié que
-          c'est bien la version la plus récente).
+          Pour chaque source, la <b className="text-txt-mut">version en service</b> (le millésime
+          ou la date de la donnée utilisée). Quand la source expose un moyen automatique de le
+          vérifier, on ajoute <b className="text-txt-mut">« Vérifié il y a X »</b> — la date réelle
+          du dernier contrôle par notre radar (il confirme que c'est bien la version la plus
+          récente publiée). Les sources qui n'exposent pas de date interrogeable (INSEE, SAFER…)
+          ne peuvent pas être contrôlées automatiquement : on affiche alors la cadence de
+          publication de leur producteur, sans date de contrôle inventée.
         </p>
 
         {/* M13-F2 (QA-56) : le bloc « Ce que LABUSE mesure » (BAN 99,99 %, jamais de SQL généré,
@@ -222,8 +249,10 @@ export function SourcesPage() {
           </div>
         ))}
         <p className="mt-6 text-[11px] leading-relaxed text-txt-dim">
-          Les rafraîchissements sont aujourd'hui manuels ; cet écran affichera la fraîcheur
-          automatique dès que la synchronisation planifiée sera en place.
+          Le contrôle automatique de fraîcheur est assuré par le <b className="text-txt-mut">radar</b>
+          des sources (sonde des métadonnées amont, sans téléchargement), aujourd'hui hebdomadaire.
+          Il ne couvre que les sources qui exposent une date interrogeable ; pour les autres, la
+          fraîcheur repose sur la cadence connue du producteur.
         </p>
       </div>
     </div>
