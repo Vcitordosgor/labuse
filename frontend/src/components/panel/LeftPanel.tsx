@@ -4,6 +4,38 @@ import { Legend } from '../map/Legend'
 import { LAYER_INFO } from '../../lib/layers'
 import { Tip } from '../Tip'
 import { ResultsSection } from './ResultsSection'
+import { CLIENT } from '../../lib/strings'
+
+// B8 (M12) : « Comprendre le classement » — explication du scoring ÉCRITE POUR UN CLIENT
+// (contenu centralisé dans strings.ts, validé par Vic avant prod). Overlay léger, fermable.
+function AlgoExplainer({ onClose }: { onClose: () => void }) {
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
+    window.addEventListener('keydown', h)
+    return () => window.removeEventListener('keydown', h)
+  }, [onClose])
+  return (
+    <div data-algo-overlay className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      onClick={onClose}>
+      <div className="max-h-[80vh] w-full max-w-md overflow-y-auto rounded-xl border border-line-2 bg-surface-2 p-5 shadow-elev-2"
+        onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="font-display text-sm font-bold text-txt-hi">{CLIENT.algo.titre}</h3>
+          <button onClick={onClose} className="shrink-0 rounded-md px-2 py-0.5 text-txt-dim hover:text-txt"
+            aria-label="Fermer">✕</button>
+        </div>
+        <div className="mt-3 flex flex-col gap-3">
+          {CLIENT.algo.corps.map((s) => (
+            <div key={s.h}>
+              <p className="label-caps text-[9.5px]">{s.h}</p>
+              <p className="mt-0.5 text-[12px] leading-relaxed text-txt-mut">{s.p}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // M12 C4 — ORDRE des couches, du PLUS UTILISÉ au moins utilisé (justif. au rapport) :
 //  1. parcelles       — la couche de travail (verdict coloré) — vue à chaque session
@@ -118,14 +150,26 @@ function LayersSection({ open, onToggle, onSelected }: {
 // chaque parcelle garde son verdict cliquable. L'utilisateur garde la main.
 function VerdictHero() {
   const { verdict, setVerdict } = useApp()
+  const [algoOpen, setAlgoOpen] = useState(false)
   if (verdict) {
     return (
-      <div className="mx-5 mb-1 flex shrink-0 items-center justify-between rounded-lg bg-mint/[0.08] px-3 py-2 shadow-elev-1">
-        <span className="text-[11px] font-medium text-mint">✓ Analyse LABUSE affichée</span>
-        <button data-verdict-off onClick={() => setVerdict(false)}
-          className="text-[11px] text-txt-dim hover:text-txt" title="Masquer l'analyse — revenir au cadastre brut">
-          masquer
-        </button>
+      <div className="mx-5 mb-1 flex shrink-0 items-center justify-between gap-2 rounded-lg bg-mint/[0.08] px-3 py-2 shadow-elev-1">
+        {algoOpen && <AlgoExplainer onClose={() => setAlgoOpen(false)} />}
+        <span className="min-w-0 truncate text-[11px] font-medium text-mint">✓ Analyse LABUSE affichée</span>
+        <span className="flex shrink-0 items-center gap-1.5">
+          {/* B8 : « Comprendre le classement » à côté de l'analyse affichée */}
+          <button data-algo-open onClick={() => setAlgoOpen(true)}
+            className="rounded-full border border-mint/40 px-2 py-0.5 text-[10.5px] font-medium text-mint hover:bg-mint/10"
+            title="Ce que le classement mesure, sur quoi il est entraîné, ce qu'il ne dit pas">
+            {CLIENT.algo.bouton}
+          </button>
+          {/* B9 : « masquer » est désormais un vrai bouton affirmé (plus un texte gris) */}
+          <button data-verdict-off onClick={() => setVerdict(false)}
+            className="rounded-full border border-line-2 px-2 py-0.5 text-[10.5px] text-txt-mut hover:border-txt-dim hover:text-txt"
+            title="Masquer l'analyse — revenir au cadastre brut">
+            Masquer
+          </button>
+        </span>
       </div>
     )
   }

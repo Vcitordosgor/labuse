@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef } from 'react'
 import { getSources } from '../../lib/api'
+import { CLIENT } from '../../lib/strings'
 import { TOKENS } from '../../lib/tokens'
 import type { SourceInfo } from '../../lib/types'
 import { useApp } from '../../store/useApp'
@@ -32,17 +33,6 @@ const PRECISION_PAR_SOURCE: Record<string, string> = {
   'Base Adresse Nationale': '99,99 % des parcelles rattachées à une adresse',
   'VRD / assainissement (SPANC)': 'signal ANC calé sur les zonages Office de l’eau',
 }
-const PRECISIONS_MESUREES: { couche: string; precision: string; methode: string }[] = [
-  { couche: 'Piscines (détection sur ortho IGN)', precision: '90,7 %',
-    methode: 'échantillon interne contrôlé, ortho 2025 — fiabilité statistique, non contractuelle' },
-  { couche: 'Recherche en langage naturel → filtres', precision: '20/20',
-    methode: 'jeu de recette interne, chaque traduction validée par schéma (jamais de SQL généré)' },
-  { couche: 'Adresses (rattachement BAN)', precision: '99,99 %',
-    methode: 'rattachement parcelle ↔ adresse certifiée BAN sur l’île entière' },
-  { couche: 'Assainissement non collectif (signal ANC)', precision: 'calé Office de l’eau',
-    methode: 'zonages SPANC + EGOUL RP à l’IRIS — signal de priorisation, pas un diagnostic' },
-]
-
 // ── M6 Phase 2a (audit §1.11) : licence RÉELLE par source — plus jamais le repli
 // « Données publiques » (R6). Le libellé est lu dans legal_notes (rempli ligne à ligne
 // au 2a-p1, seed_sources.py = source de vérité) ; le référentiel par nom ne garde que
@@ -110,14 +100,18 @@ const CADENCE_PAR_SOURCE: Record<string, { label: string; jours: number }> = {
 // NB SITADEL/DPE : petite marge (31 j, 10 j) pour ne pas passer orange le jour même de la
 // cadence théorique — le badge juge le retard, pas l'heure de publication.
 
+// B5 (M12) : les 3 statuts parlent enfin client (libellés centralisés dans strings.ts).
+// Point CENTRAL corrigé : « À VÉRIFIER » ne veut PAS dire « donnée douteuse » — il veut dire
+// « le producteur n'expose pas de calendrier sondable ». D'où « Cadence non sondable » + un
+// title qui rassure explicitement (« la donnée affichée est bien la dernière ingérée »).
 type Badge = 'a_jour' | 'maj_attendue' | 'a_verifier'
-const BADGE_META: Record<Badge, { label: string; color: string; title: string }> = {
-  a_jour: { label: 'À JOUR', color: TOKENS.mint,
-    title: 'Donnée plus récente que la cadence de publication du producteur' },
-  maj_attendue: { label: 'MAJ ATTENDUE', color: TOKENS.stCreuser,
-    title: 'La date de prochaine publication du producteur est dépassée — rafraîchissement à lancer' },
-  a_verifier: { label: 'À VÉRIFIER', color: TOKENS.txtDim,
-    title: 'Cadence du producteur non documentée ici (ou aucune date de donnée tracée) — pas de verdict inventé' },
+const BADGE_META: Record<Badge, { label: string; color: string; title: string; court: string }> = {
+  a_jour: { label: CLIENT.fraicheur.a_jour.label, color: TOKENS.mint,
+    title: CLIENT.fraicheur.a_jour.title, court: CLIENT.fraicheur.a_jour.court },
+  maj_attendue: { label: CLIENT.fraicheur.maj_attendue.label, color: TOKENS.stCreuser,
+    title: CLIENT.fraicheur.maj_attendue.title, court: CLIENT.fraicheur.maj_attendue.court },
+  a_verifier: { label: CLIENT.fraicheur.a_verifier.label, color: TOKENS.txtDim,
+    title: CLIENT.fraicheur.a_verifier.title, court: CLIENT.fraicheur.a_verifier.court },
 }
 
 /** Fraîcheur HONNÊTE : date de donnée réelle (majReelle) × cadence documentée du producteur.
@@ -207,15 +201,17 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
             : maj.iso ? `donnée du ${new Date(maj.iso).toLocaleDateString('fr-FR')}`
               : mil ? `donnée du ${mil}` : '—'}
         </div>
-        {/* M6.1 item 4 : prochaine MAJ calculée depuis la cadence du producteur — « — »
-            quand la cadence n'est pas documentée, jamais une date inventée. */}
-        <div data-source-prochaine className="mt-0.5 text-[11px] text-txt-dim"
-          title={f.cadence ? `Cadence du producteur : ${f.cadence}` : 'Cadence du producteur non documentée'}>
-          prochaine MAJ attendue : {f.prochaine
-            ? <span className={f.badge === 'maj_attendue' ? 'font-medium text-st-creuser' : undefined}>
-                {f.prochaine.toLocaleDateString('fr-FR')}</span>
-            : '—'}
-        </div>
+        {/* B6 (M12) : plus de « — » isolé sans contexte. La ligne « prochaine MAJ » ne s'affiche
+            QUE lorsqu'une date existe. Sans cadence sondable, le badge « Cadence non sondable »
+            porte déjà le sens — on ne répète pas un tiret orphelin. */}
+        {f.prochaine && (
+          <div data-source-prochaine className="mt-0.5 text-[11px] text-txt-dim"
+            title={f.cadence ? `Rythme de publication de la source : ${f.cadence}` : undefined}>
+            prochaine MAJ attendue :{' '}
+            <span className={f.badge === 'maj_attendue' ? 'font-medium text-st-creuser' : undefined}>
+              {f.prochaine.toLocaleDateString('fr-FR')}</span>
+          </div>
+        )}
         {/* M6.1 item 4 : « vérifié le » = source_checks uniquement ; sinon mention discrète
             « jamais vérifiée » — la table est vide tant que l'audit data n'a pas tourné. */}
         {/* B3 (BLOC B) : LE RADAR — cadence, mode (— auto — / — manuel, grande passe —),
@@ -242,8 +238,8 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
           </div>
         )}
         {s.radar?.statut === 'non_sondable' && (
-          <div data-source-radar="non-sondable" className="mt-0.5 text-[10.5px] italic text-txt-dim opacity-70">
-            — manuel / grande passe — non sondable automatiquement ({s.radar.detail ?? 'pas de signal stable'})
+          <div data-source-radar="non-sondable" className="mt-0.5 text-[10.5px] text-txt-mut">
+            manuel / grande passe — non sondable automatiquement ({s.radar.detail ?? 'pas de signal stable'})
           </div>
         )}
         {s.verified_at ? (
@@ -251,8 +247,8 @@ function Row({ s, focused }: { s: SourceInfo; focused: boolean }) {
             dernière version publiée — vérifié le {new Date(s.verified_at).toLocaleDateString('fr-FR')}
           </div>
         ) : (
-          <div data-source-verifiee="jamais" className="mt-0.5 text-[10.5px] italic text-txt-dim opacity-70">
-            jamais vérifiée
+          <div data-source-verifiee="jamais" className="mt-0.5 text-[10.5px] text-txt-mut">
+            pas encore contrôlée manuellement
           </div>
         )}
       </div>
@@ -302,57 +298,66 @@ export function SourcesPage() {
           le millésime lorsque la source publie par millésime, la précision quand elle a été mesurée,
           et la licence de réutilisation.
         </p>
+        {/* B7 (M12) : « Précision mesurée » n'est plus une section autonome — son contenu utile
+            remonte ICI, dans l'en-tête de crédibilité. Chaque ligne est CLIQUABLE (details) →
+            méthode + échantillon + date. Piscines retiré (part au spin-off) ; ANC conservé (A8 :
+            utilisé aussi par FLASH). Reformulé pour un client (strings.ts). */}
+        <div data-sources-preuve className="mt-4 rounded-lg border border-line-2 bg-surface-2 px-4 py-3">
+          <p className="text-[13px] font-semibold text-txt-hi">{CLIENT.preuve.titre}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-txt-dim">{CLIENT.preuve.intro}</p>
+          <div className="mt-2.5 flex flex-col gap-1.5">
+            {[...CLIENT.preuve.lignes, CLIENT.preuve.ancLigne].map((l) => (
+              <details key={l.titre} className="group rounded-[10px] border border-line-2 bg-surface-3 px-3 py-2">
+                <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4">
+                  <span className="text-xs font-medium text-txt">{l.titre}</span>
+                  <span className="shrink-0 font-display text-sm font-bold text-mint">{l.valeur}</span>
+                </summary>
+                <p className="mt-1.5 text-[11px] leading-relaxed text-txt-mut">{l.methode}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+
+        {/* B4 (M12) : le bloc modèle est scindé. VISIBLE = le seul point de CONFIANCE (les niveaux
+            récents sont provisoires, mais le CLASSEMENT reste fiable). REPLIÉ derrière « détail
+            technique » = version/sha/gel/mécanique de recalage. */}
         {modele && (
           <div data-sources-modele className="mt-3 rounded-lg border border-line-2 bg-surface-2 px-4 py-2.5">
-            <p className="text-xs font-medium text-txt">
-              Modèle de scoring v2 : <span className="font-mono">{modele.model_version}</span>
-              <span className="ml-1.5 font-mono text-[10.5px] text-txt-dim">
-                sha {modele.sha256_court} — gelé le {modele.gel.slice(0, 10)}
-              </span>
-            </p>
-            <p className="mt-1 text-[11px] leading-snug text-st-creuser">
-              ▲ {modele.avertissement_censure}.
-            </p>
-            <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">{modele.politique_recalibration}.</p>
+            <p className="text-[11px] leading-snug text-txt">{CLIENT.modele.confiance}</p>
+            <details className="mt-1.5">
+              <summary className="cursor-pointer list-none text-[10.5px] font-medium text-txt-dim hover:text-txt">
+                ▸ {CLIENT.modele.detailToggle}
+              </summary>
+              <p className="mt-1 text-[10.5px] font-medium text-txt">
+                Modèle de scoring v2 : <span className="font-mono">{modele.model_version}</span>
+                <span className="ml-1.5 font-mono text-[10px] text-txt-dim">
+                  sha {modele.sha256_court} — gelé le {modele.gel.slice(0, 10)}
+                </span>
+              </p>
+              <p className="mt-1 text-[10.5px] leading-snug text-st-creuser">▲ {modele.avertissement_censure}.</p>
+              <p className="mt-0.5 text-[10px] leading-snug text-txt-dim">{modele.politique_recalibration}.</p>
+            </details>
           </div>
         )}
+
+        {/* B5 (M12) : en-tête fraîcheur — faute « à » → « a » corrigée (strings.ts), légende des 3
+            statuts en langage client. « Cadence non sondable » ≠ « donnée douteuse ». */}
         <p data-sources-fraicheur className="mt-3 rounded-lg border border-line-2 bg-surface-2 px-4 py-2.5 text-xs font-medium text-txt">
-          Chaque source à sa fraîcheur maximale, prouvée.
+          {CLIENT.fraicheur.entete}
           <span className="ml-1.5 font-normal text-txt-dim">La mention « vérifié le » n'apparaît que
           lorsqu'un contrôle a réellement eu lieu — jamais de date déclarative.</span>
-          {/* M6.1 item 4 : légende des badges — le verdict vient de la cadence DOCUMENTÉE
-              du producteur ; cadence inconnue = gris, pas un vert de complaisance. */}
-          <span data-sources-legende className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-normal text-[10.5px] text-txt-dim">
+          <span data-sources-legende className="mt-1.5 flex flex-col gap-1 font-normal text-[10.5px] text-txt-dim">
             {(Object.keys(BADGE_META) as Badge[]).map((b) => (
-              <span key={b} className="flex items-center gap-1">
-                <span className="rounded-full px-1.5 py-px font-mono text-[9px] font-semibold"
+              <span key={b} className="flex items-center gap-1.5">
+                <span className="shrink-0 rounded-full px-1.5 py-px text-[9px] font-semibold"
                   style={{ backgroundColor: `${BADGE_META[b].color}22`, color: BADGE_META[b].color }}>
                   {BADGE_META[b].label}
                 </span>
-                {b === 'a_jour' && 'donnée dans la cadence du producteur'}
-                {b === 'maj_attendue' && 'prochaine publication dépassée'}
-                {b === 'a_verifier' && 'cadence non documentée — pas de verdict inventé'}
+                {BADGE_META[b].court}
               </span>
             ))}
           </span>
         </p>
-
-        {/* UX V1 ajout A : les précisions MESURÉES — uniquement des chiffres issus de mesures
-            internes consignées, jamais un pourcentage marketing. */}
-        <div className="mt-6">
-          <p className="mb-2 font-mono text-[11px] tracking-widest text-txt-dim">PRÉCISION MESURÉE — COUCHES DÉRIVÉES LABUSE</p>
-          <div data-sources-precisions className="flex flex-col gap-2">
-            {PRECISIONS_MESUREES.map((p) => (
-              <div key={p.couche} className="flex items-baseline gap-4 rounded-[10px] border border-line-2 bg-surface-3 px-4 py-2.5">
-                <div className="min-w-0 flex-1">
-                  <span className="text-xs font-medium text-txt">{p.couche}</span>
-                  <div className="mt-0.5 text-[11px] leading-snug text-txt-dim">{p.methode}</div>
-                </div>
-                <span className="shrink-0 font-display text-sm font-bold text-mint">{p.precision}</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
         {isLoading && <div className="mt-6"><Loading label="Chargement des sources" className="text-xs" /></div>}
         {isError && <p className="mt-6 text-xs text-st-ecartee">Sources inaccessibles — vérifiez votre réseau ou réessayez.</p>}
