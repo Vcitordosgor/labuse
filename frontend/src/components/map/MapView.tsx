@@ -353,11 +353,12 @@ export function MapView() {
       // rapproché (z18-20, l'échelle de travail sur une parcelle) elles restaient figées à 0,60
       // pendant que tout le reste de la carte grossissait → effet de rétrécissement relatif.
       // Rampe croissante et CONTINUE jusqu'à z20 : plus on approche, plus la pastille est lisible.
+      // M13 D3 (QA-49) : icônes ×1,5 (rampe M12 0,30/0,55/0,85/1,3 → 0,45/0,825/1,275/1,95).
       m.addLayer({ id: 'ov-equip', type: 'symbol', source: 'ov-equip', minzoom: 12,
         layout: { visibility: 'none',
                   'icon-image': ['concat', 'equip-', ['get', 'subtype']] as never,
                   'icon-size': ['interpolate', ['linear'], ['zoom'],
-                    12, 0.30, 15, 0.55, 17, 0.85, 20, 1.3] as never,
+                    12, 0.45, 15, 0.825, 17, 1.275, 20, 1.95] as never,
                   'icon-allow-overlap': true } })
       m.on('click', 'ov-equip', (e) => {
         const f = (e as maplibregl.MapLayerMouseEvent).features?.[0]

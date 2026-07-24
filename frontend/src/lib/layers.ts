@@ -59,7 +59,7 @@ export const layerLabel = (key: string): string => LAYER_LABEL[key] ?? key
 // ─────────────────────────────────────────────────────────────────────────────
 export const LAYER_INFO: Record<string, string> = {
   zonage:
-    'La carte officielle des zones du PLU (urbaine, à urbaniser, agricole, naturelle) telle que publiée par la commune — les grands aplats de couleur, sans découpage à la parcelle.',
+    'Les zones du PLU telles que déposées officiellement par la commune sur le Géoportail de l’urbanisme (source GPU) : les grands aplats de couleur, avec leurs contours d’origine — qui ne suivent pas forcément le découpage cadastral. C’est le document opposable de référence. À la différence de « Zonage PLU (par parcelle) » (qui colore chaque parcelle et affiche son code de zone au clic) et de « Colorisation par type de zonage » (qui teinte toutes les parcelles d’un coup), cette couche montre le zonage brut, non rattaché aux parcelles.',
   zonage_parcelle:
     'Chaque parcelle prend la couleur de sa zone du PLU. En zoomant, ou en cliquant une parcelle, le code exact de la zone (par ex. U1a, 1AUc) s’affiche.',
   zonage_colorise:

@@ -85,13 +85,15 @@ function LayerInfoPill({ info }: { info: string }) {
   )
 }
 
-// M12 C1 — « Couches » est un TIROIR REPLIABLE, REPLIÉ PAR DÉFAUT (libère la vue parcelle).
+// M12 C1 / M13 D1 — « Couches » est un TIROIR REPLIABLE, OUVERT PAR DÉFAUT tant que
+// l'analyse LABUSE n'est pas affichée (QA-47). Il se referme automatiquement quand on clique
+// « Afficher l'analyse LABUSE » (voir LeftPanel : effet sur `verdict`), pour libérer la place.
+// Plus d'auto-fermeture 10 s : c'est le passage à l'analyse qui replie les couches.
 // Ouvert, il POUSSE le contenu du dessous (flux flex : jamais de recouvrement, la liste des
-// résultats reste entière). Auto-fermeture ~10 s après une sélection de couche (`onSelected`).
-function LayersSection({ open, onToggle, onSelected }: {
+// résultats reste entière).
+function LayersSection({ open, onToggle }: {
   open: boolean
   onToggle: () => void
-  onSelected: () => void
 }) {
   const { layers, toggleLayer } = useApp()
   const activeCount = LAYERS.reduce((n, { key }) => n + (layers[key] ? 1 : 0), 0)
@@ -122,7 +124,7 @@ function LayersSection({ open, onToggle, onSelected }: {
               return (
                 <div key={key} className="flex items-center gap-2">
                   <button
-                    onClick={() => { toggleLayer(key); onSelected() }}
+                    onClick={() => toggleLayer(key)}
                     className="flex min-h-[28px] flex-1 items-center gap-3 rounded-md py-1 text-left transition-colors duration-quick"
                   >
                     <span className={`flex h-[13px] w-[13px] shrink-0 items-center justify-center rounded-[3px] ${on ? 'bg-mint' : 'border border-line-2'}`}>
@@ -200,19 +202,18 @@ export function LeftPanel() {
   // n'existait pas. Désormais la CARTE est l'écran d'accueil mobile ; COUCHES + légende
   // VERDICT vivent dans un tiroir escamotable (bouton « Couches » flottant).
   const [mobileOpen, setMobileOpen] = useState(false)
-  // M12 C1 : « Couches » REPLIÉ PAR DÉFAUT (libère la vue parcelle). État partagé desktop/mobile.
-  const [couchesOpen, setCouchesOpen] = useState(false)
-  const autoClose = useRef<number | undefined>(undefined)
-  useEffect(() => () => window.clearTimeout(autoClose.current), [])
-  // Auto-fermeture ~10 s après une sélection de couche (on relance le minuteur à chaque toggle).
-  const onLayerSelected = () => {
-    window.clearTimeout(autoClose.current)
-    autoClose.current = window.setTimeout(() => setCouchesOpen(false), 10_000)
-  }
-  const toggleCouches = () => {
-    window.clearTimeout(autoClose.current)
-    setCouchesOpen((o) => !o)
-  }
+  // M13 D1 (QA-47) : « Couches » OUVERT PAR DÉFAUT tant que l'analyse LABUSE n'est pas affichée.
+  // État partagé desktop/mobile.
+  const [couchesOpen, setCouchesOpen] = useState(true)
+  // M13 D1 : plus d'auto-fermeture 10 s ; c'est l'affichage de l'analyse LABUSE (`verdict` passe
+  // à true) qui replie les couches pour libérer la place. On ne force la fermeture qu'à la
+  // BASCULE (false→true), jamais ensuite : l'utilisateur peut rouvrir manuellement.
+  const prevVerdict = useRef(verdict)
+  useEffect(() => {
+    if (verdict && !prevVerdict.current) setCouchesOpen(false)
+    prevVerdict.current = verdict
+  }, [verdict])
+  const toggleCouches = () => setCouchesOpen((o) => !o)
   return (
     <>
       {/* ── desktop ≥ 640 px : panneau latéral inchangé ── */}
@@ -230,7 +231,7 @@ export function LeftPanel() {
             <h2 className="text-sm font-medium text-txt-hi">Cartes</h2>
             <button onClick={togglePanel} className="text-txt-dim hover:text-txt" title="Replier le panneau" aria-label="Replier le panneau">‹</button>
           </div>
-          <LayersSection open={couchesOpen} onToggle={toggleCouches} onSelected={onLayerSelected} />
+          <LayersSection open={couchesOpen} onToggle={toggleCouches} />
           <div className="mx-5 my-3 shrink-0 border-t border-line" />
           <VerdictHero />
           {verdict && <ResultsSection />}
@@ -262,7 +263,7 @@ export function LeftPanel() {
               <button data-couches-fermer onClick={() => setMobileOpen(false)} aria-label="Fermer"
                 className="flex h-7 w-7 items-center justify-center rounded-md text-txt-dim transition-colors duration-quick hover:bg-surface-3 hover:text-txt" title="Revenir à la carte">✕</button>
             </div>
-            <LayersSection open={couchesOpen} onToggle={toggleCouches} onSelected={onLayerSelected} />
+            <LayersSection open={couchesOpen} onToggle={toggleCouches} />
             <div className="mx-5 my-3 shrink-0 border-t border-line" />
             <div className="shrink-0 px-5 pb-1"><Legend inline /></div>
             <VerdictHero />
