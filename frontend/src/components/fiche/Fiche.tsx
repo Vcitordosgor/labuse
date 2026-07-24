@@ -1098,7 +1098,10 @@ export function Fiche({ idu }: { idu: string }) {
       )}
 
       {!fq && (
-      <div className="flex shrink-0 gap-4 overflow-x-auto border-b border-line px-5 py-2 text-xs">
+      // QA-46 (M13-C) : les onglets RETOURNENT À LA LIGNE (flex-wrap) au lieu de défiler
+      // horizontalement — 8 onglets ne tiennent pas sur la largeur de fiche (400 px) et
+      // produisaient une barre de scroll. `gap-y` gère l'espacement vertical entre lignes.
+      <div data-fiche-tabs className="flex shrink-0 flex-wrap gap-x-4 gap-y-1.5 border-b border-line px-5 py-2 text-xs">
         {/* R5 (O3) : « Pourquoi pas ? » n'apparaît que si la parcelle est écartée ou porte des flags */}
         {[...TABS, ...(f && (verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) ? [TAB_POURQUOI] : [])].map((t) => (
           <button key={t.k} onClick={() => setTab(t.k)} className={`shrink-0 ${tab === t.k ? 'font-medium text-txt-hi' : 'text-txt-dim hover:text-txt-mut'}`}>
@@ -1108,7 +1111,7 @@ export function Fiche({ idu }: { idu: string }) {
       </div>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip p-5">
         {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
         {fq && f && (
           <div data-fiche-search-results>

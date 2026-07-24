@@ -12,7 +12,8 @@ export function Tip({ tip, children, side = 'top', className = '', block = false
   className?: string
   block?: boolean                       // true = wrapper display:flex (lignes entières)
 }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false)      // tap mobile (toggle, auto-close 4 s)
+  const [hover, setHover] = useState(false)    // survol / focus clavier
   const ref = useRef<HTMLSpanElement>(null)
 
   useEffect(() => {
@@ -25,19 +26,30 @@ export function Tip({ tip, children, side = 'top', className = '', block = false
     return () => { window.removeEventListener('pointerdown', close); window.clearTimeout(t) }
   }, [open])
 
+  // QA-46 (M13-C) : le tooltip n'est MONTÉ que lorsqu'il est demandé (survol / focus / tap).
+  // Auparavant il était toujours dans le DOM (opacity-0) : `position:absolute` + `w-max`, il
+  // gonflait le scrollWidth de tout conteneur défilant étroit (volet Couches, liste, fiche, CARTES
+  // CRM) → une BARRE DE SCROLL HORIZONTALE fantôme. Monté à la demande, il n'élargit plus rien au
+  // repos ; le comportement d'affichage (apparition au survol) est identique.
+  const shown = open || hover
   const pos = side === 'top' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
   return (
     <span ref={ref}
-      className={`group/tip relative ${block ? 'flex' : 'inline-flex'} ${className}`}
-      onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}>
+      className={`relative ${block ? 'flex' : 'inline-flex'} ${className}`}
+      onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onFocus={() => setHover(true)}
+      onBlur={() => setHover(false)}>
       {children}
-      <span role="tooltip"
-        className={`floating pointer-events-none absolute left-1/2 z-50 w-max max-w-[260px]
-          -translate-x-1/2 px-2.5 py-1.5 text-left text-[11px] font-normal normal-case leading-snug
-          tracking-normal text-txt ${pos} transition-opacity duration-quick ease-cockpit
-          group-hover/tip:opacity-100 group-focus-within/tip:opacity-100 ${open ? 'opacity-100' : 'opacity-0'}`}>
-        {tip}
-      </span>
+      {shown && (
+        <span role="tooltip"
+          className={`floating pointer-events-none absolute left-1/2 z-50 w-max max-w-[260px]
+            -translate-x-1/2 px-2.5 py-1.5 text-left text-[11px] font-normal normal-case leading-snug
+            tracking-normal text-txt opacity-100 ${pos}`}>
+          {tip}
+        </span>
+      )}
     </span>
   )
 }
