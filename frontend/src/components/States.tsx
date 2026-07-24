@@ -15,15 +15,18 @@ export function Oiseau({ className = 'h-6 w-auto', dim = true }: { className?: s
 
 /** État VIDE : l'oiseau discret, un titre court, l'explication en dessous, une sortie
  *  si elle existe. Centré, respirant — le vide est un état de repos, pas un échec. */
-export function EmptyState({ title, hint, action, className = '' }: {
+export function EmptyState({ title, hint, action, className = '', mint = false }: {
   title: string
   hint?: ReactNode
   action?: ReactNode
   className?: string
+  // F8 (M12) : oiseau en MENTHE (au lieu du gris de repos) — pour un vide invitant à agir
+  // (ex. « Aucun projet encore »), à la couleur de l'appel « Décrivez votre opération au copilote ».
+  mint?: boolean
 }) {
   return (
     <div className={`flex flex-col items-center gap-2 px-6 py-10 text-center ${className}`}>
-      <Oiseau className="mb-1 h-5 w-auto" />
+      <Oiseau className="mb-1 h-5 w-auto" dim={!mint} />
       <p className="text-sm font-medium text-txt">{title}</p>
       {hint && <p className="max-w-[340px] text-xs leading-relaxed text-txt-mut">{hint}</p>}
       {action && <div className="mt-2">{action}</div>}

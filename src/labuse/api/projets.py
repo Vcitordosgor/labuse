@@ -434,6 +434,31 @@ def projets_fusionner(body: FusionIn, request: Request, db: Session = Depends(ge
             "n_parcelles": len(by_parcel), "conflits": conflits, **_counts(db, cible.id)}
 
 
+@router.get("/pour-parcelle/{idu}")
+def projets_pour_parcelle(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
+    """F7 (M12) — les projets ACTIFS du compte auxquels cette parcelle est déjà rattachée (id, nom,
+    statut de la parcelle dans le projet). Alimente le bouton « Projet » de la fiche : état actif +
+    nom du projet si déjà attachée. SEC-IDOR : borné au compte (jointure projets.compte_id).
+    Déclaré AVANT `/{pid}` : « pour-parcelle » n'est pas un int, mais on lève l'ambiguïté à la source."""
+    cid = current_compte(request)
+    # SEC-IDOR : la cloison est branchée en Python (NULL = bucket pilote) — évite un bind NULL
+    # non typé côté Postgres (AmbiguousParameter) tout en gardant la clause explicite.
+    scope = "p.compte_id IS NULL" if cid is None else "p.compte_id = :cid"
+    params: dict = {"idu": idu}
+    if cid is not None:
+        params["cid"] = cid
+    rows = db.execute(text(
+        f"""SELECT p.id, p.nom, pp.statut
+           FROM projet_parcelles pp
+           JOIN projets p ON p.id = pp.projet_id
+           JOIN parcels par ON par.id = pp.parcel_id
+           WHERE par.idu = :idu AND p.statut = 'actif' AND {scope}
+           ORDER BY p.updated_at DESC"""),
+        params).mappings().all()
+    return {"idu": idu,
+            "projets": [{"id": r["id"], "nom": r["nom"], "statut": r["statut"]} for r in rows]}
+
+
 @router.get("/{pid}")
 def projet_get(pid: int, request: Request, db: Session = Depends(get_db)) -> dict:
     p = _projet_or_404(db, pid, current_compte(request))

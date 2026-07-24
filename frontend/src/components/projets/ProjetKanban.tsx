@@ -120,6 +120,8 @@ export function ProjetKanban({ pid, nom }: { pid: number; nom: string }) {
   const elargir = useMutation({
     mutationFn: () => chercherPlus(pid, { limit: 48, ile: true }),
     onSuccess: (r) => { setMsg(r.n_added > 0 ? `+${r.n_added} parcelle(s) ajoutée(s) (élargi à l'île)` : 'aucune nouvelle parcelle (déjà toutes proposées)'); qc.invalidateQueries({ queryKey: ['parcours', pid] }) },
+    // F6 (M12) : un échec ne DOIT jamais être silencieux (« rien ne se passe ») — on l'énonce.
+    onError: () => setMsg('recherche indisponible — réessayez'),
   })
   const patch = useMutation({
     mutationFn: (body: { nom?: string; statut?: string }) => patchProjet(pid, body),

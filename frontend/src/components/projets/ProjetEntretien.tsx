@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { deriveProjet, getApercu, getReperes, iaEntretien, type EntretienQuestion, type EntretienRep, type FicheProjet, type RepereOption } from '../../lib/api'
-import { useApplySearch } from '../../lib/useApplySearch'
+import { createProjet, getReperes, iaEntretien, type EntretienQuestion, type EntretienRep, type FicheProjet, type RepereOption } from '../../lib/api'
 import { fmtEurCompact, fmtInt } from '../../lib/format'
 import { useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
@@ -14,7 +13,8 @@ const CONTRAINTE_LABEL: Record<string, string> = {
   eviter_abf: 'hors ABF', eviter_icpe: 'hors ICPE',
 }
 
-// Les 4 « cases » de la fiche que la jauge suit — l'utilisateur voit son projet prendre forme.
+// Les 5 « cases » de la fiche que la jauge suit — l'utilisateur voit son projet prendre forme.
+// F1 (M12) : Budget est une case à part entière (5e info collectée) — au même titre que les autres.
 const SLOTS: { key: string; label: string; rempli: (f: FicheProjet) => string | null }[] = [
   { key: 'type', label: 'Programme', rempli: (f) => f.type_programme ? TYPE_LABEL[f.type_programme] : null },
   {
@@ -40,6 +40,9 @@ const SLOTS: { key: string; label: string; rempli: (f: FicheProjet) => string | 
     key: 'contraintes', label: 'Contraintes', rempli: (f) =>
       f.contraintes?.length ? f.contraintes.map((c) => CONTRAINTE_LABEL[c] ?? c).join(' · ') : null,
   },
+  {
+    key: 'budget', label: 'Budget', rempli: (f) => f.budget_foncier_eur ? fmtEurCompact(f.budget_foncier_eur) : null,
+  },
 ]
 
 /** Repère sourcé sous un chip de secteur : « N opp · ~P €/m² » (+ pastille carencée SRU). */
@@ -57,8 +60,7 @@ function RepereBadge({ opt }: { opt: RepereOption | undefined }) {
 /** L'ENTRETIEN de cadrage projet — l'IA mène, la fiche se construit à l'écran, chaque question
  *  à chips (repères sourcés sous le secteur), skippable. Fin : « Lancer la recherche ». */
 export function ProjetEntretien({ initial, onClose }: { initial: string; onClose: () => void }) {
-  const apply = useApplySearch()
-  const { setView } = useApp()
+  const { setOpenProjet } = useApp()
   const [fiche, setFiche] = useState<FicheProjet>({})
   const [reformulation, setReformulation] = useState('')
   const [questions, setQuestions] = useState<EntretienQuestion[]>([])
@@ -100,26 +102,14 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
   const repere = (label: string): RepereOption | undefined =>
     (reperesQ.data?.options ?? []).find((o) => o.key === label || o.label === label)
 
+  // F5 (M12) — « Lancer la recherche » PERSISTE le projet et ouvre DIRECTEMENT sa vue 3 colonnes
+  // (À trier / Retenues / Écartées), pas la carte globale. Le kanban (re)propose les parcelles du
+  // jour à l'ouverture (proposerProjet idempotent) → elles atterrissent dans « À trier ». Dédup
+  // douce serveur : un projet identique est repris (jamais de doublon).
   const lancer = useMutation({
-    mutationFn: async () => {
-      const d = await deriveProjet({ fiche, nom })
-      const ap = await getApercu(fiche)   // pourquoi PAR PARCELLE, sorti du moteur
-      return { d, ap }
-    },
-    onSuccess: async ({ d, ap }) => {
-      // la carte : filtres + verdict + vol caméra (chorégraphie partagée)
-      await apply(d.filtres, `parcelles pour « ${d.nom} »`)
-      setView('cartes')
-      // la restitution ENRICHIE : compteur SQL + top avec « pourquoi » + contexte projet
-      useApp.getState().setIaRestitution({
-        n: ap.n,
-        phrase: ap.programme_defini
-          ? `parcelles portent la capacité du programme — voici les meilleures`
-          : `parcelles correspondent à votre projet — voici les meilleures`,
-        top: ap.top.map((t) => ({ idu: t.idu, commune: t.commune, q_score: t.q_score ?? 0, pourquoi: t.pourquoi })),
-        projet: { nom: d.nom, fiche: fiche as Record<string, unknown>, programme: d.programme },
-      })
-      useApp.getState().setProjetBrouillon({ fiche: fiche as Record<string, unknown>, nom: d.nom, filtres: d.filtres, sdp_besoin_m2: d.sdp_besoin_m2 })
+    mutationFn: () => createProjet({ fiche, nom: nom || undefined }),
+    onSuccess: ({ projet }) => {
+      setOpenProjet({ id: projet.id, nom: projet.nom })   // → vue kanban 3 colonnes (nav exclusive)
       onClose()   // l'entretien est terminé : ré-ouvrir le copilote = une recherche fraîche
     },
   })
@@ -150,10 +140,12 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
           </button>
         </div>
 
-        {/* jauge : la fiche prend forme */}
+        {/* jauge : la fiche prend forme. F1 (M12) — PROGRESSION left→right : les `remplis`
+            PREMIERS segments s'allument, dans l'ordre (jamais un segment vert isolé au milieu
+            parce que l'IA a rempli « Où » avant « Programme »). 5 segments = 5 infos collectées. */}
         <div className="mt-3 flex gap-1" data-entretien-jauge data-remplis={remplis}>
-          {SLOTS.map((s) => (
-            <div key={s.key} className={`h-1 flex-1 rounded-full transition-colors duration-soft ${s.rempli(fiche) ? 'bg-mint' : 'bg-line-2'}`} />
+          {SLOTS.map((s, i) => (
+            <div key={s.key} className={`h-1 flex-1 rounded-full transition-colors duration-soft ${i < remplis ? 'bg-mint' : 'bg-line-2'}`} />
           ))}
         </div>
 
@@ -178,21 +170,15 @@ export function ProjetEntretien({ initial, onClose }: { initial: string; onClose
               return (
                 <div key={s.key} className="flex items-baseline gap-3 text-xs">
                   <dt className="w-24 shrink-0 text-txt-dim">{s.label}</dt>
-                  <dd className={v ? 'text-txt-hi' : 'text-txt-dim/50'}>{v ?? '—'}</dd>
+                  <dd className={`${v ? 'text-txt-hi' : 'text-txt-dim/50'}${s.key === 'budget' ? ' tnum' : ''}`}>{v ?? '—'}</dd>
                 </div>
               )
             })}
-            {fiche.budget_foncier_eur ? (
-              <div className="flex items-baseline gap-3 text-xs">
-                <dt className="w-24 shrink-0 text-txt-dim">Budget</dt>
-                <dd className="tnum text-txt-hi">{fmtEurCompact(fiche.budget_foncier_eur)}</dd>
-              </div>
-            ) : null}
           </dl>
         </div>
 
         {/* question active (chips + skip) */}
-        {loading && <div className="mt-5"><Loading big label="Le copilote réfléchit" /></div>}
+        {loading && <div className="mt-5"><Loading big label="LABUSE réfléchit" /></div>}
         {!loading && active && (
           <div className="mt-5" data-entretien-question data-qid={active.id}>
             <p className="text-sm font-medium text-txt-hi">{active.texte}</p>
