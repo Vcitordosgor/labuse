@@ -1,9 +1,9 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { addProfile, getProfiles, matchCompatibilite, motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, runMatch, zanParcelle } from '../../lib/api'
+import { addProfile, getProfiles, getResults, motAssemblage, motBarometre, motSimulPlu, motSimulPluZones, motZan, promoteursActifs, zanParcelle } from '../../lib/api'
 import { fmtInt } from '../../lib/format'
 import { TOKENS } from '../../lib/tokens'
-import { useApp } from '../../store/useApp'
+import { EMPTY_FILTERS, useApp } from '../../store/useApp'
 import { Loading } from '../Loading'
 import { TierBadge } from './TierBadge'
 
@@ -316,93 +316,122 @@ export function M18() {
 
 /* ───────────── M19 — MATCHING TERRAIN ↔ PROMOTEUR ───────────── */
 
-const DemoTag = () => <span className="ml-1 rounded bg-violet/15 px-1 py-0.5 text-[8px] font-medium text-violet">DÉMO · ILLUSTRATIF</span>
-const RealTag = () => <span className="ml-1 rounded bg-mint/10 px-1 py-0.5 text-[8px] font-medium text-mint">RÉEL · SITADEL</span>
 
+// M15 A3 — REFONTE. DÉMO/RÉEL nettement séparés (le client ne doit jamais douter du réel).
+// Les cartes de PROFIL (démo) sont cliquables : un clic ALLUME les parcelles matchées sur la carte
+// (un seul profil actif à la fois) ; cliquer une parcelle allumée ouvre sa fiche avec la RAISON du
+// match en tête. L'outil démarre VIERGE — rien n'est hérité du filtre carte (RG1).
 export function M19() {
   const profiles = useQuery({ queryKey: ['m19'], queryFn: getProfiles })
-  const { selectedIdu, commune } = useApp()
-  const [idu, setIdu] = useState(selectedIdu ?? '')
-  useEffect(() => { if (selectedIdu) setIdu(selectedIdu) }, [selectedIdu])
-  const compat = useQuery({ queryKey: ['m19-compat', idu], queryFn: () => matchCompatibilite(idu.trim()), enabled: idu.trim().length >= 10 })
-  const secteur = commune ?? (compat.data?.commune as string | undefined)
-  const actifs = useQuery({ queryKey: ['m19-actifs', secteur], queryFn: () => promoteursActifs(secteur!), enabled: !!secteur })
+  const setModuleMap = useApp((s) => s.setModuleMap)
+  const setModuleFiche = useApp((s) => s.setModuleFiche)
+  const [activeId, setActiveId] = useState<number | null>(null)
   const [nom, setNom] = useState('')
   const [smin, setSmin] = useState('')
   const add = useMutation({ mutationFn: () => addProfile({ nom, surface_min: smin ? Number(smin) : null }),
-    onSuccess: () => { setNom(''); profiles.refetch() } })
-  const match = useMutation({ mutationFn: runMatch })
+    onSuccess: () => { setNom(''); setSmin(''); profiles.refetch() } })
+
+  const list = (profiles.data ?? []) as Record<string, any>[]
+  const active = list.find((p) => p.id === activeId) ?? null
+
+  // parcelles matchées = les critères du profil (surface/SDP/commune) appliqués comme FILTRE via
+  // /parcels (aucun nouveau back). Vierge tant qu'aucun profil n'est actif (RG1 : rien d'hérité).
+  const matched = useQuery({
+    queryKey: ['m19-matched', activeId],
+    queryFn: () => getResults({ ...EMPTY_FILTERS,
+      surfaceMin: active?.surface_min ?? null, surfaceMax: active?.surface_max ?? null,
+      sdpMin: active?.sdp_min ?? null, communes: active?.commune ? [active.commune] : [] }, 400),
+    enabled: activeId != null,
+  })
+
+  // ALLUMER les parcelles matchées + poser la RAISON du match sur chaque fiche (moduleFiche).
+  useEffect(() => {
+    if (activeId == null || !active) { setModuleMap({ idus: [], extra: null }); setModuleFiche({}); return }
+    const items = (matched.data ?? []) as Record<string, any>[]
+    setModuleMap({ idus: items.map((i) => i.idu as string), extra: null })
+    const lines: [string, string][] = [
+      ['Correspond au profil', String(active.nom)],
+      ['Surface', `${fmt(active.surface_min ?? 0)}–${fmt(active.surface_max ?? 0)} m² ✓`],
+    ]
+    if (active.sdp_min) lines.push(['SDP résiduelle', `≥ ${fmt(active.sdp_min)} m² ✓`])
+    if (active.commune) lines.push(['Commune', `${active.commune} ✓`])
+    const mf: Record<string, { module: string; lines: [string, string][] }> = {}
+    for (const i of items) mf[i.idu as string] = { module: 'matching', lines }
+    setModuleFiche(mf)
+    return () => { setModuleMap({ idus: [], extra: null }); setModuleFiche({}) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [matched.dataUpdatedAt, activeId])
+
+  const nMatch = (matched.data as Record<string, any>[] | undefined)?.length ?? 0
+
   return (
     <>
-      <Banner>Deux volets : la <b>compatibilité</b> avec des profils <b>démo</b> (illustratif) et les
-        <b>promoteurs réellement actifs</b> du secteur via <b>SITADEL</b> (donnée réelle).</Banner>
+      <Banner>Deux blocs bien distincts. <b className="text-violet">Profils de démonstration</b>
+        (des exemples, pour illustrer) et les <b className="text-mint">promoteurs réellement actifs</b>
+        du secteur (donnée SITADEL). <b>Cliquez un profil</b> : les parcelles qui lui correspondent
+        <b> s'allument sur la carte</b> — cliquez-en une pour ouvrir sa fiche avec la raison du match.</Banner>
 
-      {/* A + B — compatibilité parcelle × profil (DÉMO), score décomposé */}
-      <p className="label-caps">Compatibilité parcelle × profil<DemoTag /></p>
-      <input data-m19-idu value={idu} onChange={(e) => setIdu(e.target.value.trim())}
-        placeholder="IDU (ou sélectionnez une parcelle sur la carte)"
-        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 font-mono text-[11px] text-txt focus:border-violet focus:outline-none" />
-      {compat.data && (compat.data.profils as Record<string, any>[]).map((pr, k) => (
-        <div key={k} data-m19-compat className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-[11px]">
-          <div className="flex items-center gap-2">
-            <span className={`num-key text-base ${pr.score >= 70 ? 'text-mint' : pr.score >= 40 ? 'text-st-creuser' : 'text-txt-mut'}`}>{pr.score}</span>
-            <span className="text-txt-dim">/100 · {pr.profil}</span>
-            {pr.demo && <DemoTag />}
-          </div>
-          <div className="mt-1 flex flex-col gap-0.5">
-            {(pr.facteurs as Record<string, any>[]).map((f, i) => (
-              <div key={i} className="flex gap-1.5 text-[10.5px]">
-                <span className={f.ok ? 'text-mint' : 'text-txt-dim'}>{f.ok ? '✓' : '○'}</span>
-                <span className={f.ok ? 'text-txt-mut' : 'text-txt-dim'}>{f.critere} <span className="text-txt-dim">— {f.valeur}</span></span>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-
-      {/* C — promoteurs réellement actifs (SITADEL, réel, PM only) */}
-      <p className="label-caps mt-1">Promoteurs actifs du secteur<RealTag /></p>
-      {actifs.data ? (
-        <div data-m19-actifs className="flex max-h-48 flex-col gap-1 overflow-y-auto">
-          <p className="text-[9.5px] leading-snug text-txt-dim">{actifs.data.source}</p>
-          {(actifs.data.promoteurs as Record<string, any>[]).map((p, k) => (
-            <div key={k} className="rounded-lg border border-line-2 bg-surface-2 px-3 py-1.5 text-[11px]">
-              <div className="truncate text-txt" title={`SIREN ${p.siren}`}>{p.nom}</div>
-              <div className="text-[10.5px] text-txt-dim">SIREN {p.siren} · <b className="text-txt-mut">{p.n_permis}</b> permis (5 ans){p.logements ? ` · ${p.logements} logements` : ''}</div>
-            </div>
-          ))}
-          {(actifs.data.promoteurs as unknown[]).length === 0 && <p className="text-[10.5px] text-txt-dim">Aucun promoteur (personne morale) avec ≥ 2 permis récents ici.</p>}
-        </div>
-      ) : <p className="text-[10.5px] text-txt-dim">Choisissez une commune ou une parcelle pour voir les promoteurs actifs réels.</p>}
-
-      <p className="label-caps mt-1">Profils de recherche (alertes cloche)<DemoTag /></p>
-      <div className="flex min-h-0 flex-col gap-1.5 overflow-y-auto">
-        {((profiles.data ?? []) as Record<string, any>[]).map((p) => (
-          <div key={p.id} className="rounded-lg border border-line-2 bg-surface-3 px-3 py-2 text-[11px]">
-            <div className="flex items-center gap-2">
-              <span className="text-txt">{p.nom}</span>
-              {p.demo && <span className="rounded-full bg-violet/15 px-1.5 py-0.5 text-[8.5px] text-violet">DÉMO</span>}
-            </div>
-            <div className="mt-0.5 text-[11px] text-txt-dim">
-              {p.commune ?? 'toute commune'} · surface {p.surface_min ?? '—'}–{p.surface_max ?? '—'} m² · SDP ≥ {p.sdp_min ?? '—'}
-            </div>
-          </div>
-        ))}
+      {/* ── DÉMO — profils cliquables (un seul actif à la fois) ── */}
+      <div className="flex items-center gap-1.5">
+        <p className="label-caps">Profils de recherche</p>
+        <span className="rounded bg-violet/15 px-1.5 py-0.5 text-[8px] font-medium text-violet">DÉMO · EXEMPLES</span>
       </div>
+      <div className="flex flex-col gap-1.5">
+        {list.map((p) => {
+          const on = p.id === activeId
+          return (
+            <button key={p.id} data-m19-profil aria-pressed={on}
+              onClick={() => setActiveId(on ? null : p.id)}
+              className={`rounded-lg border px-3 py-2 text-left text-[11px] transition-colors duration-quick ${
+                on ? 'border-violet bg-violet/10' : 'border-line-2 bg-surface-3 hover:border-violet/50'}`}>
+              <div className="flex items-center gap-2">
+                <span className={`font-medium ${on ? 'text-violet' : 'text-txt'}`}>{on ? '● ' : ''}{p.nom}</span>
+                <span className="ml-auto text-[9px] text-txt-dim">{on ? 'actif — voir la carte' : 'cliquer pour voir'}</span>
+              </div>
+              <div className="mt-0.5 text-[10.5px] text-txt-dim">
+                {p.commune ?? 'toute commune'} · surface {fmt(p.surface_min)}–{fmt(p.surface_max)} m² · SDP ≥ {p.sdp_min ?? '—'}
+              </div>
+              {on && <div className="mt-1 text-[10.5px] text-violet">{matched.isFetching ? 'recherche des parcelles…' : `${fmt(nMatch)} parcelle(s) allumée(s) sur la carte — cliquez-en une`}</div>}
+            </button>
+          )
+        })}
+      </div>
+      {/* ajout d'un profil de démo */}
       <div className="flex gap-1.5">
-        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nom du profil…"
+        <input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Nouveau profil…"
           className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-violet focus:outline-none" />
         <input value={smin} onChange={(e) => setSmin(e.target.value)} placeholder="surf. min" type="number"
           className="w-20 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-violet focus:outline-none" />
-        <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()}
-          title="Ajouter le profil" aria-label="Ajouter le profil"
+        <button onClick={() => nom.trim() && add.mutate()} disabled={!nom.trim()} title="Ajouter le profil" aria-label="Ajouter le profil"
           className="rounded bg-violet px-2 text-[11px] font-medium text-bg transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">+</button>
       </div>
-      <button onClick={() => match.mutate()} disabled={match.isPending}
-        className="rounded-lg border border-line-2 py-1.5 text-[11px] text-txt transition-colors duration-quick hover:text-txt-hi">
-        {match.isPending ? '…' : 'Tester le matching maintenant'}
-      </button>
-      {match.data && <p className="text-[11px] text-violet">✓ {match.data.matches} match(s) émis → voir la cloche</p>}
+
+      {/* ── RÉEL — promoteurs actifs SITADEL (commune du profil actif) ── */}
+      <div className="mt-1 flex items-center gap-1.5">
+        <p className="label-caps">Promoteurs actifs du secteur</p>
+        <span className="rounded bg-mint/10 px-1.5 py-0.5 text-[8px] font-medium text-mint">RÉEL · SITADEL</span>
+      </div>
+      <PromoteursActifs commune={active?.commune ?? null} />
     </>
+  )
+}
+
+// RÉEL — promoteurs SITADEL du secteur (pilotés par la commune du profil actif ; pas d'héritage carte).
+function PromoteursActifs({ commune }: { commune: string | null }) {
+  const actifs = useQuery({ queryKey: ['m19-actifs', commune], queryFn: () => promoteursActifs(commune!), enabled: !!commune })
+  if (!commune) return <p className="text-[10.5px] text-txt-dim">Choisissez un profil ciblant une commune pour voir les promoteurs réellement actifs (SITADEL).</p>
+  if (!actifs.data) return <Loading accent="violet" label="Promoteurs actifs…" />
+  const promos = (actifs.data.promoteurs as Record<string, any>[]) ?? []
+  return (
+    <div data-m19-actifs className="flex max-h-48 flex-col gap-1 overflow-y-auto">
+      <p className="text-[9.5px] leading-snug text-txt-dim">{actifs.data.source}</p>
+      {promos.map((p, k) => (
+        <div key={k} className="rounded-lg border border-mint/25 bg-mint/[0.04] px-3 py-1.5 text-[11px]">
+          <div className="truncate text-txt" title={`SIREN ${p.siren}`}>{p.nom}</div>
+          <div className="text-[10.5px] text-txt-dim">SIREN {p.siren} · <b className="text-txt-mut">{p.n_permis}</b> permis (5 ans){p.logements ? ` · ${p.logements} logements` : ''}</div>
+        </div>
+      ))}
+      {promos.length === 0 && <p className="text-[10.5px] text-txt-dim">Aucun promoteur (personne morale) avec ≥ 2 permis récents ici.</p>}
+    </div>
   )
 }
