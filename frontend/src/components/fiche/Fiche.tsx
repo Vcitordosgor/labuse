@@ -961,7 +961,7 @@ const TABS: { k: 'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'; lab
 const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
 // M19 · onglets déjà migrés en tiroirs (dans la pile Synthèse). Grandit à chaque commit
 // jusqu'à absorber les 8 ; à ce moment la bascule `tab` disparaît, la barre devient nav pure.
-const MIGRATED = new Set<string>(['risques', 'marche'])
+const MIGRATED = new Set<string>(['risques', 'marche', 'proprio'])
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -1040,6 +1040,12 @@ export function Fiche({ idu }: { idu: string }) {
   const marcheValue = dvfSecteur?.mediane_prix_m2 != null
     ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²${dvfSecteur.n_ventes ? ` · ${dvfSecteur.n_ventes} ventes secteur` : ''}`
     : (marcheLines.length ? 'comparables DVF · aménités' : 'voir le détail')
+  // Proprio : le signal dominant s'il existe (gérant âgé, procédure…), sinon le type de
+  // propriétaire. Jamais d'identité de personne physique (boussole).
+  const proprioLines = ongletLines('proprio')
+  const proprioSignal = proprioLines.filter((l) => (l.weight ?? 0) > 0).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
+  const proprioType = f?.proprietaire_moral?.denomination ?? (f?.proprietaire_moral ? 'personne morale' : 'personne physique / non recensé')
+  const proprioValue = proprioSignal ? `${proprioType} · ${fmtLibelleBrut(proprioSignal.detail)}` : proprioType
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
@@ -1363,32 +1369,35 @@ export function Fiche({ idu }: { idu: string }) {
                 ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
             </FicheDrawer>
+            {/* Propriétaire — carte PM (ou mention personne physique, jamais nommée) + lignes. */}
+            <FicheDrawer id="proprio" ico="👤" name="Propriétaire" value={proprioValue}>
+              {f.proprietaire_moral ? (
+                <div className="card-elev px-3 py-2.5">
+                  <p className="label-caps">Propriétaire (DGFiP)</p>
+                  <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
+                  <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
+                    {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
+                    {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
+                  </div>
+                  {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
+                </div>
+              ) : (
+                <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
+                  Propriétaire : personne physique ou non recensé au fichier des personnes morales
+                  (identité nominative : workflow SPF/CERFA, jamais automatisée).
+                </div>
+              )}
+              {proprioLines.length > 0 && <div className="mt-2 flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+            </FicheDrawer>
           </>
-        )}
-        {!fq && f && tab === 'proprio' && f.proprietaire_moral && (
-          <div className="card-elev px-3 py-2.5">
-            <p className="label-caps">Propriétaire (DGFiP)</p>
-            <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
-            <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
-              {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
-              {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
-            </div>
-            {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
-          </div>
-        )}
-        {!fq && f && tab === 'proprio' && !f.proprietaire_moral && (
-          <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
-            Propriétaire : personne physique ou non recensé au fichier des personnes morales
-            (identité nominative : workflow SPF/CERFA, jamais automatisée).
-          </div>
         )}
         {/* BLOC B · S45 (verdict Vic : variante B) — le TRADUCTEUR PLU vit DANS l'onglet
             Règles : bloc dépliable violet (IA/premium = violet), règles en français courant,
             chaque valeur avec sa provenance ; le règlement écrit reste la référence. */}
         {!fq && f && tab === 'regles' && <TraducteurBloc idu={idu} />}
-        {!fq && f && (tab === 'regles' || tab === 'proprio') && (
+        {!fq && f && tab === 'regles' && (
           <div>
-            {ongletLines(tab).length ? ongletLines(tab).map((l, i) => <Line key={i} line={l} />)
+            {ongletLines('regles').length ? ongletLines('regles').map((l, i) => <Line key={i} line={l} />)
               : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
           </div>
         )}
