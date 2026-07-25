@@ -961,7 +961,7 @@ const TABS: { k: 'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'; lab
 const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
 // M19 · onglets déjà migrés en tiroirs (dans la pile Synthèse). Grandit à chaque commit
 // jusqu'à absorber les 8 ; à ce moment la bascule `tab` disparaît, la barre devient nav pure.
-const MIGRATED = new Set<string>(['risques', 'marche', 'proprio', 'regles', 'bilan'])
+const MIGRATED = new Set<string>(['risques', 'marche', 'proprio', 'regles', 'bilan', 'pourquoi'])
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -1135,7 +1135,7 @@ export function Fiche({ idu }: { idu: string }) {
           {f && verdictEcartee && (
             <span data-ecartee-motif className="ml-1.5 mt-1.5 inline-flex items-center gap-1.5 text-[11px] align-middle">
               <Tip tip={ecarteeMotifDetail}><span className="text-txt-mut">{ecarteeMotif}</span></Tip>
-              <button onClick={() => setTab('pourquoi')}
+              <button onClick={() => goDrawer('pourquoi')}
                 className="text-st-ecartee underline transition-colors duration-quick hover:text-st-ecartee/80"
                 title={CLIENT.fiche.ecarteeVoirTip}>
                 {CLIENT.fiche.ecarteeVoir}
@@ -1406,10 +1406,15 @@ export function Fiche({ idu }: { idu: string }) {
             <FicheDrawer id="bilan" ico="🧮" name="Bilan" value={bilanValue}>
               <BilanTab idu={idu} />
             </FicheDrawer>
+            {/* Pourquoi pas — seulement si écartée / flaggée (anti-fiche, motifs sourcés). */}
+            {(verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) && (
+              <FicheDrawer id="pourquoi" ico="⚖️" name="Pourquoi pas ?" value="motifs d'écartement & points de vigilance">
+                <PourquoiPasTab idu={idu} />
+              </FicheDrawer>
+            )}
           </>
         )}
         {!fq && f && tab === 'faisabilite' && <FaisabiliteTab idu={idu} />}
-        {!fq && f && tab === 'pourquoi' && <PourquoiPasTab idu={idu} />}
       </div>
 
       <div className="shrink-0 border-t border-line px-5 py-3">
