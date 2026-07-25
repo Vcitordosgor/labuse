@@ -22,12 +22,14 @@ const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', f
 // M19 · tiroir « fermé, ça informe » : summary = valeur clé lisible d'un coup d'œil (P1.3
 // niveau 1) ; le bloc détaillé (niveau 2/3) ne se monte QU'À l'ouverture — plus léger, et
 // rien n'est supprimé (le détail reste accessible). Réutilise les blocs existants tels quels.
-function FicheDrawer({ ico, name, value, defaultOpen, children }:
-  { ico: string; name: string; value: ReactNode; defaultOpen?: boolean; children: ReactNode }) {
+// `id` (data-drawer) + aria-expanded : permet à la barre d'onglets d'ouvrir/scroller vers le
+// tiroir pendant la migration strangler (les deux navigations coexistent).
+function FicheDrawer({ id, ico, name, value, defaultOpen, children }:
+  { id?: string; ico: string; name: string; value: ReactNode; defaultOpen?: boolean; children: ReactNode }) {
   const [open, setOpen] = useState(!!defaultOpen)
   return (
-    <div className={`overflow-hidden rounded-lg border transition-colors duration-quick ${open ? 'border-line-2 bg-surface-2' : 'border-line bg-surface-1'}`}>
-      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left">
+    <div data-drawer={id} className={`scroll-mt-2 overflow-hidden rounded-lg border transition-colors duration-quick ${open ? 'border-line-2 bg-surface-2' : 'border-line bg-surface-1'}`}>
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-3 px-3 py-2.5 text-left">
         <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-surface-3 text-sm">{ico}</span>
         <span className="min-w-0 flex-1">
           <span className="label-caps block text-txt-dim">{name}</span>
@@ -957,6 +959,9 @@ const TABS: { k: 'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'; lab
 // R5 (O3) : onglet « Pourquoi pas ? » — ajouté SEULEMENT pour les parcelles écartées/flaggées
 // (anti-fiche : motifs RÉDHIBITOIRE/VIGILANCE sourcés). La nav reste toujours visible (règle PJ6).
 const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
+// M19 · onglets déjà migrés en tiroirs (dans la pile Synthèse). Grandit à chaque commit
+// jusqu'à absorber les 8 ; à ce moment la bascule `tab` disparaît, la barre devient nav pure.
+const MIGRATED = new Set<string>(['risques'])
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -976,6 +981,24 @@ export function Fiche({ idu }: { idu: string }) {
   }, [select])
   void sourceLine
   const [tab, setTab] = useState<'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'>('synthese')
+  // M19 · migration strangler onglets → tiroirs. MIGRATED = onglets déjà fondus dans la pile
+  // Synthèse (leur contenu vit en FicheDrawer). Un clic d'onglet migré ouvre + scrolle le tiroir
+  // (au lieu de basculer la vue) ; les onglets non migrés gardent l'ancienne bascule `tab`.
+  const [pendingScroll, setPendingScroll] = useState<string | null>(null)
+  useEffect(() => {
+    if (!pendingScroll || tab !== 'synthese') return
+    const t = window.setTimeout(() => {
+      const root = document.querySelector(`[data-drawer="${pendingScroll}"]`) as HTMLElement | null
+      if (root) {
+        const btn = root.querySelector('button')
+        if (btn && btn.getAttribute('aria-expanded') === 'false') btn.click()
+        root.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      setPendingScroll(null)
+    }, 40)
+    return () => window.clearTimeout(t)
+  }, [pendingScroll, tab])
+  const goDrawer = (key: string) => { setTab('synthese'); setPendingScroll(key) }
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
@@ -1001,6 +1024,16 @@ export function Fiche({ idu }: { idu: string }) {
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
+  // M19 · valeurs fermées des tiroirs d'onglets (P1.3) — dérivées des données DÉJÀ chargées,
+  // aucun nouveau calcul ni requête. Risques : le NÉGATIF est AFFIRMÉ (« ✓ rien à signaler ·
+  // N couches vérifiées ») — c'est le point capital de la refonte.
+  const risquesLines = ongletLines('risques')
+  const risquesFlags = risquesLines.filter((l) => l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE')
+  const risquesClean = risquesLines.filter((l) => l.result === 'PASS').length
+  const risquesValue = risquesLines.length === 0 ? 'voir le détail'
+    : risquesFlags.length === 0
+      ? `✓ rien à signaler · ${risquesClean} couche${risquesClean > 1 ? 's' : ''} vérifiée${risquesClean > 1 ? 's' : ''}`
+      : `${risquesFlags.length} point${risquesFlags.length > 1 ? 's' : ''} de vigilance · ${risquesClean} couche${risquesClean > 1 ? 's' : ''} sans risque`
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
@@ -1152,7 +1185,8 @@ export function Fiche({ idu }: { idu: string }) {
       <div data-fiche-tabs className="flex shrink-0 flex-wrap gap-x-4 gap-y-1.5 border-b border-line px-5 py-2 text-xs">
         {/* R5 (O3) : « Pourquoi pas ? » n'apparaît que si la parcelle est écartée ou porte des flags */}
         {[...TABS, ...(f && (verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) ? [TAB_POURQUOI] : [])].map((t) => (
-          <button key={t.k} onClick={() => setTab(t.k)} className={`shrink-0 ${tab === t.k ? 'font-medium text-txt-hi' : 'text-txt-dim hover:text-txt-mut'}`}>
+          <button key={t.k} onClick={() => (MIGRATED.has(t.k) ? goDrawer(t.k) : setTab(t.k))}
+            className={`shrink-0 ${tab === t.k && !MIGRATED.has(t.k) ? 'font-medium text-txt-hi' : 'text-txt-dim hover:text-txt-mut'}`}>
             {t.label}
           </button>
         ))}
@@ -1309,6 +1343,14 @@ export function Fiche({ idu }: { idu: string }) {
                 <div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div>
               </FicheDrawer>
             )}
+
+            {/* ═══ M19 · ONGLETS MIGRÉS EN TIROIRS (strangler, un par commit) ═══ */}
+            {/* Risques — le négatif est AFFIRMÉ fermé ; les lignes sourcées sont inchangées (R1). */}
+            <FicheDrawer id="risques" ico="🛡️" name="Risques" value={risquesValue}>
+              {risquesLines.length
+                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
+                : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+            </FicheDrawer>
           </>
         )}
         {!fq && f && tab === 'proprio' && f.proprietaire_moral && (
@@ -1332,7 +1374,7 @@ export function Fiche({ idu }: { idu: string }) {
             Règles : bloc dépliable violet (IA/premium = violet), règles en français courant,
             chaque valeur avec sa provenance ; le règlement écrit reste la référence. */}
         {!fq && f && tab === 'regles' && <TraducteurBloc idu={idu} />}
-        {!fq && f && (tab === 'regles' || tab === 'risques' || tab === 'marche' || tab === 'proprio') && (
+        {!fq && f && (tab === 'regles' || tab === 'marche' || tab === 'proprio') && (
           <div>
             {ongletLines(tab).length ? ongletLines(tab).map((l, i) => <Line key={i} line={l} />)
               : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
