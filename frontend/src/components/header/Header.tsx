@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { banAutocomplete, deleteSearch, getCommunes, getEvents, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postSuggestion, saveSearch, searchParcels } from '../../lib/api'
+import { banAutocomplete, deleteSearch, getCommunes, getEvents, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postSuggestion, saveSearch, searchParcels, veilleNL } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
 import { TIER_V2_META, type TierV2 } from '../../lib/status'
@@ -307,6 +307,9 @@ function FilterChips() {
 function NotifBell() {
   const [open, setOpen] = useState(false)
   const [veilleNom, setVeilleNom] = useState('')
+  const [nlText, setNlText] = useState('')          // M17-B : saisie veille en langage naturel
+  const [nlResume, setNlResume] = useState<string | null>(null)
+  const [nlRefus, setNlRefus] = useState<string | null>(null)
   const qc = useQueryClient()
   const { filters, zone, select, setView, setFilters } = useApp()
   const ev = useQuery({ queryKey: ['events'], queryFn: getEvents, refetchInterval: 60_000 })
@@ -317,6 +320,19 @@ function NotifBell() {
   const addVeille = useMutation({ mutationFn: () => saveSearch(veilleNom, filtersToHash(filters, zone) || '#f=1'),
     onSuccess: () => { setVeilleNom(''); qc.invalidateQueries({ queryKey: ['searches'] }) } })
   const delVeille = useMutation({ mutationFn: deleteSearch, onSuccess: () => qc.invalidateQueries({ queryKey: ['searches'] }) })
+  // M17-B : traduction NL → filtres VISIBLES (setFilters) OU refus honnête si non déclenchable
+  const nlVeille = useMutation({
+    mutationFn: () => veilleNL(nlText),
+    onSuccess: (r) => {
+      if (r.ok && r.filters) {
+        setFilters({ ...EMPTY_FILTERS, ...(r.filters as Partial<typeof EMPTY_FILTERS>) })
+        setVeilleNom(nlText.trim().slice(0, 80))
+        setNlResume(r.resume ?? null); setNlRefus(null)
+      } else {
+        setNlRefus(r.refus ?? 'Veille non déclenchable.'); setNlResume(null)
+      }
+    },
+  })
   const unread = ev.data?.unread ?? 0
   return (
     <div className="relative">
@@ -370,6 +386,25 @@ function NotifBell() {
               {/* M16-B3 : « veilles » = alerte par filtres (fonctionnel) — renommé + expliqué */}
               <p className="label-caps">Vos veilles — alertes sur mesure</p>
               <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">Enregistrez une recherche : on vous alerte dès qu'une parcelle <b>bascule</b> et correspond à vos critères.</p>
+              {/* M17-B : décrire sa veille en français → filtres VISIBLES (ci-contre) ou refus honnête */}
+              <div className="mt-2 flex gap-1.5">
+                <input data-nl-veille value={nlText}
+                  onChange={(e) => { setNlText(e.target.value); setNlRefus(null) }}
+                  onKeyDown={(e) => { if (e.key === 'Enter' && nlText.trim().length >= 3) nlVeille.mutate() }}
+                  placeholder="Décrivez : « les grandes parcelles à Saint-Paul qui deviennent chaudes »"
+                  className="min-w-0 flex-1 rounded border border-line-2 bg-surface-3 px-2 py-1 text-[11px] text-txt focus:border-mint focus:outline-none" />
+                <button data-nl-go onClick={() => nlText.trim().length >= 3 && nlVeille.mutate()} disabled={nlText.trim().length < 3 || nlVeille.isPending}
+                  className="shrink-0 rounded border border-mint/50 px-2 text-[11px] text-mint transition-colors duration-quick hover:bg-mint/10 disabled:opacity-40">
+                  {nlVeille.isPending ? '…' : 'Traduire'}</button>
+              </div>
+              {nlResume && (
+                <p data-nl-resume className="mt-1 rounded-md border border-mint/40 bg-mint/[0.07] px-2 py-1 text-[10.5px] leading-snug text-mint">
+                  ✓ {nlResume} <span className="text-txt-dim">— vérifiez/ajustez les filtres, puis « + Veille ».</span>
+                </p>
+              )}
+              {nlRefus && (
+                <p data-nl-refus className="mt-1 rounded-md border border-st-creuser/40 bg-st-creuser/10 px-2 py-1 text-[10.5px] leading-snug text-st-creuser">{nlRefus}</p>
+              )}
               {(veilles.data ?? []).map((v) => (
                 <div key={v.id} className="mt-1.5 flex items-center gap-2 text-[11px]">
                   <a href={'/socle/' + v.hash} className="min-w-0 flex-1 truncate text-txt hover:text-mint" title={v.hash}>{v.nom}</a>

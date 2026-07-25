@@ -291,6 +291,10 @@ export const getSavedSearches = () => j<{ id: number; nom: string; hash: string;
 export const saveSearch = (nom: string, hash: string) =>
   j<{ ok: boolean }>('/events/searches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, hash }) })
 export const deleteSearch = (id: number) => j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'DELETE' })
+// M17-B : veille en langage naturel — traduction réutilisée (schéma), garde-fou déclenchable côté back.
+export const veilleNL = (text: string) =>
+  j<{ ok: boolean; refus?: string; indeclenchable?: boolean; filters?: Record<string, unknown>; resume?: string; ignores?: string[] }>(
+    '/events/veille-nl', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) })
 
 // ── M16-C : menu compte (identité + palier RÉEL) + « proposer une amélioration » ──
 export interface Moi { mode: 'pilote' | 'compte'; plan: string; plan_label: string; plan_par_compte: boolean; role?: string; statut_compte?: string }

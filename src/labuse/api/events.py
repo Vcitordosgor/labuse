@@ -141,7 +141,12 @@ def _parse_hash_filters(h: str) -> dict:
     from urllib.parse import parse_qs
     q = parse_qs(h.lstrip("#"))
     g = lambda k: q.get(k, [None])[0]  # noqa: E731
-    return {"st": (g("st") or "").split(",") if g("st") else [],
+    # M17-B : honorer AUSSI `tv` (tiers du front, filtersToHash) et `cs` (commune) — jusqu'ici la
+    # veille lisait `st`/rien pour la commune, donc sur-alertait sur ces deux dimensions (silencieux).
+    st = (g("st") or "").split(",") if g("st") else []
+    tv = (g("tv") or "").split(",") if g("tv") else []
+    return {"st": list(dict.fromkeys([*st, *tv])),
+            "cm": (g("cs") or "").split(",") if g("cs") else [],
             "ev": g("ev") == "1", "q": int(g("q")) if g("q") else None,
             "smin": int(g("smin")) if g("smin") else None, "smax": int(g("smax")) if g("smax") else None,
             "sdp": int(g("sdp")) if g("sdp") else None, "fl": (g("fl") or "").split(",") if g("fl") else []}
@@ -155,7 +160,7 @@ def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
         return 0
     # bascules « montantes » de CE diff (déjà en event_log, kind=bascule, run_to)
     rows = db.execute(text("""
-        SELECT e.idu, p.surface_m2, d.matrice_statut, d.q_score, r.sdp_residuelle_m2,
+        SELECT e.idu, p.commune, p.surface_m2, d.matrice_statut, d.q_score, r.sdp_residuelle_m2,
                EXISTS (SELECT 1 FROM dryrun_cascade_results cr WHERE cr.run_label = :to
                        AND cr.parcel_id = p.id AND cr.evenement = 'rouge') AS a_evenement
         FROM event_log e
@@ -169,6 +174,8 @@ def _veilles_match(db: Session, run_to: str, demo: bool) -> int:
         f = _parse_hash_filters(v["hash"])
         for r in rows:
             if f["st"] and r["matrice_statut"] not in f["st"]:
+                continue
+            if f["cm"] and r["commune"] not in f["cm"]:   # M17-B : commune honorée
                 continue
             if f["ev"] and not r["a_evenement"]:
                 continue
@@ -334,6 +341,88 @@ def searches_add(body: SearchSaveIn, request: Request, db: Session = Depends(get
     db.execute(text("INSERT INTO saved_searches (nom, hash, compte_id) VALUES (:n, :h, :cid)"),
                {"n": body.nom[:80], "h": body.hash, "cid": current_compte(request)})
     return {"ok": True}
+
+
+# ── M17-B : veille en langage naturel — RÉUTILISE la brique NL (ia_search, validée par schéma) ;
+# ne produit QUE des veilles réellement déclenchables (garde-fou audit M16-A5). ──
+class VeilleNLIn(BaseModel):
+    text: str
+
+
+#: intentions naturelles NON détectables aujourd'hui (M16-A5) → refus honnête, jamais de veille muette.
+_INDECLENCHABLE = [
+    (("plu", "zonage", "constructible", "zone"), ("chang", "passe", "devien", "évolu", "modif", "révis"),
+     "un changement de PLU / de zonage"),
+    (("permis",), ("aband", "annul", "refus", "retir", "caduc", "périm", "expir"),
+     "l'abandon ou l'annulation d'un permis (on ne détecte que l'APPARITION d'un permis)"),
+    (("prix", "vente", "vendu", "dvf", "valeur"), ("baiss", "monte", "chang", "évolu"),
+     "un mouvement de prix / de valeur"),
+    (("dpe", "énerg", "passoire"), ("chang", "amélior", "rénov"), "un changement de DPE"),
+]
+_TRIGGERS_TXT = ("Aujourd'hui, une veille vous alerte quand une parcelle bascule (devient plus chaude), "
+                 "éventuellement filtrée par commune, surface, score, SDP ou procédure BODACC. "
+                 "Reformulez vers l'un de ces déclencheurs — ex. « les grandes parcelles à Saint-Paul qui deviennent chaudes ».")
+
+
+@router.post("/veille-nl")
+def veille_nl(body: VeilleNLIn, db: Session = Depends(get_db)) -> dict:
+    txt = (body.text or "").strip()
+    low = txt.lower()
+    if len(txt) < 3:
+        return {"ok": False, "refus": "Décrivez en quelques mots ce que vous voulez suivre."}
+    # 1) garde-fou : intention explicitement NON détectable → refus ciblé (jamais de veille muette)
+    for sujets, verbes, libelle in _INDECLENCHABLE:
+        if any(s in low for s in sujets) and any(v in low for v in verbes):
+            return {"ok": False, "indeclenchable": True,
+                    "refus": f"Cette veille n'est pas encore possible : on ne sait pas détecter {libelle}. {_TRIGGERS_TXT}"}
+    # 2) traduction par la brique existante (schéma = garde-fou : jamais de filtre inventé)
+    from .ia import SearchIn, ia_search
+    res = ia_search(SearchIn(text=txt), db)
+    fr = res.get("filters")
+    if not isinstance(fr, dict):
+        # programme / out_of_scope / projet_intent → ce n'est pas une veille filtrable
+        return {"ok": False, "refus": f"Je n'ai pas su en tirer une veille déclenchable. {_TRIGGERS_TXT}"}
+    # 3) ne garder QUE les dimensions que le matcher de veille honore réellement
+    tiers = list(fr.get("tiers") or [])
+    for s in (fr.get("statuts") or []):        # statuts matrice → tiers (recouvrement chaude/a_creuser/ecartee)
+        if s in ("chaude", "a_creuser", "ecartee") and s not in tiers:
+            tiers.append(s)
+    communes = list(fr.get("communes") or []) or ([fr["commune"]] if fr.get("commune") else [])
+    trig = {"tiers": tiers, "communes": communes, "evenement": bool(fr.get("evenement")),
+            "scoreMin": fr.get("scoreMin"), "surfaceMin": fr.get("surfaceMin"),
+            "surfaceMax": fr.get("surfaceMax"), "sdpMin": fr.get("sdpMin")}
+    if not (tiers or communes or trig["evenement"] or trig["scoreMin"]
+            or trig["surfaceMin"] or trig["surfaceMax"] or trig["sdpMin"]):
+        return {"ok": False, "refus": f"Je n'ai pas su en tirer un critère déclenchable. {_TRIGGERS_TXT}"}
+    # 4) résumé lisible (ce que la veille fera VRAIMENT)
+    STA = {"brulante": "brûlante", "chaude": "chaude", "a_creuser": "à creuser", "ecartee": "écartée"}
+    bits = []
+    if tiers:
+        bits.append("devient " + " / ".join(STA.get(t, t) for t in tiers))
+    else:
+        bits.append("bascule (devient plus chaude)")
+    if communes:
+        bits.append("à " + ", ".join(communes))
+    if trig["surfaceMin"]:
+        bits.append(f"surface ≥ {trig['surfaceMin']} m²")
+    if trig["surfaceMax"]:
+        bits.append(f"surface ≤ {trig['surfaceMax']} m²")
+    if trig["sdpMin"]:
+        bits.append(f"SDP ≥ {trig['sdpMin']} m²")
+    if trig["scoreMin"]:
+        bits.append(f"potentiel ≥ {trig['scoreMin']}")
+    if trig["evenement"]:
+        bits.append("avec procédure BODACC")
+    # critères compris MAIS non déclenchables par une veille (honnêteté : on le dit)
+    ignores = []
+    if fr.get("zonage"):
+        ignores.append("zonage PLU")
+    if fr.get("flags"):
+        ignores.append("contraintes (flags)")
+    if fr.get("personneMorale"):
+        ignores.append("propriétaire personne morale")
+    return {"ok": True, "filters": trig, "resume": "Alerte quand une parcelle " + ", ".join(bits) + ".",
+            "ignores": ignores, "explication": res.get("explanation")}
 
 
 @router.delete("/searches/{sid}")
