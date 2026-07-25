@@ -77,7 +77,7 @@ _NEEDED_TABLES = {
     "parcel_residuel_bati", "dryrun_parcel_evaluations", "rpls_commune",
     "filosofi_carreaux_200m", "data_sources",
     # M18 enrichissement Flash — contexte commune (chacune détectée, section omise si absente)
-    "m10_permit_delais", "commune_contexte_sru", "commune_conso_enaf",
+    "m10_permit_delais", "commune_contexte_sru", "commune_conso_enaf", "parcel_solar",
     # Mandats pas encore mergés — le jour où ils atterrissent, la section apparaît seule.
     "parcel_vegetation", "parcel_anc",
 }
@@ -373,6 +373,16 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
                        {"idu": idu}).mappings().first()
         if r and r["ombrage_pct"] is not None:
             out["canopee"] = {"ombrage_pct": _i(r["ombrage_pct"])}
+    # M18 — gisement solaire PVGIS (prod. spécifique = valeur SOURCÉE ; score = lecture LABUSE).
+    # Donnée fiable (ingestion PVGIS fidèle) MAIS caveat honnête : le gradient côtier E/O local n'est
+    # pas capturé par le modèle SARAH3 → ordre de grandeur, pas une garantie de production.
+    if "parcel_solar" in avail:
+        r = db.execute(text(
+            "SELECT prod_spec_kwh_kwc, score_solaire FROM parcel_solar WHERE idu = :idu"),
+            {"idu": idu}).mappings().first()
+        if r and r["prod_spec_kwh_kwc"] is not None:
+            out["solaire"] = {"prod_kwh_kwc": round(float(r["prod_spec_kwh_kwc"])),
+                              "score": _i(r["score_solaire"])}
     return out or None
 
 
@@ -402,6 +412,7 @@ _SECTION_SOURCES: list[tuple[str, str, int | None, str | None]] = [
     ("marche", "DVF — valeurs foncières (DGFiP / Cerema)", 5, None),
     ("dynamique", "Sitadel — autorisations d'urbanisme (SDES)", 16, None),
     ("terrain", "RGE ALTI 5 m (IGN)", 6, None),
+    ("terrain", "PVGIS — gisement solaire (Commission européenne)", None, "modèle SARAH3"),
     ("carte", "Fond de carte © OpenStreetMap contributors (ODbL)", 19, None),
     ("adresse", "Base Adresse Nationale (DINUM / IGN)", 18, None),
     # M18 — contexte commune

@@ -1,7 +1,16 @@
-# M18 — Enrichissement du PDF Flash (À VALIDER par Vic avant de figer)
+# M18 — Enrichissement du PDF Flash (VALIDÉ Vic — figé, golden 116/116, NON poussé)
 
-**Branche** `feat/m18-d-pdf-flash-enrichi` (base `main` M18 merged). **Committée localement, NON poussée** —
-en attente de la validation du contenu par Vic (comme demandé : « montre-le-moi avant de figer »).
+**Branche** `feat/m18-d-pdf-flash-enrichi` (base `main` M18 merged). **Committée localement, NON poussée**
+(Vic pousse). Contenu **validé** ; les 3 retours de Vic sont appliqués.
+
+## Validation Vic appliquée
+1. **Vélocité — biais explicite pour le CLIENT** : le caveat dit désormais « ce délai est calculé sur les
+   **seuls permis accordés** — les dossiers refusés ou en instruction ne sont pas comptés, ce qui
+   **raccourcit mécaniquement la médiane** ; c'est un **minimum optimiste**, pas un délai garanti ».
+2. **ZAN** : rythme observé **seul**, **aucun horizon** (même étiqueté) — conforme.
+3. **Solaire PVGIS ajouté** (donnée propre) : section Terrain, **productible spécifique** (ex. 1 393
+   kWh/kWc/an) + indice ; caveat honnête « gradient côtier E/O non capturé par SARAH3 → ordre de grandeur ».
+   **RP écarté** (ambiguïté 2022/2023 non levée), comme demandé.
 
 Nouvelle **section 07 « Contexte commune & leviers »** (indicateurs à l'échelle commune ; Terrain →
 08, Sources → 09). Exemple généré : `qa/m18/B/flash_enrichi_sample.pdf` (parcelle 97416000CD0024,
