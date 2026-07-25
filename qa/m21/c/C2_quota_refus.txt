@@ -1,0 +1,4 @@
+Preuve C2 — refus explicite de quota (serveur SMTP rejetant « 550 5.4.5 Daily user sending limit exceeded ») :
+SendResult(sent=False, detail='error: quota')
+LOG: MAIL REFUSÉ — plafond d'envoi atteint (Gmail gratuit ≈ 500/jour) : passer à un relais SMTP transactionnel. to=qui@example.fr cause=SMTPDataError: (550, b'5.4.5 Daily user sending limit exceeded')
+→ refus LOGUÉ clairement (jamais silencieux), aucun mot de passe dans le log.

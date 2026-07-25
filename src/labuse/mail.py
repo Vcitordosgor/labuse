@@ -88,6 +88,13 @@ def send_email(to: str, subject: str, body_text: str, *,
     except Exception as exc:  # noqa: BLE001 — on veut TOUTE cause, mais jamais silencieuse
         # str(exc) = réponse SMTP / message socket — ne contient pas le mot de passe.
         cause = f"{type(exc).__name__}: {str(exc)[:200]}"
+        low = str(exc).lower()
+        # C2 — plafond Gmail (~500/j) : refus EXPLICITE (jamais silencieux). Gmail répond
+        # « 550 5.4.5 Daily user sending limit exceeded » / « 4.7.0 ... rate » selon le cas.
+        if any(k in low for k in ("5.4.5", "sending limit", "rate limit", "quota", "too many")):
+            log.error("MAIL REFUSÉ — plafond d'envoi atteint (Gmail gratuit ≈ %d/jour) : "
+                      "passer à un relais SMTP transactionnel. to=%s cause=%s", GMAIL_DAILY_CAP, to, cause)
+            return SendResult(False, "error: quota")
         log.warning("MAIL ÉCHEC — to=%s subject=%r cause=%s", to, subject, cause)
         return SendResult(False, f"error: {type(exc).__name__}")
 
