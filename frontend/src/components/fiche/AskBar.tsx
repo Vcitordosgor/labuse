@@ -71,14 +71,15 @@ function ProvChip({ src, prov, href }: { src: string; prov?: Provenance; href?: 
   return href ? <a href={href} target="_blank" rel="noreferrer" title="Voir la source">{body}</a> : body
 }
 
-export function AskBar({ idu }: { idu: string; zone?: string | null }) {
+export function AskBar({ idu, startOpen, onClose }: { idu: string; zone?: string | null; startOpen?: boolean; onClose?: () => void }) {
   const [q, setQ] = useState('')
-  const [open, setOpen] = useState(false)   // Fix point 6 : REPLIÉE par défaut — la fiche d'abord
+  const [open, setOpen] = useState(!!startOpen)   // M19 : contrôlable — la carte IA (bas de pile) l'ouvre
   const ask = useMutation({ mutationFn: (question: string) => askParcel(idu, question) })
   const d: AskResponse | undefined = ask.data
   const run = (question: string) => { const t = question.trim(); if (t) { setQ(t); ask.mutate(t) } }
+  const close = () => { if (onClose) onClose(); else setOpen(false) }
   // à chaque changement de fiche : on replie et on repart propre (l'IA ne s'impose jamais).
-  useEffect(() => { setOpen(false); setQ(''); ask.reset() }, [idu])   // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setOpen(!!startOpen); setQ(''); ask.reset() }, [idu])   // eslint-disable-line react-hooks/exhaustive-deps
 
   // Exemples curés (point 15) — tous GROUNDÉS sur la liste blanche de /ask (aménités = ajout backend).
   const chips = [
@@ -90,6 +91,8 @@ export function AskBar({ idu }: { idu: string; zone?: string | null }) {
     'Pourquoi ce statut ?',
   ]
 
+  // M19 : en mode contrôlé (carte IA en bas de pile), replié = rien (le parent fournit la carte).
+  if (!open && onClose) return null
   // ── REPLIÉE (défaut) : juste un bouton découvrable — la fiche reste PLEINEMENT visible (point 6) ──
   if (!open) {
     return (
@@ -113,7 +116,7 @@ export function AskBar({ idu }: { idu: string; zone?: string | null }) {
       <div className="flex items-center gap-2">
         <span className="label-caps text-[10px] text-violet">✦ Demander à l'IA</span>
         <span className="rounded bg-violet/15 px-1.5 py-0.5 text-[9px] font-semibold text-violet">PREMIUM</span>
-        <button data-askbar-close onClick={() => setOpen(false)}
+        <button data-askbar-close onClick={close}
           className="ml-auto min-h-7 rounded px-1.5 py-0.5 text-[11px] text-txt-dim transition-colors duration-quick hover:bg-violet/15 hover:text-txt"
           title="Replier — afficher toute la fiche">✕ fermer</button>
       </div>
@@ -178,7 +181,7 @@ export function AskBar({ idu }: { idu: string; zone?: string | null }) {
           zone IA (réponse comprise) et rend la place à la fiche. La réponse reste gardée — rouvrir
           « ✦ Demander à l'IA » la ré-affiche (cache inchangé, aucun nouvel appel). */}
       {d && !ask.isPending && (
-        <button data-askbar-voir-fiche onClick={() => setOpen(false)}
+        <button data-askbar-voir-fiche onClick={close}
           className="mt-2 flex min-h-7 w-full items-center justify-center gap-1 rounded-lg border border-violet/30 bg-violet/[0.06] py-1.5 text-[11px] font-medium text-violet transition-colors duration-quick hover:border-violet/60 hover:bg-violet/10"
           title="Replier l'IA et afficher toute la fiche — la réponse reste gardée (rouvrir pour la revoir)">
           Voir l'entièreté de la fiche →

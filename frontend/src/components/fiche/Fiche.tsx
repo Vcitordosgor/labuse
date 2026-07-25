@@ -19,28 +19,93 @@ import { useApp } from '../../store/useApp'
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
 
-// M19 · tiroir « fermé, ça informe » : summary = valeur clé lisible d'un coup d'œil (P1.3
-// niveau 1) ; le bloc détaillé (niveau 2/3) ne se monte QU'À l'ouverture — plus léger, et
-// rien n'est supprimé (le détail reste accessible). Réutilise les blocs existants tels quels.
-// `id` (data-drawer) + aria-expanded : permet à la barre d'onglets d'ouvrir/scroller vers le
-// tiroir pendant la migration strangler (les deux navigations coexistent).
-function FicheDrawer({ id, ico, name, value, defaultOpen, children }:
-  { id?: string; ico: string; name: string; value: ReactNode; defaultOpen?: boolean; children: ReactNode }) {
+
+// ═══════════════════════════════════════════════════════════════════════════
+// M19 · RÉFÉRENCE VISUELLE (qa/m19/reference/REFERENCE_FICHE_PARCELLE.html) — hex/tailles/espacements
+// repris À L'IDENTIQUE de la spec Vic. Ce sont les seules couleurs en dur autorisées (spec).
+const REF = {
+  bg: '#080b0a', shell: '#1d2521',
+  card: '#0e1311', cardBorder: '#202b26', accent: '#120e1c', accentBorder: '#443563',
+  name: '#eef7f2', mint: '#7de3ab', violet: '#c9b6f2', dim: '#5f7568', dim2: '#7d9488',
+  chev: '#3f5249', chevAccent: '#564a75', barTrack: '#18211d', barFill: '#3aa06e', seg: '#26473a',
+  pastilleTxt: '#8a7ab0', pastilleBg: '#1a1428',
+} as const
+
+const drSvg = (path: ReactNode, size = 17) =>
+  <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>{path}</svg>
+
+// icônes de la référence (mêmes tracés)
+const IC = {
+  regles: drSvg(<><path d="M7 20h10" /><path d="M6 6l6-1l6 1" /><path d="M12 3v17" /><path d="M9 12 6 6l-3 6a3 3 0 0 0 6 0" /><path d="M21 12l-3-6l-3 6a3 3 0 0 0 6 0" /></>),
+  risques: drSvg(<><path d="M12 3l7 4v5c0 4-3 7.5-7 9c-4-1.5-7-5-7-9V7z" /><path d="m9 12 2 2 4-4" /></>),
+  proprio: drSvg(<><circle cx="12" cy="8" r="3.5" /><path d="M5 20a7 7 0 0 1 14 0" /></>),
+  marche: drSvg(<><path d="m3 17 6-6 4 4 8-8" /><path d="M14 7h7v7" /></>),
+  faisa: drSvg(<><path d="M3 21h18" /><path d="M5 21V8l7-5 7 5v13" /><path d="M9 21v-5h6v5" /></>),
+  viab: drSvg(<><path d="M12 3v6" /><path d="M8 9h8l-1 5a3 3 0 0 1-6 0z" /><path d="M12 17v4" /></>),
+  confiance: drSvg(<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M9 13h6" /><path d="M9 17h4" /></>),
+}
+
+function RefChevron({ open, accent }: { open: boolean; accent?: boolean }) {
+  return <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke={accent ? REF.chevAccent : REF.chev} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+    style={{ flexShrink: 0, transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }}><path d="m9 6 6 6-6 6" /></svg>
+}
+
+/** M19 · tiroir de la référence : fermé = icône + nom + valeur clé + MICRO-PREUVE (jauge, segments,
+ *  sparkline, pastilles, 3 données) ; ouvert = le détail (blocs existants). Une seule carte peut être
+ *  `accent` (violet) = le signal chaud. Rien n'est supprimé : le détail vit dans le corps déplié. */
+function RefDrawer({ id, icon, name, value, valueColor, accent, micro, children, defaultOpen }: {
+  id?: string; icon: ReactNode; name: string; value?: ReactNode; valueColor?: string
+  accent?: boolean; micro?: ReactNode; children?: ReactNode; defaultOpen?: boolean
+}) {
   const [open, setOpen] = useState(!!defaultOpen)
   return (
-    <div data-drawer={id} className={`scroll-mt-2 overflow-hidden rounded-lg border transition-colors duration-quick ${open ? 'border-line-2 bg-surface-2' : 'border-line bg-surface-1'}`}>
-      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-3 px-3 py-2.5 text-left">
-        <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-surface-3 text-sm">{ico}</span>
-        <span className="min-w-0 flex-1">
-          <span className="label-caps block text-txt-dim">{name}</span>
-          <span className="mt-0.5 block truncate text-[12.5px] font-medium text-txt-hi">{value}</span>
-        </span>
-        <span aria-hidden className={`shrink-0 text-txt-dim transition-transform duration-quick ${open ? 'rotate-90' : ''}`}>▸</span>
+    <div data-drawer={id} style={{ background: accent ? REF.accent : REF.card, border: `1px solid ${accent ? REF.accentBorder : REF.cardBorder}`, borderRadius: 12, padding: '13px 15px', scrollMarginTop: 8 }}>
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open}
+        style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%', background: 'none', border: 0, padding: 0, cursor: children ? 'pointer' : 'default', textAlign: 'left', color: accent ? REF.violet : REF.mint }}>
+        <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>
+        <span style={{ flex: 1, fontSize: 14, color: REF.name, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+        {value != null && <span style={{ fontSize: 15, fontWeight: 500, color: valueColor ?? (accent ? REF.violet : REF.mint), whiteSpace: 'nowrap' }}>{value}</span>}
+        {children && <RefChevron open={open} accent={accent} />}
       </button>
-      {open && <div className="border-t border-line px-3 py-2.5">{children}</div>}
+      {micro && <div style={{ marginTop: 10 }}>{micro}</div>}
+      {open && children && <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${accent ? REF.accentBorder : '#1a231e'}` }}>{children}</div>}
     </div>
   )
 }
+
+// micro-preuves (spec) ──────────────────────────────────────────────────────
+const MicroJauge = ({ pct, label }: { pct: number; label: string }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div style={{ flex: 1, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ width: `${Math.max(0, Math.min(100, pct))}%`, height: 4, background: REF.barFill }} />
+    </div>
+    <span style={{ fontSize: 11, color: REF.dim, whiteSpace: 'nowrap' }}>{label}</span>
+  </div>
+)
+const MicroSegments = ({ n, label }: { n: number; label: string }) => (
+  <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+    <span style={{ fontSize: 11, color: REF.dim, marginRight: 2, whiteSpace: 'nowrap' }}>{label}</span>
+    {Array.from({ length: Math.max(1, Math.min(12, n)) }).map((_, i) => (
+      <span key={i} style={{ flex: 1, height: 4, background: REF.seg, borderRadius: 2 }} />
+    ))}
+  </div>
+)
+const MicroSpark = ({ label }: { label: string }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <svg width="72" height="20" viewBox="0 0 72 20" style={{ flexShrink: 0 }}><polyline points="2,17 14,14 26,15 38,10 50,7 70,3" fill="none" stroke={REF.barFill} strokeWidth="1.6" /></svg>
+    <span style={{ fontSize: 11, color: REF.dim }}>{label}</span>
+  </div>
+)
+const MicroPastilles = ({ items }: { items: string[] }) => (
+  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+    {items.map((t, i) => <span key={i} style={{ fontSize: 11, color: REF.pastilleTxt, background: REF.pastilleBg, borderRadius: 5, padding: '2px 8px' }}>{t}</span>)}
+  </div>
+)
+const MicroTriple = ({ items }: { items: ReactNode[] }) => (
+  <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+    {items.map((it, i) => <span key={i} style={{ fontSize: 11, color: REF.dim }}>{it}</span>)}
+  </div>
+)
 
 /** 429 (rate-limit / quota) : message dédié + nouvel essai automatique après la fenêtre.
  *  Ne JAMAIS afficher « serveur périmé » ici — le serveur va très bien, il protège. */
@@ -426,12 +491,12 @@ function WatchButton({ idu }: { idu: string }) {
   const w = useQuery({ queryKey: ['watch', idu], queryFn: () => getWatch(idu) })
   const t = useMutation({ mutationFn: () => toggleWatch(idu), onSuccess: () => qc.invalidateQueries({ queryKey: ['watch', idu] }) })
   const on = w.data?.watched
+  // C4 · cloche = suivi ; style référence (31×31, vert actif quand suivie).
   return (
     <button onClick={() => t.mutate()}
-      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs ${on ? 'border-mint text-mint' : 'border-line-2 text-txt hover:text-txt-hi'}`}
+      style={{ width: 31, height: 31, background: on ? '#101d16' : 'none', border: `1px solid ${on ? '#2f7a54' : '#232e29'}`, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', color: on ? '#7de3ab' : '#7d9488', cursor: 'pointer', flexShrink: 0 }}
       title={on ? CLIENT.fiche.suivreActif : CLIENT.fiche.suivre}>
-      {/* C4 : l'œil devient cloche — cohérent avec les notifications (M16) que le suivi alimente */}
-      🔔
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M10 5a2 2 0 1 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3H4a4 4 0 0 0 2-3v-3a7 7 0 0 1 4-6" /><path d="M9 17v1a3 3 0 0 0 6 0v-1" /></svg>
     </button>
   )
 }
@@ -440,11 +505,11 @@ function WatchButton({ idu }: { idu: string }) {
 function ShareButton({ idu }: { idu: string }) {
   const share = useMutation({ mutationFn: () => createShare(idu) })
   return (
-    <div className="relative shrink-0">
+    <div style={{ position: 'relative', flexShrink: 0 }}>
       <button onClick={() => share.mutate()}
-        className="flex h-8 w-8 items-center justify-center rounded-lg border border-line-2 text-xs text-txt hover:text-txt-hi"
+        style={{ width: 31, height: 31, border: '1px solid #232e29', borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7d9488', cursor: 'pointer' }}
         title="Pack apporteur : générer un lien public lecture seule (filigrané, compteur de vues)">
-        ↗
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5" /></svg>
       </button>
       {share.data && (
         <div className="floating absolute bottom-10 right-0 z-20 w-64 p-3 text-[11px]">
@@ -992,6 +1057,8 @@ export function Fiche({ idu }: { idu: string }) {
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
   const [ficheQuery, setFicheQuery] = useState('')
+  const [askOpen, setAskOpen] = useState(false)   // M19 : la carte IA (bas de pile) ouvre l'AskBar
+  useEffect(() => { setAskOpen(false) }, [idu])
   const { data: f, isLoading, isError, error, refetch } = useQuery({ queryKey: ['fiche', idu], queryFn: () => getFiche(idu) })
   const fq = ficheQuery.trim().toLowerCase()
   const ficheMatches = fq && f
@@ -1008,7 +1075,6 @@ export function Fiche({ idu }: { idu: string }) {
   // Le détail complet reste dans l'onglet « Pourquoi pas » (rien n'est supprimé — R1).
   const hardLines = f?.lines.filter((l) => l.result === 'HARD_EXCLUDE') ?? []
   const ecarteeMotif = hardLines[0] ? layerLabel(hardLines[0].layer) : (f ? `qualité insuffisante (Q ${f.q_score})` : '')
-  const ecarteeMotifDetail = hardLines[0] ? `${layerLabel(hardLines[0].layer)} — ${fmtLibelleBrut(hardLines[0].detail)}` : `Aucune exclusion dure : qualité insuffisante (Q ${f?.q_score} < 50) — détail dans « Pourquoi pas ».`
   const meta = f ? STATUT_META[f.statut] : null
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
@@ -1019,31 +1085,27 @@ export function Fiche({ idu }: { idu: string }) {
   const risquesLines = ongletLines('risques')
   const risquesFlags = risquesLines.filter((l) => l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE')
   const risquesClean = risquesLines.filter((l) => l.result === 'PASS').length
-  const risquesValue = risquesLines.length === 0 ? 'voir le détail'
-    : risquesFlags.length === 0
-      ? `✓ rien à signaler · ${risquesClean} couche${risquesClean > 1 ? 's' : ''} vérifiée${risquesClean > 1 ? 's' : ''}`
-      : `${risquesFlags.length} point${risquesFlags.length > 1 ? 's' : ''} de vigilance · ${risquesClean} couche${risquesClean > 1 ? 's' : ''} sans risque`
   // Marché : médiane €/m² structurée (dvf_parcelle.secteur) + nb de ventes — donnée propre.
   const marcheLines = ongletLines('marche')
   const dvfSecteur = f?.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain') ?? f?.dvf_parcelle?.secteur?.[0]
-  const marcheValue = dvfSecteur?.mediane_prix_m2 != null
-    ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²${dvfSecteur.n_ventes ? ` · ${dvfSecteur.n_ventes} ventes secteur` : ''}`
-    : (marcheLines.length ? 'comparables DVF · aménités' : 'voir le détail')
   // Proprio : le signal dominant s'il existe (gérant âgé, procédure…), sinon le type de
   // propriétaire. Jamais d'identité de personne physique (boussole).
   const proprioLines = ongletLines('proprio')
   const proprioSignal = proprioLines.filter((l) => (l.weight ?? 0) > 0).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
   const proprioType = f?.proprietaire_moral?.denomination ?? (f?.proprietaire_moral ? 'personne morale' : 'personne physique / non recensé')
-  const proprioValue = proprioSignal ? `${proprioType} · ${fmtLibelleBrut(proprioSignal.detail)}` : proprioType
   // Règles : zone PLU + SDP résiduelle (données déjà chargées).
   const reglesLines = ongletLines('regles')
   const reglesZone = f?.reglement_plu?.zones?.[0]?.zone
   const reglesSdp = f?.potentiel_transformation?.sdp_residuelle_m2
-  const reglesValue = [reglesZone ? `Zone ${reglesZone}` : null, reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : null].filter(Boolean).join(' · ') || 'voir le détail'
-  // Bilan / Faisabilité : la capacité fine (logements, charge foncière) est calculée DANS ces
-  // blocs à l'ouverture (pas de requête au chargement). Fermé = proxy SDP depuis f + libellé.
-  const bilanValue = reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP · marché & fiscal` : 'capacité · marché · fiscal · RTAA'
-  const faisaValue = reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP · charge foncière` : 'capacité constructible & calculette'
+  // M19 réf. · faisabilité au niveau fiche pour la MICRO-PREUVE fermée (gabarit / logements /
+  // charge). MÊME queryKey ['bilan', idu] que Faisabilité/Bilan → cache partagé, zéro requête en +.
+  const faisa = useQuery({ queryKey: ['bilan', idu], queryFn: () => getFaisabilite(idu), enabled: !!f })
+  const cap = faisa.data?.capacite
+  const fo = cap?.fourchette
+  const logementsTxt = fo?.logements_au_sol ? (Array.isArray(fo.logements_au_sol) ? `${fo.logements_au_sol[0]}–${fo.logements_au_sol[1]} logts` : `${fo.logements_au_sol} logts`) : (reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP` : 'à estimer')
+  // micro-preuve Règles : jauge = part de SDP DÉJÀ consommée (le reste = potentiel).
+  const pctConsomme = f?.potentiel_transformation?.pct_consomme
+  const reglesArticle = f?.reglement_plu?.zones?.[0]?.articles?.[0]?.reference
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
@@ -1073,113 +1135,83 @@ export function Fiche({ idu }: { idu: string }) {
         </div>
       )}
 
-      {/* M11 Surface A — barre de recherche IA (premium, en haut de fiche) */}
-      {/* M19 (réf. ordre) : la carte IA descend en bas de fiche (avant la barre d'actions) —
-          plus jamais l'IA en tête. En-tête = identité seule ; le verdict devient une carte
-          encadrée juste dessous. */}
-      <div className="flex shrink-0 items-start justify-between border-b border-line px-5 py-4">
-        <div className="min-w-0">
-          <div className="truncate font-mono text-sm font-medium text-txt-hi">{idu}</div>
-          {/* M6 2a (§1.8) : adresse postale BAN en tête de fiche — jamais un champ vide */}
-          {f && (
-            <div data-fiche-adresse className={`mt-0.5 min-w-0 ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
-              {/* C3 : l'adresse n'est JAMAIS tronquée — elle passe à deux lignes si besoin. */}
-              <div className="text-[11px] leading-snug break-words">{f.adresse ?? CLIENT.fiche.adresseAbsente}</div>
-              {/* C2 : le lien Pages Jaunes est renommé et assumé en « jaune » (nod à la marque).
-                  Recherche d'ADRESSE sortante, wording neutre — rien n'est stocké, jamais un mot
-                  sur le propriétaire. */}
-              {f.adresse && (
+      {/* ═══ M19 · EN-TÊTE + CARTE VERDICT — spec qa/m19/reference (hex/tailles à l'identique) ═══ */}
+      <div style={{ padding: '20px 16px 16px', flexShrink: 0, borderBottom: `1px solid ${REF.shell}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
+          <div style={{ minWidth: 0 }}>
+            <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.6, color: '#4a5d53' }}>PARCELLE{f?.commune ? ` · ${f.commune.toUpperCase()}` : ''}</p>
+            <p style={{ margin: '5px 0 0', fontFamily: 'ui-monospace,SFMono-Regular,Menlo,monospace', fontSize: 19, color: '#f5fbf8', letterSpacing: .4 }}>{idu.length >= 14 ? `${idu.slice(8, 10)} ${idu.slice(10)}` : idu}</p>
+            {/* C3 : adresse jamais tronquée (2 lignes possibles) */}
+            <p data-fiche-adresse style={{ margin: '5px 0 0', fontSize: 13, color: f?.adresse ? '#9db5a8' : '#5f7568', lineHeight: 1.45, overflowWrap: 'anywhere' }}>{f?.adresse ?? CLIENT.fiche.adresseAbsente}</p>
+            <p style={{ margin: '4px 0 0', fontSize: 12, color: '#5f7568' }}>
+              {f?.surface_m2 ? `${fmtM2(f.surface_m2)} · ` : ''}
+              {f?.adresse && (
                 <a data-fiche-pj href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
-                  target="_blank" rel="noreferrer noopener"
-                  className="mt-1 inline-flex items-center gap-1 rounded border border-[#F4D35E]/45 bg-[#F4D35E]/10 px-1.5 py-0.5 text-[10.5px] font-medium text-[#F4D35E] transition-colors duration-quick hover:bg-[#F4D35E]/20"
-                  title={CLIENT.fiche.pagesJaunesTip}>
-                  🔎 {CLIENT.fiche.pagesJaunes}
+                  target="_blank" rel="noreferrer noopener" style={{ color: '#f4d35e', textDecoration: 'none' }} title={CLIENT.fiche.pagesJaunesTip}>
+                  {CLIENT.fiche.pagesJaunes} ↗
                 </a>
               )}
-            </div>
-          )}
-          <div className="mt-0.5 text-[11px] text-txt-mut">
-            {f?.surface_m2 ? <span className="tnum">{fmtM2(f.surface_m2)} · </span> : ''}{f?.commune ?? ''}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+            {/* C4 : cloche = suivi (état réel via WatchButton, style référence) */}
+            <WatchButton idu={idu} />
+            <ShareButton idu={idu} />
+            <button onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
+              style={{ width: 31, height: 31, border: `1px solid ${ficheSearchOpen ? '#2f7a54' : '#232e29'}`, borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ficheSearchOpen ? '#7de3ab' : '#7d9488', cursor: 'pointer' }}
+              title="Rechercher dans cette fiche">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><circle cx="11" cy="11" r="6" /><path d="m20 20-3.5-3.5" /></svg>
+            </button>
+            <button onClick={() => select(null)}
+              style={{ width: 31, height: 31, border: '1px solid #232e29', borderRadius: 9, background: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7d9488', cursor: 'pointer' }}
+              title="Fermer la fiche">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            </button>
           </div>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          {/* A6 : la loupe de la fiche cherche DANS la fiche (son contenu), pas dans le dashboard */}
-          <button
-            onClick={() => setFicheSearchOpen((o) => { if (o) setFicheQuery(''); return !o })}
-            className={`flex h-7 w-7 items-center justify-center rounded-md border text-txt-mut hover:border-mint hover:text-mint ${ficheSearchOpen ? 'border-mint text-mint' : 'border-line-2'}`}
-            title="Rechercher dans cette fiche (ses données)">
-            <svg viewBox="0 0 20 20" className="h-[15px] w-[15px]">
-              <circle cx="9" cy="9" r="5.5" fill="none" stroke="currentColor" strokeWidth="1.7" />
-              <line x1="13" y1="13" x2="17.5" y2="17.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-            </svg>
-          </button>
-          <button onClick={() => select(null)}
-            className="flex h-7 w-7 items-center justify-center rounded-md text-txt-mut transition-colors duration-quick hover:text-txt-hi"
-            title="Fermer la fiche">✕</button>
-        </div>
-      </div>
 
-      {/* M19 (réf. ordre) : CARTE VERDICT ENCADRÉE — juste sous l'en-tête, avant les tiroirs.
-          Le verdict n'est plus un petit badge noyé dans l'en-tête : c'est un en-tête de rapport. */}
-      {f && verdict && (
-        <div data-verdict-card className="shrink-0 border-b border-line px-5 py-3">
-          <div className="relative overflow-hidden rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
-            <div aria-hidden className="absolute inset-y-0 left-0 w-1" style={{ background: verdict.color }} />
-            <div className="pl-2">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <span data-badge-verdict className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: verdict.color }}>
-                  <span className="h-2 w-2 rounded-full" style={{ background: verdict.color }} />{verdict.label}
-                </span>
-                {v2Pilote && f.score_v2 && (f.score_v2.rang != null || f.score_v2.mult_base != null) && (
-                  <Tip tip="Verdict scoring (P×C) — rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc ; détail dans « Probabilité de mutation ».">
-                    <span className="font-mono text-[11px] text-txt-mut">
-                      {(verdict.tier === 'brulante' || verdict.tier === 'chaude') && f.score_v2.rang != null ? `rang ${f.score_v2.rang}` : ''}
-                      {f.score_v2.mult_base != null ? `${(verdict.tier === 'brulante' || verdict.tier === 'chaude') && f.score_v2.rang != null ? ' · ' : ''}×${f.score_v2.mult_base.toFixed(1)}` : ''}
+        {/* CARTE VERDICT — teintée selon le tier (verdict.color) ; la référence montre le cas Chaude. */}
+        {f && verdict && (
+          <div data-verdict-card style={{ background: `${verdict.color}12`, border: `1px solid ${verdict.color}59`, borderRadius: 13, padding: '15px 16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <p style={{ margin: 0, fontSize: 10, letterSpacing: 1.4, color: '#7d9488' }}>VERDICT LABUSE</p>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginTop: 5, flexWrap: 'wrap' }}>
+                  <span data-badge-verdict style={{ fontSize: 23, fontWeight: 500, color: verdict.color, lineHeight: 1 }}>{verdict.label}</span>
+                  {v2Pilote && f.score_v2?.rang != null && (verdict.tier === 'brulante' || verdict.tier === 'chaude') && (
+                    <span style={{ fontSize: 12, color: '#7d9488' }}>rang {f.score_v2.rang}</span>
+                  )}
+                  {verdictEcartee && (
+                    <span data-ecartee-motif style={{ fontSize: 12, color: '#7d9488' }}>
+                      · {ecarteeMotif} <button onClick={() => goDrawer('pourquoi')} style={{ background: 'none', border: 0, padding: 0, color: '#E8695A', textDecoration: 'underline', cursor: 'pointer', fontSize: 12 }} title={CLIENT.fiche.ecarteeVoirTip}>{CLIENT.fiche.ecarteeVoir}</button>
                     </span>
-                  </Tip>
-                )}
-                {!v2Pilote && f.evenement === 'rouge' && f.statut === 'chaude' && (
-                  <Tip tip="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">
-                    <span className="rounded-full bg-st-ecartee/15 px-1.5 text-[9px] font-semibold text-st-ecartee">· ÉVÉNEMENT</span>
-                  </Tip>
-                )}
-                {/* C1 : motif d'écartement à côté du verdict + « voir pourquoi » → tiroir Pourquoi pas */}
-                {verdictEcartee && (
-                  <span data-ecartee-motif className="inline-flex items-center gap-1.5 text-[11px]">
-                    <Tip tip={ecarteeMotifDetail}><span className="text-txt-mut">· {ecarteeMotif}</span></Tip>
-                    <button onClick={() => goDrawer('pourquoi')}
-                      className="text-st-ecartee underline transition-colors duration-quick hover:text-st-ecartee/80"
-                      title={CLIENT.fiche.ecarteeVoirTip}>
-                      {CLIENT.fiche.ecarteeVoir}
-                    </button>
-                  </span>
-                )}
+                  )}
+                </div>
               </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                {f.score_v?.v_score != null && (
-                  <Tip tip={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans le tiroir Signaux vendeur`}>
-                    <span data-badge-signaux className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
-                      style={{ background: `${vBandColor(f.score_v.v_band)}22`, color: vBandColor(f.score_v.v_band) }}>
-                      signaux vendeur {f.score_v.v_score}/100
-                    </span>
-                  </Tip>
-                )}
-                {f.score_v?.badge && (
-                  <span className="inline-flex rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-mut">{f.score_v.badge}</span>
-                )}
-                {f.icd && f.icd.score < 85 && (
-                  <Tip tip={`Confiance des données : ${f.icd.score}/100 — ${f.icd.libelle}. ${f.icd.cloisonnement}`}>
-                    <span data-badge-icd className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
-                      style={{ background: `${icdColor(f.icd.bande)}22`, color: icdColor(f.icd.bande) }}>
-                      {f.icd.libelle} {f.icd.score}/100
-                    </span>
-                  </Tip>
-                )}
-              </div>
+              {f.score_v2?.mult_base != null && (
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <p style={{ margin: 0, fontSize: 19, fontWeight: 500, color: verdict.color, lineHeight: 1 }}>×{f.score_v2.mult_base.toFixed(1).replace('.', ',')}</p>
+                  <p style={{ margin: '3px 0 0', fontSize: 11, color: '#7d9488' }}>plus probable de muter</p>
+                </div>
+              )}
             </div>
+            {/* chips d'arguments : 1 seul violet = le signal chaud (spec) ; le reste vert. */}
+            {(proprioSignal || reglesZone || risquesLines.length > 0) && (
+              <div style={{ margin: '13px 0 0', paddingTop: 12, borderTop: `1px solid ${verdict.color}33`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {proprioSignal && (
+                  <span style={{ fontSize: 11, background: '#1c1630', color: '#c9b6f2', border: '1px solid #3d3159', borderRadius: 6, padding: '3px 9px' }}>{fmtLibelleBrut(proprioSignal.detail).replace(/\s*—.*$/, '').slice(0, 34)}</span>
+                )}
+                {reglesZone && (
+                  <span style={{ fontSize: 11, background: '#14251c', color: '#8fd8b4', border: '1px solid #26473a', borderRadius: 6, padding: '3px 9px' }}>constructible {reglesZone}</span>
+                )}
+                {risquesLines.length > 0 && (
+                  <span style={{ fontSize: 11, background: '#14251c', color: '#8fd8b4', border: '1px solid #26473a', borderRadius: 6, padding: '3px 9px' }}>{risquesFlags.length === 0 ? '✓ rien à signaler' : `${risquesFlags.length} vigilance`}</span>
+                )}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {ficheSearchOpen && (
         <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface-2 px-5 py-2">
@@ -1233,255 +1265,187 @@ export function Fiche({ idu }: { idu: string }) {
             <button onClick={() => refetch()} className="mt-2 min-h-7 rounded border border-line-2 px-2 py-1 text-txt transition-colors duration-quick hover:border-mint/60 hover:text-txt-hi">Réessayer</button>
           </div>
         ))}
-        {!fq && f && tab === 'synthese' && (
-          <>
-            {f.evenement === 'rouge' && f.statut === 'chaude' && (
-              <div data-histoire-evenement className="rounded-lg border border-st-ecartee/40 bg-st-ecartee/10 px-3 py-2.5 text-[11.5px] leading-relaxed text-txt">
-                Priorité dossier par <b className="text-st-ecartee">ÉVÉNEMENT</b> : le propriétaire
-                {f.proprietaire_moral?.denomination ? <> (<b>{f.proprietaire_moral.denomination}</b>)</> : ''} est en
-                procédure collective{f.evenement_detail ? <> — {f.evenement_detail.replace(/^.*?:\s*/, '')}</> : ''}.
-                Le score qualité ({f.q_score}) n'a pas déclenché ce statut : c'est l'urgence
-                du dossier vendeur qui prime (doctrine bascule).
-              </div>
-            )}
-            <EquipementsBadges idu={idu} />
-            {/* CRED-1 (revue externe 12/07) : le « pas d'accès direct » était une ligne neutre
-                enterrée dans Marché — un Q 91 s'affichait sans que l'enclavement possible saute
-                aux yeux. Remonté ICI, au niveau des scores, en avertissement HONNÊTE : le signal
-                n'est PAS pondéré (BD TOPO = axes publics ; dessertes privées et servitudes de
-                passage n'y figurent pas — 293 078 parcelles concernées, trop de faux positifs
-                pour un malus en l'état). */}
-            {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
-              <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
-                <span aria-hidden className="text-st-creuser">▲</span>
-                <p className="text-[11px] leading-snug text-st-creuser">
-                  <b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact de la parcelle.
-                  <span className="text-txt-mut"> Signal informatif, non pondéré dans les scores : la BD TOPO
-                  trace les voies publiques — une desserte privée ou une servitude de passage n'y figure pas.
-                  À lever sur place ou au plan cadastral avant d'engager le dossier.</span>
-                </p>
-              </div>
-            )}
-            {/* réf. ordre : tiroirs TOUS FERMÉS par défaut — Qualité n'est plus déplié pleine page. */}
-            <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} tip={SCORE_TIP.q} />
-            {/* correctif M5 : le statut matrice legacy n'est PLUS le verdict d'en-tête quand un
-                run v2 existe — il reste visible ici, en historique, jamais en verdict principal */}
-            {v2Pilote && meta && (
-              <div data-statut-matrice-historique className="card-elev flex items-center gap-2 px-3 py-2 text-[11px]">
-                <Tip tip="Classement de la matrice Q×A historique — remplacé par le scoring (P×C) comme verdict d'en-tête">
-                  <span className="text-txt-dim underline decoration-dotted decoration-line-2 underline-offset-4">Statut matrice (historique)</span>
-                </Tip>
-                <span className="ml-auto inline-flex items-center gap-1.5" style={{ color: meta.color }}>
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}
-                </span>
-              </div>
-            )}
-            <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
-            {f.score_v && <VendabiliteBlock sv={f.score_v} />}
-            {/* M19 P1.3 — blocs secondaires en TIROIRS « fermé, ça informe » : la valeur clé
-                reste lisible fermée, le détail (bloc existant, inchangé) se déplie au clic.
-                Rien n'est supprimé — seulement réorganisé en niveaux. */}
-            {/* M5 : scoring v2 (P×C) — additif, auto-porté (fetch /v2/score, absent si pas de run) */}
-            <FicheDrawer ico="📊" name="Probabilité de mutation (P)"
-              value={f.score_v2
-                ? <>{verdict?.label ?? 'Scorée'}{f.score_v2.mult_base != null ? ` · ×${f.score_v2.mult_base.toFixed(1)}` : ''}{f.score_v2.rang != null ? ` · rang ${f.score_v2.rang}` : ''}</>
-                : 'voir le détail'}>
-              <ScoreV2Block idu={idu} />
-            </FicheDrawer>
-            {/* M9 lot 1 : indice de confiance données (ICD) — méta d'affichage, cloisonnée du score P */}
-            {f.icd && (
-              <FicheDrawer ico="✓" name="Confiance des données" value={`${f.icd.libelle} · ${f.icd.score}/100`}>
-                <IcdBlockView icd={f.icd} />
-              </FicheDrawer>
-            )}
-            {/* M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité) */}
-            {f.potentiel_transformation && (
-              <FicheDrawer ico="📐" name="Potentiel de transformation" value={f.potentiel_transformation.libelle ?? f.potentiel_transformation.niveau}>
-                <TransformationBlock pt={f.potentiel_transformation} />
-              </FicheDrawer>
-            )}
-            {/* M9 lot 2 : lien règlement PLU par zone */}
-            {f.reglement_plu && (
-              <FicheDrawer ico="📋" name="Règlement PLU" value={f.reglement_plu.zones.map((z) => z.zone).join(' · ') || 'voir le détail'}>
-                <ReglementPluBlock rp={f.reglement_plu} />
-              </FicheDrawer>
-            )}
-            {/* M-VIA : indicateur de viabilisation (faisceau de preuves) */}
-            {f.viabilisation && (
-              <FicheDrawer ico="🔌" name="Viabilisation & réseaux" value={f.viabilisation.libelle}>
-                <ViabilisationBlock via={f.viabilisation} />
-              </FicheDrawer>
-            )}
-            {/* M10 : permis à proximité, cliquables (preuve derrière le signal viabilisation) */}
-            <FicheDrawer ico="🏗️" name="Permis à proximité" value="permis récents alentour">
-              <PermitsProximityBlock idu={idu} />
-            </FicheDrawer>
-            {f.gestionnaires && (
-              <FicheDrawer ico="⚙️" name="Gestionnaires (raccordement)" value="eau · assainissement · électricité">
-                <GestionnairesBlock g={f.gestionnaires} />
-              </FicheDrawer>
-            )}
-            {/* M9 lot 3 : signaler une erreur (file de QA humaine) */}
-            <SignalerErreur idu={idu} />
-            {/* S02 : la jauge de complétude en vrai instrument — anneau + valeur au centre,
-                label-instrument, le pourcentage n'est plus noyé dans la phrase */}
-            <div className="card-elev flex items-center gap-3 px-3 py-2.5">
-              <svg viewBox="0 0 36 36" className="h-11 w-11 shrink-0 -rotate-90">
-                <circle cx="18" cy="18" r="15" fill="none" stroke="#1E2A23" strokeWidth="3.5" />
-                <circle cx="18" cy="18" r="15" fill="none" stroke={completudeColor(f.completeness_score)} strokeWidth="3.5"
-                  strokeDasharray={2 * Math.PI * 15} strokeDashoffset={2 * Math.PI * 15 * (1 - f.completeness_score / 100)} strokeLinecap="round" />
-                <text x="18" y="18" transform="rotate(90 18 18)" textAnchor="middle" dominantBaseline="central"
-                  className="fill-txt-hi font-display text-[11px] font-bold" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                  {f.completeness_score}
-                </text>
-              </svg>
-              <div>
-                <div className="label-caps">Complétude · {f.completeness_score} %</div>
-                <div className="mt-0.5 text-[11px] text-txt-dim">{f.completeness_score >= 50 ? 'Dossier suffisant pour trancher' : 'Dossier incomplet — à creuser'}</div>
-              </div>
-            </div>
-            {f.flags.length > 0 && (
-              <FicheDrawer ico="🏷️" name="Signaux additionnels" value={`${f.flags.length} flag${f.flags.length > 1 ? 's' : ''}`}>
-                <div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div>
-              </FicheDrawer>
-            )}
+        {!fq && f && tab === 'synthese' && (() => {
+          // micro-preuves (spec) dérivées des données déjà chargées
+          const shorten = (s: string) => fmtLibelleBrut(s).replace(/\s*[—(].*$/, '').trim()
+          const proprioPastilles = proprioLines.filter((l) => (l.weight ?? 0) > 0).slice(0, 3).map((l) => shorten(l.detail).slice(0, 26))
+          const proprioAccent = !!proprioSignal || f.score_v?.v_band === 'fort' || f.score_v?.v_band === 'present'
+          const viabValue = f.viabilisation?.libelle ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
+          const confianceValue = f.icd ? `${f.icd.score} %` : `${f.completeness_score} %`
+          return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {/* rien ne flotte : équipements, alerte accès, Q/A, statut, signaux → DANS les tiroirs (R1). */}
 
-            {/* ═══ M19 · ONGLETS MIGRÉS EN TIROIRS (strangler, un par commit) ═══ */}
-            {/* Risques — le négatif est AFFIRMÉ fermé ; les lignes sourcées sont inchangées (R1). */}
-            <FicheDrawer id="risques" ico="🛡️" name="Risques" value={risquesValue}>
+            {/* 1 · RÈGLES D'URBANISME — micro : jauge SDP + zone/article */}
+            <RefDrawer id="regles" icon={IC.regles} name="Règles d'urbanisme"
+              value={reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : reglesZone ? `zone ${reglesZone}` : 'voir'}
+              micro={<MicroJauge pct={pctConsomme ?? 0} label={[reglesZone ? `zone ${reglesZone}` : null, reglesArticle ? `art. ${reglesArticle}` : null].filter(Boolean).join(' · ') || 'PLU'} />}>
+              <div className="flex flex-col gap-3">
+                <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} tip={SCORE_TIP.q} />
+                <TraducteurBloc idu={idu} />
+                {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
+                {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+                {reglesLines.length > 0 && <div className="flex flex-col gap-1">{reglesLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+              </div>
+            </RefDrawer>
+
+            {/* 2 · RISQUES — micro : N segments verts = N couches vérifiées (négatif AFFIRMÉ) */}
+            <RefDrawer id="risques" icon={IC.risques} name="Risques"
+              value={risquesFlags.length === 0 ? 'rien à signaler' : `${risquesFlags.length} vigilance`}
+              micro={<MicroSegments n={risquesClean} label={`${risquesClean} couches`} />}>
               {risquesLines.length
                 ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-            </FicheDrawer>
-            {/* Marché — médiane €/m² secteur fermé ; lignes DVF/aménités inchangées. */}
-            <FicheDrawer id="marche" ico="📈" name="Marché" value={marcheValue}>
+            </RefDrawer>
+
+            {/* 3 · PROPRIÉTAIRE — CARTE ACCENTUÉE VIOLETTE (le signal chaud, une seule sur la fiche) */}
+            <RefDrawer id="proprio" icon={IC.proprio} name="Propriétaire" accent={proprioAccent}
+              value={proprioSignal ? shorten(proprioSignal.detail).slice(0, 20) : (f.proprietaire_moral ? proprioType.slice(0, 18) : 'privé')}
+              micro={proprioPastilles.length ? <MicroPastilles items={proprioPastilles} /> : undefined}>
+              <div className="flex flex-col gap-2">
+                {f.proprietaire_moral ? (
+                  <div className="card-elev px-3 py-2.5">
+                    <p className="label-caps">Propriétaire (DGFiP)</p>
+                    <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
+                    <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
+                      {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
+                      {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
+                    </div>
+                    {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
+                  </div>
+                ) : (
+                  <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
+                    Propriétaire : personne physique ou non recensé au fichier des personnes morales
+                    (identité nominative : workflow SPF/CERFA, jamais automatisée).
+                  </div>
+                )}
+                {f.score_v && <VendabiliteBlock sv={f.score_v} />}
+                {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+              </div>
+            </RefDrawer>
+
+            {/* 4 · MARCHÉ — micro : sparkline + volume */}
+            <RefDrawer id="marche" icon={IC.marche} name="Marché" valueColor={REF.name}
+              value={dvfSecteur?.mediane_prix_m2 != null ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²` : '—'}
+              micro={<MicroSpark label={dvfSecteur?.n_ventes ? `${dvfSecteur.n_ventes} ventes secteur` : 'comparables DVF'} />}>
               {marcheLines.length
                 ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-            </FicheDrawer>
-            {/* Propriétaire — carte PM (ou mention personne physique, jamais nommée) + lignes. */}
-            <FicheDrawer id="proprio" ico="👤" name="Propriétaire" value={proprioValue}>
-              {f.proprietaire_moral ? (
-                <div className="card-elev px-3 py-2.5">
-                  <p className="label-caps">Propriétaire (DGFiP)</p>
-                  <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
-                  <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
-                    {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
-                    {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
+            </RefDrawer>
+
+            {/* 5 · FAISABILITÉ ET BILAN — micro : 3 données sur une ligne */}
+            <RefDrawer id="faisabilite" icon={IC.faisa} name="Faisabilité et bilan" value={logementsTxt}
+              micro={<MicroTriple items={[fo?.niveaux ?? 'gabarit', <>SDP <span style={{ color: '#9db5a8' }}>{fo?.surface_plancher_m2 ?? reglesSdp ?? '—'} m²</span></>, 'calcul tracé']} />}>
+              <div className="flex flex-col gap-3">
+                <FaisabiliteTab idu={idu} />
+                <BilanTab idu={idu} />
+              </div>
+            </RefDrawer>
+
+            {/* 6 · VIABILISATION ET RÉSEAUX — accès, équipements, gestionnaires, permis */}
+            <RefDrawer id="viabilisation" icon={IC.viab} name="Viabilisation et réseaux" value={viabValue}>
+              <div className="flex flex-col gap-3">
+                <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
+                <EquipementsBadges idu={idu} />
+                {f.lines.some((l) => l.layer === 'acces' && l.result === 'PASS') && (
+                  <div data-acces-avertissement className="flex items-start gap-2 rounded-lg border border-st-creuser/40 bg-st-creuser/10 px-3 py-2">
+                    <span aria-hidden className="text-st-creuser">▲</span>
+                    <p className="text-[11px] leading-snug text-st-creuser"><b>Accès à vérifier</b> — aucun tronçon de voirie cartographié au contact.
+                      <span className="text-txt-mut"> Signal informatif, non pondéré : la BD TOPO trace les voies publiques.</span></p>
                   </div>
-                  {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
+                )}
+                {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
+                {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
+                <PermitsProximityBlock idu={idu} />
+              </div>
+            </RefDrawer>
+
+            {/* 7 · CONFIANCE ET DONNÉES — score P (pourquoi), ICD, complétude, statut, flags, signaler */}
+            <RefDrawer id="confiance" icon={IC.confiance} name="Confiance et données" value={confianceValue}>
+              <div className="flex flex-col gap-3">
+                <ScoreV2Block idu={idu} />
+                {f.icd && <IcdBlockView icd={f.icd} />}
+                {v2Pilote && meta && (
+                  <div data-statut-matrice-historique className="card-elev flex items-center gap-2 px-3 py-2 text-[11px]">
+                    <Tip tip="Classement de la matrice Q×A historique — remplacé par le scoring (P×C)"><span className="text-txt-dim underline decoration-dotted decoration-line-2 underline-offset-4">Statut matrice (historique)</span></Tip>
+                    <span className="ml-auto inline-flex items-center gap-1.5" style={{ color: meta.color }}><span className="h-1.5 w-1.5 rounded-full" style={{ background: meta.color }} />{meta.label}</span>
+                  </div>
+                )}
+                <div className="card-elev flex items-center gap-3 px-3 py-2.5">
+                  <svg viewBox="0 0 36 36" className="h-11 w-11 shrink-0 -rotate-90">
+                    <circle cx="18" cy="18" r="15" fill="none" stroke="#1E2A23" strokeWidth="3.5" />
+                    <circle cx="18" cy="18" r="15" fill="none" stroke={completudeColor(f.completeness_score)} strokeWidth="3.5" strokeDasharray={2 * Math.PI * 15} strokeDashoffset={2 * Math.PI * 15 * (1 - f.completeness_score / 100)} strokeLinecap="round" />
+                    <text x="18" y="18" transform="rotate(90 18 18)" textAnchor="middle" dominantBaseline="central" className="fill-txt-hi font-display text-[11px] font-bold" style={{ fontVariantNumeric: 'tabular-nums' }}>{f.completeness_score}</text>
+                  </svg>
+                  <div><div className="label-caps">Complétude · {f.completeness_score} %</div><div className="mt-0.5 text-[11px] text-txt-dim">{f.completeness_score >= 50 ? 'Dossier suffisant pour trancher' : 'Dossier incomplet — à creuser'}</div></div>
                 </div>
-              ) : (
-                <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
-                  Propriétaire : personne physique ou non recensé au fichier des personnes morales
-                  (identité nominative : workflow SPF/CERFA, jamais automatisée).
-                </div>
-              )}
-              {proprioLines.length > 0 && <div className="mt-2 flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
-            </FicheDrawer>
-            {/* Règles — zone + SDP fermé ; Traducteur PLU (violet) + lignes réglementaires. */}
-            <FicheDrawer id="regles" ico="📐" name="Règles d'urbanisme" value={reglesValue}>
-              <TraducteurBloc idu={idu} />
-              {reglesLines.length > 0 && <div className="mt-2 flex flex-col gap-1">{reglesLines.map((l, i) => <Line key={i} line={l} />)}</div>}
-            </FicheDrawer>
-            {/* Bilan — capacité + marché de sortie + fiscal & RTAA (calculé à l'ouverture). */}
-            <FicheDrawer id="bilan" ico="🧮" name="Bilan" value={bilanValue}>
-              <BilanTab idu={idu} />
-            </FicheDrawer>
-            {/* Faisabilité — capacité tracée + calculette de charge foncière (composant PARTAGÉ
-                M15-C2, réutilisé tel quel, jamais dupliqué). Calcul à l'ouverture. */}
-            <FicheDrawer id="faisabilite" ico="🏗️" name="Faisabilité" value={faisaValue}>
-              <FaisabiliteTab idu={idu} />
-            </FicheDrawer>
-            {/* Pourquoi pas — seulement si écartée / flaggée (anti-fiche, motifs sourcés). */}
+                {f.flags.length > 0 && <div><p className="label-caps mb-1.5">Signaux additionnels</p><div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div></div>}
+                <SignalerErreur idu={idu} />
+              </div>
+            </RefDrawer>
+
+            {/* Pourquoi pas — conditionnel (écartée / flaggée) */}
             {(verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) && (
-              <FicheDrawer id="pourquoi" ico="⚖️" name="Pourquoi pas ?" value="motifs d'écartement & points de vigilance">
+              <RefDrawer id="pourquoi" icon={IC.risques} name="Pourquoi pas ?" value="motifs">
                 <PourquoiPasTab idu={idu} />
-              </FicheDrawer>
+              </RefDrawer>
             )}
-          </>
-        )}
-      </div>
 
-      {/* M19 (réf. ordre) : CARTE IA en bas de fiche — après les tiroirs, avant les actions. */}
-      {f && <AskBar idu={idu} zone={null} />}
-
-      <div className="shrink-0 border-t border-line px-5 py-3">
-        {/* P6 (dernière passe) : barre d'actions REPRISE — deux rangées régulières, boutons de
-            HAUTEUR UNIFORME (h-8). Rangée 1 = actions (pipeline/suivre/partager/IA), rangée 2 =
-            exports & liens externes, tous à largeur égale. Fini le « bien vilain ». */}
-        <div className="flex items-center gap-2">
-          <PipelineButton idu={idu} />
-          <ProjetButton idu={idu} />
-          <WatchButton idu={idu} />
-          <ShareButton idu={idu} />
-          {/* Fix point 18 : le vieux bouton « IA » (panneau Synthèse/Pourquoi) est retiré —
-              redondant avec la barre « Demander à l'IA » repliable en haut de fiche. */}
-        </div>
-        {/* C5 : les 6 exports débordaient à droite (rangée `flex` non-« wrap » : le 6e bouton
-            « Maps » sortait du panneau 400 px). Passés en grille 3 colonnes → bloc segmenté
-            régulier, 2 rangées de 3, aucun débordement quelle que soit la largeur. */}
-        <div className="mt-2 grid grid-cols-3 gap-2">
-          {/* M19 : le PDF reflète la charge foncière dès que la calculette est active (drawer
-              Faisabilité/Bilan ouvert → `calculette` non-null), sans dépendre d'un onglet
-              actif (les onglets sont devenus des tiroirs). */}
-          <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer"
-            className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-            title={calculette ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
-            PDF
-          </a>
-          {/* Lot 4 (wave-adresses) : Dossier parcelle brandé — comité d'engagement, banque,
-              client final. Quota mensuel selon plan ; 501 tant que le générateur (module
-              Flash) n'est pas mergé — le serveur répond un message honnête. */}
-          <a href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer"
-            className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-            title="Dossier parcelle PDF brandé (carte, zonage calibré, risques, DVF, permis) — usage interne">
-            Dossier
-          </a>
-          {/* O1 : dossier banquier — 6-8 pages print, synthèse exécutive + bilan/charge foncière +
-              Score É + comparables DVF/SITADEL + risques, tout sourcé (photo aérienne IGN).
-              B1.5 : génération ASYNC (9,3 s ne bloquent plus le clic) — préparer → sonder →
-              « prêt » cliquable ; le PDF sort alors du cache serveur en ~ms. */}
-          <BanquierButton idu={idu} />
-          {f?.coords && (
-            /* Fix LOT 2 : recentrer sur LA parcelle en ouvrant la vue historique (sinon la carte
-               restait où elle était → on voyait l'île, pas le terrain). */
-            <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }}
-              className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-              title="Ce terrain en 1950 — comparateur temporel (M08)">
-              1950
+            {/* CARTE IA — EN BAS de la pile (jamais en tête), une seule ligne (spec) */}
+            <button onClick={() => setAskOpen(true)} data-askbar-open
+              style={{ background: '#110d1b', border: '1px solid #372c58', borderRadius: 12, padding: '12px 15px', display: 'flex', alignItems: 'center', gap: 9, whiteSpace: 'nowrap', overflow: 'hidden', color: '#c9b6f2', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" /><path d="M18 16l.7 1.9L21 18.6l-2.3.7L18 21l-.7-1.7L15 18.6l2.3-.7z" /></svg>
+              <span style={{ flex: 1, fontSize: 13, color: '#d8ccf5', overflow: 'hidden', textOverflow: 'ellipsis' }}>{CLIENT.fiche.ia.accroche}</span>
+              <span style={{ fontSize: 13, color: '#8a6ff0', flexShrink: 0 }}>{CLIENT.fiche.ia.demander}</span>
             </button>
-          )}
-          {f?.coords && (
-            /* C7 : « Cadastre » ouvre désormais le cadastre officiel EXTERNE, paramétré sur la
-               parcelle. cadastre.gouv.fr (Struts/POST) n'expose pas de lien GET par parcelle ; le
-               parcellaire officiel accessible par URL est le Géoportail (IGN — Parcellaire Express),
-               que l'on centre sur les coordonnées de la parcelle avec la couche cadastrale active. */
-            <a data-cadastre-link
-              href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
-              target="_blank" rel="noreferrer noopener"
-              className="flex h-8 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-              title={CLIENT.fiche.export.cadastreTip}>
-              {CLIENT.fiche.export.cadastre}
-            </a>
-          )}
-          {f?.coords && (
-            /* Fix LOT 2 : « Maps » (ex-« G ») → ÉPINGLE sur la parcelle (search?query=lat,lng pose un
-               marqueur), au lieu du simple centrage caméra `@lat,lng` qui n'épinglait rien. */
-            <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`}
-              target="_blank" rel="noreferrer"
-              className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-              title="Ouvrir la parcelle dans Google Maps (épingle sur la parcelle)">
-              Maps
-            </a>
-          )}
-        </div>
-        <p className="mt-2.5 text-[11px] leading-tight text-txt-dim">
-          Estimations indicatives issues de données publiques — ne valent ni conseil juridique/notarial ni
-          garantie de constructibilité. <span data-disclaimer-cu className="text-txt-mut">Ces informations
-          ne remplacent pas un certificat d'urbanisme.</span> À vérifier au règlement et auprès des services.
-        </p>
+            {askOpen && <AskBar idu={idu} zone={null} startOpen onClose={() => setAskOpen(false)} />}
+
+            {/* ═══ BARRE D'ACTIONS · 2 niveaux (spec) — DANS le flux (fin du « double écran de vide ») ═══ */}
+            <div style={{ marginTop: 7, paddingTop: 14, borderTop: '1px solid #1a2320' }}>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 11 }}>
+                <PipelineButton idu={idu} />
+                <ProjetButton idu={idu} />
+              </div>
+              {/* BLOC SEGMENTÉ UNIQUE — 6 tuiles (spec), plus 6 boutons séparés (C5 réglé structurellement). */}
+              <div style={{ background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', overflow: 'hidden' }}>
+                <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>
+                  <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>PDF</p>
+                </a>
+                <a href={`/dossier/${idu}.pdf`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title="Dossier parcelle PDF brandé">
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></svg>
+                  <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Dossier</p>
+                </a>
+                <BanquierButton idu={idu} />
+                {f.coords && (
+                  <button onClick={() => { setFlyTo({ center: f.coords, zoom: 18 }); setModule('temps') }} style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }} title="Ce terrain en 1950 — comparateur temporel">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M12 8v4l3 2" /><path d="M3.05 11a9 9 0 1 1 .5 4" /><path d="M3 21v-5h5" /></svg>
+                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>1950</p>
+                  </button>
+                )}
+                {f.coords && (
+                  <a data-cadastre-link href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`} target="_blank" rel="noreferrer noopener" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={CLIENT.fiche.export.cadastreTip}>
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="m9 4 6 2 6-2v14l-6 2-6-2-6 2V6z" /><path d="M9 4v14" /><path d="M15 6v14" /></svg>
+                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Cadastre</p>
+                  </a>
+                )}
+                {f.coords && (
+                  <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title="Ouvrir dans Google Maps (épingle sur la parcelle)">
+                    <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>
+                    <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Maps</p>
+                  </a>
+                )}
+              </div>
+              <p style={{ marginTop: 11, fontSize: 11, lineHeight: 1.45, color: '#5f7568' }}>
+                Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu style={{ color: '#7d9488' }}>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
+              </p>
+            </div>
+          </div>
+          )
+        })()}
       </div>
+
+
     </aside>
   )
 }
@@ -1514,24 +1478,23 @@ function BanquierButton({ idu }: { idu: string }) {
       setEtat('encours'); timer.current = window.setTimeout(poll, 1500)
     } catch { setEtat('erreur') }
   }
+  // C6 · « Financier » (ex-Banquier) — rendu en CELLULE du bloc segmenté (spec référence).
+  const cellStyle = { padding: '10px 0 9px', textAlign: 'center' as const, background: 'none', border: 0, borderRight: '1px solid #16201c', cursor: 'pointer', width: '100%' }
+  const icon = <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><rect x="3" y="6" width="18" height="12" rx="2" /><circle cx="12" cy="12" r="2.5" /></svg>
   if (etat === 'pret') return (
-    <a href={url} target="_blank" rel="noreferrer"
-      className="flex h-8 flex-1 items-center justify-center gap-1 rounded-lg border border-mint/50 px-3 text-xs font-medium text-mint transition-colors duration-quick hover:bg-mint/10"
-      title="Note de financement prête — ouvrir le PDF">
-      {CLIENT.fiche.export.banquierPret}
+    <a href={url} target="_blank" rel="noreferrer" style={{ ...cellStyle, color: '#7de3ab', textDecoration: 'none', display: 'block' }} title="Note de financement prête — ouvrir le PDF">
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7de3ab' }}>{CLIENT.fiche.export.banquierPret}</p>
     </a>
   )
   if (etat === 'encours') return (
-    <span className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3">
-      <Loading label={CLIENT.fiche.export.banquierEnCours} className="text-xs" />
+    <span style={{ ...cellStyle, color: '#8fd8b4', display: 'block' }}>
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.banquierEnCours}</p>
     </span>
   )
   return (
-    <button onClick={lancer} data-banquier-btn
-      className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt transition-colors duration-quick hover:text-txt-hi"
+    <button onClick={lancer} data-banquier-btn style={{ ...cellStyle, color: '#8fd8b4' }}
       title={etat === 'erreur' ? 'Génération impossible — réessayer' : CLIENT.fiche.export.banquierTip}>
-      {/* C6 : « Banquier » → « Note de financement » (3 pistes étudiées, cf. strings.ts) */}
-      {etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.banquier}
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : 'Financier'}</p>
     </button>
   )
 }
