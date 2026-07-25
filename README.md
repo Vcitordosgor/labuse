@@ -111,6 +111,20 @@ src/labuse/
 tests/                   dont le test de SURFACE obligatoire (m² en 2975, jamais en degrés)
 ```
 
+## E-mail (SMTP — M21)
+
+Transport unique (`labuse.mail`) partagé par les 4 mécaniques (reset mot de passe, avis
+d'échéance Chatel, digest notifications, `labuse mail-test`). Config via `.env` (cf.
+`.env.example`) : `LABUSE_SMTP_HOST/PORT/USER/PASSWORD/STARTTLS` + `LABUSE_MAIL_FROM`.
+
+- **Sans `LABUSE_SMTP_HOST`** : les mails sont **journalisés et non envoyés** (dev honnête — jamais
+  « envoyé » à tort). Avec config : STARTTLS sur 587, expéditeur affiché `contact@labuse.immo`.
+- **Le mot de passe d'application Gmail vit dans le `.env`** (gitignored), jamais dans le code ni un
+  commit ni un log.
+- **Quota Gmail gratuit ≈ 500 envois/jour** (`GMAIL_DAILY_CAP`). Au-delà, prévoir un relais SMTP
+  transactionnel. À `N` abonnés en digest quotidien, on approche la limite vers `~500/N` événements.
+- Vérifier après déploiement : `labuse mail-test votre-adresse@exemple.fr` (mail réellement reçu).
+
 ## Posture juridique / RGPD (résumé)
 
 Personnes **morales et publiques** uniquement (acquérables) ; **jamais** de
