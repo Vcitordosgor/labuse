@@ -292,6 +292,12 @@ export const saveSearch = (nom: string, hash: string) =>
   j<{ ok: boolean }>('/events/searches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nom, hash }) })
 export const deleteSearch = (id: number) => j<{ ok: boolean }>(`/events/searches/${id}`, { method: 'DELETE' })
 
+// ── M16-C : menu compte (identité + palier RÉEL) + « proposer une amélioration » ──
+export interface Moi { mode: 'pilote' | 'compte'; plan: string; plan_label: string; plan_par_compte: boolean; role?: string; statut_compte?: string }
+export const getMoi = () => j<Moi>('/moi')
+export const postSuggestion = (body: { categorie: string; texte: string; contexte?: string }) =>
+  j<{ ok: boolean }>('/suggestions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+
 // ── Moteurs (Vague 4) ──
 export const motSimulPluZones = () => j<{ zone: string; n_ilots: number }[]>(`/moteurs/simulplu/zones?${cq()}`)
 export const motSimulPlu = (zone: string) => j<Record<string, any>>(`/moteurs/simulplu?zone=${encodeURIComponent(zone)}&${cq()}`)

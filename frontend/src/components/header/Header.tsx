@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { banAutocomplete, deleteSearch, getCommunes, getEvents, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, saveSearch, searchParcels } from '../../lib/api'
+import { banAutocomplete, deleteSearch, getCommunes, getEvents, getMoi, getParcelsGeojson, getSavedSearches, markAllEventsRead, markEventRead, parcelAt, postSuggestion, saveSearch, searchParcels } from '../../lib/api'
 import { filtersToHash } from '../../lib/filters'
 import { activeChips, FLAG_DEFS, removeToken, V_SIGNAL_DEFS } from '../../lib/filters'
 import { TIER_V2_META, type TierV2 } from '../../lib/status'
@@ -381,6 +381,104 @@ function NotifBell() {
   )
 }
 
+/** M16-C — formulaire « proposer une amélioration » : court, proche, destination RÉELLE (table
+ *  `suggestions`, consultable par `labuse suggestions`). Aucun e-mail (pas d'infra e-mail, audit A3). */
+function SuggestionForm({ onDone }: { onDone: () => void }) {
+  const [cat, setCat] = useState('idee')
+  const [texte, setTexte] = useState('')
+  const [sent, setSent] = useState(false)
+  const send = useMutation({
+    mutationFn: () => postSuggestion({ categorie: cat, texte, contexte: (typeof location !== 'undefined' ? location.hash || location.pathname : '') }),
+    onSuccess: () => setSent(true),
+  })
+  if (sent) return (
+    <div data-sugg-ok className="p-4 text-center">
+      <p className="text-sm font-medium text-mint">✓ Merci, c'est noté.</p>
+      <p className="mt-1 text-[11px] leading-snug text-txt-mut">Votre retour est bien arrivé — on le lit vraiment.</p>
+      <button onClick={onDone} className="mt-3 text-[11px] text-txt-mut hover:text-txt">Fermer</button>
+    </div>
+  )
+  return (
+    <div className="flex flex-col gap-2 p-3">
+      <p className="text-[11px] leading-snug text-txt-mut">Une idée, un bug, un manque ? Dites-le en une phrase — ça compte vraiment pour la suite.</p>
+      <div className="flex gap-1">
+        {([['idee', 'Idée'], ['bug', 'Bug'], ['autre', 'Autre']] as const).map(([k, l]) => (
+          <button key={k} data-sugg-cat={k} onClick={() => setCat(k)}
+            className={`flex-1 rounded border py-1 text-[11px] transition-colors duration-quick ${cat === k ? 'border-mint text-mint' : 'border-line-2 text-txt-mut hover:text-txt'}`}>{l}</button>
+        ))}
+      </div>
+      <textarea data-sugg-texte value={texte} onChange={(e) => setTexte(e.target.value)} rows={4} autoFocus
+        placeholder="Votre suggestion…"
+        className="rounded-lg border border-line-2 bg-surface-3 px-2 py-1.5 text-[11px] leading-snug text-txt focus:border-mint focus:outline-none" />
+      <div className="flex gap-2">
+        <button onClick={onDone} className="rounded-lg border border-line-2 px-3 py-1.5 text-[11px] text-txt-mut transition-colors duration-quick hover:text-txt">Annuler</button>
+        <button data-sugg-send onClick={() => texte.trim().length >= 3 && send.mutate()} disabled={texte.trim().length < 3 || send.isPending}
+          className="flex-1 rounded-lg bg-mint py-1.5 text-[11px] font-medium text-mint-ink transition-[filter] duration-quick hover:brightness-110 disabled:opacity-40">
+          {send.isPending ? 'Envoi…' : 'Envoyer'}</button>
+      </div>
+      {send.isError && <p className="text-[10.5px] text-st-ecartee">Échec de l'envoi — réessayez.</p>}
+    </div>
+  )
+}
+
+/** M16-C — menu compte (avatar VL). Palier RÉEL (via /moi + plan_courant), pas de faux « Pro ». */
+function AccountMenu() {
+  const [open, setOpen] = useState(false)
+  const [suggOpen, setSuggOpen] = useState(false)
+  const moi = useQuery({ queryKey: ['moi'], queryFn: getMoi, enabled: open })
+  const d = moi.data
+  const close = () => { setOpen(false); setSuggOpen(false) }
+  return (
+    <div className="relative">
+      <button data-account-btn onClick={() => setOpen((o) => !o)} title="Mon compte" aria-label="Mon compte"
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-line-2 bg-surface-3 font-mono text-[11px] text-mint transition-colors duration-quick hover:border-mint/50">VL</button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={close} />
+          <div data-account-menu className="floating absolute right-0 top-11 z-20 flex w-[300px] flex-col overflow-hidden">
+            <div className="flex items-center justify-between border-b border-line px-4 py-2.5">
+              <p className="label-caps">{suggOpen ? 'Proposer une amélioration' : 'Mon compte'}</p>
+              {suggOpen && <button onClick={() => setSuggOpen(false)} className="text-[11px] text-txt-mut hover:text-txt">← retour</button>}
+            </div>
+            {suggOpen ? (
+              <SuggestionForm onDone={close} />
+            ) : (
+              <div className="flex flex-col p-2 text-[12px]">
+                {/* ABONNEMENT — palier réel */}
+                <div className="rounded-lg bg-surface-2 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-txt-dim">Abonnement</p>
+                  <p className="mt-0.5 text-txt">Plan <b className="text-mint">{d?.plan_label ?? '…'}</b></p>
+                  {d && !d.plan_par_compte && (
+                    <p className="mt-0.5 text-[10.5px] leading-snug text-txt-dim">
+                      Accès {d.mode === 'pilote' ? 'pilote' : 'du compte'} — l'abonnement par compte (facturation) arrive.
+                    </p>
+                  )}
+                </div>
+                {/* COMPTE */}
+                <div className="mt-1.5 rounded-lg bg-surface-2 px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-txt-dim">Compte</p>
+                  <p className="mt-0.5 text-txt">{d?.mode === 'compte' ? `Rôle : ${d.role}` : 'Session pilote'}</p>
+                </div>
+                {/* PROPOSER UNE AMÉLIORATION */}
+                <button data-account-suggest onClick={() => setSuggOpen(true)}
+                  className="mt-1.5 flex items-center gap-2 rounded-lg px-3 py-2 text-left text-txt transition-colors duration-quick hover:bg-surface-3">
+                  <svg viewBox="0 0 20 20" className="h-4 w-4 text-mint"><path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z" fill="currentColor" /></svg>
+                  Proposer une amélioration
+                </button>
+                {/* DÉCONNEXION */}
+                <a href="/logout" className="mt-0.5 flex items-center gap-2 rounded-lg px-3 py-2 text-txt-mut transition-colors duration-quick hover:bg-surface-3 hover:text-st-ecartee">
+                  <svg viewBox="0 0 20 20" className="h-4 w-4"><path d="M7 3H4v14h3M13 14l4-4-4-4M17 10H8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                  Se déconnecter
+                </a>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 export function Header() {
   // M12-D4 : « Scorer une adresse » a quitté l'en-tête pour le tiroir Outils (registry).
   return (
@@ -396,7 +494,7 @@ export function Header() {
       <FilterChips />
       <div className="ml-auto flex items-center gap-3">
         <NotifBell />
-        <span className="flex h-8 w-8 items-center justify-center rounded-full border border-line-2 bg-surface-3 font-mono text-[11px] text-mint">VL</span>
+        <AccountMenu />
       </div>
     </header>
   )
