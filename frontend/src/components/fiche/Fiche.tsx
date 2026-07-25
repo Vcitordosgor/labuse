@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { fmtDate, fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut } from '../../lib/format'
@@ -18,6 +18,27 @@ import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu
 import { useApp } from '../../store/useApp'
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
+
+// M19 · tiroir « fermé, ça informe » : summary = valeur clé lisible d'un coup d'œil (P1.3
+// niveau 1) ; le bloc détaillé (niveau 2/3) ne se monte QU'À l'ouverture — plus léger, et
+// rien n'est supprimé (le détail reste accessible). Réutilise les blocs existants tels quels.
+function FicheDrawer({ ico, name, value, defaultOpen, children }:
+  { ico: string; name: string; value: ReactNode; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(!!defaultOpen)
+  return (
+    <div className={`overflow-hidden rounded-lg border transition-colors duration-quick ${open ? 'border-line-2 bg-surface-2' : 'border-line bg-surface-1'}`}>
+      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5 text-left">
+        <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-surface-3 text-sm">{ico}</span>
+        <span className="min-w-0 flex-1">
+          <span className="label-caps block text-txt-dim">{name}</span>
+          <span className="mt-0.5 block truncate text-[12.5px] font-medium text-txt-hi">{value}</span>
+        </span>
+        <span aria-hidden className={`shrink-0 text-txt-dim transition-transform duration-quick ${open ? 'rotate-90' : ''}`}>▸</span>
+      </button>
+      {open && <div className="border-t border-line px-3 py-2.5">{children}</div>}
+    </div>
+  )
+}
 
 /** 429 (rate-limit / quota) : message dédié + nouvel essai automatique après la fenêtre.
  *  Ne JAMAIS afficher « serveur périmé » ici — le serveur va très bien, il protège. */
@@ -1221,19 +1242,49 @@ export function Fiche({ idu }: { idu: string }) {
             )}
             <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}
+            {/* M19 P1.3 — blocs secondaires en TIROIRS « fermé, ça informe » : la valeur clé
+                reste lisible fermée, le détail (bloc existant, inchangé) se déplie au clic.
+                Rien n'est supprimé — seulement réorganisé en niveaux. */}
             {/* M5 : scoring v2 (P×C) — additif, auto-porté (fetch /v2/score, absent si pas de run) */}
-            <ScoreV2Block idu={idu} />
+            <FicheDrawer ico="📊" name="Probabilité de mutation (P)"
+              value={f.score_v2
+                ? <>{verdict?.label ?? 'Scorée'}{f.score_v2.mult_base != null ? ` · ×${f.score_v2.mult_base.toFixed(1)}` : ''}{f.score_v2.rang != null ? ` · rang ${f.score_v2.rang}` : ''}</>
+                : 'voir le détail'}>
+              <ScoreV2Block idu={idu} />
+            </FicheDrawer>
             {/* M9 lot 1 : indice de confiance données (ICD) — méta d'affichage, cloisonnée du score P */}
-            {f.icd && <IcdBlockView icd={f.icd} />}
+            {f.icd && (
+              <FicheDrawer ico="✓" name="Confiance des données" value={`${f.icd.libelle} · ${f.icd.score}/100`}>
+                <IcdBlockView icd={f.icd} />
+              </FicheDrawer>
+            )}
             {/* M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité) */}
-            {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+            {f.potentiel_transformation && (
+              <FicheDrawer ico="📐" name="Potentiel de transformation" value={f.potentiel_transformation.libelle ?? f.potentiel_transformation.niveau}>
+                <TransformationBlock pt={f.potentiel_transformation} />
+              </FicheDrawer>
+            )}
             {/* M9 lot 2 : lien règlement PLU par zone */}
-            {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
-            {/* M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires */}
-            {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
+            {f.reglement_plu && (
+              <FicheDrawer ico="📋" name="Règlement PLU" value={f.reglement_plu.zones.map((z) => z.zone).join(' · ') || 'voir le détail'}>
+                <ReglementPluBlock rp={f.reglement_plu} />
+              </FicheDrawer>
+            )}
+            {/* M-VIA : indicateur de viabilisation (faisceau de preuves) */}
+            {f.viabilisation && (
+              <FicheDrawer ico="🔌" name="Viabilisation & réseaux" value={f.viabilisation.libelle}>
+                <ViabilisationBlock via={f.viabilisation} />
+              </FicheDrawer>
+            )}
             {/* M10 : permis à proximité, cliquables (preuve derrière le signal viabilisation) */}
-            <PermitsProximityBlock idu={idu} />
-            {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
+            <FicheDrawer ico="🏗️" name="Permis à proximité" value="permis récents alentour">
+              <PermitsProximityBlock idu={idu} />
+            </FicheDrawer>
+            {f.gestionnaires && (
+              <FicheDrawer ico="⚙️" name="Gestionnaires (raccordement)" value="eau · assainissement · électricité">
+                <GestionnairesBlock g={f.gestionnaires} />
+              </FicheDrawer>
+            )}
             {/* M9 lot 3 : signaler une erreur (file de QA humaine) */}
             <SignalerErreur idu={idu} />
             {/* S02 : la jauge de complétude en vrai instrument — anneau + valeur au centre,
@@ -1254,10 +1305,9 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </div>
             {f.flags.length > 0 && (
-              <div>
-                <p className="label-caps mb-1.5">Flags</p>
+              <FicheDrawer ico="🏷️" name="Signaux additionnels" value={`${f.flags.length} flag${f.flags.length > 1 ? 's' : ''}`}>
                 <div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div>
-              </div>
+              </FicheDrawer>
             )}
           </>
         )}
