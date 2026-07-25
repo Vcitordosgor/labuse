@@ -192,6 +192,21 @@ export interface Fiche {
   // M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires (contact admin).
   viabilisation?: Viabilisation | null
   gestionnaires?: Gestionnaires | null
+  // M19 : marché DVF de la parcelle (présent dans le payload) — typé pour la valeur fermée du
+  // tiroir Marché (médiane €/m² structurée = donnée propre, ≠ nombre brut de la ligne dvf).
+  dvf_parcelle?: DvfParcelle | null
+}
+
+export interface DvfSecteur {
+  type_bien: string
+  n_ventes: number | null
+  mediane_valeur: number | null
+  mediane_prix_m2: number | null
+  fenetre?: string | null
+}
+export interface DvfParcelle {
+  derniere_mutation?: unknown
+  secteur?: DvfSecteur[] | null
 }
 
 export interface IcdBlock {

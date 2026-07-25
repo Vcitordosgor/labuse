@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { fmtDate, fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
+import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
@@ -17,6 +18,29 @@ import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu
 import { useApp } from '../../store/useApp'
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
+
+// M19 · tiroir « fermé, ça informe » : summary = valeur clé lisible d'un coup d'œil (P1.3
+// niveau 1) ; le bloc détaillé (niveau 2/3) ne se monte QU'À l'ouverture — plus léger, et
+// rien n'est supprimé (le détail reste accessible). Réutilise les blocs existants tels quels.
+// `id` (data-drawer) + aria-expanded : permet à la barre d'onglets d'ouvrir/scroller vers le
+// tiroir pendant la migration strangler (les deux navigations coexistent).
+function FicheDrawer({ id, ico, name, value, defaultOpen, children }:
+  { id?: string; ico: string; name: string; value: ReactNode; defaultOpen?: boolean; children: ReactNode }) {
+  const [open, setOpen] = useState(!!defaultOpen)
+  return (
+    <div data-drawer={id} className={`scroll-mt-2 overflow-hidden rounded-lg border transition-colors duration-quick ${open ? 'border-line-2 bg-surface-2' : 'border-line bg-surface-1'}`}>
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-3 px-3 py-2.5 text-left">
+        <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-surface-3 text-sm">{ico}</span>
+        <span className="min-w-0 flex-1">
+          <span className="label-caps block text-txt-dim">{name}</span>
+          <span className="mt-0.5 block truncate text-[12.5px] font-medium text-txt-hi">{value}</span>
+        </span>
+        <span aria-hidden className={`shrink-0 text-txt-dim transition-transform duration-quick ${open ? 'rotate-90' : ''}`}>▸</span>
+      </button>
+      {open && <div className="border-t border-line px-3 py-2.5">{children}</div>}
+    </div>
+  )
+}
 
 /** 429 (rate-limit / quota) : message dédié + nouvel essai automatique après la fenêtre.
  *  Ne JAMAIS afficher « serveur périmé » ici — le serveur va très bien, il protège. */
@@ -405,8 +429,9 @@ function WatchButton({ idu }: { idu: string }) {
   return (
     <button onClick={() => t.mutate()}
       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs ${on ? 'border-mint text-mint' : 'border-line-2 text-txt hover:text-txt-hi'}`}
-      title={on ? 'Suivie — les événements alimentent la cloche' : 'Suivre cette parcelle (alertes sans pipeline)'}>
-      👁
+      title={on ? CLIENT.fiche.suivreActif : CLIENT.fiche.suivre}>
+      {/* C4 : l'œil devient cloche — cohérent avec les notifications (M16) que le suivi alimente */}
+      🔔
     </button>
   )
 }
@@ -939,7 +964,6 @@ export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
-  const setBasemap = useApp((s) => s.setBasemap)   // Fix LOT 2 : « Cadastre » = fond officiel IGN + halo
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
@@ -954,6 +978,28 @@ export function Fiche({ idu }: { idu: string }) {
   }, [select])
   void sourceLine
   const [tab, setTab] = useState<'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'>('synthese')
+  // M19 · migration strangler onglets → tiroirs. MIGRATED = onglets déjà fondus dans la pile
+  // Synthèse (leur contenu vit en FicheDrawer). Un clic d'onglet migré ouvre + scrolle le tiroir
+  // (au lieu de basculer la vue) ; les onglets non migrés gardent l'ancienne bascule `tab`.
+  const [pendingScroll, setPendingScroll] = useState<string | null>(null)
+  useEffect(() => {
+    if (!pendingScroll || tab !== 'synthese') return
+    const t = window.setTimeout(() => {
+      const root = document.querySelector(`[data-drawer="${pendingScroll}"]`) as HTMLElement | null
+      if (root) {
+        const btn = root.querySelector('button')
+        if (btn && btn.getAttribute('aria-expanded') === 'false') btn.click()
+        root.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+      setPendingScroll(null)
+    }, 40)
+    return () => window.clearTimeout(t)
+  }, [pendingScroll, tab])
+  const goDrawer = (key: string) => { setTab('synthese'); setPendingScroll(key) }
+  // M19 · la barre d'onglets est devenue une NAV pure : « Synthèse » remonte en tête de fiche,
+  // les autres ouvrent+scrollent leur tiroir. Ref sur la zone scrollable pour le retour en tête.
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const goTop = () => { setTab('synthese'); scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
@@ -970,27 +1016,52 @@ export function Fiche({ idu }: { idu: string }) {
   const verdict = f ? verdictMeta(f.statut, f.score_v2?.tier, f.etage0) : null
   const v2Pilote = !!(f?.score_v2 && !f.etage0)
   const verdictEcartee = f ? (f.etage0 || (v2Pilote ? f.score_v2!.tier === 'ecartee' : f.statut === 'ecartee')) : false
+  // C1 : motif principal d'écartement, affiché À CÔTÉ du badge (plus de bandeau rouge séparé).
+  // Le détail complet reste dans l'onglet « Pourquoi pas » (rien n'est supprimé — R1).
+  const hardLines = f?.lines.filter((l) => l.result === 'HARD_EXCLUDE') ?? []
+  const ecarteeMotif = hardLines[0] ? layerLabel(hardLines[0].layer) : (f ? `qualité insuffisante (Q ${f.q_score})` : '')
+  const ecarteeMotifDetail = hardLines[0] ? `${layerLabel(hardLines[0].layer)} — ${fmtLibelleBrut(hardLines[0].detail)}` : `Aucune exclusion dure : qualité insuffisante (Q ${f?.q_score} < 50) — détail dans « Pourquoi pas ».`
   const meta = f ? STATUT_META[f.statut] : null
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
   const ongletLines = (o: Onglet) => f?.lines.filter((l) => l.onglet === o) ?? []
+  // M19 · valeurs fermées des tiroirs d'onglets (P1.3) — dérivées des données DÉJÀ chargées,
+  // aucun nouveau calcul ni requête. Risques : le NÉGATIF est AFFIRMÉ (« ✓ rien à signaler ·
+  // N couches vérifiées ») — c'est le point capital de la refonte.
+  const risquesLines = ongletLines('risques')
+  const risquesFlags = risquesLines.filter((l) => l.result === 'SOFT_FLAG' || l.result === 'HARD_EXCLUDE')
+  const risquesClean = risquesLines.filter((l) => l.result === 'PASS').length
+  const risquesValue = risquesLines.length === 0 ? 'voir le détail'
+    : risquesFlags.length === 0
+      ? `✓ rien à signaler · ${risquesClean} couche${risquesClean > 1 ? 's' : ''} vérifiée${risquesClean > 1 ? 's' : ''}`
+      : `${risquesFlags.length} point${risquesFlags.length > 1 ? 's' : ''} de vigilance · ${risquesClean} couche${risquesClean > 1 ? 's' : ''} sans risque`
+  // Marché : médiane €/m² structurée (dvf_parcelle.secteur) + nb de ventes — donnée propre.
+  const marcheLines = ongletLines('marche')
+  const dvfSecteur = f?.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain') ?? f?.dvf_parcelle?.secteur?.[0]
+  const marcheValue = dvfSecteur?.mediane_prix_m2 != null
+    ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²${dvfSecteur.n_ventes ? ` · ${dvfSecteur.n_ventes} ventes secteur` : ''}`
+    : (marcheLines.length ? 'comparables DVF · aménités' : 'voir le détail')
+  // Proprio : le signal dominant s'il existe (gérant âgé, procédure…), sinon le type de
+  // propriétaire. Jamais d'identité de personne physique (boussole).
+  const proprioLines = ongletLines('proprio')
+  const proprioSignal = proprioLines.filter((l) => (l.weight ?? 0) > 0).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
+  const proprioType = f?.proprietaire_moral?.denomination ?? (f?.proprietaire_moral ? 'personne morale' : 'personne physique / non recensé')
+  const proprioValue = proprioSignal ? `${proprioType} · ${fmtLibelleBrut(proprioSignal.detail)}` : proprioType
+  // Règles : zone PLU + SDP résiduelle (données déjà chargées).
+  const reglesLines = ongletLines('regles')
+  const reglesZone = f?.reglement_plu?.zones?.[0]?.zone
+  const reglesSdp = f?.potentiel_transformation?.sdp_residuelle_m2
+  const reglesValue = [reglesZone ? `Zone ${reglesZone}` : null, reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : null].filter(Boolean).join(' · ') || 'voir le détail'
+  // Bilan / Faisabilité : la capacité fine (logements, charge foncière) est calculée DANS ces
+  // blocs à l'ouverture (pas de requête au chargement). Fermé = proxy SDP depuis f + libellé.
+  const bilanValue = reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP · marché & fiscal` : 'capacité · marché · fiscal · RTAA'
+  const faisaValue = reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP · charge foncière` : 'capacité constructible & calculette'
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
-      {f && verdictEcartee && (
-        <div data-bandeau-ecartee className="shrink-0 border-b border-line-2 bg-surface-2 px-5 py-2.5">
-          <div className="text-xs font-medium text-st-ecartee">LABUSE l'a écartée — voici pourquoi</div>
-          <div className="mt-1 flex flex-col gap-0.5">
-            {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').slice(0, 4).map((l) => (
-              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{layerLabel(l.layer)}</b> — {fmtLibelleBrut(l.detail)}</div>
-            ))}
-            {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').length === 0 && (
-              <div className="text-[10.5px] text-txt-mut">Aucune exclusion dure : qualité insuffisante (Q {f.q_score} &lt; 50) — détail dans les onglets.</div>
-            )}
-          </div>
-          <div className="mt-1 text-[11px] text-txt-dim">Une écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.</div>
-        </div>
-      )}
+      {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
+          (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
+          sourcés y restent intégralement (R1 : rien n'est supprimé). */}
       {f?.evenement === 'rouge' && (
         <div className="shrink-0 border-b border-st-ecartee/40 bg-st-ecartee/15 px-5 py-2.5">
           {/* R3 (PJ5) : vocabulaire matrice non thermique — « priorité dossier » (thermique = tier P servi) */}
@@ -1022,16 +1093,18 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="truncate font-mono text-sm font-medium text-txt-hi">{idu}</div>
           {/* M6 2a (§1.8) : adresse postale BAN en tête de fiche — jamais un champ vide */}
           {f && (
-            <div data-fiche-adresse className={`mt-0.5 flex min-w-0 items-baseline gap-2 text-[11px] ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
-              <span className="min-w-0 truncate">{f.adresse ?? 'Adresse non disponible'}</span>
-              {/* B4 (BLOC B) : recherche d'ADRESSE sortante, wording neutre — rien n'est
-                  stocké, rien n'est promis (jamais un mot sur le propriétaire). */}
+            <div data-fiche-adresse className={`mt-0.5 min-w-0 ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
+              {/* C3 : l'adresse n'est JAMAIS tronquée — elle passe à deux lignes si besoin. */}
+              <div className="text-[11px] leading-snug break-words">{f.adresse ?? CLIENT.fiche.adresseAbsente}</div>
+              {/* C2 : le lien Pages Jaunes est renommé et assumé en « jaune » (nod à la marque).
+                  Recherche d'ADRESSE sortante, wording neutre — rien n'est stocké, jamais un mot
+                  sur le propriétaire. */}
               {f.adresse && (
                 <a data-fiche-pj href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
                   target="_blank" rel="noreferrer noopener"
-                  className="shrink-0 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
-                  title="Recherche externe à cette adresse (Pages Jaunes) — s'ouvre dans un nouvel onglet, rien n'est stocké">
-                  Rechercher à cette adresse ↗
+                  className="mt-1 inline-flex items-center gap-1 rounded border border-[#F4D35E]/45 bg-[#F4D35E]/10 px-1.5 py-0.5 text-[10.5px] font-medium text-[#F4D35E] transition-colors duration-quick hover:bg-[#F4D35E]/20"
+                  title={CLIENT.fiche.pagesJaunesTip}>
+                  🔎 {CLIENT.fiche.pagesJaunes}
                 </a>
               )}
             </div>
@@ -1060,6 +1133,17 @@ export function Fiche({ idu }: { idu: string }) {
               ? <Tip className="mt-1.5" tip="Verdict scoring (P×C) — rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc ; détail dans « Probabilité de mutation », statut matrice historique dans la Synthèse.">{badge}</Tip>
               : <span className="mt-1.5 inline-flex">{badge}</span>
           })()}
+          {/* C1 : motif d'écartement À CÔTÉ du badge + « voir pourquoi » → onglet Pourquoi pas */}
+          {f && verdictEcartee && (
+            <span data-ecartee-motif className="ml-1.5 mt-1.5 inline-flex items-center gap-1.5 text-[11px] align-middle">
+              <Tip tip={ecarteeMotifDetail}><span className="text-txt-mut">{ecarteeMotif}</span></Tip>
+              <button onClick={() => goDrawer('pourquoi')}
+                className="text-st-ecartee underline transition-colors duration-quick hover:text-st-ecartee/80"
+                title={CLIENT.fiche.ecarteeVoirTip}>
+                {CLIENT.fiche.ecarteeVoir}
+              </button>
+            </span>
+          )}
           {/* M5.1 : le badge « V nn » disparaît — le dossier propriétaire (signaux vendeur)
               reste dans la fiche, libellé en clair, sans le sigle nu */}
           {f?.score_v?.v_score != null && (
@@ -1117,20 +1201,21 @@ export function Fiche({ idu }: { idu: string }) {
       )}
 
       {!fq && (
-      // QA-46 (M13-C) : les onglets RETOURNENT À LA LIGNE (flex-wrap) au lieu de défiler
-      // horizontalement — 8 onglets ne tiennent pas sur la largeur de fiche (400 px) et
-      // produisaient une barre de scroll. `gap-y` gère l'espacement vertical entre lignes.
-      <div data-fiche-tabs className="flex shrink-0 flex-wrap gap-x-4 gap-y-1.5 border-b border-line px-5 py-2 text-xs">
+      // M19 : la barre d'onglets est devenue une NAV pure — chaque libellé ouvre + scrolle son
+      // tiroir (« Synthèse » remonte en tête). Les 8 contenus vivent désormais en tiroirs empilés.
+      // QA-46 (M13-C) : flex-wrap — les libellés reviennent à la ligne sur 400 px (pas de scroll-x).
+      <nav data-fiche-tabs className="flex shrink-0 flex-wrap gap-x-4 gap-y-1.5 border-b border-line px-5 py-2 text-xs">
         {/* R5 (O3) : « Pourquoi pas ? » n'apparaît que si la parcelle est écartée ou porte des flags */}
         {[...TABS, ...(f && (verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) ? [TAB_POURQUOI] : [])].map((t) => (
-          <button key={t.k} onClick={() => setTab(t.k)} className={`shrink-0 ${tab === t.k ? 'font-medium text-txt-hi' : 'text-txt-dim hover:text-txt-mut'}`}>
+          <button key={t.k} onClick={() => (t.k === 'synthese' ? goTop() : goDrawer(t.k))}
+            className="shrink-0 text-txt-dim transition-colors duration-quick hover:text-txt-hi">
             {t.label}
           </button>
         ))}
-      </div>
+      </nav>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip p-5">
+      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip p-5">
         {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
         {fq && f && (
           <div data-fiche-search-results>
@@ -1213,19 +1298,49 @@ export function Fiche({ idu }: { idu: string }) {
             )}
             <ScoreBar label="Accessibilité" value={f.a_score} color="#4ADE96" lines={aLines} tip={SCORE_TIP.a} />
             {f.score_v && <VendabiliteBlock sv={f.score_v} />}
+            {/* M19 P1.3 — blocs secondaires en TIROIRS « fermé, ça informe » : la valeur clé
+                reste lisible fermée, le détail (bloc existant, inchangé) se déplie au clic.
+                Rien n'est supprimé — seulement réorganisé en niveaux. */}
             {/* M5 : scoring v2 (P×C) — additif, auto-porté (fetch /v2/score, absent si pas de run) */}
-            <ScoreV2Block idu={idu} />
+            <FicheDrawer ico="📊" name="Probabilité de mutation (P)"
+              value={f.score_v2
+                ? <>{verdict?.label ?? 'Scorée'}{f.score_v2.mult_base != null ? ` · ×${f.score_v2.mult_base.toFixed(1)}` : ''}{f.score_v2.rang != null ? ` · rang ${f.score_v2.rang}` : ''}</>
+                : 'voir le détail'}>
+              <ScoreV2Block idu={idu} />
+            </FicheDrawer>
             {/* M9 lot 1 : indice de confiance données (ICD) — méta d'affichage, cloisonnée du score P */}
-            {f.icd && <IcdBlockView icd={f.icd} />}
+            {f.icd && (
+              <FicheDrawer ico="✓" name="Confiance des données" value={`${f.icd.libelle} · ${f.icd.score}/100`}>
+                <IcdBlockView icd={f.icd} />
+              </FicheDrawer>
+            )}
             {/* M9 lot 4 : potentiel de transformation (fond de l'ancien outil Mutabilité) */}
-            {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
+            {f.potentiel_transformation && (
+              <FicheDrawer ico="📐" name="Potentiel de transformation" value={f.potentiel_transformation.libelle ?? f.potentiel_transformation.niveau}>
+                <TransformationBlock pt={f.potentiel_transformation} />
+              </FicheDrawer>
+            )}
             {/* M9 lot 2 : lien règlement PLU par zone */}
-            {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
-            {/* M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires */}
-            {f.viabilisation && <ViabilisationBlock via={f.viabilisation} />}
+            {f.reglement_plu && (
+              <FicheDrawer ico="📋" name="Règlement PLU" value={f.reglement_plu.zones.map((z) => z.zone).join(' · ') || 'voir le détail'}>
+                <ReglementPluBlock rp={f.reglement_plu} />
+              </FicheDrawer>
+            )}
+            {/* M-VIA : indicateur de viabilisation (faisceau de preuves) */}
+            {f.viabilisation && (
+              <FicheDrawer ico="🔌" name="Viabilisation & réseaux" value={f.viabilisation.libelle}>
+                <ViabilisationBlock via={f.viabilisation} />
+              </FicheDrawer>
+            )}
             {/* M10 : permis à proximité, cliquables (preuve derrière le signal viabilisation) */}
-            <PermitsProximityBlock idu={idu} />
-            {f.gestionnaires && <GestionnairesBlock g={f.gestionnaires} />}
+            <FicheDrawer ico="🏗️" name="Permis à proximité" value="permis récents alentour">
+              <PermitsProximityBlock idu={idu} />
+            </FicheDrawer>
+            {f.gestionnaires && (
+              <FicheDrawer ico="⚙️" name="Gestionnaires (raccordement)" value="eau · assainissement · électricité">
+                <GestionnairesBlock g={f.gestionnaires} />
+              </FicheDrawer>
+            )}
             {/* M9 lot 3 : signaler une erreur (file de QA humaine) */}
             <SignalerErreur idu={idu} />
             {/* S02 : la jauge de complétude en vrai instrument — anneau + valeur au centre,
@@ -1246,43 +1361,66 @@ export function Fiche({ idu }: { idu: string }) {
               </div>
             </div>
             {f.flags.length > 0 && (
-              <div>
-                <p className="label-caps mb-1.5">Flags</p>
+              <FicheDrawer ico="🏷️" name="Signaux additionnels" value={`${f.flags.length} flag${f.flags.length > 1 ? 's' : ''}`}>
                 <div className="flex flex-col gap-1">{f.flags.map((l, i) => <Line key={i} line={l} />)}</div>
-              </div>
+              </FicheDrawer>
+            )}
+
+            {/* ═══ M19 · ONGLETS MIGRÉS EN TIROIRS (strangler, un par commit) ═══ */}
+            {/* Risques — le négatif est AFFIRMÉ fermé ; les lignes sourcées sont inchangées (R1). */}
+            <FicheDrawer id="risques" ico="🛡️" name="Risques" value={risquesValue}>
+              {risquesLines.length
+                ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
+                : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+            </FicheDrawer>
+            {/* Marché — médiane €/m² secteur fermé ; lignes DVF/aménités inchangées. */}
+            <FicheDrawer id="marche" ico="📈" name="Marché" value={marcheValue}>
+              {marcheLines.length
+                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
+                : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+            </FicheDrawer>
+            {/* Propriétaire — carte PM (ou mention personne physique, jamais nommée) + lignes. */}
+            <FicheDrawer id="proprio" ico="👤" name="Propriétaire" value={proprioValue}>
+              {f.proprietaire_moral ? (
+                <div className="card-elev px-3 py-2.5">
+                  <p className="label-caps">Propriétaire (DGFiP)</p>
+                  <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
+                  <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
+                    {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
+                    {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
+                  </div>
+                  {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
+                </div>
+              ) : (
+                <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
+                  Propriétaire : personne physique ou non recensé au fichier des personnes morales
+                  (identité nominative : workflow SPF/CERFA, jamais automatisée).
+                </div>
+              )}
+              {proprioLines.length > 0 && <div className="mt-2 flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+            </FicheDrawer>
+            {/* Règles — zone + SDP fermé ; Traducteur PLU (violet) + lignes réglementaires. */}
+            <FicheDrawer id="regles" ico="📐" name="Règles d'urbanisme" value={reglesValue}>
+              <TraducteurBloc idu={idu} />
+              {reglesLines.length > 0 && <div className="mt-2 flex flex-col gap-1">{reglesLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+            </FicheDrawer>
+            {/* Bilan — capacité + marché de sortie + fiscal & RTAA (calculé à l'ouverture). */}
+            <FicheDrawer id="bilan" ico="🧮" name="Bilan" value={bilanValue}>
+              <BilanTab idu={idu} />
+            </FicheDrawer>
+            {/* Faisabilité — capacité tracée + calculette de charge foncière (composant PARTAGÉ
+                M15-C2, réutilisé tel quel, jamais dupliqué). Calcul à l'ouverture. */}
+            <FicheDrawer id="faisabilite" ico="🏗️" name="Faisabilité" value={faisaValue}>
+              <FaisabiliteTab idu={idu} />
+            </FicheDrawer>
+            {/* Pourquoi pas — seulement si écartée / flaggée (anti-fiche, motifs sourcés). */}
+            {(verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) && (
+              <FicheDrawer id="pourquoi" ico="⚖️" name="Pourquoi pas ?" value="motifs d'écartement & points de vigilance">
+                <PourquoiPasTab idu={idu} />
+              </FicheDrawer>
             )}
           </>
         )}
-        {!fq && f && tab === 'proprio' && f.proprietaire_moral && (
-          <div className="card-elev px-3 py-2.5">
-            <p className="label-caps">Propriétaire (DGFiP)</p>
-            <div className="mt-1 text-xs font-medium text-txt-hi">{f.proprietaire_moral.denomination ?? '—'}</div>
-            <div className="mt-0.5 flex items-center gap-3 text-[10.5px] text-txt-mut">
-              {f.proprietaire_moral.siren && <span className="font-mono">SIREN {f.proprietaire_moral.siren}</span>}
-              {f.proprietaire_moral.groupe_label && <span>{f.proprietaire_moral.groupe_label}</span>}
-            </div>
-            {f.proprietaire_moral.siren && <PatrimoineLink siren={f.proprietaire_moral.siren} />}
-          </div>
-        )}
-        {!fq && f && tab === 'proprio' && !f.proprietaire_moral && (
-          <div className="card-elev px-3 py-2 text-[11px] text-txt-mut">
-            Propriétaire : personne physique ou non recensé au fichier des personnes morales
-            (identité nominative : workflow SPF/CERFA, jamais automatisée).
-          </div>
-        )}
-        {/* BLOC B · S45 (verdict Vic : variante B) — le TRADUCTEUR PLU vit DANS l'onglet
-            Règles : bloc dépliable violet (IA/premium = violet), règles en français courant,
-            chaque valeur avec sa provenance ; le règlement écrit reste la référence. */}
-        {!fq && f && tab === 'regles' && <TraducteurBloc idu={idu} />}
-        {!fq && f && (tab === 'regles' || tab === 'risques' || tab === 'marche' || tab === 'proprio') && (
-          <div>
-            {ongletLines(tab).length ? ongletLines(tab).map((l, i) => <Line key={i} line={l} />)
-              : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-          </div>
-        )}
-        {!fq && f && tab === 'faisabilite' && <FaisabiliteTab idu={idu} />}
-        {!fq && f && tab === 'bilan' && <BilanTab idu={idu} />}
-        {!fq && f && tab === 'pourquoi' && <PourquoiPasTab idu={idu} />}
       </div>
 
       <div className="shrink-0 border-t border-line px-5 py-3">
@@ -1297,10 +1435,16 @@ export function Fiche({ idu }: { idu: string }) {
           {/* Fix point 18 : le vieux bouton « IA » (panneau Synthèse/Pourquoi) est retiré —
               redondant avec la barre « Demander à l'IA » repliable en haut de fiche. */}
         </div>
-        <div className="mt-2 flex items-stretch gap-2">
-          <a href={pdfUrl(idu, (tab === 'bilan' || tab === 'faisabilite') ? calculette : null)} target="_blank" rel="noreferrer"
+        {/* C5 : les 6 exports débordaient à droite (rangée `flex` non-« wrap » : le 6e bouton
+            « Maps » sortait du panneau 400 px). Passés en grille 3 colonnes → bloc segmenté
+            régulier, 2 rangées de 3, aucun débordement quelle que soit la largeur. */}
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {/* M19 : le PDF reflète la charge foncière dès que la calculette est active (drawer
+              Faisabilité/Bilan ouvert → `calculette` non-null), sans dépendre d'un onglet
+              actif (les onglets sont devenus des tiroirs). */}
+          <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer"
             className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-            title={calculette && (tab === 'bilan' || tab === 'faisabilite') ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
+            title={calculette ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
             PDF
           </a>
           {/* Lot 4 (wave-adresses) : Dossier parcelle brandé — comité d'engagement, banque,
@@ -1326,16 +1470,17 @@ export function Fiche({ idu }: { idu: string }) {
             </button>
           )}
           {f?.coords && (
-            /* Fix LOT 2 : « Cadastre » CENTRE ET SÉLECTIONNE la parcelle. Aucun viewer cadastre externe
-               gratuit (Géoportail — qui ferme 09/2026 — ni Etalab) n'expose de sélection par IDU via URL ;
-               un lien externe ne faisait que CENTRER sur la zone. On bascule donc sur le fond officiel
-               IGN Plan (parcellaire) DANS l'app + halo de sélection (`select` → contour + recentrage). */
-            <button data-cadastre-link
-              onClick={() => { setBasemap('plan'); select(f.idu) }}
-              className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-              title="Voir la parcelle SÉLECTIONNÉE sur le cadastre officiel (fond IGN Plan)">
-              Cadastre
-            </button>
+            /* C7 : « Cadastre » ouvre désormais le cadastre officiel EXTERNE, paramétré sur la
+               parcelle. cadastre.gouv.fr (Struts/POST) n'expose pas de lien GET par parcelle ; le
+               parcellaire officiel accessible par URL est le Géoportail (IGN — Parcellaire Express),
+               que l'on centre sur les coordonnées de la parcelle avec la couche cadastrale active. */
+            <a data-cadastre-link
+              href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
+              target="_blank" rel="noreferrer noopener"
+              className="flex h-8 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
+              title={CLIENT.fiche.export.cadastreTip}>
+              {CLIENT.fiche.export.cadastre}
+            </a>
           )}
           {f?.coords && (
             /* Fix LOT 2 : « Maps » (ex-« G ») → ÉPINGLE sur la parcelle (search?query=lat,lng pose un
@@ -1389,21 +1534,21 @@ function BanquierButton({ idu }: { idu: string }) {
   if (etat === 'pret') return (
     <a href={url} target="_blank" rel="noreferrer"
       className="flex h-8 flex-1 items-center justify-center gap-1 rounded-lg border border-mint/50 px-3 text-xs font-medium text-mint transition-colors duration-quick hover:bg-mint/10"
-      title="Dossier banquier prêt — ouvrir le PDF">
-      Banquier — prêt
+      title="Note de financement prête — ouvrir le PDF">
+      {CLIENT.fiche.export.banquierPret}
     </a>
   )
   if (etat === 'encours') return (
     <span className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3">
-      <Loading label="Banquier…" className="text-xs" />
+      <Loading label={CLIENT.fiche.export.banquierEnCours} className="text-xs" />
     </span>
   )
   return (
     <button onClick={lancer} data-banquier-btn
       className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt transition-colors duration-quick hover:text-txt-hi"
-      title={etat === 'erreur' ? 'Génération impossible — réessayer'
-        : 'Dossier banquier PDF (synthèse exécutive, bilan & charge foncière, comparables, risques) — présentation financeur'}>
-      {etat === 'erreur' ? 'Banquier — réessayer' : 'Banquier'}
+      title={etat === 'erreur' ? 'Génération impossible — réessayer' : CLIENT.fiche.export.banquierTip}>
+      {/* C6 : « Banquier » → « Note de financement » (3 pistes étudiées, cf. strings.ts) */}
+      {etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.banquier}
     </button>
   )
 }
