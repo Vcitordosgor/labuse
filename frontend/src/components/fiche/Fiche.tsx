@@ -1407,7 +1407,9 @@ export function Fiche({ idu }: { idu: string }) {
                 <ProjetButton idu={idu} />
               </div>
               {/* BLOC SEGMENTÉ UNIQUE — 6 tuiles (spec), plus 6 boutons séparés (C5 réglé structurellement). */}
-              <div style={{ background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', overflow: 'hidden' }}>
+              {/* M20-B1 : bloc segmenté UNIQUE, 6→7 colonnes (PDF·Dossier·Financier·1950·Cadastre·Maps·Courrier),
+                  un seul rang, pas de menu ni de scroll horizontal (réf. M19 conservée). */}
+              <div style={{ background: '#0e1311', border: '1px solid #1e2823', borderRadius: 11, display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', overflow: 'hidden' }}>
                 <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title={calculette ? 'PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
                   <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" /><path d="M14 3v5h5" /><path d="M12 12v5" /><path d="m9.5 14.5 2.5 2.5 2.5-2.5" /></svg>
                   <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>PDF</p>
@@ -1430,11 +1432,20 @@ export function Fiche({ idu }: { idu: string }) {
                   </a>
                 )}
                 {f.coords && (
-                  <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title="Ouvrir dans Google Maps (épingle sur la parcelle)">
+                  <a data-maps-link href={`https://www.google.com/maps/search/?api=1&query=${f.coords[1]},${f.coords[0]}`} target="_blank" rel="noreferrer" style={{ padding: '10px 0 9px', textAlign: 'center', borderRight: '1px solid #16201c', color: '#8fd8b4', textDecoration: 'none', display: 'block' }} title="Ouvrir dans Google Maps (épingle sur la parcelle)">
                     <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0" /><circle cx="12" cy="10" r="3" /></svg>
                     <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>Maps</p>
                   </a>
                 )}
+                {/* M20-A · 7e tuile : Courrier propriétaire → ouvre le module M09 (setModule) avec la
+                    parcelle courante (selectedIdu) pré-remplie. Même moteur que l'entrée Outils, aucune
+                    divergence. Boussole gérée par M09 (aucune identité de personne physique). */}
+                <button data-courrier-tile onClick={() => setModule('courriers')}
+                  style={{ padding: '10px 0 9px', textAlign: 'center', color: '#8fd8b4', background: 'none', border: 0, cursor: 'pointer' }}
+                  title={CLIENT.fiche.export.courrierTip}>
+                  <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ margin: '0 auto' }}><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></svg>
+                  <p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{CLIENT.fiche.export.courrier}</p>
+                </button>
               </div>
               <p style={{ marginTop: 11, fontSize: 11, lineHeight: 1.45, color: '#5f7568' }}>
                 Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. <span data-disclaimer-cu style={{ color: '#7d9488' }}>Ces informations ne remplacent pas un certificat d'urbanisme.</span>
@@ -1494,7 +1505,7 @@ function BanquierButton({ idu }: { idu: string }) {
   return (
     <button onClick={lancer} data-banquier-btn style={{ ...cellStyle, color: '#8fd8b4' }}
       title={etat === 'erreur' ? 'Génération impossible — réessayer' : CLIENT.fiche.export.banquierTip}>
-      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : 'Financier'}</p>
+      {icon}<p style={{ margin: '5px 0 0', fontSize: 10, color: '#7d9488' }}>{etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.finance}</p>
     </button>
   )
 }

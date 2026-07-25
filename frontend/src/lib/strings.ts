@@ -203,6 +203,20 @@ export const CLIENT = {
       cadastre: 'Cadastre ↗',
       cadastreTip:
         'Ouvre la parcelle sur le cadastre officiel (Géoportail — parcellaire express IGN) dans un nouvel onglet.',
+      // ── M20 · barre à 7 tuiles ────────────────────────────────────────────
+      // M20-B2 · « Financier » (9 c.) ne tient plus sur 7 colonnes (~55 px). 3 pistes courtes
+      // étudiées, la 1re retenue :
+      //   1. « Finance »  (RETENU — garde le sens « document de financement », tient sans troncature)
+      //   2. « Banque »   (clair mais évoque un contact, pas un document)
+      //   3. « Note fin. » (abréviation, moins lisible)
+      finance: 'Finance',
+      // M20-A · tuile « Courrier propriétaire » — ouvre le module M09 (un seul moteur, cf. Outils)
+      // avec la parcelle courante pré-remplie. Boussole : aucune identité de personne physique
+      // (le module adresse génériquement — identification via workflow SPF/CERFA).
+      courrier: 'Courrier',
+      courrierTip:
+        'Écrire au propriétaire — ouvre le module Courrier avec cette parcelle pré-remplie. ' +
+        'Aucune identité de personne physique n’est exposée (adressage générique ; identification via SPF/CERFA).',
     },
     // P1.2 · explications de scores rendues VISIBLES (plus seulement en survol)
     scores: {
