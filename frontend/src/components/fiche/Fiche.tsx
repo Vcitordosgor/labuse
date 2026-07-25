@@ -961,7 +961,7 @@ const TABS: { k: 'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'; lab
 const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
 // M19 · onglets déjà migrés en tiroirs (dans la pile Synthèse). Grandit à chaque commit
 // jusqu'à absorber les 8 ; à ce moment la bascule `tab` disparaît, la barre devient nav pure.
-const MIGRATED = new Set<string>(['risques', 'marche', 'proprio'])
+const MIGRATED = new Set<string>(['risques', 'marche', 'proprio', 'regles'])
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -1046,6 +1046,11 @@ export function Fiche({ idu }: { idu: string }) {
   const proprioSignal = proprioLines.filter((l) => (l.weight ?? 0) > 0).sort((a, b) => (b.weight ?? 0) - (a.weight ?? 0))[0]
   const proprioType = f?.proprietaire_moral?.denomination ?? (f?.proprietaire_moral ? 'personne morale' : 'personne physique / non recensé')
   const proprioValue = proprioSignal ? `${proprioType} · ${fmtLibelleBrut(proprioSignal.detail)}` : proprioType
+  // Règles : zone PLU + SDP résiduelle (données déjà chargées).
+  const reglesLines = ongletLines('regles')
+  const reglesZone = f?.reglement_plu?.zones?.[0]?.zone
+  const reglesSdp = f?.potentiel_transformation?.sdp_residuelle_m2
+  const reglesValue = [reglesZone ? `Zone ${reglesZone}` : null, reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : null].filter(Boolean).join(' · ') || 'voir le détail'
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
@@ -1389,17 +1394,12 @@ export function Fiche({ idu }: { idu: string }) {
               )}
               {proprioLines.length > 0 && <div className="mt-2 flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
             </FicheDrawer>
+            {/* Règles — zone + SDP fermé ; Traducteur PLU (violet) + lignes réglementaires. */}
+            <FicheDrawer id="regles" ico="📐" name="Règles d'urbanisme" value={reglesValue}>
+              <TraducteurBloc idu={idu} />
+              {reglesLines.length > 0 && <div className="mt-2 flex flex-col gap-1">{reglesLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+            </FicheDrawer>
           </>
-        )}
-        {/* BLOC B · S45 (verdict Vic : variante B) — le TRADUCTEUR PLU vit DANS l'onglet
-            Règles : bloc dépliable violet (IA/premium = violet), règles en français courant,
-            chaque valeur avec sa provenance ; le règlement écrit reste la référence. */}
-        {!fq && f && tab === 'regles' && <TraducteurBloc idu={idu} />}
-        {!fq && f && tab === 'regles' && (
-          <div>
-            {ongletLines('regles').length ? ongletLines('regles').map((l, i) => <Line key={i} line={l} />)
-              : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
-          </div>
         )}
         {!fq && f && tab === 'faisabilite' && <FaisabiliteTab idu={idu} />}
         {!fq && f && tab === 'bilan' && <BilanTab idu={idu} />}
