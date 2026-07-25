@@ -189,7 +189,7 @@ def login_page(error: bool = False) -> str:
   <label for="identifiant">E-mail</label>
   <div class="field"><input id="identifiant" name="identifiant" type="email"
      autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" autofocus
-     placeholder="vous@cabinet.re" aria-required="true"></div>
+     placeholder="prenom.nom@cabinet.re" aria-required="true"></div>
   <label for="password">Mot de passe</label>
   <div class="field"><input id="password" name="password" type="password"
      autocomplete="current-password" aria-required="true"></div>

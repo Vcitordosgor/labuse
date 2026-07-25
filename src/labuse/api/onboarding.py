@@ -50,7 +50,8 @@ les invitations expirent après 7 jours.</p>"""), status_code=404)
     p = PLANS.get(inv["plan"], PLANS["integral"])
     return HTMLResponse(_page("créer votre accès", f"""
 <h1>Créer votre accès</h1>
-<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · 1 accès</p>
+<p class="sub">licence {p['label']} · {p['eur_mois']} €/mois · engagement 12 mois</p>
+<p style="text-align:center;font-size:12.5px;color:var(--mut);margin:-2px 0 20px">Votre e-mail est déjà validé par l'invitation. Choisissez un mot de passe et vous entrez dans le radar foncier de La Réunion.</p>
 <form method="post" action="/invitation" novalidate>
 <input type="hidden" name="token" value="{html.escape(token)}">
 <label for="email">E-mail</label>
@@ -61,11 +62,17 @@ les invitations expirent après 7 jours.</p>"""), status_code=404)
   autocomplete="new-password" autofocus aria-describedby="rules" oninput="labStrength(this.value)"></div>
 <div class="meter" id="meter" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="meterlbl" id="rules" role="status" aria-live="polite">10 caractères minimum — mélangez lettres, chiffres et symboles.</div>
-<div class="consent"><input type="checkbox" id="cgv" name="cgv" value="oui" required aria-required="true">
-<label for="cgv">J'ai lu et j'accepte les <a href="/cgv" target="_blank">conditions générales</a> —
-les analyses LABUSE sont une pré-analyse sur données publiques, jamais un conseil.</label></div>
-<button type="submit">Continuer vers le paiement →</button></form>
-<p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>""",
+<div class="consent"><input type="checkbox" id="cgv" name="cgv" value="oui" required aria-required="true" onchange="labCgv()">
+<label for="cgv">J'ai lu et j'accepte les <a href="/cgv" target="_blank">conditions générales</a>.</label></div>
+<button type="submit" id="cta" disabled aria-disabled="true">Continuer vers le paiement →</button>
+<p class="meterlbl" id="cgverr" role="status" aria-live="polite" style="text-align:center;margin-top:8px">Vous devez d'abord accepter les conditions générales pour continuer.</p>
+</form>
+<p class="note">Paiement sécurisé par Stripe — aucune donnée de carte ne transite par LABUSE.</p>
+<script>
+// M18-A2 : le bouton reste INACTIF tant que les CGV ne sont pas cochées (plus de cul-de-sac).
+function labCgv(){{var c=document.getElementById('cgv'),b=document.getElementById('cta'),e=document.getElementById('cgverr');var on=c.checked;b.disabled=!on;b.setAttribute('aria-disabled',String(!on));e.style.display=on?'none':'block';}}
+labCgv();
+</script>""",
                         head=coffre_ui.STRENGTH_JS))
 
 
@@ -79,8 +86,11 @@ async def invitation_submit(request: Request, db: Session = Depends(get_db)):
     password = (q.get("password") or [""])[0]
     cgv = (q.get("cgv") or [""])[0] == "oui"
     if not cgv:
-        return HTMLResponse(_page("conditions", "<h1>Conditions requises</h1><p class='sous'>"
-                                  "l'acceptation des CGV est nécessaire</p>"), status_code=400)
+        # M18-A2 : plus de cul-de-sac — un retour vers le formulaire existe toujours.
+        return HTMLResponse(_page("conditions", f"<h1>Conditions requises</h1>"
+                                  f"<p class='sous'>vous devez d'abord accepter les conditions générales pour continuer</p>"
+                                  f"<p style='text-align:center;margin-top:18px'><a class='pill' href='/invitation?token={html.escape(token)}'>← Revenir</a></p>"),
+                            status_code=400)
     s = get_settings()
     try:
         inv = activer_par_invitation(db, token, password, s.cgv_version)
@@ -113,14 +123,14 @@ def paiement_bascule(t: str = "", db: Session = Depends(get_db)):
     return HTMLResponse(_page("votre abonnement", f"""
 <h1>Votre abonnement</h1><p class="sub">dernière étape avant votre espace</p>
 <div class="recap"><div class="prix">{p['eur_mois']} € <span style="font-size:14px;color:var(--mut);font-weight:400">/ mois</span></div>
-<div class="quoi">Licence {p['label']} — accès complet, résiliable à tout moment.</div></div>
+<div class="quoi">Licence {p['label']} — accès complet. <b style="color:var(--txt)">Engagement 12 mois</b>, facturé mensuellement.</div></div>
 <div class="trust" role="list">
   <div role="listitem">{coffre_ui.LOCK_SVG} Paiement <b style="color:var(--txt)">sécurisé par Stripe</b> — page hébergée, chiffrée.</div>
   <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M10 2l6 3v5c0 4-3 6.5-6 8-3-1.5-6-4-6-8V5z"/><path d="M7.5 10l1.8 1.8L13 8"/></svg> <b style="color:var(--txt)">Aucune donnée bancaire</b> ne transite par LABUSE.</div>
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> Facture émise automatiquement. Résiliation en un clic.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> {p['eur_mois']} €/mois pendant 12 mois, puis reconduction mensuelle. Facture émise automatiquement.</div>
 </div>
 <form method="post" action="/onboarding/paiement"><input type="hidden" name="t" value="{html.escape(t)}">
-<button type="submit">{coffre_ui.LOCK_SVG.replace('var(--mint)','currentColor')} Payer {p['eur_mois']} € en toute sécurité</button></form>
+<button type="submit">{coffre_ui.LOCK_SVG.replace('var(--mint)','currentColor')} Payer {p['eur_mois']} €</button></form>
 <p class="note">Vous serez redirigé vers Stripe. Rien n'est débité tant que vous n'avez pas confirmé.</p>""",
                         pied=False))
 
@@ -154,10 +164,12 @@ def onboarding_retour(ok: int = 1):
     if ok:
         return HTMLResponse(_page("bienvenue", """
 <div class="big"><div class="mark ok" aria-hidden="true">✓</div>
-<h1>Bienvenue</h1><p class="sub">votre abonnement est actif</p>
-<p style="font-size:13px">Merci. Connectez-vous avec votre email et votre mot de passe —
-un guide de prise en main vous attend dans l'app.</p>
-<p style="margin-top:20px"><a href="/login" class="pill">Entrer dans LABUSE →</a></p></div>""", pied=False))
+<h1>Bienvenue chez LABUSE</h1><p class="sub">votre abonnement Intégral est actif</p>
+<p style="font-size:13.5px;line-height:1.6;color:var(--txt)">Vous avez désormais accès à tout le radar
+foncier de La Réunion — le scoring des parcelles, les fiches sourcées, les outils d'analyse et le dossier
+banquier. Un guide de prise en main en 5 gestes vous attend dès votre première connexion.</p>
+<p style="margin-top:26px"><a href="/login" style="display:inline-flex;align-items:center;gap:8px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:15px 32px;border-radius:var(--r);text-decoration:none;box-shadow:0 8px 24px rgba(92,230,161,.30)">Entrer dans LABUSE →</a></p>
+<p class="note" style="margin-top:16px">Connectez-vous avec votre e-mail et le mot de passe que vous venez de choisir.</p></div>""", pied=False))
     return HTMLResponse(_page("paiement interrompu", """
 <div class="big"><div class="mark soft" aria-hidden="true">↺</div>
 <h1>Paiement interrompu</h1><p class="sub">rien n'a été débité</p>
@@ -171,10 +183,16 @@ un guide de prise en main vous attend dans l'app.</p>
 @router.get("/reset", include_in_schema=False)
 def reset_page(token: str = ""):
     if not token:
+        # M18-A6 : vrai self-service — un formulaire, plus « écrivez à votre contact ».
         return HTMLResponse(_page("mot de passe oublié", """
-<h1>Réinitialisation</h1><p class="sous">le lien s'obtient auprès de votre contact LABUSE</p>
-<p style="text-align:center;font-size:12.5px">Écrivez à votre contact LABUSE : un lien de
-réinitialisation valable une heure vous sera transmis directement.</p>"""))
+<h1>Mot de passe oublié ?</h1><p class="sub">on vous envoie un lien de réinitialisation</p>
+<form method="post" action="/reset-demande" novalidate>
+<label for="email">Votre e-mail</label>
+<div class="field"><input id="email" name="email" type="email" required autofocus
+  autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false"
+  placeholder="prenom.nom@cabinet.re" aria-required="true"></div>
+<button type="submit">Recevoir le lien →</button></form>
+<p class="linkrow"><a href="/login">← Retour à la connexion</a></p>"""))
     return HTMLResponse(_page("nouveau mot de passe", f"""
 <h1>Nouveau mot de passe</h1><p class="sub">choisissez-le soigneusement</p>
 <form method="post" action="/reset" novalidate>
@@ -189,16 +207,40 @@ réinitialisation valable une heure vous sera transmis directement.</p>"""))
                         head=coffre_ui.STRENGTH_JS))
 
 
+def _envoyer_reset_email(email: str, lien: str) -> None:
+    """M18-A6 — POINT D'ENVOI du lien de réinitialisation. L'app n'a AUCUN service e-mail branché
+    (Resend retiré, audit M16). En attendant, on TRACE le lien dans le log serveur (= file d'attente
+    consultable). Dès qu'un service e-mail sera câblé, il remplacera CE corps de fonction, sans
+    toucher aux appelants. On ne prétend JAMAIS côté client qu'un e-mail est parti."""
+    log.info("[RESET-EMAIL · À ENVOYER dès que le service e-mail sera branché] %s → %s", email, lien)
+
+
 @router.post("/reset-demande", include_in_schema=False)
-async def reset_demande():
-    # Refonte 22/07 : AUCUN email automatique — le lien de reset se génère côté admin
-    # (`labuse compte-reset-lien email`) et s'envoie à la main. Réponse identique quoi
-    # qu'il arrive (anti-énumération conservée).
-    return HTMLResponse(_page("mot de passe oublié", """
-<h1>Réinitialisation</h1><p class="sous">le lien s'obtient auprès de votre contact LABUSE</p>
-<p style="text-align:center;font-size:12.5px">Écrivez à votre contact LABUSE (l'adresse de
-votre échange initial) : un lien de réinitialisation valable une heure vous sera transmis
-directement.</p>"""))
+async def reset_demande(request: Request, db: Session = Depends(get_db)):
+    # M18-A6 : mécanique COMPLÈTE (token 1 h + page reset). Anti-énumération : réponse identique
+    # que le compte existe ou non. L'ENVOI réel s'active dès que l'e-mail sera branché (_envoyer_reset_email).
+    from urllib.parse import parse_qs
+
+    from ..comptes import demander_reset
+    q = parse_qs((await request.body()).decode("utf-8", "replace"))
+    email = (q.get("email") or [""])[0].strip()
+    if email:
+        try:
+            res = demander_reset(db, email)
+            if res:
+                db.commit()
+                _envoyer_reset_email(res["email"], res["lien"])
+        except Exception:  # noqa: BLE001 — jamais bloquer, jamais révéler l'existence du compte
+            pass
+    # État HONNÊTE : on n'affiche PAS « e-mail envoyé » (l'envoi auto n'est pas encore branché).
+    return HTMLResponse(_page("demande enregistrée", """
+<div class="big"><div class="mark ok" aria-hidden="true">✓</div>
+<h1>Demande enregistrée</h1><p class="sub">un lien valable 1 heure a été généré</p>
+<p style="font-size:13px;line-height:1.6">Si un compte est associé à cette adresse, un lien de
+réinitialisation lui est destiné. <b style="color:var(--warn)">L'envoi automatique par e-mail est en
+cours d'activation</b> — en attendant, votre contact LABUSE peut vous le transmettre immédiatement.</p>
+<p style="margin-top:18px"><a class="pill" href="/login">← Retour à la connexion</a></p></div>""",
+                        pied=False))
 
 
 @router.post("/reset", include_in_schema=False)
