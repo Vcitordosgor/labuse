@@ -1,0 +1,10 @@
+import { chromium } from '../../../frontend/node_modules/playwright/index.mjs';
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1440, height: 300 } });
+await p.goto('http://127.0.0.1:8060/socle/', { waitUntil: 'networkidle' });
+await p.waitForTimeout(1200);
+const bell = await p.getByRole('button', { name: 'Notifications' }).count();
+const acct = await p.locator('[data-account-btn]').count();
+console.log('cloche présente:', bell > 0, '| menu VL présent:', acct > 0, '(les deux voisins coexistent)');
+await p.locator('header').screenshot({ path: new URL('./header_deux_composants.png', import.meta.url).pathname });
+await b.close();
