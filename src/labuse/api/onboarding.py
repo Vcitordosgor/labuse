@@ -480,28 +480,43 @@ def flash_page(idu: str = "", annule: int = 0, db: Session = Depends(get_db)):
             {"i": idu.upper()}).mappings().first()
     if parcelle:
         return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sub">une parcelle · un PDF sourcé · 79 €</p>
+<h1>Votre rapport Flash</h1><p class="sub">tout sur cette parcelle, en un PDF sourcé</p>
 <div class="recap"><div style="font:600 13px ui-monospace,monospace;color:var(--hi)">{html.escape(parcelle['idu'][8:10])} {html.escape(parcelle['idu'][10:])} · {html.escape(parcelle['commune'])} · {('%d' % (parcelle['m2'] or 0))} m²</div>
-<div class="quoi" style="margin-top:8px">Le rapport : identité et plan, zonage et règles, risques,
-marché (DVF), permis voisins — chaque donnée avec sa source (Sourcé / Estimé). Pré-analyse sur
-données publiques ; ne remplace ni certificat d'urbanisme ni conseil notarial.</div></div>
-<div class="recap" style="margin-top:10px"><div class="prix">79 € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique</span></div></div>
+<div class="quoi" style="margin-top:10px"><b style="color:var(--txt)">Dans votre PDF :</b> identité et plan,
+zonage et <b style="color:var(--txt)">règles d'urbanisme calibrées</b> (hauteur, emprise, ce qu'on peut y
+construire), risques (Géorisques, PPR, littoral), marché DVF du secteur, permis voisins et
+<b style="color:var(--txt)">potentiel de transformation</b> — chaque donnée avec sa source (Sourcé /
+Estimé) et son millésime.</div></div>
+<div class="trust" role="list">
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> Livré en <b style="color:var(--txt)">quelques secondes</b>, lien valable 30 jours.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M4 10l4 4 8-9"/></svg> Ce qu'une simple fiche cadastrale ne dit pas : <b style="color:var(--txt)">les règles PLU traduites</b> et le potentiel constructible chiffré.</div>
+  <div role="listitem">{coffre_ui.LOCK_SVG} Paiement unique — <b style="color:var(--txt)">aucune donnée de carte</b> ne transite par LABUSE.</div>
+</div>
+<div class="recap" style="margin-top:6px"><div class="prix">79 € <span style="font-size:13px;color:var(--mut);font-weight:400">paiement unique, sans abonnement</span></div></div>
 <form method="post" action="/flash"><input type="hidden" name="idu" value="{html.escape(parcelle['idu'])}">
-<button type="submit">Payer 79 € et générer le rapport →</button></form>
+<button type="submit">Payer 79 € et recevoir mon rapport →</button></form>
 <p class="linkrow"><a href="/flash">← changer de parcelle</a></p>
-<p class="note">Paiement unique par Stripe — aucune donnée de carte ne transite par LABUSE.
-Le lien de téléchargement (30 jours) s'affiche dès la génération.</p>""", pied=False))
+<p class="note">Pré-analyse sur données publiques officielles — ne remplace ni certificat d'urbanisme ni
+conseil notarial. Le lien de téléchargement (30 jours) s'affiche dès la génération.</p>""", pied=False))
     introuvable = ('<p class="err">Parcelle introuvable — vérifiez l\'IDU (14 caractères).</p>'
                    if idu and not parcelle else "")
     return HTMLResponse(_page("rapport Flash", f"""
-<h1>Rapport Flash</h1><p class="sub">une parcelle · un PDF sourcé · 79 €</p>
+<h1>Rapport Flash</h1><p class="sub">le dossier complet d'une parcelle, en PDF · 79 €</p>
 {note_annule}{introuvable}
+<div class="recap" style="margin-bottom:16px">
+<div style="font-size:12.5px;color:var(--txt);line-height:1.65"><b style="color:var(--hi)">Ce que vous
+obtenez :</b> zonage et règles d'urbanisme calibrées (hauteur, emprise, ce qu'on peut y construire),
+risques (Géorisques, PPR, littoral), marché DVF du secteur, permis voisins et potentiel de transformation.
+Chaque donnée <b style="color:var(--txt)">avec sa source et sa fraîcheur</b>.</div>
+<div style="font-size:12px;color:var(--mint);margin-top:11px;line-height:1.55">→ Ce que vous n'auriez pas
+trouvé seul : les règles du PLU traduites en clair, le potentiel constructible chiffré, et les signaux
+croisés que LABUSE agrège — pas une simple fiche cadastrale.</div></div>
 <form method="get" action="/flash">
 <label for="idu">Identifiant de parcelle (IDU)</label>
 <div class="field"><input id="idu" name="idu" type="text" minlength="14" maxlength="14" required
   autofocus inputmode="text" placeholder="97415000CW0658" aria-describedby="iduhint"
   style="font-family:ui-monospace,monospace"></div>
-<button type="submit">Vérifier la parcelle →</button></form>
+<button type="submit">Voir ma parcelle →</button></form>
 <p class="meterlbl" id="iduhint">14 caractères — figure sur cadastre.gouv.fr, ou demandez-le à votre contact LABUSE. Le rapport est généré sur la parcelle EXACTE.</p>"""))
 
 
@@ -529,24 +544,28 @@ débité — réessayez, ou écrivez à votre contact LABUSE.</p>"""), status_co
 
 @router.get("/flash/retour", include_in_schema=False)
 def flash_retour(session_id: str = ""):
-    return HTMLResponse(_page("génération du rapport", f"""
+    return HTMLResponse(_page("votre rapport", f"""
 <div class="big"><div class="mark ok" id="mark" aria-hidden="true"><span class="spin" style="border-color:rgba(92,230,161,.3);border-top-color:var(--mint)"></span></div>
-<h1>Paiement reçu</h1><p class="sub" id="sub">génération en cours…</p></div>
-<div id="etat" role="status" aria-live="polite" style="text-align:center;font-size:13px;color:var(--mut);margin-top:6px">
-Quelques secondes — le lien de téléchargement s'affiche ici.</div>
+<h1 id="hero" style="font-size:17px">Votre rapport arrive…</h1>
+<p class="sub" id="sub">paiement reçu · nous assemblons votre PDF</p></div>
+<div id="etat" role="status" aria-live="polite" style="text-align:center;margin-top:12px;font-size:13px;color:var(--mut)">
+Quelques secondes — le téléchargement s'affiche ici.</div>
 <script>
 const sid = {session_id!r};
+// M18-B3 : « votre rapport est prêt » = la vedette ; le bouton PDF, gros et rempli, saute aux yeux.
+const DL = '<a href="#L" style="display:inline-flex;align-items:center;gap:9px;background:var(--mint);color:var(--mint-ink);font:600 15px inherit;padding:16px 34px;border-radius:var(--r);text-decoration:none;box-shadow:0 10px 30px rgba(92,230,161,.32)">&#8595; Télécharger mon rapport PDF</a>';
 async function poll() {{
   try {{
     const r = await fetch('/flash/statut?session_id=' + encodeURIComponent(sid));
     const d = await r.json();
     const el = document.getElementById('etat');
     if (d.statut === 'generee' && d.lien) {{
-      document.getElementById('mark').innerHTML = '✓';   // spinner → coche (état PRÊT, arrête l'animation)
-      document.getElementById('sub').textContent = 'Votre rapport est prêt';
-      el.innerHTML = '<a class="pill" href="' + d.lien + '">↓ Télécharger le PDF</a>' +
-        '<p style="font-size:11px;color:var(--dim);margin-top:12px">Lien valable 30 jours — ' +
-        'conservez le PDF. Reçu et facture : dans l\\'email Stripe.</p>';
+      document.getElementById('mark').innerHTML = '✓';   // spinner → coche (état PRÊT)
+      document.getElementById('hero').textContent = 'Votre rapport est prêt';
+      document.getElementById('sub').textContent = 'paiement reçu · votre PDF est généré';
+      el.innerHTML = DL.replace('#L', d.lien) +
+        '<p style="font-size:11.5px;color:var(--dim);margin-top:16px;line-height:1.6">Lien valable 30 jours — ' +
+        'conservez le PDF. Reçu et facture dans votre e-mail Stripe.</p>';
       return;
     }}
     if (d.statut === 'erreur') {{
