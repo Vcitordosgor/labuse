@@ -344,11 +344,65 @@
 </section>
 {% endif %}
 
+{# ══ Contexte commune & leviers (M18) ══ #}
+{% set cc = data.contexte_commune %}
+{% if cc %}
+<section>
+  <h2><span class="num">07</span>Contexte commune &amp; leviers</h2>
+  <p>Indicateurs à l'échelle de la commune de {{ p.commune }} — pour situer la parcelle dans son
+     environnement administratif et foncier. Agrégats publics ; <b>aucune donnée nominative</b>.</p>
+
+  {% if cc.velocite %}
+  <h3>Vélocité administrative — permis de construire</h3>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Délai médian d'instruction (dépôt → autorisation)</div>
+      <div class="valeur">{{ cc.velocite.median_mois }}<small> mois</small></div></div>
+    <div class="cartouche"><div class="titre">Fourchette · dossiers observés</div>
+      <div class="valeur">{{ cc.velocite.p25_mois }}–{{ cc.velocite.p75_mois }}<small> mois · {{ cc.velocite.n }} dossiers</small></div></div>
+  </div>
+  <p style="font-size:8pt;color:var(--txt-mut);margin-top:1.5mm">Sourcé — Sitadel (SDES). Médiane robuste
+     sur les <b>dossiers accordés</b> (refusés et en cours non observables), cohortes mûres (dépôts de
+     plus de 12 mois). Indicateur historique (2013+), pas une promesse de délai futur.</p>
+  {% endif %}
+
+  {% if cc.leviers %}
+  <h3>Leviers logement social / bailleur</h3>
+  {% set s = cc.leviers.sru %}
+  {% if s %}
+  <p>SRU : commune <b>{{ s.statut }}</b>{% if s.taux_lls is not none %} — {{ "%.1f"|format(s.taux_lls) }} % de
+     logements sociaux pour un objectif de {{ s.objectif_pct|int }} %{% endif %}{% if s.deficit_logements %} ·
+     besoin estimé <b>~{{ "{:,}".format(s.deficit_logements).replace(",", " ") }}</b> logements sociaux{% endif %}.
+     <span style="font-size:8pt;color:var(--txt-mut)">Sourcé DHUP{% if s.deficit_logements %} · besoin = Estimé (dérivé du taux et de l'objectif){% endif %} · {{ s.millesime }}.</span></p>
+  {% endif %}
+  {% if cc.leviers.qpv %}
+  <p><span class="chip">Quartier prioritaire (QPV)</span> Leviers bailleur : TVA 2,1 % (au lieu de 8,5 %
+     DOM), abattement TFPB 30 %, éligibilité LLS/LLTS renforcée.
+     <span style="font-size:8pt;color:var(--txt-mut)">Sourcé — ANCT (génération 2024) ; dispositif fiscal à instruire au cas par cas.</span></p>
+  {% endif %}
+  {% endif %}
+
+  {% if cc.enaf %}
+  <h3>Consommation d'espace (foncier / ZAN)</h3>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Rythme récent (2021-2024)</div>
+      <div class="valeur">{{ "{:,}".format(cc.enaf.rythme_2124_m2an).replace(",", " ") }}<small> m²/an</small></div></div>
+    <div class="cartouche"><div class="titre">Rythme précédent (2011-2021)</div>
+      <div class="valeur">{{ "{:,}".format(cc.enaf.rythme_1121_m2an).replace(",", " ") }}<small> m²/an</small></div></div>
+  </div>
+  {% if cc.enaf.acceleration %}<p style="margin-top:2mm"><span class="chip alerte">Consommation foncière en accélération</span></p>{% endif %}
+  <p style="font-size:8pt;color:var(--txt-mut);margin-top:1.5mm">Sourcé — Cerema, consommation d'espaces
+     naturels, agricoles et forestiers (ENAF), {{ cc.enaf.millesime }}. Signal de <b>pression foncière</b>
+     (rythme observé). Le budget et l'horizon ZAN ne sont <b>pas</b> indiqués : l'enveloppe n'est pas encore
+     territorialisée (SAR / PLUi, loi TRACE) — à confirmer auprès des documents d'urbanisme locaux.</p>
+  {% endif %}
+</section>
+{% endif %}
+
 {# ══ Terrain & réseaux ══ #}
 {% set t = data.terrain %}
 {% if t %}
 <section>
-  <h2><span class="num">07</span>Terrain{% if t.anc or t.solaire %} &amp; réseaux{% endif %}</h2>
+  <h2><span class="num">08</span>Terrain{% if t.anc or t.solaire %} &amp; réseaux{% endif %}</h2>
   <div class="cartouches">
     {% if t.pente %}
     <div class="cartouche"><div class="titre">Pente moyenne (RGE ALTI 5 m)</div>
@@ -377,7 +431,7 @@
 
 {# ══ Sources & millésimes ══ #}
 <section class="saut">
-  <h2><span class="num">08</span>Sources &amp; millésimes</h2>
+  <h2><span class="num">09</span>Sources &amp; millésimes</h2>
   <p>Chaque donnée de ce rapport provient d'une source publique identifiée. Le tableau
      ci-dessous les cite avec leur état de synchronisation dans la base LABUSE.</p>
   <table class="donnees">
