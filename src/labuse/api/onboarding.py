@@ -127,7 +127,7 @@ def paiement_bascule(t: str = "", db: Session = Depends(get_db)):
 <div class="trust" role="list">
   <div role="listitem">{coffre_ui.LOCK_SVG} Paiement <b style="color:var(--txt)">sécurisé par Stripe</b> — page hébergée, chiffrée.</div>
   <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><path d="M10 2l6 3v5c0 4-3 6.5-6 8-3-1.5-6-4-6-8V5z"/><path d="M7.5 10l1.8 1.8L13 8"/></svg> <b style="color:var(--txt)">Aucune donnée bancaire</b> ne transite par LABUSE.</div>
-  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> {p['eur_mois']} €/mois pendant 12 mois, puis reconduction mensuelle. Facture émise automatiquement.</div>
+  <div role="listitem"><svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="var(--mint)" stroke-width="1.5" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M10 6v4l2.5 1.5"/></svg> {p['eur_mois']} €/mois pendant 12 mois, puis reconduction par périodes de 12 mois — dénonçable avant chaque échéance (vous êtes prévenu à l'avance). Facture émise automatiquement.</div>
 </div>
 <form method="post" action="/onboarding/paiement"><input type="hidden" name="t" value="{html.escape(t)}">
 <button type="submit">{coffre_ui.LOCK_SVG.replace('var(--mint)','currentColor')} Payer {p['eur_mois']} €</button></form>
@@ -337,10 +337,20 @@ Le rapport porte exclusivement sur la parcelle confirmée par l'acheteur avant p
 l'article 2 (nature des analyses) s'y applique intégralement. En cas d'échec technique de
 génération, LABUSE fournit le rapport par tout moyen ou rembourse le paiement.</p>
 
-<h2>5. Durée et résiliation</h2>
-<p>Abonnement mensuel, tacitement reconduit, résiliable à tout moment avec effet à la fin de
-la période en cours (aucun remboursement prorata). LABUSE peut résilier avec un préavis de
-30 jours ; en cas d'arrêt du service, les sommes de la période non servie sont remboursées.</p>
+<h2>5. Durée, reconduction et résiliation</h2>
+<p>L'abonnement est souscrit pour une <b>durée ferme de 12 mois</b> à compter de son activation, facturé
+mensuellement. À l'échéance, il est <b>reconduit tacitement pour des périodes successives de 12 mois</b>,
+sauf dénonciation par le client au plus tard <b>un mois avant la date anniversaire</b> (depuis son espace
+ou par e-mail à son contact LABUSE).</p>
+<p>Conformément à l'article L. 215-1 du code de la consommation (loi Chatel), LABUSE <b>informe le client,
+au plus tôt trois mois et au plus tard un mois avant le terme de chaque période, de sa faculté de ne pas
+reconduire</b> l'abonnement. À défaut d'information dans ce délai, le client peut mettre fin gratuitement à
+la reconduction à tout moment à compter de la date de reconduction, les sommes correspondant à la période
+postérieure lui étant remboursées.</p>
+<p>Pendant la période d'engagement de 12 mois, l'abonnement n'est pas résiliable par anticipation, sauf
+motif légitime (cessation d'activité dûment justifiée, manquement de LABUSE à ses obligations). LABUSE peut
+résilier avec un préavis de 30 jours ; en cas d'arrêt du service, les sommes de la période non servie sont
+remboursées.</p>
 
 <h2>6. Disponibilité</h2>
 <p>LABUSE est fourni « en l'état », avec un engagement de <b>meilleurs efforts</b> sur la

@@ -15,7 +15,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -280,6 +280,66 @@ def appliquer_reset(db: Session, token: str, password: str) -> bool:
     db.execute(text("DELETE FROM sessions_auth WHERE utilisateur_id = :i"), {"i": u["id"]})
     audit(db, "reset_applique", u["compte_id"], u["id"]); db.commit()
     return True
+
+
+# ── M18-C · loi Chatel : avis d'échéance AVANT reconduction (obligation de la clause CGV §5) ──
+# L'envoi e-mail n'est PAS branché (Resend retiré, audit M16) : point d'envoi IDENTIFIÉ, envoi réel
+# INACTIF jusqu'au branchement d'un service e-mail. Le DÉCLENCHEUR (cronable : `labuse avis-echeance`)
+# trouve les comptes dont une période de 12 mois arrive à terme dans la fenêtre Chatel [T-3 mois, T-1 mois]
+# et appelle le point d'envoi. On ne simule JAMAIS un envoi.
+
+def _envoyer_avis_echeance(email: str, echeance_iso: str, lien_espace: str) -> None:
+    """POINT D'ENVOI de l'avis d'échéance (loi Chatel, art. L.215-1). Aucun service e-mail branché → on
+    TRACE le rappel dans le log serveur (= file d'attente consultable). Dès qu'un e-mail sera câblé, ce
+    corps est remplacé sans toucher aux appelants. On n'affiche/ne prétend JAMAIS qu'un e-mail est parti."""
+    logging.getLogger("labuse.comptes").info(
+        "[AVIS-ECHEANCE Chatel · À ENVOYER dès que le service e-mail sera branché] %s → échéance %s (%s)",
+        email, echeance_iso, lien_espace)
+
+
+def avis_echeance_dus(db: Session, today: date | None = None) -> list[dict]:
+    """Comptes actifs dont une échéance annuelle (activation + k×12 mois) tombe dans la fenêtre Chatel
+    (entre ~1 et ~3 mois à venir) ET pas encore prévenus pour CE terme (dédup via evenements_compte).
+    Lecture seule — le déclencheur envoie et enregistre."""
+    today = today or datetime.now(timezone.utc).date()
+    rows = db.execute(text(
+        "SELECT c.id AS compte_id, u.email, c.created_at::date AS depuis"
+        " FROM comptes c JOIN utilisateurs u ON u.compte_id = c.id AND u.role = 'titulaire'"
+        " WHERE c.statut = 'actif'")).mappings().all()
+    dus: list[dict] = []
+    for r in rows:
+        depuis = r["depuis"]
+        annees = today.year - depuis.year
+        for k in (annees, annees + 1):
+            if k < 1:
+                continue
+            try:
+                ech = depuis.replace(year=depuis.year + k)
+            except ValueError:                       # 29/02 → 28/02
+                ech = depuis.replace(year=depuis.year + k, day=28)
+            jours = (ech - today).days
+            if 30 <= jours <= 92:                    # fenêtre Chatel [≈1 mois, ≈3 mois]
+                deja = db.execute(text(
+                    "SELECT 1 FROM evenements_compte WHERE type = 'avis_echeance'"
+                    " AND compte_id = :c AND detail LIKE :d LIMIT 1"),
+                    {"c": r["compte_id"], "d": f"%echeance={ech.isoformat()}%"}).scalar()
+                if not deja:
+                    dus.append({"compte_id": r["compte_id"], "email": r["email"], "echeance": ech.isoformat()})
+                break
+    return dus
+
+
+def declencher_avis_echeance(db: Session, today: date | None = None) -> int:
+    """DÉCLENCHEUR cronable (`labuse avis-echeance`) : pour chaque compte dû, appelle le point d'envoi
+    et l'enregistre (dédup par terme). Retourne le nombre traité. Idempotent."""
+    n = 0
+    lien = f"{get_settings().public_base_url}/login"
+    for d in avis_echeance_dus(db, today):
+        _envoyer_avis_echeance(d["email"], d["echeance"], lien)
+        audit(db, "avis_echeance", d["compte_id"], None, f"echeance={d['echeance']}")
+        n += 1
+    db.commit()
+    return n
 
 
 # ── administration (CLI Vic) ──

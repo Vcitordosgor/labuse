@@ -105,6 +105,18 @@ def suggestions_cmd(nouvelles: bool = typer.Option(False, "--nouvelles", help="S
     typer.echo(f"\n{len(rows)} suggestion(s).")
 
 
+@app.command("avis-echeance")
+def avis_echeance_cmd() -> None:
+    """M18-C (loi Chatel) : déclenche les avis d'échéance dus (fenêtre 3→1 mois avant reconduction).
+    L'envoi e-mail réel s'activera au branchement d'un service e-mail ; ici, chaque avis est tracé
+    (point d'envoi identifié). Cronable (mensuel)."""
+    from .comptes import declencher_avis_echeance
+
+    with session_scope() as s:
+        n = declencher_avis_echeance(s)
+    typer.echo(f"✓ Avis d'échéance Chatel déclenchés : {n} (envoi e-mail réel = dès branchement du service).")
+
+
 @app.command("seed-sources")
 def seed_sources_cmd() -> None:
     from .ingestion import seed_sources
