@@ -961,7 +961,7 @@ const TABS: { k: 'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'; lab
 const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
 // M19 · onglets déjà migrés en tiroirs (dans la pile Synthèse). Grandit à chaque commit
 // jusqu'à absorber les 8 ; à ce moment la bascule `tab` disparaît, la barre devient nav pure.
-const MIGRATED = new Set<string>(['risques', 'marche', 'proprio', 'regles', 'bilan', 'pourquoi'])
+const MIGRATED = new Set<string>(['risques', 'marche', 'proprio', 'regles', 'bilan', 'pourquoi', 'faisabilite'])
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -1054,6 +1054,7 @@ export function Fiche({ idu }: { idu: string }) {
   // Bilan / Faisabilité : la capacité fine (logements, charge foncière) est calculée DANS ces
   // blocs à l'ouverture (pas de requête au chargement). Fermé = proxy SDP depuis f + libellé.
   const bilanValue = reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP · marché & fiscal` : 'capacité · marché · fiscal · RTAA'
+  const faisaValue = reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP · charge foncière` : 'capacité constructible & calculette'
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
@@ -1406,6 +1407,11 @@ export function Fiche({ idu }: { idu: string }) {
             <FicheDrawer id="bilan" ico="🧮" name="Bilan" value={bilanValue}>
               <BilanTab idu={idu} />
             </FicheDrawer>
+            {/* Faisabilité — capacité tracée + calculette de charge foncière (composant PARTAGÉ
+                M15-C2, réutilisé tel quel, jamais dupliqué). Calcul à l'ouverture. */}
+            <FicheDrawer id="faisabilite" ico="🏗️" name="Faisabilité" value={faisaValue}>
+              <FaisabiliteTab idu={idu} />
+            </FicheDrawer>
             {/* Pourquoi pas — seulement si écartée / flaggée (anti-fiche, motifs sourcés). */}
             {(verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) && (
               <FicheDrawer id="pourquoi" ico="⚖️" name="Pourquoi pas ?" value="motifs d'écartement & points de vigilance">
@@ -1414,7 +1420,6 @@ export function Fiche({ idu }: { idu: string }) {
             )}
           </>
         )}
-        {!fq && f && tab === 'faisabilite' && <FaisabiliteTab idu={idu} />}
       </div>
 
       <div className="shrink-0 border-t border-line px-5 py-3">
@@ -1433,9 +1438,12 @@ export function Fiche({ idu }: { idu: string }) {
             « Maps » sortait du panneau 400 px). Passés en grille 3 colonnes → bloc segmenté
             régulier, 2 rangées de 3, aucun débordement quelle que soit la largeur. */}
         <div className="mt-2 grid grid-cols-3 gap-2">
-          <a href={pdfUrl(idu, (tab === 'bilan' || tab === 'faisabilite') ? calculette : null)} target="_blank" rel="noreferrer"
+          {/* M19 : le PDF reflète la charge foncière dès que la calculette est active (drawer
+              Faisabilité/Bilan ouvert → `calculette` non-null), sans dépendre d'un onglet
+              actif (les onglets sont devenus des tiroirs). */}
+          <a href={pdfUrl(idu, calculette)} target="_blank" rel="noreferrer"
             className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-            title={calculette && (tab === 'bilan' || tab === 'faisabilite') ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
+            title={calculette ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
             PDF
           </a>
           {/* Lot 4 (wave-adresses) : Dossier parcelle brandé — comité d'engagement, banque,
