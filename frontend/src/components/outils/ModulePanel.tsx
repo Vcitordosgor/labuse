@@ -599,6 +599,10 @@ function M09() {
   const selectedIdu = useApp((s) => s.selectedIdu)
   const [step, setStep] = useState(1)
   const [idu, setIdu] = useState(selectedIdu ?? '')
+  // M20-A : le module reflète la parcelle sélectionnée tant qu'on est à l'étape « Parcelle »
+  // (ouverture depuis la tuile Courrier d'une fiche déjà affichée, ou clic d'une autre parcelle
+  // sur la carte). Vaut pour LES DEUX points d'entrée (fiche + Outils) — aucune divergence.
+  useEffect(() => { if (selectedIdu && step === 1) setIdu(selectedIdu) }, [selectedIdu])   // eslint-disable-line react-hooks/exhaustive-deps
   const [motif, setMotif] = useState('standard')
   const [texte, setTexte] = useState('')
   const [done, setDone] = useState<string | null>(null)
