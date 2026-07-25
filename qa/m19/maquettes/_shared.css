@@ -1,0 +1,158 @@
+/* M19 — feuille partagée des 3 maquettes. Palette = tokens réels (tailwind.config.js / tokens.ts).
+   Aucune couleur inventée : bg/surface/line/txt/statuts sont copiés du design system. */
+:root{
+  --bg:#060A08; --s1:#0B100D; --s2:#0D120F; --s3:#111814;
+  --line:#1B2620; --line2:#1E2A23;
+  --mint:#5CE6A1; --mint-ink:#06130C; --violet:#B497F0; --violet-dim:#8b76c0;
+  --txt-hi:#ECF5EF; --txt:#C9DCD1; --txt-mut:#8FA69A; --txt-dim:#5C7268;
+  --brulante:#E8695A; --chaude:#5CE6A1; --creuser:#E8B44C; --ecartee:#E8695A; --exclue:#6B7A72;
+  --jaune:#F4D35E; /* Pages Jaunes (C2) */
+  --radius:14px; --radius-sm:9px;
+  --shadow:0 1px 0 rgba(255,255,255,.02) inset, 0 10px 30px -18px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:radial-gradient(1200px 600px at 50% -200px,#0A1510,transparent),var(--bg);
+  color:var(--txt); font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased; padding:28px 16px 80px;
+}
+.wrap{max-width:860px;margin:0 auto}
+.mono{font-family:"SF Mono",ui-monospace,Menlo,monospace}
+a{color:inherit}
+.muted{color:var(--txt-mut)} .dim{color:var(--txt-dim)}
+
+/* ---- barre maquette (méta, non-produit) ---- */
+.mockbar{max-width:860px;margin:0 auto 20px;padding:10px 16px;border:1px dashed var(--line2);
+  border-radius:var(--radius-sm);background:var(--s1);color:var(--txt-mut);font-size:12.5px;display:flex;
+  gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.mockbar b{color:var(--txt-hi)} .mockbar .tag{color:var(--violet)}
+
+/* ---- VERDICT (en-tête de rapport, pas un badge) ---- */
+.verdict{background:linear-gradient(180deg,var(--s2),var(--s1));border:1px solid var(--line2);
+  border-radius:var(--radius);padding:22px 22px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.verdict::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--brulante)}
+.verdict.is-ecartee::before{background:var(--ecartee)}
+.vhead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.vtier{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--brulante)}
+.vtier.ecartee{color:var(--ecartee)}
+.vclaim{font-size:23px;font-weight:650;color:var(--txt-hi);margin:2px 0 3px;letter-spacing:-.01em}
+.vsub{font-size:13.5px;color:var(--txt-mut)}
+.vsub .em{color:var(--mint);font-weight:600}
+.addr{margin-top:14px;font-size:16px;color:var(--txt-hi);font-weight:550;/* C3 : jamais tronquée */
+  white-space:normal;overflow-wrap:anywhere;max-width:46ch}
+.meta{margin-top:5px;font-size:12.5px;color:var(--txt-dim);display:flex;gap:10px;flex-wrap:wrap}
+.meta .sep{opacity:.4}
+.vtools{display:flex;gap:8px;flex-shrink:0}
+.icbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--line2);background:var(--s3);
+  color:var(--txt-mut);display:grid;place-items:center;cursor:pointer;font-size:16px;transition:.15s}
+.icbtn:hover{color:var(--txt-hi);border-color:var(--violet-dim)}
+.pj{margin-top:14px;display:inline-flex;gap:7px;align-items:center;padding:7px 12px;border-radius:9px;
+  font-size:13px;font-weight:600;cursor:pointer;text-decoration:none; /* C2 : jaune Pages Jaunes */
+  background:rgba(244,211,94,.12);border:1px solid rgba(244,211,94,.4);color:var(--jaune)}
+.pj:hover{background:rgba(244,211,94,.2)}
+
+/* pastilles d'argument */
+.pills{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.pill{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--s3);border:1px solid var(--line2);
+  color:var(--txt);display:inline-flex;gap:6px;align-items:center}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:var(--mint)}
+.pill.warn .dot{background:var(--creuser)}
+
+/* ---- carte accent unique (violet) : signal chaud ---- */
+.accent{margin-top:14px;background:linear-gradient(180deg,rgba(180,151,240,.12),rgba(180,151,240,.04));
+  border:1px solid rgba(180,151,240,.42);border-radius:var(--radius);padding:15px 17px}
+.accent .lab{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--violet);font-weight:700}
+.accent .big{font-size:15.5px;color:var(--txt-hi);font-weight:600;margin:4px 0 3px}
+.accent .why{font-size:13px;color:var(--txt-mut)}
+
+/* ---- TIROIRS (fermé, ça informe) ---- */
+.drawers{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+details.dr{background:var(--s1);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+details.dr[open]{border-color:var(--line2);background:var(--s2)}
+.dr>summary{list-style:none;cursor:pointer;padding:15px 17px;display:flex;align-items:center;gap:14px}
+.dr>summary::-webkit-details-marker{display:none}
+.dr .ico{width:30px;height:30px;border-radius:8px;background:var(--s3);display:grid;place-items:center;
+  font-size:15px;flex-shrink:0}
+.dr .sumtxt{flex:1;min-width:0}
+.dr .drname{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--txt-dim);font-weight:600}
+.dr .drval{font-size:14.5px;color:var(--txt-hi);font-weight:550;margin-top:1px}
+.dr .drval .ok{color:var(--mint)} .dr .drval .amber{color:var(--creuser)} .dr .drval .hot{color:var(--brulante)}
+.dr .chev{color:var(--txt-dim);font-size:13px;transition:.2s;flex-shrink:0}
+.dr[open] .chev{transform:rotate(90deg)}
+.dr .body{padding:2px 17px 17px 61px;font-size:13.5px;color:var(--txt);border-top:1px solid var(--line)}
+.dr[open] .body{animation:fade .2s ease}
+@keyframes fade{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.kv:last-child{border-bottom:0}
+.kv .k{color:var(--txt-mut)} .kv .v{color:var(--txt-hi);text-align:right}
+.note{font-size:12px;color:var(--txt-dim);margin-top:8px}
+.src{font-size:11.5px;color:var(--violet-dim);cursor:pointer}
+.src:hover{color:var(--violet)}
+
+/* score expliqué (P1.2) */
+.score{margin:10px 0}
+.score .row{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.score .nm{font-size:13px;color:var(--txt-hi);font-weight:600}
+.score .val{font-family:"SF Mono",monospace;font-size:13px;color:var(--txt-hi)}
+.score .exp{font-size:12px;color:var(--txt-mut);margin-top:2px}
+.bar{height:6px;border-radius:4px;background:var(--s3);margin-top:6px;overflow:hidden}
+.bar>i{display:block;height:100%;border-radius:4px}
+
+/* preuve risques 9 segments */
+.segs{display:flex;gap:3px;margin-top:8px}
+.segs>i{flex:1;height:7px;border-radius:2px;background:var(--mint)}
+.segs>i.amber{background:var(--creuser)}
+.segs>i.off{background:var(--s3)}
+
+/* détail replié niveau 3 */
+details.n3{margin-top:10px}
+details.n3>summary{cursor:pointer;font-size:12px;color:var(--violet-dim);list-style:none;padding:4px 0}
+details.n3>summary::-webkit-details-marker{display:none}
+details.n3[open]>summary{color:var(--violet)}
+details.n3 .n3body{padding:6px 0 2px;font-size:12.5px;color:var(--txt-mut)}
+.linerow{display:flex;gap:9px;padding:4px 0;align-items:baseline}
+.linerow .w{font-family:monospace;font-size:11.5px;min-width:26px;text-align:right}
+.linerow .w.pos{color:var(--mint)} .linerow .w.neg{color:var(--brulante)} .linerow .w.zero{color:var(--txt-dim)}
+
+/* ---- BLOC IA (C8) ---- */
+.ia{margin-top:16px;display:flex;align-items:center;gap:12px;padding:14px 17px;border-radius:var(--radius);
+  background:linear-gradient(180deg,rgba(180,151,240,.1),rgba(180,151,240,.03));
+  border:1px solid rgba(180,151,240,.36);cursor:pointer}
+.ia .spark{font-size:17px;color:var(--violet)}
+.ia .iatxt{flex:1}
+.ia .iaq{font-size:14.5px;color:var(--txt-hi);font-weight:550}
+.ia .iahint{font-size:12px;color:var(--txt-mut)}
+.ia .prem{font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--violet);
+  border:1px solid var(--violet-dim);border-radius:20px;padding:3px 9px}
+
+/* ---- ACTIONS (2 niveaux, export segmenté) ---- */
+.actions{margin-top:16px}
+.arow{display:flex;gap:8px;flex-wrap:wrap}
+.abtn{flex:1;min-width:120px;padding:11px 12px;border-radius:10px;border:1px solid var(--line2);background:var(--s2);
+  color:var(--txt-hi);font-size:13.5px;font-weight:550;cursor:pointer;display:inline-flex;gap:7px;
+  align-items:center;justify-content:center;transition:.15s}
+.abtn:hover{border-color:var(--mint);color:var(--txt-hi)}
+.abtn.primary{background:var(--mint);color:var(--mint-ink);border-color:var(--mint)}
+.exlabel{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--txt-dim);margin:14px 0 7px;font-weight:600}
+.exports{display:flex;flex-wrap:wrap;gap:0;border:1px solid var(--line2);border-radius:11px;overflow:hidden}/* C5 : wrap, rien ne déborde */
+.exports>button,.exports>a{flex:1 1 33%;min-width:120px;padding:11px 10px;background:var(--s1);border:0;
+  border-right:1px solid var(--line);border-bottom:1px solid var(--line);color:var(--txt);font-size:12.5px;
+  cursor:pointer;display:inline-flex;gap:6px;align-items:center;justify-content:center;text-decoration:none}
+.exports>*:hover{background:var(--s3);color:var(--txt-hi)}
+.disclaimer{font-size:11px;color:var(--txt-dim);margin-top:12px;line-height:1.5}
+
+/* ---- états dégradés ---- */
+.degrade{margin-top:40px}
+.degrade h2{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt-mut);
+  border-top:1px solid var(--line);padding-top:22px}
+.dgrid{display:grid;grid-template-columns:1fr;gap:14px}
+.dcard{background:var(--s1);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.dcard .dlabel{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--violet-dim);font-weight:700;margin-bottom:9px}
+.placeholder{color:var(--txt-dim);font-style:italic}
+.ecartee-inline{display:inline-flex;gap:8px;align-items:center;margin-top:6px} /* C1 : motif à côté du badge */
+.ebadge{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:var(--ecartee);
+  border:1px solid rgba(232,105,90,.5);border-radius:6px;padding:3px 8px}
+.ewhy{font-size:12.5px;color:var(--txt-mut)}
+.ewhy a{color:var(--ecartee);text-decoration:underline;cursor:pointer}
+@media(min-width:620px){.dgrid{grid-template-columns:1fr 1fr 1fr}}
