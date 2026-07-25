@@ -76,6 +76,8 @@ _NEEDED_TABLES = {
     "dvf_secteur_medianes", "sitadel_permits", "parcel_terrain", "parcel_residuel",
     "parcel_residuel_bati", "dryrun_parcel_evaluations", "rpls_commune",
     "filosofi_carreaux_200m", "data_sources",
+    # M18 enrichissement Flash — contexte commune (chacune détectée, section omise si absente)
+    "m10_permit_delais", "commune_contexte_sru", "commune_conso_enaf", "parcel_solar",
     # Mandats pas encore mergés — le jour où ils atterrissent, la section apparaît seule.
     "parcel_vegetation", "parcel_anc",
 }
@@ -371,6 +373,16 @@ def _terrain(db: Session, idu: str, avail: set[str]) -> dict | None:
                        {"idu": idu}).mappings().first()
         if r and r["ombrage_pct"] is not None:
             out["canopee"] = {"ombrage_pct": _i(r["ombrage_pct"])}
+    # M18 — gisement solaire PVGIS (prod. spécifique = valeur SOURCÉE ; score = lecture LABUSE).
+    # Donnée fiable (ingestion PVGIS fidèle) MAIS caveat honnête : le gradient côtier E/O local n'est
+    # pas capturé par le modèle SARAH3 → ordre de grandeur, pas une garantie de production.
+    if "parcel_solar" in avail:
+        r = db.execute(text(
+            "SELECT prod_spec_kwh_kwc, score_solaire FROM parcel_solar WHERE idu = :idu"),
+            {"idu": idu}).mappings().first()
+        if r and r["prod_spec_kwh_kwc"] is not None:
+            out["solaire"] = {"prod_kwh_kwc": round(float(r["prod_spec_kwh_kwc"])),
+                              "score": _i(r["score_solaire"])}
     return out or None
 
 
@@ -400,9 +412,81 @@ _SECTION_SOURCES: list[tuple[str, str, int | None, str | None]] = [
     ("marche", "DVF — valeurs foncières (DGFiP / Cerema)", 5, None),
     ("dynamique", "Sitadel — autorisations d'urbanisme (SDES)", 16, None),
     ("terrain", "RGE ALTI 5 m (IGN)", 6, None),
+    ("terrain", "PVGIS — gisement solaire (Commission européenne)", None, "modèle SARAH3"),
     ("carte", "Fond de carte © OpenStreetMap contributors (ODbL)", 19, None),
     ("adresse", "Base Adresse Nationale (DINUM / IGN)", 18, None),
+    # M18 — contexte commune
+    ("contexte_commune", "Sitadel — délais d'instruction (SDES/Dido)", 16, "historique 2013+"),
+    ("contexte_commune", "Inventaire SRU / LLS (DHUP)", None, "inventaire 2024 · périmètre 2025"),
+    ("contexte_commune", "QPV (ANCT)", 38, "génération 2024"),
+    ("contexte_commune", "Consommation d'espace ENAF (Cerema)", None, "2009-2024 · publié 05/2025"),
 ]
+
+
+def _contexte_commune(db: Session, idu: str, commune: str, avail: set[str]) -> dict | None:
+    """M18 — contexte COMMUNE (agrégats sourcés, JAMAIS d'identité de personne physique) :
+    vélocité d'instruction PC (Sitadel, dossiers accordés), leviers social/bailleur (SRU + QPV),
+    consommation d'espace observée (Cerema ENAF). Le budget/horizon ZAN (estimé, SAR non
+    territorialisé) est VOLONTAIREMENT EXCLU — donnée trop incertaine (garde-fou : pas de champ faux)."""
+    out: dict[str, Any] = {}
+
+    # 1) Vélocité administrative — délai médian d'instruction PC (dépôt → autorisation).
+    # Source Sitadel/SDES : dossiers ACCORDÉS uniquement ; cohortes mûres (dépôts > 12 mois) ;
+    # seuil de fiabilité ≥ 8 dossiers (sinon médiane non significative → on n'affiche pas).
+    if "m10_permit_delais" in avail:
+        v = db.execute(text("""
+            WITH cut AS (SELECT (max(date_depot) - make_interval(months => 12))::date AS c
+                         FROM m10_permit_delais WHERE nature = 'PC')
+            SELECT count(*) FILTER (WHERE valide AND date_depot <= (SELECT c FROM cut)) AS n,
+              round(percentile_cont(0.5) WITHIN GROUP (ORDER BY delai_mois)
+                    FILTER (WHERE valide AND date_depot <= (SELECT c FROM cut))) AS med,
+              round(percentile_cont(0.25) WITHIN GROUP (ORDER BY delai_mois)
+                    FILTER (WHERE valide AND date_depot <= (SELECT c FROM cut))) AS p25,
+              round(percentile_cont(0.75) WITHIN GROUP (ORDER BY delai_mois)
+                    FILTER (WHERE valide AND date_depot <= (SELECT c FROM cut))) AS p75
+            FROM m10_permit_delais WHERE commune = :c AND nature = 'PC'"""),
+            {"c": commune}).mappings().first()
+        if v and v["med"] is not None and (v["n"] or 0) >= 8:
+            out["velocite"] = {"median_mois": _i(v["med"]), "p25_mois": _i(v["p25"]),
+                               "p75_mois": _i(v["p75"]), "n": int(v["n"])}
+
+    # 2) Leviers social / bailleur — SRU (déficit LLS) + QPV (TVA réduite). Sourcé (millésime porté).
+    sru = None
+    if "commune_contexte_sru" in avail:
+        r = db.execute(text(
+            "SELECT statut, taux_lls, objectif_pct, millesime, (detail->>'nb_lls')::float AS nb_lls"
+            " FROM commune_contexte_sru WHERE commune = :c"), {"c": commune}).mappings().first()
+        if r:
+            deficit = None
+            tx, obj, nb = _f(r["taux_lls"]), _f(r["objectif_pct"]), r["nb_lls"]
+            if tx and obj and nb and 0 < tx < obj:   # déficitaire → besoin estimé de LLS
+                deficit = round(float(nb) * (obj - tx) / tx)
+            sru = {"statut": r["statut"], "taux_lls": tx, "objectif_pct": obj,
+                   "deficit_logements": deficit, "millesime": r["millesime"]}
+    qpv = False
+    if "spatial_layers" in avail:
+        qpv = bool(db.execute(text(
+            "WITH p AS (SELECT geom_2975 FROM parcels WHERE idu = :idu)"
+            " SELECT 1 FROM spatial_layers sl, p WHERE sl.kind = 'qpv'"
+            " AND ST_Intersects(sl.geom_2975, p.geom_2975) LIMIT 1"), {"idu": idu}).scalar())
+    if sru or qpv:
+        out["leviers"] = {"sru": sru, "qpv": qpv}
+
+    # 3) Consommation d'espace OBSERVÉE (Cerema ENAF) — Sourcé. On montre le rythme, PAS de budget/
+    # horizon ZAN (estimé, non territorialisé → exclu par garde-fou).
+    if "commune_conso_enaf" in avail:
+        e = db.execute(text(
+            "SELECT conso_2011_2021_m2 AS c1, conso_2021_2024_m2 AS c2, millesime"
+            " FROM commune_conso_enaf WHERE commune = :c"), {"c": commune}).mappings().first()
+        if e and e["c1"] is not None:
+            out["enaf"] = {
+                "conso_1121_ha": round((e["c1"] or 0) / 10000, 1),
+                "conso_2124_ha": round((e["c2"] or 0) / 10000, 1),
+                "rythme_1121_m2an": round((e["c1"] or 0) / 10),   # 2011-2021 = 10 ans
+                "rythme_2124_m2an": round((e["c2"] or 0) / 3),    # 2021-2024 = 3 ans
+                "acceleration": (e["c2"] or 0) / 3 > (e["c1"] or 0) / 10,
+                "millesime": e["millesime"]}
+    return out or None
 
 
 def _sources(db: Session, avail: set[str], sections_rendues: set[str]) -> list[dict]:
@@ -425,7 +509,7 @@ _SECTION_LABELS = {"identite": "Identité parcellaire", "constructibilite": "Con
                    "risques": "Risques", "patrimoine": "Patrimoine & environnement",
                    "marche": "Marché", "dynamique": "Dynamique locale",
                    "terrain": "Terrain & réseaux", "carte": "Carte de situation",
-                   "adresse": "Adresse"}
+                   "adresse": "Adresse", "contexte_commune": "Contexte commune & leviers"}
 
 
 # ── Point d'entrée ───────────────────────────────────────────────────────────────────────
@@ -458,10 +542,11 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
         "marche": _marche(db, idu, avail),
         "dynamique": _dynamique(db, idu, avail),
         "terrain": _terrain(db, idu, avail),
+        "contexte_commune": _contexte_commune(db, idu, parcelle["commune"], avail),
         "date_generation": date.today().isoformat(),
     }
     rendues = {k for k in ("identite", "constructibilite", "risques", "patrimoine",
-                           "marche", "dynamique", "terrain") if data.get(k)}
+                           "marche", "dynamique", "terrain", "contexte_commune") if data.get(k)}
     if adresse:
         rendues.add("adresse")
     data["sources"] = _sources(db, avail, rendues | {"carte"})
