@@ -961,7 +961,7 @@ const TABS: { k: 'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'; lab
 const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
 // M19 · onglets déjà migrés en tiroirs (dans la pile Synthèse). Grandit à chaque commit
 // jusqu'à absorber les 8 ; à ce moment la bascule `tab` disparaît, la barre devient nav pure.
-const MIGRATED = new Set<string>(['risques'])
+const MIGRATED = new Set<string>(['risques', 'marche'])
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -1034,6 +1034,12 @@ export function Fiche({ idu }: { idu: string }) {
     : risquesFlags.length === 0
       ? `✓ rien à signaler · ${risquesClean} couche${risquesClean > 1 ? 's' : ''} vérifiée${risquesClean > 1 ? 's' : ''}`
       : `${risquesFlags.length} point${risquesFlags.length > 1 ? 's' : ''} de vigilance · ${risquesClean} couche${risquesClean > 1 ? 's' : ''} sans risque`
+  // Marché : médiane €/m² structurée (dvf_parcelle.secteur) + nb de ventes — donnée propre.
+  const marcheLines = ongletLines('marche')
+  const dvfSecteur = f?.dvf_parcelle?.secteur?.find((s) => s.type_bien === 'terrain') ?? f?.dvf_parcelle?.secteur?.[0]
+  const marcheValue = dvfSecteur?.mediane_prix_m2 != null
+    ? `${fmtInt(dvfSecteur.mediane_prix_m2)} €/m²${dvfSecteur.n_ventes ? ` · ${dvfSecteur.n_ventes} ventes secteur` : ''}`
+    : (marcheLines.length ? 'comparables DVF · aménités' : 'voir le détail')
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
@@ -1351,6 +1357,12 @@ export function Fiche({ idu }: { idu: string }) {
                 ? <div className="flex flex-col gap-1">{risquesLines.map((l, i) => <Line key={i} line={l} />)}</div>
                 : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
             </FicheDrawer>
+            {/* Marché — médiane €/m² secteur fermé ; lignes DVF/aménités inchangées. */}
+            <FicheDrawer id="marche" ico="📈" name="Marché" value={marcheValue}>
+              {marcheLines.length
+                ? <div className="flex flex-col gap-1">{marcheLines.map((l, i) => <Line key={i} line={l} />)}</div>
+                : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
+            </FicheDrawer>
           </>
         )}
         {!fq && f && tab === 'proprio' && f.proprietaire_moral && (
@@ -1374,7 +1386,7 @@ export function Fiche({ idu }: { idu: string }) {
             Règles : bloc dépliable violet (IA/premium = violet), règles en français courant,
             chaque valeur avec sa provenance ; le règlement écrit reste la référence. */}
         {!fq && f && tab === 'regles' && <TraducteurBloc idu={idu} />}
-        {!fq && f && (tab === 'regles' || tab === 'marche' || tab === 'proprio') && (
+        {!fq && f && (tab === 'regles' || tab === 'proprio') && (
           <div>
             {ongletLines(tab).length ? ongletLines(tab).map((l, i) => <Line key={i} line={l} />)
               : <p className="text-xs text-txt-dim">Aucun signal sur cet onglet.</p>}
