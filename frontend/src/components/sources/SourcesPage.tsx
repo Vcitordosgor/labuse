@@ -21,6 +21,14 @@ const MILLESIME_VERIFIE: Record<string, string> = {
   // nom ni dans un job daté. Filosofi carroyé 200 m = millésime 2021 (directive M14). BPE et
   // SAFER : millésime NON tracé en base localement → consigné, jamais inventé (voir Row).
   'Filosofi INSEE (carreaux 200 m)': 'millésime 2021',
+  // M17-A : millésimes RÉELS retrouvés dans le code d'ingestion (jamais devinés). Réf. seed_sources.py :
+  'Parc National de La Réunion (INPN)': 'millésime 2021',              // jeu ODS `pnrun_2021` (l.94-95)
+  'QPV 2024 (ANCT)': 'génération 2024',                                // décret 2023-1314, en vigueur 01/01/2024 (l.217)
+  'Classement sonore ITT (Cerema)': 'arrêtés déc. 2023',              // arrêtés préfectoraux 14-15/12/2023 (l.199)
+  '50 pas géométriques — limite haute (DEAL)': 'cadastre 1877 (géoréf. 2012/1950)', // lignée documentée (l.193)
+  'DEAL Réunion — trait de côte': 'millésime 2018',                    // fichier GéoLittoral `…_062018_shape.zip` (l.272)
+  // BPE INSEE et Zonage SAFER (DAAF) : millésime INTROUVABLE en base/code → laissés « non tracé »
+  // assumé (BPE = A_FAIRE, note « import millésime » sans année ; SAFER = proxy RPG.LATEST, non daté).
 }
 function millesimeNote(s: SourceInfo): string | null {
   if (MILLESIME_VERIFIE[s.name]) return MILLESIME_VERIFIE[s.name]
