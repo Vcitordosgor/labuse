@@ -949,16 +949,8 @@ function PatrimoineLink({ siren }: { siren: string }) {
   )
 }
 
-const TABS: { k: 'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'; label: string }[] = [
-  { k: 'synthese', label: 'Synthèse' }, { k: 'regles', label: 'Règles' }, { k: 'risques', label: 'Risques' },
-  { k: 'marche', label: 'Marché' }, { k: 'proprio', label: 'Proprio' },
-  // M3 spin-off vues+solaire : « Solaire » retiré — Faisabilité occupe sa place (prévu M11 Surface C).
-  { k: 'faisabilite', label: 'Faisabilité' },
-  { k: 'bilan', label: 'Bilan' },
-]
-// R5 (O3) : onglet « Pourquoi pas ? » — ajouté SEULEMENT pour les parcelles écartées/flaggées
-// (anti-fiche : motifs RÉDHIBITOIRE/VIGILANCE sourcés). La nav reste toujours visible (règle PJ6).
-const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
+// M19 : la barre d'onglets a été retirée (fiche = pile de tiroirs) ; `tab` subsiste comme
+// état interne toujours à 'synthese' (le contenu unique), gardé pour un diff minimal.
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -996,10 +988,6 @@ export function Fiche({ idu }: { idu: string }) {
     return () => window.clearTimeout(t)
   }, [pendingScroll, tab])
   const goDrawer = (key: string) => { setTab('synthese'); setPendingScroll(key) }
-  // M19 · la barre d'onglets est devenue une NAV pure : « Synthèse » remonte en tête de fiche,
-  // les autres ouvrent+scrollent leur tiroir. Ref sur la zone scrollable pour le retour en tête.
-  const scrollRef = useRef<HTMLDivElement>(null)
-  const goTop = () => { setTab('synthese'); scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
@@ -1086,8 +1074,9 @@ export function Fiche({ idu }: { idu: string }) {
       )}
 
       {/* M11 Surface A — barre de recherche IA (premium, en haut de fiche) */}
-      {f && <AskBar idu={idu} zone={null} />}
-
+      {/* M19 (réf. ordre) : la carte IA descend en bas de fiche (avant la barre d'actions) —
+          plus jamais l'IA en tête. En-tête = identité seule ; le verdict devient une carte
+          encadrée juste dessous. */}
       <div className="flex shrink-0 items-start justify-between border-b border-line px-5 py-4">
         <div className="min-w-0">
           <div className="truncate font-mono text-sm font-medium text-txt-hi">{idu}</div>
@@ -1112,66 +1101,6 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="mt-0.5 text-[11px] text-txt-mut">
             {f?.surface_m2 ? <span className="tnum">{fmtM2(f.surface_m2)} · </span> : ''}{f?.commune ?? ''}
           </div>
-          {verdict && (() => {
-            const badge = (
-              <span data-badge-verdict className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px]" style={{ background: `${verdict.color}22`, color: verdict.color }}>
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: verdict.color }} />{verdict.label}
-                {v2Pilote && f?.score_v2 && (
-                  <span className="font-mono text-[10px] opacity-90">
-                    {(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? `rang ${f.score_v2.rang}` : ''}
-                    {f.score_v2.mult_base != null ? `${(verdict?.tier === 'brulante' || verdict?.tier === 'chaude') && f.score_v2.rang != null ? ' · ' : ''}×${f.score_v2.mult_base.toFixed(1)}` : ''}
-                  </span>
-                )}
-                {!v2Pilote && f?.evenement === 'rouge' && f.statut === 'chaude' && (
-                  <Tip tip="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">
-                    <span className="rounded-full bg-st-ecartee/15 px-1.5 text-[9px] font-semibold text-st-ecartee">· ÉVÉNEMENT</span>
-                  </Tip>
-                )}
-              </span>
-            )
-            return verdict.v2
-              ? <Tip className="mt-1.5" tip="Verdict scoring (P×C) — rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc ; détail dans « Probabilité de mutation », statut matrice historique dans la Synthèse.">{badge}</Tip>
-              : <span className="mt-1.5 inline-flex">{badge}</span>
-          })()}
-          {/* C1 : motif d'écartement À CÔTÉ du badge + « voir pourquoi » → onglet Pourquoi pas */}
-          {f && verdictEcartee && (
-            <span data-ecartee-motif className="ml-1.5 mt-1.5 inline-flex items-center gap-1.5 text-[11px] align-middle">
-              <Tip tip={ecarteeMotifDetail}><span className="text-txt-mut">{ecarteeMotif}</span></Tip>
-              <button onClick={() => goDrawer('pourquoi')}
-                className="text-st-ecartee underline transition-colors duration-quick hover:text-st-ecartee/80"
-                title={CLIENT.fiche.ecarteeVoirTip}>
-                {CLIENT.fiche.ecarteeVoir}
-              </button>
-            </span>
-          )}
-          {/* M5.1 : le badge « V nn » disparaît — le dossier propriétaire (signaux vendeur)
-              reste dans la fiche, libellé en clair, sans le sigle nu */}
-          {f?.score_v?.v_score != null && (
-            <Tip className="ml-1.5 mt-1.5" tip={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans la Synthèse`}>
-              <span data-badge-signaux className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
-                style={{
-                  background: `${vBandColor(f.score_v.v_band)}22`,
-                  color: vBandColor(f.score_v.v_band),
-                }}>
-                signaux vendeur {f.score_v.v_score}/100
-              </span>
-            </Tip>
-          )}
-          {f?.score_v?.badge && (
-            <span className="ml-1.5 mt-1.5 inline-flex rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-mut">
-              {f.score_v.badge}
-            </span>
-          )}
-          {/* M9 lot 1 : chip Indice de confiance données (ICD) — affiché seulement si < 85
-              (cas nominal = pas de badge). Méta d'affichage, indépendante du score P. */}
-          {f?.icd && f.icd.score < 85 && (
-            <Tip className="ml-1.5 mt-1.5" tip={`Confiance des données : ${f.icd.score}/100 — ${f.icd.libelle}. ${f.icd.cloisonnement}`}>
-              <span data-badge-icd className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
-                style={{ background: `${icdColor(f.icd.bande)}22`, color: icdColor(f.icd.bande) }}>
-                {f.icd.libelle} {f.icd.score}/100
-              </span>
-            </Tip>
-          )}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {/* A6 : la loupe de la fiche cherche DANS la fiche (son contenu), pas dans le dashboard */}
@@ -1190,6 +1119,68 @@ export function Fiche({ idu }: { idu: string }) {
         </div>
       </div>
 
+      {/* M19 (réf. ordre) : CARTE VERDICT ENCADRÉE — juste sous l'en-tête, avant les tiroirs.
+          Le verdict n'est plus un petit badge noyé dans l'en-tête : c'est un en-tête de rapport. */}
+      {f && verdict && (
+        <div data-verdict-card className="shrink-0 border-b border-line px-5 py-3">
+          <div className="relative overflow-hidden rounded-lg border border-line-2 bg-surface-2 px-3 py-2.5">
+            <div aria-hidden className="absolute inset-y-0 left-0 w-1" style={{ background: verdict.color }} />
+            <div className="pl-2">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span data-badge-verdict className="inline-flex items-center gap-1.5 text-sm font-semibold" style={{ color: verdict.color }}>
+                  <span className="h-2 w-2 rounded-full" style={{ background: verdict.color }} />{verdict.label}
+                </span>
+                {v2Pilote && f.score_v2 && (f.score_v2.rang != null || f.score_v2.mult_base != null) && (
+                  <Tip tip="Verdict scoring (P×C) — rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc ; détail dans « Probabilité de mutation ».">
+                    <span className="font-mono text-[11px] text-txt-mut">
+                      {(verdict.tier === 'brulante' || verdict.tier === 'chaude') && f.score_v2.rang != null ? `rang ${f.score_v2.rang}` : ''}
+                      {f.score_v2.mult_base != null ? `${(verdict.tier === 'brulante' || verdict.tier === 'chaude') && f.score_v2.rang != null ? ' · ' : ''}×${f.score_v2.mult_base.toFixed(1)}` : ''}
+                    </span>
+                  </Tip>
+                )}
+                {!v2Pilote && f.evenement === 'rouge' && f.statut === 'chaude' && (
+                  <Tip tip="Statut forcé par la bascule événementielle (BODACC) — pas par la matrice Q×A">
+                    <span className="rounded-full bg-st-ecartee/15 px-1.5 text-[9px] font-semibold text-st-ecartee">· ÉVÉNEMENT</span>
+                  </Tip>
+                )}
+                {/* C1 : motif d'écartement à côté du verdict + « voir pourquoi » → tiroir Pourquoi pas */}
+                {verdictEcartee && (
+                  <span data-ecartee-motif className="inline-flex items-center gap-1.5 text-[11px]">
+                    <Tip tip={ecarteeMotifDetail}><span className="text-txt-mut">· {ecarteeMotif}</span></Tip>
+                    <button onClick={() => goDrawer('pourquoi')}
+                      className="text-st-ecartee underline transition-colors duration-quick hover:text-st-ecartee/80"
+                      title={CLIENT.fiche.ecarteeVoirTip}>
+                      {CLIENT.fiche.ecarteeVoir}
+                    </button>
+                  </span>
+                )}
+              </div>
+              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {f.score_v?.v_score != null && (
+                  <Tip tip={`${SCORE_TIP.v} (${f.score_v.v_band_label}) — détail dans le tiroir Signaux vendeur`}>
+                    <span data-badge-signaux className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
+                      style={{ background: `${vBandColor(f.score_v.v_band)}22`, color: vBandColor(f.score_v.v_band) }}>
+                      signaux vendeur {f.score_v.v_score}/100
+                    </span>
+                  </Tip>
+                )}
+                {f.score_v?.badge && (
+                  <span className="inline-flex rounded-full border border-line-2 px-2 py-0.5 text-[11px] text-txt-mut">{f.score_v.badge}</span>
+                )}
+                {f.icd && f.icd.score < 85 && (
+                  <Tip tip={`Confiance des données : ${f.icd.score}/100 — ${f.icd.libelle}. ${f.icd.cloisonnement}`}>
+                    <span data-badge-icd className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium tnum"
+                      style={{ background: `${icdColor(f.icd.bande)}22`, color: icdColor(f.icd.bande) }}>
+                      {f.icd.libelle} {f.icd.score}/100
+                    </span>
+                  </Tip>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {ficheSearchOpen && (
         <div className="flex shrink-0 items-center gap-2 border-b border-line bg-surface-2 px-5 py-2">
           <input autoFocus data-fiche-search value={ficheQuery} onChange={(e) => setFicheQuery(e.target.value)}
@@ -1200,22 +1191,10 @@ export function Fiche({ idu }: { idu: string }) {
         </div>
       )}
 
-      {!fq && (
-      // M19 : la barre d'onglets est devenue une NAV pure — chaque libellé ouvre + scrolle son
-      // tiroir (« Synthèse » remonte en tête). Les 8 contenus vivent désormais en tiroirs empilés.
-      // QA-46 (M13-C) : flex-wrap — les libellés reviennent à la ligne sur 400 px (pas de scroll-x).
-      <nav data-fiche-tabs className="flex shrink-0 flex-wrap gap-x-4 gap-y-1.5 border-b border-line px-5 py-2 text-xs">
-        {/* R5 (O3) : « Pourquoi pas ? » n'apparaît que si la parcelle est écartée ou porte des flags */}
-        {[...TABS, ...(f && (verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) ? [TAB_POURQUOI] : [])].map((t) => (
-          <button key={t.k} onClick={() => (t.k === 'synthese' ? goTop() : goDrawer(t.k))}
-            className="shrink-0 text-txt-dim transition-colors duration-quick hover:text-txt-hi">
-            {t.label}
-          </button>
-        ))}
-      </nav>
-      )}
+      {/* M19 (réf. ordre) : la barre d'onglets est RETIRÉE — la fiche est une pile de tiroirs
+          empilés, navigable au scroll ; plus de navigation par onglets. */}
 
-      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip p-5">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip p-5">
         {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
         {fq && f && (
           <div data-fiche-search-results>
@@ -1283,7 +1262,8 @@ export function Fiche({ idu }: { idu: string }) {
                 </p>
               </div>
             )}
-            <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} defaultOpen tip={SCORE_TIP.q} />
+            {/* réf. ordre : tiroirs TOUS FERMÉS par défaut — Qualité n'est plus déplié pleine page. */}
+            <ScoreBar label="Qualité" value={f.q_score} color="#5CE6A1" lines={qLines} tip={SCORE_TIP.q} />
             {/* correctif M5 : le statut matrice legacy n'est PLUS le verdict d'en-tête quand un
                 run v2 existe — il reste visible ici, en historique, jamais en verdict principal */}
             {v2Pilote && meta && (
@@ -1422,6 +1402,9 @@ export function Fiche({ idu }: { idu: string }) {
           </>
         )}
       </div>
+
+      {/* M19 (réf. ordre) : CARTE IA en bas de fiche — après les tiroirs, avant les actions. */}
+      {f && <AskBar idu={idu} zone={null} />}
 
       <div className="shrink-0 border-t border-line px-5 py-3">
         {/* P6 (dernière passe) : barre d'actions REPRISE — deux rangées régulières, boutons de
