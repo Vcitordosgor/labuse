@@ -961,7 +961,7 @@ const TABS: { k: 'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'; lab
 const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
 // M19 · onglets déjà migrés en tiroirs (dans la pile Synthèse). Grandit à chaque commit
 // jusqu'à absorber les 8 ; à ce moment la bascule `tab` disparaît, la barre devient nav pure.
-const MIGRATED = new Set<string>(['risques', 'marche', 'proprio', 'regles'])
+const MIGRATED = new Set<string>(['risques', 'marche', 'proprio', 'regles', 'bilan'])
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -1051,6 +1051,9 @@ export function Fiche({ idu }: { idu: string }) {
   const reglesZone = f?.reglement_plu?.zones?.[0]?.zone
   const reglesSdp = f?.potentiel_transformation?.sdp_residuelle_m2
   const reglesValue = [reglesZone ? `Zone ${reglesZone}` : null, reglesSdp != null ? `${fmtInt(reglesSdp)} m² SDP` : null].filter(Boolean).join(' · ') || 'voir le détail'
+  // Bilan / Faisabilité : la capacité fine (logements, charge foncière) est calculée DANS ces
+  // blocs à l'ouverture (pas de requête au chargement). Fermé = proxy SDP depuis f + libellé.
+  const bilanValue = reglesSdp != null ? `~${fmtInt(reglesSdp)} m² SDP · marché & fiscal` : 'capacité · marché · fiscal · RTAA'
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
@@ -1399,10 +1402,13 @@ export function Fiche({ idu }: { idu: string }) {
               <TraducteurBloc idu={idu} />
               {reglesLines.length > 0 && <div className="mt-2 flex flex-col gap-1">{reglesLines.map((l, i) => <Line key={i} line={l} />)}</div>}
             </FicheDrawer>
+            {/* Bilan — capacité + marché de sortie + fiscal & RTAA (calculé à l'ouverture). */}
+            <FicheDrawer id="bilan" ico="🧮" name="Bilan" value={bilanValue}>
+              <BilanTab idu={idu} />
+            </FicheDrawer>
           </>
         )}
         {!fq && f && tab === 'faisabilite' && <FaisabiliteTab idu={idu} />}
-        {!fq && f && tab === 'bilan' && <BilanTab idu={idu} />}
         {!fq && f && tab === 'pourquoi' && <PourquoiPasTab idu={idu} />}
       </div>
 
