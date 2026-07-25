@@ -959,9 +959,6 @@ const TABS: { k: 'synthese' | Onglet | 'bilan' | 'faisabilite' | 'pourquoi'; lab
 // R5 (O3) : onglet « Pourquoi pas ? » — ajouté SEULEMENT pour les parcelles écartées/flaggées
 // (anti-fiche : motifs RÉDHIBITOIRE/VIGILANCE sourcés). La nav reste toujours visible (règle PJ6).
 const TAB_POURQUOI = { k: 'pourquoi' as const, label: 'Pourquoi pas ?' }
-// M19 · onglets déjà migrés en tiroirs (dans la pile Synthèse). Grandit à chaque commit
-// jusqu'à absorber les 8 ; à ce moment la bascule `tab` disparaît, la barre devient nav pure.
-const MIGRATED = new Set<string>(['risques', 'marche', 'proprio', 'regles', 'bilan', 'pourquoi', 'faisabilite'])
 
 export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
@@ -999,6 +996,10 @@ export function Fiche({ idu }: { idu: string }) {
     return () => window.clearTimeout(t)
   }, [pendingScroll, tab])
   const goDrawer = (key: string) => { setTab('synthese'); setPendingScroll(key) }
+  // M19 · la barre d'onglets est devenue une NAV pure : « Synthèse » remonte en tête de fiche,
+  // les autres ouvrent+scrollent leur tiroir. Ref sur la zone scrollable pour le retour en tête.
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const goTop = () => { setTab('synthese'); scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' }) }
   // A6 (post-revue) : recherche DANS la fiche (≠ barre du haut). La loupe de la fiche filtre le
   // CONTENU de la fiche (toutes les lignes tracées, tous onglets), pas le dashboard.
   const [ficheSearchOpen, setFicheSearchOpen] = useState(false)
@@ -1200,21 +1201,21 @@ export function Fiche({ idu }: { idu: string }) {
       )}
 
       {!fq && (
-      // QA-46 (M13-C) : les onglets RETOURNENT À LA LIGNE (flex-wrap) au lieu de défiler
-      // horizontalement — 8 onglets ne tiennent pas sur la largeur de fiche (400 px) et
-      // produisaient une barre de scroll. `gap-y` gère l'espacement vertical entre lignes.
-      <div data-fiche-tabs className="flex shrink-0 flex-wrap gap-x-4 gap-y-1.5 border-b border-line px-5 py-2 text-xs">
+      // M19 : la barre d'onglets est devenue une NAV pure — chaque libellé ouvre + scrolle son
+      // tiroir (« Synthèse » remonte en tête). Les 8 contenus vivent désormais en tiroirs empilés.
+      // QA-46 (M13-C) : flex-wrap — les libellés reviennent à la ligne sur 400 px (pas de scroll-x).
+      <nav data-fiche-tabs className="flex shrink-0 flex-wrap gap-x-4 gap-y-1.5 border-b border-line px-5 py-2 text-xs">
         {/* R5 (O3) : « Pourquoi pas ? » n'apparaît que si la parcelle est écartée ou porte des flags */}
         {[...TABS, ...(f && (verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) ? [TAB_POURQUOI] : [])].map((t) => (
-          <button key={t.k} onClick={() => (MIGRATED.has(t.k) ? goDrawer(t.k) : setTab(t.k))}
-            className={`shrink-0 ${tab === t.k && !MIGRATED.has(t.k) ? 'font-medium text-txt-hi' : 'text-txt-dim hover:text-txt-mut'}`}>
+          <button key={t.k} onClick={() => (t.k === 'synthese' ? goTop() : goDrawer(t.k))}
+            className="shrink-0 text-txt-dim transition-colors duration-quick hover:text-txt-hi">
             {t.label}
           </button>
         ))}
-      </div>
+      </nav>
       )}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip p-5">
+      <div ref={scrollRef} className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overflow-x-clip p-5">
         {/* A6 : recherche active → on remplace les onglets par les lignes de la fiche qui matchent */}
         {fq && f && (
           <div data-fiche-search-results>
