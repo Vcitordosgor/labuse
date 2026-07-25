@@ -46,6 +46,14 @@ CREATE TABLE IF NOT EXISTS saved_searches (
   id serial PRIMARY KEY, nom varchar(80) NOT NULL, hash text NOT NULL,
   created_at timestamptz DEFAULT now()
 );
+-- M21-B3 : préférences de notification par compte (désinscription obligatoire du digest e-mail).
+CREATE TABLE IF NOT EXISTS notif_prefs (
+  compte_id integer PRIMARY KEY,
+  unsubscribed boolean DEFAULT false,   -- opt-out du digest e-mail (jamais d'envoi sans arrêt possible)
+  token varchar(48),                    -- jeton de désinscription en 1 clic (lien + List-Unsubscribe)
+  digest_freq varchar(12) DEFAULT 'hebdo',   -- hebdo | quotidien (réglable)
+  last_digest_at timestamptz
+);
 """
 
 
@@ -487,3 +495,78 @@ def digest_html(request: Request, db: Session = Depends(get_db)) -> str:
 <tr><td style="padding:14px 24px;font:10px sans-serif;color:#99a">Estimations indicatives issues de
 données publiques — ne valent ni conseil juridique ni garantie de constructibilité.</td></tr>
 </table></body></html>"""
+
+
+# ── M21-B3 — ENVOI du digest par e-mail (le contenu M13 existait, l'envoi jamais) ──
+# Un DIGEST (pas un mail par événement), avec désinscription OBLIGATOIRE (lien + List-Unsubscribe).
+# Ne notifie que des déclencheurs RÉELS (bascule / bodacc / permis / veille) ; jamais les démos.
+
+def _notif_token(db: Session, cid: int) -> str:
+    import secrets
+    tok = db.execute(text("SELECT token FROM notif_prefs WHERE compte_id=:c"), {"c": cid}).scalar()
+    if tok:
+        return tok
+    tok = secrets.token_urlsafe(24)
+    db.execute(text("INSERT INTO notif_prefs (compte_id, token) VALUES (:c,:t) "
+                    "ON CONFLICT (compte_id) DO UPDATE SET token=COALESCE(notif_prefs.token,:t)"),
+               {"c": cid, "t": tok})
+    return db.execute(text("SELECT token FROM notif_prefs WHERE compte_id=:c"), {"c": cid}).scalar()
+
+
+def envoyer_digests(db: Session, *, base_url: str = "", freq: str = "hebdo", force: bool = False) -> dict:
+    """Envoie le digest aux comptes actifs abonnés ayant des événements RÉELS récents. Respecte
+    l'opt-out (`notif_prefs.unsubscribed`) et un intervalle mini (anti-double-envoi)."""
+    from datetime import datetime, timedelta, timezone
+
+    from ..emails import digest_notifications
+    from ..mail import send_email
+
+    interval_h = 20 if freq == "quotidien" else 24 * 6  # hebdo ≈ 6 j
+    now = datetime.now(timezone.utc)
+    recipients = db.execute(text(
+        "SELECT c.id AS cid, u.email FROM comptes c "
+        "JOIN utilisateurs u ON u.compte_id = c.id AND u.role = 'titulaire' "
+        "WHERE c.statut = 'actif'")).mappings().all()
+    envoyes = ignores = 0
+    for r in recipients:
+        cid, email = r["cid"], r["email"]
+        pref = db.execute(text("SELECT unsubscribed, last_digest_at FROM notif_prefs WHERE compte_id=:c"),
+                          {"c": cid}).first()
+        if pref and pref[0]:                          # désinscrit → jamais d'envoi
+            ignores += 1
+            continue
+        last = pref[1] if pref else None
+        if not force and last and (now - last) < timedelta(hours=interval_h):
+            ignores += 1
+            continue
+        data = _digest_data(db, cid)
+        evs = [e for e in data["evenements"] if not e.get("demo")]   # jamais de démo dans un vrai digest
+        if not evs:
+            ignores += 1
+            continue
+        tok = _notif_token(db, cid)
+        lien_desabo = f"{base_url}/events/desabonner?c={cid}&t={tok}"
+        sujet, corps = digest_notifications(
+            evs, lien_desabo, base_url=base_url,
+            periode="aujourd'hui" if freq == "quotidien" else "cette semaine")
+        send_email(email, sujet, corps, headers={"List-Unsubscribe": f"<{lien_desabo}>"})
+        db.execute(text("INSERT INTO notif_prefs (compte_id, last_digest_at) VALUES (:c,:n) "
+                        "ON CONFLICT (compte_id) DO UPDATE SET last_digest_at=:n"), {"c": cid, "n": now})
+        envoyes += 1
+    db.commit()
+    return {"envoyes": envoyes, "ignores": ignores}
+
+
+@router.get("/desabonner", response_class=HTMLResponse, include_in_schema=False)
+def desabonner(c: int, t: str, db: Session = Depends(get_db)) -> str:
+    """Désinscription en 1 clic du digest e-mail (lien public, jeton par compte). Obligation légale."""
+    tok = db.execute(text("SELECT token FROM notif_prefs WHERE compte_id=:c"), {"c": c}).scalar()
+    if not tok or tok != t:
+        return HTMLResponse("<!doctype html><meta charset=utf-8><p style='font:15px sans-serif;padding:40px'>"
+                            "Lien de désinscription invalide ou expiré.</p>", status_code=400)
+    db.execute(text("UPDATE notif_prefs SET unsubscribed = true WHERE compte_id = :c"), {"c": c})
+    db.commit()
+    return ("<!doctype html><meta charset=utf-8><body style='font:15px sans-serif;padding:40px;max-width:520px'>"
+            "<h1 style='color:#2FE0A0'>Désinscription confirmée</h1>"
+            "<p>Vous ne recevrez plus le résumé e-mail LABUSE. Les notifications restent visibles dans "
+            "l'application. Vous pouvez réactiver le résumé depuis votre espace compte.</p></body>")
