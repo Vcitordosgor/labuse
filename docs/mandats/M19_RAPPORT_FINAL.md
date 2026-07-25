@@ -71,15 +71,30 @@ visibles en tête (contenu verdict-adjacent). **Rien supprimé (R1)** — seulem
   1950, **module IA**, **calculette** (composant `Calculette` partagé avec l'outil M15-C2 — non dupliqué),
   **suivi**, onglets Règles / Risques / Marché / Proprio / Bilan / Faisabilité / Pourquoi pas.
 
-## Choix de périmètre (transparence, R4 prime)
-La direction validée (maquettes) est un **empilement de tiroirs sans onglets**. La fiche de production repose
-sur des **onglets** (Synthèse + 7). Fusionner tous les onglets en un seul flux de tiroirs = démontage à haut
-risque de régression d'un composant de 1 500 lignes. **Décision** : appliquer les tiroirs « fermé ça informe »
-là où le risque est maîtrisé — **la Synthèse** (l'écran principal), en réutilisant les blocs prouvés — et
-**conserver les onglets** pour le détail. C'est la meilleure part de la direction validée livrée sans mettre en
-péril la non-régression. **Ambition restante** (mandat séparé si Vic le veut) : fondre les onglets Règles /
-Risques / Marché / Proprio en tiroirs Synthèse (dont l'affirmation du négatif risques « ✓ hors PPR » — aujourd'hui
-une absence), pour égaler pixel-près la maquette A.
+## Onglets → tiroirs (strangler, 8 commits) — **TERMINÉ** (option 2, Vic)
+Les 8 onglets ont été **fondus en tiroirs, un par commit**, sans big-bang : chaque onglet est **reparenté**
+(son rendu existant, inchangé) dans un `FicheDrawer` de la pile Synthèse. Ordre de risque croissant tenu.
+Après CHAQUE onglet : `tsc + build + golden 116/116` + capture (fermé/ouvert). Aucun onglet récalcitrant.
+
+| # | Commit | Onglet | Valeur clé fermée (P1.3) |
+|---|---|---|---|
+| 1 | 3046c71 | **Risques** | **« ✓ rien à signaler · N couches vérifiées »** — le négatif AFFIRMÉ (sinon « N vigilance · M couches sans risque ») |
+| 2 | 473ead7 | Marché | « 498 €/m² · 91 ventes secteur » (médiane structurée `dvf_parcelle`, typée) |
+| 3 | 95575e6 | Proprio | « CBO TERRITORIA · Gérant âgé (81 ans)… » (signal dominant sinon type ; personne physique jamais nommée) |
+| 4 | ff9c352 | Règles | « Zone UB · 126 m² SDP » |
+| 5 | 47b5e10 | Bilan | « ~126 m² SDP · marché & fiscal » |
+| 6 | b57301a | Pourquoi pas | « motifs d'écartement & points de vigilance » (conditionnel écartée/flaggée ; le C1 « voir pourquoi » l'ouvre) |
+| 7 | bc1c83d | Faisabilité | « ~126 m² SDP · charge foncière » (calculette PARTAGÉE M15-C2, réutilisée, jamais dupliquée) |
+| — | 9488c2a | *finalisation* | barre d'onglets → **nav pure** (« Synthèse » remonte, chaque libellé ouvre+scrolle son tiroir) |
+
+Infra strangler : `FicheDrawer` gagne `id`/`aria-expanded` ; pendant la migration, un clic d'onglet migré
+ouvrait+scrollait le tiroir tandis que les non-migrés gardaient l'ancienne bascule (les deux navigations
+coexistaient — étape intermédiaire testable). **Fix R4** (fonction préservée) : le PDF reflète la charge
+foncière dès que la calculette est active (`calculette` store non-null = tiroir Faisa/Bilan ouvert), au lieu de
+dépendre d'un onglet actif devenu tiroir. **Captures finales** : `qa/m19/maquettes/impl_FINAL_ferme.png` (fiche
+entière en pile de tiroirs, chacun informe fermé) + `impl_FINAL_ouvert.png` (7 tiroirs ouverts, tout le contenu
+présent). La fiche EST désormais la pile « fermé ça informe » de la maquette A : verdict + scores en tête, puis
+chaque section en tiroir informatif. Plus d'onglets qui masquent — tout est là, replié (R1).
 
 ## Arbitrages laissés à Vic (aucun blocage, rien supprimé)
 1. **C7 cadastre** : Géoportail (Parcellaire Express IGN) au lieu de `cadastre.gouv.fr` (non-linkable en GET). Cf. supra.
@@ -87,7 +102,8 @@ une absence), pour égaler pixel-près la maquette A.
    équipements cosmétiques → repliés, jamais retirés. Vic peut contester chaque ligne du tableau P1.3.
 3. **⚠ suspects** de P1.1 (rang masqué hors brûlante/chaude, ICD ≥85 masqué, redondance Complétude/ICD, « accès
    à vérifier » non pondéré…) : **signalés, laissés en place** — leur correction dépend d'une décision produit.
-4. **Onglets → tiroirs** : périmètre à ouvrir (cf. ci-dessus).
+4. **Onglets → tiroirs** : ✅ FAIT (strangler 8 commits). La barre subsiste en **nav** ; Vic peut décider de la
+   retirer complètement si la navigation par scroll suffit.
 
 ## PHASE 4 (après merge Vic)
 Rejouer `golden 116/116` sur la prod, vérifier la fiche en ligne (LOT C + tiroirs), confirmer exports/IA/calculette.
