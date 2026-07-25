@@ -289,12 +289,16 @@ def appliquer_reset(db: Session, token: str, password: str) -> bool:
 # et appelle le point d'envoi. On ne simule JAMAIS un envoi.
 
 def _envoyer_avis_echeance(email: str, echeance_iso: str, lien_espace: str) -> None:
-    """POINT D'ENVOI de l'avis d'échéance (loi Chatel, art. L.215-1). Aucun service e-mail branché → on
-    TRACE le rappel dans le log serveur (= file d'attente consultable). Dès qu'un e-mail sera câblé, ce
-    corps est remplacé sans toucher aux appelants. On n'affiche/ne prétend JAMAIS qu'un e-mail est parti."""
+    """M18-C → M21-B2 — POINT D'ENVOI de l'avis d'échéance (loi Chatel, art. L.215-1), désormais BRANCHÉ
+    sur le transport SMTP unique (`labuse.mail`). Envoi SYNCHRONE (contexte CLI/cron). Sans SMTP configuré,
+    le mail est journalisé et non prétendu. Le texte à valeur légale vit dans `labuse.emails.avis_echeance`."""
+    from .emails import avis_echeance as _texte
+    from .mail import send_email
+
+    sujet, corps = _texte(echeance_iso, lien_espace)
+    r = send_email(email, sujet, corps)
     logging.getLogger("labuse.comptes").info(
-        "[AVIS-ECHEANCE Chatel · À ENVOYER dès que le service e-mail sera branché] %s → échéance %s (%s)",
-        email, echeance_iso, lien_espace)
+        "[AVIS-ECHEANCE Chatel] %s → échéance %s (envoi=%s)", email, echeance_iso, r.detail)
 
 
 def avis_echeance_dus(db: Session, today: date | None = None) -> list[dict]:

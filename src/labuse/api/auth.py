@@ -35,7 +35,9 @@ FAILURE_DELAY_S = 0.4          # ralentit la force brute sans pénaliser l'utili
 _PUBLIC = {"/health", "/healthz", "/healthz/crons", "/readyz", "/login", "/logout", "/favicon.ico",
            "/invitation", "/reset", "/reset-demande", "/cgv", "/mentions-legales", "/confidentialite",
            "/onboarding/retour", "/onboarding/paiement", "/stripe/webhook", "/guide",
-           "/flash", "/flash/retour", "/flash/statut", "/flash/telecharger"}
+           "/flash", "/flash/retour", "/flash/statut", "/flash/telecharger",
+           # M21-B3 : désinscription du digest e-mail en 1 clic (lien public jeton — sécurité = le jeton).
+           "/events/desabonner"}
 # Documentation auto (surface de découverte de l'API) : publique en local seulement.
 _DOCS = {"/docs", "/docs/oauth2-redirect", "/redoc", "/openapi.json"}
 

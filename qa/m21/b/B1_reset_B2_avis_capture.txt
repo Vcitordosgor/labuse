@@ -1,0 +1,69 @@
+
+===== MESSAGE REÇU (SMTP) =====
+[enveloppe] MAIL FROM=contact@labuse.immo  RCPT TO=['client@exemple.fr']
+From: LABUSE <contact@labuse.immo>
+To: client@exemple.fr
+Subject: LABUSE =?utf-8?q?=E2=80=94_r=C3=A9initialisation?= de votre mot de
+ passe
+Date: Sat, 25 Jul 2026 23:34:33 +0200
+Message-ID: <178501527380.79800.4930799377393527738@labuse.immo>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Bonjour,
+
+Une r=C3=A9initialisation du mot de passe de votre compte LABUSE a =C3=A9t=C3=
+=A9 demand=C3=A9e. Pour choisir un nouveau mot de passe, ouvrez le lien ci-de=
+ssous :
+
+https://app.labuse.immo/reset?token=3DDEMO_TOKEN_1h
+
+Ce lien est valable 1 heure. Pass=C3=A9 ce d=C3=A9lai, il faudra en redemande=
+r un.
+
+Si vous n'=C3=AAtes pas =C3=A0 l'origine de cette demande, ignorez simplement=
+ cet e-mail : votre mot de passe reste inchang=C3=A9 et votre compte n'est pa=
+s modifi=C3=A9.
+
+=E2=80=94 LABUSE
+contact@labuse.immo
+===== FIN MESSAGE =====
+
+===== MESSAGE REÇU (SMTP) =====
+[enveloppe] MAIL FROM=contact@labuse.immo  RCPT TO=['client@exemple.fr']
+From: LABUSE <contact@labuse.immo>
+To: client@exemple.fr
+Subject: LABUSE =?utf-8?b?4oCU?= votre abonnement se reconduit le 25 octobre
+ 2026
+Date: Sat, 25 Jul 2026 23:34:33 +0200
+Message-ID: <178501527381.79800.8868324662371751675@labuse.immo>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
+MIME-Version: 1.0
+
+Bonjour,
+
+Conform=C3=A9ment =C3=A0 l'article L. 215-1 du code de la consommation (loi C=
+hatel), nous vous informons que votre abonnement LABUSE arrive =C3=A0 =C3=A9c=
+h=C3=A9ance le 25 octobre 2026.
+
+Sauf d=C3=A9nonciation de votre part, il sera reconduit tacitement pour une n=
+ouvelle p=C3=A9riode de douze (12) mois, aux conditions en vigueur.
+
+Vous pouvez choisir de NE PAS reconduire cet abonnement. Pour cela, informez-=
+nous de votre d=C3=A9cision au plus tard UN (1) MOIS avant l'=C3=A9ch=C3=A9an=
+ce, soit avant le 25 septembre 2026, par e-mail =C3=A0 contact@labuse.immo ou=
+ depuis votre espace :
+
+https://app.labuse.immo/login
+
+Si vous ne nous avez pas inform=C3=A9s de votre facult=C3=A9 de non-reconduct=
+ion dans ce d=C3=A9lai, vous pourrez mettre gratuitement un terme =C3=A0 la r=
+econduction et, le cas =C3=A9ch=C3=A9ant, =C3=AAtre rembours=C3=A9 des sommes=
+ vers=C3=A9es d'avance apr=C3=A8s la date de reconduction (art. L. 215-1, al.=
+ 3).
+
+=E2=80=94 LABUSE
+contact@labuse.immo
+===== FIN MESSAGE =====

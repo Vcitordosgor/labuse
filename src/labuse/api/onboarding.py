@@ -208,11 +208,17 @@ def reset_page(token: str = ""):
 
 
 def _envoyer_reset_email(email: str, lien: str) -> None:
-    """M18-A6 — POINT D'ENVOI du lien de réinitialisation. L'app n'a AUCUN service e-mail branché
-    (Resend retiré, audit M16). En attendant, on TRACE le lien dans le log serveur (= file d'attente
-    consultable). Dès qu'un service e-mail sera câblé, il remplacera CE corps de fonction, sans
-    toucher aux appelants. On ne prétend JAMAIS côté client qu'un e-mail est parti."""
-    log.info("[RESET-EMAIL · À ENVOYER dès que le service e-mail sera branché] %s → %s", email, lien)
+    """M18-A6 → M21-B1 — POINT D'ENVOI du lien de réinitialisation, désormais BRANCHÉ sur le
+    transport SMTP unique (`labuse.mail`). Envoi en tâche de fond (ne bloque pas la requête, pas de
+    fuite de timing sur l'existence du compte). Sans SMTP configuré, `send_email` journalise le mail
+    (lien inclus, = file d'attente dev) et ne prétend rien. Le token n'est jamais logué en clair
+    hors de ce cas dev."""
+    from ..emails import reset_password
+    from ..mail import send_email_async
+
+    sujet, corps = reset_password(lien)
+    send_email_async(email, sujet, corps)
+    log.info("[RESET-EMAIL] envoi déclenché → %s", email)
 
 
 @router.post("/reset-demande", include_in_schema=False)
@@ -232,15 +238,24 @@ async def reset_demande(request: Request, db: Session = Depends(get_db)):
                 _envoyer_reset_email(res["email"], res["lien"])
         except Exception:  # noqa: BLE001 — jamais bloquer, jamais révéler l'existence du compte
             pass
-    # État HONNÊTE : on n'affiche PAS « e-mail envoyé » (l'envoi auto n'est pas encore branché).
-    return HTMLResponse(_page("demande enregistrée", """
-<div class="big"><div class="mark ok" aria-hidden="true">✓</div>
+    # État HONNÊTE (boussole) : le message dépend de l'état du TRANSPORT (pas de l'existence du
+    # compte — anti-énumération). SMTP branché → on annonce l'envoi (conditionnel « si un compte
+    # existe ») ; SMTP absent (dev) → on ne prétend PAS qu'un e-mail est parti.
+    from ..mail import mail_configured
+    if mail_configured():
+        corps = """<div class="big"><div class="mark ok" aria-hidden="true">✓</div>
+<h1>Vérifiez votre boîte mail</h1><p class="sub">un lien valable 1 heure vient d'être envoyé</p>
+<p style="font-size:13px;line-height:1.6">Si un compte est associé à cette adresse, un e-mail de
+réinitialisation vient de lui être envoyé. Pensez à vérifier vos indésirables. Le lien expire dans 1 heure.</p>
+<p style="margin-top:18px"><a class="pill" href="/login">← Retour à la connexion</a></p></div>"""
+    else:
+        corps = """<div class="big"><div class="mark ok" aria-hidden="true">✓</div>
 <h1>Demande enregistrée</h1><p class="sub">un lien valable 1 heure a été généré</p>
 <p style="font-size:13px;line-height:1.6">Si un compte est associé à cette adresse, un lien de
-réinitialisation lui est destiné. <b style="color:var(--warn)">L'envoi automatique par e-mail est en
-cours d'activation</b> — en attendant, votre contact LABUSE peut vous le transmettre immédiatement.</p>
-<p style="margin-top:18px"><a class="pill" href="/login">← Retour à la connexion</a></p></div>""",
-                        pied=False))
+réinitialisation lui est destiné. <b style="color:var(--warn)">L'envoi automatique par e-mail n'est pas
+actif sur cet environnement</b> — votre contact LABUSE peut vous le transmettre.</p>
+<p style="margin-top:18px"><a class="pill" href="/login">← Retour à la connexion</a></p></div>"""
+    return HTMLResponse(_page("demande enregistrée", corps, pied=False))
 
 
 @router.post("/reset", include_in_schema=False)

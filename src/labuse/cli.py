@@ -108,13 +108,13 @@ def suggestions_cmd(nouvelles: bool = typer.Option(False, "--nouvelles", help="S
 @app.command("avis-echeance")
 def avis_echeance_cmd() -> None:
     """M18-C (loi Chatel) : déclenche les avis d'échéance dus (fenêtre 3→1 mois avant reconduction).
-    L'envoi e-mail réel s'activera au branchement d'un service e-mail ; ici, chaque avis est tracé
-    (point d'envoi identifié). Cronable (mensuel)."""
+    M21-B2 : l'e-mail est réellement envoyé via le transport SMTP (ou journalisé si SMTP non configuré).
+    Dédup par terme. Cronable (quotidien conseillé)."""
     from .comptes import declencher_avis_echeance
 
     with session_scope() as s:
         n = declencher_avis_echeance(s)
-    typer.echo(f"✓ Avis d'échéance Chatel déclenchés : {n} (envoi e-mail réel = dès branchement du service).")
+    typer.echo(f"✓ Avis d'échéance Chatel déclenchés : {n} (e-mail envoyé si SMTP configuré, sinon journalisé).")
 
 
 @app.command("mail-test")
@@ -1542,6 +1542,23 @@ def detect_events_cmd(run_from: str | None = None, run_to: str = "q_v2_demo") ->
         out = detect_events(s, run_from, run_to, demo=run_to.endswith("_demo"))
         s.commit()
     typer.echo(f"Événements émis {run_from} → {run_to} : {out}")
+
+
+@app.command("digest")
+def digest_cmd(freq: str = typer.Option("hebdo", help="hebdo | quotidien"),
+               force: bool = typer.Option(False, help="ignore l'intervalle mini (test)")) -> None:
+    """M21-B3 : envoie le DIGEST e-mail (résumé des événements) aux comptes actifs abonnés. Cronable
+    (hebdo par défaut). Respecte l'opt-out (désinscription) ; ne notifie que des déclencheurs réels."""
+    from sqlalchemy.orm import Session
+
+    from .api.events import ensure_tables, envoyer_digests
+    from .db import engine
+
+    ensure_tables(engine())
+    base = get_settings().public_base_url or ""
+    with Session(engine()) as s:
+        out = envoyer_digests(s, base_url=base, freq=freq, force=force)
+    typer.echo(f"✓ Digest ({freq}) : {out['envoyes']} envoyé(s), {out['ignores']} ignoré(s).")
 
 
 @app.command("score-v-fetch")
