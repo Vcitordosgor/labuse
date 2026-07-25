@@ -5,6 +5,7 @@ import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExpla
 import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
 import { fmtDate, fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
+import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 import { ErrorState } from '../States'
 import { AskBar, renderRich } from './AskBar'
@@ -405,8 +406,9 @@ function WatchButton({ idu }: { idu: string }) {
   return (
     <button onClick={() => t.mutate()}
       className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border text-xs ${on ? 'border-mint text-mint' : 'border-line-2 text-txt hover:text-txt-hi'}`}
-      title={on ? 'Suivie — les événements alimentent la cloche' : 'Suivre cette parcelle (alertes sans pipeline)'}>
-      👁
+      title={on ? CLIENT.fiche.suivreActif : CLIENT.fiche.suivre}>
+      {/* C4 : l'œil devient cloche — cohérent avec les notifications (M16) que le suivi alimente */}
+      🔔
     </button>
   )
 }
@@ -939,7 +941,6 @@ export function Fiche({ idu }: { idu: string }) {
   const select = useApp((s) => s.select)
   const moduleFiche = useApp((s) => s.moduleFiche)
   const setModule = useApp((s) => s.setModule)
-  const setBasemap = useApp((s) => s.setBasemap)   // Fix LOT 2 : « Cadastre » = fond officiel IGN + halo
   const setFlyTo = useApp((s) => s.setFlyTo)        // Fix LOT 2 : « 1950 » recentre sur la parcelle
   const modBlock = moduleFiche[idu]
   const sourceLine = useApp((s) => s.sourceLine)
@@ -970,6 +971,11 @@ export function Fiche({ idu }: { idu: string }) {
   const verdict = f ? verdictMeta(f.statut, f.score_v2?.tier, f.etage0) : null
   const v2Pilote = !!(f?.score_v2 && !f.etage0)
   const verdictEcartee = f ? (f.etage0 || (v2Pilote ? f.score_v2!.tier === 'ecartee' : f.statut === 'ecartee')) : false
+  // C1 : motif principal d'écartement, affiché À CÔTÉ du badge (plus de bandeau rouge séparé).
+  // Le détail complet reste dans l'onglet « Pourquoi pas » (rien n'est supprimé — R1).
+  const hardLines = f?.lines.filter((l) => l.result === 'HARD_EXCLUDE') ?? []
+  const ecarteeMotif = hardLines[0] ? layerLabel(hardLines[0].layer) : (f ? `qualité insuffisante (Q ${f.q_score})` : '')
+  const ecarteeMotifDetail = hardLines[0] ? `${layerLabel(hardLines[0].layer)} — ${fmtLibelleBrut(hardLines[0].detail)}` : `Aucune exclusion dure : qualité insuffisante (Q ${f?.q_score} < 50) — détail dans « Pourquoi pas ».`
   const meta = f ? STATUT_META[f.statut] : null
   const qLines = f?.lines.filter((l) => l.axis === 'q') ?? []
   const aLines = f?.lines.filter((l) => l.axis === 'a') ?? []
@@ -977,20 +983,9 @@ export function Fiche({ idu }: { idu: string }) {
 
   return (
     <aside className="absolute right-0 top-0 z-10 flex h-full w-[400px] max-w-full flex-col border-l border-line bg-surface-1 shadow-2xl">
-      {f && verdictEcartee && (
-        <div data-bandeau-ecartee className="shrink-0 border-b border-line-2 bg-surface-2 px-5 py-2.5">
-          <div className="text-xs font-medium text-st-ecartee">LABUSE l'a écartée — voici pourquoi</div>
-          <div className="mt-1 flex flex-col gap-0.5">
-            {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').slice(0, 4).map((l) => (
-              <div key={l.layer} className="text-[10.5px] leading-snug text-txt-mut">✕ <b className="text-txt">{layerLabel(l.layer)}</b> — {fmtLibelleBrut(l.detail)}</div>
-            ))}
-            {f.lines.filter((l) => l.result === 'HARD_EXCLUDE').length === 0 && (
-              <div className="text-[10.5px] text-txt-mut">Aucune exclusion dure : qualité insuffisante (Q {f.q_score} &lt; 50) — détail dans les onglets.</div>
-            )}
-          </div>
-          <div className="mt-1 text-[11px] text-txt-dim">Une écartée motivée = de la due diligence offerte — chaque motif est sourcé dans les onglets.</div>
-        </div>
-      )}
+      {/* C1 : le bandeau « écartée » séparé est retiré — le motif s'affiche à côté du badge
+          (en-tête, plus bas) et « voir pourquoi » ouvre l'onglet « Pourquoi pas ». Les motifs
+          sourcés y restent intégralement (R1 : rien n'est supprimé). */}
       {f?.evenement === 'rouge' && (
         <div className="shrink-0 border-b border-st-ecartee/40 bg-st-ecartee/15 px-5 py-2.5">
           {/* R3 (PJ5) : vocabulaire matrice non thermique — « priorité dossier » (thermique = tier P servi) */}
@@ -1022,16 +1017,18 @@ export function Fiche({ idu }: { idu: string }) {
           <div className="truncate font-mono text-sm font-medium text-txt-hi">{idu}</div>
           {/* M6 2a (§1.8) : adresse postale BAN en tête de fiche — jamais un champ vide */}
           {f && (
-            <div data-fiche-adresse className={`mt-0.5 flex min-w-0 items-baseline gap-2 text-[11px] ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
-              <span className="min-w-0 truncate">{f.adresse ?? 'Adresse non disponible'}</span>
-              {/* B4 (BLOC B) : recherche d'ADRESSE sortante, wording neutre — rien n'est
-                  stocké, rien n'est promis (jamais un mot sur le propriétaire). */}
+            <div data-fiche-adresse className={`mt-0.5 min-w-0 ${f.adresse ? 'text-txt' : 'text-txt-dim'}`}>
+              {/* C3 : l'adresse n'est JAMAIS tronquée — elle passe à deux lignes si besoin. */}
+              <div className="text-[11px] leading-snug break-words">{f.adresse ?? CLIENT.fiche.adresseAbsente}</div>
+              {/* C2 : le lien Pages Jaunes est renommé et assumé en « jaune » (nod à la marque).
+                  Recherche d'ADRESSE sortante, wording neutre — rien n'est stocké, jamais un mot
+                  sur le propriétaire. */}
               {f.adresse && (
                 <a data-fiche-pj href={`https://www.pagesjaunes.fr/annuaire/chercherlespros?ou=${encodeURIComponent(`${f.adresse} ${f.commune ?? ''}`)}`}
                   target="_blank" rel="noreferrer noopener"
-                  className="shrink-0 text-[10.5px] text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
-                  title="Recherche externe à cette adresse (Pages Jaunes) — s'ouvre dans un nouvel onglet, rien n'est stocké">
-                  Rechercher à cette adresse ↗
+                  className="mt-1 inline-flex items-center gap-1 rounded border border-[#F4D35E]/45 bg-[#F4D35E]/10 px-1.5 py-0.5 text-[10.5px] font-medium text-[#F4D35E] transition-colors duration-quick hover:bg-[#F4D35E]/20"
+                  title={CLIENT.fiche.pagesJaunesTip}>
+                  🔎 {CLIENT.fiche.pagesJaunes}
                 </a>
               )}
             </div>
@@ -1060,6 +1057,17 @@ export function Fiche({ idu }: { idu: string }) {
               ? <Tip className="mt-1.5" tip="Verdict scoring (P×C) — rang P (hors copro, tiers pipeline) et ×N vs moyenne du parc ; détail dans « Probabilité de mutation », statut matrice historique dans la Synthèse.">{badge}</Tip>
               : <span className="mt-1.5 inline-flex">{badge}</span>
           })()}
+          {/* C1 : motif d'écartement À CÔTÉ du badge + « voir pourquoi » → onglet Pourquoi pas */}
+          {f && verdictEcartee && (
+            <span data-ecartee-motif className="ml-1.5 mt-1.5 inline-flex items-center gap-1.5 text-[11px] align-middle">
+              <Tip tip={ecarteeMotifDetail}><span className="text-txt-mut">{ecarteeMotif}</span></Tip>
+              <button onClick={() => setTab('pourquoi')}
+                className="text-st-ecartee underline transition-colors duration-quick hover:text-st-ecartee/80"
+                title={CLIENT.fiche.ecarteeVoirTip}>
+                {CLIENT.fiche.ecarteeVoir}
+              </button>
+            </span>
+          )}
           {/* M5.1 : le badge « V nn » disparaît — le dossier propriétaire (signaux vendeur)
               reste dans la fiche, libellé en clair, sans le sigle nu */}
           {f?.score_v?.v_score != null && (
@@ -1297,7 +1305,10 @@ export function Fiche({ idu }: { idu: string }) {
           {/* Fix point 18 : le vieux bouton « IA » (panneau Synthèse/Pourquoi) est retiré —
               redondant avec la barre « Demander à l'IA » repliable en haut de fiche. */}
         </div>
-        <div className="mt-2 flex items-stretch gap-2">
+        {/* C5 : les 6 exports débordaient à droite (rangée `flex` non-« wrap » : le 6e bouton
+            « Maps » sortait du panneau 400 px). Passés en grille 3 colonnes → bloc segmenté
+            régulier, 2 rangées de 3, aucun débordement quelle que soit la largeur. */}
+        <div className="mt-2 grid grid-cols-3 gap-2">
           <a href={pdfUrl(idu, (tab === 'bilan' || tab === 'faisabilite') ? calculette : null)} target="_blank" rel="noreferrer"
             className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
             title={calculette && (tab === 'bilan' || tab === 'faisabilite') ? 'Exporter la fiche en PDF (avec votre charge foncière)' : 'Exporter la fiche en PDF'}>
@@ -1326,16 +1337,17 @@ export function Fiche({ idu }: { idu: string }) {
             </button>
           )}
           {f?.coords && (
-            /* Fix LOT 2 : « Cadastre » CENTRE ET SÉLECTIONNE la parcelle. Aucun viewer cadastre externe
-               gratuit (Géoportail — qui ferme 09/2026 — ni Etalab) n'expose de sélection par IDU via URL ;
-               un lien externe ne faisait que CENTRER sur la zone. On bascule donc sur le fond officiel
-               IGN Plan (parcellaire) DANS l'app + halo de sélection (`select` → contour + recentrage). */
-            <button data-cadastre-link
-              onClick={() => { setBasemap('plan'); select(f.idu) }}
-              className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
-              title="Voir la parcelle SÉLECTIONNÉE sur le cadastre officiel (fond IGN Plan)">
-              Cadastre
-            </button>
+            /* C7 : « Cadastre » ouvre désormais le cadastre officiel EXTERNE, paramétré sur la
+               parcelle. cadastre.gouv.fr (Struts/POST) n'expose pas de lien GET par parcelle ; le
+               parcellaire officiel accessible par URL est le Géoportail (IGN — Parcellaire Express),
+               que l'on centre sur les coordonnées de la parcelle avec la couche cadastrale active. */
+            <a data-cadastre-link
+              href={`https://www.geoportail.gouv.fr/carte?c=${f.coords[0]},${f.coords[1]}&z=19&l0=GEOGRAPHICALGRIDSYSTEMS.PLANIGNV2::GEOPORTAIL:OGC:WMTS(1)&l1=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes`}
+              target="_blank" rel="noreferrer noopener"
+              className="flex h-8 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt hover:text-txt-hi"
+              title={CLIENT.fiche.export.cadastreTip}>
+              {CLIENT.fiche.export.cadastre}
+            </a>
           )}
           {f?.coords && (
             /* Fix LOT 2 : « Maps » (ex-« G ») → ÉPINGLE sur la parcelle (search?query=lat,lng pose un
@@ -1389,21 +1401,21 @@ function BanquierButton({ idu }: { idu: string }) {
   if (etat === 'pret') return (
     <a href={url} target="_blank" rel="noreferrer"
       className="flex h-8 flex-1 items-center justify-center gap-1 rounded-lg border border-mint/50 px-3 text-xs font-medium text-mint transition-colors duration-quick hover:bg-mint/10"
-      title="Dossier banquier prêt — ouvrir le PDF">
-      Banquier — prêt
+      title="Note de financement prête — ouvrir le PDF">
+      {CLIENT.fiche.export.banquierPret}
     </a>
   )
   if (etat === 'encours') return (
     <span className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3">
-      <Loading label="Banquier…" className="text-xs" />
+      <Loading label={CLIENT.fiche.export.banquierEnCours} className="text-xs" />
     </span>
   )
   return (
     <button onClick={lancer} data-banquier-btn
       className="flex h-8 flex-1 items-center justify-center rounded-lg border border-line-2 px-3 text-xs text-txt transition-colors duration-quick hover:text-txt-hi"
-      title={etat === 'erreur' ? 'Génération impossible — réessayer'
-        : 'Dossier banquier PDF (synthèse exécutive, bilan & charge foncière, comparables, risques) — présentation financeur'}>
-      {etat === 'erreur' ? 'Banquier — réessayer' : 'Banquier'}
+      title={etat === 'erreur' ? 'Génération impossible — réessayer' : CLIENT.fiche.export.banquierTip}>
+      {/* C6 : « Banquier » → « Note de financement » (3 pistes étudiées, cf. strings.ts) */}
+      {etat === 'erreur' ? CLIENT.fiche.export.banquierErreur : CLIENT.fiche.export.banquier}
     </button>
   )
 }

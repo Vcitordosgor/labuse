@@ -166,6 +166,53 @@ export const CLIENT = {
       'Une parcelle en tête ailleurs ? Ajoutez-la à ce projet à tout moment depuis ' +
       'sa fiche, avec le bouton « Projet ».',
   },
+
+  // ── M19 · fiche parcelle (refonte) — LOT C + explications de scores (P1.2) ──
+  // Tout le texte client de la refonte fiche vit ici (R3) : Vic réécrit sans toucher au JSX.
+  fiche: {
+    adresseAbsente: 'Adresse non disponible',
+    // C2 · le lien Pages Jaunes, renommé et assumé (jaune côté JSX)
+    pagesJaunes: 'Voir sur Pages Jaunes',
+    pagesJaunesTip:
+      "Recherche externe à cette adresse (Pages Jaunes) — s'ouvre dans un nouvel onglet, rien n'est stocké.",
+    // C4 · l'œil devient cloche (cohérent avec les notifications M16)
+    suivre: 'Suivre cette parcelle (alertes sans pipeline)',
+    suivreActif: 'Suivie — les événements alimentent la cloche',
+    // C1 · le motif d'écartement passe à côté du badge
+    ecarteeVoir: 'voir pourquoi →',
+    ecarteeVoirTip: "Ouvre l'onglet « Pourquoi pas » — motifs sourcés de l'écartement.",
+    // C8 · le bloc IA en une ligne, accroche client
+    ia: {
+      accroche: 'Une question sur cette parcelle ?',
+      premium: 'Premium',
+      demander: 'demander →',
+      gardee: 'dernière réponse gardée — rouvrir →',
+    },
+    // C6 · « Banquier » renommé — 3 pistes étudiées, la 1re retenue :
+    //   1. « Note de financement » (RETENU — dit l'objet : un document pour financer)
+    //   2. « Dossier financeur »
+    //   3. « Présentation banque »
+    export: {
+      banquier: 'Note de financement',
+      banquierPret: 'Note — prête',
+      banquierEnCours: 'Note…',
+      banquierErreur: 'Note — réessayer',
+      banquierTip:
+        'Note de financement PDF (synthèse exécutive, bilan & charge foncière, comparables DVF/SITADEL, risques) — présentation financeur.',
+      // C7 · ouvre le cadastre officiel externe, paramétré sur la parcelle
+      cadastre: 'Cadastre ↗',
+      cadastreTip:
+        'Ouvre la parcelle sur le cadastre officiel (Géoportail — parcellaire express IGN) dans un nouvel onglet.',
+    },
+    // P1.2 · explications de scores rendues VISIBLES (plus seulement en survol)
+    scores: {
+      q: 'Qualité du terrain au regard des règles PLU, des risques et de l’accès (0-100, 100 = idéal).',
+      a: 'Accès & desserte : voirie, réseaux et aménités à proximité (0-100).',
+      v: 'Indices publics qu’un propriétaire pourrait céder (procédures, détention longue, succession, dirigeant).',
+      icd: 'Part des sources renseignées pour CETTE parcelle. Ce n’est pas une note de qualité du terrain.',
+      completude: 'Part des couches de données disponibles pour cette parcelle.',
+    },
+  },
 } as const
 
 export type ClientStrings = typeof CLIENT

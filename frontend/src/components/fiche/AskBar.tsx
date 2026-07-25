@@ -4,6 +4,7 @@
 import { Fragment, useEffect, useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { askParcel, type AskResponse, type Provenance } from '../../lib/api'
+import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
 
 // Rend le Markdown minimal du modèle et GARANTIT qu'aucun marqueur brut ne reste visible côté client
@@ -93,12 +94,13 @@ export function AskBar({ idu }: { idu: string; zone?: string | null }) {
   if (!open) {
     return (
       <div data-askbar className="shrink-0 border-b border-violet/50 bg-violet/[0.07] px-5 py-2">
+        {/* C8 : bloc IA en UNE LIGNE — l'accroche client mène, PREMIUM assumé en violet. */}
         <button data-askbar-open onClick={() => setOpen(true)}
-          className="group flex w-full items-center gap-2 rounded-lg border border-violet/40 bg-violet/10 px-3 py-1.5 transition-colors duration-quick hover:border-violet hover:bg-violet/15">
-          <span className="label-caps text-[10px] text-violet">✦ Demander à l'IA</span>
-          <span className="rounded bg-violet/15 px-1.5 py-0.5 text-[9px] font-semibold text-violet">PREMIUM</span>
-          <span className="ml-auto text-[11px] text-txt-dim transition-colors duration-quick group-hover:text-txt-mut">
-            {d && !ask.isPending ? 'dernière réponse gardée — rouvrir →' : 'une question sur cette parcelle →'}
+          className="group flex w-full items-center gap-2 whitespace-nowrap rounded-lg border border-violet/40 bg-violet/10 px-3 py-1.5 transition-colors duration-quick hover:border-violet hover:bg-violet/15">
+          <span className="shrink-0 text-[13px] font-medium text-violet">✦ {CLIENT.fiche.ia.accroche}</span>
+          <span className="shrink-0 rounded bg-violet/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase text-violet">{CLIENT.fiche.ia.premium}</span>
+          <span className="ml-auto min-w-0 truncate text-[11px] text-txt-dim transition-colors duration-quick group-hover:text-txt-mut">
+            {d && !ask.isPending ? CLIENT.fiche.ia.gardee : CLIENT.fiche.ia.demander}
           </span>
         </button>
       </div>
