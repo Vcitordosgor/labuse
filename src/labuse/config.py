@@ -124,14 +124,17 @@ class Settings(BaseSettings):
     stripe_secret_key: str | None = None
     stripe_webhook_secret: str | None = None
     stripe_price_id: str | None = None
-    # SMTP (livraison des rapports) — provider en config ; sans hôte configuré, provider
-    # « console » (le mail est journalisé, jamais envoyé) : acceptable en dev seulement.
-    smtp_host: str | None = None
-    smtp_port: int = 587
-    smtp_user: str | None = None
-    smtp_password: str | None = None
-    smtp_from: str = "LABUSE <no-reply@labuse.immo>"
-    smtp_starttls: bool = True
+    # SMTP (M21 — transport e-mail unique) — env LABUSE_SMTP_* + LABUSE_MAIL_FROM.
+    # Sans hôte configuré : le mail est JOURNALISÉ et marqué non-envoyé (jamais « envoyé »).
+    # Le mot de passe (mot de passe d'application Gmail) vit dans le .env, JAMAIS dans le code.
+    smtp_host: str | None = None                 # LABUSE_SMTP_HOST (ex. smtp.gmail.com)
+    smtp_port: int = 587                         # LABUSE_SMTP_PORT (587 = STARTTLS)
+    smtp_user: str | None = None                 # LABUSE_SMTP_USER (ex. contactlabuse@gmail.com)
+    smtp_password: str | None = None             # LABUSE_SMTP_PASSWORD (mot de passe d'application, 16 c.)
+    smtp_starttls: bool = True                   # LABUSE_SMTP_STARTTLS
+    # Expéditeur AFFICHÉ (alias vérifié Google) — jamais l'adresse Gmail brute.
+    mail_from: str = "LABUSE <contact@labuse.immo>"   # LABUSE_MAIL_FROM
+    smtp_from: str = "LABUSE <contact@labuse.immo>"   # rétro-compat (déprécié — utiliser mail_from)
     # Alertes exploitation (génération en échec après paiement, etc.).
     admin_email: str | None = None
 

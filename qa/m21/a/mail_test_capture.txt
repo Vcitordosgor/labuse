@@ -1,0 +1,18 @@
+
+===== MESSAGE REÇU (SMTP) =====
+[enveloppe] MAIL FROM=contact@labuse.immo  RCPT TO=['verif@example.com']
+From: LABUSE <contact@labuse.immo>
+To: verif@example.com
+Subject: LABUSE =?utf-8?b?4oCU?= test d'envoi
+Date: Sat, 25 Jul 2026 23:27:54 +0200
+Message-ID: <178501487453.79370.17203526225390905366@labuse.immo>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+MIME-Version: 1.0
+
+Ceci est un e-mail de test envoyé par LABUSE.
+
+Si vous le recevez, le transport SMTP est opérationnel.
+
+— LABUSE
+===== FIN MESSAGE =====

@@ -117,6 +117,32 @@ def avis_echeance_cmd() -> None:
     typer.echo(f"✓ Avis d'échéance Chatel déclenchés : {n} (envoi e-mail réel = dès branchement du service).")
 
 
+@app.command("mail-test")
+def mail_test_cmd(destinataire: str = typer.Argument(..., help="Adresse e-mail de vérification")) -> None:
+    """M21-A : envoie un e-mail de test — prouve que la config SMTP marche. À lancer après avoir
+    rempli le .env (VPS). N'affiche ni ne logue JAMAIS le mot de passe."""
+    from .config import get_settings
+    from .mail import mail_configured, send_email
+
+    s = get_settings()
+    if not mail_configured(s):
+        typer.echo("⚠ SMTP non configuré (LABUSE_SMTP_HOST absent) — le mail sera journalisé, PAS envoyé.")
+    r = send_email(
+        destinataire,
+        "LABUSE — test d'envoi",
+        "Ceci est un e-mail de test envoyé par LABUSE.\n\n"
+        "Si vous le recevez, le transport SMTP est opérationnel.\n\n— LABUSE",
+        settings=s,
+    )
+    if r.sent:
+        typer.echo(f"✓ Mail envoyé à {destinataire} (expéditeur : {s.mail_from}).")
+    elif r.detail == "no-config":
+        typer.echo("• Mail journalisé (SMTP non configuré) — rien n'a été envoyé (comportement dev honnête).")
+    else:
+        typer.echo(f"✗ Échec d'envoi : {r.detail} (voir les logs pour la cause).")
+        raise typer.Exit(1)
+
+
 @app.command("seed-sources")
 def seed_sources_cmd() -> None:
     from .ingestion import seed_sources
