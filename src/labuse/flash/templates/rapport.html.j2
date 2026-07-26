@@ -19,6 +19,7 @@
     <span class="wordmark">LABUSE</span>
     <span class="produit">{{ produit_sous_titre }}</span>
   </div>
+  {% if data.marque_client_html %}{{ data.marque_client_html | safe }}{% endif %}
   <h1>{{ produit }}</h1>
   <div class="cover-note">Étude de faisabilité indicative d'une parcelle</div>
   {% if data.adresse %}<div class="adresse">{{ data.adresse }}</div>

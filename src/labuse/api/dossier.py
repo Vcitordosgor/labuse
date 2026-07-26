@@ -93,7 +93,8 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
 
     ref = f"DP-{date.today():%Y%m%d}-{idu[-4:]}"
     try:
-        html = render_report_html(db, idu, order_ref=ref, with_map=carte,
+        from ..marque import charger as _charger_marque
+        html = render_report_html(db, idu, order_ref=ref, with_map=carte, marque=_charger_marque(db, request),
                                   produit="Dossier parcelle",
                                   produit_sous_titre="DOSSIER PARCELLE · usage interne")
     except ValueError as exc:                    # parcelle inconnue

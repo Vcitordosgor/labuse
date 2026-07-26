@@ -10,7 +10,7 @@ from __future__ import annotations
 import html
 import logging
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
@@ -627,3 +627,64 @@ def flash_telecharger(token: str = "", db: Session = Depends(get_db)):
                             status_code=404)
     return FileResponse(p, media_type="application/pdf",
                         filename=f"labuse_flash_{Path(p).stem}.pdf")
+
+# ═══ M23-A — MARQUE DU CLIENT (logo + coordonnées) sur les documents ABONNÉ ═══
+# Upload png/jpg/svg ≤ 512 Ko, SIGNATURE de fichier vérifiée (jamais le mime déclaré),
+# SVG à <script> refusé. Champs vides = rien ne s'imprime (M22-C4). Le Flash 79 €
+# n'affiche JAMAIS cette marque (produit LABUSE).
+
+def _compte_session(request: Request, db) -> int:
+    from .auth import session_info
+    tok = request.cookies.get("labuse_session") or request.cookies.get("session")
+    info = session_info(tok)
+    if not info:
+        raise HTTPException(401, "Session requise — connectez-vous à votre compte.")
+    return int(info["compte_id"])
+
+
+@router.post("/moi/logo", include_in_schema=False)
+async def moi_logo(request: Request, db: Session = Depends(get_db)) -> dict:
+    """Upload en BODY BRUT (fetch/curl --data-binary) — pas de multipart : zéro dépendance
+    nouvelle (python-multipart absent des deps, pyproject = source de vérité). Le format
+    RÉEL est vérifié par signature (marque.valider_logo), le Content-Type est indicatif."""
+    from ..marque import ensure_colonnes, valider_logo
+    cid = _compte_session(request, db)
+    contenu = await request.body()
+    try:
+        mime = valider_logo(contenu, request.headers.get("content-type") or "")
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    ensure_colonnes(db)
+    from sqlalchemy import text as _t
+    db.execute(_t("UPDATE comptes SET logo = :b, logo_mime = :m WHERE id = :c"),
+               {"b": contenu, "m": mime, "c": cid})
+    db.commit()
+    return {"ok": True, "mime": mime, "octets": len(contenu)}
+
+
+@router.delete("/moi/logo", include_in_schema=False)
+def moi_logo_suppr(request: Request, db: Session = Depends(get_db)) -> dict:
+    from ..marque import ensure_colonnes
+    cid = _compte_session(request, db)
+    ensure_colonnes(db)
+    from sqlalchemy import text as _t
+    db.execute(_t("UPDATE comptes SET logo = NULL, logo_mime = NULL WHERE id = :c"), {"c": cid})
+    db.commit()
+    return {"ok": True}
+
+
+@router.post("/moi/marque", include_in_schema=False)
+def moi_marque(payload: dict, request: Request, db: Session = Depends(get_db)) -> dict:
+    """Raison sociale / coordonnées / mention libre COURTE (couverture personnalisable A4).
+    Champs vides acceptés (= rien ne s'imprime, M22-C4)."""
+    from ..marque import ensure_colonnes
+    cid = _compte_session(request, db)
+    m = {k: str(payload.get(k) or "").strip()[:240]
+         for k in ("raison_sociale", "coordonnees", "mention")}
+    ensure_colonnes(db)
+    import json as _json
+    from sqlalchemy import text as _t
+    db.execute(_t("UPDATE comptes SET marque = :m WHERE id = :c"),
+               {"m": _json.dumps(m), "c": cid})
+    db.commit()
+    return {"ok": True, "marque": m}

@@ -66,9 +66,15 @@ def pdf_path_for(idu: str, order_ref: str) -> Path:
 def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | None = None,
                        watermark: str | None = None, with_map: bool = True,
                        produit: str = "Rapport Flash",
-                       produit_sous_titre: str = "RAPPORT FLASH · parcelle à l'unité") -> str:
+                       produit_sous_titre: str = "RAPPORT FLASH · parcelle à l'unité",
+                       marque: dict | None = None) -> str:
     """Assemble les données et rend le HTML complet du rapport (CSS inliné)."""
     data = collect_report_data(db, idu, adresse=adresse)
+    # M23-A : marque CLIENT — documents ABONNÉ uniquement (dossier.py). Le FLASH 79 €
+    # n'alimente JAMAIS ce champ : produit LABUSE, aucun logo client.
+    if marque:
+        from ..marque import bloc_html
+        data["marque_client_html"] = bloc_html(marque)
     carte = None
     if with_map:
         carte = build_situation_map(data["parcelle"]["geojson"],

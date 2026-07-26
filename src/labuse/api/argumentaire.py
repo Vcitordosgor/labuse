@@ -204,7 +204,7 @@ def _synthese(out: dict) -> str:
                        f"({esc(calc.get('raison') or 'données insuffisantes')}) — l'argumentaire "
                        "se limite aux faits qualitatifs des parties suivantes.")
     return (f"<section class='garde'>"
-            f"{bq.garde_entete(p, produit_sous_titre='ARGUMENTAIRE DE NÉGOCIATION · contre-offre fondée', titre='Argumentaire de négociation foncière', bandeau=LIBELLE)}"
+            f"{bq.garde_entete(p, produit_sous_titre='ARGUMENTAIRE DE NÉGOCIATION · contre-offre fondée', titre='Argumentaire de négociation foncière', bandeau=LIBELLE, marque=marque)}"
             f"<h2>1 · Synthèse</h2>"
             f"<div class='exec'>{esc(' '.join(phrases))}</div>"
             f"{bq.cartouches(kpis)}"
@@ -331,7 +331,7 @@ def _sources(out: dict) -> str:
 # ───────────────────────── endpoint ─────────────────────────
 
 def _build_pdf(db: Session, idu: str, cout_m2: float, marge_pct: float,
-               prix_demande: float | None) -> bytes:
+               prix_demande: float | None, marque: dict | None = None) -> bytes:
     out = _collect(db, idu, cout_m2, marge_pct, prix_demande)
     # renumérotation visuelle des sections briques (2 et 3) via leurs titres d'origine
     marche = bq.comparables(out).replace("<h2>Marché de comparaison</h2>",
@@ -362,6 +362,7 @@ def argumentaire_pdf(idu: str, request: Request,
     # Flash HORS quota) — 429 honnête au dépassement, passant sans session (pilote).
     from ..quota import porte_export
     porte_export(request, db)
-    pdf = _build_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
+    from ..marque import charger as _charger_marque
+    pdf = _build_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur, marque=_charger_marque(db, request))
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="argumentaire_{idu}.pdf"'})
