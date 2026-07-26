@@ -80,7 +80,8 @@ export const V_BAND_META: Record<VBand, { label: string; color: string }> = {
   aucun: { label: 'Aucun signal', color: '#5C7268' },
   na: { label: 'N.A.', color: '#4A5A52' },
 }
-export const vBandColor = (b: VBand | null | undefined) => (b && V_BAND_META[b]?.color) || NONE_COLOR
+// ALGO-1 item 2 : vBandColor RETIRÉE — le Score V n'est plus affiché (contre-prédictif,
+// RR@1158 = 0,51, SCORING_SPEC §7-D). V_BAND_META reste : types du payload (backtest/audit).
 
 // ── M6.1 / M12 C5 : couche « Zonage PLU (parcelles) » — familles U/AU/A/N ────────────────
 // Palette DISTINCTE du verdict v2 (braise #E8695A, ambre #E8B44C, gris-vert #8FA69A, bleu
@@ -121,7 +122,6 @@ export const EQUIP_META: { key: string; emoji: string; color: string; label: str
 export const SCORE_TIP = {
   q: 'Q — Qualité intrinsèque de la parcelle (règles PLU, risques, terrain)',
   a: 'A — Accessibilité du dossier (contraintes d’acquisition et de montage)',
-  v: 'V — Vendabilité : signaux publics indiquant un propriétaire susceptible de vendre',
 } as const
 
 

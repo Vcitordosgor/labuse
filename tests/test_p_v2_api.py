@@ -9,7 +9,10 @@ from labuse.api import score_v2 as api_v2
 
 pytestmark = pytest.mark.db
 
-RUN = "test-m5-run"
+# ALGO-1 item 6 : /v2 est ÉPINGLÉ au run servi (Q_A_RUN_LABEL) — le seed porte ce label
+from labuse.scoring.score_v_constants import Q_A_RUN_LABEL
+
+RUN = Q_A_RUN_LABEL
 
 
 def _seed(session):
