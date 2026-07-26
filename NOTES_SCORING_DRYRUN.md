@@ -1,5 +1,14 @@
 # NOTES — Dry-run scoring étages 1+2 (branche scoring/dryrun-etages-1-2)
 
+> ⚠ **JOURNAL HISTORIQUE — dépassé par le système servi** (ALGO-1, 26/07/2026,
+> SCORING_SPEC §7-I). Ce journal date de l'ère « matrice Q×A comme verdict » ; le
+> `SCHEMA_SCORING_LABUSE.md` promis ci-dessous n'a jamais été écrit — la spec qui
+> fait foi est **`docs/SCORING_SPEC.md`**. Aujourd'hui : le verdict vient des tiers
+> P×C v2 (`parcel_p_score_v2`, run servi épinglé `Q_A_RUN_LABEL` = `q_v7_defisc`) ;
+> le dry-run décrit ici survit comme ÉTAGE 0 (exclusions dures) + complément
+> « historique » de la fiche. Les baselines chiffrées ci-dessous (runs q_v*) sont
+> des instantanés d'époque, ne pas les citer comme état courant.
+
 Journal du chantier. À la FIN (validé), ces décisions deviendront `docs/product/SCHEMA_SCORING_LABUSE.md`
 (la spec suivra le code, dans le repo). Périmètre : Saint-Paul (97415). Rien branché au live.
 
