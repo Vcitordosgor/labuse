@@ -8,10 +8,18 @@
    "factuelle": 53,
    "format": "couple (cascade_status, matrice_statut, tier_v2) + validation"
   },
+  "m_renouv": "lot C 2026-07-26 : +3 cas — (1) 97413000DM0210 porte le bloc renouvellement (rang gelé), (2) les 31 autres riches le gèlent à null, (3) meta.tiers_effectifs stricts. Patch chirurgical (jamais --dump : il perdrait les 84 ancres J3).",
   "mandat": "M6 Phase 1 §1.2 — golden dataset",
   "n_parcelles": 116,
   "run_cascade": "q_v7_defisc",
   "run_v2_servi": "q_v7_defisc",
+  "tiers_effectifs": {
+   "a_creuser": 72980,
+   "brulante": 120,
+   "chaude": 1031,
+   "ecartee": 353945,
+   "reserve_fonciere": 3587
+  },
   "tolerances": {
    "canopee_pct": 2.0,
    "distance_cote_m": 10.0,
@@ -219,6 +227,7 @@
      "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
      "q_score": 37,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -357,6 +366,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 46,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -517,6 +527,7 @@
      "n_lignes_cascade": 35,
      "proprietaire_moral_siren": null,
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -708,6 +719,7 @@
      "n_lignes_cascade": 40,
      "proprietaire_moral_siren": "820238707",
      "q_score": 53,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pm",
       "v_band": "faible",
@@ -840,6 +852,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 87,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -961,6 +974,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 60,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -1105,6 +1119,7 @@
      "n_lignes_cascade": 40,
      "proprietaire_moral_siren": null,
      "q_score": 65,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -1245,6 +1260,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": "912933710",
      "q_score": 44,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pm",
       "v_band": "aucun",
@@ -1369,6 +1385,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": "912933710",
      "q_score": 44,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pm",
       "v_band": "aucun",
@@ -1493,6 +1510,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 41,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -1637,6 +1655,7 @@
      "n_lignes_cascade": 41,
      "proprietaire_moral_siren": null,
      "q_score": 1,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -1754,6 +1773,7 @@
      "n_lignes_cascade": 32,
      "proprietaire_moral_siren": "U23691569",
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "public",
       "v_band": "na",
@@ -1881,6 +1901,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 19,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -2045,6 +2066,7 @@
      "n_lignes_cascade": 31,
      "proprietaire_moral_siren": "249740101",
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "public",
       "v_band": "na",
@@ -2174,6 +2196,7 @@
      "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
      "q_score": 41,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "faible",
@@ -2296,6 +2319,10 @@
      "n_lignes_cascade": 31,
      "proprietaire_moral_siren": null,
      "q_score": 50,
+     "renouvellement": {
+      "rang_segment": 18222,
+      "renouv_score": 53
+     },
      "score_v": {
       "owner_type": "pp",
       "v_band": "faible",
@@ -2477,6 +2504,7 @@
      "n_lignes_cascade": 41,
      "proprietaire_moral_siren": null,
      "q_score": 43,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -2587,6 +2615,7 @@
      "n_lignes_cascade": 40,
      "proprietaire_moral_siren": null,
      "q_score": 55,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -2701,6 +2730,7 @@
      "n_lignes_cascade": 40,
      "proprietaire_moral_siren": "310863378",
      "q_score": 71,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "bailleur",
       "v_band": "na",
@@ -2839,6 +2869,7 @@
      "n_lignes_cascade": 31,
      "proprietaire_moral_siren": null,
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -2945,6 +2976,7 @@
      "n_lignes_cascade": 31,
      "proprietaire_moral_siren": "249740077",
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "public",
       "v_band": "na",
@@ -3121,6 +3153,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": "452038805",
      "q_score": 41,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pm",
       "v_band": "faible",
@@ -3258,6 +3291,7 @@
      "n_lignes_cascade": 31,
      "proprietaire_moral_siren": null,
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -3408,6 +3442,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": "444841241",
      "q_score": 44,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pm",
       "v_band": "aucun",
@@ -3559,6 +3594,7 @@
      "n_lignes_cascade": 37,
      "proprietaire_moral_siren": null,
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -3704,6 +3740,7 @@
      "n_lignes_cascade": 39,
      "proprietaire_moral_siren": null,
      "q_score": 63,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -3828,6 +3865,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 31,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -3938,6 +3976,7 @@
      "n_lignes_cascade": 32,
      "proprietaire_moral_siren": "U23640598",
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "copro",
       "v_band": "faible",
@@ -4073,6 +4112,7 @@
      "n_lignes_cascade": 37,
      "proprietaire_moral_siren": "807931308",
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pm",
       "v_band": "faible",
@@ -4201,6 +4241,7 @@
      "n_lignes_cascade": 40,
      "proprietaire_moral_siren": null,
      "q_score": 44,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -4350,6 +4391,7 @@
      "n_lignes_cascade": 32,
      "proprietaire_moral_siren": null,
      "q_score": 50,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
@@ -4469,6 +4511,7 @@
      "n_lignes_cascade": 38,
      "proprietaire_moral_siren": null,
      "q_score": 58,
+     "renouvellement": null,
      "score_v": {
       "owner_type": "pp",
       "v_band": "aucun",
