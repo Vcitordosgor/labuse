@@ -1349,28 +1349,19 @@ def ensure_dvf_marche(engine) -> None:
 
 
 def ensure_score_v_view(engine) -> None:
-    """Vue `v_parcelles_brulantes` (Score V, Phase 3) : tier combiné 🔥 Brûlante.
+    """ALGO-1 item 3 — la vue legacy `v_parcelles_brulantes` est SUPPRIMÉE (drop idempotent).
 
-    Brûlante = chaude Q×A (run de référence) ∧ v_score ≥ V_BRULANTE_THRESHOLD. VUE DYNAMIQUE
-    (jamais une liste matérialisée) : la population des chaudes évoluera (mandat data à venir)
-    et Brûlante doit suivre automatiquement. Le seuil (constante configurable) est injecté à la
-    (re)création de la vue — rejouée à chaque boot via ensure_schema. Reconstruite sans échouer
-    si les tables sont vides."""
+    Elle portait la DEUXIÈME définition de « brûlante » (chaude Q×A ∧ v_score ≥ 17, v1.3) :
+    112 lignes vs 120 au tier v2 servi — deux vérités en base pour le même mot
+    (SCORING_SPEC §7-C), et le Score V est mesuré contre-prédictif pour la mutation
+    (RR@1158 = 0,51, §7-D). LA seule définition servie est le tier `brulante` de
+    `parcel_p_score_v2`. Le DROP est rejoué à chaque boot (mêmes points d'appel que
+    l'ancienne création) : la vue disparaît aussi en prod au prochain déploiement.
+    Rollback : git revert de ce commit (la définition complète est dans l'historique)."""
     from sqlalchemy import text as _t
 
-    from .scoring.score_v_constants import Q_A_RUN_LABEL, V_BRULANTE_THRESHOLD
-
     with engine.begin() as c:
-        c.execute(_t(
-            "CREATE OR REPLACE VIEW v_parcelles_brulantes AS "
-            "SELECT p.idu, p.commune, d.q_score, d.a_score, d.matrice_statut, "
-            "  v.v_score, v.v_band, v.v_coverage, v.owner_type, v.owner_siren, "
-            "  v.owner_denomination, v.signals "
-            "FROM parcels p "
-            f"JOIN dryrun_parcel_evaluations d ON d.parcel_id = p.id AND d.run_label = '{Q_A_RUN_LABEL}' "
-            "JOIN parcel_v_score v ON v.parcelle_id = p.idu "
-            "WHERE d.matrice_statut = 'chaude' "
-            f"  AND v.v_score >= {int(V_BRULANTE_THRESHOLD)}"))
+        c.execute(_t("DROP VIEW IF EXISTS v_parcelles_brulantes"))
 
 
 def ensure_parcel_origine(engine) -> None:
