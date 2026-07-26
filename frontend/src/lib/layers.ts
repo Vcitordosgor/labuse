@@ -80,6 +80,8 @@ export const LAYER_INFO: Record<string, string> = {
     'La bande littorale des « 50 pas géométriques » (81,20 m depuis le rivage), un régime foncier propre à l’outre-mer où la constructibilité est très encadrée.',
   equipements:
     'Les équipements du quotidien à proximité (mairie, écoles, santé, commerces, transport, sport). Sur la fiche d’une parcelle, LABUSE indique la distance en mètres jusqu’à chaque équipement le plus proche.',
+  renouv:
+    'Des parcelles déjà occupées (bâties) mais en zone constructible avec une vraie capacité restante : un potentiel de renouvellement urbain (densifier, diviser, reconstruire) — pas une opportunité qualifiée, et rien ne dit qu’elles se vendront.',
 }
 
 export const layerInfo = (key: string): string | undefined => LAYER_INFO[key]

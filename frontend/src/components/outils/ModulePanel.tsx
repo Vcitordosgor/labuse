@@ -19,6 +19,7 @@ import { M15, M16, M17, M18, M19 } from './moteurs'
 import { MODULES, VIOLET } from './registry'
 import { ScoreurAdresse } from './ScoreurAdresse'
 import { ScoringV2Module } from './ScoringV2'
+import { RenouvellementModule } from './Renouvellement'
 import { TierBadge } from './TierBadge'
 
 /* ───────── primitives partagées (doctrine module : violet, bandeau honnête, liste→fiche) ───────── */
@@ -810,6 +811,7 @@ const COMPONENTS: Record<string, () => JSX.Element> = {
   bailleur: M06, fantome: M07, temps: M08, courriers: M09, duediligence: M10,
   simulplu: M15, assemblage: M16, zan: M17, barometre: M18, matching: M19, programme: M22,
   'scoring-v2': ScoringV2Module,
+  renouvellement: RenouvellementModule,
   'scoreur-adresse': ScoreurAdresse,
   'o5-servitudes': O5Servitudes,
   'o6-comparateur': O6Comparateur,

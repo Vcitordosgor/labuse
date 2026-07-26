@@ -171,6 +171,25 @@ export const getMapLayer = (kind: string) => {
 // M6.1 : capacités des tuiles île — `zonage_parcelle` dit si mvt_parcels embarque zone_fam
 // (sinon la couche « Zonage PLU (parcelles) » est grisée en mode île jusqu'au prochain build).
 export const getTilesMeta = () => j<{ run_label: string | null; zonage_parcelle: boolean }>('/map/tiles/meta')
+// M-RENOUV : calque du segment Renouvellement (occupées, potentiel). `total`/`servis`
+// voyagent — la légende dit la troncature, jamais un « tout » silencieux.
+export type RenouvFC = ParcelFeatureCollection & { total: number; servis: number }
+export const getRenouvGeojson = () => {
+  const c = commune()
+  return j<RenouvFC>(`/map/renouvellement.geojson${c ? `?commune=${encodeURIComponent(c)}` : ''}`)
+}
+export interface RenouvItem {
+  idu: string; commune_nom: string; commune_insee: string; renouv_score: number
+  comp_potentiel: number; comp_assiette: number; comp_marche: number; comp_divisibilite: number
+  code_bati_origine: string; sdp_residuelle_m2: number | null; surface_m2: number | null
+  zone_plu: string | null; rang_segment: number; rang_commune: number
+}
+export interface RenouvListe {
+  total: number; n: number; items: RenouvItem[]
+  libelle: string; composantes_libelles: Record<string, string>; avertissement: string
+}
+export const getRenouvListe = (sort: string, communeNom?: string | null) =>
+  j<RenouvListe>(`/renouvellement/liste?sort=${sort}&limit=300${communeNom ? `&commune=${encodeURIComponent(communeNom)}` : ''}`)
 export const pdfUrl = (idu: string, calc?: { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur: number | null } | null) => {
   const p = new URLSearchParams({ source: SOURCE })
   if (calc) {

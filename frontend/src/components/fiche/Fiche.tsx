@@ -31,6 +31,17 @@ const REF = {
   pastilleTxt: '#8a7ab0', pastilleBg: '#1a1428',
 } as const
 
+// M-RENOUV : CUIVRE du segment Renouvellement (aligné TOKENS.renouv, lib/tokens.ts) — teinte
+// propre, ni le vert des statuts ni le violet signal. Doctrine : « potentiel de renouvellement
+// urbain », jamais « opportunité ».
+const RENOUV = { txt: '#d99a63', bg: '#291d12', border: '#4a3520', bar: '#C9834E' } as const
+
+const RENOUV_CODE_LABEL: Record<string, string> = {
+  deja_bati: 'déjà bâtie',
+  deja_bati_probable: 'déjà bâtie (probable)',
+  ensemble_bati: 'ensemble bâti',
+}
+
 const drSvg = (path: ReactNode, size = 17) =>
   <svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>{path}</svg>
 
@@ -1209,6 +1220,21 @@ export function Fiche({ idu }: { idu: string }) {
                 )}
               </div>
             )}
+            {/* M-RENOUV : badge segment Renouvellement (CUIVRE) — le verdict reste « Écartée » ;
+                libellé doctrinal sous le badge, jamais « opportunité ». */}
+            {f.renouvellement && (
+              <div data-renouv-badge style={{ margin: '13px 0 0', paddingTop: 12, borderTop: `1px solid ${verdict.color}33` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 11, fontWeight: 600, background: RENOUV.bg, color: RENOUV.txt, border: `1px solid ${RENOUV.border}`, borderRadius: 6, padding: '3px 9px' }}>
+                    Renouvellement — rang {fmtInt(f.renouvellement.rang_segment)}/{fmtInt(f.renouvellement.total_segment)}
+                  </span>
+                  <button onClick={() => goDrawer('renouvellement')}
+                    style={{ background: 'none', border: 0, padding: 0, color: RENOUV.txt, textDecoration: 'underline', cursor: 'pointer', fontSize: 11 }}
+                    title="Voir les composantes du score de renouvellement">pourquoi ?</button>
+                </div>
+                <p data-renouv-libelle style={{ margin: '6px 0 0', fontSize: 11, color: '#9db5a8' }}>{f.renouvellement.libelle}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1383,6 +1409,38 @@ export function Fiche({ idu }: { idu: string }) {
                 <SignalerErreur idu={idu} />
               </div>
             </RefDrawer>
+
+            {/* M-RENOUV : tiroir « pourquoi » du segment — les 4 composantes du score,
+                sourcées ; wording doctrinal (géométrie favorable, jamais « division »). */}
+            {f.renouvellement && (
+              <RefDrawer id="renouvellement" icon={IC.faisa} name="Renouvellement — pourquoi ce rang"
+                value={`${f.renouvellement.renouv_score}/100`} valueColor={RENOUV.txt}
+                micro={<MicroJauge pct={f.renouvellement.renouv_score} label={`rang ${fmtInt(f.renouvellement.rang_commune)}/${fmtInt(f.renouvellement.total_commune)} commune`} />}>
+                <div data-renouv-pourquoi style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <p style={{ margin: 0, fontSize: 11.5, lineHeight: 1.5, color: '#9db5a8' }}>
+                    {f.renouvellement.libelle} — écartée du classement principal ({RENOUV_CODE_LABEL[f.renouvellement.code_bati_origine] ?? f.renouvellement.code_bati_origine}),
+                    mais en zone {f.renouvellement.zone_plu ?? '—'} avec une capacité restante réelle.
+                  </p>
+                  {f.renouvellement.composantes.map((c) => (
+                    <div key={c.cle} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ flex: 1, fontSize: 11.5, color: REF.name, minWidth: 0 }}>{c.libelle}</span>
+                      <div style={{ width: 90, height: 4, background: REF.barTrack, borderRadius: 2, overflow: 'hidden', flexShrink: 0 }}>
+                        <div style={{ width: `${c.max > 0 ? Math.round(100 * c.points / c.max) : 0}%`, height: 4, background: RENOUV.bar }} />
+                      </div>
+                      <span style={{ fontSize: 11, color: RENOUV.txt, whiteSpace: 'nowrap', width: 42, textAlign: 'right' }}>{c.points}/{c.max}</span>
+                    </div>
+                  ))}
+                  <MicroTriple items={[
+                    f.renouvellement.sdp_residuelle_m2 != null ? `SDP résiduelle ${fmtInt(f.renouvellement.sdp_residuelle_m2)} m²` : 'SDP résiduelle —',
+                    f.renouvellement.surface_m2 != null ? `assiette ${fmtM2(f.renouvellement.surface_m2)}` : 'assiette —',
+                    `rang île ${fmtInt(f.renouvellement.rang_segment)}/${fmtInt(f.renouvellement.total_segment)}`,
+                  ]} />
+                  <p style={{ margin: 0, fontSize: 10.5, lineHeight: 1.5, color: REF.dim }}>
+                    Potentiel physique et réglementaire — ni une mise en vente prévisible, ni une garantie de constructibilité.
+                  </p>
+                </div>
+              </RefDrawer>
+            )}
 
             {/* Pourquoi pas — conditionnel (écartée / flaggée) */}
             {(verdictEcartee || f.lines.some((l) => l.result === 'SOFT_FLAG')) && (

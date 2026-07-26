@@ -195,6 +195,23 @@ export interface Fiche {
   // M19 : marché DVF de la parcelle (présent dans le payload) — typé pour la valeur fermée du
   // tiroir Marché (médiane €/m² structurée = donnée propre, ≠ nombre brut de la ligne dvf).
   dvf_parcelle?: DvfParcelle | null
+  // M-RENOUV : segment Renouvellement (parcelle OCCUPÉE, potentiel de renouvellement urbain —
+  // jamais « opportunité »). Le verdict d'en-tête reste « Écartée » ; badge + pourquoi seulement.
+  renouvellement?: Renouvellement | null
+}
+
+export interface Renouvellement {
+  libelle: string
+  renouv_score: number
+  rang_segment: number
+  total_segment: number
+  rang_commune: number
+  total_commune: number
+  code_bati_origine: string
+  zone_plu: string | null
+  sdp_residuelle_m2: number | null
+  surface_m2: number | null
+  composantes: { cle: string; points: number; max: number; libelle: string }[]
 }
 
 export interface DvfSecteur {

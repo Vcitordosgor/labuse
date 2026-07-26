@@ -29,4 +29,9 @@ export const TOKENS = {
   viabProbable: '#8FD9B6', viabProbableBg: '#16231D',
   viabIncertaine: '#E6B15C', viabIncertaineBg: '#2A2213',
   viabLourde: '#E68A6B', viabLourdeBg: '#2A1A13',
+
+  // — segment Renouvellement (M-RENOUV) : CUIVRE, teinte propre — ni le vert chaud des
+  //   statuts, ni le violet signal ; distinct de viabIncertaine #E6B15C (ambre) et de
+  //   stCreuser #E8B44C (jaune). Parcelles OCCUPÉES, potentiel de renouvellement urbain.
+  renouv: '#C9834E', renouvBg: '#291D12',
 } as const

@@ -2,8 +2,9 @@ import { useQuery } from '@tanstack/react-query'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { useEffect, useRef, useState } from 'react'
-import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, getTilesMeta, parcelAt } from '../../lib/api'
+import { getCommunes, getFiche, getMapLayer, getParcelsGeojson, getRenouvGeojson, getTilesMeta, parcelAt } from '../../lib/api'
 import { CINQUANTE_PAS_COLOR, EQUIP_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { TOKENS } from '../../lib/tokens'
 import { fmtArea, fmtDistance, pathLength, polygonArea, roughCentroid, type LngLat } from '../../lib/geo'
 import { useApp, type Filters, type MapTool } from '../../store/useApp'
 import { BASEMAP_SOURCES } from './basemaps'
@@ -195,6 +196,8 @@ export function MapView() {
   const equip = useQuery({ queryKey: ['layer', 'equip', commune], queryFn: () => getMapLayer('amenite'), enabled: layers.equipements })
   // M6.1 item 2 : 50 pas géométriques (163 polygones île, commune NULL → servis partout)
   const cinquantePas = useQuery({ queryKey: ['layer', 'cinquante_pas'], queryFn: () => getMapLayer('cinquante_pas'), enabled: layers.cinquante_pas })
+  // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, top rangs servis
+  const renouv = useQuery({ queryKey: ['layer', 'renouv', commune], queryFn: getRenouvGeojson, enabled: layers.renouv })
   // M6.1 item 1 : les tuiles île portent-elles zone_fam ? (sinon repli honnête au prochain build)
   const tilesMeta = useQuery({ queryKey: ['tiles-meta'], queryFn: getTilesMeta, staleTime: 60_000, retry: false })
   const communes = useQuery({ queryKey: ['communes'], queryFn: getCommunes })
@@ -254,6 +257,13 @@ export function MapView() {
         paint: { 'fill-color': CINQUANTE_PAS_COLOR, 'fill-opacity': 0.16 } })
       m.addLayer({ id: 'ov-50pas-line', type: 'line', source: 'ov-50pas', layout: { visibility: 'none' },
         paint: { 'line-color': CINQUANTE_PAS_COLOR, 'line-width': 1.6, 'line-dasharray': [2, 1.4], 'line-opacity': 0.9 } })
+      // M-RENOUV : segment Renouvellement — CUIVRE (token dédié), remplissage + contour fin.
+      // Parcelles OCCUPÉES à potentiel : style volontairement distinct des tiers (ni vert ni violet).
+      m.addSource('ov-renouv', { type: 'geojson', data: EMPTY_FC as never })
+      m.addLayer({ id: 'ov-renouv', type: 'fill', source: 'ov-renouv', layout: { visibility: 'none' },
+        paint: { 'fill-color': TOKENS.renouv, 'fill-opacity': 0.38 } })
+      m.addLayer({ id: 'ov-renouv-line', type: 'line', source: 'ov-renouv', layout: { visibility: 'none' },
+        paint: { 'line-color': TOKENS.renouv, 'line-width': 1.1, 'line-opacity': 0.85 } })
       // P11 : limites communales OFFICIELLES (geo.api.gouv 974) — ligne verte de la charte
       m.addSource('communes-bounds', { type: 'geojson', data: `${(import.meta as unknown as { env: { BASE_URL: string } }).env.BASE_URL}communes974.geojson` })
       m.addLayer({ id: 'communes-bounds', type: 'line', source: 'communes-bounds', layout: { visibility: 'none' },
@@ -467,6 +477,16 @@ export function MapView() {
     }
     // M6.1 item 2 : 50 pas — servis île entière (commune NULL en base) ; en mode commune,
     // même pattern honnête que l'ANRU : commune SANS littoral → toast, jamais un silence.
+    // M-RENOUV : calque Renouvellement — si le serveur tronque (top rangs), le DIRE (toast),
+    // jamais un « tout » silencieux (règle no-silent-caps).
+    if (renouv.data) {
+      ;(m.getSource('ov-renouv') as maplibregl.GeoJSONSource | undefined)?.setData(renouv.data as never)
+      if (layers.renouv && renouv.data.total > renouv.data.servis) {
+        useApp.getState().setToast(
+          `Renouvellement : ${renouv.data.servis.toLocaleString('fr-FR')} parcelles affichées sur ` +
+          `${renouv.data.total.toLocaleString('fr-FR')} (meilleurs rangs)${commune ? ` — ${commune}` : ' — île entière'}.`)
+      }
+    }
     if (cinquantePas.data) {
       ;(m.getSource('ov-50pas') as maplibregl.GeoJSONSource | undefined)?.setData(cinquantePas.data as never)
       if (layers.cinquante_pas && commune) {
@@ -477,7 +497,7 @@ export function MapView() {
         }
       }
     }
-  }, [zonage.data, ppr.data, parc.data, anru.data, equip.data, cinquantePas.data, layers.cinquante_pas, commune, communes.data, mapReady])
+  }, [zonage.data, ppr.data, parc.data, anru.data, equip.data, cinquantePas.data, renouv.data, layers.cinquante_pas, layers.renouv, commune, communes.data, mapReady])
 
   // M6.1 item 1 (repli île) : la couche zonage est demandée mais les tuiles servies ne portent
   // pas encore zone_fam → le dire franchement (elle arrivera au prochain `labuse build-mvt`).
@@ -544,6 +564,9 @@ export function MapView() {
     // M6.1 item 2 : 50 pas géométriques (remplissage + contour tireté) — servis île entière
     m.setLayoutProperty('ov-50pas', 'visibility', vis(layers.cinquante_pas))
     m.setLayoutProperty('ov-50pas-line', 'visibility', vis(layers.cinquante_pas))
+    // M-RENOUV : segment Renouvellement (cuivre) — OFF par défaut
+    m.setLayoutProperty('ov-renouv', 'visibility', vis(layers.renouv))
+    m.setLayoutProperty('ov-renouv-line', 'visibility', vis(layers.renouv))
     // M6.1 item 1 : étiquette de zone PRÉCISE (zone_lib, z ≥ 16) — suit la couche zonage
     m.setLayoutProperty('parcels-zone-label', 'visibility', vis(layers.zonage_parcelle && !ile))
     m.setLayoutProperty('ile-zone-label', 'visibility', vis(layers.zonage_parcelle && ile))
