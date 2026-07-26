@@ -834,6 +834,9 @@ class ChargeIn(BaseModel):
     cout_construction_m2: float = Field(2500.0, ge=500, le=8000)   # €/m² de plancher
     marge_frais_pct: float = Field(21.0, ge=0, le=60)              # marge promoteur + frais (% du CA)
     prix_demande_eur: float | None = Field(None, ge=0, le=500_000_000)
+    # M22-A : "charge" (sens historique) | "achat_max" (lecture inverse — prix d'achat max
+    # admissible : même équation, dérivation ligne à ligne + écart de négociation demandé − max)
+    mode: str = Field("charge", pattern="^(charge|achat_max)$")
 
 
 @router.post("/faisabilite/{idu}/charge")
@@ -865,7 +868,8 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
                            "non résolue / non constructible) — charge foncière non calculable."}
     prix = sector_price(db, row["id"], Hypotheses())
     res = compute_calculette(float(shab), float(row["s"] or 0), prix,
-                             body.cout_construction_m2, body.marge_frais_pct, body.prix_demande_eur)
+                             body.cout_construction_m2, body.marge_frais_pct, body.prix_demande_eur,
+                             mode=body.mode)
     res["defaults"] = defaults
     if not res.get("calculable"):
         # prix de sortie insuffisant → au mieux, on rend le prix secteur (déjà dans `marche`)

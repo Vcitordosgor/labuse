@@ -460,7 +460,7 @@ CALCULETTE_MARGE_FRAIS_DEFAUT_PCT = 21.0
 
 def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix: dict,
                        cout_construction_m2: float, marge_frais_pct: float,
-                       prix_demande_eur: float | None = None) -> dict:
+                       prix_demande_eur: float | None = None, mode: str = "charge") -> dict:
     """Charge foncière supportable — PURE, testable en isolation (aucun accès DB : `prix` est
     fourni). LIGNE ROUGE : les valeurs SOURCÉES (SDP vendable, prix de sortie DVF) viennent du
     moteur ; le coût de construction et la marge sont les HYPOTHÈSES SAISIES par le promoteur —
@@ -468,7 +468,15 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
     on injecte les saisies comme `bilan_params` (coût au m² de plancher, marge+frais en % du CA,
     honoraires/frais financiers neutralisés car agrégés dans « marge & frais »). Le résultat est
     présenté « selon vos hypothèses ». Si `prix_demande_eur` est fourni : verdict d'achat
-    (supportable si la charge foncière médiane ≥ prix demandé)."""
+    (supportable si la charge foncière médiane ≥ prix demandé).
+
+    M22-A — `mode="achat_max"` : la MÊME équation lue à l'envers, « à quel prix MAXIMUM puis-je
+    acheter ce terrain pour que l'opération tienne ? ». Le prix d'achat max admissible EST la
+    charge foncière supportable (identité arithmétique, AUCUN recalcul) — le mode ne change que
+    la PRÉSENTATION : la dérivation ligne à ligne (prix de sortie DVF → CA → − marge & frais →
+    − construction → − VRD → = foncier max) est exposée dans `steps`, la fourchette est
+    réétiquetée `prix_achat_max` (les trois scénarios de prix de sortie DVF), et l'écart au prix
+    demandé est rendu dans le sens de la négociation (demandé − max : + = surcoût, − = marge)."""
     bp = {
         "cout_construction_m2_sdp": float(cout_construction_m2),
         "marge_cible_pct": float(marge_frais_pct),
@@ -509,4 +517,29 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
             "ecart_eur": round(ecart),                                  # + = marge, − = surcoût
             "ecart_pct": round(100 * ecart / pd) if pd else None,
         }
+    if mode == "achat_max":
+        out["mode"] = "achat_max"
+        # Identité arithmétique EXPOSÉE (jamais deux moteurs) : prix d'achat max = charge foncière.
+        out["prix_achat_max"] = dict(cf)
+        # Dérivation ligne à ligne, dans le sens de la lecture inverse (prix de sortie → foncier).
+        steps = [{"label": st.label, "formule": st.formule, "valeur": st.valeur,
+                  "source": st.source, "prov": st.prov} for st in (b.steps or [])]
+        steps.append({
+            "label": "Prix d'achat maximal admissible",
+            "formule": "= la charge foncière supportable, lue comme un prix d'achat "
+                       "(même équation : CA × (1 − marge & frais) − construction − VRD)",
+            "valeur": f"médiane {_eur(cf['central'])} "
+                      f"(fourchette {_eur(cf['bas'])} – {_eur(cf['haut'])})",
+            "source": "dérivé", "prov": "derive"})
+        out["steps"] = steps
+        if prix_demande_eur:
+            pd = float(prix_demande_eur)
+            surcout = pd - cf["central"]                                # demandé − max admissible
+            out["ecart_negociation"] = {
+                "prix_demande_eur": round(pd),
+                "prix_achat_max_eur": cf["central"],
+                "demande_moins_max_eur": round(surcout),                # + = surcoût, − = marge
+                "demande_moins_max_pct": round(100 * surcout / pd) if pd else None,
+                "sens": "surcout" if surcout > 0 else "marge",
+            }
     return out

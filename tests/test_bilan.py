@@ -165,3 +165,53 @@ def test_calculette_fiabilite_heritee():
     prix = _prix(2980, 3030, 3080, fiabilite="fragile", raisons=["ventes anciennes (2021)"])
     res = compute_calculette(1000, 1000, prix, 2500, 21)
     assert res["fiabilite"] == "fragile"
+
+
+# ── M22-A · MODE INVERSE — prix d'achat max admissible ─────────────────────────────────────
+
+def test_achat_max_identite_arithmetique_forward_inverse():
+    """COHÉRENCE forward/inverse : mêmes hypothèses → mêmes totaux. Le prix d'achat max EST la
+    charge foncière supportable (identité, pas un second moteur) — bas/central/haut/€ par m²."""
+    prix = _prix(5310, 5310, 5310, n=14)
+    fwd = compute_calculette(6344, 9723, prix, 2500, 21)
+    inv = compute_calculette(6344, 9723, prix, 2500, 21, mode="achat_max")
+    assert inv["mode"] == "achat_max"
+    assert inv["prix_achat_max"] == fwd["charge_fonciere"]
+    # le mode inverse n'altère RIEN du sens forward (non-régression fiche M19/M20)
+    assert inv["charge_fonciere"] == fwd["charge_fonciere"] and inv["ca"] == fwd["ca"]
+
+
+def test_achat_max_derivation_ligne_a_ligne():
+    """La dérivation est tracée ligne à ligne (prix de sortie → CA → marge & frais →
+    construction → prix d'achat max), chaque terme avec sa provenance."""
+    prix = _prix(5310, 5310, 5310, n=14)
+    res = compute_calculette(6344, 9723, prix, 2500, 21, mode="achat_max")
+    labels = [st["label"] for st in res["steps"]]
+    assert labels[-1] == "Prix d'achat maximal admissible"
+    txt = " ".join(labels).lower()
+    assert "prix de vente" in txt and "chiffre d'affaires" in txt and "coût de construction" in txt
+    assert all(st.get("prov") in ("sourcee", "estimee", "derive") for st in res["steps"])
+    # pas de step en mode forward (réponse historique inchangée)
+    assert "steps" not in compute_calculette(6344, 9723, prix, 2500, 21)
+
+
+def test_achat_max_ecart_negociation_sens_demande_moins_max():
+    """L'écart de négociation est demandé − max (+ = surcoût, − = marge) — LE chiffre
+    de la contre-offre, jamais ambigu (le champ porte son sens)."""
+    prix = _prix(5310, 5310, 5310, n=14)
+    cher = compute_calculette(6344, 9723, prix, 2500, 21,
+                              prix_demande_eur=20_000_000, mode="achat_max")
+    e = cher["ecart_negociation"]
+    assert e["sens"] == "surcout" and e["demande_moins_max_eur"] > 0
+    assert e["demande_moins_max_eur"] == 20_000_000 - e["prix_achat_max_eur"]
+    ok = compute_calculette(6344, 9723, prix, 2500, 21,
+                            prix_demande_eur=3_000_000, mode="achat_max")
+    assert ok["ecart_negociation"]["sens"] == "marge"
+    assert ok["ecart_negociation"]["demande_moins_max_eur"] < 0
+
+
+def test_achat_max_prix_insuffisant_pas_de_faux_chiffre():
+    """Prix DVF insuffisant → PAS de prix d'achat max fabriqué (doctrine inchangée en inverse)."""
+    prix = {"fiable": False, "fiabilite": "insuffisant", "n": 3, "median": None, "radius_m": 1500.0}
+    res = compute_calculette(4600, 4500, prix, 2500, 21, mode="achat_max")
+    assert res["calculable"] is False and res.get("prix_achat_max") is None
