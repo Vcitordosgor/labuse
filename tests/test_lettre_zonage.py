@@ -1,0 +1,69 @@
+"""M22-B — LETTRE DE VÉRIFICATION DE ZONAGE : garde-fous d'honnêteté (sans réseau ni DB).
+
+Interdits du mandat, testés :
+ · une règle sans article ne s'imprime PAS ;
+ · on n'affirme jamais l'absence d'une contrainte non modélisée (« ne vaut pas ») ;
+ · la lettre ne se dit jamais opposable — c'est le CU (art. L.410-1) qui l'est ;
+ · la taille minimale de lot est « non vérifiée » (donnée non modélisée).
+"""
+from __future__ import annotations
+
+from labuse.api import lettre_zonage as lz
+from labuse.faisabilite.plu_rules import A_VERIFIER
+
+
+def test_fmt_regle_sans_article_ne_s_imprime_pas():
+    assert lz._fmt_regle(12, "m", None) is None
+    assert lz._fmt_regle(12, "m", "") is None
+
+
+def test_fmt_regle_a_verifier_et_non_reglemente():
+    v, src = lz._fmt_regle(A_VERIFIER, "m", "Art. 6, p.16-18")
+    assert "à vérifier" in v and "Art. 6" in src
+    v, src = lz._fmt_regle(None, "%", "Art. 9, p.20 : « Il n'est pas fixé de règle »")
+    assert v == "non réglementé" and "Art. 9" in src
+    v, _ = lz._fmt_regle(3, "m", "Art. 7.2, p.17-18")
+    assert v == "3 m"
+
+
+def test_limites_texte_exact_et_jamais_opposable():
+    html = lz._limites({"sources": []})
+    assert "art. L.410-1" in html and "seul opposable" in html
+    assert "taille minimale de lot" in html.lower() and "non vérifiée" in html
+    # le mot « opposable » n'est JAMAIS appliqué à la lettre elle-même
+    assert "lettre opposable" not in html.lower()
+    for txt in (lz.LIBELLE, lz.LIMITES):
+        assert "opposable" not in txt or "seul opposable" in txt
+
+
+def test_servitudes_vide_n_affirme_pas_l_absence():
+    html = lz._servitudes({})
+    assert "ne vaut pas absence" in html
+    assert "Aucune servitude" not in html          # jamais un négatif affirmé global
+
+
+def test_servitudes_liste_uniquement_ce_qui_est_en_base():
+    rap = {"identite": {"prescriptions": [{"libelle": "OAP 2.2", "code": ""}]},
+           "risques": {"couches": [{"label": "Aléa inondation", "detail": "fort"}]},
+           "patrimoine": {"couches": [], "abf": [{"name": "Chapelle"}]}}
+    html = lz._servitudes(rap)
+    assert "OAP 2.2" in html and "Aléa inondation" in html and "ABF" in html
+    assert "ne vaut pas état exhaustif" in html
+
+
+def test_zonage_non_resolu_honnete():
+    html = lz._zonage([], "Saint-Paul")
+    assert "non résolu" in html and "mairie" in html
+
+
+def test_regles_zone_calibree_saint_paul_articles_presents():
+    """Sur le YAML réel Saint-Paul : chaque ligne imprimée porte un article."""
+    rz = lz._regles_zone("U1b", "Saint-Paul")
+    assert rz["calibree"] and rz["lignes"]
+    for _label, _val, article in rz["lignes"]:
+        assert "Art." in article or "art." in article.lower()
+
+
+def test_regles_zone_non_calibree_repli():
+    rz = lz._regles_zone("ZZZ9", "Commune-Inconnue")
+    assert rz["calibree"] is False and rz["lignes"] == []

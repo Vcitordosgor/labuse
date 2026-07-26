@@ -3278,6 +3278,7 @@ from .moteurs import router as _moteurs_router  # noqa: E402
 from .partners import router as _partners_router  # noqa: E402
 from .pre_dossier import router as _pre_dossier_router  # noqa: E402
 from .banquier import router as _banquier_router  # noqa: E402  (O1 — dossier banquier PDF)
+from .lettre_zonage import router as _lettre_zonage_router  # noqa: E402  (M22-B — lettre de zonage PDF)
 from .scoreur import router as _scoreur_router  # noqa: E402  (O2 — scoreur d'adresse inversé)
 from .anti_fiche import router as _anti_fiche_router  # noqa: E402  (O3 — anti-fiche « pourquoi pas »)
 from .traducteur import router as _traducteur_router  # noqa: E402  (O4 — traducteur de règlement PLU)
@@ -3305,6 +3306,7 @@ app.include_router(_courrier_router)
 app.include_router(_dossier_router)
 app.include_router(_pre_dossier_router)
 app.include_router(_banquier_router)
+app.include_router(_lettre_zonage_router)
 app.include_router(_scoreur_router)
 app.include_router(_anti_fiche_router)
 app.include_router(_traducteur_router)
