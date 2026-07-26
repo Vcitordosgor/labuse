@@ -1320,6 +1320,11 @@ export function Fiche({ idu }: { idu: string }) {
                 {f.reglement_plu && <ReglementPluBlock rp={f.reglement_plu} />}
                 {f.potentiel_transformation && <TransformationBlock pt={f.potentiel_transformation} />}
                 {reglesLines.length > 0 && <div className="flex flex-col gap-1">{reglesLines.map((l, i) => <Line key={i} line={l} />)}</div>}
+                {/* M22-B : lettre de vérification de zonage — bouton discret (la barre M20 reste à 7 tuiles) */}
+                <a data-lettre-zonage href={`/lettre-zonage/${idu}.pdf`} target="_blank" rel="noreferrer"
+                  className="self-start text-[10.5px] text-txt-mut underline decoration-line-2 underline-offset-2 hover:text-mint">
+                  Éditer la lettre de vérification de zonage (PDF)
+                </a>
               </div>
             </RefDrawer>
 
