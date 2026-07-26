@@ -230,6 +230,13 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                     f"Segment Renouvellement — parcelle occupée, potentiel de renouvellement "
                     f"urbain : rang {rn['rang_segment']}/{rn['total']} "
                     f"(score {rn['renouv_score']}/100). Composantes dominantes : {dom}.")
+        # MANDAT RNU (B3) : étiquetage export — UNE ligne conditionnelle, flag commune-level
+        # général (config/rnu_communes.yaml). Jamais d'affirmation de constructibilité RNU.
+        from .. import rnu as _rnu
+        blk = _rnu.rnu_block(idu)
+        if blk:
+            out["rnu_ligne"] = (f"{blk['libelle']}. {blk['detail']} "
+                                f"(statut vérifié le {blk['verifie_le']}).")
     return out or None
 
 

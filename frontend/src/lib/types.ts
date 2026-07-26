@@ -198,6 +198,9 @@ export interface Fiche {
   // M-RENOUV : segment Renouvellement (parcelle OCCUPÉE, potentiel de renouvellement urbain —
   // jamais « opportunité »). Le verdict d'en-tête reste « Écartée » ; badge + pourquoi seulement.
   renouvellement?: Renouvellement | null
+  // MANDAT RNU : commune sans document local (flag général config/rnu_communes.yaml) —
+  // étiquetage obligatoire, jamais une affirmation de constructibilité.
+  rnu?: { libelle: string; detail: string; commune_nom: string | null; statut_detail: string | null; verifie_le: string | null } | null
 }
 
 export interface Renouvellement {

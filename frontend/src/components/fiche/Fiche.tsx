@@ -1271,6 +1271,17 @@ export function Fiche({ idu }: { idu: string }) {
             )}
           </div>
         )}
+
+        {/* MANDAT RNU (B3) : bannière commune sans document local — étiquetage OBLIGATOIRE,
+            flag général (config/rnu_communes.yaml). Jamais une affirmation de constructibilité. */}
+        {f?.rnu && (
+          <div data-rnu-banner style={{ marginTop: 10, background: '#2a2213', border: '1px solid #4a3c20', borderRadius: 10, padding: '9px 12px' }}>
+            <p style={{ margin: 0, fontSize: 11.5, fontWeight: 600, color: '#e6b15c' }}>⚠ {f.rnu.libelle}</p>
+            <p style={{ margin: '4px 0 0', fontSize: 10.5, lineHeight: 1.5, color: '#c9b98e' }}>
+              {f.rnu.detail}{f.rnu.verifie_le ? ` Statut vérifié le ${f.rnu.verifie_le}.` : ''}
+            </p>
+          </div>
+        )}
       </div>
 
       {ficheSearchOpen && (
