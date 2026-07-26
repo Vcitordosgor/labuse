@@ -30,7 +30,11 @@ _ph = PasswordHasher()  # argon2id par défaut (time_cost=3, memory=64 MiB, para
 # Refonte commerciale (Vic 22/07) : UN modèle d'abonnement — INTÉGRAL, 349 €/mois par
 # licence, 1 licence = 1 accès (plus d'Indé/Pro, plus de sièges multiples, plus de founding).
 # Le one-shot FLASH (79 €/rapport) vit dans facturation.py — pas un compte.
-PLANS = {"integral": {"label": "Intégral", "sieges": 1, "eur_mois": 349}}
+# M23-E : ILLIMITÉ 499 €/mois — quota d'exports porté à 200/jour, PLAFOND D'USAGE LOYAL
+# (à mentionner en CGV — gate légal Vic). Prix Stripe : à créer au moment de la vente
+# (facturation.py), l'entrée ici câble le plan côté produit (quota.PLAFONDS_JOUR).
+PLANS = {"integral": {"label": "Intégral", "sieges": 1, "eur_mois": 349},
+         "illimite": {"label": "Illimité", "sieges": 1, "eur_mois": 499}}
 
 
 def ensure_tables(db: Session) -> None:

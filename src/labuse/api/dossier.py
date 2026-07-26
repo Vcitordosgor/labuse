@@ -72,6 +72,10 @@ def dossier_pdf(idu: str, request: Request, carte: bool = True,
 
     if not plans.acces("dossier_parcelle"):          # stub : toujours vrai aujourd'hui
         raise HTTPException(403, detail=plans.refus("dossier_parcelle"))
+    # M23-E : PORTE DE QUOTA abonné (30/j Intégral · 200/j Illimité usage loyal ;
+    # Flash HORS quota) — 429 honnête au dépassement, passant sans session (pilote).
+    from ..quota import porte_export
+    porte_export(request, db)
     if not plans.acces("dossier_illimite"):
         utilises = _quota_mois(db, sujet)
         if utilises >= max(1, s.dossier_quota_mois):

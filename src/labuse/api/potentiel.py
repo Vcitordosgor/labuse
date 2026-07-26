@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -218,8 +218,12 @@ def _build_pdf(db: Session, idu: str) -> bytes:
 
 
 @router.get("/{idu}.pdf")
-def rapport_potentiel_pdf(idu: str, db: Session = Depends(get_db)) -> Response:
+def rapport_potentiel_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
     """Sert le rapport de potentiel (synchrone). Entrée : IDU seul."""
+    # M23-E : PORTE DE QUOTA abonné (30/j Intégral · 200/j Illimité usage loyal ;
+    # Flash HORS quota) — 429 honnête au dépassement, passant sans session (pilote).
+    from ..quota import porte_export
+    porte_export(request, db)
     pdf = _build_pdf(db, idu)
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="rapport_potentiel_{idu}.pdf"'})

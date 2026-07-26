@@ -209,6 +209,11 @@ def dossier_banquier_pdf(idu: str, request: Request, ign: bool = True,
     """Sert le Dossier banquier — du cache si prêt, sinon génération synchrone (compat liens)."""
     if not plans.acces("dossier_parcelle"):
         raise HTTPException(403, detail=plans.refus("dossier_parcelle"))
+    # M23-E : PORTE DE QUOTA abonné (30/j Intégral · 200/j Illimité usage loyal ;
+    # Flash HORS quota) — 429 honnête au dépassement, passant sans session (pilote).
+    from ..quota import porte_export
+    porte_export(request, db)
+
     key = (idu, _RUN)
     with _PDF_LOCK:
         pdf = _PDF_CACHE.get(key)
