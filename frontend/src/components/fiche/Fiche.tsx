@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Tip } from '../Tip'
 import { useEffect, useState, useRef, type ReactNode } from 'react'
 import { addToPipeline, ajouterParcelle, ApiError, createShare, faisabiliteExplain, getFaisabilite, getFiche, getOrthoEquipements, getPipelineForParcel, getProjets, getWatch, is429, pdfUrl, postChargeFonciere, postSignalement, projetsPourParcelle, toggleWatch } from '../../lib/api'
-import { ageSignal, completudeColor, SCORE_TIP, STATUT_META, vBandColor, verdictMeta } from '../../lib/status'
-import { fmtDate, fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut } from '../../lib/format'
+import { completudeColor, SCORE_TIP, STATUT_META, verdictMeta } from '../../lib/status'
+import { fmtDateNum, fmtInt, fmtM2, fmtLibelleBrut } from '../../lib/format'
 import { layerLabel } from '../../lib/layers'
 import { CLIENT } from '../../lib/strings'
 import { Loading } from '../Loading'
@@ -14,7 +14,7 @@ import { ScoreV2Block } from './ScoreV2Block'
 import { ViabilisationBlock } from './ViabilisationBlock'
 import { PermitsProximityBlock } from './PermitsProximityBlock'
 import { GestionnairesBlock } from './GestionnairesBlock'
-import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu, ScoreV, VSignal } from '../../lib/types'
+import type { FicheLine, IcdBlock, Onglet, PotentielTransformation, ReglementPlu } from '../../lib/types'
 import { useApp } from '../../store/useApp'
 
 const SEV_COLOR: Record<string, string> = { fort: '#E8695A', moyen: '#E8B44C', faible: '#C9DCD1', info: '#8FA69A' }
@@ -219,73 +219,7 @@ function ScoreBar({ label, value, color, lines, defaultOpen, tip }: {
   )
 }
 
-// ── Score V (Vendabilité, Stage 3) ─────────────────────────────────────────────
-// Le panneau « Pourquoi ce score » est le différenciateur crédibilité : chaque signal
-// affiche son label, sa source, sa date et son LIEN VÉRIFIABLE (avis BODACC cliquable).
-const FAMILLE_LABEL: Record<string, string> = {
-  A: 'Détresse juridique', B: 'Cycle de vie du propriétaire', C: 'Détachement géographique',
-  D: 'Dormance de l’actif', E: 'Pression réglementaire', malus: 'Malus',
-}
-
-function VSignalRow({ s }: { s: VSignal }) {
-  const neg = s.points < 0
-  return (
-    <div className="flex gap-3 border-b border-line py-2 last:border-0">
-      <span className={`w-10 shrink-0 text-right font-mono text-xs font-semibold ${neg ? 'text-st-ecartee' : 'text-st-creuser'}`}>
-        {neg ? s.points : `+${s.points}`}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-txt">{s.label}</span>
-          <Tip tip={`Famille ${s.famille}`} className="shrink-0">
-            <span className="rounded-full bg-surface-3 px-1.5 text-[8.5px] text-txt-dim">
-              {FAMILLE_LABEL[s.famille] ?? s.famille}
-            </span>
-          </Tip>
-          {/* CRED-4 : le statut des procédures saute aux yeux (en cours / clôturée) */}
-          {/en cours/i.test(s.label) && (
-            <Tip tip="Procédure toujours ouverte au dernier avis BODACC ingéré" className="shrink-0">
-              <span data-v-statut="en-cours" className="rounded-full bg-st-ecartee/15 px-1.5 text-[8.5px] font-semibold text-st-ecartee">EN COURS</span>
-            </Tip>
-          )}
-          {/clôtur/i.test(s.label) && (
-            <Tip tip="Procédure clôturée — le signal reste pertinent tant que la parcelle est au nom de la société" className="shrink-0">
-              <span data-v-statut="cloturee" className="rounded-full border border-line-2 px-1.5 text-[8.5px] font-medium text-txt-dim">CLÔTURÉE</span>
-            </Tip>
-          )}
-        </div>
-        {s.ref && <div className="text-[11px] leading-snug text-txt-mut">{s.ref}</div>}
-        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-txt-dim">
-          {s.url
-            ? <a href={s.url} target="_blank" rel="noreferrer" className="truncate text-txt-dim transition-colors duration-quick hover:text-mint hover:underline"
-                title="Vérifier à la source (avis officiel)">{s.source} ↗</a>
-            : <span className="truncate">{s.source}</span>}
-          {s.match && s.match.confiance < 1 && (
-            <Tip tip="Propriétaire rapproché par dénomination (pas de SIREN au fichier DGFiP) — points réduits ×0.7" className="shrink-0">
-              <span className="rounded bg-st-creuser/10 px-1 text-[8.5px] text-st-creuser">
-                match {Math.round(s.match.confiance * 100)} %
-              </span>
-            </Tip>
-          )}
-          {/* CRED-4 : l'ÂGE du signal d'un coup d'œil — pastille < 6 mois / 6-18 / > 18 */}
-          {s.date_evenement && (() => {
-            const a = ageSignal(s.date_evenement)!
-            return (
-              <Tip tip={`Signal daté du ${fmtDate(s.date_evenement)} — ${a.label}`} className="ml-auto shrink-0">
-                <span className="flex items-center gap-1.5 font-mono tnum">
-                  <span data-v-age className="h-2 w-2 rounded-full" style={{ background: a.color }} />
-                  {a.label} · {fmtDateNum(s.date_evenement)}
-                </span>
-              </Tip>
-            )
-          })()}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ── M9 lot 1 — Indice de confiance données (ICD) ────────────────────────────
+// ALGO-1 item 2 — le bloc « Signaux vendeur » (Score V agrégé 0-100 + bandes) est RETIRÉ de l'affichage : le backtest M3.6 le mesure CONTRE-prédictif pour la mutation (RR@1158 = 0,51 < 1, SCORING_SPEC §7-D). Le CALCUL reste en base (parcel_v_score, backtest) ; les signaux propriétaires FACTUELS restent servis par le tiroir Propriétaire (lines cascade), les chips verdict et le filtre « signaux propriétaire » du Header.
 const ICD_COLORS: Record<string, string> = { haute: '#4ADE96', partielle: '#9AA6A0', faible: '#F5A524', inconnu: '#9AA6A0' }
 const icdColor = (b: string) => ICD_COLORS[b] ?? '#9AA6A0'
 
@@ -437,64 +371,6 @@ function SignalerErreur({ idu }: { idu: string }) {
   )
 }
 
-function VendabiliteBlock({ sv }: { sv: ScoreV }) {
-  const [open, setOpen] = useState(false)
-  // M5.1 lexical : « brûlante » = tier v2 uniquement — le flag v1.3 a disparu du dossier
-  const color = vBandColor(sv.v_band)
-  if (sv.v_score == null) {
-    // V non applicable (D4) : badge spécial à la place du score — jamais un « 0 » menteur.
-    return (
-      <div data-score-v className="card-elev px-3 py-2.5">
-        <div className="flex items-center gap-3">
-          <span className="w-24 shrink-0 text-xs text-txt">Signaux vendeur</span>
-          <span className="rounded-full bg-surface-3 px-2 py-0.5 text-[10.5px] text-txt-mut">{sv.badge ?? 'N.A.'}</span>
-        </div>
-        <p className="mt-1 text-[11px] leading-snug text-txt-dim">
-          Score V non calculé pour ce type de propriétaire — démarche d'acquisition spécifique.
-        </p>
-      </div>
-    )
-  }
-  return (
-    <div data-score-v className="card-elev">
-      <button onClick={() => setOpen((o) => !o)} className="flex w-full items-center gap-3 px-3 py-2.5"
-        title="Signaux vendeur : déplier « Pourquoi ce score »">
-        <Tip tip={SCORE_TIP.v} className="w-24 shrink-0">
-          <span className="text-left text-xs text-txt underline decoration-dotted decoration-line-2 underline-offset-4">Signaux vendeur</span>
-        </Tip>
-        <span className="relative h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-line">
-          <span className="absolute left-0 top-0 h-full rounded-full" style={{ width: `${sv.v_score}%`, background: color }} />
-        </span>
-        <span className="w-8 shrink-0 text-right font-display text-sm font-bold tnum" style={{ color }}>{sv.v_score}</span>
-        <span className="shrink-0 text-txt-dim">{open ? '▾' : '▸'}</span>
-      </button>
-      {open && (
-        <div className="border-t border-line-2 px-3 py-1">
-          <div className="flex items-center gap-2 py-1.5">
-            <span className="rounded-full px-1.5 py-0.5 text-[9px] font-medium" style={{ background: `${color}1f`, color }}>
-              {sv.v_band_label}
-            </span>
-            {sv.badge && <span className="rounded-full border border-line-2 px-1.5 py-0.5 text-[9px] text-txt-dim">{sv.badge}</span>}
-            {sv.v_coverage === 'partial' && !sv.badge && (
-              <span className="rounded-full border border-line-2 px-1.5 py-0.5 text-[9px] text-txt-dim"
-                title="Propriétaire non identifié (personne physique ou sans SIREN) : seuls les signaux de la parcelle (dormance, DPE) sont évalués">
-                Signaux partiels
-              </span>
-            )}
-          </div>
-          <p className="label-caps pb-1">Pourquoi ce score</p>
-          {sv.signals.length
-            ? sv.signals.map((s, i) => <VSignalRow key={i} s={s} />)
-            : <p className="py-2 text-[11px] text-txt-dim">Aucun signal public de vente détecté — le propriétaire ne montre aucune raison objective de vendre.</p>}
-          <p className="py-1.5 text-[9px] leading-snug text-txt-dim">
-            V agrège des signaux PUBLICS (BODACC, RNE, DGFiP, DVF, Cartofriches, ADEME) — une
-            propension, jamais une certitude ni une donnée nominative de personne physique.
-          </p>
-        </div>
-      )}
-    </div>
-  )
-}
 
 // M14 — suivi de cible : événements sur cette parcelle SANS l'entrer au pipeline.
 function WatchButton({ idu }: { idu: string }) {
@@ -1329,7 +1205,8 @@ export function Fiche({ idu }: { idu: string }) {
           // micro-preuves (spec) dérivées des données déjà chargées
           const shorten = (s: string) => fmtLibelleBrut(s).replace(/\s*[—(].*$/, '').trim()
           const proprioPastilles = proprioLines.filter((l) => (l.weight ?? 0) > 0).slice(0, 3).map((l) => shorten(l.detail).slice(0, 26))
-          const proprioAccent = !!proprioSignal || f.score_v?.v_band === 'fort' || f.score_v?.v_band === 'present'
+          // ALGO-1 item 2 : l'accent proprio ne dépend plus du Score V (retiré de l'affichage)
+          const proprioAccent = !!proprioSignal
           const viabValue = f.viabilisation?.libelle ?? (f.gestionnaires ? 'réseaux renseignés' : '—')
           const confianceValue = f.icd ? `${f.icd.score} %` : `${f.completeness_score} %`
           return (
@@ -1384,7 +1261,6 @@ export function Fiche({ idu }: { idu: string }) {
                     (identité nominative : workflow SPF/CERFA, jamais automatisée).
                   </div>
                 )}
-                {f.score_v && <VendabiliteBlock sv={f.score_v} />}
                 {proprioLines.length > 0 && <div className="flex flex-col gap-1">{proprioLines.map((l, i) => <Line key={i} line={l} />)}</div>}
               </div>
             </RefDrawer>
