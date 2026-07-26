@@ -258,6 +258,27 @@ export function SourcesPage() {
           </div>
         )}
 
+        {/* M-RENOUV lot C — méthodo du segment Renouvellement : la définition, le score, LA LIMITE.
+            Texte validé au rapport (M_RENOUV_RAPPORT.md) — ne pas reformuler sans décision Vic. */}
+        <div data-sources-renouv className="mt-4 rounded-lg border px-4 py-2.5"
+          style={{ borderColor: `${TOKENS.renouv}40`, background: `${TOKENS.renouv}0a` }}>
+          <p className="text-[11px] font-medium" style={{ color: TOKENS.renouv }}>Segment Renouvellement</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-txt">
+            Le classement principal écarte volontairement les parcelles <b>déjà occupées</b> (bâties).
+            Le segment Renouvellement rend visibles celles d'entre elles qui restent en <b>zone
+            constructible (U/AU)</b> avec une <b>capacité réelle</b> (surface constructible résiduelle
+            supérieure à 100 m², ou assiette d'au moins 600 m²) — hors copropriétés et hors foncier
+            public. Son score (0-100) est une <b>règle de calcul transparente</b>, pas un modèle
+            prédictif : droits à bâtir résiduels (40), taille de l'assiette (25), rotation du bâti
+            dans le secteur (20), géométrie favorable (15) — chaque parcelle est située par rang au
+            sein du segment.
+          </p>
+          <p className="mt-1.5 text-[10.5px] leading-relaxed text-st-creuser">
+            ▲ La limite : ce segment identifie un potentiel physique et réglementaire ; il ne prédit
+            pas une mise en vente et ne constitue pas une opportunité qualifiée.
+          </p>
+        </div>
+
         {isLoading && <div className="mt-6"><Loading label="Chargement des sources" className="text-xs" /></div>}
         {isError && <p className="mt-6 text-xs text-st-ecartee">Sources inaccessibles — vérifiez votre réseau ou réessayez.</p>}
         {[...cats.entries()].map(([cat, list]) => (

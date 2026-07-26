@@ -314,6 +314,12 @@ def collect_api(idu: str) -> dict:
             "n_coproprietes": len(fiche.get("coproprietes") or []),
             "dvf_derniere_mutation": dvf_last.get("date_mutation"),
             "proprietaire_moral_siren": (fiche.get("proprietaire_moral") or {}).get("siren"),
+            # M-RENOUV lot C — cas golden (1)/(2) : une parcelle du segment porte le badge
+            # (bloc non nul, rang gelé) ; une écartée hors segment n'en porte pas (None).
+            "renouvellement": (
+                {"rang_segment": fiche["renouvellement"].get("rang_segment"),
+                 "renouv_score": fiche["renouvellement"].get("renouv_score")}
+                if fiche.get("renouvellement") else None),
         }
     if v2 is None:
         out["score_v2"] = {"erreur": err_v}
@@ -409,6 +415,13 @@ def collect_all(idus: list[str], anchors: set[str] | None = None) -> dict:
             api = collect_api(idu)
             entries[idu] = {"db": db, "api": api,
                             "coherence_db_api": coherence_db_api(db, api)}
+        # M-RENOUV lot C — cas golden (3) : les EFFECTIFS des 5 tiers servis sont gelés
+        # dans la référence (le segment est additif : toute dérive des tiers = FAIL).
+        tiers_effectifs = None
+        if v2run:
+            cur.execute("SELECT tier, count(*) AS n FROM parcel_p_score_v2 "
+                        "WHERE run_id = %(r)s GROUP BY tier", {"r": v2run})
+            tiers_effectifs = {r["tier"]: int(r["n"]) for r in cur.fetchall()}
     return {
         "meta": {
             "mandat": "M6 Phase 1 §1.2 — golden dataset",
@@ -418,6 +431,7 @@ def collect_all(idus: list[str], anchors: set[str] | None = None) -> dict:
             "api_base": API_BASE,
             "tolerances": TOLERANCES,
             "n_parcelles": len(entries),
+            "tiers_effectifs": tiers_effectifs,
         },
         "parcelles": entries,
     }
@@ -461,6 +475,16 @@ def main() -> int:
               f"écarts tier/rang attendus")
 
     n_fail, n_coh = 0, 0
+    # M-RENOUV lot C — cas golden (3) : effectifs des 5 tiers servis STRICTS (si la
+    # référence les gèle ; référence antérieure sans le champ = pas de check, rétro-compatible).
+    ref_tiers = golden["meta"].get("tiers_effectifs")
+    if ref_tiers is not None:
+        cur_tiers = current["meta"].get("tiers_effectifs")
+        if cur_tiers != ref_tiers:
+            print(f"FAIL tiers_effectifs — référence {ref_tiers} ≠ courant {cur_tiers}")
+            n_fail += 1
+        else:
+            print(f"PASS tiers_effectifs {cur_tiers}")
     for idu in idus:
         exp = golden["parcelles"].get(idu)
         got = current["parcelles"][idu]
