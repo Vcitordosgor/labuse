@@ -45,21 +45,41 @@ def slug(commune: str) -> str:
     return s.lower().replace(" ", "_").replace("'", "_").replace("-", "_")
 
 
-def export(cur) -> None:
+def commune_insee(cur, commune: str) -> str | None:
+    """Code INSEE de la commune, dérivé du cadastre (préfixe IDU) — zéro dépendance."""
+    cur.execute("SELECT left(min(idu), 5) AS insee FROM parcels WHERE commune = %(c)s", {"c": commune})
+    r = cur.fetchone()
+    return r["insee"] if r else None
+
+
+def export(cur, only_commune: str | None = None) -> None:
     CFG.mkdir(parents=True, exist_ok=True)
     DATA.mkdir(parents=True, exist_ok=True)
     cur.execute("SELECT DISTINCT commune FROM spatial_layers WHERE kind='plu_gpu_zone'"
                 " AND commune IS NOT NULL AND commune NOT LIKE '%%,%%' ORDER BY 1")
     communes = [r["commune"] for r in cur.fetchall()]
+    if only_commune:
+        communes = [c for c in communes if c == only_commune]
     for c in communes:
+        insee = commune_insee(cur, c)
         cur.execute("""
             SELECT subtype, name, attrs, encode(ST_AsEWKB(geom), 'hex') AS ewkb,
                    round(ST_Area(geom_2975)::numeric)::bigint AS surface_m2
             FROM spatial_layers WHERE kind='plu_gpu_zone' AND commune=%(c)s
             ORDER BY subtype, name, md5(ST_AsEWKB(geom)::text)""", {"c": c})
         rows = cur.fetchall()
-        zones, geoms = [], []
+        zones, geoms, debords = [], [], []
         for r in rows:
+            # MANDAT RNU A1 — filtre ANTI-DÉBORD (général, toutes communes) : une zone dont
+            # l'idurba appartient à une AUTRE commune est un artefact d'ingestion par bbox
+            # (PLU voisin qui mord l'emprise). Elle ne doit JAMAIS être gravée au manifeste
+            # de CETTE commune : c'est ainsi que zonage_saint_philippe.yaml a figé 19 zones
+            # de Saint-Joseph/Sainte-Rose sous le nom de Saint-Philippe (commune au RNU —
+            # cf. reports/algo1b-diagnostic-rr.md, annexe). Exclue et COMPTÉE, jamais tue.
+            zid = ((r["attrs"] or {}).get("idurba") or "")
+            if insee and zid and not zid.startswith(insee):
+                debords.append(zid)
+                continue
             md5 = hashlib.md5(bytes.fromhex(r["ewkb"])).hexdigest()
             zones.append({"subtype": r["subtype"], "name": r["name"], "attrs": r["attrs"],
                           "surface_m2": int(r["surface_m2"] or 0), "geom_md5": md5})
@@ -78,6 +98,17 @@ def export(cur) -> None:
             "geoms_sidecar": f"data/calibrage/zonage_{slug(c)}.geoms.jsonl.gz",
             "zones": zones,
         }
+        if debords:
+            # traçabilité : les débords exclus restent visibles au manifeste (jamais silencieux)
+            manifest["zones_debord_exclues"] = {
+                "n": len(debords), "idurba": sorted(set(debords)),
+                "note": ("zones de PLU VOISINS mordant l'emprise (artefact bbox) — exclues du "
+                         "manifeste : aucune parcelle ne doit hériter d'un règlement voisin "
+                         "(mandat RNU A1)")}
+        if not zones and insee:
+            manifest["statut_document"] = (
+                "AUCUNE zone propre — commune sans document local ingéré ; si la commune est "
+                "au RNU (cf. config/rnu_communes.yaml), c'est l'état ATTENDU, ne pas réimporter")
         (CFG / f"zonage_{slug(c)}.yaml").write_text(
             yaml.safe_dump(manifest, allow_unicode=True, sort_keys=False, width=110), encoding="utf-8")
         with gzip.open(DATA / f"zonage_{slug(c)}.geoms.jsonl.gz", "wt", encoding="utf-8") as f:
@@ -119,14 +150,20 @@ def roundtrip(cur) -> bool:
     ok = True
     for c in communes:
         n = do_import(cur, c, "spatial_layers_temoin")
+        # MANDAT RNU A1 : la face DB de la comparaison exclut les DÉBORDS (idurba d'une autre
+        # commune) — même règle que l'export. Le ZÉRO écart porte sur les zones PROPRES.
+        insee = commune_insee(cur, c)
         cur.execute("""
             WITH a AS (SELECT subtype, name, attrs::text AS at, md5(ST_AsEWKB(geom)::text) AS g
-                       FROM spatial_layers WHERE kind='plu_gpu_zone' AND commune=%(c)s),
+                       FROM spatial_layers WHERE kind='plu_gpu_zone' AND commune=%(c)s
+                         AND (coalesce(attrs->>'idurba','') = ''
+                              OR %(insee)s::text IS NULL
+                              OR attrs->>'idurba' LIKE %(insee)s::text || '%%')),
                  b AS (SELECT subtype, name, attrs::text AS at, md5(ST_AsEWKB(geom)::text) AS g
                        FROM spatial_layers_temoin WHERE commune=%(c)s)
             SELECT (SELECT count(*) FROM (SELECT * FROM a EXCEPT ALL SELECT * FROM b) x)
                  + (SELECT count(*) FROM (SELECT * FROM b EXCEPT ALL SELECT * FROM a) y) AS d""",
-            {"c": c})
+            {"c": c, "insee": insee})
         diff = cur.fetchone()["d"]
         status = "✓ ZÉRO écart" if diff == 0 else f"✗ {diff} écart(s)"
         print(f"  {c}: {n} zones réimportées → {status}")
@@ -142,7 +179,7 @@ def main() -> int:
     args = ap.parse_args()
     with psycopg.connect(DB) as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
         if args.action == "export":
-            export(cur)
+            export(cur, only_commune=args.commune)
         elif args.action == "import":
             n = do_import(cur, args.commune, args.table)
             conn.commit()
