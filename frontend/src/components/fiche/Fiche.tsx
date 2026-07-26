@@ -693,14 +693,17 @@ export function Calculette({ idu }: { idu: string }) {
   const [cout, setCout] = useState<number | null>(CALC_COUT_DEFAUT)
   const [marge, setMarge] = useState<number | null>(CALC_MARGE_DEFAUT)
   const [prixDemande, setPrixDemande] = useState<number | null>(null)
+  // M22-A : la même équation, deux lectures — charge supportable (historique) ou prix d'achat
+  // max admissible (inverse). Le moteur garantit l'identité des totaux (aucun calcul en JS).
+  const [mode, setMode] = useState<'charge' | 'achat_max'>('charge')
   const [deb, setDeb] = useState({ cout: CALC_COUT_DEFAUT, marge: CALC_MARGE_DEFAUT, prix: null as number | null })
   useEffect(() => {
     const t = setTimeout(() => setDeb({ cout: cout ?? CALC_COUT_DEFAUT, marge: marge ?? CALC_MARGE_DEFAUT, prix: prixDemande }), 350)
     return () => clearTimeout(t)
   }, [cout, marge, prixDemande])
   const q = useQuery({
-    queryKey: ['charge', idu, deb.cout, deb.marge, deb.prix],
-    queryFn: () => postChargeFonciere(idu, { cout_construction_m2: deb.cout, marge_frais_pct: deb.marge, prix_demande_eur: deb.prix }),
+    queryKey: ['charge', idu, deb.cout, deb.marge, deb.prix, mode],
+    queryFn: () => postChargeFonciere(idu, { cout_construction_m2: deb.cout, marge_frais_pct: deb.marge, prix_demande_eur: deb.prix, mode }),
     placeholderData: (prev) => prev,   // garde l'ancien résultat pendant le recalcul (pas de flash)
   })
   const d = q.data
@@ -741,20 +744,43 @@ export function Calculette({ idu }: { idu: string }) {
               <HypInput label="Coût construction" value={cout} onChange={setCout} suffix="€/m²" hint />
               <HypInput label="Marge & frais" value={marge} onChange={setMarge} suffix="%" hint />
             </div>
-            {/* le RÉSULTAT — calcul de VOS hypothèses */}
+            {/* M22-A · BASCULE DE LECTURE — même équation, deux sens (discret, pas de refonte) */}
+            <div className="mt-2 flex gap-1 rounded-lg border border-line-2 bg-surface-2 p-1">
+              {([['charge', 'Charge supportable'], ['achat_max', "Prix d'achat max"]] as const).map(([m, l]) => (
+                <button key={m} data-calc-mode={m} onClick={() => setMode(m)}
+                  className={`flex-1 rounded-md py-1 text-[11px] font-medium transition-colors duration-quick ${mode === m ? 'bg-mint text-bg' : 'text-txt-mut hover:text-txt'}`}>
+                  {l}
+                </button>
+              ))}
+            </div>
+            {/* le RÉSULTAT — calcul de VOS hypothèses (mêmes totaux dans les deux lectures) */}
             <div data-calc-resultat className="mt-2.5 rounded-lg border border-mint/40 bg-mint/[0.06] px-3 py-2">
-              <p className="text-[11px] text-txt-dim">Charge foncière supportable <span className="text-txt-mut">— selon vos hypothèses</span></p>
+              <p className="text-[11px] text-txt-dim">{mode === 'achat_max' ? "Prix d'achat maximal admissible" : 'Charge foncière supportable'} <span className="text-txt-mut">— selon vos hypothèses</span></p>
               <p className="mt-0.5">
                 <b data-calc-cf className="num-key text-lg text-mint">{euros(cf.central)}</b>
                 <span className="ml-1.5 text-[11px] text-txt-mut">≈ {fmtInt(Number(cf.par_m2_terrain))} €/m² de terrain</span>
               </p>
               <p className="text-[11px] text-txt-dim">fourchette {euros(cf.bas)} – {euros(cf.haut)}{d.fiabilite === 'fragile' ? ' · prix de sortie fragile (ordre de grandeur)' : ''}</p>
+              {mode === 'achat_max' && (
+                <p className="mt-1 text-[9.5px] leading-snug text-txt-dim">
+                  = ce que l'opération peut payer le terrain (CA × (1 − marge & frais) − construction − VRD le cas
+                  échéant) — les trois scénarios suivent la fourchette de prix de sortie DVF (même équation que la
+                  charge supportable, lue à l'envers).
+                </p>
+              )}
             </div>
             {/* aide à la DÉCISION D'ACHAT — prix demandé optionnel */}
             <div className="mt-2 flex items-end gap-2">
               <HypInput label="Prix demandé du terrain" value={prixDemande} onChange={setPrixDemande} suffix="€" placeholder="si connu" />
             </div>
-            {achat && (
+            {mode === 'achat_max' && d.ecart_negociation && (
+              <div data-calc-ecart className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${d.ecart_negociation.sens === 'marge' ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
+                {d.ecart_negociation.sens === 'surcout'
+                  ? <>Écart : prix demandé {euros(d.ecart_negociation.prix_demande_eur)} − prix d'achat max {euros(d.ecart_negociation.prix_achat_max_eur)} = <b>surcoût de {euros(d.ecart_negociation.demande_moins_max_eur)}</b> (+{d.ecart_negociation.demande_moins_max_pct} % au-dessus du max admissible).</>
+                  : <>Écart : prix demandé {euros(d.ecart_negociation.prix_demande_eur)} est <b>sous votre prix d'achat max</b> ({euros(d.ecart_negociation.prix_achat_max_eur)}) — marge de {euros(Math.abs(d.ecart_negociation.demande_moins_max_eur))}.</>}
+              </div>
+            )}
+            {mode === 'charge' && achat && (
               <div data-calc-verdict className={`mt-2 rounded-lg px-3 py-2 text-[11px] font-medium ${achat.supportable ? 'bg-mint/10 text-mint' : 'bg-st-ecartee/10 text-st-ecartee'}`}>
                 {achat.supportable
                   ? <>✓ Supportable — le terrain peut valoir {euros(achat.prix_demande_eur)} ; marge de {euros(achat.ecart_eur)} ({achat.ecart_pct > 0 ? '+' : ''}{achat.ecart_pct} %) sous votre charge foncière.</>

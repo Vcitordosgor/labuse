@@ -349,7 +349,8 @@ export const faisabiliteExplain = (idu: string) =>
 
 // Calculette de charge foncière (mandat bilan-calculette) : LABUSE calcule le déterministe
 // (SDP, prix DVF) ; le coût de construction et la marge sont les hypothèses SAISIES.
-export interface ChargeIn { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur?: number | null }
+// M22-A : mode 'achat_max' = la même équation lue à l'envers (prix d'achat max admissible).
+export interface ChargeIn { cout_construction_m2: number; marge_frais_pct: number; prix_demande_eur?: number | null; mode?: 'charge' | 'achat_max' }
 export const postChargeFonciere = (idu: string, body: ChargeIn) =>
   j<Record<string, any>>(`/modules/faisabilite/${idu}/charge`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
