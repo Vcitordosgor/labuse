@@ -90,3 +90,104 @@ panel — indétectable par construction.
 **Précision mesurée : 32/32 = 100 % sur vérification exhaustive** (≥ 95 % exigé — OK) ;
 la règle de longueur élimine la classe de risque homonyme résiduelle. Impact assumé :
 ~10,4 k lignes/an restent « inconnu » au multi-détention (bin réel, WoE propre).
+
+---
+
+## B + D — CHALLENGER : construction et mesure (27/07/2026)
+
+**B construit as-of** (`algo2_prop_features`, préfixe dédié — champion intouché, zéro
+ligne dans parcel_p_score_v2) : prop_type (catégories distinctes `non_pm` ≠ `inconnu`
+panel — bin « inconnu » PROUVÉ vraie catégorie : effectif 1 294 989, WoE −0,074, test
+unitaire 2/2), tenure_mois continue (100 % frame), portefeuille commune/île (résolution
+C), ancienneté société, bodacc36 (590→3 301 TRUE/an — ≥ 200 au train ✓, précision n°4).
+Protocole D = champion à l'identique (folds 2020-2025, train ≤ F-2, isotonique F-1,
+C=5,0, 5 interactions gelées, seed 974).
+
+### Walk-forward FULL (RR@1158 hors copro, IC95)
+
+| Fold | Challenger | Champion | Δ |
+|---|---|---|---|
+| 2020 | 8,98 [7,47;10,09] | 9,41 | −0,43 |
+| 2021 | 8,52 [7,44;9,59] | 8,61 | −0,09 |
+| 2022 | 8,09 [6,91;9,17] | 8,63 | −0,54 |
+| 2023 | 7,15 [6,12;8,28] | 7,30 | −0,15 |
+| 2024 | 7,08 [5,94;8,33] | 7,08 | 0,00 |
+| **2025** | **6,73 [5,53;7,87]** | **6,73 [5,53;7,84]** | **0,00** |
+
+ECE 0,0012-0,0033 (calibration intacte). Aucun fold amélioré ; 2020-2022 légèrement
+dégradés (bins « inconnu » pré-panel + variance ajoutée).
+
+### Ablations fold 2025 (bootstrap APPARIÉ vs BASE) — la question n°2 de Vic
+
+| Variante | RR | Δ vs BASE [IC95] |
+|---|---|---|
+| BASE (29 features champion) | 6,73 | — |
+| **+ B2 tenure fine seule** | 7,07 | **+0,34 [−0,56;+1,02]** — seul frémissement, NON significatif |
+| + bloc PM seul | 6,67 | −0,06 [−0,91;+1,07] — rien |
+| FULL | 6,73 | +0,00 [−0,98;+0,96] — rien |
+
+**Réponse à la question n°2 : le (maigre) signal vient de B2 — le bloc PROPRIÉTAIRE
+n'apporte RIEN de mesurable.** Même B2 ne franchit pas la significativité.
+
+### Arène-équivalente (fold 2025, out-of-sample des deux côtés)
+
+- **Δ FULL − CHAMPION apparié : 0,00 [−0,98;+0,96] — NON significatif** (le critère
+  d'avis exige une borne basse > 0) ;
+- **churn top-1158 : 43 %** — une rotation massive de la réserve pour un gain nul,
+  coût produit pur (budget d'arène : 25 %) ;
+- permutation : RR 0,74 ≈ 1 ✓ (aucune fuite) ;
+- **boussole** : 1 hit du PROXY top-1158 (97423000AB1341) — mais c'est une **étage-0**
+  (cascade `exclue`) : dans le vrai pipeline l'étage 0 PRIME et elle ne peut JAMAIS
+  devenir chaude, quel que soit son rang. Artefact du proxy (qui teste le rang, pas le
+  tier), pas une violation réelle ; l'arène formelle sur run-candidat la testerait sur
+  le TIER. Aucune autre négative factuelle au top.
+
+### RR PAR COMMUNE (fold 2025, Δ apparié FULL−champion, k_c proportionnel)
+
+| Commune | Champion | FULL | Δ apparié [IC95] |
+|---|---|---|---|
+| **Le Tampon** | 3,1 | 6,1 | **+3,06 [+0,48;+5,78] — SIGNIFICATIF** |
+| Saint-Joseph | 2,5 | 4,1 | +1,65 [−1,74;+4,25] — ns |
+| Saint-Paul | 4,6 | 5,0 | +0,42 [−1,68;+3,40] — ns |
+| **Saint-Denis** | 3,8 | 2,5 | **−1,25 [−4,37;0,00]** — dégradation, borne haute à 0 pile |
+
+Lecture prudente du +Tampon : (a) la moyenne île est STRICTEMENT inchangée — le gain
+du Tampon est payé ailleurs (SD en tête) : une REDISTRIBUTION, pas une création de
+signal ; (b) 1 seul test significatif sur 4 (α=5 % → ~18 % de chance d'un faux positif
+par multiplicité) ; (c) l'ablation montre que ni B2 ni le bloc PM ne portent d'effet
+propre — le mouvement communal vient de la recomposition d'ensemble, fragile par
+nature. On ne promeut pas un modèle sur ce fondement.
+
+---
+
+## E — VERDICT : NE PAS PROMOUVOIR
+
+Le challenger ne bat pas le champion : **Δ île = 0,00 pile [−0,98;+0,96]**, aucun fold
+amélioré, **aucun apport propre du bloc propriétaire** (−0,06 en ablation), et un
+**churn de 43 %** qui, à gain nul, n'est que du coût (clients qui verraient leur
+réserve tourner sans raison). Le seul point significatif (+3,06 au Tampon) est une
+redistribution non expliquée par les features testées, contredite par la dégradation
+symétrique de Saint-Denis — pas un fondement de bascule.
+
+**Le mandat le prévoyait : « un mandat qui conclut ça n'apporte rien est un mandat
+réussi. »** C'est le cas. L'attente était d'ailleurs cadrée dès l'inventaire :
+couverture PM ~19 % île, 12 % là où on espérait remonter.
+
+**Recommandations motivées (aucune bascule — décision Vic)** :
+1. **NE PAS PROMOUVOIR** ce challenger ; le champion `q_v7_defisc` reste servi tel quel.
+2. **B2 (tenure continue)** : seul frémissement (+0,34 ns, 100 % du frame) — candidate
+   à retester SEULE au prochain RE-TRAIN ANNUEL prévu par la politique de recalibration
+   (jamais une bascule dédiée pour un effet non significatif).
+3. Tampon/Saint-Joseph : confirmer la piste déjà actée par Vic — **voisinage
+   hyper-local, mandat suivant** ; ce mandat établit leur base chiffrée (3,1 / 2,5).
+4. Actifs réutilisables du mandat : la résolution d'entités C (100 % vérifiée) et la
+   table as-of `algo2_prop_features` restent disponibles pour tout usage descriptif
+   (fiche propriétaire, portefeuille affiché) — leur inutilité PRÉDICTIVE n'enlève
+   rien à leur valeur PRODUIT éventuelle.
+
+**Écartées (récapitulatif, motifs gravés)** : âge dirigeant (⛔ boussole personne
+physique) ; B5 dormance (snapshot 2026 = fuite) ; B7 indivision (rien de structurel).
+
+*Incident consigné : 3e collision de session concurrente dans ce clone (checkout main
+pendant le run de fond — script disparu du worktree, complément relancé). La
+recommandation « un clone/worktree par mandat simultané » devient pressante.*
