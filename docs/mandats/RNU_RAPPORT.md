@@ -1,4 +1,22 @@
-# MANDAT RNU — Rapport d'étape · STOP validation (méthode PAU)
+# MANDAT RNU — Rapport final (STOP levé : méthode validée Vic 26/07/2026 et codée)
+
+> **Validation Vic** : (1) médian, paramètres en CONFIG ; (2) critère centre ;
+> (3) plancher `dans PAU ∧ ≥ 600 m²` — même seuil que partout. **+ 2 ajouts** :
+> exports RNU = « non applicable — RNU » sur les règles de capacité (jamais un
+> tableau vide) ; PAU étiquetée ESTIMATION (wording exact gravé, testé).
+>
+> **CODÉ ET PROUVÉ (commit d7e103f)** : `labuse rnu-pau` → `commune_pau`/`parcel_pau`
+> (Saint-Philippe : 35 noyaux · 268 ha · 2 373 parcelles · **127 nues ≥ 600 m²
+> éligibles** — identique au prototype) ; plancher C branché (colonne absente =
+> comportement d'avant, testé ; les tiers ne bougent qu'au prochain `score-v2`) ;
+> bannière fiche DANS/HORS enveloppe + avertissement ; PDF : « non applicable —
+> RNU » ×3 + estimation + état d'enveloppe. Tests 7/7 · golden 116/116 + PASS
+> tiers_effectifs · tiers île au bit près · tsc 0 · build OK.
+> Le contenu ci-dessous est conservé tel quel (historique de la proposition).
+
+---
+
+# (Historique) Rapport d'étape · STOP validation (méthode PAU)
 
 **Branche** : `feat/rnu` (base main 7976d54, poussée, non mergée). **Golden 116/116** +
 `PASS tiers_effectifs` ; **les 5 tiers île au bit près** (120/1031/3587/72980/353945 —
