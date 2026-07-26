@@ -28,7 +28,9 @@ log = logging.getLogger("labuse.flash")
 #: Version de la maquette du rapport (page de garde + nom de fichier).
 #: 1.1 (O2) — wordmark de la page de garde « LA BUSE » → « LABUSE » (le contenu du
 #: template a changé ; la version suit pour rester traçable).
-TEMPLATE_VERSION = "1.1"
+#: 1.2 (M22-F C3) — titre de garde = LE PRODUIT (« Rapport Flash » / « Dossier
+#: parcelle ») pour différencier les deux documents ; descriptif en sous-titre.
+TEMPLATE_VERSION = "1.2"
 
 _TEMPLATES = Path(__file__).resolve().parent / "templates"
 #: Fonts du design system (OFL) — déjà embarquées pour les exports PDF existants.
@@ -78,7 +80,7 @@ def render_report_html(db: Session, idu: str, *, order_ref: str, adresse: str | 
         date_generation=data["date_generation"], watermark=watermark)
     return _env.get_template("rapport.html.j2").render(
         data=data, carte=carte, css=Markup(css), order_ref=order_ref,
-        produit_sous_titre=produit_sous_titre,
+        produit=produit, produit_sous_titre=produit_sous_titre,
         watermark=watermark, template_version=TEMPLATE_VERSION,
         logo_path=_logo_svg_path(), sources_attribution=SOURCES_ATTRIBUTION)
 

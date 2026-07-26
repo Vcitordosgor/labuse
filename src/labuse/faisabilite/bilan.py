@@ -217,6 +217,9 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
             "periode": [min(annees), max(annees)],
             "q1": round(q1), "median": round(med), "q3": round(q3),
             "min": round(min(prices)), "max": round(max(prices)),
+            # M22-F C9 (additif) : les prix RETENUS, un par vente — la bande de points de
+            # l'argumentaire les dessine tels quels (aucune agrégation nouvelle).
+            "prix_points": sorted(round(p) for p in prices)[:120],
             **_marche_dynamique(kept, q1, med, q3, min_n),
             "comparables": _comparables(kept, min_n, niveau)}
 
@@ -458,6 +461,20 @@ CALCULETTE_COUT_DEFAUT_M2 = 2500.0
 CALCULETTE_MARGE_FRAIS_DEFAUT_PCT = 21.0
 
 
+def bilan_params_defaut() -> dict:
+    """M22-F C1 — LA source d'hypothèses par défaut, UNIQUE pour tous les documents
+    (calculette, Dossier banquier, Argumentaire). Injectée comme `bilan_params` dans
+    `compute_bilan` : coût 2500 €/m² SDP, marge & frais agrégés 21 % du CA (honoraires
+    et frais financiers neutralisés car agrégés). Deux documents générés avec ces
+    défauts sur la même parcelle DOIVENT porter les mêmes totaux (test l'atteste)."""
+    return {
+        "cout_construction_m2_sdp": CALCULETTE_COUT_DEFAUT_M2,
+        "marge_cible_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+        "honoraires_pct": 0.0,
+        "frais_financiers_pct": 0.0,
+    }
+
+
 def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix: dict,
                        cout_construction_m2: float, marge_frais_pct: float,
                        prix_demande_eur: float | None = None, mode: str = "charge") -> dict:
@@ -477,12 +494,11 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
     − construction → − VRD → = foncier max) est exposée dans `steps`, la fourchette est
     réétiquetée `prix_achat_max` (les trois scénarios de prix de sortie DVF), et l'écart au prix
     demandé est rendu dans le sens de la négociation (demandé − max : + = surcoût, − = marge)."""
-    bp = {
-        "cout_construction_m2_sdp": float(cout_construction_m2),
-        "marge_cible_pct": float(marge_frais_pct),
-        "honoraires_pct": 0.0,          # agrégés dans « marge & frais » saisi par l'utilisateur
-        "frais_financiers_pct": 0.0,
-    }
+    # C1 — même squelette d'hypothèses que tous les documents (source unique), les saisies
+    # de l'utilisateur remplacent les deux valeurs par défaut.
+    bp = {**bilan_params_defaut(),
+          "cout_construction_m2_sdp": float(cout_construction_m2),
+          "marge_cible_pct": float(marge_frais_pct)}
     b = compute_bilan(float(shab_vendable_m2), float(surface_terrain_m2 or 0), prix, Hypotheses(),
                       bilan_params=bp)
     marche = {"median": prix.get("median"), "fiabilite": prix.get("fiabilite"), "n": prix.get("n")}
@@ -506,6 +522,9 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
         "verdict": b.verdict,
         "avertissements": b.avertissements,
         "marche": marche,
+        # M22-F C9 (additif) : termes bruts du bilan (cc_bas/cc_haut, cout_vrd, coef) — le
+        # diagramme en cascade de l'argumentaire les dessine sans RIEN recalculer.
+        "calc": b.calc,
     }
     if prix_demande_eur:
         pd = float(prix_demande_eur)

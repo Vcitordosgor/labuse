@@ -133,3 +133,6 @@ ul.liste li { margin-bottom: 1mm; }
 {% endif %}
 
 .saut { break-before: page; }
+
+/* M22-F C3 — sous-titre descriptif sous le titre produit de la garde */
+.garde .cover-note { font-size: 10pt; color: var(--txt-mut); margin: 0 0 4mm 0; }

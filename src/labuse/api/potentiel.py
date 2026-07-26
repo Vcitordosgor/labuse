@@ -105,13 +105,21 @@ def _synthese(out: dict) -> str:
             f"<tr><td><b>Division</b></td><td>étude complémentaire</td>"
             f"<td>{ENCADRE_DIVISION}</td></tr>"
             f"<tr><td><b>Points d'attention</b></td><td>{n_att or '—'}</td><td>{esc(v_att)}</td></tr>")
-    return (f"<h1>Rapport de potentiel</h1>"
-            f"<p class='cover-sub'>Parcelle {esc(p['idu'])} — {esc(p['commune'])} · "
-            f"section {esc(p['section'])} n° {esc(p['numero'])} · {p['surface_m2']:.0f} m² de terrain</p>"
-            f"<div class='bandeau'>{LIBELLE}</div>"
+    # C6 — le chiffre-héros : la SDP résiduelle se voit à 2 mètres (quand elle existe)
+    kpis = []
+    if r.get("disponible") and r.get("sdp_residuelle_m2", 0) > 0:
+        # toujours Estimé : dérivée des règles calibrées, même quand la hauteur bâtie est réelle
+        kpis.append(bq.cartouche("Surface constructible restante · Estimé",
+                                 f"~{r['sdp_residuelle_m2']} m²", hero=True))
+    kpis.append(bq.cartouche("Terrain · Sourcé", f"{p['surface_m2']:.0f} m²"))
+    if n_att:
+        kpis.append(bq.cartouche("À vérifier avant compromis", str(n_att), "point(s)"))
+    return (f"<section class='garde'>"
+            f"{bq.garde_entete(p, produit_sous_titre='RAPPORT DE POTENTIEL · avant compromis', titre='Rapport de potentiel', bandeau=LIBELLE)}"
             f"<h2>1 · Ce que ce bien permet, en trois lignes</h2>"
             f"<table><tr><th>Volet</th><th>Verdict</th><th>En clair</th></tr>{rows}</table>"
-            f"<h2>Situation</h2>{bq.map_html(p['geojson'], ign=True)}")
+            f"{bq.cartouches(kpis)}"
+            f"<h2>Situation</h2>{bq.map_html(p['geojson'])}</section>")
 
 
 def _extension(out: dict) -> str:
@@ -202,7 +210,9 @@ def _build_pdf(db: Session, idu: str) -> bytes:
                                          "<h2>5 · Contexte marché (pour situer)</h2>")
     sections = [_synthese(out), _extension(out), _divisibilite(),
                 _avant_compromis(out), marche, _limites(out)]
-    pdf = bq.render_pdf(sections, LIBELLE)
+    # C7 : bandeau de contexte sur chaque page
+    pdf = bq.render_pdf(sections, LIBELLE, produit="Rapport de potentiel",
+                        idu=idu, commune=out["parcelle"].get("commune") or "")
     log.info("rapport potentiel %s généré (%d ko)", idu, len(pdf) // 1024)
     return pdf
 

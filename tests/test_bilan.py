@@ -215,3 +215,27 @@ def test_achat_max_prix_insuffisant_pas_de_faux_chiffre():
     prix = {"fiable": False, "fiabilite": "insuffisant", "n": 3, "median": None, "radius_m": 1500.0}
     res = compute_calculette(4600, 4500, prix, 2500, 21, mode="achat_max")
     assert res["calculable"] is False and res.get("prix_achat_max") is None
+
+
+# ── M22-F C1 · UNE SEULE SOURCE D'HYPOTHÈSES (cohérence inter-documents) ───────────────────
+
+def test_c1_banquier_et_calculette_memes_totaux():
+    """Le bilan du Dossier banquier (compute_bilan + bilan_params_defaut) et la calculette
+    (défauts) DOIVENT porter les mêmes totaux intermédiaires : CA, charge foncière, €/m²."""
+    from labuse.faisabilite.bilan import (bilan_params_defaut, CALCULETTE_COUT_DEFAUT_M2,
+                                          CALCULETTE_MARGE_FRAIS_DEFAUT_PCT)
+    prix = _prix(5310, 5310, 5310, n=14)
+    banquier = compute_bilan(6344, 9723, prix, H, bilan_params=bilan_params_defaut())
+    calculette = compute_calculette(6344, 9723, prix,
+                                    CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT)
+    assert banquier.ca == calculette["ca"]
+    assert banquier.charge_fonciere == calculette["charge_fonciere"]
+
+
+def test_c1_encadre_hypotheses_identique_en_forme():
+    """L'encadré « Hypothèses de calcul » est LA MÊME brique dans tous les documents —
+    à hypothèses égales, HTML strictement identique."""
+    from labuse.api.briques_pdf import hypotheses_encadre
+    assert hypotheses_encadre(2500, 21) == hypotheses_encadre(2500.0, 21.0)
+    html = hypotheses_encadre(2500, 21)
+    assert "Hypothèses de calcul" in html and "2500" in html and "21" in html
