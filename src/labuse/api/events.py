@@ -47,6 +47,17 @@ CREATE TABLE IF NOT EXISTS saved_searches (
   created_at timestamptz DEFAULT now()
 );
 -- M21-B3 : préférences de notification par compte (désinscription obligatoire du digest e-mail).
+CREATE TABLE IF NOT EXISTS veille_reprise (
+  id serial PRIMARY KEY,
+  compte_id integer,
+  idu varchar(14) NOT NULL,
+  mois integer NOT NULL,                 -- 3 | 6 | 12 | 24 (réalerte M23-C)
+  echeance date NOT NULL,
+  tier_archivage varchar(24),            -- état SERVI au moment de l'archivage (diff à l'échéance)
+  event_date_archivage date,             -- dernier événement daté connu à l'archivage
+  created_at timestamptz DEFAULT now(),
+  traite_at timestamptz                  -- NULL = en attente d'échéance
+);
 CREATE TABLE IF NOT EXISTS notif_prefs (
   compte_id integer PRIMARY KEY,
   unsubscribed boolean DEFAULT false,   -- opt-out du digest e-mail (jamais d'envoi sans arrêt possible)
@@ -141,7 +152,50 @@ def detect_events(db: Session, run_from: str, run_to: str, demo: bool = False) -
              "from": run_from, "to": run_to, "demo": demo, "cid": r["compte_id"]}).rowcount
         inserted["permis"] += n
     db.flush()
+    # M23-C : reprises de veille ÉCHUES → le MÊME canal que les veilles (event_log kind='veille',
+    # cron detect-events existant) — jamais un second circuit de notification.
+    inserted["reprises"] = traiter_reprises(db)
     return inserted
+
+
+def traiter_reprises(db: Session) -> int:
+    """M23-C — échéances de reprise atteintes : une entrée event_log kind='veille' avec la
+    MENTION DE CE QUI A CHANGÉ depuis l'archivage (tier servi, nouveaux événements datés).
+    Idempotent : traite_at marque la reprise consommée."""
+    from ..scoring.score_v_constants import Q_A_RUN_LABEL
+    dus = db.execute(text(
+        "SELECT id, compte_id, idu, mois, echeance, tier_archivage, event_date_archivage "
+        "FROM veille_reprise WHERE traite_at IS NULL AND echeance <= CURRENT_DATE")).mappings().all()
+    n = 0
+    for r in dus:
+        cur = db.execute(text(
+            "SELECT tier, event_date FROM parcel_p_score_v2 "
+            "WHERE run_id = :run AND parcelle_id = :idu"),
+            {"run": Q_A_RUN_LABEL, "idu": r["idu"]}).mappings().first()
+        tier_now = cur["tier"] if cur else None
+        ev_now = cur["event_date"] if cur else None
+        changes = []
+        if tier_now and r["tier_archivage"] and tier_now != r["tier_archivage"]:
+            changes.append(f"tier {r['tier_archivage']} → {tier_now}")
+        elif tier_now:
+            changes.append(f"tier inchangé ({tier_now})")
+        if ev_now and (r["event_date_archivage"] is None or ev_now > r["event_date_archivage"]):
+            changes.append(f"nouvel événement daté ({ev_now})")
+        else:
+            changes.append("aucun nouvel événement")
+        detail = (f"Réalerte à {r['mois']} mois après archivage — depuis : "
+                  + " · ".join(changes) + ".")
+        db.execute(text(
+            "INSERT INTO event_log (kind, idu, titre, detail, run_from, run_to, compte_id) "
+            "SELECT 'veille', CAST(:idu AS varchar), CAST(:titre AS varchar), CAST(:detail AS text), 'archivage', 'reprise', :cid "
+            "WHERE NOT EXISTS (SELECT 1 FROM event_log WHERE kind='veille' AND idu=:idu "
+            "  AND titre=:titre AND compte_id IS NOT DISTINCT FROM :cid)"),
+            {"idu": r["idu"], "titre": f"⏰ Reprise de veille : {r['idu']}",
+             "detail": detail, "cid": r["compte_id"]})
+        db.execute(text("UPDATE veille_reprise SET traite_at = now() WHERE id = :i"), {"i": r["id"]})
+        n += 1
+    db.flush()
+    return n
 
 
 def _parse_hash_filters(h: str) -> dict:
@@ -310,6 +364,40 @@ def watch_status(idu: str, request: Request, db: Session = Depends(get_db)) -> d
     w = db.execute(text("SELECT 1 FROM watched_parcels WHERE idu = :i AND compte_id IS NOT DISTINCT FROM :cid"),
                    {"i": idu, "cid": current_compte(request)}).scalar()
     return {"watched": bool(w)}
+
+
+@router.post("/reprise/{idu}")
+def reprise_veille(idu: str, payload: dict, request: Request, db: Session = Depends(get_db)) -> dict:
+    """M23-C — remise en veille d'une parcelle ARCHIVÉE du pipeline : réalerte à 3/6/12/24
+    mois. Snapshot de l'état SERVI (tier + dernier événement) au moment de l'archivage —
+    l'échéance dira CE QUI A CHANGÉ. Circuit M17 (event_log kind='veille'), pas un second."""
+    from ..scoring.score_v_constants import Q_A_RUN_LABEL
+    mois = int(payload.get("mois") or 0)
+    if mois not in (3, 6, 12, 24):
+        raise HTTPException(422, "mois ∈ {3, 6, 12, 24}")
+    if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
+        raise HTTPException(404, "Parcelle inconnue")
+    compte_id = None
+    try:
+        from .auth import session_info
+        info = session_info(request.cookies.get("labuse_session") or request.cookies.get("session"))
+        compte_id = info["compte_id"] if info else None
+    except Exception:  # noqa: BLE001
+        pass
+    cur = db.execute(text(
+        "SELECT tier, event_date FROM parcel_p_score_v2 WHERE run_id = :r AND parcelle_id = :i"),
+        {"r": Q_A_RUN_LABEL, "i": idu}).mappings().first()
+    row = db.execute(text(
+        "INSERT INTO veille_reprise (compte_id, idu, mois, echeance, tier_archivage, event_date_archivage) "
+        "VALUES (:c, :i, :m, CURRENT_DATE + make_interval(months => :m), :t, :e) "
+        "RETURNING id, echeance"),
+        {"c": compte_id, "i": idu, "m": mois,
+         "t": cur["tier"] if cur else None,
+         "e": cur["event_date"] if cur else None}).mappings().first()
+    db.commit()
+    return {"ok": True, "id": row["id"], "idu": idu, "mois": mois,
+            "echeance": str(row["echeance"]),
+            "tier_archivage": cur["tier"] if cur else None}
 
 
 @router.post("/watch/{idu}")
