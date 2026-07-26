@@ -3,12 +3,16 @@
 Garde-fous : chaque section porte Sourcé/Estimé ; « non estimable » (jamais un chiffre inventé)
 quand la donnée manque ; la synthèse de repli ne concatène QUE des faits fournis (aucune invention) ;
 jamais de score interne / RR en vitrine.
+
+M22-0 : les sections vivent dans `briques_pdf` (partagées avec les exports M22) — les
+garde-fous restent testés à l'identique ; le spécifique banquier (synthèse) reste dans `banquier`.
 """
 from __future__ import annotations
 
 from types import SimpleNamespace as NS
 
 from labuse.api import banquier as b
+from labuse.api import briques_pdf as bq
 
 
 def _step(label, valeur, prov=""):
@@ -49,22 +53,22 @@ def _out_complet():
 
 
 def test_puce_source_estime_absent():
-    assert "Sourcé" in b._s("S") and "Estimé" in b._s("E") and "non estimable" in b._s("A")
+    assert "Sourcé" in bq.s("S") and "Estimé" in bq.s("E") and "non estimable" in bq.s("A")
 
 
 def test_eur_format():
-    assert b._eur(None) == "—" and "M€" in b._eur(2_500_000) and "k€" in b._eur(350_000)
+    assert bq.eur(None) == "—" and "M€" in bq.eur(2_500_000) and "k€" in bq.eur(350_000)
 
 
 def test_bilan_porte_score_e_et_estime():
-    html = b._bilan(_out_complet())
+    html = bq.bilan(_out_complet())
     assert "Score É" in html and "charge foncière" in html.lower()
     assert "Estimé" in html and "250 k€" in html          # marge Score É rendue
     assert "RR" not in html and "percentile" not in html   # jamais de score interne en vitrine
 
 
 def test_comparables_ancien_vefa_sources():
-    html = b._comparables(_out_complet())
+    html = bq.comparables(_out_complet())
     assert "Sourcé" in html and "VEFA" in html and "3900" in html and "SITADEL" in html
 
 
@@ -72,22 +76,22 @@ def test_bilan_niveau_prix_visible_wording_vic():
     # exigence Vic (flag Score É levé) : le niveau du prix visible en clair dans le dossier banquier
     out = _out_complet()
     out["score_e"]["niveau_prix"] = "commune"
-    assert "estimation niveau commune (repli)" in b._bilan(out)
+    assert "estimation niveau commune (repli)" in bq.bilan(out)
     out["score_e"]["niveau_prix"] = "secteur"
-    assert "estimation niveau secteur" in b._bilan(out)
+    assert "estimation niveau secteur" in bq.bilan(out)
 
 
 def test_score_e_non_estimable_pas_de_chiffre():
     out = _out_complet()
     out["score_e"] = {"estimable": False, "marge_estimee": None, "charge_supportable": None,
                       "prix_probable": None, "niveau_prix": None, "libelle_court": "", "detail": ""}
-    html = b._bilan(out)
+    html = bq.bilan(out)
     assert "non estimable" in html and "None" not in html
 
 
 def test_faisabilite_absente_non_estimable():
     out = _out_complet(); out["faisabilite"] = None
-    html = b._faisabilite(out)
+    html = bq.faisabilite(out)
     assert "non estimable" in html
 
 
