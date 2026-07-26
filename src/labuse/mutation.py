@@ -1,5 +1,18 @@
 """LA BUSE — Score Mutation V1 (Radar Mutation foncière).
 
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║ ALGO-1 item 4 (SCORING_SPEC §7-G) — MOTEUR NON SERVI. STATUT GRAVÉ ICI :               ║
+║ · ce score N'EST PAS le modèle P (hazard M3.6) et N'ENTRE PAS dans les tiers servis    ║
+║   (brûlante/chaude/… viennent de parcel_p_score_v2, jamais d'ici) ;                    ║
+║ · ses pondérations sont des PLACEHOLDERS jamais calés terrain (cf. bloc _W plus bas) ; ║
+║ · AUCUNE UI ne le consomme (vérifié 26/07/2026 : zéro référence frontend) — seuls      ║
+║   deux endpoints d'exploration l'exposent (/mutation/top, /map/mutation.geojson),      ║
+║   marqués non-servis dans leurs docstrings ;                                           ║
+║ · toute exposition produit exigerait d'abord un calage terrain + un dossier de revue.  ║
+║ Décision ALGO-1 : CONSERVÉ-DOCUMENTÉ (tests existants, moteur pur, lecture seule) —    ║
+║ la suppression serait du churn sans gain ; ce bandeau supprime l'ambiguïté.            ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+
 Score 0-100 qui mesure le **potentiel de TRANSFORMATION** d'une parcelle (grand terrain
 sous-exploité, presque-seuil, foncier public/morale acquérable, marché actif), **distinct
 du verdict d'opportunité** (« à prospecter maintenant »).

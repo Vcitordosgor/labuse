@@ -2283,7 +2283,7 @@ def shortlist(commune: str | None = None, limit: int = Query(5, ge=1, le=20),
 
 @app.get("/mutation/{idu}")
 def mutation_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
-    """Score Mutation (Radar Mutation) d'une parcelle — potentiel de transformation à étudier."""
+    """Score Mutation (Radar Mutation) d'une parcelle — potentiel de transformation à étudier. NON SERVI (ALGO-1 §7-G) : moteur V1 à pondérations placeholder, hors tiers, aucune UI — endpoint d'exploration uniquement."""
     from .. import mutation as mut
 
     p = db.execute(select(models.Parcel).where(models.Parcel.idu == idu)).scalar_one_or_none()
@@ -2299,7 +2299,7 @@ def mutation_parcel(idu: str, db: Session = Depends(get_db)) -> dict:
 def mutation_top(commune: str | None = None, niveau: str | None = None,
                  min_score: int = Query(0, ge=0, le=100), limit: int = Query(20, ge=1, le=100),
                  db: Session = Depends(get_db)) -> dict:
-    """Top Radar Mutation d'une commune — shortlist premium triée par Score Mutation (lecture seule).
+    """[NON SERVI — ALGO-1 §7-G, moteur placeholder hors tiers] Top Radar Mutation d'une commune — shortlist premium triée par Score Mutation (lecture seule).
 
     Paramètres durcis : `niveau` hors nomenclature → 422 ; `commune` inconnue → 404 (plutôt
     qu'une liste vide silencieuse). `min_score`/`limit` sont déjà bornés par FastAPI."""
@@ -2318,7 +2318,7 @@ def mutation_top(commune: str | None = None, niveau: str | None = None,
 @app.get("/map/mutation.geojson")
 def mutation_geojson(commune: str | None = None, niveau: str = "prioritaire",
                      limit: int = Query(100, ge=1, le=500), db: Session = Depends(get_db)) -> dict:
-    """Calque carte Radar Mutation (LECTURE SEULE) : géométries du TOP mutation d'une commune,
+    """[NON SERVI — ALGO-1 §7-G, moteur placeholder hors tiers] Calque carte Radar Mutation (LECTURE SEULE) : géométries du TOP mutation d'une commune,
     `score_mutation`/`niveau` en propriétés. Réutilise le top MÉMORISÉ (léger) — n'évalue JAMAIS
     toutes les parcelles. Fondation backend d'un futur calque « Radar » optionnel (Phase 2E),
     distinct des couches verdict ; ne modifie aucune couche carte existante."""
