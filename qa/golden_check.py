@@ -120,7 +120,9 @@ def _all(cur, sql: str, **params) -> list[dict]:
 
 
 def served_v2_run(cur) -> str | None:
-    r = _row(cur, "SELECT run_id FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")
+    # ALGO-1 item 6 : même règle que l'API — ÉPINGLÉ au label servi (plus jamais « le
+    # dernier par computed_at » : un run candidat postérieur ne doit pas fausser le golden).
+    r = _row(cur, "SELECT run_id FROM p_score_v2_runs WHERE run_id = %(r)s", r=RUN_LABEL)
     return r["run_id"] if r else None
 
 

@@ -30,13 +30,26 @@ def get_db():
     yield from _g()
 
 
-def _latest_run(db: Session) -> dict:
+def _served_run(db: Session) -> dict:
+    """ALGO-1 item 6 (SCORING_SPEC §7-J) — le run /v2 est ÉPINGLÉ au label servi
+    (Q_A_RUN_LABEL, source unique de vérité) : MÊME règle que la fiche
+    (`app._score_v2_run_id`) et le scoreur d'adresse. Plus jamais « le dernier par
+    computed_at » : un run CANDIDAT calculé après le servi ne doit JAMAIS fuir dans
+    le produit. Label absent → 503 explicite (jamais un repli silencieux)."""
+    from ..scoring.score_v_constants import Q_A_RUN_LABEL
+
     row = db.execute(text(
         "SELECT run_id, model_version, model_sha256, params, computed_at, snapshot_label "
-        "FROM p_score_v2_runs ORDER BY computed_at DESC LIMIT 1")).mappings().one_or_none()
+        "FROM p_score_v2_runs WHERE run_id = :r"),
+        {"r": Q_A_RUN_LABEL}).mappings().one_or_none()
     if row is None:
-        raise HTTPException(503, "aucun run score-v2 — lancer `labuse score-v2`.")
+        raise HTTPException(503, f"run servi « {Q_A_RUN_LABEL} » absent de p_score_v2_runs — "
+                                 "lancer `labuse score-v2` ou vérifier LABUSE_SERVED_RUN.")
     return dict(row)
+
+
+#: alias rétro-compatible (imports externes éventuels) — même épinglage.
+_latest_run = _served_run
 
 
 def _row_payload(r, run: dict) -> dict:
@@ -69,7 +82,7 @@ def score_parcelle(idu: str, db: Session = Depends(get_db)) -> dict:
     """Score P v2 d'une parcelle : ×N, percentile, rang, tier, 5 contributions
     lisibles, badges (copro, veille_succession, événement daté). p_raw stocké
     mais non exposé ici (défaut produit — saturation isotonique en tête)."""
-    run = _latest_run(db)
+    run = _served_run(db)
     r = db.execute(text("""
         SELECT s.*, (vs.parcelle_id IS NOT NULL) AS veille_succession
         FROM parcel_p_score_v2 s
@@ -88,7 +101,7 @@ def liste(tier: str | None = Query(None),
           limit: int = Query(100, le=1000), offset: int = Query(0, ge=0),
           db: Session = Depends(get_db)) -> dict:
     """Liste triée par P (rang croissant), filtres tier/commune, toggle copro."""
-    run = _latest_run(db)
+    run = _served_run(db)
     where, params = ["s.run_id = :run"], {"run": run["run_id"],
                                           "limit": limit, "offset": offset}
     if not include_copro:
@@ -135,7 +148,7 @@ def reserve(commune: str | None = Query(None), limit: int = Query(200, le=1000),
 def modele(db: Session = Depends(get_db)) -> dict:
     """« Sources & fraîcheur » côté modèle : version, sha court, date de gel,
     politique de recalibration, avertissement censure, note deprecated matrice."""
-    run = _latest_run(db)
+    run = _served_run(db)
     freeze = json.loads(Path(MODEL_FREEZE).read_text())
     return {
         "model_version": MODEL_VERSION,
