@@ -64,3 +64,29 @@ L'inventaire est présenté AVANT tout code de feature. Si tu valides :
 
 Attente à cadrer dès maintenant (honnêteté) : couverture PM ~19 % île → le bloc ne peut
 déplacer qu'une minorité de rangs ; l'effet le plus probable est à Saint-Denis/Saint-Paul.
+
+---
+
+## C — RÉSOLUTION D'ENTITÉS (validée : feu vert Vic sur A)
+
+Mesure du gisement (millésime 2024) : 2 879 dénominations sans SIREN ; le rapprochement
+par dénomination normalisée (upper, alphanumérique seul) vers les lignes à SIREN n'en
+résout que **31 uniques** (+3 ambiguës multi-SIREN, rejetées d'office) — les sans-SIREN
+sont massivement des entités qui n'apparaissent JAMAIS ailleurs avec un SIREN.
+
+**Vérification EXHAUSTIVE à la main (32 paires — mieux qu'un échantillon)** : 32/32
+littéralement exactes (variations d'apostrophes/espaces/sigles : « G F A CRATERE » =
+« GFA CRATERE », « SICA LAIT » = « SICALAIT », Conservatoire du littoral avec/sans
+apostrophe…). Risque résiduel identifié : les dénominations COURTES/GÉNÉRIQUES
+(« WB », « DALY », « CORAIL », « SCI EMERAUDE »…) peuvent avoir des homonymes hors
+panel — indétectable par construction.
+
+**RÈGLE SERVIE (prudence mandat : « un portefeuille faux est un faux positif »)** :
+1. SIREN strict (87 % des lignes PM) — confiance 1,0 ;
+2. rapprochement dénomination SEULEMENT si normalisée **≥ 12 caractères** ET SIREN
+   **unique** au panel (≈18 entités distinctives, toutes vérifiées exactes) ;
+3. tout le reste (courtes, ambiguës, introuvables) → **« inconnu »** : jamais un
+   portefeuille deviné.
+**Précision mesurée : 32/32 = 100 % sur vérification exhaustive** (≥ 95 % exigé — OK) ;
+la règle de longueur élimine la classe de risque homonyme résiduelle. Impact assumé :
+~10,4 k lignes/an restent « inconnu » au multi-détention (bin réel, WoE propre).
