@@ -44,11 +44,21 @@ class TierParams:
 
 
 def plancher_c(df: pd.DataFrame, params: TierParams) -> pd.Series:
-    """Plancher capacité : SDP résiduelle > 0 OU surface ≥ seuil en U/AU."""
+    """Plancher capacité : SDP résiduelle > 0 OU surface ≥ seuil en U/AU.
+
+    BRANCHE RNU (mandat RNU, méthode et plancher VALIDÉS Vic 26/07/2026) : pour une
+    commune SANS document local, U/AU n'existe pas — l'équivalent validé est
+    « parcelle DANS la PAU (estimée, critère centre) ∧ surface ≥ MÊME seuil »
+    (aucune règle spéciale cachée : le seuil de surface est celui de tout le monde,
+    et la branche SDP n'existe pas au RNU — pas de règlement, pas de droits calculables).
+    La colonne `dans_pau` est injectée par le pipeline (parcel_pau) et vaut False
+    partout ailleurs : comportement STRICTEMENT identique pour les communes à PLU."""
     sdp = pd.to_numeric(df["sdp_residuelle_m2"], errors="coerce").fillna(0)
     surf = pd.to_numeric(df["surface_m2"], errors="coerce").fillna(0)
     en_u_au = df["zone_plu"].isin(["U", "AU"])
-    return (sdp > 0) | ((surf >= params.c_surface_min_m2) & en_u_au)
+    dans_pau = (df["dans_pau"].fillna(False).astype(bool)
+                if "dans_pau" in df.columns else pd.Series(False, index=df.index))
+    return (sdp > 0) | ((surf >= params.c_surface_min_m2) & (en_u_au | dans_pau))
 
 
 def assign_tiers(df: pd.DataFrame, params: TierParams,

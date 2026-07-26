@@ -1,0 +1,38 @@
+# COMMUNES AU RNU (règlement national d'urbanisme) — SOURCE DE VÉRITÉ du flag commune-level.
+#
+# MANDAT RNU (C) : le mécanisme est GÉNÉRAL — « toute commune sans document local » — pas un
+# cas Saint-Philippe. Un PLU annulé au contentieux ou caduc fait retomber n'importe quelle
+# commune ici : AJOUTER une entrée suffit (aucun code à toucher).
+#
+# Doctrine :
+# - ce fichier est DÉCLARATIF et VÉRIFIÉ À LA MAIN (la donnée automatique la plus proche,
+#   le flag GPU `is_rnu`, est PROUVÉE périmée — cf. reports/algo1b-diagnostic-rr.md annexe) ;
+# - chaque entrée porte sa PREUVE (sources + date de vérification) ;
+# - conséquences produit : étiquette « commune au règlement national d'urbanisme — pas de
+#   PLU local » sur la fiche et les exports ; à terme (après validation de la méthode PAU),
+#   branche RNU du moteur de faisabilité + plancher C adapté.
+# - retirer une commune = son document local est approuvé ET ingéré (zones GPU/AGORAH en base).
+
+# ── PAU (parties actuellement urbanisées) — MÉTHODE VALIDÉE (Vic, 26/07/2026) ──────────────
+# Jeu « médian » retenu sur prototype chiffré (RNU_RAPPORT.md) : noyaux = clusters de
+# bâtiments BD TOPO (ST_ClusterDBSCAN), enveloppe = union des buffers, parcelle dans la
+# PAU si son POINT SUR SURFACE est dans l'enveloppe (critère « centre », validé).
+# L'enveloppe est une ESTIMATION LABUSE — la délimitation des PAU relève de l'appréciation
+# du service instructeur (avertissement gravé dans rnu.py, affiché fiche + exports).
+pau:
+  eps_m: 50            # distance de continuité entre bâtiments d'un même noyau (m)
+  min_batiments: 10    # effectif minimal d'un noyau (les constructions isolées ≠ PAU)
+  buffer_m: 40         # rayon de l'enveloppe autour des bâtiments clusterisés (m)
+  critere: centre      # parcelle dans la PAU ssi ST_PointOnSurface ∈ enveloppe (validé)
+
+communes:
+  - insee: "97417"
+    nom: Saint-Philippe
+    statut: rnu
+    detail: PLU en élaboration, jamais approuvé — aucune carte communale
+    verifie_le: "2026-07-26"
+    sources:
+      - "DEAL Réunion, état d'avancement des documents d'urbanisme (lu 25/06/2026) : « RNU + PLU en élaboration »"
+      - "GPU apicarto : document DU_97417 = 0, CC_97417 = 0, zone-urba au bourg = 0 (live 26/07/2026)"
+      - "AGORAH base permanente des PLU : 0 enregistrement insee=97417 (live 26/07/2026)"
+      - "reports/algo1b-diagnostic-rr.md (annexe Saint-Philippe)"

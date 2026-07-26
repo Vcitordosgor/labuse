@@ -230,6 +230,17 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                     f"Segment Renouvellement — parcelle occupée, potentiel de renouvellement "
                     f"urbain : rang {rn['rang_segment']}/{rn['total']} "
                     f"(score {rn['renouv_score']}/100). Composantes dominantes : {dom}.")
+        # MANDAT RNU (B3) : étiquetage export — UNE ligne conditionnelle, flag commune-level
+        # général (config/rnu_communes.yaml). Jamais d'affirmation de constructibilité RNU.
+        from .. import rnu as _rnu
+        blk = _rnu.rnu_block(idu, db)
+        if blk:
+            pau_txt = {True: " Parcelle DANS l'enveloppe urbanisée estimée.",
+                       False: " Parcelle HORS de l'enveloppe urbanisée estimée.",
+                       None: ""}[blk["dans_pau"]]
+            out["rnu_ligne"] = (f"{blk['libelle']}. {blk['detail']}{pau_txt} "
+                                f"{blk['avertissement_pau']} "
+                                f"(statut vérifié le {blk['verifie_le']}).")
     return out or None
 
 
@@ -534,6 +545,11 @@ _SECTION_LABELS = {"identite": "Identité parcellaire", "constructibilite": "Con
 
 # ── Point d'entrée ───────────────────────────────────────────────────────────────────────
 
+def _rnu_flag(idu: str) -> bool:
+    from .. import rnu as _rnu
+    return _rnu.is_rnu_idu(idu)
+
+
 def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> dict:
     """Assemble toutes les sections du rapport pour UNE parcelle.
 
@@ -564,6 +580,10 @@ def collect_report_data(db: Session, idu: str, adresse: str | None = None) -> di
         "terrain": _terrain(db, idu, avail),
         "contexte_commune": _contexte_commune(db, idu, parcelle["commune"], avail),
         "date_generation": date.today().isoformat(),
+        # MANDAT RNU : flag top-level — le template remplace les règles de capacité par
+        # « non applicable — RNU » (jamais un tableau vide qui laisserait croire à une
+        # absence de contrainte — ajout Vic 26/07/2026).
+        "rnu": _rnu_flag(idu),
     }
     rendues = {k for k in ("identite", "constructibilite", "risques", "patrimoine",
                            "marche", "dynamique", "terrain", "contexte_commune") if data.get(k)}

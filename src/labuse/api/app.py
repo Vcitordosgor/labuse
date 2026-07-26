@@ -31,6 +31,7 @@ from sqlalchemy import func, select, text
 from sqlalchemy.orm import Session
 
 from .. import config, models, prospection
+from .. import rnu as _rnu
 from ..db import session_scope
 from ..enums import FeedbackVerdict
 from ..scoring.score_v_constants import Q_A_RUN_LABEL, V_BAND_LABELS, V_BRULANTE_THRESHOLD
@@ -1885,6 +1886,9 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M-RENOUV : segment Renouvellement (table additive, lecture seule) — le verdict
         # d'en-tête reste « Écartée » ; ce bloc n'ajoute qu'un badge + un « pourquoi ».
         "renouvellement": _renouvellement_block(db, idu),
+        # MANDAT RNU (B3) : étiquetage commune sans document local — flag GÉNÉRAL
+        # (config/rnu_communes.yaml), jamais un cas Saint-Philippe codé en dur.
+        "rnu": _rnu.rnu_block(idu, db),
     }
 
 

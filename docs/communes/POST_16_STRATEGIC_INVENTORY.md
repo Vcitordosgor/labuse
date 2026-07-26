@@ -23,7 +23,7 @@ Saint-Denis **0,22 %** (84 opp, max 72). C'est le **plancher** des communes gold
 | Commune | INSEE | DB | config etat | reliable | parcelles | évaluée | Blocage / raison | Potentiel gold | Recommandation |
 |---|---|---|---|---|---|---|---|---|---|
 | **Saint-Leu** | 97413 | présente | partiel_non_evalue | False | 22 959 | ❌ (0) | PLU absent GPU ; AGORAH = **PLU 2007 en révision** (projet arrêté 11/12/2025, avis défavorable Région 27/02/2026) | Moyen (différé) | **Veille PLU** (réouverture S2-2026) |
-| **Saint-Philippe** | 97417 | présente | partiel_non_evalue | False | 4 162 | ❌ (0) | PLU absent GPU **ET absent AGORAH** (`[]`) ; `is_rnu=false` (un PLU existe mais non numérisé) | Faible court terme | **Sourcing PLU manuel** (commune / CASUD / DEAL) |
+| **Saint-Philippe** | 97417 | présente | partiel_non_evalue | False | 4 162 | ❌ (0) | **RNU confirmé** (DEAL : « RNU + PLU en élaboration », jamais approuvé — la ligne antérieure « un PLU existe mais non numérisé » était FAUSSE, déduite du flag GPU `is_rnu=false` PÉRIMÉ ; la note du 25/06 `saint_philippe_BLOCKED_PLU_GPU.md` fait foi, corroborée live 26/07 : GPU `DU_97417`=0, `CC_97417`=0, AGORAH=0 — cf. `reports/algo1b-diagnostic-rr.md` annexe) | Faible court terme | **Branche RNU** (mandat RNU) — PAS un sourcing de données : il n'existe rien à ingérer |
 | **La Plaine-des-Palmistes** | 97406 | présente | partiel_evalue | False | 6 450 | ✅ 100 % | **0 opp (0,00 %)** ; **max_score 53 < seuil 65** → structurel | **Quasi-nul intrinsèque** | **NO-GO durable** |
 | **Les Trois-Bassins** | 97423 | présente | absent → importée | False | 5 314 | ✅ 100 % | importée NO-GO **1 opp (0,02 %)** | Très faible | NO-GO (à confirmer à l'audit) |
 | **Sainte-Rose** | 97419 | présente | absent → importée | False | 6 287 | ✅ 100 % | importée NO-GO **8 opp (0,13 %)** | Faible / marginal | Audit scoring |
@@ -41,7 +41,8 @@ Saint-Denis **0,22 %** (84 opp, max 72). C'est le **plancher** des communes gold
    (présente + PLU frais immédiatement exploitable via AGORAH).
 2. **Récupérable seulement avec source PLU** :
    - **Saint-Leu** — AGORAH 2007 exploitable mais en révision → **veille** (S2-2026).
-   - **Saint-Philippe** — ni GPU ni AGORAH → **sourcing PLU manuel** requis.
+   - **Saint-Philippe** — ni GPU ni AGORAH car **RNU confirmé** (aucun PLU approuvé à sourcer :
+     il n'existe RIEN à ingérer) → **branche RNU** (mandat RNU), pas un sourcing.
 3. **Scoring / métier à résoudre** (présentes, évaluées, opportunité marginale/nulle) :
    **La Plaine** (0,00 %), **Les Trois-Bassins** (0,02 %), **Sainte-Rose** (0,13 %), **Entre-Deux** (0,14 %).
 4. **NO-GO durable** : **La Plaine-des-Palmistes** (max 53 < seuil = structurel) ; **Les Trois-Bassins**
@@ -53,7 +54,8 @@ Saint-Denis **0,22 %** (84 opp, max 72). C'est le **plancher** des communes gold
 
 - **Aucune cible technique « facile » ne reste après Saint-André.** Les présentes restantes sont soit
   bloquées source PLU, soit plafonnées par le scoring.
-- **Saint-Philippe** nécessite un **sourcing PLU manuel** (pas d'AGORAH, pas de géométrie GPU).
+- **Saint-Philippe** est au **RNU** (aucun document local approuvé — corrigé 26/07/2026, mandat RNU) :
+  le traitement passe par la **branche RNU** (parties actuellement urbanisées), pas par un sourcing.
 - **Saint-Leu** **attend la révision PLU** (approbation visée S2-2026, non stabilisée — avis Région défavorable).
 - **Salazie / Cilaos** = **imports risqués de cirques** (relief extrême, urbanisme atypique) — différés.
 - **La Plaine / Les Trois-Bassins / Sainte-Rose / Entre-Deux** = **cluster faible opportunité** (≤ 0,14 %).
