@@ -1,6 +1,18 @@
 # LA BUSE — Barème : score, complétude, verdict & mutabilité
 
-> **But du document.** Rendre la notation **défendable** face à un promoteur. Toute parcelle
+> ⚠ **DOCUMENT HISTORIQUE — CE N'EST PAS LE SYSTÈME SERVI** (ALGO-1, 26/07/2026,
+> SCORING_SPEC §7-I). Ce barème décrit la **cascade + matrice Q×A legacy** (score
+> d'opportunité 0-100, seuils statiques opp ≥ 65 / compl ≥ 50, verdicts
+> opportunité/à creuser/écartée). **Le verdict affiché aujourd'hui vient du scoring
+> P×C v2 (M5)** : tiers {brûlante, chaude, à creuser, réserve foncière, écartée} de
+> `parcel_p_score_v2`, seuils DYNAMIQUES (n_entree calibré ~1 150, hystérésis ×1,4,
+> brûlante garde-fou [30-120]) — **la référence est `docs/SCORING_SPEC.md`**.
+> Ce document reste exact pour ce qu'il décrit encore : la cascade alimente
+> l'ÉTAGE 0 (exclusions dures) du système servi, et la « mutabilité » (§bâti) est
+> bien la règle d'exclusion BatiLayer. Le reste est un complément « historique »
+> visible dans la section Qualité de la fiche, jamais le verdict principal.
+
+> **But du document (historique).** Rendre la notation **défendable** face à un promoteur. Toute parcelle
 > peut être expliquée : « pourquoi ce verdict, pourquoi cette note ». Aucun chiffre n'est inventé —
 > chaque seuil ci-dessous est **tiré du code** (fichier + valeur exacte). Les seuils marqués
 > **PLACEHOLDER** sont des valeurs par défaut **à calibrer** (jamais présentées comme sourcées).
