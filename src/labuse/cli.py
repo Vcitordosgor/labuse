@@ -2192,6 +2192,44 @@ def prix_neuf_cmd() -> None:
         typer.echo(f"✓ dvf_prix_sortie_neuf : {r['secteurs']} secteurs + {r['communes']} communes")
 
 
+@app.command("renouv")
+def renouv_cmd(
+    run: str = typer.Option(None, help="Run servi dont lire l'étage 0 (défaut : Q_A_RUN_LABEL)."),
+    top_n: int = typer.Option(20, help="Taille du top affiché."),
+    commune: str = typer.Option(None, help="Limiter le top à une commune (code INSEE)."),
+) -> None:
+    """SEGMENT RENOUVELLEMENT (M-RENOUV) : parcelles écartées « déjà bâties » à l'étage 0 mais en
+    zone U/AU avec capacité réelle → potentiel de renouvellement urbain (JAMAIS « opportunité »).
+    Table additive parcel_renouvellement ; heuristique déterministe (config/renouvellement.yaml) ;
+    lecture seule des sources — ne touche jamais la cascade ni les tiers servis."""
+    from . import renouvellement
+
+    with session_scope() as s:
+        r = renouvellement.build(s, run_label=run, log=typer.echo)
+        typer.echo(f"✓ segment Renouvellement : {r['n']} parcelles (run {r['run_label']}, "
+                   f"as-of {r['annee']})")
+        typer.echo("Entonnoir :")
+        libelles = {
+            "1_bati_exclues": "écartées BatiLayer (codes francs)",
+            "2_zone_u_au": "∩ zone U/AU",
+            "3_capacite": (f"∩ capacité (SDP > {r['seuils']['sdp_min_m2']} m² "
+                           f"ou surface ≥ {r['seuils']['surface_min_m2']} m²)"),
+            "4_hors_copro": "− copropriétés",
+            "5_hors_foncier_public_final": "− foncier public (SEGMENT FINAL)",
+        }
+        for k, lib in libelles.items():
+            typer.echo(f"  {r['funnel'][k]:>7}  {lib}")
+        rows = renouvellement.top(s, n=top_n, commune=commune)
+        titre = f"commune {commune}" if commune else "île"
+        typer.echo(f"\nTop {len(rows)} ({titre}) — score /100 (pot+ass+mar+div) :")
+        for t in rows:
+            typer.echo(
+                f"  #{t['rang_segment']:<5} {t['idu']}  {t['renouv_score']:>3} "
+                f"({t['comp_potentiel']}+{t['comp_assiette']}+{t['comp_marche']}+{t['comp_divisibilite']})  "
+                f"{t['zone_plu']:<3} sdp={t['sdp_residuelle_m2'] or 0:>5} surf={t['surface_m2']:>6}  "
+                f"{t['code_bati_origine']}")
+
+
 @app.command("score-e")
 def score_e_cmd(
     run: str = typer.Option("q_v7_defisc", help="Run servi dont scorer les parcelles non-écartées."),

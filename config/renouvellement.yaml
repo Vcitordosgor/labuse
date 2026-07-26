@@ -1,0 +1,41 @@
+# SEGMENT RENOUVELLEMENT (mandat M-RENOUV) — convention VERSIONNÉE.
+#
+# Ce segment rend visible un gisement que le pipeline servi ÉCARTE volontairement :
+# les parcelles exclues à l'étage 0 pour occupation bâtie (BatiLayer, codes francs
+# deja_bati / deja_bati_probable / ensemble_bati) mais situées en zone U/AU avec un
+# signal de capacité réel. Densification, division, démolition-reconstruction.
+#
+# ═══ DOCTRINE (ne pas reformuler sans décision Vic) ═══
+# - Ces parcelles sont OCCUPÉES. On parle de « potentiel de renouvellement urbain »,
+#   JAMAIS d'« opportunité ». Jamais mélangées aux Chaudes/Brûlantes.
+# - Le pipeline servi est INTOUCHÉ : ce segment est une couche additive en lecture
+#   (table parcel_renouvellement), le tier reste « écartée ».
+# - Le score est une HEURISTIQUE DÉTERMINISTE TRANSPARENTE — aucun modèle appris.
+#   Le futur modèle P dédié (walk-forward + arène) est un mandat séparé.
+
+# ── Définition du segment (A1) — les 5 conditions, toutes requises ──────────────
+seuils:
+  sdp_min_m2: 100        # capacité : SDP résiduelle STRICTEMENT > 100 m² …
+  surface_min_m2: 600    # … OU surface ≥ 600 m² (plancher d'une division en R+1 locale,
+                         #    aligné sur le plancher C du scoring servi — cf. SCORING_SPEC §5.2)
+# Les autres conditions sont structurelles (pas des réglages) :
+#   exclusion BatiLayer franche · zone_plu ∈ {U, AU} · non copro · non foncier public.
+
+# ── Le score de renouvellement (A2) — somme pondérée LISIBLE, total = 100 ────────
+# Chaque composante est stockée séparément (affichage « pourquoi » sur la fiche).
+# Les composantes continues sont normalisées par RANG (percent_rank) AU SEIN du
+# segment : pas d'échelle absolue à calibrer, robuste aux valeurs extrêmes, et le
+# classement est invariant par transformation monotone des entrées.
+poids:
+  potentiel_residuel: 40   # sdp_residuelle_m2 (droits à bâtir non consommés) — le cœur du
+                           # renouvellement : ce qu'on peut ENCORE construire malgré le bâti.
+  assiette: 25             # surface_m2 — une grande assiette donne des options (division,
+                           # curetage, phasage) même à SDP modeste.
+  contexte_marche: 20      # rot_bati_brute du secteur (p_model_ext_dataset, année de scoring) :
+                           # un secteur où le bâti TOURNE favorise le renouvellement. On prend
+                           # la rotation brute (le shrinkage gamma-Poisson vit dans le modèle P,
+                           # hors de portée d'une heuristique lisible — assumé, cf. rapport).
+  divisibilite: 15         # présence dans division_or_candidates (signal O12, géométrie du
+                           # résiduel). Utilisé comme composante INTERNE de classement ;
+                           # le libellé affiché reste « géométrie favorable », JAMAIS une
+                           # promesse de division.
