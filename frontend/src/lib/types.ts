@@ -200,7 +200,7 @@ export interface Fiche {
   renouvellement?: Renouvellement | null
   // MANDAT RNU : commune sans document local (flag général config/rnu_communes.yaml) —
   // étiquetage obligatoire, jamais une affirmation de constructibilité.
-  rnu?: { libelle: string; detail: string; commune_nom: string | null; statut_detail: string | null; verifie_le: string | null } | null
+  rnu?: { libelle: string; detail: string; commune_nom: string | null; statut_detail: string | null; verifie_le: string | null; dans_pau: boolean | null; avertissement_pau: string } | null
 }
 
 export interface Renouvellement {

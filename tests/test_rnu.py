@@ -40,3 +40,48 @@ def test_bloc_etiquetage_wording_doctrinal():
     texte = (b["libelle"] + " " + b["detail"]).lower()
     assert "constructible" not in texte.replace("constructibilité limitée", "")
     assert rnu.rnu_block("97415000DK1044") is None
+
+
+# ───────────── PAU + plancher C (méthode VALIDÉE Vic 26/07/2026) ─────────────
+
+def test_pau_params_depuis_config():
+    p = rnu.pau_params()
+    assert p == {"eps_m": 50.0, "min_batiments": 10, "buffer_m": 40.0, "critere": "centre"}
+
+
+def test_pau_params_refus_si_invalide(monkeypatch):
+    monkeypatch.setattr(rnu, "load_yaml_config", lambda _n: {"pau": {"eps_m": 50}})
+    import pytest
+    with pytest.raises(ValueError, match="incomplet"):
+        rnu.pau_params()
+
+
+def test_avertissement_pau_wording_exact():
+    # wording VALIDÉ Vic — toute reformulation casse ce test volontairement
+    assert rnu.AVERTISSEMENT_PAU == (
+        "Enveloppe urbanisée estimée par LABUSE — la délimitation des parties "
+        "actuellement urbanisées relève de l'appréciation du service instructeur.")
+    assert rnu.NON_APPLICABLE_RNU == "non applicable — RNU"
+    b = rnu.rnu_block("97417000AC0003")
+    assert b["avertissement_pau"] == rnu.AVERTISSEMENT_PAU and b["dans_pau"] is None
+
+
+def test_plancher_c_branche_rnu():
+    import pandas as pd
+    from labuse.scoring.p_v2.statuts import TierParams, plancher_c
+    params = TierParams(n_entree=10, n_sortie=14)
+    df = pd.DataFrame({
+        "sdp_residuelle_m2": [0, 0, 0, 0, 500],
+        "surface_m2":        [800, 800, 400, 800, 100],
+        "zone_plu":          ["inconnu", "inconnu", "inconnu", "U", "N"],
+        "dans_pau":          [True, False, True, False, False],
+    })
+    r = plancher_c(df, params)
+    assert list(r) == [True,   # RNU : dans PAU ∧ ≥600 → éligible
+                       False,  # RNU : hors PAU → non
+                       False,  # RNU : dans PAU mais 400 < 600 → non (MÊME seuil que partout)
+                       True,   # commune à PLU : comportement INCHANGÉ (U ∧ ≥600)
+                       True]   # SDP > 0 : inchangé
+    # colonne absente = comportement d'avant à l'identique (aucune régression possible)
+    r2 = plancher_c(df.drop(columns=["dans_pau"]), params)
+    assert list(r2) == [False, False, False, True, True]

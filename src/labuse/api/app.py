@@ -1888,7 +1888,7 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         "renouvellement": _renouvellement_block(db, idu),
         # MANDAT RNU (B3) : étiquetage commune sans document local — flag GÉNÉRAL
         # (config/rnu_communes.yaml), jamais un cas Saint-Philippe codé en dur.
-        "rnu": _rnu.rnu_block(idu),
+        "rnu": _rnu.rnu_block(idu, db),
     }
 
 

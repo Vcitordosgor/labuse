@@ -54,6 +54,15 @@
   <div class="cartouches">
     <div class="cartouche"><div class="titre">Contenance cadastrale</div>
       <div class="valeur">{{ p.surface_m2 }} <small>m²</small></div></div>
+    {# MANDAT RNU (ajout Vic) : en commune sans document local, les règles de capacité
+       affichent « non applicable — RNU » — JAMAIS des cartouches absentes qui laisseraient
+       croire à une absence de contrainte. #}
+    {% if data.rnu %}
+    <div class="cartouche"><div class="titre">Zonage PLU</div>
+      <div class="valeur"><small>non applicable — RNU</small></div></div>
+    <div class="cartouche"><div class="titre">Hauteur max (règle calibrée)</div>
+      <div class="valeur"><small>non applicable — RNU</small></div></div>
+    {% else %}
     {% if ident.zones %}
     <div class="cartouche"><div class="titre">Zonage PLU</div>
       <div class="valeur">{{ ident.zones[0].libelle or ident.zones[0].classe }}
@@ -63,6 +72,7 @@
     {% if ident.regles and ident.regles.hauteur_max_m %}
     <div class="cartouche"><div class="titre">Hauteur max (règle calibrée)</div>
       <div class="valeur">{{ "%.1f"|format(ident.regles.hauteur_max_m) }} <small>m</small></div></div>
+    {% endif %}
     {% endif %}
   </div>
 
@@ -137,7 +147,11 @@
      Ce n'est pas une étude de faisabilité réglementaire.</p>
   {% endif %}
 
-  {% if c.residuel and c.residuel.sdp_residuelle_m2 is not none %}
+  {% if data.rnu %}
+  {# MANDAT RNU : pas de règlement local → pas de SDP calculable — on le DIT. #}
+  <div class="cartouche"><div class="titre">Surface constructible restante (estimation)</div>
+    <div class="valeur"><small>non applicable — RNU</small></div></div>
+  {% elif c.residuel and c.residuel.sdp_residuelle_m2 is not none %}
   {# M6.1 item 6 (sprint personas) : libellé client — la « SDP résiduelle » est du jargon ;
      on dit ce que c'est : ce qu'il reste à construire au regard du PLU. #}
   <div class="cartouche"><div class="titre">Surface constructible restante (estimation)</div>

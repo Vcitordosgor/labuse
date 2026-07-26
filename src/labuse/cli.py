@@ -2192,6 +2192,20 @@ def prix_neuf_cmd() -> None:
         typer.echo(f"✓ dvf_prix_sortie_neuf : {r['secteurs']} secteurs + {r['communes']} communes")
 
 
+@app.command("rnu-pau")
+def rnu_pau_cmd() -> None:
+    """MANDAT RNU : matérialise les PAU (parties actuellement urbanisées ESTIMÉES) des
+    communes sans document local (config/rnu_communes.yaml — méthode et paramètres VALIDÉS,
+    en config jamais en dur). Tables additives commune_pau/parcel_pau ; le plancher C les
+    lit au prochain `labuse score-v2` — jamais rétroactivement. La PAU est une ESTIMATION :
+    la délimitation relève de l'appréciation du service instructeur."""
+    from . import rnu
+
+    with session_scope() as s:
+        r = rnu.build_pau(s, log=typer.echo)
+        typer.echo(f"✓ rnu-pau : {len(r['communes'])} commune(s) traitée(s) · params {r['params']}")
+
+
 @app.command("renouv")
 def renouv_cmd(
     run: str = typer.Option(None, help="Run servi dont lire l'étage 0 (défaut : Q_A_RUN_LABEL)."),

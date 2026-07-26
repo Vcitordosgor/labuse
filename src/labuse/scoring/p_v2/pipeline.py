@@ -202,6 +202,18 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     df = df.merge(copro, on="idu", how="left")
     df["copro"] = df["copro"].fillna(False).astype(bool)
 
+    # MANDAT RNU (plancher C, branche validée) : parcelles dans la PAU estimée des
+    # communes SANS document local (parcel_pau, construite par `labuse rnu-pau`).
+    # Table absente → colonne False partout = comportement d'avant, à l'identique.
+    df["dans_pau"] = False
+    if session.execute(text("SELECT to_regclass('parcel_pau') IS NOT NULL")).scalar():
+        pau = pd.read_sql("SELECT idu, true AS dans_pau_t FROM parcel_pau",
+                          session.connection())
+        if len(pau):
+            df = df.merge(pau, on="idu", how="left")
+            df["dans_pau"] = df["dans_pau_t"].fillna(False).astype(bool)
+            df = df.drop(columns=["dans_pau_t"])
+
     # rangs et percentiles HORS copro, ties départagés seedés 974
     rng = np.random.RandomState(SEED)
     tie = rng.random(len(df))

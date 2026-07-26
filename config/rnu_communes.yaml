@@ -13,6 +13,18 @@
 #   branche RNU du moteur de faisabilité + plancher C adapté.
 # - retirer une commune = son document local est approuvé ET ingéré (zones GPU/AGORAH en base).
 
+# ── PAU (parties actuellement urbanisées) — MÉTHODE VALIDÉE (Vic, 26/07/2026) ──────────────
+# Jeu « médian » retenu sur prototype chiffré (RNU_RAPPORT.md) : noyaux = clusters de
+# bâtiments BD TOPO (ST_ClusterDBSCAN), enveloppe = union des buffers, parcelle dans la
+# PAU si son POINT SUR SURFACE est dans l'enveloppe (critère « centre », validé).
+# L'enveloppe est une ESTIMATION LABUSE — la délimitation des PAU relève de l'appréciation
+# du service instructeur (avertissement gravé dans rnu.py, affiché fiche + exports).
+pau:
+  eps_m: 50            # distance de continuité entre bâtiments d'un même noyau (m)
+  min_batiments: 10    # effectif minimal d'un noyau (les constructions isolées ≠ PAU)
+  buffer_m: 40         # rayon de l'enveloppe autour des bâtiments clusterisés (m)
+  critere: centre      # parcelle dans la PAU ssi ST_PointOnSurface ∈ enveloppe (validé)
+
 communes:
   - insee: "97417"
     nom: Saint-Philippe
