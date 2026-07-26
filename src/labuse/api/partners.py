@@ -7,7 +7,7 @@ from __future__ import annotations
 import secrets
 from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -179,20 +179,64 @@ def promoteurs_actifs(commune: str | None = None, db: Session = Depends(get_db))
 
 # ───────────────────────── M20 — PACK APPORTEUR (lien de partage) ─────────────────────────
 
+#: M23-B — durée de vie PAR DÉFAUT d'un lien public (proposée au mandat : 30 jours —
+#: assez pour un tour de table apporteur, assez court pour ne pas laisser traîner des
+#: fiches publiques). Révocable à tout moment ; prolongeable en re-créant un lien.
+SHARE_TTL_JOURS = 30
+
+
+def _share_colonnes(db) -> None:
+    """Colonnes additives M23-B (expiration / révocation / journal) — idempotent."""
+    for ddl in ("ALTER TABLE share_links ADD COLUMN IF NOT EXISTS expires_at timestamptz",
+                "ALTER TABLE share_links ADD COLUMN IF NOT EXISTS revoked_at timestamptz",
+                "ALTER TABLE share_links ADD COLUMN IF NOT EXISTS compte_id integer"):
+        db.execute(text(ddl))
+
+
 @router.post("/partners/share/{idu}")
-def share_create(idu: str, db: Session = Depends(get_db)) -> dict:
+def share_create(idu: str, request: Request, db: Session = Depends(get_db)) -> dict:
     if not db.execute(text("SELECT 1 FROM parcels WHERE idu = :i"), {"i": idu}).scalar():
         raise HTTPException(404, "Parcelle inconnue")
+    _share_colonnes(db)
+    # M23-B journal : créé PAR QUI (compte session si présent — pilote : libellé legacy)
+    compte_id, created_by = None, None
+    try:
+        from .auth import session_info
+        info = session_info(request.cookies.get("labuse_session") or request.cookies.get("session"))
+        if info:
+            compte_id = info["compte_id"]
+            created_by = f"compte {compte_id}"
+    except Exception:  # noqa: BLE001
+        pass
     token = secrets.token_urlsafe(12)[:16]
-    db.execute(text("INSERT INTO share_links (token, idu) VALUES (:t, :i)"), {"t": token, "i": idu})
-    return {"token": token, "url": f"/p/{token}"}
+    db.execute(text(
+        "INSERT INTO share_links (token, idu, compte_id, created_by, expires_at) "
+        "VALUES (:t, :i, :c, coalesce(:by, 'Vic — LABUSE'), now() + make_interval(days => :j))"),
+        {"t": token, "i": idu, "c": compte_id, "by": created_by, "j": SHARE_TTL_JOURS})
+    return {"token": token, "url": f"/p/{token}", "expire_dans_jours": SHARE_TTL_JOURS}
+
+
+@router.delete("/partners/share/token/{token}")
+def share_revoke(token: str, db: Session = Depends(get_db)) -> dict:
+    """M23-B : révocation — le lien meurt immédiatement (journalisé, jamais supprimé)."""
+    _share_colonnes(db)
+    n = db.execute(text(
+        "UPDATE share_links SET revoked_at = now() WHERE token = :t AND revoked_at IS NULL"),
+        {"t": token}).rowcount
+    if not n:
+        raise HTTPException(404, "Lien inconnu ou déjà révoqué")
+    return {"ok": True, "token": token}
 
 
 @router.get("/partners/share/{idu}/list")
 def share_list(idu: str, db: Session = Depends(get_db)) -> list[dict]:
+    _share_colonnes(db)
     return [dict(r) for r in db.execute(text(
-        """SELECT token, created_at::date::text AS date, views FROM share_links
-           WHERE idu = :i ORDER BY created_at DESC"""), {"i": idu}).mappings()]
+        """SELECT token, created_at::date::text AS date, views, created_by,
+                  expires_at::date::text AS expire_le,
+                  (revoked_at IS NOT NULL) AS revoque,
+                  (expires_at IS NOT NULL AND expires_at < now()) AS expire
+           FROM share_links WHERE idu = :i ORDER BY created_at DESC"""), {"i": idu}).mappings()]
 
 
 # Points clés = FORMATAGE déterministe des facteurs de scoring (aucune IA). Titre de pitch par
@@ -302,13 +346,25 @@ _PACK_PRINT_CSS = """<style>
 @router.get("/p/{token}", response_class=HTMLResponse)
 def share_public(token: str, db: Session = Depends(get_db)) -> str:
     """Page publique MINIMALE, lecture seule, filigranée + horodatée, compteur de consultations."""
-    link = db.execute(text("SELECT idu, created_by, created_at FROM share_links WHERE token = :t"),
-                      {"t": token}).mappings().first()
+    _share_colonnes(db)
+    link = db.execute(text(
+        "SELECT idu, created_by, created_at, expires_at, revoked_at "
+        "FROM share_links WHERE token = :t"), {"t": token}).mappings().first()
     if not link:
-        raise HTTPException(404, "Lien inconnu ou révoqué")
+        raise HTTPException(404, "Lien inconnu")
+    if link["revoked_at"] is not None:
+        raise HTTPException(410, "Lien révoqué par son émetteur — demandez-lui un nouveau lien.")
+    if link["expires_at"] is not None and link["expires_at"] < datetime.now(link["expires_at"].tzinfo):
+        raise HTTPException(410, "Lien expiré (30 jours) — demandez un nouveau lien à son émetteur.")
     db.execute(text("UPDATE share_links SET views = views + 1 WHERE token = :t"), {"t": token})
     from .app import _q_v2_fiche
     f = _q_v2_fiche(db, link["idu"])
+    # M23-B (PRIORITÉ RELEVÉE — trou ACTUEL corrigé) : la page publique ne sert JAMAIS une
+    # donnée PROPRIÉTAIRE (ni PM ni PP). Couches nominatives/patrimoniales EXCLUES du rendu
+    # (détail sourcé ET points clés), et le bandeau événement BODACC (détail = dénomination,
+    # procédure) est SUPPRIMÉ du public. La page n'a aucune tuile d'action (statique).
+    COUCHES_PROPRIETAIRE = {"proprietaire", "age_dirigeant", "bodacc", "assemblage"}
+    lines_pub = [ln for ln in f["lines"] if ln["layer"] not in COUCHES_PROPRIETAIRE]
     # Photo aérienne IGN (ortho) + contour — image STATIQUE. Défensif : réseau/géométrie absents → pas
     # de photo (jamais d'erreur), le pack reste valide.
     photo = ""
@@ -323,7 +379,7 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
             photo = _pack_photo_html(m)
     except Exception:  # noqa: BLE001 — la photo est un plus, jamais un bloqueur
         photo = ""
-    points_cles = _points_cles_html(f["lines"])   # pitch dérivé des facteurs (forces + attentions)
+    points_cles = _points_cles_html(lines_pub)   # pitch dérivé des facteurs FILTRÉS (jamais proprio)
     horodatage = datetime.now().strftime("%d/%m/%Y à %H:%M")
     cree = link["created_at"].strftime("%d/%m/%Y à %H:%M")
     lignes = "".join(
@@ -334,10 +390,8 @@ def share_public(token: str, db: Session = Depends(get_db)) -> str:
         f"<div><div style='font:500 12px sans-serif;color:#C9DCD1'>{ln['layer']}</div>"
         f"<div style='font:11px sans-serif;color:#8FA69A'>{ln['detail']}</div>"
         f"<div style='font:9px monospace;color:#5C7268'>{ln['source'] or ''} · {ln['date'] or ''}</div></div></div>"
-        for ln in f["lines"] if ln["weight"] or ln["result"] in ("SOFT_FLAG", "UNKNOWN"))
-    ev = (f"<div style='background:#3a1614;border-radius:8px;padding:10px 14px;margin:12px 0;"
-          f"color:#E8695A;font:12px sans-serif'>● ÉVÉNEMENT — {f['evenement_detail']}</div>"
-          if f.get("evenement") == "rouge" else "")
+        for ln in lines_pub if ln["weight"] or ln["result"] in ("SOFT_FLAG", "UNKNOWN"))
+    ev = ""   # M23-B : le détail d'événement BODACC est une donnée PROPRIÉTAIRE — jamais en public
     return f"""<!doctype html><html lang=fr><head><meta charset=utf-8><meta name=robots content=noindex>
 <title>LABUSE — {f['idu']} (lecture seule)</title>{_PACK_PRINT_CSS}</head>
 <body style="margin:0;background:#060A08;font-family:sans-serif">
