@@ -1,18 +1,25 @@
-"""M22-0 — BRIQUES PDF PARTAGÉES (thème clair d'impression).
+"""M22-0 — BRIQUES PDF PARTAGÉES · M22-F — UNE SEULE IDENTITÉ VISUELLE (DA Flash).
 
-Sections extraites du Dossier banquier (O1, `banquier.py`) pour être réutilisées par les
-exports M22 (lettre de zonage, argumentaire de négociation, rapport de potentiel) SANS
-tripliquer le HTML inline. Le Banquier reste la référence visuelle : tout changement ici
-doit laisser son PDF strictement identique (preuve avant/après : qa/m22/0/).
+Sections extraites du Dossier banquier (O1) et partagées par les exports M22 (lettre de
+zonage, argumentaire, rapport de potentiel). Depuis M22-F, les briques portent l'identité
+IMPRESSION LABUSE du Flash (C2) : wordmark + silhouette, Space Grotesk / Inter /
+JetBrains Mono (OFL, api/fonts), palette menthe print, cartouches — et le BANDEAU DE
+CONTEXTE du Flash sur CHAQUE page (C7 : « LABUSE — produit · IDU — commune », aucune
+page orpheline à l'impression ; la page de garde porte le wordmark graphique à la place).
 
 Contenu :
- · `PAGE_CSS` + `page_css(libelle)` — thème clair print A4, pied de page légal ;
+ · `page_css(...)` — DA print A4, bandeau running, pied légal ;
  · helpers `s` (puce Sourcé/Estimé/Absent), `eur`, `esc` ;
- · `collect(db, idu)` — assemblage des briques de données (chaque section optionnelle
-   et guardée : une donnée absente devient None, jamais un chiffre inventé) ;
- · `map_html` — photo aérienne / plan de situation (IGN, cache tuiles) ;
+ · `wordmark_html`, `garde_entete` — la marque + le chapeau de couverture (partagé) ;
+ · `cartouche` / `cartouches` — les KPI du Flash, variante `hero=True` (C6 : le chiffre
+   principal se voit à 2 mètres) ;
+ · `hypotheses_encadre` — C1 : l'encadré « Hypothèses de calcul », IDENTIQUE en forme
+   dans tous les documents qui chiffrent (Banquier, Argumentaire) ;
+ · `collect(db, idu)` — assemblage des données (bilan sur les DÉFAUTS UNIQUES
+   `bilan_params_defaut()` : mêmes totaux que la calculette, C1) ;
+ · `map_html` — plan de situation, PLAN CADASTRAL CLAIR partout (C2) ;
  · sections : `cover`, `identite`, `faisabilite`, `bilan`, `comparables`, `risques` ;
- · `render_pdf(sections, libelle)` — HTML → WeasyPrint.
+ · `render_pdf(sections, libelle, produit=…, idu=…, commune=…)` — HTML → WeasyPrint.
 
 Doctrine (inchangée) : jamais un RR ni un score interne en vitrine ; chaque chiffre porte
 Sourcé/Estimé ; « non estimable » quand une donnée manque ; particulier jamais nommé.
@@ -21,6 +28,8 @@ from __future__ import annotations
 
 import html
 import logging
+from datetime import date
+from pathlib import Path
 
 from fastapi import HTTPException
 from sqlalchemy import text
@@ -28,44 +37,99 @@ from sqlalchemy.orm import Session
 
 log = logging.getLogger("labuse.briques_pdf")
 
+_FONTS = Path(__file__).resolve().parent / "fonts"
+
+# ── DA IMPRESSION LABUSE (portée du Flash, C2) — placeholders {fonts}/{produit_ctx}/
+#    {date_edition}/{libelle} ; accolades CSS doublées. ─────────────────────────────────
 PAGE_CSS = """
-@page {{ size: A4; margin: 15mm 15mm 18mm;
-  @bottom-center {{ content: "{libelle}"; font-family: sans-serif; font-size: 6pt; color: #8892908c; }}
-  @bottom-right {{ content: "p. " counter(page) "/" counter(pages); font-family: sans-serif;
-    font-size: 7pt; color: #889290; }} }}
-body {{ font-family: sans-serif; color: #26302B; font-size: 9.7pt; line-height: 1.42; }}
-h1 {{ font-size: 20pt; color: #0B120E; margin: 0 0 1mm; }}
-h2 {{ font-size: 12.5pt; color: #0B120E; border-bottom: 1.2pt solid #0B8A5F; padding-bottom: 1.5mm;
-  margin: 7mm 0 2.5mm; page-break-after: avoid; }}
-h3 {{ font-size: 10pt; color: #35423B; margin: 4mm 0 1mm; }}
+@font-face {{ font-family: "Inter"; src: url("{fonts}/Inter-Regular.ttf"); }}
+@font-face {{ font-family: "JetBrains Mono"; src: url("{fonts}/JetBrainsMono-Regular.ttf"); }}
+@font-face {{ font-family: "Space Grotesk"; font-weight: 700;
+             src: url("{fonts}/SpaceGrotesk-Bold.ttf"); }}
+@page {{
+  size: A4; margin: 22mm 16mm 20mm 16mm;
+  @top-left {{
+    content: "{produit_ctx}";
+    font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
+    border-bottom: 0.6pt solid #0B8A5F; width: 100%; padding-bottom: 4pt;
+    margin-bottom: 8pt; vertical-align: bottom;
+  }}
+  @top-right {{
+    content: "{date_edition}";
+    font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
+    border-bottom: 0.6pt solid #0B8A5F; vertical-align: bottom;
+    padding-bottom: 4pt; margin-bottom: 8pt;
+  }}
+  @bottom-center {{
+    content: "{libelle} · p. " counter(page) "/" counter(pages);
+    font-family: "Inter"; font-size: 6pt; color: #8C9891;
+  }}
+}}
+@page garde {{ @top-left {{ content: none; }} @top-right {{ content: none; }} }}
+.garde {{ page: garde; }}
+html {{ font-size: 9.5pt; }}
+body {{ font-family: "Inter", sans-serif; color: #28322D; line-height: 1.45; margin: 0; }}
+h1, h2, h3 {{ font-family: "Space Grotesk", "Inter", sans-serif; font-weight: 700; color: #111814; }}
+h1 {{ font-size: 21pt; margin: 0 0 2mm 0; line-height: 1.2; }}
+h2 {{ font-size: 13pt; margin: 7mm 0 3mm 0; padding-bottom: 1.5mm;
+     border-bottom: 1.4pt solid #0B8A5F; break-after: avoid; }}
+h3 {{ font-size: 10pt; margin: 4mm 0 1.5mm 0; break-after: avoid; }}
+.marque {{ display: flex; align-items: center; margin-bottom: 8mm; }}
+.wordmark {{ font-family: "Space Grotesk"; font-weight: 700; font-size: 16pt;
+            color: #0B8A5F; letter-spacing: 0.04em; margin-left: 4mm; }}
+.produit {{ font-family: "JetBrains Mono", monospace; font-size: 8pt;
+           color: #5F6C65; margin-left: 4mm; }}
+.refs {{ font-family: "JetBrains Mono", monospace; font-size: 9pt;
+        color: #5F6C65; margin-bottom: 5mm; }}
+.refs b {{ color: #111814; }}
 table {{ width: 100%; border-collapse: collapse; margin: 1mm 0; }}
-td, th {{ border-bottom: 0.5pt solid #DCE5E0; padding: 1.5mm 2mm 1.5mm 0; text-align: left;
+td, th {{ border-bottom: 0.5pt solid #D8E2DC; padding: 1.6mm 2mm 1.6mm 0; text-align: left;
   font-size: 8.6pt; vertical-align: top; }}
 th {{ color: #5F6C65; text-transform: uppercase; font-size: 6.8pt; letter-spacing: 0.3pt;
-  border-bottom: 0.8pt solid #0B8A5F; }}
+  border-bottom: 0.8pt solid #0B8A5F; font-family: "JetBrains Mono", monospace; }}
 td.n, th.n {{ text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }}
-.note {{ font-size: 7.6pt; color: #6B7772; }}
+.note {{ font-size: 7.6pt; color: #5F6C65; }}
 .src {{ font-size: 6.6pt; text-transform: uppercase; letter-spacing: 0.3pt; padding: 0.2mm 1.2mm;
-  border-radius: 1mm; white-space: nowrap; }}
-.src-s {{ background: #DFF3EA; color: #0B6A48; }}   /* Sourcé */
+  border-radius: 1mm; white-space: nowrap; font-family: "JetBrains Mono", monospace; }}
+.src-s {{ background: #E2F7ED; color: #0B6A48; }}   /* Sourcé */
 .src-e {{ background: #FFF2D6; color: #7A5A12; }}   /* Estimé */
 .src-a {{ background: #EFEFEF; color: #767676; }}   /* Absent / non estimable */
-.kpi {{ display: inline-block; margin: 1mm 6mm 2mm 0; }}
-.kpi .v {{ font-size: 16pt; font-weight: 700; color: #0B120E; display: block; }}
-.kpi .l {{ font-size: 7.4pt; color: #6B7772; text-transform: uppercase; letter-spacing: 0.3pt; }}
-.exec {{ background: #F5FAF8; border-left: 2.5pt solid #0B8A5F; padding: 3mm 4mm; border-radius: 0 1.5mm 1.5mm 0;
-  font-size: 9.4pt; }}
+.cartouche {{ background: #F4F8F6; border-radius: 2mm; padding: 3mm 4mm; }}
+.cartouche .titre {{ font-family: "JetBrains Mono", monospace; font-size: 7pt;
+  color: #5F6C65; text-transform: uppercase; letter-spacing: 0.4pt; display: block; }}
+.cartouche .valeur {{ font-family: "Space Grotesk"; font-weight: 700; font-size: 15pt;
+  color: #111814; display: block; margin-top: 1mm; }}
+.cartouche .valeur small {{ font-size: 8.5pt; color: #5F6C65; font-family: "Inter"; font-weight: 400; }}
+.cartouche.hero .valeur {{ font-size: 27pt; color: #0B8A5F; }}   /* C6 : lisible à 2 mètres */
+.cartouches {{ display: flex; gap: 3mm; margin: 3mm 0; }}
+.cartouches .cartouche {{ flex: 1; margin: 0; }}
+.exec {{ background: #F4F8F6; border-left: 2.5pt solid #0B8A5F; padding: 3mm 4mm;
+  border-radius: 0 1.5mm 1.5mm 0; font-size: 9.4pt; }}
 .bandeau {{ background: #FFF6DE; border-radius: 1.5mm; padding: 2.5mm 3.5mm; font-size: 7.8pt;
   color: #7A5A12; margin: 2mm 0 4mm; }}
+.hyp-encadre {{ background: #F4F8F6; border: 0.8pt solid #D8E2DC; border-radius: 2mm;
+  padding: 2.5mm 3.5mm; font-size: 8.2pt; color: #28322D; margin: 2mm 0; }}
+.hyp-encadre .titre {{ font-family: "JetBrains Mono", monospace; font-size: 6.8pt;
+  color: #5F6C65; text-transform: uppercase; letter-spacing: 0.4pt; display: block;
+  margin-bottom: 1mm; }}
 .cover-sub {{ color: #5F6C65; font-size: 10.5pt; margin: 0 0 3mm; }}
-.map {{ border: 0.8pt solid #DCE5E0; border-radius: 1.5mm; overflow: hidden; }}
+.map {{ border: 0.8pt solid #D8E2DC; border-radius: 2mm; overflow: hidden; }}
 .pb {{ page-break-before: always; }}
 """
 
 
-def page_css(libelle: str) -> str:
-    """CSS de page prêt à inliner — le libellé légal va au pied de CHAQUE page."""
-    return PAGE_CSS.format(libelle=libelle.replace('"', ""))
+def page_css(libelle: str, *, produit: str = "", idu: str = "", commune: str = "") -> str:
+    """CSS de page : pied légal + BANDEAU DE CONTEXTE C7 sur chaque page
+    (« LABUSE — produit · IDU — commune », même forme que le Flash)."""
+    def _c(x: str) -> str:
+        return (x or "").replace('"', "'").replace("\\", "")
+    ctx = f"LABUSE — {_c(produit)}"
+    if idu:
+        ctx += f" · {_c(idu)}"
+    if commune:
+        ctx += f" — {_c(commune)}"
+    return PAGE_CSS.format(fonts=_FONTS.as_uri(), produit_ctx=ctx,
+                           date_edition=date.today().strftime("%d/%m/%Y"), libelle=_c(libelle))
 
 
 def s(prov: str) -> str:
@@ -91,11 +155,61 @@ def esc(x) -> str:
     return html.escape(str(x if x is not None else "—"))
 
 
+# ── marque & chapeau de couverture (C2 : une seule identité) ─────────────────────────────
+
+def wordmark_html(produit_sous_titre: str) -> str:
+    """Le bloc marque de la page de garde Flash : silhouette + wordmark + produit."""
+    from ..flash.report import _logo_svg_path
+    return (f"<div class='marque'>"
+            f"<svg width='46' height='13' viewBox='0 0 240 62'>"
+            f"<path d='{_logo_svg_path()}' fill='#0B8A5F'/></svg>"
+            f"<span class='wordmark'>LABUSE</span>"
+            f"<span class='produit'>{esc(produit_sous_titre)}</span></div>")
+
+
+def garde_entete(p: dict, *, produit_sous_titre: str, titre: str, bandeau: str,
+                 sous_titre: str | None = None) -> str:
+    """Chapeau de couverture partagé par les 4 briques : marque, H1, référence parcelle
+    (ligne mono comme le Flash), bandeau légal. À rendre DANS une section `garde`
+    (pas de bandeau running en tête de couverture — même règle que le Flash)."""
+    st = f"<div class='cover-sub'>{esc(sous_titre)}</div>" if sous_titre else ""
+    return (f"{wordmark_html(produit_sous_titre)}"
+            f"<h1>{esc(titre)}</h1>{st}"
+            f"<div class='refs'>Parcelle <b>{esc(p['idu'])}</b> · {esc(p['commune'])} · "
+            f"section {esc(p['section'])} n° {esc(p['numero'])}</div>"
+            f"<div class='bandeau'>{bandeau}</div>")
+
+
+def cartouche(titre: str, valeur: str, note: str | None = None, *, hero: bool = False) -> str:
+    """Cartouche KPI du Flash. `hero=True` (C6) : le chiffre principal, très grand, menthe."""
+    small = f" <small>{esc(note)}</small>" if note else ""
+    return (f"<div class='cartouche{' hero' if hero else ''}'>"
+            f"<span class='titre'>{esc(titre)}</span>"
+            f"<span class='valeur'>{esc(valeur)}{small}</span></div>")
+
+
+def cartouches(items: list[str]) -> str:
+    return f"<div class='cartouches'>{''.join(items)}</div>"
+
+
+def hypotheses_encadre(cout_m2: float, marge_pct: float) -> str:
+    """C1 — l'encadré « Hypothèses de calcul », IDENTIQUE en forme dans tous les documents
+    qui chiffrent. Deux documents aux hypothèses différentes l'affichent chacun — le
+    lecteur qui tient les deux comprend d'où vient tout écart."""
+    return (f"<div class='hyp-encadre'><span class='titre'>Hypothèses de calcul</span>"
+            f"Coût de construction <b>{cout_m2:g} €/m²</b> de surface de plancher · "
+            f"marge &amp; frais <b>{marge_pct:g} %</b> du chiffre d'affaires — hypothèses "
+            f"par défaut, à ajuster : LABUSE ne les estime pas. Les valeurs sourcées "
+            f"(surface vendable, prix DVF) viennent du moteur.</div>")
+
+
 # ───────────────────────── assemblage données (réutilise l'existant) ─────────────────────────
 
 def collect(db: Session, idu: str) -> dict:
     """Rassemble toutes les briques du dossier. Chaque section est optionnelle et guardée :
-    une donnée absente devient None (la page l'omet proprement), jamais un chiffre inventé."""
+    une donnée absente devient None (la page l'omet proprement), jamais un chiffre inventé.
+    C1 : le bilan tourne sur `bilan_params_defaut()` — LES MÊMES hypothèses que la
+    calculette et l'argumentaire par défaut → totaux identiques entre documents."""
     row = db.execute(text(
         "SELECT id, idu, commune, section, numero, round(surface_m2) AS surface_m2, "
         "ST_AsGeoJSON(geom, 7) AS geojson FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
@@ -115,7 +229,7 @@ def collect(db: Session, idu: str) -> dict:
     # faisabilité (11 steps déterministes) + bilan promoteur + charge foncière
     try:
         from ..faisabilite.db import parcel_faisabilite
-        from ..faisabilite.bilan import sector_price, compute_bilan
+        from ..faisabilite.bilan import sector_price, compute_bilan, bilan_params_defaut
         from ..faisabilite.engine import Hypotheses
         fa = parcel_faisabilite(db, pid)
         if fa:
@@ -126,7 +240,8 @@ def collect(db: Session, idu: str) -> dict:
                 hyp = Hypotheses()
                 prix = sector_price(db, pid, hyp)
                 out["prix_dvf"] = prix
-                out["bilan"] = compute_bilan(float(shab), float(ctx.surface_m2 or 0), prix, hyp)
+                out["bilan"] = compute_bilan(float(shab), float(ctx.surface_m2 or 0), prix, hyp,
+                                             bilan_params=bilan_params_defaut())
     except Exception as exc:  # noqa: BLE001
         log.warning("faisabilité/bilan %s : %s", idu, exc)
 
@@ -160,7 +275,9 @@ def collect(db: Session, idu: str) -> dict:
 
 # ───────────────────────── sections HTML ─────────────────────────
 
-def map_html(geojson: str, ign: bool) -> str:
+def map_html(geojson: str, ign: bool = False) -> str:
+    """Plan de situation. C2 : LE PLAN CADASTRAL CLAIR partout (le lisible) — le fond
+    ortho IGN reste disponible (`ign=True`) mais n'est plus le défaut d'aucune brique."""
     try:
         from ..flash.carte import build_situation_map, IGN_ORTHO_URL, IGN_ORTHO_ATTRIBUTION
         from ..flash.report import storage_dir
@@ -183,34 +300,30 @@ def map_html(geojson: str, ign: bool) -> str:
 
 
 def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
+          produit_sous_titre: str = "DOSSIER BANQUIER · présentation financeur",
           synthese_titre: str = "Synthèse exécutive") -> str:
-    """Couverture : titre, référence parcelle, bandeau légal, synthèse (si `out['_synthese']`),
-    KPI disponibles, plan de situation. Les défauts reproduisent le Banquier à l'identique."""
+    """Couverture générique (Banquier) : chapeau de marque (C2), synthèse, cartouches
+    avec la charge foncière en HÉROS (C6), plan de situation clair (C2)."""
     p = out["parcelle"]
-    photo = map_html(p["geojson"], ign=True)
+    photo = map_html(p["geojson"])
     kpis = []
-    kpis.append(f"<div class='kpi'><span class='v'>{p['surface_m2']:.0f} m²</span>"
-                f"<span class='l'>Terrain · Sourcé</span></div>")
-    fo = (out.get("faisabilite").fourchette if out.get("faisabilite") else {}) or {}
-    if fo.get("shab_vendable_m2"):
-        kpis.append(f"<div class='kpi'><span class='v'>~{fo['shab_vendable_m2']:.0f} m²</span>"
-                    f"<span class='l'>Surface vendable · Estimé</span></div>")
     bilan_ = out.get("bilan")
     if bilan_ and bilan_.charge_fonciere:
-        kpis.append(f"<div class='kpi'><span class='v'>{eur(bilan_.charge_fonciere.get('central'))}</span>"
-                    f"<span class='l'>Charge foncière · Estimé</span></div>")
+        kpis.append(cartouche("Charge foncière · Estimé", eur(bilan_.charge_fonciere.get("central")),
+                              "médiane", hero=True))
+    kpis.append(cartouche("Terrain · Sourcé", f"{p['surface_m2']:.0f} m²"))
+    fo = (out.get("faisabilite").fourchette if out.get("faisabilite") else {}) or {}
+    if fo.get("shab_vendable_m2"):
+        kpis.append(cartouche("Surface vendable · Estimé", f"~{fo['shab_vendable_m2']:.0f} m²"))
     se = out.get("score_e")
     if se and se["estimable"]:
-        kpis.append(f"<div class='kpi'><span class='v'>{eur(se['marge_estimee'])}</span>"
-                    f"<span class='l'>Marge estimée · Estimé</span></div>")
+        kpis.append(cartouche("Marge estimée · Estimé", eur(se["marge_estimee"])))
     synthese = f"<h2>{esc(synthese_titre)}</h2>{out['_synthese']}" if out.get("_synthese") else ""
-    return (f"<h1>{esc(titre)}</h1>"
-            f"<p class='cover-sub'>Parcelle {esc(p['idu'])} — {esc(p['commune'])} · "
-            f"section {esc(p['section'])} n° {esc(p['numero'])}</p>"
-            f"<div class='bandeau'>{bandeau}</div>"
+    return (f"<section class='garde'>"
+            f"{garde_entete(p, produit_sous_titre=produit_sous_titre, titre=titre, bandeau=bandeau)}"
             f"{synthese}"
-            f"<div style='margin-top:4mm;'>{''.join(kpis)}</div>"
-            f"<h2>Situation</h2>{photo}")
+            f"{cartouches(kpis)}"
+            f"<h2>Situation</h2>{photo}</section>")
 
 
 def identite(out: dict) -> str:
@@ -278,6 +391,9 @@ def bilan(out: dict) -> str:
         return ""
     body = "<div class='pb'></div><h2>Bilan promoteur & charge foncière</h2>"
     if bilan_ is not None:
+        # C1 — l'encadré d'hypothèses, même forme partout (défauts uniques du moteur)
+        from ..faisabilite.bilan import CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT
+        body += hypotheses_encadre(CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT)
         steps = "".join(
             f"<tr><td>{esc(st.label)}</td><td class='n'>{esc(st.valeur)}</td>"
             f"<td>{s({'sourcee':'S'}.get(st.prov, 'E'))}</td></tr>" for st in bilan_.steps)
@@ -366,9 +482,13 @@ def risques(out: dict) -> str:
 
 # ───────────────────────── rendu ─────────────────────────
 
-def render_pdf(sections: list[str], libelle: str) -> bytes:
-    """Assemble les sections non vides et rend le PDF (WeasyPrint, thème clair)."""
+def render_pdf(sections: list[str], libelle: str, *, produit: str = "",
+               idu: str = "", commune: str = "") -> bytes:
+    """Assemble les sections non vides et rend le PDF. C7 : le bandeau de contexte
+    (« LABUSE — produit · IDU — commune ») court sur CHAQUE page (sauf la garde,
+    qui porte le wordmark graphique — même règle que le Flash)."""
     from weasyprint import HTML
-    doc = (f"<!DOCTYPE html><html lang='fr'><head><meta charset='utf-8'><style>{page_css(libelle)}</style></head>"
+    css = page_css(libelle, produit=produit, idu=idu, commune=commune)
+    doc = (f"<!DOCTYPE html><html lang='fr'><head><meta charset='utf-8'><style>{css}</style></head>"
            f"<body>{''.join(sec for sec in sections if sec)}</body></html>")
     return HTML(string=doc).write_pdf()

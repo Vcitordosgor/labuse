@@ -19,7 +19,8 @@
     <span class="wordmark">LABUSE</span>
     <span class="produit">{{ produit_sous_titre }}</span>
   </div>
-  <h1>Rapport de faisabilité indicative</h1>
+  <h1>{{ produit }}</h1>
+  <div class="cover-note">Étude de faisabilité indicative d'une parcelle</div>
   {% if data.adresse %}<div class="adresse">{{ data.adresse }}</div>
   {% else %}<div class="adresse adresse-nd">Adresse non disponible</div>{% endif %}
   <div class="refs">Parcelle <b>{{ p.idu }}</b> · {{ p.commune }} · section {{ p.section }} n° {{ p.numero }}</div>

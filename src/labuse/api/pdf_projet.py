@@ -86,22 +86,40 @@ def render_projet_pdf(projet: dict, apercu: dict) -> bytes:
     pdf.set_text_color(*TXT_MUT)
     pdf.cell(0, 5, "FICHE DE CADRAGE", new_x="LMARGIN", new_y="NEXT")
     pdf.ln(1)
+    # M22-F C4 — un champ VIDE ne s'imprime pas (jamais de « — ») ; on assemble d'abord
+    # les lignes remplies, on compte, et sous 3 sections remplies le document le DIT.
     t = fiche.get("type_programme")
     amp = fiche.get("ampleur") or {}
     ampleur = (f"{amp['logements']} logements" if amp.get("logements")
-               else f"{amp['sdp_m2']:.0f} m² SDP" if amp.get("sdp_m2") else "—")
-    ligne("Programme", TYPE_LABEL.get(t, "—"))
-    ligne("Ampleur", ampleur)
+               else f"{amp['sdp_m2']:.0f} m² SDP" if amp.get("sdp_m2") else None)
+    remplies: list[tuple[str, str]] = []
+    if t and TYPE_LABEL.get(t):
+        remplies.append(("Programme", TYPE_LABEL[t]))
+    if ampleur:
+        remplies.append(("Ampleur", ampleur))
     if apercu.get("sdp_besoin_m2"):
-        ligne("SDP besoin", f"{apercu['sdp_besoin_m2']:,} m² (formule capacitaire M22)".replace(",", " "))
-    ligne("Périmètre", _perimetre_label(fiche))
+        remplies.append(("SDP besoin", f"{apercu['sdp_besoin_m2']:,} m² (formule capacitaire M22)".replace(",", " ")))
+    remplies.append(("Périmètre", _perimetre_label(fiche)))
     contraintes = fiche.get("contraintes") or []
     if contraintes:
-        ligne("Contraintes", ", ".join(CONTRAINTE_LABEL.get(c, c) for c in contraintes))
+        remplies.append(("Contraintes", ", ".join(CONTRAINTE_LABEL.get(c, c) for c in contraintes)))
     if fiche.get("budget_foncier_eur"):
-        ligne("Budget foncier", f"{fiche['budget_foncier_eur'] / 1000:,.0f} k€".replace(",", " "))
+        remplies.append(("Budget foncier", f"{fiche['budget_foncier_eur'] / 1000:,.0f} k€".replace(",", " ")))
     if fiche.get("criteres_libres"):
-        ligne("Notes", fiche["criteres_libres"])
+        remplies.append(("Notes", fiche["criteres_libres"]))
+    if len(remplies) < 3:
+        # bandeau honnête : le cadrage n'est pas encore un dossier
+        yb = pdf.get_y()
+        pdf.set_fill_color(255, 246, 222)
+        pdf.rect(14, yb, pdf.w - 28, 9, style="F", round_corners=True, corner_radius=2)
+        pdf.set_xy(18, yb + 1.6)
+        pdf.set_font("inter", size=7.6)
+        pdf.set_text_color(168, 121, 22)
+        pdf.multi_cell(pdf.w - 36, 3.8, "Projet en cours de constitution — le cadrage est incomplet : "
+                       "complétez programme, ampleur et périmètre dans l'application.")
+        pdf.set_y(yb + 11)
+    for k, v in remplies:
+        ligne(k, v)
     pdf.ln(3)
 
     # ── Les meilleures parcelles + leur POURQUOI

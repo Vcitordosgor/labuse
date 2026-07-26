@@ -69,6 +69,85 @@ def _collect(db: Session, idu: str, cout_m2: float, marge_pct: float,
     return out
 
 
+# ───────────────────────── dataviz C9 (SVG inline, DA existante) ─────────────────────────
+
+def _svg_bande_points(prix: dict) -> str:
+    """C9 — les ventes DVF en BANDE DE POINTS : chaque vente retenue = un point (aucune
+    agrégation nouvelle), médiane marquée. Inter, vert LABUSE, fond clair — DA existante."""
+    pts = prix.get("prix_points") or []
+    if len(pts) < 5:
+        return ""
+    lo, hi = min(pts), max(pts)
+    if hi <= lo:
+        return ""
+    W, H, PAD = 640, 74, 34
+    x = lambda v: PAD + (W - 2 * PAD) * (v - lo) / (hi - lo)  # noqa: E731
+    med = prix.get("median")
+    cercles = "".join(
+        f"<circle cx='{x(v):.1f}' cy='40' r='3.2' fill='#0B8A5F' fill-opacity='0.45'/>" for v in pts)
+    med_svg = (f"<line x1='{x(med):.1f}' y1='16' x2='{x(med):.1f}' y2='58' stroke='#111814' "
+               f"stroke-width='1.6'/>"
+               f"<text x='{x(med):.1f}' y='12' text-anchor='middle' font-family='Inter' "
+               f"font-size='10' fill='#111814'>médiane {med} €/m²</text>") if med else ""
+    return (f"<svg width='{W}' height='{H}' viewBox='0 0 {W} {H}' "
+            f"style='background:#F4F8F6;border-radius:6px'>"
+            f"<line x1='{PAD}' y1='40' x2='{W - PAD}' y2='40' stroke='#D8E2DC' stroke-width='1'/>"
+            f"{cercles}{med_svg}"
+            f"<text x='{PAD}' y='68' font-family='Inter' font-size='9' fill='#5F6C65'>{lo} €/m²</text>"
+            f"<text x='{W - PAD}' y='68' text-anchor='end' font-family='Inter' font-size='9' "
+            f"fill='#5F6C65'>{hi} €/m²</text></svg>"
+            f"<p class='note'>Chaque point est une vente DVF retenue dans le comparable "
+            f"({len(pts)} ventes) — aucune vente n'est fabriquée ni lissée.</p>")
+
+
+def _svg_cascade(calc: dict) -> str:
+    """C9 — le bilan à rebours en CASCADE : CA → − marge & frais → − construction → − VRD →
+    = terrain (prix d'achat max). Valeurs = les termes exacts du moteur (calc), scénario médian."""
+    c = calc.get("calc") or {}
+    cf = calc.get("prix_achat_max") or {}
+    ca = (calc.get("ca") or {}).get("central")
+    coef = c.get("coef")
+    if not (ca and coef and cf):
+        return ""
+    marge = ca * (1.0 - float(coef))
+    construction = (float(c.get("cc_bas") or 0) + float(c.get("cc_haut") or 0)) / 2
+    vrd = float(c.get("cout_vrd") or 0)
+    terrain = float(cf.get("central") or 0)
+    etapes = [("Chiffre d'affaires", ca, "#0B8A5F"), ("− Marge & frais", -marge, "#A87916"),
+              ("− Construction", -construction, "#A87916")]
+    if vrd:
+        etapes.append(("− VRD", -vrd, "#A87916"))
+    etapes.append(("= Terrain (max)", terrain, "#111814"))
+    W, H, PAD, BW = 640, 150, 30, 96
+    ymax = max(ca, 1.0)
+    yh = lambda v: max(2.0, 108.0 * abs(v) / ymax)  # noqa: E731
+    bars, cursor = [], 0.0
+    for i, (lab, v, col) in enumerate(etapes):
+        x0 = PAD + i * ((W - 2 * PAD - BW) / max(1, len(etapes) - 1))
+        if i == 0:
+            top, cursor = ca, ca
+            y0, h = 118 - yh(ca), yh(ca)
+        elif lab.startswith("="):
+            y0, h = 118 - yh(max(terrain, 0.0)), yh(max(terrain, 0.0))
+        else:
+            nouveau = cursor + v
+            y0, h = 118 - yh(cursor) , yh(v)
+            cursor = nouveau
+        bars.append(
+            f"<rect x='{x0:.1f}' y='{y0:.1f}' width='{BW}' height='{h:.1f}' rx='3' "
+            f"fill='{col}' fill-opacity='{0.85 if lab.startswith(('Chiffre', '=')) else 0.35}'/>"
+            f"<text x='{x0 + BW / 2:.1f}' y='132' text-anchor='middle' font-family='Inter' "
+            f"font-size='8.6' fill='#5F6C65'>{lab}</text>"
+            f"<text x='{x0 + BW / 2:.1f}' y='{max(y0 - 4, 10):.1f}' text-anchor='middle' "
+            f"font-family='Inter' font-size='9' fill='#111814'>{eur(abs(v))}</text>")
+    return (f"<svg width='{W}' height='{H}' viewBox='0 0 {W} {H}' "
+            f"style='background:#F4F8F6;border-radius:6px'>"
+            f"<line x1='{PAD}' y1='118' x2='{W - PAD}' y2='118' stroke='#D8E2DC' stroke-width='1'/>"
+            f"{''.join(bars)}</svg>"
+            f"<p class='note'>Cascade du scénario médian — mêmes termes que le tableau ci-dessus "
+            f"(aucun recalcul) ; les scénarios bas/haut suivent la fourchette DVF.</p>")
+
+
 # ───────────────────────── sections ─────────────────────────
 
 def _synthese(out: dict) -> str:
@@ -84,46 +163,52 @@ def _synthese(out: dict) -> str:
     prix = out.get("prix_dvf") or {}
     phrases: list[str] = []
     kpis: list[str] = []
-    kpis.append(f"<div class='kpi'><span class='v'>{p['surface_m2']:.0f} m²</span>"
-                f"<span class='l'>Terrain · Sourcé</span></div>")
     if calc.get("calculable"):
         cf = calc["prix_achat_max"]
+        # C3 — borne basse à 0 INTERDITE dans la phrase : si le scénario bas ne supporte
+        # rien, on le DIT (honnêteté) au lieu d'écrire « entre 0 € et X ».
+        if cf["bas"] <= 0:
+            fourchette_txt = (f"s'établit à {eur(cf['central'])} en médiane (haut de fourchette "
+                              f"{eur(cf['haut'])}) ; dans le scénario bas, l'opération ne "
+                              f"supporte aucune charge foncière")
+        else:
+            fourchette_txt = (f"s'établit entre {eur(cf['bas'])} et {eur(cf['haut'])} "
+                              f"(médiane {eur(cf['central'])})")
         phrases.append(
             f"Au regard des règles applicables{f' (zone {zone})' if zone else ''} et du marché "
             f"observé ({prix.get('n', '?')} ventes DVF, fiabilité {prix.get('fiabilite', '?')}), "
             f"la charge foncière supportable — ce que l'opération peut payer le terrain — "
-            f"s'établit entre {eur(cf['bas'])} et {eur(cf['haut'])} (médiane {eur(cf['central'])}, "
-            f"selon les hypothèses de coût et de marge rappelées en partie 5).")
-        kpis.append(f"<div class='kpi'><span class='v'>{eur(cf['central'])}</span>"
-                    f"<span class='l'>Prix d'achat max (médiane) · Estimé</span></div>")
+            f"{fourchette_txt}, selon les hypothèses de coût et de marge rappelées en partie 5.")
+        # C6 — le chiffre-héros : le prix d'achat max se voit à 2 mètres
+        kpis.append(bq.cartouche("Prix d'achat max (médiane) · Estimé", eur(cf["central"]),
+                                 hero=True))
+        kpis.append(bq.cartouche("Terrain · Sourcé", f"{p['surface_m2']:.0f} m²"))
         e = calc.get("ecart_negociation")
         if e:
-            kpis.append(f"<div class='kpi'><span class='v'>{eur(e['prix_demande_eur'])}</span>"
-                        f"<span class='l'>Prix demandé · saisi</span></div>")
+            kpis.append(bq.cartouche("Prix demandé · saisi", eur(e["prix_demande_eur"])))
             if e["sens"] == "surcout":
                 phrases.append(
                     f"Le prix demandé ({eur(e['prix_demande_eur'])}) excède ce maximum de "
                     f"{eur(e['demande_moins_max_eur'])} (+{e['demande_moins_max_pct']} %) : "
                     f"l'écart constitue la base factuelle d'une contre-proposition.")
-                kpis.append(f"<div class='kpi'><span class='v'>+{eur(e['demande_moins_max_eur'])}</span>"
-                            f"<span class='l'>Écart demandé − max · dérivé</span></div>")
+                kpis.append(bq.cartouche("Écart demandé − max · dérivé",
+                                         f"+{eur(e['demande_moins_max_eur'])}"))
             else:
                 phrases.append(
                     f"Le prix demandé ({eur(e['prix_demande_eur'])}) s'inscrit sous ce maximum "
                     f"(marge {eur(abs(e['demande_moins_max_eur']))}) : l'opération reste "
                     f"finançable à ce prix selon ces hypothèses.")
     else:
+        kpis.append(bq.cartouche("Terrain · Sourcé", f"{p['surface_m2']:.0f} m²"))
         phrases.append("La charge foncière supportable n'est pas chiffrable sur cette parcelle "
                        f"({esc(calc.get('raison') or 'données insuffisantes')}) — l'argumentaire "
                        "se limite aux faits qualitatifs des parties suivantes.")
-    return (f"<h1>Argumentaire de négociation foncière</h1>"
-            f"<p class='cover-sub'>Parcelle {esc(p['idu'])} — {esc(p['commune'])} · "
-            f"section {esc(p['section'])} n° {esc(p['numero'])}</p>"
-            f"<div class='bandeau'>{LIBELLE}</div>"
+    return (f"<section class='garde'>"
+            f"{bq.garde_entete(p, produit_sous_titre='ARGUMENTAIRE DE NÉGOCIATION · contre-offre fondée', titre='Argumentaire de négociation foncière', bandeau=LIBELLE)}"
             f"<h2>1 · Synthèse</h2>"
             f"<div class='exec'>{esc(' '.join(phrases))}</div>"
-            f"<div style='margin-top:4mm;'>{''.join(kpis)}</div>"
-            f"<h2>Situation</h2>{bq.map_html(p['geojson'], ign=True)}")
+            f"{bq.cartouches(kpis)}"
+            f"<h2>Situation</h2>{bq.map_html(p['geojson'])}</section>")
 
 
 def _reductions(out: dict) -> str:
@@ -155,10 +240,9 @@ def _bilan_rebours(out: dict) -> str:
     """5 — LE BILAN À REBOURS ligne à ligne (mode inverse M22-A) → prix d'achat max."""
     calc = out["calc"]
     hyp = out["hyp_saisies"]
+    # C1 — le MÊME encadré d'hypothèses que le Dossier banquier (forme identique)
     body = ("<div class='pb'></div><h2>5 · Le bilan à rebours — du prix de sortie au foncier</h2>"
-            f"<p class='note'>Hypothèses saisies (jamais estimées par LABUSE) : coût de construction "
-            f"{hyp['cout_m2']:g} €/m² de plancher · marge & frais {hyp['marge_pct']:g} % du CA. "
-            f"Les valeurs sourcées (surface vendable, prix DVF) viennent du moteur.</p>")
+            + bq.hypotheses_encadre(hyp["cout_m2"], hyp["marge_pct"]))
     if not calc.get("calculable"):
         return body + ("<p class='note'>Non chiffrable : "
                        f"{esc(calc.get('raison') or 'données insuffisantes')} — aucun chiffre "
@@ -177,6 +261,10 @@ def _bilan_rebours(out: dict) -> str:
              f"<tr><td class='n'>{eur(cf['bas'])}</td><td class='n'><b>{eur(cf['central'])}</b></td>"
              f"<td class='n'>{eur(cf['haut'])}</td>"
              f"<td class='n'>{esc(cf.get('par_m2_terrain'))} €/m²</td></tr></table>")
+    # C9 — le même bilan, en cascade (CA → coûts → marge → terrain), scénario médian
+    cascade = _svg_cascade(calc)
+    if cascade:
+        body += f"<h3>Le même calcul, en un coup d'œil</h3>{cascade}"
     e = calc.get("ecart_negociation")
     if e:
         if e["sens"] == "surcout":
@@ -250,9 +338,15 @@ def _build_pdf(db: Session, idu: str, cout_m2: float, marge_pct: float,
                                          "<h2>2 · Le marché réel (DVF)</h2>")
     permet = bq.faisabilite(out).replace("<h2>Faisabilité — dérivation détaillée</h2>",
                                          "<h2>3 · Ce que le terrain permet</h2>")
+    # C9 — la bande de points DVF complète le tableau du marché (chaque vente = un point)
+    strip = _svg_bande_points(out.get("prix_dvf") or {})
+    if strip:
+        marche += f"<h3>Les ventes retenues, une à une</h3>{strip}"
     sections = [_synthese(out), marche, permet, _reductions(out),
                 _bilan_rebours(out), _vigilance(out), _sources(out)]
-    pdf = bq.render_pdf(sections, LIBELLE)
+    # C7 : bandeau de contexte sur chaque page
+    pdf = bq.render_pdf(sections, LIBELLE, produit="Argumentaire de négociation",
+                        idu=idu, commune=out["parcelle"].get("commune") or "")
     log.info("argumentaire %s généré (%d ko)", idu, len(pdf) // 1024)
     return pdf
 

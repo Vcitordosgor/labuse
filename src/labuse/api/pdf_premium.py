@@ -160,15 +160,25 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             label += f" · ×{s2['mult_base']:.1f}"
     else:
         label, color = STATUT.get(fiche["statut"], ("?", TXT_MUT))
-    y = pdf.get_y() + 1
-    w = _chip(pdf, 14, y, label, color)
-    pdf.set_font("inter", size=8)
-    pdf.set_text_color(*TXT_MUT)
+    # ── M22-F C4 : VERDICT EN TÊTE, hiérarchie M19 — carte pleine largeur, gros label
     surf = f"{fiche['surface_m2']:,} m²".replace(",", " ") if fiche.get("surface_m2") else "surface n/d"
     lon, lat = fiche.get("coords", [None, None])
-    pdf.set_xy(14 + w + 4, y + 0.4)
-    pdf.cell(0, 4.6, f"{surf} · {fiche.get('commune', '')} · {lat}, {lon}")
-    pdf.set_y(y + 9)
+    y = pdf.get_y() + 1
+    pdf.set_fill_color(*SURFACE)
+    pdf.rect(14, y, pdf.w - 28, 15, style="F", round_corners=True, corner_radius=2.4)
+    pdf.set_xy(19, y + 2.2)
+    pdf.set_font("mono", size=6.6)
+    pdf.set_text_color(*TXT_DIM)
+    pdf.cell(0, 3.6, "VERDICT LABUSE", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_xy(19, y + 6.6)
+    pdf.set_font("grotesk", size=14)
+    pdf.set_text_color(*color)
+    pdf.cell(110, 6.5, label)
+    pdf.set_font("inter", size=7.2)
+    pdf.set_text_color(*TXT_MUT)
+    pdf.set_xy(14, y + 7.8)
+    pdf.cell(pdf.w - 33, 4.6, f"{surf} · {fiche.get('commune', '')} · {lat}, {lon}", align="R")
+    pdf.set_y(y + 17)
     if v2_pilote:
         hist, _ = STATUT.get(fiche["statut"], ("?", TXT_MUT))
         pdf.set_font("inter", size=6.5)
@@ -306,19 +316,38 @@ def render_fiche_pdf(fiche: dict) -> bytes:
                        "reglementaire du maitre d'oeuvre.", new_x="LMARGIN", new_y="NEXT")
         pdf.ln(2)
 
-    # ── Lignes tracées, par onglet
+    # ── Lignes tracées, par onglet — M22-F C4 : SECTIONS CARTOUCHES (hiérarchie M19)
+    # + PLAFOND 2 PAGES : au-delà, on n'imprime plus (compteur honnête, fiche écran complète).
+    TITRES_M19 = {"regles": "Règles d'urbanisme", "risques": "Risques",
+                  "marche": "Marché", "proprio": "Propriétaire"}
+    omises = 0
     for key, titre in ONGLETS:
         lines = [ln for ln in fiche["lines"] if ln["onglet"] == key]
         if not lines:
             continue
+        if pdf.page >= 2 and pdf.get_y() > pdf.h - 60:
+            omises += len(lines)
+            continue
         pdf.ln(1.5)
-        pdf.set_font("mono", size=7.5)
-        pdf.set_text_color(*TXT_DIM)
-        pdf.cell(0, 5, titre, new_x="LMARGIN", new_y="NEXT")
-        pdf.set_draw_color(*LINE)
-        pdf.line(14, pdf.get_y(), pdf.w - 14, pdf.get_y())
-        pdf.ln(1.2)
+        # en-tête de section en CARTOUCHE (comme un tiroir M19) + résumé à droite
+        poids = sum(ln.get("weight") or 0 for ln in lines)
+        resume = f"{len(lines)} signal(aux) · somme {'+' if poids > 0 else ''}{poids}"
+        y = pdf.get_y()
+        pdf.set_fill_color(*SURFACE)
+        pdf.rect(14, y, pdf.w - 28, 7, style="F", round_corners=True, corner_radius=2)
+        pdf.set_xy(18, y + 1.6)
+        pdf.set_font("grotesk", size=8.5)
+        pdf.set_text_color(*TXT_HI)
+        pdf.cell(90, 4, TITRES_M19.get(key, titre))
+        pdf.set_font("mono", size=6.4)
+        pdf.set_text_color(*TXT_MUT)
+        pdf.set_xy(14, y + 1.8)
+        pdf.cell(pdf.w - 32, 4, resume, align="R")
+        pdf.set_y(y + 8.6)
         for ln in lines:
+            if pdf.page >= 2 and pdf.get_y() > pdf.h - 44:
+                omises += 1
+                continue
             if pdf.get_y() > pdf.h - 34:
                 pdf.add_page()
             w0 = ln.get("weight")
@@ -344,6 +373,14 @@ def render_fiche_pdf(fiche: dict) -> bytes:
             pdf.cell(0, 3.4, "  ".join(x for x in (src, ref, ln.get("date") or "") if x),
                      new_x="LMARGIN", new_y="NEXT")
             pdf.ln(0.8)
+
+    if omises:
+        # plafond 2 pages (C4) — jamais silencieux : le compteur dit ce qui n'est pas imprimé
+        pdf.set_font("inter", size=6.8)
+        pdf.set_text_color(*TXT_DIM)
+        pdf.multi_cell(pdf.w - 28, 3.6,
+                       f"… {omises} signal(aux) supplémentaire(s) non imprimé(s) (format 2 pages) — "
+                       "la fiche écran porte la liste complète.", new_x="LMARGIN", new_y="NEXT")
 
     # ── A6 (mandat bilan-calculette) : CHARGE FONCIÈRE « selon vos hypothèses », si passée à l'export
     calc = fiche.get("calculette")

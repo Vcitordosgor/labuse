@@ -103,21 +103,53 @@ def _regles_zone(code: str, commune: str | None) -> dict:
             "prospect": r.hauteur_mode == "prospect"}
 
 
+# ───────────────────────── référence d'attestation (C8) ─────────────────────────
+
+def _ref_attestation(db: Session, idu: str) -> str:
+    """M22-F C8 — numéro de référence UNIQUE de l'attestation, LZ-AAAA-NNNN, stocké en base
+    (table `lettre_zonage_refs`, additive). Une référence par ÉDITION : chaque génération
+    est tracée. Petit retry sur collision (concurrence faible, contrainte UNIQUE fait foi)."""
+    from sqlalchemy import text as _t
+    db.execute(_t(
+        "CREATE TABLE IF NOT EXISTS lettre_zonage_refs ("
+        "  id serial PRIMARY KEY, ref text UNIQUE NOT NULL, idu text NOT NULL,"
+        "  created_at timestamptz NOT NULL DEFAULT now())"))
+    annee = date.today().year
+    for _essai in range(3):
+        n = db.execute(_t(
+            "SELECT count(*) FROM lettre_zonage_refs WHERE ref LIKE :p"),
+            {"p": f"LZ-{annee}-%"}).scalar() or 0
+        ref = f"LZ-{annee}-{n + 1:04d}"
+        try:
+            db.execute(_t("INSERT INTO lettre_zonage_refs (ref, idu) VALUES (:r, :i)"),
+                       {"r": ref, "i": idu})
+            db.commit()
+            return ref
+        except Exception:  # noqa: BLE001 — collision UNIQUE : on recompte
+            db.rollback()
+    return f"LZ-{annee}-XXXX"  # repli improbable : la lettre sort, la réf est dégradée
+
+
 # ───────────────────────── sections HTML (layout attestation) ─────────────────────────
 
-def _identification(p: dict, rap: dict) -> str:
+def _identification(p: dict, rap: dict, ref: str) -> str:
+    """Couverture d'ATTESTATION (C8) : marque, titre, RÉFÉRENCE et DATE D'ÉDITION en tête,
+    identification, plan cadastral clair (C2)."""
+    edition = date.today().strftime("%d/%m/%Y")
     rows = [("Références cadastrales", f"{p['idu']} · section {p['section']} n° {p['numero']}"),
             ("Commune", p["commune"]),
             ("Surface du terrain (cadastre)", f"{p['surface_m2']:.0f} m²")]
     if rap.get("adresse"):
         rows.append(("Adresse (Base Adresse Nationale)", rap["adresse"]))
-    rows.append(("Date d'édition", date.today().strftime("%d/%m/%Y")))
     table = "".join(f"<tr><td style='width:38%'>{esc(k)}</td><td>{esc(v)}</td></tr>" for k, v in rows)
-    return (f"<h1>Lettre de vérification de zonage</h1>"
-            f"<p class='cover-sub'>Parcelle {esc(p['idu'])} — {esc(p['commune'])}</p>"
+    return (f"<section class='garde'>"
+            f"{bq.wordmark_html('LETTRE DE VÉRIFICATION DE ZONAGE · attestation documentaire')}"
+            f"<h1>Lettre de vérification de zonage</h1>"
+            f"<div class='refs'>Référence <b>{esc(ref)}</b> · éditée le <b>{esc(edition)}</b> · "
+            f"parcelle <b>{esc(p['idu'])}</b> — {esc(p['commune'])}</div>"
             f"<div class='bandeau'>{LIBELLE}</div>"
             f"<h2>1 · Identification</h2><table>{table}</table>"
-            f"{bq.map_html(p['geojson'], ign=True)}")
+            f"{bq.map_html(p['geojson'])}</section>")
 
 
 def _zonage(zones: list[dict], commune: str | None) -> str:
@@ -125,22 +157,31 @@ def _zonage(zones: list[dict], commune: str | None) -> str:
     if not zones:
         return ("<h2>2 · Zonage applicable</h2><p class='note'>Zonage non résolu dans les couches "
                 "numérisées (GPU) à la date d'édition — vérification en mairie indispensable.</p>")
-    rows, docs = [], {}
+    def _approb_fr(iso: str | None) -> str | None:
+        try:
+            return date.fromisoformat(iso).strftime("%d/%m/%Y") if iso else None
+        except ValueError:
+            return iso
+    rows, fichiers = [], {}
     for z in zones:
         code = z.get("libelle") or z.get("classe") or "—"
         reg = resolve_reglement(commune, str(code), z.get("idurba")) or {}
-        nom = reg.get("document")                      # nom du PDF règlement (calibré) ou None
-        if nom:
-            approb = reg.get("approbation")
-            docs[nom] = f"{nom}" + (f" — approuvé le {approb}" if approb else "")
-        ref_doc = nom or (f"GPU {z['idurba']}" if z.get("idurba") else "document non calibré")
+        fichier = reg.get("document")                  # nom du PDF règlement (calibré) ou None
+        if fichier:
+            # C3 — nom LISIBLE du document en tableau ; le nom de fichier part en note.
+            approb = _approb_fr(reg.get("approbation"))
+            ref_doc = f"PLU de {commune}" + (f", approuvé le {approb}" if approb else "")
+            fichiers[fichier] = ref_doc
+        else:
+            ref_doc = f"GPU {z['idurba']}" if z.get("idurba") else "document non calibré"
         rows.append(f"<tr><td><b>{esc(code)}</b></td><td class='n'>{esc(z.get('pct'))} %</td>"
                     f"<td>{esc(ref_doc)}</td></tr>")
     body = (f"<h2>2 · Zonage applicable</h2>"
             f"<table><tr><th>Zone (intitulé du règlement)</th><th class='n'>Part de la parcelle</th>"
             f"<th>Document d'urbanisme</th></tr>{''.join(rows)}</table>")
-    if docs:
-        body += "<p class='note'>" + " · ".join(esc(d) for d in docs.values()) + "</p>"
+    for fichier, lisible in fichiers.items():
+        body += (f"<p class='note'>{esc(lisible)} — fichier du règlement écrit : "
+                 f"{esc(fichier)}.</p>")
     body += ("<p class='note'>Source zonage : Géoportail de l'urbanisme (GPU), couche numérisée "
              "intersectée avec la géométrie cadastrale de la parcelle.</p>")
     return body
@@ -216,6 +257,19 @@ def _limites(rap: dict) -> str:
     return body
 
 
+def _cloture(ref: str) -> str:
+    """C8 — bloc de clôture d'attestation : qui édite, sous quelle référence, quand.
+    Codes d'un document formel — aucun engagement au-delà du libellé légal du pied."""
+    edition = date.today().strftime("%d/%m/%Y")
+    return (f"<div class='hyp-encadre' style='margin-top:6mm'>"
+            f"<span class='titre'>Édité par LABUSE</span>"
+            f"Attestation documentaire n° <b>{esc(ref)}</b>, éditée le <b>{esc(edition)}</b> "
+            f"par LABUSE (radar foncier — La Réunion) sur données publiques numérisées. "
+            f"Document généré électroniquement, valable en l'état de ses sources ; la référence "
+            f"ci-dessus est enregistrée par LABUSE et permet de vérifier l'authenticité de "
+            f"l'édition sur simple demande.</div>")
+
+
 # ───────────────────────── endpoint ─────────────────────────
 
 def _build_pdf(db: Session, idu: str) -> bytes:
@@ -230,15 +284,19 @@ def _build_pdf(db: Session, idu: str) -> bytes:
     p = dict(row)
     rap = collect_report_data(db, idu) or {}
     zones = (rap.get("identite") or {}).get("zones", [])
+    ref = _ref_attestation(db, idu)                      # C8 : référence unique, tracée
     sections = [
-        _identification(p, rap),
+        _identification(p, rap, ref),
         _zonage(zones, p.get("commune")),
         _regles(zones, p.get("commune")),
         _servitudes(rap),
         _limites(rap),
+        _cloture(ref),
     ]
-    pdf = bq.render_pdf(sections, LIBELLE)
-    log.info("lettre zonage %s générée (%d ko)", idu, len(pdf) // 1024)
+    # C7 : bandeau de contexte sur chaque page
+    pdf = bq.render_pdf(sections, LIBELLE, produit="Lettre de zonage",
+                        idu=idu, commune=p.get("commune") or "")
+    log.info("lettre zonage %s générée (%s, %d ko)", idu, ref, len(pdf) // 1024)
     return pdf
 
 

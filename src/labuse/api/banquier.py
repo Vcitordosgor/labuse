@@ -141,9 +141,13 @@ _PDF_LOCK = _Lock()
 def _build_pdf(db: Session, idu: str) -> bytes:
     out = bq.collect(db, idu)
     out["_synthese"] = _synthese_html(db, out)   # synthèse d'abord (utilisée en couverture)
-    sections = [bq.cover(out, bandeau=LIBELLE), bq.identite(out), bq.faisabilite(out),
+    sections = [bq.cover(out, titre="Dossier banquier", bandeau=LIBELLE,
+                         produit_sous_titre="DOSSIER BANQUIER · présentation financeur"),
+                bq.identite(out), bq.faisabilite(out),
                 bq.bilan(out), bq.comparables(out), bq.risques(out)]
-    pdf = bq.render_pdf(sections, LIBELLE)
+    # C7 : bandeau de contexte sur chaque page (produit · IDU — commune)
+    pdf = bq.render_pdf(sections, LIBELLE, produit="Dossier banquier",
+                        idu=idu, commune=out["parcelle"].get("commune") or "")
     log.info("dossier banquier %s généré (%d ko)", idu, len(pdf) // 1024)
     return pdf
 
