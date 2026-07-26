@@ -168,6 +168,11 @@
   {% endif %}
   {% endif %}
 
+  {# M-RENOUV (B3) : une ligne conditionnelle — segment + rang + 2 composantes dominantes #}
+  {% if c.renouvellement_ligne %}
+  <p class="note">{{ c.renouvellement_ligne }}</p>
+  {% endif %}
+
   {% if c.score %}
   <h3>Score LABUSE de la parcelle ({% if c.verdict_v2 %}grille historique Q/A — complément
       du verdict v2 ci-dessus{% else %}valeur absolue{% endif %})</h3>

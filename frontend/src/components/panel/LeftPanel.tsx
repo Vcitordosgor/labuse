@@ -65,6 +65,8 @@ const LAYERS: { key: keyof LayerToggles; label: string }[] = [
   { key: 'anru', label: 'ANRU (NPNRU)' },
   // M6.1 item 2 : réserve domaniale littorale — libellé métier exact exigé par le mandat
   { key: 'cinquante_pas', label: '50 pas géométriques' },
+  // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut, teinte cuivre
+  { key: 'renouv', label: 'Renouvellement' },
 ]
 
 // M12 C2 — pastille « i » d'une couche : au survol OU au clic, l'explication CLIENT (LAYER_INFO,

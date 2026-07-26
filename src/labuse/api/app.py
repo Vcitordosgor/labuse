@@ -1882,6 +1882,42 @@ def _q_v2_fiche(db: Session, idu: str, run_label: str = Q_A_RUN_LABEL) -> dict:
         # M-VIA : indicateur de viabilisation (faisceau de preuves) + gestionnaires.
         "viabilisation": _viabilisation_block(db, idu),
         "gestionnaires": _gestionnaires_block(head["commune"]),
+        # M-RENOUV : segment Renouvellement (table additive, lecture seule) — le verdict
+        # d'en-tête reste « Écartée » ; ce bloc n'ajoute qu'un badge + un « pourquoi ».
+        "renouvellement": _renouvellement_block(db, idu),
+    }
+
+
+def _renouvellement_block(db: Session, idu: str) -> dict | None:
+    """M-RENOUV lot B — segment Renouvellement (None si table absente ou parcelle hors
+    segment). DOCTRINE : « potentiel de renouvellement urbain », jamais « opportunité » ;
+    la divisibilité s'affiche « géométrie favorable », jamais une promesse de division."""
+    if not db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
+        return None
+    r = db.execute(text(
+        "SELECT renouv_score, comp_potentiel, comp_assiette, comp_marche, comp_divisibilite, "
+        "       code_bati_origine, sdp_residuelle_m2, surface_m2, zone_plu, commune, "
+        "       rang_segment, rang_commune, "
+        "       (SELECT count(*) FROM parcel_renouvellement)                      AS total_segment, "
+        "       (SELECT count(*) FROM parcel_renouvellement r2 "
+        "        WHERE r2.commune = parcel_renouvellement.commune)                AS total_commune "
+        "FROM parcel_renouvellement WHERE idu = :idu"), {"idu": idu}).mappings().first()
+    if not r:
+        return None
+    from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
+    return {
+        "libelle": LIBELLE_SEGMENT,
+        "renouv_score": r["renouv_score"],
+        "rang_segment": r["rang_segment"], "total_segment": r["total_segment"],
+        "rang_commune": r["rang_commune"], "total_commune": r["total_commune"],
+        "code_bati_origine": r["code_bati_origine"],
+        "zone_plu": r["zone_plu"],
+        "sdp_residuelle_m2": r["sdp_residuelle_m2"], "surface_m2": r["surface_m2"],
+        "composantes": [
+            {"cle": k, "points": r[k], "max": m, "libelle": LIBELLES_COMPOSANTES[k]}
+            for k, m in (("comp_potentiel", 40), ("comp_assiette", 25),
+                         ("comp_marche", 20), ("comp_divisibilite", 15))
+        ],
     }
 
 
@@ -2308,6 +2344,68 @@ def mutation_geojson(commune: str | None = None, niveau: str = "prioritaire",
                           "properties": {"idu": idu, "score_mutation": p.get("score_mutation"),
                                          "niveau": p.get("niveau")}})
     return {"type": "FeatureCollection", "features": feats}
+
+
+# ═══ M-RENOUV lot B — segment Renouvellement : couche carte + liste (LECTURE SEULE) ═══
+# DOCTRINE : parcelles OCCUPÉES, « potentiel de renouvellement urbain », jamais
+# « opportunité » ; vitrine parallèle, jamais mélangée aux Chaudes/Brûlantes (le flux
+# principal /parcels n'est PAS touché). Toggle OFF par défaut côté carte.
+
+@app.get("/map/renouvellement.geojson")
+def renouvellement_geojson(commune: str | None = None,
+                           limit: int = Query(1500, ge=1, le=3000),
+                           db: Session = Depends(get_db)) -> dict:
+    """Calque carte du segment Renouvellement : géométries des MEILLEURS rangs (île ou
+    commune), score/rang en propriétés. `total` et `servis` sont renvoyés — la légende
+    dit si le calque est tronqué (jamais un « tout » silencieux)."""
+    if not db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
+        return {"type": "FeatureCollection", "features": [], "total": 0, "servis": 0}
+    where = "WHERE p.commune = :c" if commune else ""
+    rows = db.execute(text(f"""
+        SELECT r.idu, r.renouv_score, r.rang_segment, r.rang_commune, ST_AsGeoJSON(p.geom) AS g
+        FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu
+        {where} ORDER BY r.rang_segment LIMIT :n"""),
+        {"c": commune, "n": limit}).all()
+    total = int(db.execute(text(f"""
+        SELECT count(*) FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
+        {"c": commune}).scalar() or 0)
+    feats = [{"type": "Feature", "geometry": json.loads(g),
+              "properties": {"idu": idu, "renouv_score": sc, "rang_segment": rg, "rang_commune": rc}}
+             for idu, sc, rg, rc, g in rows if g]
+    return {"type": "FeatureCollection", "features": feats, "total": total, "servis": len(feats)}
+
+
+@app.get("/renouvellement/liste")
+def renouvellement_liste(commune: str | None = None,
+                         sort: str = Query("score", pattern="^(score|sdp|surface|rang_commune)$"),
+                         limit: int = Query(200, ge=1, le=1000), offset: int = Query(0, ge=0),
+                         db: Session = Depends(get_db)) -> dict:
+    """Liste du segment Renouvellement, triable (score par défaut). Sert l'outil dédié —
+    JAMAIS le flux principal (doctrine : pas de mélange avec les tiers servis)."""
+    if not db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
+        raise HTTPException(503, "segment Renouvellement non calculé — lancer `labuse renouv`.")
+    from ..renouvellement import LIBELLE_SEGMENT, LIBELLES_COMPOSANTES
+    orders = {"score": "r.renouv_score DESC, r.idu",
+              "sdp": "r.sdp_residuelle_m2 DESC NULLS LAST, r.idu",
+              "surface": "r.surface_m2 DESC NULLS LAST, r.idu",
+              "rang_commune": "r.commune, r.rang_commune"}
+    where = "WHERE p.commune = :c" if commune else ""
+    rows = db.execute(text(f"""
+        SELECT r.idu, p.commune AS commune_nom, r.commune AS commune_insee, r.renouv_score,
+               r.comp_potentiel, r.comp_assiette, r.comp_marche, r.comp_divisibilite,
+               r.code_bati_origine, r.sdp_residuelle_m2, r.surface_m2, r.zone_plu,
+               r.rang_segment, r.rang_commune
+        FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu
+        {where} ORDER BY {orders[sort]} LIMIT :n OFFSET :o"""),
+        {"c": commune, "n": limit, "o": offset}).mappings().all()
+    total = int(db.execute(text(f"""
+        SELECT count(*) FROM parcel_renouvellement r JOIN parcels p ON p.idu = r.idu {where}"""),
+        {"c": commune}).scalar() or 0)
+    return {"total": total, "n": len(rows), "items": [dict(r) for r in rows],
+            "libelle": LIBELLE_SEGMENT, "composantes_libelles": LIBELLES_COMPOSANTES,
+            "avertissement": ("Parcelles occupées : potentiel physique et réglementaire de "
+                              "renouvellement — ni une mise en vente prévisible, ni une "
+                              "opportunité qualifiée.")}
 
 
 @app.get("/map/permits.geojson")

@@ -210,6 +210,26 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
                     "rang": (None if etage0 or not v2 else v2["rang"]),
                     "mult": (None if etage0 or not v2 or v2["mult_base"] is None
                              else round(float(v2["mult_base"]), 1))}
+        # M-RENOUV (B3) : UNE ligne conditionnelle dans la synthèse — segment + rang +
+        # les 2 composantes dominantes. Pas de refonte du template ; wording doctrinal
+        # (« potentiel de renouvellement urbain », jamais « opportunité »).
+        if db.execute(text("SELECT to_regclass('parcel_renouvellement') IS NOT NULL")).scalar():
+            rn = db.execute(text(
+                "SELECT renouv_score, rang_segment, comp_potentiel, comp_assiette, "
+                "       comp_marche, comp_divisibilite, "
+                "       (SELECT count(*) FROM parcel_renouvellement) AS total "
+                "FROM parcel_renouvellement WHERE idu = :idu"), {"idu": idu}).mappings().first()
+            if rn:
+                from ..renouvellement import LIBELLES_COMPOSANTES
+                dominantes = sorted(
+                    ((k, int(rn[k])) for k in ("comp_potentiel", "comp_assiette",
+                                               "comp_marche", "comp_divisibilite")),
+                    key=lambda kv: kv[1], reverse=True)[:2]
+                dom = " · ".join(f"{LIBELLES_COMPOSANTES[k]} ({v} pts)" for k, v in dominantes)
+                out["renouvellement_ligne"] = (
+                    f"Segment Renouvellement — parcelle occupée, potentiel de renouvellement "
+                    f"urbain : rang {rn['rang_segment']}/{rn['total']} "
+                    f"(score {rn['renouv_score']}/100). Composantes dominantes : {dom}.")
     return out or None
 
 

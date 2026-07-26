@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { CINQUANTE_PAS_COLOR, EQUIP_META, LEGEND_ORDER, LEGEND_V2_ORDER, STATUT_META, TIER_V2_META, ZONE_FAM_META, ZONE_FAM_ORDER } from '../../lib/status'
+import { TOKENS } from '../../lib/tokens'
 import { useApp } from '../../store/useApp'
 import { Tip } from '../Tip'
 
@@ -93,6 +94,18 @@ export function Legend({ inline = false }: { inline?: boolean }) {
             <div data-legend-50pas className="flex items-center gap-2">
               <span className="h-0.5 w-4 rounded" style={{ background: CINQUANTE_PAS_COLOR }} />
               <span className="text-[11px] text-txt">50 pas géométriques</span>
+            </div>
+          </Tip>
+        </div>
+      )}
+
+      {/* ── M-RENOUV : segment Renouvellement (cuivre) ── */}
+      {layers.renouv && (
+        <div className="mt-3 border-t border-line pt-2.5">
+          <Tip block side="top" tip="Parcelles occupées (bâties) en zone U/AU avec capacité restante — potentiel de renouvellement urbain, pas une opportunité qualifiée.">
+            <div data-legend-renouv className="flex items-center gap-2">
+              <span className="h-2.5 w-4 rounded-sm" style={{ background: TOKENS.renouv, opacity: 0.7 }} />
+              <span className="text-[11px] text-txt">Renouvellement — occupées, potentiel de renouvellement</span>
             </div>
           </Tip>
         </div>

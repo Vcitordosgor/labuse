@@ -39,6 +39,9 @@ export const MODULES: ModuleDef[] = [
     label: 'Division parcellaire', desc: 'Repérez les grands terrains où détacher un lot à bâtir' },
   { key: 'fantome', num: 'M07', group: 'detecter', phare: true,
     label: 'Foncier fantôme', desc: 'Le constructible verrouillé que les autres ne voient pas' },
+  // M-RENOUV : segment séparé (doctrine : jamais mélangé aux Chaudes ; « potentiel », pas opportunité)
+  { key: 'renouvellement', num: 'MR1', group: 'detecter',
+    label: 'Renouvellement', desc: 'Parcelles occupées en zone constructible avec capacité restante — potentiel de renouvellement urbain (densifier, diviser, reconstruire)' },
   { key: 'patrimoine', num: 'M02', group: 'detecter', phare: true,
     label: 'Scan patrimoine', desc: 'Un nom de propriétaire, et TOUT son foncier ressort d’un coup — repérez les gros détenteurs à approcher' },
   { key: 'bailleur', num: 'M06', group: 'detecter',

@@ -16,6 +16,7 @@ export interface LayerToggles {
   equipements: boolean
   communes: boolean   // P11 : limites communales (ligne verte, contours officiels)
   cinquante_pas: boolean // M6.1 : réserve des 50 pas géométriques (bande littorale outre-mer)
+  renouv: boolean     // M-RENOUV : segment Renouvellement (occupées, potentiel) — OFF par défaut
 }
 
 // Filtres actifs — appliqués EN MÊME TEMPS à la carte, la liste et les compteurs, et
@@ -233,7 +234,7 @@ export const useApp = create<AppState>((set) => ({
   // afficherait un titre « undefined » et un faux « serveur injoignable ». `null` ferme la fiche.
   select: (idu) => set({ selectedIdu: idu === '' || idu === 'undefined' ? null : idu }),
   // C (M12) : + zonage_colorise (colorisation d'emblée de toutes les parcelles par famille de zone)
-  layers: { zonage: false, zonage_parcelle: false, zonage_colorise: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false },
+  layers: { zonage: false, zonage_parcelle: false, zonage_colorise: false, parcelles: true, ppr: false, parc: false, limites: true, anru: false, equipements: false, communes: true, cinquante_pas: false, renouv: false },
   toggleLayer: (k) => set((s) => ({ layers: { ...s.layers, [k]: !s.layers[k] } })),
   panelOpen: true,
   togglePanel: () => set((s) => ({ panelOpen: !s.panelOpen })),
