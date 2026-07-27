@@ -1,0 +1,158 @@
+# =============================================================================
+# PLU SAINTE-SUZANNE (97420) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Sainte-Suzanne (archive GPU 97420_plu_20250929).
+#   document : 97420_reglement.pdf (cache pré-vol nuit), 48 p. Concordance manifeste/GPU
+#   re-vérifiée au pré-vol du 27/07/2026.
+#
+# FIABILITÉ :
+#   - page_pdf = page_imprimee (offset 0 — vote pré-vol 47 concordances).
+#   - FORMAT MODERNE MUTUALISÉ (style Sainte-Marie) : chapitre unique « ZONES UA, UB et UC »
+#     (articles U1..U17 déclinés par zone), chapitre UE, chapitre AU à renvoi d'indice.
+#   - EMPRISE « Sans objet » dans UA/UB/UC => null sourcé ; UE 70 %.
+#   - PLEINE TERRE = « % espace perméable » (Art. U12) : UA 20 / UB 30 / UC 40 ; UE 15.
+#   - AU : 1AU ouvertes (renvoi) ; 2AU « horizon 2031 » + après aménagement des 1AU => GEL.
+#   - Aucun COS (pré-vol : 0 occurrence).
+# =============================================================================
+
+source:
+  document: "97420_reglement.pdf (Pieces_ecrites/3_Reglement, archive GPU 97420_plu_20250929)"
+  url: "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97420"
+  approbation: "2025-09-29"
+  pages_total: 48
+  offset_pdf_vs_imprimee: 0
+  reglement_grave:
+    fichier: "97420_reglement.pdf"
+    md5: "c7cf9f25fad688b1894b618f108015ff"
+    millesime: "2025-09-29"
+    document_gpu_au_calibrage: "97420_plu_20250929"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Logements privés <50 m² SDP : 1 place ; >=50 m² : 2 places ; +0,5 place publique/logement pour les opérations >10 logements ; LLS : 1 place (0,5 à <500 m d'une gare/TCSP) — Art. U13, p.16-18."
+  cours_d_eau: "Implantation à 10 m minimum des cours d'eau (Art. U5.2)."
+
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== Chapitre « ZONES UA, UB et UC » (p.10-19) ==============
+  UA: {bassin: "Sainte-Suzanne",
+       he_m: 13, hf_m: 16, hauteur_src: "Art. U8.2, p.14-15",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
+       recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.12-13 (alignement possible OU recul >= 2 m en UA)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (2 limites, 1 ou retrait >= 3 m)",
+       stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
+       stat_note: "Logements >=50 m² ; <50 m² : 1 place (cf. regles_transverses).",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16"}
+  UAv: {bassin: "Sainte-Suzanne",
+       he_m: 14, hf_m: 17, hauteur_src: "Art. U8.2, p.14-15 (« en secteur UAv : 14/17 m »)",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
+       recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.12-13",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14",
+       stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 (zone UA)"}
+  UAc: {bassin: "Sainte-Suzanne",
+       he_m: 13, hf_m: 16, hauteur_src: "Art. U8.2, p.14-15 (zone UA — pas de hauteur propre UAc)",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
+       recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.12-13",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. U1, p.10-11",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16",
+       habitat: interdit, habitat_src: "Art. U1 (rappel 5), p.10-11 : « Dans le secteur UAc, seules sont autorisées les constructions … à destination de commerce et activités de service »"}
+  UB: {bassin: "Sainte-Suzanne",
+       he_m: 9, hf_m: 12, hauteur_src: "Art. U8.2, p.14-15",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13 (alignement possible OU recul >= 4 m en UB/UC)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14",
+       stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12.1, p.16"}
+  UC: {bassin: "Sainte-Suzanne",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. U8.2, p.14-15",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (UC : retrait OU une seule limite latérale)",
+       stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U12.1, p.16"}
+  UC1: {bassin: "Sainte-Suzanne",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. U8.2, p.14-15 (zone UC — pas de hauteur propre UC1)",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14",
+       stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U12.1, p.16",
+       note: "SDU loi ELAN / L.121-8 (Art. U1 rappel 6, p.10-11) : constructions autorisées EXCLUSIVEMENT pour l'amélioration de l'offre de logement/hébergement et services publics, SANS extension du périmètre bâti ni modification significative du bâti ; avis CDNPS requis. Densification contrainte — capacité à interpréter avec prudence."}
+
+  # ============== UE — activités (p.20-28) : HABITAT STRICTEMENT INTERDIT ==============
+  UE: {bassin: "Sainte-Suzanne",
+       he_m: null, hf_m: 12, hauteur_src: "Art. UE8, p.23-24 (« la hauteur maximale des constructions au faitage est fixée à 12 mètres »)",
+       emprise_sol_pct: 70, emprise_src: "Art. UE7, p.23 (« limitée à 70% de la superficie du terrain »)",
+       recul_voirie_m: 5, recul_voirie_src: "Art. UE4.2, p.22 (recul >= H/2, minimum 5 m)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UE5.2, p.22-23 (retrait OU une limite ; retrait >= H/2, min 4 m ; retrait OBLIGATOIRE en limite de zone UA/UB/UC ou AU habitat)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit sans exception).", stat_src: "Art. UE1.2/UE2, p.20-21",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE12, p.25",
+       habitat: interdit, habitat_src: "Art. UE1.2, p.20 (habitation interdite « à l'exception de ceux visés à l'article UE2 ») + Art. UE2, p.20-21 : AUCUNE exception logement (même pas le gardiennage — seuls commerces/bureaux/équipements <=5 % de la zone, réseaux, reconstruction, extensions limitées, 50 pas)"}
+
+  # ============== 1AU ouvertes — renvoi à la zone U d'indice (Titre III, p.29-31) ==============
+  1AUa: {bassin: "Sainte-Suzanne",
+       he_m: 13, hf_m: 16, hauteur_src: "Art. U8.2, p.14-15 via renvoi (Titre III p.29 : « se reporter … au règlement des zones urbaines correspondantes »)",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 (via renvoi)",
+       recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.12-13 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18 (via renvoi)",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 (via renvoi)"}
+  1AUac: {bassin: "Sainte-Suzanne",
+       he_m: 13, hf_m: 16, hauteur_src: "Art. U8.2, p.14-15 via renvoi (secteur UAc)",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 (via renvoi)",
+       recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.12-13 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. U1 (rappel 5), p.10-11 (via renvoi)",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 (via renvoi)",
+       habitat: interdit, habitat_src: "Art. U1 (rappel 5), p.10-11 via renvoi (UAc : commerce et services uniquement)"}
+  1AUb: {bassin: "Sainte-Suzanne",
+       he_m: 9, hf_m: 12, hauteur_src: "Art. U8.2, p.14-15 via renvoi (zone UB)",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12.1, p.16 (via renvoi)"}
+  1AUc: {bassin: "Sainte-Suzanne",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. U8.2, p.14-15 via renvoi (zone UC)",
+       emprise_sol_pct: null, emprise_src: "Art. U7, p.14 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18 (via renvoi)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U12.1, p.16 (via renvoi)",
+       note: "Densité 10 logements/ha (Titre III, p.30-31)."}
+  1AUe: {bassin: "Sainte-Suzanne",
+       he_m: null, hf_m: 12, hauteur_src: "Art. UE8, p.23-24 via renvoi (zone UE)",
+       emprise_sol_pct: 70, emprise_src: "Art. UE7, p.23 (via renvoi)",
+       recul_voirie_m: 5, recul_voirie_src: "Art. UE4.2, p.22 (via renvoi)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UE5.2, p.22-23 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UE1.2/UE2, p.20-21 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE12, p.25 (via renvoi)",
+       habitat: interdit, habitat_src: "Art. UE1.2/UE2, p.20-21 via renvoi (aucune exception logement)"}
+
+zones_au_renvoi: {}
+
+# 2AU : « espaces d'ouverture à l'urbanisation à l'horizon 2031. Leur ouverture … ne pourra
+# toutefois intervenir qu'une fois l'aménagement de l'ensemble des zones 1AUindicée entrepris »
+# (Titre III, p.29) => GEL (friction F2 : étiquette moteur approximative, capacité zéro exacte).
+zones_au_st:
+  liste: ["2AUa", "2AUb"]
+  portee: "Zones 2AU : ouverture à l'urbanisation à l'horizon 2031 ET après l'aménagement de l'ensemble des 1AU — construction neuve non autorisée en l'état."
+  source: "Titre III — caractère des zones AU, p.29."
+
+# Zones NON constructibles — décision motivée (principe mandat-cadre) :
+zones_non_constructibles: ["A, Acu, Aenr (Titre IV, p.32-38)",
+                           "N, Ndé, Nenr, Nlit, Npnr, Nr, Nt (Titre V, p.39+)"]
