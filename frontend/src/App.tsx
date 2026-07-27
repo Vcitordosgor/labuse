@@ -16,6 +16,7 @@ import { ContextePanel } from './components/contexte/ContextePanel'
 import { filtersFromHash, filtersToHash } from './lib/filters'
 import { SCORE_TIP } from './lib/status'
 import { useApplySearch } from './lib/useApplySearch'
+import { CopiloteView } from './components/copilote/CopiloteView'
 import { ModulePanel } from './components/outils/ModulePanel'
 import { TimeMachine } from './components/outils/TimeMachine'
 import { EMPTY_FILTERS, useApp } from './store/useApp'
@@ -285,6 +286,7 @@ export default function App() {
           {view === 'sources' && <SourcesPage />}
           {view === 'projets' && <ProjetsPanel />}
           {view === 'ia' && <IAStub />}
+          {view === 'copilote' && <CopiloteView />}
           {selectedIdu && view !== 'sources' && <Fiche idu={selectedIdu} />}
           <ContextePanel />
           <SourceDrawer />

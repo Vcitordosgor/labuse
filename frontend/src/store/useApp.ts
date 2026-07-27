@@ -2,7 +2,9 @@ import { create } from 'zustand'
 import type { FicheLine } from '../lib/types'
 import type { TierV2 } from '../lib/status'
 
-export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets'
+// M26-B : 'copilote' = l'écran Copilote (instruction de dossier, event log SSE) — vue de
+// premier niveau, la maquette B4 est pleine largeur (pas un module du panneau 320 px).
+export type View = 'ia' | 'cartes' | 'crm' | 'sources' | 'projets' | 'copilote'
 
 export interface LayerToggles {
   zonage: boolean
