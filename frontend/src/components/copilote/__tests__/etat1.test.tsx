@@ -98,11 +98,16 @@ describe('état 1 — instruction terminée (fixture calibrée)', () => {
     const es = await lancerRun()
     act(() => { for (const e of evts) es.emet(e); es.fin('done') })
     await waitFor(() => expect(document.querySelectorAll('[data-restituee]')).toHaveLength(20))
-    // 3 parcelles au-dessus de la charge supportable : flag affiché, parcelles RESTITUÉES
+    // 3 parcelles au-dessus de la charge supportable : encart affiché, parcelles RESTITUÉES
     expect(document.querySelectorAll('[data-charge-flag]')).toHaveLength(3)
     const lead = normalise(document.querySelector('[data-charge-flag]')!.textContent)
     expect(lead).toContain('charge supportable')
     expect(lead).toContain('385 k€')
+    // la parcelle flaguée (#01, au_dessus=true dans la fixture) reste bien restituée
+    expect(document.querySelector('[data-restituee="97415000BV0180"]')).toBeInTheDocument()
+    // lead : charge supportable CÔTE À CÔTE du prix probable + pastille budget (revue B)
+    expect(document.querySelector('[data-charge-supportable]')).toBeInTheDocument()
+    expect(document.querySelector('[data-budget]')).toBeInTheDocument()
   })
 
   it('fil : 8 étapes du plan figé, chaque étape faite porte son étiquette', async () => {

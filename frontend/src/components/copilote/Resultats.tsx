@@ -70,23 +70,44 @@ function Lead({ p, et }: { p: Restituee; et: EtiquettesMoteurs }) {
         </div>
       </div>
       <div className="border-cp-line md:border-l md:pl-5">
-        <span className="rounded-md border border-cp-tier/30 bg-cp-tier/10 px-2.5 py-1 font-display text-[9.5px] font-bold uppercase tracking-[.16em] text-cp-tier">
-          {S.tier} · {tierLabel(p.tier)}
-        </span>
-        {p.prix_probable_eur != null && et.marche_dvf && (
-          <>
-            <div className="mt-2.5 font-display text-[28px] font-bold tabular-nums tracking-tight text-cp-txt">
-              {fmtEurCompact(p.prix_probable_eur)}
-            </div>
-            <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[10.5px] text-cp-faint">
-              {S.prixProbable} <Etiquette v={et.marche_dvf} />
-            </div>
-          </>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rounded-md border border-cp-tier/30 bg-cp-tier/10 px-2.5 py-1 font-display text-[9.5px] font-bold uppercase tracking-[.16em] text-cp-tier">
+            {S.tier} · {tierLabel(p.tier)}
+          </span>
+          {/* pastille budget : la mention du payload, verbatim, toujours affichée */}
+          {p.budget && (
+            <span data-budget className="rounded-md border border-cp-line2 bg-cp-card2 px-2 py-1 font-display text-[9px] font-semibold uppercase tracking-[.1em] text-cp-muted">
+              {p.budget}
+            </span>
+          )}
+        </div>
+        {/* prix probable et charge supportable CÔTE À CÔTE — l'arbitrage est là */}
+        {et.marche_dvf && (p.prix_probable_eur != null || p.charge_fonciere_eur != null) && (
+          <div className="mt-3 flex flex-wrap gap-5">
+            {p.prix_probable_eur != null && (
+              <div>
+                <div className="font-display text-[26px] font-bold tabular-nums leading-none tracking-tight text-cp-txt">
+                  {fmtEurCompact(p.prix_probable_eur)}
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-cp-faint">
+                  {S.prixProbable} <Etiquette v={et.marche_dvf} />
+                </div>
+              </div>
+            )}
+            {p.charge_fonciere_eur != null && (
+              <div data-charge-supportable>
+                <div className={`font-display text-[26px] font-bold tabular-nums leading-none tracking-tight ${
+                  p.au_dessus_charge_supportable ? 'text-cp-amber' : 'text-cp-txt'}`}>
+                  {fmtEurCompact(p.charge_fonciere_eur)}
+                </div>
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-cp-faint">
+                  {S.chargeSupportable} <Etiquette v={et.marche_dvf} />
+                </div>
+              </div>
+            )}
+          </div>
         )}
         {p.au_dessus_charge_supportable && <FlagCharge charge={p.charge_fonciere_eur} />}
-        {p.budget && p.budget !== 'dans le budget' && (
-          <div className="mt-2 text-[10.5px] text-cp-muted">{p.budget}</div>
-        )}
       </div>
     </div>
   )

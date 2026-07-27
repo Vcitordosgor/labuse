@@ -312,6 +312,7 @@ export const CLIENT = {
       sdp: 'SDP résiduelle',
       surface: 'surface parcelle',
       prixProbable: 'Prix probable du foncier',
+      chargeSupportable: 'Charge foncière supportable',
       signauxRisques: (n: number) => `${n} signal${n > 1 ? 'aux' : ''} de risques`,
       tier: 'Tier',
       // règle 7 : information, jamais un filtre — la parcelle reste restituée
