@@ -1,0 +1,230 @@
+# =============================================================================
+# PLU SAINTE-MARIE (97418) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Sainte-Marie (archive GPU 97418_PLU_20251126).
+#   document : 97418_reglement.pdf (cache pré-vol nuit), 66 p. PLU prescrit 03/06/2021,
+#   arrêté 05/03/2025, APPROUVÉ 26/11/2025. Concordance manifeste/GPU re-vérifiée au pré-vol.
+#
+# FIABILITÉ :
+#   - page_pdf = page_imprimee + 1 (résolu au pré-vol via la table des matières :
+#     « Champ d'application » p.3 = PDF 4 — l'offset « ND » du pré-vol est TRANCHÉ).
+#   - FORMAT MODERNE 2025 « MUTUALISÉ » (3e style constaté sur l'île) : articles partagés
+#     PAR GROUPE de zones (III. U « résidentielles », IV. U « d'activités », V. AU) avec
+#     déclinaisons par zone À L'INTÉRIEUR des articles (U4=voies, U5=limites, U7=emprise,
+#     U8=hauteur, U12=espaces perméables, U13=stationnement).
+#   - hauteurs : le règlement donne égout + faîtage + acrotère toiture-terrasse => he_m =
+#     égout, hf_m = faîtage (acrotère en note). Zones d'activités : FAÎTAGE SEUL => he null.
+#   - PLEINE TERRE = « % de la surface en espace perméable » (Art. U12).
+#   - RETRAIT LIMITES : règle H/2 avec minimum (résidentielles 3 m, activités 4 m) => le
+#     MINIMUM est gravé, la règle H/2 en note.
+#   - AU : renvoi à la zone U d'indice (1AUb→UB, 1AUc→UC, 1AUep→UEp) ; 1AU ouvertes dès
+#     l'approbation ; 2AU « ouvertes à l'urbanisation à partir de 2031 » => GEL (zones_au_st).
+#   - Aucun COS (pré-vol : 0 occurrence).
+# =============================================================================
+
+source:
+  document: "97418_reglement.pdf (Pieces_ecrites/3_Reglement, archive GPU 97418_PLU_20251126)"
+  url: "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97418"
+  approbation: "2025-11-26"
+  pages_total: 66
+  offset_pdf_vs_imprimee: 1
+  reglement_grave:
+    fichier: "97418_reglement.pdf"
+    md5: "14a9319d81208c58f859b084be30f10e"
+    millesime: "2025-11-26"
+    document_gpu_au_calibrage: "97418_PLU_20251126"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  recul_limites: "Retrait >= moitié de la hauteur totale de la façade (H/2), minimum 3 m (résidentielles) / 4 m (activités) — minimum gravé."
+  deux_fois_deux_voies: "Toute construction à 35 m minimum de l'axe de la 2x2 voies (Art. U4.2 des deux groupes)."
+  stationnement: "Logements privés : <100 m² SDP 1 pl./logt ; >=100 m² : 2 pl. (opération d'un logement) ou 1,5 pl./logt (opérations de plusieurs logements) ; à <500 m d'une gare/TCSP : 1 pl. (0,5 pour les logements aidés) — Art. U13.2, p.25-26."
+  gardiennage_activites: "Groupe « activités » : habitation admise UNIQUEMENT si indispensable au fonctionnement/gardiennage des activités autorisées (Art. U2 « activités », p.28-30)."
+
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== Groupe III — U « résidentielles » (p.15-27) ==============
+  UA: {bassin: "Sainte-Marie",
+       he_m: 15, hf_m: 18, hauteur_src: "Art. U8.2 « résidentielles », p.20-21",
+       hauteur_note: "16 m à l'acrotère en toiture-terrasse. Attique hors calcul ; RDC commerces/bureaux : +0,5 m (Art. U8.3).",
+       emprise_sol_pct: null, emprise_src: "Art. U7.2 « résidentielles », p.20 : « Sans objet en zone UA »",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « résidentielles », p.17-18",
+       recul_voirie_note: "UA/UB : alignement possible (0) OU recul >= 3 m.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2 « résidentielles », p.19-20",
+       recul_limites_note: "1 ou 2 limites possibles ; retrait >= H/2, minimum 3 m (minimum gravé).",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
+       stat_note: "Norme des opérations de plusieurs logements >=100 m² ; <100 m² : 1 pl. ; 1 logement >=100 m² : 2 pl. ; TCSP <500 m : 1 pl.",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12 « résidentielles », p.24 (« espace perméable sur au moins 20% » en UA)"}
+  UAb: {bassin: "Sainte-Marie",
+       he_m: 18, hf_m: 21, hauteur_src: "Art. U8.2 « résidentielles », p.20-21 (secteur UAb)",
+       hauteur_note: "19 m à l'acrotère en toiture-terrasse.",
+       emprise_sol_pct: null, emprise_src: "Art. U7.2, p.20 (« Sans objet en zone UA »)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12, p.24"}
+  UAz: {bassin: "Sainte-Marie",
+       he_m: 27, hf_m: 30, hauteur_src: "Art. U8.2 « résidentielles », p.20-21 (secteur UAz)",
+       hauteur_note: "28 m à l'acrotère en toiture-terrasse — le plus haut gabarit de la commune.",
+       emprise_sol_pct: null, emprise_src: "Art. U7.2, p.20 (« Sans objet en zone UA »)",
+       recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.17-18 (« Ce seuil est réduit à 2,00 mètres minimum en secteur UAz »)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12, p.24 (zone UA)"}
+  UB: {bassin: "Sainte-Marie",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. U8.2 « résidentielles », p.20-21",
+       hauteur_note: "13 m à l'acrotère en toiture-terrasse.",
+       emprise_sol_pct: 70, emprise_src: "Art. U7.2, p.20",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (alignement possible OU recul >= 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. U12, p.24"}
+  UC: {bassin: "Sainte-Marie",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. U8.2 « résidentielles », p.20-21 (« Zone UC y compris UC1 et UC2 »)",
+       hauteur_note: "11 m à l'acrotère en toiture-terrasse.",
+       emprise_sol_pct: 60, emprise_src: "Art. U7.2, p.20",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (recul OBLIGATOIRE >= 3 m en UC/UD)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+  UC1: {bassin: "Sainte-Marie",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. U8.2, p.20-21 (« y compris UC1 et UC2 » — aucune règle propre)",
+       emprise_sol_pct: 60, emprise_src: "Art. U7.2, p.20",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+  UC2: {bassin: "Sainte-Marie",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. U8.2, p.20-21 (« y compris UC1 et UC2 »)",
+       emprise_sol_pct: 60, emprise_src: "Art. U7.2, p.20",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+  UD: {bassin: "Sainte-Marie",
+       he_m: 8, hf_m: 11, hauteur_src: "Art. U8.2 « résidentielles », p.20-21 (« Zone UD y compris UD1 »)",
+       hauteur_note: "10 m à l'acrotère en toiture-terrasse.",
+       emprise_sol_pct: 50, emprise_src: "Art. U7.2, p.20",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (recul obligatoire)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+  UD1: {bassin: "Sainte-Marie",
+       he_m: 8, hf_m: 11, hauteur_src: "Art. U8.2, p.20-21 (« y compris UD1 »)",
+       emprise_sol_pct: 50, emprise_src: "Art. U7.2, p.20",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+
+  # ============== Groupe IV — U « d'activités » (p.28-39) : HABITAT INTERDIT (hors gardiennage) ==============
+  UEa: {bassin: "Sainte-Marie",
+       he_m: null, hf_m: 24, hauteur_src: "Art. U8.2 « activités », p.33 (faîtage seul)",
+       emprise_sol_pct: 60, emprise_src: "Art. U7.2 « activités », p.32",
+       recul_voirie_m: 5, recul_voirie_src: "Art. U4.2 « activités », p.31 (« en zones UEa et UR : 5 mètres »)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32 (une limite possible ; retrait >= H/2, min 4 m)",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
+       pleine_terre_pct: "a_verifier", pleine_terre_note: "Le % perméable du groupe activités n'a pas été isolé avec certitude — non gravé.", pleine_terre_src: "Art. U12 « activités », p.36-37",
+       habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 : tout est interdit sauf admissions listées ; habitation UNIQUEMENT si indispensable au fonctionnement/gardiennage"}
+  UEc: {bassin: "Sainte-Marie",
+       he_m: null, hf_m: 14, hauteur_src: "Art. U8.2 « activités », p.33",
+       emprise_sol_pct: 70, emprise_src: "Art. U7.2 « activités », p.32",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
+       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
+       habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 (UEc : commerces, services, équipements, bureaux)"}
+  UEm: {bassin: "Sainte-Marie",
+       he_m: null, hf_m: 16, hauteur_src: "Art. U8.2 « activités », p.33 (« Zones UEm et UEp : 16 m »)",
+       emprise_sol_pct: 75, emprise_src: "Art. U7.2 « activités », p.32",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
+       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
+       habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 (UEm : commerces/services, équipements, secteurs primaire-secondaire-tertiaire)"}
+  UEp: {bassin: "Sainte-Marie",
+       he_m: null, hf_m: 16, hauteur_src: "Art. U8.2 « activités », p.33",
+       emprise_sol_pct: 75, emprise_src: "Art. U7.2 « activités », p.32",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
+       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
+       habitat: interdit, habitat_src: "Art. U2 « activités », p.28-30 (« En zone UEp … industrie, artisanat, entrepôt »)"}
+  UR: {bassin: "Sainte-Marie",
+       he_m: null, hf_m: 24, hauteur_src: "Art. U8.2 « activités », p.33",
+       emprise_sol_pct: 75, emprise_src: "Art. U7.2 « activités », p.32",
+       recul_voirie_m: 5, recul_voirie_src: "Art. U4.2 « activités », p.31",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
+       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
+       habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 — zone de l'aéroport Roland-Garros (arbitrage O12 concordant)"}
+  UT: {bassin: "Sainte-Marie",
+       he_m: null, hf_m: 11, hauteur_src: "Art. U8.2 « activités », p.33",
+       emprise_sol_pct: 30, emprise_src: "Art. U7.2 « activités », p.32",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
+       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
+       habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 (zone touristique du groupe activités)"}
+  UTp: {bassin: "Sainte-Marie",
+       he_m: null, hf_m: 11, hauteur_src: "Art. U8.2 « activités », p.33 (zone UT — pas de hauteur propre UTp)",
+       emprise_sol_pct: 30, emprise_src: "Art. U7.2 « activités », p.32 (zone UT)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
+       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
+       habitat: interdit, habitat_src: "Art. U2 « activités », p.28-30 (secteur UTp : port — bureaux et activités économiques compatibles avec l'infrastructure portuaire)"}
+
+  # ============== Groupe V — 1AU ouvertes (renvoi à la zone U d'indice, p.40-42) ==============
+  1AUb: {bassin: "Sainte-Marie",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. U8.2 « résidentielles », p.20-21 via renvoi (V. p.40 : « se reporter … au règlement des zones urbaines correspondantes »)",
+       emprise_sol_pct: 70, emprise_src: "Art. U7.2, p.20 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20 (via renvoi)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. U12, p.24 (via renvoi, zone UB)",
+       note: "1AU ouvertes dès l'approbation (V., p.40) — opération d'ensemble ou au fur et à mesure des équipements, OAP à respecter."}
+  1AUc: {bassin: "Sainte-Marie",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. U8.2, p.20-21 via renvoi (zone UC)",
+       emprise_sol_pct: 60, emprise_src: "Art. U7.2, p.20 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20 (via renvoi)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24 (via renvoi, zone UC)"}
+  1AUep: {bassin: "Sainte-Marie",
+       he_m: null, hf_m: 16, hauteur_src: "Art. U8.2 « activités », p.33 via renvoi (zone UEp)",
+       emprise_sol_pct: 75, emprise_src: "Art. U7.2 « activités », p.32 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31 (via renvoi)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30 (via renvoi)",
+       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37 (via renvoi)",
+       habitat: interdit, habitat_src: "Art. U2 « activités », p.28-30 via renvoi (zone UEp : industrie, artisanat, entrepôt)"}
+
+zones_au_renvoi: {}
+
+# 2AU : « ouvertes à l'urbanisation à partir de 2031, lorsque les voies et réseaux suffisants
+# seront présents en périphérie de la zone » (V., p.40) => construction neuve NON autorisée
+# aujourd'hui — gel via zones_au_st (friction F2 : étiquette moteur approximative, capacité
+# zéro exacte).
+zones_au_st:
+  liste: ["2AUa", "2AUb", "2AUc"]
+  portee: "Zones 2AU ouvertes à l'urbanisation à partir de 2031 seulement (et sous condition de voies/réseaux suffisants en périphérie) — construction neuve non autorisée en l'état."
+  source: "V. Dispositions applicables aux zones AU, p.40."
+
+# Zones NON constructibles — décision motivée (principe mandat-cadre) : A (dont Aenr
+# photovoltaïque, Ap paysager, Acu coupures) et N (dont Npnr cœur du Parc, Nr remarquables
+# Loi Littoral, Npv, Nli, Ncu) = constructibilité d'exception.
+zones_non_constructibles: ["A, Acu, Aenr, Ap (VI., p.43-50)",
+                           "N, Ncu, Nli, Npnr, Npv, Nr (VII., p.51-58)"]
