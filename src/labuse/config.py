@@ -170,9 +170,11 @@ class Settings(BaseSettings):
     copilote_timeout_run_s: float = 120.0  # budget global d'exécution d'un run
     copilote_max_appels_moteurs: int = 12  # plafond d'appels moteurs (retries inclus)
     # Garde-fou de DERNIER RECOURS sur le nombre de parcelles instruites (arbitrage Vic,
-    # revue plafond M26-A) : s'il mord, la requalification s'applique intégralement
-    # (« N examinées sur M candidates ») — jamais présenté comme exhaustif.
-    copilote_max_candidats: int = 2000
+    # revue plafond M26-A — 5 000 validé sur mesure : exhaustif run 1 = 56,8 s < 120 s).
+    # TOUJOURS un plafond en PARCELLES, jamais un budget en temps : un seuil temporel
+    # rendrait le même brief non reproductible d'un jour à l'autre. S'il mord, la
+    # requalification s'applique intégralement (« N examinées sur M candidates »).
+    copilote_max_candidats: int = 5000
     copilote_top_restitution: int = 20     # top-N restitué (toutes missions M26-A)
     copilote_sessions_paralleles: int = 4  # faisabilité/charge : pool borné (arbitrage Vic)
 

@@ -201,22 +201,47 @@ Le sens « charge supportable ≥ budget » a été écarté : il exclurait les 
 MARCHÉ (prix probable 200 k€, charge 300 k€ → parfaitement dans un budget de 480 k€).
 Sans prix probable : « non estimable — non filtrée », jamais écartée sur une absence.
 **Pas d'hybride `score_e`** (condition Vic vérifiée) : `score_e` est un pipeline batch
-DIFFÉRENT (« bilan-neuf-v2 » : bilan à rebours sur SDP *résiduelle*, prix de sortie NEUF
-sectoriel, coût 2 550 €/m² point) — la charge servie par le Copilote est calculée LIVE
-par les mêmes fonctions que la fiche (`sector_price` + `compute_bilan`). **Écart
-méthodologique signalé** : deux méthodes de charge foncière coexistent dans le produit
-(score_e servi en fiche/scoreur/banquier vs bilan live) — cohérence à traiter hors M26-A.
+DIFFÉRENT — la charge servie par le Copilote est calculée LIVE par les mêmes fonctions
+que la fiche (`sector_price` + `compute_bilan`).
 
-**Run de preuve** (brief exact du mandat, serveur local, 27/07) — **70,6 s** :
-pool 13 155 → filtre géométrique écarte 8 905 (386 ms) → **garde-fou 2 000 A MORDU**
-(2 250 non examinées → requalification intégrale au récap) → 2 000 examinées →
-faisabilité 1 793 retenues (33,4 s, 4 sessions) → charge live 1 793/1 793 (27,6 s) →
-budget : 1 100 dans le budget + 85 non estimables non filtrées, 608 écartées →
-**1 185 retenues, top-20 restitué**, entonnoir 6 étages au récap, `exhaustif: false`.
-Note chiffrée pour l'arbitrage du garde-fou : l'examen EXHAUSTIF du run 1 (4 250
-survivants + charge sur ~3 800 retenues) est extrapolé à ~135-140 s aux débits mesurés —
-légèrement au-dessus du budget 120 s ; à 2 000 il tient (70,6 s) au prix de la
-requalification.
+**DETTE PRODUIT PRIORITAIRE (consignée à la demande de Vic — mandat dédié à prévoir,
+RIEN modifié ici).** Deux méthodes de charge foncière coexistent et sont SERVIES à des
+endroits différents : un même utilisateur peut lire deux chiffres différents pour la
+même parcelle dans la même session. Ce n'est pas faux au sens de la boussole (les deux
+sont Estimé, tracés), mais l'incohérence coûte autant que l'erreur devant un comité.
+| | `score_e` (batch, NUIT 21/07, `bilan-neuf-v2`) | bilan live (`sector_price`+`compute_bilan`) |
+|---|---|---|
+| Servi dans | fiche (chip marge), scoreur d'adresse, dossier banquier | faisabilité fiche/Flash, briques PDF, **Copilote M26-A** |
+| Base de surface | SDP **résiduelle** (`parcel_residuel`) | SHAB **vendable** de la fourchette faisabilité |
+| Prix de sortie | **NEUF** reconstruit (`dvf_prix_sortie_neuf`, secteur→commune, ~3 688 €/m² méd.) | médiane DVF existant (ancien+VEFA), rayon adaptatif 500→1500 m→commune |
+| Coût construction | 2 550 €/m² (point, milieu de fourchette) | 2 300–2 800 €/m² (fourchette bas/haut) |
+| Coefficients | CA×0,79 (marge 9 % + frais 12 %), plancher/habitable 1,15, VRD 0 | mêmes taux mais bilan complet (fourchette, mixité sociale, params sectoriels si calibrés) |
+| Sortie | point unique (`charge_supportable`, `prix_probable`, `marge_estimee`) | fourchette bas/central/haut + fiabilité héritée du prix |
+| Fraîcheur | snapshot (`computed_at` 21/07, `hypotheses_version` unique) | calcul à la demande sur l'état courant |
+
+**Garde-fou — arbitrage final (Vic, 27/07) : 5 000, validé sur mesure.** La charge live
+était DÉJÀ parallélisée (même `_en_parallele` que la faisabilité) — mesure dédiée :
+mono 13,4 ms/p vs 4 sessions 7,1 ms/p, speedup ×1,9 seulement (contention PostGIS sur
+les requêtes DVF à rayon). La mesure décisive est l'EXHAUSTIF de bout en bout, garde-fou
+levé : **56,8 s** (et 55,3 / 56,2 s aux runs de confirmation) — largement sous les 120 s.
+Le garde-fou passe donc à **5 000** (budget inchangé), et reste un plafond en PARCELLES,
+jamais en temps (reproductibilité du même brief d'un jour à l'autre — gravé en
+commentaire de la constante). S'il mord : requalification intégrale.
+
+**Indicateur « au-dessus de la charge supportable »** (Vic, revue budget — un indicateur,
+JAMAIS un filtre) : pour chaque retenue où prix probable ET charge sont connus,
+`au_dessus_charge_supportable = prix probable > charge foncière supportable` — « dans le
+budget de l'acheteur mais l'opération ne supporte pas son prix ». La parcelle reste
+retenue, l'utilisateur arbitre (logique Argumentaire de négociation). Étiquette Estimé.
+Porté par parcelle (payload marche_dvf + restituées) et compté au récap.
+
+**Run de preuve FINAL** (brief exact du mandat, config par défaut, 27/07) — **56,2 s** :
+entonnoir `pool 13 155 → filtre_geometrique 4 250 → examinées 4 250 (garde-fou 5 000
+non mordu) → retenues 2 947 → dans_budget 2 753 (+194 non estimables non filtrées,
+905 écartées budget) → restituées 20` · `exhaustif: true` · 1 836 retenues marquées
+au-dessus de la charge supportable · faisabilité 3 852/4 250 en 14,6 s (4 sessions) ·
+charge live 3 852/3 852 en 33,0 s · le « 0 retenue » du pipeline v1 est devenu
+**2 947 retenues exhaustives** sur le même brief.
 
 ## 10 · Information produit (demande Vic, revue calibrage) — règles chiffrées PLU
 
@@ -244,5 +269,13 @@ PDF, sourcée article/page — c'est le travail par commune.
   `api/lettre_zonage.py`, `plu_reglement.py` (deep-links règlement — repli GPU propre) ;
 - **chaîne du résiduel** : `faisabilite/residuel.py` → `parcel_residuel`
   (`sdp_residuelle_m2`) consommé par la couche cascade `residuel_socle` (étage 0 étendu
-  du scoring SERVI), la shortlist, le renouvellement et `score_e` (marge €). Le repli
-  générique irrigue donc aussi ces scores — étiqueté Estimé, mais à l'échelle produit.
+  du scoring SERVI), la shortlist, le renouvellement et `score_e` (marge €).
+
+**À dire sans euphémisme (exigence Vic)** : la portée du repli générique à 22 communes
+NE SE LIMITE PAS à la faisabilité affichée. Via la chaîne du résiduel, des règles
+génériques (hé 9 m ≈ 3 niveaux, reculs par défaut) entrent dans `residuel_socle`, donc
+dans le SCORING SERVI (tiers Q×A), dans la shortlist, dans le renouvellement et dans
+`score_e` — sur 22 communes sur 24, les « droits à construire » qui irriguent ces scores
+sont une estimation générique, pas une lecture du règlement. C'est étiqueté Estimé là où
+c'est affiché, mais l'ampleur systémique relève d'un arbitrage produit (re-gravure des
+YAML PLU commune par commune : ~300 lignes sourcées article/page chacune, cf. supra).

@@ -384,11 +384,18 @@ def marche_dvf(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> St
             return
         bilan = compute_bilan(float(shab), float(c["surface_m2"] or 0), prix, hyp)
         cf = (bilan.charge_fonciere or {}).get("central") if bilan else None
+        # Indicateur (Vic, revue budget) — PAS un filtre : prix probable > charge
+        # supportable = « dans le budget de l'acheteur mais l'opération ne supporte pas
+        # son prix ». La parcelle RESTE retenue ; l'utilisateur arbitre. Estimé (comme
+        # les deux grandeurs qui le composent).
+        au_dessus = (None if cf is None or prix_probable is None
+                     else bool(prix_probable > cf))
         with lock:
             c["marche"] = {
                 "disponible": True, "prix_m2_median": prix.get("median"),
                 "fiabilite": getattr(bilan, "fiabilite", None) or prix.get("fiabilite"),
                 "charge_fonciere_eur": cf, "prix_probable_eur": prix_probable,
+                "au_dessus_charge_supportable": au_dessus,
                 "provenance": "calcul live (sector_price + compute_bilan)",
             }
             n_ok[0] += 1
@@ -400,6 +407,9 @@ def marche_dvf(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> St
                   "n_indisponible": n - n_ok[0],
                   "n_prix_probable": sum(1 for c in retenus
                                          if (c.get("marche") or {}).get("prix_probable_eur")),
+                  "n_au_dessus_charge_supportable": sum(
+                      1 for c in retenus
+                      if (c.get("marche") or {}).get("au_dessus_charge_supportable")),
                   "provenance": "calcul live — jamais score_e (pipeline distinct)"},
         etiquette="estimé")
 
@@ -482,16 +492,18 @@ def _persist_parcels(db: Session, run_id: str, dossier: Dossier) -> None:
 
 def _entonnoir(dossier: Dossier, n_pool: int, restituees: list[dict]) -> list[dict]:
     """Les six étages, chacun avec compteur et étiquette (exigence Vic, revue plafond) :
-    pool → filtre géométrique → examinées → retenues → dans le budget → restituées."""
-    examinees = [c for c in dossier.candidats if c.get("examine", True)]
+    pool → filtre géométrique → examinées → retenues → dans le budget → restituées.
+    « Examinées » = réellement passées à la faisabilité : survivantes du filtre
+    géométrique MOINS les non-examinées du garde-fou (jamais les écartées du filtre)."""
     retenues = dossier.retenus()
     dans_budget = [c for c in retenues if c.get("budget") != "non estimable — non filtrée"]
-    apres_geo = getattr(dossier, "_n_apres_geo", len(examinees))
+    n_non_exam = sum(1 for c in dossier.candidats if not c.get("examine", True))
+    apres_geo = getattr(dossier, "_n_apres_geo", len(dossier.candidats))
     return [
         {"etape": "pool", "n": n_pool, "etiquette": "sourcé"},
         {"etape": "filtre_geometrique", "n": apres_geo,
          "etiquette": "sourcé/estimé selon calibrage"},
-        {"etape": "examinees", "n": len(examinees), "etiquette": "sourcé"},
+        {"etape": "examinees", "n": apres_geo - n_non_exam, "etiquette": "sourcé"},
         {"etape": "retenues", "n": len(retenues), "etiquette": "estimé (faisabilité)"},
         {"etape": "dans_budget", "n": len(dans_budget), "etiquette": "estimé (prix probable)"},
         {"etape": "restituees", "n": len(restituees), "etiquette": "sourcé (tri champion P)"},
@@ -515,7 +527,8 @@ def _restitution(dossier: Dossier) -> list[dict]:
 def _recap(dossier: Dossier, n_pool: int, *, court: bool = False) -> dict:
     restituees = _restitution(dossier)
     garde_fou_a_mordu = any(not c.get("examine", True) for c in dossier.candidats)
-    n_exam = sum(1 for c in dossier.candidats if c.get("examine", True))
+    n_non_exam = sum(1 for c in dossier.candidats if not c.get("examine", True))
+    n_exam = (getattr(dossier, "_n_apres_geo", len(dossier.candidats)) - n_non_exam)
     recap = {
         "entonnoir": _entonnoir(dossier, n_pool, restituees),
         "n_retenues": len(dossier.retenus()),
@@ -531,6 +544,11 @@ def _recap(dossier: Dossier, n_pool: int, *, court: bool = False) -> dict:
                         else MENTION_SDP_GENERIQUE),
         "motifs_ecartement": sorted({c["motif_ecarte"] for c in dossier.candidats
                                      if c.get("motif_ecarte")})[:40],
+        # Indicateur (Estimé, jamais un filtre) : dans le budget de l'acheteur mais
+        # l'opération ne supporte pas son prix probable — l'utilisateur arbitre.
+        "n_au_dessus_charge_supportable": sum(
+            1 for c in dossier.retenus()
+            if (c.get("marche") or {}).get("au_dessus_charge_supportable")),
     }
     if garde_fou_a_mordu:
         recap["requalification"] = (f"Résultat NON exhaustif : {recap['n_retenues']} retenue(s) "
@@ -544,6 +562,7 @@ def _recap(dossier: Dossier, n_pool: int, *, court: bool = False) -> dict:
             "n_signaux_risques": len(c.get("risques") or []),
             "charge_fonciere_eur": (c.get("marche") or {}).get("charge_fonciere_eur"),
             "prix_probable_eur": (c.get("marche") or {}).get("prix_probable_eur"),
+            "au_dessus_charge_supportable": (c.get("marche") or {}).get("au_dessus_charge_supportable"),
             "budget": c.get("budget"),
         } for c in restituees]
     else:

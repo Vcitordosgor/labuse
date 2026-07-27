@@ -260,6 +260,41 @@ def test_faisabilite_mention_generique_jamais_tracee_par_article(db_session, mon
     assert "tracée par article" not in json.dumps(res.resultat, ensure_ascii=False)
 
 
+# ───────────────────── marche_dvf : indicateur au-dessus de la charge (pas un filtre) ───
+
+@pytest.mark.db
+def test_marche_dvf_indicateur_au_dessus_charge_supportable(db_session, monkeypatch):
+    pid = _seed_parcelle(db_session, "97415000MD0001", surface=1000)
+    db_session.execute(text(
+        "INSERT INTO dvf_secteur_medianes (secteur, type_bien, n_ventes, mediane_valeur, "
+        " mediane_prix_m2, fenetre) VALUES (:s, 'terrain', 10, 300000, 300, '2021-2025')"),
+        {"s": "97415000MD"})
+
+    class _B:
+        fiabilite = "fiable"
+        charge_fonciere = {"central": 200_000}   # < prix probable 300 × 1000 = 300 000
+
+    monkeypatch.setattr("labuse.faisabilite.bilan.sector_price",
+                        lambda s, p, h: {"median": 3000, "fiabilite": "fiable"})
+    monkeypatch.setattr("labuse.faisabilite.bilan.compute_bilan",
+                        lambda *a, **k: _B())
+    dossier = moteurs.Dossier()
+    dossier.candidats = [{"idu": "97415000MD0001", "parcel_id": pid, "commune": "Saint-Paul",
+                          "surface_m2": 1000, "tier": "chaude", "rang": 1,
+                          "retenu": True, "faisabilite": {"shab_m2": 700, "sdp_m2": 800}}]
+    res = moteurs.marche_dvf(db_session, BRIEF, dossier)
+    m = dossier.candidats[0]["marche"]
+    assert m["prix_probable_eur"] == 300_000 and m["charge_fonciere_eur"] == 200_000
+    assert m["au_dessus_charge_supportable"] is True     # marqué…
+    assert dossier.candidats[0]["retenu"] is True        # …mais JAMAIS écartée (indicateur)
+    assert res.resultat["n_au_dessus_charge_supportable"] == 1
+    assert res.etiquette == "estimé"
+    # …et le récap le porte (l'utilisateur arbitre).
+    recap = moteurs._recap(dossier, 1)
+    assert recap["n_au_dessus_charge_supportable"] == 1
+    assert recap["restituees"][0]["au_dessus_charge_supportable"] is True
+
+
 # ───────────────────── filtre budget (avant toute troncature) ───────────────────────────
 
 def _cand(idu, prix_probable, retenu=True):
@@ -357,7 +392,8 @@ def test_assemblage_entonnoir_tri_p_et_persistance(db_session, engine, monkeypat
         r = res.resultat
         assert [e["etape"] for e in r["entonnoir"]] == [
             "pool", "filtre_geometrique", "examinees", "retenues", "dans_budget", "restituees"]
-        assert [e["n"] for e in r["entonnoir"]] == [10, 4, 4, 3, 3, 2]
+        # examinées = survivantes du filtre (4) − non-examinées garde-fou (1) = 3
+        assert [e["n"] for e in r["entonnoir"]] == [10, 4, 3, 3, 3, 2]
         # tri champion P APRÈS faisabilité : chaude r2, chaude r9 (top-2)
         assert [x["idu"] for x in r["restituees"]] == ["97415000CW0002", "97415000CW0003"]
         assert r["exhaustif"] is False and "3 retenue(s)" in r["requalification"]
