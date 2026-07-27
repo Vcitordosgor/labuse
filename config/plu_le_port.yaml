@@ -1,0 +1,283 @@
+# =============================================================================
+# PLU LE PORT (97407) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU du Port (pièce écrite n°3, 319 p.).
+#   document : 97407_reglement.pdf (cache session, md5 conforme pré-vol).
+#   PLU révisé approuvé le 02/10/2018 (délibération n°2018-143), modification n°1 du
+#   17/12/2019, modification n°2 du 30/01/2024 (tableau de suivi des versions, p.2).
+#   Document GPU servi au calibrage : idurba 97407_PLU_20241209.
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee (offset 0 — vote extract.py 0 à 264 voix, confirmé sur le
+#     sommaire p.3 ET 7 ancres du corps : Ua p.21, Ud p.65, Up p.107, 1AU p.142, 2AU p.157,
+#     A p.162, N p.170 ; en-tête imprimé = n° de page PDF partout ; AUCUN bloc concaténé à
+#     double numérotation : document unique, partie I p.4-176 = règlement par zone,
+#     partie II p.177-319 = dispositions complémentaires patrimoine/OAP Fil Vert/clôtures/
+#     façades commerciales, même numérotation continue).
+#   - FORMAT MODERNE par zone : Article <Z> 1 = destinations interdites (tableau à cases
+#     cochées ☒ = interdit), 2 = soumis à conditions, 4 = voies, 5 = limites séparatives,
+#     7 = emprise, 8 = hauteur, 11.1 = surfaces éco-aménageables/pleine terre,
+#     12.1 = stationnement.
+#   - null         = règle explicitement « Non réglementé » dans le texte (sourcé).
+#   - "a_verifier" = présent mais non attribuable sûrement (motivé en note).
+#   - HAUTEURS : formule locale « X mètres au faitage ou au sommet de l'acrotère »
+#     (plafond UNIQUE, valable toiture en pente comme toiture-terrasse) => he_m = X
+#     (acrotère = sommet de façade) ET hf_m = X (faîtage). Uem/Us/1AUm : « la hauteur
+#     maximale des constructions est fixée 18 mètres » SANS point de référence => hf_m: 18
+#     seulement (lecture la plus conservatrice), he_m null.
+#   - PLEINE TERRE : Art. <Z> 11.1 donne « au minimum P % de la superficie totale de
+#     l'unité foncière … non imperméabilisées ou éco-aménageables dont au moins 50 % de
+#     pleine terre plantées avec 3 strates » => pleine_terre_pct = P × 50 % (part MINIMALE
+#     de pleine terre de l'unité foncière, arithmétique directe du texte, notée par zone).
+#     Zones SANS sous-minimum de pleine terre (Ub 10 %, Ud/Ue/Umi 20 % éco-aménageables
+#     seulement) => null + note (le % perméable n'est jamais gravé en pleine terre).
+#   - COS : ZÉRO occurrence dans les 319 pages (grep « COS » et « coefficient
+#     d'occupation ») — consigné, rien à appliquer.
+#   - Indice « m » : Uem = SECTEUR de la zone Ue « zone tampon » en continuité des
+#     quartiers résidentiels, dans lequel les activités industrielles sont interdites
+#     (caractère de zone, p.79) — ce n'est PAS une servitude type Tampon : Uem porte des
+#     règles propres (hauteur 18 m, Art. Ue 8, p.82) ; le reste = règles du chapitre Ue.
+#   - ZONES 1AU indicées (chapitre unique « La zone 1AU », p.142-156) : renvoi explicite
+#     « se reporter en fonction de l'indice de la zone AU considérée au règlement des
+#     zones urbaines correspondantes » (p.142, répété à chaque article) => entrées
+#     EXPLICITES 1AUa/1AUc/1AUem/1AUs (le renvoi moteur ne couvre pas les préfixes
+#     chiffrés) ; 1AUm et 1AUmut ont leurs règles PROPRES dans le chapitre ; 1AUe et 1AUv
+#     héritent de zones sans hauteur chiffrée => groupe capacité zéro (cf. zones_au_st).
+#   - HABITAT INTERDIT (moteur ; logement de fonction/surveillance = interdit) :
+#     Ue/Uem (Art. Ue 2, p.80 : logement limité à « être utiles au fonctionnement ou à la
+#     surveillance », 1/unité foncière ; Hébergement coché interdit Art. Ue 1, p.79),
+#     Up/Uppp (Art. Up 2, p.109 : idem surveillance ; Hébergement interdit Art. Up 1,
+#     p.107), Us (Art. Us 2, p.120-121 : idem, 1/UF), Umi (Art. Umi 2, p.93 : habitation
+#     réservée au gardiennage/personnel en caserne), Uv (Art. Uv 2, p.132 : liste
+#     LIMITATIVE — équipements/services publics et locaux liés dont gardiennage ; l'Art.
+#     Uv 2 n'admet PAS « toutes les occupations non cochées », à la différence de toutes
+#     les autres zones).
+#   - GROUPE CAPACITÉ ZÉRO via zones_au_st (précédents UF/AUF Petite-Île, 2AU Tampon) :
+#     zones à habitat interdit SANS hauteur chiffrée (Ue, Up, Uppp, Uv + renvois 1AUe,
+#     1AUv) — une entrée `zones:` sans hauteur retomberait en estimation générique 9 m
+#     avec capacité logement FICTIVE ; capacité logement ZÉRO exacte, étiquette moteur
+#     « secteur de transition » inexacte (friction F2 connue). + gels 2AUem/2AUmut/2AUp
+#     (Art. 2AU 1, p.157 : tout est interdit sauf réseaux/ouvrages techniques ; ouverture
+#     conditionnée à une modification du PLU) et 1AUmut (échéancier OAP « Centrale EDF »,
+#     p.142 ; Art. 1AU 1-2, p.143-144 : dans l'attente, constructions légères et
+#     facilement démontables uniquement).
+#   - Uoap : non calibrée — les 14 articles renvoient TOUS à l'OAP « Portes de l'océan »
+#     (pièce écrite n°4, hors règlement) ; graver quoi que ce soit = deviner.
+#   - A, N, Nerl : non constructibles (urbanisation) — cf. zones_non_constructibles.
+# =============================================================================
+
+source:
+  document: "97407_reglement.pdf"
+  approbation: "2018-10-02"
+  approbation_note: "PLU révisé approuvé le 02/10/2018 (délibération n°2018-143) ; modification n°1 le 17/12/2019 ; modification n°2 le 30/01/2024 (suivi des versions, p.2 ; page de garde p.1). Document GPU au calibrage : 97407_PLU_20241209."
+  pages_total: 319
+  offset_pdf_vs_imprimee: 0
+  reglement_grave:
+    fichier: "97407_reglement.pdf"
+    md5: "5df6eb00bd505c3f29154ce7f1d72cd5"
+    millesime: "2024-01-30"
+    document_gpu_au_calibrage: "97407_PLU_20241209"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Tableau identique dans les zones U mixtes et 1AU (Art. <Z> 12.1) : logement 0,3 place/logement + 1 place visiteur/100 m² SDP ; logement locatif aidé 0,2 place/logement + 8 places/1000 m² SDP. Opérations > 1 000 m² SDP dans le centre urbain : part minimale en ouvrage (100 % pour le logement)."
+  mixite_sociale: "Part de logements libres/intermédiaires fixée par l'annexe cartographique n°2 (carte de mixité sociale) ; en QPV, LLS soumis à programmation validée par l'État (Art. Ua 3, p.23 ; Ub 3, p.37 ; Uc 3, p.52)."
+  regles_alternatives: "Chaque article 4/5/8 comporte des « règles alternatives » dérogatoires (existant non conforme, qualité architecturale, patrimoine L.151-19, équipements publics…) — non gravées, la règle générale fait foi."
+  forages: "Périmètres de protection rapprochés des forages AEP : interdictions supplémentaires (niveaux enterrés, ICPE…) dans toutes les zones (Art. <Z> 1)."
+
+# Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== LOT U — zones urbaines (partie I, p.21-141) ==============
+  Ua: {bassin: "Le Port",
+       he_m: 9, hf_m: 9, hauteur_src: "Art. Ua 8, p.25",
+       hauteur_note: "« 9 mètres au faitage ou au sommet de l'acrotère » — plafond unique (he = hf).",
+       emprise_sol_pct: 60, emprise_src: "Art. Ua 7, p.25",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ua 4, p.23",
+       recul_voirie_note: "Retrait obligatoire, recul min 3 m (alignement autorisé uniquement au niveau de l'OAP Mascareignes). RN4a : 45 m de l'axe (périmètre Loi Barnier).",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua 5, p.24",
+       recul_limites_note: "Implantation possible sur 2 limites max ; en retrait : 3 m min.",
+       stat_logement: "0,3 place / logement", stat_src: "Art. Ua 12.1 (tableau), p.29-30",
+       stat_note: "+ 1 place visiteur / 100 m² SDP ; LLS : 0,2 place/logt + 8 places/1000 m² SDP.",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. Ua 11.1, p.27",
+       pleine_terre_note: "30 % de l'unité foncière non imperméabilisés/éco-aménageables DONT au moins 50 % de pleine terre plantée 3 strates => minimum 15 % de l'UF en pleine terre."}
+  Ub: {bassin: "Le Port",
+       he_m: 13, hf_m: 13, hauteur_src: "Art. Ub 8, p.40",
+       hauteur_note: "« 13 mètres au faitage ou au sommet de l'acrotère » (centre historique, plan en damier).",
+       emprise_sol_pct: 90, emprise_src: "Art. Ub 7, p.40",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ub 4, p.37",
+       recul_voirie_note: "Alignement possible (0) OU recul min 3 m ; alignement OBLIGATOIRE le long des linéaires de diversité commerciale repérés au zonage.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 5, p.38",
+       recul_limites_note: "Bande de 20 m depuis l'alignement : implantation EN limite obligatoire (2 limites si façade <= 12 m, 1 limite sinon) ; en retrait : 3 m min. Fond de parcelle : annexes uniquement.",
+       stat_logement: "0,3 place / logement", stat_src: "Art. Ub 12.1 (tableau), p.44-45",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 11.1, p.43 : 10 % non imperméabilisés/éco-aménageables SANS sous-minimum de pleine terre",
+       pleine_terre_note: "Le % éco-aménageable n'est pas un % de pleine terre => null."}
+  Uc: {bassin: "Le Port",
+       he_m: 16, hf_m: 16, hauteur_src: "Art. Uc 8, p.55",
+       hauteur_note: "« 16 mètres au faitage ou au sommet de l'acrotère » (règle générale hors secteur Uca).",
+       emprise_sol_pct: 80, emprise_src: "Art. Uc 7, p.55",
+       emprise_note: "60 % dans l'OAP Mascareignes, le secteur Uca et la ZAC « Rivière des Galets ».",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Uc 4, p.53",
+       recul_voirie_note: "Alignement possible (0) OU recul min 3 m ; alignement obligatoire le long des linéaires commerciaux ; RN4a : 45 m de l'axe (Loi Barnier).",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Uc 5, p.54",
+       recul_limites_note: "En limite autorisée OU retrait 4 m min (périmètre RHI : 1,5 m/1 m selon baies).",
+       stat_logement: "0,3 place / logement", stat_src: "Art. Uc 12.1 (tableau), p.59-60",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. Uc 11.1, p.58",
+       pleine_terre_note: "20 % éco-aménageables dont au moins 50 % de pleine terre 3 strates => minimum 10 % de l'UF."}
+  Uca: {bassin: "Le Port",
+       he_m: 6, hf_m: 6, hauteur_src: "Art. Uc 8, p.55 (« En secteur Uca, la hauteur maximale des constructions ne peut excéder 6 mètres au faitage ou au sommet de l'acrotère »)",
+       emprise_sol_pct: 60, emprise_src: "Art. Uc 7, p.55 (« Dans les secteurs ou périmètres suivants … 60% … Uca »)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Uc 4, p.53 (secteur du chapitre Uc)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Uc 5, p.54 (secteur du chapitre Uc)",
+       stat_logement: "0,3 place / logement", stat_src: "Art. Uc 12.1 (tableau), p.59-60",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. Uc 11.1, p.58",
+       note: "Poches d'habitat entre le triangle agricole et La Possession, NON desservies par l'assainissement collectif : constructibilité limitée (caractère de zone, p.50)."}
+  Ud: {bassin: "Le Port",
+       he_m: 22, hf_m: 22, hauteur_src: "Art. Ud 8, p.68",
+       hauteur_note: "« 22 mètres au faitage ou au sommet de l'acrotère » (grands ensembles).",
+       emprise_sol_pct: 80, emprise_src: "Art. Ud 7, p.68",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ud 4, p.67 (alignement possible (0) OU recul min 3 m)",
+       recul_limites_sep_m: 0, recul_limites_src: "Art. Ud 5, p.68",
+       recul_limites_note: "« Les constructions doivent être implantées en limite séparative et/ou suivant l'alignement des constructions limitrophes existantes » — implantation en limite, aucun retrait minimal chiffré => 0 sourcé.",
+       stat_logement: "0,3 place / logement", stat_src: "Art. Ud 12.1 (tableau), p.73-74",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ud 11.1, p.71 : 20 % éco-aménageables SANS sous-minimum de pleine terre"}
+  Uem: {bassin: "Le Port",
+       he_m: null, hf_m: 18, hauteur_src: "Art. Ue 8, p.82 (« En secteur Uem, la hauteur maximale des constructions est fixée 18 mètres » — seule règle de hauteur du chapitre Ue)",
+       hauteur_note: "Sans point de référence (ni égout ni faîtage distingués) => gravée au faîtage (conservateur).",
+       emprise_sol_pct: 60, emprise_src: "Art. Ue 7, p.82",
+       recul_voirie_m: 5, recul_voirie_src: "Art. Ue 4, p.81 (retrait obligatoire, recul min 5 m ; RN1/RN1001 : 25 m de l'axe)",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Ue 5, p.82 (en limite OU retrait 5 m min)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors logement de surveillance).", stat_src: "Art. Ue 2, p.80",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 11.1, p.85 : 20 % éco-aménageables SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. Ue 1, p.79 (Hébergement coché interdit) + Art. Ue 2, p.80 : logement admis SEULEMENT s'il est « utile au fonctionnement ou à la surveillance » des installations, 1 logement max par unité foncière — logement de fonction => habitat interdit pour le moteur",
+       note: "Secteur « zone tampon » de la zone Ue en continuité des quartiers résidentiels : activités industrielles INTERDITES (caractère de zone, p.79 ; maintien de l'existant seulement, Art. Ue 2, p.81)."}
+  Umi: {bassin: "Le Port",
+       he_m: 16, hf_m: 16, hauteur_src: "Art. Umi 8, p.94",
+       hauteur_note: "« 16 mètres au faitage ou au sommet de l'acrotère ».",
+       emprise_sol_pct: 80, emprise_src: "Art. Umi 7, p.94",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Umi 4, p.93 (alignement possible (0) OU recul min 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Umi 5, p.94 (en limite OU retrait 3 m min)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage/caserne).", stat_src: "Art. Umi 2, p.92-93",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Umi 11.1, p.97 : 20 % éco-aménageables SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. Umi 2, p.92-93 : « Les constructions à usage d'habitation sous réserve qu'elles soient exclusivement destinées au gardiennage ou à l'hébergement du personnel en caserne » (zone militaire) — logement de fonction => habitat interdit pour le moteur"}
+  Us: {bassin: "Le Port",
+       he_m: null, hf_m: 18, hauteur_src: "Art. Us 8, p.122 (« La hauteur maximale des constructions est fixée 18 mètres »)",
+       hauteur_note: "Sans point de référence => gravée au faîtage (conservateur).",
+       emprise_sol_pct: 60, emprise_src: "Art. Us 7, p.122",
+       recul_voirie_m: 5, recul_voirie_src: "Art. Us 4, p.121 (retrait obligatoire, recul min 5 m ; RN7 : 25 m de l'axe, Loi Barnier)",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Us 5, p.122 (en limite OU retrait 5 m min)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors logement de surveillance).", stat_src: "Art. Us 2, p.120-121",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. Us 11.1, p.125 (20 % éco-aménageables dont au moins 50 % de pleine terre => 10 % de l'UF)",
+       habitat: interdit, habitat_src: "Art. Us 1, p.119 (Hébergement coché interdit) + Art. Us 2, p.120-121 : logement admis SEULEMENT « utile au fonctionnement ou à la surveillance », 1 par unité foncière — zone commerciale/services, habitat interdit pour le moteur"}
+
+  # ============== LOT 1AU — chapitre unique « La zone 1AU », p.142-156 ==============
+  # Renvoi explicite p.142 (« se reporter en fonction de l'indice … au règlement des zones
+  # urbaines correspondantes »), répété à chaque article => entrées explicites (le renvoi
+  # moteur ne couvre pas les préfixes chiffrés). Conditions d'urbanisation 1AU (Art. 1AU 2,
+  # p.144) : infrastructures suffisantes, respect des principes et densités minimales des
+  # OAP — conditions opérationnelles non portées par le schéma, notées.
+  1AUa: {bassin: "Le Port",
+       he_m: 9, hf_m: 9, hauteur_src: "Art. Ua 8, p.25 via renvoi (ZONE 1AU, p.142)",
+       emprise_sol_pct: 60, emprise_src: "Art. Ua 7, p.25 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ua 4, p.23 (via renvoi)",
+       recul_voirie_note: "En zone 1AUa : retrait minimal de 45 m de l'axe de la RN4a (Art. 1AU 4, p.146).",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua 5, p.24 (via renvoi)",
+       stat_logement: "0,3 place / logement", stat_src: "Art. Ua 12.1, p.29-30 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. Ua 11.1, p.27 (via renvoi)",
+       note: "Urbanisation par opération d'ensemble OU au fur et à mesure des équipements internes (caractère de zone 1AU, p.142) ; densités minimales des OAP à respecter (Art. 1AU 2, p.144)."}
+  1AUc: {bassin: "Le Port",
+       he_m: 16, hf_m: 16, hauteur_src: "Art. Uc 8, p.55 via renvoi (ZONE 1AU, p.142)",
+       emprise_sol_pct: 80, emprise_src: "Art. Uc 7, p.55 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Uc 4, p.53 (via renvoi)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Uc 5, p.54 (via renvoi)",
+       stat_logement: "0,3 place / logement", stat_src: "Art. Uc 12.1, p.59-60 (via renvoi)",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. Uc 11.1, p.58 (via renvoi)",
+       note: "Renvoi à la zone Uc (indice « c »). Assainissement 1AUe/graphies : la seule 1AUc du manifeste (12,6 ha) suit le régime Uc ; densités minimales OAP (Art. 1AU 2, p.144)."}
+  1AUem: {bassin: "Le Port",
+       he_m: null, hf_m: 18, hauteur_src: "Art. Ue 8, p.82 via renvoi (ZONE 1AU, p.142 — indice « em » => secteur Uem)",
+       emprise_sol_pct: 60, emprise_src: "Art. Ue 7, p.82 (via renvoi)",
+       recul_voirie_m: 5, recul_voirie_src: "Art. Ue 4, p.81 (via renvoi)",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Ue 5, p.82 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors logement de surveillance).", stat_src: "Art. Ue 2, p.80 (via renvoi)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 11.1, p.85 (via renvoi) : pas de sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. Ue 1, p.79 + Art. Ue 2, p.80 via renvoi : logement limité à la surveillance (1/unité foncière) => habitat interdit pour le moteur"}
+  1AUs: {bassin: "Le Port",
+       he_m: null, hf_m: 18, hauteur_src: "Art. Us 8, p.122 via renvoi (ZONE 1AU, p.142)",
+       emprise_sol_pct: 60, emprise_src: "Art. Us 7, p.122 (via renvoi)",
+       recul_voirie_m: 5, recul_voirie_src: "Art. Us 4, p.121 (via renvoi)",
+       recul_voirie_note: "En zone 1AUs : retrait minimal de 25 m de l'axe de la RN7 (Art. 1AU 4, p.145).",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Us 5, p.122 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors logement de surveillance).", stat_src: "Art. Us 2, p.120-121 (via renvoi)",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. Us 11.1, p.125 (via renvoi)",
+       habitat: interdit, habitat_src: "Art. Us 1, p.119 + Art. Us 2, p.120-121 via renvoi : logement limité à la surveillance => habitat interdit pour le moteur"}
+  1AUm: {bassin: "Le Port",
+       he_m: null, hf_m: 18, hauteur_src: "Art. 1AU 8, p.146 (« Dans les zones 1AUm et 1AUmut, la hauteur maximale des constructions est fixée 18 mètres »)",
+       hauteur_note: "Sans point de référence => gravée au faîtage (conservateur).",
+       emprise_sol_pct: 60, emprise_src: "Art. 1AU 7, p.146",
+       recul_voirie_m: a_verifier, recul_voirie_src: "Art. 1AU 4, p.145-146",
+       recul_voirie_note: "LACUNE du règlement : l'Art. 1AU 4 renvoie « au règlement de la zone U indiquée en indice » mais il n'existe AUCUNE zone Um ; seuls 1AUmut (5 m), 1AUs et 1AUa reçoivent une règle propre => non attribuable sans deviner.",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. 1AU 5, p.146",
+       recul_limites_note: "En limite OU retrait 5 m min ; 3 m pour l'habitat individuel — tranche la plus conservatrice gravée (5 m).",
+       stat_logement: "0,3 place / logement", stat_src: "Art. 1AU 12.1 (tableau), p.151-152",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. 1AU 11.1, p.149-150 (20 % éco-aménageables dont au moins 50 % de pleine terre => 10 % de l'UF)",
+       note: "Secteur à dominante urbaine mixte, habitat admis (Art. 1AU 1, p.143 : Habitation non cochée ; Art. 1AU 2, p.144 : « Outre les constructions destinées à l'habitat… »). Urbanisation par opération d'ensemble ou au fur et à mesure des équipements (p.142)."}
+
+zones_au_renvoi: {}
+
+# GROUPE CAPACITÉ LOGEMENT ZÉRO (constructible_neuf=False — étiquette moteur « secteur de
+# transition » inexacte pour les zones U de ce groupe, capacité logement ZÉRO exacte ;
+# friction F2, précédents 2AU* Tampon et UF/AUF Petite-Île). TROIS familles :
+# 1) GEL 2AU (2AUem, 2AUmut, 2AUp) : « A l'exception de ceux visés à l'article 2AU 2, sont
+#    interdits toutes les constructions, ouvrages et travaux » (Art. 2AU 1, p.157) ;
+#    admis : réseaux, ouvrages techniques SP, extension mesurée bureaux existants,
+#    maintien industrie/entrepôts existants (Art. 2AU 2, p.157-158). « L'ouverture à
+#    l'urbanisation de la zone est conditionnée à une modification du PLU » (caractère de
+#    zone, p.157) — condition d'ouverture EXPLICITE, pas d'échéancier chiffré.
+# 2) GEL 1AUmut : « Soumis à un échéancier d'ouverture à l'urbanisation prévu dans l'OAP
+#    « Centrale EDF », ce secteur sera ouvert à l'urbanisation à moyen et long terme.
+#    Dans l'attente, les terrains pourront être occupés par des constructions légères et
+#    facilement démontables » (caractère de zone, p.142 ; Art. 1AU 1, p.143 : tout ce qui
+#    n'est pas visé à l'Art. 1AU 2 est interdit ; Art. 1AU 2, p.144-145 : maintien/mise
+#    aux normes, extension mesurée bureaux, constructions légères démontables).
+# 3) HABITAT INTERDIT SANS HAUTEUR CHIFFRÉE : Ue (Art. Ue 8, p.82 : seule la hauteur du
+#    secteur Uem est fixée — AUCUNE hauteur pour Ue général ; habitat interdit Art. Ue 2,
+#    p.80), Up et Uppp (Art. Up 5/6/7/8, p.110 : « Non réglementé » ; habitat interdit
+#    Art. Up 2, p.109 — logement de surveillance seulement), Uv (Art. Uv 5/6/7/8, p.133 :
+#    « Non réglementé » ; Art. Uv 2, p.132 : liste limitative équipements/services publics
+#    et locaux liés dont gardiennage), et par renvoi du chapitre 1AU (p.142) : 1AUe → Ue
+#    (graphie confirmée Art. 1AU 14.3, p.155 « zone 1AUe (Haut du Triangle Agricole) »),
+#    1AUv → Uv. Une entrée `zones:` sans hauteur exploitable retomberait en estimation
+#    générique 9 m avec capacité logement fictive => capacité zéro exacte ici.
+zones_au_st:
+  liste: ["2AUem", "2AUmut", "2AUp", "1AUmut", "Ue", "Up", "Uppp", "Uv", "1AUe", "1AUv"]
+  portee: "Construction neuve de logement impossible : gels 2AU* (ouverture conditionnée à une modification du PLU) et 1AUmut (échéancier OAP Centrale EDF — constructions légères démontables uniquement dans l'attente) ; zones Ue/Up/Uppp/Uv et renvois 1AUe/1AUv : habitat interdit (logement de surveillance/gardiennage uniquement) SANS hauteur chiffrée."
+  source: "Art. 2AU 1 et 2AU 2, p.157-158 ; ZONE 1AU (1AUmut), p.142-144 ; Art. Ue 2, p.80 et Ue 8, p.82 ; Art. Up 2, p.109 et Up 8, p.110 ; Art. Uv 2, p.132 et Uv 8, p.133."
+
+# Zone NON CALIBRÉE (motif, pas d'entrée => repli générique honnête en mode progressif) :
+zones_non_calibrees:
+  Uoap:
+    motif: "Zone du périmètre de l'OAP « Portes de l'océan » (OAP de secteur d'aménagement R.151-8 : « l'OAP s'applique seule, en l'absence de dispositions réglementaires dans le secteur », caractère de zone p.103). Les 14 articles du chapitre renvoient TOUS à la pièce écrite n°4 (hors règlement) — aucune règle chiffrée gravable sans deviner. 7,2 ha, 0,42 % de la surface du manifeste."
+    source: "Art. Uoap 1 à Uoap 14, p.103-106 (« Se reporter à l'OAP Portes de l'Océan — pièce écrite n°4 » à chaque article)."
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
+# A « triangle agricole » : tout interdit sauf bâtiments techniques agricoles ;
+# habitations EXISTANTES : amélioration/extension/reconstruction dans la limite TOTALE de
+# 120 m² SDP ; agrotourisme 30 m² (Art. A 1, p.162 ; Art. A 2, p.163). N/Nerl : tout
+# interdit sauf exploitation forestière, équipements collectifs compatibles et
+# aménagements légers sans hébergement (Art. N 1, p.170 ; Art. N 2, p.171-172 ; Nerl :
+# aménagements légers L.121-24, p.172). Les graver ferait calculer une capacité logement
+# fictive => repli générique non constructible, verdict produit correct.
+zones_non_constructibles: ["A (chap. p.162-169)",
+                           "N, Nerl (chap. p.170-176)"]
