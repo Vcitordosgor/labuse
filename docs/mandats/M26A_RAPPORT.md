@@ -1,7 +1,10 @@
 # M26-A — RAPPORT DE FIN DE MANDAT · COPILOTE LABUSE, SOCLE AGENTIQUE
 
-**Branche** : `feat/m26a-copilote-socle` (base `origin/main` 18ea733, poussée, non mergée —
-Vic merge en `--no-ff`). **Périmètre tenu** : back-end uniquement, aucune UI.
+**Branche** : `feat/m26a-copilote-socle` (base `origin/main` 18ea733) — **MERGÉE par Vic
+le 27/07/2026** ; un commit de clôture (cache froid, kit VPS `[ai]`, état définitif du
+rapport) suit le merge sur la même branche. **MANDAT CLOS.** Le M26-B (écran du
+Copilote) viendra dans un mandat séparé avec sa maquette de référence.
+**Périmètre tenu** : back-end uniquement, aucune UI.
 **Règle absolue respectée** : le LLM ne calcule jamais rien — il n'apparaît QUE dans
 l'interpréteur (`copilote/interpreteur.py`), tout chiffre servi vient d'un moteur
 déterministe existant, journalisé et étiqueté.
@@ -66,14 +69,17 @@ examiner) ; restitution top-20 à l'assemblage.
    aucun moteur appelé.
 3. **Criblage = lecture seule** (GO Q3) : run servi épinglé + `parcel_zone_plu` +
    `cascade_results` (PPR rouge, ABF). Aucun score recalculé ; chaque filtre journalise
-   avant→après ; plafond `copilote_max_candidats` (24) JAMAIS silencieux
-   (`plafonne_a` dans le payload).
+   avant→après ; AUCUN plafond au criblage (revue plafond — le garde-fou 5 000 vit au
+   filtre géométrique, requalifié s'il mord, cf. §9-bis).
 4. **Entonnoir faisabilité** : moteur 11 étapes existant (`parcel_faisabilite`), étiquette
    Estimé. SDP estimée < cible → écartée motif tracé ; non calculable → écartée
    « non vérifiable » (boussole). La conversion logements→SDP est du CODE :
    `SDP_PAR_LOGEMENT_M2 = 70`.
-5. **marche_dvf annote, n'élimine pas** : charge foncière = Estimé ; un Estimé n'écarte
-   jamais une parcelle (le rapprochement budget est porté à la note, pas tranché).
+5. **Charge foncière et budget** (remplacé par l'arbitrage revue plafond, cf. §9-bis) :
+   charge LIVE sur TOUTES les retenues ; `filtre_budget` écarte sur prix probable >
+   budget (critère du brief, Estimé étiqueté, provenance au motif) ; sans prix probable
+   → « non estimable — non filtrée » ; indicateur « au-dessus de la charge supportable »
+   marqué, jamais filtrant.
 6. **Zéro retenue = run `done`, n_retenues=0** — aucun assouplissement silencieux.
 7. **Exécution in-process** (thread démon, pas de worker séparé en M26-A). Budgets :
    timeout global 120 s, plafond 12 appels moteurs (retries inclus), vérifiés avant
@@ -96,7 +102,10 @@ fil via `after_seq`. Si le polling devient un point de charge → M26-B (décisi
 
 ## 6 · Tests
 
-- **81 nouveaux tests copilote** (objectif ~40) : réduction (13 séquences), boussole,
+- **90 nouveaux tests copilote** (objectif ~40 ; 81 au socle + 9 revue plafond : filtre
+  géométrique calibré/générique/à_vérifier, garde-fou requalifié, parallélisme,
+  annulation coupante, filtre budget, indicateur charge, formulation calibrage) :
+  réduction (13 séquences), boussole,
   émission append-only (trigger testé), interpréteur (jeu figé de 16 phrases + 4 cas
   verifier_adresse : commune absente, k€, deux communes, hors-sujet, injection —
   sortie hors schéma REJETÉE, anti-invention de références), plans snapshot, exécuteur
@@ -149,6 +158,10 @@ fil via `after_seq`. Si le polling devient un point de charge → M26-B (décisi
   (appel réseau) — l'IDU reste 100 % local.
 
 ## 9 · Point d'arrêt B — démo (exécutée le 27/07/2026, base de ce poste)
+
+> **HISTORIQUE — pipeline v1 (plafond 24 au criblage), remplacé le même jour par la
+> revue plafond « option c » (§9-bis). Conservé comme preuve du point d'arrêt B et du
+> faux négatif corrigé.**
 
 `scripts/demo_copilote_m26a.sh` (curl uniquement, pas d'UI). Serveur local sur la base
 applicative, interpréteur réel (Sonnet, clé du poste). **Prérequis découvert** :
@@ -234,6 +247,14 @@ JAMAIS un filtre) : pour chaque retenue où prix probable ET charge sont connus,
 budget de l'acheteur mais l'opération ne supporte pas son prix ». La parcelle reste
 retenue, l'utilisateur arbitre (logique Argumentaire de négociation). Étiquette Estimé.
 Porté par parcelle (payload marche_dvf + restituées) et compté au récap.
+
+**Cache froid (demande Vic, clôture M26-A)** : même run après REDÉMARRAGE de Postgres
+(`shared_buffers` vidé) — **56,5 s**, mêmes 2 947 retenues (reproductibilité confirmée
+après redémarrage). Méthodologie honnête : sur ce poste, le cache de pages de l'OS reste
+chaud (un vrai froid exigerait `sudo purge`, non disponible ici) — la mesure couvre donc
+« shared_buffers froid / OS chaud ». À REFAIRE une fois sur le VPS après reboot complet
+lors de la bascule (une ligne : POST du brief de référence, lire `duree_totale_ms`) ;
+si l'écart y pousse au-delà de 120 s, le garde-fou + la requalification couvrent.
 
 **Run de preuve FINAL** (brief exact du mandat, config par défaut, 27/07) — **56,2 s** :
 entonnoir `pool 13 155 → filtre_geometrique 4 250 → examinées 4 250 (garde-fou 5 000

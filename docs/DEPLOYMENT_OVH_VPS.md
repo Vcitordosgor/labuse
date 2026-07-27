@@ -140,9 +140,11 @@ cd /opt/labuse/app
 sudo -u labuse git checkout main        # ou le tag de release retenu
 
 # venv + installation ÉDITABLE (l'app lit config/, data/, web/ depuis l'arbre du repo)
+# ⚠ M26-A : l'extra [ai] est OBLIGATOIRE — sans lui, l'interpréteur du Copilote tombe
+# en run_failed « ia_indisponible » en prod (le paquet anthropic vit dans cet extra).
 sudo -u labuse python3 -m venv /opt/labuse/venv
 sudo -u labuse /opt/labuse/venv/bin/pip install --upgrade pip
-sudo -u labuse /opt/labuse/venv/bin/pip install -e /opt/labuse/app
+sudo -u labuse /opt/labuse/venv/bin/pip install -e "/opt/labuse/app[ai]"
 
 # Sanity : la commande 'labuse' répond
 sudo -u labuse /opt/labuse/venv/bin/labuse --help | head
@@ -229,6 +231,10 @@ systemctl reload nginx
 L'assistant « Expliquer cette parcelle » fonctionne **sans clé** (synthèse règles déterministe, déjà
 premium). Pour activer l'**IA enrichie**, poser une clé Anthropic — **uniquement** côté serveur, jamais
 dans git. Détails et garde-fous : `docs/AI_ASSISTANT_SAFETY_AND_DEMO.md`, checklist : `docs/AI_DEMO_CHECKLIST.md`.
+
+**Copilote M26-A** : l'interpréteur de besoin EXIGE la clé **et** l'extra `[ai]` installé (§6).
+Sans clé → chaque run échoue honnêtement (`run_failed`, code `ia_indisponible`) ; sans l'extra
+→ même échec, avec `ModuleNotFoundError: anthropic` dans les logs serveur.
 
 **1) Où placer la clé.** Dans le fichier d'environnement systemd, **hors dépôt** : `/etc/labuse/labuse.env`
 (640 root:labuse). Jamais dans le code, un fichier suivi, un commit ou un log.
@@ -324,7 +330,7 @@ production est précédée d'un dump** (étape 5 / sauvegarde). Pour revenir à 
 cd /opt/labuse/app
 sudo -u labuse git fetch --tags
 sudo -u labuse git checkout <tag_ou_commit_precedent>
-sudo -u labuse /opt/labuse/venv/bin/pip install -e /opt/labuse/app   # si deps modifiées
+sudo -u labuse /opt/labuse/venv/bin/pip install -e "/opt/labuse/app[ai]"   # si deps modifiées ([ai] requis — Copilote M26-A)
 
 # 2) Repli base (UNIQUEMENT si la migration a touché la donnée) :
 #    restaurer le dump pris JUSTE AVANT la migration. pg_restore --clean ÉCRASE l'existant.
