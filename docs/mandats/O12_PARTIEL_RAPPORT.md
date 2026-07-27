@@ -338,6 +338,71 @@ Bras-Panon, UA Saint-André — vérifiées non touchées).
   de la revue précédente étaient suspectes, les 139 n'étaient pas servables ; 59 propres
   valent mieux. (Seuil d'alerte « < 30 » du mandat : non atteint.)
 
+---
+
+# REVUE 2 (27/07/2026) — 14/20 propres · analyses demandées ⏸ ARBITRAGE PLANCHER
+
+## 1 — Plancher de compacité : distribution et coût des trois seuils
+
+Déciles de la compacité des 45 lots : D0 0,312 · D1 0,492 · D2 0,533 · D3 0,621 · D4 0,667 ·
+**D5 0,706** · D6 0,739 · D7 0,785 · D8 0,785 · D9 0,785 · D10 0,793.
+
+| Plancher | Survivants | Pool total (avec 14 résiduels) | Cartes visées tuées |
+|---:|---:|---:|---|
+| 0,55 | 36 | 50 | AC0118 (0,312) · AE0284 (0,485) |
+| **0,60** | **33** | **47** | + AT0650 (0,552) |
+| 0,65 | **29 — SOUS 30** | 43 | + CX0720 (0,647) |
+
+**Constat honnête : aucun plancher ne tue les 5 cartes visées.** `AV0203` (0,665) survit même
+à 0,65 — un lot en U autour d'une PETITE maison peut rester compact au sens Polsby-Popper.
+Le plancher réduit la classe, il ne l'éradique pas ; l'éradication demanderait un critère de
+convexité (ex. aire/aire de l'enveloppe convexe), non chiffré ici. À 0,60 (préférence
+annoncée) : 33 découpes + 14 résiduels = 47, au-dessus du seuil d'alerte. `CX0720` (0,647)
+survivrait à 0,60 — mais il est aussi l'un des cas « > 50 % » ci-dessous.
+
+## 2 — Les « > 50 % » : pas une fuite, une règle propre à l'autre famille — en-tête corrigé
+
+La borne « lot ≤ 50 % de la parcelle » (correctif A2) appartient à la famille **lot
+RÉSIDUEL** : elle rejette les parcelles dont le terrain libre entier dépasse la moitié
+(démembrement). L'univers du **lot à découper** est PRÉCISÉMENT le complément (résiduel
+> 50 %) et sa borne est ABSOLUE (600-900 m²) + viabilité du reste — jamais un ratio. Sur
+petite parcelle, le lot dépasse mécaniquement 50 % : **6 cas sur 45** (CR0093 50,7 % ·
+CX0720 50,9 % · AT0650 55,2 % · CV0219 55,3 % · BO0089 55,8 % · AV0573 64,3 %). Aucun filtre
+ne fuit — mais l'en-tête du dossier affirmait la règle globalement : **corrigé** (l'intro
+détaille désormais les règles PAR famille et dit explicitement que la borne 50 % ne
+s'applique pas aux découpes).
+
+**Glissement de population documenté** : après l'érosion et C5, les parcelles retenues sont
+plus petites — min 1 060 · P25 1 536 · médiane 1 975 m² (16/45 sous 1 600 m²) ; le lot y pèse
+mécaniquement plus lourd. Point d'attention connexe : la famille découpe n'a PAS d'équivalent
+du « le lot bâti garde ≥ 400 m² » du résiduel — **1 cas** de reste < 400 m² (`AV0573`,
+378 m² + maison, et 64,3 % de ratio). Si un garde « reste ≥ 400 m² » était souhaité : −1.
+
+## 3 — CX0214 : risque de fraîcheur, non classé — note source & recoupements
+
+- **Source bâti** : BD TOPO IGN V3, flux WFS Géoplateforme (`BDTOPO_V3:batiment`), ingérée
+  les **28-29/06/2026** (817 506 bâtiments). Le flux sert l'édition IGN courante à cette
+  date ; le délai intrinsèque de BD TOPO sur les constructions neuves (mise à jour
+  photogrammétrique) est de plusieurs mois à années — le millésime TERRAIN réel est donc
+  antérieur à 2026, sans précision disponible en base.
+- **Recoupement possible en base, coût faible (une jointure SQL)** : `sitadel_permits`
+  (50 043 permis 2013-2026, liens parcellaires `idu_codes`). Appliqué aux 45 : **2 candidats
+  portent un PC récent sur la parcelle** — `97416000CZ2174` (PC du **05/11/2025**, bâti
+  probablement en chantier, invisible de BD TOPO — le cas dangereux type) et `97416000CO0911`
+  (PC 02/2023). **CX0214 lui-même : recoupement NÉGATIF** — aucun permis sur la parcelle
+  (plus proche : 50 m, 2017) ; les structures visibles sont soit non déclarées, soit un
+  artefact de parallaxe. Le recoupement Sitadel ne blanchit donc PAS ce cas.
+- **Recoupement lourd disponible** : le module détection ortho (config/detection_ortho.yaml,
+  tuiles RVB) pourrait comparer l'emprise bâtie VUE à la couche vecteur — coût : run tuiles
+  sur les lots (~heures) + calibration. Non lancé.
+- **Limite consignée du segment** : « lot nu » est affirmé au vu de BD TOPO ; toute
+  construction postérieure au millésime IGN (déclarée ou non) est invisible du détecteur —
+  seule la revue visuelle sur ortho récente, ou un recoupement permis/ortho, la voit.
+  Aucun classement de CX0214.
+
+**Aucun re-run, aucun filtre appliqué — en attente de l'arbitrage plancher** (et, s'il est
+souhaité, du garde « reste ≥ 400 m² » et du flag permis-récent).
+
 ## Livrables (revue en session neuve)
 
 `docs/mandats/O12_PARTIEL_REVUE.pdf` (20 cartes, tourniquet sur les 14 communes, SANS

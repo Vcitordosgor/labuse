@@ -159,11 +159,15 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
               "— remarque : ____________________</p></div>")
 
     intro = ("<div class='intro'><b>Dossier de revue — Division en or (O12).</b> Détection géométrique CONSERVATRICE "
-             "de parcelles où un lot constructible semble détachable (bâti dans un coin, résiduel ≥ 500 m² avec accès "
-             "voirie ≥ 12 m et largeur ≥ 18 m, lot ≤ 50 % de la parcelle, zonage U/AU — ou PAU estimée en commune "
-             "RNU —, les deux lots restant viables). Deux types : <b>division libre</b> (lot nu) et <b>division avec "
-             "démolition</b> (le lot contient du bâti SECONDAIRE, chiffré et tracé en rouge — jamais le bâtiment "
-             "principal, et au plus la moitié du bâti conservé). <b>Faux positif = péché mortel</b> : "
+             "de parcelles où un lot constructible semble détachable. Règles COMMUNES : accès voirie qualifiée "
+             "≥ 12 m contigus, largeur ≥ 18 m (cercle inscrit), compacité, zonage U/AU (PAU estimée en RNU), hors "
+             "littoral/domaine public et zonages d'activité, les deux lots restant viables (reste d'un seul tenant, "
+             "façade conservée, emprise bâtie résultante plafonnée). Règles PAR FAMILLE — <b>lot résiduel</b> "
+             "(libre ou avec démolition) : le terrain libre existe tel quel, résiduel ≥ 500 m² et ≤ 50 % de la "
+             "parcelle ; <b>lot à découper</b> : bande de façade de 600-900 m² taillée dans le résiduel des parcelles "
+             "où le terrain libre DÉPASSE 50 % — la borne « ≤ 50 % » ne s'applique pas à cette famille (sur petite "
+             "parcelle, le lot peut peser plus de la moitié ; c'est la surface absolue et la viabilité du reste qui "
+             "bornent). <b>Faux positif = péché mortel</b> : "
              "l'outil reste MASQUÉ tant que ce dossier n'est pas validé. Aucune constructibilité réglementaire n'est "
              "affirmée (recul, prospect, servitudes) — la revue tranche.</div>")
     doc = (f"<!DOCTYPE html><html lang='fr'><head><meta charset='utf-8'><style>{_CSS}</style></head><body>"
