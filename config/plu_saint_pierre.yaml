@@ -35,6 +35,14 @@ source:
   approbation: "2024-06-25"
   pages_total: 227
   offset_pdf_vs_imprimee: 0
+  # Millésime du règlement GRAVÉ (garde-fou de fraîcheur, revue GO du 27/07/2026) : comparé
+  # par check-plu-fraicheur au règlement du document GPU EN VIGUEUR — alerte type 4 si antérieur.
+  reglement_grave:
+    fichier: "97416_reglement_20240625.pdf"
+    md5: "8d65c791a716df53dfb42e62c5cc53a1"
+    millesime: "2024-06-25"
+    document_gpu_au_calibrage: "97416_PLU_20240625"
+    verifie_le: "2026-07-27"
 
 # Mode de résolution des zones (cf. resolve_zone) :
 #   progressif (défaut) = commune EN COURS de calibration : une zone hors de ce YAML,

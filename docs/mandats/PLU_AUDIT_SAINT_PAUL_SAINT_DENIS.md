@@ -118,3 +118,38 @@ ce problème (édition mars 2026 du règlement, postérieure à l'idurba 2025121
 diff règlement Saint-Denis 2024-02 vs 2026-04 (une heure, archive GPU) ; (2) lot court
 « consolidation Saint-Paul » (sources + Usdu) à planifier, non bloquant ; (3) le mandat « Repli
 non optimiste » couvrira AUx et consorts.
+
+---
+
+## ADDENDUM (même jour, arbitrages Vic reçus) — LES DEUX DIFFS SONT TRANCHÉS
+
+**Saint-Denis — risque millésime LEVÉ.** Archive GPU du document en vigueur `97411_PLU_20260423`
+téléchargée ; son règlement écrit (`97411_reglement_20260423.pdf`, 154 p.) porte la couverture
+« Modification simplifiée n°8 — dossier approuvé FÉVRIER 2024 » : c'est LE règlement de la
+gravure, re-stampé au nom du document 2026. Valeurs vérifiées aux pages citées par le YAML :
+Um.9 emprise 50 % (p.68) ✓, Ui.9 60 % / Uicm 40 % (p.56) ✓, Uh 30 % + H 4,5 m (p.73) ✓,
+prospect Ud (p.43-44) ✓, Uv.9/10 (p.84) ✓. **La procédure d'avril 2026 n'a pas modifié le
+règlement écrit — les règles de Saint-Denis sont À JOUR.** Le verdict PARTIEL demeure (Upi/Upr,
+Uavap, AUx), la re-gravure n'est PAS nécessaire.
+
+**Saint-Paul — vérifié dans la foulée (la liste des DCM de l'édition mars 2026 s'arrête au
+27/03/2025, antérieure à l'idurba 17/12/2025)** : le règlement du document GPU en vigueur
+`97415_reglement_20251217.pdf` est **BYTE-IDENTIQUE (md5 `0aee7298…`) à l'édition mars 2026**
+utilisée pour la gravure. Aucun écart ; la procédure du 17/12/2025 n'a pas touché le règlement
+écrit.
+
+**Application rétroactive du garde-fou (décision Vic)** : champ `source.reglement_grave`
+(fichier, md5, millésime, document GPU, date de vérification) posé sur les TROIS YAML calibrés.
+Saint-Denis y documente son cas d'alerte type 4 (millésime gravé 2024-02-20 < document
+2026-04-23) avec le résultat du diff — l'alerte reste légitime et se réexamine à chaque
+procédure.
+
+**Lot « consolidation Saint-Paul » — PLANIFIÉ, non bloquant (décision Vic)** : (1) les 3
+valeurs chiffrées sans source (recul_limites U1ec/U2e/U3e) ; (2) les 48 citations sans n° de
+page + pages `~` ; (3) résolution des `a_verifier` à fort pool, **Usdu en tête (598 parcelles
+servies : emprise « surfaces perméables » et pleine terre à trancher sur pièces)**, puis les
+pleine_terre/stationnement « à préciser » des U1/U2. Source à utiliser : le PDF md5 `0aee7298…`
+(GPU = mairie). À prendre quand une session se libère, APRÈS Le Tampon.
+
+**Séquence actée** : ~~diff Saint-Denis~~ (fait) → **Le Tampon** → consolidation Saint-Paul ·
+« Repli non optimiste » après merge O12.

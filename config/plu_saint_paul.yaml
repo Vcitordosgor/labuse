@@ -28,6 +28,17 @@ source:
   edition: "2026-03"
   pages_total: 413
   offset_pdf_vs_imprimee: 4
+  # Millésime du règlement GRAVÉ (garde-fou de fraîcheur, revue GO du 27/07/2026 — ajout
+  # rétroactif, AUCUNE valeur de zone modifiée) : l'édition mars 2026 est BYTE-IDENTIQUE
+  # (md5) au règlement du document GPU en vigueur 97415_PLU_20251217 (vérifié 27/07/2026).
+  # NB : la liste des DCM en page de garde s'arrête au 27/03/2025 — la procédure du
+  # 17/12/2025 n'a donc pas modifié le règlement écrit (fichier identique).
+  reglement_grave:
+    fichier: "97415_reglement_20251217.pdf (= édition mars 2026 mairie)"
+    md5: "0aee72989399d6f6232aea7acf236376"
+    millesime: "2025-12-17"
+    document_gpu_au_calibrage: "97415_PLU_20251217"
+    verifie_le: "2026-07-27"
 
 # Mode de résolution des zones (cf. resolve_zone) :
 #   strict     = commune de référence « gold ou rien » — JAMAIS d'estimation générique ;

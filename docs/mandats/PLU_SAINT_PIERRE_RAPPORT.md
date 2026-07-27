@@ -252,9 +252,16 @@ Comportement du repli pour une commune NON calibrée — **trois situations, tro
    article lors du calibrage de la commune) ; message distinct, ne PAS le noyer avec les zones
    spécialisées.
 3. **Zone ordinaire non calibrée** → estimation générique, étiquette Estimé — INCHANGÉ.
+4. **(Ajout revue GO n°4) Zones documentées NON CALIBRABLES dans une commune CALIBRÉE**
+   (Uavap Saint-Denis — 302 parcelles servies —, AUdma Saint-Pierre) : aujourd'hui elles
+   retombent en estimation générique R+2. Formulation : « **Capacité non calculée — zone à
+   règles particulières** » (AVAP / zone régie par les seules OAP), pas d'estimation générique.
+   Convention d'activation à définir au mandat (ex. marqueur `non_calibrable: true` dans le
+   YAML de la commune — micro-extension de schéma à arbitrer par Vic).
 
 Validation du mandat : golden 116 ; comptage avant/après des parcelles servies qui changent de
-message par commune ; aucun changement pour les communes calibrées ni pour les zones ordinaires.
+message par commune ; aucun changement pour les zones ordinaires ni pour les zones calibrées
+chiffrées.
 
 ## 6ter · Audit de fraîcheur GPU — 24 communes (demande Vic, revue GO)
 
@@ -329,9 +336,19 @@ interrogée live le 27/07/2026) :
 implémentation dans un mandat séparé — cible Opus, une demi-journée ; **le cron hebdomadaire
 est à reporter au kit VPS**) :
 - **Quoi** : commande `labuse check-plu-fraicheur` — pour chacune des 24 communes, GET
-  `api/document?grid=<insee>` ; comparer le doc EN_VIGUEUR (originalName + updateDate) au
-  couple mémorisé au calibrage ; trois alertes distinctes : (a) nouveau millésime, (b)
-  re-publication du même millésime, (c) **0 document = dépublication** (le cas réel du jour).
+  `api/document?grid=<insee>` ; DEUX comparaisons (spec corrigée en revue GO n°4 — le contrôle
+  zonage seul n'aurait PAS attrapé le cas Saint-Denis, où le zonage était à jour et le
+  règlement de gravure en retard) :
+  1. **idurba du ZONAGE** en vigueur vs manifeste `config/calibrage/zonage_<commune>.yaml` ;
+  2. **millésime du RÈGLEMENT GRAVÉ** (`source.reglement_grave.millesime` du
+     `config/plu_<commune>.yaml`, champ posé rétroactivement sur les 3 communes calibrées avec
+     fichier + md5 + date de vérification) vs le document en vigueur au GPU.
+  **Quatre alertes distinctes** : (a) nouveau millésime de zonage, (b) re-publication du même
+  millésime (updateDate), (c) **0 document = dépublication** (cas réel du jour), (d) **« règles
+  gravées sur un règlement antérieur au document en vigueur »** — Saint-Denis déclenche (d)
+  par construction : millésime gravé 2024-02-20 < 97411_PLU_20260423. C'est le comportement
+  ATTENDU : l'alerte prompte le diff (fait le 27/07/2026 : règlement écrit identique, alerte
+  documentée au YAML, à réexaminer à chaque nouvelle procédure).
 - **Où** : résultat versé dans l'infra existante `source_checks`/`source_radar` +
   `admin_alertes` (rien à créer côté modèle) ; l'état de référence est déjà dans les manifestes.
 - **Périodicité** : hebdomadaire suffit largement (les procédures PLU bougent au rythme du
@@ -476,7 +493,8 @@ l'instant, spécification ci-dessus gardée au chaud. Décision reconfirmée ava
 
 | Leçon | Détail |
 |---|---|
-| **Fraîcheur GPU : 3 signaux, pas 1** | Audit 24 communes (27/07/2026) : 0 divergence de millésime, MAIS Saint-André et Saint-Leu DÉPUBLIÉS du GPU (11 356 parcelles servies non vérifiables à la source), et Saint-Louis re-publié le 22/07/2026 sous le même idurba. Un contrôle de fraîcheur doit suivre : nouveau millésime / re-publication (updateDate) / dépublication (0 doc). Cf. §6ter, garde-fou spécifié. |
+| **Fraîcheur GPU : 4 signaux, pas 1** | Audit 24 communes (27/07/2026) : 0 divergence de millésime de zonage, MAIS Saint-André et Saint-Leu DÉPUBLIÉS (11 356 parcelles servies non vérifiables à la source), Saint-Louis re-publié le 22/07/2026 sous le même idurba, ET Saint-Denis gravé sur un règlement antérieur de 2 procédures au document en vigueur (zonage à jour — le contrôle zonage seul ne l'attrape pas). Suivre : nouveau millésime / re-publication (updateDate) / dépublication / **règlement de gravure antérieur** (champ `source.reglement_grave` posé sur les 3 YAML). Cf. §6ter. |
+| **FAIT PRODUIT — le repli générique est OPTIMISTE (établi sur 3 communes indépendantes)** | Écart repli→calibré, 400 parcelles/commune, moteur complet : Saint-Pierre **-33 %** de SDP médiane, Saint-Paul **-33 %**, Saint-Denis **-53 %** ; parcelles perdant toute constructibilité : 15/11/25 sur 400 ; parcelles en GAGNANT : **0 sur 1 200**. Le repli ne se trompe que dans un sens. C'est l'argument chiffré qui justifie le calibrage complet de l'île — et le mandat « Repli non optimiste » en attendant. |
 | **Format moderne vs ancien** | Île mixte confirmée : Saint-Paul 2012 et Le Tampon 2018 à l'ancienne (articles préfixés) ; Saint-Pierre 2024 moderne (chapitres 1/2/3). Le schéma porte les deux ; les correspondances d'articles du pilote (en-tête du YAML) sont réutilisables. |
 | **Le tableau des destinations d'abord** | Lire Art. <Z>1 AVANT le chapitre 2 : la moitié des zones de Saint-Pierre sont habitat-interdit ou gelées — leurs hauteurs n'ont alors qu'une valeur documentaire. |
 | **Préambules porteurs de droit** | Gel SCoT (Us), R151-8/OAP-only (AUdma), aménagement d'ensemble (toutes les AU) : uniquement dans les préambules. |
