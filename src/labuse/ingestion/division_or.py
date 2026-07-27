@@ -158,6 +158,15 @@ ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS emprise_restante num
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS lot_geom geometry(Polygon, 2975);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS aire_bati_dans_lot_m2 numeric(6,1);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS solidite numeric(4,3);
+
+-- SNAPSHOT des tracés REVUS (revue 2) : photographie des lots découpés AVANT un re-run, pour
+-- que le re-run distingue « tracé inchangé » (déjà revu / exclusion liée-géométrie tenue) de
+-- « tracé modifié » (à re-revoir). Repeuplée par snapshot_review_lots() avant chaque re-run.
+CREATE TABLE IF NOT EXISTS division_or_revue_snapshot (
+  idu         varchar(14) PRIMARY KEY,
+  lot_geom    geometry(Polygon, 2975),
+  snapshot_at timestamptz DEFAULT now()
+);
 """
 
 # Détection pour UNE commune (batch raisonnable). Buffers/seuils = constantes ci-dessus.
@@ -463,28 +472,83 @@ def _ensure_ddl(session: Session) -> None:
     les ALTER ... IF NOT EXISTS prennent un verrou EXCLUSIF même à vide et, en parallèle par
     commune, se mettent en file derrière chaque INSERT long — constaté sur le run O12-PARTIEL
     (workers bloqués ~40 min sur un CREATE TABLE no-op)."""
-    if not session.execute(text(
+    up_to_date = (
+        session.execute(text(
             "SELECT count(*) FROM information_schema.columns "
-            "WHERE table_name='division_or_candidates' AND column_name='solidite'"
-    )).scalar():
+            "WHERE table_name='division_or_candidates' AND column_name='solidite'")).scalar()
+        and session.execute(text("SELECT to_regclass('division_or_revue_snapshot')")).scalar() is not None)
+    if not up_to_date:
         session.execute(text(DDL))
 
 
-def _revue_pred_sql() -> str:
-    """Prédicat SQL des EXCLUSIONS DE REVUE (config/o12_exclusions_revue.yaml — idu, motif,
-    date ; jamais de retrait silencieux). 'true' si le fichier est absent ou vide."""
+# tolérance de comparaison de tracés : deux lots dont la différence symétrique fait moins de
+# 2 % de l'aire sont « le même tracé » (le détecteur est déterministe → un tracé inchangé est
+# quasi identique ; une autre ancre donne un polygone franchement différent).
+_TRACE_SYMDIFF_TOL = 0.02
+
+
+def _exclusions_revue() -> list[dict]:
+    """Entrées d'exclusion de revue (config/o12_exclusions_revue.yaml) — idu, nature, motif,
+    date. [] si le fichier est absent (aucune exclusion)."""
     import yaml
 
     from ..config import get_settings
     try:
         cfg = get_settings().config_path / "o12_exclusions_revue.yaml"
         doc = yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}
-        idus = [str(e["idu"]) for e in doc.get("exclusions") or [] if "'" not in str(e.get("idu", "'"))]
+        return [e for e in (doc.get("exclusions") or []) if "'" not in str(e.get("idu", "'"))]
     except Exception:  # noqa: BLE001 — config illisible → aucune exclusion
-        idus = []
-    if not idus:
-        return "true"
-    return "idu NOT IN (" + ", ".join(f"'{i}'" for i in idus) + ")"
+        return []
+
+
+def _revue_idus(nature: str | None = None) -> list[str]:
+    """IDU exclus par la revue, filtrés par nature ('permanente' | 'liee_geometrie' | None=tous)."""
+    return [str(e["idu"]) for e in _exclusions_revue()
+            if nature is None or e.get("nature") == nature]
+
+
+def _revue_pred_sql(*, decoupe: bool) -> str:
+    """Prédicat SQL des EXCLUSIONS DE REVUE. Deux natures (jamais de retrait silencieux) :
+    · permanente     — exclue par IDU, toujours ;
+    · liee_geometrie — exclue seulement si le lot RE-CALCULÉ est ~identique au tracé revu
+      (snapshot). Un tracé modifié n'est PAS exclu ici : il revient au dossier, à re-revoir.
+      Ne s'applique qu'à la famille découpe (le résiduel n'a pas de lot_geom découpé)."""
+    perm = _revue_idus("permanente")
+    clauses = []
+    if perm:
+        clauses.append("idu NOT IN (" + ", ".join(f"'{i}'" for i in perm) + ")")
+    geo = _revue_idus("liee_geometrie")
+    if decoupe and geo:
+        idu_list = ", ".join(f"'{i}'" for i in geo)
+        clauses.append(
+            f"NOT (zon.idu IN ({idu_list}) AND EXISTS (SELECT 1 FROM division_or_revue_snapshot s "
+            f"WHERE s.idu = zon.idu AND s.lot_geom IS NOT NULL "
+            f"AND ST_Area(ST_SymDifference(zon.lot_geom, s.lot_geom)) "
+            f"< {_TRACE_SYMDIFF_TOL} * ST_Area(s.lot_geom)))")
+    return " AND ".join(clauses) if clauses else "true"
+
+
+def snapshot_review_lots(session: Session, *, commit: bool = True) -> int:
+    """Photographie les tracés découpés COURANTS dans division_or_revue_snapshot — à appeler
+    AVANT un re-run (qui remplace les lignes). Le re-run s'en sert pour distinguer un tracé
+    inchangé (déjà revu / exclusion liée-géométrie tenue) d'un tracé modifié (à re-revoir).
+    NON DESTRUCTIF s'il n'y a rien à photographier (0 découpe en base) : le snapshot existant
+    est préservé — ainsi un run résiduel qui TRUNCATE la table avant le run découpe ne
+    l'efface pas (l'orchestrateur prend le snapshot une seule fois, tout au début)."""
+    _ensure_ddl(session)
+    src = session.execute(text(
+        "SELECT count(*) FROM division_or_candidates "
+        "WHERE type_division = 'decoupe' AND lot_geom IS NOT NULL")).scalar()
+    if not src:
+        return session.execute(text("SELECT count(*) FROM division_or_revue_snapshot")).scalar()
+    session.execute(text("TRUNCATE division_or_revue_snapshot"))
+    n = session.execute(text(
+        "INSERT INTO division_or_revue_snapshot (idu, lot_geom) "
+        "SELECT idu, lot_geom FROM division_or_candidates "
+        "WHERE type_division = 'decoupe' AND lot_geom IS NOT NULL")).rowcount
+    if commit:
+        session.commit()
+    return n
 
 
 def _zones_activite_doc() -> dict:
@@ -545,7 +609,7 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
             activite_pred=_activite_pred_sql(commune),
             erosion_m=EROSION_RESTE_M, dist_bati_min=DIST_BATI_MIN_M,
             descr_re=ACTIVITE_DESCR_RE, descr_protege=ACTIVITE_DESCR_PROTEGE_RE,
-            pc_pred=pc_pred, revue_pred=_revue_pred_sql()).strip().rstrip(";")
+            pc_pred=pc_pred, revue_pred=_revue_pred_sql(decoupe=True)).strip().rstrip(";")
         if has_score_e:
             insert_sql = _INSERT_PARTIEL.format(detect=detect)
         else:
@@ -600,7 +664,7 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
                                 activite_pred=_activite_pred_sql(commune),
                                 descr_re=ACTIVITE_DESCR_RE,
                                 descr_protege=ACTIVITE_DESCR_PROTEGE_RE,
-                                revue_pred=_revue_pred_sql()).strip().rstrip(";")
+                                revue_pred=_revue_pred_sql(decoupe=False)).strip().rstrip(";")
         if has_score_e:
             insert_sql = _INSERT.format(detect=detect)
         else:   # pas de Score É → gain NULL, sans jointure
@@ -646,3 +710,29 @@ def top_candidates(session: Session, *, limit: int = 20, communes: list[str] | N
         ORDER BY rn, {tri} LIMIT :lim
         """), params).mappings().all()
     return [{k: v for k, v in dict(r).items() if k != "rn"} for r in rows]
+
+
+def all_candidates_for_review(session: Session) -> list[dict]:
+    """TOUT le pool pour un dossier de revue EXHAUSTIF (revue 2 : un défaut attrapable seulement
+    par l'œil ⇒ l'échantillon ne suffit plus). Ordre : découpes par commune, puis résiduels
+    (libre avant démolition). Chaque candidat porte `revue_statut` (par rapport au snapshot des
+    tracés revus) : 'nouveau' / 'inchange' / 'modifie' pour les découpes, 'residuel' sinon."""
+    if session.execute(text("SELECT to_regclass('division_or_candidates')")).scalar() is None:
+        return []
+    has_snap = session.execute(text("SELECT to_regclass('division_or_revue_snapshot')")).scalar() is not None
+    statut = (
+        f"""CASE WHEN c.type_division <> 'decoupe' THEN 'residuel'
+                 WHEN s.idu IS NULL OR s.lot_geom IS NULL THEN 'nouveau'
+                 WHEN ST_Area(ST_SymDifference(c.lot_geom, s.lot_geom))
+                      < {_TRACE_SYMDIFF_TOL} * ST_Area(s.lot_geom) THEN 'inchange'
+                 ELSE 'modifie' END"""
+        if has_snap else "CASE WHEN c.type_division <> 'decoupe' THEN 'residuel' ELSE 'nouveau' END")
+    join = "LEFT JOIN division_or_revue_snapshot s ON s.idu = c.idu" if has_snap else ""
+    rows = session.execute(text(
+        f"""
+        SELECT c.*, {statut} AS revue_statut
+        FROM division_or_candidates c {join}
+        ORDER BY (c.type_division = 'decoupe') DESC, c.commune,
+                 (c.type_division = 'demolition'), c.clarte DESC, c.residuel_m2 DESC
+        """)).mappings().all()
+    return [dict(r) for r in rows]

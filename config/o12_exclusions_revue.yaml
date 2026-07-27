@@ -1,25 +1,38 @@
 # O12 — EXCLUSIONS DE REVUE (mécanisme traçable, mandat O12-PARTIEL-2 revue 2).
 # Un candidat géométriquement valide peut être écarté par la REVUE VISUELLE (« la revue
-# tranche ») : jamais de retrait silencieux — chaque exclusion porte idu, motif, date.
+# tranche ») : jamais de retrait silencieux — chaque exclusion porte idu, motif, date, NATURE.
 # Appliqué aux DEUX familles par les détecteurs (division_or). Retirer une entrée = la
 # parcelle redevient éligible au prochain run.
+#
+# NATURE (revue 2, arbitrage Vic) — deux comportements distincts au re-run :
+#   permanente     : exclusion par IDU, INDÉPENDANTE de la géométrie. Quelle que soit l'ancre,
+#                    la parcelle reste écartée (ex. bâti douteux non blanchi par la source).
+#   liee_geometrie : exclusion liée au TRACÉ du lot revu, pas à la parcelle. Le re-run compare
+#                    le lot re-calculé au lot revu (snapshot division_or_revue_snapshot) :
+#                    tracé identique → reste écarté ; tracé DIFFÉRENT → revient au dossier avec
+#                    la mention « déjà écarté en revue précédente — géométrie modifiée ».
+# Règle générale : toute parcelle dont le lot change au re-run est « à revoir », même validée —
+#                  la validation portait sur un tracé, pas sur un IDU (statut porté par la fiche).
 
 exclusions:
   - idu: "97416000CX0214"
+    nature: permanente
     motif: "Fraîcheur bâti : structures visibles sur l'ortho dans le polygone sur deux dossiers
             successifs ; BD TOPO (06/2026) et Sitadel (aucun permis sur parcelle) ne les
-            expliquent pas — « lot nu » non garanti. Revue Vic."
+            expliquent pas — « lot nu » non garanti, indépendant de l'ancre. Revue Vic."
     date: "2026-07-27"
   - idu: "97409000AT0650"
-    motif: "Lot en U autour d'un bâtiment (revue 2) — commercialement nul ; non séparable par
-            métrique (solidité 0,860 / compacité 0,552, au-dessus des seuils préservant les
-            cartes validées). Revue Vic."
+    nature: liee_geometrie
+    motif: "Lot en U autour d'un bâtiment (revue 2, solidité 0,860 / compacité 0,552) —
+            commercialement nul ; non séparable par métrique. Écarté sur le TRACÉ revu. Revue Vic."
     date: "2026-07-27"
   - idu: "97422000CX0720"
-    motif: "Lot en U autour d'un bâtiment (revue 2) — idem (solidité 0,884 / compacité 0,647).
-            Revue Vic."
+    nature: liee_geometrie
+    motif: "Lot en U autour d'un bâtiment (revue 2, solidité 0,884 / compacité 0,647) — idem,
+            écarté sur le tracé revu. Revue Vic."
     date: "2026-07-27"
   - idu: "97416000AV0203"
-    motif: "Lot en U autour d'un bâtiment (revue 2) — idem (solidité 0,912 / compacité 0,665 ;
-            dépasse même la validée la plus basse en solidité). Revue Vic."
+    nature: liee_geometrie
+    motif: "Lot en U autour d'un bâtiment (revue 2, solidité 0,912 / compacité 0,665 ; dépasse
+            même la validée la plus basse en solidité) — écarté sur le tracé revu. Revue Vic."
     date: "2026-07-27"

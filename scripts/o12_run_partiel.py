@@ -32,6 +32,10 @@ def main() -> None:
 
     print(f"── DELETE decoupe + build_divisions_partiel ({WORKERS} communes en parallèle) ──", flush=True)
     session.execute(text(division_or.DDL))
+    # SNAPSHOT des tracés revus AVANT le delete : le re-run distingue « tracé inchangé » (déjà
+    # revu / exclusion liée-géométrie tenue) de « tracé modifié » (à re-revoir).
+    n_snap = division_or.snapshot_review_lots(session)
+    print(f"  snapshot des tracés revus : {n_snap} découpes", flush=True)
     session.execute(text("DELETE FROM division_or_candidates WHERE type_division = 'decoupe'"))
     session.commit()
 

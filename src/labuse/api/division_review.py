@@ -44,9 +44,19 @@ SELECT p.gj AS parcelle,
        ST_AsGeoJSON(ST_Transform(lotg.g, 4326), 7) AS lot,
        CASE WHEN ST_Area(ST_Intersection(bat.g, lotg.g)) > 1
             THEN ST_AsGeoJSON(ST_Transform(ST_Intersection(bat.g, lotg.g), 4326), 7) END AS demolir,
-       (SELECT ST_AsGeoJSON(ST_Transform(voi.g, 4326), 7) FROM voi) AS voirie
+       (SELECT ST_AsGeoJSON(ST_Transform(voi.g, 4326), 7) FROM voi) AS voirie,
+       -- solidité affichée aussi pour les résiduels (non stockée pour eux) : calculée ici
+       round((ST_Area(lotg.g) / NULLIF(ST_Area(ST_ConvexHull(lotg.g)), 0))::numeric, 3) AS solidite_calc
 FROM p, bat, lotg;
 """
+
+# libellé du statut de tracé (revue 2) — la validation porte sur un tracé, pas sur un IDU
+_STATUT_LABEL = {
+    "nouveau": "🆕 Nouveau candidat (non vu en revue précédente)",
+    "modifie": "✎ Tracé MODIFIÉ depuis la revue précédente — à revoir",
+    "inchange": "✓ Tracé inchangé depuis la revue précédente",
+    "residuel": "",  # famille résiduelle : tracé déterministe (résiduel), pas de comparaison
+}
 
 _CSS = """
 @page { size: A4; margin: 12mm; }
@@ -61,6 +71,7 @@ td { padding:0.8mm 2mm 0.8mm 0; }
 .leg { font-size:7.5pt; color:#555; }
 .leg b.p{color:#0B8A5F} .leg b.b{color:#888} .leg b.l{color:#C98A00} .leg b.d{color:#B01818} .leg b.v{color:#2A5AC8}
 .valid { margin-top:1.5mm; font-size:8.5pt; }
+.statut { margin:0 0 1mm; font-size:8pt; font-weight:bold; color:#7A5A12; }
 """
 
 
@@ -132,6 +143,10 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
         # marge d'une opération de PROMOTION sur la parcelle entière, pas le produit d'une
         # division — chiffres négatifs massifs ; piste gelée, cf. O12_PARTIEL_RAPPORT.md)
         compacite = f"{c['compacite']}" if c.get("compacite") is not None else "—"
+        # solidité (revue 2) : stockée pour les découpes, calculée à la volée pour les résiduels
+        sol_val = c.get("solidite") if c.get("solidite") is not None else (
+            geoms["solidite_calc"] if geoms else None)
+        solidite = f"{sol_val}" if sol_val is not None else "—"
         type_txt = ("Division libre (lot nu — le terrain libre existe tel quel)" if type_div == "libre"
                     else f"Division avec démolition — dont {c.get('bati_lot_m2') or 0} m² à démolir"
                     if type_div == "demolition" else
@@ -140,15 +155,18 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
                     else c.get("zone") or "RNU — PAU estimée")
         emprise_txt = (f"{c['emprise_restante'] * 100:.0f} % après division"
                        if c.get("emprise_restante") is not None else "—")
+        statut = _STATUT_LABEL.get(c.get("revue_statut") or "", "")
+        statut_html = f"<p class='statut'>{html.escape(statut)}</p>" if statut else ""
         cards.append(
             f"<div class='card'><h3>{i}. {html.escape(c['idu'])} — {html.escape(c['commune'])}</h3>"
+            + statut_html
             + (carte or "<p class='leg'>Fond IGN indisponible.</p>")
             + "<p class='leg'>Tracés : <b class='p'>parcelle</b> · <b class='b'>bâti</b> · "
               "<b class='l'>lot proposé</b> · <b class='d'>bâti à démolir</b> · <b class='v'>voirie</b></p>"
             + f"<table><tr><td colspan='2'><b>{html.escape(type_txt)}</b></td>"
               f"<td>Zonage du lot</td><td>{html.escape(zone_txt)}</td></tr>"
               f"<tr><td>Emprise du lot restant</td><td>{html.escape(emprise_txt)}</td>"
-              f"<td></td><td></td></tr>"
+              f"<td>Solidité du lot (aire/convexe)</td><td>{html.escape(solidite)}</td></tr>"
               f"<tr><td>Surface parcelle</td><td>{c['surface_m2']} m²</td>"
               f"<td>Emprise bâtie</td><td>{c['bati_ratio']*100:.0f} %</td></tr>"
               f"<tr><td>Lot détachable</td><td>{c['residuel_m2']} m²</td>"
@@ -167,7 +185,12 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
              "parcelle ; <b>lot à découper</b> : bande de façade de 600-900 m² taillée dans le résiduel des parcelles "
              "où le terrain libre DÉPASSE 50 % — la borne « ≤ 50 % » ne s'applique pas à cette famille (sur petite "
              "parcelle, le lot peut peser plus de la moitié ; c'est la surface absolue et la viabilité du reste qui "
-             "bornent). <b>Faux positif = péché mortel</b> : "
+             "bornent). Solidité = aire ÷ enveloppe convexe (une bande franche ≈ 1, un lot en U autour d'un bâtiment "
+             "chute) ; compacité = Polsby-Popper. <b>Revue EXHAUSTIVE</b> (revue 2) : un lot en U « modéré » n'est "
+             "séparable d'une bande franche par AUCUN critère géométrique — la revue voit donc 100 % du pool, pas un "
+             "échantillon. Le bandeau de chaque fiche indique si le tracé est nouveau, modifié depuis la revue "
+             "précédente (à revoir) ou inchangé — la validation porte sur un tracé, pas sur un IDU. "
+             "<b>Faux positif = péché mortel</b> : "
              "l'outil reste MASQUÉ tant que ce dossier n'est pas validé. Aucune constructibilité réglementaire n'est "
              "affirmée (recul, prospect, servitudes) — la revue tranche.</div>")
     doc = (f"<!DOCTYPE html><html lang='fr'><head><meta charset='utf-8'><style>{_CSS}</style></head><body>"

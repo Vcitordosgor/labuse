@@ -2143,16 +2143,20 @@ def division_or_review_cmd(
     limit: int = typer.Option(20, help="Nombre de cartes (candidats les plus clairs)."),
     communes: str = typer.Option(None, help="Échantillonnage équilibré sur ces communes (séparées par des virgules)."),
     type_division: str = typer.Option(None, "--type", help="Restreindre à un type : libre | demolition."),
+    exhaustif: bool = typer.Option(False, "--all", help="TOUT le pool (découpes par commune puis résiduels) — revue 2."),
 ) -> None:
-    """O12 — génère le DOSSIER DE REVUE (20 cartes) pour validation visuelle de Vic."""
+    """O12 — génère le DOSSIER DE REVUE pour validation visuelle de Vic (--all = pool complet)."""
     from .ingestion import division_or
     from .api import division_review
 
     with session_scope() as s:
-        cands = division_or.top_candidates(
-            s, limit=limit,
-            communes=[c.strip() for c in communes.split(",") if c.strip()] if communes else None,
-            type_division=type_division)
+        if exhaustif:
+            cands = division_or.all_candidates_for_review(s)
+        else:
+            cands = division_or.top_candidates(
+                s, limit=limit,
+                communes=[c.strip() for c in communes.split(",") if c.strip()] if communes else None,
+                type_division=type_division)
         if not cands:
             typer.echo("Aucun candidat — lancer d'abord `division-or --communes …`.")
             raise typer.Exit(1)

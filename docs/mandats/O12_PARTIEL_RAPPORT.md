@@ -470,7 +470,72 @@ DINOv2, 100 % local sur les tuiles RVB déjà outillées (`ortho_detections`). U
 « bâti visible dans le lot » réutiliserait l'infrastructure telle quelle ; seuls le profil de
 décision et la calibration seraient à refaire (l'équivalent du travail piscines).
 
+---
+
+# REVUE 2 — GO solidité : re-run exhaustif, mécanisme de tracé, pool final 44
+
+## Ce que le re-run a produit (`scripts/o12_rerun_v3.py` — snapshot → résiduel → découpe)
+
+**Familles : découpe = 30 · libre = 13 · démolition = 1 → 44 candidats.** Solidité des découpes :
+min **0,858** (au ras du seuil 0,85, par construction), médiane 0,978, max 1,000 ; compacité
+0,571-0,793 ; lots 606-703 m² (médiane 629). **Entonnoir final** : 45 découpes revues → 30
+(les 15 retraits = solidité < 0,85, reste < 400, PC frais, exclusions de revue) + **2 repêchées**
+via une ancre alternative que la contrainte solidité-dans-la-grille a fait gagner. Comme prévu,
+28 était un plancher : le re-run remonte à 30.
+
+Toutes les exclusions ont TENU (vérifié : 0 ligne pour les 4 exclusions de revue + les 2 PC
+frais). Les 3 U liés-géométrie sont sortis parce que leur tracé re-calculé est identique au
+snapshot ; CX0214 est sorti par IDU (permanent).
+
+## Le mécanisme « à revoir » a mordu — 1 cas
+
+Statut de tracé vs revue précédente : **inchangé = 29 · modifié = 1 · résiduel = 14**.
+Le cas modifié est **`97422000AV0573`** (Le Tampon) : c'est exactement la parcelle dont le reste
+faisait 378 m² (< 400). La contrainte « reste ≥ 400 m² » a écarté son ancien lot ; une autre
+ancre en produit un nouveau (reste ≥ 400), de tracé différent (différence symétrique 5,6 %).
+Il revient donc au dossier avec le bandeau **« ✎ Tracé MODIFIÉ depuis la revue précédente — à
+revoir »** au lieu d'être gardé silencieusement ou perdu. C'est précisément le comportement
+demandé : *la validation portait sur un tracé, pas sur un IDU.*
+
+## Les deux natures d'exclusion (config/o12_exclusions_revue.yaml)
+
+| Nature | IDU | Comportement au re-run |
+|---|---|---|
+| `permanente` | CX0214 | exclu par IDU, quelle que soit la géométrie (bâti douteux non blanchi) |
+| `liee_geometrie` | AT0650, CX0720, AV0203 | exclu **seulement si** le lot re-calculé ≈ le tracé revu (snapshot `division_or_revue_snapshot`, différence symétrique < 2 %) ; un tracé modifié reviendrait au dossier |
+
+Snapshot pris **avant** toute destruction (l'orchestrateur photographie les 45 découpes, puis
+TRUNCATE résiduel, puis rebuild découpe) ; `snapshot_review_lots` est non destructif quand il
+n'y a rien à photographier, pour survivre au TRUNCATE intermédiaire.
+
+## Règle de gouvernance gravée (revue 2)
+
+**Ce segment ne s'expose qu'après revue de 100 % du pool, tant qu'aucun critère géométrique
+n'attrape la classe des « U modérés ».** La revue 2 l'a établi : solidité et compacité ne
+séparent pas AV0203 (0,912) d'une bande franche validée (CS0625, 0,898) — un défaut visible
+seulement à l'œil rend l'échantillon insuffisant. Si le pool grossit un jour au point de rendre
+la revue exhaustive impraticable, c'est le **critère manquant** qu'il faudra trouver — pas
+l'échantillon qu'il faudra reprendre. Le dossier est donc désormais EXHAUSTIF (`--all` : une
+carte par candidat, découpes par commune puis résiduels, solidité + compacité + statut de tracé
+affichés).
+
 ## Livrables (revue en session neuve)
+
+- `docs/mandats/O12_PARTIEL_REVUE.pdf` — **44 cartes (pool complet)**, solidité + compacité +
+  bandeau de statut de tracé sur chacune.
+- `docs/mandats/O12_PARTIEL_EXEMPLES.pdf` — 5 exemples découpe.
+- `reports/o12-ile/pool_decoupe.csv` — enrichi : solidité, compacité, emprise restante,
+  aire_bati_dans_lot, zone, **revue_statut** (nouveau/inchangé/modifié).
+- `reports/o12-ile/exclusions_revue.csv` + `config/o12_exclusions_revue.yaml` — les exclusions
+  de revue avec **nature** (permanente / liée-géométrie), motif, date.
+- `docs/mandats/O12_PARTIEL_REVUE.zip` — tout le nécessaire pour la revue en session neuve.
+
+Golden **116/116 PASS**, tiers servis au bit près (120 · 1031 · 3587 · 72980 · 353945).
+Tests `test_division_or.py` **11/11**. **EXPOSE reste False.**
+
+---
+
+## (archive) Livrables de l'itération précédente
 
 `docs/mandats/O12_PARTIEL_REVUE.pdf` (20 cartes, tourniquet sur les 14 communes, SANS
 colonne Gain, compacité affichée) · `O12_PARTIEL_EXEMPLES.pdf` (5 exemples régénérés) ·

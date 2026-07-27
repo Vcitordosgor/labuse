@@ -170,8 +170,16 @@ def test_revue_2_solidite_et_gardes():
     assert d.PC_FRAIS_DEPUIS == "2023-01-01" and "({pc_pred})" in q
     # exclusions de revue TRAÇABLES (config), appliquées aux DEUX familles — jamais silencieuses
     assert "({revue_pred})" in q and "({revue_pred})" in d._DETECT
-    pred = d._revue_pred_sql()
-    assert "'97416000CX0214'" in pred and "'97416000AV0203'" in pred
+    # nature PERMANENTE (CX0214) : exclue par IDU dans les deux familles
+    assert "'97416000CX0214'" in d._revue_pred_sql(decoupe=False)
+    assert "'97416000CX0214'" in d._revue_pred_sql(decoupe=True)
+    # nature LIÉE-GÉOMÉTRIE (les 3 U) : n'exclut que si le tracé re-calculé == snapshot revu,
+    # et seulement pour la famille découpe (comparaison de tracés, jamais silencieuse)
+    dec = d._revue_pred_sql(decoupe=True)
+    assert "'97416000AV0203'" in dec and "ST_SymDifference" in dec and "division_or_revue_snapshot" in dec
+    assert "97416000AV0203" not in d._revue_pred_sql(decoupe=False)   # géométrie ⇒ pas côté résiduel
+    assert d._revue_idus("permanente") == ["97416000CX0214"]
+    assert set(d._revue_idus("liee_geometrie")) == {"97409000AT0650", "97422000CX0720", "97416000AV0203"}
 
 
 @pytest.mark.db
@@ -185,3 +193,6 @@ def test_build_commune_vide_et_table_creee(db_session):
     # le détecteur PARTIEL tourne sur le même socle (SQL valide, 0 candidat, masqué)
     r2 = d.build_divisions_partiel(s, ["Commune-Inexistante"], commit=False, log=lambda *_: None)
     assert r2["total"] == 0 and r2["expose"] is False
+    # snapshot des tracés revus + revue exhaustive : SQL valides sur table vide (0 ligne)
+    assert d.snapshot_review_lots(s, commit=False) == 0
+    assert d.all_candidates_for_review(s) == []
