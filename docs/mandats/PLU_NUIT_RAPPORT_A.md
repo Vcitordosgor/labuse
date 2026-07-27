@@ -52,6 +52,13 @@
 
 ## Nouveaux pièges pour le §9 du mandat-cadre
 
+- **EN TÊTE DE §9 (décision Vic, 28/07/2026) — LE PRÉFIXE D'UN LIBELLÉ NE PROUVE RIEN.**
+  UAa (La Possession) est un secteur *résidentiel* à habitat INTERDIT ; UEm (La Possession)
+  est une zone *économique* à habitat ADMIS. Seule la lecture des articles 1/2 (destinations)
+  tranche. **Conséquence structurante : l'usage naïf de la liste O12 PAR CODE est INVALIDÉ
+  comme fondement du mandat « Repli non optimiste »** — la liste reste un indice de
+  pré-identification, jamais une source ; le mandat devra s'appuyer sur les statuts habitat
+  SOURCES des YAML calibrés (désormais disponibles pour 12+ communes) et non sur les codes.
 - **L'île compte AU MOINS 4 styles de règlement** (ancien préfixé, moderne par chapitre,
   moderne mutualisé par groupe, sections « UA 2.4 ») — la détection du style est la première
   minute de chaque commune ; les 6 requêtes-clés (voies/limites/emprise/hauteur/perméable/
