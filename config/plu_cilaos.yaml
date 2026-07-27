@@ -1,0 +1,221 @@
+# =============================================================================
+# PLU CILAOS (97424) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Cilaos (cache session nuit B).
+#   document : 97424_reglement.pdf (« Commune de Cilaos — PLU — Règlement », 90 p.)
+#   PLU approuvé le 6 février 2008 ; « Mise à jour du 5 mars 2018 » (page de garde,
+#   PDF p.1). Document GPU en vigueur au calibrage : 97424_plu_20240213.
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee + 1 (vérifié : sommaire ZONE Ua imprimée 17 = PDF 18,
+#     Uc 41 = PDF 42, AUst 53 = PDF 54, N 73 = PDF 74 ; numéros IMPRIMÉS lus en
+#     EN-TÊTE de page : « 17 » sur PDF 18, « 41 » sur PDF 42, « 53 » sur PDF 54,
+#     « 73 » sur PDF 74). Les _src citent la page IMPRIMÉE.
+#   - LETTRES DOUBLÉES (vigilance mandat) : l'extraction pypdf du pré-vol doublait les
+#     lettres des titres (« AARRTTIICCLLEE ») ; l'extraction PyMuPDF utilisée ici est
+#     PROPRE. Par précaution, CHAQUE valeur chiffrée gravée ci-dessous a été relue
+#     VISUELLEMENT sur le rendu image du PDF (pages 18, 22, 23, 25, 28, 29, 30, 34,
+#     35, 37, 40, 41, 42, 46-49, 51, 52, 54-58, 60, 61, 64, 70, 72, 74, 75, 79) :
+#     aucune divergence texte/visuel, aucun doublement de chiffres constaté.
+#   - null         = règle explicitement absente / « Non réglementée » / sans plafond
+#     chiffré dans le texte (sourcé au champ _src).
+#   - ANCIEN FORMAT à articles préfixés (Ua 1..Ua 14) : 6=recul voirie, 7=recul limites,
+#     9=emprise, 10=hauteur, 12=stationnement, 13=espaces libres.
+#   - COS (invariant 5, ALUR 2014) : règlement rédigé en 2008/2018 (pré-ALUR) mais
+#     document GPU en vigueur du 13/02/2024 (post-ALUR) => les articles 14 sont
+#     CONSIGNÉS, JAMAIS APPLIQUÉS :
+#       Art. Ua 14, p.28 / Art. Ub 14, p.40 / Art. Uc 14, p.51 : « Il n'est pas fixé
+#       de coefficient d'occupation du sol. » ;
+#       Art. AUst 14, p.56 : « Le coefficient d'occupation des sols est nul à
+#       l'exception des travaux d'aménagement et d'extension mineure pour mise aux
+#       normes sanitaires et d'habitabilité limités à 20 m2 de SHON réalisés sur des
+#       constructions existantes. » (le gel AUst est porté par le caractère de zone
+#       et Art. AUst 1.2/2.2, indépendants du COS) ;
+#       Art. AUindicée 14, p.61 : « Se reporter au règlement de la zone U indiquée en
+#       indice. » ; Art. A 14, p.71 et Art. N 14, p.80 : « Sans objet. »
+#     Aucun COS n'est gravé ni consommé.
+#   - ESPACES LIBRES : Art. 13.1 impose un % « espace vert » où « les aires de
+#     stationnement peuvent être traitées en espaces verts si nécessaire » => ce n'est
+#     PAS de la pleine terre : pleine_terre_pct null partout, % espace vert en note.
+#   - RECULS VOIRIE Ua/Ub : « soit à l'alignement, soit en retrait [...] minimum 3 m »
+#     => gravé 3 avec note (alignement 0 possible). Uc : retrait obligatoire 4 m.
+#   - ZONES AU : chapitre « ZONE AUindicée » (p.57-61) : « il convient de se reporter
+#     en fonction de l'indice de la zone AU considérée au règlement des zones urbaines
+#     correspondantes à savoir Ub pour AUb, etc. sauf spécification contraire » (p.57).
+#     Le renvoi mécanique du moteur ne couvre pas AUb/AUb1/AUb2 (pas de préfixe
+#     chiffré mais résolution explicite exigée) => entrées EXPLICITES. Secteurs AUb1
+#     et AUb2 (ZAC Roland Garros, p.57) : spécifications propres (emprise/hauteur/
+#     espaces verts, Art. AUindicée 9/10/13, p.59-60), le reste via règles Ub.
+#   - AUst (p.53-56) : GEL — « l'ouverture à l'urbanisation de la zone est conditionnée
+#     à une modification du PLU » (caractère de zone, p.53) ; Art. AUst 1.2 : tout est
+#     interdit sauf Art. AUst 2.2 (réseaux, ouvrages techniques, reconstruction après
+#     sinistre, extensions <= 20 m² de SHON) => zones_au_st.
+#   - Ub1 (1 polygone, 0,9 ha) : le libellé n'apparaît NULLE PART dans le règlement
+#     (aucun secteur au chapitre Ub, caractère de zone p.29 sans secteur). Sigle « U »
+#     => zone urbaine (Titre I, p.4-6) ; le seul chapitre possible est Ub et il ne
+#     contient AUCUNE disposition particulière de secteur => règle générale Ub
+#     (Titre I : « la règle générale de la zone s'applique à chacun [des secteurs]
+#     sauf lorsqu'une disposition particulière est prévue », p.5) — même décision que
+#     le précédent Saint-Louis (1AUb1/1AUb2 sans secteur UB1/UB2 => règles UB, note).
+#   - Uah : le texte écrit « UAh » (caractère de zone Ua, p.17 : « Elle comporte un
+#     secteur UAh où les constructions sont limitées à R+1+combles » ; Art. Ua 10.2,
+#     p.24) — équivalence de casse manifeste « Uah » = texte « UAh » confirmée.
+#   - NtoPOS (1 polygone, 12,9 ha) : la graphie « NtoPOS » n'apparaît JAMAIS dans le
+#     règlement (chapitre N, p.73-80 : seuls secteurs nommés Ndé et Nto ; « POS »
+#     n'apparaît que pour Anc « zone NC du POS de 2001 », p.63). Le rattachement à la
+#     famille Nto serait une HYPOTHÈSE => non calibré, repli générique non
+#     constructible (sans conséquence de capacité : famille N, cf. bloc
+#     zones_non_constructibles).
+# =============================================================================
+
+source:
+  document: "97424_reglement.pdf"
+  approbation: "2008-02-06"
+  approbation_note: "PLU approuvé le 06/02/2008, « Mise à jour du 5 mars 2018 » (page de garde, PDF p.1 ; en-têtes « PLAN LOCAL D'URBANISME 2018 »). Document GPU en vigueur au calibrage : 97424_plu_20240213."
+  pages_total: 90
+  offset_pdf_vs_imprimee: 1
+  reglement_grave:
+    fichier: "97424_reglement.pdf"
+    md5: "124d7e80e9c14db4194eedc021666062"
+    millesime: "2018-03-05"
+    document_gpu_au_calibrage: "97424_plu_20240213"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Habitat : 1,5 place / logement, identique en Ua/Ub/Uc (Art. <Z> 12.2.1). Commerces, services et bureaux : surface de stationnement >= 50 % de la SHON (40 % en secteur AUb2, Art. AUindicée 12, p.60). Une place = 25 m²."
+  limites_separatives: "Retrait minimal 3 m dans toutes les zones U (Art. <Z> 7.2/7.3). Implantation en limite : Ua sur les deux limites (profondeur <= 15 m habitat, 20 m RDC commerces/bureaux) ; Ub une seule limite (ou deux si façade sur voie < 20 m) ; Uc une seule limite (profondeur <= 15 m). Fond de parcelle : Ua en limite possible, Ub/Uc retrait 3 m obligatoire (dépendances en limite admises, regroupées)."
+  destinations_interdites_u: "Ua/Ub (Art. <Z> 1.2) : interdits = industriel, entrepôt exclusif, agricole, camping/caravanes, carrières — l'habitat y est admis. Uc (Art. Uc 1.2) : interdits = industriel, entrepôt exclusif, camping, carrières + TOUTE occupation sur les « espaces cultivés » du document graphique (sauf extensions <= 170 m² SHOB, Art. Uc 2.2.1, p.42)."
+
+# Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== LOT U — zones urbaines (Titre II, p.16-51) ==============
+  Ua: {bassin: "Cilaos",
+       he_m: 10, hf_m: 14, hauteur_src: "Art. Ua 10.2, p.24",
+       hauteur_note: "Dépendances : 3,50 m de hauteur absolue. Secteurs à risque d'inondation moyen : +1 m admis (Art. Ua 10.3, p.24-25).",
+       emprise_sol_pct: 80, emprise_src: "Art. Ua 9.2, p.24",
+       emprise_note: "Dépendances comprises ; emprise des dépendances <= 40 m² par logement. Équipements publics d'intérêt collectif : pas de règle.",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ua 6.2, p.21",
+       recul_voirie_note: "Alignement possible (0) OU retrait >= 3 m.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua 7.2/7.3, p.22",
+       recul_limites_note: "Implantation sur les deux limites autorisée (profondeur <= 15 m habitat, 20 m RDC commerces/bureaux et 15 m à l'étage) OU retrait 3 m ; fond de propriété : en limite ou retrait 3 m.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.27",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.28 : 10 % de l'unité foncière en espace vert paysager, SANS exigence de pleine terre (les aires de stationnement peuvent compter)",
+       note: "Centre-ville de Cilaos, morphologie à préserver (caractère de zone, p.17). Interdits : industriel, entrepôt exclusif, agricole, camping, carrières (Art. Ua 1.2, p.17)."}
+  Uah: {bassin: "Cilaos",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. Ua 10.2, p.24 (« En secteur UAh, la hauteur maximale des constructions ne devra pas excéder 2 niveaux plus combles (R+1+C) ou 7 mètres à l'égout des toitures et 11 mètres au faîtage »)",
+       hauteur_note: "R+1+combles. Dépendances : 3,50 m de hauteur absolue.",
+       emprise_sol_pct: 80, emprise_src: "Art. Ua 9.2, p.24 (aucune règle d'emprise propre au secteur)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ua 6.2, p.21",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua 7.2/7.3, p.22",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.27",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.28 : 10 % espace vert, sans exigence de pleine terre",
+       note: "Graphie du manifeste « Uah » = secteur « UAh » du texte (caractère de zone, p.17 ; Art. Ua 10.2, p.24)."}
+  Ub: {bassin: "Cilaos",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. Ub 10.2, p.36",
+       hauteur_note: "Dépendances : 3,50 m de hauteur absolue. Secteurs à risque d'inondation moyen : +1 m admis (Art. Ub 10.3, p.36).",
+       emprise_sol_pct: 50, emprise_src: "Art. Ub 9.2, p.36",
+       emprise_note: "Dépendances comprises ; emprise des dépendances <= 40 m² par logement.",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ub 6.2, p.33",
+       recul_voirie_note: "Alignement possible (0) OU retrait >= 3 m.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34",
+       recul_limites_note: "Une seule limite (ou les deux si façade sur voie < 20 m ; profondeur <= 15 m habitat, 20 m RDC commerces) OU retrait 3 m ; fond de propriété : retrait 3 m obligatoire (dépendances en limite admises, regroupées).",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.40 : 40 % de l'unité foncière en espace vert paysager, SANS exigence de pleine terre",
+       pleine_terre_note: "Opérations > 5 logements/lots : 30 m² d'espaces verts publics par logement, portés à 40 m² au-delà de 10 (Art. Ub 13.2, p.40).",
+       note: "Tissu urbain lâche et discontinu : continuité du centre-ville, Bras Sec, Palmiste Rouge, Peter Both (caractère de zone, p.29). Interdits : industriel, entrepôt exclusif, agricole, camping, carrières (Art. Ub 1.2, p.29)."}
+  Ub1: {bassin: "Cilaos",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. Ub 10.2, p.36 (règle générale de la zone Ub)",
+       emprise_sol_pct: 50, emprise_src: "Art. Ub 9.2, p.36",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ub 6.2, p.33",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.40",
+       note: "Libellé « Ub1 » ABSENT du règlement (aucun secteur au chapitre Ub, p.29-40). Sigle U => zone urbaine ; seul chapitre possible : Ub, qui ne prévoit AUCUNE disposition particulière de secteur => règle générale Ub (Titre I, p.5 : la règle générale s'applique aux secteurs sans disposition particulière). Sous-numérotation cartographique sans règle propre — même décision que Saint-Louis (1AUb1/1AUb2)."}
+  Uc: {bassin: "Cilaos",
+       he_m: 4, hf_m: 8, hauteur_src: "Art. Uc 10.2, p.48",
+       hauteur_note: "Dépendances : 3,50 m de hauteur absolue.",
+       emprise_sol_pct: null, emprise_src: "Art. Uc 9.2, p.47-48 : aucun plafond chiffré — « L'emprise au sol des constructions (dépendances comprises) doit s'effectuer en dehors des espaces cultivés, identifiés comme tels au document graphique »",
+       emprise_note: "Emprise des dépendances <= 40 m² par logement (p.48).",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc 6.2, p.45 (retrait obligatoire de 4 m minimum, PAS d'option alignement)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uc 7.2/7.3, p.46",
+       recul_limites_note: "Une seule limite autorisée (profondeur <= 15 m) OU retrait 3 m ; fond de propriété : retrait 3 m obligatoire.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Uc 12.2, p.50",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Uc 13, p.51 : aucun % d'espaces libres (uniquement plantations à préserver et espaces boisés classés)",
+       note: "Îlet à Cordes, éco-village agriculture/bâti (caractère de zone, p.41). Les « espaces cultivés » du document graphique sont inconstructibles (Art. Uc 1.2.1, p.41 ; extensions existantes <= 170 m² SHOB, Art. Uc 2.2.1, p.42)."}
+
+  # ============== LOT AU — zones à urbaniser ouvertes (chap. « ZONE AUindicée », p.57-61) ==============
+  # « se reporter en fonction de l'indice de la zone AU considérée au règlement des zones
+  # urbaines correspondantes à savoir Ub pour AUb, etc. sauf spécification contraire » (p.57).
+  AUb: {bassin: "Cilaos",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. Ub 10.2, p.36 via renvoi (ZONE AUindicée, p.57 : « Ub pour AUb »)",
+       emprise_sol_pct: 50, emprise_src: "Art. Ub 9.2, p.36 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ub 6.2, p.33 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34 (via renvoi)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39 (via renvoi)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.40 (via renvoi)",
+       note: "Urbanisation future OUVERTE : opération d'aménagement d'ensemble OU au fur et à mesure des équipements internes (caractère de zone, p.57) ; constructions sous réserve d'infrastructures suffisantes (Art. AUindicée 2.2, p.58)."}
+  AUb1: {bassin: "Cilaos",
+       he_m: 9, hf_m: 12, hauteur_src: "Art. AUindicée 10, p.60 (« Dans le secteur AUb1, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit ou au sommet de l'acrotère et 12 mètres au faîtage »)",
+       emprise_sol_pct: 60, emprise_src: "Art. AUindicée 9, p.59",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ub 6.2, p.33 via renvoi (ZONE AUindicée, p.57)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34 (via renvoi)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39 (via renvoi)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. AUindicée 13, p.60 : 40 % espace vert paysager, SANS exigence de pleine terre (l'article UB13.2 ne s'applique pas)",
+       note: "Secteur de la ZAC Roland Garros (caractère de zone, p.57)."}
+  AUb2: {bassin: "Cilaos",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. AUindicée 10, p.60 (« Dans le secteur AUb2 ... 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage »)",
+       hauteur_note: "Équipements sportifs couverts d'intérêt collectif : hauteur absolue portée à 14 m.",
+       emprise_sol_pct: 70, emprise_src: "Art. AUindicée 9, p.59",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ub 6.2, p.33 via renvoi (ZONE AUindicée, p.57)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34 (via renvoi)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39 (via renvoi)",
+       stat_note: "Commerces/services/bureaux en AUb2 : 40 % de la SHON (Art. AUindicée 12, p.60).",
+       pleine_terre_pct: null, pleine_terre_src: "Art. AUindicée 13, p.60 : 30 % espace vert paysager, SANS exigence de pleine terre",
+       note: "Secteur de la ZAC Roland Garros (p.57). Spécificité : l'industriel et l'entrepôt exclusif y sont ADMIS (Art. AUindicée 1.2/2.2, p.57-58) — l'habitat reste admis (règles Ub via renvoi)."}
+
+zones_au_renvoi: {}
+
+# AUst — GEL (1 polygone, 2,4 ha) : réseaux et accès insuffisants, « l'ouverture à
+# l'urbanisation de la zone est conditionnée à une modification du PLU » (caractère de
+# zone, p.53) ; Art. AUst 1.2 (p.53) : toutes les occupations interdites sauf Art. AUst 2.2
+# (p.54 : réseaux, ouvrages techniques, reconstruction après sinistre, extensions mineures
+# <= 20 m² de SHON). Hauteur des rares travaux admis : 6 m (Art. AUst 10, p.56).
+zones_au_st:
+  liste: ["AUst"]
+  hauteur_max_m: 6
+  portee: "Construction neuve non autorisée en l'état : ouverture à l'urbanisation conditionnée à une MODIFICATION du PLU ; seuls réseaux, ouvrages techniques, reconstruction après sinistre et extensions mineures <= 20 m² de SHON sont admis, hauteur max 6 m."
+  source: "ZONE AUst (caractère de zone, p.53) ; Art. AUst 1.2, p.53 ; Art. AUst 2.2, p.54 ; Art. AUst 10, p.56."
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
+# DÉCISION (principe mandat-cadre, modèle Tampon) : constructibilité d'EXCEPTION uniquement,
+# aucune règle consommable pour du logement neuf ordinaire => repli générique honnête
+# (non constructibles), pas de calibrage :
+#   - Zone A + secteur Anc (chap. p.63-71) : Art. A 1.2 (p.63) interdit tout ce qui n'est
+#     pas lié et nécessaire à une exploitation agricole ; un seul logement par exploitation,
+#     <= 170 m² de SHOB (Art. A 2.2.3, p.64). Anc = « zone NC du POS de 2001 » (caractère de
+#     zone, p.63), occupations limitées sous avis CDPENAF (Art. A 2.2, p.65). Hauteur zone
+#     A : 4 m égout / 7 m faîtage (Art. A 10.2, p.69).
+#   - Zone N + secteurs Ndé, Nto (chap. p.73-80) : Art. N 1.2 (p.73) : interdits sauf N 2 ;
+#     N 2.2 (p.74) : extensions <= 150 m² SHOB total, abris/kiosques 30 m² par bâtiment et
+#     90 m² par unité foncière ; secteur Nto (tourisme/loisirs, hébergement possible) :
+#     SHOB <= 60 m² par bâtiment et 180 m² par unité foncière ; secteur Ndé : déchetterie,
+#     hélistation, station d'épuration. Hauteur zone N : 6 m au faîtage (Art. N 10.2, p.78).
+#   - NtoPOS (12,9 ha) : graphie JAMAIS écrite dans le règlement (secteurs N nommés : Ndé,
+#     Nto — caractère de zone, p.73) => rattachement à Nto NON gravé (hypothèse interdite),
+#     repli générique non constructible (famille N), à faire trancher par Vic.
+zones_non_constructibles: ["A, Anc (chap. p.63-71)",
+                           "N, Ndé, Nto (chap. p.73-80)",
+                           "NtoPOS (libellé absent du règlement — repli générique, famille N)"]
