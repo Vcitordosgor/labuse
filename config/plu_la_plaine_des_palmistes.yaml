@@ -1,0 +1,241 @@
+# =============================================================================
+# PLU LA PLAINE-DES-PALMISTES (97406) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU (archive GPU 97406_PLU_20230527).
+#   document : 97406_reglement.pdf (217 p.) — PLU approuvé le 29/05/2013, modifié le
+#   11/03/2019 (modification n°2) et le 27/05/2023 (modification n°3, idurba).
+#
+# STRUCTURE DU PDF (4 blocs concaténés — vérifiée page à page) :
+#   - p.1-117   : RÈGLEMENT consolidé (CODRA 2019, « Approuvé le 29 mai 2013, Modifié le
+#                 11 mars 2019 ») — pagination imprimée = page PDF (offset 0, vérifié :
+#                 « ZONE Ua » imprimée 11 = PDF 11, « ZONE Ub » 23 = PDF 23, glossaire 113
+#                 = PDF 113, conforme au sommaire p.3). C'EST LE SEUL TEXTE RÈGLEMENTAIRE
+#                 EN VIGUEUR ; toutes les citations _src pointent dans ce bloc (offset 0).
+#   - p.118-149 : notice de la MODIFICATION n°3 (mai 2023, pagination propre 1-31) —
+#                 REZONAGE PUR : la parcelle AV 613 (5 640 m² AUs1 + 1 670 m² AUs2) est
+#                 reclassée AUb (p.134-135 PDF, en image) ; AUCUNE modification du texte
+#                 du règlement (« Pour appliquer le règlement, il convient de se reporter
+#                 … au règlement des zones urbaines correspondantes à savoir Ub pour
+#                 AUb », p.135 PDF). Couche texte fantôme superposée (articles du
+#                 règlement en filigrane) — ignorée, sans valeur normative propre.
+#   - p.150-177 : notice de la modification n°2 (février 2019, pagination propre) — déjà
+#                 intégrée au bloc consolidé p.1-117.
+#   - p.178-217 : notice de la modification « Plateau vert » (2016, pagination propre
+#                 1-40 : c'est elle qui produisait le faux vote d'offset +177) — périmée,
+#                 intégrée au consolidé.
+#
+# COS (invariant 5, ALUR 2014) — document GPU en vigueur du 27/05/2023 (post-ALUR) :
+#   occurrences CONSIGNÉES, JAMAIS APPLIQUÉES :
+#     - Art. Ua 14 p.22, Ub 14 p.34, Uc 14 p.46, Ur 14 p.58, Ue 14 p.69 : « Il n'est pas
+#       fixé de coefficient d'occupation du sol. »
+#     - Art. AUs 14, p.74 : « Le coefficient d'occupation des sols est nul à l'exception
+#       des travaux d'aménagement et d'extension mineure pour mise aux normes sanitaires
+#       et d'habitabilité limités à 20 m2 de surface de plancher réalisés sur des
+#       constructions existantes. » — le gel AUs gravé ici est porté par Art. AUs 1.2/2.2
+#       (liste limitative, indépendante du COS), pas par ce COS nul.
+#     - Art. AUINDICEE 14, p.77 : « Se reporter au règlement de la zone U indiquée en
+#       indice. » ; Art. A 14, p.87 et Art. N 14, p.98 : « Sans objet. »
+#     - Reprises fantômes des mêmes articles 14 dans les couches texte superposées des
+#       blocs annexés (p.118-177 PDF) — mêmes textes, aucune valeur nouvelle.
+#   Aucun COS n'est gravé ni consommé.
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - null = « Non réglementé(e) » / « Sans objet » explicite (sourcé).
+#   - ANCIEN FORMAT à articles préfixés (Ua1..Ua14) : 6=recul voirie, 7=recul limites,
+#     9=emprise, 10=hauteur, 12=stationnement, 13=espaces libres.
+#   - RECUL VOIRIE Ua : « peuvent être implantées en retrait ou à l'alignement », le
+#     retrait étant PLAFONNÉ à 6 m (bande d'implantation, Art. Ua 6.2) => minimum 0
+#     gravé, plafond en note. Ub/Uc : retrait obligatoire 4 m ; Ur : 5 m ; Ue : 3 m.
+#   - RECUL LIMITES : implantation sur limite(s) autorisée en Ua (2 max), Ub/Uc (1 max),
+#     Ue (2 max) OU retrait 3,50 m ; Ur : retrait 3,50 m OBLIGATOIRE => gravé 3.5
+#     partout (valeur du retrait), faculté d'implantation en limite en note (convention
+#     Tampon).
+#   - PLEINE TERRE : Art. 13.3 impose un % « espace vert et perméable » SANS AUCUN
+#     sous-minimum de pleine terre => pleine_terre_pct null PARTOUT, % perméable en note
+#     (précédents Saint-Louis, Le Port, Les Avirons). En Ua, les aires de stationnement
+#     peuvent MÊME compter dans ce % (p.22) ; en Ub/Uc/Ur/Ue elles en sont exclues.
+#   - STATIONNEMENT : tableau UNIQUE en annexe (p.103) pour toutes les zones (chaque
+#     Art. 12.2 : « cf. annexe du règlement ») : logement < 30 m² => 1 place ; logement
+#     > 30 m² => 1,5 place/logement arrondi à l'entier inférieur pour l'opération.
+#   - ZONES AU indicées (chapitre « ZONE AUindicée », p.75-77) : renvoi explicite « il
+#     convient de se reporter, en fonction de l'indice de la zone AU considérée, au
+#     règlement des zones urbaines correspondantes à savoir Ub pour AUb, etc. » (p.75),
+#     répété « Se reporter au règlement de la zone U indiquée en indice » à chaque
+#     article => AUb→Ub, AUc→Uc, AUe→Ue, AUr→Ur en entrées EXPLICITES (le renvoi
+#     mécanique du moteur ne couvre que les codes AU à indice numérique).
+#   - AUs1/AUs2 : le chapitre AUs (p.71-74) ne nomme pas les secteurs, mais la règle
+#     générale des dispositions générales s'applique : « Dès lors qu'une zone comprend
+#     un ou plusieurs secteurs, la règle générale de la zone s'applique à chacun d'eux
+#     sauf lorsqu'une disposition particulière est prévue » (p.7) ; AUCUNE disposition
+#     particulière AUs1/AUs2 n'existe dans le règlement. Les graphies AUs1/AUs2 sont
+#     attestées dans le dossier : modification n°3 p.134 PDF (« 5 640 m² sont classés en
+#     zone AUs1 et 1 670 m² en zone AUs2 », en image) et notice 2016 p.190 PDF (AUs1
+#     « moyen terme », zone AUs2 chemin Dureau) => gel de la zone AUs entière.
+# =============================================================================
+
+source:
+  document: "97406_reglement.pdf"
+  approbation: "2023-05-27"
+  approbation_note: "PLU approuvé le 29/05/2013, modifié le 11/03/2019 ; modification n°3 approuvée le 27/05/2023 (rezonage AV 613 AUs1/AUs2 → AUb, sans modification du texte règlementaire) — millésime GPU 97406_PLU_20230527."
+  pages_total: 217
+  offset_pdf_vs_imprimee: 0
+  offset_note: "Offset 0 vérifié sur le bloc règlement p.1-117 (imprimée = PDF : Ua p.11, Ub p.23, glossaire p.113, sommaire p.3 concordant). Les blocs annexés p.118-217 ont leurs paginations propres (1-31, 1-27, 1-40) : les rares références à ces blocs sont citées en pages PDF."
+  reglement_grave:
+    fichier: "97406_reglement.pdf"
+    md5: "533ce4c9aa4ba3acdcb3ee78a9317929"
+    millesime: "2023-05-27"
+    document_gpu_au_calibrage: "97406_PLU_20230527"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Tableau UNIQUE en annexe p.103, toutes zones (Art. <Z>12.2 : « cf. annexe du règlement ») : logement < 30 m² 1 place ; logement > 30 m² 1,5 place/logement (arrondi à l'entier inférieur pour l'opération) ; vélo 2 m²/logement."
+  superficie_minimale: "Art. <Z>5 : « Non réglementée » dans toutes les zones U (sous réserve assainissement non collectif)."
+  secteurs: "Dispositions générales p.7 : « Dès lors qu'une zone comprend un ou plusieurs secteurs, la règle générale de la zone s'applique à chacun d'eux sauf lorsqu'une disposition particulière est prévue pour l'un de ces secteurs. »"
+  toitures: "Toits terrasses INTERDITS dans les zones U (Art. <Z>11.3) — toitures à 2 pans 15-45° obligatoires pour les constructions principales."
+
+# Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== LOT U — zones urbaines (Titre II, p.10-69) ==============
+  Ua: {bassin: "La Plaine-des-Palmistes",
+       he_m: 9, hf_m: 11, hauteur_src: "Art. Ua 10.1, p.18",
+       hauteur_note: "9 m à l'égout/acrotère, 11 m au faîtage, R+2. Annexes : 3,50 m absolu. RDC >=80 % commerce/bureaux/artisanat : +1 m.",
+       emprise_sol_pct: 70, emprise_src: "Art. Ua 9.2, p.17-18",
+       recul_voirie_m: 0, recul_voirie_src: "Art. Ua 6.2, p.15 (« Les constructions peuvent être implantées en retrait ou à l'alignement »)",
+       recul_voirie_note: "Alignement autorisé (0) ; en cas de retrait, celui-ci est AU MAXIMUM de 6 m (bande d'implantation).",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ua 7.2, p.16",
+       recul_limites_note: "Implantation possible sur 2 limites séparatives max (en fond de parcelle : 1 seule latérale + 3,50 m des angles) OU retrait 3,50 m min.",
+       stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ua 12.2, p.21 + annexe « Normes de stationnement », p.103",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.3, p.22 : 20 % « espace vert et perméable » SANS sous-minimum de pleine terre — les aires de stationnement peuvent y être comptées",
+       note: "Zone mixte du coeur de village (caractère de zone, p.11) ; habitat admis (Art. Ua 1.2, p.11 : interdits limités à industrie, entrepôt exclusif, agricole, camping, dépôts, carrières)."}
+  Ub: {bassin: "La Plaine-des-Palmistes",
+       he_m: 6, hf_m: 9, hauteur_src: "Art. Ub 10.1, p.30",
+       hauteur_note: "6 m à l'égout/acrotère, 9 m au faîtage, R+1+C. Annexes : 3,50 m. RDC >=80 % commerce/bureaux/artisanat : +1 m ; commerce >= 800 m² SDP : +4 m.",
+       emprise_sol_pct: 50, emprise_src: "Art. Ub 9.2, p.29-30",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ub 6.2, p.27",
+       recul_voirie_note: "Retrait obligatoire 4 m min ; 5 m sur voie de délestage/boulevard urbain du PADD ; 10 m si commerce >= 800 m² SDP.",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ub 7.2, p.28",
+       recul_limites_note: "Implantation possible sur 1 limite séparative max OU retrait 3,50 m min.",
+       stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ub 12.2, p.33 + annexe « Normes de stationnement », p.103",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.3, p.34 : 40 % « espace vert et perméable » (20 % si commerce >= 800 m² SDP) SANS sous-minimum de pleine terre ; stationnements exclus du décompte",
+       note: "Zone mixte de la zone agglomérée du village (caractère de zone, p.23) ; habitat admis (Art. Ub 1.2, p.23)."}
+  Uc: {bassin: "La Plaine-des-Palmistes",
+       he_m: 6, hf_m: 8, hauteur_src: "Art. Uc 10.1, p.42",
+       hauteur_note: "6 m à l'égout/acrotère, 8 m au faîtage, R+1. Annexes : 3,50 m.",
+       emprise_sol_pct: 40, emprise_src: "Art. Uc 9.2, p.41-42",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc 6.2, p.39 (retrait obligatoire, 4,00 m minimum)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. Uc 7.2, p.40",
+       recul_limites_note: "Implantation possible sur 1 limite séparative max OU retrait 3,50 m min.",
+       stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Uc 12.2, p.44-45 + annexe « Normes de stationnement », p.103",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Uc 13.3, p.45-46 : 50 % « espace vert et perméable » SANS sous-minimum de pleine terre ; stationnements exclus du décompte",
+       note: "Zone mixte de transition village/espaces ruraux + Bras des Calumets (caractère de zone, p.35) ; habitat admis (Art. Uc 1.2, p.35)."}
+  Ur: {bassin: "La Plaine-des-Palmistes",
+       he_m: 3.5, hf_m: 7, hauteur_src: "Art. Ur 10.1, p.54",
+       hauteur_note: "3,50 m à l'égout/acrotère, 7 m au faîtage, R+c. EXCEPTION (p.54) : opérations d'ensemble >= 10 logements locatifs sociaux : 6 m égout / 10 m faîtage / R+1+c — tranche générale (la plus conservatrice) gravée.",
+       emprise_sol_pct: 40, emprise_src: "Art. Ur 9.2, p.53",
+       recul_voirie_m: 5, recul_voirie_src: "Art. Ur 6.2, p.51 (retrait obligatoire, 5,00 m minimum)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ur 7.2, p.52 (retrait obligatoire de toute limite, 3,50 m minimum)",
+       stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ur 12.2, p.56-57 + annexe « Normes de stationnement », p.103",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ur 13.3, p.58 : 50 % « espace vert et perméable » SANS sous-minimum de pleine terre ; stationnements exclus du décompte",
+       note: "Zone mixte des quartiers ruraux — Petite Plaine, Bras Piton, la Pyramide (caractère de zone, p.47) ; habitat admis (Art. Ur 1.2, p.47 : interdits limités à industrie/entrepôt exclusif/dépôts/carrières — l'agricole n'y est PAS interdit)."}
+  Ue: {bassin: "La Plaine-des-Palmistes",
+       he_m: null, hf_m: 8, hauteur_src: "Art. Ue 10.1, p.66 (« limitée à 8 mètres au faîtage » — égout non réglementé)",
+       emprise_sol_pct: 60, emprise_src: "Art. Ue 9.2, p.66",
+       emprise_note: "70 % dans le secteur de la Pyramide, 60 % à Bras des Calumets — tranche la plus conservatrice (60) gravée.",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ue 6.2, p.63 (retrait obligatoire, 3 m minimum)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ue 7.2, p.64",
+       recul_limites_note: "Implantation possible sur 2 limites séparatives max OU retrait 3,50 m min.",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ue 1.2, p.59",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 13.3, p.69 : 25 % « espace vert et perméable » à Bras des Calumets, 10 % à la Pyramide, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. Ue 1.2, p.59 : sont interdits « 1. Les constructions, ouvrages et travaux à destination d'habitation » (+ hôtellerie, restauration, hébergement touristique rural) — aucune exception (même de gardiennage) à l'Art. Ue 2.2, p.60",
+       note: "Zone d'activité économique — industrie/artisanat de production, transformation, conditionnement, distribution (caractère de zone, p.59). O12 confirmé dans le texte."}
+
+  # ============== LOT AU indicées (Titre III, chapitre « ZONE AUindicée », p.75-77) ==============
+  # Renvoi explicite p.75 : « il convient de se reporter, en fonction de l'indice de la
+  # zone AU considérée, au règlement des zones urbaines correspondantes à savoir Ub pour
+  # AUb, etc. » — répété à chaque article (« Se reporter au règlement de la zone U
+  # indiquée en indice »). Constructions autorisées lors d'une opération d'aménagement
+  # d'ensemble OU au fur et à mesure des équipements internes (préambule p.75).
+  AUb: {bassin: "La Plaine-des-Palmistes",
+       he_m: 6, hf_m: 9, hauteur_src: "Art. Ub 10.1, p.30 via renvoi (ZONE AUindicée, p.75 : « Ub pour AUb »)",
+       emprise_sol_pct: 50, emprise_src: "Art. Ub 9.2, p.29-30 (via renvoi AUindicée, p.75)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ub 6.2, p.27 (via renvoi AUindicée, p.75)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ub 7.2, p.28 (via renvoi AUindicée, p.75)",
+       stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ub 12.2, p.33 + annexe p.103 (via renvoi AUindicée, p.75)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.3, p.34 (via renvoi) : 40 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Urbanisation future : opération d'ensemble OU au fur et à mesure des équipements internes (ZONE AUindicée, p.75). Renvoi intégral au règlement Ub, confirmé par la modification n°3 (p.135 PDF)."}
+  AUc: {bassin: "La Plaine-des-Palmistes",
+       he_m: 6, hf_m: 8, hauteur_src: "Art. Uc 10.1, p.42 via renvoi (ZONE AUindicée, p.75 : règlement de la zone U d'indice)",
+       emprise_sol_pct: 40, emprise_src: "Art. Uc 9.2, p.41-42 (via renvoi AUindicée, p.75)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc 6.2, p.39 (via renvoi AUindicée, p.75)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. Uc 7.2, p.40 (via renvoi AUindicée, p.75)",
+       stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Uc 12.2, p.44-45 + annexe p.103 (via renvoi AUindicée, p.75)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Uc 13.3, p.45-46 (via renvoi) : 50 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Urbanisation future : opération d'ensemble OU au fur et à mesure des équipements internes (ZONE AUindicée, p.75)."}
+  AUr: {bassin: "La Plaine-des-Palmistes",
+       he_m: 3.5, hf_m: 7, hauteur_src: "Art. Ur 10.1, p.54 via renvoi (ZONE AUindicée, p.75 : règlement de la zone U d'indice)",
+       hauteur_note: "Exception LLS >= 10 logements : 6 m / 10 m / R+1+c (Art. Ur 10.2, p.54, via renvoi).",
+       emprise_sol_pct: 40, emprise_src: "Art. Ur 9.2, p.53 (via renvoi AUindicée, p.75)",
+       recul_voirie_m: 5, recul_voirie_src: "Art. Ur 6.2, p.51 (via renvoi AUindicée, p.75)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ur 7.2, p.52 (via renvoi AUindicée, p.75)",
+       stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ur 12.2, p.56-57 + annexe p.103 (via renvoi AUindicée, p.75)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ur 13.3, p.58 (via renvoi) : 50 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Urbanisation future : opération d'ensemble OU au fur et à mesure des équipements internes (ZONE AUindicée, p.75)."}
+  AUe: {bassin: "La Plaine-des-Palmistes",
+       he_m: null, hf_m: 8, hauteur_src: "Art. Ue 10.1, p.66 via renvoi (ZONE AUindicée, p.75 : règlement de la zone U d'indice)",
+       emprise_sol_pct: 60, emprise_src: "Art. Ue 9.2, p.66 (via renvoi) — tranche conservatrice des deux secteurs (70 Pyramide / 60 Bras des Calumets)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ue 6.2, p.63 (via renvoi AUindicée, p.75)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ue 7.2, p.64 (via renvoi AUindicée, p.75)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ue 1.2, p.59 (via renvoi)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 13.3, p.69 (via renvoi) : 25 % / 10 % espace vert et perméable, sans sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. Ue 1.2, p.59 via renvoi (ZONE AUindicée, p.75) : constructions à destination d'habitation interdites, sans exception à l'Art. Ue 2.2, p.60",
+       note: "Zone d'activité future — O12 confirmé par le renvoi au règlement Ue (habitat interdit)."}
+
+zones_au_renvoi: {}
+
+# Zone AUs (chapitre p.71-74) — GEL : « l'ouverture à l'urbanisation de la zone est
+# conditionnée à une modification du PLU » (caractère de zone, p.71 ; idem dispositions
+# générales, p.7). Art. AUs 1.2 (p.71) : « Toutes les occupations et utilisations du sol
+# sont interdites à l'exception de celles admises à l'article AUs 2.2 » ; Art. AUs 2.2
+# (p.72) : réseaux/voirie/stationnement, ouvrages techniques de service public,
+# reconstruction après sinistre, extension mineure <= 20 m² SDP sur constructions
+# existantes. Hauteur des rares travaux admis : 6 m égout / 9 m faîtage (Art. AUs 10,
+# p.73). COS nul (Art. AUs 14, p.74) : consigné en tête, PAS consommé — le gel repose
+# sur Art. AUs 1.2/2.2. AUs1/AUs2 : secteurs sans AUCUNE disposition particulière au
+# chapitre => règle générale de la zone (dispositions générales, p.7) ; graphies
+# attestées par la modification n°3 (p.134 PDF) et la notice 2016 (p.190 PDF).
+# Capacité zéro EXACTE (étiquette moteur « secteur de transition » inexacte — friction
+# F2 connue depuis le pilote).
+zones_au_st:
+  liste: ["AUs1", "AUs2"]
+  hauteur_max_m: 9
+  portee: "Construction neuve non autorisée en l'état : zone AUs d'urbanisation future gelée, ouverture conditionnée à une MODIFICATION du PLU (réseaux et accès insuffisants). Seuls admis : réseaux/voirie, ouvrages techniques de service public, reconstruction après sinistre, extension mineure <= 20 m² SDP sur l'existant (hauteur 6 m égout / 9 m faîtage). AUs1 (« moyen terme ») et AUs2 (« long terme », notice 2016 p.190 PDF) : aucune disposition particulière au chapitre AUs => règle de la zone entière pour chacun (dispositions générales, p.7). La parcelle AV 613 (ex-AUs1/AUs2) a été reclassée AUb par la modification n°3 du 27/05/2023 — le zonage du manifeste (millésime 20230527) intègre déjà ce reclassement."
+  source: "ZONE AUs (caractère de zone, p.71) ; Art. AUs 1.2, p.71 ; Art. AUs 2.2, p.72 ; Art. AUs 10, p.73 ; Art. AUs 14, p.74."
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
+# DÉCISION (principe du mandat-cadre, modèle Tampon) : constructibilité d'EXCEPTION
+# uniquement — les graver ferait calculer une capacité logement fictive => repli
+# générique (non constructibles), verdict produit correct.
+#   - A (p.79-87) : seules les constructions nécessaires à l'exploitation agricole ;
+#     1 habitation par exploitation, 170 m² SDP max, hors secteur Aco (Art. A 2.2 (7.),
+#     p.80). Aco (corridors écologiques) : encore plus restrictif ; Ama : carrières.
+#   - N (p.89-98) : Art. N 1.2 tout est interdit sauf N 2.2 ; N : extension de l'existant
+#     limitée à 120 m² SDP cumulée (hors Nco/Nr/Np/Nu) ; Nto : STECAL touristique à SDP
+#     plafonnée 250 m² hébergement + 250 m² autres par unité foncière, emprise 20 %
+#     (Art. N 9.2, p.94), hauteurs 3 m égout / 7 m faîtage (Art. N 10.1, p.94) ; Nco/Nr/
+#     Np : quasi-inconstructibles (corridors, réservoirs de biodiversité, pâturages du
+#     coeur de Parc national) ; Nma : carrières ; Nu : parcs et jardins familiaux.
+zones_non_constructibles: ["A, Aco, Ama (chap. p.79-87)",
+                           "N, Nco, Nma, Np, Nr, Nto, Nu (chap. p.89-98)"]
