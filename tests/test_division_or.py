@@ -92,6 +92,29 @@ def test_metrique_bati_invalidee_pas_filtrante():
     assert "(facade_parcelle - facade_free) >= 5" not in d._DETECT
 
 
+def test_lot_decoupe_o12_partiel():
+    """O12-PARTIEL : lot DÉCOUPÉ (bande de façade) — aucun critère validé assoupli."""
+    q = d._DETECT_PARTIEL
+    # univers : écartées par le SEUL ratio > 50 % ; filtres parcelle inchangés (surface, bâti, activité)
+    assert "ST_Area(lg.geom) > c.surface_m2 * 0.5" in q
+    assert "BETWEEN 1000 AND 6000" in q and "BETWEEN 0.08 AND 0.45" in q
+    assert "nb_bat < {ens_min_bat} AND bat.max_bat_m2 < {grand_bat_m2}" in q
+    # bande ancrée sur le plus long segment CONTIGU de façade (LineMerge), bouts droits
+    assert "ST_LineMerge" in q and "endcap=flat" in q and "ST_LineSubstring" in q
+    # cible 600-900 m², compacité ≥ 0.28 (plancher OBSERVÉ du pool validé), cercle ≥ 9 m
+    assert (d.LOT_DECOUPE_MIN_M2, d.LOT_DECOUPE_MAX_M2) == (600, 900)
+    assert d.COMPACITE_MIN_DECOUPE == 0.28 and d.COMPACITE_MIN_DECOUPE >= d.COMPACITE_MIN
+    assert "BETWEEN {lot_min} AND {lot_max}" in q and ">= {compacite_min_dec}" in q
+    assert ".radius >= 9" in q
+    # façade du LOT revérifiée (contiguë ≥ 12), zonage, littoral, emprise restante : mêmes gardes
+    assert "facade_lot >= 12" in q
+    assert "zone = 'U' OR zone LIKE 'AU%'" in q and "{pau_pred}" in q and "{emprise_max}" in q
+    for kind in ("cinquante_pas", "foret_publique", "parc_national", "trait_de_cote"):
+        assert kind in q
+    # famille DISTINCTE, jamais fusionnée : type 'decoupe', géométrie du lot STOCKÉE
+    assert "'decoupe' AS type_division" in q and "lot_geom" in d._INSERT_PARTIEL
+
+
 @pytest.mark.db
 def test_build_commune_vide_et_table_creee(db_session):
     s = db_session
@@ -100,3 +123,6 @@ def test_build_commune_vide_et_table_creee(db_session):
     # la table masquée existe (DDL passé), vide
     assert s.execute(text("SELECT count(*) FROM division_or_candidates")).scalar() == 0
     assert d.top_candidates(s, limit=5) == []
+    # le détecteur PARTIEL tourne sur le même socle (SQL valide, 0 candidat, masqué)
+    r2 = d.build_divisions_partiel(s, ["Commune-Inexistante"], commit=False, log=lambda *_: None)
+    assert r2["total"] == 0 and r2["expose"] is False

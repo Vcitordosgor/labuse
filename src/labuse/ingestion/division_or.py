@@ -67,6 +67,19 @@ COMPACITE_MIN = 0.25
 # quand elle existe ; sinon ce plancher prudent s'applique.
 EMPRISE_RESTANTE_MAX = 0.60
 
+# ── O12-PARTIEL : le LOT DÉCOUPÉ (méthode « bande de façade ») ─────────────────────────────
+# Sur les parcelles écartées par le ratio > 50 % (résiduel entier = démembrement), on cherche
+# un SOUS-POLYGONE : bande ancrée sur le plus long segment CONTIGU de façade voirie du
+# résiduel (ancre ≤ 25 m, 3 positions), poussée en profondeur (20-40 m, buffer à bouts
+# droits) jusqu'à 600-900 m². Le lot ⊂ résiduel ⇒ AUCUN bâti dedans et recul 3 m du bâti
+# conservé, par construction. Aucun critère validé n'est assoupli : compacité ≥ 0.28 (le
+# plancher OBSERVÉ du pool validé, plus dur que COMPACITE_MIN), cercle inscrit ≥ 9 m, façade
+# contiguë du lot ≥ 12 m, zone U/AU (PAU si RNU), gardes littoral, emprise restante plafonnée.
+LOT_DECOUPE_MIN_M2 = 600
+LOT_DECOUPE_MAX_M2 = 900
+COMPACITE_MIN_DECOUPE = 0.28   # = min observé du pool « lot résiduel » validé (mandat O12-PARTIEL)
+ANCRE_LARGEUR_M = 25           # largeur de la bande côté rue (≥ 12 m de façade garantis)
+
 DDL = """
 CREATE TABLE IF NOT EXISTS division_or_candidates (
   idu           varchar(14) PRIMARY KEY,
@@ -94,6 +107,7 @@ ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS bati_lot_m2 int;
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS compacite numeric(4,3);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS zone_lib varchar(16);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS emprise_restante numeric(4,3);
+ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS lot_geom geometry(Polygon, 2975);
 """
 
 # Détection pour UNE commune (batch raisonnable). Buffers/seuils = constantes ci-dessus.
@@ -210,6 +224,155 @@ ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.su
     emprise_restante=EXCLUDED.emprise_restante,
     gain_estime_eur=EXCLUDED.gain_estime_eur, clarte=EXCLUDED.clarte, computed_at=now()
 """
+
+
+# O12-PARTIEL — détection du LOT DÉCOUPÉ pour UNE commune (méthode « bande de façade »).
+# Univers : parcelles du périmètre actuel écartées par le SEUL ratio > 50 % (résiduel entier
+# = démembrement) — filtres parcelle (surface, bâti 8-45 %, activité) inchangés. Le lot est
+# découpé DANS le résiduel : aucun bâti dedans ni à moins de 3 m, par construction.
+_DETECT_PARTIEL = """
+WITH cand AS (
+  SELECT p.id, p.idu, p.commune, p.geom_2975, p.surface_m2 FROM parcels p
+  WHERE p.commune = :commune AND p.surface_m2 BETWEEN 1000 AND 6000
+    AND EXISTS (SELECT 1 FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975))),
+bldg AS (
+  SELECT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
+  FROM cand c JOIN spatial_layers b ON b.kind='batiment' AND ST_Intersects(b.geom_2975, c.geom_2975)),
+bat AS (SELECT id, ST_Union(g) AS bgeom, sum(a) AS bat_m2,
+               count(*) FILTER (WHERE a >= 10) AS nb_bat, max(a) AS max_bat_m2 FROM bldg GROUP BY id),
+freed AS (
+  SELECT c.id, c.idu, c.commune, c.surface_m2, bat.bat_m2,
+         lg.geom AS free_geom, ST_Area(lg.geom) AS free_m2
+  FROM cand c JOIN bat ON bat.id = c.id
+  CROSS JOIN LATERAL (SELECT g.geom FROM ST_Dump(ST_Difference(c.geom_2975, ST_Buffer(bat.bgeom, 3))) g
+                      ORDER BY ST_Area(g.geom) DESC LIMIT 1) lg
+  WHERE bat.bat_m2 / c.surface_m2 BETWEEN 0.08 AND 0.45
+    AND bat.nb_bat < {ens_min_bat} AND bat.max_bat_m2 < {grand_bat_m2}
+    AND ST_Area(lg.geom) > c.surface_m2 * 0.5),
+-- plus long segment CONTIGU de façade voirie du résiduel (ST_LineMerge) — l'ancre de la bande
+fac AS (
+  SELECT f.*, seg.geom AS fseg, ST_Length(seg.geom) AS flen
+  FROM freed f
+  CROSS JOIN LATERAL (
+    SELECT g.geom FROM ST_Dump((
+      SELECT ST_LineMerge(ST_Union(ST_Intersection(ST_Buffer(v.geom_2975, 1.5), ST_Boundary(f.free_geom))))
+      FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, f.free_geom, 2))) g
+    ORDER BY ST_Length(g.geom) DESC LIMIT 1) seg
+  WHERE ST_Length(seg.geom) >= 12),
+-- bande : ancre ≤ {ancre_w} m (3 positions) × profondeur 20-40 m (buffer à bouts droits),
+-- clippée au résiduel — on retient la découpe de MEILLEURE compacité satisfaisant les seuils
+carve AS (
+  SELECT f.id, f.idu, f.commune, f.surface_m2, f.bat_m2, f.free_m2,
+         best.lot_geom, best.lot_m2, best.compacite_lot, best.rad
+  FROM fac f
+  CROSS JOIN LATERAL (
+    SELECT lot.geom AS lot_geom, ST_Area(lot.geom) AS lot_m2,
+           4*pi()*ST_Area(lot.geom)/power(ST_Perimeter(lot.geom),2) AS compacite_lot,
+           (ST_MaximumInscribedCircle(lot.geom)).radius AS rad
+    FROM (VALUES (0.0),(0.5),(1.0)) pos(frac)
+    CROSS JOIN generate_series(20, 40, 5) prof(d)
+    CROSS JOIN LATERAL (
+      SELECT CASE WHEN f.flen <= {ancre_w} THEN f.fseg
+             ELSE ST_LineSubstring(f.fseg, pos.frac * (1 - {ancre_w} / f.flen),
+                                   pos.frac * (1 - {ancre_w} / f.flen) + {ancre_w} / f.flen) END AS geom) an
+    CROSS JOIN LATERAL (
+      SELECT g.geom FROM ST_Dump(ST_Intersection(f.free_geom, ST_Buffer(an.geom, prof.d, 'endcap=flat'))) g
+      ORDER BY ST_Area(g.geom) DESC LIMIT 1) lot
+    WHERE ST_Area(lot.geom) BETWEEN {lot_min} AND {lot_max}
+      AND 4*pi()*ST_Area(lot.geom)/power(ST_Perimeter(lot.geom),2) >= {compacite_min_dec}
+      AND (ST_MaximumInscribedCircle(lot.geom)).radius >= 9
+    ORDER BY compacite_lot DESC LIMIT 1) best),
+-- façade voirie CONTIGUË du LOT découpé (revérifiée sur le lot, pas héritée de l'ancre)
+mesure AS (
+  SELECT c.*,
+    (SELECT coalesce(max(ST_Length(g.geom)), 0) FROM ST_Dump((
+       SELECT ST_LineMerge(ST_Union(ST_Intersection(ST_Buffer(v.geom_2975, 1.5), ST_Boundary(c.lot_geom))))
+       FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, c.lot_geom, 2))) g) AS facade_lot
+  FROM carve c),
+zon AS (
+  SELECT m.*, z.subtype AS zone, z.zone_lib
+  FROM mesure m
+  LEFT JOIN LATERAL (
+    SELECT z2.subtype, z2.attrs->>'libelle' AS zone_lib FROM spatial_layers z2
+    WHERE z2.kind='plu_gpu_zone' AND ST_Intersects(z2.geom_2975, m.lot_geom)
+    ORDER BY ST_Area(ST_Intersection(z2.geom_2975, m.lot_geom)) DESC LIMIT 1) z ON true)
+SELECT idu, commune, round(surface_m2)::int surface_m2, round(bat_m2)::int bati_m2,
+       round((bat_m2/surface_m2)::numeric,3) bati_ratio, round(lot_m2)::int residuel_m2,
+       round(rad::numeric,1) residuel_rayon_m, round(facade_lot::numeric,1) residuel_facade_m,
+       NULL::numeric AS bati_facade_m, zone, zone_lib,
+       'decoupe' AS type_division, 0 AS bati_lot_m2,
+       round(compacite_lot::numeric,3) AS compacite,
+       round((bat_m2 / NULLIF(surface_m2 - lot_m2, 0))::numeric,3) AS emprise_restante,
+       lot_geom
+FROM zon
+WHERE facade_lot >= 12
+  AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
+  AND bat_m2 / NULLIF(surface_m2 - lot_m2, 0) <= ({emprise_max})
+  AND NOT EXISTS (SELECT 1 FROM spatial_layers l5 WHERE l5.kind='cinquante_pas'
+                    AND ST_Intersects(l5.geom_2975, zon.lot_geom))
+  AND NOT EXISTS (SELECT 1 FROM spatial_layers lf WHERE lf.kind='foret_publique'
+                    AND lf.subtype='domaniale' AND ST_Intersects(lf.geom_2975, zon.lot_geom))
+  AND NOT EXISTS (SELECT 1 FROM spatial_layers lp WHERE lp.kind='parc_national'
+                    AND lp.subtype='coeur' AND ST_Intersects(lp.geom_2975, zon.lot_geom))
+  AND NOT EXISTS (SELECT 1 FROM spatial_layers lt WHERE lt.kind='trait_de_cote'
+                    AND ST_DWithin(lt.geom_2975, zon.lot_geom, 1));
+"""
+
+
+_INSERT_PARTIEL = """
+INSERT INTO division_or_candidates (idu, commune, surface_m2, bati_m2, bati_ratio,
+    residuel_m2, residuel_rayon_m, residuel_facade_m, bati_facade_m, zone, zone_lib,
+    type_division, bati_lot_m2, compacite, emprise_restante, lot_geom, gain_estime_eur, clarte)
+SELECT d.idu, d.commune, d.surface_m2, d.bati_m2, d.bati_ratio, d.residuel_m2,
+       d.residuel_rayon_m, d.residuel_facade_m, d.bati_facade_m, d.zone, d.zone_lib,
+       d.type_division, d.bati_lot_m2, d.compacite, d.emprise_restante, d.lot_geom,
+       se.marge_estimee,
+       round((d.residuel_rayon_m * 2 + LEAST(d.residuel_facade_m, 30))::numeric, 1) AS clarte
+FROM ({detect}) d
+LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable
+ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.surface_m2,
+    bati_m2=EXCLUDED.bati_m2, bati_ratio=EXCLUDED.bati_ratio, residuel_m2=EXCLUDED.residuel_m2,
+    residuel_rayon_m=EXCLUDED.residuel_rayon_m, residuel_facade_m=EXCLUDED.residuel_facade_m,
+    bati_facade_m=EXCLUDED.bati_facade_m, zone=EXCLUDED.zone, zone_lib=EXCLUDED.zone_lib,
+    type_division=EXCLUDED.type_division, bati_lot_m2=EXCLUDED.bati_lot_m2,
+    compacite=EXCLUDED.compacite, emprise_restante=EXCLUDED.emprise_restante,
+    lot_geom=EXCLUDED.lot_geom, gain_estime_eur=EXCLUDED.gain_estime_eur,
+    clarte=EXCLUDED.clarte, computed_at=now()
+"""
+
+
+def build_divisions_partiel(session: Session, communes: list[str], *, commit: bool = True,
+                            log=lambda *_: None) -> dict:
+    """O12-PARTIEL — détecte les LOTS DÉCOUPÉS (type 'decoupe', famille DISTINCTE des lots
+    résiduels — jamais fusionnée). Univers disjoint du pool résiduel (ratio > 50 % vs ≤ 50 %) :
+    aucun conflit de clé. Mêmes gardes que le pool validé, aucun critère assoupli."""
+    session.execute(text(DDL))
+    has_score_e = session.execute(text("SELECT to_regclass('score_e')")).scalar() is not None
+    has_pau = session.execute(text("SELECT to_regclass('parcel_pau')")).scalar() is not None
+    pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
+    total = 0
+    for commune in communes:
+        detect = _DETECT_PARTIEL.format(
+            pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
+            grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
+            lot_min=LOT_DECOUPE_MIN_M2, lot_max=LOT_DECOUPE_MAX_M2,
+            compacite_min_dec=COMPACITE_MIN_DECOUPE, ancre_w=ANCRE_LARGEUR_M).strip().rstrip(";")
+        if has_score_e:
+            insert_sql = _INSERT_PARTIEL.format(detect=detect)
+        else:
+            insert_sql = _INSERT_PARTIEL.replace("se.marge_estimee,", "NULL::int,").replace(
+                "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
+        session.execute(text(insert_sql), {"commune": commune})
+        n = session.execute(text(
+            "SELECT count(*) FROM division_or_candidates WHERE commune = :c AND type_division = 'decoupe'"),
+            {"c": commune}).scalar()
+        total = session.execute(text(
+            "SELECT count(*) FROM division_or_candidates WHERE type_division = 'decoupe'")).scalar()
+        log(f"division-or-partiel {commune} : {n} lots à découper")
+    if commit:
+        session.commit()
+    log(f"division_or_candidates (decoupe) : {total} lots à découper (MASQUÉ)")
+    return {"total": total, "expose": EXPOSE}
 
 
 def _emprise_max_sql(commune: str) -> str:

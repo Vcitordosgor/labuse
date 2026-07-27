@@ -31,13 +31,21 @@ sub AS (SELECT CASE WHEN :type = 'demolition'
                     THEN (SELECT g FROM bldg ORDER BY a DESC LIMIT 1) ELSE (SELECT g FROM bat) END g),
 free AS (SELECT lg.geom g FROM p, sub
          CROSS JOIN LATERAL (SELECT gg.geom FROM ST_Dump(ST_Difference(p.geom_2975, ST_Buffer(sub.g,3))) gg
-                             ORDER BY ST_Area(gg.geom) DESC LIMIT 1) lg)
+                             ORDER BY ST_Area(gg.geom) DESC LIMIT 1) lg),
+-- type 'decoupe' (O12-PARTIEL) : le lot AFFICHÉ est la découpe STOCKÉE par le détecteur,
+-- jamais recalculée (fidélité au run) ; sinon le résiduel recalculé comme avant
+lotg AS (SELECT CASE WHEN :type = 'decoupe'
+                     THEN (SELECT dc.lot_geom FROM division_or_candidates dc WHERE dc.idu = :idu)
+                     ELSE (SELECT g FROM free) END g),
+voi AS (SELECT ST_Union(ST_Buffer(ST_Intersection(v.geom_2975, ST_Buffer(p.geom_2975, 30)), 1.5)) g
+        FROM spatial_layers v, p WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, p.geom_2975, 30))
 SELECT p.gj AS parcelle,
        ST_AsGeoJSON(ST_Transform(bat.g, 4326), 7) AS bati,
-       ST_AsGeoJSON(ST_Transform(free.g, 4326), 7) AS lot,
-       CASE WHEN ST_Area(ST_Intersection(bat.g, free.g)) > 1
-            THEN ST_AsGeoJSON(ST_Transform(ST_Intersection(bat.g, free.g), 4326), 7) END AS demolir
-FROM p, bat, free;
+       ST_AsGeoJSON(ST_Transform(lotg.g, 4326), 7) AS lot,
+       CASE WHEN ST_Area(ST_Intersection(bat.g, lotg.g)) > 1
+            THEN ST_AsGeoJSON(ST_Transform(ST_Intersection(bat.g, lotg.g), 4326), 7) END AS demolir,
+       (SELECT ST_AsGeoJSON(ST_Transform(voi.g, 4326), 7) FROM voi) AS voirie
+FROM p, bat, lotg;
 """
 
 _CSS = """
@@ -51,12 +59,12 @@ h1 { font-size: 16pt; }
 table { width:100%; border-collapse:collapse; font-size:8pt; margin-top:1.5mm; }
 td { padding:0.8mm 2mm 0.8mm 0; }
 .leg { font-size:7.5pt; color:#555; }
-.leg b.p{color:#0B8A5F} .leg b.b{color:#888} .leg b.l{color:#C98A00} .leg b.d{color:#B01818}
+.leg b.p{color:#0B8A5F} .leg b.b{color:#888} .leg b.l{color:#C98A00} .leg b.d{color:#B01818} .leg b.v{color:#2A5AC8}
 .valid { margin-top:1.5mm; font-size:8.5pt; }
 """
 
 
-def _tiles_and_shapes(parcelle_gj, bati_gj, lot_gj, cache_dir, demolir_gj=None):
+def _tiles_and_shapes(parcelle_gj, bati_gj, lot_gj, cache_dir, demolir_gj=None, voirie_gj=None):
     """Fond IGN + tracés SVG (parcelle, bâti, lot) dans une MÊME transformée ancrée sur la parcelle."""
     import json
     rings = _rings(json.loads(parcelle_gj))
@@ -96,6 +104,7 @@ def _tiles_and_shapes(parcelle_gj, bati_gj, lot_gj, cache_dir, demolir_gj=None):
     imgs = "".join(f"<img src='{u}' style='position:absolute;left:{l}px;top:{t}px;width:256px;height:256px;'>"
                    for l, t, u in tiles)
     svg = (f"<svg width='{VIEW_W}' height='{VIEW_H}' style='position:absolute;left:0;top:0;'>"
+           + to_svg(voirie_gj, "rgba(40,90,200,0.35)", "#2A5AC8", 0.8)
            + to_svg(parcelle_gj, "none", "#0B8A5F", 3)
            + to_svg(bati_gj, "rgba(120,120,120,0.55)", "#666", 1)
            + to_svg(lot_gj, "rgba(201,138,0,0.30)", "#C98A00", 2.5)
@@ -118,10 +127,12 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
         type_div = c.get("type_division") or "libre"
         geoms = session.execute(text(_GEOMS), {"idu": c["idu"], "type": type_div}).mappings().first()
         carte = (_tiles_and_shapes(geoms["parcelle"], geoms["bati"], geoms["lot"], cache_dir,
-                                   demolir_gj=geoms["demolir"]) if geoms else None)
+                                   demolir_gj=geoms["demolir"], voirie_gj=geoms["voirie"]) if geoms else None)
         gain = f"{c['gain_estime_eur']:,} €".replace(",", " ") if c.get("gain_estime_eur") else "non estimable"
-        type_txt = ("Division libre (lot nu)" if type_div == "libre" else
-                    f"Division avec démolition — dont {c.get('bati_lot_m2') or 0} m² à démolir")
+        type_txt = ("Division libre (lot nu — le terrain libre existe tel quel)" if type_div == "libre"
+                    else f"Division avec démolition — dont {c.get('bati_lot_m2') or 0} m² à démolir"
+                    if type_div == "demolition" else
+                    "Lot À DÉCOUPER (hypothétique — le lot proposé exige un découpage géomètre)")
         zone_txt = (f"{c['zone']} ({c['zone_lib']})" if c.get("zone") and c.get("zone_lib")
                     else c.get("zone") or "RNU — PAU estimée")
         emprise_txt = (f"{c['emprise_restante'] * 100:.0f} % après division"
@@ -130,7 +141,7 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
             f"<div class='card'><h3>{i}. {html.escape(c['idu'])} — {html.escape(c['commune'])}</h3>"
             + (carte or "<p class='leg'>Fond IGN indisponible.</p>")
             + "<p class='leg'>Tracés : <b class='p'>parcelle</b> · <b class='b'>bâti</b> · "
-              "<b class='l'>lot détachable proposé</b> · <b class='d'>bâti à démolir</b></p>"
+              "<b class='l'>lot proposé</b> · <b class='d'>bâti à démolir</b> · <b class='v'>voirie</b></p>"
             + f"<table><tr><td colspan='2'><b>{html.escape(type_txt)}</b></td>"
               f"<td>Zonage du lot</td><td>{html.escape(zone_txt)}</td></tr>"
               f"<tr><td>Emprise du lot restant</td><td>{html.escape(emprise_txt)}</td>"
