@@ -70,6 +70,9 @@ def engine():
     with _ss() as _s:
         _comptes_ens(_s)
         ensure_scoping(_s)   # migre compte_id + FK cascade + unique (compte_id, idu) — comme au boot
+    # M26-A — Copilote : agent_runs / agent_events / agent_run_parcels (après comptes, comme au boot).
+    from labuse.copilote.tables import ensure_tables as _copilote_ens
+    _copilote_ens(eng)
     # F3 (Phase 0 J1) : tables « data-gap » interrogées par l'app mais NON déclarées en ORM (créées
     # hors code en prod par l'ingestion pente). On les matérialise VIDES en base de test → l'app ne
     # casse plus sur « relation inexistante » (le contrat data-gap = 0 ligne, jamais une erreur SQL).
