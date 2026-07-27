@@ -1,0 +1,110 @@
+── Phase 1 : ancienne formule annotée (lecture seule, 5 communes en parallèle) ──
+  Saint-Paul               avant= 745  (21s)
+  Le Tampon                avant= 720  (27s)
+  Saint-Pierre             avant= 404  (15s)
+  Saint-Denis              avant= 545  (20s)
+  Saint-Louis              avant= 395  (17s)
+  Saint-Joseph             avant= 423  (9s)
+  Saint-Leu                avant= 284  (7s)
+  Saint-André              avant= 252  (7s)
+  Saint-Benoît             avant= 267  (7s)
+  Sainte-Marie             avant= 278  (7s)
+  La Possession            avant= 146  (974s)
+  Petite-Île               avant= 204  (665s)
+  Sainte-Suzanne           avant= 180  (842s)
+  Le Port                  avant=  24  (168s)
+  L'Étang-Salé             avant= 129  (404s)
+  Les Avirons              avant= 114  (613s)
+  Salazie                  avant= 265  (577s)
+  Cilaos                   avant=  97  (278s)
+  La Plaine-des-Palmistes  avant= 110  (416s)
+  Entre-Deux               avant=  72  (95s)
+  Sainte-Rose              avant=  56  (70s)
+  Bras-Panon               avant=  51  (112s)
+  Les Trois-Bassins        avant= 115  (139s)
+  Saint-Philippe           avant=  40  (31s)
+  détail → /Users/openclaw/Desktop/labuse-o12/reports/o12-ile/bilan_avant.csv
+── Phase 2 : TRUNCATE + build_divisions (formule corrigée, 5 communes en parallèle) ──
+  division-or Saint-Louis : 14 candidats
+  division_or_candidates : 14 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Paul : 65 candidats
+  division_or_candidates : 79 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Le Tampon : 6 candidats
+  division_or_candidates : 85 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Denis : 18 candidats
+  division_or_candidates : 103 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Pierre : 30 candidats
+  division_or_candidates : 133 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Joseph : 17 candidats
+  division_or_candidates : 150 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Leu : 19 candidats
+  division_or_candidates : 169 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-André : 30 candidats
+  division_or_candidates : 199 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Benoît : 16 candidats
+  division_or_candidates : 215 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Sainte-Marie : 20 candidats
+  division_or_candidates : 235 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or La Possession : 10 candidats
+  division_or_candidates : 245 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Petite-Île : 3 candidats
+  division_or_candidates : 248 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Sainte-Suzanne : 10 candidats
+  division_or_candidates : 258 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Le Port : 11 candidats
+  division_or_candidates : 269 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or L'Étang-Salé : 7 candidats
+  division_or_candidates : 276 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Les Avirons : 0 candidats
+  division_or_candidates : 276 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Salazie : 5 candidats
+  division_or_candidates : 281 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Cilaos : 3 candidats
+  division_or_candidates : 284 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or La Plaine-des-Palmistes : 2 candidats
+  division_or_candidates : 286 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Entre-Deux : 2 candidats
+  division_or_candidates : 288 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Sainte-Rose : 0 candidats
+  division_or_candidates : 288 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Bras-Panon : 1 candidats
+  division_or_candidates : 289 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Les Trois-Bassins : 1 candidats
+  division_or_candidates : 290 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Philippe : 4 candidats
+  division_or_candidates : 294 candidats (MASQUÉ — attend le dossier de revue Vic)
+
+## Effectifs par commune — avant / après correctifs
+
+| Commune | Avant | Après | Éliminés |
+|---|---:|---:|---:|
+| Bras-Panon | 51 | 1 | 50 |
+| Cilaos | 97 | 3 | 94 |
+| Entre-Deux | 72 | 2 | 70 |
+| L'Étang-Salé | 129 | 7 | 122 |
+| La Plaine-des-Palmistes | 110 | 2 | 108 |
+| La Possession | 146 | 10 | 136 |
+| Le Port | 24 | 11 | 13 |
+| Le Tampon | 720 | 6 | 714 |
+| Les Avirons | 114 | 0 | 114 |
+| Les Trois-Bassins | 115 | 1 | 114 |
+| Petite-Île | 204 | 3 | 201 |
+| Saint-André | 252 | 30 | 222 |
+| Saint-Benoît | 267 | 16 | 251 |
+| Saint-Denis | 545 | 18 | 527 |
+| Saint-Joseph | 423 | 17 | 406 |
+| Saint-Leu | 284 | 19 | 265 |
+| Saint-Louis | 395 | 14 | 381 |
+| Saint-Paul | 745 | 65 | 680 |
+| Saint-Philippe | 40 | 4 | 36 |
+| Saint-Pierre | 404 | 30 | 374 |
+| Sainte-Marie | 278 | 20 | 258 |
+| Sainte-Rose | 56 | 0 | 56 |
+| Sainte-Suzanne | 180 | 10 | 170 |
+| Salazie | 265 | 5 | 260 |
+| **Total** | **5916** | **294** | **5622** |
+
+Éliminations (non exclusives) : ratio>50 % = 5562 · zone A/N = 2309 · RNU hors PAU = 18
+
+Surfaces de lot (après) : n=294 · min=501 · P25=775 · médiane=1052 · P75=1739 · max=2885 m²
+Zones (après) : U=280 · AUc=7 · RNU-PAU=4 · AU=3
