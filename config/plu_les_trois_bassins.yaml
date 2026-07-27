@@ -1,0 +1,282 @@
+# =============================================================================
+# PLU LES TROIS-BASSINS (97423) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU (archive GPU 97423_PLU_20220602).
+#   document : 97423_reglement.pdf (119 p.) — PLU prescrit le 08/12/2011, arrêté le
+#   30/06/2016, approuvé le 21/02/2017, modifié le 02/06/2022 (page de garde, p.1).
+#
+# COS — INVARIANT 5 DU MANDAT (document post-ALUR approuvé le 21/02/2017, modifié le
+# 02/06/2022 — le COS est aboli depuis la loi ALUR 2014 ; consigné, JAMAIS appliqué).
+# 12 occurrences détectées (8 intitulés d'article 14 + 4 phrases), AUCUNE valeur fixée :
+#   - Art. Ua 14, p.24  : « Il n'est pas fixé de coefficient d'occupation du sol. »
+#   - Art. Ub 14, p.38  : « Il n'est pas fixé de coefficient d'occupation du sol. »
+#   - Art. Uc 14, p.52  : « Il n'est pas fixé de coefficient d'occupation du sol. »
+#   - Art. Ue 14, p.62  : « Il n'est pas fixé de coefficient d'occupation du sol. »
+#   - Art. AUINDICEE 14, p.70 : « Pour la zone AUt, se reporter au règlement de la zone
+#     Ub. Pour les autres zones, se reporter au règlement de la zone U indiquée en
+#     indice » (renvoi vers des zones U où le COS n'est pas fixé).
+#   - Art. AUs 14, p.73 : « Sans objet. »
+#   - Art. A14, p.82    : « Sans objet. »
+#   - Art. N14, p.94    : « Sans objet. »
+# Aucune valeur de COS dans le document => rien à appliquer, tout est consigné ci-dessus.
+# (Le comptage brut/dedouble 12/0 d'extract.py vient du repli des lettres doublées qui
+# casse le mot « occupation » — pas d'occurrence fantôme.)
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee + 0 (vote extract.py 0 avec 4 voix, CONFIRMÉ : sommaire
+#     « 2 » en en-tête = PDF 2 ; « ZONE Ua » sommaire p.10 = PDF 10 ; « ZONE Ub » p.25 =
+#     PDF 25 ; « ZONE N » p.84 = PDF 84 — numéros imprimés en EN-TÊTE de page, piège du
+#     lot vérifié). Les _src citent la page IMPRIMÉE (= page PDF ici).
+#   - null = « Non réglementé » / « Sans objet » explicite (sourcé), ou absence de
+#     sous-minimum de pleine terre (voir ci-dessous).
+#   - ANCIEN FORMAT à articles préfixés (Ua1..Ua14) : 6=recul voirie, 7=recul limites,
+#     9=emprise, 10=hauteur, 12=stationnement, 13=espaces libres.
+#   - PLEINE TERRE : chaque Art. <Z>13.1 impose un % « espace vert et perméable »
+#     (Ua 20 %, Ub 30 %, Uc 40 %, Ue 25 %) SANS AUCUN sous-minimum de pleine terre =>
+#     pleine_terre_pct null PARTOUT, % perméable en note (précédents Saint-Louis,
+#     Le Port, Les Avirons, La Plaine-des-Palmistes, Bras-Panon).
+#   - RECUL VOIRIE : retrait 4 m dans toutes les zones U (Art. <Z>6.2) ; en Ua,
+#     l'alignement est ouvert aux seuls bureaux/commerces/artisanat (et RDC commerce) —
+#     le logement reste à 4 m => gravé 4, faculté en note. RN1a : 17 m de l'axe ;
+#     ravines du domaine public fluvial : 10 m du bord (chaque Art. <Z>6.2).
+#   - RECUL LIMITES : implantation en limite latérale autorisée (1 limite ; patio 3 m si
+#     habitation > 10 m de profondeur en limite) OU retrait 3 m ; fond de propriété :
+#     retrait 3 m obligatoire => gravé 3 (valeur du retrait), faculté en note
+#     (convention Tampon). Ue : retrait D=H/2 sans être inférieur à 4 m, fond 4 m => 4.
+#   - STATIONNEMENT : norme identique dans Ua/Ub/Uc (Art. <Z>12.2) : 1,5 place /
+#     logement ; collectif : 1,25 place/logement OU 1 place/35 m² SDP (norme la plus
+#     productive, plafond 2 places/logement) => gravé « 1,5 place / logement ».
+#   - RÈGLE GÉNÉRALE DES SECTEURS (Art. 3 des dispositions générales, p.5) : « Dès lors
+#     qu'une zone comprend un ou plusieurs secteurs, la règle générale de la zone
+#     s'applique à chacun d'eux sauf lorsqu'une disposition particulière est prévue pour
+#     l'un de ces secteurs » => Uaa (dispositions propres : Art. Ua 7.2 limites et
+#     Art. Ua 10.2 hauteur) hérite du reste des règles Ua — héritage ÉCRIT, pas inféré.
+#   - ZONES AU (chapitre unique « ZONE AUindicée », p.64-70) : renvoi explicite « il
+#     convient de se reporter en fonction de l'indice de la zone AU considérée au
+#     règlement des zones urbaines correspondantes, sauf spécification contraire »
+#     (p.64), répété article par article (Art. 3 à 6 et 8 à 14 : « Pour les autres
+#     zones, se reporter au règlement de la zone U indiquée en indice ») ; à chaque
+#     article : « Pour la zone AUt, se reporter au règlement de la zone Ub ». Art. 7
+#     (limites séparatives) : règles PROPRES au chapitre (retrait 3 m) + « Pour la zone
+#     AUe, se reporter au règlement de la zone Ue ». Art. 10 : hauteur PROPRE pour AUt
+#     (8/10 m) et renvoi « Pour la zone Aua, se reporter au règlement de la zone Uaa »
+#     (modification du 02/06/2022 ; « Aua » = zone AUa, seule lecture possible dans le
+#     chapitre AU — la hauteur de 1AUa suit donc Uaa 12/16, pas Ua 10/14).
+#     Le renvoi mécanique du moteur ne couvre pas les codes 1AUx/2AUx (préfixe
+#     chiffré) => entrées EXPLICITES.
+#   - GRAPHIES AU : le corps du texte écrit les indices SANS préfixe chiffré (« En zone
+#     AUt », « Pour la zone AUe », « en zone AUa/AUb/AUc », Art. AUINDICEE 1.2, 2.2 et
+#     7, p.64-67) ; le préambule définit les « deux types de zones » 1AUindicée /
+#     2AUindicée (p.64, idem dispositions générales p.6). L'équivalence
+#     1AUx/2AUx <-> AUx est donc écrite (type 1/2 + indice), pas inférée. Le manifeste
+#     ne compte AUCUN polygone 2AUe ni 2AUt.
+#   - 24 RENVOIS du pré-vol : tous dans le chapitre AUindicée (préambule p.64 + Art. 3 à
+#     6 et 8 à 14 « zone U indiquée en indice » x2 lignes chacun + AUt -> Ub à chaque
+#     article + AUe -> Ue à l'Art. 7 + AUa -> Uaa à l'Art. 10) — chaîne résolue
+#     explicitement dans chaque entrée 1AU* ci-dessous. Aucune chaîne non résolue.
+#   - 1AUe NON CALIBRÉE (contradiction de destinations, décision motivée — voir
+#     zones_non_calibrees).
+# =============================================================================
+
+source:
+  document: "97423_reglement.pdf"
+  approbation: "2022-06-02"
+  approbation_note: "PLU approuvé le 21/02/2017 ; modification approuvée par délibération du conseil municipal du 02/06/2022 (page de garde p.1 ; mentions « Modification approuvée par délibération du conseil municipal du 02 juin 2022 » dans le corps, ex. Art. Ua 2.2, p.11)."
+  pages_total: 119
+  offset_pdf_vs_imprimee: 0
+  offset_note: "Vote extract.py 0 (4 voix contre 1), confirmé sur le sommaire (« ZONE Ua » p.10 = PDF 10, « ZONE Ub » p.25 = PDF 25, « ZONE Uc » p.39 = PDF 39, « ZONE N » p.84 = PDF 84) et sur les numéros imprimés en EN-TÊTE des pages PDF 2, 10, 25, 39, 53, 64, 74, 84."
+  reglement_grave:
+    fichier: "97423_reglement.pdf"
+    md5: "c3d7e7fd26ba985cf7bb8e5a14bb4534"
+    millesime: "2022-06-02"
+    document_gpu_au_calibrage: "97423_PLU_20220602"
+    verifie_le: "2026-07-28"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Norme identique dans Ua/Ub/Uc (Art. <Z>12.2) : habitation 1,5 place/logement (arrondi à l'entier inférieur) ; collectif : 1,25 place/logement OU 1 place/35 m² SDP, norme la plus productive retenue, PLAFOND 2 places/logement ; +0,5 place sur voie par parcelle pour les lotissements > 5 lots ; logement locatif aidé : 1 place max (R.111-6). Deux-roues obligatoire (Art. <Z>12.4)."
+  limites_separatives: "Latérales : implantation sur une limite autorisée (patio 3 m si habitation > 10 m de profondeur en limite ; 5 m si autre destination > 20 m) OU retrait 3 m ; fond de propriété : retrait 3 m obligatoire (Art. <Z>7.2-7.3, zones Ua/Ub/Uc et chapitre AUindicée). Ue : une seule limite possible, retrait D=H/2 >= 4 m, fond 4 m."
+  reculs_particuliers: "RN1a : retrait obligatoire 17 m de l'axe ; ravines du domaine public fluvial : 10 m du bord (5 m possibles pour les autres ravines à fort dénivelé) — rappelé à chaque Art. <Z>6.2 (Ua p.14, Ub p.29, Uc p.43)."
+  densite_minimale: "Ua et Ub : densité MINIMALE 30 logts/ha (Art. Ua 2.2, p.11 ; Art. Ub 2.2, p.26-27). Zones AU hors OAP : 35 logts/ha en AUa, 30 en AUb, 20 en AUc (Art. AUINDICEE 2.2, p.66 ; AUe et AUt exclues). Densité appréciée à l'échelle de la zone."
+  mixite: "Projet > 1 000 m² SDP habitation : 40 % minimum de logement aidé dont 25 % de locatif social ; opérations d'aménagement > 1 200 m² SDP : 40 % global (Art. Ua 2.2 p.11, Ub 2.2 p.27, AUINDICEE 2.2 p.66 — Uc : clause logement social seule, p.40)."
+  distance_entre_batiments: "Deux constructions principales non contiguës : D=H/2 >= 4 m (Art. Ua 8.2, p.16 ; idem Ub/Uc) ; Ue : 6 m (Art. Ue 8.2, p.58)."
+
+# Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== LOT U — zones urbaines (Titre II, p.9-62) ==============
+  Ua: {bassin: "Les Trois-Bassins",
+       he_m: 10, hf_m: 14, hauteur_src: "Art. Ua 10.2, p.18",
+       hauteur_note: "Annexes : 3,50 m (p.18). Prise de mitoyenneté : hauteur de la construction voisine +3 m sans excéder le plafond.",
+       emprise_sol_pct: 60, emprise_src: "Art. Ua 9.2, p.17",
+       emprise_note: "Annexes : 10 % max en sus du plafond global. Portée à 80 % si raccordement à l'assainissement collectif ET terrain <= 150 m², ou pour les CINASPIC (Art. Ua 9.3, p.17).",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua 6.2, p.14",
+       recul_voirie_note: "Alignement possible pour les seules constructions de bureaux/commerce/artisanat ou à RDC commercial — le logement reste à 4 m. RN1a : 17 m de l'axe ; ravines DPF : 10 m.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua 7.2-7.3, p.15-16",
+       recul_limites_note: "Implantation sur une limite latérale autorisée (patio 3 m si habitation > 10 m de profondeur) OU retrait 3 m ; fond : 3 m obligatoire.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.22",
+       stat_note: "Collectif : 1,25 place/logement OU 1 place/35 m² SDP (norme la plus productive), plafond 2 places/logement.",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.23 : 20 % de l'unité foncière en espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_note: "Ramené à 10 % pour les terrains <= 150 m² et les CINASPIC.",
+       note: "Zone mixte de centralité (caractère de zone, p.10). Interdits : industrie, entrepôt exclusif, agricole, camping, dépôts, carrières (Art. Ua 1.2, p.10). Densité MINIMALE 30 logts/ha (Art. Ua 2.2, p.11)."}
+  Uaa: {bassin: "Les Trois-Bassins",
+       he_m: 12, hf_m: 16, hauteur_src: "Art. Ua 10.2, p.18 (« Dans le secteur Uaa, la hauteur maximale des constructions est fixée à : 12 mètres à l'égout du toit ou au sommet de l'acrotère, 16 mètres au faîtage »)",
+       emprise_sol_pct: 60, emprise_src: "Art. Ua 9.2, p.17 (règle de la zone Ua, aucune disposition particulière Uaa — règle générale des secteurs, Art. 3, p.5)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua 6.2, p.14 (règle de la zone Ua)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua 7.2, p.15 (« Dans le secteur Uaa, elles doivent joindre au moins une des deux limites séparatives » ; en cas de retrait de l'autre limite : 3 m)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.22",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.23 : 20 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       note: "Secteur de l'hypercentre, front bâti sur rue encouragé (caractère de zone, p.10)."}
+  Ub: {bassin: "Les Trois-Bassins",
+       he_m: 8, hf_m: 12, hauteur_src: "Art. Ub 10.2, p.33",
+       hauteur_note: "Annexes : 3,50 m.",
+       emprise_sol_pct: 50, emprise_src: "Art. Ub 9.2, p.32",
+       emprise_note: "Annexes : 10 % max. Portée à 70 % si assainissement collectif ET terrain <= 150 m², ou CINASPIC (Art. Ub 9.3, p.32).",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ub 6.2, p.29 (retrait obligatoire, pas d'option alignement)",
+       recul_voirie_note: "RN1a : 17 m de l'axe ; ravines DPF : 10 m.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2-7.3, p.30-31",
+       recul_limites_note: "Une limite latérale autorisée (patio 3 m si habitation > 10 m de profondeur) OU retrait 3 m ; fond : 3 m.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.36",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.38 : 30 % espace vert et perméable, SANS sous-minimum de pleine terre (20 % si terrain <= 150 m² ou CINASPIC)",
+       note: "Zone mixte de périphérie du centre-ville et espaces urbanisés littoraux (caractère de zone, p.25). Dans les cinquante pas géométriques : destinations restreintes (Art. Ub 2.2 (al. 1), p.26). Densité MINIMALE 30 logts/ha (Art. Ub 2.2, p.26-27)."}
+  Uc: {bassin: "Les Trois-Bassins",
+       he_m: 5.5, hf_m: 8.5, hauteur_src: "Art. Uc 10.2, p.46-47 (« 5,50 mètres à l'égout du toit ou au sommet de l'acrotère » p.46, « 8,50 mètres au faîtage » p.47 — valeurs étalées sur deux pages)",
+       hauteur_note: "Annexes : 3,50 m (p.47). Majoration CINASPIC limitée à 20 % (Art. Uc 10.3, p.47).",
+       emprise_sol_pct: 40, emprise_src: "Art. Uc 9.2, p.46",
+       emprise_note: "Annexes : 10 % max. Portée à 60 % si assainissement collectif ET terrain <= 150 m², ou CINASPIC (Art. Uc 9.3, p.46).",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc 6.2, p.43 (retrait obligatoire)",
+       recul_voirie_note: "RN1a : 17 m de l'axe ; ravines DPF : 10 m.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uc 7.2-7.3, p.44",
+       recul_limites_note: "Une limite latérale autorisée OU retrait 3 m ; fond : 3 m.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Uc 12.2, p.50",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Uc 13.1, p.52 : 40 % espace vert et perméable, SANS sous-minimum de pleine terre (30 % si terrain <= 150 m² ou CINASPIC)",
+       note: "Zone mixte des écarts ruraux habités : Petite Ravine, Cocâtre, Piveteau (caractère de zone, p.39)."}
+  Ue: {bassin: "Les Trois-Bassins",
+       he_m: 10, hf_m: 14, hauteur_src: "Art. Ue 10.2, p.59",
+       hauteur_note: "Annexes : 3,50 m.",
+       emprise_sol_pct: 60, emprise_src: "Art. Ue 9.2, p.59 (« L'emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder 60% »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ue 6.2, p.56",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. Ue 7.2-7.3, p.57",
+       recul_limites_note: "Une seule limite latérale possible ; en cas de retrait D=H/2 sans être inférieur à 4 m ; fond de propriété : 4 m obligatoire.",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit). Activités : surface de stationnement >= 30 % de la SDP de l'établissement, stockage compris.", stat_src: "Art. Ue 12.2, p.60",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 13.1, p.61 : 25 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. Ue 1.2 (al. 1), p.53 : « Les constructions, ouvrages et travaux à destination d'habitation » sont INTERDITS (aucune exception de gardiennage à l'Art. Ue 2.2, p.54 — O12 confirmé)",
+       note: "Zone d'activité économique : production, transformation, conditionnement, distribution (caractère de zone, p.53). Hôtellerie/restauration/hébergement touristique également interdits (Art. Ue 1.2 (al. 3), p.53) ; commerces/bureaux limités (surface de vente < surface de production, Art. Ue 2.2, p.54)."}
+
+  # ====== LOT AU — zones à urbaniser (Titre III, chap. « ZONE AUindicée », p.64-70) ======
+  # Renvoi explicite par indice (préambule p.64, répété aux Art. 3-6 et 8-14) ; AUt -> Ub
+  # à chaque article ; Art. 7 propre au chapitre ; Art. 10 : hauteur propre AUt 8/10 et
+  # AUa -> Uaa (modification du 02/06/2022). Constructions autorisées lors d'une
+  # opération d'ensemble OU au fur et à mesure des équipements internes (p.64).
+  # Destinations : Art. AUINDICEE 1.2 / 2.2 (p.64-65), propres au chapitre.
+  1AUa: {bassin: "Les Trois-Bassins",
+       he_m: 12, hf_m: 16, hauteur_src: "Art. Ua 10.2, p.18 (secteur Uaa) via renvoi (Art. AUINDICEE 10, p.69 : « Pour la zone Aua, se reporter au règlement de la zone Uaa » — modification approuvée le 02/06/2022)",
+       hauteur_note: "Renvoi hauteur SPÉCIFIQUE AUa -> Uaa (12/16), distinct du renvoi d'indice général (Ua 10/14) ; « Aua » du texte = zone AUa, seule lecture possible dans le chapitre AU.",
+       emprise_sol_pct: 60, emprise_src: "Art. Ua 9.2, p.17 (via renvoi Art. AUINDICEE 9, p.68 : « règlement de la zone U indiquée en indice »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua 6.2, p.14 (via renvoi Art. AUINDICEE 6, p.67)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. AUINDICEE 7.2-7.3, p.67-68 (règle propre au chapitre AU : une limite possible, retrait 3 m, fond 3 m)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.22 (via renvoi Art. AUINDICEE 12, p.69)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.23 (via renvoi Art. AUINDICEE 13, p.70) : 20 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Urbanisation prioritaire SAR (préambule AUindicée, p.64). Densité MINIMALE 35 logts/ha hors OAP (Art. AUINDICEE 2.2, p.66). Graphie : le texte écrit « en zone AUa » (p.66), type 1AUindicée défini p.64."}
+  1AUb: {bassin: "Les Trois-Bassins",
+       he_m: 8, hf_m: 12, hauteur_src: "Art. Ub 10.2, p.33 via renvoi (Art. AUINDICEE 10, p.69 : « règlement de la zone U indiquée en indice »)",
+       emprise_sol_pct: 50, emprise_src: "Art. Ub 9.2, p.32 (via renvoi Art. AUINDICEE 9, p.68)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ub 6.2, p.29 (via renvoi Art. AUINDICEE 6, p.67)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. AUINDICEE 7.2-7.3, p.67-68 (règle propre au chapitre AU)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.36 (via renvoi Art. AUINDICEE 12, p.69)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.38 (via renvoi Art. AUINDICEE 13, p.70) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Urbanisation prioritaire SAR. Densité MINIMALE 30 logts/ha hors OAP (Art. AUINDICEE 2.2, p.66)."}
+  1AUc: {bassin: "Les Trois-Bassins",
+       he_m: 5.5, hf_m: 8.5, hauteur_src: "Art. Uc 10.2, p.46-47 via renvoi (Art. AUINDICEE 10, p.69)",
+       emprise_sol_pct: 40, emprise_src: "Art. Uc 9.2, p.46 (via renvoi Art. AUINDICEE 9, p.68)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc 6.2, p.43 (via renvoi Art. AUINDICEE 6, p.67)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. AUINDICEE 7.2-7.3, p.67-68 (règle propre au chapitre AU)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Uc 12.2, p.50 (via renvoi Art. AUINDICEE 12, p.69)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Uc 13.1, p.52 (via renvoi Art. AUINDICEE 13, p.70) : 40 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Urbanisation prioritaire SAR. Densité MINIMALE 20 logts/ha hors OAP (Art. AUINDICEE 2.2, p.66)."}
+  1AUt: {bassin: "Les Trois-Bassins",
+       he_m: 8, hf_m: 10, hauteur_src: "Art. AUINDICEE 10.2, p.69 : « Pour la zone AUt, la hauteur maximale des constructions est fixée à : 8 mètres à l'égout du toit ou au sommet de l'acrotère (Modification approuvée par délibération du conseil municipal du 02 juin 2022), 10 mètres au faîtage »",
+       hauteur_note: "Hauteur PROPRE au chapitre AU (déroge au renvoi AUt -> Ub des autres articles).",
+       emprise_sol_pct: 50, emprise_src: "Art. Ub 9.2, p.32 (via renvoi Art. AUINDICEE 9, p.68 : « Pour la zone AUt, se reporter au règlement de la zone Ub »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ub 6.2, p.29 (via renvoi AUt -> Ub, Art. AUINDICEE 6, p.67)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2-7.3, p.30-31 (via renvoi Art. AUINDICEE 7, p.67 : « Pour la zone AUt, se reporter au règlement de la zone Ub »)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit — vocation d'hébergement touristique exclusive ; hôtellerie : 1 place/3 chambres via tableau Ub).", stat_src: "Art. AUINDICEE 2.2, p.65 + Art. Ub 12.2, p.36 (via renvoi)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.38 (via renvoi AUt -> Ub, Art. AUINDICEE 13, p.70) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. AUINDICEE 1.2, p.64 (« En zone AUt : Les constructions, ouvrages et travaux non cités à l'article AU2.2 » sont interdits) + Art. AUINDICEE 2.2, p.65 : seuls admis « les constructions à destination d'hébergement touristique et les services liés » et les stationnements/affouillements nécessaires — aucune habitation admise",
+       note: "Zone AU touristique. Graphie : règles écrites sous « zone AUt » (p.64-65, 69), type 1AUindicée défini p.64 ; le manifeste ne compte aucun polygone 2AUt."}
+
+zones_au_renvoi: {}
+
+# GELS — capacité zéro exacte (étiquette moteur « secteur de transition » inexacte,
+# friction F2 connue depuis le pilote) :
+#   - 2AUa / 2AUb / 2AUc : « Pour les zones 2AUindicée, leur ouverture à l'urbanisation
+#     ne pourra intervenir qu'une fois l'aménagement de l'ensemble des zones 1AUindicée
+#     entrepris » (Art. AUINDICEE 2.2, p.65 ; idem préambule p.64 : « une fois
+#     l'aménagement de l'ensemble des zones 1AUindicée du pôle urbain de référence
+#     entrepris », et dispositions générales p.6).
+#   - AUs / AUse : « l'ouverture à l'urbanisation de la zone est conditionnée à une
+#     modification du PLU » (caractère de zone, p.70 ; idem dispositions générales
+#     p.6) ; Art. AUs 1.2 (p.71) : « Toutes les occupations et utilisations du sol sont
+#     interdites à l'exception de celles admises à l'article AUs 2.2 » ; Art. AUs 2.2
+#     (p.71) : réseaux/voirie/stationnement/énergie, ouvrages techniques de service
+#     public, reconstruction après sinistre — articles 3 à 14 « Sans objet »
+#     (p.71-73). AUse (secteur réservé au développement de l'activité artisanale,
+#     p.70) : AUCUNE disposition particulière dans le chapitre => même gel que AUs
+#     (règle générale des secteurs, Art. 3, p.5). Candidate O12 implicite : le régime
+#     réel vérifié est un GEL total, la vocation artisanale n'ouvre aucun droit avant
+#     modification du PLU.
+zones_au_st:
+  liste: ["2AUa", "2AUb", "2AUc", "AUs", "AUse"]
+  portee: "Construction neuve non autorisée en l'état : 2AUa/2AUb/2AUc = extension urbaine SAR, ouverture conditionnée à l'engagement de l'aménagement de l'ensemble des zones 1AUindicée (Art. AUINDICEE 2.2, p.65) ; AUs et son secteur AUse = urbanisation future gelée, ouverture conditionnée à une MODIFICATION du PLU (réseaux et accès insuffisants, études préalables requises — caractère de zone p.70), seuls admis réseaux/ouvrages techniques/reconstruction après sinistre (Art. AUs 1.2 et 2.2, p.71). Le manifeste ne compte AUCUN polygone 2AUe ni 2AUt."
+  source: "Art. AUINDICEE 2.2, p.65 ; ZONE AUs : caractère de zone p.70, Art. AUs 1.2 et Art. AUs 2.2, p.71."
+
+# Zone non calibrée — contradiction de destinations, on ne devine pas (invariant 2).
+zones_non_calibrees:
+  1AUe:
+    motif: "Contradiction sur la destination habitat. Lecture 1 (chapitre AU autoportant) : l'Art. AUINDICEE 1.2 (p.65) n'interdit pour « les autres zones » (dont AUe) que industrie/entrepôt/agricole/camping/dépôts/carrières/sports motorisés/affouillements, et l'Art. AUINDICEE 2.2 (p.65) admet « toutes les occupations et utilisations du sol non citées à l'article 1.2 » => l'habitat serait ADMIS (et l'industrie INTERDITE, dans une zone pourtant indexée sur la zone d'activité Ue). Lecture 2 (renvoi d'indice, p.64 : « se reporter en fonction de l'indice […] au règlement des zones urbaines correspondantes ») : l'Art. Ue 1.2 (al. 1), p.53, INTERDIT l'habitat. Les deux lectures divergent sur une destination ; la clause densité qui exclut AUe (Art. AUINDICEE 2.2, p.66 : « à l'exception de celles des zones AUe et AUt ») et le renvoi explicite AUe -> Ue de l'Art. 7 (p.67) suggèrent l'intention « activité » sans l'écrire à l'Art. 1/2. O12 signalait 1AUe candidate habitat-interdit : NON confirmée à l'Art. 1/2 comme l'exige le mandat => non calibrée, arbitrage Vic. 1 polygone, 1,9 ha (0,04 % du manifeste), repli générique."
+    source: "Art. AUINDICEE 1.2 et 2.2, p.65 ; Art. AUINDICEE 2.2 (clause densité), p.66 ; Art. AUINDICEE 7, p.67 ; Art. Ue 1.2, p.53."
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
+# DÉCISION (principe du mandat-cadre, modèle Tampon) : constructibilité d'EXCEPTION
+# uniquement — les graver ferait calculer une capacité logement fictive => repli
+# générique (non constructibles), verdict produit correct.
+#   - A (chap. p.74-83) : Art. A1.2 (p.74) : « sont interdits les nouvelles
+#     constructions à destination d'habitation, les constructions, ouvrages et travaux
+#     non nécessaires à une exploitation agricole » sauf A2.2 (p.75) — bâtiments
+#     techniques agricoles, logement d'exploitant 120 m² SDP max (1 par exploitation),
+#     agritourisme/vente 30 m², extension de l'existant non agricole 20 m² ; hauteur
+#     5,50/8,50 m (Art. A 10.2, p.79).
+#   - Acu (coupure d'urbanisation SAR 2011, caractère p.74 et Art. 3 p.6) : régime
+#     encore restreint — réhabilitation/mise aux normes de bâtiments agricoles
+#     existants et réseaux d'eau seulement (Art. A2.2 (al. 9), p.75 ; tous les alinéas
+#     constructifs commencent par « A l'exception du secteur Acu »).
+#   - Arh (STECAL L.151-13, caractère p.74) : habitations nouvelles admises dans la
+#     limite TOTALE de 120 m² de SDP (Art. A2.2 (al. 8), p.75) — capacité d'exception
+#     plafonnée hors schéma v1, repli générique conservateur.
+#   - N (chap. p.84-94) : Art. N1.2 (p.84) tout interdit sauf N2.2 (p.85-86) —
+#     aménagements légers sans hébergement, extension limitée de l'existant 120 m² SDP
+#     cumulés (hors Nco/Nr/Nli/Nu), agricole (hors Nco/Nr/Nli/Nu) ; hauteur zone N
+#     4 m égout / 7 m faîtage (Art. N 10.2, p.91).
+#   - Nr (réservoirs de biodiversité), Nco (corridors écologiques), Nli (espaces
+#     remarquables du littoral, installations liées à l'usage de la mer seulement,
+#     Art. N2.2 (al. 14), p.86), Nu (parcs et espaces verts urbains) : exclus de
+#     l'essentiel des occupations admises (Art. N2.2 (al. 5 à 11), p.85-86).
+#   - Nto et polygones numérotés Nto1 à Nto6 du manifeste (le règlement ne définit que
+#     le secteur « Nto », p.84) : STECAL tourisme/loisirs dont la SDP totale ET la
+#     hauteur sont fixées dans les OAP, hors règlement (Art. N2.2 (al. 12), p.86 ;
+#     Art. N 10.2, p.91 : « Dans les secteurs Nto, la hauteur maximale des
+#     constructions est fixée dans les Orientations d'Aménagement et de
+#     Programmation ») — aucune règle chiffrée gravable sans deviner.
+zones_non_constructibles: ["A, Acu, Arh (chap. p.74-83)",
+                           "N, Nr, Nco, Nli, Nu, Nto, Nto1, Nto2, Nto3, Nto4, Nto5, Nto6 (chap. p.84-94)"]
