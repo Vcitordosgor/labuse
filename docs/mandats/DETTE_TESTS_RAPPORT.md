@@ -16,7 +16,7 @@ Avant : `17 failed, 1176 passed, 19 skipped, 66 errors`.
 | **E** (1, test_auth) | fuite corrigée **à la source** (2 fixtures audit) | ✅ vert |
 
 **Garde-fous servis** : tiers du run servi `q_v7_defisc` mesurés en base — **120 / 1031 / 3587 / 72980 / 353945
-au bit près** (`parcel_p_score_v2`). Golden 116/116 (face API) : **différé** — cf. § Golden.
+au bit près** (`parcel_p_score_v2`). **Golden 116/116 PASS** (0 FAIL, 0 incohérence base↔API) — cf. § Golden.
 
 ---
 
@@ -181,22 +181,21 @@ Aucun test ne cible du code supprimé (pas de Score V legacy, pas de vue morte p
 
 ---
 
-## Golden 116/116 — face API différée (honnête)
+## Golden 116/116 — ✅ PASS (rejoué base libérée)
 
-Le run golden complet (comparaison des 116 parcelles, face **API**) exige l'API locale démarrée sur la base
-applicative. Or, au moment de la clôture, la **base applicative est sous un job de calcul division en cours**
-(6 backends `INSERT INTO division_or_candidates`, actifs **> 13 min**, antérieurs à ce mandat) : le `_lifespan`
-du serveur bloque sur un `ALTER TABLE parcels ADD COLUMN` en attente d'un verrou de relation tenu par ce job.
-Contention **d'environnement**, sans rapport avec ce mandat.
+`qa/golden_check.py` contre la base applicative + API locale (`:8010`, `env=local · schéma=ok`) :
 
-Ce qui EST mesuré et vert :
-- **Tiers du run servi au bit près** : `120 / 1031 / 3587 / 72980 / 353945` (`parcel_p_score_v2`, run récent) —
-  la face « chiffres servis » du golden, lisible en base sans l'API.
-- **Diff test-only** : `git status` = 5 fichiers `tests/` + 2 docs, **zéro `src/`**. Le run servi, le scoring,
-  les moteurs, le champion P sont **intouchés** → golden invariant par construction.
+```
+Bilan: 116/116 PASS, 0 FAIL, 0 parcelle(s) avec incohérence base↔API (runtime)   (exit 0)
+```
 
-À rejouer dès la base libérée (`qa/golden_check.py`, cf. `docs/TESTS.md`). Aucun `PASS` inventé (boussole :
-« non vérifiable se dit »).
+Ancres de cohérence tier vérifiées (brulante / chaude / a_creuser / reserve_fonciere) + ancres factuelles
+(surface, pente, zonage GPU, prescription PLU, risques, foncier public, faux positif OSM…). Complété par :
+- **Tiers du run servi au bit près** : `120 / 1031 / 3587 / 72980 / 353945` (`parcel_p_score_v2`).
+- **Diff test-only** : `git status` = fichiers `tests/` + docs, **zéro `src/`** → run servi/scoring/moteurs/champion P intouchés.
+
+Note : le run avait dû être différé (base sous un job de calcul division d'un autre mandat qui bloquait le
+`ALTER TABLE parcels` du `_lifespan`) — rejoué et vert dès la base libérée. Aucun `PASS` inventé entre-temps.
 
 ## Point de bascule prod/VPS (consigné)
 
