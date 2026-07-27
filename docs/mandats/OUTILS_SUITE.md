@@ -521,6 +521,15 @@ revue. Aucune affirmation de constructibilité réglementaire (reculs, prospect,
 puis exposer avec le wording conservateur. **Finding O12 (suite)** : remplacer la façade voirie sommée par une façade
 « plus long segment continu » éviterait de sur-compter les parcelles d'angle (465 m sur un candidat).
 
+### Addendum O12-ÎLE (27/07/2026, branche `feat/o12-ile`) — durcissement post-revue
+La revue des 20 cartes a conclu **EXPOSE reste False** et identifié 3 défauts, corrigés :
+**clarté à façade plafonnée 30 m** (les bandes linéaires ne trustent plus le haut du dossier),
+**ratio lot/parcelle ≤ 50 %** (tue les démembrements — 94 % des éliminations), **zonage du lot U/AU
+exigé** (A/N exclus ; commune RNU → PAU estimée exigée via `parcel_pau`). Run île entière :
+**5 916 → 294 candidats** (24 communes) ; lots médians 1 052 m², zones U=280/AU*=10/RNU-PAU=4.
+Nouveau dossier : `docs/mandats/O12_ILE_REVUE.pdf` (20 cartes, 5 × Saint-Paul/Saint-Denis/
+Le Tampon/Saint-Pierre) + `.zip` (preuves). Détail : `RAPPORT_O12_ILE.md`. Toujours **MASQUÉ**.
+
 ---
 
 # STOP FINAL
