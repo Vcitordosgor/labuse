@@ -1,0 +1,249 @@
+# =============================================================================
+# CONTRE-EXTRACTION (session C) — PLU SAINT-LOUIS (97414)
+# =============================================================================
+# Ré-extraction À L'AVEUGLE (mandat nuit §3) : source UNIQUE = 97414_reglement.pdf du cache
+# pré-vol (md5 bae5ab70e6a8dc7697b2414fddf62145, re-vérifié au tirage 00:06). Les YAML et le
+# rapport de la session B n'ont PAS été ouverts. Mêmes invariants, même schéma.
+#   - page_pdf = page_imprimee + 2 (en-têtes « Règlement 2025 N »).
+#   - COS CONSIGNÉ (doc 2025 post-ALUR) : les Articles 14 existent (squelette ancien format)
+#     mais TOUS disent « Il n'est pas fixé de coefficient d'occupation du sol » (ex. Art.
+#     UA 14, p.23) — aucune valeur, rien à appliquer : anomalie de forme, pas de fond.
+#   - Chapitres par zone UA/UB/UC/UD/UE/US/UZ ; AUindicée = renvoi à la zone U d'indice ;
+#     chapitre AUst : « l'ouverture à l'urbanisation de la zone est conditionnée à une
+#     modification du PLU » (1AUst ET 2AUst) => GEL ; 2AU<indice> => GEL (après aménagement
+#     des 1AU et 1AUst par polarité SAR).
+#   - suffixe « oap1/oap3/oap4/oap5 » des libellés = rattachement aux OAP, mêmes règles que
+#     la famille (aucune règle chiffrée propre trouvée dans le règlement).
+# =============================================================================
+
+source:
+  document: "97414_reglement.pdf (cache pré-vol, archive GPU 97414_plu_20251218)"
+  approbation: "2025-12-18"
+  pages_total: 139
+  offset_pdf_vs_imprimee: 2
+  reglement_grave:
+    fichier: "97414_reglement.pdf"
+    md5: "bae5ab70e6a8dc7697b2414fddf62145"
+    millesime: "2025-12-18"
+    document_gpu_au_calibrage: "97414_plu_20251218"
+    verifie_le: "2026-07-28"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "LLS : 1 place/logement ; autres : 2 places/logement ; opérations >10 logements : +0,5 place publique/logement (Art. 12 des chapitres)."
+
+zones:
+
+  UA: {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.17-18",
+       emprise_sol_pct: 70, emprise_src: "Art. UA 9, p.17",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (alignement possible OU retrait >= 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (2 limites, 1 ou retrait >= 3 m)",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12, p.20-21",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22"}
+  UA1: {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.17-18 (pas de hauteur propre UA1)",
+       emprise_sol_pct: null, emprise_src: "Art. UA 9, p.17 (« En secteur UA1, l'emprise au sol n'est pas réglementée »)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12, p.20-21",
+       pleine_terre_pct: null, pleine_terre_src: "Art. UA 13.1, p.22 (« En secteur UA1, il n'est pas fixé de règle »)",
+       note: "Centre historique de Saint-Louis."}
+  UB: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 17, hauteur_src: "Art. UB 10.2, p.31-32",
+       emprise_sol_pct: 70, emprise_src: "Art. UB 9, p.31",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.28 (alignement possible OU retrait >= 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.29",
+       stat_logement: "2 places / logement", stat_src: "Art. UB 12, p.35",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UB 13.1, p.36"}
+  UC: {bassin: "Saint-Louis",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47",
+       hauteur_note: "Projets d'aménagement sur terrain >=4 000 m² : 40 % max des constructions à 9/13 m (conditionnel, non gravé).",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9, p.46",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (retrait obligatoire >= 4 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.43",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.50",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51"}
+  UC1: {bassin: "Saint-Louis",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. UC 10.2, p.47 (« En secteur UC1 … 9/13 m » ; >=4 000 m² : 40 % à 12/16 m, conditionnel)",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9, p.46",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.43",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.50",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51"}
+  UC2: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UC 10.2, p.47-48 (« En secteur UC2 … 6/10 m »)",
+       emprise_sol_pct: 50, emprise_src: "Art. UC 9, p.46 (« UC2 ce seuil est limité à 50% »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.43",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.50",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51",
+       note: "Quartier du Ruisseau."}
+  UD: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60-61",
+       emprise_sol_pct: 50, emprise_src: "Art. UD 9, p.60",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57 (retrait obligatoire >= 4 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58",
+       stat_logement: "2 places / logement", stat_src: "Art. UD 12, p.63-64",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UD 13.1, p.65"}
+  UD1: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60-61 (pas de hauteur propre UD1 — règles UD ; prescriptions architecturales spécifiques Les Makes en note)",
+       emprise_sol_pct: 40, emprise_src: "Art. UD 9, p.60 (« UD1, ce seuil est limité à 40% »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58",
+       stat_logement: "2 places / logement", stat_src: "Art. UD 12, p.63-64",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UD 13.1, p.65",
+       note: "Village des Makes : toitures 2/4 pans obligatoires, toits terrasses interdits, couleurs imposées (Art. UD 11, règles spécifiques UD1)."}
+  UE: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. UE 10.2, p.74 (toits terrasses végétalisés : 15 m hauteur absolue)",
+       emprise_sol_pct: 70, emprise_src: "Art. UE 9, p.73",
+       recul_voirie_m: 5, recul_voirie_src: "Art. UE 6.2, p.71 (retrait >= H/2, minimum 5 m ; RN : 25 m de l'axe)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UE 7.2, p.72 (une limite possible ; retrait >= H/2, min 4 m)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit y compris gardiennage).", stat_src: "Art. UE 1.2, p.67-68",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE 13.1, p.77",
+       habitat: interdit, habitat_src: "Art. UE 1.2, p.67-68 : « Les constructions ouvrages et travaux à usage d'habitation Y COMPRIS celles liées au gardiennage » sont interdits"}
+  US: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. US 10.2, p.86 (toits terrasses végétalisés : 15 m hauteur absolue)",
+       emprise_sol_pct: 70, emprise_src: "Art. US 9, p.85",
+       recul_voirie_m: 5, recul_voirie_src: "Art. US 6.2, p.83 (retrait >= H/2, minimum 5 m)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. US 7.2, p.84 (une limite possible ; retrait >= H/2, min 4 m)",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage 70 m²).", stat_src: "Art. US 1.2/2, p.79-81",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. US 13.1, p.89",
+       habitat: interdit, habitat_src: "Art. US 1.2 (habitation interdite sauf US 2) + Art. US 2, p.79-81 : « dans la limite de 70 m² de surface de plancher … exclusivement destinées et liées au gardiennage et à la surveillance »"}
+  # UZ — ZAC à RÈGLES GRAPHIQUES : hauteur définie par cote NGR absolue (42 m « hors tout »)
+  # et par secteurs du schéma annexé (« affectations dominantes ») ; CONTRADICTION apparente
+  # entre l'Art. UZ 1/2 (logements limités à la surveillance/gardiennage, p.91-93) et le
+  # 10.2.2 qui décrit des espaces « affectations dominantes en habitat » (p.96-97).
+  # Invariant « contradiction => ne rien graver » : hauteurs a_verifier, habitat NON tranché,
+  # les deux passages cités — repli générique honnête.
+  UZ: {bassin: "Saint-Louis",
+       he_m: "a_verifier", hf_m: "a_verifier",
+       hauteur_note: "« Aucune construction … ne doit dépasser hors tout la cote NGR de 42 mètres » (altitude absolue, pas une hauteur relative) + hauteurs par secteurs du schéma en annexe — non attribuables sans le schéma.",
+       hauteur_src: "Art. UZ 10.2, p.96-97",
+       emprise_sol_pct: 60, emprise_src: "Art. UZ 9, p.96",
+       recul_voirie_m: "a_verifier", recul_voirie_note: "« Sauf indications contraires figurant au document graphique … principe de parallélisme » — pas de valeur fixe.", recul_voirie_src: "Art. UZ 6.2, p.94",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UZ 7, p.94-95",
+       stat_logement: "a_verifier", stat_src: "Art. UZ 12, p.100-101",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UZ 13.1, p.102 (« 25% … resteront libres, paysagés (au minimum engazonnés) »)",
+       note: "CONTRADICTION consignée : Art. UZ 1/2 p.91-93 (« logements … autorisés à la condition d'être nécessaires à la surveillance et au gardiennage ») vs Art. UZ 10.2.2 p.96-97 (« affectations dominantes en habitat avec activités et services compatibles ») — statut habitat non tranché sur pièces."}
+
+  # ============== 1AU ouvertes — renvoi à la zone U d'indice (AUindicée, p.105-109) ==============
+  1AUa: {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.17-18 via renvoi (AUindicée p.105)",
+       emprise_sol_pct: 70, emprise_src: "Art. UA 9, p.17 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12, p.20-21 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi)"}
+  1AUa oap1: {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.17-18 via renvoi (suffixe oap = OAP à respecter, mêmes règles chiffrées)",
+       emprise_sol_pct: 70, emprise_src: "Art. UA 9, p.17 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12, p.20-21 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi)"}
+  1AUa oap3: {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.17-18 via renvoi (oap3)",
+       emprise_sol_pct: 70, emprise_src: "Art. UA 9, p.17 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12, p.20-21 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi)"}
+  1AUb1: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 17, hauteur_src: "Art. UB 10.2, p.31-32 via renvoi (indice b — le règlement ne définit pas de sous-règles b1/b2 : règles de la zone UB)",
+       emprise_sol_pct: 70, emprise_src: "Art. UB 9, p.31 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.28 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.29 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UB 12, p.35 (via renvoi)",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi)"}
+  1AUb2: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 17, hauteur_src: "Art. UB 10.2, p.31-32 via renvoi (règles UB)",
+       emprise_sol_pct: 70, emprise_src: "Art. UB 9, p.31 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.28 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.29 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UB 12, p.35 (via renvoi)",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi)"}
+  1AUc: {bassin: "Saint-Louis",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.43 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)"}
+  1AUc oap4: {bassin: "Saint-Louis",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi (oap4)",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.43 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)"}
+  1AUc oap5: {bassin: "Saint-Louis",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi (oap5)",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.43 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)"}
+  1AUc1: {bassin: "Saint-Louis",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. UC 10.2, p.47 via renvoi (secteur UC1)",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.43 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)"}
+  1AUc2: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UC 10.2, p.47-48 via renvoi (secteur UC2)",
+       emprise_sol_pct: 50, emprise_src: "Art. UC 9, p.46 (via renvoi, UC2 50 %)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.43 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)"}
+  1AUd: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60-61 via renvoi",
+       emprise_sol_pct: 50, emprise_src: "Art. UD 9, p.60 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UD 12, p.63-64 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UD 13.1, p.65 (via renvoi)"}
+  1AUd1: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60-61 via renvoi (secteur UD1)",
+       emprise_sol_pct: 40, emprise_src: "Art. UD 9, p.60 (via renvoi, UD1 40 %)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UD 12, p.63-64 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UD 13.1, p.65 (via renvoi)"}
+  1AUe: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. UE 10.2, p.74 via renvoi",
+       emprise_sol_pct: 70, emprise_src: "Art. UE 9, p.73 (via renvoi)",
+       recul_voirie_m: 5, recul_voirie_src: "Art. UE 6.2, p.71 (via renvoi)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UE 7.2, p.72 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit y compris gardiennage).", stat_src: "Art. UE 1.2, p.67-68 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE 13.1, p.77 (via renvoi)",
+       habitat: interdit, habitat_src: "Art. UE 1.2, p.67-68 via renvoi (habitation interdite y compris gardiennage)"}
+  1AUe oap1: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. UE 10.2, p.74 via renvoi (oap1)",
+       emprise_sol_pct: 70, emprise_src: "Art. UE 9, p.73 (via renvoi)",
+       recul_voirie_m: 5, recul_voirie_src: "Art. UE 6.2, p.71 (via renvoi)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UE 7.2, p.72 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UE 1.2, p.67-68 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE 13.1, p.77 (via renvoi)",
+       habitat: interdit, habitat_src: "Art. UE 1.2, p.67-68 via renvoi"}
+
+zones_au_renvoi: {}
+
+# GELS :
+#  - AUst (chapitre p.110-116) : « l'ouverture à l'urbanisation de la zone est conditionnée à
+#    une MODIFICATION du PLU » — vaut pour 1AUst ET 2AUst (le 1/2 n'est qu'un ordre de
+#    priorité SAR une fois la modification faite). 1AUste/2AUste = variantes du chapitre.
+#  - 2AU<indice> : « Leur ouverture … ne pourra intervenir qu'une fois l'aménagement des
+#    zones 1AUindicée et 1AUst identifiées par polarité du SAR entreprises » (caractère
+#    AUindicée, p.105).
+zones_au_st:
+  liste: ["1AUst", "1AUst oap1", "1AUste", "2AUst", "2AUste", "2AUb1", "2AUb2", "2AUd", "2AUd1", "2AUe"]
+  portee: "Construction neuve non autorisée en l'état : zones AUst ouvrables uniquement par MODIFICATION du PLU (études préalables) ; zones 2AU après aménagement des 1AU/1AUst de la polarité SAR."
+  source: "Caractère ZONE AUst, p.110 ; caractère ZONE AUindicée, p.105."
+
+# Zones NON constructibles — décision motivée (principe mandat-cadre) :
+zones_non_constructibles: ["A, Aco, Acu, Ama, Arh, Ato (chap. p.116-124)",
+                           "N, Nco, Nli, Nma, Npnr, Nr, Nstep, Nto, Nto 1, Nto2, Nto3 (chap. p.126+)"]
