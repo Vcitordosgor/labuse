@@ -1,10 +1,11 @@
 // M26-B — écran Copilote (vue de premier niveau). PROJECTION de l'event log M26-A :
 // aucune logique métier, aucun recalcul. Design : maquette B4 de référence
 // (docs/mandats/copilote_maquette_B4_reference_M26B.html), tokens cp-*.
-// Point B : l'état 1 (instruction terminée) est complet ; pendant l'instruction on
-// n'affiche AUCUN résultat partiel (règle 5) — les états 2 à 5 viennent après la
-// validation visuelle de Vic (les rendus transitoires ci-dessous restent sobres).
-import { useState } from 'react'
+// Les 5 états : 1 terminé · 2 en cours (AUCUN résultat partiel — règle 5) · 3 précision
+// (le run REPREND, ne redémarre pas) · 4 zéro retenue (honnête, relances non chiffrées)
+// · 5 quota (aucun run créé). Un rafraîchissement en plein run retombe sur le même fil
+// (run épinglé + rejeu after_seq).
+import { useEffect, useRef, useState } from 'react'
 import type { MissionActive } from '../../lib/copilote'
 import { CLIENT } from '../../lib/strings'
 import { BlocLivrable } from './BlocLivrable'
@@ -12,8 +13,8 @@ import { Entonnoir } from './Entonnoir'
 import { FilInstruction } from './FilInstruction'
 import { Resultats, type EtiquettesMoteurs } from './Resultats'
 import { PillStatut, SecHead } from './ui'
-import { useCopiloteRun } from './useCopiloteRun'
-import type { VueCopilote } from './reduireEvenements'
+import { runEpingle, useCopiloteRun } from './useCopiloteRun'
+import { calibrageConnu, entonnoirEnCours, etatInterpretation, type VueCopilote } from './reduireEvenements'
 
 const S = CLIENT.copilote
 
@@ -89,6 +90,19 @@ function Journal({ evenements, fermer }: {
   )
 }
 
+/** Secondes écoulées depuis le premier événement du run (affichage seulement). */
+function useChrono(depuis: string | null, actif: boolean): number | null {
+  const [, retick] = useState(0)
+  useEffect(() => {
+    if (!actif) return
+    const t = setInterval(() => retick((n) => n + 1), 1000)
+    return () => clearInterval(t)
+  }, [actif])
+  if (!depuis) return null
+  const s = Math.max(0, Math.round((Date.now() - new Date(depuis).getTime()) / 1000))
+  return Number.isFinite(s) ? s : null
+}
+
 export function CopiloteView() {
   const run = useCopiloteRun()
   const { vue } = run
@@ -96,29 +110,54 @@ export function CopiloteView() {
   const [mission, setMission] = useState<MissionActive>('instruire')
   const [reponse, setReponse] = useState('')
   const [journalOuvert, setJournalOuvert] = useState(false)
+  const briefRef = useRef<HTMLTextAreaElement | null>(null)
+
+  // rafraîchissement en plein run : on recharge le run épinglé, le SSE rejoue le fil
+  const { charger } = run
+  useEffect(() => {
+    const id = runEpingle()
+    if (id) charger(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const actif = run.runId != null
   const terminal = vue.statut === 'done' || vue.statut === 'failed' || vue.statut === 'cancelled'
-  const enInstruction = actif && !terminal && vue.statut !== 'awaiting_user'
+  const enAttente = vue.statut === 'awaiting_user'
+  const enInstruction = actif && !terminal && !enAttente
   const fini = vue.statut === 'done' && vue.recap != null
   const communes = (vue.briefJson?.communes as string[] | undefined) ?? null
   const nLogements = (vue.briefJson?.programme as { logements?: number } | undefined)?.logements
+  const nFaits = vue.etapes.filter((e) => e.etat === 'faite' || e.etat === 'echouee').length
+  const chrono = useChrono(run.evenements[0]?.created_at ?? null, enInstruction)
 
   const lancer = () => {
-    if (brief.trim() && !enInstruction && !run.enCreation) void run.instruire(mission, brief)
+    if (brief.trim() && !enInstruction && !enAttente && !run.enCreation)
+      void run.instruire(mission, brief)
   }
+  // relances de l'état 4 — NON CHIFFRÉES : le brief d'origine revient en console,
+  // l'utilisateur ajuste lui-même (aucun chiffre inventé par l'écran)
+  const relancer = () => {
+    setBrief(vue.briefRaw ?? brief)
+    briefRef.current?.focus()
+    briefRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+  }
+
+  const pill = run.quota != null
+    ? <PillStatut ton="rouge">{S.quota.pill}</PillStatut>
+    : actif
+      ? <PillStatut ton={TON_STATUT[vue.statut] ?? 'violet'}
+          pulse={vue.statut === 'running' || vue.statut === 'interpreting'}>
+          {S.statuts[vue.statut] ?? vue.statut}
+          {enInstruction && chrono != null ? ` · ${chrono} s` : ''}
+        </PillStatut>
+      : null
 
   return (
     <div data-copilote className="min-h-0 flex-1 overflow-y-auto bg-cp-bg font-sans text-[13px] text-cp-txt" style={FOND}>
       <div className="mx-auto max-w-[1000px] px-6 pb-12 pt-9">
         <div className="mb-4 flex items-center gap-3">
           <span className="font-display text-[10.5px] uppercase tracking-[.24em] text-cp-muted">{S.crumb}</span>
-          {actif && (
-            <PillStatut ton={TON_STATUT[vue.statut] ?? 'violet'}
-              pulse={vue.statut === 'running' || vue.statut === 'interpreting'}>
-              {S.statuts[vue.statut] ?? vue.statut}
-            </PillStatut>
-          )}
+          {pill}
           {run.fluxInterrompu && (
             <span data-flux-interrompu className="text-[10.5px] text-cp-amber">{S.fluxInterrompu}</span>
           )}
@@ -131,11 +170,12 @@ export function CopiloteView() {
           {S.lede}<b className="font-medium text-cp-txt">{S.ledeFort}</b>
         </p>
 
-        <div className={`flex flex-wrap items-start gap-5 rounded-[18px] border border-cp-mint/35 bg-gradient-to-b from-cp-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(99,242,184,.06)] ${
-          enInstruction ? 'opacity-65' : ''}`}>
+        <div className={`flex flex-wrap items-start gap-5 rounded-[18px] border bg-gradient-to-b from-cp-mint/5 to-white/[0.015] p-5 shadow-[0_0_60px_rgba(99,242,184,.06)] ${
+          run.quota != null ? 'border-cp-red/30 opacity-50'
+          : enInstruction || enAttente ? 'border-cp-mint/35 opacity-65' : 'border-cp-mint/35'}`}>
           <div className="min-w-[250px] flex-1">
-            <textarea data-brief value={brief} onChange={(e) => setBrief(e.target.value)}
-              readOnly={enInstruction} placeholder={S.placeholder} rows={2}
+            <textarea data-brief ref={briefRef} value={brief} onChange={(e) => setBrief(e.target.value)}
+              readOnly={enInstruction || enAttente} placeholder={S.placeholder} rows={2}
               className="w-full resize-none bg-transparent font-sans text-base leading-normal text-cp-txt outline-none placeholder:text-cp-faint focus:outline-none" />
           </div>
           <div className="flex flex-col items-end gap-2">
@@ -144,23 +184,46 @@ export function CopiloteView() {
                 className="rounded-[13px] border border-cp-line2 px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-muted">
                 {S.annuler}
               </button>
+            ) : enAttente ? (
+              <button data-en-attente disabled
+                className="cursor-default rounded-[13px] border border-cp-line2 px-6 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-cp-muted">
+                {S.enAttenteBouton}
+              </button>
             ) : (
-              <button data-instruire onClick={lancer} disabled={!brief.trim() || run.enCreation}
+              <button data-instruire onClick={lancer}
+                disabled={!brief.trim() || run.enCreation || run.quota != null}
                 className="rounded-[13px] bg-cp-mint px-7 py-3.5 font-display text-[13px] font-bold uppercase tracking-wide text-[#08130E] shadow-[0_0_36px_rgba(99,242,184,.28)] transition-transform duration-quick hover:brightness-110 disabled:opacity-40">
                 {S.instruire} →
               </button>
             )}
-            <div className="flex items-center gap-2 text-[10.5px] text-cp-faint">
-              <i className="h-1 w-1 rounded-full bg-cp-mint" />{S.serment}
+            <div className={`flex items-center gap-2 text-[10.5px] ${run.quota != null ? 'text-cp-red' : 'text-cp-faint'}`}>
+              <i className={`h-1 w-1 rounded-full ${run.quota != null ? 'bg-cp-red' : 'bg-cp-mint'}`} />
+              {run.quota != null ? S.quota.pill
+                : enInstruction ? S.enCoursSerment(nFaits, vue.plan.length || 6)
+                : enAttente ? S.suspendue
+                : S.serment}
             </div>
           </div>
         </div>
-        <Missions mission={mission} setMission={setMission} verrouille={enInstruction} />
+        <Missions mission={mission} setMission={setMission} verrouille={enInstruction || enAttente} />
 
+        {/* ── état 5 · quota atteint AVANT création — aucun run, aucun moteur ── */}
         {run.quota && (
-          <p data-quota className="mt-5 rounded-xl border border-cp-red/30 bg-cp-red/10 px-4 py-3 text-[12px] text-cp-red">
-            {run.quota.detail}
-          </p>
+          <div data-quota-panel
+            className="mt-9 rounded-2xl border border-cp-red/30 bg-gradient-to-br from-cp-red/10 to-cp-red/[0.02] px-6 py-7 text-center">
+            <div className="mx-auto mb-3.5 flex h-11 w-11 items-center justify-center rounded-full border border-cp-red/45 text-cp-red">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
+              </svg>
+            </div>
+            <h3 className="font-display text-[19px] font-semibold tracking-tight text-cp-txt">
+              {S.quota.titre(run.quota.quota)}
+            </h3>
+            {/* le corps du 429, verbatim — c'est lui qui dit quand ça repart */}
+            <p data-quota-detail className="mx-auto mt-2 max-w-[62ch] text-[13px] text-cp-muted">{run.quota.detail}</p>
+            <p className="mx-auto mt-1.5 max-w-[62ch] text-[13px] text-cp-muted">{S.quota.aucunRun}</p>
+            <p className="mx-auto mt-3 max-w-[62ch] text-[12px] text-cp-faint">{S.quota.distinct}</p>
+          </div>
         )}
         {run.erreur && (
           <p data-erreur className="mt-5 rounded-xl border border-cp-red/30 bg-cp-red/10 px-4 py-3 text-[12px] text-cp-red">
@@ -168,40 +231,55 @@ export function CopiloteView() {
           </p>
         )}
 
-        {/* règle 5 : AUCUN résultat partiel pendant l'instruction — rendu transitoire
-            sobre ; le fil vivant (état 2) vient après validation du Point B */}
-        {actif && !terminal && vue.statut !== 'awaiting_user' && (
-          <div data-en-cours className="mt-9 rounded-2xl border border-dashed border-cp-line2 bg-cp-card px-8 py-9 text-center text-[12.5px] text-cp-faint">
-            {vue.statut === 'interpreting' ? S.interpretationEnCours : S.enCours}
-            <br />{S.enCoursNote}
-          </div>
-        )}
-
-        {/* clarification — gabarit provisoire (état 3 complet après validation du B) :
-            fonctionnel pour ne pas bloquer un run réel, sans prétendre au design final */}
-        {vue.statut === 'awaiting_user' && vue.clarification && (
+        {/* ── état 3 · demande de précision — le run REPREND, il ne redémarre pas ── */}
+        {enAttente && vue.clarification && (
           <div data-clarification className="mt-9 rounded-2xl border border-cp-violet/35 bg-cp-card px-6 py-5">
             <div className="mb-2.5 font-display text-[9.5px] uppercase tracking-[.2em] text-cp-violet">{S.precisionTitre}</div>
-            <h3 className="font-display text-lg font-semibold text-cp-txt">{vue.clarification.question}</h3>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {(vue.clarification.options ?? []).map((o) => (
-                <button key={o} onClick={() => void run.repondre(o)}
-                  className="rounded-xl border border-cp-line2 bg-cp-card2 px-4 py-2.5 font-display text-[12.5px] font-semibold text-cp-txt hover:border-cp-mint hover:text-cp-mint">
-                  {o}
-                </button>
-              ))}
-            </div>
-            <div className="mt-3.5 flex gap-2 rounded-[13px] border border-cp-line2 bg-cp-card2 p-1.5">
-              <input value={reponse} onChange={(e) => setReponse(e.target.value)}
+            <h3 className="font-display text-lg font-semibold tracking-tight text-cp-txt">{vue.clarification.question}</h3>
+            {(vue.clarification.options?.length ?? 0) > 0 && (
+              <div className="mb-3.5 mt-4 flex flex-wrap gap-2">
+                {(vue.clarification.options ?? []).map((o) => (
+                  <button key={o} data-clarif-option onClick={() => void run.repondre(o)}
+                    className="rounded-xl border border-cp-line2 bg-cp-card2 px-4 py-2.5 font-display text-[12.5px] font-semibold text-cp-txt transition-colors duration-quick hover:border-cp-mint hover:text-cp-mint">
+                    {o}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="mt-3.5 flex gap-1.5 rounded-[13px] border border-cp-line2 bg-cp-card2 p-1.5">
+              <input data-clarif-libre value={reponse} onChange={(e) => setReponse(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && reponse.trim()) void run.repondre(reponse) }}
                 placeholder={S.precisionPlaceholder}
                 className="flex-1 bg-transparent px-3 py-2.5 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint focus:outline-none" />
-              <button disabled={!reponse.trim()} onClick={() => void run.repondre(reponse)}
+              <button data-clarif-reprendre disabled={!reponse.trim()} onClick={() => void run.repondre(reponse)}
                 className="rounded-[10px] bg-cp-violet px-5 py-2.5 font-display text-[12px] font-bold text-[#150E22] disabled:opacity-40">
                 {S.precisionReprendre}
               </button>
             </div>
           </div>
+        )}
+        {enAttente && vue.plan.length > 0 && (
+          <>
+            <SecHead titre={S.fil.titre} meta={S.fil.metaPause} />
+            <FilInstruction etapes={vue.etapes} interpretation={etatInterpretation(vue)} />
+          </>
+        )}
+
+        {/* ── état 2 · instruction en cours — AUCUN résultat partiel (règle 5) ── */}
+        {enInstruction && vue.plan.length > 0 && (
+          <>
+            <SecHead titre={S.entonnoir.titre} sousTitre={S.entonnoir.sousTitreEnCours} />
+            <Entonnoir etages={entonnoirEnCours(vue)} communes={communes}
+              calibrage={calibrageConnu(vue)} enCours />
+            <SecHead titre={S.fil.titre}
+              meta={S.fil.metaEtape(Math.min(nFaits + 1, vue.plan.length), vue.plan.length)} />
+            <FilInstruction etapes={vue.etapes} interpretation={etatInterpretation(vue)} />
+            <SecHead titre={S.resultats.titreEnCours} />
+            <div data-en-cours
+              className="rounded-2xl border border-dashed border-cp-line2 bg-cp-card px-8 py-9 text-center text-[12.5px] leading-relaxed text-cp-faint">
+              {S.enCours}<br />{S.enCoursNote}
+            </div>
+          </>
         )}
 
         {vue.statut === 'cancelled' && (
@@ -215,11 +293,14 @@ export function CopiloteView() {
           </p>
         )}
 
-        {/* ── état 1 : instruction terminée ─────────────────────────────────── */}
+        {/* ── états 1 & 4 · instruction terminée (zéro n'est PAS une erreur — règle 6) ── */}
         {fini && vue.recap && (
           <>
             <SecHead titre={S.entonnoir.titre} sousTitre={S.entonnoir.sousTitre} />
-            <Entonnoir recap={vue.recap} communes={communes} dureeMs={vue.final?.duree_totale_ms ?? null} />
+            <Entonnoir etages={vue.recap.entonnoir} communes={communes}
+              dureeMs={vue.final?.duree_totale_ms ?? null}
+              exhaustif={vue.recap.exhaustif} calibrage={vue.recap.calibrage}
+              requalification={vue.recap.requalification ?? null} />
 
             <SecHead titre={S.fil.titre} meta={S.fil.meta(vue.etapes.length)} />
             <FilInstruction etapes={vue.etapes} />
@@ -231,10 +312,24 @@ export function CopiloteView() {
                 titre={[communes?.join(', '), nLogements != null ? `${nLogements} logements` : null]
                   .filter(Boolean).join(' · ')} />
             ) : (
-              // zéro n'est PAS une erreur (règle 6) — panneau complet de l'état 4 après le B
-              <div data-zero className="rounded-2xl border border-cp-line2 bg-cp-card px-8 py-9 text-center">
-                <h3 className="font-display text-[17px] font-semibold text-cp-txt">{S.resultats.zeroTitre}</h3>
-                <p className="mt-2 text-[12px] text-cp-muted">{S.resultats.zeroNote}</p>
+              <div data-zero className="rounded-2xl border border-cp-line2 bg-cp-card px-8 py-8 text-center">
+                <div className="mx-auto mb-3.5 flex h-11 w-11 items-center justify-center rounded-full border border-cp-line2 text-cp-muted">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
+                  </svg>
+                </div>
+                <h3 className="font-display text-[19px] font-semibold tracking-tight text-cp-txt">{S.resultats.zeroTitre}</h3>
+                <p className="mx-auto mt-2 max-w-[62ch] text-[13px] text-cp-muted">{S.resultats.zeroNote}</p>
+                <div className="mt-4 flex flex-wrap justify-center gap-2.5">
+                  <button data-relance onClick={relancer}
+                    className="rounded-xl bg-cp-mint px-5 py-3 font-display text-[12px] font-bold text-[#08130E]">
+                    {S.resultats.relanceBudget}
+                  </button>
+                  <button data-relance onClick={relancer}
+                    className="rounded-xl border border-cp-line2 bg-cp-card2 px-5 py-3 font-display text-[12px] font-bold text-cp-txt">
+                    {S.resultats.relanceCommunes}
+                  </button>
+                </div>
               </div>
             )}
             <BlocLivrable recap={vue.recap} nMoteurs={vue.etapes.length}

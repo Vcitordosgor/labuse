@@ -68,6 +68,49 @@ const etapesDepuisPlan = (plan: EtapePlan[]): EtapeVue[] =>
 const majEtape = (etapes: EtapeVue[], moteur: string, maj: Partial<EtapeVue>): EtapeVue[] =>
   etapes.map((e) => (e.moteur === moteur ? { ...e, ...maj } : e))
 
+// ── état 2 · entonnoir PENDANT le run — projection pure des step_completed ──────────────
+// Un étage n'affiche un nombre que si le moteur correspondant a terminé (compteur du
+// payload). « examinees » et « restituees » n'existent qu'au recap d'assemblage : ils
+// restent en attente (aucun step_progress en M26-A — arbitrage GO, pas de compteur inventé).
+const ETAGES_RUN: Array<{ etape: string; moteur: string | null }> = [
+  { etape: 'pool', moteur: 'criblage' },
+  { etape: 'filtre_geometrique', moteur: 'filtre_geometrique' },
+  { etape: 'examinees', moteur: null },
+  { etape: 'retenues', moteur: 'faisabilite' },
+  { etape: 'dans_budget', moteur: 'filtre_budget' },
+  { etape: 'restituees', moteur: null },
+]
+
+export interface EtageEnCours { etape: string; n: number | null; etiquette: string | null }
+
+export function entonnoirEnCours(vue: VueCopilote): EtageEnCours[] {
+  const auPlan = new Set(vue.plan.map((e) => e.moteur))
+  return ETAGES_RUN
+    .filter((s) => s.moteur == null || auPlan.has(s.moteur))
+    .map((s) => {
+      const fait = s.moteur ? vue.etapes.find((e) => e.moteur === s.moteur)?.fait : null
+      return { etape: s.etape, n: fait?.compteur?.apres ?? null, etiquette: fait?.etiquette ?? null }
+    })
+}
+
+/** Calibrage dès qu'un moteur l'a émis (filtre géométrique ou faisabilité) — payload brut. */
+export function calibrageConnu(vue: VueCopilote): Record<string, string> | null {
+  for (const m of ['faisabilite', 'filtre_geometrique']) {
+    const r = vue.etapes.find((e) => e.moteur === m)?.fait?.resultat as
+      { calibrage?: Record<string, string> } | undefined
+    if (r?.calibrage && Object.keys(r.calibrage).length) return r.calibrage
+  }
+  return null
+}
+
+/** État de la ligne « Interprétation » du fil (avant les moteurs). */
+export type EtatInterpretation = 'faite' | 'active' | 'pause'
+export function etatInterpretation(vue: VueCopilote): EtatInterpretation {
+  if (vue.clarification != null || vue.statut === 'awaiting_user') return 'pause'
+  if (vue.briefJson != null) return 'faite'
+  return vue.statut === 'interpreting' ? 'active' : 'faite'
+}
+
 export function reduireEvenements(evts: CopiloteEvent[], base: VueCopilote = VUE_INITIALE): VueCopilote {
   let vue = base
   // rejeu large toléré : tri par seq + dédoublonnage strict sur dernierSeq

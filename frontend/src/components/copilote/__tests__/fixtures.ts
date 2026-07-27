@@ -31,9 +31,11 @@ const restituee = (i: number, extra: Partial<Restituee> = {}): Restituee => ({
   zone: i % 3 === 0 ? 'UB2' : 'UB1',
   sdp_m2: 486 - i * 2,
   n_signaux_risques: i % 4 === 0 ? 1 : 0,
-  charge_fonciere_eur: 385_000 - i * 1_000,
+  // i<3 : au-dessus de la charge (positive) · i=3/4 : charge nulle/négative = opération
+  // NON VIABLE (cas d'affichage dédié, revue B) — la parcelle reste restituée (règle 7)
+  charge_fonciere_eur: i === 3 ? 0 : i === 4 ? -236_204 : 385_000 - i * 1_000,
   prix_probable_eur: 412_000 - i * 2_000,
-  au_dessus_charge_supportable: i < 3,
+  au_dessus_charge_supportable: i < 5,
   budget: i === 7 ? 'non estimable — non filtrée' : 'dans le budget',
   ...extra,
 })
@@ -115,6 +117,96 @@ export function etat1Calibre(): CopiloteEvent[] {
     ev('step_completed', { moteur: 'assemblage', resultat: recap, etiquette: 'sourcé',
       duree_ms: 900, compteur: { avant: 4250, apres: 20 } }),
     ev('run_completed', { n_retenues: 2753, n_ecartees: 1303, duree_totale_ms: 56_000 }),
+  ]
+}
+
+/** État 2 — instruction en cours : criblage et filtre géométrique faits, faisabilité
+ *  active. AUCUN recap, aucun résultat — la projection ne doit rien montrer d'assemblé. */
+export function etat2EnCours(): CopiloteEvent[] {
+  seq = 0; quandMs = 0
+  return [
+    ev('run_started', {
+      mission: 'instruire',
+      brief_raw: 'Terrain pour un collectif de 6 logements à Saint-Paul, budget foncier 480 k€, hors zone rouge PPR',
+      plan: PLAN_INSTRUIRE,
+    }),
+    ev('brief_parsed', {
+      brief_json: {
+        communes: ['Saint-Paul'], programme: { logements: 6, sdp_cible_m2: 420 },
+        budget_max_eur: 480_000,
+        contraintes: { exclure_ppr_rouge: true, exclure_abf: false, zones: ['U', 'AU'] },
+        surface_min_m2: null,
+      },
+    }),
+    ev('step_started', { moteur: 'criblage', params: { communes: ['Saint-Paul'], n_candidats: null, n_refs: null } }),
+    ev('step_completed', { moteur: 'criblage', resultat: { run_servi: 'q_v7_defisc', n_pool: 13_155 },
+      etiquette: 'sourcé', duree_ms: 2900, compteur: { avant: 13_155, apres: 13_155 } }),
+    ev('step_started', { moteur: 'filtre_geometrique', params: { communes: ['Saint-Paul'], n_candidats: 13_155, n_refs: null } }),
+    ev('step_completed', { moteur: 'filtre_geometrique',
+      resultat: { cible_sdp_m2: 420, calibrage: { 'Saint-Paul': 'article_plu' },
+                  garde_fou: { plafond: 5000, a_mordu: false, n_non_examinees: 0 } },
+      etiquette: 'sourcé', duree_ms: 250, compteur: { avant: 13_155, apres: 4250 } }),
+    ev('step_started', { moteur: 'faisabilite', params: { communes: ['Saint-Paul'], n_candidats: 4250, n_refs: null } }),
+  ]
+}
+
+/** État 3 — demande de précision : l'interpréteur ne devine pas, le run est en pause. */
+export function etat3Clarification(): CopiloteEvent[] {
+  seq = 0; quandMs = 0
+  return [
+    ev('run_started', {
+      mission: 'instruire',
+      brief_raw: 'Je cherche un terrain pas trop cher pour faire du collectif',
+      plan: PLAN_INSTRUIRE,
+    }),
+    ev('clarification_requested', {
+      question: 'Sur quelle commune dois-je instruire ce dossier ?',
+      champ_manquant: 'communes',
+      options: ['Saint-Paul', 'Saint-Pierre', 'Saint-Denis', 'Le Tampon'],
+    }),
+  ]
+}
+
+/** État 4 — zéro retenue : run done (jamais failed), entonnoir complet, 0 restituée. */
+export function etat4Zero(): CopiloteEvent[] {
+  seq = 0; quandMs = 0
+  const calibrage = { Cilaos: 'regle_generique' as const }
+  const mention = 'SDP estimée — règle générique, PLU non calibré'
+  const recap = {
+    entonnoir: [
+      { etape: 'pool', n: 1204, etiquette: 'sourcé' },
+      { etape: 'filtre_geometrique', n: 31, etiquette: 'sourcé/estimé selon calibrage' },
+      { etape: 'examinees', n: 31, etiquette: 'sourcé' },
+      { etape: 'retenues', n: 4, etiquette: 'estimé (faisabilité)' },
+      { etape: 'dans_budget', n: 0, etiquette: 'estimé (prix probable)' },
+      { etape: 'restituees', n: 0, etiquette: 'sourcé (tri champion P)' },
+    ],
+    n_retenues: 0, n_ecartees: 31, n_non_examinees: 0, n_restituees: 0,
+    exhaustif: true, calibrage,
+    mention_sdp: mention,
+    motifs_ecartement: ['prix probable au-dessus du budget (écart médian +215 %)'],
+    n_au_dessus_charge_supportable: 0,
+    restituees: [],
+  }
+  return [
+    ev('run_started', {
+      mission: 'instruire',
+      brief_raw: 'Terrain pour 25 logements à Cilaos, budget foncier 200 k€, hors PPR',
+      plan: PLAN_INSTRUIRE,
+    }),
+    ev('brief_parsed', {
+      brief_json: {
+        communes: ['Cilaos'], programme: { logements: 25, sdp_cible_m2: 1750 },
+        budget_max_eur: 200_000,
+        contraintes: { exclure_ppr_rouge: true, exclure_abf: false, zones: null },
+        surface_min_m2: null,
+      },
+    }),
+    ...etapesCompletes({ calibrage, mention_sdp: mention, geoEtiquette: 'estimé' }),
+    ev('step_started', { moteur: 'assemblage', params: { communes: ['Cilaos'], n_candidats: 0, n_refs: null } }),
+    ev('step_completed', { moteur: 'assemblage', resultat: recap, etiquette: 'sourcé',
+      duree_ms: 120, compteur: { avant: 31, apres: 0 } }),
+    ev('run_completed', { n_retenues: 0, n_ecartees: 31, duree_totale_ms: 12_000 }),
   ]
 }
 

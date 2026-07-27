@@ -260,18 +260,30 @@ export const CLIENT = {
     bientot: 'bientôt',
     // états transitoires — AUCUN résultat partiel pendant l'instruction (règle 5)
     interpretationEnCours: 'Interprétation du besoin en cours…',
-    enCours: 'Instruction en cours — les parcelles s’afficheront à la fin.',
-    enCoursNote: 'Aucune liste partielle n’est montrée : elle laisserait croire à un examen terminé.',
+    enCours: 'Les parcelles s’afficheront à la fin de l’instruction.',
+    enCoursNote: 'Aucune liste partielle n’est montrée — elle laisserait croire à un examen terminé.',
+    enCoursSerment: (fait: number, total: number) => `${fait} moteur${fait > 1 ? 's' : ''} appelé${fait > 1 ? 's' : ''} sur ${total}`,
+    enAttenteBouton: 'En attente',
+    suspendue: 'Instruction suspendue',
     fluxInterrompu: 'Flux interrompu — reconnexion…',
     annulee: 'Instruction annulée.',
-    // clarification (gabarit provisoire — l'état 3 complet vient après validation du B)
+    // état 3 · demande de précision — le run REPREND, il ne redémarre pas
     precisionTitre: 'Précision nécessaire',
     precisionReprendre: 'Reprendre l’instruction',
-    precisionPlaceholder: 'Votre réponse…',
+    precisionPlaceholder: 'Ou saisissez votre réponse…',
+    interpretation: {
+      nom: 'Interprétation',
+      faite: 'besoin interprété',
+      active: 'analyse du besoin',
+      pause: 'précision demandée — le Copilote ne devine pas',
+    },
     entonnoir: {
       titre: 'Le gisement se resserre',
       sousTitre: 'Un étage par moteur — le détail est en dessous.',
       cap: 'Instruction',
+      capEnCours: 'Instruction en cours',
+      sousTitreEnCours: 'Les étages s’affichent au fur et à mesure.',
+      enAttenteEtage: '—',
       // libellés des étages (les n et étiquettes viennent du payload entonnoir)
       etages: {
         pool: 'pool servi', filtre_geometrique: 'filtre géométrique', examinees: 'examinées',
@@ -286,6 +298,8 @@ export const CLIENT = {
     fil: {
       titre: 'Fil d’instruction',
       meta: (n: number) => `${n} moteurs · journal joint`,
+      metaEtape: (i: number, n: number) => `étape ${i} sur ${n}`,
+      metaPause: 'en pause',
       enAttente: 'en attente',
       moteurs: {
         criblage: { nom: 'Criblage', desc: 'pool servi · zones et contraintes du brief' },
@@ -303,6 +317,7 @@ export const CLIENT = {
     },
     resultats: {
       titre: (n: number) => `${n} parcelle${n > 1 ? 's' : ''} restituée${n > 1 ? 's' : ''}`,
+      titreEnCours: 'Résultats',
       meta: (nRetenues: number) => `sur ${nRetenues} retenues`,
       // règle 4 (mandat) : TOUJOURS visible quand retenues > restituées — verrouillé par test.
       // En deux morceaux : le « N autres retenues » est mis en gras par le composant.
@@ -318,8 +333,18 @@ export const CLIENT = {
       // règle 7 : information, jamais un filtre — la parcelle reste restituée
       chargeFlag: (charge: string) =>
         `Au-dessus de la charge supportable (${charge}) — dans votre budget, mais l’opération ne supporte pas ce prix.`,
-      zeroTitre: 'Aucune parcelle restituée pour ce besoin.',
+      // décision produit (revue B) : charge ≤ 0 = information forte, jamais un montant nu.
+      // La valeur brute reste visible, le sens est donné.
+      chargeNonViable: (charge: string) =>
+        `Opération non viable — la charge supportable est nulle ou négative (${charge}), même à foncier gratuit.`,
+      chargeNonViableCourt: (charge: string) => `opération non viable (${charge})`,
+      chargeSupportableCourt: (charge: string) => `charge supportable ${charge}`,
+      zeroTitre: 'Aucune parcelle ne satisfait ce besoin.',
       zeroNote: 'Aucun critère n’a été assoupli — l’entonnoir ci-dessus montre où le besoin s’est heurté au réel.',
+      // relances NON CHIFFRÉES (arbitrage GO) : elles pré-remplissent la console avec le
+      // brief d'origine, l'utilisateur ajuste lui-même. Aucun chiffre inventé par l'écran.
+      relanceBudget: 'Relancer en ajustant le budget',
+      relanceCommunes: 'Élargir à d’autres communes',
     },
     livrable: {
       titre: 'Note d’opportunité',
@@ -328,6 +353,14 @@ export const CLIENT = {
       journal: 'Voir le journal',
       pdf: 'Télécharger le PDF',
       pdfBientot: 'bientôt', // livrable PDF = mandat M26-C
+    },
+    // état 5 · quota atteint AVANT création du run — aucun moteur appelé
+    quota: {
+      pill: 'Indisponible aujourd’hui',
+      titre: (n: number | null) =>
+        n != null ? `Vos ${n} instructions du jour sont utilisées.` : 'Quota du jour atteint.',
+      aucunRun: 'Cette instruction n’a pas été lancée : aucun moteur n’a été appelé, rien n’a été décompté de plus.',
+      distinct: 'Le quota agentique est distinct du quota Dossier — vos exports restent disponibles.',
     },
     journal: {
       titre: 'Journal d’instruction',

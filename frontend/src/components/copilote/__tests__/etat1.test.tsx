@@ -36,7 +36,7 @@ class FauxEventSource {
   }
 }
 
-const normalise = (s: string | null) => (s ?? '').replace(/[  ]/g, ' ')
+const normalise = (s: string | null) => (s ?? '').replace(/[\u202f\u00a0\u2009]/g, ' ')
 
 async function lancerRun(): Promise<FauxEventSource> {
   render(<CopiloteView />)
@@ -47,6 +47,7 @@ async function lancerRun(): Promise<FauxEventSource> {
 }
 
 beforeEach(() => {
+  localStorage.clear()
   FauxEventSource.instances = []
   vi.stubGlobal('EventSource', FauxEventSource as unknown as typeof EventSource)
   vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => ({ run_id: 'run-test' }) })))
@@ -60,8 +61,10 @@ describe('état 1 — instruction terminée (fixture calibrée)', () => {
     // toutes les étapes moteurs, mais ni assemblage ni run_completed
     act(() => { for (const e of evts.slice(0, evts.length - 2)) es.emet(e) })
     expect(document.querySelector('[data-resultats]')).toBeNull()
-    expect(document.querySelector('[data-entonnoir]')).toBeNull()
     expect(document.querySelector('[data-restituee]')).toBeNull()
+    // l'entonnoir partiel de l'état 2 est légitime — mais l'étage « restituées »
+    // reste en attente tant que l'assemblage n'a pas parlé
+    expect(document.querySelector('[data-etage="restituees"]')).not.toHaveAttribute('data-etage-atteint')
     expect(document.querySelector('[data-en-cours]')).toBeInTheDocument()
     // fin du run : l'état 1 complet apparaît
     act(() => { for (const e of evts.slice(evts.length - 2)) es.emet(e); es.fin('done') })
@@ -98,9 +101,10 @@ describe('état 1 — instruction terminée (fixture calibrée)', () => {
     const es = await lancerRun()
     act(() => { for (const e of evts) es.emet(e); es.fin('done') })
     await waitFor(() => expect(document.querySelectorAll('[data-restituee]')).toHaveLength(20))
-    // 3 parcelles au-dessus de la charge supportable : encart affiché, parcelles RESTITUÉES
-    expect(document.querySelectorAll('[data-charge-flag]')).toHaveLength(3)
-    const lead = normalise(document.querySelector('[data-charge-flag]')!.textContent)
+    // 3 au-dessus (charge positive) + 2 non viables : encarts affichés, parcelles RESTITUÉES
+    expect(document.querySelectorAll('[data-charge-flag="au-dessus"]')).toHaveLength(3)
+    expect(document.querySelectorAll('[data-charge-flag="non-viable"]')).toHaveLength(2)
+    const lead = normalise(document.querySelector('[data-charge-flag="au-dessus"]')!.textContent)
     expect(lead).toContain('charge supportable')
     expect(lead).toContain('385 k€')
     // la parcelle flaguée (#01, au_dessus=true dans la fixture) reste bien restituée
@@ -146,6 +150,27 @@ describe('état 1 — instruction terminée (fixture calibrée)', () => {
     await waitFor(() => expect(document.querySelectorAll('[data-restituee]')).toHaveLength(20))
     expect(document.querySelectorAll('[data-fil-etape]')).toHaveLength(8)   // pas de doublon
     expect(document.querySelectorAll('[data-entonnoir]')).toHaveLength(1)
+  })
+})
+
+describe('charges dégénérées — opération non viable (charge ≤ 0)', () => {
+  it('charge nulle/négative → formulation « non viable », valeur brute visible, parcelle restituée', async () => {
+    const evts = etat1Calibre()
+    const es = await lancerRun()
+    act(() => { for (const e of evts) es.emet(e); es.fin('done') })
+    await waitFor(() => expect(document.querySelectorAll('[data-restituee]')).toHaveLength(20))
+    const nonViables = document.querySelectorAll('[data-charge-flag="non-viable"]')
+    expect(nonViables).toHaveLength(2)
+    const textes = [...nonViables].map((n) => normalise(n.textContent))
+    // valeur brute TOUJOURS visible, jamais un montant nu ni masqué
+    expect(textes.join(' ')).toContain('opération non viable')
+    expect(textes.join(' ')).toContain('0 €')
+    expect(textes.join(' ')).toContain('-236 204 €')
+    // les parcelles concernées restent restituées (règle 7 — information, pas filtre)
+    expect(document.querySelector('[data-restituee="97415000BV0183"]')).toBeInTheDocument()
+    expect(document.querySelector('[data-restituee="97415000BV0184"]')).toBeInTheDocument()
+    // et plus aucune mention nue « charge supportable 0 € »
+    expect(normalise(document.body.textContent)).not.toContain('charge supportable 0 €')
   })
 })
 

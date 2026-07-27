@@ -35,12 +35,20 @@ function Stat({ v, l, etiquette }: { v: string; l: string; etiquette: string | n
   )
 }
 
-function FlagCharge({ charge }: { charge: number | null }) {
+/** Charge ≤ 0 = opération non viable même à foncier gratuit : cas d'affichage à part
+ *  entière (décision produit, revue B). Jamais masqué, jamais un montant nu — la valeur
+ *  brute reste visible, le sens est donné. La parcelle reste restituée (règle 7). */
+const estNonViable = (p: Restituee) => p.charge_fonciere_eur != null && p.charge_fonciere_eur <= 0
+
+function FlagCharge({ p }: { p: Restituee }) {
+  const nonViable = estNonViable(p)
   return (
-    <div data-charge-flag
+    <div data-charge-flag={nonViable ? 'non-viable' : 'au-dessus'}
       className="mt-2.5 flex items-start gap-2 rounded-xl border border-cp-amber/30 bg-cp-amber/10 px-3 py-2 text-[10.5px] leading-relaxed text-cp-amber">
       <span aria-hidden className="mt-px shrink-0">▲</span>
-      <span>{S.chargeFlag(fmtEurCompact(charge))}</span>
+      <span>{nonViable
+        ? S.chargeNonViable(fmtEurCompact(p.charge_fonciere_eur))
+        : S.chargeFlag(fmtEurCompact(p.charge_fonciere_eur))}</span>
     </div>
   )
 }
@@ -107,7 +115,7 @@ function Lead({ p, et }: { p: Restituee; et: EtiquettesMoteurs }) {
             )}
           </div>
         )}
-        {p.au_dessus_charge_supportable && <FlagCharge charge={p.charge_fonciere_eur} />}
+        {(p.au_dessus_charge_supportable || estNonViable(p)) && <FlagCharge p={p} />}
       </div>
     </div>
   )
@@ -131,12 +139,17 @@ function Ligne({ p, i, et }: { p: Restituee; i: number; et: EtiquettesMoteurs })
             SDP {fmtM2(p.sdp_m2)} <Etiquette v={et.faisabilite} />
           </span>
         )}
-        {p.au_dessus_charge_supportable && (
-          <span data-charge-flag
+        {estNonViable(p) ? (
+          <span data-charge-flag="non-viable"
             className="rounded-lg border border-cp-amber/30 bg-cp-amber/10 px-2 py-0.5 text-[10px] text-cp-amber">
-            ▲ charge supportable {fmtEurCompact(p.charge_fonciere_eur)}
+            ▲ {S.chargeNonViableCourt(fmtEurCompact(p.charge_fonciere_eur))}
           </span>
-        )}
+        ) : p.au_dessus_charge_supportable ? (
+          <span data-charge-flag="au-dessus"
+            className="rounded-lg border border-cp-amber/30 bg-cp-amber/10 px-2 py-0.5 text-[10px] text-cp-amber">
+            ▲ {S.chargeSupportableCourt(fmtEurCompact(p.charge_fonciere_eur))}
+          </span>
+        ) : null}
         {p.budget && p.budget !== 'dans le budget' && (
           <span className="text-[10px] text-cp-muted">{p.budget}</span>
         )}

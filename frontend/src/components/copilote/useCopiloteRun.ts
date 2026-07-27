@@ -25,6 +25,17 @@ const KINDS: CopiloteKind[] = [
 
 const REPRISE_MS = 2000   // délai avant réouverture après coupure réseau
 
+// Critère d'acceptation du mandat : un RAFRAÎCHISSEMENT en plein run retombe sur le
+// même fil. Le run courant est épinglé ici ; au remontage, la vue le recharge et le
+// SSE rejoue tout depuis seq 0 (réducteur idempotent → ni doublon ni trou).
+const CLE_RUN = 'labuse.copilote.run'
+export const runEpingle = (): string | null => {
+  try { return localStorage.getItem(CLE_RUN) } catch { return null }
+}
+const epingler = (id: string | null) => {
+  try { id == null ? localStorage.removeItem(CLE_RUN) : localStorage.setItem(CLE_RUN, id) } catch { /* stockage indisponible : la reprise au refresh est perdue, rien d'autre */ }
+}
+
 export interface CopiloteRun {
   runId: string | null
   vue: VueCopilote
@@ -106,6 +117,7 @@ export function useCopiloteRun(): CopiloteRun {
     try {
       const { run_id } = await copiloteCreerRun(mission, brief)
       runRef.current = run_id
+      epingler(run_id)
       setRunId(run_id)
       ouvrir(run_id)
     } catch (e) {
@@ -143,6 +155,7 @@ export function useCopiloteRun(): CopiloteRun {
     setQuota(null); setErreur(null); setFluxInterrompu(false)
     setVue(VUE_INITIALE); setEvenements([]); seqRef.current = 0
     runRef.current = id
+    epingler(id)
     setRunId(id)
     ouvrir(id)
   }, [fermerFlux, ouvrir])
@@ -150,6 +163,7 @@ export function useCopiloteRun(): CopiloteRun {
   const reinitialiser = useCallback(() => {
     fermerFlux()
     runRef.current = null
+    epingler(null)
     setRunId(null); setVue(VUE_INITIALE); setEvenements([]); seqRef.current = 0
     setQuota(null); setErreur(null); setFluxInterrompu(false)
   }, [fermerFlux])
