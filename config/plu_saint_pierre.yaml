@@ -1,0 +1,409 @@
+# =============================================================================
+# PLU SAINT-PIERRE (97416) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Saint-Pierre (Eco-PLU).
+#   document : 97416_reglement_20240625.pdf (extrait de l'archive GPU 97416_PLU_20240625)
+#   url      : https://www.geoportail-urbanisme.gouv.fr/document/by-id/6c6320c68195297390a319acb951dc4b
+#   PLU approuvé le 25/06/2024 (délibération CM), publié GPU le 16/07/2024. EN VIGUEUR,
+#   aucune procédure en cours au 27/07/2026. Millésime = zonage servi (idurba 97416_PLU_20240625).
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee (offset 0 — vérifié : imprimée 98 = PDF 98).
+#   - chaque valeur cite ZONE + ARTICLE + page : champ _src = "Art. UgN.M, p.PP".
+#   - null         = règle explicitement "non réglementée" dans le texte.
+#   - "a_verifier" = présent mais ambigu / conditionnel / non attribuable sûrement.
+#   - hauteurs : le règlement donne « X m à l'égout du toit ou au sommet de l'acrotère »
+#     et « Y m au faîtage » => he_m <- X, hf_m <- Y (mapping direct, aucune conversion).
+#   - RÈGLEMENT AU FORMAT MODERNE (décret 2015) : Chapitres 1/2/3, articles préfixés
+#     par zone (Ug1..Ug8). Correspondance consommée par le moteur :
+#       implantation voies = Art. <Z>3.1 · limites séparatives = Art. <Z>3.2 ·
+#       emprise au sol = Art. <Z>3.4 · hauteur = Art. <Z>3.5 ·
+#       pleine terre/CBS = Art. <Z>5.1 · stationnement = Art. <Z>6.
+#   - RÈGLES À TIROIRS (spécificité du format moderne, cf. § Frictions du rapport) :
+#     emprise et pleine terre sont fixées PAR TRANCHE DE SURFACE de l'unité foncière.
+#     Le schéma ne porte qu'un nombre => on grave la tranche > 250 m² (dominante :
+#     81 % du pool servi Ug, médiane 458 m²) et la note cite toutes les tranches.
+#     Sens de l'écart : pour les parcelles <= 250 m² la valeur gravée SOUS-estime
+#     l'emprise autorisée (prudent, jamais optimiste).
+#   - Chaque chapitre couvre zone U + zone AU jumelle (« zone Ug et AUg ») : une entrée
+#     par libellé GPU, mêmes articles cités, condition d'urbanisation AU en note.
+# =============================================================================
+
+source:
+  document: "data/reglements/97416_reglement_20240625.pdf"
+  url: "https://www.geoportail-urbanisme.gouv.fr/document/by-id/6c6320c68195297390a319acb951dc4b"
+  approbation: "2024-06-25"
+  pages_total: 227
+  offset_pdf_vs_imprimee: 0
+
+# Mode de résolution des zones (cf. resolve_zone) :
+#   progressif (défaut) = commune EN COURS de calibration : une zone hors de ce YAML,
+#               ou une zone calibrée sans hauteur exploitable, retombe sur l'ESTIMATION
+#               générique (calibree=False) — la couverture ne RECULE jamais.
+mode: progressif
+
+# Règles transverses constatées (dispositions générales + motifs répétés par chapitre) :
+regles_transverses:
+  stationnement: "Norme logement PAR ZONE (tableau Art. <Z>6). Réductions transverses : -30 % à moins de 200 m du TCSP ; -30 % (mutualisation) pour opérations > 50 logts + 500 m² SDP autre destination ; parcelles < 150 m² à façade < 8 m ou accessibles à pied : exemptées."
+  pleine_terre: "Exprimée via le Coefficient de Biotope de Surface (CBS) + un % minimal d'espaces plantés de pleine terre, PAR TRANCHE de surface de l'unité foncière (Art. <Z>5.1)."
+  hauteur_bonus: "Bonus récurrent : opérations de plus de 10 logements aidés et/ou CBS > 70 % => hauteur portée à un palier supérieur (précisé par zone). Non gravé (conditionnel) — noté par zone."
+  limites_separatives: "Implantation EN limite autorisée (max 2 limites, 70 % du linéaire ; hauteur limitée 6 m dans la bande de 3 m) OU retrait 3 m (Art. <Z>3.2)."
+
+# Hypothèses de CALCUL (reprises de Saint-Paul ; NB : le moteur lit aujourd'hui les
+# hypothèses GLOBALES de plu_saint_paul.yaml — cette section est documentaire/future).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  cout_construction_m2_bas: 1800.0
+  cout_construction_m2_haut: 2200.0
+  marge_promoteur_pct: 0.09
+  frais_annexes_pct: 0.12
+  dvf_radius_m: 1500.0
+  dvf_min_ventes: 8
+  pct_lls: 30
+  mixite_sdp_seuil_m2: 1500
+  mixite_logements_seuil: 20
+  mixite_terrain_seuil_m2: 6000
+  prix_m2_lls: 0
+  majoration_vrd_pluvial: 0
+  niveaux_bati_existant_defaut: 1
+  sous_densite_seuil_pct: 40
+  he_defaut_generique_m: 9.0
+  assemblage_min_surface_m2: 1000
+  assemblage_individuel_max_m2: 1000
+
+zones:
+
+  # ============== LOT UG — zone urbaine mixte générale (chap. « Ug et AUg », p.97-111) ==============
+  # Pool servi : Ug 3 584 parcelles (1er pool de la commune), AUg 7.
+  Ug: {bassin: "Saint-Pierre",
+       he_m: 7, hf_m: 12, hauteur_src: "Art. Ug3.5, p.103",
+       hauteur_note: "Règle générale : 7 m égout/acrotère, 12 m faîtage. Bonus conditionnels NON gravés : >10 logts aidés et/ou CBS>70 % => 10/15 m ; attique => 13 m faîtage ; équipements publics 10/15 m ; 50 pas géométriques => 6/9 m ; terrain en pente : +1,5 m en aval ; surtoiture/toiture végétalisée : +0,5 m.",
+       emprise_sol_pct: 50, emprise_src: "Art. Ug3.4, p.102-103",
+       emprise_note: "PAR TRANCHE : 80 % si UF<=150 m² ; 70 % si 150<UF<=250 m² ; 50 % si UF>250 m². Gravé : tranche >250 m² (81 % du pool servi Ug, médiane 458 m²) — sous-estime pour les petites parcelles.",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ug3.1, p.101",
+       recul_voirie_note: "3 m min de l'emprise des voies routières (1 m si construction <=3 m égout et <=5 m faîtage ; voies piétonnes 2 m ; RN1/RN2/RN3 : 10 à 30 m selon destination).",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ug3.2, p.101-102",
+       recul_limites_note: "En limite autorisée (max 2 limites, 70 % du linéaire, h<=6 m sur la bande de 3 m) OU retrait 3 m.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ug6 (tableau), p.109",
+       stat_note: "1 place / logement locatif social. Réductions transverses (TCSP -30 %, mutualisation) et exemptions cf. regles_transverses.",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ug5.1, p.107-108",
+       pleine_terre_note: "PAR TRANCHE : UF>250 m² : CBS 40 % min dont >=30 % pleine terre plantée ; UF<=250 m² : CBS 30 % dont >=25 % pleine terre. Gravé : tranche >250 m² (dominante)."}
+  AUg: {bassin: "Saint-Pierre",
+       he_m: 7, hf_m: 12, hauteur_src: "Art. Ug3.5, p.103 (chapitre commun « zone Ug et AUg »)",
+       hauteur_note: "Mêmes règles que Ug (chapitre unique). Bonus conditionnels non gravés, cf. Ug.",
+       emprise_sol_pct: 50, emprise_src: "Art. Ug3.4, p.102-103 (chapitre commun)",
+       emprise_note: "Tranches 80/70/50 % — gravé 50 % (>250 m² ; la totalité du pool servi AUg est >250 m², médiane 3 561 m²).",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ug3.1, p.101 (chapitre commun)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ug3.2, p.101-102 (chapitre commun)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ug6 (tableau), p.109 (chapitre commun)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ug5.1, p.107-108 (chapitre commun)",
+       note: "Préambule p.97 : AUg couverte par OAP ; urbanisation possible UNIQUEMENT après opération d'aménagement d'ensemble (totalité de la zone, ou partie identifiée aux OAP) — ZAC, PUP ou permis d'aménager. Capacité calculée sous cette condition opérationnelle (non portée par le schéma, cf. § Frictions)."}
+
+  # ============== LOT UF — zone urbaine de faible densité (chap. « Uf et AUf », p.112-128) ==============
+  # Pool servi : Uf 2 486 (2e pool), UfCA 166, AUf 3, AUfGB 7.
+  Uf: {bassin: "Saint-Pierre",
+       he_m: 6, hf_m: 11, hauteur_src: "Art. Uf3.5, p.119",
+       hauteur_note: "Règle générale : 6 m égout/acrotère, 11 m faîtage. Limites séparatives : 4 m max dans la bande de 3 m. Équipements publics 8/13 m ; pente : +1,5 m aval ; surtoiture/toiture végétalisée : +0,5 m. Pas de bonus mixité/CBS en Uf.",
+       emprise_sol_pct: 50, emprise_src: "Art. Uf3.4, p.118",
+       emprise_note: "PAR TRANCHE : 70 % si UF<150 m² ; 50 % si UF>150 m² (le texte ne statue pas UF=150 m² exactement). Gravé : 50 % (93 % du pool servi Uf est >150 m², médiane 502 m²).",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uf3.1, p.117",
+       recul_voirie_note: "4 m min de l'emprise des voies (voies piétonnes 2 m ; RN1/RN2/RN3 : 10 à 30 m selon destination ; ZAC Cap Austral : 20 m de l'axe RN2).",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uf3.2, p.117-118",
+       recul_limites_note: "En limite autorisée (max 2 limites, 60 % du linéaire) OU retrait 3 m.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Uf6 (tableau), p.126",
+       stat_note: "1 place / logement locatif social. Réductions/exemptions transverses cf. regles_transverses.",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Uf5.1, p.123-124",
+       pleine_terre_note: "PAR TRANCHE : UF>250 m² : CBS 50 % min dont >=40 % pleine terre plantée ; UF<=250 m² : CBS 40 % dont >=30 %. Gravé : tranche >250 m² (83 % du pool servi Uf)."}
+  UfCA: {bassin: "Saint-Pierre",
+       he_m: 6, hf_m: 7.5, hauteur_src: "Art. Uf3.5, p.119 (« Dans le secteur UfCa limiter la hauteur à 6 m égout et 7,5 m au faîtage »)",
+       hauteur_note: "Secteur ZAC Cap Austral (Grand Bois). Mesure de la hauteur : par rapport au terrain livré par l'aménageur (ou au déblai si affouillements) — spécifique UfCA.",
+       emprise_sol_pct: 50, emprise_src: "Art. Uf3.4, p.118 (règle générale du chapitre, pas d'exception UfCA)",
+       emprise_note: "Tranches 70/50 % — gravé 50 % (>150 m² ; 87 % du pool servi UfCA).",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uf3.1, p.117",
+       recul_voirie_note: "ZAC Cap Austral : retrait minimal 20 m depuis l'axe de la RN2 (façade RN uniquement) ; sinon règle générale 4 m.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uf3.2, p.117-118",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Uf6 (tableau), p.126",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Uf5.1, p.123-124",
+       pleine_terre_note: "Tranches CBS 50/40 % dont pleine terre 40/30 % — gravé 40 % (>250 m² : 73 % du pool servi UfCA)."}
+  AUf: {bassin: "Saint-Pierre",
+       he_m: 6, hf_m: 11, hauteur_src: "Art. Uf3.5, p.119 (chapitre commun « zone Uf et AUf »)",
+       emprise_sol_pct: 50, emprise_src: "Art. Uf3.4, p.118 (chapitre commun)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uf3.1, p.117 (chapitre commun)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uf3.2, p.117-118 (chapitre commun)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Uf6 (tableau), p.126 (chapitre commun)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Uf5.1, p.123-124 (chapitre commun)",
+       note: "Préambule p.112 : AUf couverte par OAP ; urbanisation UNIQUEMENT après opération d'aménagement d'ensemble (ZAC, PUP ou permis d'aménager). Condition opérationnelle non portée par le schéma, cf. § Frictions."}
+  AUfGB: {bassin: "Saint-Pierre",
+       he_m: null, hf_m: 5.5, hauteur_src: "Art. Uf3.5, p.119 (« Dans le secteur AUfGB limiter la hauteur à 5,5 m au faîtage »)",
+       hauteur_note: "Seul le faîtage (5,5 m) est donné ; hé non précisé.",
+       emprise_sol_pct: 50, emprise_src: "Art. Uf3.4, p.118 (règle générale du chapitre)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uf3.1, p.117 (chapitre commun)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uf3.2, p.117-118 (chapitre commun)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Uf6 (tableau), p.126 (chapitre commun)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Uf5.1, p.123-124 (chapitre commun)",
+       note: "Secteur à urbaniser spécifique Grand Bois. Préambule p.112 : couvert par OAP ; urbanisation UNIQUEMENT après opération d'aménagement d'ensemble."}
+
+  # ============== LOT UD — zone urbaine de centralité (chap. « Ud et AUd », p.76-96) ==============
+  # Pool servi : Ud 680 (3e pool), UdBO 86, Udl 1, AUdma 11.
+  # NB : le zonage GPU servi ne contient AUCUN polygone « AUd » (la zone AUd du chapitre
+  # n'apparaît pas au plan) — pas d'entrée AUd.
+  Ud: {bassin: "Saint-Pierre",
+       he_m: 15, hf_m: 20, hauteur_src: "Art. Ud3.5, p.84",
+       hauteur_note: "« comprises ENTRE 6 et 15 m à l'égout/acrotère et de 20 m maximum au faîtage » : hauteur MINIMALE 6 m imposée (non portée par le schéma). UF<200 m² : max 7/12 m. À l'alignement : H <= emprise de la voie, plafonné 9 m, puis oblique 100 % (gabarit de front de rue — non gravé). Bonus >10 logts aidés et/ou CBS>60 % : 18/23 m. Limites séparatives : 9 m max dans la bande de 3 m.",
+       emprise_sol_pct: 60, emprise_src: "Art. Ud3.4, p.83-84",
+       emprise_note: "60 % de l'unité foncière. UF<200 m² et équipements publics : emprise NON réglementée (exception non portée — le 60 % gravé sous-estime pour les petites parcelles).",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ud3.1, p.81",
+       recul_voirie_note: "Premier rideau : à l'alignement (0) OU recul minimal 3 m ; en cas d'alignement, 50-70 % du linéaire à l'alignement. Voies piétonnes 2 m. RN3 : 10-30 m selon destination.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ud3.2, p.82",
+       recul_limites_note: "Implantation obligatoire sur AU MOINS une limite séparative (une limite reste libre), max 80 % du linéaire ; sinon retrait 3 m. Règles de mitoyenneté selon le bâti contigu (premier rideau).",
+       stat_logement: "1 place par tranche de 75 m² de surface de plancher", stat_src: "Art. Ud6 (tableau), p.93",
+       stat_note: "Norme AU M² DE SDP, pas par logement (non consommée par le moteur, cf. § Frictions). 1 place / logement locatif social.",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ud5.1, p.91",
+       pleine_terre_note: "CBS 30 % (UF>250 m²) ou 15 % (UF<=250 m²), avec pleine terre 20 % dans LES DEUX tranches — pas d'ambiguïté de tranche pour la pleine terre."}
+  UdBO: {bassin: "Saint-Pierre",
+       he_m: 16, hf_m: 19, hauteur_src: "Art. Ud3.5, p.84 (secteur UdBO)",
+       hauteur_note: "« entre 8 et 16 m à l'égout/acrotère et entre 11 et 19 m au faîtage » : hauteurs MINIMALES 8/11 m imposées (non portées). CBS porté à 60 % : +3 m dérogatoires.",
+       emprise_sol_pct: 55, emprise_src: "Art. Ud3.4, p.83 (« En secteur UdBO : limitée à 55 % »)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ud3.1, p.81",
+       recul_voirie_note: "Règle générale du chapitre (alignement OU 3 m) ; voies piétonnes en UdBO : recul entre 3 et 5 m.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ud3.2, p.82",
+       recul_limites_note: "Sur au moins une limite, max 65 % du linéaire en UdBO ; sinon retrait 3 m.",
+       stat_logement: "1 place par tranche de 75 m² de surface de plancher", stat_src: "Art. Ud6 (tableau), p.93",
+       stat_note: "Norme au m² de SDP (cf. § Frictions). Stationnements >20 places : 80 % intégrés aux bâtiments en UdBO.",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Ud5.1, p.92 (secteur UdBO)",
+       pleine_terre_note: "UdBO PAR TRANCHE : UF>250 m² : CBS 50 % dont 40 % pleine terre ; UF<=250 m² : CBS 20 % dont 25 %. Gravé : 40 % (67 % du pool servi UdBO est >250 m²)."}
+  Udl: {bassin: "Saint-Pierre",
+       he_m: 6, hf_m: 9, hauteur_src: "Art. Ud3.5, p.84 (« Dans le secteur Udl, la hauteur est limitée à 6 m à l'égout et à 9 m au faîtage »)",
+       hauteur_note: "Secteur littoral. Hôtels sur terrain >=2 000 m² : 8/12 m. Limites séparatives : 6 m max dans la bande de 3 m (au lieu de 9).",
+       emprise_sol_pct: 60, emprise_src: "Art. Ud3.4, p.83 (règle générale — aucune exception Udl)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ud3.1, p.81 (règle générale du chapitre)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ud3.2, p.82 (règle générale du chapitre)",
+       stat_logement: "1 place par tranche de 75 m² de surface de plancher", stat_src: "Art. Ud6 (tableau), p.93",
+       stat_note: "Norme au m² de SDP (cf. § Frictions).",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ud5.1, p.91 (règle générale du chapitre)"}
+  # AUdma — ZAC Mairie Annexe (Bois d'Olive) : NON CALIBRABLE PAR NATURE.
+  # Préambule p.76 : « Au titre de l'article R151-8 du code de l'urbanisme, la zone AUdma
+  # est uniquement régie par les Orientations d'Aménagement et de Programmation. »
+  # Les articles Ud3 (volumétrie/emprise/hauteur), Ud5 (CBS) et Ud6 (stationnement)
+  # portent chacun : « En zone AUdma : non règlementé pour l'ensemble de l'article ».
+  # Aucune valeur chiffrée n'existe dans le règlement écrit ; les OAP (document séparé,
+  # graphique) ne sont pas une source chiffrable => estimation générique VOLONTAIRE.
+  AUdma: {bassin: "Saint-Pierre",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "« En zone AUdma : non règlementé pour l'ensemble de l'article » — règles portées par les seules OAP (R151-8).", hauteur_src: "Art. Ud3, p.81 + préambule p.76",
+       emprise_sol_pct: "a_verifier", emprise_note: "Idem — non réglementé au règlement écrit, régi par les OAP.", emprise_src: "Art. Ud3, p.81",
+       recul_voirie_m: "a_verifier", recul_voirie_src: "Art. Ud3, p.81",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. Ud3, p.81",
+       stat_logement: "a_verifier", stat_note: "« non règlementé pour l'ensemble de l'article »", stat_src: "Art. Ud6, p.92",
+       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. Ud5, p.91",
+       note: "NON CALIBRABLE PAR NATURE — zone régie uniquement par les OAP (R151-8, préambule p.76). Estimation prudente volontaire, pas un manque."}
+
+  # ============== LOT UP — village de pêcheurs de Terre Sainte (chap. « Up », p.142-155) ==============
+  # Pool servi : Up 194.
+  Up: {bassin: "Saint-Pierre",
+       he_m: 6, hf_m: 11, hauteur_src: "Art. Up3.5, p.147",
+       hauteur_note: "6 m égout/acrotère, 11 m faîtage. 50 pas géométriques : 9 m faîtage max. Limites séparatives : 4 m max dans la bande de 1,90 m. Équipements publics 10 m égout.",
+       emprise_sol_pct: 60, emprise_src: "Art. Up3.4, p.147",
+       emprise_note: "PAR TRANCHE : 80 % si UF<150 m² ; 60 % si UF>150 m². Gravé : 60 % (tranche dominante : 87 % du pool servi Up est >=150 m², médiane 261 m² — pour les 26 parcelles <150 m² le 60 % SOUS-estime, prudent).",
+       recul_voirie_m: 0, recul_voirie_src: "Art. Up3.1, p.146 (« Les constructions nouvelles peuvent être implantées à l'alignement ou en retrait libre »)",
+       recul_voirie_note: "Implantation libre (alignement ou retrait) ; voies piétonnes : 1 m de l'axe.",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. Up3.2, p.146 (« Soit en limites séparatives … Soit en retrait de 1,9 m »)",
+       stat_logement: "1 place / logement", stat_src: "Art. Up6 (tableau), p.153 (« 1 place de stationnement par logement minimum »)",
+       stat_note: "1 place / logement locatif social. Parcelles <150 m² à façade <8 m ou accessibles à pied : exemptées (transverse).",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Up5.1, p.152 : « Coefficient de Biotope de surface : Non réglementé »"}
+
+  # ============== LOT UCV — centre-ville (chap. « Ucv », p.59-75) ==============
+  # Pool servi : Ucv 93.
+  Ucv: {bassin: "Saint-Pierre",
+       he_m: 15, hf_m: 20, hauteur_src: "Art. Ucv3.5, p.65",
+       hauteur_note: "« comprises entre 9 m et 15 m à l'égout/acrotère, 20 m maximum au faîtage » : hauteur MINIMALE 9 m imposée (non portée par le schéma). Bonus >10 logts aidés et/ou CBS>60 % : 18/23 m ; + attique si désartificialisation : 21/25 m. ZAC du Mail/Bld H. Delisle : RDC min 4 m.",
+       emprise_sol_pct: 70, emprise_src: "Art. Ucv3.4, p.65",
+       emprise_note: "70 % de l'unité foncière. UF<200 m² et équipements publics : emprise NON réglementée (le 70 % gravé sous-estime pour les petites parcelles).",
+       recul_voirie_m: 0, recul_voirie_src: "Art. Ucv3.1, p.63 (« Les constructions nouvelles en premier rideau doivent être implantées à l'alignement »)",
+       recul_voirie_note: "Alignement OBLIGATOIRE en premier rideau (voies piétonnes : 2 m).",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ucv3.2, p.63-64",
+       recul_limites_note: "Implantation obligatoire sur AU MOINS une limite séparative (une limite reste libre), max 80 % du linéaire ; sinon retrait 3 m.",
+       stat_logement: "1 place par tranche de 75 m² de surface de plancher", stat_src: "Art. Ucv6 (tableau), p.72",
+       stat_note: "Norme AU M² DE SDP, pas par logement (non consommée par le moteur, cf. § Frictions). 0,85 place / logement social.",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ucv5.1, p.70",
+       pleine_terre_note: "CBS 30 % (UF>250 m²) ou 15 % (UF<=250 m²), pleine terre 20 % dans LES DEUX tranches."}
+
+  # ============== LOT UA — zones d'activités économiques (chap. « Ua et AUa », p.171-186) ==============
+  # HABITAT INTERDIT dans TOUS les secteurs : tableau Art. Ua1 (p.173-174) : Logement X,
+  # Hébergement X pour Uazp, Uazpc, Uaza/AUaza, Uazc/AUazc, Uazi/AUazi.
+  # Pool servi : Uazi 134, Uazc 53, Uaza 52, Uazp 27, Uazpc 10, AUazi 16, AUazc 5.
+  Uaza: {bassin: "Saint-Pierre",
+       he_m: 16, hf_m: 21, hauteur_src: "Art. Ua3.5, p.177 (règle générale)",
+       emprise_sol_pct: 75, emprise_src: "Art. Ua3.4, p.177",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua3.1, p.176",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua3.2, p.176-177",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ua1 (tableau), p.173-174",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua5.1, p.180 (CBS 30 % dont 20 % pleine terre)",
+       habitat: interdit, habitat_src: "Art. Ua1 (tableau), p.173-174 : Logement X, Hébergement X — ZA de Cap Austral, Mon Caprice, Trois Cheminées, Mont Vert les Hauts, Cafrine, ZI n°2"}
+  Uazc: {bassin: "Saint-Pierre",
+       he_m: 13, hf_m: 18, hauteur_src: "Art. Ua3.5, p.177-178 (secteurs Uazc et AUazc)",
+       hauteur_note: "13/18 m, SAUF ZAC Canabady et Condé Concession : 7 m égout / 12 m faîtage. Équipements publics : 25/30 m.",
+       emprise_sol_pct: 75, emprise_src: "Art. Ua3.4, p.177",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua3.1, p.176",
+       recul_voirie_note: "ZAC Canabady : 5 m (et 65 m de l'axe RN3, 20 m des bretelles) ; terrains face à la ZAC : alignement OU 4 m.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua3.2, p.176-177",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ua1 (tableau), p.173-174",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua5.1, p.180",
+       habitat: interdit, habitat_src: "Art. Ua1 (tableau), p.173-174 : Logement X, Hébergement X — ZAC Canabady, haut ZAC des Casernes, Condé Concession, Ravine des Cafres"}
+  Uazi: {bassin: "Saint-Pierre",
+       he_m: 16, hf_m: 21, hauteur_src: "Art. Ua3.5, p.177 (règle générale)",
+       hauteur_note: "Installations d'extraction de matériaux (ZI n°4) : pas de règle de hauteur. ZI n°4 parcelles 1,9,11,21-24 : 8 m max dans la bande de 15 m longeant la Ravine des Cabris.",
+       emprise_sol_pct: 75, emprise_src: "Art. Ua3.4, p.177",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua3.1, p.176",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Ua3.2, p.177 (« Dans les secteurs Uazi et AUazi … sur deux limites séparatives au maximum ou en retrait de 5 m minimum »)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ua1 (tableau), p.173-174",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua5.1, p.180",
+       habitat: interdit, habitat_src: "Art. Ua1 (tableau), p.173-174 : Logement X, Hébergement X — ZI n°2/3/4, pépinière de Pierrefonds"}
+  Uazp: {bassin: "Saint-Pierre",
+       he_m: 16, hf_m: 21, hauteur_src: "Art. Ua3.5, p.177 (règle générale)",
+       emprise_sol_pct: 70, emprise_src: "Art. Ua3.4, p.177 (« limitée à 70 % dans le secteur Uazp »)",
+       recul_voirie_m: 0, recul_voirie_src: "Art. Ua3.1, p.176 (« Dans les secteurs Uazp et Uazpc les constructions nouvelles peuvent être implantées à l'alignement »)",
+       recul_voirie_note: "Alignement possible SAUF aval RN1 : recul 40 m (Nord) / 50 m (Sud) depuis le giratoire RD26.",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Ua3.2, p.177 (« Uazp et Uazpc … sur une limite séparative au maximum ou en retrait de 5 m minimum »)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ua1 (tableau), p.173-174",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua5.1, p.180",
+       habitat: interdit, habitat_src: "Art. Ua1 (tableau), p.173-174 : Logement X, Hébergement X — ZAC Pierrefonds Aérodrome"}
+  Uazpc: {bassin: "Saint-Pierre",
+       he_m: 16, hf_m: 21, hauteur_src: "Art. Ua3.5, p.177 (règle générale)",
+       emprise_sol_pct: 75, emprise_src: "Art. Ua3.4, p.177 (règle générale — la limite 70 % ne vise que Uazp)",
+       recul_voirie_m: 0, recul_voirie_src: "Art. Ua3.1, p.176 (alignement possible, cf. Uazp)",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Ua3.2, p.177 (cf. Uazp)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ua1 (tableau), p.173-174",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua5.1, p.180",
+       habitat: interdit, habitat_src: "Art. Ua1 (tableau), p.173-174 : Logement X, Hébergement X — ZAC Pierrefonds Aérodrome (secteur commercial)"}
+  AUazc: {bassin: "Saint-Pierre",
+       he_m: 13, hf_m: 18, hauteur_src: "Art. Ua3.5, p.177-178 (secteurs Uazc et AUazc — chapitre commun « Ua et AUa »)",
+       emprise_sol_pct: 75, emprise_src: "Art. Ua3.4, p.177",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua3.1, p.176",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua3.2, p.176-177",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ua1 (tableau), p.173-174",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua5.1, p.180",
+       habitat: interdit, habitat_src: "Art. Ua1 (tableau), p.173-174 : Logement X, Hébergement X",
+       note: "Préambule p.171 : AUazc sous OAP ; urbanisation UNIQUEMENT après opération d'aménagement d'ensemble."}
+  AUazi: {bassin: "Saint-Pierre",
+       he_m: 16, hf_m: 21, hauteur_src: "Art. Ua3.5, p.177 (règle générale — chapitre commun)",
+       hauteur_note: "Installations d'extraction (ZI n°4) : pas de règle de hauteur (cf. Uazi).",
+       emprise_sol_pct: 75, emprise_src: "Art. Ua3.4, p.177",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua3.1, p.176",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Ua3.2, p.177 (cf. Uazi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ua1 (tableau), p.173-174",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua5.1, p.180",
+       habitat: interdit, habitat_src: "Art. Ua1 (tableau), p.173-174 : Logement X, Hébergement X",
+       note: "Préambule p.171 : AUazi sous OAP ; urbanisation UNIQUEMENT après opération d'aménagement d'ensemble."}
+
+  # ============== LOT UE — zones d'équipements (chap. « Ue et AUe », p.187-199) ==============
+  # Logement : V* strictement pour présence permanente nécessaire (Ue) / X (Uep)
+  # => même doctrine que M6 2b A-03 : habitat interdit hors gardiennage/fonction.
+  # Pool servi : Uea 13, Ue 4, Uep 3, Uemi 0 (3 parcelles totales).
+  Ue: {bassin: "Saint-Pierre",
+       he_m: 16, hf_m: 21, hauteur_src: "Art. Ue3.5, p.193",
+       hauteur_note: "Équipements publics structurants et ouvrages techniques : pas de règle de hauteur maximale.",
+       emprise_sol_pct: 75, emprise_src: "Art. Ue3.4, p.192 (« En zones Ue et Uemi, l'emprise au sol est au maximum de 75 % »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ue3.1, p.192 (1 m si hauteur <= 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ue3.2, p.192 (sur limite(s) possible ; en cas de retrait : 3 m min)",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage/fonction).", stat_src: "Art. Ue1 (tableau), p.188-189",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ue5.1, p.197 (CBS 25 % dont 20 % pleine terre)",
+       habitat: interdit, habitat_src: "Art. Ue1 (tableau + condition), p.188-189 : logements/hébergements autorisés STRICTEMENT pour les personnes dont la présence permanente sur site est nécessaire au fonctionnement de l'équipement"}
+  Uea: {bassin: "Saint-Pierre",
+       he_m: 9, hf_m: 15, hauteur_src: "Art. Ue3.5, p.193 (« Dans le secteur Uea, la hauteur maximale est fixée à 9 m à l'égout et à 15 m au faîtage »)",
+       hauteur_note: "Aérodrome de Pierrefonds : plafonds du Plan de Servitude Aéronautique en sus ; ouvrages techniques (tour de contrôle…) sans règle.",
+       emprise_sol_pct: 30, emprise_src: "Art. Ue3.4, p.192 (« En zone Uea, l'emprise au sol est au maximum de 30 % »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ue3.1, p.192",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ue3.2, p.192",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage/fonction).", stat_src: "Art. Ue1 (tableau), p.188-189",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ue5.1, p.197",
+       habitat: interdit, habitat_src: "Art. Ue1 (tableau + condition), p.188-189 — emprises aéroportuaires"}
+  Uep: {bassin: "Saint-Pierre",
+       he_m: 16, hf_m: 21, hauteur_src: "Art. Ue3.5, p.193 (règle générale du chapitre)",
+       emprise_sol_pct: 0.2, emprise_src: "Art. Ue3.4, p.192 (« En zone Uep, l'emprise au sol est limitée au maximum à 20 m² par ha », soit 0,2 %)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ue3.1, p.192",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ue3.2, p.192",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ue1 (tableau), p.188-189 (Uep : Logement X, Hébergement X)",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ue5.1, p.197",
+       habitat: interdit, habitat_src: "Art. Ue1 (tableau), p.188-189 : Logement X, Hébergement X — parcs et espaces verts paysagers"}
+  Uemi: {bassin: "Saint-Pierre",
+       he_m: 16, hf_m: 21, hauteur_src: "Art. Ue3.5, p.193 (règle générale du chapitre)",
+       emprise_sol_pct: 75, emprise_src: "Art. Ue3.4, p.192 (« En zones Ue et Uemi … 75 % »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ue3.1, p.192",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ue3.2, p.192",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage/fonction).", stat_src: "Art. Ue1 (tableau), p.188-189",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ue5.1, p.197",
+       habitat: interdit, habitat_src: "Art. Ue1 (préambule p.187 : espaces dévolus aux activités militaires ; tableau p.188-189)"}
+
+  # ============== LOT UT — zones touristiques (chap. « Ut et AUt », p.156-170) ==============
+  # Ut : Logement V* strictement présence permanente nécessaire ; AUt1/AUt2 : Logement X.
+  # Pool servi : AUt1 2, AUt2 1, Ut 0.
+  Ut: {bassin: "Saint-Pierre",
+       he_m: 9, hf_m: 12, hauteur_src: "Art. Ut3.5, p.162 (« En zone Ut … 9 m à l'égout … 12 m au faîtage »)",
+       emprise_sol_pct: 50, emprise_src: "Art. Ut3.4, p.162 (piscines <30 m² non comptées)",
+       recul_voirie_m: 2, recul_voirie_src: "Art. Ut3.1, p.161 (2 m min ; bretelle échangeur RN1 : 25 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ut3.2, p.161 (retrait 3 m min — pas d'implantation en limite)",
+       stat_logement: null, stat_note: "Sans objet (habitat limité à la présence permanente nécessaire). Tableau Art. Ut6 : 1 place/logement min le cas échéant.", stat_src: "Art. Ut1 (tableau), p.157-158",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ut5.1, p.164 : « Coefficient de Biotope de surface : Non réglementé »",
+       habitat: interdit, habitat_src: "Art. Ut1 (tableau + condition), p.157-158 : logements strictement pour les personnes dont la présence permanente sur le site est nécessaire"}
+  AUt1: {bassin: "Saint-Pierre",
+       he_m: null, hf_m: 15, hauteur_src: "Art. Ut3.5, p.162 (« En zone AUt1 … 15 m au faîtage ») — seul le faîtage est donné",
+       emprise_sol_pct: 50, emprise_src: "Art. Ut3.4, p.162 (chapitre commun)",
+       recul_voirie_m: 2, recul_voirie_src: "Art. Ut3.1, p.161 (chapitre commun)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ut3.2, p.161 (chapitre commun)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ut1 (tableau), p.157-158 (AUt1 : Logement X)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ut5.1, p.164 (« Non réglementé »)",
+       habitat: interdit, habitat_src: "Art. Ut1 (tableau), p.157-158 : Logement X, Hébergement X",
+       note: "Préambule p.156 : AUt1 sous OAP ; urbanisation UNIQUEMENT après opération d'aménagement d'ensemble."}
+  AUt2: {bassin: "Saint-Pierre",
+       he_m: null, hf_m: 6, hauteur_src: "Art. Ut3.5, p.162 (« En zone AUt2 … 6 m au faîtage ») — seul le faîtage est donné",
+       emprise_sol_pct: 50, emprise_src: "Art. Ut3.4, p.162 (chapitre commun)",
+       recul_voirie_m: 2, recul_voirie_src: "Art. Ut3.1, p.161 (chapitre commun)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ut3.2, p.161 (chapitre commun)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ut1 (tableau), p.157-158 (AUt2 : Logement X)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ut5.1, p.164 (« Non réglementé »)",
+       habitat: interdit, habitat_src: "Art. Ut1 (tableau), p.157-158 : Logement X, Hébergement X",
+       note: "Préambule p.156 : AUt2 sous OAP ; urbanisation UNIQUEMENT après opération d'aménagement d'ensemble."}
+
+# Zones AU « génériques » : à Saint-Pierre, chaque zone AU jumelle est régie par le
+# chapitre de sa zone U (« Dispositions applicables à la zone Ux et AUx ») : entrées
+# PROPRES ci-dessus, pas de renvoi mécanique (le renvoi code ne couvre que AU+chiffre).
+zones_au_renvoi: {}
+
+# Zones à CONSTRUCTION NEUVE NON AUTORISÉE — portées par le mécanisme zones_au_st
+# (seul chemin du schéma produisant constructible_neuf=False ; l'étiquette moteur
+# « secteur de transition (AU*st), H max 4 m » est INEXACTE pour ces zones — friction
+# de schéma consignée au rapport, la CAPACITÉ (zéro construction neuve) est exacte) :
+#   - Us  : zone gelée PROVISOIREMENT — préambule p.129 : « Provisoirement, elle
+#     n'accepte aucune nouvelle construction dans l'attente de l'approbation de la
+#     modification du SCoT » ; Art. Us1 (tableau p.130) : Logement/Hébergement V*
+#     « Uniquement les extensions limitées à 25 % de la surface de plancher des
+#     constructions existantes », tout commerce X. (Le chapitre 2 fixe pourtant
+#     hé 6/hf 11, emprise 40 % >150 m², CBS 60 %/50 % pleine terre — règles gravables
+#     le jour où la zone rouvre.)
+#   - AU01/AU02/AU03/AU0c-1 : Art. AU01 p.200 : « Sont interdites, dans l'ensemble des
+#     zones AU0, toute construction quelle qu'elle soit » (seuls services publics et
+#     extensions <=20 % SDP) ; ouverture UNIQUEMENT par modification du PLU, avec
+#     échéancier : AU0-1/AU0c-1 : 2-6 ans ; AU0-2 : 6-12 ans ; AU0-3 : >12 ans à
+#     compter de l'approbation (25/06/2024). AU0c (Pierrefonds) : carrières autorisées
+#     avant ouverture.
+zones_au_st:
+  liste: ["Us", "AU01", "AU02", "AU03", "AU0c-1"]
+  portee: "Construction neuve NON autorisée : Us gelée provisoirement (extensions <=25 % SDP uniquement, dans l'attente de la modification du SCoT — préambule p.129 + Art. Us1 p.130) ; zones AU0 fermées (toute construction interdite, extensions <=20 % SDP, ouverture par modification du PLU selon échéancier 2-6/6-12/>12 ans — Art. AU01 p.200)."
+  source: "Préambule Us p.129 + Art. Us1 (tableau) p.130 ; Art. AU01, p.200."
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
+# DÉCISION (cadrage GO n°1) : A et N restent NON CALIBRÉES — constructibilité
+# d'EXCEPTION uniquement (A : logement de l'exploitant agricole limité à 1/exploitation
+# et 150 m² SDP, extensions <=25 %, STECAL At — Art. A1 p.202-204 ; N : extensions
+# <=25 %, carrières Nc, parcs Np/Nge — Art. N1 p.212-214). Les hauteurs du chapitre
+# (A : 4/7 m ; N : 6/9 m) encadrent ces exceptions, PAS une constructibilité logement
+# ordinaire : les graver ferait calculer une capacité logement fictive. Le repli
+# générique classe A*/N* non constructibles => verdict produit correct.
+zones_non_constructibles: ["A, Ac, Ac1, Acu, Acu1, At (chap. p.202-211)",
+                           "N, Nr, Nc, Ncu, Nci, Np, Npnr, Nge (chap. p.212-221)"]
