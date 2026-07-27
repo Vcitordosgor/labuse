@@ -37,13 +37,20 @@ Le filtre boussole (`copilote/boussole.py`) passe sur CHAQUE payload avant écri
 clés nominatives bloquées sauf preuve personne morale/publique (types alignés sur
 `proprietaire_type`) ; `prenom`/`contact`/`dirigeant` bloqués même en contexte PM.
 
-## 3 · Plans (100 % déterministes, figés dans run_started)
+## 3 · Plans (100 % déterministes, figés dans run_started) — v2, revue plafond 27/07
 
 ```
-PLAN_INSTRUIRE  = criblage* · faisabilite* · risques* · marche_dvf · mutation · assemblage*
-PLAN_SHORTLIST  = criblage* · faisabilite* · risques* · mutation · assemblage_court*
+PLAN_INSTRUIRE  = criblage* · filtre_geometrique* · faisabilite* · risques* ·
+                  marche_dvf · filtre_budget · mutation · assemblage*
+PLAN_SHORTLIST  = criblage* · filtre_geometrique* · faisabilite* · risques* ·
+                  mutation · assemblage_court*
 PLAN_VERIFIER   = scoreur_unitaire* · assemblage_verdict*        (* = bloquant)
 ```
+
+Cascade de coût (arbitrage Vic) : filtre bon marché AVANT la faisabilité (exhaustive,
+parallèle) ; charge foncière sur TOUTES les retenues ; budget AVANT toute troncature ;
+tri champion P APRÈS la faisabilité (classer les retenues, jamais choisir lesquelles
+examiner) ; restitution top-20 à l'assemblage.
 
 ## 4 · Décisions prises (avec le GO de Vic)
 
@@ -121,14 +128,13 @@ fil via `after_seq`. Si le polling devient un point de charge → M26-B (décisi
   avant→après) mais le récap `run_completed` (`n_retenues`/`n_ecartees`) ne la requalifie
   pas encore — correction à faire selon l'arbitrage plafond (voir ci-dessous), AVANT
   toute UI M26-B.
-- **Plafond du criblage (arbitrage Vic en cours, bloquant pour le merge)** :
-  `copilote_max_candidats = 24`, appliqué en fin de criblage après les filtres du brief,
-  tri déterministe tier (brûlante→à creuser) puis rang du champion P puis IDU. Mesuré
-  (Saint-Paul, run 1) : pool servi 13 155 (= 4 tiers non écartés sur 51 129 parcelles),
-  les 24 examinées = les 24 meilleures brûlantes → le « 0 retenue » du run 1 signifie
-  « 0 parmi les 24 meilleures brûlantes », pas « rien à Saint-Paul ». Débit mesuré de la
-  faisabilité : 13,1 ms/parcelle (échantillon 300, pseudo-aléatoire md5) → pool complet
-  ≈ 172 s, hors budget 120 s d'un facteur ~1,4 (pas une impossibilité d'échelle).
+- **Plafond du criblage — RÉSOLU (arbitrage Vic « option c », 27/07)** : le plafond 24
+  au criblage était un faux négatif structurel (vérité terrain : **3 852** parcelles de
+  Saint-Paul satisfont le brief du run 1, le pipeline v1 en servait 0). Remplacé par la
+  cascade de coût du §3 : filtre géométrique prouvablement conservateur (voir §9-bis),
+  faisabilité exhaustive parallèle (4 sessions, pool borné, fermé en fin d'étape,
+  annulation coupant les travaux en cours), garde-fou de dernier recours
+  `copilote_max_candidats = 2000` avec requalification intégrale s'il mord.
 
 - L'exécution est in-process : un redémarrage du serveur laisse un run `running` orphelin
   (pas de reprise automatique en M26-A ; l'event log permet de le constater honnêtement —
@@ -169,3 +175,74 @@ près après démo · non-régression pytest : les 17 échecs + 66 erreurs const
 branche sont **identiques à `origin/main`** sur ce poste (diff vide — préexistants :
 test_front_reliquats, test_protection, setup test_api…) ; la branche ajoute exactement
 ses 81 tests verts (1167 passés vs 1086 baseline).
+
+## 9-bis · Revue plafond (« option c ») — filtre géométrique, mesures et preuves (27/07)
+
+**Filtre géométrique** (`filtre_geometrique`, bloquant, avant faisabilité) : une parcelle
+n'est écartée que si son MAJORANT de SDP — emprise insetée du recul (`ST_Buffer(−recul)`,
+SQL) × niveaux(hé) × `coef_occupation` — reste sous la cible moins 1 m² (marge absorbant
+l'ARRONDI du moteur, 8 cas limites à SDP = 420 pile sans elle). Toutes les valeurs sont
+lues AUX MÊMES SOURCES que le moteur (`plu_rules.resolve_zone`, `Hypotheses.charger()`)
+— jamais dupliquées : si le moteur change, le filtre suit. Zones sans plafond exploitable
+(`à_vérifier`) ou dont l'attribution pourrait différer de celle du moteur (non-U/AU,
+habitat interdit) : NON filtrées — la faisabilité tranche. Étiquette Sourcé (PLU calibré)
+/ Estimé (repli générique 9 m ≈ 3 niveaux), provenance dans chaque motif d'écartement.
+
+**Preuves 0 faux négatif** (vérité terrain complète, moteur exécuté sur TOUT le pool) :
+Saint-Paul (calibré) : 13 155 parcelles, 3 852 retenues réelles, 0 FN · Bras-Panon
+(générique) : 686, 177 retenues, 0 FN · Le Port (générique) : 1 333, 309 retenues, 0 FN.
+Vérification complémentaire du filtre TEL QU'IMPLÉMENTÉ (résolution progressive des
+renvois de zones incluse) : faisabilité exécutée sur les **8 905 parcelles qu'il écarte**
+au brief du run 1 → **0 faux négatif** (aucune n'aurait été retenue par le moteur).
+
+**Sémantique du filtre budget** : « dans le budget » = prix probable du foncier (médiane
+terrain sectorielle × surface, `dvf_secteur_medianes`, Estimé) ≤ `budget_max_eur`.
+Le sens « charge supportable ≥ budget » a été écarté : il exclurait les parcelles BON
+MARCHÉ (prix probable 200 k€, charge 300 k€ → parfaitement dans un budget de 480 k€).
+Sans prix probable : « non estimable — non filtrée », jamais écartée sur une absence.
+**Pas d'hybride `score_e`** (condition Vic vérifiée) : `score_e` est un pipeline batch
+DIFFÉRENT (« bilan-neuf-v2 » : bilan à rebours sur SDP *résiduelle*, prix de sortie NEUF
+sectoriel, coût 2 550 €/m² point) — la charge servie par le Copilote est calculée LIVE
+par les mêmes fonctions que la fiche (`sector_price` + `compute_bilan`). **Écart
+méthodologique signalé** : deux méthodes de charge foncière coexistent dans le produit
+(score_e servi en fiche/scoreur/banquier vs bilan live) — cohérence à traiter hors M26-A.
+
+**Run de preuve** (brief exact du mandat, serveur local, 27/07) — **70,6 s** :
+pool 13 155 → filtre géométrique écarte 8 905 (386 ms) → **garde-fou 2 000 A MORDU**
+(2 250 non examinées → requalification intégrale au récap) → 2 000 examinées →
+faisabilité 1 793 retenues (33,4 s, 4 sessions) → charge live 1 793/1 793 (27,6 s) →
+budget : 1 100 dans le budget + 85 non estimables non filtrées, 608 écartées →
+**1 185 retenues, top-20 restitué**, entonnoir 6 étages au récap, `exhaustif: false`.
+Note chiffrée pour l'arbitrage du garde-fou : l'examen EXHAUSTIF du run 1 (4 250
+survivants + charge sur ~3 800 retenues) est extrapolé à ~135-140 s aux débits mesurés —
+légèrement au-dessus du budget 120 s ; à 2 000 il tient (70,6 s) au prix de la
+requalification.
+
+## 10 · Information produit (demande Vic, revue calibrage) — règles chiffrées PLU
+
+**Communes en repli générique (22)** : Les Avirons, Bras-Panon, Cilaos, Entre-Deux,
+L'Étang-Salé, Petite-Île, La Plaine-des-Palmistes, Le Port, La Possession, Saint-André,
+Saint-Benoît, Saint-Joseph, Saint-Leu, Saint-Louis, Saint-Philippe, Saint-Pierre,
+Sainte-Marie, Sainte-Rose, Sainte-Suzanne, Salazie, Le Tampon, Les Trois-Bassins.
+(Calibrées : Saint-Paul, Saint-Denis. Vérifié moteur en main : `calibree=True` pour 2
+communes exactement.)
+
+**Contenu d'un `config/plu_<commune>.yaml` calibré** (dimensionnement de la re-gravure) :
+Saint-Paul = 277 lignes, Saint-Denis = 312. Racine : `source` (document, URL, offset PDF),
+`mode`, `regles_transverses`, `hypotheses_faisabilite`, `zones` (Saint-Paul : 35),
+`zones_au_renvoi`, `zones_au_st`, `zones_non_constructibles`. Par zone : `he_m`, `hf_m`,
+`emprise_sol_pct`, `recul_voirie_m`, `recul_limites_sep_m`, `stat_logement`,
+`pleine_terre_pct`, chacun avec sa source (`*_src` : article + page) et ses notes ;
+valeurs `a_verifier` admises (jamais comblées). Extraction manuelle depuis le règlement
+PDF, sourcée article/page — c'est le travail par commune.
+
+**Consommateurs des règles chiffrées** (donc en repli générique sur 22 communes) :
+- Faisabilité 11 étapes (fiche, Flash) et tout ce qui l'appelle : `briques_pdf.collect`
+  → **dossier banquier O1**, **rapport de potentiel M22-D**, **pré-dossier PC (Lot 5)**,
+  `api/modules.py` (3 appels), **Copilote M26-A** ;
+- `api/moteurs.py` (SimulPLU), `api/traducteur.py` (traducteur PLU),
+  `api/lettre_zonage.py`, `plu_reglement.py` (deep-links règlement — repli GPU propre) ;
+- **chaîne du résiduel** : `faisabilite/residuel.py` → `parcel_residuel`
+  (`sdp_residuelle_m2`) consommé par la couche cascade `residuel_socle` (étage 0 étendu
+  du scoring SERVI), la shortlist, le renouvellement et `score_e` (marge €). Le repli
+  générique irrigue donc aussi ces scores — étiqueté Estimé, mais à l'échelle produit.

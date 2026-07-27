@@ -106,7 +106,7 @@ def test_sse_rejoue_puis_reconnecte_sans_doublon_ni_trou(client, engine):
             assert r.headers["content-type"].startswith("text/event-stream")
             data = "".join(r.iter_text())
         for bloc in data.strip().split("\n\n"):
-            champs = dict(l.split(": ", 1) for l in bloc.splitlines() if ": " in l)
+            champs = dict(ligne.split(": ", 1) for ligne in bloc.splitlines() if ": " in ligne)
             if champs.get("event") == "fin":
                 continue
             seqs.append(int(champs["id"]))

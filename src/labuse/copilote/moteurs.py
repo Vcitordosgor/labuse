@@ -5,12 +5,23 @@ Interdiction de dupliquer la logique métier : chaque wrapper APPELLE un moteur 
 (sourcé/estimé/absent) et compacte le résultat pour l'event log. Les listes complètes
 vont dans agent_run_parcels, jamais dans les payloads.
 
-Chaque wrapper reçoit (db, brief, dossier) et renvoie un StepResult ; le `dossier` est
-l'état de travail en mémoire (candidats + annotations), muté au fil des étapes.
+Cascade de coût (arbitrage Vic, revue plafond M26-A) :
+  criblage (SQL) → filtre_geometrique (SQL, prouvablement conservateur) → faisabilité
+  (moteur 11 étapes, TOUS les survivants, parallèle) → risques → charge foncière LIVE
+  sur TOUTES les retenues (pas d'hybride score_e : pipeline différent, cf. rapport) →
+  filtre budget → tri champion P → restitution top-N.
+
+Le filtre géométrique n'écarte une parcelle QUE si son majorant de SDP — emprise insetée
+du recul × niveaux(hé) × coef_occupation, valeurs lues AUX MÊMES SOURCES que le moteur
+(plu_rules.resolve_zone + Hypotheses.charger, jamais dupliquées) — reste sous la cible
+moins la marge d'arrondi. Preuve 0 faux négatif : vérité terrain complète Saint-Paul
+(3 852 retenues), Bras-Panon, Le Port (rapport §9-bis).
 """
 from __future__ import annotations
 
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 from sqlalchemy import text
@@ -20,6 +31,15 @@ from ..scoring.score_v_constants import Q_A_RUN_LABEL
 
 #: Ordre de service des tiers du run servi (champion P) — les écartées ne sont jamais criblées.
 _TIERS_SERVIS = ("brulante", "chaude", "reserve_fonciere", "a_creuser")
+
+#: Marge d'arrondi du filtre géométrique : le moteur ARRONDIT sa SDP au m² — comparer le
+#: majorant à (cible − 1) absorbe le cas limite (8 faux négatifs à SDP = 420 pile sans elle).
+MARGE_ARRONDI_M2 = 1.0
+
+#: Formulations imposées (Vic, revue calibrage M26-A) : sur commune non calibrée, JAMAIS
+#: « tracée par article ».
+MENTION_SDP_CALIBREE = "SDP tracée par article (PLU calibré)"
+MENTION_SDP_GENERIQUE = "SDP estimée — règle générique, PLU non calibré"
 
 
 @dataclass
@@ -36,24 +56,62 @@ class Dossier:
     candidats: list[dict] = field(default_factory=list)
     refs: list[dict] = field(default_factory=list)          # mission verifier_adresse
     verdicts: list[dict] = field(default_factory=list)
+    calibrage: dict = field(default_factory=dict)           # commune → article_plu | regle_generique
 
     def retenus(self) -> list[dict]:
         return [c for c in self.candidats if c.get("retenu", True)]
+
+    def examines(self) -> list[dict]:
+        return [c for c in self.candidats if c.get("examine", True)]
 
     def ecarter(self, c: dict, motif: str) -> None:
         c["retenu"] = False
         c["motif_ecarte"] = motif
 
 
-def _max_candidats() -> int:
+def _settings():
     from .. import config
-    return config.get_settings().copilote_max_candidats
+    return config.get_settings()
+
+
+# ── Parallélisation bornée (arbitrage Vic : 4 sessions, fermées en fin d'étape,
+#    annulation coupant les travaux en cours) ────────────────────────────────────────────
+def _en_parallele(items: list, travail, annule=None, lot_verif: int = 25) -> None:
+    """Applique `travail(session, item)` sur chaque item, N sessions dédiées (pool borné).
+
+    Chaque worker ouvre SA session (jamais partagée entre runs ni entre workers) et la
+    ferme en `finally`. `annule()` est consulté tous les `lot_verif` items : un run
+    annulé coupe les travaux en cours au lieu de les laisser finir.
+    """
+    from ..db import session_factory
+    n_workers = max(1, int(_settings().copilote_sessions_paralleles))
+    stop = threading.Event()
+
+    def _lot(sous_liste):
+        s = session_factory()()
+        try:
+            for i, item in enumerate(sous_liste):
+                if stop.is_set():
+                    return
+                if annule is not None and i % lot_verif == 0 and annule():
+                    stop.set()
+                    return
+                travail(s, item)
+        finally:
+            s.close()
+
+    lots = [items[i::n_workers] for i in range(n_workers)]
+    with ThreadPoolExecutor(n_workers) as ex:
+        for fut in [ex.submit(_lot, lot) for lot in lots if lot]:
+            fut.result()                       # propage la première exception
 
 
 # ── criblage — LECTURE SEULE du run servi épinglé + couches précalculées ────────────────
 def criblage(db: Session, brief: dict, dossier: Dossier) -> StepResult:
     """Candidats = parcelles du run servi (Q_A_RUN_LABEL), tiers non écartés, filtrées par
-    les critères du brief. AUCUN score recalculé (décision Vic, GO M26-A Q3)."""
+    les critères du brief. AUCUN score recalculé (décision Vic, GO M26-A Q3). Aucun
+    plafond ici : l'exhaustivité de l'examen est la règle, le garde-fou vit au filtre
+    géométrique (dernier recours, requalifié)."""
     contraintes = brief.get("contraintes") or {}
     smin = brief.get("surface_min_m2")
     zones = contraintes.get("zones")
@@ -94,54 +152,162 @@ def criblage(db: Session, brief: dict, dossier: Dossier) -> StepResult:
     if contraintes.get("exclure_abf"):
         kept = _filtre("exclure_abf", kept, lambda r: not r["abf"])
 
-    cap = _max_candidats()
-    plafonne = len(kept) > cap
-    kept = kept[:cap]
-
-    dossier.candidats = [dict(r) | {"retenu": True} for r in kept]
+    dossier.candidats = [dict(r) | {"retenu": True, "examine": True} for r in kept]
     par_tier: dict[str, int] = {}
     for c in dossier.candidats:
         par_tier[c["tier"]] = par_tier.get(c["tier"], 0) + 1
     return StepResult(
         resultat={"run_servi": Q_A_RUN_LABEL, "n_pool": n0, "filtres": etapes,
-                  "n_candidats": len(kept), "par_tier": par_tier,
-                  "plafonne_a": cap if plafonne else None},
+                  "n_candidats": len(kept), "par_tier": par_tier},
         etiquette="sourcé", n_avant=n0, n_apres=len(kept))
 
 
-# ── faisabilite — moteur 11 étapes existant, par candidat ───────────────────────────────
-def faisabilite(db: Session, brief: dict, dossier: Dossier) -> StepResult:
-    """`faisabilite.db.parcel_faisabilite` par candidat. Entonnoir : SDP estimée < cible →
-    écartée (motif tracé). Non calculable → écartée « non vérifiable » (boussole : jamais
-    servi comme faisable ce qui ne l'est pas vérifiablement). Étiquette ESTIMÉ
-    (pré-faisabilité sur hypothèses calibrables)."""
+# ── filtre_geometrique — majorant de SDP prouvablement conservateur (SQL) ───────────────
+def _regles_filtre(commune: str, zone_libs: set[str]) -> tuple[dict, str]:
+    """zone_lib → (niveaux majorants, recul) depuis LES MÊMES SOURCES que le moteur :
+    plu_rules.resolve_zone (YAML calibré ou repli générique) + Hypotheses.charger().
+    Renvoie aussi le mode de calibrage de la commune (article_plu | regle_generique).
+    Zone sans plafond exploitable (à_vérifier…) → absente du mapping → NON filtrée."""
+    from ..faisabilite.engine import Hypotheses
+    from ..faisabilite.plu_rules import _calibrated_yaml, resolve_zone
+
+    hyp = Hypotheses.charger()
+    calibree = _calibrated_yaml(commune) is not None
+    regles: dict[str, tuple[int, float]] = {}
+    for lib in zone_libs:
+        r = resolve_zone(lib, commune)
+        if r is None or not r.constructible_neuf or r.habitat == "interdit":
+            # le moteur conclura non-constructible : on laisse la faisabilité le dire
+            # (l'attribution de zone d'une parcelle mixte peut différer — jamais d'exclusion ici).
+            continue
+        # Même dérivation des niveaux que le moteur (engine.py, « Niveaux (hé prioritaire) »).
+        if isinstance(r.he_m, (int, float)):
+            niveaux = int(float(r.he_m) // hyp.etage_m)
+        elif isinstance(r.hf_m, (int, float)):
+            niveaux = max(1, int((float(r.hf_m) - hyp.etage_m) // hyp.etage_m))
+        else:
+            continue                                     # pas de plafond exploitable
+        recul = (float(r.recul_limites_sep_m)
+                 if isinstance(r.recul_limites_sep_m, (int, float))
+                 else hyp.recul_limites_defaut_m)
+        regles[lib] = (niveaux, recul)
+    return regles, ("article_plu" if calibree else "regle_generique")
+
+
+def filtre_geometrique(db: Session, brief: dict, dossier: Dossier) -> StepResult:
+    """Écarte les parcelles dont la SDP est GÉOMÉTRIQUEMENT hors d'atteinte, quelle que
+    soit la règle applicable : majorant = emprise insetée du recul × niveaux(hé) ×
+    coef_occupation (le moteur ne peut jamais produire plus). Marge d'arrondi 1 m².
+    Puis garde-fou de dernier recours (copilote_max_candidats) : au-delà, les parcelles
+    ne sont PAS examinées et le récap est requalifié — jamais présenté comme exhaustif."""
+    from ..faisabilite.engine import Hypotheses
+
+    hyp = Hypotheses.charger()
+    occ = float(hyp.coef_occupation)                     # même source que le moteur, jamais dupliqué
+    cible = float(brief["programme"]["sdp_cible_m2"])
+    avant = len(dossier.retenus())
+
+    par_commune: dict[str, set] = {}
+    for c in dossier.candidats:
+        par_commune.setdefault(c["commune"], set()).add(c["zone_lib"])
+    regles_par_commune: dict[str, dict] = {}
+    for commune, libs in par_commune.items():
+        regles, mode = _regles_filtre(commune, {x for x in libs if x})
+        regles_par_commune[commune] = regles
+        dossier.calibrage[commune] = mode
+
+    # Emprises insetées par groupe de recul distinct (une requête SQL par valeur).
+    a_inspecter: dict[float, list[dict]] = {}
+    for c in dossier.candidats:
+        r = regles_par_commune[c["commune"]].get(c["zone_lib"] or "")
+        if r is None:
+            continue                                     # zone sans plafond exploitable → non filtrée
+        c["_niveaux_majorant"], recul = r
+        a_inspecter.setdefault(recul, []).append(c)
+    for recul, cs in a_inspecter.items():
+        insets = dict(db.execute(text(
+            "SELECT id, ST_Area(ST_Buffer(geom_2975, -:d)) FROM parcels WHERE id = ANY(:ids)"),
+            {"d": recul, "ids": [c["parcel_id"] for c in cs]}).all())
+        for c in cs:
+            majorant = (insets.get(c["parcel_id"]) or 0.0) * c["_niveaux_majorant"] * occ
+            if majorant < cible - MARGE_ARRONDI_M2:
+                mode = dossier.calibrage[c["commune"]]
+                src = ("Sourcé, article PLU" if mode == "article_plu"
+                       else "Estimé, règle générique (hé 9 m ≈ 3 niveaux)")
+                dossier.ecarter(c, f"capacité géométrique insuffisante "
+                                   f"(majorant {majorant:.0f} m² < cible {cible:.0f} m²) — {src}")
+
+    survivants = dossier.retenus()
+    dossier._n_apres_geo = len(survivants)             # étage « filtre_geometrique » du récap
+    # Garde-fou de DERNIER RECOURS (arbitrage Vic) — ordre déterministe déjà en place
+    # (tier puis rang du champion P puis IDU, hérité du criblage).
+    plafond = int(_settings().copilote_max_candidats)
+    tronque = len(survivants) > plafond
+    if tronque:
+        for c in survivants[plafond:]:
+            c["examine"] = False
+            c["retenu"] = False
+            c["motif_ecarte"] = (f"non examinée — garde-fou {plafond} parcelles atteint "
+                                 "(résultat NON exhaustif, voir récapitulatif)")
+    apres = min(len(survivants), plafond)
+    etiquette = ("sourcé" if all(m == "article_plu" for m in dossier.calibrage.values())
+                 else "estimé")
+    return StepResult(
+        resultat={"cible_sdp_m2": cible, "coef_occupation": occ,
+                  "marge_arrondi_m2": MARGE_ARRONDI_M2,
+                  "calibrage": dict(dossier.calibrage),
+                  "n_ecartees_geometrie": avant - len(survivants),
+                  "garde_fou": {"plafond": plafond, "a_mordu": tronque,
+                                "n_non_examinees": max(0, len(survivants) - plafond)},
+                  "n_examinees": apres},
+        etiquette=etiquette, n_avant=avant, n_apres=apres)
+
+
+# ── faisabilite — moteur 11 étapes existant, TOUS les survivants, en parallèle ──────────
+def faisabilite(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> StepResult:
+    """`faisabilite.db.parcel_faisabilite` sur chaque parcelle examinée, pool parallèle
+    borné. Entonnoir : SDP estimée < cible → écartée (motif tracé). Non calculable →
+    écartée « non vérifiable » (boussole). Étiquette ESTIMÉ ; le mode de calibrage
+    (article PLU / règle générique) est porté explicitement (exigence Vic, revue M26-A)."""
     from ..faisabilite.db import parcel_faisabilite
 
     cible = float(brief["programme"]["sdp_cible_m2"])
-    avant = len(dossier.retenus())
-    for c in dossier.retenus():
-        res = parcel_faisabilite(db, c["parcel_id"])
-        if res is None:
-            dossier.ecarter(c, "faisabilité non vérifiable (zone PLU non résolue)")
-            continue
-        _ctx, fai = res
-        f = fai.fourchette
-        c["faisabilite"] = {
-            "constructible": fai.constructible, "verdict": fai.verdict,
-            "zone": fai.zone, "sdp_m2": f.get("surface_plancher_m2"),
-            "shab_m2": f.get("shab_vendable_m2"),
-            "logements": f.get("logements_sous_sol") or f.get("logements_au_sol"),
-            "calibree": fai.calibree,
-        }
-        if not fai.constructible:
-            dossier.ecarter(c, f"non constructible en l'état ({fai.verdict})")
-        elif (f.get("surface_plancher_m2") or 0) < cible:
-            dossier.ecarter(c, f"SDP estimée insuffisante "
-                               f"({f.get('surface_plancher_m2', 0):.0f} m² < cible {cible:.0f} m²)")
+    a_examiner = dossier.retenus()
+    avant = len(a_examiner)
+    lock = threading.Lock()
+
+    def _travail(s: Session, c: dict) -> None:
+        res = parcel_faisabilite(s, c["parcel_id"])
+        with lock:
+            if res is None:
+                dossier.ecarter(c, "faisabilité non vérifiable (zone PLU non résolue)")
+                return
+            _ctx, fai = res
+            f = fai.fourchette
+            c["faisabilite"] = {
+                "constructible": fai.constructible, "verdict": fai.verdict,
+                "zone": fai.zone, "sdp_m2": f.get("surface_plancher_m2"),
+                "shab_m2": f.get("shab_vendable_m2"),
+                "logements": f.get("logements_sous_sol") or f.get("logements_au_sol"),
+                "calibree": fai.calibree,
+            }
+            if not fai.constructible:
+                dossier.ecarter(c, f"non constructible en l'état ({fai.verdict})")
+            elif (f.get("surface_plancher_m2") or 0) < cible:
+                dossier.ecarter(c, f"SDP estimée insuffisante "
+                                   f"({f.get('surface_plancher_m2', 0):.0f} m² < cible {cible:.0f} m²)")
+
+    _en_parallele(a_examiner, _travail, annule=annule)
     apres = len(dossier.retenus())
+    calibrage = dict(dossier.calibrage)
+    mention = (MENTION_SDP_CALIBREE
+               if calibrage and all(m == "article_plu" for m in calibrage.values())
+               else MENTION_SDP_GENERIQUE)
     return StepResult(
         resultat={"sdp_cible_m2": cible, "n_avant": avant, "n_apres": apres,
-                  "n_ecartees": avant - apres},
+                  "n_ecartees": avant - apres,
+                  "calibrage": calibrage, "mention_sdp": mention,
+                  "sessions_paralleles": int(_settings().copilote_sessions_paralleles)},
         etiquette="estimé", n_avant=avant, n_apres=apres)
 
 
@@ -178,48 +344,103 @@ def risques(db: Session, brief: dict, dossier: Dossier) -> StepResult:
         etiquette="sourcé")
 
 
-# ── marche_dvf — prix de secteur + charge foncière (bilan promoteur existant) ───────────
-def marche_dvf(db: Session, brief: dict, dossier: Dossier) -> StepResult:
-    """`sector_price` + `compute_bilan` par candidat retenu. NON-BLOQUANT et NON
-    éliminatoire : la charge foncière est un ESTIMÉ (jamais un motif d'écartement —
-    l'annotation budget est portée à la note, pas tranchée ici)."""
+# ── marche_dvf — charge foncière LIVE sur TOUTES les retenues + prix probable ───────────
+def marche_dvf(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> StepResult:
+    """`sector_price` + `compute_bilan` (mêmes fonctions que la fiche) sur CHAQUE retenue,
+    en parallèle — PAS d'hybride score_e (pipeline batch différent : bilan à rebours
+    « bilan-neuf-v2 », cf. rapport). Prix probable du foncier = médiane terrain
+    sectorielle × surface (dvf_secteur_medianes, lecture SQL). NON-BLOQUANT : s'il
+    échoue, la note dira « charge foncière non calculable »."""
     from ..faisabilite.bilan import compute_bilan, sector_price
     from ..faisabilite.engine import Hypotheses
 
     hyp = Hypotheses.charger()
-    budget = brief.get("budget_max_eur")
-    n_ok = 0
-    for c in dossier.retenus():
+    retenus = dossier.retenus()
+    # Prix probable (une requête pour tout le lot).
+    prix_terrain = dict(db.execute(text(
+        "SELECT left(p.idu, 10), max(m.mediane_prix_m2) "
+        "FROM parcels p JOIN dvf_secteur_medianes m ON m.secteur = left(p.idu, 10) "
+        "WHERE p.id = ANY(:ids) AND m.type_bien = 'terrain' AND m.n_ventes >= 3 "
+        "GROUP BY left(p.idu, 10)"),
+        {"ids": [c["parcel_id"] for c in retenus]}).all())
+    lock = threading.Lock()
+    n_ok = [0]
+
+    def _travail(s: Session, c: dict) -> None:
         shab = ((c.get("faisabilite") or {}).get("shab_m2") or 0)
+        terrain_m2 = prix_terrain.get(c["idu"][:10])
+        prix_probable = (round(terrain_m2 * float(c["surface_m2"] or 0))
+                         if terrain_m2 and c["surface_m2"] else None)
         if not shab:
-            c["marche"] = {"disponible": False, "motif": "SHAB estimée absente"}
-            continue
-        prix = sector_price(db, c["parcel_id"], hyp)
+            with lock:
+                c["marche"] = {"disponible": False, "motif": "SHAB estimée absente",
+                               "prix_probable_eur": prix_probable}
+            return
+        prix = sector_price(s, c["parcel_id"], hyp)
         if not prix or not prix.get("median"):
-            c["marche"] = {"disponible": False, "motif": "DVF insuffisant sur le secteur"}
-            continue
+            with lock:
+                c["marche"] = {"disponible": False, "motif": "DVF insuffisant sur le secteur",
+                               "prix_probable_eur": prix_probable}
+            return
         bilan = compute_bilan(float(shab), float(c["surface_m2"] or 0), prix, hyp)
         cf = (bilan.charge_fonciere or {}).get("central") if bilan else None
-        c["marche"] = {
-            "disponible": True, "prix_m2_median": prix.get("median"),
-            "fiabilite": getattr(bilan, "fiabilite", None) or prix.get("fiabilite"),
-            "charge_fonciere_eur": cf,
-            "compatible_budget": (None if budget is None or cf is None
-                                  else bool(cf >= float(budget))),
-        }
-        n_ok += 1
-    n = len(dossier.retenus())
+        with lock:
+            c["marche"] = {
+                "disponible": True, "prix_m2_median": prix.get("median"),
+                "fiabilite": getattr(bilan, "fiabilite", None) or prix.get("fiabilite"),
+                "charge_fonciere_eur": cf, "prix_probable_eur": prix_probable,
+                "provenance": "calcul live (sector_price + compute_bilan)",
+            }
+            n_ok[0] += 1
+
+    _en_parallele(retenus, _travail, annule=annule)
+    n = len(retenus)
     return StepResult(
-        resultat={"n_candidats": n, "n_charge_calculable": n_ok,
-                  "n_indisponible": n - n_ok, "budget_max_eur": budget},
+        resultat={"n_candidats": n, "n_charge_calculable": n_ok[0],
+                  "n_indisponible": n - n_ok[0],
+                  "n_prix_probable": sum(1 for c in retenus
+                                         if (c.get("marche") or {}).get("prix_probable_eur")),
+                  "provenance": "calcul live — jamais score_e (pipeline distinct)"},
         etiquette="estimé")
+
+
+# ── filtre_budget — critère du brief, appliqué AVANT toute troncature ───────────────────
+def filtre_budget(db: Session, brief: dict, dossier: Dossier) -> StepResult:
+    """« Dans le budget » = prix probable du foncier (Estimé, médiane terrain sectorielle
+    × surface) ≤ budget_max_eur du brief. Une parcelle SANS prix probable est
+    « non estimable — non filtrée », JAMAIS écartée sur une absence (règle Vic)."""
+    budget = brief.get("budget_max_eur")
+    retenus = dossier.retenus()
+    if budget is None:
+        return StepResult(resultat={"applique": False, "motif": "aucun budget au brief",
+                                    "n_candidats": len(retenus)}, etiquette="sourcé")
+    avant = len(retenus)
+    n_non_estimable = 0
+    for c in retenus:
+        prix = (c.get("marche") or {}).get("prix_probable_eur")
+        if prix is None:
+            c["budget"] = "non estimable — non filtrée"
+            n_non_estimable += 1
+        elif prix > float(budget):
+            dossier.ecarter(c, f"prix probable du foncier ({prix:,.0f} € — Estimé, médiane "
+                               f"terrain sectorielle) au-dessus du budget ({budget:,.0f} €)".replace(",", " "))
+        else:
+            c["budget"] = "dans le budget"
+    apres = len(dossier.retenus())
+    return StepResult(
+        resultat={"applique": True, "budget_max_eur": budget, "n_avant": avant,
+                  "n_dans_budget": apres - n_non_estimable,
+                  "n_non_estimables_non_filtrees": n_non_estimable,
+                  "n_ecartees_budget": avant - apres},
+        etiquette="estimé", n_avant=avant, n_apres=apres)
 
 
 # ── mutation — CHAMPION P, lecture seule du run servi épinglé ───────────────────────────
 def mutation(db: Session, brief: dict, dossier: Dossier) -> StepResult:
     """Décision Vic (GO M26-A Q1) : lecture seule des scores/tiers du champion P
-    (run servi épinglé), étiquette SOURCÉ. Le Radar Mutation V1 (NON SERVI, RR 0,51)
-    n'est JAMAIS appelé ici."""
+    (run servi épinglé), étiquette SOURCÉ. Sa place (revue plafond) : APRÈS la
+    faisabilité, pour CLASSER les retenues — jamais pour choisir lesquelles examiner.
+    Le Radar Mutation V1 (NON SERVI, RR 0,51) n'est JAMAIS appelé ici."""
     retenus = dossier.retenus()
     if not retenus:
         return StepResult(resultat={"run_servi": Q_A_RUN_LABEL, "n_candidats": 0},
@@ -243,51 +464,110 @@ def mutation(db: Session, brief: dict, dossier: Dossier) -> StepResult:
         etiquette="sourcé")
 
 
-# ── assemblage — récapitulatif du dossier + persistance retenues/écartées ───────────────
-def _persist_parcels(db: Session, run_id: str, dossier: Dossier) -> tuple[int, int]:
-    retenues = ecartees = 0
+# ── assemblage — tri P, restitution top-N, entonnoir complet, persistance ───────────────
+def _persist_parcels(db: Session, run_id: str, dossier: Dossier) -> None:
     for c in dossier.candidats:
-        verdict = "retenue" if c.get("retenu", True) else "ecartee"
-        retenues += verdict == "retenue"
-        ecartees += verdict == "ecartee"
+        if not c.get("examine", True):
+            verdict = "non_examinee"
+        elif c.get("retenu", True):
+            verdict = "retenue"
+        else:
+            verdict = "ecartee"
         db.execute(text(
             "INSERT INTO agent_run_parcels (run_id, parcel_idu, verdict, motif) "
             "VALUES (:r, :i, :v, :m) "
             "ON CONFLICT (run_id, parcel_idu) DO UPDATE SET verdict = :v, motif = :m"),
             {"r": run_id, "i": c["idu"], "v": verdict, "m": c.get("motif_ecarte")})
-    return retenues, ecartees
 
 
-def _recap(dossier: Dossier, *, court: bool = False) -> dict:
-    retenus = dossier.retenus()
+def _entonnoir(dossier: Dossier, n_pool: int, restituees: list[dict]) -> list[dict]:
+    """Les six étages, chacun avec compteur et étiquette (exigence Vic, revue plafond) :
+    pool → filtre géométrique → examinées → retenues → dans le budget → restituées."""
+    examinees = [c for c in dossier.candidats if c.get("examine", True)]
+    retenues = dossier.retenus()
+    dans_budget = [c for c in retenues if c.get("budget") != "non estimable — non filtrée"]
+    apres_geo = getattr(dossier, "_n_apres_geo", len(examinees))
+    return [
+        {"etape": "pool", "n": n_pool, "etiquette": "sourcé"},
+        {"etape": "filtre_geometrique", "n": apres_geo,
+         "etiquette": "sourcé/estimé selon calibrage"},
+        {"etape": "examinees", "n": len(examinees), "etiquette": "sourcé"},
+        {"etape": "retenues", "n": len(retenues), "etiquette": "estimé (faisabilité)"},
+        {"etape": "dans_budget", "n": len(dans_budget), "etiquette": "estimé (prix probable)"},
+        {"etape": "restituees", "n": len(restituees), "etiquette": "sourcé (tri champion P)"},
+    ]
+
+
+_ORDRE_TIER = {t: i for i, t in enumerate(_TIERS_SERVIS)}
+
+
+def _restitution(dossier: Dossier) -> list[dict]:
+    """Tri par champion P (tier puis rang — APRÈS faisabilité, jamais avant), top-N."""
+    top_n = int(_settings().copilote_top_restitution)
+    tries = sorted(dossier.retenus(),
+                   key=lambda c: (_ORDRE_TIER.get((c.get("champion_p") or {}).get("tier")
+                                                  or c.get("tier"), 9),
+                                  (c.get("champion_p") or {}).get("rang") or c.get("rang") or 10**9,
+                                  c["idu"]))
+    return tries[:top_n]
+
+
+def _recap(dossier: Dossier, n_pool: int, *, court: bool = False) -> dict:
+    restituees = _restitution(dossier)
+    garde_fou_a_mordu = any(not c.get("examine", True) for c in dossier.candidats)
+    n_exam = sum(1 for c in dossier.candidats if c.get("examine", True))
     recap = {
-        "n_retenues": len(retenus),
-        "n_ecartees": sum(1 for c in dossier.candidats if not c.get("retenu", True)),
-        "retenues_idu": [c["idu"] for c in retenus],
+        "entonnoir": _entonnoir(dossier, n_pool, restituees),
+        "n_retenues": len(dossier.retenus()),
+        "n_ecartees": sum(1 for c in dossier.candidats
+                          if c.get("examine", True) and not c.get("retenu", True)),
+        "n_non_examinees": sum(1 for c in dossier.candidats if not c.get("examine", True)),
+        "n_restituees": len(restituees),
+        "exhaustif": not garde_fou_a_mordu,
+        "calibrage": dict(dossier.calibrage),
+        "mention_sdp": (MENTION_SDP_CALIBREE
+                        if dossier.calibrage
+                        and all(m == "article_plu" for m in dossier.calibrage.values())
+                        else MENTION_SDP_GENERIQUE),
         "motifs_ecartement": sorted({c["motif_ecarte"] for c in dossier.candidats
-                                     if c.get("motif_ecarte")}),
+                                     if c.get("motif_ecarte")})[:40],
     }
+    if garde_fou_a_mordu:
+        recap["requalification"] = (f"Résultat NON exhaustif : {recap['n_retenues']} retenue(s) "
+                                    f"parmi les {n_exam} examinées sur {len(dossier.candidats)} "
+                                    "candidates — jamais « aucune opportunité ».")
     if not court:
-        recap["retenues"] = [{
+        recap["restituees"] = [{
             "idu": c["idu"], "commune": c["commune"], "surface_m2": c["surface_m2"],
-            "tier": c["tier"], "zone": c.get("zone_lib"),
+            "tier": c["tier"], "rang": c.get("rang"), "zone": c.get("zone_lib"),
             "sdp_m2": (c.get("faisabilite") or {}).get("sdp_m2"),
             "n_signaux_risques": len(c.get("risques") or []),
             "charge_fonciere_eur": (c.get("marche") or {}).get("charge_fonciere_eur"),
-        } for c in retenus]
+            "prix_probable_eur": (c.get("marche") or {}).get("prix_probable_eur"),
+            "budget": c.get("budget"),
+        } for c in restituees]
+    else:
+        recap["restituees_idu"] = [c["idu"] for c in restituees]
     return recap
 
 
+def _n_pool(dossier: Dossier, brief: dict) -> int:
+    # le pool est journalisé au criblage ; ici on retombe sur les candidats connus
+    return getattr(dossier, "_n_pool", None) or len(dossier.candidats)
+
+
 def assemblage(db: Session, brief: dict, dossier: Dossier, *, run_id: str = "") -> StepResult:
-    retenues, ecartees = _persist_parcels(db, run_id, dossier)
-    return StepResult(resultat=_recap(dossier), etiquette="sourcé",
-                      n_avant=retenues + ecartees, n_apres=retenues)
+    _persist_parcels(db, run_id, dossier)
+    recap = _recap(dossier, _n_pool(dossier, brief))
+    return StepResult(resultat=recap, etiquette="sourcé",
+                      n_avant=len(dossier.candidats), n_apres=recap["n_restituees"])
 
 
 def assemblage_court(db: Session, brief: dict, dossier: Dossier, *, run_id: str = "") -> StepResult:
-    retenues, ecartees = _persist_parcels(db, run_id, dossier)
-    return StepResult(resultat=_recap(dossier, court=True), etiquette="sourcé",
-                      n_avant=retenues + ecartees, n_apres=retenues)
+    _persist_parcels(db, run_id, dossier)
+    recap = _recap(dossier, _n_pool(dossier, brief), court=True)
+    return StepResult(resultat=recap, etiquette="sourcé",
+                      n_avant=len(dossier.candidats), n_apres=recap["n_restituees"])
 
 
 # ── scoreur_unitaire — mission verifier_adresse ─────────────────────────────────────────
@@ -332,6 +612,7 @@ def scoreur_unitaire(db: Session, brief: dict, dossier: Dossier) -> StepResult:
 
 
 def assemblage_verdict(db: Session, brief: dict, dossier: Dossier, *, run_id: str = "") -> StepResult:
+    top_n = int(_settings().copilote_top_restitution)
     for v in dossier.verdicts:
         db.execute(text(
             "INSERT INTO agent_run_parcels (run_id, parcel_idu, verdict, motif) "
@@ -343,15 +624,17 @@ def assemblage_verdict(db: Session, brief: dict, dossier: Dossier, *, run_id: st
     return StepResult(
         resultat={"n_retenues": sum(1 for v in dossier.verdicts if v["trouvee"]),
                   "n_ecartees": sum(1 for v in dossier.verdicts if not v["trouvee"]),
-                  "verdicts": dossier.verdicts[:12]},
+                  "verdicts": dossier.verdicts[:top_n]},
         etiquette="sourcé")
 
 
 MOTEURS = {
     "criblage": criblage,
+    "filtre_geometrique": filtre_geometrique,
     "faisabilite": faisabilite,
     "risques": risques,
     "marche_dvf": marche_dvf,
+    "filtre_budget": filtre_budget,
     "mutation": mutation,
     "assemblage": assemblage,
     "assemblage_court": assemblage_court,
@@ -361,14 +644,21 @@ MOTEURS = {
 
 #: Étapes qui persistent le détail parcelles (elles reçoivent run_id en kwarg).
 MOTEURS_AVEC_RUN_ID = {"assemblage", "assemblage_court", "assemblage_verdict"}
+#: Étapes longues qui acceptent le rappel d'annulation (coupe les sessions en cours).
+MOTEURS_AVEC_ANNULE = {"faisabilite", "marche_dvf"}
 
 
-def appeler(nom: str, db: Session, brief: dict, dossier: Dossier, *, run_id: str) -> tuple[StepResult, int]:
+def appeler(nom: str, db: Session, brief: dict, dossier: Dossier, *, run_id: str,
+            annule=None) -> tuple[StepResult, int]:
     """Appelle un moteur, chronomètre (ms). Le retry/l'étiquetage d'échec = exécuteur."""
     fn = MOTEURS[nom]
     t0 = time.monotonic()
     if nom in MOTEURS_AVEC_RUN_ID:
         res = fn(db, brief, dossier, run_id=run_id)
+    elif nom in MOTEURS_AVEC_ANNULE:
+        res = fn(db, brief, dossier, annule=annule)
     else:
         res = fn(db, brief, dossier)
+    if nom == "criblage":
+        dossier._n_pool = res.resultat.get("n_pool")
     return res, int((time.monotonic() - t0) * 1000)

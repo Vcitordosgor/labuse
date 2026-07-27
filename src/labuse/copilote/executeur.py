@@ -156,6 +156,16 @@ def _executer(db: Session, run_id: str, t0: float) -> None:
     plan = _plan_fige(db, run_id)
     dossier = moteurs.Dossier()
     appels = 0
+
+    def _annule() -> bool:
+        """Consulté par les étapes longues (sessions parallèles) : un run annulé coupe
+        les travaux en cours au lieu de les laisser finir (exigence Vic)."""
+        from ..db import session_factory
+        s2 = session_factory()()
+        try:
+            return events.run_status(s2, run_id) == "cancelled"
+        finally:
+            s2.close()
     for etape in plan:
         nom, bloquant = etape["moteur"], bool(etape["bloquant"])
         # Budgets + annulation, vérifiés AVANT chaque étape.
@@ -181,7 +191,8 @@ def _executer(db: Session, run_id: str, t0: float) -> None:
         for tentative in (1, 2):
             appels += 1
             try:
-                res, duree_ms = moteurs.appeler(nom, db, brief, dossier, run_id=run_id)
+                res, duree_ms = moteurs.appeler(nom, db, brief, dossier, run_id=run_id,
+                                                annule=_annule)
                 db.commit()
                 break
             except Exception as exc:  # noqa: BLE001 — compacté en step_failed, stacktrace en logs

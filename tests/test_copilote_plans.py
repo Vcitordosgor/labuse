@@ -7,11 +7,15 @@ from labuse.copilote import plans
 
 
 def test_plan_instruire_snapshot():
+    # Cascade de coût (arbitrage Vic) : filtre géométrique AVANT la faisabilité,
+    # budget AVANT toute troncature, tri P APRÈS la faisabilité (à l'assemblage).
     assert plans.plan_serialise("instruire") == [
         {"moteur": "criblage", "bloquant": True},
+        {"moteur": "filtre_geometrique", "bloquant": True},
         {"moteur": "faisabilite", "bloquant": True},
         {"moteur": "risques", "bloquant": True},
         {"moteur": "marche_dvf", "bloquant": False},
+        {"moteur": "filtre_budget", "bloquant": False},
         {"moteur": "mutation", "bloquant": False},
         {"moteur": "assemblage", "bloquant": True},
     ]
@@ -20,6 +24,7 @@ def test_plan_instruire_snapshot():
 def test_plan_shortlist_snapshot():
     assert plans.plan_serialise("shortlist") == [
         {"moteur": "criblage", "bloquant": True},
+        {"moteur": "filtre_geometrique", "bloquant": True},
         {"moteur": "faisabilite", "bloquant": True},
         {"moteur": "risques", "bloquant": True},
         {"moteur": "mutation", "bloquant": False},

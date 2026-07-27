@@ -169,7 +169,12 @@ class Settings(BaseSettings):
     copilote_quota_jour: int = 10          # runs Copilote / jour / sujet
     copilote_timeout_run_s: float = 120.0  # budget global d'exécution d'un run
     copilote_max_appels_moteurs: int = 12  # plafond d'appels moteurs (retries inclus)
-    copilote_max_candidats: int = 24       # plafond de candidats instruits par run (journalisé)
+    # Garde-fou de DERNIER RECOURS sur le nombre de parcelles instruites (arbitrage Vic,
+    # revue plafond M26-A) : s'il mord, la requalification s'applique intégralement
+    # (« N examinées sur M candidates ») — jamais présenté comme exhaustif.
+    copilote_max_candidats: int = 2000
+    copilote_top_restitution: int = 20     # top-N restitué (toutes missions M26-A)
+    copilote_sessions_paralleles: int = 4  # faisabilité/charge : pool borné (arbitrage Vic)
 
     @model_validator(mode="after")
     def _base_url_selon_env(self) -> "Settings":

@@ -20,17 +20,24 @@ class Etape:
     bloquant: bool
 
 
+# Cascade de coût (arbitrage Vic, revue plafond M26-A) : filtre géométrique bon marché
+# AVANT la faisabilité (exhaustive, parallèle), charge foncière sur TOUTES les retenues,
+# filtre budget AVANT toute troncature, tri champion P APRÈS la faisabilité (classer,
+# jamais choisir qui examiner), restitution top-N à l'assemblage.
 PLAN_INSTRUIRE: tuple[Etape, ...] = (
     Etape("criblage", bloquant=True),
+    Etape("filtre_geometrique", bloquant=True),
     Etape("faisabilite", bloquant=True),
     Etape("risques", bloquant=True),
     Etape("marche_dvf", bloquant=False),   # échec → « charge foncière non calculable »
+    Etape("filtre_budget", bloquant=False),  # sans charge/prix : non estimable, non filtrée
     Etape("mutation", bloquant=False),     # lecture seule champion P (tier/rang/percentile)
     Etape("assemblage", bloquant=True),
 )
 
 PLAN_SHORTLIST: tuple[Etape, ...] = (
     Etape("criblage", bloquant=True),
+    Etape("filtre_geometrique", bloquant=True),
     Etape("faisabilite", bloquant=True),
     Etape("risques", bloquant=True),
     Etape("mutation", bloquant=False),
