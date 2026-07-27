@@ -403,6 +403,73 @@ du « le lot bâti garde ≥ 400 m² » du résiduel — **1 cas** de reste < 40
 **Aucun re-run, aucun filtre appliqué — en attente de l'arbitrage plancher** (et, s'il est
 souhaité, du garde « reste ≥ 400 m² » et du flag permis-récent).
 
+---
+
+# REVUE 2 — arbitrage SOLIDITÉ : chiffres et branche déclenchée ⏸ (pas de re-run)
+
+## Solidité (aire ÷ enveloppe convexe) des 45
+
+Déciles : D0 0,687 · D1 0,789 · D2 0,826 · D3 0,884 · D4 0,912 · D5 0,948 · D6 0,973 ·
+D7 0,995 · D8-D10 1,000.
+
+| Les 5 en U | solidité | compacité | | Les 14 validées | solidité |
+|---|---:|---:|---|---|---:|
+| AC0118 | 0,687 | 0,312 | | CS0625 (la plus basse) | **0,898** |
+| AE0284 | 0,785 | 0,485 | | BW0123 | 0,938 |
+| AT0650 | 0,860 | 0,552 | | AH1514, AV0207 | 0,946-0,948 |
+| CX0720 | 0,884 | 0,647 | | les 10 autres | 0,961-1,000 |
+| AV0203 | **0,912** | 0,665 | | | |
+
+| Seuil | Survivants/45 | U au-dessus | Validées perdues |
+|---:|---:|---|---|
+| 0,80 | 40 | AT0650, CX0720, AV0203 | aucune |
+| 0,85 | 35 | AT0650, CX0720, AV0203 | aucune |
+| 0,90 | 28 | AV0203 | CS0625 |
+
+## Branche déclenchée : la 2 — avec un constat que la règle n'avait pas prévu
+
+- **Branche 1 (séparation propre) : NON** — AV0203 (0,912) est AU-DESSUS de la validée la plus
+  basse (CS0625, 0,898) : aucun seuil ne sépare proprement.
+- **Branche 2 (imparfaite mais bonne, ≤ 1 validée perdue) : OUI** — atteignable à 0,90
+  (4 U tués, 1 validée perdue). Action appliquée telle qu'écrite : **solidité au seuil qui
+  préserve les validées (0,85) + plancher de compacité 0,55**.
+- **Constat honnête** : sur ce pool, solidité et compacité attrapent LES MÊMES deux extrêmes
+  (AC0118, AE0284) — la prémisse « la solidité voit ce que Polsby-Popper ne voit pas » ne se
+  vérifie pas ; à 0,85 la compacité 0,55 ne retire plus rien (gardée en ceinture). Les trois
+  U « modérés » (AT0650 0,860 · CX0720 0,884 · AV0203 0,912) ne sont séparables par AUCUN
+  réglage sans perdre une validée. **Ils sont portés à la liste d'exclusions de revue**
+  (`config/o12_exclusions_revue.yaml` — le mécanisme traçable créé pour CX0214 : ces trois cas
+  ont été VUS et JUGÉS en revue, c'est exactement son usage ; réversible en retirant l'entrée).
+  La classe « U modéré NON VU en revue » reste une **limite consignée du segment** — un critère
+  géométrique ne la sépare pas des bandes franches validées.
+
+## Gardes appliqués (GO revue 2) — entonnoir prévisionnel sur les 45 stockés
+
+| Étape | Retirés | Restants |
+|---|---:|---:|
+| Solidité ≥ 0,85 | 10 | 35 |
+| Compacité ≥ 0,55 (ceinture) | 0 | 35 |
+| Reste ≥ 400 m² (aligné famille résiduelle) | 1 (AV0573, 378 m²) | 34 |
+| Fraîcheur : PC ≥ 01/01/2023 sur parcelle | 2 (CZ2174 PC 11/2025 · CO0911 PC 02/2023) | 32 |
+| Exclusions de revue (CX0214 + 3 U) | 4 | **28** |
+
+**Pool prévisionnel : 28 découpes — SOUS 30, signalé** (+ 14 résiduels = 42). Nuance : la
+solidité s'applique désormais DANS la grille de découpe (3 ancres × 5 profondeurs) — le re-run
+peut REPÊCHER des parcelles dont le lot stocké était en U mais qu'une autre ancre découpe en
+bande franche : 28 est un plancher, le chiffre exact viendra du re-run.
+
+**Fenêtre fraîcheur justifiée** : BD TOPO ingérée 28-29/06/2026 ; sa mise à jour bâti repose
+sur une ortho millésimée (cycle DOM ~3 ans, dernier millésime exploitable ~2023) + 12-18 mois
+de chantier après PC → tout PC déposé depuis le 01/01/2023 peut être bâti mais invisible de la
+couche. Gravé : **« lot nu » = nu au vu de BD TOPO (millésime), recoupé Sitadel (PC) — rien de
+plus n'est affirmé.** (En passant : les 14 résiduels ont été recoupés — aucun PC ≥ 2023.)
+
+**Réserve ortho (information, pas d'action)** : la brique existe — `ortho_piscines.py` =
+FLAIR-INC (segmentation multi-classes Etalab, la classe *bâtiment* en fait partie) + probe
+DINOv2, 100 % local sur les tuiles RVB déjà outillées (`ortho_detections`). Un contrôle
+« bâti visible dans le lot » réutiliserait l'infrastructure telle quelle ; seuls le profil de
+décision et la calibration seraient à refaire (l'équivalent du travail piscines).
+
 ## Livrables (revue en session neuve)
 
 `docs/mandats/O12_PARTIEL_REVUE.pdf` (20 cartes, tourniquet sur les 14 communes, SANS

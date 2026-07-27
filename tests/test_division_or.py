@@ -103,7 +103,7 @@ def test_lot_decoupe_o12_partiel():
     assert "ST_LineMerge" in q and "endcap=flat" in q and "ST_LineSubstring" in q
     # cible 600-900 m², compacité ≥ 0.28 (plancher OBSERVÉ du pool validé), cercle ≥ 9 m
     assert (d.LOT_DECOUPE_MIN_M2, d.LOT_DECOUPE_MAX_M2) == (600, 900)
-    assert d.COMPACITE_MIN_DECOUPE == 0.28 and d.COMPACITE_MIN_DECOUPE >= d.COMPACITE_MIN
+    assert d.COMPACITE_MIN_DECOUPE >= d.COMPACITE_MIN     # 0.28 à l'origine, relevé en revue 2
     assert "BETWEEN {lot_min} AND {lot_max}" in q and ">= {compacite_min_dec}" in q
     assert ".radius >= 9" in q
     # façade du LOT revérifiée (contiguë ≥ 12), zonage, littoral, emprise restante : mêmes gardes
@@ -153,6 +153,25 @@ def test_correctifs_o12_partiel_2():
     from labuse.api import division_review
     src = inspect.getsource(division_review)
     assert "Gain estimé" not in src
+
+
+def test_revue_2_solidite_et_gardes():
+    """Revue 2 : branche 2 de la règle de décision + gardes validés (reste ≥ 400,
+    fraîcheur Sitadel, exclusions de revue traçables)."""
+    q = d._DETECT_PARTIEL
+    # solidité (aire/enveloppe convexe) ≥ 0.85 — le seuil qui préserve TOUTES les validées ;
+    # compacité relevée à 0.55 (branche 2)
+    assert d.SOLIDITE_MIN_DECOUPE == 0.85 and d.COMPACITE_MIN_DECOUPE == 0.55
+    assert "ST_Area(lot.geom) / ST_Area(ST_ConvexHull(lot.geom)) >= {solidite_min}" in q
+    assert "solidite" in d._INSERT_PARTIEL
+    # reste ≥ 400 m², aligné sur la famille résiduelle
+    assert "ST_Area(lot.geom) <= f.surface_m2 - 400" in q
+    # fraîcheur : PC Sitadel ≥ 2023-01-01 sur la parcelle → exclu (fenêtre justifiée au rapport)
+    assert d.PC_FRAIS_DEPUIS == "2023-01-01" and "({pc_pred})" in q
+    # exclusions de revue TRAÇABLES (config), appliquées aux DEUX familles — jamais silencieuses
+    assert "({revue_pred})" in q and "({revue_pred})" in d._DETECT
+    pred = d._revue_pred_sql()
+    assert "'97416000CX0214'" in pred and "'97416000AV0203'" in pred
 
 
 @pytest.mark.db

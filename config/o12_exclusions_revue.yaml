@@ -1,0 +1,25 @@
+# O12 — EXCLUSIONS DE REVUE (mécanisme traçable, mandat O12-PARTIEL-2 revue 2).
+# Un candidat géométriquement valide peut être écarté par la REVUE VISUELLE (« la revue
+# tranche ») : jamais de retrait silencieux — chaque exclusion porte idu, motif, date.
+# Appliqué aux DEUX familles par les détecteurs (division_or). Retirer une entrée = la
+# parcelle redevient éligible au prochain run.
+
+exclusions:
+  - idu: "97416000CX0214"
+    motif: "Fraîcheur bâti : structures visibles sur l'ortho dans le polygone sur deux dossiers
+            successifs ; BD TOPO (06/2026) et Sitadel (aucun permis sur parcelle) ne les
+            expliquent pas — « lot nu » non garanti. Revue Vic."
+    date: "2026-07-27"
+  - idu: "97409000AT0650"
+    motif: "Lot en U autour d'un bâtiment (revue 2) — commercialement nul ; non séparable par
+            métrique (solidité 0,860 / compacité 0,552, au-dessus des seuils préservant les
+            cartes validées). Revue Vic."
+    date: "2026-07-27"
+  - idu: "97422000CX0720"
+    motif: "Lot en U autour d'un bâtiment (revue 2) — idem (solidité 0,884 / compacité 0,647).
+            Revue Vic."
+    date: "2026-07-27"
+  - idu: "97416000AV0203"
+    motif: "Lot en U autour d'un bâtiment (revue 2) — idem (solidité 0,912 / compacité 0,665 ;
+            dépasse même la validée la plus basse en solidité). Revue Vic."
+    date: "2026-07-27"

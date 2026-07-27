@@ -80,7 +80,7 @@ EMPRISE_RESTANTE_MAX = 0.60
 # parcelle traversante dont le reste donne sur la deuxième rue passe ; sinon rejet.
 LOT_DECOUPE_MIN_M2 = 600
 LOT_DECOUPE_MAX_M2 = 900
-COMPACITE_MIN_DECOUPE = 0.28   # = min observé du pool « lot résiduel » validé (mandat O12-PARTIEL)
+COMPACITE_MIN_DECOUPE = 0.55   # revue 2, branche 2 (0.28 d'origine ne filtrait pas les lots en U)
 ANCRE_LARGEUR_M = 25           # largeur de la bande côté rue (≥ 12 m de façade garantis)
 
 # O12-PARTIEL-2 (arbitrages Vic 27/07/2026) :
@@ -97,6 +97,26 @@ ANCRE_LARGEUR_M = 25           # largeur de la bande côté rue (≥ 12 m de fa�
 EROSION_RESTE_M = 2
 DIST_BATI_MIN_M = 1
 VOIRIE_QUALIFIEE = ("Route à 1 chaussée", "Route à 2 chaussées", "Rond-point")
+
+# Revue 2 (arbitrage « règle de décision », branche 2 déclenchée — cf. O12_PARTIEL_RAPPORT.md) :
+# · SOLIDITÉ du lot = aire / aire de l'enveloppe convexe (une bande franche ≈ 1, un lot en U
+#   autour d'un bâtiment chute). Seuil 0.85 = le plus haut des seuils proposés qui préserve
+#   TOUTES les cartes validées en revue (la plus basse : 0.898). Constat honnête : les U
+#   « modérés » (0.86-0.91) ne sont séparables par AUCUN seuil sans perdre une validée —
+#   classe résiduelle consignée comme limite ; les cas VUS en revue passent par la liste
+#   d'exclusions de revue (config/o12_exclusions_revue.yaml).
+# · COMPACITE_MIN_DECOUPE relevé 0.28 → 0.55 (branche 2 : « plancher 0.55 pour les extrêmes
+#   indéfendables ») — redondant avec la solidité sur le pool mesuré, gardé en ceinture.
+# · RESTE ≥ 400 m² : aligné sur la famille résiduelle (« le lot bâti garde ≥ 400 m² ») —
+#   laisser 378 m² sous la maison du vendeur est un rognage, pas une division.
+# · FRAÎCHEUR BÂTI : parcelle porteuse d'un PC Sitadel trop récent pour que BD TOPO (ingérée
+#   28-29/06/2026) ait pu capter le chantier → exclue. Fenêtre : PC ≥ 2023-01-01 — la mise à
+#   jour photogrammétrique IGN repose sur une ortho millésimée (cycle DOM ~3 ans, dernier
+#   millésime exploitable ~2023) + 12-18 mois de chantier après PC : tout PC depuis début
+#   2023 peut être bâti mais invisible de la couche. « Lot nu » = nu au vu de BD TOPO
+#   (millésime), recoupé Sitadel — rien de plus n'est affirmé.
+SOLIDITE_MIN_DECOUPE = 0.85
+PC_FRAIS_DEPUIS = "2023-01-01"
 
 # Filtre par LIBELLÉ DESCRIPTIF de zone (finding BP0363 : « Ua — zone d'activités du
 # Chaudron » passait le filtre par code). Mots-clés d'activité dans l'intitulé GPU, avec
@@ -123,6 +143,7 @@ CREATE TABLE IF NOT EXISTS division_or_candidates (
   type_division varchar(12),     -- 'libre' (lot nu) | 'demolition' (bâti secondaire dans le lot)
   bati_lot_m2   int,             -- bâti contenu dans le lot (« dont N m² à démolir » ; 0 si libre)
   compacite     numeric(4,3),    -- Polsby-Popper du lot (4π·aire/périmètre² — 1=cercle)
+  solidite      numeric(4,3),    -- aire / enveloppe convexe (bande franche ≈ 1, lot en U chute)
   emprise_restante numeric(4,3), -- emprise bâtie du lot RESTANT après division (viabilité côté propriétaire)
   gain_estime_eur int,           -- via Score É V2 si dispo (Estimé), sinon NULL
   clarte        numeric(5,1),    -- score de clarté géométrique (tri du dossier de revue)
@@ -136,6 +157,7 @@ ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS zone_lib varchar(16)
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS emprise_restante numeric(4,3);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS lot_geom geometry(Polygon, 2975);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS aire_bati_dans_lot_m2 numeric(6,1);
+ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS solidite numeric(4,3);
 """
 
 # Détection pour UNE commune (batch raisonnable). Buffers/seuils = constantes ci-dessus.
@@ -217,6 +239,8 @@ WHERE facade_free >= 12
   -- et par LIBELLÉ descriptif (un code générique peut cacher une zone d'activités : BP0363)
   AND ({activite_pred})
   AND (zone_descr IS NULL OR NOT (zone_descr ~* '{descr_re}') OR zone_descr ~* '{descr_protege}')
+  -- EXCLUSIONS DE REVUE (traçables — config/o12_exclusions_revue.yaml) : la revue tranche
+  AND ({revue_pred})
   -- revue O12-ÎLE (5) : VIABILITÉ DU LOT RESTANT — l'emprise bâtie résultante côté propriétaire
   -- (bâti conservé / surface restante) ne doit pas dépasser l'emprise max de la zone (PLU
   -- calibré s'il existe, sinon plancher prudent) : la division ne rend pas la parcelle non conforme
@@ -296,11 +320,12 @@ fac AS (
 -- clippée au résiduel — on retient la découpe de MEILLEURE compacité satisfaisant les seuils
 carve AS (
   SELECT f.id, f.idu, f.commune, f.geom_2975, f.surface_m2, f.bat_m2, f.free_m2,
-         best.lot_geom, best.lot_m2, best.compacite_lot, best.rad
+         best.lot_geom, best.lot_m2, best.compacite_lot, best.solidite_lot, best.rad
   FROM fac f
   CROSS JOIN LATERAL (
     SELECT lot.geom AS lot_geom, ST_Area(lot.geom) AS lot_m2,
            4*pi()*ST_Area(lot.geom)/power(ST_Perimeter(lot.geom),2) AS compacite_lot,
+           ST_Area(lot.geom) / ST_Area(ST_ConvexHull(lot.geom)) AS solidite_lot,
            (ST_MaximumInscribedCircle(lot.geom)).radius AS rad
     FROM (VALUES (0.0),(0.5),(1.0)) pos(frac)
     CROSS JOIN generate_series(20, 40, 5) prof(d)
@@ -312,7 +337,11 @@ carve AS (
       SELECT g.geom FROM ST_Dump(ST_Intersection(f.free_geom, ST_Buffer(an.geom, prof.d, 'endcap=flat'))) g
       ORDER BY ST_Area(g.geom) DESC LIMIT 1) lot
     WHERE ST_Area(lot.geom) BETWEEN {lot_min} AND {lot_max}
+      -- reste ≥ 400 m² : aligné sur la famille résiduelle (le lot bâti garde ≥ 400 m²)
+      AND ST_Area(lot.geom) <= f.surface_m2 - 400
       AND 4*pi()*ST_Area(lot.geom)/power(ST_Perimeter(lot.geom),2) >= {compacite_min_dec}
+      -- SOLIDITÉ (revue 2) : bande franche exigée, pas de lot en U autour d'un bâtiment
+      AND ST_Area(lot.geom) / ST_Area(ST_ConvexHull(lot.geom)) >= {solidite_min}
       AND (ST_MaximumInscribedCircle(lot.geom)).radius >= 9
     ORDER BY compacite_lot DESC LIMIT 1) best),
 -- façade voirie CONTIGUË du LOT découpé (revérifiée sur le lot, pas héritée de l'ancre)
@@ -360,6 +389,7 @@ SELECT idu, commune, round(surface_m2)::int surface_m2, round(bat_m2)::int bati_
        NULL::numeric AS bati_facade_m, zone, zone_lib,
        'decoupe' AS type_division, 0 AS bati_lot_m2,
        round(compacite_lot::numeric,3) AS compacite,
+       round(solidite_lot::numeric,3) AS solidite,
        round((bat_m2 / NULLIF(surface_m2 - lot_m2, 0))::numeric,3) AS emprise_restante,
        lot_geom, aire_bati_dans_lot_m2
 FROM zon
@@ -385,6 +415,10 @@ WHERE facade_lot >= 12
   -- C4-libellé (finding BP0363) : mots-clés d'activité dans le DESCRIPTIF de zone,
   -- descriptions mixtes habitat/proximité protégées
   AND (zone_descr IS NULL OR NOT (zone_descr ~* '{descr_re}') OR zone_descr ~* '{descr_protege}')
+  -- FRAÎCHEUR (revue 2) : PC Sitadel trop récent pour la couche BD TOPO → « lot nu » non garanti
+  AND ({pc_pred})
+  -- EXCLUSIONS DE REVUE (traçables — config/o12_exclusions_revue.yaml) : la revue tranche
+  AND ({revue_pred})
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   AND bat_m2 / NULLIF(surface_m2 - lot_m2, 0) <= ({emprise_max})
   AND NOT EXISTS (SELECT 1 FROM spatial_layers l5 WHERE l5.kind='cinquante_pas'
@@ -401,11 +435,11 @@ WHERE facade_lot >= 12
 _INSERT_PARTIEL = """
 INSERT INTO division_or_candidates (idu, commune, surface_m2, bati_m2, bati_ratio,
     residuel_m2, residuel_rayon_m, residuel_facade_m, bati_facade_m, zone, zone_lib,
-    type_division, bati_lot_m2, compacite, emprise_restante, lot_geom, aire_bati_dans_lot_m2,
-    gain_estime_eur, clarte)
+    type_division, bati_lot_m2, compacite, solidite, emprise_restante, lot_geom,
+    aire_bati_dans_lot_m2, gain_estime_eur, clarte)
 SELECT d.idu, d.commune, d.surface_m2, d.bati_m2, d.bati_ratio, d.residuel_m2,
        d.residuel_rayon_m, d.residuel_facade_m, d.bati_facade_m, d.zone, d.zone_lib,
-       d.type_division, d.bati_lot_m2, d.compacite, d.emprise_restante, d.lot_geom,
+       d.type_division, d.bati_lot_m2, d.compacite, d.solidite, d.emprise_restante, d.lot_geom,
        d.aire_bati_dans_lot_m2,
        se.marge_estimee,
        round((d.residuel_rayon_m * 2 + LEAST(d.residuel_facade_m, 30))::numeric, 1) AS clarte
@@ -416,7 +450,8 @@ ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.su
     residuel_rayon_m=EXCLUDED.residuel_rayon_m, residuel_facade_m=EXCLUDED.residuel_facade_m,
     bati_facade_m=EXCLUDED.bati_facade_m, zone=EXCLUDED.zone, zone_lib=EXCLUDED.zone_lib,
     type_division=EXCLUDED.type_division, bati_lot_m2=EXCLUDED.bati_lot_m2,
-    compacite=EXCLUDED.compacite, emprise_restante=EXCLUDED.emprise_restante,
+    compacite=EXCLUDED.compacite, solidite=EXCLUDED.solidite,
+    emprise_restante=EXCLUDED.emprise_restante,
     lot_geom=EXCLUDED.lot_geom, aire_bati_dans_lot_m2=EXCLUDED.aire_bati_dans_lot_m2,
     gain_estime_eur=EXCLUDED.gain_estime_eur,
     clarte=EXCLUDED.clarte, computed_at=now()
@@ -430,9 +465,26 @@ def _ensure_ddl(session: Session) -> None:
     (workers bloqués ~40 min sur un CREATE TABLE no-op)."""
     if not session.execute(text(
             "SELECT count(*) FROM information_schema.columns "
-            "WHERE table_name='division_or_candidates' AND column_name='aire_bati_dans_lot_m2'"
+            "WHERE table_name='division_or_candidates' AND column_name='solidite'"
     )).scalar():
         session.execute(text(DDL))
+
+
+def _revue_pred_sql() -> str:
+    """Prédicat SQL des EXCLUSIONS DE REVUE (config/o12_exclusions_revue.yaml — idu, motif,
+    date ; jamais de retrait silencieux). 'true' si le fichier est absent ou vide."""
+    import yaml
+
+    from ..config import get_settings
+    try:
+        cfg = get_settings().config_path / "o12_exclusions_revue.yaml"
+        doc = yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}
+        idus = [str(e["idu"]) for e in doc.get("exclusions") or [] if "'" not in str(e.get("idu", "'"))]
+    except Exception:  # noqa: BLE001 — config illisible → aucune exclusion
+        idus = []
+    if not idus:
+        return "true"
+    return "idu NOT IN (" + ", ".join(f"'{i}'" for i in idus) + ")"
 
 
 def _zones_activite_doc() -> dict:
@@ -478,6 +530,10 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
     has_score_e = session.execute(text("SELECT to_regclass('score_e')")).scalar() is not None
     has_pau = session.execute(text("SELECT to_regclass('parcel_pau')")).scalar() is not None
     pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
+    # fraîcheur bâti : recoupement Sitadel si la table existe, sinon pas de garde (et on l'assume)
+    has_sitadel = session.execute(text("SELECT to_regclass('sitadel_permits')")).scalar() is not None
+    pc_pred = (f"NOT EXISTS (SELECT 1 FROM sitadel_permits sp WHERE sp.idu_codes ? zon.idu "
+               f"AND sp.type = 'PC' AND sp.date >= '{PC_FRAIS_DEPUIS}')") if has_sitadel else "true"
     total = 0
     for commune in communes:
         detect = _DETECT_PARTIEL.format(
@@ -485,9 +541,11 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
             grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
             lot_min=LOT_DECOUPE_MIN_M2, lot_max=LOT_DECOUPE_MAX_M2,
             compacite_min_dec=COMPACITE_MIN_DECOUPE, ancre_w=ANCRE_LARGEUR_M,
+            solidite_min=SOLIDITE_MIN_DECOUPE,
             activite_pred=_activite_pred_sql(commune),
             erosion_m=EROSION_RESTE_M, dist_bati_min=DIST_BATI_MIN_M,
-            descr_re=ACTIVITE_DESCR_RE, descr_protege=ACTIVITE_DESCR_PROTEGE_RE).strip().rstrip(";")
+            descr_re=ACTIVITE_DESCR_RE, descr_protege=ACTIVITE_DESCR_PROTEGE_RE,
+            pc_pred=pc_pred, revue_pred=_revue_pred_sql()).strip().rstrip(";")
         if has_score_e:
             insert_sql = _INSERT_PARTIEL.format(detect=detect)
         else:
@@ -541,7 +599,8 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
                                 emprise_max=_emprise_max_sql(commune),
                                 activite_pred=_activite_pred_sql(commune),
                                 descr_re=ACTIVITE_DESCR_RE,
-                                descr_protege=ACTIVITE_DESCR_PROTEGE_RE).strip().rstrip(";")
+                                descr_protege=ACTIVITE_DESCR_PROTEGE_RE,
+                                revue_pred=_revue_pred_sql()).strip().rstrip(";")
         if has_score_e:
             insert_sql = _INSERT.format(detect=detect)
         else:   # pas de Score É → gain NULL, sans jointure
