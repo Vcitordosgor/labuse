@@ -143,12 +143,53 @@ Deux niveaux :
   la classe nouvelle a son propre dossier de validation. CLI : `division-or-review --type demolition`.
 - Golden re-passé après D : **116/116 PASS**. Tests : 6/6 (nouvelles gardes verrouillées).
 
+## E — Correctifs de revue 2-3-4 (3e itération) : activité, compacité, littoral
+
+**Pool final : 308 → 17 candidats (16 libres + 1 démolition).** Attribution (détail par candidat :
+`reports/o12-ile/analyse_correctifs_234.csv`) :
+
+| Correctif | En isolation (sur 308) | Séquentiel |
+|---|---:|---:|
+| (2) Bâti d'activité — `ensemble_bati` cascade : ≥ 3 bâtiments (intersection ≥ 10 m², comptage `bati.stats_batch`) OU un bâtiment ≥ 400 m² | **287** | 308 → **21** |
+| (3) Compacité du lot < 0,25 (Polsby-Popper) | 181 | 21 → **17** |
+| (4) Littoral / domaine public (50 pas · trait de côte · forêt domaniale · cœur du Parc) | 14 | 17 → **17** (0 résiduel) |
+
+- **(2) est le grand faucheur — et c'est structurel** : le plafond ratio ≤ 50 % (correctif A2)
+  ne garde que des parcelles déjà à moitié occupées par le bâti+buffer, donc mécaniquement des
+  ensembles multi-bâtiments — exactement ce que la revue a vu (cartes 4/7/14/20). Constat carte
+  par carte : les 20 cartes du dossier précédent avaient TOUTES ≥ 3 bâtiments — le correctif
+  élimine aussi des cartes non signalées (8, 9, 19, d'apparence résidentielle saine). Les 17
+  survivants sont des parcelles à 1-2 bâtiments : le profil « maison + jardin divisible » visé.
+- **(3) compacité — distribution rapportée AVANT le seuil** (sur les 308) : min 0,037 · P25 0,114 ·
+  médiane 0,212 · P75 0,372 · max 0,757. Cartes « lanière » de la revue : 6 = 0,189, 18 = 0,064,
+  mais **16 = 0,368** — Polsby-Popper seul ne sépare pas la carte 16 des cartes saines
+  (12 = 0,308, 15 = 0,429) ; elle tombe par le correctif activité (14 bâtiments). Seuil retenu
+  **0,25** (≈ rectangle 1:10) : tue 6 et 18, et retire 4 lanières du pool post-activité
+  (compacités 0,186–0,205). Après correctifs : min 0,280 · médiane 0,505.
+- **(4) littoral** : le corridor des 50 pas a des **trous de couverture** — la carte 3 (front de
+  mer du Barachois) n'y est PAS ; son lot touche en revanche le **trait de côte** (distance 0,
+  vérifié) — couche cascade ajoutée au garde (contact ≤ 1 m), qui l'exclut indépendamment du
+  flag activité. En isolation : 12 lots dans les 50 pas, 4 au contact du trait, 1 en forêt
+  domaniale, 0 au cœur du Parc. Résiduel séquentiel nul : les candidats littoral tombaient déjà
+  par (2)/(3) — le garde reste nécessaire (sans (2), la carte 3 ne serait éliminée que par lui).
+
+Effectifs finaux par commune (9 communes en portent, 15 à zéro) : Sainte-Marie 4 · Saint-Leu 3 ·
+Saint-Paul 3 (dont la démolition) · Saint-Pierre 2 · L'Étang-Salé, La Plaine-des-Palmistes,
+Saint-Denis, Saint-Joseph, Sainte-Suzanne 1. Lots : 509–898 m² (médiane 590) — le pool a changé
+de nature : petits lots nus compacts au lieu de grands résiduels d'ensembles bâtis.
+
+Dossiers régénérés pour la revue unique : **`O12_ILE_REVUE.pdf` (16 cartes libres, île entière)**
++ **`O12_ILE_DEMOLITION_REVUE.pdf` (1 carte)**. Golden re-passé : **116/116 PASS**. Tests : 7/7.
+
 ## Ce que la revue devra trancher
 
-Le ratio ≤ 50 % est **le** filtre dominant (94 % des éliminations) : il ne garde que les parcelles
-dont le bâti + son buffer occupent déjà ≈ la moitié de l'emprise. C'est le durcissement demandé et
-il tue les démembrements — mais il écarte aussi la configuration « petit bâti en coin d'une grande
-parcelle U », où une division réelle découperait un lot PARTIEL du résiduel (le détecteur ne sait
-proposer que le résiduel entier). Si la revue des 20 nouvelles cartes juge le reste sain mais le
-vivier trop maigre (294 sur l'île), la piste suivante est un **découpage de lot proposé**
-(sous-polygone du résiduel côté voirie) plutôt qu'un assouplissement du ratio.
+Après les cinq vagues de correctifs (A2/A3, D, 2-3-4), le vivier est passé de 5 916 à **17**
+candidats — très haute précision visée, rappel sacrifié. Deux effets structurels se cumulent :
+le ratio ≤ 50 % ne garde que des parcelles déjà à moitié occupées, et le filtre activité (≥ 3
+bâtiments) écarte ces mêmes parcelles très bâties — l'intersection des deux est étroite, et la
+configuration « petit bâti en coin d'une GRANDE parcelle U » (division réelle la plus fréquente)
+reste hors de portée car le détecteur ne sait proposer que le résiduel ENTIER, jamais un lot
+partiel. Si la revue des 17 est bonne mais le vivier jugé trop maigre pour exposer, la piste
+n'est ni d'assouplir le ratio ni le critère activité : c'est le **découpage de lot proposé**
+(sous-polygone du résiduel côté voirie, ~600-900 m², compacité imposée) — il rouvrirait les
+grandes parcelles U sans réintroduire les démembrements ni les ensembles bâtis.

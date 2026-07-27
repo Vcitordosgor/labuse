@@ -536,6 +536,13 @@ anti-découpage inversé : principal jamais dans le lot + `bati_lot × 3 ≤ bat
 ≤ moitié du conservé) — île : 30 bruts → 19 nouveaux → **14 gardés / 5 rejetés** → total
 **308** (294 libres + 14 démolitions). Dossier dédié `O12_ILE_DEMOLITION_REVUE.pdf` (14 cartes,
 `--type demolition`).
+**Itération E (correctifs de revue 2-3-4)** : bâti d'ACTIVITÉ exclu (critère `ensemble_bati`
+de la cascade, ≥ 3 bâtiments [∩ ≥ 10 m²] OU un ≥ 400 m² — retire 287/308, le pool était dominé
+par les ensembles bâtis) ; COMPACITÉ du lot ≥ 0,25 (Polsby-Popper, distribution rapportée —
+retire 4 lanières de plus) ; LITTORAL/domaine public (50 pas + trait de côte [trou de couverture
+50 pas constaté au Barachois] + forêt domaniale + cœur du Parc — 14 en isolation, 0 en résiduel).
+**Pool final : 17 candidats (16 libres + 1 démolition), lots 509-898 m², compacité ≥ 0,28.**
+Dossiers régénérés (16 + 1 cartes). Détail : `RAPPORT_O12_ILE.md` §E. Toujours **MASQUÉ**.
 
 ---
 

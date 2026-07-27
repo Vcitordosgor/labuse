@@ -55,6 +55,24 @@ def test_types_de_division_o12_ile_d():
     assert "(type_division = 'demolition'), clarte DESC" in inspect.getsource(d.top_candidates)
 
 
+def test_correctifs_revue_2_3_4():
+    """Revue O12-ÎLE, 2e itération : bâti d'activité, compacité, littoral/domaine public."""
+    q = d._DETECT
+    # (2) critère ensemble_bati RÉUTILISÉ de la cascade (mêmes constantes que bati.py),
+    #     comptage fidèle à stats_batch (intersection ≥ 10 m²)
+    from labuse.bati import ENSEMBLE_MIN_BATIMENTS, GRAND_BATIMENT_M2
+    assert "nb_bat < {ens_min_bat} AND bat.max_bat_m2 < {grand_bat_m2}" in q
+    assert "count(*) FILTER (WHERE a >= 10) AS nb_bat" in q
+    assert (ENSEMBLE_MIN_BATIMENTS, int(GRAND_BATIMENT_M2)) == (3, 400)
+    # (3) compacité Polsby-Popper du lot, seuil en constante documentée
+    assert "4 * pi() * free_m2 / power(ST_Perimeter(free_geom), 2) >= {compacite_min}" in q
+    assert d.COMPACITE_MIN == 0.25
+    # (4) littoral et domaine public non acquérable : 50 pas, forêt domaniale, cœur du Parc,
+    #     et CONTACT du trait de côte (trou de couverture du corridor 50 pas au Barachois)
+    for kind in ("cinquante_pas", "foret_publique", "parc_national", "trait_de_cote"):
+        assert kind in q
+
+
 def test_metrique_bati_invalidee_pas_filtrante():
     # la métrique façade du lot bâti est NULL (invalidée — finding), jamais un filtre sur un chiffre faux
     assert "NULL::numeric AS bati_facade_m" in d._DETECT

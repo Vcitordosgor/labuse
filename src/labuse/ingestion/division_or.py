@@ -16,6 +16,15 @@ Géométrie (EPSG:2975, mètres) — seuils CONSERVATEURS :
   · **zonage du lot : U ou AU exigé** (revue O12-ÎLE : une division urbaine n'a pas de sens en zone
     A ou N). Zone dominante (plus grande intersection) du LOT dans `plu_gpu_zone` ; commune sans
     document (RNU) → lot gardé seulement si la parcelle est dans la PAU estimée (`parcel_pau`).
+Revue O12-ÎLE, correctifs 2-3-4 :
+  · **bâti d'activité exclu** — critère `ensemble_bati` de la cascade (bati.py) : ≥ 3 bâtiments
+    (intersection ≥ 10 m², comme stats_batch) OU un bâtiment ≥ 400 m² → hangars, ensembles
+    commerciaux, équipements ; le signal vise la division RÉSIDENTIELLE ;
+  · **compacité du lot** ≥ COMPACITE_MIN (Polsby-Popper) — le cercle inscrit mesure le point le
+    plus large, pas la forme d'ensemble : les lanières passaient ;
+  · **littoral / domaine public** — lot exclu s'il touche : bande des 50 pas géométriques,
+    forêt domaniale, cœur du Parc national, ou le TRAIT DE CÔTE (contact ≤ 1 m — le corridor
+    50 pas a des trous de couverture, constaté au Barachois ; couches de la cascade).
 Deux TYPES de division (O12-ÎLE D — le bâti dans le lot est CLASSÉ, pas exclu) :
   · **libre** : lot nu (tout le bâti retiré du calcul du résiduel) — prioritaire au tri ;
   · **demolition** : seul le bâtiment PRINCIPAL (plus grande emprise au sol) est retiré — le lot
@@ -37,7 +46,15 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from ..bati import ENSEMBLE_MIN_BATIMENTS, GRAND_BATIMENT_M2
+
 EXPOSE = False   # MASQUÉ jusqu'à validation visuelle Vic (dossier 20 cartes)
+
+# Compacité minimale du lot (Polsby-Popper, 4π·aire/périmètre² — cercle=1, carré≈0.79,
+# rectangle 1:10 ≈ 0.25). Revue O12-ÎLE (cartes 6/16/18 : lanières — le cercle inscrit mesure
+# le point le plus LARGE, pas la forme d'ensemble). Seuil fixé sur la distribution île entière
+# (P25=0.11, médiane=0.21 avant correctif) : 0.25 écarte les lots plus étirés qu'un 1:10.
+COMPACITE_MIN = 0.25
 
 DDL = """
 CREATE TABLE IF NOT EXISTS division_or_candidates (
@@ -53,6 +70,7 @@ CREATE TABLE IF NOT EXISTS division_or_candidates (
   zone          varchar(8),      -- zone dominante du lot (U/AU/AUc/AUs) ; NULL = commune RNU (PAU estimée)
   type_division varchar(12),     -- 'libre' (lot nu) | 'demolition' (bâti secondaire dans le lot)
   bati_lot_m2   int,             -- bâti contenu dans le lot (« dont N m² à démolir » ; 0 si libre)
+  compacite     numeric(4,3),    -- Polsby-Popper du lot (4π·aire/périmètre² — 1=cercle)
   gain_estime_eur int,           -- via Score É V2 si dispo (Estimé), sinon NULL
   clarte        numeric(5,1),    -- score de clarté géométrique (tri du dossier de revue)
   computed_at   timestamptz DEFAULT now()
@@ -60,6 +78,7 @@ CREATE TABLE IF NOT EXISTS division_or_candidates (
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS zone varchar(8);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS type_division varchar(12);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS bati_lot_m2 int;
+ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS compacite numeric(4,3);
 """
 
 # Détection pour UNE commune (batch raisonnable). Buffers/seuils = constantes ci-dessus.
@@ -71,7 +90,10 @@ WITH cand AS (
 bldg AS (
   SELECT c.id, b.geom_2975 AS g, ST_Area(ST_Intersection(b.geom_2975, c.geom_2975)) AS a
   FROM cand c JOIN spatial_layers b ON b.kind='batiment' AND ST_Intersects(b.geom_2975, c.geom_2975)),
-bat AS (SELECT id, ST_Union(g) AS bgeom, sum(a) AS bat_m2, count(*) AS nb_bat FROM bldg GROUP BY id),
+-- nb_bat compte comme la cascade (bati.stats_batch) : intersection ≥ 10 m² (les voisins en
+-- limite et les abris minuscules ne comptent pas) ; max_bat_m2 = plus grande emprise intersectée
+bat AS (SELECT id, ST_Union(g) AS bgeom, sum(a) AS bat_m2,
+               count(*) FILTER (WHERE a >= 10) AS nb_bat, max(a) AS max_bat_m2 FROM bldg GROUP BY id),
 -- bâtiment PRINCIPAL = plus grande emprise au sol sur la parcelle — JAMAIS dans le lot proposé
 princ AS (SELECT DISTINCT ON (id) id, g AS pgeom FROM bldg ORDER BY id, a DESC),
 -- deux variantes de lot : LIBRE (tout le bâti retiré — le lot est nu) ; DÉMOLITION (seul le
@@ -86,15 +108,21 @@ freed AS (
   CROSS JOIN LATERAL (SELECT g.geom FROM ST_Dump(ST_Difference(c.geom_2975, ST_Buffer(v.sub, 3))) g
                       ORDER BY ST_Area(g.geom) DESC LIMIT 1) lg
   WHERE bat.bat_m2 / c.surface_m2 BETWEEN 0.08 AND 0.45
-    AND NOT (v.variante = 'demolition' AND bat.nb_bat = 1)),
+    AND NOT (v.variante = 'demolition' AND bat.nb_bat = 1)
+    -- revue O12-ÎLE (2) : bâti d'ACTIVITÉ exclu — critère ensemble_bati de la cascade (bati.py)
+    AND bat.nb_bat < {ens_min_bat} AND bat.max_bat_m2 < {grand_bat_m2}),
 -- façade voirie du LOT détaché — le filtre d'accès (indépendant ≥ 12 m)
 -- + borne lot/parcelle ≤ 50 % (au-delà c'est un démembrement, pas une division — revue O12-ÎLE)
 acces AS (
   SELECT *,
+    round((4 * pi() * free_m2 / power(ST_Perimeter(free_geom), 2))::numeric, 3) AS compacite,
     (SELECT coalesce(sum(ST_Length(ST_Intersection(ST_Buffer(v.geom_2975,1.5), ST_Boundary(free_geom)))),0)
        FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, free_geom, 2)) AS facade_free
   FROM freed
-  WHERE free_m2 >= 500 AND free_m2 <= surface_m2 - 400 AND free_m2 <= surface_m2 * 0.5 AND rad >= 9),
+  WHERE free_m2 >= 500 AND free_m2 <= surface_m2 - 400 AND free_m2 <= surface_m2 * 0.5 AND rad >= 9
+    -- revue O12-ÎLE (3) : COMPACITÉ du lot — le cercle inscrit mesure le point le plus large,
+    -- pas la forme d'ensemble (lanières) ; Polsby-Popper 4π·aire/périmètre² ≥ seuil
+    AND 4 * pi() * free_m2 / power(ST_Perimeter(free_geom), 2) >= {compacite_min}),
 -- bâti contenu dans le lot proposé (0 par construction en variante libre) → « dont N m² à démolir »
 demol AS (
   SELECT a.*, CASE WHEN a.variante = 'libre' THEN 0 ELSE coalesce(
@@ -119,11 +147,22 @@ SELECT DISTINCT ON (idu)
                                         -- de la frontière découpée — finding O12, pas de chiffre faux)
        zone,
        CASE WHEN bati_lot_m2 < 1 THEN 'libre' ELSE 'demolition' END AS type_division,
-       bati_lot_m2
+       bati_lot_m2, compacite
 FROM zon
 WHERE facade_free >= 12
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   AND (variante = 'libre' OR bati_lot_m2 * 3 <= bat_m2)
+  -- revue O12-ÎLE (4) : LITTORAL et domaine public non acquérable (couches de la cascade).
+  -- Le corridor 50 pas ne couvre pas tout le front de mer (trou constaté au Barachois,
+  -- Saint-Denis) → le CONTACT du trait de côte complète la maille.
+  AND NOT EXISTS (SELECT 1 FROM spatial_layers l5 WHERE l5.kind='cinquante_pas'
+                    AND ST_Intersects(l5.geom_2975, zon.free_geom))
+  AND NOT EXISTS (SELECT 1 FROM spatial_layers lf WHERE lf.kind='foret_publique'
+                    AND lf.subtype='domaniale' AND ST_Intersects(lf.geom_2975, zon.free_geom))
+  AND NOT EXISTS (SELECT 1 FROM spatial_layers lp WHERE lp.kind='parc_national'
+                    AND lp.subtype='coeur' AND ST_Intersects(lp.geom_2975, zon.free_geom))
+  AND NOT EXISTS (SELECT 1 FROM spatial_layers lt WHERE lt.kind='trait_de_cote'
+                    AND ST_DWithin(lt.geom_2975, zon.free_geom, 1))
 ORDER BY idu, (variante = 'demolition'), free_m2 DESC;
 """
 
@@ -132,10 +171,10 @@ ORDER BY idu, (variante = 'demolition'), free_m2 DESC;
 _INSERT = """
 INSERT INTO division_or_candidates (idu, commune, surface_m2, bati_m2, bati_ratio,
     residuel_m2, residuel_rayon_m, residuel_facade_m, bati_facade_m, zone,
-    type_division, bati_lot_m2, gain_estime_eur, clarte)
+    type_division, bati_lot_m2, compacite, gain_estime_eur, clarte)
 SELECT d.idu, d.commune, d.surface_m2, d.bati_m2, d.bati_ratio, d.residuel_m2,
        d.residuel_rayon_m, d.residuel_facade_m, d.bati_facade_m, d.zone,
-       d.type_division, d.bati_lot_m2,
+       d.type_division, d.bati_lot_m2, d.compacite,
        se.marge_estimee,
        round((d.residuel_rayon_m * 2 + LEAST(d.residuel_facade_m, 30))::numeric, 1) AS clarte
 FROM ({detect}) d
@@ -145,6 +184,7 @@ ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.su
     residuel_rayon_m=EXCLUDED.residuel_rayon_m, residuel_facade_m=EXCLUDED.residuel_facade_m,
     bati_facade_m=EXCLUDED.bati_facade_m, zone=EXCLUDED.zone,
     type_division=EXCLUDED.type_division, bati_lot_m2=EXCLUDED.bati_lot_m2,
+    compacite=EXCLUDED.compacite,
     gain_estime_eur=EXCLUDED.gain_estime_eur, clarte=EXCLUDED.clarte, computed_at=now()
 """
 
@@ -158,7 +198,9 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
     # dans la PAU ; sinon (base sans branche RNU) un lot sans zone est simplement exclu.
     has_pau = session.execute(text("SELECT to_regclass('parcel_pau')")).scalar() is not None
     pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
-    detect = _DETECT.format(pau_pred=pau_pred).strip().rstrip(";")
+    detect = _DETECT.format(pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
+                            grand_bat_m2=int(GRAND_BATIMENT_M2),
+                            compacite_min=COMPACITE_MIN).strip().rstrip(";")
     if has_score_e:
         insert_sql = _INSERT.format(detect=detect)
     else:   # pas de Score É → gain NULL, sans jointure
