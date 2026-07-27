@@ -108,6 +108,9 @@ async def _lifespan(app: FastAPI):
         with session_scope() as _s:
             _comptes_ens(_s)
             _scoping_ens(_s)
+        # M26-A — Copilote : après comptes (FK agent_runs.compte_id posée si la table existe).
+        from ..copilote.tables import ensure_tables as _copilote_ens
+        _copilote_ens(_engine())
         app.state.schema_heal = "ok"
     except Exception as exc:  # noqa: BLE001 — l'app doit démarrer ; /readyz dira la vérité
         app.state.schema_heal = f"échec : {type(exc).__name__}: {exc}"
@@ -3401,8 +3404,10 @@ from .tiles import router as _tiles_router  # noqa: E402
 from .score_v2 import router as _score_v2_router  # noqa: E402  (M5, additif)
 from .fiche_ask import router as _fiche_ask_router  # noqa: E402  (M11 surface A — barre de fiche)
 from .crm_columns import router as _crm_columns_router  # noqa: E402  (M12 LOT H — CRM personnalisable)
+from .copilote import router as _copilote_router  # noqa: E402  (M26-A — Copilote, socle agentique)
 
 app.include_router(_crm_columns_router)
+app.include_router(_copilote_router)
 app.include_router(_fiche_ask_router)
 app.include_router(_score_v2_router)
 app.include_router(_modules_router)
