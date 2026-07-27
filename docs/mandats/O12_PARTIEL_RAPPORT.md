@@ -282,3 +282,66 @@ perte attendue est faible, mais un chiffre EXACT exigerait un re-run à plancher
 - **⏸ B (sous-point C3.3)** : chiffré ci-dessus — reco option (b), −2.
 - Après GO : re-run île complet → `pool_decoupe.csv` (avec `aire_bati_dans_lot_m2`) →
   20 cartes (sans marge Score É, compacité affichée) + 5 exemples + zip session neuve.
+
+---
+
+# GO Vic (27/07/2026) — arbitrages appliqués et re-run île
+
+Tous les arbitrages pris : **érosion 2 m** (couloir < 4 m ≠ accès utilisable — largeur
+minimale d'un passage carrossable ; références SANS application : érosion 1 m rejetterait
+53/139 en isolation, 3 m en rejetterait 38 — le 2 m est entre les deux et porte une
+justification physique, pas un réglage fin) · **C5 étendu à toutes les communes** ·
+**C4 ambigus tous exclus** (config mise à jour, touristiques marqués pour réouverture v2) ·
+**filtre-LIBELLÉ** sur les deux familles · **distance bâti ≥ 1 m** (garde-fou de COHÉRENCE
+GÉOMÉTRIQUE — un lot à 0,4 m d'un mur signale une erreur de donnée — PAS une règle
+d'urbanisme : le 3 m est refusé car il simulerait un contrôle de prospect que le dossier
+refuse explicitement de prononcer).
+
+## Entonnoir FINAL (séquentiel sur les 139 ; re-run île = même résultat au candidat près)
+
+| Étape | Retirés | Restants |
+|---|---:|---:|
+| C2 — connexité stricte du reste (composantes > 1 m²) | 49 | 90 |
+| C2-érosion — reste rétréci de 2 m toujours d'un seul tenant | 22 | 68 |
+| C3 — lot nu strict (bâti ∩ lot ≤ 1 m²) | 0 | 68 |
+| C3.3 — lot à ≥ 1 m de tout bâti | 0¹ | 68 |
+| C4 — codes exclus (activité + arbitrés + 2AU*/3AU*) | 6 | 62 |
+| C4-libellé — mots-clés d'activité dans le descriptif | 0² | 62 |
+| C5 étendu — façade sur voirie qualifiée partout | 17 | **45** |
+
+¹ les 2 cas < 1 m tombent déjà en amont. ² redondant avec les codes sur ce pool — mais c'est
+lui qui attrape **BP0363** (« Ua : zone d'activités du Chaudron ») côté résiduel : le filtre
+par code ne suffit pas, le libellé complète (finding traité).
+
+**Ventilation C5 par catégorie** (les 40 façades non qualifiées, pour réouverture éventuelle
+d'une sous-catégorie sans re-run) : **route empierrée 23 (+1 mixte chemin)** · chemin 8
+(+2 mixtes) · sentier 7 (+1 mixte). La sous-catégorie « empierrée » est la plus grosse — si
+elle recouvre de vraies voies publiques des Hauts, sa réouverture rendrait ~24 candidats.
+
+**Filtre-libellé, prises code par code** (pools avant re-run) : Petite-Île AUE (1), UEa (1) ·
+Saint-Benoît Ue (1) · **Saint-Denis Ua (1, pool RÉSIDUEL — BP0363)**. Aucun autre code
+générique ne cachait de zone d'activité dans les pools actuels ; le filtre reste actif pour
+les runs futurs. Descriptions MIXTES protégées (habitat/« commerces de proximité » : Ud
+Bras-Panon, UA Saint-André — vérifiées non touchées).
+
+## Pools finaux (re-run île complet, 24 communes)
+
+- **Lot résiduel : 14** (13 libres + 1 démolition, 7 communes) — seule perte vs pool validé :
+  `97411000BP0363` (retrait ordonné). Distributions inchangées (lots 509-883 m², compacité
+  0,280-0,717).
+- **Lot à découper : 45**, 14 communes : Saint-Paul 7 · Le Tampon 7 · Saint-Pierre 6 ·
+  Saint-Joseph 5 · Saint-Benoît 4 · Saint-Denis 4 · Cilaos 2 · Saint-André 2 · Saint-Leu 2 ·
+  Sainte-Marie 2 · Entre-Deux, La Possession, Les Trois-Bassins, Saint-Louis 1.
+  Lots 606-781 m² (médiane 632) · compacité 0,312-0,793 (médiane 0,706) · façade médiane
+  27,6 m · emprise restante max 0,556 · `aire_bati_dans_lot_m2` = 0 partout (colonne au CSV).
+- **Total : 59 candidats.** Le vivier est passé sous les ~139 comme attendu — 40 % des cartes
+  de la revue précédente étaient suspectes, les 139 n'étaient pas servables ; 59 propres
+  valent mieux. (Seuil d'alerte « < 30 » du mandat : non atteint.)
+
+## Livrables (revue en session neuve)
+
+`docs/mandats/O12_PARTIEL_REVUE.pdf` (20 cartes, tourniquet sur les 14 communes, SANS
+colonne Gain, compacité affichée) · `O12_PARTIEL_EXEMPLES.pdf` (5 exemples régénérés) ·
+`O12_PARTIEL_REVUE.zip` (les 2 PDF + `pool_decoupe.csv` enrichi + logs des 2 runs).
+Golden **116/116 PASS**, tiers servis au bit près (120 · 1031 · 3587 · 72980 · 353945).
+Tests **10/10**. **EXPOSE reste False** — la revue visuelle des 20 cartes tranche.

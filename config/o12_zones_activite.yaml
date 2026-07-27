@@ -1,39 +1,60 @@
-# O12 — ZONAGES D'ACTIVITÉ / ÉCONOMIQUES exclus du gisement « Division en or »
-# (mandat O12-PARTIEL-2, correctif 4 : la division en or vise un particulier qui détache
-#  un lot à bâtir — jamais du foncier d'activité).
+# O12 — ZONAGES EXCLUS du gisement « Division en or » (mandat O12-PARTIEL-2, C4 + arbitrages Vic).
+# La division en or vise un PARTICULIER qui détache un lot à bâtir : sont exclus les zonages
+# d'activité/économiques ET (arbitrage du 27/07/2026 : « tous exclus, sans exception ») les
+# zonages spécialisés — touristiques, équipements/aéroport/militaire, protection paysagère,
+# AU fermées, ZAC sous maîtrise d'aménageur.
 #
-# Liste établie commune par commune, JAMAIS devinée — trois niveaux de preuve :
-#   explicite : la description GPU de la zone dit « activités économiques / industrielles /
-#               artisanales / commerciales / logistiques » (texte conservé en commentaire) ;
-#   calibre   : PLU calibré (config/plu_<slug>.yaml) avec `habitat: interdit`, sourcé article ;
-#   infere    : libellé de la famille « e = économique » (Ue/UE/AUe/…) SANS description GPU —
-#               convention confirmée par les 10 communes à descriptions explicites. Réfutable :
-#               tout libellé de cette famille dont la description dit AUTRE CHOSE est resté
-#               HORS liste (ex. Bras-Panon 1AUe « urbanisation prioritaire SAR »").
-# Les libellés AMBIGUS (touristique, aéroportuaire, militaire, équipements publics, ZAC,
-# AU strictes…) ne sont PAS exclus ici : listés dans O12_PARTIEL_RAPPORT.md pour arbitrage Vic.
+# Liste établie commune par commune, JAMAIS devinée — niveaux de preuve :
+#   explicite : description GPU citée ; calibre : PLU calibré `habitat: interdit`, sourcé ;
+#   infere    : famille « e = économique » sans description GPU (convention confirmée par les
+#               10 communes explicites ; réfutable — Bras-Panon 1AUe « urbanisation prioritaire
+#               SAR » reste HORS liste) ;
+#   arbitre   : ambigus tranchés par Vic (27/07/2026). Les TOURISTIQUES sont marqués ci-dessous
+#               (réouverture possible en v2 — liste tenue à part dans O12_PARTIEL_RAPPORT.md).
 #
-# Consommé par division_or._zones_activite() (détecteur du lot découpé).
+# En COMPLÉMENT (finding BP0363 : une zone d'activités peut porter un code générique) :
+#   - exclusions_pattern : familles exclues par motif sur le LIBELLÉ (regex PostgreSQL) ;
+#   - un filtre par MOTS-CLÉS DU LIBELLÉ DESCRIPTIF (« zone d'activités », économique,
+#     industriel, artisanal, commercial, logistique, ZAC, aménagement concerté, technopole)
+#     vit dans division_or.py (ACTIVITE_DESCR_RE) avec protection des descriptions MIXTES
+#     habitat/commerces de proximité — appliqué aux DEUX familles (découpe ET résiduel).
+#
+# Consommé par division_or._zones_activite() / _activite_pred_sql().
 
 exclusions:
-  Bras-Panon: [Ue, 1AUec, 2AUec, AUst]          # explicite — « activités économiques » (GPU)
-  Entre-Deux: [AUe]                              # explicite — « urbanisation future à vocation économique »
-  L'Étang-Salé: [UE, AUe]                        # inféré (famille e, GPU muet)
-  La Plaine-des-Palmistes: [Ue, AUe]             # inféré
-  La Possession: [UE, UEm, AUEm]                 # inféré
-  Le Port: [Ue, Uem, 1AUe, 1AUem, 2AUem]        # inféré
-  Le Tampon: [Ue, 1AUe, 2AUe]                    # inféré
-  Les Avirons: [Ue, AUec, AUes]                  # inféré
-  Les Trois-Bassins: [Ue, 1AUe]                  # inféré
-  Petite-Île: [UE, UEa, AUE]                     # explicite — « activités industrielles et/ou artisanales », « zone d'activités Verger Hemery »
-  Saint-André: [UE, US, 1AUcr]                   # explicite — « activités économiques », « zone d'activités mixtes » (Cressonnière)
-  Saint-Benoît: [Ue, Up, AUe3, AUp1]             # explicite — « activités économiques et industrielles / de production »
-  Saint-Denis: [Ua, Uac, Uad, AUa]               # explicite — Chaudron, Technopole, chemin Neuf (zone d'activités)
-  Saint-Leu: [UE, AUE]                           # inféré
-  Saint-Louis: [UE, 1AUe, 1AUe oap1, 2AUe]      # inféré
-  Saint-Paul: [U1e, U1ec, U2e, U3e, AU5e]       # calibré — plu_saint_paul.yaml `habitat: interdit` (Art. 1.2)
-  Saint-Pierre: [Uaza, Uazc, Uazi, Uazp, Uazpc, AUazc, AUazi]   # explicite — zones d'activités artisanales/tertiaires/industrielles, ZAC Roland Hoareau
-  Sainte-Marie: [UEa, UEc, UEm, UEp]             # explicite — « activités » (développement, commercial, mixtes, production)
-  Sainte-Rose: [Ue]                              # explicite — « activités économiques »
-  Sainte-Suzanne: [UE, 1AUe]                     # inféré
+  Bras-Panon: [Ue, 1AUec, 2AUec, AUst]           # explicite — « activités économiques » (GPU)
+  Entre-Deux: [AUe]                               # explicite — « urbanisation future à vocation économique »
+  L'Étang-Salé: [UE, AUe]                         # inféré (famille e, GPU muet)
+  La Plaine-des-Palmistes: [Ue, AUe]              # inféré
+  La Possession: [UE, UEm, AUEm]                  # inféré
+  Le Port: [Ue, Uem, 1AUe, 1AUem, 2AUem]         # inféré
+  Le Tampon: [Ue, 1AUe, 2AUe]                     # inféré
+  Les Avirons: [Ue, AUec, AUes]                   # inféré
+  Les Trois-Bassins: [Ue, 1AUe]                   # inféré
+  Petite-Île: [UE, UEa, AUE,                      # explicite — activités industrielles/artisanales, ZA Verger Hemery
+               UT, AUT,                           # arbitré — touristiques (réouverture possible v2)
+               UZ, 1AUz]                          # arbitré — ZAC Cambrai (maîtrise d'aménageur)
+  Saint-André: [UE, US, 1AUcr,                    # explicite — activités économiques, ZA mixte Cressonnière
+               UT]                                # arbitré — touristique (réouverture possible v2)
+  Saint-Benoît: [Ue, Up, AUe3, AUp1]              # explicite — activités économiques/industrielles/production
+  Saint-Denis: [Ua, Uac, Uad, AUa,                # explicite — Chaudron, Technopole, chemin Neuf
+               AUx,                               # arbitré — AU « stricte » (urbanisation fermée)
+               Uva,                               # arbitré — coulée verte (protection paysagère)
+               Uat]                               # arbitré — ZAC Triangle (maîtrise d'aménageur)
+  Saint-Leu: [UE, AUE]                            # inféré
+  Saint-Louis: [UE, 1AUe, 1AUe oap1, 2AUe]       # inféré
+  Saint-Paul: [U1e, U1ec, U2e, U3e, AU5e]        # calibré — plu_saint_paul.yaml `habitat: interdit`
+  Saint-Pierre: [Uaza, Uazc, Uazi, Uazp, Uazpc, AUazc, AUazi,   # explicite — ZA artisanales/tertiaires/industrielles, ZAC R. Hoareau
+               Ut, AUt1, AUt2,                    # arbitré — touristiques (réouverture possible v2)
+               Ue, Uea, Uemi, Uep]                # arbitré — équipements, aérodrome, militaire, parcs
+  Sainte-Marie: [UEa, UEc, UEm, UEp,              # explicite — activités (développement/commercial/mixtes/production)
+               UT, UTp,                           # arbitré — touristiques (réouverture possible v2)
+               UR]                                # arbitré — aéroport Roland-Garros
+  Sainte-Rose: [Ue]                               # explicite — « activités économiques »
+  Sainte-Suzanne: [UE, 1AUe]                      # inféré
   # Cilaos, Salazie, Saint-Joseph, Saint-Philippe : aucune zone d'activité identifiée dans le GPU
+
+# Familles exclues par MOTIF de libellé, toutes communes (arbitrage : AU fermées — leur
+# ouverture à l'urbanisation exige une modification/révision du PLU, on ne construit pas
+# aujourd'hui ; numérotation 2AU/3AU = fermées, les 1AU restent au cas par cas ci-dessus).
+exclusions_pattern: ["^2AU", "^3AU"]

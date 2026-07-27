@@ -129,14 +129,24 @@ def test_correctifs_o12_partiel_2():
     # C3 : lot NU strict — bâti ∩ lot ≤ 1 m², mesuré contre TOUS les bâtiments (voisins compris)
     assert "aire_bati_dans_lot_m2 <= 1" in q
     assert "aire_bati_dans_lot_m2" in d._INSERT_PARTIEL      # rendu dans la table → CSV
-    # C4 : zonages d'activité exclus, liste en CONFIG (jamais devinée ; ambigus → arbitrage)
+    # C4 : zonages exclus, liste en CONFIG (jamais devinée) + motifs AU fermées (2AU*/3AU*)
     assert "({activite_pred})" in q
-    assert d._activite_pred_sql("Petite-Île") == "(zone_lib IS NULL OR zone_lib NOT IN ('UE', 'UEa', 'AUE'))"
-    assert d._activite_pred_sql("Salazie") == "true"          # aucune zone d'activité au GPU
-    assert "'U1e'" in d._activite_pred_sql("Saint-Paul")      # PLU calibré : habitat interdit
-    # C5 : en RNU, façade sur voirie QUALIFIÉE (routes BD TOPO — pas chemins/sentiers/empierrées)
-    assert "(zone IS NOT NULL OR facade_lot_route >= 12)" in q
+    p = d._activite_pred_sql("Petite-Île")
+    assert "'UEa'" in p and "'UT'" in p and "'UZ'" in p        # activité + arbitrés (touristique, ZAC)
+    assert "zone_lib !~ '^2AU'" in p and "zone_lib !~ '^3AU'" in p
+    assert "'U1e'" in d._activite_pred_sql("Saint-Paul")       # PLU calibré : habitat interdit
+    # C4-libellé (finding BP0363) : mots-clés d'activité dans le DESCRIPTIF, appliqué aux
+    # DEUX familles ; descriptions mixtes habitat/proximité protégées
+    for sql in (q, d._DETECT):
+        assert "zone_descr ~* '{descr_re}'" in sql and "{descr_protege}" in sql
+    assert "zone d.activit" in d.ACTIVITE_DESCR_RE and "proximit" in d.ACTIVITE_DESCR_PROTEGE_RE
+    # C5 ÉTENDU (GO Vic) : façade sur voirie QUALIFIÉE PARTOUT (plus seulement RNU)
+    assert "AND facade_lot_route >= 12" in q
     assert "'Route à 1 chaussée', 'Route à 2 chaussées', 'Rond-point'" in q
+    # C2-érosion (GO Vic) : rétréci de 2 m (couloir < 4 m ≠ accès), composantes > 25 m²
+    assert d.EROSION_RESTE_M == 2 and "nb_reste_erode <= 1" in q
+    # C3.3 (GO Vic, option b) : lot à ≥ 1 m de TOUT bâti — cohérence géométrique, pas urbanisme
+    assert d.DIST_BATI_MIN_M == 1 and "ST_DWithin(bd.geom_2975, zon.lot_geom, {dist_bati_min})" in q
     # C1 : plus de « Gain estimé » sur les fiches de revue
     import inspect
 

@@ -83,6 +83,30 @@ LOT_DECOUPE_MAX_M2 = 900
 COMPACITE_MIN_DECOUPE = 0.28   # = min observé du pool « lot résiduel » validé (mandat O12-PARTIEL)
 ANCRE_LARGEUR_M = 25           # largeur de la bande côté rue (≥ 12 m de façade garantis)
 
+# O12-PARTIEL-2 (arbitrages Vic 27/07/2026) :
+# · ÉROSION du reste : un reste relié par un COULOIR est un reste en deux morceaux dans la
+#   vraie vie. Le reste rétréci de EROSION_RESTE_M doit rester d'un seul tenant — 2 m d'érosion
+#   ⇔ un couloir < 4 m (largeur minimale d'un accès utilisable) ne « connecte » plus.
+#   Composantes comptées au-dessus de 25 m² (anti-bruit d'érosion).
+# · Distance lot ↔ bâti ≥ 1 m contre TOUS les bâtiments (voisins compris) : garde-fou de
+#   COHÉRENCE GÉOMÉTRIQUE (un lot à 0,4 m d'un mur signale une erreur de donnée), PAS une
+#   règle d'urbanisme — le seuil 3 m est refusé : le dossier ne prononce AUCUNE
+#   constructibilité réglementaire (recul, prospect, servitudes), on ne la simule pas.
+# · Façade sur voirie QUALIFIÉE partout (plus seulement RNU) : une façade sur sentier, chemin
+#   ou route empierrée n'est pas un accès (BD TOPO, cf. VOIRIE_QUALIFIEE).
+EROSION_RESTE_M = 2
+DIST_BATI_MIN_M = 1
+VOIRIE_QUALIFIEE = ("Route à 1 chaussée", "Route à 2 chaussées", "Rond-point")
+
+# Filtre par LIBELLÉ DESCRIPTIF de zone (finding BP0363 : « Ua — zone d'activités du
+# Chaudron » passait le filtre par code). Mots-clés d'activité dans l'intitulé GPU, avec
+# PROTECTION des descriptions mixtes habitat/centre-ville (« commerces … de proximité »,
+# « l'habitat mais également les commerces ») — regex PostgreSQL, appliqué aux DEUX familles.
+ACTIVITE_DESCR_RE = (r"zone d.activit|activit[ée]s? [ée]conomiq|activit[ée]s? commercial"
+                     r"|vocation [ée]conomique|industriel|artisanal|logistiq|technopole"
+                     r"|\mZAC\M|zone d.am[ée]nagement")
+ACTIVITE_DESCR_PROTEGE_RE = r"habitat|r[ée]sidentiel|proximit[ée]"
+
 DDL = """
 CREATE TABLE IF NOT EXISTS division_or_candidates (
   idu           varchar(14) PRIMARY KEY,
@@ -165,12 +189,13 @@ demol AS (
 -- zone dominante du LOT (plus grande intersection avec plu_gpu_zone) — U/AU gardés, A/N exclus ;
 -- NULL (commune RNU sans document) → gardé seulement si la parcelle est dans la PAU estimée
 zon AS (
-  SELECT d.*, z.subtype AS zone, z.zone_lib
+  SELECT d.*, z.subtype AS zone, z.zone_lib, z.zone_descr
   FROM demol d
   LEFT JOIN LATERAL (
     -- libellé via attrs->>'libelle' (code seul, ex. Ud3) — z2.name mélange parfois
-    -- « code : description » selon la commune d'ingestion
-    SELECT z2.subtype, z2.attrs->>'libelle' AS zone_lib FROM spatial_layers z2
+    -- « code : description » selon la commune d'ingestion ; name gardé comme DESCRIPTIF
+    -- (filtre par mots-clés d'activité — finding BP0363, un code générique peut cacher une ZA)
+    SELECT z2.subtype, z2.attrs->>'libelle' AS zone_lib, z2.name AS zone_descr FROM spatial_layers z2
     WHERE z2.kind='plu_gpu_zone' AND ST_Intersects(z2.geom_2975, d.free_geom)
     ORDER BY ST_Area(ST_Intersection(z2.geom_2975, d.free_geom)) DESC LIMIT 1) z ON true)
 SELECT DISTINCT ON (idu)
@@ -188,6 +213,10 @@ FROM zon
 WHERE facade_free >= 12
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   AND (variante = 'libre' OR bati_lot_m2 * 3 <= bat_m2)
+  -- O12-PARTIEL-2 §4 : zonages d'activité exclus AUSSI du pool résiduel — par CODE (config)
+  -- et par LIBELLÉ descriptif (un code générique peut cacher une zone d'activités : BP0363)
+  AND ({activite_pred})
+  AND (zone_descr IS NULL OR NOT (zone_descr ~* '{descr_re}') OR zone_descr ~* '{descr_protege}')
   -- revue O12-ÎLE (5) : VIABILITÉ DU LOT RESTANT — l'emprise bâtie résultante côté propriétaire
   -- (bâti conservé / surface restante) ne doit pas dépasser l'emprise max de la zone (PLU
   -- calibré s'il existe, sinon plancher prudent) : la division ne rend pas la parcelle non conforme
@@ -305,6 +334,8 @@ mesure AS (
        FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, rg.geom, 2))) g) AS facade_reste,
     (SELECT count(*) FROM ST_Dump(ST_Difference(c.geom_2975, c.lot_geom)) g
        WHERE ST_Area(g.geom) > 1) AS nb_reste,
+    (SELECT count(*) FROM ST_Dump(ST_Buffer(ST_Difference(c.geom_2975, c.lot_geom), -{erosion_m})) g
+       WHERE ST_Area(g.geom) > 25) AS nb_reste_erode,
     round(coalesce((SELECT sum(ST_Area(ST_Intersection(b.geom_2975, c.lot_geom)))
        FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, c.lot_geom)),
        0)::numeric, 1) AS aire_bati_dans_lot_m2,
@@ -317,10 +348,10 @@ mesure AS (
   CROSS JOIN LATERAL (SELECT g.geom FROM ST_Dump(ST_Difference(c.geom_2975, c.lot_geom)) g
                       ORDER BY ST_Area(g.geom) DESC LIMIT 1) rg),
 zon AS (
-  SELECT m.*, z.subtype AS zone, z.zone_lib
+  SELECT m.*, z.subtype AS zone, z.zone_lib, z.zone_descr
   FROM mesure m
   LEFT JOIN LATERAL (
-    SELECT z2.subtype, z2.attrs->>'libelle' AS zone_lib FROM spatial_layers z2
+    SELECT z2.subtype, z2.attrs->>'libelle' AS zone_lib, z2.name AS zone_descr FROM spatial_layers z2
     WHERE z2.kind='plu_gpu_zone' AND ST_Intersects(z2.geom_2975, m.lot_geom)
     ORDER BY ST_Area(ST_Intersection(z2.geom_2975, m.lot_geom)) DESC LIMIT 1) z ON true)
 SELECT idu, commune, round(surface_m2)::int surface_m2, round(bat_m2)::int bati_m2,
@@ -336,12 +367,24 @@ WHERE facade_lot >= 12
   AND facade_reste >= 12
   -- C2 : le reste doit être D'UN SEUL TENANT (tolérance 1 m² pour les slivers cadastraux)
   AND nb_reste = 1
+  -- C2-érosion (GO Vic) : rétréci de {erosion_m} m, le reste tient toujours d'un seul tenant
+  -- (un couloir < {erosion_m}×2 m n'est pas un accès utilisable) — composantes > 25 m²
+  AND nb_reste_erode <= 1
   -- C3 : lot NU strict — bâti ∩ lot ≤ 1 m² (bruit de numérisation), voisins compris
   AND aire_bati_dans_lot_m2 <= 1
-  -- C5 : en RNU (zone NULL), la façade doit reposer sur une voirie QUALIFIÉE (≥ 12 m contigus)
-  AND (zone IS NOT NULL OR facade_lot_route >= 12)
-  -- C4 : zonages d'activité / économiques exclus (config/o12_zones_activite.yaml)
+  -- C3.3 (GO Vic, option b) : lot à ≥ 1 m de TOUT bâti — garde-fou de COHÉRENCE GÉOMÉTRIQUE
+  -- (0,4 m d'un mur = erreur de donnée), PAS une règle d'urbanisme (le 3 m simulerait un
+  -- prospect que le dossier refuse explicitement de prononcer)
+  AND NOT EXISTS (SELECT 1 FROM spatial_layers bd WHERE bd.kind='batiment'
+                    AND ST_DWithin(bd.geom_2975, zon.lot_geom, {dist_bati_min}))
+  -- C5 ÉTENDU (GO Vic) : la façade repose sur une voirie QUALIFIÉE partout, plus seulement en
+  -- RNU — sentier/chemin/empierrée ne sont pas un accès
+  AND facade_lot_route >= 12
+  -- C4 : zonages exclus par CODE (config : activité, touristique, équipements, AU fermées…)
   AND ({activite_pred})
+  -- C4-libellé (finding BP0363) : mots-clés d'activité dans le DESCRIPTIF de zone,
+  -- descriptions mixtes habitat/proximité protégées
+  AND (zone_descr IS NULL OR NOT (zone_descr ~* '{descr_re}') OR zone_descr ~* '{descr_protege}')
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   AND bat_m2 / NULLIF(surface_m2 - lot_m2, 0) <= ({emprise_max})
   AND NOT EXISTS (SELECT 1 FROM spatial_layers l5 WHERE l5.kind='cinquante_pas'
@@ -392,28 +435,38 @@ def _ensure_ddl(session: Session) -> None:
         session.execute(text(DDL))
 
 
-def _zones_activite(commune: str) -> list[str]:
-    """Libellés de zones d'ACTIVITÉ exclus du gisement pour la commune (mandat O12-PARTIEL-2
-    C4) — lus dans config/o12_zones_activite.yaml (explicite GPU / PLU calibré / famille « e »
-    inférée ; les ambigus n'y figurent pas, ils attendent l'arbitrage Vic). [] si absent."""
+def _zones_activite_doc() -> dict:
+    """config/o12_zones_activite.yaml (mandat O12-PARTIEL-2 C4 + arbitrages) — {} si absent."""
     import yaml
 
     from ..config import get_settings
     try:
         cfg = get_settings().config_path / "o12_zones_activite.yaml"
-        doc = yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}
-        return [str(x) for x in (doc.get("exclusions") or {}).get(commune, [])]
+        return yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}
     except Exception:  # noqa: BLE001 — config illisible → aucune exclusion
-        return []
+        return {}
+
+
+def _zones_activite(commune: str) -> list[str]:
+    """Libellés de zones exclus du gisement pour la commune (activité, touristique,
+    équipements, ZAC, AU strictes… — arbitrés, sourcés dans le yaml)."""
+    return [str(x) for x in (_zones_activite_doc().get("exclusions") or {}).get(commune, [])]
 
 
 def _activite_pred_sql(commune: str) -> str:
-    """Prédicat SQL « la zone du lot n'est PAS un zonage d'activité » pour la commune."""
+    """Prédicat SQL « la zone du lot n'est PAS un zonage exclu » : liste par commune +
+    motifs toutes-communes (exclusions_pattern : familles AU fermées 2AU*/3AU*)."""
+    clauses = []
     libs = [lib for lib in _zones_activite(commune) if "'" not in lib]
-    if not libs:
+    if libs:
+        clauses.append("zone_lib NOT IN (" + ", ".join(f"'{lib}'" for lib in libs) + ")")
+    for pat in _zones_activite_doc().get("exclusions_pattern") or []:
+        pat = str(pat)
+        if "'" not in pat:
+            clauses.append(f"zone_lib !~ '{pat}'")
+    if not clauses:
         return "true"
-    quoted = ", ".join(f"'{lib}'" for lib in libs)
-    return f"(zone_lib IS NULL OR zone_lib NOT IN ({quoted}))"
+    return "(zone_lib IS NULL OR (" + " AND ".join(clauses) + "))"
 
 
 def build_divisions_partiel(session: Session, communes: list[str], *, commit: bool = True,
@@ -432,7 +485,9 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
             grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
             lot_min=LOT_DECOUPE_MIN_M2, lot_max=LOT_DECOUPE_MAX_M2,
             compacite_min_dec=COMPACITE_MIN_DECOUPE, ancre_w=ANCRE_LARGEUR_M,
-            activite_pred=_activite_pred_sql(commune)).strip().rstrip(";")
+            activite_pred=_activite_pred_sql(commune),
+            erosion_m=EROSION_RESTE_M, dist_bati_min=DIST_BATI_MIN_M,
+            descr_re=ACTIVITE_DESCR_RE, descr_protege=ACTIVITE_DESCR_PROTEGE_RE).strip().rstrip(";")
         if has_score_e:
             insert_sql = _INSERT_PARTIEL.format(detect=detect)
         else:
@@ -479,11 +534,14 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
     pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
     total = 0
     for commune in communes:
-        # le plafond d'emprise du lot restant dépend du PLU calibré → SQL bâti PAR commune
+        # plafond d'emprise (PLU calibré) et zonages exclus dépendent de la commune → SQL par commune
         detect = _DETECT.format(pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
                                 grand_bat_m2=int(GRAND_BATIMENT_M2),
                                 compacite_min=COMPACITE_MIN,
-                                emprise_max=_emprise_max_sql(commune)).strip().rstrip(";")
+                                emprise_max=_emprise_max_sql(commune),
+                                activite_pred=_activite_pred_sql(commune),
+                                descr_re=ACTIVITE_DESCR_RE,
+                                descr_protege=ACTIVITE_DESCR_PROTEGE_RE).strip().rstrip(";")
         if has_score_e:
             insert_sql = _INSERT.format(detect=detect)
         else:   # pas de Score É → gain NULL, sans jointure
