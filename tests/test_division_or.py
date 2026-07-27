@@ -108,6 +108,11 @@ def test_lot_decoupe_o12_partiel():
     assert ".radius >= 9" in q
     # façade du LOT revérifiée (contiguë ≥ 12), zonage, littoral, emprise restante : mêmes gardes
     assert "facade_lot >= 12" in q
+    # ANTI-ENCLAVEMENT : le lot RESTANT garde ≥ 12 m de façade contiguë, mesurée DIRECTEMENT
+    # sur sa géométrie (jamais par soustraction de longueurs — finding O12) ; parcelle
+    # traversante acceptée naturellement (mesure contre toutes les voiries)
+    assert "facade_reste >= 12" in q
+    assert "ST_Difference(c.geom_2975, c.lot_geom)" in q
     assert "zone = 'U' OR zone LIKE 'AU%'" in q and "{pau_pred}" in q and "{emprise_max}" in q
     for kind in ("cinquante_pas", "foret_publique", "parc_national", "trait_de_cote"):
         assert kind in q

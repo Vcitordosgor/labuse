@@ -75,6 +75,9 @@ EMPRISE_RESTANTE_MAX = 0.60
 # conservé, par construction. Aucun critère validé n'est assoupli : compacité ≥ 0.28 (le
 # plancher OBSERVÉ du pool validé, plus dur que COMPACITE_MIN), cercle inscrit ≥ 9 m, façade
 # contiguë du lot ≥ 12 m, zone U/AU (PAU si RNU), gardes littoral, emprise restante plafonnée.
+# ANTI-ENCLAVEMENT (GO Vic) : le lot RESTANT garde lui aussi ≥ 12 m de façade voirie contiguë,
+# mesurée directement sur sa géométrie (parcelle − découpe) contre TOUTES les voiries — une
+# parcelle traversante dont le reste donne sur la deuxième rue passe ; sinon rejet.
 LOT_DECOUPE_MIN_M2 = 600
 LOT_DECOUPE_MAX_M2 = 900
 COMPACITE_MIN_DECOUPE = 0.28   # = min observé du pool « lot résiduel » validé (mandat O12-PARTIEL)
@@ -241,7 +244,7 @@ bldg AS (
 bat AS (SELECT id, ST_Union(g) AS bgeom, sum(a) AS bat_m2,
                count(*) FILTER (WHERE a >= 10) AS nb_bat, max(a) AS max_bat_m2 FROM bldg GROUP BY id),
 freed AS (
-  SELECT c.id, c.idu, c.commune, c.surface_m2, bat.bat_m2,
+  SELECT c.id, c.idu, c.commune, c.geom_2975, c.surface_m2, bat.bat_m2,
          lg.geom AS free_geom, ST_Area(lg.geom) AS free_m2
   FROM cand c JOIN bat ON bat.id = c.id
   CROSS JOIN LATERAL (SELECT g.geom FROM ST_Dump(ST_Difference(c.geom_2975, ST_Buffer(bat.bgeom, 3))) g
@@ -262,7 +265,7 @@ fac AS (
 -- bande : ancre ≤ {ancre_w} m (3 positions) × profondeur 20-40 m (buffer à bouts droits),
 -- clippée au résiduel — on retient la découpe de MEILLEURE compacité satisfaisant les seuils
 carve AS (
-  SELECT f.id, f.idu, f.commune, f.surface_m2, f.bat_m2, f.free_m2,
+  SELECT f.id, f.idu, f.commune, f.geom_2975, f.surface_m2, f.bat_m2, f.free_m2,
          best.lot_geom, best.lot_m2, best.compacite_lot, best.rad
   FROM fac f
   CROSS JOIN LATERAL (
@@ -283,12 +286,21 @@ carve AS (
       AND (ST_MaximumInscribedCircle(lot.geom)).radius >= 9
     ORDER BY compacite_lot DESC LIMIT 1) best),
 -- façade voirie CONTIGUË du LOT découpé (revérifiée sur le lot, pas héritée de l'ancre)
+-- + façade RESTANTE du lot conservé : la bande ne doit pas ENCLAVER la maison — le lot
+-- restant garde ≥ 12 m de façade contiguë, MESURÉE DIRECTEMENT sur sa géométrie (parcelle −
+-- découpe ; jamais par soustraction de longueurs, l'artefact du finding O12). Une parcelle
+-- traversante dont le reste donne sur la DEUXIÈME rue passe naturellement (toutes voiries).
 mesure AS (
   SELECT c.*,
     (SELECT coalesce(max(ST_Length(g.geom)), 0) FROM ST_Dump((
        SELECT ST_LineMerge(ST_Union(ST_Intersection(ST_Buffer(v.geom_2975, 1.5), ST_Boundary(c.lot_geom))))
-       FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, c.lot_geom, 2))) g) AS facade_lot
-  FROM carve c),
+       FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, c.lot_geom, 2))) g) AS facade_lot,
+    (SELECT coalesce(max(ST_Length(g.geom)), 0) FROM ST_Dump((
+       SELECT ST_LineMerge(ST_Union(ST_Intersection(ST_Buffer(v.geom_2975, 1.5), ST_Boundary(rg.geom))))
+       FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, rg.geom, 2))) g) AS facade_reste
+  FROM carve c
+  CROSS JOIN LATERAL (SELECT g.geom FROM ST_Dump(ST_Difference(c.geom_2975, c.lot_geom)) g
+                      ORDER BY ST_Area(g.geom) DESC LIMIT 1) rg),
 zon AS (
   SELECT m.*, z.subtype AS zone, z.zone_lib
   FROM mesure m
@@ -306,6 +318,7 @@ SELECT idu, commune, round(surface_m2)::int surface_m2, round(bat_m2)::int bati_
        lot_geom
 FROM zon
 WHERE facade_lot >= 12
+  AND facade_reste >= 12
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   AND bat_m2 / NULLIF(surface_m2 - lot_m2, 0) <= ({emprise_max})
   AND NOT EXISTS (SELECT 1 FROM spatial_layers l5 WHERE l5.kind='cinquante_pas'
@@ -341,12 +354,23 @@ ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.su
 """
 
 
+def _ensure_ddl(session: Session) -> None:
+    """DDL seulement si le schéma n'est pas déjà au dernier état (colonne la plus récente) :
+    les ALTER ... IF NOT EXISTS prennent un verrou EXCLUSIF même à vide et, en parallèle par
+    commune, se mettent en file derrière chaque INSERT long — constaté sur le run O12-PARTIEL
+    (workers bloqués ~40 min sur un CREATE TABLE no-op)."""
+    if not session.execute(text(
+            "SELECT count(*) FROM information_schema.columns "
+            "WHERE table_name='division_or_candidates' AND column_name='lot_geom'")).scalar():
+        session.execute(text(DDL))
+
+
 def build_divisions_partiel(session: Session, communes: list[str], *, commit: bool = True,
                             log=lambda *_: None) -> dict:
     """O12-PARTIEL — détecte les LOTS DÉCOUPÉS (type 'decoupe', famille DISTINCTE des lots
     résiduels — jamais fusionnée). Univers disjoint du pool résiduel (ratio > 50 % vs ≤ 50 %) :
     aucun conflit de clé. Mêmes gardes que le pool validé, aucun critère assoupli."""
-    session.execute(text(DDL))
+    _ensure_ddl(session)
     has_score_e = session.execute(text("SELECT to_regclass('score_e')")).scalar() is not None
     has_pau = session.execute(text("SELECT to_regclass('parcel_pau')")).scalar() is not None
     pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
@@ -395,7 +419,7 @@ def _emprise_max_sql(commune: str) -> str:
 def build_divisions(session: Session, communes: list[str], *, commit: bool = True, log=lambda *_: None) -> dict:
     """Détecte les candidats division-en-or pour une liste de communes. Table MASQUÉE (flag EXPOSE=False).
     Une passe SQL par commune (détection + gain Score É + clarté), pas de boucle Python par ligne."""
-    session.execute(text(DDL))
+    _ensure_ddl(session)
     has_score_e = session.execute(text("SELECT to_regclass('score_e')")).scalar() is not None
     # PAU estimée (mandat RNU) : si la table existe, une commune SANS zonage garde ses candidats
     # dans la PAU ; sinon (base sans branche RNU) un lot sans zone est simplement exclu.

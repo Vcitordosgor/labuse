@@ -86,13 +86,66 @@ façade, emprise restante, zonage).
 - Coût : ~2-5 min/commune pilote (3×5 découpes × cercle inscrit). Île entière estimée
   30-90 min en 5 parallèles — lancée seulement après le GO.
 
-**⏸ STOP — validation demandée avant le run île (B).** Si la méthode ne convient pas
-(découpes jugées non plausibles), on s'arrête là, conformément au garde-fou n° 2.
+**⏸ STOP — validation demandée avant le run île (B).** → **GO reçu**, avec correctif préalable.
 
 ---
 
-## B — Run île *(après GO)*
+## A-bis — Correctif préalable au GO : façade RESTANTE du lot bâti (anti-enclavement)
 
-## C — Deux familles distinctes *(acté dans le code, cf. A)*
+La bande pouvait enclaver la maison. Ajouté : le lot RESTANT (côté propriétaire) doit garder
+**≥ 12 m de façade voirie CONTIGUË** — même seuil que le lot détaché — **mesurée directement
+sur sa géométrie** (parcelle − découpe, `ST_LineMerge` contre TOUTES les voiries), jamais par
+soustraction de longueurs (l'artefact du finding O12). Le cas **parcelle traversante** passe
+naturellement : si le reste donne sur la deuxième rue, sa façade est comptée. Sinon, rejet.
 
-## D — Dossier de revue *(après B)*
+**Impact pilotes (avant l'île) : 9 → 6** — retirés `97403000AP2225`, `97402000AK0807`,
+`97402000AH0621` (la bande mangeait la façade de la maison ; les deux premiers étaient les
+tops compacité des 5 exemples initiaux — le correctif était nécessaire). Parmi les 6 gardés,
+**0 cas traversant** (toutes les façades restantes sont sur la même rue que le lot — mesuré,
+distance façade-lot ↔ façade-reste = 0 m partout).
+
+## B — Run île : **139 lots à découper, 22 communes sur 24**
+
+`scripts/o12_run_partiel.py` (DELETE des `decoupe` + rebuild — le pool résiduel n'est jamais
+touché). Effectifs (0 : Le Port, Les Avirons) :
+
+Saint-Paul 16 · Le Tampon 15 · Saint-Joseph 13 · Saint-Denis 12 · Sainte-Marie 11 ·
+Saint-Pierre 10 · Saint-Benoît 8 · Saint-Leu 8 · Saint-André 7 · Saint-Louis 7 · Cilaos 5 ·
+Entre-Deux 5 · La Possession 5 · Salazie 5 · Petite-Île 4 · L'Étang-Salé 2 · et 1 chacune :
+Bras-Panon, La Plaine-des-Palmistes, Les Trois-Bassins, Saint-Philippe, Sainte-Rose,
+Sainte-Suzanne.
+
+Distributions (n = 139) :
+- **surface du lot** : min 600 · P25 621 · médiane 632 · P75 683 · max 896 m² ;
+- **compacité** : min 0,290 · P25 0,577 · **médiane 0,718** · max 0,815 (des rectangles — la
+  méthode produit ce qu'elle promet ; à comparer à la médiane 0,505 du pool résiduel) ;
+- **façade du lot** : min 15,7 · médiane 27,6 · max 52,3 m ;
+- **emprise restante** : min 0,098 · médiane 0,203 · max 0,585 (toutes sous plafond).
+
+**Toutes les 139 parcelles gagnent un lot partiel qui n'existait pas** (univers = écartées par
+le ratio, disjoint du pool résiduel par construction) : le vivier passe de 15 à **154**
+candidats (× 10), sans toucher aucun seuil validé.
+
+## C — Deux familles distinctes (acté)
+
+`type_division='decoupe'`, jamais fusionné ; tri du dossier : lots résiduels d'abord ;
+libellé carte : **« Lot À DÉCOUPER (hypothétique — le lot proposé exige un découpage
+géomètre) »**. En table : 139 `decoupe` + 14 `libre` + 1 `demolition`.
+
+## D — Dossier de revue (session neuve)
+
+- **`docs/mandats/O12_PARTIEL_REVUE.pdf`** — 20 cartes échantillonnées en tourniquet sur les
+  22 communes du pool (le rang-1 de 20 communes, tri clarté) : lot découpé (tracé STOCKÉ du
+  run), bâti, **voirie**, métriques + emprise restante + zonage.
+- **`docs/mandats/O12_PARTIEL_EXEMPLES.pdf`** — les 5 exemples (régénérés post-correctif
+  anti-enclavement : 2 des 5 initiaux avaient été éliminés par la garde, preuve qu'elle mord).
+- **`docs/mandats/O12_PARTIEL_REVUE.zip`** — les 2 PDF + `pool_decoupe.csv` (les 139, toutes
+  métriques) + log du run. **Prêt pour la revue en session neuve.**
+
+## Preuves & finding
+
+- Golden **116/116 PASS** après chaque étape ; tests `test_division_or.py` **9/9**.
+- EXPOSE reste `False` — rien d'exposé avant la revue des 20 cartes.
+- Finding d'ingénierie : les `ALTER … IF NOT EXISTS` du DDL par commune se mettent en FILE
+  (verrou exclusif) derrière chaque INSERT long en parallèle — workers bloqués ~40 min sur un
+  no-op. Corrigé : `_ensure_ddl` saute le DDL quand le schéma est déjà au dernier état.
