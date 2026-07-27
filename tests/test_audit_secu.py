@@ -28,7 +28,10 @@ def app_client(engine, monkeypatch):
     from labuse import config
     config.get_settings.cache_clear()
     from labuse.api.app import app
-    return TestClient(app, base_url="https://testserver")
+    yield TestClient(app, base_url="https://testserver")
+    # Nettoyage À LA SOURCE : les settings « pilote » chargés en cache lru fuiraient sinon
+    # vers les tests suivants (ordre alphabétique → test_auth voit une auth active à tort).
+    config.get_settings.cache_clear()
 
 
 def _compte_actif(email: str) -> int:
