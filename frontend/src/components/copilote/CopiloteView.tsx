@@ -136,7 +136,7 @@ export function CopiloteView() {
           <div className="min-w-[250px] flex-1">
             <textarea data-brief value={brief} onChange={(e) => setBrief(e.target.value)}
               readOnly={enInstruction} placeholder={S.placeholder} rows={2}
-              className="w-full resize-none bg-transparent font-sans text-base leading-normal text-cp-txt outline-none placeholder:text-cp-faint" />
+              className="w-full resize-none bg-transparent font-sans text-base leading-normal text-cp-txt outline-none placeholder:text-cp-faint focus:outline-none" />
           </div>
           <div className="flex flex-col items-end gap-2">
             {enInstruction ? (
@@ -195,7 +195,7 @@ export function CopiloteView() {
               <input value={reponse} onChange={(e) => setReponse(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && reponse.trim()) void run.repondre(reponse) }}
                 placeholder={S.precisionPlaceholder}
-                className="flex-1 bg-transparent px-3 py-2.5 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint" />
+                className="flex-1 bg-transparent px-3 py-2.5 text-[13px] text-cp-txt outline-none placeholder:text-cp-faint focus:outline-none" />
               <button disabled={!reponse.trim()} onClick={() => void run.repondre(reponse)}
                 className="rounded-[10px] bg-cp-violet px-5 py-2.5 font-display text-[12px] font-bold text-[#150E22] disabled:opacity-40">
                 {S.precisionReprendre}
