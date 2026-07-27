@@ -6,14 +6,13 @@ Zéro code de production touché (diff = 5 fichiers `tests/` + 2 docs). Aucun me
 ## État final de la suite (mesuré)
 
 Avant : `17 failed, 1176 passed, 19 skipped, 66 errors`.
-**Après : `1256 passed, 19 skipped, 3 xfailed, 0 failed, 0 errors` (55 s).** — 1256 + 19 + 3 = 1278 collectés. ✓
+**Après arbitrage Vic : `1259 passed, 19 skipped, 0 xfailed, 0 failed, 0 errors`.** — 1259 + 19 = 1278 collectés. ✓
 
 | Catégorie | Traité | Résultat |
 |---|---|---|
 | **C** (69, PROJ_DATA) | fixture conftest auto-découverte + échec bruyant | ✅ verts |
 | **A.1** (4, protection) | `monkeypatch.delenv("LABUSE_DEV_MODE")` | ✅ verts |
-| **A.2** (6, front impl) | assertions repointées sur le front refactoré | ✅ verts |
-| **A.2** (3, front wording) | `xfail` motivé — **arbitrage Vic** (deltas ci-dessous) | ⏸ parqués |
+| **A.2** (9, front) | 6 assertions repointées + 3 verrous wording remis à jour (arbitrage Vic) | ✅ verts |
 | **E** (1, test_auth) | fuite corrigée **à la source** (2 fixtures audit) | ✅ vert |
 
 **Garde-fous servis** : tiers du run servi `q_v7_defisc` mesurés en base — **120 / 1031 / 3587 / 72980 / 353945
@@ -21,21 +20,20 @@ au bit près** (`parcel_p_score_v2`). Golden 116/116 (face API) : **différé** 
 
 ---
 
-## ⚠ ARBITRAGE VIC — 3 verrous de wording produit (deltas exacts)
+## ✅ ARBITRAGE VIC — 3 verrous de wording (RÉSOLU : (a) pour les trois)
 
-Ces 3 tests verrouillaient une formulation servie ; le front l'a reformulée. Je **ne réécris pas** ces
-verrous sans ton feu vert (boussole : jamais d'assouplissement silencieux). Ils sont `xfail(strict=False)`
-en attendant. Décision par delta : **(a)** wording actuel validé → je mets le test à jour dessus ;
-**(b)** wording d'origine à restaurer → ticket côté front (hors ce mandat, catégorie B).
+Décision Vic (07/2026) : **les 3 wordings actuellement servis sont validés** — tests remis à jour dessus,
+`xfail` retirés, **aucun ticket front**, catégorie B toujours à **0**.
 
-| # | Test | Où c'est affiché | Ancien (verrou) | Actuel (servi) |
+| # | Test | Ancien (verrou) | Servi (validé) | Motif Vic |
 |---|---|---|---|---|
-| 1 | `test_r3_tooltip_multiplicateur_de_rang` | tooltip du badge ×N (chaque ligne de résultat, `ResultsSection.tsx`) | « **Multiplicateur de rang** … au-dessus de la moyenne de **l'univers analysé** » | « ×N **vs moyenne du parc** » (via `CLIENT.mult.tip`, centralisé) |
-| 2 | `test_r3_tooltip_jauge_completude` | jauge complétude — a **quitté** le panneau résultats (B2/M12), désormais sur la **carte Kanban** (`crm/Kanban.tsx`) | « part des sources disponibles » + « **N'est PAS une note de qualité du terrain** » | « part des sources disponibles, **pas une note de qualité** » (« du terrain » retiré ; tooltip déplacé) |
-| 3 | `test_r3_matrice_non_thermique` | libellés du **tier P thermique** (badge/légende, `lib/status.ts`) | tier `'Brûlante **v2**'` / `'Chaude **v2**'` | `'Brûlante'` / `'Chaude'` (**suffixe « v2 » retiré**) |
+| 1 | `test_r3_tooltip_multiplicateur_de_rang` | « **Multiplicateur de rang** … moyenne de **l'univers analysé** » | « ×N **vs moyenne du parc** » | plus court et plus clair que la formulation longue |
+| 2 | `test_r3_tooltip_jauge_completude` | « part des sources disponibles » + « pas une note de qualité **du terrain** » | « part des sources disponibles, **pas une note de qualité** » | même sens, plus concis ; la nuance « pas une note de qualité » est conservée |
+| 3 | `test_r3_matrice_non_thermique` | tier `'Brûlante **v2**'` / `'Chaude **v2**'` | `'Brûlante'` / `'Chaude'` (**v2 retiré**) | un n° de version interne n'a rien à faire devant un client — amélioration, pas régression |
 
-> Note rassurante (#3) : l'invariant **matrice ≠ thermique** TIENT — la matrice Q×A rend toujours
-> `'Priorité dossier'` (`STATUT_META`). Seuls les **noms** du tier thermique ont changé. Aucun `B`.
+> Invariant **matrice ≠ thermique** re-verrouillé plus proprement qu'avant : le test affirme désormais que
+> le statut `chaude` de la MATRICE rend `'Priorité dossier'` ET que le tier P `chaude` rend `'Chaude'`
+> (thermique réservé au tier P). Aucun `B`.
 
 ---
 

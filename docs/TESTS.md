@@ -12,8 +12,8 @@ LABUSE_DEV_MODE=1 PYTHONPATH=src .venv/bin/python -m pytest -q
 
 - Base **dédiée** `labuse_test` auto-créée (jamais la base applicative — cf. `tests/conftest.py`).
   `conftest` lit `LABUSE_DATABASE_URL` **avant** le `.env` → l'exporter dans la commande.
-- Attendu (poste correctement configuré) : **suite verte**, 19 skips motivés, **3 xfail** (verrous de
-  wording produit parqués, cf. plus bas). Aucun `failed`, aucun `error`.
+- Attendu (poste correctement configuré) : **suite verte** — `1259 passed, 19 skipped`, 0 xfail.
+  Aucun `failed`, aucun `error`.
 
 ## Extras Python requis
 
@@ -71,13 +71,13 @@ Tous les skips portent une condition + un motif (jamais un `skip` nu). Les 19 sk
 | `pas de parcelles en base de test` / Flash non testable | 3 | base de test sans jeu de données |
 | `module Flash / run de référence` | 1 | couvert par la QA merge |
 
-## xfail parqués (arbitrage produit en attente)
+## Verrous de wording produit (arbitrage clos)
 
-3 tests de `test_front_reliquats.py` (`test_r3_tooltip_multiplicateur_de_rang`,
-`test_r3_tooltip_jauge_completude`, `test_r3_matrice_non_thermique`) sont `xfail(strict=False)` :
-ils **verrouillent une formulation produit** qui a été reformulée dans le front. Les mettre à jour
-reviendrait à ratifier la reformulation en silence → **arbitrage Vic requis** (deltas exacts dans
-`docs/mandats/DETTE_TESTS_RAPPORT.md §A.2`). Ils repassent `XPASS` si le wording d'origine revient.
+3 tests de `test_front_reliquats.py` (tooltips ×N / jauge complétude, libellés du tier P) verrouillent
+une **formulation produit servie**. Arbitrage Vic 07/2026 : les wordings actuels sont **validés** (tests
+remis à jour dessus, plus de `xfail`). Toute reformulation future de ces libellés cassera ces tests **par
+conception** — c'est le garde-fou : un changement de wording servi passe par une décision, pas en silence.
+Détails dans `docs/mandats/DETTE_TESTS_RAPPORT.md §A.2`.
 
 ## Golden & invariant des tiers
 

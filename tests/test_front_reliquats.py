@@ -3,7 +3,6 @@ marqueurs dans le source servi, garde-fous de régression sans framework JS).
 """
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -88,39 +87,32 @@ STATUS = (ROOT / "frontend/src/lib/status.ts").read_text(encoding="utf-8")
 LEGEND = (ROOT / "frontend/src/components/map/Legend.tsx").read_text(encoding="utf-8")
 TIERBADGE = (ROOT / "frontend/src/components/outils/TierBadge.tsx").read_text(encoding="utf-8")
 MAPVIEW = (ROOT / "frontend/src/components/map/MapView.tsx").read_text(encoding="utf-8")
+# B2/M12 : le mini-anneau de complétude a quitté la liste (ResultsSection) → carte Kanban CRM.
+KANBAN_CRM = (ROOT / "frontend/src/components/crm/Kanban.tsx").read_text(encoding="utf-8")
 
 
-# ⚠ PARQUÉS — verrous de FORMULATION PRODUIT : le wording servi a été reformulé après l'écriture
-# de ces tests. Les mettre à jour = ratifier la reformulation ; boussole = « jamais d'assouplissement
-# silencieux de critères ». En attente d'arbitrage Vic (deltas exacts dans DETTE_TESTS_RAPPORT §A.2).
-# xfail(strict=False) : documenté, ne casse pas la suite, repasse XPASS si le wording d'origine revient.
-_WORDING_PARK = pytest.mark.xfail(
-    reason="wording produit reformulé — arbitrage Vic requis (cf. docs/mandats/DETTE_TESTS_RAPPORT.md §A.2)",
-    strict=False,
-)
+# Wordings servis VALIDÉS par Vic (arbitrage 07/2026) — tests remis à jour dessus, xfail retirés.
 
-
-@_WORDING_PARK
 def test_r3_tooltip_multiplicateur_de_rang():
+    # Wording servi validé : « ×N vs moyenne du parc » (plus court/clair que la formulation longue).
     assert "data-mult-tip" in RESULTS
-    assert "Multiplicateur de rang" in RESULTS
-    assert "au-dessus de la moyenne de l'univers analysé" in RESULTS
+    assert "vs moyenne du parc" in RESULTS
     assert "RR" not in RESULTS                      # jamais un chiffre de perf in-sample en surface
 
 
-@_WORDING_PARK
 def test_r3_tooltip_jauge_completude():
-    assert "part des sources disponibles" in RESULTS
-    assert "N'est PAS une note de qualité du terrain" in RESULTS
+    # Wording servi validé : même sens, plus concis, la nuance « pas une note de qualité » est conservée.
+    assert "part des sources disponibles" in KANBAN_CRM
+    assert "pas une note de qualité" in KANBAN_CRM
 
 
-@_WORDING_PARK
 def test_r3_matrice_non_thermique():
-    # échelle thermique RÉSERVÉE au tier P servi ; matrice Q×A = « Priorité dossier »
-    # (l'invariant matrice≠thermique TIENT ; seuls les libellés du tier thermique ont changé de nom)
-    assert "label: 'Priorité dossier'" in STATUS
-    assert "label: 'Chaude'," not in STATUS         # plus de « Chaude » matrice
-    assert "label: 'Brûlante v2'" in STATUS and "label: 'Chaude v2'" in STATUS   # thermique v2 conservé
+    # Invariant DUR : le vocabulaire thermique est RÉSERVÉ au tier P ; la matrice Q×A ne l'emprunte jamais.
+    # Le statut 'chaude' de la MATRICE rend « Priorité dossier » ; le tier P 'chaude' rend « Chaude » (thermique).
+    # Retrait du « v2 » des libellés tier validé (un n° de version interne ne s'affiche pas côté client).
+    assert "chaude: { label: 'Priorité dossier'" in STATUS   # matrice Q×A → vocab dossier, jamais thermique
+    assert "chaude: { label: 'Chaude'" in STATUS             # tier P → thermique (réservé)
+    assert "brulante: { label: 'Brûlante'" in STATUS         # tier P → thermique (réservé)
 
 
 def test_r3_desambiguisation_cote_a_cote():
