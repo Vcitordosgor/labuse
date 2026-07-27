@@ -1,0 +1,6 @@
+,rot_nu,rot_bati,dens_bati_secteur,pct_bati_secteur
+ventes_50m_24m,0.073,0.158,0.108,0.095
+ventes_100m_24m,0.115,0.28,0.2,0.184
+ventes_200m_24m,0.193,0.382,0.246,0.227
+ecart_rotation_local_secteur,-0.122,-0.009,0.054,0.05
+permis_100m_24m,0.081,0.105,0.171,0.143

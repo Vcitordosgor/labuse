@@ -1,0 +1,24 @@
+{
+ "delta_vs_champion": {
+  "diff_rr": 0.4560618513498369,
+  "ic95_bas": -0.5198514028006243,
+  "ic95_haut": 1.438319361573127,
+  "significatif": false,
+  "n_boot": 1000
+ },
+ "churn_pct": 0.41882556131260795,
+ "permutation_rr": 0.5700773141872958,
+ "boussole_proxy": [
+  "97423000AB1341"
+ ],
+ "signes_stables": "32/39",
+ "instables": [
+  "med_pm2_terrain_36m",
+  "med_pm2_bati_36m",
+  "tendance_pm2_bati",
+  "qpv",
+  "acces_equipements",
+  "window_coverage",
+  "ventes_100m_24m"
+ ]
+}
