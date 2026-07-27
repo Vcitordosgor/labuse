@@ -24,6 +24,19 @@ def test_seuils_conservateurs_dans_detect():
     assert "facade_free >= 12" in q                 # accès voirie indépendant
 
 
+def test_correctifs_o12_ile_dans_detect():
+    """Revue O12-ÎLE (20 cartes Entre-Deux + Bras-Panon) — trois défauts corrigés."""
+    q = d._DETECT
+    # démembrement ≠ division : le lot ne peut pas emporter plus de la moitié de la parcelle
+    assert "free_m2 <= surface_m2 * 0.5" in q
+    # division URBAINE : zone dominante du LOT en U/AU ; A et N exclus ; RNU → PAU estimée exigée
+    assert "zone = 'U' OR zone LIKE 'AU%'" in q
+    assert "zone IS NULL AND ({pau_pred})" in q
+    assert "plu_gpu_zone" in q
+    # clarté : façade voirie PLAFONNÉE à 30 m (une façade de 465 m = bande linéaire, pas un top candidat)
+    assert "LEAST(d.residuel_facade_m, 30)" in d._INSERT
+
+
 def test_metrique_bati_invalidee_pas_filtrante():
     # la métrique façade du lot bâti est NULL (invalidée — finding), jamais un filtre sur un chiffre faux
     assert "NULL::numeric AS bati_facade_m" in d._DETECT

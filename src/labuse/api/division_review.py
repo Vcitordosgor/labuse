@@ -120,13 +120,16 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
               f"<tr><td>Lot détachable</td><td>{c['residuel_m2']} m²</td>"
               f"<td>Largeur constructible (⌀ inscrit)</td><td>~{c['residuel_rayon_m']*2:.0f} m</td></tr>"
               f"<tr><td>Façade voirie du lot</td><td>{c['residuel_facade_m']} m</td>"
-              f"<td>Gain estimé (Score É, Estimé)</td><td>{gain}</td></tr></table>"
+              f"<td>Gain estimé (Score É, Estimé)</td><td>{gain}</td></tr>"
+              f"<tr><td>Zonage du lot</td><td>{html.escape(c.get('zone') or 'RNU — PAU estimée')}</td>"
+              f"<td></td><td></td></tr></table>"
             + "<p class='valid'>Validation Vic : ☐ vrai positif &nbsp; ☐ faux positif &nbsp; ☐ douteux "
               "— remarque : ____________________</p></div>")
 
     intro = ("<div class='intro'><b>Dossier de revue — Division en or (O12).</b> Détection géométrique CONSERVATRICE "
              "de parcelles où un lot constructible semble détachable (bâti dans un coin, résiduel ≥ 500 m² avec accès "
-             "voirie ≥ 12 m et largeur ≥ 18 m, les deux lots restant viables). <b>Faux positif = péché mortel</b> : "
+             "voirie ≥ 12 m et largeur ≥ 18 m, lot ≤ 50 % de la parcelle, zonage U/AU — ou PAU estimée en commune "
+             "RNU —, les deux lots restant viables). <b>Faux positif = péché mortel</b> : "
              "l'outil reste MASQUÉ tant que ce dossier n'est pas validé. Aucune constructibilité réglementaire n'est "
              "affirmée (recul, prospect, servitudes) — la revue tranche.</div>")
     doc = (f"<!DOCTYPE html><html lang='fr'><head><meta charset='utf-8'><style>{_CSS}</style></head><body>"

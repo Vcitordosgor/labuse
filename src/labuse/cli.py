@@ -2141,13 +2141,16 @@ def division_or_cmd(
 def division_or_review_cmd(
     out: str = typer.Option("division_or_revue.pdf", help="Chemin du PDF de revue."),
     limit: int = typer.Option(20, help="Nombre de cartes (candidats les plus clairs)."),
+    communes: str = typer.Option(None, help="Échantillonnage équilibré sur ces communes (séparées par des virgules)."),
 ) -> None:
     """O12 — génère le DOSSIER DE REVUE (20 cartes) pour validation visuelle de Vic."""
     from .ingestion import division_or
     from .api import division_review
 
     with session_scope() as s:
-        cands = division_or.top_candidates(s, limit=limit)
+        cands = division_or.top_candidates(
+            s, limit=limit,
+            communes=[c.strip() for c in communes.split(",") if c.strip()] if communes else None)
         if not cands:
             typer.echo("Aucun candidat — lancer d'abord `division-or --communes …`.")
             raise typer.Exit(1)
