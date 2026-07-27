@@ -25,6 +25,10 @@ Revue O12-ÎLE, correctifs 2-3-4 :
   · **littoral / domaine public** — lot exclu s'il touche : bande des 50 pas géométriques,
     forêt domaniale, cœur du Parc national, ou le TRAIT DE CÔTE (contact ≤ 1 m — le corridor
     50 pas a des trous de couverture, constaté au Barachois ; couches de la cascade).
+  · **viabilité du LOT RESTANT** — l'emprise bâtie résultante côté propriétaire (bâti conservé /
+    surface restante) est plafonnée : emprise max CALIBRÉE de la zone (PLU yaml) si elle existe,
+    sinon EMPRISE_RESTANTE_MAX (plancher prudent) — la division ne doit pas rendre la parcelle
+    du propriétaire non conforme (revue : 80-81 % d'emprise résultante sur 2 cartes).
 Deux TYPES de division (O12-ÎLE D — le bâti dans le lot est CLASSÉ, pas exclu) :
   · **libre** : lot nu (tout le bâti retiré du calcul du résiduel) — prioritaire au tri ;
   · **demolition** : seul le bâtiment PRINCIPAL (plus grande emprise au sol) est retiré — le lot
@@ -56,6 +60,13 @@ EXPOSE = False   # MASQUÉ jusqu'à validation visuelle Vic (dossier 20 cartes)
 # (P25=0.11, médiane=0.21 avant correctif) : 0.25 écarte les lots plus étirés qu'un 1:10.
 COMPACITE_MIN = 0.25
 
+# Emprise bâtie maximale du LOT RESTANT après division (revue O12-ÎLE, 4e itération : la
+# division ne doit pas rendre la parcelle du PROPRIÉTAIRE non conforme — cartes 1 et 11 :
+# 80-81 % d'emprise résultante, au-delà de toute règle de zone U, sans pleine terre).
+# L'emprise max CALIBRÉE de la zone (config/plu_<commune>.yaml, emprise_sol_pct) prime
+# quand elle existe ; sinon ce plancher prudent s'applique.
+EMPRISE_RESTANTE_MAX = 0.60
+
 DDL = """
 CREATE TABLE IF NOT EXISTS division_or_candidates (
   idu           varchar(14) PRIMARY KEY,
@@ -68,9 +79,11 @@ CREATE TABLE IF NOT EXISTS division_or_candidates (
   residuel_facade_m numeric(5,1),
   bati_facade_m numeric(5,1),
   zone          varchar(8),      -- zone dominante du lot (U/AU/AUc/AUs) ; NULL = commune RNU (PAU estimée)
+  zone_lib      varchar(16),     -- libellé de la (sous-)zone (ex. Ud3) — clé du PLU calibré
   type_division varchar(12),     -- 'libre' (lot nu) | 'demolition' (bâti secondaire dans le lot)
   bati_lot_m2   int,             -- bâti contenu dans le lot (« dont N m² à démolir » ; 0 si libre)
   compacite     numeric(4,3),    -- Polsby-Popper du lot (4π·aire/périmètre² — 1=cercle)
+  emprise_restante numeric(4,3), -- emprise bâtie du lot RESTANT après division (viabilité côté propriétaire)
   gain_estime_eur int,           -- via Score É V2 si dispo (Estimé), sinon NULL
   clarte        numeric(5,1),    -- score de clarté géométrique (tri du dossier de revue)
   computed_at   timestamptz DEFAULT now()
@@ -79,6 +92,8 @@ ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS zone varchar(8);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS type_division varchar(12);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS bati_lot_m2 int;
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS compacite numeric(4,3);
+ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS zone_lib varchar(16);
+ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS emprise_restante numeric(4,3);
 """
 
 # Détection pour UNE commune (batch raisonnable). Buffers/seuils = constantes ci-dessus.
@@ -132,10 +147,12 @@ demol AS (
 -- zone dominante du LOT (plus grande intersection avec plu_gpu_zone) — U/AU gardés, A/N exclus ;
 -- NULL (commune RNU sans document) → gardé seulement si la parcelle est dans la PAU estimée
 zon AS (
-  SELECT d.*, z.subtype AS zone
+  SELECT d.*, z.subtype AS zone, z.zone_lib
   FROM demol d
   LEFT JOIN LATERAL (
-    SELECT z2.subtype FROM spatial_layers z2
+    -- libellé via attrs->>'libelle' (code seul, ex. Ud3) — z2.name mélange parfois
+    -- « code : description » selon la commune d'ingestion
+    SELECT z2.subtype, z2.attrs->>'libelle' AS zone_lib FROM spatial_layers z2
     WHERE z2.kind='plu_gpu_zone' AND ST_Intersects(z2.geom_2975, d.free_geom)
     ORDER BY ST_Area(ST_Intersection(z2.geom_2975, d.free_geom)) DESC LIMIT 1) z ON true)
 SELECT DISTINCT ON (idu)
@@ -145,13 +162,18 @@ SELECT DISTINCT ON (idu)
        NULL::numeric AS bati_facade_m,  -- accès du lot BÂTI : jugé VISUELLEMENT en revue (métrique
                                         -- façade_parcelle − façade_lot invalidée : négative, artefact
                                         -- de la frontière découpée — finding O12, pas de chiffre faux)
-       zone,
+       zone, zone_lib,
        CASE WHEN bati_lot_m2 < 1 THEN 'libre' ELSE 'demolition' END AS type_division,
-       bati_lot_m2, compacite
+       bati_lot_m2, compacite,
+       round(((bat_m2 - bati_lot_m2) / NULLIF(surface_m2 - free_m2, 0))::numeric, 3) AS emprise_restante
 FROM zon
 WHERE facade_free >= 12
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   AND (variante = 'libre' OR bati_lot_m2 * 3 <= bat_m2)
+  -- revue O12-ÎLE (5) : VIABILITÉ DU LOT RESTANT — l'emprise bâtie résultante côté propriétaire
+  -- (bâti conservé / surface restante) ne doit pas dépasser l'emprise max de la zone (PLU
+  -- calibré s'il existe, sinon plancher prudent) : la division ne rend pas la parcelle non conforme
+  AND (bat_m2 - bati_lot_m2) / NULLIF(surface_m2 - free_m2, 0) <= ({emprise_max})
   -- revue O12-ÎLE (4) : LITTORAL et domaine public non acquérable (couches de la cascade).
   -- Le corridor 50 pas ne couvre pas tout le front de mer (trou constaté au Barachois,
   -- Saint-Denis) → le CONTACT du trait de côte complète la maille.
@@ -170,11 +192,11 @@ ORDER BY idu, (variante = 'demolition'), free_m2 DESC;
 # INSERT ... SELECT : détection + gain (Score É) + clarté en UNE passe SQL (pas de boucle Python par ligne).
 _INSERT = """
 INSERT INTO division_or_candidates (idu, commune, surface_m2, bati_m2, bati_ratio,
-    residuel_m2, residuel_rayon_m, residuel_facade_m, bati_facade_m, zone,
-    type_division, bati_lot_m2, compacite, gain_estime_eur, clarte)
+    residuel_m2, residuel_rayon_m, residuel_facade_m, bati_facade_m, zone, zone_lib,
+    type_division, bati_lot_m2, compacite, emprise_restante, gain_estime_eur, clarte)
 SELECT d.idu, d.commune, d.surface_m2, d.bati_m2, d.bati_ratio, d.residuel_m2,
-       d.residuel_rayon_m, d.residuel_facade_m, d.bati_facade_m, d.zone,
-       d.type_division, d.bati_lot_m2, d.compacite,
+       d.residuel_rayon_m, d.residuel_facade_m, d.bati_facade_m, d.zone, d.zone_lib,
+       d.type_division, d.bati_lot_m2, d.compacite, d.emprise_restante,
        se.marge_estimee,
        round((d.residuel_rayon_m * 2 + LEAST(d.residuel_facade_m, 30))::numeric, 1) AS clarte
 FROM ({detect}) d
@@ -184,9 +206,27 @@ ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.su
     residuel_rayon_m=EXCLUDED.residuel_rayon_m, residuel_facade_m=EXCLUDED.residuel_facade_m,
     bati_facade_m=EXCLUDED.bati_facade_m, zone=EXCLUDED.zone,
     type_division=EXCLUDED.type_division, bati_lot_m2=EXCLUDED.bati_lot_m2,
-    compacite=EXCLUDED.compacite,
+    compacite=EXCLUDED.compacite, zone_lib=EXCLUDED.zone_lib,
+    emprise_restante=EXCLUDED.emprise_restante,
     gain_estime_eur=EXCLUDED.gain_estime_eur, clarte=EXCLUDED.clarte, computed_at=now()
 """
+
+
+def _emprise_max_sql(commune: str) -> str:
+    """Plafond d'emprise bâtie du LOT RESTANT : les emprises max CALIBRÉES du PLU de la commune
+    (config/plu_<slug>.yaml, `emprise_sol_pct` chiffré, clé = libellé de zone) priment via un
+    CASE sur zone_lib ; toute zone non calibrée retombe sur le plancher EMPRISE_RESTANTE_MAX."""
+    try:
+        from ..faisabilite import plu_rules
+        rules = plu_rules.load_rules(commune)
+    except Exception:  # noqa: BLE001 — pas de PLU calibré lisible → plancher prudent partout
+        rules = {}
+    pairs = [(code, r.emprise_sol_pct) for code, r in sorted(rules.items())
+             if isinstance(r.emprise_sol_pct, float) and "'" not in code]
+    if not pairs:
+        return str(EMPRISE_RESTANTE_MAX)
+    whens = " ".join(f"WHEN '{code}' THEN {pct / 100:.2f}" for code, pct in pairs)
+    return f"CASE zone_lib {whens} ELSE {EMPRISE_RESTANTE_MAX} END"
 
 
 def build_divisions(session: Session, communes: list[str], *, commit: bool = True, log=lambda *_: None) -> dict:
@@ -198,16 +238,18 @@ def build_divisions(session: Session, communes: list[str], *, commit: bool = Tru
     # dans la PAU ; sinon (base sans branche RNU) un lot sans zone est simplement exclu.
     has_pau = session.execute(text("SELECT to_regclass('parcel_pau')")).scalar() is not None
     pau_pred = "EXISTS (SELECT 1 FROM parcel_pau pp WHERE pp.idu = zon.idu)" if has_pau else "false"
-    detect = _DETECT.format(pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
-                            grand_bat_m2=int(GRAND_BATIMENT_M2),
-                            compacite_min=COMPACITE_MIN).strip().rstrip(";")
-    if has_score_e:
-        insert_sql = _INSERT.format(detect=detect)
-    else:   # pas de Score É → gain NULL, sans jointure
-        insert_sql = _INSERT.replace("se.marge_estimee,", "NULL::int,").replace(
-            "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
     total = 0
     for commune in communes:
+        # le plafond d'emprise du lot restant dépend du PLU calibré → SQL bâti PAR commune
+        detect = _DETECT.format(pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
+                                grand_bat_m2=int(GRAND_BATIMENT_M2),
+                                compacite_min=COMPACITE_MIN,
+                                emprise_max=_emprise_max_sql(commune)).strip().rstrip(";")
+        if has_score_e:
+            insert_sql = _INSERT.format(detect=detect)
+        else:   # pas de Score É → gain NULL, sans jointure
+            insert_sql = _INSERT.replace("se.marge_estimee,", "NULL::int,").replace(
+                "LEFT JOIN score_e se ON se.idu = d.idu AND se.estimable", "").format(detect=detect)
         session.execute(text(insert_sql), {"commune": commune})
         n = session.execute(text("SELECT count(*) FROM division_or_candidates WHERE commune = :c"),
                             {"c": commune}).scalar()

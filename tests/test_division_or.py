@@ -73,6 +73,19 @@ def test_correctifs_revue_2_3_4():
         assert kind in q
 
 
+def test_viabilite_lot_restant():
+    """Revue O12-ÎLE, 4e itération : la division ne doit pas rendre la parcelle du
+    PROPRIÉTAIRE non conforme — emprise bâtie du lot restant plafonnée."""
+    q = d._DETECT
+    assert "(bat_m2 - bati_lot_m2) / NULLIF(surface_m2 - free_m2, 0) <= ({emprise_max})" in q
+    assert d.EMPRISE_RESTANTE_MAX == 0.60          # plancher prudent hors zone calibrée
+    # PLU calibré : le plafond de zone prime (CASE sur zone_lib) ; sans yaml → plancher seul
+    assert d._emprise_max_sql("Commune-Sans-Plu") == "0.6"
+    case_sd = d._emprise_max_sql("Saint-Denis")    # 20 zones chiffrées dans plu_saint_denis.yaml
+    assert case_sd.startswith("CASE zone_lib WHEN ") and case_sd.endswith("ELSE 0.6 END")
+    assert "WHEN 'Ud' THEN 0.80" in case_sd and "WHEN 'Uh' THEN 0.30" in case_sd
+
+
 def test_metrique_bati_invalidee_pas_filtrante():
     # la métrique façade du lot bâti est NULL (invalidée — finding), jamais un filtre sur un chiffre faux
     assert "NULL::numeric AS bati_facade_m" in d._DETECT

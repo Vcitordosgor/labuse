@@ -122,13 +122,19 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
         gain = f"{c['gain_estime_eur']:,} €".replace(",", " ") if c.get("gain_estime_eur") else "non estimable"
         type_txt = ("Division libre (lot nu)" if type_div == "libre" else
                     f"Division avec démolition — dont {c.get('bati_lot_m2') or 0} m² à démolir")
+        zone_txt = (f"{c['zone']} ({c['zone_lib']})" if c.get("zone") and c.get("zone_lib")
+                    else c.get("zone") or "RNU — PAU estimée")
+        emprise_txt = (f"{c['emprise_restante'] * 100:.0f} % après division"
+                       if c.get("emprise_restante") is not None else "—")
         cards.append(
             f"<div class='card'><h3>{i}. {html.escape(c['idu'])} — {html.escape(c['commune'])}</h3>"
             + (carte or "<p class='leg'>Fond IGN indisponible.</p>")
             + "<p class='leg'>Tracés : <b class='p'>parcelle</b> · <b class='b'>bâti</b> · "
               "<b class='l'>lot détachable proposé</b> · <b class='d'>bâti à démolir</b></p>"
             + f"<table><tr><td colspan='2'><b>{html.escape(type_txt)}</b></td>"
-              f"<td>Zonage du lot</td><td>{html.escape(c.get('zone') or 'RNU — PAU estimée')}</td></tr>"
+              f"<td>Zonage du lot</td><td>{html.escape(zone_txt)}</td></tr>"
+              f"<tr><td>Emprise du lot restant</td><td>{html.escape(emprise_txt)}</td>"
+              f"<td></td><td></td></tr>"
               f"<tr><td>Surface parcelle</td><td>{c['surface_m2']} m²</td>"
               f"<td>Emprise bâtie</td><td>{c['bati_ratio']*100:.0f} %</td></tr>"
               f"<tr><td>Lot détachable</td><td>{c['residuel_m2']} m²</td>"

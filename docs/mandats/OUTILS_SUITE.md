@@ -543,6 +543,12 @@ retire 4 lanières de plus) ; LITTORAL/domaine public (50 pas + trait de côte [
 50 pas constaté au Barachois] + forêt domaniale + cœur du Parc — 14 en isolation, 0 en résiduel).
 **Pool final : 17 candidats (16 libres + 1 démolition), lots 509-898 m², compacité ≥ 0,28.**
 Dossiers régénérés (16 + 1 cartes). Détail : `RAPPORT_O12_ILE.md` §E. Toujours **MASQUÉ**.
+**Itération F (viabilité du LOT RESTANT)** : l'emprise bâtie résultante côté propriétaire est
+plafonnée — emprise max CALIBRÉE de la zone (`plu_<slug>.yaml`, CASE par zone_lib, libellé via
+`attrs->>'libelle'`) sinon plancher 60 %. Retire les 2 cartes signalées (0,796 / 0,804) →
+**pool final 15 (14 libres + 1 démolition)**, emprises restantes ≤ 0,595. Colonnes `zone_lib`
++ `emprise_restante`. PDF non régénérés (session saturée) — voir `RAPPORT_O12_ILE.md`
+« Session neuve — mode d'emploi ». Détail : §F. Toujours **MASQUÉ**.
 
 ---
 

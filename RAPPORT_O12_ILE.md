@@ -181,15 +181,54 @@ de nature : petits lots nus compacts au lieu de grands résiduels d'ensembles b�
 Dossiers régénérés pour la revue unique : **`O12_ILE_REVUE.pdf` (16 cartes libres, île entière)**
 + **`O12_ILE_DEMOLITION_REVUE.pdf` (1 carte)**. Golden re-passé : **116/116 PASS**. Tests : 7/7.
 
+## F — Viabilité du LOT RESTANT (4e itération) : 17 → 15
+
+Le critère vérifiait le lot détaché, jamais ce qui reste au propriétaire. Correctif :
+**l'emprise bâtie résultante du lot restant** (bâti conservé ÷ surface restante — pour une
+démolition, le bâti à démolir est déduit) **est plafonnée** :
+
+- **emprise max CALIBRÉE de la (sous-)zone** quand elle existe — lookup `config/plu_<slug>.yaml`
+  (`emprise_sol_pct` chiffré, clé = libellé de zone) via `plu_rules.load_rules`, injecté en SQL
+  (`CASE zone_lib …`) par commune. Le libellé vient de `attrs->>'libelle'` (code seul —
+  `name` mélange parfois « code : description » selon la commune, piège constaté à Saint-Denis) ;
+- sinon **plancher prudent 60 %** (`EMPRISE_RESTANTE_MAX`). État calibrage : Saint-Denis
+  20 zones chiffrées (30–80 %), Saint-Paul 0 (tout `null`/`a_verifier`) → plancher partout sauf
+  Saint-Denis, aujourd'hui.
+
+**Retire 2 candidats sur 17 — exactement les cartes 1 et 11 de la revue** :
+`97418000BT0459` (Sainte-Marie, emprise résultante 0,796) et `97406000AE0276`
+(La Plaine-des-Palmistes, 0,804). Le suivant est à 0,595 — sous le plancher. Le candidat de
+Saint-Denis (`97411000BP0363`, 0,355) est jugé contre son plafond CALIBRÉ (zone Ua : 70 %) et
+survit. Colonnes ajoutées : `zone_lib`, `emprise_restante` (traçabilité carte/table).
+
+**Pool final : 15 candidats (14 libres + 1 démolition), 8 communes.** Emprises restantes
+0,307–0,595, lots 509–898 m² (médiane 590), compacité 0,280–0,717. Golden : **116/116 PASS**.
+Tests : 8/8. Dossiers PDF **non régénérés** (demande explicite — session d'affichage saturée).
+
+## Session neuve — mode d'emploi (dossiers à régénérer)
+
+La table `division_or_candidates` est À JOUR (15 candidats, formule complète). Il ne reste qu'à :
+```bash
+DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib \
+LABUSE_DATABASE_URL=postgresql+psycopg://openclaw@localhost:5432/labuse PYTHONPATH=src \
+~/miniforge3/envs/labusedb/bin/labuse division-or-review \
+  --out docs/mandats/O12_ILE_REVUE.pdf --limit 20 --type libre        # 14 cartes
+# idem --type demolition --out docs/mandats/O12_ILE_DEMOLITION_REVUE.pdf   # 1 carte
+```
+(Les PDF versionnés datent de l'itération E — 16 + 1 cartes — et contiennent donc 2 cartes
+retirées depuis : `97418000BT0459` et `97406000AE0276`. Les cartes affichent maintenant aussi
+zone_lib/emprise via la table.) Golden local : API `uvicorn labuse.api.app:app --port 8010`
+avec la même DATABASE_URL, puis `PYTHONPATH=src python qa/golden_check.py`.
+
 ## Ce que la revue devra trancher
 
-Après les cinq vagues de correctifs (A2/A3, D, 2-3-4), le vivier est passé de 5 916 à **17**
-candidats — très haute précision visée, rappel sacrifié. Deux effets structurels se cumulent :
+Après les vagues de correctifs (A2/A3, D, 2-3-4, viabilité du restant), le vivier est passé de
+5 916 à **15** candidats — très haute précision visée, rappel sacrifié. Deux effets structurels se cumulent :
 le ratio ≤ 50 % ne garde que des parcelles déjà à moitié occupées, et le filtre activité (≥ 3
 bâtiments) écarte ces mêmes parcelles très bâties — l'intersection des deux est étroite, et la
 configuration « petit bâti en coin d'une GRANDE parcelle U » (division réelle la plus fréquente)
 reste hors de portée car le détecteur ne sait proposer que le résiduel ENTIER, jamais un lot
-partiel. Si la revue des 17 est bonne mais le vivier jugé trop maigre pour exposer, la piste
+partiel. Si la revue des 15 est bonne mais le vivier jugé trop maigre pour exposer, la piste
 n'est ni d'assouplir le ratio ni le critère activité : c'est le **découpage de lot proposé**
 (sous-polygone du résiduel côté voirie, ~600-900 m², compacité imposée) — il rouvrirait les
 grandes parcelles U sans réintroduire les démembrements ni les ensembles bâtis.
