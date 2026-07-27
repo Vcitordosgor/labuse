@@ -1,0 +1,335 @@
+idu,commune,variante,surface_m2,residuel_m2,bati_m2,bati_lot_m2,crit_ok,libre_pass,zone
+97415000AC0003,Saint-Paul,libre,3629,1760,1170,0,True,True,U
+97415000AD0043,Saint-Paul,libre,4760,1753,1993,0,True,True,U
+97415000AD0043,Saint-Paul,demolition,4760,2220,1993,154,True,True,U
+97415000AH0108,Saint-Paul,libre,4221,1765,1539,0,True,True,U
+97415000AH1309,Saint-Paul,libre,2226,850,710,0,True,True,AUc
+97415000AT0137,Saint-Paul,libre,1842,919,702,0,True,True,U
+97415000AW1532,Saint-Paul,libre,1790,548,645,0,True,True,U
+97415000BC0038,Saint-Paul,libre,2447,975,591,0,True,True,U
+97415000BC0067,Saint-Paul,libre,2050,955,567,0,True,True,U
+97415000BC0452,Saint-Paul,libre,2751,1133,342,0,True,True,U
+97415000BI0503,Saint-Paul,libre,5429,1858,2110,0,True,True,U
+97415000BV0182,Saint-Paul,demolition,1282,520,514,144,True,False,U
+97415000BW0119,Saint-Paul,libre,2258,996,545,0,True,True,U
+97415000BW0826,Saint-Paul,libre,4922,1486,1599,0,True,True,U
+97415000BW1207,Saint-Paul,libre,1093,539,223,0,True,True,U
+97415000CI0074,Saint-Paul,libre,5317,2010,1378,0,True,True,U
+97415000CM0132,Saint-Paul,libre,1443,602,414,0,True,True,U
+97415000CM0143,Saint-Paul,libre,1445,717,327,0,True,True,U
+97415000CM0485,Saint-Paul,libre,2598,1072,544,0,True,True,U
+97415000CO0457,Saint-Paul,libre,2918,1374,784,0,True,True,U
+97415000CP0238,Saint-Paul,libre,5612,2339,1343,0,True,True,U
+97415000CP0632,Saint-Paul,demolition,2388,870,1034,241,True,False,U
+97415000CP0872,Saint-Paul,libre,1886,939,484,0,True,True,U
+97415000CR0033,Saint-Paul,libre,1731,837,353,0,True,True,U
+97415000CR0034,Saint-Paul,libre,2217,739,750,0,True,True,U
+97415000CR0776,Saint-Paul,libre,1217,601,235,0,True,True,U
+97415000CR0895,Saint-Paul,libre,4892,2153,1449,0,True,True,U
+97415000CS0309,Saint-Paul,demolition,2160,1051,904,230,True,False,U
+97415000CS0332,Saint-Paul,libre,2993,1426,738,0,True,True,U
+97415000CS0835,Saint-Paul,libre,3146,1570,770,0,True,True,U
+97415000CS1285,Saint-Paul,libre,2211,1020,466,0,True,True,U
+97415000CT0137,Saint-Paul,libre,5906,2145,1788,0,True,True,U
+97415000CT0164,Saint-Paul,libre,3072,942,818,0,True,True,U
+97415000CT1899,Saint-Paul,libre,5318,2654,1528,0,True,True,U
+97415000CT3122,Saint-Paul,libre,3847,1846,1037,0,True,True,U
+97415000CV0423,Saint-Paul,libre,1726,857,371,0,True,True,U
+97415000CV0867,Saint-Paul,libre,5947,2363,1334,0,True,True,U
+97415000CV1157,Saint-Paul,libre,4151,1876,839,0,True,True,U
+97415000CY0180,Saint-Paul,libre,2513,1223,514,0,True,True,U
+97415000CZ0085,Saint-Paul,libre,2245,1006,608,0,True,True,U
+97415000CZ0120,Saint-Paul,libre,1264,594,387,0,True,True,U
+97415000CZ0752,Saint-Paul,demolition,2725,1121,1101,8,True,True,U
+97415000CZ0752,Saint-Paul,libre,2725,1053,1101,0,True,True,U
+97415000CZ1301,Saint-Paul,libre,3211,801,863,0,True,True,U
+97415000DH0142,Saint-Paul,libre,3000,1410,885,0,True,True,U
+97415000DH0188,Saint-Paul,libre,3675,1447,1092,0,True,True,U
+97415000DH0258,Saint-Paul,libre,5888,2760,1464,0,True,True,U
+97415000DM1573,Saint-Paul,libre,2811,982,893,0,True,True,U
+97415000DT0740,Saint-Paul,libre,1521,682,370,0,True,True,U
+97415000EH0042,Saint-Paul,libre,5058,805,1430,0,True,True,U
+97415000EK0090,Saint-Paul,libre,4418,1723,897,0,True,True,U
+97415000EM0019,Saint-Paul,libre,3378,1279,827,0,True,True,U
+97415000ER0816,Saint-Paul,libre,2922,1197,742,0,True,True,U
+97415000ES0233,Saint-Paul,libre,1248,595,537,0,True,True,U
+97415000ES0255,Saint-Paul,demolition,1412,600,430,0,True,True,U
+97415000ES0255,Saint-Paul,libre,1412,600,430,0,True,True,U
+97415000ET0056,Saint-Paul,demolition,1879,904,546,188,False,False,U
+97415000ET0526,Saint-Paul,libre,3564,1758,809,0,True,True,AUc
+97415000ET0830,Saint-Paul,libre,2897,1348,1131,0,True,True,U
+97415000EV0699,Saint-Paul,demolition,4869,2421,1578,123,True,True,AUc
+97415000EV0699,Saint-Paul,libre,4869,2143,1578,0,True,True,AUc
+97415000EW0335,Saint-Paul,libre,4362,1336,1612,0,True,True,U
+97415000EW0454,Saint-Paul,libre,1205,556,258,0,True,True,U
+97415000EW1327,Saint-Paul,libre,5459,2641,1382,0,True,True,U
+97415000EY0471,Saint-Paul,libre,3551,1574,1136,0,True,True,U
+97415000EY0705,Saint-Paul,libre,3223,1583,1034,0,True,True,U
+97415000EY1725,Saint-Paul,libre,5467,2490,1499,0,True,True,U
+97415000HM0185,Saint-Paul,libre,1998,972,713,0,True,True,U
+97415000HO0188,Saint-Paul,libre,2520,1106,579,0,True,True,U
+97415000HO0226,Saint-Paul,libre,3866,1863,1005,0,True,True,U
+97415000HO0407,Saint-Paul,libre,3106,1480,921,0,True,True,U
+97415000HP0326,Saint-Paul,libre,4088,1960,1047,0,True,True,U
+97415000HR0116,Saint-Paul,libre,2222,983,606,0,True,True,U
+97422000AK0470,Le Tampon,libre,3195,1296,1103,0,True,True,U
+97422000AK1047,Le Tampon,libre,4988,2300,1495,0,True,True,U
+97422000AP0222,Le Tampon,libre,2819,1362,489,0,True,True,U
+97422000BK0910,Le Tampon,libre,1635,656,700,0,True,True,U
+97422000BN0538,Le Tampon,libre,2362,1076,863,0,True,True,U
+97422000DL0698,Le Tampon,libre,2419,1073,624,0,True,True,U
+97416000CT0175,Saint-Pierre,libre,2217,999,414,0,True,True,U
+97416000CT0216,Saint-Pierre,libre,2300,787,924,0,True,True,U
+97416000CT1263,Saint-Pierre,libre,2090,1019,624,0,True,True,U
+97416000CZ0842,Saint-Pierre,libre,1113,541,453,0,True,True,U
+97416000DE0587,Saint-Pierre,libre,2829,1251,850,0,True,True,U
+97416000DI0038,Saint-Pierre,libre,1985,924,404,0,True,True,U
+97416000DL0235,Saint-Pierre,libre,2045,1021,457,0,True,True,U
+97416000DM0665,Saint-Pierre,libre,1267,598,227,0,True,True,U
+97416000DM0986,Saint-Pierre,libre,5793,2339,2204,0,True,True,U
+97416000DM0990,Saint-Pierre,demolition,1741,719,503,0,True,True,U
+97416000DM0990,Saint-Pierre,libre,1741,678,503,0,True,True,U
+97416000DO0194,Saint-Pierre,libre,1912,731,373,0,True,True,U
+97416000DR0343,Saint-Pierre,libre,3980,1000,1560,0,True,True,U
+97416000DW0440,Saint-Pierre,libre,5559,1994,1468,0,True,True,U
+97416000DY0530,Saint-Pierre,libre,5640,2564,1676,0,True,True,U
+97416000EI0996,Saint-Pierre,libre,3127,893,1218,0,True,True,U
+97416000EN1223,Saint-Pierre,libre,4379,1087,1489,0,True,True,U
+97416000ER0362,Saint-Pierre,libre,2416,686,652,0,True,True,U
+97416000ES0477,Saint-Pierre,libre,1225,607,273,0,True,True,U
+97416000ES0885,Saint-Pierre,libre,2663,1329,987,0,True,True,U
+97416000ES1729,Saint-Pierre,libre,1972,947,499,0,True,True,U
+97416000ES1945,Saint-Pierre,libre,1379,671,304,0,True,True,U
+97416000ET0452,Saint-Pierre,libre,4093,1846,1106,0,True,True,U
+97416000EW0374,Saint-Pierre,libre,4047,1615,1729,0,True,True,U
+97416000HW0170,Saint-Pierre,libre,2436,989,639,0,True,True,U
+97416000HX0990,Saint-Pierre,libre,1470,700,563,0,True,True,U
+97416000HX1065,Saint-Pierre,libre,1305,626,353,0,True,True,U
+97416000HY1747,Saint-Pierre,libre,5871,2399,1888,0,True,True,U
+97416000ID0454,Saint-Pierre,libre,3554,1283,1233,0,True,True,U
+97416000IK0071,Saint-Pierre,libre,2227,923,686,0,True,True,U
+97416000IL0230,Saint-Pierre,libre,3660,1645,1491,0,True,True,U
+97411000AD0009,Saint-Denis,libre,5445,2572,1539,0,True,True,U
+97411000AH0321,Saint-Denis,libre,2902,1052,1302,0,True,True,U
+97411000AH0321,Saint-Denis,demolition,2902,1074,1302,0,True,True,U
+97411000AK0023,Saint-Denis,libre,2330,1157,648,0,True,True,U
+97411000AP0518,Saint-Denis,libre,4541,1007,1819,0,True,True,U
+97411000AR0329,Saint-Denis,demolition,2984,1491,1075,271,True,False,U
+97411000AS0235,Saint-Denis,libre,2422,993,835,0,True,True,U
+97411000BH0547,Saint-Denis,libre,1076,536,454,0,True,True,U
+97411000BP0363,Saint-Denis,libre,2171,898,452,0,True,True,U
+97411000BP0363,Saint-Denis,demolition,2171,898,452,0,True,True,U
+97411000CH0622,Saint-Denis,libre,1775,792,488,0,True,True,U
+97411000CI0209,Saint-Denis,libre,1835,793,672,0,True,True,AUc
+97411000CV0094,Saint-Denis,libre,1437,550,267,0,True,True,U
+97411000CV0698,Saint-Denis,libre,1858,786,813,0,True,True,AUc
+97411000DE0017,Saint-Denis,libre,1187,552,438,0,True,True,U
+97411000DS0866,Saint-Denis,libre,4031,1463,1277,0,True,True,U
+97411000HA0114,Saint-Denis,libre,3257,1557,1026,0,True,True,U
+97411000HA0127,Saint-Denis,libre,5025,1739,1722,0,True,True,U
+97411000HL0015,Saint-Denis,libre,4906,2310,2050,0,True,True,U
+97411000IR0111,Saint-Denis,libre,5674,2705,1705,0,True,True,U
+97411000IT0009,Saint-Denis,libre,5831,1924,2094,0,True,True,U
+97414000CI0522,Saint-Louis,libre,2305,975,870,0,True,True,U
+97414000CO1040,Saint-Louis,libre,4978,2454,1296,0,True,True,U
+97414000DE0475,Saint-Louis,libre,3960,1743,1265,0,True,True,U
+97414000DH0932,Saint-Louis,libre,4443,1869,1678,0,True,True,U
+97414000DH0939,Saint-Louis,libre,5976,2407,2089,0,True,True,AUc
+97414000DM0398,Saint-Louis,libre,4856,2297,1631,0,True,True,U
+97414000EL0409,Saint-Louis,libre,2382,1036,525,0,True,True,U
+97414000EL0939,Saint-Louis,libre,3244,1010,1459,0,True,True,U
+97414000EL2183,Saint-Louis,libre,5971,2557,710,0,True,True,U
+97414000EM0066,Saint-Louis,libre,2187,1051,941,0,True,True,U
+97414000EO0476,Saint-Louis,libre,1896,714,744,0,True,True,U
+97414000EX0874,Saint-Louis,libre,2770,979,1022,0,True,True,U
+97414000HD0232,Saint-Louis,libre,1858,925,637,0,True,True,U
+97414000HE0164,Saint-Louis,libre,3197,1595,1349,0,True,True,U
+97412000AH1270,Saint-Joseph,libre,4403,2087,753,0,True,True,U
+97412000AM0462,Saint-Joseph,libre,3680,1739,759,0,True,True,U
+97412000AM0946,Saint-Joseph,libre,1191,576,233,0,True,True,U
+97412000AM1659,Saint-Joseph,libre,4622,2210,1102,0,True,True,U
+97412000AN0150,Saint-Joseph,demolition,3112,1490,1312,133,True,False,AUc
+97412000AO0043,Saint-Joseph,libre,4060,1639,1406,0,True,True,U
+97412000BL0688,Saint-Joseph,libre,1044,509,237,0,True,True,U
+97412000BM0149,Saint-Joseph,libre,3160,780,1127,0,True,True,U
+97412000BP0292,Saint-Joseph,libre,4993,2310,1634,0,True,True,U
+97412000BS0374,Saint-Joseph,libre,2815,1318,669,0,True,True,U
+97412000BV0076,Saint-Joseph,libre,2457,1018,1002,0,True,True,U
+97412000BW0295,Saint-Joseph,libre,3883,1292,1464,0,True,True,U
+97412000BW0933,Saint-Joseph,libre,1891,763,497,0,True,True,U
+97412000BW0936,Saint-Joseph,libre,2615,963,905,0,True,True,U
+97412000BY1645,Saint-Joseph,libre,1462,694,335,0,True,True,U
+97412000CD0697,Saint-Joseph,demolition,3452,1597,948,352,False,False,U
+97412000CR0357,Saint-Joseph,libre,1321,600,302,0,True,True,U
+97412000CR0715,Saint-Joseph,libre,2171,984,506,0,True,True,U
+97412000CX0349,Saint-Joseph,libre,1369,610,322,0,True,True,U
+97413000AC0370,Saint-Leu,libre,1679,701,641,0,True,True,U
+97413000CA0089,Saint-Leu,libre,3213,1001,1228,0,True,True,U
+97413000CG0166,Saint-Leu,libre,4807,1991,529,0,True,True,U
+97413000CG0434,Saint-Leu,libre,2295,1018,391,0,True,True,U
+97413000CH0738,Saint-Leu,libre,2445,1120,777,0,True,True,U
+97413000CH0738,Saint-Leu,demolition,2445,1126,777,0,True,True,U
+97413000CM0623,Saint-Leu,libre,1609,790,585,0,True,True,U
+97413000CQ0412,Saint-Leu,libre,1029,509,160,0,True,True,U
+97413000CR0068,Saint-Leu,libre,1357,579,262,0,True,True,U
+97413000CR0068,Saint-Leu,demolition,1357,623,262,1,True,True,U
+97413000CU0888,Saint-Leu,libre,2632,1147,767,0,True,True,AU
+97413000CX0369,Saint-Leu,libre,1607,680,510,0,True,True,U
+97413000CX0585,Saint-Leu,libre,1694,772,364,0,True,True,U
+97413000CX1578,Saint-Leu,libre,4373,1961,1222,0,True,True,U
+97413000CX2225,Saint-Leu,libre,2042,954,493,0,True,True,AU
+97413000CY1151,Saint-Leu,demolition,1355,663,471,62,True,False,U
+97413000DC1043,Saint-Leu,libre,2705,1239,783,0,True,True,U
+97413000DC1043,Saint-Leu,demolition,2705,1281,783,1,True,True,U
+97413000DE0064,Saint-Leu,libre,5037,2061,794,0,True,True,U
+97413000DE0427,Saint-Leu,libre,2581,1217,237,0,True,True,U
+97413000DE1642,Saint-Leu,demolition,1854,893,529,180,False,False,U
+97413000DE1720,Saint-Leu,libre,5712,2354,2048,0,True,True,U
+97413000DJ0331,Saint-Leu,libre,1641,812,351,0,True,True,U
+97413000DM0116,Saint-Leu,libre,3460,1383,1037,0,True,True,U
+97409000AC0675,Saint-André,libre,2064,990,552,0,True,True,U
+97409000AC0913,Saint-André,libre,2069,908,616,0,True,True,U
+97409000AD0596,Saint-André,libre,1517,695,410,0,True,True,U
+97409000AH0141,Saint-André,libre,3290,1558,898,0,True,True,U
+97409000AI0641,Saint-André,libre,2065,942,528,0,True,True,U
+97409000AI1311,Saint-André,libre,2213,523,692,0,True,True,U
+97409000AL0581,Saint-André,libre,2950,1167,888,0,True,True,U
+97409000AL1984,Saint-André,libre,3799,1447,1328,0,True,True,U
+97409000AL1996,Saint-André,demolition,3774,1703,1654,95,True,False,U
+97409000AL2017,Saint-André,libre,5848,2885,1742,0,True,True,U
+97409000AO0534,Saint-André,libre,1703,773,693,0,True,True,U
+97409000AO0534,Saint-André,demolition,1703,804,693,7,True,True,U
+97409000AO0636,Saint-André,libre,4386,2087,1233,0,True,True,U
+97409000AP0378,Saint-André,demolition,1395,666,481,101,True,False,U
+97409000AP1506,Saint-André,libre,2956,1392,850,0,True,True,U
+97409000AR0052,Saint-André,libre,2562,1229,752,0,True,True,U
+97409000AR1277,Saint-André,libre,1566,620,551,0,True,True,U
+97409000AR1277,Saint-André,demolition,1566,747,551,59,True,True,U
+97409000AR2164,Saint-André,libre,1572,780,397,0,True,True,U
+97409000AS0350,Saint-André,libre,1697,688,327,0,True,True,U
+97409000AS1299,Saint-André,libre,5630,2635,1354,0,True,True,U
+97409000AT0112,Saint-André,libre,1276,625,254,0,True,True,U
+97409000AT1265,Saint-André,libre,1105,518,228,0,True,True,AU
+97409000AV0449,Saint-André,libre,1789,887,366,0,True,True,U
+97409000AW0122,Saint-André,libre,1608,690,542,0,True,True,U
+97409000AW1352,Saint-André,demolition,1446,675,490,186,False,False,U
+97409000AW1489,Saint-André,libre,4532,2126,1707,0,True,True,U
+97409000AY0709,Saint-André,libre,1889,933,537,0,True,True,U
+97409000AZ0095,Saint-André,libre,1564,730,452,0,True,True,U
+97409000BD1267,Saint-André,libre,3345,1598,1198,0,True,True,U
+97409000BE2256,Saint-André,libre,5725,2573,2233,0,True,True,U
+97409000BI0110,Saint-André,libre,1275,607,315,0,True,True,U
+97409000BI0284,Saint-André,libre,1606,629,619,0,True,True,U
+97409000BI0755,Saint-André,libre,2331,1162,410,0,True,True,U
+97409000BM1058,Saint-André,libre,1370,656,445,0,True,True,U
+97410000AC0202,Saint-Benoît,libre,1895,696,582,0,True,True,U
+97410000AD0696,Saint-Benoît,libre,4202,1239,1787,0,True,True,U
+97410000AI0600,Saint-Benoît,demolition,4972,2415,1751,145,True,False,U
+97410000AI1103,Saint-Benoît,libre,4873,2339,1343,0,True,True,U
+97410000AS0506,Saint-Benoît,libre,4835,1790,1810,0,True,True,U
+97410000AS0509,Saint-Benoît,libre,4888,1447,1421,0,True,True,U
+97410000AS0961,Saint-Benoît,libre,4471,2153,1305,0,True,True,U
+97410000AS1189,Saint-Benoît,libre,5094,1942,583,0,True,True,U
+97410000AT1129,Saint-Benoît,libre,1874,892,776,0,True,True,U
+97410000BD0191,Saint-Benoît,libre,2363,986,984,0,True,True,U
+97410000BD0531,Saint-Benoît,libre,1607,792,583,0,True,True,U
+97410000BD0844,Saint-Benoît,libre,4492,2169,1391,0,True,True,U
+97410000BE0317,Saint-Benoît,libre,1368,548,349,0,True,True,U
+97410000BE0357,Saint-Benoît,libre,2146,1012,548,0,True,True,U
+97410000BN0721,Saint-Benoît,libre,2339,986,764,0,True,True,U
+97410000BT0149,Saint-Benoît,libre,3782,1707,1239,0,True,True,U
+97410000BX1962,Saint-Benoît,libre,1794,854,341,0,True,True,U
+97418000AI0827,Sainte-Marie,libre,2388,965,1015,0,True,True,U
+97418000AO0081,Sainte-Marie,libre,2910,1136,1021,0,True,True,U
+97418000AO0805,Sainte-Marie,libre,1040,517,311,0,True,True,U
+97418000AP1068,Sainte-Marie,libre,4283,2119,1004,0,True,True,U
+97418000AP2571,Sainte-Marie,libre,2137,1025,480,0,True,True,U
+97418000AP3270,Sainte-Marie,libre,1160,522,270,0,True,True,U
+97418000AR1274,Sainte-Marie,demolition,3916,1911,1342,6,True,False,U
+97418000AR1574,Sainte-Marie,libre,5897,1933,2280,0,True,True,U
+97418000AS0479,Sainte-Marie,libre,4348,1428,1578,0,True,True,U
+97418000AS0973,Sainte-Marie,libre,5487,2274,1679,0,True,True,U
+97418000AT0909,Sainte-Marie,libre,3377,1635,1135,0,True,True,U
+97418000AT0983,Sainte-Marie,libre,2781,1148,888,0,True,True,U
+97418000AV2066,Sainte-Marie,libre,2485,1124,712,0,True,True,U
+97418000AV2092,Sainte-Marie,libre,1206,535,379,0,True,True,U
+97418000AV2530,Sainte-Marie,libre,3828,1791,1240,0,True,True,U
+97418000AX0107,Sainte-Marie,libre,2013,987,861,0,True,True,U
+97418000BE0011,Sainte-Marie,libre,1220,577,509,0,True,True,U
+97418000BT0459,Sainte-Marie,libre,1469,732,587,0,True,True,U
+97418000BT0459,Sainte-Marie,demolition,1469,732,587,0,True,True,U
+97418000BV0026,Sainte-Marie,libre,2426,1068,657,0,True,True,U
+97418000BV0082,Sainte-Marie,demolition,1333,603,514,229,False,False,U
+97418000BV0443,Sainte-Marie,libre,4470,2089,425,0,True,True,U
+97418000BV0481,Sainte-Marie,libre,1802,501,620,0,True,True,U
+97408000AM0680,La Possession,libre,1532,715,407,0,True,True,U
+97408000AN1009,La Possession,libre,4327,2006,1354,0,True,True,U
+97408000AN1383,La Possession,libre,1240,544,337,0,True,True,U
+97408000AN1435,La Possession,libre,5284,2559,1258,0,True,True,U
+97408000AO0295,La Possession,libre,5002,2054,1664,0,True,True,U
+97408000BN3617,La Possession,libre,3103,1227,1151,0,True,True,U
+97408000BO0478,La Possession,demolition,3467,1310,1553,456,True,False,AUc
+97408000BO0505,La Possession,libre,2794,1123,928,0,True,True,U
+97408000BP0008,La Possession,libre,5507,1943,1896,0,True,True,U
+97408000BP0009,La Possession,libre,3111,1328,1304,0,True,True,U
+97408000BP0080,La Possession,libre,4048,1215,890,0,True,True,U
+97405000AM0381,Petite-Île,libre,1463,690,586,0,True,True,U
+97405000AR1299,Petite-Île,libre,1341,590,480,0,True,True,U
+97405000AW1527,Petite-Île,libre,4062,1961,825,0,True,True,AUc
+97420000AB1535,Sainte-Suzanne,libre,2371,867,703,0,True,True,U
+97420000AB1535,Sainte-Suzanne,demolition,2371,978,703,77,True,True,U
+97420000AC0560,Sainte-Suzanne,libre,3619,1136,1112,0,True,True,U
+97420000AC1043,Sainte-Suzanne,libre,5013,2435,1369,0,True,True,U
+97420000AC1152,Sainte-Suzanne,libre,2174,924,537,0,True,True,U
+97420000AE0280,Sainte-Suzanne,libre,1595,763,300,0,True,True,U
+97420000AH0277,Sainte-Suzanne,demolition,2555,800,1117,4,True,True,U
+97420000AH0277,Sainte-Suzanne,libre,2555,749,1117,0,True,True,U
+97420000AH0387,Sainte-Suzanne,demolition,3636,1727,1534,501,True,False,U
+97420000AN0199,Sainte-Suzanne,libre,1845,656,590,0,True,True,U
+97420000AV0386,Sainte-Suzanne,libre,2281,1090,830,0,True,True,U
+97420000BH1036,Sainte-Suzanne,libre,1955,883,597,0,True,True,U
+97420000BH1036,Sainte-Suzanne,demolition,1955,883,597,0,True,True,U
+97420000BH1821,Sainte-Suzanne,libre,5242,1788,2061,0,True,True,U
+97407000AI0670,Le Port,libre,2972,1427,997,0,True,True,U
+97407000AI1764,Le Port,libre,4580,1758,1225,0,True,True,U
+97407000AI1764,Le Port,demolition,4580,1758,1225,0,True,True,U
+97407000AL0736,Le Port,libre,5780,2303,2049,0,True,True,U
+97407000AL1511,Le Port,libre,2992,1441,810,0,True,True,U
+97407000AL1553,Le Port,libre,2856,1036,891,0,True,True,U
+97407000AO1058,Le Port,libre,2026,914,852,0,True,True,U
+97407000AS0189,Le Port,libre,2442,735,834,0,True,True,U
+97407000AS0189,Le Port,demolition,2442,735,834,0,True,True,U
+97407000BC0485,Le Port,libre,4272,1707,1362,0,True,True,U
+97407000BE0001,Le Port,libre,4882,2113,1759,0,True,True,U
+97407000BE0118,Le Port,libre,4956,1936,1718,0,True,True,U
+97407000BI0222,Le Port,libre,5056,2333,1930,0,True,True,U
+97404000AM0721,L'Étang-Salé,libre,4270,1916,1358,0,True,True,U
+97404000AX0324,L'Étang-Salé,libre,1717,590,671,0,True,True,U
+97404000AX0535,L'Étang-Salé,demolition,2141,999,931,80,True,False,U
+97404000AY0105,L'Étang-Salé,libre,5693,2663,1646,0,True,True,U
+97404000AY0423,L'Étang-Salé,libre,4875,966,1839,0,True,True,U
+97404000AY0457,L'Étang-Salé,libre,4391,2026,1276,0,True,True,U
+97404000AY0462,L'Étang-Salé,demolition,3909,1559,1376,14,True,True,U
+97404000AY0462,L'Étang-Salé,libre,3909,946,1376,0,True,True,U
+97404000BA0134,L'Étang-Salé,libre,2800,1151,903,0,True,True,U
+97421000AC0154,Salazie,libre,5213,1865,1477,0,True,True,U
+97421000AI0107,Salazie,libre,1415,615,474,0,True,True,U
+97421000AI0209,Salazie,libre,1658,799,535,0,True,True,U
+97421000AI0213,Salazie,libre,1511,711,540,0,True,True,U
+97421000BD0303,Salazie,libre,1923,624,835,0,True,True,U
+97424000AE0191,Cilaos,libre,1296,532,373,0,True,True,U
+97424000AH0688,Cilaos,libre,2341,1067,630,0,True,True,U
+97424000AL0756,Cilaos,libre,2864,1386,1268,0,True,True,U
+97406000AE0140,La Plaine-des-Palmistes,libre,1547,609,438,0,True,True,U
+97406000AE0276,La Plaine-des-Palmistes,libre,1154,556,481,0,True,True,U
+97406000AE0276,La Plaine-des-Palmistes,demolition,1154,556,481,0,True,True,U
+97403000AP0671,Entre-Deux,libre,3759,1460,1492,0,True,True,U
+97403000AP0671,Entre-Deux,demolition,3759,1541,1492,26,True,True,U
+97403000AT0386,Entre-Deux,libre,1981,754,507,0,True,True,U
+97419000AI1024,Sainte-Rose,demolition,1536,629,415,98,True,False,U
+97402000AH1346,Bras-Panon,libre,2250,963,924,0,True,True,U
+97423000AH0610,Les Trois-Bassins,libre,2648,1038,1129,0,True,True,U
+97417000AO0511,Saint-Philippe,libre,1490,650,491,0,True,True,
+97417000AT0092,Saint-Philippe,libre,4524,1480,1421,0,True,True,
+97417000AT0191,Saint-Philippe,libre,1236,608,314,0,True,True,
+97417000AT0533,Saint-Philippe,libre,2877,1280,895,0,True,True,

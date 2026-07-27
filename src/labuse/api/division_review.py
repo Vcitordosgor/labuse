@@ -19,17 +19,24 @@ from ..flash.carte import (IGN_ORTHO_URL, TILE_PX, USER_AGENT, VIEW_H, VIEW_W, Z
 
 log = logging.getLogger("labuse.division_review")
 
-# géométries par candidat : parcelle, bâti (union), lot détachable (plus grand résiduel après retrait du bâti bufferisé)
+# géométries par candidat : parcelle, bâti (union), lot détachable, bâti à démolir (∩ lot).
+# Le lot reproduit la variante du détecteur : 'libre' = tout le bâti retiré ;
+# 'demolition' = seul le bâtiment PRINCIPAL retiré (le lot peut contenir du bâti secondaire).
 _GEOMS = """
 WITH p AS (SELECT geom_2975, ST_AsGeoJSON(geom, 7) gj FROM parcels WHERE idu = :idu),
-bat AS (SELECT ST_Union(b.geom_2975) g FROM spatial_layers b, p
-        WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)),
-free AS (SELECT lg.geom g FROM p, bat
-         CROSS JOIN LATERAL (SELECT gg.geom FROM ST_Dump(ST_Difference(p.geom_2975, ST_Buffer(bat.g,3))) gg
+bldg AS (SELECT b.geom_2975 g, ST_Area(ST_Intersection(b.geom_2975, p.geom_2975)) a
+         FROM spatial_layers b, p WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, p.geom_2975)),
+bat AS (SELECT ST_Union(g) g FROM bldg),
+sub AS (SELECT CASE WHEN :type = 'demolition'
+                    THEN (SELECT g FROM bldg ORDER BY a DESC LIMIT 1) ELSE (SELECT g FROM bat) END g),
+free AS (SELECT lg.geom g FROM p, sub
+         CROSS JOIN LATERAL (SELECT gg.geom FROM ST_Dump(ST_Difference(p.geom_2975, ST_Buffer(sub.g,3))) gg
                              ORDER BY ST_Area(gg.geom) DESC LIMIT 1) lg)
 SELECT p.gj AS parcelle,
        ST_AsGeoJSON(ST_Transform(bat.g, 4326), 7) AS bati,
-       ST_AsGeoJSON(ST_Transform(free.g, 4326), 7) AS lot
+       ST_AsGeoJSON(ST_Transform(free.g, 4326), 7) AS lot,
+       CASE WHEN ST_Area(ST_Intersection(bat.g, free.g)) > 1
+            THEN ST_AsGeoJSON(ST_Transform(ST_Intersection(bat.g, free.g), 4326), 7) END AS demolir
 FROM p, bat, free;
 """
 
@@ -44,12 +51,12 @@ h1 { font-size: 16pt; }
 table { width:100%; border-collapse:collapse; font-size:8pt; margin-top:1.5mm; }
 td { padding:0.8mm 2mm 0.8mm 0; }
 .leg { font-size:7.5pt; color:#555; }
-.leg b.p{color:#0B8A5F} .leg b.b{color:#888} .leg b.l{color:#C98A00}
+.leg b.p{color:#0B8A5F} .leg b.b{color:#888} .leg b.l{color:#C98A00} .leg b.d{color:#B01818}
 .valid { margin-top:1.5mm; font-size:8.5pt; }
 """
 
 
-def _tiles_and_shapes(parcelle_gj, bati_gj, lot_gj, cache_dir):
+def _tiles_and_shapes(parcelle_gj, bati_gj, lot_gj, cache_dir, demolir_gj=None):
     """Fond IGN + tracés SVG (parcelle, bâti, lot) dans une MÊME transformée ancrée sur la parcelle."""
     import json
     rings = _rings(json.loads(parcelle_gj))
@@ -91,7 +98,8 @@ def _tiles_and_shapes(parcelle_gj, bati_gj, lot_gj, cache_dir):
     svg = (f"<svg width='{VIEW_W}' height='{VIEW_H}' style='position:absolute;left:0;top:0;'>"
            + to_svg(parcelle_gj, "none", "#0B8A5F", 3)
            + to_svg(bati_gj, "rgba(120,120,120,0.55)", "#666", 1)
-           + to_svg(lot_gj, "rgba(201,138,0,0.30)", "#C98A00", 2.5) + "</svg>")
+           + to_svg(lot_gj, "rgba(201,138,0,0.30)", "#C98A00", 2.5)
+           + to_svg(demolir_gj, "rgba(200,30,30,0.45)", "#B01818", 2) + "</svg>")
     return f"<div class='map' style='width:{VIEW_W}px;height:{VIEW_H}px;'>{imgs}{svg}</div>"
 
 
@@ -107,29 +115,35 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
 
     cards = []
     for i, c in enumerate(candidates, 1):
-        geoms = session.execute(text(_GEOMS), {"idu": c["idu"]}).mappings().first()
-        carte = _tiles_and_shapes(geoms["parcelle"], geoms["bati"], geoms["lot"], cache_dir) if geoms else None
+        type_div = c.get("type_division") or "libre"
+        geoms = session.execute(text(_GEOMS), {"idu": c["idu"], "type": type_div}).mappings().first()
+        carte = (_tiles_and_shapes(geoms["parcelle"], geoms["bati"], geoms["lot"], cache_dir,
+                                   demolir_gj=geoms["demolir"]) if geoms else None)
         gain = f"{c['gain_estime_eur']:,} €".replace(",", " ") if c.get("gain_estime_eur") else "non estimable"
+        type_txt = ("Division libre (lot nu)" if type_div == "libre" else
+                    f"Division avec démolition — dont {c.get('bati_lot_m2') or 0} m² à démolir")
         cards.append(
             f"<div class='card'><h3>{i}. {html.escape(c['idu'])} — {html.escape(c['commune'])}</h3>"
             + (carte or "<p class='leg'>Fond IGN indisponible.</p>")
             + "<p class='leg'>Tracés : <b class='p'>parcelle</b> · <b class='b'>bâti</b> · "
-              "<b class='l'>lot détachable proposé</b></p>"
-            + f"<table><tr><td>Surface parcelle</td><td>{c['surface_m2']} m²</td>"
+              "<b class='l'>lot détachable proposé</b> · <b class='d'>bâti à démolir</b></p>"
+            + f"<table><tr><td colspan='2'><b>{html.escape(type_txt)}</b></td>"
+              f"<td>Zonage du lot</td><td>{html.escape(c.get('zone') or 'RNU — PAU estimée')}</td></tr>"
+              f"<tr><td>Surface parcelle</td><td>{c['surface_m2']} m²</td>"
               f"<td>Emprise bâtie</td><td>{c['bati_ratio']*100:.0f} %</td></tr>"
               f"<tr><td>Lot détachable</td><td>{c['residuel_m2']} m²</td>"
               f"<td>Largeur constructible (⌀ inscrit)</td><td>~{c['residuel_rayon_m']*2:.0f} m</td></tr>"
               f"<tr><td>Façade voirie du lot</td><td>{c['residuel_facade_m']} m</td>"
-              f"<td>Gain estimé (Score É, Estimé)</td><td>{gain}</td></tr>"
-              f"<tr><td>Zonage du lot</td><td>{html.escape(c.get('zone') or 'RNU — PAU estimée')}</td>"
-              f"<td></td><td></td></tr></table>"
+              f"<td>Gain estimé (Score É, Estimé)</td><td>{gain}</td></tr></table>"
             + "<p class='valid'>Validation Vic : ☐ vrai positif &nbsp; ☐ faux positif &nbsp; ☐ douteux "
               "— remarque : ____________________</p></div>")
 
     intro = ("<div class='intro'><b>Dossier de revue — Division en or (O12).</b> Détection géométrique CONSERVATRICE "
              "de parcelles où un lot constructible semble détachable (bâti dans un coin, résiduel ≥ 500 m² avec accès "
              "voirie ≥ 12 m et largeur ≥ 18 m, lot ≤ 50 % de la parcelle, zonage U/AU — ou PAU estimée en commune "
-             "RNU —, les deux lots restant viables). <b>Faux positif = péché mortel</b> : "
+             "RNU —, les deux lots restant viables). Deux types : <b>division libre</b> (lot nu) et <b>division avec "
+             "démolition</b> (le lot contient du bâti SECONDAIRE, chiffré et tracé en rouge — jamais le bâtiment "
+             "principal, et au plus la moitié du bâti conservé). <b>Faux positif = péché mortel</b> : "
              "l'outil reste MASQUÉ tant que ce dossier n'est pas validé. Aucune constructibilité réglementaire n'est "
              "affirmée (recul, prospect, servitudes) — la revue tranche.</div>")
     doc = (f"<!DOCTYPE html><html lang='fr'><head><meta charset='utf-8'><style>{_CSS}</style></head><body>"

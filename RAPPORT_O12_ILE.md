@@ -106,6 +106,43 @@ les 24 communes, 5 en parallèle. Contrôle de non-régression : Entre-Deux 72 e
    l'état du cache Postgres — le script est parallélisé (5 communes, `O12_WORKERS`) et trie les
    grosses communes en premier.
 
+## D — Le bâti dans le lot : classé, pas exclu (2e itération du mandat)
+
+Deux types de division, distincts partout (table, tri, cartes) :
+
+- **`libre`** (lot nu — le cas classique, **prioritaire au tri** du dossier) : lot = plus grand
+  résiduel après retrait de TOUT le bâti. Inchangé — les **294 candidats sont reproduits à
+  l'identique**, aucun n'est requalifié.
+- **`demolition`** : lot = plus grand résiduel après retrait du seul bâtiment **PRINCIPAL**
+  (plus grande emprise au sol sur la parcelle) — le lot peut contenir du bâti **secondaire**,
+  chiffré (`bati_lot_m2`, « dont N m² à démolir ») et **tracé en rouge** sur la carte.
+  Parcelle mono-bâtiment : variante sautée (identique à libre). Une parcelle qui passe en libre
+  **reste libre** (dédoublonnage, la démolition ne remplace jamais une division sans démolition).
+
+### Garde anti-« découpage inversé » (critère proposé et appliqué)
+
+Deux niveaux :
+1. **Par construction** : le bâtiment principal est retiré du lot avec son buffer de 3 m —
+   le lot ne peut JAMAIS contenir la maison principale.
+2. **Critère de secondarité** : `bati_lot × 3 ≤ bati_total`, c.-à-d. **le bâti à démolir pèse au
+   plus la moitié du bâti conservé** (équivalent : ≤ 1/3 du bâti total de la parcelle). Au-delà,
+   le « lot » emporte l'essentiel des constructions et le reste est du jardin → découpage
+   inversé, candidat **rejeté**.
+   Limite honnête : « principal » = plus grande **emprise au sol** (pas de notion d'usage — un
+   grand hangar peut dominer une petite maison) ; c'est précisément ce que la revue visuelle voit.
+
+### Chiffres île entière (preuves : `reports/o12-ile/bilan_demolition.csv` + `run_demolition.log`)
+
+- Variante démolition brute (géométrie + zonage, sans garde) : **30 lots**, dont **19 parcelles
+  nouvelles** (les 11 autres passaient déjà en libre et y restent).
+- Garde de secondarité : **14 gardés · 5 rejetés** (découpage inversé — le critère travaille).
+- **Table finale : 294 libres + 14 démolitions = 308 candidats.** Bâti à démolir : min 6 ·
+  médiane 138 · max 501 m² (le max reste ≤ moitié du bâti conservé, par construction du critère).
+- Dossiers : `O12_ILE_REVUE.pdf` régénéré (type affiché sur chaque carte) + nouveau
+  **`docs/mandats/O12_ILE_DEMOLITION_REVUE.pdf`** (les 14 cartes, bâti à démolir en rouge) —
+  la classe nouvelle a son propre dossier de validation. CLI : `division-or-review --type demolition`.
+- Golden re-passé après D : **116/116 PASS**. Tests : 6/6 (nouvelles gardes verrouillées).
+
 ## Ce que la revue devra trancher
 
 Le ratio ≤ 50 % est **le** filtre dominant (94 % des éliminations) : il ne garde que les parcelles

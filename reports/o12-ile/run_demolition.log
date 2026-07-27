@@ -1,0 +1,110 @@
+── Phase 1 : deux variantes annotées, sans garde (5 communes en parallèle) ──
+  Saint-Paul               libre= 65 demo-brut=  7  (12s)
+  Le Tampon                libre=  6 demo-brut=  0  (17s)
+  Saint-Pierre             libre= 30 demo-brut=  0  (17s)
+  Saint-Denis              libre= 18 demo-brut=  1  (12s)
+  Saint-Louis              libre= 14 demo-brut=  0  (9s)
+  Saint-Joseph             libre= 17 demo-brut=  2  (6s)
+  Saint-Leu                libre= 19 demo-brut=  4  (5s)
+  Saint-André              libre= 30 demo-brut=  5  (6s)
+  Saint-Benoît             libre= 16 demo-brut=  1  (5s)
+  Sainte-Marie             libre= 20 demo-brut=  2  (6s)
+  La Possession            libre= 10 demo-brut=  1  (4s)
+  Petite-Île               libre=  3 demo-brut=  0  (4s)
+  Sainte-Suzanne           libre= 10 demo-brut=  3  (5s)
+  Le Port                  libre= 11 demo-brut=  0  (1s)
+  L'Étang-Salé             libre=  7 demo-brut=  2  (3s)
+  Les Avirons              libre=  0 demo-brut=  0  (4s)
+  Salazie                  libre=  5 demo-brut=  0  (4s)
+  Cilaos                   libre=  3 demo-brut=  0  (3s)
+  La Plaine-des-Palmistes  libre=  2 demo-brut=  0  (4s)
+  Entre-Deux               libre=  2 demo-brut=  1  (2s)
+  Sainte-Rose              libre=  0 demo-brut=  1  (1s)
+  Bras-Panon               libre=  1 demo-brut=  0  (1s)
+  Les Trois-Bassins        libre=  1 demo-brut=  0  (1s)
+  Saint-Philippe           libre=  4 demo-brut=  0  (1s)
+  détail → /Users/openclaw/Desktop/labuse-o12/reports/o12-ile/bilan_demolition.csv
+
+Variante démolition (bati_lot ≥ 1 m²) : 30 lots — dont 19 parcelles NOUVELLES (ne passaient pas en libre)
+Garde de secondarité (bati_lot×3 ≤ bati_total) : 14 gardés · 5 rejetés (découpage inversé)
+
+── Phase 2 : TRUNCATE + build_divisions (formule complète, 5 en parallèle) ──
+  division-or Saint-Paul : 68 candidats
+  division_or_candidates : 68 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Pierre : 30 candidats
+  division_or_candidates : 98 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Le Tampon : 6 candidats
+  division_or_candidates : 104 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Louis : 14 candidats
+  division_or_candidates : 118 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Denis : 19 candidats
+  division_or_candidates : 137 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Joseph : 18 candidats
+  division_or_candidates : 155 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Leu : 20 candidats
+  division_or_candidates : 175 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-André : 32 candidats
+  division_or_candidates : 207 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Benoît : 17 candidats
+  division_or_candidates : 224 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Sainte-Marie : 21 candidats
+  division_or_candidates : 245 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or La Possession : 11 candidats
+  division_or_candidates : 256 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Petite-Île : 3 candidats
+  division_or_candidates : 259 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Sainte-Suzanne : 11 candidats
+  division_or_candidates : 270 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Le Port : 11 candidats
+  division_or_candidates : 281 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or L'Étang-Salé : 8 candidats
+  division_or_candidates : 289 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Les Avirons : 0 candidats
+  division_or_candidates : 289 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Salazie : 5 candidats
+  division_or_candidates : 294 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Cilaos : 3 candidats
+  division_or_candidates : 297 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or La Plaine-des-Palmistes : 2 candidats
+  division_or_candidates : 299 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Entre-Deux : 2 candidats
+  division_or_candidates : 301 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Sainte-Rose : 1 candidats
+  division_or_candidates : 302 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Bras-Panon : 1 candidats
+  division_or_candidates : 303 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Les Trois-Bassins : 1 candidats
+  division_or_candidates : 304 candidats (MASQUÉ — attend le dossier de revue Vic)
+  division-or Saint-Philippe : 4 candidats
+  division_or_candidates : 308 candidats (MASQUÉ — attend le dossier de revue Vic)
+
+## Effectifs finaux par commune et type
+
+| Commune | Libre | Démolition | Total |
+|---|---:|---:|---:|
+| Bras-Panon | 1 | 0 | 1 |
+| Cilaos | 3 | 0 | 3 |
+| Entre-Deux | 2 | 0 | 2 |
+| L'Étang-Salé | 7 | 1 | 8 |
+| La Plaine-des-Palmistes | 2 | 0 | 2 |
+| La Possession | 10 | 1 | 11 |
+| Le Port | 11 | 0 | 11 |
+| Le Tampon | 6 | 0 | 6 |
+| Les Trois-Bassins | 1 | 0 | 1 |
+| Petite-Île | 3 | 0 | 3 |
+| Saint-André | 30 | 2 | 32 |
+| Saint-Benoît | 16 | 1 | 17 |
+| Saint-Denis | 18 | 1 | 19 |
+| Saint-Joseph | 17 | 1 | 18 |
+| Saint-Leu | 19 | 1 | 20 |
+| Saint-Louis | 14 | 0 | 14 |
+| Saint-Paul | 65 | 3 | 68 |
+| Saint-Philippe | 4 | 0 | 4 |
+| Saint-Pierre | 30 | 0 | 30 |
+| Sainte-Marie | 20 | 1 | 21 |
+| Sainte-Rose | 0 | 1 | 1 |
+| Sainte-Suzanne | 10 | 1 | 11 |
+| Salazie | 5 | 0 | 5 |
+| **Total** | **294** | **14** | **308** |
+
+Bâti à démolir (type demolition) : n=14 · min=6 · médiane=138 · max=501 m²

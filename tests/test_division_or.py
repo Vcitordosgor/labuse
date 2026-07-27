@@ -37,6 +37,24 @@ def test_correctifs_o12_ile_dans_detect():
     assert "LEAST(d.residuel_facade_m, 30)" in d._INSERT
 
 
+def test_types_de_division_o12_ile_d():
+    """O12-ÎLE D — le bâti dans le lot est CLASSÉ (libre / démolition), pas exclu."""
+    q = d._DETECT
+    # deux variantes : lot nu (tout le bâti retiré) / démolition (seul le PRINCIPAL retiré)
+    assert "VALUES ('libre', bat.bgeom), ('demolition', princ.pgeom)" in q
+    # le bâtiment principal = plus grande emprise au sol — jamais dans le lot par construction
+    assert "ORDER BY id, a DESC" in q
+    # garde anti-découpage inversé : bâti à démolir ≤ 1/3 du bâti total (≤ moitié du bâti conservé)
+    assert "bati_lot_m2 * 3 <= bat_m2" in q
+    # une parcelle qui passe en libre RESTE libre (dédoublonnage, libre prioritaire)
+    assert "DISTINCT ON (idu)" in q and "(variante = 'demolition')" in q
+    # mono-bâtiment : variante démolition sautée (identique à libre)
+    assert "v.variante = 'demolition' AND bat.nb_bat = 1" in q
+    # divisions libres prioritaires au tri du dossier de revue
+    import inspect
+    assert "(type_division = 'demolition'), clarte DESC" in inspect.getsource(d.top_candidates)
+
+
 def test_metrique_bati_invalidee_pas_filtrante():
     # la métrique façade du lot bâti est NULL (invalidée — finding), jamais un filtre sur un chiffre faux
     assert "NULL::numeric AS bati_facade_m" in d._DETECT

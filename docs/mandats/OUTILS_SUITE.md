@@ -529,6 +529,13 @@ exigé** (A/N exclus ; commune RNU → PAU estimée exigée via `parcel_pau`). R
 **5 916 → 294 candidats** (24 communes) ; lots médians 1 052 m², zones U=280/AU*=10/RNU-PAU=4.
 Nouveau dossier : `docs/mandats/O12_ILE_REVUE.pdf` (20 cartes, 5 × Saint-Paul/Saint-Denis/
 Le Tampon/Saint-Pierre) + `.zip` (preuves). Détail : `RAPPORT_O12_ILE.md`. Toujours **MASQUÉ**.
+**Itération D** : le bâti dans le lot est **classé, pas exclu** — `type_division` `libre`
+(lot nu, prioritaire au tri, les 294 reproduits) / `demolition` (seul le bâtiment PRINCIPAL
+retiré du lot ; bâti secondaire chiffré « dont N m² à démolir », tracé rouge). Garde
+anti-découpage inversé : principal jamais dans le lot + `bati_lot × 3 ≤ bati_total` (à démolir
+≤ moitié du conservé) — île : 30 bruts → 19 nouveaux → **14 gardés / 5 rejetés** → total
+**308** (294 libres + 14 démolitions). Dossier dédié `O12_ILE_DEMOLITION_REVUE.pdf` (14 cartes,
+`--type demolition`).
 
 ---
 
