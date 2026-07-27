@@ -1,0 +1,119 @@
+# =============================================================================
+# PLU SAINT-PIERRE (97416) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Saint-Pierre (Eco-PLU).
+#   document : 97416_reglement_20240625.pdf (extrait de l'archive GPU 97416_PLU_20240625)
+#   url      : https://www.geoportail-urbanisme.gouv.fr/document/by-id/6c6320c68195297390a319acb951dc4b
+#   PLU approuvé le 25/06/2024 (délibération CM), publié GPU le 16/07/2024. EN VIGUEUR,
+#   aucune procédure en cours au 27/07/2026. Millésime = zonage servi (idurba 97416_PLU_20240625).
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee (offset 0 — vérifié : imprimée 98 = PDF 98).
+#   - chaque valeur cite ZONE + ARTICLE + page : champ _src = "Art. UgN.M, p.PP".
+#   - null         = règle explicitement "non réglementée" dans le texte.
+#   - "a_verifier" = présent mais ambigu / conditionnel / non attribuable sûrement.
+#   - hauteurs : le règlement donne « X m à l'égout du toit ou au sommet de l'acrotère »
+#     et « Y m au faîtage » => he_m <- X, hf_m <- Y (mapping direct, aucune conversion).
+#   - RÈGLEMENT AU FORMAT MODERNE (décret 2015) : Chapitres 1/2/3, articles préfixés
+#     par zone (Ug1..Ug8). Correspondance consommée par le moteur :
+#       implantation voies = Art. <Z>3.1 · limites séparatives = Art. <Z>3.2 ·
+#       emprise au sol = Art. <Z>3.4 · hauteur = Art. <Z>3.5 ·
+#       pleine terre/CBS = Art. <Z>5.1 · stationnement = Art. <Z>6.
+#   - RÈGLES À TIROIRS (spécificité du format moderne, cf. § Frictions du rapport) :
+#     emprise et pleine terre sont fixées PAR TRANCHE DE SURFACE de l'unité foncière.
+#     Le schéma ne porte qu'un nombre => on grave la tranche > 250 m² (dominante :
+#     81 % du pool servi Ug, médiane 458 m²) et la note cite toutes les tranches.
+#     Sens de l'écart : pour les parcelles <= 250 m² la valeur gravée SOUS-estime
+#     l'emprise autorisée (prudent, jamais optimiste).
+#   - Chaque chapitre couvre zone U + zone AU jumelle (« zone Ug et AUg ») : une entrée
+#     par libellé GPU, mêmes articles cités, condition d'urbanisation AU en note.
+# =============================================================================
+
+source:
+  document: "data/reglements/97416_reglement_20240625.pdf"
+  url: "https://www.geoportail-urbanisme.gouv.fr/document/by-id/6c6320c68195297390a319acb951dc4b"
+  approbation: "2024-06-25"
+  pages_total: 227
+  offset_pdf_vs_imprimee: 0
+
+# Mode de résolution des zones (cf. resolve_zone) :
+#   progressif (défaut) = commune EN COURS de calibration : une zone hors de ce YAML,
+#               ou une zone calibrée sans hauteur exploitable, retombe sur l'ESTIMATION
+#               générique (calibree=False) — la couverture ne RECULE jamais.
+mode: progressif
+
+# Règles transverses constatées (dispositions générales + motifs répétés par chapitre) :
+regles_transverses:
+  stationnement: "Norme logement PAR ZONE (tableau Art. <Z>6). Réductions transverses : -30 % à moins de 200 m du TCSP ; -30 % (mutualisation) pour opérations > 50 logts + 500 m² SDP autre destination ; parcelles < 150 m² à façade < 8 m ou accessibles à pied : exemptées."
+  pleine_terre: "Exprimée via le Coefficient de Biotope de Surface (CBS) + un % minimal d'espaces plantés de pleine terre, PAR TRANCHE de surface de l'unité foncière (Art. <Z>5.1)."
+  hauteur_bonus: "Bonus récurrent : opérations de plus de 10 logements aidés et/ou CBS > 70 % => hauteur portée à un palier supérieur (précisé par zone). Non gravé (conditionnel) — noté par zone."
+  limites_separatives: "Implantation EN limite autorisée (max 2 limites, 70 % du linéaire ; hauteur limitée 6 m dans la bande de 3 m) OU retrait 3 m (Art. <Z>3.2)."
+
+# Hypothèses de CALCUL (reprises de Saint-Paul ; NB : le moteur lit aujourd'hui les
+# hypothèses GLOBALES de plu_saint_paul.yaml — cette section est documentaire/future).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  cout_construction_m2_bas: 1800.0
+  cout_construction_m2_haut: 2200.0
+  marge_promoteur_pct: 0.09
+  frais_annexes_pct: 0.12
+  dvf_radius_m: 1500.0
+  dvf_min_ventes: 8
+  pct_lls: 30
+  mixite_sdp_seuil_m2: 1500
+  mixite_logements_seuil: 20
+  mixite_terrain_seuil_m2: 6000
+  prix_m2_lls: 0
+  majoration_vrd_pluvial: 0
+  niveaux_bati_existant_defaut: 1
+  sous_densite_seuil_pct: 40
+  he_defaut_generique_m: 9.0
+  assemblage_min_surface_m2: 1000
+  assemblage_individuel_max_m2: 1000
+
+zones:
+
+  # ============== LOT UG — zone urbaine mixte générale (chap. « Ug et AUg », p.97-111) ==============
+  # Pool servi : Ug 3 584 parcelles (1er pool de la commune), AUg 7.
+  Ug: {bassin: "Saint-Pierre",
+       he_m: 7, hf_m: 12, hauteur_src: "Art. Ug3.5, p.103",
+       hauteur_note: "Règle générale : 7 m égout/acrotère, 12 m faîtage. Bonus conditionnels NON gravés : >10 logts aidés et/ou CBS>70 % => 10/15 m ; attique => 13 m faîtage ; équipements publics 10/15 m ; 50 pas géométriques => 6/9 m ; terrain en pente : +1,5 m en aval ; surtoiture/toiture végétalisée : +0,5 m.",
+       emprise_sol_pct: 50, emprise_src: "Art. Ug3.4, p.102-103",
+       emprise_note: "PAR TRANCHE : 80 % si UF<=150 m² ; 70 % si 150<UF<=250 m² ; 50 % si UF>250 m². Gravé : tranche >250 m² (81 % du pool servi Ug, médiane 458 m²) — sous-estime pour les petites parcelles.",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ug3.1, p.101",
+       recul_voirie_note: "3 m min de l'emprise des voies routières (1 m si construction <=3 m égout et <=5 m faîtage ; voies piétonnes 2 m ; RN1/RN2/RN3 : 10 à 30 m selon destination).",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ug3.2, p.101-102",
+       recul_limites_note: "En limite autorisée (max 2 limites, 70 % du linéaire, h<=6 m sur la bande de 3 m) OU retrait 3 m.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ug6 (tableau), p.109",
+       stat_note: "1 place / logement locatif social. Réductions transverses (TCSP -30 %, mutualisation) et exemptions cf. regles_transverses.",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ug5.1, p.107-108",
+       pleine_terre_note: "PAR TRANCHE : UF>250 m² : CBS 40 % min dont >=30 % pleine terre plantée ; UF<=250 m² : CBS 30 % dont >=25 % pleine terre. Gravé : tranche >250 m² (dominante)."}
+  AUg: {bassin: "Saint-Pierre",
+       he_m: 7, hf_m: 12, hauteur_src: "Art. Ug3.5, p.103 (chapitre commun « zone Ug et AUg »)",
+       hauteur_note: "Mêmes règles que Ug (chapitre unique). Bonus conditionnels non gravés, cf. Ug.",
+       emprise_sol_pct: 50, emprise_src: "Art. Ug3.4, p.102-103 (chapitre commun)",
+       emprise_note: "Tranches 80/70/50 % — gravé 50 % (>250 m² ; la totalité du pool servi AUg est >250 m², médiane 3 561 m²).",
+       recul_voirie_m: 3, recul_voirie_src: "Art. Ug3.1, p.101 (chapitre commun)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ug3.2, p.101-102 (chapitre commun)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. Ug6 (tableau), p.109 (chapitre commun)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ug5.1, p.107-108 (chapitre commun)",
+       note: "Préambule p.97 : AUg couverte par OAP ; urbanisation possible UNIQUEMENT après opération d'aménagement d'ensemble (totalité de la zone, ou partie identifiée aux OAP) — ZAC, PUP ou permis d'aménager. Capacité calculée sous cette condition opérationnelle (non portée par le schéma, cf. § Frictions)."}
+
+# Zones AU « génériques » : à Saint-Pierre, chaque zone AU jumelle est régie par le
+# chapitre de sa zone U (« Dispositions applicables à la zone Ux et AUx ») : entrées
+# PROPRES ci-dessus, pas de renvoi mécanique (le renvoi code ne couvre que AU+chiffre).
+zones_au_renvoi: {}
+
+# Zones AU « st » (secteurs de transition) : AUCUNE dans le règlement de Saint-Pierre.
+zones_au_st:
+  liste: []
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU :
+# (décision par chapitre au fil des lots — cf. rapport)
+zones_non_constructibles: []
