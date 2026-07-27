@@ -26,10 +26,10 @@ prompt interpréteur (`m26a-v1`), le sha git court.
 (code_erreur, résumé ≤ 200 car, jamais de stacktrace) · `run_paused` / `run_resumed` ·
 `run_completed` (n_retenues, n_écartées, durée) · `run_failed` (code, message honnête).
 
-**Extension soumise à validation : `run_cancelled`.** Le mandat prévoit le statut
-`cancelled` et `POST /cancel`, mais aucun événement correspondant — sans lui, le statut
-ne serait plus dérivable de l'event log (la règle « status = réduction des événements »
-serait violée). Ajouté comme l'extension minimale ; à entériner ou remplacer.
+**`run_cancelled` — VALIDÉ par Vic (revue M26-A, 27/07/2026), taxonomie DÉFINITIVE à
+11 types.** Le mandat prévoyait le statut `cancelled` et `POST /cancel` sans événement
+correspondant — sans `run_cancelled`, le statut ne serait plus dérivable de l'event log.
+Nécessité structurelle actée ; toute extension ultérieure reste une décision Vic.
 
 `reduce_run(events) → status` : fonction pure, états terminaux absorbants, testée sur
 13 séquences (pause/reprise, clarification, échec, annulation, terminal absorbant).
@@ -113,11 +113,22 @@ fil via `after_seq`. Si le polling devient un point de charge → M26-B (décisi
 
 ## 8 · Limites connues
 
-- **Le plafond de candidats suit l'ordre tier→rang du run servi** : pour un programme
-  exigeant (420 m² de SDP), les 24 premières brûlantes peuvent être toutes trop petites
-  → zéro retenue honnête (démo 1). Le levier prévu est dans le brief
-  (`surface_min_m2` — démo 2 : 22 retenues). Un pré-tri « adapté au programme » serait
-  un critère inventé : refusé en M26-A, à discuter si besoin.
+- **RÈGLE PRODUIT (Vic, revue M26-A — s'applique à toute présentation du résultat)** :
+  quand un plafond a mordu, le résultat ne peut JAMAIS être présenté comme exhaustif.
+  Un « 0 retenue » après troncature doit dire « aucune retenue parmi les N examinées
+  sur M candidates » — jamais « aucune opportunité ». État au 27/07 : la troncature est
+  journalisée dans `step_completed` du criblage (`plafonne_a`, `n_pool`, compteurs
+  avant→après) mais le récap `run_completed` (`n_retenues`/`n_ecartees`) ne la requalifie
+  pas encore — correction à faire selon l'arbitrage plafond (voir ci-dessous), AVANT
+  toute UI M26-B.
+- **Plafond du criblage (arbitrage Vic en cours, bloquant pour le merge)** :
+  `copilote_max_candidats = 24`, appliqué en fin de criblage après les filtres du brief,
+  tri déterministe tier (brûlante→à creuser) puis rang du champion P puis IDU. Mesuré
+  (Saint-Paul, run 1) : pool servi 13 155 (= 4 tiers non écartés sur 51 129 parcelles),
+  les 24 examinées = les 24 meilleures brûlantes → le « 0 retenue » du run 1 signifie
+  « 0 parmi les 24 meilleures brûlantes », pas « rien à Saint-Paul ». Débit mesuré de la
+  faisabilité : 13,1 ms/parcelle (échantillon 300, pseudo-aléatoire md5) → pool complet
+  ≈ 172 s, hors budget 120 s d'un facteur ~1,4 (pas une impossibilité d'échelle).
 
 - L'exécution est in-process : un redémarrage du serveur laisse un run `running` orphelin
   (pas de reprise automatique en M26-A ; l'event log permet de le constater honnêtement —
