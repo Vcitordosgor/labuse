@@ -9,7 +9,9 @@ Si la base est injoignable, les tests `db` sont SKIPPÉS (pas en échec).
 """
 from __future__ import annotations
 
+import glob
 import os
+import sys
 
 import pytest
 from sqlalchemy.orm import sessionmaker
@@ -17,6 +19,69 @@ from sqlalchemy.orm import sessionmaker
 os.environ.setdefault("LABUSE_CONFIG_DIR", "config")
 # Fiche « promoteur » : pas d'appels externes (RGE ALTI / GPU) en test → déterministe.
 os.environ.setdefault("LABUSE_ENRICH_LIVE", "0")
+
+
+def _ensure_proj_data() -> None:
+    """Garantit que pyproj trouve son répertoire de données PROJ (`proj.db`) AVANT tout
+    import géo (Transformer 4326↔2975). Certains wheels pyproj (build source sur macOS 13,
+    cf. README_DEV) n'embarquent AUCUN `proj.db` et `PROJ_DATA` n'est pas posé → 69 tests
+    cassent au setup sur `pyproj.exceptions.DataDirError`.
+
+    Ordre de recherche (documenté dans docs/TESTS.md) :
+      1. `PROJ_DATA` déjà posé et valide → respecté tel quel.
+      2. données déjà trouvables par pyproj (wheel avec data embarquée) → rien à faire.
+      3. auto-découverte d'un `proj.db` (env conda, homebrew, préfixe courant).
+      4. AUCUN trouvé → ÉCHEC BRUYANT et actionnable (jamais un skip silencieux de 69 tests :
+         une machine mal configurée — y compris un VPS avec le même wheel — DOIT le savoir).
+    """
+    def _valid(d: str | None) -> bool:
+        return bool(d) and os.path.isfile(os.path.join(d, "proj.db"))
+
+    # 1. PROJ_DATA explicite et valide : la variable prime, on ne la contredit jamais.
+    if _valid(os.environ.get("PROJ_DATA")):
+        return
+
+    import pyproj
+
+    # 2. pyproj trouve déjà ses données (wheel avec proj.db embarqué) : rien à forcer.
+    try:
+        if _valid(pyproj.datadir.get_data_dir()):
+            return
+    except Exception:
+        pass  # DataDirError → on passe à l'auto-découverte
+
+    # 3. Auto-découverte, du plus spécifique (env courant) au plus générique.
+    home = os.path.expanduser("~")
+    candidates: list[str] = [
+        os.path.join(sys.prefix, "share", "proj"),
+        os.path.join(os.path.dirname(pyproj.__file__), "proj_dir", "share", "proj"),
+        "/opt/homebrew/share/proj",
+        "/usr/local/share/proj",
+        "/usr/share/proj",
+    ]
+    for pat in ("miniforge3", "miniconda3", "anaconda3", "mambaforge"):
+        candidates += sorted(glob.glob(os.path.join(home, pat, "envs", "*", "share", "proj")))
+        candidates.append(os.path.join(home, pat, "share", "proj"))
+
+    for d in candidates:
+        if _valid(d):
+            os.environ["PROJ_DATA"] = d
+            pyproj.datadir.set_data_dir(d)
+            return
+
+    # 4. Rien trouvé : échec explicite et actionnable (pas de skip masqué).
+    raise RuntimeError(
+        "Données PROJ (proj.db) introuvables — pyproj ne peut pas reprojeter (4326↔2975).\n"
+        "  Le wheel pyproj installé n'embarque pas proj.db et aucun proj.db système n'a été trouvé.\n"
+        "  Emplacements cherchés :\n    - " + "\n    - ".join(candidates) + "\n"
+        "  Corriger AU CHOIX :\n"
+        "    • poser PROJ_DATA vers un dossier contenant proj.db (ex. l'env conda de PostGIS), ou\n"
+        "    • réinstaller pyproj avec sa donnée embarquée :  pip install --force-reinstall --no-cache-dir pyproj\n"
+        "  ⚠ Prod/VPS : si le serveur porte le même wheel sans proj.db, il aura le MÊME défaut — cf. docs/TESTS.md."
+    )
+
+
+_ensure_proj_data()
 
 # Redirige l'app ET les tests vers une base de test dédiée, AVANT le 1er get_settings().
 _APP_URL = os.environ.get("LABUSE_DATABASE_URL", "postgresql+psycopg://labuse:labuse@localhost:5432/labuse")
