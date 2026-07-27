@@ -1,0 +1,225 @@
+# =============================================================================
+# PLU LE TAMPON (97422) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU du Tampon (archive GPU 97422_PLU_20230811).
+#   document : 97422_reglement_20230811.pdf (« PLU du Tampon — Règlement 2018 », 137 p.)
+#   url      : https://www.geoportail-urbanisme.gouv.fr/document/by-id/3bd1b9d43addd334e64405c82343c405
+#   PLU révisé approuvé 2018, modifications jusqu'au 11/08/2023 (idurba). EN VIGUEUR,
+#   concordance manifeste/GPU vérifiée le 27/07/2026 (audit fraîcheur 24 communes).
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee + 2 (vérifié : sommaire imprimé 1 = PDF 3, zone Ua imprimée 9 = PDF 11).
+#     Les _src citent la page IMPRIMÉE.
+#   - null         = règle explicitement « Non réglementée » dans le texte.
+#   - "a_verifier" = présent mais ambigu / conditionnel / non attribuable sûrement.
+#   - hauteurs : « X mètres à l'égout du toit ou au sommet de l'acrotère et Y mètres au
+#     faîtage » => he_m <- X, hf_m <- Y. Ue ne donne que l'égout (12 m) => hf null.
+#   - ANCIEN FORMAT à articles préfixés (Ua1..Ua14) : 6=recul voirie, 7=recul limites,
+#     9=emprise, 10=hauteur, 12=stationnement, 13=espaces libres. AUCUN COS résiduel
+#     (zéro occurrence dans le document — piège ALUR non rencontré).
+#   - EMPRISE : « Non réglementée » dans TOUTES les zones U (Ua9/Ub9/Uc9/Ud9/Ue9) —
+#     même situation que Saint-Paul, la capacité est bornée par reculs+hauteur+pleine terre.
+#   - PLEINE TERRE : Art. 13.2 donne « X % perméable dont Y % pleine terre » => gravé Y
+#     (le moteur consomme le % pleine terre). Ue : 15 % perméable SANS sous-minimum de
+#     pleine terre => null + note.
+#   - indice « m » (Ucm, UCtom) : terrains dans le polygone de protection du dépôt de
+#     munitions de la Plaine des Cafres — mêmes règles chiffrées que la zone support,
+#     servitude en note (caractère de zone Uc, p.39).
+#   - ZONES AU (chapitre unique « AUindicée », p.83-87) : renvoi explicite au règlement
+#     de la zone U d'indice (« il convient de se reporter au règlement des zones urbaines
+#     correspondantes ») ; AUto/AUcto => règlement de la zone Ucto (renvoi répété à chaque
+#     article). Le renvoi mécanique du moteur ne couvre pas les codes 1AUx/2AUx (préfixe
+#     chiffré) => entrées EXPLICITES. 2AU* : ouverture soumise à l'engagement de
+#     l'aménagement de toutes les 1AU du pôle SAR => zones_au_st (gel conditionnel).
+# =============================================================================
+
+source:
+  document: "97422_reglement_20230811.pdf"
+  url: "https://www.geoportail-urbanisme.gouv.fr/document/by-id/3bd1b9d43addd334e64405c82343c405"
+  approbation: "2023-08-11"
+  pages_total: 137
+  offset_pdf_vs_imprimee: 2
+  reglement_grave:
+    fichier: "97422_reglement_20230811.pdf"
+    md5: "678cf0c64a4aa293f25f99f805974715"
+    millesime: "2023-08-11"
+    document_gpu_au_calibrage: "97422_PLU_20230811"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Tableau identique dans toutes les zones U (Art. <Z>12.2) : habitat individuel 1 place/logement ; habitat collectif (hors LLS) 0,5 place par chambre et studio ; logement locatif aidé 1 place/logement AU MAXIMUM."
+  limites_separatives: "Implantation sur 1 ou 2 limites autorisée (profondeur max 18 m sur la limite ; angle de 2 limites interdit) OU retrait 3 m — identique dans toutes les zones U (Art. <Z>7.1). Ud : UNE seule limite max."
+  hauteur_limites: "Bande de 3,60 m le long des limites séparatives : hauteur absolue plafonnée (18 m en Ua, 13 m en Uav, 10 m en Ub, 6 m en Uc) — Art. <Z>10.3."
+  mixite: "Uc : programme de logements > 1 000 m² SDP => 30 % minimum de logements aidés (Art. Uc2)."
+
+# Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== LOT U — zones urbaines (Titre II, p.9-81) ==============
+  Ua: {bassin: "Le Tampon",
+       he_m: 21, hf_m: 25, hauteur_src: "Art. Ua10.2, p.16",
+       hauteur_note: "Annexes/dépendances : 3,5 m. Bande de 3,60 m en limite séparative : 18 m max (Art. Ua10.3).",
+       emprise_sol_pct: null, emprise_src: "Art. Ua9, p.16 : « Non réglementée »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua6.2, p.13",
+       recul_voirie_note: "Alignement possible (0) OU 4 m min. RD3 (RN3-Ravine Blanche) : 10,50 m de l'axe.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua7.1, p.14",
+       recul_limites_note: "1 ou 2 limites autorisées (18 m de profondeur max) OU retrait 3 m.",
+       stat_logement: "1 place / logement", stat_src: "Art. Ua12.2 (tableau), p.20-21",
+       stat_note: "Habitat individuel. Collectif hors LLS : 0,5 place par chambre et studio ; LLS : 1 place max (cf. regles_transverses).",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. Ua13.2, p.22",
+       pleine_terre_note: "20 % perméable dont 15 % pleine terre plantée (3 strates)."}
+  Uav: {bassin: "Le Tampon",
+       he_m: 16, hf_m: 20, hauteur_src: "Art. Ua10.2, p.16 (« Dans le secteur Uav, ce seuil est limité à 16 mètres … et 20 mètres au faîtage »)",
+       hauteur_note: "Secteur d'habitation de densité moyenne (caractère de zone p.9). Bande 3,60 m : 13 m max.",
+       emprise_sol_pct: null, emprise_src: "Art. Ua9, p.16 : « Non réglementée »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua6.2, p.13",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua7.1, p.14",
+       stat_logement: "1 place / logement", stat_src: "Art. Ua12.2 (tableau), p.20-21",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua13.2, p.23 (« En secteur Uav, ces seuils sont respectivement portés à 30% et 20% »)",
+       pleine_terre_note: "30 % perméable dont 20 % pleine terre."}
+  Ub: {bassin: "Le Tampon",
+       he_m: 13, hf_m: 17, hauteur_src: "Art. Ub10.2, p.31",
+       hauteur_note: "Annexes : 3,5 m. Bande 3,60 m en limite : 10 m max.",
+       emprise_sol_pct: null, emprise_src: "Art. Ub9, p.31 : « Non réglementée »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ub6.2, p.28 (alignement possible OU 4 m min)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub7.1, p.29",
+       stat_logement: "1 place / logement", stat_src: "Art. Ub12.2 (tableau), p.35-36",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. Ub13.2, p.37 (35 % perméable dont 25 % pleine terre)"}
+  Uc: {bassin: "Le Tampon",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46",
+       hauteur_note: "Annexes : 3,5 m. Bande 3,60 m en limite : 6 m max.",
+       emprise_sol_pct: null, emprise_src: "Art. Uc9, p.46 : « Non réglementée »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc6.2, p.43 (4 m min, PAS d'option alignement)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uc7.1, p.44",
+       stat_logement: "1 place / logement", stat_src: "Art. Uc12.2 (tableau), p.50-51",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Uc13.2, p.52 (40 % perméable dont 30 % pleine terre)"}
+  Ucm: {bassin: "Le Tampon",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46 (règles de la zone Uc — l'indice « m » n'ajoute aucune règle chiffrée)",
+       emprise_sol_pct: null, emprise_src: "Art. Uc9, p.46 : « Non réglementée »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc6.2, p.43",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uc7.1, p.44",
+       stat_logement: "1 place / logement", stat_src: "Art. Uc12.2 (tableau), p.50-51",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Uc13.2, p.52",
+       note: "Indice « m » : terrains dans le polygone de protection du dépôt de munitions de la Plaine des Cafres (caractère de zone, p.39 ; PPRT 31/10/2016) — servitude d'usage, règles chiffrées de la zone Uc."}
+  UCto: {bassin: "Le Tampon",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46 (secteur de la zone Uc — pas de hauteur spécifique Ucto)",
+       emprise_sol_pct: null, emprise_src: "Art. Uc9, p.46 : « Non réglementée »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc6.2, p.43",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uc7.1, p.44",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage).", stat_src: "Art. Uc2.2 (secteur Ucto), p.40-42",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Uc13.2, p.52",
+       habitat: interdit, habitat_src: "Caractère de zone p.39 (« secteur Ucto, dans lequel sont uniquement autorisées les activités touristiques ») + Art. Uc2.2 (p.40-42) : habitation limitée à 100 m² SDP, exclusivement liée au gardiennage"}
+  UCtom: {bassin: "Le Tampon",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46 (secteur Ucto + indice « m »)",
+       emprise_sol_pct: null, emprise_src: "Art. Uc9, p.46 : « Non réglementée »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc6.2, p.43",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uc7.1, p.44",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage).", stat_src: "Art. Uc2.2 (secteur Ucto), p.40-42",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Uc13.2, p.52",
+       habitat: interdit, habitat_src: "Caractère de zone p.39 (Ucto : uniquement activités touristiques) + Art. Uc2.2 p.40-42 (gardiennage 100 m²) ; indice « m » : polygone munitions",
+       note: "Secteur Ucto + servitude du dépôt de munitions."}
+  Ud: {bassin: "Le Tampon",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. Ud10.2, p.61",
+       hauteur_note: "Annexes : 3,5 m. Pas de règle de bande en limite (Art. Ud10 sans 10.3).",
+       emprise_sol_pct: null, emprise_src: "Art. Ud9, p.60 : « Non réglementée »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ud6.2, p.58 (4 m min)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ud7.1, p.59 (UNE seule limite max OU retrait 3 m)",
+       stat_logement: "1 place / logement", stat_src: "Art. Ud12.2 (tableau), p.65-66",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ud13.2, p.67 (40 % perméable dont 30 % pleine terre)"}
+  Ue: {bassin: "Le Tampon",
+       he_m: 12, hf_m: null, hauteur_src: "Art. Ue10.2, p.75-76 (« limitée à 12 mètres à l'égout du toit ou au sommet de l'acrotère » — faîtage non précisé)",
+       emprise_sol_pct: null, emprise_src: "Art. Ue9, p.75 : « Non réglementée »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ue6.2, p.73",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ue7.1, p.74",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit, gardiennage compris).", stat_src: "Art. Ue1.2, p.69-70",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ue13.2, p.81 : 15 % perméable, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. Ue1.2, p.69-70 : « Les constructions ouvrages et travaux à usage d'habitation Y COMPRIS celles liées au gardiennage » sont INTERDITS (+ hébergement hôtelier interdit)"}
+
+  # ============== LOT AU — zones à urbaniser (Titre III, chap. unique « AUindicée », p.83-87) ==============
+  # Renvoi explicite : « se reporter au règlement de la zone U indiquée en indice » (chaque
+  # article) ; AUto/AUcto → « se reporter au règlement de la zone Ucto ». Le renvoi mécanique
+  # du moteur ne matche pas les codes à préfixe chiffré => entrées explicites.
+  # 1AU = urbanisation prioritaire SAR (opération d'ensemble OU au fur et à mesure des
+  # équipements internes) ; densités MINIMALES imposées (AUindicée 2.2.4, p.84-85) en note.
+  1AUa: {bassin: "Le Tampon",
+       he_m: 21, hf_m: 25, hauteur_src: "Art. Ua10.2, p.16 via renvoi (ZONE AUindicée, p.83 : « se reporter au règlement de la zone U indiquée en indice »)",
+       emprise_sol_pct: null, emprise_src: "Art. Ua9, p.16 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ua6.2, p.13 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ua7.1, p.14 (via renvoi)",
+       stat_logement: "1 place / logement", stat_src: "Art. Ua12.2, p.20-21 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. Ua13.2, p.22 (via renvoi)",
+       note: "Urbanisation prioritaire SAR — opération d'ensemble OU au fur et à mesure des équipements (préambule AUindicée p.83). Densité MINIMALE : 50 logts/ha (AUindicée 2.2.4, p.84)."}
+  1AUb: {bassin: "Le Tampon",
+       he_m: 13, hf_m: 17, hauteur_src: "Art. Ub10.2, p.31 via renvoi (ZONE AUindicée, p.83)",
+       emprise_sol_pct: null, emprise_src: "Art. Ub9, p.31 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ub6.2, p.28 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ub7.1, p.29 (via renvoi)",
+       stat_logement: "1 place / logement", stat_src: "Art. Ub12.2, p.35-36 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. Ub13.2, p.37 (via renvoi)",
+       note: "Densité minimale : 50 logts/ha (pôle secondaire SAR) ou 30 logts/ha (ville relais) — AUindicée 2.2.4, p.85."}
+  1AUc: {bassin: "Le Tampon",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46 via renvoi (ZONE AUindicée, p.83)",
+       emprise_sol_pct: null, emprise_src: "Art. Uc9, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc6.2, p.43 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uc7.1, p.44 (via renvoi)",
+       stat_logement: "1 place / logement", stat_src: "Art. Uc12.2, p.50-51 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Uc13.2, p.52 (via renvoi)",
+       note: "Densité minimale : 50 (pôle secondaire) / 30 (ville relais) / 20 logts/ha — AUindicée 2.2.4, p.85."}
+  1AUe: {bassin: "Le Tampon",
+       he_m: 12, hf_m: null, hauteur_src: "Art. Ue10.2, p.75-76 via renvoi (ZONE AUindicée, p.83)",
+       emprise_sol_pct: null, emprise_src: "Art. Ue9, p.75 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Ue6.2, p.73 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Ue7.1, p.74 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ue1.2, p.69-70 (via renvoi)",
+       pleine_terre_pct: null, pleine_terre_src: "Art. Ue13.2, p.81 (via renvoi)",
+       habitat: interdit, habitat_src: "Art. Ue1.2, p.69-70 via renvoi : habitation interdite y compris gardiennage"}
+  1AUto: {bassin: "Le Tampon",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46 via renvoi AUto→Ucto (« Pour la zone AUto, il convient de se reporter au règlement de la zone Ucto », répété à chaque article, p.84-87)",
+       emprise_sol_pct: null, emprise_src: "Art. Uc9, p.46 (via renvoi AUto→Ucto)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc6.2, p.43 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uc7.1, p.44 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage).", stat_src: "Art. Uc2.2 (Ucto), p.40-42 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Uc13.2, p.52 (via renvoi)",
+       habitat: interdit, habitat_src: "Règles du secteur Ucto via renvoi : uniquement activités touristiques, habitation limitée au gardiennage (100 m²)"}
+  1AUcto: {bassin: "Le Tampon",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. Uc10.2, p.46 via renvoi (indice cto → règlement Ucto, ZONE AUindicée p.83)",
+       emprise_sol_pct: null, emprise_src: "Art. Uc9, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. Uc6.2, p.43 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. Uc7.1, p.44 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage).", stat_src: "Art. Uc2.2 (Ucto), p.40-42 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Uc13.2, p.52 (via renvoi)",
+       habitat: interdit, habitat_src: "Règles du secteur Ucto via renvoi (activités touristiques uniquement)"}
+
+zones_au_renvoi: {}
+
+# Zones 2AU* : ouverture à l'urbanisation SOUMISE à l'engagement de l'aménagement de
+# TOUTES les zones 1AU du pôle urbain de référence fixé par le SAR (Art. AUindicée 2.2.3,
+# p.84 : « leur ouverture à l'urbanisation ne peut intervenir dès lors que l'aménagement de
+# l'ensemble des zones 1AUindicée du pôle urbain de référence … soit entrepris »).
+# Gel CONDITIONNEL porté par zones_au_st (constructible_neuf=False — étiquette moteur
+# « secteur de transition » inexacte, capacité zéro exacte : même friction F2 que le pilote).
+zones_au_st:
+  liste: ["2AUa", "2AUb", "2AUc", "2AUd", "2AUe"]
+  portee: "Construction neuve non autorisée en l'état : zones 2AU d'extension urbaine, ouverture conditionnée à l'engagement de l'aménagement de l'ensemble des 1AU du pôle SAR de référence (Art. AUindicée 2.2.3, p.84). Le manifeste ne compte AUCUN polygone 1AUd ni 2AUto."
+  source: "ZONE AUindicée, Art. 2.2.3, p.84."
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
+# DÉCISION (principe du mandat-cadre §9) : constructibilité d'EXCEPTION uniquement —
+# A (agricole ; secteur Aba = STECAL L.151-13, p.89), N (naturelle ; Nco corridors
+# écologiques, Npnr cœur du Parc national, Nto1-5 = STECAL touristiques à SDP plafonnée
+# par secteur et hauteurs 4-7 m, Art. N p.101+). Les graver ferait calculer une capacité
+# logement fictive => repli générique (non constructibles), verdict produit correct.
+zones_non_constructibles: ["A, Aba (chap. p.89-100)",
+                           "N, Nco, Npnr, Nto1, Nto2, Nto3, Nto4, Nto5 (chap. p.101+)"]
