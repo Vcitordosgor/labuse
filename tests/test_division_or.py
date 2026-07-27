@@ -120,6 +120,31 @@ def test_lot_decoupe_o12_partiel():
     assert "'decoupe' AS type_division" in q and "lot_geom" in d._INSERT_PARTIEL
 
 
+def test_correctifs_o12_partiel_2():
+    """Mandat O12-PARTIEL-2 (NO-GO de revue) : connexité, lot nu strict, zonage activité,
+    voirie qualifiée en RNU, gain estimé retiré des fiches."""
+    q = d._DETECT_PARTIEL
+    # C2 : le reste D'UN SEUL TENANT — composantes > 1 m² (tolérance anti-slivers cadastraux)
+    assert "nb_reste = 1" in q and "WHERE ST_Area(g.geom) > 1) AS nb_reste" in q
+    # C3 : lot NU strict — bâti ∩ lot ≤ 1 m², mesuré contre TOUS les bâtiments (voisins compris)
+    assert "aire_bati_dans_lot_m2 <= 1" in q
+    assert "aire_bati_dans_lot_m2" in d._INSERT_PARTIEL      # rendu dans la table → CSV
+    # C4 : zonages d'activité exclus, liste en CONFIG (jamais devinée ; ambigus → arbitrage)
+    assert "({activite_pred})" in q
+    assert d._activite_pred_sql("Petite-Île") == "(zone_lib IS NULL OR zone_lib NOT IN ('UE', 'UEa', 'AUE'))"
+    assert d._activite_pred_sql("Salazie") == "true"          # aucune zone d'activité au GPU
+    assert "'U1e'" in d._activite_pred_sql("Saint-Paul")      # PLU calibré : habitat interdit
+    # C5 : en RNU, façade sur voirie QUALIFIÉE (routes BD TOPO — pas chemins/sentiers/empierrées)
+    assert "(zone IS NOT NULL OR facade_lot_route >= 12)" in q
+    assert "'Route à 1 chaussée', 'Route à 2 chaussées', 'Rond-point'" in q
+    # C1 : plus de « Gain estimé » sur les fiches de revue
+    import inspect
+
+    from labuse.api import division_review
+    src = inspect.getsource(division_review)
+    assert "Gain estimé" not in src
+
+
 @pytest.mark.db
 def test_build_commune_vide_et_table_creee(db_session):
     s = db_session

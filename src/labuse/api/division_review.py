@@ -128,7 +128,10 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
         geoms = session.execute(text(_GEOMS), {"idu": c["idu"], "type": type_div}).mappings().first()
         carte = (_tiles_and_shapes(geoms["parcelle"], geoms["bati"], geoms["lot"], cache_dir,
                                    demolir_gj=geoms["demolir"], voirie_gj=geoms["voirie"]) if geoms else None)
-        gain = f"{c['gain_estime_eur']:,} €".replace(",", " ") if c.get("gain_estime_eur") else "non estimable"
+        # mandat O12-PARTIEL-2 C1 : la marge Score É n'apparaît plus sur les fiches (c'est la
+        # marge d'une opération de PROMOTION sur la parcelle entière, pas le produit d'une
+        # division — chiffres négatifs massifs ; piste gelée, cf. O12_PARTIEL_RAPPORT.md)
+        compacite = f"{c['compacite']}" if c.get("compacite") is not None else "—"
         type_txt = ("Division libre (lot nu — le terrain libre existe tel quel)" if type_div == "libre"
                     else f"Division avec démolition — dont {c.get('bati_lot_m2') or 0} m² à démolir"
                     if type_div == "demolition" else
@@ -151,7 +154,7 @@ def build_review_dossier(session: Session, candidates: list[dict]) -> bytes:
               f"<tr><td>Lot détachable</td><td>{c['residuel_m2']} m²</td>"
               f"<td>Largeur constructible (⌀ inscrit)</td><td>~{c['residuel_rayon_m']*2:.0f} m</td></tr>"
               f"<tr><td>Façade voirie du lot</td><td>{c['residuel_facade_m']} m</td>"
-              f"<td>Gain estimé (Score É, Estimé)</td><td>{gain}</td></tr></table>"
+              f"<td>Compacité du lot</td><td>{html.escape(compacite)}</td></tr></table>"
             + "<p class='valid'>Validation Vic : ☐ vrai positif &nbsp; ☐ faux positif &nbsp; ☐ douteux "
               "— remarque : ____________________</p></div>")
 

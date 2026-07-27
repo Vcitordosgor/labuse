@@ -1,0 +1,39 @@
+# O12 — ZONAGES D'ACTIVITÉ / ÉCONOMIQUES exclus du gisement « Division en or »
+# (mandat O12-PARTIEL-2, correctif 4 : la division en or vise un particulier qui détache
+#  un lot à bâtir — jamais du foncier d'activité).
+#
+# Liste établie commune par commune, JAMAIS devinée — trois niveaux de preuve :
+#   explicite : la description GPU de la zone dit « activités économiques / industrielles /
+#               artisanales / commerciales / logistiques » (texte conservé en commentaire) ;
+#   calibre   : PLU calibré (config/plu_<slug>.yaml) avec `habitat: interdit`, sourcé article ;
+#   infere    : libellé de la famille « e = économique » (Ue/UE/AUe/…) SANS description GPU —
+#               convention confirmée par les 10 communes à descriptions explicites. Réfutable :
+#               tout libellé de cette famille dont la description dit AUTRE CHOSE est resté
+#               HORS liste (ex. Bras-Panon 1AUe « urbanisation prioritaire SAR »").
+# Les libellés AMBIGUS (touristique, aéroportuaire, militaire, équipements publics, ZAC,
+# AU strictes…) ne sont PAS exclus ici : listés dans O12_PARTIEL_RAPPORT.md pour arbitrage Vic.
+#
+# Consommé par division_or._zones_activite() (détecteur du lot découpé).
+
+exclusions:
+  Bras-Panon: [Ue, 1AUec, 2AUec, AUst]          # explicite — « activités économiques » (GPU)
+  Entre-Deux: [AUe]                              # explicite — « urbanisation future à vocation économique »
+  L'Étang-Salé: [UE, AUe]                        # inféré (famille e, GPU muet)
+  La Plaine-des-Palmistes: [Ue, AUe]             # inféré
+  La Possession: [UE, UEm, AUEm]                 # inféré
+  Le Port: [Ue, Uem, 1AUe, 1AUem, 2AUem]        # inféré
+  Le Tampon: [Ue, 1AUe, 2AUe]                    # inféré
+  Les Avirons: [Ue, AUec, AUes]                  # inféré
+  Les Trois-Bassins: [Ue, 1AUe]                  # inféré
+  Petite-Île: [UE, UEa, AUE]                     # explicite — « activités industrielles et/ou artisanales », « zone d'activités Verger Hemery »
+  Saint-André: [UE, US, 1AUcr]                   # explicite — « activités économiques », « zone d'activités mixtes » (Cressonnière)
+  Saint-Benoît: [Ue, Up, AUe3, AUp1]             # explicite — « activités économiques et industrielles / de production »
+  Saint-Denis: [Ua, Uac, Uad, AUa]               # explicite — Chaudron, Technopole, chemin Neuf (zone d'activités)
+  Saint-Leu: [UE, AUE]                           # inféré
+  Saint-Louis: [UE, 1AUe, 1AUe oap1, 2AUe]      # inféré
+  Saint-Paul: [U1e, U1ec, U2e, U3e, AU5e]       # calibré — plu_saint_paul.yaml `habitat: interdit` (Art. 1.2)
+  Saint-Pierre: [Uaza, Uazc, Uazi, Uazp, Uazpc, AUazc, AUazi]   # explicite — zones d'activités artisanales/tertiaires/industrielles, ZAC Roland Hoareau
+  Sainte-Marie: [UEa, UEc, UEm, UEp]             # explicite — « activités » (développement, commercial, mixtes, production)
+  Sainte-Rose: [Ue]                              # explicite — « activités économiques »
+  Sainte-Suzanne: [UE, 1AUe]                     # inféré
+  # Cilaos, Salazie, Saint-Joseph, Saint-Philippe : aucune zone d'activité identifiée dans le GPU

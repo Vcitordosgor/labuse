@@ -111,6 +111,7 @@ ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS compacite numeric(4,
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS zone_lib varchar(16);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS emprise_restante numeric(4,3);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS lot_geom geometry(Polygon, 2975);
+ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS aire_bati_dans_lot_m2 numeric(6,1);
 """
 
 # Détection pour UNE commune (batch raisonnable). Buffers/seuils = constantes ci-dessus.
@@ -290,6 +291,10 @@ carve AS (
 -- restant garde ≥ 12 m de façade contiguë, MESURÉE DIRECTEMENT sur sa géométrie (parcelle −
 -- découpe ; jamais par soustraction de longueurs, l'artefact du finding O12). Une parcelle
 -- traversante dont le reste donne sur la DEUXIÈME rue passe naturellement (toutes voiries).
+-- O12-PARTIEL-2 : + CONNEXITÉ du reste (C2 — composantes > 1 m², tolérance anti-slivers
+-- cadastraux), + bâti ∩ lot mesuré contre TOUS les bâtiments, voisins compris (C3),
+-- + façade sur voirie QUALIFIÉE — ouverte à la circulation publique : Route à 1/2 chaussées,
+-- rond-point BD TOPO ; chemins, sentiers, routes empierrées, escaliers exclus (C5, RNU).
 mesure AS (
   SELECT c.*,
     (SELECT coalesce(max(ST_Length(g.geom)), 0) FROM ST_Dump((
@@ -297,7 +302,17 @@ mesure AS (
        FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, c.lot_geom, 2))) g) AS facade_lot,
     (SELECT coalesce(max(ST_Length(g.geom)), 0) FROM ST_Dump((
        SELECT ST_LineMerge(ST_Union(ST_Intersection(ST_Buffer(v.geom_2975, 1.5), ST_Boundary(rg.geom))))
-       FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, rg.geom, 2))) g) AS facade_reste
+       FROM spatial_layers v WHERE v.kind='voirie' AND ST_DWithin(v.geom_2975, rg.geom, 2))) g) AS facade_reste,
+    (SELECT count(*) FROM ST_Dump(ST_Difference(c.geom_2975, c.lot_geom)) g
+       WHERE ST_Area(g.geom) > 1) AS nb_reste,
+    round(coalesce((SELECT sum(ST_Area(ST_Intersection(b.geom_2975, c.lot_geom)))
+       FROM spatial_layers b WHERE b.kind='batiment' AND ST_Intersects(b.geom_2975, c.lot_geom)),
+       0)::numeric, 1) AS aire_bati_dans_lot_m2,
+    (SELECT coalesce(max(ST_Length(g.geom)), 0) FROM ST_Dump((
+       SELECT ST_LineMerge(ST_Union(ST_Intersection(ST_Buffer(v.geom_2975, 1.5), ST_Boundary(c.lot_geom))))
+       FROM spatial_layers v WHERE v.kind='voirie'
+         AND v.subtype IN ('Route à 1 chaussée', 'Route à 2 chaussées', 'Rond-point')
+         AND ST_DWithin(v.geom_2975, c.lot_geom, 2))) g) AS facade_lot_route
   FROM carve c
   CROSS JOIN LATERAL (SELECT g.geom FROM ST_Dump(ST_Difference(c.geom_2975, c.lot_geom)) g
                       ORDER BY ST_Area(g.geom) DESC LIMIT 1) rg),
@@ -315,10 +330,18 @@ SELECT idu, commune, round(surface_m2)::int surface_m2, round(bat_m2)::int bati_
        'decoupe' AS type_division, 0 AS bati_lot_m2,
        round(compacite_lot::numeric,3) AS compacite,
        round((bat_m2 / NULLIF(surface_m2 - lot_m2, 0))::numeric,3) AS emprise_restante,
-       lot_geom
+       lot_geom, aire_bati_dans_lot_m2
 FROM zon
 WHERE facade_lot >= 12
   AND facade_reste >= 12
+  -- C2 : le reste doit être D'UN SEUL TENANT (tolérance 1 m² pour les slivers cadastraux)
+  AND nb_reste = 1
+  -- C3 : lot NU strict — bâti ∩ lot ≤ 1 m² (bruit de numérisation), voisins compris
+  AND aire_bati_dans_lot_m2 <= 1
+  -- C5 : en RNU (zone NULL), la façade doit reposer sur une voirie QUALIFIÉE (≥ 12 m contigus)
+  AND (zone IS NOT NULL OR facade_lot_route >= 12)
+  -- C4 : zonages d'activité / économiques exclus (config/o12_zones_activite.yaml)
+  AND ({activite_pred})
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   AND bat_m2 / NULLIF(surface_m2 - lot_m2, 0) <= ({emprise_max})
   AND NOT EXISTS (SELECT 1 FROM spatial_layers l5 WHERE l5.kind='cinquante_pas'
@@ -335,10 +358,12 @@ WHERE facade_lot >= 12
 _INSERT_PARTIEL = """
 INSERT INTO division_or_candidates (idu, commune, surface_m2, bati_m2, bati_ratio,
     residuel_m2, residuel_rayon_m, residuel_facade_m, bati_facade_m, zone, zone_lib,
-    type_division, bati_lot_m2, compacite, emprise_restante, lot_geom, gain_estime_eur, clarte)
+    type_division, bati_lot_m2, compacite, emprise_restante, lot_geom, aire_bati_dans_lot_m2,
+    gain_estime_eur, clarte)
 SELECT d.idu, d.commune, d.surface_m2, d.bati_m2, d.bati_ratio, d.residuel_m2,
        d.residuel_rayon_m, d.residuel_facade_m, d.bati_facade_m, d.zone, d.zone_lib,
        d.type_division, d.bati_lot_m2, d.compacite, d.emprise_restante, d.lot_geom,
+       d.aire_bati_dans_lot_m2,
        se.marge_estimee,
        round((d.residuel_rayon_m * 2 + LEAST(d.residuel_facade_m, 30))::numeric, 1) AS clarte
 FROM ({detect}) d
@@ -349,7 +374,8 @@ ON CONFLICT (idu) DO UPDATE SET commune=EXCLUDED.commune, surface_m2=EXCLUDED.su
     bati_facade_m=EXCLUDED.bati_facade_m, zone=EXCLUDED.zone, zone_lib=EXCLUDED.zone_lib,
     type_division=EXCLUDED.type_division, bati_lot_m2=EXCLUDED.bati_lot_m2,
     compacite=EXCLUDED.compacite, emprise_restante=EXCLUDED.emprise_restante,
-    lot_geom=EXCLUDED.lot_geom, gain_estime_eur=EXCLUDED.gain_estime_eur,
+    lot_geom=EXCLUDED.lot_geom, aire_bati_dans_lot_m2=EXCLUDED.aire_bati_dans_lot_m2,
+    gain_estime_eur=EXCLUDED.gain_estime_eur,
     clarte=EXCLUDED.clarte, computed_at=now()
 """
 
@@ -361,8 +387,33 @@ def _ensure_ddl(session: Session) -> None:
     (workers bloqués ~40 min sur un CREATE TABLE no-op)."""
     if not session.execute(text(
             "SELECT count(*) FROM information_schema.columns "
-            "WHERE table_name='division_or_candidates' AND column_name='lot_geom'")).scalar():
+            "WHERE table_name='division_or_candidates' AND column_name='aire_bati_dans_lot_m2'"
+    )).scalar():
         session.execute(text(DDL))
+
+
+def _zones_activite(commune: str) -> list[str]:
+    """Libellés de zones d'ACTIVITÉ exclus du gisement pour la commune (mandat O12-PARTIEL-2
+    C4) — lus dans config/o12_zones_activite.yaml (explicite GPU / PLU calibré / famille « e »
+    inférée ; les ambigus n'y figurent pas, ils attendent l'arbitrage Vic). [] si absent."""
+    import yaml
+
+    from ..config import get_settings
+    try:
+        cfg = get_settings().config_path / "o12_zones_activite.yaml"
+        doc = yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}
+        return [str(x) for x in (doc.get("exclusions") or {}).get(commune, [])]
+    except Exception:  # noqa: BLE001 — config illisible → aucune exclusion
+        return []
+
+
+def _activite_pred_sql(commune: str) -> str:
+    """Prédicat SQL « la zone du lot n'est PAS un zonage d'activité » pour la commune."""
+    libs = [lib for lib in _zones_activite(commune) if "'" not in lib]
+    if not libs:
+        return "true"
+    quoted = ", ".join(f"'{lib}'" for lib in libs)
+    return f"(zone_lib IS NULL OR zone_lib NOT IN ({quoted}))"
 
 
 def build_divisions_partiel(session: Session, communes: list[str], *, commit: bool = True,
@@ -380,7 +431,8 @@ def build_divisions_partiel(session: Session, communes: list[str], *, commit: bo
             pau_pred=pau_pred, ens_min_bat=ENSEMBLE_MIN_BATIMENTS,
             grand_bat_m2=int(GRAND_BATIMENT_M2), emprise_max=_emprise_max_sql(commune),
             lot_min=LOT_DECOUPE_MIN_M2, lot_max=LOT_DECOUPE_MAX_M2,
-            compacite_min_dec=COMPACITE_MIN_DECOUPE, ancre_w=ANCRE_LARGEUR_M).strip().rstrip(";")
+            compacite_min_dec=COMPACITE_MIN_DECOUPE, ancre_w=ANCRE_LARGEUR_M,
+            activite_pred=_activite_pred_sql(commune)).strip().rstrip(";")
         if has_score_e:
             insert_sql = _INSERT_PARTIEL.format(detect=detect)
         else:

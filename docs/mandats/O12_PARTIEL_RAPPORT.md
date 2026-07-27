@@ -149,3 +149,136 @@ géomètre) »**. En table : 139 `decoupe` + 14 `libre` + 1 `demolition`.
 - Finding d'ingénierie : les `ALTER … IF NOT EXISTS` du DDL par commune se mettent en FILE
   (verrou exclusif) derrière chaque INSERT long en parallèle — workers bloqués ~40 min sur un
   no-op. Corrigé : `_ensure_ddl` saute le DDL quand le schéma est déjà au dernier état.
+
+---
+
+# MANDAT O12-PARTIEL-2 — correctifs post-revue (NO-GO en l'état) ⏸ POINTS D'ARRÊT A & B
+
+Revue visuelle des 20 cartes : méthode validée sur le fond, 6 correctifs exigés.
+Tout est chiffré ci-dessous sur les **139 stockés** (géométries `lot_geom` en base — aucun
+re-run nécessaire pour l'entonnoir) ; la SQL de PRODUCTION reproduit l'entonnoir au candidat
+près (validée sur Petite-Île 2/2 et Saint-Benoît 6/6, transaction annulée).
+
+## Entonnoir (mandaté, séquentiel sur les 139)
+
+| Étape | Retirés | Restants |
+|---|---:|---:|
+| C2 — connexité stricte du reste (composantes > 1 m²) | **49** | 90 |
+| C3 — lot nu strict (bâti ∩ lot ≤ 1 m², voisins compris) | 0 | 90 |
+| C4 — zonages d'activité (liste config) | **3** | 87 |
+| C5 — RNU : façade sur voirie qualifiée | 0¹ | **87** |
+
+¹ le candidat RNU fautif (`97417000AO0329`, façade sur « Chemin ») tombe déjà en C2.
+
+**Options en arbitrage (non appliquées)** : + C2-érosion → **66** ; + C5 étendu hors RNU → **48**.
+
+## C1 — Gain estimé : retiré des fiches, piste gelée
+
+**D'où venait le chiffre** : `gain_estime_eur` = `score_e.marge_estimee`, jointe par idu dans
+`_INSERT` — c'est la **marge promoteur du Score É V2** pour une opération de PROMOTION sur la
+**parcelle entière** (prix de sortie NEUF × SHAB constructible − coûts), pas le produit d'une
+division. Elle est négative pour l'écrasante majorité des parcelles de l'île (fait connu du
+Score É : marges serrées, médiane négative — cf. O0). Sur une fiche « Division en or », −2,1 M€
+est donc un chiffre **sémantiquement faux**, pas seulement choquant : le bon ordre de grandeur
+serait la valeur du TERRAIN À BÂTIR du lot (600-900 m² viabilisables), notion non calculée
+aujourd'hui. **Fait** : ligne retirée des fiches (remplacée par la compacité), champ conservé
+en table masquée, formule NON touchée (interdit du mandat). Refonte ou abandon : décision Vic.
+
+## C2 — Connexité du lot restant
+
+Implémenté : le reste (parcelle − lot) doit être **d'un seul tenant** — composantes comptées
+avec une **tolérance de 1 m²** (les slivers cadastraux observés font < 1 m² ; documentée).
+**−49 sur 139** — liste complète : AT0140, AW0372, CH0239, CH3356, CP0890, DP0101 (Saint-Paul) ·
+AH0386, AB0189² (Saint-Benoît) · EN3624, EO0702 (Saint-Louis) · IE0466, HX0397 (Saint-Pierre) ·
+CX0846 (Saint-Denis) · AE0970, AE0697, AV0453, AV0695, BI0296 (Le Tampon) · BM1224, BM1352,
+BX1357, CE2730 (Saint-Joseph) · CO0123, CQ0450, CS0256, DC0859 (Saint-Leu) · AI0612, BE0102
+(Saint-André) · AI0780, AI2095, AM0716 (Cilaos) · AO1130, AP3000, AP3016, AP4237, BO0227,
+BW0054 (Sainte-Marie) · AE0876, AV0200 (L'Étang-Salé) · AO0843, AS0857, AS1883 (Entre-Deux) ·
+AM0243, AN0518, AN1648 (La Possession) · AI0524 (Sainte-Rose) · AN0302, BC0185 (Salazie) ·
+AE0235 (La Plaine-des-Palmistes) · AO0329 (Saint-Philippe). ² voir ci-dessous.
+
+**Les 3 cas nommés par la revue — constat honnête** : leur reste est CONNEXE au sens strict
+(il tient par un couloir) — la connexité stricte ne les attrape pas.
+- `97410000AB0189` et `97408000AC1115` : attrapés par la **variante érosion** (reste rétréci
+  de 2 m, composantes > 25 m² — un couloir < 4 m de large ne « connecte » plus) : **−21 de
+  plus** sur le pool post-mandat (87 → 66). → **Arbitrage : appliquer l'érosion ?** (reco : oui)
+- `97418000AI0768` : ni strict ni érosion (reste d'un seul côté) — mais sa façade repose sur
+  une **route empierrée** : il tombe si C5 est étendu hors RNU (ci-dessous).
+
+## C3 — Lot ∩ bâti : 0 partout, critère appliqué quand même
+
+`aire_bati_dans_lot_m2` calculée contre **tous** les bâtiments (voisins compris) et rendue en
+table + CSV : **0,0 m² pour les 139** — conforme à la construction (lot ⊂ résiduel, bâti
+bufferisé 3 m retiré). Les recouvrements VUS en revue (CX0214, AH1514, AZ0485, AC0262, AS1883)
+sont des **artefacts** : bâtiments visibles sur l'ortho mais ABSENTS de BD TOPO (constructions
+récentes/légères — distance au bâti vectoriel le plus proche : 7,9 m pour CX0214) ou parallaxe
+ortho/cadastre. Le critère `≤ 1 m²` (bruit de numérisation, documenté) est appliqué en défense
+en profondeur. **Risque résiduel consigné** : le millésime BD TOPO peut rater du bâti réel —
+seule la revue visuelle (ou un contrôle ortho type module détection) le voit.
+
+### C3.3 — Distance lot ↔ bâti conservé ⏸ POINT D'ARRÊT B (chiffré, non appliqué)
+
+Par construction le lot est à **≥ 3 m du bâti de SA parcelle** (buffer). Mesuré contre TOUS
+les bâtiments (voisins compris) : **2 candidats à < 1 m** (min 0,4 m) et **19 à < 3 m** — tous
+dus à des bâtiments VOISINS en limite. Options : (a) rien — la garde structurelle couvre le
+bâti conservé, objet littéral du sous-point ; (b) ≥ 1 m contre tous bâtiments → **−2** ;
+(c) ≥ 3 m contre tous → **−19**. **Reco : (b)** — un lot collé au mur du voisin est aussi
+ininstruisible que collé au sien. Attendre le GO.
+
+## C4 — Zonages d'activité : exclusion par config, liste sourcée
+
+`config/o12_zones_activite.yaml` — trois niveaux de preuve, AUCUNE devinette :
+**explicite** (description GPU : 10 communes), **calibré** (`habitat: interdit` du PLU
+Saint-Paul : U1e, U1ec, U2e, U3e, AU5e), **inféré** (famille « e » sans description — convention
+confirmée par les 10 communes explicites ; réfutable, cf. Bras-Panon `1AUe` gardé hors liste
+car sa description dit « urbanisation prioritaire SAR »). Cilaos, Salazie, Saint-Joseph,
+Saint-Philippe : rien au GPU. **Retire 3** du pool : `97405000AW1275` (UEa — le cas de la
+revue), `97405000AW1526` (UEa), `97410000BD0537` (Ue Saint-Benoît).
+
+**Libellés AMBIGUS — arbitrage demandé (non exclus)** :
+- *touristiques/loisirs* : UT/AUT (Petite-Île), UT (Saint-André), UT/UTp (Sainte-Marie),
+  Ut/AUt1/AUt2 (Saint-Pierre) ;
+- *équipements/aéroport/militaire/parcs* : Ue « principaux équipements », Uea (aérodrome),
+  Uemi (militaire), Uep (parcs) à Saint-Pierre ; UR (aéroport Roland-Garros, Sainte-Marie) ;
+- *AU à ouverture différée* : AUx (Saint-Denis, « stricte »), 2AU*/3AU* divers ;
+- *divers* : Uva (coulée verte, Saint-Denis), Uat (ZAC Triangle, Saint-Denis), UZ/1AUz
+  (ZAC Cambrai, Petite-Île), 2AUec/AUst (équipements-commerces, Bras-Panon — EXCLUS car
+  « activités économiques » explicite ; signalés par transparence).
+- **Hors mandat mais à signaler** : le pool RÉSIDUEL validé contient `97411000BP0363`
+  (Saint-Denis) en zone **Ua « zone d'activités du Chaudron »** — validé en revue des 16,
+  non touché ici. Arbitrage : l'exclusion doit-elle s'appliquer aussi à la famille résiduelle ?
+
+## C5 — Qualification des voiries
+
+**Source** : `spatial_layers kind='voirie'` = **BD TOPO IGN**, nature portée par `subtype`
+(les `attrs` sont vides — pas d'attribut « accès réglementé » ingéré). Qualifiés « ouverts à
+la circulation publique » : *Route à 1 chaussée, Route à 2 chaussées, Rond-point*. Non
+qualifiés : *Chemin (58 337), Sentier (20 094), Route empierrée (22 426), Escalier, Type
+autoroutier, Bretelle* (l'empierrée est carrossable mais rien ne prouve l'ouverture publique —
+prudence). **Implémenté (mandat)** : candidat RNU → façade contiguë ≥ 12 m sur voirie
+QUALIFIÉE. Concerné : 1 candidat RNU (`97417000AO0329`, façade sur « Chemin » — le cas vu en
+revue, la « route » au nord-ouest n'est pas son linéaire de façade) ; il tombe déjà par C2.
+**Constat île entière (arbitrage)** : **40/139** lots ont leur façade sur du linéaire non
+qualifié (18 encore présents dans le pool post-mandat) — étendre la qualification à TOUTES les
+communes ? (reco : oui — un lot « à bâtir » desservi par un sentier n'est pas plausible ;
+cela attrape aussi `AI0768`). Ce serait un DURCISSEMENT du critère façade, pas un
+assouplissement.
+
+## C6 — Sensibilité au plancher 600 m² (documentation, aucun seuil touché)
+
+Sur les 139 : **81 lots < 650 m²** (58 %), **113 < 700 m²** (81 %), pic de **31 lots entre
+620 et 630 m²**. Explication STRUCTURELLE : parmi les découpes valides, l'algorithme retient
+la MEILLEURE COMPACITÉ — le carré ~25 × 25 m = 625 m² est l'optimum géométrique de la bande
+(ancre 25 m) ; le pic à 625 est un artefact de sélection, PAS un signe de pénurie : 84/139
+parcelles gardent un reste ≥ 1 000 m² après découpe. Si le plancher montait à 650/700,
+l'algorithme choisirait des bandes plus profondes (25 × 26+) sur les mêmes parcelles — la
+perte attendue est faible, mais un chiffre EXACT exigerait un re-run à plancher modifié
+(non fait : aucun seuil touché).
+
+## État des points d'arrêt
+
+- **⏸ A (GO re-run île)** : entonnoir mandaté 139 → **87**. Questions ouvertes qui changent
+  le pool final : C2-érosion (→ 66), C5 étendu (→ 48), et les deux listes d'arbitrage C4.
+- **⏸ B (sous-point C3.3)** : chiffré ci-dessus — reco option (b), −2.
+- Après GO : re-run île complet → `pool_decoupe.csv` (avec `aire_bati_dans_lot_m2`) →
+  20 cartes (sans marge Score É, compacité affichée) + 5 exemples + zip session neuve.
