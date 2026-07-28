@@ -7,6 +7,17 @@
 > API). **CONDITION D'ARRÊT PRINCIPALE : si parcel_residuel bouge, residuel_socle bouge,
 > donc le scoring servi bouge — si les tiers changent, RIEN ne merge sans re-run du
 > champion, arène et arbitrage Vic.**
+>
+> **CONTRAINTE DE SÉQUENCEMENT INTER-MANDATS (Vic, 28/07) — trois correctifs en attente
+> touchent la MÊME chaîne (parcel_residuel → residuel_socle → scoring servi → tiers) :
+> (1) hypothèses du bilan (×2,37 charge supportable, session en cours), (2) phase 4 PLU
+> (écart repli/calibré, 21 communes), (3) ce mandat. RÈGLE : un seul correctif appliqué
+> à la fois, chacun mesuré sur une base stable — sinon les deltas se mélangent et le
+> rollback devient impossible. ORDRE ACTÉ : hypothèses du bilan (mesure → arbitrage →
+> application → re-golden → tiers) PUIS phase 4 sur base stabilisée PUIS ce mandat en
+> DERNIER. Les mesures de ce mandat (§4, §2bis, population e) NE VALENT QUE sur une base
+> où les hypothèses du bilan sont déjà réalignées — prises avant, elles porteraient sur
+> des chiffres appelés à changer.**
 > Rédigée le 28/07/2026 (session A/C, nuit PLU) sur décision Vic. Remplace l'approche
 > initiale par liste de codes de zones, **invalidée** par la leçon « le préfixe d'un
 > libellé ne prouve rien » (UAa résidentiel habitat-INTERDIT, UEm économique
