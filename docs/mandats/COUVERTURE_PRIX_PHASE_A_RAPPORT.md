@@ -229,3 +229,96 @@ légitime un estimateur plat de niveau île. Connaissance de marché servable pa
 
 `/tmp/couv_verifications.py` (LECTURE SEULE : back-test restreint + EPCI + E3). Golden 116/116 +
 tiers au bit près avant/après (`/tmp/covB_tiers_avant.txt` = `/tmp/covB_tiers_apres.txt`).
+
+---
+
+# LEVIERS 3 (temporel) & 4 (hédonique) — mesure seule (28/07/2026). LECTURE SEULE.
+
+Golden 116/116 + tiers au bit près avant/après. (Réconciliation : le levier 3 du mandat déposé =
+fenêtre temporelle ; le levier 4 — hédonique — a été ajouté par Vic ce tour.)
+
+## 12 · Levier 3 — élargissement de la fenêtre temporelle (+ indexation)
+
+Constat préalable : l'instrument prix inclut DÉJÀ toutes les années de vente (2014-2025). « Élargir »
+agit donc sur (a) la **cohorte de back-test** (opérations PC, actuellement 2021+) et (b) l'**indexation**
+(l'île 4 375 mélange du 2016 @~4 000 et du 2024 @~4 700 non corrigés). Trajectoire prix des communes
+couvertes : ~4 000 (2016-2018) → ~4 700 (2022-2024), index lisse (facteurs 0,94-1,18).
+
+**Q1 — les 4 communes non validées deviennent-elles testables ?** Cohorte élargie PC 2015+, prix
+sûr 4 375 :
+
+| Commune | back-test 2015+ |
+|---|---|
+| **Les Avirons** | **14 / 15 = 93 %** ✓ |
+| **Saint-André** | **9 / 11 = 82 %** ✓ |
+| Sainte-Rose | 0 / 1 (1 op, non concluant) |
+| Salazie | 0 / 0 (aucune opération de marché) |
+
+**Les Avirons et Saint-André étaient testables** (elles étaient absentes de l'artefact back-test
+réutilisé, pas du marché) — elles **passent** → validées. **Sainte-Rose (1 op) et Salazie (0)
+n'ont aucune opération de marché même en 2015+** : l'absence de preuve devient un FAIT établi (issue
+n°2 de Vic) → étiquette « estimation île — aucune opération de marché observée sur cette commune ».
+
+**Q2 — l'indexation change-t-elle la médiane île ?** Oui : 4 375 (brut) → **4 692 (+7 %)** indexée
+au présent (le brut est tiré vers le bas par les ventes anciennes).
+
+**Q3 — le back-test tient-il ? OUI au prix sûr, MAIS l'indexation le fait basculer en
+SUR-ÉVALUATION.** Cohorte élargie 2015+ : **91 % à 4 375** (dans la bande) ; 97 % à 4 692. Le 97 %
+n'est PAS un progrès — c'est le prix trop haut : **E3 à 4 692 donne 5 / 12 opérations sur-évaluées
+(l'acheteur a payé MOINS que notre charge), contre 0 / 10 à 4 375**. **L'indexation réintroduit le
+mode d'échec du 4900.** Résultat en soi : **on garde le 4 375 non indexé — plus bas, conservateur,
+seul à passer E3.** L'indexation est méthodologiquement séduisante mais rejetée par la mesure
+symétrique.
+
+## 13 · Levier 4 — estimateur hédonique : la constante gagne (dit franchement)
+
+Modèle `prix_m2 ~ niveau de vie + densité + part proprio + pente + surface + année` (features
+parcelle `p_model_static`), **282 transactions** des 5 communes couvertes.
+
+**Q1 — explique-t-il quelque chose ?** **R² = 0,204** (faible). Le vrai test = **validation croisée
+laisser-une-commune** (prédire une commune couverte non vue) : **MAE médiane hédonique 397 €/m² vs
+île plate 242 €/m²**. **Le modèle fait PIRE que la constante.** Il surajuste le bruit in-sample
+(Saint-Denis prédit 4 885 vs vrai 4 275, err 610 ; Le Tampon 4 858 vs 4 318, err 540) et ne
+généralise pas. **Par la règle de Vic : la constante gagne.**
+
+**Q2 — domaine.** Enveloppe d'entraînement : revenu [19 256, 24 062], densité [1 675, 3 338], pente
+[5, 12]. **10 des 11 communes étendues sont HORS enveloppe** sur ≥ 1 feature (Salazie, Trois-Bassins,
+Sainte-Rose, Saint-Benoît, Saint-André… — les Hauts et l'Est). Toute prédiction y est une
+**extrapolation** ; le modèle est le moins fiable là où on en a le plus besoin, et prédit des prix
+sous le seuil de bascule (Salazie 3 627, Sainte-Rose 3 805) qui déclareraient non viable par
+extrapolation non fiable.
+
+**Q3 — back-test.** Inutile de le lancer : le modèle échoue déjà les deux tests plus fondamentaux
+(il ne bat pas la constante en CV, il extrapole sur 10/11 communes). **Résultat en soi (mot de Vic)
+: le marché du neuf est si INTÉGRÉ qu'il n'y a pas de signal spatial à capter — la constante plate
+EST le meilleur estimateur, par robustesse.** C'est la confirmation, par un quatrième angle, du fait
+produit du §10.
+
+## 14 · Tableau final consolidé — 4 leviers
+
+| Levier | Couverture | Back-test | Incertitude | Verdict |
+|---|---|---|---|---|
+| 1 · ratio neuf/ancien | 0 réel | 8 % | ratio ×1,77 instable | **NON FONDÉ** |
+| 2 · rétrécissement EPCI | +11 | 93 % (= île) | EPCI 7,6 % ~ île ; CIREST n=4 | **écarté (île plus simple ET plus robuste)** |
+| 3 · fenêtre temporelle | valide +2 (Avirons, St-André) | 91 % à 4 375 | indexation → E3 5/12 sur-éval. | **utile pour VALIDER ; indexation REJETÉE** |
+| 4 · hédonique | — | échoue en amont | CV 397 > île 242 ; 10/11 hors domaine | **REJETÉ (la constante gagne)** |
+| **→ estimateur retenu : ÎLE PLATE 4 375** | **5 → 16** | **91-94 %** | plat ±12 % ; E3 0 % sur-éval. | **VALIDÉ, tous angles** |
+
+## 15 · Recommandation consolidée finale (phase C, non exécutée)
+
+- **Estimateur : médiane MARCHÉ île 4 375 (NON indexée)**, en repli TYPÉ après le local. L'indexation
+  et l'hédonique sont mesurés et écartés — la constante plate gagne par robustesse ET par E3.
+- **Couverture 5 → 16 communes** : **14 validées par back-test** (5 locales + L'Étang-Salé, La
+  Possession, Saint-Benoît, Saint-Louis, Sainte-Marie, Sainte-Suzanne, Trois-Bassins, **Les Avirons,
+  Saint-André**) + **2 avec étiquette « estimation île — aucune opération de marché observée »**
+  (Sainte-Rose, Salazie — issue n°2 de Vic, l'absence de preuve est un fait servi honnêtement).
+- **8 communes social-dominantes restent « non calculable » sans exception** (garde anti-socle).
+- **Étiquetage par confiance** (validé Vic) : « médiane locale, N ventes » / « estimation île, ± ~12 % »
+  / « estimation île — aucune opération de marché observée » / « non calculable » (par cas).
+- **Interdits respectés** : pas de socle global (repli TYPÉ, local prime), back-test = juge, E3
+  re-mesurée en phase C au prix retenu.
+
+## Artefacts (leviers 3-4)
+
+`/tmp/levier_temporel.py`, `/tmp/levier_hedonique.py` (LECTURE SEULE). E3 à 4 375 vs 4 692 mesurée.
+Golden 116/116 + tiers au bit près avant/après (`/tmp/covT_tiers_avant.txt` = `/tmp/covT_tiers_apres.txt`).
