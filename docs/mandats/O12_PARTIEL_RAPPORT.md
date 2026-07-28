@@ -678,6 +678,52 @@ artefact à jour, pas comme nouvelle demande de revue.)
 EXPOSE reste **False** jusqu'à (1)+(2). Golden **116/116**, tiers au bit près
 (120 · 1031 · 3587 · 72980 · 353945). Tests `test_division_or.py` **12/12**.
 
+---
+
+# REVUE 3 — dernière marche : re-confrontation au plafond PLU RÉEL (post-merge nuit)
+
+Le pool avait été calculé quand 2 communes seulement étaient calibrées (le reste au repli 60 %).
+Les PLU de la nuit (`feat/plu-nuit-a` + `-b`, mergés sur main) gravent 21 communes ; les emprises
+réelles sont souvent < 60 %. `feat/o12-partiel` a été mis à jour depuis origin/main (sens
+main→feature — PAS le merge livrable, réservé à Vic). Verdict par `scripts/o12_emprise_recheck.py`
+(lecture seule, mêmes règles que le détecteur : `emprise_sol_pct` calibrée si chiffrée, sinon 60 %).
+
+## Résultat : 36 → 35, **1 faux positif tombe**
+
+**`97418000BO0089`** (Sainte-Marie, découpe, zone **UD**) : emprise du lot restant **55,6 %** >
+plafond réel **50 %** (UD calibré). Le défaut 60 % le laissait passer ; le vrai plafond l'écarte.
+**Il sort du pool** (removal-only → `DELETE`, pas de compensation). Un re-run propre du détecteur
+avec les 21 YAML le droppe de lui-même (le filtre emprise lit désormais le vrai plafond) → table =
+sortie du détecteur, reproductible.
+
+**Les 35 autres passent leur vrai plafond.** Notamment `AV2092` (douteux GARDÉ en revue 3,
+Sainte-Marie **UB**) : emprise 56 % ≤ plafond réel **70 %** — la calibration CONFIRME de le garder.
+
+## Les 20 candidats encore au repli 60 % (à part)
+
+- **Commune non calibrée** (restent au défaut, comme annoncé) : Saint-André (`AR2367`), Saint-Leu
+  (`CM0268, CQ0412, CR0068, CR0093, CX0585`).
+- **Zone calibrée mais emprise « non fixée » au PLU** (Art. 9 sans chiffre → repli 60 % légitime) :
+  Entre-Deux Ub, Le Tampon Uc, Saint-Paul U3c/U4b/U6c, Saint-Pierre Us, Sainte-Suzanne UB.
+
+Un seul y est proche du plafond : **`BH1036`** (Sainte-Suzanne UB, 56 %) — passe au repli 60 %, à
+re-confronter si cette zone reçoit une emprise chiffrée. Tous les autres sont ≤ 40 %.
+
+## Honnêteté — effet à double tranchant (non compensé, assumé)
+
+La calibration RETIRE un faux positif en zone à plafond bas (UD 50 %), mais elle pourrait aussi
+ADMETTRE des candidats en zone à plafond HAUT (ex. Saint-Denis Ud 80 %) que le défaut 60 %
+rejetait à la génération. Ce gain de rappel n'est PAS mesuré (il exigerait un re-run complet —
+perf 5-6 h/grosse commune) et n'est PAS compensé : doctrine précision d'abord. On l'a su avant un
+client, pas après — c'était l'objet de la marche.
+
+## Pool FINAL : 35 (27 découpes + 8 résiduels)
+
+Golden **116/116 PASS**, tiers au bit près — la mise à jour depuis main (PLU + copilote) n'a pas
+touché le service. Tests **12/12**. Les 35 sont tous dans les 44 déjà revus, 0 tracé modifié,
+désormais tous conformes à leur vrai plafond d'emprise. **EXPOSE reste False** jusqu'au feu vert
++ merge de Vic.
+
 ## Livrables (revue en session neuve)
 
 - `docs/mandats/O12_PARTIEL_REVUE.pdf` — **44 cartes (pool complet)**, solidité + compacité +
