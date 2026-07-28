@@ -212,7 +212,7 @@ zones:
        he_m: 10, hf_m: 13, hauteur_src: "Art. AUS.10, p.127 (« Dans le reste de la zone, la hauteur des constructions ne doit pas excéder 10 m à l'égout du toit et 13 m au faîtage »)",
        hauteur_note: "Constructions en façade de la RN2 : 6 m à l'égout / 9 m au faîtage (repérage positionnel hors manifeste — valeur générale gravée, restriction en note).",
        emprise_sol_pct: 50, emprise_src: "Art. AUS.9, p.127",
-       recul_voirie_m: 4, recul_voirie_src: "Art. AUS.6, p.126 (4 m des autres voies)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. AUS.6, p.126 : « recul minimal de : 10 mètres par rapport aux routes départementales - 30 mètres par rapport aux routes nationales (cf. point précédent) - 4 mètres par rapport aux autres voies » — TIROIR GÉOGRAPHIQUE : tranche majoritaire gravée (arbitrage Vic 28/07), tranches RD/RN écartées (minorité localisable), croisement couche voirie = candidat v2",
        recul_voirie_note: "10 m des routes départementales, 30 m des routes nationales (bande d'inconstructibilité RN2 de 30 m, seuls stationnements/aires de jeux/protections phoniques admis) ; 8 m de l'axe si alignement non défini.",
        recul_limites_sep_m: 3, recul_limites_src: "Art. AUS.7, p.127",
        stat_logement: null, stat_note: "Sans objet (habitat interdit hors logements liés aux équipements — ceux-ci : 1 place/logement ; hébergement hôtelier 1 place/chambre ; équipements >= 50 % SDP, Art. AUS.12, p.129).", stat_src: "Art. AUS.12, p.129",
@@ -229,6 +229,35 @@ zones:
        pleine_terre_pct: 40, pleine_terre_src: "Art. AUT.13, p.138-139 (« espaces de pleine terre à hauteur de 40 % de l'unité foncière », p.139)",
        habitat: interdit, habitat_src: "Art. AUT.1 (1°), p.132 : habitation INTERDITE ; exceptions Art. AUT.2, p.132 : personnel indispensable au fonctionnement/gardiennage des établissements touristiques (100 m² SDP max), amélioration/extension/reconstruction de l'existant. Hébergement touristique en opérations d'ensemble — hors cible logement."}
 
+  # UF/UFcim/AUF — équipements publics, habitat interdit (reclassées du gel par arbitrage
+  # Vic 28/07 ; entrées portées de la contre-extraction C, citations vérifiées).
+  UF: {bassin: "Petite-Île",
+       he_m: "a_verifier", hf_m: "a_verifier",
+       hauteur_note: "« La hauteur autorisée des constructions sera réglementée en fonction du terrain naturel avant travaux (voir schéma) » — aucune valeur chiffrée hors schéma.",
+       hauteur_src: "Art. UF.10, p.70",
+       emprise_sol_pct: null, emprise_src: "Art. UF.9, p.69 (« Non règlementé sous réserve … UF.13 »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UF.6, p.69",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UF.7, p.69",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage : 1 place/logement pour ces logements).", stat_src: "Art. UF.12, p.71",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UF.13, p.72",
+       habitat: interdit, habitat_src: "Art. UF.1/2, p.66-68 : habitation interdite sauf logements des employés/gardiennage/surveillance"}
+  UFcim: {bassin: "Petite-Île",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_src: "Art. UF.10, p.70 (règles UF — schéma)",
+       emprise_sol_pct: null, emprise_src: "Art. UF.9, p.69",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UF.6, p.69",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UF.7, p.69",
+       stat_logement: null, stat_note: "Sans objet.", stat_src: "Art. UF.12, p.71",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UF.13, p.72",
+       habitat: interdit, habitat_src: "Caractère UF p.66-67 : « Pour UFcim : SEULS sont autorisés les équipements et installations liées aux activités et services funéraires » (futur cimetière)"}
+  AUF: {bassin: "Petite-Île",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Comme UF : hauteur par schéma, aucune valeur chiffrée.", hauteur_src: "Art. AUF.10, p.120",
+       emprise_sol_pct: null, emprise_src: "Art. AUF.9, p.119",
+       recul_voirie_m: 4, recul_voirie_src: "Art. AUF.6, p.119",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. AUF.7, p.119",
+       stat_logement: null, stat_note: "Sans objet.", stat_src: "Art. AUF.12, p.121",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. AUF.13, p.121",
+       habitat: interdit, habitat_src: "Art. AUF.1/2, p.116-118 (équipements — habitation limitée aux logements de gardiennage/surveillance)"}
+
 zones_au_renvoi: {}
 
 # DEUX groupes portés par zones_au_st (constructible_neuf=False, capacité logement zéro) :
@@ -239,19 +268,19 @@ zones_au_renvoi: {}
 #    Relais du SAR (sauf 2AU du centre bourg de Piton des Goyaves), après modification ou
 #    révision du PLU. Art. 2 AU.1 (p.140) : TOUT est interdit (habitat, commerce, bureaux,
 #    équipements publics compris) ; Art. 2 AU.2 à 2AU.13 : « Sans objet ».
-# 2) UF / UFcim / AUF — zones d'équipements publics, habitat interdit (UF.1/UF.2,
-#    p.66-67 ; AUF.1/AUF.2, p.116 : seuls logements des employés/gardiennage ; UFcim :
-#    uniquement équipements et installations liés aux activités et services funéraires,
-#    UF.2, p.67) SANS AUCUN plafond de hauteur chiffré aux Art. UF.10 (p.70) et AUF.10
-#    (p.120) : une entrée `zones:` sans hauteur exploitable retomberait en estimation
-#    générique (capacité logement fictive, habitat interdit perdu). Capacité logement
-#    ZÉRO exacte ; étiquette moteur « secteur de transition » inexacte pour ce groupe
-#    (friction F2, précédent Tampon 2AU*). AUF.9 : emprise non réglementée ; AUF.6 : 4 m ;
-#    AUF.7 : 3 m ; UF.6/UF.7 : alignement/limite ou retrait 1 m (p.69) — documentaire.
+# 2) UF / UFcim / AUF — RECLASSÉES en zones calibrées habitat-interdit (arbitrage Vic
+#    28/07, convention : gel = ouverture juridiquement conditionnée ; interdiction
+#    d'habitat = zone calibrée habitat: interdit). Le gel « construction neuve non
+#    autorisée » mentait sur la nature de ces zones (un équipement public y est
+#    constructible). Vérifié dans le code moteur : habitat=="interdit" est testé AVANT
+#    les hauteurs (engine.py) => capacité 0 EXACTE même avec hauteurs a_verifier — la
+#    crainte d'une retombée en estimation générique était infondée (le repli 9 m ne
+#    s'applique qu'aux zones ABSENTES du YAML, plu_rules.py:210). Entrées portées de la
+#    contre-extraction C (117 citations vérifiées 0 FAIL), session B libre de les réviser.
 zones_au_st:
-  liste: ["2AU", "2AUe", "UF", "UFcim", "AUF"]
-  portee: "Capacité logement nulle. 2AU/2AUe : zones gelées (« les possibilités de construire sont nulles », p.140), ouverture après urbanisation de l'ensemble des 1AU/1AUa + assainissement collectif Ville Relais SAR + modification/révision du PLU. UF/UFcim/AUF : équipements publics, habitat interdit hors logements de fonction, aucun plafond de hauteur chiffré au règlement (UF.10 p.70, AUF.10 p.120)."
-  source: "Chapeau ZONE 2AU + Art. 2 AU.1, p.140 ; Art. UF.1, p.66 et Art. UF.2, p.67 ; Art. AUF.1, p.116."
+  liste: ["2AU", "2AUe"]
+  portee: "Capacité logement nulle. 2AU/2AUe : zones gelées (« les possibilités de construire sont nulles », p.140), ouverture après urbanisation de l'ensemble des 1AU/1AUa + assainissement collectif Ville Relais SAR + modification/révision du PLU."
+  source: "Chapeau ZONE 2AU + Art. 2 AU.1, p.140."
 
 # Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
 # DÉCISION (principe du mandat-cadre §9) : constructibilité d'EXCEPTION uniquement —
