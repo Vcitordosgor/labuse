@@ -1,8 +1,9 @@
 """M22-D — RAPPORT DE POTENTIEL : garde-fous (sans réseau ni DB).
 
 Interdits du mandat, testés :
- · divisibilité : AUCUN chiffre tant que la revue O12 n'est pas validée (encadré
-   « étude complémentaire ») — et O12 reste EXPOSE=False ;
+ · divisibilité : l'encadré du RAPPORT reste sans chiffre du détecteur (« étude
+   complémentaire ») ; O12 est EXPOSÉ depuis le 28/07/2026 (clôture O12-PARTIEL-2 J,
+   feu vert Vic) — le test atteste le nouvel invariant : pool figé 35, recheck branché ;
  · aucune identité de propriétaire dans le document ;
  · aucune valorisation en euros de la division ;
  · incertitude SDP dite en clair (« estimation sur la base d'un bâti de N niveau(x) ») ;
@@ -31,9 +32,48 @@ def _out(residuel=None, couches=None):
     }
 
 
-def test_o12_reste_masque():
+def test_o12_expose_par_decision():
+    """O12 EXPOSÉ (feu vert Vic 28/07/2026, clôture O12-PARTIEL-2 J — 2 revues visuelles
+    exhaustives + verdict de calibrage PLU). Ce test atteste la DÉCISION : re-masquer (ou
+    ré-exposer autrement) casse la suite par construction — grille dette-repo, catégorie A."""
     from labuse.ingestion import division_or as d
-    assert d.EXPOSE is False                      # la revue Vic n'a pas eu lieu : inchangé
+    assert d.EXPOSE is True
+
+
+def _pool_o12_reference():
+    """Référence VERSIONNÉE du pool revu (clôture O12) : (lignes pool_complet, idus découpes)."""
+    import csv
+    from pathlib import Path
+    rep = Path(__file__).resolve().parent.parent / "reports" / "o12-ile"
+    with open(rep / "pool_complet.csv", encoding="utf-8") as fh:
+        complet = list(csv.DictReader(fh))
+    with open(rep / "pool_decoupe.csv", encoding="utf-8") as fh:
+        decoupes = {r["idu"] for r in csv.DictReader(fh)}
+    return complet, decoupes
+
+
+def test_o12_pool_reference_35_fige():
+    """Pool servi conforme à la clôture : 35 candidats (27 découpes + 8 résiduels), les
+    découpes coïncident avec les tracés revus, BO0089 (tombé au verdict emprise) absent."""
+    complet, decoupes = _pool_o12_reference()
+    idus = {r["idu"] for r in complet}
+    assert len(complet) == 35 and len(idus) == 35            # 35 uniques, pas de doublon
+    n_dec = sum(1 for r in complet if r["type_division"] == "decoupe")
+    assert n_dec == 27 and len(complet) - n_dec == 8         # 27 découpes + 8 résiduels
+    assert {r["idu"] for r in complet if r["type_division"] == "decoupe"} == decoupes
+    assert "97418000BO0089" not in idus                      # faux positif du verdict emprise
+
+
+def test_o12_emprise_recheck_branche():
+    """La dépendance récurrente reste CÂBLÉE : le script de re-vérification d'emprise existe,
+    le module la documente (à relancer après chaque évolution PLU), le script vise le pool."""
+    from pathlib import Path
+    racine = Path(__file__).resolve().parent.parent
+    script = racine / "scripts" / "o12_emprise_recheck.py"
+    assert script.exists()
+    src = (racine / "src" / "labuse" / "ingestion" / "division_or.py").read_text(encoding="utf-8")
+    assert "o12_emprise_recheck" in src                      # dépendance documentée côté module
+    assert "division_or" in script.read_text(encoding="utf-8")
 
 
 def test_divisibilite_encadre_sans_aucun_chiffre():
