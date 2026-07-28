@@ -95,6 +95,10 @@
   une hauteur non qualifiée (le texte ne dit pas où se prend la mesure) reste he null —
   l'estimation moteur (hf−3)÷3 est plus prudente qu'un choix d'interprétation généreux
   d'un texte muet. Vic applique la règle sur verbatims, jamais d'extension en bloc.
+  Raisonnement qui tranche (La Possession, décision Vic) : le MÊME article écrit
+  « 16 mètres AU FAITAGE » pour la règle générale UA et « fixée à N mètres » pour les
+  secteurs — le rédacteur savait qualifier quand il le voulait ; ne pas l'avoir fait est
+  un SILENCE, pas un oubli à combler.
 - **L'île compte AU MOINS 4 styles de règlement** (ancien préfixé, moderne par chapitre,
   moderne mutualisé par groupe, sections « UA 2.4 ») — la détection du style est la première
   minute de chaque commune ; les 6 requêtes-clés (voies/limites/emprise/hauteur/perméable/
