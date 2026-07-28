@@ -1,0 +1,307 @@
+# =============================================================================
+# PLU PETITE-ÎLE (97405) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Petite-Île (cache session nuit B).
+#   document : 97405_reglement.pdf (« 4 — Règlement », 169 p.)
+#   PLU approuvé le 23/02/2017, modifié le 01/09/2017 ; « PLU approuvé le 09 Juin 2023
+#   après modification simplifiée, révision avec examen conjoint et mise en compatibilité
+#   par déclaration de projet » (page de garde, PDF p.1). Document GPU : 97405_PLU_20230609.
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee (OFFSET 0, vérifié : sommaire imprimé 2 = PDF 2 ; ZONE UB
+#     imprimée 23 = PDF 23 ; ZONE UE imprimée 52 = PDF 52 ; ZONE 1AU imprimée 88 = PDF 88 ;
+#     ZONE AUS imprimée 130 = PDF 130). ⚠ Le SOMMAIRE (p.2) est PÉRIMÉ pour la fin du
+#     document (AUS→122 exact mais 2AU « 117 », TITRE 4 « 119 », N « 130 » faux) : les
+#     positions réelles sont 2AU p.140, A p.143-152, N p.153-162, annexes p.163+.
+#   - null         = règle explicitement « Non réglementé » dans le texte (sourcé).
+#   - ANCIEN FORMAT à articles préfixés (UB.1..UB.13) : 6=recul voirie, 7=recul limites,
+#     9=emprise, 10=hauteur, 12=stationnement, 13=espaces libres. Aucun article 14/COS :
+#     ZÉRO occurrence de « COS »/« coefficient d'occupation » dans le document (doc 2023,
+#     piège ALUR non rencontré).
+#   - PLEINE TERRE : Art. <Z>.13 impose partout un % « espaces de pleine terre » de
+#     l'unité foncière => gravé tel quel (c'est bien un % PLEINE TERRE, pas un % perméable).
+#   - HAUTEURS : « X mètres à l'égout du toit et Y mètres au faîtage » => he_m X, hf_m Y.
+#     Tolérance pente > 10 % (+1,50 m à l'égout) et exemptions bâtiments publics/techniques
+#     NON gravées (notes). UZ.10 ne donne qu'une « hauteur totale » de 12 m => hf_m 12,
+#     he_m null + note. UE.10 ne donne que l'égout (10 m) => hf null.
+#   - Sous-secteurs « e » (couloir réservé au doublement de la ligne haute tension
+#     Langevin — Bras de la Plaine) : UCe/UDe = hauteur propre 6 m au faîtage, autres
+#     règles de la zone support ; 2AUe = gelée avec la zone 2AU.
+#   - GRAPHIES manifeste ≠ casse du texte : « 1AUz » (manifeste) = chapitre « ZONE 1AUZ »
+#     (p.99) ; « AUs » (manifeste) = chapitre « ZONE AUS » (p.122) — une seule zone de
+#     chaque famille, équivalence confirmée par le caractère de zone. Toutes les autres
+#     graphies apparaissent telles quelles dans le texte.
+#   - O12 (candidates habitat-interdit) CONFIRMÉES au texte : UE, UEa, AUE, UT, AUT
+#     (+ UF/AUF/UFcim/AUS hors liste O12). INFIRMÉES : UZ (ZAC Cambrai « à usage
+#     d'habitat et d'équipements », UZ.1 p.81 n'interdit pas l'habitation) et 1AUz
+#     (ZAC habitat, 1AUZ.1 p.99 n'interdit pas l'habitation).
+#   - UF / UFcim / AUF (équipements publics ; habitat interdit hors logements de
+#     fonction, Art. UF.1/UF.2 p.66-67 et AUF.1/AUF.2 p.116 ; UFcim : uniquement
+#     funéraire, UF.2 p.67) : les articles UF.10 (p.70) et AUF.10 (p.120) n'énoncent
+#     AUCUN plafond chiffré (texte : « La hauteur autorisée des constructions sera
+#     réglementée en fonction du terrain naturel avant travaux (voir schéma) » puis rien).
+#     Sans hauteur exploitable, une entrée `zones:` retomberait en ESTIMATION générique
+#     (he 9 m, habitat non contraint) => capacité logement FICTIVE dans des zones
+#     d'équipements. DÉCISION (même friction F2 que le pilote/Tampon) : portées par
+#     zones_au_st (constructible_neuf=False — étiquette moteur « secteur de transition »
+#     inexacte, capacité logement ZÉRO exacte).
+#   - 1AU.10 (p.94) contient un alinéa « Pour 1AUe : 6 m au faîtage » : AUCUN polygone
+#     1AUe au manifeste (sous-secteur vestigial) — non gravé.
+# =============================================================================
+
+source:
+  document: "97405_reglement.pdf"
+  approbation: "2023-06-09"
+  approbation_note: "PLU approuvé le 23/02/2017, modifié le 01/09/2017 ; approuvé le 09/06/2023 après modification simplifiée, révision avec examen conjoint et mise en compatibilité par déclaration de projet (page de garde, p.1)."
+  pages_total: 169
+  offset_pdf_vs_imprimee: 0
+  reglement_grave:
+    fichier: "97405_reglement.pdf"
+    md5: "19407563d46266104df408b837d67fc4"
+    millesime: "2023-06-09"
+    document_gpu_au_calibrage: "97405_PLU_20230609"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Zones d'habitat (UB/UC/UD/UZ/1AU/1AUz, Art. <Z>.12) : 1 place/logement ; logements locatifs aidés 1 place/logement sauf LLTS (0 place) ; opérations de logements collectifs : 20 % du stationnement aérien perméable (sauf UZ). Zones d'activités : UE 50 % de la SDP (UE.12, p.58), UEa/AUE 20 % de la SDP avec minimum 8 places (UEa.12 p.65, AUE.12 p.115)."
+  limites_separatives: "UB/UC/UD/1AU (Art. <Z>.7) : implantation en limite possible dans la bande de 20 m depuis l'alignement (ou parcelle < 15 m de large), au-delà une seule limite ; sinon retrait 3 m, ramené à 2 m en mur plein ou jalousies ; fond de parcelle 3 m ; en limite ne touchant pas la voie si H <= 4 m au faîtage."
+  voirie: "Recul des clôtures : 3 m de l'axe des voies publiques et 1 m de la limite d'emprise (zones UB/UC/UD/1AU/1AUz). Routes départementales : reculs spécifiques d'axe en annexe 5 du règlement (non gravés — dépendent de la RD). Hors agglomération, bande d'inconstructibilité de 30 m de part et d'autre de la RN2 (rappel Art. AUS.6, p.126)."
+  perimetre_elevage: "Constructions nouvelles à usage d'habitation interdites dans le périmètre de 100 m autour des bâtiments d'élevage repérés au plan de zonage (Art. <Z>.1, toutes zones) — repérage graphique hors manifeste, non modélisé."
+
+# Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== LOT U — zones urbaines (Titre II, p.22-86) ==============
+  UB: {bassin: "Petite-Île",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. UB.10, p.28",
+       hauteur_note: "Terrains > 10 % de pente : +1,50 m à l'égout toléré. Annexes : 3 m au faîtage. Bâtiments publics exemptés.",
+       emprise_sol_pct: null, emprise_src: "Art. UB.9, p.28 : « Non règlementé sous réserve du respect de l'article UB.13 »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UB.6, p.26",
+       recul_voirie_note: "Alignement possible (0) OU retrait 4 m min ; 8 m de l'axe si alignement non défini ; 4 m des voies privées.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UB.7, p.26-27",
+       recul_limites_note: "En limite possible (bande de 20 m / parcelle < 15 m ; au-delà 1 limite max) ; retrait 3 m, ramené à 2 m en mur plein ; fond de propriété 3 m.",
+       stat_logement: "1 place / logement", stat_src: "Art. UB.12, p.31",
+       stat_note: "Logements aidés : 1 place/logement, LLTS 0 place ; collectifs : 20 % du stationnement aérien perméable.",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UB.13, p.32",
+       pleine_terre_note: "« conservées en espaces de pleine terre à hauteur de 25 % de l'unité foncière », végétalisées."}
+  UC: {bassin: "Petite-Île",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. UC.10, p.38",
+       hauteur_note: "Terrains > 10 % de pente : +1,50 m à l'égout toléré. Annexes : 3 m. Bâtiments publics exemptés.",
+       emprise_sol_pct: 50, emprise_src: "Art. UC.9, p.38",
+       emprise_note: "50 % de l'unité foncière, sous réserve UC.4 (assainissement) et UC.13 (perméabilité) ; ne s'applique pas aux équipements publics d'intérêt collectif.",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC.6, p.36",
+       recul_voirie_note: "4 m de l'alignement (pas d'option alignement) ; 8 m de l'axe si alignement non défini ; 4 m des voies privées.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC.7, p.36-37",
+       stat_logement: "1 place / logement", stat_src: "Art. UC.12, p.40-41",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UC.13, p.41-42 (« espaces de pleine terre à hauteur de 30 % de l'unité foncière », p.42)"}
+  UCe: {bassin: "Petite-Île",
+       he_m: null, hf_m: 6, hauteur_src: "Art. UC.10, p.38 (« Pour UCe : La hauteur d'une construction ne doit pas excéder 6 mètres au faîtage », mesurée du sol après travaux)",
+       emprise_sol_pct: 50, emprise_src: "Art. UC.9, p.38 (secteur de la zone UC — pas de règle propre)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC.6, p.36",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC.7, p.36-37",
+       stat_logement: "1 place / logement", stat_src: "Art. UC.12, p.40-41",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UC.13, p.41-42",
+       note: "Sous-secteur UCe : couloir réservé au doublement de la ligne haute tension Langevin — Bras de la Plaine (caractère de zone, p.33) ; seule la hauteur diffère de UC."}
+  UD: {bassin: "Petite-Île",
+       he_m: 4, hf_m: 7, hauteur_src: "Art. UD.10, p.48",
+       hauteur_note: "Annexes : 3 m au faîtage. Bâtiments publics exemptés. Pas de tolérance de pente en UD.",
+       emprise_sol_pct: 40, emprise_src: "Art. UD.9, p.48",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD.6, p.46",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD.7, p.46-47",
+       stat_logement: "1 place / logement", stat_src: "Art. UD.12, p.50",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UD.13, p.51"}
+  UDe: {bassin: "Petite-Île",
+       he_m: null, hf_m: 6, hauteur_src: "Art. UD.10, p.48 (« Pour UDe : La hauteur d'une construction ne doit pas excéder 6 mètres au faîtage »)",
+       emprise_sol_pct: 40, emprise_src: "Art. UD.9, p.48 (secteur de la zone UD — pas de règle propre)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD.6, p.46",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD.7, p.46-47",
+       stat_logement: "1 place / logement", stat_src: "Art. UD.12, p.50",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UD.13, p.51",
+       note: "Sous-secteur UDe : couloir réservé au doublement de la ligne haute tension (caractère de zone, p.43) ; seule la hauteur diffère de UD."}
+  UE: {bassin: "Petite-Île",
+       he_m: 10, hf_m: null, hauteur_src: "Art. UE.10, p.56 (« 10 mètres à l'égout du toit » — faîtage non précisé)",
+       hauteur_note: "Constructions en façade sur la RN2 : 6 m à l'égout max. Bâtiments industriels à nécessité technique exemptés.",
+       emprise_sol_pct: 70, emprise_src: "Art. UE.9, p.56 (annexes comprises)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UE.6, p.55 (alignement possible OU retrait 4 m ; 8 m de l'axe si alignement non défini)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UE.7, p.55",
+       recul_limites_note: "Demi-hauteur à l'égout, minimum 4 m ; dépendances/extensions <= 3,50 m possibles en limite ; fond de propriété 3 m (2 m en mur plein).",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage). Règle : surface de stationnement >= 50 % de la SDP (Art. UE.12, p.58).", stat_src: "Art. UE.12, p.58",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. UE.13, p.58",
+       habitat: interdit, habitat_src: "Art. UE.1 (1°), p.52 : constructions à usage d'habitation INTERDITES (+ hébergement hôtelier, bureaux) ; seule exception Art. UE.2 (1°), p.52 : personnel indispensable au fonctionnement et au gardiennage, limite 100 m² SDP"}
+  UEa: {bassin: "Petite-Île",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. UEa.10, p.62",
+       hauteur_note: "Installations à nécessité technique : 13 m à l'égout admis. Ouvrages techniques exemptés.",
+       emprise_sol_pct: 50, emprise_src: "Art. UEa.9, p.62 (« 50 % de la superficie du lot », annexes comprises)",
+       recul_voirie_m: 5, recul_voirie_src: "Art. UEa.6, p.61",
+       recul_voirie_note: "5 m de l'alignement (toutes voies) ; 20 m minimum de l'axe de la RN2.",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UEa.7, p.62 (en limite sur UNE limite possible, sinon retrait 4 m)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors logements de fonction). Règle : surface de stationnement >= 20 % de la SDP, minimum 8 places (Art. UEa.12, p.65).", stat_src: "Art. UEa.12, p.65",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. UEa.13, p.65",
+       habitat: interdit, habitat_src: "Art. UEa.1 (1°), p.59 : habitation INTERDITE ; seule exception Art. UEa.2 (1°), p.59 : logements des employés, du personnel de gardiennage et de surveillance des équipements"}
+  UT: {bassin: "Petite-Île",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. UT.10, p.77",
+       hauteur_note: "Annexes : 3 m au faîtage.",
+       emprise_sol_pct: 50, emprise_src: "Art. UT.9, p.77 (annexes comprises)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UT.6, p.76 (alignement possible OU retrait 4 m ; 8 m de l'axe si alignement non défini)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UT.7, p.76",
+       recul_limites_note: "Demi-hauteur à l'égout, minimum 4 m (limites sur voie ET fond de propriété) ; dépendances <= 3,50 m possibles en limite.",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage — logements de gardiennage : 1,5 place/logement ; hôtels : 1 place/chambre, Art. UT.12, p.79).", stat_src: "Art. UT.12, p.79",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UT.13, p.80",
+       habitat: interdit, habitat_src: "Art. UT.1 (1°), p.73 : habitation INTERDITE ; exceptions Art. UT.2, p.73 : personnel indispensable au fonctionnement/gardiennage des établissements touristiques (100 m² SDP max) et amélioration/extension/reconstruction de bâtiments d'habitation existants sans dépassement de la SDP autorisée. Hébergement touristique (complexes hôteliers, villages vacances) autorisé en opérations d'ensemble — hors cible logement."}
+  UZ: {bassin: "Petite-Île",
+       he_m: null, hf_m: 12, hauteur_src: "Art. UZ.10, p.84 (« La hauteur totale d'une construction ne doit pas excéder 12 mètres » — hauteur TOTALE, pas de valeur à l'égout)",
+       hauteur_note: "Terrains > 10 % de pente : +1,50 m toléré. Bâtiments publics exemptés.",
+       emprise_sol_pct: null, emprise_src: "Art. UZ.9, p.84 : « Non règlementé sous réserve du respect de l'article UZ.13 »",
+       recul_voirie_m: 0, recul_voirie_src: "Art. UZ.6, p.83 : « soit à l'alignement soit en retrait des voies publiques » — AUCUN retrait minimal chiffré",
+       recul_voirie_note: "Routes départementales : recul d'axe selon annexe 5 (non gravé).",
+       recul_limites_sep_m: 0, recul_limites_src: "Art. UZ.7, p.83 : « soit en limite séparative soit en retrait » — AUCUN retrait minimal chiffré",
+       stat_logement: "1 place / logement", stat_src: "Art. UZ.12, p.85",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. UZ.13, p.86",
+       note: "ZAC Cambrai, « zone à usage d'habitat et d'équipements » (caractère de zone, p.81) — candidate O12 INFIRMÉE : UZ.1 (p.81) n'interdit pas l'habitation."}
+
+  # ============== LOT AU — zones à urbaniser ouvertes (Titre III, p.87-139) ==============
+  1AU: {bassin: "Petite-Île",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. 1AU.10, p.94",
+       hauteur_note: "Terrains > 10 % de pente : +1,50 m à l'égout toléré. Annexes : 3 m. Bâtiments publics exemptés.",
+       emprise_sol_pct: 50, emprise_src: "Art. 1 AU.9, p.93",
+       emprise_note: "Sous réserve 1AU.4 (assainissement) et 1AU.13 (perméabilité) ; ne s'applique pas aux équipements publics d'intérêt collectif.",
+       recul_voirie_m: 4, recul_voirie_src: "Art. 1 AU.6, p.91",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. 1 AU.7, p.92",
+       stat_logement: "1 place / logement", stat_src: "Art. 1AU.12, p.96",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. 1AU.13, p.97",
+       note: "Zone à urbaniser à court/moyen terme (chapeau, p.88) — le règlement n'impose PAS d'opération d'ensemble en 1AU non indicée."}
+  1AUa: {bassin: "Petite-Île",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. 1AU.10, p.94 (chapitre ZONE 1AU — 1AUa est un sous-secteur, aucune hauteur propre)",
+       emprise_sol_pct: 50, emprise_src: "Art. 1 AU.9, p.93",
+       recul_voirie_m: 4, recul_voirie_src: "Art. 1 AU.6, p.91",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. 1 AU.7, p.92",
+       stat_logement: "1 place / logement", stat_src: "Art. 1AU.12, p.96",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. 1AU.13, p.97",
+       note: "Sous-secteur 1AUa : habitat admis À CONDITION d'opérations d'ensemble, densité tendant vers les objectifs du SAR (Art. 1 AU.2 « Pour 1AUa », p.89 ; caractère de zone p.88)."}
+  1AUz: {bassin: "Petite-Île",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. 1AUZ.10, p.104",
+       hauteur_note: "Terrains > 10 % de pente : +1,50 m à l'égout toléré. Annexes : 3 m. Bâtiments publics exemptés.",
+       emprise_sol_pct: 50, emprise_src: "Art. 1AUZ.9, p.103",
+       recul_voirie_m: 4, recul_voirie_src: "Art. 1AUZ.6, p.102",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. 1AUZ.7, p.102-103",
+       stat_logement: "1 place / logement", stat_src: "Art. 1AUZ.12, p.106",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. 1AUZ.13, p.107-108 (« espaces de pleine terre à hauteur de 30 % de l'unité foncière », p.108)",
+       note: "Graphie manifeste « 1AUz » = chapitre « ZONE 1AUZ » (p.99, zone unique). ZAC en cours (phases restantes), occupations soumises aux conditions de l'OAP du secteur (Art. 1AUZ.2, p.99) — candidate O12 INFIRMÉE : 1AUZ.1 (p.99) n'interdit pas l'habitation."}
+  AUE: {bassin: "Petite-Île",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. AUE.10, p.112",
+       hauteur_note: "Installations à nécessité technique : 13 m à l'égout admis. Ouvrages techniques exemptés.",
+       emprise_sol_pct: 50, emprise_src: "Art. AUE.9, p.112 (« 50 % de la superficie du lot », annexes comprises)",
+       recul_voirie_m: 5, recul_voirie_src: "Art. AUE.6, p.111 (5 m de l'alignement ; 20 m minimum de l'axe de la RN2)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. AUE.7, p.112 (en limite sur UNE limite possible, sinon retrait 4 m)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors logements de fonction). Règle : surface >= 20 % de la SDP, minimum 8 places (Art. AUE.12, p.115).", stat_src: "Art. AUE.12, p.115",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. AUE.13, p.115",
+       habitat: interdit, habitat_src: "Art. AUE.1 (1°), p.109 : habitation INTERDITE ; seule exception Art. AUE.2 (1°), p.109 : logements des employés, du personnel de gardiennage et de surveillance. Commerces/services limités à 5 % de la superficie de la zone (AUE.2 3°)."}
+  AUs: {bassin: "Petite-Île",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. AUS.10, p.127 (« Dans le reste de la zone, la hauteur des constructions ne doit pas excéder 10 m à l'égout du toit et 13 m au faîtage »)",
+       hauteur_note: "Constructions en façade de la RN2 : 6 m à l'égout / 9 m au faîtage (repérage positionnel hors manifeste — valeur générale gravée, restriction en note).",
+       emprise_sol_pct: 50, emprise_src: "Art. AUS.9, p.127",
+       recul_voirie_m: 4, recul_voirie_src: "Art. AUS.6, p.126 : « recul minimal de : 10 mètres par rapport aux routes départementales - 30 mètres par rapport aux routes nationales (cf. point précédent) - 4 mètres par rapport aux autres voies » — TIROIR GÉOGRAPHIQUE : tranche majoritaire gravée (arbitrage Vic 28/07), tranches RD/RN écartées (minorité localisable), croisement couche voirie = candidat v2",
+       recul_voirie_note: "10 m des routes départementales, 30 m des routes nationales (bande d'inconstructibilité RN2 de 30 m, seuls stationnements/aires de jeux/protections phoniques admis) ; 8 m de l'axe si alignement non défini.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. AUS.7, p.127",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors logements liés aux équipements — ceux-ci : 1 place/logement ; hébergement hôtelier 1 place/chambre ; équipements >= 50 % SDP, Art. AUS.12, p.129).", stat_src: "Art. AUS.12, p.129",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. AUS.13, p.131",
+       habitat: interdit, habitat_src: "Art. AUS.1 (1°), p.122 : habitation INTERDITE ; exceptions Art. AUS.2, p.122 : logements exclusivement destinés aux usagers des équipements de santé, sociaux et de formation du site et aux employés/personnel de gardiennage — pas de logement libre",
+       note: "Graphie manifeste « AUs » = chapitre « ZONE AUS » (p.122, zone unique) : équipements publics ou d'intérêt collectif (santé, social, formation) ; accès direct depuis la RN2 interdit (AUS.3, p.126)."}
+  AUT: {bassin: "Petite-Île",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. AUT.10, p.136",
+       hauteur_note: "Annexes : 3 m au faîtage.",
+       emprise_sol_pct: 50, emprise_src: "Art. AUT.9, p.136 (annexes comprises)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. AUT.6, p.135 (alignement possible OU retrait 4 m ; 8 m de l'axe si alignement non défini)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. AUT.7, p.135 (demi-hauteur à l'égout, minimum 4 m — limites sur voie et fond)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage — logements de gardiennage : 1,5 place/logement ; hôtels : 1 place/chambre, Art. AUT.12, p.138).", stat_src: "Art. AUT.12, p.138",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. AUT.13, p.138-139 (« espaces de pleine terre à hauteur de 40 % de l'unité foncière », p.139)",
+       habitat: interdit, habitat_src: "Art. AUT.1 (1°), p.132 : habitation INTERDITE ; exceptions Art. AUT.2, p.132 : personnel indispensable au fonctionnement/gardiennage des établissements touristiques (100 m² SDP max), amélioration/extension/reconstruction de l'existant. Hébergement touristique en opérations d'ensemble — hors cible logement."}
+
+  # UF/UFcim/AUF — équipements publics, habitat interdit (reclassées du gel par arbitrage
+  # Vic 28/07 ; entrées portées de la contre-extraction C, citations vérifiées).
+  UF: {bassin: "Petite-Île",
+       he_m: "a_verifier", hf_m: "a_verifier",
+       hauteur_note: "« La hauteur autorisée des constructions sera réglementée en fonction du terrain naturel avant travaux (voir schéma) » — aucune valeur chiffrée hors schéma.",
+       hauteur_src: "Art. UF.10, p.70",
+       emprise_sol_pct: null, emprise_src: "Art. UF.9, p.69 (« Non règlementé sous réserve … UF.13 »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UF.6, p.69",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UF.7, p.69",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage : 1 place/logement pour ces logements).", stat_src: "Art. UF.12, p.71",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UF.13, p.72",
+       habitat: interdit, habitat_src: "Art. UF.1/2, p.66-68 : habitation interdite sauf logements des employés/gardiennage/surveillance"}
+  UFcim: {bassin: "Petite-Île",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_src: "Art. UF.10, p.70 (règles UF — schéma)",
+       emprise_sol_pct: null, emprise_src: "Art. UF.9, p.69",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UF.6, p.69",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UF.7, p.69",
+       stat_logement: null, stat_note: "Sans objet.", stat_src: "Art. UF.12, p.71",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UF.13, p.72",
+       habitat: interdit, habitat_src: "Caractère UF p.66-67 : « Pour UFcim : SEULS sont autorisés les équipements et installations liées aux activités et services funéraires » (futur cimetière)"}
+  AUF: {bassin: "Petite-Île",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Comme UF : hauteur par schéma, aucune valeur chiffrée.", hauteur_src: "Art. AUF.10, p.120",
+       emprise_sol_pct: null, emprise_src: "Art. AUF.9, p.119",
+       recul_voirie_m: 4, recul_voirie_src: "Art. AUF.6, p.119",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. AUF.7, p.119",
+       stat_logement: null, stat_note: "Sans objet.", stat_src: "Art. AUF.12, p.121",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. AUF.13, p.121",
+       habitat: interdit, habitat_src: "Art. AUF.1/2, p.116-118 (équipements — habitation limitée aux logements de gardiennage/surveillance)"}
+
+zones_au_renvoi: {}
+
+# DEUX groupes portés par zones_au_st (constructible_neuf=False, capacité logement zéro) :
+# 1) 2AU / 2AUe — GEL EXPLICITE : « Dans cette attente les possibilités de construire
+#    sont nulles » (chapeau ZONE 2AU, p.140) ; ouverture conditionnée à l'urbanisation
+#    (au moins engagée) de l'ensemble des zones 1AU et 1AUa ET à la création d'un système
+#    d'assainissement collectif sur la zone préférentielle d'urbanisation de la Ville
+#    Relais du SAR (sauf 2AU du centre bourg de Piton des Goyaves), après modification ou
+#    révision du PLU. Art. 2 AU.1 (p.140) : TOUT est interdit (habitat, commerce, bureaux,
+#    équipements publics compris) ; Art. 2 AU.2 à 2AU.13 : « Sans objet ».
+# 2) UF / UFcim / AUF — RECLASSÉES en zones calibrées habitat-interdit (arbitrage Vic
+#    28/07, convention : gel = ouverture juridiquement conditionnée ; interdiction
+#    d'habitat = zone calibrée habitat: interdit). Le gel « construction neuve non
+#    autorisée » mentait sur la nature de ces zones (un équipement public y est
+#    constructible). Vérifié dans le code moteur : habitat=="interdit" est testé AVANT
+#    les hauteurs (engine.py) => capacité 0 EXACTE même avec hauteurs a_verifier — la
+#    crainte d'une retombée en estimation générique était infondée (le repli 9 m ne
+#    s'applique qu'aux zones ABSENTES du YAML, plu_rules.py:210). Entrées portées de la
+#    contre-extraction C (117 citations vérifiées 0 FAIL), session B libre de les réviser.
+zones_au_st:
+  liste: ["2AU", "2AUe"]
+  portee: "Capacité logement nulle. 2AU/2AUe : zones gelées (« les possibilités de construire sont nulles », p.140), ouverture après urbanisation de l'ensemble des 1AU/1AUa + assainissement collectif Ville Relais SAR + modification/révision du PLU."
+  source: "Chapeau ZONE 2AU + Art. 2 AU.1, p.140."
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
+# DÉCISION (principe du mandat-cadre §9) : constructibilité d'EXCEPTION uniquement —
+# A (chap. p.143-152) : constructions nouvelles d'habitation interdites (A.1 1°, p.143)
+#   sauf nécessité agricole regroupée au siège d'exploitation (A.2 1°, p.144) ; extensions
+#   d'habitations existantes <= 80 m² SDP dans la limite de 250 m² au total, annexes
+#   <= 30 m² (A.2 5°/6°, p.145 ; emprises identiques A.9, p.149) ; hauteur 4 m égout /
+#   7 m faîtage (A.10, p.149). Ac : uniquement établissements de formation/insertion
+#   agricole + UN logement de gardiennage (A.2 « Pour Ac », p.145). Acu (coupure
+#   d'urbanisation), Ad (SMVM Grand Anse), Ae (couloir haute tension) : « toute
+#   construction est interdite » (caractère de zone p.19 ; A.2, p.144-145).
+# N (chap. p.153-162) : habitat interdit (N.1 1°, p.153) ; extensions d'habitations
+#   existantes <= 80 m² SDP dans la limite de 200 m² au total, annexes <= 30 m²
+#   (N.2 4°/5°, p.154) ; hauteur 6 m au faîtage (N.10, p.159). Na : amélioration/
+#   réfection/reconstruction de l'existant dans la limite du bâti existant (N.2, p.155).
+#   Nb : aménagement/extension de l'existant <= 500 m² SDP au total (N.2, p.155).
+#   Nce/Ncu/Ne/Np : « toute construction est interdite » (N.2 2°/4°/5°/6°, p.154).
+#   Ntl/Ntla : STECAL touristiques — entretien/gardiennage, aménagements légers,
+#   extension de bâtiments publics <= 300 m² SDP ; Ntla en plus : hébergement touristique
+#   type aire naturelle de camping / gîte <= 150 m² SDP par unité foncière, hauteur d'un
+#   gîte 4 m (N.2 p.155 ; N.9/N.10 p.159). Les graver ferait calculer une capacité
+#   logement fictive => repli générique (non constructibles), verdict produit correct.
+zones_non_constructibles: ["A, Ac, Acu, Ad, Ae (chap. p.143-152)",
+                           "N, Na, Nb, Nce, Ncu, Ne, Np, Ntl, Ntla (chap. p.153-162)"]

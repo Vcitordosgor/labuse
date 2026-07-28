@@ -1,0 +1,329 @@
+# =============================================================================
+# PLU LES AVIRONS (97401) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU des Avirons (59 p.).
+#   document : 97401_reglement.pdf (cache session, md5 conforme pré-vol).
+#   PLU prescrit le 24/06/2011, arrêté le 01/03/2024, APPROUVÉ le 06/12/2024
+#   (page de garde, p.1). Document GPU servi au calibrage : idurba 97401_PLU_20241206.
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee (offset 0). Le vote de pied de page d'extract.py a rendu
+#     0 voix : les numéros imprimés sont EN EN-TÊTE (sous le bandeau « PLU DES AVIRONS —
+#     REGLEMENT »), pas en pied. Confirmé manuellement : n° imprimé = n° de page PDF sur
+#     les pages 3, 10, 19, 26, 44, 50 et 59, et les 8 entrées du sommaire (p.2) tombent
+#     toutes sur la page PDF de même numéro (II-U p.7, UE p.19, III-AU p.26, AUEC p.29,
+#     AUT p.35, AUES p.42, IV-A p.44, V-N p.50).
+#   - ANCIEN FORMAT à articles 1-15 : 1/2 = destinations, 6 = recul voirie, 7 = recul
+#     limites, 9 = emprise, 10 = hauteur, 12 = stationnement, 13 = espaces libres.
+#   - CHAPITRE U MUTUALISÉ « ZONES UA, UB, UC et UD » (p.7-18) : articles U 1 à U 15
+#     communs, valeurs déclinées par zone/secteur DANS chaque article (« en zone Ua : … »,
+#     « en secteur Uc3 : … »). Chaque secteur du manifeste = une entrée, valeur vérifiée
+#     ligne à ligne dans l'article ; quand l'article ne distingue pas le secteur, la
+#     valeur « en zone X » du même article s'applique (rattachement écrit, pas d'héritage
+#     supposé — noté zone par zone).
+#   - null         = règle explicitement « Non réglementé » / « sans objet » (sourcé).
+#   - HAUTEURS : « X mètres à l'égout du toit ou au sommet de l'acrotère ; Y mètres au
+#     faitage » => he_m = X, hf_m = Y. Ub4 : « 8 mètres en hauteur absolue » => he_m = 8
+#     ET hf_m = 8 (plafond absolu unique).
+#   - PLEINE TERRE : les Art. U 13.1 / UE 13.1 / AUec 13.1 / AUt 13.1 imposent un % en
+#     « espace libre et perméable » (ou « espace vert et perméable ») SANS AUCUN
+#     sous-minimum de pleine terre => pleine_terre_pct null PARTOUT + % perméable en note
+#     (précédents Saint-Louis, Le Port : le % perméable n'est jamais gravé en pleine
+#     terre).
+#   - COS : ZÉRO occurrence dans les 59 pages (grep « COS » et « coefficient
+#     d'occupation ») — doc 2024 post-ALUR sain, rien à consigner de plus.
+#   - ZONES AU indicées (chapitre « ZONES AUindicée », p.26-28) : renvoi explicite « il
+#     convient de se reporter en fonction de l'indice de la zone AU considérée au
+#     règlement des zones urbaines correspondantes (zones U) » (p.26, répété à chaque
+#     article) => entrées EXPLICITES AUa/AUc/AUd : le renvoi moteur (regex AU+chiffre) ne
+#     couvre pas les codes AU+lettre. Graphies confirmées dans le corps : « en zones AUa
+#     et AUc, 30 logements par hectare ; en zones AUd, 20 logements par hectare »
+#     (Art. AUindicée 2.2.4, p.26).
+#   - HABITAT INTERDIT (confirmé au texte, candidates O12 Ue/AUec/AUes toutes tranchées) :
+#     Ue (Art. UE 1.2.2, p.19 : habitation interdite « y compris celles liées au
+#     gardiennage »), AUec (Art. AUec 1.2.2, p.29 : formule identique), AUt (Art. AUt
+#     2.2.4, p.35 : habitation UNIQUEMENT gardiennage/surveillance, 50 m² d'emprise max
+#     — logement de fonction => interdit pour le moteur), Ub4 (Art. U 1.2.7, p.7 : tout
+#     sauf équipements collectifs d'intérêt général), Ud2 (Art. U 2.2, p.8 : « seules les
+#     constructions destinées à la pratique du tourisme … ainsi que l'extension limitée
+#     des constructions existantes », SDP 60 m²/bâtiment et 120 m²/unité foncière — pas
+#     de logement neuf). Ces cinq zones ont une hauteur chiffrée => entrées `zones:`.
+#   - GROUPE CAPACITÉ ZÉRO via zones_au_st (précédents UF/AUF Petite-Île, Ue/Up/Uv
+#     Le Port : habitat impossible SANS hauteur chiffrée => jamais d'entrée `zones:` qui
+#     retomberait en estimation générique 9 m) :
+#       Ub5  = zone non aedificandi (ravines/talweg) : tout interdit sauf chemins piétons
+#              et voies d'entretien des ravines (Art. U 1.2.8, p.7 ; Art. U 2.2, p.8) ;
+#              aucune hauteur au chapitre.
+#       AUes = zone STRICTE dédiée à l'activité économique de production (caractère,
+#              p.5) : tout interdit sauf réseaux/ouvrages techniques/reconstruction après
+#              sinistre/extension 20 m² SDP pour mise aux normes ; « l'ouverture à
+#              l'urbanisation de la zone conditionnée à une modification du PLU »
+#              (Art. AUes 1.2 et AUes 2, p.42) ; hauteur « Sans objet » (Art. AUes 10,
+#              p.43). GEL => zones_au_st, condition d'ouverture explicite.
+#   - A, N, Nli, Npnr, Nr, Nto : non constructibles (urbanisation) — cf.
+#     zones_non_constructibles (pas de logement neuf : A 2.2 p.44-45 limite l'habitat à
+#     l'exploitation agricole ; N 2.2 p.50-51 n'admet que l'extension de l'existant hors
+#     Npnr/Nr et des équipements sans hébergement).
+# =============================================================================
+
+# DOCTRINE HARMONISÉE A/B/C (28/07/2026, arbitrage Vic) : le % « espace vert et
+# perméable » est GRAVÉ dans pleine_terre_pct, libellé verbatim conservé en _src —
+# ce n'est PAS un minimum de pleine terre stricto sensu. Retraits en H/2 :
+# valeur gravée = max(H/2 à la hauteur maximale gravée, plancher du texte).
+
+source:
+  document: "97401_reglement.pdf"
+  approbation: "2024-12-06"
+  approbation_note: "PLU prescrit le 24/06/2011, arrêté le 01/03/2024, approuvé le 06/12/2024 (page de garde, p.1). Document GPU au calibrage : 97401_PLU_20241206."
+  pages_total: 59
+  offset_pdf_vs_imprimee: 0
+  offset_note: "Numéros imprimés en EN-TÊTE de page (non détectés par le vote de pied de page) ; n° imprimé = n° PDF vérifié sur 7 pages + sommaire p.2 (8 entrées concordantes)."
+  reglement_grave:
+    fichier: "97401_reglement.pdf"
+    md5: "73a0f8f65869a65da5c666bf27ed91db"
+    millesime: "2024-12-06"
+    document_gpu_au_calibrage: "97401_PLU_20241206"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Tableau unique du chapitre U (Art. U 12.2, p.17), repris par renvoi en AUa/AUc/AUd : habitat 1,5 place/logement (+0,5 place sur voie par terrain pour les lotissements de plus de 5 lots) ; habitat collectif : 1,25 place/logement OU 1 place/35 m² SDP, norme la plus productive retenue ; LLS plafonné à 1 place/logement (R.111-25)."
+  bonus_hauteur: "Opérations >= 50 % de SDP en logement social : +3 m à l'égout/acrotère et au faîtage (toutes zones du chapitre U) ; en Ua/Uc/Ud, +3 m pour l'hébergement hôtelier ; dépendances plafonnées à 3 m et 25 m² d'emprise (Art. U 10.2, p.13 ; Art. U 9.2, p.12)."
+  mixite_sociale: "Programme de logements > 1 000 m² SDP => au minimum 40 % de logements aidés (Art. U 2.2.5, p.8)."
+  densites_au: "Zones AU indicées : minimum 30 logements/ha en AUa et AUc, 20 logements/ha en AUd, appréciés à l'échelle de la zone ; équivalent logement 80 m² SDP hors habitat (Art. AUindicée 2.2.4, p.26)."
+  marge_recul: "En zones Ua, Uc et Ud, au minimum 70 % de la marge de recul entre la voie et la construction en espace libre et perméable (Art. U 13.1, p.18)."
+
+# Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ========= LOT U — chapitre mutualisé « ZONES UA, UB, UC et UD », p.7-18 =========
+  Ua: {bassin: "Les Avirons",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. U 10.2, p.12",
+       hauteur_note: "« en zones Ua et Ub : 12 mètres à l'égout du toit ou au sommet de l'acrotère ; 15 mètres au faitage ». Bonus +3 m (LLS >= 50 % SDP, hébergement hôtelier) cf. regles_transverses.",
+       emprise_sol_pct: 80, emprise_src: "Art. U 9.2, p.12",
+       emprise_note: "Dépendances : 25 m² d'emprise max.",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11",
+       recul_limites_note: "Implantation possible sur 1 ou 2 limites (profondeur bâtie <= 12 m habitat, 15 m RDC autre destination) ; en retrait : 1,90 m min ; fond de propriété : 3 m (Art. U 7.3, p.11).",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       stat_note: "Collectif : 1,25/logt ou 1 place/35 m² SDP (norme la plus productive).",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U 13.1, p.18 : 15 % de l'unité foncière en espace libre et perméable planté, SANS sous-minimum de pleine terre",
+       note: "Zone mixte du centre-ville (caractère de zone, p.7). Linéaire L.151-16 : RDC obligatoirement actifs (Art. U 2.2.6, p.8)."}
+  Ub: {bassin: "Les Avirons",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. U 10.2, p.12",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 : « en zone Ub : sans objet »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11",
+       recul_limites_note: "1 ou 2 limites possibles (profondeur bâtie <= 20 m en zone Ub) ; retrait 1,90 m min ; fond de propriété : 1,90 m (Art. U 7.3, p.11).",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U 13.1, p.18 : zone Ub 30 % espace libre et perméable dont 10 % espace vert planté, SANS sous-minimum de pleine terre",
+       note: "ZAC du Ruisseau-Bois de Nèfles en achèvement (caractère de zone, p.7)."}
+  Ub1: {bassin: "Les Avirons",
+       he_m: 10, hf_m: 13, hauteur_src: "Art. U 10.2, p.12-13 (« en secteur Ub1 : 10 mètres à l'égout du toit ou au sommet de l'acrotère ; 13 mètres au faitage », p.13)",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 : « en zone Ub : sans objet » (aucune valeur propre au secteur Ub1)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (règle de la zone Ub)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U 13.1, p.18 : « en zones Ub et secteurs Ub1, Ub2 et Ub3 » 30 % perméable dont 10 % espace vert, SANS sous-minimum de pleine terre"}
+  Ub2: {bassin: "Les Avirons",
+       he_m: 8, hf_m: 11, hauteur_src: "Art. U 10.2, p.12 (« en zone Uc et secteur Ub2 : 8 mètres à l'égout … 11 mètres au faitage »)",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 : « en zone Ub : sans objet » (aucune valeur propre au secteur Ub2)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (règle de la zone Ub)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U 13.1, p.18 : 30 % perméable dont 10 % espace vert, SANS sous-minimum de pleine terre"}
+  Ub3: {bassin: "Les Avirons",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. U 10.2, p.12-13 (« en zone Ud et secteur Ub3 : 7 mètres à l'égout … 10 mètres au faitage », p.13)",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 : « en zone Ub : sans objet » (aucune valeur propre au secteur Ub3)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (règle de la zone Ub)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U 13.1, p.18 : 30 % perméable dont 10 % espace vert, SANS sous-minimum de pleine terre"}
+  Ub4: {bassin: "Les Avirons",
+       he_m: 8, hf_m: 8, hauteur_src: "Art. U 10.2, p.13 (« en secteur Ub4 : 8 mètres en hauteur absolue »)",
+       hauteur_note: "Plafond absolu unique => he = hf = 8.",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 : « en zone Ub : sans objet » (aucune valeur propre au secteur Ub4)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (règle de la zone Ub)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. U 12.2, p.17",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U 13.1, p.18 : secteur Ub4 30 % perméable dont 20 % espace vert, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. U 1.2 (7.), p.7 : « En secteur Ub4, les constructions, ouvrages et travaux non liés » à la réalisation d'équipements collectifs d'intérêt général sont interdits",
+       note: "Secteur destiné aux équipements d'intérêt collectif (caractère de zone, p.7)."}
+  Uc: {bassin: "Les Avirons",
+       he_m: 8, hf_m: 11, hauteur_src: "Art. U 10.2, p.12",
+       emprise_sol_pct: 60, emprise_src: "Art. U 9.2, p.12",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11",
+       recul_limites_note: "1 ou 2 limites possibles (profondeur <= 12 m habitat) ; retrait 1,90 m min ; fond de propriété : 3 m (Art. U 7.3, p.11).",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U 13.1, p.18 : 30 % de l'unité foncière en espace libre et perméable, SANS sous-minimum de pleine terre"}
+  Uc1: {bassin: "Les Avirons",
+       he_m: 6, hf_m: 9, hauteur_src: "Art. U 10.2, p.12 (« en secteur Uc1, Uc3, Ud2 et Ud3 : 6 mètres à l'égout … 9 mètres au faitage »)",
+       hauteur_note: "En limite séparative : 6 m max dans une bande de 3 m. SURÉLÉVATION des constructions existantes INTERDITE en Uc1 ; extension/reconstruction plafonnée aux hauteurs du bâtiment initial (Art. U 10.2, p.12).",
+       emprise_sol_pct: 60, emprise_src: "Art. U 9.2, p.12 (« en zone Uc : 60% » — seul le secteur Uc3 reçoit une valeur dérogatoire)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (règle de la zone Uc)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U 13.1, p.18 : zone Uc 30 % perméable, SANS sous-minimum de pleine terre",
+       note: "Lotissement récent et structuré, reprend la règlementation initiale du lotissement (caractère de zone, p.7)."}
+  Uc3: {bassin: "Les Avirons",
+       he_m: 6, hf_m: 9, hauteur_src: "Art. U 10.2, p.12",
+       hauteur_note: "En limite séparative : 6 m max dans une bande de 3 m.",
+       emprise_sol_pct: 40, emprise_src: "Art. U 9.2, p.12 (« en secteurs Uc3, Ud2 et Ud3 : 40% »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11",
+       recul_limites_note: "En secteurs Uc3 et Ud3 : UNE seule limite possible (profondeur <= 12 m habitat) ; retrait 1,90 m min ; fond : 3 m.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U 13.1, p.18 : « en secteurs Uc3, Ud2 et Ud3 : 40% » espace libre et perméable, SANS sous-minimum de pleine terre",
+       note: "Bourg du Tévelave — prescriptions renforcées de perméabilité (caractère de zone, p.7)."}
+  Ud: {bassin: "Les Avirons",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. U 10.2, p.12-13 (« en zone Ud et secteur Ub3 », p.13)",
+       emprise_sol_pct: 50, emprise_src: "Art. U 9.2, p.12",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11",
+       recul_limites_note: "1 ou 2 limites possibles (profondeur <= 12 m habitat) ; retrait 1,90 m min ; fond de propriété : 3 m (Art. U 7.3, p.11).",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U 13.1, p.18 : 40 % de l'unité foncière en espace libre et perméable, SANS sous-minimum de pleine terre"}
+  Ud1: {bassin: "Les Avirons",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. U 10.2, p.12-13 (« en zone Ud … », p.13 — aucune valeur propre au secteur Ud1)",
+       emprise_sol_pct: 50, emprise_src: "Art. U 9.2, p.12 (« en zone Ud : 50% » — seuls Ud2 et Ud3 reçoivent une valeur dérogatoire)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (règle de la zone Ud)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U 13.1, p.18 : zone Ud 40 % perméable, SANS sous-minimum de pleine terre",
+       note: "Secteur déjà urbanisé (SDU loi ELAN) au sein de l'espace agricole/naturel : constructions admises « à des fins exclusives d'amélioration de l'offre de logement ou d'hébergement et d'implantation de services publics », SANS extension du périmètre bâti ni modification significative du bâti ; avis CDNPS obligatoire (Art. U 2.2, p.8)."}
+  Ud2: {bassin: "Les Avirons",
+       he_m: 6, hf_m: 9, hauteur_src: "Art. U 10.2, p.12",
+       emprise_sol_pct: 40, emprise_src: "Art. U 9.2, p.12 (« en secteurs Uc3, Ud2 et Ud3 : 40% »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (règle de la zone Ud)",
+       stat_logement: null, stat_note: "Sans objet (pas de logement neuf).", stat_src: "Art. U 12.2, p.17",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U 13.1, p.18 : « en secteurs Uc3, Ud2 et Ud3 : 40% » perméable, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. U 2.2, p.8 : « En secteur Ud2, seules les constructions destinées à la pratique du tourisme, dont l'hébergement touristique, ainsi que l'extension limitée des constructions existantes sont autorisées » — aucun logement neuf => habitat interdit pour le moteur",
+       note: "Quartier de Bois Blanc, constructions limitées (caractère de zone, p.7) ; SDP totale admise 60 m² par bâtiment, 120 m² max par unité foncière (Art. U 2.2, p.8)."}
+  Ud3: {bassin: "Les Avirons",
+       he_m: 6, hf_m: 9, hauteur_src: "Art. U 10.2, p.12",
+       hauteur_note: "En limite séparative : 6 m max dans une bande de 3 m.",
+       emprise_sol_pct: 40, emprise_src: "Art. U 9.2, p.12",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11",
+       recul_limites_note: "En secteurs Uc3 et Ud3 : UNE seule limite possible ; retrait 1,90 m min ; fond : 3 m.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2 (tableau), p.17",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U 13.1, p.18 : 40 % perméable, SANS sous-minimum de pleine terre",
+       note: "Bourg du Tévelave — prescriptions renforcées de perméabilité (caractère de zone, p.7)."}
+
+  # ========= Zone UE — chapitre propre, p.19-25 =========
+  Ue: {bassin: "Les Avirons",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. UE 10.2, p.22",
+       hauteur_note: "Dépendances : 3 m max.",
+       emprise_sol_pct: null, emprise_src: "Art. UE 9, p.22 : « Sans objet »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UE 6.2, p.21",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. UE 7.2, p.21",
+       recul_limites_note: "1 ou 2 limites possibles OU retrait 5 m min ; retrait OBLIGATOIRE contre toute limite avec une zone urbaine (UA, UB) ou AU non dédiée à l'activité économique de production.",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UE 12.2 (tableau activités), p.24",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UE 13.1, p.24 : 30 % de l'unité foncière en espace libre et perméable, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. UE 1.2 (2.), p.19 : interdiction des constructions « à usage d'habitation y compris celles liées au gardiennage »",
+       note: "Zone d'activités économiques (production, transformation, artisanat, recherche/formation — caractère de zone, p.19). Commerces/bureaux/équipements plafonnés à 5 % de l'emprise foncière de la zone (Art. UE 2.2.2, p.19)."}
+
+  # ========= LOT AU indicées — renvoi explicite au règlement de la zone U d'indice
+  # (« ZONES AUindicée », p.26 : renvoi répété à chaque article) =========
+  AUa: {bassin: "Les Avirons",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. U 10.2, p.12 via renvoi (ZONES AUindicée, p.26)",
+       emprise_sol_pct: 80, emprise_src: "Art. U 9.2, p.12 (via renvoi, règles de la zone Ua)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10 (via renvoi)",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (via renvoi)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2, p.17 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U 13.1, p.18 (via renvoi) : 15 % perméable, SANS sous-minimum de pleine terre",
+       note: "Urbanisation par opération d'ensemble OU au fur et à mesure des équipements internes ; conditions : infrastructures suffisantes, compatibilité OAP, densité minimale 30 logements/ha à l'échelle de la zone (Art. AUindicée 2.2, p.26)."}
+  AUc: {bassin: "Les Avirons",
+       he_m: 8, hf_m: 11, hauteur_src: "Art. U 10.2, p.12 via renvoi (ZONES AUindicée, p.26)",
+       emprise_sol_pct: 60, emprise_src: "Art. U 9.2, p.12 (via renvoi, règles de la zone Uc)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10 (via renvoi)",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (via renvoi)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2, p.17 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U 13.1, p.18 (via renvoi) : 30 % perméable, SANS sous-minimum de pleine terre",
+       note: "Renvoi à la zone Uc ; densité minimale 30 logements/ha à l'échelle de la zone (Art. AUindicée 2.2.4, p.26)."}
+  AUd: {bassin: "Les Avirons",
+       he_m: 7, hf_m: 10, hauteur_src: "Art. U 10.2, p.12-13 via renvoi (ZONES AUindicée, p.26)",
+       emprise_sol_pct: 50, emprise_src: "Art. U 9.2, p.12 (via renvoi, règles de la zone Ud)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U 6.2, p.10 (via renvoi)",
+       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7.2, p.11 (via renvoi)",
+       stat_logement: "1,5 place / logement", stat_src: "Art. U 12.2, p.17 (via renvoi)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U 13.1, p.18 (via renvoi) : 40 % perméable, SANS sous-minimum de pleine terre",
+       note: "Renvoi à la zone Ud ; densité minimale 20 logements/ha à l'échelle de la zone (Art. AUindicée 2.2.4, p.26)."}
+
+  # ========= Zone AUec — chapitre propre, p.29-34 (ancienne ZAC du bas du Tévelave) ====
+  AUec: {bassin: "Les Avirons",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. AUec 10.2, p.32",
+       hauteur_note: "Dépendances : 3 m max.",
+       emprise_sol_pct: null, emprise_src: "Art. AUec 9, p.32 : « Sans objet »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. AUec 6.2, p.31",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. AUec 7.2, p.31 (1 ou 2 limites possibles OU retrait 5 m min)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. AUec 12.2 (tableau activités), p.33",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. AUec 13.1, p.34 : 30 % de l'unité foncière en espace libre et perméable, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. AUec 1.2 (2.), p.29 : interdiction des constructions « à usage d'habitation y compris celles liées au gardiennage »",
+       note: "Urbanisation future à vocation économique (commerce, services, production, hôtellerie — caractère de zone, p.29) ; condition : infrastructures suffisantes (Art. AUec 2.2.1, p.29)."}
+
+  # ========= Zone AUt — chapitre propre, p.35-41 (équipements touristiques/loisirs) ====
+  AUt: {bassin: "Les Avirons",
+       he_m: 9, hf_m: 12, hauteur_src: "Art. AUt 10.2, p.38",
+       hauteur_note: "« 9 mètres à l'égout du toit ou au sommet de l'acrotère ; 12 mètres au faitage » ; dépendances 3 m max.",
+       emprise_sol_pct: null, emprise_src: "Art. AUt 9, p.38 : « Sans objet »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. AUt 6.2, p.36-37",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. AUt 7.2, p.37",
+       recul_limites_note: "1 ou 2 limites possibles (profondeur bâtie <= 20 m) ; en retrait : 3 m min.",
+       stat_logement: null, stat_note: "Sans objet pour le moteur (habitat limité au gardiennage) ; tableau : 1 place/logement autorisé, hôtelier 1 place/2 chambres (Art. AUt 12.2, p.40).", stat_src: "Art. AUt 12.2 (tableau), p.40",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. AUt 13.1, p.40 : 30 % de l'unité foncière en espace vert et perméable, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. AUt 1.2, p.35 (liste limitative : tout est interdit sauf Art. AUt 2) + Art. AUt 2.2.4, p.35 : habitation admise UNIQUEMENT « destinée et liée au gardiennage et à la surveillance des installations autorisées », 50 m² d'emprise au sol max — logement de fonction => habitat interdit pour le moteur",
+       note: "Urbanisation future pour équipements touristiques et de loisirs (hébergement hôtelier, sports, détente — Art. AUt 2.2, p.35)."}
+
+zones_au_renvoi: {}
+
+# GROUPE CAPACITÉ LOGEMENT ZÉRO (constructible_neuf=False — capacité logement ZÉRO exacte,
+# précédents UF/AUF Petite-Île, Ue/Up/Uv Le Port : zone à habitat impossible SANS hauteur
+# chiffrée => jamais d'entrée `zones:` qui retomberait en estimation générique 9 m).
+# 1) GEL AUes : « En attendant la réalisation d'études préalables devant déterminer un
+#    programme d'aménagement et l'ouverture à l'urbanisation de la zone conditionnée à
+#    une modification du PLU, sont admises … » réseaux/voirie/énergie, ouvrages techniques
+#    SP, reconstruction après sinistre, extension mineure 20 m² SDP pour mise aux normes
+#    (Art. AUes 2, p.42) ; tout le reste interdit (Art. AUes 1.2, p.42) ; hauteur « Sans
+#    objet » (Art. AUes 10, p.43). Zone stricte dédiée à l'activité économique de
+#    production (caractère de zone, p.5 — décrite au chapitre des caractères sous
+#    l'intitulé « AUs … Répondant aux mêmes logiques, la zone AUes est une zone stricte
+#    dédiée à l'activité économique de production » ; seul AUes figure au zonage).
+# 2) Ub5 NON AEDIFICANDI (ravines et talweg) : « En secteur Ub5, toutes les
+#    constructions, ouvrages et travaux à l'exception de ceux mentionnés à l'article U 2 »
+#    sont interdits (Art. U 1.2.8, p.7) ; « En secteur Ub5, seules sont autorisés les
+#    chemins piétons et les voies d'accès permettant aux services d'entretenir les lits
+#    et remparts des ravines » (Art. U 2.2, p.8). Aucune hauteur au chapitre pour Ub5.
+zones_au_st:
+  liste: ["AUes", "Ub5"]
+  portee: "Construction neuve de logement impossible : AUes gelée (ouverture à l'urbanisation conditionnée à une modification du PLU après études préalables ; seuls réseaux, ouvrages techniques, reconstruction après sinistre et extension de mise aux normes 20 m² SDP admis) ; Ub5 non aedificandi (chemins piétons et voies d'entretien des ravines uniquement)."
+  source: "Art. AUes 1.2 et AUes 2, p.42 ; Art. AUes 10, p.43 ; Art. U 1.2, p.7 et Art. U 2.2, p.8 (secteur Ub5)."
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
+# A : tout interdit sauf conditions (Art. A 1.2, p.44) ; habitat limité à l'exploitation
+# agricole : extension des habitations existantes +30 % dans la limite de 60 m² et
+# 150 m² SDP au total, construction d'habitation liée et nécessaire à l'exploitation
+# 150 m² SDP max, agritourisme (Art. A 2.2, p.44-45) ; hauteur A 10.2 p.47 (habitat 4 m
+# égout / R+0 …) — pas de logement hors exploitation => non constructible (urbanisation).
+# N + secteurs Nli/Npnr/Nr/Nto : tout interdit sauf conditions (Art. N 1.2, p.50) ;
+# aucune habitation neuve — seulement extension de l'existant +30 %/60 m²/150 m² SDP hors
+# Npnr et Nr (Art. N 2.2.4, p.51) ; Npnr coeur du Parc national (autorisation spéciale),
+# Nli espaces remarquables du littoral (aménagements légers R.121-5), Nr réservoirs de
+# biodiversité (équipements AEP uniquement), Nto tourisme/loisirs Tévelave 60 m² SDP par
+# nouveau bâtiment sans habitat (Art. N 2.2.6, p.51). Les graver ferait calculer une
+# capacité logement fictive => repli générique non constructible, verdict produit correct.
+zones_non_constructibles: ["A (chap. p.44-49)",
+                           "N, Nli, Npnr, Nr, Nto (chap. p.50-56)"]

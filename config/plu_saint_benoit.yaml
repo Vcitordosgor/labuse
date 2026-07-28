@@ -1,0 +1,148 @@
+# =============================================================================
+# PLU SAINT-BENOÎT (97410) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Saint-Benoît (cache session nuit B).
+#   document : 97410_reglement.pdf (« PIECE 3.1 - REGLEMENT ECRIT », 162 p. PDF)
+#   PLU approuvé le 06/02/2020 (idurba GPU 97410_PLU_20200206 ; la page de garde
+#   PDF p.1 porte « APPROUVE LE : ………… » non rempli — millésime tenu de l'idurba).
+#
+# ARBITRAGE VIC (nuit du 27-28/07/2026, matin) — HAUTEURS PAR SECTEURS GRAPHIQUES :
+#   Art. U 4 (p.9) et Art. AU 4 (p.23) fixent la hauteur « selon les secteurs
+#   repérés sur le document graphique » (U : 15/13/10/7/4 m ; AU : 15/13/10/7 m).
+#   Un écart de 4 à 15 m selon le secteur graphique n'est pas une tranche à
+#   choisir : c'est une règle que le YAML ne sait pas porter. La gravure initiale
+#   à 4 m (tranche conservatrice) sous-estimait d'un facteur 4 => FAUX NÉGATIFS en
+#   série. DÉCISION : zones à habitat admis NON CALIBRÉES, motif « hauteur définie
+#   par secteur graphique, non portable par le schéma v1 » ; zones à habitat
+#   interdit (interdiction TEXTUELLE, indépendante du graphique) en capacité zéro
+#   exacte via zones_au_st. FRICTION DE SCHÉMA MAJEURE — candidat v2 :
+#   « hauteur par calque graphique » (cf. PLU_NUIT_RAPPORT_B.md).
+#
+# PAGINATION — DOUBLE NUMÉROTATION => TOUTES les citations en pages PDF :
+#   Le PDF concatène DEUX blocs qui portent chacun leur propre numérotation imprimée :
+#     - PDF 1-48   : le règlement écrit proprement dit (chapitres ZONES U p.PDF 3,
+#       AU p.19, A p.32, N p.40), numéroté « Page N sur 49 » (PDF n = imprimée n) ;
+#     - PDF 49-162 : le cahier d'annexes du règlement (fiches AU, fiches STECAL
+#       Ns/Nta/Ntb, patrimoine, ER…), renuméroté « Page 1 sur 114 » à « Page 114
+#       sur 114 » (PDF n = imprimée n - 48).
+#   Deux référentiels imprimés dans un même fichier = ambiguïté ; décision imposée
+#   par le mandat : pagination_citee: "pdf" — chaque « p.N » des _src est la page
+#   PDF du fichier gravé, dans les DEUX blocs. Ne pas réinterpréter en pages imprimées.
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - FORMAT MODERNE MUTUALISÉ PAR FAMILLE : un chapitre unique par famille (articles
+#     « Article U – n », « Article AU – n », « Article A – n », « Article N – n »)
+#     s'applique à TOUTES les zones de la famille ; les différenciations sont des
+#     alinéas « En zone(s) X ». Les _src citent « Art. U 4 » pour « Article U – 4 »
+#     (tiret cadratin du titre non repris). Pas d'articles 1-14 par zone, zéro renvoi.
+#   - COS (invariant 5, ALUR 2014) : ZÉRO occurrence de « coefficient d'occupation »
+#     dans le document (vérifié sur texte brut et à lettres doublées repliées) —
+#     document 2020 propre, rien à consigner d'autre, rien n'est appliqué.
+#   - STECAL Ns20-46 / Nta47-54 / Ntb55-57-59 (« considérées comme des STECAL »,
+#     annexe 3, p.73) : NON CALIBRÉS — voir zones_non_calibrees (caducité loi
+#     ELAN au 31/12/2021, passages cités).
+# =============================================================================
+
+source:
+  document: "97410_reglement.pdf"
+  approbation: "2020-02-06"
+  approbation_note: "Date du document GPU en vigueur (idurba 97410_PLU_20200206) ; la page de garde du PDF (p.1) n'est pas datée."
+  pages_total: 162
+  pagination_citee: "pdf"
+  pagination_note: "Double numérotation imprimée (« Page N sur 49 » PDF 1-48, « Page N sur 114 » PDF 49-162) => toutes les citations p.N sont des pages PDF."
+  reglement_grave:
+    fichier: "97410_reglement.pdf"
+    md5: "900a6c13641a4fd39b5bb65b71914f70"
+    millesime: "2020-02-06"
+    document_gpu_au_calibrage: "97410_PLU_20200206"
+    verifie_le: "2026-07-27"
+    correction: "2026-07-28 — arbitrage Vic : dé-calibrage des hauteurs par secteurs graphiques (cf. en-tête)."
+
+mode: progressif
+
+regles_transverses:
+  hauteur_secteurs: "NON PORTABLE SCHÉMA V1 — hauteurs maximales fixées par SECTEURS du document graphique (Art. U 4, p.9 : 15/13/10/7/4 m à l'égout ou acrotère, faîtage +3,50 m imposé dans les zones à 4 m et le long des rues Pompidou/Montfleury/Brunet, Art. U 4 I 2° ; Art. AU 4, p.23 : 15/13/10/7 m). Les secteurs de hauteur ne sont pas les zones du manifeste : aucune tranche n'est gravable sans le calque graphique (arbitrage Vic 28/07/2026)."
+  stationnement: "Tableau unique zone U (Art. U 12, p.16-17) repris à l'identique en AU (Art. AU 12, p.29-31) : logements individuels ou opérations <= 5 logements 1 place/logement ; opérations > 5 logements +1 place visiteur par tranche de 5 ; logements aidés 1 place pour 2 logements ; commerces/services/bureaux : non réglementé en Ua, sinon 30 % de la SDP."
+  limites_separatives: "U et AU (Art. U 7, p.11 ; Art. AU 7, p.25) : implantation sur l'une ou les deux limites séparatives latérales OU recul d'un mètre au moins ; fond de parcelle libre."
+  emprise: "U et AU : emprise au sol maximale 80 % (Art. U 5, p.10 ; Art. AU 5, p.24)."
+  espaces_libres: "U et AU (Art. U 9, p.13 ; Art. AU 9, p.26) : 20 % minimum de la superficie du terrain en espaces libres traités en surface perméable ; aire de jeux 100 m² dès 20 logements. Libellé verbatim « espaces libres traités en surface perméable » — pas un minimum de pleine terre stricto sensu."
+
+# Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+# AUCUNE entrée `zones:` — arbitrage Vic 28/07/2026 (cf. en-tête) : les hauteurs U/AU
+# sont définies par secteurs graphiques, non portables par le schéma v1. Les valeurs
+# textuelles saines (emprise 80 %, limites 1 m, stationnement, 20 % perméable) sont
+# consignées en regles_transverses et dans les motifs ci-dessous pour un futur v2.
+zones: {}
+
+zones_au_renvoi: {}
+
+# Zones U/AU à HABITAT INTERDIT (interdiction TEXTUELLE, indépendante des secteurs
+# graphiques de hauteur) : capacité logement zéro EXACTE — l'étiquette moteur
+# « secteur de transition » est inexacte (friction F2), la capacité zéro est correcte.
+zones_au_st:
+  liste: ["Ue", "Up", "Ut", "AUe3", "AUp1"]
+  portee: "Habitat interdit par le texte : Ue/Up — Art. U 2 (5°), p.5-6 : « En zone Ue et Up » sont interdites les constructions à usage d'habitation à l'exception des logements de gardiennage incorporés au bâtiment d'activité (+ internat CFPPA en Ue Beaulieu) ; Ut — Art. U 2 (6°), p.5-7 : tout est interdit sauf équipements et hébergements touristiques et logement du personnel du site ; AUe3/AUp1 — Art. AU 2 (2°), p.21 : « En zone AUe et AUp » habitations interdites sauf gardiennage incorporé. Hauteurs de ces zones également définies par secteurs graphiques (Art. U 4, p.9 ; Art. AU 4, p.23) — sans incidence sur la capacité logement (zéro)."
+  source: "Art. U 2 (5°-6°), p.5-7 ; Art. AU 2 (2°), p.21"
+
+# Zones NON calibrées (repli générique du moteur) — motifs sourcés,
+# vérifiés par script via les clés `source` ci-dessous.
+zones_non_calibrees:
+  "Ua, Uap, Ub (zones U à habitat admis)":
+    motif: "ARBITRAGE VIC 28/07/2026 — hauteur définie par secteur graphique, non portable par le schéma v1 : Art. U 4 (p.9) fixe 15/13/10/7/4 m à l'égout/acrotère « selon les secteurs repérés sur le document graphique » ; l'écart 4-15 m n'est pas une tranche à choisir, graver 4 m sous-estimait d'un facteur 4 (faux négatifs en série). Valeurs textuelles saines consignées pour un futur v2 : emprise 80 % (Art. U 5, p.10) ; limites séparatives 1 m ou implantation en limite (Art. U 7, p.11) ; recul voirie non réglementé sauf exceptions Pompidou/Montfleury/Brunet et RN 75 m hors agglomération (Art. U 6, p.10-11) ; stationnement 1 place/logement + visiteurs (Art. U 12, p.16-17) ; 20 % perméable (Art. U 9, p.13). Uap : secteur patrimonial (toitures >= 35°, Art. U 8 2°, p.12). Ub : corridor écologique la Sourdine, constructions interdites dans les hachures vertes (Art. U 2 7°, p.7)."
+    source: "Art. U 4, p.9 : « selon les secteurs repérés sur le document graphique » ; Art. U 5, p.10 ; Art. U 7, p.11"
+  "AUa5, AUa8, AUa9, AUa18, AUb2, AUb6, AUb7, AUb10, AUb11, AUb12, AUb13, AUb14, AUb15, AUb16, AUb17, AUb19 (zones AU à habitat admis)":
+    motif: "ARBITRAGE VIC 28/07/2026 — hauteur définie par secteur graphique, non portable par le schéma v1 : Art. AU 4 (p.23) fixe 15/13/10/7 m « selon les secteurs repérés sur le document graphique » (même règle que U 4, écart facteur 2). Régime d'urbanisation : chaque zone AU a sa fiche annexe N°01-19 (opération d'ensemble OU équipements internes réalisés — régime 1AU, précédent Tampon), n° du libellé GPU = n° de fiche (confirmé Art. AU 1, p.19). Valeurs textuelles saines consignées pour un futur v2 : emprise 80 % (Art. AU 5, p.24) ; limites 1 m (Art. AU 7, p.25) ; stationnement (Art. AU 12, p.29-30) ; 20 % perméable (Art. AU 9, p.26) ; AUb2 : recul voirie 10 m (fiche N°02, p.55 : « Recul minimum obligatoire des constructions : 10 mètres à compter de l'emprise de la voie »)."
+    source: "Art. AU 4, p.23 : « selon les secteurs repérés sur le document graphique » ; Art. AU 1, p.19 ; Art. AU 5, p.24"
+  A:
+    motif: "Zone agricole : « toute construction nouvelle » interdite à l'exception des constructions nécessaires à l'exploitation agricole ; pour l'habitat existant, seules annexes/extensions dans la limite TOTALE de 160 m² de SDP (300 m² si agrotourisme) — aucune règle consommable pour du logement neuf ordinaire. Hauteur consignée : 12 m agricole, 4 m égout / 8 m faîtage autres constructions."
+    source: "Art. A 2, p.34 ; Art. A 3 (4°-5°), p.35 ; Art. A 4, p.37"
+  Acor:
+    motif: "Corridors écologiques agricoles : toute construction nouvelle interdite sauf extension limitée des constructions agricoles pour mise aux normes et changements de destination listés."
+    source: "Art. A 2, p.34 ; Art. A 3 (zones Acu et Acor), p.36"
+  Acu:
+    motif: "Coupures d'urbanisation (loi Littoral) : « toutes les constructions, même agricoles, sont interdites » (caractère de zone) ; seules extensions de mise aux normes, changements de destination et carrières du Schéma départemental."
+    source: "Art. A 1, p.32 ; Art. A 2, p.34 ; Art. A 3, p.36"
+  Ai:
+    motif: "Espace agricole inconstructible de Le Conardel (future zone d'activités) : tous travaux/constructions interdits sauf aménagement et extension mineure de mise aux normes <= 20 m² de SDP sur constructions existantes."
+    source: "Art. A 1, p.32 ; Art. A 2, p.34 ; Art. A 3 (zone Ai), p.37"
+  N:
+    motif: "Zone naturelle : toute construction nouvelle interdite sauf exploitation agricole/forestière ; habitat existant limité à 160 m² SDP total (annexes/extensions). Hauteur consignée : 12 m agricole, 4 m égout / 8 m faîtage autres."
+    source: "Art. N 2, p.42 ; Art. N 3 (4°), p.44 ; Art. N 4, p.46"
+  Npnr:
+    motif: "Cœur du Parc national de La Réunion : tous travaux, constructions et installations interdits sauf autorisation spéciale de l'établissement public du Parc."
+    source: "Art. N 2, p.42"
+  Nerl:
+    motif: "Espaces remarquables du littoral (SAR) : tous travaux/constructions interdits sauf aménagements légers de gestion/mise en valeur."
+    source: "Art. N 2, p.42 ; Art. N 3 (zone Nerl), p.45"
+  Np:
+    motif: "Sites naturels à forte valeur écologique protégés de manière stricte : « toute construction nouvelle » interdite, sans exception consommable."
+    source: "Art. N 2, p.42"
+  Nci:
+    motif: "Cimetières : toute construction nouvelle interdite sauf ouvrages liés à la gestion des cimetières dans la limite de 300 m² de SDP."
+    source: "Art. N 2, p.42"
+  "Ns20 à Ns46 (27 libellés du manifeste, graphie texte « Ns 20 »… : fiches N°20 à 46)":
+    motif: "STECAL « hameaux nouveaux » loi Littoral (anciennes zones Nba 2006). L'habitat en hameau intégré y est admis dans le principe (Art. N 2) MAIS l'annexe 3 rend le droit à construire caduc : en espace proche du rivage (Ns 20, 21, 41 à 46) « les constructions seront interdites à partir du 31/12/2021 » ; hors espace proche du rivage, partie non bâtie (rouge) interdite depuis le 31/12/2021 et partie déjà bâtie (bleue) constructible seulement « si le STECAL est pris en compte avant cette date par le Préfet ou par le SCOT de la CIREST » — fait extérieur au règlement, invérifiable ici ; découpage rouge/bleu par schémas de fiche non parcellisable. Graver une capacité serait deviner => non calibrées. Chiffres consignés : hauteur 4 m égout / 8 m faîtage, emprise 70 % (Art. N 4 et N 5, p.46)."
+    source: "Art. N 1, p.40 ; Art. N 2, p.42 ; annexe 3, p.73 : « les constructions seront interdites à partir du 31/12/2021 » ; Art. N 4, p.46"
+  "Nta47 à Nta54 (8 libellés, fiches N°47 à 54)":
+    motif: "STECAL touristiques (anciennes zones Nto/Ntc 2006) : en zone Nt toute construction nouvelle est interdite « à l'exception des équipements et hébergements touristiques, ainsi que des constructions affectées au logement du personnel » — pas de logement neuf ordinaire ; même caducité loi ELAN que les Ns (annexe 3, p.73). Nta n°53 (Kanopea Forest Lodge) : cabanes arboricoles démontables, 350 m² de SDP max par unité foncière, emprise 10 %, hauteurs 5/8 m (10 m max au sol) — fiche N°53, p.86."
+    source: "Art. N 2, p.42-43 ; Art. N 1, p.40 ; annexe 4, fiche N°53, p.86 : « dans la limite de 350 m² de surface de plancher par unité foncière »"
+  "Ntb55, Ntb57, Ntb59 (3 libellés, fiches N°55, 57, 59)":
+    motif: "STECAL « hameaux touristiques nouveaux » à projet unique, vocation exclusivement touristique (zone Nt, Art. N 2) + caducité loi ELAN (annexe 3, p.73). Plafonds de fiche consignés : Ntb55 Domaine Anamoutou — emprise totale 1700 m², 10 m au faîtage (p.88) ; Ntb57 Diana Dea Lodge — SPA 1075 m² d'emprise, hameau 500 m² de SDP, hauteurs 4,5/6 m (p.91-92) ; Ntb59 Le Verger — 30 bungalows max, emprise totale 1050 m², 6 m égout / 8 m faîtage (p.94, zone en espace proche du rivage : constructions interdites depuis le 31/12/2021)."
+    source: "Art. N 2, p.42-43 ; annexe 5, fiche N°55, p.88 : « L'emprise au sol totale des constructions ne pourra excéder 1700 m² » ; fiche N°59, p.94"
+
+# Récapitulatif conventionnel (modèle Tampon) — mêmes décisions que zones_non_calibrees :
+zones_non_constructibles: ["A, Acor, Acu, Ai (chap. ZONES A, p.32-39)",
+                           "N, Npnr, Nerl, Np, Nci (chap. ZONES N, p.40-48)",
+                           "Ns20, Ns21, Ns22, Ns23, Ns24, Ns25, Ns26, Ns27, Ns28, Ns29, Ns30, Ns31, Ns32, Ns33, Ns34, Ns35, Ns36, Ns37, Ns38, Ns39, Ns40, Ns41, Ns42, Ns43, Ns44, Ns45, Ns46 (STECAL, fiches N°20-46, p.73-81)",
+                           "Nta47, Nta48, Nta49, Nta50, Nta51, Nta52, Nta53, Nta54 (STECAL, fiches N°47-54, p.82-87)",
+                           "Ntb55, Ntb57, Ntb59 (STECAL, fiches N°55/57/59, p.88-96)"]

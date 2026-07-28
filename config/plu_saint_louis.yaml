@@ -1,0 +1,353 @@
+# =============================================================================
+# PLU SAINT-LOUIS (97414) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Saint-Louis (cache session nuit B).
+#   document : 97414_reglement.pdf (« PLU de Saint-Louis — Règlement 2025 », 139 p.)
+#   PLU approuvé le 11 mars 2014 ; modifications approuvées le 27 février 2020 et
+#   le 9 juillet 2025 (page de garde, PDF p.1). Document GPU : 97414_plu_20251218.
+#
+# FIABILITÉ (n'inventer AUCUNE valeur) :
+#   - page_pdf = page_imprimee + 2 (vérifié : sommaire imprimé 1 = PDF 3, ZONE UA
+#     imprimée 10 = PDF 12, ZONE AUindicée imprimée 105 = PDF 107). Les _src citent
+#     la page IMPRIMÉE.
+#   - null         = règle explicitement absente/« non réglementée » dans le texte (sourcé).
+#   - ANCIEN FORMAT à articles préfixés (UA 1..UA 15) : 6=recul voirie, 7=recul limites,
+#     9=emprise, 10=hauteur, 12=stationnement, 13=espaces perméables.
+#   - COS (invariant 5, ALUR 2014) : le document (modifié 09/07/2025, post-ALUR) contient
+#     encore un article 14 « COEFFICIENT D'OCCUPATION DU SOL » dans CHAQUE zone :
+#     « Il n'est pas fixé de coefficient d'occupation du sol » (UA p.23, UB p.37, UC p.52,
+#     UD p.66, UE p.78, US p.90, UZ p.103), « Sans objet » (A p.124, N p.133), renvoi
+#     (AUindicée p.109) — et Art. AUst 14, p.114 : « Le coefficient d'occupation des sols
+#     est nul à l'exception des travaux d'aménagement et d'extension mineure … ».
+#     CONSIGNÉ, JAMAIS APPLIQUÉ : aucun COS n'est gravé ; le gel AUst est porté par
+#     Art. AUst 1.2/2.2 (indépendant du COS).
+#   - ESPACES VERTS : Art. 13.1 impose un % « espace vert et perméable » SANS sous-minimum
+#     de pleine terre => % perméable GRAVÉ dans pleine_terre_pct, libellé verbatim en _src
+#     (doctrine harmonisée A/B/C 28/07/2026 — remplace le « null partout » de la nuit).
+#   - STATIONNEMENT habitat (tableau 12.2, identique UA/UB/UC/UD) : LLS 1 place/logt,
+#     autres logements 2 places/logt, opérations >10 logts +0,5 place publique/logt =>
+#     gravé « 2 places / logement » (tranche la plus exigeante hors LLS).
+#   - RÈGLES À TIROIRS : tranche LA PLUS CONSERVATRICE gravée + note (UC/UC1 : bonus de
+#     hauteur limité à 40 % des constructions pour terrains >= 4 000 m² NON gravé ;
+#     UZ : hauteurs par affectation du schéma annexe 9/12/17 m => 9 m gravé).
+#   - Reculs en « moitié de la hauteur avec minimum » (UE, US, UC1) : valeur gravée =
+#     H/2 À LA HAUTEUR MAXIMALE de la zone (jamais inférieure au plancher du texte), note.
+#   - ZONES AU (Titre III) : chapitre « ZONE AUindicée » (p.105-109) : « il convient de se
+#     reporter en fonction de l'indice de la zone AU considérée au règlement des zones
+#     urbaines correspondantes » (p.105, répété à chaque article). Le renvoi moteur ne
+#     couvre pas les codes à préfixe chiffré (1AUx) => entrées EXPLICITES, une par libellé
+#     du manifeste (y compris suffixes « oapN » : mêmes règles que la zone d'indice + OAP).
+#     1AUb1/1AUb2/2AUb1/2AUb2 : NON CALIBRÉES (arbitrage Vic 28/07/2026) — les libellés
+#     n'apparaissent nulle part et aucun secteur UB1/UB2 n'est DÉCLARÉ : la clause
+#     générale des secteurs (p.4) ne couvre que les secteurs déclarés d'une zone, le
+#     rattachement reposait sur une déduction par élimination (≠ Cilaos Ub1 : secteur
+#     porté au manifeste d'une zone Ub sans AUCUN secteur déclaré, clause applicable).
+#     Motif gravé : « rattachement non fondé sur une clause du règlement, indice
+#     cartographique sans disposition écrite » — cf. zones_non_calibrees.
+#     1AUc1/1AUc2/1AUd1 : l'indice correspond exactement aux secteurs UC1/UC2/UD1 définis
+#     au règlement => règles du secteur homonyme, note.
+#   - 2AUindicée : gel conditionnel (Art. AUindicée 2.2.3, p.106 : ouverture qu'une fois
+#     l'aménagement de l'ensemble des 1AUindicée et 1AUst entrepris) => zones_au_st.
+#   - AUst (p.110-114) : « st » N'EST PAS un simple secteur de transition nommé — le
+#     caractère de zone dit : réseaux/accès insuffisants, « l'ouverture à l'urbanisation
+#     de la zone est conditionnée à une modification du PLU » (p.110) ; Art. AUst 1.2 :
+#     tout est interdit sauf Art. AUst 2.2 (réseaux, ouvrages techniques, reconstruction
+#     après sinistre, extension <= 20 m² SDP) => gel, TOUTES graphies en liste explicite
+#     (le regex moteur AU\w*st ne matche ni 1AUst/2AUst ni 1AUste/2AUste).
+# =============================================================================
+
+# DOCTRINE HARMONISÉE A/B/C (28/07/2026, arbitrage Vic) : le % « espace vert et
+# perméable » est GRAVÉ dans pleine_terre_pct, libellé verbatim conservé en _src —
+# ce n'est PAS un minimum de pleine terre stricto sensu. Retraits en H/2 :
+# valeur gravée = max(H/2 à la hauteur maximale gravée, plancher du texte).
+
+source:
+  document: "97414_reglement.pdf"
+  approbation: "2014-03-11"
+  approbation_note: "PLU approuvé le 11/03/2014 ; modifications approuvées le 27/02/2020 et le 09/07/2025 (page de garde). Version du règlement : « Règlement 2025 » (en-tête de chaque page)."
+  pages_total: 139
+  offset_pdf_vs_imprimee: 2
+  reglement_grave:
+    fichier: "97414_reglement.pdf"
+    md5: "bae5ab70e6a8dc7697b2414fddf62145"
+    millesime: "2025-07-09"
+    document_gpu_au_calibrage: "97414_plu_20251218"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Tableau identique en UA/UB/UC/UD (Art. <Z> 12.2) : logements sociaux 1 place/logement ; autres constructions 2 places/logement ; opérations de plus de 10 logements : +0,5 place de stationnement PUBLIC par logement. UZ : 1,5 place/logement (Art. UZ 12, p.101)."
+  mixite: "Programme de logements > 2 000 m² SDP en UA (Art. UA 2.2, p.11), > 1 500 m² en UB (Art. UB 2.2, p.25) et UC (Art. UC 2.2, p.39) => 30 % minimum de logements aidés ; > 1 000 m² en UD => 20 % minimum (Art. UD 2.2, p.54)."
+  limites_separatives: "Zones UA/UB/UC/UD : implantation en limite(s) latérale(s) autorisée OU retrait >= 3 m ; fond de parcelle : en limite si <= 4 m de hauteur absolue au droit de la limite (gabarit 100 % sur 3 m), sinon retrait 3 m (Art. <Z> 7.2/7.3)."
+  destinations_interdites_u: "UA/UB/UC/UD/UZ (Art. <Z> 1.2) : interdits = constructions à destination industrielle, à destination exclusive d'entrepôt, à destination agricole — l'habitat y est admis."
+
+# Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== LOT U — zones urbaines (Titre II, p.9-103) ==============
+  UA: {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.18",
+       hauteur_note: "Dépendances : 3,50 m de hauteur absolue.",
+       emprise_sol_pct: 70, emprise_src: "Art. UA 9.2, p.17",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14",
+       recul_voirie_note: "Alignement possible (0) OU retrait >= 3 m. Servitude de galerie rue du Dr R. Vergés (RDC à 3 m de retrait, étages à l'alignement).",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15",
+       recul_limites_note: "Implantation sur les deux limites latérales, sur une seule ou en retrait 3 m ; fond de parcelle : en limite si <= 4 m au droit de la limite, sinon 3 m (Art. UA 7.3).",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12.2 (tableau), p.21",
+       stat_note: "LLS : 1 place/logement ; opérations > 10 logements : +0,5 place publique/logement.",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 : 15 % de l'unité foncière en espace vert et perméable, SANS sous-minimum de pleine terre",
+       note: "Grand centre-ville. Interdits : industrie, entrepôt exclusif, agricole (Art. UA 1.2, p.10). Mixité : > 2 000 m² SDP => 30 % logements aidés (Art. UA 2.2, p.11)."}
+  UA1: {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.18 (aucune règle de hauteur propre au secteur UA1)",
+       emprise_sol_pct: null, emprise_src: "Art. UA 9.2, p.17 : « En secteur UA1, l'emprise au sol n'est pas réglementée »",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12.2 (tableau), p.21",
+       pleine_terre_pct: null, pleine_terre_src: "Art. UA 13.1, p.22 : « En secteur UA1, il n'est pas fixé de règle »",
+       note: "Secteur du centre historique de Saint-Louis, morphologie et fonctions urbaines à préserver (caractère de zone, p.10)."}
+  UB: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 17, hauteur_src: "Art. UB 10.2, p.31-32",
+       hauteur_note: "Dépendances : 3,50 m de hauteur absolue.",
+       emprise_sol_pct: 70, emprise_src: "Art. UB 9.2, p.31",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.28 (alignement possible OU retrait >= 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.29",
+       stat_logement: "2 places / logement", stat_src: "Art. UB 12.2 (tableau), p.35",
+       stat_note: "LLS : 1 place/logement ; opérations > 10 logements : +0,5 place publique/logement.",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UB 13.1, p.36 : 20 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       note: "Bois de Nèfles Cocos, quartier stratégique (caractère de zone, p.24). Mixité : > 1 500 m² SDP => 30 % logements aidés (Art. UB 2.2, p.25)."}
+  UC: {bassin: "Saint-Louis",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47",
+       hauteur_note: "Tiroir NON gravé (conservateur) : projets d'aménagement sur terrain >= 4 000 m² : au max 40 % des constructions à 9 m égout / 13 m faîtage. Dépendances : 3,50 m.",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9.2, p.46",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (retrait OBLIGATOIRE >= 4 m, pas d'option alignement)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12.2 (tableau), p.50",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 : 25 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       note: "Tissu aggloméré du quartier de la Rivière (caractère de zone, p.38). Mixité : > 1 500 m² SDP => 30 % logements aidés (Art. UC 2.2, p.39)."}
+  UC1: {bassin: "Saint-Louis",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. UC 10.2, p.47 (« En secteur UC1, la hauteur maximale des constructions est fixée à 9 mètres … 13 mètres au faîtage »)",
+       hauteur_note: "Tiroir NON gravé : terrain >= 4 000 m² : au max 40 % des constructions à 12 m égout / 16 m faîtage.",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9.2, p.46 (60 % ; seul le secteur UC2 est abaissé à 50 %)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42",
+       recul_limites_sep_m: 4.5, recul_limites_src: "Art. UC 7.2/7.3, p.44 : « en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l'égout du toit … sans être inférieur à 3,00 mètres »",
+       recul_limites_note: "Valeur gravée = H/2 à la hauteur max du secteur (9 m égout => 4,5 m) ; plancher du texte : 3 m.",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12.2 (tableau), p.50",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 : 25 % espace vert et perméable (règle de la zone UC, aucune disposition propre au secteur), sans sous-minimum de pleine terre",
+       note: "Secteur d'emprises foncières pour opérations d'habitat collectif relativement denses (caractère de zone, p.38)."}
+  UC2: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UC 10.2, p.47 (« En secteur UC2 … 6 mètres à l'égout … 10 mètres au faîtage »)",
+       emprise_sol_pct: 50, emprise_src: "Art. UC 9.2, p.46 : « Dans le secteur UC2 ce seuil est limité à 50% »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12.2 (tableau), p.50",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 : 25 % espace vert et perméable (règle de la zone UC, aucune disposition propre au secteur), sans sous-minimum de pleine terre",
+       note: "Quartier du Ruisseau, densités moindres (caractère de zone, p.38)."}
+  UD: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60",
+       hauteur_note: "Dépendances : 3,50 m de hauteur absolue.",
+       emprise_sol_pct: 50, emprise_src: "Art. UD 9.2, p.60",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57 (retrait obligatoire >= 4 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58",
+       stat_logement: "2 places / logement", stat_src: "Art. UD 12.2 (tableau), p.64",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UD 13.1, p.65 : 30 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       note: "Tissu résidentiel peu dense en territoire rural (caractère de zone, p.53). Mixité : > 1 000 m² SDP => 20 % logements aidés (Art. UD 2.2, p.54)."}
+  UD1: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60 (aucune règle de hauteur propre au secteur UD1)",
+       emprise_sol_pct: 40, emprise_src: "Art. UD 9.2, p.60 : « Dans le secteur UD1, ce seuil est limité à 40% »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58",
+       stat_logement: "2 places / logement", stat_src: "Art. UD 12.2 (tableau), p.64",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UD 13.1, p.65 : « en secteur UD1, ce seuil est porté à 35% minimum » (perméable, sans sous-minimum pleine terre)",
+       note: "Village des Makes, bourg relais SAR, label Villages Créoles (caractère de zone, p.53). Aspect : toitures 2 ou 4 pans, toits terrasses interdits (Art. UD 11, p.62)."}
+  UE: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. UE 10.2, p.74",
+       emprise_sol_pct: 70, emprise_src: "Art. UE 9.2, p.74",
+       recul_voirie_m: 6, recul_voirie_src: "Art. UE 6.2, p.71 : retrait >= H/2 (H à l'égout), minimum 5 m",
+       recul_voirie_note: "Valeur gravée = H/2 à la hauteur max (12 m égout => 6 m) ; plancher du texte : 5 m. RN1 : 25 m minimum de l'axe.",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UE 7.2, p.72 : une seule limite latérale possible, sinon retrait >= H/2, minimum 4 m ; fond de parcelle : retrait >= 4 m (Art. UE 7.3)",
+       recul_limites_note: "Valeur gravée = H/2 à la hauteur max (12 m => 6 m) ; planchers du texte : 4 m.",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit, gardiennage compris).", stat_src: "Art. UE 1.2, p.68",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE 13.1, p.77 : 15 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. UE 1.2, p.68 : « Les constructions ouvrages et travaux à usage d'habitation y compris celles liées au gardiennage » sont interdits"}
+  US: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. US 10.2, p.86",
+       emprise_sol_pct: 70, emprise_src: "Art. US 9.2, p.85",
+       recul_voirie_m: 6, recul_voirie_src: "Art. US 6.2, p.83 : retrait >= H/2, minimum 5 m ; RN1 : 25 m de l'axe",
+       recul_voirie_note: "Valeur gravée = H/2 à la hauteur max (12 m => 6 m).",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. US 7.2, p.84 : une seule limite latérale possible, sinon retrait >= H/2, minimum 4 m ; fond : 4 m (Art. US 7.3)",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage, 70 m² max ; 1 place/logement autorisé, Art. US 12.2, p.88).", stat_src: "Art. US 12.2, p.88",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. US 13.1, p.89 : 15 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. US 1.2, p.79 (habitation interdite sauf Art. US 2.2) + Art. US 2.2, p.80 : habitation limitée à 70 m² SDP « exclusivement destinées et liées au gardiennage et à la surveillance des installations autorisées »"}
+  UZ: {bassin: "Saint-Louis",
+       he_m: null, hf_m: 9, hauteur_src: "Art. UZ 10.2, p.96-97 : hauteurs « en tout point » par affectation du schéma joint en annexe — 17 m (collectifs), 9 m (individuels), 12 m (tertiaires) ; plafond hors tout : cote NGR 42 m",
+       hauteur_note: "Règle à tiroirs dépendant du schéma d'annexe de la ZAC (non parcellisable ici) => tranche LA PLUS CONSERVATRICE gravée : 9 m hors tout (affectations individuelles).",
+       emprise_sol_pct: 60, emprise_src: "Art. UZ 9.2, p.96",
+       recul_voirie_m: null, recul_voirie_src: "Art. UZ 6.2, p.94 : pas de retrait métrique général (« les constructions nouvelles peuvent être librement implantées » en l'absence d'indications au schéma)",
+       recul_voirie_note: "Bande non aedificandi de 35 m depuis l'axe de la RN1 ; implantations conformes au schéma d'annexe de la ZAC.",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UZ 7.2, p.95 : limites possibles, sinon marge d'isolement = H/2 sans être inférieure à 3 m",
+       recul_limites_note: "Réductible à 1 m (façade aveugle) pour terrains < 12 m de large en habitat individuel.",
+       stat_logement: "1,5 place / logement", stat_src: "Art. UZ 12, p.101",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UZ 13.1, p.102 : 25 % de l'unité foncière libres et paysagés (pas d'exigence de pleine terre) — gravé par arbitrage Vic 28/07 : « libres et paysagés » = contrainte d'emprise réelle (classe paysager)",
+       note: "ZAC de l'Avenir (caractère de zone, p.91). Habitat admis selon les affectations du schéma joint en annexe (Art. UZ 2.2, p.92 : 1 logement/parcelle si parcelle <= 400 m² en « affectations dominantes en habitat » ; gardiennage seul en « activités tertiaires »)."}
+
+  # ============== LOT AU — zones à urbaniser (Titre III, chap. « ZONE AUindicée », p.105-109) ==============
+  # Renvoi explicite : « se reporter en fonction de l'indice de la zone AU considérée au
+  # règlement des zones urbaines correspondantes tout en respectant les OAP » (p.105,
+  # répété aux articles 1.2 à 15). Conditions AUindicée 2.2 (p.106) : infrastructures
+  # suffisantes + compatibilité OAP. Le renvoi mécanique du moteur ne matche pas les
+  # codes à préfixe chiffré => entrées explicites, une par libellé du manifeste.
+  1AUa: {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.18 via renvoi (ZONE AUindicée, p.105 : « se reporter … au règlement des zones urbaines correspondantes »)",
+       emprise_sol_pct: 70, emprise_src: "Art. UA 9.2, p.17 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.21 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Urbanisation prioritaire SAR (préambule AUindicée, p.105). Pour les 1AUa « se rapportant à l'OAP2 » : normes de stationnement spécifiques (LLS 0,8 place/logt, équipements 1,5 place/10 pers., Art. AUindicée 12, p.108) — base UA conservée (plus exigeante)."}
+  "1AUa oap1": {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.18 via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 70, emprise_src: "Art. UA 9.2, p.17 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.21 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Libellé GPU « 1AUa oap1 » : zone 1AUa soumise à une OAP — le règlement ne définit aucune règle chiffrée propre aux suffixes « oapN », il impose de « respecter les OAP lorsqu'elles existent » (p.105) => règles UA via renvoi."}
+  "1AUa oap3": {bassin: "Saint-Louis",
+       he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.18 via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 70, emprise_src: "Art. UA 9.2, p.17 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.21 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Zone 1AUa soumise à OAP (suffixe cartographique) => règles UA via renvoi (p.105)."}
+  1AUc: {bassin: "Saint-Louis",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9.2, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre"}
+  "1AUc oap4": {bassin: "Saint-Louis",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9.2, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Zone 1AUc soumise à OAP (suffixe cartographique) => règles UC via renvoi (p.105)."}
+  "1AUc oap5": {bassin: "Saint-Louis",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9.2, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Zone 1AUc soumise à OAP (suffixe cartographique) => règles UC via renvoi (p.105)."}
+  1AUc1: {bassin: "Saint-Louis",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. UC 10.2, p.47 (secteur UC1) via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 60, emprise_src: "Art. UC 9.2, p.46 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 4.5, recul_limites_src: "Art. UC 7.2/7.3, p.44 (secteur UC1 : retrait obligatoire >= H/2, min 3 m ; gravé à la hauteur max 9 m => 4,5 m) via renvoi",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Indice « c1 » = secteur UC1 du règlement (seul homonyme existant, caractère de zone p.38) => règles du secteur UC1 via renvoi AUindicée."}
+  1AUc2: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UC 10.2, p.47 (secteur UC2) via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 50, emprise_src: "Art. UC 9.2, p.46 (secteur UC2 : 50 %) via renvoi",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre",
+       note: "Indice « c2 » = secteur UC2 du règlement (seul homonyme existant, p.38) => règles du secteur UC2 via renvoi AUindicée."}
+  1AUd: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60 via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 50, emprise_src: "Art. UD 9.2, p.60 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UD 12.2, p.64 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UD 13.1, p.65 (via renvoi) : 30 % espace vert et perméable, sans sous-minimum de pleine terre"}
+  1AUd1: {bassin: "Saint-Louis",
+       he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60 via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 40, emprise_src: "Art. UD 9.2, p.60 (secteur UD1 : 40 %) via renvoi",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. UD 12.2, p.64 (via renvoi)",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UD 13.1, p.65 (secteur UD1 : 35 % perméable) via renvoi",
+       note: "Indice « d1 » = secteur UD1 du règlement (village des Makes, seul homonyme existant, p.53) => règles du secteur UD1 via renvoi AUindicée."}
+  1AUe: {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. UE 10.2, p.74 via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 70, emprise_src: "Art. UE 9.2, p.74 (via renvoi)",
+       recul_voirie_m: 6, recul_voirie_src: "Art. UE 6.2, p.71 (via renvoi : H/2 min 5 m, gravé à 12 m => 6 m)",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UE 7.2, p.72 (via renvoi : H/2 min 4 m, gravé à 12 m => 6 m)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UE 1.2, p.68 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE 13.1, p.77 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. UE 1.2, p.68 via renvoi (AUindicée 1.2, p.106) : habitation interdite y compris gardiennage",
+       note: "Pour la « zone 1AUe se rapportant à l'OAP2 », hauteur spécifique 17 m égout / 20 m faîtage (Art. AUindicée 10, p.108) — NON gravée (le manifeste GPU ne porte pas de suffixe oap2 ; base UE 12/15 conservée, plus conservatrice)."}
+  "1AUe oap1": {bassin: "Saint-Louis",
+       he_m: 12, hf_m: 15, hauteur_src: "Art. UE 10.2, p.74 via renvoi (ZONE AUindicée, p.105)",
+       emprise_sol_pct: 70, emprise_src: "Art. UE 9.2, p.74 (via renvoi)",
+       recul_voirie_m: 6, recul_voirie_src: "Art. UE 6.2, p.71 (via renvoi)",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UE 7.2, p.72 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UE 1.2, p.68 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE 13.1, p.77 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
+       habitat: interdit, habitat_src: "Art. UE 1.2, p.68 via renvoi : habitation interdite y compris gardiennage",
+       note: "Zone 1AUe soumise à OAP (suffixe cartographique) => règles UE via renvoi (p.105)."}
+
+zones_au_renvoi: {}
+
+# Gels AU — deux mécanismes distincts, tous portés par zones_au_st (constructible_neuf=False) :
+# 1) AUst (chapitre p.110-114) : réseaux/accès insuffisants, « l'ouverture à l'urbanisation de
+#    la zone est conditionnée à une modification du PLU » (caractère de zone, p.110) ; tout est
+#    interdit sauf réseaux/ouvrages techniques/reconstruction après sinistre/extension <= 20 m²
+#    (Art. AUst 1.2 et 2.2, p.111). Hauteur des rares travaux admis : 4 m égout / 8 m faîtage
+#    (Art. AUst 10, p.114). Concerne 1AUst, « 1AUst oap1 », 1AUste, 2AUst, 2AUste (les graphies
+#    « ste » n'ont aucun secteur propre au chapitre AUst : règles de la zone AUst entière).
+# 2) 2AUindicée (Art. AUindicée 2.2, p.106) : « leur ouverture à l'urbanisation ne pourra
+#    intervenir qu'une fois l'aménagement de l'ensemble des zones 1AUindicée et 1AUst
+#    entrepris » => gel conditionnel : 2AUb1, 2AUb2, 2AUd, 2AUd1, 2AUe.
+# Le regex moteur (AU\w*st) ne matche AUCUN de ces codes (préfixes chiffrés, suffixe « e ») :
+# liste EXPLICITE obligatoire. Art. AUst 14 (COS nul, p.114) consigné en tête, non appliqué.
+zones_au_st:
+  liste: ["1AUst", "1AUst oap1", "1AUste", "2AUst", "2AUste",
+          "2AUd", "2AUd1", "2AUe"]
+  hauteur_max_m: 4
+  portee: "Construction neuve non autorisée en l'état. AUst (1AUst/1AUste/2AUst/2AUste et OAP associées) : ouverture conditionnée à une MODIFICATION du PLU, seuls réseaux, ouvrages techniques, reconstruction après sinistre et extensions <= 20 m² SDP sont admis. 2AUindicée (2AUd/2AUd1/2AUe ; 2AUb1/2AUb2 exclues par arbitrage Vic 28/07/2026, cf. zones_non_calibrees) : ouverture conditionnée à l'aménagement préalable de l'ensemble des 1AUindicée et 1AUst de la polarité SAR. 2AUe : indice e => habitat au surplus interdit par renvoi UE."
+  source: "ZONE AUst (caractère de zone, p.110) ; Art. AUst 1.2 et 2.2, p.111 ; Art. AUst 10, p.114 ; Art. AUindicée 2.2, p.106."
+
+# Zones NON CALIBRÉES (arbitrage Vic 28/07/2026) — repli générique du moteur.
+zones_non_calibrees:
+  "1AUb1, 1AUb2, 2AUb1, 2AUb2":
+    motif: "Rattachement non fondé sur une clause du règlement, indice cartographique sans disposition écrite. Les libellés n'apparaissent nulle part dans le règlement, aucun secteur UB1/UB2 n'existe (caractère de zone UB p.24 ; liste des zones urbaines p.5-6) La clause générale des secteurs EXISTE (p.4 imprimée : « Dès lors que la zone comprend un ou plusieurs secteurs, la règle générale de la zone s'applique à chacun d'eux sauf lorsqu'une disposition particulière est prévue ») mais elle vise les secteurs DÉCLARÉS d'une zone — or aucun secteur UB1/UB2 n'est déclaré nulle part : la clause ne peut fonder le rattachement d'un libellé que le règlement ne reconnaît pas ; il reposait sur une déduction par élimination (indice « b » => UB), refusée (leçon §9 : une clause écrite fonde un rattachement d'un secteur déclaré, une déduction par élimination non). Pool concerné : 1AUb1 7 polygones/7,1 ha ; 1AUb2 12/20,8 ha ; 2AUb1 1/2,0 ha ; 2AUb2 8/7,6 ha — total 28 polygones, 37,5 ha (parcelles : mesure phase 4). NB : 2AUb1/2AUb2 perdent aussi le gel 2AUindicée (Art. AUindicée 2.2, p.106) car leur appartenance au chapitre reposait sur le même rattachement d'indice non écrit."
+    source: "Liste des zones urbaines p.5-6 ; caractère de zone UB, p.24 ; ZONE AUindicée, p.105"
+
+# Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
+# DÉCISION (principe mandat-cadre, modèle Tampon) : constructibilité d'EXCEPTION uniquement,
+# aucune règle consommable pour du logement neuf ordinaire => repli générique honnête
+# (non constructibles), pas de calibrage :
+#   - Zone A (chap. p.116-124) : Art. A1.2 (p.117) interdit tout sauf A2.2 — bâtiments
+#     agricoles, extensions d'habitations existantes <= 150 m² cumulés ; secteurs Aco
+#     (corridors), Acu (coupures d'urbanisation), Ama (carrières), Arh (STECAL habitat
+#     rural : 50 m² SDP par tranche de 600 m² de terrain, Art. A2.2.6, p.118), Ato
+#     (agrotourisme : extension <= 200 m², Art. A2.2.7, p.118). Hauteur zone A : 6 m
+#     (Art. A10, p.121).
+#   - Zone N (chap. p.126-133) : Art. N1.2 (p.127) : « sont interdits toutes les
+#     constructions, ouvrages et travaux » sauf N2.2 ; secteurs Nco, Nli (littoral étang
+#     du Gol), Nma (carrières), Npnr (cœur du Parc national), Nr (réservoirs biodiversité),
+#     Nstep (station d'épuration), Nto/Nto1/Nto2/Nto3 (STECAL touristiques : SDP plafonnée
+#     250 m²/unité foncière, Art. N2.2.11, p.128).
+#   - Graphie manifeste « Nto 1 » (avec espace) : traitée comme les autres libellés A/N —
+#     non calibrée, repli générique non constructible (le règlement écrit « Nto1 », p.128 ;
+#     l'équivalence n'emporte aucune règle consommable de toute façon).
+zones_non_constructibles: ["A, Aco, Acu, Ama, Arh, Ato (chap. p.116-124)",
+                           "N, Nco, Nli, Nma, Npnr, Nr, Nstep, Nto, Nto 1, Nto2, Nto3 (chap. p.126-133)"]
