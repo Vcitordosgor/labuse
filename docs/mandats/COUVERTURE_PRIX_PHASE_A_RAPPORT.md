@@ -1,0 +1,144 @@
+# RAPPORT — Mandat couverture prix, PHASE A : les 3 leviers internes (mesure seule)
+
+**Exécuté le 28/07/2026** (exécuteur Claude Code). **LECTURE SEULE intégrale — aucune
+application.** Golden **116/116** et tiers du run servi `q_v7_defisc` **au bit près**
+(120 / 1031 / 3587 / 72980 / 353945) avant ET après. Back-test = juge, **référence production
+89-91 % viables** (promotion de marché ≥ 10 lgt).
+
+> **Réserve d'entrée, factuelle** : `docs/mandats/MANDAT_COUVERTURE_PRIX.md` **n'existe pas**
+> dans le dépôt (ni suivi, ni autre branche) — comme le mandat dossier communal. Je ne l'ai pas
+> lu. Le message d'instruction spécifie complètement le **levier 1** (ratio neuf/ancien) et
+> l'objectif (étendre la couverture au-delà de 5 communes sans baisser la barre) ; il ne nomme pas
+> les leviers 2 et 3. Je les ai donc **définis comme les deux candidats internes naturels** —
+> **levier 2 = abaissement de N_MIN, levier 3 = repli île (médiane marché mise en commun)** — en
+> le disant. À corriger si tu visais autre chose.
+
+## 0 · Le fait qui commande tout (et renverse l'ordre attendu)
+
+**Le prix de l'EXISTANT varie énormément par commune (1 633 à 3 867 €/m²), mais le prix du NEUF
+de marché est quasi UNIFORME sur l'île (4 258 à 4 953, ~4 375 médiane).** Le neuf est un marché
+intégré (coûts de construction homogènes, acheteurs défisc/investisseurs insulaires) ; l'existant
+reflète l'âge et la désirabilité du stock local. **Conséquence directe : tout levier ancré sur le
+prix LOCAL de l'existant hérite de sa variance et échoue ; un levier qui utilise le prix de marché
+du neuf directement réussit.** C'est pourquoi le levier 1 (le plus prometteur a priori) tombe et
+le levier 3 (a priori le « péché du socle ») passe.
+
+## 1 · Levier 1 — ratio neuf/ancien : NON FONDÉ (dit franchement)
+
+Critère de validité posé par Vic : la **stabilité du ratio** entre les 5 communes couvertes.
+Mesuré (médiane appartement neuf de marché / médiane appartement existant) :
+
+| Commune | neuf | existant | **ratio** |
+|---|---|---|---|
+| Saint-Paul | 4 730 | 3 867 | **1,223** |
+| Saint-Leu | 4 953 | 3 622 | 1,368 |
+| Saint-Pierre | 4 258 | 2 681 | 1,588 |
+| Saint-Denis | 4 275 | 2 256 | 1,895 |
+| Le Tampon | 4 318 | 2 000 | **2,159** |
+
+**Le ratio va de 1,223 à 2,159 — un écart de 1,77×, à la lisière du « simple au double » que tu
+poses comme disqualifiant** (CV ≈ 21 %). La prime du neuf sur l'existant N'EST PAS une constante :
+elle est faible là où l'existant est cher et désirable (Saint-Paul balnéaire, ×1,22), forte là où
+l'existant est vieux et bon marché (Le Tampon, ×2,16). **Le transfert n'est pas fondé.**
+
+**Back-test (confirmation) : 7 / 87 = 8 % viables** sur les opérations de marché des communes non
+couvertes. Pourquoi : appliqué aux prix existants bon marché, le ratio médian (1,588) donne des
+prix estimés **sous le seuil de bascule 3 859** dans 6 communes sur 9 (Sainte-Marie 2 000×1,588 =
+3 176 ; Saint-Louis 3 573 ; La Possession 3 691…) → le modèle déclare non viables des opérations
+réellement construites. Le ratio médian **sous-estime** précisément là où l'existant est bon
+marché (communes qui auraient besoin d'un ratio ~2,1). **Rejeté par le back-test, exactement
+comme l'instabilité le prédisait.**
+
+## 2 · Levier 2 — abaissement de N_MIN (10 → 5) : marginal, pas un levier de couverture
+
+À N_MIN = 5 (règle de fragilité maintenue : n < 20 & médiane < 3 859 → écarté), une seule commune
+franchit : **Saint-Joseph** (n = 7 ventes neuves de marché, médiane 4 660). Or Saint-Joseph est
+**social-dominant** (56 % du collectif est social) — lui servir un prix de marché sur 7 ventes est
+doublement fragile. Back-test : 2 opérations, 2 viables — **échantillon sans valeur statistique**.
+Toutes les autres communes non couvertes ont **< 5** ventes neuves de marché (souvent 0). **Gain
+de couverture réel : nul.** Baisser N_MIN n'ouvre pas de marché là où il n'y a pas de ventes.
+
+## 3 · Levier 3 — repli île (médiane marché 4 375) : PASSE le back-test (le prometteur, contre toute attente)
+
+Médiane des ventes d'appartements neufs de marché **de toute l'île** (hors bailleurs sociaux) =
+**4 375 €/m²**. Appliquée aux communes non couvertes :
+
+**Back-test : 86 / 93 = 92 % viables** — **dans la bande de référence (89-91 %)**. Par commune
+(viables / testées) : L'Étang-Salé 7/8, La Plaine 5/6, Le Port 1/1, La Possession 10/10,
+Saint-Benoît 15/16, Saint-Joseph 2/2, Saint-Louis 13/14, Sainte-Marie 22/24, Sainte-Suzanne 9/10,
+Trois-Bassins 2/2. Le prix de marché du neuf étant uniforme (~4 375), un prix île plat le
+reproduit à ±12 % près (l'écart max des 5 communes couvertes), ce qui reste au-dessus du seuil de
+bascule partout.
+
+**Distinction CRITIQUE avec le socle 4900 mort** (à ne pas confondre) :
+
+| | Socle 4900 (mort) | Levier 3 (candidat) |
+|---|---|---|
+| Provenance | prix d'UNE commune chère (Saint-Paul observatoire) | **médiane MARCHÉ de l'île** (DVF, appartements neufs hors social) |
+| Niveau | 4 900 (trop haut) | **4 375** (empirique, plus bas) |
+| Appliqué à | TOUTES les opérations, TOUTES communes (social/patrimonial inclus) | **communes de MARCHÉ uniquement** (social-dominantes restent « non calculable ») |
+| Back-test | 78 % NON viables (échoue) | **92 % viables (passe)** |
+
+Le levier 3 est la version **disciplinée** de ce que le socle tentait : un prix de marché mesuré,
+appliqué là où le marché domine, validé par le back-test — pas un prix d'exception servi partout.
+
+**Couverture** : il étend aux **~11 communes de marché** aujourd'hui non couvertes (social < 50 %) :
+Sainte-Marie, Saint-Louis, Les Avirons, La Possession, Saint-Benoît, L'Étang-Salé, Sainte-Suzanne,
+Saint-André, Les Trois-Bassins, Salazie, Sainte-Rose. **Couverture 5 → ~16 communes**, les **8
+communes social-dominantes** (Le Port, Entre-Deux, Saint-Philippe, Petite-Île, Cilaos, Bras-Panon,
+Saint-Joseph, La Plaine) **restant « non calculable — collectif majoritairement social/aidé »**
+(décision précédente inchangée, et c'est correct).
+
+**Incertitude honnête du levier 3** (à ne pas taire) :
+1. **Prix PLAT** : il ignore la variation résiduelle du neuf (4 258-4 953, ±12 %). ±12 % de prix
+   ≈ ±70 % de charge — significatif, mais ne fait pas basculer la majorité (marge au-dessus du
+   seuil). Une variante régionale (Nord/Sud/Est/Ouest) réduirait l'écart si les régions ont assez
+   de ventes — à mesurer en phase B.
+2. **Validé E1 seulement** : le back-test montre que 4 375 ne déclare PAS non viables des
+   opérations réellement construites (faux négatif écarté). Il ne prouve PAS l'absence de
+   SUR-évaluation (le mode d'échec du 4900) : cela demande le test E3 (prix payé vs charge) sur
+   les communes non couvertes, où les données achat→PC sont minces. **Mesure bloquante de phase B.**
+3. **Ne pas l'appliquer aux social-dominantes** : le risque « socle » revient si on sert 4 375 à
+   une commune où le collectif est social/patrimonial (il ne se vend pas à ce prix). La garde =
+   la carte social-dominant déjà mesurée.
+
+## 4 · Combinaisons
+
+- **1 + 3, 2 + 3** : les leviers 1 et 2 n'ajoutent rien d'exploitable au levier 3 (1 échoue, 2
+  n'ouvre qu'une commune social-dominante). Aucune combinaison n'améliore le levier 3 seul.
+- **Raffinement de 3** (pas une combinaison des trois, mais la piste de phase B) : médiane MARCHÉ
+  **régionale** plutôt qu'île, si chaque grande région atteint N_MIN de ventes neuves — réduirait
+  le caractère plat sans ré-ancrer sur l'existant. À mesurer.
+
+## 5 · Tableau final — levier → couverture → back-test → incertitude
+
+| Levier | Couverture ajoutée | Back-test (réf. 89-91 %) | Incertitude | Verdict |
+|---|---|---|---|---|
+| **1 · ratio neuf/ancien** | nominalement ~15, **réellement 0** | **8 %** | ratio instable 1,22-2,16 (×1,77) | **NON FONDÉ** |
+| **2 · N_MIN 10→5** | **+1** (Saint-Joseph, social-dom.) | 100 % sur **2 op.** (sans valeur) | n=7, commune social-dominante | **marginal, écarté** |
+| **3 · repli île marché 4 375** | **+11** (5 → 16 communes de marché) | **92 %** | prix plat ±12 % ; validé E1 seul (E3 à faire) ; garder social-dom. non calc. | **PROMETTEUR** |
+
+## 6 · Recommandation (phase B, non exécutée)
+
+**Le levier 3 est le seul fondé, et il est contre-intuitif** : ce n'est pas le ratio local mais le
+prix de marché île qui étend la couverture, parce que le neuf de marché est un marché insulaire
+intégré. Recommandation pour la phase B (application), si GO :
+1. Étendre l'instrument aux **~11 communes de marché** via la médiane marché île (ou régionale si
+   assez de ventes — à départager), en tête de préséance APRÈS le local : override bassin sourcé >
+   dvf secteur local > dvf commune local > **médiane marché région/île (repli typé)** > non
+   calculable. Le local prime toujours ; le repli île ne sert que faute de local.
+2. **Étiquette distincte** pour le repli île (« estimation île — pas de marché local observé »,
+   placeholder) : ne jamais faire passer un repli pour une mesure locale.
+3. **Garder les 8 communes social-dominantes en « non calculable »** — le levier 3 ne les touche
+   pas.
+4. **Mesure bloquante avant application** : E3 (prix payé vs charge) sur les communes de marché
+   étendues, pour borner la SUR-évaluation (le mode d'échec du 4900 que le back-test E1 ne voit
+   pas). Le back-test reste le juge permanent.
+5. Ordre inchangé : ce mandat **avant** le coût par taille.
+
+## Artefacts
+
+`/tmp/leviers_couverture.py` (LECTURE SEULE, back-test des 3 leviers), mesures de ratio et de
+couverture par requête SQL reproductible. Golden 116/116 + tiers au bit près avant/après
+(`/tmp/couv_tiers_avant.txt` = `/tmp/couv_tiers_apres.txt`). Échantillons d'opérations réelles
+issus de `/tmp/backtest_e1.json`.
