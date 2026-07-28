@@ -68,6 +68,10 @@
 #     zones_non_constructibles).
 # =============================================================================
 
+# DOCTRINE HARMONISÉE A/B/C (28/07/2026) revue : AUCUNE gravure — les Art. 13
+# n'imposent qu'un « espace vert paysager » (stationnements parfois comptables),
+# jamais un % perméable => pleine_terre_pct reste null, sourcé.
+
 source:
   document: "97424_reglement.pdf"
   approbation: "2008-02-06"

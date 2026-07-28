@@ -22,8 +22,8 @@
 #     CONSIGNÉ, JAMAIS APPLIQUÉ : aucun COS n'est gravé ; le gel AUst est porté par
 #     Art. AUst 1.2/2.2 (indépendant du COS).
 #   - ESPACES VERTS : Art. 13.1 impose un % « espace vert et perméable » SANS sous-minimum
-#     de pleine terre => pleine_terre_pct: null partout (le moteur consomme le % PLEINE
-#     TERRE, jamais le % perméable), % perméable en note.
+#     de pleine terre => % perméable GRAVÉ dans pleine_terre_pct, libellé verbatim en _src
+#     (doctrine harmonisée A/B/C 28/07/2026 — remplace le « null partout » de la nuit).
 #   - STATIONNEMENT habitat (tableau 12.2, identique UA/UB/UC/UD) : LLS 1 place/logt,
 #     autres logements 2 places/logt, opérations >10 logts +0,5 place publique/logt =>
 #     gravé « 2 places / logement » (tranche la plus exigeante hors LLS).
@@ -52,6 +52,11 @@
 #     après sinistre, extension <= 20 m² SDP) => gel, TOUTES graphies en liste explicite
 #     (le regex moteur AU\w*st ne matche ni 1AUst/2AUst ni 1AUste/2AUste).
 # =============================================================================
+
+# DOCTRINE HARMONISÉE A/B/C (28/07/2026, arbitrage Vic) : le % « espace vert et
+# perméable » est GRAVÉ dans pleine_terre_pct, libellé verbatim conservé en _src —
+# ce n'est PAS un minimum de pleine terre stricto sensu. Retraits en H/2 :
+# valeur gravée = max(H/2 à la hauteur maximale gravée, plancher du texte).
 
 source:
   document: "97414_reglement.pdf"
@@ -98,7 +103,7 @@ zones:
        recul_limites_note: "Implantation sur les deux limites latérales, sur une seule ou en retrait 3 m ; fond de parcelle : en limite si <= 4 m au droit de la limite, sinon 3 m (Art. UA 7.3).",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2 (tableau), p.21",
        stat_note: "LLS : 1 place/logement ; opérations > 10 logements : +0,5 place publique/logement.",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UA 13.1, p.22 : 15 % de l'unité foncière en espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 : 15 % de l'unité foncière en espace vert et perméable, SANS sous-minimum de pleine terre",
        note: "Grand centre-ville. Interdits : industrie, entrepôt exclusif, agricole (Art. UA 1.2, p.10). Mixité : > 2 000 m² SDP => 30 % logements aidés (Art. UA 2.2, p.11)."}
   UA1: {bassin: "Saint-Louis",
        he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.18 (aucune règle de hauteur propre au secteur UA1)",
@@ -116,7 +121,7 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.29",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2 (tableau), p.35",
        stat_note: "LLS : 1 place/logement ; opérations > 10 logements : +0,5 place publique/logement.",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UB 13.1, p.36 : 20 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UB 13.1, p.36 : 20 % en espace vert et perméable, SANS sous-minimum de pleine terre",
        note: "Bois de Nèfles Cocos, quartier stratégique (caractère de zone, p.24). Mixité : > 1 500 m² SDP => 30 % logements aidés (Art. UB 2.2, p.25)."}
   UC: {bassin: "Saint-Louis",
        he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47",
@@ -125,7 +130,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (retrait OBLIGATOIRE >= 4 m, pas d'option alignement)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12.2 (tableau), p.50",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.51 : 25 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 : 25 % en espace vert et perméable, SANS sous-minimum de pleine terre",
        note: "Tissu aggloméré du quartier de la Rivière (caractère de zone, p.38). Mixité : > 1 500 m² SDP => 30 % logements aidés (Art. UC 2.2, p.39)."}
   UC1: {bassin: "Saint-Louis",
        he_m: 9, hf_m: 13, hauteur_src: "Art. UC 10.2, p.47 (« En secteur UC1, la hauteur maximale des constructions est fixée à 9 mètres … 13 mètres au faîtage »)",
@@ -135,7 +140,7 @@ zones:
        recul_limites_sep_m: 4.5, recul_limites_src: "Art. UC 7.2/7.3, p.44 : « en secteur UC1, le retrait (L) est obligatoire et doit correspondre au minimum à la moitié de la hauteur à l'égout du toit … sans être inférieur à 3,00 mètres »",
        recul_limites_note: "Valeur gravée = H/2 à la hauteur max du secteur (9 m égout => 4,5 m) ; plancher du texte : 3 m.",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12.2 (tableau), p.50",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.51",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 : 25 % espace vert et perméable (règle de la zone UC, aucune disposition propre au secteur), sans sous-minimum de pleine terre",
        note: "Secteur d'emprises foncières pour opérations d'habitat collectif relativement denses (caractère de zone, p.38)."}
   UC2: {bassin: "Saint-Louis",
        he_m: 6, hf_m: 10, hauteur_src: "Art. UC 10.2, p.47 (« En secteur UC2 … 6 mètres à l'égout … 10 mètres au faîtage »)",
@@ -143,7 +148,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12.2 (tableau), p.50",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.51",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 : 25 % espace vert et perméable (règle de la zone UC, aucune disposition propre au secteur), sans sous-minimum de pleine terre",
        note: "Quartier du Ruisseau, densités moindres (caractère de zone, p.38)."}
   UD: {bassin: "Saint-Louis",
        he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60",
@@ -152,7 +157,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57 (retrait obligatoire >= 4 m)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58",
        stat_logement: "2 places / logement", stat_src: "Art. UD 12.2 (tableau), p.64",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UD 13.1, p.65 : 30 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UD 13.1, p.65 : 30 % en espace vert et perméable, SANS sous-minimum de pleine terre",
        note: "Tissu résidentiel peu dense en territoire rural (caractère de zone, p.53). Mixité : > 1 000 m² SDP => 20 % logements aidés (Art. UD 2.2, p.54)."}
   UD1: {bassin: "Saint-Louis",
        he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60 (aucune règle de hauteur propre au secteur UD1)",
@@ -160,7 +165,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58",
        stat_logement: "2 places / logement", stat_src: "Art. UD 12.2 (tableau), p.64",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UD 13.1, p.65 : « en secteur UD1, ce seuil est porté à 35% minimum » (perméable, sans sous-minimum pleine terre)",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UD 13.1, p.65 : « en secteur UD1, ce seuil est porté à 35% minimum » (perméable, sans sous-minimum pleine terre)",
        note: "Village des Makes, bourg relais SAR, label Villages Créoles (caractère de zone, p.53). Aspect : toitures 2 ou 4 pans, toits terrasses interdits (Art. UD 11, p.62)."}
   UE: {bassin: "Saint-Louis",
        he_m: 12, hf_m: 15, hauteur_src: "Art. UE 10.2, p.74",
@@ -170,7 +175,7 @@ zones:
        recul_limites_sep_m: 6, recul_limites_src: "Art. UE 7.2, p.72 : une seule limite latérale possible, sinon retrait >= H/2, minimum 4 m ; fond de parcelle : retrait >= 4 m (Art. UE 7.3)",
        recul_limites_note: "Valeur gravée = H/2 à la hauteur max (12 m => 6 m) ; planchers du texte : 4 m.",
        stat_logement: null, stat_note: "Sans objet (habitat interdit, gardiennage compris).", stat_src: "Art. UE 1.2, p.68",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UE 13.1, p.77 : 15 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE 13.1, p.77 : 15 % en espace vert et perméable, SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. UE 1.2, p.68 : « Les constructions ouvrages et travaux à usage d'habitation y compris celles liées au gardiennage » sont interdits"}
   US: {bassin: "Saint-Louis",
        he_m: 12, hf_m: 15, hauteur_src: "Art. US 10.2, p.86",
@@ -179,7 +184,7 @@ zones:
        recul_voirie_note: "Valeur gravée = H/2 à la hauteur max (12 m => 6 m).",
        recul_limites_sep_m: 6, recul_limites_src: "Art. US 7.2, p.84 : une seule limite latérale possible, sinon retrait >= H/2, minimum 4 m ; fond : 4 m (Art. US 7.3)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage, 70 m² max ; 1 place/logement autorisé, Art. US 12.2, p.88).", stat_src: "Art. US 12.2, p.88",
-       pleine_terre_pct: null, pleine_terre_src: "Art. US 13.1, p.89 : 15 % en espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. US 13.1, p.89 : 15 % en espace vert et perméable, SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. US 1.2, p.79 (habitation interdite sauf Art. US 2.2) + Art. US 2.2, p.80 : habitation limitée à 70 m² SDP « exclusivement destinées et liées au gardiennage et à la surveillance des installations autorisées »"}
   UZ: {bassin: "Saint-Louis",
        he_m: null, hf_m: 9, hauteur_src: "Art. UZ 10.2, p.96-97 : hauteurs « en tout point » par affectation du schéma joint en annexe — 17 m (collectifs), 9 m (individuels), 12 m (tertiaires) ; plafond hors tout : cote NGR 42 m",
@@ -205,7 +210,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.21 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation prioritaire SAR (préambule AUindicée, p.105). Pour les 1AUa « se rapportant à l'OAP2 » : normes de stationnement spécifiques (LLS 0,8 place/logt, équipements 1,5 place/10 pers., Art. AUindicée 12, p.108) — base UA conservée (plus exigeante)."}
   "1AUa oap1": {bassin: "Saint-Louis",
        he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.18 via renvoi (ZONE AUindicée, p.105)",
@@ -213,7 +218,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.21 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Libellé GPU « 1AUa oap1 » : zone 1AUa soumise à une OAP — le règlement ne définit aucune règle chiffrée propre aux suffixes « oapN », il impose de « respecter les OAP lorsqu'elles existent » (p.105) => règles UA via renvoi."}
   "1AUa oap3": {bassin: "Saint-Louis",
        he_m: 15, hf_m: 19, hauteur_src: "Art. UA 10.2, p.18 via renvoi (ZONE AUindicée, p.105)",
@@ -221,7 +226,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2, p.15 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.21 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Zone 1AUa soumise à OAP (suffixe cartographique) => règles UA via renvoi (p.105)."}
   1AUb1: {bassin: "Saint-Louis",
        he_m: 12, hf_m: 17, hauteur_src: "Art. UB 10.2, p.31-32 via renvoi (ZONE AUindicée, p.105)",
@@ -229,7 +234,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.28 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.29 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.35 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi)",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi) : 20 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Le code « 1AUb1 » n'apparaît pas dans le règlement et il n'existe AUCUN secteur UB1 (zone UB sans secteur, p.24 ; liste p.5-6) : l'indice « b » ne peut renvoyer qu'au règlement UB, la sous-numérotation « 1 » est cartographique, sans règle propre."}
   1AUb2: {bassin: "Saint-Louis",
        he_m: 12, hf_m: 17, hauteur_src: "Art. UB 10.2, p.31-32 via renvoi (ZONE AUindicée, p.105)",
@@ -237,7 +242,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.28 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.29 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.35 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi)",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi) : 20 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Même décision que 1AUb1 : indice « b » => règlement UB (aucun secteur UB2 au règlement), sous-numérotation cartographique sans règle propre."}
   1AUc: {bassin: "Saint-Louis",
        he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi (ZONE AUindicée, p.105)",
@@ -245,14 +250,14 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)"}
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre"}
   "1AUc oap4": {bassin: "Saint-Louis",
        he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi (ZONE AUindicée, p.105)",
        emprise_sol_pct: 60, emprise_src: "Art. UC 9.2, p.46 (via renvoi)",
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Zone 1AUc soumise à OAP (suffixe cartographique) => règles UC via renvoi (p.105)."}
   "1AUc oap5": {bassin: "Saint-Louis",
        he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi (ZONE AUindicée, p.105)",
@@ -260,7 +265,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Zone 1AUc soumise à OAP (suffixe cartographique) => règles UC via renvoi (p.105)."}
   1AUc1: {bassin: "Saint-Louis",
        he_m: 9, hf_m: 13, hauteur_src: "Art. UC 10.2, p.47 (secteur UC1) via renvoi (ZONE AUindicée, p.105)",
@@ -268,7 +273,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
        recul_limites_sep_m: 4.5, recul_limites_src: "Art. UC 7.2/7.3, p.44 (secteur UC1 : retrait obligatoire >= H/2, min 3 m ; gravé à la hauteur max 9 m => 4,5 m) via renvoi",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Indice « c1 » = secteur UC1 du règlement (seul homonyme existant, caractère de zone p.38) => règles du secteur UC1 via renvoi AUindicée."}
   1AUc2: {bassin: "Saint-Louis",
        he_m: 6, hf_m: 10, hauteur_src: "Art. UC 10.2, p.47 (secteur UC2) via renvoi (ZONE AUindicée, p.105)",
@@ -276,7 +281,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.42 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2, p.44 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12.2, p.50 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UC 13.1, p.51 (via renvoi) : 25 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Indice « c2 » = secteur UC2 du règlement (seul homonyme existant, p.38) => règles du secteur UC2 via renvoi AUindicée."}
   1AUd: {bassin: "Saint-Louis",
        he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60 via renvoi (ZONE AUindicée, p.105)",
@@ -284,14 +289,14 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UD 12.2, p.64 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UD 13.1, p.65 (via renvoi)"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UD 13.1, p.65 (via renvoi) : 30 % espace vert et perméable, sans sous-minimum de pleine terre"}
   1AUd1: {bassin: "Saint-Louis",
        he_m: 6, hf_m: 10, hauteur_src: "Art. UD 10.2, p.60 via renvoi (ZONE AUindicée, p.105)",
        emprise_sol_pct: 40, emprise_src: "Art. UD 9.2, p.60 (secteur UD1 : 40 %) via renvoi",
        recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.57 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2, p.58 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UD 12.2, p.64 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UD 13.1, p.65 (secteur UD1 : 35 % perméable) via renvoi",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UD 13.1, p.65 (secteur UD1 : 35 % perméable) via renvoi",
        note: "Indice « d1 » = secteur UD1 du règlement (village des Makes, seul homonyme existant, p.53) => règles du secteur UD1 via renvoi AUindicée."}
   1AUe: {bassin: "Saint-Louis",
        he_m: 12, hf_m: 15, hauteur_src: "Art. UE 10.2, p.74 via renvoi (ZONE AUindicée, p.105)",
@@ -299,7 +304,7 @@ zones:
        recul_voirie_m: 6, recul_voirie_src: "Art. UE 6.2, p.71 (via renvoi : H/2 min 5 m, gravé à 12 m => 6 m)",
        recul_limites_sep_m: 6, recul_limites_src: "Art. UE 7.2, p.72 (via renvoi : H/2 min 4 m, gravé à 12 m => 6 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UE 1.2, p.68 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UE 13.1, p.77 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE 13.1, p.77 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. UE 1.2, p.68 via renvoi (AUindicée 1.2, p.106) : habitation interdite y compris gardiennage",
        note: "Pour la « zone 1AUe se rapportant à l'OAP2 », hauteur spécifique 17 m égout / 20 m faîtage (Art. AUindicée 10, p.108) — NON gravée (le manifeste GPU ne porte pas de suffixe oap2 ; base UE 12/15 conservée, plus conservatrice)."}
   "1AUe oap1": {bassin: "Saint-Louis",
@@ -308,7 +313,7 @@ zones:
        recul_voirie_m: 6, recul_voirie_src: "Art. UE 6.2, p.71 (via renvoi)",
        recul_limites_sep_m: 6, recul_limites_src: "Art. UE 7.2, p.72 (via renvoi)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UE 1.2, p.68 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UE 13.1, p.77 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE 13.1, p.77 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. UE 1.2, p.68 via renvoi : habitation interdite y compris gardiennage",
        note: "Zone 1AUe soumise à OAP (suffixe cartographique) => règles UE via renvoi (p.105)."}
 

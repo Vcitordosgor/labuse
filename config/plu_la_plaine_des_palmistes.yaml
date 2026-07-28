@@ -73,6 +73,11 @@
 #     « moyen terme », zone AUs2 chemin Dureau) => gel de la zone AUs entière.
 # =============================================================================
 
+# DOCTRINE HARMONISÉE A/B/C (28/07/2026, arbitrage Vic) : le % « espace vert et
+# perméable » est GRAVÉ dans pleine_terre_pct, libellé verbatim conservé en _src —
+# ce n'est PAS un minimum de pleine terre stricto sensu. Retraits en H/2 :
+# valeur gravée = max(H/2 à la hauteur maximale gravée, plancher du texte).
+
 source:
   document: "97406_reglement.pdf"
   approbation: "2023-05-27"
@@ -118,7 +123,7 @@ zones:
        recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ua 7.2, p.16",
        recul_limites_note: "Implantation possible sur 2 limites séparatives max (en fond de parcelle : 1 seule latérale + 3,50 m des angles) OU retrait 3,50 m min.",
        stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ua 12.2, p.21 + annexe « Normes de stationnement », p.103",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.3, p.22 : 20 % « espace vert et perméable » SANS sous-minimum de pleine terre — les aires de stationnement peuvent y être comptées",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua 13.3, p.22 : 20 % « espace vert et perméable » SANS sous-minimum de pleine terre — les aires de stationnement peuvent y être comptées",
        note: "Zone mixte du coeur de village (caractère de zone, p.11) ; habitat admis (Art. Ua 1.2, p.11 : interdits limités à industrie, entrepôt exclusif, agricole, camping, dépôts, carrières)."}
   Ub: {bassin: "La Plaine-des-Palmistes",
        he_m: 6, hf_m: 9, hauteur_src: "Art. Ub 10.1, p.30",
@@ -129,7 +134,7 @@ zones:
        recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ub 7.2, p.28",
        recul_limites_note: "Implantation possible sur 1 limite séparative max OU retrait 3,50 m min.",
        stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ub 12.2, p.33 + annexe « Normes de stationnement », p.103",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.3, p.34 : 40 % « espace vert et perméable » (20 % si commerce >= 800 m² SDP) SANS sous-minimum de pleine terre ; stationnements exclus du décompte",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Ub 13.3, p.34 : 40 % « espace vert et perméable » (20 % si commerce >= 800 m² SDP) SANS sous-minimum de pleine terre ; stationnements exclus du décompte",
        note: "Zone mixte de la zone agglomérée du village (caractère de zone, p.23) ; habitat admis (Art. Ub 1.2, p.23)."}
   Uc: {bassin: "La Plaine-des-Palmistes",
        he_m: 6, hf_m: 8, hauteur_src: "Art. Uc 10.1, p.42",
@@ -139,7 +144,7 @@ zones:
        recul_limites_sep_m: 3.5, recul_limites_src: "Art. Uc 7.2, p.40",
        recul_limites_note: "Implantation possible sur 1 limite séparative max OU retrait 3,50 m min.",
        stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Uc 12.2, p.44-45 + annexe « Normes de stationnement », p.103",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Uc 13.3, p.45-46 : 50 % « espace vert et perméable » SANS sous-minimum de pleine terre ; stationnements exclus du décompte",
+       pleine_terre_pct: 50, pleine_terre_src: "Art. Uc 13.3, p.45-46 : 50 % « espace vert et perméable » SANS sous-minimum de pleine terre ; stationnements exclus du décompte",
        note: "Zone mixte de transition village/espaces ruraux + Bras des Calumets (caractère de zone, p.35) ; habitat admis (Art. Uc 1.2, p.35)."}
   Ur: {bassin: "La Plaine-des-Palmistes",
        he_m: 3.5, hf_m: 7, hauteur_src: "Art. Ur 10.1, p.54",
@@ -148,7 +153,7 @@ zones:
        recul_voirie_m: 5, recul_voirie_src: "Art. Ur 6.2, p.51 (retrait obligatoire, 5,00 m minimum)",
        recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ur 7.2, p.52 (retrait obligatoire de toute limite, 3,50 m minimum)",
        stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ur 12.2, p.56-57 + annexe « Normes de stationnement », p.103",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ur 13.3, p.58 : 50 % « espace vert et perméable » SANS sous-minimum de pleine terre ; stationnements exclus du décompte",
+       pleine_terre_pct: 50, pleine_terre_src: "Art. Ur 13.3, p.58 : 50 % « espace vert et perméable » SANS sous-minimum de pleine terre ; stationnements exclus du décompte",
        note: "Zone mixte des quartiers ruraux — Petite Plaine, Bras Piton, la Pyramide (caractère de zone, p.47) ; habitat admis (Art. Ur 1.2, p.47 : interdits limités à industrie/entrepôt exclusif/dépôts/carrières — l'agricole n'y est PAS interdit)."}
   Ue: {bassin: "La Plaine-des-Palmistes",
        he_m: null, hf_m: 8, hauteur_src: "Art. Ue 10.1, p.66 (« limitée à 8 mètres au faîtage » — égout non réglementé)",
@@ -158,7 +163,7 @@ zones:
        recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ue 7.2, p.64",
        recul_limites_note: "Implantation possible sur 2 limites séparatives max OU retrait 3,50 m min.",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ue 1.2, p.59",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 13.3, p.69 : 25 % « espace vert et perméable » à Bras des Calumets, 10 % à la Pyramide, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. Ue 13.3, p.69 : 25 % « espace vert et perméable » à Bras des Calumets, 10 % à la Pyramide, SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. Ue 1.2, p.59 : sont interdits « 1. Les constructions, ouvrages et travaux à destination d'habitation » (+ hôtellerie, restauration, hébergement touristique rural) — aucune exception (même de gardiennage) à l'Art. Ue 2.2, p.60",
        note: "Zone d'activité économique — industrie/artisanat de production, transformation, conditionnement, distribution (caractère de zone, p.59). O12 confirmé dans le texte."}
 
@@ -174,7 +179,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. Ub 6.2, p.27 (via renvoi AUindicée, p.75)",
        recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ub 7.2, p.28 (via renvoi AUindicée, p.75)",
        stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ub 12.2, p.33 + annexe p.103 (via renvoi AUindicée, p.75)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.3, p.34 (via renvoi) : 40 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Ub 13.3, p.34 (via renvoi) : 40 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation future : opération d'ensemble OU au fur et à mesure des équipements internes (ZONE AUindicée, p.75). Renvoi intégral au règlement Ub, confirmé par la modification n°3 (p.135 PDF)."}
   AUc: {bassin: "La Plaine-des-Palmistes",
        he_m: 6, hf_m: 8, hauteur_src: "Art. Uc 10.1, p.42 via renvoi (ZONE AUindicée, p.75 : règlement de la zone U d'indice)",
@@ -182,7 +187,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. Uc 6.2, p.39 (via renvoi AUindicée, p.75)",
        recul_limites_sep_m: 3.5, recul_limites_src: "Art. Uc 7.2, p.40 (via renvoi AUindicée, p.75)",
        stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Uc 12.2, p.44-45 + annexe p.103 (via renvoi AUindicée, p.75)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Uc 13.3, p.45-46 (via renvoi) : 50 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 50, pleine_terre_src: "Art. Uc 13.3, p.45-46 (via renvoi) : 50 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation future : opération d'ensemble OU au fur et à mesure des équipements internes (ZONE AUindicée, p.75)."}
   AUr: {bassin: "La Plaine-des-Palmistes",
        he_m: 3.5, hf_m: 7, hauteur_src: "Art. Ur 10.1, p.54 via renvoi (ZONE AUindicée, p.75 : règlement de la zone U d'indice)",
@@ -191,7 +196,7 @@ zones:
        recul_voirie_m: 5, recul_voirie_src: "Art. Ur 6.2, p.51 (via renvoi AUindicée, p.75)",
        recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ur 7.2, p.52 (via renvoi AUindicée, p.75)",
        stat_logement: "1,5 place / logement (> 30 m²) ; 1 place (< 30 m²)", stat_src: "Art. Ur 12.2, p.56-57 + annexe p.103 (via renvoi AUindicée, p.75)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ur 13.3, p.58 (via renvoi) : 50 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 50, pleine_terre_src: "Art. Ur 13.3, p.58 (via renvoi) : 50 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation future : opération d'ensemble OU au fur et à mesure des équipements internes (ZONE AUindicée, p.75)."}
   AUe: {bassin: "La Plaine-des-Palmistes",
        he_m: null, hf_m: 8, hauteur_src: "Art. Ue 10.1, p.66 via renvoi (ZONE AUindicée, p.75 : règlement de la zone U d'indice)",
@@ -199,7 +204,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. Ue 6.2, p.63 (via renvoi AUindicée, p.75)",
        recul_limites_sep_m: 3.5, recul_limites_src: "Art. Ue 7.2, p.64 (via renvoi AUindicée, p.75)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. Ue 1.2, p.59 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 13.3, p.69 (via renvoi) : 25 % / 10 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. Ue 13.3, p.69 (via renvoi) : 25 % / 10 % espace vert et perméable, sans sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. Ue 1.2, p.59 via renvoi (ZONE AUindicée, p.75) : constructions à destination d'habitation interdites, sans exception à l'Art. Ue 2.2, p.60",
        note: "Zone d'activité future — O12 confirmé par le renvoi au règlement Ue (habitat interdit)."}
 

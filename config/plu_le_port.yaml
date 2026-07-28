@@ -30,7 +30,7 @@
 #     pleine terre plantées avec 3 strates » => pleine_terre_pct = P × 50 % (part MINIMALE
 #     de pleine terre de l'unité foncière, arithmétique directe du texte, notée par zone).
 #     Zones SANS sous-minimum de pleine terre (Ub 10 %, Ud/Ue/Umi 20 % éco-aménageables
-#     seulement) => null + note (le % perméable n'est jamais gravé en pleine terre).
+#     seulement) ; sans sous-minimum : % perméable/éco-aménageable GRAVÉ, libellé verbatim en _src (doctrine harmonisée A/B/C 28/07/2026).
 #   - COS : ZÉRO occurrence dans les 319 pages (grep « COS » et « coefficient
 #     d'occupation ») — consigné, rien à appliquer.
 #   - Indice « m » : Uem = SECTEUR de la zone Ue « zone tampon » en continuité des
@@ -65,6 +65,11 @@
 #     (pièce écrite n°4, hors règlement) ; graver quoi que ce soit = deviner.
 #   - A, N, Nerl : non constructibles (urbanisation) — cf. zones_non_constructibles.
 # =============================================================================
+
+# DOCTRINE HARMONISÉE A/B/C (28/07/2026, arbitrage Vic) : le % « espace vert et
+# perméable » est GRAVÉ dans pleine_terre_pct, libellé verbatim conservé en _src —
+# ce n'est PAS un minimum de pleine terre stricto sensu. Retraits en H/2 :
+# valeur gravée = max(H/2 à la hauteur maximale gravée, plancher du texte).
 
 source:
   document: "97407_reglement.pdf"
@@ -122,7 +127,7 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 5, p.38",
        recul_limites_note: "Bande de 20 m depuis l'alignement : implantation EN limite obligatoire (2 limites si façade <= 12 m, 1 limite sinon) ; en retrait : 3 m min. Fond de parcelle : annexes uniquement.",
        stat_logement: "0,3 place / logement", stat_src: "Art. Ub 12.1 (tableau), p.44-45",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 11.1, p.43 : 10 % non imperméabilisés/éco-aménageables SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. Ub 11.1, p.43 : 10 % non imperméabilisés/éco-aménageables SANS sous-minimum de pleine terre",
        pleine_terre_note: "Le % éco-aménageable n'est pas un % de pleine terre => null."}
   Uc: {bassin: "Le Port",
        he_m: 16, hf_m: 16, hauteur_src: "Art. Uc 8, p.55",
@@ -152,7 +157,7 @@ zones:
        recul_limites_sep_m: 0, recul_limites_src: "Art. Ud 5, p.68",
        recul_limites_note: "« Les constructions doivent être implantées en limite séparative et/ou suivant l'alignement des constructions limitrophes existantes » — implantation en limite, aucun retrait minimal chiffré => 0 sourcé.",
        stat_logement: "0,3 place / logement", stat_src: "Art. Ud 12.1 (tableau), p.73-74",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ud 11.1, p.71 : 20 % éco-aménageables SANS sous-minimum de pleine terre"}
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ud 11.1, p.71 : 20 % éco-aménageables SANS sous-minimum de pleine terre"}
   Uem: {bassin: "Le Port",
        he_m: null, hf_m: 18, hauteur_src: "Art. Ue 8, p.82 (« En secteur Uem, la hauteur maximale des constructions est fixée 18 mètres » — seule règle de hauteur du chapitre Ue)",
        hauteur_note: "Sans point de référence (ni égout ni faîtage distingués) => gravée au faîtage (conservateur).",
@@ -160,7 +165,7 @@ zones:
        recul_voirie_m: 5, recul_voirie_src: "Art. Ue 4, p.81 (retrait obligatoire, recul min 5 m ; RN1/RN1001 : 25 m de l'axe)",
        recul_limites_sep_m: 5, recul_limites_src: "Art. Ue 5, p.82 (en limite OU retrait 5 m min)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit hors logement de surveillance).", stat_src: "Art. Ue 2, p.80",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 11.1, p.85 : 20 % éco-aménageables SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ue 11.1, p.85 : 20 % éco-aménageables SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. Ue 1, p.79 (Hébergement coché interdit) + Art. Ue 2, p.80 : logement admis SEULEMENT s'il est « utile au fonctionnement ou à la surveillance » des installations, 1 logement max par unité foncière — logement de fonction => habitat interdit pour le moteur",
        note: "Secteur « zone tampon » de la zone Ue en continuité des quartiers résidentiels : activités industrielles INTERDITES (caractère de zone, p.79 ; maintien de l'existant seulement, Art. Ue 2, p.81)."}
   Umi: {bassin: "Le Port",
@@ -170,7 +175,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. Umi 4, p.93 (alignement possible (0) OU recul min 3 m)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. Umi 5, p.94 (en limite OU retrait 3 m min)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage/caserne).", stat_src: "Art. Umi 2, p.92-93",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Umi 11.1, p.97 : 20 % éco-aménageables SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Umi 11.1, p.97 : 20 % éco-aménageables SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. Umi 2, p.92-93 : « Les constructions à usage d'habitation sous réserve qu'elles soient exclusivement destinées au gardiennage ou à l'hébergement du personnel en caserne » (zone militaire) — logement de fonction => habitat interdit pour le moteur"}
   Us: {bassin: "Le Port",
        he_m: null, hf_m: 18, hauteur_src: "Art. Us 8, p.122 (« La hauteur maximale des constructions est fixée 18 mètres »)",
@@ -211,7 +216,7 @@ zones:
        recul_voirie_m: 5, recul_voirie_src: "Art. Ue 4, p.81 (via renvoi)",
        recul_limites_sep_m: 5, recul_limites_src: "Art. Ue 5, p.82 (via renvoi)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit hors logement de surveillance).", stat_src: "Art. Ue 2, p.80 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 11.1, p.85 (via renvoi) : pas de sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ue 11.1, p.85 (via renvoi) : pas de sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. Ue 1, p.79 + Art. Ue 2, p.80 via renvoi : logement limité à la surveillance (1/unité foncière) => habitat interdit pour le moteur"}
   1AUs: {bassin: "Le Port",
        he_m: null, hf_m: 18, hauteur_src: "Art. Us 8, p.122 via renvoi (ZONE 1AU, p.142)",

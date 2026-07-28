@@ -78,6 +78,11 @@
 #     zones_non_calibrees).
 # =============================================================================
 
+# DOCTRINE HARMONISÉE A/B/C (28/07/2026, arbitrage Vic) : le % « espace vert et
+# perméable » est GRAVÉ dans pleine_terre_pct, libellé verbatim conservé en _src —
+# ce n'est PAS un minimum de pleine terre stricto sensu. Retraits en H/2 :
+# valeur gravée = max(H/2 à la hauteur maximale gravée, plancher du texte).
+
 source:
   document: "97423_reglement.pdf"
   approbation: "2022-06-02"
@@ -127,7 +132,7 @@ zones:
        recul_limites_note: "Implantation sur une limite latérale autorisée (patio 3 m si habitation > 10 m de profondeur) OU retrait 3 m ; fond : 3 m obligatoire.",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.22",
        stat_note: "Collectif : 1,25 place/logement OU 1 place/35 m² SDP (norme la plus productive), plafond 2 places/logement.",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.23 : 20 % de l'unité foncière en espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua 13.1, p.23 : 20 % de l'unité foncière en espace vert et perméable, SANS sous-minimum de pleine terre",
        pleine_terre_note: "Ramené à 10 % pour les terrains <= 150 m² et les CINASPIC.",
        note: "Zone mixte de centralité (caractère de zone, p.10). Interdits : industrie, entrepôt exclusif, agricole, camping, dépôts, carrières (Art. Ua 1.2, p.10). Densité MINIMALE 30 logts/ha (Art. Ua 2.2, p.11)."}
   Uaa: {bassin: "Les Trois-Bassins",
@@ -136,7 +141,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. Ua 6.2, p.14 (règle de la zone Ua)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ua 7.2, p.15 (« Dans le secteur Uaa, elles doivent joindre au moins une des deux limites séparatives » ; en cas de retrait de l'autre limite : 3 m)",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.22",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.23 : 20 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua 13.1, p.23 : 20 % espace vert et perméable, SANS sous-minimum de pleine terre",
        note: "Secteur de l'hypercentre, front bâti sur rue encouragé (caractère de zone, p.10)."}
   Ub: {bassin: "Les Trois-Bassins",
        he_m: 8, hf_m: 12, hauteur_src: "Art. Ub 10.2, p.33",
@@ -148,7 +153,7 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2-7.3, p.30-31",
        recul_limites_note: "Une limite latérale autorisée (patio 3 m si habitation > 10 m de profondeur) OU retrait 3 m ; fond : 3 m.",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.36",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.38 : 30 % espace vert et perméable, SANS sous-minimum de pleine terre (20 % si terrain <= 150 m² ou CINASPIC)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ub 13.1, p.38 : 30 % espace vert et perméable, SANS sous-minimum de pleine terre (20 % si terrain <= 150 m² ou CINASPIC)",
        note: "Zone mixte de périphérie du centre-ville et espaces urbanisés littoraux (caractère de zone, p.25). Dans les cinquante pas géométriques : destinations restreintes (Art. Ub 2.2 (al. 1), p.26). Densité MINIMALE 30 logts/ha (Art. Ub 2.2, p.26-27)."}
   Uc: {bassin: "Les Trois-Bassins",
        he_m: 5.5, hf_m: 8.5, hauteur_src: "Art. Uc 10.2, p.46-47 (« 5,50 mètres à l'égout du toit ou au sommet de l'acrotère » p.46, « 8,50 mètres au faîtage » p.47 — valeurs étalées sur deux pages)",
@@ -160,17 +165,17 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. Uc 7.2-7.3, p.44",
        recul_limites_note: "Une limite latérale autorisée OU retrait 3 m ; fond : 3 m.",
        stat_logement: "1,5 place / logement", stat_src: "Art. Uc 12.2, p.50",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Uc 13.1, p.52 : 40 % espace vert et perméable, SANS sous-minimum de pleine terre (30 % si terrain <= 150 m² ou CINASPIC)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Uc 13.1, p.52 : 40 % espace vert et perméable, SANS sous-minimum de pleine terre (30 % si terrain <= 150 m² ou CINASPIC)",
        note: "Zone mixte des écarts ruraux habités : Petite Ravine, Cocâtre, Piveteau (caractère de zone, p.39)."}
   Ue: {bassin: "Les Trois-Bassins",
        he_m: 10, hf_m: 14, hauteur_src: "Art. Ue 10.2, p.59",
        hauteur_note: "Annexes : 3,50 m.",
        emprise_sol_pct: 60, emprise_src: "Art. Ue 9.2, p.59 (« L'emprise au sol des bâtiments (y compris les annexes) ne doit pas excéder 60% »)",
        recul_voirie_m: 4, recul_voirie_src: "Art. Ue 6.2, p.56",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. Ue 7.2-7.3, p.57",
-       recul_limites_note: "Une seule limite latérale possible ; en cas de retrait D=H/2 sans être inférieur à 4 m ; fond de propriété : 4 m obligatoire.",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. Ue 7.2-7.3, p.57",
+       recul_limites_note: "Une seule limite latérale possible ; en cas de retrait D=H/2 (H à l'égout/acrotère) sans être inférieur à 4 m ; valeur gravée = H/2 à la hauteur max gravée (10 m égout => 5 m), plancher du texte 4 m (doctrine harmonisée) ; fond de propriété : 4 m obligatoire.",
        stat_logement: null, stat_note: "Sans objet (habitat interdit). Activités : surface de stationnement >= 30 % de la SDP de l'établissement, stockage compris.", stat_src: "Art. Ue 12.2, p.60",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ue 13.1, p.61 : 25 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. Ue 13.1, p.61 : 25 % espace vert et perméable, SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. Ue 1.2 (al. 1), p.53 : « Les constructions, ouvrages et travaux à destination d'habitation » sont INTERDITS (aucune exception de gardiennage à l'Art. Ue 2.2, p.54 — O12 confirmé)",
        note: "Zone d'activité économique : production, transformation, conditionnement, distribution (caractère de zone, p.53). Hôtellerie/restauration/hébergement touristique également interdits (Art. Ue 1.2 (al. 3), p.53) ; commerces/bureaux limités (surface de vente < surface de production, Art. Ue 2.2, p.54)."}
 
@@ -187,7 +192,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. Ua 6.2, p.14 (via renvoi Art. AUINDICEE 6, p.67)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. AUINDICEE 7.2-7.3, p.67-68 (règle propre au chapitre AU : une limite possible, retrait 3 m, fond 3 m)",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.22 (via renvoi Art. AUINDICEE 12, p.69)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.23 (via renvoi Art. AUINDICEE 13, p.70) : 20 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. Ua 13.1, p.23 (via renvoi Art. AUINDICEE 13, p.70) : 20 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation prioritaire SAR (préambule AUindicée, p.64). Densité MINIMALE 35 logts/ha hors OAP (Art. AUINDICEE 2.2, p.66). Graphie : le texte écrit « en zone AUa » (p.66), type 1AUindicée défini p.64."}
   1AUb: {bassin: "Les Trois-Bassins",
        he_m: 8, hf_m: 12, hauteur_src: "Art. Ub 10.2, p.33 via renvoi (Art. AUINDICEE 10, p.69 : « règlement de la zone U indiquée en indice »)",
@@ -195,7 +200,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. Ub 6.2, p.29 (via renvoi Art. AUINDICEE 6, p.67)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. AUINDICEE 7.2-7.3, p.67-68 (règle propre au chapitre AU)",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.36 (via renvoi Art. AUINDICEE 12, p.69)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.38 (via renvoi Art. AUINDICEE 13, p.70) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ub 13.1, p.38 (via renvoi Art. AUINDICEE 13, p.70) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation prioritaire SAR. Densité MINIMALE 30 logts/ha hors OAP (Art. AUINDICEE 2.2, p.66)."}
   1AUc: {bassin: "Les Trois-Bassins",
        he_m: 5.5, hf_m: 8.5, hauteur_src: "Art. Uc 10.2, p.46-47 via renvoi (Art. AUINDICEE 10, p.69)",
@@ -203,7 +208,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. Uc 6.2, p.43 (via renvoi Art. AUINDICEE 6, p.67)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. AUINDICEE 7.2-7.3, p.67-68 (règle propre au chapitre AU)",
        stat_logement: "1,5 place / logement", stat_src: "Art. Uc 12.2, p.50 (via renvoi Art. AUINDICEE 12, p.69)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Uc 13.1, p.52 (via renvoi Art. AUINDICEE 13, p.70) : 40 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Uc 13.1, p.52 (via renvoi Art. AUINDICEE 13, p.70) : 40 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation prioritaire SAR. Densité MINIMALE 20 logts/ha hors OAP (Art. AUINDICEE 2.2, p.66)."}
   1AUt: {bassin: "Les Trois-Bassins",
        he_m: 8, hf_m: 10, hauteur_src: "Art. AUINDICEE 10.2, p.69 : « Pour la zone AUt, la hauteur maximale des constructions est fixée à : 8 mètres à l'égout du toit ou au sommet de l'acrotère (Modification approuvée par délibération du conseil municipal du 02 juin 2022), 10 mètres au faîtage »",
@@ -212,7 +217,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. Ub 6.2, p.29 (via renvoi AUt -> Ub, Art. AUINDICEE 6, p.67)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2-7.3, p.30-31 (via renvoi Art. AUINDICEE 7, p.67 : « Pour la zone AUt, se reporter au règlement de la zone Ub »)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit — vocation d'hébergement touristique exclusive ; hôtellerie : 1 place/3 chambres via tableau Ub).", stat_src: "Art. AUINDICEE 2.2, p.65 + Art. Ub 12.2, p.36 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.38 (via renvoi AUt -> Ub, Art. AUINDICEE 13, p.70) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. Ub 13.1, p.38 (via renvoi AUt -> Ub, Art. AUINDICEE 13, p.70) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. AUINDICEE 1.2, p.64 (« En zone AUt : Les constructions, ouvrages et travaux non cités à l'article AU2.2 » sont interdits) + Art. AUINDICEE 2.2, p.65 : seuls admis « les constructions à destination d'hébergement touristique et les services liés » et les stationnements/affouillements nécessaires — aucune habitation admise",
        note: "Zone AU touristique. Graphie : règles écrites sous « zone AUt » (p.64-65, 69), type 1AUindicée défini p.64 ; le manifeste ne compte aucun polygone 2AUt."}
 

@@ -65,6 +65,11 @@
 #     total (aucune vocation d'activité dans le chapitre), pas une zone d'activité.
 # =============================================================================
 
+# DOCTRINE HARMONISÉE A/B/C (28/07/2026, arbitrage Vic) : le % « espace vert et
+# perméable » est GRAVÉ dans pleine_terre_pct, libellé verbatim conservé en _src —
+# ce n'est PAS un minimum de pleine terre stricto sensu. Retraits en H/2 :
+# valeur gravée = max(H/2 à la hauteur maximale gravée, plancher du texte).
+
 source:
   document: "97402_reglement.pdf"
   approbation: "2026-04-28"
@@ -107,11 +112,11 @@ zones:
        hauteur_note: "Annexes : 3,50 m (p.17). En limite séparative : max +1 niveau par rapport à la construction principale voisine.",
        emprise_sol_pct: 70, emprise_src: "Art. UA 9, p.16",
        recul_voirie_m: 2, recul_voirie_src: "Art. UA 6.2, p.14",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2-7.3, p.14-15",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. UA 7.2-7.3, p.14-15 : retrait >= « la moitié de la hauteur de la façade concernée (H/2) sans pouvoir être inférieure à 3 mètres » — H/2 à la hauteur gravée (10 m égout) = 5 m",
        recul_limites_note: "Implantation sur les deux limites latérales autorisée OU retrait H/2 >= 3 m ; fond de parcelle : retrait H/2 >= 3 m obligatoire.",
        stat_logement: "1 place / logement", stat_src: "Art. UA 12.2 (tableau), p.20-21",
        stat_note: "SDP <= 100 m². Logement >= 100 m² : 1,5 place. Logement aidé : 1 place MAXIMUM.",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UA 13.1, p.21 : 30 % de l'unité foncière en espace vert et perméable planté, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UA 13.1, p.21 : 30 % de l'unité foncière en espace vert et perméable planté, SANS sous-minimum de pleine terre",
        note: "Centre aggloméré, densité et fonctions centrales à conforter (caractère de zone, p.10). Interdits : industrie, entrepôt exclusif, agricole/forestier, camping (Art. UA 1.2, p.10)."}
   Ub: {bassin: "Bras-Panon",
        he_m: 8, hf_m: 11, hauteur_src: "Art. UB 10.2, p.29",
@@ -119,45 +124,45 @@ zones:
        emprise_sol_pct: 60, emprise_src: "Art. UB 9, p.29",
        recul_voirie_m: 4, recul_voirie_src: "Art. UB 6.2, p.27",
        recul_voirie_note: "Ramené à 2 m rues Dufour, ruelle des Jacques, ruelle Montprès, rue Roger Vidot ; alignement possible rue des Limites.",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2-7.3, p.28",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UB 7.2-7.3, p.28 : retrait >= H/2 de la façade, plancher 3 m — H/2 à la hauteur gravée (8 m égout) = 4 m (tiroir 10/13 m pour assiette >= 2 000 m² : 5 m, en note)",
        recul_limites_note: "Deux limites latérales autorisées OU retrait H/2 >= 3 m ; fond : H/2 >= 3 m.",
        stat_logement: "1 place / logement", stat_src: "Art. UB 12.2 (tableau), p.33-34",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UB 13.1, p.35 : 30 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UB 13.1, p.35 : 30 % espace vert et perméable, SANS sous-minimum de pleine terre",
        note: "Périphérie de l'hypercentre jusqu'au littoral (caractère de zone, p.23). Aléas trait de côte/submersion : constructions interdites en aléa fort (Art. UB 1.2.5-6, p.23)."}
   Uba: {bassin: "Bras-Panon",
        he_m: 8, hf_m: 11, hauteur_src: "Art. UB 10.2, p.29 (le relèvement à 10/13 m pour assiette >= 2 000 m² est écrit « A l'exception du secteur Uba » — 8/11 strict en Uba)",
        emprise_sol_pct: 60, emprise_src: "Art. UB 9, p.29 (règle de la zone Ub, aucune disposition particulière Uba — règle générale des secteurs, p.6)",
        recul_voirie_m: 4, recul_voirie_src: "Art. UB 6.2, p.27",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.28 (« En secteur Uba, les constructions peuvent être implantées sur une seule limite latérale ou en retrait »)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UB 7.2, p.28 (« En secteur Uba, les constructions peuvent être implantées sur une seule limite latérale ou en retrait ») : retrait >= H/2, plancher 3 m — H/2 à 8 m égout = 4 m",
        stat_logement: "1 place / logement", stat_src: "Art. UB 12.2 (tableau), p.33-34",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UB 13.1, p.35 : 30 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UB 13.1, p.35 : 30 % espace vert et perméable, SANS sous-minimum de pleine terre",
        note: "Secteur de tissu urbain patrimonial à valoriser (caractère de zone, p.23)."}
   Uc: {bassin: "Bras-Panon",
        he_m: 8, hf_m: 11, hauteur_src: "Art. UC 10.2, p.43",
        hauteur_note: "Annexes : 3,50 m (p.44).",
        emprise_sol_pct: 50, emprise_src: "Art. UC 9, p.43",
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.40",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2-7.3, p.42",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UC 7.2-7.3, p.42 : retrait >= H/2 de la façade, plancher 3 m — H/2 à la hauteur gravée (8 m égout) = 4 m",
        recul_limites_note: "Une seule limite latérale (profondeur bâtie 20 m max) OU retrait H/2 >= 3 m ; 2 limites si largeur du terrain < 14 m ; fond : H/2 >= 3 m.",
        stat_logement: "1 place / logement", stat_src: "Art. UC 12.2 (tableau), p.46-47",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.48 : 30 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UC 13.1, p.48 : 30 % espace vert et perméable, SANS sous-minimum de pleine terre",
        note: "Bourg de Rivière du Mât, dominante résidentielle (caractère de zone, p.37)."}
   Ud: {bassin: "Bras-Panon",
        he_m: 7, hf_m: 10, hauteur_src: "Art. UD 10.2, p.56",
        emprise_sol_pct: 50, emprise_src: "Art. UD 9, p.56",
        recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.53",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2-7.3, p.55",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. UD 7.2-7.3, p.55 : retrait >= H/2 de la façade, plancher 3 m — H/2 à la hauteur gravée (7 m égout) = 3,5 m",
        recul_limites_note: "Une seule limite latérale (profondeur 20 m max) OU retrait H/2 >= 3 m ; 2 limites si largeur < 14 m.",
        stat_logement: "1 place / logement", stat_src: "Art. UD 12.2 (tableau), p.59-60",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UD 13.1, p.61 : 40 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UD 13.1, p.61 : 40 % espace vert et perméable, SANS sous-minimum de pleine terre",
        note: "Écarts agglomérés semi-ruraux : Libéria, la Caroline, Bellevue, le Refuge, Paniandy (caractère de zone, p.50)."}
   Udu: {bassin: "Bras-Panon",
        he_m: 7, hf_m: 10, hauteur_src: "Art. UD 10.2, p.56 (secteur de la zone Ud sans hauteur propre — règle générale des secteurs, p.6)",
        emprise_sol_pct: 50, emprise_src: "Art. UD 9, p.56 (règle de la zone Ud)",
        recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.53",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2-7.3, p.55",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. UD 7.2-7.3, p.55 : retrait >= H/2 de la façade, plancher 3 m — H/2 à la hauteur gravée (7 m égout) = 3,5 m",
        stat_logement: null, stat_note: "Sans objet (habitat interdit — seuls équipements, commerces de restauration et hébergement en résidences/foyers avec service).", stat_src: "Art. UD 2.1 (al. 4), p.50",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UD 13.1, p.61 : 40 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UD 13.1, p.61 : 40 % espace vert et perméable, SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. UD 1.1.5, p.50 (« En secteur Udu, toutes les constructions et tous les ouvrages et travaux non autorisés à l'exception de ceux visés à l'article UD 2 ») + Art. UD 2.1.4, p.50 : « seules sont autorisées les constructions à destination d'équipement d'intérêt collectif et services publics, de commerces de restauration et d'hébergement dans des résidences ou foyers avec service »",
        note: "Secteur du projet médico-social et social du Domaine de l'Union (déclaration de projet approuvée le 28/04/2026, p.1 et caractère de zone p.50). Pas de logement ordinaire — capacité logement nulle, hébergement spécialisé seulement."}
   Ue: {bassin: "Bras-Panon",
@@ -167,7 +172,7 @@ zones:
        recul_limites_sep_m: 5, recul_limites_src: "Art. UE 7.2-7.3, p.67",
        recul_limites_note: "Retrait 5 m (une limite latérale possible, retrait OBLIGATOIRE en limite de zone Ua/Ub/Uc/Ud ou AU d'habitat) ; fond : 5 m.",
        stat_logement: null, stat_note: "Sans objet (habitat interdit, gardiennage compris).", stat_src: "Art. UE 1.2, p.63",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UE 13.1, p.72 : 20 % espace vert et perméable, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UE 13.1, p.72 : 20 % espace vert et perméable, SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. UE 1.2 (al. 2), p.63 : « travaux à usage d'habitation y compris celles liées au gardiennage » INTERDITS (O12 confirmé)",
        note: "Zone d'activités économiques de production (caractère de zone, p.63). Commerces/bureaux/équipements plafonnés à 5 % de l'emprise foncière de la zone (Art. UE 2.2.1, p.64)."}
 
@@ -181,34 +186,34 @@ zones:
        he_m: 10, hf_m: 13, hauteur_src: "Art. UA 10.2, p.16 via renvoi (ZONE AUindicée, p.75 : règlement de la zone U d'indice)",
        emprise_sol_pct: 70, emprise_src: "Art. UA 9, p.16 (via renvoi Art. AUINDICEE 9, p.77)",
        recul_voirie_m: 2, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi Art. AUINDICEE 6, p.77)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2-7.3, p.14-15 (via renvoi Art. AUINDICEE 7, p.77)",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. UA 7.2-7.3, p.14-15 (via renvoi Art. AUINDICEE 7, p.77) : retrait >= H/2, plancher 3 m — H/2 à 10 m égout = 5 m",
        stat_logement: "1 place / logement", stat_src: "Art. UA 12.2, p.20-21 (via renvoi Art. AUINDICEE 12, p.78)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UA 13.1, p.21 (via renvoi Art. AUINDICEE 13, p.78) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UA 13.1, p.21 (via renvoi Art. AUINDICEE 13, p.78) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation prioritaire SAR (préambule AUindicée, p.75). Densité MINIMALE 30 logts/ha (Art. AUINDICEE 2.2.4, p.76) ; raccordement assainissement collectif obligatoire (2.2.5). Graphie : le texte écrit « zones AUa » (p.76), type 1AUindicée défini p.75."}
   1AUb: {bassin: "Bras-Panon",
        he_m: 8, hf_m: 11, hauteur_src: "Art. UB 10.2, p.29 via renvoi (ZONE AUindicée, p.75)",
        hauteur_note: "Tiroir Ub : 10/13 m si assiette >= 2 000 m² (hors Uba) — tranche conservatrice gravée.",
        emprise_sol_pct: 60, emprise_src: "Art. UB 9, p.29 (via renvoi Art. AUINDICEE 9, p.77)",
        recul_voirie_m: 4, recul_voirie_src: "Art. UB 6.2, p.27 (via renvoi Art. AUINDICEE 6, p.77)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2-7.3, p.28 (via renvoi Art. AUINDICEE 7, p.77)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UB 7.2-7.3, p.28 (via renvoi Art. AUINDICEE 7, p.77) : retrait >= H/2, plancher 3 m — H/2 à 8 m égout = 4 m",
        stat_logement: "1 place / logement", stat_src: "Art. UB 12.2, p.33-34 (via renvoi Art. AUINDICEE 12, p.78)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UB 13.1, p.35 (via renvoi Art. AUINDICEE 13, p.78) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UB 13.1, p.35 (via renvoi Art. AUINDICEE 13, p.78) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation prioritaire SAR. Densité MINIMALE 30 logts/ha ; assainissement collectif obligatoire (Art. AUINDICEE 2.2.4-2.2.5, p.76). Graphie 1AUb attestée p.1 (révision allégée n°1)."}
   1AUc: {bassin: "Bras-Panon",
        he_m: 8, hf_m: 11, hauteur_src: "Art. UC 10.2, p.43 via renvoi (ZONE AUindicée, p.75)",
        emprise_sol_pct: 50, emprise_src: "Art. UC 9, p.43 (via renvoi Art. AUINDICEE 9, p.77)",
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6.2, p.40 (via renvoi Art. AUINDICEE 6, p.77)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7.2-7.3, p.42 (via renvoi Art. AUINDICEE 7, p.77)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. UC 7.2-7.3, p.42 (via renvoi Art. AUINDICEE 7, p.77) : retrait >= H/2, plancher 3 m — H/2 à 8 m égout = 4 m",
        stat_logement: "1 place / logement", stat_src: "Art. UC 12.2, p.46-47 (via renvoi Art. AUINDICEE 12, p.78)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UC 13.1, p.48 (via renvoi Art. AUINDICEE 13, p.78) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UC 13.1, p.48 (via renvoi Art. AUINDICEE 13, p.78) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation prioritaire SAR. Densité MINIMALE 20 logts/ha (« en zone AUc », Art. AUINDICEE 2.2.4, p.76)."}
   1AUd: {bassin: "Bras-Panon",
        he_m: 7, hf_m: 10, hauteur_src: "Art. UD 10.2, p.56 via renvoi (ZONE AUindicée, p.75)",
        emprise_sol_pct: 50, emprise_src: "Art. UD 9, p.56 (via renvoi Art. AUINDICEE 9, p.77)",
        recul_voirie_m: 4, recul_voirie_src: "Art. UD 6.2, p.53 (via renvoi Art. AUINDICEE 6, p.77)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7.2-7.3, p.55 (via renvoi Art. AUINDICEE 7, p.77)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. UD 7.2-7.3, p.55 (via renvoi Art. AUINDICEE 7, p.77) : retrait >= H/2, plancher 3 m — H/2 à 7 m égout = 3,5 m",
        stat_logement: "1 place / logement", stat_src: "Art. UD 12.2, p.59-60 (via renvoi Art. AUINDICEE 12, p.78)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UD 13.1, p.61 (via renvoi Art. AUINDICEE 13, p.78) : 40 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UD 13.1, p.61 (via renvoi Art. AUINDICEE 13, p.78) : 40 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Urbanisation prioritaire SAR. Densité MINIMALE 10 logts/ha (« en zone AUd », Art. AUINDICEE 2.2.4, p.76)."}
   1AUe: {bassin: "Bras-Panon",
        he_m: 12, hf_m: 16, hauteur_src: "Art. UE 10.2, p.69 via renvoi (ZONE AUindicée, p.75 : règlement de la zone U d'indice)",
@@ -216,7 +221,7 @@ zones:
        recul_voirie_m: 5, recul_voirie_src: "Art. UE 6.2, p.66 (via renvoi Art. AUINDICEE 6, p.77)",
        recul_limites_sep_m: 5, recul_limites_src: "Art. UE 7.2-7.3, p.67 (via renvoi Art. AUINDICEE 7, p.77)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit via règlement Ue).", stat_src: "Art. UE 1.2, p.63 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UE 13.1, p.72 (via renvoi Art. AUINDICEE 13, p.78) : 20 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UE 13.1, p.72 (via renvoi Art. AUINDICEE 13, p.78) : 20 % espace vert et perméable, sans sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. UE 1.2 (al. 2), p.63 via renvoi (ZONE AUindicée, p.75) : habitation interdite y compris gardiennage",
        note: "Zone d'activités future (indice e -> Ue). Graphie 1AUe attestée p.1 (révision allégée n°2 : « d'une zone A en zone 1AUe »). O12 hors liste (« urbanisation prioritaire SAR ») mais habitat interdit CONFIRMÉ par le renvoi Ue."}
   1AUec: {bassin: "Bras-Panon",
@@ -224,18 +229,18 @@ zones:
        hauteur_note: "Hauteur ABSOLUE unique (pas de couple égout/faîtage) => hf_m 18, he_m null.",
        emprise_sol_pct: 70, emprise_src: "Art. UA 9, p.16 (via renvoi AUec -> Ua, Art. AUINDICEE 9, p.77)",
        recul_voirie_m: 2, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi AUec -> Ua, Art. AUINDICEE 6, p.77)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2-7.3, p.14-15 (via renvoi AUec -> Ua, Art. AUINDICEE 7, p.77)",
+       recul_limites_sep_m: 9, recul_limites_src: "Art. UA 7.2-7.3, p.14-15 (via renvoi AUec -> Ua, Art. AUINDICEE 7, p.77) : retrait >= H/2 de la façade, plancher 3 m — hauteur AUec = 18 m absolue => H/2 = 9 m (sans incidence produit : habitat interdit)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage 70 m²).", stat_src: "Art. AUINDICEE 2.2 (al. 7), p.76",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AUINDICEE 13, p.78 : 15 % de l'unité foncière plantée et 20 % perméable minimum, SANS sous-minimum de pleine terre",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. AUINDICEE 13, p.78 : 15 % de l'unité foncière plantée et 20 % perméable minimum, SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. AUINDICEE 2.2.7, p.76 : « En zone AUec, sont uniquement admises les constructions liées au commerce, au bureau, à l'hébergement hôtelier, à l'artisanat et aux équipements d'intérêt collectif, ainsi que les constructions à usage d'habitation dans la limite de 70 m² de surface de plancher … exclusivement destinées et liées au gardiennage » (O12 confirmé)",
        note: "Zone dédiée équipements/commerces/activités autres que de production. Graphie : « zones 1AUec » nommées au préambule p.75 et aux dispositions générales p.6 ; règles écrites sous « zone AUec »."}
   1AUt: {bassin: "Bras-Panon",
        he_m: 10, hf_m: 13, hauteur_src: "Art. UA 10.2, p.16 via renvoi (Art. AUINDICEE 10, p.78 : « Pour la zone AUt, il convient de se reporter au règlement de la zone Ua »)",
        emprise_sol_pct: 70, emprise_src: "Art. UA 9, p.16 (via renvoi AUt -> Ua, Art. AUINDICEE 9, p.77)",
        recul_voirie_m: 2, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi AUt -> Ua, Art. AUINDICEE 6, p.77)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7.2-7.3, p.14-15 (via renvoi AUt -> Ua, Art. AUINDICEE 7, p.77)",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. UA 7.2-7.3, p.14-15 (via renvoi AUt -> Ua, Art. AUINDICEE 7, p.77) : retrait >= H/2, plancher 3 m — H/2 à 10 m égout = 5 m",
        stat_logement: null, stat_note: "Sans objet (habitat interdit — vocation touristique exclusive ; hébergement hôtelier : 1 place/3 chambres via tableau Ua).", stat_src: "Art. AUINDICEE 2.2.6, p.76 + Art. UA 12.2, p.20-21 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UA 13.1, p.21 (via renvoi AUt -> Ua, Art. AUINDICEE 13, p.78) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UA 13.1, p.21 (via renvoi AUt -> Ua, Art. AUINDICEE 13, p.78) : 30 % espace vert et perméable, sans sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. AUINDICEE 2.2 (al. 6), p.76 : « uniquement admises les constructions liées au tourisme » (hôtellerie, restaurant, loisirs, sports, services liés) — aucune habitation admise",
        note: "Zone AU touristique (indice t sans zone U correspondante : le chapitre renvoie explicitement à Ua article par article). Graphie : règles écrites sous « zone AUt », type 1AUindicée défini p.75."}
 
