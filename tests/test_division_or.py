@@ -212,3 +212,22 @@ def test_build_commune_vide_et_table_creee(db_session):
     # snapshot des tracés revus + revue exhaustive : SQL valides sur table vide (0 ligne)
     assert d.snapshot_review_lots(s, commit=False) == 0
     assert d.all_candidates_for_review(s) == []
+
+
+@pytest.mark.db
+def test_aucun_candidat_hors_des_35_revus(db_session):
+    """Invariant de clôture O12 (exposition 28/07/2026) : TOUT candidat présent en table est
+    dans le pool VERSIONNÉ des 35 revus (reports/o12-ile/pool_complet.csv) — un re-run du
+    détecteur qui ferait entrer un candidat non revu casse ici (base vide : trivialement vrai,
+    l'invariant s'applique partout où la table est peuplée, base servie comprise)."""
+    import csv
+    from pathlib import Path
+    ref = Path(__file__).resolve().parent.parent / "reports" / "o12-ile" / "pool_complet.csv"
+    with open(ref, encoding="utf-8") as fh:
+        revus = {r["idu"] for r in csv.DictReader(fh)}
+    assert len(revus) == 35
+    if db_session.execute(text("SELECT to_regclass('division_or_candidates')")).scalar() is None:
+        return   # table absente = rien de servi : invariant trivialement tenu
+    servis = {r[0] for r in db_session.execute(text("SELECT idu FROM division_or_candidates"))}
+    hors = servis - revus
+    assert not hors, f"candidat(s) servi(s) HORS des 35 revus : {sorted(hors)}"
