@@ -15,7 +15,12 @@ from sqlalchemy import text
 # param → (valeur, provenance 'sourcee' | 'estimee')
 CALIBRATION: dict[str, tuple[float, str]] = {
     # Recettes
-    "prix_m2_neuf": (4900.0, "sourcee"),   # neuf Saint-Paul 2024 ~4 920 €/m² (corroboré marché ~5 200)
+    # `prix_m2_neuf` GLOBAL 4900 RETIRÉ (décision Vic 28/07/2026, mandat calibration estimées —
+    # back-test contre le réel). C'était un prix de neuf SAINT-PAULOIS servi comme socle à toute
+    # l'île, dans le sens généreux : il gonflait la charge foncière (symétrique du bug 2100). Le
+    # prix de sortie vient désormais de `dvf_prix_sortie_neuf` (appartements de marché, hors
+    # bailleurs sociaux, N_MIN ≥ 10) résolu par commune, ou « non calculable ». Seuls survivent
+    # les overrides de BASSIN sourcés (SECTEUR_PRIX_NEUF ci-dessous), en tête de préséance.
     "prix_m2_lls": (2900.0, "estimee"),    # cession VEFA→bailleur ~prix de revient social DOM
     # ratio_vendable RETIRÉ (Vic 28/07/2026) : paramètre mort — aucun moteur ne le lisait.
     # Coûts — PAS de cout_construction_m2_sdp ici (mandat hypothèses bilan, décision Vic
