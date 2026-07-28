@@ -253,3 +253,107 @@ collectif de marché ou petit privé.)
 Rien n'est appliqué. Aucun re-run de scoring. Invariant tiers inchangé (120 / 1031 / 3587 /
 72980 / 353945). Artefacts : `/tmp/segment_marche_social.py`, `/tmp/cout_taille_sensibilite.py`
 (LECTURE SEULE, recomposition analytique — aucune écriture).
+
+---
+
+# SUITE 2 — trois catégories qualifiées + instrument prix trouvé (28/07/2026)
+
+Arbitrage Vic : il n'y a pas deux catégories d'opérations mais **trois**, et le bilan promoteur
+ne s'applique qu'à la troisième. Mesures ci-dessous (LECTURE SEULE, aucune écriture, aucun re-run
+de scoring).
+
+| Catégorie | Équilibre réel | compute_bilan s'applique ? |
+|---|---|---|
+| Social / aidé (~25 % des logements) | subventions, LLS/LLTS | ❌ |
+| Patrimonial 3-4 lgt, build-to-hold | rendement locatif + défisc (`q_v7_defisc`) | ❌ |
+| **Promotion de marché, vendue (≥ 10 lgt)** | prix de sortie − coûts − marge | ✅ |
+
+## 14 · Catégorie 2 qualifiée sur PIÈCES (pas supposée) — test build-to-hold
+
+Pour chaque opération E1, revente DVF observée APRÈS le PC (cohorte **2021-2022**, la moins
+censurée : 3-5 ans écoulés). « Tenue » = jamais revendue = build-to-hold.
+
+| Taille (lgt) | n | vendue post-PC | **tenue (build-to-hold)** |
+|---|---|---|---|
+| 3-4 | 293 | 28 % | **72 %** |
+| 5-9 | 103 | 35 % | 65 % |
+| 10-19 | 80 | 51 % | 49 % |
+| 20+ | 118 | 47 % | 53 % |
+
+**72 % des opérations de 3-4 logements ne sont jamais revendues** : un particulier qui bâtit 3-4
+logements les garde pour louer — ni vente, ni prix de sortie, ni marge de promoteur. Le taux de
+vente double vers les grandes (28 % → 51 %). La catégorie 2 est réelle et volumineuse.
+*Caveats* : censure à droite résiduelle (un PC 2022 s'achève ~2024, DVF parcelle s'arrête au
+31/12/2025) et VEFA off-plan mal captée au 974 → le taux « tenu » est une borne HAUTE ; le
+gradient petit→grand, lui, est robuste. Le 20+ (47 %, sous les 10-19) est contaminé par le
+social/SEM qui se garde en gestion locative sociale.
+
+## 15 · Test d'acceptation resserré — et PASSÉ
+
+Sous-ensemble = **promotion de marché véritable** : ≥ 10 lgt + commune de marché (social < 50 %)
++ commune couverte par le nouvel instrument, non-social ; variante STRICTE = + revente post-PC
+observée. Charge RECALCULÉE (`compute_bilan`, programme réel) en changeant **seulement le prix**.
+
+Nouvel instrument prix : **APPARTEMENTS seuls** (proxy du collectif), ventes ≤ 3 ans
+post-achèvement, **N_MIN ≥ 10**, percentile au niveau commune. Coût **audité 2 550** conservé
+(implicite d'équilibre des 10-19 = 2 573, déjà juste — §11).
+
+| Sous-ensemble | ancien prix (médiane mixte) | **appt p50** | **appt p75** | appt p90 |
+|---|---|---|---|---|
+| Large (≥10, marché, non-social ; n=178) | 59 % viables | 80 % | **93 %** | 99 % |
+| **Strict (+ vendu ; n=85)** | — | 84 % | **95 %** | 99 % |
+
+**Le modèle est validé là où il s'applique.** Sur la promotion de marché vendue, l'instrument
+appartement fait ressortir **84 % (p50) à 95 % (p75)** d'opérations viables — contre l'effondrement
+de la médiane mixte. **L'erreur était bien l'instrument prix** (la médiane noyait le collectif
+sous les maisons), pas le modèle. Le coût audité tient.
+
+## 16 · L'instrument trouvé (et sa discipline)
+
+- **Appartements uniquement** : c'est le levier qui recolle (dès le p50 : 80-84 %). Le percentile
+  n'est que du réglage fin.
+- **p75 recommandé comme ancre** (93-95 %), p50 comme plancher. **p90 (99 %) SUR-corrige** — il
+  réintroduit l'optimisme du 4900, à écarter.
+- **N_MIN ≥ 10, résolution commune** : 6 communes couvertes (Saint-Denis 112 appt, Saint-Pierre 76,
+  Saint-Paul 54, Saint-Leu 41, Le Tampon 36, La Possession 12). Le p50 appartement y dépasse déjà
+  le seuil 3 859 partout sauf La Possession (n=12, fragile).
+- **Ailleurs = « non calculable », et c'est CORRECT.** Sainte-Marie (que le back-test donnait
+  64/64 ≤ 0 à la médiane mixte) a < 10 ventes d'appartements : l'instrument appartement **s'abstient**
+  au lieu d'asserter un chiffre faux. Non calculable > faux. Sa faillite précédente était
+  l'artefact maison, pas une non-viabilité réelle.
+- **Préséance conservée** : override bassin sourcé > appt secteur (si ≥ N_MIN) > appt commune >
+  non calculable. Le repli île est définitivement écarté.
+
+## 17 · Le fait produit — trois formulations, commune par commune
+
+1. **Communes à social dominant** (Le Port 96 %, Entre-Deux 97 %, Saint-Philippe 84 %,
+   Petite-Île 76 %, Cilaos 72 %, Bras-Panon 60 %, Saint-Joseph 56 %, La Plaine 53 %) →
+   « **Charge foncière de marché non atteignable — le collectif y est majoritairement social ou
+   aidé.** » Information exacte, cible bailleurs sociaux.
+2. **Communes de marché couvertes** (Saint-Denis, Saint-Pierre, Saint-Paul, Saint-Leu, Le Tampon,
+   La Possession) → le modèle tient avec l'instrument appartement (§15). C'est là qu'il sert.
+3. **Communes de marché non couvertes** (Sainte-Marie, Saint-Louis, Les Avirons, Saint-Benoît,
+   L'Étang-Salé : < 10 ventes d'appartements) → « **marché du collectif non observable (n
+   insuffisant) — charge non calculable** », jamais un chiffre inventé.
+4. **Petites opérations patrimoniales (3-4 lgt, build-to-hold)** → « **hors périmètre du bilan
+   promoteur : opération de rendement locatif, pas de prix de sortie de marché.** »
+
+## 18 · Second mode de bilan — mandat produit à part entière (consigné)
+
+Motivé par DEUX populations, pas une : **social/aidé** (25 % des logements, majorité de 8 communes)
+**et patrimonial locatif** (72 % des petites opérations). Un bilan « opération sociale / locative »
+(équilibre par subventions + rendement locatif + défisc, pas par prix de sortie − marge) touche
+directement la cible bailleurs sociaux. **Hors de ce mandat** — à ouvrir comme mandat distinct.
+
+## 19 · Conclusion
+
+- **Modèle validé** sur son périmètre (promotion de marché vendue ≥ 10 lgt) : 84-95 % viables avec
+  l'instrument appartement, coût audité confirmé.
+- **Instrument trouvé** : appartements seuls, p75 (plancher p50), N_MIN ≥ 10, commune ; p90 écarté.
+- **Deux catégories hors périmètre** (social, patrimonial locatif) qualifiées sur pièces —
+  ce ne sont pas des échecs du modèle.
+- **Rien n'est appliqué.** L'application (résolution appartement par commune + préséance + coût par
+  taille pour les < 10 lgt servis + étiquettes « non calculable » commune par commune) reste au
+  point d'arrêt Vic, avec le back-test comme test d'acceptation permanent. Invariant tiers inchangé
+  (120 / 1031 / 3587 / 72980 / 353945). Artefacts : `/tmp/rederive_acceptation.py`,
+  `/tmp/segment_marche_social.py`, `/tmp/cout_taille_sensibilite.py` (tous LECTURE SEULE).
