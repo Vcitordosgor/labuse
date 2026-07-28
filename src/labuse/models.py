@@ -1119,6 +1119,15 @@ def ensure_bilan_params(engine) -> None:
         c.execute(_t(
             "DELETE FROM bilan_params WHERE secteur = '*' AND param = 'cout_construction_m2_sdp' "
             "AND provenance = 'estimee' AND value = 2100"))
+        # MANDAT CALIBRATION ESTIMÉES (décision Vic 28/07/2026) — purge du SOCLE global « prix de
+        # sortie neuf » 4900 (prix saint-paulois servi à toute l'île, back-test contre le réel).
+        # CIBLÉE : valeur exacte 4900, provenance « sourcee », secteur global — un override saisi
+        # par Vic (autre valeur/provenance/secteur) et les overrides de bassin (secteur ≠ '*')
+        # survivent. Sans cette purge, `seed()` le ré-injecterait au boot (piège exact du 2100).
+        # Le prix vient désormais de `dvf_prix_sortie_neuf` (résolution par commune, préséance).
+        c.execute(_t(
+            "DELETE FROM bilan_params WHERE secteur = '*' AND param = 'prix_m2_neuf' "
+            "AND provenance = 'sourcee' AND value = 4900"))
         # Décision Vic 28/07/2026 : une valeur ESTIMÉE non confirmée reste placeholder (visible
         # aux bandeaux) — aligne l'existant, idempotent.
         c.execute(_t(

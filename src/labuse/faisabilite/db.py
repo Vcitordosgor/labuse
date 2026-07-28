@@ -365,23 +365,48 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
             secteur = (rules.bassin if rules else None) or "Saint-Paul"
             resolved = bpmod.resolve(session, secteur)
             bp_values = {k: r["value"] for k, r in resolved.items()}
-            b = compute_bilan(fr.get("shab_vendable_m2", 0), ctx.surface_m2,
-                              sector_price(session, ctx.parcel_id, hyp), hyp,
-                              contexte_eco=ctx.prescriptions_eco, bilan_params=bp_values)
-            bilan = {
-                "fiable": b.fiable, "fiabilite": b.fiabilite, "verdict": b.verdict,
-                "prix_dvf": b.prix_dvf, "comparables": (b.prix_dvf or {}).get("comparables"),
-                "ca": b.ca, "charge_fonciere": b.charge_fonciere,
-                "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur,
-                           "source": s.source, "prov": s.prov} for s in b.steps],
-                "hypotheses": b.hypotheses, "avertissements": b.avertissements, "bandeau": b.bandeau,
-                "calc": b.calc,
-                # 1.C — secteur + paramètres éditables (registre + valeurs résolues) + non calibrés.
-                "secteur": secteur,
-                "params": [{**p, **resolved.get(p["key"], {})} for p in bpmod.registry()],
-                "non_calibres_critiques": bpmod.uncalibrated_critical(resolved),
-                "estimes_a_affiner": bpmod.estimated_to_refine(resolved),
-            }
+            # MANDAT CALIBRATION ESTIMÉES (décision Vic 28/07/2026) — prix de sortie neuf servi
+            # par PRÉSÉANCE : override bassin sourcé > dvf_prix_sortie_neuf secteur > commune >
+            # NON CALCULABLE. Le socle global 4900 (prix saint-paulois servi à toute l'île) est
+            # supprimé : hors des communes où un marché du collectif neuf est observable, on dit
+            # qu'on ne sait pas (jamais un chiffre faux). Cf. CALIBRATION_PHASE_A_BACKTEST.md.
+            from ..ingestion.dvf_prix_neuf import resolve_prix_neuf_marche
+            prix_marche, niveau_prix, motif_nc = resolve_prix_neuf_marche(
+                session, ctx.parcel_id, resolved.get("prix_m2_neuf"))
+            _params_registre = [{**p, **resolved.get(p["key"], {})} for p in bpmod.registry()]
+            if motif_nc is None:
+                bp_values["prix_m2_neuf"] = prix_marche      # prix de MARCHÉ injecté comme override
+                b = compute_bilan(fr.get("shab_vendable_m2", 0), ctx.surface_m2,
+                                  sector_price(session, ctx.parcel_id, hyp), hyp,
+                                  contexte_eco=ctx.prescriptions_eco, bilan_params=bp_values)
+                bilan = {
+                    "fiable": b.fiable, "fiabilite": b.fiabilite, "verdict": b.verdict,
+                    "prix_dvf": b.prix_dvf, "comparables": (b.prix_dvf or {}).get("comparables"),
+                    "ca": b.ca, "charge_fonciere": b.charge_fonciere,
+                    "steps": [{"label": s.label, "formule": s.formule, "valeur": s.valeur,
+                               "source": s.source, "prov": s.prov} for s in b.steps],
+                    "hypotheses": b.hypotheses, "avertissements": b.avertissements, "bandeau": b.bandeau,
+                    "calc": b.calc, "niveau_prix_neuf": niveau_prix,
+                    # 1.C — secteur + paramètres éditables (registre + valeurs résolues) + non calibrés.
+                    "secteur": secteur,
+                    "params": _params_registre,
+                    "non_calibres_critiques": bpmod.uncalibrated_critical(resolved),
+                    "estimes_a_affiner": bpmod.estimated_to_refine(resolved),
+                }
+            else:
+                # NON CALCULABLE — la parcelle est SERVIE avec la mention, JAMAIS écartée
+                # (comportement M26-A « non estimable — non filtrée »). Un professionnel doit voir
+                # la parcelle et savoir qu'on ne sait pas, pas la perdre.
+                bilan = {
+                    "fiable": False, "fiabilite": "non_calculable", "verdict": motif_nc,
+                    "non_calculable": True, "motif_non_calculable": motif_nc,
+                    "prix_dvf": None, "comparables": None, "ca": None, "charge_fonciere": None,
+                    "steps": [], "hypotheses": [], "avertissements": [motif_nc], "bandeau": motif_nc,
+                    "calc": None, "niveau_prix_neuf": None, "secteur": secteur,
+                    "params": _params_registre,
+                    "non_calibres_critiques": bpmod.uncalibrated_critical(resolved),
+                    "estimes_a_affiner": bpmod.estimated_to_refine(resolved),
+                }
     except Exception:  # noqa: BLE001 - le bilan ne casse jamais la fiche
         bilan = None
 
