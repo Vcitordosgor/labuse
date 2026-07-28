@@ -80,9 +80,21 @@
   juridiquement CONDITIONNÉE (modification/révision du PLU, études préalables…) ;
   interdiction d'habitat = zone CALIBRÉE avec habitat: interdit (hauteurs a_verifier si
   non chiffrées). Le gel « construction neuve non autorisée » ment sur la nature d'une
-  zone d'équipements — un équipement public y est constructible. Sans danger moteur :
-  habitat=="interdit" est testé AVANT les hauteurs (capacité 0 exacte) ; le repli 9 m ne
-  concerne que les zones ABSENTES du YAML (plu_rules.py:210).
+  zone d'équipements — un équipement public y est constructible. **CORRECTIF (28/07,
+  mesure session B)** : la convention est SUSPENDUE en v1 pour les zones à hauteurs non
+  chiffrées en mode progressif — le gate de resolve_zone (plu_rules.py:149-151) substitue
+  l'estimation générique AVANT que le moteur ne voie habitat:interdit (le test
+  engine.py:157 n'est jamais atteint) => capacité fictive. Ma vérification ne couvrait
+  que l'ordre DANS engine.py, pas la couche resolve : leçon — vérifier le CHEMIN COMPLET,
+  pas une fonction. Représentation v1 correcte en attendant : zones_au_st (mesuré par B).
+  Levée possible sur arbitrage : 1 ligne dans resolve_zone (retourner l'entrée si
+  habitat=="interdit" même sans hauteur exploitable) — décision Vic.
+- **HAUTEUR « ABSOLUE / TOTALE / EN TOUT POINT » vs « FIXÉE À N M » NON QUALIFIÉE**
+  (principe Vic, 28/07/2026) : une hauteur explicitement absolue/totale/en tout point se
+  transcrit he = hf = N (transcription exacte — un plafond en tout point borne l'égout) ;
+  une hauteur non qualifiée (le texte ne dit pas où se prend la mesure) reste he null —
+  l'estimation moteur (hf−3)÷3 est plus prudente qu'un choix d'interprétation généreux
+  d'un texte muet. Vic applique la règle sur verbatims, jamais d'extension en bloc.
 - **L'île compte AU MOINS 4 styles de règlement** (ancien préfixé, moderne par chapitre,
   moderne mutualisé par groupe, sections « UA 2.4 ») — la détection du style est la première
   minute de chaque commune ; les 6 requêtes-clés (voies/limites/emprise/hauteur/perméable/
