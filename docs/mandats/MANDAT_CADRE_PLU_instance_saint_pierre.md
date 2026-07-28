@@ -213,6 +213,17 @@ La chaîne du résiduel irrigue `residuel_socle`, donc le scoring servi, la shor
     Tampon) : `habitat: interdit` devrait primer sur le gate hauteur dans `resolve_zone`,
     et un vrai type « gel » devrait remplacer l'étiquette « secteur de transition »
     (utilisée pour capacité zéro exacte dans 6 communes sur 9 du lot B).
+24. **Le repli générique n'est pas systématiquement optimiste : il est ARBITRAIRE**
+    (doctrine reformulée par Vic, 28/07/2026, sur la mesure phase 4 — 18 communes).
+    Il se trouve optimiste dans 17 cas sur 18 parce que 9 m est en dessous de la
+    plupart des plafonds réunionnais, mais rien ne le garantit : Salazie est calibrée
+    hé = 12 m (Art. U 10.2, p.13) → le repli y SOUS-estimait de 33 %, et les queues
+    positives (+2 355 % Le Port Ud R+6, Art. Ud 8 p.68) montrent l'erreur dans les
+    deux sens sur les petites parcelles denses. **L'argument du calibrage est
+    l'EXACTITUDE, pas la correction d'un biais unidirectionnel** — on ne vend pas
+    « on corrige une surestimation », on vend « on lit le règlement ». Tout
+    durcissement uniforme du repli (mandat « Repli non optimiste » compris) doit être
+    pensé avec ce contre-exemple en tête.
 
 ### À fusionner (sessions A et C)
 

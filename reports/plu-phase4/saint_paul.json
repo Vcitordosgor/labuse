@@ -1,0 +1,401 @@
+{
+ "commune": "Saint-Paul",
+ "pool_servi": 13155,
+ "n_dist": 400,
+ "n_err": 3,
+ "echantillon10": [
+  {
+   "zone_couche": "U3c",
+   "idu": "97415000CP0010",
+   "surface_m2": 1134,
+   "avant": {
+    "zone": "U3c",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~6 à 8 logts",
+    "sdp": 918,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 680,
+    "emprise_batie": 306,
+    "logts": [
+     6,
+     8
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U3c",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~5-6 / sous-sol ~6-8 logts",
+    "sdp": 918,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 680,
+    "emprise_batie": 306,
+    "logts": [
+     6,
+     8
+    ],
+    "src_hauteur": "Zone U3c, Art. 10.2, p.110-112"
+   }
+  },
+  {
+   "zone_couche": "U6c",
+   "idu": "97415000BV0090",
+   "surface_m2": 2100,
+   "avant": {
+    "zone": "U6c",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~7 à 8 logts",
+    "sdp": 2129,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 1577,
+    "emprise_batie": 710,
+    "logts": [
+     7,
+     8
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U6c",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~4-6 / sous-sol ~4-6 logts",
+    "sdp": 1134,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 1260,
+    "emprise_batie": 567,
+    "logts": [
+     4,
+     6
+    ],
+    "src_hauteur": "Zone U6c, Art. 10.2, p.277-279"
+   }
+  },
+  {
+   "zone_couche": "U2c",
+   "idu": "97415000CX0020",
+   "surface_m2": 161,
+   "avant": {
+    "zone": "U2c",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~0 à 1 logts",
+    "sdp": 46,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 34,
+    "emprise_batie": 15,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U2c",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~0-1 / sous-sol ~0-1 logts",
+    "sdp": 31,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 34,
+    "emprise_batie": 15,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "Zone U2c, Art. 10.2, p.70-72"
+   }
+  },
+  {
+   "zone_couche": "U5b",
+   "idu": "97415000EL0101",
+   "surface_m2": 861,
+   "avant": {
+    "zone": "U5b",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~4 à 6 logts",
+    "sdp": 582,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 431,
+    "emprise_batie": 194,
+    "logts": [
+     4,
+     6
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U5b",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~4-6 / sous-sol ~4-6 logts",
+    "sdp": 582,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 431,
+    "emprise_batie": 194,
+    "logts": [
+     4,
+     6
+    ],
+    "src_hauteur": "Zone U5b, Art. 10.2, p.217-219"
+   }
+  },
+  {
+   "zone_couche": "U4c",
+   "idu": "97415000AH0158",
+   "surface_m2": 1410,
+   "avant": {
+    "zone": "U4c",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~3 à 4 logts",
+    "sdp": 755,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 559,
+    "emprise_batie": 252,
+    "logts": [
+     3,
+     4
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U4c",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~2-3 / sous-sol ~2-3 logts",
+    "sdp": 504,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 559,
+    "emprise_batie": 252,
+    "logts": [
+     2,
+     3
+    ],
+    "src_hauteur": "Zone U4c, Art. 10.2, p.171-173"
+   }
+  },
+  {
+   "zone_couche": "Usdu",
+   "idu": "97415000AS0815",
+   "surface_m2": 248,
+   "avant": {
+    "zone": "Usdu",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~0 à 1 logts",
+    "sdp": 126,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 94,
+    "emprise_batie": 42,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "Usdu",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~0-1 / sous-sol ~0-1 logts",
+    "sdp": 53,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 58,
+    "emprise_batie": 26,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "Zone Usdu, Art. 10.2, p.130-131 (id. p.191-192 / p.237-238 / p.297-298)"
+   }
+  },
+  {
+   "zone_couche": "U4b",
+   "idu": "97415000AT0082",
+   "surface_m2": 598,
+   "avant": {
+    "zone": "U4b",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~2 à 4 logts",
+    "sdp": 359,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 266,
+    "emprise_batie": 120,
+    "logts": [
+     2,
+     4
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U4b",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~2-4 / sous-sol ~2-4 logts",
+    "sdp": 359,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 266,
+    "emprise_batie": 120,
+    "logts": [
+     2,
+     4
+    ],
+    "src_hauteur": "Zone U4b, Art. 10.2, p.171-173"
+   }
+  },
+  {
+   "zone_couche": "U6b",
+   "idu": "97415000CM0019",
+   "surface_m2": 2010,
+   "avant": {
+    "zone": "U6b",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~12 à 13 logts",
+    "sdp": 2025,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 1500,
+    "emprise_batie": 675,
+    "logts": [
+     12,
+     13
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U6b",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~10-11 / sous-sol ~12-13 logts",
+    "sdp": 1899,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 1407,
+    "emprise_batie": 633,
+    "logts": [
+     12,
+     13
+    ],
+    "src_hauteur": "Zone U6b, Art. 10.2, p.277-279"
+   }
+  },
+  {
+   "zone_couche": "U2d",
+   "idu": "97415000CY0074",
+   "surface_m2": 1074,
+   "avant": {
+    "zone": "U2d",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~9 à 10 logts",
+    "sdp": 963,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 713,
+    "emprise_batie": 321,
+    "logts": [
+     9,
+     10
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U2d",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+0 · au sol ~0-1 / sous-sol ~0-1 logts",
+    "sdp": 48,
+    "hauteur_m": 3.0,
+    "niveaux": "R+0",
+    "emprise": 107,
+    "emprise_batie": 48,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "Zone U2d, Art. 10.2, p.70-72"
+   }
+  },
+  {
+   "zone_couche": "U1f",
+   "idu": "97415000BE0029",
+   "surface_m2": 535,
+   "avant": {
+    "zone": "U1f",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~3 à 5 logts",
+    "sdp": 384,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 284,
+    "emprise_batie": 128,
+    "logts": [
+     3,
+     5
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U1f",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~3-5 / sous-sol ~3-5 logts",
+    "sdp": 384,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 284,
+    "emprise_batie": 128,
+    "logts": [
+     3,
+     5
+    ],
+    "src_hauteur": "Zone U1f, Art. 10.2, p.20"
+   }
+  }
+ ],
+ "stats": {
+  "n_constructibles_avant": 371,
+  "n_constructibles_apres": 366,
+  "sdp_mediane_avant": 339,
+  "sdp_mediane_apres": 261.5,
+  "n_deux_passes": 366,
+  "delta_sdp_mediane_m2": -27.5,
+  "delta_rel_q25_pct": -33.39605040833568,
+  "delta_rel_mediane_pct": -33.035466613829996,
+  "delta_rel_q75_pct": 0.0,
+  "delta_rel_min_pct": -95.38940809968847,
+  "delta_rel_max_pct": 67.1875,
+  "n_perdant_constructibilite": 5,
+  "n_gagnant_constructibilite": 0,
+  "perdants_idu": [
+   "97415000CT1349",
+   "97415000CT2530",
+   "97415000AB0387",
+   "97415000CV1010",
+   "97415000AB0691"
+  ],
+  "gagnants_idu": []
+ }
+}

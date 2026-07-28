@@ -263,6 +263,24 @@ Validation du mandat : golden 116 ; comptage avant/après des parcelles servies 
 message par commune ; aucun changement pour les zones ordinaires ni pour les zones calibrées
 chiffrées.
 
+#### MISE À JOUR PHASE 4 (Vic, 28/07/2026) — poids réels mesurés, RE-PRIORISATION
+
+Pools servis mesurés en phase 4 (`docs/mandats/PLU_NUIT_PHASE4_MESURES.md`,
+`reports/plu-phase4/populations.json` + `population_d.json`), run `q_v7_defisc` :
+
+| Population | Contenu | Pool servi | Priorité |
+|---|---|---|---|
+| **e** — 92 libellés gelés classés positifs par la cascade | capacité 0 exacte au moteur, mais parcelles SERVIES dans les tiers | **1 229** | **1 — d'abord** |
+| **d** — cascade vs habitat-interdit calibré (87 zones `zones:`) | positives cascade, habitat interdit au règlement | **1 005** (0 brûlante · 24 chaudes · 115 réserve · 866 à creuser) | mesurée en phase 4 — priorité À ARBITRER (même mécanique que e : la cascade ignore le règlement ; 24 chaudes concernées) |
+| **b** — 11 zones sans hauteur (générique optimiste servi) | Uavap Saint-Denis 302, AUBm La Possession 124, AUx 44… | **553** | 2 — ensuite |
+| **a** — 14 habitat-interdit gelées | capacité 0 déjà exacte (st-liste), seule l'étiquette ment | **238** | 3 — en dernier |
+| **c** — emprises implicites | ~~17 797~~ → **la population est QUASI VIDE** : 76 des 89 zones sont bornées par la pleine terre gravée (passe d'harmonisation doctrine a de la nuit — résultat obtenu sans l'avoir cherché) ; reste **13 zones / 237 parcelles** sans aucune borne | 237 | 3 — DÉCLASSÉE en note, ne justifie plus un traitement |
+
+Total mesurable ≈ 2 250 parcelles (a+b+c+e hors recouvrements) + population d 1 005.
+Nettement moins que redouté. **La doctrine du mandat intègre la leçon 24 du mandat-cadre**
+(Salazie +33 % : le repli est ARBITRAIRE, pas systématiquement optimiste — un durcissement
+uniforme créerait des faux négatifs ; l'argument est l'exactitude, pas le sens du biais).
+
 ## 6ter · Audit de fraîcheur GPU — 24 communes (demande Vic, revue GO)
 
 Comparaison manifeste de calibrage (`config/calibrage/zonage_*.yaml`, extraits le 07/07/2026)
