@@ -220,3 +220,14 @@ Détail des motifs de non-calibrage : chaque YAML porte ses motifs zone par zone
    ne sauve pas le rattachement (elle vise les secteurs déclarés d'une zone, pas le
    saut d'indice b1→b d'une zone AU), mais la distinction Cilaos/Saint-Louis est plus
    fine que « clause présente/absente » : signalé à Vic, précision versée au §9.
+6. **⚠ CONTRADICTION OUVERTE — classe « paysager » (à trancher par Vic)** : deux
+   décisions opposées coexistent, toutes deux de Vic, le 28/07 au matin. (a) Message à
+   la session B : « un stationnement n'est pas du bâti (…) je me range à ta lecture,
+   ne grave pas » — la doctrine perméable ne s'applique qu'aux règles qui bornent
+   réellement l'emprise constructible. (b) Commit `4890058` (Vic, 08:14:39, poussé sur
+   la branche B) : GRAVE la classe paysager (Cilaos Ua/Uah 10, Ub/Ub1/AUb/AUb1 40,
+   AUb2 30 ; Saint-Louis UZ 25) au motif « un % de parcelle sans bâti est une
+   contrainte d'emprise réelle, quel que soit le traitement de surface ». La session B
+   n'a PAS annulé le commit (jamais écraser un arbitrage poussé) : l'état de branche
+   applique (b), le §9 (leçon 20) et l'annexe 5 documentent (a). Les deux lectures
+   sont défendables — dernier mot à Vic ; portes re-vérifiées sur (b) : 0 FAIL.
