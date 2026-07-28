@@ -52,7 +52,12 @@ from sqlalchemy.orm import Session
 
 from ..bati import ENSEMBLE_MIN_BATIMENTS, GRAND_BATIMENT_M2
 
-EXPOSE = False   # MASQUÉ jusqu'à validation visuelle Vic (dossier 20 cartes)
+EXPOSE = True    # VALIDÉ par Vic (28/07/2026) après 2 revues visuelles exhaustives + verdict
+                 # de calibrage PLU (pool 35, 0 faux positif connu). Le câblage client (encadré →
+                 # chiffres) est fait par M22-D (section divisibilité du Rapport de potentiel).
+                 # DÉPENDANCE RÉCURRENTE : relancer scripts/o12_emprise_recheck.py après chaque
+                 # évolution des PLU (le vrai plafond d'emprise peut faire tomber un candidat) —
+                 # même principe que le garde-fou de fraîcheur bâti (PC Sitadel).
 
 # Compacité minimale du lot (Polsby-Popper, 4π·aire/périmètre² — cercle=1, carré≈0.79,
 # rectangle 1:10 ≈ 0.25). Revue O12-ÎLE (cartes 6/16/18 : lanières — le cercle inscrit mesure
@@ -158,6 +163,7 @@ ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS emprise_restante num
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS lot_geom geometry(Polygon, 2975);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS aire_bati_dans_lot_m2 numeric(6,1);
 ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS solidite numeric(4,3);
+ALTER TABLE division_or_candidates ADD COLUMN IF NOT EXISTS note_revue varchar(120);
 
 -- SNAPSHOT des tracés REVUS (revue 2) : photographie des lots découpés AVANT un re-run, pour
 -- que le re-run distingue « tracé inchangé » (déjà revu / exclusion liée-géométrie tenue) de

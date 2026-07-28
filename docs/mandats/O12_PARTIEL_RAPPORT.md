@@ -1,8 +1,47 @@
 # MANDAT O12-PARTIEL — Le lot découpé
 
-Branche `feat/o12-partiel` (depuis `feat/o12-ile`, aucun merge). **EXPOSE reste `False`.**
+Branche `feat/o12-partiel` (depuis `feat/o12-ile`). **EXPOSE = `True`** (Vic, 28/07/2026).
 Inversion d'approche : au lieu de « que reste-t-il après le bâti ? », « quel lot pourrait-on
 découper ? » — un SOUS-POLYGONE compact, pas le résiduel entier.
+
+---
+
+## CLÔTURE (28/07/2026) — EXPOSE=True · pool 35
+
+Le segment est validé après **2 revues visuelles exhaustives** (les 44 puis les 36/35 cartes),
+**une contre-preuve de mécanisme** (le bug `liee_geometrie` qui s'auto-annulait) et **un verdict
+de calibrage PLU** (emprise réelle). **Aucun faux positif connu n'y survit** — c'est ce qui
+permet de le servir. Câblage client = M22-D (section divisibilité du Rapport de potentiel).
+
+### Le chemin complet du filtrage
+**5 916 → 294 → 15 → 139 → 45 → 36 → 35.** Sept étapes : (1) `5 916` résiduels bruts →
+(2) `294` après correctifs A (ratio ≤ 50 %, zone U/AU, clarté plafonnée) → (3) `15` après les
+gardes de forme et de viabilité (littoral, emprise, solidité…) sur la famille résiduelle →
+(4) `139` lots à DÉCOUPER (inversion « bande de façade ») → (5) `45` après les correctifs de
+revue (connexité + érosion, bâti d'activité, voirie qualifiée, fraîcheur) → (6) `36` après
+solidité + arbitrage des douteux → (7) `35` après re-confrontation au plafond PLU réel (BO0089
+tombe). Pool final servi : **27 découpes + 8 résiduels**.
+
+### Trois limites/dépendances GRAVÉES (conditions du service)
+1. **Rappel non mesuré — limite connue, pas un oubli.** Le pool a été généré sous le défaut
+   d'emprise permissif à **60 %** en amont ; des candidats situés en zone à plafond SUPÉRIEUR
+   (ex. Saint-Denis Ud à **80 %**) ont pu être rejetés à la génération et **ne sont pas
+   récupérés**. Le pool est donc **conservateur par construction** — c'est le bon côté de
+   l'erreur, mais il est écrit : ré-ouvrir le rappel exigerait un re-run complet du détecteur
+   avec les 21 PLU calibrés (perf 5-6 h/grosse commune).
+2. **`BH1036` (Sainte-Suzanne UB, 56 % au repli 60 %) — sur liste de surveillance.** Passe tant
+   que la zone n'a pas d'emprise chiffrée ; **marqué en base (`note_revue`) et dans
+   `reports/o12-ile/pool_complet.csv`** pour qu'un futur passage le retrouve sans chercher.
+3. **`scripts/o12_emprise_recheck.py` = contrôle RÉCURRENT, pas un script d'un jour.** À
+   relancer **après chaque évolution des PLU** : un plafond nouvellement chiffré (ou abaissé)
+   peut faire tomber un candidat. C'est une **dépendance du segment**, au même titre que le
+   garde-fou de fraîcheur bâti (PC Sitadel ≥ 2023). Le flag `EXPOSE=True` porte ce rappel en
+   commentaire ; à recontrôler avant toute régénération du dossier.
+
+### Suite
+Vic **merge** `feat/o12-partiel` (Fable ne merge jamais), puis **M22-D** branche la section
+divisibilité du Rapport de potentiel (`_divisibilite()` lira `EXPOSE`) en commit dédié.
+Golden **116/116**, tiers au bit près. Tests `test_division_or.py` **12/12**.
 
 ---
 
