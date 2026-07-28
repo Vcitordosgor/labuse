@@ -231,3 +231,14 @@ Détail des motifs de non-calibrage : chaque YAML porte ses motifs zone par zone
    n'a PAS annulé le commit (jamais écraser un arbitrage poussé) : l'état de branche
    applique (b), le §9 (leçon 20) et l'annexe 5 documentent (a). Les deux lectures
    sont défendables — dernier mot à Vic ; portes re-vérifiées sur (b) : 0 FAIL.
+
+7. **Contradiction « paysager » RÉSOLUE (Vic, 28/07/2026)** : le commit `4890058`
+   TIENT — la classe paysager reste gravée (Cilaos Ua/Uah 10, Ub/Ub1/AUb/AUb1 40,
+   AUb2 30 ; Saint-Louis UZ 25), rien n'est reverté. La seconde position (« ne grave
+   pas ») était fausse : si 40 % de la parcelle sont soustraits à la construction,
+   l'emprise bâtie est bornée à 60 % quel que soit l'usage de ces 40 %. Doctrine
+   finale au §9 (leçon 20) : c'est la FONCTION qui décide, pas le mot — seule
+   exclusion, une règle qui n'empêche pas de bâtir sur la surface visée (plantation
+   sur dalle/toiture). Leçon 22 reformulée dans les termes adoptés (« secteur déclaré
+   couvert par la clause » vs « saut d'indice non écrit »). Mandat-cadre : §§0-8
+   restaurés depuis la copie de Vic, §9 vivant conservé intégralement.
