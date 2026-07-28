@@ -11,8 +11,6 @@ secteur,param,valeur,source,unite,libelle,valeur_actuelle,provenance_actuelle,re
 # ===== SOCLE COMMUN (s'applique a toute la commune ; un secteur peut surcharger plus bas) =====
 *,cout_construction_m2_sdp,,,€/m² SDP,Cout de construction (CRITIQUE — plus fort levier),2100,estimee,"Reunion collectif 2200-2800+ €/m² SDP (audit O2) — sous-evalue surestime la charge fonciere"
 *,prix_m2_lls,,,€/m²,Prix de sortie logement aide (LLS),2900,estimee,"cession VEFA->bailleur, prix de revient social DOM"
-*,ratio_vendable,,,ratio,Ratio SDP -> habitable vendable,0.80,estimee,"standard 0.78-0.85"
-*,bonus_vue_mer_pct,,,%,Bonus prix si vue mer degagee,15,estimee,"balneaire Reunion 10-25 %"
 *,cout_vrd_base,,,€/m² terrain,VRD / viabilisation de base,90,estimee,"a confirmer par devis local"
 *,majoration_vrd_pente_pct,,,%,Majoration VRD — pente forte,30,estimee,"surcout terrassement"
 *,majoration_vrd_assainissement_pct,,,%,Majoration VRD — assainissement autonome,25,estimee,"surcout ANC"

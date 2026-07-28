@@ -30,7 +30,10 @@ PARAMS: list[tuple[str, str, str, str, float, bool, bool]] = [
     # Recettes
     ("prix_m2_neuf", "Prix de vente neuf (override ; 0 = DVF du secteur)", "Recettes", "€/m²", 0.0, True, False),
     ("prix_m2_lls", "Prix de sortie logement aidé (LLS)", "Recettes", "€/m²", 0.0, True, False),
-    ("ratio_vendable", "Ratio surface de plancher → habitable vendable", "Recettes", "ratio", 0.80, False, False),
+    # `ratio_vendable` RETIRÉ (décision Vic 28/07/2026, mandat calibration estimées §3) : aucun
+    # moteur ne le lisait (le rendement SDP→habitable est `coef_rendement` des hypothèses YAML) —
+    # un curseur qui ne calibre rien trompe l'utilisateur. Le re-brancher = décision explicite
+    # avec mesure d'impact. Idem `bonus_vue_mer_pct` (ligne orpheline en base, jamais au registre).
     # Coûts
     ("cout_construction_m2_sdp", "Coût de construction (0 = fourchette YAML auditée)", "Coûts", "€/m² SDP", 0.0, False, True),
     ("cout_vrd_base", "VRD / viabilisation de base", "Coûts", "€/m² terrain", 0.0, True, False),

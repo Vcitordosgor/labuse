@@ -12,8 +12,8 @@ _CSV = """\
 secteur,param,valeur,source,unite,libelle,valeur_actuelle,provenance_actuelle,repere
 # ===== socle =====
 *,marge_cible_pct,8.5,promoteur X,% du CA,Marge,9,estimee,repere
-*,cout_construction_m2_sdp,2650,devis 2026,€/m² SDP,Cout,2100,estimee,repere
-*,ratio_vendable,,,ratio,Ratio,0.80,estimee,non renseigné
+*,cout_construction_m2_sdp,2650,devis 2026,€/m² SDP,Cout,0,defaut,repere
+*,cout_vrd_base,,,€/m² terrain,VRD,90,estimee,non renseigné
 Saint-Gilles,prix_m2_neuf,6200,SeLoger,€/m²,Prix neuf,5800,sourcee,repere
 *,param_bidon,123,x,,,,,
 *,marge_cible_pct,,,,,,,
@@ -56,11 +56,21 @@ def test_apply_upsert_et_provenance(db_session, tmp_path):
 
 
 def test_dry_run_n_ecrit_rien(db_session, tmp_path):
-    avant = bp.resolve(db_session, None)["ratio_vendable"]["value"]
-    csv = "secteur,param,valeur,source\n*,ratio_vendable,0.99,test\n"
+    avant = bp.resolve(db_session, None)["cout_vrd_base"]["value"]
+    csv = "secteur,param,valeur,source\n*,cout_vrd_base,77,test\n"
     bp.apply_calibration(db_session, bp.read_calibration_csv(_write(tmp_path, csv)), dry_run=True)
-    apres = bp.resolve(db_session, None)["ratio_vendable"]["value"]
-    assert apres == avant and apres != 0.99           # rien écrit
+    apres = bp.resolve(db_session, None)["cout_vrd_base"]["value"]
+    assert apres == avant and apres != 77.0           # rien écrit
+
+
+def test_parametres_morts_retires(db_session):
+    """ratio_vendable et bonus_vue_mer_pct RETIRÉS (Vic 28/07/2026) : plus au registre (panneau),
+    plus au gabarit, refusés à l'injection — les re-brancher = décision explicite + mesure."""
+    assert "ratio_vendable" not in {p["key"] for p in bp.registry()}
+    assert "bonus_vue_mer_pct" not in {p["key"] for p in bp.registry()}
+    res = bp.apply_calibration(db_session, [{"secteur": "*", "param": "ratio_vendable",
+                                             "valeur": "0.9", "source": "x"}], dry_run=True)
+    assert res["applied"] == [] and res["errors"][0][1] == "ratio_vendable"
 
 
 def test_valeur_non_numerique_remonte_une_erreur(db_session, tmp_path):
