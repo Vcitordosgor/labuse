@@ -31,6 +31,30 @@ mouvement des tiers n'est donc plus une condition d'arrêt : c'est un **constat*
 
 ---
 
+## 0bis. Barème `residuel_socle` DÉCALIBRÉ — préalable CONFIRMÉ (mesuré 29/07)
+
+Le barème `residuel_socle` (`etage0_ext.py:31`, bornes SDP 5000/2000/800/300/100 → bonus
++30/+25/+15/+5/−10/−25) a été extrait des **32 448 verdicts Saint-Paul**. La consolidation
+SP de la nuit a relevé la **pleine terre de 20 % à 40 %** sur U3c/U6c (`pleine_terre_pct: 40`
+au YAML courant). **Mesure (recalcul des 31 991 résiduels SP sur YAML courants, table de
+travail `repli_sp_residuel`, lecture seule)** :
+
+- **Direction monotone** : 6 577 SP en baisse, **0 en hausse**, 25 380 stables. La calibration
+  ne fait que RÉDUIRE (pleine terre ↑ → emprise ↓ → SDP ↓). SDP moyenne 488 → 424 (**−13 %**).
+- **Pools ciblés** : U3c −14 % (5 842 parc.), U6c −13 % (4 854), U3b −7 %, U6b −3 %.
+- **Transitions de palier** : **1 633 SP (5,1 %) changent de palier, TOUTES vers le bas** —
+  dont **74 quittent le palier +30** (belle/majeure opération), 163 quittent +25.
+
+**Verdict : le barème est décalibré.** Ses bornes ont été ajustées sur des résiduels gonflés
+par l'ancienne pleine terre ; appliquées aux résiduels recalculés, elles sur-bornent et
+sous-récompensent d'un palier ~5 % des parcelles — systématiquement, sur les plus gros pools.
+**Préalable confirmé : re-dériver les bornes du barème sur les verdicts SP recalculés AVANT le
+re-run de l'île** — sinon on propage un barème périmé sur les 24 communes. Le re-run seul ne
+suffit pas. (La re-dérivation ~translate les bornes de ~−13 %, restaurant l'alignement
+palier↔verdict ; mesure de re-dérivation à ouvrir en préalable.)
+
+---
+
 ## 1. Mesure d'ampleur d'ABORD (préalable bloquant — le chiffre qui dit ce que la calibration a produit)
 
 Avant toute bascule, mesurer — **lecture seule, sur un run de travail isolé, jamais sur le
