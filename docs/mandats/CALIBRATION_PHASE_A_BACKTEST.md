@@ -5,6 +5,17 @@ Contre-test bloquant exigé par Vic avant toute application (§1 de son arbitrag
 **LECTURE SEULE intégrale.** État base ouverture ET clôture : **golden 116/116 PASS, tiers du
 run servi `q_v7_defisc` au bit près (120 / 1031 / 3587 / 72980 / 353945).**
 
+## ⚠ AVERTISSEMENT DE COUVERTURE (à ne pas adoucir — arbitrage Vic 28/07)
+
+**Après application, la charge foncière supportable ne sera calculable que sur 6 communes —
+Saint-Denis, Saint-Pierre, Saint-Paul, Saint-Leu, Le Tampon, La Possession — les seules où un
+marché du collectif neuf est OBSERVABLE (≥ 10 ventes d'appartements). Sur les 18 autres, LABUSE
+dira qu'il ne sait pas** (« non calculable » : marché du collectif non observable, ou collectif
+majoritairement social/aidé — §17). C'est une régression APPARENTE de couverture et une
+progression RÉELLE d'exactitude : mieux vaut s'abstenir que servir un chiffre faux. C'est aussi
+ce qui rend le **second mode de bilan** (social + patrimonial locatif, §18) commercialement
+NÉCESSAIRE et non plus seulement souhaitable.
+
 ## 0 · Verdict en une phrase
 
 **Le contre-test contredit la correction naïve.** Substituer la médiane `dvf_prix_sortie_neuf`
@@ -357,3 +368,89 @@ directement la cible bailleurs sociaux. **Hors de ce mandat** — à ouvrir comm
   point d'arrêt Vic, avec le back-test comme test d'acceptation permanent. Invariant tiers inchangé
   (120 / 1031 / 3587 / 72980 / 353945). Artefacts : `/tmp/rederive_acceptation.py`,
   `/tmp/segment_marche_social.py`, `/tmp/cout_taille_sensibilite.py` (tous LECTURE SEULE).
+
+---
+
+# SUITE 3 — composition du quartile bas : p50 ou p75 tranché par la POPULATION (28/07/2026)
+
+Dernière mesure avant application (arbitrage Vic) : p75 ne se justifie que si le bas de la
+distribution des appartements neufs est du produit aidé/plafonné. Sinon p75 est optimiste et p50
+s'impose. **La justification doit porter sur la population, jamais sur le score du test.**
+DVF public ne porte pas l'identité vendeur → signal = **pétitionnaire du PC d'origine** sur la
+parcelle (couverture 255/331 = 77 % des ventes d'appartements des 6 communes). LECTURE SEULE.
+
+## 20 · Le quartile bas est du produit aidé — mais SEULEMENT à Saint-Denis
+
+Composition des ventes d'appartements neufs (6 communes), quartile bas (≤ p25 communal) vs reste :
+
+| Zone | n | prix moyen | social | privé | inconnu | % social des identifiés |
+|---|---|---|---|---|---|---|
+| **Q1 (quartile bas)** | 84 | 2 616 | 24 | 34 | 26 | **41 %** |
+| Q2-Q4 (reste) | 247 | 4 670 | 11 | 186 | 50 | 6 % |
+
+Le quartile bas est **7× plus social** que le reste (41 % vs 6 %) → la traîne basse EST enrichie
+en aidé. **Mais la contamination est CONCENTRÉE** : les 24 ventes sociales du quartile bas sont
+**toutes à Saint-Denis** (24 des 28 ventes de son quartile bas = 86 % social). Dans les 5 autres
+communes couvertes, le quartile bas contient **ZÉRO vente sociale identifiée** (Saint-Pierre,
+Saint-Leu, Saint-Paul, Le Tampon, La Possession).
+
+**Conséquence directe (population, pas score)** : un p75 uniforme serait une correction légitime
+à Saint-Denis mais une hypothèse OPTIMISTE dans 5 communes sur 6. La correction propre n'est pas
+un percentile arbitraire, c'est **exclure les ventes de bailleurs sociaux puis prendre la
+médiane du marché** :
+
+| INSEE | Commune | n | dont social | p50 plein | **p50 marché (excl. social)** | p75 plein |
+|---|---|---|---|---|---|---|
+| 97411 | Saint-Denis | 112 | 35 | 4 005 | **4 275** | 4 572 |
+| 97416 | Saint-Pierre | 76 | 0 | 4 258 | 4 258 | 4 652 |
+| 97422 | Le Tampon | 36 | 0 | 4 318 | 4 318 | 4 491 |
+| 97415 | Saint-Paul | 54 | 0 | 4 730 | 4 730 | 5 276 |
+| 97413 | Saint-Leu | 41 | 0 | 4 953 | 4 953 | 5 574 |
+| 97408 | La Possession | 12 | 0 | 2 638 | 2 638 | 2 879 |
+
+La médiane de marché = la médiane pleine dans 5 communes (rien à exclure) ; elle ne remonte
+qu'à Saint-Denis (4 005 → 4 275), là où l'aidé traîne le bas.
+
+## 21 · Recommandation d'instrument (population-justifiée) + confirmation
+
+**Instrument retenu : médiane des ventes d'appartements neufs APRÈS exclusion des ventes de
+bailleurs sociaux (« médiane de marché »), N_MIN ≥ 10, résolution commune.** Justification —
+une phrase, sur la population : *« Le quartile bas n'est du produit aidé qu'à Saint-Denis (86 %
+de son quartile bas est construit par un bailleur social) ; l'en exclure y porte la médiane de
+marché à 4 275 €/m². Dans les cinq autres communes couvertes, aucune vente aidée n'est
+identifiable : la médiane pleine EST la médiane de marché. »*
+
+**p75 est ÉCARTÉ comme règle générale** : il n'est justifié par la population qu'à Saint-Denis,
+et la médiane-de-marché y produit le même effet pour la bonne raison. Confirmation (le score
+vient APRÈS la justification, il ne la fonde pas) :
+
+| Sous-ensemble | p50 plein | **p50 marché (excl. social)** |
+|---|---|---|
+| Strict vendu (n=85) | 84 % | **93 %** |
+| Large (n=178) | 80 % | **92 %** |
+
+La médiane-de-marché atteint l'effet du p75 (92-93 %) sans son optimisme. **Caveats honnêtes** :
+(a) les ventes « inconnu » du quartile bas (26) pourraient masquer de l'aidé non exclu — mais les
+bailleurs déposent au SIREN, l'inconnu est surtout du petit privé ; impact non matériel (le test
+passe). (b) **La Possession est fragile** : n=12 (au ras de N_MIN) et médiane 2 638 SOUS le seuil
+de bascule 3 859 — la traiter avec prudence à l'application (relever N_MIN, ou la basculer en
+« non calculable » si le marché n'y est pas assez épais).
+
+## 22 · Gravé dans le mandat (arbitrages Vic 28/07)
+
+- **Test d'acceptation PERMANENT** de tout instrument prix ou coût : sous-ensemble **promotion de
+  marché véritable** (vendue post-PC + ≥ 10 lgt + commune de marché couverte), critère
+  **« majoritairement viables »**. Tout futur changement de prix ou de coût le repasse AVANT
+  application. Harnais : `/tmp/rederive_acceptation.py`, `/tmp/confirme_marche_only.py`.
+- **Un correctif à la fois** : le PRIX d'abord (ce mandat). Le **coût variable par taille
+  d'opération = MANDAT SUIVANT**, avec sa propre mesure d'impact — chiffre déjà en main : coût
+  d'équilibre implicite **2 018 €/m² (petites 3-4 lgt) → 2 573 (moyennes 10-19)** (§11). NE PAS
+  le mélanger à l'application prix.
+- **Second mode de bilan** (opération sociale + patrimonial locatif) = mandat produit distinct,
+  désormais NÉCESSAIRE (18 communes non couvertes en bilan de marché ; cible bailleurs sociaux).
+- **Préséance finale** : override bassin sourcé > appt secteur (≥ N_MIN) > appt commune
+  (médiane de marché) > **non calculable**. Repli île définitivement écarté.
+
+**Rien n'est appliqué.** Aucun re-run de scoring. Golden 116/116 et tiers au bit près à chaque
+tour (120 / 1031 / 3587 / 72980 / 353945). La mesure du quartile bas close le diagnostic ;
+l'application est au point d'arrêt Vic.
