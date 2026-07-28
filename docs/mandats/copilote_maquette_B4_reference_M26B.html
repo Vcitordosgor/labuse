@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LABUSE · Copilote — B4 · référence M26-B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#070A09; --card:#0D1211; --card2:#111716;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+  --txt:#EDF3EF; --muted:#8A9A92; --faint:#57655E;
+  --mint:#63F2B8; --mint-glow:rgba(99,242,184,.35); --mint-dim:rgba(99,242,184,.1);
+  --violet:#B497F0; --violet-dim:rgba(180,151,240,.12);
+  --amber:#F0C97A; --amber-dim:rgba(240,201,122,.1);
+  --red:#F08A8A; --red-dim:rgba(240,138,138,.1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;font-size:13px;line-height:1.55;
+  background-image:radial-gradient(ellipse 900px 460px at 78% -10%,rgba(99,242,184,.06),transparent 62%),radial-gradient(ellipse 700px 460px at 5% 105%,rgba(180,151,240,.05),transparent 62%);}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.4;
+  background-image:linear-gradient(rgba(255,255,255,.016) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.016) 1px,transparent 1px);
+  background-size:60px 60px;mask-image:radial-gradient(ellipse 85% 55% at 50% 0%,black,transparent 92%);}
+
+/* ==== bandeau de repérage des états (maquette seulement) ==== */
+.statebar{position:sticky;top:0;z-index:60;background:#14100A;border-bottom:1px solid rgba(240,201,122,.3);
+  padding:9px 26px;font-family:'Space Grotesk',sans-serif;font-size:11px;color:var(--amber);letter-spacing:.1em;text-transform:uppercase}
+.statebar b{color:#FFF}
+.divider{margin:70px 0 0;padding:26px 0 0;border-top:2px dashed rgba(255,255,255,.12)}
+.divider .tag{display:inline-block;background:var(--amber-dim);border:1px solid rgba(240,201,122,.35);color:var(--amber);
+  font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:6px 14px;border-radius:7px}
+.divider h2{font-family:'Space Grotesk',sans-serif;font-size:20px;margin:12px 0 4px}
+.divider p{color:var(--faint);font-size:12px;max-width:70ch}
+
+.topbar{display:flex;align-items:center;gap:18px;padding:13px 28px;border-bottom:1px solid var(--line);background:rgba(7,10,9,.78);backdrop-filter:blur(14px)}
+.wordmark{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;letter-spacing:.16em}
+.wordmark span{color:var(--mint)}
+.crumb{color:var(--faint);font-size:11.5px}.crumb b{color:var(--muted);font-weight:500}
+.quota{margin-left:auto;display:flex;align-items:center;gap:9px;font-size:11px;color:var(--muted)}
+.quota .bar{width:60px;height:3px;border-radius:3px;background:var(--line2);overflow:hidden}
+.quota .bar i{display:block;height:100%;background:var(--violet)}
+.quota.full{color:var(--red)}.quota.full .bar i{background:var(--red);width:100%!important}
+
+.wrap{max-width:1000px;margin:0 auto;padding:38px 26px 40px;position:relative}
+
+.eyebrow{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.eyebrow .lbl{font-family:'Space Grotesk',sans-serif;font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(99,242,184,.3);background:var(--mint-dim);color:var(--mint);border-radius:20px;padding:4px 12px;font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-family:'Space Grotesk',sans-serif}
+.pill i{width:6px;height:6px;border-radius:50%;background:var(--mint);box-shadow:0 0 8px var(--mint-glow)}
+.pill.run{border-color:rgba(180,151,240,.4);background:var(--violet-dim);color:var(--violet)}
+.pill.run i{background:var(--violet);box-shadow:0 0 8px rgba(180,151,240,.5);animation:blink 1.2s infinite}
+.pill.warn{border-color:rgba(240,201,122,.4);background:var(--amber-dim);color:var(--amber)}.pill.warn i{background:var(--amber);box-shadow:none}
+.pill.stop{border-color:rgba(240,138,138,.4);background:var(--red-dim);color:var(--red)}.pill.stop i{background:var(--red);box-shadow:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+h1{font-family:'Space Grotesk',sans-serif;font-size:clamp(30px,5vw,44px);font-weight:700;letter-spacing:-.025em;line-height:1.05;margin-bottom:12px}
+h1 em{font-style:normal;color:var(--mint)}
+.lede{color:var(--muted);font-size:13.5px;max-width:600px;margin-bottom:24px}
+.lede b{color:var(--txt);font-weight:500}
+
+.console{border:1px solid rgba(99,242,184,.35);border-radius:18px;padding:20px;background:linear-gradient(180deg,rgba(99,242,184,.05),rgba(255,255,255,.015));
+  box-shadow:0 0 60px rgba(99,242,184,.06);display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap}
+.console .field{flex:1;min-width:250px}
+.console textarea{width:100%;background:transparent;border:none;outline:none;resize:none;color:var(--txt);font-family:'Inter',sans-serif;font-size:16px;line-height:1.5;height:50px}
+.console .right{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+.btn-go{background:var(--mint);color:#08130E;border:none;border-radius:13px;padding:15px 28px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 0 36px rgba(99,242,184,.28)}
+.btn-go.ghost{background:transparent;border:1px solid var(--line2);color:var(--muted);box-shadow:none;cursor:default}
+.swear{display:flex;align-items:center;gap:7px;font-size:10.5px;color:var(--faint)}
+.swear i{width:5px;height:5px;border-radius:50%;background:var(--mint)}
+
+.sec-head{margin:34px 0 12px}
+.sec-head h2{font-family:'Space Grotesk',sans-serif;font-size:15px;font-weight:600}
+.sec-head p{color:var(--faint);font-size:11.5px;margin-top:2px}
+.sec-head.inline{display:flex;align-items:baseline;gap:12px}
+.sec-head.inline .meta{color:var(--faint);font-size:11px;margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* ==== entonnoir 6 étages ==== */
+.funnel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px 24px 22px}
+.funnel .cap{font-family:'Space Grotesk',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.badge{font-family:'Space Grotesk',sans-serif;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px;border-radius:5px}
+.badge.exh{background:var(--mint-dim);color:var(--mint);border:1px solid rgba(99,242,184,.3)}
+.badge.trunc{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(240,201,122,.35)}
+.badge.calib{background:var(--mint-dim);color:var(--mint);border:1px solid rgba(99,242,184,.3)}
+.badge.gener{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(240,201,122,.35)}
+.rail{position:relative;height:2px;background:var(--line2);border-radius:2px;margin:0 5% 16px}
+.rail::after{content:'';position:absolute;left:0;top:0;height:2px;width:100%;background:linear-gradient(90deg,var(--faint),var(--mint));border-radius:2px}
+.rail i{position:absolute;top:-3px;width:8px;height:8px;border-radius:50%;background:var(--mint);box-shadow:0 0 10px var(--mint-glow)}
+.rail i:nth-child(1){left:0;background:var(--faint);box-shadow:none}
+.rail i:nth-child(2){left:20%}.rail i:nth-child(3){left:40%}.rail i:nth-child(4){left:60%}.rail i:nth-child(5){left:80%}
+.rail i:nth-child(6){left:calc(100% - 8px);width:11px;height:11px;top:-4.5px}
+.steps{display:grid;grid-template-columns:repeat(6,1fr);text-align:center;gap:6px}
+.stepn .n{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:25px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.stepn .l{color:var(--faint);font-size:10px;line-height:1.4;margin-top:3px}
+.stepn.last .n{color:var(--mint)}.stepn.last .l{color:var(--mint);opacity:.75}
+.stepn.pending .n{color:var(--faint);opacity:.35}.stepn.pending .l{opacity:.35}
+@media(max-width:800px){.steps{grid-template-columns:repeat(3,1fr);gap:16px}.rail{display:none}}
+
+/* ==== fil ==== */
+.fil{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:6px 20px}
+.frow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.frow:last-child{border:none}
+.frow.pending{opacity:.32}
+.fdot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+.fdot.ok{color:var(--mint);border:1px solid rgba(99,242,184,.45)}
+.fdot.warn{color:var(--amber);border:1px solid rgba(240,201,122,.45)}
+.fdot.run{color:var(--violet);border:1px solid var(--violet);animation:pulse 1.4s infinite}
+.fdot.wait{color:var(--faint);border:1px dashed var(--line2)}
+.fdot.fail{color:var(--red);border:1px solid rgba(240,138,138,.5)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(180,151,240,.35)}50%{box-shadow:0 0 0 7px rgba(180,151,240,0)}}
+.fname{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;min-width:128px}
+.fres{color:var(--muted);font-size:12px}.fres b{color:var(--txt);font-weight:600}
+.fcnt{margin-left:auto;font-family:'Space Grotesk',sans-serif;font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.fcnt b{color:var(--mint)}
+.tag{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2.5px 8px;border-radius:5px;font-weight:700;font-family:'Space Grotesk',sans-serif}
+.tag.source{background:var(--mint-dim);color:var(--mint);border:1px solid rgba(99,242,184,.25)}
+.tag.estime{background:var(--amber-dim);color:var(--amber);border:1px solid rgba(240,201,122,.25)}
+.tag.absent{background:rgba(138,154,146,.1);color:var(--muted);border:1px solid var(--line2)}
+
+/* ==== résultats ==== */
+.results{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.rhead{display:flex;align-items:center;gap:12px;padding:15px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.rhead h3{font-family:'Space Grotesk',sans-serif;font-size:13.5px;font-weight:600}
+.btn-map{margin-left:auto;background:var(--card2);border:1px solid var(--line2);color:var(--txt);border-radius:11px;padding:10px 16px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:11.5px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.lead{display:grid;grid-template-columns:190px 1fr 215px;padding:18px 20px;border-bottom:1px solid var(--line)}
+@media(max-width:840px){.lead{grid-template-columns:1fr}}
+.thumb{border-radius:12px;overflow:hidden;border:1px solid var(--line2);align-self:start}
+.mid{padding:0 20px}
+.rank{display:inline-flex;background:var(--mint);color:#08130E;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10px;border-radius:6px;padding:3px 8px;letter-spacing:.06em}
+.pid{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:18px;margin-left:9px}
+.ploc{color:var(--faint);font-size:11.5px;margin-top:3px}
+.chipsrow{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0 14px}
+.zchip{border:1px solid var(--line2);background:var(--card2);border-radius:8px;padding:5px 11px;font-size:11px;color:var(--muted);font-family:'Space Grotesk',sans-serif;font-weight:600}
+.zchip.s{border-color:rgba(99,242,184,.25);color:var(--mint);background:var(--mint-dim)}
+.stats{display:flex;gap:24px;flex-wrap:wrap}
+.stat .v{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
+.stat .l{color:var(--faint);font-size:9.5px;text-transform:uppercase;letter-spacing:.1em;margin-top:2px}
+.right-col{border-left:1px solid var(--line);padding-left:20px}
+@media(max-width:840px){.right-col{border-left:none;border-top:1px solid var(--line);padding:16px 0 0;margin-top:16px}.mid{padding:14px 0 0}}
+.tierbig{display:inline-block;font-family:'Space Grotesk',sans-serif;font-size:9.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;background:rgba(240,140,90,.14);color:#F0A87A;border:1px solid rgba(240,140,90,.3);padding:4px 11px;border-radius:6px}
+.charge{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:28px;letter-spacing:-.03em;margin-top:10px;font-variant-numeric:tabular-nums}
+.charge-l{color:var(--faint);font-size:10.5px;margin-top:1px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.warnflag{margin-top:11px;display:flex;align-items:flex-start;gap:8px;background:var(--amber-dim);border:1px solid rgba(240,201,122,.3);border-radius:10px;padding:9px 11px;font-size:10.5px;color:var(--amber);line-height:1.5}
+.checks{margin-top:13px;display:flex;flex-direction:column;gap:6px}
+.chk{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--muted)}
+.chk svg{width:13px;height:13px;color:var(--mint);flex-shrink:0}
+.chk.absent svg{color:var(--faint)}
+.row{display:grid;grid-template-columns:52px 132px 1fr auto auto 34px;gap:12px;align-items:center;padding:12px 20px;border-bottom:1px solid var(--line)}
+.row:last-of-type{border:none}
+.rk{background:var(--card2);border:1px solid var(--line2);color:var(--muted);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:10px;border-radius:6px;padding:3px 0;text-align:center}
+.rid{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px}
+.rloc{color:var(--faint);font-size:11.5px}
+.rmini{display:flex;gap:7px}
+.rval{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13.5px;font-variant-numeric:tabular-nums;text-align:right}
+.rtier{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#F0A87A;font-family:'Space Grotesk',sans-serif;text-align:right}
+.chev{color:var(--faint);display:flex;justify-content:flex-end}
+@media(max-width:840px){.row{grid-template-columns:44px 1fr auto 28px}.rloc,.rmini{display:none}}
+.restnote{padding:14px 20px;background:rgba(255,255,255,.015);border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.restnote b{color:var(--txt)}
+.restnote button{margin-left:auto;background:var(--card2);border:1px solid var(--line2);color:var(--txt);border-radius:10px;padding:9px 15px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:11.5px;cursor:pointer}
+
+/* ==== livrable ==== */
+.deliver{margin-top:14px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(180,151,240,.12),rgba(180,151,240,.03));border:1px solid rgba(180,151,240,.3);border-radius:18px;padding:18px 22px}
+.deliver .doc{width:44px;height:56px;border-radius:5px;background:#FBFCFB;position:relative;flex-shrink:0;box-shadow:0 8px 22px rgba(0,0,0,.5)}
+.deliver .doc::before{content:'';position:absolute;top:0;left:0;right:0;height:13px;background:#0E1512;border-radius:5px 5px 0 0;border-bottom:1.5px solid var(--mint)}
+.deliver .doc::after{content:'';position:absolute;left:7px;right:7px;top:20px;height:2px;background:#DCE5DF;box-shadow:0 6px 0 #DCE5DF,0 12px 0 #DCE5DF,0 18px 0 #E9EFEB}
+.deliver .txt{flex:1;min-width:200px}
+.deliver h4{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600}
+.deliver p{color:var(--muted);font-size:11.5px;margin-top:4px}
+.btn-dl{background:var(--violet);color:#150E22;border:none;border-radius:12px;padding:13px 22px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12.5px;cursor:pointer;box-shadow:0 0 30px rgba(180,151,240,.25)}
+.btn-log{background:transparent;border:1px solid var(--line2);color:var(--txt);border-radius:12px;padding:13px 18px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;cursor:pointer}
+
+/* ==== blocs d'état ==== */
+.panel{border-radius:18px;padding:26px 24px;text-align:center}
+.panel.zero{background:var(--card);border:1px solid var(--line2)}
+.panel.quota{background:linear-gradient(135deg,rgba(240,138,138,.1),rgba(240,138,138,.02));border:1px solid rgba(240,138,138,.3)}
+.panel .ico{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.panel.zero .ico{border:1px solid var(--line2);color:var(--muted)}
+.panel.quota .ico{border:1px solid rgba(240,138,138,.45);color:var(--red)}
+.panel h3{font-family:'Space Grotesk',sans-serif;font-size:19px;font-weight:600;letter-spacing:-.01em}
+.panel p{color:var(--muted);font-size:13px;margin-top:9px;max-width:62ch;margin-left:auto;margin-right:auto}
+.panel .acts{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.panel .acts button{border-radius:11px;padding:12px 20px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;cursor:pointer;border:1px solid var(--line2);background:var(--card2);color:var(--txt)}
+.panel .acts button.prim{background:var(--mint);border-color:var(--mint);color:#08130E}
+
+/* ==== clarification ==== */
+.clarif{background:var(--card);border:1px solid rgba(180,151,240,.35);border-radius:18px;padding:22px 24px}
+.clarif .k{font-family:'Space Grotesk',sans-serif;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--violet);margin-bottom:11px}
+.clarif h3{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;letter-spacing:-.01em}
+.clarif .why{color:var(--faint);font-size:11.5px;margin-top:7px}
+.opts{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0 14px}
+.opt{background:var(--card2);border:1px solid var(--line2);border-radius:11px;padding:11px 17px;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:12.5px;color:var(--txt);cursor:pointer}
+.opt:hover{border-color:var(--mint);color:var(--mint)}
+.freefield{display:flex;gap:7px;background:var(--card2);border:1px solid var(--line2);border-radius:13px;padding:5px}
+.freefield input{flex:1;background:transparent;border:none;outline:none;color:var(--txt);font-size:13px;padding:12px 14px;font-family:'Inter',sans-serif}
+.freefield button{background:var(--violet);color:#150E22;border:none;border-radius:10px;padding:12px 20px;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:12px;cursor:pointer}
+.emptyres{background:var(--card);border:1px dashed var(--line2);border-radius:18px;padding:34px;text-align:center;color:var(--faint);font-size:12.5px}
+</style>
+</head>
+<body>
+
+<!-- ============================================================ -->
+<!-- ÉTAT 1 — INSTRUCTION TERMINÉE (état nominal)                 -->
+<!-- ============================================================ -->
+<div class="statebar">État 1 / 5 — <b>Instruction terminée</b> · exhaustif · commune calibrée</div>
+
+<div class="topbar">
+  <div class="wordmark">LAB<span>USE</span></div>
+  <div class="crumb"><b>Copilote</b> / Instruction</div>
+  <div class="quota">Quota agentique 2/10 <span class="bar"><i style="width:20%"></i></span></div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow"><span class="lbl">Copilote</span><span class="pill"><i></i>Terminé</span></div>
+  <h1>Décrivez le besoin.<br>Le Copilote <em>instruit le dossier</em>.</h1>
+  <p class="lede">Il ne calcule rien. Il séquence les moteurs LABUSE, journalise chaque étape et étiquette chaque chiffre. <b>C'est pour ça que vous pouvez l'emmener en comité.</b></p>
+
+  <div class="console">
+    <div class="field"><textarea readonly>Terrain pour un collectif de 6 logements à Saint-Paul, budget foncier 480 k€, hors zone rouge PPR</textarea></div>
+    <div class="right">
+      <button class="btn-go">Instruire <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <div class="swear"><i></i>Moteurs déterministes journalisés</div>
+    </div>
+  </div>
+
+  <div class="sec-head"><h2>Le gisement se resserre</h2><p>Six étages, chacun un moteur — le détail est en dessous.</p></div>
+  <div class="funnel">
+    <div class="cap">
+      Instruction · Saint-Paul · 56 s
+      <span class="badge exh">Examen exhaustif</span>
+      <span class="badge calib">PLU calibré — tracé par article</span>
+    </div>
+    <div class="rail"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="steps">
+      <div class="stepn"><div class="n">13 155</div><div class="l">pool servi<br>Saint-Paul</div></div>
+      <div class="stepn"><div class="n">4 250</div><div class="l">filtre géométrique<br>SDP atteignable</div></div>
+      <div class="stepn"><div class="n">4 250</div><div class="l">examinées<br>faisabilité</div></div>
+      <div class="stepn"><div class="n">2 947</div><div class="l">retenues<br>SDP ≥ cible</div></div>
+      <div class="stepn"><div class="n">2 753</div><div class="l">dans le budget<br>+194 non estimables</div></div>
+      <div class="stepn last"><div class="n">20</div><div class="l">restituées<br>classées par mutation</div></div>
+    </div>
+  </div>
+
+  <div class="sec-head inline"><h2>Fil d'instruction</h2><div class="meta">6 moteurs · journal joint au PDF</div></div>
+  <div class="fil">
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Criblage</div><div class="fres">pool servi · zones U/AU · contraintes du brief</div><span class="tag source">Sourcé</span><div class="fcnt">→ <b>13 155</b></div></div>
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Filtre géométrique</div><div class="fres">SDP cible inatteignable sous toute zone de la commune</div><span class="tag source">Sourcé</span><div class="fcnt">13 155 → <b>4 250</b></div></div>
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Faisabilité</div><div class="fres">PLU Saint-Paul · SDP résiduelle tracée par article</div><span class="tag source">Sourcé</span><div class="fcnt">4 250 → <b>2 947</b></div></div>
+    <div class="frow"><div class="fdot warn">!</div><div class="fname">Charge foncière</div><div class="fres">prix probable du foncier · comparables DVF à rayon adaptatif</div><span class="tag estime">Estimé</span><div class="fcnt">2 947 → <b>2 753</b></div></div>
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Mutation</div><div class="fres">classement des retenues · modèle P</div><span class="tag source">Sourcé</span><div class="fcnt">2 753 classées</div></div>
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Assemblage</div><div class="fres">20 restituées · écartées motivées · non vérifiés listés</div><span class="tag source">Sourcé</span><div class="fcnt">→ <b>note</b></div></div>
+  </div>
+
+  <div class="sec-head inline"><h2>20 parcelles restituées</h2><div class="meta">sur 2 753 retenues dans le budget</div></div>
+  <div class="results">
+    <div class="rhead">
+      <h3>Saint-Paul · collectif 6 logements</h3>
+      <button class="btn-map"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>Voir sur la carte</button>
+    </div>
+
+    <div class="lead">
+      <div class="thumb">
+        <svg width="190" height="150" viewBox="0 0 190 150">
+          <rect width="190" height="150" fill="#121815"/>
+          <g stroke="#1E2723" stroke-width="1" fill="none"><path d="M0 34h190M0 76h190M0 118h190M42 0v150M96 0v150M144 0v150"/></g>
+          <g fill="#182420"><rect x="8" y="6" width="26" height="22" rx="2"/><rect x="52" y="6" width="34" height="22" rx="2"/><rect x="106" y="8" width="30" height="20" rx="2"/><rect x="152" y="6" width="30" height="24" rx="2"/><rect x="8" y="86" width="26" height="24" rx="2"/><rect x="106" y="86" width="30" height="26" rx="2"/><rect x="152" y="88" width="30" height="22" rx="2"/><rect x="8" y="126" width="26" height="18" rx="2"/><rect x="52" y="126" width="34" height="18" rx="2"/><rect x="106" y="124" width="30" height="20" rx="2"/></g>
+          <line x1="0" y1="76" x2="190" y2="76" stroke="#3A4A42" stroke-width="4"/>
+          <polygon points="50,40 92,38 94,70 52,72" fill="rgba(99,242,184,.22)" stroke="#63F2B8" stroke-width="2"/>
+          <rect x="58" y="46" width="20" height="15" fill="#63F2B8" opacity=".35"/>
+          <line x1="50" y1="72" x2="94" y2="70" stroke="#F0C97A" stroke-width="2.5"/>
+        </svg>
+      </div>
+      <div class="mid">
+        <div><span class="rank">#01</span><span class="pid">97415000BV0182</span></div>
+        <div class="ploc">Saint-Paul · La Saline</div>
+        <div class="chipsrow"><span class="zchip s">Zone UB2</span><span class="zchip">Article UB10 · R+2</span><span class="zchip">Façade voirie 22 m</span></div>
+        <div class="stats">
+          <div class="stat"><div class="v">486 m²</div><div class="l">SDP résiduelle · Sourcé</div></div>
+          <div class="stat"><div class="v">722 m²</div><div class="l">surface parcelle</div></div>
+          <div class="stat"><div class="v">14</div><div class="l">comparables DVF</div></div>
+        </div>
+      </div>
+      <div class="right-col">
+        <span class="tierbig">Tier · Chaude</span>
+        <div class="charge">412 k€</div>
+        <div class="charge-l">Prix probable du foncier <span class="tag estime">Estimé</span></div>
+        <div class="warnflag">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;margin-top:1px"><path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>
+          <span>Au-dessus de la charge supportable (385 k€) — dans votre budget, mais l'opération ne supporte pas ce prix. <b>Estimé</b></span>
+        </div>
+        <div class="checks">
+          <div class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Hors zone rouge PPR</div>
+          <div class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Hors périmètre ABF</div>
+          <div class="chk absent"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 8v5M12 16.5h.01"/><circle cx="12" cy="12" r="9"/></svg>DPE absent — non vérifié</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row"><div class="rk">#02</div><div><div class="rid">97415000AK0067</div></div><div class="rloc">Bois de Nèfles</div><div class="rmini"><span class="zchip">UB1</span><span class="zchip">SDP 441 m²</span></div><div><div class="rval">398 k€</div><div class="rtier">Chaude</div></div><div class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+    <div class="row"><div class="rk">#03</div><div><div class="rid">97415000BX0221</div></div><div class="rloc">Plateau Caillou</div><div class="rmini"><span class="zchip">UB2</span><span class="zchip">SDP 428 m²</span></div><div><div class="rval">455 k€</div><div class="rtier">Chaude</div></div><div class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+    <div class="row"><div class="rk">#04</div><div><div class="rid">97415000CD0056</div></div><div class="rloc">Tan Rouge</div><div class="rmini"><span class="zchip">AU1</span><span class="zchip">SDP 395 m²</span></div><div><div class="rval">421 k€</div><div class="rtier">Chaude</div></div><div class="chev"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+
+    <div class="restnote">
+      <span><b>2 733 autres retenues</b> dans le budget, non restituées — classées après le rang 20.</span>
+      <button>Voir la liste complète</button>
+    </div>
+  </div>
+
+  <div class="deliver">
+    <div class="doc"></div>
+    <div class="txt">
+      <h4>Note d'opportunité — NO-2026-0341</h4>
+      <p>20 restituées argumentées · 1 303 écartées motivées · 194 non estimables · journal des 6 appels moteurs joint.</p>
+    </div>
+    <button class="btn-log">Voir le journal</button>
+    <button class="btn-dl">Télécharger le PDF</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ÉTAT 2 — INSTRUCTION EN COURS                                -->
+<!-- ============================================================ -->
+<div class="wrap"><div class="divider">
+  <span class="tag" style="background:var(--amber-dim);border:1px solid rgba(240,201,122,.35);color:var(--amber);font-family:'Space Grotesk';font-size:10px;font-weight:700;letter-spacing:.18em;padding:6px 14px;border-radius:7px">État 2 / 5</span>
+  <h2>Instruction en cours</h2>
+  <p>Le fil se remplit ligne par ligne via SSE. L'entonnoir n'affiche que les étages atteints ; les suivants restent en attente. Aucun résultat n'est montré avant la fin — jamais de liste partielle qui donnerait une fausse impression d'exhaustivité.</p>
+</div></div>
+
+<div class="topbar">
+  <div class="wordmark">LAB<span>USE</span></div>
+  <div class="crumb"><b>Copilote</b> / Instruction en cours</div>
+  <div class="quota">Quota agentique 3/10 <span class="bar"><i style="width:30%"></i></span></div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow"><span class="lbl">Copilote</span><span class="pill run"><i></i>Instruction · 18 s</span></div>
+
+  <div class="console" style="opacity:.65">
+    <div class="field"><textarea readonly>Terrain pour un collectif de 6 logements à Saint-Paul, budget foncier 480 k€, hors zone rouge PPR</textarea></div>
+    <div class="right">
+      <button class="btn-go ghost">Annuler l'instruction</button>
+      <div class="swear"><i></i>3 moteurs appelés sur 6</div>
+    </div>
+  </div>
+
+  <div class="sec-head"><h2>Le gisement se resserre</h2><p>Les étages s'affichent au fur et à mesure.</p></div>
+  <div class="funnel">
+    <div class="cap">Instruction en cours · Saint-Paul<span class="badge calib">PLU calibré</span></div>
+    <div class="rail"><i></i><i></i><i></i><i style="background:var(--faint);box-shadow:none"></i><i style="background:var(--faint);box-shadow:none"></i><i style="background:var(--faint);box-shadow:none;width:8px;height:8px;top:-3px"></i></div>
+    <div class="steps">
+      <div class="stepn"><div class="n">13 155</div><div class="l">pool servi</div></div>
+      <div class="stepn"><div class="n">4 250</div><div class="l">filtre géométrique</div></div>
+      <div class="stepn"><div class="n">1 862</div><div class="l">examinées…<br>sur 4 250</div></div>
+      <div class="stepn pending"><div class="n">—</div><div class="l">retenues</div></div>
+      <div class="stepn pending"><div class="n">—</div><div class="l">dans le budget</div></div>
+      <div class="stepn pending"><div class="n">—</div><div class="l">restituées</div></div>
+    </div>
+  </div>
+
+  <div class="sec-head inline"><h2>Fil d'instruction</h2><div class="meta">étape 3 sur 6</div></div>
+  <div class="fil">
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Criblage</div><div class="fres">pool servi · zones U/AU · contraintes du brief</div><span class="tag source">Sourcé</span><div class="fcnt">→ <b>13 155</b></div></div>
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Filtre géométrique</div><div class="fres">SDP cible inatteignable sous toute zone</div><span class="tag source">Sourcé</span><div class="fcnt">13 155 → <b>4 250</b></div></div>
+    <div class="frow"><div class="fdot run">◌</div><div class="fname">Faisabilité</div><div class="fres">PLU Saint-Paul · 1 862 parcelles examinées sur 4 250…</div><span class="tag source">Sourcé</span><div class="fcnt">44 %</div></div>
+    <div class="frow pending"><div class="fdot wait">·</div><div class="fname">Charge foncière</div><div class="fres">en attente</div></div>
+    <div class="frow pending"><div class="fdot wait">·</div><div class="fname">Mutation</div><div class="fres">en attente</div></div>
+    <div class="frow pending"><div class="fdot wait">·</div><div class="fname">Assemblage</div><div class="fres">en attente</div></div>
+  </div>
+
+  <div class="sec-head"><h2>Résultats</h2></div>
+  <div class="emptyres">Les parcelles s'afficheront à la fin de l'instruction.<br>Aucune liste partielle n'est montrée — elle laisserait croire à un examen terminé.</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ÉTAT 3 — DEMANDE DE PRÉCISION                                -->
+<!-- ============================================================ -->
+<div class="wrap"><div class="divider">
+  <span class="tag" style="background:var(--amber-dim);border:1px solid rgba(240,201,122,.35);color:var(--amber);font-family:'Space Grotesk';font-size:10px;font-weight:700;letter-spacing:.18em;padding:6px 14px;border-radius:7px">État 3 / 5</span>
+  <h2>Demande de précision</h2>
+  <p>L'interpréteur ne devine jamais. Un champ obligatoire manquant ou ambigu met le run en pause (<code>awaiting_user</code>) et pose une question. Le run reprend là où il s'est arrêté, il ne redémarre pas.</p>
+</div></div>
+
+<div class="topbar">
+  <div class="wordmark">LAB<span>USE</span></div>
+  <div class="crumb"><b>Copilote</b> / En attente de précision</div>
+  <div class="quota">Quota agentique 3/10 <span class="bar"><i style="width:30%"></i></span></div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow"><span class="lbl">Copilote</span><span class="pill warn"><i></i>En pause</span></div>
+
+  <div class="console" style="opacity:.65">
+    <div class="field"><textarea readonly>Je cherche un terrain pas trop cher pour faire du collectif</textarea></div>
+    <div class="right"><button class="btn-go ghost">En attente</button><div class="swear"><i></i>Instruction suspendue</div></div>
+  </div>
+
+  <div class="sec-head" style="margin-top:26px"></div>
+  <div class="clarif">
+    <div class="k">Précision nécessaire</div>
+    <h3>Sur quelle commune dois-je instruire ce dossier&nbsp;?</h3>
+    <div class="why">La commune détermine le PLU applicable et le pool de parcelles. Sans elle, je ne peux pas commencer — et je ne devine pas.</div>
+    <div class="opts">
+      <button class="opt">Saint-Paul</button>
+      <button class="opt">Saint-Pierre</button>
+      <button class="opt">Saint-Denis</button>
+      <button class="opt">Le Tampon</button>
+    </div>
+    <div class="freefield">
+      <input readonly placeholder="Ou saisissez une ou plusieurs communes…" value="">
+      <button>Reprendre l'instruction</button>
+    </div>
+  </div>
+
+  <div class="sec-head inline"><h2>Fil d'instruction</h2><div class="meta">en pause à l'étape 1</div></div>
+  <div class="fil">
+    <div class="frow"><div class="fdot warn">?</div><div class="fname">Interprétation</div><div class="fres">« pas trop cher » : montant non exprimé · commune absente · programme non chiffré</div><span class="tag absent">Incomplet</span><div class="fcnt">en pause</div></div>
+    <div class="frow pending"><div class="fdot wait">·</div><div class="fname">Criblage</div><div class="fres">en attente de votre réponse</div></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ÉTAT 4 — ZÉRO RETENUE                                        -->
+<!-- ============================================================ -->
+<div class="wrap"><div class="divider">
+  <span class="tag" style="background:var(--amber-dim);border:1px solid rgba(240,201,122,.35);color:var(--amber);font-family:'Space Grotesk';font-size:10px;font-weight:700;letter-spacing:.18em;padding:6px 14px;border-radius:7px">État 4 / 5</span>
+  <h2>Zéro retenue — le résultat honnête</h2>
+  <p>L'entonnoir tombe à 0. Le run se termine <code>done</code>, pas <code>failed</code> : zéro est une réponse valide. Jamais d'assouplissement silencieux des critères, jamais de « voici quand même quelques pistes ». L'entonnoir complet reste affiché — c'est lui qui montre <em>où</em> le besoin s'est heurté au réel.</p>
+</div></div>
+
+<div class="topbar">
+  <div class="wordmark">LAB<span>USE</span></div>
+  <div class="crumb"><b>Copilote</b> / Instruction terminée</div>
+  <div class="quota">Quota agentique 4/10 <span class="bar"><i style="width:40%"></i></span></div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow"><span class="lbl">Copilote</span><span class="pill"><i></i>Terminé</span></div>
+
+  <div class="console" style="opacity:.65">
+    <div class="field"><textarea readonly>Terrain pour 25 logements à Cilaos, budget foncier 200 k€, hors PPR</textarea></div>
+    <div class="right"><button class="btn-go ghost">Terminé · 12 s</button><div class="swear"><i></i>6 moteurs appelés</div></div>
+  </div>
+
+  <div class="sec-head"><h2>Le gisement se resserre</h2></div>
+  <div class="funnel">
+    <div class="cap">Instruction · Cilaos · 12 s<span class="badge exh">Examen exhaustif</span><span class="badge gener">Règle générique — PLU non calibré</span></div>
+    <div class="rail"><i></i><i></i><i></i><i></i><i></i><i style="background:var(--faint);box-shadow:none"></i></div>
+    <div class="steps">
+      <div class="stepn"><div class="n">1 204</div><div class="l">pool servi<br>Cilaos</div></div>
+      <div class="stepn"><div class="n">31</div><div class="l">filtre géométrique<br>SDP atteignable</div></div>
+      <div class="stepn"><div class="n">31</div><div class="l">examinées<br>faisabilité</div></div>
+      <div class="stepn"><div class="n">4</div><div class="l">retenues<br>SDP ≥ 1 750 m²</div></div>
+      <div class="stepn"><div class="n" style="color:var(--amber)">0</div><div class="l">dans le budget<br>4 au-dessus</div></div>
+      <div class="stepn"><div class="n" style="color:var(--muted)">0</div><div class="l">restituées</div></div>
+    </div>
+  </div>
+
+  <div class="sec-head inline"><h2>Fil d'instruction</h2><div class="meta">6 moteurs · journal joint</div></div>
+  <div class="fil">
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Criblage</div><div class="fres">pool servi Cilaos · zones U/AU</div><span class="tag source">Sourcé</span><div class="fcnt">→ <b>1 204</b></div></div>
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Filtre géométrique</div><div class="fres">SDP cible 1 750 m² inatteignable sur 1 173 parcelles</div><span class="tag estime">Estimé</span><div class="fcnt">1 204 → <b>31</b></div></div>
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Faisabilité</div><div class="fres">règle générique · 9 m, 3 niveaux · PLU Cilaos non calibré</div><span class="tag estime">Estimé</span><div class="fcnt">31 → <b>4</b></div></div>
+    <div class="frow"><div class="fdot warn">!</div><div class="fname">Charge foncière</div><div class="fres">4 parcelles au-dessus du budget · écart médian +215 %</div><span class="tag estime">Estimé</span><div class="fcnt">4 → <b>0</b></div></div>
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Mutation</div><div class="fres">aucune parcelle à classer</div><span class="tag source">Sourcé</span><div class="fcnt">0</div></div>
+    <div class="frow"><div class="fdot ok">✓</div><div class="fname">Assemblage</div><div class="fres">0 restituée · 31 écartées motivées</div><span class="tag source">Sourcé</span><div class="fcnt">→ <b>note</b></div></div>
+  </div>
+
+  <div class="sec-head"><h2>Résultat</h2></div>
+  <div class="panel zero">
+    <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+    <h3>Aucune parcelle ne satisfait ce besoin à Cilaos.</h3>
+    <p>Les 1 204 parcelles du pool ont toutes été examinées. 4 supportent la SDP demandée, mais leur prix probable dépasse le budget de 215 % en médiane. <b>Aucun critère n'a été assoupli</b> — l'écart est réel et vous le voyez tel quel.</p>
+    <div class="acts">
+      <button class="prim">Relancer avec un budget de 630 k€</button>
+      <button>Élargir aux communes voisines</button>
+      <button>Voir les 31 écartées et leurs motifs</button>
+    </div>
+  </div>
+
+  <div class="deliver">
+    <div class="doc"></div>
+    <div class="txt">
+      <h4>Note d'instruction — NO-2026-0347</h4>
+      <p>0 retenue · 31 écartées motivées · SDP en règle générique (PLU Cilaos non calibré) · journal des 6 appels joint.</p>
+    </div>
+    <button class="btn-log">Voir le journal</button>
+    <button class="btn-dl">Télécharger le PDF</button>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ÉTAT 5 — QUOTA AGENTIQUE ATTEINT                             -->
+<!-- ============================================================ -->
+<div class="wrap"><div class="divider">
+  <span class="tag" style="background:var(--amber-dim);border:1px solid rgba(240,201,122,.35);color:var(--amber);font-family:'Space Grotesk';font-size:10px;font-weight:700;letter-spacing:.18em;padding:6px 14px;border-radius:7px">État 5 / 5</span>
+  <h2>Quota agentique atteint</h2>
+  <p>Le quota est vérifié <em>avant</em> le premier événement : aucun run n'est créé, aucun moteur n'est appelé, 429 honnête. Le message dit ce qui se passe et quand ça repart — jamais de dégradation silencieuse ni de résultat tronqué déguisé.</p>
+</div></div>
+
+<div class="topbar">
+  <div class="wordmark">LAB<span>USE</span></div>
+  <div class="crumb"><b>Copilote</b> / Quota atteint</div>
+  <div class="quota full">Quota agentique 10/10 <span class="bar"><i></i></span></div>
+</div>
+
+<div class="wrap">
+  <div class="eyebrow"><span class="lbl">Copilote</span><span class="pill stop"><i></i>Indisponible aujourd'hui</span></div>
+
+  <div class="console" style="opacity:.5;border-color:rgba(240,138,138,.3)">
+    <div class="field"><textarea readonly>Terrain pour un collectif de 8 logements à Saint-Pierre, budget 600 k€</textarea></div>
+    <div class="right"><button class="btn-go ghost">Instruire</button><div class="swear" style="color:var(--red)"><i style="background:var(--red)"></i>Quota épuisé</div></div>
+  </div>
+
+  <div class="sec-head" style="margin-top:26px"></div>
+  <div class="panel quota">
+    <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+    <h3>Vos 10 instructions du jour sont utilisées.</h3>
+    <p>Le compteur repart demain à 00 h 00 (heure de La Réunion). Cette instruction n'a pas été lancée : aucun moteur n'a été appelé, rien n'a été facturé au quota.</p>
+    <p style="margin-top:12px;color:var(--faint);font-size:12px">Le quota agentique est distinct du quota Dossier — vos exports restent disponibles.</p>
+    <div class="acts">
+      <button class="prim">Consulter mes instructions du jour</button>
+      <button>Générer un export Dossier à la place</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

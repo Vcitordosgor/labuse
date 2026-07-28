@@ -9,7 +9,8 @@ const API = 'http://127.0.0.1:8000'
 const apiPaths = ['/map', '/parcels', '/stats', '/sources', '/filters', '/discover',
   '/health', '/coverage', '/assemblage', '/compare', '/mutation', '/communes',
   '/projets', '/ia', '/crm', '/pipeline', '/modules', '/watch', '/share', '/dossier',
-  '/faisabilite', '/charge', '/signalement', '/guide']
+  '/faisabilite', '/charge', '/signalement', '/guide',
+  '/api']   // M26-B : /api/copilote (runs + SSE)
 
 export default defineConfig({
   base: '/socle/', // servi par FastAPI sous /socle (cf. app.py). Dev vite = racine.

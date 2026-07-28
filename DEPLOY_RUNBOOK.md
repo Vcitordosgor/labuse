@@ -27,6 +27,32 @@ via LABUSE_ASSISTANT_MODEL (défaut : claude-sonnet-4-6).
 Dimensionnement pilote constaté : base Saint-Paul complète ≈ 1,5 Go en base, dump **≈ 240 Mo** ;
 2 vCPU / 4 Go RAM / 20 Go disque suffisent largement.
 
+## 0-bis. Prérequis de bascule consignés au fil des mandats
+
+Cinq points à régler AVANT la mise en service — chacun renvoie à sa pièce d'origine :
+
+1. **DDL de démarrage non bloquante — LE PLUS URGENT** (M26-B, nuit du 27-28/07/2026).
+   Le `_lifespan` fait des `ALTER TABLE` / `CREATE INDEX` sur `parcels` au boot : si un
+   batch à transactions longues tourne (type `division_or_candidates`), le DDL s'enfile
+   en AccessExclusive → le démarrage GÈLE **et** toutes les lectures de `parcels` gèlent
+   derrière lui ; si le process API meurt, sa session Postgres orpheline entretient le
+   gel (incident O12, rejoué deux fois au M26-B). **En production, un batch long rend
+   l'API impossible à redémarrer.** À corriger par mandat : `lock_timeout` sur les DDL
+   du heal + échec best-effort bruyant (le chemin existe : `schema_heal` + `/readyz`),
+   ou heal sorti du chemin de démarrage. Contournement d'urgence :
+   `--lifespan off` si le schéma est déjà à jour, purge des sessions orphelines
+   (`pg_stat_activity`, `query ILIKE 'ALTER TABLE parcels%'` dont le client est mort).
+2. **Extra `[ai]`** : `pip install -e ".[ai]"` + `ANTHROPIC_API_KEY` — l'interpréteur
+   Copilote l'exige (M26A_RAPPORT §7, prérequis découvert en démo).
+3. **`PROJ_DATA` / `proj.db` système** : sans lui, reprojection cassée au boot du
+   serveur, pas seulement en tests (DETTE_TESTS_RAPPORT « Point de bascule prod/VPS »,
+   `docs/TESTS.md` § Données PROJ).
+4. **Cache froid** : rejouer le run Copilote de référence après reboot complet du VPS
+   et lire `duree_totale_ms` (M26A_RAPPORT §9 — la mesure poste couvre seulement
+   « shared_buffers froid / OS chaud » ; budget 120 s, garde-fou sinon).
+5. **Cron `check-plu-fraicheur`** : la veille des millésimes PLU (double comparaison,
+   4e alerte — spec fraîcheur corrigée au mandat PLU garde-fou, commit `9940d51`).
+
 ## 1. Préparer le serveur (Ubuntu 22.04/24.04)
 
 ```bash
