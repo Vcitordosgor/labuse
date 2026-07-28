@@ -170,7 +170,7 @@ zones:
   AUs: {bassin: "Petite-Île",
        he_m: 10, hf_m: 13, hauteur_src: "Art. AUS.10, p.127-128",
        emprise_sol_pct: 50, emprise_src: "Art. AUS.9, p.127 (« limitée à 50 % de l'unité foncière »)",
-       recul_voirie_m: 10, recul_voirie_src: "Art. AUS.6, p.126 (« recul minimal de : 10 mètres par rapport … » RN2 et voies principales)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. AUS.6, p.126 : « recul minimal de : 10 mètres par rapport aux routes départementales - 30 mètres par rapport aux routes nationales - 4 mètres par rapport aux autres voies » — tiroir géographique, tranche majoritaire gravée (arbitrage Vic 28/07 ; ma gravure initiale 10 m = tranche RD, écartée)",
        recul_voirie_note: "Recul 10 m (axe RN2) — la valeur pour les autres voies suit la règle générale 4 m/8 m axe si applicable (rédaction du chapitre).",
        recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. AUS.7, p.127",
        stat_logement: null, stat_note: "Sans objet (logements des usagers/personnel des équipements santé-social uniquement).", stat_src: "Art. AUS.1/2, p.122-126",

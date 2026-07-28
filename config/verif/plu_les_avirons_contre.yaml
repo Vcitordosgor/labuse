@@ -73,7 +73,7 @@ zones:
        stat_logement: "1,5 place / logement", stat_src: "Art. U 12, p.16-17",
        pleine_terre_pct: 30, pleine_terre_src: "Art. U 13.1, p.18 — « espace libre et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   Ub4: {bassin: "Les Avirons",
-       he_m: null, hf_m: 8, hauteur_src: "Art. U 10, p.13 (« en secteur Ub4 : 8 mètres en hauteur absolue » — gravé en faîtage, prudent)",
+       he_m: 8, hf_m: 8, hauteur_src: "Art. U 10, p.13 (« en secteur Ub4 : 8 mètres en hauteur absolue » — plafond unique => he = hf = 8, convention B validée par arbitrage Vic 28/07 ; ma forme initiale hf-seul était pessimiste par accident)",
        emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12",
        recul_voirie_m: 4, recul_voirie_src: "Art. U 6, p.10",
        recul_limites_sep_m: 1.9, recul_limites_src: "Art. U 7, p.10-11",
