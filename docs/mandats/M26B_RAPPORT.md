@@ -1,5 +1,11 @@
 # M26-B — Rapport de mandat : Copilote · Écran (Point d'arrêt C)
 
+> **⚠ CONSIGNE (Vic, 28/07/2026) — tant que le mandat `MANDAT_HYPOTHESES_BILAN` n'est
+> pas passé, le Copilote ne doit être montré à PERSONNE.** Sa charge supportable est
+> ×2,37 trop généreuse et un verdict de viabilité sur deux est faux (hypothèses YAML
+> périmées, cf. `M26B_CONSTAT_CHARGES.md`). Ce n'est pas un défaut du M26-B — mais
+> c'est cet écran qui donne ces chiffres à voir, et c'est ce qui compte.
+
 **Branche** : `feat/m26b-copilote-ecran` (base `origin/main` post-M26-A + dette-tests).
 **Périmètre tenu** : front seul — `git diff` vide sous `src/` (back intouché).
 **Référence design** : `docs/mandats/copilote_maquette_B4_reference_M26B.html`, tokens repris (`cp-*`).
