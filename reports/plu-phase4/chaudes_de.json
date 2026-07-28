@@ -1,0 +1,237 @@
+{
+ "chaudes_d": {
+  "97408000BL0014": [
+   "chaude",
+   "La Possession",
+   "UAa"
+  ],
+  "97407000BA0371": [
+   "chaude",
+   "Le Port",
+   "Us"
+  ],
+  "97422000BW3164": [
+   "chaude",
+   "Le Tampon",
+   "Ue"
+  ],
+  "97423000AB0057": [
+   "chaude",
+   "Les Trois-Bassins",
+   "1AUt"
+  ],
+  "97423000AB1846": [
+   "chaude",
+   "Les Trois-Bassins",
+   "1AUt"
+  ],
+  "97412000BK1975": [
+   "chaude",
+   "Saint-Joseph",
+   "1AU6"
+  ],
+  "97412000BK1980": [
+   "chaude",
+   "Saint-Joseph",
+   "1AU6"
+  ],
+  "97414000EN3769": [
+   "chaude",
+   "Saint-Louis",
+   "1AUe"
+  ],
+  "97416000CS0642": [
+   "chaude",
+   "Saint-Pierre",
+   "Uazi"
+  ],
+  "97416000CW1554": [
+   "chaude",
+   "Saint-Pierre",
+   "Uazc"
+  ],
+  "97416000CS1538": [
+   "chaude",
+   "Saint-Pierre",
+   "Uazi"
+  ],
+  "97416000CS0543": [
+   "chaude",
+   "Saint-Pierre",
+   "Uazi"
+  ],
+  "97416000CS1401": [
+   "chaude",
+   "Saint-Pierre",
+   "Uazi"
+  ],
+  "97416000CS1176": [
+   "chaude",
+   "Saint-Pierre",
+   "Uazi"
+  ],
+  "97416000DI0233": [
+   "chaude",
+   "Saint-Pierre",
+   "Uaza"
+  ],
+  "97416000DO0264": [
+   "chaude",
+   "Saint-Pierre",
+   "Uazc"
+  ],
+  "97416000DH1252": [
+   "chaude",
+   "Saint-Pierre",
+   "Uazc"
+  ],
+  "97418000AC0952": [
+   "chaude",
+   "Sainte-Marie",
+   "UEm"
+  ],
+  "97418000AC0889": [
+   "chaude",
+   "Sainte-Marie",
+   "UEm"
+  ],
+  "97418000AT0454": [
+   "chaude",
+   "Sainte-Marie",
+   "1AUep"
+  ],
+  "97418000AT2287": [
+   "chaude",
+   "Sainte-Marie",
+   "1AUep"
+  ],
+  "97418000AT2288": [
+   "chaude",
+   "Sainte-Marie",
+   "1AUep"
+  ],
+  "97418000AT0942": [
+   "chaude",
+   "Sainte-Marie",
+   "UEm"
+  ],
+  "97418000AY0716": [
+   "chaude",
+   "Sainte-Marie",
+   "UEc"
+  ]
+ },
+ "chaudes_e": {
+  "97407000AT0049": [
+   "chaude",
+   "Le Port",
+   "Ue"
+  ],
+  "97407000AX0020": [
+   "chaude",
+   "Le Port",
+   "1AUe"
+  ],
+  "97407000AX0191": [
+   "chaude",
+   "Le Port",
+   "1AUe"
+  ],
+  "97407000AX0206": [
+   "chaude",
+   "Le Port",
+   "Up"
+  ],
+  "97422000AP1250": [
+   "chaude",
+   "Le Tampon",
+   "2AUe"
+  ],
+  "97422000AD1237": [
+   "brulante",
+   "Le Tampon",
+   "2AUd"
+  ],
+  "97422000AX1480": [
+   "chaude",
+   "Le Tampon",
+   "2AUe"
+  ],
+  "97422000AX1253": [
+   "chaude",
+   "Le Tampon",
+   "2AUe"
+  ],
+  "97422000CM1077": [
+   "chaude",
+   "Le Tampon",
+   "2AUc"
+  ],
+  "97423000AB1756": [
+   "chaude",
+   "Les Trois-Bassins",
+   "2AUb"
+  ],
+  "97423000AB1759": [
+   "chaude",
+   "Les Trois-Bassins",
+   "2AUb"
+  ],
+  "97423000AB1773": [
+   "chaude",
+   "Les Trois-Bassins",
+   "2AUb"
+  ],
+  "97423000AB1777": [
+   "chaude",
+   "Les Trois-Bassins",
+   "2AUb"
+  ],
+  "97423000AB1441": [
+   "chaude",
+   "Les Trois-Bassins",
+   "2AUb"
+  ],
+  "97405000AL0145": [
+   "chaude",
+   "Petite-Île",
+   "2AU"
+  ],
+  "97415000AB0020": [
+   "chaude",
+   "Saint-Paul",
+   "AU1st"
+  ],
+  "97415000AB0599": [
+   "chaude",
+   "Saint-Paul",
+   "AU1st"
+  ],
+  "97415000CT3276": [
+   "chaude",
+   "Saint-Paul",
+   "AU3st"
+  ],
+  "97415000CT2125": [
+   "chaude",
+   "Saint-Paul",
+   "AU3st"
+  ],
+  "97415000CT3278": [
+   "chaude",
+   "Saint-Paul",
+   "AU3st"
+  ],
+  "97415000CT3279": [
+   "chaude",
+   "Saint-Paul",
+   "AU3st"
+  ],
+  "97416000HX0658": [
+   "chaude",
+   "Saint-Pierre",
+   "Us"
+  ]
+ },
+ "overlap": []
+}
