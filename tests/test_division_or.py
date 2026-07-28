@@ -170,16 +170,30 @@ def test_revue_2_solidite_et_gardes():
     assert d.PC_FRAIS_DEPUIS == "2023-01-01" and "({pc_pred})" in q
     # exclusions de revue TRAÇABLES (config), appliquées aux DEUX familles — jamais silencieuses
     assert "({revue_pred})" in q and "({revue_pred})" in d._DETECT
-    # nature PERMANENTE (CX0214) : exclue par IDU dans les deux familles
-    assert "'97416000CX0214'" in d._revue_pred_sql(decoupe=False)
-    assert "'97416000CX0214'" in d._revue_pred_sql(decoupe=True)
-    # nature LIÉE-GÉOMÉTRIE (les 3 U) : n'exclut que si le tracé re-calculé == snapshot revu,
-    # et seulement pour la famille découpe (comparaison de tracés, jamais silencieuse)
-    dec = d._revue_pred_sql(decoupe=True)
-    assert "'97416000AV0203'" in dec and "ST_SymDifference" in dec and "division_or_revue_snapshot" in dec
-    assert "97416000AV0203" not in d._revue_pred_sql(decoupe=False)   # géométrie ⇒ pas côté résiduel
-    assert d._revue_idus("permanente") == ["97416000CX0214"]
-    assert set(d._revue_idus("liee_geometrie")) == {"97409000AT0650", "97422000CX0720", "97416000AV0203"}
+    # revue 3 : exclusion PERMANENTE par IDU (liee_geometrie abandonnée — s'auto-annulait) ;
+    # tous les IDU exclus sont dans le prédicat des DEUX familles, sans comparaison de tracé
+    for fam in (d._revue_pred_sql(decoupe=True), d._revue_pred_sql(decoupe=False)):
+        assert "'97416000CX0214'" in fam and "'97411000AV0203'" in fam
+        assert "ST_SymDifference" not in fam and "snapshot" not in fam
+
+
+def test_exclusions_revue_idu_coherents():
+    """VERROU de la revue 3 : chaque exclusion porte une commune connue dont l'INSEE est le
+    préfixe de l'idu (interdit l'IDU-fantôme qui a laissé passer le U de Saint-Denis). Une
+    parcelle exclue ne doit jamais reparaître : exclusion PERMANENTE par IDU + IDU vérifié."""
+    assert d.check_exclusions_revue() == []                    # config actuelle cohérente
+    # le vrai U de Saint-Denis (préfixe 97411, pas le fantôme 97416) est exclu, permanent
+    assert "97411000AV0203" in d._revue_idus("permanente")
+    assert "97416000AV0203" not in d._revue_idus()             # l'IDU-fantôme a disparu
+    # revue 3 : TOUTES les exclusions sont permanentes (les 3 U + AV0573 + 4 résiduels FP)
+    perm = set(d._revue_idus("permanente"))
+    assert d._revue_idus("liee_geometrie") == []
+    assert {"97409000AT0650", "97422000CX0720", "97411000AV0203", "97422000AV0573",
+            "97404000AX0324", "97415000CR0776", "97416000HX1065", "97418000AP3270",
+            "97416000CX0214"} == perm
+    # fail-safe : une entrée au préfixe INSEE faux est DÉTECTÉE (et serait écartée au chargement)
+    faux_insee = d._insee_par_commune()["Saint-Denis"]
+    assert "97416000AV0203"[:5] != faux_insee                  # 97416 ≠ 97411 : incohérent
 
 
 @pytest.mark.db

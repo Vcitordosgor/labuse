@@ -487,18 +487,61 @@ def _ensure_ddl(session: Session) -> None:
 _TRACE_SYMDIFF_TOL = 0.02
 
 
-def _exclusions_revue() -> list[dict]:
-    """Entrées d'exclusion de revue (config/o12_exclusions_revue.yaml) — idu, nature, motif,
-    date. [] si le fichier est absent (aucune exclusion)."""
+def _insee_par_commune() -> dict[str, str]:
+    """{nom de commune → INSEE} depuis le référentiel officiel (24 communes)."""
+    from .run_all import REUNION_COMMUNES
+    return {nom: insee for insee, nom in REUNION_COMMUNES}
+
+
+def check_exclusions_revue() -> list[str]:
+    """Vérifie la cohérence de config/o12_exclusions_revue.yaml et renvoie la liste des
+    problèmes (vide = OK). Chaque entrée doit porter une `commune` connue dont l'INSEE ÉGALE
+    les 5 premiers chiffres de l'idu (verrou anti-IDU-fantôme, revue 3), une `nature` valide,
+    et un idu de 14 caractères sans apostrophe. Une entrée invalide est IGNORÉE au chargement
+    (fail-safe : une config cassée n'exclut rien plutôt que d'exclure la mauvaise parcelle)."""
     import yaml
 
     from ..config import get_settings
+    insee = _insee_par_commune()
+    problems: list[str] = []
     try:
         cfg = get_settings().config_path / "o12_exclusions_revue.yaml"
-        doc = yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}
-        return [e for e in (doc.get("exclusions") or []) if "'" not in str(e.get("idu", "'"))]
+        entries = (yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}).get("exclusions") or []
+    except Exception as exc:  # noqa: BLE001
+        return [f"config illisible : {exc}"]
+    for e in entries:
+        idu, com, nat = str(e.get("idu", "")), e.get("commune"), e.get("nature")
+        if len(idu) != 14 or "'" in idu:
+            problems.append(f"{idu!r} : idu invalide")
+        elif com not in insee:
+            problems.append(f"{idu} : commune inconnue {com!r}")
+        elif idu[:5] != insee[com]:
+            problems.append(f"{idu} : préfixe {idu[:5]} ≠ INSEE {insee[com]} de {com}")
+        if nat not in ("permanente", "liee_geometrie"):
+            problems.append(f"{idu} : nature invalide {nat!r}")
+    return problems
+
+
+def _exclusions_revue() -> list[dict]:
+    """Entrées d'exclusion de revue VALIDES (config/o12_exclusions_revue.yaml). Une entrée
+    incohérente (préfixe INSEE ≠ commune, nature absente…) est ÉCARTÉE — jamais utilisée pour
+    exclure la mauvaise parcelle. [] si le fichier est absent."""
+    import yaml
+
+    from ..config import get_settings
+    insee = _insee_par_commune()
+    try:
+        cfg = get_settings().config_path / "o12_exclusions_revue.yaml"
+        entries = (yaml.safe_load(cfg.read_text(encoding="utf-8")) or {}).get("exclusions") or []
     except Exception:  # noqa: BLE001 — config illisible → aucune exclusion
         return []
+    ok = []
+    for e in entries:
+        idu, com = str(e.get("idu", "")), e.get("commune")
+        if (len(idu) == 14 and "'" not in idu and com in insee and idu[:5] == insee[com]
+                and e.get("nature") in ("permanente", "liee_geometrie")):
+            ok.append(e)
+    return ok
 
 
 def _revue_idus(nature: str | None = None) -> list[str]:
@@ -508,24 +551,14 @@ def _revue_idus(nature: str | None = None) -> list[str]:
 
 
 def _revue_pred_sql(*, decoupe: bool) -> str:
-    """Prédicat SQL des EXCLUSIONS DE REVUE. Deux natures (jamais de retrait silencieux) :
-    · permanente     — exclue par IDU, toujours ;
-    · liee_geometrie — exclue seulement si le lot RE-CALCULÉ est ~identique au tracé revu
-      (snapshot). Un tracé modifié n'est PAS exclu ici : il revient au dossier, à re-revoir.
-      Ne s'applique qu'à la famille découpe (le résiduel n'a pas de lot_geom découpé)."""
-    perm = _revue_idus("permanente")
-    clauses = []
-    if perm:
-        clauses.append("idu NOT IN (" + ", ".join(f"'{i}'" for i in perm) + ")")
-    geo = _revue_idus("liee_geometrie")
-    if decoupe and geo:
-        idu_list = ", ".join(f"'{i}'" for i in geo)
-        clauses.append(
-            f"NOT (zon.idu IN ({idu_list}) AND EXISTS (SELECT 1 FROM division_or_revue_snapshot s "
-            f"WHERE s.idu = zon.idu AND s.lot_geom IS NOT NULL "
-            f"AND ST_Area(ST_SymDifference(zon.lot_geom, s.lot_geom)) "
-            f"< {_TRACE_SYMDIFF_TOL} * ST_Area(s.lot_geom)))")
-    return " AND ".join(clauses) if clauses else "true"
+    """Prédicat SQL des EXCLUSIONS DE REVUE — exclusion PERMANENTE par IDU (revue 3, 2e
+    correctif : `liee_geometrie` abandonnée car elle s'auto-annulait, cf. yaml). `decoupe`
+    est conservé pour la signature ; les deux familles excluent par IDU (une parcelle découpe
+    ne matche pas un résiduel et vice-versa — l'union est inoffensive)."""
+    idus = _revue_idus()
+    if not idus:
+        return "true"
+    return "idu NOT IN (" + ", ".join(f"'{i}'" for i in idus) + ")"
 
 
 def snapshot_review_lots(session: Session, *, commit: bool = True) -> int:

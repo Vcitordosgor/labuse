@@ -1,5 +1,10 @@
-idu,nature,date,motif
-97416000CX0214,permanente,2026-07-27,"Fraîcheur bâti : structures visibles sur l'ortho dans le polygone sur deux dossiers successifs ; BD TOPO (06/2026) et Sitadel (aucun permis sur parcelle) ne les expliquent pas — « lot nu » non garanti, indépendant de l'ancre. Revue Vic."
-97409000AT0650,liee_geometrie,2026-07-27,"Lot en U autour d'un bâtiment (revue 2, solidité 0,860 / compacité 0,552) — commercialement nul ; non séparable par métrique. Écarté sur le TRACÉ revu. Revue Vic."
-97422000CX0720,liee_geometrie,2026-07-27,"Lot en U autour d'un bâtiment (revue 2, solidité 0,884 / compacité 0,647) — idem, écarté sur le tracé revu. Revue Vic."
-97416000AV0203,liee_geometrie,2026-07-27,"Lot en U autour d'un bâtiment (revue 2, solidité 0,912 / compacité 0,665 ; dépasse même la validée la plus basse en solidité) — écarté sur le tracé revu. Revue Vic."
+idu,commune,nature,date,motif
+97416000CX0214,Saint-Pierre,permanente,2026-07-27,"Fraîcheur bâti : structures visibles sur l'ortho dans le polygone sur deux dossiers successifs ; BD TOPO (06/2026) et Sitadel (aucun permis) ne les expliquent pas — « lot nu » non garanti, indépendant de l'ancre. Revue Vic."
+97409000AT0650,Saint-André,permanente,2026-07-27,"Lot en U autour d'un bâtiment (revue 2, solidité 0,860 / compacité 0,552) — écarté sur le tracé revu. Revue Vic."
+97422000CX0720,Le Tampon,permanente,2026-07-27,"Lot en U autour d'un bâtiment (revue 2, solidité 0,884 / compacité 0,647) — écarté sur le tracé revu. Revue Vic."
+97411000AV0203,Saint-Denis,permanente,2026-07-28,"Lot en U autour d'un bâtiment (revue 2, solidité 0,912 / compacité 0,665 ; dépasse la validée la plus basse en solidité). CORRECTIF revue 3 : l'IDU avait été saisi 97416000AV0203 (Saint-Pierre, fantôme) → n'a jamais mordu ; corrigé en 97411000AV0203."
+97422000AV0573,Le Tampon,permanente,2026-07-28,"Revue 3 : lot 644 m² sur 1060 m² (61 %), reste 416 m² au ras du seuil, solidité 0,858 / compacité 0,571 (les 2 plus basses), le lot épouse le bâti. Deux tracés successifs refusés → problème de PARCELLE, pas de géométrie. Revue Vic."
+97404000AX0324,L'Étang-Salé,permanente,2026-07-28,"Revue 3 : résiduel en U autour du bâti, tissu commercial dense (solidité 0,573 / compacité 0,280 — les plus basses des résiduels). Revue Vic."
+97415000CR0776,Saint-Paul,permanente,2026-07-28,"Revue 3 : résiduel de forme aberrante, reste en lanière (solidité 0,615 / compacité 0,367). Revue Vic."
+97416000HX1065,Saint-Pierre,permanente,2026-07-28,"Revue 3 : résiduel enveloppant une construction (solidité 0,672 / compacité 0,401). Revue Vic."
+97418000AP3270,Sainte-Marie,permanente,2026-07-28,"Revue 3 : résiduel en U, façade 12,2 m au ras du seuil (solidité 0,662 / compacité 0,416). Revue Vic."

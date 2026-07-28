@@ -519,6 +519,102 @@ l'échantillon qu'il faudra reprendre. Le dossier est donc désormais EXHAUSTIF 
 carte par candidat, découpes par commune puis résiduels, solidité + compacité + statut de tracé
 affichés).
 
+---
+
+# REVUE 3 — corrections + DEUX bugs de mécanisme trouvés et corrigés
+
+Pool final : **28 découpes + 10 résiduels = 38** (34 servables + 4 douteux en attente d'arbitrage).
+Golden 116/116, tiers au bit près, tests 12/12, EXPOSE reste False.
+
+## 1 — AV0203 a percé : IDU FANTÔME (bug de saisie) → verrou
+
+Cause exacte : le vrai U de Saint-Denis est `97411000AV0203` (INSEE 97411) ; la config portait
+`97416000AV0203` (préfixe 97416 = Saint-Pierre), **un IDU qui n'existe dans AUCUNE parcelle** →
+l'exclusion n'a jamais rien matché. Origine : dans l'analyse solidité je résolvais les IDU par
+suffixe (`endswith`), donc l'analyse utilisait le bon 97411 ; en recopiant à la main dans le
+YAML j'ai figé le préfixe brut erroné. Les 2 autres U (AT0650, CX0720) avaient le bon IDU.
+
+**Verrou** (`test_exclusions_revue_idu_coherents`, sans DB, déterministe) : chaque exclusion
+porte une `commune` OBLIGATOIRE, et les 5 premiers chiffres de l'IDU doivent ÉGALER son INSEE
+(`check_exclusions_revue`). Un IDU-fantôme est détecté au test ET écarté au chargement
+(`_exclusions_revue` fail-safe : une config incohérente n'exclut rien, plutôt que d'exclure la
+mauvaise parcelle).
+
+## 2 — AT0650 a REPARU : le mécanisme `liee_geometrie` s'auto-annulait (2e bug)
+
+Découvert en comparant le pool re-calculé au CSV v3 : `97409000AT0650` (exclu en v3) était
+revenu. Cause : `liee_geometrie` comparait le tracé re-calculé au **snapshot**, or le snapshot
+est reconstruit depuis le pool à chaque run — une fois AT0650 exclu, il quitte le pool, donc le
+snapshot suivant, donc la comparaison perd sa référence et la parcelle **reparaît**. Le
+mécanisme se défaisait après un tour.
+
+**Correctif** : le détecteur étant DÉTERMINISTE (le tracé d'une parcelle est identique à chaque
+run tant que le code ne bouge pas), toutes les exclusions passent en **`permanente` (par IDU)** —
+robuste, garantit la non-réapparition (ta demande explicite). La nuance « re-revoir si
+l'algorithme produit un autre tracé » reste couverte par la RÈGLE de revue exhaustive à chaque
+changement d'algorithme. Le snapshot ne sert plus qu'à l'annotation « tracé modifié » (info).
+`liee_geometrie` est abandonnée (documenté dans le yaml et le code).
+
+## 3 — Résiduels : tri à la main des 4 FP (pas de plancher systématique)
+
+Les planchers découpe (0,85/0,55) appliqués aux résiduels tuent **10/14 dont des validés**
+(BV0182 démolition 0,773 ; CR0068 0,847) — même 0,80/0,50 en tue 7. Les 4 FP que tu as repérés
+sont les **4 plus basses solidités** (≤ 0,672), nettement sous le premier validé (0,773). Un
+résiduel est du terrain libre existant (sa forme est un FAIT, pas une proposition de l'algo) :
+**pas de plancher systématique**, exclusion à la main des 4 FP (permanente). Distribution des 14
+au rapport ci-dessous (§ REVUE 3 data).
+
+**Mon avis sur les 4 douteux** (tu tranches) : `CM0143` (0,713/0,391 — métriques DANS le cluster
+FP, compacité 0,391) → **je pencherais EXCLURE** · `AO0805` (0,853/0,535, façade 12,3 m au ras,
+emprise restante 59 %) → **EXCLURE (prudence)** : reste petit et mal desservi · `BH1036`
+(0,828/0,485, façade 40 m) → **GARDER** (grande façade, pas un U ; emprise 56 % à noter) ·
+`AV2092` (0,893/0,505, zone UB « quartiers résidentiels » vérifiée, non spécialisée) → **GARDER**.
+
+## 4 — DM0665 (Saint-Pierre, Ud) : zone vérifiée = OK
+
+Libellé GPU : **« Zone urbaine mixte de centralité »** — non spécialisée (ni activité, ni
+touristique). Géométrie excellente (solidité 0,948 / compacité 0,697, façade 55 m). Reste
+validée. Si l'ortho montre un équipement réel, c'est un fait d'usage que le zonage (mixte) ne
+capte pas — mais rien ne justifie l'exclusion côté zonage.
+
+## Findings d'ingénierie (consignés)
+
+- **Erreur de méthode (la mienne)** : mes changements de revue 3 ne font que RETIRER 6 parcelles.
+  Le geste correct était `DELETE FROM division_or_candidates WHERE idu IN (…)`, PAS un TRUNCATE +
+  re-run complet. J'ai lancé le re-run, buté sur la perf (ci-dessous), puis **reconstruit** le
+  pool découpe depuis l'état v3 revu (CSV attributs + snapshot géométries) moins les exclusions —
+  déterministe, identique à un run propre. Leçon : un changement « removal-only » = DELETE.
+- **Perf du détecteur découpe** : sur les 2 plus gros viviers (Saint-Paul, Le Tampon), une passe
+  dépasse **5-6 h**. Cause : `ST_MaximumInscribedCircle` (coût invisible au planner) évaluée
+  ~2× × (3 ancres × 5 profondeurs) par parcelle candidate, plus `ST_ConvexHull`/`ST_Area`
+  recalculés. **TODO** (à tester séparément, non fait ici pour ne pas risquer la sortie
+  déterministe juste avant livraison) : dans la CTE `carve`, matérialiser `aire/périmètre/
+  convexe/rayon` une fois par candidat (LATERAL) au lieu de les recalculer en SELECT + WHERE →
+  ~½ des appels `ST_MaximumInscribedCircle`. Le run résiduel est plus lent encore (deux variantes)
+  mais tolérable.
+
+## REVUE 3 data — distribution solidité/compacité des 14 résiduels
+
+| idu | commune | zone | sol | comp | avis |
+|---|---|---|---:|---:|---|
+| AX0324 | L'Étang-Salé | UA | 0,573 | 0,280 | FP exclu |
+| CR0776 | Saint-Paul | U3c | 0,615 | 0,367 | FP exclu |
+| AP3270 | Sainte-Marie | UD | 0,662 | 0,416 | FP exclu |
+| HX1065 | Saint-Pierre | Ug | 0,672 | 0,401 | FP exclu |
+| CM0143 | Saint-Paul | U6a | 0,713 | 0,391 | douteux → exclure (reco) |
+| BV0182 | Saint-Paul | U6c | 0,773 | 0,472 | validé (démolition) |
+| BH1036 | Sainte-Suzanne | UB | 0,828 | 0,485 | douteux → garder (reco) |
+| CR0068 | Saint-Leu | UC | 0,847 | 0,582 | validé |
+| AO0805 | Sainte-Marie | UD | 0,853 | 0,535 | douteux → exclure (reco) |
+| AM0946 | Saint-Joseph | U5 | 0,854 | 0,563 | validé |
+| CX0585 | Saint-Leu | UD | 0,868 | 0,589 | validé |
+| AV2092 | Sainte-Marie | UB | 0,893 | 0,505 | douteux → garder (reco) |
+| CQ0412 | Saint-Leu | UD | 0,941 | 0,717 | validé |
+| DM0665 | Saint-Pierre | Ud | 0,948 | 0,697 | validé (zone vérifiée) |
+
+Survivants aux planchers découpe : **sol≥0,85/comp≥0,55 → 4/14** ; **sol≥0,80/comp≥0,50 → 7/14**
+(tuent des validés) — d'où le tri à la main.
+
 ## Livrables (revue en session neuve)
 
 - `docs/mandats/O12_PARTIEL_REVUE.pdf` — **44 cartes (pool complet)**, solidité + compacité +
