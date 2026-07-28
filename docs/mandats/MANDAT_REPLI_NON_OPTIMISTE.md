@@ -1,5 +1,14 @@
 # MANDAT « REPLI NON OPTIMISTE » — SPEC v2 (refondée sur le correctif du gate)
 
+> **NOTE DE LECTURE (vaut pour TOUT le document) — Les numéros de ligne sont indicatifs et
+> datés du 28/07 : vérifier avant exécution, le code a pu bouger.** Un numéro de ligne se
+> périme, la fonction et le fichier non — c'est le couple (fichier, fonction) qui fait foi.
+> Une seule vérité de ligne par site dans ce mandat, recalée sur le code le 28/07 ; les
+> trois sites qui divergeaient entre les versions A et B ont été vérifiés contre le
+> working tree : `phase1.py` → resolve_zone appelé l.279 et l.287 ; `lettre_zonage.py` →
+> resolve_zone l.76 (wording « repli honnête » l.74) ; `modules.py` → hcache l.1034-1047,
+> resolve_zone l.1042 (faux dans A ET B avant recalage).
+
 > Statut : **SPEC SEULEMENT** — rien n'est implémenté sans le GO de Vic sur les mesures.
 > **NATURE (arbitrage Vic 28/07) : ce n'est PAS un correctif de code — c'est un correctif
 > de code PLUS une migration de données** (recalcul scopé de `parcel_residuel`, sans
@@ -79,7 +88,7 @@ repérer du foncier à bâtir.
 État réel du code (audit exécuté 28/07, sans base) :
 - `cascade_rules.yaml:74` : `positive_prefixes: [U, AU]` — classification positive par
   PRÉFIXE (l'inférence invalidée par la leçon 15 du §9).
-- MAIS un garde-fou existe : **M6 2b (A-03)**, `phase1.py:276-292` — hard_exclude
+- MAIS un garde-fou existe : **M6 2b (A-03)**, `phase1.py:279+287` — hard_exclude
   « exclue » si recouvrement ≥ seuil par une zone `r.calibree and r.habitat=="interdit"`
   (soft_flag FORT entre plancher et seuil). Le préfixe ne décide donc PAS seul… quand la
   zone est calibrée AVEC hauteur.
@@ -109,11 +118,11 @@ d'un coup TOUS les consommateurs — mais chacun doit être audité pour ses hyp
 | Consommateur | Site | Aujourd'hui (gate actif) | Après correctif | Verdict |
 |---|---|---|---|---|
 | Moteur faisabilité | engine.py:157+229 | interdit-sans-hauteur → générique R+2 constructible | habitat testé avant hauteurs → 0 exact sourcé | **corrigé par la ligne** |
-| Cascade M6 2b | phase1.py:276-292 | exige calibree+interdit → aveugle au gate ET aux gels | gate-population revue → hard_exclude auto ; GELS toujours invisibles (constructible_neuf jamais lu) | **corrigé pour interdit ; angle mort gels → §2bis mesure 2** |
+| Cascade M6 2b | phase1.py:279+287 | exige calibree+interdit → aveugle au gate ET aux gels | gate-population revue → hard_exclude auto ; GELS toujours invisibles (constructible_neuf jamais lu) | **corrigé pour interdit ; angle mort gels → §2bis mesure 2** |
 | Chaîne du résiduel | etage0_ext.py:153 + opportunity.py:56 | lit la TABLE parcel_residuel (SDP précalculée) — pas resolve_zone en direct | **le correctif seul ne change RIEN ici : recalcul de parcel_residuel requis pour les parcelles impactées, sinon SDP optimiste périmée** | **à adapter (recalcul scoped)** |
 | Traducteur API | traducteur.py:128 | affiche les règles du générique | affichera l'interdiction — rendu à adapter (mise en avant) | à adapter (affichage) |
-| Lettre zonage | lettre_zonage.py:74-76 | calibree=False → « repli honnête » | zone interdit calibrée : lignes avec hauteurs a_verifier — wording à revoir | à adapter (wording) |
-| Modules API filtre hauteur | modules.py:1001-1040 (hcache) | h = hauteur_max_m/hf/he | h peut devenir « a_verifier » (str) → comparaison str/float à GARDER ; joint aussi parcel_residuel (même point stale) | **à adapter (garde type + recalcul)** |
+| Lettre zonage | lettre_zonage.py:76 | calibree=False → « repli honnête » | zone interdit calibrée : lignes avec hauteurs a_verifier — wording à revoir | à adapter (wording) |
+| Modules API filtre hauteur | modules.py:1034-1047 (hcache) | h = hauteur_max_m/hf/he | h peut devenir « a_verifier » (str) → comparaison str/float à GARDER ; joint aussi parcel_residuel (même point stale) | **à adapter (garde type + recalcul)** |
 | Copilote | moteurs.py:177-190 | `if r is None or not r.constructible_neuf or r.habitat == "interdit": continue` | inchangé — **consommateur MODÈLE** (teste déjà les deux drapeaux) | OK |
 | Fiche règlement | plu_reglement.py:53 | sources seulement si calibree | interdit calibrée → sources affichées | OK |
 | DB prospect | faisabilite/db.py | exception déjà dans _has_usable_height | inchangé | OK (confirmé) |
@@ -133,13 +142,6 @@ repasser par cette table.
 > Sortie attendue de cet audit : un tableau « couche → comportement avant/après → OK/à
 > adapter » (fourni ci-dessus), **AUCUNE autre couche ne devant écraser l'interdiction plus
 > haut ou plus bas**.
->
-> **NOTE — Les numéros de ligne sont indicatifs et datés du 28/07 — vérifier avant
-> exécution, le code a pu bouger.** Un numéro de ligne se périme, la fonction et le fichier
-> non : c'est le couple (fichier, fonction) qui fait foi. (Recalage effectué le 28/07 sur
-> les trois sites divergents entre les versions A et B : `phase1.py` → resolve_zone appelé
-> l.279 et l.287 ; `lettre_zonage.py` → resolve_zone l.76, wording « repli honnête » l.74 ;
-> `modules.py` → hcache l.1034-1047, resolve_zone l.1042.)
 
 | Consommateur de resolve_zone | Site | À vérifier |
 |---|---|---|
