@@ -123,8 +123,81 @@ potentiel encadré), pas de bouger un tier.
 **Hors périmètre phase 1 explicitement** : aucune modification de la cascade, du scoring, du
 bilan ou de l'emprise — l'inventaire ne fournit aucun motif de rendre l'OAP pénalisante.
 
+---
+
+# PHASE 0 (suite) — couverture GPU des 17 communes absentes + révision (28/07/2026)
+
+Contre-vérification demandée par Vic : 7/24 communes, est-ce un fait GPU ou un trou d'ingestion ?
+**Méthode LECTURE SEULE** : interrogation directe de l'API Carto GPU par `partition=DU_<insee>`
+(endpoints `prescription-surf`/`lin`/`pct`), 24 communes, **aucune ingestion, aucune écriture** —
+comparaison au contenu de la base. Script `/tmp/gpu_couverture_prescriptions.py`.
+
+## 6 · Le 7/24 est un FAIT GPU, pas un trou d'ingestion
+
+- **OAP (typepsc 18)** : le GPU expose du 18 pour **exactement les 7 mêmes communes** déjà en
+  base, aux **mêmes comptes** (L'Étang-Salé 12, Le Port 8, Saint-Joseph 19, Saint-Paul 15,
+  Sainte-Marie 12, Sainte-Suzanne 21, Le Tampon 13). **Les 17 autres communes : aucun typepsc 18
+  au GPU non plus.** Notre ingestion n'a rien manqué — **les 2 883 non-écartées restent le vrai
+  chiffre du sujet**, aucun volume caché ne le dépasse.
+- **Contrôle large (le trou est-il plus vaste que l'OAP ?)** : **0 typepsc manquant en base sur
+  les 24 communes.** Chaque type exposé par le GPU est présent, comptes égaux au feature près
+  (bbox vs partition : Bras-Panon 414/412, Le Tampon 589/590, Saint-Louis 505/503…). **Notre
+  ingestion des prescriptions est fidèle et complète vis-à-vis du GPU.**
+- **Angle mort réel à nommer** : **3 communes ont ZÉRO prescription au GPU** sous `DU_<insee>` —
+  **Saint-André, Saint-Leu, Saint-Philippe**. Pour Saint-André et Saint-Leu, le PLU est servi par
+  repli AGORAH (zonage seul, `agorah_plu.py` allowlist) : elles n'ont **aucune** donnée de
+  prescription ni d'OAP. C'est un trou de dématérialisation GPU (pas d'ingestion à relancer), mais
+  un vrai point aveugle du produit sur ces communes.
+- **Lecture** : l'OAP est une pièce PLU obligatoire, mais **sa dématérialisation en géométrie
+  (prescription-18) est partielle — 7/24.** Les périmètres des 17 autres n'existent qu'en PDF
+  (cahier d'OAP). Les récupérer = géoréférencer depuis les cahiers, effort lourd **hors GPU** →
+  mandat séparé, pas un rattrapage d'ingestion.
+
+## 7 · Les 7 brûlantes de Saint-Paul en OAP — une par une (vérifiées)
+
+**Les 7 tombent dans la MÊME OAP** : « **OAP 4.2 – L'opération d'aménagement "Marie CAZE"** »
+(PLU Saint-Paul `97415_PLU_20251217`, récent). Parcelles : 97415000AX1100 (209 m²), AY1535
+(343), AY1541 (322), AY1587 (106), AY1592 (305), AY1622 (311), AY1625 (297) — **7 petites
+parcelles groupées, emprise d'ensemble ~4 300 m²**. C'est la convergence signalée par Vic : forte
+probabilité de mutation (brûlante) **+** volonté communale de densifier au même endroit
+(opération d'aménagement nommée) — un signal qu'aucun concurrent ne sert.
+**Limite honnête** : le GPU ne porte que le **nom** de l'OAP (`txt` vide, `stypepsc=00`) — **le
+contenu opposable de "Marie CAZE" (densité, phasage, part sociale, emprise réservée) n'est PAS
+dans la couche, il est dans le cahier d'OAP PDF.**
+
+## 8 · RÉVISION de la recommandation phase 1
+
+**EN TÊTE — la distinction qui commande tout le reste (gravée à la demande de Vic)** :
+
+> **Le PÉRIMÈTRE d'OAP est une enveloppe : un signal de contexte AFFICHÉ (descriptif), issu de la
+> géométrie GPU, sans aucun effet de calcul. Le CONTENU de l'OAP est une règle OPPOSABLE — densité
+> minimale (augmente la capacité), phasage (la bloque), emprise réservée pour accès/équipement (la
+> réduit), part de logement social (change le bilan). Le sens de l'effet dépend du texte et n'est
+> JAMAIS devinable depuis le périmètre. Le contenu ne peut entrer dans un calcul qu'après lecture
+> SOURCÉE du document PDF.** La mesure le confirme : le GPU ne livre que le nom, jamais la règle.
+
+Sur cette base, la reco §4 est précisée (elle ne change pas de sens, elle se resserre) :
+
+1. **Plafond géométrie = les 7 communes.** Les 17 autres ne sont pas récupérables via GPU (mesuré)
+   → ne PAS relancer d'ingestion pour les « rattraper » ; tout élargissement OAP au-delà des 7 est
+   un géoréférencement de cahiers PDF, mandat distinct.
+2. **Volet PÉRIMÈTRE (affichage descriptif, livrable court)** : restituer l'appartenance OAP par
+   son nom sur les **199 non-écartées de tête**, en démarrant **Saint-Paul** (15 OAP nommées, dossier
+   citable sans PDF) puis **Le Tampon** (masse). Aucun effet score. C'est la partie sûre et rapide.
+3. **Volet CONTENU (règle sourcée, à cadencer)** : pilote idéal = **« Marie CAZE » et ses 7
+   brûlantes**. Une seule OAP à lire, 7 parcelles convergentes, vérifiable à la source — le bon
+   banc d'essai pour décider si (et comment) une règle d'OAP sourcée touche capacité/bilan. Rien
+   n'entre dans un calcul avant cette lecture.
+4. **Nommer l'angle mort** dans tout dossier communal : Saint-André, Saint-Leu, Saint-Philippe =
+   aucune prescription/OAP disponible (« non couvert par le GPU », jamais « aucune OAP »).
+5. **Décision Vic** (inchangée) : périmètre affiché = descriptif (tranché : oui) ; l'entrée du
+   CONTENU dans un calcul reste conditionnée à la lecture sourcée, avec sa propre mesure d'impact.
+
 ## Artefacts
 
-Requêtes LECTURE SEULE (tables TEMP de session, rien de persisté). Comptages reproductibles :
-run `q_v7_defisc`, `spatial_layers kind='plu_gpu_prescription' subtype='18'`, jointure
-`geom_2975`. Invariant tiers relevé inchangé en clôture.
+Requêtes LECTURE SEULE (tables TEMP de session, rien de persisté) + interrogation API GPU
+read-only par partition (`/tmp/gpu_couverture_prescriptions.py`, résultats
+`/tmp/gpu_couverture_resultats.json`). Comptages reproductibles : run `q_v7_defisc`,
+`spatial_layers kind='plu_gpu_prescription' subtype='18'`, jointure `geom_2975`. **Aucune
+ingestion, aucune écriture.** Invariant tiers relevé inchangé en clôture
+(120 / 1031 / 3587 / 72980 / 353945).
