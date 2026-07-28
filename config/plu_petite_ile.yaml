@@ -229,35 +229,6 @@ zones:
        pleine_terre_pct: 40, pleine_terre_src: "Art. AUT.13, p.138-139 (« espaces de pleine terre à hauteur de 40 % de l'unité foncière », p.139)",
        habitat: interdit, habitat_src: "Art. AUT.1 (1°), p.132 : habitation INTERDITE ; exceptions Art. AUT.2, p.132 : personnel indispensable au fonctionnement/gardiennage des établissements touristiques (100 m² SDP max), amélioration/extension/reconstruction de l'existant. Hébergement touristique en opérations d'ensemble — hors cible logement."}
 
-  # UF/UFcim/AUF — équipements publics, habitat interdit (reclassées du gel par arbitrage
-  # Vic 28/07 ; entrées portées de la contre-extraction C, citations vérifiées).
-  UF: {bassin: "Petite-Île",
-       he_m: "a_verifier", hf_m: "a_verifier",
-       hauteur_note: "« La hauteur autorisée des constructions sera réglementée en fonction du terrain naturel avant travaux (voir schéma) » — aucune valeur chiffrée hors schéma.",
-       hauteur_src: "Art. UF.10, p.70",
-       emprise_sol_pct: null, emprise_src: "Art. UF.9, p.69 (« Non règlementé sous réserve … UF.13 »)",
-       recul_voirie_m: 4, recul_voirie_src: "Art. UF.6, p.69",
-       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UF.7, p.69",
-       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage : 1 place/logement pour ces logements).", stat_src: "Art. UF.12, p.71",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. UF.13, p.72",
-       habitat: interdit, habitat_src: "Art. UF.1/2, p.66-68 : habitation interdite sauf logements des employés/gardiennage/surveillance"}
-  UFcim: {bassin: "Petite-Île",
-       he_m: "a_verifier", hf_m: "a_verifier", hauteur_src: "Art. UF.10, p.70 (règles UF — schéma)",
-       emprise_sol_pct: null, emprise_src: "Art. UF.9, p.69",
-       recul_voirie_m: 4, recul_voirie_src: "Art. UF.6, p.69",
-       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UF.7, p.69",
-       stat_logement: null, stat_note: "Sans objet.", stat_src: "Art. UF.12, p.71",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. UF.13, p.72",
-       habitat: interdit, habitat_src: "Caractère UF p.66-67 : « Pour UFcim : SEULS sont autorisés les équipements et installations liées aux activités et services funéraires » (futur cimetière)"}
-  AUF: {bassin: "Petite-Île",
-       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Comme UF : hauteur par schéma, aucune valeur chiffrée.", hauteur_src: "Art. AUF.10, p.120",
-       emprise_sol_pct: null, emprise_src: "Art. AUF.9, p.119",
-       recul_voirie_m: 4, recul_voirie_src: "Art. AUF.6, p.119",
-       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. AUF.7, p.119",
-       stat_logement: null, stat_note: "Sans objet.", stat_src: "Art. AUF.12, p.121",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. AUF.13, p.121",
-       habitat: interdit, habitat_src: "Art. AUF.1/2, p.116-118 (équipements — habitation limitée aux logements de gardiennage/surveillance)"}
-
 zones_au_renvoi: {}
 
 # DEUX groupes portés par zones_au_st (constructible_neuf=False, capacité logement zéro) :
@@ -268,17 +239,20 @@ zones_au_renvoi: {}
 #    Relais du SAR (sauf 2AU du centre bourg de Piton des Goyaves), après modification ou
 #    révision du PLU. Art. 2 AU.1 (p.140) : TOUT est interdit (habitat, commerce, bureaux,
 #    équipements publics compris) ; Art. 2 AU.2 à 2AU.13 : « Sans objet ».
-# 2) UF / UFcim / AUF — RECLASSÉES en zones calibrées habitat-interdit (arbitrage Vic
-#    28/07, convention : gel = ouverture juridiquement conditionnée ; interdiction
-#    d'habitat = zone calibrée habitat: interdit). Le gel « construction neuve non
-#    autorisée » mentait sur la nature de ces zones (un équipement public y est
-#    constructible). Vérifié dans le code moteur : habitat=="interdit" est testé AVANT
-#    les hauteurs (engine.py) => capacité 0 EXACTE même avec hauteurs a_verifier — la
-#    crainte d'une retombée en estimation générique était infondée (le repli 9 m ne
-#    s'applique qu'aux zones ABSENTES du YAML, plu_rules.py:210). Entrées portées de la
-#    contre-extraction C (117 citations vérifiées 0 FAIL), session B libre de les réviser.
+# 2) UF / UFcim / AUF — REVENUES en st-liste (session B, 28/07, sur MESURE — révision
+#    permise par le commit de reclassement). Le reclassement en zones calibrées
+#    habitat-interdit reposait sur une lecture erronée du code : plu_rules.py:210 ne
+#    concerne que les zones ABSENTES du YAML, mais le gate réel est plu_rules.py:148-152
+#    (resolve_zone, mode progressif) — une entrée PRÉSENTE sans hauteur exploitable
+#    (a_verifier n'est pas exploitable) est substituée par l'estimation générique AVANT
+#    que engine.py:157 ne teste habitat. Mesure sur l'état reclassé : UF/UFcim/AUF →
+#    calibree=False, habitat=None, he=9.0, constructible_neuf=True — capacité logement
+#    FICTIVE dans un cimetière. Cf. exception à la règle 10 du §4 du mandat-cadre
+#    (exigence v2 : type gel distinct + habitat prioritaire sur le gate hauteur).
+#    Les entrées de la contre-extraction C (citations vérifiées) sont CONSERVÉES sous
+#    la clé documentaire inerte zones_habitat_interdit_sans_hauteur ci-dessous.
 zones_au_st:
-  liste: ["2AU", "2AUe"]
+  liste: ["2AU", "2AUe", "UF", "UFcim", "AUF"]
   portee: "Capacité logement nulle. 2AU/2AUe : zones gelées (« les possibilités de construire sont nulles », p.140), ouverture après urbanisation de l'ensemble des 1AU/1AUa + assainissement collectif Ville Relais SAR + modification/révision du PLU."
   source: "Chapeau ZONE 2AU + Art. 2 AU.1, p.140."
 
@@ -305,3 +279,33 @@ zones_au_st:
 #   logement fictive => repli générique (non constructibles), verdict produit correct.
 zones_non_constructibles: ["A, Ac, Acu, Ad, Ae (chap. p.143-152)",
                            "N, Na, Nb, Nce, Ncu, Ne, Np, Ntl, Ntla (chap. p.153-162)"]
+
+# Entrées documentaires (contre-extraction C, citations vérifiées) — NON consommées par
+# le moteur : cf. commentaire du groupe 2 ci-dessus, ces zones sont portées par la st-liste.
+zones_habitat_interdit_sans_hauteur:
+  UF: {bassin: "Petite-Île",
+       he_m: "a_verifier", hf_m: "a_verifier",
+       hauteur_note: "« La hauteur autorisée des constructions sera réglementée en fonction du terrain naturel avant travaux (voir schéma) » — aucune valeur chiffrée hors schéma.",
+       hauteur_src: "Art. UF.10, p.70",
+       emprise_sol_pct: null, emprise_src: "Art. UF.9, p.69 (« Non règlementé sous réserve … UF.13 »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UF.6, p.69",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UF.7, p.69",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage : 1 place/logement pour ces logements).", stat_src: "Art. UF.12, p.71",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UF.13, p.72",
+       habitat: interdit, habitat_src: "Art. UF.1/2, p.66-68 : habitation interdite sauf logements des employés/gardiennage/surveillance"}
+  UFcim: {bassin: "Petite-Île",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_src: "Art. UF.10, p.70 (règles UF — schéma)",
+       emprise_sol_pct: null, emprise_src: "Art. UF.9, p.69",
+       recul_voirie_m: 4, recul_voirie_src: "Art. UF.6, p.69",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UF.7, p.69",
+       stat_logement: null, stat_note: "Sans objet.", stat_src: "Art. UF.12, p.71",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. UF.13, p.72",
+       habitat: interdit, habitat_src: "Caractère UF p.66-67 : « Pour UFcim : SEULS sont autorisés les équipements et installations liées aux activités et services funéraires » (futur cimetière)"}
+  AUF: {bassin: "Petite-Île",
+       he_m: "a_verifier", hf_m: "a_verifier", hauteur_note: "Comme UF : hauteur par schéma, aucune valeur chiffrée.", hauteur_src: "Art. AUF.10, p.120",
+       emprise_sol_pct: null, emprise_src: "Art. AUF.9, p.119",
+       recul_voirie_m: 4, recul_voirie_src: "Art. AUF.6, p.119",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. AUF.7, p.119",
+       stat_logement: null, stat_note: "Sans objet.", stat_src: "Art. AUF.12, p.121",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. AUF.13, p.121",
+       habitat: interdit, habitat_src: "Art. AUF.1/2, p.116-118 (équipements — habitation limitée aux logements de gardiennage/surveillance)"}
