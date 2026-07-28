@@ -235,6 +235,15 @@ le calibrage par commune reste la résorption définitive.
 
 ### MANDAT PRÊT À TIRER — « Repli non optimiste » (décision Vic, revue GO n°3)
 
+> **POURQUOI CE MANDAT EST PRIORITAIRE (Vic, 28/07/2026, post-phase 4)** : pour les
+> **2 234 parcelles** de la population fusionnée d+e, le moteur de faisabilité rend
+> DÉJÀ capacité 0 exacte — mais la cascade les classe positives. **Le produit se
+> contredit lui-même** : un utilisateur qui ouvre la fiche voit « capacité 0 » sur une
+> parcelle que le score lui a présentée comme prometteuse. Ce n'est pas seulement un
+> faux positif, c'est une incohérence interne VISIBLE — la pire chose devant un comité,
+> comme le ×2,07 des hypothèses. NE PAS EXÉCUTER avant la phase A (prix de sortie par
+> commune) : un correctif à la fois.
+
 **Déclencheur : merge de la branche O12** (le mandat NE duplique PAS `o12_zones_activite.yaml`
 et ne le sort pas de sa branche — dépendance stricte). Périmètre : `_zone_generique` /
 `resolve_zone` + messages produit + tests. Durée cible : quelques heures (Opus possible).
@@ -264,22 +273,59 @@ message par commune ; aucun changement pour les zones ordinaires ni pour les zon
 chiffrées.
 
 #### MISE À JOUR PHASE 4 (Vic, 28/07/2026) — poids réels mesurés, RE-PRIORISATION
+#### (ajustée sur pièces post-merge : FUSION d+e, arbitrage Vic)
 
 Pools servis mesurés en phase 4 (`docs/mandats/PLU_NUIT_PHASE4_MESURES.md`,
-`reports/plu-phase4/populations.json` + `population_d.json`), run `q_v7_defisc` :
+`reports/plu-phase4/populations.json`, `population_d.json`, `chaudes_de.json`),
+run `q_v7_defisc` :
 
 | Population | Contenu | Pool servi | Priorité |
 |---|---|---|---|
-| **e** — 92 libellés gelés classés positifs par la cascade | capacité 0 exacte au moteur, mais parcelles SERVIES dans les tiers | **1 229** | **1 — d'abord** |
-| **d** — cascade vs habitat-interdit calibré (87 zones `zones:`) | positives cascade, habitat interdit au règlement | **1 005** (0 brûlante · 24 chaudes · 115 réserve · 866 à creuser) | mesurée en phase 4 — priorité À ARBITRER (même mécanique que e : la cascade ignore le règlement ; 24 chaudes concernées) |
+| **d+e FUSIONNÉES** — la cascade classe positif sur le préfixe SANS consulter le règlement | deux symptômes du même défaut : elle ignore `habitat: interdit` (d — 87 zones `zones:`, 1 005 parcelles) et `constructible_neuf` (e — 92 gels, 1 229 parcelles). Même point d'étranglement, même correctif (**honorer le contrat Copilote dans la couche zonage de la cascade**), même mesure de tiers. Recouvrement d∩e vérifié : **0** | **2 234** (1 brûlante · 45 chaudes · 251 réserve · 1 937 à creuser) | **1 — largement en tête** |
 | **b** — 11 zones sans hauteur (générique optimiste servi) | Uavap Saint-Denis 302, AUBm La Possession 124, AUx 44… | **553** | 2 — ensuite |
 | **a** — 14 habitat-interdit gelées | capacité 0 déjà exacte (st-liste), seule l'étiquette ment | **238** | 3 — en dernier |
-| **c** — emprises implicites | ~~17 797~~ → **la population est QUASI VIDE** : 76 des 89 zones sont bornées par la pleine terre gravée (passe d'harmonisation doctrine a de la nuit — résultat obtenu sans l'avoir cherché) ; reste **13 zones / 237 parcelles** sans aucune borne | 237 | 3 — DÉCLASSÉE en note, ne justifie plus un traitement |
+| **c** — emprises implicites | ~~17 797~~ → **QUASI VIDE** : 76 des 89 zones bornées par la pleine terre gravée (produit dérivé, non recherché, de l'harmonisation doctrine a) ; reste 13 zones / 237 parcelles sans aucune borne | 237 | 3 — DÉCLASSÉE en note |
 
-Total mesurable ≈ 2 250 parcelles (a+b+c+e hors recouvrements) + population d 1 005.
-Nettement moins que redouté. **La doctrine du mandat intègre la leçon 24 du mandat-cadre**
-(Salazie +33 % : le repli est ARBITRAIRE, pas systématiquement optimiste — un durcissement
-uniforme créerait des faux négatifs ; l'argument est l'exactitude, pas le sens du biais).
+**La doctrine du mandat intègre la leçon 24 du mandat-cadre** (Salazie +33 % : le repli
+est ARBITRAIRE, pas systématiquement optimiste — un durcissement uniforme créerait des
+faux négatifs ; l'argument est l'exactitude, pas le sens du biais).
+
+##### Les 46 vitrines de la population fusionnée — LISTE NOMINATIVE (à connaître avant l'application)
+
+Le « 0 brûlante » de la mesure d seule ne tient pas à la fusion : **e contient
+1 BRÛLANTE et 21 chaudes**. La vitrine réelle est donc 1 brûlante + 45 chaudes — des
+parcelles qu'un client peut ouvrir aujourd'hui et découvrir vides. **Deux sont des
+parcelles du GOLDEN** (marquées ⚑) : la correction fera bouger leur tier dans la
+référence elle-même.
+
+- **BRÛLANTE (1)** : ⚑ `97422000AD1237` Le Tampon 2AUd (e — gel).
+- **Chaudes d (24, habitat-interdit calibré)** : Saint-Pierre (9) : `97416000CS0543`,
+  `97416000CS0642`, `97416000CS1176`, `97416000CS1401`, `97416000CS1538` (Uazi),
+  `97416000CW1554`, `97416000DH1252`, `97416000DO0264` (Uazc), `97416000DI0233` (Uaza) ·
+  Sainte-Marie (7) : `97418000AC0889`, `97418000AC0952`, `97418000AT0942` (UEm),
+  `97418000AT0454`, `97418000AT2287`, `97418000AT2288` (1AUep), `97418000AY0716` (UEc) ·
+  Saint-Joseph (2) : `97412000BK1975`, `97412000BK1980` (1AU6) · Les Trois-Bassins (2) :
+  `97423000AB0057`, `97423000AB1846` (1AUt) · Le Port : `97407000BA0371` (Us) ·
+  La Possession : `97408000BL0014` (UAa) · Saint-Louis : `97414000EN3769` (1AUe) ·
+  Le Tampon : `97422000BW3164` (Ue).
+- **Chaudes e (21, gels)** : Saint-Paul (6) : `97415000AB0020`, `97415000AB0599` (AU1st),
+  `97415000CT2125`, `97415000CT3276`, `97415000CT3278`, `97415000CT3279` (AU3st) ·
+  Les Trois-Bassins (5) : `97423000AB1441`, `97423000AB1756`, `97423000AB1759`,
+  `97423000AB1773`, `97423000AB1777` (2AUb) · Le Port (4) : `97407000AT0049` (Ue),
+  `97407000AX0020`, `97407000AX0191` (1AUe), `97407000AX0206` (Up) · Le Tampon (4) :
+  ⚑ `97422000AX1253`, `97422000AP1250`, `97422000AX1480` (2AUe), `97422000CM1077`
+  (2AUc) · Petite-Île : `97405000AL0145` (2AU) · Saint-Pierre : `97416000HX0658` (Us).
+
+##### CONDITION D'ARRÊT (Vic, 28/07/2026) — la question bloquante reste entière
+
+Corriger la cascade retire 2 234 parcelles du classement positif → le rang P change →
+**les tiers peuvent bouger**. Si un tier bouge d'un bit : RIEN ne merge sans re-run du
+champion, arène et arbitrage Vic. (Le golden bougera mécaniquement : 2 de ses parcelles
+sont dans la population — la régénération de la référence fera partie du constat, pas
+une anomalie.)
+
+**NE PAS EXÉCUTER MAINTENANT** : la phase A (prix de sortie par commune) passe d'abord —
+un correctif à la fois.
 
 ## 6ter · Audit de fraîcheur GPU — 24 communes (demande Vic, revue GO)
 
