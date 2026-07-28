@@ -195,7 +195,7 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. UZ 7.2, p.95 : limites possibles, sinon marge d'isolement = H/2 sans être inférieure à 3 m",
        recul_limites_note: "Réductible à 1 m (façade aveugle) pour terrains < 12 m de large en habitat individuel.",
        stat_logement: "1,5 place / logement", stat_src: "Art. UZ 12, p.101",
-       pleine_terre_pct: null, pleine_terre_src: "Art. UZ 13.1, p.102 : 25 % de l'unité foncière libres et paysagés (pas d'exigence de pleine terre)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UZ 13.1, p.102 : 25 % de l'unité foncière libres et paysagés (pas d'exigence de pleine terre) — gravé par arbitrage Vic 28/07 : « libres et paysagés » = contrainte d'emprise réelle (classe paysager)",
        note: "ZAC de l'Avenir (caractère de zone, p.91). Habitat admis selon les affectations du schéma joint en annexe (Art. UZ 2.2, p.92 : 1 logement/parcelle si parcelle <= 400 m² en « affectations dominantes en habitat » ; gardiennage seul en « activités tertiaires »)."}
 
   # ============== LOT AU — zones à urbaniser (Titre III, chap. « ZONE AUindicée », p.105-109) ==============

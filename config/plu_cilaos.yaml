@@ -36,7 +36,8 @@
 #     Aucun COS n'est gravé ni consommé.
 #   - ESPACES LIBRES : Art. 13.1 impose un % « espace vert » où « les aires de
 #     stationnement peuvent être traitées en espaces verts si nécessaire » => ce n'est
-#     PAS de la pleine terre : pleine_terre_pct null partout, % espace vert en note.
+#     PAS de la pleine terre — ARBITRAGE VIC 28/07 : le % « espace vert paysager » est
+#     GRAVÉ malgré tout (contrainte d'emprise réelle, stationnements compris), libellé en src.
 #   - RECULS VOIRIE Ua/Ub : « soit à l'alignement, soit en retrait [...] minimum 3 m »
 #     => gravé 3 avec note (alignement 0 possible). Uc : retrait obligatoire 4 m.
 #   - ZONES AU : chapitre « ZONE AUindicée » (p.57-61) : « il convient de se reporter
@@ -70,7 +71,8 @@
 
 # DOCTRINE HARMONISÉE A/B/C (28/07/2026) revue : AUCUNE gravure — les Art. 13
 # n'imposent qu'un « espace vert paysager » (stationnements parfois comptables),
-# jamais un % perméable => pleine_terre_pct reste null, sourcé.
+# jamais un % perméable => gravé néanmoins sur arbitrage Vic 28/07 (30-40 % de la
+# parcelle sans bâti = contrainte d'emprise, quel que soit le traitement de surface).
 
 source:
   document: "97424_reglement.pdf"
@@ -116,7 +118,7 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ua 7.2/7.3, p.22",
        recul_limites_note: "Implantation sur les deux limites autorisée (profondeur <= 15 m habitat, 20 m RDC commerces/bureaux et 15 m à l'étage) OU retrait 3 m ; fond de propriété : en limite ou retrait 3 m.",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.27",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.28 : 10 % de l'unité foncière en espace vert paysager, SANS exigence de pleine terre (les aires de stationnement peuvent compter)",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. Ua 13.1, p.28 : 10 % de l'unité foncière en espace vert paysager, SANS exigence de pleine terre (les aires de stationnement peuvent compter) — gravé par arbitrage Vic 28/07 : « espace vert paysager », stationnements compris = contrainte d'emprise réelle (classe paysager, cf. PLU_NUIT_HARMONISATION.md)",
        note: "Centre-ville de Cilaos, morphologie à préserver (caractère de zone, p.17). Interdits : industriel, entrepôt exclusif, agricole, camping, carrières (Art. Ua 1.2, p.17)."}
   Uah: {bassin: "Cilaos",
        he_m: 7, hf_m: 11, hauteur_src: "Art. Ua 10.2, p.24 (« En secteur UAh, la hauteur maximale des constructions ne devra pas excéder 2 niveaux plus combles (R+1+C) ou 7 mètres à l'égout des toitures et 11 mètres au faîtage »)",
@@ -125,7 +127,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. Ua 6.2, p.21",
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ua 7.2/7.3, p.22",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ua 12.2, p.27",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ua 13.1, p.28 : 10 % espace vert, sans exigence de pleine terre",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. Ua 13.1, p.28 : 10 % espace vert, sans exigence de pleine terre — gravé par arbitrage Vic 28/07 : « espace vert paysager », stationnements compris = contrainte d'emprise réelle (classe paysager, cf. PLU_NUIT_HARMONISATION.md)",
        note: "Graphie du manifeste « Uah » = secteur « UAh » du texte (caractère de zone, p.17 ; Art. Ua 10.2, p.24)."}
   Ub: {bassin: "Cilaos",
        he_m: 7, hf_m: 11, hauteur_src: "Art. Ub 10.2, p.36",
@@ -137,7 +139,7 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34",
        recul_limites_note: "Une seule limite (ou les deux si façade sur voie < 20 m ; profondeur <= 15 m habitat, 20 m RDC commerces) OU retrait 3 m ; fond de propriété : retrait 3 m obligatoire (dépendances en limite admises, regroupées).",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.40 : 40 % de l'unité foncière en espace vert paysager, SANS exigence de pleine terre",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Ub 13.1, p.40 : 40 % de l'unité foncière en espace vert paysager, SANS exigence de pleine terre — gravé par arbitrage Vic 28/07 : « espace vert paysager », stationnements compris = contrainte d'emprise réelle (classe paysager, cf. PLU_NUIT_HARMONISATION.md)",
        pleine_terre_note: "Opérations > 5 logements/lots : 30 m² d'espaces verts publics par logement, portés à 40 m² au-delà de 10 (Art. Ub 13.2, p.40).",
        note: "Tissu urbain lâche et discontinu : continuité du centre-ville, Bras Sec, Palmiste Rouge, Peter Both (caractère de zone, p.29). Interdits : industriel, entrepôt exclusif, agricole, camping, carrières (Art. Ub 1.2, p.29)."}
   Ub1: {bassin: "Cilaos",
@@ -146,7 +148,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. Ub 6.2, p.33",
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.40",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Ub 13.1, p.40 : 40 % (article cible) — gravé par arbitrage Vic 28/07 : « espace vert paysager », stationnements compris = contrainte d'emprise réelle (classe paysager, cf. PLU_NUIT_HARMONISATION.md)",
        note: "Libellé « Ub1 » ABSENT du règlement (aucun secteur au chapitre Ub, p.29-40). Sigle U => zone urbaine ; seul chapitre possible : Ub, qui ne prévoit AUCUNE disposition particulière de secteur => règle générale Ub (Titre I, p.5 : la règle générale s'applique aux secteurs sans disposition particulière). Sous-numérotation cartographique sans règle propre — même décision que Saint-Louis (1AUb1/1AUb2)."}
   Uc: {bassin: "Cilaos",
        he_m: 4, hf_m: 8, hauteur_src: "Art. Uc 10.2, p.48",
@@ -169,7 +171,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. Ub 6.2, p.33 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34 (via renvoi)",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. Ub 13.1, p.40 (via renvoi)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. Ub 13.1, p.40 (via renvoi) : 40 % (article cible) — gravé par arbitrage Vic 28/07 : « espace vert paysager », stationnements compris = contrainte d'emprise réelle (classe paysager, cf. PLU_NUIT_HARMONISATION.md)",
        note: "Urbanisation future OUVERTE : opération d'aménagement d'ensemble OU au fur et à mesure des équipements internes (caractère de zone, p.57) ; constructions sous réserve d'infrastructures suffisantes (Art. AUindicée 2.2, p.58)."}
   AUb1: {bassin: "Cilaos",
        he_m: 9, hf_m: 12, hauteur_src: "Art. AUindicée 10, p.60 (« Dans le secteur AUb1, la hauteur maximale des constructions est fixée à 9 mètres à l'égout du toit ou au sommet de l'acrotère et 12 mètres au faîtage »)",
@@ -177,7 +179,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. Ub 6.2, p.33 via renvoi (ZONE AUindicée, p.57)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34 (via renvoi)",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39 (via renvoi)",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AUindicée 13, p.60 : 40 % espace vert paysager, SANS exigence de pleine terre (l'article UB13.2 ne s'applique pas)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. AUindicée 13, p.60 : 40 % espace vert paysager, SANS exigence de pleine terre (l'article UB13.2 ne s'applique pas) — gravé par arbitrage Vic 28/07 : « espace vert paysager », stationnements compris = contrainte d'emprise réelle (classe paysager, cf. PLU_NUIT_HARMONISATION.md)",
        note: "Secteur de la ZAC Roland Garros (caractère de zone, p.57)."}
   AUb2: {bassin: "Cilaos",
        he_m: 7, hf_m: 11, hauteur_src: "Art. AUindicée 10, p.60 (« Dans le secteur AUb2 ... 7 mètres à l'égout du toit ou au sommet de l'acrotère et 11 mètres au faîtage »)",
@@ -187,7 +189,7 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. Ub 7.2/7.3, p.34 (via renvoi)",
        stat_logement: "1,5 place / logement", stat_src: "Art. Ub 12.2, p.39 (via renvoi)",
        stat_note: "Commerces/services/bureaux en AUb2 : 40 % de la SHON (Art. AUindicée 12, p.60).",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AUindicée 13, p.60 : 30 % espace vert paysager, SANS exigence de pleine terre",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. AUindicée 13, p.60 : 30 % espace vert paysager, SANS exigence de pleine terre — gravé par arbitrage Vic 28/07 : « espace vert paysager », stationnements compris = contrainte d'emprise réelle (classe paysager, cf. PLU_NUIT_HARMONISATION.md)",
        note: "Secteur de la ZAC Roland Garros (p.57). Spécificité : l'industriel et l'entrepôt exclusif y sont ADMIS (Art. AUindicée 1.2/2.2, p.57-58) — l'habitat reste admis (règles Ub via renvoi)."}
 
 zones_au_renvoi: {}
