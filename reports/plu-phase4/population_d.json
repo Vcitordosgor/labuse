@@ -1,0 +1,646 @@
+{
+ "par_commune_tier": {
+  "Bras-Panon": {
+   "a_creuser": 40
+  },
+  "L'Étang-Salé": {
+   "a_creuser": 53,
+   "reserve_fonciere": 5
+  },
+  "La Plaine-des-Palmistes": {
+   "a_creuser": 11
+  },
+  "La Possession": {
+   "a_creuser": 20,
+   "reserve_fonciere": 6,
+   "chaude": 1
+  },
+  "Le Port": {
+   "a_creuser": 40,
+   "reserve_fonciere": 4,
+   "chaude": 1
+  },
+  "Le Tampon": {
+   "a_creuser": 87,
+   "reserve_fonciere": 10,
+   "chaude": 1
+  },
+  "Les Avirons": {
+   "a_creuser": 15,
+   "reserve_fonciere": 4
+  },
+  "Les Trois-Bassins": {
+   "chaude": 2,
+   "a_creuser": 1
+  },
+  "Petite-Île": {
+   "a_creuser": 12
+  },
+  "Saint-Joseph": {
+   "a_creuser": 51,
+   "chaude": 2,
+   "reserve_fonciere": 10
+  },
+  "Saint-Louis": {
+   "a_creuser": 49,
+   "chaude": 1,
+   "reserve_fonciere": 22
+  },
+  "Saint-Paul": {
+   "a_creuser": 1
+  },
+  "Saint-Pierre": {
+   "a_creuser": 253,
+   "chaude": 9,
+   "reserve_fonciere": 30
+  },
+  "Sainte-Marie": {
+   "a_creuser": 206,
+   "chaude": 7,
+   "reserve_fonciere": 23
+  },
+  "Sainte-Suzanne": {
+   "a_creuser": 25
+  },
+  "Salazie": {
+   "a_creuser": 2,
+   "reserve_fonciere": 1
+  }
+ },
+ "par_zone": {
+  "Bras-Panon|1AUe": {
+   "a_creuser": 2
+  },
+  "Bras-Panon|1AUec": {
+   "a_creuser": 13
+  },
+  "Bras-Panon|Udu": {
+   "a_creuser": 3
+  },
+  "Bras-Panon|Ue": {
+   "a_creuser": 22
+  },
+  "L'Étang-Salé|AUe": {
+   "a_creuser": 8
+  },
+  "L'Étang-Salé|UE": {
+   "a_creuser": 37,
+   "reserve_fonciere": 4
+  },
+  "L'Étang-Salé|UT": {
+   "a_creuser": 8,
+   "reserve_fonciere": 1
+  },
+  "La Plaine-des-Palmistes|Ue": {
+   "a_creuser": 11
+  },
+  "La Possession|AUT": {
+   "a_creuser": 1,
+   "reserve_fonciere": 1
+  },
+  "La Possession|UAa": {
+   "a_creuser": 8,
+   "chaude": 1
+  },
+  "La Possession|UE": {
+   "a_creuser": 9,
+   "reserve_fonciere": 4
+  },
+  "La Possession|UTfr2": {
+   "a_creuser": 2,
+   "reserve_fonciere": 1
+  },
+  "Le Port|1AUem": {
+   "a_creuser": 1
+  },
+  "Le Port|Uem": {
+   "a_creuser": 31,
+   "reserve_fonciere": 2
+  },
+  "Le Port|Us": {
+   "a_creuser": 8,
+   "chaude": 1,
+   "reserve_fonciere": 2
+  },
+  "Le Tampon|1AUcto": {
+   "a_creuser": 10
+  },
+  "Le Tampon|1AUe": {
+   "a_creuser": 9,
+   "reserve_fonciere": 2
+  },
+  "Le Tampon|1AUto": {
+   "a_creuser": 2
+  },
+  "Le Tampon|UCto": {
+   "a_creuser": 19,
+   "reserve_fonciere": 1
+  },
+  "Le Tampon|UCtom": {
+   "a_creuser": 33,
+   "reserve_fonciere": 4
+  },
+  "Le Tampon|Ue": {
+   "a_creuser": 14,
+   "chaude": 1,
+   "reserve_fonciere": 3
+  },
+  "Les Avirons|AUec": {
+   "a_creuser": 1
+  },
+  "Les Avirons|AUt": {
+   "a_creuser": 3,
+   "reserve_fonciere": 1
+  },
+  "Les Avirons|Ud2": {
+   "a_creuser": 10,
+   "reserve_fonciere": 3
+  },
+  "Les Avirons|Ue": {
+   "a_creuser": 1
+  },
+  "Les Trois-Bassins|1AUt": {
+   "chaude": 2
+  },
+  "Les Trois-Bassins|Ue": {
+   "a_creuser": 1
+  },
+  "Petite-Île|AUE": {
+   "a_creuser": 3
+  },
+  "Petite-Île|AUs": {
+   "a_creuser": 3
+  },
+  "Petite-Île|UEa": {
+   "a_creuser": 5
+  },
+  "Petite-Île|UT": {
+   "a_creuser": 1
+  },
+  "Saint-Joseph|1AU6": {
+   "a_creuser": 23,
+   "chaude": 2,
+   "reserve_fonciere": 8
+  },
+  "Saint-Joseph|1AU6c": {
+   "a_creuser": 11,
+   "reserve_fonciere": 1
+  },
+  "Saint-Joseph|1AUto": {
+   "a_creuser": 1
+  },
+  "Saint-Joseph|U6": {
+   "a_creuser": 16,
+   "reserve_fonciere": 1
+  },
+  "Saint-Louis|1AUe": {
+   "a_creuser": 6,
+   "chaude": 1
+  },
+  "Saint-Louis|1AUe oap1": {
+   "a_creuser": 1,
+   "reserve_fonciere": 1
+  },
+  "Saint-Louis|UE": {
+   "a_creuser": 14,
+   "reserve_fonciere": 16
+  },
+  "Saint-Louis|US": {
+   "a_creuser": 28,
+   "reserve_fonciere": 5
+  },
+  "Saint-Paul|U3e": {
+   "a_creuser": 1
+  },
+  "Saint-Pierre|AUazc": {
+   "a_creuser": 3
+  },
+  "Saint-Pierre|AUt1": {
+   "a_creuser": 2
+  },
+  "Saint-Pierre|AUt2": {
+   "a_creuser": 1
+  },
+  "Saint-Pierre|Uaza": {
+   "a_creuser": 48,
+   "chaude": 1,
+   "reserve_fonciere": 3
+  },
+  "Saint-Pierre|Uazc": {
+   "a_creuser": 48,
+   "chaude": 3,
+   "reserve_fonciere": 2
+  },
+  "Saint-Pierre|Uazi": {
+   "a_creuser": 116,
+   "chaude": 5,
+   "reserve_fonciere": 13
+  },
+  "Saint-Pierre|Uazp": {
+   "a_creuser": 23,
+   "reserve_fonciere": 4
+  },
+  "Saint-Pierre|Ue": {
+   "a_creuser": 4
+  },
+  "Saint-Pierre|Uea": {
+   "a_creuser": 7,
+   "reserve_fonciere": 6
+  },
+  "Saint-Pierre|Uep": {
+   "a_creuser": 1,
+   "reserve_fonciere": 2
+  },
+  "Sainte-Marie|1AUep": {
+   "a_creuser": 21,
+   "chaude": 3
+  },
+  "Sainte-Marie|UEa": {
+   "a_creuser": 2
+  },
+  "Sainte-Marie|UEc": {
+   "a_creuser": 31,
+   "chaude": 1,
+   "reserve_fonciere": 5
+  },
+  "Sainte-Marie|UEm": {
+   "a_creuser": 123,
+   "chaude": 3,
+   "reserve_fonciere": 13
+  },
+  "Sainte-Marie|UEp": {
+   "a_creuser": 25,
+   "reserve_fonciere": 4
+  },
+  "Sainte-Marie|UR": {
+   "a_creuser": 2,
+   "reserve_fonciere": 1
+  },
+  "Sainte-Marie|UT": {
+   "a_creuser": 2
+  },
+  "Sainte-Suzanne|UAc": {
+   "a_creuser": 3
+  },
+  "Sainte-Suzanne|UE": {
+   "a_creuser": 22
+  },
+  "Salazie|AUe": {
+   "a_creuser": 1
+  },
+  "Salazie|AUt": {
+   "a_creuser": 1,
+   "reserve_fonciere": 1
+  }
+ },
+ "zones_interdites": [
+  [
+   "Bras-Panon",
+   "Udu"
+  ],
+  [
+   "Bras-Panon",
+   "Ue"
+  ],
+  [
+   "Bras-Panon",
+   "1AUe"
+  ],
+  [
+   "Bras-Panon",
+   "1AUec"
+  ],
+  [
+   "Bras-Panon",
+   "1AUt"
+  ],
+  [
+   "L'Étang-Salé",
+   "UE"
+  ],
+  [
+   "L'Étang-Salé",
+   "UT"
+  ],
+  [
+   "L'Étang-Salé",
+   "AUe"
+  ],
+  [
+   "L'Étang-Salé",
+   "AUt"
+  ],
+  [
+   "La Plaine-des-Palmistes",
+   "Ue"
+  ],
+  [
+   "La Plaine-des-Palmistes",
+   "AUe"
+  ],
+  [
+   "La Possession",
+   "UAa"
+  ],
+  [
+   "La Possession",
+   "UE"
+  ],
+  [
+   "La Possession",
+   "UT"
+  ],
+  [
+   "La Possession",
+   "UTfr2"
+  ],
+  [
+   "La Possession",
+   "AUT"
+  ],
+  [
+   "Le Port",
+   "Uem"
+  ],
+  [
+   "Le Port",
+   "Umi"
+  ],
+  [
+   "Le Port",
+   "Us"
+  ],
+  [
+   "Le Port",
+   "1AUem"
+  ],
+  [
+   "Le Port",
+   "1AUs"
+  ],
+  [
+   "Le Tampon",
+   "UCto"
+  ],
+  [
+   "Le Tampon",
+   "UCtom"
+  ],
+  [
+   "Le Tampon",
+   "Ue"
+  ],
+  [
+   "Le Tampon",
+   "1AUe"
+  ],
+  [
+   "Le Tampon",
+   "1AUto"
+  ],
+  [
+   "Le Tampon",
+   "1AUcto"
+  ],
+  [
+   "Les Avirons",
+   "Ub4"
+  ],
+  [
+   "Les Avirons",
+   "Ud2"
+  ],
+  [
+   "Les Avirons",
+   "Ue"
+  ],
+  [
+   "Les Avirons",
+   "AUec"
+  ],
+  [
+   "Les Avirons",
+   "AUt"
+  ],
+  [
+   "Les Trois-Bassins",
+   "Ue"
+  ],
+  [
+   "Les Trois-Bassins",
+   "1AUt"
+  ],
+  [
+   "Petite-Île",
+   "UE"
+  ],
+  [
+   "Petite-Île",
+   "UEa"
+  ],
+  [
+   "Petite-Île",
+   "UT"
+  ],
+  [
+   "Petite-Île",
+   "AUE"
+  ],
+  [
+   "Petite-Île",
+   "AUs"
+  ],
+  [
+   "Petite-Île",
+   "AUT"
+  ],
+  [
+   "Saint-Joseph",
+   "U6"
+  ],
+  [
+   "Saint-Joseph",
+   "U6c"
+  ],
+  [
+   "Saint-Joseph",
+   "1AU6"
+  ],
+  [
+   "Saint-Joseph",
+   "1AU6c"
+  ],
+  [
+   "Saint-Joseph",
+   "1AUto"
+  ],
+  [
+   "Saint-Joseph",
+   "1AUtok"
+  ],
+  [
+   "Saint-Louis",
+   "UE"
+  ],
+  [
+   "Saint-Louis",
+   "US"
+  ],
+  [
+   "Saint-Louis",
+   "1AUe"
+  ],
+  [
+   "Saint-Louis",
+   "1AUe oap1"
+  ],
+  [
+   "Saint-Paul",
+   "U1e"
+  ],
+  [
+   "Saint-Paul",
+   "U1ec"
+  ],
+  [
+   "Saint-Paul",
+   "U2e"
+  ],
+  [
+   "Saint-Paul",
+   "U3e"
+  ],
+  [
+   "Saint-Paul",
+   "AU5e"
+  ],
+  [
+   "Saint-Pierre",
+   "Uaza"
+  ],
+  [
+   "Saint-Pierre",
+   "Uazc"
+  ],
+  [
+   "Saint-Pierre",
+   "Uazi"
+  ],
+  [
+   "Saint-Pierre",
+   "Uazp"
+  ],
+  [
+   "Saint-Pierre",
+   "Uazpc"
+  ],
+  [
+   "Saint-Pierre",
+   "AUazc"
+  ],
+  [
+   "Saint-Pierre",
+   "AUazi"
+  ],
+  [
+   "Saint-Pierre",
+   "Ue"
+  ],
+  [
+   "Saint-Pierre",
+   "Uea"
+  ],
+  [
+   "Saint-Pierre",
+   "Uep"
+  ],
+  [
+   "Saint-Pierre",
+   "Uemi"
+  ],
+  [
+   "Saint-Pierre",
+   "Ut"
+  ],
+  [
+   "Saint-Pierre",
+   "AUt1"
+  ],
+  [
+   "Saint-Pierre",
+   "AUt2"
+  ],
+  [
+   "Sainte-Marie",
+   "UEa"
+  ],
+  [
+   "Sainte-Marie",
+   "UEc"
+  ],
+  [
+   "Sainte-Marie",
+   "UEm"
+  ],
+  [
+   "Sainte-Marie",
+   "UEp"
+  ],
+  [
+   "Sainte-Marie",
+   "UR"
+  ],
+  [
+   "Sainte-Marie",
+   "UT"
+  ],
+  [
+   "Sainte-Marie",
+   "UTp"
+  ],
+  [
+   "Sainte-Marie",
+   "1AUep"
+  ],
+  [
+   "Sainte-Rose",
+   "Ue"
+  ],
+  [
+   "Sainte-Rose",
+   "1AUe"
+  ],
+  [
+   "Sainte-Rose",
+   "1AUto"
+  ],
+  [
+   "Sainte-Suzanne",
+   "UAc"
+  ],
+  [
+   "Sainte-Suzanne",
+   "UE"
+  ],
+  [
+   "Sainte-Suzanne",
+   "1AUac"
+  ],
+  [
+   "Sainte-Suzanne",
+   "1AUe"
+  ],
+  [
+   "Salazie",
+   "UT"
+  ],
+  [
+   "Salazie",
+   "AUt"
+  ],
+  [
+   "Salazie",
+   "AUe"
+  ]
+ ]
+}

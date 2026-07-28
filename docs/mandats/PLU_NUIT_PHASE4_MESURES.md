@@ -172,7 +172,39 @@ Définition retrouvée qui tombe exactement sur 89 : zones calibrées à
 Têtes de pool (toutes bornées par la pleine terre) : Saint-Paul U3c 2 730, U6c 2 642,
 U2c 1 445, U5b 1 046 · La Possession UB 1 372 · Entre-Deux Ub 714.
 
-### 5.5 · Sous-ensemble U/AU des 3 communes résiduelles — ce que le calibrage n'a PAS résorbé
+### 5.5 · Population d — cascade vs habitat-interdit calibré : 1 005 parcelles servies (mesure ajoutée sur demande Vic, clôture de phase 4)
+
+Parcelles classées POSITIVES par la cascade (`tier <> 'ecartee'`) dont la zone porte
+`habitat: interdit` dans une entrée `zones:` d'un YAML calibré (87 zones sur les
+21 communes — hors les 14 gelées du §5.3, comptées à part). Détail zone par zone dans
+`reports/plu-phase4/population_d.json`.
+
+| Commune | brûlante | chaude | réserve | à creuser | TOTAL |
+|---|---|---|---|---|---|
+| Saint-Pierre | 0 | 9 | 30 | 253 | **292** |
+| Sainte-Marie | 0 | 7 | 23 | 206 | **236** |
+| Le Tampon | 0 | 1 | 10 | 87 | 98 |
+| Saint-Louis | 0 | 1 | 22 | 49 | 72 |
+| Saint-Joseph | 0 | 2 | 10 | 51 | 63 |
+| L'Étang-Salé | 0 | 0 | 5 | 53 | 58 |
+| Le Port | 0 | 1 | 4 | 40 | 45 |
+| Bras-Panon | 0 | 0 | 0 | 40 | 40 |
+| La Possession | 0 | 1 | 6 | 20 | 27 |
+| Sainte-Suzanne | 0 | 0 | 0 | 25 | 25 |
+| Les Avirons | 0 | 0 | 4 | 15 | 19 |
+| Petite-Île | 0 | 0 | 0 | 12 | 12 |
+| La Plaine-des-Palmistes | 0 | 0 | 0 | 11 | 11 |
+| Les Trois-Bassins | 0 | 2 | 0 | 1 | 3 |
+| Salazie | 0 | 0 | 1 | 2 | 3 |
+| Saint-Paul | 0 | 0 | 0 | 1 | 1 |
+| **TOTAL** | **0** | **24** | **115** | **866** | **1 005** |
+
+Têtes de zone : Sainte-Marie UEm 139 · Saint-Pierre Uazi 134, Uazc 53, Uaza 52 ·
+L'Étang-Salé UE 41 · Le Tampon UCtom 37. **Aucune brûlante** ; 24 chaudes concernées.
+Pour toutes ces parcelles le moteur de faisabilité rend déjà capacité 0 exacte
+(`engine.py:157`) — c'est la CASCADE qui les classe positives sans lire le règlement.
+
+### 5.6 · Sous-ensemble U/AU des 3 communes résiduelles — ce que le calibrage n'a PAS résorbé
 
 | Commune | Pool servi | dont U/AU (servi en GÉNÉRIQUE) | Détail têtes |
 |---|---|---|---|
@@ -185,17 +217,35 @@ Saint-Leu (dépubliés GPU — dossiers d'appel prêts), plus 2 232 à Saint-Phi
 zonage du tout. C'est, en creux, la mesure de ce que les 21 calibrages ont résorbé :
 hors ces 3 communes, le U/AU servi de l'île est calibré ou gelé-exact.
 
-## 6 · Ce que ces mesures disent au mandat « Repli non optimiste »
+## 6 · Poids réel du mandat « Repli non optimiste » (re-priorisé par Vic, 28/07/2026)
 
-1. Sa cible réelle et chiffrée : **553 parcelles** servies en générique optimiste dans
-   les 11 zones sans hauteur (Uavap 302 en tête — non calibrable par nature) +
-   **11 217** U/AU des deux communes dépubliées. Les gels (1 229) et habitat-interdit
-   gelés (238) sont DÉJÀ exacts ; les emprises implicites se réduisent à 237 parcelles
-   réellement sans borne.
-2. **Le repli n'est pas uniformément optimiste** : Salazie +33 % (hé 12 sourcé) et les
-   queues positives (+2 355 % Le Port) montrent qu'un durcissement uniforme du repli
-   créerait des faux négatifs. Le biais est massif (−33 % médian) mais directionnel
-   par commune, pas par nature.
+| Population | Pool servi mesuré | Priorité |
+|---|---|---|
+| **e** — 92 gelés classés positifs par la cascade | **1 229** | **1 — d'abord** (la plus lourde, la seule à toucher le scoring servi avec d) |
+| **d** — cascade vs habitat-interdit calibré | **1 005** (0 brûlante, 24 chaudes) | mesurée en clôture — à arbitrer (même mécanique que e) |
+| **b** — 11 zones sans hauteur, générique optimiste servi | **553** (Uavap 302) | 2 — ensuite |
+| **a** — 14 habitat-interdit gelées (capacité déjà exacte, étiquette fausse) | 238 | 3 — en dernier |
+| **c** — emprises implicites | ~~17 797~~ → **237** (76/89 zones bornées par la pleine terre gravée — produit dérivé, non recherché, de la passe d'harmonisation doctrine a) | 3 — DÉCLASSÉE en note |
+
+Total mesurable ≈ 2 250 parcelles (a+b+c+e) + 1 005 (d). Nettement moins que redouté.
+Mise à jour gravée dans le mandat lui-même (`PLU_SAINT_PIERRE_RAPPORT.md` §6bis).
+
+Doctrine (leçon 24 du mandat-cadre, gravée ce jour) : **le repli générique n'est pas
+systématiquement optimiste, il est ARBITRAIRE** — optimiste dans 17 communes sur 18
+parce que 9 m est sous la plupart des plafonds réunionnais, mais rien ne le garantit
+(Salazie hé 12 sourcé : −33 % de sous-estimation ; queues positives +2 355 %).
+L'argument du calibrage est l'exactitude, pas la correction d'un biais unidirectionnel :
+on ne vend pas « on corrige une surestimation », on vend « on lit le règlement ».
+
+## 7 · Dette de calibrage prioritaire : Saint-Benoît
+
+**Commune de 21 671 parcelles (3 676 servies), calibrée en zonage mais MUETTE en
+capacité** : depuis la refonte hauteurs-par-secteurs-graphiques (`f55416a`), aucune
+zone habitat-admis n'y a de hauteur exploitable — les deux passes de la mesure y
+servent le même générique (écart 0 structurel, §3.3). Son déblocage ne passe pas par
+une re-extraction mais par le **schéma v2 (hauteur par calque graphique)** — mandat
+« règlement graphique » à ouvrir. À traiter comme dette de calibrage n°1 des
+21 communes gravées.
 
 ---
 
