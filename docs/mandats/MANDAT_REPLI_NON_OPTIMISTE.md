@@ -133,15 +133,22 @@ repasser par cette table.
 > Sortie attendue de cet audit : un tableau « couche → comportement avant/après → OK/à
 > adapter » (fourni ci-dessus), **AUCUNE autre couche ne devant écraser l'interdiction plus
 > haut ou plus bas**.
+>
+> **NOTE — Les numéros de ligne sont indicatifs et datés du 28/07 — vérifier avant
+> exécution, le code a pu bouger.** Un numéro de ligne se périme, la fonction et le fichier
+> non : c'est le couple (fichier, fonction) qui fait foi. (Recalage effectué le 28/07 sur
+> les trois sites divergents entre les versions A et B : `phase1.py` → resolve_zone appelé
+> l.279 et l.287 ; `lettre_zonage.py` → resolve_zone l.76, wording « repli honnête » l.74 ;
+> `modules.py` → hcache l.1034-1047, resolve_zone l.1042.)
 
 | Consommateur de resolve_zone | Site | À vérifier |
 |---|---|---|
 | Moteur faisabilité | faisabilite/engine.py (estimate_capacity) | ordre habitat→hauteurs OK (vérifié) ; messages/steps si hauteur a_verifier |
-| Cascade phase 1 | cascade/layers/phase1.py:279+287 | le score utilise-t-il hauteur/emprise du générique ? une parcelle habitat-interdit doit-elle scorer « positive » via positive_prefixes [U, AU] (cascade_rules.yaml:74) ? |
+| Cascade phase 1 | cascade/layers/phase1.py:279+287 (dans `_habitat_interdit`, def l.277 ; bloc hard_exclude éco l.277-292) | le score utilise-t-il hauteur/emprise du générique ? une parcelle habitat-interdit doit-elle scorer « positive » via positive_prefixes [U, AU] (lu l.240 ; défaut `cascade_rules.yaml:74`) ? |
 | Chaîne du résiduel | cascade/layers/etage0_ext.py:153 (residuel_socle, barème -25…+30) + scoring/opportunity.py:56 | la SDP résiduelle d'une zone interdite doit passer au barème « hors cible » et non au socle générique ; effet sur les 32 448 verdicts SP d'étalonnage |
 | Traducteur API | api/traducteur.py:128 | règles chiffrées affichées : doit montrer l'interdiction, pas le générique |
-| Lettre zonage | api/lettre_zonage.py:76 | libellé « calibree=False → repli honnête » à revoir pour interdit-sans-hauteur |
-| Modules API (filtre hauteur) | api/modules.py:1001+ (hcache) | cache (zone, commune)→hauteur : gérer a_verifier post-correctif |
+| Lettre zonage | api/lettre_zonage.py:76 (wording « calibree=False → repli honnête » l.74) | libellé « calibree=False → repli honnête » à revoir pour interdit-sans-hauteur |
+| Modules API (filtre hauteur) | api/modules.py:1034-1047 (hcache ; resolve_zone l.1042 ; fn `faisabilite_sens2` def l.1004) | cache (zone, commune)→hauteur : gérer a_verifier post-correctif |
 | Copilote | copilote/moteurs.py:178 | idem traducteur |
 | Fiche règlement | plu_reglement.py:53 | idem |
 | DB prospect | faisabilite/db.py (hauteur_mode=prospect) | non concerné (exception déjà dans _has_usable_height) — à confirmer |
