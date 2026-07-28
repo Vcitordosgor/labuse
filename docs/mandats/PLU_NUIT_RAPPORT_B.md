@@ -173,3 +173,34 @@ Détail des motifs de non-calibrage : chaque YAML porte ses motifs zone par zone
   (verify_citations + smoke) AVANT chaque push — double contrôle systématique.
 - Horodatage : session démarrée ~22 h 40, premier commit 23:02:09, dernier commit
   commune 00:55:05 ; heure de fin (rapport compris) : voir commit du présent fichier.
+
+---
+
+## ANNEXE — ARBITRAGES DU MATIN (28/07/2026, appliqués sur instruction de Vic)
+
+1. **Saint-Benoît, hauteurs par secteurs graphiques** (`f55416a`) : la tranche 4 m est
+   retirée. 19 zones habitat-admis passées NON CALIBRÉES (motif : « hauteur définie par
+   secteur graphique, non portable par le schéma v1 ») : Ua, Uap, Ub + AUa5/8/9/18 +
+   AUb2/6/7/10-17/19 — 67 polygones, 1 064,9 ha (Ua 230,8 · Uap 21,4 · Ub 773,3 ·
+   AU 39,4). 5 zones habitat-interdit (interdiction TEXTUELLE) en capacité zéro exacte
+   via st-liste : Ue, Up, Ut, AUe3, AUp1 — 9 polygones, 107,0 ha. Le nombre de PARCELLES
+   concernées exige la base (interdite) : mesure en phase 4. Friction de schéma majeure
+   consignée au §9 (candidat v2 : hauteur par calque graphique).
+2. **Harmonisation doctrines A/B/C** (`7fd6244`) : % perméable gravé avec libellé
+   verbatim sur **79 zones** (Saint-Louis 23, Le Port 5, Les Avirons 19, PdP 9,
+   Bras-Panon 14, Trois-Bassins 9 ; Cilaos 0 — « espace vert paysager », pas une règle
+   perméable, note posée ; Petite-Île 0 — valeurs déjà en vraie pleine terre) ;
+   retraits H/2 réalignés sur max(H/2 à hauteur max, plancher) sur **13 zones**
+   (Bras-Panon : Ua 5 m, Ub/Uba/Uc 4 m, Ud/Udu 3,5 m, 1AUa 5, 1AUb/1AUc 4, 1AUd 3,5,
+   1AUec 9 — hauteur absolue 18 m, habitat interdit —, 1AUt 5 ; Trois-Bassins : Ue 5 m).
+   Portes re-jouées : 614 citations 0 FAIL, 8 YAML rechargés, smoke conforme.
+3. **Mandat-cadre** : original INTROUVABLE partout — déposé en RECONSTRUCTION explicite
+   (`docs/mandats/MANDAT_CADRE_PLU_instance_saint_pierre.md`) : §§1-8 en squelette à
+   restaurer par Vic, §9 peuplé (8 leçons pilote/Tampon sourcées + 15 ajouts nuit B).
+4. **En attente d'arbitrage Vic (inchangés, consignés au YAML)** : 1AUe Trois-Bassins
+   (contradiction de destinations, deux lectures verbatim dans `zones_non_calibrees`) ;
+   rattachements par règle générale — Cilaos Ub1 (Titre I, p.5 : « la règle générale de
+   la zone s'applique à chacun [des secteurs] sauf lorsqu'une disposition particulière
+   est prévue ») et Saint-Louis 1AUb1/1AUb2/2AUb1/2AUb2 (aucun secteur UB1/UB2 au
+   règlement, liste des zones p.5-6, caractère UB p.24 : indice « b » → règlement UB,
+   sous-numérotation cartographique).
