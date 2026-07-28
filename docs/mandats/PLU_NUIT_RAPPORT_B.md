@@ -256,3 +256,10 @@ Détail des motifs de non-calibrage : chaque YAML porte ses motifs zone par zone
    hors secteur Uba), pas un secteur géographique ; la branche gravée 8/11 est la
    règle générale (majoritaire ET conservatrice coïncident) — arbitrage Vic sur
    pièces en attente.
+9. **Analyses du matin (28/07, demande Vic)** → `PLU_NUIT_ANALYSES_MATIN_B.md` :
+   les 18 zones « plafond unique » avec verbatims classés en 2 catégories (dont une
+   double clause concurrente découverte à La Possession UApsfr2, p.16) · les 15 zones
+   `a_verifier` he+hf (pool = phase 4, proxy surface fourni) · les 14 zones
+   habitat-interdit logées en st pour la raison mesurée (Le Port 6, Saint-Benoît 5,
+   Petite-Île 3 — périmètre de migration v2) · la table des 89 emprises implicites
+   (100 − % soustrait), documentée SANS application. Rien appliqué aux YAML.
