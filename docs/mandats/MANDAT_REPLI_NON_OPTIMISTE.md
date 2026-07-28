@@ -44,26 +44,58 @@ calibrage** (où chercher des Art. 1/2 restrictifs), **jamais une source de vér
 le moteur**. La vérité moteur = les statuts `habitat` SOURCES des YAML calibrés
 (21 communes, statuts vérifiés articles + pages, contre-preuve à l'appui).
 
-## 3. Vérification du CHEMIN COMPLET (préalable bloquant n°1)
+## 2bis. CASCADE `positive_prefixes` — section À PART ENTIÈRE (décision Vic, 28/07)
+
+**Périmètre et risque distincts du gate** : le gate corrige la faisabilité ; ceci touche
+le SCORING SERVI, donc potentiellement les tiers. Décision de principe (Vic) : **une
+parcelle où le logement est interdit ne doit pas scorer positive** — le score sert à
+repérer du foncier à bâtir.
+
+État réel du code (audit exécuté 28/07, sans base) :
+- `cascade_rules.yaml:74` : `positive_prefixes: [U, AU]` — classification positive par
+  PRÉFIXE (l'inférence invalidée par la leçon 15 du §9).
+- MAIS un garde-fou existe : **M6 2b (A-03)**, `phase1.py:276-292` — hard_exclude
+  « exclue » si recouvrement ≥ seuil par une zone `r.calibree and r.habitat=="interdit"`
+  (soft_flag FORT entre plancher et seuil). Le préfixe ne décide donc PAS seul… quand la
+  zone est calibrée AVEC hauteur.
+- **Angle mort n°1 — le gate** : zone interdit sans hauteur → générique
+  (`calibree=False`, habitat perdu) → M6 2b ne la voit pas → positive par préfixe.
+  Le correctif du gate RÉPARE AUSSI M6 2b automatiquement (même point d'étranglement).
+- **Angle mort n°2 — les gels** : `constructible_neuf` n'est lu NULLE PART dans
+  cascade/ ni scoring/ (grep 0 occurrence). Une zone gelée (2AU, AUst, et les 14
+  interdit-gelées de §5.a) garde sa classification positive de préfixe ; seule la
+  chaîne residuel_socle peut la pénaliser indirectement (si parcel_residuel est à 0).
+- **Angle mort n°3 — le générique pur** : zones U/AU de communes/zones non calibrées :
+  positive par préfixe, par construction (repli assumé, calibree=False).
+
+**Mesure AVANT tout changement (statut BLOQUANT, même rang que les tiers)** :
+1. Parcelles classées positives par la cascade dont la zone porte `habitat: interdit`
+   dans un YAML calibré — par commune, par tier. C'est LE chiffre (détail ou trou).
+2. Même compte pour les zones en `zones_au_st` (dont les 14 interdit-gelées).
+3. Si les tiers servis sont touchés : PAS de correctif sans re-run du champion, donc
+   sans arène et sans arbitrage Vic.
+
+## 3. Vérification du CHEMIN COMPLET (préalable bloquant n°1) — AUDIT EXÉCUTÉ 28/07
 
 Leçon de la nuit : vérifier une fonction ne suffit pas (engine.py avait le bon ordre,
 resolve_zone le court-circuitait). Le correctif étant au point d'étranglement, il soigne
 d'un coup TOUS les consommateurs — mais chacun doit être audité pour ses hypothèses :
 
-| Consommateur de resolve_zone | Site | À vérifier |
-|---|---|---|
-| Moteur faisabilité | faisabilite/engine.py (estimate_capacity) | ordre habitat→hauteurs OK (vérifié) ; messages/steps si hauteur a_verifier |
-| Cascade phase 1 | cascade/layers/phase1.py:279+287 | le score utilise-t-il hauteur/emprise du générique ? une parcelle habitat-interdit doit-elle scorer « positive » via positive_prefixes [U, AU] (cascade_rules.yaml:74) ? |
-| Chaîne du résiduel | cascade/layers/etage0_ext.py:153 (residuel_socle, barème -25…+30) + scoring/opportunity.py:56 | la SDP résiduelle d'une zone interdite doit passer au barème « hors cible » et non au socle générique ; effet sur les 32 448 verdicts SP d'étalonnage |
-| Traducteur API | api/traducteur.py:128 | règles chiffrées affichées : doit montrer l'interdiction, pas le générique |
-| Lettre zonage | api/lettre_zonage.py:76 | libellé « calibree=False → repli honnête » à revoir pour interdit-sans-hauteur |
-| Modules API (filtre hauteur) | api/modules.py:1001+ (hcache) | cache (zone, commune)→hauteur : gérer a_verifier post-correctif |
-| Copilote | copilote/moteurs.py:178 | idem traducteur |
-| Fiche règlement | plu_reglement.py:53 | idem |
-| DB prospect | faisabilite/db.py (hauteur_mode=prospect) | non concerné (exception déjà dans _has_usable_height) — à confirmer |
+| Consommateur | Site | Aujourd'hui (gate actif) | Après correctif | Verdict |
+|---|---|---|---|---|
+| Moteur faisabilité | engine.py:157+229 | interdit-sans-hauteur → générique R+2 constructible | habitat testé avant hauteurs → 0 exact sourcé | **corrigé par la ligne** |
+| Cascade M6 2b | phase1.py:276-292 | exige calibree+interdit → aveugle au gate ET aux gels | gate-population revue → hard_exclude auto ; GELS toujours invisibles (constructible_neuf jamais lu) | **corrigé pour interdit ; angle mort gels → §2bis mesure 2** |
+| Chaîne du résiduel | etage0_ext.py:153 + opportunity.py:56 | lit la TABLE parcel_residuel (SDP précalculée) — pas resolve_zone en direct | **le correctif seul ne change RIEN ici : recalcul de parcel_residuel requis pour les parcelles impactées, sinon SDP optimiste périmée** | **à adapter (recalcul scoped)** |
+| Traducteur API | traducteur.py:128 | affiche les règles du générique | affichera l'interdiction — rendu à adapter (mise en avant) | à adapter (affichage) |
+| Lettre zonage | lettre_zonage.py:74-76 | calibree=False → « repli honnête » | zone interdit calibrée : lignes avec hauteurs a_verifier — wording à revoir | à adapter (wording) |
+| Modules API filtre hauteur | modules.py:1001-1040 (hcache) | h = hauteur_max_m/hf/he | h peut devenir « a_verifier » (str) → comparaison str/float à GARDER ; joint aussi parcel_residuel (même point stale) | **à adapter (garde type + recalcul)** |
+| Copilote | moteurs.py:177-190 | `if r is None or not r.constructible_neuf or r.habitat == "interdit": continue` | inchangé — **consommateur MODÈLE** (teste déjà les deux drapeaux) | OK |
+| Fiche règlement | plu_reglement.py:53 | sources seulement si calibree | interdit calibrée → sources affichées | OK |
+| DB prospect | faisabilite/db.py | exception déjà dans _has_usable_height | inchangé | OK (confirmé) |
 
-Sortie attendue : un tableau « couche → comportement avant/après → OK/à adapter »,
-AUCUNE autre couche ne devant écraser l'interdiction plus haut ou plus bas.
+Constat transverse : `constructible_neuf=False` (gels) n'est consommé QUE par le moteur
+et le copilote — cascade, scoring, API l'ignorent. Toute correction future d'un gel doit
+repasser par cette table.
 
 ## 4. Mesure d'impact (préalable bloquant n°2 — base requise, fenêtre phase 4+)
 
@@ -74,6 +106,10 @@ AUCUNE autre couche ne devant écraser l'interdiction plus haut ou plus bas.
    si le correctif vide un tiers commercialement servi, Vic arbitre avant merge.
 3. **residuel_socle et chaîne du résiduel** : delta de barème sur les parcelles
    impactées ; re-étalonnage éventuel des bornes (extraites des verdicts SP).
+   **Constat d'audit : residuel_socle lit la table précalculée `parcel_residuel`, pas
+   resolve_zone — le correctif exige un RECALCUL scoped de parcel_residuel pour les
+   parcelles impactées, à inclure dans la mesure (sinon la SDP optimiste périmée
+   continue d'alimenter le barème et les modules API).**
 4. **Golden 116 + tiers au bit près** avant/après ; échantillons nominatifs de parcelles
    basculées (fiche avant / fiche après) pour lecture Vic.
 
@@ -96,11 +132,12 @@ c) Hors périmètre : Saint-Paul (mode strict, gate inactif) ; zones hauteur_mod
 
 ## 6. Séquencement
 
-1. Audit chemin complet (§3) — sans base, faisable immédiatement sur GO.
-2. Mesures (§4) — nécessitent la base : à caler après/avec la phase 4 (Vic).
-3. GO Vic sur les mesures → implémentation (la ligne + adaptations §3) → golden.
-4. Bascule des 14 zones du §5.a (3 communes) → re-golden → fin du repli optimiste
-   par interdiction perdue.
+1. ~~Audit chemin complet (§3)~~ — **FAIT le 28/07 (GO Vic), table remplie ci-dessus.**
+2. Mesures (§4 + §2bis, bloquantes) — nécessitent la base : phase 4 (Vic).
+3. Arbitrage Vic sur les mesures (si tiers touchés : re-run champion + arène) →
+   implémentation (la ligne + adaptations « à adapter » de la table §3) → golden.
+4. Bascule des 14 zones du §5.a (3 communes) → recalcul parcel_residuel scoped →
+   re-golden → fin du repli optimiste par interdiction perdue.
 
 — Rien de ce mandat n'est implémenté à ce jour. La seule action déjà faite est du
 DONNÉES : statuts habitat sourcés sur 21 communes (série nuit + contre-preuve).

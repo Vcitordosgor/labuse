@@ -99,6 +99,15 @@
   « 16 mètres AU FAITAGE » pour la règle générale UA et « fixée à N mètres » pour les
   secteurs — le rédacteur savait qualifier quand il le voulait ; ne pas l'avoir fait est
   un SILENCE, pas un oubli à combler.
+- **AVANT TOUTE CORRECTION D'UN COMPORTEMENT MOTEUR : CARTOGRAPHIER TOUS LES
+  CONSOMMATEURS DU POINT MODIFIÉ ET AUDITER CHACUN** (méthode Vic, 28/07/2026 — illustrée
+  deux fois le même jour : le gate trouvé en vérifiant le chemin complet plutôt qu'une
+  fonction ; la cascade positive_prefixes trouvée en cartographiant les consommateurs de
+  resolve_zone). Vérifier la fonction cible ne prouve rien sur le système : engine.py
+  avait le bon ordre, resolve_zone le court-circuitait ; M6 2b protégeait la cascade,
+  mais pas des gels ni du gate ; residuel_socle ne lit même pas resolve_zone (table
+  précalculée). Un correctif sans la carte de ses consommateurs est une hypothèse, pas
+  une correction.
 - **L'île compte AU MOINS 4 styles de règlement** (ancien préfixé, moderne par chapitre,
   moderne mutualisé par groupe, sections « UA 2.4 ») — la détection du style est la première
   minute de chaque commune ; les 6 requêtes-clés (voies/limites/emprise/hauteur/perméable/
