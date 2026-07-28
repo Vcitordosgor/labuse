@@ -163,6 +163,21 @@ class Settings(BaseSettings):
     login_echecs_max: int = 5
     login_verrou_minutes: int = 15
 
+    # ── M26-A — Copilote (socle agentique) ──
+    # Quota provisoire (la vraie valeur sera fixée avec l'offre) ; compté kind='agent'
+    # dans usage_compteurs, même scope que la propriété du run (compte, sinon session/IP).
+    copilote_quota_jour: int = 10          # runs Copilote / jour / sujet
+    copilote_timeout_run_s: float = 120.0  # budget global d'exécution d'un run
+    copilote_max_appels_moteurs: int = 12  # plafond d'appels moteurs (retries inclus)
+    # Garde-fou de DERNIER RECOURS sur le nombre de parcelles instruites (arbitrage Vic,
+    # revue plafond M26-A — 5 000 validé sur mesure : exhaustif run 1 = 56,8 s < 120 s).
+    # TOUJOURS un plafond en PARCELLES, jamais un budget en temps : un seuil temporel
+    # rendrait le même brief non reproductible d'un jour à l'autre. S'il mord, la
+    # requalification s'applique intégralement (« N examinées sur M candidates »).
+    copilote_max_candidats: int = 5000
+    copilote_top_restitution: int = 20     # top-N restitué (toutes missions M26-A)
+    copilote_sessions_paralleles: int = 4  # faisabilité/charge : pool borné (arbitrage Vic)
+
     @model_validator(mode="after")
     def _base_url_selon_env(self) -> "Settings":
         # public_base_url non posée → localhost en 'local' (retours Checkout/liens pointent sur

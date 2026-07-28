@@ -31,6 +31,7 @@ def client(engine, monkeypatch):
 
 def test_quota_fiches_gel_jusqua_minuit(client, engine, monkeypatch):
     """301e fiche distincte du jour → 429 (critère d'acceptation, ici quota réduit à 3)."""
+    monkeypatch.delenv("LABUSE_DEV_MODE", raising=False)   # la garde teste le mode NON-dev
     monkeypatch.setenv("LABUSE_QUOTA_FICHES_JOUR", "3")
     from labuse import config
     config.get_settings.cache_clear()
@@ -50,6 +51,7 @@ def test_quota_fiches_gel_jusqua_minuit(client, engine, monkeypatch):
 
 def test_rate_limit_defi_puis_gel(client, monkeypatch, engine):
     """Burst → 429 + défi arithmétique ; bonne réponse → répit ; récidive → gel + alerte."""
+    monkeypatch.delenv("LABUSE_DEV_MODE", raising=False)   # la garde teste le mode NON-dev
     monkeypatch.setenv("LABUSE_RATE_LIMIT_RPM", "5")
     monkeypatch.setenv("LABUSE_RATE_BURST_GEL", "2")
     from labuse import config
@@ -122,6 +124,7 @@ def test_abuse_scan_sequences_regulieres(db_session, engine):
 
 def test_quota_tuiles_gel_jusqua_minuit(client, monkeypatch):
     """Tuiles vectorielles : au-delà du quota JOURNALIER → 429 « reprend à minuit » (ici 3)."""
+    monkeypatch.delenv("LABUSE_DEV_MODE", raising=False)   # la garde teste le mode NON-dev
     monkeypatch.setenv("LABUSE_QUOTA_TUILES_JOUR", "3")
     from labuse import config
     config.get_settings.cache_clear()
@@ -144,6 +147,7 @@ def test_tuiles_hors_rate_limit_60min(client, monkeypatch):
 
 def test_quota_carto_geojson_ile(client, monkeypatch):
     """Dump geojson île : quota d'appels JOURNALIER (ici 2) → 3e appel 429 (borne la moisson)."""
+    monkeypatch.delenv("LABUSE_DEV_MODE", raising=False)   # la garde teste le mode NON-dev
     monkeypatch.setenv("LABUSE_QUOTA_CARTO_JOUR", "2")
     from labuse import config
     config.get_settings.cache_clear()

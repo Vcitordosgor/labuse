@@ -12,6 +12,23 @@ export default {
         'line-2': '#1E2A23',
         mint: '#5CE6A1',
         'mint-ink': '#06130C',
+        // M26-B · tokens de l'écran Copilote — repris de la maquette B4 validée
+        // (docs/mandats/copilote_maquette_B4_reference_M26B.html), palette légèrement
+        // distincte de l'app (mint plus clair, fond plus neutre). Préfixe cp-, scope
+        // strict : ces tokens ne sortent pas de components/copilote/.
+        'cp-bg': '#070A09',
+        'cp-card': '#0D1211',
+        'cp-card2': '#111716',
+        'cp-mint': '#63F2B8',
+        'cp-violet': '#B497F0',
+        'cp-amber': '#F0C97A',
+        'cp-red': '#F08A8A',
+        'cp-tier': '#F0A87A',
+        'cp-txt': '#EDF3EF',
+        'cp-muted': '#8A9A92',
+        'cp-faint': '#57655E',
+        'cp-line': 'rgba(255,255,255,.08)',
+        'cp-line2': 'rgba(255,255,255,.14)',
         // LOI-0 · violet = l'exclusivité premium/IA/outils (remplace les #B497F0 en dur,
         // migrés au fil des surfaces — jamais de nouvel hex local).
         violet: '#B497F0',

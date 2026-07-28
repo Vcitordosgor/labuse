@@ -31,6 +31,19 @@ source:
   approbation: "2024-02-20"
   pages_total: 154
   offset_pdf_vs_imprimee: 0
+  # Millésime du règlement GRAVÉ (garde-fou de fraîcheur, revue GO du 27/07/2026 — ajout
+  # rétroactif, AUCUNE valeur de zone modifiée). CAS D'ALERTE ATTENDU (type 4) : millésime
+  # gravé (2024-02-20) ANTÉRIEUR au document GPU en vigueur (97411_PLU_20260423). Diff fait le
+  # 27/07/2026 : le règlement écrit embarqué dans le document 20260423 EST le dossier approuvé
+  # « Modification simplifiée n°8, février 2024 » (même couverture, 154 p., articles et valeurs
+  # vérifiés identiques — Um.9 50 %, Ui.9 60/40 %, Uh 30 %/4,5 m, prospect Ud) : la procédure
+  # d'avril 2026 n'a pas touché le règlement écrit. L'alerte reste LÉGITIME : à réexaminer à
+  # chaque nouvelle procédure.
+  reglement_grave:
+    fichier: "97411_reglement_20240220.pdf"
+    millesime: "2024-02-20"
+    document_gpu_au_calibrage: "97411_PLU_20260423"
+    verifie_le: "2026-07-27"
 
 # Mode de résolution des zones (cf. resolve_zone) :
 #   progressif (défaut) = commune EN COURS de calibration : une zone hors de ce YAML,
