@@ -162,3 +162,31 @@ plafonds uniques type « hauteur absolue/totale/fixée à N m sans précision »
 réglementé, forme correcte) ; 15 zones « he et hf a_verifier » (capacité non calculable —
 attendues : îlots La Possession, Saint-Denis 10 zones AVAP/patrimoine, U1lec Saint-Paul,
 AUdma Saint-Pierre). Liste détaillée remise à Vic en session.
+
+## Correctifs du 28/07 (après mesure session B) — le gate resolve_zone
+
+1. **Ma vérification « he null » était incomplète et deux de ses conclusions étaient
+   fausses.** Le gate `plu_rules.py:149-151` (mode progressif) remplace une zone calibrée
+   SANS hauteur exploitable par `_zone_generique` (9 m, calibree=False) AVANT le moteur :
+   `habitat: interdit` y est PERDU. La session B l'a démontré PAR LA MESURE (capacité
+   fictive dans le cimetière UFcim) et a reverté mon reclassement Petite-Île — son revert
+   est JUSTE, son gel initial aussi, sa « crainte historique » n'était pas infondée.
+2. **Classe 2 corrigée** (15 zones he+hf non chiffrés) : Saint-Paul U1lec (mode strict) →
+   0 logement ; Saint-Denis Ud/Udp/Uu (hauteur_mode prospect) → hf par parcelle ; les 11
+   AUTRES (Saint-Denis Udo/Uavap/Uat/Uma/Upi/Upr/AUx, La Possession UAv/AUAv/AUBm,
+   Saint-Pierre AUdma — toutes progressif) → GATE → estimation générique 9 m
+   calibree=False, PAS « capacité non calculable » comme écrit plus haut. Aucune des 15
+   ne porte habitat:interdit → pas de perte d'interdiction dans ce lot. Dette de
+   calibrage : ces 11 zones servent leur pool au REPLI générique — pools à chiffrer en
+   phase 4 (mesure base, interdite cette nuit) ; Saint-Denis en concentre 7 (verdict
+   PARTIEL confirmé, matière d'un lot de consolidation).
+3. **Reclassements Saint-Benoît (Ue/Up/Ut/AUe3/AUp1) et Le Port (Ue/Up/Uppp/Uv +
+   renvois 1AUe/1AUv) ANNULÉS avant push** : même classe que Petite-Île UF (habitat
+   interdit textuel + hauteurs non chiffrées) — le gel actuel de B est la représentation
+   v1 CORRECTE tant que le gate existe. Saint-Pierre Us : gel légitime (conditionné à la
+   modification du SCoT), conforme à la convention.
+4. **Proposition à l'arbitrage de Vic (aucune modification moteur appliquée)** : lever le
+   gate pour les interdictions — dans resolve_zone, retourner l'entrée calibrée quand
+   `habitat == "interdit"` même sans hauteur exploitable (le moteur rend alors 0 exact
+   via engine.py:157). Une ligne ; permettrait la convention gel/interdit en v1 et le
+   reclassement des 3 communes. Sinon, la convention reste sémantique (schéma v2).
