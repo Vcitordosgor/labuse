@@ -365,13 +365,13 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
             secteur = (rules.bassin if rules else None) or "Saint-Paul"
             resolved = bpmod.resolve(session, secteur)
             bp_values = {k: r["value"] for k, r in resolved.items()}
-            # MANDAT CALIBRATION ESTIMÉES (décision Vic 28/07/2026) — prix de sortie neuf servi
-            # par PRÉSÉANCE : override bassin sourcé > dvf_prix_sortie_neuf secteur > commune >
-            # NON CALCULABLE. Le socle global 4900 (prix saint-paulois servi à toute l'île) est
-            # supprimé : hors des communes où un marché du collectif neuf est observable, on dit
-            # qu'on ne sait pas (jamais un chiffre faux). Cf. CALIBRATION_PHASE_A_BACKTEST.md.
-            from ..ingestion.dvf_prix_neuf import resolve_prix_neuf_marche
-            prix_marche, niveau_prix, motif_nc = resolve_prix_neuf_marche(
+            # MANDATS CALIBRATION + COUVERTURE PRIX (décisions Vic 28/07/2026) — prix de sortie neuf
+            # servi par PRÉSÉANCE : override bassin sourcé > dvf secteur local > dvf commune local >
+            # REPLI ÎLE (communes de marché sans local, médiane marché non indexée) > NON CALCULABLE
+            # (communes social-dominantes seulement — mode D à venir). Le socle global 4900 est
+            # supprimé. Le repli île n'écrase jamais un prix local. Cf. COUVERTURE_PRIX_PHASE_A_RAPPORT.md.
+            from ..ingestion.dvf_prix_neuf import resolve_prix_neuf_marche, niveau_prix_label
+            prix_marche, niveau_prix, n_ventes_prix, motif_nc = resolve_prix_neuf_marche(
                 session, ctx.parcel_id, resolved.get("prix_m2_neuf"))
             _params_registre = [{**p, **resolved.get(p["key"], {})} for p in bpmod.registry()]
             if motif_nc is None:
@@ -387,6 +387,9 @@ def fiche_payload(session: Session, parcel_id: int) -> dict | None:
                                "source": s.source, "prov": s.prov} for s in b.steps],
                     "hypotheses": b.hypotheses, "avertissements": b.avertissements, "bandeau": b.bandeau,
                     "calc": b.calc, "niveau_prix_neuf": niveau_prix,
+                    # Étiquette à 4 niveaux (couverture jamais payée par une fausse précision).
+                    "prix_neuf_label": niveau_prix_label(niveau_prix, n_ventes_prix),
+                    "prix_neuf_repli_ile": niveau_prix in ("ile_validee", "ile_sans_operation"),
                     # 1.C — secteur + paramètres éditables (registre + valeurs résolues) + non calibrés.
                     "secteur": secteur,
                     "params": _params_registre,

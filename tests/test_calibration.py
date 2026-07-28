@@ -54,15 +54,33 @@ def test_socle_prix_neuf_retire_du_seed():
 
 
 def test_motif_non_calculable_formulations():
-    """VERROU des formulations produit imposées (Vic) — au mot près, par cas."""
+    """VERROU des formulations produit imposées (Vic) — au mot près. Depuis le repli île (mandat
+    couverture prix), SEULES les communes social-dominantes sont non calculables ; les communes de
+    marché sans local reçoivent le repli île (cf. test_repli_ile_preseance_et_etiquettes)."""
     from labuse.ingestion.dvf_prix_neuf import motif_non_calculable, SOCIAL_DOMINANT_INSEE
     assert "97407" in SOCIAL_DOMINANT_INSEE                      # Le Port (social 96 %)
     assert motif_non_calculable("97407") == (
         "Charge foncière de marché non atteignable sur cette commune — le collectif y est "
         "majoritairement social ou aidé.")
-    assert motif_non_calculable("97418") == (                   # Sainte-Marie (marché, n insuffisant)
-        "Marché du collectif neuf non observable sur cette commune (ventes d'appartements de "
-        "marché insuffisantes) — charge non calculable.")
+
+
+def test_repli_ile_preseance_et_etiquettes():
+    """VERROU (mandat couverture prix, Vic 28/07/2026) : partition des 24 communes en 4 niveaux de
+    confiance + étiquettes au mot près. Le repli île ne touche JAMAIS les social-dominantes."""
+    from labuse.ingestion import dvf_prix_neuf as dp
+    couvertes = {"97411", "97416", "97415", "97413", "97422"}
+    # partition exhaustive et disjointe des 24 communes
+    assert len(dp.ILE_VALIDEES_INSEE) == 9 and len(dp.ILE_SANS_OPERATION_INSEE) == 2
+    assert len(dp.SOCIAL_DOMINANT_INSEE) == 8
+    tous = couvertes | dp.ILE_VALIDEES_INSEE | dp.ILE_SANS_OPERATION_INSEE | dp.SOCIAL_DOMINANT_INSEE
+    assert len(tous) == 24                                       # partition sans recouvrement
+    assert not (dp.ILE_VALIDEES_INSEE & dp.SOCIAL_DOMINANT_INSEE)   # jamais île sur une social-dom.
+    assert not (dp.ILE_SANS_OPERATION_INSEE & dp.SOCIAL_DOMINANT_INSEE)
+    # étiquettes à 4 niveaux (au mot près)
+    assert dp.niveau_prix_label("commune", 54) == "Estimé — médiane locale, 54 ventes"
+    assert dp.niveau_prix_label("ile_validee") == "Estimé — estimation île, ± 12 %, validée sur cette commune"
+    assert dp.niveau_prix_label("ile_sans_operation") == (
+        "Estimé — estimation île, aucune opération de marché observée sur cette commune")
 
 
 def test_boot_purge_socle_4900_idempotente(db_session):

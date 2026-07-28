@@ -73,12 +73,17 @@ def test_comparables_ancien_vefa_sources():
 
 
 def test_bilan_niveau_prix_visible_wording_vic():
-    # exigence Vic (flag Score É levé) : le niveau du prix visible en clair dans le dossier banquier
+    # exigence Vic (flag Score É levé) : le niveau du prix visible en clair dans le dossier banquier.
+    # Repli île (mandat couverture prix, Vic 28/07/2026) : 4 niveaux de confiance visibles.
     out = _out_complet()
     out["score_e"]["niveau_prix"] = "commune"
-    assert "estimation niveau commune (repli)" in bq.bilan(out)
+    assert "estimation niveau commune" in bq.bilan(out)
     out["score_e"]["niveau_prix"] = "secteur"
     assert "estimation niveau secteur" in bq.bilan(out)
+    out["score_e"]["niveau_prix"] = "ile_validee"
+    assert "validée sur cette commune" in bq.bilan(out)
+    out["score_e"]["niveau_prix"] = "ile_sans_operation"
+    assert "aucune opération de marché observée" in bq.bilan(out)
 
 
 def test_score_e_non_estimable_pas_de_chiffre():
