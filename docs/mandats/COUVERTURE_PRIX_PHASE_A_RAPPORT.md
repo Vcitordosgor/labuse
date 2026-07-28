@@ -322,3 +322,53 @@ produit du §10.
 
 `/tmp/levier_temporel.py`, `/tmp/levier_hedonique.py` (LECTURE SEULE). E3 à 4 375 vs 4 692 mesurée.
 Golden 116/116 + tiers au bit près avant/après (`/tmp/covT_tiers_avant.txt` = `/tmp/covT_tiers_apres.txt`).
+
+---
+
+# VÉRIFICATION D'ARTEFACT avant GO phase C (28/07/2026) — exigée par Vic. LECTURE SEULE.
+
+Une conclusion antérieure (« Les Avirons/Saint-André sans opération ») était fausse à cause d'un
+filtre de mesure. Vic exige l'audit avant tout GO. Golden 116/116 + tiers au bit près.
+
+## 16 · Le filtre, exactement, et depuis quand
+
+`backtest_e1.json` (construit au PREMIER back-test) résolvait le prix via l'**ANCIEN**
+`dvf_prix_sortie_neuf` (17 communes, médiane maison+appartement, N_MIN 5). Une opération dans une
+commune HORS de ces 17 recevait le motif **`non_calculable_sans_marche_neuf`** et `c_prog=None`.
+Mes mesures de leviers ont rechargé `backtest_e1.json` avec `if c_prog is not None` → ces opérations
+étaient écartées. **Le filtre est donc la COUVERTURE de l'ancien instrument prix**, dans la chaîne
+depuis le premier back-test.
+
+**Empreinte mesurée** (les 1 137 entrées de `backtest_e1.json`) : 1 018 calculables ; **105
+écartées `non_calculable_sans_marche_neuf`** — Les Avirons 21, Saint-André 52, Bras-Panon 8,
+Cilaos 12, Salazie 9, Sainte-Rose 3 : **TOUTES en communes NON couvertes, ZÉRO dans les 5
+couvertes** ; + 14 `faisabilite_absente` (Saint-Philippe 11, Saint-Paul 3 = parcelles réellement
+non constructibles).
+
+## 17 · Quelles conclusions en dépendent — audit source par source
+
+| Conclusion | Source | Filtre l'affecte ? | Statut |
+|---|---|---|---|
+| **89-91 % acceptation** | `backtest_e1.json`, communes COUVERTES | Footprint = 0 en couvertes | **inchangé — re-mesuré FRAIS : 91 % (155/170)** |
+| **E1 78 % (médiane fausse)** | back-test original, ANCIEN instrument par design | Mesure l'ancien instrument (17 communes) — pas un biais | inchangé (c'était le but) |
+| **E3 0/10 sur-évaluation** | requête SQL FRAÎCHE (achats→PC) ce tour | N'utilise pas `backtest_e1.json` | inchangé |
+| **Composition 20 % social** | requête Sitadel `vol` (tous permis) | Non filtrée par c_prog | inchangé |
+| **Gradient build-to-hold** | Sitadel + DVF direct | Non filtrée | inchangé |
+| **4 communes « sans opération »** | `backtest_e1.json` filtré | **OUI — matériellement faux** | **DÉJÀ CORRIGÉ ce tour (levier temporel, cohorte fraîche) : Les Avirons 14/15, Saint-André 9/11 validées** |
+
+**La seule conclusion que le filtre a matériellement faussée est celle des 4 communes — et c'est
+exactement celle que le levier temporel a rattrapée ce tour, en cohorte FRAÎCHE** (query Sitadel
+directe + `parcel_faisabilite`, sans `backtest_e1.json`). Toutes les autres sont soit une mesure
+de l'ancien instrument par construction (E1), soit bâties fraîches (E3, composition, build-to-hold),
+soit sur les communes couvertes que le filtre n'a pas touchées (acceptation, re-confirmée à 91 %).
+
+## 18 · Verdict : rien ne bouge → conditions du GO réunies
+
+Aucune conclusion matérielle ne change. La seule affectée (4 communes) est corrigée et documentée.
+**Le principe golden est respecté : on ne valide pas une mesure avec l'instrument dont on a
+découvert qu'il filtrait — on a re-mesuré FRAIS, et le chiffre tient (91 %).**
+
+Note d'exécution pour la phase C : la branche de mesure `mesure/couverture-prix-phase-a` est partie
+d'AVANT le merge de l'application ; la **phase C doit brancher depuis `main` APPLIQUÉ** (code
+`resolve_prix_neuf_marche`, N_MIN 10). La DB, elle, est en état APPLIQUÉ (5 communes, socle 4900
+purgé) — les mesures ci-dessus l'ont lue.
