@@ -351,7 +351,7 @@ def marche_dvf(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> St
     « bilan-neuf-v2 », cf. rapport). Prix probable du foncier = médiane terrain
     sectorielle × surface (dvf_secteur_medianes, lecture SQL). NON-BLOQUANT : s'il
     échoue, la note dira « charge foncière non calculable »."""
-    from ..faisabilite.bilan import compute_bilan, sector_price
+    from ..faisabilite.bilan import compute_bilan, sector_price, resolve_prix_sortie_servi
     from ..faisabilite.engine import Hypotheses
 
     hyp = Hypotheses.charger()
@@ -376,13 +376,26 @@ def marche_dvf(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> St
                 c["marche"] = {"disponible": False, "motif": "SHAB estimée absente",
                                "prix_probable_eur": prix_probable}
             return
-        prix = sector_price(s, c["parcel_id"], hyp)
+        prix = sector_price(s, c["parcel_id"], hyp)      # comparables DVF (bloc marché, LÉGITIME)
         if not prix or not prix.get("median"):
             with lock:
                 c["marche"] = {"disponible": False, "motif": "DVF insuffisant sur le secteur",
                                "prix_probable_eur": prix_probable}
             return
-        bilan = compute_bilan(float(shab), float(c["surface_m2"] or 0), prix, hyp)
+        # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — la charge est un bilan NEUF : prix de
+        # sortie via le point de résolution PARTAGÉ (plus jamais sector_price/existant). Non
+        # calculable (commune social-dominante) → parcelle SERVIE avec la mention, JAMAIS écartée.
+        ps = resolve_prix_sortie_servi(s, c["parcel_id"])
+        if ps["non_calculable"]:
+            with lock:
+                c["marche"] = {"disponible": False, "non_calculable": True,
+                               "motif": ps["motif"], "prix_m2_median": prix.get("median"),
+                               "prix_probable_eur": prix_probable,
+                               "provenance": "prix de sortie non calculable (marché non atteignable)"}
+                n_ok[0] += 1
+            return
+        bilan = compute_bilan(float(shab), float(c["surface_m2"] or 0), prix, hyp,
+                              bilan_params={"prix_m2_neuf": ps["prix"]})   # prix de sortie NEUF
         cf = (bilan.charge_fonciere or {}).get("central") if bilan else None
         # Indicateur (Vic, revue budget) — PAS un filtre : prix probable > charge
         # supportable = « dans le budget de l'acheteur mais l'opération ne supporte pas
@@ -393,10 +406,12 @@ def marche_dvf(db: Session, brief: dict, dossier: Dossier, *, annule=None) -> St
         with lock:
             c["marche"] = {
                 "disponible": True, "prix_m2_median": prix.get("median"),
+                "prix_sortie_neuf": ps["prix"], "niveau_prix_neuf": ps["niveau"],
+                "prix_neuf_label": ps["label"], "prix_neuf_repli_ile": ps["repli_ile"],
                 "fiabilite": getattr(bilan, "fiabilite", None) or prix.get("fiabilite"),
                 "charge_fonciere_eur": cf, "prix_probable_eur": prix_probable,
                 "au_dessus_charge_supportable": au_dessus,
-                "provenance": "calcul live (sector_price + compute_bilan)",
+                "provenance": "calcul live (prix de sortie neuf partagé + compute_bilan)",
             }
             n_ok[0] += 1
 

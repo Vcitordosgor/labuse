@@ -2076,7 +2076,7 @@ def parcel_export_pdf(idu: str, source: str = Q_A_RUN_LABEL,
 
 def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_demande: float | None) -> dict | None:
     """Recalcule la charge foncière (moteur) pour l'export PDF — None si non calculable."""
-    from ..faisabilite.bilan import compute_calculette, sector_price
+    from ..faisabilite.bilan import compute_calculette, sector_price, resolve_prix_sortie_servi
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
     row = db.execute(text("SELECT id, round(surface_m2) AS s FROM parcels WHERE idu = :i"), {"i": idu}).mappings().first()
@@ -2086,7 +2086,13 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
     shab = (fz[1].fourchette or {}).get("shab_vendable_m2") if fz else None
     if not shab:
         return None
+    # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — prix de sortie NEUF via le point partagé
+    # (plus jamais sector_price/existant) ; non calculable (social-dominant) → None (pas de charge).
+    ps = resolve_prix_sortie_servi(db, row["id"])
+    if ps["non_calculable"]:
+        return None
     prix = sector_price(db, row["id"], Hypotheses.charger())
+    prix = {**prix, "q1": ps["prix"], "median": ps["prix"], "q3": ps["prix"]}   # prix de sortie NEUF
     res = compute_calculette(float(shab), float(row["s"] or 0), prix, cout, marge, prix_demande)
     return res if res.get("calculable") else None
 

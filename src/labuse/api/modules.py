@@ -779,7 +779,7 @@ def _faisa_step_prov(source: str, prov: str) -> str:
 @router.get("/faisabilite/{idu}")
 def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     """SENS 1 (parcelle → programme) : « que peut accueillir ce terrain ? » + bilan économique."""
-    from ..faisabilite.bilan import compute_bilan, sector_price
+    from ..faisabilite.bilan import sector_price, compute_bilan_servi
     from ..faisabilite.db import parcel_faisabilite
     from ..faisabilite.engine import Hypotheses
 
@@ -810,12 +810,17 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
     # P14 (dernière passe) : fraîcheur DVF — période RÉELLE couverte (SQL), pour que l'utilisateur
     # sache de QUAND datent les prix (« fiabilité fragile » reste, c'est le n de ventes).
     out["marche"]["dvf_couverture"] = _dvf_couverture(db)
-    shab = (f.fourchette or {}).get("shab_vendable_m2") if fz else None
-    if shab and prix.get("median"):
-        b = compute_bilan(float(shab), float(row["s"] or 0), prix, hyp)
-        out["bilan"] = {k: v for k, v in b.__dict__.items() if not k.startswith("_")}
-    else:
+    # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — LE MÊME bilan que la fiche
+    # (compute_bilan_servi : charge cohérente à l'euro, prix de sortie neuf, non calculable servi).
+    b, ps = compute_bilan_servi(db, row["id"], fz) if fz else (None, None)
+    if b is None:
         out["bilan"] = None
+    else:
+        out["bilan"] = {k: v for k, v in b.__dict__.items() if not k.startswith("_")}
+        out["bilan"]["non_calculable"] = bool(ps["non_calculable"])
+        out["bilan"]["niveau_prix_neuf"] = None if ps["non_calculable"] else ps["niveau"]
+        out["bilan"]["prix_neuf_label"] = ps["motif"] if ps["non_calculable"] else ps["label"]
+        out["bilan"]["prix_neuf_repli_ile"] = ps["repli_ile"]
     # fiscal / leviers (bilan promoteur — données en base + hypothèses ÉTIQUETÉES)
     qpv = bool(db.execute(text("""SELECT 1 FROM spatial_layers q JOIN parcels p ON p.idu = :i
         WHERE q.kind = 'qpv' AND ST_Intersects(p.geom_2975, q.geom_2975) LIMIT 1"""), {"i": idu}).scalar())
@@ -855,6 +860,7 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
         CALCULETTE_COUT_DEFAUT_M2,
         CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
         compute_calculette,
+        resolve_prix_sortie_servi,
         sector_price,
     )
     from ..faisabilite.db import parcel_faisabilite
@@ -872,10 +878,21 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
         return {"calculable": False, "raison": "capacite_non_resolue", "defaults": defaults,
                 "message": "Capacité constructible non résolue pour cette parcelle (zone PLU "
                            "non résolue / non constructible) — charge foncière non calculable."}
-    prix = sector_price(db, row["id"], Hypotheses.charger())
+    # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — le prix de sortie de la calculette est un
+    # prix NEUF (point de résolution partagé), plus jamais sector_price/existant. Non calculable
+    # (social-dominant) → réponse honnête, jamais un faux chiffre.
+    ps = resolve_prix_sortie_servi(db, row["id"])
+    if ps["non_calculable"]:
+        return {"calculable": False, "raison": "prix_sortie_non_calculable", "defaults": defaults,
+                "message": ps["motif"]}
+    prix = sector_price(db, row["id"], Hypotheses.charger())        # comparables/fiabilité (marché)
+    prix = {**prix, "q1": ps["prix"], "median": ps["prix"], "q3": ps["prix"],   # prix de sortie NEUF
+            "niveau_prix_neuf": ps["niveau"], "prix_neuf_label": ps["label"]}
     res = compute_calculette(float(shab), float(row["s"] or 0), prix,
                              body.cout_construction_m2, body.marge_frais_pct, body.prix_demande_eur,
                              mode=body.mode)
+    res["prix_neuf_label"] = ps["label"]
+    res["prix_neuf_repli_ile"] = ps["repli_ile"]
     res["defaults"] = defaults
     if not res.get("calculable"):
         # prix de sortie insuffisant → au mieux, on rend le prix secteur (déjà dans `marche`)
@@ -915,7 +932,7 @@ def _faisa_explain_facts(db: Session, row, core_mod) -> dict | None:
     from ..faisabilite.bilan import (
         CALCULETTE_COUT_DEFAUT_M2,
         CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
-        compute_bilan,
+        compute_bilan_servi,
         sector_price,
     )
     from ..faisabilite.db import parcel_faisabilite
@@ -932,25 +949,20 @@ def _faisa_explain_facts(db: Session, row, core_mod) -> dict | None:
     facts["resultat"] = core_mod.Fact(
         f"gabarit {fo.get('niveaux')}, SDP {fo.get('surface_plancher_m2')} m², "
         f"{fo.get('logements_au_sol')} logements, hauteur {fo.get('hauteur_m')} m", "ESTIME")
-    # bilan (si capacité vendable + prix) — hypothèses = celles de la calculette par défaut
-    hyp = Hypotheses.charger()
-    prix = sector_price(db, row["id"], hyp)
-    shab = fo.get("shab_vendable_m2")
-    if shab and prix.get("median"):
-        bp = {"cout_construction_m2_sdp": CALCULETTE_COUT_DEFAUT_M2,
-              "marge_cible_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
-              "honoraires_pct": 0.0, "frais_financiers_pct": 0.0}
-        b = compute_bilan(float(shab), float(row["s"] or 0), prix, hyp, bilan_params=bp)
+    # bilan (si capacité vendable) — MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) : l'explication
+    # IA porte sur LE MÊME bilan que la fiche (compute_bilan_servi), pas une variante. Non calculable
+    # (social-dominant) → dit honnêtement.
+    b, ps = compute_bilan_servi(db, row["id"], fz)
+    if b is not None and ps["non_calculable"]:
+        facts["charge_fonciere"] = core_mod.Fact(ps["motif"], "SOURCE")
+    elif b is not None:
         for i, s in enumerate(b.steps, 1):
             facts[f"bilan_{i}"] = core_mod.Fact(f"{s.label} : {s.valeur}", _PROV_SOCLE.get(s.prov, "ESTIME"))
         cf = b.charge_fonciere or {}
         facts["charge_fonciere"] = core_mod.Fact(
             f"charge foncière médiane {cf.get('central')} € (~{cf.get('par_m2_terrain')} €/m² de terrain), "
-            f"hypothèses par défaut coût {CALCULETTE_COUT_DEFAUT_M2:.0f} €/m² et marge+frais "
-            f"{CALCULETTE_MARGE_FRAIS_DEFAUT_PCT:.0f} % (ajustables)", "ESTIME")
-        facts["prix_dvf_fiabilite"] = core_mod.Fact(
-            f"prix de sortie DVF — fiabilité {prix.get('fiabilite')}",
-            "SOURCE" if prix.get("fiabilite") == "fiable" else "ESTIME")
+            f"prix de sortie neuf {ps['label']}", "ESTIME")
+        facts["prix_sortie_neuf"] = core_mod.Fact(f"prix de sortie neuf — {ps['label']}", "ESTIME")
     return facts
 
 
