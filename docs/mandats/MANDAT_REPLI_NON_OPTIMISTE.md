@@ -1,6 +1,12 @@
 # MANDAT « REPLI NON OPTIMISTE » — SPEC v2 (refondée sur le correctif du gate)
 
 > Statut : **SPEC SEULEMENT** — rien n'est implémenté sans le GO de Vic sur les mesures.
+> **NATURE (arbitrage Vic 28/07) : ce n'est PAS un correctif de code — c'est un correctif
+> de code PLUS une migration de données** (recalcul scopé de `parcel_residuel`, sans
+> lequel la SDP optimiste périmée continue d'alimenter residuel_socle et les modules
+> API). **CONDITION D'ARRÊT PRINCIPALE : si parcel_residuel bouge, residuel_socle bouge,
+> donc le scoring servi bouge — si les tiers changent, RIEN ne merge sans re-run du
+> champion, arène et arbitrage Vic.**
 > Rédigée le 28/07/2026 (session A/C, nuit PLU) sur décision Vic. Remplace l'approche
 > initiale par liste de codes de zones, **invalidée** par la leçon « le préfixe d'un
 > libellé ne prouve rien » (UAa résidentiel habitat-INTERDIT, UEm économique
@@ -37,6 +43,14 @@ l'appui. Esquisse (à valider, PAS implémentée) :
 ```python
 if strict or r.habitat == "interdit" or _has_usable_height(r):
     return r
+```
+
+**Contrat de référence (consommateur modèle — Copilote, moteurs.py:177-190)** — la
+formulation exacte que toute couche consommant ZoneRules doit honorer :
+
+```python
+if r is None or not r.constructible_neuf or r.habitat == "interdit":
+    continue   # le moteur conclura non-constructible : on laisse la faisabilité le dire
 ```
 
 La liste O12 redevient ce qu'elle doit être : un **indice de pré-identification pour le
@@ -128,16 +142,39 @@ b) **Servies au générique 9 m OPTIMISTE (habitat admis — même gate, effet p
    ne les change PAS (elles restent au repli générique assumé calibree=False) — leur
    sortie du repli = calibrage des hauteurs (arbitrages îlots/AVAP), pools à chiffrer en
    phase 4.
-c) Hors périmètre : Saint-Paul (mode strict, gate inactif) ; zones hauteur_mode=prospect.
+c) Hors périmètre du correctif : Saint-Paul (mode strict, gate inactif) ; zones
+   hauteur_mode=prospect.
+d) **Générique pur (blind spot c) — population RÉSIDUELLE mesurée au 28/07** : avant la
+   série PLU, 22 communes servies au générique par préfixe ; il en reste **3** —
+   Saint-André (22 600 parcelles cadastre, dépubliée GPU, dossier d'appel prêt),
+   Saint-Leu (22 959, idem), Saint-Philippe (4 162, RNU — pas de PLU à graver), soit
+   **~49 721 parcelles cadastre** (source AUDIT_MULTICOMMUNE_24) contre ~450 000 pour
+   l'île. Le calibrage a résorbé l'essentiel du blind spot ; le résiduel est l'argument
+   chiffré pour aller chercher les deux communes dépubliées. Sous-ensemble U/AU exact à
+   chiffrer en phase 4.
+e) **ZONES GELÉES CLASSÉES POSITIVES (faux positif à part entière, rang du gate —
+   arbitrage Vic 28/07)** : `constructible_neuf` n'étant lu nulle part dans cascade/ ni
+   scoring/, une zone juridiquement FERMÉE à l'urbanisation (2AU/3AU, AU-st, et les 14
+   interdit-gelées du §5.a) garde sa classification positive de préfixe — le « 227
+   logements sur une AU02 fermée » de Saint-Pierre, transposé au scoring servi. Recensement
+   au 28/07 : **92 libellés gelés sur 19 communes** (gels des 21 YAML, compte vérifié sur les têtes de branches au 28/07). **Mesure BLOQUANTE
+   identique au §2bis : parcelles classées positives dans ces zones, par commune, par
+   tier.** Correctif candidat : honorer le contrat de référence (constructible_neuf) dans
+   la couche zonage de la cascade — même statut d'arrêt que les tiers.
 
 ## 6. Séquencement
 
 1. ~~Audit chemin complet (§3)~~ — **FAIT le 28/07 (GO Vic), table remplie ci-dessus.**
-2. Mesures (§4 + §2bis, bloquantes) — nécessitent la base : phase 4 (Vic).
-3. Arbitrage Vic sur les mesures (si tiers touchés : re-run champion + arène) →
-   implémentation (la ligne + adaptations « à adapter » de la table §3) → golden.
-4. Bascule des 14 zones du §5.a (3 communes) → recalcul parcel_residuel scoped →
-   re-golden → fin du repli optimiste par interdiction perdue.
+2. Mesures (§4, §2bis, population e — TOUTES bloquantes) — nécessitent la base :
+   phase 4 (Vic).
+3. Arbitrage Vic sur les mesures. **Condition d'arrêt principale : tiers touchés →
+   re-run champion + arène + arbitrage, sinon rien ne merge.**
+4. Implémentation (la ligne + adaptations « à adapter » de la table §3) →
+   **recalcul SCOPÉ de parcel_residuel** (migration de données, partie intégrante du
+   correctif) → **mesure du delta sur les 32 448 verdicts d'étalonnage** →
+   vérification des tiers → re-golden.
+5. Bascule des 14 zones du §5.a (3 communes) → recalcul scopé → re-golden →
+   fin du repli optimiste par interdiction perdue.
 
 — Rien de ce mandat n'est implémenté à ce jour. La seule action déjà faite est du
 DONNÉES : statuts habitat sourcés sur 21 communes (série nuit + contre-preuve).
