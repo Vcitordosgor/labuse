@@ -63,6 +63,13 @@
   comme fondement du mandat « Repli non optimiste »** — la liste reste un indice de
   pré-identification, jamais une source ; le mandat devra s'appuyer sur les statuts habitat
   SOURCES des YAML calibrés (désormais disponibles pour 12+ communes) et non sur les codes.
+- **UNE CONTRE-EXTRACTION AVEUGLE RÉVÈLE L'EXISTENCE D'UNE CLASSE DE DIVERGENCE, JAMAIS
+  SON AMPLEUR** (décision Vic, 28/07/2026). La contre-preuve a détecté la doctrine b sur
+  10 cas ; le périmètre réel était 49 (les secteurs frères et les renvois 1AU partagent la
+  règle H/2 avec des sources sans le mot-clé). Conséquence de méthode : toute doctrine
+  arbitrée exige une PASSE DE RECHERCHE EXHAUSTIVE du motif sur tout le corpus (balayage
+  par article de rattachement, pas par mot-clé de source), jamais la seule correction des
+  cas signalés. Appliqué aux deux doctrines le 28/07 (cf. PLU_NUIT_HARMONISATION.md).
 - **L'île compte AU MOINS 4 styles de règlement** (ancien préfixé, moderne par chapitre,
   moderne mutualisé par groupe, sections « UA 2.4 ») — la détection du style est la première
   minute de chaque commune ; les 6 requêtes-clés (voies/limites/emprise/hauteur/perméable/

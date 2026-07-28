@@ -124,3 +124,21 @@ Trois-Bassins (Ue) corrigés par la session B dans sa propre passe (7fd6244).
 
 — Session A/C, harmonisation exécutée dans la nuit du 27 au 28/07/2026. Base applicative
 jamais touchée. Phase 4 non lancée.
+
+## Post-arbitrages du matin (28/07, Vic réveillé)
+
+- **Exhaustivité doctrine a VÉRIFIÉE** (exigence Vic) : le traitement n'a pas porté que
+  sur les 32 cas signalés par la contre-preuve — lot A balayé fichier par fichier (toute
+  `pleine_terre_src` sans libellé → 125 annotations, libellés vérifiés dans les textes) ;
+  lot B balayé par trois filets complémentaires (% + mot-clé perméable/paysager ; null
+  sans % ; % à libellé atypique « éco-aménageable ») puis re-balayé sur la tête après la
+  passe de B : il ne restait que la classe « paysager » ci-dessous. C annoté. Aucun cas
+  résiduel connu.
+- **Classe « paysager » : GRAVER (arbitrage Vic)** — un % de parcelle sans bâti est une
+  contrainte d'emprise réelle, stationnements compris ; laisser null sert plus généreux.
+  Appliqué sur la branche B (commit dédié, session B informée par le commit) : Cilaos
+  Ua/Uah ∅→10, Ub/Ub1/AUb/AUb1 ∅→40, AUb2 ∅→30 ; Saint-Louis UZ ∅→25 (« libres et
+  paysagés »). Libellés verbatim en src, en-tête Cilaos mis à jour.
+- **Étang-Salé UBv 35→50** : validée par Vic.
+- Saint-Benoît : refonte (arbitrage hauteurs par secteurs graphiques) portée par la
+  branche B — non touchée ici.
