@@ -1124,6 +1124,12 @@ def ensure_bilan_params(engine) -> None:
         c.execute(_t(
             "UPDATE bilan_params SET is_placeholder = (provenance = 'estimee') "
             "WHERE is_placeholder IS DISTINCT FROM (provenance = 'estimee')"))
+        # Décision Vic 28/07/2026 (mandat calibration estimées §3) — purge des paramètres MORTS :
+        # `ratio_vendable` (doublon inactif de `coef_rendement` YAML) et `bonus_vue_mer_pct`
+        # (jamais au registre) n'étaient lus par AUCUN moteur ; leurs curseurs laissaient croire
+        # qu'ils calibraient le modèle. Retirés du registre et du seed ; purge idempotente.
+        c.execute(_t(
+            "DELETE FROM bilan_params WHERE param IN ('ratio_vendable', 'bonus_vue_mer_pct')"))
 
 
 def ensure_personnes_morales(engine) -> None:

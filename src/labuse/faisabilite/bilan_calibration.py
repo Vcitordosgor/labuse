@@ -17,7 +17,7 @@ CALIBRATION: dict[str, tuple[float, str]] = {
     # Recettes
     "prix_m2_neuf": (4900.0, "sourcee"),   # neuf Saint-Paul 2024 ~4 920 €/m² (corroboré marché ~5 200)
     "prix_m2_lls": (2900.0, "estimee"),    # cession VEFA→bailleur ~prix de revient social DOM
-    "ratio_vendable": (0.80, "estimee"),   # SDP brute → habitable vendable (standard 0,78-0,85)
+    # ratio_vendable RETIRÉ (Vic 28/07/2026) : paramètre mort — aucun moteur ne le lisait.
     # Coûts — PAS de cout_construction_m2_sdp ici (mandat hypothèses bilan, décision Vic
     # 28/07/2026) : le 2100 « estimé » du 14/06 était ancré sur la fourchette YAML PÉRIMÉE
     # (avant-audit O2) et dupliquait la source unique. Le coût vient de la fourchette

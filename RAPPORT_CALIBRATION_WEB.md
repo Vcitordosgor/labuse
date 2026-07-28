@@ -73,3 +73,10 @@ seul un override **sectoriel justifié et sourcé** peut le re-piloter. Les vale
 sont désormais insérées `is_placeholder=true` et surveillées par `labuse bilan-params-perimes`.
 La question n°1 au promoteur (coût réel Réunion) reste ouverte — gabarit
 `config/bilan_calibration_vic.csv` à remplir par Vic.
+
+**Complément 28/07/2026 (2)** — `ratio_vendable` et `bonus_vue_mer_pct` sont **retirés**
+(registre, seed, gabarit, base — purge de boot idempotente) : aucun moteur ne les lisait ;
+un curseur qui ne calibre rien est trompeur pour l'utilisateur et dangereux pour nous
+(décision Vic, mandat calibration estimées §3). Les re-brancher sera une décision explicite
+avec sa mesure d'impact. Le rendement SDP→habitable reste gouverné par `coef_rendement`
+(hypothèses YAML, source unique).
