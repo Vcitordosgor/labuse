@@ -4,6 +4,14 @@
 Vic du 28/07 aux trois points d'arrêt). Mandat : `MANDAT_HYPOTHESES_BILAN.md` ; constat
 d'origine : `M26B_CONSTAT_CHARGES.md`.
 
+## Ce que ce mandat a réellement produit (consigne Vic, 28/07/2026)
+
+**La charge foncière servie était ×2 trop généreuse sur le cœur et ×1,96 sur le Copilote ;
+52 % des parcelles déclarées viables ne l'étaient pas.** Après correction, l'étiquette reste
+**Estimé** — et elle le restera tant que le coût de construction ne viendra pas d'un promoteur
+réunionnais et non d'un audit (gabarit `config/bilan_calibration_vic.csv`, action Vic ; suite :
+`MANDAT_CALIBRATION_ESTIMEES.md`).
+
 ## 1 · Ce qui a été prouvé (mesure d'impact, points A-B)
 
 - Le YAML versionné portait 1800–2200 €/m² « habitable » (avant-audit, `e3191f2` 10/06) ; les
