@@ -142,3 +142,23 @@ jamais touchée. Phase 4 non lancée.
 - **Étang-Salé UBv 35→50** : validée par Vic.
 - Saint-Benoît : refonte (arbitrage hauteurs par secteurs graphiques) portée par la
   branche B — non touchée ici.
+
+## Vérification élargie « he null » (demande Vic, 28/07 — AUCUNE correction appliquée)
+
+**Le bug redouté n'existe pas, et mon argument n°2 d'hier était INVERSÉ** — correction
+honnête : le repli générique 9 m (`he_defaut_generique_m`) ne s'applique QU'AUX zones
+absentes du YAML (`plu_rules.py:210`, `calibree=False`). Pour une zone calibrée :
+- `he` null + `hf` chiffré → le moteur estime les niveaux depuis hf par
+  `max(1, (hf − 3) ÷ 3)` avec avertissement (`engine.py:236-242`) — PLUS conservateur
+  que le calcul sur hé (hf 8 → 1 niveau, là où he 8 → 2 niveaux). La forme C sur Ub4
+  était donc pessimiste par accident, pas optimiste. La convention he = hf reste juste
+  (transcription exacte d'un plafond « en tout point ») mais elle AUGMENTE la capacité
+  calculée vs la forme hf-seul — à savoir en lisant les mesures.
+- `he` ET `hf` non chiffrés → « capacité non calculable », 0 logement (conservateur).
+
+**Compte sur les 21 YAML** : 43 zones en classe « he null + hf chiffré » (dont ~14
+plafonds uniques type « hauteur absolue/totale/fixée à N m sans précision » — candidates
+à l'extension de la convention he = hf, décision Vic ; le reste = faîtage seul réellement
+réglementé, forme correcte) ; 15 zones « he et hf a_verifier » (capacité non calculable —
+attendues : îlots La Possession, Saint-Denis 10 zones AVAP/patrimoine, U1lec Saint-Paul,
+AUdma Saint-Pierre). Liste détaillée remise à Vic en session.

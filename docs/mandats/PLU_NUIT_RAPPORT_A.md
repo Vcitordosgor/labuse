@@ -70,6 +70,19 @@
   arbitrée exige une PASSE DE RECHERCHE EXHAUSTIVE du motif sur tout le corpus (balayage
   par article de rattachement, pas par mot-clé de source), jamais la seule correction des
   cas signalés. Appliqué aux deux doctrines le 28/07 (cf. PLU_NUIT_HARMONISATION.md).
+- **TIROIR D'AFFECTATION vs TIROIR GÉOGRAPHIQUE** (principe Vic, 28/07/2026) : tranche
+  la plus conservatrice UNIQUEMENT pour les tiroirs d'affectation (que le moteur ne peut
+  pas départager) ; pour les tiroirs géographiques (RD/RN, bandes littorales…), tranche
+  MAJORITAIRE gravée, tranches dures citées en VERBATIM dans la source, croisement avec
+  la couche voirie/spatiale = candidat v2 documenté. Graver la tranche dure écraserait la
+  majorité des parcelles — le faux négatif en série de Saint-Benoît, dans l'autre sens.
+- **GEL vs HABITAT-INTERDIT** (convention Vic, 28/07/2026) : zones_au_st (gel) = ouverture
+  juridiquement CONDITIONNÉE (modification/révision du PLU, études préalables…) ;
+  interdiction d'habitat = zone CALIBRÉE avec habitat: interdit (hauteurs a_verifier si
+  non chiffrées). Le gel « construction neuve non autorisée » ment sur la nature d'une
+  zone d'équipements — un équipement public y est constructible. Sans danger moteur :
+  habitat=="interdit" est testé AVANT les hauteurs (capacité 0 exacte) ; le repli 9 m ne
+  concerne que les zones ABSENTES du YAML (plu_rules.py:210).
 - **L'île compte AU MOINS 4 styles de règlement** (ancien préfixé, moderne par chapitre,
   moderne mutualisé par groupe, sections « UA 2.4 ») — la détection du style est la première
   minute de chaque commune ; les 6 requêtes-clés (voies/limites/emprise/hauteur/perméable/
