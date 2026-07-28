@@ -521,6 +521,35 @@ revue. Aucune affirmation de constructibilité réglementaire (reculs, prospect,
 puis exposer avec le wording conservateur. **Finding O12 (suite)** : remplacer la façade voirie sommée par une façade
 « plus long segment continu » éviterait de sur-compter les parcelles d'angle (465 m sur un candidat).
 
+### Addendum O12-ÎLE (27/07/2026, branche `feat/o12-ile`) — durcissement post-revue
+La revue des 20 cartes a conclu **EXPOSE reste False** et identifié 3 défauts, corrigés :
+**clarté à façade plafonnée 30 m** (les bandes linéaires ne trustent plus le haut du dossier),
+**ratio lot/parcelle ≤ 50 %** (tue les démembrements — 94 % des éliminations), **zonage du lot U/AU
+exigé** (A/N exclus ; commune RNU → PAU estimée exigée via `parcel_pau`). Run île entière :
+**5 916 → 294 candidats** (24 communes) ; lots médians 1 052 m², zones U=280/AU*=10/RNU-PAU=4.
+Nouveau dossier : `docs/mandats/O12_ILE_REVUE.pdf` (20 cartes, 5 × Saint-Paul/Saint-Denis/
+Le Tampon/Saint-Pierre) + `.zip` (preuves). Détail : `RAPPORT_O12_ILE.md`. Toujours **MASQUÉ**.
+**Itération D** : le bâti dans le lot est **classé, pas exclu** — `type_division` `libre`
+(lot nu, prioritaire au tri, les 294 reproduits) / `demolition` (seul le bâtiment PRINCIPAL
+retiré du lot ; bâti secondaire chiffré « dont N m² à démolir », tracé rouge). Garde
+anti-découpage inversé : principal jamais dans le lot + `bati_lot × 3 ≤ bati_total` (à démolir
+≤ moitié du conservé) — île : 30 bruts → 19 nouveaux → **14 gardés / 5 rejetés** → total
+**308** (294 libres + 14 démolitions). Dossier dédié `O12_ILE_DEMOLITION_REVUE.pdf` (14 cartes,
+`--type demolition`).
+**Itération E (correctifs de revue 2-3-4)** : bâti d'ACTIVITÉ exclu (critère `ensemble_bati`
+de la cascade, ≥ 3 bâtiments [∩ ≥ 10 m²] OU un ≥ 400 m² — retire 287/308, le pool était dominé
+par les ensembles bâtis) ; COMPACITÉ du lot ≥ 0,25 (Polsby-Popper, distribution rapportée —
+retire 4 lanières de plus) ; LITTORAL/domaine public (50 pas + trait de côte [trou de couverture
+50 pas constaté au Barachois] + forêt domaniale + cœur du Parc — 14 en isolation, 0 en résiduel).
+**Pool final : 17 candidats (16 libres + 1 démolition), lots 509-898 m², compacité ≥ 0,28.**
+Dossiers régénérés (16 + 1 cartes). Détail : `RAPPORT_O12_ILE.md` §E. Toujours **MASQUÉ**.
+**Itération F (viabilité du LOT RESTANT)** : l'emprise bâtie résultante côté propriétaire est
+plafonnée — emprise max CALIBRÉE de la zone (`plu_<slug>.yaml`, CASE par zone_lib, libellé via
+`attrs->>'libelle'`) sinon plancher 60 %. Retire les 2 cartes signalées (0,796 / 0,804) →
+**pool final 15 (14 libres + 1 démolition)**, emprises restantes ≤ 0,595. Colonnes `zone_lib`
++ `emprise_restante`. PDF non régénérés (session saturée) — voir `RAPPORT_O12_ILE.md`
+« Session neuve — mode d'emploi ». Détail : §F. Toujours **MASQUÉ**.
+
 ---
 
 # STOP FINAL

@@ -1,0 +1,80 @@
+── DELETE decoupe + build_divisions_partiel (5 communes en parallèle) ──
+  division-or-partiel Saint-Paul : 16 lots à découper
+  division_or_candidates (decoupe) : 16 lots à découper (MASQUÉ)
+  division-or-partiel Saint-Louis : 7 lots à découper
+  division_or_candidates (decoupe) : 23 lots à découper (MASQUÉ)
+  division-or-partiel Saint-Denis : 12 lots à découper
+  division_or_candidates (decoupe) : 35 lots à découper (MASQUÉ)
+  division-or-partiel Saint-Pierre : 10 lots à découper
+  division_or_candidates (decoupe) : 45 lots à découper (MASQUÉ)
+  division-or-partiel Le Tampon : 15 lots à découper
+  division_or_candidates (decoupe) : 60 lots à découper (MASQUÉ)
+  division-or-partiel Saint-Joseph : 13 lots à découper
+  division_or_candidates (decoupe) : 73 lots à découper (MASQUÉ)
+  division-or-partiel Saint-Leu : 8 lots à découper
+  division_or_candidates (decoupe) : 81 lots à découper (MASQUÉ)
+  division-or-partiel Saint-André : 7 lots à découper
+  division_or_candidates (decoupe) : 88 lots à découper (MASQUÉ)
+  division-or-partiel Saint-Benoît : 8 lots à découper
+  division_or_candidates (decoupe) : 96 lots à découper (MASQUÉ)
+  division-or-partiel Sainte-Marie : 11 lots à découper
+  division_or_candidates (decoupe) : 107 lots à découper (MASQUÉ)
+  division-or-partiel La Possession : 5 lots à découper
+  division_or_candidates (decoupe) : 112 lots à découper (MASQUÉ)
+  division-or-partiel Petite-Île : 4 lots à découper
+  division_or_candidates (decoupe) : 116 lots à découper (MASQUÉ)
+  division-or-partiel Sainte-Suzanne : 1 lots à découper
+  division_or_candidates (decoupe) : 117 lots à découper (MASQUÉ)
+  division-or-partiel Le Port : 0 lots à découper
+  division_or_candidates (decoupe) : 117 lots à découper (MASQUÉ)
+  division-or-partiel L'Étang-Salé : 2 lots à découper
+  division_or_candidates (decoupe) : 119 lots à découper (MASQUÉ)
+  division-or-partiel Les Avirons : 0 lots à découper
+  division_or_candidates (decoupe) : 119 lots à découper (MASQUÉ)
+  division-or-partiel Salazie : 5 lots à découper
+  division_or_candidates (decoupe) : 124 lots à découper (MASQUÉ)
+  division-or-partiel Cilaos : 5 lots à découper
+  division_or_candidates (decoupe) : 129 lots à découper (MASQUÉ)
+  division-or-partiel La Plaine-des-Palmistes : 1 lots à découper
+  division_or_candidates (decoupe) : 130 lots à découper (MASQUÉ)
+  division-or-partiel Entre-Deux : 5 lots à découper
+  division_or_candidates (decoupe) : 135 lots à découper (MASQUÉ)
+  division-or-partiel Sainte-Rose : 1 lots à découper
+  division_or_candidates (decoupe) : 136 lots à découper (MASQUÉ)
+  division-or-partiel Bras-Panon : 1 lots à découper
+  division_or_candidates (decoupe) : 137 lots à découper (MASQUÉ)
+  division-or-partiel Les Trois-Bassins : 1 lots à découper
+  division_or_candidates (decoupe) : 138 lots à découper (MASQUÉ)
+  division-or-partiel Saint-Philippe : 1 lots à découper
+  division_or_candidates (decoupe) : 139 lots à découper (MASQUÉ)
+
+| Commune | Lots à découper |
+|---|---:|
+| Bras-Panon | 1 |
+| Cilaos | 5 |
+| Entre-Deux | 5 |
+| L'Étang-Salé | 2 |
+| La Plaine-des-Palmistes | 1 |
+| La Possession | 5 |
+| Le Tampon | 15 |
+| Les Trois-Bassins | 1 |
+| Petite-Île | 4 |
+| Saint-André | 7 |
+| Saint-Benoît | 8 |
+| Saint-Denis | 12 |
+| Saint-Joseph | 13 |
+| Saint-Leu | 8 |
+| Saint-Louis | 7 |
+| Saint-Paul | 16 |
+| Saint-Philippe | 1 |
+| Saint-Pierre | 10 |
+| Sainte-Marie | 11 |
+| Sainte-Rose | 1 |
+| Sainte-Suzanne | 1 |
+| Salazie | 5 |
+| **Total** | **139** |
+residuel_m2 : min=600 · P25=621.000 · médiane=632.000 · P75=683.000 · max=896
+compacite : min=0.290 · P25=0.577 · médiane=0.718 · P75=0.785 · max=0.815
+residuel_facade_m : min=15.7 · P25=26.300 · médiane=27.600 · P75=29.300 · max=52.3
+emprise_restante : min=0.098 · P25=0.147 · médiane=0.203 · P75=0.266 · max=0.585
+Familles en table : decoupe=139 · demolition=1 · libre=14

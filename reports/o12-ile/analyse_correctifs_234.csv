@@ -1,0 +1,309 @@
+idu,commune,type_division,clarte,residuel_m2,nb,mx,compacite,pas50,foret,parc,trait
+97415000BV0182,Saint-Paul,demolition,42.7,520,2,370,0.472,False,False,False,False
+97415000AC0003,Saint-Paul,libre,34.0,1760,3,935,0.115,False,False,False,False
+97415000AD0043,Saint-Paul,libre,55.6,1753,3,1768,0.154,False,False,False,False
+97415000AH0108,Saint-Paul,libre,48.8,1765,16,188,0.108,False,False,False,False
+97415000AH1309,Saint-Paul,libre,44.5,850,8,152,0.259,False,False,False,False
+97415000AT0137,Saint-Paul,libre,48.2,919,12,136,0.129,False,False,False,False
+97415000AW1532,Saint-Paul,libre,43.5,548,10,115,0.482,False,False,False,False
+97415000BC0452,Saint-Paul,libre,34.0,1133,5,109,0.201,False,False,False,False
+97415000BC0067,Saint-Paul,libre,51.4,955,6,192,0.181,False,False,False,False
+97415000BC0038,Saint-Paul,libre,34.6,975,7,190,0.371,False,False,False,False
+97415000BI0503,Saint-Paul,libre,36.4,1858,4,556,0.078,False,False,False,False
+97415000BW0119,Saint-Paul,libre,45.8,996,4,197,0.215,False,False,False,False
+97415000BW0826,Saint-Paul,libre,47.0,1486,5,714,0.342,False,False,False,False
+97415000BW1207,Saint-Paul,libre,39.0,539,3,88,0.440,False,False,False,False
+97415000CI0074,Saint-Paul,libre,37.8,2010,15,200,0.093,False,False,False,False
+97415000CM0143,Saint-Paul,libre,48.3,717,1,327,0.391,False,False,False,False
+97415000CM0485,Saint-Paul,libre,49.6,1072,4,241,0.107,False,False,False,False
+97415000CM0132,Saint-Paul,libre,49.4,602,3,266,0.215,False,False,False,False
+97415000CO0457,Saint-Paul,libre,50.8,1374,3,275,0.076,False,False,False,False
+97415000CP0238,Saint-Paul,libre,68.8,2339,12,419,0.244,False,False,False,False
+97415000CP0872,Saint-Paul,libre,38.3,939,3,248,0.124,False,False,False,False
+97415000CP0632,Saint-Paul,demolition,49.8,870,2,788,0.212,False,False,False,False
+97415000CR0776,Saint-Paul,libre,36.8,601,2,182,0.367,False,False,False,False
+97415000CR0895,Saint-Paul,libre,49.4,2153,11,334,0.047,False,False,False,False
+97415000CR0033,Saint-Paul,libre,49.4,837,6,188,0.273,False,False,False,False
+97415000CR0034,Saint-Paul,libre,49.2,739,9,333,0.151,False,False,False,False
+97415000CS1285,Saint-Paul,libre,34.9,1020,6,131,0.247,False,False,False,False
+97415000CS0332,Saint-Paul,libre,56.8,1426,6,369,0.099,False,False,False,False
+97415000CS0309,Saint-Paul,demolition,45.9,1051,6,386,0.421,False,False,False,False
+97415000CS0835,Saint-Paul,libre,56.2,1570,10,490,0.153,False,False,False,False
+97415000CT0137,Saint-Paul,libre,53.4,2145,19,218,0.079,False,False,False,False
+97415000CT1899,Saint-Paul,libre,57.2,2654,4,573,0.074,False,False,False,False
+97415000CT0164,Saint-Paul,libre,52.8,942,7,202,0.114,False,False,False,False
+97415000CT3122,Saint-Paul,libre,50.0,1846,12,363,0.081,False,False,False,False
+97415000CV0867,Saint-Paul,libre,63.2,2363,15,220,0.199,False,False,False,False
+97415000CV1157,Saint-Paul,libre,54.0,1876,12,162,0.057,False,False,False,False
+97415000CV0423,Saint-Paul,libre,48.4,857,4,134,0.255,False,False,False,False
+97415000CY0180,Saint-Paul,libre,48.2,1223,11,114,0.110,True,False,False,True
+97415000CZ0752,Saint-Paul,libre,55.6,1053,6,757,0.269,False,False,False,False
+97415000CZ0120,Saint-Paul,libre,49.6,594,3,274,0.237,False,False,False,False
+97415000CZ1301,Saint-Paul,libre,49.0,801,17,103,0.103,False,False,False,False
+97415000CZ0085,Saint-Paul,libre,50.2,1006,13,156,0.362,False,False,False,False
+97415000DH0258,Saint-Paul,libre,38.0,2760,11,313,0.052,False,False,False,False
+97415000DH0142,Saint-Paul,libre,48.8,1410,6,437,0.092,False,False,False,False
+97415000DH0188,Saint-Paul,libre,53.2,1447,14,339,0.064,False,False,False,False
+97415000DM1573,Saint-Paul,libre,51.0,982,5,286,0.200,False,False,False,False
+97415000DT0740,Saint-Paul,libre,35.7,682,5,160,0.229,False,False,False,False
+97415000EH0042,Saint-Paul,libre,45.4,805,11,281,0.144,False,False,False,False
+97415000EK0090,Saint-Paul,libre,50.8,1723,22,84,0.281,False,False,False,False
+97415000EM0019,Saint-Paul,libre,44.1,1279,9,197,0.099,False,False,False,False
+97415000ER0816,Saint-Paul,libre,55.6,1197,9,142,0.210,False,False,False,False
+97415000ES0233,Saint-Paul,libre,49.6,595,8,185,0.677,False,False,False,False
+97415000ES0255,Saint-Paul,libre,51.0,600,4,167,0.531,False,False,False,False
+97415000ET0830,Saint-Paul,libre,55.8,1348,14,180,0.290,False,False,False,False
+97415000ET0526,Saint-Paul,libre,40.7,1758,9,304,0.389,False,False,False,False
+97415000EV0699,Saint-Paul,libre,49.2,2143,2,1456,0.063,False,False,False,False
+97415000EW0335,Saint-Paul,libre,49.8,1336,11,418,0.085,True,False,False,True
+97415000EW1327,Saint-Paul,libre,42.8,2641,28,277,0.053,False,False,False,False
+97415000EW0454,Saint-Paul,libre,49.4,556,4,173,0.752,True,False,False,False
+97415000EY0705,Saint-Paul,libre,48.4,1583,6,266,0.109,False,False,False,False
+97415000EY0471,Saint-Paul,libre,52.8,1574,1,1136,0.368,False,False,False,False
+97415000EY1725,Saint-Paul,libre,33.8,2490,10,211,0.050,False,False,False,False
+97415000HM0185,Saint-Paul,libre,50.8,972,1,713,0.243,False,False,False,False
+97415000HO0407,Saint-Paul,libre,48.0,1480,5,397,0.109,False,False,False,False
+97415000HO0188,Saint-Paul,libre,50.6,1106,3,260,0.282,False,False,False,False
+97415000HO0226,Saint-Paul,libre,54.6,1863,11,269,0.248,False,False,False,False
+97415000HP0326,Saint-Paul,libre,41.3,1960,16,184,0.149,False,False,False,False
+97415000HR0116,Saint-Paul,libre,49.0,983,5,279,0.080,False,False,False,False
+97402000AH1346,Bras-Panon,libre,50.6,963,3,706,0.212,False,False,False,False
+97408000AM0680,La Possession,libre,50.2,715,4,224,0.286,False,False,False,False
+97408000AN1009,La Possession,libre,54.4,2006,2,970,0.085,False,False,False,False
+97408000AN1435,La Possession,libre,42.6,2559,10,423,0.098,False,False,False,False
+97408000AN1383,La Possession,libre,36.4,544,2,277,0.189,False,False,False,False
+97408000AO0295,La Possession,libre,51.6,2054,13,244,0.078,False,False,False,False
+97408000BN3617,La Possession,libre,39.9,1227,8,982,0.289,False,False,False,False
+97408000BO0478,La Possession,demolition,54.8,1310,5,1098,0.178,False,False,False,False
+97408000BO0505,La Possession,libre,54.6,1123,4,525,0.084,False,False,False,False
+97408000BP0008,La Possession,libre,47.0,1943,18,415,0.095,False,False,False,False
+97408000BP0080,La Possession,libre,61.0,1215,11,251,0.305,False,False,False,False
+97408000BP0009,La Possession,libre,48.6,1328,2,1108,0.107,False,False,False,False
+97404000AM0721,L'Étang-Salé,libre,58.0,1916,6,363,0.221,False,False,False,False
+97404000AX0324,L'Étang-Salé,libre,36.4,590,2,357,0.280,False,False,False,False
+97404000AX0535,L'Étang-Salé,demolition,52.2,999,3,780,0.167,False,False,False,False
+97404000AY0462,L'Étang-Salé,libre,43.3,946,1,1349,0.412,False,False,False,False
+97404000AY0423,L'Étang-Salé,libre,49.6,966,51,203,0.173,False,False,False,False
+97404000AY0105,L'Étang-Salé,libre,54.6,2663,13,871,0.141,False,False,False,False
+97404000AY0457,L'Étang-Salé,libre,38.7,2026,3,814,0.106,False,False,False,False
+97404000BA0134,L'Étang-Salé,libre,48.0,1151,8,563,0.075,True,False,False,False
+97416000CT0216,Saint-Pierre,libre,49.8,787,5,526,0.205,False,False,False,False
+97416000CT1263,Saint-Pierre,libre,39.6,1019,1,619,0.187,False,False,False,False
+97416000CT0175,Saint-Pierre,libre,52.6,999,6,195,0.293,False,False,False,False
+97416000CZ0842,Saint-Pierre,libre,51.0,541,6,159,0.507,False,False,False,False
+97416000DE0587,Saint-Pierre,libre,50.4,1251,9,214,0.216,False,False,False,False
+97416000DI0038,Saint-Pierre,libre,37.9,924,6,182,0.267,False,False,False,False
+97416000DL0235,Saint-Pierre,libre,43.9,1021,3,201,0.144,False,False,False,False
+97416000DM0986,Saint-Pierre,libre,45.2,2339,6,1239,0.111,True,False,False,False
+97416000DM0990,Saint-Pierre,libre,48.2,678,1,484,0.330,True,False,False,False
+97416000DM0665,Saint-Pierre,libre,50.0,598,2,116,0.697,False,False,False,False
+97416000DO0194,Saint-Pierre,libre,46.5,731,4,184,0.321,False,False,False,False
+97416000DR0343,Saint-Pierre,libre,35.1,1000,28,274,0.067,False,False,False,False
+97416000DW0440,Saint-Pierre,libre,60.6,1994,12,598,0.103,False,False,False,False
+97416000DY0530,Saint-Pierre,libre,47.9,2564,16,503,0.114,False,False,False,False
+97416000EI0996,Saint-Pierre,libre,51.9,893,4,550,0.429,False,False,False,False
+97416000EN1223,Saint-Pierre,libre,36.4,1087,13,514,0.242,False,False,False,False
+97416000ER0362,Saint-Pierre,libre,50.0,686,6,215,0.547,False,False,False,False
+97416000ES0477,Saint-Pierre,libre,50.4,607,4,126,0.441,False,False,False,False
+97416000ES1729,Saint-Pierre,libre,49.2,947,6,143,0.144,False,False,False,False
+97416000ES0885,Saint-Pierre,libre,45.2,1329,6,675,0.260,False,False,False,False
+97416000ES1945,Saint-Pierre,libre,48.0,671,2,188,0.205,False,False,False,False
+97416000ET0452,Saint-Pierre,libre,49.2,1846,12,386,0.135,True,False,False,False
+97416000EW0374,Saint-Pierre,libre,50.2,1615,4,1587,0.093,False,False,False,False
+97416000HW0170,Saint-Pierre,libre,35.8,989,8,170,0.181,False,False,False,False
+97416000HX1065,Saint-Pierre,libre,49.4,626,2,304,0.401,False,False,False,False
+97416000HX0990,Saint-Pierre,libre,52.8,700,6,110,0.612,False,False,False,False
+97416000HY1747,Saint-Pierre,libre,49.4,2399,7,437,0.068,False,False,False,False
+97416000ID0454,Saint-Pierre,libre,40.6,1283,14,216,0.146,False,False,False,False
+97416000IK0071,Saint-Pierre,libre,34.3,923,3,636,0.447,False,False,False,False
+97416000IL0230,Saint-Pierre,libre,48.4,1645,3,1288,0.193,False,False,False,False
+97422000AK1047,Le Tampon,libre,56.4,2300,5,394,0.110,False,False,False,False
+97422000AK0470,Le Tampon,libre,44.8,1296,4,402,0.083,False,False,False,False
+97422000AP0222,Le Tampon,libre,62.2,1362,5,343,0.273,False,False,False,False
+97422000BK0910,Le Tampon,libre,48.6,656,12,156,0.308,False,False,False,False
+97422000BN0538,Le Tampon,libre,48.2,1076,14,123,0.368,False,False,False,False
+97422000DL0698,Le Tampon,libre,44.2,1073,22,57,0.178,False,False,False,False
+97413000AC0370,Saint-Leu,libre,52.2,701,6,223,0.613,False,False,False,False
+97413000CA0089,Saint-Leu,libre,51.8,1001,3,914,0.184,False,False,False,False
+97413000CG0166,Saint-Leu,libre,51.2,1991,7,264,0.110,False,False,False,False
+97413000CG0434,Saint-Leu,libre,49.4,1018,8,92,0.372,False,False,False,False
+97413000CH0738,Saint-Leu,libre,39.9,1120,2,703,0.619,False,False,False,False
+97413000CM0623,Saint-Leu,libre,51.0,790,6,180,0.283,False,False,False,False
+97413000CQ0412,Saint-Leu,libre,47.6,509,2,144,0.717,False,False,False,False
+97413000CR0068,Saint-Leu,libre,43.0,579,1,261,0.582,False,False,False,False
+97413000CU0888,Saint-Leu,libre,49.0,1147,12,269,0.090,False,False,False,False
+97413000CX1578,Saint-Leu,libre,54.4,1961,6,666,0.047,False,False,False,False
+97413000CX0585,Saint-Leu,libre,53.5,772,2,258,0.589,False,False,False,False
+97413000CX0369,Saint-Leu,libre,31.5,680,5,260,0.220,False,False,False,False
+97413000CX2225,Saint-Leu,libre,48.3,954,1,493,0.328,False,False,False,False
+97413000CY1151,Saint-Leu,demolition,44.2,663,3,409,0.239,False,False,False,False
+97413000DC1043,Saint-Leu,libre,54.4,1239,2,705,0.385,False,False,False,False
+97413000DE0064,Saint-Leu,libre,51.2,2061,11,169,0.063,False,False,False,False
+97413000DE0427,Saint-Leu,libre,50.6,1217,3,163,0.432,False,False,False,False
+97413000DE1720,Saint-Leu,libre,53.0,2354,5,850,0.048,False,False,False,False
+97413000DJ0331,Saint-Leu,libre,32.7,812,3,152,0.252,False,False,False,False
+97413000DM0116,Saint-Leu,libre,44.0,1383,11,306,0.055,False,False,False,False
+97414000CI0522,Saint-Louis,libre,47.3,975,8,172,0.262,False,False,False,False
+97414000CO1040,Saint-Louis,libre,57.2,2454,12,184,0.105,False,False,False,False
+97414000DE0475,Saint-Louis,libre,56.6,1743,20,260,0.225,False,False,False,False
+97414000DH0932,Saint-Louis,libre,56.8,1869,5,858,0.220,False,False,False,False
+97414000DH0939,Saint-Louis,libre,53.2,2407,8,675,0.062,False,False,False,False
+97414000DM0398,Saint-Louis,libre,61.6,2297,8,433,0.391,False,False,False,False
+97414000EL2183,Saint-Louis,libre,62.0,2557,26,43,0.063,False,False,False,False
+97414000EL0409,Saint-Louis,libre,48.4,1036,8,97,0.591,False,False,False,False
+97414000EL0939,Saint-Louis,libre,49.4,1010,28,204,0.324,False,False,False,False
+97414000EM0066,Saint-Louis,libre,49.6,1051,20,118,0.117,False,False,False,False
+97414000EO0476,Saint-Louis,libre,52.0,714,14,141,0.540,False,False,False,False
+97414000EX0874,Saint-Louis,libre,49.0,979,20,96,0.155,False,False,False,False
+97414000HD0232,Saint-Louis,libre,48.7,925,7,154,0.120,False,False,False,False
+97414000HE0164,Saint-Louis,libre,50.2,1595,20,131,0.067,False,False,False,False
+97409000AC0913,Saint-André,libre,51.4,908,6,191,0.141,False,False,False,False
+97409000AC0675,Saint-André,libre,48.8,990,4,204,0.134,False,False,False,False
+97409000AD0596,Saint-André,libre,48.8,695,3,219,0.371,False,False,False,False
+97409000AH0141,Saint-André,libre,54.0,1558,4,496,0.162,False,False,False,False
+97409000AI1311,Saint-André,libre,49.8,523,7,252,0.501,False,False,False,False
+97409000AI0641,Saint-André,libre,48.6,942,3,484,0.109,False,False,False,False
+97409000AL2017,Saint-André,libre,63.6,2885,3,910,0.075,False,False,False,False
+97409000AL0581,Saint-André,libre,52.8,1167,7,426,0.105,False,False,False,False
+97409000AL1996,Saint-André,demolition,51.4,1703,2,1559,0.112,False,False,False,False
+97409000AL1984,Saint-André,libre,42.7,1447,20,435,0.332,False,False,False,False
+97409000AO0636,Saint-André,libre,50.0,2087,4,401,0.132,False,False,False,False
+97409000AO0534,Saint-André,libre,54.6,773,1,666,0.273,False,False,False,False
+97409000AP1506,Saint-André,libre,59.0,1392,9,269,0.261,False,False,False,False
+97409000AP0378,Saint-André,demolition,41.6,666,3,343,0.561,False,False,False,False
+97409000AR2164,Saint-André,libre,36.6,780,3,220,0.528,False,False,False,False
+97409000AR0052,Saint-André,libre,48.2,1229,5,316,0.112,False,False,False,False
+97409000AR1277,Saint-André,libre,33.7,620,3,416,0.585,False,False,False,False
+97409000AS1299,Saint-André,libre,49.5,2635,17,145,0.063,False,False,False,False
+97409000AS0350,Saint-André,libre,38.0,688,4,168,0.500,False,False,False,False
+97409000AT1265,Saint-André,libre,32.1,518,3,133,0.469,False,False,False,False
+97409000AT0112,Saint-André,libre,49.8,625,4,158,0.164,True,False,False,False
+97409000AV0449,Saint-André,libre,34.2,887,7,96,0.409,False,False,False,False
+97409000AW1489,Saint-André,libre,50.0,2126,5,852,0.118,False,False,False,False
+97409000AW0122,Saint-André,libre,37.3,690,2,508,0.356,False,False,False,False
+97409000AY0709,Saint-André,libre,48.2,933,2,425,0.221,False,False,False,False
+97409000AZ0095,Saint-André,libre,50.0,730,6,183,0.313,False,False,False,False
+97409000BD1267,Saint-André,libre,58.6,1598,5,668,0.182,False,False,False,False
+97409000BE2256,Saint-André,libre,49.6,2573,5,1096,0.272,False,False,False,False
+97409000BI0755,Saint-André,libre,48.4,1162,4,128,0.099,False,False,False,False
+97409000BI0284,Saint-André,libre,51.2,629,6,148,0.257,False,False,False,False
+97409000BI0110,Saint-André,libre,49.0,607,3,266,0.626,False,False,False,False
+97409000BM1058,Saint-André,libre,52.0,656,4,169,0.693,False,False,False,False
+97412000AH1270,Saint-Joseph,libre,64.8,2087,18,93,0.170,False,False,False,False
+97412000AM0946,Saint-Joseph,libre,49.0,576,1,233,0.563,False,False,False,False
+97412000AM0462,Saint-Joseph,libre,55.8,1739,7,212,0.269,False,False,False,False
+97412000AM1659,Saint-Joseph,libre,48.2,2210,9,683,0.071,False,False,False,False
+97412000AN0150,Saint-Joseph,demolition,51.6,1490,3,1179,0.209,False,False,False,False
+97412000AO0043,Saint-Joseph,libre,49.6,1639,9,510,0.080,False,False,False,False
+97412000BL0688,Saint-Joseph,libre,32.2,509,3,107,0.340,False,False,False,False
+97412000BM0149,Saint-Joseph,libre,47.1,780,5,494,0.446,False,False,False,False
+97412000BP0292,Saint-Joseph,libre,48.4,2310,7,685,0.061,False,False,False,False
+97412000BS0374,Saint-Joseph,libre,61.4,1318,2,606,0.195,False,False,False,False
+97412000BV0076,Saint-Joseph,libre,40.5,1018,2,588,0.466,False,False,False,False
+97412000BW0936,Saint-Joseph,libre,50.8,963,3,537,0.225,False,False,False,False
+97412000BW0933,Saint-Joseph,libre,43.2,763,1,497,0.405,False,False,False,False
+97412000BW0295,Saint-Joseph,libre,48.6,1292,7,772,0.056,False,False,False,False
+97412000BY1645,Saint-Joseph,libre,50.3,694,3,148,0.248,False,False,False,False
+97412000CR0357,Saint-Joseph,libre,48.8,600,3,192,0.292,False,False,False,False
+97412000CR0715,Saint-Joseph,libre,50.4,984,1,506,0.416,False,False,False,False
+97412000CX0349,Saint-Joseph,libre,35.9,610,6,178,0.470,False,False,False,False
+97410000AC0202,Saint-Benoît,libre,32.3,696,8,178,0.579,False,False,False,False
+97410000AD0696,Saint-Benoît,libre,57.0,1239,3,1064,0.407,False,False,False,False
+97410000AI0600,Saint-Benoît,demolition,51.0,2415,2,1606,0.108,False,False,False,False
+97410000AI1103,Saint-Benoît,libre,35.3,2339,7,325,0.092,True,False,False,False
+97410000AS1189,Saint-Benoît,libre,45.6,1942,7,169,0.195,False,False,False,False
+97410000AS0961,Saint-Benoît,libre,56.4,2153,11,1094,0.193,False,False,False,False
+97410000AS0506,Saint-Benoît,libre,51.4,1790,11,346,0.080,False,False,False,False
+97410000AS0509,Saint-Benoît,libre,42.8,1447,10,640,0.132,False,False,False,False
+97410000AT1129,Saint-Benoît,libre,37.5,892,14,129,0.193,False,False,False,False
+97410000BD0844,Saint-Benoît,libre,53.8,2169,3,628,0.087,False,False,False,False
+97410000BD0191,Saint-Benoît,libre,49.0,986,1,984,0.161,False,False,False,False
+97410000BD0531,Saint-Benoît,libre,33.7,792,2,558,0.436,False,False,False,False
+97410000BE0317,Saint-Benoît,libre,41.3,548,3,171,0.661,False,False,False,False
+97410000BE0357,Saint-Benoît,libre,37.6,1012,7,178,0.138,False,False,False,False
+97410000BN0721,Saint-Benoît,libre,36.0,986,3,610,0.198,False,False,False,False
+97410000BT0149,Saint-Benoît,libre,49.0,1707,4,780,0.097,False,False,False,False
+97410000BX1962,Saint-Benoît,libre,59.0,854,4,198,0.729,True,False,False,True
+97407000AI0670,Le Port,libre,53.6,1427,4,762,0.468,False,False,False,False
+97407000AI1764,Le Port,libre,62.2,1758,2,1211,0.369,False,False,False,False
+97407000AL1511,Le Port,libre,49.8,1441,8,270,0.146,False,False,False,False
+97407000AL1553,Le Port,libre,44.1,1036,7,213,0.096,False,False,False,False
+97407000AL0736,Le Port,libre,47.7,2303,19,668,0.075,False,False,False,False
+97407000AO1058,Le Port,libre,32.5,914,16,82,0.146,False,False,False,False
+97407000AS0189,Le Port,libre,53.6,735,2,801,0.466,False,False,False,False
+97407000BC0485,Le Port,libre,37.7,1707,3,769,0.133,False,False,False,False
+97407000BE0118,Le Port,libre,49.0,1936,5,732,0.164,False,False,False,False
+97407000BE0001,Le Port,libre,61.4,2113,1,1759,0.073,False,False,False,False
+97407000BI0222,Le Port,libre,49.0,2333,2,1774,0.105,False,False,False,False
+97405000AM0381,Petite-Île,libre,52.8,690,4,268,0.680,False,False,False,False
+97405000AR1299,Petite-Île,libre,50.0,590,6,145,0.543,False,False,False,False
+97405000AW1527,Petite-Île,libre,58.4,1961,7,224,0.155,False,False,False,False
+97411000AD0009,Saint-Denis,libre,61.2,2572,8,578,0.122,False,False,False,True
+97411000AH0321,Saint-Denis,libre,38.7,1052,4,1197,0.237,False,False,False,False
+97411000AK0023,Saint-Denis,libre,51.2,1157,1,645,0.115,False,False,False,False
+97411000AP0518,Saint-Denis,libre,43.3,1007,6,948,0.265,True,False,False,False
+97411000AR0329,Saint-Denis,demolition,52.1,1491,2,803,0.691,False,False,False,False
+97411000AS0235,Saint-Denis,libre,32.7,993,3,480,0.159,False,False,False,False
+97411000BH0547,Saint-Denis,libre,47.3,536,4,174,0.392,False,False,False,False
+97411000BP0363,Saint-Denis,libre,33.4,898,2,226,0.402,False,False,False,False
+97411000CH0622,Saint-Denis,libre,57.4,792,8,142,0.576,False,False,False,False
+97411000CI0209,Saint-Denis,libre,36.2,793,6,232,0.230,False,False,False,False
+97411000CV0094,Saint-Denis,libre,40.9,550,4,108,0.299,False,False,False,False
+97411000CV0698,Saint-Denis,libre,51.2,786,4,281,0.378,False,False,False,False
+97411000DE0017,Saint-Denis,libre,50.4,552,1,438,0.757,False,False,False,False
+97411000DS0866,Saint-Denis,libre,48.0,1463,14,217,0.130,False,False,False,False
+97411000HA0127,Saint-Denis,libre,51.8,1739,14,417,0.064,False,False,False,False
+97411000HA0114,Saint-Denis,libre,48.4,1557,2,1011,0.100,False,False,False,False
+97411000HL0015,Saint-Denis,libre,56.2,2310,12,484,0.147,False,False,False,False
+97411000IR0111,Saint-Denis,libre,51.7,2705,8,356,0.227,False,False,False,False
+97411000IT0009,Saint-Denis,libre,57.6,1924,16,281,0.189,False,False,False,False
+97418000AI0827,Sainte-Marie,libre,50.8,965,6,187,0.200,False,False,False,False
+97418000AO0805,Sainte-Marie,libre,31.7,517,2,295,0.535,False,False,False,False
+97418000AO0081,Sainte-Marie,libre,54.4,1136,3,555,0.246,False,False,False,False
+97418000AP1068,Sainte-Marie,libre,41.7,2119,7,247,0.316,False,False,False,False
+97418000AP2571,Sainte-Marie,libre,48.6,1025,5,139,0.083,False,False,False,False
+97418000AP3270,Sainte-Marie,libre,30.2,522,2,242,0.416,False,False,False,False
+97418000AR1574,Sainte-Marie,libre,53.4,1933,7,752,0.117,False,False,False,False
+97418000AR1274,Sainte-Marie,demolition,57.8,1911,9,1106,0.122,False,False,False,False
+97418000AS0973,Sainte-Marie,libre,51.6,2274,7,426,0.037,False,False,False,False
+97418000AS0479,Sainte-Marie,libre,50.4,1428,13,557,0.082,False,False,False,False
+97418000AT0983,Sainte-Marie,libre,48.4,1148,6,211,0.158,False,False,False,False
+97418000AT0909,Sainte-Marie,libre,51.2,1635,2,621,0.111,False,False,False,False
+97418000AV2066,Sainte-Marie,libre,55.2,1124,8,251,0.146,False,False,False,False
+97418000AV2092,Sainte-Marie,libre,37.9,535,1,379,0.505,False,False,False,False
+97418000AV2530,Sainte-Marie,libre,63.0,1791,3,1038,0.212,False,False,False,False
+97418000AX0107,Sainte-Marie,libre,49.2,987,12,143,0.322,False,False,False,False
+97418000BE0011,Sainte-Marie,libre,48.6,577,8,116,0.359,False,False,False,False
+97418000BT0459,Sainte-Marie,libre,54.4,732,2,293,0.648,False,False,False,False
+97418000BV0443,Sainte-Marie,libre,54.8,2089,6,110,0.178,False,False,False,False
+97418000BV0481,Sainte-Marie,libre,31.8,501,3,366,0.540,False,False,False,False
+97418000BV0026,Sainte-Marie,libre,48.2,1068,7,146,0.227,False,False,False,False
+97420000AB1535,Sainte-Suzanne,libre,40.5,867,4,313,0.534,False,False,False,False
+97420000AC1043,Sainte-Suzanne,libre,48.7,2435,7,947,0.141,False,False,False,False
+97420000AC0560,Sainte-Suzanne,libre,51.2,1136,8,714,0.231,False,False,False,False
+97420000AC1152,Sainte-Suzanne,libre,47.6,924,6,261,0.184,True,False,False,False
+97420000AE0280,Sainte-Suzanne,libre,38.2,763,6,85,0.410,False,False,False,False
+97420000AH0387,Sainte-Suzanne,demolition,57.4,1727,2,1033,0.307,False,False,False,False
+97420000AH0277,Sainte-Suzanne,libre,49.4,749,1,1113,0.205,False,False,False,False
+97420000AN0199,Sainte-Suzanne,libre,48.2,656,6,234,0.406,False,False,False,False
+97420000AV0386,Sainte-Suzanne,libre,53.8,1090,4,296,0.245,False,False,False,False
+97420000BH1821,Sainte-Suzanne,libre,54.6,1788,64,72,0.129,False,False,False,False
+97420000BH1036,Sainte-Suzanne,libre,52.4,883,2,298,0.485,False,False,False,False
+97419000AI1024,Sainte-Rose,demolition,47.6,629,3,285,0.313,False,False,False,False
+97403000AP0671,Entre-Deux,libre,57.8,1460,6,543,0.557,False,False,False,False
+97403000AT0386,Entre-Deux,libre,53.8,754,8,132,0.625,False,False,False,False
+97406000AE0276,La Plaine-des-Palmistes,libre,37.5,556,2,240,0.725,False,False,False,False
+97406000AE0140,La Plaine-des-Palmistes,libre,35.7,609,6,108,0.541,False,False,False,False
+97417000AO0511,Saint-Philippe,libre,50.6,650,2,302,0.202,False,False,False,False
+97417000AT0092,Saint-Philippe,libre,49.6,1480,6,768,0.223,False,False,False,False
+97417000AT0533,Saint-Philippe,libre,55.0,1280,2,594,0.149,False,False,False,False
+97417000AT0191,Saint-Philippe,libre,35.7,608,2,171,0.186,False,False,False,False
+97423000AH0610,Les Trois-Bassins,libre,48.6,1038,18,138,0.104,False,False,False,False
+97421000AC0154,Salazie,libre,66.8,1865,26,154,0.323,False,False,False,False
+97421000AI0107,Salazie,libre,48.6,615,12,79,0.429,False,False,False,False
+97421000AI0209,Salazie,libre,37.7,799,6,133,0.595,False,False,False,False
+97421000AI0213,Salazie,libre,38.0,711,8,110,0.673,False,False,False,False
+97421000BD0303,Salazie,libre,36.1,624,10,123,0.520,False,False,False,False
+97424000AE0191,Cilaos,libre,49.6,532,4,139,0.745,False,False,False,False
+97424000AH0688,Cilaos,libre,48.8,1067,1,630,0.195,False,True,False,False
+97424000AL0756,Cilaos,libre,60.6,1386,12,213,0.411,False,False,False,False

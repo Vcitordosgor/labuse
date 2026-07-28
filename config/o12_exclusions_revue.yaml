@@ -1,0 +1,96 @@
+# O12 — EXCLUSIONS DE REVUE (mécanisme traçable, mandat O12-PARTIEL-2 revue 2 & 3).
+# Un candidat géométriquement valide peut être écarté par la REVUE VISUELLE (« la revue
+# tranche ») : jamais de retrait silencieux — chaque exclusion porte idu, commune, nature,
+# motif, date. Appliqué aux DEUX familles par les détecteurs (division_or).
+#
+# `commune` est OBLIGATOIRE et VÉRIFIÉ : les 5 premiers chiffres de l'idu doivent être l'INSEE
+# de la commune nommée (test_exclusions_revue_idu_coherents). Ce garde-fou verrouille la
+# défaillance de la revue 3 : `97416000AV0203` (préfixe 97416 = Saint-Pierre) avait été saisi
+# pour le U de Saint-Denis `97411000AV0203` — IDU FANTÔME (aucune parcelle), l'exclusion n'a
+# jamais mordu et le faux positif a reparu. Le préfixe croisé avec la commune l'interdit.
+#
+# NATURE = permanente : exclusion par IDU, INDÉPENDANTE de la géométrie. C'est la SEULE nature
+# retenue (revue 3, 2e correctif). La nature `liee_geometrie` (comparer le tracé re-calculé au
+# tracé revu via un snapshot) a été ABANDONNÉE : elle s'auto-annulait après un tour — une fois
+# la parcelle exclue, elle disparaît du pool, donc du snapshot reconstruit au run suivant, donc
+# la comparaison perd sa référence et la parcelle REPARAÎT (constaté sur AT0650). Le détecteur
+# étant DÉTERMINISTE (le tracé d'une parcelle est identique à chaque run tant que le code ne
+# change pas), l'exclusion par IDU est robuste et suffit ; la nuance « re-revoir si l'algorithme
+# produit un autre tracé » est déjà couverte par la RÈGLE de revue exhaustive à chaque
+# changement d'algorithme. Le snapshot ne sert plus qu'à l'ANNOTATION « tracé modifié » (info).
+
+exclusions:
+  # ── bâti douteux (fraîcheur) — famille découpe ─────────────────────────────────────────
+  - idu: "97416000CX0214"
+    commune: Saint-Pierre
+    nature: permanente
+    motif: "Fraîcheur bâti : structures visibles sur l'ortho dans le polygone sur deux dossiers
+            successifs ; BD TOPO (06/2026) et Sitadel (aucun permis) ne les expliquent pas —
+            « lot nu » non garanti, indépendant de l'ancre. Revue Vic."
+    date: "2026-07-27"
+  # ── lots en U autour d'un bâtiment — famille découpe, liés au tracé ─────────────────────
+  - idu: "97409000AT0650"
+    commune: Saint-André
+    nature: permanente
+    motif: "Lot en U autour d'un bâtiment (revue 2, solidité 0,860 / compacité 0,552) — écarté
+            sur le tracé revu. Revue Vic."
+    date: "2026-07-27"
+  - idu: "97422000CX0720"
+    commune: Le Tampon
+    nature: permanente
+    motif: "Lot en U autour d'un bâtiment (revue 2, solidité 0,884 / compacité 0,647) — écarté
+            sur le tracé revu. Revue Vic."
+    date: "2026-07-27"
+  - idu: "97411000AV0203"
+    commune: Saint-Denis
+    nature: permanente
+    motif: "Lot en U autour d'un bâtiment (revue 2, solidité 0,912 / compacité 0,665 ; dépasse
+            la validée la plus basse en solidité). CORRECTIF revue 3 : l'IDU avait été saisi
+            97416000AV0203 (Saint-Pierre, fantôme) → n'a jamais mordu ; corrigé en 97411000AV0203."
+    date: "2026-07-28"
+  # ── faux positif de parcelle (2 tracés refusés) — famille découpe ──────────────────────
+  - idu: "97422000AV0573"
+    commune: Le Tampon
+    nature: permanente
+    motif: "Revue 3 : lot 644 m² sur 1060 m² (61 %), reste 416 m² au ras du seuil, solidité
+            0,858 / compacité 0,571 (les 2 plus basses), le lot épouse le bâti. Deux tracés
+            successifs refusés → problème de PARCELLE, pas de géométrie. Revue Vic."
+    date: "2026-07-28"
+  # ── lots RÉSIDUELS en U / forme aberrante — la forme est un fait de la parcelle ─────────
+  - idu: "97404000AX0324"
+    commune: L'Étang-Salé
+    nature: permanente
+    motif: "Revue 3 : résiduel en U autour du bâti, tissu commercial dense (solidité 0,573 /
+            compacité 0,280 — les plus basses des résiduels). Revue Vic."
+    date: "2026-07-28"
+  - idu: "97415000CR0776"
+    commune: Saint-Paul
+    nature: permanente
+    motif: "Revue 3 : résiduel de forme aberrante, reste en lanière (solidité 0,615 /
+            compacité 0,367). Revue Vic."
+    date: "2026-07-28"
+  - idu: "97416000HX1065"
+    commune: Saint-Pierre
+    nature: permanente
+    motif: "Revue 3 : résiduel enveloppant une construction (solidité 0,672 / compacité 0,401).
+            Revue Vic."
+    date: "2026-07-28"
+  - idu: "97418000AP3270"
+    commune: Sainte-Marie
+    nature: permanente
+    motif: "Revue 3 : résiduel en U, façade 12,2 m au ras du seuil (solidité 0,662 /
+            compacité 0,416). Revue Vic."
+    date: "2026-07-28"
+  # ── douteux résiduels tranchés EXCLUS (revue 3, arbitrage Vic) ──────────────────────────
+  - idu: "97415000CM0143"
+    commune: Saint-Paul
+    nature: permanente
+    motif: "Revue 3 arbitrage : métriques DANS le cluster des FP (solidité 0,713 /
+            compacité 0,391) ; le lot contourne le bâti à un carrefour. Revue Vic."
+    date: "2026-07-28"
+  - idu: "97418000AO0805"
+    commune: Sainte-Marie
+    nature: permanente
+    motif: "Revue 3 arbitrage : façade 12,3 m contre seuil 12 m + emprise restante 59 %
+            (le reste est quasi saturé) — solidité 0,853 / compacité 0,535. Revue Vic."
+    date: "2026-07-28"
