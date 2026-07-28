@@ -242,3 +242,17 @@ Détail des motifs de non-calibrage : chaque YAML porte ses motifs zone par zone
    sur dalle/toiture). Leçon 22 reformulée dans les termes adoptés (« secteur déclaré
    couvert par la clause » vs « saut d'indice non écrit »). Mandat-cadre : §§0-8
    restaurés depuis la copie de Vic, §9 vivant conservé intégralement.
+
+8. **Suites d'arbitrage (28/07, seconde vague)** : (a) Bras-Panon AUec — règle 8
+   appliquée, he = hf = 18 (90 citations 0 FAIL re-vérifiées). (b) Gel vs
+   habitat-interdit TRANCHÉ SUR MESURE : test local pur Python (YAML jetable, zéro
+   accès base) — une zone calibrée habitat-interdit SANS hauteur chiffrée rend
+   `calibree=False, habitat=None, he=9.0, constructible_neuf=True` : `resolve_zone`
+   (plu_rules.py, gate `_has_usable_height` en mode progressif) substitue le
+   générique AVANT `engine.py:157`. Leçon 15 confirmée, pratique de la nuit
+   maintenue, exception explicite ajoutée à la règle 10 du §4 du mandat-cadre,
+   exigence v2 de premier rang. (c) Bras-Panon Ub, tiroir 8/11 vs 10/13 : verbatim
+   remis à Vic — le critère de partage est un seuil d'assiette de PROJET (≥ 2 000 m²,
+   hors secteur Uba), pas un secteur géographique ; la branche gravée 8/11 est la
+   règle générale (majoritaire ET conservatrice coïncident) — arbitrage Vic sur
+   pièces en attente.
