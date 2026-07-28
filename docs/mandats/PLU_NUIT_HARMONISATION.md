@@ -14,7 +14,28 @@ règlement en verbatim dans la source** (« espace vert et perméable », PAS «
 terre »). A et C rétro-annotent leurs sources de la même façon. Schéma v2 (plus tard) :
 champ distinct `espace_permeable_pct`.
 
-### Lot B — 111 valeurs gravées (∅ = null avant)
+### Lot B — harmonisé par la SESSION B elle-même (79 zones, commit 7fd6244)
+
+**Coordination constatée a posteriori** : la session B, ayant reçu le même arbitrage, a
+poussé sa propre passe (79 zones sur 6 communes + doctrine b sur 13 zones Bras-Panon/
+Trois-Bassins) pendant que je préparais la mienne. **Vérification croisée : les 79 valeurs
+de B sont STRICTEMENT identiques à ma table dérivée indépendamment (0 écart)** — deuxième
+convergence en aveugle de la nuit. Ma passe B (préparée sur l'ancienne tête) a été
+abandonnée sans push ; la table ci-dessous reste le référentiel de contrôle croisé.
+
+Deltas entre ma table (établie sur l'ancienne tête de B) et la passe de B — consignés,
+AUCUNE retouche de ma part sur la branche B :
+- **Cilaos (7 zones)** : B a laissé null DÉLIBÉRÉMENT — « espace vert paysager » où les
+  stationnements peuvent compter, « jamais un % perméable » (en-tête + srcs du YAML B).
+  Lecture défendable (le paysager n'est pas une contrainte de perméabilité) ; ma table
+  aurait gravé 10/40 par prudence. → micro-arbitrage Vic : paysager-sans-perméable,
+  graver ou non ?
+- **Saint-Benoît (24 zones)** : ma table est CADUQUE — le YAML a été refondu (commit
+  f55416a) suite à l'arbitrage matinal de Vic sur les hauteurs par secteurs graphiques
+  (zones habitat-admis dé-calibrées, habitat-interdit en zones_au_st) ; les entrées visées
+  n'existent plus.
+
+### Table de contrôle croisé (établie indépendamment, validée 79/79 sur les communes gravées par B)
 
 | Fichier | n | Détail zone ∅→valeur |
 |---|---|---|
@@ -27,8 +48,8 @@ champ distinct `espace_permeable_pct`.
 | saint_benoit | 24 | Ua ∅→20 ; Uap ∅→20 ; Ub ∅→20 ; Ue ∅→20 ; Up ∅→20 ; Ut ∅→20 ; AUa5 ∅→20 ; AUa8 ∅→20 ; AUa9 ∅→20 ; AUa18 ∅→20 ; AUb2 ∅→20 ; AUb6 ∅→20 ; AUb7 ∅→20 ; AUb10 ∅→20 ; AUb11 ∅→20 ; AUb12 ∅→20 ; AUb13 ∅→20 ; AUb14 ∅→20 ; AUb15 ∅→20 ; AUb16 ∅→20 ; AUb17 ∅→20 ; AUb19 ∅→20 ; AUe3 ∅→20 ; AUp1 ∅→20 |
 | saint_louis | 24 | UA ∅→15 ; UB ∅→20 ; UC ∅→25 ; UC1 ∅→25 ; UC2 ∅→25 ; UD ∅→30 ; UD1 ∅→35 ; UE ∅→15 ; US ∅→15 ; UZ ∅→25 ; 1AUa ∅→15 ; 1AUa oap1 ∅→15 ; 1AUa oap3 ∅→15 ; 1AUb1 ∅→20 ; 1AUb2 ∅→20 ; 1AUc ∅→25 ; 1AUc oap4 ∅→25 ; 1AUc oap5 ∅→25 ; 1AUc1 ∅→25 ; 1AUc2 ∅→25 ; 1AUd ∅→30 ; 1AUd1 ∅→35 ; 1AUe ∅→15 ; 1AUe oap1 ∅→15 |
 
-Valeurs = celles que B avait déjà consignées dans ses propres sources (libellé + %), ou la
-zone U de renvoi ; les tranches à tiroir sont gravées au plus conservateur (La Plaine Ue
+Valeurs = celles des sources B (libellé + %), ou la zone U de renvoi ; tranches à tiroir
+au plus conservateur (La Plaine Ue
 25 % Bras des Calumets vs 10 % Pyramide → 25 ; Trois-Bassins Ua 20 hors dérogation ;
 Bras-Panon 1AUec « 15 % planté ET 20 % perméable » → 20). Restent null À RAISON :
 Saint-Louis UA1 (« il n'est pas fixé de règle »), Cilaos Uc (« aucun % d'espaces libres »).
@@ -81,7 +102,8 @@ UE rv 5→6, rl 4→6 ; US rv 5→6, rl 4→6 ; 1AUe rv 5→6, rl 4→6 ; 1AUe o
 UC1 rl 3→4.5 ; 1AUc1 rl 3→4.5 — alignées sur B (qui avait juste). Les 17 défauts de C
 listés à la contre-preuve restent intacts (preuve d'honnêteté, décision Vic).
 
-### Lot B : déjà conforme doctrine b — aucun changement.
+### Lot B doctrine b : Saint-Louis vérifié conforme dès l'extraction ; Bras-Panon (12) et
+Trois-Bassins (Ue) corrigés par la session B dans sa propre passe (7fd6244).
 
 ## Correction incidente (découverte en vérifiant les libellés, hors doctrines)
 
