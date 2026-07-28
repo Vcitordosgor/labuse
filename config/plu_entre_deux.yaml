@@ -56,35 +56,35 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20",
        recul_limites_note: "Ua : retrait OBLIGATOIRE des limites (exception terrains <200 m²) ; retrait >= 3 m.",
        stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27"}
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   Ub: {bassin: "Entre-Deux",
        he_m: 9, hf_m: 13, hauteur_src: "Art. U7.2, p.21-22 (« En zones Ub et Ue : 9/13 m »)",
        emprise_sol_pct: null, emprise_src: "Art. U6.2, p.21 : « Sans objet en zones Ub et Ue »",
        recul_voirie_m: 4, recul_voirie_src: "Art. U3.2, p.19",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20 (Ub : une limite OU retrait >= 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27"}
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   Ub1: {bassin: "Entre-Deux",
        he_m: 7, hf_m: 11, hauteur_src: "Art. U7.2, p.21-22 (« En zone Ua et en secteur Ub1 »)",
        emprise_sol_pct: null, emprise_src: "Art. U6.2, p.21 (zone Ub : sans objet)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U3.2, p.19",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20",
        stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27"}
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   Ub2: {bassin: "Entre-Deux",
        he_m: 4.5, hf_m: 7, hauteur_src: "Art. U7.2, p.21-22 (« En secteur Ub2 : 4,50 m à l'égout … 7 m au faîtage »)",
        emprise_sol_pct: null, emprise_src: "Art. U6.2, p.21 (zone Ub : sans objet)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U3.2, p.19",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20",
        stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27"}
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   AUb: {bassin: "Entre-Deux",
        he_m: 9, hf_m: 13, hauteur_src: "Art. U7.2, p.21-22 via renvoi (IV p.29 : « se reporter au règlement de la zone U indiquée en indice »)",
        emprise_sol_pct: null, emprise_src: "Art. U6.2, p.21 (via renvoi)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U3.2, p.19 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28 (via renvoi)",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 (via renvoi)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 (via renvoi) — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
        note: "Densité minimale 20 logts/ha (Art. AU1.2, p.29)."}
   # AUe — NON CALIBRÉE (invariant « jamais deviner ») : renvoi à la zone Ue, dont le statut
   # habitat est porté par le tableau des destinations Art. U1.2 (p.16-18) — matrice V/X

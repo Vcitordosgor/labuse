@@ -54,21 +54,21 @@ zones:
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (2 limites, 1 ou retrait >= 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
        stat_note: "Logements >=50 m² ; <50 m² : 1 place (cf. regles_transverses).",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16"}
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)"}
   UAv: {bassin: "Sainte-Suzanne",
        he_m: 14, hf_m: 17, hauteur_src: "Art. U8.2, p.14-15 (« en secteur UAv : 14/17 m »)",
        emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
        recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.12-13",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14",
        stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 (zone UA)"}
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 (zone UA) — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)"}
   UAc: {bassin: "Sainte-Suzanne",
        he_m: 13, hf_m: 16, hauteur_src: "Art. U8.2, p.14-15 (zone UA — pas de hauteur propre UAc)",
        emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
        recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.12-13",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. U1, p.10-11",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. U1 (rappel 5), p.10-11 : « Dans le secteur UAc, seules sont autorisées les constructions … à destination de commerce et activités de service »"}
   UB: {bassin: "Sainte-Suzanne",
        he_m: 9, hf_m: 12, hauteur_src: "Art. U8.2, p.14-15",
@@ -76,31 +76,31 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13 (alignement possible OU recul >= 4 m en UB/UC)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14",
        stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. U12.1, p.16"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12.1, p.16 — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)"}
   UC: {bassin: "Sainte-Suzanne",
        he_m: 7, hf_m: 10, hauteur_src: "Art. U8.2, p.14-15",
        emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
        recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (UC : retrait OU une seule limite latérale)",
        stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. U12.1, p.16"}
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U12.1, p.16 — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)"}
   UC1: {bassin: "Sainte-Suzanne",
        he_m: 7, hf_m: 10, hauteur_src: "Art. U8.2, p.14-15 (zone UC — pas de hauteur propre UC1)",
        emprise_sol_pct: null, emprise_src: "Art. U7, p.14 : « Sans objet »",
        recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14",
        stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. U12.1, p.16",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U12.1, p.16 — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)",
        note: "SDU loi ELAN / L.121-8 (Art. U1 rappel 6, p.10-11) : constructions autorisées EXCLUSIVEMENT pour l'amélioration de l'offre de logement/hébergement et services publics, SANS extension du périmètre bâti ni modification significative du bâti ; avis CDNPS requis. Densification contrainte — capacité à interpréter avec prudence."}
 
   # ============== UE — activités (p.20-28) : HABITAT STRICTEMENT INTERDIT ==============
   UE: {bassin: "Sainte-Suzanne",
        he_m: null, hf_m: 12, hauteur_src: "Art. UE8, p.23-24 (« la hauteur maximale des constructions au faitage est fixée à 12 mètres »)",
        emprise_sol_pct: 70, emprise_src: "Art. UE7, p.23 (« limitée à 70% de la superficie du terrain »)",
-       recul_voirie_m: 5, recul_voirie_src: "Art. UE4.2, p.22 (recul >= H/2, minimum 5 m)",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. UE5.2, p.22-23 (retrait OU une limite ; retrait >= H/2, min 4 m ; retrait OBLIGATOIRE en limite de zone UA/UB/UC ou AU habitat)",
+       recul_voirie_m: 6, recul_voirie_src: "Art. UE4.2, p.22 (recul >= H/2, minimum 5 m) — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 5 m)",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UE5.2, p.22-23 (retrait OU une limite ; retrait >= H/2, min 4 m ; retrait OBLIGATOIRE en limite de zone UA/UB/UC ou AU habitat) — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit sans exception).", stat_src: "Art. UE1.2/UE2, p.20-21",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. UE12, p.25",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE12, p.25 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. UE1.2, p.20 (habitation interdite « à l'exception de ceux visés à l'article UE2 ») + Art. UE2, p.20-21 : AUCUNE exception logement (même pas le gardiennage — seuls commerces/bureaux/équipements <=5 % de la zone, réseaux, reconstruction, extensions limitées, 50 pas)"}
 
   # ============== 1AU ouvertes — renvoi à la zone U d'indice (Titre III, p.29-31) ==============
@@ -110,14 +110,14 @@ zones:
        recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.12-13 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18 (via renvoi)",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 (via renvoi)"}
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 (via renvoi) — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)"}
   1AUac: {bassin: "Sainte-Suzanne",
        he_m: 13, hf_m: 16, hauteur_src: "Art. U8.2, p.14-15 via renvoi (secteur UAc)",
        emprise_sol_pct: null, emprise_src: "Art. U7, p.14 (via renvoi)",
        recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.12-13 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (via renvoi)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. U1 (rappel 5), p.10-11 (via renvoi)",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 (via renvoi)",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12.1, p.16 (via renvoi) — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. U1 (rappel 5), p.10-11 via renvoi (UAc : commerce et services uniquement)"}
   1AUb: {bassin: "Sainte-Suzanne",
        he_m: 9, hf_m: 12, hauteur_src: "Art. U8.2, p.14-15 via renvoi (zone UB)",
@@ -125,22 +125,22 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18 (via renvoi)",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. U12.1, p.16 (via renvoi)"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12.1, p.16 (via renvoi) — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)"}
   1AUc: {bassin: "Sainte-Suzanne",
        he_m: 7, hf_m: 10, hauteur_src: "Art. U8.2, p.14-15 via renvoi (zone UC)",
        emprise_sol_pct: null, emprise_src: "Art. U7, p.14 (via renvoi)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U4.2, p.12-13 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.13-14 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. U13, p.16-18 (via renvoi)",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. U12.1, p.16 (via renvoi)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U12.1, p.16 (via renvoi) — « traité en espace perméable à hauteur minimum de » 20/30/40 %, sans sous-minimum de pleine terre (doctrine a)",
        note: "Densité 10 logements/ha (Titre III, p.30-31)."}
   1AUe: {bassin: "Sainte-Suzanne",
        he_m: null, hf_m: 12, hauteur_src: "Art. UE8, p.23-24 via renvoi (zone UE)",
        emprise_sol_pct: 70, emprise_src: "Art. UE7, p.23 (via renvoi)",
-       recul_voirie_m: 5, recul_voirie_src: "Art. UE4.2, p.22 (via renvoi)",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. UE5.2, p.22-23 (via renvoi)",
+       recul_voirie_m: 6, recul_voirie_src: "Art. UE4.2, p.22 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 5 m)",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UE5.2, p.22-23 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UE1.2/UE2, p.20-21 (via renvoi)",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. UE12, p.25 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. UE12, p.25 (via renvoi) — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. UE1.2/UE2, p.20-21 via renvoi (aucune exception logement)"}
 
 zones_au_renvoi: {}

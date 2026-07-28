@@ -45,8 +45,12 @@
 4. **Hauteurs par BANDES de profondeur** (Saint-Joseph U1/U2/U3/U5cvd) : précédent Saint-Paul
    U1a appliqué (bande profonde gravée, front en note) — convention à contre-vérifier par la
    session C.
-5. **Retraits « H/2 avec minimum »** (Saint-Joseph, Sainte-Marie, La Possession, Étang-Salé…) :
-   minimum plancher gravé, règle relative en note — prudent (jamais optimiste).
+5. **Retraits « H/2 avec minimum »** (Saint-Joseph, Sainte-Marie, La Possession…) :
+   minimum plancher gravé, règle relative en note — **DÉSAVOUÉE par la contre-preuve puis
+   par l'arbitrage Vic (28/07, doctrine b)** : le plancher seul sous-estime le retrait à
+   hauteur max, donc SURESTIME la constructibilité. Convention corrigée partout :
+   gravé = max(H/2 à la hauteur max de la zone, plancher) — cf. PLU_NUIT_HARMONISATION.md
+   (49 valeurs lot A re-gravées).
 6. **Tableaux perdus à l'extraction texte** : stationnement (Étang-Salé, La Possession UEm),
    matrice destinations V/X (Entre-Deux) → a_verifier/non-calibrage motivés, JAMAIS devinés.
 

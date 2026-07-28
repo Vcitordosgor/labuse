@@ -16,7 +16,7 @@
 #     égout, hf_m = faîtage (acrotère en note). Zones d'activités : FAÎTAGE SEUL => he null.
 #   - PLEINE TERRE = « % de la surface en espace perméable » (Art. U12).
 #   - RETRAIT LIMITES : règle H/2 avec minimum (résidentielles 3 m, activités 4 m) => le
-#     MINIMUM est gravé, la règle H/2 en note.
+#     GRAVÉ = max(H/2 à la hauteur max de la zone, minimum) — harmonisation doctrine b (28/07/2026).
 #   - AU : renvoi à la zone U d'indice (1AUb→UB, 1AUc→UC, 1AUep→UEp) ; 1AU ouvertes dès
 #     l'approbation ; 2AU « ouvertes à l'urbanisation à partir de 2031 » => GEL (zones_au_st).
 #   - Aucun COS (pré-vol : 0 occurrence).
@@ -38,7 +38,7 @@ source:
 mode: progressif
 
 regles_transverses:
-  recul_limites: "Retrait >= moitié de la hauteur totale de la façade (H/2), minimum 3 m (résidentielles) / 4 m (activités) — minimum gravé."
+  recul_limites: "Retrait >= moitié de la hauteur totale de la façade (H/2), minimum 3 m (résidentielles) / 4 m (activités) — gravé : max(H/2 à H max, minimum)."
   deux_fois_deux_voies: "Toute construction à 35 m minimum de l'axe de la 2x2 voies (Art. U4.2 des deux groupes)."
   stationnement: "Logements privés : <100 m² SDP 1 pl./logt ; >=100 m² : 2 pl. (opération d'un logement) ou 1,5 pl./logt (opérations de plusieurs logements) ; à <500 m d'une gare/TCSP : 1 pl. (0,5 pour les logements aidés) — Art. U13.2, p.25-26."
   gardiennage_activites: "Groupe « activités » : habitation admise UNIQUEMENT si indispensable au fonctionnement/gardiennage des activités autorisées (Art. U2 « activités », p.28-30)."
@@ -62,8 +62,8 @@ zones:
        emprise_sol_pct: null, emprise_src: "Art. U7.2 « résidentielles », p.20 : « Sans objet en zone UA »",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « résidentielles », p.17-18",
        recul_voirie_note: "UA/UB : alignement possible (0) OU recul >= 3 m.",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2 « résidentielles », p.19-20",
-       recul_limites_note: "1 ou 2 limites possibles ; retrait >= H/2, minimum 3 m (minimum gravé).",
+       recul_limites_sep_m: 7.5, recul_limites_src: "Art. U5.2 « résidentielles », p.19-20 — harmonisation doctrine b : max(H/2 à H max 15 m = 7,5 m ; plancher 3 m)",
+       recul_limites_note: "1 ou 2 limites possibles ; retrait >= H/2, minimum 3 m (gravé : H/2 à H max).",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
        stat_note: "Norme des opérations de plusieurs logements >=100 m² ; <100 m² : 1 pl. ; 1 logement >=100 m² : 2 pl. ; TCSP <500 m : 1 pl.",
        pleine_terre_pct: 20, pleine_terre_src: "Art. U12 « résidentielles », p.24 (« espace perméable sur au moins 20% » en UA)"}
@@ -74,7 +74,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. U12, p.24"}
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12, p.24 — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)"}
   UAz: {bassin: "Sainte-Marie",
        he_m: 27, hf_m: 30, hauteur_src: "Art. U8.2 « résidentielles », p.20-21 (secteur UAz)",
        hauteur_note: "28 m à l'acrotère en toiture-terrasse — le plus haut gabarit de la commune.",
@@ -82,7 +82,7 @@ zones:
        recul_voirie_m: 2, recul_voirie_src: "Art. U4.2, p.17-18 (« Ce seuil est réduit à 2,00 mètres minimum en secteur UAz »)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. U12, p.24 (zone UA)"}
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U12, p.24 (zone UA) — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)"}
   UB: {bassin: "Sainte-Marie",
        he_m: 12, hf_m: 15, hauteur_src: "Art. U8.2 « résidentielles », p.20-21",
        hauteur_note: "13 m à l'acrotère en toiture-terrasse.",
@@ -90,7 +90,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (alignement possible OU recul >= 3 m)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
-       pleine_terre_pct: 25, pleine_terre_src: "Art. U12, p.24"}
+       pleine_terre_pct: 25, pleine_terre_src: "Art. U12, p.24 — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)"}
   UC: {bassin: "Sainte-Marie",
        he_m: 10, hf_m: 13, hauteur_src: "Art. U8.2 « résidentielles », p.20-21 (« Zone UC y compris UC1 et UC2 »)",
        hauteur_note: "11 m à l'acrotère en toiture-terrasse.",
@@ -98,21 +98,21 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (recul OBLIGATOIRE >= 3 m en UC/UD)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24 — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)"}
   UC1: {bassin: "Sainte-Marie",
        he_m: 10, hf_m: 13, hauteur_src: "Art. U8.2, p.20-21 (« y compris UC1 et UC2 » — aucune règle propre)",
        emprise_sol_pct: 60, emprise_src: "Art. U7.2, p.20",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24 — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)"}
   UC2: {bassin: "Sainte-Marie",
        he_m: 10, hf_m: 13, hauteur_src: "Art. U8.2, p.20-21 (« y compris UC1 et UC2 »)",
        emprise_sol_pct: 60, emprise_src: "Art. U7.2, p.20",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24 — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)"}
   UD: {bassin: "Sainte-Marie",
        he_m: 8, hf_m: 11, hauteur_src: "Art. U8.2 « résidentielles », p.20-21 (« Zone UD y compris UD1 »)",
        hauteur_note: "10 m à l'acrotère en toiture-terrasse.",
@@ -120,21 +120,21 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (recul obligatoire)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24 — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)"}
   UD1: {bassin: "Sainte-Marie",
        he_m: 8, hf_m: 11, hauteur_src: "Art. U8.2, p.20-21 (« y compris UD1 »)",
        emprise_sol_pct: 50, emprise_src: "Art. U7.2, p.20",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24 — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)"}
 
   # ============== Groupe IV — U « d'activités » (p.28-39) : HABITAT INTERDIT (hors gardiennage) ==============
   UEa: {bassin: "Sainte-Marie",
        he_m: null, hf_m: 24, hauteur_src: "Art. U8.2 « activités », p.33 (faîtage seul)",
        emprise_sol_pct: 60, emprise_src: "Art. U7.2 « activités », p.32",
        recul_voirie_m: 5, recul_voirie_src: "Art. U4.2 « activités », p.31 (« en zones UEa et UR : 5 mètres »)",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32 (une limite possible ; retrait >= H/2, min 4 m)",
+       recul_limites_sep_m: 12, recul_limites_src: "Art. U5.2 « activités », p.31-32 (une limite possible ; retrait >= H/2, min 4 m) — harmonisation doctrine b : max(H/2 à H max 24 m = 12 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
        pleine_terre_pct: "a_verifier", pleine_terre_note: "Le % perméable du groupe activités n'a pas été isolé avec certitude — non gravé.", pleine_terre_src: "Art. U12 « activités », p.36-37",
        habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 : tout est interdit sauf admissions listées ; habitation UNIQUEMENT si indispensable au fonctionnement/gardiennage"}
@@ -142,7 +142,7 @@ zones:
        he_m: null, hf_m: 14, hauteur_src: "Art. U8.2 « activités », p.33",
        emprise_sol_pct: 70, emprise_src: "Art. U7.2 « activités », p.32",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       recul_limites_sep_m: 7, recul_limites_src: "Art. U5.2 « activités », p.31-32 — harmonisation doctrine b : max(H/2 à H max 14 m = 7 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
        habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 (UEc : commerces, services, équipements, bureaux)"}
@@ -150,7 +150,7 @@ zones:
        he_m: null, hf_m: 16, hauteur_src: "Art. U8.2 « activités », p.33 (« Zones UEm et UEp : 16 m »)",
        emprise_sol_pct: 75, emprise_src: "Art. U7.2 « activités », p.32",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       recul_limites_sep_m: 8, recul_limites_src: "Art. U5.2 « activités », p.31-32 — harmonisation doctrine b : max(H/2 à H max 16 m = 8 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
        habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 (UEm : commerces/services, équipements, secteurs primaire-secondaire-tertiaire)"}
@@ -158,7 +158,7 @@ zones:
        he_m: null, hf_m: 16, hauteur_src: "Art. U8.2 « activités », p.33",
        emprise_sol_pct: 75, emprise_src: "Art. U7.2 « activités », p.32",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       recul_limites_sep_m: 8, recul_limites_src: "Art. U5.2 « activités », p.31-32 — harmonisation doctrine b : max(H/2 à H max 16 m = 8 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
        habitat: interdit, habitat_src: "Art. U2 « activités », p.28-30 (« En zone UEp … industrie, artisanat, entrepôt »)"}
@@ -166,7 +166,7 @@ zones:
        he_m: null, hf_m: 24, hauteur_src: "Art. U8.2 « activités », p.33",
        emprise_sol_pct: 75, emprise_src: "Art. U7.2 « activités », p.32",
        recul_voirie_m: 5, recul_voirie_src: "Art. U4.2 « activités », p.31",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       recul_limites_sep_m: 12, recul_limites_src: "Art. U5.2 « activités », p.31-32 — harmonisation doctrine b : max(H/2 à H max 24 m = 12 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
        habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 — zone de l'aéroport Roland-Garros (arbitrage O12 concordant)"}
@@ -174,7 +174,7 @@ zones:
        he_m: null, hf_m: 11, hauteur_src: "Art. U8.2 « activités », p.33",
        emprise_sol_pct: 30, emprise_src: "Art. U7.2 « activités », p.32",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       recul_limites_sep_m: 5.5, recul_limites_src: "Art. U5.2 « activités », p.31-32 — harmonisation doctrine b : max(H/2 à H max 11 m = 5,5 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
        habitat: interdit, habitat_src: "Art. U1/U2 « activités », p.28-30 (zone touristique du groupe activités)"}
@@ -182,7 +182,7 @@ zones:
        he_m: null, hf_m: 11, hauteur_src: "Art. U8.2 « activités », p.33 (zone UT — pas de hauteur propre UTp)",
        emprise_sol_pct: 30, emprise_src: "Art. U7.2 « activités », p.32 (zone UT)",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32",
+       recul_limites_sep_m: 5.5, recul_limites_src: "Art. U5.2 « activités », p.31-32 — harmonisation doctrine b : max(H/2 à H max 11 m = 5,5 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30",
        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37",
        habitat: interdit, habitat_src: "Art. U2 « activités », p.28-30 (secteur UTp : port — bureaux et activités économiques compatibles avec l'infrastructure portuaire)"}
@@ -194,7 +194,7 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20 (via renvoi)",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26 (via renvoi)",
-       pleine_terre_pct: 25, pleine_terre_src: "Art. U12, p.24 (via renvoi, zone UB)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. U12, p.24 (via renvoi, zone UB) — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)",
        note: "1AU ouvertes dès l'approbation (V., p.40) — opération d'ensemble ou au fur et à mesure des équipements, OAP à respecter."}
   1AUc: {bassin: "Sainte-Marie",
        he_m: 10, hf_m: 13, hauteur_src: "Art. U8.2, p.20-21 via renvoi (zone UC)",
@@ -202,12 +202,12 @@ zones:
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2, p.17-18 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5.2, p.19-20 (via renvoi)",
        stat_logement: "1,5 place / logement", stat_src: "Art. U13.2, p.25-26 (via renvoi)",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24 (via renvoi, zone UC)"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U12, p.24 (via renvoi, zone UC) — « La parcelle doit être perméable sur au moins » 20/25/30 % selon zone (liste perméable p.24-25), sans exigence de pleine terre (doctrine a)"}
   1AUep: {bassin: "Sainte-Marie",
        he_m: null, hf_m: 16, hauteur_src: "Art. U8.2 « activités », p.33 via renvoi (zone UEp)",
        emprise_sol_pct: 75, emprise_src: "Art. U7.2 « activités », p.32 (via renvoi)",
        recul_voirie_m: 3, recul_voirie_src: "Art. U4.2 « activités », p.31 (via renvoi)",
-       recul_limites_sep_m: 4, recul_limites_src: "Art. U5.2 « activités », p.31-32 (via renvoi)",
+       recul_limites_sep_m: 8, recul_limites_src: "Art. U5.2 « activités », p.31-32 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 16 m = 8 m ; plancher 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. U2 « activités », p.28-30 (via renvoi)",
        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. U12 « activités », p.36-37 (via renvoi)",
        habitat: interdit, habitat_src: "Art. U2 « activités », p.28-30 via renvoi (zone UEp : industrie, artisanat, entrepôt)"}

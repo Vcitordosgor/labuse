@@ -11,7 +11,8 @@
 #   - Beaucoup de hauteurs données AU FAÎTAGE SEUL ou « sans précision » => hf_m gravé,
 #     he_m null (« En l'absence d'indication » : convention non écrite ici — noté par zone).
 #   - EMPRISE « Sans objet » dans UA/UB/UE/UT => null sourcé ; UEm 70 %, AUBm 60 %.
-#   - RETRAIT LIMITES : règle H/2 avec minimum 3 m partout => minimum gravé, H/2 en note.
+#   - RETRAIT LIMITES : règle H/2 avec minimum 3 m partout => gravé = max(H/2 à la
+#     hauteur max de la zone, 3 m) — harmonisation doctrine b (28/07/2026).
 #   - PLEINE TERRE = « % espace perméable » (Art. 13) — tranches par secteur gravées à la
 #     valeur de la zone/secteur concerné ; réduction <=300 m² (UB) en note.
 #   - indices « psfr2 »/« fr2 » = périmètre de protection rapprochée du Puits (forage) —
@@ -40,7 +41,7 @@ source:
 mode: progressif
 
 regles_transverses:
-  recul_limites: "Retrait >= moitié de la hauteur de la façade (H/2 — égout ou faîtage selon la zone), minimum 3 m — minimum gravé."
+  recul_limites: "Retrait >= moitié de la hauteur de la façade (H/2 — égout ou faîtage selon la zone), minimum 3 m — gravé : max(H/2 à H max, 3 m)."
   stationnement: "Tableau UA/UB : logements <=50 m² SDP 1 place, >50 m² 2 places + 1 visiteur/5 logements ; LLS 1 place (0,5 à <500 m d'une gare/TCSP)."
 
 hypotheses_faisabilite:
@@ -61,33 +62,33 @@ zones:
        hauteur_note: "16 m au faîtage (hé non précisé). Bonus en retrait de 2 m : 19 m, puis 22 m sur 30 % de l'emprise (conditionnels, non gravés).",
        emprise_sol_pct: null, emprise_src: "Art. UA 9, p.16 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (recul obligatoire >= 3 m ; venelle des Lataniers : alignement possible)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.15 (H/2 égout, min 3 m)",
+       recul_limites_sep_m: 8, recul_limites_src: "Art. UA 7, p.15 (H/2 égout, min 3 m) — harmonisation doctrine b : max(H/2 à H max 16 m = 8 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.20-21",
        stat_note: "Logements >50 m² SDP ; <=50 m² : 1 place ; +1 visiteur/5 logements ; LLS 1 (0,5 près TCSP).",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. UA 13.1, p.22 (hors UAm/UAv ; UApsfr2 : 40 %)"}
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UA 13.1, p.22 (hors UAm/UAv ; UApsfr2 : 40 %) — « traité en espace perméable : soit planté intégralement en pleine terre, soit… » (pleine terre = une modalité, pas un sous-minimum) (doctrine a)"}
   UAa: {bassin: "La Possession",
        he_m: null, hf_m: 9, hauteur_src: "Art. UA 10.2, p.17 (« Dans le secteur UAa, la hauteur maximale est fixée à 9 mètres » — sans précision égout/faîtage : gravé en faîtage, prudent)",
        emprise_sol_pct: null, emprise_src: "Art. UA 9, p.16 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.15",
+       recul_limites_sep_m: 4.5, recul_limites_src: "Art. UA 7, p.15 — harmonisation doctrine b : max(H/2 à H max 9 m = 4,5 m ; plancher 3 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UA 1.2, p.10-11",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. UA 13.1, p.22",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UA 13.1, p.22 — « traité en espace perméable : soit planté intégralement en pleine terre, soit… » (pleine terre = une modalité, pas un sous-minimum) (doctrine a)",
        habitat: interdit, habitat_src: "Art. UA 1.2 alinéa 3, p.10-11 : « Dans le secteur UAa, les constructions à usage d'habitation » sont INTERDITES"}
   UAm: {bassin: "La Possession",
        he_m: 12, hf_m: null, hauteur_src: "Art. UA 10.2, p.17 (« Sur le reste du secteur, la hauteur maximale à l'égout du toit est limitée à 12 mètres »)",
        hauteur_note: "15 m à l'égout dans la bande de 50 m de part et d'autre de la voie RN1E (rue Gandhi)–rue du Moulin Joli (non gravé : bande).",
        emprise_sol_pct: null, emprise_src: "Art. UA 9, p.16 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.15",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UA 7, p.15 — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.20-21",
-       pleine_terre_pct: "a_verifier", pleine_terre_note: "UAm EXCEPTÉ de la règle des 35 % (Art. UA 13.1 : « A l'exception des secteurs UAm et UAv ») — pas de % attribuable.", pleine_terre_src: "Art. UA 13.1, p.22"}
+       pleine_terre_pct: "a_verifier", pleine_terre_note: "UAm EXCEPTÉ de la règle des 35 % (Art. UA 13.1 : « A l'exception des secteurs UAm et UAv ») — pas de % attribuable.", pleine_terre_src: "Art. UA 13.1, p.22 — « traité en espace perméable : soit planté intégralement en pleine terre, soit… » (pleine terre = une modalité, pas un sous-minimum) (doctrine a)"}
   UApsfr2: {bassin: "La Possession",
        he_m: null, hf_m: 12, hauteur_src: "Art. UA 10.2, p.17 (« Dans le secteur UApsfr2 … 12 mètres » — sans précision : gravé en faîtage, prudent)",
        emprise_sol_pct: null, emprise_src: "Art. UA 9, p.16 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.15",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UA 7, p.15 — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.20-21",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. UA 13.1, p.22 (« porté à 40% minimum en secteur UApsfr2 »)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UA 13.1, p.22 (« porté à 40% minimum en secteur UApsfr2 ») — « traité en espace perméable : soit planté intégralement en pleine terre, soit… » (pleine terre = une modalité, pas un sous-minimum) (doctrine a)",
        note: "psfr2 = périmètre de protection rapprochée du Puits (servitude captage)."}
   UAv: {bassin: "La Possession",
        he_m: "a_verifier", hf_m: "a_verifier",
@@ -95,53 +96,53 @@ zones:
        hauteur_src: "Art. UA 10.2, p.17 (tableau par îlot)",
        emprise_sol_pct: null, emprise_src: "Art. UA 9, p.16 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.15",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.15 — doctrine b NON APPLICABLE : hauteur a_verifier, H/2 incalculable, plancher 3 m conservé (à revoir avec la hauteur)",
        stat_logement: "a_verifier", stat_note: "UAv EXCEPTÉ du tableau de stationnement (Art. UA 12.2 : « A l'exception du secteur UAv »).", stat_src: "Art. UA 12.2, p.20",
-       pleine_terre_pct: "a_verifier", pleine_terre_note: "UAv excepté de la règle des 35 %.", pleine_terre_src: "Art. UA 13.1, p.22"}
+       pleine_terre_pct: "a_verifier", pleine_terre_note: "UAv excepté de la règle des 35 %.", pleine_terre_src: "Art. UA 13.1, p.22 — « traité en espace perméable : soit planté intégralement en pleine terre, soit… » (pleine terre = une modalité, pas un sous-minimum) (doctrine a)"}
 
   # ============== UB (+ UBa, UBb, UBc, UBpszc, UBpsfr2) — chap. p.26-37 ==============
   UB: {bassin: "La Possession",
        he_m: 9, hf_m: 12, hauteur_src: "Art. UB 10.2, p.31-32",
        emprise_sol_pct: null, emprise_src: "Art. UB 9, p.31 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.29 (alignement possible OU recul >= 3 m)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.30 (H/2 égout, min 3 m)",
+       recul_limites_sep_m: 4.5, recul_limites_src: "Art. UB 7, p.30 (H/2 égout, min 3 m) — harmonisation doctrine b : max(H/2 à H max 9 m = 4,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.34-35 (tableau identique UA : >50 m² 2 pl., <=50 m² 1 pl.)",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. UB 13.1, p.36"}
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UB 13.1, p.36 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   UBa: {bassin: "La Possession",
        he_m: 7, hf_m: 10, hauteur_src: "Art. UB 10.2, p.31-32 (« Dans les secteurs UBa, UBb et UBc … 7/10 m »)",
        emprise_sol_pct: null, emprise_src: "Art. UB 9, p.31 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.29",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.30",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. UB 7, p.30 — harmonisation doctrine b : max(H/2 à H max 7 m = 3,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.34-35",
-       pleine_terre_pct: 50, pleine_terre_src: "Art. UB 13.1, p.36 (« porté à 50% en secteur UBa »)"}
+       pleine_terre_pct: 50, pleine_terre_src: "Art. UB 13.1, p.36 (« porté à 50% en secteur UBa ») — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   UBb: {bassin: "La Possession",
        he_m: 7, hf_m: 10, hauteur_src: "Art. UB 10.2, p.31-32 (secteurs UBa/UBb/UBc)",
        emprise_sol_pct: null, emprise_src: "Art. UB 9, p.31 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.29",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.30",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. UB 7, p.30 — harmonisation doctrine b : max(H/2 à H max 7 m = 3,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.34-35",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36 (« 40% en secteurs UBb, UBc, UBpszc et UBpsfr2 » ; <=300 m² : réduit à 35 %)"}
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36 (« 40% en secteurs UBb, UBc, UBpszc et UBpsfr2 » ; <=300 m² : réduit à 35 %) — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   UBc: {bassin: "La Possession",
        he_m: 7, hf_m: 10, hauteur_src: "Art. UB 10.2, p.31-32 (secteurs UBa/UBb/UBc)",
        emprise_sol_pct: null, emprise_src: "Art. UB 9, p.31 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.29",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.30",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. UB 7, p.30 — harmonisation doctrine b : max(H/2 à H max 7 m = 3,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.34-35",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36"}
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   UBpszc: {bassin: "La Possession",
        he_m: null, hf_m: 7, hauteur_src: "Art. UB 10.2, p.32 (« Dans le secteur UBpszc, la hauteur maximale est fixée à 7 mètres » — sans précision : gravé en faîtage, prudent ; en limite séparative 7 m sur 3 m de profondeur)",
        emprise_sol_pct: null, emprise_src: "Art. UB 9, p.31 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.29",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.30",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. UB 7, p.30 — harmonisation doctrine b : max(H/2 à H max 7 m = 3,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.34-35",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36"}
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   UBpsfr2: {bassin: "La Possession",
        he_m: 9, hf_m: 12, hauteur_src: "Art. UB 10.2, p.31-32 (règle générale — UBpsfr2 non excepté)",
        emprise_sol_pct: null, emprise_src: "Art. UB 9, p.31 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.29",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.30",
+       recul_limites_sep_m: 4.5, recul_limites_src: "Art. UB 7, p.30 — harmonisation doctrine b : max(H/2 à H max 9 m = 4,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.34-35",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        note: "psfr2 = périmètre de protection rapprochée du Puits."}
 
   # ============== UE — activités (p.38-46) : habitat limité au gardiennage ==============
@@ -149,7 +150,7 @@ zones:
        he_m: 12, hf_m: null, hauteur_src: "Art. UE 10.2, p.42 (« 12 mètres à l'égout du toit ou au sommet de l'acrotère » — faîtage non précisé)",
        emprise_sol_pct: null, emprise_src: "Art. UE 9, p.42 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UE 6.2, p.40",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UE 7, p.41 (H/2 faîtage, min 3 m)",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UE 7, p.41 (H/2 faîtage, min 3 m) — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 3 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage 70 m²).", stat_src: "Art. UE 2.2, p.38-39",
        pleine_terre_pct: "a_verifier", pleine_terre_note: "Art. UE 13 : « espace libre dont au moins la moitié en espace perméable » — % de base tronqué à l'extraction (« 0% ») : non attribuable sûrement.", pleine_terre_src: "Art. UE 13, p.45",
        habitat: interdit, habitat_src: "Art. UE 1.2/2.2, p.38-39 : habitation interdite SAUF gardiennage/surveillance, 70 m² SDP max"}
@@ -157,9 +158,9 @@ zones:
        he_m: null, hf_m: 12, hauteur_src: "Art. UEm 10.2, p.51 (« 12 mètres au faîtage »)",
        emprise_sol_pct: 70, emprise_src: "Art. UEm 9, p.51 (« ne peut excéder 70% de l'unité foncière »)",
        recul_voirie_m: 3, recul_voirie_src: "Art. UEm 6.2, p.49 (RN1E rue Gandhi : 5 m)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UEm 7, p.50 (H/2, min 3 m)",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UEm 7, p.50 (H/2, min 3 m) — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 3 m)",
        stat_logement: "a_verifier", stat_note: "HABITAT ADMIS en UEm (l'Art. UEm 1.2 n'interdit que l'entrepôt exclusif, l'agricole, le camping et les décharges — divergence avec la liste O12 « inféré », le règlement prime) ; norme logement non trouvée au tableau UEm 12 → a_verifier.", stat_src: "Art. UEm 12, p.54",
-       pleine_terre_pct: 10, pleine_terre_src: "Art. UEm 13, p.55 (« 10% de la surface … en espace éco-aménageable »)",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. UEm 13, p.55 (« 10% de la surface … en espace éco-aménageable ») — « traité en espace éco-aménageable » (coefficient de biotope, PAS pleine terre — extension signalée) (doctrine a)",
        pleine_terre_note: "10 % « éco-aménageable » (≠ pleine terre stricte) — valeur la plus proche portée par le schéma."}
 
   # ============== UT (+ UTfr2) — touristique littorale (p.57-65) : habitat interdit ==============
@@ -167,17 +168,17 @@ zones:
        he_m: null, hf_m: 10, hauteur_src: "Art. UT 10.2, p.61 (« fixée à 10 mètres » — sans précision : gravé en faîtage, prudent)",
        emprise_sol_pct: null, emprise_src: "Art. UT 9, p.61 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UT 6.2, p.59 (alignement OU recul >= 3 m)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UT 7, p.60 (H/2 faîtage, min 3 m)",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. UT 7, p.60 (H/2 faîtage, min 3 m) — harmonisation doctrine b : max(H/2 à H max 10 m = 5 m ; plancher 3 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UT 1.2/2, p.57-58",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. UT 13, p.64 (« Au minimum 30% … porté à 40% en secteur UTfr2 »)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UT 13, p.64 (« Au minimum 30% … porté à 40% en secteur UTfr2 ») — « espace perméable planté en pleine terre » : PLEINE TERRE CONFIRMÉE (doctrine a)",
        habitat: interdit, habitat_src: "Art. UT 1.2, p.57 : tout est interdit sauf admissions de l'Art. UT 2 (50 pas géométriques : équipements/commerces/tourisme ; extensions) — pas de logement ordinaire"}
   UTfr2: {bassin: "La Possession",
        he_m: null, hf_m: 10, hauteur_src: "Art. UT 10.2, p.61 (zone UT — pas de hauteur propre UTfr2)",
        emprise_sol_pct: null, emprise_src: "Art. UT 9, p.61 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UT 6.2, p.59",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UT 7, p.60",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. UT 7, p.60 — harmonisation doctrine b : max(H/2 à H max 10 m = 5 m ; plancher 3 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UT 1.2/2, p.57-58",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. UT 13, p.64 (« porté à 40% en secteur UTfr2 »)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UT 13, p.64 (« porté à 40% en secteur UTfr2 ») — « espace perméable planté en pleine terre » : PLEINE TERRE CONFIRMÉE (doctrine a)",
        habitat: interdit, habitat_src: "Art. UT 1.2, p.57 (chapitre commun UT)",
        note: "fr2 = périmètre de protection rapprochée du Puits."}
 
@@ -186,25 +187,25 @@ zones:
        he_m: 9, hf_m: 12, hauteur_src: "Art. UB 10.2, p.31-32 via renvoi (ZONE AUindicée p.67 : « se reporter au règlement de la zone U indiquée en indice »)",
        emprise_sol_pct: null, emprise_src: "Art. UB 9, p.31 (via renvoi)",
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.29 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.30 (via renvoi)",
+       recul_limites_sep_m: 4.5, recul_limites_src: "Art. UB 7, p.30 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 9 m = 4,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.34-35 (via renvoi)",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi)",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi) — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        note: "Densité MINIMALE 30 logts/ha (Art. AUindicée 2.3, p.67-68)."}
   AUBb: {bassin: "La Possession",
        he_m: 7, hf_m: 10, hauteur_src: "Art. UB 10.2, p.31-32 via renvoi (secteur UBb)",
        emprise_sol_pct: null, emprise_src: "Art. UB 9, p.31 (via renvoi)",
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.29 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.30 (via renvoi)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. UB 7, p.30 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 7 m = 3,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.34-35 (via renvoi)",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi) — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        note: "Densité 20 à 30 logts/ha max (Art. AUindicée 2.3, p.67-68)."}
   AUBpsfr2: {bassin: "La Possession",
        he_m: 9, hf_m: 12, hauteur_src: "Art. UB 10.2, p.31-32 via renvoi (UBpsfr2 non excepté)",
        emprise_sol_pct: null, emprise_src: "Art. UB 9, p.31 (via renvoi)",
        recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.29 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.30 (via renvoi)",
+       recul_limites_sep_m: 4.5, recul_limites_src: "Art. UB 7, p.30 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 9 m = 4,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.34-35 (via renvoi)",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi) — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        note: "Densité minimale 30 logts/ha (AUB/AUBpsfr2/AUBm)."}
   AUAv: {bassin: "La Possession",
        he_m: "a_verifier", hf_m: "a_verifier",
@@ -212,25 +213,25 @@ zones:
        hauteur_src: "Art. UA 10.2, p.17 via renvoi (tableau par îlot)",
        emprise_sol_pct: null, emprise_src: "Art. UA 9, p.16 (via renvoi : « Sans objet »)",
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.15 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.15 (via renvoi) — doctrine b NON APPLICABLE : hauteur a_verifier, H/2 incalculable, plancher 3 m conservé (à revoir avec la hauteur)",
        stat_logement: "a_verifier", stat_src: "Art. UA 12.2, p.20 (UAv excepté du tableau)",
-       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. UA 13.1, p.22 (UAv excepté)",
+       pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. UA 13.1, p.22 (UAv excepté) — « traité en espace perméable : soit planté intégralement en pleine terre, soit… » (pleine terre = une modalité, pas un sous-minimum) (doctrine a)",
        note: "Densité minimale 50 logts/ha (AUA/AUAv, Art. AUindicée 2.3)."}
   AUT: {bassin: "La Possession",
        he_m: null, hf_m: 10, hauteur_src: "Art. UT 10.2, p.61 via renvoi",
        emprise_sol_pct: null, emprise_src: "Art. UT 9, p.61 (via renvoi)",
        recul_voirie_m: 3, recul_voirie_src: "Art. UT 6.2, p.59 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UT 7, p.60 (via renvoi)",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. UT 7, p.60 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 10 m = 5 m ; plancher 3 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. UT 1.2/2, p.57-58 (via renvoi)",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. UT 13, p.64 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UT 13, p.64 (via renvoi) — « espace perméable planté en pleine terre » : PLEINE TERRE CONFIRMÉE (doctrine a)",
        habitat: interdit, habitat_src: "Art. UT 1.2, p.57 via renvoi (AUT exemptée de la clause de densité, Art. AUindicée 2.3)"}
   AUEm: {bassin: "La Possession",
        he_m: null, hf_m: 12, hauteur_src: "Art. UEm 10.2, p.51 via renvoi",
        emprise_sol_pct: 70, emprise_src: "Art. UEm 9, p.51 (via renvoi)",
        recul_voirie_m: 3, recul_voirie_src: "Art. UEm 6.2, p.49 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UEm 7, p.50 (via renvoi)",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. UEm 7, p.50 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 3 m)",
        stat_logement: "a_verifier", stat_note: "Habitat admis (cf. UEm) ; norme logement non trouvée.", stat_src: "Art. UEm 12, p.54 (via renvoi)",
-       pleine_terre_pct: 10, pleine_terre_src: "Art. UEm 13, p.55 (via renvoi)"}
+       pleine_terre_pct: 10, pleine_terre_src: "Art. UEm 13, p.55 (via renvoi) — « traité en espace éco-aménageable » (coefficient de biotope, PAS pleine terre — extension signalée) (doctrine a)"}
   # AUBm — chapitre PROPRE (p.71-80) : hauteur exprimée en NIVEAUX (« R+3 ») — le schéma ne
   # porte que des mètres => a_verifier motivé (friction consignée) ; le repli générique
   # (~R+2 estimé) SOUS-estime la règle réelle : sens prudent, étiquette Estimé honnête.
@@ -240,7 +241,7 @@ zones:
        hauteur_src: "Art. AUBm 10.2, p.75",
        emprise_sol_pct: 60, emprise_src: "Art. AUBm 9, p.75 (« excéder 60% de l'unité foncière »)",
        recul_voirie_m: 4, recul_voirie_src: "Art. AUBm 6.2, p.73 (recul >= 4 m)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. AUBm 7, p.74 (H/2 égout, min 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. AUBm 7, p.74 (H/2 égout, min 3 m) — doctrine b NON APPLICABLE : hauteur a_verifier, H/2 incalculable, plancher 3 m conservé (à revoir avec la hauteur)",
        stat_logement: "2 places / logement", stat_src: "Art. AUBm 12, p.78 (tableau type UA/UB)",
        pleine_terre_pct: 25, pleine_terre_src: "Art. AUBm 13, p.79 (« 25% minimum obligatoire … en espace perméable »)",
        note: "Densité minimale 30 logts/ha (Art. AUindicée 2.3)."}

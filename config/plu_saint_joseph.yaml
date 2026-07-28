@@ -17,7 +17,7 @@
 #     Friction v1 consignée au rapport de nuit.
 #   - PLEINE TERRE = « % espace vert et perméable » des Art. 13 (convention Saint-Paul).
 #   - RETRAIT LIMITES : U2-U6 = « moitié de la hauteur de façade, minimum X m » → gravé X
-#     (minimum plancher, prudent ; règle H/2 en note).
+#     max(H/2 à la hauteur max de la zone, plancher) — harmonisation doctrine b (28/07/2026).
 #   - ZONES AU : chapitre unique « AUindicée » (renvoi à la zone U d'indice) ; AUto/AUtok à
 #     règles PROPRES (Art. AUindicée 9/10). Degrés : 1AU ouvertes ; 2AU fermées (après
 #     aménagement des 1AU du pôle SAR) ; 3AU fermées (après les 2AU, à partir de 2026) ;
@@ -43,7 +43,7 @@ source:
 mode: progressif
 
 regles_transverses:
-  recul_limites: "U2-U6 : retrait >= moitié de la hauteur de la façade (H mesurée à l'égout), avec un MINIMUM par zone (gravé) — Art. <Z>7.2."
+  recul_limites: "U2-U6 : retrait >= moitié de la hauteur de la façade (H mesurée à l'égout), minimum par zone ; gravé = max(H/2 à H max de la zone, minimum) — Art. <Z>7.2."
   stationnement_rpa: "RPA : 0,5 place/logement aidé + 2 places visiteurs par tranche de 10 logements (tableaux Art. 12)."
   bandes: "U1/U2/U3/U5cvd : hauteurs croissantes par bande de profondeur depuis l'alignement — bande profonde gravée, front en note."
 
@@ -76,17 +76,17 @@ zones:
        hauteur_note: "BANDES : 8/10 m (0-6 m depuis l'alignement) ; 10/12 m (6-12 m) ; 11/13 m au-delà (gravé). Bonus au-delà de 12 m si RDC commercial/services ou RPA : 13/15 m (non gravé, conditionnel). Annexes 3,5 m.",
        emprise_sol_pct: 80, emprise_src: "Art. U2 9.2, p.34",
        recul_voirie_m: 3, recul_voirie_src: "Art. U2 6.2, p.31 (alignement possible OU retrait >= 3 m)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U2 7.2, p.32-33",
-       recul_limites_note: "2 limites, 1 ou retrait ; retrait >= H/2 de la façade, minimum 3 m (minimum gravé).",
+       recul_limites_sep_m: 5.5, recul_limites_src: "Art. U2 7.2, p.32-33 — harmonisation doctrine b : max(H/2 à H max 11 m = 5,5 m ; plancher 3 m)",
+       recul_limites_note: "2 limites, 1 ou retrait ; retrait >= H/2 de la façade, minimum 3 m (gravé : H/2 à H max).",
        stat_logement: "1 place / logement", stat_src: "Art. U2 12.2, p.37-38",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. U2 13.1, p.39"}
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U2 13.1, p.39 — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   U2a: {bassin: "Saint-Joseph",
        he_m: 11, hf_m: 13, hauteur_src: "Art. U2 10.2, p.34-35 (aucune variante U2a aux articles chiffrés — vérifié)",
        emprise_sol_pct: 80, emprise_src: "Art. U2 9.2, p.34",
        recul_voirie_m: 3, recul_voirie_src: "Art. U2 6.2, p.31",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U2 7.2, p.32-33",
+       recul_limites_sep_m: 5.5, recul_limites_src: "Art. U2 7.2, p.32-33 — harmonisation doctrine b : max(H/2 à H max 11 m = 5,5 m ; plancher 3 m)",
        stat_logement: "1 place / logement", stat_src: "Art. U2 12.2, p.37-38",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. U2 13.1, p.39",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U2 13.1, p.39 — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
        note: "Secteur U2a = « diverses centralités du Grand Centre-ville » (caractère de zone p.27) ; mêmes règles chiffrées que U2."}
 
   # ============== U3 (+ U3a, U3ar) — grand centre-ville (chap. impr 42-56) ==============
@@ -95,25 +95,25 @@ zones:
        hauteur_note: "BANDES identiques à U2 : 8/10 (0-6 m), 10/12 (6-12 m), 11/13 au-delà (gravé) ; bonus RDC commercial/RPA au-delà de 12 m : 13/15 (conditionnel, non gravé).",
        emprise_sol_pct: 70, emprise_src: "Art. U3 9.2, p.49",
        recul_voirie_m: 3, recul_voirie_src: "Art. U3 6.2, p.46 (alignement possible OU retrait >= 3 m)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U3 7.2, p.47-48 (retrait >= H/2, min 3 m)",
+       recul_limites_sep_m: 5.5, recul_limites_src: "Art. U3 7.2, p.47-48 (retrait >= H/2, min 3 m) — harmonisation doctrine b : max(H/2 à H max 11 m = 5,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U3 12.2, p.53-54",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. U3 13.1, p.55"}
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U3 13.1, p.55 — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   U3a: {bassin: "Saint-Joseph",
        he_m: 8, hf_m: 9, hauteur_src: "Art. U3 10.2, p.50 (« Dans le secteur U3a, quelle que soit la distance d'implantation … 8 m à l'égout, 9 m au faîtage »)",
        hauteur_note: "Bonus conditionnel au-delà de 6 m de profondeur si RDC commercial/services (valeur du bonus au texte, non gravée).",
        emprise_sol_pct: 70, emprise_src: "Art. U3 9.2, p.49",
        recul_voirie_m: 3, recul_voirie_src: "Art. U3 6.2, p.46",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U3 7.2, p.47-48",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U3 7.2, p.47-48 — harmonisation doctrine b : max(H/2 à H max 8 m = 4 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U3 12.2, p.53-54",
-       pleine_terre_pct: 25, pleine_terre_src: "Art. U3 13.1, p.55 (« En secteur U3a, ce seuil est porté à 25% »)"}
+       pleine_terre_pct: 25, pleine_terre_src: "Art. U3 13.1, p.55 (« En secteur U3a, ce seuil est porté à 25% ») — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   U3ar: {bassin: "Saint-Joseph",
        he_m: 8, hf_m: 9, hauteur_src: "Art. U3 10.2, p.50 (règles du secteur U3a)",
        hauteur_note: "Indice « r » (risque) : plancher bas surélevé >= 0,5 m au-dessus du TN, hauteur mesurée depuis le plancher bas (Art. U3 10.1, p.49).",
        emprise_sol_pct: 70, emprise_src: "Art. U3 9.2, p.49",
        recul_voirie_m: 3, recul_voirie_src: "Art. U3 6.2, p.46",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U3 7.2, p.47-48",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U3 7.2, p.47-48 — harmonisation doctrine b : max(H/2 à H max 8 m = 4 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U3 12.2, p.53-54",
-       pleine_terre_pct: 25, pleine_terre_src: "Art. U3 13.1, p.55 (secteur U3a)"}
+       pleine_terre_pct: 25, pleine_terre_src: "Art. U3 13.1, p.55 (secteur U3a) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
 
   # ============== U4 — Cayenne (chap. impr 57-70) ==============
   U4: {bassin: "Saint-Joseph",
@@ -121,10 +121,10 @@ zones:
        hauteur_note: "Bonus si locaux commerciaux/services/bureaux : 7/10 m (conditionnel, non gravé). Annexes 3,5 m.",
        emprise_sol_pct: 80, emprise_src: "Art. U4 9.2, p.64",
        recul_voirie_m: 2, recul_voirie_src: "Art. U4 6.2, p.61 (alignement possible OU retrait >= 2 m)",
-       recul_limites_sep_m: 1.9, recul_limites_src: "Art. U4 7.2, p.62-63",
-       recul_limites_note: "2 limites si terrain <=400 m², 1 limite si >400 m² ; retrait >= H/2, minimum 1,9 m (minimum gravé).",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U4 7.2, p.62-63 — harmonisation doctrine b : max(H/2 à H max 6 m = 3 m ; plancher 1,9 m)",
+       recul_limites_note: "2 limites si terrain <=400 m², 1 limite si >400 m² ; retrait >= H/2, minimum 1,9 m (gravé : H/2 à H max).",
        stat_logement: "1 place / logement", stat_src: "Art. U4 12.2, p.67-68",
-       pleine_terre_pct: 10, pleine_terre_src: "Art. U4 13.1, p.69"}
+       pleine_terre_pct: 10, pleine_terre_src: "Art. U4 13.1, p.69 — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
 
   # ============== U5 (+ cv, cvd, ma, ru, vi) — mi-pentes et hauts (chap. impr 71-86) ==============
   U5: {bassin: "Saint-Joseph",
@@ -132,33 +132,33 @@ zones:
        hauteur_note: "Logements aidés : 8/10 m (conditionnel, non gravé). Annexes 3,5 m.",
        emprise_sol_pct: 50, emprise_src: "Art. U5 9.2, p.79",
        recul_voirie_m: 4, recul_voirie_src: "Art. U5 6.2, p.75-76 (retrait obligatoire >= 4 m)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U5 7.2, p.77-78 (1 limite max OU retrait >= H/2, min 3 m)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. U5 7.2, p.77-78 (1 limite max OU retrait >= H/2, min 3 m) — harmonisation doctrine b : max(H/2 à H max 7 m = 3,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U5 12.2, p.83",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85"}
+       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   U5cv: {bassin: "Saint-Joseph",
        he_m: 7, hf_m: 9, hauteur_src: "Art. U5 10.2, p.80 (« Dans le secteur U5cv … 7 m à l'égout, 9 m au faîtage »)",
        emprise_sol_pct: 60, emprise_src: "Art. U5 9.2, p.79 (« en U5cv à 60% »)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U5 6.2, p.75-76 (U5cv/U5cvd : alignement possible OU retrait)",
        recul_voirie_note: "Alignement possible (0) en U5cv/U5cvd.",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U5 7.2, p.77-78 (U5cv/U5cvd : 2 limites possibles)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. U5 7.2, p.77-78 (U5cv/U5cvd : 2 limites possibles) — harmonisation doctrine b : max(H/2 à H max 7 m = 3,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U5 12.2, p.83",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. U5 13.1, p.84-85 (« dans le secteur U5cv à 30% »)"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. U5 13.1, p.84-85 (« dans le secteur U5cv à 30% ») — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   U5cvd: {bassin: "Saint-Joseph",
        he_m: 10, hf_m: 12, hauteur_src: "Art. U5 10.2, p.80",
        hauteur_note: "BANDES : 8/10 m (0-6 m depuis l'alignement) ; 10/12 m au-delà (gravé, précédent Saint-Paul U1a).",
        emprise_sol_pct: 75, emprise_src: "Art. U5 9.2, p.79 (« Dans le secteur U5cvd, ce seuil est porté à 75% »)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U5 6.2, p.75-76 (alignement possible OU retrait)",
        recul_voirie_note: "Alignement possible (0) en U5cv/U5cvd.",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U5 7.2, p.77-78 (2 limites possibles)",
+       recul_limites_sep_m: 5, recul_limites_src: "Art. U5 7.2, p.77-78 (2 limites possibles) — harmonisation doctrine b : max(H/2 à H max 10 m = 5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U5 12.2, p.83",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. U5 13.1, p.84-85 (« Dans le secteur U5cvd ce seuil est réduit à 15% »)"}
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U5 13.1, p.84-85 (« Dans le secteur U5cvd ce seuil est réduit à 15% ») — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   U5ma: {bassin: "Saint-Joseph",
        he_m: 7, hf_m: 9, hauteur_src: "Art. U5 10.2, p.79-80 (« En zone U5 et dans le secteur U5ma »)",
        emprise_sol_pct: 40, emprise_src: "Art. U5 9.2, p.79 (« dans les secteurs U5ma, U5ru et U5vi ce seuil est limité à 40% »)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U5 6.2, p.75-76",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U5 7.2, p.77-78",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. U5 7.2, p.77-78 — harmonisation doctrine b : max(H/2 à H max 7 m = 3,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U5 12.2, p.83",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (base zone — aucune exception U5ma)",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (base zone — aucune exception U5ma) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
        note: "Camping/hébergements de loisirs ADMIS en U5ma/U5vi (exception à l'interdiction générale, Art. U5 1.2, p.71-72)."}
   U5ru: {bassin: "Saint-Joseph",
        he_m: 6, hf_m: 8, hauteur_src: "Art. U5 10.2, p.80 (« Dans les secteurs U5ru et U5vi … 6 m à l'égout, 8 m au faîtage »)",
@@ -166,14 +166,14 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. U5 6.2, p.75-76",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5 7.2, p.77-78",
        stat_logement: "2 places / logement", stat_src: "Art. U5 12.2, p.83",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (base zone)"}
+       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (base zone) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   U5vi: {bassin: "Saint-Joseph",
        he_m: 6, hf_m: 8, hauteur_src: "Art. U5 10.2, p.80 (secteurs U5ru et U5vi)",
        emprise_sol_pct: 40, emprise_src: "Art. U5 9.2, p.79",
        recul_voirie_m: 4, recul_voirie_src: "Art. U5 6.2, p.75-76",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5 7.2, p.77-78",
        stat_logement: "2 places / logement", stat_src: "Art. U5 12.2, p.83",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (base zone)",
+       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (base zone) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
        note: "Camping/hébergements de loisirs admis (Art. U5 1.2)."}
 
   # ============== U6 (+ U6c) — activités économiques (chap. impr 87-99) : HABITAT INTERDIT ==============
@@ -182,17 +182,17 @@ zones:
        hauteur_note: "Secteur U6ch et ZA de Vincendo : 10/13 m (aucun polygone U6ch au zonage servi).",
        emprise_sol_pct: 50, emprise_src: "Art. U6 9.2, p.93",
        recul_voirie_m: 4, recul_voirie_src: "Art. U6 6.2, p.91 (retrait obligatoire >= 4 m)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U6 7.2, p.92 (1 limite max OU retrait >= H/2, min 3 m)",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. U6 7.2, p.92 (1 limite max OU retrait >= H/2, min 3 m) — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 3 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. U6 1.2, p.87-88",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. U6 13.1, p.98",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U6 13.1, p.98 — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. U6 1.2, p.87-88 : « Les constructions ouvrages et travaux à usage d'habitation Y COMPRIS celles liées au gardiennage » sont interdits — ZAC des Grègues I/II, Vincendo, station de transit"}
   U6c: {bassin: "Saint-Joseph",
        he_m: 15, hf_m: 18, hauteur_src: "Art. U6 10.2, p.94 (« Dans le secteur U6c, ces seuils sont portés à 15/18 m »)",
        emprise_sol_pct: 50, emprise_src: "Art. U6 9.2, p.93",
        recul_voirie_m: 4, recul_voirie_src: "Art. U6 6.2, p.91",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U6 7.2, p.92",
+       recul_limites_sep_m: 7.5, recul_limites_src: "Art. U6 7.2, p.92 — harmonisation doctrine b : max(H/2 à H max 15 m = 7,5 m ; plancher 3 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. U6 1.2, p.87-88",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. U6 13.1, p.98",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U6 13.1, p.98 — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. U6 1.2, p.87-88 (chapitre commun U6)"}
 
   # ============== 1AU* ouvertes — renvoi à la zone U d'indice (chap. AUindicée, impr 105-110) ==============
@@ -200,53 +200,53 @@ zones:
        he_m: 11, hf_m: 13, hauteur_src: "Art. U3 10.2, p.49-50 via renvoi (ZONE AUindicée p.105 : « se reporter … au règlement des zones urbaines correspondantes »)",
        emprise_sol_pct: 70, emprise_src: "Art. U3 9.2, p.49 (via renvoi)",
        recul_voirie_m: 3, recul_voirie_src: "Art. U3 6.2, p.46 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U3 7.2, p.47-48 (via renvoi)",
+       recul_limites_sep_m: 5.5, recul_limites_src: "Art. U3 7.2, p.47-48 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 11 m = 5,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U3 12.2, p.53-54 (via renvoi)",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. U3 13.1, p.55 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U3 13.1, p.55 (via renvoi) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
        note: "1AU = urbanisation prioritaire SAR (ex-NA/NAU du POS), opération d'ensemble ou au fur et à mesure des équipements. Densité minimale AU3 : 50 logts/ha (Art. AUindicée 2.2, p.106-107)."}
   1AU3a: {bassin: "Saint-Joseph",
        he_m: 8, hf_m: 9, hauteur_src: "Art. U3 10.2, p.50 via renvoi (règles du secteur U3a)",
        emprise_sol_pct: 70, emprise_src: "Art. U3 9.2, p.49 (via renvoi)",
        recul_voirie_m: 3, recul_voirie_src: "Art. U3 6.2, p.46 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U3 7.2, p.47-48 (via renvoi)",
+       recul_limites_sep_m: 4, recul_limites_src: "Art. U3 7.2, p.47-48 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 8 m = 4 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U3 12.2, p.53-54 (via renvoi)",
-       pleine_terre_pct: 25, pleine_terre_src: "Art. U3 13.1, p.55 (secteur U3a, via renvoi)"}
+       pleine_terre_pct: 25, pleine_terre_src: "Art. U3 13.1, p.55 (secteur U3a, via renvoi) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   1AU5: {bassin: "Saint-Joseph",
        he_m: 7, hf_m: 9, hauteur_src: "Art. U5 10.2, p.79-80 via renvoi (ZONE AUindicée p.105)",
        emprise_sol_pct: 50, emprise_src: "Art. U5 9.2, p.79 (via renvoi)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U5 6.2, p.75-76 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U5 7.2, p.77-78 (via renvoi)",
+       recul_limites_sep_m: 3.5, recul_limites_src: "Art. U5 7.2, p.77-78 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 7 m = 3,5 m ; plancher 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. U5 12.2, p.83 (via renvoi)",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (via renvoi)"}
+       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (via renvoi) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   1AU5ru: {bassin: "Saint-Joseph",
        he_m: 6, hf_m: 8, hauteur_src: "Art. U5 10.2, p.80 via renvoi (secteurs U5ru/U5vi)",
        emprise_sol_pct: 40, emprise_src: "Art. U5 9.2, p.79 (via renvoi)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U5 6.2, p.75-76 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5 7.2, p.77-78 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. U5 12.2, p.83 (via renvoi)",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (via renvoi)"}
+       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (via renvoi) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   1AU5vi: {bassin: "Saint-Joseph",
        he_m: 6, hf_m: 8, hauteur_src: "Art. U5 10.2, p.80 via renvoi (secteurs U5ru/U5vi)",
        emprise_sol_pct: 40, emprise_src: "Art. U5 9.2, p.79 (via renvoi)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U5 6.2, p.75-76 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. U5 7.2, p.77-78 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. U5 12.2, p.83 (via renvoi)",
-       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (via renvoi)"}
+       pleine_terre_pct: 35, pleine_terre_src: "Art. U5 13.1, p.84-85 (via renvoi) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
   1AU6: {bassin: "Saint-Joseph",
        he_m: 12, hf_m: 15, hauteur_src: "Art. U6 10.2, p.94 via renvoi (ZONE AUindicée p.105)",
        emprise_sol_pct: 50, emprise_src: "Art. U6 9.2, p.93 (via renvoi)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U6 6.2, p.91 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U6 7.2, p.92 (via renvoi)",
+       recul_limites_sep_m: 6, recul_limites_src: "Art. U6 7.2, p.92 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 3 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. U6 1.2, p.87-88 (via renvoi)",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. U6 13.1, p.98 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U6 13.1, p.98 (via renvoi) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. U6 1.2, p.87-88 via renvoi : habitation interdite y compris gardiennage"}
   1AU6c: {bassin: "Saint-Joseph",
        he_m: 15, hf_m: 18, hauteur_src: "Art. U6 10.2, p.94 via renvoi (secteur U6c)",
        emprise_sol_pct: 50, emprise_src: "Art. U6 9.2, p.93 (via renvoi)",
        recul_voirie_m: 4, recul_voirie_src: "Art. U6 6.2, p.91 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. U6 7.2, p.92 (via renvoi)",
+       recul_limites_sep_m: 7.5, recul_limites_src: "Art. U6 7.2, p.92 (via renvoi) — harmonisation doctrine b : max(H/2 à H max 15 m = 7,5 m ; plancher 3 m)",
        stat_logement: null, stat_note: "Sans objet (habitat interdit).", stat_src: "Art. U6 1.2, p.87-88 (via renvoi)",
-       pleine_terre_pct: 15, pleine_terre_src: "Art. U6 13.1, p.98 (via renvoi)",
+       pleine_terre_pct: 15, pleine_terre_src: "Art. U6 13.1, p.98 (via renvoi) — « espace vert et perméable comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. U6 1.2, p.87-88 via renvoi"}
 
   # ============== AUto / AUtok — activités touristiques et de loisirs (règles PROPRES) ==============

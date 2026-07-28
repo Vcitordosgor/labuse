@@ -65,35 +65,35 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "UB 2.1, p.28",
        recul_limites_sep_m: 3, recul_limites_src: "UB 2.2, p.28-29",
        stat_logement: "a_verifier", stat_note: "Tableau 2.7.3 non extractible ; LLS 1 place max.", stat_src: "UB 2.7.3, p.34",
-       pleine_terre_pct: 35, pleine_terre_src: "UB 2.6, p.31-33"}
+       pleine_terre_pct: 35, pleine_terre_src: "UB 2.6, p.31-33 — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)"}
   UBv: {bassin: "L'Étang-Salé",
        he_m: 9, hf_m: 12, hauteur_src: "UB 2.5.2, p.30-31 (règle générale UB ; en UBv la hauteur se mesure par rapport au TN avant travaux)",
        emprise_sol_pct: 50, emprise_src: "UB 2.4, p.30 (« En secteur UBv, ce pourcentage est fixé à 50% maximum »)",
        recul_voirie_m: 4, recul_voirie_src: "UB 2.1, p.28",
        recul_limites_sep_m: 3, recul_limites_src: "UB 2.2, p.28-29",
        stat_logement: "a_verifier", stat_note: "Tableau 2.7.3 non extractible.", stat_src: "UB 2.7.3, p.34",
-       pleine_terre_pct: 35, pleine_terre_src: "UB 2.6, p.31-33"}
+       pleine_terre_pct: 50, pleine_terre_src: "UB 2.6, p.31-33 — « Au moins 35% de la surface de la parcelle doit être perméable. En secteur UBv, ce seuil est porté 50% » — correction incidente à l'harmonisation (le 35 % gravé ignorait l'alinéa UBv), sans exigence de pleine terre (doctrine a)"}
   UC: {bassin: "L'Étang-Salé",
        he_m: 6, hf_m: 9, hauteur_src: "UC 2.5.2, p.40 (7 m à l'acrotère)",
        emprise_sol_pct: 60, emprise_src: "UC 2.4, p.39",
        recul_voirie_m: 4, recul_voirie_src: "UC 2.1, p.38",
        recul_limites_sep_m: 3, recul_limites_src: "UC 2.2, p.38-39",
        stat_logement: "a_verifier", stat_note: "Tableau 2.7.3 non extractible ; LLS 1 place max.", stat_src: "UC 2.7.3, p.43",
-       pleine_terre_pct: 40, pleine_terre_src: "UC 2.6, p.40-42"}
+       pleine_terre_pct: 40, pleine_terre_src: "UC 2.6, p.40-42 — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)"}
   UD: {bassin: "L'Étang-Salé",
        he_m: 4, hf_m: 7, hauteur_src: "UD 2.5.2, p.48-49 (5 m à l'acrotère)",
        emprise_sol_pct: 60, emprise_src: "UD 2.4, p.48",
        recul_voirie_m: 4, recul_voirie_src: "UD 2.1, p.47",
        recul_limites_sep_m: 3, recul_limites_src: "UD 2.2, p.47-48",
        stat_logement: "a_verifier", stat_note: "Tableau 2.7.3 non extractible.", stat_src: "UD 2.7.3, p.51",
-       pleine_terre_pct: 40, pleine_terre_src: "UD 2.6, p.49-50"}
+       pleine_terre_pct: 40, pleine_terre_src: "UD 2.6, p.49-50 — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)"}
   UE: {bassin: "L'Étang-Salé",
        he_m: 15, hf_m: 18, hauteur_src: "UE 2.5.2, p.58-59",
        emprise_sol_pct: 75, emprise_src: "UE 2.4, p.58",
        recul_voirie_m: 4, recul_voirie_src: "UE 2.1, p.57",
        recul_limites_sep_m: 4, recul_limites_src: "UE 2.2, p.57-58 (marge d'isolement minimale 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage 50 m²).", stat_src: "UE 1.2, p.56-57",
-       pleine_terre_pct: 25, pleine_terre_src: "UE 2.6, p.59-60",
+       pleine_terre_pct: 25, pleine_terre_src: "UE 2.6, p.59-60 — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "UE 1.1/1.2, p.56-57 : habitation interdite sauf « personnes dont la présence est indispensable pour assurer le fonctionnement ou le gardiennage » (max 50 m² SDP)"}
   UT: {bassin: "L'Étang-Salé",
        he_m: 9, hf_m: 12, hauteur_src: "UT 2.5.2, p.66-67 (10 m à l'acrotère)",
@@ -101,7 +101,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "UT 2.1, p.65",
        recul_limites_sep_m: 3, recul_limites_src: "UT 2.2, p.65-66",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "UT 1.1.2, p.64-65",
-       pleine_terre_pct: 35, pleine_terre_src: "UT 2.6, p.67-68",
+       pleine_terre_pct: 35, pleine_terre_src: "UT 2.6, p.67-68 — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "UT 1.1.2, p.64 (habitation interdite sauf clauses UT 2) + clause gardiennage (« présence indispensable pour assurer le fonctionnement ou le gardiennage des activités autorisées »)"}
 
   # ============== ZONE AU — chapitre unique à règles PROPRES par secteur (p.76-88) ==============
@@ -111,7 +111,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "AU 2.1, p.77-78 (règles communes du chapitre)",
        recul_limites_sep_m: 3, recul_limites_src: "AU 2.2, p.78-79",
        stat_logement: "a_verifier", stat_note: "Tableau AU 2.7 non extractible.", stat_src: "AU 2.7, p.84",
-       pleine_terre_pct: 30, pleine_terre_src: "AU 2.6, p.82-83 (« Au moins 30% (AUa) … de la surface de la parcelle doit être perméable »)",
+       pleine_terre_pct: 30, pleine_terre_src: "AU 2.6, p.82-83 (« Au moins 30% (AUa) … de la surface de la parcelle doit être perméable ») — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)",
        note: "Urbanisation par opérations d'ensemble (caractère de zone, p.76-77). Mixité : >1 000 m² SDP => 20 % logement aidé (AU 1.3, p.77)."}
   AUb: {bassin: "L'Étang-Salé",
        he_m: 9, hf_m: 12, hauteur_src: "AU 2.5.2, p.80-82 (10 m à l'acrotère)",
@@ -119,7 +119,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "AU 2.1, p.77-78",
        recul_limites_sep_m: 3, recul_limites_src: "AU 2.2, p.78-79",
        stat_logement: "a_verifier", stat_note: "Tableau AU 2.7 non extractible.", stat_src: "AU 2.7, p.84",
-       pleine_terre_pct: 35, pleine_terre_src: "AU 2.6, p.82-83 (35 % AUb)",
+       pleine_terre_pct: 35, pleine_terre_src: "AU 2.6, p.82-83 (35 % AUb) — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)",
        note: "Mixité : >1 000 m² SDP => 20 % logement aidé (AU 1.3)."}
   AUc: {bassin: "L'Étang-Salé",
        he_m: 6, hf_m: 9, hauteur_src: "AU 2.5.2, p.80-82 (7 m à l'acrotère)",
@@ -127,14 +127,14 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "AU 2.1, p.77-78",
        recul_limites_sep_m: 3, recul_limites_src: "AU 2.2, p.78-79",
        stat_logement: "a_verifier", stat_note: "Tableau AU 2.7 non extractible.", stat_src: "AU 2.7, p.84",
-       pleine_terre_pct: 40, pleine_terre_src: "AU 2.6, p.82-83 (40 % AUc)"}
+       pleine_terre_pct: 40, pleine_terre_src: "AU 2.6, p.82-83 (40 % AUc) — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)"}
   AUe: {bassin: "L'Étang-Salé",
        he_m: 15, hf_m: 18, hauteur_src: "AU 2.5.2, p.80-82",
        emprise_sol_pct: 75, emprise_src: "AU 2.4, p.80",
        recul_voirie_m: 4, recul_voirie_src: "AU 2.1, p.77-78",
        recul_limites_sep_m: 4, recul_limites_src: "AU 2.2, p.78-79 (alignement sur le régime UE)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage 50 m²).", stat_src: "AU 1.2 clause 3, p.76-77",
-       pleine_terre_pct: 25, pleine_terre_src: "AU 2.6, p.82-83 (25 % AUe, « sauf impossibilité technique avérée »)",
+       pleine_terre_pct: 25, pleine_terre_src: "AU 2.6, p.82-83 (25 % AUe, « sauf impossibilité technique avérée ») — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "AU 1.2 clause 3, p.76-77 : en AUe, habitation UNIQUEMENT « nécessaire au gardiennage ou à la surveillance des établissements » (max 50 m² SDP)"}
   AUt: {bassin: "L'Étang-Salé",
        he_m: null, hf_m: 12, hauteur_src: "AU 2.5.2, p.80-82 (« en zone AUt - 12,00m au faîtage » ; cabanes arboricoles 5 m — faîtage seul)",
@@ -142,7 +142,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "AU 2.1, p.77-78",
        recul_limites_sep_m: 3, recul_limites_src: "AU 2.2, p.78-79",
        stat_logement: null, stat_note: "Sans objet (habitat non prévu aux admissions).", stat_src: "AU 1.1.2/1.2, p.76-77",
-       pleine_terre_pct: 35, pleine_terre_src: "AU 2.6, p.82-83 (35 % AUt)",
+       pleine_terre_pct: 35, pleine_terre_src: "AU 2.6, p.82-83 (35 % AUt) — « Au moins X % de la surface de la parcelle doit être perméable », sans exigence de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "AU 1.1.2 (« toute construction non prévue à l'article AU 1.2 » est interdite) + AU 1.2 (« Dans le secteur AUt : les constructions et installations à usage TOURISTIQUE et de loisirs » — aucune clause logement)"}
 
 zones_au_renvoi: {}

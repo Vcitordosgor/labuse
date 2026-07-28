@@ -53,35 +53,35 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UA 6, p.11 (4 m ; porté à 7 m le long de certaines voies)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.12",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12, p.15-16",
-       pleine_terre_pct: 25, pleine_terre_src: "Art. UA 13, p.16 (« 25% … en espace perméable »)"}
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UA 13, p.16 (« 25% … en espace perméable ») — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   Ub: {bassin: "Sainte-Rose",
        he_m: 7, hf_m: 12, hauteur_src: "Art. UB 10, p.22-23",
        emprise_sol_pct: 60, emprise_src: "Art. UB 9, p.22",
        recul_voirie_m: 4, recul_voirie_src: "Art. UB 6, p.20 (4 m ; 7 m le long de certaines voies)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7, p.21",
        stat_logement: "2 places / logement", stat_src: "Art. UB 12, p.24-25",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. UB 13, p.25"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UB 13, p.25 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   Uc: {bassin: "Sainte-Rose",
        he_m: 6, hf_m: 9, hauteur_src: "Art. UC 10, p.31-32",
        emprise_sol_pct: 50, emprise_src: "Art. UC 9, p.31",
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6, p.29 (4 m ; 7 m le long de certaines voies)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7, p.30",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.33-34",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. UC 13, p.34"}
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UC 13, p.34 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   Ud: {bassin: "Sainte-Rose",
        he_m: null, hf_m: 7, hauteur_src: "Art. UD 10, p.40-41 (« fixée à 7 mètres » — sans précision égout/faîtage : gravé en faîtage, prudent)",
        emprise_sol_pct: 50, emprise_src: "Art. UD 9, p.40",
        recul_voirie_m: 4, recul_voirie_src: "Art. UD 6, p.38 (4 m ; 7 m le long de certaines voies)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UD 7, p.39 (une limite possible si façade <=14 m ; retrait 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UD 12, p.42-43",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. UD 13, p.43"}
+       pleine_terre_pct: 40, pleine_terre_src: "Art. UD 13, p.43 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   Ue: {bassin: "Sainte-Rose",
        he_m: 11, hf_m: 14, hauteur_src: "Art. UE 10, p.48-49",
        emprise_sol_pct: 70, emprise_src: "Art. UE 9, p.48",
        recul_voirie_m: 4, recul_voirie_src: "Art. UE 6, p.46",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UE 7, p.47",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage 70 m²).", stat_src: "Art. UE 1/2, p.44-45",
-       pleine_terre_pct: 25, pleine_terre_src: "Art. UE 13, p.50-51",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UE 13, p.50-51 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. UE 1 (habitation interdite sauf UE2) + Art. UE 2, p.44-45 : « dans la limite de 70m² de surface de plancher … exclusivement destinées et liées au gardiennage et à la surveillance »"}
 
   # ============== 1AU ouvertes — renvoi à la zone U d'indice (AUindicée, p.53-55) ==============
@@ -91,14 +91,14 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UA 6, p.11 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UA 7, p.12 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12, p.15-16 (via renvoi)",
-       pleine_terre_pct: 25, pleine_terre_src: "Art. UA 13, p.16 (via renvoi)"}
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UA 13, p.16 (via renvoi) — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)"}
   1AUc: {bassin: "Sainte-Rose",
        he_m: 6, hf_m: 9, hauteur_src: "Art. UC 10, p.31-32 via renvoi",
        emprise_sol_pct: 50, emprise_src: "Art. UC 9, p.31 (via renvoi)",
        recul_voirie_m: 4, recul_voirie_src: "Art. UC 6, p.29 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UC 7, p.30 (via renvoi)",
        stat_logement: "2 places / logement", stat_src: "Art. UC 12, p.33-34 (via renvoi)",
-       pleine_terre_pct: 30, pleine_terre_src: "Art. UC 13, p.34 (via renvoi)",
+       pleine_terre_pct: 30, pleine_terre_src: "Art. UC 13, p.34 (via renvoi) — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        note: "Comprend la zone du territoire rural habité de Bois Blanc (caractère AUindicée, p.53)."}
   1AUe: {bassin: "Sainte-Rose",
        he_m: 11, hf_m: 14, hauteur_src: "Art. UE 10, p.48-49 via renvoi",
@@ -106,7 +106,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. UE 6, p.46 (via renvoi)",
        recul_limites_sep_m: 3, recul_limites_src: "Art. UE 7, p.47 (via renvoi)",
        stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. UE 1/2, p.44-45 (via renvoi)",
-       pleine_terre_pct: 25, pleine_terre_src: "Art. UE 13, p.50-51 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UE 13, p.50-51 (via renvoi) — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. UE 1/2, p.44-45 via renvoi (gardiennage 70 m²)"}
 
   # ============== 1AUto — hébergement touristique, chapitre PROPRE (p.56-62) ==============
@@ -116,7 +116,7 @@ zones:
        recul_voirie_m: 4, recul_voirie_src: "Art. AUto 6, p.57-58",
        recul_limites_sep_m: 4, recul_limites_src: "Art. AUto 7, p.58 (retrait >= 4 m)",
        stat_logement: null, stat_note: "Sans objet (habitat non prévu aux admissions).", stat_src: "Art. AUto 1.2/2, p.56-57",
-       pleine_terre_pct: 40, pleine_terre_src: "Art. AUto 13, p.61-62",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. AUto 13, p.61-62 — « traité en espace perméable », sans sous-minimum de pleine terre (doctrine a)",
        habitat: interdit, habitat_src: "Art. AUto 1.2, p.56 (« Sont interdits toutes les constructions … à l'exception de ceux visés à l'article 2 ») + Art. AUto 2 : équipements touristiques/hôteliers, sports/loisirs — aucune clause logement"}
 
 zones_au_renvoi: {}
