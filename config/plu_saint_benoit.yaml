@@ -6,6 +6,18 @@
 #   PLU approuvé le 06/02/2020 (idurba GPU 97410_PLU_20200206 ; la page de garde
 #   PDF p.1 porte « APPROUVE LE : ………… » non rempli — millésime tenu de l'idurba).
 #
+# ARBITRAGE VIC (nuit du 27-28/07/2026, matin) — HAUTEURS PAR SECTEURS GRAPHIQUES :
+#   Art. U 4 (p.9) et Art. AU 4 (p.23) fixent la hauteur « selon les secteurs
+#   repérés sur le document graphique » (U : 15/13/10/7/4 m ; AU : 15/13/10/7 m).
+#   Un écart de 4 à 15 m selon le secteur graphique n'est pas une tranche à
+#   choisir : c'est une règle que le YAML ne sait pas porter. La gravure initiale
+#   à 4 m (tranche conservatrice) sous-estimait d'un facteur 4 => FAUX NÉGATIFS en
+#   série. DÉCISION : zones à habitat admis NON CALIBRÉES, motif « hauteur définie
+#   par secteur graphique, non portable par le schéma v1 » ; zones à habitat
+#   interdit (interdiction TEXTUELLE, indépendante du graphique) en capacité zéro
+#   exacte via zones_au_st. FRICTION DE SCHÉMA MAJEURE — candidat v2 :
+#   « hauteur par calque graphique » (cf. PLU_NUIT_RAPPORT_B.md).
+#
 # PAGINATION — DOUBLE NUMÉROTATION => TOUTES les citations en pages PDF :
 #   Le PDF concatène DEUX blocs qui portent chacun leur propre numérotation imprimée :
 #     - PDF 1-48   : le règlement écrit proprement dit (chapitres ZONES U p.PDF 3,
@@ -18,42 +30,11 @@
 #   PDF du fichier gravé, dans les DEUX blocs. Ne pas réinterpréter en pages imprimées.
 #
 # FIABILITÉ (n'inventer AUCUNE valeur) :
-#   - null         = règle explicitement non réglementée/absente dans le texte (sourcé).
 #   - FORMAT MODERNE MUTUALISÉ PAR FAMILLE : un chapitre unique par famille (articles
 #     « Article U – n », « Article AU – n », « Article A – n », « Article N – n »)
 #     s'applique à TOUTES les zones de la famille ; les différenciations sont des
 #     alinéas « En zone(s) X ». Les _src citent « Art. U 4 » pour « Article U – 4 »
 #     (tiret cadratin du titre non repris). Pas d'articles 1-14 par zone, zéro renvoi.
-#   - HAUTEURS U/AU PAR SECTEURS GRAPHIQUES (règle à tiroirs) : Art. U 4 (p.9) :
-#     « selon les secteurs repérés sur le document graphique » 15/13/10/7/4 m à
-#     l'égout ou l'acrotère ; Art. AU 4 (p.23) : 15/13/10/7 m. Les secteurs de
-#     hauteur ne sont PAS les zones du manifeste => tranche LA PLUS CONSERVATRICE
-#     gravée (U : 4 m égout + faîtage imposé 4+3,50 = 7,50 m dans les zones à 4 m,
-#     Art. U 4 I 2° ; AU : 7 m égout, faîtage non réglementé au chapitre AU) + note.
-#   - ESPACES LIBRES : Art. U 9 / AU 9 : 20 % de la superficie du terrain en espaces
-#     libres traités en surface perméable, SANS sous-minimum de pleine terre
-#     => pleine_terre_pct: null partout (le moteur ne consomme que le % PLEINE TERRE).
-#   - STATIONNEMENT habitat (tableaux U 12 / AU 12, identiques) : logements
-#     individuels / opérations <= 5 logements : 1 place/logement ; opérations > 5
-#     logements : 1 place/logement + 1 place visiteur par tranche de 5 lots ou
-#     logements ; logements aidés 1 place pour 2 logements => gravé « 1 place /
-#     logement » + note.
-#   - ZONES AU : 18 zones numérotées, « chacune l'objet d'une fiche » (Art. AU 1,
-#     p.19 : 4 AUa + 12 AUb + 1 AUe + 1 AUp — comptes conformes au manifeste).
-#     Le n° du libellé GPU = le n° de la fiche annexe (confirmations : « zone AU
-#     n°1 (zone d'activités économiques de Beauvallon) » p.19 = fiche N°01 ZONE
-#     AUp Beauvallon = libellé AUp1 ; AUe unique de Beaulieu = fiche N°03 = AUe3 ;
-#     les 4 AUa de l'Art. AU 1 (Le Conardel, sentier des Lataniers, chemin des
-#     Jonquilles, chemin Impérial) = fiches N°05/08/09/18 = AUa5/AUa8/AUa9/AUa18 ;
-#     fiches N°20 à 59 = Ns20…Ntb59, Art. N 1, p.40). Les fiches (annexe 2,
-#     p.54-72) complètent/se substituent au chapitre AU : essentiellement des
-#     conditions d'opération d'ensemble (« les constructions ne seront acceptées
-#     que dans le cadre d'une opération d'ensemble réalisant les équipements
-#     internes de la zone, ou après que les équipements internes auront été
-#     réalisés ») => régime 1AU classique (précédent Tampon), PAS un gel : zones
-#     calibrées avec note. Seule règle chiffrée de fiche consommable : AUb2,
-#     recul 10 m (fiche N°02, p.55). AUCUN gel AU (pas de 2AU ni AUst au
-#     manifeste) => pas de bloc zones_au_st.
 #   - COS (invariant 5, ALUR 2014) : ZÉRO occurrence de « coefficient d'occupation »
 #     dans le document (vérifié sur texte brut et à lettres doublées repliées) —
 #     document 2020 propre, rien à consigner d'autre, rien n'est appliqué.
@@ -75,14 +56,16 @@ source:
     millesime: "2020-02-06"
     document_gpu_au_calibrage: "97410_PLU_20200206"
     verifie_le: "2026-07-27"
+    correction: "2026-07-28 — arbitrage Vic : dé-calibrage des hauteurs par secteurs graphiques (cf. en-tête)."
 
 mode: progressif
 
 regles_transverses:
+  hauteur_secteurs: "NON PORTABLE SCHÉMA V1 — hauteurs maximales fixées par SECTEURS du document graphique (Art. U 4, p.9 : 15/13/10/7/4 m à l'égout ou acrotère, faîtage +3,50 m imposé dans les zones à 4 m et le long des rues Pompidou/Montfleury/Brunet, Art. U 4 I 2° ; Art. AU 4, p.23 : 15/13/10/7 m). Les secteurs de hauteur ne sont pas les zones du manifeste : aucune tranche n'est gravable sans le calque graphique (arbitrage Vic 28/07/2026)."
   stationnement: "Tableau unique zone U (Art. U 12, p.16-17) repris à l'identique en AU (Art. AU 12, p.29-31) : logements individuels ou opérations <= 5 logements 1 place/logement ; opérations > 5 logements +1 place visiteur par tranche de 5 ; logements aidés 1 place pour 2 logements ; commerces/services/bureaux : non réglementé en Ua, sinon 30 % de la SDP."
   limites_separatives: "U et AU (Art. U 7, p.11 ; Art. AU 7, p.25) : implantation sur l'une ou les deux limites séparatives latérales OU recul d'un mètre au moins ; fond de parcelle libre."
-  hauteur_secteurs: "Hauteurs maximales fixées par SECTEURS du document graphique (Art. U 4, p.9 : 15/13/10/7/4 m à l'égout ou acrotère ; Art. AU 4, p.23 : 15/13/10/7 m) — tranche la plus conservatrice gravée dans chaque entrée."
-  espaces_libres: "U et AU (Art. U 9, p.13 ; Art. AU 9, p.26) : 20 % minimum de la superficie du terrain en espaces libres traités en surface perméable ; aire de jeux 100 m² dès 20 logements."
+  emprise: "U et AU : emprise au sol maximale 80 % (Art. U 5, p.10 ; Art. AU 5, p.24)."
+  espaces_libres: "U et AU (Art. U 9, p.13 ; Art. AU 9, p.26) : 20 % minimum de la superficie du terrain en espaces libres traités en surface perméable ; aire de jeux 100 m² dès 20 logements. Libellé verbatim « espaces libres traités en surface perméable » — pas un minimum de pleine terre stricto sensu."
 
 # Hypothèses de CALCUL (documentaire — le moteur lit les hypothèses GLOBALES de plu_saint_paul.yaml).
 hypotheses_faisabilite:
@@ -95,249 +78,31 @@ hypotheses_faisabilite:
   densite_logts_ha_par_niveau: 30.0
   he_defaut_generique_m: 9.0
 
-zones:
-
-  # ============== LOT U — zones urbaines (chapitre ZONES U, p.3-18) ==============
-  Ua: {bassin: "Saint-Benoît",
-       he_m: 4, hf_m: 7.5, hauteur_src: "Art. U 4, p.9",
-       hauteur_note: "Règle à tiroirs par secteurs graphiques : 15 m (R+4+c), 13 m (R+3+c), 10 m (R+2+c), 7 m (R+1+c) ou 4 m (R+c) à l'égout/acrotère selon le document graphique => tranche la plus conservatrice gravée (4 m). Faîtage imposé uniquement dans les zones à 4 m et le long des rues Pompidou/Montfleury/Brunet : +3,50 m (Art. U 4 I 2°) => 7,50 m.",
-       emprise_sol_pct: 80, emprise_src: "Art. U 5, p.10",
-       recul_voirie_m: null, recul_voirie_src: "Art. U 6, p.10 : « L'implantation par rapport aux voies publiques ou privées n'est pas réglementée », sauf cas listés",
-       recul_voirie_note: "Exceptions : 7 m de l'axe de la rue G. Pompidou, 5 m de l'axe des rues Montfleury et L. Brunet (Art. U 6 1°) ; hors agglomération 75 m de l'axe des routes nationales (Art. U 6 2°, p.11).",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. U 7, p.11",
-       recul_limites_note: "Sur l'une ou les deux limites latérales OU recul d'un mètre au moins ; fond de parcelle libre.",
-       stat_logement: "1 place / logement", stat_src: "Art. U 12 (tableau), p.16-17",
-       stat_note: "Opérations > 5 logements : +1 place visiteur par tranche de 5 ; logements aidés : 1 place pour 2 logements.",
-       pleine_terre_pct: null, pleine_terre_src: "Art. U 9, p.13 : 20 % d'espaces libres traités en surface perméable, SANS sous-minimum de pleine terre",
-       note: "Centres urbains de Saint-Benoît et Sainte-Anne. Servitude de projet (Art. U 2 2°, p.5) : secteur de l'ancienne maternité (trait bleu au graphique), constructions > 20 m² interdites 5 ans max."}
-  Uap: {bassin: "Saint-Benoît",
-       he_m: 4, hf_m: 7.5, hauteur_src: "Art. U 4, p.9 (tranche conservatrice des secteurs graphiques ; point bas = niveau de la rue dans le secteur Uap, Art. U 4 II, p.10)",
-       hauteur_note: "Cf. Ua. Le secteur patrimonial de Sainte-Anne/Saint-François est cité parmi ceux où la liberté de faîtage est restreinte (explication Art. U 4, p.9).",
-       emprise_sol_pct: 80, emprise_src: "Art. U 5, p.10",
-       recul_voirie_m: null, recul_voirie_src: "Art. U 6, p.10",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. U 7, p.11",
-       stat_logement: "1 place / logement", stat_src: "Art. U 12 (tableau), p.16-17",
-       pleine_terre_pct: null, pleine_terre_src: "Art. U 9, p.13 : 20 % perméable, sans sous-minimum de pleine terre",
-       note: "Secteur patrimonial (graphie « secteur Uap » confirmée p.10, 12, 13) : toitures à pente >= 35° (Art. U 8 2°, p.12) ; bâtiments créoles protégés de Sainte-Anne et Saint-François (Art. U 8 4°, p.13 ; fiches annexes n°60 à 82, p.97+)."}
-  Ub: {bassin: "Saint-Benoît",
-       he_m: 4, hf_m: 7.5, hauteur_src: "Art. U 4, p.9",
-       hauteur_note: "Cf. Ua : tranche conservatrice des secteurs graphiques 15/13/10/7/4 m ; faîtage 4+3,50 m dans les zones à 4 m.",
-       emprise_sol_pct: 80, emprise_src: "Art. U 5, p.10",
-       recul_voirie_m: null, recul_voirie_src: "Art. U 6, p.10",
-       recul_voirie_note: "Hors agglomération : 75 m de l'axe des routes nationales (Art. U 6 2°, p.11).",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. U 7, p.11",
-       stat_logement: "1 place / logement", stat_src: "Art. U 12 (tableau), p.16-17",
-       pleine_terre_pct: null, pleine_terre_src: "Art. U 9, p.13 : 20 % perméable, sans sous-minimum de pleine terre",
-       note: "Urbanisation périphérique et bourgs. Industries <= 250 m² d'emprise admises (Art. U 3 3°, p.8). Corridor écologique de la ravine la Sourdine (hachures vertes) : toute construction interdite (Art. U 2 7°, p.7)."}
-  Ue: {bassin: "Saint-Benoît",
-       he_m: 4, hf_m: 7.5, hauteur_src: "Art. U 4, p.9 (tranche conservatrice des secteurs graphiques)",
-       emprise_sol_pct: 80, emprise_src: "Art. U 5, p.10",
-       recul_voirie_m: null, recul_voirie_src: "Art. U 6, p.10",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. U 7, p.11",
-       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage/internat CFPPA).", stat_src: "Art. U 2 (5°), p.5-6",
-       pleine_terre_pct: null, pleine_terre_src: "Art. U 9, p.13 : 20 % perméable, sans sous-minimum de pleine terre",
-       habitat: interdit, habitat_src: "Art. U 2 (5°), p.5-6 : « En zone Ue et Up » sont interdites les constructions à usage d'habitation à l'exception 1) des logements de gardiennage incorporés au bâtiment d'activité, 2) des logements étudiants de l'internat du CFPPA (zone Ue de Beaulieu)",
-       note: "Zone d'activités économiques. Zones Ue Distillerie Rivière du Mât et Petit Saint-Pierre : espaces non aedificandi des loupes L1/L2 (Art. U 2 3°-4°, p.6 ; annexes p.51-53)."}
-  Up: {bassin: "Saint-Benoît",
-       he_m: 4, hf_m: 7.5, hauteur_src: "Art. U 4, p.9 (tranche conservatrice des secteurs graphiques)",
-       emprise_sol_pct: 80, emprise_src: "Art. U 5, p.10",
-       recul_voirie_m: null, recul_voirie_src: "Art. U 6, p.10",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. U 7, p.11",
-       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage).", stat_src: "Art. U 2 (5°), p.5-6",
-       pleine_terre_pct: null, pleine_terre_src: "Art. U 9, p.13 : 20 % perméable, sans sous-minimum de pleine terre",
-       habitat: interdit, habitat_src: "Art. U 2 (5°), p.5-6 : « En zone Ue et Up » habitations interdites sauf logements de gardiennage incorporés au bâtiment d'activité",
-       note: "Zone d'activités de production (SAR) : commerces et services limités à 5 % de la surface totale de la zone (Art. U 3 4°, p.8) ; corridor écologique ravine la Sourdine : constructions interdites dans les hachures vertes (Art. U 2 7°, p.7)."}
-  Ut: {bassin: "Saint-Benoît",
-       he_m: 4, hf_m: 7.5, hauteur_src: "Art. U 4, p.9 (tranche conservatrice des secteurs graphiques)",
-       emprise_sol_pct: 80, emprise_src: "Art. U 5, p.10",
-       recul_voirie_m: null, recul_voirie_src: "Art. U 6, p.10",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. U 7, p.11",
-       stat_logement: null, stat_note: "Sans objet (habitat interdit hors logement du personnel).", stat_src: "Art. U 2 (6°), p.5-7",
-       pleine_terre_pct: null, pleine_terre_src: "Art. U 9, p.13 : 20 % perméable, sans sous-minimum de pleine terre",
-       habitat: interdit, habitat_src: "Art. U 2 (6°), p.5-7 : « En zone Ut » sont interdites toutes les constructions à l'exception des équipements et hébergements touristiques et des constructions affectées au logement du personnel travaillant sur le site",
-       note: "Zone urbaine touristique (2,0 ha)."}
-
-  # ============== LOT AU — zones à urbaniser (chapitre ZONES AU, p.19-31 ; fiches annexes p.54-72) ==============
-  # Chapitre AU autonome (aucun renvoi vers U). Chaque zone : régime d'opération
-  # d'ensemble de sa fiche (constructions acceptées dans le cadre d'une opération
-  # d'ensemble réalisant les équipements internes, OU après réalisation de ceux-ci)
-  # — régime 1AU, zones calibrées. Hauteur : tranche conservatrice 7 m (Art. AU 4).
-  AUa5: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Secteurs graphiques 15/13/10/7 m à l'égout/acrotère => tranche conservatrice 7 m ; faîtage non réglementé au chapitre AU.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 : non réglementée à l'intérieur de l'agglomération, sauf disposition contraire de la fiche de la zone (aucune dans la fiche N°05)",
-       recul_voirie_note: "Hors agglomération : 75 m de l'axe des routes nationales (Art. AU 6 2°).",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26 : 20 % perméable, sans sous-minimum de pleine terre",
-       note: "Fiche annexe N°05 (p.57-58) : AUa Le Conardel — opération d'ensemble ou équipements internes réalisés ; îlot rivière des Marsouins : densité 30-40 logements pour l'îlot > 2 ha, secteur dense > 50 logts/ha (prescriptions de fiche)."}
-  AUa8: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°08)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°08 (p.61) : AUa Le Cap les Bas, sentier des Lataniers — opération d'ensemble ou équipements internes réalisés."}
-  AUa9: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°09)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°09 (p.62) : AUa Le Cap les Bas, chemin des Jonquilles — opération d'ensemble ou équipements internes réalisés."}
-  AUa18: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°18)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°18 (p.71) : AUa Petit Saint-Pierre, chemin Impérial — opération d'ensemble ou équipements internes réalisés."}
-  AUb2: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: 10, recul_voirie_src: "Fiche annexe N°02, p.55 : « Recul minimum obligatoire des constructions : 10 mètres à compter de l'emprise de la voie »",
-       recul_voirie_note: "Règle de fiche « devant être appliquée strictement » (se substitue à l'Art. AU 6 non réglementé) — portée graphique liée à l'ER n°2 ; gravée en conservateur pour toute la zone.",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°02 (p.55) : AUb Bourbier les Hauts, chemin Montjol — bande de 18 m constructible immédiatement le long de la voie, le reste en opération d'ensemble ou après équipements internes."}
-  AUb6: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°06)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°06 (p.59) : AUb Bras-Canot, espace Sarda Garriga — opération d'ensemble ou équipements internes réalisés."}
-  AUb7: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°07)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°07 (p.60) : AUb Bras-Canot - Prévoisy — bande de 12 m constructible immédiatement, le reste en opération d'ensemble ; secteurs R1 PPR non constructibles."}
-  AUb10: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°10)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°10 (p.63) : AUb Le Cap les Bas, allée des Palmistes — opération d'ensemble ou équipements internes réalisés."}
-  AUb11: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°11)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°11 (p.64) : AUb Le Cap les Bas, impasse Louis Barnaval — opération d'ensemble ou équipements internes réalisés."}
-  AUb12: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°12)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°12 (p.65) : AUb Le Cap les Hauts, près du lotissement Baies Roses — opération d'ensemble ou équipements internes réalisés."}
-  AUb13: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°13)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°13 (p.66) : AUb Le Cap les Hauts, impasse Lee-Fong-Chi — opération d'ensemble ou équipements internes réalisés ; impasses interdites (OAP)."}
-  AUb14: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°14)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°14 (p.67) : AUb Sainte-Anne, chemin Blémir — un secteur constructible immédiatement, le reste en opération d'ensemble ; secteurs R1 PPR non constructibles."}
-  AUb15: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°15)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°15 (p.68) : AUb Sainte-Anne, chemin Jacquemin — un secteur constructible immédiatement, le reste en opération d'ensemble."}
-  AUb16: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°16)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°16 (p.69) : AUb Sainte-Anne, chemin Morange — opération d'ensemble ou équipements internes réalisés."}
-  AUb17: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°17)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°17 (p.70) : AUb Petit Saint-Pierre, chemin Gallias — opération d'ensemble ou équipements internes réalisés."}
-  AUb19: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°19)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: "1 place / logement", stat_src: "Art. AU 12 (tableau), p.29-30",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       note: "Fiche annexe N°19 (p.72) : AUb Cambourg, chemin Baptiste (opération SEMAC Amaryllis II) — opération d'ensemble ou équipements internes réalisés ; secteurs R1 PPR non constructibles."}
-  AUe3: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°03)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage).", stat_src: "Art. AU 2 (2°), p.21",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       habitat: interdit, habitat_src: "Art. AU 2 (2°), p.21 : « En zone AUe et AUp » sont interdites les constructions à usage d'habitation à l'exception des logements de gardiennage incorporés au bâtiment d'activité",
-       note: "Fiche annexe N°03 (p.56) : AUe Beaulieu, zone commerciale — opération d'ensemble ou équipements internes réalisés ; secteurs R1 PPR non constructibles. Zone d'activités confirmée (candidate O12 confirmée dans le texte)."}
-  AUp1: {bassin: "Saint-Benoît",
-       he_m: 7, hf_m: null, hauteur_src: "Art. AU 4, p.23",
-       hauteur_note: "Tranche conservatrice des secteurs graphiques (15/13/10/7 m) ; faîtage non réglementé.",
-       emprise_sol_pct: 80, emprise_src: "Art. AU 5, p.24",
-       recul_voirie_m: null, recul_voirie_src: "Art. AU 6, p.24 (aucune disposition contraire dans la fiche N°01)",
-       recul_limites_sep_m: 1, recul_limites_src: "Art. AU 7, p.25",
-       stat_logement: null, stat_note: "Sans objet (habitat interdit hors gardiennage).", stat_src: "Art. AU 2 (2°), p.21",
-       pleine_terre_pct: null, pleine_terre_src: "Art. AU 9, p.26",
-       habitat: interdit, habitat_src: "Art. AU 2 (2°), p.21 : « En zone AUe et AUp » habitations interdites sauf logements de gardiennage incorporés ; commerces et services limités à 5 % de la surface de la zone (Art. AU 3 4°, p.22)",
-       note: "Fiche annexe N°01 (p.54) : AUp Beauvallon, pôle d'activités à vocation régionale (= « zone AU n°1 », Art. AU 1, p.19) — opération d'ensemble ou équipements internes réalisés ; secteurs R1 PPR non constructibles ; corridor écologique ravine la Sourdine (Art. AU 2 3°, p.22)."}
+# AUCUNE entrée `zones:` — arbitrage Vic 28/07/2026 (cf. en-tête) : les hauteurs U/AU
+# sont définies par secteurs graphiques, non portables par le schéma v1. Les valeurs
+# textuelles saines (emprise 80 %, limites 1 m, stationnement, 20 % perméable) sont
+# consignées en regles_transverses et dans les motifs ci-dessous pour un futur v2.
+zones: {}
 
 zones_au_renvoi: {}
 
-# AUCUN gel AU à Saint-Benoît : pas de zone 2AU ni AUst au manifeste ; les 18 zones AU
-# sont urbanisables sous condition d'opération d'ensemble ou de réalisation des
-# équipements internes (fiches annexes N°01 à 19) — régime 1AU calibré, cf. entrées.
+# Zones U/AU à HABITAT INTERDIT (interdiction TEXTUELLE, indépendante des secteurs
+# graphiques de hauteur) : capacité logement zéro EXACTE — l'étiquette moteur
+# « secteur de transition » est inexacte (friction F2), la capacité zéro est correcte.
+zones_au_st:
+  liste: ["Ue", "Up", "Ut", "AUe3", "AUp1"]
+  portee: "Habitat interdit par le texte : Ue/Up — Art. U 2 (5°), p.5-6 : « En zone Ue et Up » sont interdites les constructions à usage d'habitation à l'exception des logements de gardiennage incorporés au bâtiment d'activité (+ internat CFPPA en Ue Beaulieu) ; Ut — Art. U 2 (6°), p.5-7 : tout est interdit sauf équipements et hébergements touristiques et logement du personnel du site ; AUe3/AUp1 — Art. AU 2 (2°), p.21 : « En zone AUe et AUp » habitations interdites sauf gardiennage incorporé. Hauteurs de ces zones également définies par secteurs graphiques (Art. U 4, p.9 ; Art. AU 4, p.23) — sans incidence sur la capacité logement (zéro)."
+  source: "Art. U 2 (5°-6°), p.5-7 ; Art. AU 2 (2°), p.21"
 
-# Zones NON calibrées (repli générique non constructible du moteur) — motifs sourcés,
+# Zones NON calibrées (repli générique du moteur) — motifs sourcés,
 # vérifiés par script via les clés `source` ci-dessous.
 zones_non_calibrees:
+  "Ua, Uap, Ub (zones U à habitat admis)":
+    motif: "ARBITRAGE VIC 28/07/2026 — hauteur définie par secteur graphique, non portable par le schéma v1 : Art. U 4 (p.9) fixe 15/13/10/7/4 m à l'égout/acrotère « selon les secteurs repérés sur le document graphique » ; l'écart 4-15 m n'est pas une tranche à choisir, graver 4 m sous-estimait d'un facteur 4 (faux négatifs en série). Valeurs textuelles saines consignées pour un futur v2 : emprise 80 % (Art. U 5, p.10) ; limites séparatives 1 m ou implantation en limite (Art. U 7, p.11) ; recul voirie non réglementé sauf exceptions Pompidou/Montfleury/Brunet et RN 75 m hors agglomération (Art. U 6, p.10-11) ; stationnement 1 place/logement + visiteurs (Art. U 12, p.16-17) ; 20 % perméable (Art. U 9, p.13). Uap : secteur patrimonial (toitures >= 35°, Art. U 8 2°, p.12). Ub : corridor écologique la Sourdine, constructions interdites dans les hachures vertes (Art. U 2 7°, p.7)."
+    source: "Art. U 4, p.9 : « selon les secteurs repérés sur le document graphique » ; Art. U 5, p.10 ; Art. U 7, p.11"
+  "AUa5, AUa8, AUa9, AUa18, AUb2, AUb6, AUb7, AUb10, AUb11, AUb12, AUb13, AUb14, AUb15, AUb16, AUb17, AUb19 (zones AU à habitat admis)":
+    motif: "ARBITRAGE VIC 28/07/2026 — hauteur définie par secteur graphique, non portable par le schéma v1 : Art. AU 4 (p.23) fixe 15/13/10/7 m « selon les secteurs repérés sur le document graphique » (même règle que U 4, écart facteur 2). Régime d'urbanisation : chaque zone AU a sa fiche annexe N°01-19 (opération d'ensemble OU équipements internes réalisés — régime 1AU, précédent Tampon), n° du libellé GPU = n° de fiche (confirmé Art. AU 1, p.19). Valeurs textuelles saines consignées pour un futur v2 : emprise 80 % (Art. AU 5, p.24) ; limites 1 m (Art. AU 7, p.25) ; stationnement (Art. AU 12, p.29-30) ; 20 % perméable (Art. AU 9, p.26) ; AUb2 : recul voirie 10 m (fiche N°02, p.55 : « Recul minimum obligatoire des constructions : 10 mètres à compter de l'emprise de la voie »)."
+    source: "Art. AU 4, p.23 : « selon les secteurs repérés sur le document graphique » ; Art. AU 1, p.19 ; Art. AU 5, p.24"
   A:
     motif: "Zone agricole : « toute construction nouvelle » interdite à l'exception des constructions nécessaires à l'exploitation agricole ; pour l'habitat existant, seules annexes/extensions dans la limite TOTALE de 160 m² de SDP (300 m² si agrotourisme) — aucune règle consommable pour du logement neuf ordinaire. Hauteur consignée : 12 m agricole, 4 m égout / 8 m faîtage autres constructions."
     source: "Art. A 2, p.34 ; Art. A 3 (4°-5°), p.35 ; Art. A 4, p.37"
