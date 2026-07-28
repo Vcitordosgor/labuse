@@ -161,7 +161,7 @@ zones:
        pleine_terre_pct: 40, pleine_terre_src: "Art. UT.13, p.80",
        habitat: interdit, habitat_src: "Art. UT.1 (1°), p.73 : habitation INTERDITE ; exceptions Art. UT.2, p.73 : personnel indispensable au fonctionnement/gardiennage des établissements touristiques (100 m² SDP max) et amélioration/extension/reconstruction de bâtiments d'habitation existants sans dépassement de la SDP autorisée. Hébergement touristique (complexes hôteliers, villages vacances) autorisé en opérations d'ensemble — hors cible logement."}
   UZ: {bassin: "Petite-Île",
-       he_m: null, hf_m: 12, hauteur_src: "Art. UZ.10, p.84 (« La hauteur totale d'une construction ne doit pas excéder 12 mètres » — hauteur TOTALE, pas de valeur à l'égout)",
+       he_m: 12, hf_m: 12, hauteur_src: "Art. UZ.10, p.84 : « La hauteur totale d'une construction ne doit pas excéder 12 mètres » — plafond TOTAL => he = hf = 12 (catégorie 1, arbitrage Vic 28/07)",
        hauteur_note: "Terrains > 10 % de pente : +1,50 m toléré. Bâtiments publics exemptés.",
        emprise_sol_pct: null, emprise_src: "Art. UZ.9, p.84 : « Non règlementé sous réserve du respect de l'article UZ.13 »",
        recul_voirie_m: 0, recul_voirie_src: "Art. UZ.6, p.83 : « soit à l'alignement soit en retrait des voies publiques » — AUCUN retrait minimal chiffré",

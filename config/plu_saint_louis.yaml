@@ -190,7 +190,7 @@ zones:
        pleine_terre_pct: 15, pleine_terre_src: "Art. US 13.1, p.89 : 15 % en espace vert et perméable, SANS sous-minimum de pleine terre",
        habitat: interdit, habitat_src: "Art. US 1.2, p.79 (habitation interdite sauf Art. US 2.2) + Art. US 2.2, p.80 : habitation limitée à 70 m² SDP « exclusivement destinées et liées au gardiennage et à la surveillance des installations autorisées »"}
   UZ: {bassin: "Saint-Louis",
-       he_m: null, hf_m: 9, hauteur_src: "Art. UZ 10.2, p.96-97 : hauteurs « en tout point » par affectation du schéma joint en annexe — 17 m (collectifs), 9 m (individuels), 12 m (tertiaires) ; plafond hors tout : cote NGR 42 m",
+       he_m: null, he_m: 9, hf_m: 9, hauteur_src: "Art. UZ 10.2, p.96-97 : « la hauteur maximale de TOUT POINT des constructions … ne doit pas dépasser 9 mètres » (individuels) — plafond en tout point => he = hf = 9 (catégorie 1, arbitrage Vic 28/07) ; hauteurs « en tout point » par affectation du schéma joint en annexe — 17 m (collectifs), 9 m (individuels), 12 m (tertiaires) ; plafond hors tout : cote NGR 42 m",
        hauteur_note: "Règle à tiroirs dépendant du schéma d'annexe de la ZAC (non parcellisable ici) => tranche LA PLUS CONSERVATRICE gravée : 9 m hors tout (affectations individuelles).",
        emprise_sol_pct: 60, emprise_src: "Art. UZ 9.2, p.96",
        recul_voirie_m: null, recul_voirie_src: "Art. UZ 6.2, p.94 : pas de retrait métrique général (« les constructions nouvelles peuvent être librement implantées » en l'absence d'indications au schéma)",
