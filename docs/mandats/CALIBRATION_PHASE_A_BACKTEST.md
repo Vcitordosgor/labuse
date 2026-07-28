@@ -128,3 +128,128 @@ périmètre à l'application ; condition d'arrêt inchangée (un tier bouge = ar
 `/tmp/backtest_reel_phaseA.py` (LECTURE SEULE, 3 épreuves), résultats à l'euro
 `/tmp/backtest_e1.json` (1 137), `/tmp/backtest_e2.json` (1 267), `/tmp/backtest_e3.json` (42).
 Relevés d'état ouverture/clôture golden + tiers dans `/tmp`.
+
+---
+
+# SUITE — segmentation marché vs social/aidé + sensibilité coût×taille (28/07/2026)
+
+Mesure exigée par Vic avant toute re-dérivation du prix : la cohorte E1 n'est pas qualifiée
+(une opération de marché ne se monte pas à perte ; 66 % vendaient sous le seuil de bascule → une
+part n'est pas du marché). Segmentation par le **pétitionnaire du permis** (SIREN Sitadel).
+**LECTURE SEULE** : la charge n'est PAS recalculée, on filtre la population des charges déjà
+mesurées (`/tmp/backtest_e1.json`, `e3.json`) ; la sensibilité coût est recomposée
+analytiquement (`charge(coût) = c_prog + SDP × (2550 − coût)`, le coût entre linéairement).
+Bailleurs sociaux / SEM réunionnais identifiés par 7 SIREN confirmés (SHLMR 310895172,
+SIDR 310863592, SODEGIS 380177170, SEDRE 310863378, SEMADER 380572453, SEM Réunion 332824242,
+SODIAC 378918510 ; faux positifs de nom écartés — TEYSSEDRE, etc.). Couverture pétitionnaire :
+610/1036 permis E1 (**59 %** ; 41 % « inconnu », sans SIREN — volume faible, 18 % des logements,
+opérations petites, peu compatibles avec du gros social qui, lui, dépose toujours au SIREN).
+
+## 9 · Le social ne domine PAS l'île — l'hypothèse de catégorie est réfutée
+
+Répartition du collectif 2021+ (≥ 3 lgt) :
+
+| Segment | permis | logements |
+|---|---|---|
+| Social / SEM (bailleurs confirmés) | 96 (9 %) | 2 890 (**20 %**) |
+| Marché ou défisc (privé identifié) | 514 (50 %) | 8 659 (61 %) |
+| Inconnu (sans pétitionnaire) | 426 (41 %) | 2 614 (18 %) |
+
+**Parmi les identifiés : social = 16 % des permis, 25 % des logements.** Le social est un quart
+du collectif réunionnais, **pas l'essentiel**. (Borne haute : même en reversant dans l'« aidé »
+le SNC IP1R — 536 lgt, véhicule institutionnel probablement intermédiaire/LLI — et les SCCV/SCI
+défisc du segment « marché », l'aidé resterait minoritaire à l'échelle de l'île.)
+
+## 10 · Retirer le social ne recolle PAS le modèle — le marché échoue encore
+
+Même charge, population filtrée :
+
+| Segment | E1 : charge ≤ 0 | E3 : payé > charge | E3 : charge ≤ 0 |
+|---|---|---|---|
+| **Marché ou défisc** | **365 / 527 = 69 %** | **22 / 22 = 100 %** | 20 / 22 = 91 % |
+| Social / SEM | 96 / 127 = 76 % | 3 / 3 = 100 % | 2 / 3 = 67 % |
+| Inconnu | 334 / 364 = 92 % | 11 / 11 = 100 % | 9 / 11 = 82 % |
+
+Passer de 78 % (global) à **69 % (marché seul)** ne sauve rien. **Par l'arbre de décision de Vic
+(point 3) : même le marché échoue → le levier coût est en cause. Testé ci-dessous.**
+
+## 11 · Sensibilité coût × TAILLE d'opération (marché, 525 op. après trim artefacts)
+
+% de charge ≤ 0 selon le coût de construction (€/m² SDP) et la taille :
+
+| Taille (lgt) | n | @2550 (audité) | @2300 | @2000 | @1800 |
+|---|---|---|---|---|---|
+| 3-4 | 171 | 86 % | 71 % | 48 % | 33 % |
+| 5-9 | 127 | 66 % | 52 % | 41 % | 25 % |
+| **10-19** | 84 | **42 %** | 28 % | 20 % | 11 % |
+| 20+ | 143 | 65 % | 51 % | 41 % | 21 % |
+| **TOTAL** | 525 | **69 %** | 54 % | 40 % | 25 % |
+
+**Coût de construction €/m² SDP qui annulerait la charge, au prix DVF-local réel** (médiane) :
+3-4 lgt → **2 018** · 5-9 → 2 219 · **10-19 → 2 573** · 20+ → 2 123 · TOTAL → 2 195.
+
+**Lecture** :
+- **Le levier coût est réel MAIS c'est la TAILLE qui structure tout.** Un coût unique de 2 550
+  appliqué à toutes les opérations est faux : le coût implicite d'équilibre va de 2 018 (petit)
+  à 2 573 (moyen). Le collectif de 4 logements à Saint-Benoît et l'immeuble de 15 ne se
+  construisent pas au même €/m² — la mesure le confirme, Vic avait raison.
+- **Le segment 10-19 logements — le collectif de marché « normal » — est le plus proche du
+  vrai** : 42 % ≤ 0 à coût audité, et son coût implicite d'équilibre (2 573) **coïncide avec le
+  2 550 audité**. Là, le modèle est presque juste ; une simple économie d'échelle le recollerait.
+- **Les petites opérations (3-4 lgt, 86 % ≤ 0) NE se corrigent PAS par un coût plus bas** (elles
+  coûtent PLUS cher au m², pas moins) : leur échec vient d'ailleurs — soit elles se vendent bien
+  au-dessus de la médiane DVF (instrument prix), soit elles sont construites pour louer/garder
+  (pas de prix de sortie de marché applicable). **Les deux leviers se cumulent, aucun seul ne
+  suffit.**
+
+## 12 · Le fait produit — VRAI, mais COMMUNE PAR COMMUNE (révision du point 4 de Vic)
+
+Le social ne domine pas l'île, mais sa part varie du tout au tout selon la commune (% social
+parmi le collectif identifié) :
+
+| Social DOMINE (charge de marché inapplicable) | % | Marché DOMINE (le modèle doit tenir) | % |
+|---|---|---|---|
+| Le Port | 96 | Sainte-Marie | 4 |
+| Entre-Deux | 97 | Saint-Pierre | 13 |
+| Saint-Philippe | 84 | Saint-Denis | 14 |
+| Petite-Île | 76 | Saint-Louis | 17 |
+| Cilaos | 72 | Les Avirons | 17 |
+| Bras-Panon | 60 | Saint-Leu | 21 |
+| Saint-Joseph | 56 | La Possession | 23 |
+| La Plaine-des-Palmistes | 53 | Saint-Benoît | 26 |
+
+(Le Tampon, Saint-André, Salazie, Sainte-Rose, Les Trois-Bassins : aucun social identifié →
+collectif de marché ou petit privé.)
+
+**Deux régimes, deux diagnostics :**
+1. **Communes à social dominant** (Le Port, Entre-Deux, Saint-Philippe, Petite-Île, Cilaos,
+   Saint-Joseph, La Plaine, Bras-Panon) — ce sont les communes les moins chères, où le neuf DVF
+   était le plus bas. **Le fait produit de Vic (point 4) TIENT, à leur échelle** : « Charge
+   foncière de marché non atteignable sur cette commune — le collectif y est majoritairement
+   social ou aidé. » Ce n'est pas une régression, c'est l'information exacte, et elle intéresse
+   les bailleurs sociaux (dans la cible).
+2. **Communes à marché dominant** (Sainte-Marie 4 % social, Saint-Denis, Saint-Pierre,
+   Saint-Louis, Saint-Leu…) — le collectif y EST de marché, et pourtant le back-test le déclare
+   non viable (Sainte-Marie : 64/64 ≤ 0). **Ici PAS d'erreur de catégorie : c'est l'instrument.**
+   Prix DVF-médian sous-évalué (population maison-dominée) + coût unique sans économie d'échelle.
+
+## 13 · Conclusion et prochaine mesure (rien n'est appliqué)
+
+- **Social minoritaire à l'échelle de l'île (20-25 %)** ; l'échec E1 n'est PAS un simple artefact
+  de catégorie. Mais **le fait produit tient commune par commune** là où le social domine (8
+  communes listées) → formulation « charge de marché non atteignable » à servir CIBLÉE, jamais
+  île entière.
+- **Le modèle est presque juste sur le collectif de marché de taille normale (10-19 lgt) en
+  commune de marché** ; il échoue sur (a) les petites opérations et (b) les communes bon marché,
+  par cumul instrument-prix + coût-unique-sans-taille.
+- **Prochaine mesure (avant toute application, acceptation = « les opérations de marché de taille
+  normale ressortent majoritairement viables »)** : re-dériver le prix (appartements only,
+  percentile haut p75-p90, `N_MIN` relevé) ET introduire un coût variable par taille d'opération,
+  puis re-passer E1/E3 sur le sous-ensemble marché en régime « commune de marché ». Départager la
+  part respective des deux leviers sur ce sous-ensemble propre.
+- **Second mode de bilan (opération sociale)** : hors de ce mandat, mais la mesure le motive —
+  25 % des logements et la majorité de 8 communes en relèvent.
+
+Rien n'est appliqué. Aucun re-run de scoring. Invariant tiers inchangé (120 / 1031 / 3587 /
+72980 / 353945). Artefacts : `/tmp/segment_marche_social.py`, `/tmp/cout_taille_sensibilite.py`
+(LECTURE SEULE, recomposition analytique — aucune écriture).
