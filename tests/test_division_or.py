@@ -185,12 +185,12 @@ def test_exclusions_revue_idu_coherents():
     # le vrai U de Saint-Denis (préfixe 97411, pas le fantôme 97416) est exclu, permanent
     assert "97411000AV0203" in d._revue_idus("permanente")
     assert "97416000AV0203" not in d._revue_idus()             # l'IDU-fantôme a disparu
-    # revue 3 : TOUTES les exclusions sont permanentes (les 3 U + AV0573 + 4 résiduels FP)
+    # revue 3 : TOUTES les exclusions sont permanentes (3 U + AV0573 + 4 FP + 2 douteux tranchés)
     perm = set(d._revue_idus("permanente"))
     assert d._revue_idus("liee_geometrie") == []
     assert {"97409000AT0650", "97422000CX0720", "97411000AV0203", "97422000AV0573",
             "97404000AX0324", "97415000CR0776", "97416000HX1065", "97418000AP3270",
-            "97416000CX0214"} == perm
+            "97416000CX0214", "97415000CM0143", "97418000AO0805"} == perm
     # fail-safe : une entrée au préfixe INSEE faux est DÉTECTÉE (et serait écartée au chargement)
     faux_insee = d._insee_par_commune()["Saint-Denis"]
     assert "97416000AV0203"[:5] != faux_insee                  # 97416 ≠ 97411 : incohérent

@@ -8,3 +8,5 @@ idu,commune,nature,date,motif
 97415000CR0776,Saint-Paul,permanente,2026-07-28,"Revue 3 : résiduel de forme aberrante, reste en lanière (solidité 0,615 / compacité 0,367). Revue Vic."
 97416000HX1065,Saint-Pierre,permanente,2026-07-28,"Revue 3 : résiduel enveloppant une construction (solidité 0,672 / compacité 0,401). Revue Vic."
 97418000AP3270,Sainte-Marie,permanente,2026-07-28,"Revue 3 : résiduel en U, façade 12,2 m au ras du seuil (solidité 0,662 / compacité 0,416). Revue Vic."
+97415000CM0143,Saint-Paul,permanente,2026-07-28,"Revue 3 arbitrage : métriques DANS le cluster des FP (solidité 0,713 / compacité 0,391) ; le lot contourne le bâti à un carrefour. Revue Vic."
+97418000AO0805,Sainte-Marie,permanente,2026-07-28,"Revue 3 arbitrage : façade 12,3 m contre seuil 12 m + emprise restante 59 % (le reste est quasi saturé) — solidité 0,853 / compacité 0,535. Revue Vic."

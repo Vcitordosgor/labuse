@@ -81,3 +81,16 @@ exclusions:
     motif: "Revue 3 : résiduel en U, façade 12,2 m au ras du seuil (solidité 0,662 /
             compacité 0,416). Revue Vic."
     date: "2026-07-28"
+  # ── douteux résiduels tranchés EXCLUS (revue 3, arbitrage Vic) ──────────────────────────
+  - idu: "97415000CM0143"
+    commune: Saint-Paul
+    nature: permanente
+    motif: "Revue 3 arbitrage : métriques DANS le cluster des FP (solidité 0,713 /
+            compacité 0,391) ; le lot contourne le bâti à un carrefour. Revue Vic."
+    date: "2026-07-28"
+  - idu: "97418000AO0805"
+    commune: Sainte-Marie
+    nature: permanente
+    motif: "Revue 3 arbitrage : façade 12,3 m contre seuil 12 m + emprise restante 59 %
+            (le reste est quasi saturé) — solidité 0,853 / compacité 0,535. Revue Vic."
+    date: "2026-07-28"

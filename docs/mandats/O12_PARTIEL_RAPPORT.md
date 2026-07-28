@@ -615,6 +615,69 @@ capte pas — mais rien ne justifie l'exclusion côté zonage.
 Survivants aux planchers découpe : **sol≥0,85/comp≥0,55 → 4/14** ; **sol≥0,80/comp≥0,50 → 7/14**
 (tuent des validés) — d'où le tri à la main.
 
+---
+
+# REVUE 3 — clôture : arbitrage, traçabilité prouvée, pool intégralement revu
+
+## Pool arbitré : 36 (28 découpes + 8 résiduels)
+
+4 douteux tranchés (arbitrage Vic, = mes recos) : **CM0143 exclu** (métriques dans le cluster FP,
+lot qui contourne le bâti à un carrefour) · **AO0805 exclu** (façade 12,3 m au ras + emprise
+restante 59 %, reste quasi saturé) · **BH1036 gardé** (40 m de façade — la compacité basse vient
+de l'allongement le long de la voirie, pas d'un contournement) · **AV2092 gardé** (zone UB
+résidentielle vérifiée). Les 2 exclusions ont été appliquées par **`DELETE`** (removal-only, la
+leçon), pas un re-run.
+
+## DOCTRINE gravée — pas de plancher de forme systématique sur les résiduels
+
+**Un lot résiduel est du terrain libre EXISTANT : sa forme est un FAIT du terrain, pas une
+proposition de l'algorithme.** Un plancher géométrique systématique (solidité/compacité) y est
+donc illégitime — et les chiffres le confirment : les planchers découpe (0,85/0,55) tueraient
+BV0182 (0,773, démolition validée) et CR0068 (0,847), tous deux constructibles. On écarte les
+faux positifs résiduels **à la main, en revue**, jamais par un seuil aveugle. (Les lots à
+DÉCOUPER, eux, SONT des propositions de l'algorithme → les planchers s'y appliquent pleinement.)
+Cette règle vaut pour toute évolution future du segment.
+
+## Traçabilité de la reconstruction (les 3 conditions, rendues visibles)
+
+1. **Preuve de coïncidence (déterminisme)** : le run frais des petites/moyennes communes a
+   produit 18 découpes ; le CSV v3 en a 17 pour ces mêmes communes. **Seule différence :
+   `97409000AT0650`** — le U que le bug `liee_geometrie` laissait passer (désormais permanent).
+   Sur TOUTES les autres parcelles, le détecteur frais reproduit le CSV v3 au caractère près :
+   le détecteur est déterministe, donc reconstruire depuis l'état v3 = re-tourner un run propre.
+2. **Provenance par famille (lisible, colonne `provenance` du CSV)** : les **28 découpes** sont
+   RECONSTRUITES (attributs = CSV v3 `[O12-PARTIEL-2 E]`, revu par Vic ; géométrie `lot_geom` =
+   snapshot des tracés revus) ; les **8 résiduels** sont FRAÎCHEMENT calculés (run résiduel du
+   run ciblé — le résiduel est rapide et sa géométrie déterministe). Aucune découpe des 4 gros
+   viviers n'a été re-calculée à la grille (perf 5-6 h) : leurs tracés viennent de l'état revu.
+3. **Conformité aux filtres de forme des 28 découpes** (reconstruites comprises), mesurée sur la
+   table finale : solidité **min 0,880** (≥ 0,85) · compacité **min 0,608** (≥ 0,55) · reste
+   **min 483 m²** (≥ 400) · bâti dans lot **0,0 m² partout** · **0** découpe avec PC Sitadel
+   ≥ 2023. Toutes conformes.
+
+## Statut de tracé des 36 (la question qui décide) : AUCUN modifié
+
+| Statut vs revue précédente (44 cartes) | Nombre |
+|---|---:|
+| inchangé (découpe — lot_geom identique au tracé revu, différence symétrique nulle) | 28 |
+| résiduel (tracé déterministe — résiduel recalculé, identique par construction) | 8 |
+| **modifié** | **0** |
+
+Les 28 découpes sont byte-identiques aux tracés revus (reconstruites DEPUIS le snapshot du pool
+v3 qui a généré le dossier des 44 cartes) ; les 8 résiduels sont des recalculs déterministes du
+même résiduel. **Aucun tracé n'a bougé → les 36 sont tous dans les 44 déjà revus → PAS de 4e
+dossier de revue nécessaire.** (Le PDF `O12_PARTIEL_REVUE.pdf` est régénéré à 36 cartes comme
+artefact à jour, pas comme nouvelle demande de revue.)
+
+## Reste avant EXPOSE=True (points de sortie)
+
+1. Ton **feu vert** au vu de ce rapport (pool 36, tracés inchangés, filtres conformes).
+2. Ton **merge** de `feat/o12-partiel` (Fable ne merge jamais).
+3. Branchement de la **section divisibilité du Rapport de potentiel (M22-D)** — commit dédié.
+
+EXPOSE reste **False** jusqu'à (1)+(2). Golden **116/116**, tiers au bit près
+(120 · 1031 · 3587 · 72980 · 353945). Tests `test_division_or.py` **12/12**.
+
 ## Livrables (revue en session neuve)
 
 - `docs/mandats/O12_PARTIEL_REVUE.pdf` — **44 cartes (pool complet)**, solidité + compacité +
