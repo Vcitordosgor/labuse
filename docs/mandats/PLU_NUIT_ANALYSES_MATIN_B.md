@@ -10,6 +10,12 @@
 
 ## A · LES 18 ZONES « PLAFOND UNIQUE » — verbatims classés pour arbitrage
 
+> **TRANCHÉ par Vic (commit `672532c`, en parallèle de ce document)** : CAT 1 → he = hf
+> gravé sur les 3 zones (verbatims sans ambiguïté) ; CAT 2 « fixée à N m » → reste
+> `he: null` (« le silence n'est pas un oubli à combler »). Le tableau CAT 2 ci-dessous
+> vaut pour les 18 zones, y compris les 9 de Saint-Denis absentes du décompte initial
+> de 13 ; la double clause UApsfr2 (n°2) reste à trancher sur pièce.
+
 Classe analysée : zones dont la clause de hauteur donne UNE valeur sans couple
 égout/faîtage. Deux catégories selon la formulation (arbitrage Vic sur les libellés).
 Hors périmètre : les zones où le faîtage est explicitement nommé (forme `hf`-seul
@@ -21,7 +27,7 @@ zone support).
 | Commune | Zone | Valeur | Verbatim |
 |---|---|---|---|
 | Bras-Panon | AUec | 18 | « Pour la zone AUec, la hauteur absolue (hors équipements techniques) des constructions ne doit pas excéder 18 mètres dans un plan parallèle au sol naturel » (Art. AUINDICEE 10, p.78) — **DÉJÀ réalignée he = hf = 18** (arbitrage explicite du matin). |
-| Petite-Île | UZ | 12 | « La hauteur totale d'une construction ne doit pas excéder 12 mètres » (Art. UZ.10, p.84). Gravée `hf: 12, he: null`. |
+| Petite-Île | UZ | 12 | « La hauteur totale d'une construction ne doit pas excéder 12 mètres » (Art. UZ.10, p.84). |
 | Saint-Louis | UZ | 9 (tranche) | Hauteurs « en tout point » PAR AFFECTATION du schéma d'annexe ZAC : 17 m collectifs / 9 m individuels / 12 m tertiaires + plafond NGR (Art. UZ 10.2, p.96-97). Cas particulier : tiroir dépendant d'un schéma non parcellisable, tranche conservatrice 9 gravée en `hf`. |
 
 ### CAT 2 — « hauteur maximale fixée à N mètres », sans précision de référence (18 zones)
