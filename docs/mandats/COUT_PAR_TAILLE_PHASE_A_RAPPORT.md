@@ -91,3 +91,43 @@ prix), et dans les 16 couvertes les 3-4 sont viables (coût implicite 2 595 > 2 
 
 `/tmp/cout_taille_phaseA.py` (LECTURE SEULE, coût implicite par tranche + croisement vendu/tenu).
 Golden 116/116 + tiers au bit près avant/après.
+
+---
+
+# CONSIGNATIONS DE CLÔTURE (Vic 28/07/2026)
+
+## 6 · Le coût de construction reste PLAT à 2 550 — verrou anti-réouverture
+
+**Aucun instrument « coût par taille » n'existera tant qu'une MESURE ne le justifiera.** La mesure
+de phase A (§1-3) l'a réfuté : coût d'équilibre implicite plat hors VRD (= prix × 0,661), pas
+d'économie d'échelle. Le coût audité **2 550 €/m² SDP** (fourchette YAML 2300-2800, milieu),
+conservateur, est le bon défaut. **Un futur mandat ne doit PAS rouvrir un coût par taille sur le
+chiffre 2 018 → 2 573 : c'était un vestige des prix pré-correction (§3), déjà dissous.** Le rouvrir
+serait corriger une distorsion disparue en en créant une nouvelle (double-comptage du VRD).
+
+## 7 · LEÇON DE MÉTHODE (au-delà de ce mandat)
+
+**Tout chiffre issu d'une mesure ANTÉRIEURE à une correction majeure doit être RE-MESURÉ avant de
+fonder un mandat.** Le « 2 018 → 2 573 » motivait ce mandat ; il datait de l'ancien instrument prix
+(médiane mixte, trop basse). Corrigé, il disparaît. Sans re-mesure, on empile les correctifs sur
+des symptômes déjà résolus. Cf. mémoire de session (règle permanente).
+
+## 8 · Mandats en RÉSERVE (motivés par cette mesure, non ouverts)
+
+- **VRD par devis** (mandat distinct) : `cout_vrd_base` 90 €/m² est un PLACEHOLDER jamais confirmé,
+  et il porte des majorations **pente 30 % / assainissement 25 %** estimées elles aussi. Levier
+  faible (±7 % de charge) mais **multiplicatif** (les majorations s'appliquent au 90). À traiter en
+  **bloc de trois** par devis réels. C'est du VRD, PAS du coût de construction par taille.
+- **Spec multi-modes** : désormais motivée par TROIS populations hors bilan de marché —
+  (1) **social/aidé** (25 % des logements, majorité de 8 communes) → mode D ; (2) **patrimonial
+  locatif** (81 % des opérations de 3-4 lgt jamais revendues) → mode patrimonial (rendement locatif
+  + défisc) ; (3) **communes sans marché observable** (non calculable). Ce n'est plus une
+  amélioration : c'est ce qui manque au produit pour répondre PARTOUT.
+
+## 9 · Bilan de l'arc « nettoyage du prix »
+
+Trois mandats APPLIQUÉS — hypothèses du bilan, couverture prix, prix de sortie consommateurs —
+un FERMÉ sans exécution (coût par taille), et un **point de calcul unique** (`compute_bilan_servi`)
+pour toute la chaîne servie. **La charge foncière est désormais juste là où elle est calculable
+(5 locales + 11 île validées/étiquetées), et silencieuse ailleurs (8 social-dominantes).** Prochain
+mandat = arbitrage Vic : repli non optimiste (2 234 parcelles, tiers en jeu) OU spec multi-modes.
