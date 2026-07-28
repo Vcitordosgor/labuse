@@ -104,164 +104,180 @@ zones:
         hauteur_note: "Bande 15 m depuis voie : hé 9 / hf 13 ; au-delà (ou si jouxte bâti >3 niveaux) : hé 12 / hf 16.",
         hauteur_src: "Zone U1a, Art. 10.2, p.20-21",
         emprise_sol_pct: null, emprise_src: "Art. 9, p.20 : « Il n'est pas fixé de règle »",
-        recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18 : valeurs multiples (alignement/3/6/8 m) non attribuables sûrement à la sous-zone",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18",
-        stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.23",
-        pleine_terre_pct: 10, pleine_terre_note: "10 % base ; 30 % / 50 % (aléa fort PPRI) selon secteur — à préciser", pleine_terre_src: "Art. 13.1, p.25"}
+        recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.14-16 : valeurs multiples (alignement/3/6/8 m) non attribuables sûrement à la sous-zone",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.16-17",
+        stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.26-29 (page corrigée)",
+        pleine_terre_pct: 10, pleine_terre_note: "U1a : 10 % ; parking sous-sol : 10 % min en pleine terre. Aléa fort PPRI : 50 % (transverse).", pleine_terre_src: "Art. 13.1, p.30-31 (page corrigée à la consolidation) — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
   U1b: {bassin: "Saint-Paul Centre", he_m: 12, hf_m: 16, hauteur_src: "Zone U1b, Art. 10.2, p.20",
-        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.23",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.14-16",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.16-17", stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.26-29 (page corrigée)",
+        pleine_terre_pct: 30, pleine_terre_note: "RÉSOLU (consolidation 27/07/2026) : zones U1b/U1c/U1f/U1g/U1pso : 30 %.", pleine_terre_src: "Art. 13.1, p.30-31 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
   U1c: {bassin: "Saint-Paul Centre", he_m: 15, hf_m: 19, hauteur_src: "Zone U1c, Art. 10.2, p.20",
-        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.23",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.14-16",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.16-17", stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.26-29 (page corrigée)",
+        pleine_terre_pct: 30, pleine_terre_note: "RÉSOLU (consolidation 27/07/2026) : zones U1b/U1c/U1f/U1g/U1pso : 30 %.", pleine_terre_src: "Art. 13.1, p.30-31 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
   U1d: {bassin: "Saint-Paul Centre", he_m: 6, hf_m: 9, hauteur_src: "Zones U1d et U1g, Art. 10.2, p.20",
-        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.23",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.14-16",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.16-17", stat_logement: "1 place / logement", stat_src: "Art. 12.2, p.26-29 (page corrigée)",
+        pleine_terre_pct: "a_verifier", pleine_terre_note: "U1d NON CITÉ au 13.1 Perméabilité (listes : U1a ; U1b/c/f/g/pso) — pas de % attribuable sûrement.", pleine_terre_src: "Art. 13.1, p.30-31 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
   U1f: {bassin: "Saint-Paul Centre", he_m: 9, hf_m: 13, hauteur_src: "Zone U1f, Art. 10.2, p.20",
-        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.23 (U1f, U1g : 2 pl./logt)",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.14-16",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.16-17", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.26-29 (U1f, U1g : 2 pl./logt ; page corrigée)",
+        pleine_terre_pct: 30, pleine_terre_note: "RÉSOLU (consolidation 27/07/2026) : zones U1b/U1c/U1f/U1g/U1pso : 30 %.", pleine_terre_src: "Art. 13.1, p.30-31 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
   U1g: {bassin: "Saint-Paul Centre", he_m: 6, hf_m: 9, hauteur_src: "Zones U1d et U1g, Art. 10.2, p.20",
-        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.23 (U1f, U1g : 2 pl./logt)",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.14-16",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.16-17", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.26-29 (U1f, U1g : 2 pl./logt ; page corrigée)",
+        pleine_terre_pct: 30, pleine_terre_note: "RÉSOLU (consolidation 27/07/2026) : zones U1b/U1c/U1f/U1g/U1pso : 30 %.", pleine_terre_src: "Art. 13.1, p.30-31 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
   U1pru: {bassin: "Saint-Paul Centre", he_m: 30, hf_m: 34, hauteur_src: "Zones U1pru et U1pso, Art. 10.2, p.21",
-        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18",
-        stat_logement: "exempté : aucune place imposée", stat_src: "Art. 12 : « il doit être réalisé, SAUF EN ZONE U1pru, des places de stationnement » (p.23)",
-        pleine_terre_pct: "a_verifier", pleine_terre_note: "U1pru : plantations dans >=80 cm de terre comptées en pleine terre (Art. 13.3)", pleine_terre_src: "Art. 13, p.25"}
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.14-16",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.16-17",
+        stat_logement: "exempté : aucune place imposée", stat_src: "Art. 12 : « il doit être réalisé, SAUF EN ZONE U1pru, des places de stationnement » (p.26)",
+        pleine_terre_pct: "a_verifier", pleine_terre_note: "U1pru : plantations dans >=80 cm de terre comptées en pleine terre (Art. 13.3)", pleine_terre_src: "Art. 13, p.30-33"}
   U1pso: {bassin: "Saint-Paul Centre", he_m: 30, hf_m: 34, hauteur_src: "Zones U1pru et U1pso, Art. 10.2, p.21",
-        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.16-18",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.17-18", stat_logement: "a_verifier", stat_src: "Art. 12.2, p.23",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13.1, p.25"}
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.20", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.14-16",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.16-17", stat_logement: "a_verifier", stat_src: "Art. 12.2, p.26-29",
+        pleine_terre_pct: 30, pleine_terre_note: "RÉSOLU : U1pso dans la liste U1b/c/f/g/pso : 30 %.", pleine_terre_src: "Art. 13.1, p.30-31 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
   U1e: {bassin: "Saint-Paul Centre", he_m: null, hf_m: 14, hauteur_note: "Seul hf donné (14 m au faîtage) ; hé non précisé.",
-        hauteur_src: "Zones U1e/U1l, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9",
-        recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6", recul_limites_sep_m: 3, recul_limites_src: "Art. 7",
+        hauteur_src: "Zones U1e/U1l, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9, p.40",
+        recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.37-38", recul_limites_sep_m: 5,
+        recul_limites_note: "CORRIGÉ (consolidation 27/07/2026) : 3 gravé à tort → « en cas de retrait … 5 m minimum » ; retrait OBLIGATOIRE en limite de zone U/AU.", recul_limites_src: "Art. 7.2, p.39",
         stat_logement: "a_verifier", stat_src: "Art. 12", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13",
-        habitat: interdit, habitat_src: "Art. 1.2 p.37-38 (M6 2b A-03) : zone d'activités économiques, industrielles, artisanales et commerciales — habitat interdit hors gardiennage"}
+        habitat: interdit, habitat_src: "Art. 1.2 p.33-34 (pages imprimées, converties de PDF 37-38 à la consolidation ; M6 2b A-03) : zone d'activités économiques, industrielles, artisanales et commerciales — habitat interdit hors gardiennage"}
   U1l: {bassin: "Saint-Paul Centre", he_m: null, hf_m: 14, hauteur_note: "Idem U1e (section commune). hé non précisé.",
-        hauteur_src: "Zones U1e/U1l, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9",
-        recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6", recul_limites_sep_m: 3, recul_limites_src: "Art. 7",
+        hauteur_src: "Zones U1e/U1l, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9, p.40",
+        recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.37-38", recul_limites_sep_m: 5,
+        recul_limites_note: "CORRIGÉ (consolidation 27/07/2026) : 3 → 5 m (Art. 7.2).", recul_limites_src: "Art. 7.2, p.39",
         stat_logement: "a_verifier", stat_src: "Art. 12", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
   U1ec: {bassin: "Saint-Paul Centre", he_m: null, hf_m: 18,
         hauteur_note: "18 m au faîtage ; porté à 21 m pour parcs de stationnement communs à <250 m de l'axe de la RN7. hé non précisé.",
-        hauteur_src: "Zone U1ec, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9",
-        recul_voirie_m: "a_verifier", recul_limites_sep_m: 3, stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
+        hauteur_src: "Zone U1ec, Art. 10.2, p.41", emprise_sol_pct: null, emprise_src: "Art. 9, p.40",
+        recul_voirie_m: "a_verifier", recul_limites_sep_m: 5,
+        recul_limites_note: "CORRIGÉ (consolidation 27/07/2026) : 3 sans source → 5 m (Art. 7.2 du chapitre U1e/U1l).", recul_limites_src: "Art. 7.2, p.39",
+        stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
         note: "Mentionnée dans la section U1e/U1l ; non listée séparément au sommaire.",
-        habitat: interdit, habitat_src: "Art. 1.2 p.37-38, même article que U1e (M6 2b A-03)"}
+        habitat: interdit, habitat_src: "Art. 1.2 p.33-34 (converti PDF→imprimée), même article que U1e (M6 2b A-03)"}
   U1lec: {bassin: "Saint-Paul Centre", he_m: "a_verifier", hf_m: "a_verifier",
         note: "Zone citée comme renvoi par AU1lec ; règles propres non localisées précisément — à vérifier.",
-        hauteur_src: "a_verifier", emprise_sol_pct: "a_verifier", recul_voirie_m: "a_verifier",
+        hauteur_src: "a_verifier", emprise_sol_pct: "a_verifier",
+        recul_voirie_m: 3, recul_voirie_note: "RÉSOLU (consolidation 27/07/2026) : « En zone U1lec … retrait de 3 m minimum de la voie ».", recul_voirie_src: "Art. 6.2, p.38",
         recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier"}
 
   # ============== BASSIN SAINT-GILLES LES BAINS (p. 61-99) ==============
-  U2a: {bassin: "Saint-Gilles", he_m: 12, hf_m: 16, hauteur_src: "Zone U2a, Art. 10.2, p.~75",
-        emprise_sol_pct: null, emprise_src: "Art. 9 : « Il n'est pas fixé de règle »",
-        recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min de la voie ; terrasses commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U2a",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U2a, U2b : 1,5 pl./logt)",
-        pleine_terre_pct: "a_verifier", pleine_terre_note: "30/40/50 % selon sous-zone/aléa", pleine_terre_src: "Art. 13"}
-  U2b: {bassin: "Saint-Gilles", he_m: 15, hf_m: 19, hauteur_src: "Zone U2b, Art. 10.2, p.~75",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6 (U2b non capturé explicitement)",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U2a, U2b : 1,5 pl./logt)",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
-  U2c: {bassin: "Saint-Gilles", he_m: 6, hf_m: 9, hauteur_src: "Zone U2c, Art. 10.2, p.~75",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6 (U2c non capturé explicitement)",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U2c, U2d : 2 pl./logt)",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
-  U2d: {bassin: "Saint-Gilles", he_m: 4.5, hf_m: 6.5, hauteur_src: "Zone U2d, Art. 10.2, p.~75",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U2c, U2d : 2 pl./logt)",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
-  U2h: {bassin: "Saint-Gilles", he_m: 9, hf_m: 13, hauteur_src: "Zone U2h, Art. 10.2, p.~75",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "bande 5 m à compter du retrait 4 m min de la voie", recul_voirie_src: "Art. 6, zone U2h",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "a_verifier", stat_src: "Art. 12.2 (U2h non capturé)",
-        pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13"}
-  U2e: {bassin: "Saint-Gilles", he_m: null, hf_m: 14, hauteur_note: "Seul hf (14 m) ; hé non précisé.", hauteur_src: "Zone U2e, Art. 10.2, p.~92",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_limites_sep_m: 3,
+  U2a: {bassin: "Saint-Gilles", he_m: 12, hf_m: 16, hauteur_src: "Zone U2a, Art. 10.2, p.70-72",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.70 : « Il n'est pas fixé de règle »",
+        recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min de la voie ; terrasses commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U2a, p.66-67",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.67-68", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2, p.76-79 (U2a, U2b : 1,5 pl./logt)",
+        pleine_terre_pct: 30, pleine_terre_note: "RÉSOLU (consolidation 27/07/2026) : U2a et U2b : 30 %.", pleine_terre_src: "Art. 13.1, p.80-81 — « espaces libres perméables » + 50 % de la surface perméable en pleine terre (3 strates) (doctrine a)"}
+  U2b: {bassin: "Saint-Gilles", he_m: 15, hf_m: 19, hauteur_src: "Zone U2b, Art. 10.2, p.70-72",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.70", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.66-67 (U2b non capturé explicitement)",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.67-68", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2, p.76-79 (U2a, U2b : 1,5 pl./logt)",
+        pleine_terre_pct: 30, pleine_terre_note: "RÉSOLU : U2a et U2b : 30 %.", pleine_terre_src: "Art. 13.1, p.80-81 — « espaces libres perméables » + 50 % de la surface perméable en pleine terre (3 strates) (doctrine a)"}
+  U2c: {bassin: "Saint-Gilles", he_m: 6, hf_m: 9, hauteur_src: "Zone U2c, Art. 10.2, p.70-72",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.70", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.66-67 (U2c non capturé explicitement)",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.67-68", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.76-79 (U2c, U2d : 2 pl./logt)",
+        pleine_terre_pct: 50, pleine_terre_note: "RÉSOLU : U2c « autres constructions, y compris habitations » : 50 % ; constructions à usage touristique : 40 %.", pleine_terre_src: "Art. 13.1, p.81 — « espaces libres perméables » + 50 % de la surface perméable en pleine terre (3 strates) (doctrine a)"}
+  U2d: {bassin: "Saint-Gilles", he_m: 4.5, hf_m: 6.5, hauteur_src: "Zone U2d, Art. 10.2, p.70-72",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.70", recul_voirie_m: "a_verifier", recul_voirie_src: "Art. 6, p.66-67",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.67-68", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.76-79 (U2c, U2d : 2 pl./logt)",
+        pleine_terre_pct: 90, pleine_terre_note: "RÉSOLU, tranche CONSERVATRICE gravée : 90 % si terrain <700 m² ; 65 % si >=700 m² ET en démolition/reconstruction ou extension (quelle que soit la surface). Distribution du pool inconnue sans base (mesure phase 4).", pleine_terre_src: "Art. 13.1, p.81 — « espaces libres perméables » + 50 % de la surface perméable en pleine terre (3 strates) (doctrine a)"}
+  U2h: {bassin: "Saint-Gilles", he_m: 9, hf_m: 13, hauteur_src: "Zone U2h, Art. 10.2, p.70-72",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.70", recul_voirie_m: 4, recul_voirie_note: "bande 5 m à compter du retrait 4 m min de la voie", recul_voirie_src: "Art. 6, zone U2h, p.66-67",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.67-68", stat_logement: "a_verifier", stat_src: "Art. 12.2, p.76-79 (U2h non capturé)",
+        pleine_terre_pct: 40, pleine_terre_note: "RÉSOLU : U2h : 40 %.", pleine_terre_src: "Art. 13.1, p.81-82 — « espaces libres perméables » + 50 % de la surface perméable en pleine terre (3 strates) (doctrine a)"}
+  U2e: {bassin: "Saint-Gilles", he_m: null, hf_m: 14, hauteur_note: "Seul hf (14 m) ; hé non précisé.", hauteur_src: "Zone U2e, Art. 10.2, p.89",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.90", recul_voirie_m: "a_verifier", recul_limites_sep_m: 5,
+        recul_limites_note: "CORRIGÉ (consolidation 27/07/2026) : 3 sans source → 5 m.", recul_limites_src: "Art. 7.2, p.88",
         stat_logement: "a_verifier", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13",
-        habitat: interdit, habitat_src: "Art. 1.2 p.88 (M6 2b A-03) : occupation spécialisée (Carrosse, Bruniquel, STEP Ermitage) — habitat interdit"}
+        habitat: interdit, habitat_src: "Art. 1.2 p.84-85 (converti PDF→imprimée ; M6 2b A-03) : occupation spécialisée (Carrosse, Bruniquel, STEP Ermitage) — habitat interdit"}
 
   # ============== BASSIN PLATEAU CAILLOU (p. 101-161) ==============
-  U3a: {bassin: "Plateau Caillou", he_m: 15, hf_m: 19, hauteur_note: "Sous-cas : hé 18 / hf 22 (secteur spécifique).", hauteur_src: "Zone U3a, Art. 10.2, p.~115",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 0, recul_voirie_note: "à l'alignement ; ZAC Savane des Tamarins : retrait 3 m possible", recul_voirie_src: "Art. 6, zone U3a",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U3a, U3b : 1,5 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_note: "20 % base ; 30 % selon secteur/aléa", pleine_terre_src: "Art. 13"}
-  U3b: {bassin: "Plateau Caillou", he_m: 12, hf_m: 16, hauteur_src: "Zone U3b, Art. 10.2, p.~115",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U3b",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U3a, U3b : 1,5 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
-  U3c: {bassin: "Plateau Caillou", he_m: 9, hf_m: 12, hauteur_src: "Zone U3c, Art. 10.2, p.~115",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U3c",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U3c : 2 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
-  U3h: {bassin: "Plateau Caillou", he_m: 9, hf_m: 13, hauteur_src: "Zone U3h, Art. 10.2, p.~115",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "bande 5 m à compter du retrait 4 m min", recul_voirie_src: "Art. 6, zone U3h",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "a_verifier", stat_src: "Art. 12.2 (U3h non capturé)",
-        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
-  U3e: {bassin: "Plateau Caillou", he_m: null, hf_m: 14, hauteur_note: "Seul hf (14 m) ; ZAC Savane des Tamarins : 19 m. hé non précisé.", hauteur_src: "Zone U3e, Art. 10.2, p.~149",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: "a_verifier", recul_limites_sep_m: 3,
+  U3a: {bassin: "Plateau Caillou", he_m: 15, hf_m: 19, hauteur_note: "Sous-cas : hé 18 / hf 22 (secteur spécifique).", hauteur_src: "Zone U3a, Art. 10.2, p.110-112",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.110", recul_voirie_m: 0, recul_voirie_note: "à l'alignement ; ZAC Savane des Tamarins : retrait 3 m possible", recul_voirie_src: "Art. 6, zone U3a, p.106",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.107-108", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2, p.116-118 (U3a, U3b : 1,5 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_note: "CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité). Parking sous-sol totalité : 20 % min en pleine terre.", pleine_terre_src: "Art. 13.1, p.119-121 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U3b: {bassin: "Plateau Caillou", he_m: 12, hf_m: 16, hauteur_src: "Zone U3b, Art. 10.2, p.110-112",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.110", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U3b, p.106",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.107-108", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2, p.116-118 (U3a, U3b : 1,5 pl./logt)",
+        pleine_terre_pct: 30, pleine_terre_note: "CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 30 % au 13.1.", pleine_terre_src: "Art. 13.1, p.119-121 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U3c: {bassin: "Plateau Caillou", he_m: 9, hf_m: 12, hauteur_src: "Zone U3c, Art. 10.2, p.110-112",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.110", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U3c, p.106",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.107-108", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.116-118 (U3c : 2 pl./logt)",
+        pleine_terre_pct: 40, pleine_terre_note: "CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.", pleine_terre_src: "Art. 13.1, p.119-121 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U3h: {bassin: "Plateau Caillou", he_m: 9, hf_m: 13, hauteur_src: "Zone U3h, Art. 10.2, p.110-112",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.110", recul_voirie_m: 4, recul_voirie_note: "bande 5 m à compter du retrait 4 m min", recul_voirie_src: "Art. 6, zone U3h, p.106",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.107-108", stat_logement: "a_verifier", stat_src: "Art. 12.2, p.116-118 (U3h non capturé)",
+        pleine_terre_pct: 40, pleine_terre_note: "CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.", pleine_terre_src: "Art. 13.1, p.119-121 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U3e: {bassin: "Plateau Caillou", he_m: null, hf_m: 14, hauteur_note: "Seul hf (14 m) ; ZAC Savane des Tamarins : 19 m. hé non précisé.", hauteur_src: "Zone U3e, Art. 10.2, p.146",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.147", recul_voirie_m: "a_verifier", recul_limites_sep_m: 5,
+        recul_limites_note: "CORRIGÉ (consolidation 27/07/2026) : 3 sans source → 5 m.", recul_limites_src: "Art. 7.2, p.145",
         stat_logement: "a_verifier", pleine_terre_pct: "a_verifier", pleine_terre_src: "Art. 13",
-        habitat: interdit, habitat_src: "Art. 1.2 p.145 (M6 2b A-03) : espaces à vocation d'activités économiques et artisanales (Eperon, Plateau Caillou) — habitat interdit"}
-  Usdu_PlateauCaillou: {bassin: "Plateau Caillou", he_m: 6, hf_m: 9, hauteur_src: "Zone Usdu, Art. 10.2, p.~131",
-        emprise_sol_pct: "a_verifier", emprise_note: "Emprise liée aux surfaces perméables imposées (règle propre, ≠ « pas de règle ») — à détailler", emprise_src: "Art. 9",
-        recul_voirie_m: "a_verifier", recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
-        note: "Zone Usdu présente dans plusieurs bassins (mêmes hauteurs constatées)."}
+        habitat: interdit, habitat_src: "Art. 1.2 p.141-142 (converti PDF→imprimée ; M6 2b A-03) : espaces à vocation d'activités économiques et artisanales (Eperon, Plateau Caillou) — habitat interdit"}
+  # Usdu_PlateauCaillou : clé HISTORIQUE (aucun libellé GPU ne matche « Usdu_PlateauCaillou ») —
+  # alignée sur l'entrée Usdu à la consolidation du 27/07/2026, conservée pour compat.
+  Usdu_PlateauCaillou: {bassin: "Plateau Caillou", he_m: 6, hf_m: 9, hauteur_src: "Zone Usdu, Art. 10.2, p.130-131",
+        emprise_sol_pct: "a_verifier", emprise_note: "Plafonds ABSOLUS par destination — cf. entrée Usdu.", emprise_src: "Art. 9, p.129-130",
+        recul_voirie_m: 4, recul_voirie_src: "Art. 6.2, p.127", recul_limites_sep_m: 4, recul_limites_src: "Art. 7.2, p.127-128",
+        stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.135-136", pleine_terre_pct: 50, pleine_terre_src: "Art. 13.1, p.138-139 — « espaces libres perméables » + 50 % de la surface perméable en pleine terre (3 strates) (doctrine a)",
+        note: "Zone Usdu présente dans plusieurs bassins (mêmes règles constatées aux 4 chapitres)."}
 
   # ============== BASSIN LA PLAINE - BOIS DE NÈFLES (p. 163-207) ==============
-  U4a: {bassin: "La Plaine-Bois de Nèfles", he_m: 12, hf_m: 16, hauteur_src: "Zone U4a, Art. 10.2, p.~177",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 0, recul_voirie_note: "à l'alignement ; ZAC Marie Caze / Sans Souci : retrait 3 m possible", recul_voirie_src: "Art. 6, zone U4a",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U4a : 1,5 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_note: "20 % base ; 30/40 % selon secteur/aléa", pleine_terre_src: "Art. 13"}
-  U4b: {bassin: "La Plaine-Bois de Nèfles", he_m: 9, hf_m: 13, hauteur_src: "Zone U4b, Art. 10.2, p.~177",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U4b",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U4b, U4c : 2 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
-  U4c: {bassin: "La Plaine-Bois de Nèfles", he_m: 6, hf_m: 9, hauteur_src: "Zone U4c, Art. 10.2, p.~177",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U4c",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U4b, U4c : 2 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  U4a: {bassin: "La Plaine-Bois de Nèfles", he_m: 12, hf_m: 16, hauteur_src: "Zone U4a, Art. 10.2, p.171-173",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.171", recul_voirie_m: 0, recul_voirie_note: "à l'alignement ; ZAC Marie Caze / Sans Souci : retrait 3 m possible", recul_voirie_src: "Art. 6, zone U4a, p.167",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.169-170", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2, p.177-180 (U4a : 1,5 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_note: "CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité).", pleine_terre_src: "Art. 13.1, p.181-183 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U4b: {bassin: "La Plaine-Bois de Nèfles", he_m: 9, hf_m: 13, hauteur_src: "Zone U4b, Art. 10.2, p.171-173",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.171", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U4b, p.167",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.169-170", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.177-180 (U4b, U4c : 2 pl./logt)",
+        pleine_terre_pct: 30, pleine_terre_note: "CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 30 % au 13.1.", pleine_terre_src: "Art. 13.1, p.181-183 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U4c: {bassin: "La Plaine-Bois de Nèfles", he_m: 6, hf_m: 9, hauteur_src: "Zone U4c, Art. 10.2, p.171-173",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.171", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U4c, p.167",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.169-170", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.177-180 (U4b, U4c : 2 pl./logt)",
+        pleine_terre_pct: 40, pleine_terre_note: "CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.", pleine_terre_src: "Art. 13.1, p.181-183 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
 
   # ============== BASSIN LA SALINE (p. 209-267) ==============
-  U5a: {bassin: "La Saline", he_m: 12, hf_m: 16, hauteur_src: "Zone U5a, Art. 10.2, p.~223",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 0, recul_voirie_note: "à l'alignement ; ZAC Saline : retrait 3 m possible", recul_voirie_src: "Art. 6, zone U5a",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U5a : 1,5 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_note: "20 % base ; 30/40 % selon secteur/aléa", pleine_terre_src: "Art. 13"}
-  U5b: {bassin: "La Saline", he_m: 9, hf_m: 13, hauteur_src: "Zone U5b, Art. 10.2, p.~223",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U5b",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U5b, U5c : 2 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
-  U5c: {bassin: "La Saline", he_m: 6, hf_m: 9, hauteur_src: "Zone U5c, Art. 10.2, p.~223",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U5c",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U5b, U5c : 2 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  U5a: {bassin: "La Saline", he_m: 12, hf_m: 16, hauteur_src: "Zone U5a, Art. 10.2, p.217-219",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.217", recul_voirie_m: 0, recul_voirie_note: "à l'alignement ; ZAC Saline : retrait 3 m possible", recul_voirie_src: "Art. 6, zone U5a, p.213",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.215-216", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2, p.223-226 (U5a : 1,5 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_note: "CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité).", pleine_terre_src: "Art. 13.1, p.227-229 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U5b: {bassin: "La Saline", he_m: 9, hf_m: 13, hauteur_src: "Zone U5b, Art. 10.2, p.217-219",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.217", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U5b, p.213",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.215-216", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.223-226 (U5b, U5c : 2 pl./logt)",
+        pleine_terre_pct: 30, pleine_terre_note: "CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 30 % au 13.1.", pleine_terre_src: "Art. 13.1, p.227-229 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U5c: {bassin: "La Saline", he_m: 6, hf_m: 9, hauteur_src: "Zone U5c, Art. 10.2, p.217-219",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.217", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U5c, p.213",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.215-216", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.223-226 (U5b, U5c : 2 pl./logt)",
+        pleine_terre_pct: 40, pleine_terre_note: "CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.", pleine_terre_src: "Art. 13.1, p.227-229 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
   AU5e: {bassin: "La Saline", he_m: null, hf_m: 14, hauteur_note: "Zone AU avec règle PROPRE (ne renvoie pas à un U) : hf 14 m ; hé non précisé.",
-        hauteur_src: "Zone AU5e, Art. 10.2, p.~254", emprise_sol_pct: "a_verifier", recul_voirie_m: "a_verifier",
-        recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
-        habitat: interdit, habitat_src: "Art. 1.2 p.254 (M6 2b A-03) : espace à vocation d'activités économiques et artisanales (La Saline) — habitat interdit"}
+        hauteur_src: "Zone AU5e, Art. 10.2, p.255-256", emprise_sol_pct: "a_verifier", recul_voirie_m: "a_verifier",
+        recul_limites_sep_m: 5, recul_limites_note: "RÉSOLU (consolidation 27/07/2026) : retrait 5 m min.", recul_limites_src: "Art. 7.2, p.254",
+        stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
+        habitat: interdit, habitat_src: "Art. 1.2 p.250-251 (converti PDF→imprimée ; M6 2b A-03) : espace à vocation d'activités économiques et artisanales (La Saline) — habitat interdit"}
 
   # ============== BASSIN DU GUILLAUME (p. 269-313) ==============
-  U6a: {bassin: "Le Guillaume", he_m: 12, hf_m: 16, hauteur_src: "Zone U6a, Art. 10.2, p.~283",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 0, recul_voirie_note: "à l'alignement", recul_voirie_src: "Art. 6, zone U6a",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2 (U6a : 1,5 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_note: "20 % base ; 30/40 % selon secteur/aléa", pleine_terre_src: "Art. 13"}
-  U6b: {bassin: "Le Guillaume", he_m: 9, hf_m: 13, hauteur_src: "Zone U6b, Art. 10.2, p.~283",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U6b",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U6b, U6c : 2 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
-  U6c: {bassin: "Le Guillaume", he_m: 6, hf_m: 9, hauteur_src: "Zone U6c, Art. 10.2, p.~283",
-        emprise_sol_pct: null, emprise_src: "Art. 9", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U6c",
-        recul_limites_sep_m: 3, recul_limites_src: "Art. 7", stat_logement: "2 places / logement", stat_src: "Art. 12.2 (U6b, U6c : 2 pl./logt)",
-        pleine_terre_pct: 20, pleine_terre_src: "Art. 13"}
+  U6a: {bassin: "Le Guillaume", he_m: 12, hf_m: 16, hauteur_src: "Zone U6a, Art. 10.2, p.277-279",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.277", recul_voirie_m: 0, recul_voirie_note: "à l'alignement", recul_voirie_src: "Art. 6, zone U6a, p.273",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.275-276", stat_logement: "1,5 place / logement", stat_src: "Art. 12.2, p.283-286 (U6a : 1,5 pl./logt)",
+        pleine_terre_pct: 20, pleine_terre_note: "CONFIRMÉ à la consolidation 27/07/2026 (13.1 Perméabilité).", pleine_terre_src: "Art. 13.1, p.287-289 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U6b: {bassin: "Le Guillaume", he_m: 9, hf_m: 13, hauteur_src: "Zone U6b, Art. 10.2, p.277-279",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.277", recul_voirie_m: 3, recul_voirie_note: "retrait 3 m min ; commerces RDC à l'alignement", recul_voirie_src: "Art. 6, zone U6b, p.273",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.275-276", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.283-286 (U6b, U6c : 2 pl./logt)",
+        pleine_terre_pct: 30, pleine_terre_note: "CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 30 % au 13.1.", pleine_terre_src: "Art. 13.1, p.287-289 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
+  U6c: {bassin: "Le Guillaume", he_m: 6, hf_m: 9, hauteur_src: "Zone U6c, Art. 10.2, p.277-279",
+        emprise_sol_pct: null, emprise_src: "Art. 9, p.277", recul_voirie_m: 4, recul_voirie_note: "retrait 4 m min", recul_voirie_src: "Art. 6, zone U6c, p.273",
+        recul_limites_sep_m: 3, recul_limites_src: "Art. 7.2, p.275-276", stat_logement: "2 places / logement", stat_src: "Art. 12.2, p.283-286 (U6b, U6c : 2 pl./logt)",
+        pleine_terre_pct: 40, pleine_terre_note: "CORRIGÉ (consolidation 27/07/2026) : 20 gravé à tort → 40 % au 13.1.", pleine_terre_src: "Art. 13.1, p.287-289 — « pourcentage minimal d'espaces libres perméables », sans sous-minimum de pleine terre (doctrine a)"}
 
   # ============== Usdu (secteur présent dans 4 bassins, hauteurs identiques) ==============
   Usdu: {bassin: "multi (Plateau C., Plaine, Saline, Guillaume)", he_m: 6, hf_m: 9,
-        hauteur_src: "Zone Usdu, Art. 10.2 (ex. p.~131, ~192)",
-        emprise_sol_pct: "a_verifier", emprise_note: "Règle propre liée aux surfaces perméables imposées (≠ « pas de règle ») — à détailler par bassin", emprise_src: "Art. 9",
-        recul_voirie_m: "a_verifier", recul_limites_sep_m: "a_verifier", stat_logement: "a_verifier", pleine_terre_pct: "a_verifier",
-        annexes_hf_m: 3.5, annexes_src: "Art. 10.2"}
+        hauteur_src: "Zone Usdu, Art. 10.2, p.130-131 (id. p.191-192 / p.237-238 / p.297-298)",
+        emprise_sol_pct: "a_verifier",
+        emprise_note: "PLAFONDS ABSOLUS par destination (Art. 9) : habitation/commerce 150 m² max, annexes 25 m², équipements 200 m², hébergement hôtelier 300 m² max — dans la limite des surfaces perméables. NON PORTABLE par le schéma v1 (emprise en %) : friction consignée au rapport de nuit ; le repli sans plafond SURESTIME les grandes parcelles.",
+        emprise_src: "Art. 9, p.129-130 (id. p.190 / p.236 / p.296)",
+        recul_voirie_m: 4, recul_voirie_note: "RÉSOLU (consolidation 27/07/2026) : retrait 4 m min de la voie.", recul_voirie_src: "Art. 6.2, p.127 (id. p.187 / p.233 / p.293)",
+        recul_limites_sep_m: 4, recul_limites_note: "RÉSOLU : retrait OBLIGATOIRE de toutes les limites, 4 m min.", recul_limites_src: "Art. 7.2, p.127-128 (id. p.188 / p.234 / p.294)",
+        stat_logement: "2 places / logement", stat_note: "RÉSOLU : « Autres logements : 2 places / logement » ; logements aidés 1 place.", stat_src: "Art. 12.2, p.135-136 (id. p.196 / p.242 / p.302)",
+        pleine_terre_pct: 50, pleine_terre_note: "RÉSOLU : 50 % d'espaces libres perméables (identique aux 4 bassins), dont au moins 50 % en pleine terre plantée (règle transverse).", pleine_terre_src: "Art. 13.1, p.138-139 (id. p.199-200 / p.245-246 / p.305-306) — « espaces libres perméables » + 50 % de la surface perméable en pleine terre (3 strates) (doctrine a)",
+        annexes_hf_m: 3.5, annexes_src: "Art. 10.2, p.131"}
 
 # Zones AU « génériques » : RENVOI explicite au règlement de la zone U de même indice
 # (donc mêmes règles que U ci-dessus — ne pas dupliquer/inventer).

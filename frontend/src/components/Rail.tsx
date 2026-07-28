@@ -6,6 +6,13 @@ import { GROUPS, MODULES } from './outils/registry'
 type Zone = Exclude<View, 'sources'> | 'outils'
 
 const ICONS: Record<Zone, JSX.Element> = {
+  // M26-B · entonnoir : l'instruction Copilote resserre le gisement étage par étage
+  copilote: (
+    <>
+      <path d="M4 4.5 H16 L11.8 10 V15 L8.2 16.8 V10 Z"
+        fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </>
+  ),
   ia: (
     <>
       <path d="M10 3.5 L11.6 8.4 L16.5 10 L11.6 11.6 L10 16.5 L8.4 11.6 L3.5 10 L8.4 8.4 Z"
@@ -46,6 +53,7 @@ const ICONS: Record<Zone, JSX.Element> = {
 
 const ZONES: { key: Zone; label: string }[] = [
   { key: 'ia', label: 'IA' },
+  { key: 'copilote', label: 'Copilote' },
   { key: 'cartes', label: 'Cartes' },
   { key: 'outils', label: 'Outils' },
   { key: 'projets', label: 'Projets' },

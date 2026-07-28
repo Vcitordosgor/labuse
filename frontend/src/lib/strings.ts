@@ -227,6 +227,147 @@ export const CLIENT = {
       completude: 'Part des couches de données disponibles pour cette parcelle.',
     },
   },
+
+  // ── M26-B · écran Copilote ─────────────────────────────────────────────────
+  // L'écran est une projection de l'event log M26-A : TOUT chiffre et toute
+  // étiquette (Sourcé/Estimé/Absent) viennent du payload, jamais d'ici. Ici ne
+  // vivent que les libellés fixes. Les formulations de calibrage sont IMPOSÉES
+  // par le mandat : sur commune non calibrée, jamais « tracé(e) par article ».
+  copilote: {
+    crumb: 'Copilote',
+    statuts: {
+      interpreting: 'Interprétation', awaiting_user: 'En pause', running: 'Instruction',
+      paused: 'En pause', done: 'Terminé', failed: 'Échec', cancelled: 'Annulée',
+    } as Record<string, string>,
+    h1Ligne1: 'Décrivez le besoin.',
+    h1Ligne2Avant: 'Le Copilote ',
+    h1Ligne2Em: 'instruit le dossier',
+    h1Ligne2Apres: '.',
+    lede: 'Il ne calcule rien. Il séquence les moteurs LABUSE, journalise chaque étape et étiquette chaque chiffre. ',
+    ledeFort: 'C’est pour ça que vous pouvez l’emmener en comité.',
+    placeholder: 'Décrivez le besoin — commune, programme, budget, contraintes…',
+    instruire: 'Instruire',
+    annuler: 'Annuler l’instruction',
+    serment: 'Moteurs déterministes journalisés',
+    // Les 5 missions du Copilote — 2 actives (M26-A/B), 3 « bientôt » (mandats dédiés).
+    missions: [
+      { key: 'instruire', label: 'Instruire un besoin', actif: true },
+      { key: 'shortlist', label: 'Shortlist', actif: true },
+      { key: 'verifier_adresse', label: 'Vérifier des références', actif: false },
+      { key: 'aide_dossier', label: 'Aide sur un dossier', actif: false },
+      { key: 'brief_matin', label: 'Brief du matin', actif: false },
+    ] as ReadonlyArray<{ key: string; label: string; actif: boolean }>,
+    bientot: 'bientôt',
+    // états transitoires — AUCUN résultat partiel pendant l'instruction (règle 5)
+    interpretationEnCours: 'Interprétation du besoin en cours…',
+    enCours: 'Les parcelles s’afficheront à la fin de l’instruction.',
+    enCoursNote: 'Aucune liste partielle n’est montrée — elle laisserait croire à un examen terminé.',
+    enCoursSerment: (fait: number, total: number) => `${fait} moteur${fait > 1 ? 's' : ''} appelé${fait > 1 ? 's' : ''} sur ${total}`,
+    enAttenteBouton: 'En attente',
+    suspendue: 'Instruction suspendue',
+    fluxInterrompu: 'Flux interrompu — reconnexion…',
+    annulee: 'Instruction annulée.',
+    // état 3 · demande de précision — le run REPREND, il ne redémarre pas
+    precisionTitre: 'Précision nécessaire',
+    precisionReprendre: 'Reprendre l’instruction',
+    precisionPlaceholder: 'Ou saisissez votre réponse…',
+    interpretation: {
+      nom: 'Interprétation',
+      faite: 'besoin interprété',
+      active: 'analyse du besoin',
+      pause: 'précision demandée — le Copilote ne devine pas',
+    },
+    entonnoir: {
+      titre: 'Le gisement se resserre',
+      sousTitre: 'Un étage par moteur — le détail est en dessous.',
+      cap: 'Instruction',
+      capEnCours: 'Instruction en cours',
+      sousTitreEnCours: 'Les étages s’affichent au fur et à mesure.',
+      enAttenteEtage: '—',
+      // libellés des étages (les n et étiquettes viennent du payload entonnoir)
+      etages: {
+        pool: 'pool servi', filtre_geometrique: 'filtre géométrique', examinees: 'examinées',
+        retenues: 'retenues', dans_budget: 'dans le budget', restituees: 'restituées',
+      } as Record<string, string>,
+      badgeExhaustif: 'Examen exhaustif',
+      badgePartiel: 'Examen partiel',
+      // formulation IMPOSÉE (mandat §2.2) — verrouillée par test
+      badgeCalibre: 'PLU calibré — tracé par article',
+      badgeGenerique: 'Règle générique — PLU non calibré',
+    },
+    fil: {
+      titre: 'Fil d’instruction',
+      meta: (n: number) => `${n} moteurs · journal joint`,
+      metaEtape: (i: number, n: number) => `étape ${i} sur ${n}`,
+      metaPause: 'en pause',
+      enAttente: 'en attente',
+      moteurs: {
+        criblage: { nom: 'Criblage', desc: 'pool servi · zones et contraintes du brief' },
+        filtre_geometrique: { nom: 'Filtre géométrique', desc: 'SDP cible inatteignable écartée par la géométrie' },
+        faisabilite: { nom: 'Faisabilité', desc: 'SDP résiduelle par parcelle' },
+        risques: { nom: 'Risques', desc: 'signaux PPR, ABF et couches de risques' },
+        marche_dvf: { nom: 'Charge foncière', desc: 'prix probable du foncier · comparables DVF' },
+        filtre_budget: { nom: 'Filtre budget', desc: 'retenues confrontées au budget du brief' },
+        mutation: { nom: 'Mutation', desc: 'classement des retenues · modèle P' },
+        assemblage: { nom: 'Assemblage', desc: 'restitution motivée · journal joint' },
+        assemblage_court: { nom: 'Assemblage', desc: 'restitution courte · journal joint' },
+        scoreur_unitaire: { nom: 'Scoreur unitaire', desc: 'références retrouvées et scorées' },
+        assemblage_verdict: { nom: 'Verdicts', desc: 'un verdict par référence' },
+      } as Record<string, { nom: string; desc: string }>,
+    },
+    resultats: {
+      titre: (n: number) => `${n} parcelle${n > 1 ? 's' : ''} restituée${n > 1 ? 's' : ''}`,
+      titreEnCours: 'Résultats',
+      meta: (nRetenues: number) => `sur ${nRetenues} retenues`,
+      // règle 4 (mandat) : TOUJOURS visible quand retenues > restituées — verrouillé par test.
+      // En deux morceaux : le « N autres retenues » est mis en gras par le composant.
+      autresRetenuesFort: 'autres retenues',
+      autresRetenuesSuite: (rang: number) =>
+        `, non restituées — classées après le rang ${rang}.`,
+      sdp: 'SDP résiduelle',
+      surface: 'surface parcelle',
+      prixProbable: 'Prix probable du foncier',
+      chargeSupportable: 'Charge foncière supportable',
+      signauxRisques: (n: number) => `${n} signal${n > 1 ? 'aux' : ''} de risques`,
+      tier: 'Tier',
+      // règle 7 : information, jamais un filtre — la parcelle reste restituée
+      chargeFlag: (charge: string) =>
+        `Au-dessus de la charge supportable (${charge}) — dans votre budget, mais l’opération ne supporte pas ce prix.`,
+      // décision produit (revue B) : charge ≤ 0 = information forte, jamais un montant nu.
+      // La valeur brute reste visible, le sens est donné.
+      chargeNonViable: (charge: string) =>
+        `Opération non viable — la charge supportable est nulle ou négative (${charge}), même à foncier gratuit.`,
+      chargeNonViableCourt: (charge: string) => `opération non viable (${charge})`,
+      chargeSupportableCourt: (charge: string) => `charge supportable ${charge}`,
+      zeroTitre: 'Aucune parcelle ne satisfait ce besoin.',
+      zeroNote: 'Aucun critère n’a été assoupli — l’entonnoir ci-dessus montre où le besoin s’est heurté au réel.',
+      // relances NON CHIFFRÉES (arbitrage GO) : elles pré-remplissent la console avec le
+      // brief d'origine, l'utilisateur ajuste lui-même. Aucun chiffre inventé par l'écran.
+      relanceBudget: 'Relancer en ajustant le budget',
+      relanceCommunes: 'Élargir à d’autres communes',
+    },
+    livrable: {
+      titre: 'Note d’opportunité',
+      desc: (nR: number, nE: number, nMoteurs: number) =>
+        `${nR} restituée${nR > 1 ? 's' : ''} argumentée${nR > 1 ? 's' : ''} · ${nE} écartées motivées · journal des ${nMoteurs} appels moteurs joint.`,
+      journal: 'Voir le journal',
+      pdf: 'Télécharger le PDF',
+      pdfBientot: 'bientôt', // livrable PDF = mandat M26-C
+    },
+    // état 5 · quota atteint AVANT création du run — aucun moteur appelé
+    quota: {
+      pill: 'Indisponible aujourd’hui',
+      titre: (n: number | null) =>
+        n != null ? `Vos ${n} instructions du jour sont utilisées.` : 'Quota du jour atteint.',
+      aucunRun: 'Cette instruction n’a pas été lancée : aucun moteur n’a été appelé, rien n’a été décompté de plus.',
+      distinct: 'Le quota agentique est distinct du quota Dossier — vos exports restent disponibles.',
+    },
+    journal: {
+      titre: 'Journal d’instruction',
+      sousTitre: 'L’event log intégral du run — ce que la note joint en annexe.',
+      fermer: 'Fermer le journal',
+    },
+  },
 } as const
 
 export type ClientStrings = typeof CLIENT

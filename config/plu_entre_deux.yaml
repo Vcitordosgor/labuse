@@ -1,0 +1,107 @@
+# =============================================================================
+# PLU ENTRE-DEUX (97403) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de l'Entre-Deux (archive GPU 97403_plu_20240924).
+#   document : 97403_reglement.pdf (cache pré-vol nuit), 62 p. Concordance manifeste/GPU
+#   re-vérifiée au pré-vol du 27/07/2026.
+#
+# FIABILITÉ :
+#   - page_pdf = page_imprimee (offset 0, pré-vol).
+#   - Format moderne MUTUALISÉ par groupe (III zones U : articles U1..U12 déclinés par
+#     zone ; IV zones AU : renvoi à la zone U d'indice ; AUst = gel).
+#   - PLEINE TERRE = 40 % « espace vert et perméable » toutes zones U (Ue : 30 %) —
+#     Art. U11.1, p.26-27.
+#   - ZONE NON CALIBRÉE (invariant « jamais deviner ») : AUe — le tableau des destinations
+#     de l'Art. U1.2 (matrice V/X) perd ses symboles à l'extraction texte : le statut
+#     HABITAT de la zone Ue (dont AUe hérite par renvoi) est INDÉTERMINABLE sur pièces.
+#     Repli générique honnête ; à trancher en lecture visuelle du PDF (p.16-18).
+#   - Aucun COS (pré-vol : 0 occurrence).
+# =============================================================================
+
+source:
+  document: "97403_reglement.pdf (Pieces_ecrites/3_Reglement, archive GPU 97403_plu_20240924)"
+  url: "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97403"
+  approbation: "2024-09-24"
+  pages_total: 62
+  offset_pdf_vs_imprimee: 0
+  reglement_grave:
+    fichier: "97403_reglement.pdf"
+    md5: "673137a9ac9b3a82f07dc2160d7c57c4"
+    millesime: "2024-09-24"
+    document_gpu_au_calibrage: "97403_plu_20240924"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Autres logements : 2 places/logement + 1 visiteur/5 logements ; LLS : 1 place max + 1 visiteur/10 logements (Art. U12, p.27-28)."
+  densite_au: "Zones AU : densité MINIMALE 20 logements/ha (Art. AU1.2, p.29)."
+
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  Ua: {bassin: "Entre-Deux",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. U7.2, p.21-22 (« En zone Ua et en secteur Ub1 : 7/11 m »)",
+       emprise_sol_pct: 60, emprise_src: "Art. U6.2, p.21 (« En zone Ua … 60% de la superficie du terrain »)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U3.2, p.19 (recul obligatoire >= 4 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20",
+       recul_limites_note: "Ua : retrait OBLIGATOIRE des limites (exception terrains <200 m²) ; retrait >= 3 m.",
+       stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
+  Ub: {bassin: "Entre-Deux",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. U7.2, p.21-22 (« En zones Ub et Ue : 9/13 m »)",
+       emprise_sol_pct: null, emprise_src: "Art. U6.2, p.21 : « Sans objet en zones Ub et Ue »",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U3.2, p.19",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20 (Ub : une limite OU retrait >= 3 m)",
+       stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
+  Ub1: {bassin: "Entre-Deux",
+       he_m: 7, hf_m: 11, hauteur_src: "Art. U7.2, p.21-22 (« En zone Ua et en secteur Ub1 »)",
+       emprise_sol_pct: null, emprise_src: "Art. U6.2, p.21 (zone Ub : sans objet)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U3.2, p.19",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20",
+       stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
+  Ub2: {bassin: "Entre-Deux",
+       he_m: 4.5, hf_m: 7, hauteur_src: "Art. U7.2, p.21-22 (« En secteur Ub2 : 4,50 m à l'égout … 7 m au faîtage »)",
+       emprise_sol_pct: null, emprise_src: "Art. U6.2, p.21 (zone Ub : sans objet)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U3.2, p.19",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20",
+       stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)"}
+  AUb: {bassin: "Entre-Deux",
+       he_m: 9, hf_m: 13, hauteur_src: "Art. U7.2, p.21-22 via renvoi (IV p.29 : « se reporter au règlement de la zone U indiquée en indice »)",
+       emprise_sol_pct: null, emprise_src: "Art. U6.2, p.21 (via renvoi)",
+       recul_voirie_m: 4, recul_voirie_src: "Art. U3.2, p.19 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U4.2, p.19-20 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. U12, p.27-28 (via renvoi)",
+       pleine_terre_pct: 40, pleine_terre_src: "Art. U11.1, p.26-27 (via renvoi) — « espace vert et perméable, comprenant des plantations », sans sous-minimum de pleine terre (doctrine a)",
+       note: "Densité minimale 20 logts/ha (Art. AU1.2, p.29)."}
+  # AUe — NON CALIBRÉE (invariant « jamais deviner ») : renvoi à la zone Ue, dont le statut
+  # habitat est porté par le tableau des destinations Art. U1.2 (p.16-18) — matrice V/X
+  # ILLISIBLE à l'extraction texte (symboles perdus). Les clauses textuelles (U1, p.18 :
+  # « En zone Ue, commerces/bureaux/équipements <= 5 % de la zone ») n'établissent PAS le
+  # statut logement. Repli générique (Estimé) plutôt qu'une valeur devinée ; lecture
+  # visuelle du PDF requise pour trancher.
+
+zones_au_renvoi: {}
+
+# AUst : « l'ouverture à l'urbanisation de la zone est conditionnée à une MODIFICATION du
+# PLU » (caractère IV, p.29) => GEL.
+zones_au_st:
+  liste: ["AUst"]
+  portee: "Réseaux et accès insuffisants — ouverture à l'urbanisation conditionnée à une modification du PLU : construction neuve non autorisée en l'état."
+  source: "IV — caractère des zones AU, p.29."
+
+# Zones NON constructibles — décision motivée (principe mandat-cadre) :
+zones_non_constructibles: ["A, Aba (V, zones agricoles)",
+                           "N, Nci, Npnr, Nr, Nstep, Nt (VI, zones naturelles)"]

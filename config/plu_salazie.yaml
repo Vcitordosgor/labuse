@@ -1,0 +1,138 @@
+# =============================================================================
+# PLU SALAZIE (97421) — règles chiffrées par zone constructible (U / AU)
+# =============================================================================
+# Source unique : règlement écrit du PLU de Salazie (archive GPU 97421_PLU_20220524).
+#   document : 97421_reglement.pdf (cache pré-vol nuit), 64 p. Concordance manifeste/GPU
+#   re-vérifiée au pré-vol du 27/07/2026.
+#
+# FIABILITÉ :
+#   - page_pdf = page_imprimee + 2 (pré-vol +2, confirmé sur les en-têtes d'articles).
+#   - Format mutualisé : chapitre « ZONES UA, UB et UC » (articles U 1..U 16), chapitres
+#     UT, AUindicée (renvoi d'indice) et AUe (règles propres).
+#   - Hauteurs données À L'ÉGOUT SEUL => he_m gravé, hf_m null.
+#   - EMPRISE « Sans objet » partout (U, AUe) => null sourcé.
+#   - PLEINE TERRE = « % espace perméable, hors assainissement individuel » (Art. 13.1).
+#   - Aucun COS (pré-vol : 0 occurrence). Aucune zone 2AU/3AU.
+# =============================================================================
+
+source:
+  document: "97421_reglement.pdf (Pieces_ecrites/3_Reglement, archive GPU 97421_PLU_20220524)"
+  url: "https://www.geoportail-urbanisme.gouv.fr/api/document?grid=97421"
+  approbation: "2022-05-24"
+  pages_total: 64
+  offset_pdf_vs_imprimee: 2
+  reglement_grave:
+    fichier: "97421_reglement.pdf"
+    md5: "4c18dc58075b4b2d04acad4ee9c8a24f"
+    millesime: "2022-05-24"
+    document_gpu_au_calibrage: "97421_PLU_20220524"
+    verifie_le: "2026-07-27"
+
+mode: progressif
+
+regles_transverses:
+  stationnement: "Logements privés <=50 m² SDP : 1 place ; >50 m² : 2 places ; LLS/intermédiaires/RPA/résidences universitaires : 1 place/logement (Art. U 12.2, p.15-16)."
+
+hypotheses_faisabilite:
+  etage_m: 3.0
+  coef_occupation: 0.45
+  coef_rendement: 0.80
+  logement_m2_bas: 65.0
+  logement_m2_haut: 80.0
+  place_m2: 25.0
+  densite_logts_ha_par_niveau: 30.0
+  he_defaut_generique_m: 9.0
+
+zones:
+
+  # ============== Chapitre « ZONES UA, UB et UC » (p.8-17 imprimées) ==============
+  UA: {bassin: "Salazie",
+       he_m: 12, hf_m: null, hauteur_src: "Art. U 10.2, p.13 (« En zones UA et UB … 12 mètres à l'égout du toit ou au sommet de l'acrotère » — faîtage non précisé)",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 : « Sans objet »",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U 6.2, p.10-11 (UA : alignement possible OU recul >= 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U 7.2, p.11-12 (2 limites, 1 ou retrait >= 3 m)",
+       stat_logement: "2 places / logement", stat_src: "Art. U 12.2, p.15-16",
+       stat_note: "Logements >50 m² ; <=50 m² : 1 place.",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. U 13.1, p.16-17 (« En zone UA, au minimum 10% … en espace perméable ») — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)"}
+  UA1: {bassin: "Salazie",
+       he_m: 7, hf_m: null, hauteur_src: "Art. U 10.2, p.13 (« Dans le secteur UA1 … 7 mètres à l'égout … sans dépasser R+1 »)",
+       hauteur_note: "Centre d'Hell-Bourg (patrimonial) : R+1 maximum.",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 : « Sans objet »",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U 6.2, p.10-11",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U 7.2, p.11-12",
+       stat_logement: "2 places / logement", stat_src: "Art. U 12.2, p.15-16",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. U 13.1, p.16-17 (zone UA) — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)"}
+  UB: {bassin: "Salazie",
+       he_m: 12, hf_m: null, hauteur_src: "Art. U 10.2, p.13 (zones UA et UB)",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 : « Sans objet »",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U 6.2, p.10-11 (UB/UC : recul OBLIGATOIRE >= 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U 7.2, p.11-12 (2 limites si façade <15 m, sinon 1 max ; retrait >= 3 m)",
+       stat_logement: "2 places / logement", stat_src: "Art. U 12.2, p.15-16",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U 13.1, p.16-17 — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)"}
+  UC: {bassin: "Salazie",
+       he_m: 9, hf_m: null, hauteur_src: "Art. U 10.2, p.13 (« En zone UC … 9 mètres à l'égout »)",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 : « Sans objet »",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U 6.2, p.10-11",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U 7.2, p.11-12",
+       stat_logement: "2 places / logement", stat_src: "Art. U 12.2, p.15-16",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. U 13.1, p.16-17 — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)"}
+
+  # ============== UT — touristique (p.18-25) : habitat limité au gardiennage ==============
+  UT: {bassin: "Salazie",
+       he_m: 12, hf_m: null, hauteur_src: "Art. UT 10.2, p.22 (12 m à l'égout — faîtage non précisé)",
+       emprise_sol_pct: null, emprise_src: "Art. UT 9.2, p.22 : « Sans objet »",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UT 6.2, p.20",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UT 7.2, p.20-21",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage 50 m² d'emprise).", stat_src: "Art. UT 2.2, p.18-19",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UT 13.1, p.24-25 — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)",
+       habitat: interdit, habitat_src: "Art. UT 1.2, p.18 (tout interdit sauf UT 2) + Art. UT 2.2 al.3 : habitation UNIQUEMENT « liée au gardiennage et à la surveillance », max 50 m² d'emprise au sol"}
+
+  # ============== AU ouvertes — renvoi à la zone U d'indice (AUindicée, p.27-29) ==============
+  AUa1: {bassin: "Salazie",
+       he_m: 7, hf_m: null, hauteur_src: "Art. U 10.2, p.13 via renvoi (ZONE AUindicée p.27 : règles du secteur UA1)",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U 6.2, p.10-11 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U 7.2, p.11-12 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. U 12.2, p.15-16 (via renvoi)",
+       pleine_terre_pct: 10, pleine_terre_src: "Art. U 13.1, p.16-17 (via renvoi, zone UA) — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)"}
+  AUb: {bassin: "Salazie",
+       he_m: 12, hf_m: null, hauteur_src: "Art. U 10.2, p.13 via renvoi (zone UB)",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U 6.2, p.10-11 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U 7.2, p.11-12 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. U 12.2, p.15-16 (via renvoi)",
+       pleine_terre_pct: 20, pleine_terre_src: "Art. U 13.1, p.16-17 (via renvoi) — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)"}
+  AUc: {bassin: "Salazie",
+       he_m: 9, hf_m: null, hauteur_src: "Art. U 10.2, p.13 via renvoi (zone UC)",
+       emprise_sol_pct: null, emprise_src: "Art. U 9.2, p.12 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. U 6.2, p.10-11 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. U 7.2, p.11-12 (via renvoi)",
+       stat_logement: "2 places / logement", stat_src: "Art. U 12.2, p.15-16 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. U 13.1, p.16-17 (via renvoi) — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)"}
+  AUt: {bassin: "Salazie",
+       he_m: 12, hf_m: null, hauteur_src: "Art. UT 10.2, p.22 via renvoi (zone UT)",
+       emprise_sol_pct: null, emprise_src: "Art. UT 9.2, p.22 (via renvoi)",
+       recul_voirie_m: 3, recul_voirie_src: "Art. UT 6.2, p.20 (via renvoi)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. UT 7.2, p.20-21 (via renvoi)",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. UT 2.2, p.18-19 (via renvoi)",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. UT 13.1, p.24-25 (via renvoi) — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)",
+       habitat: interdit, habitat_src: "Art. UT 1.2/2.2, p.18-19 via renvoi (gardiennage 50 m²)"}
+
+  # ============== AUe — activités économiques, chapitre propre (p.30-37) ==============
+  AUe: {bassin: "Salazie",
+       he_m: 12, hf_m: null, hauteur_src: "Art. AUe 10.2, p.34 (12 m à l'égout)",
+       emprise_sol_pct: null, emprise_src: "Art. AUe 9.2, p.34 : « Sans objet »",
+       recul_voirie_m: 3, recul_voirie_src: "Art. AUe 6.2, p.32 (recul obligatoire >= 3 m)",
+       recul_limites_sep_m: 3, recul_limites_src: "Art. AUe 7.2, p.33",
+       stat_logement: null, stat_note: "Sans objet (habitat limité au gardiennage).", stat_src: "Art. AUe 1.2/2.2, p.30-31",
+       pleine_terre_pct: 25, pleine_terre_src: "Art. AUe 13.1, p.37 — « traité en espace perméable » (hors assainissement individuel en U), sans sous-minimum de pleine terre (doctrine a)",
+       habitat: interdit, habitat_src: "Art. AUe 1.2, p.30-31 : habitation interdite sauf AUe 2.2 (gardiennage/surveillance des installations autorisées)"}
+
+zones_au_renvoi: {}
+
+zones_au_st:
+  liste: []
+
+# Zones NON constructibles — décision motivée (principe mandat-cadre) :
+zones_non_constructibles: ["A, Aba (chap. p.39-46)",
+                           "N, Npnr, Nr (chap. p.48+)"]
