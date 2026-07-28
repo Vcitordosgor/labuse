@@ -110,3 +110,68 @@ cross-écran que la fiche corrigeait : le Copilote/Banquier affiche un chiffre l
 `/tmp/conso_ecart.py` (écart de charge + bascules, LECTURE SEULE). Golden 116/116 + tiers au bit
 près (`/tmp/consoA_tiers_avant.txt` = `/tmp/consoA_tiers_apres.txt`). Mesuré sur la branche
 `feat/couverture-prix-repli-ile` (code phase C).
+
+---
+
+# ANNEXE — Bassins des Hauts de Saint-Paul : les 81 reverse flips tranchés (mesure Vic)
+
+LECTURE SEULE. Golden 116/116 + tiers au bit près. Question : sur Plateau Caillou et La Plaine,
+l'override de bassin (3 400-3 500) et le `sector_price` local (4 155-4 645) ne peuvent être vrais
+tous les deux. Quatre mesures.
+
+## 1 · Provenance de l'override — LA FAMILLE DU 2100
+
+Les 4 overrides de bassin (Saint-Gilles 5 800, La Saline 6 000, Plateau Caillou 3 500,
+La Plaine-Bois de Nèfles 3 400) viennent de **`f25e8cc`, 14/06/2026** — **le même jour et la même
+calibration web que le socle 2100** (`d94ff9b`, 14/06). Marqués « sourcée », mais la source est un
+**OBSERVATOIRE de l'EXISTANT** (SeLoger : Plateau Caillou appart 3 417 ; consortium : La Plaine
+~3 100-3 700), **pas du DVF, pas du neuf**. Le RAPPORT_CALIBRATION_WEB le dit lui-même : « Hauts,
+**peu de collectif** ». C'est la famille du 4900 : observatoire, 14/06, jamais confirmé par DVF —
+et en conflit avec la règle « DVF, un seul référentiel » (décision Vic, l'observatoire est une
+contre-mesure documentée, pas une entrée de calcul).
+
+## 2 · Ventes d'appartements neufs DVF dans ces bassins (mesure directe) — trop minces ET contradictoires
+
+| Bassin | override | neuf DVF (direct) | existant DVF bassin | commune Saint-Paul DVF |
+|---|---|---|---|---|
+| Plateau Caillou | 3 500 | **3 585 (n=2)** ~ override | 4 016 (n=328) | 4 730 |
+| La Plaine | 3 400 | **4 255 (n=3)** > override | 3 431 (n=106) | 4 730 |
+
+Le DVF neuf direct est **sous le seuil N_MIN=10** (n=2 et n=3) et **contradictoire** : il ~confirme
+Plateau Caillou (3 585) mais **infirme La Plaine** (4 255 ≫ 3 400). **Il ne peut ni confirmer ni
+réfuter l'override** — il n'y a pas de marché du collectif neuf mesurable dans ces Hauts.
+
+## 3 · Résolution SANS override + gonflement du rayon (`sector_price`)
+
+- **Sans override** : aucun `dvf secteur` pour ces bassins → repli **commune Saint-Paul 4 730**
+  (source DVF mesurée).
+- **`sector_price` (rayon adaptatif)** : La Plaine 3 000-3 457 (rayon 500-1000 m, **PAS gonflé** —
+  ≈ override) ; **Plateau Caillou 4 134-4 596** (rayon 500-1000 m, **plus haut** — c'est là que
+  naissent les 77 reverse flips). Le gonflement du rayon est réel **à Plateau Caillou** (le rayon
+  remonte des appartements plus chers), pas à La Plaine.
+
+## 4 · Verdict et recommandation (ton inclination confirmée par la mesure)
+
+**Trois sources sur ces bassins : l'override observatoire (3 400-3 500, existant, 14/06, non
+confirmé DVF), le DVF neuf direct (n=2-3, trop mince et contradictoire), la commune DVF (4 730,
+mesurée).** L'override **ne peut pas primer sur une source DVF mesurée** — il est de la famille du
+2100, observatoire, jamais confirmé, et il n'y a pas assez de collectif neuf dans les Hauts pour le
+confirmer un jour à court terme.
+
+**Recommandation — les deux overrides des Hauts (Plateau Caillou, La Plaine) → `is_placeholder=true`,
+HORS préséance jusqu'à confirmation DVF** (exactement le traitement du 2100 et du socle). Effet
+mesuré : ces parcelles résolvent alors sur la **commune 4 730** (DVF), les **81 reverse flips
+disparaissent**, le routage devient **monotone** (charge ↑ partout). L'override reste visible en
+placeholder (le signal « Hauts moins chers » n'est pas perdu — il attend une confirmation DVF).
+
+**Réserve honnête** : 4 730 peut SUR-évaluer les Hauts face au signal observatoire (~3 400-3 800).
+Mais 4 730 est **mesuré** ; le DVF neuf direct est trop mince pour arbitrer ; et le défaut discipliné
+(source mesurée > estimation non confirmée) est cohérent avec le 2100/socle.
+
+**Les deux bassins balnéaires (Saint-Gilles 5 800, La Saline 6 000)** : MÊME provenance (observatoire
+14/06, non confirmés DVF), mais AU-DESSUS de la commune (premium balnéaire plausible) et **aucun
+reverse flip**. Aucune mesure ne force leur retrait ; les démoter perdrait un signal plausible. **À
+ta décision** : la cohérence stricte (DVF seul) les démoterait aussi, mais le premium balnéaire est
+réel — je recommande de les GARDER, en les flaggant « à confirmer par DVF » comme Le Guillaume.
+
+Artefact : `/tmp/hauts_bassins.py` (LECTURE SEULE). Golden 116/116, tiers au bit près avant/après.
