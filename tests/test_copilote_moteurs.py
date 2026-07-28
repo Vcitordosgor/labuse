@@ -278,6 +278,11 @@ def test_marche_dvf_indicateur_au_dessus_charge_supportable(db_session, monkeypa
                         lambda s, p, h: {"median": 3000, "fiabilite": "fiable"})
     monkeypatch.setattr("labuse.faisabilite.bilan.compute_bilan",
                         lambda *a, **k: _B())
+    # mandat prix sortie consommateurs : le Copilote résout le prix de sortie NEUF via le point
+    # partagé — mocké ici (le test porte sur l'indicateur charge, pas la résolution du prix).
+    monkeypatch.setattr("labuse.faisabilite.bilan.resolve_prix_sortie_servi",
+                        lambda s, pid: {"non_calculable": False, "prix": 4375.0, "niveau": "ile_validee",
+                                        "n": None, "label": "Estimé — estimation île", "repli_ile": True})
     dossier = moteurs.Dossier()
     dossier.candidats = [{"idu": "97415000MD0001", "parcel_id": pid, "commune": "Saint-Paul",
                           "surface_m2": 1000, "tier": "chaude", "rang": 1,

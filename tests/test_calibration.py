@@ -34,23 +34,26 @@ def test_socle_calibre_les_critiques_et_signale_les_estimes(db_session):
 
 
 def test_prix_neuf_ventile_par_secteur(db_session):
-    """Recette ventilation : chaque bassin sourcé garde SON prix (tête de préséance) ; un secteur
-    non couvert n'a PLUS de socle (4900 retiré) → défaut registre 0 = résolution par commune
-    (dvf_prix_sortie_neuf) ou « non calculable » côté bilan (mandat calibration estimées)."""
+    """Recette ventilation : les 5 overrides de bassin sont DÉMOTÉS en `estimee` (is_placeholder,
+    HORS préséance) — mandat prix sortie consommateurs (Vic 28/07/2026) : observatoire de l'existant
+    non confirmé DVF neuf → ne prime jamais sur la médiane communale DVF. `resolve_prix_neuf_marche`
+    n'honore que `sourcee` : ces bassins ne priment plus. Pas de socle 4900. Défaut registre 0."""
     sg = bp.resolve(db_session, "Saint-Gilles")["prix_m2_neuf"]
-    assert sg["value"] == 5800.0 and sg["source"] == "secteur" and sg["provenance"] == "sourcee"
+    assert sg["value"] == 5800.0 and sg["provenance"] == "estimee" and sg["is_placeholder"] is True
     gui = bp.resolve(db_session, "Le Guillaume")["prix_m2_neuf"]
-    assert gui["value"] == 3900.0 and gui["provenance"] == "estimee"   # Hauts — fragile, signalé
+    assert gui["value"] == 3900.0 and gui["provenance"] == "estimee"   # Hauts — fragile, déjà placeholder
     unc = bp.resolve(db_session, "Secteur Inexistant")["prix_m2_neuf"]
     assert unc["value"] == 0.0 and unc["source"] == "défaut"           # plus de socle commun 4900
 
 
 def test_socle_prix_neuf_retire_du_seed():
     """VERROU (mandat calibration estimées, Vic 28/07/2026) : le socle global `prix_m2_neuf`
-    4900 n'est PLUS au seed — sinon il se ré-injecterait au boot (piège exact du 2100). Les
-    overrides de bassin sourcés survivent."""
+    4900 n'est PLUS au seed (sinon ré-injecté au boot — piège du 2100). Les 5 overrides de bassin
+    sont DÉMOTÉS en `estimee` (mandat prix sortie consommateurs) : observatoire non confirmé DVF →
+    hors préséance. AUCUN bassin ne reste `sourcee`."""
     assert "prix_m2_neuf" not in cal.CALIBRATION
-    assert cal.SECTEUR_PRIX_NEUF["Saint-Gilles"] == (5800.0, "sourcee")
+    assert cal.SECTEUR_PRIX_NEUF["Saint-Gilles"] == (5800.0, "estimee")
+    assert all(prov == "estimee" for _v, prov in cal.SECTEUR_PRIX_NEUF.values())
 
 
 def test_motif_non_calculable_formulations():

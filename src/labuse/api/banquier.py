@@ -75,9 +75,15 @@ def _facts_synthese(out: dict, core_mod):
             f"(~{cf.get('par_m2_terrain')} €/m² de terrain), fiabilité {bilan.fiabilite}", "ESTIME")
     prix = out.get("prix_dvf")
     if prix and prix.get("median"):
-        facts["marche"] = F(f"prix de sortie médian du secteur {prix.get('median')} €/m² "
-                            f"(DVF, {prix.get('n', '?')} comparables, fiabilité {prix.get('fiabilite')})",
+        # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — `sector_price` est le prix des
+        # COMPARABLES (existant), PAS le prix de sortie du bilan (neuf). Distingués pour ne pas
+        # servir deux « prix de sortie » incohérents dans le même dossier.
+        facts["marche"] = F(f"comparables DVF du secteur {prix.get('median')} €/m² (existant, "
+                            f"{prix.get('n', '?')} ventes, fiabilité {prix.get('fiabilite')})",
                             "SOURCE" if prix.get("fiabilite") == "fiable" else "ESTIME")
+    label_neuf = out.get("prix_neuf_label")
+    if label_neuf:
+        facts["prix_sortie_neuf"] = F(f"prix de sortie neuf retenu pour le bilan — {label_neuf}", "ESTIME")
     se = out.get("score_e")
     if se and se["estimable"]:
         facts["marge"] = F(f"marge foncière estimée {_eur(se['marge_estimee'])} "

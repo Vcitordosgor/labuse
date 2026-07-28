@@ -224,6 +224,71 @@ def sector_price(db: Session, parcel_id: int, hyp: Hypotheses) -> dict:
             "comparables": _comparables(kept, min_n, niveau)}
 
 
+# ── POINT DE RÉSOLUTION PARTAGÉ du prix de sortie neuf (mandat prix sortie consommateurs) ──────
+def resolve_prix_sortie_servi(session: Session, parcel_id: int, secteur: str | None = None) -> dict:
+    """UN SEUL chemin pour le prix de sortie NEUF servi — cœur (fiche) ET les 6 consommateurs
+    (Copilote, Rapport de potentiel, Explication IA, Banquier, Argumentaire, calculette). Décision
+    Vic 28/07/2026 : plus jamais de `sector_price` (prix de l'EXISTANT) comme prix de sortie d'un
+    bilan NEUF. Préséance dans `resolve_prix_neuf_marche` (override bassin DVF-sourcé > dvf secteur
+    local > dvf commune local > repli île > non calculable social-dominant).
+
+    Renvoie {prix, niveau, n, label, motif, non_calculable, repli_ile}. Si `motif` (commune
+    social-dominante) : la parcelle est SERVIE avec la mention, jamais écartée (comportement M26-A).
+    `secteur` (bassin PLU) peut être fourni si l'appelant l'a déjà résolu (évite une requête)."""
+    from . import bilan_params as bpmod
+    from ..ingestion.dvf_prix_neuf import resolve_prix_neuf_marche, niveau_prix_label
+    if secteur is None:
+        from .db import parcel_context
+        from .plu_rules import resolve_zone
+        ctx = parcel_context(session, parcel_id)
+        rules = resolve_zone(ctx.zone, ctx.commune) if ctx and ctx.zone else None
+        secteur = (rules.bassin if rules else None) or "Saint-Paul"
+    prix, niveau, n, motif = resolve_prix_neuf_marche(
+        session, parcel_id, bpmod.resolve(session, secteur).get("prix_m2_neuf"))
+    return {"prix": prix, "niveau": niveau, "n": n, "motif": motif,
+            "non_calculable": motif is not None,
+            "repli_ile": niveau in ("ile_validee", "ile_sans_operation"),
+            "label": None if motif is not None else niveau_prix_label(niveau, n)}
+
+
+def compute_bilan_servi(session: Session, parcel_id: int, fz=None) -> tuple["Bilan | None", dict | None]:
+    """LE bilan promoteur SERVI pour une parcelle — SOURCE UNIQUE partagée par le cœur (fiche), le
+    Banquier, l'Argumentaire et le Rapport de potentiel. Garantit une charge COHÉRENTE À L'EURO entre
+    tous les écrans (mandat prix sortie consommateurs, Vic 28/07/2026) : même capacité, mêmes
+    hypothèses résolues par secteur (VRD, honoraires, marge), même prix de sortie neuf, même
+    contexte éco (mixité/pluvial). Renvoie (Bilan | None, info_prix_sortie). Non calculable
+    (commune social-dominante) → Bilan(fiable=False) SERVI avec la mention, jamais None écarté."""
+    from .db import parcel_faisabilite
+    from .plu_rules import resolve_zone
+    from .engine import Hypotheses
+    from . import bilan_params as bpmod
+    fz = fz or parcel_faisabilite(session, parcel_id)
+    if not fz or not fz[1].constructible:
+        return None, None
+    ctx, f = fz
+    fr = f.fourchette or {}
+    shab = fr.get("shab_vendable_m2")
+    if not shab:
+        return None, None
+    hyp = Hypotheses.charger()
+    rules = resolve_zone(ctx.zone, ctx.commune) if ctx.zone else None
+    secteur = (rules.bassin if rules else None) or "Saint-Paul"
+    ps = resolve_prix_sortie_servi(session, parcel_id, secteur)
+    if ps["non_calculable"]:
+        return Bilan(False, "non_calculable", ps["motif"], None, None, None,
+                     avertissements=[ps["motif"]], bandeau=ps["motif"]), ps
+    logements_est = max((fr.get("logements_au_sol") or (0, 0))[1],
+                        (fr.get("logements_sous_sol") or (0, 0))[1])
+    eco = dict(ctx.prescriptions_eco)
+    eco.update({"sdp_max_m2": fr.get("surface_plancher_m2"), "logements_estimes": logements_est,
+                "terrain_m2": ctx.surface_m2, "pente_pct": ctx.contraintes.pente_pct})
+    bp = {k: r["value"] for k, r in bpmod.resolve(session, secteur).items()}
+    bp["prix_m2_neuf"] = ps["prix"]
+    b = compute_bilan(float(shab), float(ctx.surface_m2 or 0),
+                      sector_price(session, parcel_id, hyp), hyp, contexte_eco=eco, bilan_params=bp)
+    return b, ps
+
+
 def _clause_mixite(eco: dict, hyp: Hypotheses) -> dict:
     """Déclenchement de la clause de mixité (Art. 2 règlement PLU) selon le PROGRAMME estimé.
     Logique OU du texte : SDP ≥ seuil OU logements ≥ seuil OU terrain > seuil. Renvoie l'état

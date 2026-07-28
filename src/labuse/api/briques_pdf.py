@@ -229,7 +229,7 @@ def collect(db: Session, idu: str) -> dict:
     # faisabilité (11 steps déterministes) + bilan promoteur + charge foncière
     try:
         from ..faisabilite.db import parcel_faisabilite
-        from ..faisabilite.bilan import sector_price, compute_bilan, bilan_params_defaut
+        from ..faisabilite.bilan import sector_price, compute_bilan_servi
         from ..faisabilite.engine import Hypotheses
         fa = parcel_faisabilite(db, pid)
         if fa:
@@ -237,12 +237,17 @@ def collect(db: Session, idu: str) -> dict:
             out["faisabilite"] = fais
             shab = (fais.fourchette or {}).get("shab_vendable_m2")
             if shab and shab > 0:
-                # Source unique (mandat hypothèses bilan, Vic 28/07/2026) : charger().
-                hyp = Hypotheses.charger()
-                prix = sector_price(db, pid, hyp)
-                out["prix_dvf"] = prix
-                out["bilan"] = compute_bilan(float(shab), float(ctx.surface_m2 or 0), prix, hyp,
-                                             bilan_params=bilan_params_defaut())
+                out["prix_dvf"] = sector_price(db, pid, Hypotheses.charger())  # comparables DVF (LÉGITIME)
+                # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — Banquier + Argumentaire servent
+                # LE MÊME bilan que la fiche (compute_bilan_servi : charge COHÉRENTE À L'EURO — même
+                # capacité, hypothèses résolues, prix de sortie neuf, contexte éco). Non calculable
+                # (social-dominant) → dossier SERVI avec la mention, jamais un chiffre de marché.
+                b, ps = compute_bilan_servi(db, pid, fa)
+                out["bilan"] = b
+                if ps is not None:
+                    out["bilan_non_calculable"] = bool(ps["non_calculable"])
+                    out["prix_neuf_label"] = ps["motif"] if ps["non_calculable"] else ps["label"]
+                    out["prix_neuf_repli_ile"] = ps["repli_ile"]
     except Exception as exc:  # noqa: BLE001
         log.warning("faisabilité/bilan %s : %s", idu, exc)
 
@@ -391,7 +396,13 @@ def bilan(out: dict) -> str:
     if bilan_ is None and not se:
         return ""
     body = "<div class='pb'></div><h2>Bilan promoteur & charge foncière</h2>"
-    if bilan_ is not None:
+    if bilan_ is not None and getattr(bilan_, "fiabilite", None) == "non_calculable":
+        # MANDAT PRIX SORTIE CONSOMMATEURS (Vic 28/07/2026) — commune sans marché du collectif neuf
+        # observable / social-dominante : la MENTION est servie (jamais un chiffre de marché faux),
+        # le dossier reste généré. Comportement M26-A « non estimable — non filtrée ».
+        body += (f"<p class='note'><b>Charge foncière de marché non calculable.</b> "
+                 f"{esc(getattr(bilan_, 'verdict', '') or getattr(bilan_, 'bandeau', ''))}</p>")
+    elif bilan_ is not None:
         # C1 — l'encadré d'hypothèses, même forme partout (défauts uniques du moteur)
         from ..faisabilite.bilan import CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT
         body += hypotheses_encadre(CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT)
@@ -426,7 +437,9 @@ def comparables(out: dict) -> str:
         return ""
     body = "<div class='pb'></div><h2>Marché de comparaison</h2>"
     if prix and prix.get("median"):
-        body += (f"<h3>Prix de sortie du secteur (DVF) {s('S')}</h3>"
+        # Comparables DVF de l'EXISTANT (pas le prix de sortie neuf du bilan — mandat prix sortie
+        # consommateurs, Vic 28/07/2026 : ne pas étiqueter « prix de sortie » ce qui est l'existant).
+        body += (f"<h3>Prix du marché — comparables DVF (existant) {s('S')}</h3>"
                  f"<table><tr><th class='n'>Q1</th><th class='n'>Médiane</th><th class='n'>Q3</th>"
                  f"<th class='n'>Ventes</th><th>Période</th><th>Fiabilité</th></tr>"
                  f"<tr><td class='n'>{esc(prix.get('q1'))}</td><td class='n'>{esc(prix.get('median'))}</td>"

@@ -40,15 +40,26 @@ CALIBRATION: dict[str, tuple[float, str]] = {
 
 
 # prix_m2_neuf VENTILÉ par BASSIN PLU existant (le découpage de l'app, cf RAPPORT_CALIBRATION_WEB.md).
-# Chaque valeur sourcée par observatoire/annonces du quartier ; les secteurs absents retombent sur
-# le socle commun (4 900). secteur → (valeur, provenance).
+# MANDAT PRIX SORTIE CONSOMMATEURS (décision Vic 28/07/2026) — les 5 overrides de bassin sont
+# DÉMOTÉS en `estimee` (is_placeholder=true, HORS préséance). Motif : **observatoire de l'existant,
+# non confirmé par DVF neuf — en attente de confirmation**. Ils viennent tous de la calibration web
+# du 14/06 (`f25e8cc`, même famille que le socle 2100), sourcés d'un OBSERVATOIRE de l'EXISTANT
+# (SeLoger/consortium), jamais confirmés par du DVF neuf de marché. RÈGLE DE PRÉSÉANCE GRAVÉE : un
+# override de bassin ne prime sur la médiane communale DVF que s'il est fondé sur du DVF NEUF de
+# marché ≥ N_MIN ; un observatoire de l'existant n'est jamais une entrée de calcul (déclinaison au
+# bassin de « DVF, un seul référentiel »). `resolve_prix_neuf_marche` n'honore que la provenance
+# `sourcee` → ces bassins sortent de la préséance et les parcelles résolvent sur le DVF (secteur
+# local / commune / repli île). Le signal n'est pas perdu : visible en placeholder, remonte dans
+# `bilan-params-perimes`, redevient candidat dès qu'un bassin franchit N_MIN en ventes neuves.
+# LIMITE CONNUE : la commune Saint-Paul (4 730 DVF) peut SUR-évaluer les Hauts face à l'observatoire
+# (~3 400-3 800) ; condition de levée = confirmation DVF neuf sur ces bassins.
 SECTEUR_PRIX_NEUF: dict[str, tuple[float, str]] = {
-    "Saint-Gilles": (5800.0, "sourcee"),               # balnéaire — médiane appart ~6 029 €/m² (SeLoger)
-    "La Saline": (6000.0, "sourcee"),                  # balnéaire — moy. appart ~6 632 €/m² (immo-diffusion)
-    "Plateau Caillou": (3500.0, "sourcee"),            # intérieur — moy. appart ~3 417 €/m² (SeLoger)
-    "La Plaine-Bois de Nèfles": (3400.0, "sourcee"),   # Hauts — appart ~3 100-3 700 €/m² (consortium/SeLoger)
-    "Le Guillaume": (3900.0, "estimee"),               # Hauts — échantillon appart FRAGILE (maison ~3 973)
-    # « Saint-Paul Centre » → reste sur le socle commun 4 900 € (neuf Saint-Paul 2024, sourcé).
+    "Saint-Gilles": (5800.0, "estimee"),               # balnéaire — observatoire ~6 029 €/m² (SeLoger) — à confirmer DVF
+    "La Saline": (6000.0, "estimee"),                  # balnéaire — observatoire ~6 632 €/m² — à confirmer DVF
+    "Plateau Caillou": (3500.0, "estimee"),            # Hauts — observatoire ~3 417 €/m² (SeLoger) — à confirmer DVF
+    "La Plaine-Bois de Nèfles": (3400.0, "estimee"),   # Hauts — observatoire ~3 100-3 700 €/m² — à confirmer DVF
+    "Le Guillaume": (3900.0, "estimee"),               # Hauts — échantillon appart FRAGILE (déjà placeholder)
+    # Hors bassin sourcé DVF → résolution DVF (secteur local / commune Saint-Paul 4 730 / repli île).
 }
 
 

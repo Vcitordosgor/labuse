@@ -1128,6 +1128,16 @@ def ensure_bilan_params(engine) -> None:
         c.execute(_t(
             "DELETE FROM bilan_params WHERE secteur = '*' AND param = 'prix_m2_neuf' "
             "AND provenance = 'sourcee' AND value = 4900"))
+        # MANDAT PRIX SORTIE CONSOMMATEURS (décision Vic 28/07/2026) — DÉMOTION des overrides de
+        # BASSIN « prix de sortie neuf » : ils viennent d'un OBSERVATOIRE de l'EXISTANT (calibration
+        # web 14/06, famille du 2100), jamais confirmés par DVF neuf → ne peuvent primer sur la
+        # médiane communale DVF. Passés en `estimee` (is_placeholder=true) → hors préséance
+        # (`resolve_prix_neuf_marche` n'honore que `sourcee`). CIBLÉE aux valeurs SYSTÈME
+        # (provenance='sourcee') : un override de bassin re-saisi par Vic (provenance NULL) survit.
+        c.execute(_t(
+            "UPDATE bilan_params SET provenance = 'estimee', is_placeholder = true, updated_at = now() "
+            "WHERE param = 'prix_m2_neuf' AND provenance = 'sourcee' "
+            "AND secteur IN ('Saint-Gilles','La Saline','Plateau Caillou','La Plaine-Bois de Nèfles','Le Guillaume')"))
         # Décision Vic 28/07/2026 : une valeur ESTIMÉE non confirmée reste placeholder (visible
         # aux bandeaux) — aligne l'existant, idempotent.
         c.execute(_t(
