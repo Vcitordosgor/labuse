@@ -184,6 +184,28 @@ def bilan_calibrate_cmd(
     typer.echo(f"✓ {len(res['applied'])} valeur(s) {mode} · {len(res['errors'])} erreur(s).")
 
 
+@app.command("bilan-params-perimes")
+def bilan_params_perimes_cmd(
+    jours: int = typer.Option(30, "--jours", help="Âge au-delà duquel une estimée non confirmée est signalée."),
+) -> None:
+    """Liste les params de bilan de provenance « estimée » jamais confirmés depuis plus de N jours
+    (verrou anti-« provisoire devenu permanent », décision Vic 28/07/2026 — cas du 2100).
+    Code retour 1 si au moins un paramètre est signalé (utilisable en contrôle automatique)."""
+    from .faisabilite import bilan_params as bp
+
+    with session_scope() as s:
+        rows = bp.estimees_non_confirmees(s, jours=jours)
+    if not rows:
+        typer.echo(f"✓ Aucune valeur estimée non confirmée depuis plus de {jours} jours.")
+        raise typer.Exit(0)
+    for r in rows:
+        typer.echo(f"  ⚠ {r['secteur']:24} {r['param']:34} = {r['value']:g}  "
+                   f"({r['age_jours']} j) — {r['libelle']}")
+    typer.echo(f"{len(rows)} estimée(s) non confirmée(s) > {jours} j — à confirmer via le gabarit "
+               "config/bilan_calibration_vic.csv (labuse bilan-calibrate) ou à supprimer.")
+    raise typer.Exit(1)
+
+
 @app.command("seed-demo")
 def seed_demo_cmd() -> None:
     from .ingestion import demo_saint_paul, seed_sources

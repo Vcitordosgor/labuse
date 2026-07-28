@@ -59,3 +59,17 @@ résolution par secteur + fallback commun vérifiés.
 Aucun paramètre n'est resté « non calibré » : tous ont au moins un ordre de grandeur sourcé ou
 estimé. Les valeurs `estimée` restent **visibles comme « indicatif »** dans le panneau de calibration
 (badge gris) ; les `sourcée` portent un badge vert. Vic peut tout écraser par secteur en session terrain.
+
+## MISE À JOUR 28/07/2026 — retrait du coût de construction du socle (mandat hypothèses bilan)
+
+Décision Vic 28/07/2026 (revue M26-B, `docs/mandats/MANDAT_HYPOTHESES_BILAN.md`) : le
+`cout_construction_m2_sdp = 2100` du socle ci-dessus est **retiré** (code `bilan_calibration.py`
++ ligne supprimée en base). Instruction sur pièces : cette estimation du 14/06 s'était ancrée
+sur la fourchette YAML **périmée** (1 800–2 200, avant-audit) alors que l'audit O2 du 12/06
+(`2c25746`) avait fixé 2 300–2 800 €/m² de plancher — et son `is_placeholder=false` l'avait
+rendue invisible aux bandeaux « à affiner » pendant six semaines. Le coût vient désormais de la
+**source unique** (fourchette auditée du YAML, préséance documentée dans `bilan_params.py`) ;
+seul un override **sectoriel justifié et sourcé** peut le re-piloter. Les valeurs « estimée »
+sont désormais insérées `is_placeholder=true` et surveillées par `labuse bilan-params-perimes`.
+La question n°1 au promoteur (coût réel Réunion) reste ouverte — gabarit
+`config/bilan_calibration_vic.csv` à remplir par Vic.
