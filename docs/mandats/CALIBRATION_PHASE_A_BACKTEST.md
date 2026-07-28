@@ -454,3 +454,44 @@ de bascule 3 859 — la traiter avec prudence à l'application (relever N_MIN, o
 **Rien n'est appliqué.** Aucun re-run de scoring. Golden 116/116 et tiers au bit près à chaque
 tour (120 / 1031 / 3587 / 72980 / 353945). La mesure du quartile bas close le diagnostic ;
 l'application est au point d'arrêt Vic.
+
+---
+
+# APPLICATION (28/07/2026) — instrument appartement de marché + suppression du socle 4900
+
+GO Vic. Séquence stricte (mêmes gates que les hypothèses du bilan). Branche
+`feat/calibration-prix-appartement-marche`. **Fable ne merge pas — Vic merge en `--no-ff`.**
+
+**Décisions Vic appliquées** : (1) **La Possession → « non calculable »** (n=12, médiane 2 638 <
+seuil 3 859 ; règle gravée : N_MIN franchi de justesse + médiane sous le seuil = instrument non
+fiable, PAS une commune non viable — servira aux communes qui franchiront N_MIN plus tard).
+**Couverture finale : 5 communes** (Saint-Denis, Saint-Pierre, Saint-Paul, Saint-Leu, Le Tampon).
+
+**Ce qui a été fait, dans l'ordre :**
+1. Golden 116/116 + tiers relevés avant. Golden ne couvre aucun champ charge/marge (vérifié).
+2. `dvf_prix_sortie_neuf` reconstruit : appartements de marché (hors bailleurs sociaux, SIREN
+   pétitionnaire du PC), N_MIN ≥ 10, secteur→commune, règle de fragilité. 5 communes + 6 secteurs.
+3. **Socle global 4900 supprimé** (`bilan_calibration.py`) + **purge de boot ciblée**
+   (`models.py` `ensure_bilan_params`, valeur exacte / provenance / secteur global — piège du 2100
+   évité) + purge appliquée en base (1 ligne). Overrides de bassin sourcés conservés (préséance).
+4. Cœur (`faisabilite/db.py`) : prix résolu par **préséance** override bassin sourcé > dvf secteur
+   > dvf commune > **non calculable**. Hors 5 communes : parcelle **servie avec la mention**
+   (jamais écartée, M26-A), formulation par cas (social dominant / marché non observable). score_e
+   recomposé (estimables 51 926 → 29 353).
+5. Golden **116/116** + tiers **au bit près** (120/1031/3587/72980/353945) après. Aucun tier bougé.
+6. Acceptation par le **chemin de production** (`resolve_prix_neuf_marche`) : promotion de marché
+   ≥ 10 lgt → **89-91 % viables** (bande validée ~90 % ; léger écart vs 92-93 % = résolution
+   SECTEUR plus locale + La Possession écartée, deux effets corrects). Fiche vérifiée en direct :
+   Saint-Denis/Saint-Paul → charge réelle ; Sainte-Marie/Le Port → non calculable servi.
+
+**Tests** : 2 verrous d'ancien socle mis à jour (nouvelle vérité), 3 verrous ajoutés (socle hors
+seed, formulations imposées au mot près, purge boot idempotente). 75 tests verts sur le périmètre.
+
+**RÉSERVE consignée — consommateurs hors fiche (correction SUIVANTE, un correctif à la fois)** :
+seule la fiche utilisait le socle 4900. Le **Copilote, le Banquier, l'Argumentaire, les modules**
+calculent leur charge sur `sector_price` (DVF de l'EXISTANT, ~2 265) — jamais le socle — et sont
+déjà **non-filtrants** (parcelle servie, fait charge omis si absent : comportement M26-A vérifié).
+MAIS ils ne consomment PAS encore le nouvel instrument : ils afficheront donc une charge (base
+DVF-existant) là où la fiche dit « non calculable ». Divergence **pré-existante** (la fiche était
+à 4900, eux à 2 265) désormais plus visible → à router sur `resolve_prix_neuf_marche` dans une
+correction dédiée, avec sa propre passe de vérification. Signalé, non bundlé.
