@@ -225,8 +225,8 @@ zones:
        habitat: interdit, habitat_src: "Art. UE 1.2 (al. 2), p.63 via renvoi (ZONE AUindicée, p.75) : habitation interdite y compris gardiennage",
        note: "Zone d'activités future (indice e -> Ue). Graphie 1AUe attestée p.1 (révision allégée n°2 : « d'une zone A en zone 1AUe »). O12 hors liste (« urbanisation prioritaire SAR ») mais habitat interdit CONFIRMÉ par le renvoi Ue."}
   1AUec: {bassin: "Bras-Panon",
-       he_m: null, hf_m: 18, hauteur_src: "Art. AUINDICEE 10, p.78 : « Pour la zone AUec, la hauteur absolue (hors équipements techniques) des constructions ne doit pas excéder 18 mètres dans un plan parallèle au sol naturel »",
-       hauteur_note: "Hauteur ABSOLUE unique (pas de couple égout/faîtage) => hf_m 18, he_m null.",
+       he_m: 18, he_m: 18, hf_m: 18, hauteur_src: "Art. AUINDICEE 10, p.78 : « Pour la zone AUec, la hauteur ABSOLUE => he = hf = 18 (catégorie 1, arbitrage Vic 28/07) ; « la hauteur absolue (hors équipements techniques) des constructions ne doit pas excéder 18 mètres dans un plan parallèle au sol naturel »",
+       hauteur_note: "Hauteur ABSOLUE unique => he = hf = 18 (règle 8 du mandat-cadre, arbitrage Vic 28/07/2026 — un null accidentel déclencherait un repli plus permissif que le plafond réel).",
        emprise_sol_pct: 70, emprise_src: "Art. UA 9, p.16 (via renvoi AUec -> Ua, Art. AUINDICEE 9, p.77)",
        recul_voirie_m: 2, recul_voirie_src: "Art. UA 6.2, p.14 (via renvoi AUec -> Ua, Art. AUINDICEE 6, p.77)",
        recul_limites_sep_m: 9, recul_limites_src: "Art. UA 7.2-7.3, p.14-15 (via renvoi AUec -> Ua, Art. AUINDICEE 7, p.77) : retrait >= H/2 de la façade, plancher 3 m — hauteur AUec = 18 m absolue => H/2 = 9 m (sans incidence produit : habitat interdit)",

@@ -76,7 +76,7 @@ Un lot par famille de zones (U d'abord, en commençant par le plus gros pool ; p
 7. **Sous-secteurs** : une entrée distincte chacun, jamais d'héritage implicite.
 8. **Hauteur absolue** : `he = hf = valeur`. Un champ laissé `null` ne signifie pas « pas de contrainte » — il déclenche le repli générique, qui peut être plus permissif que le plafond réel.
 9. **Aucune rétro-ingénierie depuis la base.** Les règles se lisent dans le règlement, uniquement.
-10. **Gel vs habitat-interdit** : gel (`zones_au_st`) = ouverture juridiquement conditionnée. Interdiction d'habitat dans une zone constructible = zone **calibrée** avec `habitat: interdit`.
+10. **Gel vs habitat-interdit** : gel (`zones_au_st`) = ouverture juridiquement conditionnée. Interdiction d'habitat dans une zone constructible = zone **calibrée** avec `habitat: interdit`. **EXCEPTION (vérifiée sur pièces le 28/07/2026)** : tant que le schéma v1 n'a pas de type « gel » distinct, une zone habitat-interdit **sans hauteur chiffrée** va en `zones_au_st` — test empirique : `resolve_zone` en mode progressif substitue l'estimation générique (9 m, habitat non contraint, `calibree=False`) à toute entrée sans hauteur exploitable AVANT que `engine.py:157` ne force la capacité zéro ; l'interdiction serait perdue. **Exigence v2 de premier rang.**
 11. **`source.reglement_grave`** : fichier, md5, millésime, document GPU au calibrage, date de vérification.
 
 **Porte de sortie de lot (obligatoire)** : tous les libellés résolus ou explicitement non calibrés avec motif · **script de re-vérification des citations** (chaque couple article/page re-résolu contre le PDF, zéro FAIL) · le YAML se charge sans erreur.
