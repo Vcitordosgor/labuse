@@ -235,6 +235,12 @@ le calibrage par commune reste la résorption définitive.
 
 ### MANDAT PRÊT À TIRER — « Repli non optimiste » (décision Vic, revue GO n°3)
 
+> **LE CAS LE PLUS GRAVE DE LA CAMPAGNE PHASE 4 (Vic, 28/07/2026)** : la brûlante
+> ⚑ `97422000AD1237` (Le Tampon) est en **2AUd — zone FERMÉE à l'urbanisation** — et
+> elle est dans le **tier de tête**. La parcelle la plus mise en avant du produit
+> repose sur du foncier juridiquement inconstructible. C'est ce qui justifie la
+> priorité 1 de ce mandat.
+
 > **POURQUOI CE MANDAT EST PRIORITAIRE (Vic, 28/07/2026, post-phase 4)** : pour les
 > **2 234 parcelles** de la population fusionnée d+e, le moteur de faisabilité rend
 > DÉJÀ capacité 0 exacte — mais la cascade les classe positives. **Le produit se
@@ -320,9 +326,26 @@ référence elle-même.
 
 Corriger la cascade retire 2 234 parcelles du classement positif → le rang P change →
 **les tiers peuvent bouger**. Si un tier bouge d'un bit : RIEN ne merge sans re-run du
-champion, arène et arbitrage Vic. (Le golden bougera mécaniquement : 2 de ses parcelles
-sont dans la population — la régénération de la référence fera partie du constat, pas
-une anomalie.)
+champion, arène et arbitrage Vic.
+
+##### DISCIPLINE GOLDEN (Vic, 28/07/2026) — le point de méthode de ce mandat
+
+Deux parcelles de la référence golden sont dans la population (⚑ `97422000AD1237`
+brûlante 2AUd, ⚑ `97422000AX1253` chaude 2AUe). La référence DOIT bouger — c'est le
+résultat attendu — mais sous une discipline précise, la même que pour les tiers :
+**on ne corrige pas la mesure pour qu'elle valide le correctif.**
+
+1. **Le golden ne se met pas à jour pour faire passer le test.** On mesure d'abord ce
+   qui bouge ; on vérifie que le mouvement est EXACTEMENT celui attendu (ces deux
+   parcelles quittent leur tier parce que leur zone est fermée ou interdit l'habitat) ;
+   seulement ensuite on met la référence à jour, avec une entrée DATÉE qui explique
+   pourquoi.
+2. **Tout autre mouvement dans le golden est un signal d'alerte, pas un ajustement.**
+   Si une troisième parcelle bouge, le correctif fait plus que ce qu'on croit — on
+   S'ARRÊTE.
+3. **La mise à jour de la référence est un commit DÉDIÉ, distinct du correctif**, pour
+   qu'un lecteur puisse voir séparément ce qui a changé dans le code et ce qui a
+   changé dans la vérité de référence.
 
 **NE PAS EXÉCUTER MAINTENANT** : la phase A (prix de sortie par commune) passe d'abord —
 un correctif à la fois.
