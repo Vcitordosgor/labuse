@@ -1,7 +1,9 @@
-"""O12 — DIVISION EN OR : détecteur conservateur, MASQUÉ jusqu'à validation visuelle Vic (20 cartes).
+"""O12 — DIVISION EN OR : détecteur conservateur. VALIDÉ (Vic, 28/07/2026) après 2 revues
+visuelles exhaustives + verdict de calibrage PLU — EXPOSE=True, pool 35, 0 faux positif connu.
 
-Faux positif = péché mortel : EXPOSE=False ; seuils conservateurs codés en dur dans _DETECT ;
-la métrique d'accès du lot bâti (invalidée) n'est PAS filtrante — champ NULL, revue humaine.
+Faux positif = péché mortel : seuils conservateurs codés dans _DETECT ; exclusions de revue
+PERMANENTES par IDU (config, INSEE vérifié) ; emprise du lot restant confrontée au plafond PLU
+réel (dépendance récurrente o12_emprise_recheck.py).
 """
 from __future__ import annotations
 
@@ -11,8 +13,8 @@ from sqlalchemy import text
 from labuse.ingestion import division_or as d
 
 
-def test_expose_false():
-    assert d.EXPOSE is False    # masqué tant que Vic n'a pas validé le dossier de revue
+def test_expose_true():
+    assert d.EXPOSE is True      # validé par Vic (28/07/2026) — câblage client = M22-D
 
 
 def test_seuils_conservateurs_dans_detect():
@@ -200,13 +202,13 @@ def test_exclusions_revue_idu_coherents():
 def test_build_commune_vide_et_table_creee(db_session):
     s = db_session
     r = d.build_divisions(s, ["Commune-Inexistante"], commit=False, log=lambda *_: None)
-    assert r["total"] == 0 and r["expose"] is False
-    # la table masquée existe (DDL passé), vide
+    assert r["total"] == 0 and r["expose"] is True
+    # la table existe (DDL passé), vide
     assert s.execute(text("SELECT count(*) FROM division_or_candidates")).scalar() == 0
     assert d.top_candidates(s, limit=5) == []
-    # le détecteur PARTIEL tourne sur le même socle (SQL valide, 0 candidat, masqué)
+    # le détecteur PARTIEL tourne sur le même socle (SQL valide, 0 candidat)
     r2 = d.build_divisions_partiel(s, ["Commune-Inexistante"], commit=False, log=lambda *_: None)
-    assert r2["total"] == 0 and r2["expose"] is False
+    assert r2["total"] == 0 and r2["expose"] is True
     # snapshot des tracés revus + revue exhaustive : SQL valides sur table vide (0 ligne)
     assert d.snapshot_review_lots(s, commit=False) == 0
     assert d.all_candidates_for_review(s) == []
