@@ -74,14 +74,21 @@ WITH med AS (
          max(mediane_prix_m2) FILTER (WHERE type_bien='terrain' AND n_ventes >= :nt) AS terrain
   FROM dvf_secteur_medianes GROUP BY secteur),
 neuf_sec AS (SELECT cle, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau='secteur'),
-neuf_com AS (SELECT cle, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau='commune')
+neuf_com AS (SELECT cle, prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau='commune'),
+-- MANDAT COUVERTURE PRIX (Vic 28/07/2026) — REPLI ÎLE : médiane marché île (non indexée), servie
+-- aux communes de MARCHÉ sans prix local ; les communes social-dominantes n'y accèdent pas.
+neuf_ile AS (SELECT prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau='ile' LIMIT 1)
 SELECT p.idu,
        p.surface_m2,
        r.sdp_residuelle_m2 AS sdp,
        m.terrain,
-       COALESCE(ns.prix_m2_neuf, nc.prix_m2_neuf) AS prix_vente,
+       COALESCE(ns.prix_m2_neuf, nc.prix_m2_neuf,
+                CASE WHEN left(p.idu,5) <> ALL(:social) THEN (SELECT prix_m2_neuf FROM neuf_ile) END) AS prix_vente,
        CASE WHEN ns.prix_m2_neuf IS NOT NULL THEN 'secteur'
-            WHEN nc.prix_m2_neuf IS NOT NULL THEN 'commune' END AS niveau_prix
+            WHEN nc.prix_m2_neuf IS NOT NULL THEN 'commune'
+            WHEN left(p.idu,5) <> ALL(:social) AND (SELECT prix_m2_neuf FROM neuf_ile) IS NOT NULL
+                 THEN CASE WHEN left(p.idu,5) = ANY(:validees) THEN 'ile_validee' ELSE 'ile_sans_operation' END
+            END AS niveau_prix
 FROM parcel_p_score_v2 s
 JOIN parcels p ON p.idu = s.parcelle_id
 LEFT JOIN parcel_residuel r ON r.parcel_id = p.id
@@ -109,9 +116,12 @@ _CAVEAT = ("Estimé (hypothèses de bilan génériques) — prix de sortie neuf 
 
 def niveau_label(niveau_prix: str | None) -> str:
     """Libellé CLIENT du niveau du prix de sortie neuf (exigence Vic : niveau_prix visible).
-    Tooltip/détail fiche + dossier banquier s'appuient dessus."""
+    Tooltip/détail fiche + dossier banquier s'appuient dessus. Repli île = mandat couverture prix."""
     return {"secteur": "estimation niveau secteur",
-            "commune": "estimation niveau commune (repli)"}.get(niveau_prix, "estimation niveau non déterminé")
+            "commune": "estimation niveau commune",
+            "ile_validee": "estimation île, ± 12 %, validée sur cette commune",
+            "ile_sans_operation": "estimation île, aucune opération de marché observée sur cette commune",
+            }.get(niveau_prix, "estimation niveau non déterminé")
 
 
 def _eur(x: int) -> str:
@@ -149,10 +159,13 @@ def build_score_e(session: Session, *, run: str = "q_v7_defisc",
                   commit: bool = True, log=lambda *_: None) -> dict:
     """Construit/rafraîchit `score_e` (rebuild complet idempotent). Lecture seule des sources.
     `commit=False` pour les tests transactionnels. Renvoie {'total', 'estimables'}."""
+    from .dvf_prix_neuf import SOCIAL_DOMINANT_INSEE, ILE_VALIDEES_INSEE
     session.execute(text("DROP TABLE IF EXISTS score_e"))
     session.execute(text(DDL))
     raw = session.execute(text(_SELECT_RAW),
-                          {"run": run, "nt": N_MIN_TERRAIN, "nv": N_MIN_VENTE}).mappings().all()
+                          {"run": run, "nt": N_MIN_TERRAIN, "nv": N_MIN_VENTE,
+                           "social": list(SOCIAL_DOMINANT_INSEE),
+                           "validees": list(ILE_VALIDEES_INSEE)}).mappings().all()
     rows = [_row(r["idu"], r["surface_m2"], r["sdp"], r["terrain"], r["prix_vente"], r["niveau_prix"]) for r in raw]
     for r in rows:
         session.execute(text(_INSERT), r)

@@ -55,8 +55,8 @@ SOCIAL_SIREN = (
 
 DDL = """
 CREATE TABLE IF NOT EXISTS dvf_prix_sortie_neuf (
-  cle           varchar(10) NOT NULL,   -- secteur (préfixe IDU 10) OU INSEE commune (5)
-  niveau        text NOT NULL,          -- 'secteur' | 'commune'
+  cle           varchar(10) NOT NULL,   -- secteur (préfixe IDU 10) | INSEE commune (5) | '__ILE__'
+  niveau        text NOT NULL,          -- 'secteur' | 'commune' | 'ile' (repli marché île)
   prix_m2_neuf  int  NOT NULL,          -- médiane €/m² habitable, appartements neufs de MARCHÉ (hors social)
   n             int  NOT NULL,          -- nb de ventes ayant servi
   computed_at   timestamptz DEFAULT now(),
@@ -92,10 +92,22 @@ agg AS (
   UNION ALL
   SELECT insee AS cle, 'commune' AS niveau,
          round(percentile_cont(0.5) WITHIN GROUP (ORDER BY prix_m2))::int AS p, count(*) AS n
-  FROM neuf GROUP BY insee HAVING count(*) >= :nmin)
+  FROM neuf GROUP BY insee HAVING count(*) >= :nmin
+  UNION ALL
+  -- MANDAT COUVERTURE PRIX (décision Vic 28/07/2026) — REPLI ÎLE : médiane MARCHÉ de toute l'île,
+  -- NON indexée (l'indexation a été mesurée puis REJETÉE par E3 : elle sur-évaluait). Sert de repli
+  -- aux communes de MARCHÉ sans prix local observable. Fondé sur le fait mesuré : le prix du neuf
+  -- de marché est quasi uniforme à La Réunion (4 258-4 953, ±8 %) alors que l'existant varie du
+  -- simple au double — marché intégré (coûts homogènes, acheteurs en défiscalisation). Validé par
+  -- back-test sur cohorte élargie (91 %) et E3 (0 sur-évaluation à 4 375). JAMAIS un socle : le
+  -- local prime toujours, et les communes social-dominantes n'y accèdent pas (cf. resolve_...).
+  SELECT '__ILE__' AS cle, 'ile' AS niveau,
+         round(percentile_cont(0.5) WITHIN GROUP (ORDER BY prix_m2))::int AS p, count(*) AS n
+  FROM neuf)
 INSERT INTO dvf_prix_sortie_neuf (cle, niveau, prix_m2_neuf, n, computed_at)
 SELECT cle, niveau, p, n, now() FROM agg
 -- règle de fragilité : n franchi de justesse ET médiane sous le seuil de bascule → écarté
+-- (jamais pour l'île : n île très élevé, médiane bien au-dessus du seuil).
 WHERE NOT (n < :nfragile AND p < :seuil);
 """
 
@@ -114,35 +126,79 @@ SOCIAL_DOMINANT_INSEE = frozenset({
     "97406",  # La Plaine-des-Palmistes 53 %
 })
 
+# MANDAT COUVERTURE PRIX (Vic 28/07/2026) — communes de MARCHÉ sans prix LOCAL, servies par le repli
+# île. Deux niveaux de confiance mesurés (back-test cohorte élargie) :
+#  · ÎLE VALIDÉE : le repli île y a été confirmé par des opérations de marché réelles (≥ 82 % viables).
+ILE_VALIDEES_INSEE = frozenset({
+    "97404",  # L'Étang-Salé
+    "97408",  # La Possession
+    "97410",  # Saint-Benoît
+    "97414",  # Saint-Louis
+    "97418",  # Sainte-Marie
+    "97420",  # Sainte-Suzanne
+    "97423",  # Les Trois-Bassins
+    "97401",  # Les Avirons (validée via fenêtre temporelle 2015+)
+    "97409",  # Saint-André (validée via fenêtre temporelle 2015+)
+})
+#  · ÎLE SANS OPÉRATION : commune de marché mais AUCUNE opération de marché observée, même en 2015+
+#    → le repli s'applique, mais l'absence de preuve est SERVIE honnêtement (issue n°2 de Vic).
+ILE_SANS_OPERATION_INSEE = frozenset({
+    "97419",  # Sainte-Rose (1 opération, non concluante)
+    "97421",  # Salazie (aucune opération de marché)
+})
+
 
 def motif_non_calculable(insee: str | None) -> str:
-    """Formulation CLIENT du « non calculable » selon le cas (formulations Vic 28/07/2026).
-    Le patrimonial (build-to-hold) est un motif d'OPÉRATION, pas de commune — traité côté fiche."""
-    if insee in SOCIAL_DOMINANT_INSEE:
-        return ("Charge foncière de marché non atteignable sur cette commune — le collectif y est "
-                "majoritairement social ou aidé.")
-    return ("Marché du collectif neuf non observable sur cette commune (ventes d'appartements de "
-            "marché insuffisantes) — charge non calculable.")
+    """Formulation CLIENT du « non calculable » (formulation Vic 28/07/2026). Depuis le repli île,
+    seules les communes SOCIAL-DOMINANTES sont non calculables — « pas de charge de MARCHÉ », PAS
+    « pas de réponse » : le mode D (opération sociale) de la spec multi-modes leur répondra."""
+    return ("Charge foncière de marché non atteignable sur cette commune — le collectif y est "
+            "majoritairement social ou aidé.")
+
+
+def niveau_prix_label(niveau: str | None, n: int | None = None) -> str:
+    """Étiquette CLIENT à 4 niveaux de confiance (Vic 28/07/2026) — la couverture ne se paie jamais
+    par une fausse précision : un pro doit distinguer un chiffre OBSERVÉ d'un chiffre ESTIMÉ par repli."""
+    if niveau in ("secteur", "commune"):
+        return f"Estimé — médiane locale{f', {n} ventes' if n else ''}"
+    if niveau == "override_bassin":
+        return "Estimé — prix de bassin sourcé (observatoire)"
+    if niveau == "ile_validee":
+        return "Estimé — estimation île, ± 12 %, validée sur cette commune"
+    if niveau == "ile_sans_operation":
+        return "Estimé — estimation île, aucune opération de marché observée sur cette commune"
+    return "Estimé"
 
 
 def resolve_prix_neuf_marche(session: Session, parcel_id: int,
-                             bassin_override: dict | None = None) -> tuple[float | None, str | None, str | None]:
-    """Prix de sortie neuf SERVI pour une parcelle, préséance (décision Vic 28/07/2026) :
-    override bassin SOURCÉ > `dvf_prix_sortie_neuf` secteur > commune > **non calculable**.
-    Renvoie (prix €/m² | None, niveau | None, motif_non_calculable | None). Le socle global 4900
-    n'existe plus : hors des 5 communes couvertes, on dit qu'on ne sait pas (jamais un chiffre faux)."""
+                             bassin_override: dict | None = None) -> tuple[float | None, str | None, int | None, str | None]:
+    """Prix de sortie neuf SERVI pour une parcelle, PRÉSÉANCE (décisions Vic 28/07/2026) :
+    override bassin SOURCÉ > `dvf_prix_sortie_neuf` secteur local > commune local > **REPLI ÎLE**
+    (communes de marché sans local) > **non calculable** (communes social-dominantes seulement).
+    Renvoie (prix €/m² | None, niveau | None, n_ventes | None, motif_non_calculable | None).
+    Le socle global 4900 n'existe plus ; le repli île (médiane MARCHÉ, non indexée) n'écrase JAMAIS
+    un prix local et n'atteint JAMAIS les communes social-dominantes."""
     if (bassin_override and bassin_override.get("provenance") == "sourcee"
             and (bassin_override.get("value") or 0) > 0):
-        return float(bassin_override["value"]), "override_bassin", None
+        return float(bassin_override["value"]), "override_bassin", None, None
     row = session.execute(text(
-        "SELECT d.prix_m2_neuf AS p, d.niveau AS niveau, left(pa.idu, 5) AS insee "
+        "SELECT d.prix_m2_neuf AS p, d.niveau AS niveau, d.n AS n, left(pa.idu, 5) AS insee "
         "FROM parcels pa "
         "LEFT JOIN dvf_prix_sortie_neuf d ON d.cle IN (left(pa.idu, 10), left(pa.idu, 5)) "
         "WHERE pa.id = :pid ORDER BY (d.niveau = 'secteur') DESC NULLS LAST LIMIT 1"),
         {"pid": parcel_id}).first()
-    if row and row.p is not None:
-        return float(row.p), row.niveau, None
-    return None, None, motif_non_calculable(row.insee if row else None)
+    if row and row.p is not None:                        # prix LOCAL observé (5 communes)
+        return float(row.p), row.niveau, int(row.n), None
+    insee = row.insee if row else None
+    if insee in SOCIAL_DOMINANT_INSEE:                   # NON calculable (mode D à venir)
+        return None, None, None, motif_non_calculable(insee)
+    # commune de MARCHÉ sans prix local → REPLI ÎLE (médiane marché, non indexée)
+    ile = session.execute(text(
+        "SELECT prix_m2_neuf FROM dvf_prix_sortie_neuf WHERE niveau = 'ile' LIMIT 1")).scalar()
+    if ile is None:
+        return None, None, None, motif_non_calculable(insee)   # sécurité : île non calculée
+    niveau = "ile_validee" if insee in ILE_VALIDEES_INSEE else "ile_sans_operation"
+    return float(ile), niveau, None, None
 
 
 def build_prix_neuf(session: Session, *, commit: bool = True, log=lambda *_: None) -> dict:

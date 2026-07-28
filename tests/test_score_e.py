@@ -26,13 +26,16 @@ def test_row_marge_negative_affichee():
     r = se._row("idu", 500, 1000, 200, 3000, "commune")   # prix modeste → charge < prix → marge négative
     assert r["estimable"] is True and r["marge"] < 0
     assert "−" in r["court"]                                # signe moins explicite (U+2212)
-    assert "repli" in r["detail"]                           # niveau commune tracé comme repli
+    assert "estimation niveau commune" in r["detail"]      # niveau commune tracé côté client
 
 
 def test_niveau_label_client_visible():
-    # exigence Vic : niveau_prix visible côté client (« estimation niveau secteur/commune »)
+    # exigence Vic : niveau_prix visible côté client (« estimation niveau … »). Repli île =
+    # mandat couverture prix (Vic 28/07/2026) : 4 niveaux de confiance, jamais de fausse précision.
     assert se.niveau_label("secteur") == "estimation niveau secteur"
-    assert se.niveau_label("commune") == "estimation niveau commune (repli)"
+    assert se.niveau_label("commune") == "estimation niveau commune"
+    assert "validée sur cette commune" in se.niveau_label("ile_validee")
+    assert "aucune opération de marché observée" in se.niveau_label("ile_sans_operation")
     assert "non déterminé" in se.niveau_label(None)
 
 
