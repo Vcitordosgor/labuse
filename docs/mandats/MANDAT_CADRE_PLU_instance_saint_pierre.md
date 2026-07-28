@@ -74,8 +74,10 @@
 20. **Doctrines harmonisées A/B/C (arbitrage Vic, 28/07/2026)** :
     - % « espace vert et perméable » sans sous-minimum de pleine terre → VALEUR GRAVÉE
       dans `pleine_terre_pct`, libellé verbatim conservé en `_src` (fini le null+note) ;
-      ne s'applique PAS aux règles non perméables (« espace vert paysager » avec
-      stationnements comptables, « libres et paysagés ») qui restent null sourcé.
+      ne s'applique QU'AUX règles qui bornent réellement l'emprise constructible —
+      « espace vert paysager » où les stationnements sont comptables, ou « libres et
+      paysagés » sans exigence de perméabilité, ne bornent pas le bâti et restent
+      null sourcé (raisonnement Cilaos, validé par Vic).
     - Retraits en H/2 → valeur gravée = **max(H/2 à la hauteur maximale gravée, plancher
       du texte)**, fond du calcul en note.
 21. **Signal de pré-vol ≠ preuve** (Cilaos NtoPOS→Nto) : un rattachement de famille
@@ -84,6 +86,15 @@
 22. **Rattachement d'un secteur muet à sa zone support** : uniquement si la règle
     générale « la règle de la zone s'applique aux secteurs sauf disposition particulière »
     est ÉCRITE dans le règlement (citée dans l'entrée) — sinon non calibrée.
+    **Précision d'arbitrage (Vic, 28/07/2026)** : une clause de règle générale écrite
+    fonde un rattachement, une déduction par élimination non. La clause ne couvre que
+    les secteurs d'une ZONE : Cilaos Ub1 (secteur cartographique d'une zone Ub sans
+    secteur déclaré) → rattachement VALIDÉ ; Saint-Louis 1AUb1/1AUb2/2AUb1/2AUb2
+    (zones AU dont l'indice « b1 »/« b2 » ne correspond à aucune zone urbaine — le
+    passage b1→b est une élimination non écrite, même si la commune possède aussi une
+    clause générale des secteurs, p.4) → rattachement REFUSÉ, zones non calibrées,
+    motif « rattachement non fondé sur une clause du règlement, indice cartographique
+    sans disposition écrite ».
 23. **Schéma v1, manques récurrents constatés en série** (2e signalement après le
     Tampon) : `habitat: interdit` devrait primer sur le gate hauteur dans `resolve_zone`,
     et un vrai type « gel » devrait remplacer l'étiquette « secteur de transition »

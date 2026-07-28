@@ -204,3 +204,19 @@ Détail des motifs de non-calibrage : chaque YAML porte ses motifs zone par zone
    est prévue ») et Saint-Louis 1AUb1/1AUb2/2AUb1/2AUb2 (aucun secteur UB1/UB2 au
    règlement, liste des zones p.5-6, caractère UB p.24 : indice « b » → règlement UB,
    sous-numérotation cartographique).
+
+5. **Arbitrages finaux de Vic (28/07/2026, seconde passe)** : Saint-Benoît VALIDÉ tel
+   quel · 1AUe Trois-Bassins RESTE non calibrée (« je ne tranche pas, et c'est la
+   réponse » — à poser à la commune, consigné au YAML) · rattachements : Cilaos Ub1 GO,
+   Saint-Louis 1AUb1/1AUb2/2AUb1/2AUb2 REFUSÉS — passées non calibrées, motif
+   « rattachement non fondé sur une clause du règlement, indice cartographique sans
+   disposition écrite » ; pool concerné : 28 polygones, 37,5 ha (1AUb1 7/7,1 ·
+   1AUb2 12/20,8 · 2AUb1 1/2,0 · 2AUb2 8/7,6 ; parcelles en phase 4) ; 2AUb1/2AUb2
+   sortent aussi du gel 2AUindicée (même rattachement d'indice non écrit) ·
+   harmonisation VALIDÉE, y compris le non-gravage Cilaos (la doctrine perméable ne
+   s'applique qu'aux règles qui bornent réellement l'emprise constructible — un
+   stationnement comptable n'est pas du bâti). DÉCOUVERTE en appliquant le refus
+   Saint-Louis : la clause générale des secteurs y EXISTE aussi (p.4 imprimée) — elle
+   ne sauve pas le rattachement (elle vise les secteurs déclarés d'une zone, pas le
+   saut d'indice b1→b d'une zone AU), mais la distinction Cilaos/Saint-Louis est plus
+   fine que « clause présente/absente » : signalé à Vic, précision versée au §9.

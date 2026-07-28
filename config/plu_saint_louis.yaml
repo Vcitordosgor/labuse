@@ -37,10 +37,13 @@
 #     urbaines correspondantes » (p.105, répété à chaque article). Le renvoi moteur ne
 #     couvre pas les codes à préfixe chiffré (1AUx) => entrées EXPLICITES, une par libellé
 #     du manifeste (y compris suffixes « oapN » : mêmes règles que la zone d'indice + OAP).
-#     Les libellés 1AUb1/1AUb2 (et 2AUb1/2AUb2) n'apparaissent nulle part dans le
-#     règlement et AUCUN secteur UB1/UB2 n'existe (caractère de zone UB p.24 ; liste des
-#     zones urbaines p.5-6) : l'indice « b » ne peut renvoyer qu'à UB, la sous-numérotation
-#     est cartographique et sans règle propre dans le règlement => règles UB, note.
+#     1AUb1/1AUb2/2AUb1/2AUb2 : NON CALIBRÉES (arbitrage Vic 28/07/2026) — les libellés
+#     n'apparaissent nulle part et aucun secteur UB1/UB2 n'est DÉCLARÉ : la clause
+#     générale des secteurs (p.4) ne couvre que les secteurs déclarés d'une zone, le
+#     rattachement reposait sur une déduction par élimination (≠ Cilaos Ub1 : secteur
+#     porté au manifeste d'une zone Ub sans AUCUN secteur déclaré, clause applicable).
+#     Motif gravé : « rattachement non fondé sur une clause du règlement, indice
+#     cartographique sans disposition écrite » — cf. zones_non_calibrees.
 #     1AUc1/1AUc2/1AUd1 : l'indice correspond exactement aux secteurs UC1/UC2/UD1 définis
 #     au règlement => règles du secteur homonyme, note.
 #   - 2AUindicée : gel conditionnel (Art. AUindicée 2.2.3, p.106 : ouverture qu'une fois
@@ -228,22 +231,6 @@ zones:
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.21 (via renvoi)",
        pleine_terre_pct: 15, pleine_terre_src: "Art. UA 13.1, p.22 (via renvoi) : 15 % espace vert et perméable, sans sous-minimum de pleine terre",
        note: "Zone 1AUa soumise à OAP (suffixe cartographique) => règles UA via renvoi (p.105)."}
-  1AUb1: {bassin: "Saint-Louis",
-       he_m: 12, hf_m: 17, hauteur_src: "Art. UB 10.2, p.31-32 via renvoi (ZONE AUindicée, p.105)",
-       emprise_sol_pct: 70, emprise_src: "Art. UB 9.2, p.31 (via renvoi)",
-       recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.28 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.29 (via renvoi)",
-       stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.35 (via renvoi)",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi) : 20 % espace vert et perméable, sans sous-minimum de pleine terre",
-       note: "Le code « 1AUb1 » n'apparaît pas dans le règlement et il n'existe AUCUN secteur UB1 (zone UB sans secteur, p.24 ; liste p.5-6) : l'indice « b » ne peut renvoyer qu'au règlement UB, la sous-numérotation « 1 » est cartographique, sans règle propre."}
-  1AUb2: {bassin: "Saint-Louis",
-       he_m: 12, hf_m: 17, hauteur_src: "Art. UB 10.2, p.31-32 via renvoi (ZONE AUindicée, p.105)",
-       emprise_sol_pct: 70, emprise_src: "Art. UB 9.2, p.31 (via renvoi)",
-       recul_voirie_m: 3, recul_voirie_src: "Art. UB 6.2, p.28 (via renvoi)",
-       recul_limites_sep_m: 3, recul_limites_src: "Art. UB 7.2, p.29 (via renvoi)",
-       stat_logement: "2 places / logement", stat_src: "Art. UB 12.2, p.35 (via renvoi)",
-       pleine_terre_pct: 20, pleine_terre_src: "Art. UB 13.1, p.36 (via renvoi) : 20 % espace vert et perméable, sans sous-minimum de pleine terre",
-       note: "Même décision que 1AUb1 : indice « b » => règlement UB (aucun secteur UB2 au règlement), sous-numérotation cartographique sans règle propre."}
   1AUc: {bassin: "Saint-Louis",
        he_m: 7, hf_m: 11, hauteur_src: "Art. UC 10.2, p.47 via renvoi (ZONE AUindicée, p.105)",
        emprise_sol_pct: 60, emprise_src: "Art. UC 9.2, p.46 (via renvoi)",
@@ -333,10 +320,16 @@ zones_au_renvoi: {}
 # liste EXPLICITE obligatoire. Art. AUst 14 (COS nul, p.114) consigné en tête, non appliqué.
 zones_au_st:
   liste: ["1AUst", "1AUst oap1", "1AUste", "2AUst", "2AUste",
-          "2AUb1", "2AUb2", "2AUd", "2AUd1", "2AUe"]
+          "2AUd", "2AUd1", "2AUe"]
   hauteur_max_m: 4
-  portee: "Construction neuve non autorisée en l'état. AUst (1AUst/1AUste/2AUst/2AUste et OAP associées) : ouverture conditionnée à une MODIFICATION du PLU, seuls réseaux, ouvrages techniques, reconstruction après sinistre et extensions <= 20 m² SDP sont admis. 2AUindicée (2AUb1/2AUb2/2AUd/2AUd1/2AUe) : ouverture conditionnée à l'aménagement préalable de l'ensemble des 1AUindicée et 1AUst de la polarité SAR. 2AUe : indice e => habitat au surplus interdit par renvoi UE."
+  portee: "Construction neuve non autorisée en l'état. AUst (1AUst/1AUste/2AUst/2AUste et OAP associées) : ouverture conditionnée à une MODIFICATION du PLU, seuls réseaux, ouvrages techniques, reconstruction après sinistre et extensions <= 20 m² SDP sont admis. 2AUindicée (2AUd/2AUd1/2AUe ; 2AUb1/2AUb2 exclues par arbitrage Vic 28/07/2026, cf. zones_non_calibrees) : ouverture conditionnée à l'aménagement préalable de l'ensemble des 1AUindicée et 1AUst de la polarité SAR. 2AUe : indice e => habitat au surplus interdit par renvoi UE."
   source: "ZONE AUst (caractère de zone, p.110) ; Art. AUst 1.2 et 2.2, p.111 ; Art. AUst 10, p.114 ; Art. AUindicée 2.2, p.106."
+
+# Zones NON CALIBRÉES (arbitrage Vic 28/07/2026) — repli générique du moteur.
+zones_non_calibrees:
+  "1AUb1, 1AUb2, 2AUb1, 2AUb2":
+    motif: "Rattachement non fondé sur une clause du règlement, indice cartographique sans disposition écrite. Les libellés n'apparaissent nulle part dans le règlement, aucun secteur UB1/UB2 n'existe (caractère de zone UB p.24 ; liste des zones urbaines p.5-6) La clause générale des secteurs EXISTE (p.4 imprimée : « Dès lors que la zone comprend un ou plusieurs secteurs, la règle générale de la zone s'applique à chacun d'eux sauf lorsqu'une disposition particulière est prévue ») mais elle vise les secteurs DÉCLARÉS d'une zone — or aucun secteur UB1/UB2 n'est déclaré nulle part : la clause ne peut fonder le rattachement d'un libellé que le règlement ne reconnaît pas ; il reposait sur une déduction par élimination (indice « b » => UB), refusée (leçon §9 : une clause écrite fonde un rattachement d'un secteur déclaré, une déduction par élimination non). Pool concerné : 1AUb1 7 polygones/7,1 ha ; 1AUb2 12/20,8 ha ; 2AUb1 1/2,0 ha ; 2AUb2 8/7,6 ha — total 28 polygones, 37,5 ha (parcelles : mesure phase 4). NB : 2AUb1/2AUb2 perdent aussi le gel 2AUindicée (Art. AUindicée 2.2, p.106) car leur appartenance au chapitre reposait sur le même rattachement d'indice non écrit."
+    source: "Liste des zones urbaines p.5-6 ; caractère de zone UB, p.24 ; ZONE AUindicée, p.105"
 
 # Zones NON constructibles (urbanisation) — hors périmètre faisabilité U/AU.
 # DÉCISION (principe mandat-cadre, modèle Tampon) : constructibilité d'EXCEPTION uniquement,
