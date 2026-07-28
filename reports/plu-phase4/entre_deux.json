@@ -1,0 +1,395 @@
+{
+ "commune": "Entre-Deux",
+ "pool_servi": 1175,
+ "n_dist": 400,
+ "n_err": 0,
+ "echantillon10": [
+  {
+   "zone_couche": "Ub",
+   "idu": "97403000AM0013",
+   "surface_m2": 3025,
+   "avant": {
+    "zone": "Ub",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~27 à 28 logts",
+    "sdp": 2923,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 2165,
+    "emprise_batie": 974,
+    "logts": [
+     27,
+     28
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "Ub",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~19-20 / sous-sol ~24-28 logts",
+    "sdp": 2450,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 1815,
+    "emprise_batie": 817,
+    "logts": [
+     24,
+     28
+    ],
+    "src_hauteur": "Art. U7.2, p.21-22 (« En zones Ub et Ue : 9/13 m »)"
+   }
+  },
+  {
+   "zone_couche": "Ua",
+   "idu": "97403000AP0030",
+   "surface_m2": 790,
+   "avant": {
+    "zone": "Ua",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~4 à 5 logts",
+    "sdp": 643,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 476,
+    "emprise_batie": 214,
+    "logts": [
+     4,
+     5
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "Ua",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~2-4 / sous-sol ~2-4 logts",
+    "sdp": 426,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 474,
+    "emprise_batie": 213,
+    "logts": [
+     2,
+     4
+    ],
+    "src_hauteur": "Art. U7.2, p.21-22 (« En zone Ua et en secteur Ub1 : 7/11 m »)"
+   }
+  },
+  {
+   "zone_couche": "AUb",
+   "idu": "97403000AM0715",
+   "surface_m2": 246,
+   "avant": {
+    "zone": "AUb",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~1 à 2 logts",
+    "sdp": 125,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 93,
+    "emprise_batie": 42,
+    "logts": [
+     1,
+     2
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "AUb",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~1-2 / sous-sol ~1-2 logts",
+    "sdp": 125,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 93,
+    "emprise_batie": 42,
+    "logts": [
+     1,
+     2
+    ],
+    "src_hauteur": "Art. U7.2, p.21-22 via renvoi (IV p.29 : « se reporter au règlement de la zone U indiquée en indice »)"
+   }
+  },
+  {
+   "zone_couche": "Ub2",
+   "idu": "97403000AO0295",
+   "surface_m2": 688,
+   "avant": {
+    "zone": "Ub2",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~2 à 3 logts",
+    "sdp": 526,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 390,
+    "emprise_batie": 175,
+    "logts": [
+     2,
+     3
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "Ub2",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+0 · au sol ~0-1 / sous-sol ~0-1 logts",
+    "sdp": 175,
+    "hauteur_m": 3.0,
+    "niveaux": "R+0",
+    "emprise": 390,
+    "emprise_batie": 175,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "Art. U7.2, p.21-22 (« En secteur Ub2 : 4,50 m à l'égout … 7 m au faîtage »)"
+   }
+  },
+  {
+   "zone_couche": "A",
+   "idu": "97403000AM0225",
+   "surface_m2": 1486,
+   "avant": {
+    "zone": "A",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Construction neuve non autorisée — secteur de transition (AU*st) : travaux mineurs de mise aux normes, H max 4",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   },
+   "apres": {
+    "zone": "A",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Construction neuve non autorisée — secteur de transition (AU*st) : travaux mineurs de mise aux normes, H max 4",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   }
+  },
+  {
+   "zone_couche": "Ub1",
+   "idu": "97403000AM0123",
+   "surface_m2": 259,
+   "avant": {
+    "zone": "Ub1",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~0 à 1 logts",
+    "sdp": 87,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 64,
+    "emprise_batie": 29,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "Ub1",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~0-1 / sous-sol ~0-1 logts",
+    "sdp": 58,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 64,
+    "emprise_batie": 29,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "Art. U7.2, p.21-22 (« En zone Ua et en secteur Ub1 »)"
+   }
+  },
+  {
+   "zone_couche": "N",
+   "idu": "97403000AM0238",
+   "surface_m2": 6475,
+   "avant": {
+    "zone": "N",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Construction neuve non autorisée — secteur de transition (AU*st) : travaux mineurs de mise aux normes, H max 4",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   },
+   "apres": {
+    "zone": "N",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Construction neuve non autorisée — secteur de transition (AU*st) : travaux mineurs de mise aux normes, H max 4",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   }
+  },
+  {
+   "zone_couche": "AUe",
+   "idu": "97403000AT0066",
+   "surface_m2": 2817,
+   "avant": {
+    "zone": "AUe",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~25 à 26 logts",
+    "sdp": 2746,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 2034,
+    "emprise_batie": 915,
+    "logts": [
+     25,
+     26
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "AUe",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~25 à 26 logts",
+    "sdp": 2746,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 2034,
+    "emprise_batie": 915,
+    "logts": [
+     25,
+     26
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   }
+  },
+  {
+   "zone_couche": "AUst",
+   "idu": "97403000AS0993",
+   "surface_m2": 1677,
+   "avant": {
+    "zone": "AUst",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   },
+   "apres": {
+    "zone": "AUst",
+    "calibree": true,
+    "constructible": false,
+    "verdict": "Construction neuve non autorisée — secteur de transition (AU*st) : travaux mineurs de mise aux normes, H max 4",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   }
+  },
+  {
+   "zone_couche": "Ub",
+   "idu": "97403000AM0017",
+   "surface_m2": 982,
+   "avant": {
+    "zone": "Ub",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~8 à 9 logts",
+    "sdp": 854,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 633,
+    "emprise_batie": 285,
+    "logts": [
+     8,
+     9
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "Ub",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~6-7 / sous-sol ~7-9 logts",
+    "sdp": 795,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 589,
+    "emprise_batie": 265,
+    "logts": [
+     7,
+     9
+    ],
+    "src_hauteur": "Art. U7.2, p.21-22 (« En zones Ub et Ue : 9/13 m »)"
+   }
+  }
+ ],
+ "stats": {
+  "n_constructibles_avant": 380,
+  "n_constructibles_apres": 380,
+  "sdp_mediane_avant": 333.5,
+  "sdp_mediane_apres": 291.5,
+  "n_deux_passes": 380,
+  "delta_sdp_mediane_m2": 0.0,
+  "delta_rel_q25_pct": -33.25292728939852,
+  "delta_rel_mediane_pct": 0.0,
+  "delta_rel_q75_pct": 0.0,
+  "delta_rel_min_pct": -67.66304347826087,
+  "delta_rel_max_pct": 0.0,
+  "n_perdant_constructibilite": 0,
+  "n_gagnant_constructibilite": 0,
+  "perdants_idu": [],
+  "gagnants_idu": []
+ }
+}

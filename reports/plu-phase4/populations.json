@@ -1,0 +1,1619 @@
+{
+ "populations": {
+  "dette_calibrage": [
+   {
+    "commune": "La Possession",
+    "zone": "UAv",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 50
+   },
+   {
+    "commune": "La Possession",
+    "zone": "AUAv",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 16
+   },
+   {
+    "commune": "La Possession",
+    "zone": "AUBm",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 124
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "Udo",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "Uavap",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 302
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "Uat",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 4
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "Uma",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "Upi",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "Upr",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "AUx",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 44
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1lec",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Pierre",
+    "zone": "AUdma",
+    "habitat": null,
+    "he": "a_verifier",
+    "hf": "a_verifier",
+    "pool_servi": 11
+   }
+  ],
+  "gel": [
+   {
+    "commune": "Bras-Panon",
+    "zone": "2AUa",
+    "pool_servi": 16
+   },
+   {
+    "commune": "Bras-Panon",
+    "zone": "2AUb",
+    "pool_servi": 4
+   },
+   {
+    "commune": "Bras-Panon",
+    "zone": "2AUc",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Bras-Panon",
+    "zone": "2AUec",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Bras-Panon",
+    "zone": "AUst",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Cilaos",
+    "zone": "AUst",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Entre-Deux",
+    "zone": "AUst",
+    "pool_servi": 1
+   },
+   {
+    "commune": "L'Étang-Salé",
+    "zone": "AUs",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "La Plaine-des-Palmistes",
+    "zone": "AUs1",
+    "pool_servi": 14
+   },
+   {
+    "commune": "La Plaine-des-Palmistes",
+    "zone": "AUs2",
+    "pool_servi": 25
+   },
+   {
+    "commune": "La Possession",
+    "zone": "AUst",
+    "pool_servi": 60
+   },
+   {
+    "commune": "Le Port",
+    "zone": "2AUem",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Le Port",
+    "zone": "2AUmut",
+    "pool_servi": 3
+   },
+   {
+    "commune": "Le Port",
+    "zone": "2AUp",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Le Port",
+    "zone": "1AUmut",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Le Port",
+    "zone": "Ue",
+    "pool_servi": 97
+   },
+   {
+    "commune": "Le Port",
+    "zone": "Up",
+    "pool_servi": 5
+   },
+   {
+    "commune": "Le Port",
+    "zone": "Uppp",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Le Port",
+    "zone": "Uv",
+    "pool_servi": 26
+   },
+   {
+    "commune": "Le Port",
+    "zone": "1AUe",
+    "pool_servi": 3
+   },
+   {
+    "commune": "Le Port",
+    "zone": "1AUv",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "2AUa",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "2AUb",
+    "pool_servi": 7
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "2AUc",
+    "pool_servi": 78
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "2AUd",
+    "pool_servi": 14
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "2AUe",
+    "pool_servi": 28
+   },
+   {
+    "commune": "Les Avirons",
+    "zone": "AUes",
+    "pool_servi": 7
+   },
+   {
+    "commune": "Les Avirons",
+    "zone": "Ub5",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Les Trois-Bassins",
+    "zone": "2AUa",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Les Trois-Bassins",
+    "zone": "2AUb",
+    "pool_servi": 47
+   },
+   {
+    "commune": "Les Trois-Bassins",
+    "zone": "2AUc",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Les Trois-Bassins",
+    "zone": "AUs",
+    "pool_servi": 7
+   },
+   {
+    "commune": "Les Trois-Bassins",
+    "zone": "AUse",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Petite-Île",
+    "zone": "2AU",
+    "pool_servi": 45
+   },
+   {
+    "commune": "Petite-Île",
+    "zone": "2AUe",
+    "pool_servi": 11
+   },
+   {
+    "commune": "Petite-Île",
+    "zone": "UF",
+    "pool_servi": 3
+   },
+   {
+    "commune": "Petite-Île",
+    "zone": "UFcim",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Petite-Île",
+    "zone": "AUF",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Saint-Benoît",
+    "zone": "Ue",
+    "pool_servi": 94
+   },
+   {
+    "commune": "Saint-Benoît",
+    "zone": "Up",
+    "pool_servi": 3
+   },
+   {
+    "commune": "Saint-Benoît",
+    "zone": "Ut",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Benoît",
+    "zone": "AUe3",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Saint-Benoît",
+    "zone": "AUp1",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU2",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU3",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU3a",
+    "pool_servi": 9
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU5",
+    "pool_servi": 15
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU5cvd",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU5ma",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU5ru",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU5st",
+    "pool_servi": 6
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU5vi",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU6",
+    "pool_servi": 15
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "2AU6ch",
+    "pool_servi": 4
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AU3",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AU3a",
+    "pool_servi": 5
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AU3st",
+    "pool_servi": 16
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AU5",
+    "pool_servi": 9
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AU5ma",
+    "pool_servi": 9
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AU5st",
+    "pool_servi": 7
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AU5vist",
+    "pool_servi": 20
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AU6",
+    "pool_servi": 8
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AU6ch",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Saint-Joseph",
+    "zone": "3AUto",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Louis",
+    "zone": "1AUst",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Saint-Louis",
+    "zone": "1AUst oap1",
+    "pool_servi": 21
+   },
+   {
+    "commune": "Saint-Louis",
+    "zone": "1AUste",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Saint-Louis",
+    "zone": "2AUst",
+    "pool_servi": 7
+   },
+   {
+    "commune": "Saint-Louis",
+    "zone": "2AUste",
+    "pool_servi": 2
+   },
+   {
+    "commune": "Saint-Louis",
+    "zone": "2AUd",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Saint-Louis",
+    "zone": "2AUd1",
+    "pool_servi": 16
+   },
+   {
+    "commune": "Saint-Louis",
+    "zone": "2AUe",
+    "pool_servi": 4
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "AU1st",
+    "pool_servi": 79
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "AU1e st",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "AU3st",
+    "pool_servi": 97
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "AU4st",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "AU5st",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "AU6st",
+    "pool_servi": 3
+   },
+   {
+    "commune": "Saint-Pierre",
+    "zone": "Us",
+    "pool_servi": 139
+   },
+   {
+    "commune": "Saint-Pierre",
+    "zone": "AU01",
+    "pool_servi": 5
+   },
+   {
+    "commune": "Saint-Pierre",
+    "zone": "AU02",
+    "pool_servi": 22
+   },
+   {
+    "commune": "Saint-Pierre",
+    "zone": "AU03",
+    "pool_servi": 16
+   },
+   {
+    "commune": "Saint-Pierre",
+    "zone": "AU0c-1",
+    "pool_servi": 10
+   },
+   {
+    "commune": "Sainte-Marie",
+    "zone": "2AUa",
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Sainte-Marie",
+    "zone": "2AUb",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Sainte-Marie",
+    "zone": "2AUc",
+    "pool_servi": 4
+   },
+   {
+    "commune": "Sainte-Rose",
+    "zone": "2AUa",
+    "pool_servi": 18
+   },
+   {
+    "commune": "Sainte-Rose",
+    "zone": "2AUb",
+    "pool_servi": 8
+   },
+   {
+    "commune": "Sainte-Rose",
+    "zone": "2AUc",
+    "pool_servi": 3
+   },
+   {
+    "commune": "Sainte-Rose",
+    "zone": "2AUd",
+    "pool_servi": 8
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "2AUa",
+    "pool_servi": 16
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "2AUb",
+    "pool_servi": 1
+   }
+  ],
+  "sans_hauteur": [],
+  "emprise_implicite": [
+   {
+    "commune": "Cilaos",
+    "zone": "Uc",
+    "pleine_terre_pct": null,
+    "pool_servi": 24
+   },
+   {
+    "commune": "Entre-Deux",
+    "zone": "Ub",
+    "pleine_terre_pct": 40,
+    "pool_servi": 714
+   },
+   {
+    "commune": "Entre-Deux",
+    "zone": "Ub1",
+    "pleine_terre_pct": 40,
+    "pool_servi": 19
+   },
+   {
+    "commune": "Entre-Deux",
+    "zone": "Ub2",
+    "pleine_terre_pct": 40,
+    "pool_servi": 28
+   },
+   {
+    "commune": "Entre-Deux",
+    "zone": "AUb",
+    "pleine_terre_pct": 40,
+    "pool_servi": 61
+   },
+   {
+    "commune": "La Possession",
+    "zone": "UA",
+    "pleine_terre_pct": 35,
+    "pool_servi": 360
+   },
+   {
+    "commune": "La Possession",
+    "zone": "UAm",
+    "pleine_terre_pct": "a_verifier",
+    "pool_servi": 33
+   },
+   {
+    "commune": "La Possession",
+    "zone": "UApsfr2",
+    "pleine_terre_pct": 40,
+    "pool_servi": 77
+   },
+   {
+    "commune": "La Possession",
+    "zone": "UB",
+    "pleine_terre_pct": 35,
+    "pool_servi": 1372
+   },
+   {
+    "commune": "La Possession",
+    "zone": "UBa",
+    "pleine_terre_pct": 50,
+    "pool_servi": 38
+   },
+   {
+    "commune": "La Possession",
+    "zone": "UBb",
+    "pleine_terre_pct": 40,
+    "pool_servi": 104
+   },
+   {
+    "commune": "La Possession",
+    "zone": "UBc",
+    "pleine_terre_pct": 40,
+    "pool_servi": 524
+   },
+   {
+    "commune": "La Possession",
+    "zone": "UBpszc",
+    "pleine_terre_pct": 40,
+    "pool_servi": 4
+   },
+   {
+    "commune": "La Possession",
+    "zone": "UBpsfr2",
+    "pleine_terre_pct": 40,
+    "pool_servi": 244
+   },
+   {
+    "commune": "La Possession",
+    "zone": "AUB",
+    "pleine_terre_pct": 35,
+    "pool_servi": 95
+   },
+   {
+    "commune": "La Possession",
+    "zone": "AUBb",
+    "pleine_terre_pct": 40,
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "La Possession",
+    "zone": "AUBpsfr2",
+    "pleine_terre_pct": 40,
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "Ua",
+    "pleine_terre_pct": 15,
+    "pool_servi": 477
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "Uav",
+    "pleine_terre_pct": 20,
+    "pool_servi": 385
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "Ub",
+    "pleine_terre_pct": 25,
+    "pool_servi": 862
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "Uc",
+    "pleine_terre_pct": 30,
+    "pool_servi": 3712
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "Ucm",
+    "pleine_terre_pct": 30,
+    "pool_servi": 46
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "Ud",
+    "pleine_terre_pct": 30,
+    "pool_servi": 310
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "1AUa",
+    "pleine_terre_pct": 15,
+    "pool_servi": 31
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "1AUb",
+    "pleine_terre_pct": 25,
+    "pool_servi": 37
+   },
+   {
+    "commune": "Le Tampon",
+    "zone": "1AUc",
+    "pleine_terre_pct": 30,
+    "pool_servi": 53
+   },
+   {
+    "commune": "Les Avirons",
+    "zone": "Ub",
+    "pleine_terre_pct": 30,
+    "pool_servi": 3
+   },
+   {
+    "commune": "Les Avirons",
+    "zone": "Ub1",
+    "pleine_terre_pct": 30,
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Les Avirons",
+    "zone": "Ub2",
+    "pleine_terre_pct": 30,
+    "pool_servi": 6
+   },
+   {
+    "commune": "Les Avirons",
+    "zone": "Ub3",
+    "pleine_terre_pct": 30,
+    "pool_servi": 16
+   },
+   {
+    "commune": "Petite-Île",
+    "zone": "UB",
+    "pleine_terre_pct": 25,
+    "pool_servi": 106
+   },
+   {
+    "commune": "Petite-Île",
+    "zone": "UZ",
+    "pleine_terre_pct": 10,
+    "pool_servi": 16
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "Uva",
+    "pleine_terre_pct": null,
+    "pool_servi": 19
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "Uvl",
+    "pleine_terre_pct": null,
+    "pool_servi": 4
+   },
+   {
+    "commune": "Saint-Denis",
+    "zone": "Uvac",
+    "pleine_terre_pct": null,
+    "pool_servi": 9
+   },
+   {
+    "commune": "Saint-Louis",
+    "zone": "UA1",
+    "pleine_terre_pct": null,
+    "pool_servi": 79
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1a",
+    "pleine_terre_pct": 10,
+    "pool_servi": 55
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1b",
+    "pleine_terre_pct": 30,
+    "pool_servi": 358
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1c",
+    "pleine_terre_pct": 30,
+    "pool_servi": 166
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1d",
+    "pleine_terre_pct": "a_verifier",
+    "pool_servi": 7
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1f",
+    "pleine_terre_pct": 30,
+    "pool_servi": 382
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1g",
+    "pleine_terre_pct": 30,
+    "pool_servi": 104
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1pru",
+    "pleine_terre_pct": "a_verifier",
+    "pool_servi": 13
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1pso",
+    "pleine_terre_pct": 30,
+    "pool_servi": 2
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U1l",
+    "pleine_terre_pct": "a_verifier",
+    "pool_servi": 1
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U2a",
+    "pleine_terre_pct": 30,
+    "pool_servi": 32
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U2b",
+    "pleine_terre_pct": 30,
+    "pool_servi": 29
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U2c",
+    "pleine_terre_pct": 50,
+    "pool_servi": 1445
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U2d",
+    "pleine_terre_pct": 90,
+    "pool_servi": 400
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U2h",
+    "pleine_terre_pct": 40,
+    "pool_servi": 67
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U3a",
+    "pleine_terre_pct": 20,
+    "pool_servi": 84
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U3b",
+    "pleine_terre_pct": 30,
+    "pool_servi": 89
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U3c",
+    "pleine_terre_pct": 40,
+    "pool_servi": 2730
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U3h",
+    "pleine_terre_pct": 40,
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U4a",
+    "pleine_terre_pct": 20,
+    "pool_servi": 89
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U4b",
+    "pleine_terre_pct": 30,
+    "pool_servi": 430
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U4c",
+    "pleine_terre_pct": 40,
+    "pool_servi": 735
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U5a",
+    "pleine_terre_pct": 20,
+    "pool_servi": 69
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U5b",
+    "pleine_terre_pct": 30,
+    "pool_servi": 1046
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U5c",
+    "pleine_terre_pct": 40,
+    "pool_servi": 214
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U6a",
+    "pleine_terre_pct": 20,
+    "pool_servi": 92
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U6b",
+    "pleine_terre_pct": 30,
+    "pool_servi": 409
+   },
+   {
+    "commune": "Saint-Paul",
+    "zone": "U6c",
+    "pleine_terre_pct": 40,
+    "pool_servi": 2642
+   },
+   {
+    "commune": "Sainte-Marie",
+    "zone": "UA",
+    "pleine_terre_pct": 20,
+    "pool_servi": 315
+   },
+   {
+    "commune": "Sainte-Marie",
+    "zone": "UAb",
+    "pleine_terre_pct": 20,
+    "pool_servi": 29
+   },
+   {
+    "commune": "Sainte-Marie",
+    "zone": "UAz",
+    "pleine_terre_pct": 20,
+    "pool_servi": 2
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "UA",
+    "pleine_terre_pct": 20,
+    "pool_servi": 333
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "UAv",
+    "pleine_terre_pct": 20,
+    "pool_servi": 2
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "UB",
+    "pleine_terre_pct": 30,
+    "pool_servi": 582
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "UC",
+    "pleine_terre_pct": 40,
+    "pool_servi": 231
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "UC1",
+    "pleine_terre_pct": 40,
+    "pool_servi": 68
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "1AUa",
+    "pleine_terre_pct": 20,
+    "pool_servi": 12
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "1AUb",
+    "pleine_terre_pct": 30,
+    "pool_servi": 22
+   },
+   {
+    "commune": "Sainte-Suzanne",
+    "zone": "1AUc",
+    "pleine_terre_pct": 40,
+    "pool_servi": 0,
+    "match": "AUCUN_POLYGONE"
+   },
+   {
+    "commune": "Salazie",
+    "zone": "UA",
+    "pleine_terre_pct": 10,
+    "pool_servi": 16
+   },
+   {
+    "commune": "Salazie",
+    "zone": "UA1",
+    "pleine_terre_pct": 10,
+    "pool_servi": 46
+   },
+   {
+    "commune": "Salazie",
+    "zone": "UB",
+    "pleine_terre_pct": 20,
+    "pool_servi": 325
+   },
+   {
+    "commune": "Salazie",
+    "zone": "UC",
+    "pleine_terre_pct": 25,
+    "pool_servi": 40
+   },
+   {
+    "commune": "Salazie",
+    "zone": "AUa1",
+    "pleine_terre_pct": 10,
+    "pool_servi": 2
+   },
+   {
+    "commune": "Salazie",
+    "zone": "AUb",
+    "pleine_terre_pct": 20,
+    "pool_servi": 49
+   },
+   {
+    "commune": "Salazie",
+    "zone": "AUc",
+    "pleine_terre_pct": 25,
+    "pool_servi": 4
+   }
+  ]
+ },
+ "zone_pools": {
+  "Bras-Panon": {
+   "Ub": 345,
+   "Uba": 83,
+   "Uc": 66,
+   "Ud": 58,
+   "1AUa": 25,
+   "1AUb": 24,
+   "Ue": 22,
+   "2AUa": 16,
+   "1AUec": 13,
+   "1AUc": 8,
+   "A": 5,
+   "N": 5,
+   "2AUb": 4,
+   "Ua": 3,
+   "Udu": 3,
+   "1AUe": 2,
+   "2AUec": 2,
+   "2AUc": 1,
+   "AUst": 1
+  },
+  "Cilaos": {
+   "Ub": 649,
+   "AUb": 54,
+   "Ua": 40,
+   "Uah": 28,
+   "Uc": 24,
+   "AUb1": 8,
+   "A": 7,
+   "AUb2": 5,
+   "Anc": 3,
+   "N": 1,
+   "AUst": 1
+  },
+  "Entre-Deux": {
+   "Ub": 714,
+   "Ua": 325,
+   "AUb": 61,
+   "Ub2": 28,
+   "A": 20,
+   "Ub1": 19,
+   "N": 4,
+   "AUe": 3,
+   "AUst": 1
+  },
+  "L'Étang-Salé": {
+   "UA": 513,
+   "UC": 435,
+   "UB": 245,
+   "UBv": 166,
+   "AUb": 58,
+   "UE": 41,
+   "AUc": 38,
+   "UD": 33,
+   "UT": 9,
+   "AUe": 8,
+   "A": 7,
+   "AUa": 1
+  },
+  "La Plaine-des-Palmistes": {
+   "Ub": 417,
+   "Ur": 170,
+   "Uc": 66,
+   "AUb": 42,
+   "A": 33,
+   "AUs2": 25,
+   "AUr": 24,
+   "AUc": 18,
+   "AUs1": 14,
+   "Ue": 11,
+   "Nr": 5,
+   "Ua": 1,
+   "N": 1,
+   "Aco": 1
+  },
+  "La Possession": {
+   "UB": 1372,
+   "UBc": 524,
+   "UA": 360,
+   "UBpsfr2": 244,
+   "AUBm": 124,
+   "UBb": 104,
+   "AUB": 95,
+   "UApsfr2": 77,
+   "AUst": 60,
+   "UAv": 50,
+   "UBa": 38,
+   "UAm": 33,
+   "UEm": 18,
+   "AUAv": 16,
+   "UE": 13,
+   "AUEm": 12,
+   "N": 11,
+   "UAa": 9,
+   "A": 4,
+   "UBpszc": 4,
+   "UTfr2": 3,
+   "AUT": 2,
+   "Nli": 1,
+   "Nr": 1
+  },
+  "Le Port": {
+   "Uc": 613,
+   "Ua": 271,
+   "Ub": 124,
+   "Ue": 97,
+   "Ud": 74,
+   "Uem": 33,
+   "1AUa": 31,
+   "Uv": 26,
+   "Uca": 20,
+   "Uoap": 16,
+   "Us": 11,
+   "Up": 5,
+   "1AUe": 3,
+   "2AUmut": 3,
+   "1AUc": 1,
+   "A": 1,
+   "1AUem": 1,
+   "Uppp": 1,
+   "1AUm": 1,
+   "1AUmut": 1
+  },
+  "Le Tampon": {
+   "Uc": 3712,
+   "Ub": 862,
+   "Ua": 477,
+   "Uav": 385,
+   "Ud": 310,
+   "2AUc": 78,
+   "A": 75,
+   "1AUc": 53,
+   "Ucm": 46,
+   "1AUb": 37,
+   "UCtom": 37,
+   "1AUa": 31,
+   "2AUe": 28,
+   "UCto": 20,
+   "Ue": 18,
+   "2AUd": 14,
+   "1AUe": 11,
+   "Nco": 10,
+   "1AUcto": 10,
+   "2AUb": 7,
+   "1AUto": 2,
+   "2AUa": 2,
+   "N": 2
+  },
+  "Les Avirons": {
+   "Uc": 260,
+   "Ud": 231,
+   "Ud3": 94,
+   "Ua": 39,
+   "A": 38,
+   "AUd": 37,
+   "AUc": 33,
+   "Ud1": 23,
+   "Uc3": 21,
+   "Ub3": 16,
+   "Ud2": 13,
+   "AUes": 7,
+   "Ub2": 6,
+   "Uc1": 6,
+   "AUt": 4,
+   "AUa": 4,
+   "Ub": 3,
+   "N": 2,
+   "Ue": 1,
+   "AUec": 1,
+   "Ub5": 1
+  },
+  "Les Trois-Bassins": {
+   "Ub": 309,
+   "1AUb": 153,
+   "Uc": 100,
+   "Ua": 90,
+   "2AUb": 47,
+   "A": 12,
+   "1AUc": 9,
+   "N": 8,
+   "AUs": 7,
+   "Uaa": 2,
+   "2AUc": 2,
+   "1AUt": 2,
+   "Ue": 1
+  },
+  "Petite-Île": {
+   "UC": 785,
+   "UD": 287,
+   "UB": 106,
+   "A": 47,
+   "2AU": 45,
+   "UZ": 16,
+   "2AUe": 11,
+   "1AUz": 11,
+   "1AUa": 9,
+   "N": 8,
+   "Acu": 5,
+   "UEa": 5,
+   "1AU": 3,
+   "AUE": 3,
+   "AUs": 3,
+   "UF": 3,
+   "AUF": 2,
+   "Ae": 2,
+   "Ad": 1,
+   "UFcim": 1,
+   "UT": 1
+  },
+  "Saint-André": {
+   "UC": 3078,
+   "UB": 1661,
+   "UD": 159,
+   "UA": 128,
+   "1AUc": 86,
+   "2AUc": 51,
+   "A": 46,
+   "US": 28,
+   "UE": 22,
+   "1AUb": 16,
+   "UA1": 14,
+   "1AUd": 14,
+   "1AUs": 12,
+   "2AUb": 7,
+   "1AUe": 6,
+   "2AUd": 6,
+   "1AUcr": 2,
+   "Nli": 2,
+   "Ntvb": 2
+  },
+  "Saint-Benoît": {
+   "Ub": 2402,
+   "Ua": 878,
+   "Ue": 94,
+   "Uap": 62,
+   "AUa5": 60,
+   "A": 59,
+   "AUb19": 48,
+   "AUb6": 13,
+   "AUa8": 8,
+   "AUb15": 8,
+   "AUb14": 7,
+   "AUa18": 6,
+   "AUb7": 6,
+   "AUb10": 6,
+   "AUb2": 4,
+   "AUb12": 3,
+   "Up": 3,
+   "Ai": 3,
+   "AUb16": 2,
+   "AUp1": 2,
+   "Acu": 1,
+   "AUe3": 1
+  },
+  "Saint-Denis": {
+   "Um": 1685,
+   "Uh": 1255,
+   "Ui": 573,
+   "Uj": 326,
+   "Uavap": 302,
+   "Ud": 295,
+   "AUm": 85,
+   "AUx": 44,
+   "AUj": 43,
+   "Ua": 36,
+   "AUh": 34,
+   "Udp": 27,
+   "Uva": 19,
+   "A": 16,
+   "Uicm": 10,
+   "Uip": 10,
+   "Uvac": 9,
+   "Udop": 8,
+   "Uac": 7,
+   "Uat": 4,
+   "Uvl": 4,
+   "Uu": 3,
+   "Upi": 2,
+   "N": 2,
+   "Uad": 2
+  },
+  "Saint-Joseph": {
+   "U5": 2288,
+   "U3a": 1207,
+   "U5ru": 750,
+   "U3": 615,
+   "U5vi": 477,
+   "A": 186,
+   "U4": 122,
+   "U5ma": 89,
+   "1AU5": 69,
+   "U5cvd": 66,
+   "U2": 63,
+   "1AU5vi": 38,
+   "1AU6": 33,
+   "1AU5ru": 33,
+   "3AU5vist": 20,
+   "U2a": 18,
+   "U6": 17,
+   "3AU3st": 16,
+   "2AU5": 15,
+   "2AU6": 15,
+   "N": 13,
+   "1AU6c": 12,
+   "1AU3": 12,
+   "U3ar": 10,
+   "3AU5ma": 9,
+   "3AU5": 9,
+   "U1": 9,
+   "U5cv": 9,
+   "2AU3a": 9,
+   "3AU6": 8,
+   "3AU5st": 7,
+   "2AU5st": 6,
+   "3AU3a": 5,
+   "2AU6ch": 4,
+   "3AU3": 2,
+   "3AU6ch": 2,
+   "1AUto": 1,
+   "2AU5cvd": 1
+  },
+  "Saint-Leu": {
+   "UC": 2351,
+   "UD": 2111,
+   "UB": 514,
+   "UCA": 360,
+   "AUC": 169,
+   "UA": 125,
+   "AUB": 76,
+   "AUS": 60,
+   "AUA": 59,
+   "APF": 40,
+   "AUE": 38,
+   "UE": 29,
+   "A": 11,
+   "UF": 8,
+   "UDB": 7,
+   "AD": 7,
+   "UAA": 7,
+   "UDP": 6,
+   "AUD": 5,
+   "N": 3,
+   "NL": 3,
+   "AUT": 1,
+   "UAT": 1
+  },
+  "Saint-Louis": {
+   "UC2": 598,
+   "UD": 587,
+   "UC": 575,
+   "UA": 551,
+   "UB": 444,
+   "UD1": 176,
+   "1AUb2": 96,
+   "A": 85,
+   "UA1": 79,
+   "UZ": 56,
+   "1AUb1": 48,
+   "2AUb2": 37,
+   "1AUd": 35,
+   "US": 33,
+   "UE": 30,
+   "1AUa oap1": 26,
+   "1AUst oap1": 21,
+   "1AUc": 19,
+   "UC1": 18,
+   "2AUd1": 16,
+   "2AUb1": 13,
+   "1AUc oap4": 9,
+   "1AUd1": 7,
+   "2AUst": 7,
+   "1AUe": 7,
+   "Nco": 5,
+   "N": 4,
+   "2AUe": 4,
+   "1AUc oap5": 3,
+   "1AUc1": 3,
+   "1AUste": 2,
+   "1AUc2": 2,
+   "2AUste": 2,
+   "1AUe oap1": 2,
+   "2AUd": 1,
+   "1AUa oap3": 1,
+   "1AUst": 1,
+   "1AUa": 1
+  },
+  "Saint-Paul": {
+   "U3c": 2730,
+   "U6c": 2642,
+   "U2c": 1445,
+   "U5b": 1046,
+   "U4c": 735,
+   "Usdu": 598,
+   "U4b": 430,
+   "U6b": 409,
+   "U2d": 400,
+   "U1f": 382,
+   "U1b": 358,
+   "U5c": 214,
+   "AU3c": 180,
+   "U1c": 166,
+   "A": 115,
+   "U1g": 104,
+   "AU2c": 97,
+   "AU3st": 97,
+   "U6a": 92,
+   "U4a": 89,
+   "U3b": 89,
+   "AU4c": 87,
+   "U3a": 84,
+   "AU1st": 79,
+   "U5a": 69,
+   "U2h": 67,
+   "AU5b": 63,
+   "U1a": 55,
+   "AU6c": 36,
+   "U2a": 32,
+   "AU2h": 31,
+   "U2b": 29,
+   "AU5a": 25,
+   "AU3a": 19,
+   "U1pru": 13,
+   "AU5c": 11,
+   "N": 9,
+   "U1d": 7,
+   "AU1est": 7,
+   "AU6st": 3,
+   "U1pso": 2,
+   "Acu": 2,
+   "U3e": 1,
+   "Nrh": 1,
+   "AU4b": 1,
+   "U1l": 1,
+   "AU1lec": 1,
+   "AU1b": 1,
+   "AU5st": 1
+  },
+  "Saint-Philippe": {},
+  "Saint-Pierre": {
+   "Ug": 3584,
+   "Uf": 2486,
+   "Ud": 680,
+   "Up": 194,
+   "UfCA": 166,
+   "Us": 139,
+   "Uazi": 134,
+   "Ucv": 93,
+   "UdBO": 86,
+   "A": 72,
+   "Uazc": 53,
+   "Uaza": 52,
+   "Uazp": 27,
+   "AU02": 22,
+   "AU03": 16,
+   "Uea": 13,
+   "AUdma": 11,
+   "AU0c-1": 10,
+   "AUfGB": 7,
+   "AUg": 7,
+   "Ac1": 6,
+   "AU01": 5,
+   "Ue": 4,
+   "AUf": 3,
+   "Nge": 3,
+   "Uep": 3,
+   "AUazc": 3,
+   "AUt1": 2,
+   "N": 2,
+   "Np": 2,
+   "AUt2": 1,
+   "Udl": 1,
+   "Acu1": 1
+  },
+  "Sainte-Marie": {
+   "UD": 774,
+   "UB": 686,
+   "UC": 541,
+   "UA": 315,
+   "UD1": 232,
+   "UEm": 139,
+   "UC1": 106,
+   "UEc": 37,
+   "UAb": 29,
+   "UEp": 29,
+   "1AUep": 24,
+   "A": 21,
+   "1AUb": 20,
+   "N": 18,
+   "1AUc": 8,
+   "2AUc": 4,
+   "UR": 3,
+   "UT": 2,
+   "UAz": 2,
+   "UEa": 2,
+   "2AUb": 1,
+   "UC2": 1
+  },
+  "Sainte-Rose": {
+   "Uc": 504,
+   "Ua": 320,
+   "Ub": 225,
+   "1AUa": 57,
+   "1AUc": 31,
+   "A": 25,
+   "2AUa": 18,
+   "Ud": 11,
+   "N": 8,
+   "2AUd": 8,
+   "2AUb": 8,
+   "2AUc": 3,
+   "Nli": 2
+  },
+  "Sainte-Suzanne": {
+   "UB": 582,
+   "UA": 333,
+   "UC": 231,
+   "UC1": 68,
+   "UE": 22,
+   "1AUb": 22,
+   "2AUa": 16,
+   "1AUa": 12,
+   "A": 9,
+   "UAc": 3,
+   "Acu": 2,
+   "UAv": 2,
+   "2AUb": 1
+  },
+  "Salazie": {
+   "UB": 325,
+   "AUb": 49,
+   "UA1": 46,
+   "UC": 40,
+   "UA": 16,
+   "A": 5,
+   "AUc": 4,
+   "AUt": 2,
+   "AUa1": 2,
+   "AUe": 1
+  }
+ }
+}

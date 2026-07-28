@@ -1,0 +1,417 @@
+{
+ "commune": "Saint-Joseph",
+ "pool_servi": 6265,
+ "n_dist": 400,
+ "n_err": 0,
+ "echantillon10": [
+  {
+   "zone_couche": "U5",
+   "idu": "97412000AM0019",
+   "surface_m2": 672,
+   "avant": {
+    "zone": "U5",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~4 à 6 logts",
+    "sdp": 453,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 336,
+    "emprise_batie": 151,
+    "logts": [
+     4,
+     6
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U5",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~2-4 / sous-sol ~2-4 logts",
+    "sdp": 264,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 294,
+    "emprise_batie": 132,
+    "logts": [
+     2,
+     4
+    ],
+    "src_hauteur": "Art. U5 10.2, p.79-80"
+   }
+  },
+  {
+   "zone_couche": "U3a",
+   "idu": "97412000BL0190",
+   "surface_m2": 201,
+   "avant": {
+    "zone": "U3a",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~0 à 1 logts",
+    "sdp": 74,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 54,
+    "emprise_batie": 25,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U3a",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~0-1 / sous-sol ~0-1 logts",
+    "sdp": 24,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 26,
+    "emprise_batie": 12,
+    "logts": [
+     0,
+     1
+    ],
+    "src_hauteur": "Art. U3 10.2, p.50 (« Dans le secteur U3a, quelle que soit la distance d'implantation … 8 m à l'égout, 9 m au faîtage »)"
+   }
+  },
+  {
+   "zone_couche": "U5ru",
+   "idu": "97412000AT0497",
+   "surface_m2": 1861,
+   "avant": {
+    "zone": "U5ru",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Non constructible en l'état malgré le zonage (R+2 théorique) — contrainte rédhibitoire (voir modulation).",
+    "sdp": 1778,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 1317,
+    "emprise_batie": 593,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U5ru",
+    "calibree": true,
+    "constructible": false,
+    "verdict": "Non constructible en l'état malgré le zonage (R+1 théorique) — contrainte rédhibitoire (voir modulation).",
+    "sdp": 670,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 744,
+    "emprise_batie": 335,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": "Art. U5 10.2, p.80 (« Dans les secteurs U5ru et U5vi … 6 m à l'égout, 8 m au faîtage »)"
+   }
+  },
+  {
+   "zone_couche": "U3",
+   "idu": "97412000BK0715",
+   "surface_m2": 1058,
+   "avant": {
+    "zone": "U3",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~6 à 7 logts",
+    "sdp": 903,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 669,
+    "emprise_batie": 301,
+    "logts": [
+     6,
+     7
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U3",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~3-5 / sous-sol ~3-5 logts",
+    "sdp": 544,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 403,
+    "emprise_batie": 181,
+    "logts": [
+     3,
+     5
+    ],
+    "src_hauteur": "Art. U3 10.2, p.49-50"
+   }
+  },
+  {
+   "zone_couche": "U5vi",
+   "idu": "97412000AH0206",
+   "surface_m2": 973,
+   "avant": {
+    "zone": "U5vi",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~8 à 9 logts",
+    "sdp": 836,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 619,
+    "emprise_batie": 279,
+    "logts": [
+     8,
+     9
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U5vi",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~3-5 / sous-sol ~3-5 logts",
+    "sdp": 350,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 389,
+    "emprise_batie": 175,
+    "logts": [
+     3,
+     5
+    ],
+    "src_hauteur": "Art. U5 10.2, p.80 (secteurs U5ru et U5vi)"
+   }
+  },
+  {
+   "zone_couche": "A",
+   "idu": "97412000AM0947",
+   "surface_m2": 1271,
+   "avant": {
+    "zone": "U5",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~5 à 7 logts",
+    "sdp": 752,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 557,
+    "emprise_batie": 251,
+    "logts": [
+     5,
+     7
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U5",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~3-5 / sous-sol ~3-5 logts",
+    "sdp": 465,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 517,
+    "emprise_batie": 232,
+    "logts": [
+     3,
+     5
+    ],
+    "src_hauteur": "Art. U5 10.2, p.79-80"
+   }
+  },
+  {
+   "zone_couche": "U4",
+   "idu": "97412000BN0058",
+   "surface_m2": 317,
+   "avant": {
+    "zone": "U4",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~1 à 3 logts",
+    "sdp": 183,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 136,
+    "emprise_batie": 61,
+    "logts": [
+     1,
+     3
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U4",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~1-2 / sous-sol ~1-2 logts",
+    "sdp": 122,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 136,
+    "emprise_batie": 61,
+    "logts": [
+     1,
+     2
+    ],
+    "src_hauteur": "Art. U4 10.2, p.64"
+   }
+  },
+  {
+   "zone_couche": "U5ma",
+   "idu": "97412000BI0168",
+   "surface_m2": 2160,
+   "avant": {
+    "zone": "U5ma",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~13 à 14 logts",
+    "sdp": 2222,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 1646,
+    "emprise_batie": 741,
+    "logts": [
+     13,
+     14
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U5ma",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~5-7 / sous-sol ~5-7 logts",
+    "sdp": 778,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 864,
+    "emprise_batie": 389,
+    "logts": [
+     5,
+     7
+    ],
+    "src_hauteur": "Art. U5 10.2, p.79-80 (« En zone U5 et dans le secteur U5ma »)"
+   }
+  },
+  {
+   "zone_couche": "1AU5",
+   "idu": "97412000AM0622",
+   "surface_m2": 1932,
+   "avant": {
+    "zone": "1AU5",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   },
+   "apres": {
+    "zone": "1AU5",
+    "calibree": true,
+    "constructible": false,
+    "verdict": "Terrain trop exigu compte tenu des reculs (3.5 m) — non constructible en l'état (le contour inseté se vide).",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   }
+  },
+  {
+   "zone_couche": "U5cvd",
+   "idu": "97412000BY0047",
+   "surface_m2": 615,
+   "avant": {
+    "zone": "U5cvd",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~4 à 6 logts",
+    "sdp": 439,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 325,
+    "emprise_batie": 146,
+    "logts": [
+     4,
+     6
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "U5cvd",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~2-3 / sous-sol ~2-3 logts",
+    "sdp": 229,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 170,
+    "emprise_batie": 76,
+    "logts": [
+     2,
+     3
+    ],
+    "src_hauteur": "Art. U5 10.2, p.80"
+   }
+  }
+ ],
+ "stats": {
+  "n_constructibles_avant": 345,
+  "n_constructibles_apres": 324,
+  "sdp_mediane_avant": 342,
+  "sdp_mediane_apres": 181.5,
+  "n_deux_passes": 324,
+  "delta_sdp_mediane_m2": -159.0,
+  "delta_rel_q25_pct": -53.94785216718266,
+  "delta_rel_mediane_pct": -46.136529771398195,
+  "delta_rel_q75_pct": -42.00701013107985,
+  "delta_rel_min_pct": -91.30434782608695,
+  "delta_rel_max_pct": 0.0,
+  "n_perdant_constructibilite": 21,
+  "n_gagnant_constructibilite": 0,
+  "perdants_idu": [
+   "97412000BL0940",
+   "97412000BX0441",
+   "97412000CD0209",
+   "97412000BK1956",
+   "97412000CV0389",
+   "97412000BK1323",
+   "97412000BK1967",
+   "97412000CT0528",
+   "97412000BW1305",
+   "97412000CV0831",
+   "97412000BT0271",
+   "97412000BM0929",
+   "97412000CR0712",
+   "97412000BX1631",
+   "97412000BK1814",
+   "97412000BK1976",
+   "97412000BK1966",
+   "97412000BK0968",
+   "97412000BM1019",
+   "97412000BW1855",
+   "97412000BT0694"
+  ],
+  "gagnants_idu": []
+ }
+}

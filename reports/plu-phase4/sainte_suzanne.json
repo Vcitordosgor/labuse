@@ -1,0 +1,404 @@
+{
+ "commune": "Sainte-Suzanne",
+ "pool_servi": 1303,
+ "n_dist": 400,
+ "n_err": 0,
+ "echantillon10": [
+  {
+   "zone_couche": "UB",
+   "idu": "97420000AB0264",
+   "surface_m2": 677,
+   "avant": {
+    "zone": "UB",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~4 à 7 logts",
+    "sdp": 498,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 369,
+    "emprise_batie": 166,
+    "logts": [
+     4,
+     7
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "UB",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+2 · au sol ~4-7 / sous-sol ~4-7 logts",
+    "sdp": 498,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 369,
+    "emprise_batie": 166,
+    "logts": [
+     4,
+     7
+    ],
+    "src_hauteur": "Art. U8.2, p.14-15"
+   }
+  },
+  {
+   "zone_couche": "UA",
+   "idu": "97420000AB0298",
+   "surface_m2": 1518,
+   "avant": {
+    "zone": "UA",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~13 à 14 logts",
+    "sdp": 1415,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 1048,
+    "emprise_batie": 472,
+    "logts": [
+     13,
+     14
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "UA",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+3 · au sol ~14-15 / sous-sol ~18-19 logts",
+    "sdp": 1887,
+    "hauteur_m": 12.0,
+    "niveaux": "R+3",
+    "emprise": 1048,
+    "emprise_batie": 472,
+    "logts": [
+     18,
+     19
+    ],
+    "src_hauteur": "Art. U8.2, p.14-15"
+   }
+  },
+  {
+   "zone_couche": "UC",
+   "idu": "97420000AB0014",
+   "surface_m2": 1191,
+   "avant": {
+    "zone": "UC",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~9 à 11 logts",
+    "sdp": 979,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 725,
+    "emprise_batie": 326,
+    "logts": [
+     9,
+     11
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "UC",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~6-8 / sous-sol ~6-8 logts",
+    "sdp": 643,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 715,
+    "emprise_batie": 322,
+    "logts": [
+     6,
+     8
+    ],
+    "src_hauteur": "Art. U8.2, p.14-15"
+   }
+  },
+  {
+   "zone_couche": "UC1",
+   "idu": "97420000AM0023",
+   "surface_m2": 826,
+   "avant": {
+    "zone": "UC1",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Non constructible en l'état malgré le zonage (R+2 théorique) — contrainte rédhibitoire (voir modulation).",
+    "sdp": 463,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 343,
+    "emprise_batie": 154,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "UC1",
+    "calibree": true,
+    "constructible": false,
+    "verdict": "Non constructible en l'état malgré le zonage (R+1 théorique) — contrainte rédhibitoire (voir modulation).",
+    "sdp": 308,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 343,
+    "emprise_batie": 154,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": "Art. U8.2, p.14-15 (zone UC — pas de hauteur propre UC1)"
+   }
+  },
+  {
+   "zone_couche": "1AUb",
+   "idu": "97420000AS0147",
+   "surface_m2": 5867,
+   "avant": {
+    "zone": "1AUb",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Non constructible en l'état malgré le zonage (R+2 théorique) — contrainte rédhibitoire (voir modulation).",
+    "sdp": 4247,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 3146,
+    "emprise_batie": 1416,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "1AUb",
+    "calibree": true,
+    "constructible": false,
+    "verdict": "Non constructible en l'état malgré le zonage (R+2 théorique) — contrainte rédhibitoire (voir modulation).",
+    "sdp": 4247,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 3146,
+    "emprise_batie": 1416,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": "Art. U8.2, p.14-15 via renvoi (zone UB)"
+   }
+  },
+  {
+   "zone_couche": "UE",
+   "idu": "97420000AI0431",
+   "surface_m2": 1116,
+   "avant": {
+    "zone": "UE",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~6 à 9 logts",
+    "sdp": 661,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 490,
+    "emprise_batie": 220,
+    "logts": [
+     6,
+     9
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "UE",
+    "calibree": true,
+    "constructible": false,
+    "verdict": "Habitat interdit au règlement — zone à vocation économique/activités (seules exceptions : gardiennage/logement",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   }
+  },
+  {
+   "zone_couche": "2AUa",
+   "idu": "97420000AC0643",
+   "surface_m2": 7256,
+   "avant": {
+    "zone": "2AUa",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   },
+   "apres": {
+    "zone": "2AUa",
+    "calibree": true,
+    "constructible": false,
+    "verdict": "Construction neuve non autorisée — secteur de transition (AU*st) : travaux mineurs de mise aux normes, H max 4",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   }
+  },
+  {
+   "zone_couche": "1AUa",
+   "idu": "97420000AI0564",
+   "surface_m2": 238,
+   "avant": {
+    "zone": "1AUa",
+    "calibree": false,
+    "constructible": false,
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   },
+   "apres": {
+    "zone": "1AUa",
+    "calibree": true,
+    "constructible": false,
+    "verdict": "Terrain trop exigu compte tenu des reculs (3 m) — non constructible en l'état (le contour inseté se vide).",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   }
+  },
+  {
+   "zone_couche": "A",
+   "idu": "97420000AV0467",
+   "surface_m2": 2065,
+   "avant": {
+    "zone": "UC1",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~7 à 10 logts",
+    "sdp": 1121,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 830,
+    "emprise_batie": 374,
+    "logts": [
+     7,
+     10
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "UC1",
+    "calibree": true,
+    "constructible": true,
+    "verdict": "R+1 · au sol ~5-7 / sous-sol ~5-7 logts",
+    "sdp": 747,
+    "hauteur_m": 6.0,
+    "niveaux": "R+1",
+    "emprise": 830,
+    "emprise_batie": 374,
+    "logts": [
+     5,
+     7
+    ],
+    "src_hauteur": "Art. U8.2, p.14-15 (zone UC — pas de hauteur propre UC1)"
+   }
+  },
+  {
+   "zone_couche": "UAc",
+   "idu": "97420000AI0483",
+   "surface_m2": 474,
+   "avant": {
+    "zone": "UAc",
+    "calibree": false,
+    "constructible": true,
+    "verdict": "R+2 · ~2 à 4 logts",
+    "sdp": 285,
+    "hauteur_m": 9.0,
+    "niveaux": "R+2",
+    "emprise": 211,
+    "emprise_batie": 95,
+    "logts": [
+     2,
+     4
+    ],
+    "src_hauteur": "estimation générique (PLU non outillé)"
+   },
+   "apres": {
+    "zone": "UAc",
+    "calibree": true,
+    "constructible": false,
+    "verdict": "Habitat interdit au règlement — zone à vocation économique/activités (seules exceptions : gardiennage/logement",
+    "sdp": null,
+    "hauteur_m": null,
+    "niveaux": null,
+    "emprise": null,
+    "emprise_batie": null,
+    "logts": [
+     0,
+     0
+    ],
+    "src_hauteur": ""
+   }
+  }
+ ],
+ "stats": {
+  "n_constructibles_avant": 347,
+  "n_constructibles_apres": 339,
+  "sdp_mediane_avant": 297,
+  "sdp_mediane_apres": 277,
+  "n_deux_passes": 339,
+  "delta_sdp_mediane_m2": 0,
+  "delta_rel_q25_pct": -5.093182858014336,
+  "delta_rel_mediane_pct": 0.0,
+  "delta_rel_q75_pct": 33.112233692071165,
+  "delta_rel_min_pct": -43.13380281690141,
+  "delta_rel_max_pct": 42.857142857142854,
+  "n_perdant_constructibilite": 8,
+  "n_gagnant_constructibilite": 0,
+  "perdants_idu": [
+   "97420000BC1432",
+   "97420000BD0523",
+   "97420000AI0762",
+   "97420000BC1429",
+   "97420000BC1710",
+   "97420000BC1737",
+   "97420000BD0516",
+   "97420000BC1277"
+  ],
+  "gagnants_idu": []
+ }
+}
