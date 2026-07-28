@@ -122,6 +122,30 @@ Constat transverse : `constructible_neuf=False` (gels) n'est consommé QUE par l
 et le copilote — cascade, scoring, API l'ignorent. Toute correction future d'un gel doit
 repasser par cette table.
 
+### 3bis. Fiche de chemin — sites exacts (fichier:ligne) et points d'audit d'origine
+
+> Préservée intégralement depuis la version B du mandat. C'est le résultat de l'audit de
+> chemin complet des **9 consommateurs de `resolve_zone`**, avec chemin de fichier complet
+> et les questions d'investigation d'origine (dont plusieurs ont été tranchées depuis et
+> reportées dans le tableau des verdicts ci-dessus et au §2bis). Conservée telle quelle
+> pour la traçabilité des sites exacts et des points de contrôle.
+>
+> Sortie attendue de cet audit : un tableau « couche → comportement avant/après → OK/à
+> adapter » (fourni ci-dessus), **AUCUNE autre couche ne devant écraser l'interdiction plus
+> haut ou plus bas**.
+
+| Consommateur de resolve_zone | Site | À vérifier |
+|---|---|---|
+| Moteur faisabilité | faisabilite/engine.py (estimate_capacity) | ordre habitat→hauteurs OK (vérifié) ; messages/steps si hauteur a_verifier |
+| Cascade phase 1 | cascade/layers/phase1.py:279+287 | le score utilise-t-il hauteur/emprise du générique ? une parcelle habitat-interdit doit-elle scorer « positive » via positive_prefixes [U, AU] (cascade_rules.yaml:74) ? |
+| Chaîne du résiduel | cascade/layers/etage0_ext.py:153 (residuel_socle, barème -25…+30) + scoring/opportunity.py:56 | la SDP résiduelle d'une zone interdite doit passer au barème « hors cible » et non au socle générique ; effet sur les 32 448 verdicts SP d'étalonnage |
+| Traducteur API | api/traducteur.py:128 | règles chiffrées affichées : doit montrer l'interdiction, pas le générique |
+| Lettre zonage | api/lettre_zonage.py:76 | libellé « calibree=False → repli honnête » à revoir pour interdit-sans-hauteur |
+| Modules API (filtre hauteur) | api/modules.py:1001+ (hcache) | cache (zone, commune)→hauteur : gérer a_verifier post-correctif |
+| Copilote | copilote/moteurs.py:178 | idem traducteur |
+| Fiche règlement | plu_reglement.py:53 | idem |
+| DB prospect | faisabilite/db.py (hauteur_mode=prospect) | non concerné (exception déjà dans _has_usable_height) — à confirmer |
+
 ## 4. Mesure d'impact (préalable bloquant n°2 — base requise, fenêtre phase 4+)
 
 1. **Parcelles changeant de verdict** : compte exact, par commune, par zone, et par SENS
@@ -172,6 +196,21 @@ e) **ZONES GELÉES CLASSÉES POSITIVES (faux positif à part entière, rang du g
    identique au §2bis : parcelles classées positives dans ces zones, par commune, par
    tier.** Correctif candidat : honorer le contrat de référence (constructible_neuf) dans
    la couche zonage de la cascade — même statut d'arrêt que les tiers.
+f) **[NOTE, DÉCLASSÉE — plus une priorité] Emprise implicite IGNORÉE (population versée
+   par la session B sur décision Vic, 28/07)** : zones où l'article « emprise » dit « non
+   réglementée » (`emprise_sol_pct: null` sourcé) alors qu'un % « espace vert/perméable/
+   paysager » est imposé — l'emprise bâtie y est bornée à **100 − X**. Règle :
+   **X borne l'emprise, pas Y** — X = % soustrait TOTAL du texte, PAS Y le sous-minimum
+   de pleine terre (cas « X % perméable dont Y % pleine terre » du Tampon/Saint-Paul).
+   **MISE À JOUR phase 4** : la mesure a ramené cette population de **89 zones /
+   17 797 parcelles** à **13 zones / 237 parcelles** — les **76 autres zones étaient déjà
+   bornées par la pleine terre gravée** (emprise déjà contrainte par ailleurs, donc pas
+   de sur-estimation). Le reliquat de 13 zones / 237 parcelles est marginal : la population
+   est **déclassée en simple note**, plus une priorité du mandat. Table complète zone par
+   zone (commune, % soustrait, emprise implicite) conservée : `PLU_NUIT_ANALYSES_MATIN_B.md`
+   §D. Si un jour repris : implémentation SÉPARÉE du correctif du gate (elle DURCIT la
+   capacité, là où le gate ne fait que rendre l'interdit exact), avec mesure d'impact +
+   question des tiers servis avant toute implémentation (décision produit réservée par Vic).
 
 ## 6. Séquencement
 
@@ -186,6 +225,10 @@ e) **ZONES GELÉES CLASSÉES POSITIVES (faux positif à part entière, rang du g
    vérification des tiers → re-golden.
 5. Bascule des 14 zones du §5.a (3 communes) → recalcul scopé → re-golden →
    fin du repli optimiste par interdiction perdue.
+6. *(note, hors chemin critique)* Emprise implicite (§5.f) : reliquat de 13 zones /
+   237 parcelles après la mesure de phase 4 (les 76 autres déjà bornées par la pleine
+   terre gravée). Déclassée en note — si un jour reprise, mesure d'impact dédiée puis
+   arbitrage produit Vic, implémentation séparée du correctif du gate.
 
 — Rien de ce mandat n'est implémenté à ce jour. La seule action déjà faite est du
 DONNÉES : statuts habitat sourcés sur 21 communes (série nuit + contre-preuve).
