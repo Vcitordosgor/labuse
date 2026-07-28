@@ -14,7 +14,7 @@
 > gravé sur les 3 zones (verbatims sans ambiguïté) ; CAT 2 « fixée à N m » → reste
 > `he: null` (« le silence n'est pas un oubli à combler »). Le tableau CAT 2 ci-dessous
 > vaut pour les 18 zones, y compris les 9 de Saint-Denis absentes du décompte initial
-> de 13 ; la double clause UApsfr2 (n°2) reste à trancher sur pièce.
+> de 13 ; la double clause UApsfr2 (n°2) est TRANCHÉE : ni l'une ni l'autre — zone passée a_verifier (leçon §9-24), question à la commune.
 
 Classe analysée : zones dont la clause de hauteur donne UNE valeur sans couple
 égout/faîtage. Deux catégories selon la formulation (arbitrage Vic sur les libellés).
@@ -40,7 +40,7 @@ capacité mesurable. Décision sur formulations, rien appliqué.
 | # | Commune | Zone | Valeur | Verbatim |
 |---|---|---|---|---|
 | 1 | La Possession | UAa | 9 | « Dans le secteur UAa, la hauteur maximale des constructions est fixée à 9 mètres. » (Art. UA 10.2, PDF p.16) |
-| 2 | La Possession | UApsfr2 | 12 | « Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres » (Art. UA 10.2, PDF p.16). ⚠ La MÊME page porte aussi : « …UApsfr2, UAm et UAv, la hauteur maximale des constructions est fixée à 16 mètres au faitage » — deux clauses concurrentes sur la même page, à trancher sur pièce (la session A a gravé 12 sans précision). |
+| 2 | La Possession | UApsfr2 | 12 | « Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres » (Art. UA 10.2, PDF p.16). ⚠ La MÊME page porte aussi : « …UApsfr2, UAm et UAv, la hauteur maximale des constructions est fixée à 16 mètres au faitage » — deux clauses concurrentes sur la même page. **TRANCHÉ Vic 28/07 : a_verifier** (contradiction interne — leçon §9-24), appliqué au YAML. |
 | 3 | La Possession | UBpszc | 7 | « Dans le secteur UBpszc, la hauteur maximale des constructions est fixée à 7 mètres. » (Art. UB 10.2, PDF p.31 — la clause générale UB juste avant donne, elle, le couple 7 égout / 10 faîtage) |
 | 4 | La Possession | UT | 10 | « La hauteur maximale des constructions est fixée à 10 mètres » (Art. UT 10.2, PDF p.61 ; annexes 3,50 m) |
 | 5 | Le Port | Uem | 18 | « En secteur Uem, la hauteur maximale des constructions est fixée 18 mètres » (Art. Ue 8, p.82 — seule règle de hauteur du chapitre Ue) |
@@ -69,7 +69,7 @@ UEp, UR, UT, UTp, 1AUep · Sainte-Suzanne UE, 1AUe · Saint-Paul U1e, U1l, U1ec,
 U3e, AU5e (« au faîtage » dans les notes ; PDF hors cache) · Saint-Denis Uip, Udop
 (R+n = N m « au faîtage/acrotère »).
 
-## B · LES 15 ZONES `a_verifier` (he ET hf) — dette de calibrage
+## B · LES ZONES `a_verifier` (he ET hf) — dette de calibrage (15 au scan + UApsfr2 arbitrée ensuite = 16)
 
 **Pool servi (parcelles) : NON MESURABLE sans la base (interdite) — mesure en phase 4.**
 Proxy fourni : polygones et surface (matrice m6 `reports/m6-audit/sections/1-3a-matrice-plu.csv`
@@ -77,6 +77,7 @@ et manifestes de zonage).
 
 | Commune | Zone | Polygones | Surface (ha) | Motif du a_verifier (note YAML) |
 |---|---|---|---|---|
+| La Possession | UApsfr2 | 1 | — | Deux clauses de hauteur concurrentes p.16-17 (arbitrage Vic 28/07) |
 | La Possession | UAv | 2 | 13 | Hauteur PAR ÎLOT (repérage graphique) |
 | La Possession | AUAv | 2 | 16 | Renvoi → UAv (hauteur par îlot) |
 | La Possession | AUBm | — | — | Hauteur « R+3 » en niveaux (friction v1 ; repli R+2 < R+3 réel : prudent) |

@@ -214,6 +214,19 @@ La chaîne du résiduel irrigue `residuel_socle`, donc le scoring servi, la shor
     et un vrai type « gel » devrait remplacer l'étiquette « secteur de transition »
     (utilisée pour capacité zéro exacte dans 6 communes sur 9 du lot B).
 
+24. **Deux clauses concurrentes sur la même zone ne se tranchent pas par préférence**
+    (arbitrage Vic 28/07/2026 — La Possession UApsfr2 : « fixée à 12 mètres » ET
+    « 16 mètres au faitage » sur la même page ; précédent 1AUe Trois-Bassins) : choisir
+    la plus basse serait prudent mais arbitraire, la plus précise supposerait une
+    primauté que le texte ne dit pas. L'invariant « ne jamais deviner » couvre les
+    contradictions INTERNES autant que les silences → zone non calibrée / a_verifier,
+    les deux verbatims consignés, question à poser à la commune.
+25. **Leçon de méthode — toute vérification de comportement moteur doit déclarer le
+    MODE (strict/progressif) et le fichier de test** (réconciliation du 28/07/2026 :
+    deux sessions observaient des comportements opposés du gate hauteur parce que leurs
+    zones témoins vivaient dans des fichiers en modes différents — les deux avaient
+    raison ; un résultat sans ce contexte n'est pas reproductible).
+
 ### À fusionner (sessions A et C)
 
 Les leçons propres au lot A (PLU_NUIT_RAPPORT_A.md) et au verdict de contre-preuve

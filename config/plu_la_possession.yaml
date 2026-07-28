@@ -83,10 +83,12 @@ zones:
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.20-21",
        pleine_terre_pct: "a_verifier", pleine_terre_note: "UAm EXCEPTÉ de la règle des 35 % (Art. UA 13.1 : « A l'exception des secteurs UAm et UAv ») — pas de % attribuable.", pleine_terre_src: "Art. UA 13.1, p.22 — « traité en espace perméable : soit planté intégralement en pleine terre, soit… » (pleine terre = une modalité, pas un sous-minimum) (doctrine a)"}
   UApsfr2: {bassin: "La Possession",
-       he_m: null, hf_m: 12, hauteur_src: "Art. UA 10.2, p.17 (« Dans le secteur UApsfr2 … 12 mètres » — sans précision : gravé en faîtage, prudent)",
+       he_m: "a_verifier", hf_m: "a_verifier",
+       hauteur_src: "Art. UA 10.2, p.16-17 — DEUX CLAUSES CONCURRENTES sur la même page : « Dans le secteur UApsfr2, la hauteur maximale des constructions est fixée à 12 mètres » ET « …UApsfr2, UAm et UAv, la hauteur maximale des constructions est fixée à 16 mètres au faitage »",
+       hauteur_note: "ARBITRAGE VIC 28/07/2026 : ni l'une ni l'autre — contradiction textuelle interne, ne se départage pas depuis un bureau (choisir la plus basse serait arbitraire, la plus précise supposerait une primauté que le texte ne dit pas). a_verifier, question à poser à la commune (même traitement que 1AUe Trois-Bassins, leçon §9).",
        emprise_sol_pct: null, emprise_src: "Art. UA 9, p.16 : « Sans objet »",
        recul_voirie_m: 3, recul_voirie_src: "Art. UA 6.2, p.14",
-       recul_limites_sep_m: 6, recul_limites_src: "Art. UA 7, p.15 — harmonisation doctrine b : max(H/2 à H max 12 m = 6 m ; plancher 3 m)",
+       recul_limites_sep_m: "a_verifier", recul_limites_src: "Art. UA 7, p.15 — retrait en H/2 : dérivation impossible tant que la hauteur est a_verifier (12 => 6 m, 16 => 8 m ; plancher du texte 3 m)",
        stat_logement: "2 places / logement", stat_src: "Art. UA 12.2, p.20-21",
        pleine_terre_pct: 40, pleine_terre_src: "Art. UA 13.1, p.22 (« porté à 40% minimum en secteur UApsfr2 ») — « traité en espace perméable : soit planté intégralement en pleine terre, soit… » (pleine terre = une modalité, pas un sous-minimum) (doctrine a)",
        note: "psfr2 = périmètre de protection rapprochée du Puits (servitude captage)."}

@@ -263,3 +263,11 @@ Détail des motifs de non-calibrage : chaque YAML porte ses motifs zone par zone
    habitat-interdit logées en st pour la raison mesurée (Le Port 6, Saint-Benoît 5,
    Petite-Île 3 — périmètre de migration v2) · la table des 89 emprises implicites
    (100 − % soustrait), documentée SANS application. Rien appliqué aux YAML.
+
+10. **Clôture des arbitrages (28/07)** : CAT 2 Saint-Denis — he reste null (décompte
+    corrigé 18) · La Possession UApsfr2 → a_verifier (deux clauses concurrentes p.16-17,
+    verbatims consignés au YAML — leçon §9-24) · les 89 emprises implicites VERSÉES au
+    MANDAT_REPLI_NON_OPTIMISTE §5.c (3e population, mesure d'impact + tiers servis avant
+    toute implémentation) · réconciliation strict/progressif gravée en leçon de méthode
+    (§9-25) · reclassement Petite-Île : solution « entrées C en clé documentaire inerte »
+    validée par Vic. Rien d'autre avant la phase 4.
