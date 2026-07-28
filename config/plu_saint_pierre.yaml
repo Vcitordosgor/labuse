@@ -67,8 +67,12 @@ hypotheses_faisabilite:
   logement_m2_haut: 80.0
   place_m2: 25.0
   densite_logts_ha_par_niveau: 30.0
-  cout_construction_m2_bas: 1800.0
-  cout_construction_m2_haut: 2200.0
+  # RÉALIGNÉ audit O2 (décision Vic 28/07/2026, revue M26-B — MANDAT_HYPOTHESES_BILAN.md) :
+  # valeurs auditées 12/06/2026 (`2c25746`) en €/m² de PLANCHER ; 1800/2200 « habitable »
+  # (`e3191f2`, 10/06/2026) = avant-audit + contresens d'unité (M26B_CONSTAT_CHARGES.md).
+  cout_construction_m2_bas: 2300.0
+  cout_construction_m2_haut: 2800.0
+  coef_plancher_habitable: 1.15
   marge_promoteur_pct: 0.09
   frais_annexes_pct: 0.12
   dvf_radius_m: 1500.0

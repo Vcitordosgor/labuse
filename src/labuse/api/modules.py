@@ -25,6 +25,10 @@ from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/modules", tags=["modules"])
 
+from ..faisabilite.bilan import (  # défauts calculette dérivés de la source unique (mandat hypothèses bilan)
+    CALCULETTE_COUT_DEFAUT_M2,
+    CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
+)
 from ..scoring.score_v_constants import Q_A_RUN_LABEL as RUN  # run de référence (bascule centralisée)
 
 
@@ -798,7 +802,8 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
                            "avertissements": f.avertissements, "modulation": f.modulation}
     else:
         out["capacite"] = None
-    hyp = Hypotheses()
+    # Source unique (mandat hypothèses bilan, Vic 28/07/2026) : charger(), plus de défauts directs.
+    hyp = Hypotheses.charger()
     prix = sector_price(db, row["id"], hyp)
     out["marche"] = {k: prix.get(k) for k in ("type_prix", "median", "q1", "q3", "n", "fiabilite",
                                               "tendance", "volatilite", "radius_m") if k in prix}
@@ -830,9 +835,10 @@ def faisabilite_sens1(idu: str, db: Session = Depends(get_db)) -> dict:
 
 
 class ChargeIn(BaseModel):
-    # hypothèses métier SAISIES (jamais estimées par LABUSE) — défauts « à ajuster »
-    cout_construction_m2: float = Field(2500.0, ge=500, le=8000)   # €/m² de plancher
-    marge_frais_pct: float = Field(21.0, ge=0, le=60)              # marge promoteur + frais (% du CA)
+    # hypothèses métier SAISIES (jamais estimées par LABUSE) — défauts « à ajuster »,
+    # DÉRIVÉS de la source unique (mandat hypothèses bilan : plus de 2500 gravé ici).
+    cout_construction_m2: float = Field(CALCULETTE_COUT_DEFAUT_M2, ge=500, le=8000)   # €/m² de plancher
+    marge_frais_pct: float = Field(CALCULETTE_MARGE_FRAIS_DEFAUT_PCT, ge=0, le=60)    # marge + frais (% du CA)
     prix_demande_eur: float | None = Field(None, ge=0, le=500_000_000)
     # M22-A : "charge" (sens historique) | "achat_max" (lecture inverse — prix d'achat max
     # admissible : même équation, dérivation ligne à ligne + écart de négociation demandé − max)
@@ -866,7 +872,7 @@ def faisabilite_charge(idu: str, body: ChargeIn, db: Session = Depends(get_db)) 
         return {"calculable": False, "raison": "capacite_non_resolue", "defaults": defaults,
                 "message": "Capacité constructible non résolue pour cette parcelle (zone PLU "
                            "non résolue / non constructible) — charge foncière non calculable."}
-    prix = sector_price(db, row["id"], Hypotheses())
+    prix = sector_price(db, row["id"], Hypotheses.charger())
     res = compute_calculette(float(shab), float(row["s"] or 0), prix,
                              body.cout_construction_m2, body.marge_frais_pct, body.prix_demande_eur,
                              mode=body.mode)
@@ -927,7 +933,7 @@ def _faisa_explain_facts(db: Session, row, core_mod) -> dict | None:
         f"gabarit {fo.get('niveaux')}, SDP {fo.get('surface_plancher_m2')} m², "
         f"{fo.get('logements_au_sol')} logements, hauteur {fo.get('hauteur_m')} m", "ESTIME")
     # bilan (si capacité vendable + prix) — hypothèses = celles de la calculette par défaut
-    hyp = Hypotheses()
+    hyp = Hypotheses.charger()
     prix = sector_price(db, row["id"], hyp)
     shab = fo.get("shab_vendable_m2")
     if shab and prix.get("median"):

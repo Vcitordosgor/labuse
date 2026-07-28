@@ -5,8 +5,17 @@ paramètres du bilan sont déclarés ici une seule fois (libellé, groupe, unit�
 éditables en UI et persistés par secteur (bassin PLU). Le code n'invente AUCUNE valeur : les params
 non calibrés sont marqués `is_placeholder` et signalés « non calibré » dans la fiche.
 
-Résolution : défaut registre ← override global (secteur='*') ← override secteur. Un override n'est
-plus « placeholder » (il a été saisi par Vic).
+Résolution : défaut registre ← override global (secteur='*') ← override secteur. Un override
+CONFIRMÉ (saisi/sourcé par Vic) n'est plus « placeholder » ; un override de provenance
+« estimee » RESTE placeholder tant qu'il n'est pas confirmé (mandat hypothèses bilan,
+décision Vic 28/07/2026 — le 2100 provisoire du 14/06 était devenu invisible aux bandeaux).
+
+PRÉSÉANCE DU COÛT DE CONSTRUCTION (gravée au mandat hypothèses bilan, Vic 28/07/2026) :
+  1. source unique = fourchette `hypotheses_faisabilite` du YAML PLU (auditée O2 : 2300-2800
+     €/m² de plancher) — le défaut registre de `cout_construction_m2_sdp` vaut 0, qui signifie
+     « repli fourchette YAML » dans `compute_bilan` ;
+  2. un override SECTORIEL justifié et sourcé peut re-piloter le coût (table, provenance) ;
+  3. JAMAIS de défaut codé silencieux — le test-verrou anti-constante de coût l'atteste.
 """
 from __future__ import annotations
 
@@ -23,7 +32,7 @@ PARAMS: list[tuple[str, str, str, str, float, bool, bool]] = [
     ("prix_m2_lls", "Prix de sortie logement aidé (LLS)", "Recettes", "€/m²", 0.0, True, False),
     ("ratio_vendable", "Ratio surface de plancher → habitable vendable", "Recettes", "ratio", 0.80, False, False),
     # Coûts
-    ("cout_construction_m2_sdp", "Coût de construction", "Coûts", "€/m² SDP", 2550.0, True, True),
+    ("cout_construction_m2_sdp", "Coût de construction (0 = fourchette YAML auditée)", "Coûts", "€/m² SDP", 0.0, False, True),
     ("cout_vrd_base", "VRD / viabilisation de base", "Coûts", "€/m² terrain", 0.0, True, False),
     ("majoration_vrd_pente_pct", "Majoration VRD — pente forte", "Coûts", "%", 0.0, True, False),
     ("majoration_vrd_assainissement_pct", "Majoration VRD — assainissement autonome", "Coûts", "%", 0.0, True, False),
@@ -61,7 +70,9 @@ def resolve(session: Session, secteur: str | None) -> dict[str, dict]:
     for sect_target in (SECTEUR_GLOBAL, secteur):
         for sect, param, value, prov in rows:
             if sect == sect_target and param in out:
-                out[param] = {"value": float(value), "is_placeholder": False,
+                # Une valeur ESTIMÉE non confirmée RESTE placeholder (visible aux bandeaux) —
+                # c'est le verrou anti-« provisoire devenu permanent » (décision Vic 28/07/2026).
+                out[param] = {"value": float(value), "is_placeholder": prov == "estimee",
                               "source": "global" if sect == SECTEUR_GLOBAL else "secteur",
                               "provenance": prov}
     return out
@@ -84,6 +95,22 @@ def estimated_to_refine(resolved: dict[str, dict]) -> list[str]:
     """Libellés des paramètres clés RENSEIGNÉS mais ESTIMÉS (→ sous-bandeau « à affiner », pas dur)."""
     return [_BY_KEY[k][1] for k in REFINE_KEYS
             if resolved.get(k, {}).get("provenance") == "estimee"]
+
+
+def estimees_non_confirmees(session: Session, jours: int = 30) -> list[dict]:
+    """Contrôle anti-« provisoire devenu permanent » (décision Vic 28/07/2026) : liste les
+    overrides de provenance « estimee » jamais confirmés depuis plus de `jours` jours —
+    le scénario du 2100 (estimation du 14/06 restée 6 semaines en base) ne doit pas se
+    reproduire en silence. Confirmation = re-saisie par Vic (gabarit CSV ou UI) qui pose
+    provenance sourcée/NULL. Exposé par `labuse bilan-params-perimes`."""
+    rows = session.execute(text(
+        "SELECT secteur, param, value, updated_at, "
+        "       extract(day FROM now() - updated_at)::int AS age_jours "
+        "FROM bilan_params WHERE provenance = 'estimee' AND now() - updated_at > make_interval(days => :j) "
+        "ORDER BY updated_at, secteur, param"), {"j": jours}).mappings().all()
+    return [{"secteur": r["secteur"], "param": r["param"], "value": float(r["value"]),
+             "age_jours": r["age_jours"],
+             "libelle": _BY_KEY.get(r["param"], (None, r["param"]))[1]} for r in rows]
 
 
 def save(session: Session, secteur: str, param: str, value: float | None) -> None:

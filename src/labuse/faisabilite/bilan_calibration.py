@@ -18,8 +18,10 @@ CALIBRATION: dict[str, tuple[float, str]] = {
     "prix_m2_neuf": (4900.0, "sourcee"),   # neuf Saint-Paul 2024 ~4 920 €/m² (corroboré marché ~5 200)
     "prix_m2_lls": (2900.0, "estimee"),    # cession VEFA→bailleur ~prix de revient social DOM
     "ratio_vendable": (0.80, "estimee"),   # SDP brute → habitable vendable (standard 0,78-0,85)
-    # Coûts
-    "cout_construction_m2_sdp": (2100.0, "estimee"),  # bâti seul, collectif DOM (métropole 1340-1480 + surcoût)
+    # Coûts — PAS de cout_construction_m2_sdp ici (mandat hypothèses bilan, décision Vic
+    # 28/07/2026) : le 2100 « estimé » du 14/06 était ancré sur la fourchette YAML PÉRIMÉE
+    # (avant-audit O2) et dupliquait la source unique. Le coût vient de la fourchette
+    # auditée du YAML (2300-2800, repli cout=0) ; seul un override SECTORIEL sourcé est légitime.
     "cout_vrd_base": (90.0, "estimee"),               # VRD/viabilisation €/m² terrain
     "majoration_vrd_pente_pct": (30.0, "estimee"),    # surcoût terrassement pente forte
     "majoration_vrd_assainissement_pct": (25.0, "estimee"),  # surcoût assainissement autonome
@@ -48,15 +50,17 @@ SECTEUR_PRIX_NEUF: dict[str, tuple[float, str]] = {
 def seed(executor, secteur: str = "*") -> None:
     """Injecte le socle commun (global '*') + la ventilation prix neuf par secteur, sans écraser
     un override existant. `executor` = Session OU Connection. Idempotent (ON CONFLICT DO NOTHING)."""
+    # Une valeur « estimee » est INSÉRÉE placeholder=true (décision Vic 28/07/2026) : elle reste
+    # visible aux bandeaux tant qu'elle n'est pas confirmée (cf. `labuse bilan-params-perimes`).
     for param, (value, prov) in CALIBRATION.items():
         executor.execute(
             text("INSERT INTO bilan_params (secteur, param, value, is_placeholder, provenance, updated_at) "
-                 "VALUES (:s, :p, :v, false, :pr, now()) ON CONFLICT (secteur, param) DO NOTHING"),
-            {"s": secteur, "p": param, "v": value, "pr": prov},
+                 "VALUES (:s, :p, :v, :ph, :pr, now()) ON CONFLICT (secteur, param) DO NOTHING"),
+            {"s": secteur, "p": param, "v": value, "ph": prov == "estimee", "pr": prov},
         )
     for sect, (value, prov) in SECTEUR_PRIX_NEUF.items():
         executor.execute(
             text("INSERT INTO bilan_params (secteur, param, value, is_placeholder, provenance, updated_at) "
-                 "VALUES (:s, 'prix_m2_neuf', :v, false, :pr, now()) ON CONFLICT (secteur, param) DO NOTHING"),
-            {"s": sect, "v": value, "pr": prov},
+                 "VALUES (:s, 'prix_m2_neuf', :v, :ph, :pr, now()) ON CONFLICT (secteur, param) DO NOTHING"),
+            {"s": sect, "v": value, "ph": prov == "estimee", "pr": prov},
         )

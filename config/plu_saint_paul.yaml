@@ -64,8 +64,15 @@ hypotheses_faisabilite:
   place_m2: 25.0                    # 1 place de stationnement (avec circulation)
   densite_logts_ha_par_niveau: 30.0 # plafond densité = ce taux x niveaux (logts/ha) — filet ex-COS
   # --- Bilan promoteur (CA, charge foncière) ---
-  cout_construction_m2_bas: 1800.0  # coût de construction au m² habitable (borne basse)
-  cout_construction_m2_haut: 2200.0 # idem (borne haute)
+  # RÉALIGNÉ audit O2 (décision Vic 28/07/2026, revue M26-B — MANDAT_HYPOTHESES_BILAN.md) :
+  # valeurs auditées du 12/06/2026 (`2c25746`, bilan prudent Réunion), en €/m² de PLANCHER.
+  # Les 1800/2200 « au m² habitable » introduits par `e3191f2` (10/06/2026) étaient l'état
+  # d'avant-audit + contresens d'unité (constat docs/mandats/M26B_CONSTAT_CHARGES.md).
+  # Statut : ESTIMÉ (chiffre d'audit) — le passage à Sourcé exige un coût promoteur
+  # réunionnais réel (gabarit config/bilan_calibration_vic.csv, à remplir par Vic).
+  cout_construction_m2_bas: 2300.0  # coût de construction au m² de PLANCHER (borne basse)
+  cout_construction_m2_haut: 2800.0 # idem (borne haute)
+  coef_plancher_habitable: 1.15     # plancher ≈ habitable × 1.15 (circulations, gaines, murs) — audit O2
   marge_promoteur_pct: 0.09         # marge promoteur (% du CA) — fourchette réelle 8–10 %, à affiner
   frais_annexes_pct: 0.12           # honoraires + commercialisation + financier + aléas (% du CA)
   dvf_radius_m: 1500.0              # rayon de recherche des ventes DVF comparables (m)

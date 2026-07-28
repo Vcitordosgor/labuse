@@ -2086,7 +2086,7 @@ def _calculette_for_pdf(db: Session, idu: str, cout: float, marge: float, prix_d
     shab = (fz[1].fourchette or {}).get("shab_vendable_m2") if fz else None
     if not shab:
         return None
-    prix = sector_price(db, row["id"], Hypotheses())
+    prix = sector_price(db, row["id"], Hypotheses.charger())
     res = compute_calculette(float(shab), float(row["s"] or 0), prix, cout, marge, prix_demande)
     return res if res.get("calculable") else None
 

@@ -15,7 +15,8 @@ Un promoteur vend du neuf : c'est le prix économiquement juste pour une charge 
 Méthode (batch, hypothèses par DÉFAUT du bilan — cf. `faisabilite/bilan.py`) :
 - **charge supportable** = bilan à REBOURS, version batch : `CA×coef − construction`, où
     CA = surf_habitable × prix_sortie_NEUF_secteur ; surf_habitable = SDP_résiduelle / coef_plancher (1,15) ;
-    coef = 1 − (marge 9 % + frais 12 %) = 0,79 ; construction = SDP_résiduelle × 2 550 €/m² (milieu 2300-2800).
+    coef = 1 − (marge 9 % + frais 12 %) = 0,79 ; construction = SDP_résiduelle × milieu de la
+    fourchette auditée du YAML (2300-2800 → 2 550 €/m² — DÉRIVÉ de la source unique, plus de constante).
     (VRD = 0 : paramètre sectoriel non calibré en batch — hypothèse prudente, documentée.)
     Prix de sortie = médiane NEUF `dvf_prix_sortie_neuf` au niveau secteur (préfixe IDU 10) si n ≥ 5,
     sinon repli commune (INSEE 5) si n ≥ 5 — le niveau retenu est tracé (`niveau_prix`).
@@ -33,10 +34,21 @@ from __future__ import annotations
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-HYP_VERSION = "bilan-neuf-v2"          # O0 : prix de sortie NEUF · coef_plancher 1,15 · coef 0,79 · constr. 2550 €/m² · VRD 0
-COEF_PLANCHER = 1.15
-COEF_CA = 0.79
-COUT_M2 = 2550.0
+# Hypothèses DÉRIVÉES de la source unique (`hypotheses_faisabilite` YAML — mandat hypothèses
+# bilan, décision Vic 28/07/2026) : plus de constante de coût autonome ici. Numériquement
+# identiques à « bilan-neuf-v2 » tant que le YAML porte l'audit O2 (2300-2800 → milieu 2550,
+# coef plancher 1,15, coef CA 0,79) ; la version tracée expose les valeurs effectives.
+def _hyp_source_unique() -> tuple[float, float, float]:
+    from ..faisabilite.engine import Hypotheses
+    h = Hypotheses.charger()
+    cout = round((h.cout_construction_m2_bas + h.cout_construction_m2_haut) / 2)
+    coef_ca = round(1.0 - (h.marge_promoteur_pct + h.frais_annexes_pct), 4)
+    return float(h.coef_plancher_habitable), coef_ca, float(cout)
+
+
+COEF_PLANCHER, COEF_CA, COUT_M2 = _hyp_source_unique()
+HYP_VERSION = (f"bilan-neuf-v2 · source-unique constr. {COUT_M2:.0f} €/m² · "
+               f"coef_plancher {COEF_PLANCHER:g} · coef CA {COEF_CA:g} · VRD 0")
 N_MIN_VENTE = 5                        # ventes min pour un prix de sortie sectoriel (CA)
 N_MIN_TERRAIN = 3                      # ventes min pour un prix terrain sectoriel
 
@@ -128,7 +140,7 @@ def _row(idu, surface_m2, sdp, terrain, prix_vente, niveau_prix) -> dict:
     detail = (
         f"Marge estimée {_eur(marge)} = charge foncière supportable {_eur(charge)} − prix probable du "
         f"foncier {_eur(prix)}. Charge = bilan à rebours (prix de sortie neuf {prix_vente:.0f} €/m², {niveau_txt} "
-        f"× 0,79 − construction 2 550 €/m²) ; prix probable = médiane terrain sectorielle × {surface_m2:.0f} m². {_CAVEAT}")
+        f"× {COEF_CA:g} − construction {COUT_M2:.0f} €/m²) ; prix probable = médiane terrain sectorielle × {surface_m2:.0f} m². {_CAVEAT}")
     return {"idu": idu, "estimable": True, "marge": marge, "charge": charge, "prix": prix,
             "niveau": niveau_prix, "hv": HYP_VERSION, "court": court, "detail": detail}
 

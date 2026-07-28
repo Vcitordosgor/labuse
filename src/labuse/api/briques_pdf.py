@@ -237,7 +237,8 @@ def collect(db: Session, idu: str) -> dict:
             out["faisabilite"] = fais
             shab = (fais.fourchette or {}).get("shab_vendable_m2")
             if shab and shab > 0:
-                hyp = Hypotheses()
+                # Source unique (mandat hypothèses bilan, Vic 28/07/2026) : charger().
+                hyp = Hypotheses.charger()
                 prix = sector_price(db, pid, hyp)
                 out["prix_dvf"] = prix
                 out["bilan"] = compute_bilan(float(shab), float(ctx.surface_m2 or 0), prix, hyp,

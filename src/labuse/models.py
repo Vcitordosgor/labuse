@@ -1110,6 +1110,20 @@ def ensure_bilan_params(engine) -> None:
             "WHERE secteur = '*' AND param = 'marge_cible_pct' "
             "AND provenance = 'estimee' AND value > 10"),
             {"v": CALIBRATION["marge_cible_pct"][0]})
+        # MANDAT HYPOTHÈSES BILAN (décision Vic 28/07/2026) — purge du coût GLOBAL « estimé »
+        # 2100 du 14/06 (ancré sur la fourchette YAML périmée d'avant-audit O2, cf.
+        # RAPPORT_CALIBRATION_WEB.md « MISE À JOUR 28/07/2026 »). CIBLÉE : la valeur exacte du
+        # socle système, provenance « estimee », secteur global — un override saisi/sourcé par
+        # Vic (autre valeur, autre provenance ou autre secteur) survit. Le coût vient désormais
+        # de la source unique (fourchette YAML auditée, repli cout=0 dans compute_bilan).
+        c.execute(_t(
+            "DELETE FROM bilan_params WHERE secteur = '*' AND param = 'cout_construction_m2_sdp' "
+            "AND provenance = 'estimee' AND value = 2100"))
+        # Décision Vic 28/07/2026 : une valeur ESTIMÉE non confirmée reste placeholder (visible
+        # aux bandeaux) — aligne l'existant, idempotent.
+        c.execute(_t(
+            "UPDATE bilan_params SET is_placeholder = (provenance = 'estimee') "
+            "WHERE is_placeholder IS DISTINCT FROM (provenance = 'estimee')"))
 
 
 def ensure_personnes_morales(engine) -> None:

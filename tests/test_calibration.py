@@ -13,13 +13,19 @@ pytestmark = pytest.mark.db
 
 def test_socle_calibre_les_critiques_et_signale_les_estimes(db_session):
     r = bp.resolve(db_session, None)              # global '*' — socle injecté au boot (ensure_bilan_params)
-    # Le coût de construction (critique) a une valeur → plus de bandeau « non fiable » DUR.
+    # Coût de construction : PLUS d'override global (mandat hypothèses bilan, Vic 28/07/2026) —
+    # défaut registre 0 = repli fourchette YAML auditée dans compute_bilan ; pas de bandeau DUR.
+    assert r["cout_construction_m2_sdp"]["value"] == 0.0
+    assert r["cout_construction_m2_sdp"]["source"] == "défaut"
     assert r["cout_construction_m2_sdp"]["is_placeholder"] is False
     assert bp.uncalibrated_critical(r) == []
-    # Prix neuf = SOURCÉ ; coût construction + marge = ESTIMÉS → sous-bandeau « à affiner ».
+    # Prix neuf = SOURCÉ ; marge = ESTIMÉE → sous-bandeau « à affiner » ET placeholder (une
+    # estimée non confirmée reste visible — verrou anti-« provisoire devenu permanent »).
     assert r["prix_m2_neuf"]["provenance"] == "sourcee" and r["prix_m2_neuf"]["value"] == 4900.0
+    assert r["marge_cible_pct"]["provenance"] == "estimee"
+    assert r["marge_cible_pct"]["is_placeholder"] is True
     aff = " ".join(bp.estimated_to_refine(r))
-    assert "Coût de construction" in aff and "Marge cible promoteur" in aff
+    assert "Marge cible promoteur" in aff
 
 
 def test_prix_neuf_ventile_par_secteur(db_session):

@@ -454,19 +454,29 @@ def compute_bilan(shab_vendable_m2: float, surface_terrain_m2: float,
 
 # ── CALCULETTE DE CHARGE FONCIÈRE (mandat bilan-calculette) ────────────────────────────────
 #: hypothèses métier PAR DÉFAUT, explicitement marquées « à ajuster » côté fiche — LABUSE ne
-#: prétend pas les connaître (elles relèvent du jugement du promoteur). Le coût de construction
-#: par défaut = milieu de la fourchette prudente Réunion (2300–2800) ; la marge & frais par
-#: défaut = marge promoteur (9 %) + frais annexes (12 %) des hypothèses moteur.
-CALCULETTE_COUT_DEFAUT_M2 = 2500.0
-CALCULETTE_MARGE_FRAIS_DEFAUT_PCT = 21.0
+#: prétend pas les connaître (elles relèvent du jugement du promoteur). DÉRIVÉES de la source
+#: unique (`hypotheses_faisabilite` du YAML, mandat hypothèses bilan — décision Vic
+#: 28/07/2026) : coût = milieu de la fourchette auditée (2300–2800 → 2550) ; marge & frais =
+#: marge promoteur (9 %) + frais annexes (12 %). Plus jamais de constante autonome ici.
+
+
+def _defauts_calculette() -> tuple[float, float]:
+    h = Hypotheses.charger()
+    cout = round((h.cout_construction_m2_bas + h.cout_construction_m2_haut) / 2)
+    marge_frais = round((h.marge_promoteur_pct + h.frais_annexes_pct) * 100)
+    return float(cout), float(marge_frais)
+
+
+CALCULETTE_COUT_DEFAUT_M2, CALCULETTE_MARGE_FRAIS_DEFAUT_PCT = _defauts_calculette()
 
 
 def bilan_params_defaut() -> dict:
     """M22-F C1 — LA source d'hypothèses par défaut, UNIQUE pour tous les documents
     (calculette, Dossier banquier, Argumentaire). Injectée comme `bilan_params` dans
-    `compute_bilan` : coût 2500 €/m² SDP, marge & frais agrégés 21 % du CA (honoraires
-    et frais financiers neutralisés car agrégés). Deux documents générés avec ces
-    défauts sur la même parcelle DOIVENT porter les mêmes totaux (test l'atteste)."""
+    `compute_bilan` : coût = milieu de la fourchette auditée du YAML (2550 €/m² SDP),
+    marge & frais agrégés 21 % du CA (honoraires et frais financiers neutralisés car
+    agrégés). Deux documents générés avec ces défauts sur la même parcelle DOIVENT
+    porter les mêmes totaux (test l'atteste)."""
     return {
         "cout_construction_m2_sdp": CALCULETTE_COUT_DEFAUT_M2,
         "marge_cible_pct": CALCULETTE_MARGE_FRAIS_DEFAUT_PCT,
@@ -499,8 +509,8 @@ def compute_calculette(shab_vendable_m2: float, surface_terrain_m2: float, prix:
     bp = {**bilan_params_defaut(),
           "cout_construction_m2_sdp": float(cout_construction_m2),
           "marge_cible_pct": float(marge_frais_pct)}
-    b = compute_bilan(float(shab_vendable_m2), float(surface_terrain_m2 or 0), prix, Hypotheses(),
-                      bilan_params=bp)
+    b = compute_bilan(float(shab_vendable_m2), float(surface_terrain_m2 or 0), prix,
+                      Hypotheses.charger(), bilan_params=bp)
     marche = {"median": prix.get("median"), "fiabilite": prix.get("fiabilite"), "n": prix.get("n")}
     if not b.charge_fonciere:
         # prix insuffisant / surface nulle → on ne fabrique pas de chiffre creux (doctrine)
