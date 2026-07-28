@@ -142,3 +142,90 @@ intégré. Recommandation pour la phase B (application), si GO :
 couverture par requête SQL reproductible. Golden 116/116 + tiers au bit près avant/après
 (`/tmp/couv_tiers_avant.txt` = `/tmp/couv_tiers_apres.txt`). Échantillons d'opérations réelles
 issus de `/tmp/backtest_e1.json`.
+
+---
+
+# VÉRIFICATIONS (28/07/2026) — back-test restreint, E3, variante EPCI. LECTURE SEULE.
+
+**Réconciliation de nomenclature** (le mandat déposé `MANDAT_COUVERTURE_PRIX.md` a été fourni
+après ce rapport) : ses trois leviers sont **1 · ratio neuf/ancien** (mesuré, NON fondé, ci-dessus),
+**2 · estimation hiérarchique avec rétrécissement vers l'EPCI**, **3 · élargissement de la fenêtre
+temporelle**. Mon « repli île » qui passe à 92 % = le **levier 2** du mandat avec l'ÎLE comme niveau
+supérieur au lieu de l'EPCI. Les trois vérifications ci-dessous valident et raffinent ce levier 2.
+Golden 116/116 + tiers au bit près avant/après.
+
+## 7 · Le 92 % vient bien des communes ÉTENDUES (pas des 5 couvertes) — question tranchée
+
+Back-test **restreint aux seules communes étendues marché-dominantes**, île 4 375 :
+
+| Commune | viables / testées |
+|---|---|
+| Sainte-Marie | 22 / 24 |
+| Saint-Benoît | 15 / 16 |
+| Saint-Louis | 13 / 14 |
+| La Possession | 10 / 10 |
+| Sainte-Suzanne | 9 / 10 |
+| L'Étang-Salé | 7 / 8 |
+| Les Trois-Bassins | 2 / 2 |
+| **TOTAL étendues** | **78 / 84 = 93 %** |
+
+**Le 92-93 % ne parle PAS des 5 communes déjà couvertes** (elles sont exclues de ce test) : il
+mesure la validité du repli **sur les nouvelles**, et il tient (93 %, dans la bande 89-91 %).
+**Limite de validation nommée** : 7 des 11 communes étendues ont des opérations ≥ 10 lgt pour le
+test ; **4 (Les Avirons, Saint-André, Sainte-Rose, Salazie) n'en ont AUCUNE** — l'estimateur y
+serait appliqué mais **non validé localement** (inoffensif, peu de parcelles, mais à dire). Le
+levier 3 du mandat (fenêtre temporelle 2018+/2015+ indexée) servirait surtout à densifier la
+validation de ces 4-là — non mesuré ce tour, à ouvrir si tu veux les couvrir avec preuve.
+
+## 8 · E3 — pas de sur-évaluation (le mode d'échec du 4900 est absent)
+
+Achat foncier → PC collectif ≤ 4 ans, communes étendues, charge à l'île 4 375, **ratio prix payé /
+charge** (charge > 0, n = 10) :
+- **ratio < 1 (acheteur a payé MOINS que notre charge = SUR-évaluation) : 0 / 10 (0 %).**
+- médiane 5,57 · min **1,17** · déciles 1,17 / 1,39 / 1,58 / 1,99 / … — **tous ≥ 1**.
+
+**Verdict** : à 4 375, aucun acheteur réel n'a payé moins que notre charge supportable → on ne
+sur-évalue pas (contrairement au 4900, où E3 donnait des ratios < 1 massifs). On est même sur le
+**versant conservateur** (l'acheteur paie 1,2 à 5× notre charge : direction non-optimiste, la
+sûre — Vic). **Caveats honnêtes** : n = 10 (mince, limite de validation à nommer, non masquée) ;
+les ratios élevés indiquent un léger sous-évaluation possible (charge un peu basse) OU un
+`prix_payé` portant de la valeur bâtie résiduelle — dans les deux cas, PAS le défaut du 4900.
+
+## 9 · Variante EPCI vs île — l'île suffit, la simplicité prime
+
+Médianes MARCHÉ par EPCI (appt neuf hors social) : **TCO 4 595 · CIREST 4 400 (n=4 seulement) ·
+CASUD 4 318 · CINOR 4 287 · CIVIS 4 270** — **écart 7,6 %**, ~ île 4 375. Back-test avec la médiane
+EPCI par commune (repli île si EPCI mince) : **93 %, IDENTIQUE à l'île plate**. Et **CIREST (tout
+l'Est) n'a que 4 ventes de marché** → médiane non fiable, repli île obligatoire. **Conclusion (règle
+du mandat : « si l'amélioration est marginale, l'île suffit et la simplicité prime ») : l'estimateur
+ÎLE PLAT est retenu.** L'EPCI n'apporte rien qui justifie sa complexité, et échoue là où l'île sauve.
+
+## 10 · Le fait produit — le marché intégré (à servir tel quel, formulation Vic)
+
+> « Le prix de sortie du collectif neuf est quasi uniforme à La Réunion (4 258 à 4 953 €/m², ±8 %)
+> alors que le prix de l'existant varie de 1 633 à 3 867. Le neuf est un marché intégré — coûts de
+> construction homogènes, acheteurs en défiscalisation — tandis que l'existant reflète l'âge et la
+> qualité du stock local. »
+
+Ce n'est pas un défaut du levier, c'est sa **fondation** : c'est ce qui rend méthodologiquement
+légitime un estimateur plat de niveau île. Connaissance de marché servable par le produit.
+
+## 11 · Recommandation consolidée (phase B/C, non exécutée)
+
+- **Estimateur retenu : médiane MARCHÉ île (4 375), en repli TYPÉ après le local** — préséance :
+  override bassin sourcé > dvf secteur local > dvf commune local > **repli île « estimation île »** >
+  non calculable. Le local prime toujours ; le repli ne sert qu'à défaut.
+- **Couverture 5 → ~16 communes** (5 locales + 11 marché-dominantes en repli île), dont **7 validées
+  par back-test**, 4 non validées localement (à couvrir avec preuve seulement si le levier temporel
+  est ouvert).
+- **Les 8 communes social-dominantes restent « non calculable »** — sans exception (garde anti-socle).
+- **Étiquetage** (validé Vic) : « Estimé — médiane locale, N ventes » (local) / « Estimé —
+  estimation île, pas de marché local observé, incertitude ± ~12 % » (repli) / « Non calculable »
+  (social dominant / marché non observable). Jamais un repli présenté comme une observation locale.
+- **Interdits d'application respectés** : pas de socle global (le repli île est TYPÉ et n'écrase
+  jamais un prix local), back-test = juge permanent, E3 re-mesurée en phase C.
+
+## Artefacts (vérifications)
+
+`/tmp/couv_verifications.py` (LECTURE SEULE : back-test restreint + EPCI + E3). Golden 116/116 +
+tiers au bit près avant/après (`/tmp/covB_tiers_avant.txt` = `/tmp/covB_tiers_apres.txt`).
