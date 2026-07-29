@@ -184,3 +184,55 @@ v8 ne sont acquis que quand ces correctifs sont sur main.)
 ---
 *A' et A'' résolus (VERDICT IDENTIQUE). B reste FERMÉ jusqu'à ton arbitrage. Aucun merge, aucune
 relance, aucune purge. q_v7_defisc servi intact.*
+
+---
+# POINT B — gardes de complétude (exécuté sur origin/main 7b067f7)
+
+## B.1 — tiers servis q_v8_calibre vs cibles (écart par ligne, brut)
+| Tier | Cible | Réel | Écart |
+|---|---:|---:|---:|
+| Brûlantes | 120 | 120 | **0** |
+| Chaudes | 1 042 | 1 043 | **+1** |
+| Réserve foncière | 3 208 | 3 209 | **+1** |
+| À creuser | 63 949 | 63 964 | **+15** |
+| Écartées | 353 945 | 354 355 | **+410** |
+| Déclassée « zone fermée » | 3 221 | 2 804 | **−417** |
+| Déclassée « inconstructible » | 6 178 | 6 168 | **−10** |
+| **TOTAL** | **431 663** | **431 663** | **0** |
+Total exact. Écarts sur 6 lignes/7 — le plus grand : `declasse_zone_fermee` −417, `ecartee` +410.
+Rapporté brut, non corrigé, non expliqué.
+
+## B.2 — golden : **107/116 PASS, 9 FAIL, 0 incohérence runtime**
+Les 9 FAIL sont TOUS sur `db.residuel` (capacité), AUCUN sur un tier (`tier_v2` passent — le revert
+`ad872ce` a restauré les attentes de tier à l'état q_v7). Ancres en échec (brut, non ajusté) :
+- 97402000AK1725 (taux_emprise_pct 49→61)
+- 97408000AC1870 (sdp 3553→1870)
+- 97416000CR1351 (residuel : golden présent → DB **absent**)
+- 97418000AT2379 (sdp 108→146)
+- 97420000AO0654 (sdp 176→117)
+- 97422000AD1237 (residuel : golden présent → DB **absent** ; = golden brûlante 2AUd)
+- 97423000AB1341 (sdp 199→133)
+- 97423000AB1908 (sdp 183→122)
+- 97424000AI0355 (taux 27→28 ; sdp 395→209)
+Constat brut : `parcel_residuel` en base = version CALIBRÉE v8 (migrée par la bascule, non
+rollbackée) ; le snapshot golden porte les valeurs d'AVANT calibration → 9 écarts de capacité.
+Rien ajusté.
+
+## B.3 — Saint-Benoît (21 671 parcelles)
+- **Capacité renseignée** (ligne `parcel_residuel`) : **12 000**
+- **Muettes** (aucune ligne `parcel_residuel`) : **9 671**
+(interprétation : capacité renseignée = présence d'un résiduel calculé ; muette = absence.)
+
+## B.4 — O12 : 35 candidats
+- **35 présents** après bascule (0 sorti, 0 entré vs capture pré-bascule `/tmp/o12_avant.txt`).
+- **`computed_at` = 28/07** pour les 35 → la table `division_or_candidates` **n'a PAS été recomputée
+  par la bascule** ; les 35 sont inchangés.
+- **EXPOSE = True** — c'est une CONSTANTE de code (`division_or.py:55`, validée Vic 28/07), globale
+  (pas une colonne par ligne) → les 35 sont exposés.
+- 35 idus : 97403000AR1521, 97409000AR2367, 97410000AV0207/BK0219/BM1144, 97411000CH0320/CH0631,
+  97412000AH0413/AM0461/AM0946/BE0229/BW0123/CS0625, 97413000CM0268/CQ0412/CR0068/CR0093/CX0585,
+  97414000ES0629, 97415000AX1059/BV0182/CH1198/CP0511/DS0617/HO0423, 97416000DM0665/HX0339/ID0021,
+  97418000AO1527/AV2092, 97420000BH1036, 97422000CL0575/CY0118, 97423000AH1514, 97424000AE0089.
+
+---
+*B exécuté sur origin/main 7b067f7. Rapporté brut, rien corrigé, rien mergé. q_v7_defisc servi intact.*
