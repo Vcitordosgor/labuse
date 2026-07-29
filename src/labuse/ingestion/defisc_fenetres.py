@@ -1,7 +1,7 @@
 """PHASE A-1 étape 2, volet 2 — BADGE « fenêtre de sortie de défiscalisation ».
 
 Table ADDITIVE `defisc_fenetres`, dérivée en LECTURE des sources DVF/permis/copro. Ne touche JAMAIS
-les tables servies (`parcel_p_score_v2`, `dryrun_parcel_evaluations`, run `q_v6_m8`). Purement un signal
+les tables servies (`parcel_p_score_v2`, `dryrun_parcel_evaluations`, run servi Q_A_RUN_LABEL). Purement un signal
 de classement horodaté et tracé, exposé sur la fiche et en filtre — **jamais une date de vente promise**,
 **jamais une personne physique** (le badge dit « cette parcelle entre dans une fenêtre », pas « M. X vendra »).
 

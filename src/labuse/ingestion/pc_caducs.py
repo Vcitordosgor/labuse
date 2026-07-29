@@ -1,7 +1,7 @@
 """PHASE A cycle 2, volet 2 (badge) — « PC caducs ».
 
 Table ADDITIVE `pc_caducs`, dérivée en LECTURE de Sitadel/m10. Ne touche JAMAIS les tables servies
-(`parcel_p_score_v2`, `dryrun_*`, runs `q_v7_defisc`/`q_v6_m8`). Signal parcellaire et horodaté :
+(`parcel_p_score_v2`, `dryrun_*`, run servi `q_v7_defisc`). Signal parcellaire et horodaté :
 la parcelle et ses dates, JAMAIS le demandeur (personne physique possible) ni un jugement du propriétaire.
 
 Doctrine (cf. A1_PC_CADUCS_CADRAGE.md) : un PC OCTROYÉ jamais réalisé porte une constructibilité prouvée
