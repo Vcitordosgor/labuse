@@ -1352,6 +1352,31 @@ def ensure_residuel_cache(engine) -> None:
         c.execute(_t("ALTER TABLE parcel_residuel ADD COLUMN IF NOT EXISTS capacite_estimee boolean"))
 
 
+def ensure_spatial_layers_sub(engine, force: bool = False) -> int:
+    """Cache PRÉ-SUBDIVISÉ des couches spatiales (pièces ≤256 sommets + GiST) — évite de
+    re-subdiviser les mêmes couches PPR/aléa à CHAQUE lot de cascade (ST_Subdivide = 95 % du coût
+    de EvalContext.prime ; ×64 mesuré, coverage strictement identique). Dérivé de la géométrie
+    STATIQUE de spatial_layers : reconstruire (`force=True`) si les couches changent. `prime`
+    utilise cette table si présente, sinon repli sur le découpage à la volée (comportement inchangé).
+    Idempotent : ne reconstruit que si absente ou `force`."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        if not force and c.execute(_t("SELECT to_regclass('spatial_layers_sub') IS NOT NULL")).scalar():
+            return int(c.execute(_t("SELECT count(*) FROM spatial_layers_sub")).scalar())
+        c.execute(_t("DROP TABLE IF EXISTS spatial_layers_sub"))
+        c.execute(_t(
+            "CREATE TABLE spatial_layers_sub AS "
+            " SELECT id AS lid, kind, subtype, name, attrs, data_source_id, ST_Subdivide(geom_2975,256) AS g "
+            "   FROM spatial_layers WHERE kind<>'batiment' AND ST_Dimension(geom_2975)=2 "
+            " UNION ALL "
+            " SELECT id, kind, subtype, name, attrs, data_source_id, geom_2975 "
+            "   FROM spatial_layers WHERE kind<>'batiment' AND ST_Dimension(geom_2975)<2"))
+        c.execute(_t("CREATE INDEX idx_sls_geom ON spatial_layers_sub USING gist (g)"))
+        c.execute(_t("ANALYZE spatial_layers_sub"))
+        return int(c.execute(_t("SELECT count(*) FROM spatial_layers_sub")).scalar())
+
+
 def ensure_constructibilite_cache(engine) -> None:
     """Cache du verdict de constructibilité (déclassement étage 0) — évite de relancer la
     faisabilité par parcelle au scoring. `label` : declasse_zone_fermee (A) / declasse_non_

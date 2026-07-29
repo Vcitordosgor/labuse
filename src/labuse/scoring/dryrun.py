@@ -25,6 +25,13 @@ def compute_matrice(session: Session, run_label: str, commune: str) -> dict:
     params = {"r": run_label, "c": commune, "a_layers": cfg["a_layers"], "base": cfg["base"],
               "az_layers": cfg.get("a_zone_layers", []),
               "qs": s["q_chaude"], "as_": s["a_chaude"], "acm": s["a_completude_min"], "qe": s["q_ecartee"]}
+    # PERF (bascule 30/07) : sans ceci le planner SEQ-SCAN la tranche `run_label` entière de
+    # dryrun_cascade_results (38 M lignes) à CHAQUE commune — coût qui CROÎT avec la tranche
+    # (quadratique sur un run complet). Forcer le nested-loop indexé (ix_dryrun_cascade
+    # run_label,parcel_id) rend la lecture PAR PARCELLE, indépendante de la taille de tranche
+    # (mesuré 4,5 s → 0,15 s de lecture cascade). Portée LOCALE : réinitialisé au commit.
+    session.execute(text("SET LOCAL enable_seqscan = off"))
+    session.execute(text("SET LOCAL enable_hashjoin = off"))
     # Décision Vic (data-gap, 10/07/2026) : un SIGNAL DE ZONE (couches `a_zone_layers`,
     # ex. sitadel §7bis) est du CONTEXTE, pas un fait parcellaire — il compte dans le score A
     # AFFICHÉ mais est EXCLU du test de FRANCHISSEMENT « chaude » (a_hors_zone ≥ seuil aussi) :

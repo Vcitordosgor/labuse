@@ -176,6 +176,10 @@ def main():
     ensure_backups()
     migrate_residuel()
     rebuild_static()
+    # cache pré-subdivisé (×64 sur l'intersection de prime) — construit avant la re-passe cascade.
+    from labuse import models as _m
+    npieces = _m.ensure_spatial_layers_sub(engine())
+    print(f"  [2b] spatial_layers_sub : {npieces} pièces (cache pré-subdivisé, prime ~×64)", flush=True)
     repass_cascade(communes, resume=args.resume)
     score()
     counts = verify_completude(TARGET, n_expected_cascade=n_parcels, n_expected_scores=n_parcels)
