@@ -49,3 +49,36 @@ def classify_constructibilite(faisa: Faisabilite | None) -> tuple[str | None, st
     # cause B, ou non constructible sans cause structurée → repli prudent en B (physique).
     return DECLASSE_NON_CONSTRUCTIBLE, ("Parcelle non constructible — surface ou reculs "
                                         "insuffisants.")
+
+
+def build_constructibilite_batch(session, parcel_ids: list[int]) -> int:
+    """Calcule et CACHE le verdict de constructibilité (table parcel_constructibilite) pour un
+    lot de parcelles, via le moteur (`parcel_faisabilite`). Ne stocke QUE les non-constructibles
+    et les non-vérifiables (label non nul) : une parcelle constructible = pas de ligne (le
+    pipeline lit un LEFT JOIN → NULL = pas de déclassement). Lecture-moteur, écriture cache."""
+    from sqlalchemy import text
+    from .db import parcel_faisabilite
+
+    n = 0
+    for pid in parcel_ids:
+        try:
+            res = parcel_faisabilite(session, pid)
+        except Exception:  # noqa: BLE001 — une parcelle ne casse pas le lot
+            res = None
+        faisa = None if res is None else res[1]
+        label, motif = classify_constructibilite(faisa)
+        if label is None:                       # constructible → pas de ligne
+            session.execute(text("DELETE FROM parcel_constructibilite WHERE parcel_id = :p"),
+                            {"p": pid})
+            continue
+        cause = None if faisa is None else faisa.cause
+        session.execute(text(
+            """INSERT INTO parcel_constructibilite (parcel_id, label, motif, cause, computed_at)
+               VALUES (:p, :l, :m, :c, now())
+               ON CONFLICT (parcel_id) DO UPDATE SET
+                 label=EXCLUDED.label, motif=EXCLUDED.motif, cause=EXCLUDED.cause,
+                 computed_at=now()"""),
+            {"p": pid, "l": label, "m": motif, "c": cause})
+        n += 1
+    session.flush()
+    return n

@@ -1025,6 +1025,31 @@ def compute_residuel_cmd(
     typer.echo(f"✓ Potentiel résiduel caché pour {total} parcelles constructibles ({commune}).")
 
 
+@app.command("compute-constructibilite")
+def compute_constructibilite_cmd(
+    commune: str = typer.Option(None, help="Commune (nom ou INSEE ; défaut = pilote)."),
+    chunk: int = typer.Option(500, help="Taille des lots (commit par lot)."),
+) -> None:
+    """Calcule et cache le VERDICT DE CONSTRUCTIBILITÉ (déclassement étage 0 : tête de liste non
+    constructible). Alimente `parcel_constructibilite` (A zone fermée / B parcelle inconstructible
+    / C non vérifiable), lu par le scoring pour déclasser les parcelles servies non bâtissables."""
+    from .faisabilite.constructibilite import build_constructibilite_batch
+
+    commune = _resolve_commune(commune)
+    models.ensure_constructibilite_cache(engine())
+    with session_scope() as session:
+        ids = _parcel_ids(session, commune)
+    if not ids:
+        typer.echo("Aucune parcelle ingérée.")
+        raise typer.Exit(1)
+    total = 0
+    for k in range(0, len(ids), chunk):
+        with session_scope() as s:
+            total += build_constructibilite_batch(s, ids[k:k + chunk])
+        typer.echo(f"    {min(k + chunk, len(ids))}/{len(ids)} parcelles…")
+    typer.echo(f"✓ Constructibilité cachée : {total} parcelles déclassées/non vérifiables ({commune}).")
+
+
 def _print_healthcheck(commune: str) -> bool:
     from . import demo
 

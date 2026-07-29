@@ -31,6 +31,14 @@ TIER_A_CREUSER = "a_creuser"
 TIER_RESERVE = "reserve_fonciere"
 TIER_ECARTEE = "ecartee"
 
+# Déclassement étage 0 (arbitrage Vic 29/07) — parcelles VISIBLES mais retirées des tiers de
+# tête, avec motif. Deux tiers dédiés, jamais confondus (A réversible / B permanent) ; distincts
+# de `ecartee` (qui, elle, sort du produit). Le label C « non vérifiable » n'est PAS un tier :
+# c'est un SIGNAL de fiche (pas de verdict → on ne déclasse pas), traité hors assign_tiers.
+from ...faisabilite.constructibilite import (   # noqa: E402  (constantes pures, sans DB)
+    DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE,
+)
+
 
 @dataclass(frozen=True)
 class TierParams:
@@ -74,6 +82,10 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     rang = pd.to_numeric(df["rang"], errors="coerce")
     event_age = pd.to_numeric(df["event_age_mois"], errors="coerce")
     c_ok = plancher_c(df, params)
+    # déclassement A/B (colonne optionnelle → rétro-compatible : absente = aucun déclassement).
+    dc = (df["declasse_cause"] if "declasse_cause" in df.columns
+          else pd.Series(pd.NA, index=df.index))
+    declasse = dc.isin([DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE])
     was_hot = (prev_tier.isin([TIER_CHAUDE, TIER_BRULANTE])
                if prev_tier is not None else pd.Series(False, index=df.index))
     event_recent = event_age <= params.event_bypass_mois
@@ -82,7 +94,7 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     entree = rang <= params.n_entree
     maintien = was_hot & (rang <= params.n_sortie)
     bypass = event_recent & (rang <= params.n_sortie)
-    chaude = (entree | maintien | bypass) & c_ok & ~df["copro"] & ~df["ecartee_etage0"]
+    chaude = (entree | maintien | bypass) & c_ok & ~df["copro"] & ~df["ecartee_etage0"] & ~declasse
 
     # ---- brûlante : doctrine « un contexte seul ne franchit jamais un seuil » --
     contrib_d = pd.to_numeric(df["contrib_d"], errors="coerce").fillna(-np.inf)
@@ -95,12 +107,16 @@ def assign_tiers(df: pd.DataFrame, params: TierParams,
     sdp_pos = sdp[sdp > 0]
     seuil_c = float(sdp_pos.quantile(0.9)) if len(sdp_pos) else np.inf
     p = pd.to_numeric(df["p"], errors="coerce")
-    reserve = (sdp >= seuil_c) & (p < p.median()) & ~df["ecartee_etage0"] & ~chaude
+    reserve = (sdp >= seuil_c) & (p < p.median()) & ~df["ecartee_etage0"] & ~chaude & ~declasse
 
     tier = pd.Series(TIER_A_CREUSER, index=df.index)
     tier[reserve] = TIER_RESERVE
     tier[chaude] = TIER_CHAUDE
     tier[brulante] = TIER_BRULANTE
+    # déclassement : prime sur les tiers normaux (les A/B ne sont ni chaude ni réserve par les
+    # masques ci-dessus, et écrasent a_creuser), MAIS l'étage 0 dur prime sur le déclassement.
+    tier[dc == DECLASSE_ZONE_FERMEE] = DECLASSE_ZONE_FERMEE
+    tier[dc == DECLASSE_NON_CONSTRUCTIBLE] = DECLASSE_NON_CONSTRUCTIBLE
     tier[df["ecartee_etage0"]] = TIER_ECARTEE
     return tier
 

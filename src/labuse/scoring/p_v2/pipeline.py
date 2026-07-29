@@ -246,11 +246,29 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
     df["event_age_mois"] = (now - pd.to_datetime(df["event_date"])).dt.days / 30.44
     _ = asof  # l'âge des événements est relatif à AUJOURD'HUI (fraîcheur produit)
 
+    # Déclassement étage 0 (tête de liste non constructible) — label A/B/C depuis le cache
+    # `parcel_constructibilite` (verdict MOTEUR, jamais resolve_zone(name) : garde-fou 21 077).
+    # A (zone fermée) / B (parcelle inconstructible) sortent des tiers de tête mais restent
+    # VISIBLES dans un tier dédié avec motif ; C « non vérifiable » est un SIGNAL de fiche,
+    # PAS un déclassement. Table absente → colonne None partout = comportement d'avant.
+    from ...faisabilite.constructibilite import (
+        DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE)
+    df["declasse_cause"] = None
+    if session.execute(text("SELECT to_regclass('parcel_constructibilite') IS NOT NULL")).scalar():
+        dcl = pd.read_sql(text("SELECT pp.idu, c.label FROM parcel_constructibilite c "
+                               "JOIN parcels pp ON pp.id = c.parcel_id"), session.connection())
+        if len(dcl):
+            df = df.merge(dcl, on="idu", how="left")
+            df["declasse_cause"] = df["label"]
+            df = df.drop(columns=["label"])
+
     # tiers : calibrage N_e (effectif chaude ~1 150) puis hystérésis vs run précédent
     work = df.assign(rang=rang, p=p, contrib_d=contrib["contrib_D"].to_numpy())
     from .statuts import plancher_c
     base_params = TierParams(n_entree=1, n_sortie=1)
-    eligibles = work[~work["copro"] & ~work["ecartee_etage0"]
+    _declasse_ab = work["declasse_cause"].isin(
+        [DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE])
+    eligibles = work[~work["copro"] & ~work["ecartee_etage0"] & ~_declasse_ab
                      & plancher_c(work, base_params)]
     n_e = calibre_n_entree(eligibles["rang"], cible=1150)
     params = TierParams(n_entree=n_e, n_sortie=int(round(1.4 * n_e)))

@@ -881,6 +881,7 @@ def create_all(engine) -> None:
     ensure_geom_2975(engine)
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
+    ensure_constructibilite_cache(engine)   # déclassement étage 0 (tête de liste non constructible)
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
     ensure_bodacc_view(engine)
@@ -1349,6 +1350,21 @@ def ensure_residuel_cache(engine) -> None:
         c.execute(_t("ALTER TABLE parcel_residuel ADD COLUMN IF NOT EXISTS capacite_estimee boolean"))
 
 
+def ensure_constructibilite_cache(engine) -> None:
+    """Cache du verdict de constructibilité (déclassement étage 0) — évite de relancer la
+    faisabilité par parcelle au scoring. `label` : declasse_zone_fermee (A) / declasse_non_
+    constructible (B) / non_verifiable (C) ; NULL = constructible. `motif` = phrase produit.
+    Idempotent. Rafraîchi par `labuse compute-constructibilite`."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        c.execute(_t(
+            "CREATE TABLE IF NOT EXISTS parcel_constructibilite ("
+            " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
+            " label varchar(32), motif text, cause varchar(24),"
+            " computed_at timestamptz NOT NULL DEFAULT now())"))
+
+
 def ensure_schema(engine) -> None:
     """Réconciliation LÉGÈRE et idempotente du schéma (boot / doctor / prepare-pilot).
 
@@ -1366,6 +1382,7 @@ def ensure_schema(engine) -> None:
     ensure_enrichment_cache(engine)
     ensure_parcel_origine(engine)
     ensure_residuel_cache(engine)
+    ensure_constructibilite_cache(engine)   # déclassement étage 0 (tête de liste non constructible)
     ensure_saved_filters(engine)
     ensure_personnes_morales(engine)
     ensure_bodacc_view(engine)

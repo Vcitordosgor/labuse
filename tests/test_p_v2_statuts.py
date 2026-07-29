@@ -84,6 +84,25 @@ def test_copro_et_etage0_jamais_chaudes():
     assert r[0] == TIER_ECARTEE                      # l'étage 0 prime sur tout
 
 
+def test_declassement_A_B_retire_des_tiers_de_tete():
+    from labuse.faisabilite.constructibilite import (
+        DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE)
+    # rang 1 (serait brûlante/chaude) mais zone fermée → tier dédié A, PAS chaude
+    rA = tiers([base_row(rang=1, contrib_d=0.9, event_age_mois=1,
+                         declasse_cause=DECLASSE_ZONE_FERMEE)])
+    assert rA[0] == DECLASSE_ZONE_FERMEE
+    # parcelle inconstructible → tier dédié B, jamais confondu avec A
+    rB = tiers([base_row(rang=1, declasse_cause=DECLASSE_NON_CONSTRUCTIBLE)])
+    assert rB[0] == DECLASSE_NON_CONSTRUCTIBLE
+    assert rA[0] != rB[0]
+    # l'étage 0 dur prime même sur le déclassement
+    rE = tiers([base_row(rang=1, ecartee_etage0=True,
+                         declasse_cause=DECLASSE_ZONE_FERMEE)])
+    assert rE[0] == TIER_ECARTEE
+    # colonne absente = aucun déclassement (rétro-compatibilité)
+    assert tiers([base_row(rang=1)])[0] == TIER_CHAUDE
+
+
 def test_brulante_exige_contribution_non_zone():
     # chaude + événement récent MAIS contribution D sous le seuil → PAS brûlante
     # (doctrine : un contexte seul ne franchit jamais un seuil)
