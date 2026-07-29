@@ -22,3 +22,13 @@ constructible légitime, PAS une dette) ; **2 743 en U/AU = la vraie dette** « 
 Corrigé à la source (`PLU_NUIT_PHASE4_MESURES.md §7`). **La dette réelle vaut 2 743**, plus jamais
 « 21 671 muettes ». (Le « 12 000 capacité renseignée » = 12 238 − 238, rond par coïncidence, pas un
 cap — cf. V8_VERIF_RAPPORT B'.3.)
+
+## 4 · Le hard-exclude « déjà bâti » traverse plusieurs mécanismes (à traiter ensemble)
+Le signal « déjà bâti » (parcelle déjà construite à N %) intervient dans AU MOINS deux mécanismes
+indépendants : (a) l'ÉCARTEMENT cascade (couche `bati`, `faux_positif_probable`) et (b) la DÉTECTION
+O12 (`bati_ratio` 0,08-0,45 = prémisse). Ils tirent en sens OPPOSÉ : la cascade veut écarter le bâti,
+O12 veut précisément le bâti-avec-résiduel-détachable. **Traiter ENSEMBLE, pas séparément.**
+Arbitrage Vic (30/07) : `faux_positif_probable` = probabilité, pas fait → ne jamais écarter O12
+dessus (garde restreinte à `status='exclue'`). **Solution cible** : filtre CLIENT + hiérarchisation
+par ANNÉE DE CONSTRUCTION (DPE ADEME / BDNB), étiquetée **Sourcé / Absent** — laisser l'utilisateur
+juger un bâti récent vs ancien plutôt que le moteur écarter au soupçon.

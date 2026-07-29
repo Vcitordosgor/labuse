@@ -250,13 +250,16 @@ FROM zon
 WHERE facade_free >= 12
   AND (zone = 'U' OR zone LIKE 'AU%' OR (zone IS NULL AND ({pau_pred})))
   -- O12-GARDE (Vic 30/07) : garde de CONSTRUCTIBILITÉ EN AMONT. Un candidat dont la parcelle
-  -- SUPPORT est hard-exclue à l'étage 0 du RUN SERVI (`:served` = Q_A_RUN_LABEL → la garde SUIT
-  -- automatiquement toute bascule future), OU marquée non constructible (`parcel_constructibilite`
-  -- declasse_*), n'est PAS candidat. Point. (Un candidat géométrique sur foncier fermé/inconstructible
-  -- ne doit pas être exposé comme opportunité — 3 cas trouvés au mandat V8-VERIF.)
+  -- SUPPORT est écartée DÉFINITIVEMENT à l'étage 0 du RUN SERVI (`:served` = Q_A_RUN_LABEL → la
+  -- garde SUIT automatiquement toute bascule future), OU marquée non constructible
+  -- (`parcel_constructibilite` declasse_*), n'est PAS candidat.
+  -- Restreint à `status = 'exclue'` (fait DÉFINITIF : PPR rouge, foncier public…), PAS
+  -- `faux_positif_probable` (arbitrage Vic 30/07 : c'est une probabilité, pas un fait — écarter
+  -- dessus serait écarter au soupçon ; et le bâti-avec-résiduel-détachable EST la prémisse d'O12,
+  -- cohérent avec l'arbitrage produit du 29/07 : le bâti n'est pas disqualifiant par principe).
   AND NOT EXISTS (SELECT 1 FROM dryrun_parcel_evaluations de
                   WHERE de.parcel_id = zon.id AND de.run_label = :served
-                    AND de.status IN ('exclue', 'faux_positif_probable'))
+                    AND de.status = 'exclue')
   AND ({constr_guard})
   AND (variante = 'libre' OR bati_lot_m2 * 3 <= bat_m2)
   -- O12-PARTIEL-2 §4 : zonages d'activité exclus AUSSI du pool résiduel — par CODE (config)

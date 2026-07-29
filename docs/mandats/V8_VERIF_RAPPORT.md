@@ -342,3 +342,21 @@ visuellement avant exposition.
 ## Point d'arrêt
 Garde CODÉE, table servie `division_or_candidates` INTOUCHÉE, aucune bascule. En attente :
 arbitrage sur les 3 « déjà bâti » + revue visuelle → puis recompute O12 + bascule q_v8.
+
+---
+# O12-GARDE — ARBITRÉE (Vic 30/07) : garde à `status='exclue'` seul
+
+Garde restreinte : `faux_positif_probable` RETIRÉ du critère de drop (probabilité ≠ fait ; le
+bâti-avec-résiduel EST la prémisse O12 — cohérent avec l'arbitrage bâti du 29/07). Code : `_DETECT`
+→ `de.status = 'exclue'` (+ `parcel_constructibilite` declasse_*).
+
+**Recompte à blanc CONFIRMÉ : 24 candidats survivent, 11 tombent (définitifs).**
+- **GARDÉS (arbitrage, +3)** : 97415000BV0182 (Saint-Paul, résiduel 520, bâti 40 %),
+  97418000AV2092 (Sainte-Marie, 535, 32 %), 97420000BH1036 (Sainte-Suzanne, 883, 30 %) — « déjà
+  bâti » (faux_positif_probable), désormais GARDÉS.
+- **11 DROPS définitifs confirmés** : 3 non-constructibles (BK0219, ES0629, HX0339) + 8 PPR rouge /
+  foncier public (CH0320, AM0461, CM0268, CR0068, CH1198, CP0511, DS0617, CL0575).
+
+**Revue visuelle** : `O12_GARDE_REVUE_MANIFEST.txt` — les 3 « déjà bâti » EN TÊTE (rang 1), à
+trancher en premier par Vic, ortho à l'appui. Table servie `division_or_candidates` **INTOUCHÉE**,
+aucune exposition, aucune bascule.
