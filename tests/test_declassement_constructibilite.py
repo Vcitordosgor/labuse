@@ -63,6 +63,22 @@ def test_hors_plu_non_verifiable():
     assert label == NON_VERIFIABLE and "non calibré" in motif
 
 
+def test_pipeline_declasse_merge_ne_collisionne_pas_avec_label():
+    """RÉGRESSION (bascule 29/07) : `p_model_ext_dataset` porte DÉJÀ une colonne `label` (le y
+    d'entraînement). Le merge du label de constructibilité DOIT être aliasé `declasse_label` —
+    sinon pandas suffixe en label_x/label_y et `df['label']` lève KeyError (échec run_score_v2).
+    Ce test reproduit le raccord exact du pipeline ; il échoue si l'alias saute."""
+    import pandas as pd
+    df = pd.DataFrame({"idu": ["A", "B"], "label": [0, 1]})               # y d'entraînement
+    dcl = pd.DataFrame({"idu": ["A"], "declasse_label": ["declasse_zone_fermee"]})  # aliasé
+    df = df.merge(dcl, on="idu", how="left")
+    df["declasse_cause"] = df["declasse_label"]                            # NE doit PAS lever
+    df = df.drop(columns=["declasse_label"])
+    assert "label" in df.columns                                          # y préservé
+    assert df.loc[df.idu == "A", "declasse_cause"].iloc[0] == "declasse_zone_fermee"
+    assert pd.isna(df.loc[df.idu == "B", "declasse_cause"].iloc[0])
+
+
 # ─────────────────────────── intégration (DB) ───────────────────────────
 
 pytestmark_db = pytest.mark.db

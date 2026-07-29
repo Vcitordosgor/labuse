@@ -3,7 +3,7 @@
 Un agrégat n'est pas une liste filtrée : le client demande un NOMBRE (« combien de brûlantes à
 Saint-Paul ? », « quelle commune en a le plus ? »). Boussole (Vic), deux règles de fer :
 
-  1. Le chiffre vient TOUJOURS d'une requête SQL réelle sur le run servi (q_v6_m8), JAMAIS du modèle.
+  1. Le chiffre vient TOUJOURS d'une requête SQL réelle sur le run servi (Q_A_RUN_LABEL), JAMAIS du modèle.
      Le résultat SQL devient le CONTEXTE AUTORISÉ (chiffres étiquetés SOURCÉ) ; l'IA se contente de
      FORMULER (« Saint-Paul compte 28 parcelles brûlantes »).
   2. La couche 2 du socle (`validate_output`) vérifie mécaniquement que chaque chiffre de la réponse

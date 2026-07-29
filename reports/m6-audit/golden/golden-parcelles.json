@@ -60,15 +60,8 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "declasse_zone_fermee",
-   "validation": "coherence",
-   "realign_m26": {
-    "ancien_tier": "a_creuser",
-    "nouveau_tier": "declasse_zone_fermee",
-    "type": "A",
-    "motif": "Déclassée — zone fermée à l'urbanisation (secteur de transition AUes/AU*st). Source : Art. AUes 1.2 et AUes 2, p.42 ; Art. AUes 10, p.43.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
-   }
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
   },
   "97401000AD0095": {
    "anchor": true,
@@ -477,15 +470,8 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "declasse_non_constructible",
-   "validation": "coherence",
-   "realign_m26": {
-    "ancien_tier": "a_creuser",
-    "nouveau_tier": "declasse_non_constructible",
-    "type": "B",
-    "motif": "Déclassée — parcelle inconstructible : terrain trop exigu compte tenu des reculs (3 m), zone Ub.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
-   }
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
   },
   "97404000AC0011": {
    "anchor": true,
@@ -686,15 +672,8 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "declasse_non_constructible",
-   "validation": "coherence",
-   "realign_m26": {
-    "ancien_tier": "a_creuser",
-    "nouveau_tier": "declasse_non_constructible",
-    "type": "B",
-    "motif": "Déclassée — parcelle inconstructible : terrain trop exigu compte tenu des reculs (3,5 m), zone Ur.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
-   }
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
   },
   "97407000AB0009": {
    "anchor": true,
@@ -723,15 +702,8 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "declasse_zone_fermee",
-   "validation": "coherence",
-   "realign_m26": {
-    "ancien_tier": "reserve_fonciere",
-    "nouveau_tier": "declasse_zone_fermee",
-    "type": "A",
-    "motif": "Déclassée — zone fermée à l'urbanisation (Ue, habitat interdit). Source : Art. Ue 2, p.80 et Ue 8, p.82.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
-   }
+   "tier_v2": "reserve_fonciere",
+   "validation": "coherence"
   },
   "97407000BI0350": {
    "api": {
@@ -758,7 +730,7 @@
       "mult_base": 5.85,
       "percentile": 99.84,
       "rang": 706,
-      "tier": "declasse_non_constructible"
+      "tier": "chaude"
      },
      "statut": "a_creuser",
      "surface_m2": 683,
@@ -771,7 +743,7 @@
      "percentile": 99.84,
      "rang": 706,
      "run_id": "q_v7_defisc",
-     "tier": "declasse_non_constructible"
+     "tier": "chaude"
     }
    },
    "coherence_db_api": [],
@@ -821,7 +793,7 @@
      "mult_base": 5.85,
      "percentile": 99.8,
      "rang": 706,
-     "tier": "declasse_non_constructible"
+     "tier": "chaude"
     },
     "section": "BI",
     "solaire": {
@@ -844,13 +816,6 @@
      "recouvrement_pct": null,
      "zone": "AUc"
     }
-   },
-   "realign_m26": {
-    "ancien_tier": "chaude",
-    "nouveau_tier": "declasse_non_constructible",
-    "type": "B",
-    "motif": "Déclassée — parcelle inconstructible : terrain trop exigu compte tenu des reculs (3 m), zone 1AUa.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
    }
   },
   "97408000AB0007": {
@@ -1653,15 +1618,8 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "chaude",
-   "validation": "coherence",
-   "realign_m26": {
-    "ancien_tier": "a_creuser",
-    "nouveau_tier": "chaude",
-    "type": "rerank",
-    "motif": "Re-classement post-déclassement, seuil recalibré (n_entree 2676->2944) — constructibilité INCHANGÉE (a_creuser->chaude, refill).",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
-   }
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
   },
   "97411000AB0006": {
    "anchor": true,
@@ -2221,15 +2179,8 @@
    "etage0": false,
    "matrice_statut": "a_creuser",
    "motif": null,
-   "tier_v2": "declasse_non_constructible",
-   "validation": "coherence",
-   "realign_m26": {
-    "ancien_tier": "a_creuser",
-    "nouveau_tier": "declasse_non_constructible",
-    "type": "B",
-    "motif": "Déclassée — parcelle inconstructible : terrain trop exigu compte tenu des reculs (3 m), zone UC.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
-   }
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
   },
   "97413000CS0160": {
    "api": {
@@ -2564,7 +2515,7 @@
       "mult_base": 13.07,
       "percentile": 99.99,
       "rang": 33,
-      "tier": "declasse_non_constructible"
+      "tier": "a_creuser"
      },
      "statut": "ecartee",
      "surface_m2": 130,
@@ -2577,7 +2528,7 @@
      "percentile": 99.99,
      "rang": 33,
      "run_id": "q_v7_defisc",
-     "tier": "declasse_non_constructible"
+     "tier": "a_creuser"
     }
    },
    "coherence_db_api": [],
@@ -2624,7 +2575,7 @@
      "mult_base": 13.07,
      "percentile": 100.0,
      "rang": 33,
-     "tier": "declasse_non_constructible"
+     "tier": "a_creuser"
     },
     "section": "CW",
     "solaire": {
@@ -2648,13 +2599,6 @@
      "recouvrement_pct": null,
      "zone": null
     }
-   },
-   "realign_m26": {
-    "ancien_tier": "a_creuser",
-    "nouveau_tier": "declasse_non_constructible",
-    "type": "B",
-    "motif": "Déclassée — parcelle inconstructible : terrain trop exigu compte tenu des reculs (3 m), zone AU3a.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
    }
   },
   "97415000CX1395": {
@@ -3759,15 +3703,8 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "chaude",
-   "validation": "coherence",
-   "realign_m26": {
-    "ancien_tier": "brulante",
-    "nouveau_tier": "chaude",
-    "type": "rerank",
-    "motif": "Re-classement post-déclassement, seuil recalibré (top-décile brûlante 1,7468->1,7484) — constructibilité INCHANGÉE (brulante->chaude, refill, parcelle-frontière).",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
-   }
+   "tier_v2": "brulante",
+   "validation": "coherence"
   },
   "97422000AB0001": {
    "anchor": true,
@@ -3814,7 +3751,7 @@
       "mult_base": 21.99,
       "percentile": 100.0,
       "rang": 17,
-      "tier": "declasse_zone_fermee"
+      "tier": "brulante"
      },
      "statut": "a_creuser",
      "surface_m2": 599,
@@ -3827,7 +3764,7 @@
      "percentile": 100.0,
      "rang": 17,
      "run_id": "q_v7_defisc",
-     "tier": "declasse_zone_fermee"
+     "tier": "brulante"
     }
    },
    "coherence_db_api": [],
@@ -3882,7 +3819,7 @@
      "mult_base": 21.99,
      "percentile": 100.0,
      "rang": 17,
-     "tier": "declasse_zone_fermee"
+     "tier": "brulante"
     },
     "section": "AD",
     "solaire": {
@@ -3902,13 +3839,6 @@
      "recouvrement_pct": null,
      "zone": "AUs"
     }
-   },
-   "realign_m26": {
-    "ancien_tier": "brulante",
-    "nouveau_tier": "declasse_zone_fermee",
-    "type": "A",
-    "motif": "Déclassée — zone fermée à l'urbanisation (2AUd). Source : ZONE AUindicée, Art. 2.2.3, p.84.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
    }
   },
   "97422000AS0911": {
@@ -3918,15 +3848,8 @@
    "etage0": false,
    "matrice_statut": "ecartee",
    "motif": null,
-   "tier_v2": "declasse_non_constructible",
-   "validation": "coherence",
-   "realign_m26": {
-    "ancien_tier": "a_creuser",
-    "nouveau_tier": "declasse_non_constructible",
-    "type": "B",
-    "motif": "Déclassée — parcelle inconstructible : contrainte rédhibitoire malgré le zonage (R+2 théorique), zone Uc.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
-   }
+   "tier_v2": "a_creuser",
+   "validation": "coherence"
   },
   "97422000AX1253": {
    "api": {
@@ -3953,7 +3876,7 @@
       "mult_base": 13.07,
       "percentile": 99.99,
       "rang": 56,
-      "tier": "declasse_zone_fermee"
+      "tier": "chaude"
      },
      "statut": "ecartee",
      "surface_m2": 27084,
@@ -3966,7 +3889,7 @@
      "percentile": 99.99,
      "rang": 56,
      "run_id": "q_v7_defisc",
-     "tier": "declasse_zone_fermee"
+     "tier": "chaude"
     }
    },
    "coherence_db_api": [],
@@ -4017,7 +3940,7 @@
      "mult_base": 13.07,
      "percentile": 100.0,
      "rang": 56,
-     "tier": "declasse_zone_fermee"
+     "tier": "chaude"
     },
     "section": "AX",
     "solaire": {
@@ -4037,13 +3960,6 @@
      "recouvrement_pct": null,
      "zone": "AUs"
     }
-   },
-   "realign_m26": {
-    "ancien_tier": "chaude",
-    "nouveau_tier": "declasse_zone_fermee",
-    "type": "A",
-    "motif": "Déclassée — zone fermée à l'urbanisation (2AUe). Source : ZONE AUindicée, Art. 2.2.3, p.84.",
-    "note": "Réaligné M26 (déclassement tête-de-liste, 29/07) — valeur ATTENDUE post-bascule du run avec déclassement ; jusqu'à la bascule, l'API sert encore l'ancienne valeur."
    }
   },
   "97422000BY0489": {

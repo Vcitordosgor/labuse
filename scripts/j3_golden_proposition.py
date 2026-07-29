@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+# ─────────────────────────────────────────────────────────────────────────────
+# SCRIPT DÉPENSÉ — one-shot déjà exécuté (golden/bascule A-1, juillet 2026).
+# NON REJOUABLE EN L'ÉTAT : le run référencé `q_v6_m8` a été PURGÉ le 30/07/2026
+# (libération disque, bascule v8 ; q_v6_m8 = ancien champion pré-v7, obsolète).
+# Une relance échouera/rendra vide. Pour rejouer : viser Q_A_RUN_LABEL (run servi).
+# ─────────────────────────────────────────────────────────────────────────────
 """PHASE 0 J3 étape 1 — PROPOSITION de ~88 parcelles golden additionnelles (stratifiées).
 
 LECTURE SEULE. Sélection DÉTERMINISTE (ORDER BY reproductible) qui, en plus des 32 golden

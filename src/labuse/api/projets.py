@@ -554,7 +554,7 @@ def _counts(db: Session, pid: int) -> dict:
 
 
 def _search_items(db: Session, fiche: dict, limit: int, overrides: dict | None = None) -> list[dict]:
-    """RÉUTILISE la recherche existante (M22 si programme, sinon run servi q_v6_m8) — même
+    """RÉUTILISE la recherche existante (M22 si programme, sinon run servi Q_A_RUN_LABEL) — même
     source que /apercu, jamais un re-scoring. Renvoie les items ordonnés (best-first).
     `overrides` assouplit les filtres dérivés (chercher plus : communes=None → île, surfaceMin↓)."""
     filtres = derive_filtres(fiche)

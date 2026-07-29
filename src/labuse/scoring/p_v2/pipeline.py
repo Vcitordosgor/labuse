@@ -255,12 +255,15 @@ def run_score_v2(session: Session, *, run_id: str | None = None,
         DECLASSE_ZONE_FERMEE, DECLASSE_NON_CONSTRUCTIBLE)
     df["declasse_cause"] = None
     if session.execute(text("SELECT to_regclass('parcel_constructibilite') IS NOT NULL")).scalar():
-        dcl = pd.read_sql(text("SELECT pp.idu, c.label FROM parcel_constructibilite c "
+        # ALIAS `declasse_label` OBLIGATOIRE : `df` (p_model_ext_dataset) porte DÉJÀ une colonne
+        # `label` (le label d'entraînement y) — un merge sur `label` la suffixerait en label_x/_y
+        # et casserait le pipeline (KeyError 'label', bascule 29/07).
+        dcl = pd.read_sql(text("SELECT pp.idu, c.label AS declasse_label FROM parcel_constructibilite c "
                                "JOIN parcels pp ON pp.id = c.parcel_id"), session.connection())
         if len(dcl):
             df = df.merge(dcl, on="idu", how="left")
-            df["declasse_cause"] = df["label"]
-            df = df.drop(columns=["label"])
+            df["declasse_cause"] = df["declasse_label"]
+            df = df.drop(columns=["declasse_label"])
 
     # tiers : calibrage N_e (effectif chaude ~1 150) puis hystérésis vs run précédent
     work = df.assign(rang=rang, p=p, contrib_d=contrib["contrib_D"].to_numpy())

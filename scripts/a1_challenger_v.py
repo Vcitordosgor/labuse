@@ -1,3 +1,9 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SCRIPT DÉPENSÉ — one-shot déjà exécuté (golden/bascule A-1, juillet 2026).
+# NON REJOUABLE EN L'ÉTAT : le run référencé `q_v6_m8` a été PURGÉ le 30/07/2026
+# (libération disque, bascule v8 ; q_v6_m8 = ancien champion pré-v7, obsolète).
+# Une relance échouera/rendra vide. Pour rejouer : viser Q_A_RUN_LABEL (run servi).
+# ─────────────────────────────────────────────────────────────────────────────
 """PHASE A-1 étape 2, volet 3 — CHALLENGER « composante V défisc » (dérivé de q_v6_m8).
 
 Matérialise un run challenger dans SON PROPRE run_id, dérivé du run servi `q_v6_m8` + une composante V

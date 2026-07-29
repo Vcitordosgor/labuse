@@ -1,0 +1,186 @@
+# V8-VERIF — Rapport (résultats bruts A + C)
+
+> Lecture seule. Aucun fichier de production modifié, aucun recalcul, aucune purge, aucun rollback.
+> Branche dédiée `verif/v8-calibre`. **Points A et C rendus ; B NON abordé (gated derrière feu vert A).**
+> Boussole : les écarts sont rapportés tels quels, non lissés.
+
+---
+
+## POINT D'ARRÊT A — provenance des 85 537 reprises (BLOQUANT)
+
+### A.1/A.2 — horodatage + version de code, par commune (run `q_v8_calibre`)
+Journalisation disponible par ligne : `dryrun_parcel_evaluations.created_at` (horodatage d'écriture)
++ `.rules_version` (hash de config de règles) ; `dryrun_cascade_results.created_at`. **Pas de SHA de
+CODE git par ligne.**
+
+**`rules_version` = `b5b513abae46` — IDENTIQUE sur les 431 663 lignes / 24 communes** (reprises
+comprises : Saint-Paul, La Possession, L'Étang-Salé, Saint-Pierre).
+
+**Horodatages `created_at` par commune (ordre chronologique) :**
+- Saint-Paul : 29/07 **19:09:38 → 19:50:37**
+- *(écart de 1 h 17 min 39 s)*
+- La Possession 21:08 → L'Étang-Salé 21:21 → Saint-Pierre 21:30→22:22 → Le Tampon 22:22 → … →
+  Cilaos 30/07 **00:44 → 00:47**.
+- **Toutes les transitions inter-communes = quelques secondes à ~1 min (continues), SAUF l'écart
+  unique de 1 h 17 min entre Saint-Paul (fin 19:50) et La Possession (début 21:08).**
+
+**Écart constaté, rapporté tel quel (non expliqué)** : `parcel_residuel` (lu par la couche
+`residuel_socle` de la cascade) porte un `computed_at` postérieur (22:08) à la cascade de Saint-Paul
+(19:09). Cela signifie que la migration de `parcel_residuel` a (ré)écrit après que Saint-Paul a été
+cascadé. `migrate_residuel` étant déterministe (copie de `parcel_residuel_rerun WHERE dispo_rerun`,
+253 328 lignes constantes), le CONTENU est le même à chaque migration — mais le fait est signalé.
+
+### A.3 — comparaison reprises vs communes post-refonte
+- `rules_version` : **IDENTIQUE** (b5b513abae46) entre reprises et communes calculées après refonte
+  (Le Tampon, Saint-Denis, Cilaos).
+- Header du run de score `q_v8_calibre` : `model_sha256 = 00a58008143d5260…` = **le champion figé
+  INCHANGÉ** (identique à q_v6_m8/q_v7_defisc) ; `computed_at` 30/07 00:48 (après la fin de cascade
+  00:47), durée 240 s → le scoring a tourné UNE fois, à la fin, avec l'artifact gelé.
+
+### A.4 — le code producteur N'EST PAS journalisé ligne à ligne (dit explicitement)
+`rules_version` est un hash de la **CONFIG de règles** (YAML), **PAS un SHA de code git**. Le refonte
+a modifié le **CODE** (cache pré-subdivisé de `prime` dans `context.py`, commit dbca5ab **29/07
+19:44**), sans toucher les règles YAML → `rules_version` reste identique et **ne prouve donc PAS
+l'identité du code par ligne**. Je ne l'infère pas.
+
+**Éléments circonstanciels (rapportés, non concluants seuls) :**
+- Le script de bascule **refondu** (cascade native, commit f657e63) est daté **29/07 17:06**, soit
+  AVANT la première écriture de cascade (Saint-Paul 19:09). La refonte de la re-passe existait donc
+  avant toute ligne.
+- Le seul changement de CODE de cascade PENDANT le run est le cache `prime` (dbca5ab, 19:44). J'ai
+  mesuré ce changement dans un mandat précédent : coverage **bit-identique** (écart 0,0). Saint-Paul
+  (19:09–19:50) chevauche ce commit ; un process en cours ne recharge pas son code → Saint-Paul a
+  été produit par la version « à la volée », les communes tardives par la version « cache » —
+  **résultat prouvé identique**, mais ce sont deux états de code.
+
+**VERDICT A : NI « IDENTIQUE » NI « DIVERGENT » prouvés par la journalisation** — le code n'est pas
+tracé par ligne (seul un hash de config l'est, et il est identique). La preuve définitive exige le
+**CONTRÔLE DE SUBSTITUTION**, que je PROPOSE et n'exécute pas (interdit : aucun recalcul sans
+validation) :
+
+> Recalcul À BLANC de 50 parcelles reprises (échantillon Saint-Paul, la seule reprise pré-écart)
+> dans un label isolé, comparaison des champs DÉTERMINISTES (`matrice_statut`, `q_score`, `a_score`,
+> et le multiset `(layer, result, weight_applied)` par parcelle) avec les valeurs stockées de
+> `q_v8_calibre`. Champs non déterministes connus (ordre des lignes `risques`/`zonage`, cf. note
+> non-déterminisme) exclus de la comparaison bit-à-bit. IDENTIQUE ⇒ les reprises = ce que le code
+> courant produit ⇒ équivalence d'ÉTAT prouvée (Principe 6). DIVERGENT ⇒ arrêt.
+
+**→ S'ARRÊTE ICI. Attente feu vert Vic pour le contrôle de substitution. B NON abordé.**
+
+---
+
+## POINT C — état git (parallèle de A)
+
+`origin/main` HEAD = `4bc610f` (merge de `mesure/repli-non-optimiste-phaseA`, jusqu'à `9aae96a`).
+
+**SUR origin/main (mergé) :**
+- Correctif « tête de liste » : `constructibilite.py` ✓, `statuts.py` (DECLASSE_ZONE_FERMEE ×3) ✓.
+- `compute_bilan_servi` (charge foncière) : `bilan.py` ✓.
+
+**ABSENT de origin/main (RISQUE — garde n°4 / Principe 7) :**
+- **`scripts/bascule_v8_calibre.py` — ABSENT.** Le script qui a PRODUIT le run q_v8 n'est pas sur main.
+- **`context.py` sur main N'A PAS le cache `spatial_layers_sub`** (0 occurrence) — c'est la version
+  « prime à la volée », PAS celle (cache) qui a produit q_v8. Le code de cascade qui a produit q_v8
+  diffère de celui de main (résultats prouvés identiques, mais code différent).
+- **18 commits locaux absents de origin/main**, dont TOUS les commits critiques de la bascule :
+  `164a6c5` (scripts bascule), `4d95402` (fix KeyError), `eb1ce17` (fix varchar), `f657e63` (script
+  refondu), `dbca5ab` (perf cache), `46a2b02`+`edb57bb` (gardes), `ad872ce`+`2585626` (rollback/golden),
+  + les notes et nettoyages. Liste complète en annexe.
+
+**Branches non mergées dans origin/main** (extrait) : `mesure/repli-non-optimiste-phaseA` (au-delà de
+9aae96a), `mesure/cout-par-taille-phaseA`, `mesure/couverture-prix-phase-a`,
+`mesure/prix-sortie-consommateurs-A`, `verif/v8-calibre`, + plusieurs `origin/*` anciennes.
+
+**Constat C (Principe 7)** : le run servi candidat `q_v8_calibre` a été produit par du code
+(script de bascule + cache cascade) qui **n'est pas sur `origin/main`**. La garde n°4 (« code
+d'application sur main ») n'est pas satisfaite pour la chaîne de bascule. Aucun merge effectué
+(interdit respecté) — c'est un constat, pas une action.
+
+---
+
+*Aucune modification servie. `q_v7_defisc` (run servi actuel) intact : 120/1031/3587/72980/353945.
+Scripts de vérification : requêtes SQL consignées dans `scripts/verif_v8_provenance.sql`.*
+
+---
+# EXTENSION — A', A'', C' (30/07)
+
+## A' — parcel_residuel (incident traité)
+- **A'.1** : `parcel_residuel` a **UNE seule valeur de `computed_at` = 29/07 22:08:46** sur les
+  253 328 lignes → la table entière a été (ré)écrite en un seul `migrate`, en cours de cascade.
+- **A'.2** : cascadées **AVANT 22:08** (ont lu le residuel ensuite écrasé) = **Saint-Paul,
+  La Possession, L'Étang-Salé** (+ les 12 000 premières de Saint-Pierre, cf. A''). **APRÈS** = les
+  21 autres. Les reprises = exactement les communes pré-22:08.
+- **A'.3 (par le code)** : la CASCADE `residuel_socle` lit `parcel_residuel` **EN DIRECT au calcul**
+  (`etage0_ext.py:156` → `context.residuel_sdp` : `SELECT … FROM parcel_residuel WHERE parcel_id=…`).
+  Le SCORING P lit `p_model_static` (copie **FIGÉE** construite par `build_static` au début du run
+  final, `sql.py:261-263,290`). Donc : les reprises ont lu le residuel pré-22:08 pendant leur
+  cascade ; le scoring a lu la copie figée post-22:08 pour tout le monde.
+- **A'.4 (identité de contenu, pas déterminisme)** : checksum md5 du `parcel_residuel` ACTUEL
+  (22:08) = **`15f769ae…`** = checksum du recompute déterministe depuis la source
+  `parcel_residuel_rerun WHERE dispo_rerun` (**IDENTIQUE**). Le contenu 22:08 est donc exactement
+  l'image de la source, prouvé par checksum. **La version pré-22:08 est écrasée (un seul
+  computed_at) → non checksummable directement** ; son identité au contenu 22:08 est prouvée
+  INDIRECTEMENT par A'' (le residuel_socle des reprises == recompute avec le residuel 22:08).
+  (`parcel_residuel_rerun` n'a pas de colonne d'horodatage — artefact de mesure statique.)
+
+## A'' — Contrôle de substitution — VERDICT : **IDENTIQUE**
+- **Point de coupure identifié** : dans Saint-Pierre, **gap de 26 min 08 s** entre la ligne 12000
+  (~21:43, dernière reprise) et la ligne 12001 (**parcel_id 104372**, 22:09:19). **12 000 avant /
+  30 425 après.** C'est le seul endroit où deux exécutions se touchent (le `parcel_residuel` a été
+  réécrit à 22:08 pendant ce gap).
+- **Échantillon** : 80 parcelles — 15 Saint-Paul, 10 La Possession, 10 L'Étang-Salé, 45 Saint-Pierre
+  (20 juste avant la coupure + 20 juste après + 5 ailleurs). Recompute à blanc, label isolé.
+- **Commit du recompute : `c867eec`** (HEAD verif/v8-calibre : cache prime + tous les fix).
+- **Précondition prouvée (par le code) avant d'ignorer l'ordre** : le seul aspect non déterministe
+  est l'**ORDRE physique des lignes** risques/zonage. `compute_matrice` (`dryrun.py:50-56`) agrège
+  par `bool_or(HARD_EXCLUDE)` + `sum(weight)` + `bool_or(evenement)` — **ordre-indépendants**. Le
+  tier servi (`pipeline.py:239`) = `status IN (exclue,faux_positif)` (result) + P + déclassement
+  faisabilité — pas le detail/ordre. Donc l'ordre n'alimente **ni matrice, ni q/a, ni tier, ni
+  chiffre servi**. Comparaison faite sur le **multiset complet** (layer, result, weight, **detail**)
+  + matrice_statut/q/a ; seul l'ordre physique est ignoré. **Rien n'est exclu à tort.**
+- **Résultat : 80 comparées, 0 DIVERGENTE.** Multiset (detail inclus) ET matrice/q/a identiques,
+  reprises comme fraîches, de part et d'autre de la coupure.
+- **CONCLUSION A (résolue)** : les 85 537 reprises sont **équivalentes en ÉTAT** (Principe 6, pas
+  inféré de l'effet) à ce que produit le code courant. L'« ancien script défectueux » (qui n'écrivait
+  aucune cascade) est écarté ; les deux états de code intra-run (à-la-volée / cache) sont prouvés
+  résultat-identiques ; le residuel pré-22:08 a produit le même residuel_socle que le 22:08.
+  **Verdict : IDENTIQUE. La base v8 n'est plus suspecte sur ce point.**
+
+## C' — préparer le merge (NE PAS merger)
+`origin/main` (4bc610f) est **incohérent pour le chemin servi** tant que la branche n'est pas mergée :
+- `pipeline.py` sur main = version **buguée** (`df["label"]`, KeyError) — `parcel_constructibilite`
+  existe (11 782 lignes) → un scoring sur main **planterait**. Fix = `4d95402`.
+- `models.py` sur main : `tier varchar(24)` → `declasse_non_constructible` (26 car.) **déborde**.
+  Fix = `eb1ce17`.
+- golden sur main = **réaligné** (realign_m26 ×12) mais revert `ad872ce` absent → golden échoue
+  contre le run servi q_v7.
+
+**Les 19 commits (origin/main..HEAD), classés :**
+
+| hash | change (1 ligne) | chiffre servi | chaîne q_v8 |
+|---|---|---|---|
+| `4d95402` | fix KeyError merge déclassement (pipeline.py) + test | **OUI** (corrige break latent main) | OUI |
+| `eb1ce17` | tier/statut varchar 24→32 (models.py) | **OUI** (corrige débordement main) | OUI |
+| `dbca5ab` | cache prime ×6 + matrice nested-loop (context/models/dryrun) | non (résultat bit-identique prouvé) | OUI |
+| `ad872ce` | golden — retour arrière 12 ancres | non (réf test) — **requis cohérence golden↔q_v7** | non |
+| `9cf351c` | commentaires q_v6_m8 → Q_A_RUN_LABEL | non | non |
+| `164a6c5` | scripts bascule+rollback initiaux + doc | non | OUI |
+| `f657e63` | bascule refondu (cascade native + auto-vérif) | non | OUI |
+| `46a2b02` | gardes bascule (disque + journal) | non | OUI |
+| `edb57bb` | garde disque exacte FSM | non | OUI |
+| `2585626` | fix rollback (snapshot par snapshot_id) | non | non (outil undo) |
+| `2dea488` | en-têtes DÉPENSÉ scripts one-shot | non | non |
+| `90eab34` `fc64071` `4f2fe89` `e1ac1db` `3b9022b` `6e78d4e` `a5f835f` `c867eec` | docs/notes/rapports de mandat | non | non |
+
+**Ordre de merge recommandé** : la branche est une continuation LINÉAIRE de `9aae96a` (que main
+contient via 4bc610f). `merge-tree origin/main HEAD` **exit 0 — zéro conflit**, et l'intersection
+des fichiers modifiés des deux côtés depuis la base est **VIDE**. → **un seul `git merge --no-ff
+verif/v8-calibre`** suffit, sans conflit anticipé. Si Vic veut un sous-ensemble « servi d'abord » :
+`4d95402` + `eb1ce17` + `ad872ce` sont le trio qui **restaure la cohérence du chemin servi sur main**
+(sans eux, main plante au scoring et le golden ne passe pas) — à ne pas dissocier du déclassement
+déjà mergé. **CC ne merge pas ; Vic merge en --no-ff.** (Principe 7 : la purge de q_v6_m8 et le run
+v8 ne sont acquis que quand ces correctifs sont sur main.)
+
+---
+*A' et A'' résolus (VERDICT IDENTIQUE). B reste FERMÉ jusqu'à ton arbitrage. Aucun merge, aucune
+relance, aucune purge. q_v7_defisc servi intact.*

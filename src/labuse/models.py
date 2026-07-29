@@ -291,7 +291,7 @@ class ScoreSnapshotParcelle(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     snapshot_id: Mapped[int] = mapped_column(ForeignKey("score_snapshots.id", ondelete="CASCADE"), index=True)
     parcelle_id: Mapped[str] = mapped_column(String(14), index=True)
-    statut: Mapped[str | None] = mapped_column(String(24))
+    statut: Mapped[str | None] = mapped_column(String(32))   # 32 : reçoit le tier (declasse_* 26 car.)
     v_score: Mapped[int | None] = mapped_column(Integer)
     v_band: Mapped[str | None] = mapped_column(String(8))
     brulante: Mapped[bool] = mapped_column(default=False)
@@ -865,7 +865,9 @@ class ParcelPScoreV2(Base):
     contrib_d: Mapped[float] = mapped_column(Float)
     top5_contributions: Mapped[list | None] = mapped_column(JSONB)
     copro: Mapped[bool] = mapped_column(default=False)
-    tier: Mapped[str | None] = mapped_column(String(24))
+    # 32 (et non 24) : les tiers de déclassement `declasse_non_constructible` (26 car.) débordaient
+    # varchar(24) → erreur d'écriture SQLAlchemy (bascule 29/07). Idem score_snapshot_parcelles.statut.
+    tier: Mapped[str | None] = mapped_column(String(32))
     event_date: Mapped[date | None] = mapped_column(Date)    # dernier événement daté v1.3
     model_version: Mapped[str] = mapped_column(String(32))
     computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -1350,6 +1352,31 @@ def ensure_residuel_cache(engine) -> None:
         c.execute(_t("ALTER TABLE parcel_residuel ADD COLUMN IF NOT EXISTS capacite_estimee boolean"))
 
 
+def ensure_spatial_layers_sub(engine, force: bool = False) -> int:
+    """Cache PRÉ-SUBDIVISÉ des couches spatiales (pièces ≤256 sommets + GiST) — évite de
+    re-subdiviser les mêmes couches PPR/aléa à CHAQUE lot de cascade (ST_Subdivide = 95 % du coût
+    de EvalContext.prime ; ×64 mesuré, coverage strictement identique). Dérivé de la géométrie
+    STATIQUE de spatial_layers : reconstruire (`force=True`) si les couches changent. `prime`
+    utilise cette table si présente, sinon repli sur le découpage à la volée (comportement inchangé).
+    Idempotent : ne reconstruit que si absente ou `force`."""
+    from sqlalchemy import text as _t
+
+    with engine.begin() as c:
+        if not force and c.execute(_t("SELECT to_regclass('spatial_layers_sub') IS NOT NULL")).scalar():
+            return int(c.execute(_t("SELECT count(*) FROM spatial_layers_sub")).scalar())
+        c.execute(_t("DROP TABLE IF EXISTS spatial_layers_sub"))
+        c.execute(_t(
+            "CREATE TABLE spatial_layers_sub AS "
+            " SELECT id AS lid, kind, subtype, name, attrs, data_source_id, ST_Subdivide(geom_2975,256) AS g "
+            "   FROM spatial_layers WHERE kind<>'batiment' AND ST_Dimension(geom_2975)=2 "
+            " UNION ALL "
+            " SELECT id, kind, subtype, name, attrs, data_source_id, geom_2975 "
+            "   FROM spatial_layers WHERE kind<>'batiment' AND ST_Dimension(geom_2975)<2"))
+        c.execute(_t("CREATE INDEX idx_sls_geom ON spatial_layers_sub USING gist (g)"))
+        c.execute(_t("ANALYZE spatial_layers_sub"))
+        return int(c.execute(_t("SELECT count(*) FROM spatial_layers_sub")).scalar())
+
+
 def ensure_constructibilite_cache(engine) -> None:
     """Cache du verdict de constructibilité (déclassement étage 0) — évite de relancer la
     faisabilité par parcelle au scoring. `label` : declasse_zone_fermee (A) / declasse_non_
@@ -1363,6 +1390,11 @@ def ensure_constructibilite_cache(engine) -> None:
             " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
             " label varchar(32), motif text, cause varchar(24),"
             " computed_at timestamptz NOT NULL DEFAULT now())"))
+        # Élargissement des colonnes qui reçoivent le TIER : le déclassement ajoute
+        # `declasse_non_constructible` (26 car.) qui débordait varchar(24) (bascule 29/07).
+        # ALTER TYPE d'agrandissement = métadonnée-only en Postgres (instantané, pas de réécriture).
+        c.execute(_t("ALTER TABLE parcel_p_score_v2 ALTER COLUMN tier TYPE varchar(32)"))
+        c.execute(_t("ALTER TABLE score_snapshot_parcelles ALTER COLUMN statut TYPE varchar(32)"))
 
 
 def ensure_schema(engine) -> None:

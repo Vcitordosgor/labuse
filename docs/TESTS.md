@@ -90,4 +90,19 @@ LABUSE_API_BASE=http://127.0.0.1:8010 PYTHONPATH=src .venv/bin/python qa/golden_
 Nécessite l'API locale démarrée sur la base applicative. Invariant des tiers du run servi
 `q_v7_defisc` (vérifiable en base sans l'API) : **120 / 1031 / 3587 / 72980 / 353945** au bit près
 (`parcel_p_score_v2`, run le plus récent).
+
+> ⚠ **PIÈGE RATE-LIMIT — des FAIL golden NON DÉTERMINISTES qui ne sont PAS une régression.**
+> `golden_check.py` fait **116 parcelles × 2 GET = 232 requêtes** à l'API, contre un quota
+> applicatif de **60 req/min** (`api/protection.py`). Au-delà, l'API renvoie **HTTP 429 « Trop de
+> requêtes »** et les fiches concernées reviennent `obtenu='<absent>'` sur TOUS leurs champs
+> (`api.fiche.*`) → FAIL comptés comme « incohérence base↔API (runtime) ». Le nombre **fluctue
+> d'un run à l'autre** (0, 10, 32…) selon le quota résiduel — vécu le 29/07, à l'origine d'une
+> fausse alerte de régression après un rollback pourtant complet.
+> **Reconnaître le piège** : un FAIL rate-limit a `obtenu='<absent>'` sur *tout* le bloc `api.fiche`
+> (jamais un désaccord de valeur), varie entre exécutions, et **la face DB reste 116/116** (les FAIL
+> `db.*`/`tier_v2` sont, eux, de vrais désaccords de données — déterministes).
+> **Contre-mesures** : (a) lancer l'API en **dev mode** (`LABUSE_DEV_MODE=1`) qui exempte
+> rate-limit + quota ; ou (b) espacer les requêtes (le golden pourrait throttler à < 60/min) ; ou
+> (c) allowlister l'IP QA (`qa_allowlist`, voie M7). Pour prouver un rollback/une bascule, se fier
+> à la **face DB du golden** (déterministe), pas au compte brut PASS/FAIL bruité par l'API.
 </content>

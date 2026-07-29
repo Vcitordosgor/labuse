@@ -81,44 +81,46 @@ class EvalContext:
         # cascade ne le lit — il alimente le DÉCLASSEMENT (compute_declass_signals) et la
         # fiche « Occupation », qui font leurs propres requêtes ciblées. Le garder ici
         # multiplierait le coût d'intersection sans changer aucun verdict.
-        for r in self.session.execute(
-            text(
+        # CACHE PRÉ-SUBDIVISÉ (optionnel) : `spatial_layers_sub` (mêmes pièces ≤256 sommets,
+        # construit UNE fois par `ensure_spatial_layers_sub`) évite de RE-subdiviser les mêmes
+        # couches PPR/aléa à chaque lot (ST_Subdivide = 95 % du coût de prime, ×64 mesuré) et
+        # indexe l'intersection (GiST sur les pièces). Coverage STRICTEMENT identique (Σ pièces
+        # = géométrie entière ; écart 0,0 mesuré). Absent → repli sur le découpage à la volée
+        # (comportement historique inchangé). La table est un cache dérivé de la géométrie STATIQUE
+        # de spatial_layers ; la reconstruire si les couches changent (drop → ensure).
+        _has_sub = self.session.execute(
+            text("SELECT to_regclass('spatial_layers_sub') IS NOT NULL")).scalar()
+        if _has_sub:
+            inter_sql = """
+                SELECT b.id AS pid, s.lid AS lid, s.kind, s.subtype, s.name, s.attrs,
+                       SUM(ST_Area(ST_Intersection(b.geom_2975, s.g)))
+                         / NULLIF(MAX(ST_Area(b.geom_2975)), 0) AS coverage,
+                       ds.name AS source_name
+                FROM parcels b
+                JOIN spatial_layers_sub s ON b.geom_2975 && s.g AND ST_Intersects(b.geom_2975, s.g)
+                LEFT JOIN data_sources ds ON ds.id = s.data_source_id
+                WHERE b.id = ANY(:ids)
+                GROUP BY b.id, s.lid, s.kind, s.subtype, s.name, s.attrs, ds.name
                 """
-                -- ST_Subdivide(256) : certains polygones PPR/aléa DEAL atteignent
-                -- ~221 906 sommets ; ST_Intersection (overlay GEOS) sur ces géométries
-                -- bloque des lots entiers (la cascade restait suspendue >15 min/lot).
-                -- On découpe chaque couche en pièces ≤256 sommets — l'UNION des pièces = la
-                -- géométrie d'origine — puis on RE-SOMME l'aire d'intersection par zone
-                -- logique (GROUP BY sl.id). Coverage EXACTE : Σ aire(∩ pièce) = aire(∩ tout)
-                -- (pièces disjointes), prouvé identique au full à 5×10⁻¹³. La géométrie
-                -- stockée n'est JAMAIS modifiée (découpe à la volée, pas de migration).
-                -- PÉRIMÈTRE INCHANGÉ vs l'ancienne requête : `parts` est restreint aux
-                -- couches dont le bbox chevauche l'emprise du lot (`&&`, indexé GiST) — toute
-                -- couche qui intersecte une parcelle chevauche forcément ce bbox, donc aucune
-                -- intersection n'est perdue ; on évite seulement de subdiviser les couches
-                -- hors-lot. kind='batiment' reste exclu (cf. note ci-dessus).
-                WITH batch AS (
-                    SELECT id, geom_2975 FROM parcels WHERE id = ANY(:ids)
-                ),
-                bbox AS (
-                    SELECT ST_SetSRID(ST_Extent(geom_2975)::geometry, 2975) AS g FROM batch
-                ),
+        else:
+            inter_sql = """
+                -- ST_Subdivide(256) : certains polygones PPR/aléa DEAL atteignent ~221 906 sommets ;
+                -- ST_Intersection (overlay GEOS) sur ces géométries bloque des lots entiers. On
+                -- découpe chaque couche en pièces ≤256 sommets — Σ pièces = géométrie d'origine —
+                -- puis on RE-SOMME l'aire par zone logique. Coverage EXACTE (identique au full à
+                -- 5×10⁻¹³). `parts` restreint au bbox du lot (`&&`, GiST). batiment exclu.
+                WITH batch AS (SELECT id, geom_2975 FROM parcels WHERE id = ANY(:ids)),
+                bbox AS (SELECT ST_SetSRID(ST_Extent(geom_2975)::geometry, 2975) AS g FROM batch),
                 parts AS (
-                    -- polygones (dim 2) : découpés ; SEULS concernés par le coût overlay.
                     SELECT sl.id AS lid, sl.kind, sl.subtype, sl.name, sl.attrs,
                            sl.data_source_id, ST_Subdivide(sl.geom_2975, 256) AS g
                     FROM spatial_layers sl, bbox
-                    WHERE sl.kind <> 'batiment' AND sl.geom_2975 && bbox.g
-                      AND ST_Dimension(sl.geom_2975) = 2
+                    WHERE sl.kind <> 'batiment' AND sl.geom_2975 && bbox.g AND ST_Dimension(sl.geom_2975) = 2
                     UNION ALL
-                    -- points/lignes (dim < 2) : passés TELS QUELS — ST_Subdivide n'émet que
-                    -- des pièces polygonales et supprimerait ces géométries (ex. prescriptions
-                    -- « Point Immeuble »). Aucun gain à les subdiviser, on garde l'exactitude.
                     SELECT sl.id AS lid, sl.kind, sl.subtype, sl.name, sl.attrs,
                            sl.data_source_id, sl.geom_2975 AS g
                     FROM spatial_layers sl, bbox
-                    WHERE sl.kind <> 'batiment' AND sl.geom_2975 && bbox.g
-                      AND ST_Dimension(sl.geom_2975) < 2
+                    WHERE sl.kind <> 'batiment' AND sl.geom_2975 && bbox.g AND ST_Dimension(sl.geom_2975) < 2
                 )
                 SELECT b.id AS pid, parts.lid AS lid, parts.kind, parts.subtype, parts.name, parts.attrs,
                        SUM(ST_Area(ST_Intersection(b.geom_2975, parts.g)))
@@ -127,11 +129,9 @@ class EvalContext:
                 FROM batch b
                 JOIN parts ON ST_Intersects(b.geom_2975, parts.g)
                 LEFT JOIN data_sources ds ON ds.id = parts.data_source_id
-                GROUP BY b.id, parts.lid, parts.kind, parts.subtype, parts.name,
-                         parts.attrs, ds.name
+                GROUP BY b.id, parts.lid, parts.kind, parts.subtype, parts.name, parts.attrs, ds.name
                 """
-            ), {"ids": ids}
-        ).mappings().all():
+        for r in self.session.execute(text(inter_sql), {"ids": ids}).mappings().all():
             self._inter.setdefault((r["pid"], r["kind"]), []).append(
                 Intersection(r["subtype"], r["name"], float(r["coverage"] or 0.0), r["attrs"] or {},
                              r["source_name"], id=r["lid"]))
