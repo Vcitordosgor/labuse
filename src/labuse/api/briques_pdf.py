@@ -168,12 +168,15 @@ def wordmark_html(produit_sous_titre: str) -> str:
 
 
 def garde_entete(p: dict, *, produit_sous_titre: str, titre: str, bandeau: str,
-                 sous_titre: str | None = None) -> str:
+                 sous_titre: str | None = None, marque: dict | None = None) -> str:
     """Chapeau de couverture partagé par les 4 briques : marque, H1, référence parcelle
     (ligne mono comme le Flash), bandeau légal. À rendre DANS une section `garde`
     (pas de bandeau running en tête de couverture — même règle que le Flash)."""
     st = f"<div class='cover-sub'>{esc(sous_titre)}</div>" if sous_titre else ""
-    return (f"{wordmark_html(produit_sous_titre)}"
+    # M23-A : bloc marque CLIENT (abonné seulement — le Flash n'atteint jamais ces briques
+    # avec une marque) ; wordmark LABUSE inchangé + mention « Généré via LABUSE » dans le bloc.
+    from ..marque import bloc_html as _marque_bloc
+    return (f"{_marque_bloc(marque)}{wordmark_html(produit_sous_titre)}"
             f"<h1>{esc(titre)}</h1>{st}"
             f"<div class='refs'>Parcelle <b>{esc(p['idu'])}</b> · {esc(p['commune'])} · "
             f"section {esc(p['section'])} n° {esc(p['numero'])}</div>"
@@ -307,7 +310,7 @@ def map_html(geojson: str, ign: bool = False) -> str:
 
 def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
           produit_sous_titre: str = "DOSSIER BANQUIER · présentation financeur",
-          synthese_titre: str = "Synthèse exécutive") -> str:
+          synthese_titre: str = "Synthèse exécutive", marque: dict | None = None) -> str:
     """Couverture générique (Banquier) : chapeau de marque (C2), synthèse, cartouches
     avec la charge foncière en HÉROS (C6), plan de situation clair (C2)."""
     p = out["parcelle"]
@@ -326,7 +329,7 @@ def cover(out: dict, *, titre: str = "Dossier foncier", bandeau: str = "",
         kpis.append(cartouche("Marge estimée · Estimé", eur(se["marge_estimee"])))
     synthese = f"<h2>{esc(synthese_titre)}</h2>{out['_synthese']}" if out.get("_synthese") else ""
     return (f"<section class='garde'>"
-            f"{garde_entete(p, produit_sous_titre=produit_sous_titre, titre=titre, bandeau=bandeau)}"
+            f"{garde_entete(p, produit_sous_titre=produit_sous_titre, titre=titre, bandeau=bandeau, marque=marque)}"
             f"{synthese}"
             f"{cartouches(kpis)}"
             f"<h2>Situation</h2>{photo}</section>")

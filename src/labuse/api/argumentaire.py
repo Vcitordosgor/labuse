@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -204,7 +204,7 @@ def _synthese(out: dict) -> str:
                        f"({esc(calc.get('raison') or 'données insuffisantes')}) — l'argumentaire "
                        "se limite aux faits qualitatifs des parties suivantes.")
     return (f"<section class='garde'>"
-            f"{bq.garde_entete(p, produit_sous_titre='ARGUMENTAIRE DE NÉGOCIATION · contre-offre fondée', titre='Argumentaire de négociation foncière', bandeau=LIBELLE)}"
+            f"{bq.garde_entete(p, produit_sous_titre='ARGUMENTAIRE DE NÉGOCIATION · contre-offre fondée', titre='Argumentaire de négociation foncière', bandeau=LIBELLE, marque=marque)}"
             f"<h2>1 · Synthèse</h2>"
             f"<div class='exec'>{esc(' '.join(phrases))}</div>"
             f"{bq.cartouches(kpis)}"
@@ -331,7 +331,7 @@ def _sources(out: dict) -> str:
 # ───────────────────────── endpoint ─────────────────────────
 
 def _build_pdf(db: Session, idu: str, cout_m2: float, marge_pct: float,
-               prix_demande: float | None) -> bytes:
+               prix_demande: float | None, marque: dict | None = None) -> bytes:
     out = _collect(db, idu, cout_m2, marge_pct, prix_demande)
     # renumérotation visuelle des sections briques (2 et 3) via leurs titres d'origine
     marche = bq.comparables(out).replace("<h2>Marché de comparaison</h2>",
@@ -352,12 +352,17 @@ def _build_pdf(db: Session, idu: str, cout_m2: float, marge_pct: float,
 
 
 @router.get("/{idu}.pdf")
-def argumentaire_pdf(idu: str,
+def argumentaire_pdf(idu: str, request: Request,
                      prix_demande_eur: float | None = Query(None, ge=0, le=500_000_000),
                      cout_construction_m2: float = Query(2500.0, ge=500, le=8000),
                      marge_frais_pct: float = Query(21.0, ge=0, le=60),
                      db: Session = Depends(get_db)) -> Response:
     """Sert l'argumentaire de négociation (synchrone). Hypothèses = celles de la calculette."""
-    pdf = _build_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur)
+    # M23-E : PORTE DE QUOTA abonné (30/j Intégral · 200/j Illimité usage loyal ;
+    # Flash HORS quota) — 429 honnête au dépassement, passant sans session (pilote).
+    from ..quota import porte_export
+    porte_export(request, db)
+    from ..marque import charger as _charger_marque
+    pdf = _build_pdf(db, idu, cout_construction_m2, marge_frais_pct, prix_demande_eur, marque=_charger_marque(db, request))
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="argumentaire_{idu}.pdf"'})

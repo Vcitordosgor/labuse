@@ -144,10 +144,10 @@ _PDF_JOBS: dict[tuple[str, str], dict] = {}
 _PDF_LOCK = _Lock()
 
 
-def _build_pdf(db: Session, idu: str) -> bytes:
+def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
     out = bq.collect(db, idu)
     out["_synthese"] = _synthese_html(db, out)   # synthèse d'abord (utilisée en couverture)
-    sections = [bq.cover(out, titre="Dossier banquier", bandeau=LIBELLE,
+    sections = [bq.cover(out, marque=marque, titre="Dossier banquier", bandeau=LIBELLE,
                          produit_sous_titre="DOSSIER BANQUIER · présentation financeur"),
                 bq.identite(out), bq.faisabilite(out),
                 bq.bilan(out), bq.comparables(out), bq.risques(out)]
@@ -215,13 +215,20 @@ def dossier_banquier_pdf(idu: str, request: Request, ign: bool = True,
     """Sert le Dossier banquier — du cache si prêt, sinon génération synchrone (compat liens)."""
     if not plans.acces("dossier_parcelle"):
         raise HTTPException(403, detail=plans.refus("dossier_parcelle"))
+    # M23-E : PORTE DE QUOTA abonné (30/j Intégral · 200/j Illimité usage loyal ;
+    # Flash HORS quota) — 429 honnête au dépassement, passant sans session (pilote).
+    from ..quota import porte_export
+    porte_export(request, db)
+    from ..marque import charger as _charger_marque
+    marque = _charger_marque(db, request)
+
     key = (idu, _RUN)
     with _PDF_LOCK:
         pdf = _PDF_CACHE.get(key)
         if pdf is not None:
             _PDF_CACHE.move_to_end(key)
     if pdf is None:
-        pdf = _build_pdf(db, idu)
+        pdf = _build_pdf(db, idu, marque=marque)
         _cache_put(key, pdf)
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="dossier_banquier_{idu}.pdf"'})

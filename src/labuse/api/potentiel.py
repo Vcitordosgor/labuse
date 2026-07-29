@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -115,7 +115,7 @@ def _synthese(out: dict) -> str:
     if n_att:
         kpis.append(bq.cartouche("À vérifier avant compromis", str(n_att), "point(s)"))
     return (f"<section class='garde'>"
-            f"{bq.garde_entete(p, produit_sous_titre='RAPPORT DE POTENTIEL · avant compromis', titre='Rapport de potentiel', bandeau=LIBELLE)}"
+            f"{bq.garde_entete(p, produit_sous_titre='RAPPORT DE POTENTIEL · avant compromis', titre='Rapport de potentiel', bandeau=LIBELLE, marque=marque)}"
             f"<h2>1 · Ce que ce bien permet, en trois lignes</h2>"
             f"<table><tr><th>Volet</th><th>Verdict</th><th>En clair</th></tr>{rows}</table>"
             f"{bq.cartouches(kpis)}"
@@ -204,7 +204,7 @@ def _limites(out: dict) -> str:
 
 # ───────────────────────── endpoint ─────────────────────────
 
-def _build_pdf(db: Session, idu: str) -> bytes:
+def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
     out = _collect(db, idu)
     marche = bq.comparables(out).replace("<h2>Marché de comparaison</h2>",
                                          "<h2>5 · Contexte marché (pour situer)</h2>")
@@ -218,8 +218,13 @@ def _build_pdf(db: Session, idu: str) -> bytes:
 
 
 @router.get("/{idu}.pdf")
-def rapport_potentiel_pdf(idu: str, db: Session = Depends(get_db)) -> Response:
+def rapport_potentiel_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
     """Sert le rapport de potentiel (synchrone). Entrée : IDU seul."""
-    pdf = _build_pdf(db, idu)
+    # M23-E : PORTE DE QUOTA abonné (30/j Intégral · 200/j Illimité usage loyal ;
+    # Flash HORS quota) — 429 honnête au dépassement, passant sans session (pilote).
+    from ..quota import porte_export
+    porte_export(request, db)
+    from ..marque import charger as _charger_marque
+    pdf = _build_pdf(db, idu, marque=_charger_marque(db, request))
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="rapport_potentiel_{idu}.pdf"'})

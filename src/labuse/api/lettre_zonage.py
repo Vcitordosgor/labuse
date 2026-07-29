@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 from datetime import date
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
@@ -143,7 +143,7 @@ def _identification(p: dict, rap: dict, ref: str) -> str:
         rows.append(("Adresse (Base Adresse Nationale)", rap["adresse"]))
     table = "".join(f"<tr><td style='width:38%'>{esc(k)}</td><td>{esc(v)}</td></tr>" for k, v in rows)
     return (f"<section class='garde'>"
-            f"{bq.wordmark_html('LETTRE DE VÉRIFICATION DE ZONAGE · attestation documentaire')}"
+            f"{_marque_bloc(marque)}{bq.wordmark_html('LETTRE DE VÉRIFICATION DE ZONAGE · attestation documentaire')}"
             f"<h1>Lettre de vérification de zonage</h1>"
             f"<div class='refs'>Référence <b>{esc(ref)}</b> · éditée le <b>{esc(edition)}</b> · "
             f"parcelle <b>{esc(p['idu'])}</b> — {esc(p['commune'])}</div>"
@@ -272,7 +272,8 @@ def _cloture(ref: str) -> str:
 
 # ───────────────────────── endpoint ─────────────────────────
 
-def _build_pdf(db: Session, idu: str) -> bytes:
+def _build_pdf(db: Session, idu: str, marque: dict | None = None) -> bytes:
+    from ..marque import bloc_html as _marque_bloc
     from ..flash.data import collect_report_data
     from sqlalchemy import text as _t
     row = db.execute(_t(
@@ -301,8 +302,13 @@ def _build_pdf(db: Session, idu: str) -> bytes:
 
 
 @router.get("/{idu}.pdf")
-def lettre_zonage_pdf(idu: str, db: Session = Depends(get_db)) -> Response:
+def lettre_zonage_pdf(idu: str, request: Request, db: Session = Depends(get_db)) -> Response:
     """Sert la lettre de vérification de zonage (synchrone : document court)."""
-    pdf = _build_pdf(db, idu)
+    # M23-E : PORTE DE QUOTA abonné (30/j Intégral · 200/j Illimité usage loyal ;
+    # Flash HORS quota) — 429 honnête au dépassement, passant sans session (pilote).
+    from ..quota import porte_export
+    porte_export(request, db)
+    from ..marque import charger as _charger_marque
+    pdf = _build_pdf(db, idu, marque=_charger_marque(db, request))
     return Response(pdf, media_type="application/pdf",
                     headers={"Content-Disposition": f'inline; filename="lettre_zonage_{idu}.pdf"'})
