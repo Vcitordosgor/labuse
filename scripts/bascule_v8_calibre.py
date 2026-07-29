@@ -77,25 +77,35 @@ def check_disque(target: str = TARGET, marge: float = 1.25) -> dict:
                    / NULLIF((SELECT count(*) FROM dryrun_cascade_results WHERE run_label='q_v7_defisc'),0)"""),
             {"t": target}).scalar() or 0.0
         need_rest = need * max(0.0, 1.0 - already)
-        # espace mort réutilisable dans les tables cibles (lignes supprimées non rendues à l'OS)
-        dead = c.execute(text("""
-            SELECT COALESCE(sum(n_dead_tup::float / NULLIF(n_live_tup,0)
-                     * pg_relation_size(relid)),0)
-            FROM pg_stat_user_tables
-            WHERE relname IN ('dryrun_cascade_results','parcel_p_score_v2','dryrun_parcel_evaluations','score_snapshot_parcelles')""")).scalar() or 0.0
+        # espace RÉUTILISABLE dans les tables cibles (lignes supprimées non rendues à l'OS, mais
+        # réutilisées par les INSERT). Mesure EXACTE via pg_freespacemap (FSM) si l'extension est
+        # présente — post-VACUUM `n_dead_tup` retombe à 0 et sous-compterait ; repli n_dead_tup sinon.
+        _tables = ('dryrun_cascade_results', 'parcel_p_score_v2', 'dryrun_parcel_evaluations', 'score_snapshot_parcelles')
+        _has_fsm = c.execute(text("SELECT 1 FROM pg_extension WHERE extname='pg_freespacemap'")).scalar()
+        if _has_fsm:
+            dead = 0.0
+            for t in _tables:
+                if c.execute(text("SELECT to_regclass(:t)"), {"t": t}).scalar():
+                    dead += float(c.execute(text(f"SELECT COALESCE(sum(avail),0) FROM pg_freespace('{t}')")).scalar() or 0)
+        else:
+            dead = c.execute(text("""
+                SELECT COALESCE(sum(n_dead_tup::float / NULLIF(n_live_tup,0) * pg_relation_size(relid)),0)
+                FROM pg_stat_user_tables WHERE relname = ANY(:t)"""), {"t": list(_tables)}).scalar() or 0.0
     free = shutil.disk_usage(".").free
-    dispo = free + dead
-    rep = {"besoin_reste_go": round(need_rest/1e9, 2), "libre_os_go": round(free/1e9, 2),
-           "mort_reutilisable_go": round(dead/1e9, 2), "disponible_go": round(dispo/1e9, 2),
-           "marge": marge, "ok": dispo >= need_rest * marge}
-    print(f"  [garde disque] besoin≈{rep['besoin_reste_go']} Go · libre OS {rep['libre_os_go']} Go "
-          f"+ mort réutilisable {rep['mort_reutilisable_go']} Go = {rep['disponible_go']} Go dispo "
-          f"(marge ×{marge})", flush=True)
+    # Le FSM ABSORBE les écritures (réutilisation sans grossir le fichier) ; seul le DÉBORDEMENT
+    # (besoin − FSM) tombe sur le disque OS. On garde donc sur le besoin OS RÉEL, pas le brut.
+    besoin_os = max(0.0, need_rest - dead)
+    rep = {"besoin_reste_go": round(need_rest/1e9, 2), "fsm_reutilisable_go": round(dead/1e9, 2),
+           "besoin_os_go": round(besoin_os/1e9, 2), "libre_os_go": round(free/1e9, 2),
+           "marge": marge, "ok": free >= besoin_os * marge}
+    print(f"  [garde disque] besoin≈{rep['besoin_reste_go']} Go, dont FSM réutilisable "
+          f"{rep['fsm_reutilisable_go']} Go → débordement OS ≈{rep['besoin_os_go']} Go vs libre OS "
+          f"{rep['libre_os_go']} Go (marge ×{marge})", flush=True)
     if not rep["ok"]:
         raise DisqueInsuffisantError(
-            f"DISQUE INSUFFISANT : besoin ≈{rep['besoin_reste_go']} Go × {marge}, "
-            f"disponible {rep['disponible_go']} Go. Libérer des runs obsolètes (purge q_v6_m8 + "
-            f"anciens runs de score) puis VACUUM, ou --skip-disk-check si réutilisation certaine.")
+            f"DISQUE INSUFFISANT : débordement OS ≈{rep['besoin_os_go']} Go × {marge} > libre "
+            f"{rep['libre_os_go']} Go. Libérer des runs obsolètes (purge q_v6_m8 + anciens runs) "
+            f"puis VACUUM, ou --skip-disk-check si réutilisation certaine.")
     return rep
 
 
