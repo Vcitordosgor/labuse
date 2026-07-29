@@ -112,6 +112,28 @@ deux.** Le repli reprend sa population (cause A) portée par ce correctif. Note 
 
 ---
 
+## Correctif implémenté (29/07) — deux faits à retenir
+
+**DIVERGENCE GOLDEN VOULUE ET DATÉE.** Le golden a été réaligné (12 ancres, commit dédié) sur
+l'état **POST-BASCULE** : il encode les tiers déclassés que produira le prochain run. Tant que le
+re-run n'a pas eu lieu, **le golden DIVERGE du run servi** (`q_v7_defisc`) — c'est **voulu**, chaque
+ancre porte la note « valeur attendue post-bascule ». Un lecteur qui constate un écart golden ↔
+production dans les prochains jours doit savoir qu'il est **intentionnel et daté du 29/07**, pas une
+régression.
+
+**LE PIRE DU DÉFAUT EST DÉJÀ CORRIGÉ, AVANT LA BASCULE.** Le déclassement des tiers ne sert qu'au
+prochain run, MAIS les trois motifs s'affichent **dès maintenant** sur la fiche (lus de
+`parcel_constructibilite`, indépendamment du tier servi). Dès aujourd'hui, un utilisateur qui ouvre
+une des 9 399 parcelles voit qu'elle n'est pas constructible et pourquoi. Le pire du défaut —
+présenter du foncier inconstructible **sans le dire** — est levé. Conséquence : **le re-run n'est
+plus une urgence de sécurité, c'est une amélioration de tri.**
+
+## Gate tiers — prédiction validée au chiffre près
+Le gate a donné **80 mouvements EXACTEMENT**, égal à la prédiction de la phase de mesure ; et la
+table `parcel_constructibilite` tombe **au parcel près** sur la mesure (A 3 221 / B 6 178 = 6 177 +1
+hauteur indispo / C 2 383). Le décalage de 1, expliqué, distingue une correspondance d'une
+coïncidence. Première fois qu'un correctif de cette ampleur tombe au chiffre près sur sa prévision.
+
 ## Ordre acté (Vic 29/07)
 **(1) ce défaut tête-de-liste → (2) re-dérivation barème `residuel_socle` → (3) mesure canal cascade
 (déclassement gels) → (4) re-run complet post-calibration.**
