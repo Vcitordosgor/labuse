@@ -448,3 +448,27 @@ compacité/solidité comme qualité que sur `libre`/`demolition`.
 ## État
 18 recevables (dont 6 avec réserve de pente) — NON exposés avant : (1) verdict AUh carte 15,
 (2) recontrôle emprise carte 3 (BH1036). Table servie INTOUCHÉE, rien basculé.
+
+---
+# O12-REVUE-VIC suites (arbitrages 30/07)
+
+## DETTE #7 (prioritaire) — ouverture des AU non gravée : MESURÉE (run servi q_v7_defisc)
+- 187 zones AU distinctes servies : **106 ouverture documentée, 81 NON**.
+- **6 636 parcelles servies en AU à ouverture NON documentée** (3 829 génériques + 2 807 calibrées
+  dimensions seules), dont **420 en tête de liste : 12 brûlantes, 172 chaudes, 236 réserve**.
+- Même classe de risque que la 2AUd brûlante du 29/07, à l'échelle. Consigné dette #7 → à intégrer
+  au mandat calibration (extraire Art. 1/2 des AU). Chiffres bruts, aucune correction.
+
+## Carte 3 (Sainte-Suzanne UB) — TRANCHÉ : repli légitime, étiqueter Estimé
+UB EXISTE au YAML Sainte-Suzanne, `emprise_sol_pct: null`, `emprise_src: "Art. U7, p.14 : « Sans
+objet »"`. **L'article existe et ne plafonne PAS l'emprise** (« Sans objet ») → le repli générique
+60 % est LÉGITIME → BH1036 conforme (56 % < 60 %), **carte 3 passe, à étiqueter « Estimé »**. Ce
+n'est PAS une lacune de calibration (le YAML a correctement gravé « Sans objet » = null + source).
+
+## Seuil compacité #4 — NON gravé ; mesure au pool large à faire
+COMPACITE_MIN actuel = 0,25. Le gap 0,505 → 0,563 est observé sur les 35 seulement. Principe 4 :
+un seuil dérivé d'une distribution se périme → à mesurer sur le pool large des **5 916 résiduels
+bruts** (funnel 5916→294→…→35), pas sur 35. Mesure en cours (recompute géométrique à blanc, sans
+écriture sur la table servie).
+
+## Dette #8 — l'ortho voit ce que la cascade rate (cartes 16, 8) : consignée.

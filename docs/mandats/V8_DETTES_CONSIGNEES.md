@@ -46,3 +46,23 @@ tracé, pas celle du terrain. **Ces deux chiffres ne doivent plus être présent
 de QUALITÉ sur la famille `decoupe`** — seulement sur `libre`/`demolition`, où la géométrie est
 celle du terrain réel. (Confirmé : famille `decoupe` compacité ∈ [0,608 ; 0,785], resserrée ;
 famille `libre` étalée [0,485 ; 0,770] = vraie variance terrain.)
+
+## 7 · Statut d'OUVERTURE des zones AU non gravé (PRIORITAIRE — dépasse O12)
+Les YAML calibrent les DIMENSIONS des zones AU (hauteur, emprise, reculs — Art. 9/10/13) mais PAS
+leur statut d'OUVERTURE (Art. 1/2 : ouverte / subordonnée à modification-OAP). Conséquence : toute
+AU dotée d'articles chiffrés est servie constructible sans que son ouverture ait été lue.
+**Mesure (run servi q_v7_defisc, 24 communes)** :
+- **187 zones AU distinctes servies** ; ouverture DOCUMENTÉE 106, **NON documentée 81**.
+- **6 636 parcelles servies en AU à ouverture NON documentée** (3 829 génériques + 2 807 « calibrées
+  dimensions seules »), dont **420 EN TÊTE DE LISTE : 12 brûlantes, 172 chaudes, 236 réserve**.
+- Risque de faux positif du même ordre que la brûlante 2AUd rattrapée le 29/07, à l'échelle.
+**À intégrer au mandat de calibration** : extraire SYSTÉMATIQUEMENT l'Article 1/2 (caractère /
+ouverture) des zones AU, pas seulement les articles dimensionnels. Tant que non fait, la garde
+O12 « AU fermée = 2AU » ne peut pas distinguer ouverte/fermée sur ces 81 zones.
+
+## 8 · L'ortho voit des contraintes que la cascade ne capte pas
+Revue Vic (30/07) : la ravine SE de la carte 16 (97412000CS0625) et le risque mouvement de terrain
+de Cilaos (carte 8, 97424000AE0089) sont VISIBLES à l'ortho mais **absents des exclusions cascade**
+(seul « aléa mvt terrain FAIBLE » soft, aucune exclusion PPR/ravine). La détection géométrique et la
+cascade ne captent pas tout ce que l'œil voit sur l'ortho. **Dette** : croiser systématiquement les
+candidats servis avec une revue ortho (ou enrichir les couches ravine/aléa) avant exposition.
