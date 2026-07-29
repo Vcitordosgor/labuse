@@ -32,3 +32,17 @@ Arbitrage Vic (30/07) : `faux_positif_probable` = probabilité, pas fait → ne 
 dessus (garde restreinte à `status='exclue'`). **Solution cible** : filtre CLIENT + hiérarchisation
 par ANNÉE DE CONSTRUCTION (DPE ADEME / BDNB), étiquetée **Sourcé / Absent** — laisser l'utilisateur
 juger un bâti récent vs ancien plutôt que le moteur écarter au soupçon.
+
+## 5 · O12 — AUCUN critère de PENTE (dette, à mesurer sur MNT IGN)
+O12 ne teste pas la pente du lot résiduel. À La Réunion c'est décisif : un lot de 660 m² à 30 %
+de pente n'est pas un lot de 660 m². Revue Vic (30/07) : 6 des 24 candidats sont visiblement sur
+versant raide (cartes 4, 11, 15, 20, 21, 24). **À mesurer** : faisabilité d'un critère de pente à
+partir du MNT IGN (BD ALTI / RGE ALTI) sur l'emprise du lot proposé — seuil à calibrer.
+
+## 6 · O12 — les indicateurs s'auto-valident sur la famille « lot à découper »
+Sur les 17 candidats `decoupe` (algo TRACE lui-même le lot), la compacité converge vers π/4 ≈ 0,785
+(carré parfait) et la solidité vers 0,998-1,000 : l'algorithme mesure la qualité de SON PROPRE
+tracé, pas celle du terrain. **Ces deux chiffres ne doivent plus être présentés comme indicateurs
+de QUALITÉ sur la famille `decoupe`** — seulement sur `libre`/`demolition`, où la géométrie est
+celle du terrain réel. (Confirmé : famille `decoupe` compacité ∈ [0,608 ; 0,785], resserrée ;
+famille `libre` étalée [0,485 ; 0,770] = vraie variance terrain.)

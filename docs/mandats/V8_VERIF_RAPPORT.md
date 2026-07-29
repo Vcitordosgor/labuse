@@ -382,3 +382,69 @@ sélectionnés à blanc, pas réécrits).
 
 Observation (non-verdict) : la carte 01 porte une façade voirie du lot de 22,3 m (> 0) → accès a
 priori propre, pas enclavé ; **ta revue visuelle tranche.** Rien exposé, rien basculé.
+
+---
+# O12-REVUE-VIC — retours (lecture seule, table servie INTOUCHÉE)
+
+## BLOQUANT carte 15 — AUh Saint-Denis (97411000CH0631) : NON RÉSOLU par les données
+Le YAML calibre AUh avec ses articles DIMENSIONNELS : hauteur (Art. AUh.10, p.103), emprise 30 %
+(Art. AUh.9, p.103), reculs (AUh.6/7), pleine terre (AUh.13, p.105). **Mais la calibration n'a PAS
+extrait l'Article AUh.1/AUh.2** (occupations autorisées / caractère de zone) — là où se lit
+l'ouverture ou la subordination à une modification/OAP. **Je n'ai pas le règlement source**
+(« Modification simplifiée n°8, févr. 2024 », 154 p.) pour citer le verbatim exigé.
+- **Signal (inférence réglementaire, PAS verbatim)** : AUh possède des articles de CONSTRUCTION
+  complets (9/10/13) et ses propres chapitres (`zones_au_renvoi: {}`) ; `zones_au_st: []` (aucune
+  zone de transition à Saint-Denis) ; les calibrateurs ont noté « conditionnelles à l'ouverture
+  future » pour **AUx** mais RIEN pour AUh. Par convention PLU, une AU dotée de règles de
+  construction complètes est ouverte (une 2AU fermée n'aurait pas d'Art. 9/10 chiffrés). **Cela
+  suggère AUh ouverte — sans le prouver.**
+- **Verdict : INDÉTERMINÉ sans le règlement.** Il faut Art. AUh.1/AUh.2 (ou « caractère de la
+  zone AU ») du PLU Saint-Denis. **O12 reste non exposé** jusqu'à ce verdict (consigne respectée).
+- **Balayage des 24** : **un SEUL candidat est en zone AU — carte 15 (AUh)**. Les 23 autres sont
+  en U. Donc si AUh est fermée, seule la carte 15 sort. La garde « AU fermée = 2AU » est PRÊTE à
+  poser, mais **butte sur une dette** : les YAML calibrent les DIMENSIONS des AU, pas leur STATUT
+  d'ouverture → la garde ne peut pas distinguer AU ouverte/fermée sans que ce statut soit gravé.
+
+## FAUX POSITIF carte 1 — 97415000BV0182 : SORT
+Confirmé par les données : compacité 0,472 (la PLUS BASSE du pool), emprise lot restant 48 %,
+144 m² de démolition. Sortira au recompute (avec la garde). Noté.
+
+## Seuil de compacité — mesuré sur les 35
+Les 3 « déjà bâti » sont les 3 compacités les plus basses : **0,472 (BV0182), 0,485 (BH1036),
+0,505 (AV2092)** ; valeur suivante **0,563** (AM0946). **Gap net : ZÉRO candidat dans la zone grise
+0,55-0,5629.** Un seuil de compacité minimale à **0,55 sépare proprement** les 3 du reste. Meaningful
+uniquement sur la famille `libre`/`demolition` (terrain réel) — la famille `decoupe` est ≥ 0,608
+(compacité auto-validée, cf. dette #6). **Mesuré, cohérent, mais 35 = petit échantillon → à
+confirmer sur un pool plus large avant de graver** (comme demandé).
+
+## Emprise du lot restant — par le code + par candidat
+`_emprise_max_sql` (division_or.py:670) lit le `emprise_sol_pct` **CALIBRÉ** du YAML par zone (CASE),
+sinon **repli générique 0,60** (`EMPRISE_RESTANTE_MAX`). Donc calibré pour les zones au YAML, repli
+sinon. Cartes signalées (emprise restante vs emprise max appliquée) :
+- **Carte 2** — AV2092 (UB Sainte-Marie) : 56 % vs **70 % CALIBRÉ** (Art. calibré) → conforme réel ✓
+- **Carte 3** — BH1036 (UB Sainte-Suzanne) : 56 % vs **60 % GÉNÉRIQUE** (UB Sainte-Suzanne NON
+  calibrée) → vérifié contre le repli, **PAS contre le réel** → **recontrôle requis** (défaut repli
+  générique) : besoin de l'emprise max réelle de UB Sainte-Suzanne (article).
+- **Carte 1** — BV0182 (U6c) : 48 % vs 60 % générique — mais faux positif, sort.
+- **Carte 23** — ID0021 (Ug Saint-Pierre) : 43 % vs **50 % CALIBRÉ** → conforme réel ✓
+(Les 24 sont tous ≤ leur max appliqué ; le risque est confiné aux zones en repli générique — 12/24,
+dont BH1036 est la seule proche du seuil.)
+
+## Douteux — aucun hard-exclu par la cascade (à contrôler visuellement/manuellement)
+- **Carte 7 (97416000DM0665, Saint-Pierre)** : `owner_type='pm'` (personne morale), **PAS flaggé
+  foncier public** (hors groupes DGFiP publics) ; contexte piste d'athlétisme à l'ortho → contrôle
+  MANUEL de la dénomination du propriétaire requis (dénomination non disponible en base).
+- **Carte 16 (97412000CS0625, Saint-Joseph)** : cascade = « Aléa mvt terrain FAIBLE » seul, **aucune
+  exclusion PPR ni ravine** → la ravine SE vue à l'ortho n'est pas captée (soit hors buffer, soit
+  data ravine incomplète) → contrôle distance lot↔axe ravine.
+- **Carte 8 (97424000AE0089, Cilaos)** : « Aléa mvt terrain FAIBLE » seul, pas de PPR → à confirmer
+  (Cilaos = cirque, risque mvt terrain sous-estimé possible).
+
+## Dettes consignées (V8_DETTES_CONSIGNEES.md #5, #6)
+5 · Aucun critère de PENTE (6/24 sur versant raide) → mesurer sur MNT IGN.
+6 · Indicateurs auto-validés sur la famille `decoupe` (compacité→π/4, solidité→1) → ne présenter
+compacité/solidité comme qualité que sur `libre`/`demolition`.
+
+## État
+18 recevables (dont 6 avec réserve de pente) — NON exposés avant : (1) verdict AUh carte 15,
+(2) recontrôle emprise carte 3 (BH1036). Table servie INTOUCHÉE, rien basculé.
