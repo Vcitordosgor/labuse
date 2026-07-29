@@ -1,0 +1,583 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<style>/* Rapport Flash — DA IMPRESSION LABUSE : fond BLANC (un notaire imprime), typos de la
+   marque (Space Grotesk / Inter / JetBrains Mono, OFL embarquées api/fonts), accents
+   vert menthe #0B8A5F (déclinaison print de la menthe écran). Pas le thème sombre. */
+
+@font-face { font-family: "Inter"; src: url("file:///Users/openclaw/Desktop/labuse/src/labuse/api/fonts/Inter-Regular.ttf"); }
+@font-face { font-family: "JetBrains Mono"; src: url("file:///Users/openclaw/Desktop/labuse/src/labuse/api/fonts/JetBrainsMono-Regular.ttf"); }
+@font-face { font-family: "Space Grotesk"; font-weight: 700;
+             src: url("file:///Users/openclaw/Desktop/labuse/src/labuse/api/fonts/SpaceGrotesk-Bold.ttf"); }
+
+:root {
+  --mint: #0B8A5F;
+  --mint-soft: #E2F7ED;
+  --surface: #F4F8F6;
+  --line: #D8E2DC;
+  --txt-hi: #111814;
+  --txt: #28322D;
+  --txt-mut: #5F6C65;
+  --txt-dim: #8C9891;
+  --red: #B73F32;
+  --red-soft: #FAE9E6;
+  --amber: #A87916;
+}
+
+@page {
+  size: A4;
+  margin: 22mm 16mm 20mm 16mm;
+  @top-left {
+    content: "LABUSE — Dossier parcelle · DP-20260725-2317";
+    font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
+    border-bottom: 0.6pt solid #0B8A5F; width: 100%; padding-bottom: 4pt;
+    margin-bottom: 8pt; vertical-align: bottom;
+  }
+  @top-right {
+    content: "2026-07-25";
+    font-family: "JetBrains Mono", monospace; font-size: 7pt; color: #8C9891;
+    border-bottom: 0.6pt solid #0B8A5F; vertical-align: bottom;
+    padding-bottom: 4pt; margin-bottom: 8pt;
+  }
+  @bottom-center {
+    content: "Document d'information — ne remplace pas un certificat d'urbanisme ; ne vaut ni document opposable, ni conseil juridique · page " counter(page) "/" counter(pages);
+    font-family: "Inter"; font-size: 6.5pt; color: #8C9891;
+  }
+}
+@page garde { @top-left { content: none; } @top-right { content: none; } }
+
+html { font-size: 9.5pt; }
+body { font-family: "Inter", sans-serif; color: var(--txt); line-height: 1.45; margin: 0; }
+
+h1, h2, h3 { font-family: "Space Grotesk", "Inter", sans-serif; font-weight: 700;
+             color: var(--txt-hi); }
+h2 { font-size: 13pt; margin: 0 0 3mm 0; padding-bottom: 1.5mm;
+     border-bottom: 1.4pt solid var(--mint); break-after: avoid; }
+h2 .num { color: var(--mint); font-family: "JetBrains Mono", monospace;
+          font-size: 9pt; margin-right: 2mm; }
+h3 { font-size: 10pt; margin: 4mm 0 1.5mm 0; break-after: avoid; }
+
+section { margin-bottom: 8mm; }
+p { margin: 0 0 2mm 0; }
+
+/* ── Page de garde ── */
+.garde { page: garde; }
+.garde .marque { display: flex; align-items: center; margin-bottom: 10mm; }
+.garde .wordmark { font-family: "Space Grotesk"; font-weight: 700; font-size: 16pt;
+                   color: var(--mint); letter-spacing: 0.04em; margin-left: 4mm; }
+.garde .produit { font-family: "JetBrains Mono", monospace; font-size: 8pt;
+                  color: var(--txt-mut); margin-left: 4mm; }
+.garde h1 { font-size: 21pt; margin: 0 0 2mm 0; line-height: 1.2; }
+.garde .adresse { font-size: 12pt; color: var(--txt); margin-bottom: 6mm; }
+.garde .adresse-nd { font-size: 10pt; color: #8C9891; }
+.garde .refs { font-family: "JetBrains Mono", monospace; font-size: 9pt;
+               color: var(--txt-mut); margin-bottom: 8mm; }
+.garde .refs b { color: var(--txt-hi); }
+.meta-table { width: 100%; border-collapse: collapse; margin-top: 6mm; }
+.meta-table td { border-top: 0.5pt solid var(--line); padding: 1.6mm 0; font-size: 8.5pt; }
+.meta-table td:first-child { color: var(--txt-mut); width: 38%; }
+.meta-table td:last-child { font-family: "JetBrains Mono", monospace; }
+
+/* ── Carte ── */
+.carte { position: relative; overflow: hidden; border: 0.8pt solid var(--line);
+         border-radius: 2mm; }
+.carte img { position: absolute; width: 256px; height: 256px; }
+.carte svg { position: absolute; left: 0; top: 0; }
+.carte-attribution { font-size: 6.5pt; color: var(--txt-dim); text-align: right;
+                     margin-top: 1mm; }
+
+/* ── Tableaux & cartouches ── */
+table.donnees { width: 100%; border-collapse: collapse; margin: 2mm 0; }
+table.donnees th { text-align: left; font-family: "JetBrains Mono", monospace;
+                   font-size: 7pt; text-transform: uppercase; letter-spacing: 0.06em;
+                   color: var(--txt-mut); border-bottom: 0.8pt solid var(--mint);
+                   padding: 1.2mm 2mm 1.2mm 0; font-weight: normal; }
+table.donnees td { border-bottom: 0.5pt solid var(--line); padding: 1.6mm 2mm 1.6mm 0;
+                   font-size: 8.8pt; vertical-align: top; }
+table.donnees tr { break-inside: avoid; }
+.num-cell { font-family: "JetBrains Mono", monospace; }
+
+.cartouche { background: var(--surface); border-radius: 2mm; padding: 3mm 4mm;
+             margin: 2mm 0; break-inside: avoid; }
+.cartouche .titre { font-family: "JetBrains Mono", monospace; font-size: 7pt;
+                    text-transform: uppercase; letter-spacing: 0.06em;
+                    color: var(--txt-mut); margin-bottom: 1mm; }
+.cartouche .valeur { font-family: "Space Grotesk"; font-weight: 700; font-size: 15pt;
+                     color: var(--txt-hi); }
+.cartouche .valeur small { font-size: 8.5pt; color: var(--txt-mut); font-family: "Inter";
+                           font-weight: normal; }
+.cartouches { display: flex; gap: 3mm; }
+.cartouches .cartouche { flex: 1; margin: 0; }
+
+.chip { display: inline-block; border-radius: 2mm; padding: 0.6mm 2.4mm; font-size: 7.8pt;
+        background: var(--mint-soft); color: var(--mint); }
+.chip.alerte { background: var(--red-soft); color: var(--red); }
+.chip.neutre { background: #EEF1EF; color: var(--txt-mut); }
+
+.note { font-size: 7.8pt; color: var(--txt-mut); }
+.ok-vide { color: var(--mint); font-size: 9pt; }
+
+ul.liste { margin: 1mm 0 2mm 0; padding-left: 5mm; }
+ul.liste li { margin-bottom: 1mm; }
+
+/* ── Grille de lecture du score (valeur absolue, jamais un classement) ── */
+.grille td { font-size: 8.2pt; }
+
+/* ── Mentions ── */
+.mentions { font-size: 8pt; color: var(--txt-mut); border-top: 0.8pt solid var(--line);
+            padding-top: 3mm; }
+
+/* ── Watermark EXEMPLE (rapport démo uniquement) ── */
+
+
+.saut { break-before: page; }</style>
+</head>
+<body>
+
+
+
+
+<section class="garde">
+  <div class="marque">
+    <svg width="46" height="13" viewBox="0 0 240 62"><path d="M2.0,15.0 L8.9,14.4 L15.7,14.0 L22.3,13.7 L28.8,13.5 L35.1,13.5 L41.2,13.5 L47.2,13.6 L53.0,13.9 L58.7,14.2 L64.1,14.7 L69.4,15.2 L74.5,15.8 L79.4,16.4 L84.1,17.1 L88.6,17.9 L93.0,18.8 L97.1,19.7 L101.0,20.6 L104.7,21.6 L108.2,22.6 L111.5,23.7 L114.5,24.8 L117.4,25.9 L120.0,27.0 L122.6,25.9 L125.5,24.8 L128.5,23.7 L131.8,22.6 L135.3,21.6 L139.0,20.6 L142.9,19.7 L147.0,18.8 L151.4,17.9 L155.9,17.1 L160.6,16.4 L165.5,15.8 L170.6,15.2 L175.9,14.7 L181.3,14.2 L187.0,13.9 L192.8,13.6 L198.8,13.5 L204.9,13.5 L211.2,13.5 L217.7,13.7 L224.3,14.0 L231.1,14.4 L238.0,15.0 L233.5,16.7 L228.9,18.4 L224.3,20.1 L219.7,21.7 L215.1,23.3 L210.5,24.9 L205.9,26.4 L201.3,27.9 L196.7,29.4 L192.1,30.8 L187.6,32.2 L183.1,33.5 L178.7,34.8 L174.3,36.0 L170.0,37.2 L165.7,38.4 L161.5,39.5 L157.4,40.6 L153.4,41.6 L149.5,42.6 L145.7,43.5 L142.0,44.4 L138.4,45.2 L135.0,46.0 L134.0,46.4 L133.1,46.8 L132.1,47.2 L131.2,47.6 L130.4,48.0 L129.6,48.5 L128.8,48.9 L128.0,49.4 L127.3,49.9 L126.6,50.4 L125.9,50.9 L125.2,51.5 L124.6,52.1 L124.1,52.7 L123.5,53.3 L123.0,53.9 L122.5,54.6 L122.1,55.3 L121.6,56.0 L121.2,56.7 L120.9,57.5 L120.6,58.3 L120.3,59.1 L120.0,60.0 L119.7,59.1 L119.4,58.3 L119.1,57.5 L118.8,56.7 L118.4,56.0 L117.9,55.3 L117.5,54.6 L117.0,53.9 L116.5,53.3 L115.9,52.7 L115.4,52.1 L114.8,51.5 L114.1,50.9 L113.4,50.4 L112.7,49.9 L112.0,49.4 L111.2,48.9 L110.4,48.5 L109.6,48.0 L108.8,47.6 L107.9,47.2 L106.9,46.8 L106.0,46.4 L105.0,46.0 L101.6,45.2 L98.0,44.4 L94.3,43.5 L90.5,42.6 L86.6,41.6 L82.6,40.6 L78.5,39.5 L74.3,38.4 L70.0,37.2 L65.7,36.0 L61.3,34.8 L56.9,33.5 L52.4,32.2 L47.9,30.8 L43.3,29.4 L38.7,27.9 L34.1,26.4 L29.5,24.9 L24.9,23.3 L20.3,21.7 L15.7,20.1 L11.1,18.4 L6.5,16.7 L2.0,15.0 Z" fill="#0B8A5F"/></svg>
+    <span class="wordmark">LABUSE</span>
+    <span class="produit">DOSSIER PARCELLE · usage interne</span>
+  </div>
+  <h1>Rapport de faisabilité indicative</h1>
+  <div class="adresse">204 Rue de l&#39;égalité, 97438 Sainte-Marie</div>
+  
+  <div class="refs">Parcelle <b>97418000AT2317</b> · Sainte-Marie · section AT n° 2317</div>
+
+  
+
+  <table class="meta-table">
+    <tr><td>N° de rapport</td><td>DP-20260725-2317</td></tr>
+    <tr><td>Date de génération</td><td>2026-07-25</td></tr>
+    <tr><td>Commune</td><td>Sainte-Marie (97418)</td></tr>
+    <tr><td>Références cadastrales</td><td>97418 AT 2317</td></tr>
+    <tr><td>Contenance cadastrale</td><td>274 m²</td></tr>
+    <tr><td>Version du modèle de rapport</td><td>1.1</td></tr>
+  </table>
+</section>
+
+
+
+<section class="saut">
+  <h2><span class="num">01</span>Identité parcellaire</h2>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Contenance cadastrale</div>
+      <div class="valeur">274 <small>m²</small></div></div>
+    
+    <div class="cartouche"><div class="titre">Zonage PLU</div>
+      <div class="valeur">UB
+        
+      </div></div>
+    
+    
+  </div>
+
+  
+  <h3>Zonage du document d'urbanisme</h3>
+  <table class="donnees">
+    <tr><th>Zone</th><th>Classe</th><th>Part de la parcelle</th><th>Document</th></tr>
+    
+    <tr><td>UB</td><td class="num-cell">U</td>
+        <td class="num-cell">100 %</td><td class="num-cell">97418_plu_20251126</td></tr>
+    
+  </table>
+  
+
+  
+
+  
+</section>
+
+
+
+
+<section>
+  <h2><span class="num">02</span>Constructibilité</h2>
+  
+
+  
+  
+  <div class="cartouche"><div class="titre">Surface constructible restante (estimation)</div>
+    <div class="valeur">126 <small>m² de plancher (indicatif)</small></div>
+    
+    <div class="note-sdp">surface de plancher au sens PLU (hors murs et circulations) — la surface
+      habitable / vendable est ~15&nbsp;% inférieure (soit ~110 m²).</div></div>
+  
+
+  
+  <h3>Verdict LABUSE (scoring v2)</h3>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Verdict</div>
+      <div class="valeur">Brûlante <small>v2</small></div></div>
+    
+    <div class="cartouche"><div class="titre">Rang île (hors copropriétés)</div>
+      <div class="valeur">11</div></div>
+    
+    
+    <div class="cartouche"><div class="titre">Probabilité de mutation vs base</div>
+      <div class="valeur">×22.0</div></div>
+    
+  </div>
+  
+  
+
+  
+  <h3>Score LABUSE de la parcelle (grille historique Q/A — complément
+      du verdict v2 ci-dessus)</h3>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Q — Qualité foncière</div>
+      <div class="valeur">56 <small>/100</small></div></div>
+    <div class="cartouche"><div class="titre">A — Accessibilité (mutabilité)</div>
+      <div class="valeur">78 <small>/100</small></div></div>
+    
+    <div class="cartouche"><div class="titre">Complétude du signal A</div>
+      <div class="valeur">83 <small>%</small></div></div>
+    
+  </div>
+  <table class="donnees grille">
+    <tr><th>Grille de lecture</th><th>Interprétation</th></tr>
+    <tr><td class="num-cell">Q ≥ 65</td>
+        <td>Qualité foncière élevée : la parcelle « vaut le coup » au regard des règles et
+            contraintes analysées.</td></tr>
+    <tr><td class="num-cell">Q &lt; 50</td>
+        <td>Qualité foncière faible : contraintes ou déqualifications identifiées.</td></tr>
+    <tr><td class="num-cell">A ≥ 60</td>
+        <td>Signaux de mutabilité réels détectés (cycle de vie du propriétaire, marché…).</td></tr>
+    <tr><td class="num-cell">A ≈ 50</td>
+        <td>Aucun signal particulier — valeur de base, ni positif ni négatif.</td></tr>
+  </table>
+  <p class="note">Score propre à cette parcelle, exprimé en valeur absolue sur la grille
+     LABUSE — ce rapport ne compare pas la parcelle à d'autres.</p>
+  
+</section>
+
+
+
+
+
+<section>
+  <h2><span class="num">03</span>Risques</h2>
+  
+  
+  <table class="donnees">
+    <tr><th>Couche</th><th>Détail sur la parcelle</th></tr>
+    
+    <tr><td>Aléa Géorisques</td>
+        <td><span class="chip alerte">Aléa mouvement terrain — faible</span></td></tr>
+    
+  </table>
+  
+  
+  <h3>Installations classées (ICPE) à proximité</h3>
+  <table class="donnees">
+    <tr><th>Installation</th><th>Régime</th><th>Distance</th></tr>
+    
+    <tr><td>2009-26 CBo TERRITORIA - ZAC BEAUSEJOUR</td><td>Autorisation</td>
+        <td class="num-cell">314 m</td></tr>
+    
+  </table>
+  
+  
+  <p class="note">Sources : Géorisques (BRGM), PPR DEAL Réunion, classement sonore Cerema.
+     L'absence d'une couche dans ce tableau signifie qu'aucune emprise n'intersecte la
+     parcelle dans les données disponibles.</p>
+</section>
+
+
+
+
+
+<section>
+  <h2><span class="num">04</span>Patrimoine &amp; environnement</h2>
+  
+  <p class="ok-vide">✓ La parcelle n'est concernée par aucun périmètre patrimonial ou
+     environnemental des couches analysées (ABF/Mérimée, ENS, QPV, Cartofriches,
+     Parc national, forêts publiques).</p>
+  
+</section>
+
+
+
+
+
+<section>
+  <h2><span class="num">05</span>Marché — mutations à proximité</h2>
+  
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Ventes (500 m · 3 ans)</div>
+      <div class="valeur">60</div></div>
+    
+    <div class="cartouche"><div class="titre">Prix médian bâti</div>
+      <div class="valeur">3 096 <small>€/m²</small></div></div>
+    
+    
+  </div>
+
+  
+  <h3>Comparables récents (anonymisés)</h3>
+  <table class="donnees">
+    <tr><th>Type</th><th>Surface bâtie</th><th>Terrain</th><th>Prix</th><th>Mois</th></tr>
+    
+    <tr><td>Appartement</td>
+        <td class="num-cell">96 m²</td>
+        <td class="num-cell">—</td>
+        <td class="num-cell">296 500 €</td>
+        <td class="num-cell">12/2025</td></tr>
+    
+    <tr><td>Appartement</td>
+        <td class="num-cell">65 m²</td>
+        <td class="num-cell">—</td>
+        <td class="num-cell">150 000 €</td>
+        <td class="num-cell">11/2025</td></tr>
+    
+    <tr><td>Appartement</td>
+        <td class="num-cell">95 m²</td>
+        <td class="num-cell">—</td>
+        <td class="num-cell">272 000 €</td>
+        <td class="num-cell">10/2025</td></tr>
+    
+    <tr><td>Appartement</td>
+        <td class="num-cell">47 m²</td>
+        <td class="num-cell">—</td>
+        <td class="num-cell">146 000 €</td>
+        <td class="num-cell">10/2025</td></tr>
+    
+    <tr><td>Appartement</td>
+        <td class="num-cell">96 m²</td>
+        <td class="num-cell">—</td>
+        <td class="num-cell">283 000 €</td>
+        <td class="num-cell">10/2025</td></tr>
+    
+  </table>
+  <p class="note">Comparables anonymisés (type, surface, prix, mois) — l'adresse exacte des
+     biens n'est jamais communiquée.</p>
+  
+
+  
+  
+</section>
+
+
+
+
+
+<section>
+  <h2><span class="num">06</span>Dynamique locale — autorisations d'urbanisme</h2>
+  
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Autorisations (500 m · 24 mois)</div>
+      <div class="valeur">13</div></div>
+    <div class="cartouche"><div class="titre">Logements autorisés (total)</div>
+      <div class="valeur">81</div></div>
+  </div>
+  
+  <h3>Plus gros projets autorisés</h3>
+  <table class="donnees">
+    <tr><th>Type</th><th>Mois</th><th>Logements</th></tr>
+    
+    <tr><td>PC (logements)</td>
+        <td class="num-cell">12/2025</td><td class="num-cell">69</td></tr>
+    
+    <tr><td>PC (logements)</td>
+        <td class="num-cell">10/2024</td><td class="num-cell">1</td></tr>
+    
+    <tr><td>PC (logements)</td>
+        <td class="num-cell">10/2024</td><td class="num-cell">1</td></tr>
+    
+  </table>
+  
+  
+</section>
+
+
+
+
+
+<section>
+  <h2><span class="num">07</span>Contexte commune &amp; leviers</h2>
+  <p>Indicateurs à l'échelle de la commune de Sainte-Marie — pour situer la parcelle dans son
+     environnement administratif et foncier. Agrégats publics ; <b>aucune donnée nominative</b>.</p>
+
+  
+  <h3>Vélocité administrative — permis de construire</h3>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Délai médian d'instruction (dépôt → autorisation)</div>
+      <div class="valeur">9<small> mois</small></div></div>
+    <div class="cartouche"><div class="titre">Fourchette · dossiers observés</div>
+      <div class="valeur">6–12<small> mois · 1780 dossiers</small></div></div>
+  </div>
+  <p style="font-size:8pt;color:var(--txt-mut);margin-top:1.5mm">Sourcé — Sitadel (SDES).
+     <b>À lire avec prudence :</b> ce délai est calculé sur les <b>seuls permis accordés</b> — les dossiers
+     refusés ou encore en instruction ne sont pas comptés, ce qui <b>raccourcit mécaniquement la médiane</b>.
+     C'est donc un <b>minimum optimiste</b>, pas un délai garanti. Médiane robuste, cohortes mûres (dépôts de
+     plus de 12 mois), historique 2013+.</p>
+  
+
+  
+  <h3>Leviers logement social / bailleur</h3>
+  
+  
+  <p>SRU : commune <b>conforme</b> — 29.7 % de
+     logements sociaux pour un objectif de 20 %.
+     <span style="font-size:8pt;color:var(--txt-mut)">Sourcé DHUP · inventaire LLS 01/01/2024 · périmètre 01/01/2025 · prélèvement 2025.</span></p>
+  
+  
+  
+
+  
+  <h3>Consommation d'espace (foncier / ZAN)</h3>
+  <div class="cartouches">
+    <div class="cartouche"><div class="titre">Rythme récent (2021-2024)</div>
+      <div class="valeur">57 721<small> m²/an</small></div></div>
+    <div class="cartouche"><div class="titre">Rythme précédent (2011-2021)</div>
+      <div class="valeur">172 953<small> m²/an</small></div></div>
+  </div>
+  
+  <p style="font-size:8pt;color:var(--txt-mut);margin-top:1.5mm">Sourcé — Cerema, consommation d'espaces
+     naturels, agricoles et forestiers (ENAF), consommation ENAF 2009-2024 · publié 12/05/2025 · Licence Ouverte 2.0. Signal de <b>pression foncière</b>
+     (rythme observé). Le budget et l'horizon ZAN ne sont <b>pas</b> indiqués : l'enveloppe n'est pas encore
+     territorialisée (SAR / PLUi, loi TRACE) — à confirmer auprès des documents d'urbanisme locaux.</p>
+  
+</section>
+
+
+
+
+
+<section>
+  <h2><span class="num">08</span>Terrain &amp; réseaux</h2>
+  <div class="cartouches">
+    
+    <div class="cartouche"><div class="titre">Pente moyenne (RGE ALTI 5 m)</div>
+      <div class="valeur">7.3<small>°</small>
+        <small> · max 8.0°</small>
+      </div></div>
+    
+    
+    <div class="cartouche"><div class="titre">Gisement solaire (PVGIS)</div>
+      <div class="valeur">1 500<small> kWh/kWc/an · indice 74/100</small></div></div>
+    
+    
+  </div>
+  
+  
+  
+  <p style="font-size:8pt;color:var(--txt-mut);margin-top:1.5mm">Solaire — Sourcé PVGIS (Commission
+     européenne, modèle SARAH3). Productible spécifique estimé pour une installation optimisée ;
+     <b>le gradient côtier est/ouest local n'est pas capturé</b> par le modèle → ordre de grandeur, à
+     affiner par une étude sur site.</p>
+  
+</section>
+
+
+
+<section class="saut">
+  <h2><span class="num">09</span>Sources &amp; millésimes</h2>
+  <p>Chaque donnée de ce rapport provient d'une source publique identifiée. Le tableau
+     ci-dessous les cite avec leur état de synchronisation dans la base LABUSE.</p>
+  <table class="donnees">
+    <tr><th>Section</th><th>Source</th><th>Millésime / synchronisation</th></tr>
+    
+    <tr><td>Identité parcellaire</td>
+        <td>Cadastre Etalab (DGFiP)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Identité parcellaire</td>
+        <td>PLU / GPU (API Carto, IGN)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Identité parcellaire</td>
+        <td>Droits résiduels — calibrage LABUSE sur règlements PLU</td><td class="num-cell">calibrage continu 2026</td></tr>
+    
+    <tr><td>Risques</td>
+        <td>Géorisques (BRGM / MTE)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Risques</td>
+        <td>Géorisques — sites et sols pollués</td><td class="num-cell">synchronisé le 2026-07-10</td></tr>
+    
+    <tr><td>Risques</td>
+        <td>Géorisques — cavités souterraines</td><td class="num-cell">synchronisé le 2026-07-10</td></tr>
+    
+    <tr><td>Risques</td>
+        <td>Géorisques — ICPE</td><td class="num-cell">synchronisé le 2026-07-10</td></tr>
+    
+    <tr><td>Risques</td>
+        <td>Géorisques — mouvements de terrain</td><td class="num-cell">synchronisé le 2026-07-05</td></tr>
+    
+    <tr><td>Risques</td>
+        <td>PPR / aléas (DEAL Réunion)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Risques</td>
+        <td>Classement sonore ITT (Cerema)</td><td class="num-cell">synchronisé le 2026-07-10</td></tr>
+    
+    <tr><td>Risques</td>
+        <td>Recul du trait de côte (Cerema / GéoLittoral)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Risques</td>
+        <td>50 pas géométriques (DEAL)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Patrimoine &amp; environnement</td>
+        <td>Base Mérimée / ABF (Ministère de la Culture)</td><td class="num-cell">synchronisé le 2026-07-05</td></tr>
+    
+    <tr><td>Patrimoine &amp; environnement</td>
+        <td>ENS (INPN / Département)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Patrimoine &amp; environnement</td>
+        <td>QPV 2024 (ANCT)</td><td class="num-cell">synchronisé le 2026-07-05</td></tr>
+    
+    <tr><td>Patrimoine &amp; environnement</td>
+        <td>Cartofriches (Cerema)</td><td class="num-cell">synchronisé le 2026-07-05</td></tr>
+    
+    <tr><td>Patrimoine &amp; environnement</td>
+        <td>Parc National de La Réunion (INPN)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Marché</td>
+        <td>DVF — valeurs foncières (DGFiP / Cerema)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Dynamique locale</td>
+        <td>Sitadel — autorisations d&#39;urbanisme (SDES)</td><td class="num-cell">synchronisé le 2026-07-10</td></tr>
+    
+    <tr><td>Terrain &amp; réseaux</td>
+        <td>RGE ALTI 5 m (IGN)</td><td class="num-cell">—</td></tr>
+    
+    <tr><td>Terrain &amp; réseaux</td>
+        <td>PVGIS — gisement solaire (Commission européenne)</td><td class="num-cell">modèle SARAH3</td></tr>
+    
+    <tr><td>Carte de situation</td>
+        <td>Fond de carte © OpenStreetMap contributors (ODbL)</td><td class="num-cell">synchronisé le 2026-07-06</td></tr>
+    
+    <tr><td>Adresse</td>
+        <td>Base Adresse Nationale (DINUM / IGN)</td><td class="num-cell">synchronisé le 2026-07-11</td></tr>
+    
+    <tr><td>Contexte commune &amp; leviers</td>
+        <td>Sitadel — délais d&#39;instruction (SDES/Dido)</td><td class="num-cell">historique 2013+</td></tr>
+    
+    <tr><td>Contexte commune &amp; leviers</td>
+        <td>Inventaire SRU / LLS (DHUP)</td><td class="num-cell">inventaire 2024 · périmètre 2025</td></tr>
+    
+    <tr><td>Contexte commune &amp; leviers</td>
+        <td>QPV (ANCT)</td><td class="num-cell">génération 2024</td></tr>
+    
+    <tr><td>Contexte commune &amp; leviers</td>
+        <td>Consommation d&#39;espace ENAF (Cerema)</td><td class="num-cell">2009-2024 · publié 05/2025</td></tr>
+    
+  </table>
+
+  <div class="mentions" style="margin-top:6mm">
+    <p><b>Mentions.</b> Document d'information établi à partir de données publiques.
+       Ne constitue ni un document d'urbanisme opposable, ni une étude de faisabilité
+       réglementaire, ni un conseil juridique. Ces informations ne remplacent pas un
+       certificat d'urbanisme. Les règles complètes du PLU peuvent modifier les
+       potentiels indiqués.</p>
+    <p>Sources : DGFiP/Etalab — Plan Cadastral Informatisé · DGFiP — Demandes de valeurs foncières (DVF) · © IGN — BD TOPO, BD ORTHO, RGE ALTI (Licence Ouverte 2.0) · ADEME, base DPE · SDES, Sitadel · Géorisques (BRGM/MTE) · Insee · INPI — RNE · Base Adresse Nationale (DINUM/IGN) · © les contributeurs d&#39;OpenStreetMap — ODbL (openstreetmap.org/copyright)</p>
+    <p>Rapport DP-20260725-2317 généré le 2026-07-25 ·
+       modèle v1.1 · LABUSE — radar foncier de La Réunion ·
+       labuse.immo</p>
+  </div>
+</section>
+<div style="position:fixed; bottom:2mm; right:0; font-size:7pt; color:#5F6C65; font-family: Inter, sans-serif;">Généré via LABUSE pour Pilote LABUSE</div></body>
+</html>

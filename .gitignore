@@ -93,3 +93,5 @@ exports/
 # Harnais de captures Playwright (P5) — les PNG ne vont jamais en git
 qa/captures/out/
 qa/qa/
+qa/node_modules/
+qa/*.zip

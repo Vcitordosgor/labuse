@@ -1,0 +1,584 @@
+PARCELLE · SAINTE-MARIE
+
+AT 2317
+
+204 Rue de l'égalité, 97438 Sainte-Marie
+
+274 m² · Voir sur Pages Jaunes ↗
+
+VERDICT LABUSE
+
+Brûlante
+rang 11
+
+×22,0
+
+plus probable de muter
+
+Gérant âgé (81 ans)
+constructible UB
+1 vigilance
+Règles d'urbanisme
+126 m² SDP
+zone UB
+Qualité
+56
+▸
+✦ TRADUIRE MA ZONE EN FRANÇAIS COURANT
+replier ▴
+
+Traduction indisponible — réessayer
+
+RÈGLEMENT PLU
+
+UB
+Voir le règlement ↗
+
+Règlement PLU non outillé pour cette commune — consultez le Géoportail de l'Urbanisme (recherche par commune). Réf. document : 97418_plu_20251126.
+
+Le règlement PLU fait foi ; les valeurs affichées sont une aide à la lecture, non un certificat d'urbanisme.
+
+Potentiel de transformation
+Fort
+
+Fort potentiel — parcelle en forte sous-densité
+
+SDP consommée / autorisée
+0 %
+SDP résiduelle estimée
+~126 m²
+
+Ratio SDP consommée/autorisée (bloc D du modèle P) + potentiel bâti résiduel (BD TOPO × règles PLU calibrées)
+
+-10
+SDP résiduelle
+SDP résiduelle 126 m² — une maison — hors cible collectif (socle -10).
+parcel_residuel#371458
+15/07/2026
++8
+Zonage PLU
+Zone PLU « U » (urbaine / à urbaniser — constructible).
+Urbanisme PLU/GPU (API Carto)
+15/07/2026
+·
+Bâti
+Aucun bâti significatif détecté
+15/07/2026
+·
+Bruit routier
+Hors secteurs affectés par le bruit routier.
+Classement sonore ITT (Cerema)
+15/07/2026
+·
+50 pas géométriques
+Hors zone des 50 pas géométriques.
+50 pas géométriques — limite haute (DEAL)
+15/07/2026
+·
+Emprise linéaire
+Forme non linéaire (largeur 11 m, allongement 2.5×).
+15/07/2026
+·
+Emprise routière
+Aucun axe routier carrossable ne touche la parcelle.
+15/07/2026
+·
+Foncier public
+Propriétaire PM « Personnes morales non remarquables » (groupe 0) — acquérable.
+15/07/2026
+·
+Forêt publique
+Hors forêt publique.
+Forêts publiques (ONF)
+15/07/2026
+·
+Faux positif OSM
+Aucun faux positif géométrique OSM.
+OpenStreetMap / Overpass
+15/07/2026
+·
+Parc national
+Hors Parc National.
+Parc National de La Réunion (INPN)
+15/07/2026
+·
+Prescriptions PLU
+Aucune prescription PLU sur la parcelle.
+Urbanisme PLU/GPU (API Carto)
+15/07/2026
+·
+SAFER
+Hors zonage SAFER.
+Zonage SAFER (DAAF)
+15/07/2026
+·
+SAR (aménagement régional)
+SAR : vocation compatible détectée — espace d'urbanisation prioritaire SAR — compatible — à croiser avec PLU/PPR.
+SAR Réunion (PEIGEO)
+15/07/2026
+·
+Servitudes (SUP)
+Aucune servitude d'utilité publique recensée.
+SUP — assiettes GPU (API Carto)
+15/07/2026
+·
+Surface parcelle
+Surface 274 m² — sous le seuil de valorisation (400 m²).
+15/07/2026
+Risques
+1 vigilance
+10 couches
+-5
+Risques PPR
+Aléa mouvement_terrain — niveau faible.
+Géorisques
+15/07/2026
+·
+ABF / Monuments
+Hors périmètre ABF.
+ABF / Monuments historiques
+15/07/2026
+·
+Cavités
+Aucun objet recensé à proximité.
+Géorisques — cavités souterraines
+15/07/2026
+·
+Eau
+Hors hydrographie.
+BD TOPO IGN
+15/07/2026
+·
+Espace naturel sensible
+Hors ENS.
+ENS (Département)
+15/07/2026
+·
+ICPE
+Aucun objet recensé à proximité.
+Géorisques — ICPE
+15/07/2026
+·
+Mouvement de terrain
+Aucun objet recensé à proximité.
+Géorisques — mouvements de terrain
+15/07/2026
+·
+Pente
+Pente fort (~22%) — calculée, non éliminatoire.
+RGE ALTI (altimétrie)
+15/07/2026
+·
+Ravines
+Hors voisinage immédiat d'une ravine.
+BD TOPO IGN
+15/07/2026
+·
+Sols pollués
+Aucun objet recensé à proximité.
+Géorisques — sites et sols pollués
+15/07/2026
+·
+Trait de côte
+Hors zone de recul du trait de côte.
+DEAL Réunion — trait de côte
+15/07/2026
+Propriétaire
+Gérant âgé
+Gérant âgé
+
+PROPRIÉTAIRE (DGFIP)
+
+CBO TERRITORIA
+SIREN 452038805
+Personnes morales non remarquables
+→ tout son patrimoine (M02)
+Signaux vendeur
+18
+▸
++12
+Âge du dirigeant
+Gérant âgé (81 ans) — horizon de transmission.
+INPI RNE (dirigeants)
+v_foncier_propension_vendre#452038805
+15/07/2026
+·
+BODACC
+Aucune procédure collective recensée.
+BODACC (procédures collectives)
+15/07/2026
+·
+DPE passoire
+Pas de passoire thermique F/G recensée.
+DPE ADEME (logements existants)
+15/07/2026
+?
+Propriétaire
+inconnu
+Propriétaire inconnu (Fichiers fonciers sous convention non branchés).
+Fichiers fonciers (Cerema)
+15/07/2026
+Marché
+498 €/m²
+91 ventes secteur
++12
+Potentiel foncier Région
+Dans un îlot « Potentiel foncier » Région — recouvrement 100% de la parcelle.
+data.regionreunion.com — Potentiel foncier
+15/07/2026
++8
+Marché DVF
+Marché : 13 mutation(s) ≤ 250 m / 5 ans, médiane terrain 86 045 €/m² (valeur ÷ surface terrain tous biens). Contexte de marché favorable.
+DVF / valeurs foncières
+15/07/2026
++8
+Permis SITADEL
+1 permis récent(s) RATTACHÉ(S) par IDU (≤ 60 mois).
+SITADEL (autorisations d'urbanisme)
+15/07/2026
++6
+Aménités
+Aménités : école 56m, commerce 259m, santé 263m, bus 778m (score 0.90).
+OpenStreetMap / Overpass
+parcel_amenites#371458
+15/07/2026
+-5
+Occupation du sol
+Sol naturel (logique ZAN — artificialisation à justifier).
+OCS GE (IGN)
+15/07/2026
+·
+Accès voirie
+Pas d'accès direct évident à la voirie.
+BD TOPO IGN
+15/07/2026
+·
+Friche
+Aucune friche recensée.
+Cartofriches (Cerema)
+15/07/2026
+Faisabilité et bilan
+0–2 logts
+R+2
+SDP 126 m²
+calcul tracé
+
+CAPACITÉ CONSTRUCTIBLE
+
+R+2 · ~0 à 2 logts
+Gabarit : R+2 (9 m)
+SDP : 126 m²
+Logements : 0–2
+SHAB vendable : ~71 m²
+▲ estimation générique (zone non calibrée)
+Pré-faisabilité indicative sur règlement PLU public — ne remplace pas une étude de faisabilité réglementaire par un professionnel.
+LE CALCUL, ÉTAPE PAR ÉTAPE (8)
+−
+1
+Emprise au sol — reculs (géométrie réelle)
+~93 m²
+Estimé
+Art. 7 (à_vérifier → hypothèse) (séparatif) ; recul voirie en sus
+2
+Emprise au sol — % réglementé
+—
+Sourcé
+Art. 9
+3
+Niveaux constructibles
+R+2
+Estimé
+estimation générique (PLU non outillé)
+4
+Emprise bâtie (occupation du gabarit)
+~42 m²
+Estimé
+hypothèse occupation
+5
+Surface de plancher brute
+~126 m²
+Dérivé
+dérivé occupation×hauteur
+6
+Surface habitable (rendement)
+~101 m²
+Estimé
+hypothèse rendement
+7
+Logements (avant plafonds)
+~1 à 2
+Estimé
+hypothèse surface logement
+8
+Plafond de densité (filet de sécurité)
+≤ 2 logts
+Estimé
+hypothèse densité (ex-COS)
+
+L'IA lit les étapes du calcul…
+
+CALCULETTE DE CHARGE FONCIÈRE
+
+LABUSE (sourcé) : SDP vendable 71 m² · prix de sortie bâti 2 969 €/m² · terrain 274 m²
+
+Coût construction
+hyp. — ajustez
+€/m²
+Marge & frais
+hyp. — ajustez
+%
+
+Charge foncière supportable — selon vos hypothèses
+
+-38 k€≈ -137 €/m² de terrain
+
+fourchette 0 € – -22 k€
+
+Prix demandé du terrain
+€
+Charge foncière NÉGATIVE en bas de fourchette : aux prix bas / coûts hauts, l'opération ne dégage pas de valeur pour le terrain.
+
+Le coût de construction et la marge sont VOS hypothèses (LABUSE ne les estime pas). Le résultat est un calcul à partir de celles-ci — estimation indicative, ne vaut pas conseil.
+
+CAPACITÉ (QUE PEUT ACCUEILLIR CE TERRAIN ?)
+
+R+2 · ~0 à 2 logts
+R+2 · emprise bâtie max 42 m² · SDP 126 m² · SHAB vendable ~71 m² · stationnement : non applique
+▲ estimation générique (zone non calibrée)
+Pré-faisabilité indicative sur règlement PLU public — ne remplace pas une étude de faisabilité réglementaire par un professionnel.
+
+MARCHÉ — PRIX DE SORTIE BÂTI (SECTEUR)
+
+médiane bâti 2 969 €/m² (appartement, 75 ventes ≤ 500 m) · fiabilité fiable · tendance hausse
+DVF — ventes jusqu'à déc. 2025 (dernière transaction en base · millésime en vigueur)
+La charge foncière (« combien puis-je payer ce terrain ? ») est désormais dans l'onglet Faisabilité, avec le calcul détaillé.
+
+FISCAL & LEVIERS
+
+QPV : non · TVA : 8,5 % (taux DOM) — 2,1 % possible en LLS selon montage
+Taxe d'aménagement : taux communal à confirmer en mairie (non ingéré) — hypothèse indicative 5 % + part départementale.
+
+RTAA DOM — RAPPEL RÉGLEMENTAIRE
+
+Construction neuve de logements : protection solaire, ventilation traversante, acoustique, aération et ECS renouvelable s'appliquent (seuils d'altitude 400/600 m).replier
+CADRE
+
+Limiter le recours à la climatisation par solutions techniques (protection solaire, ventilation naturelle) fixées par arrêtés — ou atteindre un indice de confort thermique de référence (voie de résultat ouverte par la réécriture 2025).
+
+CCH art. R.192-1 (décret n°2024-168 du 01/03/2024) ↗
+THERMIQUE
+
+Protection solaire des parois opaques des pièces principales : facteur solaire ≤ 0,03 en toiture et ≤ 0,09 en vertical.
+
+altitude : ≤ 600 m — au-dessus : isolation U ≤ 0,5 (toiture) / 2 W/m²·K (vertical), art. 5 2°
+
+Arrêté du 17/04/2009 (thermique) modifié 11/01/2016, art. 5 1° ↗
+THERMIQUE
+
+Facteur solaire maximal des baies PAR ORIENTATION : < 400 m — Nord 0,6 · Sud 0,8 · Est 0,6 · Ouest 0,6 ; entre 400 et 600 m — 0,8 (pas d'exigence au sud).
+
+altitude : seuils 400 m / 600 m
+
+Arrêté du 17/04/2009 (thermique) modifié, art. 6 ↗
+THERMIQUE
+
+Ventilation naturelle TRAVERSANTE : taux d'ouverture minimal des pièces principales (séjour 22 %, chambres 18 % sous 400 m ; 18 %/14 % entre 400 et 600 m), au moins deux ouvertures > 0,5 m² en parois opposées ou latérales, au plus 70 % des ouvertures sur une même façade.
+
+altitude : exemption > 600 m
+
+Arrêté du 17/04/2009 (thermique) modifié, art. 9 ↗
+THERMIQUE
+
+Brasseurs d'air : ventilateur de plafond fixe dans les chambres mono-orientées, attentes électriques dans les autres pièces principales (2 si séjour > 20 m²) ; au-dessus de 600 m : thermostats sur les équipements de chauffage.
+
+altitude : art. 10 exempté > 600 m
+
+Arrêté du 17/04/2009 (thermique) modifié, art. 10 et 13 ↗
+ACOUSTIQUE
+
+Séparatifs entre logements : paroi ≥ 350 kg/m² ou Rw+C ≥ 54 dB (57 dB face aux locaux d'activité) ; plancher ≥ 450 kg/m² ou Rw+C ≥ 57 dB avec L'n,w ≤ 67 dB ; porte palière Rw+C ≥ 28 dB.
+
+Arrêté du 17/04/2009 (acoustique) modifié 11/01/2016, art. 3 et 4 ↗
+ACOUSTIQUE
+
+Équipements : chauffage/climatisation individuels ≤ 35 dB(A) en pièces principales, ≤ 50 dB(A) en cuisine ; VMC ≤ 35 dB(A). En secteur affecté par une infrastructure classée : isolement de façade DnT,A,tr requis (rue en U : 40/37/33 dB selon catégorie).
+
+Arrêté du 17/04/2009 (acoustique) modifié, art. 7, 8 et 11 ↗
+AERATION
+
+Cuisine : baie ≥ 1 m² sur l'extérieur (dont 0,2 m² au-dessus de 1,9 m) ; salle de bains ≥ 0,30 m² et WC ≥ 0,15 m², sinon extraction mécanique (cuisine 20/30/45 m³/h selon typologie, SdB 15-30, WC 15).
+
+Arrêté du 17/04/2009 (aération) modifié 11/01/2016, art. 3 et 4 ↗
+AERATION
+
+Pièces climatisées ou façades soumises à isolement acoustique : ventilation mécanique obligatoire avec entrées d'air (pièces principales 35 m³/h en dépression, ou insufflation 20/40 m³/h chambre/séjour).
+
+Arrêté du 17/04/2009 (aération) modifié, art. 5 à 7 ↗
+ECS
+
+Tout logement neuf est pourvu d'un système d'ECS ; l'eau chaude est produite à au moins 50 % des besoins par sources de chaleur RENOUVELABLES (solaire thermique en pratique à La Réunion), sauf potentiel insuffisant de la parcelle. Depuis 2025 ce n'est plus « solaire » strict (ancien R.162-2 abrogé).
+
+CCH art. R.192-2 (décret n°2024-168), en vigueur 01/01/2025 ↗
+
+Bâtiments d'habitation NOUVEAUX et parties nouvelles de bâtiments existants (extensions) — art. 1er des trois arrêtés du 17/04/2009 modifiés ; version 2016 applicable aux PC/DP déposés depuis le 01/07/2016 ; cadre CCH R.192-1 à R.192-4 en vigueur depuis le 01/01/2025. Vérifié le 2026-07-08 — rappel de conception, ne remplace pas l'étude réglementaire du maître d'œuvre.
+
+Viabilisation et réseaux
+Viabilisation confirmée par les faits
+Accessibilité
+78
+▸
+▲
+
+Accès à vérifier — aucun tronçon de voirie cartographié au contact. Signal informatif, non pondéré : la BD TOPO trace les voies publiques.
+
+Viabilisation (eau · assainissement · élec)
+Viabilisation confirmée par les faits
+100
+/ 100 — probabilité de viabilisation (faisceau de preuves)
+
+POURQUOI CET INDICATEUR
+
++40
+Permis accordés à proximité — 45 permis autorisé(s) < 100 m · 40 depuis 2022 (secteur en développement actif) · 16 achevé(s) — raccordements réalisés (DAACT)
++25
+Façade sur voie publique urbanisée — voie au contact + bâti riverain → réseaux enterrés sous voirie
++20
+Zone urbaine (U) — pondération de fond (zonage PLU)
++15
+Adjacence au bâti existant — bâti ≤ 10 m (le bâti voisin est raccordé)
+
+RACCORDEMENT (QUALITATIF)
+
+Raccordement a priori SIMPLE : réseaux présumés en façade/voirie, secteur déjà desservi et construit.
+
+Zonage assainissement non disponible sur la commune (M8).
+
+↯
+Capacité d'accueil PV NULLE sur les 24 postes sources de La Réunion (S3REnR) → toute injection photovoltaïque est en file d'attente réseau.
+
+Indicateur de PROBABILITÉ de viabilisation (faisceau de preuves), pas une certitude ni un droit à construire. Aucun tracé de réseau (donnée sensible). À confirmer auprès des gestionnaires et via DT-DICT (reseaux-et-canalisations.gouv.fr).
+
+Gestionnaires (raccordement)
+à jour 2026-07
+◆
+Compétence
+CINOR — Communauté intercommunale du Nord de La Réunion · cinor.re
+≈
+Eau potable
+CISE Réunion (SAUR)confirmé · DSP 01/05/2022 → 31/12/2029
+∿
+Assainissement
+STEP Grand Prado (Runéo) ; collecte CISEà confirmer · → 16/06/2030
+◇
+SPANC (ANC)
+Régie SPANC CINOR
+↯
+Électricité
+EDF SEI · EDF SEI Réunion — raccordement.reunion@edf.fr / edf.re
+
+Eaux usées traitées à Grand Prado (Runéo).
+
+Gestionnaires administratifs à jour au 2026-07, à revérifier annuellement (les délégations changent aux renouvellements de contrat). Contact administratif uniquement — aucun tracé de réseau (donnée sensible). Viabilité (eau, électricité, assainissement) à confirmer auprès des concessionnaires via DT-DICT (reseaux-et-canalisations.gouv.fr).
+
+Permis à proximité
+47 à < 100 m · 88 à < 200 m
+
+Permis autorisés géolocalisés < 200 m (source du signal viabilisation M-VIA). Cliquez pour la fiche.
+
+PC
+2025-11-19
+1 lgt
+0 m
+PC
+2022-07-07
+1 lgt
+5 m
+PC
+2023-08-04
+1 lgt
+12 m
+PC
+2022-06-23
+1 lgt
+12 m
+PC
+2022-08-17
+1 lgt
+17 m
+PC
+2023-10-10
+1 lgt
+18 m
+PC
+2022-10-12
+1 lgt
+18 m
+PC
+2022-07-11
+1 lgt
+18 m
+PC
+2024-01-02
+1 lgt
+21 m
+PC
+2023-08-08
+1 lgt
+22 m
+PC
+2023-05-05
+1 lgt
+26 m
+PC
+2023-06-15
+1 lgt
+26 m
+Confiance et données
+90 %
+Probabilité de mutation (P)
+non scorée
+
+Parcelle absente du dernier run du modèle — copropriété ou hors périmètre du scoring.
+
+Confiance données
+90
+▸
+Statut matrice (historique)
+À creuser
+92
+COMPLÉTUDE · 92 %
+Dossier suffisant pour trancher
+
+SIGNAUX ADDITIONNELS
+
+?
+Propriétaire
+inconnu
+Propriétaire inconnu (Fichiers fonciers sous convention non branchés).
+Fichiers fonciers (Cerema)
+15/07/2026
+⚑ Signaler une erreur
+Pourquoi pas ?
+motifs
+
+Motifs momentanément indisponibles.
+
+Réessayer
+Une question sur cette parcelle ?
+demander →
++ Pipeline
++ Projet
+
+PDF
+
+Dossier
+
+Financier
+
+1950
+
+Cadastre
+
+Maps
+
+Estimations indicatives issues de données publiques — ni conseil juridique/notarial ni garantie de constructibilité. Ces informations ne remplacent pas un certificat d'urbanisme.
