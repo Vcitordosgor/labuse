@@ -472,3 +472,14 @@ bruts** (funnel 5916→294→…→35), pas sur 35. Mesure en cours (recompute g
 écriture sur la table servie).
 
 ## Dette #8 — l'ortho voit ce que la cascade rate (cartes 16, 8) : consignée.
+
+## #4 compacité — le gap 0,55 est un ARTEFACT de petit échantillon (mesuré au pool large)
+Pool de **1 422 résiduels viables** (recompute géométrique à blanc, 24 communes, sans plancher
+compacité ; 40× les 35 — le « 5 916 » du funnel est le brut AVANT filtres de viabilité, mon pool
+applique free_m2≥500/rad≥9). **La compacité est un CONTINUUM lisse** :
+`[0,45-0,50)=81 · [0,50-0,55)=98 · [0,55-0,60)=86 · [0,60-0,65)=87` — aucune rupture.
+**105 candidats tombent dans l'ancien « gap » [0,505 ; 0,563)** (contre 0 sur les 35).
+**Verdict : le gap 0,55 était une illusion de petit échantillon (Principe 4).** À l'échelle,
+aucune coupure naturelle → un seuil de compacité serait une coupe ARBITRAIRE dans un continuum, pas
+un séparateur. NE PAS graver 0,55. Si un plancher de compacité est voulu, il doit se justifier sur
+le critère de forme acceptable (revue visuelle), pas sur un « gap ».
