@@ -64,6 +64,18 @@ deux cas) ; la seule différence est la VISIBILITÉ produit. Le déclassement co
 tier et garde le foncier surveillable (radar M24 sur les 3 221 zones fermées). Inclination Vic :
 déclassement — la mesure la confirme peu coûteuse.
 
+## 3bis. Remembrement (cause B — MESURE en information, Vic tâche 2 ; NE PAS traiter ici)
+
+Les 4 653 « terrain trop exigu » sont les candidates naturelles au remembrement (une parcelle seule
+inconstructible, deux ou trois contiguës ne le sont plus — le pendant inverse d'O12). Mesure de
+contiguïté (ST_Touches, geom_2975) :
+- **1 234 parcelles B contiguës à une autre B**, formant **475 groupes** (≥2).
+- Tailles : 340 paires, 78 triples, 26 quadruples… jusqu'à un groupe de 18. **554 parcelles en
+  groupes de 3+.** 1 366 contiguës à une inconstructible quelconque.
+
+**Significatif** — segment qu'aucun concurrent ne sert. Graine de mandat « remembrement » (inverse
+d'O12), à ouvrir séparément. Non traité ici.
+
 ## 4. Golden avant/après (Vic tâche 5) — 10 ancres à réaligner, motifs sourcés
 
 10 ancres golden sont servies positives mais non constructibles au règlement calibré :
