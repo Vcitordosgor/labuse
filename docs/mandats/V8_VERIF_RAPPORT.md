@@ -360,3 +360,25 @@ bâti-avec-résiduel EST la prémisse O12 — cohérent avec l'arbitrage bâti d
 **Revue visuelle** : `O12_GARDE_REVUE_MANIFEST.txt` — les 3 « déjà bâti » EN TÊTE (rang 1), à
 trancher en premier par Vic, ortho à l'appui. Table servie `division_or_candidates` **INTOUCHÉE**,
 aucune exposition, aucune bascule.
+
+---
+# REVUE VISUELLE O12 — dossier des 24 cartes (garde appliquée à blanc)
+
+**Correction de chemin (constat)** : `qa/division_or/gen_revue.py` n'existe NI en working tree, NI
+dans git (toutes branches / historique), NI sur le disque. Le générateur réel est la commande
+**`labuse division-or-review`** → `src/labuse/api/division_review.py::build_review_dossier`
+(fond IGN ortho WMTS, PDF). C'est lui qui a produit les cartes de revue du 28/07.
+
+**Généré** sur les **24 candidats retenus après garde** (35 − 11 drops), **BV0182 / AV2092 / BH1036
+forcés en cartes 01 / 02 / 03**. Chaque carte : ortho IGN + contour parcelle + emprise bâti + lot
+résiduel proposé + voirie (accès). Table servie `division_or_candidates` **INTOUCHÉE** (les 24 sont
+sélectionnés à blanc, pas réécrits).
+
+**Sorties** (`qa/division_or/revue_v8/`, JPEG q85 @140 dpi pour l'hygiène git ; PDF = les 24 d'un bloc) :
+- **carte 01 — `qa/division_or/revue_v8/carte_01.jpg`** — 97415000BV0182 (Saint-Paul, résiduel 520 m², bâti 40 %, façade voirie du lot 22,3 m)
+- **carte 02 — `qa/division_or/revue_v8/carte_02.jpg`** — 97418000AV2092 (Sainte-Marie, 535 m², 32 %)
+- **carte 03 — `qa/division_or/revue_v8/carte_03.jpg`** — 97420000BH1036 (Sainte-Suzanne, 883 m², 30 %)
+- dossier complet : `qa/division_or/revue_v8/dossier_revue_v8.pdf` (24 cartes)
+
+Observation (non-verdict) : la carte 01 porte une façade voirie du lot de 22,3 m (> 0) → accès a
+priori propre, pas enclavé ; **ta revue visuelle tranche.** Rien exposé, rien basculé.
