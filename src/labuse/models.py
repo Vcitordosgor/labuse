@@ -291,7 +291,7 @@ class ScoreSnapshotParcelle(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     snapshot_id: Mapped[int] = mapped_column(ForeignKey("score_snapshots.id", ondelete="CASCADE"), index=True)
     parcelle_id: Mapped[str] = mapped_column(String(14), index=True)
-    statut: Mapped[str | None] = mapped_column(String(24))
+    statut: Mapped[str | None] = mapped_column(String(32))   # 32 : reçoit le tier (declasse_* 26 car.)
     v_score: Mapped[int | None] = mapped_column(Integer)
     v_band: Mapped[str | None] = mapped_column(String(8))
     brulante: Mapped[bool] = mapped_column(default=False)
@@ -865,7 +865,9 @@ class ParcelPScoreV2(Base):
     contrib_d: Mapped[float] = mapped_column(Float)
     top5_contributions: Mapped[list | None] = mapped_column(JSONB)
     copro: Mapped[bool] = mapped_column(default=False)
-    tier: Mapped[str | None] = mapped_column(String(24))
+    # 32 (et non 24) : les tiers de déclassement `declasse_non_constructible` (26 car.) débordaient
+    # varchar(24) → erreur d'écriture SQLAlchemy (bascule 29/07). Idem score_snapshot_parcelles.statut.
+    tier: Mapped[str | None] = mapped_column(String(32))
     event_date: Mapped[date | None] = mapped_column(Date)    # dernier événement daté v1.3
     model_version: Mapped[str] = mapped_column(String(32))
     computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -1363,6 +1365,11 @@ def ensure_constructibilite_cache(engine) -> None:
             " parcel_id integer PRIMARY KEY REFERENCES parcels(id) ON DELETE CASCADE,"
             " label varchar(32), motif text, cause varchar(24),"
             " computed_at timestamptz NOT NULL DEFAULT now())"))
+        # Élargissement des colonnes qui reçoivent le TIER : le déclassement ajoute
+        # `declasse_non_constructible` (26 car.) qui débordait varchar(24) (bascule 29/07).
+        # ALTER TYPE d'agrandissement = métadonnée-only en Postgres (instantané, pas de réécriture).
+        c.execute(_t("ALTER TABLE parcel_p_score_v2 ALTER COLUMN tier TYPE varchar(32)"))
+        c.execute(_t("ALTER TABLE score_snapshot_parcelles ALTER COLUMN statut TYPE varchar(32)"))
 
 
 def ensure_schema(engine) -> None:
