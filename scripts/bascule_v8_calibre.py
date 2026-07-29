@@ -40,6 +40,65 @@ class RunIncompletError(RuntimeError):
     """Levée par verify_completude quand une table attendue manque — échec BRUYANT."""
 
 
+# ─────────────────────────────── gardes de démarrage ───────────────────────────────
+
+class DisqueInsuffisantError(RuntimeError):
+    """Espace disque insuffisant pour finir la re-passe — refus de démarrer (échec bruyant)."""
+
+
+def _ts() -> str:
+    """Horodatage HH:MM:SS pour la journalisation (Date.now() indisponible dans les workflows,
+    mais ici on est en script Python standard)."""
+    import datetime
+    return datetime.datetime.now().strftime("%H:%M:%S")
+
+
+def check_disque(target: str = TARGET, marge: float = 1.25) -> dict:
+    """Garde DISQUE (garde manquante qui a tué le job à 20 %, Vic 30/07). Estime l'espace que la
+    re-passe q_v8 va CONSOMMER (cascade + evaluations + scores + snapshot, dimensionné sur la
+    référence complète q_v7_defisc), le compare à l'espace DISPONIBLE = libre OS + espace mort
+    RÉUTILISABLE dans les tables cibles (le job réutilise les lignes supprimées sans grossir le
+    fichier). Refuse de démarrer si disponible < besoin × marge. Idempotent, lecture seule."""
+    import shutil
+    with engine().connect() as c:
+        # besoin = taille des tranches q_v7 (référence complète) MOINS ce que q_v8 a déjà écrit
+        need = c.execute(text("""
+            SELECT
+              (SELECT pg_total_relation_size('dryrun_cascade_results')::float
+                      * (SELECT count(*) FROM dryrun_cascade_results WHERE run_label='q_v7_defisc')
+                      / NULLIF((SELECT count(*) FROM dryrun_cascade_results),0)) +
+              (SELECT pg_total_relation_size('parcel_p_score_v2')::float / NULLIF((SELECT count(DISTINCT run_id) FROM parcel_p_score_v2),0)) +
+              (SELECT pg_total_relation_size('dryrun_parcel_evaluations')::float
+                      * (SELECT count(*) FROM dryrun_parcel_evaluations WHERE run_label='q_v7_defisc')
+                      / NULLIF((SELECT count(*) FROM dryrun_parcel_evaluations),0))
+        """)).scalar() or 0.0
+        already = c.execute(text("""
+            SELECT (SELECT count(*) FROM dryrun_cascade_results WHERE run_label=:t)::float
+                   / NULLIF((SELECT count(*) FROM dryrun_cascade_results WHERE run_label='q_v7_defisc'),0)"""),
+            {"t": target}).scalar() or 0.0
+        need_rest = need * max(0.0, 1.0 - already)
+        # espace mort réutilisable dans les tables cibles (lignes supprimées non rendues à l'OS)
+        dead = c.execute(text("""
+            SELECT COALESCE(sum(n_dead_tup::float / NULLIF(n_live_tup,0)
+                     * pg_relation_size(relid)),0)
+            FROM pg_stat_user_tables
+            WHERE relname IN ('dryrun_cascade_results','parcel_p_score_v2','dryrun_parcel_evaluations','score_snapshot_parcelles')""")).scalar() or 0.0
+    free = shutil.disk_usage(".").free
+    dispo = free + dead
+    rep = {"besoin_reste_go": round(need_rest/1e9, 2), "libre_os_go": round(free/1e9, 2),
+           "mort_reutilisable_go": round(dead/1e9, 2), "disponible_go": round(dispo/1e9, 2),
+           "marge": marge, "ok": dispo >= need_rest * marge}
+    print(f"  [garde disque] besoin≈{rep['besoin_reste_go']} Go · libre OS {rep['libre_os_go']} Go "
+          f"+ mort réutilisable {rep['mort_reutilisable_go']} Go = {rep['disponible_go']} Go dispo "
+          f"(marge ×{marge})", flush=True)
+    if not rep["ok"]:
+        raise DisqueInsuffisantError(
+            f"DISQUE INSUFFISANT : besoin ≈{rep['besoin_reste_go']} Go × {marge}, "
+            f"disponible {rep['disponible_go']} Go. Libérer des runs obsolètes (purge q_v6_m8 + "
+            f"anciens runs de score) puis VACUUM, ou --skip-disk-check si réutilisation certaine.")
+    return rep
+
+
 # ─────────────────────────────── étapes (idempotentes) ───────────────────────────────
 
 def ensure_backups() -> None:
@@ -104,9 +163,12 @@ def repass_cascade(communes: list[str], target: str = TARGET, chunk: int = 2000,
         with session_scope() as s:                       # matrice = post-pass sur la commune entière
             compute_matrice(s, target, commune)
             s.commit()
-        print(f"  [3] cascade {ci}/{len(communes)} {commune:22s} : {len(ids)} parcelles "
-              f"({len(ids)-len(todo)} reprises)  [{time.time()-t0:.0f}s]", flush=True)
-    print(f"  [3] cascade RE-PASSÉE : {total} évaluées sur {len(communes)} communes", flush=True)
+        # une ligne par commune TERMINÉE : heure, commune, compte cumulé, ETA (Vic 30/07).
+        eta = (len(communes) - ci) * (time.time() - t0) / ci
+        print(f"  [3] {_ts()} commune {ci}/{len(communes)} {commune:22s} FINIE : "
+              f"{len(ids)} parcelles ({len(ids)-len(todo)} reprises) · cumul {total} · "
+              f"ETA ~{eta/60:.0f} min", flush=True)
+    print(f"  [3] {_ts()} cascade RE-PASSÉE : {total} évaluées sur {len(communes)} communes", flush=True)
     return total
 
 
@@ -163,6 +225,7 @@ def all_communes() -> list[str]:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--resume", action="store_true", help="reprend la cascade interrompue (ne recommence pas).")
+    ap.add_argument("--skip-disk-check", action="store_true", help="passe la garde disque (réutilisation d'espace mort certaine).")
     args = ap.parse_args()
 
     with engine().connect() as c:
@@ -172,7 +235,9 @@ def main():
 
     t0 = time.time()
     communes = all_communes()
-    print(f"BASCULE → {TARGET} : {n_parcels} parcelles, {len(communes)} communes. q_v7_defisc conservé.", flush=True)
+    print(f"{_ts()} BASCULE → {TARGET} : {n_parcels} parcelles, {len(communes)} communes. q_v7_defisc conservé.", flush=True)
+    if not args.skip_disk_check:            # garde DISQUE : refuse de démarrer si la marge manque
+        check_disque(TARGET)
     ensure_backups()
     migrate_residuel()
     rebuild_static()
