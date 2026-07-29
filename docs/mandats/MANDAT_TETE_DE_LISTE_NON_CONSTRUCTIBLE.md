@@ -1,9 +1,19 @@
 # MANDAT « TÊTE DE LISTE NON CONSTRUCTIBLE » — SPEC
 
-> **Statut : SPEC — mesure faite, rien implémenté. Passe DEVANT le re-run et le repli (arbitrage
-> Vic 29/07).** Défaut produit PRÉSENT, indépendant de toute correction en cours : le produit
-> classe en tête de liste (brûlante/chaude) du foncier que le moteur de faisabilité déclare
-> NON CONSTRUCTIBLE. Découvert via le cas AD1237 (phase 1 re-run).
+> **Statut : SPEC — mesure faite (voir `TETE_DE_LISTE_PHASE_MESURE.md`), rien implémenté. Passe
+> DEVANT le re-run et le repli (arbitrage Vic 29/07).** Défaut produit PRÉSENT, indépendant de
+> toute correction en cours.
+>
+> **POURQUOI CE DÉFAUT PASSE DEVANT TOUT — c'est le SEUL visible en UN CLIC.** Un promoteur ouvre
+> la tête de liste, choisit une parcelle, découvre que le règlement y interdit toute construction.
+> Les 2 234 du repli, le ×2 de la charge, les SDP surestimées — tout demandait une mesure pour être
+> vu. Celui-ci se voit à l'œil nu, dès le premier usage.
+>
+> **NOTE INTER-MANDATS (Vic 29/07 — vaut aussi pour `MANDAT_REPLI_NON_OPTIMISTE.md`) : UN SEUL
+> correctif sert les DEUX mandats.** Le correctif d'étage 0 de ce mandat (honorer le verdict de
+> faisabilité avant le scoring P) EST le levier du repli non optimiste — le déclassement des gels
+> passe par l'étage 0, JAMAIS par le canal résiduel (contre-levier prouvé, phase 1 re-run). Aucune
+> session ne doit traiter les deux séparément : mesurer une fois, corriger une fois.
 
 ---
 
