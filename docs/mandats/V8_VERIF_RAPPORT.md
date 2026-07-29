@@ -100,3 +100,87 @@ d'application sur main ») n'est pas satisfaite pour la chaîne de bascule. Aucu
 
 *Aucune modification servie. `q_v7_defisc` (run servi actuel) intact : 120/1031/3587/72980/353945.
 Scripts de vérification : requêtes SQL consignées dans `scripts/verif_v8_provenance.sql`.*
+
+---
+# EXTENSION — A', A'', C' (30/07)
+
+## A' — parcel_residuel (incident traité)
+- **A'.1** : `parcel_residuel` a **UNE seule valeur de `computed_at` = 29/07 22:08:46** sur les
+  253 328 lignes → la table entière a été (ré)écrite en un seul `migrate`, en cours de cascade.
+- **A'.2** : cascadées **AVANT 22:08** (ont lu le residuel ensuite écrasé) = **Saint-Paul,
+  La Possession, L'Étang-Salé** (+ les 12 000 premières de Saint-Pierre, cf. A''). **APRÈS** = les
+  21 autres. Les reprises = exactement les communes pré-22:08.
+- **A'.3 (par le code)** : la CASCADE `residuel_socle` lit `parcel_residuel` **EN DIRECT au calcul**
+  (`etage0_ext.py:156` → `context.residuel_sdp` : `SELECT … FROM parcel_residuel WHERE parcel_id=…`).
+  Le SCORING P lit `p_model_static` (copie **FIGÉE** construite par `build_static` au début du run
+  final, `sql.py:261-263,290`). Donc : les reprises ont lu le residuel pré-22:08 pendant leur
+  cascade ; le scoring a lu la copie figée post-22:08 pour tout le monde.
+- **A'.4 (identité de contenu, pas déterminisme)** : checksum md5 du `parcel_residuel` ACTUEL
+  (22:08) = **`15f769ae…`** = checksum du recompute déterministe depuis la source
+  `parcel_residuel_rerun WHERE dispo_rerun` (**IDENTIQUE**). Le contenu 22:08 est donc exactement
+  l'image de la source, prouvé par checksum. **La version pré-22:08 est écrasée (un seul
+  computed_at) → non checksummable directement** ; son identité au contenu 22:08 est prouvée
+  INDIRECTEMENT par A'' (le residuel_socle des reprises == recompute avec le residuel 22:08).
+  (`parcel_residuel_rerun` n'a pas de colonne d'horodatage — artefact de mesure statique.)
+
+## A'' — Contrôle de substitution — VERDICT : **IDENTIQUE**
+- **Point de coupure identifié** : dans Saint-Pierre, **gap de 26 min 08 s** entre la ligne 12000
+  (~21:43, dernière reprise) et la ligne 12001 (**parcel_id 104372**, 22:09:19). **12 000 avant /
+  30 425 après.** C'est le seul endroit où deux exécutions se touchent (le `parcel_residuel` a été
+  réécrit à 22:08 pendant ce gap).
+- **Échantillon** : 80 parcelles — 15 Saint-Paul, 10 La Possession, 10 L'Étang-Salé, 45 Saint-Pierre
+  (20 juste avant la coupure + 20 juste après + 5 ailleurs). Recompute à blanc, label isolé.
+- **Commit du recompute : `c867eec`** (HEAD verif/v8-calibre : cache prime + tous les fix).
+- **Précondition prouvée (par le code) avant d'ignorer l'ordre** : le seul aspect non déterministe
+  est l'**ORDRE physique des lignes** risques/zonage. `compute_matrice` (`dryrun.py:50-56`) agrège
+  par `bool_or(HARD_EXCLUDE)` + `sum(weight)` + `bool_or(evenement)` — **ordre-indépendants**. Le
+  tier servi (`pipeline.py:239`) = `status IN (exclue,faux_positif)` (result) + P + déclassement
+  faisabilité — pas le detail/ordre. Donc l'ordre n'alimente **ni matrice, ni q/a, ni tier, ni
+  chiffre servi**. Comparaison faite sur le **multiset complet** (layer, result, weight, **detail**)
+  + matrice_statut/q/a ; seul l'ordre physique est ignoré. **Rien n'est exclu à tort.**
+- **Résultat : 80 comparées, 0 DIVERGENTE.** Multiset (detail inclus) ET matrice/q/a identiques,
+  reprises comme fraîches, de part et d'autre de la coupure.
+- **CONCLUSION A (résolue)** : les 85 537 reprises sont **équivalentes en ÉTAT** (Principe 6, pas
+  inféré de l'effet) à ce que produit le code courant. L'« ancien script défectueux » (qui n'écrivait
+  aucune cascade) est écarté ; les deux états de code intra-run (à-la-volée / cache) sont prouvés
+  résultat-identiques ; le residuel pré-22:08 a produit le même residuel_socle que le 22:08.
+  **Verdict : IDENTIQUE. La base v8 n'est plus suspecte sur ce point.**
+
+## C' — préparer le merge (NE PAS merger)
+`origin/main` (4bc610f) est **incohérent pour le chemin servi** tant que la branche n'est pas mergée :
+- `pipeline.py` sur main = version **buguée** (`df["label"]`, KeyError) — `parcel_constructibilite`
+  existe (11 782 lignes) → un scoring sur main **planterait**. Fix = `4d95402`.
+- `models.py` sur main : `tier varchar(24)` → `declasse_non_constructible` (26 car.) **déborde**.
+  Fix = `eb1ce17`.
+- golden sur main = **réaligné** (realign_m26 ×12) mais revert `ad872ce` absent → golden échoue
+  contre le run servi q_v7.
+
+**Les 19 commits (origin/main..HEAD), classés :**
+
+| hash | change (1 ligne) | chiffre servi | chaîne q_v8 |
+|---|---|---|---|
+| `4d95402` | fix KeyError merge déclassement (pipeline.py) + test | **OUI** (corrige break latent main) | OUI |
+| `eb1ce17` | tier/statut varchar 24→32 (models.py) | **OUI** (corrige débordement main) | OUI |
+| `dbca5ab` | cache prime ×6 + matrice nested-loop (context/models/dryrun) | non (résultat bit-identique prouvé) | OUI |
+| `ad872ce` | golden — retour arrière 12 ancres | non (réf test) — **requis cohérence golden↔q_v7** | non |
+| `9cf351c` | commentaires q_v6_m8 → Q_A_RUN_LABEL | non | non |
+| `164a6c5` | scripts bascule+rollback initiaux + doc | non | OUI |
+| `f657e63` | bascule refondu (cascade native + auto-vérif) | non | OUI |
+| `46a2b02` | gardes bascule (disque + journal) | non | OUI |
+| `edb57bb` | garde disque exacte FSM | non | OUI |
+| `2585626` | fix rollback (snapshot par snapshot_id) | non | non (outil undo) |
+| `2dea488` | en-têtes DÉPENSÉ scripts one-shot | non | non |
+| `90eab34` `fc64071` `4f2fe89` `e1ac1db` `3b9022b` `6e78d4e` `a5f835f` `c867eec` | docs/notes/rapports de mandat | non | non |
+
+**Ordre de merge recommandé** : la branche est une continuation LINÉAIRE de `9aae96a` (que main
+contient via 4bc610f). `merge-tree origin/main HEAD` **exit 0 — zéro conflit**, et l'intersection
+des fichiers modifiés des deux côtés depuis la base est **VIDE**. → **un seul `git merge --no-ff
+verif/v8-calibre`** suffit, sans conflit anticipé. Si Vic veut un sous-ensemble « servi d'abord » :
+`4d95402` + `eb1ce17` + `ad872ce` sont le trio qui **restaure la cohérence du chemin servi sur main**
+(sans eux, main plante au scoring et le golden ne passe pas) — à ne pas dissocier du déclassement
+déjà mergé. **CC ne merge pas ; Vic merge en --no-ff.** (Principe 7 : la purge de q_v6_m8 et le run
+v8 ne sont acquis que quand ces correctifs sont sur main.)
+
+---
+*A' et A'' résolus (VERDICT IDENTIQUE). B reste FERMÉ jusqu'à ton arbitrage. Aucun merge, aucune
+relance, aucune purge. q_v7_defisc servi intact.*
