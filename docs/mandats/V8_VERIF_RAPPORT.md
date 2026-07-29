@@ -236,3 +236,73 @@ Rien ajusté.
 
 ---
 *B exécuté sur origin/main 7b067f7. Rapporté brut, rien corrigé, rien mergé. q_v7_defisc servi intact.*
+
+---
+# B-PRIME — qualification des écarts (lecture seule, sur origin/main 7b067f7)
+
+## B'.1 — les 427 (mécanisme prouvé par le code)
+- Les 427 étiquetées A/B dans `parcel_constructibilite` mais tier q_v8 ≠ déclassé sont **TOUTES
+  passées en `ecartee`** (417 A « zone fermée » + 10 B « inconstructible »). **ZÉRO en
+  chaude/réserve/à-creuser.**
+- **Mécanisme (code)** : `assign_tiers` (statuts.py:118-120) affecte le tier déclassé PUIS
+  `tier[ecartee_etage0] = TIER_ECARTEE` en **dernier** → écartée écrase déclassé. Et la bascule
+  fixe `LABUSE_ETAGE0_RUN=q_v8_calibre` (bascule:189 → pipeline:236) : l'étage 0 est lu sur la
+  cascade CALIBRÉE de q_v8, où **M6 2b hard-exclut les zones interdit-avec-hauteur** (UE/Uem/US/
+  UCtom + AU* transition). Vérifié : **427/427 sont hard-exclues (status exclue/faux_positif) à
+  l'étage 0 de q_v8.** La cible (jetable) lisait l'étage 0 de q_v7 (pré-calibration, sans ces
+  exclusions) → d'où l'écart. C'est cohérent : une parcelle hard-exclue par la cascade calibrée
+  est écartée (exclusion forte), pas seulement déclassée.
+- **B'.1.1 (les +17 en tiers normaux)** : ce ne sont PAS des déclassées perdues (0 déclassée en
+  tier normal, prouvé). Ce sont des parcelles constructibles re-classées vs la cible. **Je ne peux
+  PAS les nommer par IDU** : la cible était un run jetable (supprimé), non persisté par IDU, et ses
+  comptes diffèrent même légèrement des cibles du mandat (chaude 1042 vs 1043 mesuré). Je le dis
+  plutôt que d'inventer une liste.
+- **B'.1.2** : les 417 (A) sont en zones économiques habitat-interdit (UE 105, UCtom 37, US 33,
+  Uem 33, Ue 31, UCto 20…) + AU* transition ; les 10 (B) inconstructibles. Liste complète des 427
+  par IDU : `docs/mandats/V8_BPRIME_427_ecartees.tsv`.
+- **B'.1.3** : les 427 en `ecartee` sont **hors de toute liste servie** (écartée). **Leur motif
+  reste consultable** sur la fiche : `flash/data.py::_constructibilite` lit `parcel_constructibilite`
+  et pose `out["constructibilite"]={label,motif}` **sans condition de tier** → motif affiché même
+  écartée.
+
+## B'.2 — les 3 ancres + les 6 autres FAIL
+- **97422000AD1237** (Le Tampon 2AUd, `calibree=True`) : golden résiduel 453 → DB **absent**.
+  **Justifié OUI** : Art. 2.2.3 p.84 ferme 2AUd → non constructible → résiduel supprimé. **Tier q_v8
+  = `declasse_zone_fermee` → n'est PLUS servie brûlante.** (correction visée du défaut d'origine.)
+- **97418000AT2379** (Sainte-Marie U, `calibree=False`) : 108 → 146. Aucune règle PLU changée (zone
+  générique 9 m) → recompute résiduel. **Justifié : indéterminé.** Toujours brûlante, constructible.
+- **97424000AI0355** (Cilaos « 86 » → AUst, `calibree=False`) : 395 → 209. Zone AUst (Art. AUst
+  p.53-56) mais non calibrée. **Justifié : indéterminé.**
+- 6 autres FAIL, cohérence avec le calibrage (une ligne) : AK1725 (Bras-Panon U) sdp 0→0, taux
+  49→61 ✓ ; AC1870 (La Possession UBc **calibré**) 3553→1870 ✓ ; CR1351 (Saint-Pierre AU)
+  3903→absent (devenu non constructible) ✓ ; AO0654 (Sainte-Suzanne UC **calibré**) 176→117 ✓ ;
+  AB1341/AB1908 (Trois-Bassins 1AUb **calibré**) 199→133 / 183→122 ✓.
+
+## B'.3 — le « plafond » à 12 000 : PAS une troncature
+- Par commune (23, **Saint-Philippe absente = 0 résiduel, RNU**) : comptes variés (Saint-Paul 31957,
+  Saint-Pierre 27489…) ; **Saint-Benoît = 12 000 exact, seule ronde.**
+- **Débunké** : parcel_residuel_rerun Saint-Benoît = 12 238 total, **12 000 disponibles** (238
+  devenues non-constructibles au recompute) ; l'ancienne parcel_residuel (29/06) = 12 238. Donc
+  **12 000 = 12 238 − 238, rond par COÏNCIDENCE.** Aucun `12000`/`LIMIT`/cap dans le code
+  (migration + résiduel ; seul `chunk=2000` de commit, sans effet sur le total).
+- **Verdict B'.3.4** : les 9 671 muettes = **6 928 en A/N** (absence RÉELLE, non-constructible
+  légitime) + **2 743 en U/AU** (dette « muettes en capacité » — zones urbaines sans résiduel, à
+  investiguer). **Ni cap, ni troncature.**
+
+## B'.4 — O12 contre v8 : les 35 seraient INCHANGÉS
+- La détection division_or (division_or.py:181-282) lit **géométrie** (surface 1000-6000, bâti,
+  résiduel free_m2, cercle inscrit, compacité, façade, solidité) + `_emprise_max_sql` = seuil
+  `emprise_sol_pct` du **YAML calibré** (`load_rules`, l.670-684). Elle NE lit NI `parcel_residuel`,
+  NI le run/tier, NI la constructibilité résolue. Géométrie statique + YAML inchangé depuis le
+  27-28/07 (avant le calcul du 28/07) → **un recompute contre q_v8 rend les mêmes 35** (la bascule
+  n'a touché aucun input de la détection). (Non relancé : interdit « recomputer une table servie »,
+  pas de mécanisme de label isolé dans division_or ; conclusion étayée par le code.)
+- **B'.4.3 — à revoir visuellement par Vic** : 3 candidats dont la parcelle est désormais
+  NON CONSTRUCTIBLE en v8 (candidat géométrique O12, mais foncier fermé/inconstructible) :
+  **97410000BK0219** (declasse_non_constructible), **97414000ES0629** (declasse_non_constructible),
+  **97416000HX0339** (declasse_zone_fermee). Secondairement, 11 des 35 sont désormais `ecartee`
+  (hard-exclues cascade : risque/foncier public/interdit) — à regarder aussi.
+
+---
+*B-PRIME lecture seule, rien corrigé, rien mergé, rien recomputé sur table servie. q_v7_defisc servi
+intact. Artefact : V8_BPRIME_427_ecartees.tsv.*
