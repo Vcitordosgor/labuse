@@ -201,7 +201,10 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
         if v2 or etage0:
             libelles = {"brulante": "Brûlante", "chaude": "Chaude",
                         "reserve_fonciere": "Réserve foncière", "a_creuser": "À creuser",
-                        "ecartee": "Écartée"}
+                        "ecartee": "Écartée",
+                        # déclassement tête-de-liste (étage 0) — visibles avec motif
+                        "declasse_zone_fermee": "Zone fermée à l'urbanisation",
+                        "declasse_non_constructible": "Parcelle non constructible"}
             tier_eff = "ecartee" if etage0 else (v2["tier"] if v2 else None)
             if tier_eff:
                 out["verdict_v2"] = {
@@ -241,6 +244,17 @@ def _constructibilite(db: Session, idu: str, avail: set[str]) -> dict | None:
             out["rnu_ligne"] = (f"{blk['libelle']}. {blk['detail']}{pau_txt} "
                                 f"{blk['avertissement_pau']} "
                                 f"(statut vérifié le {blk['verifie_le']}).")
+    # Constructibilité (déclassement tête-de-liste) — motif AFFICHÉ dès qu'un verdict moteur
+    # existe, INDÉPENDAMMENT du tier servi : le défaut « tête de liste non constructible » est
+    # signalé sur la fiche même AVANT la bascule du run avec déclassement. Trois motifs distincts
+    # (A zone fermée / B parcelle inconstructible / C non vérifiable).
+    if db.execute(text("SELECT to_regclass('parcel_constructibilite') IS NOT NULL")).scalar():
+        cst = db.execute(text(
+            "SELECT c.label, c.motif FROM parcel_constructibilite c "
+            "JOIN parcels p ON p.id = c.parcel_id WHERE p.idu = :idu"),
+            {"idu": idu}).mappings().first()
+        if cst:
+            out["constructibilite"] = {"label": cst["label"], "motif": cst["motif"]}
     return out or None
 
 
