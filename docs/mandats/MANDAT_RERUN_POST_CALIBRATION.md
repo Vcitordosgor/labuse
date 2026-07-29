@@ -45,13 +45,15 @@ travail `repli_sp_residuel`, lecture seule)** :
 - **Transitions de palier** : **1 633 SP (5,1 %) changent de palier, TOUTES vers le bas** —
   dont **74 quittent le palier +30** (belle/majeure opération), 163 quittent +25.
 
-**Verdict : le barème est décalibré.** Ses bornes ont été ajustées sur des résiduels gonflés
-par l'ancienne pleine terre ; appliquées aux résiduels recalculés, elles sur-bornent et
-sous-récompensent d'un palier ~5 % des parcelles — systématiquement, sur les plus gros pools.
-**Préalable confirmé : re-dériver les bornes du barème sur les verdicts SP recalculés AVANT le
-re-run de l'île** — sinon on propage un barème périmé sur les 24 communes. Le re-run seul ne
-suffit pas. (La re-dérivation ~translate les bornes de ~−13 %, restaurant l'alignement
-palier↔verdict ; mesure de re-dérivation à ouvrir en préalable.)
+**~~Verdict : le barème est décalibré.~~ CORRIGÉ le 29/07 (`BAREME_RESIDUEL_SOCLE_MESURE.md`) —
+CE PRÉALABLE EST RETIRÉ.** La mesure a montré que les bornes (100/300/800/2000/5000) sont des
+**seuils PHYSIQUES de taille d'opération**, PAS une dérivation statistique : elles ne coïncident
+ni avec les quantiles SP (201/364/993/1857/4249) ni avec l'`opportunity_score` (plat-inverse par
+palier). Le −13 % SP est un input plus JUSTE qui re-classe correctement (1 633 franchissements,
+tous constructibles, 0 déclassée), pas une décalibration. La distribution de l'île (p50 212, p98
+4398) ≈ SP → SP n'est pas un référentiel biaisant. **Le barème n'a PAS besoin d'être re-dérivé** ;
+l'effet du re-classement SDP sur la cascade appartient à l'étape (3) canal cascade. Alerte de
+phase 1 prématurée — principe #3, 3e instance.
 
 ---
 
