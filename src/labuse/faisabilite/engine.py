@@ -106,6 +106,12 @@ class Faisabilite:
     fourchette: dict
     bandeau: str
     calibree: bool = True                       # False ⇒ capacité issue de l'estimation générique
+    # Cause STRUCTURÉE de non-constructibilité (None si constructible). Deux familles :
+    #   A « zone fermée au règlement » : {"zone_transition", "habitat_interdit"} — réversible
+    #     (une 2AU peut être ouverte par modification du PLU).
+    #   B « parcelle inconstructible » : {"terrain_exigu", "redhibitoire", "hauteur_indispo"} —
+    #     contrainte physique/donnée, pas un interdit de zone.
+    cause: str | None = None
 
 
 _BANDEAU = (
@@ -139,10 +145,10 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         avert.append("Capacité ESTIMÉE — PLU de la commune non outillé (valeurs génériques "
                      "prudentes). Calibrage = ajout d'un YAML PLU communal (config/plu_<commune>.yaml).")
 
-    def fini(constructible, verdict, fourchette):
+    def fini(constructible, verdict, fourchette, cause=None):
         return Faisabilite(rules.code, rules.via_renvoi, constructible, verdict,
                            steps, hypotheses, avert, modul, fourchette, _BANDEAU,
-                           calibree=rules.calibree)
+                           calibree=rules.calibree, cause=cause)
 
     if rules.via_renvoi:
         steps.append(Step("Zone (renvoi AU→U)", rules.via_renvoi, rules.code, "Règlement, caractère de zone"))
@@ -150,7 +156,8 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
     if not rules.constructible_neuf:
         return fini(False, "Construction neuve non autorisée — secteur de transition "
                     "(AU*st) : travaux mineurs de mise aux normes, H max 4 m.",
-                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                    cause="zone_transition")
 
     # M6 2b (A-03) : zone à vocation économique — l'habitat y est interdit au règlement
     # (exceptions résiduelles type logement de gardiennage/fonction, hors cible produit).
@@ -158,7 +165,8 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
         return fini(False, "Habitat interdit au règlement — zone à vocation économique/"
                     "activités (seules exceptions : gardiennage/logement de fonction). "
                     "Aucune capacité logement calculée.",
-                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                    cause="habitat_interdit")
 
     # reculs (avec hypothèse prudente si "a_verifier")
     if _is_num(rules.recul_voirie_m):
@@ -181,7 +189,8 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                               "≈ 0 m² (contour vidé)", f"{rl_src}"))
             return fini(False, f"Terrain trop exigu compte tenu des reculs ({recul_used:g} m) — "
                         "non constructible en l'état (le contour inseté se vide).",
-                        {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+                        {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                        cause="terrain_exigu")
         steps.append(Step("Emprise au sol — reculs (géométrie réelle)",
                           f"contour cadastral réel inseté de {recul_used:g} m (ST_Buffer, EPSG:2975)",
                           f"~{emprise:.0f} m²", f"{rl_src} (séparatif) ; recul voirie en sus"))
@@ -242,7 +251,8 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
                           f"R+{max(0, niveaux - 1)}", he_src))
     else:
         return fini(False, "Hauteur non disponible (à_vérifier) — capacité non calculable.",
-                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)})
+                    {"logements_au_sol": (0, 0), "logements_sous_sol": (0, 0)},
+                    cause="hauteur_indispo")
     hypotheses.append(f"Hauteur d'étage supposée {hyp.etage_m:g} m ; niveaux comptés sur hé (égout), pas hf.")
 
     # ---- Emprise BÂTIE (on ne remplit pas toute l'enveloppe) ----
@@ -358,7 +368,8 @@ def estimate_capacity(rules: ZoneRules, surface_m2: float,
 
     if facteur == 0.0:
         return fini(False, f"Non constructible en l'état malgré le zonage ({rp} théorique) — "
-                    "contrainte rédhibitoire (voir modulation).", fourch)
+                    "contrainte rédhibitoire (voir modulation).", fourch,
+                    cause="redhibitoire")
 
     if regime == "borne":
         a, b = fourch["logements_au_sol"]
