@@ -1,5 +1,18 @@
 # MANDAT « REPLI NON OPTIMISTE » — SPEC v2 (refondée sur le correctif du gate)
 
+> **SUSPENDU, PAS ABANDONNÉ (Vic 29/07).** La phase A (`REPLI_NON_OPTIMISTE_PHASE_A_MESURE.md`)
+> puis la phase 1 du re-run ont recadré ce mandat : (1) le correctif du gate §2 est un NO-OP (0
+> zone interdit-sans-hauteur dans l'état courant) ; (2) le canal résiduel est un CONTRE-levier —
+> mettre la SDP d'un gel à 0 fait MONTER son score P, pas descendre ; (3) le déclassement des gels
+> passe donc par l'ÉTAGE 0 (cascade), jamais par le résiduel.
+>
+> **NOTE INTER-MANDATS (Vic 29/07 — vaut aussi pour `MANDAT_TETE_DE_LISTE_NON_CONSTRUCTIBLE.md`) :
+> UN SEUL correctif sert les DEUX mandats.** Le correctif d'étage 0 du mandat tête-de-liste
+> (honorer le verdict de faisabilité avant le scoring P) EST le levier de déclassement des gels de
+> ce mandat. Le repli reprend sa population (cause A « zone fermée » = 3 221 parcelles servies)
+> PORTÉE par ce correctif, une fois mesuré. Aucune session ne traite les deux séparément. Ordre
+> acté : (1) tête-de-liste → (2) re-dérivation barème → (3) canal cascade → (4) re-run complet.
+>
 > **NOTE DE LECTURE (vaut pour TOUT le document) — Les numéros de ligne sont indicatifs et
 > datés du 28/07 : vérifier avant exécution, le code a pu bouger.** Un numéro de ligne se
 > périme, la fonction et le fichier non — c'est le couple (fichier, fonction) qui fait foi.
