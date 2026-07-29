@@ -1,0 +1,24 @@
+# Dettes consignées — arbitrages B-PRIME (Vic 30/07)
+
+## 1 · Filtrabilité par motif des déclassées écartées (dette produit, lot filtres)
+Les 427 parcelles étiquetées déclassées (A/B) qui sont hard-exclues à l'étage 0 sortent en tier
+`ecartee` (l'exclusion étage 0 prime sur le déclassement, `assign_tiers` statuts.py:120). VALIDÉ :
+leur motif reste servi sur la fiche (`_constructibilite`, indépendant du tier). **Dette** : on perd
+la FILTRABILITÉ par motif de déclassement pour ces 427 (elles filtrent comme « écartées », pas
+comme « zone fermée »/« inconstructible »). Non-régression — à traiter au **lot filtres**.
+
+## 2 · Golden AT2379 / AI0355 — INDÉTERMINÉS (ne pas ajuster le golden)
+Deux ancres golden montrent un résiduel changé dont la justification est INDÉTERMINÉE, car leurs
+zones ne sont PAS calibrées (`calibree=False`) :
+- **97418000AT2379** (Sainte-Marie, zone U générique 9 m) : résiduel 108 → 146.
+- **97424000AI0355** (Cilaos, zone « 86 » → AUst, non calibrée) : résiduel 395 → 209.
+Le mouvement vient du recompute résiduel, pas d'un article de règlement. **À reprendre quand ces
+zones seront calibrées.** NE PAS ajuster le golden pour les faire passer (les 9 FAIL golden restent
+acceptés comme conséquence attendue de la calibration ; cf. V8_VERIF_RAPPORT B.2/B'.2).
+
+## 3 · Saint-Benoît — dette « muettes » requalifiée : 2 743 (pas 21 671)
+Sur 21 671 parcelles, 9 671 sans capacité résiduelle : **6 928 en A/N = absence RÉELLE** (non
+constructible légitime, PAS une dette) ; **2 743 en U/AU = la vraie dette** « muette en capacité ».
+Corrigé à la source (`PLU_NUIT_PHASE4_MESURES.md §7`). **La dette réelle vaut 2 743**, plus jamais
+« 21 671 muettes ». (Le « 12 000 capacité renseignée » = 12 238 − 238, rond par coïncidence, pas un
+cap — cf. V8_VERIF_RAPPORT B'.3.)

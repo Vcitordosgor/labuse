@@ -306,3 +306,39 @@ Rien ajusté.
 ---
 *B-PRIME lecture seule, rien corrigé, rien mergé, rien recomputé sur table servie. q_v7_defisc servi
 intact. Artefact : V8_BPRIME_427_ecartees.tsv.*
+
+---
+# MANDAT O12-GARDE — garde de constructibilité (code posé, table servie INTOUCHÉE)
+
+## Garde ajoutée (code) — division_or.py
+Filtre AMONT dans `_DETECT` : un candidat dont la parcelle SUPPORT est (a) hard-exclue à l'étage 0
+du RUN SERVI (`:served` = `Q_A_RUN_LABEL` → **suit automatiquement toute bascule future**), OU
+(b) marquée non constructible (`parcel_constructibilite` declasse_*), n'est PAS candidat.
+Robuste : la garde (b) retombe sur `true` si `parcel_constructibilite` absente. Code posé sur la
+branche ; la table servie `division_or_candidates` **n'est PAS recomputée** (point d'arrêt).
+
+## Recompte à blanc (mesure, sans écriture sur la table servie)
+Sur les 35 candidats : **14 tombent, 21 survivent** (mêmes 14 sous q_v7 servi actuel et sous q_v8) :
+| verdict | n | idus |
+|---|---|---|
+| DROP — non constructible (declasse_*) | 3 | 97410000BK0219, 97414000ES0629, 97416000HX0339 |
+| DROP — écartement définitif (PPR rouge / foncier public) | 8 | CH0320, AM0461, CM0268, CR0068, CH1198, CP0511, DS0617, CL0575 |
+| **ARBITRAGE — « déjà bâti » (faux_positif_probable)** | 3 | 97415000BV0182, 97418000AV2092, 97420000BH1036 |
+
+## Motifs des 11 écartés (point 4)
+- **5 PPR zone rouge inconstructible** (CH0320, CM0268, CR0068, DS0617, CL0575) → drop clair.
+- **4 propriété publique non-acquérable** (AM0461, CM0268 aussi, CH1198, CP0511) → drop clair.
+- **3 « déjà bâtie probable » 31-40 %** (BV0182, AV2092, BH1036) → `faux_positif_probable`.
+  **DÉFENDABLES** : O12 vise précisément le bâti-dans-un-coin avec résiduel détachable ; le
+  hard-exclude « déjà bâti » de la cascade entre en TENSION avec la raison d'être d'O12. **Ta
+  décision** : la garde (status IN exclue/faux_positif) les drop ; faut-il la restreindre à
+  `status='exclue'` (définitif) pour GARDER ces 3, motif servi ? Non tranché par moi.
+
+## Revue visuelle (point 5)
+Manifeste des 14 candidats dont l'état a changé depuis la revue du 28/07 :
+`docs/mandats/O12_GARDE_REVUE_MANIFEST.txt` (idu, commune, motif, verdict garde). À revoir
+visuellement avant exposition.
+
+## Point d'arrêt
+Garde CODÉE, table servie `division_or_candidates` INTOUCHÉE, aucune bascule. En attente :
+arbitrage sur les 3 « déjà bâti » + revue visuelle → puis recompute O12 + bascule q_v8.
